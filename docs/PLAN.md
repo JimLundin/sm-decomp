@@ -2367,10 +2367,42 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Complete incremental candidate implementation/caller cost is **+103 lines**;
    separate fixture growth is 659 lines plus 15 runtime-hook and eight observation
    lines. This is not a whole replacement price or maintained-main saving.
-   The session's other phase/display dependencies still reference fixtures, and
-   drawing/effect callbacks remain legacy runtime execution with unsafe calls.
-   Continue replacing those dependencies in this same complete candidate, then
-   price and integrate the full ownership path under target-architecture/MIGRATION.md.
+   The same full draft now supplies the outer gameplay/door session with
+   explicit runtime phase, display, wait and nested-mechanism bindings at
+   **d03f819d**. Player preparation, projectile reset and mechanism-header clearing
+   use the existing owned state. Other phases publish/reimport that complete owner
+   around actual legacy execution; the adapter no longer references fixtures.
+   **170 actual-runtime comparisons**, **1,823 ordered RAM/APU observations** and
+   **53 expected matching failures** pass. Full RAM, completion, diagnostic flags,
+   APU queues and DMA state agree; scheduler cases also compare serialized PPU
+   state. Checks cover firing/drawing, live gates and callback cursor writes,
+   enemy/PLM-message suspension, disabled/deleted mechanism resume, reset/clear
+   persistence and failure prefixes. Initial door loading exercises all 18 phases,
+   four directions and immediate/deferred readiness; actual background DMA
+   produces required VRAM contents.
+   These constructed cases select actual no-op movement/draw handlers and empty
+   destination enemy/object lists. Message display and NMI waits are controlled;
+   PPU register/DMA execution runs, but CPU, scanline rendering, audio advancement,
+   physical devices and movies do not. They establish no new gameplay-route or
+   backend-independence coverage.
+   Affected inherited outer-session, preparation, script, dialogue and award
+   compositions pass, as does the 896-case actual-runtime script suite on this
+   source. Repeated inherited groups are not additive coverage; the obsolete
+   nested export described above remains excluded. Optimized builds, formatting,
+   exact generator/caller reproduction and **135 runtime + 175 draft compiled
+   inputs** pass; 165 inherited inputs are unchanged. Frozen source/DLL/results:
+   player-projectiles/runtime-session-stage. Reproduction and fixture limitations
+   are recorded in this status commit.
+   Complete incremental implementation/caller cost is **+64 lines**. Separately,
+   fixture/harness growth is 843 lines, runtime observation support is 50 lines,
+   and Python preparation/check/freeze support is 289 lines. Maintained main and
+   its progress counters are unchanged; no whole-replacement savings are claimed.
+   The independent models and checked session adapter forbid unsafe code, but
+   runtime phases, display and other legacy callbacks remain unsafe execution.
+   The target Session contract is still open: remove the remaining fixture
+   choices in mechanism closing/dialogue output, compose their actual runtime
+   consumers, then price and integrate the full ownership path under
+   target-architecture/MIGRATION.md. Current Game/RAM interfaces are temporary.
    The full projectile candidate now includes shared script control flow:
    13 actual commands and two wake consumers use the
    existing owned slots for sleep/release, pre-actions, counters, conditional
