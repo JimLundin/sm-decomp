@@ -42,8 +42,8 @@ several internal state machines; an enum for every instruction is not required.
 | Owner | State and rules it owns | Inputs and outcomes at its interface |
 | --- | --- | --- |
 | Session | Play/pause/door/death/cinematic mode, the gameplay continuation, save/load requests | Controller input and nested completion/yield results; advances the next permitted phase |
-| Samus | Locomotion, pose and gameplay animation, health, resources, owned/equipped abilities, launch history | Input, resolved contacts, carry/push, item awards; movement, shot requests and presentation changes |
-| Player projectiles | Allocation, firing, flight, collision response, trails, linked extensions and retirement | Shot/reflect requests and ordered contact results; impact, damage and presentation outcomes |
+| Samus | Locomotion, pose and gameplay animation, health/resources/abilities, weapon control, pending aim, launch history and contact protection | Input, resolved contacts, carry/push, item awards and encounter restrictions; movement, shot requests and presentation changes |
+| Player projectiles | Reservation, placement, flight, collision response, trails, linked extensions and retirement | Shot/reflect requests and ordered contact results; reservation results, ammunition/cooldown/protection effects, impact, damage and presentation outcomes |
 | Creatures and encounters | Population, active slots, creature-specific behavior, combat reactions, multipart coordination | Room population, contacts and stimuli; movement, attacks, drops, progress and room changes |
 | Room mechanisms | Doors, stations, destructible blocks, pickups and platform behavior; each scheduler's continuation | Trigger/contact/script result; block changes, carry/push, item awards and message requests |
 | Rooms | Selected room instance, geometry, environment, camera and entry/exit sequence | Door and progress input; population changes, mechanism setup and discovered-map observations |
@@ -163,7 +163,8 @@ is insufficient while other projectile operations can still write into its bytes
 
 The scope includes these connected responsibilities:
 
-- Firing input, allocation/reservation, ammunition/cooldown effects and initialization
+- Samus weapon control through firing input, allocation/reservation,
+  ammunition/cooldown/protection effects and initialization
   in [beam_firing](../sm/src/game/beam_firing.rs) and [sm_90](../sm/src/game/sm_90.rs).
 - Launch history producers/reset, immediate beam reflection and later missile
   activation. Keep the independently sampled absolute-Y fraction explicit.
@@ -189,6 +190,51 @@ launch stores. It must show which representation wins at each step and compare
 unrelated bytes too. Then expand to the complete projectile responsibility, pricing
 all retained compatibility, callers and registrations. Small commits can advance
 this design, but a collection of temporary value models does not complete it.
+
+## Samus weapon control and projectile ownership
+
+The [weapon-control audit](RAM_OWNERSHIP.md#11-samus-weapon-control-crosses-projectiles-grapple-and-encounters)
+distinguishes the player's ability state from allocated shots. Samus owns the
+single live inventory, charge/control state, pending aim and contact protection.
+Projectiles own reservation and each shot's lifecycle. Firing joins these owners
+through ordered decisions and effects; it is not one atomic success/failure call.
+Reservation or placement failure can retain selected earlier changes.
+
+```mermaid
+flowchart LR
+    Pose[Samus pose transitions] -->|capture pending aim| Control[Samus weapon control]
+    Encounter[Encounter phase] -->|restrict abilities| Control
+    Control -->|reserve then place a shot| Shots[Player projectiles]
+    Pose -->|live origin and retained launch motion| Shots
+    Shots -->|ordered resource and protection effects| Control
+    Grapple[Grapple transitions] -->|shared charge state| Control
+    Phase[Scheduled visual phase] -->|advance weapon visuals| Control
+    Control -->|visual and sound results| Output[Presentation]
+```
+
+The names below are proposed operations, not new production functions:
+
+| Contract | Required state and transition |
+| --- | --- |
+| Capture / consume aim | Retain the captured direction separately from live origin pose/position. Placement consumes it once; reservation rejection retains it until the phase clear. Pending aim can release a beam while shoot stays held. |
+| Change weapon mode | Beam and grapple share charge state. Grapple start, release, ordinary beam charge and hyper flare have distinct transitions; separate independent charge clocks would change behavior. |
+| Apply encounter restriction | Shitroid drain communicates through cooldown, bomb reservation count and motion state. Preserve its exact X-ray observation point before replacing that encoding with a named restriction. |
+| Grant / advance contact protection | Successful firing placement grants Samus global projectile protection. Its countdown belongs to completed gameplay, not individual shot updates or releases. |
+| Advance weapon appearance | Current draw code advances flare state and can end hyper's active marker; palette handling separately advances glow. Schedule these gameplay transitions at their current phases and return visual results. |
+| Restore weapon sound | Ordinary, deferred and republished resume requests differ; message/unpause completion also has a direct restoration path. |
+| Cancel / reset | Clear-charge, clear-charge-and-flare, projectile reset and Samus initialization retain different state. Keep the named causes and affected values explicit. |
+
+The aim experiment executes production placement and selected producers: **68
+full-RAM fixture comparisons**, including 14 expected partial failures, plus eight
+linked sequences and four counterexamples. It establishes that captured aim and
+live origin cannot be collapsed into one pose snapshot. This is behavior discovery,
+not an old/new typed replacement test. Other rows above are source-audited findings;
+their gameplay execution and complete writer/alias closure remain unestablished.
+
+The full projectile draft may temporarily aggregate these inputs for comparison.
+Its final interface must give each value one authority and apply cross-owner
+effects before the next observer, including before a failure. This refinement
+does not require a second live Samus copy alongside the draft's state.
 
 ## Projectile interactions define the interface
 
@@ -259,12 +305,14 @@ through foreign execution, preserve nesting and failures, and encode those rules
 in the actual callers. The whole-projectile implementation and full cost remain
 open; no savings or gameplay-route coverage follow from this prototype.
 
-The [first firing slice of the full draft](RAM_OWNERSHIP.md#whole-projectile-draft-first-firing-slice)
-then passes 202 comparisons, with controlled foreign calls. Its owner crosses
+The [firing and flight stages of the full draft](RAM_OWNERSHIP.md#whole-projectile-draft-first-firing-slice)
+then pass 425 comparisons, with controlled foreign calls. Its owner crosses
 those calls by value, rereads returned inputs, and publishes partial state before
-diverging on an invalid table lookup. This validates the selected firing policy
-and transfer interface; flight, contact, animation, retirement and production
-runtime integration remain outstanding. No whole-replacement cost is established.
+diverging on an invalid table lookup. These stages cover beam input/firing, flight,
+linked-extension collision, release and linked production cooldown checks.
+Animation, acceleration, remaining weapons/trails, actual contact reactions and
+production runtime integration remain outstanding. Retained out-of-pool execution
+still uses reference bodies. No whole-replacement cost is established.
 
 ## Shared behavior and coordination
 

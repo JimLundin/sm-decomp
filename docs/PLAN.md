@@ -1604,7 +1604,20 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    trails, real callers and runtime transfers in this same candidate, then count
    every retained adapter/fallback. No movie ran and no savings are claimed.
    The earlier beam-stage details and limits are in RAM_OWNERSHIP.md.
-   User-requested [RAM ownership research](RAM_OWNERSHIP.md) now traces ten
+   The aim-handoff experiment now passes 68 full-RAM expected-state comparisons
+   (14 partial failures), eight linked sequences and four counterexamples. Captured
+   aim is consumed once; origin uses the live pose, and reservation rejection
+   retains pending aim until the phase clear. These are production-body fixtures,
+   not a typed old/new replacement. Synthetic pose definitions and controlled
+   remaining callees limit coverage; 115 frozen library and five local compiled
+   inputs are checked. No movie ran. Local work: 20261022/aim-handoff.
+   The source-only weapon-control audit refines the design: Samus owns shared
+   beam/grapple charge, aim, resources and global contact protection; projectiles
+   own reservations/lifecycles with ordered effects on Samus. Drawing/palette
+   progression, cancellation subsets and the drain-to-X-ray restriction retain
+   distinct observation points. Continue these producer/consumer experiments in
+   the full candidate; persistent writer/alias closure is still open.
+   User-requested [RAM ownership research](RAM_OWNERSHIP.md) now traces eleven
    producer/consumer contracts and separates live values, captured selectors,
    cross-update handoffs and nested continuations. The first implementation moves
    ordinary gameplay scheduling to `gameplay::advance`, migrates all real callers,

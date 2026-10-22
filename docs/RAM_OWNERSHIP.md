@@ -1,6 +1,7 @@
 # Super Metroid state ownership and interaction contracts
 
-Research date: 2026-10-22. Baseline: `f2198988`.
+Research date: 2026-10-22. Initial baseline: `f2198988`; follow-up baselines are
+identified with their findings and experiments.
 This note follows [PLAN.md](PLAN.md#validation-strategy-2026-10-21).
 The findings below come from current Rust source. Proposed owners and interfaces
 are design recommendations, not a completed replacement of the shared RAM model.
@@ -458,6 +459,78 @@ Use a session-mode lease as a design concept: the active mode defines the storag
 interpretation and reset rules. Do not infer that unused slot data can be erased,
 or that deferred spawning has equivalent same-update execution order.
 
+### 11. Samus weapon control crosses projectiles, grapple and encounters
+
+Follow-up source audit at `0f98f559`, checked unchanged through `4c979503` for the
+cited gameplay and RAM metadata. This identifies ownership interactions, not
+complete writer/alias closure. The aim experiment below has separate execution
+coverage; the other findings in this section are source evidence.
+
+**Pending aim is a one-use handoff.** Normal-jump pose handling captures the
+current pose's direction with flag `0x8000`; moonwalk-turn handling captures the
+previous pose's direction with `0x0100`. A nonzero pending value forces beam input
+onto the release branch, even while shoot remains held. Placement consumes the
+pending value, uses its low byte and bypasses normal pose-direction rejection.
+Origin height still comes from the live current pose. Without pending aim,
+direction `0x10` falls back to the last-different pose's direction, again retaining
+the current pose's origin height. Invalid default/fallback directions decrement
+the reservation with wrapping arithmetic.[^aimproducers][^aimplacement][^aiminput]
+
+Consumption, successful placement and phase expiry are different transitions.
+Pending direction `0x17` is accepted, with origin indexing by its low nibble;
+do not reject it just because projectile direction later contains lifecycle flags.
+An invalid origin index can fail after clearing pending aim and storing direction,
+before storing X/Y. Reservation rejection leaves pending aim available;
+`Samus_Func10` later clears it. Captured aim, live origin and launch history thus
+have three different observation contracts.[^aimplacement][^aiminput][^aimclear]
+
+| State | Proposed owner | Observed interaction |
+| --- | --- | --- |
+| Charge/control (`flare_counter`) | Samus weapon control | Beam and grapple use one counter; other consumers include contact attacks, bomb spread, PLM cancellation and encounter transitions. |
+| Flare frames/timers | Samus weapon appearance | Beam and grapple have different advancement rules; drawing currently advances them and can clear hyper's active charge marker. |
+| Shot glow | Samus appearance | Firing starts it; palette handling advances it separately and can skip advancement under special palette routing. |
+| Cooldown | Samus weapon control | Reservation and impact change it; encounter restrictions and X-ray also observe its exact value. |
+| Projectile protection | Samus contact protection | Firing grants a global timer, Samus/projectile contact rejects while nonzero, and the completed gameplay tail decrements it. |
+| Resume-charge sound request | Samus weapon sound continuity | Hurt/pose transitions publish it; draw-tail processing consumes, defers or republishes it. |
+
+Grapple start sets charge to 1 and clears the resume-sound request. Its draw path
+advances flare first, draws Samus/cannon, updates grapple tiles and then increments
+charge toward 120 where applicable. Ordinary beam flare has transitions at
+1/15/16/30; hyper uses `0x8000` as an active marker, cleared when its fast-spark
+frame expires. Charge visuals and glow cannot become one generic per-frame timer.
+The future visual consumer must receive results of these scheduled gameplay
+transitions, even when backend drawing is omitted.[^weaponvisual][^grapplecharge]
+[^weaponglow]
+
+**Cooldown also encodes an encounter restriction.** Shitroid drain writes
+cooldown 8, bomb count 5 and speed divisor 2. Ordinary weapon preparation advances
+cooldown before the selected HUD handler; `Xray_Initialize` rejects the exact tuple
+7/5/2. Mother Brain phases also write cooldown 8/0. A named restriction must
+preserve this predicate and timing, including paths that skip preparation, until
+all producers and consumers migrate. Treating cooldown only as a next-fire time
+would lose this communication.[^weaponphase][^drainrestriction]
+
+Projectile protection (`$18AC`) is independent of ordinary Samus invincibility
+and of each projectile's lifetime. Firing sets it to 10/20 after placement;
+individual release and `ResetProjectileData` do not clear it. Samus initialization's
+`$0A02..$0E0B` workspace clear excludes it too. A suspended gameplay pass does not
+reach its normal countdown until the pass completes.[^beamlaunch][^missilelaunch]
+[^contact][^weapontimers][^resetslots][^samusinit]
+
+An ordinary resume-sound request can play sound and clear; subsequent echo/pose
+logic in the same call can republish 1. A high-bit request instead skips that work
+and becomes 1 for a later call. Message/unpause completion directly restores
+movement sound through a different path. PLM cancel-charge clears only the counter;
+mode/grapple transitions clear selected bundles. Projectile reset retains charge,
+flare, glow, resume sound and protection. A blanket weapon reset or an immediate
+Boolean sound event would change these rules.[^weaponsound][^weaponcancel]
+[^grapplecharge][^resetslots]
+
+The full projectile replacement must migrate these interactions with Samus weapon
+control. Pool ownership does not imply ownership of ammunition, global protection
+or an independent beam charge clock. The source audit's local notes are at
+`Local/sm-decomp-experiments/20261022/player-weapon-control/RESEARCH.md`.
+
 ## Target: coordinated gameplay state machines
 
 The proposed engine has explicit state and transitions for Samus, weapon flight,
@@ -700,6 +773,48 @@ global writer closure, production runtime binding and the complete lifecycle are
 still open. All foreign gameplay calls are controlled. No movie ran, and no whole
 replacement price, savings, or downstream collision/animation coverage is claimed.
 
+The preserved flight stage expands this to **425 comparisons**: the 202 firing
+cases, 213 flight/extension/release cases and ten linked production cooldown
+checks. There are 1,175 ordered full-RAM callback observations and 54 matching
+failures. Live camera/position changes, offscreen edges/wrap, callback redirection,
+odd extension selectors and failure before selector restoration are covered.
+Its 115 frozen library inputs and seven draft inputs are checked. The original
+firing stage is preserved in `beam-stage/`, and this stage in `flight-stage/`.
+Acceleration, contact and trail calls remain controlled; accepted out-of-pool
+accesses explicitly execute retained reference bodies. Animation, remaining weapon
+rules, production callers and runtime authority closure are still unfinished.
+These checks establish no movie coverage or complete replacement price.
+
+### Aim capture, placement and expiry
+
+An isolated experiment against frozen `15589b48` executes the production bodies
+of `InitProjectilePositionDirection`, `SamusFunc_F468_NormalJump`,
+`SamusFunc_F468_TurningAroundOnGround`, `HudSelectionHandler_TurningAround`,
+`Samus_Func10` and beam input/firing. It uses the real compiled `Game` and RAM
+macros with synthetic pose definitions; no game ROM is loaded.
+
+**68 full-RAM fixture comparisons pass**, including **14 expected partial
+failures**. These compare the real placement/cancellation behavior with explicit
+expected state, not an old/new typed replacement. Indices include 0/1, 18/19,
+`0x1bc`, `0xfffe` and `0xffff`, all within the actual RAM allocation. Cases cover
+pending/default/fallback directions, wrapped reservation decrement, low-byte
+consumption, retained current-pose origin and partial writes on origin-table failure.
+
+**Eight linked sequences** additionally inspect selected state and callback
+observations: two placements, pose producer to placement, moonwalk turn, reservation
+rejection then phase clear, and held-shoot beam release. These are not full-RAM
+old/new sequence comparisons. **Four counterexamples** reject a Boolean aim flag,
+premature clearing, ignoring fallback and replacing captured aim with live aim.
+
+Other firing callbacks, shinespark and the launch-history clear callee are
+controlled. The check validates all **115 embedded library inputs** against the
+frozen Git source and **five local compiled inputs** against exact hashes. The
+release experiment compiles and passes; no movie ran. This establishes the selected
+handoff behavior, not complete pose/weapon writer closure or gameplay reachability
+of unusual indices. Reproduction: `Local/sm-decomp-experiments/20261022/aim-handoff`
+(`prepare.py`, `build.py`, `check.py`, `result.json`). No production change or
+saving is claimed.
+
 ### Explicit gameplay continuation
 
 The implementation now lives in [gameplay.rs](../sm/src/game/gameplay.rs).
@@ -851,6 +966,13 @@ its own exercised checks.
 
 ## Next ownership experiments
 
+Continue the same whole-projectile draft through Samus weapon control. The aim
+handoff now has the fixture/sequence coverage above. Next exercise shared
+beam/grapple charge, scheduled flare/glow progression, cancellation subsets,
+drain-to-X-ray observation, protection across suspension/reset and sound-request
+deferral using real producers and consumers. These are new coverage questions,
+not additional pass counts for the existing firing or launch experiments.
+
 1. Codify `ExternalMotion` as ordered reset, replacement and addition operations;
    trace real sand/platform contacts through message suspension and movement.
 2. Move the now-explicit launch state into owned Samus state when its remaining
@@ -925,3 +1047,15 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^roomshotreaction]: [Shootable/bombable reactions and scan overrides](../sm/src/game/sm_94.rs#L1359); [PlmSetup_B974](../sm/src/game/sm_84.rs#L941).
 [^roomshotsetup]: [SpawnPLM and SpawnPLMWithCollision](../sm/src/game/sm_84.rs#L249); [find_plm_at_block](../sm/src/game/sm_84.rs#L766); [sub_84C64C](../sm/src/game/sm_84.rs#L956); [Strange Door and respawning shot block](../sm/src/game/sm_84.rs#L1882).
 [^roomshotcursor]: [Extension reactions](../sm/src/game/sm_94.rs#L800); [ShotAxis::advance and slope reactions](../sm/src/game/sm_94.rs#L1570); [Game::react_to_block](../sm/src/game_state.rs); [gate triggers](../sm/src/game/sm_84.rs#L1370).
+[^aimproducers]: [SamusFunc_F468_NormalJump](../sm/src/game/sm_91.rs#L2587); [SamusFunc_F468_TurningAroundOnGround](../sm/src/game/sm_91.rs#L2802).
+[^aimplacement]: [InitProjectilePositionDirection](../sm/src/game/sm_90.rs#L2226).
+[^aiminput]: [beam_firing::update_input and reservation](../sm/src/game/beam_firing.rs#L8); [HudSelectionHandler_TurningAround](../sm/src/game/sm_90.rs#L3490).
+[^aimclear]: [Samus_Func10](../sm/src/game/sm_90.rs#L4559).
+[^weaponvisual]: [HandleChargingBeamGfxAudio](../sm/src/game/sm_90.rs#L2279); [DrawSamusAndProjectiles and draw handlers](../sm/src/game/sm_90.rs#L4565).
+[^grapplecharge]: [UpdateGrappleBeamTilesAndIncrFlameCtr and HandleGrappleBeamFlare](../sm/src/game/sm_9b.rs#L519); [grapple release](../sm/src/game/sm_9b.rs#L687); [grapple start](../sm/src/game/sm_9b.rs#L971).
+[^weaponglow]: [Samus_HandlePalette and HandleBeamChargePalettes](../sm/src/game/sm_91.rs#L678).
+[^weaponphase]: [Samus_HandleCooldown](../sm/src/game/sm_90.rs#L1402); [Samus_HandleHudSpecificBehaviorAndProjs](../sm/src/game/sm_90.rs#L3457).
+[^drainrestriction]: [Shitroid_Func_16](../sm/src/game/sm_a9.rs#L4526); [Xray_Initialize](../sm/src/game/sm_91.rs#L1337); [Mother Brain rainbow phases](../sm/src/game/sm_a9.rs#L720).
+[^weapontimers]: [DecrementSamusTimers](../sm/src/game/sm_a0.rs#L888); [gameplay completion](../sm/src/game/gameplay.rs).
+[^weaponsound]: [Samus_ShootCheck](../sm/src/game/sm_90.rs#L5133); [hurt-flash producer](../sm/src/game/sm_91.rs#L795); [QueueSamusMovementSfx](../sm/src/game/sm_82.rs#L3301); [message completion](../sm/src/game/message_boxes.rs#L468); [unpause completion](../sm/src/game/sm_82.rs#L1483).
+[^weaponcancel]: [PLM charge cancellation](../sm/src/game/sm_84.rs#L3100); [HUD switching](../sm/src/game/sm_90.rs#L2747); [mode transitions](../sm/src/game/sm_90.rs#L4985).
