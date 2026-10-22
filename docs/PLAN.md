@@ -1703,6 +1703,11 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    **71 lines (1,194 -> 1,265)**, with 70 authored native-example lines separate.
    No new unsafe elimination, production savings or movie coverage is claimed.
    Impact/bomb-explosion transitions and drawing still use encoded definitions.
+   The coordinator independently checked initialization-stage's 115+53 compiled
+   inputs, actual initializer/provider order, captured live definition views and
+   five native-sequence limits. Forty-six prior files are unchanged. The +71
+   formatted model/provider cost was independently recounted; the suite was not
+   rerun. See [named initialization](RAM_OWNERSHIP.md#named-weapon-initialization).
    Bomb firing, spread allocation/movement and ordinary/Power Bomb fuse updates
    now share this owner, initialization and release. **878 selected full-RAM
    comparisons**, 829 ordered observations and 136 matching failures pass:
@@ -1758,6 +1763,21 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    rerun; no ROM/movie, adoption or full price. The definition-consumer source trace
    records initializer damage/radius order and distinct trail identities/schedules;
    it adds no execution coverage. Details: [trail findings](RAM_OWNERSHIP.md#named-trail-sampling).
+   Standalone trail emission/placement now passes **466 actual old/new full-RAM
+   comparisons**, 461 ordered observations and 108 matching failures: 250
+   allocation, 54 placement, 160 callback and two checked script-read cases.
+   Generic typed pairs preserve left-only allocation, distinct style/source
+   identities, live type/direction after projection and ordered signed positions.
+   The complete pool crosses callbacks and script lookups by value; failed reads
+   retain both committed timers and, on the second read, the installed left script.
+   One native sequence runs without RAM/ROM decoding. Formatted optimized build
+   and all 115+10 compiled inputs pass; four actual reference bodies and three
+   current gameplay files match. New model/provider sources total 271 lines plus
+   87 native-example lines, not a complete replacement price. Projection and
+   diagnostics are controlled; canonical destination pairs only. Full-Firing
+   integration, side playback/drawing, reset and production migration remain open.
+   No ROM/movie, adoption or savings. Preserved work: 20261022/owned-trail-emission;
+   details: [emission contract](RAM_OWNERSHIP.md#owned-trail-emission-and-placement).
    The aim-handoff experiment now passes 68 full-RAM expected-state comparisons
    (14 partial failures), eight linked sequences and four counterexamples. Captured
    aim is consumed once; origin uses the live pose, and reservation rejection

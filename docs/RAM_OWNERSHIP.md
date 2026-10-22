@@ -896,9 +896,10 @@ Three native-definition sequences pass, including one using the **same
 `Firing<Label, Sprite>` data structure**. It retains other-shot damage, shared
 charge, deferred sound state and protection while sampling and advancing named
 frames with no byte image or RAM/ROM decoding. Its terminal result is `Release`;
-the native sequence does not execute the full release operation. Firing, flight,
-initialization, reset and drawing remain bound to the encoded variant. The generic
-data structure does not establish a completely native weapon lifecycle.
+the native sequence does not execute the full release operation. At this stage,
+firing, flight, initialization, reset and drawing remain bound to the encoded
+variant. Initialization is extended below; the generic data structure alone does
+not establish a completely native weapon lifecycle.
 
 The coordinator checked **115 embedded library inputs** against `15589b48` and
 **50 compiled draft inputs/hashes**, inspected the changed field bundle, codec,
@@ -916,6 +917,44 @@ Retained reference paths and runtime transport are not priced by that comparison
 it is an architecture cost, not a complete saving. Initialization, remaining
 definition consumers and global writer/alias/runtime closure stay open.
 Preserved source: `Local/sm-decomp-experiments/20261022/player-projectiles/definition-stage`.
+
+### Named weapon initialization
+
+The reviewed **initialization-stage** adds `Firing::initialize_from` with named
+weapon definitions. It shares the actual owner used by playback and trail
+sampling. The generic algorithm has no RAM, `Game`, encoded address or opcode;
+the provider maps a weapon to a captured launch definition and an entry frame.
+The five initialization policies preserve the existing ordering:[^projectiledefinitions]
+
+| Policy | Damage and entry behavior |
+| --- | --- |
+| Ordinary projectile | Capture direction; diagnose invalid damage before writing it, then reread the retained definition. Write the entry before resolving radii; set duration last. |
+| Fixed super missile, bomb or special attack | Write damage before its diagnostic, then select the fixed entry. Preserve existing radii. |
+| Echo | Write damage before its diagnostic, then use captured direction to select the entry. Preserve existing radii. |
+
+Definitions receive and return the complete owner. A damage diagnostic can mutate
+another shot, charge, feedback or protection, or reset the owner. The retained
+launch view observes edits to its original allocation; a later radius lookup
+opens the then-current allocation. Replacing the ROM does not redirect the
+already captured launch view. Eagerly copying all fields would lose this rule.
+
+**786 selected full-RAM comparisons pass**, with **491 ordered observations** and
+**178 matching failures**: 159 diagnostic/owner cases, 293 initialization and
+firing/extension cases, and 334 missile/shared-reservation cases. Five additional
+native-definition sequences initialize the **same `Firing<Label, Sprite>`**, then
+sample trails and play animation to a `Release` result without RAM/ROM decoding.
+They retain surrounding weapon state; they do not perform full native release,
+firing selection, movement or rendering. These are synthetic definitions.
+
+The coordinator reviewed the result, actual initializer bodies, provider and
+native sequences without rerunning the suite. All **115 embedded library inputs**
+match `15589b48`; **53 compiled draft inputs** match local source/hashes, with
+46 prior files unchanged. Optimized compilation and formatting passed. The
+formatted model/provider cohort was independently recounted at **1,194 -> 1,265
+lines (+71)**; the native example/assertions add 70 separate lines. This is not a
+whole-replacement price or production saving. Diagnostics remain controlled,
+broad-index fallbacks remain, and no movie or production integration is claimed.
+Preserved source: `Local/sm-decomp-experiments/20261022/player-projectiles/initialization-stage`.
 
 ### Named projectile animation definitions
 
@@ -1006,10 +1045,64 @@ suite was not rerun. Reproduction:
 (`trail.rs`, `compatibility.rs`, `native_trail.rs`, `harness.rs`, `prepare.py`,
 `build.py`, `check.py`, `result.json`).
 
+### Owned trail emission and placement
+
+The standalone `owned-trail-emission` experiment gives 18 trail pairs typed left
+and right state: duration, script cursor, tile and position. Generic `emit` and
+`place` use a definition/context provider; neither contains `Game`, RAM/ROM
+addresses, opcodes or unsafe code. Reservation searches pairs from last to first
+using **only the left duration**. A live right side does not prevent reuse, and
+its old tile remains until playback changes it.[^trail]
+
+Emission chooses the style from the argument projectile, commits both durations
+to one, then installs the left and right scripts in order. It next captures the
+live selected projectile for placement. Placement captures its trail marker,
+samples origin or performs Mode 7 projection, and then reads that captured
+projectile's live type/direction for offsets. It writes left Y, left X, right Y,
+right X with signed wrapping offsets and the existing minus-four adjustment.
+
+The entire trail owner moves through script lookup, sampling, projection and
+offset-definition diagnostics. In particular, **a failed first script read keeps
+both durations; a failed second read also keeps the installed left script**.
+Allocation is an ordered transition with partial results, not an atomic operation.
+Callbacks can change the pool or recursively emit another trail; the resumed
+operation uses the returned owner. Offset views retain their allocation while
+later diagnostics can select a replacement for the next lookup.
+
+**466 actual old/new full-RAM/completion comparisons pass**: 250 allocation cases,
+54 placement cases, 160 callback cases and two checked script-read failures.
+There are **461 matching ordered observations** and **108 matching failures**.
+The reference executes the extracted production `SpawnProjectileTrail`,
+`ProjectileTrail_Func5`, `trail_frame` and `get_ProjectileInstr`; all four bodies
+and their three current source files match the frozen reference. Cases cover
+distinct argument/selected projectiles, odd/broad source selectors, full/free
+pools, all three offset families, live camera/type/definition changes, nested
+emission and failure after partial mutation.
+
+One additional persistent native sequence uses named scripts and ordinary signed
+offset definitions without a byte image. It checks reuse with an active right
+side, retained tile, coordinate wrapping, subsequent allocation and full rejection.
+The formatted optimized build and source-checked run pass: **115 library inputs**
+match `15589b48`, and **10 experiment inputs** match compiled bytes/hashes. Five
+sampling/support inputs are unchanged from the earlier trail experiment.
+
+Mode 7 projection and diagnostics are controlled. The destination is limited to
+canonical pairs; broad destination indices, side playback/drawing, reset and
+complete-Firing transport are not established here. The standalone owner is the
+whole trail pool. Integration must move the complete projectile owner through
+these effects, rather than retaining a detached pool while callbacks change it.
+The new formatted model/provider cost is **271 lines** (91 model, 180 adapter),
+plus 87 native-example lines; reused support, harnesses and production retirement
+are outside that partial count. No complete price, adoption, ROM or movie result
+is claimed. Reproduction: `Local/sm-decomp-experiments/20261022/owned-trail-emission`
+(`emission.rs`, `environment.rs`, `native.rs`, `harness.rs`, `prepare.py`, `build.py`,
+`check.py`, `result.json`).
+
 ### Definition consumers still to migrate
 
-This is a current-source trace, not new execution coverage. It identifies the
-contracts that a named attack/animation definition must support:
+This source trace identifies the contracts a named attack/animation definition
+must support. The initialization and emission experiments above now exercise
+their stated subsets; this table adds no execution coverage:
 
 | Consumer | Required behavior |
 | --- | --- |
@@ -1029,8 +1122,9 @@ Trail emission runs during projectile flight before the later animation advance.
 Its separate side scripts have different zero-timer and command rules from
 projectile playback. Sharing named definition access is supported; one generic
 script executor has not been established. Trail script choice, position sampling,
-pair reservation and side playback therefore remain distinct operations to close
-with actual consumers.[^flight][^trailpipeline]
+pair reservation and side playback therefore remain distinct operations. The
+remaining closure includes side playback/drawing, complete-owner emission and
+actual producer/consumer integration.[^flight][^trailpipeline]
 
 ### Aim capture, placement and expiry
 
@@ -1492,8 +1586,9 @@ movement and environment effects still transfer through the legacy adapter.
 Exercise remaining cancellation producers. Integrate Samus protection with its grant, contact and
 completed-pass consumers, preserving broad alias transfers and reset distinctions.
 Close remaining shared palette/sound writers and runtime transfers.
-Integrate the named-animation definition seam by transporting the complete owner
-through diagnostics, then close initializer, trail and attack-definition consumers.
+Complete-owner playback, trail sampling and initialization are reviewed in the
+draft. Integrate the standalone emission model into that owner, then close trail
+side playback/drawing and remaining attack-definition consumers.
 These are new coverage questions,
 not additional pass counts for the existing firing or launch experiments.
 

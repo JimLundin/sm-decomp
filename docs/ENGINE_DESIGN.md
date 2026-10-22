@@ -446,9 +446,9 @@ animation, reset and missile consumers. Broad-index paths still use reference bo
 
 Three synthetic native-definition sequences also pass. One uses the same
 `Firing<Label, Sprite>` data structure for playback and trail sampling without RAM
-or ROM decoding, retaining the surrounding weapon state. This proves those two
-generic operations: firing, initialization, release and drawing still use the
-encoded implementation. Native game content, remaining attack interfaces,
+or ROM decoding, retaining the surrounding weapon state. That stage proves those
+two generic operations; initialization is extended below. Native firing, release,
+drawing, game content, remaining attack interfaces,
 production ownership and complete malformed-data coverage remain open.
 
 The changed model/provider cohort grows from **989 to 1,194 formatted lines
@@ -463,14 +463,31 @@ on the last tick, before playback changes the visible sprite. The shared model
 therefore asks definitions for an `Upcoming` or `Active` trail marker. Its native
 sequence demonstrates that distinction without RAM/ROM decoding; the compatibility
 provider preserves the original cursor-relative lookup and repeated diagnostics.
-This does not yet own trail allocation, position, side animations or drawing.
+Trail allocation and position are extended below; side playback/drawing remain open.
 
-Attack initialization also needs an explicit policy: ordinary projectile setup,
-fixed-entry setup and echo setup differ in when they publish damage and whether
-they initialize collision radii. A named definition must not imply that all fields
-are applied atomically.
+The reviewed [weapon-initialization experiment](RAM_OWNERSHIP.md#named-weapon-initialization)
+now implements initialization policies on the same generic `Firing`: ordinary setup writes
+damage after its diagnostic and initializes radii; fixed-entry and echo setup
+write damage earlier and preserve radii. A captured launch definition stays live
+across callbacks, while later frame lookup can use replacement definitions.
+All **786 selected comparisons** pass. Five native sequences initialize from named
+weapons, sample trails and play animation without RAM decoding. Firing selection,
+movement, actual release and rendering still use compatibility interfaces. The
+reviewed model/provider cohort grows another **71 lines**; no complete saving is
+established.
+
+The [trail-emission experiment](RAM_OWNERSHIP.md#owned-trail-emission-and-placement)
+passes **466 comparisons** using typed trail pairs, named scripts and signed offset
+definitions. Its allocator deliberately tests only the left side for availability.
+It chooses style from one projectile, then captures the live selected projectile
+for placement. Both timers commit before script lookup, and the left script commits
+before the right lookup: failure can leave an allocated, partially configured pair.
+The model preserves that sequence through explicit owner transfers. One native
+sequence needs no RAM/ROM decoding. Complete-Firing integration, side playback and
+drawing remain open; this standalone pool is not a production state promotion.
+
 The [definition-consumer trace](RAM_OWNERSHIP.md#definition-consumers-still-to-migrate)
-records these remaining boundaries and distinguishes source findings from tests.
+records the remaining contracts and distinguishes source findings from tests.
 
 ## Shared behavior and coordination
 
