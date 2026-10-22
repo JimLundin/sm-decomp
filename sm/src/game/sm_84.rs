@@ -1,3 +1,4 @@
+use crate::game::plm_spawning::spawn_hardcoded_plm;
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_84::*;
 pub use crate::game::constants::bank_86::*;
@@ -21,17 +22,6 @@ use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_90::{CallSomeSamusCode, UpdateBeamTilesAndPalette};
 use crate::game::sm_91::{GravitySuitPickup, MakeSamusFaceForward, VariaSuitPickup};
 
-crate::typed_struct! {
-    [
-        #[derive(Copy, Clone)]
-        #[repr(C, packed)]
-    ];
-    pub struct PlmHeader_Size4 {
-        pub func_ptr, instr_list_ptr: VoidP;
-    }
-
-}
-
 pub const NULL: *mut c_void = null_mut::<c_void>();
 crate::game::constants::typed_constants! { i32;
     true_0 = 1, false_0 = 0,
@@ -53,18 +43,6 @@ unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
 }
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
-}
-#[inline]
-unsafe fn get_RoomDefRoomstate(a: u16, game: &mut Game) -> *mut RoomDefRoomstate {
-    RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefRoomstate
-}
-#[inline]
-unsafe fn get_RoomPlmEntry(a: u16, game: &mut Game) -> *mut RoomPlmEntry {
-    RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomPlmEntry
-}
-#[inline]
-unsafe fn get_PlmHeader_Size4(a: u16, game: &mut Game) -> *mut PlmHeader_Size4 {
-    RomPtr((0x840000u32) | ((a) as u32), game) as *mut PlmHeader_Size4
 }
 pub unsafe fn SetGoldenTorizoPalette(mut a: u16, game: &mut Game) {
     let mut v1: i16 = ((byte!(a; 1)) as i16) & (0x78i16);
@@ -149,148 +127,6 @@ pub fn ClearPLMs(game: &mut Game) {
         game.g_ram[header_addr..header_addr + 2].copy_from_slice(&0u16.to_le_bytes());
     }
     game.g_ram[0x1c2d..0x1c2f].copy_from_slice(&0u16.to_le_bytes()); // plm_item_gfx_index
-}
-pub unsafe fn SpawnHardcodedPlm(p: SpawnHardcodedPlmArgs, game: &mut Game) {
-    spawn_hardcoded_plm(p, core::ptr::null_mut(), game);
-}
-// Nested setup spawns retain the calling collision's displacement.
-unsafe fn spawn_hardcoded_plm(
-    mut p: SpawnHardcodedPlmArgs,
-    displacement: *mut i32,
-    game: &mut Game,
-) {
-    let pp = &raw mut p;
-    let mut v1: u16 = 78;
-    while word!(game.plm_header_ptr[(v1 >> 1)]) != 0 {
-        v1 = (v1).wrapping_sub(2);
-        if (v1 & 0x8000) != 0 {
-            return;
-        }
-    }
-    let prod: u16 = Mult8x8((*pp).block_y, word!(game.room_width_in_blocks) as u8);
-    let index = usize::from(v1 >> 1) * 2;
-    let write_word = |game: &mut Game, offset: usize, value: u16| {
-        game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
-    };
-    let block_index = (2 * (u32::from(prod) + u32::from((*pp).block_x))) as u16;
-    write_word(game, 0x1c87 + index, block_index); // plm_block_indices
-    let v3 = (*pp).header;
-    write_word(game, 0x1c37 + index, v3); // plm_header_ptr
-    write_word(game, 0x1dc7 + index, 0); // plm_room_arguments
-    write_word(game, 0xdf0c + index, 0); // plm_variables
-    write_word(game, 0x1cd7 + index, 0x8469); // plm_pre_instrs
-    let PH = get_PlmHeader_Size4(v3, game);
-    let instruction = (*PH).instr_list_ptr;
-    write_word(game, 0x1d27 + index, instruction); // plm_instr_list_ptrs
-    write_word(game, 0xde1c + index, 1); // plm_instruction_timer
-    write_word(game, 0xde6c + index, addr_kDefaultPlmDrawInstruction as u16);
-    write_word(game, 0x1d77 + index, 0); // plm_timers
-    write_word(game, 0x1c27, v1); // plm_id
-    CallPlmHeaderFunc(
-        (((*PH).func_ptr) as u32) | (0x840000u32),
-        v1,
-        displacement,
-        addr_kDefaultPlmDrawInstruction as u16,
-        game,
-    );
-}
-pub unsafe fn SpawnRoomPLM(k: u16, game: &mut Game) {
-    let v1 = match (0..40).rev().find(|&slot| {
-        let header_addr = 0x1c37 + slot * 2; // plm_header_ptr
-        u16::from_le_bytes([game.g_ram[header_addr], game.g_ram[header_addr + 1]]) == 0
-    }) {
-        Some(slot) => (slot * 2) as u16,
-        None => return,
-    };
-    let entry = if k == 0x12 {
-        game.g_ram.as_ptr().add(0x12)
-    } else {
-        get_RoomPlmEntry(k, game).cast::<u8>()
-    };
-    let read_entry_word =
-        |offset: usize| u16::from_le_bytes([*entry.add(offset), *entry.add(offset + 1)]);
-    let y_block = u16::from(*entry.add(3));
-    let room_width = u16::from_le_bytes([game.g_ram[0x7a5], game.g_ram[0x7a6]]) as u8;
-    let row_start = y_block * u16::from(room_width);
-    let x_block = u16::from(*entry.add(2));
-    let index = usize::from(v1 >> 1) * 2;
-    let write_word = |game: &mut Game, offset: usize, value: u16| {
-        game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
-    };
-    let block_index = row_start.wrapping_add(x_block).wrapping_mul(2);
-    write_word(game, 0x1c87 + index, block_index); // plm_block_indices
-    let argument = read_entry_word(4);
-    write_word(game, 0x1dc7 + index, argument); // plm_room_arguments
-    let pp = read_entry_word(0);
-    let header = read_entry_word(0);
-    write_word(game, 0x1c37 + index, header); // plm_header_ptr
-    write_word(game, 0xdf0c + index, 0); // plm_variables
-    write_word(game, 0x1cd7 + index, 0x84e6); // plm_pre_instrs
-    let header_bytes = get_PlmHeader_Size4(pp, game).cast::<u8>();
-    let read_header_word = |offset: usize| {
-        u16::from_le_bytes([*header_bytes.add(offset), *header_bytes.add(offset + 1)])
-    };
-    let instruction = read_header_word(2);
-    write_word(game, 0x1d27 + index, instruction); // plm_instr_list_ptrs
-    write_word(game, 0xde1c + index, 1); // plm_instruction_timer
-    write_word(game, 0xde6c + index, addr_kDefaultPlmDrawInstruction as u16);
-    write_word(game, 0x1d77 + index, 0); // plm_timers
-    write_word(game, 0x1c27, v1); // plm_id
-    CallPlmHeaderFunc(
-        0x840000 | u32::from(read_header_word(0)),
-        v1,
-        core::ptr::null_mut(),
-        addr_kDefaultPlmDrawInstruction as u16,
-        game,
-    );
-}
-/// Prepare a PLM slot at the current collision block and invoke its setup.
-///
-/// # Safety
-/// The selected setup callback requires the legacy game runtime to be initialized.
-pub unsafe fn SpawnPLM(header: u16, game: &mut Game) -> u8 {
-    SpawnPLMWithCollision(header, core::ptr::null_mut(), game)
-}
-/// Prepare a PLM while retaining the caller's active collision displacement.
-///
-/// # Safety
-/// Setup requires initialized runtime state. A non-null `displacement` must
-/// remain live and writable through setup and any nested PLM spawns.
-pub unsafe fn SpawnPLMWithCollision(header: u16, displacement: *mut i32, game: &mut Game) -> u8 {
-    let read_word = |game: &Game, offset: usize| {
-        u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
-    };
-    let write_word = |game: &mut Game, offset: usize, value: u16| {
-        game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
-    };
-    // Allocate from the last slot down, retaining the original full-table result.
-    let Some(slot) = (0..40)
-        .rev()
-        .find(|&slot| read_word(game, 0x1c37 + slot * 2) == 0)
-    else {
-        return 0;
-    };
-    let index = slot * 2;
-    write_word(game, 0x1c87 + index, game.cur_block_index().wrapping_mul(2));
-    write_word(game, 0x1c37 + index, header);
-    write_word(game, 0x1cd7 + index, 0x853d);
-    let instruction = game.read_rom_word(0x840000 | u32::from(header), 2);
-    write_word(game, 0x1d27 + index, instruction);
-    write_word(game, 0xde1c + index, 1);
-    write_word(game, 0xde6c + index, addr_kDefaultPlmDrawInstruction as u16);
-    write_word(game, 0x1d77 + index, 0);
-    write_word(game, 0x1dc7 + index, 0);
-    write_word(game, 0xdf0c + index, 0);
-    write_word(game, 0x1c27, index as u16);
-    // Read setup after preparing the slot, at the original callback boundary.
-    let setup = game.read_rom_word(0x840000 | u32::from(header), 0);
-    CallPlmHeaderFunc(
-        0x840000 | u32::from(setup),
-        index as u16,
-        displacement,
-        0,
-        game,
-    )
 }
 unsafe fn collect_item(plmp: *const u8, kind: PickupKind, game: &mut Game) -> *const u8 {
     let amount = match kind {

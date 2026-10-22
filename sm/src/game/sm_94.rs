@@ -4,7 +4,7 @@ pub use crate::game::prelude::*;
 
 use crate::game::progress_flags::CheckBossBitForCurArea;
 
-use crate::game::sm_84::{SpawnPLM, SpawnPLMWithCollision};
+use crate::game::plm_spawning::{SpawnPLM, SpawnPLMWithCollision};
 use crate::game::sm_90::KillProjectile;
 use crate::game::sm_a0::CalculateAngleFromXY;
 

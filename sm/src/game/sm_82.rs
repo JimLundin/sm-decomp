@@ -31,9 +31,10 @@ use crate::game::sm_80::{
 use crate::game::sm_81::{
     DrawMenuSpritemap, DrawSpritemap, FileSelectMap, FileSelectMenu, GameOverMenu, SaveToSram,
 };
+use crate::game::plm_spawning::SpawnRoomPLM;
 use crate::game::sm_84::{
     ClearPLMs, ClearSoundsWhenGoingThroughDoor, EnablePLMs, PlaySpinJumpSoundIfSpinJumping,
-    PlmHandler_Async, SpawnRoomPLM,
+    PlmHandler_Async,
 };
 use crate::game::sm_86::{ClearEprojs, EnableEprojs, EprojRunAll};
 use crate::game::sm_87::{AnimtilesHandler, ClearAnimtiles, DisableAnimtiles, EnableAnimtiles};

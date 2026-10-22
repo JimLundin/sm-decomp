@@ -357,6 +357,7 @@ pub mod game {
     pub mod sm_80;
     pub mod sm_81;
     pub mod sm_82;
+    pub mod plm_spawning;
     pub mod sm_84;
     pub mod item_pickups;
     pub mod item_pickups_ram;

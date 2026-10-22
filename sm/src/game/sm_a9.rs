@@ -15,7 +15,7 @@ use crate::game::sm_80::{
     NextRandom, QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6,
     QueueSfx3_Max3, QueueSfx3_Max6,
 };
-use crate::game::sm_84::SpawnHardcodedPlm;
+use crate::game::plm_spawning::SpawnHardcodedPlm;
 use crate::game::sm_86::{
     Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
 };

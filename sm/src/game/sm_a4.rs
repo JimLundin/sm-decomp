@@ -5,7 +5,7 @@ pub use crate::game::constants::bank_a4::*;
 
 use crate::game::minimap;
 use crate::game::sm_80::{QueueMusic_Delayed8, QueueSfx2_Max6, QueueSfx3_Max6};
-use crate::game::sm_84::SpawnHardcodedPlm;
+use crate::game::plm_spawning::SpawnHardcodedPlm;
 use crate::game::sm_86::{ClearEprojs, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::SpawnHdmaObject;
 use crate::game::sm_a0::{

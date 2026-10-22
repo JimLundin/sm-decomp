@@ -11,7 +11,8 @@ use crate::game::sm_82::{
     LoadDestinationRoomThings, LoadLevelDataAndOtherThings, LoadRoomMusic, NullFunc,
     ResetSoundQueues, UpdateMusicTrackIndex,
 };
-use crate::game::sm_84::{ClearPLMs, LoadRoomPlmGfx, SpawnHardcodedPlm};
+use crate::game::plm_spawning::SpawnHardcodedPlm;
+use crate::game::sm_84::{ClearPLMs, LoadRoomPlmGfx};
 use crate::game::sm_86::ClearEprojs;
 use crate::game::sm_87::ClearAnimtiles;
 use crate::game::sm_88::{InitializeSpecialEffectsForNewRoom, WaitUntilEndOfVblankAndClearHdma};

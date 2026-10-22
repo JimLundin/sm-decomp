@@ -2,7 +2,7 @@
 use crate::game::constants::bank_86::*;
 use crate::game::prelude::*;
 use crate::game::sm_80::QueueSfx2_Max6;
-use crate::game::sm_84::SpawnHardcodedPlm;
+use crate::game::plm_spawning::SpawnHardcodedPlm;
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_a9::WriteColorsToPalette;
 const RomPtr_AD: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xad>;

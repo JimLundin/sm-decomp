@@ -7,7 +7,7 @@ use crate::game::scrolling_sky::{
     initialize_land, initialize_ocean, queue_land_rows, queue_ocean_rows,
 };
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
-use crate::game::sm_84::SpawnHardcodedPlm;
+use crate::game::plm_spawning::SpawnHardcodedPlm;
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_87::SpawnAnimtiles;
 use crate::game::sm_88::FxTypeFunc_2C_Haze;

@@ -15,7 +15,7 @@ use crate::game::sm_80::{
 use crate::game::sm_81::{
     DrawSpritemapWithBaseTile, DrawSpritemapWithBaseTile2, DrawSpritemapWithBaseTileOffscreen,
 };
-use crate::game::sm_84::SpawnPLM;
+use crate::game::plm_spawning::SpawnPLM;
 use crate::game::sm_86::{DrawEprojsWithPriority, EprojPriority, SpawnEprojWithGfx};
 use crate::game::sm_90::{CallSomeSamusCode, DrawSamusAndProjectiles};
 use crate::game::sm_91::Samus_DealDamage;

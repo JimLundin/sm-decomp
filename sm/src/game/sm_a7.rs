@@ -10,7 +10,7 @@ use crate::game::sm_80::{
     QueueSfx2_Max6, QueueSfx3_Max6, ScreenOff, ScreenOn, WaitForNMI_Async,
 };
 use crate::game::sm_82::AdvancePaletteFade_BgPalette6;
-use crate::game::sm_84::SpawnHardcodedPlm;
+use crate::game::plm_spawning::SpawnHardcodedPlm;
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::{sub_88E487, SpawnHdmaObject};
 use crate::game::sm_a0::{
