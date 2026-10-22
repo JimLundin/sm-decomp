@@ -39,3 +39,23 @@ impl RomImage {
         self.0.as_ptr().cast::<u8>().cast_mut()
     }
 }
+
+/// A captured cartridge allocation with linear, native-endian record reads.
+pub(crate) struct RomRecord {
+    pub(crate) image: RomImage,
+    pub(crate) base: usize,
+}
+
+impl RomRecord {
+    pub(crate) fn byte(&self, offset: usize) -> u8 {
+        self.image.read(
+            self.base
+                .checked_add(offset)
+                .expect("ROM record offset overflow"),
+        )
+    }
+
+    pub(crate) fn word(&self, offset: usize) -> u16 {
+        u16::from_ne_bytes([self.byte(offset), self.byte(offset + 1)])
+    }
+}

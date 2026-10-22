@@ -51,38 +51,8 @@ mod palette_ram {
     }
 }
 
-// Each acquisition observes the current cartridge, with linear reads in that image.
-struct PaletteScript {
-    image: crate::rom::RomImage,
-    base: usize,
-}
-
-#[forbid(unsafe_code)]
-impl PaletteScript {
-    fn byte(&self, offset: usize) -> u8 {
-        self.image.read(self.base + offset)
-    }
-
-    fn word(&self, offset: usize) -> u16 {
-        u16::from_ne_bytes([self.byte(offset), self.byte(offset + 1)])
-    }
-}
-
-unsafe fn palette_script(address: u16, game: &mut Game) -> PaletteScript {
-    let address = 0x8d0000 | u32::from(address);
-    if address & 0x8000 == 0 {
-        printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), address);
-        game.g_fail = true;
-    }
-    PaletteScript {
-        image: game
-            .loaded_rom
-            .as_ref()
-            .expect("ROM must be loaded")
-            .clone(),
-        base: crate::rtl::lorom_offset(address) as usize,
-    }
-}
+const palette_script: unsafe fn(u16, &mut Game) -> crate::rom::RomRecord =
+    crate::rtl::rom_bank_record::<0x8d>;
 
 #[forbid(unsafe_code)]
 pub fn EnablePaletteFx(game: &mut Game) {
