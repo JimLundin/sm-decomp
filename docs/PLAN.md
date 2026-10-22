@@ -1624,19 +1624,31 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the live hyper-beam reread after the target-palette callback. Recursive reset,
    callback mutation/failure, reset/release order and single-owner firing/reset/firing
    and palette/reset/palette sequences are covered. The reset model and adapter
-   forbid unsafe code. All 115 frozen and 34 current draft inputs match compiled
+   forbid unsafe code. All 115 frozen and 34 reset-stage draft inputs match compiled
    bytes; optimized DLL and formatting pass. Exact source/result is preserved in
    reset-stage. These are 89 additional selected checks, not a rerun or a new total
    for the prior 3,427-case stage. Earlier Rust inputs are unchanged except three
    reset effect declarations and harness wiring. Door/elevator callers, actual
    palette output and production runtime transfer remain unexercised here.
+   Drain/X-ray integration in this same owner passes **686 selected full-RAM
+   comparisons**, 1,921 ordered observations and 11 matching failures. Refresh
+   and release use its existing cooldown and bomb reservations; Samus supplies
+   live movement drag at the X-ray query. No second restriction state is stored.
+   Actual drain damage, weapon preparation, HUD selection and beam-input consumers
+   execute, including eight added switching/charged-release compositions and one
+   uninterrupted owner/query sequence. The actor and X-ray coordinator bodies
+   remain retained; HUD routing, projectile processing, HDMA and remaining native
+   effects are controlled. All 115 frozen and 41 draft inputs match compiled
+   bytes; optimized DLL and format checks pass. Preserved encounter-stage records
+   these selected checks separately from cancellation-stage and reset-stage;
+   neither earlier suite was rerun. No movie or production adoption is claimed.
    This remains an **unadopted, incomplete draft**, not a production promotion or
    a complete price. Collision, native diagnostics, drawing/trail, palette/sound
    output and grapple-start consumers remain controlled. ROM definitions are
    synthetic; no gameplay route or hardware
    coverage is established. Other accepted out-of-pool operations retain reference
    bodies, including drawing continuations; handoff tests do not retire those bodies.
-   Continue with remaining weapon modes, trails, encounter restrictions,
+   Continue with remaining weapon modes, trails, protection/suspension,
    real producers/callers and runtime transfers. Count every adapter/fallback and
    close the remaining numeric-definition/motion interfaces. The frozen library
    predates current main; final integration requires current-source builds.
