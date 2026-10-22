@@ -60,10 +60,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **96,435 Rust lines in 128 files**, plus 262 C
-bridge and 296 C-header lines = **96,993 maintained implementation lines**.
+Current composition (2026-10-22): **96,462 Rust lines in 128 files**, plus 266 C
+bridge and 296 C-header lines = **97,024 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,824**. This complete recount includes frontend,
+gives **97,855**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -71,8 +71,12 @@ lines**, plus **919 configuration/utility C/header lines** sharing the music
 dependency's types header, **882 desktop C lines** sharing those headers, and
 **659 shader C / 99 shader header lines** sharing the same types header,
 disclosed separately like GL/SDL.
-The preceding 96,406 total overcounted unchanged C by four lines: its corrected
-baseline is 96,402 (198 C lines). This accounting correction is not new deletion.
+Accounting correction: the earlier 96,406 -> 96,402 adjustment excluded the
+four-line `sm/native/stb_image.c` compilation unit. It is maintained glue and is
+included in the complete total above. The prior 96,993 implementation / 97,824
+installer-inclusive totals become 96,997 / 97,828 on this same basis. The current
+drawing-reader change adds 27 Rust lines; these four existing C lines are not new
+implementation or a deletion.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
 The complete GLSL dependency replacement removes **282 maintained lines**, with
@@ -2334,6 +2338,39 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    remaining script, compatibility and session bindings in this full candidate,
    then price all retired code, adapters and registrations. Substantial structural
    savings, complete safety and runtime adoption remain open.
+   The same full candidate now binds mechanism execution and awards to the actual
+   runtime at **b45cd3dd**, including its checked PLM instruction cursors. Explicit
+   dependencies replace fixture references in the pass and award providers;
+   the outer session passes those dependencies into the existing owned child.
+   Script reads retain ownership, and external preinstructions, commands, drawing,
+   visual/music effects and display publish/reimport the complete affected owner.
+   The 13 control commands, two wake consumers and nine award rules remain owned.
+   Award operands preserve native versus little-endian decoding explicitly.
+   **896 actual-runtime comparisons**, **500 ordered full-RAM/selected-ROM/APU
+   observations** and **34 expected matching failures** pass, including 90 pass
+   invocations. Checks cover odd/broad slots, counters/branches, actual charge,
+   terrain and progress commands, real block/coordinate/drawing and HUD/music
+   consumers, retained ROM, live selection, stop-before-message, repeated yields,
+   disabled/deleted resume and published prefixes on failure. Message display is
+   controlled; no movie, device execution or new gameplay coverage is claimed.
+   Affected inherited script, dialogue and award compositions also pass, including
+   their outer callers and native owned examples. Repeated shared groups in those
+   exports are not additive coverage. A separate old nested-session export fails
+   its bounded fixture on both sides: it still expects controlled message leaves
+   after they were replaced with actual bodies. The same failure reproduces in
+   the source-checked runtime-bomb-stage DLL; it is not a new regression or a pass.
+   Current composition checks exercise those callers with working dialogue input.
+   Optimized library/DLL builds, formatting, exact dependency/caller transformations
+   and **135 runtime + 172 draft compiled inputs** pass; 157 inherited inputs are
+   unchanged. Source/DLL/results: player-projectiles/runtime-script-stage, with
+   214 top-level files and inherited/current-runtime source trees preserved.
+   Complete incremental candidate implementation/caller cost is **+103 lines**;
+   separate fixture growth is 659 lines plus 15 runtime-hook and eight observation
+   lines. This is not a whole replacement price or maintained-main saving.
+   The session's other phase/display dependencies still reference fixtures, and
+   drawing/effect callbacks remain legacy runtime execution with unsafe calls.
+   Continue replacing those dependencies in this same complete candidate, then
+   price and integrate the full ownership path under target-architecture/MIGRATION.md.
    The full projectile candidate now includes shared script control flow:
    13 actual commands and two wake consumers use the
    existing owned slots for sleep/release, pre-actions, counters, conditional
@@ -2685,6 +2722,27 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the accepted target architecture, rather than treating checked storage as
    persistent domain ownership. Local reproduction and external verification
    fixtures: Local/sm-decomp-experiments/20261022/plm-script.
+   `ProcessPlmDrawInstruction` now reads ROM/RAM drawing streams through checked
+   byte offsets instead of raw pointer traversal. It retains ROM ownership while
+   reading RAM words live, including streams overwritten by their own level-data
+   writes. Native stream words, little-endian fields, low-byte block counts,
+   vertical strides, signed displacement from the captured origin, odd destination
+   rounding and writes before failure remain unchanged. **1,531 actual old/new
+   full-RAM comparisons** pass, including 32 real drawing/interpreter/item-frame
+   caller cases and one long overlapping RAM stream. Four destination failures
+   retain their committed prefix; six candidate-only short-ROM checks fail safely.
+   Two invalid RAM addresses retain identical native assertion diagnostics/exits.
+   All 136 compiled inputs per side, retained-source/caller checks, formatting,
+   normal release library/frontend/verifier builds and library/native-source checks
+   pass. No movie ran; hardware advancement, message display and gameplay routes
+   are outside these constructed checks. Complete maintained safety cost is
+   **+27 Rust lines** with no helper module, macro or caller additions. Other
+   progress counters are unchanged. The native assertion call remains unsafe;
+   `DrawPlm` still has raw reads/writes, and RAM owns the mechanism state. This
+   removes this reader's raw memory operations, not all PLM unsafe calls or the
+   transitional storage boundary. Retire that boundary with the full named
+   mechanism state/sequence and rendering consumers above. Reproduction:
+   Local/sm-decomp-experiments/20261022/plm-draw-stream.
    Standard enemy combat now belongs to `enemy_combat`: contact, projectiles,
    Power Bombs, grapple latching/results, freeze selection, death cleanup and
    hit/dud effects. All callers
@@ -4573,14 +4631,16 @@ spawning, room-content loading, door closing, checked music control and shared
 dialogue control, checked room graphics, checked enemy graphics staging and
 checked sprite-object state, checked scene/enemy drawing, checked enemy scheduling,
 owned enemy-script positions, checked enemy-definition records, standard combat and shared enemy/projectile contact,
-maintained Rust is **96,435**,
+maintained Rust is **96,462**,
 with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,993**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,824**.
+Including 266 C and 296 header lines gives **97,024**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,855**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2953; cast lines 6206. Checked PLM instruction cursors add 16
+unsafe functions 2953; cast lines 6206. Checked PLM drawing-stream reads add 27
+Rust lines and change no other counter; native assertions and the remaining
+drawing/effect paths still require unsafe calls. Checked PLM instruction cursors add 16
 Rust lines and remove two counted unsafe declarations and three cast-containing
 lines. Raw instruction pointers and interpreter RAM operations retire; all
 replacement code is counted. Slot ownership and drawing/effect calls remain

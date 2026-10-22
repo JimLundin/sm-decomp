@@ -275,26 +275,53 @@ pub unsafe fn ProcessPlmDrawInstruction(k: u16, game: &mut Game) {
     let slot = usize::from(k >> 1) * 2;
     let draw_instruction =
         u16::from_le_bytes([game.g_ram[0xde6c + slot], game.g_ram[0xde6d + slot]]);
-    let mut words = RomPtr_84orRAM(draw_instruction, game) as *const u16;
+    let image = if draw_instruction & 0x8000 != 0 {
+        Some(
+            game.loaded_rom
+                .as_ref()
+                .expect("ROM must be loaded")
+                .clone(),
+        )
+    } else {
+        crate::native_assertion! {
+            '_c2rust_label: draw_instruction < 0x2000;
+            b"addr < 0x2000\0", b"src/sm_84.c\0", 265, b"uint8 *RomPtr_84orRAM(uint16_t)\0"
+        };
+        None
+    };
+    let mut cursor = usize::from(draw_instruction)
+        + if image.is_some() {
+            bank_base(0x84) as usize
+        } else {
+            0
+        };
+    // RAM streams stay live: block writes can change later words in the stream.
+    // Each read borrows only for its duration; ROM streams retain their allocation.
+    let read = |position: usize, game: &Game| {
+        u16::from_ne_bytes(core::array::from_fn(|i| match &image {
+            Some(image) => image.read(position + i),
+            None => game.g_ram[position + i],
+        }))
+    };
     let mut destination =
         u16::from_le_bytes([game.g_ram[0x1c87 + slot], game.g_ram[0x1c88 + slot]]);
     let origin = destination;
     loop {
-        let command = words.read_unaligned();
-        words = words.add(1);
+        let command = read(cursor, game);
+        cursor += 2;
         let stride = if command & 0x8000 != 0 {
             usize::from(u16::from_le_bytes([game.g_ram[0x7a5], game.g_ram[0x7a6]])) * 2
         } else {
             2
         };
         for block in 0..usize::from(command as u8) {
-            let word = words.read_unaligned();
-            words = words.add(1);
+            let word = read(cursor, game);
+            cursor += 2;
             // The original word indexing rounds odd byte destinations down.
             let offset = 0x10002 + ((usize::from(destination) + block * stride) >> 1) * 2;
             game.g_ram[offset..offset + 2].copy_from_slice(&word.to_le_bytes());
         }
-        let displacement = words.read_unaligned();
+        let displacement = read(cursor, game);
         if displacement == 0 {
             break;
         }
@@ -302,7 +329,7 @@ pub unsafe fn ProcessPlmDrawInstruction(k: u16, game: &mut Game) {
         let y = i32::from((displacement >> 8) as u8 as i8);
         let width = i32::from(u16::from_le_bytes([game.g_ram[0x7a5], game.g_ram[0x7a6]]));
         destination = (i32::from(origin) + 2 * (x + y * width)) as u16;
-        words = words.add(1);
+        cursor += 2;
     }
 }
 crate::game::address_dispatch! {
