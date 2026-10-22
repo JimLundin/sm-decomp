@@ -1703,13 +1703,31 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    **71 lines (1,194 -> 1,265)**, with 70 authored native-example lines separate.
    No new unsafe elimination, production savings or movie coverage is claimed.
    Impact/bomb-explosion transitions and drawing still use encoded definitions.
+   Bomb firing, spread allocation/movement and ordinary/Power Bomb fuse updates
+   now share this owner, initialization and release. **878 selected full-RAM
+   comparisons**, 829 ordered observations and 136 matching failures pass:
+   452 producer/fuse/spread cases, three successful linked paths, 89 reset and
+   334 missile/shared-state consumers. The linked paths reach fuse flash,
+   explosion/contact, release, reset and beam firing. Checks preserve reservation
+   writes after ammo rejection, full-pool reuse, captured fuse versus contact
+   slots, callback mutation/nesting, vertical early return and horizontal
+   reflection/backout. Power Bomb completion is an explicit controlled HDMA
+   boundary. Spread charging is authoritative in the same owner; bomb motions
+   have named variants. Models and codec forbid unsafe code. All 115 frozen and
+   56 draft inputs match compiled bytes; 49 prior files are unchanged. Optimized
+   DLL and formatting pass. Preserved bomb-stage is a selected result, not a new
+   cumulative lifecycle total. Its formatted model/codec cohort adds **305 lines
+   (747 -> 1,052)**, including the 272-line bomb model. This excludes retained
+   broad-index reference bodies and final runtime bridges; it is not a complete
+   replacement price. Collision internals, audio and HDMA output remain controlled;
+   fuse-flash/explosion definitions remain encoded. No movie or adoption is claimed.
    This remains an **unadopted, incomplete draft**, not a production promotion or
    a complete price. Collision, native diagnostics, drawing/trail, palette/sound
    output and grapple-start consumers remain controlled. ROM definitions are
    synthetic; no gameplay route or hardware
    coverage is established. Other accepted out-of-pool operations retain reference
    bodies, including drawing continuations; handoff tests do not retire those bodies.
-   Continue with bombs and special attacks, trails, protection/suspension,
+   Continue with special attacks, trails, protection/suspension,
    real producers/callers and runtime transfers. Count every adapter/fallback and
    close the remaining numeric-definition/motion interfaces. The frozen library
    predates current main; final integration requires current-source builds.
