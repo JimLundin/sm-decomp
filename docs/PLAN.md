@@ -2184,33 +2184,38 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    coordinator and are untouched. Continue this complete candidate with actual
    award/queue producers and remaining phase/script effects; runtime adoption,
    complete safety and net pricing remain open.
-   All nine real inventory awards now run on that aggregate owner, reusing the
-   current `Inventory::collect` rules. Visual and delayed-music effects receive
-   the complete state; the message operand is read afterward from the retained
-   script allocation. A zero operand clears the queue and skips dialogue. The
-   inventory codec, award sequence and checked operand provider forbid unsafe
-   code, replacing the selected raw script loads. **313 comparisons**, 14,053
-   ordered state observations and 90 matching failures pass: 132 direct award
-   cases, 56 actual award/call/dialogue/return consumer steps, 80 affected callers
-   and 45 scheduler cases. Checks cover all nine numeric routes, odd and bank-edge
-   operands, inventory/slot/queue mutation, script mutation versus ROM replacement,
-   nested awards, committed failure prefixes and fresh returned weapon inputs.
-   Three candidate-only bounds failures preserve the completed prefix; they claim
-   no old raw-pointer equivalence outside an allocation. A native two-call sequence
-   retains the real award, visual/music mutations, dialogue and script return in
-   one world. Visual/music/input/device leaves remain controlled. No movie,
-   prior projectile/contact/creation/direct-script or dialogue sweep ran.
-   Optimized build, formatting, exact current award/model/codec bodies, nine
-   dispatch identities and all **115+153 compiled inputs** pass; 140 inherited
-   inputs are unchanged. Caller correspondence includes the concurrent
-   `LoadEnemies` to `load_room_assets` rename; its phase is controlled, not new
-   loader coverage. Incremental implementation cost is **193 lines** plus the
-   reused 137-line inventory module. Separate support: 63 reference codec,
-   23 award reference, 421 direct fixture lines; native fixture +104, nested child
-   fixture +92, scheduler binding +5 and harness +17. No new implementation macros,
-   production adoption or savings. Sources/DLL/results: player-projectiles/
-   mechanism-awards-stage. Continue closing the remaining script/phase effects
-   and runtime authority in this candidate; full pricing and safety remain open.
+   The complete candidate now connects player preparation to its existing firing,
+   projectile update and mechanism lifecycle. Both real Alfa preparation orders,
+   all 28 HUD movement routes, cooldown, beam/missile/bomb dispatch and launch-history
+   cleanup execute against the complete session. Every firing effect relinquishes
+   inventory, mechanisms, dialogue and caller continuation before legacy execution;
+   callback-returned state is authoritative. The new bridge and checked coordinator
+   forbid unsafe code. Existing nonweapon leaves and HUD-selection compatibility
+   remain explicit boundaries; this is not complete Samus ownership or production
+   adoption. The nine shared inventory awards and their dialogue/queue composition
+   remain in this same candidate, preserved at mechanism-awards-stage (313 prior
+   comparisons); that earlier suite was not rerun for this connection.
+   **146 focused comparisons**, 914 ordered observations and 22 matching failures
+   pass. Required mutation/failure boundaries must execute. Checks include frozen
+   front-facing poses, demo input order, live HUD changes, invalid table prefixes,
+   nested resets, callback changes to inventory/dialogue/slots/continuation,
+   missile/bomb consumers and flare diagnostics. Seven gameplay caller steps include
+   one actual firing -> terrain scan -> mechanism creation -> created-script
+   execution path. Movement, grapple, X-ray, drawing and other session leaves remain
+   controlled. No movie, native-only lifecycle or frontend checkpoint ran; no earlier
+   projectile/contact/creation/dialogue sweep was repeated. Optimized build, format,
+   exact current coordinator/Alfa bodies and all **115+157 compiled inputs** pass;
+   150 inherited inputs are unchanged. The Legacy adapter and existing firing
+   algorithms are unchanged. Sources, DLL and results: player-projectiles/
+   player-preparation-stage (178 top-level files preserved).
+   Incremental candidate cost is **349 implementation/integration lines**, plus
+   172 reference and 638 fixture lines; harness/session fixture deltas are 15/7.
+   No new implementation macros or maintained-main savings. The preceding full
+   candidate recount found 8,686 implementation/support lines and 4,620 extracted
+   old-reference lines in different scopes: they are not a net deletion budget.
+   Continue closing remaining phase/script effects and price the complete production
+   replacement, including retained compatibility code. Runtime adoption, full safety
+   and substantial net savings remain open; further glue alone does not prove them.
    The full projectile candidate now includes shared script control flow:
    13 actual commands and two wake consumers use the
    existing owned slots for sleep/release, pre-actions, counters, conditional
