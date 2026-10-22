@@ -2186,38 +2186,47 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    complete safety and net pricing remain open.
    The complete candidate connects player preparation to its existing firing,
    projectile update and mechanism lifecycle. Both Alfa preparation orders and all
-   28 HUD movement routes execute against the session owner. HUD selection now also
-   belongs to `PlayerProjectiles`: selected item, raw auto-cancel selection and change
-   timer move together, replacing two sampled selection copies. The complete
-   selection controller uses the existing owned acceptance/charge rules; button
-   settings remain sampled inputs. Missile, Power Bomb and SBA auto-cancel now update
-   this owner directly, retiring their selection-clearing compatibility effect.
-   Every remaining firing effect relinquishes inventory, mechanisms, dialogue and
-   caller continuation before legacy execution; returned state is authoritative.
-   The selection model forbids unsafe code and has no Game/RAM dependency. Remaining
-   phase/fixture bindings are not a production adapter or complete Samus ownership.
-   **308 focused comparisons**, 1,083 ordered observations and 28 matching failures
-   pass: 162 additional selection/auto-cancel/SBA comparisons and 146 affected player
-   comparisons. Required mutation/failure boundaries must execute. Checks cover
-   available/unavailable choices, cancel/switch precedence, wrapped selection/change
-   timers, live callback selection/auto-cancel/charge mutations, nested resets,
-   committed invalid-index prefixes and missile/bomb/SBA consumers. Seven gameplay
-   caller steps retain the actual firing -> terrain scan -> mechanism creation ->
-   created-script path. Movement, grapple, X-ray, drawing and other phase leaves stay
-   controlled. No movie, native-only lifecycle or frontend checkpoint ran; earlier
-   broad projectile/contact/creation/dialogue sweeps were not repeated. Optimized
-   build, formatting, exact current selection/acceptance bodies, source-inverse checks
-   for relocated consumers and all **115+158 compiled inputs** pass; 149 inherited
-   files are unchanged. Sources/DLL/results: player-projectiles/hud-selection-stage
-   (179 top-level files preserved). Earlier complete stages remain intact.
-   This selection change adds **91 implementation/integration lines**; fixture code
-   adds 223 lines and harness code loses one. No new macros, production adoption or
-   maintained-main savings. The full candidate now contains **9,126 lines in 77
-   implementation/support files** under the same recount scope. Its extracted old
-   references are a different scope and cannot establish a net deletion budget.
-   Continue replacing fixture-bound effects with the real production dependencies
-   in this same candidate, then price all retired code, adapters and registrations.
-   Runtime authority, complete safety and substantial net savings remain open.
+   28 HUD movement routes execute against the session owner. HUD selection belongs
+   to `PlayerProjectiles`: selected item, raw auto-cancel selection and change timer
+   move together. Missile, Power Bomb and SBA auto-cancel update this owner directly;
+   buttons remain sampled inputs. Every compatibility effect relinquishes inventory,
+   mechanisms, dialogue and continuation; returned state is authoritative. The
+   selection model forbids unsafe code and has no Game/RAM dependency.
+   Player preparation now accepts an explicit effect handler and has no fixture
+   dependency of its own. The same complete candidate builds against the runtime
+   frozen at **f7ce6b8a**, replacing its old 15589b48 library. Its seven real bindings
+   call radius, input dispatch, suit selection, acceleration, block-inside detection,
+   grapple and X-ray. Their current-main source bytes still match. The direct
+   preparation entry executes in 18 comparisons; other cases record ordered
+   boundaries. This is partial runtime composition, not a production session adapter.
+   **220 selected comparisons**, 1,259 ordered observations and 26 matching failures
+   pass: 146 affected player cases and 74 real-runtime cases. Checks cover both Alfa
+   orders, persistent preparation, dry/water/lava physics and precedence, suit effects,
+   active input transitions, inactive grapple, and rejected/accepted X-ray entry.
+   Actual X-ray initialization disables mechanisms and freezes subsequent projectile
+   updates through the complete-owner transfer; actual HDMA allocation and register
+   writes match RAM and serialized DMA state. Boundary mutation and four injected
+   failures preserve the committed prefix. Synthetic ROM records and an attached
+   DMA/cart bus exercise these paths; no CPU/render/audio advancement is claimed.
+   Other projectile and session effects remain controlled. Seven inherited gameplay
+   caller steps retain firing -> terrain -> mechanism creation -> created-script
+   execution. No movie, native-only lifecycle or frontend checkpoint ran; selection,
+   contact, creation and dialogue sweeps were not repeated after handler injection.
+   Optimized library/DLL builds, formatting, exact current reference bodies and
+   handler source-inverse checks pass. All **124+159 compiled inputs** match their
+   sources; 154 inherited candidate inputs are unchanged. The library differs from
+   its Git source only by 13 disclosed fixture-support lines exposing existing ROM
+   registration and typed DMA/bus initialization. Sources/DLL/results are preserved
+   in player-projectiles/runtime-player-stage: 184 top-level files and 130 runtime
+   files, byte-compared. The preceding hud-selection-stage retains its 308 selection/
+   consumer comparisons and 9,126-line, 77-file implementation/support recount.
+   Runtime binding adds **31 candidate implementation/integration lines**, plus 319
+   fixture and 11 harness lines; the 13 library fixture lines are separate. No new
+   macros or maintained-main savings. Explicit unsafe runtime calls remain. Extracted
+   old references have a different scope and cannot establish a net deletion budget.
+   Continue replacing the remaining fixture-bound phase/projectile/script effects
+   in this same full candidate, then price all retired code, adapters and registrations.
+   Runtime adoption, complete safety and substantial net savings remain open.
    The full projectile candidate now includes shared script control flow:
    13 actual commands and two wake consumers use the
    existing owned slots for sleep/release, pre-actions, counters, conditional
