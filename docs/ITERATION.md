@@ -115,15 +115,16 @@ short-lived locks. No reservation locks or new scheduling service are needed.
 
 ## Apply it to the current projectile work
 
-Current completion status and the next dependency live in PLAN, with draft
+Current completion status and the next dependency live in PLAN, with continuation
 details in [HANDOFF.md](HANDOFF.md#paused-launch-draft). Read those before a new
-assignment. The 2026-10-22 wind-down preserved an untested beam-launch draft;
-review its boundary and deletion before extending it. Keep missile acceleration
-and extension creation behind that dependency instead of opening all three.
+assignment. The 2026-10-22 restart resolved the preserved beam-launch draft through
+the seven steps above. Missile acceleration and extension creation are the next
+dependent changes; keep their boundaries explicit.
 
-For the first explicit restart, the implementer can resolve the launch draft
-while a validation investigator independently traces aliasing, diagnostics and
-actual launch consumers. The integrator owns shared wiring and final comparisons.
+The launch restart was single-worker, with aliasing, diagnostics and actual launch
+consumers traced before integration. Subsequent authorized parallel work can use
+a validation investigator for those independent questions. The integrator owns
+shared wiring and final comparisons.
 Keep the saved old decoder independent of the new one. Defer runtime ownership
 implementation until its prerequisites are ready; its existing audit remains a
 reference. Preserve the distinction between RAM compatibility and persistent
@@ -192,9 +193,9 @@ skipping a component build. Runtime and harness have separate incremental caches
 and logs (`runtime-build.log`, `harness-build.log`). A fixture-only edit rebuilds
 the harness; call `python build.py --library` and `python build.py` without
 rebuilding unchanged inputs. Existing compiled-source assertions remain required.
-The launch draft is preserved under `runtime-impact-working/launch-draft/`;
-main and the harness use the verified baseline. Applying it still needs
-synchronized reference wiring and behavioral validation.
+The original launch draft is preserved under `runtime-impact-working/launch-draft/`;
+main and the harness now use the synchronized verified launch change, including
+an independent old decoder on the reference side.
 
 Measured runner improvement (2026-10-22): unchanged component library/harness
 reuse took 0.08–0.12s each, versus a 21.37s unchanged library compile before the

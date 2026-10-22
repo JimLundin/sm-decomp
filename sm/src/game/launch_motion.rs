@@ -23,6 +23,36 @@ pub(crate) enum Aim {
     UpLeft,
 }
 
+impl Aim {
+    pub(crate) fn from_direction(direction: u16) -> Option<Self> {
+        Some(match direction & 0xf {
+            0 | 9 => Self::Up,
+            1 => Self::UpRight,
+            2 => Self::Right,
+            3 => Self::DownRight,
+            4 | 5 => Self::Down,
+            6 => Self::DownLeft,
+            7 => Self::Left,
+            8 => Self::UpLeft,
+            _ => return None,
+        })
+    }
+}
+
+pub(crate) const BEAM_SPEEDS: [u16; 24] = [
+    0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400,
+    0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab,
+];
+
+pub(crate) fn beam_selection(kind: u16, direction: u16) -> (usize, bool) {
+    let direction = direction & 0xf;
+    let diagonal = !matches!(direction, 0 | 2 | 4 | 5 | 7 | 9);
+    (
+        2 * usize::from(kind & 0xf) + usize::from(diagonal),
+        direction >= 10,
+    )
+}
+
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub(crate) struct LaunchMotion {
     /// Signed 16.16 displacements, in left/right/up/down order.

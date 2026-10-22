@@ -9,9 +9,10 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest verified gameplay implementation is `e3fadf56`. The user authorized
-immediate build-pipeline preparation. The untested draft below is now isolated;
-main and the working comparison harness use the verified gameplay baseline.
+The latest verified gameplay stage shares beam-speed selection and aim decoding
+through `launch_motion`, following extension contact at `e3fadf56`. The user
+requested the next iteration under ITERATION.md. Main, the current comparison
+carrier and the owned launch draft are synchronized and behavior-compared.
 
 The phase stage at `ba0d94c1` now also shares linked-extension contact through
 `projectile_flight_control`. The core and new extension RAM adapter forbid unsafe
@@ -22,16 +23,16 @@ owned position helper are removed. Current production and draft callers use
 the axis-parameterized contact entry.
 
 This follows shared room scans (`ff02c9b7`) and terminal impact/retirement
-(`de9bf05e`). Launch setup, missile acceleration, extension creation,
+(`de9bf05e`). Missile acceleration, extension creation,
 block reactions, persistent Session authority and broader unsafe elimination
 remain unfinished. Checked RAM is transitional; the destination has independent
 owned domain state. Never retain an authoritative typed owner across
 RAM-authoritative execution; transfer the complete owner.
 
-Main is **101,646 Rust lines in 135 files**, with 2,936 counted unsafe declarations
-and 6,150 cast-containing lines. Maintained implementation is 102,208 lines;
-including installers/launcher, 103,039. The full prospective composition is
-**110,698 Rust lines**, **+9,052 over main**, and remains unadopted.
+Main is **101,659 Rust lines in 135 files**, with 2,936 counted unsafe declarations
+and 6,146 cast-containing lines. Maintained implementation is 102,221 lines;
+including installers/launcher, 103,131. The full prospective composition is
+**110,689 Rust lines**, **+9,030 over main**, and remains unadopted.
 
 The extension stage removes 5 main lines and adds 12 owned-draft lines:
 **+7 complete lines, +245 lexical tokens, -170 normalized text bytes**.
@@ -46,38 +47,43 @@ was left running by that task. Resume only after a new implementation request.
 The coordinator found one other running project thread; the inspected older
 verification, reduction, architecture and cleanup threads were already inactive.
 
-Three drafted main files, based on `e3fadf56`, are preserved locally:
+Resolved in the 2026-10-22 restart. The original three-file draft, based on
+`e3fadf56`, remains preserved locally:
 
 - `sm/src/game/launch_motion.rs`: shared beam speed data/selection and aim decoder.
 - `sm/src/game/launch_motion_ram.rs`: shared decoding after subpixel clearing.
 - `sm/src/game/projectile_flight.rs`: checked beam speed selection.
 
-They were targeted-formatted but **not behavior-compared, fully priced or
-committed**. They compile in production, but that does not establish correctness.
-Their net main delta is +13 lines. Preserve them for review; the
-extension-stage results below apply to the committed baseline only.
+The adopted main change adds 13 lines; synchronized owned `launch.rs` removes
+22 lines, giving -9 complete composition lines, -166 lexical tokens and -509
+normalized text bytes. Existing local comparison code adds 167 lines, including
+the independently frozen old decoder; including checks gives +158 lines.
+No dependency or maintained native/launcher code is added.
 
 In `runtime-impact-working/launch-draft/`, the three production drafts,
 `owned-launch.rs`, `main.patch` and `source-hashes.json` preserve exact edited
-bytes. Main and working `launch.rs` were restored to the verified baseline to
-leave the next session runnable. The draft's local launch-motion modules and
-`runtime-source` were not synchronized, so applying it requires that work first.
+bytes. The restart synchronized main, working `launch.rs`, local launch-motion
+modules and `runtime-source`.
 `launch-parent/` preserves pre-draft production,
 owned launch, harness/preparation and relevant previous composition inputs.
 The local `WIND_DOWN.md` records the historical dirty stop point; this section
 supersedes its draft locations. Preserve existing caches,
-backups and results; `impact-composition/` still holds the verified extension
-composition, not this new launch draft.
+backups and results; `impact-composition/` now includes this launch change.
 
-On restart, agree the beam-launch boundary and deletion before extending the
-draft. Reuse `prepare_flight_control.py` and the selected launch/beam comparisons.
-Keep the saved old aim decoder independent of the new shared decoder on the
-reference side; sharing both would hide a regression. Cover invalid-direction
-diagnostics, kind bounds, captured selection, odd/broad indices, fraction writes
-aliasing direction and Y writes aliasing history before X rereads. Synchronize
-the actual new inputs, then perform the required comparisons, production build/
-source checks and complete price. Resolve this change before starting missile
-acceleration or extension creation. Follow ITERATION.md for the division of work.
+Use `prepare_flight_control.py` and selected exports `owned_launch_experiment`,
+`runtime_launch_experiment`, `flight_experiment`, `runtime_beam_experiment`,
+`runtime_flight_compat_experiment` and `runtime_session_experiment`.
+The launch checks pass 395 owned cases and 1,070 RAM/owned runtime cases,
+including invalid diagnostics, kind bounds, captured selection, odd/broad
+indices, fraction/direction aliases and live history rereads. The old decoder
+matches pre-change Git source and is separately compiled; production diagnostics
+stop at the native assertion boundary, while owned fixtures exercise returning
+diagnostics. No movie runs or full-composition runtime comparison are claimed.
+Final production and prospective Rust 2024 headless release builds pass.
+Results: `launch-final-results.json`, `launch-final-check.log`,
+`launch-main-source-check.json`, `launch-production-build.log`,
+`launch-composition-price.json` and `launch-composition-build.log`.
+Missile acceleration and extension creation are the next explicit dependencies.
 
 ## Local work and validation
 
@@ -232,8 +238,8 @@ names. The existing local build.py now reuses content-checked library/harness
 outputs and separate incremental caches; a changed fixture does not rebuild
 the library. Logs are runtime-build.log and harness-build.log. Compiler options,
 dependency bytes, native libraries and output bytes determine reuse; keep the
-compiled-input assertions in the selected checks. The paused launch draft still
-requires synchronized inputs before these current checks can pass on that draft.
+compiled-input assertions in the selected checks. Launch inputs are synchronized;
+keep the separate old decoder in both carrier and harness on subsequent preparation.
 For production, use `python tools/verify_dll.py --build-only --frontend-check`
 with the installed SDK environment; it now shares normal Cargo flags/artifacts.
 Preparation does not compile; reuse unchanged libraries. Formatter:

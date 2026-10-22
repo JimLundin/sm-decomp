@@ -135,25 +135,16 @@ fn delete_offscreen(game: &mut Game) -> u8 {
     1
 }
 
-static kInitializeProjectileSpeed_XY_Diag: [u16; 24] = [
-    0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400,
-    0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab, 0x400, 0x2ab,
-];
-pub(crate) unsafe fn initialize_beam_speed(r20: u16, game: &mut Game) {
-    unsafe {
-        let v0: i32 = r20 as i32 >> 1;
-        let v1: u16 = (4 * (word!(game.projectile_type[v0]) as i32 & 0xf)) as u16;
-        let v2: u16 = (2 * (word!(game.projectile_dir[v0]) as i32 & 0xf)) as u16;
-        let mut r22: u16 = if v2 == 0 || v2 == 4 || v2 == 8 || v2 == 10 || v2 == 14 || v2 == 18 {
-            kInitializeProjectileSpeed_XY_Diag[(v1 >> 1) as usize]
-        } else {
-            if v2 != 2 && v2 != 6 && v2 != 12 && v2 != 16 {
-                Unreachable(game);
-            }
-            kInitializeProjectileSpeed_XY_Diag[((v1 as i32 >> 1) + 1) as usize]
-        };
-        initialize_speed(r20, r22, game);
+pub(crate) unsafe fn initialize_beam_speed(slot: u16, game: &mut Game) {
+    use crate::game::launch_motion::{BEAM_SPEEDS, beam_selection};
+    let (index, invalid) = beam_selection(
+        checked_word!(game.projectile_type[(slot >> 1)]),
+        checked_word!(game.projectile_dir[(slot >> 1)]),
+    );
+    if invalid {
+        unsafe { Unreachable(game) };
     }
+    unsafe { initialize_speed(slot, BEAM_SPEEDS[index], game) };
 }
 
 unsafe fn accelerate_missile(k: u16, game: &mut Game) {

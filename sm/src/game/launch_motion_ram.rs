@@ -46,16 +46,8 @@ pub(crate) fn initialize(k: u16, speed: u16, game: &mut Game) -> bool {
     let offset = usize::from(k >> 1) * 2;
     write(game, 0xb8c + offset, 0);
     write(game, 0xba0 + offset, 0);
-    let aim = match read(game, 0xc04 + offset) & 0xf {
-        0 | 9 => Aim::Up,
-        1 => Aim::UpRight,
-        2 => Aim::Right,
-        3 => Aim::DownRight,
-        4 | 5 => Aim::Down,
-        6 => Aim::DownLeft,
-        7 => Aim::Left,
-        8 => Aim::UpLeft,
-        _ => return false,
+    let Some(aim) = Aim::from_direction(read(game, 0xc04 + offset)) else {
+        return false;
     };
     let velocity = history(game).launch(aim, speed, read(game, 0xda8));
     write(game, 0xbf0 + offset, velocity.y as u16);

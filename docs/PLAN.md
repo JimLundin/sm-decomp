@@ -83,16 +83,10 @@ new packages alone establishes neither ownership nor backend independence.
 
 ## Work order
 
-**Coordination reset (2026-10-22): implementation is paused at the user's
-request.** The user has authorized immediate build-pipeline improvements before
-the next long-running implementation session. These are complete as recorded
-in ITERATION.md; the preserved gameplay draft still needs its next explicit
-bounded assignment. The previous reduction agent has wound down; its migration child is
-complete and older inspected project threads are inactive. Keep the work order
-below, but resume only on a new implementation request under ITERATION.md.
-The next assignment should resolve the preserved beam-launch draft as one
-bounded change, with independent caller/validation investigation if assigned.
-Do not automatically restart the former task queues.
+**Bounded restart (2026-10-22): the user requested an iteration under ITERATION.md
+and completion of its steps.** The beam-launch dependency is resolved below.
+Build-pipeline preparation is complete. Gameplay work remains single-agent;
+the previous task queues and ownership experiments are not automatically restarted.
 
 1. [x] **Test Samus domain alternatives.** Complete; the tested representations
    did not establish the proposed large volume payoff.
@@ -106,39 +100,45 @@ Do not automatically restart the former task queues.
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage, **e3fadf56**, shares ordinary flight phases and linked-extension contact
-   through `projectile_flight_control`, following the room, terminal and phase
-   stages at `ff02c9b7`, `de9bf05e` and `ba0d94c1`. The core and extension RAM
-   adapter forbid unsafe code. The extension macro, two axis wrappers and owned
-   contact algorithm are removed. Launch setup, missile acceleration, extension
-   creation, block reactions and broader unsafe elimination remain.
+   Latest verified stage shares beam-speed selection, speed data and aim decoding
+   through `launch_motion`, following extension contact at `e3fadf56`. The RAM
+   adapter and owned launch use the same decoder; production uses checked kind
+   and direction reads. The duplicate owned table/selection/decoder and production
+   selection body are removed. Captured selection, diagnostic prefixes, fraction
+   clearing and Y-write-before-X-reread ordering are preserved. LaunchMotion and
+   its RAM adapter forbid unsafe code; legacy diagnostic calls remain unsafe.
+   Missile acceleration, extension creation, block reactions and broader unsafe
+   elimination remain.
 
-   Saved production comparisons pass 1,044 cases, including 600 new RAM/owned
-   extension cases, selector-changing room callbacks and 96 matching failures. The
-   owned flight, broad compatibility, room, session and beam checks also pass.
-   All 143 runtime and 201 draft compiled inputs match. Formatting, normal
+   Saved production/current RAM/owned launch comparisons pass 1,070 cases,
+   including 260 matching failures, alongside 395 owned launch cases with 71
+   matching failures and returning/mutating diagnostics. The saved old decoder
+   is independent and matches pre-change Git source. Selected flight, beam,
+   broad compatibility and session consumers also pass.
+   All 144 runtime and 202 draft compiled inputs match. Formatting, normal
    release library/frontend/verifier builds and loaded DLL source checks pass.
    No movie ran. Synthetic content and controlled hardware do not establish
-   scheduler encounters or full-game fidelity.
+   scheduler encounters or full-game fidelity. Production diagnostics are
+   compared through their native assertion entry; continuation is constructed
+   on the owned comparison path.
 
-   Main is **101,646 Rust lines in 135 files**. The prospective composition is
-   **110,698 (+9,052)** and remains unadopted, without full-composition runtime
+   Main is **101,659 Rust lines in 135 files**. The prospective composition is
+   **110,689 (+9,030)** and remains unadopted, without full-composition runtime
    or movie comparison. Its Rust 2024 headless release library builds.
-   This stage removes 5 main lines and adds 12 draft lines: **+7 complete lines**,
-   +245 lexical tokens and -170 normalized text bytes, for shared behavior and
-   checked access. This is not net line reduction. Persistent Session authority
+   This stage adds 13 main lines and removes 22 draft lines: **-9 complete lines**,
+   -166 lexical tokens and -509 normalized text bytes. Main alone adds 27 tokens
+   and 197 bytes for sharing/checked access and removes four counted cast lines.
+   Existing local verification grows 167 lines, including a 67-line independent
+   old decoder; including that local check cost gives +158 lines for this stage.
+   No dependencies or maintained native/launcher code are added. Persistent Session authority
    and the substantial reduction remain unfinished.
 
    Next dependencies, in order:
 
-   - Review and resolve the preserved **untested beam-launch draft** first.
-     Three main files and local `launch.rs` were edited before wind-down.
-     Their exact draft bytes/patch are now isolated under `launch-draft/` in
-     the continuation directory; main and the harness use the verified baseline.
-     The draft's carrier copies and reference wiring need synchronization. See
-     [the restart handoff](HANDOFF.md#paused-launch-draft) before building or
-     adopting it. Preserve an independent old decoder in the comparisons.
-   - Then select missile acceleration and extension creation as explicit
+   - [x] Resolve the preserved beam-launch draft, synchronize the carrier and
+     retain independent old decoding. The original draft remains in `launch-draft/`;
+     [the handoff](HANDOFF.md#paused-launch-draft) describes the verified continuation.
+   - Select missile acceleration and extension creation as explicit
      dependent changes, migrating consumers and deleting retained implementations.
      Ordinary flight ordering and extension contact are already shared.
    - Close remaining consumers and runtime authority transfers, validate the
@@ -148,8 +148,9 @@ Do not automatically restart the former task queues.
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified flight continuation, including
-   `extension-final-results.json` and `extension-composition-price.json`.
+   `runtime-impact-working/` is the verified launch continuation, including
+   `launch-final-results.json`, `launch-main-source-check.json` and
+   `launch-composition-price.json`.
    `runtime-impact-stage/` preserves the previous terminal stage; the independent
    flight reference remains in `flight-parent/`; `extension-parent/` saves the
    immediately preceding source and composition changes.
@@ -304,18 +305,16 @@ content.
 
 ## Progress and references
 
-Verified shared-extension stage at e3fadf56: Rust 101,646; maintained C bridge 266 and headers
-296 = **102,208 implementation lines**. Including 803 dependency-installer and
-the previously added 28 verifier-launcher lines gives **103,039**. The current
-build-reuse fix adds 79 maintained launcher lines, giving **103,118** on the
-same installer/launcher-inclusive basis; Rust/native implementation is unchanged.
+Verified shared-launch stage: Rust 101,659; maintained C bridge 266 and headers
+296 = **102,221 implementation lines**. Including 803 dependency-installer and
+107 verifier-launcher lines gives **103,131**. The separate prospective owned
+composition and local comparison additions are disclosed above.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
-unsafe declarations 2,936; cast-containing lines 6,150. These narrow counters do
+unsafe declarations 2,936; cast-containing lines 6,146. These narrow counters do
 not count all unsafe operations. Use the actual checkout's progress output for
 new changes; uncommitted drafts are not landed savings.
-The isolated launch draft would add 13 Rust lines and remove four counted cast
-lines. It remains unverified and unapplied; the checkout uses the verified
-101,646-line baseline. Its source bytes and patch are preserved outside Git.
+The isolated launch draft is now synchronized and verified; its original source
+bytes and patch remain preserved outside Git.
 
 External source is disclosed separately: CPU 2,836, SPC 2,104, PPU 1,261, DSP 685,
 music 1,659, stb 7,762, configuration/utilities 919, desktop 882, and shader
