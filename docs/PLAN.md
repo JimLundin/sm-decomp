@@ -60,10 +60,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **96,468 Rust lines in 128 files**, plus 266 C
-bridge and 296 C-header lines = **97,030 maintained implementation lines**.
+Current composition (2026-10-22): **96,438 Rust lines in 128 files**, plus 266 C
+bridge and 296 C-header lines = **97,000 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,861**. This complete recount includes frontend,
+gives **97,831**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -77,7 +77,7 @@ included in the complete total above. The prior 96,993 implementation / 97,824
 installer-inclusive totals become 96,997 / 97,828 on this same basis. The
 drawing-reader change adds 27 Rust lines and checked extension linkage adds six;
 these four existing C lines are not new
-implementation or a deletion.
+implementation or a deletion. Checked projectile animation then removes 30 Rust lines.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
 The complete GLSL dependency replacement removes **282 maintained lines**, with
@@ -2471,8 +2471,32 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    cost is 84 adapter lines plus an 11-line copy of the adopted linkage helper;
    separately 585 fixture/harness, six runtime-observation and 174 Python-support
    lines. This is not the complete replacement price or lifecycle adoption.
+   Animation now has an explicit actual-runtime binding in the same candidate,
+   including all initializer kinds, impacts, playback, trail queries and drawing
+   continuation. Main's animation module uses checked RAM and captured ROM records,
+   removing its raw memory operations and **30 maintained Rust lines**. Native
+   diagnostics, clearing and rendering remain unsafe; RAM is still authoritative.
+   **524 three-way comparisons** of old source, actual checked runtime and the
+   complete owner pass, with **204 ordered observations**, **30 matching failures**
+   and **six drawing continuations producing OAM**. **55 short-ROM cases** also
+   pass against explicit committed-prefix expectations in the checked runtime and
+   owner; no old out-of-allocation reads execute. These caught and fixed loss of
+   partial owned state before failed definition/frame reads. Bank-window crossings,
+   wrapped jumps, distinct table selection, aliased selectors and callback mutations
+   are covered. Shared drawing tails can enter the checked animation module from
+   either side; direct playback/trail comparisons cover those changed functions.
+   Synthetic content and controlled device state supply no movie coverage.
+   Affected flight, flight-compatibility, session and closing checks pass. Normal
+   release library/frontend/verifier builds, formatting, exact source/drawing-loop
+   checks and **135 runtime + 184 draft compiled inputs** pass; 173 inherited
+   inputs are unchanged. Frozen source/DLL/final results: runtime-animation-stage
+   under the same player-projectiles directory (`result-script.json`), with 272
+   top-level files and three source trees byte-compared. Incremental draft cost is
+   **90 lines**, separately 286 reference, 875 fixture/harness, ten runtime-hook,
+   114 Python-support and 145 unused generation-fragment lines. This does not price
+   the complete replacement or establish persistent Session authority.
    The target Session contract remains open. The runtime composition still has
-   unbound effects: remaining off-pool animation/bomb/SBA/trail operations, beam
+   unbound effects: remaining off-pool bomb/SBA/trail lifecycle operations, beam
    continuation and encounter effects need explicit bindings or elimination.
    Bind and validate these in the same full candidate before pricing/adopting its
    complete dependency and deletion surface under target-architecture/MIGRATION.md.
@@ -4738,15 +4762,21 @@ spawning, room-content loading, door closing, checked music control and shared
 dialogue control, checked room graphics, checked enemy graphics staging and
 checked sprite-object state, checked scene/enemy drawing, checked enemy scheduling,
 owned enemy-script positions, checked enemy-definition records, standard combat,
-shared enemy/projectile contact and checked extension linkage,
-maintained Rust is **96,468**,
+shared enemy/projectile contact, checked extension linkage and projectile animation,
+maintained Rust is **96,438**,
 with applicable static, component and exercised movie checks passing.
-Including 266 C and 296 header lines gives **97,030**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,861**.
+Including 266 C and 296 header lines gives **97,000**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,831**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2953; cast lines 6204. Checked extension linkage adds six Rust
+unsafe functions 2955; cast lines 6195. Checked projectile animation removes 30
+Rust lines and nine cast-containing lines. Raw RAM/ROM operations retire, and
+table/direction selection plus bomb-explosion setup forbid unsafe code. The
+declaration counter rises by two because formerly macro-declared functions are
+now explicit and drawing gains a continuation entry, offset by removed pointer
+helpers and safe bomb setup. Native diagnostics, clearing and drawing remain
+unsafe; other counters are unchanged. Checked extension linkage adds six Rust
 lines and removes two cast-containing lines. Its native-order parent-field
 read/write and selector access forbid unsafe code; the surrounding factory and
 flight calls remain unsafe. Other counters are unchanged; this is a safety cost.
