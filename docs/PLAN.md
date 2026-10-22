@@ -1793,6 +1793,15 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    remain outside this partial cost. These are selected component checks, not a
    rerun or cumulative total of earlier suites. No movie, production adoption,
    whole-replacement price or savings is claimed.
+   The coordinator independently checked trail-playback-stage's 115+67 compiled
+   inputs, 51 unchanged inherited files, reconstructed reference macros/dispatcher
+   and six current gameplay/support sources. The reused side interpreter differs
+   from the completed standalone model only in its module import. Complete-owner
+   transfers, native-sequence limits and the +228/+93 cohort/example prices were
+   reviewed without rerunning the suite. The next presentation experiment must
+   close actual projectile-spritemap output and its following echo/trail consumers,
+   preserving definition capture, carried Ceres coordinates, live selectors and
+   output aliases. See the [presentation contract](RAM_OWNERSHIP.md#projectile-presentation-still-to-close).
    Special-attack selection, four-shot production and pursuit/orbit/release updates
    now use this same owner, its initializers, trail emission and slot release.
    Named motion variants replace the six primary special-attack selectors; the

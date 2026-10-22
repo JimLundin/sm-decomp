@@ -532,11 +532,24 @@ compatibility adapter owns clipping, ordered output writes and aliased reads.
 
 The linked experiment confirms that projectile reset clears shot emission
 countdowns while retaining existing visual trail pairs. Failure during sprite
-lookup similarly keeps the duration already committed. The next integration
-must carry the complete `Firing` through side playback and output, then connect
-the actual rendering and runtime consumers. The standalone reference has existing
-potentially unaligned raw stores; its comparison result is observed native output,
-not a proof of portable semantics. No full-game migration or savings are claimed.
+lookup similarly keeps the duration already committed. The reviewed
+[complete-owner integration](RAM_OWNERSHIP.md#integrated-trail-playback-and-output)
+now passes **688 selected comparisons** and carries `Firing` through each definition
+read and trail draw. A native sequence holds named weapon, projectile sprite,
+trail script and trail sprite identities in that same owner. Rendering records
+named trail requests there; its compatibility provider performs actual checked
+trail output. The reviewed model/provider/codec cohort adds 228 formatted lines,
+with 93 separate native-example lines. These are partial costs, not savings.
+
+The [next presentation boundary](RAM_OWNERSHIP.md#projectile-presentation-still-to-close)
+is actual projectile-spritemap output, including its definition lifetime, followed
+by echoes and trails. The scheduler must preserve Ceres's carried coordinates and
+its live selector reread. A pass of independent sprite requests would miss those
+rules. Native sprite identities should reach the existing shared renderer through
+definitions, while the compatibility adapter preserves ordered output aliases.
+Current native examples do not execute that consumer. The old trail reference's
+potentially unaligned stores establish observed Windows output, not portable
+defined-Rust semantics; current runtime ownership remains open.
 
 The [definition-consumer trace](RAM_OWNERSHIP.md#definition-consumers-still-to-migrate)
 records the remaining contracts and distinguishes source findings from tests.

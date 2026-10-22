@@ -1255,6 +1255,48 @@ No movie or production adoption is claimed. Reproduction:
 (`side_playback.rs`, `side_adapter.rs`, `emission.rs`, `native.rs`, `harness.rs`,
 `prepare.py`, `build.py`, `check.py`, `result.json`).
 
+### Integrated trail playback and output
+
+The coordinator reviewed `player-projectiles/trail-playback-stage`: **688 selected
+comparisons**, 1,277 ordered observations and 299 matching failures. All **115
+frozen library and 67 draft compiled inputs** match their sources. Fifty-one
+inherited inputs are unchanged from emission-stage. The trail-side model is the
+completed standalone implementation with only its module import changed; the old
+dispatcher, playback macros and drawing loop reconstruct exactly from frozen Rust.
+Six relevant gameplay/support files still match current main. This review did not
+rerun the suite or establish integration with the newer runtime.
+
+The ordinary projectile draw loop now calls owned trail playback after the echo
+effect. Each shot and all 18 trail pairs remain inside the same non-Clone `Firing`.
+Definition diagnostics and each output operation transport that complete owner;
+the codec imports output aliases before the next side runs. There is no retained
+detached trail copy. The pass keeps its original freeze decision even if a callback
+changes the current freeze input. The integration retains partial output writes,
+fresh sprite resolution after duration publication and explicit cross-side moves.
+
+The selected checks comprise 96 timing, 36 command, 96 output, 432 callback, 12
+actual ordinary-drawing callers, nine explicit contracts and seven linked
+emission/reset/drawing steps. They check recursive playback/reset and unrelated
+charge, protection, shot damage, spread charge and sound-resume changes. The
+linked sequence retains the owner between operations; its read-only encoding is
+for comparison. Legacy effects still transfer authority through RAM.
+
+One separate native sequence initializes a named weapon, samples and emits trails,
+advances projectile/trail animation and records named trail sprites, including
+freeze and expiry. The same generic owner holds both sprite types. Native drawing
+records requests; actual sprite geometry, physical output, native firing and actual
+slot release are not exercised by that example. The compatibility tests execute
+the checked trail output adapter, while projectile-spritemap output, echoes and
+palette callbacks remain controlled. The old raw-store portability limit above
+still applies.
+
+The complete changed model/provider/codec cohort independently recounts to
+**1,514 -> 1,742 formatted lines (+228)**. Native emission/presentation examples
+grow from 159 to 252 lines (+93); generic changes to native initialization add no
+formatted lines. Retained broad paths and the legacy/runtime bridges remain
+outside this partial price. No movie, production adoption or savings are claimed.
+The next presentation seam is the actual projectile-spritemap consumer below.
+
 ### Definition consumers still to migrate
 
 This source trace identifies the contracts a named attack/animation definition
@@ -1282,8 +1324,9 @@ Its separate side scripts have different zero-timer and command rules from
 projectile playback. Sharing named definition access is supported; one generic
 script executor has not been established. Trail script choice, position sampling,
 pair reservation and side playback therefore remain distinct operations. The
-remaining closure includes side playback/drawing, complete-owner emission and
-actual producer/consumer integration.[^flight][^trailpipeline]
+complete-owner draft now covers emission and side playback/drawing. Remaining
+closure includes projectile-spritemap output, special attacks and current runtime
+producer/consumer integration.[^flight][^trailpipeline]
 
 The side interpreter is called by `draw_projectiles`, after ordinary projectile
 drawing and shinespark echoes. It captures the freeze flag once for the whole
@@ -1303,8 +1346,36 @@ atomic visible-sprite append would not reproduce the current output image.
 The playback experiment above now exercises these source findings through its
 stated native-output scope: cross-side commands, repeated definition resolution,
 frozen passes, left/right output ordering, clipping with partial output, and
-emission followed by projectile reset and side playback. Complete-owner/runtime
-integration remains a separate requirement.[^trailpipeline][^resetslots]
+emission followed by projectile reset and side playback. Its complete-owner
+integration is reviewed above; runtime promotion remains a separate
+requirement.[^trailpipeline][^resetslots]
+
+### Projectile presentation still to close
+
+The next boundary runs from the projectile draw scheduler through actual sprite
+definition lookup and output. The full-owner draft's `DrawProjectile` and echo
+effects currently use controlled callbacks. Trail output coverage therefore does
+not retire either consumer. The current Rust supplies these constraints; this
+source audit adds no execution coverage:[^projectilepresentation]
+
+| Boundary | Contract for a named presentation interface |
+| --- | --- |
+| Pass selection | Ordinary drawing visits five slots; explosion drawing visits ten. An animation cursor enables a slot. Type, bomb phase and frame-parity rules then decide visibility. Name these presentation policies when kinds become native. |
+| Captured and live identity | Capture the candidate slot and kind before projection. After projection, ordinary drawing checks that captured slot's live sprite; output then resolves its current sprite definition. After the draw path, reread the live selected projectile before decrementing. Horizontal explosion rejection bypasses that reread. |
+| Ceres projection | Retain the pass's previous coordinates. Ordinary shots clip using transformed Y but draw using previous Y. Explosions still call projection but discard both returned coordinates. An independent per-shot position calculation would change this behavior. |
+| Sprite definitions | A low sprite address triggers a diagnostic before the ROM owner is captured. Preserve any diagnostic mutation or replacement; the resulting allocation stays owned through drawing. Native definitions can supply named geometry. |
+| Actual output | Projectile spritemaps use the wrapping output policy, distinct from trail capacity/clipping. The sprite loop writes X and extension bits before Y/tile reads and updates the output cursor last. Keep checked partial writes and failures in the compatibility output adapter. |
+| Ordinary pass tail | Finish projectile slots, then shinespark crash echoes, then trail playback/output. Echoes can affect what trails observe. Explosion drawing has no equivalent tail. |
+| Broad selector | If callbacks redirect the selector beyond the canonical pool, preserve its captured pass coordinates and continue through an explicit legacy interval until the remaining aliases are migrated. |
+
+The next experiment must run the actual sprite consumer through ordinary and
+explosion callers, capture definition ownership across diagnostics, exercise
+projection's retained-coordinate rules and output aliases, and observe the following
+trail pass. Its native case should consume a named sprite through the same owner
+without an encoded sprite-validity bit or ROM decoding. Keep the existing shared
+sprite-output implementation; extending its definition boundary does not justify a
+second renderer. A queued rendering result is only valid after its current
+same-pass observations are accounted for.
 
 ### Aim capture, placement and expiry
 
@@ -1766,10 +1837,11 @@ movement and environment effects still transfer through the legacy adapter.
 Exercise remaining cancellation producers. Integrate Samus protection with its grant, contact and
 completed-pass consumers, preserving broad alias transfers and reset distinctions.
 Close remaining shared palette/sound writers and runtime transfers.
-Complete-owner projectile playback, trail sampling and initialization are reviewed
-in the draft. The emission integration now has its selected 603-case result.
-Integrate the completed standalone trail side-playback/drawing model into that
-owner, then close remaining attack-definition consumers and runtime transfers.
+Complete-owner projectile playback, trail sampling, initialization, emission and
+trail side-playback/output are reviewed in the draft. Compose the named visual
+transitions with the latest owner. Close actual projectile-spritemap output,
+remaining special-attack definitions and runtime transfers; the presentation
+consumer contract above selects the next experiment.
 These are new coverage questions,
 not additional pass counts for the existing firing or launch experiments.
 
@@ -1844,6 +1916,7 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^shotretirement]: [ResetProjectileData](../sm/src/game/sm_90.rs#L1468); [ClearProjectile](../sm/src/game/sm_90.rs#L1504); [KillProjectile](../sm/src/game/sm_90.rs#L1566).
 [^shotimpact]: [start_impact](../sm/src/game/projectile_animation.rs#L102); [instruction_delete and advance](../sm/src/game/projectile_animation.rs#L185).
 [^bombowner]: [Bomb fuse and explosion](../sm/src/game/sm_90.rs#L2659); [Power Bomb fuse](../sm/src/game/sm_90.rs#L2676).
+[^projectilepresentation]: [Projectile draw scheduling](../sm/src/game/projectile_animation.rs#L217); [sprite lookup and projectile output](../sm/src/game/sm_81.rs#L174); [shared sprite output](../sm/src/game/sprite_drawing.rs#L29); [Ceres projection](../sm/src/game/sm_8b.rs#L580); [crash echoes](../sm/src/game/samus_animation.rs#L629).
 [^projectileplayback]: [get_ProjectileInstr](../sm/src/game/projectile_animation.rs#L33); [advance and instruction dispatch](../sm/src/game/projectile_animation.rs#L188).
 [^projectiletrailframe]: [trail_frame](../sm/src/game/projectile_animation.rs#L170).
 [^projectiledefinitions]: [Fixed and directional initialization](../sm/src/game/projectile_animation.rs#L36); [echo initialization](../sm/src/game/projectile_animation.rs#L148).
