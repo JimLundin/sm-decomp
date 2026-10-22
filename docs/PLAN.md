@@ -2672,6 +2672,9 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    position writes, aliasing, live room-width reads and synchronous reactions;
    price the shared algorithm plus both adapters. Merely adding checked wrappers
    or another dispatch layer does not resolve the duplication found here.
+   Work paused for the user's generation handoff on 2026-10-22; see
+   [HANDOFF.md](HANDOFF.md) for the unverified scan draft and exact continuation
+   point. No shared-scan implementation is adopted or verified yet.
    Current Game/RAM interfaces are temporary; substantial reduction, content
    extraction and complete unsafe elimination remain required beyond binding checks.
    The full projectile candidate now includes shared script control flow:
