@@ -1,3 +1,5 @@
+use crate::game::enemy_combat::resolve_grapple;
+use crate::game::combat_rules::GrappleOutcome;
 use crate::game::grapple_swing::{advance_swing, change_length, place_rope_origin};
 pub use crate::game::prelude::*;
 
@@ -301,29 +303,6 @@ pub unsafe fn CheckIfGrappleIsConnectedToBlock(game: &mut Game) -> u8 {
     }
     word!(game.samus_grapple_flags = 1);
     1
-}
-unsafe fn ProcessEnemyGrappleBeamColl(a: u16, mut r18: u16, game: &mut Game) -> i32 {
-    match a as i32 {
-        0 | 2 => -1i32,
-        3 => 1,
-        1 | 4 | 5 => 0,
-        6 => {
-            r18 = *(RomPtr_A0(r18, game) as *mut u16).offset(3);
-            if (word!(game.equipped_items) & 0x20) != 0 {
-                r18 = (r18 >> 2);
-            } else if word!(game.equipped_items) & 1 != 0 {
-                r18 = (r18 >> 1);
-            }
-            Samus_DealDamage(r18, game);
-            word! {game; samus_invincibility_timer = 96; samus_knockback_timer = 5;
-            knockback_x_dir = (*ram_ptr!(game; 0xa1e) == 4) as u16; }
-            1
-        }
-        _ => {
-            Unreachable(game);
-            0
-        }
-    }
 }
 crate::game::callback_dispatch! {
     pub unsafe fn CallGrappleNextFunc(ea: u32, game: &mut Game) => ea;
@@ -1061,20 +1040,21 @@ crate::game::callback_dispatch! {
             return;
         }
         let pair: PairU16 = grapple_enemy(game);
-        let v1: i32 = ProcessEnemyGrappleBeamColl(pair.k, pair.j, game);
-        if v1 >= 0 {
-            if v1 != 0 {
+        match resolve_grapple(pair.k, pair.j, game) {
+            GrappleOutcome::Attach => {},
+            GrappleOutcome::Cancel => {
                 word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
                 return;
             }
-        } else {
-            let v2: u8 = BlockCollGrappleBeam(game);
-            if (v2 & 1) == 0 {
-                return;
-            }
-            if (v2 & 0x40) == 0 {
-                word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
-                return;
+            GrappleOutcome::Miss => {
+                let v2: u8 = BlockCollGrappleBeam(game);
+                if (v2 & 1) == 0 {
+                    return;
+                }
+                if (v2 & 0x40) == 0 {
+                    word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
+                    return;
+                }
             }
         }
         QueueSfx1_Max6(6, game);

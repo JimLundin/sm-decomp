@@ -27,7 +27,6 @@ use crate::game::sm_a0::{
     EnemyFunc_BBBF, EnemyFunc_C8AD, Enemy_ItemDrop_Kraid,
     Enemy_ItemDrop_Phantoon, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
     IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
-    SwitchEnemyAiToMainAi,
 };
 use crate::game::sprite_objects::create_sprite;
 
@@ -2968,7 +2967,6 @@ crate::game::callback_dispatch! {
         CallEnemyPreInstr((((*E).var_F) as u32) | (0xa70000u32), game);
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [10977280] Enemy_GrappleReact_NoInteract_A7 => SwitchEnemyAiToMainAi(game);
     [10977295] Enemy_GrappleReact_CancelBeam_A7 => select_frozen_ai(game);
     [10977325] Enemy_NormalShotAI_A7 => apply_shot(game);
     [10977340]

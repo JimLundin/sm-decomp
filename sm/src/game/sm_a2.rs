@@ -30,7 +30,6 @@ use crate::game::sm_a0::{
     EnemyFunc_BC76, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
     Enemy_MoveRight_SlopesAsWalls, GetSamusEnemyDelta_X,
     IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
-    SamusLatchesOnWithGrapple,
 };
 use crate::game::sm_a9::MoveEnemyWithVelocity;
 
@@ -2648,7 +2647,6 @@ crate::game::callback_dispatch! {
     @forward [pub unsafe fn (game: &mut Game)];
     [10649615] Enemy_GrappleReact_CancelBeam_A2 => select_frozen_ai(game);
     [10649610] Enemy_GrappleReact_KillEnemy_A2 => grapple_death(game);
-    [10649605] Enemy_GrappleReact_SamusLatchesOn_A2 => SamusLatchesOnWithGrapple(game);
     [10649665] Enemy_NormalFrozenAI_A2 => update_frozen_enemy(game);
     Enemy_NormalPowerBombAI_A2 => apply_power_bomb(game);
     [10649635] Enemy_NormalTouchAI_A2 => apply_contact(game);

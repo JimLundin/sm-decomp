@@ -175,6 +175,31 @@ unsafe code; persistent RAM ownership and unsafe diagnostics/effects remain.
 Local reproduction: `Local/sm-decomp-experiments/20261022/weapon-enemy-contact`.
 
 **Standard combat (checked implementation adopted; RAM still owns state):**
+The grapple reaction family now lives in `enemy_combat`. Passive and active
+latching share frozen handling and final AI-state writes, retaining different
+snap timing. Passive latching snaps before reading frozen state or diagnosing
+the definition. Active latching captures the bank before that diagnostic, calls
+the selected main AI, then snaps using the original slot's live coordinates.
+Changing the global selector does not redirect those final writes. Recursive
+reactions and partial failures retain their original prefixes.
+
+The firing caller now consumes named miss/attach/cancel outcomes. Damage reads
+use a checked native-word record, suit state is sampled after diagnostics, and
+knockback direction reads the live direction byte after damage. Nine live numeric
+routes map directly to shared routines; the old bank forwarding functions and
+four unused A0 aliases retire. The paralyzing-latch helper had no remaining caller
+outside its unused alias and is removed too. In total, eighteen entries retire.
+
+Final checks pass **827 old/new comparisons**, 971 ordered full-RAM/selected-ROM
+observations, 246 matching failures and twelve checked short-record failures.
+They exercise all nine routes, the actual firing caller and selected actual
+AI/damage consumers. Block collision, connection setup, sound and custom AI remain
+controlled boundaries; no movie or complete gameplay coverage is claimed.
+Release/source/native checks pass. Complete cost is **+3 Rust lines**. AI reset,
+beam snapping and outcome types forbid unsafe code; persistent RAM ownership and
+unsafe diagnostics/effects remain. Local reproduction:
+`Local/sm-decomp-experiments/20261022/grapple-reactions`.
+
 `enemy_combat::shot_without_death` samples initial projectile damage/type and the
 vulnerability record, then sets flash/AI state before a hurt-sound callback. After
 that callback it rereads the enemy selector for health damage and independently

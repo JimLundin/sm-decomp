@@ -25,7 +25,6 @@ use crate::game::sm_a0::{
     EnemyFunc_B691, EnemyFunc_B7A1, EnemyFunc_Divide, Enemy_ItemDrop_Draygon,
     Enemy_ItemDrop_SporeSpawn,
     SignExtend8, SineMult8bit,
-    SwitchEnemyAiToMainAi,
 };
 use crate::game::sprite_objects::create_sprite;
 
@@ -1386,7 +1385,6 @@ crate::game::callback_dispatch! {
         SporeSpawn_Func_6(game);
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [10846208] Enemy_GrappleReact_NoInteract_A5 => SwitchEnemyAiToMainAi(game);
     [10846223] Enemy_GrappleReact_CancelBeam_A5 => select_frozen_ai(game);
     [10846243] Enemy_NormalTouchAI_A5 => apply_contact(game);
     [10846253] Enemy_NormalShotAI_A5 => apply_shot(game);

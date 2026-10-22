@@ -33,7 +33,6 @@ use crate::game::sm_a0::{
     Enemy_ItemDrop_MiniKraid, Enemy_ItemDrop_Ridley, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
     GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y,
     SineMult8bit,
-    SwitchEnemyAiToMainAi,
 };
 use crate::game::sm_a9::{
     ComputeCosMult, ComputeSinMult, MoveEnemyWithVelocity, Shitroid_Func_2, WriteColorsToPalette,
@@ -4454,7 +4453,6 @@ crate::game::callback_dispatch! {
         (*G).base.flash_timer = (*E).base.flash_timer;
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [10911744] Enemy_GrappleReact_NoInteract_A6 => SwitchEnemyAiToMainAi(game);
     [10911759] Enemy_GrappleReact_CancelBeam_A6 => select_frozen_ai(game);
     [10911779] Enemy_NormalTouchAI_A6 => apply_contact(game);
     [10911789] Enemy_NormalShotAI_A6 => apply_shot(game);

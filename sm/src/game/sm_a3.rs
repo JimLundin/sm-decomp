@@ -27,7 +27,7 @@ use crate::game::sm_a0::{
     Enemy_MoveRight_IgnoreSlopes, Enemy_MoveRight_ProcessSlopes,
     GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
     SignExtend8, SineMult8bit,
-    SineMult8bitFull, SwitchEnemyAiToMainAi,
+    SineMult8bitFull,
 };
 use crate::game::sprite_objects::create_sprite;
 pub use crate::game::waver::{Waver_Init, Waver_Instr_1, Waver_Main};
@@ -2437,7 +2437,6 @@ crate::game::callback_dispatch! {
         }
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [10715136] Enemy_GrappleReact_NoInteract_A3 => SwitchEnemyAiToMainAi(game);
     [10715146] Enemy_GrappleReact_KillEnemy_A3 => grapple_death(game);
     [10715151] Enemy_GrappleReact_CancelBeam_A3 => select_frozen_ai(game);
     [10715171] Enemy_NormalTouchAI_A3 => apply_contact(game);

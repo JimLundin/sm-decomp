@@ -18,7 +18,7 @@ use crate::game::sm_a0::{
     Enemy_ItemDrop_Botwoon, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
     GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsEnemyLeavingScreen, IsSamusWithinEnemy_X,
     IsSamusWithinEnemy_Y,
-    SignExtend8, SwitchEnemyAiToMainAi,
+    SignExtend8,
 };
 use crate::game::sprite_objects::create_sprite;
 
@@ -968,7 +968,6 @@ crate::game::callback_dispatch! {
         NorfairPipeBug_8BA8(game);
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [11763712] Enemy_GrappleReact_NoInteract_B3 => SwitchEnemyAiToMainAi(game);
     [11763722] Enemy_GrappleReact_KillEnemy_B3 => grapple_death(game);
     [11763727] Enemy_GrappleReact_CancelBeam_B3 => select_frozen_ai(game);
     [11763747] Enemy_NormalTouchAI_B3 => apply_contact(game);

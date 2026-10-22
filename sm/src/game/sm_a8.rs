@@ -18,8 +18,7 @@ use crate::game::sm_a0::{
     EnemyFunc_ACA8, EnemyFunc_ADA3, EnemyFunc_B7A1, EnemyFunc_C8AD,
     Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
     GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
-    SamusLatchesOnWithGrappleNoInvinc, SignExtend8, SineMult8bit, SineMult8bitFull,
-    SwitchEnemyAiToMainAi,
+    SignExtend8, SineMult8bit, SineMult8bitFull,
 };
 use crate::game::sprite_objects::create_sprite;
 
@@ -3001,11 +3000,8 @@ crate::game::callback_dispatch! {
         }
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [11042816] Enemy_GrappleReact_NoInteract_A8 => SwitchEnemyAiToMainAi(game);
     [11042826] Enemy_GrappleReact_KillEnemy_A8 => grapple_death(game);
     [11042831] Enemy_GrappleReact_CancelBeam_A8 => select_frozen_ai(game);
-    [11042836]
-    Enemy_GrappleReact_SamusLatchesNoInvinc_A8 => SamusLatchesOnWithGrappleNoInvinc(game);
     [11042846] Enemy_GrappleReact_HurtSamus_A8 => select_frozen_ai(game);
     [11042851] Enemy_NormalTouchAI_A8 => apply_contact(game);
     [11042861] Enemy_NormalShotAI_A8 => apply_shot(game);

@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **96,345 Rust lines in 126 files**, plus 262 C
-bridge and 296 C-header lines = **96,903 maintained implementation lines**.
+Current composition (2026-10-22): **96,348 Rust lines in 126 files**, plus 262 C
+bridge and 296 C-header lines = **96,906 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,734**. This complete recount includes frontend,
+gives **97,737**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2636,7 +2636,8 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    Contracts and limits: RAM_OWNERSHIP.md, section 6. Local reproduction:
    Local/sm-decomp-experiments/20261022/plm-pickups.
    Standard enemy combat now belongs to `enemy_combat`: contact, projectiles,
-   Power Bombs, freeze selection, death cleanup and hit/dud effects. All callers
+   Power Bombs, grapple latching/results, freeze selection, death cleanup and
+   hit/dud effects. All callers
    use its named routines; the old entry points and ten A0 forwarding aliases
    retire, with twelve Power Bomb and three hitbox routes preserved. Collision
    searches, enemy-specific reactions and persistent RAM ownership remain outside
@@ -2654,6 +2655,23 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    broader ownership and unsafe-elimination goals remain open. Contracts and
    limits: RAM_OWNERSHIP.md, section 3. Local reproduction:
    Local/sm-decomp-experiments/20261022/standard-combat.
+   Grapple reactions now share passive/active latch handling and safe AI reset;
+   the firing caller consumes named miss/attach/cancel outcomes. Eighteen old
+   entries retire, including four unused A0 aliases, the uncalled paralyzing
+   helper and nine bank forwarding functions. All nine live numeric routes use
+   direct mappings. Checked enemy handles, ROM records and the existing direction
+   byte accessor replace these paths' raw memory operations. Active latching
+   captures the bank before diagnostics and snaps after the enemy callback;
+   passive latching snaps first. All writes retain the original captured slot.
+   Final checks pass **827 comparisons**, 971 ordered full-RAM/selected-ROM
+   observations, 246 matching failures and twelve checked short-record failures.
+   All nine routes, the actual firing caller and selected actual AI/damage
+   consumers execute. Release/source/native and formatting checks pass. No movie
+   ran; block collision, connection setup, sound and custom AI remain controlled.
+   Complete cost is **+3 Rust lines**, including callers and direct dispatch.
+   Types, AI reset and beam snapping forbid unsafe code. Persistent RAM ownership
+   and native/effect calls remain; this is safety work, not volume savings.
+   Local reproduction: Local/sm-decomp-experiments/20261022/grapple-reactions.
    Enemy contact now belongs to `enemy_contact`, including the per-enemy pass,
    grapple search and Power Bomb scan. Scheduler, gameplay and all three grapple
    callers use its named routines; nine bank entries are retired. Ordinary and
@@ -4465,14 +4483,19 @@ spawning, room-content loading, door closing, checked music control and shared
 dialogue control, checked room graphics, checked enemy graphics staging and
 checked sprite-object state, checked scene/enemy drawing, checked enemy scheduling,
 owned enemy-script positions, checked enemy-definition records, standard combat and shared enemy/projectile contact,
-maintained Rust is **96,345**,
+maintained Rust is **96,348**,
 with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,903**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,734**.
+Including 262 C and 296 header lines gives **96,906**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,737**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2959; cast lines 6236. Grapple/Power Bomb contact adds 13
+unsafe functions 2959; cast lines 6232. Shared grapple reactions add three
+Rust lines and remove four cast-containing lines; all other counters are unchanged.
+Raw enemy, damage-record and direction-byte reads retire in the migrated paths;
+AI reset, beam snapping and outcome types forbid unsafe code. Diagnostics and
+actual AI/damage calls remain unsafe. This is a safety cost, not volume savings.
+Grapple/Power Bomb contact adds 13
 Rust lines and removes 14 cast-containing lines; all other counters are unchanged.
 Raw enemy pointers and the raw radius-byte access retire in those scans; shared
 geometry forbids unsafe code. Samus setup, native diagnostics and enemy reactions

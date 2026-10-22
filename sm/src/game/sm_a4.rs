@@ -16,7 +16,6 @@ use crate::game::sm_86::{ClearEprojs, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::SpawnHdmaObject;
 use crate::game::sm_a0::{
     Enemy_ItemDrop_Crocomire, Enemy_MoveRight_IgnoreSlopes,
-    SamusLatchesOnWithGrapple,
 };
 use crate::game::sprite_objects::create_sprite;
 
@@ -1422,7 +1421,6 @@ crate::game::callback_dispatch! {
         };
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [10780677] Enemy_GrappleReact_SamusLatchesOn_A4 => SamusLatchesOnWithGrapple(game);
     [10780707] Enemy_NormalTouchAI_A4 => apply_contact(game);
     [10780717] Enemy_NormalShotAI_A4 => apply_shot(game);
     [10780737] Enemy_NormalFrozenAI_A4 => update_frozen_enemy(game);

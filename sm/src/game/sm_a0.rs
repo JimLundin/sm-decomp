@@ -1,3 +1,4 @@
+use crate::game::combat_rules::LatchMode;
 use crate::rtl::rom_record;
 use core::mem::offset_of;
 use crate::game::enemy_scheduling::{shake_active_enemies, update_frozen_enemy};
@@ -260,6 +261,9 @@ crate::game::callback_dispatch! {
     call (game); default { Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
     @external {
+        10715136 | 10846208 | 10911744 | 10977280 | 11042816 | 11763712 => crate::game::enemy_combat::resume_ai;
+        10649605 | 10780677 => [crate::game::enemy_combat::latch_enemy(LatchMode::Passive, game)];
+        11042836 => [crate::game::enemy_combat::latch_enemy(LatchMode::Active, game)];
         10518583 | 10649655 | 10715191 | 10780727 | 10846263 | 10911799 | 10977335 | 11042871 | 11108407 | 11173943 | 11698231 | 11763767 => crate::game::enemy_combat::apply_power_bomb;
         10649676 => [()];
         10656319 => sm_a2::ThinHoppingBlobs_Init;
@@ -431,10 +435,6 @@ crate::game::callback_dispatch! {
     pub unsafe fn CallHitboxShot(ea: u32, j: u16, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
     @forward [pub unsafe fn (game: &mut Game)];
-    Enemy_GrappleReact_NoInteract_A0 => SwitchEnemyAiToMainAi(game);
-    Enemy_GrappleReact_SamusLatchesOn_A0 => SamusLatchesOnWithGrapple(game);
-    Enemy_GrappleReact_SamusLatchesNoInvinc_A0 => SamusLatchesOnWithGrappleNoInvinc(game);
-    Enemy_GrappleReact_SamusLatchesParalyze_A0 => SamusLatchesOnWithGrappleParalyze(game);
     Enemy_NormalFrozenAI => update_frozen_enemy(game);
     @external {
         10518573 => crate::game::enemy_combat::apply_shot;
@@ -455,52 +455,6 @@ crate::game::callback_dispatch! {
 }
 
 
-crate::prefixed_callbacks! {
-    pub unsafe fn (game: &mut Game);
-    @prefix { let E = gEnemyData(word!(game.cur_enemy_index) as i32, game); };
-    SwitchEnemyAiToMainAi [] {
-        set_fields! {[(*E)], 0; ai_handler_bits, invincibility_timer, frozen_timer, shake_timer}
-    };
-    SamusLatchesOnWithGrapple [] {
-        word! {game; grapple_beam_end_x_pos = (*E).x_pos; grapple_beam_end_y_pos = (*E).y_pos; }
-        if (*E).frozen_timer != 0 {
-            (*E).ai_handler_bits = 4;
-        } else {
-            let ED = rom_record(0xa0, (*E).enemy_ptr, game);
-            (*E).flash_timer = (if ED.byte(offset_of!(EnemyDef, hurt_ai_time)) != 0 {
-                ED.byte(offset_of!(EnemyDef, hurt_ai_time)) as i32
-            } else {
-                4
-            }) as u16;
-            (*E).ai_handler_bits = 0;
-        };
-    };
-    SamusLatchesOnWithGrappleNoInvinc [] {
-        if (*E).frozen_timer != 0 {
-            (*E).ai_handler_bits = 4;
-        } else {
-            CallEnemyAi(
-                (words!(
-                    i32,
-                    ((*E).bank, rom_record(0xa0, (*E).enemy_ptr, game).word(offset_of!(EnemyDef, main_ai)))
-                )) as u32,
-                game,
-            );
-            (*E).ai_handler_bits = 0;
-        }
-        word! {game; grapple_beam_end_x_pos = (*E).x_pos; grapple_beam_end_y_pos = (*E).y_pos; }
-    };
-    SamusLatchesOnWithGrappleParalyze [] {
-        let ED = rom_record(0xa0, (*E).enemy_ptr, game);
-        (*E).flash_timer = (if ED.byte(offset_of!(EnemyDef, hurt_ai_time)) != 0 {
-            ED.byte(offset_of!(EnemyDef, hurt_ai_time)) as i32
-        } else {
-            4
-        }) as u16;
-        (*E).ai_handler_bits = 0;
-        (*E).extra_properties = ((*E).extra_properties) | (1u16);
-    };
-}
 fn solid_enemy_probe_coordinate(position: u16, fraction: u16, amount: i32, negative: bool) -> u16 {
     let integer_amount = (amount >> 16) as u16;
     let fractional_amount = amount as u16;

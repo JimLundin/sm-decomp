@@ -119,3 +119,15 @@ pub(crate) fn suit_damage(damage: u16, equipment: u16) -> u16 {
         damage
     }
 }
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum LatchMode {
+    Passive,
+    Active,
+}
+
+pub enum GrappleOutcome {
+    Miss,
+    Attach,
+    Cancel,
+}

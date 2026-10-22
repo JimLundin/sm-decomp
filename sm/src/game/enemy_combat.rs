@@ -1,6 +1,8 @@
 //! Standard enemy combat. Slot handles survive effects; live selectors do not.
 #![deny(unsafe_op_in_unsafe_fn)]
-use crate::game::combat_rules::{self as rules, HealthResponse, Shot, ShotResponse};
+use crate::game::combat_rules::{
+    self as rules, GrappleOutcome, HealthResponse, LatchMode, Shot, ShotResponse,
+};
 use crate::game::constants::bank_86::addr_kEproj_EnemyDeathExplosion;
 use crate::game::constants::bank_a0::addr_kEnemyDef_DAFF;
 use crate::game::constants::bank_b4::addr_stru_B4EC1C;
@@ -339,4 +341,75 @@ pub unsafe fn create_dud(game: &mut Game) {
     }
     let index = word!(game.collision_detection_index);
     word!(game.projectile_dir[index] = word!(game.projectile_dir[index]) | 0x10);
+}
+
+#[forbid(unsafe_code)]
+pub fn resume_ai(game: &mut Game) {
+    let enemy = current(game);
+    for field in [F::AiHandlers, F::Invincibility, F::Frozen, F::Shake] {
+        enemy.set(field, 0, game);
+    }
+}
+
+#[forbid(unsafe_code)]
+fn snap_grapple(enemy: EnemySlot, game: &mut Game) {
+    word!(game.grapple_beam_end_x_pos = enemy.word(F::X, game));
+    word!(game.grapple_beam_end_y_pos = enemy.word(F::Y, game));
+}
+
+pub unsafe fn latch_enemy(mode: LatchMode, game: &mut Game) {
+    let enemy = current(game);
+    if mode == LatchMode::Passive {
+        snap_grapple(enemy, game);
+    }
+    if enemy.word(F::Frozen, game) != 0 {
+        enemy.set(F::AiHandlers, 4, game);
+    } else {
+        // Active latching captures the bank before the definition diagnostic.
+        let bank = enemy.bank(game);
+        let definition = unsafe { enemy.definition(game) };
+        match mode {
+            LatchMode::Passive => enemy.set(
+                F::Flash,
+                rules::hurt_duration(definition.byte(offset_of!(EnemyDef, hurt_ai_time)), 0),
+                game,
+            ),
+            LatchMode::Active => unsafe {
+                crate::game::sm_a0::CallEnemyAi(
+                    (u32::from(bank) << 16)
+                        | u32::from(definition.word(offset_of!(EnemyDef, main_ai))),
+                    game,
+                );
+            },
+        }
+        enemy.set(F::AiHandlers, 0, game);
+    }
+    if mode == LatchMode::Active {
+        snap_grapple(enemy, game);
+    }
+}
+
+pub unsafe fn resolve_grapple(reaction: u16, definition: u16, game: &mut Game) -> GrappleOutcome {
+    match reaction {
+        0 | 2 => GrappleOutcome::Miss,
+        3 => GrappleOutcome::Cancel,
+        1 | 4 | 5 => GrappleOutcome::Attach,
+        6 => {
+            let definition = unsafe { rom_record(0xa0, definition, game) };
+            let damage = reduce_suit_damage(definition.word(offset_of!(EnemyDef, damage)), game);
+            unsafe {
+                Samus_DealDamage(damage, game);
+            }
+            word!(game.samus_invincibility_timer = 96);
+            word!(game.samus_knockback_timer = 5);
+            word!(game.knockback_x_dir = u16::from(game.samus_pose_x_dir() == 4));
+            GrappleOutcome::Cancel
+        }
+        _ => {
+            unsafe {
+                crate::rtl::Unreachable(game);
+            }
+            GrappleOutcome::Attach
+        }
+    }
 }
