@@ -15,6 +15,21 @@ An agent holding a reservation must release its own reservation immediately,
 preserving source changes and verification work. Do not delete another
 process's lock; tell its owner to release it.
 
+## Accepted target architecture (2026-10-22)
+
+User direction: adopt the [owned Rust architecture](target-architecture/README.md)
+as the destination, with small platform libraries for device access. Windows
+workers may retain the current emulated backend and built-in oracle for
+development comparisons during staged responsibility replacement. The current
+work order, reduction objective, and validation strategy below remain active.
+
+Before changing subsystem ownership or backend interfaces, read the
+[migration handoff](target-architecture/MIGRATION.md). It maps current code to
+the target packages, preserves current RAM compatibility for its consumers,
+and defines evidence for eventual backend retirement. Independence is a
+completion gate for the new-engine slice, not a prerequisite to current work.
+This handoff changes documentation only; it claims no new engine verification.
+
 ## Active direction (2026-10-20)
 
 Artifact availability update (2026-10-21): the entire local TEMP

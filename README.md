@@ -9,6 +9,12 @@ with c2rust and is now being cleaned up into idiomatic Rust, one subsystem at
 a time, with that per-frame comparison as the test. See
 [docs/PLAN.md](docs/PLAN.md).
 
+The accepted destination is our own purpose-built Rust game and engine. The
+[architecture handoff](docs/target-architecture/README.md) includes a standalone
+interactive report and a staged migration plan. Windows workers can keep the
+current emulated backend and oracle for development comparisons while replacing
+responsibilities. Existing run and verification commands continue to apply.
+
 ## Run
 
 Needs SDL2 (`apt install libsdl2-dev` on Debian/Ubuntu) and rustup.

@@ -5,6 +5,10 @@ and evidence rule. Ignore `.scratch/`, readiness gates, acceptance pointers,
 translation scopes and anything else from before 2026-10-17; that project
 is archived in the branch `archive/pre-transpile-2026-10-17`.
 
+Before changing subsystem boundaries, state ownership, or backend architecture,
+read `docs/target-architecture/README.md` for the accepted destination and
+Windows migration policy. Current work and checks still follow `docs/PLAN.md`.
+
 ## The loop
 
 1. Take the earliest unfinished item in `docs/PLAN.md`.
