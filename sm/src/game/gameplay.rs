@@ -20,9 +20,8 @@ use crate::game::sm_90::{
     HandleControllerInputForGamePhysics, HandleSamusMovementAndPause, MainScrollingRoutine,
 };
 use crate::game::sm_a0::{
-    DecrementSamusTimers, EprojProjCollDet, EprojSamusCollDetect, HandleRoomShaking,
+    DecrementSamusTimers, HandleRoomShaking,
     ProcessEnemyPowerBombInteraction,
-    SamusProjectileInteractionHandler,
 };
 
 #[derive(Clone, Copy, PartialEq)]
@@ -58,7 +57,7 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
         PaletteFxHandler(game);
         HandleControllerInputForGamePhysics(game);
         if word!(game.debug_disable_sprite_interact) == 0 {
-            SamusProjectileInteractionHandler(game);
+            crate::game::projectile_contact::player_projectiles_hit_samus(game);
         }
         run_enemies(game);
     }
@@ -86,8 +85,8 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
         AnimtilesHandler(game);
         // This is a new read: earlier callbacks may change interaction policy.
         if word!(game.debug_disable_sprite_interact) == 0 {
-            EprojSamusCollDetect(game);
-            EprojProjCollDet(game);
+            crate::game::projectile_contact::enemy_projectiles_hit_samus(game);
+            crate::game::projectile_contact::shoot_enemy_projectiles(game);
             ProcessEnemyPowerBombInteraction(game);
         }
         MainScrollingRoutine(game);

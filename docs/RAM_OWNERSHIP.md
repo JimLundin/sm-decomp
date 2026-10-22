@@ -115,7 +115,7 @@ captured where the present consumer reads it, before the producer's next reset.
 ### 3. Enemy contact changes Samus before her movement completes
 
 **Producer:** `EnemyMain` runs collision handling before selected AI and instruction
-work. `SamusProjectileInteractionHandler` can set damage, invincibility,
+work. `projectile_contact::player_projectiles_hit_samus` can set damage, invincibility,
 knockback or bomb-jump direction. **Consumer:** the later Samus completion handler
 performs movement, hit interruption and pose transitions.[^enemies][^contact]
 [^complete]
@@ -126,6 +126,31 @@ contact later in the update therefore see different phases of the field.
 The effect/Samus collision pass also consults invincibility and this contact
 mode. A single end-of-update damage application would change that timing.
 [^complete][^effectcontact]
+
+The projectile-contact family now uses checked RAM access and shares its
+geometry/shot-selection rules with enemy contact. The two enemy-projectile
+passes retain descending enemy order and ascending player-shot order. Samus
+invincibility is checked once before the enemy-projectile touch loop, so a
+successful contact does not prevent later slots from dealing damage in that
+same pass. Projectile flag 2 is instead reread inside the shot loop after effects.
+
+The direct touch handler retains its unrounded native definition byte offset
+while other fields use the rounded slot. Its damage/knockback reads remain live
+after diagnostics/effects. Dud sprite coordinates deliberately index player
+projectiles using the enemy-projectile slot. Player-projectile damage preserves
+the native assertion after marking and setting invincibility/knockback; this is
+an existing failure path, not normalized game behavior.
+
+All five original bank entries retire; gameplay keeps their original phase and
+suspension ordering. Final actual-code checks pass **1,595 comparisons**, 2,123
+ordered full-RAM/selected-ROM observations and 394 matching failures, plus ten
+checked short-record failures. Explicit cases confirm repeated damage, assertion
+order, the dud index and callback-directed loop termination. Shared rule bodies
+have exact source correspondence, and release/source/native checks pass. Effects
+are controlled boundaries; no movie or full gameplay-route coverage is claimed.
+Complete cost is **+41 Rust lines**. Rules forbid unsafe code; RAM still owns
+state, and native diagnostics plus damage/sprite/sound calls remain unsafe.
+Local reproduction: `Local/sm-decomp-experiments/20261022/projectile-contact`.
 
 **Standard combat (checked implementation adopted; RAM still owns state):**
 `enemy_combat::shot_without_death` samples initial projectile damage/type and the
@@ -2783,9 +2808,9 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^prepare]: [Samus_FrameHandlerAlfa_Func11/12](../sm/src/game/sm_90.rs#L4009).
 [^hud]: [Samus_HandleHudSpecificBehaviorAndProjs](../sm/src/game/sm_90.rs#L3477).
 [^enemies]: [EnemyMain](../sm/src/game/sm_a0.rs#L879).
-[^contact]: [SamusProjectileInteractionHandler](../sm/src/game/sm_a0.rs#L1043).
+[^contact]: [player_projectiles_hit_samus](../sm/src/game/projectile_contact.rs#L18).
 [^complete]: [Samus_FrameHandlerBeta_Func17](../sm/src/game/sm_90.rs#L4058).
-[^effectcontact]: [EprojSamusCollDetect](../sm/src/game/sm_a0.rs#L1332).
+[^effectcontact]: [enemy_projectiles_hit_samus](../sm/src/game/projectile_contact.rs#L100).
 [^shotcollision]: [beam_block_collision and missile_block_collision](../sm/src/game/sm_94.rs#L1648).
 [^trail]: [SpawnProjectileTrail](../sm/src/game/sm_90.rs#L2076); [ProjectileTrail_Func5](../sm/src/game/sm_9b.rs#L61).
 [^pickup]: [PLM item pickup instructions](../sm/src/game/sm_84.rs#L2544).
@@ -2815,7 +2840,7 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^missilelaunch]: [HudSelectionHandler_MissilesOrSuperMissiles](../sm/src/game/sm_90.rs#L2507); [accelerate_missile](../sm/src/game/projectile_flight.rs#L180).
 [^reflection]: [ProjectileReflection](../sm/src/game/sm_90.rs#L2460); [Reflec_Shot](../sm/src/game/sm_a3.rs#L1923); [Space Pirate reflection](../sm/src/game/sm_b2.rs#L97).
 [^launchmodel]: [LaunchMotion and typed inputs/output](../sm/src/game/launch_motion.rs); [transition serialization and initialization](../sm/src/game/launch_motion_ram.rs); migrated callers in [sm_90](../sm/src/game/sm_90.rs), symbols `record_movement` and `finish_projectile_phase`.
-[^enemyshotsearch]: [projectile_contacts](../sm/src/game/enemy_contact.rs#L213); [projectile_hitbox](../sm/src/game/enemy_contact.rs#L340); [process_contacts](../sm/src/game/enemy_contact.rs#L63).
+[^enemyshotsearch]: [projectile_contacts](../sm/src/game/enemy_contact.rs#L175); [projectile_hitbox](../sm/src/game/enemy_contact.rs#L302); [process_contacts](../sm/src/game/enemy_contact.rs#L25).
 [^shotretirement]: [ResetProjectileData](../sm/src/game/sm_90.rs#L1468); [ClearProjectile](../sm/src/game/sm_90.rs#L1504); [KillProjectile](../sm/src/game/sm_90.rs#L1566).
 [^shotimpact]: [start_impact](../sm/src/game/projectile_animation.rs#L102); [instruction_delete and advance](../sm/src/game/projectile_animation.rs#L185).
 [^bombowner]: [Bomb fuse and explosion](../sm/src/game/sm_90.rs#L2659); [Power Bomb fuse](../sm/src/game/sm_90.rs#L2676).

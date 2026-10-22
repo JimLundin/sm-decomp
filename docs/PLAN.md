@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **96,291 Rust lines in 124 files**, plus 262 C
-bridge and 296 C-header lines = **96,849 maintained implementation lines**.
+Current composition (2026-10-22): **96,332 Rust lines in 126 files**, plus 262 C
+bridge and 296 C-header lines = **96,890 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,680**. This complete recount includes frontend,
+gives **97,721**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2670,6 +2670,22 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    RAM still owns persistent state; diagnostics and dispatch remain unsafe.
    This is safety/responsibility work, not a volume reduction. Local reproduction:
    Local/sm-decomp-experiments/20261022/enemy-contact.
+   Projectile contact now belongs to `projectile_contact`: player shots/bombs
+   touching Samus, enemy projectiles touching Samus and enemy-projectile shot
+   reactions. All five bank entries retire, with gameplay phase callers migrated.
+   Both contact owners share `contact_rules`, which forbids unsafe code and
+   retains the previous geometry and shot-selection expressions. Checked word
+   and native byte-offset access replace raw projectile RAM operations. Odd
+   definition offsets, live callback reads, repeated damage, dud coordinate
+   indexing and the original native assertion/partial writes remain intact.
+   Final checks pass **1,595 old/new comparisons**, 2,123 ordered full-RAM and
+   selected-ROM observations, 394 matching failures and ten short-record failures.
+   Release library/frontend/verifier and source/native checks pass. No movie ran;
+   damage, sprite and sound effects are controlled boundaries. Complete cost is
+   **+41 Rust lines**, including shared rules, callers and registrations. State
+   remains in RAM; diagnostics and effect calls remain unsafe. This is safety
+   and responsibility work, not volume savings. Local reproduction:
+   Local/sm-decomp-experiments/20261022/projectile-contact.
    Enemy population creation now owns its search and multipart iteration state,
    with named room/dynamic initialization rules and checked RAM/ROM adapters.
    Room creation, dynamic spawning, graphics selection, spawn recording and linked
@@ -4439,15 +4455,20 @@ owned room metadata, checked door metadata, shared scroll loading, shared PLM
 spawning, room-content loading, door closing, checked music control and shared
 dialogue control, checked room graphics, checked enemy graphics staging and
 checked sprite-object state, checked scene/enemy drawing, checked enemy scheduling,
-owned enemy-script positions, checked enemy-definition records, standard combat and enemy contact,
-maintained Rust is **96,291**,
+owned enemy-script positions, checked enemy-definition records, standard combat and shared enemy/projectile contact,
+maintained Rust is **96,332**,
 with applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **96,849**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,680**.
+Including 262 C and 296 header lines gives **96,890**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,721**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2959; cast lines 6271. Enemy contact adds 57 Rust lines and
+unsafe functions 2959; cast lines 6250. Projectile contact adds 41 Rust lines
+and removes 21 cast-containing lines; all other counters are unchanged. Raw
+projectile byte/word loads and stores retire in this complete contact family;
+shared contact rules forbid unsafe code. Native diagnostics and damage/sprite/
+sound calls remain unsafe. This is a safety cost, not a volume reduction.
+Enemy contact adds 57 Rust lines and
 three counted unsafe declarations as named functions replace macro-generated
 bodies, while removing 64 cast-containing lines. Raw enemy/spawn fields and
 sprite-map/hitbox pointers retire in the contact pass; checked geometry forbids

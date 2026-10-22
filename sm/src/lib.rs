@@ -400,6 +400,8 @@ pub mod game {
     pub mod combat_rules;
     pub mod enemy_combat;
     pub mod enemy_contact;
+    pub mod contact_rules;
+    pub mod projectile_contact;
     pub mod waver;
 }
 

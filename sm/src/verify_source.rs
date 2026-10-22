@@ -192,6 +192,8 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/game/combat_rules.rs", include_bytes!("game/combat_rules.rs")),
     ("sm/src/game/enemy_combat.rs", include_bytes!("game/enemy_combat.rs")),
     ("sm/src/game/enemy_contact.rs", include_bytes!("game/enemy_contact.rs")),
+    ("sm/src/game/contact_rules.rs", include_bytes!("game/contact_rules.rs")),
+    ("sm/src/game/projectile_contact.rs", include_bytes!("game/projectile_contact.rs")),
 
     ("sm/src/game/enemy_script.rs", include_bytes!("game/enemy_script.rs")),
     ("sm/src/game/enemy_animation.rs", include_bytes!("game/enemy_animation.rs")),
