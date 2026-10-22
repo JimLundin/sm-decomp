@@ -5,12 +5,10 @@ pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_9b::*;
 
-use crate::game::projectile_animation::trail_frame;
 use crate::game::samus_animation::DrawSamusSuitExploding;
 use crate::game::samus_animation::Samus_DrawStartingDeathAnim;
 use crate::game::sm_80::{Multiply16x16, QueueSfx1_Max1, QueueSfx1_Max15, QueueSfx1_Max6};
 use crate::game::sm_81::DrawBeamGrappleSpritemap;
-use crate::game::sm_8b::CalcExplosion_Mode7;
 use crate::game::sm_90::{
     CallSomeSamusCode, LoadProjectilePalette, Samus_GetBottom_R18, Samus_GrappleWallJumpCheck,
     Samus_PostGrappleCollisionDetect,
@@ -61,52 +59,6 @@ static kShadesOfWhite: [u16; 22] = [
 static kIsGrappleBannedForMovementType: [u8; 28] = [
     0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1,
 ];
-pub unsafe fn ProjectileTrail_Func5(k: u16, j: u16, game: &mut Game) {
-    let R22: u16 = trail_frame(k, game);
-    let mut r18: u16 = 0;
-    let mut r20: u16 = if (word!(game.ceres_status) & 0x8000) == 0 {
-        let v2: i32 = k as i32 >> 1;
-        r18 = word!(game.projectile_x_pos[v2]);
-        word!(game.projectile_y_pos[v2])
-    } else {
-        let pt: Point16U = CalcExplosion_Mode7(k, game);
-        r18 = (word!(game.layer1_x_pos)).wrapping_add(pt.x);
-        (word!(game.layer1_y_pos)).wrapping_add(pt.y)
-    };
-    let v3: i32 = k as i32 >> 1;
-    let v4: u16 = word!(game.projectile_type[v3]);
-    let mut v5: u16 = if (v4 & 0x20) != 0 {
-        (crate::rtl::rom_table_word!(
-            game,
-            0x9ba4e3,
-            (word!(game.projectile_type[v3]) as i32 & 0xf) as isize
-        ) as i32
-            + 2 * (word!(game.projectile_dir[v3]) as i32 & 0xf)) as u16
-    } else if (v4 & 0x10) != 0 {
-        (crate::rtl::rom_table_word!(
-            game,
-            0x9ba4cb,
-            (word!(game.projectile_type[v3]) as i32 & 0xf) as isize
-        ) as i32
-            + 2 * (word!(game.projectile_dir[v3]) as i32 & 0xf)) as u16
-    } else {
-        (crate::rtl::rom_table_word!(
-            game,
-            0x9ba4b3,
-            (word!(game.projectile_type[v3]) as i32 & 0xf) as isize
-        ) as i32
-            + 2 * (word!(game.projectile_dir[v3]) as i32 & 0xf)) as u16
-    };
-    let v6: u16 = (*(RomPtr_9B(v5, game) as *mut u16) as i32 + 4 * R22 as i32) as u16;
-    let p = RomPtr_9B(v6, game);
-    let v7: i32 = j as i32 >> 1;
-    word! { game;
-        projectiletrail_left_y_pos[v7] = (r20 as i32 + *p.offset(1) as i8 as i32 - 4i32) as u16;
-        projectiletrail_left_x_pos[v7] = (r18 as i32 + *p as i8 as i32 - 4i32) as u16;
-        projectiletrail_right_y_pos[v7] = (r20 as i32 + *p.offset(3) as i8 as i32 - 4i32) as u16;
-        projectiletrail_right_x_pos[v7] = (r18 as i32 + *p.offset(2) as i8 as i32 - 4i32) as u16;
-    }
-}
 pub unsafe fn StartSamusDeathAnimation(game: &mut Game) {
     let v0: u16 = *ram_ptr!(game; 0xa1f) as u16;
     if *ram_ptr!(game; 0xa1f) == 3 {

@@ -1,6 +1,6 @@
 //! Launch speed and flight of ordinary beams, missiles and their linked extensions.
 use crate::game::projectile_animation::initialize_super_missile;
-use crate::game::sm_90::{ClearProjectile, InitProjectilePositionDirection, SpawnProjectileTrail};
+use crate::game::sm_90::{ClearProjectile, InitProjectilePositionDirection};
 use crate::game::sm_94::{
     BlockCollMissileHoriz, BlockCollMissileVert, BlockCollNoWaveBeamHoriz, BlockCollNoWaveBeamVert,
     BlockCollWaveBeamHoriz, BlockCollWaveBeamVert,
@@ -35,7 +35,7 @@ pub(crate) unsafe fn update(mut k: u16, kind: Flight, trail_interval: u16, game:
         *timer = previous.wrapping_sub(1);
         if previous == 1 {
             word!(game.projectile_timers[slot] = trail_interval);
-            SpawnProjectileTrail(k, game);
+            crate::game::projectile_trails::emit(k, game);
             k = word!(game.projectile_index);
         }
     }

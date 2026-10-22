@@ -41,6 +41,12 @@ and defines evidence for eventual backend retirement. Independence is a
 completion gate for the new-engine slice, not a prerequisite to current work.
 This handoff changes documentation only; it claims no new engine verification.
 
+Toolchain direction (user clarification, 2026-10-22): migrate to Rust edition
+2024 and the latest nightly, using modern syntax where it improves the code.
+The explicitly requested parallel migration is underway in an isolated checkout;
+its toolchain and edition changes are not yet adopted or verified on main.
+Preserve exact behavior and coordinate the single heavy compiler with other work.
+
 ## Active direction (2026-10-20)
 
 Safety requirement (user clarification, 2026-10-22): **remove all unsafe calls**
@@ -60,10 +66,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **96,438 Rust lines in 128 files**, plus 266 C
-bridge and 296 C-header lines = **97,000 maintained implementation lines**.
+Current composition (2026-10-22): **96,428 Rust lines in 129 files**, plus 266 C
+bridge and 296 C-header lines = **96,990 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **97,831**. This complete recount includes frontend,
+gives **97,821**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -77,7 +83,8 @@ included in the complete total above. The prior 96,993 implementation / 97,824
 installer-inclusive totals become 96,997 / 97,828 on this same basis. The
 drawing-reader change adds 27 Rust lines and checked extension linkage adds six;
 these four existing C lines are not new
-implementation or a deletion. Checked projectile animation then removes 30 Rust lines.
+implementation or a deletion. Checked projectile animation removes 30 Rust lines,
+and consolidated checked trails remove another ten, including registrations/callers.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
 The complete GLSL dependency replacement removes **282 maintained lines**, with
@@ -2495,8 +2502,31 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    **90 lines**, separately 286 reference, 875 fixture/harness, ten runtime-hook,
    114 Python-support and 145 unused generation-fragment lines. This does not price
    the complete replacement or establish persistent Session authority.
+   Trail emission, placement, playback and OAM output now share one checked
+   production module; both bank bodies and their callers are retired. This removes
+   **ten maintained Rust lines**, one counted unsafe declaration and 25 cast lines.
+   Raw ROM/RAM and OAM operations retire; OAM output forbids unsafe code. Native
+   diagnostics and projection remain unsafe, with RAM still authoritative.
+   The same ownership candidate binds both remaining broad-selector trail paths.
+   **188 old-bank/checked-runtime/complete-owner comparisons**, **41 ordered
+   observations**, **ten matching failures** and **four emission-to-OAM sequences**
+   pass. **20 short-ROM cases** pass committed-prefix expectations in the checked
+   runtime and owner. These first exposed lost partial trail coordinates; the
+   animation and trail providers now share checked-read failure publication.
+   Coverage includes bank windows, wrapped scripts/markers, signed offsets, live
+   selectors, frozen playback, OAM aliases, ROM replacement and callback failure.
+   Affected animation, flight, bomb/SBA and session checks pass. Normal release
+   library/frontend/verifier builds and exact source/caller checks pass, using
+   stable Rust 1.99.1 before the separate requested nightly migration. Synthetic
+   content and controlled devices establish no new movie or physical-device coverage.
+   **136 runtime + 187 draft compiled inputs** pass; 174 inherited inputs are
+   unchanged. Frozen source/DLL/results: player-projectiles/runtime-trails-stage
+   (`result-script.json`), with 283 top-level files and three source trees
+   byte-compared. Draft cost is **52 lines**, separately 204 reference, 706
+   fixture/harness, five runtime-support and 133 Python lines; two source-input
+   copies add 6,434 reference-capture lines. No whole-replacement price is claimed.
    The target Session contract remains open. The runtime composition still has
-   unbound effects: remaining off-pool bomb/SBA/trail lifecycle operations, beam
+   unbound effects: remaining off-pool bomb/SBA lifecycle operations, beam
    continuation and encounter effects need explicit bindings or elimination.
    Bind and validate these in the same full candidate before pricing/adopting its
    complete dependency and deletion surface under target-architecture/MIGRATION.md.
@@ -4762,15 +4792,19 @@ spawning, room-content loading, door closing, checked music control and shared
 dialogue control, checked room graphics, checked enemy graphics staging and
 checked sprite-object state, checked scene/enemy drawing, checked enemy scheduling,
 owned enemy-script positions, checked enemy-definition records, standard combat,
-shared enemy/projectile contact, checked extension linkage and projectile animation,
-maintained Rust is **96,438**,
+shared enemy/projectile contact, checked extension linkage, projectile animation
+and consolidated checked trails, maintained Rust is **96,428**,
 with applicable static, component and exercised movie checks passing.
-Including 266 C and 296 header lines gives **97,000**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **97,831**.
+Including 266 C and 296 header lines gives **96,990**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **97,821**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2955; cast lines 6195. Checked projectile animation removes 30
+unsafe functions 2954; cast lines 6170. Consolidated checked trails remove ten
+Rust lines, one counted unsafe declaration and 25 cast-containing lines. Raw
+ROM/RAM traversal and OAM stores retire; native OAM output forbids unsafe code.
+Native diagnostics and projection remain unsafe; other counters are unchanged.
+Checked projectile animation removes 30
 Rust lines and nine cast-containing lines. Raw RAM/ROM operations retire, and
 table/direction selection plus bomb-explosion setup forbid unsafe code. The
 declaration counter rises by two because formerly macro-declared functions are

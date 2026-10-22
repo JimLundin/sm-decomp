@@ -3,7 +3,7 @@ use crate::game::samus_animation::Samus_DrawShinesparkCrashEchoProjectiles;
 use crate::game::sm_80::{InvalidInterrupt_Crash, QueueSfx2_Max6};
 use crate::game::sm_81::DrawProjectileSpritemap;
 use crate::game::sm_8b::CalcExplosion_Mode7;
-use crate::game::sm_90::{ClearProjectile, HandleProjectileTrails};
+use crate::game::sm_90::ClearProjectile;
 use crate::game_state::Game;
 use crate::ram_map::{checked_word as word, word_arrays};
 use crate::rom::RomRecord;
@@ -249,7 +249,7 @@ pub(crate) unsafe fn continue_drawing<const EXPLOSIONS: bool>(
 pub unsafe fn draw_projectiles(game: &mut Game) {
     draw_slots::<false>(game);
     Samus_DrawShinesparkCrashEchoProjectiles(game);
-    HandleProjectileTrails(game);
+    crate::game::projectile_trails::update(game);
 }
 pub unsafe fn draw_explosions(game: &mut Game) {
     draw_slots::<true>(game);
