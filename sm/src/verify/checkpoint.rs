@@ -184,7 +184,7 @@ fields!(DmaChannel {
     terminated, offIndex
 } skip { snapshot_padding0, snapshot_padding1, snapshot_padding2, snapshot_padding3 });
 
-fields!(Dsp {
+fields!(DspState {
     ram, channel, dirPage, evenCycle, mute, reset, masterVolumeL, masterVolumeR,
     noiseSample, noiseRate, noiseCounter, echoWrites, echoVolumeL, echoVolumeR,
     feedbackVolume, echoBufferAdr, echoDelay, echoRemain, echoBufferIndex,
@@ -364,10 +364,10 @@ unsafe fn machine(game: &mut Game, archive: &mut Archive<'_>) -> Result<(), Stri
     (*(*snes).my_ppu).state(archive)?;
     (*(*snes).apu).state(archive)?;
     (*(*(*snes).apu).spc).state(archive)?;
-    (*(*(*snes).apu).dsp).state(archive)?;
+    (*(*(*snes).apu).dsp).state.state(archive)?;
     (*game.g_spc_player).state.state(archive)?;
     (*game.g_spc_player).ram.state(archive)?;
-    (*(*game.g_spc_player).state.dsp).state(archive)?;
+    (*(*game.g_spc_player).state.dsp).state.state(archive)?;
     let mut save_bytes = game.g_sram.bytes(0..8192);
     archive.bytes(&mut save_bytes)?;
     game.g_sram.write_bytes(0, &save_bytes);

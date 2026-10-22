@@ -2,8 +2,8 @@
 
 use crate::game_state::Game;
 use crate::types::{
-    ApuRegisters, Dsp, DspChannel, DspRegWriteHistory, NativePlayerState, Snes, Spc, SpcPlayer,
-    Timer,
+    ApuRegisters, DspChannel, DspRegWriteHistory, DspState, NativePlayerState, Snes, Spc,
+    SpcPlayer, Timer,
 };
 
 pub(crate) use crate::apu_queue::ApuQueue as ApuQueueSnapshot;
@@ -33,7 +33,7 @@ crate::typed_struct! {
         valid: bool;
         player: NativePlayerState;
         ram: [u8; 65536];
-        dsp: Dsp;
+        dsp: DspState;
         has_history: bool;
         history: DspRegWriteHistory;
     }
@@ -48,7 +48,7 @@ impl PlayerSnapshot {
         }
         self.player = (*player).state;
         (*player).ram.copy_to(&mut self.ram);
-        self.dsp = *(*player).state.dsp;
+        self.dsp = (*(*player).state.dsp).state;
         self.has_history = !(*player).state.reg_write_history.is_null();
         if self.has_history {
             self.history = *(*player).state.reg_write_history;
@@ -72,8 +72,7 @@ impl PlayerSnapshot {
         (*player).state.ram = (*player).ram.as_mut_ptr();
         (*player).state.dsp = dsp;
         (*player).state.reg_write_history = history;
-        *dsp = self.dsp;
-        (*dsp).apu_ram = (*player).ram.as_mut_ptr();
+        (*dsp).restore_state(&self.dsp);
         if self.has_history {
             *history = self.history;
         }
@@ -86,7 +85,7 @@ crate::typed_struct! {
         ram: [u8; 65536];
         apu: ApuRegisters;
         spc: Spc;
-        dsp: Dsp;
+        dsp: DspState;
         catchup_cycles: f64;
     }
 }
@@ -157,7 +156,7 @@ impl AudioSnapshot {
             cyclesUsed
         );
         fields!(
-            Dsp,
+            DspState as Dsp,
             &self.dsp,
             &other.dsp,
             [
@@ -254,7 +253,7 @@ impl AudioSnapshot {
         (*apu).ram.copy_to(&mut self.ram);
         self.apu = (*apu).registers;
         self.spc = *(*apu).spc;
-        self.dsp = *(*apu).dsp;
+        self.dsp = (*(*apu).dsp).state;
         self.catchup_cycles = (*snes).apuCatchupCycles;
         // These links belong to the live emulator, never to a snapshot.
         self.spc.apu = core::ptr::null_mut();
@@ -270,8 +269,7 @@ impl AudioSnapshot {
         (*apu).registers = self.apu;
         *spc = self.spc;
         (*spc).apu = apu;
-        *dsp = self.dsp;
-        (*dsp).apu_ram = (*apu).ram.as_mut_ptr();
+        (*dsp).restore_state(&self.dsp);
         (*snes).apuCatchupCycles = self.catchup_cycles;
     }
 }

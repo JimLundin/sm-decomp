@@ -605,7 +605,7 @@ crate::forward_calls! { pub unsafe fn (p: *mut SpcPlayer);
 pub fn SpcPlayer_Create() -> *mut SpcPlayer {
     let ram = crate::apu_ram::ApuRam::new();
     let state = NativePlayerState {
-        dsp: dsp_init(ram.as_mut_ptr()),
+        dsp: dsp_init(ram.clone()),
         ram: ram.as_mut_ptr(),
         ..NativePlayerState::INITIAL
     };
@@ -628,17 +628,17 @@ pub unsafe fn SpcPlayer_GenerateSamples(p: *mut SpcPlayer) {
         b"void SpcPlayer_GenerateSamples(SpcPlayer *)\0"
     };
     crate::native_assertion! {
-        '_c2rust_label_0: (*(*p).state.dsp).sampleOffset as i32 <= 534;
+        '_c2rust_label_0: (*(*p).state.dsp).state.sampleOffset as i32 <= 534;
         b"p->dsp->sampleOffset <= 534\0", b"src/spc_player.c\0", 1552,
         b"void SpcPlayer_GenerateSamples(SpcPlayer *)\0"
     };
-    do_until! { (*(*p).state.dsp).sampleOffset as i32 == 534;
+    do_until! { (*(*p).state.dsp).state.sampleOffset as i32 == 534;
         if (*p).state.timer_cycles as i32 >= 64 {
             Spc_Loop_Part2(p, ((*p).state.timer_cycles >> 6));
             Spc_Loop_Part1(p);
             (*p).state.timer_cycles = ((*p).state.timer_cycles & 63);
         }
-        let mut n: i32 = 534 - (*(*p).state.dsp).sampleOffset as i32;
+        let mut n: i32 = 534 - (*(*p).state.dsp).state.sampleOffset as i32;
         if n > 64 - (*p).state.timer_cycles as i32 {
             n = 64 - (*p).state.timer_cycles as i32;
         }

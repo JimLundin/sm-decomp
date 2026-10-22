@@ -44,10 +44,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **95,309 Rust lines in 111 files**, plus 262 C
-bridge and 296 C-header lines = **95,867 maintained implementation lines**.
+Current composition (2026-10-22): **95,329 Rust lines in 111 files**, plus 262 C
+bridge and 296 C-header lines = **95,887 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **96,698**. This complete recount includes frontend,
+gives **96,718**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -2014,6 +2014,29 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    pass. No movie ran: complete compiled mapping correspondence and direct real
    consumer checks cover the representation change. No gameplay or physical-device
    coverage is claimed. Checks: Local/sm-decomp-experiments/20261022/native-player-fields.
+   DSP state now retains its own shared `ApuRam` owner. The unchanged native state
+   prefix is separate from ownership, and snapshots serialize/copy that prefix
+   while preserving the destination allocation. Key-on sample-directory reads use
+   checked bytes, including the wrapped high byte at $ffff; their helper, typed
+   constructor and state-restoration methods forbid unsafe code. Native synthesis,
+   DSP handles and output-buffer traversal remain unsafe. Complete ownership cost:
+   **+20 Rust lines** across eight files; no new macros or dependencies, and the
+   native ABI is unchanged.
+   **3,740 actual old/new comparisons** pass, including every key mask, directory
+   wrapping, explicit padding, invalid registers/envelopes, sample extraction,
+   DSP serialization, recorder/save/replay loads and checkpoints. Sixty compiled
+   state-layout checks and four DSP lifetime checks pass. Continuous synthesis
+   matches 48 buffers, 38,434 nonzero samples and 5,590 recorded DSP writes.
+   All 118 library inputs plus checkpoint sources, refreshed native source stamps,
+   formatting and normal release builds pass. Probed and clean native-audio boot
+   pass **178/0**, inputs **0..177**: restoration/cycling start at zero, key-off at
+   150, key-on and nonzero sample output at 173, followed by four frames. Inputs
+   0..149 are setup for key changes. Physical-audio boot passes probed and clean
+   **3/0**, inputs **0..2**, covering restoration, cycling and sample output.
+   No gameplay or physical-device coverage is claimed. The initial boot attempt
+   stopped before replay on stale utility stamps; refreshing the native config/
+   desktop artifacts resolved it without changing native source bodies.
+   Checks: Local/sm-decomp-experiments/20261022/dsp-ram-owner.
    Runtime construction now uses typed initial values shared through the existing
    record metadata. Game owns three separately allocated oracle snapshots while
    retaining its fixed inline SNES RAM. Nine hardware constructors use typed
@@ -3064,14 +3087,19 @@ streams, owned enemy-projectile scripts, named APU history and explicit launch
 motion, checked ROM patch installation, hardware field serialization, PLM
 award/message ownership, owned APU RAM, the owned audio command queue and enemy
 population ownership, owned native audio uploads, typed runtime initialization
-and owned native-player RAM with named field transfers, maintained Rust is **95,309**, with
+owned native-player RAM with named field transfers and DSP RAM ownership,
+maintained Rust is **95,329**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **95,867**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **96,698**.
+Including 262 C and 296 header lines gives **95,887**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **96,718**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3025; cast lines 6539. Named native-player RAM fields remove 26
+unsafe functions 3025; cast lines 6539. DSP RAM ownership adds 20 maintained Rust
+lines; other counters are unchanged. Two raw sample-directory reads are retired;
+snapshots copy only DSP state, retaining the RAM owner. Native synthesis, DSP
+handles and output-buffer traversal remain unsafe. This is a safety/ownership
+cost, not volume savings. Named native-player RAM fields remove 26
 maintained Rust lines and one counted unsafe declaration. Raw native-offset
 traversal is retired; the named transfer module forbids unsafe code. Player
 handles and native music/DSP interfaces remain unsafe. Other counters are unchanged.

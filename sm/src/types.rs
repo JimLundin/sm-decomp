@@ -371,7 +371,7 @@ crate::typed_struct! {
         pub snapshot_padding3: [u8; 1];
     }
 
-    pub struct Dsp {
+    pub struct DspState {
         pub apu_ram: *mut u8;
         pub ram: [u8; 128];
         pub channel: [DspChannel; 8];
@@ -979,3 +979,11 @@ pub struct SpcPlayer {
     pub ram: crate::apu_ram::ApuRam,
 }
 const _: () = assert!(core::mem::offset_of!(SpcPlayer, state) == 0);
+
+// The backend sees the state prefix; its RAM allocation stays owned in Rust.
+#[repr(C)]
+pub struct Dsp {
+    pub state: DspState,
+    pub(crate) apu_memory: crate::apu_ram::ApuRam,
+}
+const _: () = assert!(core::mem::offset_of!(Dsp, state) == 0);

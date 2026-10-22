@@ -902,7 +902,7 @@ pub unsafe fn RtlRenderAudio(audio_buffer: *mut i16, samples: i32, channels: i32
     RtlPopApuState_Locked(game);
     if !game.g_use_my_apu_code {
         if !game.uploading_apu() {
-            while ((*(*(*game.g_snes).apu).dsp).sampleOffset as i32) < 534 {
+            while ((*(*(*game.g_snes).apu).dsp).state.sampleOffset as i32) < 534 {
                 apu_cycle((*game.g_snes).apu, game);
             }
             dsp_getSamples((*(*game.g_snes).apu).dsp, audio_buffer, samples);

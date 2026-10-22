@@ -62,7 +62,7 @@ impl SnapshotIo<'_> {
 // Hardware values are serialized field by field. Explicit padding fields retain
 // the original byte format without interpreting a Rust allocation as a byte slice.
 use crate::types::{
-    Apu, ApuRegisters, BgLayer, Cpu, Dma, DmaChannel, Dsp, DspChannel, Layer, Ppu, Snes, Spc,
+    Apu, ApuRegisters, BgLayer, Cpu, Dma, DmaChannel, DspChannel, DspState, Layer, Ppu, Snes, Spc,
     Timer, WindowLayer,
 };
 
@@ -160,7 +160,7 @@ state_record!(Dma, 224, {
     snes
 });
 
-state_record!(Dsp, 3024, {
+state_record!(DspState, 3024, {
     ram, channel, dirPage, evenCycle, mute, reset, masterVolumeL, masterVolumeR,
     snapshot_padding0, noiseSample, noiseRate, noiseCounter, echoWrites, echoVolumeL,
     echoVolumeR, feedbackVolume, echoBufferAdr, echoDelay, echoRemain, echoBufferIndex,

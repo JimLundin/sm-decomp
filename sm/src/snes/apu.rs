@@ -28,7 +28,7 @@ pub unsafe fn apu_init() -> *mut Apu {
         registers: ApuRegisters::INITIAL,
     }));
     (*apu).spc = spc_init(apu);
-    (*apu).dsp = dsp_init((*apu).ram.as_mut_ptr());
+    (*apu).dsp = dsp_init((*apu).ram.clone());
     apu
 }
 pub unsafe fn apu_reset(apu: *mut Apu) {
