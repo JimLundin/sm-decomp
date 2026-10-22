@@ -1664,92 +1664,44 @@ pub unsafe fn ResetProjectileData(game: &mut Game) {
         }
     }
 }
-pub unsafe fn ClearProjectile(k: u16, game: &mut Game) {
-    unsafe {
-        let v1: i32 = k as i32 >> 1;
-        word! { game, 0;
-            projectile_x_pos[v1], projectile_y_pos[v1], projectile_bomb_x_subpos[v1],
-            projectile_bomb_y_subpos[v1], projectile_dir[v1], projectile_bomb_x_speed[v1],
-            projectile_bomb_y_speed[v1], projectile_x_radius[v1], projectile_y_radius[v1],
-            projectile_type[v1], projectile_damage[v1], projectile_bomb_instruction_ptr[v1],
-            projectile_bomb_instruction_timers[v1], projectile_variables[v1],
-            projectile_spritemap_pointers[v1],
-        }
-        word!(game.projectile_bomb_pre_instructions[v1] = ((0x90b169i32) as u16));
-        if ((k) as i16).wrapping_sub(10) >= 0 {
-            if (word!(game.bomb_counter -= 1, reread) & 0x8000) != 0 {
-                word!(game.bomb_counter = 0);
-            }
-        } else {
-            if (word!(game.projectile_counter -= 1, reread) & 0x8000) != 0 {
-                word!(game.projectile_counter = 0);
-            }
-        };
-    }
-}
-fn move_projectile_to_impact_point(index: u16, direction: usize, game: &mut Game) {
-    const DIRECTIONS: [(i8, i8); 10] = [
-        (0, -1),
-        (1, -1),
-        (1, 0),
-        (1, 1),
-        (0, 1),
-        (0, 1),
-        (-1, 1),
-        (-1, 0),
-        (-1, -1),
-        (0, -1),
-    ];
-    const X_POSITION: usize = 0xb64;
-    const Y_POSITION: usize = 0xb78;
-    const X_RADIUS: usize = 0xbb4;
-    const Y_RADIUS: usize = 0xbc8;
-
-    let (x_direction, y_direction) = DIRECTIONS[direction];
-    let slot_offset = usize::from(index & !1);
-    // Diagonals update X before Y; an unused axis is neither read nor written.
-    for (position_base, radius_base, step) in [
-        (X_POSITION, X_RADIUS, x_direction),
-        (Y_POSITION, Y_RADIUS, y_direction),
+#[forbid(unsafe_code)]
+pub fn ClearProjectile(k: u16, game: &mut Game) {
+    use crate::ram_map::checked_word as word;
+    use crate::ram_map::{word_arrays::*, words};
+    let slot = usize::from(k >> 1);
+    for field in [
+        projectile_x_pos,
+        projectile_y_pos,
+        projectile_bomb_x_subpos,
+        projectile_bomb_y_subpos,
+        projectile_dir,
+        projectile_bomb_x_speed,
+        projectile_bomb_y_speed,
+        projectile_x_radius,
+        projectile_y_radius,
+        projectile_type,
+        projectile_damage,
+        projectile_bomb_instruction_ptr,
+        projectile_bomb_instruction_timers,
+        projectile_variables,
+        projectile_spritemap_pointers,
     ] {
-        if step == 0 {
-            continue;
-        }
-        let address = position_base + slot_offset;
-        let position = u16::from_le_bytes([game.g_ram[address], game.g_ram[address + 1]]);
-        let radius_address = radius_base + slot_offset;
-        let radius =
-            u16::from_le_bytes([game.g_ram[radius_address], game.g_ram[radius_address + 1]]);
-        let position = if step > 0 {
-            position.wrapping_add(radius)
-        } else {
-            position.wrapping_sub(radius)
-        };
-        game.g_ram[address..address + 2].copy_from_slice(&position.to_le_bytes());
+        word!(game, field + 2 * slot; = 0);
+    }
+    word!(game.projectile_bomb_pre_instructions[slot] = 0xb169);
+    let counter = if (k as i16).wrapping_sub(10) >= 0 {
+        words::bomb_counter
+    } else {
+        words::projectile_counter
+    };
+    word!(game, counter; = word!(game, counter;).wrapping_sub(1));
+    if word!(game, counter;) & 0x8000 != 0 {
+        word!(game, counter; = 0);
     }
 }
-pub unsafe fn KillProjectile(k: u16, game: &mut Game) {
-    unsafe {
-        let v1: i32 = k as i32 >> 1;
-        if (word!(game.projectile_type[v1]) & 0xf00) != 0 {
-            if (byte!(@pointer (ram_ptr!(game, u16; 0xc18)).offset(v1 as isize); 1) as i32 & 0xf)
-                - 3i32
-                & 0x8000
-                == 0
-            {
-                ClearProjectile(k, game);
-                return;
-            }
-        } else {
-            move_projectile_to_impact_point(
-                k,
-                (word!(game.projectile_dir[v1]) as i32 & 0xf) as usize,
-                game,
-            );
-        }
-        start_impact(k, game);
-        word!(game.projectile_bomb_pre_instructions[(k >> 1)] = ((0x90b169i32) as u16));
-    }
+#[forbid(unsafe_code)]
+pub fn KillProjectile(k: u16, game: &mut Game) {
+    crate::game::projectile_lifecycle_ram::retire(k, game);
 }
 crate::game::callback_dispatch! {
     pub unsafe fn CallProjPreInstr(ea: u32, k: u16, game: &mut Game) => ea;

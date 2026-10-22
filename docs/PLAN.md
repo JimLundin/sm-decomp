@@ -96,10 +96,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **101,351 Rust lines in 132 files**, plus 266 C
-bridge and 296 C-header lines = **101,913 maintained implementation lines**.
+Current composition (2026-10-22): **101,537 Rust lines in 134 files**, plus 266 C
+bridge and 296 C-header lines = **102,099 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **102,744**. This complete recount includes frontend,
+gives **102,930**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -134,12 +134,21 @@ declaration and four cast lines. Reservation, flare clearing and Hyper preparati
 forbid unsafe code; placement, collision, animation, sound and launch remain unsafe.
 Shared projectile room scans then add 77 Rust lines to main and remove nine
 counted unsafe declarations. The storage-independent algorithm and checked native
-field/movement access forbid unsafe code; actual block reactions and retirement
-remain unsafe. This retires direct raw RAM operations in the scans and their
+field/movement access forbid unsafe code; actual block reactions remain unsafe,
+while the terminal change below retires the unsafe retirement path. The scan
+change retires direct raw RAM operations in the scans and their
 shared slope reader. Other counters are unchanged. Including the replaced owned
 draft scan and Axis removes 21 lines from the complete prospective composition;
 the unadopted integration still costs 9,113 additional lines. This is a bounded
 safety/sharing result, not the substantial engine reduction still required.
+Shared terminal projectile behavior then adds 186 Rust lines to main and removes
+three counted unsafe declarations and five cast-containing lines. Clearing,
+impact and retirement now forbid unsafe code, including the RAM adapter and
+shared rules. Ordered clearing is expressed as field data; impact directions
+and transitions are shared with the owned model. The owned draft removes 48
+lines, so the complete prospective composition grows by 138 lines. Its remaining
+9,065-line integration cost is unadopted. This is a safety/architecture cost,
+not a volume saving; all other counters are unchanged.
 No project implementation is hidden in experiment directories.
 The final composition passes normal release library/frontend/verifier builds.
 The complete GLSL dependency replacement removes **282 maintained lines**, with
@@ -2715,10 +2724,47 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    **+9,113** above current main. Its updated Rust 2024 headless release library
    builds in **44.11s**; that full prospective integration has no new runtime or
    movie comparison and remains unadopted. Source, DLLs, results and complete
-   prices are preserved at player-projectiles/runtime-room-stage. The next work
-   is to replace duplicated impact/retirement and remaining flight behavior,
-   migrate their consumers, and delete the retained implementations; do not
-   adopt outer wiring alone. [HANDOFF.md](HANDOFF.md) records the updated stop point.
+   prices are preserved at player-projectiles/runtime-room-stage.
+   Terminal projectile behavior is now shared in `projectile_lifecycle`, with
+   a checked `projectile_lifecycle_ram` adapter. The impact sequence, retirement
+   decisions, direction data and ordered offsets are common to main and the
+   owned draft. ClearProjectile, KillProjectile and start_impact are safe entry
+   points; the core, RAM adapter and clearing routine forbid unsafe code. The
+   clearing field list preserves write order and the live counter reread; odd,
+   broad and signed selectors keep their original meaning. The retirement kind
+   classifier uses the equivalent LE word mask instead of a separate raw byte
+   load, with no intervening writes/calls. Impact still samples kind and live ROM
+   after missile sound; beam sound follows the type/cursor stores. Duration,
+   damage and stopped-motion writes retain their original failure prefixes.
+   Generic projectile kinds and cursors remain supported by the owned path;
+   complete owner transfers around legacy effects are unchanged.
+   **1,137 actual old/new clearing and retirement comparisons** pass, checking
+   603 ordered observations, 84 expected failures and 48 direct clear cases.
+   They cover all ten directions, invalid directions, odd/broad selectors,
+   coordinate wrap, counter bounds, cinematic suppression, sound mutations,
+   ROM replacement and interrupted sound. The reference terminal functions are
+   captured from main before this change; actual queue_sfx runs on both paths.
+   The owned transition suite passes **349 cases / 300 observations / 70 expected
+   failures**, plus eight checked short-ROM rejections and four native-kind
+   sequences. Actual animation comparisons pass **524 cases** and **55 short-image
+   checks**. Relevant flight (529 controlled and 92 runtime), room/PLM (196),
+   session (170) and beam (338) comparisons also pass. All 141 runtime and 200
+   draft compiled inputs match; current/reference terminal bodies, shared modules,
+   the RAM adapter and actual sound queue have explicit source correspondence.
+   Final targeted formatting, normal release library/frontend/verifier builds
+   and loaded DLL host/library/native-source checks pass. No movie ran: these
+   are constructed comparisons with synthetic content and controlled hardware;
+   they do not establish scheduler encounters or full-game fidelity.
+   Main prices **101,351 -> 101,537 (+186)**; the four changed owned modules
+   remove 48 lines. The complete prospective composition therefore grows
+   **110,464 -> 110,602 (+138)**, still **+9,065** above main. Its Rust 2024 headless
+   release library builds in **45.49s**, but the full prospective integration
+   has no new runtime/movie comparison and remains unadopted. This is a measured
+   safety/architecture cost, not a volume reduction. Source, DLLs, results and
+   prices are preserved at player-projectiles/runtime-impact-stage.
+   Next replace the remaining duplicated flight behavior, migrate its consumers
+   and delete retained implementations; do not adopt outer wiring alone.
+   [HANDOFF.md](HANDOFF.md) records the updated stop point.
    Current Game/RAM interfaces are temporary; substantial reduction, content
    extraction and complete unsafe elimination remain required beyond binding checks.
    The full projectile candidate now includes shared script control flow:
@@ -4983,21 +5029,28 @@ checked sprite-object state, checked scene/enemy drawing, checked enemy scheduli
 owned enemy-script positions, checked enemy-definition records, standard combat,
 shared enemy/projectile contact, checked extension linkage, projectile animation
 and consolidated checked trails, followed by the edition 2024 migration and
-checked bomb and special-beam lifecycles and beam firing, maintained Rust is
-**101,351**, with applicable checks passing. The edition
+checked bomb and special-beam lifecycles, beam firing, shared room scans and
+shared terminal projectile behavior, maintained Rust is **101,537**, with
+applicable checks passing. The edition
 migration has source/compiler checks only; it adds no movie coverage.
-Including 266 C and 296 header lines gives **101,913**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **102,744**.
+Including 266 C and 296 header lines gives **102,099**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **102,930**.
 The explicit unsafe scopes and their formatting add 4,909 Rust lines, putting
 the current total above the previously reached immediate volume target.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 2943; cast lines 6165. Shared projectile room scans add 77 Rust
+unsafe functions 2940; cast lines 6160. Shared terminal projectile behavior adds
+186 Rust lines to main, removes three counted unsafe declarations and five cast
+lines. Clearing, impact and retirement forbid unsafe code, including their shared
+rules and checked RAM adapter. The owned draft removes 48 lines; the complete
+prospective composition adds 138, with 9,065 lines of unadopted integration cost.
+Other counters are unchanged; this is a safety/architecture cost, not savings.
+Shared projectile room scans add 77 Rust
 lines to main and remove nine counted unsafe declarations; other counters are
 unchanged. The algorithm and native field/movement access forbid unsafe code,
-retiring their direct raw RAM operations; block reactions and retirement remain
-unsafe. With the deleted owned draft scan and Axis, the complete prospective
-composition removes 21 lines; its remaining 9,113-line overhead is unadopted.
+retiring their direct raw RAM operations; block reactions remain unsafe and the
+later terminal change retires unsafe retirement. With the deleted owned draft
+scan and Axis, that complete prospective composition removes 21 lines.
 Checked beam firing removes five Rust
 lines, one counted unsafe declaration and four cast lines. Its reservation,
 flare clearing and Hyper preparation forbid unsafe code; placement, collision,

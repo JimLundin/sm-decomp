@@ -95,33 +95,10 @@ pub unsafe fn initialize_echo(k: u16, game: &mut Game) {
     }
 }
 
-pub unsafe fn start_impact(k: u16, game: &mut Game) {
-    let slot = usize::from(k >> 1);
-    if word!(game.projectile_type[slot]) & 0xf00 != 0 {
-        if word!(game.cinematic_function) == 0 {
-            QueueSfx2_Max6(7, game);
-        }
-        let kind = word!(game.projectile_type[slot]);
-        word!(game.projectile_type[slot] = kind & 0xf0ff | 0x800);
-        if kind & 0x200 != 0 {
-            word!(game.projectile_bomb_instruction_ptr[slot] = table(0x938693, 0, game));
-            word!(game.earthquake_type = 20);
-            word!(game.earthquake_timer = 30);
-        } else {
-            word!(game.projectile_bomb_instruction_ptr[slot] = table(0x93867f, 0, game));
-        }
-        if word!(game.cooldown_timer) as i32 - 21 & 0x8000 == 0 {
-            word!(game.cooldown_timer = 20);
-        }
-    } else {
-        word!(game.projectile_type[slot] = word!(game.projectile_type[slot]) & 0xf0ff | 0x700);
-        word!(game.projectile_bomb_instruction_ptr[slot] = table(0x93867b, 0, game));
-        QueueSfx2_Max6(0xc, game);
-    }
-    word!(game.projectile_bomb_instruction_timers[slot] = 1);
-    word!(game.projectile_damage[slot] = 8);
+#[forbid(unsafe_code)]
+pub fn start_impact(k: u16, game: &mut Game) {
+    crate::game::projectile_lifecycle_ram::impact(k, game);
 }
-
 #[forbid(unsafe_code)]
 pub fn start_bomb_explosion(k: u16, game: &mut Game) {
     let slot = usize::from(k >> 1);
