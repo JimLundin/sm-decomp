@@ -3,6 +3,7 @@
 //! Samus preparation includes projectile work; enemy processing and a possible
 //! message suspension separate it from movement/pose completion. Callbacks
 //! observe live RAM. Only the entry resume point is held across those callbacks.
+use crate::game::scene_drawing::{draw_scene, queue_enemy_tiles};
 use crate::game::message_boxes;
 use crate::game::prelude::*;
 use crate::game::sm_80::{
@@ -18,9 +19,9 @@ use crate::game::sm_90::{
     HandleControllerInputForGamePhysics, HandleSamusMovementAndPause, MainScrollingRoutine,
 };
 use crate::game::sm_a0::{
-    DecrementSamusTimers, DetermineWhichEnemiesToProcess, DrawSamusEnemiesAndProjectiles,
+    DecrementSamusTimers, DetermineWhichEnemiesToProcess,
     EnemyMain, EprojProjCollDet, EprojSamusCollDetect, HandleRoomShaking,
-    ProcessEnemyPowerBombInteraction, QueueEnemyBG2TilemapTransfers,
+    ProcessEnemyPowerBombInteraction,
     SamusProjectileInteractionHandler,
 };
 
@@ -94,8 +95,8 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
         if debug_scrolling_enabled != 0 {
             DebugScrollPosSaveLoad(game);
         }
-        DrawSamusEnemiesAndProjectiles(game);
-        QueueEnemyBG2TilemapTransfers(game);
+        draw_scene(game);
+        queue_enemy_tiles(game);
         HandleHudTilemap(game);
         CalculateLayer2PosAndScrollsWhenScrolling(game);
         RunRoomMainCode(game);

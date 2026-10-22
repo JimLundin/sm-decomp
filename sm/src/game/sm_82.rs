@@ -1,3 +1,4 @@
+use crate::game::scene_drawing::{draw_scene, queue_enemy_tiles};
 use crate::game::music::{
     HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY, LoadRoomMusic,
     LoadNewMusicTrackIfChanged,
@@ -63,8 +64,8 @@ use crate::game::sm_9b::{
     HandleSamusDeathSequence, StartSamusDeathAnimation,
 };
 use crate::game::sm_a0::{
-    DetermineWhichEnemiesToProcess, DrawSamusEnemiesAndProjectiles, EnemyMain,
-    QueueEnemyBG2TilemapTransfers, TransferEnemyTilesToVramAndInit,
+    DetermineWhichEnemiesToProcess, EnemyMain,
+    TransferEnemyTilesToVramAndInit,
 };
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
@@ -3629,7 +3630,7 @@ crate::game::callback_dispatch! {
         } else {
             DetermineWhichEnemiesToProcess(game);
             EnemyMain(game);
-            DrawSamusEnemiesAndProjectiles(game);
+            draw_scene(game);
             EnsureSamusDrawnEachFrame(game);
         }
         kCoroutineNone as CoroutineRet
@@ -3637,7 +3638,7 @@ crate::game::callback_dispatch! {
     [8577694] DoorTransitionFunction_WaitForSoundsToFinish [] {
         DetermineWhichEnemiesToProcess(game);
         EnemyMain(game);
-        DrawSamusEnemiesAndProjectiles(game);
+        draw_scene(game);
         EnsureSamusDrawnEachFrame(game);
         if game.sfx_queue_is_empty(0) && game.sfx_queue_is_empty(1) && game.sfx_queue_is_empty(2) {
             game.set_door_transition_function(0xe2db);
@@ -3650,7 +3651,7 @@ crate::game::callback_dispatch! {
         } else {
             DetermineWhichEnemiesToProcess(game);
             EnemyMain(game);
-            DrawSamusEnemiesAndProjectiles(game);
+            draw_scene(game);
             EnsureSamusDrawnEachFrame(game);
         }
         kCoroutineNone as CoroutineRet
@@ -3866,9 +3867,9 @@ crate::game::callback_dispatch! {
         DetermineWhichEnemiesToProcess(game);
         EnemyMain(game);
         EprojRunAll(game);
-        DrawSamusEnemiesAndProjectiles(game);
+        draw_scene(game);
         EnsureSamusDrawnEachFrame(game);
-        QueueEnemyBG2TilemapTransfers(game);
+        queue_enemy_tiles(game);
         if AdvancePaletteFadeForAllPalettes_0xc(game) != 0 {
             game.set_debug_disable_sounds(0);
             PlaySpinJumpSoundIfSpinJumping(game);
@@ -3889,7 +3890,7 @@ pub unsafe fn GameState_10_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRe
     word! { game, 0; debug_disable_minimap, save_station_lockout_flag }
     DetermineWhichEnemiesToProcess(game);
     EnemyMain(game);
-    DrawSamusEnemiesAndProjectiles(game);
+    draw_scene(game);
     EnsureSamusDrawnEachFrame(game);
     load_destination_cre(game);
     word_transfers!(game, descending, 128;

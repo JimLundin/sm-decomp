@@ -393,6 +393,7 @@ pub mod game {
     pub mod sm_b2;
     pub mod sm_b3;
     pub mod sprite_objects;
+    pub mod scene_drawing;
     pub mod waver;
 }
 

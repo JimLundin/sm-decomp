@@ -1,3 +1,4 @@
+use crate::game::scene_drawing::queue_enemy;
 use crate::game::enemy_population_ram::initialize_room;
 pub use crate::game::prelude::*;
 
@@ -8,20 +9,16 @@ pub use crate::game::constants::bank_a4::*;
 pub use crate::game::constants::bank_b4::*;
 
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
-use crate::game::projectile_animation::draw_explosions;
 use crate::game::sm_80::{
     NextRandom, QueueSfx1_Max3, QueueSfx1_Max6, QueueSfx2_Max1, QueueSfx2_Max3, QueueSfx3_Max3,
 };
-use crate::game::sm_81::{
-    DrawSpritemapWithBaseTile, DrawSpritemapWithBaseTile2, DrawSpritemapWithBaseTileOffscreen,
-};
 use crate::game::plm_spawning::SpawnPLM;
-use crate::game::sm_86::{DrawEprojsWithPriority, EprojPriority, SpawnEprojWithGfx};
-use crate::game::sm_90::{CallSomeSamusCode, DrawSamusAndProjectiles};
+use crate::game::sm_86::{SpawnEprojWithGfx};
+use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_94::square_slope_occupied;
 use crate::game::sprite_objects::{
-    create_sprite, draw_sprites, update_sprites,
+    create_sprite, update_sprites,
 };
 use crate::game::{sm_a2, sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b2, sm_b3};
 
@@ -49,14 +46,6 @@ crate::typed_struct! {
 pub type Func_EnemyBlockCollInfo_U8 = unsafe fn(&mut EnemyBlockCollInfo, &mut Game) -> u8;
 
 pub const NULL: *mut c_void = null_mut::<c_void>();
-#[inline]
-unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
-    crate::native_assertion! {
-        '_c2rust_label: addr < 0x2000;
-        b"addr < 0x2000\0", b"src/sm_rtl.h\0", 51, b"uint8 *RomPtr_RAM(uint16_t)\0"
-    };
-    ram_ptr!(game; addr as i32 as isize)
-}
 const RomPtr_86: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x86>;
 use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
 #[inline]
@@ -265,34 +254,6 @@ crate::game::address_dispatch! {
         11110278 => [()]; 11110345 => sm_a9::MotherBrain_DrawBrainNeck_EnemyGfxDrawHook;
         11110365 => sm_a9::MotherBrainsBrain_GfxDrawHook; 11129754 => sm_a9::DeadTorizo_MainGfxHook;
     }
-}
-pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
-    draw_sprites(game);
-    draw_explosions(game);
-    DrawEprojsWithPriority(EprojPriority::Low, game);
-    for phase_varE32 in 0u16..8 {
-        if phase_varE32 == 3 {
-            DrawSamusAndProjectiles(game);
-        } else if phase_varE32 == 6 {
-            DrawEprojsWithPriority(EprojPriority::High, game);
-        }
-        if word!(game.enemy_drawing_queue_sizes[phase_varE32]) != 0 {
-            let varE36: u16 = word!(game.enemy_drawing_queue_sizes[phase_varE32]);
-            let varE3A: u16 = crate::rtl::rom_table_word!(game, 0xa0b133, phase_varE32 as isize);
-            let mut v1: u16 = 0;
-            word!(game.enemy_drawing_queue_sizes[phase_varE32] = 0);
-            do_until! { (varE38 as i32 + 2 == varE36 as i32);
-                let mut varE38: u16 = v1;
-                let v2 = RomPtr_RAM((varE3A).wrapping_add(v1), game);
-                let v3: u16 = *(v2 as *mut u16);
-                *(v2 as *mut u16) = 0;
-                word!(game.cur_enemy_index = v3);
-                WriteEnemyOams(game);
-                v1 = (varE38).wrapping_add(2);
-            }
-        }
-    }
-    CallEnemyGfxDrawHook(Load24(ram_ptr!(game, LongPtr; 0x178c)), game);
 }
 
 
@@ -758,7 +719,7 @@ pub unsafe fn EnemyMain(game: &mut Game) {
                     && ((*E).properties & 0x300) == 0
                     && (word!(game.UNUSED_word_7E17A2) & 1) == 0
                 {
-                    DrawOneEnemy(game);
+                    queue_enemy(game);
                 }
             }
             if (*E).flash_timer != 0
@@ -797,86 +758,6 @@ pub unsafe fn SpawnEnemyDrops(a: u16, k: u16, varE20: u16, game: &mut Game) {
     SpawnEprojWithGfx(varE20, k, addr_kEproj_Pickup as u16, game);
 }
 
-pub unsafe fn DrawOneEnemy(game: &mut Game) {
-    let varE34: u16 =
-        (2u16).wrapping_mul((*gEnemyData(word!(game.cur_enemy_index) as i32, game)).layer);
-    *(RomPtr_RAM(
-        (word!(game.enemy_drawing_queue_sizes[(varE34 >> 1)])).wrapping_add(
-            crate::rtl::rom_table_word!(game, 0xa0b133, (varE34 >> 1) as isize),
-        ),
-        game,
-    ) as *mut u16) = word!(game.cur_enemy_index);
-    word!(game.enemy_drawing_queue_sizes[(varE34 >> 1)] += 2);
-}
-pub unsafe fn WriteEnemyOams(game: &mut Game) {
-    let mut palette_index: VoidP = 0;
-    let E = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    let ES = gEnemySpawnData(word!(game.cur_enemy_index) as i32, game);
-    let mut x2: u16 =
-        ((*ES).xpos2 as i32 + (*E).x_pos as i32 - word!(game.layer1_x_pos) as i32) as u16;
-    let y2: u16 = ((*ES).ypos2 as i32 + (*E).y_pos as i32 - word!(game.layer1_y_pos) as i32) as u16;
-    if (*E).shake_timer != 0 {
-        x2 = (x2 as i32
-            + if ((*E).frame_counter & 2) == 0 {
-                1
-            } else {
-                -1i32
-            }) as u16;
-        (*E).shake_timer = (*E).shake_timer.wrapping_sub(1);
-    }
-    let mut x: u16 = x2;
-    let mut y: u16 = y2;
-    if (*E).flash_timer != 0 && (word!(game.random_enemy_counter) & 2) != 0 {
-        palette_index = 0 as VoidP;
-    } else if (*E).frozen_timer != 0 && ((*E).frozen_timer >= 0x5a || ((*E).frozen_timer & 2) != 0)
-    {
-        palette_index = 3072 as VoidP;
-    } else {
-        palette_index = (*E).palette_index;
-    }
-    let r3: u16 = palette_index;
-    let r0: u16 = (*E).vram_tiles_index;
-    if ((*E).extra_properties & 4) != 0 {
-        if (((*E).spritemap_pointer) as i16).wrapping_add((0x8000i32) as i16) < 0 {
-            Unreachable(game);
-        }
-        let mut n: i32 = *RomPtrWithBank((*E).bank, (*E).spritemap_pointer, game) as i32;
-        let mut v5: u16 = ((*E).spritemap_pointer).wrapping_add(2);
-        do_until! { (n == 0);
-            let ext = get_ExtendedSpriteMap((*E).bank, v5, game);
-            if *(RomPtrWithBank((*E).bank, (*ext).spritemap, game) as *mut u16) == 0xfffe {
-                x = (x2).wrapping_add((*ext).xpos);
-                y = (y2).wrapping_add((*ext).ypos);
-                if ((*E).extra_properties & 0x8000) != 0 {
-                    ProcessExtendedTilemap((*E).bank, (*ext).spritemap, game);
-                }
-            } else {
-                x = (x2).wrapping_add((*ext).xpos);
-                y = (y2).wrapping_add((*ext).ypos);
-                if (x as i32 + 128 & 0xfe00) == 0 && (y as i32 + 128 & 0xfe00) == 0 {
-                    if byte!(y; 1) != 0 {
-                        DrawSpritemapWithBaseTileOffscreen(
-                            (*E).bank,
-                            (*ext).spritemap,
-                            x,
-                            y,
-                            r3,
-                            r0,
-                            game,
-                        );
-                    } else {
-                        DrawSpritemapWithBaseTile2((*E).bank, (*ext).spritemap, x, y, r3, r0, game);
-                    }
-                }
-            }
-            v5 = (v5).wrapping_add(8);
-            n -= 1;
-        }
-    } else {
-        word!(game.enemy_processing_stage = 1);
-        DrawSpritemapWithBaseTile((*E).bank, (*E).spritemap_pointer, x, y, r3, r0, game);
-    };
-}
 pub unsafe fn NormalEnemyFrozenAI(game: &mut Game) {
     let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
     (*v0).flash_timer = 0;
@@ -888,40 +769,6 @@ pub unsafe fn NormalEnemyFrozenAI(game: &mut Game) {
         (*v0).ai_handler_bits = v1;
         (*v0).frozen_timer = v1;
     }
-}
-pub unsafe fn ProcessExtendedTilemap(db: u8, r22: u16, game: &mut Game) {
-    let mut p = RomPtrWithBank(db, (r22).wrapping_add(2), game);
-    loop {
-        let v2: u16 = *(p as *mut u16);
-        if v2 == 0xffff {
-            break;
-        }
-        let n: i32 = *(p as *mut u16).offset(1) as i32;
-        p = p.offset(4);
-        memcpy(
-            ram_ptr!(game, c_void; v2 as i32 as isize),
-            p as *const c_void,
-            (n * 2) as size_t,
-        );
-        p = p.offset((n * 2) as isize);
-    }
-    word!(game.nmi_flag_bg2_enemy_vram_transfer += 1);
-}
-pub fn QueueEnemyBG2TilemapTransfers(game: &mut Game) {
-    if game.nmi_flag_bg2_enemy_vram_transfer() != 0
-        && game.debug_time_frozen_for_enemies() | game.time_is_frozen_flag() == 0
-    {
-        let cursor = game.vram_write_queue_tail();
-        let size = game.enemy_bg2_tilemap_size();
-        game.write_vram_queue_word(cursor, 0, size);
-        game.write_vram_queue_word(cursor, 2, 0x2000);
-        game.write_vram_queue_byte(cursor, 4, 126);
-        game.write_vram_queue_word(cursor, 5, addr_unk_604800 as u16);
-        // Entry writes can overlap the tail; advance its live value.
-        let tail = game.vram_write_queue_tail().wrapping_add(7);
-        game.set_vram_write_queue_tail(tail);
-    }
-    game.set_nmi_flag_bg2_enemy_vram_transfer(0);
 }
 pub unsafe fn EnemyCollisionHandler(game: &mut Game) {
     if ((*gEnemyData(word!(game.cur_enemy_index) as i32, game)).extra_properties & 4) != 0 {
