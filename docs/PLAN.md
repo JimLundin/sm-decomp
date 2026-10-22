@@ -1998,6 +1998,23 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    20261022/mechanism-spawn. Its selected setup policies/tests are now integrated
    into the existing full candidate below. Keep one allocator and do not add the
    standalone and integrated prices.
+   The coordinator's [integration cross-check](RAM_OWNERSHIP.md#integrated-mechanism-setup-and-terrain)
+   passes **188 comparisons**, 485 observations and 20 matching failures on that
+   existing allocator: 122 earlier integrated cases, 59 targeted setup cases and
+   seven retained-world steps. All five policies execute; two new native sequences
+   exercise setup/lifetime and scheduled terrain/impact/output/release. All 115
+   frozen and 112 local compiled inputs match; 102 inherited files are unchanged.
+   Optimized build, formatting and current selected-setup/source checks pass.
+   Partial model/provider price: 187 -> 353 (+166); native additions 76+9+47,
+   paired fixture 333, existing room fixture +5. Remaining costs stay separate.
+   No movie, adoption or complete saving. Source: 20261022/integrated-mechanism-setup.
+   The full candidate concurrently incorporates the richer schema and reports
+   213 comparisons; its 115 frozen and 110 candidate compiled inputs were
+   independently inspected, without rerunning that suite. Carry the full candidate
+   forward; do not install the independent cross-check's modules or add prices.
+   Coordinator follow-up is the ownership audit of remaining creation sources,
+   PLM script/suspension consumers and runtime imports. Continue implementation
+   in the full candidate rather than another parallel allocator/setup model.
    That unchanged scheduler/provider is now integrated into the top-level full
    candidate, preserved in player-projectiles/scheduled-flight-stage. **514
    selected comparisons**, 651 ordered observations and ten expected matching

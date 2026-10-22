@@ -63,6 +63,15 @@ transfers beyond nominal field boundaries. The room grid and full PLM scheduler
 remain outside this ownership interval; no persistent runtime promotion follows
 from the component result alone.
 
+The [integrated setup checks](RAM_OWNERSHIP.md#integrated-mechanism-setup-and-terrain)
+now place selected setup policies on the existing pool instead of calling the
+raw setup bodies. Candidate terrain and projectile consumers observe their effects.
+This closes that selected setup interval, not all mechanism authority: room-entry
+and hardcoded creation, the PLM interpreter, suspension and reset/load imports still
+need a complete producer/consumer audit. Use the full candidate's richer schema
+as the implementation to extend; the independent coordinator composition supplies
+additional checks rather than a second owner.
+
 ## One RAM allocation serves both execution branches
 
 `Game::new` initializes the large allocation in place. `SnesInit` passes the
@@ -282,7 +291,7 @@ native-write closure and whole-projectile ownership are still unproven.
 [^flight]: [Player projectile executor](../sm/src/game/sm_90.rs), symbols `HandleProjectile`, `ClearProjectile`, `ResetProjectileData`; [flight algorithms](../sm/src/game/projectile_flight.rs).
 [^reflection]: [ProjectileReflection](../sm/src/game/sm_90.rs), [beam firing](../sm/src/game/beam_firing.rs).
 [^word]: [RAM access contracts and pointer creation](../sm/src/ram_map.rs#L85).
-[^handoff]: [MessageHandoff](../sm/src/game/item_pickups.rs#L104), [PlmHandler_Async](../sm/src/game/sm_84.rs#L313).
+[^handoff]: [MessageHandoff](../sm/src/game/item_pickups.rs#L104), [PlmHandler_Async](../sm/src/game/sm_84.rs#L151).
 [^game]: [Game allocation and new](../sm/src/game_state.rs), symbols `Game`, `Game::new`.
 [^init]: [SnesInit](../sm/src/cpu_infra.rs#L890), [snes_init](../sm/src/snes/snes.rs#L23), [ROM-load hard reset](../sm/src/snes/snes_other.rs#L153).
 [^reset]: [snes_reset](../sm/src/snes/snes.rs#L46), [RtlReset](../sm/src/rtl.rs#L219).

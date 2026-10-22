@@ -1364,7 +1364,64 @@ adoption are claimed. No movie ran. Source/result:
 own integrated allocator in `player-projectiles/mechanism-creation-stage`, including
 shared terrain/slopes. Use that composition as the base and port these selected
 setup policies and tests onto its existing pool. Do not install a second allocator
-or add the independent prices. The combined setup/terrain owner is not yet tested.
+or add the independent prices. The combined setup/terrain checks below now cover
+this boundary.
+
+### Integrated mechanism setup and terrain
+
+The coordinator's `integrated-mechanism-setup` applies the selected setup policies
+to the existing `mechanism-creation-stage` allocator and complete projectile
+candidate. The allocator body and pool projection remain unchanged. Setup receives
+the typed creation owner; the five selected policies update its pool directly,
+using checked room operations. Other setup routes retain an explicit legacy
+interval. Before/after setup observations keep their original order.
+
+**188 comparisons**, **485 ordered observations** and **20 expected matching
+failures** pass: the earlier 122 integrated cases, 59 targeted setup cases and
+seven retained-world steps. This is a different selected suite from the preceding
+270-case prototype, not an additive total. All five policy routes have required
+execution counts: 51 no-op, 8 Blue Door, 8 Colored Door, 26 Strange Door and 50
+respawning-block entries. Tests cover odd associations, bomb cancellation,
+same-slot nested reuse, signed reads of cleared associations, zero-association
+self-signaling, actual release, partial failures and a real unconverted setup.
+
+The prior sixteen projectile lifecycle steps now run candidate setup through
+actual terrain/scans and later output. Two new native sequences use the same
+policies: a mechanism lifetime sequence and scheduled beam flight after respawning
+setup removes shootable air, followed by impact, output and release. Native room
+operations are authored, and this version retains numeric association, signal and
+restoration fields. Room-grid authority, full scripts, other creation sources and
+runtime promotion remain open. No movie ran.
+
+All **115 frozen library and 112 local compiled inputs** match; 102 inherited
+sources are unchanged. The selected setup/release bodies and ROM readers match
+current source; the separate current-main allocator responsibility move is not
+claimed byte-identical to the frozen allocator. Optimized DLL, formatting and
+source review pass. The partial model/provider cohort is **187 -> 353 (+166)**
+formatted lines. Native fixture additions are 76 new lines plus 9 room and 47
+flight lines; paired fixtures add 333, and the existing room fixture grows five.
+Remaining callback/fallback, registration and runtime costs are separate; no
+complete saving or production adoption is established. Source/result:
+`Local/sm-decomp-experiments/20261022/integrated-mechanism-setup` (`prepare.py`,
+`freeze.py`, `build.py`, `check.py`, `review.py`).
+
+The full `player-projectiles/mechanism-setup-stage` candidate concurrently incorporated the richer
+schema with named block, signal and saved-content identities. Its reported
+**213 comparisons**, 465 observations and 15 matching failures include 87 direct
+setup cases, seven retained-world steps and 119 consumers, with 48 linked
+projectile steps. Three native sequences and two association cases pass. The
+typed native setup fixture has a minimal player input; native terrain responses
+and initial collision remain authored/controlled in that full candidate. The
+coordinator independently checked its **115 frozen and 110 candidate compiled
+inputs**, but did not rerun that 213-case suite. The inspection is recorded beside
+the independent experiment in `integrated-inspection.json`.
+
+Carry that full candidate forward as the single implementation. The independent
+188-case composition is a cross-check and its separate modules should not be
+installed alongside it. Next, audit the remaining room-entry/hardcoded producers,
+PLM script consumers, suspension and runtime imports against this same owner;
+continue complete implementations in the full candidate rather than creating
+another parallel allocator or setup model.
 
 ### Named projectile animation definitions
 
@@ -2279,7 +2336,7 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^eproj]: [SpawnEprojInner, EprojRunOne and EprojRunAll](../sm/src/game/sm_86.rs#L234).
 [^door]: [DoorTransitionFunction_LoadMoreThings_Async and fade-in](../sm/src/game/sm_82.rs#L4012).
 [^inside]: [BlockInsideDetection](../sm/src/game/sm_94.rs#L1197).
-[^sand]: [PlmSetup_QuicksandSurface and sandfalls](../sm/src/game/sm_84.rs#L1736).
+[^sand]: [PlmSetup_QuicksandSurface and sandfalls](../sm/src/game/sm_84.rs#L1590).
 [^platform]: [moving_platforms::travel and react](../sm/src/game/moving_platforms.rs).
 [^movement]: [Samus_MoveY_WithSpeedCalc](../sm/src/game/sm_90.rs#L448); [Samus_CalcDisplacementMoveLeft/Right](../sm/src/game/sm_90.rs#L3932).
 [^inheritance]: [Samus movement inheritance writes](../sm/src/game/sm_90.rs#L287); [Samus_Func10](../sm/src/game/sm_90.rs#L4579).
@@ -2292,11 +2349,11 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^effectcontact]: [EprojSamusCollDetect](../sm/src/game/sm_a0.rs#L1332).
 [^shotcollision]: [beam_block_collision and missile_block_collision](../sm/src/game/sm_94.rs#L1648).
 [^trail]: [SpawnProjectileTrail](../sm/src/game/sm_90.rs#L2076); [ProjectileTrail_Func5](../sm/src/game/sm_9b.rs#L61).
-[^pickup]: [PLM item pickup instructions](../sm/src/game/sm_84.rs#L2695).
-[^plm]: [PlmHandler_Async](../sm/src/game/sm_84.rs#L292).
+[^pickup]: [PLM item pickup instructions](../sm/src/game/sm_84.rs#L2544).
+[^plm]: [PlmHandler_Async](../sm/src/game/sm_84.rs#L151).
 [^message]: [message_boxes::display, poll and queue](../sm/src/game/message_boxes.rs#L397).
 [^bits]: [Checked bit-mask preparation and event/boss operations](../sm/src/game/progress_flags.rs).
-[^doorbits]: [PlmInstr_IncrementDoorHitCounterAndJGE](../sm/src/game/sm_84.rs#L2796).
+[^doorbits]: [PlmInstr_IncrementDoorHitCounterAndJGE](../sm/src/game/sm_84.rs#L2579).
 [^roomselect]: [Ordered room-state selection](../sm/src/game/room_state.rs).
 [^roomload]: [Room-header and selected-state loading](../sm/src/game/room_state.rs).
 [^save]: [SaveToSram and LoadFromSram](../sm/src/game/sm_81.rs#L71).
@@ -2330,9 +2387,9 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^projectiledefinitions]: [Fixed and directional initialization](../sm/src/game/projectile_animation.rs#L36); [echo initialization](../sm/src/game/projectile_animation.rs#L148).
 [^trailpipeline]: [HandleProjectile and SpawnProjectileTrail](../sm/src/game/sm_90.rs#L2036); [trail side playback and drawing](../sm/src/game/sm_90.rs#L2100); [ProjectileTrail_Func5](../sm/src/game/sm_9b.rs#L61).
 [^roomshotscan]: [react_to_shot_block, beam_block_collision and missile_block_collision](../sm/src/game/sm_94.rs#L1538).
-[^roomshotreaction]: [Shootable/bombable reactions and scan overrides](../sm/src/game/sm_94.rs#L1359); [PlmSetup_B974](../sm/src/game/sm_84.rs#L941).
-[^roomshotsetup]: [SpawnPLM and SpawnPLMWithCollision](../sm/src/game/sm_84.rs#L249); [find_plm_at_block](../sm/src/game/sm_84.rs#L766); [sub_84C64C](../sm/src/game/sm_84.rs#L956); [Strange Door and respawning shot block](../sm/src/game/sm_84.rs#L1882).
-[^roomshotcursor]: [Extension reactions](../sm/src/game/sm_94.rs#L800); [ShotAxis::advance and slope reactions](../sm/src/game/sm_94.rs#L1570); [Game::react_to_block](../sm/src/game_state.rs); [gate triggers](../sm/src/game/sm_84.rs#L1370).
+[^roomshotreaction]: [Shootable/bombable reactions and scan overrides](../sm/src/game/sm_94.rs#L1359); [PlmSetup_B974](../sm/src/game/sm_84.rs#L779).
+[^roomshotsetup]: [SpawnPLM and SpawnPLMWithCollision](../sm/src/game/plm_spawning.rs#L105); [find_plm_at_block](../sm/src/game/sm_84.rs#L604); [sub_84C64C](../sm/src/game/sm_84.rs#L794); [Strange Door and respawning shot block](../sm/src/game/sm_84.rs#L1720).
+[^roomshotcursor]: [Extension reactions](../sm/src/game/sm_94.rs#L800); [ShotAxis::advance and slope reactions](../sm/src/game/sm_94.rs#L1570); [Game::react_to_block](../sm/src/game_state.rs); [gate triggers](../sm/src/game/sm_84.rs#L1208).
 [^aimproducers]: [SamusFunc_F468_NormalJump](../sm/src/game/sm_91.rs#L2587); [SamusFunc_F468_TurningAroundOnGround](../sm/src/game/sm_91.rs#L2802).
 [^aimplacement]: [InitProjectilePositionDirection](../sm/src/game/sm_90.rs#L2226).
 [^aiminput]: [beam_firing::update_input and reservation](../sm/src/game/beam_firing.rs#L8); [HudSelectionHandler_TurningAround](../sm/src/game/sm_90.rs#L3490).
@@ -2344,5 +2401,5 @@ RAM access throughout the engine, and boot-to-credits coverage remain open.
 [^drainrestriction]: [Shitroid_Func_16](../sm/src/game/sm_a9.rs#L4526); [Xray_Initialize](../sm/src/game/sm_91.rs#L1337); [Mother Brain rainbow phases](../sm/src/game/sm_a9.rs#L720).
 [^weapontimers]: [DecrementSamusTimers](../sm/src/game/sm_a0.rs#L888); [gameplay completion](../sm/src/game/gameplay.rs).
 [^weaponsound]: [Samus_ShootCheck](../sm/src/game/sm_90.rs#L5133); [hurt-flash producer](../sm/src/game/sm_91.rs#L795); [QueueSamusMovementSfx](../sm/src/game/sm_82.rs#L3301); [message completion](../sm/src/game/message_boxes.rs#L468); [unpause completion](../sm/src/game/sm_82.rs#L1483).
-[^weaponcancel]: [PLM charge cancellation](../sm/src/game/sm_84.rs#L3100); [HUD switching](../sm/src/game/sm_90.rs#L2747); [mode transitions](../sm/src/game/sm_90.rs#L4985).
+[^weaponcancel]: [PLM charge cancellation](../sm/src/game/sm_84.rs#L2938); [HUD switching](../sm/src/game/sm_90.rs#L2747); [mode transitions](../sm/src/game/sm_90.rs#L4985).
 [^extensionplacement]: [spawn_extension](../sm/src/game/projectile_flight.rs#L269).

@@ -604,10 +604,21 @@ action and slot instead of treating reuse as cancellation. Respawn setup places 
 restoration marker and preserves solidity until later script behavior removes it.
 The encoded provider still transfers authority at legacy observation points and
 uses a byte-owned room grid. Complete script execution, message suspension, wider
-setup families and runtime promotion remain open. The full candidate has since
-integrated allocation with terrain/slopes in `mechanism-creation-stage`. Extend
-that existing pool with these setup policies and tests; keep one allocator. The
-combined setup/terrain owner has not yet been tested.
+setup families and runtime promotion remain open.
+
+The [setup/terrain integration](RAM_OWNERSHIP.md#integrated-mechanism-setup-and-terrain)
+now passes 188 independent comparisons on the existing allocator, including
+selected setup followed by terrain/projectile consumers. The full candidate also
+reports 213 comparisons using the richer schema with named block, signal and
+saved-content identities; its 115 frozen and 110 candidate compiled inputs were
+independently inspected. Carry that full implementation forward. Keep the
+independent composition as a cross-check, with one allocator and setup model in
+the eventual engine.
+
+Creation from room entries and hardcoded requests, full PLM script consumption,
+message suspension and runtime imports are the next ownership audit. A pool is
+not persistently authoritative until all those producers and consumers participate
+in its state transfers. The checked room grid remains a separate migration.
 
 The earlier named-transition experiment advanced the interface without migrating
 the remaining producer, flight or runtime ownership. Its changed model/provider
