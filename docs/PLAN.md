@@ -1769,6 +1769,17 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    seeking larger responsibility replacements without treating these prices
    as a remaining deletion budget. Durable formatted draft and complete price:
    Local/sm-decomp-experiments/20261022/plm-drawing.
+   The complete room-camera/door-scrolling/tile-streaming draft on 8d618954
+   prices **95,701 -> 95,611 (-90)** across seven files, including all callers,
+   retained tile/DMA kernels and registration. Its 976-line original scope becomes
+   an 878-line owner with shared axis chasing and boundary handling; it retires
+   the local chase macro and adds none. Downward triggering retains its pre-clamp
+   row, while rightward triggering uses the clamped position. This broader scope
+   still does not establish substantial deletion. Park the formatted draft before
+   compilation/runtime checks. The axis methods use checked RAM, but remaining
+   camera, tile and hardware operations are unsafe; behavior and safety are
+   unvalidated. No main-source saving or movie coverage is claimed. Durable draft:
+   Local/sm-decomp-experiments/20261022/room-camera.
    The latest data-extraction goal also calls for authored room/asset definitions
    to live as data. Door-entry scroll changes now use 63 ordered cell/color
    sequences for all 74 dispatch identities, removing separate callback definitions,
