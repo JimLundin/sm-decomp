@@ -1225,6 +1225,72 @@ behavior or complete savings are established. Next, close actual room reactions,
 remaining missile/extension and producer definitions, outer scheduling/protection,
 and runtime authority transfers; preserve the complete execution order above.
 
+### Synchronous shot-to-room reaction protocol
+
+The `shot-block-reactions` follow-up replaces the controlled block response in
+the scheduled beam experiment with a shared reaction protocol and the actual
+mechanism allocator plus five selected setup routes. **187 comparisons**, **328
+ordered observations** and **eight expected matching failures** pass. These are
+163 direct cases and 24 linked update/draw steps, not a rerun of the earlier 675
+cases. Six separate symbolic sequences run the same protocol without RAM or ROM
+decoding. No production adoption or movie ran.
+
+`Contact<Owner>` carries projectile authority and scan progress through
+`Pass`, `Block`, `Redirect`, `Slope` or `Trigger`. A definition names the mechanism
+and whether this trigger stops the scan. The room provider owns cell selection,
+definition lookup and synchronous setup. The projectile keeps motion and scan
+progress. Blocking, scan termination and successful mechanism allocation are
+three separate outcomes; reducing them to one collision Boolean loses behavior.
+
+The cases execute all sixteen block classifications across both axes, odd and
+rejected samples, signed horizontal and vertical extensions, allocation exhaustion,
+common/regional/bombable trigger selection, selected setup mutations, a signed
+projectile selector and representative retained slope paths. Required outcomes
+and callback counts supplement full-RAM, result, scan and ordered-state comparison:
+
+- Rejected samples block without selecting a cell or decrementing the scan count.
+  Extensions redirect without a second room-size check. Zero offset passes.
+- The common shootable `B974` trigger changes scan termination **before** allocation,
+  including when the pool is full. Regional and bombable uses of that same header
+  do not request this override. Air/solid classification ignores allocation result.
+- The allocator prepares its captured block association, header, instruction,
+  timers and selector before setup. A setup callback can change the current cell
+  or projectile selection; the prepared association still targets the original
+  block. Failures before the setup body preserve that prepared prefix.
+- Actual Blue Door setup can cancel on a bomb or immediately make its associated
+  block solid. Colored Door setup writes its block type and BTS; respawning shot
+  setup saves the previous block class and changes geometry. Strange Door setup
+  can signal an inactive slot with a matching association, and retains its signed
+  projectile-selection read. Those setup bodies remain reference implementations.
+
+Six linked sequences run ordinary/wave scheduling, actual room scans, these
+reactions and Blue Door/Colored Door/respawning setup, then animation/drawing and
+a later update. They retain the same `Firing` between calls and require actual
+setup execution; ordinary shots enter impact while wave shots continue. Wave
+sequences require actual sprite geometry output. The room grid and mechanism
+pool remain RAM-owned, with explicit publish/import at the legacy setup boundary.
+The symbolic room provider authors mechanism creation and geometry changes; it
+demonstrates the protocol, not a converted mechanism allocator or setup engine.
+
+All **115 frozen library and 105 local compiled inputs** match; 97 inherited
+sources are unchanged. The extracted reference reconstructs from frozen Rust,
+with declared observation, ROM-reader and dispatch bindings. Twenty-three
+functions, four macro setup bodies and two slope tables match current source.
+The existing probe sink is a no-op; direct invocation and asserted outcomes supply
+the component checks, not movie probe coverage. Optimized DLL and formatting pass.
+
+The new pure protocol has 76 formatted lines, its encoded provider 123, and effect
+declarations add eight: **207 lines** against a **109-line** reaction cohort.
+This partial comparison excludes compatibility routing/handoffs and retained
+allocator/setup/slopes; it is not a complete replacement price or saving. The
+native fixture has 130 lines, the paired fixture 580, and retained reference 531.
+Definitions are synthetic. Regional diagnostic mutation, arbitrary setup routes,
+collision-displacement pointers and complete slope conversion are not established.
+Source/result: `Local/sm-decomp-experiments/20261022/shot-block-reactions`
+(`prepare.py`, `freeze.py`, `build.py`, `check.py`, `review.py`). Continue by owning
+the mechanism allocation/setup lifecycle and composing this boundary with the
+latest complete projectile candidate before promoting persistent runtime state.
+
 ### Named projectile animation definitions
 
 A standalone experiment separates projectile playback from instruction encoding.

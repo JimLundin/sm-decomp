@@ -44,6 +44,15 @@ The pure behavior is already useful, but RAM remains the authority.[^launch]
 `MessageHandoff` is likewise reconstructed from a continuation byte at PLM entry.
 The script slot and queued message intentionally remain live inputs.[^handoff]
 
+The [shot-to-room reaction experiment](RAM_OWNERSHIP.md#synchronous-shot-to-room-reaction-protocol)
+exercises a concrete mixed-ownership interval. Its projectile owner publishes
+before the actual mechanism allocator/setup executes, then imports before flight
+and animation resume. Room geometry and mechanism slots remain byte-owned. The
+prepared mechanism retains its captured block association even if setup changes
+the current block or selected projectile. Persistent room ownership must migrate
+these setup writers and their later consumers together; the pure reaction protocol
+alone does not transfer authority over the room or mechanism pool.
+
 ## One RAM allocation serves both execution branches
 
 `Game::new` initializes the large allocation in place. `SnesInit` passes the

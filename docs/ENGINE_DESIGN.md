@@ -550,7 +550,33 @@ native lifecycles pass. No second gameplay algorithm was needed. Room reactions
 can make a shot move twice in one pass by changing selection; captured axis targets,
 live cleanup targets and the next iteration must remain distinct. Actual
 block/slope/PLM reactions, remaining native definitions and runtime authority are
-still open. The native direction field also still combines aim and retirement.
+still open in that build. The native direction field also still combines aim and retirement.
+
+The [shot-to-room follow-up](RAM_OWNERSHIP.md#synchronous-shot-to-room-reaction-protocol)
+now makes the reaction protocol explicit and executes the real mechanism allocator
+with five selected setup routes. **187 comparisons** include 24 linked update/draw
+steps; six symbolic examples reuse the same RAM-independent protocol. The room
+selects a response, while the projectile retains its scan progress. Blocking,
+stopping the scan and successfully creating a mechanism remain separate outcomes.
+Setup runs immediately and can alter the geometry seen later in the same scan.
+
+```mermaid
+flowchart LR
+    Flight[Projectile motion] --> Contact[Room contact]
+    Contact --> Response[Room chooses response]
+    Response --> Scan[Update scan progress]
+    Scan --> Trigger[Run mechanism trigger now]
+    Trigger --> Geometry[Room geometry changes]
+    Geometry --> Resume[Resume scan and projectile update]
+    Response -->|Pass or block without trigger| Resume
+```
+
+The special stop-scan trigger takes effect even if allocation fails. Allocation
+captures the associated block before setup; setup may change the live selectors
+without changing that association. Therefore `Trigger` cannot be deferred until
+the end of the frame. The encoded provider still uses RAM for room/mechanism state
+and retains the actual setup/slopes. The symbolic provider authors those actions;
+persistent room ownership and complete mechanism conversion remain open.
 
 The earlier named-transition experiment advanced the interface without migrating
 the remaining producer, flight or runtime ownership. Its changed model/provider
