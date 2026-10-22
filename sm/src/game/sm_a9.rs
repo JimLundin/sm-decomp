@@ -1,3 +1,4 @@
+use crate::game::enemy_population_ram::spawn_enemy;
 use crate::game::minimap;
 pub use crate::game::prelude::*;
 
@@ -26,7 +27,7 @@ use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::{
     CalculateAngleFromXY, CreateDudShot, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
     Enemy_SwitchToFrozenAi, NormalEnemyFrozenAI, NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy,
-    NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SpawnEnemy,
+    NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAiSkipDeathAnim_CurEnemy,
     SuitDamageDivision,
 };
 use crate::game::sm_a6::{
@@ -387,7 +388,7 @@ crate::game::callback_dispatch! {
             }
         }
         if (v1).wrapping_sub(4) >= 0 {
-            SpawnEnemy(0xa9, addr_stru_A98AE5 as u16, game);
+            spawn_enemy(0xa9, addr_stru_A98AE5 as u16, game);
             (*Get_MotherBrainBody(0x40i32, game)).var_E = ((0xa9896ei32) as u16);
         }
     };
@@ -1474,11 +1475,11 @@ crate::game::callback_dispatch! {
         (*E).var_E = ((0xa989d2i32) as u16);
     };
     [11110887] MotherBrainBody_5_SpawnTubeFallingEnemy1 {
-        SpawnEnemy(0xa9, addr_stru_A98AF5 as u16, game);
+        spawn_enemy(0xa9, addr_stru_A98AF5 as u16, game);
         (*E).var_E = ((0xa989fai32) as u16);
     };
     [11110927] MotherBrainBody_7_SpawnTubeFallingEnemy2 {
-        SpawnEnemy(0xa9, addr_stru_A98B05 as u16, game);
+        spawn_enemy(0xa9, addr_stru_A98B05 as u16, game);
         (*E).var_E = ((0xa98a22i32) as u16);
     };
     [11110967] MotherBrainBody_9_SpawnTopMiddleLeftFalling {
@@ -1500,11 +1501,11 @@ crate::game::callback_dispatch! {
         (*E).var_E = ((0xa98a86i32) as u16);
     };
     [11111067] MotherBrainBody_13_SpawnTubeFallingEnemy3 {
-        SpawnEnemy(0xa9, ((0x868b15i32) as u16), game);
+        spawn_enemy(0xa9, ((0x868b15i32) as u16), game);
         (*E).var_E = ((0xa98aaei32) as u16);
     };
     [11111107] MotherBrainBody_15_SpawnTubeFallingEnemy4 {
-        SpawnEnemy(0xa9, addr_stru_A98B25 as u16, game);
+        spawn_enemy(0xa9, addr_stru_A98B25 as u16, game);
         (*E).var_E = ((0xa98ad6i32) as u16);
     };
     @countdown [pub unsafe fn (game: &mut Game)];
@@ -2510,7 +2511,7 @@ pub unsafe fn MotherBrain_WritePalette(j: u16, game: &mut Game) {
     WriteColorsToPalette(0x162, 0xad, (j).wrapping_add(30), 15, game);
 }
 pub unsafe fn MotherBrain_SpawnShitroidInCutscene(game: &mut Game) {
-    (*Get_MotherBrain(0x40i32, game)).var_0A = SpawnEnemy(0xa9, addr_stru_A9BE28 as u16, game);
+    (*Get_MotherBrain(0x40i32, game)).var_0A = spawn_enemy(0xa9, addr_stru_A9BE28 as u16, game);
 }
 crate::game::callback_dispatch! {
     pub unsafe fn CallMotherBrainPainfulWalk(ea: u32, game: &mut Game) => ea;

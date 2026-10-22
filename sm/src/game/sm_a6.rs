@@ -1,3 +1,4 @@
+use crate::game::enemy_population_ram::spawn_enemy;
 use crate::game::minimap;
 pub use crate::game::prelude::*;
 
@@ -24,7 +25,7 @@ use crate::game::sm_a0::{
     Enemy_SwitchToFrozenAi, GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, NormalEnemyFrozenAI,
     NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy, NormalEnemyShotAi,
     NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
-    NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SineMult8bit, SpawnEnemy, SuitDamageDivision,
+    NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SineMult8bit, SuitDamageDivision,
     SwitchEnemyAiToMainAi,
 };
 use crate::game::sm_a9::{
@@ -790,8 +791,8 @@ pub unsafe fn CeresRidley_Func_12(game: &mut Game) -> u8 {
     Shitroid_Func_2(0, rect, game)
 }
 pub unsafe fn CeresRidley_Func_25(game: &mut Game) {
-    SpawnEnemy(0xa6, addr_stru_A6AA2F as u16, game);
-    SpawnEnemy(0xa6, addr_stru_A6AA3F as u16, game);
+    spawn_enemy(0xa6, addr_stru_A6AA2F as u16, game);
+    spawn_enemy(0xa6, addr_stru_A6AA3F as u16, game);
 }
 pub unsafe fn CeresRidley_Func_27(game: &mut Game) {
     *ram_ptr!(game; 0x56) = 7;
@@ -2776,18 +2777,18 @@ pub unsafe fn RidleysExplosion_Func_1(k: u16, game: &mut Game) {
     (*E).base.properties = v3;
 }
 pub unsafe fn RidleysExplosion_Func_2(game: &mut Game) {
-    SpawnEnemy(0xa6, addr_stru_A6C9E7 as u16, game);
-    SpawnEnemy(0xa6, addr_stru_A6C9D7 as u16, game);
-    SpawnEnemy(0xa6, addr_stru_A6C9C7 as u16, game);
-    SpawnEnemy(0xa6, addr_stru_A6C9B7 as u16, game);
-    SpawnEnemy(0xa6, addr_stru_A6C9A7 as u16, game);
-    SpawnEnemy(0xa6, addr_stru_A6C997 as u16, game);
-    SpawnEnemy(0xa6, addr_stru_A6C987 as u16, game);
-    SpawnEnemy(0xa6, addr_stru_A6C9F7 as u16, game);
-    SpawnEnemy(0xa6, addr_stru_A6CA07 as u16, game);
-    SpawnEnemy(0xa6, addr_stru_A6CA27 as u16, game);
-    SpawnEnemy(0xa6, addr_stru_A6CA17 as u16, game);
-    SpawnEnemy(0xa6, addr_stru_A6CA37 as u16, game);
+    spawn_enemy(0xa6, addr_stru_A6C9E7 as u16, game);
+    spawn_enemy(0xa6, addr_stru_A6C9D7 as u16, game);
+    spawn_enemy(0xa6, addr_stru_A6C9C7 as u16, game);
+    spawn_enemy(0xa6, addr_stru_A6C9B7 as u16, game);
+    spawn_enemy(0xa6, addr_stru_A6C9A7 as u16, game);
+    spawn_enemy(0xa6, addr_stru_A6C997 as u16, game);
+    spawn_enemy(0xa6, addr_stru_A6C987 as u16, game);
+    spawn_enemy(0xa6, addr_stru_A6C9F7 as u16, game);
+    spawn_enemy(0xa6, addr_stru_A6CA07 as u16, game);
+    spawn_enemy(0xa6, addr_stru_A6CA27 as u16, game);
+    spawn_enemy(0xa6, addr_stru_A6CA17 as u16, game);
+    spawn_enemy(0xa6, addr_stru_A6CA37 as u16, game);
 }
 pub fn locret_A6CB20(game: &mut Game) {}
 static off_A6CB21: [Func_V; 9] = callback_table! { nonnull Func_V;
@@ -4018,10 +4019,10 @@ pub unsafe fn Zebetites_Func_7(j: u16, a: u8, game: &mut Game) {
     };
 }
 pub unsafe fn Zebetites_Func_8(game: &mut Game) {
-    SpawnEnemy(0xa6, addr_stru_A6FCE1 as u16, game);
+    spawn_enemy(0xa6, addr_stru_A6FCE1 as u16, game);
 }
 pub unsafe fn Zebetites_Func_9(game: &mut Game) -> u16 {
-    SpawnEnemy(0xa6, addr_stru_A6FCF9 as u16, game)
+    spawn_enemy(0xa6, addr_stru_A6FCF9 as u16, game)
 }
 pub unsafe fn Zebetites_Func_5(game: &mut Game) {
     let mut v0: u16 = 0;

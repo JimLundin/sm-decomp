@@ -1,3 +1,4 @@
+use crate::game::enemy_population_ram::initialize_room;
 pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_60::*;
@@ -29,10 +30,7 @@ crate::typed_struct! {
         #[derive(Copy, Clone)]
         #[repr(C, packed)]
     ];
-    pub struct EnemyPopulation {
-        pub enemy_ptr: VoidP;
-        pub x_pos, y_pos, init_param, properties, extra_properties, parameter1, parameter2: u16;
-    }
+
 
     pub struct EnemyTileLoadData {
         pub tile_data_size: u16;
@@ -74,7 +72,6 @@ unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
 }
 const RomPtr_86: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x86>;
 const RomPtr_A1: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa1>;
-const RomPtr_B4: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xb4>;
 use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
 #[inline]
 unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
@@ -100,10 +97,7 @@ unsafe fn get_Vulnerability(a: u16, game: &mut Game) -> *mut Vulnerability {
 unsafe fn get_ExtendedSpriteMap(db: u8, a: u16, game: &mut Game) -> *mut ExtendedSpriteMap {
     RomPtr((words!(i32, (db, a))) as u32, game) as *mut ExtendedSpriteMap
 }
-#[inline]
-unsafe fn get_EnemyPopulation(db: u8, a: u16, game: &mut Game) -> *mut EnemyPopulation {
-    RomPtr((words!(i32, (db, a))) as u32, game) as *mut EnemyPopulation
-}
+
 crate::game::constants::typed_constants! { i32;
     fnEprojPreInstr_nullsub_83 = 0x8684fb, fnGrappleBeam_Func2 = 0x9bc8c5,
 }
@@ -318,37 +312,7 @@ pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
     }
     CallEnemyGfxDrawHook(Load24(ram_ptr!(game, LongPtr; 0x178c)), game);
 }
-pub unsafe fn RecordEnemySpawnData(j: u16, game: &mut Game) {
-    let v1 = gEnemyData(j as i32, game);
-    let mut v2 = gEnemySpawnData(j as i32, game);
-    set_fields! {[(*v2)]; id = (*v1).enemy_ptr, x_pos = (*v1).x_pos, y_pos = (*v1).y_pos,
-    init_param = (*v1).current_instruction, properties = (*v1).properties,
-    extra_properties = (*v1).extra_properties, param_1 = (*v1).parameter_1,
-    param_2 = (*v1).parameter_2, };
-    let mut r18: u16 = 0;
-    let mut r20: u16 = 0;
-    let mut r22: u16 = 0;
-    let mut r24: u16 = 0;
-    let mut R26: u16 = 0;
-    let mut R28: u16 = 0;
-    let name_ptr: u16 = (*get_EnemyDef_A2((*v1).enemy_ptr, game)).name_ptr;
-    if name_ptr != 0 {
-        let v4 = RomPtr_B4(name_ptr, game) as *const u16;
-        r18 = *v4;
-        r20 = *v4.offset(1);
-        r22 = *v4.offset(2);
-        r24 = *v4.offset(3);
-        R26 = *v4.offset(4);
-        R28 = *v4.offset(6);
-    }
-    let mut v5 = gEnemySpawnData(j as i32, game);
-    *(&raw mut (*v5).name as *mut u8 as *mut u16) = r18;
-    *((&raw mut (*v5).name as *mut u8).offset(2) as *mut u16) = r20;
-    *((&raw mut (*v5).name as *mut u8).offset(4) as *mut u16) = r22;
-    *((&raw mut (*v5).name as *mut u8).offset(6) as *mut u16) = r24;
-    *((&raw mut (*v5).name as *mut u8).offset(8) as *mut u16) = R26;
-    *((&raw mut (*v5).name as *mut u8).offset(10) as *mut u16) = R28;
-}
+
 pub unsafe fn LoadEnemies(game: &mut Game) {
     word!(game.debug_time_frozen_for_enemies = 0);
     (*(ram_ptr!(game, LongPtr; 0x178c))).bank = 160;
@@ -366,84 +330,7 @@ pub unsafe fn ClearEnemyDataAndProcessEnemySet(game: &mut Game) {
         ProcessEnemyTilesets(game);
     }
 }
-pub unsafe fn InitializeEnemies(game: &mut Game) {
-    memset(ram_ptr!(game, c_void; 0x7000), 0, 0x2800 as size_t);
-    word! { game, 0;
-        num_enemies_in_room, num_enemies_killed_in_room, flag_process_all_enemies,
-    }
-    word_transfers!(game, descending, 144; le(eproj_flags, 143) <- value(0));
-    word_transfers!(game, descending, 18; le(eproj_killed_enemy_index, 17) <- value(-1i32 as u16));
-    let mut v4: u16 = word!(game.room_enemy_population_ptr);
-    if (*get_EnemyPopulation(0xa1u8, word!(game.room_enemy_population_ptr), game)).enemy_ptr
-        == 0xffff
-    {
-        return;
-    }
-    word!(game.UNUSED_word_7E0E48 = 0);
-    let mut v5: u16 = 0;
-    do_until! { ((*get_EnemyPopulation(0xa1u8, v4, game)).enemy_ptr == 0xffff);
-        LoadEnemyGfxIndexes(v4, v5, game);
-        let EP = get_EnemyPopulation(0xa1, v4, game);
-        let ED = get_EnemyDef_A2((*EP).enemy_ptr, game);
-        let E = gEnemyData(v5 as i32, game);
-        (*E).x_width = (*ED).x_radius;
-        (*E).y_height = (*ED).y_radius;
-        (*E).health = (*ED).health;
-        (*E).layer = (*ED).layer as u16;
-        *(&raw mut (*E).bank as *mut u16) = *(&raw mut (*ED).bank as *mut u16);
-        if (*ED).boss_fight_value != 0 {
-            word!(game.boss_id = (*ED).boss_fight_value);
-        }
-        set_fields! {[(*E)]; enemy_ptr = (*EP).enemy_ptr, x_pos = (*EP).x_pos,
-            y_pos = (*EP).y_pos, current_instruction = (*EP).init_param,
-            properties = (*EP).properties, extra_properties = (*EP).extra_properties,
-            parameter_1 = (*EP).parameter1, parameter_2 = (*EP).parameter2, };
-        set_fields! {[(*E)], 0; frame_counter, timer}
-        (*E).instruction_timer = 1;
-        (*E).frame_counter = 0;
-        RecordEnemySpawnData(v5, game);
-        word!(game.cur_enemy_index = v5);
-        CallEnemyAi((words!(i32, (*ED), bank, ai_init)) as u32, game);
-        (*E).spritemap_pointer = 0;
-        if ((*E).properties & 0x2000) != 0 {
-            let mut v12: u16 = addr_kSpritemap_Nothing_A4 as u16;
-            if ((*E).extra_properties & 4) != 0 {
-                v12 = addr_kExtendedSpritemap_Nothing_A4 as u16;
-            }
-            (*E).spritemap_pointer = v12;
-        }
-        v5 = (v5).wrapping_add(64);
-        v4 = (v4).wrapping_add(16);
-    }
-    word! {game; first_free_enemy_index = v5; num_enemies_in_room = (v5 >> 6);
-    num_enemy_deaths_left_to_clear = *RomPtr_A1(v4, game).offset(2) as u16; }
-}
-pub unsafe fn LoadEnemyGfxIndexes(k: u16, j: u16, game: &mut Game) {
-    let E = gEnemyData(j as i32, game);
-    let ES = gEnemySpawnData(j as i32, game);
-    let mut e: u16 = word!(game.room_enemy_tilesets_ptr);
-    let mut f: u16 = 0;
-    loop {
-        let ET = get_EnemyTileset(e, game);
-        if (*get_EnemyPopulation(0xa1u8, k, game)).enemy_ptr == (*ET).enemy_def {
-            (*ES).palette_index = (((*ET).vram_dst as i32 & 0xf) << 9) as u16;
-            (*E).palette_index = (*ES).palette_index;
-            (*ES).vram_tiles_index = f;
-            (*E).vram_tiles_index = (*ES).vram_tiles_index;
-            return;
-        }
-        if (*ET).enemy_def == 0xffff {
-            (*ES).vram_tiles_index = 0;
-            (*E).vram_tiles_index = (*ES).vram_tiles_index;
-            (*ES).palette_index = 2560;
-            (*E).palette_index = (*ES).palette_index;
-            return;
-        }
-        f = (f as i32 + ((*get_EnemyDef_A2((*ET).enemy_def, game)).tile_data_size as i32 >> 5))
-            as u16;
-        e = (e).wrapping_add(4);
-    }
-}
+
 pub unsafe fn LoadEnemyTileData(game: &mut Game) {
     for i in (0i32..=510).rev().step_by(2) {
         (*gEnemySpawnData(i, game)).some_flag =
@@ -482,7 +369,7 @@ pub unsafe fn TransferEnemyTilesToVramAndInit(game: &mut Game) {
     match source {
         0xffff => {}
         0xfffe => {
-            InitializeEnemies(game);
+            initialize_room(game);
             game.set_enemy_tile_vram_src(0xffff);
         }
         0x9800 => game.set_enemy_tile_vram_src(0xfffe),
@@ -1015,110 +902,7 @@ pub unsafe fn SpawnEnemyDrops(a: u16, k: u16, varE20: u16, game: &mut Game) {
     game.eproj_spawn_varE24 = a;
     SpawnEprojWithGfx(varE20, k, addr_kEproj_Pickup as u16, game);
 }
-pub unsafe fn DeleteEnemyAndConnectedEnemies(game: &mut Game) {
-    let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-    let mut num_parts: u16 = (*get_EnemyDef_A2((*v0).enemy_ptr, game)).num_parts;
-    if num_parts == 0 {
-        num_parts = 1;
-    }
-    let mut v2: u16 = num_parts;
-    do_until! { (v2 == 0);
-        (*gEnemyData(word!(game.cur_enemy_index) as i32, game)).enemy_ptr = 0;
-        word!(game.cur_enemy_index += 64);
-        v2 = v2.wrapping_sub(1);
-    }
-}
-pub unsafe fn SpawnEnemy(db: u8, k: u16, game: &mut Game) -> u16 {
-    let initialize_enemy_slots: bool;
-    let mut varE20: u16 = k;
-    let cur_enemy_index_backup: u16 = word!(game.cur_enemy_index);
-    let enemy_ptr: u16 = (*get_EnemyPopulation(db, k, game)).enemy_ptr;
-    let mut v3: i16 = (((*get_EnemyDef_A2(enemy_ptr, game)).num_parts) as i16).wrapping_sub(1);
-    if v3 < 0 {
-        v3 = 0;
-    }
-    let mut varE22: u16 = v3 as u16;
-    let mut varE26: u16 = v3 as u16;
-    let mut new_enemy_index: u16 = 0;
-    's_26: loop {
-        let mut v4: u16 = new_enemy_index;
-        while (*gEnemyData(v4 as i32, game)).enemy_ptr == 0 {
-            if varE22 == 0 {
-                initialize_enemy_slots = true;
-                break 's_26;
-            }
-            varE22 = varE22.wrapping_sub(1);
-            v4 = (v4).wrapping_add(64);
-            if v4 >= 2048 {
-                return 0xffff;
-            }
-        }
-        new_enemy_index = (new_enemy_index).wrapping_add(64);
-        if (new_enemy_index >= 2048) {
-            initialize_enemy_slots = false;
-            break;
-        }
-    }
-    if initialize_enemy_slots {
-        loop {
-            let E = gEnemyData(new_enemy_index as i32, game);
-            let EP = get_EnemyPopulation(db, varE20, game);
-            let mut v10: i32 = 0;
-            if (*EP).enemy_ptr == word!(game.enemy_def_ptr[0])
-                || {
-                    v10 = 1;
-                    (*EP).enemy_ptr == word!(game.enemy_def_ptr[1])
-                }
-                || {
-                    v10 = 2;
-                    (*EP).enemy_ptr == word!(game.enemy_def_ptr[2])
-                }
-                || {
-                    v10 = 3;
-                    (*EP).enemy_ptr == word!(game.enemy_def_ptr[3])
-                }
-            {
-                (*E).vram_tiles_index = word!(game.enemy_gfxdata_tiles_index[v10]);
-                (*E).palette_index =
-                    (2u16).wrapping_mul(u16::swap_bytes(word!(game.enemy_gfxdata_vram_ptr[v10])));
-            } else {
-                set_fields! {[(*E)], 0; vram_tiles_index, palette_index}
-            }
-            let ED = get_EnemyDef_A2((*EP).enemy_ptr, game);
-            (*E).x_width = (*ED).x_radius;
-            (*E).y_height = (*ED).y_radius;
-            (*E).health = (*ED).health;
-            (*E).layer = (*ED).layer as u16;
-            *(&raw mut (*E).bank as *mut u16) = *(&raw mut (*ED).bank as *mut u16);
-            set_fields! {[(*E)]; enemy_ptr = (*EP).enemy_ptr, x_pos = (*EP).x_pos,
-            y_pos = (*EP).y_pos, current_instruction = (*EP).init_param,
-            properties = (*EP).properties, extra_properties = (*EP).extra_properties,
-            parameter_1 = (*EP).parameter1, parameter_2 = (*EP).parameter2, };
-            set_fields! {[(*E)], 0; frame_counter, timer, ai_var_A, ai_var_B, ai_var_C, ai_var_D, ai_var_E, ai_preinstr}
-            (*E).instruction_timer = 1;
-            (*E).frame_counter = 0;
-            RecordEnemySpawnData(new_enemy_index, game);
-            word!(game.cur_enemy_index = new_enemy_index);
-            if (*ED).ai_init & 0x8000 != 0 {
-                CallEnemyAi((words!(i32, (*ED), bank, ai_init)) as u32, game);
-            }
-            if ((*E).properties & 0x2000) != 0 {
-                (*E).spritemap_pointer = addr_kSpritemap_Nothing_A0 as u16;
-            }
-            if varE26 == 0 || {
-                varE26 = varE26.wrapping_sub(1);
-                varE26 == 0
-            } {
-                word!(game.cur_enemy_index = cur_enemy_index_backup);
-                return new_enemy_index;
-            }
-            new_enemy_index = (new_enemy_index).wrapping_add(64);
-            varE20 = (varE20).wrapping_add(16);
-        }
-    } else {
-        0xffff
-    }
-}
+
 pub unsafe fn DrawOneEnemy(game: &mut Game) {
     let varE34: u16 =
         (2u16).wrapping_mul((*gEnemyData(word!(game.cur_enemy_index) as i32, game)).layer);

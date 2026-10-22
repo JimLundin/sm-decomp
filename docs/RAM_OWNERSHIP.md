@@ -298,6 +298,58 @@ An enemy handle must initially preserve slot identity and reuse behavior.
 Adding generation checks or rejecting a callback's selector change would require
 separate behavioral evidence, even if attractive for a later engine design.
 
+**Adopted population lifecycle:** `enemy_population` owns the spawn search and
+multipart sequence plus the different room/dynamic creation rules. It forbids
+unsafe code and needs no Game, RAM or pointers. `enemy_population_ram` captures
+owned ROM records, uses checked byte access, commits initialized fields and
+spawn records before calling AI, and retains the original slot for post-callback
+spritemap changes. Room creation leaves the callback's current selector live;
+dynamic creation restores the caller's saved selector after the final part.
+All five old entry points and the raw population layout/helper are removed from
+bank A0; callers in 82/A0/A2/A6/A9 use the new module directly. Initializer calls
+and native invalid-ROM diagnostics remain explicit unsafe interfaces. Existing
+enemy execution, collision and persistent RAM state are not migrated by this step.
+
+The original search does **not** restart its remaining-empty-probe count after
+a failed candidate window. It can revisit already-counted empty slots and select
+a region containing an occupied slot. Creation has a separate stopping rule:
+requests for two parts create one, while requests for three normally create two.
+These quirks are preserved rather than replaced with a conventional contiguous
+allocator. Room initialization preserves script variables, always calls the
+initializer and resets/selects its empty spritemap; dynamic initialization clears
+the six script variables, gates the callback on bit 15 and otherwise retains its
+spritemap. The definition's adjacent bank/hurt-time bytes still populate the
+enemy's bank/field_2F word. Spawn-name copying deliberately skips source word five
+and preserves the final six destination bytes.
+
+Final-source verification passes **152 actual production comparisons** and
+**404 controlled comparisons**, with full RAM, return and failure equality,
+840 ordered initializer observations, 57 matching injected callback failures
+and 16 matching invalid-address diagnostic cases. Cases include empty/full and
+fragmented pools, signed part-count boundaries, name/no-name records, nested
+spawning, callback deletion/selector changes, live ROM patches, wrapped population
+addresses, connected deletion and nonzero/wrapping graphics indices. Seven checks
+discriminate against conventional allocation/counting, premature ROM reads or
+incorrect selector restoration. Six production/body comparisons separately match
+the real no-op initializer route to its controlled counterpart.
+
+Controlled checks use the original function bodies/macros and the new model and
+adapter, with recording/mutating AI callbacks. The new adapter's private
+`Game.loaded_rom` acquisition is substituted with the same initialized cartridge
+image in this harness; linked production checks use the actual Game owner. No
+cartridge replacement is claimed in those controlled callbacks. Odd-address
+cases observe the optimized old raw accesses, without establishing defined
+alignment for its explicit name-word loads. No movie ran, and these constructed
+cases establish no room-route, boss or enemy-specific AI coverage.
+
+Normal release library/frontend/verifier, all **115 embedded library inputs**
+and installed native source checks pass. Complete cost is **+310 Rust lines**:
+133 model, 379 adapter and 14 caller/registration lines, offset by 216 bank lines.
+One additional counted unsafe helper names the shared initializer handoff; raw
+RAM operations are removed from the migrated paths rather than hidden in that
+helper. This is ownership/safety work, not volume savings. Local reproduction:
+`Local/sm-decomp-experiments/20261022/enemy-population`.
+
 ### 10. Effect slots belong to a session mode as well as an effect
 
 The enemy-projectile executor also spawns pickups. Its RAM aliases cinematic

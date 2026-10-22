@@ -358,6 +358,8 @@ pub mod game {
     pub mod sm_94;
     pub mod sm_9b;
     pub mod sm_a0;
+    pub mod enemy_population;
+    pub mod enemy_population_ram;
     pub mod sm_a2;
     pub mod sm_a3;
     pub mod sm_a4;

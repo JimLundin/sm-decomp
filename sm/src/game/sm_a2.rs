@@ -1,3 +1,4 @@
+use crate::game::enemy_population_ram::delete_connected;
 pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_86::*;
@@ -19,10 +20,10 @@ use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::{
     CalculateAngleFromXY, CalculateAngleOfSamusFromEnemy, CallEnemyPreInstr,
     CheckIfEnemyIsOnScreen, CheckIfEnemyTouchesSamus, CompareDistToSamus_X, ConvertAngleToXy,
-    DeleteEnemyAndConnectedEnemies, EnemyFunc_BC76, EnemyGrappleDeath, Enemy_MoveDown,
-    Enemy_MoveRight_IgnoreSlopes, Enemy_MoveRight_SlopesAsWalls, Enemy_SwitchToFrozenAi,
-    GetSamusEnemyDelta_X, IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y, NormalEnemyFrozenAI,
-    NormalEnemyPowerBombAi, NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy, NormalEnemyShotAi,
+    EnemyFunc_BC76, EnemyGrappleDeath, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
+    Enemy_MoveRight_SlopesAsWalls, Enemy_SwitchToFrozenAi, GetSamusEnemyDelta_X,
+    IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y, NormalEnemyFrozenAI, NormalEnemyPowerBombAi,
+    NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy, NormalEnemyShotAi,
     NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy, RinkasDeathAnimation, SamusLatchesOnWithGrapple,
 };
@@ -1321,7 +1322,7 @@ pub unsafe fn Rinka_B865(k: u16, game: &mut Game) {
         (*Get_Rinka(0i32, game)).var_1D != 0
     } {
         Rinka_6(k, game);
-        DeleteEnemyAndConnectedEnemies(game);
+        delete_connected(game);
     } else {
         Rinka_6(k, game);
         Rinka_Init2(k, game);

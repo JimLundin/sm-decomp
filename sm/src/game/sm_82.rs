@@ -1,4 +1,5 @@
 use crate::game::decompression::decompress_to_ram;
+use crate::game::enemy_population_ram::initialize_room;
 use crate::game::gameplay::advance as AdvanceGameplay;
 pub use crate::game::prelude::*;
 use crate::game::room_backgrounds::BackgroundLoad;
@@ -56,8 +57,8 @@ use crate::game::sm_9b::{
     HandleSamusDeathSequence, StartSamusDeathAnimation,
 };
 use crate::game::sm_a0::{
-    DetermineWhichEnemiesToProcess, DrawSamusEnemiesAndProjectiles, EnemyMain, InitializeEnemies,
-    LoadEnemies, QueueEnemyBG2TilemapTransfers, TransferEnemyTilesToVramAndInit,
+    DetermineWhichEnemiesToProcess, DrawSamusEnemiesAndProjectiles, EnemyMain, LoadEnemies,
+    QueueEnemyBG2TilemapTransfers, TransferEnemyTilesToVramAndInit,
 };
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
@@ -3962,7 +3963,7 @@ crate::game::callback_dispatch! {
             UpdateBeamTilesAndPalette(game);
             LoadColorsForSpritesBeamsAndEnemies(game);
             LoadEnemies(game);
-            InitializeEnemies(game);
+            initialize_room(game);
             ResetProjectileData(game);
             Samus_LoadSuitTargetPalette(game);
             BackgroundLoad::Door.load(game);

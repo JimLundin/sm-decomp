@@ -42,10 +42,10 @@ inside a safe wrapper, macro or C adapter does not establish their elimination.
 Enforce `forbid(unsafe_code)` in completed safe modules as they become independent
 of the remaining unsafe calls; the overall safety requirement is still open.
 
-Current composition (2026-10-22): **94,880 Rust lines in 106 files**, plus 262 C
-bridge and 296 C-header lines = **95,438 maintained implementation lines**.
+Current composition (2026-10-22): **95,190 Rust lines in 108 files**, plus 262 C
+bridge and 296 C-header lines = **95,748 maintained implementation lines**.
 Counting all 803 dependency-installer lines and 28 added verifier-launcher lines
-gives **96,269**. This complete recount includes frontend,
+gives **96,579**. This complete recount includes frontend,
 verifier, adapters, callers and registrations. Existing development scripts,
 configuration and docs remain outside the metric. External dependencies add
 **2,836 CPU, 2,104 SPC, 1,261 PPU, 685 DSP and 1,659 music C/header lines**, plus **7,762 stb header
@@ -1635,6 +1635,26 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    the two different freeze/sound orderings. The source-level contracts are in
    RAM_OWNERSHIP.md, section 3; they are not new execution coverage. Draft:
    Local/sm-decomp-experiments/20261022/enemy-combat.
+   Enemy population creation now owns its search and multipart iteration state,
+   with named room/dynamic initialization rules and checked RAM/ROM adapters.
+   Room creation, dynamic spawning, graphics selection, spawn recording and linked
+   retirement use the new owner; all five legacy entry points and their raw
+   population record/helper are retired, and all real callers are migrated.
+   The pure model forbids unsafe code. Initializer callbacks and invalid-ROM
+   diagnostics remain explicit unsafe interfaces; persistent enemy state and the
+   broader enemy executor still reside in the compatibility layout. Final checks
+   pass **152 production and 404 controlled comparisons**, with 840 ordered
+   initializer observations, seven discriminating checks, 57 matching injected
+   failures and 16 matching diagnostic cases. Cases preserve fragmented-search
+   accumulation, the separate creation count, nested spawning, callback changes
+   to selectors/slots/ROM, name copying and wrapping graphics indices. Normal
+   release library/frontend/verifier, 115 embedded inputs and installed native
+   source checks pass. No movie ran; controlled callbacks establish no gameplay
+   route or enemy-specific AI coverage. Complete cost is **+310 maintained Rust
+   lines** (133 model + 379 adapter + 14 caller/registration, minus 216 bank lines).
+   This is required ownership/safety work, not volume savings; no new macros.
+   Contracts and harness limits: RAM_OWNERSHIP.md, section 9. Local reproduction:
+   Local/sm-decomp-experiments/20261022/enemy-population.
    Renewed user direction (2026-10-21): the search is still too narrow. Prioritize
    substantial system replacements and repeated algorithms across responsibilities.
    Stop spending implementation/validation effort on roughly hundred-line enemy
@@ -2848,15 +2868,21 @@ checked ROM tables, safe word transfers, owned recording, checked VRAM readback
 owned sprite drawing, checked Mode 7 transfers, owned SRAM, checked snapshot
 streams, owned enemy-projectile scripts, named APU history and explicit launch
 motion, checked ROM patch installation, hardware field serialization, PLM
-award/message ownership, owned APU RAM and the owned audio command queue,
-maintained Rust is **94,880**, with
+award/message ownership, owned APU RAM, the owned audio command queue and enemy
+population ownership, maintained Rust is **95,190**, with
 applicable static, component and exercised movie checks passing.
-Including 262 C and 296 header lines gives **95,438**; all 803 dependency-installer
-lines and 28 added launcher lines bring the complete price to **96,269**.
+Including 262 C and 296 header lines gives **95,748**; all 803 dependency-installer
+lines and 28 added launcher lines bring the complete price to **96,579**.
 The immediate volume target is complete.
 External dependency counts and current coverage are listed at the top.
 Counters: raw offsets 21; extern C blocks 7; counted C ABI exports 6; no_mangle 65;
-unsafe functions 3033; cast lines 6554. Owned audio command queuing removes 28
+unsafe functions 3034; cast lines 6542. Enemy population ownership adds 310
+maintained lines and one counted unsafe declaration for the shared initializer
+handoff, while removing 12 cast-containing lines. Its model forbids unsafe code;
+raw population/enemy pointer access and initialization clearing in these paths
+are retired. AI calls and native diagnostics remain unsafe. Other counters are
+unchanged; the increase is an ownership/safety cost, not savings.
+Owned audio command queuing removes 28
 maintained lines, two counted unsafe declarations and 19 cast-containing lines;
 other residue counters are unchanged. Raw queue traversal and pending-command
 memsets are retired; the queue model forbids unsafe code. Native audio interfaces
