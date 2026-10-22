@@ -9,112 +9,107 @@ use crate::game_state::Game;
 use crate::ram_map::{checked_word, ram_ptr, word};
 use crate::rtl::{abs16, Unreachable};
 
-#[derive(Clone, Copy, PartialEq)]
-pub(crate) enum Flight {
-    NonWave,
-    Wave,
-    Missile,
-    SuperMissile,
-}
-const AXES: [u8; 10] = [2, 3, 1, 3, 2, 2, 3, 1, 3, 2];
-const X_ACCELERATION: [i16; 10] = [0, 16, 16, 16, 0, 0, -16, -16, -16, 0];
-const Y_ACCELERATION: [i16; 10] = [-16, -16, 0, 16, 16, 16, 16, 0, -16, -16];
+pub use crate::game::projectile_flight_control::Flight;
+use crate::game::{projectile_flight_control as control, projectile_room::Axis};
 
-pub(crate) unsafe fn update(mut k: u16, kind: Flight, trail_interval: u16, game: &mut Game) {
-    unsafe {
-        let slot = k as i32 >> 1;
-        if word!(game.projectile_dir[slot]) & 0xf0 != 0 {
-            ClearProjectile(k, game);
-            if kind == Flight::SuperMissile {
-                clear_extensions(game);
-            }
-            return;
+struct FlightContext;
+impl<'a> control::Context<&'a mut Game> for FlightContext {
+    type Direction = usize;
+    fn selected(&self, game: &&mut Game) -> u16 {
+        checked_word!(game.projectile_index)
+    }
+    fn retiring(&self, game: &&mut Game, slot: u16) -> bool {
+        checked_word!(game.projectile_dir[(slot >> 1)]) & 0xf0 != 0
+    }
+    fn extension(&self, game: &&mut Game, slot: u16) -> bool {
+        checked_word!(game.projectile_type[(slot >> 1)]) & 0xfff == 0x200
+    }
+    fn release(&mut self, game: &'a mut Game, slot: u16) -> &'a mut Game {
+        ClearProjectile(slot, game);
+        game
+    }
+    #[forbid(unsafe_code)]
+    fn trail_ready(&mut self, game: &mut &'a mut Game, slot: u16, interval: u16) -> bool {
+        let at = crate::ram_map::word_arrays::projectile_timers + usize::from(slot >> 1) * 2;
+        // The countdown uses native words; an expired timer resets in SNES order.
+        let previous = u16::from_ne_bytes([game.g_ram[at], game.g_ram[at + 1]]);
+        game.g_ram[at..at + 2].copy_from_slice(&previous.wrapping_sub(1).to_ne_bytes());
+        if previous == 1 {
+            checked_word!(game.projectile_timers[(slot >> 1)] = interval);
         }
-        if trail_interval != 0 {
-            let timer = (ram_ptr!(game, u16; 0xc90)).offset(slot as isize);
-            let previous = *timer;
-            *timer = previous.wrapping_sub(1);
-            if previous == 1 {
-                word!(game.projectile_timers[slot] = trail_interval);
-                crate::game::projectile_trails::emit(k, game);
-                k = word!(game.projectile_index);
+        previous == 1
+    }
+    fn trail(&mut self, game: &'a mut Game, slot: u16) -> &'a mut Game {
+        unsafe { crate::game::projectile_trails::emit(slot, game) };
+        game
+    }
+    fn advance(&mut self, game: &'a mut Game, slot: u16, kind: Flight) -> &'a mut Game {
+        control::advance(game, slot, kind, self)
+    }
+    fn direction(&self, game: &&mut Game, slot: u16) -> usize {
+        usize::from(checked_word!(game.projectile_dir[(slot >> 1)]) & 0xf)
+    }
+    #[forbid(unsafe_code)]
+    fn accelerate(&mut self, game: &'a mut Game, slot: u16, direction: usize) -> &'a mut Game {
+        checked_word!(
+            game.projectile_bomb_x_speed[(slot >> 1)] += control::X_ACCELERATION[direction] as u16
+        );
+        checked_word!(
+            game.projectile_bomb_y_speed[(slot >> 1)] += control::Y_ACCELERATION[direction] as u16
+        );
+        game
+    }
+    fn axes(&mut self, game: &'a mut Game, direction: usize) -> (&'a mut Game, u8) {
+        (game, control::AXES[direction])
+    }
+    fn missile(&mut self, game: &'a mut Game, slot: u16) -> &'a mut Game {
+        unsafe { accelerate_missile(slot, game) };
+        game
+    }
+    fn collide(
+        &mut self,
+        game: &'a mut Game,
+        slot: u16,
+        kind: Flight,
+        axis: Axis,
+    ) -> (&'a mut Game, u8) {
+        let hit = unsafe {
+            match (kind, axis) {
+                (Flight::NonWave, Axis::X) => BlockCollNoWaveBeamHoriz(slot, game),
+                (Flight::NonWave, Axis::Y) => BlockCollNoWaveBeamVert(slot, game),
+                (Flight::Wave, Axis::X) => BlockCollWaveBeamHoriz(slot, game),
+                (Flight::Wave, Axis::Y) => BlockCollWaveBeamVert(slot, game),
+                (_, Axis::X) => BlockCollMissileHoriz(slot, game),
+                (_, Axis::Y) => BlockCollMissileVert(slot, game),
             }
-        }
-        advance(k, kind, game);
+        };
+        (game, hit)
+    }
+    fn extension_collision(&mut self, game: &'a mut Game, axis: Axis) -> &'a mut Game {
+        unsafe {
+            match axis {
+                Axis::X => collide_extension_x(game),
+                Axis::Y => collide_extension_y(game),
+            }
+        };
+        game
+    }
+    fn cull(&mut self, game: &'a mut Game) -> (&'a mut Game, bool) {
+        let removed = delete_offscreen(game) != 0;
+        (game, removed)
     }
 }
-
+pub(crate) unsafe fn update(k: u16, kind: Flight, trail_interval: u16, game: &mut Game) {
+    control::update(game, k, kind, trail_interval, &mut FlightContext);
+}
 pub(crate) unsafe fn advance(k: u16, kind: Flight, game: &mut Game) {
-    unsafe {
-        let slot = k as i32 >> 1;
-        let direction = (word!(game.projectile_dir[slot]) & 0xf) as usize;
-        if kind != Flight::SuperMissile {
-            word!(game.projectile_bomb_x_speed[slot] += X_ACCELERATION[direction] as u16);
-            word!(game.projectile_bomb_y_speed[slot] += Y_ACCELERATION[direction] as u16);
-        }
-        if matches!(kind, Flight::Missile | Flight::SuperMissile) {
-            accelerate_missile(k, game);
-        }
-        collide(AXES[direction], kind, game);
-        let removed = delete_offscreen(game);
-        if kind == Flight::SuperMissile && removed & 1 != 0 {
-            clear_extensions(game);
-        }
-    }
+    control::advance(game, k, kind, &mut FlightContext);
 }
-
-// Bit 0 selects horizontal movement; bit 1 selects vertical movement.
-// Diagonals retain their original slot across horizontal collision callbacks.
 pub(crate) unsafe fn collide(axes: u8, kind: Flight, game: &mut Game) {
-    unsafe {
-        let k = word!(game.projectile_index);
-        if axes & 1 != 0 {
-            let hit = match kind {
-                Flight::NonWave => BlockCollNoWaveBeamHoriz(k, game) & 1 != 0,
-                Flight::Wave => BlockCollWaveBeamHoriz(k, game) & 1 != 0,
-                Flight::Missile | Flight::SuperMissile => BlockCollMissileHoriz(k, game) != 0,
-            };
-            if kind == Flight::SuperMissile {
-                collide_extension_x(game);
-            }
-            if hit || axes & 2 == 0 {
-                return;
-            }
-        }
-        match kind {
-            Flight::NonWave => {
-                BlockCollNoWaveBeamVert(k, game);
-            }
-            Flight::Wave => {
-                BlockCollWaveBeamVert(k, game);
-            }
-            Flight::Missile | Flight::SuperMissile => {
-                BlockCollMissileVert(k, game);
-            }
-        }
-        if kind == Flight::SuperMissile {
-            collide_extension_y(game);
-        }
-    }
+    control::collide(game, axes, kind, &mut FlightContext);
 }
-
-unsafe fn clear_extensions(game: &mut Game) {
-    unsafe {
-        for slot in (0..5).rev() {
-            let k = slot * 2;
-            if word!(game.projectile_type[k >> 1]) & 0xfff == 512 {
-                ClearProjectile(k as u16, game);
-            }
-        }
-    }
-}
-pub(crate) unsafe fn update_extension(k: u16, game: &mut Game) {
-    unsafe {
-        if word!(game.projectile_dir[k >> 1]) & 0xf0 != 0 {
-            ClearProjectile(k, game);
-            clear_extensions(game);
-        }
-    }
+pub(crate) fn update_extension(k: u16, game: &mut Game) {
+    control::update_extension(game, k, &mut FlightContext);
 }
 
 pub(crate) unsafe fn initialize_speed(k: u16, speed: u16, game: &mut Game) {
@@ -130,24 +125,19 @@ use crate::game::constants::bank_90::{
     addr_kSuperMissileAccelerations, addr_kSuperMissileAccelerations2,
 };
 
-unsafe fn delete_offscreen(game: &mut Game) -> u8 {
-    unsafe {
-        let mut v0: i16 = ((*(ram_ptr!(game, u16; 0xb64))
-            .offset((word!(game.projectile_index) >> 1) as isize))
-            as i16)
-            .wrapping_sub((word!(game.layer1_x_pos)) as i16);
-        if v0 as i32 + 64 & 0x8000 == 0 && v0 as i32 - 320i32 & 0x8000 != 0 {
-            let mut v2: i16 = ((*(ram_ptr!(game, u16; 0xb78))
-                .offset((word!(game.projectile_index) >> 1) as isize))
-                as i16)
-                .wrapping_sub((word!(game.layer1_y_pos)) as i16);
-            if v2 as i32 + 64 & 0x8000 == 0 && v2 as i32 - 320i32 & 0x8000 != 0 {
-                return 0;
-            }
-        }
-        ClearProjectile(word!(game.projectile_index), game);
-        1
+#[forbid(unsafe_code)]
+fn delete_offscreen(game: &mut Game) -> u8 {
+    let position = |base, game: &Game| {
+        let at = base + usize::from(checked_word!(game.projectile_index) >> 1) * 2;
+        u16::from_ne_bytes([game.g_ram[at], game.g_ram[at + 1]])
+    };
+    if control::visible(position(0xb64, game), checked_word!(game.layer1_x_pos))
+        && control::visible(position(0xb78, game), checked_word!(game.layer1_y_pos))
+    {
+        return 0;
     }
+    ClearProjectile(checked_word!(game.projectile_index), game);
+    1
 }
 
 static kInitializeProjectileSpeed_XY_Diag: [u16; 24] = [
