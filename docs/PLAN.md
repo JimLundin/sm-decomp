@@ -1797,11 +1797,25 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    integration, side playback/drawing, reset and production migration remain open.
    No ROM/movie, adoption or savings. Preserved work: 20261022/owned-trail-emission;
    details: [emission contract](RAM_OWNERSHIP.md#owned-trail-emission-and-placement).
-   Next trail consumer checks must preserve draw-phase side advancement, one
-   captured freeze decision, cross-side movement commands and partial clipped
-   output. Projectile reset clears shot emission countdowns, not visual-pair
-   timers through its direct stores. These distinctions are source findings;
-   exercise emission/reset/playback and actual output before changing scheduling.
+   The coordinator's standalone side-playback/drawing follow-up now passes
+   **537 actual old/new full-RAM comparisons**, 2,046 ordered probe/callback events
+   and 201 matching failures: 96 timing, 36 command, 96 output, 288 callback,
+   eight caller, six explicit contract checks and seven emission/reset/playback
+   steps. Use the completed 20261022/owned-trail-playback model for full-Firing
+   integration; do not repeat the standalone investigation. It has named script
+   commands and generic sprite identities, one frozen decision per pass, explicit
+   cross-side motion and complete-pool transfer through definitions/output. A
+   native emission/playback/freeze/expiry sequence needs no byte image. Actual
+   output comparisons include clipping and aliases; the reference retains its
+   existing potentially unaligned raw stores, so this is observed native behavior,
+   not a proof of defined portable Rust semantics. Optimized/format checks and all
+   115+15 compiled inputs pass. Original dispatcher/macros/caller/reset bodies and
+   three current gameplay sources correspond. New model/adapter/type changes add
+   223 formatted lines, plus 142 native-example lines; not a full replacement price.
+   Diagnostics, preceding projectile/echo drawing and reset palette calls remain
+   controlled. Full-Firing playback/output and current-runtime integration remain
+   open; no ROM, movie, production adoption or savings claimed. Details:
+   [trail playback](RAM_OWNERSHIP.md#owned-trail-playback-and-drawing).
    The aim-handoff experiment now passes 68 full-RAM expected-state comparisons
    (14 partial failures), eight linked sequences and four counterexamples. Captured
    aim is consumed once; origin uses the live pose, and reservation rejection

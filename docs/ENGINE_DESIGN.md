@@ -483,13 +483,25 @@ It chooses style from one projectile, then captures the live selected projectile
 for placement. Both timers commit before script lookup, and the left script commits
 before the right lookup: failure can leave an allocated, partially configured pair.
 The model preserves that sequence through explicit owner transfers. One native
-sequence needs no RAM/ROM decoding. Complete-Firing integration, side playback and
-drawing remain open; this standalone pool is not a production state promotion.
-The source trace places side advancement in the draw phase, with left then right
-processing and one freeze decision per pass. Commands can target either side.
-Projectile reset clears the shots' emission countdowns without directly clearing
-existing visual trail pairs. Preserve those lifetimes and scheduling points when
-closing the remaining consumer, with rendering bytes handled by its adapter.
+sequence needs no RAM/ROM decoding. The subsequent complete-Firing emission draft
+records **603 selected comparisons** through actual flight/missile callers and
+reset; production ownership remains open.
+
+The [trail-playback follow-up](RAM_OWNERSHIP.md#owned-trail-playback-and-drawing)
+now passes **537 comparisons**, including the actual trail drawing output. Side
+advancement stays in the draw phase, processing left then right with one freeze
+decision per pass. Commands name their target side. A named-script/sprite native
+sequence runs emission, playback, frozen presentation, expiry and reuse without
+RAM/ROM decoding. The domain model uses a small presentation interface; the
+compatibility adapter owns clipping, ordered output writes and aliased reads.
+
+The linked experiment confirms that projectile reset clears shot emission
+countdowns while retaining existing visual trail pairs. Failure during sprite
+lookup similarly keeps the duration already committed. The next integration
+must carry the complete `Firing` through side playback and output, then connect
+the actual rendering and runtime consumers. The standalone reference has existing
+potentially unaligned raw stores; its comparison result is observed native output,
+not a proof of portable semantics. No full-game migration or savings are claimed.
 
 The [definition-consumer trace](RAM_OWNERSHIP.md#definition-consumers-still-to-migrate)
 records the remaining contracts and distinguishes source findings from tests.

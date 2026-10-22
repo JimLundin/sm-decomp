@@ -1098,6 +1098,84 @@ is claimed. Reproduction: `Local/sm-decomp-experiments/20261022/owned-trail-emis
 (`emission.rs`, `environment.rs`, `native.rs`, `harness.rs`, `prepare.py`, `build.py`,
 `check.py`, `result.json`).
 
+The subsequent full-owner `player-projectiles/emission-stage` now records **603
+selected comparisons** through emission, actual flight and missile callers,
+reset and checked table failures. It puts the trail pool inside `Firing` and uses
+that owner for style and projectile selection as well as callback transfers.
+Its scope and partial cost are recorded in PLAN; this extends the standalone
+owner described above. Side playback/output is a separate integration step.
+
+### Owned trail playback and drawing
+
+The `owned-trail-playback` experiment adds a generic side state machine to the
+emission model. Its input includes the pass's captured freeze decision. Named
+`Frame`, `Move` and `Unknown` instructions operate on generic cursors and sprite
+identities. `Move` names its target side explicitly; it can change the opposite
+side of the pair. The model processes pairs last to first, advancing and drawing
+left before right. The complete owner moves through definition lookup and
+presentation; no detached side survives an effect.[^trailpipeline]
+
+Duration expiry captures a local cursor, follows movement commands and commits
+the next duration. A zero duration ends the side while retaining its old tile and
+stored cursor. A nonzero duration resolves the definition again for the sprite,
+then installs the next cursor. The output adapter preserves live camera reads,
+capacity, clipping and ordered byte writes. It imports the pool after output,
+because accepted broad output indices can alias trail state. The generic model
+and checked adapters forbid unsafe code.
+
+**537 actual old/new full-RAM/completion comparisons pass**, with **2,046 ordered
+probe/callback events** and **201 matching failures**. The selected cases are
+96 timing, 36 commands, 96 output, 288 callback, eight outer drawing callers,
+six explicit contract checks and seven linked emission/reset/playback steps.
+The reference contains the actual trail dispatcher, side macros and
+`HandleProjectileTrails`, plus the `draw_projectiles` caller. Probe events record
+order; diagnostic/caller events also capture incoming RAM and the failure flag.
+No game ROM is loaded; definitions are synthetic.
+
+The six explicit checks establish the following distinctions:
+
+| Contract | Observed consequence |
+| --- | --- |
+| Cross-side commands and draw order | The right script can change left state after the left sprite was emitted. |
+| One freeze decision | A diagnostic setting the freeze flag does not freeze the remaining sides of that pass. |
+| Fresh sprite lookup | A later definition edit changes the sprite without changing the duration already committed. |
+| Failure after duration commit | A failed second lookup retains the new duration and old stored cursor/tile. |
+| Y clipping after X output | The output bytes can change while the output cursor remains unchanged. |
+| Aliased output | An X write into the current trail's Y field changes the following Y read. |
+
+The seven linked steps retain the typed pool between operations. They emit,
+advance, run the actual projectile reset and continue playback. Reset's direct
+stores preserve the live trail-pair durations while clearing the shots' emission
+countdowns. During that legacy reset interval the typed owner is consumed,
+published and reconstructed. This sequence uses the existing reset body; it does
+not replace reset or prove complete-Firing playback integration.[^resetslots]
+
+One additional native sequence uses **named script and sprite enums** with no
+byte image, RAM/ROM lookup or output-byte adapter. The same emission and playback
+algorithms exercise cross-side commands, left/right presentation order, a frozen
+pass, duration waiting, expiry and subsequent pair reuse.
+
+The final formatted optimized build and source-checked run pass. **115 embedded
+library inputs** match `15589b48`; **15 experiment inputs** match compiled bytes
+and hashes. The extracted dispatcher/macros/caller and reset correspond to the
+frozen source, and three relevant gameplay files match current main. The earlier
+reset experiment's transfer support is reused unchanged. New model/adapter code
+is **221 formatted lines** (106 playback, 115 adapter); generic sprite support
+adds two lines to the 91-line emission model. The native example adds 142 lines.
+This **223-line partial cost** excludes reused adapters/support, harnesses and
+production retirement; it establishes no whole-replacement price or saving.
+
+The drawing reference retains its existing potentially unaligned raw stores.
+These comparisons establish the observed Windows native output, not defined
+portable Rust behavior or general aliasing safety of the old code. The candidate
+uses checked byte writes. Diagnostics, ordinary projectile/echo drawing before
+trails, and reset palette calls are controlled. Actual sprite hardware consumption,
+complete-Firing output, runtime integration and malformed-data closure remain open.
+No movie or production adoption is claimed. Reproduction:
+`Local/sm-decomp-experiments/20261022/owned-trail-playback`
+(`side_playback.rs`, `side_adapter.rs`, `emission.rs`, `native.rs`, `harness.rs`,
+`prepare.py`, `build.py`, `check.py`, `result.json`).
+
 ### Definition consumers still to migrate
 
 This source trace identifies the contracts a named attack/animation definition
@@ -1143,10 +1221,11 @@ capacity and X clipping succeed, it writes X as a word before checking Y. A Y-cl
 sprite can therefore change the output bytes without advancing the output cursor.
 This belongs in the output adapter while the domain requests a trail sprite; an
 atomic visible-sprite append would not reproduce the current output image.
-These are source findings, not newly executed cases. The next experiment must
-exercise cross-side commands, repeated definition resolution, frozen passes,
-left/right output ordering, clipping with partial output, and emission followed
-by projectile reset and side playback.[^trailpipeline][^resetslots]
+The playback experiment above now exercises these source findings through its
+stated native-output scope: cross-side commands, repeated definition resolution,
+frozen passes, left/right output ordering, clipping with partial output, and
+emission followed by projectile reset and side playback. Complete-owner/runtime
+integration remains a separate requirement.[^trailpipeline][^resetslots]
 
 ### Aim capture, placement and expiry
 
@@ -1608,9 +1687,10 @@ movement and environment effects still transfer through the legacy adapter.
 Exercise remaining cancellation producers. Integrate Samus protection with its grant, contact and
 completed-pass consumers, preserving broad alias transfers and reset distinctions.
 Close remaining shared palette/sound writers and runtime transfers.
-Complete-owner playback, trail sampling and initialization are reviewed in the
-draft. Integrate the standalone emission model into that owner, then close trail
-side playback/drawing and remaining attack-definition consumers.
+Complete-owner projectile playback, trail sampling and initialization are reviewed
+in the draft. The emission integration now has its selected 603-case result.
+Integrate the completed standalone trail side-playback/drawing model into that
+owner, then close remaining attack-definition consumers and runtime transfers.
 These are new coverage questions,
 not additional pass counts for the existing firing or launch experiments.
 
