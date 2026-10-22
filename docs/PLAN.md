@@ -1586,23 +1586,32 @@ sm-config-engine-7617b682. Unlanded drafts contribute nothing to the budget.
    collision scans. The design records the resulting owner interactions; these
    source findings add no collision-route coverage. Continue the concrete full
    projectile draft at Local/sm-decomp-experiments/20261022/player-projectiles.
-   Its owned beam input/firing, flight phases, linked-extension collision and
-   release now pass **425 full-RAM comparisons**: 202 beam/persistent scenarios,
-   213 flight/extension/release scenarios and ten linked production cooldown
-   checks. There are 1,175 matching ordered callback observations and 54 matching
-   failures. Cases cover callback redirection, odd extension selectors, offscreen
-   edges/wrap, live camera changes and failures before selector restoration.
-   The model and codec forbid unsafe code; state crosses legacy calls by value,
-   and a divergent failure interface publishes partial state before a bad lookup.
-   All 115 frozen library inputs and seven draft inputs are checked. The initial
-   202-case build/result is preserved separately in its beam-stage directory.
-   This is still an **unadopted, incomplete draft**, not a production promotion or
-   a complete price. Acceleration and contact/trail calls are controlled; accepted
-   out-of-pool accesses explicitly run retained reference bodies through the
-   compatibility interface. These checks validate the handoff, not removal of
-   those implementations. Finish animation, acceleration, remaining weapon modes,
-   trails, real callers and runtime transfers in this same candidate, then count
-   every retained adapter/fallback. No movie ran and no savings are claimed.
+   Its owned firing, flight, acceleration, extensions, release and animation now
+   pass **1,295 full-RAM comparisons**: 194 beam/persistent scenarios, 213 flight
+   scenarios, 470 animation scenarios, 200 acceleration scenarios, 168 drawing
+   scenarios, 40 firing/definition compositions and ten linked production cooldown
+   checks. There are 1,824 matching ordered callback observations and 134 matching
+   failures. Beam firing and extension spawning call the owned initializer directly;
+   the former initialization effect and its publish/import round trip are removed.
+   Checked ROM reads retain the captured allocation and observe live data changes
+   across diagnostics. Cases cover damage-write ordering, ROM replacement, script
+   deletion/goto, impact timing, Ceres stale drawing coordinates, callback redirects,
+   odd selectors, offscreen edges and partial failures. The model and codec forbid
+   unsafe code; state crosses remaining legacy calls by value. All 115 frozen
+   library inputs and eleven draft inputs are checked; the optimized DLL builds.
+   Earlier 202-, 425-, 1,010- and 1,303-case compiled stages are preserved locally.
+   Eight initializer-stub-only cases were removed when firing adopted real
+   initialization; the final count is not an unchanged-suite comparison.
+   This remains an **unadopted, incomplete draft**, not a production promotion or
+   a complete price. Placement, launch-speed initialization, collision, native
+   diagnostics and drawing/trail consumers remain controlled. ROM definitions are
+   synthetic; these checks establish no gameplay route or hardware coverage.
+   Accepted out-of-pool operations retain reference bodies, including drawing
+   continuations. Their tests validate the handoff, not removal of those bodies.
+   Finish placement, remaining weapon modes, trails/reset, real callers and runtime
+   transfers in this same candidate, then count every adapter/fallback. The frozen
+   library predates current main; final integration requires current-source builds.
+   No movie ran and no savings are claimed.
    The earlier beam-stage details and limits are in RAM_OWNERSHIP.md.
    The aim-handoff experiment now passes 68 full-RAM expected-state comparisons
    (14 partial failures), eight linked sequences and four counterexamples. Captured
