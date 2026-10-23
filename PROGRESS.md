@@ -37,16 +37,17 @@ flowchart TB
     POOL --> METROID["sm_a3.rs / Metroid controllers"]:::checked
     POOL --> DRAYGON["sm_a5.rs / Draygon controllers"]:::checked
     POOL --> MAW["sm_a8.rs / Maw controllers"]:::checked
-    BASE["121 predecessor cases<br/>captures + alias assertions PASS"]:::done --> VERIFY["Candidate comparisons<br/>117 match / 4 FAIL"]:::failed
-    VERIFY --> MAWFIX["Maw appearance precedence<br/>correction under review"]:::active
+    BASE["121 predecessor cases<br/>captures + alias assertions PASS"]:::done --> VERIFY["Candidate comparisons<br/>121 / 121 match"]:::done
+    VERIFY --> MAWFIX["Maw appearance precedence<br/>both writes corrected / PASS"]:::done
     CPU["Draygon motion / original CPU<br/>5 candidate phase comparisons PASS"]:::done --> VERIFY
     PROBE["Sprite lifecycle + draw probes<br/>source review PASS"]:::checked --> EARLY["Two early routes / missing hits<br/>0 failing frames / coverage FAIL"]:::failed
-    EARLY --> MOVIE["52-phase original CPU + OAM<br/>startup opcode guard FAIL"]:::failed
-    MOVIE --> HOOKFIX["Isolated original opcode restore<br/>correction under review"]:::active
+    EARLY --> MOVIE["52-phase original CPU + OAM<br/>candidate comparison PASS"]:::done
+    MOVIE --> HOOKFIX["Isolated original opcode restore<br/>strict guards + capture audit PASS"]:::done
     POOL --> BUILD["Assembled verifier + adapters<br/>format / release build PASS"]:::done
     BUILD --> HOST["Actual shared harness<br/>compile PASS / execution pending"]:::done
     GUARD["Runtime + 1,026 bytes guard<br/>execution PASS"]:::done --> VERIFY
-    MUT["12 new faults<br/>source review PASS"]:::checked --> KILLS["39 mutations / execution pending"]:::pending
+    MUT["12 new faults<br/>source review PASS"]:::checked --> KILLS["41 mutations / execution pending"]:::pending
+    MAWFIX --> MAWMUT["Two Maw precedence mutations<br/>source review PASS"]:::checked --> KILLS
     CODEC --> VERIFY
     WAFFLE --> VERIFY
     METROID --> VERIFY
@@ -55,7 +56,7 @@ flowchart TB
     VERIFY --> ADOPT["Caller migration + retirement<br/>adopt on main"]:::pending
     MOVIE --> ADOPT
     KILLS --> ADOPT
-    class CPU,VERIFY,MAWFIX,MOVIE,HOOKFIX,BUILD,GUARD changed
+    class CPU,VERIFY,MAWFIX,MOVIE,HOOKFIX,BUILD,GUARD,MAWMUT changed
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d

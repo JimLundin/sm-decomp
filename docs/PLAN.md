@@ -391,20 +391,34 @@ references; measure build/test time and resource growth before changing the loop
    inferred explosion producer. Do not lengthen those unrelated routes. A52phase
    actualCPU sprite lifecycle+OAM component oracle is drafted for downstream proof;
    it is not a movie/fullframe claim. Its first capture fails the strict original
-   opcode guard at818AB8: SnesInit installs a known startup hook there. A narrow
-   original-file-byte restoration with scoped cleanup is drafted for review;
-   keep the strict original-code guards. No lifecycle capture pass yet.
+   opcode guard at818AB8: SnesInit installs a known startup hook there. Reviewed
+   one-byte original-file restoration with scoped cleanup preserves all strict
+   guards. Reference build17.11s and52phase capture pass on297fc7ac; independent
+   binary audit confirms exact23byte scratch/stack union, OAM transitions and
+   retirement at24. No broad DP mask, movie or full-frame claim.
    Assembled candidate format/check and release build pass23.42s on a2964c46.
    Actual candidate121captures:117exact matches;96/97/99/103FAIL. Investigation
    found Maw appearance precedence differs from the predecessor; correction
-   remains under review. All four explicit actor-alias cases117..120 match.
+   is now reviewed and applied to both writes; references remain unchanged.
+   Corrected candidate format/check and release build pass18.03s on2bf8b6c8.
+   All121comparisons now match, including the four failures and actor aliases.
+   Actual52phase candidate lifecycle/OAM comparison passes against the independently
+   audited original capture (pool-candidate-results-2/comparison.json).
    New1026byte Runtimeguard passes execution, including expected foreign unwind
    and owner relinquishment. All five Draygon actualCPU/candidate comparisons
    pass ordered events, four intermediate RAM phases and final RAM. Local
    next-sprite-session/candidate-alias-results-2, candidate-runtime-guard-1.json
-   and candidate-draygon-results-1 retain source-checked results.
+   and candidate-draygon-results-1 retain source-checked initial results. Corrected
+   source repeats the Runtimeguard and five Draygon phase comparisons successfully
+   in candidate-runtime-guard-2.json and candidate-draygon-results-2; the121pass
+   captures are in candidate-alias-results-3.
    Twelve new faults pass source review (target39mutations including old27);
-   mutation execution remains. Do not adopt the failing production draft.
+   mutation execution remains. Two independent Maw grouping mutants using
+   nonzero supplied appearance now pass source review; both assert actual draw
+   palette as well as state. Total41mutations (32detached+9DLL). The corrected
+   ten-case composed harness compiles; new Maw checks are being assembled.
+   Hosted composition/mutations and selected shared-caller regressions
+   remain before adoption; this is still an unadopted production draft.
    Production draft+711lines; necessary owned-state/unsafe retirement, not a net
    source reduction. Final verification and fullscope accounting remain separate.
    Preserve distinct1022byte room clear and64byte active-pointer retirement.
