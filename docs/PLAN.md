@@ -164,7 +164,10 @@ references; measure build/test time and resource growth before changing the loop
    workers completed the candidate on verify/player-session-20261023 (026ab1a2).
    Local release/frontend/format,106groups+56comparisons and11549frames with
    all12probes pass. Hosted independent execution failed in run39996910420;
-   adoption remains pending. Production-1937lines; verification+1068lines.
+   the fixture ignored the beam leading edge. Corrected two-tick and original
+   first-tick boundary checks pass source review/compilation; hosted retry and
+   two targeted mutation checks are pending. Adoption remains pending.
+   Production-1937lines; verification Rust+1109lines after the fixture fix.
 
 
    Room mechanisms are now adopted as one production responsibility: creation,
@@ -626,6 +629,19 @@ build-script attempts remain failed/blocked, not runtime passes. Use the
 
 
 ## Validation strategy (2026-10-21)
+
+User direction (2026-10-23): include mutation testing of the verification
+harness. For each migrated responsibility, choose meaningful faults in its
+production behavior (boundaries, state updates, ordering or ownership), confirm
+the unmodified checks pass, then confirm those checks reject each compiling
+mutant. Use isolated source copies; never adopt mutant code. Compile failures,
+unrelated crashes and unexecuted checks do not count as detected mutations.
+Investigate surviving mutants and improve coverage or explain equivalence.
+Keep mutation support with verification code and report its scope separately;
+a few detected mutants do not establish comprehensive mutation coverage.
+Run standalone mutation executables on hosted Windows CI under the existing
+local Defender restriction. Start with projectile leading-edge and retirement
+faults; extend the scope with each subsequent subsystem conversion.
 
 User direction: test movie segments that actually execute the changed code
 and its relevant downstream effects. Unrelated frames add no coverage. This

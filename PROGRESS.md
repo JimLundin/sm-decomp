@@ -3,7 +3,7 @@
 Green: adopted scope | Blue: locally checked draft | Orange: active | Grey: remaining | Red: failed
 **Purple outline: changed since previous report.** Folder branches show containment; check arrows show prerequisites.
 
-[Player draft: 026ab1a2](https://github.com/JimLundin/sm-decomp/commit/026ab1a25efcc7bd329cb631f1219dbca172fa32) / [CI](https://github.com/JimLundin/sm-decomp/actions/runs/39996910420)
+[Player draft: 026ab1a2](https://github.com/JimLundin/sm-decomp/commit/026ab1a25efcc7bd329cb631f1219dbca172fa32) / [Previous CI failure](https://github.com/JimLundin/sm-decomp/actions/runs/39996910420) / [Latest CI](https://github.com/JimLundin/sm-decomp/actions?query=branch%3Averify%2Fplayer-session-20261023)
 
 ### Player projectiles / typed-core migration
 
@@ -42,7 +42,6 @@ flowchart TB
         p3_1["presentation.rs"]:::checked
         p3_2["feedback.rs"]:::checked
     end
-    class p0_0,p0_1,p0_2,p0_3,p0_4,p0_5,p0_6,p1_0,p1_1,p1_2,p1_3,p1_4,p2_0,p2_1,p2_2,p2_3,p2_4,p2_5,p3_0,p3_1,p3_2 changed
 
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
@@ -58,11 +57,16 @@ flowchart LR
     FMT["cargo fmt<br/>CI PASS"]:::checked --> LOCAL
     BUILD["Release + frontend<br/>local PASS"]:::checked --> LOCAL
     MOVIE["11,549 frames<br/>12 probes / 0 failures"]:::checked --> LOCAL
-    COMPILE["Three-core host<br/>compile PASS"]:::checked --> HOST["Independent execution<br/>CI FAIL"]:::failed
+    COMPILE["Three-core host<br/>compile PASS"]:::checked --> HOST["Independent execution<br/>corrected fixture / retry queued"]:::active
     LOCAL --> ADOPT["Adopt on main"]:::pending
     HOST --> ADOPT
     RETIRE["15 old layers retired<br/>in draft"]:::checked --> ADOPT
-    class REF,FMT,BUILD,MOVIE,COMPILE,RETIRE,HOST changed
+    FIX["player_checks.rs<br/>boundary fixture corrected"]:::checked --> HOST
+    HOST --> MUT1["Mutation: ignore radius<br/>execution pending"]:::active
+    HOST --> MUT2["Mutation: skip retirement<br/>execution pending"]:::active
+    MUT1 --> ADOPT
+    MUT2 --> ADOPT
+    class FIX,MUT1,MUT2,HOST changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

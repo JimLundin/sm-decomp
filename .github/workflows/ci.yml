@@ -57,6 +57,13 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Detached projectile compilation failed' }
           & $playerDetached
           if ($LASTEXITCODE -ne 0) { throw 'Detached projectile checks failed' }
+      - name: Reject projectile collision and retirement mutations
+        # Mutation execution remains hosted under the local Defender restriction.
+        # The preceding baseline must pass before deliberately broken variants run.
+        # Keep each fault isolated from the production checkout.
+        run: |
+          python sm/src/verification/player_detached/mutations.py
+          if ($LASTEXITCODE -ne 0) { throw 'Projectile mutation checks failed' }
       - name: Verify composed animation and palette cores without the game backend
         run: |
           $animationDetached = Join-Path $env:RUNNER_TEMP 'animated-detached.exe'

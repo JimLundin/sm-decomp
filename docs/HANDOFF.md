@@ -8,6 +8,23 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Hosted run39996910420 failed the detached fixture's first collision assertion:
+center43 plus motion4:1000 has leading edge48, already touching the wall.
+Both reviewers traced this to the expectation, not a production change. The
+revised fixture starts center41 and checks two ticks; original center43 remains
+as an explicit first-tick impact and stationary-playback test. Full root format
+and standalone compilation pass; hosted execution is pending. Actual production
+source remains unchanged from026ab1a2, so recorded gameplay evidence below still
+applies to that source. The correction adds41 verification Rust lines; totals
+are production-1937, verification+1109, combined-828 Rust lines. Prior token/byte
+figures below describe026ab1a2, before this harness correction.
+
+Mutation testing is required by PLAN. The adjacent mutations.py compiles an
+unchanged baseline and two isolated production faults (ignore beam radius;
+skip impact retirement). Each must compile and fail a player_checks equality
+assertion; unrelated failures do not count. Execution remains hosted only.
+Python mutation support and CI wiring are additional non-Rust verification cost.
+
 Player typed-core validation branch verify/player-session-20261023 is ready for
 hosted independent execution; not yet adopted in main. Source
 8da52a46f05b73235b04623499f5b1c92b13da9e973c39c4ed3b966cb80180a1 passes full

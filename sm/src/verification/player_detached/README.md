@@ -15,7 +15,11 @@ Checks use synthetic authored content, not ROM-derived data:
 
 - Actual ordinary beam input/placement/initialization and speed launch.
 - Two actual flight/terrain/animation updates: rightward movement from
-  `43:0000` to `47:1000`, then solid contact and impact at `53:3000`.
+  `41:0000` to `45:1000`, then solid contact and impact at `51:3000`.
+  The leading collision edge is center plus radius minus one; wall column 3
+  starts at X = 48. Starting at 43 would already impact on the first frame.
+- The original center-43 boundary is checked separately: first-frame impact at
+  `49:1000`, followed by stationary explosion playback on the next frame.
 - Actual impact animation and explosion drawing request, with ordered sound
   capacities and draw coordinates asserted independently.
 - Actual player reset synchronously spawning the palette core, followed by an
@@ -34,3 +38,10 @@ or demonstrate a complete backend-free game.
 
 The module wrappers include the production source files using repository-relative
 paths. Gameplay algorithms are compiled directly, without copied implementations.
+
+CI also runs `mutations.py`: an unchanged baseline must pass, then isolated
+copies ignoring the positive collision radius or skipping collision retirement
+must compile and fail an equality assertion in `player_checks.rs`. Compile
+errors, unrelated crashes and surviving mutants fail the job. These two faults
+check the collision harness's sensitivity, not comprehensive mutation coverage.
+The runner is verification support and executes only in GitHub Actions.

@@ -1,7 +1,6 @@
 //! Independent composed behavior, effect ordering, persistence and failure checks.
 #![forbid(unsafe_code)]
-use super::{Composed, Event, RomImage, Upload, World, animated, animation, colors};
-use std::panic::{AssertUnwindSafe, catch_unwind};
+use super::{Composed, Event, Upload, World, animated};
 
 fn composition() {
     let mut host = Composed::new();

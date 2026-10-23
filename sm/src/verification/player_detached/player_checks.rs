@@ -4,7 +4,9 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 
 fn prepared() -> Composed {
     let mut h = Composed::new();
-    h.world.player.player.x = 32;
+    // The muzzle is player X + 11. Start at 41 so the first right edge
+    // (45 + radius 2 - 1 = 46) remains before the wall at X = 48.
+    h.world.player.player.x = 30;
     h.world.player.player.y = 32;
     h.world.player.player.grapple = 0xc4f0;
     h.world.player_inputs.shoot_button = 1;
@@ -39,16 +41,23 @@ fn prepared() -> Composed {
 
 fn finish_flight(h: &mut Composed) {
     player::advance(h);
+    // First velocity 0x0410 adds 4:1000 to the muzzle at 41:0000.
     assert_eq!(
         (
             h.world.player.shots[0].x,
             h.world.player.shots[0].x_fraction
         ),
-        (47, 0x1000)
+        (45, 0x1000)
+    );
+    assert_eq!(
+        (h.world.player.shots[0].kind, h.world.player.shots[0].damage),
+        (0x8000, 20)
     );
     player::advance(h);
     let shot = &h.world.player.shots[0];
-    assert_eq!((shot.x, shot.x_fraction, shot.y), (53, 0x3000, 33));
+    // Next velocity 0x0420 reaches 49:3000; leading edge 50 hits column 3.
+    // Beam retirement shifts the center by radius 2 before showing impact.
+    assert_eq!((shot.x, shot.x_fraction, shot.y), (51, 0x3000, 33));
     assert_eq!(
         (shot.kind, shot.damage, shot.motion, shot.sprite),
         (0x8700, 8, 0xb169, 0x9345)
@@ -62,7 +71,7 @@ fn firing_and_replay() {
     let shot = &h.world.player.shots[0];
     assert_eq!(
         (shot.x, shot.y, shot.damage, shot.x_speed),
-        (43, 33, 20, 0x400)
+        (41, 33, 20, 0x400)
     );
     assert_eq!(h.world.player.count, 1);
     assert_eq!(h.events, [Event::PlayerSound(1, 15, 0xb)]);
@@ -71,16 +80,48 @@ fn firing_and_replay() {
     finish_flight(&mut h);
     assert_eq!(
         h.events,
-        [Event::PlayerSound(2, 6, 12), Event::Shot(0, 53, 33)]
+        [Event::PlayerSound(2, 6, 12), Event::Shot(0, 51, 33)]
     );
     let completed = h.world.clone();
     let outputs = h.events.clone();
     h.world = World::default();
+    assert_eq!(h.world, World::default());
     h.world = snapshot;
     h.events.clear();
     finish_flight(&mut h);
     assert_eq!(h.world, completed);
     assert_eq!(h.events, outputs);
+}
+
+fn first_frame_boundary() {
+    let mut h = prepared();
+    h.world.player.player.x = 32;
+    player::fire(&mut h);
+    assert_eq!(h.world.player.shots[0].x, 43);
+    h.events.clear();
+    player::advance(&mut h);
+    // 43:0000 + 4:1000 gives center 47, but edge 47 + 2 - 1 = 48
+    // is already in the wall. Retirement adds radius 2 immediately.
+    let shot = &h.world.player.shots[0];
+    assert_eq!((shot.x, shot.x_fraction, shot.y), (49, 0x1000, 33));
+    assert_eq!(
+        (shot.kind, shot.damage, shot.motion, shot.sprite),
+        (0x8700, 8, 0xb169, 0x9345)
+    );
+    assert_eq!(
+        (shot.remaining, shot.x_speed, shot.trail_time),
+        (100, 0x410, 3)
+    );
+    assert_eq!(h.events, [Event::PlayerSound(2, 6, 12)]);
+    player::advance(&mut h);
+    let shot = &h.world.player.shots[0];
+    assert_eq!((shot.x, shot.x_fraction, shot.y), (49, 0x1000, 33));
+    // Null motion leaves velocity and trail time stale; playback alone ticks.
+    assert_eq!(
+        (shot.remaining, shot.x_speed, shot.trail_time),
+        (99, 0x410, 3)
+    );
+    assert_eq!(h.events, [Event::PlayerSound(2, 6, 12)]);
 }
 
 fn reset_palette_composition() {
@@ -124,6 +165,7 @@ fn unsupported_does_not_succeed() {
 
 pub(super) fn run() {
     firing_and_replay();
+    first_frame_boundary();
     reset_palette_composition();
     unsupported_does_not_succeed();
 }
