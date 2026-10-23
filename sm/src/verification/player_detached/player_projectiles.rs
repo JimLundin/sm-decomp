@@ -31,8 +31,7 @@ pub(crate) mod preparation;
 pub(crate) mod presentation;
 #[path = "../../game/player_projectiles/specials.rs"]
 pub(crate) mod specials;
-#[path = "../../game/player_projectiles/state.rs"]
-pub(crate) mod state;
+use crate::game::session as state;
 #[path = "../../game/player_projectiles/weapons.rs"]
 pub(crate) mod weapons;
 use host::Host;
@@ -50,4 +49,7 @@ pub(crate) fn reset(h: &mut impl Host) {
 }
 pub(crate) fn prepare(h: &mut impl Host) {
     preparation::prepare(h, state::PrepareEntry::Normal);
+}
+pub(crate) fn fire_missile(h: &mut impl Host) {
+    missiles::fire(h);
 }

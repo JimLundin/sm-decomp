@@ -8,6 +8,25 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Shared room/player Session adopted from7ba1e33a. Full hosted CI40005712881
+passes build, composed execution and all eight targeted mutations. Formatted
+source8a4ee812de0eaa7b25dcecd6877c2f08d6000aae282a8efbe257ba27d286d31d
+passes1037/1037 comparisons (candidate-1037-formatted-results/results.json).
+Earlier same-behavior source passes106player groups/56comparisons/two guards
+and28314frames/19probes/zero failures. Source review found only import/layout
+formatting changes between these builds. Production+890, verification Rust+673,
+combined+1563; Python+34; unsafe declarations2606 (-7). Ten superseded files
+retire. Legacy callbacks still require interval publication; no persistence claim.
+
+Next focused draft: getter-validation passes identical54query capture against
+unoptimized and optimized code, SHA b59dac4de27781371d9d709b96a7b0dbff7819afc5a6bc075fd63276bb38e02f.
+Optimized source71b1fad86b22adba3bf4d222f9d143f8ce21669903c1a510a2f4d159aaade943;
+movie handle81316 is running; inspect before restarting. Needs room cases864..879
+against candidate-1037-formatted-results. Full enemy suite does not cover these
+initializers; nested EyeDoorProjectile argument path remains unexercised.
+Next enemy Session contract is assigned to enemy_projectiles_implementation,
+design-only under next-enemy-session. Main/candidate are not its edit targets.
+
 Adopted through e216f0ef: twelve new reference cases
 1021..1032 pass, alongside seven unchanged adjacent cases. The two scoped
 callback hooks retain actual message/native algorithms and compile out of normal
@@ -59,13 +78,13 @@ Formatted direct verifier build5 passes on source
 Five-getter optimization is assigned to an isolated getter-optimization draft;
 do not overlay while candidate validation runs. Independent design review passed.
 Production+890lines, verification Rust+673 including four formatting lines,
-mutation Python+34; no reduction claim. No candidate adoption yet.
+mutation Python+34; no reduction claim. Adopted as recorded above.
 Native source line endings match installed archives after normalized equality.
 
 Room contract v2 is frozen and four isolated production lanes are active under
 enemy_projectiles_implementation. Outputs: room-session/replacement; ownership
 and exact paths: room-session/contract/IMPLEMENTATION.md. No candidate runtime
-adoption yet. Session/caller/verification reviewers work separately; root alone
+adoption was pending at that checkpoint. Session/caller/verification reviewers work separately; root alone
 builds and captures.
 
 New actual-old message case1020 passes: real dud pre-action clears initial

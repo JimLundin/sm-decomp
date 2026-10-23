@@ -31,9 +31,9 @@ pub(super) fn clear(h: &mut impl Host, raw: u16) {
     shot!(h, raw, sprite = 0);
     shot!(h, raw, motion = 0xb169);
     let count = if (raw as i16).wrapping_sub(10) >= 0 {
-        &mut h.session_mut().bomb_count
+        &mut h.session_mut().projectiles.bomb_count
     } else {
-        &mut h.session_mut().count
+        &mut h.session_mut().projectiles.count
     };
     *count = count.wrapping_sub(1);
     if *count & 0x8000 != 0 {
@@ -62,7 +62,7 @@ pub(super) fn update(h: &mut impl Host, mut raw: u16, kind: Flight, interval: u1
         if previous == 1 {
             shot!(h, raw, trail_time = interval);
             presentation::emit(h, raw);
-            raw = h.session().selected;
+            raw = h.session().projectiles.selected;
         }
     }
     advance(h, raw, kind);
@@ -94,7 +94,7 @@ pub(super) fn advance(h: &mut impl Host, raw: u16, kind: Flight) {
 }
 pub(super) fn collide(h: &mut impl Host, axes: u8, kind: Flight) {
     // Both axes retain the selected slot across horizontal callbacks.
-    let raw = h.session().selected;
+    let raw = h.session().projectiles.selected;
     let collision = if kind == Flight::SuperMissile {
         Flight::Missile
     } else {
@@ -132,15 +132,15 @@ fn visible(position: u16, camera: u16) -> bool {
 }
 fn cull(h: &mut impl Host) -> bool {
     if visible(
-        shot_native!(h, h.session().selected, x),
+        shot_native!(h, h.session().projectiles.selected, x),
         h.inputs().camera_x,
     ) && visible(
-        shot_native!(h, h.session().selected, y),
+        shot_native!(h, h.session().projectiles.selected, y),
         h.inputs().camera_y,
     ) {
         return false;
     }
-    let raw = h.session().selected;
+    let raw = h.session().projectiles.selected;
     clear(h, raw);
     true
 }
@@ -152,16 +152,18 @@ pub(super) fn initialize_speed(h: &mut impl Host, raw: u16, speed: u16) {
         h.unknown();
         return;
     };
-    let velocity = h
-        .session()
-        .launch
-        .launch(aim, speed, h.inputs().absolute_y_fraction);
+    let velocity =
+        h.session()
+            .projectiles
+            .launch
+            .launch(aim, speed, h.inputs().absolute_y_fraction);
     shot!(h,raw,y_speed = velocity.y as u16; SliceLe);
     // A broad Y-speed write can change the launch history observed by X.
-    let velocity = h
-        .session()
-        .launch
-        .launch(aim, speed, h.inputs().absolute_y_fraction);
+    let velocity =
+        h.session()
+            .projectiles
+            .launch
+            .launch(aim, speed, h.inputs().absolute_y_fraction);
     shot!(h,raw,x_speed = velocity.x as u16; SliceLe);
 }
 pub(super) fn initialize_beam_speed(h: &mut impl Host, raw: u16) {
@@ -193,7 +195,7 @@ fn accelerate_missile(h: &mut impl Host, raw: u16) {
     }
 }
 fn extension_collision(h: &mut impl Host, axis: Axis) {
-    let parent = h.session().selected;
+    let parent = h.session().projectiles.selected;
     if !matches!(shot!(h, parent, kind) & 0xf00, 0x200 | 0x800) {
         return;
     }
@@ -239,17 +241,17 @@ fn contact_extension(h: &mut impl Host, parent: u16, child: u16, axis: Axis) {
         let distance = (magnitude >> 8) as i16 - 10;
         let delta = if speed < 0 { distance } else { -distance };
         shift_extension(h, parent, child, axis, delta);
-        h.session_mut().selected = child;
+        h.session_mut().projectiles.selected = child;
         super::collision::scan(h, child, Flight::Missile, axis);
         // Restore only after the child collision returns successfully.
-        h.session_mut().selected = parent;
+        h.session_mut().projectiles.selected = parent;
         if shot!(h, parent, kind) & 0xf00 == 0x800 {
             clear(h, child);
         }
     }
 }
 pub(super) fn link_extension(h: &mut impl Host, raw: u16) {
-    let parent = h.session().selected;
+    let parent = h.session().projectiles.selected;
     let value = shot_native!(h, parent, variable);
     shot!(h,parent,variable = (value&0xff00).wrapping_add(raw); SliceNative);
 }
@@ -262,7 +264,7 @@ fn spawn_extension(h: &mut impl Host) {
     };
     let kind = shot!(h, child, kind);
     shot!(h, child, kind = kind | 0x8200);
-    let parent = h.session().selected;
+    let parent = h.session().projectiles.selected;
     shot!(h, child, x = shot!(h, parent, x));
     shot!(h, child, y = shot!(h, parent, y));
     shot!(h, child, direction = shot!(h, parent, direction));
@@ -271,7 +273,7 @@ fn spawn_extension(h: &mut impl Host) {
     animation::initialize(h, child, Initialization::SuperMissile);
     shot!(h, child, motion = 0xb075);
     link_extension(h, child);
-    h.session_mut().count = h.session().count.wrapping_add(1);
+    h.session_mut().projectiles.count = h.session().projectiles.count.wrapping_add(1);
 }
 pub(super) fn point(angle: u16, radius: u16) -> (u16, u16) {
     let table = &crate::game::projectile_geometry::SINE_COSINE;
@@ -369,7 +371,7 @@ pub(super) fn reflect(h: &mut impl Host, raw: u16) {
     }
 }
 pub(super) fn advance_all(h: &mut impl Host) {
-    h.session_mut().selected = 18;
+    h.session_mut().projectiles.selected = 18;
     let mut cursor = 18i32;
     while cursor >= 0 {
         let raw = cursor as u16;
@@ -377,10 +379,10 @@ pub(super) fn advance_all(h: &mut impl Host) {
             let code = shot!(h, raw, motion);
             run(h, code, raw);
             animation::advance(h);
-            cursor = i32::from(h.session().selected);
+            cursor = i32::from(h.session().projectiles.selected);
         }
         cursor -= 2;
-        h.session_mut().selected = cursor as u16;
+        h.session_mut().projectiles.selected = cursor as u16;
     }
 }
 pub(super) fn run(h: &mut impl Host, code: u16, raw: u16) {
@@ -427,7 +429,7 @@ pub(super) fn run(h: &mut impl Host, code: u16, raw: u16) {
     }
 }
 pub(super) fn reset(h: &mut impl Host) {
-    for shot in &mut h.session_mut().shots {
+    for shot in &mut h.session_mut().projectiles.shots {
         shot.trail_time = 0;
         shot.x = 0;
         shot.y = 0;
@@ -444,18 +446,18 @@ pub(super) fn reset(h: &mut impl Host) {
         shot.sprite = 0;
         shot.motion = 0xb169;
     }
-    h.session_mut().bomb_count = 0;
-    h.session_mut().controls.cooldown = 0;
-    h.session_mut().count = 0;
-    h.session_mut().power_bomb.flag = 0;
+    h.session_mut().projectiles.bomb_count = 0;
+    h.session_mut().projectiles.controls.cooldown = 0;
+    h.session_mut().projectiles.count = 0;
+    h.session_mut().projectiles.power_bomb.flag = 0;
     if h.inputs().hud_auto_cancel != 0 {
-        h.session_mut().controls.selected_weapon = 0;
-        h.session_mut().controls.automatic_weapon = 0;
+        h.session_mut().projectiles.controls.selected_weapon = 0;
+        h.session_mut().projectiles.controls.automatic_weapon = 0;
     }
-    h.session_mut().echoes.x.fill(0);
-    h.session_mut().echoes.y.fill(0);
-    h.session_mut().echoes.x_speed.fill(0);
-    h.session_mut().echoes.index = 0;
+    h.session_mut().projectiles.echoes.x.fill(0);
+    h.session_mut().projectiles.echoes.y.fill(0);
+    h.session_mut().projectiles.echoes.x_speed.fill(0);
+    h.session_mut().projectiles.echoes.index = 0;
     if h.session().player.special_palette_flags != 0 {
         h.session_mut().player.special_palette_flags = 0;
         h.palette(super::host::PaletteEffect::SuitTarget);

@@ -1,17 +1,18 @@
-//! Game compatibility and actual backend effects. Gameplay lives in Session.
-use super::{
-    Host,
+//! One aggregate authority for player, projectiles, mechanisms and their room.
+use crate::game::player_projectiles::{
     access::{ShotLane, Store},
-    content, encoding,
-    host::{Drawing, PaletteEffect, PlayerStep},
-    state::{Inputs, Session},
+    content,
+    host::{Drawing, Host, PaletteEffect, PlayerStep},
+};
+use crate::game::{
+    external_inputs::ExternalInputs, session::Session, session_encoding as encoding,
 };
 use crate::{
     game_state::Game,
     rom::{RomImage, RomRecord},
 };
 
-fn invalid_window(game: &mut Game, address: u32) {
+pub(crate) fn invalid_window(game: &mut Game, address: u32) {
     unsafe {
         crate::c_library::printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), address);
     }
@@ -54,10 +55,10 @@ fn draw_trail(game: &mut Game, pair: usize, right: bool, frozen: bool) {
     }
 }
 
-pub struct Runtime<'g> {
+pub(crate) struct Runtime<'g> {
     game: &'g mut Game,
     state: Option<Session>,
-    inputs: Inputs,
+    inputs: ExternalInputs,
 }
 impl<'g> Runtime<'g> {
     pub fn new(game: &'g mut Game) -> Self {
@@ -79,22 +80,70 @@ impl<'g> Runtime<'g> {
         self.inputs = encoding::inputs(&self.game.g_ram);
         result
     }
-    pub(super) fn byte(&self, at: usize) -> u8 {
+    pub(crate) fn byte(&self, at: usize) -> u8 {
         encoding::projected_byte(self.session(), at).unwrap_or_else(|| self.game.g_ram[at])
     }
-    fn word(&self, at: usize) -> u16 {
+    pub(crate) fn word(&self, at: usize) -> u16 {
         u16::from_le_bytes([self.byte(at), self.byte(at + 1)])
     }
-    pub(super) fn store(&mut self, at: usize, value: u16, store: Store) {
-        self.foreign(|g| match store {
-            Store::PrefixLe => {
-                let [low, high] = value.to_le_bytes();
-                g.g_ram[at] = low;
-                g.g_ram[at + 1] = high;
-            }
-            Store::SliceLe => g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes()),
-            Store::SliceNative => g.g_ram[at..at + 2].copy_from_slice(&value.to_ne_bytes()),
-        });
+    pub(crate) fn store(&mut self, at: usize, value: u16, store: Store) {
+        match store {
+            Store::PrefixLe => self.write_word_le(value, at),
+            Store::SliceLe => self.write_slice_le(at, value),
+            Store::SliceNative => self.write_slice_native(at, value),
+        }
+    }
+    pub(crate) fn session(&self) -> &Session {
+        self.state
+            .as_ref()
+            .expect("aggregate unavailable during external effect")
+    }
+    pub(crate) fn session_mut(&mut self) -> &mut Session {
+        self.state
+            .as_mut()
+            .expect("aggregate unavailable during external effect")
+    }
+    pub(crate) fn inputs(&self) -> &ExternalInputs {
+        &self.inputs
+    }
+    pub(crate) fn native_word(&self, at: usize) -> u16 {
+        u16::from_ne_bytes([self.byte(at), self.byte(at + 1)])
+    }
+    pub(crate) fn set_byte(&mut self, at: usize, value: u8) {
+        // Ordinary RAM and owned fields are one live projection during an interval.
+        // A foreign destination may alias an external observation used next.
+        if !encoding::write_projected_byte(
+            self.state.as_mut().expect("aggregate unavailable"),
+            at,
+            value,
+        ) {
+            self.game.g_ram[at] = value;
+        }
+        self.inputs = encoding::inputs(&self.game.g_ram);
+    }
+    pub(crate) fn write_slice(&mut self, at: usize, bytes: &[u8]) {
+        let end = at.checked_add(bytes.len()).expect("aggregate write extent");
+        let _ = &self.game.g_ram[at..end];
+        for (lane, &value) in bytes.iter().enumerate() {
+            self.set_byte(at + lane, value);
+        }
+    }
+    pub(crate) fn write_word_le(&mut self, value: u16, at: usize) {
+        let [low, high] = value.to_le_bytes();
+        self.set_byte(at, low);
+        self.set_byte(at + 1, high);
+    }
+    pub(crate) fn write_slice_le(&mut self, at: usize, value: u16) {
+        self.write_slice(at, &value.to_le_bytes());
+    }
+    pub(crate) fn write_slice_native(&mut self, at: usize, value: u16) {
+        self.write_slice(at, &value.to_ne_bytes());
+    }
+    pub(crate) fn loaded_image(&self) -> Option<RomImage> {
+        self.game.loaded_rom.clone()
+    }
+    pub(crate) fn native_image(&self) -> RomImage {
+        self.game.capture_native_rom()
     }
 }
 impl Drop for Runtime<'_> {
@@ -141,7 +190,7 @@ impl Host for Runtime<'_> {
             .as_mut()
             .expect("projectile state unavailable during external effect")
     }
-    fn inputs(&self) -> &Inputs {
+    fn inputs(&self) -> &ExternalInputs {
         &self.inputs
     }
     fn loaded_image(&self) -> Option<RomImage> {
@@ -222,7 +271,12 @@ impl Host for Runtime<'_> {
         self.foreign(|g| unsafe { crate::game::explosion_window::spawn_power_bomb(g) });
     }
     fn spawn_mechanism(&mut self, header: u16) {
-        self.foreign(|g| unsafe { crate::game::room_mechanisms::spawn_collision(header, g) });
+        let mut contact = crate::game::room_mechanisms::host::Contact::Absent;
+        crate::game::room_mechanisms::creation::spawn(
+            self,
+            crate::game::room_mechanisms::host::SpawnSource::Collision { header },
+            &mut contact,
+        );
     }
     fn draw(&mut self, drawing: Drawing) {
         self.foreign(|g| {
@@ -313,4 +367,33 @@ fn charge_palette(game: &mut Game, output: crate::game::beam_charge_palette::Out
         crate::game::sm_91::CopyToSamusSuitPalette(palette, game);
     }
     0
+}
+
+/// Shared continuation belongs to the calling context, never to Session encoding.
+pub(crate) fn run_mechanisms(
+    game: &mut Game,
+    context: crate::game::room_mechanisms::host::CallerContext,
+) -> u8 {
+    use crate::game::room_mechanisms::host::{CallerContext, Pass, RunResult};
+    let mut pass = match game.g_ram[0x613] {
+        0 => Pass::Instructions,
+        1 => Pass::DisplayMessage,
+        other => Pass::Invalid(other),
+    };
+    let result = {
+        let mut runtime = Runtime::new(game);
+        crate::game::room_mechanisms::scheduler::advance(&mut runtime, &mut pass)
+    };
+    match context {
+        CallerContext::Gameplay | CallerContext::DoorTransition => match result {
+            RunResult::Complete => {
+                game.g_ram[0x613] = 0;
+                0
+            }
+            RunResult::Yield(value) => {
+                game.g_ram[0x613] = 1;
+                value.get()
+            }
+        },
+    }
 }

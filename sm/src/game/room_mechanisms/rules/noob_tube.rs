@@ -1,9 +1,8 @@
 //! Tube rupture: terrain installation, input suspension and ordered effects.
 #![forbid(unsafe_code)]
-use super::super::{
-    fields::{Fields, Global},
-    state::Column,
-};
+use super::super::access::*;
+use super::super::host::*;
+use super::terrain_setup as terrain;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Setup {
@@ -20,7 +19,7 @@ pub enum Block {
     BelowRightExtension,
 }
 
-pub fn setup(c: &mut impl Fields, slot: usize, kind: Setup) -> u8 {
+pub fn setup(c: &mut impl Host, slot: usize, kind: Setup) -> u8 {
     install(
         slot,
         if kind == Setup::Air {
@@ -42,11 +41,19 @@ pub fn setup(c: &mut impl Fields, slot: usize, kind: Setup) -> u8 {
     0
 }
 
-pub fn poll(c: &mut impl Fields, slot: usize) {
-    if c.global(Global::NewKeys) & 0xc3c0 != 0 {
-        c.set_slot(Column::InstructionDelay, slot, 1);
-        c.advance(slot, 1);
-        c.advance(slot, 1);
+pub fn poll(c: &mut impl Host, slot: usize) {
+    if c.inputs().pressed & 0xc3c0 != 0 {
+        mechanism!(c, slot, instruction_delay = 1);
+        {
+            let index = slot;
+            let value = mechanism!(c, index, program).wrapping_add(1);
+            mechanism!(c, index, program = value);
+        };
+        {
+            let index = slot;
+            let value = mechanism!(c, index, program).wrapping_add(1);
+            mechanism!(c, index, program = value);
+        };
     }
 }
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -59,20 +66,22 @@ pub enum Command {
     Unlock,
 }
 
-pub fn command(c: &mut impl Fields, kind: Command) {
+pub fn command(c: &mut impl Host, kind: Command) {
     match kind {
-        Command::Water => c.set_global(Global::LiquidOptions, c.global(Global::LiquidOptions) & !4),
-        Command::Crack => c.eproj(0xd904, 0),
+        Command::Water => {
+            c.session_mut().room.liquid_options = c.session().room.liquid_options & !4
+        }
+        Command::Crack => c.enemy_projectile(0xd904, 0),
         Command::Quake => {
-            c.set_global(Global::QuakeType, 11);
-            c.set_global(Global::QuakeTimer, 64);
+            c.session_mut().feedback.earthquake_kind = 11;
+            c.session_mut().feedback.earthquake_timer = 64;
         }
         Command::Shatter => {
             for shard in 0u8..10 {
-                c.eproj(0xd912, u16::from(shard) * 2);
+                c.enemy_projectile(0xd912, u16::from(shard) * 2);
             }
             for bubble in 0u8..6 {
-                c.eproj(0xd920, u16::from(bubble) * 2);
+                c.enemy_projectile(0xd920, u16::from(bubble) * 2);
             }
         }
         Command::Lock => c.player_control(0),
@@ -80,16 +89,16 @@ pub fn command(c: &mut impl Fields, kind: Command) {
     }
 }
 
-fn install(slot: usize, block: Block, c: &mut impl Fields) {
+fn install(slot: usize, block: Block, c: &mut impl Host) {
     let index = match block {
-        Block::Air | Block::Solid => c.slot(Column::Block, slot),
-        Block::RightExtension => c.slot(Column::Block, slot).wrapping_add(2),
+        Block::Air | Block::Solid => mechanism!(c, slot, block),
+        Block::RightExtension => mechanism!(c, slot, block).wrapping_add(2),
         Block::BelowExtension | Block::BelowRightExtension => {
-            let width = c.global(Global::RoomWidth);
-            let second = c.global(Global::RoomWidth);
+            let width = c.session().room.width;
+            let second = c.session().room.width;
             width
                 .wrapping_add(second)
-                .wrapping_add(c.slot(Column::Block, slot))
+                .wrapping_add(mechanism!(c, slot, block))
                 .wrapping_add(if block == Block::BelowRightExtension {
                     2
                 } else {
@@ -97,7 +106,8 @@ fn install(slot: usize, block: Block, c: &mut impl Fields) {
                 })
         }
     };
-    c.install(
+    terrain::install(
+        c,
         index,
         match block {
             Block::Air => 0x44,

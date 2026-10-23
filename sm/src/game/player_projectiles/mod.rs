@@ -1,28 +1,28 @@
 //! Player-projectile lifecycle, producers, trails and charge feedback.
 #[macro_use]
-mod access;
+pub(crate) mod access;
 mod animation;
 mod bomb_creation;
 mod bomb_terrain;
 mod bombs;
 mod collision;
-mod content;
-mod encoding;
+pub(crate) mod content;
+use crate::game::session_encoding as encoding;
 mod feedback;
-mod host;
+pub(crate) mod host;
 mod lifecycle;
 mod missiles;
 mod motion;
 mod placement;
 mod preparation;
 mod presentation;
-mod runtime;
+
 mod specials;
-mod state;
+use crate::game::session as state;
 mod weapons;
+use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use host::Host;
-use runtime::Runtime;
 #[path = "../../verification/player_projectiles.rs"]
 pub(crate) mod checks;
 

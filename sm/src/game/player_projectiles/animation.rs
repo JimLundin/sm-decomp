@@ -140,7 +140,7 @@ impl<'a, H: Host> TrailDefinitions<&'a mut H> for Playback {
     }
 }
 pub fn advance(h: &mut impl Host) {
-    let selected = h.session().selected;
+    let selected = h.session().projectiles.selected;
     let (h, outcome) = playback::advance(h, selected, &mut Playback);
     if outcome == playback::Outcome::Release {
         super::motion::clear(h, selected);

@@ -1,6 +1,6 @@
 //! Focused regression checks for the owned compatibility boundary.
 #![forbid(unsafe_code)]
-use super::port::Execution;
+use crate::game::session_runtime::Runtime;
 use crate::{game_state::Game, rom::RomImage};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
@@ -14,13 +14,13 @@ pub(super) fn run(game: &mut Game) -> bool {
         }
         let mut expected = game.g_ram.to_vec();
         {
-            let mut execution = Execution::new(game);
+            let mut execution = Runtime::new(game);
             for range in [0x1c23..0x1e6d, 0xc6c8..0xc8c8, 0xde1c..0xdf5c] {
                 for address in range {
-                    assert_eq!(execution.port().byte(address), expected[address]);
+                    assert_eq!(execution.byte(address), expected[address]);
                     expected[address] ^= 0xa5;
-                    execution.port_mut().set_byte(address, expected[address]);
-                    assert_eq!(execution.port().byte(address), expected[address]);
+                    execution.set_byte(address, expected[address]);
+                    assert_eq!(execution.byte(address), expected[address]);
                 }
             }
             // Cross both outside edges and internal column boundaries, including
@@ -30,11 +30,11 @@ pub(super) fn run(game: &mut Game) -> bool {
                 0xde1b, 0xde6b, 0xdf5b,
             ] {
                 let bytes = [0x12, 0x34, 0x56, 0x78];
-                execution.port_mut().write_slice(address, &bytes);
+                execution.write_slice(address, &bytes);
                 expected[address..address + 4].copy_from_slice(&bytes);
-                assert_eq!(execution.port().read_le(address + 1), 0x5634);
+                assert_eq!(execution.word(address + 1), 0x5634);
                 assert_eq!(
-                    execution.port().read_native(address),
+                    execution.native_word(address),
                     u16::from_ne_bytes([0x12, 0x34])
                 );
             }
@@ -45,8 +45,8 @@ pub(super) fn run(game: &mut Game) -> bool {
         old_image.write(0, 0x31);
         game.loaded_rom = Some(old_image.clone());
         {
-            let mut execution = Execution::new(game);
-            execution.port_mut().write_slice_le(0x1c37, 0xbeef);
+            let mut execution = Runtime::new(game);
+            execution.write_slice_le(0x1c37, 0xbeef);
             let returned = execution.foreign(|game| {
                 assert_eq!(&game.g_ram[0x1c37..0x1c39], &[0xef, 0xbe]);
                 game.g_ram[0x1c38] = 0x42;
@@ -57,18 +57,21 @@ pub(super) fn run(game: &mut Game) -> bool {
                 19
             });
             assert_eq!(returned, 19);
-            assert_eq!(execution.port().read_le(0x1c37), 0x42ef);
-            assert_eq!(execution.port().byte(0xc6c8), 0x73);
-            assert_eq!(execution.port().rom().len(), 3);
-            assert_eq!(execution.port().rom().read(0), 0x92);
+            assert_eq!(execution.word(0x1c37), 0x42ef);
+            assert_eq!(execution.byte(0xc6c8), 0x73);
+            assert_eq!(execution.loaded_image().expect("loaded image").len(), 3);
+            assert_eq!(
+                execution.loaded_image().expect("loaded image").read(0),
+                0x92
+            );
             assert_eq!(old_image.read(0), 0x31);
         }
 
-        // Drop the emptied Execution during unwinding: it must not restore its
+        // Drop the emptied Runtime during unwinding: it must not restore its
         // pre-callback owner over the callback's newer bytes.
         let panic = catch_unwind(AssertUnwindSafe(|| {
-            let mut execution = Execution::new(game);
-            execution.port_mut().write_slice_le(0x1d27, 0x1234);
+            let mut execution = Runtime::new(game);
+            execution.write_slice_le(0x1d27, 0x1234);
             execution.foreign(|game| {
                 assert_eq!(&game.g_ram[0x1d27..0x1d29], &[0x34, 0x12]);
                 game.g_ram[0x1d27..0x1d29].copy_from_slice(&[0xcd, 0xab]);
@@ -81,8 +84,8 @@ pub(super) fn run(game: &mut Game) -> bool {
         // A second subsystem owns its state only inside the released interval.
         game.g_ram[0xb64..0xb66].copy_from_slice(&[0x78, 0x56]);
         {
-            let mut execution = Execution::new(game);
-            execution.port_mut().write_slice_le(0x1c37, 0x4321);
+            let mut execution = Runtime::new(game);
+            execution.write_slice_le(0x1c37, 0x4321);
             execution.foreign(|game| {
                 assert_eq!(&game.g_ram[0x1c37..0x1c39], &[0x21, 0x43]);
                 crate::game::player_projectiles::clear(0, game);
@@ -90,29 +93,29 @@ pub(super) fn run(game: &mut Game) -> bool {
                 assert_eq!(&game.g_ram[0x1c37..0x1c39], &[0x21, 0x43]);
                 game.g_ram[0x1c37..0x1c39].copy_from_slice(&[0xef, 0xbe]);
             });
-            assert_eq!(execution.port().read_le(0x1c37), 0xbeef);
-            assert_eq!(execution.port().read_le(0xb64), 0);
+            assert_eq!(execution.word(0x1c37), 0xbeef);
+            assert_eq!(execution.word(0xb64), 0);
         }
         assert_eq!(&game.g_ram[0x1c37..0x1c39], &[0xef, 0xbe]);
         assert_eq!(&game.g_ram[0xb64..0xb66], &[0, 0]);
 
         let last = game.g_ram.len() - 1;
         game.g_ram[last] = 0x81;
-        let mut execution = Execution::new(game);
+        let mut execution = Runtime::new(game);
         assert!(
             catch_unwind(AssertUnwindSafe(|| {
-                execution.port_mut().write_slice(last, &[0x23, 0x45]);
+                execution.write_slice(last, &[0x23, 0x45]);
             }))
             .is_err()
         );
-        assert_eq!(execution.port().byte(last), 0x81);
+        assert_eq!(execution.byte(last), 0x81);
         assert!(
             catch_unwind(AssertUnwindSafe(|| {
-                execution.port_mut().write_word_le(0x4523, last);
+                execution.write_word_le(0x4523, last);
             }))
             .is_err()
         );
-        assert_eq!(execution.port().byte(last), 0x23);
+        assert_eq!(execution.byte(last), 0x23);
     }));
     game.g_ram.copy_from_slice(&original_ram);
     game.loaded_rom = original_rom;

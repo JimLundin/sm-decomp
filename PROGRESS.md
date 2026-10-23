@@ -7,61 +7,62 @@ Green: adopted scope | Blue: draft | Orange: active | Grey: remaining | Red: fai
 
 [Four room mutations / CI PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40005395335) · [Shared Session candidate CI](https://github.com/JimLundin/sm-decomp/actions/runs/40005712881)
 
-### Room mechanisms / next typed-core conversion
+### Room mechanisms / shared typed core adopted
 
 ```mermaid
 flowchart TB
-    CONTRACT["Shared contract v2<br/>review + compile PASS"]:::checked
+    CONTRACT["Shared contract v2<br/>review + compile PASS"]:::done
     subgraph shared["Shared ownership / lane A"]
-        S["session.rs"]:::checked --> CODEC["Aggregate codec<br/>source review PASS"]:::checked
-        S --> PLAYER["player_projectiles/<br/>same shared inventory"]:::checked
-        CODEC --> RT["session_runtime.rs"]:::checked
-        RT --> HOST["host.rs / runtime.rs"]:::checked
+        S["session.rs"]:::done --> CODEC["Aggregate codec<br/>source review PASS"]:::done
+        S --> PLAYER["player_projectiles/<br/>same shared inventory"]:::done
+        CODEC --> RT["session_runtime.rs"]:::done
+        RT --> HOST["host.rs / runtime.rs"]:::done
     end
     subgraph creation["Creation / rules / lane B"]
-        CREATE["creation.rs"]:::checked --> SETUP["setup.rs"]:::checked
-        SETUP --> PRE["pre.rs"]:::checked
-        SETUP --> RULES["rules/ / 22 modules"]:::checked
+        CREATE["creation.rs"]:::done --> SETUP["setup.rs"]:::done
+        SETUP --> PRE["pre.rs"]:::done
+        SETUP --> RULES["rules/ / 22 modules"]:::done
     end
     subgraph execution["Messages / pickups / lane C"]
-        SCHED["scheduler.rs"]:::checked --> CMD["commands.rs"]:::checked
-        CMD --> PICKUP["Pickups / shared Inventory"]:::checked
+        SCHED["scheduler.rs"]:::done --> CMD["commands.rs"]:::done
+        CMD --> PICKUP["Pickups / shared Inventory"]:::done
     end
     subgraph drawing["Drawing / content / lane D"]
-        DRAW["presentation.rs"]:::checked --> GRAPHICS["graphics.rs"]:::checked
-        CONTENT["content.rs"]:::checked --> DRAW
-        CONTENT --> CR["content_runtime.rs"]:::checked
-        GRAPHICS --> GR["graphics_runtime.rs"]:::checked
+        DRAW["presentation.rs"]:::done --> GRAPHICS["graphics.rs"]:::done
+        CONTENT["content.rs"]:::done --> DRAW
+        CONTENT --> CR["content_runtime.rs"]:::done
+        GRAPHICS --> GR["graphics_runtime.rs"]:::done
     end
     CONTRACT --> S
     CONTRACT --> CREATE
     CONTRACT --> SCHED
     CONTRACT --> CONTENT
-    HOST --> CALLERS["Actual caller migration"]:::checked
+    HOST --> CALLERS["Actual caller migration"]:::done
     RULES --> CALLERS
     PICKUP --> CALLERS
     GR --> CALLERS
-    CALLERS --> DELETE["10 superseded files retired<br/>in candidate"]:::checked
-    BASE["1,037 reference outcomes"]:::checked --> COMPARE["Candidate comparisons<br/>1,037 / 1,037 PASS"]:::checked
+    CALLERS --> DELETE["10 superseded files retired<br/>adopted"]:::done
+    BASE["1,037 reference outcomes"]:::done --> COMPARE["Candidate comparisons<br/>1,037 / 1,037 PASS"]:::done
     RESUME["Case 1020: real message resume<br/>pre + timer preservation PASS"]:::done --> COMPARE
-    DELETE --> BUILD["Integrated candidate compile<br/>build 4 PASS"]:::checked
+    DELETE --> BUILD["Integrated candidate compile<br/>build 4 PASS"]:::done
     BUILD --> COMPARE
     GAP["Cases 1021-1032<br/>adopted / PASS"]:::done --> COMPARE
-    SHAREDTEST["Pickup / refill / hold<br/>actual player consumers"]:::checked --> COMPARE
-    FLAGS["commands.rs<br/>four flag-map branches fixed"]:::checked --> COMPARE
-    COMPARE --> REG["106 player groups / 56 comparisons<br/>2 runtime guards / PASS"]:::checked
-    COMPARE --> HC["Composed host compile<br/>PASS"]:::checked
-    HC --> HE["Composed host execution<br/>CI PASS"]:::checked
-    HE --> MUT["Candidate mutation checks"]:::pending
-    HE --> CM["4 composed mutants<br/>KILLED / CI PASS"]:::checked
+    SHAREDTEST["Pickup / refill / hold<br/>actual player consumers"]:::done --> COMPARE
+    FLAGS["commands.rs<br/>four flag-map branches fixed"]:::done --> COMPARE
+    COMPARE --> REG["106 player groups / 56 comparisons<br/>2 runtime guards / PASS"]:::done
+    COMPARE --> HC["Composed host compile<br/>PASS"]:::done
+    HC --> HE["Composed host execution<br/>CI PASS"]:::done
+    HE --> MUT["8 targeted mutations<br/>KILLED / CI PASS"]:::done
+    HE --> CM["4 composed mutants<br/>KILLED / CI PASS"]:::done
     CM --> MUT
-    BUILD --> FRONT["Full frontend build<br/>CI PASS / local ASR block"]:::checked
-    REG --> MOVIE["28,314 frames / 19 probes<br/>0 failures / PASS"]:::checked
+    BUILD --> FRONT["Full frontend build<br/>CI PASS / local ASR block"]:::done
+    REG --> MOVIE["28,314 frames / 19 probes<br/>0 failures / PASS"]:::done
     MUT --> MOVIE
-    MOVIE --> PERF["Runtime cost<br/>94.81s vs 88.18s / investigate"]:::active
+    MOVIE --> PERF["Runtime cost<br/>94.81s vs 88.18s / measured"]:::done
     PERF --> ADOPT
-    MOVIE --> ADOPT["Typed core adopted"]:::pending
-    class REG,HE,MOVIE,PERF,CM,FRONT changed
+    MOVIE --> ADOPT["Shared typed core adopted"]:::done
+    ADOPT --> GET["Five compatibility getters<br/>54 queries PASS / replay running"]:::active
+    class S,CODEC,PLAYER,RT,HOST,CREATE,SETUP,PRE,RULES,SCHED,CMD,PICKUP,DRAW,GRAPHICS,CONTENT,CR,GR,CALLERS,DELETE,BUILD,COMPARE,REG,HC,HE,MUT,CM,FRONT,MOVIE,PERF,ADOPT,GET changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -182,7 +183,7 @@ flowchart TB
     GAME --> PAL["palette_effects/<br/>typed core adopted"]:::done
     GAME --> AT["animated_tiles/<br/>typed core adopted"]:::done
     PP --> PPT["Player typed core<br/>adopted / checks PASS"]:::done
-    RM --> RMT["Mechanism typed core"]:::pending
+    RM --> RMT["Mechanism typed core<br/>shared player / inventory"]:::done
     EP --> EPT["Enemy projectile typed core"]:::pending
     GAME --> SAMUS["Samus"]:::pending
     GAME --> ENEMIES["Enemies / bosses"]:::pending

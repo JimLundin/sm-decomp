@@ -1,201 +1,178 @@
-//! Room mechanisms: owned execution, creation, rules, scripts and presentation.
+//! Complete room mechanisms on the shared gameplay Session.
+mod access;
 mod commands;
-mod creation;
-mod effects;
-mod fields;
-mod fields_runtime;
+mod content;
+mod content_runtime;
+pub(crate) mod creation;
 mod graphics;
-mod native_content;
-mod port;
+mod graphics_runtime;
+pub(crate) mod host;
 mod pre;
 mod presentation;
-mod scheduler;
+mod runtime;
+pub(crate) mod scheduler;
 mod setup;
-mod state;
-#[path = "../ownership_transport.rs"]
-mod transport;
 mod rules {
-    pub(super) mod hands;
-    pub(super) mod stations;
-    pub(super) mod torizo_statue;
-
-    pub(super) mod eye_door;
-    pub(super) mod gates;
-    pub(super) mod mother_brain_glass;
-    pub(super) mod noob_tube;
-    pub(super) mod treadmill;
-
     pub(super) mod animal_rescue;
     pub(super) mod booster_escape;
-    pub(super) mod crumbling_wall;
-    pub(super) mod metroid_quota;
-    pub(super) mod shaktool;
-    pub(super) mod sound_delay;
-
     pub(super) mod cannon_setup;
     pub(super) mod contact_physics;
+    pub(super) mod crumbling_wall;
     pub(super) mod doors;
+    pub(super) mod eye_door;
+    pub(super) mod gates;
+    pub(super) mod hands;
     pub(super) mod item_setup;
+    pub(super) mod metroid_quota;
+    pub(super) mod mother_brain_glass;
+    pub(super) mod noob_tube;
     pub(super) mod plants;
     pub(super) mod scroll_setup;
+    pub(super) mod shaktool;
+    pub(super) mod sound_delay;
+    pub(super) mod stations;
     pub(super) mod terrain_setup;
+    pub(super) mod torizo_statue;
     pub(super) mod tourian_wall;
+    pub(super) mod treadmill;
 }
-
-use crate::game::mechanism_displacement::Displacement;
-use crate::game_state::Game;
-use crate::types::SpawnHardcodedPlmArgs;
-use fields::{Fields, Global};
-use port::Execution;
+use crate::game::{
+    mechanism_displacement::Displacement,
+    session_runtime::{self, Runtime},
+};
+use crate::{game_state::Game, types::SpawnHardcodedPlmArgs};
+use access::mechanism;
+use host::{Contact, ContactIdentity, Host, ImportedAliases, SpawnSource};
 pub(crate) use rules::treadmill::Direction;
-use state::Column;
 
-/// Spawn a mechanism at a hardcoded room block. Native setup effects require initialized runtime state.
 pub(crate) unsafe fn spawn_hardcoded(args: SpawnHardcodedPlmArgs, game: &mut Game) {
-    Execution::new(game).spawn(
-        creation::Source::Hardcoded {
+    creation::spawn(
+        &mut Runtime::new(game),
+        SpawnSource::Hardcoded {
             x: args.block_x,
             y: args.block_y,
             header: args.header,
         },
-        &mut Displacement::Absent,
+        &mut Contact::Absent,
     );
 }
 pub(crate) unsafe fn spawn_room(address: u16, game: &mut Game) {
-    Execution::new(game).spawn(
-        creation::Source::Room { address },
-        &mut Displacement::Absent,
+    creation::spawn(
+        &mut Runtime::new(game),
+        SpawnSource::Room {
+            entry: host::ProgramCursor(address),
+        },
+        &mut Contact::Absent,
     );
 }
 pub(crate) unsafe fn spawn_collision(header: u16, game: &mut Game) -> u8 {
-    Execution::new(game).spawn(
-        creation::Source::Collision { header },
-        &mut Displacement::Absent,
+    creation::spawn(
+        &mut Runtime::new(game),
+        SpawnSource::Collision { header },
+        &mut Contact::Absent,
     )
+}
+fn contact<'a>(value: &'a mut Displacement<'_>) -> Contact<'a> {
+    match value {
+        Displacement::Absent => Contact::Absent,
+        Displacement::Local(value) => Contact::Local(&mut **value),
+        Displacement::RamOffset(at) => Contact::Imported(ContactIdentity(*at)),
+    }
 }
 pub(crate) unsafe fn spawn_contact(
     header: u16,
     displacement: &mut Displacement<'_>,
     game: &mut Game,
 ) -> u8 {
-    Execution::new(game).spawn(creation::Source::Collision { header }, displacement)
+    creation::spawn(
+        &mut Runtime::new(game),
+        SpawnSource::Collision { header },
+        &mut contact(displacement),
+    )
 }
 pub(crate) unsafe fn close_door(game: &mut Game) {
-    Execution::new(game).close_door();
+    creation::close_door(&mut Runtime::new(game));
 }
 pub(crate) unsafe fn reload_graphics(game: &mut Game) {
-    Execution::new(game).reload_graphics();
+    graphics::reload_graphics(&mut Runtime::new(game));
 }
 pub(crate) unsafe fn run(game: &mut Game) -> u8 {
-    unsafe { Execution::new(game).run() }
+    session_runtime::run_mechanisms(game, host::CallerContext::Gameplay)
+}
+pub(crate) unsafe fn run_door(game: &mut Game) -> u8 {
+    session_runtime::run_mechanisms(game, host::CallerContext::DoorTransition)
 }
 pub(crate) fn set_enabled(enabled: bool, game: &mut Game) {
-    let mut e = Execution::new(game);
-    let flags = e.port().read_le(0x1c23);
-    e.port_mut().write_slice_le(
-        0x1c23,
-        if enabled {
-            flags | 0x8000
-        } else {
-            flags & !0x8000
-        },
-    );
+    let mut h = Runtime::new(game);
+    let flags = h.session().mechanisms.flags;
+    h.session_mut().mechanisms.flags = if enabled {
+        flags | 0x8000
+    } else {
+        flags & !0x8000
+    };
 }
 pub(crate) fn clear(game: &mut Game) {
-    let mut e = Execution::new(game);
-    for slot in (0..40).rev() {
-        e.release(slot);
+    let mut h = Runtime::new(game);
+    for slot in h.session_mut().mechanisms.slots.iter_mut().rev() {
+        slot.header = 0;
     }
-    e.port_mut().write_slice_le(0x1c2d, 0);
+    h.session_mut().mechanisms.next_graphics = 0;
 }
-/// Publish the coordinate side effect before the caller's later field reads.
 pub(crate) fn calculate_coordinates(k: u16, game: &mut Game) {
-    Execution::new(game).coordinates(usize::from(k >> 1));
+    creation::coordinates(&mut Runtime::new(game), usize::from(k >> 1));
 }
+// Actual enemy-projectile compatibility consumers still require ordered live
+// reads. Their owner is separate; do not replace these calls with an eager tuple.
 pub(crate) fn selected(game: &mut Game) -> u16 {
-    Execution::new(game).global(Global::Selected)
+    Runtime::new(game).session().mechanisms.selected
 }
 pub(crate) fn block_index(k: u16, game: &mut Game) -> u16 {
-    Execution::new(game).slot(Column::Block, usize::from(k >> 1))
+    let h = Runtime::new(game);
+    mechanism!(h, k >> 1, block)
 }
 pub(crate) fn projectile_argument(k: u16, game: &mut Game) -> u16 {
-    Execution::new(game)
-        .port()
-        .read_native(0x1dc7 + usize::from(k >> 1) * 2)
+    let h = Runtime::new(game);
+    u16::from_ne_bytes(mechanism!(h, k >> 1, room_argument).to_le_bytes())
 }
 pub(crate) fn block_x(game: &mut Game) -> u16 {
-    Execution::new(game).global(Global::BlockX)
+    Runtime::new(game).session().mechanisms.block_x
 }
 pub(crate) fn block_y(game: &mut Game) -> u16 {
-    Execution::new(game).global(Global::BlockY)
+    Runtime::new(game).session().mechanisms.block_y
 }
 pub(crate) fn carry(direction: Direction, game: &mut Game) {
-    rules::treadmill::carry(&mut Execution::new(game), direction);
+    rules::treadmill::carry(&mut Runtime::new(game), direction);
 }
 pub(crate) fn add_glass_hits(slot: usize, amount: u16, game: &mut Game) {
-    rules::mother_brain_glass::add_hits(&mut Execution::new(game), slot, amount);
+    rules::mother_brain_glass::add_hits(&mut Runtime::new(game), slot, amount);
 }
 pub(crate) fn lower_acid(game: &mut Game) {
-    rules::hands::lower_acid(&mut Execution::new(game));
+    rules::hands::lower_acid(&mut Runtime::new(game));
 }
 pub(crate) fn open_passage(game: &mut Game) {
-    rules::crumbling_wall::open_passage(&mut Execution::new(game));
+    rules::crumbling_wall::open_passage(&mut Runtime::new(game));
 }
-pub(crate) fn statue_present(game: &mut Game) -> bool {
-    rules::torizo_statue::present(&Execution::new(game))
-}
-/// The actor becomes tangible before scanning, and music precedes its live resume reads.
 pub(crate) fn wait_statue(index: u16, game: &mut Game) {
-    let mut e = Execution::new(game);
-    let actor = 0xf78 + usize::from(index);
-    let properties = actor + core::mem::offset_of!(crate::types::EnemyData, properties);
-    let value = e.port().read_native(properties) | 0x400;
-    e.port_mut().write_slice_native(properties, value);
-    if rules::torizo_statue::present(&e) {
+    use host::Effects;
+    let mut h = Runtime::new(game);
+    h.statue_wait_actor(index, true);
+    if rules::torizo_statue::present(&h) {
         return;
     }
-    e.music(6);
-    let value = e.port().read_native(properties) & !0x400;
-    e.port_mut().write_slice_native(properties, value);
-    let instruction = actor + core::mem::offset_of!(crate::types::EnemyData, current_instruction);
-    let value = e.port().read_native(instruction).wrapping_add(2);
-    e.port_mut().write_slice_native(instruction, value);
-    e.port_mut().write_slice_native(
-        actor + core::mem::offset_of!(crate::types::EnemyData, instruction_timer),
-        1,
-    );
+    h.music(6);
+    h.statue_wait_actor(index, false);
 }
-/// Reveal only the mechanism items. Room-special-case reveal stays with Xray.
-/// Native item draw records require the existing initialized ROM allocation.
 pub(crate) unsafe fn reveal_items(game: &mut Game) {
-    let mut e = Execution::new(game);
-    for slot in (0..40).rev() {
-        if e.slot(Column::Header, slot) < 0xdf89 {
-            continue;
-        }
-        let argument = e.slot(Column::RoomArgument, slot);
-        let index = e.foreign(|g| crate::game::progress_flags::PrepareBitAccess(argument, g));
-        let item = u16::from(e.port().byte(0xd870 + usize::from(index)));
-        if e.port().read_le(0x5e7) & item != 0 {
-            continue;
-        }
-        e.coordinates(slot);
-        let graphic = e.port().read_native(0xdf0c + slot * 2) >> 1;
-        let address = e.port().rom().table_word(
-            crate::rtl::lorom_offset(0x84839d) as usize,
-            isize::try_from(graphic).unwrap(),
-        );
-        let sequence = unsafe { native_content::sequence(&mut e, 0x84, address) };
-        let block = unsafe { sequence.word(2) } & 0xfff;
-        let x = e.global(Global::BlockX);
-        let y = e.global(Global::BlockY);
-        e.foreign(|g| unsafe { crate::game::xray_background::reveal_room_block(block, x, y, g) });
-    }
+    graphics::reveal_items(&mut Runtime::new(game));
 }
-/// Numeric identities used by the existing verification carrier.
+
+/// Numeric identities retained only for the actual-old verification carrier.
 pub(crate) mod checks {
     use super::*;
-    use crate::game::enemy_script::EnemyScript;
+    use crate::{
+        game::enemy_script::{EnemyScript, bank_base},
+        rom::RomRecord,
+    };
     pub(crate) fn setup_entry(
         original: u32,
         k: u16,
@@ -203,30 +180,63 @@ pub(crate) mod checks {
         accumulator: u16,
         game: &mut Game,
     ) -> u8 {
-        Execution::new(game).setup(original, usize::from(k >> 1), displacement, accumulator)
+        setup::setup(
+            &mut Runtime::new(game),
+            original,
+            usize::from(k >> 1),
+            &mut contact(displacement),
+            accumulator,
+        )
     }
     pub(crate) fn pre(ea: u32, k: u16, game: &mut Game) {
-        Execution::new(game).pre(ea, k);
+        super::pre::run(&mut Runtime::new(game), ea, k);
     }
+    /// # Safety
+    /// The native runtime and ROM binding must be initialized for legacy effects
+    /// reached by this command; owned script bounds alone do not establish that.
     pub(crate) unsafe fn command(ea: u32, p: EnemyScript, k: u16, game: &mut Game) -> EnemyScript {
-        unsafe { Execution::new(game).command(ea, p, k) }
-    }
-    pub(crate) fn process_draw(k: u16, game: &mut Game) {
-        Execution::new(game).process_draw(k);
-    }
-    pub(crate) unsafe fn draw(k: u16, game: &mut Game) {
-        unsafe {
-            Execution::new(game).draw(k);
+        let EnemyScript::At { image, position } = p else {
+            panic!("mechanism command needs a readable script")
+        };
+        let anchor = usize::try_from(bank_base(0x84) + 0x8000).unwrap();
+        let displacement = isize::try_from(position).unwrap() - isize::try_from(anchor).unwrap();
+        let p = content::Script::new(
+            RomRecord {
+                image,
+                base: anchor,
+            },
+            0x8000,
+        )
+        .advance(displacement);
+        match commands::run(&mut Runtime::new(game), ea, p, k) {
+            None => EnemyScript::Stop,
+            Some(next) => {
+                if let Some(target) = next.jump_target() {
+                    return EnemyScript::Jump(target);
+                }
+                let (record, offset) = next.into_parts();
+                EnemyScript::at(
+                    record.image,
+                    record
+                        .base
+                        .checked_add_signed(offset)
+                        .expect("mechanism script offset overflow"),
+                )
+            }
         }
     }
+    pub(crate) fn process_draw(k: u16, game: &mut Game) {
+        presentation::process_draw(&mut Runtime::new(game), k);
+    }
+    pub(crate) unsafe fn draw(k: u16, game: &mut Game) {
+        presentation::draw(&mut Runtime::new(game), k);
+    }
 }
-
 #[path = "../../verification/room_mechanism_ownership.rs"]
 mod ownership_checks;
 pub(crate) fn ownership_checks(game: &mut Game) -> bool {
     ownership_checks::run(game)
 }
-
 #[path = "../../verification/room_mechanism_qualified.rs"]
 mod qualified_checks;
 pub(crate) fn qualified_checks(game: &mut Game) -> bool {

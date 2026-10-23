@@ -275,59 +275,56 @@ fn decode(original: u32) -> Decoded {
     Decoded { original, action }
 }
 
-use super::port::Execution;
-use crate::game::mechanism_displacement::Displacement;
-impl Execution<'_> {
-    pub(super) fn setup(
-        &mut self,
-        original: u32,
-        slot: usize,
-        displacement: &mut Displacement<'_>,
-        accumulator: u16,
-    ) -> u8 {
-        match decode(original).action() {
-            Setup::Noop => 0,
-            Setup::Return(value) => value,
-            Setup::Diagnostic(_) => self.foreign(super::effects::unsupported_b3e3),
-            Setup::External(_) => self.foreign(super::effects::unreachable),
-            Setup::Contact(Contact::Physics(kind)) => {
-                super::rules::contact_physics::setup(self, displacement, kind)
-            }
-            Setup::Contact(Contact::Hand(kind)) => {
-                super::rules::hands::setup(self, slot, kind, displacement)
-            }
-            Setup::Door(kind) => {
-                super::rules::doors::setup(self, slot, kind);
-                0
-            }
-            Setup::Gate(kind) => super::rules::gates::setup(self, slot, kind, accumulator),
-            Setup::HandTrigger => super::rules::hands::prepare_ship_trigger(self, slot),
-            Setup::PeriodicDamage => self.foreign(|g| {
-                crate::game::samus_periodic_damage::grapple_contact(
-                    &mut crate::game::samus_periodic_damage_ram::DamageFields(g),
-                )
-            }),
-            Setup::Shaktool => super::rules::shaktool::begin(self),
-            Setup::NoobTube => {
-                super::rules::noob_tube::setup(self, slot, super::rules::noob_tube::Setup::Solid)
-            }
-            Setup::Terrain(kind) => super::rules::terrain_setup::setup(self, slot, kind),
-            Setup::Station(kind) => super::rules::stations::setup(self, slot, kind),
-            Setup::Scroll(kind) => super::rules::scroll_setup::setup(self, slot, kind),
-            Setup::Item(kind) => super::rules::item_setup::setup(self, slot, kind),
-            Setup::Cannon(kind) => super::rules::cannon_setup::setup(self, slot, kind),
-            Setup::Plant(kind) => super::rules::plants::begin(self, slot, kind),
-            Setup::TourianWall(kind) => super::rules::tourian_wall::setup(self, slot, kind),
-            Setup::AnimalRescue(kind) => super::rules::animal_rescue::setup(self, slot, kind),
-            Setup::TubeTerrain(kind) => super::rules::noob_tube::setup(self, slot, kind),
-            Setup::TorizoStatue => super::rules::torizo_statue::setup(self, slot),
-            Setup::MotherBrainGlass => super::rules::mother_brain_glass::setup(self, slot),
-            Setup::CrumblingWall => super::rules::crumbling_wall::setup(self, slot),
-            Setup::Treadmill => super::rules::treadmill::setup(self, slot),
-            Setup::BoosterEscape => super::rules::booster_escape::begin(self, slot),
-            Setup::SoundDelay => super::rules::sound_delay::begin(self, slot),
-            Setup::MetroidQuota => super::rules::metroid_quota::begin(self, slot),
-            Setup::EyeDoor(kind) => super::rules::eye_door::begin(self, slot, kind),
+use super::host::{Contact as HostContact, Host};
+pub(super) fn setup(
+    c: &mut impl Host,
+    original: u32,
+    slot: usize,
+    displacement: &mut HostContact<'_>,
+    accumulator: u16,
+) -> u8 {
+    match decode(original).action() {
+        Setup::Noop => 0,
+        Setup::Return(value) => value,
+        Setup::Diagnostic(_) => c.diagnostic(super::host::Diagnostic::UnsupportedSetup),
+        Setup::External(_) => c.diagnostic(super::host::Diagnostic::Unreachable),
+        Setup::Contact(Contact::Physics(kind)) => {
+            super::rules::contact_physics::setup(c, displacement, kind)
         }
+        Setup::Contact(Contact::Hand(kind)) => {
+            super::rules::hands::setup(c, slot, kind, displacement)
+        }
+        Setup::Door(kind) => {
+            super::rules::doors::setup(c, slot, kind);
+            0
+        }
+        Setup::Gate(kind) => super::rules::gates::setup(c, slot, kind, accumulator),
+        Setup::HandTrigger => super::rules::hands::prepare_ship_trigger(c, slot),
+        Setup::PeriodicDamage => {
+            let damage = c.session().player.periodic_damage.wrapping_add(1);
+            c.session_mut().player.periodic_damage = damage;
+            0x41
+        }
+        Setup::Shaktool => super::rules::shaktool::begin(c),
+        Setup::NoobTube => {
+            super::rules::noob_tube::setup(c, slot, super::rules::noob_tube::Setup::Solid)
+        }
+        Setup::Terrain(kind) => super::rules::terrain_setup::setup(c, slot, kind),
+        Setup::Station(kind) => super::rules::stations::setup(c, slot, kind),
+        Setup::Scroll(kind) => super::rules::scroll_setup::setup(c, slot, kind),
+        Setup::Item(kind) => super::rules::item_setup::setup(c, slot, kind),
+        Setup::Cannon(kind) => super::rules::cannon_setup::setup(c, slot, kind),
+        Setup::Plant(kind) => super::rules::plants::begin(c, slot, kind),
+        Setup::TourianWall(kind) => super::rules::tourian_wall::setup(c, slot, kind),
+        Setup::AnimalRescue(kind) => super::rules::animal_rescue::setup(c, slot, kind),
+        Setup::TubeTerrain(kind) => super::rules::noob_tube::setup(c, slot, kind),
+        Setup::TorizoStatue => super::rules::torizo_statue::setup(c, slot),
+        Setup::MotherBrainGlass => super::rules::mother_brain_glass::setup(c, slot),
+        Setup::CrumblingWall => super::rules::crumbling_wall::setup(c, slot),
+        Setup::Treadmill => super::rules::treadmill::setup(c, slot),
+        Setup::BoosterEscape => super::rules::booster_escape::begin(c, slot),
+        Setup::SoundDelay => super::rules::sound_delay::begin(c, slot),
+        Setup::MetroidQuota => super::rules::metroid_quota::begin(c, slot),
+        Setup::EyeDoor(kind) => super::rules::eye_door::begin(c, slot, kind),
     }
 }

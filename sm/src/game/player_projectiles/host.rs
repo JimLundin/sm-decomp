@@ -1,9 +1,7 @@
 //! Synchronous semantic host proposal; no Game, RAM, unsafe, generic control IDs.
 #![forbid(unsafe_code)]
-use super::{
-    access::{ShotLane, Store},
-    state::{Inputs, Session},
-};
+use super::access::{ShotLane, Store};
+use crate::game::{external_inputs::ExternalInputs, session::Session};
 use crate::rom::{RomImage, RomRecord};
 
 #[derive(Clone, Copy)]
@@ -34,7 +32,7 @@ pub trait Host {
     fn probe(&self, _name: &'static str) {}
     fn session(&self) -> &Session;
     fn session_mut(&mut self) -> &mut Session;
-    fn inputs(&self) -> &Inputs;
+    fn inputs(&self) -> &ExternalInputs;
     fn loaded_image(&self) -> Option<RomImage>;
     fn native_image(&self) -> RomImage;
     // Loaded low-window diagnostic runs before acquiring the fresh allocation.

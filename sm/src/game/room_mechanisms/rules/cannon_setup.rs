@@ -1,6 +1,8 @@
 //! Draygon cannon damage linkage and initial collision shape.
 #![forbid(unsafe_code)]
-use super::super::{fields::Fields, state::Column};
+use super::super::access::*;
+use super::super::host::*;
+use super::terrain_setup as terrain;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Setup {
     Right,
@@ -21,31 +23,32 @@ fn adjacent(block: u16, side: Side) -> u16 {
     }
 }
 
-pub fn setup(c: &mut impl Fields, slot: usize, kind: Setup) -> u8 {
-    c.set_slot(Column::Work0, slot, c.slot(Column::RoomArgument, slot));
-    c.set_slot(
-        Column::RoomArgument,
+pub fn setup(c: &mut impl Host, slot: usize, kind: Setup) -> u8 {
+    mechanism!(c, slot, work0 = mechanism!(c, slot, room_argument));
+    mechanism!(
+        c,
         slot,
-        if kind == Setup::Unshielded { 3 } else { 0 },
+        room_argument = if kind == Setup::Unshielded { 3 } else { 0 }
     );
     if kind != Setup::Unshielded {
-        let block = c.slot(Column::Block, slot);
-        c.install(block, 0xc044);
+        let block = mechanism!(c, slot, block);
+        terrain::install(c, block, 0xc044);
         let side = match kind {
             Setup::DiagonalRight => Some(Side::Right),
             Setup::DiagonalLeft => Some(Side::Left),
             _ => None,
         };
         if let Some(side) = side {
-            c.install(
+            terrain::install(
+                c,
                 adjacent(block, side),
                 if side == Side::Right { 0x50ff } else { 0x5001 },
             );
         }
-        let bottom = c.below(block);
-        c.install(bottom, 0xd0ff);
+        let bottom = (block).wrapping_add(c.session().room.width.wrapping_mul(2));
+        terrain::install(c, bottom, 0xd0ff);
         if let Some(side) = side {
-            c.install(adjacent(bottom, side), 0xd0ff);
+            terrain::install(c, adjacent(bottom, side), 0xd0ff);
         }
     }
     0

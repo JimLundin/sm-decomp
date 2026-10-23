@@ -1,9 +1,7 @@
 //! Select and publish a Metroid room's persistent population-clear event.
 #![forbid(unsafe_code)]
-use super::super::{
-    fields::{ContentTable, Fields, Global},
-    state::Column,
-};
+use super::super::access::*;
+use super::super::host::*;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Room {
     First,
@@ -12,16 +10,16 @@ pub enum Room {
     Fourth,
 }
 
-pub fn begin(c: &mut impl Fields, slot: usize) -> u8 {
-    let callback = c.content_word(
+pub fn begin(c: &mut impl Host, slot: usize) -> u8 {
+    let callback = c.table_word(
         ContentTable::MetroidWatcher,
-        (c.slot(Column::RoomArgument, slot) >> 1) as isize,
+        (mechanism!(c, slot, room_argument) >> 1) as isize,
     );
-    c.set_slot(Column::PreAction, slot, callback);
+    mechanism!(c, slot, pre_action = callback);
     0
 }
-pub fn poll(c: &mut impl Fields, room: Room) {
-    if c.global(Global::EnemyDeaths) >= c.global(Global::EnemyQuota) {
+pub fn poll(c: &mut impl Host, room: Room) {
+    if c.session().room.enemy_deaths >= c.session().room.enemy_quota {
         c.mark_event(match room {
             Room::First => 0x10,
             Room::Second => 0x11,

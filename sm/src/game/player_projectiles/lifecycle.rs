@@ -37,11 +37,11 @@ pub(super) fn impact(h: &mut impl Host, raw: u16) {
     shot!(h, raw, cursor = cursor);
     if ballistic {
         if heavy {
-            h.session_mut().earthquake_kind = 20;
-            h.session_mut().earthquake_timer = 30;
+            h.session_mut().feedback.earthquake_kind = 20;
+            h.session_mut().feedback.earthquake_timer = 30;
         }
-        if h.session().controls.cooldown.wrapping_sub(21) & 0x8000 == 0 {
-            h.session_mut().controls.cooldown = 20;
+        if h.session().projectiles.controls.cooldown.wrapping_sub(21) & 0x8000 == 0 {
+            h.session_mut().projectiles.controls.cooldown = 20;
         }
     } else {
         h.sound(2, 6, 12);

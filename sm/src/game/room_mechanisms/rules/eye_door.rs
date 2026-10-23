@@ -1,9 +1,8 @@
 //! Eye-door placement and transition after its persistent open flag is set.
 #![forbid(unsafe_code)]
-use super::super::{
-    fields::{Fields, Global},
-    state::Column,
-};
+use super::super::access::*;
+use super::super::host::*;
+use super::terrain_setup as terrain;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Part {
     Eye,
@@ -22,10 +21,10 @@ pub enum Tile {
     Extension(u8),
 }
 
-pub fn begin(c: &mut impl Fields, slot: usize, part: Part) -> u8 {
-    if !c.door_opened(c.slot(Column::RoomArgument, slot)) {
+pub fn begin(c: &mut impl Host, slot: usize, part: Part) -> u8 {
+    if !c.door_opened(mechanism!(c, slot, room_argument)) {
         install(
-            c.slot(Column::Block, slot),
+            mechanism!(c, slot, block),
             if part == Part::Eye {
                 Tile::Eye
             } else {
@@ -34,34 +33,35 @@ pub fn begin(c: &mut impl Fields, slot: usize, part: Part) -> u8 {
             c,
         );
         if part == Part::Eye {
-            let row = c.global(Global::RoomWidth).wrapping_mul(2);
-            let block = c.slot(Column::Block, slot);
+            let row = c.session().room.width.wrapping_mul(2);
+            let block = mechanism!(c, slot, block);
             install((block).wrapping_add(row), Tile::Extension(1), c);
         }
     }
     0
 }
-pub fn wake(c: &mut impl Fields, slot: usize) {
-    if c.door_opened(c.slot(Column::RoomArgument, slot)) {
-        c.set_slot(Column::PreAction, slot, 0xd779);
-        c.set_slot(Column::Program, slot, c.slot(Column::ReturnProgram, slot));
-        c.set_slot(Column::InstructionDelay, slot, 1);
+pub fn wake(c: &mut impl Host, slot: usize) {
+    if c.door_opened(mechanism!(c, slot, room_argument)) {
+        mechanism!(c, slot, pre_action = 0xd779);
+        mechanism!(c, slot, program = mechanism!(c, slot, return_program));
+        mechanism!(c, slot, instruction_delay = 1);
     }
 }
-pub fn convert(c: &mut impl Fields, slot: usize, side: Side) {
-    let old = c.slot(Column::Block, slot);
-    let row = c.global(Global::RoomWidth).wrapping_mul(2);
-    c.set_slot(Column::Block, slot, (old).wrapping_sub(row));
-    let mut block = c.slot(Column::Block, slot);
+pub fn convert(c: &mut impl Host, slot: usize, side: Side) {
+    let old = mechanism!(c, slot, block);
+    let row = c.session().room.width.wrapping_mul(2);
+    mechanism!(c, slot, block = (old).wrapping_sub(row));
+    let mut block = mechanism!(c, slot, block);
     install(block, Tile::Blue(side), c);
     for distance in 1..=3 {
-        block = (block).wrapping_add(c.global(Global::RoomWidth).wrapping_mul(2));
+        block = (block).wrapping_add(c.session().room.width.wrapping_mul(2));
         install(block, Tile::Extension(distance), c);
     }
 }
 
-fn install(block: u16, tile: Tile, c: &mut impl Fields) {
-    c.install(
+fn install(block: u16, tile: Tile, c: &mut impl Host) {
+    terrain::install(
+        c,
         block,
         match tile {
             Tile::Eye => 0xc044,

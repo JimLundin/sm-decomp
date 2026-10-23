@@ -1,11 +1,11 @@
 //! Chozo hand contact guards, activation and nested mechanism creation.
 #![forbid(unsafe_code)]
-use super::super::creation::Source;
-use super::super::{
-    fields::{Fields, Global},
-    state::Column,
-};
-use crate::game::mechanism_displacement::Displacement;
+use super::super::access::*;
+use super::super::creation;
+use super::super::host::Contact as Displacement;
+use super::super::host::SpawnSource as Source;
+use super::super::host::*;
+use super::terrain_setup as terrain;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Hand {
@@ -20,17 +20,17 @@ pub enum GroundedPose {
 }
 
 pub fn setup(
-    c: &mut impl Fields,
+    c: &mut impl Host,
     slot: usize,
     hand: Hand,
     displacement: &mut Displacement<'_>,
 ) -> u8 {
     let enabled = match hand {
-        Hand::LowerNorfair => c.global(Global::CollectedItems) & 0x200 != 0,
+        Hand::LowerNorfair => c.session().inventory.equipment.owned & 0x200 != 0,
         Hand::WreckedShip => c.boss(1) & 1 != 0,
     };
     if enabled
-        && c.global(Global::CollisionDirection) & 15 == 3
+        && c.session().player.contact.collision_direction & 15 == 3
         && (pose_matches(c, GroundedPose::MorphRight)
             || pose_matches(c, GroundedPose::SpringRight)
             || pose_matches(c, GroundedPose::SpringLeft))
@@ -40,14 +40,15 @@ pub fn setup(
         }
         c.statue_signal();
         if hand == Hand::WreckedShip {
-            c.native_scroll_pair(7, 0x202);
-            c.native_scroll_pair(13, 0x101);
+            c.scroll_pair(7, 0x202);
+            c.scroll_pair(13, 0x101);
         }
-        let block = c.slot(Column::Block, slot);
-        let level = c.level(block);
-        c.set_level(block, level & 0xfff);
+        let block = mechanism!(c, slot, block);
+        let level = terrain::level(c, block);
+        terrain::set_level(c, block, level & 0xfff);
         c.player_control(0);
-        c.spawn(
+        creation::spawn(
+            c,
             Source::Hardcoded {
                 x: if hand == Hand::LowerNorfair { 12 } else { 23 },
                 y: 29,
@@ -61,28 +62,33 @@ pub fn setup(
         );
     }
     // The child or another callback can reuse this captured slot.
-    c.release(slot);
+    mechanism!(c, slot, header = 0);
     1
 }
 
-pub fn prepare_ship_trigger(c: &mut impl Fields, slot: usize) -> u8 {
-    c.install(c.slot(Column::Block, slot), 0xb080);
+pub fn prepare_ship_trigger(c: &mut impl Host, slot: usize) -> u8 {
+    let block = mechanism!(c, slot, block);
+    terrain::install(c, block, 0xb080);
     0
 }
-pub fn monitor_norfair(c: &mut impl Fields) {
-    let block = (8 * u16::from(c.global(Global::RoomWidth) as u8) + 4).wrapping_mul(2);
-    if c.level(block) == 0xff {
-        c.install(block, 0xb083);
+pub fn monitor_norfair(c: &mut impl Host) {
+    let block = (8 * u16::from(c.session().room.width as u8) + 4).wrapping_mul(2);
+    if terrain::level(c, block) == 0xff {
+        terrain::install(c, block, 0xb083);
         // The running PLM selection is read after installing the trigger.
-        c.release(usize::from(c.global(Global::Selected) >> 1));
+        mechanism!(
+            c,
+            usize::from(c.session().mechanisms.selected >> 1),
+            header = 0
+        );
     }
 }
-pub fn lower_acid(c: &mut impl Fields) {
-    c.set_global(Global::LiquidHeight, 722);
+pub fn lower_acid(c: &mut impl Host) {
+    c.session_mut().room.liquid_height = 722;
 }
 
-fn pose_matches(c: &impl Fields, pose: GroundedPose) -> bool {
-    c.global(Global::Pose)
+fn pose_matches(c: &impl Host, pose: GroundedPose) -> bool {
+    c.session().player.pose
         == match pose {
             GroundedPose::MorphRight => 0x1d,
             GroundedPose::SpringRight => 0x79,

@@ -14,41 +14,42 @@ enum Mode {
 }
 pub(super) fn clear_animation(h: &mut impl Host) {
     for i in 0..3 {
-        h.session_mut().controls.flare_frames[i] = 0;
+        h.session_mut().projectiles.controls.flare_frames[i] = 0;
     }
     for i in 0..3 {
-        h.session_mut().controls.flare_timers[i] = 0;
+        h.session_mut().projectiles.controls.flare_timers[i] = 0;
     }
 }
 pub(super) fn update_input(h: &mut impl Host) {
-    h.session_mut().controls.previous_charge = h.session().controls.charge;
-    if h.inputs().hyper != 0 || h.inputs().equipped_beams & 0x1000 == 0 {
+    h.session_mut().projectiles.controls.previous_charge = h.session().projectiles.controls.charge;
+    if h.inputs().hyper != 0 || h.session().inventory.beams.active & 0x1000 == 0 {
         if h.inputs().shoot_button & h.inputs().held != 0 {
             fire(h, false);
         }
         return;
     }
-    if h.session().controls.pending_aim == 0 {
+    if h.session().projectiles.controls.pending_aim == 0 {
         if h.inputs().shoot_button & h.inputs().held != 0 {
-            if h.session().controls.charge.wrapping_sub(120) & 0x8000 != 0 {
-                h.session_mut().controls.charge = h.session().controls.charge.wrapping_add(1);
-                if h.session().controls.charge == 1 {
+            if h.session().projectiles.controls.charge.wrapping_sub(120) & 0x8000 != 0 {
+                h.session_mut().projectiles.controls.charge =
+                    h.session().projectiles.controls.charge.wrapping_add(1);
+                if h.session().projectiles.controls.charge == 1 {
                     clear_animation(h);
                     fire(h, false);
                 }
             } else if super::specials::fire(h) & 1 != 0 {
-                h.session_mut().controls.charge = 0;
+                h.session_mut().projectiles.controls.charge = 0;
                 clear_animation(h);
                 h.palette(PaletteEffect::Suit);
             }
             return;
         }
-        if h.session().controls.charge == 0 {
+        if h.session().projectiles.controls.charge == 0 {
             return;
         }
     }
-    let charged = h.session().controls.charge.wrapping_sub(60) & 0x8000 == 0;
-    h.session_mut().controls.charge = 0;
+    let charged = h.session().projectiles.controls.charge.wrapping_sub(60) & 0x8000 == 0;
+    h.session_mut().projectiles.controls.charge = 0;
     clear_animation(h);
     fire(h, charged);
 }
@@ -60,15 +61,17 @@ fn fire(h: &mut impl Host, charged: bool) {
     } else {
         Mode::Ordinary
     };
-    if h.session().count.wrapping_sub(5) & 0x8000 != 0 && h.session().controls.cooldown as u8 == 0 {
-        h.session_mut().controls.cooldown = 1;
-        h.session_mut().count = h.session().count.wrapping_add(1);
+    if h.session().projectiles.count.wrapping_sub(5) & 0x8000 != 0
+        && h.session().projectiles.controls.cooldown as u8 == 0
+    {
+        h.session_mut().projectiles.controls.cooldown = 1;
+        h.session_mut().projectiles.count = h.session().projectiles.count.wrapping_add(1);
         let raw = (0..5)
             .map(|i| i * 2)
             .find(|&raw| shot!(h, raw, damage) == 0)
             .unwrap_or(8);
         if super::placement::place(h, raw) {
-            h.session_mut().controls.protection = 10;
+            h.session_mut().projectiles.controls.protection = 10;
             if mode != Mode::Hyper {
                 shot!(h, raw, trail_time = 4; SliceLe);
             }
@@ -78,43 +81,43 @@ fn fire(h: &mut impl Host, charged: bool) {
                     definitions::CHARGED_SOUND[8]
                 }
                 Mode::Charged => {
-                    let kind = h.inputs().equipped_beams & 0x100f | 0x8010;
+                    let kind = h.session().inventory.beams.active & 0x100f | 0x8010;
                     shot!(h, raw, kind = kind; SliceLe);
                     definitions::CHARGED_SOUND[usize::from(kind & 15)]
                 }
                 Mode::Ordinary => {
-                    let sound_index = h.inputs().equipped_beams & 15;
-                    let kind = h.inputs().equipped_beams | 0x8000;
+                    let sound_index = h.session().inventory.beams.active & 15;
+                    let kind = h.session().inventory.beams.active | 0x8000;
                     shot!(h, raw, kind = kind; SliceLe);
                     definitions::UNCHARGED_SOUND[usize::from(sound_index)]
                 }
             };
             h.sound(1, 15, sound);
-            h.session_mut().controls.resume_sound = 0;
+            h.session_mut().projectiles.controls.resume_sound = 0;
             super::animation::initialize(h, raw, Initialization::Projectile);
             h.probe("player_projectiles.fire.initialized");
             if mode == Mode::Hyper {
                 shot!(h, raw, x_speed = 0; SliceLe);
                 shot!(h, raw, y_speed = 0; SliceLe);
-                h.session_mut().selected = raw;
+                h.session_mut().projectiles.selected = raw;
                 initial_collision(h, raw, true);
-                let selected = h.session().selected;
+                let selected = h.session().projectiles.selected;
                 shot!(h, selected, damage = 1000; SliceLe);
                 shot!(h, selected, motion = definitions::instruction(definitions::Motion::Hyper); SliceLe);
                 super::motion::initialize_beam_speed(h, selected);
-                h.session_mut().controls.cooldown = 21;
-                h.session_mut().controls.glow = 0x8014;
+                h.session_mut().projectiles.controls.cooldown = 21;
+                h.session_mut().projectiles.controls.glow = 0x8014;
                 for (i, value) in [29, 5, 5].into_iter().enumerate() {
-                    h.session_mut().controls.flare_frames[i] = value;
+                    h.session_mut().projectiles.controls.flare_frames[i] = value;
                 }
                 for i in 0..3 {
-                    h.session_mut().controls.flare_timers[i] = 3;
+                    h.session_mut().projectiles.controls.flare_timers[i] = 3;
                 }
-                h.session_mut().controls.charge = 0x8000;
+                h.session_mut().projectiles.controls.charge = 0x8000;
             } else {
                 let wave = shot!(h, raw, kind) & 1 != 0;
                 let manual = mode == Mode::Charged
-                    || h.inputs().equipped_beams & 0x1000 != 0
+                    || h.session().inventory.beams.active & 0x1000 != 0
                     || h.inputs().shoot_button & h.inputs().pressed != 0
                     || h.inputs().shoot_button & h.inputs().filtered_pressed != 0;
                 let kind = shot!(h, raw, kind);
@@ -123,12 +126,17 @@ fn fire(h: &mut impl Host, charged: bool) {
                 } else {
                     &definitions::AUTO_COOLDOWN
                 };
-                h.session_mut().controls.cooldown = u16::from(table[usize::from(kind & 0x3f)]);
+                h.session_mut().projectiles.controls.cooldown =
+                    u16::from(table[usize::from(kind & 0x3f)]);
                 shot!(h, raw, x_speed = 0; SliceLe);
                 shot!(h, raw, y_speed = 0; SliceLe);
-                h.session_mut().selected = raw;
+                h.session_mut().projectiles.selected = raw;
                 initial_collision(h, raw, wave);
-                let selected = if wave { raw } else { h.session().selected };
+                let selected = if wave {
+                    raw
+                } else {
+                    h.session().projectiles.selected
+                };
                 if wave || shot_native!(h, selected, kind) & 0xf00 == 0 {
                     let index = usize::from(shot!(h, selected, kind) & 15);
                     let motion =
@@ -139,14 +147,22 @@ fn fire(h: &mut impl Host, charged: bool) {
                     super::motion::initialize_beam_speed(h, selected);
                 }
                 if mode == Mode::Charged {
-                    h.session_mut().controls.glow = 4;
+                    h.session_mut().projectiles.controls.glow = 4;
                 }
             }
             return;
         }
     }
-    if mode != Mode::Hyper && h.session().controls.previous_charge.wrapping_sub(16) & 0x8000 == 0 {
-        h.session_mut().controls.resume_sound = 0;
+    if mode != Mode::Hyper
+        && h.session()
+            .projectiles
+            .controls
+            .previous_charge
+            .wrapping_sub(16)
+            & 0x8000
+            == 0
+    {
+        h.session_mut().projectiles.controls.resume_sound = 0;
         h.sound(1, 15, 2);
     }
 }
@@ -155,7 +171,7 @@ pub(super) fn initial_collision(h: &mut impl Host, caller: u16, wave: bool) {
     if direction >= 10 {
         panic!("index out of bounds: the len is 10 but the index is {direction}");
     }
-    let selected = h.session().selected;
+    let selected = h.session().projectiles.selected;
     let kind = if wave { Flight::Wave } else { Flight::NonWave };
     match direction {
         0 | 4 | 5 | 9 => {

@@ -14,16 +14,19 @@ pub(crate) enum PickupKind {
     PowerBombs,
 }
 
+#[derive(Clone, Default, Debug, PartialEq)]
 pub(crate) struct Loadout {
     pub owned: u16,
     pub active: u16,
 }
 
+#[derive(Clone, Default, Debug, PartialEq)]
 pub(crate) struct Supply {
     pub current: u16,
     pub maximum: u16,
 }
 
+#[derive(Clone, Default, Debug, PartialEq)]
 pub(crate) struct Inventory {
     pub equipment: Loadout,
     pub beams: Loadout,
@@ -96,42 +99,5 @@ impl Inventory {
             PowerBombs => (VisualUpdate::PowerBombs, Some(4)),
         };
         PickupEffects { visual, message }
-    }
-}
-
-/// Room-object scripts resume after the committed instruction. The displayed
-/// message and script slot remain live inputs, not part of this continuation.
-pub(crate) enum MessageHandoff {
-    Instructions,
-    Displaying,
-}
-
-impl MessageHandoff {
-    pub(crate) fn resume(saved: u8) -> Option<Self> {
-        match saved {
-            0 => Some(Self::Instructions),
-            1 => Some(Self::Displaying),
-            _ => None,
-        }
-    }
-    pub(crate) fn displaying(&self) -> bool {
-        matches!(self, Self::Displaying)
-    }
-    pub(crate) fn continuation(&self) -> u8 {
-        u8::from(self.displaying())
-    }
-    pub(crate) fn after_instruction(&mut self, queued_message: u16) -> bool {
-        if queued_message == 0 {
-            return false;
-        }
-        *self = Self::Displaying;
-        true
-    }
-    pub(crate) fn after_display(&mut self, yielded: u8) -> Result<(), u8> {
-        if yielded != 0 {
-            return Err(yielded);
-        }
-        *self = Self::Instructions;
-        Ok(())
     }
 }

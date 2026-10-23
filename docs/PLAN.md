@@ -168,7 +168,7 @@ references; measure build/test time and resource growth before changing the loop
    first-tick boundary checks both pass. Production-1937lines; verification
    Rust+1109lines; combined-828. Mutation Python/CI support is separate.
 
-   Next: complete room-mechanism typed core composed with one shared player,
+   Adopted: complete room-mechanism typed core composed with one shared player,
    inventory and terrain owner. Concrete interface v2 passed independent review
    and compilation; four isolated lanes implement shared ownership/runtime,
    creation/rules/contact, scheduler/messages/pickups and drawing/content.
@@ -181,8 +181,7 @@ references; measure build/test time and resource growth before changing the loop
    Extend suspension/shared-inventory/drawing checks and their discriminating
    mutations before adopting the next core. Case1020 is adopted verification:
    actual pre-action/message suspension preserves counter5507 and delay13 on
-   completion; four adjacent cases retain exact outputs. No mechanism typed-core
-   implementation is adopted yet.
+   completion; four adjacent cases retain exact outputs.
    Adopted through e216f0ef: cases1021..1032 for
    continuation timing, native provenance/rebinding, overlapping tile reads,
    full emission, transfer layouts and wide/live streams. Nineteen local cases
@@ -209,14 +208,25 @@ references; measure build/test time and resource growth before changing the loop
    full formatting (two verification files needed import/layout formatting only).
    Production+890lines; verification Rust+673 after formatting; Python+34.
    Caller/ownership/retirement review and hosted composed execution pass.
-   Hosted candidate full build and four composed mutants pass; four candidate
-   room mutations remain running in40005712881. Local frontend build was blocked
+   Hosted candidate full build and all eight mutants pass in40005712881.
+   The shared core is adopted from reviewed7ba1e33a; ten superseded files retire,
+   production+890lines, verification Rust+673, combined+1563, Python support+34.
+   Unsafe declarations fall7 to2606; remaining legacy effects are still unsafe.
+   Formatted source also passes all1037 comparisons (99.22s), no mismatches.
+   This is shared interval ownership, not persistent whole-game Session.
+   Local frontend build was blocked
    by Defender ASR01443614-CD74-433A-B99E-2ECDC07BFC25 executing khronos_api's
    build script (event1121); use the hosted build, preserve the block. Formatted
    local direct verifier build5 passes on source
    8a4ee812de0eaa7b25dcecd6877c2f08d6000aae282a8efbe257ba27d286d31d.
    Independently approved five-getter direct-read optimization is being drafted
    separately; preserve individual RAM-authoritative reads and broad aliases.
+   Next complete ownership scope: compose the18-slot enemy-projectile pool with
+   this Session, redirect room/enemy interactions, remove enemy compat.rs and the
+   last ownership_transport user, and replace ordinary per-field edges routing.
+   Freeze full setup/pre/contact/drop/attachment/effects contract before splitting
+   implementation. Reuse1382comparisons/87checks, extend shared-state mutations;
+   no net deletion claim until complete replacement is counted.
 
 
    Room mechanisms are now adopted as one production responsibility: creation,

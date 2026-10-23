@@ -86,7 +86,7 @@ macro_rules! shot_lane {
 macro_rules! shot {
     ($h:ident, $raw:expr, $field:ident) => {{
         let raw: u16 = $raw;
-        if let Some(shot) = $h.session().shots.get(usize::from(raw >> 1)) {
+        if let Some(shot) = $h.session().projectiles.shots.get(usize::from(raw >> 1)) {
             shot.$field
         } else {
             $h.alias_shot_read(shot_lane!($field), raw)
@@ -98,7 +98,7 @@ macro_rules! shot {
     ($h:ident, $raw:expr, $field:ident = $value:expr; $store:ident) => {{
         let value: u16 = $value;
         let raw: u16 = $raw;
-        if let Some(shot) = $h.session_mut().shots.get_mut(usize::from(raw >> 1)) {
+        if let Some(shot) = $h.session_mut().projectiles.shots.get_mut(usize::from(raw >> 1)) {
             shot.$field = match $crate::game::player_projectiles::access::Store::$store {
                 $crate::game::player_projectiles::access::Store::SliceNative => u16::from_le_bytes(value.to_ne_bytes()),
                 _ => value,
@@ -112,4 +112,21 @@ macro_rules! shot_native {
     ($h:ident, $raw:expr, $field:ident) => {
         u16::from_ne_bytes(shot!($h, $raw, $field).to_le_bytes())
     };
+}
+
+pub(crate) fn room_level<H: super::host::Host>(h: &H, cell: u16) -> u16 {
+    h.session()
+        .room
+        .terrain
+        .cells()
+        .get(usize::from(cell))
+        .map_or_else(|| h.room_level(cell), |cell| cell.level)
+}
+pub(crate) fn room_bts<H: super::host::Host>(h: &H, cell: u16) -> u8 {
+    h.session()
+        .room
+        .terrain
+        .cells()
+        .get(usize::from(cell))
+        .map_or_else(|| h.room_bts(cell), |cell| cell.behavior)
 }

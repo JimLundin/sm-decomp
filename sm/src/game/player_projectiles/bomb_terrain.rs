@@ -4,34 +4,34 @@ use super::{Host, collision::Room};
 use crate::game::projectile_block_reactions::{self as reactions};
 use crate::game::projectile_room::{Axis, Scan};
 fn locate(h: &mut impl Host, x: u16, y: u16) {
-    h.session_mut().room_cursor = 0;
+    h.session_mut().room.collision_cursor = 0;
     let cell = if x < 4096 && y < 4096 {
-        (x >> 4) + (y >> 4) * u16::from(h.inputs().room_width as u8)
+        (x >> 4) + (y >> 4) * u16::from(h.session().room.width as u8)
     } else {
         0xffff
     };
-    h.session_mut().room_cursor = cell;
+    h.session_mut().room.collision_cursor = cell;
 }
 fn redirect(h: &mut impl Host, axis: Axis) -> bool {
-    let offset = i16::from(h.room_bts(h.session().room_cursor) as i8);
+    let offset = i16::from(super::access::room_bts(h, h.session().room.collision_cursor) as i8);
     if offset == 0 {
         return false;
     }
     let delta = if axis == Axis::X {
         offset as u16
     } else {
-        (offset as u16).wrapping_mul(h.inputs().room_width)
+        (offset as u16).wrapping_mul(h.session().room.width)
     };
-    h.session_mut().room_cursor = h.session().room_cursor.wrapping_add(delta);
+    h.session_mut().room.collision_cursor = h.session().room.collision_cursor.wrapping_add(delta);
     true
 }
 fn special_header(h: &mut impl Host) -> u16 {
-    let bts = h.room_bts(h.session().room_cursor);
+    let bts = super::access::room_bts(h, h.session().room.collision_cursor);
     if bts & 0x80 != 0 {
         let table = h.record(0x94, 0x9e44);
         let pointer = table
             .image
-            .table_word(table.base, isize::try_from(h.inputs().area).unwrap());
+            .table_word(table.base, isize::try_from(h.session().room.area).unwrap());
         let table = h.record(0x94, pointer);
         table.image.table_word(table.base, isize::from(bts & 0x7f))
     } else {
@@ -40,9 +40,9 @@ fn special_header(h: &mut impl Host) -> u16 {
     }
 }
 fn react(h: &mut impl Host, offset: u16) {
-    h.session_mut().room_cursor = offset >> 1;
+    h.session_mut().room.collision_cursor = offset >> 1;
     loop {
-        let kind = h.room_level(h.session().room_cursor) >> 12;
+        let kind = super::access::room_level(h, h.session().room.collision_cursor) >> 12;
         match kind {
             5 | 13 => {
                 if redirect(h, if kind == 5 { Axis::X } else { Axis::Y }) {
@@ -80,35 +80,35 @@ fn cross(h: &mut impl Host, raw: u16) {
         return;
     }
     shot!(h,raw,kind = kind|1; SliceNative);
-    if h.session().room_cursor == 0xffff {
+    if h.session().room.collision_cursor == 0xffff {
         return;
     }
-    let center = h.session().room_cursor.wrapping_mul(2);
-    let live = h.session().room_cursor.wrapping_mul(2);
+    let center = h.session().room.collision_cursor.wrapping_mul(2);
+    let live = h.session().room.collision_cursor.wrapping_mul(2);
     react(h, live);
-    let width = h.inputs().room_width;
-    let width2 = h.inputs().room_width;
+    let width = h.session().room.width;
+    let width2 = h.session().room.width;
     let mut at = center.wrapping_sub(width).wrapping_sub(width2);
     react(h, at);
     at = at
-        .wrapping_add(h.inputs().room_width.wrapping_mul(2))
+        .wrapping_add(h.session().room.width.wrapping_mul(2))
         .wrapping_add(2);
     react(h, at);
     at = at.wrapping_sub(4);
     react(h, at);
     at = at
-        .wrapping_add(h.inputs().room_width.wrapping_mul(2))
+        .wrapping_add(h.session().room.width.wrapping_mul(2))
         .wrapping_add(2);
     react(h, at);
 }
 fn edge(h: &mut impl Host, start: u16, count: u16, vertical: bool) {
-    let product = u16::from(start as u8) * u16::from(h.inputs().room_width as u8);
+    let product = u16::from(start as u8) * u16::from(h.session().room.width as u8);
     let mut at = product.wrapping_add(start >> 8).wrapping_mul(2);
     let mut remaining = count as i16;
     loop {
         react(h, at);
         at = at.wrapping_add(if vertical {
-            h.inputs().room_width.wrapping_mul(2)
+            h.session().room.width.wrapping_mul(2)
         } else {
             2
         });
@@ -126,23 +126,24 @@ fn perimeter(h: &mut impl Host, raw: u16) {
         }
         return;
     }
-    let horizontal = h.inputs().power_bomb_radius >> 8;
-    let vertical = (3 * (h.inputs().power_bomb_radius >> 8)) >> 2;
+    let horizontal = h.session().room.power_bomb_radius >> 8;
+    let vertical = (3 * (h.session().room.power_bomb_radius >> 8)) >> 2;
     let left = h
         .session()
+        .projectiles
         .power_bomb
         .x
-        .wrapping_sub(h.inputs().power_bomb_radius >> 8) as i16;
+        .wrapping_sub(h.session().room.power_bomb_radius >> 8) as i16;
     let left = (left.max(0) as u16) >> 4;
-    let mut right = horizontal.wrapping_add(h.session().power_bomb.x) >> 4;
-    if right >= h.inputs().room_width {
-        right = h.inputs().room_width.wrapping_sub(1);
+    let mut right = horizontal.wrapping_add(h.session().projectiles.power_bomb.x) >> 4;
+    if right >= h.session().room.width {
+        right = h.session().room.width.wrapping_sub(1);
     }
-    let top = h.session().power_bomb.y.wrapping_sub(vertical) as i16;
+    let top = h.session().projectiles.power_bomb.y.wrapping_sub(vertical) as i16;
     let top = (top.max(0) as u16) >> 4;
-    let mut bottom = vertical.wrapping_add(h.session().power_bomb.y) >> 4;
-    if bottom >= h.inputs().room_height {
-        bottom = h.inputs().room_height.wrapping_sub(1);
+    let mut bottom = vertical.wrapping_add(h.session().projectiles.power_bomb.y) >> 4;
+    if bottom >= h.session().room.height {
+        bottom = h.session().room.height.wrapping_sub(1);
     }
     let top_left = top | (left << 8);
     edge(h, top_left, right.wrapping_sub(left), false);
@@ -174,7 +175,7 @@ pub(super) fn explode(h: &mut impl Host, raw: u16) {
         return;
     }
     let captured_x = shot_native!(h, raw, x);
-    if ((x as u16 >> 8) as i16).wrapping_sub(h.inputs().room_scroll_width as i16) >= 0 {
+    if ((x as u16 >> 8) as i16).wrapping_sub(h.session().room.scroll_width as i16) >= 0 {
         return;
     }
     let y = shot_native!(h, raw, y) as i16;
@@ -182,7 +183,7 @@ pub(super) fn explode(h: &mut impl Host, raw: u16) {
         return;
     }
     let captured_y = shot_native!(h, raw, y);
-    if ((y as u16 >> 8) as i16).wrapping_sub(h.inputs().room_scroll_height as i16) >= 0 {
+    if ((y as u16 >> 8) as i16).wrapping_sub(h.session().room.scroll_height as i16) >= 0 {
         return;
     }
     locate(h, captured_x, captured_y);
@@ -200,15 +201,15 @@ pub(super) fn spread(h: &mut impl Host, raw: u16) -> u8 {
         cross(h, raw);
         return 0;
     }
-    if h.session().room_cursor == 0xffff {
+    if h.session().room.collision_cursor == 0xffff {
         return 1;
     }
     loop {
-        let kind = h.room_level(h.session().room_cursor) >> 12;
+        let kind = super::access::room_level(h, h.session().room.collision_cursor) >> 12;
         let blocked = match kind {
             0 | 2 | 3 | 6 | 7 => false,
             1 => {
-                let bts = h.room_bts(h.session().room_cursor);
+                let bts = super::access::room_bts(h, h.session().room.collision_cursor);
                 if bts & 31 < 5 {
                     true
                 } else {
