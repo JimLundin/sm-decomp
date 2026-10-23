@@ -10,6 +10,7 @@ subsystem boundaries or ownership.
 
 Enemy-projectile owner and native ROM ownership are adopted on source
 8594f83d2cca0e79fc345e5a7e83bd50ea8e6fb09b87312432206acbf0f52a5c.
+GitHub run39993911476 also passes full build and formatting.
 Final full formatting, release/frontend/verifier build, all1382 full-memory
 comparisons and87 independent checks pass. Independent final source review
 passes. Adjacent106 player groups, mechanism ownership/qualified checks and
@@ -49,7 +50,11 @@ Contract reviewed; producers, flight and presentation/runtime work are isolated.
 Expanded44 old references captured at projectile-session/expanded-44-results;
 case43 intentionally panics, others do not. Snapshot baseline-11653c1b build3
 passes after proven line-ending-only native inputs were aligned with installed
-archive source bytes. Extra12 presentation/reset cases are still unbuilt drafts.
+archive source bytes. Extra12 presentation/reset cases are captured on source
+4a762fa17b7924d45a89fc403827000fd153ad406f439bbe20ab77696667bfea; case7
+intentionally panics, all other cases return normally, no diagnostics. Results
+are in projectile-session/presentation-reset-12-results. Build2 passes after
+adding the missing source registration. Original44 inputs/results unchanged.
 No independent-core/reduction claim until complete adoption is checked.
 
 Composed animation/palette core354f1fb5 is adopted in main after GitHub

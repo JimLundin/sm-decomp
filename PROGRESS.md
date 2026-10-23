@@ -1,6 +1,6 @@
 # Engine migration
 
-2026-10-23 17:17 UTC
+2026-10-23 17:24 UTC
 
 🟩 Committed | 🟦 Checked, uncommitted | 🟧 In progress | ⬜ Remaining | **Purple border: changed since previous report**
 
@@ -118,7 +118,6 @@ flowchart LR
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
-    class ES,EL,SETUP,PRE,CMD,EC,ATT,DROP,CALL,CORE,MORE,ROM,RECORD,QUAL,FULL,EMOVIE,ECOMMIT changed
 ```
 
 ```mermaid
@@ -131,13 +130,14 @@ flowchart LR
     PROD --> DELETE["12 singleton binding layers<br/>absorb algorithms / retire adapters"]:::active
     FLIGHT --> DELETE
     DRAW --> DELETE
+    EXTRA["12 flare / reset references<br/>CAPTURED"]:::checked --> VERIFY
     BASE --> VERIFY["Comparison + composed-host checks"]:::pending
     DELETE --> VERIFY
+    class EXTRA changed
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
-    class CONTRACT,BASE,PROD,FLIGHT,DRAW,DELETE changed
 ```
 
 [Plan](docs/PLAN.md) / [Checks and accounting](docs/HANDOFF.md) / [Target architecture](docs/target-architecture/README.md)
