@@ -207,9 +207,11 @@ references; measure build/test time and resource growth before changing the loop
    lines, including all registrations, typed clients and generated test wrappers.
    Record full UTF-8 token/byte costs and overlaps, with no reduction claim.
    `morph-bomb-transaction-parent/` preserves exact inputs; root matched all212
-   main Rust files to committed `4e0b2dcf`. Source review/builds/behavior checks
-   are pending. HUD switching and persistent external-writer/reset/load/rewind
-   authority closure remain separate dependencies.
+   main Rust files to committed `4e0b2dcf`. Source review, formatting and both
+   production/candidate builds pass on their first attempts. Comparison fixtures
+   and independent typed consumers are in preparation; behavior checks are pending.
+   HUD switching and persistent external-writer/reset/load/rewind authority closure
+   remain separate dependencies.
 
    Next dependencies, in order:
 
