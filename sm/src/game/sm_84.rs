@@ -800,12 +800,6 @@ crate::game::callback_dispatch! {
         );
         0
     };
-    [8697795] PlmSetup_B7EB_EnableSoundsIn32Frames [] {
-        let mut v1: u16 = if word!(game.area_index) == 6 { 32 } else { 240 };
-        let v2: i32 = j as i32 >> 1;
-        word! {game; plm_timers[v2] = v1; plm_pre_instrs[v2] = ((0x84b7ddi32) as u16); }
-        0
-    };
     [8698012] PlmSetup_SpeedBoosterEscape [] {
         if CheckEventHappened(0x15, game) != 0 {
             word!(game.plm_header_ptr[(j >> 1)] = 0);
@@ -1003,6 +997,7 @@ crate::game::callback_dispatch! {
         8706700 => [crate::game::mechanism_eye_door_ram::begin(j, crate::game::mechanism_eye_door::Part::Eye, game)];
         8706745 => [crate::game::mechanism_eye_door_ram::begin(j, crate::game::mechanism_eye_door::Part::Body, game)];
         8706846 => [crate::game::mechanism_metroid_quota_ram::begin(j, game)];
+        8697795 => [crate::game::mechanism_sound_delay_ram::begin(j, game)];
         8704399 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::LowerNorfair, displacement, game)];
         8705568 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::WreckedShip, displacement, game)];
         8705740 => PlmSetup_D70C_NoobTube;
@@ -1222,12 +1217,6 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     @prefix { let v2: i32 = k as i32 >> 1; };
-    [8697821] PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm [] {
-        crate::update_place! { unaligned_word fresh84 [fresh85] = &raw mut (*(ram_ptr!(game, u16; 0x1d77)).offset(v2 as isize)) => (u16::from_le(fresh84.read_unaligned())).wrapping_sub(1); }
-        if fresh85 == 1 {
-            word! { game, 0; debug_disable_sounds, plm_header_ptr[v2] }
-        }
-    };
     [8699151] PlmPreInstr_GoToLinkInstrIfShot [] {
         if word!(game.plm_timers[v2]) != 0 {
             word!(game.plm_timers[v2] = 0);
@@ -1312,6 +1301,7 @@ crate::game::callback_dispatch! {
         8706798 => [crate::game::mechanism_metroid_quota_ram::poll(crate::game::mechanism_metroid_quota::Room::Second, game)];
         8706814 => [crate::game::mechanism_metroid_quota_ram::poll(crate::game::mechanism_metroid_quota::Room::Third, game)];
         8706830 => [crate::game::mechanism_metroid_quota_ram::poll(crate::game::mechanism_metroid_quota::Room::Fourth, game)];
+        8697821 => [crate::game::mechanism_sound_delay_ram::poll(k, game)];
         8684649 => [()]; 8708008 => [()]; 8685264 => [()]; 8684774 => [()]; 8684861 => [()];
         8686246 => [()]; 8698787 => [()]; 8704854 => [()]; 8698618 => [()];
         8696028 => [{

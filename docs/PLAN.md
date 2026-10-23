@@ -104,27 +104,26 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares the Metroid room-clear quota interaction after
-   eye doors at `75d6572a`. `mechanism_metroid_quota` retires setup DB1E and four
-   event-poll bodies. It preserves arbitrary native-endian table callbacks,
-   ROM-before-argument observation, odd arguments and linear cross-bank reads.
-   Polls compare live deaths then quota and lazily publish events10..13 through
-   the existing checked writer. Both modules forbid unsafe; candidate poll routes
-   bypass native dispatch. RAM remains authoritative. Seventy-nine of 115 setup
-   identities are shared; 36 and native dispatch/authority work remain.
+   Latest verified stage shares the deferred sound gate after quota work at
+   `52c49173`. `mechanism_sound_delay` retires setup B7C3 and polling B7DD. It
+   preserves area6's 32-tick delay versus 240 elsewhere, both timer reads, wrapping
+   decrement, old-value expiry and enable-before-release ordering. Core and
+   checked adapter forbid unsafe; candidate setup/pre routes use shared logic.
+   RAM remains authoritative. Eighty of 115 setup identities are shared; 35 and
+   native dispatch/authority work remain.
 
-   Final checks pass 6,118 direct comparisons, including 66 expected lookup
-   failures, plus 112 actual death/persistence/room-selector lifecycle comparisons
-   and 48 selector boundary comparisons. Actual enemy death uses the full
-   projectile-pool path; required population is seeded. Room selection executes
-   the actual private routine through a carrier-only wrapper, including lazy
-   target reads and failure scratch effects. Independent source/domain review
-   and 203 runtime / 240 local compiled identities pass. All selected prior
-   eye-door, plants, cannon, item, scroll, station, Chozo, hand, source/setup,
-   closing and collision checks pass. Production release/frontend/verifier/source
-   passes (57.22s); prospective release passes (47.70s). No movie, population
-   initialization, free-pool death explosion, full scheduler/room load, rendering
-   or full-composition runtime ran. Those retained dependencies remain open.
+   Final checks pass 15,300 direct frozen-original/main/candidate comparisons,
+   274 main/candidate scheduler observations and 2,304 actual queue-gate cases.
+   Actual hardcoded creation, Sleep and full32/240 countdowns execute; queue
+   capacity writes, other gates and malformed-index behavior are checked.
+   Independent old-reference coverage is direct setup/poll; scheduler comparisons
+   share the current core. Initial mute is seeded, so startup reachability and
+   audio playback are not established. Compiled identities206 runtime/243 local
+   and all selected prior regressions pass independent review. Production
+   release/frontend/verifier/source passed after recovery (59.02s); prospective
+   release passed (52.17s). A tool-host interruption terminated the first build
+   without a completion result; its log is preserved, not counted as a pass.
+   No movie or complete-composition runtime ran.
 
    Historical correction: the terrain stage's 18 visible restore/render cases
    reach a native u16 read at odd RAM address 0x1E67. Those results are not
@@ -132,15 +131,15 @@ references; measure build/test time and resource growth before changing the loop
    comparisons; do not rerun the undefined cases. Current selected suites exclude
    them. Current item restores assert the offscreen guard before that read.
 
-   Main is **104,448 Rust lines in 174 files**. Prospective composition is
-   **113,191 (+8,743)**, unadopted. This stage adds 62 main and 35 owned/wiring
-   lines: **+97 complete lines**, +945 lexical tokens and +3,512 LF-normalized
-   bytes. Verification adds 553 lines; implementation plus checks adds 650.
+   Main is **104,512 Rust lines in 176 files**. Prospective composition is
+   **113,275 (+8,763)**, unadopted. This stage adds 64 main and 20 owned/wiring
+   lines: **+84 complete lines**, +757 lexical tokens and +2,681 LF-normalized
+   bytes. Verification adds 509 lines; implementation plus checks adds 593.
    The candidate previously delegated these behaviors to native callbacks; no
    duplicate owned algorithm existed to retire. No dependency or native/installer/
    launcher source is added. Unsafe declarations remain 2,885; cast-containing
-   lines remain 6,034. No net reduction, complete unsafe retirement, persistent
-   ownership or backend-independence claim.
+   lines fall one to 6,033. No net reduction, complete unsafe retirement,
+   persistent ownership or backend-independence claim.
 
    Next dependencies, in order:
 
@@ -191,11 +190,13 @@ references; measure build/test time and resource growth before changing the loop
      bodies and helper, and compare actual progress and collision/deletion tails.
    - [x] Share Metroid callback selection and quota-event polling, retire five
      bodies, and compare actual death/persistence/room-selection interactions.
+   - [x] Share deferred sound setup/countdown and retire two bodies; compare
+     actual creation, scheduler expiry and queue rejection/acceptance.
    - Close remaining room/event/boss setups, then constants/no-op/result routes.
      Preserve synchronous writes, nested displacement and failure prefixes before
      retiring native dispatch. The 115-identity inventory is in the local door
-     handoff; 22 room/event/boss and 14 residual identities remain. Select one
-     coherent responsibility through caller/validation investigation. The quota
+     handoff; 21 room/event/boss and 14 residual identities remain. Select one
+     coherent responsibility through caller/validation investigation. The sound-delay
      handoff records current scope and retained consumer dependencies.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
@@ -204,7 +205,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified Metroid-quota continuation, with
+   `runtime-impact-working/` is the verified sound-delay continuation, with
+   `SOUND_DELAY_HANDOFF.md`, `sound-delay-price.json` and
+   `sound-delay-check-attempt-1.log`. `sound-delay-parent/` preserves prior
+   main/carrier/local/composition inputs. Quota evidence remains in
    `METROID_QUOTA_HANDOFF.md`, `metroid-quota-price.json` and
    `metroid-quota-check-attempt-1.log`. `metroid-quota-parent/` preserves prior
    main/carrier/local/composition inputs. Eye-door evidence remains in
@@ -406,12 +410,12 @@ content.
 
 ## Progress and references
 
-Verified Metroid-quota stage: Rust 104,448; maintained C bridge 266 and headers
-296 = **105,010 implementation lines**. Including 803 dependency-installer and
-107 verifier-launcher lines gives **105,920**. The separate prospective owned
+Verified sound-delay stage: Rust 104,512; maintained C bridge 266 and headers
+296 = **105,074 implementation lines**. Including 803 dependency-installer and
+107 verifier-launcher lines gives **105,984**. The separate prospective owned
 composition and local comparison additions are disclosed above.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
-unsafe declarations 2,885; cast-containing lines 6,034. These narrow counters do
+unsafe declarations 2,885; cast-containing lines 6,033. These narrow counters do
 not count all unsafe operations. Use the actual checkout's progress output for
 new changes; uncommitted drafts are not landed savings.
 The isolated launch draft is now synchronized and verified; its original source

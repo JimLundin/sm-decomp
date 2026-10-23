@@ -9,46 +9,44 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares Metroid callback selection and population-clear polling
-following eye doors at `75d6572a`. Setup DB1E and four event-poll bodies retire.
-The safe core preserves arbitrary callback identities; the adapter clones the
-loaded image before reading the argument, then reads native bytes at linear
-25B28+2*(argument>>1), including odd arguments and cross-bank positions. Failed
-lookups leave RAM unchanged. Polls read deaths then required population and
-conditionally set events10..13 with their full scratch-mask writes. Candidate
-preinstruction routes bypass native fallback; both new modules forbid unsafe.
-RAM remains authoritative; 79/115 setups are shared, 36 remain.
+The latest stage shares the deferred sound gate after quota work at `52c49173`.
+Setup B7C3 and polling B7DD retire. Both modules forbid unsafe. Setup chooses32
+only in area6, otherwise240, writes timer then callback. Polling retains two
+separate timer reads, writes the wrapping decrement, and when the captured old
+value equals1 enables sounds before releasing the captured slot. Zero wrapsFFFF.
+Candidate setup and typed preinstruction routes bypass native fallback. RAM is
+authoritative; 80/115 setups are shared, 35 remain.
 
-Main: **104,448 Rust lines in 174 files**, unsafe declarations 2,885 and casts
-6,034 unchanged. Maintained implementation 105,010; installers/launcher included
-105,920. Prospective composition: **113,191 in 270 files**, **+8,743 over main**,
-unadopted. Stage main cost is +62 lines/+652 lexical tokens/+2,108 normalized
-bytes; complete implementation is +97/+945/+3,512. Retained verification adds
-553/+6,572/+23,581; implementation plus checks adds 650 lines. Local production
-+36 lines overlaps composition and is not additive. No duplicate owned algorithm
-existed. No dependency/native/installer/launcher additions, net reduction, full
-unsafe retirement, persistent authority or backend-independence claim.
+Main: **104,512 Rust lines in 176 files**, unsafe declarations2,885 unchanged,
+casts6,033 (-1). Maintained implementation105,074; installers/launcher included
+105,984. Prospective composition: **113,275 in 273 files**, **+8,763 over main**,
+unadopted. Main cost +64 lines/+567 tokens/+1,899 normalized bytes; complete
+implementation +84/+757/+2,681. Retained verification +509/+6,367/+21,873;
+implementation plus checks593 lines. Local production +19 lines overlaps the
+composition. No duplicate owned algorithm existed. No dependency/native/installer/
+launcher additions, net reduction, full unsafe retirement, persistent authority
+or backend-independence claim.
 
-Use `runtime-impact-working/METROID_QUOTA_HANDOFF.md`, `metroid-quota-price.json`
-and `metroid-quota-check-attempt-1.log`. First execution passes (18.63s): 6,118
-direct comparisons including 66 lookup-failure comparisons, 112 lifecycle
-comparisons, and 48 selector boundary comparisons. Tests cover arbitrary/odd/
-broad callback selection, missing/short images, quota boundaries, scratch writes,
-already-set flags, wrap and persistence. Actual lifecycles use vanilla arguments
-12/14/16/18 hexadecimal and trap accidental native poll fallback.
+Use `runtime-impact-working/SOUND_DELAY_HANDOFF.md`, `sound-delay-price.json`
+and `sound-delay-check-attempt-1.log`. Selected run passes in19.01s with source
+identities206 runtime/243 local: 15,300 direct frozen-original/main/candidate
+comparisons, 274 current-main/candidate scheduler observations, and2,304 common
+actual queue-gate cases. Direct tests cover broad/odd slots, areas, timer values,
+and expiry order; symbolic tests distinguish both timer reads and failure prefixes.
 
-Actual enemy_combat::enemy_death clears canonical slot64 and increments the count,
-with grapple and preserve-property variants. Its full projectile-pool branch is
-executed; explosion initialization is not. Required population is seeded, so
-population loading and its empty-population early-return quirk remain outside
-coverage. Actual room_state::select_entry runs via a carrier-only wrapper,
-without expanding the production API. False selection skips target bytes; true
-selection reads the native target and updates the pointer. Truncated records
-check lazy failure and scratch effects. A later unmet quota leaves events set.
+Actual main SpawnHardcodedPlm and candidate hardcoded creation use(8,8,B7EB),
+header(B7C3,B7E9) and Sleep86B4. Actual PlmHandler_Async and candidate mechanism
+pass run full32/240 tick sequences, checking completion, instruction timer wrap,
+Sleep, expiry and release. QueueSfx2_Max6 checks mute/capacity/game-state/power-
+bomb rejection, unconditional capacity-byte writes, accepted ring advancement,
+next-slot clearing and malformed-index priority. Candidate fallback traps cover
+its migrated polling route. Scheduler comparisons share the current core;
+independent frozen-original evidence is limited to direct setup/poll comparisons.
 
-These authored actual-code interactions establish no movie, full enemy scheduler,
-complete room loading, rendering/audio, or full-composition runtime result.
-Population initialization and free-pool death effects remain retained dependencies.
+Initial muteFFFF is seeded from the unexecuted startup prefix. An artificial
+music resume value2 is not used: real startup completion requires initialized
+SNES state. Thus startup reachability, audio playback, movie execution and full
+composition/game runtime remain unproven. Sound-engine replacement remains open.
 
 Historical correction: 18 visible terrain restore/render cases (nine kinds by
 two aliases) reach DrawPlm's native u16 dereference at odd RAM 0x1E67. They are
@@ -57,32 +55,33 @@ do not rerun the undefined cases. They occur only in the standalone terrain
 export, excluded from current selected suites. This does not diagnose the
 inherited Intro mismatch in `DRAWING_HANDOFF.md`.
 
-Eye-door 13320/3440/56/24, plants 1360/1504/8/640, cannon 3630/1420/46/8,
-item 3476/1320/14/32, scroll 5816/1296/52, station 3240/112/149/6,
-Chozo 592/4/4/16, selected hands 52/163/12, source/setup 342/672/47,
-closing 74/120/7 and collision 198/545/176/1 pass. Historical qualified graphics,
-cannon down-right, offscreen restore, Chozo stores and full-contact limitations
-remain unchanged. Eye acid initialization remains excluded. Git-frozen references
-and 203 runtime / 240 local compiled identities pass. Unchanged scroll bounded
-nonreturn checks were not repeated.
+Quota6118/66/112/48, eye-door13320/3440/56/24, plants1360/1504/8/640,
+cannon3630/1420/46/8, item3476/1320/14/32, scroll5816/1296/52,
+station3240/112/149/6, Chozo592/4/4/16, hands52/163/12,
+source342/672/47, closing74/120/7 and collision198/545/176/1 pass.
+Historical qualified graphics/cannon/Chozo evidence and full-contact limits
+remain unchanged; eye acid initialization stays excluded. Unchanged scroll
+bounded nonreturn observations were not repeated.
 
-Production release/frontend/verifier/source passes (57.22s), prospective release
-passes (47.70s), carrier18.16s and harness17.79s, all first-pass. Changed gameplay/
-root formatting and diff checks pass; new source-manifest entries conform while
-inherited formatter differences remain unchanged. Production hash:
-`74fc01a3c75be0cf254a54e0f6edb0232b2252db165e46dd182da515262d61fd`.
-The parent snapshot initially included root's early lib/verify registrations;
-those captured files remain in `metroid-quota-parent/early-registered-main/`.
-Main baseline copies were restored from Git before final cost accounting; code
-and tests were unaffected. Compiler lane is released and DLL unloaded.
+The tool host interrupted the first production build and removed both worker
+handles. Its session was missing, no compiler process remained, and its log had
+no completion result. `sound-delay-interrupted-build.log` preserves that output.
+Source/snapshots and composition sync survived and were checked before resuming.
+Replacement workers completed missing fixtures; production recovery passed59.02s,
+composition52.17s, carrier20.52s and harness28.72s. Carrier/harness and selected
+runtime checks passed first attempt after recovery. No code correction followed
+those checks. Production hash:
+`e931260d9a0b5cd70bb0ba6d1f105d759ec374f2de0ffe5a54da4030cfec7802`.
+Changed gameplay/root formatting and diff checks pass; manifest additions conform
+with baseline formatting differences unchanged. Compiler lane released; DLL unloaded.
 
-`metroid-quota-parent/` preserves prior main/carrier/local/composition sources.
+`sound-delay-parent/` preserves prior main/carrier/local/composition sources.
 Earlier snapshots/caches remain. Do not rerun historical preparation scripts;
-composition lives under `impact-composition/sm/src`. The deferred sound gate is
-the next proposed complete interaction among 22 remaining room/event/boss setups,
-then 14 residual identities. Runtime promotion needs reset/load/rewind/external-
-writer checks; rendering, sound-engine replacement and boot-to-credits remain
-unfinished. The parallel movie/state investigation is documented in
+composition lives under `impact-composition/sm/src`. Speed Booster escape is the
+next proposed interaction among21 remaining room/event/boss setups, then14
+residual identities. Runtime promotion needs reset/load/rewind/external-writer
+checks; boot-to-credits and independent renderer/audio remain unfinished.
+The parallel movie/state investigation is documented in
 [MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md); it implements no pipeline.
 
 ## Paused launch draft

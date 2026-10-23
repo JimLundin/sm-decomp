@@ -414,6 +414,8 @@ pub mod game {
     pub(crate) mod mechanism_eye_door_ram;
     pub(crate) mod mechanism_metroid_quota;
     pub(crate) mod mechanism_metroid_quota_ram;
+    pub(crate) mod mechanism_sound_delay;
+    pub(crate) mod mechanism_sound_delay_ram;
     pub mod sm_84;
     pub mod item_pickups;
     pub mod item_pickups_ram;
