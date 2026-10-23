@@ -109,7 +109,7 @@ impl<'g> Context<&'g mut Game> for Runtime {
     fn cooldown(&mut self, g: &'g mut Game, index: usize) -> (&'g mut Game, u16) {
         (
             g,
-            u16::from(crate::game::sm_90::kProjectileCooldown_Uncharged[index]),
+            u16::from(crate::game::beam_definitions::MANUAL_COOLDOWN[index]),
         )
     }
     fn point(&mut self, g: &'g mut Game, angle: u16, radius: u16) -> (&'g mut Game, (u16, u16)) {

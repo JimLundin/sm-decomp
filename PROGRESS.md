@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 09:15 UTC**
+Updated: **2026-10-23 09:31 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -10,30 +10,31 @@ SNES backend remains the comparison oracle during migration.
 
 ## Latest verified milestone
 
-**Special-beam attack creation and all six motion states now share safe rules.**
+**Beam charge, firing and initial collision now share safe rules.**
 
-Verified source: [fe6a0d0f](https://github.com/JimLundin/sm-decomp/commit/fe6a0d0f079c09312dee996c181ac8c20ded155e).
+Implementation: [shared beam rules](sm/src/game/beam_firing.rs).
 
-- Retired duplicate creation, movement and retirement algorithms. Actual beam
-  input and motion dispatch use the shared implementation.
-- Production and candidate builds passed. **All 36 comparison suites passed**,
-  with all 34 retained results unchanged.
-- Added 6,015 three-way operation comparisons, including 126 expected failures,
-  plus authored-state and geometry checks.
-- All four attacks reached natural retirement from actual charged beam input,
-  without injected phases or lifetimes: Wave 600 ticks, Ice 620, Spazer 109,
-  Plasma 99. These are component tests, not full-game or rendering coverage.
+- Retired duplicate firing and collision dispatch. Ordinary owned collision
+  scans execute directly, including selector aliases and failure handling.
+- Production and candidate builds passed. **All 46 comparison suites passed**.
+  All 36 previous behavior suites remain; two deliberately removed compatibility
+  transfers explain the sole retained counter change.
+- Added 1,294 three-way RAM/APU/failure-state comparisons, including 14 failing
+  cases, plus five separate injected read-failure checks.
+- Ten chains reach retirement from actual ordinary, charged or hyper input,
+  through initial terrain and 628 travel/playback ticks, without injected phases
+  or lifetimes. These are component tests, not full-game or rendering coverage.
 
 | Verified measure | Value |
 | --- | ---: |
 | Setup identities decoded | 115 / 115 |
-| Maintained Rust source | 106,407 lines in 207 files |
-| Counted unsafe function declarations | 2,829 |
-| Prospective composition, not yet adopted | 114,725 lines in 316 files |
+| Maintained Rust source | 106,659 lines in 209 files |
+| Counted unsafe function declarations | 2,816 |
+| Prospective composition, not yet adopted | 115,151 lines in 318 files |
 
-This stage adds 224 lines to main and removes five unsafe function declarations.
-The complete composition adds 13 lines; including retained verification, growth
-is 2,151 lines. Safe adapters and independent checks are included in those costs.
+This stage adds 252 lines to main and removes 13 unsafe function declarations.
+The complete composition adds 426 lines; including retained verification, growth
+is 1,874 lines. Safe adapters and independent checks are included in those costs.
 The target remains below 100,000 maintained Rust lines, with all unsafe
 operations removed.
 
@@ -41,14 +42,10 @@ operations removed.
 
 **Continue the player-projectile lifecycle and its remaining consumers.**
 
-The approved next change shares ordinary beam charge input, firing and initial
-collision dispatch, including direct owned scans and their failure handling.
-The implementation has passed independent source review, formatting checks,
-the production release/frontend/verifier build and the candidate release build.
-The candidate build exposed two stale integration calls, which are now corrected.
-Behavior comparisons are pending while test fixtures undergo independent review.
-These source changes are not yet committed; the verified results and counts
-above still describe the special-attack milestone.
+Next is the complete missile and super-missile firing transaction: reservation,
+ammunition, placement, launch and cancellation, with actual travel and retirement
+checks. Caller and ordering review is complete; implementation design and cost
+estimates come next.
 
 Persistent room and scheduler state still live in RAM. Persistent Session
 ownership, renderer/audio replacement and an independently running game slice

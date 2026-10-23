@@ -86,6 +86,12 @@ pub trait Definitions<O> {
     }
     fn bts(&self) -> u8;
     fn area(&self) -> u16;
+    fn bts_owned(&mut self, owner: O) -> (O, u8) {
+        (owner, self.bts())
+    }
+    fn area_owned(&mut self, owner: O) -> (O, u16) {
+        (owner, self.area())
+    }
 }
 pub fn mechanism<O>(
     mut owner: O,
@@ -97,13 +103,15 @@ pub fn mechanism<O>(
     if bombable {
         let (next, table) = content.resolve(owner, 0x94a012);
         owner = next;
-        let bts = content.bts();
+        let (next, bts) = content.bts_owned(owner);
+        owner = next;
         if bts & 128 != 0 {
             return (owner, None);
         }
         (owner, header) = content.word(owner, &table, usize::from(bts));
     } else {
-        let bts = content.bts();
+        let (next, bts) = content.bts_owned(owner);
+        owner = next;
         if bts & 128 != 0 {
             if !solid {
                 return (owner, None);
@@ -111,7 +119,8 @@ pub fn mechanism<O>(
             let (next, table) = content.resolve(owner, 0x949fc6);
             owner = next;
             let cursor;
-            (owner, cursor) = content.word(owner, &table, usize::from(content.area()));
+            let (next, area) = content.area_owned(owner);
+            (owner, cursor) = content.word(next, &table, usize::from(area));
             let (next, table) = content.resolve(owner, 0x940000 | u32::from(cursor));
             let (next, header) = content.word(next, &table, usize::from(bts & 127));
             return (
@@ -160,6 +169,16 @@ pub trait Context<O> {
     fn extension(&self) -> i16;
     fn width(&self) -> u16;
     fn slope(&self, owner: &O, axis: Axis, scan: &mut impl Progress) -> bool;
+    fn material_owned(&mut self, owner: O) -> (O, Material) {
+        (owner, self.material())
+    }
+    fn extension_owned(&mut self, owner: O) -> (O, i16) {
+        (owner, self.extension())
+    }
+    fn slope_owned(&mut self, owner: O, axis: Axis, scan: &mut impl Progress) -> (O, bool) {
+        let result = self.slope(&owner, axis, scan);
+        (owner, result)
+    }
     fn mechanism(
         &mut self,
         owner: O,
@@ -190,17 +209,21 @@ pub fn react_progress<O>(
     }
     context.select(byte_offset >> 1);
     let blocked = loop {
-        match context.material() {
+        let (next, material) = context.material_owned(owner);
+        owner = next;
+        match material {
             Material::Air => break false,
             Material::Solid => break true,
-            Material::Slope => break context.slope(&owner, axis, scan),
+            Material::Slope => {
+                let (next, blocked) = context.slope_owned(owner, axis, scan);
+                owner = next;
+                break blocked;
+            }
             Material::Extension(axis) => {
-                let Some(cell) = redirect(
-                    axis,
-                    context.extension(),
-                    || context.width(),
-                    || context.cursor(),
-                ) else {
+                let (next, extension) = context.extension_owned(owner);
+                owner = next;
+                let Some(cell) = redirect(axis, extension, || context.width(), || context.cursor())
+                else {
                     break false;
                 };
                 context.select(cell);

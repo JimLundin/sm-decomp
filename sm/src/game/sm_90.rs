@@ -5,7 +5,7 @@ use crate::game::projectile_initialization_ram::initialize;
 use crate::game::bomb_lifecycle::{Kind as BombKind, SPREAD_FRACTIONS as kBombSpread_Tab3};
 use crate::game::bomb_lifecycle_ram as bomb_lifecycle;
 use crate::game::music::{PlayRoomMusicTrackAfterAFrames};
-use crate::game::beam_firing::{clear_animation, update_input};
+use crate::game::beam_firing_ram::{clear_animation, update_input};
 use crate::game::launch_motion::MovementDirection;
 use crate::game::launch_motion_ram;
 pub use crate::game::prelude::*;
@@ -119,10 +119,6 @@ crate::game::constants::typed_constants! { u32;
     fnsub_90EB86 = 9497478,
 }
 static kNonBeamProjectile_Sfx: [u16; 9] = [0, 3, 4, 0, 0, 0, 0, 0, 0];
-pub(crate) static kProjectileCooldown_Uncharged: [u8; 38] = [
-    15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 12, 15, 0, 0, 0, 0, 30, 30, 30, 30, 30, 30, 30, 30, 30,
-    30, 30, 30, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-];
 static kNonBeamProjectileCooldowns: [u8; 9] = [0, 0xa, 0x14, 0x28, 0, 0x10, 0, 0, 0];
 /// Which liquid contains a vertical position. This query deliberately ignores
 /// equipment: movement and graphics callers apply different suit rules.
@@ -1831,20 +1827,6 @@ pub unsafe fn HandleProjectile(game: &mut Game) {
         }
     }
 }
-pub(crate) static kFireChargedBeam_Funcs: [u16; 12] = [
-    fnProjPreInstr_Beam_NoWaveBeam as u16,
-    fnProjPreInstr_WavePlasmaEtc as u16,
-    fnProjPreInstr_Beam_NoWaveBeam as u16,
-    fnProjPreInstr_WavePlasmaEtc as u16,
-    fnProjPreInstr_Beam_NoWaveBeam as u16,
-    fnProjPreInstr_WavePlasmaEtc as u16,
-    fnProjPreInstr_Beam_NoWaveBeam as u16,
-    fnProjPreInstr_WavePlasmaEtc as u16,
-    fnProjPreInstr_Beam_NoWaveBeam as u16,
-    fnProjPreInstr_WavePlasmaEtc as u16,
-    fnProjPreInstr_Beam_NoWaveBeam as u16,
-    fnProjPreInstr_WavePlasmaEtc as u16,
-];
 pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
     unsafe {
         if word!(game.hyper_beam_flag) != 0 {
@@ -1976,82 +1958,6 @@ pub unsafe fn DrawFlareAnimationComponent(k: u16, game: &mut Game) {
         }
     }
 }
-static kCheckBeamCollByDir: [Func_V; 10] = callback_table! { nonnull Func_V;
-    CheckBeamCollByDir_0459, CheckBeamCollByDir_1368, CheckBeamCollByDir_2,
-    CheckBeamCollByDir_1368, CheckBeamCollByDir_0459, CheckBeamCollByDir_0459,
-    CheckBeamCollByDir_1368, CheckBeamCollByDir_7, CheckBeamCollByDir_1368,
-    CheckBeamCollByDir_0459,
-};
-pub unsafe fn CheckBeamCollByDir(k: u16, game: &mut Game) {
-    unsafe {
-        kCheckBeamCollByDir[(word!(game.projectile_dir[(k >> 1)]) as i32 & 0xfi32) as usize](game);
-    }
-}
-pub unsafe fn CheckBeamCollByDir_0459(game: &mut Game) {
-    unsafe {
-        BlockCollNoWaveBeamVert(word!(game.projectile_index), game);
-    }
-}
-pub unsafe fn CheckBeamCollByDir_1368(game: &mut Game) {
-    unsafe {
-        let v0: u16 = word!(game.projectile_index);
-        if BlockCollNoWaveBeamHoriz(word!(game.projectile_index), game) & 1 == 0 {
-            BlockCollNoWaveBeamVert(v0, game);
-        }
-    }
-}
-pub unsafe fn CheckBeamCollByDir_2(game: &mut Game) {
-    unsafe {
-        BlockCollNoWaveBeamHoriz(word!(game.projectile_index), game);
-    }
-}
-pub unsafe fn CheckBeamCollByDir_7(game: &mut Game) {
-    unsafe {
-        let v0: u16 = word!(game.projectile_index);
-        *(ram_ptr!(game, u16; 0xbdc)).offset((word!(game.projectile_index) >> 1) as isize) =
-            -1i32 as u16;
-        BlockCollNoWaveBeamHoriz(v0, game);
-    }
-}
-static kWaveBeam_CheckColl_Funcs: [Func_V; 10] = callback_table! { nonnull Func_V;
-    WaveBeam_CheckColl_0459, WaveBeam_CheckColl_1368, WaveBeam_CheckColl_2,
-    WaveBeam_CheckColl_1368, WaveBeam_CheckColl_0459, WaveBeam_CheckColl_0459,
-    WaveBeam_CheckColl_1368, WaveBeam_CheckColl_7, WaveBeam_CheckColl_1368,
-    WaveBeam_CheckColl_0459,
-};
-pub unsafe fn WaveBeam_CheckColl(k: u16, game: &mut Game) {
-    unsafe {
-        kWaveBeam_CheckColl_Funcs[(word!(game.projectile_dir[(k >> 1)]) as i32 & 0xfi32) as usize](
-            game,
-        );
-    }
-}
-pub unsafe fn WaveBeam_CheckColl_0459(game: &mut Game) {
-    unsafe {
-        BlockCollWaveBeamVert(word!(game.projectile_index), game);
-    }
-}
-pub unsafe fn WaveBeam_CheckColl_1368(game: &mut Game) {
-    unsafe {
-        let v0: u16 = word!(game.projectile_index);
-        if BlockCollWaveBeamHoriz(word!(game.projectile_index), game) & 1 == 0 {
-            BlockCollWaveBeamVert(v0, game);
-        }
-    }
-}
-pub unsafe fn WaveBeam_CheckColl_2(game: &mut Game) {
-    unsafe {
-        BlockCollWaveBeamHoriz(word!(game.projectile_index), game);
-    }
-}
-pub unsafe fn WaveBeam_CheckColl_7(game: &mut Game) {
-    unsafe {
-        let v0: u16 = word!(game.projectile_index);
-        *(ram_ptr!(game, u16; 0xbdc)).offset((word!(game.projectile_index) >> 1) as isize) =
-            -1i32 as u16;
-        BlockCollWaveBeamHoriz(v0, game);
-    }
-}
 pub unsafe fn ProjectileReflection(r20: u16, game: &mut Game) {
     unsafe {
         let v0: u16 = r20;
@@ -2076,7 +1982,9 @@ pub unsafe fn ProjectileReflection(r20: u16, game: &mut Game) {
             initialize(v0, Initialization::Projectile, game);
             word!(
                 game.projectile_bomb_pre_instructions[v1] =
-                    kFireChargedBeam_Funcs[(word!(game.projectile_type[v1]) as i32 & 0xf) as usize]
+                    crate::game::beam_firing_ram::charged_instruction(
+                        (word!(game.projectile_type[v1]) & 15) as usize
+                    )
             );
         };
     }
