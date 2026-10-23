@@ -29,18 +29,22 @@ flowchart TB
     UNION["1,026 new bytes / no overlap<br/>source review PASS"]:::done
     CONTRACT --> DECL["Concrete Rust interfaces<br/>metadata compile PASS"]:::done
     UNION --> DECL
-    DECL --> REVIEW["Independent interface review"]:::active
-    DECL --> OWNER["session.rs / sprite state<br/>52,079-byte proposed union"]:::pending
-    OWNER --> CODEC["session_encoding.rs / runtime"]:::pending
-    DECL --> POOL["sprite_objects.rs replacement<br/>spawn / advance / draw / clear"]:::pending
-    POOL --> WAFFLE["enemy_projectiles/<br/>spawn + Waffle controllers"]:::pending
-    POOL --> METROID["sm_a3.rs / Metroid controllers"]:::pending
-    POOL --> DRAYGON["sm_a5.rs / Draygon controllers"]:::pending
-    POOL --> MAW["sm_a8.rs / Maw controllers"]:::pending
-    BASE["Actual predecessor captures<br/>in preparation"]:::active --> VERIFY["Candidate comparisons"]:::pending
-    CPU["Draygon motion / original CPU<br/>unaligned Rust reference excluded"]:::active --> VERIFY
-    PROBE["Sprite lifecycle + draw probes<br/>in preparation"]:::active --> MOVIE["Exercised oracle replay"]:::pending
-    MUT["Meaningful fault scenarios<br/>in preparation"]:::active --> KILLS["Compiling mutants rejected"]:::pending
+    DECL --> REVIEW["Independent interface review<br/>PASS / live actor reads"]:::done
+    DECL --> OWNER["session.rs / sprite state<br/>52,079-byte proposed union"]:::checked
+    OWNER --> CODEC["session_encoding.rs / runtime"]:::checked
+    DECL --> POOL["sprite_objects.rs replacement<br/>spawn / advance / draw / clear"]:::checked
+    POOL --> WAFFLE["enemy_projectiles/<br/>spawn + Waffle controllers"]:::checked
+    POOL --> METROID["sm_a3.rs / Metroid controllers"]:::checked
+    POOL --> DRAYGON["sm_a5.rs / Draygon controllers"]:::checked
+    POOL --> MAW["sm_a8.rs / Maw controllers"]:::checked
+    BASE["121 predecessor cases<br/>captures + alias assertions PASS"]:::done --> VERIFY["Candidate comparisons<br/>assembling"]:::active
+    CPU["Draygon motion / original CPU<br/>5 captures + phase audit PASS"]:::done --> VERIFY
+    PROBE["Sprite lifecycle + draw probes<br/>source review PASS"]:::checked --> EARLY["Two early routes / missing hits<br/>0 failing frames / coverage FAIL"]:::failed
+    EARLY --> MOVIE["52-phase original CPU + OAM<br/>component oracle in preparation"]:::active
+    POOL --> BUILD["Whole production verifier<br/>release build PASS"]:::done
+    BUILD --> HOST["Actual shared harness<br/>compile PASS / execution pending"]:::done
+    GUARD["Runtime + 1,026 bytes guard<br/>source review PASS"]:::checked --> VERIFY
+    MUT["12 new faults<br/>source review PASS"]:::checked --> KILLS["39 mutations / execution pending"]:::pending
     CODEC --> VERIFY
     WAFFLE --> VERIFY
     METROID --> VERIFY
@@ -49,7 +53,9 @@ flowchart TB
     VERIFY --> ADOPT["Caller migration + retirement<br/>adopt on main"]:::pending
     MOVIE --> ADOPT
     KILLS --> ADOPT
-    class CONTRACT,UNION,DECL,REVIEW,OWNER,CODEC,POOL,WAFFLE,METROID,DRAYGON,MAW,BASE,CPU,VERIFY,PROBE,MOVIE,MUT,KILLS,ADOPT changed
+    class CONTRACT,UNION,DECL,REVIEW,OWNER,CODEC,POOL,WAFFLE,METROID,DRAYGON,MAW,BASE,CPU,VERIFY,PROBE,EARLY,MOVIE,BUILD,HOST,GUARD,MUT,KILLS,ADOPT changed
+    classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5

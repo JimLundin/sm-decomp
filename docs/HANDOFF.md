@@ -8,14 +8,33 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-Active sprite iteration: room-session/next-sprite-session/CONTRACT.md and
-DECLARATION-HANDOFF.md. Root rustfmt and metadata compile of declarations/lib.rs
-pass; artifact declarations-1.rmeta, log declarations-compile-1.log. Independent
-interface review pending. Baseline-verification, probe and mutation drafts run
-in parallel; no gameplay implementation split yet. Draygon46 natural nonnegative
-cursor reads native16bit data at oddA5CE07, undefined in predecessor Rust. Use
-the independent originalCPU A13E oracle draft; do not freeze that Rust execution.
-No local heavy process is active. Main visual adoption is e7cca70c.
+Active sprite iteration: room-session/next-sprite-session. Production overlay
+PRODUCTION-HANDOFF.md/PRODUCTION-OVERLAY.json is frozen:32files,4new,0deletions.
+Candidate candidate-511bd03d has production+composed Rust,121comparison adapters,
+original/candidateDraygon modules and observer hooks,39mutation runner. First
+wholeproduction build PASS42.97s source2782a16a; detachedcompile1failed private
+write_sprite_bytes, pub(super) correction compiles in detached2. New adapters
+added afterward still need the full nextbuild. No local exe execution.
+
+Baseline baseline-e7cca70c build4 plus alias-reference-1 passes121pool/controller
+captures+5CPU captures oncae732b3 (10.57s), exactprior117+5parity. Prehook source
+1567ae81 and observerreferencecec7e085 preserved withfrozenDLLs. Only expected
+poolpanics8..11 occur. CPU5 event/phase/fullRAMfootprints independently audited.
+Both earlymovie attempts missed allspriteactivity except clear; sourceinspection
+ofactualCeres roomdata explains why. No failingframes but no spritecoverage.
+
+Remaining beforeadoption: original/candidate52phase poolCPU lifecycle capsule
+(pool-oracle-draft), production Runtimeguard (verification/runtime), allcandidate
+comparisons, relevantsharedregressions, hosted30detached+9DLLmutations andfull
+build, finalaccounting. Pooloracle finalsource fixes are in progress; no CPU
+capsule has run. Original positiveDraygon46 Rust is UB and stays excluded.
+All local compiler/capture/replay handles through53683 are terminal; new work
+must first confirm currenthandles. Sprite source remains isolated/unadopted.
+
+Atlas is published frommain511bd03d at https://jimlundin.github.io/sm-decomp/.
+Hosted40027362601 passes browser+Pagesdeploy; liveHTTP200 bytes matchGitblob.
+Graph snapshot is b0565b2d (samecurrentproduction e7cca70c); regenerate after
+substantial sourceadoption andreview curated evidence anchors.
 
 User reaffirmation: easy Super Metroid Map Rando integration is a core
 architecture requirement now. Custom sprites/palettes, supplied room/door graphs

@@ -376,18 +376,28 @@ references; measure build/test time and resource growth before changing the loop
    Seven production files retire (666gross lines, replacements counted). Geometry
    relocation and macro formatting are not savings. Complete accounting is in
    local FINAL-ACCOUNTING.md and final-source-accounting.json.
-   Next proposal: complete sprite-effect pool with actual Waffle/Metroid/Draygon/
-   Maw controllers, shared ownership and explicit content inputs. Independent
-   caller and design/union source reviews pass:1026newbytes,52079WRAM total,
-   native unchanged. Concrete interfaces compile as a safe metadata-only crate;
-   independent interface review and executable union checks remain. Defined
-   predecessor captures, lifecycle/draw probes and mutation scenarios are drafted
-   in parallel under next-sprite-session. Draygon46's natural nonnegative cursor
-   reaches an unaligned raw u16 read at nativeA5CE07: do not execute that Rust
-   path as a reference. A bounded actual65816A13E capture is being prepared;
-   distinguish native wide-offset compatibility from SNES bank wrapping.
+   Active scope: complete sprite-effect pool with actual Waffle/Metroid/Draygon/
+   Maw controllers. Full production source/alias/caller reviews pass; one shared
+   owner adds1026bytes (52079WRAM total), native unchanged. Whole production
+   verifier build passes42.97s on2782a16a; detached host compiles after correcting
+   verification helper visibility. No standalone execution occurred locally.
+   Frozen predecessor121cases and five originalCPU captures pass; old117+5 bytes
+   remain exact. Four actual actor-alias cases enforce live Maw timer and Metroid
+   position reads. Naturalpositive Draygon46 oldRust is unalignedUB; originalA13E
+   phase/event/footprint audit passes independently. Preserve nativewide offset
+   qualification; no bank-wrap equivalence claim.
+   Any15000 and SpeedBooster19000 routes have0failingframes but MISS required
+   spriteactivity. Actual Ceres roomdata selects debris/no-op/getaway, not the
+   inferred explosion producer. Do not lengthen those unrelated routes. A52phase
+   actualCPU sprite lifecycle+OAM component oracle is drafted for downstream proof;
+   it is not a movie/fullframe claim. NewRuntimeguard and12newfaults source-review
+   pass (target39mutations including old27); execution remains. Complete candidate
+   comparison/capsule adapters are being integrated under next-sprite-session.
+   Production draft+711lines; necessary owned-state/unsafe retirement, not a net
+   source reduction. Final verification and fullscope accounting remain separate.
    Preserve distinct1022byte room clear and64byte active-pointer retirement.
-   This is not prepared-media independence or Map Rando integration readiness.
+   No sprite adoption, persistentwholegameownership or MapRando readiness yet.
+
 
 
    Room mechanisms are now adopted as one production responsibility: creation,
