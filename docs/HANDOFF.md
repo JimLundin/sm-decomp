@@ -9,57 +9,66 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares the Ceres escape doorway after treadmill commit
-`c0ad5aad`. Existing mechanism_doors gains CeresEscape and shares make_solid
-with Blue doors; B9F1 routes through the existing checked adapter. No module,
-trait method or registration added. Four cells preserve lower 12 bits and gain
-solid type 8. Origin is captured; each wrapped stride observes width after the
-preceding write. The original middle pair of consecutive immutable width reads
-has no intervening observer and equals the existing doubled-width operation.
-RAM remains authoritative; 91/115 setups shared, 10 room/event/boss + 14 residual.
+The latest stage shares broken-turret grapple damage and periodic health
+application after Ceres commit `ce3e62c4`. New samus_periodic_damage core and
+checked adapter forbid unsafe. CFD5 (header D0E8, decimal 8703957) adds one
+whole pending damage and returns 0x41. The old Samus_HandlePeriodicDamage body
+is retired; the sole frame-handler caller applies the safe result and retains
+InvalidInterrupt_Crash on negative pending damage. Frozen frames clear pending
+without health reads. Preserve LE pending high/low assembly, native health
+low/high arithmetic and stores, Gravity-before-Varia masking with 0x00FFFF00,
+LE health sign/clamp and fraction-before-whole clears. RAM remains authoritative;
+92/115 setups shared, 9 room/event/boss + 14 residual identities remain.
 
-Main 105169 Rust lines/190 files; unsafe 2880 unchanged, casts 6011 (-5).
-Maintained implementation 105731; installers/launcher included 106641.
-Candidate 114182/294, gap 9013, unadopted. Main delta [4,-42,-102],
-composition [6,-2,50], verification [517,7137,24052] lines/tokens/LF bytes;
-implementation plus checks [523,7135,24102]. Local production two lines overlap
-composition. No dependency/native/installer additions or net reduction claim.
+Main 105266 Rust lines/192 files; unsafe 2879 (-1), casts 6010 (-1).
+Maintained implementation 105828; installers/launcher included 106738.
+Candidate 114297/297, gap 9031, unadopted. Main delta [97,809,3004],
+composition [115,966,3676] lines/tokens/LF bytes. Verification adds
+[659,8322,30954]; implementation plus checks adds [774,9288,34630].
+Local production overlaps composition. No dependencies/native/installer additions,
+net reduction, complete unsafe retirement or persistent ownership claim.
 
-Use `runtime-impact-working/CERES_DOOR_HANDOFF.md`, `ceres-door-price.json`
-and `ceres-door-check.log`. All 23 suites pass in 24.272693s (suite 23.9583265s),
-explicit process exit 0, source identities 229 runtime/275 local. New result
-[8800,10912,9,300]: 8800 successful and 10912 matching checked-failure comparisons,
-9 source/reentry groups and 300 mixed observations. The failures are part of
-19712 comparisons with the actual frozen original: its checked helper fails
-when any reached row cursor is FFFE/FFFF and retains prior writes. No undefined
-native execution. Symbolic cases cover captured origin, live strides and every
-operation's failure prefix. Retained Blue door comparisons still pass.
+Use `runtime-impact-working/PERIODIC_DAMAGE_HANDOFF.md`,
+`periodic-damage-price.json` and `periodic-damage-check-1.log`. All 24 suites
+pass in 25.3209581s (suite 25.0369278s), explicit exit 0, with 232 runtime/280
+local source identities. New [9784,260,52,144]: 9784 successful comparisons
+(3024 setup + 6760 apply), 260 separate negative diagnostic-entry comparisons,
+52 interaction groups and 144 mixed observations. Diagnostic cases assert the
+exact scoped crash-entry panic and unchanged RAM in frozen-original/main/local
+paths. No execution or equivalence claim for abort/nonreturn tail; production
+InvalidInterrupt_Crash remains unchanged. Symbolic contexts exercise ordering,
+lazy reads and failure prefixes.
 
-Actual DF45 room header selects DF57 by default and DF71 with boss bit 1.
-Escape callback C96E spawns BA48 at (15,38), then haze; default C976 only haze.
-Room width 16, height 48. Eight boss/PLM/HDMA pool combinations plus one
-flag-change/repeated-entry group pass. BA48 uses B9F1 and AAE3 Delete, so the
-first PLM tick deletes it without a draw, followed by two empty ticks.
-Real player movement and both projectile axes check the four solid cells and
-neighboring rows. Whole-RAM collision tails, boss/event/BTS preservation and
-retained haze allocation/DMA state agree. The 300 observations count each game:
-156 row checks, 48 player movement checks and 96 projectile reactions.
+Two actual straight-turret commands install A003 terrain. Direct, initial-beam
+and held-grapple calls allocate D0E8 and return collision/connection flags;
+first PLM tick deletes, followed by two empty ticks. Full pools, repeated held
+contact, frozen clearing, later health loss and BTS domain branches pass.
+Actual heat/lava/acid callbacks feed the consumer for four suit combinations.
+Selected liquid paths use actual pose-1 radius 21 and skip unrelated graphics
+and sound; they never enter the unsafe unfrozen liquid_effects::advance_tide.
+Three primary-bank content ranges totaling 11 bytes stay local.
 
-Packed haze arguments are checked for alignment before any native dereference
-or write. All eight source groups admitted, zero exclusions. Hardware holders
-remain live during hardware access; later full-pool reentry needs no backend.
-Three literal ranges totaling 76 bytes independently match primary banks;
-ROM-derived fixtures stay local. Static doorway setup is covered, not the
-retained CeresDoor actor, haze rendering, full encounter/movie, complete
-composition runtime, boot-to-credits or persistent Session ownership.
+The 52 groups are 36 turret/grapple, 4 BTS-domain and 12 environmental cases.
+The 144 observations mix 36 paired initial-grapple observations, 12 paired
+held-contact cycles and 96 individual environmental observations. They are
+not a uniform frame/collision-call count. No visible turret animation, complete
+frame, encounter/movie, boot-to-credits or independent backend claim. Other
+periodic RAM writers (plants, spikes, grapple, liquids, heat and sky) remain.
 
-Production release/frontend/verifier/source 50.033665s; candidate release
-41.5264568s; carrier 17.3172993s; harness 16.4909373s; checks 24.272693s,
-all first attempts, explicit exit 0. Production hash:
-`dc529dccede5c84b8b30699a275fc7ae31f74fb241f26eb0493eb91f8863623f`.
-Changed formatting passes; no lib/verify_source changes. Composition has exactly
-three changed files matching main and transformed local source. No production
-source edits after builds. Review strengthened fixture assertions before builds.
+Production release/frontend/verifier/source 53.7129753s and candidate release
+50.0259405s pass first attempts. Carrier passes 18.4661272s; harness attempt 1
+fails 6.1147483s on ambiguous fixture integer types, corrected by explicit
+annotations only. Harness attempt 2 passes 19.5795814s; all checks pass first
+run in 25.3209581s. Failed logs remain. Production hash:
+`93aaf684d3cd695104f3201e16943e314df7b8876327ca6ae889810d925b5864`.
+Formatting passes and verify_source's four inherited formatting hunks remain
+unchanged. Composition's exact ten changed files match main/local transforms
+and registrations. No production changes after final builds.
+
+Retained Ceres results: [8800,10912,9,300], all eight source groups admitted.
+Only four free-HDMA groups reach native alignment guards; four full pools
+return before argument reads. Ceres setup's 10912 checked-failure comparisons
+are separate from 8800 successes. See CERES_DOOR_HANDOFF.md and its logs.
 
 Retained treadmill results: [11120,18,19,4880]. See TREADMILL_HANDOFF.md,
 treadmill-price.json and treadmill-check-attempt1.log for row/carry details,
@@ -82,7 +91,8 @@ Current guards do not resolve inherited Intro mismatch. Qualified item/cannon/
 Chozo and full-contact limits remain; eye acid initialization stays excluded.
 Scroll bounded nonreturn observations were not repeated.
 
-`ceres-door-parent/` preserves prior main/carrier/local/composition;
+`periodic-damage-parent/` preserves prior main/carrier/local/composition;
+`ceres-door-parent/`,
 `treadmill-parent/` and earlier snapshots remain intact.
 Historical snapshots/caches/failed logs remain, including animal BE30 routing
 correction; main numeric dispatch was always correct. Never rerun historical

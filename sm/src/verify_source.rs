@@ -418,6 +418,14 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/samus_animation.rs"),
     ),
     (
+        "sm/src/game/samus_periodic_damage.rs",
+        include_bytes!("game/samus_periodic_damage.rs"),
+    ),
+    (
+        "sm/src/game/samus_periodic_damage_ram.rs",
+        include_bytes!("game/samus_periodic_damage_ram.rs"),
+    ),
+    (
         "sm/src/game/projectile_animation.rs",
         include_bytes!("game/projectile_animation.rs"),
     ),

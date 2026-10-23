@@ -732,10 +732,6 @@ crate::game::callback_dispatch! {
 ) -> u8 => ea;
     call (j, game); default Unreachable(game) as u8;
     @functions [pub unsafe fn (j: u16, game: &mut Game) -> u8];
-    [8703957] PlmSetup_D0E8_GiveSamusDamage [] {
-        word!(game.samus_periodic_damage += 1);
-        0x41
-    };
     [8704264] PlmSetup_D113_LowerNorfairChozoRoomPlug [] {
         let a: u16 = 0;
         *(ram_ptr!(game, u16; 0x10002))
@@ -798,6 +794,7 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (v0: u16, game: &mut Game) -> u8];
     @external {
+        8703957 => [crate::game::samus_periodic_damage_ram::grapple_contact(game)];
         8698353 => [crate::game::mechanism_doors_ram::setup(j, crate::game::mechanism_doors::Setup::CeresEscape, game)];
         8695882 => [crate::game::mechanism_treadmill_ram::setup(j, game)];
         8694568 => [crate::game::mechanism_crumbling_wall_ram::setup(j, game)];

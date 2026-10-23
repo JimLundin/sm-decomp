@@ -3649,7 +3649,9 @@ crate::game::callback_dispatch! {
         Samus_HandleTransFromBlockColl(game);
         Samus_HandleTransitions(game);
         Samus_HandlePalette(game);
-        Samus_HandlePeriodicDamage(game);
+        if crate::game::samus_periodic_damage_ram::apply(game).is_err() {
+            InvalidInterrupt_Crash(game);
+        }
         Samus_PauseCheck(game);
         Samus_LowHealthCheck_(game);
     };
@@ -4087,32 +4089,6 @@ pub unsafe fn RunSamusMovementHandler(game: &mut Game) {
             ((word!(game.samus_movement_handler)) as u32) | (0x900000u32),
             game,
         );
-    }
-}
-pub unsafe fn Samus_HandlePeriodicDamage(game: &mut Game) {
-    unsafe {
-        if word!(game.time_is_frozen_flag) != 0 {
-            crate::update_place! { unaligned_word fresh127 = &raw mut (*(ram_ptr!(game, u16; 0xa4e))) => 0; }
-            word!(game.samus_periodic_damage = u16::from_le(fresh127.read_unaligned()));
-            return;
-        }
-        let mut t: i32 = (words!(game.samus_periodic_damage, samus_periodic_subdamage)) as i32;
-        if t < 0 {
-            InvalidInterrupt_Crash(game);
-            return;
-        }
-        if (word!(game.equipped_items) & 0x20) != 0 {
-            t = t >> 2 & 0xffff00;
-        } else if (word!(game.equipped_items) & 1) != 0 {
-            t = t >> 1 & 0xffff00;
-        }
-        words!(game.samus_health, samus_subunit_health += -t as u32);
-        if (word!(game.samus_health) as i16) < 0 {
-            crate::update_place! { unaligned_word fresh128 = &raw mut (*(ram_ptr!(game, u16; 0xa4c))) => 0; }
-            word!(game.samus_health = u16::from_le(fresh128.read_unaligned()));
-        }
-        crate::update_place! { unaligned_word fresh129 = &raw mut (*(ram_ptr!(game, u16; 0xa4e))) => 0; }
-        word!(game.samus_periodic_damage = u16::from_le(fresh129.read_unaligned()));
     }
 }
 pub unsafe fn Samus_PauseCheck(game: &mut Game) {

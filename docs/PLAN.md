@@ -104,40 +104,46 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares the Ceres escape doorway after treadmill
-   commit `c0ad5aad`. Existing `mechanism_doors` gains CeresEscape and shares
-   its solid-block operation with Blue doors; B9F1 routes through the existing
-   checked adapter. No new module, trait method or registration. Capture origin,
-   preserve each cell's lower 12 bits, write four solid cells and observe live
-   width between writes with wrapped u16 strides. The middle pair of adjacent
-   immutable width reads has no intervening observer and equals the existing
-   doubled-width operation. RAM remains authoritative; 91/115 setups shared,
-   with 10 room/event/boss and 14 residual identities remaining.
+   Latest verified stage shares broken-turret grapple damage and periodic health
+   application after Ceres commit `ce3e62c4`. New `samus_periodic_damage` core
+   and checked adapter forbid unsafe. Setup CFD5 (header D0E8, decimal 8703957)
+   adds one whole pending damage and returns 0x41. The old periodic consumer
+   body is retired; its sole frame-handler caller uses the safe result and
+   retains the original InvalidInterrupt_Crash boundary for negative damage.
+   Preserve frozen clearing, LE pending assembly, native health arithmetic,
+   suit precedence and 0x00FFFF00 truncation, LE health sign/clamp and ordered
+   fraction-then-whole clears. RAM remains authoritative; 92/115 setups shared,
+   with 9 room/event/boss and 14 residual identities remaining.
 
-   All 23 suites pass with 229 runtime/275 local identities. New result
-   [8800,10912,9,300]: 8,800 successful and 10,912 matching checked-failure
-   comparisons, 9 source/reentry groups and 300 mixed observations. The original
-   B9F1 helper already checks bounds; reaching FFFE/FFFF at any row gives a
-   defined panic with prior writes retained. These failures are part of the
-   19,712 original/main/candidate comparisons, not undefined native executions.
-   Symbolic checks cover captured origin, live strides and every effect prefix.
+   All 24 suites pass with 232 runtime/280 local identities. New result
+   [9784,260,52,144]: 9,784 successful comparisons (3,024 setup + 6,760 apply),
+   260 separate diagnostic-entry comparisons, 52 interaction groups and 144
+   mixed observations. Negative cases assert the exact scoped diagnostic panic
+   and unchanged RAM; they stop at crash entry and do not execute or establish
+   the abort/nonreturn tail. Symbolic contexts check lazy reads, ordered writes
+   and failure prefixes. The production crash implementation remains unchanged.
 
-   Actual DF45 room headers select default DF57 or boss-bit-1 state DF71.
-   Escape callback C96E spawns BA48 at (15,38) before haze; default C976 only
-   initializes haze. Eight boss/PLM/HDMA pool combinations and a flag-change/
-   repeated-entry group pass. Actual BA48 script deletes on its first tick,
-   with two post-delete ticks; no DrawPlm or offscreen substitution. Player and
-   projectile collisions check four doorway cells and neighboring rows. Boss,
-   event and BTS preservation, retained haze allocation and DMA state agree.
-   All eight source groups pass; free-HDMA calls pass alignment guards before dereference, with zero exclusions. Full pools return before argument reads. Three content ranges (76 bytes) match
-   primary banks. This covers static doorway setup, not the CeresDoor actor,
-   haze rendering, complete encounter, movie or independent backend execution.
+   Actual straight-turret commands install A003 terrain; initial, direct and
+   held-grapple consumers allocate D0E8, return connection flags and delete on
+   the first PLM tick. Repeated contact, freeze, health loss, full allocation
+   pools and BTS table failures/negative returns pass. Actual heat, lava and
+   acid callbacks accumulate damage before application for four suit states.
+   Selected liquid callbacks use the real pose-1 radius byte and RAM branches
+   without graphics/sound dispatch; this does not exercise the unsafe unfrozen
+   liquid backend. Three literal ranges (11 bytes) match primary banks.
+   No visible turret animation, full frame/encounter/movie or backend claim.
 
-   Production release/frontend/verifier/source 50.03s, prospective release
-   41.53s, carrier 17.32s, harness 16.49s and all 23 suites 24.27s pass first
-   attempts with explicit exit 0. Production source remains unchanged.
-   The 300 observations count both games: 156 row checks, 48 player movement
-   checks and 96 projectile reactions. Retained Blue door comparisons pass.
+   The 52 groups are 36 turret/grapple, 4 BTS-domain and 12 environmental cases.
+   The 144 mixed observations are 36 paired initial-grapple observations,
+   12 paired held-contact cycles and 96 individual environmental observations;
+   do not label them a uniform frame or collision-call count. All retained
+   suites pass unchanged. Other periodic RAM writers remain authoritative.
+
+   Production release/frontend/verifier/source 53.71s and prospective release
+   50.03s pass first attempts; carrier 18.47s passes. Harness attempt 1 fails
+   solely on an ambiguous fixture integer type (6.11s); explicit annotations
+   fix it and attempt 2 passes (19.58s). All 24 checks pass first run in 25.32s,
+   explicit exit 0. Production source remains unchanged; failed logs preserved.
 
    Retained limits: `advance_tide` reads native u16 at odd RAM197D on every
    unfrozen lava_surface; never run that as defined-reference evidence. The old
@@ -146,14 +152,15 @@ references; measure build/test time and resource growth before changing the loop
    or resolve the inherited Intro mismatch. Other qualified fixtures remain as
    documented in the local handoffs.
 
-   Main is **105,169 Rust lines in 190 files**. Prospective composition is
-   **114,182 (+9,013)** in 294 files, unadopted. Stage main delta is
-   +4 lines/-42 lexical tokens/-102 LF-normalized bytes; complete composition
-   +6/-2/+50. Retained verification adds 517/7,137/24,052; implementation plus
-   checks adds 523 lines. Local production overlaps composition. No dependency,
-   native, installer or launcher additions. Unsafe declarations remain 2,880;
-   casts fall five to 6,011. No net reduction, complete unsafe retirement,
-   persistent ownership or backend independence claim.
+   Main is **105,266 Rust lines in 192 files**. Prospective composition is
+   **114,297 (+9,031)** in 297 files, unadopted. Stage main adds 97 lines,
+   809 lexical tokens and 3,004 LF-normalized bytes; complete composition adds
+   115/966/3,676. Retained verification adds 659/8,322/30,954;
+   implementation plus checks adds 774 lines/9,288 tokens/34,630 bytes.
+   Local production overlaps composition. No dependency, native, installer or
+   launcher additions. Unsafe declarations fall one to 2,879; casts fall one
+   to 6,010. No net reduction, complete unsafe retirement, persistent ownership
+   or backend independence claim.
 
    Next dependencies, in order:
 
@@ -224,12 +231,14 @@ references; measure build/test time and resource growth before changing the loop
      door producers, boss/reentry gates, inside movement and animation cycles.
    - [x] Share Ceres escape-door setup through the existing door core; compare
      actual room-state selection, allocation, deletion and collision/reentry tails.
+   - [x] Share broken-turret grapple damage and periodic health application;
+     compare allocation/held contact, diagnostic entry and environmental producers.
    - Close remaining room/event/boss setups, then constants/no-op/result routes.
      Preserve synchronous writes, nested displacement and failure prefixes before
      retiring native dispatch. The 115-identity inventory is in the local door
-     handoff; 10 room/event/boss and 14 residual identities remain. Select one
-     coherent responsibility through caller/validation investigation. The Ceres
-     handoff records retained dependencies and checked-failure coverage.
+     handoff; 9 room/event/boss and 14 residual identities remain. Select one
+     coherent responsibility through caller/validation investigation. The periodic-damage
+     handoff records retained writers and diagnostic-prefix limits.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -237,7 +246,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified Ceres doorway continuation,
+   `runtime-impact-working/` is the verified periodic-damage continuation,
+   with `PERIODIC_DAMAGE_HANDOFF.md`, `periodic-damage-price.json` and
+   `periodic-damage-check-1.log`. `periodic-damage-parent/` preserves prior
+   main/carrier/local/composition inputs. Ceres evidence remains
    with `CERES_DOOR_HANDOFF.md`, `ceres-door-price.json` and
    `ceres-door-check.log`. `ceres-door-parent/` preserves prior
    main/carrier/local/composition inputs. Treadmill evidence remains

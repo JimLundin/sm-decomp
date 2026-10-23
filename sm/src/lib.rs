@@ -379,6 +379,8 @@ pub mod game {
     pub(crate) mod room_backgrounds;
     pub(crate) mod room_scrolls;
     pub mod samus_animation;
+    pub(crate) mod samus_periodic_damage;
+    pub(crate) mod samus_periodic_damage_ram;
     pub(crate) mod sprite_drawing;
     pub(crate) mod samus_pose;
     pub mod progress_flags;
