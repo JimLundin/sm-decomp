@@ -752,69 +752,7 @@ pub unsafe fn Samus_HandlePalette(game: &mut Game) {
         HandleMiscSamusPalette(game);
     }
 }
-pub unsafe fn HandleBeamChargePalettes(game: &mut Game) -> u8 {
-    unsafe {
-        if word!(game.charged_shot_glow_timer) != 0 {
-            if word!(game.hyper_beam_flag) != 0 {
-                if (word!(game.charged_shot_glow_timer) & 1) == 0 {
-                    if (word!(game.charged_shot_glow_timer) & 0x1e) == 0 {
-                        word!(game.charged_shot_glow_timer = 0);
-                        return 1;
-                    }
-                    CopyToSamusSuitPalette(
-                        crate::rtl::rom_table_word!(
-                            game,
-                            0x91d829,
-                            ((word!(game.charged_shot_glow_timer) as i32 & 0x1e) >> 1) as isize,
-                        ),
-                        game,
-                    );
-                }
-                word!(game.charged_shot_glow_timer -= 1);
-                return 0;
-            }
-            if word!(game.charged_shot_glow_timer -= 1, reread) != 0 {
-                word_transfers!(game, descending, 15; native(0xc19e) <- value(1023));
-                0
-            } else {
-                1
-            }
-        } else if word!(game.grapple_beam_function) as i32 == 0x9bc4f0 & 0xffff
-            && word!(game.flare_counter) != 0
-            && word!(game.flare_counter) as i32 - 60i32 & 0x8000 == 0
-        {
-            let mut R36: u16 = if word!(game.samus_contact_damage_index) == 4 {
-                crate::rtl::rom_table_word!(
-                    game,
-                    0x91d7ff,
-                    (word!(game.samus_suit_palette_index) >> 1) as isize
-                )
-            } else {
-                crate::rtl::rom_table_word!(
-                    game,
-                    0x91d7d5,
-                    (word!(game.samus_suit_palette_index) >> 1) as isize
-                )
-            };
-            CopyToSamusSuitPalette(
-                *(RomPtr_91(
-                    (R36).wrapping_add(word!(game.samus_charge_palette_index)),
-                    game,
-                ) as *mut u16),
-                game,
-            );
-            let mut v1: u16 = (word!(game.samus_charge_palette_index)).wrapping_add(2);
-            if word!(game.samus_charge_palette_index) as i32 - 10i32 & 0x8000 == 0 {
-                v1 = 0;
-            }
-            word!(game.samus_charge_palette_index = v1);
-            0
-        } else {
-            word!(game.samus_charge_palette_index = 0);
-            HandleVisorPalette(game)
-        }
-    }
-}
+pub use crate::game::beam_charge_palette_ram::advance as HandleBeamChargePalettes;
 pub unsafe fn HandleVisorPalette(game: &mut Game) -> u8 {
     unsafe {
         if word!(game.timer_for_shine_timer) == 8 {

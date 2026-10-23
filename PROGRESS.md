@@ -1,84 +1,66 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 11:59 UTC**
+Updated: **2026-10-23 12:08 UTC**
 
-**Status: active development. The complete modernized engine is not finished.**
+**Status: active development. The owned engine is not yet consolidated into production.**
 
-The goal is a purpose-built Rust engine that plays Super Metroid from boot to
-credits, with owned gameplay state and its own rendering and audio. The current
-SNES backend remains the comparison oracle during migration.
+The destination is a purpose-built Rust engine that plays Super Metroid from boot
+to credits, with owned gameplay state and its own rendering and audio. The SNES
+backend remains the comparison oracle during migration.
 
-## Latest verified milestone
+## Latest verified change
 
-**Player preparation now uses one shared safe sequence.**
+**Charged-shot palette rules and output selection are shared.**
 
-Implementation: [player preparation](sm/src/game/player_preparation.rs).
+[The shared consumer](sm/src/game/beam_charge_palette.rs) replaces duplicate
+main/owned glow and charge-cycle logic. Real weapon producers, palette callers,
+demo restoration, rainbow updates and resumed audio are covered by the new checks.
 
-- Replaced duplicate normal/demo setup, weapon coordination and finalization.
-  Actual gameplay and intro callers use the shared implementation.
-- Preserved captured handlers, live reads, packed memory aliases, later demo
-  input restoration and message suspension between preparation and movement.
-- Production and candidate builds passed. **All 59 selected suites passed**,
-  with all 58 retained result vectors unchanged.
-- New checks cover 883 three-way comparisons across 119 authored scenarios,
-  including real demo input and weapon creation, later beta restoration,
-  inactive/frozen paths and dirty owned state without premature publication.
-- Two real dialogue chains each take 388 calls and run preparation only once
-  across suspension. These are calls/resumptions, not movie frames.
-- Four invalid-preparation assertion pairs match the frozen implementation;
-  five inherited setup assertion pairs also remain unchanged.
+- Both release builds and independent review passed.
+- All **60 selected suites passed**; all **59 retained result vectors** are unchanged.
+- New checks cover **378 comparisons across 318 authored scenarios**, including
+  ten two-way image-getter comparisons and separately qualified checked-only cases.
+- Nine existing assertion pairs remain unchanged.
 
-| Verified measure | Value |
+| Measure | Current value |
 | --- | ---: |
-| Maintained Rust source | 107,322 lines in 219 files |
-| Counted unsafe function declarations | 2,790 |
-| Prospective composition, not yet adopted | 115,721 lines in 328 files |
+| Main Rust source | 107,432 lines in 221 files |
+| Counted unsafe function declarations | 2,789 |
+| Prospective composition, not adopted | 115,832 lines in 330 files |
+| This change: main growth | 110 lines |
+| This change: composition plus verification growth | 1,602 lines |
 
-This stage adds 146 lines to main and removes four unsafe function declarations.
-The complete composition adds 131 lines; including retained verification, growth
-is 1,647 lines. All adapters, test overlays and helper changes are counted. One
-verification category exceeds its estimate by 20 lines; the aggregate is below
-its estimate. This is a safety and shared-behavior improvement, not a net reduction.
+## Direction correction: consolidate the engine
 
-## Work in progress
+Preparation and palette together add **256 production lines**. They remove
+duplicate rules, but adapters outweigh those deletions. They establish sharing
+and partial safety improvements, not net simplification or production adoption
+of the owned engine. The user's concern about this trajectory is valid.
 
-**Charged-shot palette feedback is implemented locally; behavior checks are underway.**
+The next task is a **complete subsystem consolidation proposal**, beginning with
+the existing owned projectile candidate. It must identify a clear public API and
+state owner, migrate real production callers, and name the bank orchestration
+and RAM adapters deleted in the same adoption. Adoption and deletion costs will
+be counted together. If that boundary cannot yet be adopted, the proposal must
+identify the specific blockers and minimum closing work before more coding.
 
-The next change shares glow timing, charge-palette cycling and output selection
-between main and the owned candidate, retiring both duplicate rule bodies.
-Checks will follow real weapon producers through palette updates, beta callers,
-rainbow palette changes and resumed charge audio. The frozen patch passed source
-review, formatting, the main release/frontend build (86.86 seconds) and candidate
-release build (53.47 seconds). The current main change adds 110 Rust lines and
-removes one counted unsafe function declaration. Complete accounting and behavior
-verification remain pending; this code is not yet committed. It preserves existing
-transfers around external palette writers and does not claim persistent ownership.
-
-A candidate-only callback-conversion optimization was deferred because it has
-no production contribution and is not required for adoption.
-
-Persistent Session ownership still requires reset/load/oracle-rewind and external
-writer handling. Preparation remains separate from later movement and scheduler
-suspension. Renderer/audio replacement and an independently running game slice
-remain required parts of the destination. The target remains below 100,000
-maintained Rust lines, with all unsafe operations removed.
+Further isolated shared consumers, package moves and candidate-only cleanup are
+not the next milestone. Persistent Session ownership, full-game coverage and
+independent rendering/audio remain unfinished.
 
 ## Verification limits
 
-The comparison suites exercise selected real implementations and constructed
-scenarios. Demo tests use a no-op movement handler, and intro timer tests use a
-frozen scene; they do not establish active movement/knockback physics or full
-demo playback. Typed preparation callbacks are modeled; their bomb consumer is
-real shared safe code. Assertion tests use the existing harness assertion handler.
+The checks exercise selected actual implementations and constructed scenarios.
+Caller fixtures use no-op movement and disabled minimap; they do not prove full
+movement physics or boot-to-credits coverage. Typed outputs are modeled separately.
+Generic native palette copying and visor code remain unchanged safety debts.
+Scoped restored-image tests do not establish frontend/checkpoint/oracle adoption.
 
-These results do **not** establish boot-to-credits coverage, visible rendering
-fidelity or an independent backend. Known native-access exclusions and the
-inherited Intro mismatch remain unresolved. Older controlled preparation fixtures
-fail identically on the untouched parent and remain explicitly excluded; their
-valid active-input subset still passes. ROM-derived fixtures stay local.
+Known native-access exclusions and the inherited Intro mismatch remain unresolved.
+Older controlled preparation fixtures fail identically on their untouched parent
+and remain excluded; their valid active-input subset still passes. ROM-derived
+fixtures stay local. No full-renderer/movie result is claimed for this change.
 
-This file is updated and pushed when verified milestones land or material work
-status changes. See [the active plan](docs/PLAN.md),
-[the detailed handoff](docs/HANDOFF.md) and
-[the accepted architecture](docs/target-architecture/README.md) for scope,
-validation details and remaining work.
+This file is pushed with verified changes or material status changes. See
+[PLAN](docs/PLAN.md), [HANDOFF](docs/HANDOFF.md), and
+[the accepted architecture](docs/target-architecture/README.md).

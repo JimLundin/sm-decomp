@@ -50,6 +50,20 @@ new packages alone establishes neither ownership nor backend independence.
 
 ## Active direction (2026-10-22)
 
+User correction (2026-10-23): sharing more individual rules while growing adapters
+is not sufficient progress toward a clear engine structure. Finish the already
+verified charge-palette change, then prioritize production consolidation of a
+complete owned subsystem. The next proposal must name its public API and state
+owner, migrate actual main callers, and identify the bank orchestration and
+per-operation RAM adapters retired in the same adoption. Price the complete
+adopted subsystem and deletions together, including the currently local candidate.
+Do not substitute another isolated shared consumer, a package move, or adoption of
+outer wiring alone. If a complete boundary cannot yet be adopted, identify its
+specific blockers and the minimum work that closes them before further coding.
+Preparation and palette together add 256 main-source lines; their algorithm
+sharing and safety gains do not establish net simplification or owned-engine
+adoption. The next milestone must address that structural gap explicitly.
+
 - Preserve the complete game and exact defined behavior, quirks included. The
   oracle decides. `sm/src` is the source of truth; use `ram_map.rs` and the
   [bank logs](https://patrickjohnston.org/bank/) when meaning is unclear. There
@@ -108,84 +122,70 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares the complete player preparation phase from
-   `41617e35`: captured entry, setup/demo backups, ordered real leaves, shared HUD
-   or projectile update, and exact finalization. The safe shared core and checked
-   RAM adapter retire Func11/12/13 sequencing and Samus_Func10; real gameplay and
-   intro callers retain their identities through aliases. The candidate uses the
-   same core and keeps pending aim owned. Other fields and external leaves retain
-   their existing authority transfers. This is not persistent Session adoption.
+   Latest verified stage shares the complete charged-shot palette consumer from
+   `8fa61a7c`. Main HandleBeamChargePalettes and owned advance_weapon_palette use
+   one safe rule; local output handling reuses the main resolver. Actual coordinator
+   and beta callers keep their schedule. Hyper copies before live glow decrement;
+   ordinary glow decrements before highlight; phase updates after output using its
+   live value; visor sees phase zero and returns its complete byte. ROM getter order,
+   low-pointer diagnostics and current native copy-image selection are preserved.
+   The secondary word read is checked; generic native copy and visor remain debts.
 
-   All **59 selected suites pass**, with **58 retained vectors unchanged**.
-   The suite took 35.730834s; full invocation 37.319585s, explicit exit0.
-   Preparation [883,311,21,12,799,17,119] means 883 three-way comparisons,
-   311 post-leaf observations, 21 failing cases, 12 unique chains, 799 calls,
-   17 typed scenarios and 119 authored scenarios. Observations are not effect counts.
-   The 84 matrix comparisons cover entry/setup/tail, aliases, live input and frozen
-   state, captured handlers and failure prefixes. Four genuine short-content cases
-   exercise radius and demo reads. Unobserved dirty-owner cases prove inactive
-   no-publication and active projectile-only update/tail without an effect transfer.
+   All **60 selected suites pass**, with **59 retained vectors unchanged** and nine
+   unchanged native assertion pairs (five setup, four preparation). Suite time
+   35.104971s; invocation 36.533343s, explicit exit0. New vector
+   [378,188,33,17,166,87,318] counts comparisons, post-output observations, compared
+   failures, chains, calls, typed scenarios and authored scenarios. The 378 include
+   202 matrix triplets, ten getter pairs and 166 chain comparisons; they are not all
+   three-way. The 33 failures include 24 injected output failures, two existing
+   checked-table failures, six getter failures and one real coordinator bounds panic.
+   Two new checked-only secondary cases are separate from native equivalence.
 
-   The 799 chain calls comprise one frozen projectile-only update, 18 demo calls,
-   four intro cases and two real gameplay dialogue chains of 388 calls each.
-   These are calls/resumptions, not movie frames. Finite E91D records produce a
-   beam before real E7F5/E833 beta restoration, including the overlapping A91 HDMA
-   word. Actual demo instruction 85FC changes future alfa/beta selectors without
-   redirecting the captured current phase. EnemyMessage resumption runs preparation
-   only once and beta after dialogue completion. Intro tests cover zero/high-bit
-   activation and zero/nonzero timers in a frozen scene. Movement uses E90E;
-   minimap is disabled. No active movement/knockback physics or full demo claim.
-   Typed tests reuse safe bomb creation/lifecycle/playback through retirement;
-   their preparation leaves are modeled. The actual gameplay scheduler invokes
-   owned preparation, not a persistently owned outer scheduler.
+   Real charged/Hyper producers reach glow expiry in four/21 palette calls and
+   projectile retirement; held input crosses 59 to 60 and cycles colors before
+   release. Actual coordinator/beta cases distinguish short circuit, base overwrite,
+   Xray/visor output and later demo-input restoration. Rainbow writes the shared
+   phase by +1, disable clears it and next charge uses +2. Hurt39-to40 requests
+   resumed audio and actual Samus_ShootCheck consumes it. Selected-image tests restore
+   Hyper1/glow4/phase8/ammo19/cursor99, apply corrective glow2, and require Hyper
+   colors and returned glow1. This proves scoped import behavior, not host adoption.
 
-   Five inherited setup assertion pairs and four new invalid-preparation pairs
-   match exact stdout/stderr/status77 through the existing harness assertion handler.
-   The latter run actual Unreachable calls and check unchanged prefix sentinels;
-   they are not an OS-native abort claim. Historical controlled preparation exports
-   remain preserved/excluded because the exact parent reproduces their obsolete
-   CheckInitialCollision expectations. The valid 74-case runtime subset still passes.
-   No movie frames ran; known native-access/Intro exclusions remain unresolved.
+   Caller tests use E90E no-op movement and disabled minimap. Typed outputs are
+   modeled separately from actual runtime output. Old unaligned/out-of-allocation
+   secondary reads are not used as native equivalence evidence; odd/short checked
+   cases are qualified. Generic native memcpy is unchanged and not claimed safe.
+   No movie/full-renderer run or persistent Session adoption is established.
+   Historical controlled preparation exclusions remain exactly as documented in
+   PLAYER_PREPARATION_HANDOFF.md; their valid runtime subset still passes.
 
-   Main release/frontend passed in 61.15s; candidate release in 52.024s. Fresh
-   carrier passed (27.58s compiler); final harness passed in 15.784s. Failed generator,
-   old-artifact reuse, fixture corrections and duplicate-call correction are retained
-   in local logs; none is presented as passing final evidence. Final generation is
-   idempotent. Main5/local1/composition339/verification806 frozen inputs match;
-   embedded identities cover 281 carrier and 335 local files.
+   Main release/frontend passed86.857s and candidate release53.468s. Final carrier
+   passed22.053s and harness19.922s. The initial test-hook name collision is retained
+   as a failed build; no production edits were needed after the frozen builds.
+   Main5/local2/composition341/verification815 hashes match; generator is idempotent;
+   source identities cover284 carrier and338 local files. Independent final review
+   and root audit approved sources, outcomes, counts and costs.
 
-   Main is **107,322 Rust lines in 219 files**; candidate **115,721 in 328 files**
-   remains unadopted. Net lines/tokens/LF UTF-8 bytes: main [146,1215,4993], local
-   [-15,-4,-326], composition [131,1211,4673], complete verification
-   [1516,17446,64563], combined [1647,18657,69236]. All replacement/verification
-   costs and compatibility overlays are counted; no new dependency. The generator/
-   checker/registration category is 240 lines, exceeding its estimate by 20; the
-   complete change remains below the aggregate estimate. Unsafe function
-   declarations fall by four to 2,790; cast-containing lines remain 5,922. This is
-   safe shared sequencing and duplicate retirement, not a net reduction.
+   Main is **107,432 Rust lines in 221 files**; candidate **115,832 in 330 files**
+   remains unadopted. Net lines/tokens/LF UTF-8 bytes: main [110,1136,3703], local
+   [1,0,-142], composition [111,1136,3567], verification [1491,16076,62226], combined
+   [1602,17212,65793]. Every maintained adapter/helper/overlay is counted; no category
+   overrun or dependency. Unsafe declarations2789(-1), cast lines5918(-4).
+   Preparation plus palette adds256 main lines. This is algorithm sharing and
+   partial safety progress, not net simplification or a consolidated owned engine.
 
-   In progress: reviewed charged-shot palette consumer replacement from `8fa61a7c`
-   shares the complete main HandleBeamChargePalettes and owned advance_weapon_palette
-   rule plus their output resolver. Preserve getter/image selection, signed/wrapped
-   rules, live post-output fields, full visor return, and native copy/visor leaves.
-   Required checks follow real producers through coordinator/beta and Misc palette
-   writes into the next charge/audio consumer. Main growth estimate 117–220 lines;
-   composition 87–235, verification 1,340–2,070. Implementation is worker-owned,
-   independently reviewed; root owns registration, integration, builds and Git.
-   The candidate-only Session-bridge conversion cleanup is deferred: it removes
-   redundancy but contributes no production change and is not required for adoption.
-   External-writer/reset/load/oracle-rewind authority remains unfinished.
-   Preparation and later beta remain
-   separated by contacts, enemies and possible suspension; beta owns demo restoration.
-   Persistent Session ownership, complete-game coverage and independent rendering/
-   audio remain unfinished. Do not adopt outer wiring alone.
+   Next, per the user's correction: propose production adoption of a complete owned
+   subsystem with a clear API, real callers and named bank/adapter deletions. Price
+   adoption plus deletion together. If adoption is blocked, name the exact missing
+   interactions and minimum closing work. Do not start another isolated shared
+   consumer, local-only cleanup or package move. Persistent ownership, complete-game
+   coverage and independent rendering/audio remain unfinished.
 
-   Production source hash:
-   `83527e0e9443df7987634ce74d09f4d6dcc053190512e2d579f93102a2581290`.
-   Local evidence: `PLAYER_PREPARATION_HANDOFF.md`, `player-preparation-results.json`,
-   `player-preparation-price.json`, `player-preparation-final-audit.json`,
-   `player-preparation-build-attempts.json`, both preparation fatal JSON files and
-   `preparation-full-1.log` in the existing runtime-impact-working directory.
+   Source hash: `d7e5c27e681f8c689b8f9162715af36e1b2647aeaa39c0f5a883116474ce24eb`.
+   Local evidence in runtime-impact-working: CHARGE_PALETTE_HANDOFF.md,
+   charge-palette-results.json, charge-palette-price.json,
+   charge-palette-final-audit.json, charge-palette-build-attempts.json,
+   charge-palette-full-1.log and the two charge-palette fatal JSON files. Prior
+   preparation/HUD/weapon-stage handoffs and snapshots remain preserved.
 
    Next dependencies, in order:
 
@@ -290,17 +290,21 @@ references; measure build/test time and resource growth before changing the loop
    - [x] Share complete player preparation/setup/finalization; retire duplicate
      phase bodies and validate real demo/beta restoration, caller suspension,
      intro gating, aliases and failure prefixes.
-   - Close remaining consumers and runtime authority transfers, validate the
-     combined replacement and recount all retained code. Owner promotion needs
+   - [x] Share complete charged-shot palette feedback and output resolution;
+     validate actual producer/coordinator/beta/Misc and next-feedback chains.
+   - Consolidate a complete owned subsystem into production with actual callers
+     and named bank/adapter deletions; no further isolated consumer sharing.
+     Recount the whole adopted replacement. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
      Independent caller/fixture investigation can run alongside implementation.
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified preparation continuation, with
-   `PLAYER_PREPARATION_HANDOFF.md`, `player-preparation-price.json`,
-   `player-preparation-results.json` and the preparation fatal JSON files;
-   `player-preparation-parent/` preserves frozen inputs. Prior HUD evidence remains
+   `runtime-impact-working/` is the verified palette continuation, with
+   `CHARGE_PALETTE_HANDOFF.md`, `charge-palette-price.json`,
+   `charge-palette-results.json` and the charge-palette fatal JSON files;
+   `charge-palette-parent/` preserves frozen inputs. Prior preparation evidence
+   remains in `PLAYER_PREPARATION_HANDOFF.md` and `player-preparation-parent/`. Prior HUD evidence remains
    in `HUD_COORDINATOR_HANDOFF.md` and `hud-coordinator-parent/`. Prior morph-bomb evidence:
    `MORPH_BOMB_TRANSACTION_HANDOFF.md`, `morph-bomb-transaction-price.json`,
    `morph-bomb-transaction-results.json` and `morph-bomb-transaction-fatal.json`;
