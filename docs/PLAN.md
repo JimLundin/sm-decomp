@@ -205,8 +205,11 @@ references; measure build/test time and resource growth before changing the loop
    +137..311, verification+960..1510, combined+1097..1821. Count full tokens/bytes
    and overlaps; no reduction claim. `missile-transaction-parent/` preserves
    exact inputs; root matched all209 main Rust files to committed `d17497e0`.
-   Source review, builds and behavior comparisons are pending. Persistent
-   authority still requires external-writer/reset/load/rewind closure.
+   Source review, formatting and production/candidate builds pass. The first
+   production compile needed checked-assignment and callback-import syntax
+   corrections; final source preserves the reviewed ordering. Comparison fixtures
+   and the independent typed client are under review; behavior checks are pending.
+   Persistent authority still requires external-writer/reset/load/rewind closure.
 
    Next dependencies, in order:
 
