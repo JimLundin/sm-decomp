@@ -104,27 +104,29 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares all five Draygon cannon setups after item
-   initialization at `66465eb3`. `mechanism_cannon_setup` owns damage-link capture,
-   hit-count initialization and vertical/diagonal collision footprints. Four bank
-   bodies and one alias are retired; both core and checked adapter forbid unsafe.
-   Numeric identities, captured origin and late live-width reads remain. Encoded
-   state stays RAM authoritative. Seventy-four of 115 setup identities are shared;
-   41 and native dispatch/authority work remain. Existing damage consumers and
-   SetPlmVarPtr remain until their complete safety migration.
+   Latest verified stage shares the complete nonvisual plant capture/hold/
+   damage/protection interaction after cannons at `2352e9c`. `mechanism_plants`
+   owns floor/ceiling alignment, terrain deactivation, saved coordinates, ordered
+   player holding, periodic damage and release protection. Five bank bodies are
+   retired. Setup and preinstruction re-entry routes remain numeric; the owned
+   scheduler adapter intercepts all three preinstructions and both commands
+   without native fallback. Core and checked adapter forbid unsafe. Encoded state
+   stays RAM authoritative. Seventy-six of 115 setup identities are shared; 39
+   and native dispatch/authority work remain. Generic scheduling/drawing remains.
 
-   Final checks pass 3,630 comparisons over 1,815 defined setup cases, including
-   1,420 expected checked-install failure comparisons. Forty-six actual consumer
-   comparisons cover rejected shots, three missiles, one super missile, unshielded
-   direct damage and aligned flag aliases. Eight separately classified down-right
-   comparisons replace exactly one odd native selected-block read with checked
-   native-byte access; they are checked-reference integration, not defined-original
-   equivalence. Independent source/domain review and 194 runtime / 231 local
-   compiled identities pass. Selected item, scroll, station, Chozo, hand,
-   source/setup, closing and runtime-collision checks also pass. Production
-   release/frontend/verifier/source passes (63.00s); prospective release passes
-   (48.88s). No movie, full Draygon scheduler, rendering or full-composition
-   runtime ran; authored fixtures and retained native consumers limit coverage.
+   Final checks pass 1,360 defined setup comparisons, 1,504 preinstruction/update
+   comparisons (1,360 setup re-entries plus 144 hold/damage/protection sequences),
+   eight complete nonvisual lifecycle comparisons and 640 replacement-only bounds
+   checks. Accepted original terrain FFFE/FFFF would be out of bounds and is never
+   executed; rejection at those indices remains defined. Four/eight-cycle tails
+   exercise actual counted branches, protection reset, clearpre and deletion.
+   Native fallback traps prove the candidate uses its new safe routes. Independent
+   source/domain review and 197 runtime / 234 local compiled identities pass.
+   Selected cannon, item, scroll, station, Chozo, hand, source/setup, closing and
+   runtime-collision checks pass. Production release/frontend/verifier/source
+   passes (46.50s); prospective release passes (47.27s). No movie, full scheduler,
+   visible rendering or full-composition runtime ran; authored nonvisual sequences
+   do not establish those results.
 
    Historical correction: the terrain stage's 18 visible restore/render cases
    reach a native u16 read at odd RAM address 0x1E67. Those results are not
@@ -132,14 +134,14 @@ references; measure build/test time and resource growth before changing the loop
    comparisons; do not rerun the undefined cases. Current selected suites exclude
    them. Current item restores assert the offscreen guard before that read.
 
-   Main is **104,167 Rust lines in 168 files**. Prospective composition is
-   **112,772 (+8,605)**, unadopted. This stage adds 81 main and 34 owned/wiring
-   lines: **+115 complete lines**, +1,173 lexical tokens and +4,143 LF-normalized
-   bytes. Verification adds 690 lines; implementation plus checks adds 805.
-   The candidate previously delegated these setups to native callbacks; no
+   Main is **104,281 Rust lines in 170 files**. Prospective composition is
+   **112,945 (+8,664)**, unadopted. This stage adds 114 main and 59 owned/wiring
+   lines: **+173 complete lines**, +1,511 lexical tokens and +5,488 LF-normalized
+   bytes. Verification adds 668 lines; implementation plus checks adds 841.
+   The candidate previously delegated these behaviors to native callbacks; no
    duplicate owned algorithm existed to retire. No dependency or native/installer/
    launcher source is added. Unsafe declarations remain 2,886; cast-containing
-   lines fall three to 6,054. No net reduction, complete unsafe retirement,
+   lines fall six to 6,048. No net reduction, complete unsafe retirement,
    persistent ownership or backend-independence claim.
 
    Next dependencies, in order:
@@ -185,11 +187,13 @@ references; measure build/test time and resource growth before changing the loop
      and missing association, and compare defined setup and qualified consumers.
    - [x] Share all five cannon setups, preserve damage linkage and ordered
      geometry, and compare shot-count/damage consumers with qualified down-right.
+   - [x] Share plant capture/hold/damage/protection, retire five bodies and
+     bypass native candidate callbacks; compare complete nonvisual release tails.
    - Close remaining room/event/boss setups, then constants/no-op/result routes.
      Preserve synchronous writes, nested displacement and failure prefixes before
      retiring native dispatch. The 115-identity inventory is in the local door
-     handoff; 27 room/event/boss and 14 residual identities remain. Select one
-     coherent responsibility through caller/validation investigation. The cannon
+     handoff; 25 room/event/boss and 14 residual identities remain. Select one
+     coherent responsibility through caller/validation investigation. The plants
      handoff records current scope and retained consumer dependencies.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
@@ -198,7 +202,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified cannon-setup continuation, with
+   `runtime-impact-working/` is the verified plants continuation, with
+   `PLANTS_HANDOFF.md`, `plants-price.json` and `plants-check-attempt-1.log`.
+   `plants-parent/` preserves prior main/carrier/local/composition inputs.
+   Cannon evidence remains in
    `CANNON_SETUP_HANDOFF.md`, `cannon-setup-price.json` and
    `cannon-setup-check-attempt-1.log`. `cannon-setup-parent/` preserves prior
    main/carrier/local/composition inputs. Item evidence remains in
@@ -391,12 +398,12 @@ content.
 
 ## Progress and references
 
-Verified cannon-setup stage: Rust 104,167; maintained C bridge 266 and headers
-296 = **104,729 implementation lines**. Including 803 dependency-installer and
-107 verifier-launcher lines gives **105,639**. The separate prospective owned
+Verified plants stage: Rust 104,281; maintained C bridge 266 and headers
+296 = **104,843 implementation lines**. Including 803 dependency-installer and
+107 verifier-launcher lines gives **105,753**. The separate prospective owned
 composition and local comparison additions are disclosed above.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
-unsafe declarations 2,886; cast-containing lines 6,054. These narrow counters do
+unsafe declarations 2,886; cast-containing lines 6,048. These narrow counters do
 not count all unsafe operations. Use the actual checkout's progress output for
 new changes; uncommitted drafts are not landed savings.
 The isolated launch draft is now synchronized and verified; its original source

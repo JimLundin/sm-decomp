@@ -781,30 +781,6 @@ crate::game::callback_dispatch! {
         }
         0
     };
-    [8696028] PlmSetup_BTS_Brinstar_0x80_Floorplant [] {
-        if (word!(game.samus_y_radius) as i32 + word!(game.samus_y_pos) as i32 - 1i32 & 0xf) == 15 {
-            let v1: i32 = word!(game.plm_block_indices[(j >> 1)]) as i32 >> 1;
-            word!(game.level_data[v1] &= (0x8fffu16));
-            let v2: i32 = j as i32 >> 1;
-            word!(game.plm_variable[v2] = word!(game.samus_x_pos));
-            word!(game.plm_variables[v2] = (word!(game.samus_y_pos)).wrapping_sub(1));
-        } else {
-            word!(game.plm_header_ptr[(j >> 1)] = 0);
-        }
-        0
-    };
-    [8696083] PlmSetup_BTS_Brinstar_0x81_Ceilingplant [] {
-        if (word!(game.samus_y_pos) as i32 - word!(game.samus_y_radius) as i32 & 0xf) != 0 {
-            word!(game.plm_header_ptr[(j >> 1)] = 0);
-        } else {
-            let v1: i32 = word!(game.plm_block_indices[(j >> 1)]) as i32 >> 1;
-            word!(game.level_data[v1] &= (0x8fffu16));
-            let v2: i32 = j as i32 >> 1;
-            word!(game.plm_variable[v2] = word!(game.samus_x_pos));
-            word!(game.plm_variables[v2] = (word!(game.samus_y_pos)).wrapping_add(1));
-        }
-        0
-    };
     [8697169] PlmSetup_ClearShitroidInvisibleWall [] {
         let mut v1: u16 = word!(game.plm_block_indices[(j >> 1)]);
         for _ in 0i16..10i16 {
@@ -1066,6 +1042,8 @@ crate::game::callback_dispatch! {
         8707824 => [crate::game::mechanism_cannon_setup_ram::setup(j, crate::game::mechanism_cannon_setup::Setup::Left, game)];
         8707861 => [crate::game::mechanism_cannon_setup_ram::setup(j, crate::game::mechanism_cannon_setup::Setup::DiagonalLeft, game)];
         8707916 => [crate::game::mechanism_cannon_setup_ram::setup(j, crate::game::mechanism_cannon_setup::Setup::Unshielded, game)];
+        8696028 => [crate::game::mechanism_plants_ram::begin(j, crate::game::mechanism_plants::Surface::Floor, game)];
+        8696083 => [crate::game::mechanism_plants_ram::begin(j, crate::game::mechanism_plants::Surface::Ceiling, game)];
         8704399 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::LowerNorfair, displacement, game)];
         8705568 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::WreckedShip, displacement, game)];
         8705740 => PlmSetup_D70C_NoobTube;
@@ -1366,11 +1344,6 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     @prefix { let v1: i32 = k as i32 >> 1; };
-    [8694921] PlmPreInstr_PositionSamusAndInvincible [] {
-        word!(game.samus_x_pos = word!(game.plm_variable[v1]));
-        word!(game.samus_y_pos = word!(game.plm_variables[v1]));
-        word!(game.samus_invincibility_timer |= (0x10u16));
-    };
     [8698706] PlmPreInstr_WakePlmIfTriggered [] {
         if word!(game.plm_timers[v1]) != 0 {
             word!(game.plm_instr_list_ptrs[v1] += 1);
@@ -1403,13 +1376,14 @@ crate::game::callback_dispatch! {
         }
     };
     @external {
+        8694921 => [crate::game::mechanism_plants_ram::hold(k, game)];
         8684649 => [()]; 8708008 => [()]; 8685264 => [()]; 8684774 => [()]; 8684861 => [()];
         8686246 => [()]; 8698787 => [()]; 8704854 => [()]; 8698618 => [()];
         8696028 => [{
-                    PlmSetup_BTS_Brinstar_0x80_Floorplant(k, game);
+                    crate::game::mechanism_plants_ram::begin(k, crate::game::mechanism_plants::Surface::Floor, game);
                 }];
         8696083 => [{
-                    PlmSetup_BTS_Brinstar_0x81_Ceilingplant(k, game);
+                    crate::game::mechanism_plants_ram::begin(k, crate::game::mechanism_plants::Surface::Ceiling, game);
                 }];
         8698730 => [()];
         8706773 | 8706774 | 8706775 | 8706776 | 8706777 | 8706778 | 8706779 | 8706780 | 8706781
@@ -1924,10 +1898,6 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (plmp: PlmScript, k: u16, game: &mut Game) -> PlmScript];
     [8694609] PlmInstr_Scroll_0_1_Blue [plmp] { *(ram_ptr!(game, u16; 0xcd20)) = 257; };
     @functions [pub unsafe fn (plmp: PlmScript, k: u16, game: &mut Game) -> PlmScript];
-    [8694941] PlmInstr_DealDamage_2 [plmp] {
-        word!(game.samus_periodic_damage += 2);
-    };
-    [8694961] PlmInstr_GiveInvincibility [plmp] { word!(game.samus_invincibility_timer = 48); };
     @functions [pub unsafe fn (
     plmp: PlmScript,
     k: u16,
@@ -2128,6 +2098,8 @@ crate::game::callback_dispatch! {
     [8709691] PlmInstr_E63B [plmp] { word!(game.fx_y_vel = -32i32 as u16); };
     @external {
         8685348 => [PlmInstr_Goto(j, k)];
+        8694941 => [{crate::game::mechanism_plants_ram::hurt(game); j}];
+        8694961 => [{crate::game::mechanism_plants_ram::protect(game); j}];
         8707126 => PlmInstr_DamageDraygonTurret2;
     }
 }
