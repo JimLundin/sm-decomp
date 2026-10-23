@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 07:33 UTC**
+Updated: **2026-10-23 07:39 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -11,6 +11,8 @@ SNES backend remains the comparison oracle during migration.
 ## Latest verified milestone
 
 **Samus movement and room contact now share an operation-owned core.**
+
+Committed as [`26d6b986`](https://github.com/JimLundin/sm-decomp/commit/26d6b98684b49c89ab03703a36c1cbff0f2b8c7a).
 
 - Migrated horizontal/vertical movement, wall-jump collision and pose-change
   collision, including nested mechanism setup and resumed movement.
@@ -34,9 +36,16 @@ operations removed.
 
 ## Work in progress
 
-Remaining gameplay consumers and state-ownership transfers are next. Persistent
-Samus and room state still live in RAM. Renderer/audio replacement and an
-independently running game slice remain required parts of the destination.
+**Bomb, power-bomb and spread-bomb lifecycle and terrain contact.**
+
+The approved next change will share fuse, movement and terrain rules, and keep
+candidate projectile state owned while scanning terrain. The validation plan
+includes actual power-bomb radius growth reaching Noob Tube from a separated
+origin. Implementation and checks are pending; the figures above describe the
+last verified milestone.
+
+Persistent room and scheduler state still live in RAM. Renderer/audio replacement
+and an independently running game slice remain required parts of the destination.
 
 ## Verification limits
 

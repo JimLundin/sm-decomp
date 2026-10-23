@@ -160,6 +160,29 @@ references; measure build/test time and resource growth before changing the loop
    Temporary scan ownership explains the small main growth; persistent Session
    ownership, all-unsafe retirement and backend independence remain unfinished.
 
+   Active implementation from `26d6b986`: share the complete Bomb/PowerBomb/
+   Spread fuse, motion, terrain/setup and resumed-motion operation. Retire both
+   sm94 bomb contact entries, class tables, cross/perimeter walkers, special
+   bomb lookup and spread-only slope wrappers, plus duplicate main/candidate
+   lifecycle rules. Execute shared terrain directly with the candidate projectile
+   owner; remove normal blanket Effect::BombContact native delegation. Actual
+   setup/content failure effects use the existing publish/import mechanism bridge;
+   off-domain selectors may use the same new checked implementation through an
+   explicit compatibility interval. Room/geometry/scheduler RAM stays authoritative.
+   Core headers are opaque; no Game/RAM/backend dependency in shared rules.
+   Preserve live fuse selector versus captured caller, postcallback velocity,
+   mark-before-invalid-block behavior, captured perimeter bounds, live widths,
+   top/left/bottom/right order and repeated corners. Keep shared inside/grapple
+   helpers still used by other callers. Complete pricing must include adapters,
+   content and checks; the 397 main plus 112 local line envelope is not net savings.
+   Retain the frozen three-way broad lifecycle/alias/failure suite and add actual
+   terrain order/resume cases. Validate a bounded real-ROM fuse -> actual HDMA
+   radius growth -> perimeter -> Noob Tube sequence with separated origin, actual
+   HDMA-before-bomb ordering and initialized hardware. Stop at the first proven
+   trigger or a named tail; no movie/render/full-expansion-termination claim.
+   Supplied-radius cases prove consumption only. Persistent Session adoption
+   remains dependent on scheduling, reset/load/rewind and external-writer closure.
+
    Next dependencies, in order:
 
    - [x] Resolve the preserved beam-launch draft, synchronize the carrier and
