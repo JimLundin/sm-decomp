@@ -189,13 +189,24 @@ references; measure build/test time and resource growth before changing the loop
    per-axis alias handling and owner-carrying failures. Main/composition/verification/
    combined growth stay within estimates. No reduction or new dependency claim.
 
-   Next: design and price the complete missile/super firing transaction, from
-   actual HUD1/2 reservation and ammo through placement, spend, sound, launch/init,
-   motion/cooldown and auto/last-ammo cancellation. Retire duplicate bank/owned
-   algorithms and migrate all nonbeam-definition consumers together. Preserve
-   captured slots, live rereads and complete-owner failures; require actual natural
-   travel/extension/impact/retirement checks. Persistent ownership still requires
-   external-writer/reset/load/rewind closure after remaining consumers migrate.
+   Active implementation from `d17497e0`: share the complete missile/super
+   firing transaction from actual HUD1/2 reservation and ammo through placement,
+   spend, sound, launch/init, motion/cooldown and auto/last-ammo cancellation.
+   Retire the old bank handler, sole-use reserve helper, local transaction and
+   duplicate tables. Share definitions with all bomb/spread cooldown consumers,
+   retaining captured missile/PB native bytes and spread's live physical byte
+   at0xC23 after five initializers. Preserve canonical captured slots, live HUD/
+   ammo rereads, placement-owned rollback and complete-owner effect failures.
+   Ammo remains inventory-authoritative through explicit SpendMissile transport.
+   Keep an independent symbolic typed client, all46 retained suites and actual
+   missile/Super input through acceleration/extension/impact/natural retirement.
+   The full corrected `MISSILE_TRANSACTION_PROPOSAL.md` is approved. Estimates:
+   main+125..230 lines (including15registrations), local+12..81, composition
+   +137..311, verification+960..1510, combined+1097..1821. Count full tokens/bytes
+   and overlaps; no reduction claim. `missile-transaction-parent/` preserves
+   exact inputs; root matched all209 main Rust files to committed `d17497e0`.
+   Source review, builds and behavior comparisons are pending. Persistent
+   authority still requires external-writer/reset/load/rewind closure.
 
    Next dependencies, in order:
 

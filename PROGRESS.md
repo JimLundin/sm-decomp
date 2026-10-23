@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 09:31 UTC**
+Updated: **2026-10-23 09:39 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -42,10 +42,10 @@ operations removed.
 
 **Continue the player-projectile lifecycle and its remaining consumers.**
 
-Next is the complete missile and super-missile firing transaction: reservation,
-ammunition, placement, launch and cancellation, with actual travel and retirement
-checks. Caller and ordering review is complete; implementation design and cost
-estimates come next.
+Implementation is starting on the approved complete missile and super-missile
+firing transaction: reservation, ammunition, placement, launch and cancellation,
+with actual travel and retirement checks. Source review, builds and behavior
+comparisons are pending. The verified results above remain the beam milestone.
 
 Persistent room and scheduler state still live in RAM. Persistent Session
 ownership, renderer/audio replacement and an independently running game slice
