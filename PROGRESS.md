@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 10:33 UTC**
+Updated: **2026-10-23 10:42 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -43,12 +43,16 @@ operations removed.
 
 **Continue the player-projectile lifecycle and its remaining consumers.**
 
-Complete HUD switching, cooldown and weapon coordination is now in implementation
-after independent design review. It will share the rules used by actual player
-frames and deselection callers, and remove an unnecessary Session transfer.
-Checks will cover selection input through weapon lifecycles and the real grapple/
-Xray effects on scheduling. Builds and behavior verification are pending; the
-verified results above remain the bomb-creation milestone.
+Complete HUD switching, cooldown and weapon coordination has passed source
+review and both production/candidate builds. The shared rules now replace the
+duplicate algorithms, and an in-memory input refresh replaces an unnecessary
+Session transfer. The candidate required one correction to preserve existing
+generic bounds on slot release; its rebuild passed.
+
+Behavior checks are in preparation, covering selection input through weapon
+lifecycles, dirty inventory state, and real grapple/Xray scheduling effects.
+These source changes are uncommitted. The verified results above remain the
+bomb-creation milestone.
 
 Persistent room and scheduler state still live in RAM. Persistent Session
 ownership, renderer/audio replacement and an independently running game slice

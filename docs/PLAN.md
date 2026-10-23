@@ -207,8 +207,15 @@ references; measure build/test time and resource growth before changing the loop
    verification+2210..3270, combined+2335..3795. Count all adapters, caller changes,
    registration, generated overlays and deleted paths; record UTF-8 tokens/bytes.
    `hud-coordinator-parent/` preserves the inputs; root matched all214 main Rust
-   files to committed `e2a25fba`. Implementation is underway; builds and behavioral
-   verification are pending. Persistent authority still requires external-writer,
+   files to committed `e2a25fba`. Source review and formatting pass. Production
+   release/frontend/source build passes in 70.72s; candidate rebuild passes in
+   53.16s after restoring an accidentally removed existing generic impl boundary
+   around slot release (first candidate attempt failed in 11.47s). Main source
+   remains frozen. The removed no-op transfer's input refresh is preserved after
+   cooldown: a shared input decoder reads external fields, then eight projections
+   come from authoritative Session inventory without publishing owned state.
+   Behavioral comparisons are in preparation; no new runtime pass is claimed.
+   Persistent authority still requires external-writer,
    reset/load/rewind closure after these remaining consumers migrate.
 
    Next dependencies, in order:
