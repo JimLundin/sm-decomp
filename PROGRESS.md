@@ -1,6 +1,6 @@
 # Engine modernization
 
-Updated: **2026-10-23 16:00 UTC**
+Updated: **2026-10-23 16:14 UTC**
 
 **Target: an owned Rust Session, without manual memory access or unsafe gameplay.**
 Green means that specific step is delivered, not that the entire subsystem is finished.
@@ -14,11 +14,11 @@ flowchart TB
         C["Palette effects<br/>old bank retired"]:::done
     end
 
-    subgraph parallel["NOW: 3 worker pairs"]
+    subgraph parallel["NOW: 3 parallel lanes"]
         direction LR
-        PC["Palette core<br/>typed fields + effects<br/>DRAFT / REVIEW"]:::active
-        AT["Animated tiles<br/>typed upload requests<br/>DRAFT"]:::active
-        EP["Enemy projectiles<br/>state + callers<br/>DESIGN / DRAFT"]:::active
+        PC["Palette core<br/>typed fields + effects<br/>VERIFYING"]:::active
+        AT["Animated tiles<br/>typed upload requests<br/>REFERENCES CAPTURED"]:::active
+        EP["Enemy projectiles<br/>state + callers<br/>CORE CHECKS READY"]:::active
     end
 
     C --> PC
@@ -47,25 +47,29 @@ Arrows show migration dependencies, not current runtime calls.
 | :--- | :---: | :--- |
 | Palette / Session seed | Implementer + reviewer | Palette behavior uses ordinary fields; a core can execute with the backend unavailable. |
 | Animated tiles | Implementer + reviewer | Scripts produce typed upload requests; actual graphics upload consumes and acknowledges them. |
-| Enemy projectiles | Implementer + reviewer | One owner replaces scattered projectile state, drops, contact handling and attached-body writes. |
+| Enemy projectiles | Lead + reviewer + 2 callback workers | One owner replaces scattered projectile state, drops, contact handling and attached-body writes. |
 
-**Six workers; one compiler/integration lane.** More implementation work can split
-once interfaces are fixed. Current drafts are not yet adopted in main.
+**Eight worker roles; one local compiler/integration lane.** Current drafts are
+not yet adopted in main. Both old-code reference suites are captured: 438 animated
+tile cases and 354 enemy-projectile core cases; callback-family coverage is next.
 
 <details>
 <summary>Counts and latest verified deliveries</summary>
 
 | Measure | Current result |
 | :--- | ---: |
-| Total Rust lines | 109,412 |
-| Dedicated verification files | 4,266 |
-| Remaining Rust, including mixed verification support | 105,146 |
+| Total Rust lines | 110,246 |
+| Dedicated verification files | 5,084 |
+| Remaining Rust, including mixed verification support | 105,162 |
 | Latest palette comparison | 512 cases match |
 | Latest palette opening replay | 272 frames, zero failures |
 | Latest mechanism game route | 28,314 frames, zero failures |
 
 Verification is excluded from the engine-reduction measure. The remaining-Rust
 figure is conservative: some verification is still mixed into production files.
+The new reference carriers and registrations add 834 verification-support lines,
+with no production algorithm change. All 792 captures pass; the enemy suite is
+core coverage, not full callback/attachment coverage.
 Moving tests earns **no reduction credit**. Their relocation adds 13 support lines;
 production algorithms are unchanged. Release/frontend/verifier builds, 106
 projectile groups, three room-copy cases and mechanism ownership/qualified checks
@@ -74,6 +78,9 @@ pass after relocation.
 - [Palette adoption](https://github.com/JimLundin/sm-decomp/commit/67d6c676): production +126 lines; verification +370. Ownership/safety progress, not size reduction.
 - [Separate verification files](https://github.com/JimLundin/sm-decomp/commit/d4cd71c3).
 - [Public CI formatting and frontend build pass](https://github.com/JimLundin/sm-decomp/actions/runs/39979717734).
+- The detached palette core compiles without Game/backend modules. Local Defender
+  ASR blocked the new executable; standalone execution will be checked on the
+  GitHub Windows runner before adoption. This is not a local runtime pass.
 
 </details>
 

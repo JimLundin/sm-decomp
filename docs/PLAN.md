@@ -119,6 +119,8 @@ projectiles, and a direct typed palette core as a Session seed. Use isolated
 drafts and freeze interfaces before splitting more implementation; no concurrent
 main edits or builds. Increase parallel source work when genuinely independent
 work is ready, while preserving this machine's single heavy compiler limit.
+Enemy-projectile setup and pre-action families now have two additional workers
+on fixed private interfaces: eight worker roles across the three lanes.
 
 The Session target requires ordinary owned data structures, not a composition
 of existing address-codec ports. New designs must put direct typed state in the
@@ -238,6 +240,16 @@ references; measure build/test time and resource growth before changing the loop
    The explicit upload and backend-free typed-core scopes must advance the actual
    destination, rather than add more memory-access wrappers. Price production and
    verification separately. Persistent whole-runtime ownership remains unproven.
+   Actual-old baselines are now frozen on source
+   108fa09ab7eb1a229a7b5a041d653eebf5855cbf1d7faf254db94b2723665601:
+   438 animated-tile cases and 354 enemy-projectile core cases pass. Animated
+   cases cover all 24 commands, near/broad aliases and actual DMA/partial transfer;
+   enemy core cases are not full callback/drop/contact/attachment coverage.
+   Their carriers/registration add 834 verification-support lines, no production
+   algorithm changes. Detached typed palette core compiles, but local executable
+   launch is blocked by Defender ASR 1121 / 01443614-CD74-433A-B99E-2ECDC07BFC25.
+   Preserve that block. Use the GitHub Windows runner for its independent-host
+   execution before adoption; do not count a blocked launch as a runtime pass.
    The accepted engine still needs persistent state, explicit backend outputs,
    all-unsafe elimination and boot-to-credits validation.
 

@@ -8,7 +8,7 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-Parallel direction (user request 2026-10-23): six worker roles in three paired
+Parallel direction (user request 2026-10-23): eight worker roles in three paired
 lanes, with one root compiler/integration lane. Ordinary typed state and an owned
 Session are the destination; wrapping existing address-based ports is insufficient.
 PROGRESS is now primarily a Mermaid graph: green delivered steps, orange drafts,
@@ -19,30 +19,46 @@ Isolated work under `Local/sm-decomp-experiments/20261023` (not adopted):
 - `animated-tiles`: complete typed six-slot state, 24-command interpreter,
   explicit per-upload request/acknowledgement, eight caller drafts. Normal fields
   are direct; odd/broad access is confined to compatibility.rs. Draft +199 runtime
-  lines, 11 check-facade lines before carrier. Reviewer prepared 424 actual-old
-  cases in verification/animated_tiles.rs; not yet compiled/captured.
+  lines, 11 check-facade lines before carrier. All 438 actual-old cases now
+  captured. The 31 expected caught panics and all process exits pass; review of
+  observed hardware/alias traces is completing.
 - `palette-session`: complete direct-field palette core and edge-scoped
   Option<Session> guard, with no Game/Port/offsets in the core. Opaque effects
   publish/drop the owner before legacy code, then import actual returned state.
   Core panic publishes successful prefixes; foreign panic cannot publish stale
   state. Detached actual-core host exercises ticks/reset/snapshot/outputs with
   backend modules unavailable. Replacement/detached drafts exist, review ongoing;
-  no build yet. Existing 512 references remain valid for comparison after adoption.
+  detached compilation passed, but local launch was blocked by Defender ASR1121
+  rule01443614-CD74-433A-B99E-2ECDC07BFC25. Do not retry/bypass that execution;
+  run the standalone host on GitHub Windows after integrating/reviewing the exact
+  candidate on a validation branch. Existing 512 references remain valid.
 - `enemy-projectiles`: reviewed 801-RAM-byte +16-native-byte state projection,
   private shared-transport import/export extension staged only in the draft,
   direct typed state/motion and full closure contract. Remaining implementation
   includes roughly 310 callback identities, drops/contact and attached-body
-  producers. A first 354-case core carrier exists as core_checks.rs (not built);
-  it does not cover the full family scope. Its logical parent must remain sm_86
-  until old reference capture. Additional family workers may split only fixed,
-  disjoint interfaces. Metadata gaps and all native spawn context are observable.
+  producers. The 354-case core reference is now captured, all131099-byte outputs;
+  expected panics10/11/12/16/347/348/349 and diagnostic8 observed. It does not cover
+  the full family scope. Two additional workers now handle fixed setup/pre-action
+  interfaces. A separate unbuilt family_cases.rs adds92 prospective cases and
+  requires a2MiB synthetic image; do not treat it as frozen reference yet.
 
-Root should next integrate both OLD reference carriers into the separate
-verification directory, add the usual hidden exports/source registration, build
-once, then capture each case in an isolated process. Do not adopt candidates
-before actual-old outputs are frozen. Keep coverage qualifications and the
-single compiler lane. Session aggregation into a persistent Game field remains
-unjustified because opaque memory writers and oracle/load adoption still exist.
+Old reference carrier build/capture completed on source
+`108fa09ab7eb1a229a7b5a041d653eebf5855cbf1d7faf254db94b2723665601`.
+Both lanes have baseline-1.dll, baseline-1-inputs/, baseline-1-source.json and
+baseline-1-capture.json plus per-case baseline-1-N.bin files. Animated outputs
+are413x131076bytes, one262148-byte repeated observation, and24x198659-byte hardware
+observations. Enemy outputs are354x131099bytes. Captures ran independently in
+separate processes with source fixed. Local combined build log is under
+animated-tiles/combined-baseline-build-1.log. No capture/compiler process remains.
+
+Next: adopt/refine typed candidates only against these frozen old references.
+Palette Session candidate has existing512references and extra real runtime-guard
+checks plus detached checks. Root can integrate on a temporary validation branch,
+run local production checks, then publish the backend-free standalone check to
+GitHub Windows CI before adopting main. Keep the local ASR block intact; it is
+not grounds for recompiling the blocked standalone program into another host.
+Current Rust110246 includes5084dedicated verification lines;105162remaining lines
+still include mixed support. New834lines are all verification/support.
 
 Verification carriers are now physically grouped in `sm/src/verification`.
 The existing logical modules and private access remain unchanged through path

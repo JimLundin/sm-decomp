@@ -4,6 +4,14 @@
 
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/verification/animated_tiles.rs",
+        include_bytes!("verification/animated_tiles.rs"),
+    ),
+    (
+        "sm/src/verification/enemy_projectiles.rs",
+        include_bytes!("verification/enemy_projectiles.rs"),
+    ),
+    (
         "sm/src/verification/room_level_copy.rs",
         include_bytes!("verification/room_level_copy.rs"),
     ),

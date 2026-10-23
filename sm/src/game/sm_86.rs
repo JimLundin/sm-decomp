@@ -1,3 +1,6 @@
+#[path = "../verification/enemy_projectiles.rs"]
+pub(crate) mod checks;
+
 use crate::game::enemy_combat::reduce_suit_damage;
 use crate::game::eproj_script::EprojScript;
 use crate::game::music::QueueMusic_Delayed8;

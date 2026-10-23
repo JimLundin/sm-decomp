@@ -537,6 +537,19 @@ pub fn verify_player_projectile_case(id: u32) -> Option<Vec<u8>> {
     game::player_projectiles::checks::capture_case(id)
 }
 
+#[path = "verification/animated_tiles.rs"]
+mod animated_tile_checks;
+
+#[doc(hidden)]
+pub fn verify_animated_tile_case(id: u32) -> Option<Vec<u8>> {
+    animated_tile_checks::capture_case(id)
+}
+
+#[doc(hidden)]
+pub fn verify_enemy_projectile_case(id: u32) -> Option<Vec<u8>> {
+    game::sm_86::checks::capture_case(id)
+}
+
 #[path = "verification/palette_effects.rs"]
 mod palette_effect_checks;
 

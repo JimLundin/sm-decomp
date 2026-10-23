@@ -71,6 +71,30 @@ pub unsafe extern "C" fn sm_verify_palette_effect_case(
     unsafe { copy_case(id, output, capacity, sm::verify_palette_effect_case) }
 }
 
+/// Copy a synthetic animated-tile observation for independent comparison.
+/// # Safety
+/// A non-null output must be writable for at least `capacity` bytes.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn sm_verify_animated_tile_case(
+    id: u32,
+    output: *mut u8,
+    capacity: usize,
+) -> usize {
+    unsafe { copy_case(id, output, capacity, sm::verify_animated_tile_case) }
+}
+
+/// Copy a synthetic enemy-projectile observation for independent comparison.
+/// # Safety
+/// A non-null output must be writable for at least `capacity` bytes.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn sm_verify_enemy_projectile_case(
+    id: u32,
+    output: *mut u8,
+    capacity: usize,
+) -> usize {
+    unsafe { copy_case(id, output, capacity, sm::verify_enemy_projectile_case) }
+}
+
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn sm_verify_backend_source_hash() -> *const c_char {
     unsafe {
