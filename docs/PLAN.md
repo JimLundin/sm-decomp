@@ -104,40 +104,42 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares all seven extension/scroll setups after stations
-   at `d9808040`. `mechanism_scroll_setup` owns named tile placement, scroll
-   initialization and touch clear/search/wake sequencing. Seven bank facades and
-   four sole-use helpers are retired; numeric routes remain. Both core and checked
-   adapter forbid unsafe. Missing-target behavior retains the literal nonreturn
-   loop after clearing the trigger block. Encoded state stays RAM authoritative.
-   Fifty-eight of 115 setup identities are shared; 57 and native dispatch/authority
-   work remain. These setups were already checked; this stage advances shared
-   behavior and owned routing, not a new unsafe-elimination claim.
+   Latest verified stage shares all 11 item initialization/wakeup setups after
+   scroll/extensions at `ed292dce`. `mechanism_item_setup` owns optional graphic
+   selection, visible/shot-block installation, saved terrain, loaded counts and
+   trigger association. Eleven bank facades and two helpers are retired. Both
+   core and checked adapter forbid unsafe; numeric routes and live aliases remain.
+   Missing association returns after writing timer 255 at the original preceding
+   program-word alias. Encoded state remains RAM authoritative. Sixty-nine of
+   115 setup identities are shared; 46 and native dispatch/authority work remain.
 
-   Final checks pass 5,816 main/owned comparisons over 2,908 defined terminating
-   cases, including 1,296 expected checked-placement failure comparisons.
-   Twenty-six actual consumer cases produce 52 comparisons: four extension
-   directions through grapple collision and air/solid scroll placement, touch
-   and instruction updates. Native tests cover aliases, clear-before-search,
-   distinct advances and failure prefixes. Three source-checked old/main/candidate
-   subprocesses remain nonreturning for 0.75s after readiness, then are terminated;
-   this is bounded observation, not proof of infinite execution. Git-derived
-   references and 188 runtime / 225 local identities pass. Prior station, Chozo,
-   selected hand, source/setup, closing and runtime-collision suites pass.
-   Production release/frontend/verifier/source checks pass (56.30s); prospective
-   release passes (46.48s). No movie, full scroll producer/scheduler or complete
-   composition runtime ran. Synthetic content and shared native consumers limit
-   these results.
+   Final checks pass 3,476 comparisons over 1,738 defined cases, including 1,320
+   expected checked-install failure comparisons. Fourteen actual consumer
+   comparisons cover wakeup and offscreen saved-tile restore; 32 separately
+   classified graphics comparisons replace exactly two unaligned native ROM
+   reads with checked native-byte reads. These are checked-reference integration,
+   not defined-original graphics equivalence. Independent source/domain review
+   and 191 runtime / 228 local compiled identities pass. Selected scroll, station,
+   Chozo, hand, source/setup, closing and runtime-collision checks also pass.
+   Production release/frontend/verifier/source passes (74.78s); prospective
+   release passes (51.70s). No movie, full item producer/scheduler, visible/VRAM
+   rendering or full-composition runtime ran.
 
-   Main is **103,989 Rust lines in 164 files**. The prospective composition is
-   **112,454 (+8,465)**, unadopted. This stage adds 72 main and 86 owned/wiring
-   lines: **+158 complete lines**, +1,629 lexical tokens and +6,304 LF-normalized
-   bytes. Verification adds 784 lines; implementation plus checks adds 942.
+   Historical correction: the terrain stage's 18 visible restore/render cases
+   reach a native u16 read at odd RAM address 0x1E67. Those results are not
+   defined-native fidelity evidence. Preserve their logs and independent setup
+   comparisons; do not rerun the undefined cases. Current selected suites exclude
+   them. Current item restores assert the offscreen guard before that read.
+
+   Main is **104,086 Rust lines in 166 files**. Prospective composition is
+   **112,657 (+8,571)**, unadopted. This stage adds 97 main and 106 owned/wiring
+   lines: **+203 complete lines**, +2,461 lexical tokens and +10,392 LF-normalized
+   bytes. Verification adds 774 lines; implementation plus checks adds 977.
    The candidate previously delegated these setups to native callbacks; no
    duplicate owned algorithm existed to retire. No dependency or native/installer/
-   launcher source is added. Counted unsafe declarations remain 2,890 and
-   cast-containing lines remain 6,058. No net reduction, persistent ownership or
-   backend-independence claim.
+   launcher source is added. Unsafe declarations fall four to 2,886 and
+   cast-containing lines fall one to 6,057. No net reduction, complete unsafe
+   retirement, persistent ownership or backend-independence claim.
 
    Next dependencies, in order:
 
@@ -166,7 +168,8 @@ references; measure build/test time and resource growth before changing the loop
    - [x] Share all four ordinary door setups, retire duplicate bank/owned rules,
      and compare Grey/shot consumer tails against independent frozen bodies.
    - [x] Share all 13 break/reveal/respawn/retained terrain setups and retire
-     duplicate bodies with independent restore/render and actual caller checks.
+     duplicate bodies with independent setup and actual caller checks; the 18
+     historical visible-render cases are qualified above.
    - [x] Share all 14 gate trigger/placement/shootblock setups, retire helpers
      and compare actual signal, projectile-init/wake and shot-scan tails.
    - [x] Share all seven contact-physics setups and compare actual movement,
@@ -177,14 +180,14 @@ references; measure build/test time and resource growth before changing the loop
      lazy guards, live aliases and association order; compare actual consumers.
    - [x] Share all seven extension/scroll setups, preserve missing-target
      nonreturn and ordered aliases, and compare actual redirect/scroll consumers.
-   - Close remaining mechanism setup families: items, room/event/boss setup,
-     then residual aliases/diagnostics. Preserve synchronous writes, nested
-     displacement and failure prefixes before retiring native dispatch. The
-     115-identity inventory is in the local door handoff. The seven
-     contact-physics setups, both Chozo contacts, all 11 stations and seven
-     scroll/extensions are shared. Next are item initialization/wakeup; preserve
-     content/slot aliases and failure prefixes. The scroll handoff records current
-     scope and retained consumer dependencies.
+   - [x] Share all 11 item initialization/wakeup setups, preserve live aliases
+     and missing association, and compare defined setup and qualified consumers.
+   - Close remaining room/event/boss setups, then constants/no-op/result routes.
+     Preserve synchronous writes, nested displacement and failure prefixes before
+     retiring native dispatch. The 115-identity inventory is in the local door
+     handoff; 32 room/event/boss and 14 residual identities remain. Select one
+     coherent responsibility through caller/validation investigation. The item
+     handoff records current scope and retained consumer dependencies.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -192,7 +195,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified scroll-setup continuation, with
+   `runtime-impact-working/` is the verified item-setup continuation, with
+   `ITEM_SETUP_HANDOFF.md`, `item-setup-price.json` and
+   `item-setup-check-attempt-1.log`. `item-setup-parent/` preserves prior
+   main/carrier/local/composition inputs. Scroll evidence remains in
    `SCROLL_SETUP_HANDOFF.md`, `scroll-setup-price.json`,
    `scroll-setup-check-attempt-2.log` and three `scroll-missing-*.log` files.
    `scroll-setup-parent/` preserves prior main/carrier/local/composition inputs.
@@ -379,12 +385,12 @@ content.
 
 ## Progress and references
 
-Verified scroll-setup stage: Rust 103,989; maintained C bridge 266 and headers
-296 = **104,551 implementation lines**. Including 803 dependency-installer and
-107 verifier-launcher lines gives **105,461**. The separate prospective owned
+Verified item-setup stage: Rust 104,086; maintained C bridge 266 and headers
+296 = **104,648 implementation lines**. Including 803 dependency-installer and
+107 verifier-launcher lines gives **105,558**. The separate prospective owned
 composition and local comparison additions are disclosed above.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
-unsafe declarations 2,890; cast-containing lines 6,058. These narrow counters do
+unsafe declarations 2,886; cast-containing lines 6,057. These narrow counters do
 not count all unsafe operations. Use the actual checkout's progress output for
 new changes; uncommitted drafts are not landed savings.
 The isolated launch draft is now synchronized and verified; its original source

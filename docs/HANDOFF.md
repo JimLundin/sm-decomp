@@ -9,82 +9,78 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares all seven extension/scroll setups after stations at
-`d9808040`. `mechanism_scroll_setup` owns named extension/scroll tile placement,
-scroll initialization and touch clear/search/wake sequencing. Seven bank facades
-and four sole-use helpers are retired; numeric identities remain. Both core and
-checked adapter forbid unsafe. The missing-target branch remains a literal loop
-after clearing the captured trigger block. Encoded state stays RAM authoritative.
-Fifty-eight of 115 setup identities are shared. These routines were already
-checked; this is shared behavior/owned routing, not new unsafe elimination.
+The latest stage shares all 11 item initialization/wakeup setups after
+scroll/extensions at `ed292dce`. The safe core and checked RAM adapter retire
+11 bank facades and two helpers, retaining numeric identities. Optional graphic
+writes precede installation; shot-block setup rereads the live block, captures
+native-endian terrain into a little-endian saved word, then increments the live
+loaded count. Trigger clears before descending block-only association, including
+inactive/self/zero matches. Missing association returns normally after signaling
+255 at RAM 0x1D75, the original preceding program-word alias. Both modules forbid
+unsafe. RAM remains authoritative; 69/115 setup identities are shared, 46 remain.
 
-Main: **103,989 Rust lines in 164 files**, unsafe declarations 2,890, casts 6,058.
-Maintained implementation 104,551; including installers/launcher 105,461.
-Prospective composition: **112,454**, **+8,465 over main**, unadopted.
-Stage adds 72 main and 86 owned/wiring lines: **+158 complete lines**, +1,629
-lexical tokens and +6,304 LF-normalized bytes. Verification adds 784 lines;
-combined cost is 942. The candidate previously delegated all seven setups to
-native callbacks; no duplicate owned algorithm existed to retire. No dependency/
-native/installer/launcher additions. No net reduction, persistent authority or
-backend-independence claim.
+Main: **104,086 Rust lines in 166 files**, unsafe declarations 2,886 (-4), casts
+6,057 (-1). Maintained implementation 104,648; installers/launcher included
+105,558. Prospective composition: **112,657**, **+8,571 over main**, unadopted.
+Stage main cost is +97 lines/+1,339 lexical tokens/+5,207 normalized bytes;
+complete implementation is +203/+2,461/+10,392. Retained verification adds
+774/+8,821/+29,862; implementation plus checks adds 977 lines. Local production
++105 lines is already represented in composition and must not be added again.
+No duplicate owned algorithm existed: these routes previously used External.
+No dependency/native/installer/launcher additions, net reduction, full unsafe
+retirement, persistent authority or backend-independence claim.
 
-Use `runtime-impact-working/SCROLL_SETUP_HANDOFF.md`, `scroll-setup-price.json`,
-`scroll-setup-check-attempt-2.log` and `scroll-missing-0.log` through `-2.log`.
-Final results: 5,816 comparisons over 2,908 defined terminating cases, including
-1,296 expected checked-placement failure comparisons. Twenty-six consumer cases
-produce 52 old/main-or-candidate comparisons: 24 grapple redirect cases across
-four extension directions, plus air and solid scroll setup/touch/update sequences.
-Each asserts relevant effects and whole-RAM equality. All seven old setups are
-checked, so placement bounds failures are defined reference cases. Consumer raw
-ROM streams and terrain accesses have separately validated authored domains.
+Use `runtime-impact-working/ITEM_SETUP_HANDOFF.md`, `item-setup-price.json` and
+`item-setup-check-attempt-1.log`. Final checks pass on first execution (18.00s):
+3,476 comparisons = 1,738 defined setup cases against main and candidate,
+including 1,320 checked-install failure comparisons. Native-domain preflight
+simulates preceding writes and checks the actual live capture address; no
+requested case was excluded. Cases include graphic/block/count aliases and
+missing-target self-alias. Native Context checks cover order and failure prefixes.
 
-Preserved quirks include install-before-release for extensions, install then
-variable clear then live +4 for scroll placement, clear-before-descending-block-
-only touch search, self/zero/inactive associations, exact 8000 overwrite and two
-separate live +1 writes before timer 1. Directed aliases cover tile writes into
-program/variable fields and broad trigger fields overlapping matched-slot state.
-The j=0050/found0 fixture deliberately sets the aliased trigger header/match block
-last; the complete intended terminating matrix is retained.
+Fourteen actual consumer comparisons cover two timer255 wakeup consumers and
+five shot-block restores, each against main and candidate. Restores execute
+DrawPlmBlock and checked ProcessPlmDrawInstruction, then assert Y32/offscreen
+before DrawPlm can read the odd RAM list. They prove saved-tile consumption,
+not visible rendering. Thirty-two graphics comparisons cover eight graphic
+setups and two frames against each path. The copied consumer substitutes exactly
+two unaligned native ROM table reads at 84E05F/84E077 with checked native-byte
+reads; all remaining source and actual common/Process/offscreen paths remain.
+These are source-preserved checked-reference integration, not defined-original
+graphics equivalence. Main graphics consumers remain unchanged and unretired.
 
-Three isolated processes validate compiled sources, seed a missing target and
-print readiness immediately before invoking old/main/candidate handlers. Each
-remains running for 0.75s afterward and is terminated by the runner. This is
-bounded nonreturn observation, not proof of infinite execution. Separate native
-Context observations and source audit check the cleared-block/retained-header
-prefix without attempting to read mutable RAM from a hung call.
+Historical correction: 18 visible terrain restore/render cases (nine kinds by
+two aliases) reach DrawPlm's native u16 dereference at odd RAM 0x1E67. They are
+not defined-native fidelity evidence. Preserve logs and independent setup results;
+do not rerun the undefined cases. They occur only in the standalone terrain
+export, excluded from current selected suites. This does not diagnose the
+inherited Intro mismatch in `DRAWING_HANDOFF.md`.
 
-Station 3240/112/149/6, Chozo 592/4/4/16, selected hands 52/163/12, source/setup
-342/672/47, closing 74/120/7 and supplemental runtime collision 198/545/176/1 pass.
-Git-frozen references and 188 runtime / 225 local compiled identities pass,
-independently inspected by the reviewer. In-process checks take 17.690s; bounded
-missing-target observations run separately afterward. The historical full contact
-suite remains outside selection because of its simulated-null-handler assumptions.
+Scroll 5816/1296/52, station 3240/112/149/6, Chozo 592/4/4/16, selected hands
+52/163/12, source/setup 342/672/47, closing 74/120/7 and supplemental runtime
+collision 198/545/176/1 pass. Git-frozen references and 191 runtime / 228 local
+compiled identities pass independent review. Historical full contact checks
+remain excluded because of stale simulated-null-handler assumptions. Unchanged
+scroll bounded nonreturn checks were not repeated; their evidence remains.
 
-Production Rust 2024 release/frontend/verifier/source checks pass (56.30s);
-prospective headless release passes (46.48s), both on final production inputs.
-The initial production parse attempt failed after 2.65s on two empty forward
-groups left by deletion; removing them fixed dispatch bookkeeping without changing
-the macro or gameplay. Carrier 17.95s. A 6.53s harness compile failure exposed an
-older fixture's call to retired DeletePlm; its expected-state helper now uses the
-exact frozen reference. Subsequent fixture builds and their limits are recorded
-in the local handoff; final harness is 9.91s.
-
-The first runtime attempt stopped at a terminating-domain preflight when fixture
-seeding overwrote its intended match through an alias. No handler ran for that
-case. Two discarded intermediate fixture builds did not run tests; final source
-retains the corrected alias and all intended cases. No production gameplay
-correction is claimed. No movie, full scroll producer/scheduler or full-composition
-runtime ran. Synthetic content and shared native consumers limit coverage.
+Production Rust 2024 release/frontend/verifier/source passes (74.78s), prospective
+headless release passes (51.70s), carrier 21.22s and harness 27.54s. All builds
+and behavioral checks pass first attempt, with final production/fixture sources frozen.
+Changed gameplay/root formatting and diff checks pass. Full verify_source.rs
+formatting retains baseline differences; added entries conform, and an exact
+comparison confirms all remaining formatter differences are inherited from HEAD.
 Production hash:
-`6d31ff3be017aa78666ffcd200a0760a9afdcb4bb057d3fe9ef7ad79d4466c08`.
+`7014c1177b23acd8b2eaa46b279dff771546b5955abf530c195698035ed4f0b9`.
+No movie, full item producer/scheduler, visible/VRAM rendering or complete
+composition runtime ran; synthetic content and retained native consumers limit
+coverage. Compiler lane is released and DLL unloaded.
 
-`scroll-setup-parent/` preserves prior main/carrier/local/composition sources.
-Earlier snapshots/caches remain. Do not rerun historical preparation scripts;
-composition lives under `impact-composition/sm/src` with distinct module wiring.
-The inherited Intro mismatch remains unresolved in `DRAWING_HANDOFF.md`.
-Next are item initialization/wakeup, then room/event/boss and residual routes.
-Runtime promotion needs reset/load/rewind/external-writer checks; rendering,
-sound and boot-to-credits completion remain outside this stage.
+`item-setup-parent/` preserves prior main/carrier/local/composition sources.
+Earlier snapshots/caches and scroll evidence remain. Do not rerun historical
+preparation scripts; composition lives under `impact-composition/sm/src`.
+Next: select a coherent responsibility from 32 room/event/boss setups, then
+14 constants/no-op/result identities. Runtime promotion needs reset/load/rewind/
+external-writer checks; rendering, sound and boot-to-credits remain unfinished.
 The parallel movie/state investigation is documented in
 [MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md); it implements no pipeline.
 

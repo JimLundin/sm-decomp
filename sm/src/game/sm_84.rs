@@ -754,18 +754,6 @@ pub unsafe fn SetPlmVarPtr(k: u16, a: u16, game: &mut Game) {
 }
 pub use self::PlmInstr_DamageDraygonTurret as PlmInstr_DamageDraygonTurret2;
 pub use self::PlmSetup_DraygonCannonFacingRight as PlmSetup_DraygonCannonFacingLeft;
-pub unsafe fn sub_84EE5F(j: u16, a: u16, game: &mut Game) -> u8 {
-    unsafe {
-        word!(game.plm_variables[(j >> 1)] = a);
-        sub_84EE64(j, game)
-    }
-}
-pub unsafe fn sub_84EE89(j: u16, a: u16, game: &mut Game) -> u8 {
-    unsafe {
-        word!(game.plm_variables[(j >> 1)] = a);
-        sub_84EE8E(j, game)
-    }
-}
 crate::game::callback_dispatch! {
     /// Dispatch setup with the active collision displacement, or null outside collision.
 /// `setup_a` preserves the spawner accumulator for setup routines that consume it.
@@ -965,11 +953,6 @@ crate::game::callback_dispatch! {
         );
         0
     };
-    [8711780] sub_84EE64 [] {
-        WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[(j >> 1)]), 0x45, game);
-        word!(game.global_number_of_items_loaded_ctr += 1);
-        0
-    };
     @functions [pub fn (j: u16, game: &mut Game) -> u8];
     @functions [pub fn (_j: u16, game: &mut Game) -> u8];
     @functions [pub unsafe fn (j: u16, game: &mut Game) -> u8];
@@ -1042,44 +1025,7 @@ crate::game::callback_dispatch! {
         word!(game.plm_room_arguments[v1] = 3);
         0
     };
-    [8711822] sub_84EE8E [] {
-        WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[v1]), 0xc045, game);
-        word!(
-            game.plm_variable[v1] = *(ram_ptr!(game, u16; 0x10002))
-                .offset((word!(game.plm_block_indices[v1]) >> 1) as isize,)
-        );
-        word!(game.global_number_of_items_loaded_ctr += 1);
-        0
-    };
     @functions [pub unsafe fn (v0: u16, game: &mut Game) -> u8];
-    [8711851] sub_84EEAB [] {
-        if word!(game.time_is_frozen_flag) != 0 {
-            word!(game.plm_header_ptr[(v0 >> 1)] = 0);
-        } else {
-            let v1: i32 = v0 as i32 >> 1;
-            let v2: u16 = word!(game.plm_block_indices[v1]);
-            word!(game.plm_block_indices[v1] = 0);
-            let mut i: i32 = 78;
-            while i >= 0 {
-                if v2 == word!(game.plm_block_indices[(i >> 1)]) {
-                    break;
-                }
-                i -= 2;
-            }
-            word!(game.plm_timers[(i >> 1)] = 255);
-        }
-        0
-    };
-    @forward [pub unsafe fn (j: u16, game: &mut Game) -> u8];
-    [8711757] sub_84EE4D => sub_84EE5F(j, 8, game);
-    [8711762] sub_84EE52 => sub_84EE5F(j, 0xa, game);
-    [8711767] sub_84EE57 => sub_84EE5F(j, 0xc, game);
-    [8711772] sub_84EE5C => sub_84EE5F(j, 0xe, game);
-    @forward [pub unsafe fn (j: u16, game: &mut Game) -> u8];
-    [8711799] sub_84EE77 => sub_84EE89(j, 8, game);
-    [8711804] sub_84EE7C => sub_84EE89(j, 0xa, game);
-    [8711809] sub_84EE81 => sub_84EE89(j, 0xc, game);
-    [8711814] sub_84EE86 => sub_84EE89(j, 0xe, game);
     @external {
         8696811 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::Ice, displacement, game)];
         8696840 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::Surface, displacement, game)];
@@ -1144,6 +1090,17 @@ crate::game::callback_dispatch! {
         8696689 => [crate::game::mechanism_scroll_setup_ram::setup(j, crate::game::mechanism_scroll_setup::Setup::Place(crate::game::mechanism_scroll_setup::Tile::Scroll(crate::game::mechanism_scroll_setup::Solidity::Air)), game)];
         8696706 => [crate::game::mechanism_scroll_setup_ram::setup(j, crate::game::mechanism_scroll_setup::Setup::Place(crate::game::mechanism_scroll_setup::Tile::Scroll(crate::game::mechanism_scroll_setup::Solidity::Solid)), game)];
         8696723 => [crate::game::mechanism_scroll_setup_ram::setup(j, crate::game::mechanism_scroll_setup::Setup::Touch, game)];
+        8711757 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::Visible,Some(crate::game::mechanism_item_setup::Graphic::EnergyTank)), game)];
+        8711762 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::Visible,Some(crate::game::mechanism_item_setup::Graphic::MissileTank)), game)];
+        8711767 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::Visible,Some(crate::game::mechanism_item_setup::Graphic::SuperMissileTank)), game)];
+        8711772 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::Visible,Some(crate::game::mechanism_item_setup::Graphic::PowerBombTank)), game)];
+        8711780 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::Visible,None), game)];
+        8711799 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::ShotBlock,Some(crate::game::mechanism_item_setup::Graphic::EnergyTank)), game)];
+        8711804 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::ShotBlock,Some(crate::game::mechanism_item_setup::Graphic::MissileTank)), game)];
+        8711809 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::ShotBlock,Some(crate::game::mechanism_item_setup::Graphic::SuperMissileTank)), game)];
+        8711814 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::ShotBlock,Some(crate::game::mechanism_item_setup::Graphic::PowerBombTank)), game)];
+        8711822 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::ShotBlock,None), game)];
+        8711851 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Trigger, game)];
         8704399 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::LowerNorfair, displacement, game)];
         8705568 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::WreckedShip, displacement, game)];
         8705740 => PlmSetup_D70C_NoobTube;
