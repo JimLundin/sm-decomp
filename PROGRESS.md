@@ -1,5 +1,7 @@
 # Engine migration
 
+[Navigate the current codebase →](https://jimlundin.github.io/sm-decomp/)
+
 Green: adopted scope / passed check | Blue: draft | Orange: active | Grey: remaining | Red: failed
 **Purple outline: changed since previous report.** Folder branches show containment; check arrows show prerequisites.
 

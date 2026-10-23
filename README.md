@@ -9,6 +9,10 @@ with c2rust and is now being cleaned up into idiomatic Rust, one subsystem at
 a time, with that per-frame comparison as the test. See
 [docs/PLAN.md](docs/PLAN.md).
 
+[Explore the current codebase](https://jimlundin.github.io/sm-decomp/): an
+interactive file and dependency map with source evidence, ownership tensions,
+search and folder navigation. The [progress graph](PROGRESS.md) tracks adoption.
+
 The accepted destination is our own purpose-built Rust game and engine. The
 [architecture handoff](docs/target-architecture/README.md) includes a standalone
 interactive report and a staged migration plan. Windows workers can keep the

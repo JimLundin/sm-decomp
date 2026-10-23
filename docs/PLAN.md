@@ -23,6 +23,15 @@ each verification step. Highlight touched files even when their status color
 stays the same. Keep adopted folder maps expandable and the active work visible;
 show failed checks in red. No percentage based on file or node counts.
 
+User request (2026-10-23): maintain the interactive
+[current-codebase atlas](https://jimlundin.github.io/sm-decomp/) for repository
+navigation, source dependencies and evidence-backed architectural tensions.
+It is separate from migration progress and the target architecture. Refresh
+docs/codebase-map/index.html from a committed source revision after substantial
+source changes; preserve snapshot identity and validate curated evidence anchors.
+Its generator reads Git blobs, not dirty source. Browser checks cover navigation,
+mobile layouts, offline behavior and accessibility before Pages deployment.
+
 This is the active plan. Read the current work order and validation strategy
 below. For the step-by-step refactor process, task boundaries and parallel work,
 use [the iteration guide](ITERATION.md). Consult reference documents only for

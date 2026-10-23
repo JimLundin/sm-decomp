@@ -1,0 +1,190 @@
+[
+  {
+    "title": "Session ownership is interval-scoped",
+    "description": "The runtime imports state on entry, publishes it before foreign calls, and reimports on return. The shared owner is not yet persistent across the whole game.",
+    "files": [
+      "sm/src/game/session_runtime.rs",
+      "sm/src/game/session.rs",
+      "sm/src/game/session_encoding.rs"
+    ],
+    "evidence": [
+      {
+        "path": "sm/src/game/session_runtime.rs",
+        "line": 59,
+        "expected": "pub(crate) struct Runtime<'g> {"
+      },
+      {
+        "path": "sm/src/game/session.rs",
+        "line": 95,
+        "expected": "pub struct Session {"
+      },
+      {
+        "path": "sm/src/game/session_encoding.rs",
+        "line": 305,
+        "expected": "pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {"
+      }
+    ]
+  },
+  {
+    "title": "Compatibility aliases cross domains",
+    "description": "Legacy offsets can reach fields in other owned subsystems or remaining RAM. Removing the compatibility layer requires migrating those interactions, not clamping their addresses.",
+    "files": [
+      "sm/src/game/visual_runtime.rs",
+      "sm/src/game/session_runtime.rs",
+      "sm/src/game/session_encoding.rs"
+    ],
+    "evidence": [
+      {
+        "path": "sm/src/game/visual_runtime.rs",
+        "line": 44,
+        "expected": "}"
+      },
+      {
+        "path": "sm/src/game/session_runtime.rs",
+        "line": 84,
+        "expected": "pub(crate) fn byte(&self, at: usize) -> u8 {"
+      },
+      {
+        "path": "sm/src/game/session_encoding.rs",
+        "line": 348,
+        "expected": "pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {"
+      }
+    ]
+  },
+  {
+    "title": "Content is still ROM-addressed",
+    "description": "Loaded and native image provenance still matters. Custom Map Rando content needs a validated import and identity boundary that this code does not yet provide.",
+    "files": [
+      "sm/src/game/visual_host.rs",
+      "sm/src/game/visual_runtime.rs",
+      "sm/src/game_state.rs"
+    ],
+    "evidence": [
+      {
+        "path": "sm/src/game/visual_host.rs",
+        "line": 19,
+        "expected": "pub trait Content {"
+      },
+      {
+        "path": "sm/src/game/visual_runtime.rs",
+        "line": 30,
+        "expected": "type Record = RomRecord;"
+      },
+      {
+        "path": "sm/src/game_state.rs",
+        "line": 503,
+        "expected": "pub(crate) fn register_native_rom(&mut self, image: crate::rom::RomImage) {"
+      }
+    ]
+  },
+  {
+    "title": "Drawing still targets the emulated backend",
+    "description": "Gameplay submits spritemaps and OAM, then the existing PPU presents the frame. An independent renderer is a destination, not the current structure.",
+    "files": [
+      "sm/src/game/scene_drawing.rs",
+      "sm/src/game/sprite_objects.rs",
+      "sm/src/main.rs",
+      "sm/src/rtl.rs"
+    ],
+    "evidence": [
+      {
+        "path": "sm/src/game/scene_drawing.rs",
+        "line": 46,
+        "expected": "pub(crate) unsafe fn draw_scene(game: &mut Game) {"
+      },
+      {
+        "path": "sm/src/game/sprite_objects.rs",
+        "line": 101,
+        "expected": "}"
+      },
+      {
+        "path": "sm/src/main.rs",
+        "line": 256,
+        "expected": "unsafe extern \"C-unwind\" fn sm_host_run_frame(owner: *const GameOwner, inputs: i32) -> bool {"
+      },
+      {
+        "path": "sm/src/rtl.rs",
+        "line": 582,
+        "expected": "pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {"
+      }
+    ]
+  },
+  {
+    "title": "Game still owns emulator pointers",
+    "description": "The outer Game contains WRAM and CPU/SNES pointers. Gameplay and the comparison backend still share this compatibility state.",
+    "files": [
+      "sm/src/game_state.rs",
+      "sm/src/cpu_infra.rs",
+      "sm/src/rtl.rs"
+    ],
+    "evidence": [
+      {
+        "path": "sm/src/game_state.rs",
+        "line": 9,
+        "expected": "pub struct Game {"
+      },
+      {
+        "path": "sm/src/cpu_infra.rs",
+        "line": 1249,
+        "expected": "pub unsafe fn RtlRunFrameCompare(input: u16, run_what: i32, game: &mut Game) {"
+      },
+      {
+        "path": "sm/src/rtl.rs",
+        "line": 112,
+        "expected": "use crate::snes::snes::{snes_catchupApu, snes_read, snes_reset, snes_saveload, snes_write};"
+      }
+    ]
+  },
+  {
+    "title": "Sprite effects remain outside Session",
+    "description": "The 32-slot RAM pool is the next complete migration. Enemy projectiles still create sprites through a foreign call and expose four coordinate ports.",
+    "files": [
+      "sm/src/game/sprite_objects.rs",
+      "sm/src/game/enemy_projectiles/effects_runtime.rs",
+      "sm/src/game/enemy_projectiles/actor_runtime.rs"
+    ],
+    "evidence": [
+      {
+        "path": "sm/src/game/sprite_objects.rs",
+        "line": 18,
+        "expected": "pub(crate) unsafe fn create_sprite("
+      },
+      {
+        "path": "sm/src/game/enemy_projectiles/effects_runtime.rs",
+        "line": 24,
+        "expected": "fn create_sprite(&mut self, x: u16, y: u16, id: u16, graphics: u16) -> u16 {"
+      },
+      {
+        "path": "sm/src/game/enemy_projectiles/actor_runtime.rs",
+        "line": 338,
+        "expected": "fn waffle_sprite_x(&self, index: u16) -> u16 {"
+      }
+    ]
+  },
+  {
+    "title": "Verification shares compilation infrastructure",
+    "description": "Verification is counted separately here, but the library, application and verifier examples still share a crate. A category color does not imply an independent build boundary.",
+    "files": [
+      "sm/Cargo.toml",
+      "sm/src/lib.rs",
+      "sm/src/verify.rs"
+    ],
+    "evidence": [
+      {
+        "path": "sm/Cargo.toml",
+        "line": 11,
+        "expected": "path = \"src/lib.rs\""
+      },
+      {
+        "path": "sm/src/lib.rs",
+        "line": 366,
+        "expected": "#[path = \"../verification/room_mechanisms.rs\"]"
+      },
+      {
+        "path": "sm/src/verify.rs",
+        "line": 1,
+        "expected": "//! Single-threaded replay through the same differential oracle as the UI."
+      }
+    ]
+  }
+]
