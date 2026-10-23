@@ -44,10 +44,10 @@ flowchart TB
     EARLY --> MOVIE["52-phase original CPU + OAM<br/>candidate comparison PASS"]:::done
     MOVIE --> HOOKFIX["Isolated original opcode restore<br/>strict guards + capture audit PASS"]:::done
     POOL --> BUILD["Assembled verifier + adapters<br/>format / release build PASS"]:::done
-    BUILD --> HOST["Hosted composition baseline<br/>fixture allocation FAIL"]:::failed
-    HOST --> HOSTFIX["Preserve larger fixture image<br/>reviewed / CI rerun active"]:::active
+    BUILD --> HOST["Hosted composition baseline<br/>execution PASS"]:::done
+    HOST --> HOSTFIX["Preserve larger fixture image<br/>corrected / baseline PASS"]:::done
     GUARD["Runtime + 1,026 bytes guard<br/>execution PASS"]:::done --> VERIFY
-    MUT["12 new faults<br/>source review PASS"]:::checked --> KILLS["41 mutations / execution pending"]:::pending
+    MUT["12 new faults<br/>source review PASS"]:::checked --> KILLS["41 mutations<br/>hosted execution active"]:::active
     MAWFIX --> MAWMUT["Two Maw precedence mutations<br/>source review PASS"]:::checked --> KILLS
     SHARED["35 shared-caller comparisons<br/>+ visual runtime guard PASS"]:::done --> ADOPT
     CODEC --> VERIFY
@@ -58,7 +58,7 @@ flowchart TB
     VERIFY --> ADOPT["Caller migration + retirement<br/>adopt on main"]:::pending
     MOVIE --> ADOPT
     KILLS --> ADOPT
-    class HOST,HOSTFIX,SHARED changed
+    class HOST,HOSTFIX,KILLS changed
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d

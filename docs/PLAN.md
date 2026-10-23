@@ -428,12 +428,25 @@ references; measure build/test time and resource growth before changing the loop
    execution fails before mutations: existing native_drop_then_missile fixture
    copies the now3MiB image into a fixed1A8000 allocation. Reviewed correction
    preserves max(existing length,1A8000), full copy and every assertion.
-   Hosted84f03c03 reruns in CI40031500027; no mutation kills claimed yet.
-   The local built candidate still precedes this verification-only allocation
-   correction. Hosted composition/mutations remain before adoption; this is
-   still an unadopted production draft.
-   Production draft+711lines; necessary owned-state/unsafe retirement, not a net
-   source reduction. Final verification and fullscope accounting remain separate.
+   Hosted84f03c03 reruns in CI40031500027: clean composed baseline now passes;
+   detached mutation execution is active, with no final kill count yet.
+   Local build5 incorporates the fixture correction: format/release pass13.59s
+   on6aa14eb6. All121sprite and35shared comparisons, fiveDraygon cases,52phase
+   OAM comparison and both ownership guards repeat successfully on that source.
+   Final captures use candidate-alias-results-final, candidate-shared-regressions-final,
+   candidate-draygon-results-final, pool-candidate-results-final and
+   candidate-runtime-guard-final.json under next-sprite-session.
+   Hosted composition/mutations/full build remain before adoption; this is
+   still an unadopted production draft. Shared random-sprite commands differ only
+   in unchanged constants; the exercised8842467 path covers the changed helper.
+   No direct8842519 execution claim is made.
+   Final same-method accounting againsta758c6ba: production+719Rust lines,
+   +5450tokens/+25272LFbytes; verificationRust+2794lines, Python support+331,
+   native unchanged. CombinedRust+3513lines. Exactly43cfg-only observer lines
+   are excluded from production; runtime adapters remain counted. Final production
+   is107892lines, verification16120, combined124012. Necessary ownership/unsafe
+   retirement, not net source reduction. Local FINAL-ACCOUNTING.md and
+   final-source-accounting.json retain classification and source identity.
    Preserve distinct1022byte room clear and64byte active-pointer retirement.
    No sprite adoption, persistentwholegameownership or MapRando readiness yet.
 
