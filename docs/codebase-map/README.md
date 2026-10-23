@@ -5,7 +5,7 @@ needed to navigate is embedded; the page makes no network requests. Source and
 architecture links open the analyzed commit on GitHub.
 
 The first screen groups responsibilities for navigation. They are not separate
-crates. Open a region or folder, search a file, or choose a guided starting point.
+packages or crates. Open a region or folder, search a file, or choose a guided starting point.
 Selecting a file shows incoming users on the left and outgoing source references
 on the right. Select an edge for its first source occurrence. All neighbors remain
 listed beneath the focused graph when the graph shows only its first ten per side.
@@ -30,7 +30,7 @@ first, regenerate, and publish the resulting snapshot in a subsequent commit.
 `atlas.template.html` owns the interaction and visual design. `tensions.json`
 contains the small curated architecture annotations with exact source evidence.
 `index.html` is the self-contained deliverable; `atlas-data.json` is its inspectable
-data companion. Python's standard library is the only generation dependency.
+data companion for local inspection; it need not be published. Python's standard library is the only generation dependency.
 
 ## Evidence limits
 
@@ -48,3 +48,7 @@ data companion. Python's standard library is the only generation dependency.
   architecture. They need source review when the relevant responsibilities change.
 
 No ROMs, captures, assets or full source-file contents are embedded in the data.
+
+Curated tension evidence stores exact expected source lines. Generation reanchors
+only a unique unchanged match; a changed or ambiguous match stops generation for
+manual source review instead of publishing a misleading source link.

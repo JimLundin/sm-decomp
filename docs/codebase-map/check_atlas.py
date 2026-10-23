@@ -8,7 +8,7 @@ output = Path("atlas-browser-results")
 output.mkdir(exist_ok=True)
 errors, network = [], []
 with sync_playwright() as playwright:
-    browser = playwright.chromium.launch()
+    browser = playwright.chromium.launch(channel="chrome")
     page = browser.new_page(viewport={"width": 1440, "height": 1000})
     page.on("pageerror", lambda error: errors.append(str(error)))
     page.on("request", lambda request: network.append(request.url) if request.url.startswith(("http:", "https:")) else None)
