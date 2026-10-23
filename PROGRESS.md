@@ -100,18 +100,27 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    S["session.rs / one owner"]:::pending
-    P["palette_effects/<br/>ownership inventory"]:::active --> S
-    A["animated_tiles/<br/>upload + callbacks"]:::active --> S
-    U["sm_91.rs / Samus palette<br/>complete behavior inventory"]:::active --> S
-    C["Callback return contract<br/>oracle / bank investigation"]:::active --> U
+    S["session.rs / 51,053 WRAM bytes<br/>ownership review PASS"]:::checked
+    P["palette_effects/<br/>implementation active"]:::active --> S
+    A["animated_tiles/<br/>implementation active"]:::active --> S
+    U["Samus palette + beam copies<br/>implementation active"]:::active --> S
+    C["samus_palette_oracle.rs<br/>29 cases / original carry PASS"]:::done --> U
+    C --> H["Hurt / 12 cases PASS"]:::done
+    C --> F["Special flags / 3 cases PASS"]:::done
+    C --> W["Spin + wall jump / 2 cases PASS"]:::done
+    C --> Q["Flare + shoot / 8 cases PASS"]:::done
+    C --> G["Grapple / 4 cases PASS"]:::done
     B["sm_90.rs / beam palette<br/>two duplicate loops identified"]:::checked --> U
-    V["512 palette + 438 animation cases<br/>coverage inventory"]:::active --> D
-    S --> D["Concrete declarations / review"]:::pending
-    D --> I["Parallel implementation"]:::pending
+    V["512 palette + 438 animation cases<br/>current baseline + 2 guards PASS"]:::checked --> D
+    S --> D["Concrete declarations<br/>compile + 2 reviews PASS"]:::checked
+    D --> I["4 implementation + 2 verification lanes"]:::active
+    I --> T["Actual shared-core composition"]:::active
+    I --> X["Samus cases + Runtime guards"]:::active
+    I --> Y["Discriminating mutations"]:::active
     I --> M["Behavior + mutation checks"]:::pending
     M --> R["Caller migration / old owners retired"]:::pending
-    class S,P,A,U,C,B,V,D,I,M,R changed
+    class S,P,A,U,C,H,F,W,Q,G,B,V,D,I,T,X,Y,M,R changed
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5

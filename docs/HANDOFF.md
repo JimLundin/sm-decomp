@@ -8,6 +8,39 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Active visual iteration: next-visual-session/CONTRACT.md and declarations are
+frozen after two independent reviews and root metadata compilation. Union:
+51053distinctWRAM bytes plus16native; no overlaps. Existing512palette and438
+animation outputs all match prior integrated-1references on c30c16ba/source21a7453a;
+both guards pass,92.70s. Evidence reference-c30c16ba/results.json and frozenDLL.
+
+Oracle prerequisite is complete:29actual65816 selector2 captures match expected
+D715carry, D717/D721branch and exactlytwo misc calls. Independent audit adds174
+phase/effect/footprint checks. No execution of the mismatched old Rust callback.
+Reusable capture source is adopted with this handoff: verification/
+samus_palette_oracle.rs, cfg-only cpu_infra registration, DLL export and source
+registration.323verificationRust lines, unsafe+3 verificationfunctions, export+1;
+production gameplay unchanged. Root fmt/check/direct build passes20.73s on
+8d7f67b461472e538a6cb16580db21d135309b9f2678d022d7c83e16e95b668a.
+All originalROM/code guards passed; no ROM bytes or captures are committed.
+Local oracle-c30c16ba is the exact checked snapshot; oracle-results-1 contains
+29captures/results/frozenDLL; capture_palette_oracle.py reruns the bounded cases.
+Build sessions75284/55933 and reference session85814 are terminal.
+
+Upcoming typed comparison uses allRAM at each checkpoint, excluding only
+fixture CPUstack[1FEB,2000) and charge scratch[24,26) forIDs21..24. Require
+candidate bytes in excluded regions to stay at their entry values, and report
+oracle values separately. No blanket frame normalizer. Soundlimit653, visorA72,
+chargephaseB62, carry/branch/two misc calls and ordered effects remain exact.
+
+Lead enemy_projectiles_implementation owns shared state/codec/runtime/callers.
+Its foreign_edges worker owns palette, setup_callbacks animation, pre_callbacks
+fullSamuspalette/sm90/sm91. Collision owns hostedSamus/oraclecases/Runtimeguards;
+torizo_implementation owns detachedcompositionRust/README; torizo_review owns
+both mutation runners, preserving existing7+9faults. Gameplay implementation is
+active in isolated replacement only. Root alone integrates/builds; review frozen
+chunks and preserve complete caller/deletion scope. Do not adopt partial wiring.
+
 Complete next-enemy candidate is assembled and independently reviewed at
 Local/sm-decomp-experiments/20261023/room-session/next-enemy-session/
 candidate-c8d728c2. Complete candidate is adopted in the commit containing this

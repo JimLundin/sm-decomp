@@ -1,6 +1,10 @@
 //! Source bytes captured by the game library compilation.
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
+    (
+        "sm/src/verification/samus_palette_oracle.rs",
+        include_bytes!("verification/samus_palette_oracle.rs"),
+    ),
     ("sm/src/apu_queue.rs", include_bytes!("apu_queue.rs")),
     ("sm/src/apu_ram.rs", include_bytes!("apu_ram.rs")),
     (

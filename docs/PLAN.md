@@ -307,9 +307,21 @@ references; measure build/test time and resource growth before changing the loop
    Next complete scope selected: shared palette effects, animated tiles and
    Samus palette control. Remove both private owners, duplicated inventory/player
    inputs, raw color copies, unsafe callback dispatch and the animation-to-enemy
-   trampoline through actual caller migration. Four source-only inventories
-   prepare owner/content/codec declarations; review them before implementation.
-   Resolve sm91's void-to-u8 callback behavior from oracle/bank evidence first.
+   trampoline through actual caller migration. Concrete declarations compile
+   and pass two independent owner/alias/content reviews:51053disjointWRAM bytes,
+   native16unchanged. Refreshed512palette+438animation comparisons all match
+   prior outputs; both Runtimeguards pass on c30c16ba (92.70s).
+   Sm91's void-to-u8 callback is undefined Rust. Actual65816 capture now confirms
+   all29selector2 carry/branch cases and two misc calls, independently of that
+   invalid call. Observe C at91D715 beforeBCS, not flags after outerPLP. Preserve
+   unsigned carry separately from signed effect branches and movement0x14.
+   Maintained verification-only capture guards executed code against the local
+   originalROM at runtime; no ROM bytes/outputs committed. Source8d7f67b4 passes
+   root fmt/check/direct verifier and29oracle captures; production unchanged.
+   Cost323verification/registrationRust lines; unsafe+3 verification functions,
+   one DLL export. All captures remain local next-visual-session/oracle-results-1.
+   Four isolated implementation lanes now active (shared owner/codec, palette,
+   animation, fullSamuspalette), plus independent composition/cases/mutation work.
    Broad palette aliases, legacy writers and reset/backend paths still prevent
    persistent whole-game ownership; do not claim persistence from composition.
    Production token/byte growth precludes a net source-reduction claim. Geometry

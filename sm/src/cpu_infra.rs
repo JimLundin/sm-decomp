@@ -1262,3 +1262,7 @@ pub unsafe fn RtlRunFrameCompare(input: u16, run_what: i32, game: &mut Game) {
         };
     }
 }
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/samus_palette_oracle.rs"]
+pub mod samus_palette_oracle;
