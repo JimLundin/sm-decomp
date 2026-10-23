@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 11:10 UTC**
+Updated: **2026-10-23 11:19 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -42,11 +42,18 @@ unsafe operations removed.
 
 ## Work in progress
 
-**Continue the remaining player consumers and state-ownership work.**
+**Player preparation replacement is approved and being implemented.**
 
-The next dependency audit covers the player preparation phase, its finalization,
-and external writers. Preparation is only part of a player frame; contacts,
-enemies, suspension and later movement must retain their ordering.
+The implementer and independent reviewer have agreed the scope: share entry
+setup, normal/demo ordering, weapon dispatch and finalization, then retire the
+duplicate bank and candidate implementations. New checks will cover real demo
+input and later restoration, message suspension, intro gating and failure
+prefixes. These changes have not yet been built or verified.
+
+Preparation is only part of a player frame; contacts, enemies, suspension and
+later movement retain their ordering. The proposal estimates 125–270 additional
+main-source lines for safe shared sequencing and adapters; it claims neither a
+source reduction nor persistent ownership.
 
 Persistent room and scheduler state still live in RAM. Persistent Session
 ownership, renderer/audio replacement and an independently running game slice

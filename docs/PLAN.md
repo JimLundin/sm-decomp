@@ -203,11 +203,21 @@ references; measure build/test time and resource growth before changing the loop
    to 2,794; cast-containing lines by 13 to 5,922. Formatting/progress pass. No reduction,
    new dependency, backend-independence or persistent-ownership claim.
 
-   Next: audit the remaining player preparation phase and its finalization against
-   external-writer/reset/load/rewind closure. Preparation is not a whole player frame:
-   gameplay can run contacts/enemies and suspend before the beta phase; demo input
-   restoration belongs to beta. Choose the next complete responsibility from these
-   actual dependencies before implementation.
+   In progress: reviewed player-preparation replacement from `41617e35` shares
+   captured entry/setup, normal/demo leaf ordering, weapon dispatch and exact tail,
+   retiring main Func11/12/13 sequencing, Samus_Func10 and local run/finish duplication.
+   The implementer owns the change; an independent reviewer checks callers and
+   validation. Root owns registration, integration, serial builds and Git.
+   Selected checks include real finite E91D demo input and later beta restoration,
+   captured-handler mutation, gameplay message suspension/resumption, intro gating,
+   frozen projectile-only and inactive entries, aliases and failure prefixes.
+   Preserve all 58 current suites and their vectors; freeze current real children,
+   not the obsolete controlled preparation graph. Main growth is estimated at
+   125–270 lines, complete composition 105–310 and verification 1,890–2,920.
+   Safe sequencing and duplicate retirement justify this bounded change; no
+   reduction or persistent-ownership claim. Preparation is not a whole player frame:
+   contacts/enemies and suspension precede beta, which owns demo restoration.
+   External-writer/reset/load/rewind closure and persistent adoption remain next.
 
    Next dependencies, in order:
 
