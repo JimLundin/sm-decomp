@@ -447,9 +447,9 @@ references; measure build/test time and resource growth before changing the loop
    audit passes independently. These are synthetic references, not a new room
    implementation or movie coverage. Main adoption and maintained fixture support
    remain separate from the private source-checked reference snapshot.
-   Atlas regenerated from adoptedf88970aa:429files/2071edges and all24curated
-   anchors pass static checks. Hosted browser/accessibility/Pages checks pending;
-   the current live snapshot still reflects4ba01b81 until that deployment passes.
+   Atlas snapshotf88970aa is live:429files/2071edges and all24curated anchors
+   pass static checks. Hosted40039541123 passes browser/accessibility and Pages;
+   live HTTP200 bytes exactly match388df54f's committed standalone HTML.
 
    Room mechanisms are now adopted as one production responsibility: creation,
    setup, pre-actions, all 110 command identities, scheduler, drawing/clipping,
