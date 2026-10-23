@@ -177,10 +177,39 @@ references; measure build/test time and resource growth before changing the loop
    fall by four to 2,810; cast-containing lines fall by 14 to 5,935. No size-reduction,
    new dependency, backend-independence or persistent-ownership claim.
 
-   Next: share complete HUD switching, cooldown and weapon coordination, including
-   actual player-frame callers and SamusCode04/06 deselection. Trace live selectors,
-   front-pose/freeze update behavior and grapple/Xray effects before implementation.
-   Persistent authority still needs external-writer/reset/load/rewind closure.
+   Active implementation from `e2a25fba`: complete HUD switching, cooldown and
+   weapon coordination. `HUD_COORDINATOR_PROPOSAL.md` is approved after independent
+   caller and ownership review. Shared weapon_selection and weapon_coordinator
+   own all decisions/write order; checked and owned adapters invoke real consumers.
+   Retire bank tables/handlers and local duplicate algorithms. Preserve actual
+   normal/demo frame calls and SamusCode04/06 deselection identity/return value.
+   Generic cooldown consumers delegate to the same pure rule.
+
+   Remove the production Leaf::SwitchHud no-op publish/reimport; test hooks remain
+   only in verification overlays. Cancel-grapple stays a direct checked 0xD32 write
+   with a borrowed owner: no Session field owns it, and active-to-cancelling leaves
+   the imported inactive predicate false. Existing ReturnGrappleToInactive remains
+   an actual effect transport because its predicate changes. Preserve live selectors,
+   signed/wrapped counters, exact palette/flare order, front poses updating despite
+   freeze, postdispatch live freeze gating and complete-owner failure prefixes.
+
+   Require all54 retained suites plus selected switching/preparation/feedback cases.
+   Natural chains start with switch/cancel input and cover beam, missile, super,
+   ordinary bomb, earned spread and power bomb; retain all-five spread retirement
+   and selector-to-real-HDMA/tube linkage. Both actual normal/demo callers and real
+   bounded grapple/Xray consumers are required. Xray must freeze an otherwise
+   advancing projectile, suppress its update and set cooldown32 on the next frozen
+   step; front poses0/9B must still update. Typed clients use the shared rules with
+   semantic state. Constructed morph transitions and bounded consumer limits remain
+   explicit. No synthetic production effects may preserve old transfer counts.
+
+   Estimates in net lines: main+225..455, local-100..70, composition+125..525,
+   verification+2210..3270, combined+2335..3795. Count all adapters, caller changes,
+   registration, generated overlays and deleted paths; record UTF-8 tokens/bytes.
+   `hud-coordinator-parent/` preserves the inputs; root matched all214 main Rust
+   files to committed `e2a25fba`. Implementation is underway; builds and behavioral
+   verification are pending. Persistent authority still requires external-writer,
+   reset/load/rewind closure after these remaining consumers migrate.
 
    Next dependencies, in order:
 
