@@ -1,4 +1,4 @@
-use crate::game::sm_91::{SamusFunc_F433, Samus_SetAnimationFrameIfPoseChanged};
+use crate::game::sm_91::{Samus_SetAnimationFrameIfPoseChanged, SamusFunc_F433};
 use crate::game_state::Game;
 
 pub(crate) unsafe fn refresh_pose(game: &mut Game) {

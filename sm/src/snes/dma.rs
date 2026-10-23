@@ -6,7 +6,7 @@ use ::core::mem::transmute;
 
 use crate::c_library::{__assert_fail, printf};
 use crate::snes::snes::{snes_read, snes_readBBus, snes_write, snes_writeBBus};
-pub use crate::types::{size_t, Dma, Snes};
+pub use crate::types::{Dma, Snes, size_t};
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 pub const __ASSERT_FUNCTION: [c_char; 34] =

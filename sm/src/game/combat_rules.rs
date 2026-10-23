@@ -34,11 +34,7 @@ impl Shot {
             return ShotResponse::Freeze;
         }
         let multiplier = if self.charged(primary) {
-            if charged == 255 {
-                0
-            } else {
-                charged & 15
-            }
+            if charged == 255 { 0 } else { charged & 15 }
         } else {
             primary & 0x7f
         };
@@ -83,11 +79,7 @@ pub(crate) fn hurt_duration(configured: u8, extra: u16) -> u16 {
 }
 
 pub(crate) fn freeze_duration(area: u16) -> u16 {
-    if area == 2 {
-        300
-    } else {
-        400
-    }
+    if area == 2 { 300 } else { 400 }
 }
 
 pub(crate) enum HealthResponse {

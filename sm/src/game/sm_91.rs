@@ -2,26 +2,26 @@ pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_8f::*;
-pub use crate::game::constants::bank_91::*;
 pub use crate::game::constants::bank_9b::*;
+pub use crate::game::constants::bank_91::*;
 
+use crate::game::room_mechanisms::set_enabled;
+use crate::game::sm_8d::{DisablePaletteFx, EnablePaletteFx, SpawnPalfxObject};
+use crate::game::sm_9b::{GrappleBeamFunc_BD95, GrappleBeamFunc_BEEB};
 use crate::game::sm_80::{
     InvalidInterrupt_Crash, QueueSfx1_Max6, QueueSfx1_Max9, QueueSfx2_Max6, QueueSfx3_Max6,
     QueueSfx3_Max9,
 };
-use crate::game::room_mechanisms::set_enabled;
 use crate::game::sm_86::{DisableEprojs, EnableEprojs};
 use crate::game::sm_87::{DisableAnimtiles, EnableAnimtiles};
 use crate::game::sm_88::SpawnHdmaObject;
-use crate::game::sm_8d::{DisablePaletteFx, EnablePaletteFx, SpawnPalfxObject};
-use crate::game::sm_90::{liquid_at_height, LiquidAtHeight};
 use crate::game::sm_90::{
     CallSomeSamusCode, LoadProjectilePalette, Projectile_Func7_Shinespark,
     Samus_AlignBottomWithPrevPose, Samus_GetBottom_R18, Samus_GetTop_R20, Samus_InitJump,
     Samus_InitWallJump, Samus_SetSpeedForKnockback_Y, UpdateBeamTilesAndPalette,
     WriteBeamPalette_A,
 };
-use crate::game::sm_9b::{GrappleBeamFunc_BD95, GrappleBeamFunc_BEEB};
+use crate::game::sm_90::{LiquidAtHeight, liquid_at_height};
 use crate::game::sm_a0::Samus_CheckSolidEnemyColl;
 
 crate::typed_struct! {
@@ -1750,8 +1750,8 @@ pub unsafe fn Samus_HandleTransFromBlockColl_3(game: &mut Game) {
         word! {game; samus_new_pose = word!(game.samus_pose); samus_momentum_routine_index = 5; }
     }
 }
-pub use self::nullsub_164 as nullsub_18_U8;
 pub use self::Samus_HandleTransFromBlockColl_3 as Samus_HandleTransFromBlockColl_4;
+pub use self::nullsub_164 as nullsub_18_U8;
 static off_91E951: [Func_U8; 6] = callback_table! { nonnull Func_U8;
     Samus_HandleTransFromBlockColl_1_0, Samus_HandleTransFromBlockColl_1_1,
     Samus_HandleTransFromBlockColl_1_2, Samus_HandleTransFromBlockColl_1_3, nullsub_18_U8,

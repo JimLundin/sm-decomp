@@ -1,48 +1,47 @@
-use crate::game::projectile_initialization::Initialization;
-use crate::game::player_projectiles::initialize;
-use crate::game::music::{PlayRoomMusicTrackAfterAFrames};
-use crate::game::player_projectiles::clear_animation;
 use crate::game::launch_motion::MovementDirection;
 use crate::game::launch_motion_ram;
+use crate::game::music::PlayRoomMusicTrackAfterAFrames;
+use crate::game::player_projectiles::clear_animation;
+use crate::game::player_projectiles::initialize;
 pub use crate::game::prelude::*;
+use crate::game::projectile_initialization::Initialization;
 use crate::game::samus_animation::{
     HandleAtmosphericEffects, PlaySamusFanfare, Samus_Animate, Samus_Draw, Samus_DrawEchoes,
     Samus_DrawShinesparkCrashEchoes, Samus_DrawWhenNotAnimatingOrDying,
 };
 
+pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_86::*;
-pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_90::*;
 
 use crate::game::explosion_window::spawn_crystal_flash;
-use crate::game::progress_flags::CheckEventHappened;
 use crate::game::player_projectiles::draw_projectiles;
+use crate::game::progress_flags::CheckEventHappened;
+use crate::game::sm_8b::Samus_CalcPos_Mode7;
+use crate::game::sm_8d::{DisablePaletteFx, SpawnPalfxObject};
+use crate::game::sm_9b::{
+    GrappleBeamFunc_BF1B, GrappleBeamHandler, UpdateGrappleBeamTilesAndIncrFlameCtr,
+};
 use crate::game::sm_80::{
     DrawTimer, HandleAutoscrolling_X, HandleAutoscrolling_Y,
     HandleScrollingWhenTriggeringScrollDown, HandleScrollingWhenTriggeringScrollLeft,
     HandleScrollingWhenTriggeringScrollRight, HandleScrollingWhenTriggeringScrollUp,
-    InvalidInterrupt_Crash, ProcessTimer, QueueSfx1_Max15, QueueSfx1_Max6, QueueSfx1_Max9,
-    QueueSfx2_Max6, QueueSfx3_Max15, QueueSfx3_Max6, QueueSfx3_Max9,
+    InvalidInterrupt_Crash, ProcessTimer, QueueSfx1_Max6, QueueSfx1_Max9, QueueSfx1_Max15,
+    QueueSfx2_Max6, QueueSfx3_Max6, QueueSfx3_Max9, QueueSfx3_Max15,
 };
 use crate::game::sm_81::DrawBeamGrappleSpritemap;
 use crate::game::sm_86::{EnableEprojs, SpawnEprojWithGfx};
 use crate::game::sm_88::EnableHdmaObjects;
-use crate::game::sm_8b::Samus_CalcPos_Mode7;
-use crate::game::sm_8d::{DisablePaletteFx, SpawnPalfxObject};
 use crate::game::sm_91::{
-    DemoObjectInputHandler, MakeSamusFaceForward, SamusFunc_E633, SamusFunc_F433,
-    Samus_CancelSpeedBoost, Samus_Func20, Samus_HandlePalette, Samus_HandleTransFromBlockColl,
-    Samus_HandleTransitions, Samus_InputHandler, Samus_LoadSuitPalette,
-    Samus_LoadSuitTargetPalette, Samus_RestoreHealth, XrayRunHandler,
+    DemoObjectInputHandler, MakeSamusFaceForward, Samus_CancelSpeedBoost, Samus_Func20,
+    Samus_HandlePalette, Samus_HandleTransFromBlockColl, Samus_HandleTransitions,
+    Samus_InputHandler, Samus_LoadSuitPalette, Samus_LoadSuitTargetPalette, Samus_RestoreHealth,
+    SamusFunc_E633, SamusFunc_F433, XrayRunHandler,
 };
 use crate::game::sm_94::{
-    scale_sine_word, BlockInsideDetection, HandleGrappleBeamGfx,
-    PostGrappleCollisionDetect_X, PostGrappleCollisionDetect_Y, Samus_AlignYPosSlope,
-};
-use crate::game::sm_9b::{
-    GrappleBeamFunc_BF1B, GrappleBeamHandler,
-    UpdateGrappleBeamTilesAndIncrFlameCtr,
+    BlockInsideDetection, HandleGrappleBeamGfx, PostGrappleCollisionDetect_X,
+    PostGrappleCollisionDetect_Y, Samus_AlignYPosSlope, scale_sine_word,
 };
 use crate::game::sm_a0::Samus_CheckSolidEnemyColl;
 
@@ -2538,7 +2537,7 @@ pub unsafe fn Samus_MoveDown_SetPoseCalcInput(game: &mut Game) {
     }
 }
 pub(crate) use crate::game::player_projectiles::{
-    prepare_entry as CallFrameHandlerAlfa, prepare as HandleControllerInputForGamePhysics,
+    prepare as HandleControllerInputForGamePhysics, prepare_entry as CallFrameHandlerAlfa,
 };
 crate::game::callback_dispatch! {
     pub unsafe fn CallFrameHandlerBeta(ea: u32, game: &mut Game) => ea;

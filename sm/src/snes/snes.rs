@@ -1,8 +1,8 @@
 use crate::c_library::{__assert_fail, memset};
 use crate::game_state::Game;
 use crate::initial_state::InitialState;
-use crate::rtl::words;
 use crate::rtl::RtlApuWrite;
+use crate::rtl::words;
 use crate::snes::apu::{apu_cycle, apu_init, apu_reset, apu_saveload};
 use crate::snes::cart::{cart_init, cart_read, cart_reset, cart_saveload, cart_write};
 use crate::snes::cpu::{cpu_init, cpu_reset, cpu_saveload};
@@ -15,7 +15,7 @@ use crate::snes::ppu::{
     ppu_checkOverscan, ppu_handleVblank, ppu_init, ppu_read, ppu_reset, ppu_runLine, ppu_saveload,
     ppu_write,
 };
-pub use crate::types::{size_t, Snes};
+pub use crate::types::{Snes, size_t};
 use ::core::ffi::{c_char, c_void};
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;

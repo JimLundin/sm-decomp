@@ -1,14 +1,10 @@
 //! Enemy selection and ordered behavior passes; slots remain encoded in SNES RAM.
 #![deny(unsafe_op_in_unsafe_fn)]
-use crate::game::enemy_combat::{
-    enemy_death,
-};
 use crate::game::enemy_animation::advance_animation;
-use crate::game::enemy_ram::{native_write, EnemyField as F, EnemySlot};
+use crate::game::enemy_combat::enemy_death;
+use crate::game::enemy_ram::{EnemyField as F, EnemySlot, native_write};
 use crate::game::scene_drawing::queue_enemy;
-use crate::game::sm_a0::{
-    CallEnemyAi, EnemyWithNormalSpritesIsOffScreen,
-};
+use crate::game::sm_a0::{CallEnemyAi, EnemyWithNormalSpritesIsOffScreen};
 use crate::game::sprite_objects::update_sprites;
 use crate::game_state::Game;
 use crate::ram_map::{checked_word as word, word_arrays as arrays};

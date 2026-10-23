@@ -1,5 +1,5 @@
 use crate::initial_state::InitialState;
-pub use crate::types::{size_t, Dsp, DspState};
+pub use crate::types::{Dsp, DspState, size_t};
 use core::mem::size_of;
 
 // The shared DSP state is also used by the native music sequencer and snapshots.

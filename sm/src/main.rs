@@ -14,7 +14,7 @@ use sm::game_state::{Game, GameOwner};
 use sm::host::Die;
 use sm::rtl::*;
 use sm::spc_player::{SpcPlayer_Create, SpcPlayer_Initialize};
-use sm::types::{size_t, RendererFuncs, Snes, FILE};
+use sm::types::{FILE, RendererFuncs, Snes, size_t};
 mod verify;
 const kWindowTitle: &[u8] = b"SuperMet\0";
 const NULL: *mut c_void = null_mut();

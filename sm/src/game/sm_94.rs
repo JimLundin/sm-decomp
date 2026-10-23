@@ -1,7 +1,7 @@
-use crate::game::projectile_room::Axis as ShotAxis;
 pub use crate::game::constants::bank_84::*;
 pub use crate::game::constants::bank_90::*;
 pub use crate::game::prelude::*;
+use crate::game::projectile_room::Axis as ShotAxis;
 
 use crate::game::progress_flags::CheckBossBitForCurArea;
 

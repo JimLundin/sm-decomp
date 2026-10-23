@@ -1,7 +1,9 @@
 //! Direct shared initialization/playback bindings, for every native selector.
 use super::{Context, Transaction};
 use crate::game::projectile_initialization::{self as initialization, Field, Initialization};
-use crate::game::projectile_playback::{self as playback, Command, Definitions, Frame, Owner, Write};
+use crate::game::projectile_playback::{
+    self as playback, Command, Definitions, Frame, Owner, Write,
+};
 use crate::game::projectile_trail_selection::{self as trail, Source, TrailDefinitions};
 use crate::rom::RomRecord;
 #[forbid(unsafe_code)]

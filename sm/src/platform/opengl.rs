@@ -10,7 +10,7 @@ use sdl2_sys::{
     SDL_GL_CreateContext, SDL_GL_GetDrawableSize, SDL_GL_SetAttribute, SDL_GL_SetSwapInterval,
     SDL_GL_SwapWindow,
 };
-use std::ffi::{c_void, CStr};
+use std::ffi::{CStr, c_void};
 use std::ptr::{null, null_mut};
 
 struct Presenter {

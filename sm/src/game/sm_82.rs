@@ -1,66 +1,65 @@
-use crate::game::enemy_scheduling::{select_enemies, run_enemies};
-use crate::game::scene_drawing::{draw_scene, queue_enemy_tiles};
-use crate::game::music::{
-    HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY, LoadRoomMusic,
-    LoadNewMusicTrackIfChanged,
-};
 use crate::game::decompression::decompress_to_ram;
 use crate::game::enemy_population_ram::{initialize_room, load_room_assets};
+use crate::game::enemy_scheduling::{run_enemies, select_enemies};
 use crate::game::gameplay::advance as AdvanceGameplay;
+use crate::game::music::{
+    HasQueuedMusic, LoadNewMusicTrackIfChanged, LoadRoomMusic, QueueMusic_Delayed8,
+    QueueMusic_DelayedY,
+};
 pub use crate::game::prelude::*;
 use crate::game::room_backgrounds::BackgroundLoad;
 use crate::game::room_state::{
-    load_enemy_graphics, load_sprite_palettes, load_tiles_and_palette, load_destination_cre,
-    load_destination_map, load_door, load_header as LoadRoomHeader, load_state as LoadStateHeader,
-    initialize_door_objects, load_level, save_departing_map,
+    initialize_door_objects, load_destination_cre, load_destination_map, load_door,
+    load_enemy_graphics, load_header as LoadRoomHeader, load_level, load_sprite_palettes,
+    load_state as LoadStateHeader, load_tiles_and_palette, save_departing_map,
 };
+use crate::game::scene_drawing::{draw_scene, queue_enemy_tiles};
 
 use crate::cpu_infra::DebugGameOverMenu;
 
+pub use crate::game::constants::bank_8f::*;
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_82::*;
-pub use crate::game::constants::bank_8f::*;
 
 use crate::game::message_boxes;
 use crate::game::progress_flags::CheckEventHappened;
-use crate::game::samus_animation::{Samus_DrawDuringDeathAnim, Samus_DrawWhenNotAnimatingOrDying};
-use crate::game::sm_80::{
-    memset7E, CalculateLayer2PosAndScrollsWhenScrolling, ClearOamExt, ClearTimerRam,
-    ClearUnusedOam, CopyToVramNow, DecompressToVRAM, DisableIrqInterrupts,
-    DoorTransitionScrollingSetup, DrawTimer, EnableIrqInterruptsNow, EnableNMI, FixDoorsMovingUp,
-    GraphicsAsset, HandleFadeIn, HandleFadeOut, HandleHudTilemap, InitializeHud,
-    LoadFromLoadStation, LoadMirrorOfExploredMapTiles, NextRandom, QueueClearingOfFxTilemap,
-    QueueSfx1_Max15, QueueSfx1_Max6, QueueSfx2_Max15, QueueSfx2_Max6, QueueSfx3_Max15,
-    QueueSfx3_Max3, QueueSfx3_Max6, ReadJoypadInputs, ReleaseButtonsFilter, ResumeGameplay,
-    SetupDmaTransfer, StartGameplay_Async, Vector_NMI, Vector_RESET_Async, WaitForNMI_Async,
-};
-use crate::game::sm_81::{
-    DrawMenuSpritemap, DrawSpritemap, FileSelectMap, FileSelectMenu, GameOverMenu, SaveToSram,
-};
 use crate::game::room_mechanisms::{clear, close_door, run, set_enabled};
-use crate::game::sm_86::{ClearEprojs, EnableEprojs, EprojRunAll};
-use crate::game::sm_87::{AnimtilesHandler, ClearAnimtiles, DisableAnimtiles, EnableAnimtiles};
-use crate::game::sm_88::{
-    sub_8882AC, DisableHdmaObjects, EnableHdmaObjects, HdmaObjectHandler,
-    InitializeSpecialEffectsForNewRoom, SpawnBG3ScrollHdmaObject, WaitUntilEndOfVblankAndClearHdma,
-};
-use crate::game::sm_89::LoadFXHeader;
+use crate::game::samus_animation::{Samus_DrawDuringDeathAnim, Samus_DrawWhenNotAnimatingOrDying};
 use crate::game::sm_8b::{
     GameState_1_OpeningCinematic_, GameState_37_CeresGoesBoomWithSamus_,
     GameState_39_EndingAndCredits_, LoadTitleSequenceGraphics,
 };
 use crate::game::sm_8d::{ClearPaletteFXObjects, DisablePaletteFx, EnablePaletteFx};
 use crate::game::sm_8f::{PauseHook_DraygonRoom, UnpauseHook_DraygonRoom};
-use crate::game::sm_90::{
-    CallSomeSamusCode, Samus_LowHealthCheck_0, SetLiquidPhysicsType,
-    UpdateBeamTilesAndPalette,
-};
-use crate::game::sm_91::{GameState_28_Unused_, Samus_Initialize, Samus_LoadSuitTargetPalette};
 use crate::game::sm_9b::{
     DrawSamusStartingDeathAnim_, GameState_24_SamusNoHealth_Explosion_Helper,
     HandleSamusDeathSequence, StartSamusDeathAnimation,
 };
-use crate::game::sm_a0::{TransferEnemyTilesToVramAndInit};
+use crate::game::sm_80::{
+    CalculateLayer2PosAndScrollsWhenScrolling, ClearOamExt, ClearTimerRam, ClearUnusedOam,
+    CopyToVramNow, DecompressToVRAM, DisableIrqInterrupts, DoorTransitionScrollingSetup, DrawTimer,
+    EnableIrqInterruptsNow, EnableNMI, FixDoorsMovingUp, GraphicsAsset, HandleFadeIn,
+    HandleFadeOut, HandleHudTilemap, InitializeHud, LoadFromLoadStation,
+    LoadMirrorOfExploredMapTiles, NextRandom, QueueClearingOfFxTilemap, QueueSfx1_Max6,
+    QueueSfx1_Max15, QueueSfx2_Max6, QueueSfx2_Max15, QueueSfx3_Max3, QueueSfx3_Max6,
+    QueueSfx3_Max15, ReadJoypadInputs, ReleaseButtonsFilter, ResumeGameplay, SetupDmaTransfer,
+    StartGameplay_Async, Vector_NMI, Vector_RESET_Async, WaitForNMI_Async, memset7E,
+};
+use crate::game::sm_81::{
+    DrawMenuSpritemap, DrawSpritemap, FileSelectMap, FileSelectMenu, GameOverMenu, SaveToSram,
+};
+use crate::game::sm_86::{ClearEprojs, EnableEprojs, EprojRunAll};
+use crate::game::sm_87::{AnimtilesHandler, ClearAnimtiles, DisableAnimtiles, EnableAnimtiles};
+use crate::game::sm_88::{
+    DisableHdmaObjects, EnableHdmaObjects, HdmaObjectHandler, InitializeSpecialEffectsForNewRoom,
+    SpawnBG3ScrollHdmaObject, WaitUntilEndOfVblankAndClearHdma, sub_8882AC,
+};
+use crate::game::sm_89::LoadFXHeader;
+use crate::game::sm_90::{
+    CallSomeSamusCode, Samus_LowHealthCheck_0, SetLiquidPhysicsType, UpdateBeamTilesAndPalette,
+};
+use crate::game::sm_91::{GameState_28_Unused_, Samus_Initialize, Samus_LoadSuitTargetPalette};
+use crate::game::sm_a0::TransferEnemyTilesToVramAndInit;
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
     UnpauseHook_Kraid_IsDead,

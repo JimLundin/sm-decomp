@@ -1,10 +1,10 @@
 //! Direct room traversal and one owner-holding binding for legacy-shaped reaction traits.
 use super::{Context, Transaction};
-use crate::game::projectile_room::{self as room, Axis, Field, Kind, Scan};
-use crate::game::projectile_flight_control::Flight;
 use crate::game::projectile_block_reactions::{
     self as reactions, Definitions, Material, Mechanism, Progress, SlopeInputs,
 };
+use crate::game::projectile_flight_control::Flight;
+use crate::game::projectile_room::{self as room, Axis, Field, Kind, Scan};
 use crate::rom::RomRecord;
 impl SlopeInputs for Transaction<'_> {
     fn block(&self) -> u16 {

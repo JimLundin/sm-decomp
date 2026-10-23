@@ -78,11 +78,7 @@ impl SpawnSearch {
     }
     pub fn remaining_parts(parts: u16) -> u16 {
         let remaining = (parts as i16).wrapping_sub(1);
-        if remaining < 0 {
-            0
-        } else {
-            remaining as u16
-        }
+        if remaining < 0 { 0 } else { remaining as u16 }
     }
     pub fn observe(&mut self, occupied: bool) -> SearchResult {
         if occupied {

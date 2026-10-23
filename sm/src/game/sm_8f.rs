@@ -3,9 +3,11 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_87::*;
 pub use crate::game::prelude::*;
 use crate::game::progress_flags::SetEventHappened;
-use crate::game::scrolling_sky::{initialize_land, initialize_ocean, queue_land_rows, queue_ocean_rows};
-use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::room_mechanisms::spawn_hardcoded;
+use crate::game::scrolling_sky::{
+    initialize_land, initialize_ocean, queue_land_rows, queue_ocean_rows,
+};
+use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_87::SpawnAnimtiles;
 use crate::game::sm_88::FxTypeFunc_2C_Haze;

@@ -2,8 +2,8 @@ use crate::game::enemy_combat::{
     apply_contact, apply_power_bomb, apply_shot, enemy_death, grapple_death, select_frozen_ai,
     shot_reaction,
 };
+use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
-use crate::game::enemy_scheduling::{update_frozen_enemy};
 pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_86::*;
@@ -15,8 +15,8 @@ use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_a0::{
     Abs16, CalculateAngleFromXY, CalculateAngleOfSamusFromEnemy, CallEnemyPreInstr,
     CheckIfEnemyIsOnScreen, CheckIfEnemyTouchesSamus, CosineMult8bit, CosineMult8bitFull,
-    EnemyFunc_ACA8, EnemyFunc_ADA3, EnemyFunc_B7A1, EnemyFunc_C8AD, Enemy_MoveDown,
-    Enemy_MoveRight_IgnoreSlopes, GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsSamusWithinEnemy_X,
+    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, EnemyFunc_ACA8, EnemyFunc_ADA3, EnemyFunc_B7A1,
+    EnemyFunc_C8AD, GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsSamusWithinEnemy_X,
     IsSamusWithinEnemy_Y, SignExtend8, SineMult8bit, SineMult8bitFull,
 };
 use crate::game::sprite_objects::create_sprite;

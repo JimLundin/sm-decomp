@@ -8,13 +8,34 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-Latest change: shared ownership transport in `game/ownership_transport.rs`,
+Latest change: repository-wide default `cargo fmt`; scoped formatting had left
+GitHub's `cargo fmt --check` failing. The full check and release/frontend/verifier
+build pass locally on source
+`d21e2bb348caf345714758514ae94830749863a57e505b62901eff9dcf085cdf`.
+Formatting affects 75 Rust files and adds 229 layout lines; source is now 108903.
+This is neither new engine behavior nor an implementation-size savings claim.
+The local native-config library needed regeneration and its linked SDK copy was
+refreshed; source checks were preserved. PLAN/ITERATION now require CI's exact
+full formatting command before Rust commits.
+
+Palette work is preserved outside main while the formatting fix lands. The
+actual-old 512-case baseline passed on source
+`b166bf625cfd98f304ab431a87cbc42f28d8e6f72a703a17d0b64b9d7c0ca7b8`;
+all earlier 507 outputs remained identical. Evidence and pending source are under
+`Local/sm-decomp-experiments/20261023/palette-effects/baseline-2*`; the four pending
+main files are in `baseline-2-inputs/sm/src`. They were deliberately removed from
+main for a formatting-only commit. The replacement and 13 caller drafts are in
+`palette-effects/game`. Reapply semantic edits onto formatted main, then full
+`cargo fmt`; do not overwrite formatting with old caller snapshots. No palette
+runtime is adopted yet. No compiler or capture session remains active.
+
+Earlier change: shared ownership transport in `game/ownership_transport.rs`,
 privately registered under projectiles and room mechanisms. Actual duplicate
 transport algorithms are removed; owner codecs stay separate. Final source
 `06c88508786a98d3bda75f0bfbb1b2a33d65398ac3783f7bffb81f8f2096667d` builds and passes
 106 projectile groups, 104 fresh full-RAM comparisons, 1018 frozen mechanism
 outcomes, strengthened ownership/qualified checks and 28314 oracle frames with
-zero failures. Current Rust 108674; full delta -8 lines / -5 tokens / -133 LF bytes.
+zero failures. At that milestone Rust was 108674; full delta -8 lines / -5 tokens / -133 LF bytes.
 
 Local `20261023/shared-ownership` contains `transport-build-1.log`,
 `transport-1.dll`, `transport-1-inputs`, `transport-1-capture.json`,

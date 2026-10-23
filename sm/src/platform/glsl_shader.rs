@@ -1,7 +1,7 @@
 use crate::c_library::{free, strtod};
 use crate::types::GlTextureWithSize;
-use std::alloc::{alloc_zeroed, dealloc, handle_alloc_error, Layout};
-use std::ffi::{c_char, c_void, CStr, CString};
+use std::alloc::{Layout, alloc_zeroed, dealloc, handle_alloc_error};
+use std::ffi::{CStr, CString, c_char, c_void};
 use std::ptr::null_mut;
 
 pub enum GlslShader {}

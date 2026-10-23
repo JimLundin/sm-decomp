@@ -5,7 +5,7 @@
 #![allow(non_snake_case, non_upper_case_globals, dead_code)]
 
 use sm::game_state::Game;
-use std::ffi::{c_char, c_int, c_void, CStr};
+use std::ffi::{CStr, c_char, c_int, c_void};
 use std::sync::atomic::{AtomicBool, Ordering};
 
 mod verify;

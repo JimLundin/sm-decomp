@@ -1,13 +1,14 @@
-use crate::game::enemy_combat::resolve_grapple;
 use crate::game::combat_rules::GrappleOutcome;
+use crate::game::enemy_combat::resolve_grapple;
 use crate::game::grapple_swing::{advance_swing, change_length, place_rope_origin};
 pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_9b::*;
 
+use crate::game::enemy_contact::grapple_enemy;
 use crate::game::samus_animation::DrawSamusSuitExploding;
 use crate::game::samus_animation::Samus_DrawStartingDeathAnim;
-use crate::game::sm_80::{Multiply16x16, QueueSfx1_Max1, QueueSfx1_Max15, QueueSfx1_Max6};
+use crate::game::sm_80::{Multiply16x16, QueueSfx1_Max1, QueueSfx1_Max6, QueueSfx1_Max15};
 use crate::game::sm_81::DrawBeamGrappleSpritemap;
 use crate::game::sm_90::{
     CallSomeSamusCode, LoadProjectilePalette, Samus_GetBottom_R18, Samus_GrappleWallJumpCheck,
@@ -15,10 +16,9 @@ use crate::game::sm_90::{
 };
 use crate::game::sm_91::{Samus_DealDamage, Samus_LoadSuitPalette, Samus_Pose_CancelGrapple};
 use crate::game::sm_94::{
-    kSinCosTable8bit_Sext, BlockCollGrappleBeam, BlockReactGrapple, GrappleFunc_AF87,
+    BlockCollGrappleBeam, BlockReactGrapple, GrappleFunc_AF87, kSinCosTable8bit_Sext,
 };
 use crate::game::sm_a0::CalculateAngleFromXY;
-use crate::game::enemy_contact::grapple_enemy;
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]

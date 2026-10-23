@@ -1,25 +1,25 @@
-use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
 use super::intro_pages;
+use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
 pub use crate::game::prelude::*;
 
-pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_8d::*;
+pub use crate::game::constants::bank_60::*;
 
 use crate::game::explosion_window::spawn_power_bomb;
-use crate::game::progress_flags::CheckEventHappened;
 use crate::game::player_projectiles::draw_projectiles;
+use crate::game::progress_flags::CheckEventHappened;
+use crate::game::sm_8d::{
+    ClearPaletteFXObjects, DisablePaletteFx, EnablePaletteFx, PaletteFxHandler, SpawnPalfxObject,
+};
 use crate::game::sm_80::{
-    memset7E, ClearOamExt, ClearUnusedOam, CopySuperMetroidString, DisableIrqInterrupts, EnableNMI,
+    ClearOamExt, ClearUnusedOam, CopySuperMetroidString, DisableIrqInterrupts, EnableNMI,
     GraphicsAsset, HandleFadeIn, HandleFadeOut, QueueMode7Transfers, QueueSfx1_Max15,
-    QueueSfx2_Max6, QueueSfx3_Max6, WaitForNMI_Async,
+    QueueSfx2_Max6, QueueSfx3_Max6, WaitForNMI_Async, memset7E,
 };
 use crate::game::sm_81::{DrawSpritemap, DrawSpritemapOffScreen, SaveToSram};
 use crate::game::sm_88::{
     CinematicFunction_Intro_Func133, DisableHdmaObjects, EnableHdmaObjects,
     SpawnTitleScreenGradientObjs, WaitUntilEndOfVblankAndClearHdma,
-};
-use crate::game::sm_8d::{
-    ClearPaletteFXObjects, DisablePaletteFx, EnablePaletteFx, PaletteFxHandler, SpawnPalfxObject,
 };
 use crate::game::sm_90::{
     DrawSamusAndProjectiles, HandleControllerInputForGamePhysics, HandleSamusMovementAndPause,

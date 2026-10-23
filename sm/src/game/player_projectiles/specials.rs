@@ -1,7 +1,7 @@
 //! Direct special-attack creation/orbit/departure binding for all selectors.
 use super::{Context, Transaction};
-use crate::game::special_attacks::{self as shared, Attack, Control, Field, Input, Kind};
 use crate::game::projectile_initialization::Initialization;
+use crate::game::special_attacks::{self as shared, Attack, Control, Field, Input, Kind};
 use crate::ram_map::{word_arrays as arrays, words};
 fn offset(field: Field) -> usize {
     use Field::*;

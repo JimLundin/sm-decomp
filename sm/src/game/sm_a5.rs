@@ -1,26 +1,28 @@
-use crate::game::enemy_drops::{scatter, DropSource};
 use crate::game::enemy_combat::{
     apply_contact, apply_shot, contact_without_death, flash_on_shot, power_bomb_without_death,
     reduce_suit_damage, select_frozen_ai, shot_reaction,
 };
+use crate::game::enemy_drops::{DropSource, scatter};
+use crate::game::enemy_scheduling::update_frozen_enemy;
+use crate::game::enemy_script::{EnemyScript, bank_base};
+use crate::game::minimap;
+use crate::game::music::QueueMusic_Delayed8;
+pub use crate::game::prelude::*;
 use crate::rtl::rom_record;
 use core::mem::offset_of;
-use crate::game::enemy_script::{EnemyScript, bank_base};
-use crate::game::enemy_scheduling::{update_frozen_enemy};
-use crate::game::music::{QueueMusic_Delayed8};
-use crate::game::minimap;
-pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_86::*;
 
-use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::room_mechanisms::spawn_hardcoded;
+use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
-use crate::game::sm_88::{sub_88DF34, SpawnBG3ScrollHdmaObject};
-use crate::game::sm_90::{CallSomeSamusCode, Samus_ReleaseFromDraygon_, Samus_SetGrabbedByDraygonPose};
+use crate::game::sm_88::{SpawnBG3ScrollHdmaObject, sub_88DF34};
+use crate::game::sm_90::{
+    CallSomeSamusCode, Samus_ReleaseFromDraygon_, Samus_SetGrabbedByDraygonPose,
+};
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_a0::{
-    Abs16, CalculateAngleFromXY, ConvertAngleToXy, CosineMult8bit, EnemyFunc_B691, EnemyFunc_B7A1,
+    Abs16, CalculateAngleFromXY, ConvertAngleToXy, CosineMult8bit, EnemyFunc_B7A1, EnemyFunc_B691,
     EnemyFunc_Divide, SignExtend8, SineMult8bit,
 };
 use crate::game::sprite_objects::create_sprite;

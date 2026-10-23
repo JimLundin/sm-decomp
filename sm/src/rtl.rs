@@ -111,7 +111,7 @@ use crate::spc_player::{
     SpcPlayer_Initialize, SpcPlayer_Upload,
 };
 pub use crate::types::Dsp;
-pub use crate::types::{size_t, LongPtr, PairU16, VoidP, FILE};
+pub use crate::types::{FILE, LongPtr, PairU16, VoidP, size_t};
 pub use crate::types::{RunFrameFunc, SyncAllFunc};
 use ::core::ffi::{c_char, c_long, c_ulong, c_void};
 use ::core::mem::size_of;

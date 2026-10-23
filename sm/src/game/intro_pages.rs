@@ -1,27 +1,27 @@
 //! Intro narrative pages, scene entry, crossfades and Japanese text continuations.
 //! Numeric callbacks select these operations; Game retains the cinematic state.
 
-use crate::game::music::{QueueMusic_Delayed8};
 use super::constants::bank_8d::addr_kPalfx_E1BC;
 use super::constants::bank_91::{addr_stru_91877E, addr_stru_918784};
 use super::constants::samus_poses::kPose_02_FaceL_Normal;
-use super::sm_80::{EnableNMI, HandleFadeOut};
-use super::sm_88::SpawnIntroCutsceneCrossfadeHdma;
 use super::sm_8b::{
-    addr_kCinematicBgObjectDef_8BCF5D, addr_kCinematicSpriteObjectDef_8BCE55,
-    addr_kCinematicSpriteObjectDef_8BCE5B, addr_kCinematicSpriteObjectDef_8BCE61,
-    addr_kCinematicSpriteObjectDef_8BCE67, addr_kCinematicSpriteObjectDef_8BCE73,
-    addr_kCinematicSpriteObjectDef_8BCE79, addr_kCinematicSpriteObjectDef_8BCF27,
     CinematicBgInstr_SetSomeStuffForSpriteObject_14, CinematicFunction_Intro_Func20,
     ClearEnglishTextTilemap, ClearJapaneseTextTiles, ClearYColorsFromIndexX, ComposeFadingPalettes,
     DecomposePaletteDataForFading, DisableCinematicBgTilemapUpdates,
     EnableCinematicBgTilemapUpdates, FadeInYColorsFromIndexX, FadeOutYColorsFromIndexX,
     RevertButtonConfig, SetSomeStuffForSpriteObject_15, SetSomeStuffForSpriteObject_16,
     SpawnCinematicBgObject, SpawnCinematicSpriteObject, SpawnCinematicSpriteObjectAtSlot,
-    SpawnMode7Object, TransferJapaneseTextTilesToVram,
+    SpawnMode7Object, TransferJapaneseTextTilesToVram, addr_kCinematicBgObjectDef_8BCF5D,
+    addr_kCinematicSpriteObjectDef_8BCE5B, addr_kCinematicSpriteObjectDef_8BCE55,
+    addr_kCinematicSpriteObjectDef_8BCE61, addr_kCinematicSpriteObjectDef_8BCE67,
+    addr_kCinematicSpriteObjectDef_8BCE73, addr_kCinematicSpriteObjectDef_8BCE79,
+    addr_kCinematicSpriteObjectDef_8BCF27,
 };
 use super::sm_8d::SpawnPalfxObject;
+use super::sm_80::{EnableNMI, HandleFadeOut};
+use super::sm_88::SpawnIntroCutsceneCrossfadeHdma;
 use super::sm_91::{EnableDemoInput, LoadDemoInputObject, ResetDemoData};
+use crate::game::music::QueueMusic_Delayed8;
 use crate::game_state::Game;
 use crate::ram_map::{ram_ptr, word};
 

@@ -6,7 +6,7 @@ use crate::game::combat_rules::{
 use crate::game::constants::bank_86::addr_kEproj_EnemyDeathExplosion;
 use crate::game::constants::bank_a0::addr_kEnemyDef_DAFF;
 use crate::game::constants::bank_b4::addr_stru_B4EC1C;
-use crate::game::enemy_ram::{native_write as write, EnemyField as F, EnemySlot};
+use crate::game::enemy_ram::{EnemyField as F, EnemySlot, native_write as write};
 use crate::game::sm_80::{QueueSfx1_Max3, QueueSfx2_Max1, QueueSfx2_Max3, QueueSfx3_Max3};
 use crate::game::sm_86::SpawnEprojWithGfx;
 use crate::game::sm_90::CallSomeSamusCode;

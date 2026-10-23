@@ -4,7 +4,7 @@
 #![forbid(unsafe_code)]
 use super::*;
 use crate::{game_state::Game, rom::RomImage};
-use std::panic::{catch_unwind, AssertUnwindSafe};
+use std::panic::{AssertUnwindSafe, catch_unwind};
 fn lorom(a: u32) -> usize {
     crate::rtl::lorom_offset(a) as usize
 }

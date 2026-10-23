@@ -1,24 +1,24 @@
-use crate::game::room_state::{load_sprite_palettes, load_tiles_and_palette};
-use crate::game::music::{HandleMusicQueue, LoadRoomMusic, UpdateMusicTrackIndex};
 use crate::game::decompression::{self, decompress_to_ram};
+use crate::game::music::{HandleMusicQueue, LoadRoomMusic, UpdateMusicTrackIndex};
 pub use crate::game::prelude::*;
 use crate::game::room_backgrounds::BackgroundLoad;
+use crate::game::room_state::{load_sprite_palettes, load_tiles_and_palette};
 
 pub use crate::game::constants::bank_60::*;
 
 use crate::c_library::memcmp;
-use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
-use crate::game::sm_82::{LoadDestinationRoomThings, NullFunc, ResetSoundQueues};
+use crate::game::enemy_population_ram::load_room_assets;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::room_mechanisms::{clear, reload_graphics};
+use crate::game::sm_8b::InitializeIoDisplayLogo_Async;
+use crate::game::sm_8d::ClearPaletteFXObjects;
+use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
+use crate::game::sm_82::{LoadDestinationRoomThings, NullFunc, ResetSoundQueues};
 use crate::game::sm_86::ClearEprojs;
 use crate::game::sm_87::ClearAnimtiles;
 use crate::game::sm_88::{InitializeSpecialEffectsForNewRoom, WaitUntilEndOfVblankAndClearHdma};
 use crate::game::sm_89::LoadFXHeader;
-use crate::game::sm_8b::InitializeIoDisplayLogo_Async;
-use crate::game::sm_8d::ClearPaletteFXObjects;
 use crate::game::sm_90::UpdateBeamTilesAndPalette;
-use crate::game::enemy_population_ram::load_room_assets;
 use crate::rtl::RtlApuUpload;
 
 crate::typed_struct! {

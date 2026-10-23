@@ -22,7 +22,7 @@ use crate::snes::snes::{snes_handle_pos_stuff, snes_init};
 use crate::snes::snes_other::snes_loadRom;
 use crate::tracing::getProcessorStateCpu;
 pub use crate::types::ProjectileInstr;
-pub use crate::types::{size_t, time_t, Cpu, Dma, Enemy_Botwoon, Ppu, Snes};
+pub use crate::types::{Cpu, Dma, Enemy_Botwoon, Ppu, Snes, size_t, time_t};
 use crate::util::ReadWholeFile;
 // Explicit state previously included by the oversized OAM memory copy.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]

@@ -1,13 +1,13 @@
-use crate::game::enemy_drops::{scatter, DropSource};
 use crate::game::enemy_combat::{
     apply_contact, apply_power_bomb, apply_shot, enemy_death, grapple_death, select_frozen_ai,
     shot_reaction,
 };
+use crate::game::enemy_drops::{DropSource, scatter};
+use crate::game::enemy_scheduling::update_frozen_enemy;
+use crate::game::enemy_script::{EnemyScript, bank_base};
+pub use crate::game::prelude::*;
 use crate::rtl::rom_record;
 use core::mem::offset_of;
-use crate::game::enemy_script::{EnemyScript, bank_base};
-use crate::game::enemy_scheduling::{update_frozen_enemy};
-pub use crate::game::prelude::*;
 
 use crate::cpu_infra::Call;
 
@@ -23,10 +23,10 @@ use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_a0::{
     Abs16, CalculateAngleOfSamusFromEnemy, CalculateBlockContainingPixelPos, CallEnemyPreInstr,
     CheckIfEnemyIsOnScreen, CheckIfEnemyTouchesSamus, ConvertAngleToXy, CosineMult8bit,
-    CosineMult8bitFull, EnemyFunc_B691, EnemyFunc_BBBF, EnemyFunc_BC76, EnemyFunc_BF8A,
-    EnemyFunc_C8AD, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_MoveRight_ProcessSlopes,
-    GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
-    SignExtend8, SineMult8bit, SineMult8bitFull,
+    CosineMult8bitFull, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
+    Enemy_MoveRight_ProcessSlopes, EnemyFunc_B691, EnemyFunc_BBBF, EnemyFunc_BC76, EnemyFunc_BF8A,
+    EnemyFunc_C8AD, GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsSamusWithinEnemy_X,
+    IsSamusWithinEnemy_Y, SignExtend8, SineMult8bit, SineMult8bitFull,
 };
 use crate::game::sprite_objects::create_sprite;
 pub use crate::game::waver::{Waver_Init, Waver_Instr_1, Waver_Main};

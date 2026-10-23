@@ -1,19 +1,19 @@
-use crate::game::enemy_drops::{scatter, DropSource};
 use crate::game::enemy_combat::{apply_contact, apply_shot};
+use crate::game::enemy_drops::{DropSource, scatter};
+use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
-use crate::game::enemy_scheduling::{update_frozen_enemy};
-use crate::game::music::{QueueMusic_Delayed8};
+use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a4::*;
 
 use crate::game::minimap;
-use crate::game::sm_80::{QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::room_mechanisms::spawn_hardcoded;
+use crate::game::sm_80::{QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_86::{ClearEprojs, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::SpawnHdmaObject;
-use crate::game::sm_a0::{Enemy_MoveRight_IgnoreSlopes};
+use crate::game::sm_a0::Enemy_MoveRight_IgnoreSlopes;
 use crate::game::sprite_objects::create_sprite;
 
 pub type Enemy_Crocomire = crate::game::enemy_layouts::EnemyLayout72;

@@ -1,7 +1,7 @@
 //! Complete preparation/weapon/update/history interval, interrupted only by native player leaves.
 use super::{Context, Transaction};
 use crate::game::player_preparation::{self as shared, Entry, Field, Input, Step};
-use crate::game::{weapon_selection as selection, weapon_coordinator as coordinator};
+use crate::game::{weapon_coordinator as coordinator, weapon_selection as selection};
 use crate::ram_map::words as ram;
 #[forbid(unsafe_code)]
 pub fn read(game: &Transaction<'_>, input: Input) -> u16 {

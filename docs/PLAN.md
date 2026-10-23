@@ -533,6 +533,10 @@ historical per-commit recipes; subsystem completion alone requires no full run.
    static checks; removing demonstrably unused private code needs a reference
    search and compiler checks. Neither needs a gameplay replay. Frontend-only
    changes need frontend checks, since the headless movie does not call the UI.
+   Before every Rust commit, run `cargo fmt` and `cargo fmt --check` from the
+   repository root, using the repository toolchain and default configuration.
+   CI runs that exact check. Formatting selected files with module/import
+   reordering disabled is not a substitute for the full check.
 2. **Focused behavior changes.** Run formatting, a release build and the shortest
    exercised oracle segment on the final source. Require explicit routine and
    changed-branch probes with `--require-hit`; a missing hit fails verification.

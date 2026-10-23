@@ -1,16 +1,16 @@
 //! Room and door metadata, ordered state selection and setup dispatch.
 //! Checked records retain their cartridge allocation; RAM owns the live state.
 use crate::game::decompression::decompress_to_ram;
-use crate::game::room_mechanisms::spawn_room;
 use crate::game::progress_flags::{CheckBossBitForCurArea, CheckEventHappened};
+use crate::game::room_mechanisms::spawn_room;
+use crate::game::sm_8f::{CallDoorDefSetupCode, CallRoomSetupCode};
 use crate::game::sm_80::{
     CopyToVramNow, DecompressToVRAM, LoadMirrorOfExploredMapTiles, SaveExploredMapTilesToSaved,
     SetElevatorsAsUsed,
 };
-use crate::game::sm_8f::{CallDoorDefSetupCode, CallRoomSetupCode};
 use crate::game_state::Game;
 use crate::ram_map::checked_word;
-use crate::rtl::{rom_bank_record, Mult8x8, Unreachable, WriteRegWord};
+use crate::rtl::{Mult8x8, Unreachable, WriteRegWord, rom_bank_record};
 use crate::snes::registers::{VMADDL, VMAIN};
 use crate::types::{DoorDef as Door, RoomDefHeader as Header, RoomDefRoomstate as State};
 use crate::types::{EnemyDef, EnemyTileset};
@@ -413,7 +413,7 @@ pub(crate) unsafe fn load_tiles_and_palette(game: &mut Game) {
 #[forbid(unsafe_code)]
 pub(crate) fn check_level_copy(case: u32) {
     use crate::rom::RomImage;
-    use std::panic::{catch_unwind, AssertUnwindSafe};
+    use std::panic::{AssertUnwindSafe, catch_unwind};
     let size = match case {
         0 => 0x5a00usize,
         1 => 0x3c00,

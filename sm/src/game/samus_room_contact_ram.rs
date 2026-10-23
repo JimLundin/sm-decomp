@@ -1,6 +1,6 @@
 //! Live checked fields for the owned contact scan; cartridge, bus and setup effects stay explicit.
-use crate::game::samus_room_contact::{self as contact, Axis, Context, Field};
 use crate::game::mechanism_displacement::Displacement;
+use crate::game::samus_room_contact::{self as contact, Axis, Context, Field};
 use crate::game_state::Game;
 struct Fields<'a>(&'a mut Game);
 fn offset(field: Field) -> usize {

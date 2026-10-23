@@ -1,8 +1,8 @@
 //! Flight, numeric motion identities, reflection and release on one owner.
 use super::{Context, Transaction, animation};
 use crate::game::projectile_flight_control::{self as control, Flight};
-use crate::game::projectile_room::Axis;
 use crate::game::projectile_initialization::Initialization;
+use crate::game::projectile_room::Axis;
 use crate::ram_map::word_arrays as arrays;
 pub(super) fn clear(k: u16, mut game: Transaction<'_>) -> Transaction<'_> {
     use crate::ram_map::{word_arrays::*, words};

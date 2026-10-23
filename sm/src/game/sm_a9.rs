@@ -2,37 +2,39 @@ use crate::game::enemy_combat::{
     contact_without_death, create_dud, power_bomb_without_death, reduce_suit_damage,
     select_frozen_ai, shot_reaction,
 };
-use crate::game::enemy_script::{EnemyScript, bank_base};
-use crate::game::enemy_scheduling::{update_frozen_enemy};
-use crate::game::music::{QueueMusic_Delayed8};
 use crate::game::enemy_population_ram::spawn_enemy;
+use crate::game::enemy_scheduling::update_frozen_enemy;
+use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::minimap;
+use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
 
 use crate::game::beam_windows::calculate_rainbow_window;
 
-pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_8d::*;
+pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
 
 use crate::game::mother_brain_visuals::{self, Fade};
 use crate::game::progress_flags::{CheckEventHappened, SetBossBitForCurArea, SetEventHappened};
+use crate::game::room_mechanisms::spawn_hardcoded;
+use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_80::{
     NextRandom, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6,
 };
-use crate::game::room_mechanisms::spawn_hardcoded;
-use crate::game::sm_86::{Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
+use crate::game::sm_86::{
+    Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
+};
 use crate::game::sm_88::{MotherBrainRisingHdmaObject, SpawnMotherBrainRainbowBeamHdma};
 use crate::game::sm_89::LoadFxEntry;
-use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::SomeMotherBrainScripts;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::{CalculateAngleFromXY, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes};
 use crate::game::sm_a6::{
-    homing_velocity, HandleTypewriterText_Ext, HomingReversal, Ridley_Func_98,
-    SetupZebesEscapeTypewriter,
+    HandleTypewriterText_Ext, HomingReversal, Ridley_Func_98, SetupZebesEscapeTypewriter,
+    homing_velocity,
 };
 
 use crate::rtl::MemCpy;

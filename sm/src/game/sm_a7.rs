@@ -1,31 +1,31 @@
-use crate::game::enemy_drops::{scatter, DropSource};
+use crate::game::decompression::decompress_to_ram;
 use crate::game::enemy_combat::{
     apply_contact, apply_shot, contact_without_death, enemy_death, power_bomb_without_death,
     select_frozen_ai, shot_reaction,
 };
+use crate::game::enemy_drops::{DropSource, scatter};
+use crate::game::enemy_scheduling::update_frozen_enemy;
+use crate::game::enemy_script::{EnemyScript, bank_base};
+use crate::game::music::QueueMusic_Delayed8;
+pub use crate::game::prelude::*;
 use crate::rtl::rom_record;
 use core::mem::offset_of;
-use crate::game::enemy_script::{EnemyScript, bank_base};
-use crate::game::enemy_scheduling::{update_frozen_enemy};
-use crate::game::music::{QueueMusic_Delayed8};
-use crate::game::decompression::decompress_to_ram;
-pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_86::*;
 
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::minimap;
+use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_80::{
-    GraphicsAsset, NextRandom, QueueSfx1_Max6, QueueSfx2_Max15, QueueSfx2_Max6, QueueSfx3_Max6,
+    GraphicsAsset, NextRandom, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx2_Max15, QueueSfx3_Max6,
     ScreenOff, ScreenOn, WaitForNMI_Async,
 };
 use crate::game::sm_82::AdvancePaletteFade_BgPalette6;
-use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
-use crate::game::sm_88::{sub_88E487, SpawnHdmaObject};
+use crate::game::sm_88::{SpawnHdmaObject, sub_88E487};
 use crate::game::sm_a0::{
     CallEnemyPreInstr, CheckIfEnemyTouchesSamus, DetermineDirectionOfSamusFromEnemy,
-    EnemyFunc_BBBF, EnemyFunc_C8AD, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
+    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, EnemyFunc_BBBF, EnemyFunc_C8AD,
     IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
 };
 use crate::game::sprite_objects::create_sprite;

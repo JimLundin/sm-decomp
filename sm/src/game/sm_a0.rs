@@ -1,9 +1,9 @@
 use crate::game::combat_rules::LatchMode;
+use crate::game::enemy_population_ram::initialize_room;
+use crate::game::enemy_scheduling::{shake_active_enemies, update_frozen_enemy};
+pub use crate::game::prelude::*;
 use crate::rtl::rom_record;
 use core::mem::offset_of;
-use crate::game::enemy_scheduling::{shake_active_enemies, update_frozen_enemy};
-use crate::game::enemy_population_ram::initialize_room;
-pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_86::*;
@@ -12,15 +12,15 @@ pub use crate::game::constants::bank_a4::*;
 pub use crate::game::constants::bank_b4::*;
 
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
+use crate::game::room_mechanisms::spawn_collision;
 use crate::game::sm_80::{
     NextRandom, QueueSfx1_Max3, QueueSfx1_Max6, QueueSfx2_Max1, QueueSfx2_Max3, QueueSfx3_Max3,
 };
-use crate::game::room_mechanisms::spawn_collision;
-use crate::game::sm_86::{SpawnEprojWithGfx};
+use crate::game::sm_86::SpawnEprojWithGfx;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_94::square_slope_occupied;
-use crate::game::sprite_objects::{create_sprite};
+use crate::game::sprite_objects::create_sprite;
 use crate::game::{sm_a2, sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b2, sm_b3};
 
 pub use crate::types::EnemyAiBits;

@@ -2,20 +2,22 @@ use crate::game::enemy_combat::{
     apply_contact, apply_power_bomb, apply_shot, contact_without_death, grapple_death,
     power_bomb_without_death, rinka_death, select_frozen_ai, shot_reaction,
 };
-use crate::game::enemy_script::{EnemyScript, bank_base};
-use crate::game::enemy_scheduling::{update_frozen_enemy};
 use crate::game::enemy_population_ram::delete_connected;
+use crate::game::enemy_scheduling::update_frozen_enemy;
+use crate::game::enemy_script::{EnemyScript, bank_base};
 pub use crate::game::prelude::*;
 
-pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_8d::*;
+pub use crate::game::constants::bank_86::*;
 
 use crate::game::message_boxes;
 use crate::game::progress_flags::CheckEventHappened;
+use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_81::SaveToSram;
-use crate::game::sm_86::{Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
-use crate::game::sm_8d::SpawnPalfxObject;
+use crate::game::sm_86::{
+    Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
+};
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::{
     MakeSamusFaceForward, Samus_RestoreHealth, Samus_RestoreMissiles, Samus_RestorePowerBombs,
@@ -25,7 +27,7 @@ use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::{
     CalculateAngleFromXY, CalculateAngleOfSamusFromEnemy, CallEnemyPreInstr,
     CheckIfEnemyIsOnScreen, CheckIfEnemyTouchesSamus, CompareDistToSamus_X, ConvertAngleToXy,
-    EnemyFunc_BC76, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_MoveRight_SlopesAsWalls,
+    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_MoveRight_SlopesAsWalls, EnemyFunc_BC76,
     GetSamusEnemyDelta_X, IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
 };
 use crate::game::sm_a9::MoveEnemyWithVelocity;

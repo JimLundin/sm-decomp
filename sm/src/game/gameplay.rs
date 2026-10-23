@@ -3,19 +3,19 @@
 //! Samus preparation includes projectile work; enemy processing and a possible
 //! message suspension separate it from movement/pose completion. Callbacks
 //! observe live RAM. Only the entry resume point is held across those callbacks.
-use crate::game::enemy_scheduling::{select_enemies, run_enemies};
-use crate::game::scene_drawing::{draw_scene, queue_enemy_tiles};
+use crate::game::enemy_scheduling::{run_enemies, select_enemies};
 use crate::game::message_boxes;
 use crate::game::prelude::*;
+use crate::game::room_mechanisms::run;
+use crate::game::scene_drawing::{draw_scene, queue_enemy_tiles};
+use crate::game::sm_8d::PaletteFxHandler;
+use crate::game::sm_8f::RunRoomMainCode;
 use crate::game::sm_80::{
     CalculateLayer2PosAndScrollsWhenScrolling, DebugScrollPosSaveLoad, HandleHudTilemap,
 };
 use crate::game::sm_82::HandleSamusOutOfHealthAndGameTile;
-use crate::game::room_mechanisms::run;
 use crate::game::sm_86::EprojRunAll;
 use crate::game::sm_87::AnimtilesHandler;
-use crate::game::sm_8d::PaletteFxHandler;
-use crate::game::sm_8f::RunRoomMainCode;
 use crate::game::sm_90::{
     HandleControllerInputForGamePhysics, HandleSamusMovementAndPause, MainScrollingRoutine,
 };

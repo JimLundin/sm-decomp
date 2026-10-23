@@ -1,5 +1,5 @@
 //! File and lexical helpers from the pinned native utility dependency.
-pub use crate::types::{size_t, FILE};
+pub use crate::types::{FILE, size_t};
 use core::ffi::{c_char, c_void};
 
 pub type __builtin_va_list = [__va_list_tag; 1];

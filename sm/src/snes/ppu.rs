@@ -4,7 +4,7 @@ use ::core::ffi::{c_char, c_void};
 use ::core::mem::{size_of, transmute};
 
 use crate::c_library::{__assert_fail, memcpy, memset};
-pub use crate::types::{size_t, Ppu, PpuPixelPrioBufs, PpuZbufType, Snes};
+pub use crate::types::{Ppu, PpuPixelPrioBufs, PpuZbufType, Snes, size_t};
 crate::type_aliases! {
     pub C2RustUnnamed_0, C2RustUnnamed_1, C2RustUnnamed_2, C2RustUnnamed_3 = u32;
 }

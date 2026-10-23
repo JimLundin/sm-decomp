@@ -2,9 +2,7 @@
 // All RAM access below is checked. Unsafe scopes identify the remaining ROM,
 // damage and failure interfaces that still need migration.
 #![deny(unsafe_op_in_unsafe_fn)]
-use crate::game::enemy_combat::{
-    apply_shot, shot_reaction,
-};
+use crate::game::enemy_combat::{apply_shot, shot_reaction};
 use crate::game::enemy_layouts::{EnemyLayout72, EnemyLayout72Late};
 use crate::game::sm_80::QueueSfx3_Max6;
 use crate::game::sm_a0::{

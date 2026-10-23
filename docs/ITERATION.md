@@ -53,7 +53,10 @@ another compiler was active. An overall speedup has not yet been measured.
    probes are removed, rebuild and repeat the measured segment on clean source.
    Reuse passing results only while their compiled inputs and relevant context
    remain unchanged. Name uncovered behavior and stop its further cleanup.
-7. **Count and land.** Run `sh tools/progress.sh`, count all replacement costs,
+7. **Count and land.** Run `cargo fmt` followed by `cargo fmt --check` from the
+   repository root, matching CI's default formatting settings. Scoped rustfmt
+   invocations with import/module reordering disabled do not satisfy this check.
+   Run `sh tools/progress.sh`, count all replacement costs,
    and explain increases. Recheck HEAD/index and commit only this change to main
    with commands, coverage and results. Update PLAN only when status, direction
    or a blocker changes. Start the next dependent step from the landed source.

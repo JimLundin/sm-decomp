@@ -2,13 +2,12 @@ use crate::game::liquid_effects::{initialize_acid, initialize_lava, initialize_w
 pub use crate::game::prelude::*;
 
 use crate::game::scrolling_sky::{initialize_banded_sky, initialize_land};
+use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_87::SpawnAnimtiles;
 use crate::game::sm_88::{
-    FxTypeFunc_24, FxTypeFunc_26_TourianEntranceStatue, FxTypeFunc_28_CeresRidley,
-    FxTypeFunc_2C_Haze, FxTypeFunc_8_Spores, FxTypeFunc_A_Rain, FxTypeFunc_C,
-    FxTypeFunc_CeresElevator,
+    FxTypeFunc_2C_Haze, FxTypeFunc_8_Spores, FxTypeFunc_24, FxTypeFunc_26_TourianEntranceStatue,
+    FxTypeFunc_28_CeresRidley, FxTypeFunc_A_Rain, FxTypeFunc_C, FxTypeFunc_CeresElevator,
 };
-use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_90::CallSomeSamusCode;
 
 crate::typed_struct! {

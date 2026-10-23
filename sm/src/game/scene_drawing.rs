@@ -1,7 +1,7 @@
 //! Layer-ordered scene drawing and live enemy graphics compatibility.
 #![deny(unsafe_op_in_unsafe_fn)]
 use crate::game::enemy_ram::{
-    native_read as read, native_write as write, EnemyField as F, EnemySlot,
+    EnemyField as F, EnemySlot, native_read as read, native_write as write,
 };
 use crate::game::player_projectiles::draw_explosions;
 use crate::game::sm_81::{
@@ -13,7 +13,7 @@ use crate::game::sm_a0::CallEnemyGfxDrawHook;
 use crate::game::sprite_objects::draw_sprites;
 use crate::game_state::Game;
 use crate::ram_map::checked_word as word;
-use crate::rtl::{rom_record, Unreachable};
+use crate::rtl::{Unreachable, rom_record};
 use crate::types::EnemySpawnData;
 use core::mem::offset_of;
 

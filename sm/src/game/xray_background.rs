@@ -4,7 +4,7 @@ use crate::game::prelude::*;
 
 use crate::game::sm_80::QueueSfx1_Max6;
 
-use crate::game::sm_91::{ResponsibleForXrayStandupGlitch, __ASSERT_FUNCTION};
+use crate::game::sm_91::{__ASSERT_FUNCTION, ResponsibleForXrayStandupGlitch};
 
 const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
 const RomPtr_91: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x91>;

@@ -1,20 +1,20 @@
-use crate::game::enemy_combat::{reduce_suit_damage};
+use crate::game::enemy_combat::reduce_suit_damage;
+use crate::game::eproj_script::EprojScript;
+use crate::game::music::QueueMusic_Delayed8;
+pub use crate::game::prelude::*;
 use crate::rtl::rom_record;
 use core::mem::offset_of;
-use crate::game::music::{QueueMusic_Delayed8};
-use crate::game::eproj_script::EprojScript;
-pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a0::*;
 use crate::game::progress_flags::PrepareBitAccess;
+use crate::game::room_mechanisms::{self, calculate_coordinates};
 use crate::game::sm_80::{
-    NextRandom, QueueSfx1_Max1, QueueSfx1_Max15, QueueSfx1_Max3, QueueSfx1_Max6, QueueSfx1_Max9,
-    QueueSfx2_Max1, QueueSfx2_Max15, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx2_Max9,
-    QueueSfx3_Max1, QueueSfx3_Max15, QueueSfx3_Max3, QueueSfx3_Max6, QueueSfx3_Max9,
+    NextRandom, QueueSfx1_Max1, QueueSfx1_Max3, QueueSfx1_Max6, QueueSfx1_Max9, QueueSfx1_Max15,
+    QueueSfx2_Max1, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx2_Max9, QueueSfx2_Max15,
+    QueueSfx3_Max1, QueueSfx3_Max3, QueueSfx3_Max6, QueueSfx3_Max9, QueueSfx3_Max15,
 };
 use crate::game::sm_81::{DrawEprojSpritemapWithBaseTile, DrawEprojSpritemapWithBaseTileOffscreen};
-use crate::game::room_mechanisms::{self, calculate_coordinates};
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_94::{
@@ -1456,8 +1456,8 @@ pub fn EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2(k: u16, game: &mut Gam
             .wrapping_sub(game.enemy_projectile_y_pos(k)) as i16)
             < 0) as u16
 }
-pub use self::EprojPreInstr_NorfairLavaquakeRocks_Inner2 as EprojPreInstrHelper_DBF2_Func2;
 pub use self::Eproj_NorfairLavaquakeRocks_Func3 as EprojPreInstr_DBF2_MoveX2;
+pub use self::EprojPreInstr_NorfairLavaquakeRocks_Inner2 as EprojPreInstrHelper_DBF2_Func2;
 static word_86DCB9: [i16; 5] = [-64i16, -56i16, -48i16, -40i16, -32i16];
 static kEprojInit_SporeSpawners_X: [i16; 4] = [0x20, 0x60, 0xa0, 0xe0];
 crate::game::callback_dispatch! {
@@ -1495,8 +1495,8 @@ crate::game::address_dispatch! {
         8839248 => Eproj_LavaThrownByLavaman_MoveX1; 8839290 => Eproj_LavaThrownByLavaman_MoveX2;
     }
 }
-pub use self::EprojPreInstr_DBF2_MoveX1 as Eproj_LavaThrownByLavaman_MoveX1;
 pub use self::Eproj_NorfairLavaquakeRocks_Func3 as Eproj_LavaThrownByLavaman_MoveX2;
+pub use self::EprojPreInstr_DBF2_MoveX1 as Eproj_LavaThrownByLavaman_MoveX1;
 pub unsafe fn sub_86E0A4(v0: u16, game: &mut Game) {
     unsafe {
         if sub_86E0B0(v0, game) != 0 {
@@ -1512,7 +1512,9 @@ unsafe fn EprojInit_SpawnedGate_Common(j: u16, v1: u16, game: &mut Game) {
         let v3: i32 = j as i32 >> 1;
         word!(game.eproj_E[v3] = room_mechanisms::block_index(v2, game));
         word!(game.eproj_x_pos[v3] = (16u16).wrapping_mul(room_mechanisms::block_x(game)));
-        word!(game.eproj_y_pos[v3] = (v1 as i32 + 16 * room_mechanisms::block_y(game) as i32) as u16);
+        word!(
+            game.eproj_y_pos[v3] = (v1 as i32 + 16 * room_mechanisms::block_y(game) as i32) as u16
+        );
     }
 }
 fn CheckIfEprojIsOffScreen(k: u16, game: &mut Game) -> u16 {

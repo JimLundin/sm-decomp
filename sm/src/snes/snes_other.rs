@@ -2,7 +2,7 @@ use crate::c_library::{free, malloc, memcpy, memset, printf};
 use crate::game_state::Game;
 use crate::snes::cart::cart_load;
 use crate::snes::snes::snes_reset;
-pub use crate::types::{size_t, Snes};
+pub use crate::types::{Snes, size_t};
 use ::core::ffi::{c_char, c_void};
 use ::core::mem::size_of;
 crate::typed_struct! {

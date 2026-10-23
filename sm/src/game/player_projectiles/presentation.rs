@@ -1,10 +1,12 @@
 //! Projectile/trail selection stays owned; actual native OAM consumers are explicit effects.
 use super::{Context, Transaction};
-use crate::game::projectile_trail_emission::{self as emission, Half, Owner, Point, Write};
-use crate::game::projectile_trail_playback::{self as playback, Definitions, Instruction, Presentation};
-use crate::game::projectile_trails::{SIDES, style, ProgramCounter};
 use crate::game::projectile_presentation::{self as presentation, Pass};
 use crate::game::projectile_presentation_ram as native;
+use crate::game::projectile_trail_emission::{self as emission, Half, Owner, Point, Write};
+use crate::game::projectile_trail_playback::{
+    self as playback, Definitions, Instruction, Presentation,
+};
+use crate::game::projectile_trails::{ProgramCounter, SIDES, style};
 use crate::rom::RomRecord;
 impl Owner for Transaction<'_> {
     type Cursor = u16;

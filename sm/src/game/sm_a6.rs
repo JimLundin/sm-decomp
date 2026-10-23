@@ -1,13 +1,13 @@
-use crate::game::enemy_drops::{scatter, DropSource};
 use crate::game::enemy_combat::{
     apply_contact, apply_shot, contact_without_death, enemy_death, power_bomb_without_death,
     reduce_suit_damage, select_frozen_ai, shot_reaction,
 };
-use crate::game::enemy_script::{EnemyScript, bank_base};
-use crate::game::enemy_scheduling::{update_frozen_enemy};
-use crate::game::music::{QueueMusic_Delayed8};
+use crate::game::enemy_drops::{DropSource, scatter};
 use crate::game::enemy_population_ram::spawn_enemy;
+use crate::game::enemy_scheduling::update_frozen_enemy;
+use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::minimap;
+use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_86::*;
@@ -17,13 +17,15 @@ pub use crate::game::constants::bank_a9::*;
 use crate::game::progress_flags::{
     CheckEventHappened, ClearEventHappened, SetBossBitForCurArea, SetEventHappened,
 };
+use crate::game::sm_8b::CalcCeresSteamPos_Mode7;
 use crate::game::sm_80::{
     NextRandom, QueueMode7Transfers, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6,
     QueueSfx3_Max3, QueueSfx3_Max6,
 };
 use crate::game::sm_81::DrawSpritemap;
-use crate::game::sm_86::{Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
-use crate::game::sm_8b::CalcCeresSteamPos_Mode7;
+use crate::game::sm_86::{
+    Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
+};
 use crate::game::sm_90::{CallSomeSamusCode, Samus_SetPushedOutOfCeresRidley};
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_94::kSinCosTable8bit_Sext;

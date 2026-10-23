@@ -334,15 +334,15 @@ pub mod game {
 
     pub(crate) mod special_attacks;
 
-    pub(crate) mod special_geometry;
     pub(crate) mod bomb_lifecycle;
+    pub(crate) mod special_geometry;
 
     pub(crate) mod bomb_terrain;
 
     pub(crate) mod bomb_creation;
 
-    pub(crate) mod weapon_selection;
     pub(crate) mod weapon_coordinator;
+    pub(crate) mod weapon_selection;
 
     pub(crate) mod player_preparation;
 
@@ -353,71 +353,70 @@ pub mod game {
     pub(crate) mod beam_definitions;
     pub(crate) mod missile_firing;
 
-    pub(crate) mod projectile_weapon_definitions;
     pub(crate) mod beam_windows;
     pub mod constants;
     pub(crate) mod decompression;
+    pub(crate) mod dialogue;
+    pub(crate) mod dialogue_ram;
     pub(crate) mod enemy_layouts;
     pub(crate) mod enemy_ram;
     pub(crate) mod explosion_window;
-    pub(crate) mod intro_pages;
-    pub mod message_boxes;
-    pub(crate) mod dialogue;
-    pub(crate) mod dialogue_ram;
-    pub(crate) mod moving_platforms;
-    pub(crate) mod minimap;
-    pub(crate) mod xray_background;
-    pub(crate) mod vram_read_queue;
-    pub(crate) mod mode7_transfers;
-    pub(crate) mod layer_blending;
-    pub(crate) mod liquid_effects;
-    pub(crate) mod scrolling_sky;
-    pub(crate) mod grapple_swing;
     pub(crate) mod gameplay;
-    pub(crate) mod prelude;
+    pub(crate) mod grapple_swing;
+    pub(crate) mod intro_pages;
     pub(crate) mod launch_motion;
     pub(crate) mod launch_motion_ram;
+    pub(crate) mod layer_blending;
+    pub(crate) mod liquid_effects;
+    pub mod message_boxes;
+    pub(crate) mod minimap;
+    pub(crate) mod mode7_transfers;
+    pub(crate) mod moving_platforms;
+    pub(crate) mod prelude;
+    pub(crate) mod projectile_weapon_definitions;
+    pub(crate) mod scrolling_sky;
+    pub(crate) mod vram_read_queue;
+    pub(crate) mod xray_background;
 
     pub(crate) mod player_projectiles;
-    pub(crate) mod room_mechanism_checks;
     pub(crate) mod projectile_flight_control;
     pub(crate) mod projectile_placement;
+    pub(crate) mod room_mechanism_checks;
 
     pub(crate) mod projectile_initialization;
 
     pub(crate) mod projectile_playback;
 
-    pub(crate) mod projectile_trail_selection;
-    pub(crate) mod projectile_trail_emission;
-    pub(crate) mod projectile_trail_playback;
-    pub(crate) mod projectile_presentation;
-    pub(crate) mod projectile_presentation_ram;
-    pub(crate) mod projectile_room;
     pub(crate) mod projectile_block_reactions;
     pub(crate) mod projectile_block_reactions_ram;
     pub(crate) mod projectile_lifecycle;
+    pub(crate) mod projectile_presentation;
+    pub(crate) mod projectile_presentation_ram;
+    pub(crate) mod projectile_room;
+    pub(crate) mod projectile_trail_emission;
+    pub(crate) mod projectile_trail_playback;
+    pub(crate) mod projectile_trail_selection;
 
+    pub mod eproj_script;
+    pub mod item_pickups;
+    pub mod item_pickups_ram;
+    pub(crate) mod mechanism_displacement;
+    pub mod music;
+    pub mod progress_flags;
     pub(crate) mod room_backgrounds;
+    pub(crate) mod room_mechanisms;
     pub(crate) mod room_scrolls;
+    pub mod room_state;
     pub mod samus_animation;
     pub(crate) mod samus_periodic_damage;
     pub(crate) mod samus_periodic_damage_ram;
-    pub(crate) mod sprite_drawing;
     pub(crate) mod samus_pose;
-    pub mod progress_flags;
-    pub mod music;
-    pub mod room_state;
+    pub(crate) mod samus_room_contact;
+    pub(crate) mod samus_room_contact_ram;
     pub mod sm_80;
     pub mod sm_81;
     pub mod sm_82;
-    pub(crate) mod room_mechanisms;
-    pub(crate) mod mechanism_displacement;
-    pub(crate) mod samus_room_contact;
-    pub(crate) mod samus_room_contact_ram;
-    pub mod item_pickups;
-    pub mod item_pickups_ram;
     pub mod sm_86;
-    pub mod eproj_script;
     pub mod sm_87;
     pub mod sm_88;
     pub mod sm_89;
@@ -426,13 +425,26 @@ pub mod game {
     pub mod sm_8f;
     pub mod sm_90;
     pub mod sm_91;
+    pub(crate) mod sprite_drawing;
 
+    pub mod combat_rules;
+    pub mod contact_rules;
+    pub mod drop_rules;
+    pub mod enemy_animation;
+    pub mod enemy_combat;
+    pub mod enemy_contact;
+    pub mod enemy_drops;
+    pub mod enemy_population;
+    pub mod enemy_population_ram;
+    pub mod enemy_scheduling;
+    pub mod enemy_script;
+    pub(crate) mod mother_brain_visuals;
+    pub mod projectile_contact;
     pub(crate) mod projectile_trails;
+    pub mod scene_drawing;
     pub mod sm_94;
     pub mod sm_9b;
     pub mod sm_a0;
-    pub mod enemy_population;
-    pub mod enemy_population_ram;
     pub mod sm_a2;
     pub mod sm_a3;
     pub mod sm_a4;
@@ -442,21 +454,9 @@ pub mod game {
     pub mod sm_a8;
     pub mod sm_a9;
     pub mod sm_aa;
-    pub(crate) mod mother_brain_visuals;
     pub mod sm_b2;
     pub mod sm_b3;
     pub mod sprite_objects;
-    pub mod scene_drawing;
-    pub mod enemy_scheduling;
-    pub mod enemy_script;
-    pub mod enemy_animation;
-    pub mod combat_rules;
-    pub mod enemy_combat;
-    pub mod drop_rules;
-    pub mod enemy_drops;
-    pub mod enemy_contact;
-    pub mod contact_rules;
-    pub mod projectile_contact;
     pub mod waver;
 }
 
@@ -487,9 +487,8 @@ pub mod platform {
 
 pub mod apu_queue;
 pub mod apu_ram;
-mod initial_state;
-pub mod audio_upload;
 pub(crate) mod audio_snapshot;
+pub mod audio_upload;
 #[doc(hidden)]
 pub mod c_library;
 /// Config file parsing.
@@ -497,6 +496,7 @@ pub mod c_library;
 pub mod config;
 /// Frame runner and the per-frame comparison against the original ROM.
 pub mod cpu_infra;
+mod initial_state;
 /// Names for raw `g_ram` offsets, recovered from snesrev's variable macros.
 pub mod ram_map;
 /// Game runtime library: RAM, ROM access, save states, frame loop glue.
@@ -514,11 +514,11 @@ pub mod util;
 pub mod host;
 
 pub mod game_state;
+pub mod recording;
 pub mod rom;
 pub mod rom_patches;
 pub mod save_ram;
 pub mod snapshot_io;
-pub mod recording;
 
 /// Execution requirements for focused verifier scenarios.
 pub mod verify_probe;

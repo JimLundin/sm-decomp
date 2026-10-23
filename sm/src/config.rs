@@ -1,6 +1,6 @@
 use crate::c_library::strtol;
 use crate::sdl_constants;
-pub use crate::types::{size_t, SDL_Keycode};
+pub use crate::types::{SDL_Keycode, size_t};
 use ::core::ffi::{c_char, c_void};
 use ::core::ptr::null_mut;
 pub use sdl2_sys::SDL_GetKeyFromName;

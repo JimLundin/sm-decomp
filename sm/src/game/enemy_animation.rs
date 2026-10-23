@@ -1,7 +1,7 @@
 //! Enemy animation interpreter, shared controls and captured-slot updates.
 use crate::c_library::__assert_fail;
 use crate::game::constants::enemy_properties::kEnemyProps_Deleted;
-use crate::game::enemy_script::{bank_base, EnemyScript};
+use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::{sm_a2, sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b2, sm_b3};
 use crate::game_state::Game;
 use crate::rtl::Unreachable;

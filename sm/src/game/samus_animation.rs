@@ -1,12 +1,14 @@
 //! Samus animation, sprite selection, echoes, atmospheric graphics and tile uploads.
-use crate::game::music::{QueueMusic_DelayedY, PlayRoomMusicTrackAfterAFrames};
+use crate::game::music::{PlayRoomMusicTrackAfterAFrames, QueueMusic_DelayedY};
 pub use crate::game::prelude::*;
-use crate::game::sm_80::{NextRandom, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6};
-use crate::game::sm_81::DrawSamusSpritemap;
 use crate::game::sm_8b::Samus_CalcPos_Mode7;
+use crate::game::sm_80::{
+    NextRandom, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6,
+};
+use crate::game::sm_81::DrawSamusSpritemap;
 use crate::game::sm_90::{
-    false_0, fnHandleAutoJumpHack, fnSamus_InputHandler_E91D, kLiquidPhysicsType_Water,
-    liquid_at_height, true_0, LiquidAtHeight, Samus_GetBottom_R18, Samus_GetTop_R20,
+    LiquidAtHeight, Samus_GetBottom_R18, Samus_GetTop_R20, false_0, fnHandleAutoJumpHack,
+    fnSamus_InputHandler_E91D, kLiquidPhysicsType_Water, liquid_at_height, true_0,
 };
 use crate::game::sm_91::Samus_CancelSpeedBoost;
 use crate::types::FuncXY_V;

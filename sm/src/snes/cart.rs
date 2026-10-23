@@ -4,7 +4,7 @@ use crate::host::Die;
 use crate::rom::RomImage;
 use crate::rtl::words;
 use crate::snes::cpu::DumpCpuHistory;
-pub use crate::types::{size_t, Cart, Snes};
+pub use crate::types::{Cart, Snes, size_t};
 use ::core::ffi::{c_char, c_void};
 use ::core::ptr::null_mut;
 pub const NULL: *mut c_void = null_mut::<c_void>();

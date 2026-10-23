@@ -1,7 +1,7 @@
 //! Synchronous enemy drop generation and checked definition access.
 #![deny(unsafe_op_in_unsafe_fn)]
 pub use crate::game::drop_rules::DropSource;
-use crate::game::drop_rules::{Spread, Weights, PICKUPS};
+use crate::game::drop_rules::{PICKUPS, Spread, Weights};
 use crate::game::sm_80::NextRandom;
 use crate::game::sm_86::SpawnEprojWithGfx;
 use crate::game_state::Game;
@@ -98,7 +98,7 @@ pub unsafe fn select(index: u16, game: &mut Game) -> u16 {
 }
 
 fn award(slot: usize, game: &mut Game) {
-    use crate::game::drop_rules::{Resource, REWARDS};
+    use crate::game::drop_rules::{REWARDS, Resource};
     use crate::game::sm_91::{
         Samus_RestoreHealth, Samus_RestoreMissiles, Samus_RestorePowerBombs,
         Samus_RestoreSuperMissiles,

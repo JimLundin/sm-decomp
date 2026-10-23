@@ -1,20 +1,20 @@
-use crate::game::music::{HandleMusicQueue, QueueMusic_Delayed8};
 use crate::game::beam_windows::calculate_xray_window;
 use crate::game::liquid_effects;
+use crate::game::music::{HandleMusicQueue, QueueMusic_Delayed8};
 pub use crate::game::prelude::*;
 use crate::game::scrolling_sky;
 
+pub use crate::game::constants::bank_8f::*;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_87::*;
-pub use crate::game::constants::bank_8f::*;
 
 use crate::game::explosion_window::{self, Phase};
 use crate::game::progress_flags::{CheckBossBitForCurArea, CheckEventHappened, SetEventHappened};
-use crate::game::sm_80::{QueueSfx1_Max6, QueueSfx2_Max6};
 use crate::game::room_mechanisms::spawn_hardcoded;
+use crate::game::sm_8b::ConfigureTitleSequenceGradientHDMA;
+use crate::game::sm_80::{QueueSfx1_Max6, QueueSfx2_Max6};
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_87::SpawnAnimtiles;
-use crate::game::sm_8b::ConfigureTitleSequenceGradientHDMA;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::{InitializeSuitPickupHdma, Samus_LoadSuitPalette};
 use crate::game::sm_94::kSinCosTable8bit_Sext;

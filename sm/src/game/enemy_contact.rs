@@ -3,14 +3,14 @@
 use crate::game::constants::bank_a0::{
     addr_kEnemyDef_DAFF, addr_kExtendedSpritemap_Nothing_A0, addr_kSpritemap_Nothing_A0,
 };
-use crate::game::contact_rules::{axis, is_shot, Bounds};
-use crate::game::enemy_ram::{native_read, EnemyField as F, EnemySlot};
+use crate::game::contact_rules::{Bounds, axis, is_shot};
+use crate::game::enemy_ram::{EnemyField as F, EnemySlot, native_read};
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_a0::{CallEnemyAi, CallHitboxShot, CallHitboxTouch};
 use crate::game_state::Game;
 use crate::ram_map::checked_word as word;
 use crate::rom::RomRecord;
-use crate::rtl::{rom_record, Unreachable};
+use crate::rtl::{Unreachable, rom_record};
 use crate::types::{EnemyDef, EnemySpawnData, ExtendedSpriteMap, Hitbox, PairU16, Vulnerability};
 use core::mem::{offset_of, size_of};
 
@@ -178,11 +178,7 @@ unsafe fn projectile_contacts(attack: Attack, extended: bool, game: &mut Game) {
     let bomb = attack == Attack::Bomb;
     word!(
         game.enemy_processing_stage = if extended {
-            if bomb {
-                4
-            } else {
-                3
-            }
+            if bomb { 4 } else { 3 }
         } else if bomb {
             8
         } else {

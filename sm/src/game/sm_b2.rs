@@ -1,20 +1,20 @@
-use crate::game::enemy_drops::{scatter, DropSource};
-use crate::game::enemy_combat::{
-    apply_contact, apply_power_bomb, apply_shot, enemy_death, select_frozen_ai, shot_reaction,
-};
-use crate::rtl::rom_record;
-use core::mem::offset_of;
-use crate::game::enemy_script::{EnemyScript, bank_base};
-use crate::game::enemy_scheduling::{update_frozen_enemy};
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a0::*;
 pub use crate::game::constants::bank_b4::*;
+use crate::game::enemy_combat::{
+    apply_contact, apply_power_bomb, apply_shot, enemy_death, select_frozen_ai, shot_reaction,
+};
+use crate::game::enemy_drops::{DropSource, scatter};
+use crate::game::enemy_scheduling::update_frozen_enemy;
+use crate::game::enemy_script::{EnemyScript, bank_base};
 pub use crate::game::prelude::*;
+use crate::rtl::rom_record;
+use core::mem::offset_of;
 
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_a0::{
-    CosineMult8bit, EnemyFunc_BBBF, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
+    CosineMult8bit, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, EnemyFunc_BBBF,
     IsSamusWithinEnemy_Y, SineMult8bit,
 };
 use crate::game::sprite_objects::create_sprite;

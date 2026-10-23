@@ -1,6 +1,8 @@
 //! Direct beam charge/fire/launch bindings over the same owner for every slot.
 use super::{Context, Transaction};
-use crate::game::beam_firing::{self as shared, Control, Cue, Field, InitialCollision, Input, Mode};
+use crate::game::beam_firing::{
+    self as shared, Control, Cue, Field, InitialCollision, Input, Mode,
+};
 use crate::game::{beam_definitions as definitions, projectile_room::Axis};
 use crate::ram_map::{word_arrays as arrays, words};
 fn field_offset(field: Field) -> usize {

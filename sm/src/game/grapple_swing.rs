@@ -1,7 +1,7 @@
 //! Grapple swing placement, rope-length changes and swept block contact.
 use crate::game::prelude::*;
 use crate::game::sm_80::Multiply16x16;
-use crate::game::sm_94::{kSinCosTable8bit_Sext, BlockReact_HorizExt, BlockReact_VertExt};
+use crate::game::sm_94::{BlockReact_HorizExt, BlockReact_VertExt, kSinCosTable8bit_Sext};
 
 fn project_axis(origin: u16, sample: i16, length: u16) -> u16 {
     let distance = if sample == -256 || sample == 256 {

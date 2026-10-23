@@ -1,10 +1,22 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 15:06 UTC**
+Updated: **2026-10-23 15:19 UTC**
 
 **Projectiles and room mechanisms now share one private ownership-transfer
 implementation.** Both production subsystems use it; their state remains separate.
 The complete engine modernization remains unfinished.
+
+## Formatting standard
+
+The full repository now passes `cargo fmt --check` locally, using the same command
+as GitHub CI. Earlier scoped formatting disabled import/module reordering and did
+not satisfy that check. The iteration instructions now require the full default
+check before every Rust commit.
+
+Formatting touched 75 Rust files and adds 229 physical lines through layout only.
+This is not implementation growth or a reduction claim. Current source has
+108,903 Rust lines; unsafe and other operation counters are unchanged. Palette
+replacement work and its 512-case old-reference capture remain preserved locally.
 
 ## Latest deduplication
 
@@ -57,7 +69,7 @@ The nonreturn check observes a timeout, not the preceding RAM write dynamically.
 
 ## Complete cost
 
-The current source has **108,674 Rust lines** and **2,732 unsafe declarations**.
+The current source has **108,903 Rust lines** and **2,732 unsafe declarations**.
 
 | Room-mechanism work | Lines | Tokens | LF bytes |
 | --- | ---: | ---: | ---: |

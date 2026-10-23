@@ -1,28 +1,28 @@
-use crate::game::enemy_drops::{scatter, DropSource};
+pub use crate::game::constants::bank_8d::*;
+pub use crate::game::constants::bank_84::*;
+pub use crate::game::constants::bank_86::*;
 use crate::game::enemy_combat::{
     apply_contact, apply_shot, contact_without_death, select_frozen_ai, shot_reaction,
 };
+use crate::game::enemy_drops::{DropSource, scatter};
+use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
-use crate::game::enemy_scheduling::{update_frozen_enemy};
-use crate::game::music::{QueueMusic_Delayed8};
-pub use crate::game::constants::bank_84::*;
-pub use crate::game::constants::bank_86::*;
-pub use crate::game::constants::bank_8d::*;
+use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
 
 use crate::game::progress_flags::{CheckBossBitForCurArea, SetBossBitForCurArea};
+use crate::game::room_mechanisms::{spawn_collision, spawn_hardcoded};
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_82::sub_82DAF7;
-use crate::game::room_mechanisms::{spawn_hardcoded, spawn_collision};
 
+use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::SpawnBombTorizoHaze;
-use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::{
     CalculateAngleOfEnemyXfromEnemyY, CalculateBlockContainingPixelPos, CallEnemyPreInstr,
-    CompareDistToSamus_X, EnemyFunc_C8AD, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
+    CompareDistToSamus_X, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, EnemyFunc_C8AD,
 };
 
 pub use crate::types::Consts_AA;

@@ -1,22 +1,22 @@
-use crate::game::enemy_drops::{scatter, DropSource};
+pub use crate::game::constants::bank_86::*;
 use crate::game::enemy_combat::{
     apply_contact, apply_shot, contact_without_death, grapple_death, power_bomb_without_death,
     select_frozen_ai, shot_reaction,
 };
+use crate::game::enemy_drops::{DropSource, scatter};
+use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
-use crate::game::enemy_scheduling::{update_frozen_enemy};
-use crate::game::music::{QueueMusic_Delayed8};
-pub use crate::game::constants::bank_86::*;
+use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
 
 use crate::game::progress_flags::{CheckEventHappened, SetBossBitForCurArea};
-use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::room_mechanisms::spawn_hardcoded;
+use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_a0::{
     CalculateAngleFromXY, CalculateAngleOfSamusFromEnemy, CallEnemyPreInstr,
-    CheckIfEnemyIsOnScreen, ConvertAngleToXy, EnemyFunc_B691, Enemy_MoveDown,
-    Enemy_MoveRight_IgnoreSlopes, GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsEnemyLeavingScreen,
+    CheckIfEnemyIsOnScreen, ConvertAngleToXy, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
+    EnemyFunc_B691, GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsEnemyLeavingScreen,
     IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y, SignExtend8,
 };
 use crate::game::sprite_objects::create_sprite;

@@ -4,22 +4,22 @@ mod state;
 mod transport;
 #[macro_use]
 mod encoded;
-pub(crate) mod checks;
 mod animation;
-mod lifecycle;
-mod motion;
-mod weapons;
-mod missiles;
-mod placement;
-mod bombs;
 mod bomb_creation;
-mod specials;
-mod collision;
 mod bomb_terrain;
-mod presentation;
+mod bombs;
+pub(crate) mod checks;
+mod collision;
 mod feedback;
+mod lifecycle;
+mod missiles;
+mod motion;
 mod native_content;
+mod placement;
 mod preparation;
+mod presentation;
+mod specials;
+mod weapons;
 use encoded::Transaction;
 #[derive(Default)]
 struct Context {

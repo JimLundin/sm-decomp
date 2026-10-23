@@ -1,6 +1,6 @@
 //! Native C-library boundary. Keep the original ABI types and symbols here.
 
-use crate::types::{__mode_t, size_t, time_t, FILE};
+use crate::types::{__mode_t, FILE, size_t, time_t};
 use ::core::ffi::{c_char, c_double, c_long, c_ulong, c_void};
 
 unsafe extern "C" {

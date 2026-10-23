@@ -66,7 +66,10 @@ impl ReplayCoverage {
         let (state, room) = self.last_state_room.unwrap();
         println!(
             "Replay coverage: {} gameplay frames, {} rooms, {} enemy definitions; final state {state}, room ${room:04X}; longest unchanged state/room {} frames",
-            self.gameplay_frames, self.rooms.len(), self.enemies.len(), self.longest_unchanged
+            self.gameplay_frames,
+            self.rooms.len(),
+            self.enemies.len(),
+            self.longest_unchanged
         );
         println!("Observed game states (state:frames): {:?}", self.states);
         println!("Ending/credits state frames: {}", self.credits_frames());
@@ -85,7 +88,9 @@ impl ReplayCoverage {
         let (state, room) = self.last_state_room.unwrap();
         eprintln!(
             "Coverage so far: {} gameplay frames, {} rooms, {} enemy definitions; state {state}, room ${room:04X}",
-            self.gameplay_frames, self.rooms.len(), self.enemies.len()
+            self.gameplay_frames,
+            self.rooms.len(),
+            self.enemies.len()
         );
     }
 }
@@ -244,7 +249,9 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             return Err("requested segment is empty".into());
         }
         if checkpoint_in.is_some() {
-            eprintln!("Checkpoint segment: input frames {first}..{end}; prefix was not replayed by this build");
+            eprintln!(
+                "Checkpoint segment: input frames {first}..{end}; prefix was not replayed by this build"
+            );
         }
         // Initialization and checkpoint loading are setup, not segment hits.
         sm::verify_probe::configure(&required_probes)?;
