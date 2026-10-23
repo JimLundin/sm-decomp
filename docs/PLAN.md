@@ -213,7 +213,8 @@ references; measure build/test time and resource growth before changing the loop
    frozen projectile-only and inactive entries, aliases and failure prefixes.
    Preserve all 58 current suites and their vectors; freeze current real children,
    not the obsolete controlled preparation graph. Main growth is estimated at
-   125–270 lines, complete composition 105–310 and verification 1,890–2,920.
+   150–280 lines, complete composition 153–333 and verification 1,890–2,920
+   after correcting the estimated deletions against the actual source.
    Safe sequencing and duplicate retirement justify this bounded change; no
    reduction or persistent-ownership claim. Preparation is not a whole player frame:
    contacts/enemies and suspension precede beta, which owns demo restoration.

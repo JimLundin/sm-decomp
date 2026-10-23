@@ -51,7 +51,7 @@ input and later restoration, message suspension, intro gating and failure
 prefixes. These changes have not yet been built or verified.
 
 Preparation is only part of a player frame; contacts, enemies, suspension and
-later movement retain their ordering. The proposal estimates 125–270 additional
+later movement retain their ordering. The proposal estimates 150–280 additional
 main-source lines for safe shared sequencing and adapters; it claims neither a
 source reduction nor persistent ownership.
 
