@@ -8,6 +8,34 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Validation branch `verify/animated-session-20261023` contains the composed
+animation/palette core replacement, not yet adopted to main. Source
+`fe7c93f85d6d98e706096f001b3028b40bfcf1d5c33bc9c27e9b55c5b9e1af15`
+passes full formatting, release/frontend/verifier builds, standalone compilation,
+438 frozen animation comparisons, actual animation and palette runtime guards,
+and the 20947-frame Speed Booster prefix with zero failures. All five required
+animation probes hit (spawn20857, upload20894, command20944), plus two follow-up
+frames. Prefix is setup, no credits. Final independent source review passes.
+Hosted independent execution remains required before adoption; do not launch the
+standalone executable locally under the retained Defender restriction.
+
+Animation core uses ordinary state without Game/Port/RAM modules; the composed
+host invokes the actual palette core synchronously with one current-colors array.
+The production compatibility guard owns Option<AnimatedTiles>, publishing and
+relinquishing it across legacy effects. No persistent whole-game Session claim.
+Production +124 lines/+1142 lexical tokens/+4298 LF bytes; verification
++587/+5377/+20098; CI/Cargo +13/+132/+663; total +724/+6651/+25059.
+Rust111746; unsafe declarations2725 unchanged, no_mangle74 (+1 guard export).
+Artifacts: Local/sm-decomp-experiments/20261023/animated-session/integrated-1*,
+detached-compile-1.log and integrated-build-1.log.
+
+Enemy comparison-2 is now verified for its594-case scope: old and new outputs
+match, and first354 old outputs match frozen baseline-1. Source
+`0b814eceb2164f3cf426c1b75030d45fdd2809a08fd2f378b77f6d352121243b`;
+results in enemy-projectiles/comparison-2-results/results.json. Headless library
+check and direct production DLL build pass; no frontend or full adoption claim.
+Expanded1362 references and qualified/native-owner checks are still drafts.
+
 Animated tiles adopted on source
 `23fd5fb6a109c2b6bc6105e52523a1ebb579200abb14f0dff6f61935844fccb2`.
 Full cargo fmt/check, release/frontend/verifier build, independent review and

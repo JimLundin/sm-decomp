@@ -541,6 +541,11 @@ pub fn verify_player_projectile_case(id: u32) -> Option<Vec<u8>> {
 mod animated_tile_checks;
 
 #[doc(hidden)]
+pub fn verify_animated_runtime_guard() -> bool {
+    game::animated_tiles::checks::guard(&mut game_state::Game::new())
+}
+
+#[doc(hidden)]
 pub fn verify_animated_tile_case(id: u32) -> Option<Vec<u8>> {
     animated_tile_checks::capture_case(id)
 }

@@ -50,6 +50,13 @@ jobs:
           if (!(Test-Path -LiteralPath "$linker/gcc.exe")) { throw 'MinGW GCC is missing' }
           $linker | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
           "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=$linker/gcc.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Verify composed animation and palette cores without the game backend
+        run: |
+          $animationDetached = Join-Path $env:RUNNER_TEMP 'animated-detached.exe'
+          rustc --edition=2024 -O sm/src/verification/animated_detached/main.rs -o $animationDetached
+          if ($LASTEXITCODE -ne 0) { throw 'Detached animation compilation failed' }
+          & $animationDetached
+          if ($LASTEXITCODE -ne 0) { throw 'Detached animation checks failed' }
       - name: Verify the palette core without the game backend
         run: |
           $detached = Join-Path $env:RUNNER_TEMP 'palette-detached.exe'

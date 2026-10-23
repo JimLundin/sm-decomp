@@ -273,6 +273,14 @@ references; measure build/test time and resource growth before changing the loop
    2725. Independent review passes. Execution still uses the compatibility Port;
    the next isolated animation/palette composition removes that dependency.
    This is not persistent Session ownership or independent backend completion.
+   Follow-on validation branch verify/animated-session-20261023 now removes
+   Port/Game from animation execution and composes the actual animation/palette
+   cores with a single color owner. Local build,438comparisons, runtime guards
+   and20947frames pass; standalone compiles. Hosted independent execution is
+   pending before adoption. Production+124lines, verification+587, CI/Cargo+13;
+   no net reduction. Keep corresponding report nodes checked/uncommitted until
+   hosted execution passes. Enemy-projectile dual594cases pass; broader cases,
+   full caller adoption and native ROM ownership remain isolated work.
    The accepted engine still needs persistent state, explicit backend outputs,
    all-unsafe elimination and boot-to-credits validation.
 

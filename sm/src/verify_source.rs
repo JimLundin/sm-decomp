@@ -4,6 +4,38 @@
 
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/game/animated_tiles/content.rs",
+        include_bytes!("game/animated_tiles/content.rs"),
+    ),
+    (
+        "sm/src/game/animated_tiles/runtime.rs",
+        include_bytes!("game/animated_tiles/runtime.rs"),
+    ),
+    (
+        "sm/src/verification/animated_entries.rs",
+        include_bytes!("verification/animated_entries.rs"),
+    ),
+    (
+        "sm/src/verification/animated_runtime_checks.rs",
+        include_bytes!("verification/animated_runtime_checks.rs"),
+    ),
+    (
+        "sm/src/verification/animated_detached/main.rs",
+        include_bytes!("verification/animated_detached/main.rs"),
+    ),
+    (
+        "sm/src/verification/animated_detached/checks.rs",
+        include_bytes!("verification/animated_detached/checks.rs"),
+    ),
+    (
+        "sm/src/verification/animated_detached/animation.rs",
+        include_bytes!("verification/animated_detached/animation.rs"),
+    ),
+    (
+        "sm/src/verification/animated_detached/palette.rs",
+        include_bytes!("verification/animated_detached/palette.rs"),
+    ),
+    (
         "sm/src/game/palette_effects/content.rs",
         include_bytes!("game/palette_effects/content.rs"),
     ),
@@ -546,20 +578,12 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/animated_tiles/state.rs"),
     ),
     (
-        "sm/src/game/animated_tiles/compatibility.rs",
-        include_bytes!("game/animated_tiles/compatibility.rs"),
-    ),
-    (
         "sm/src/game/animated_tiles/execution.rs",
         include_bytes!("game/animated_tiles/execution.rs"),
     ),
     (
         "sm/src/game/animated_tiles/native.rs",
         include_bytes!("game/animated_tiles/native.rs"),
-    ),
-    (
-        "sm/src/game/animated_tiles/checks.rs",
-        include_bytes!("game/animated_tiles/checks.rs"),
     ),
     (
         "sm/src/game/layer_blending.rs",

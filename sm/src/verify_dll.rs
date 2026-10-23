@@ -96,6 +96,11 @@ pub unsafe extern "C" fn sm_verify_enemy_projectile_case(
 }
 
 #[unsafe(no_mangle)]
+pub extern "C" fn sm_verify_animated_runtime_guard() -> bool {
+    std::panic::catch_unwind(sm::verify_animated_runtime_guard).unwrap_or(false)
+}
+
+#[unsafe(no_mangle)]
 pub extern "C" fn sm_verify_palette_runtime_guard() -> bool {
     std::panic::catch_unwind(sm::verify_palette_runtime_guard).unwrap_or(false)
 }
