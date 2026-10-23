@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 09:01 UTC**
+Updated: **2026-10-23 09:09 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -11,6 +11,8 @@ SNES backend remains the comparison oracle during migration.
 ## Latest verified milestone
 
 **Special-beam attack creation and all six motion states now share safe rules.**
+
+Verified source: [fe6a0d0f](https://github.com/JimLundin/sm-decomp/commit/fe6a0d0f079c09312dee996c181ac8c20ded155e).
 
 - Retired duplicate creation, movement and retirement algorithms. Actual beam
   input and motion dispatch use the shared implementation.
@@ -41,7 +43,10 @@ operations removed.
 
 The approved next change shares ordinary beam charge input, firing and initial
 collision dispatch, including direct owned scans and their failure handling.
-Implementation is starting; behavior verification is pending.
+The first implementation is written and undergoing independent source review.
+Final corrections, production/candidate builds and behavior comparisons are
+pending. These source changes are not yet committed; the verified results and
+counts above still describe the special-attack milestone.
 
 Persistent room and scheduler state still live in RAM. Persistent Session
 ownership, renderer/audio replacement and an independently running game slice
