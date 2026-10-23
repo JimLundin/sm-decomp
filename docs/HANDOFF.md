@@ -244,12 +244,25 @@ to reproduce the local owned work; a fresh Git checkout alone lacks that work.
 ## Next dependency
 
 The complete RoomMechanisms proposal and linear foreign-call ownership contract
-are reviewed. Capture the source-reviewed 1009-case `baseline_boundaries.rs` draft
-from `20261023/room-mechanisms` before runtime replacement. The first 90 actual-old
-cases are frozen in `baseline-90-capture.json` and matching binary outputs/DLL.
-Preserve those cases byte for byte. Remaining coverage exclusions and actual
-runtime outcomes still require review. Follow PLAN's full caller/deletion scope;
-do not restart the archived Session or isolated shared-consumer queue.
+are reviewed. The 1018-case final supplement is captured on source
+`e6101bac42ec1e57472a46c51dd1f378fd1bd8f2f813221c4b1f27c9404628db`:
+1015 normal outputs, two exact native diagnostics and one bounded nonreturn case.
+Artifacts in `20261023/room-mechanisms`: `baseline-1018.dll`, `baseline-1018-inputs`,
+`baseline-1018-capture.json` and binary outputs. All prior 1009 outputs match their
+references, including the original 90. Each normal output starts with
+131072 RAM bytes, then result kind, little-endian return word and diagnostic byte;
+setup cases append displacement, message cases append per-call hardware traces.
+All cases use isolated processes; message buffers need 32 MiB capacity. IDs
+1012/1013 must exit 2 with the B3E3/Unreachable assertion; 1014 must be run with a
+timeout and is not an ordinary capture. Its RAM write prefix is not observed
+dynamically. IDs 1009..1011 exercise actual outer door-message continuation;
+1015..1017 cover displacement aliases crossing owned-field boundaries.
+
+Continue the full replacement in `owned-draft`, using its reviewed state/port and
+common Fields/Execution pattern. Remaining checks cover qualified old-undefined
+commands and final combined caller/ownership behavior. No replacement is
+adopted yet. Follow PLAN's full caller/deletion scope; do not restart the archived
+Session or isolated shared-consumer queue.
 
 Keep these verified ordering/access constraints through subsequent changes:
 

@@ -138,8 +138,10 @@ references; measure build/test time and resource growth before changing the loop
    Retire all 24 adapters, setup_runtime, plm_spawning and sm_84; migrate drawing
    and clipping algorithms too. Only Golden Torizo palette and the two generic
    Samus sound routines relocate intact. Do not retain per-operation RAM fallbacks.
-   Estimated runtime delta is -400..+300 lines, validation +450..800; these are
-   planning ranges, not measured savings. Old raw source and DLL are preserved in
+   Initial estimates were runtime -400..+300 lines and validation +450..800;
+   the baseline alone now totals 926 main lines including exports. Count further
+   verification growth and the complete replacement at adoption; estimates are not
+   measured savings. Old raw source and DLL are preserved in
    Local/sm-decomp-experiments/20261023/room-mechanisms/pre-consolidation. Capture
    actual old entries before replacing them. Baseline coverage must distinguish
    defined old paths from unaligned raw reads and other undefined access; identity
@@ -152,10 +154,25 @@ references; measure build/test time and resource growth before changing the loop
    source/output review pass. Source fa6f4ca5605aa26c40767cbd41aeb4d66eecb11eb2e283f7517278fc5fd6da39
    adds only baseline checks/exports to the unchanged projectile runtime. Frozen
    baseline-90.dll, baseline-90-inputs and baseline-90-capture.json remain local.
-   The isolated baseline_boundaries.rs draft now has 1,009 source-reviewed cases,
-   including setup/scripts, actual effects/messages, consumers and selected aliases.
-   Runtime capture and remaining coverage qualifications precede replacement;
-   identity counts are not complete branch coverage. Preserve the first 90 references.
+   The final 1,018-case baseline is captured: 1,015 normal outputs, two exact
+   native exit-2 diagnostics and one bounded nonreturn observation. Setup/scripts,
+   actual effects/messages, outer door continuation, consumers and displacement
+   aliases are covered. All earlier 1,009 outputs match byte for byte. Final source
+   e6101bac42ec1e57472a46c51dd1f378fd1bd8f2f813221c4b1f27c9404628db builds;
+   capture takes 132.00s with all expected outcomes. Frozen baseline-1018.dll,
+   inputs and capture manifest remain local. Expansion adds 609 lines / 5542 tokens /
+   22304 LF bytes, all verification; current main has 109836 Rust lines and 2778
+   counted unsafe declarations (+9 test helpers). No gameplay code changes in this
+   stage. The nonreturn test dynamically observes its two-second timeout only;
+   the preceding clear remains a source-level observation.
+   Remaining closure: eight commands qualified for inherent old undefined accesses. Use
+   independent byte expectations/aligned draw references for replaced algorithms,
+   and exact wrapper ordering around unchanged native effects; do not call optimized
+   old undefined behavior a defined reference. Identity counts are not branch coverage.
+   The complete replacement is underway in owned-draft outside main. The reviewed
+   common Fields/Execution pattern removes separate rule-context and RAM adapters;
+   preserve linear foreign publication and route displacement aliases through the
+   owner. No runtime adoption until complete callers/deletions and combined checks.
 
    Baseline route failure at input 20857 is fixed: the room-content loader introduced
    at f116c8a6 copied overlapping layer2/BTS buffers forward. The actual room size
@@ -172,7 +189,8 @@ references; measure build/test time and resource growth before changing the loop
    The executed observer is preserved in debug-room-copy-20857; its reconstructed
    source hash matches the original probe build. No debug observer remains in main.
    New test exports invalidated the earlier checkpoint; final prefix was regenerated.
-   No new mechanism runtime is integrated. Continue baseline capture next.
+   No new mechanism runtime is integrated. Continue the complete replacement and
+   the finite remaining validation work above.
 
    `game/player_projectiles` owns ten shots, eighteen trail pairs, weapon/charge
    controls and launch history during each complete subsystem interval. One

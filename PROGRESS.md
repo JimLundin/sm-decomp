@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 13:59 UTC**
+Updated: **2026-10-23 14:30 UTC**
 
 **Player projectiles now run through one owned production subsystem.**
 The broader engine modernization remains unfinished.
@@ -57,8 +57,8 @@ are committed.
 The projectile milestone is committed in `04dbc192`. One implementation worker
 and an independent reviewer have agreed the complete room-mechanism boundary:
 creation, setup, script scheduling, commands, drawing, message suspension, reset
-and the queries used by encounters and room loading. Baseline preparation is active;
-implementation follows capture of the old behavior. No replacement is adopted yet.
+and the queries used by encounters and room loading. The baseline is now frozen;
+replacement implementation is underway outside main. No replacement is adopted yet.
 
 One owner will hold 40 mechanism slots, item graphics, drawing and execution
 state during subsystem operations. Native calls must receive its published state;
@@ -70,7 +70,8 @@ The candidate covers 24 RAM adapters, bank orchestration, spawning and setup
 dispatch: **3,684 existing lines** before retaining required native behavior.
 This is the scope to replace, not a savings claim. Estimated runtime change is
 **-400 to +300 lines**, plus **450–800 validation lines**. These are planning
-ranges; actual code, tokens and bytes will be counted before adoption. Repeated
+ranges; baseline verification has already exceeded the initial validation estimate,
+as detailed below. Actual replacement code, tokens and bytes will be counted before adoption. Repeated
 field/effect handling must be consolidated with the old adapters removed.
 
 Verification will use current production entries and the existing DLL workflow,
@@ -80,18 +81,26 @@ explicit cases. Exact old source and the verified DLL are preserved locally.
 Unaligned raw reads in old code require qualified evidence; they cannot count as
 defined Rust equivalence. Old experimental results are not new integration proof.
 
-The first **90 actual-production baseline cases are captured and independently
-checked**, including RAM, return values and expected checked failures. The
-release/frontend/verifier build passes. These are reference observations, not a
-pass for the replacement; setup, script, suspension and caller coverage is expanding.
-Baseline checks and their exports add 317 lines. Two unsafe declarations call old
-entries and expose the test buffer; current count is 2,769. No runtime reduction
-is claimed for this preparation.
+The **1,018-case actual-production baseline is frozen**: 1,015 normal captures,
+two expected native diagnostics and one two-second nonreturn observation. It
+includes RAM, returns, checked failures, native effects, message completion,
+outer door continuation, external consumers and displacement aliases. All earlier
+1,009 outputs match byte for byte, including the original 90-case references.
+The release/frontend/verifier build passes. These are reference observations,
+not a pass for the replacement or exhaustive branch coverage.
 
-The expanded **1,009-case baseline draft has passed source review** and awaits
-runtime capture. It includes setup/script identities, actual native effects,
-message suspension, external consumers and selected aliases. Coverage exclusions
-remain explicit; this is not exhaustive branch coverage or replacement validation.
+The expansion adds **609 main lines / 5,542 tokens / 22,304 LF bytes**, all for
+verification. The complete mechanism baseline and exports now total 926 lines.
+Current main has **109,836 Rust lines** and 2,778 unsafe declarations; nine added
+declarations belong to test helpers calling old entries. No runtime reduction is
+claimed for this preparation. Captured outputs and hardware traces remain local.
+
+Nineteen replacement rule families now share one field interface, removing their
+separate context traits and RAM adapters in the isolated draft. Remaining validation
+includes qualified checks for eight old commands with undefined memory accesses.
+The nonreturn capture observes the timeout, not the preceding RAM write dynamically.
+Adoption still requires
+the complete caller migration, old-code retirement and final combined verification.
 
 ## Room-loading correction
 
@@ -109,8 +118,8 @@ zero failures. Required probes confirm both corrected copies, completed loading,
 gameplay and the message sequence, with 120 follow-up frames. No credits coverage.
 
 The correction adds 89 main lines: 16 runtime/probe lines and 73 check/export lines.
-Current main source is **109,227 Rust lines**. Main delta is +951 lexical tokens /
-+3,581 LF bytes; retained local diagnostics add 10 lines / 282 tokens / 858 bytes.
+Its main delta is +951 lexical tokens / +3,581 LF bytes; retained local diagnostics
+add 10 lines / 282 tokens / 858 bytes.
 Complete incremental authored cost is 99 lines / 1,233 tokens / 4,439 bytes;
 staging copies count once. No new mechanism runtime is integrated yet.
 
