@@ -21,7 +21,40 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-### Sprite effects / shared owner adopted
+### Progression flags / active
+
+```mermaid
+flowchart TB
+    FCONTRACT["Interface + declarations<br/>review / compile PASS"]:::done
+    FUNION["210 proposed bytes<br/>overlap audit PASS"]:::done
+    FCONTRACT --> FCORE["progress_flags.rs<br/>shared rules in progress"]:::active
+    FUNION --> FCODEC["Session + codec + Runtime<br/>in progress"]:::active
+    FCORE --> FPLM["room_mechanisms / 14 files<br/>draft source review PASS"]:::draft
+    FCORE --> FVIS["palette + animation / 4 files<br/>draft source review PASS"]:::draft
+    FCORE --> FEPR["projectiles / 5 files<br/>draft source review PASS"]:::draft
+    FCORE --> FLEG["legacy callers / 18 files<br/>draft source review PASS"]:::draft
+    FLEG --> FSAVE["sm_81 save alignment repair<br/>draft source review PASS"]:::draft
+    FSAVE --> FCPU["Original CPU save capsule<br/>in preparation"]:::active
+    FCODEC --> FGUARD["210-byte ownership guard<br/>failed-load case in progress"]:::active
+    FBASE["71 reference cases<br/>source review pending"]:::active --> FCHECK["Behavior comparisons<br/>pending"]:::pending
+    FPLM --> FCHECK
+    FVIS --> FCHECK
+    FEPR --> FCHECK
+    FLEG --> FCHECK
+    FCPU --> FCHECK
+    FGUARD --> FCHECK
+    FCHECK --> FMUT["Shared-consumer checks + mutations<br/>pending"]:::pending
+    FMUT --> FADOPT["Adopt progression owner<br/>pending"]:::pending
+    class FCONTRACT,FUNION,FCORE,FCODEC,FPLM,FVIS,FEPR,FLEG,FSAVE,FCPU,FGUARD,FBASE,FCHECK,FMUT,FADOPT changed
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
+<details>
+<summary>Adopted sprite effects — shared owner and verification</summary>
 
 ```mermaid
 flowchart TB
@@ -58,7 +91,6 @@ flowchart TB
     VERIFY --> ADOPT["Caller migration + retirement<br/>adopted on main"]:::done
     MOVIE --> ADOPT
     KILLS --> ADOPT
-    class OWNER,CODEC,POOL,WAFFLE,METROID,DRAYGON,MAW,KILLS,ADOPT changed
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
@@ -93,10 +125,11 @@ flowchart LR
     end
     pool --> drawing
     pool --> controllers
-    class A,B,C,D,E,F,G,H,I,J,K,L,M,N changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
+
+</details>
 
 [Shared Session adopted: 74948127](https://github.com/JimLundin/sm-decomp/commit/74948127) / [Build + eight mutations: PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40005712881)
 

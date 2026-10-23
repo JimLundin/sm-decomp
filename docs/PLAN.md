@@ -419,6 +419,18 @@ references; measure build/test time and resource growth before changing the loop
    by originalCPU save observations before using Rust save captures. No flags
    implementation adopted yet; maps, room topology and persistent authority
    across snapshots remain separate unfinished work.
+   Implementation is split across shared core/codec, PLM, visual, projectile
+   and legacy/persistence lanes. The14PLM/4visual/5projectile/18legacy file drafts
+   pass independent source review, including the save alignment repair and
+   seven observation points. Shared-core review and all behavior checks remain.
+   Frozen71case fixture bundle is under review; root baseline-4ba01b81 reuses
+   the source-checked473905fc DLL without changing production. NewSave/demo/load
+   and defined odd-area Spore callers are included; old Rust SaveToSram is never
+   executed as a reference. Full210byte Runtimeguard is drafted; its actual
+   failed-load reentry case awaits the shared fixture helper.
+   Public atlas snapshot4ba01b81 is deployed via40034126172: browser/accessibility
+   and Pages pass; live HTTP200 bytes match committed HTML. It reflects adopted
+   sprite ownership, while this progression work remains a draft.
 
    Room mechanisms are now adopted as one production responsibility: creation,
    setup, pre-actions, all 110 command identities, scheduler, drawing/clipping,
