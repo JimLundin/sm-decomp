@@ -14,7 +14,7 @@ use crate::game::sm_80::{
     QueueSfx3_Max1, QueueSfx3_Max15, QueueSfx3_Max3, QueueSfx3_Max6, QueueSfx3_Max9,
 };
 use crate::game::sm_81::{DrawEprojSpritemapWithBaseTile, DrawEprojSpritemapWithBaseTileOffscreen};
-use crate::game::sm_84::CalculatePlmBlockCoords;
+use crate::game::room_mechanisms::{self, calculate_coordinates};
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_94::{
@@ -1507,12 +1507,12 @@ pub unsafe fn sub_86E0A4(v0: u16, game: &mut Game) {
 pub use self::EprojPreInstr_NorfairLavaquakeRocks_Inner2 as sub_86E0B0;
 unsafe fn EprojInit_SpawnedGate_Common(j: u16, v1: u16, game: &mut Game) {
     unsafe {
-        let v2: u16 = word!(game.plm_id);
-        CalculatePlmBlockCoords(word!(game.plm_id), game);
+        let v2: u16 = room_mechanisms::selected(game);
+        calculate_coordinates(room_mechanisms::selected(game), game);
         let v3: i32 = j as i32 >> 1;
-        word!(game.eproj_E[v3] = word!(game.plm_block_indices[(v2 >> 1)]));
-        word!(game.eproj_x_pos[v3] = (16u16).wrapping_mul(word!(game.plm_x_block)));
-        word!(game.eproj_y_pos[v3] = (v1 as i32 + 16 * word!(game.plm_y_block) as i32) as u16);
+        word!(game.eproj_E[v3] = room_mechanisms::block_index(v2, game));
+        word!(game.eproj_x_pos[v3] = (16u16).wrapping_mul(room_mechanisms::block_x(game)));
+        word!(game.eproj_y_pos[v3] = (v1 as i32 + 16 * room_mechanisms::block_y(game) as i32) as u16);
     }
 }
 fn CheckIfEprojIsOffScreen(k: u16, game: &mut Game) -> u16 {
@@ -1861,7 +1861,7 @@ crate::game::callback_dispatch! {
         };
     };
     [8824676] EprojInit_BombTorizoStatueBreaking [] {
-        CalculatePlmBlockCoords(word!(game.plm_id), game);
+        calculate_coordinates(room_mechanisms::selected(game), game);
         let mut v1: i8 = EprojState(&game.g_ram).init_param_1() as i8;
         let v2: i32 = EprojState(&game.g_ram).init_param_1() as i32 >> 1;
         let v3: i32 = j as i32 >> 1;
@@ -1871,12 +1871,12 @@ crate::game::callback_dispatch! {
         );
         word!(
             game.eproj_x_pos[v3] = (kEprojInit_BombTorizoStatueBreaking_Xpos[v2 as usize] as i32
-                + 16 * word!(game.plm_x_block) as i32) as u16
+                + 16 * room_mechanisms::block_x(game) as i32) as u16
         );
         let v4: i32 = (v1 as i32 & 0xf) >> 1;
         word!(
             game.eproj_y_pos[v3] = (kEprojInit_BombTorizoStatueBreaking_Ypos[v4 as usize] as i32
-                + 16 * word!(game.plm_y_block) as i32) as u16
+                + 16 * room_mechanisms::block_y(game) as i32) as u16
         );
         word!(game.eproj_y_vel[v3] = kEprojInit_BombTorizoStatueBreaking_Yvel[v4 as usize] as u16);
         word!(game.eproj_F[v3] = kEprojInit_BombTorizoStatueBreaking_F[v4 as usize] as u16);
@@ -2002,28 +2002,28 @@ crate::game::callback_dispatch! {
         };
     };
     [8828461] EprojInit_EyeDoorProjectile [] {
-        let v1: u16 = word!(game.plm_id);
+        let v1: u16 = room_mechanisms::selected(game);
         let v2: i32 = j as i32 >> 1;
         word!(
             game.eproj_F[v2] =
-                *(ram_ptr!(game, u16; 0x1dc7)).offset((word!(game.plm_id) >> 1) as isize,)
+                room_mechanisms::projectile_argument(room_mechanisms::selected(game), game)
         );
-        CalculatePlmBlockCoords(v1, game);
+        calculate_coordinates(v1, game);
         let v3: i32 = word!(game.cinematic_var8) as i32 >> 1;
         word! { game;
             eproj_x_pos[v2] =
-                (word_86B65B[v3 as usize] as i32 + 8 * (2 * word!(game.plm_x_block) as i32 + 1)) as u16;
+                (word_86B65B[v3 as usize] as i32 + 8 * (2 * room_mechanisms::block_x(game) as i32 + 1)) as u16;
             eproj_y_pos[v2] =
-                (word_86B65B[(v3 + 1) as usize] as i32 + 16 * word!(game.plm_y_block) as i32) as u16;
+                (word_86B65B[(v3 + 1) as usize] as i32 + 16 * room_mechanisms::block_y(game) as i32) as u16;
         }
     };
     [8828547] EprojInit_EyeDoorSweat [] {
-        CalculatePlmBlockCoords(word!(game.plm_id), game);
+        calculate_coordinates(room_mechanisms::selected(game), game);
         let v1: i32 = j as i32 >> 1;
         word!(
-            game.eproj_x_pos[v1] = (8 * (2 * (word!(game.plm_x_block) as i32 - 1i32) + 1)) as u16
+            game.eproj_x_pos[v1] = (8 * (2 * (room_mechanisms::block_x(game) as i32 - 1i32) + 1)) as u16
         );
-        word!(game.eproj_y_pos[v1] = (16 * (word!(game.plm_y_block) as i32 + 1)) as u16);
+        word!(game.eproj_y_pos[v1] = (16 * (room_mechanisms::block_y(game) as i32 + 1)) as u16);
         let v2: i32 = word!(game.cinematic_var8) as i32 >> 1;
         word!(game.eproj_x_vel[v1] = word_86B6B1[v2 as usize] as u16);
         word!(game.eproj_y_vel[v1] = word_86B6B1[(v2 + 1) as usize] as u16);
@@ -2140,13 +2140,13 @@ crate::game::callback_dispatch! {
             )
         );
         word!(game.eproj_gfx_idx[v2] = 1600);
-        CalculatePlmBlockCoords(word!(game.plm_id), game);
+        calculate_coordinates(room_mechanisms::selected(game), game);
         let v4: i32 = word!(game.cinematic_var8) as i32 >> 1;
         word! { game;
             eproj_x_pos[v2] = (kEprojInit_MotherBrainGlassShatteringShard_X[v4 as usize] as i32
-                + 16 * word!(game.plm_x_block) as i32) as u16;
+                + 16 * room_mechanisms::block_x(game) as i32) as u16;
             eproj_y_pos[v2] = (kEprojInit_MotherBrainGlassShatteringShard_Y[v4 as usize] as i32
-                + 16 * word!(game.plm_y_block) as i32) as u16;
+                + 16 * room_mechanisms::block_y(game) as i32) as u16;
         }
         word!(checked_i32, game.eproj_x_pos[v2] += ((NextRandom(game) as i32 & 0xf) - 8i32));
         word!(checked_i32, game.eproj_y_pos[v2] += ((NextRandom(game) as i32 & 0xf) - 8i32));
@@ -2163,22 +2163,22 @@ crate::game::callback_dispatch! {
         }
     };
     [8836773] EprojInit_N00bTubeCrack [] {
-        CalculatePlmBlockCoords(word!(game.plm_id), game);
+        calculate_coordinates(room_mechanisms::selected(game), game);
         let v1: i32 = j as i32 >> 1;
-        word!(game.eproj_x_pos[v1] = (16 * word!(game.plm_x_block) as i32 + 96) as u16);
-        word!(game.eproj_y_pos[v1] = (16 * word!(game.plm_y_block) as i32 + 48) as u16);
+        word!(game.eproj_x_pos[v1] = (16 * room_mechanisms::block_x(game) as i32 + 96) as u16);
+        word!(game.eproj_y_pos[v1] = (16 * room_mechanisms::block_y(game) as i32 + 48) as u16);
     };
     [8836809] EprojInit_N00bTubeShards [] {
-        CalculatePlmBlockCoords(word!(game.plm_id), game);
+        calculate_coordinates(room_mechanisms::selected(game), game);
         let v1: i32 = word!(game.cinematic_var8) as i32 >> 1;
         let v2: i32 = j as i32 >> 1;
         word! { game;
             eproj_F[v2] = (kEprojInit_N00bTubeShards_X[v1 as usize] as i32
-                + 16 * word!(game.plm_x_block) as i32
+                + 16 * room_mechanisms::block_x(game) as i32
                 + 96) as u16;
             eproj_E[v2] = 0;
             eproj_y_pos[v2] = (kEprojInit_N00bTubeShards_Y[v1 as usize] as i32
-                + 16 * word!(game.plm_y_block) as i32
+                + 16 * room_mechanisms::block_y(game) as i32
                 + 48) as u16;
             eproj_instr_list_ptr[v2] = crate::rtl::rom_table_word!(game, 0x86d760, v1 as isize);
             eproj_x_vel[v2] = kEprojInit_N00bTubeShards_Xvel[v1 as usize] as u16;
@@ -2186,23 +2186,23 @@ crate::game::callback_dispatch! {
         }
     };
     [8836980] EprojInit_N00bTubeReleasedAirBubbles [] {
-        CalculatePlmBlockCoords(word!(game.plm_id), game);
+        calculate_coordinates(room_mechanisms::selected(game), game);
         let v1: i32 = word!(game.cinematic_var8) as i32 >> 1;
         let v2: i32 = j as i32 >> 1;
         word! { game;
             eproj_F[v2] = (kEprojInit_N00bTubeReleasedAirBubbles_X[v1 as usize] as i32
-                + 16 * word!(game.plm_x_block) as i32) as u16;
+                + 16 * room_mechanisms::block_x(game) as i32) as u16;
             eproj_E[v2] = 0;
             eproj_y_pos[v2] = (kEprojInit_N00bTubeReleasedAirBubbles_Y[v1 as usize] as i32
-                + 16 * word!(game.plm_y_block) as i32) as u16;
+                + 16 * room_mechanisms::block_y(game) as i32) as u16;
             eproj_y_vel[v2] = -1280i32 as u16;
         }
     };
     [8840877] EprojInit_SaveStationElectricity [] {
-        CalculatePlmBlockCoords(word!(game.plm_id), game);
+        calculate_coordinates(room_mechanisms::selected(game), game);
         let v1: i32 = j as i32 >> 1;
-        word!(game.eproj_x_pos[v1] = (16 * (word!(game.plm_x_block) as i32 + 1)) as u16);
-        word!(game.eproj_y_pos[v1] = (16 * (word!(game.plm_y_block) as i32 - 2i32)) as u16);
+        word!(game.eproj_x_pos[v1] = (16 * (room_mechanisms::block_x(game) as i32 + 1)) as u16);
+        word!(game.eproj_y_pos[v1] = (16 * (room_mechanisms::block_y(game) as i32 - 2i32)) as u16);
     };
     [8842182] EprojInit_BotwoonsSpit [] {
         let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
@@ -2484,9 +2484,9 @@ crate::game::callback_dispatch! {
     };
     [8824519] EprojInit_A977 [] {
         word!(game.eproj_gfx_idx[v1] = 0);
-        CalculatePlmBlockCoords(word!(game.plm_id), game);
-        word!(game.eproj_x_pos[v1] = (16 * word!(game.plm_x_block) as i32) as u16);
-        word!(game.eproj_y_pos[v1] = (16 * word!(game.plm_y_block) as i32 - 4i32) as u16);
+        calculate_coordinates(room_mechanisms::selected(game), game);
+        word!(game.eproj_x_pos[v1] = (16 * room_mechanisms::block_x(game) as i32) as u16);
+        word!(game.eproj_y_pos[v1] = (16 * room_mechanisms::block_y(game) as i32 - 4i32) as u16);
         word! { game, 0; eproj_x_subpos[v1], eproj_y_subpos[v1] }
     };
     [8826691] EprojInit_TourianStatueDustClouds [] {
@@ -2691,9 +2691,9 @@ crate::game::callback_dispatch! {
         let y: u16 = (crate::rtl::rom_table_word!(game, 0x86e47e, (v2 + 3) as isize) as i32
             + (crate::rtl::rom_table_word!(game, 0x86e47e, (v2 + 1) as isize) as i32
                 & word!(game.random_number) as i32 >> 8)) as u16;
-        CalculatePlmBlockCoords(word!(game.plm_id), game);
-        word!(game.eproj_x_pos[v1] = (x as i32 + 8 * (2 * word!(game.plm_x_block) as i32 + 1)) as u16);
-        word!(game.eproj_y_pos[v1] = (y as i32 + 8 * (2 * word!(game.plm_y_block) as i32 + 1)) as u16);
+        calculate_coordinates(room_mechanisms::selected(game), game);
+        word!(game.eproj_x_pos[v1] = (x as i32 + 8 * (2 * room_mechanisms::block_x(game) as i32 + 1)) as u16);
+        word!(game.eproj_y_pos[v1] = (y as i32 + 8 * (2 * room_mechanisms::block_y(game) as i32 + 1)) as u16);
         NextRandom(game);
     };
     [8841777] EprojInit_BotwoonsBody [] {

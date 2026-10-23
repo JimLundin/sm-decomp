@@ -11,7 +11,7 @@ pub use crate::game::constants::bank_8f::*;
 use crate::game::explosion_window::{self, Phase};
 use crate::game::progress_flags::{CheckBossBitForCurArea, CheckEventHappened, SetEventHappened};
 use crate::game::sm_80::{QueueSfx1_Max6, QueueSfx2_Max6};
-use crate::game::plm_spawning::SpawnHardcodedPlm;
+use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_87::SpawnAnimtiles;
 use crate::game::sm_8b::ConfigureTitleSequenceGradientHDMA;
@@ -818,7 +818,7 @@ pub unsafe fn FxTypeFunc_26_TourianEntranceStatue(game: &mut Game) {
         static unk_88DBC2: SpawnHdmaObject_Args =
             SpawnHdmaObject_Args::new(0x42, 0x10, 0xdcfa as VoidP);
         if CheckEventHappened(0xa, game) & 1 != 0 {
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x6, 0xc, 0xb777 as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x6, 0xc, 0xb777 as VoidP), game);
             *(ram_ptr!(game, u16; 0xcd20)) = 514;
         }
         *ram_ptr!(game; 0x59) = 74;
@@ -886,7 +886,7 @@ pub unsafe fn HdmaobjPreInstr_DC69(k: u16, game: &mut Game) {
                 -0x4000i32 as u32,
             );
             if word!(game.hdma_object_B[v1]) == 0xff10 {
-                SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x6, 0xc, 0xb773 as VoidP), game);
+                spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x6, 0xc, 0xb773 as VoidP), game);
                 SetEventHappened(0xa, game);
                 word!(game.hdma_object_instruction_timers[v1] = 1);
                 word!(game.hdma_object_instruction_list_pointers[v1] += 2);

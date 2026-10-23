@@ -21,7 +21,7 @@ use crate::game::progress_flags::{CheckEventHappened, SetBossBitForCurArea, SetE
 use crate::game::sm_80::{
     NextRandom, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6,
 };
-use crate::game::plm_spawning::SpawnHardcodedPlm;
+use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_86::{Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::{MotherBrainRisingHdmaObject, SpawnMotherBrainRainbowBeamHdma};
 use crate::game::sm_89::LoadFxEntry;
@@ -393,85 +393,85 @@ crate::game::callback_dispatch! {
         }
     };
     [11110766] MotherBrainBody_1_ClearBottomLeftTube [] {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x5, 0x9, 0xb6c3 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x5, 0x9, 0xb6c3 as VoidP), game);
         let E = Get_MotherBrainBody(0x40, game);
         (*E).var_E = ((0xa98983i32) as u16);
         (*E).var_F = 32;
     };
     [11110816] MotherBrainBody_3_ClearCeilingBlock9 [] {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x9, 0x2, 0xb6b3 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x9, 0x2, 0xb6b3 as VoidP), game);
         let E = Get_MotherBrainBody(0x40, game);
         (*E).var_E = ((0xa989b5i32) as u16);
         (*E).var_F = 32;
     };
     [11110866] MotherBrainBody_4_ClearCeilingBlock6 [] {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x6, 0x2, 0xb6b3 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x6, 0x2, 0xb6b3 as VoidP), game);
         let E = Get_MotherBrainBody(0x40, game);
         (*E).var_E = ((0xa989e7i32) as u16);
         (*E).var_F = 32;
     };
     [11110906] MotherBrainBody_6_ClearBottomRightTube [] {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xa, 0x9, 0xb6c7 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xa, 0x9, 0xb6c7 as VoidP), game);
         let E = Get_MotherBrainBody(0x40, game);
         (*E).var_E = ((0xa98a0fi32) as u16);
         (*E).var_F = 32;
     };
     [11110946] MotherBrainBody_8_ClearBottomMiddleLeftTube [] {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x6, 0xa, 0xb6bb as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x6, 0xa, 0xb6bb as VoidP), game);
         let E = Get_MotherBrainBody(0x40, game);
         (*E).var_E = ((0xa98a37i32) as u16);
         (*E).var_F = 32;
     };
     [11110996] MotherBrainBody_10_ClearCeilingTubeColumn7 [] {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x7, 0x2, 0xb6b7 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x7, 0x2, 0xb6b7 as VoidP), game);
         let E = Get_MotherBrainBody(0x40, game);
         (*E).var_E = ((0xa98a69i32) as u16);
         (*E).var_F = 32;
     };
     [11111046] MotherBrainBody_12_ClearCeilingTubeColumn8 [] {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x8, 0x2, 0xb6b7 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x8, 0x2, 0xb6b7 as VoidP), game);
         let E = Get_MotherBrainBody(0x40, game);
         (*E).var_E = ((0xa98a9bi32) as u16);
         (*E).var_F = 32;
     };
     [11111086] MotherBrainBody_14_ClearBottomMiddleRightTube [] {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x9, 0xa, 0xb6bb as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x9, 0xa, 0xb6bb as VoidP), game);
         let E = Get_MotherBrainBody(0x40, game);
         (*E).var_E = ((0xa98ac3i32) as u16);
         (*E).var_F = 2;
     };
     [11111126] MotherBrainBody_16_ClearBottomMiddleTubes [] {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x7, 0x7, 0xb6bf as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x7, 0x7, 0xb6bf as VoidP), game);
         (*Get_MotherBrainBody(0x40i32, game)).var_E = addr_locret_A98AE4 as u16;
     };
     [11111559] MotherBrainBody_FakeDeath_Ascent_0_DrawBG1Row23 [] {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x2, 0x2, 0xb67b as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x2, 0x3, 0xb67f as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0x2, 0xb67b as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0x3, 0xb67f as VoidP), game);
         (*Get_MotherBrainBody(0i32, game)).var_A = ((0xa98c9ei32) as u16);
     };
     [11111582] MotherBrainBody_FakeDeath_Ascent_1_DrawBG1Row45 [] {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x2, 0x4, 0xb683 as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x2, 0x5, 0xb687 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0x4, 0xb683 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0x5, 0xb687 as VoidP), game);
         (*Get_MotherBrainBody(0i32, game)).var_A = ((0xa98cb5i32) as u16);
     };
     [11111605] MotherBrainBody_FakeDeath_Ascent_2_DrawBG1Row67 [] {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x2, 0x6, 0xb68b as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x2, 0x7, 0xb68f as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0x6, 0xb68b as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0x7, 0xb68f as VoidP), game);
         (*Get_MotherBrainBody(0i32, game)).var_A = ((0xa98ccci32) as u16);
     };
     [11111628] MotherBrainBody_FakeDeath_Ascent_3_DrawBG1Row89 [] {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x2, 0x8, 0xb693 as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x2, 0x9, 0xb697 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0x8, 0xb693 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0x9, 0xb697 as VoidP), game);
         (*Get_MotherBrainBody(0i32, game)).var_A = ((0xa98ce3i32) as u16);
     };
     [11111651] MotherBrainBody_FakeDeath_Ascent_4_DrawBG1RowAB [] {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x2, 0xa, 0xb69b as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x2, 0xb, 0xb69f as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0xa, 0xb69b as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0xb, 0xb69f as VoidP), game);
         (*Get_MotherBrainBody(0i32, game)).var_A = ((0xa98cfai32) as u16);
     };
     [11111674] MotherBrainBody_FakeDeath_Ascent_5_DrawBG1RowCD [] {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x2, 0xc, 0xb6a3 as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x2, 0xd, 0xb6a7 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0xc, 0xb6a3 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0xd, 0xb6a7 as VoidP), game);
         (*Get_MotherBrainBody(0i32, game)).var_A = ((0xa98d11i32) as u16);
     };
     [11111697] MotherBrainBody_FakeDeath_Ascent_6_SetupPhase2Gfx [] {
@@ -648,7 +648,7 @@ crate::game::callback_dispatch! {
     [11121450] MotherBrain_Phase3_Death_20_BlowUpEscapeDoor [] {
         MotherBrain_ExplodeEscapeDoor(game);
         (*Get_MotherBrain(0i32, game)).var_A = ((0xa9b33ci32) as u16);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0, 0x6, 0xb677 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0, 0x6, 0xb677 as VoidP), game);
     };
     [11121468] MotherBrain_Phase3_Death_21_KeepEarthquakeGoing [] {
         if word!(game.earthquake_timer) == 0 {
@@ -1147,7 +1147,7 @@ crate::game::callback_dispatch! {
                 as u16)
                 & (7u16);
             if g_byte_A9B546[v1 as usize] != 0 {
-                crate::game::mechanism_mother_brain_glass_ram::add_hits(
+                crate::game::room_mechanisms::add_glass_hits(
                     39,
                     u16::from(g_byte_A9B546[v1 as usize]),
                     game,
@@ -1615,7 +1615,7 @@ crate::game::callback_dispatch! {
         (*Get_MotherBrain(0x40i32, game)).var_E = ((0xa98949i32) as u16);
         (*E).var_A = ((0xa988b2i32) as u16);
         set_fields! {[(*E)], 0; var_F, var_37}
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xe, 0x2, 0xb6b3 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xe, 0x2, 0xb6b3 as VoidP), game);
     };
     [11111819] MotherBrainBody_FakeDeath_Ascent_9_PrepareRise {
         (*E).var_09 = MotherBrainRisingHdmaObject(game);
@@ -4702,8 +4702,8 @@ crate::game::callback_dispatch! {
             (*E).parameter_2 = 1;
             crate::update_place! { unaligned_word fresh14 = &raw mut (*(ram_ptr!(game, u16; 0xcd20))) => (u16::from_le(fresh14.read_unaligned())) | (0x100u16); }
             crate::update_place! { unaligned_word fresh15 = &raw mut (*(ram_ptr!(game, u16; 0xcd20, 2))) => (u16::from_le(fresh15.read_unaligned())) | (0x100u16); }
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb763 as VoidP), game);
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x1f, 0x3, 0xb763 as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb763 as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x1f, 0x3, 0xb763 as VoidP), game);
         }
     };
     [11137408] Shitroid_Func_13 [] {
@@ -4812,8 +4812,8 @@ pub unsafe fn Shitroid_Func_4(game: &mut Game) {
             word!(game.layer1_x_pos = 512);
             *(ram_ptr!(game, u16; 0xcd20)) = *ram_ptr!(game; 0xcd20, 0) as u16;
             *(ram_ptr!(game, u16; 0xcd20, 2)) = *ram_ptr!(game; 0xcd20, 2) as u16;
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb767 as VoidP), game);
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x1f, 0x3, 0xb767 as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb767 as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x1f, 0x3, 0xb767 as VoidP), game);
             let E = Get_Shitroid(word!(game.cur_enemy_index) as i32, game);
             (*E).var_A = ((0xa9f02bi32) as u16);
             (*E).var_04 = 1;

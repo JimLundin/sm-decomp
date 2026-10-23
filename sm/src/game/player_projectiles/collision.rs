@@ -205,7 +205,7 @@ impl reactions::Context<()> for Room<'_> {
         let owner = self.0.take().unwrap();
         self.0 = Some(
             owner
-                .foreign(|g| unsafe { crate::game::plm_spawning::SpawnPLM(header, g) })
+                .foreign(|g| unsafe { crate::game::room_mechanisms::spawn_collision(header, g) })
                 .0,
         );
     }

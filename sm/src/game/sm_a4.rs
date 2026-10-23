@@ -10,7 +10,7 @@ pub use crate::game::constants::bank_a4::*;
 
 use crate::game::minimap;
 use crate::game::sm_80::{QueueSfx2_Max6, QueueSfx3_Max6};
-use crate::game::plm_spawning::SpawnHardcodedPlm;
+use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_86::{ClearEprojs, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::SpawnHdmaObject;
 use crate::game::sm_a0::{Enemy_MoveRight_IgnoreSlopes};
@@ -429,7 +429,7 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
         } else if (*E0).base.x_pos as i32 - 1568i32 & 0x8000 != 0 {
             if word!(game.g_word_7E9002) == 0 {
                 word!(game.g_word_7E9002 = 1);
-                SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x61, 0xb, 0xb74b as VoidP), game);
+                spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x61, 0xb, 0xb74b as VoidP), game);
                 game.eproj_spawn_pt = Point16U { x: 1568, y: 176 };
                 SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
             }
@@ -440,8 +440,8 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
             } else if x_pos as i32 - 1584i32 & 0x8000 != 0 {
                 if word!(game.g_word_7E9006) == 0 {
                     word!(game.g_word_7E9006 = 1);
-                    SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x62, 0xb, 0xb74b as VoidP), game);
-                    SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x63, 0xb, 0xb74b as VoidP), game);
+                    spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x62, 0xb, 0xb74b as VoidP), game);
+                    spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x63, 0xb, 0xb74b as VoidP), game);
                     game.eproj_spawn_pt = Point16U { x: 1584, y: 176 };
                     SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
                 }
@@ -466,7 +466,7 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
                 (*Get_Crocomire(0x140i32, game)).var_01 = 0;
                 QueueSfx2_Max6(0x3b, game);
                 *(ram_ptr!(game, u16; 0x9015, 1)) = 0;
-                SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x4e, 0x3, 0xb757 as VoidP), game);
+                spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x4e, 0x3, 0xb757 as VoidP), game);
                 enemy_instruction! {[(*EK).base]; instruction = addr_kCrocomire_Ilist_BFB0 as u16, timer = 1}
                 (*EK).base.properties = ((*EK).base.properties) | ((kEnemyProps_Tangible) as u16);
                 let E1 = Get_Crocomire(word!(game.cur_enemy_index) as i32 + 64, game);
@@ -482,16 +482,16 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
 }
 pub unsafe fn Crocomire_8EE5(game: &mut Game) {
     unsafe {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x61, 0xb, 0xb74f as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x62, 0xb, 0xb74f as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x63, 0xb, 0xb74f as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x64, 0xb, 0xb74f as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x65, 0xb, 0xb74f as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x66, 0xb, 0xb74f as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x67, 0xb, 0xb74f as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x68, 0xb, 0xb74f as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x69, 0xb, 0xb74f as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x6a, 0xb, 0xb74f as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x61, 0xb, 0xb74f as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x62, 0xb, 0xb74f as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x63, 0xb, 0xb74f as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x64, 0xb, 0xb74f as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x65, 0xb, 0xb74f as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x66, 0xb, 0xb74f as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x67, 0xb, 0xb74f as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x68, 0xb, 0xb74f as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x69, 0xb, 0xb74f as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x6a, 0xb, 0xb74f as VoidP), game);
         game.eproj_spawn_pt = Point16U { x: 1536, y: 176 };
         SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
         game.eproj_spawn_pt = Point16U { x: 1552, y: 192 };
@@ -531,7 +531,7 @@ pub unsafe fn Crocomire_Func_49(game: &mut Game) {
             word!(game.debug_disable_minimap = 0);
             let fresh12 = &raw mut (*Get_Crocomire(0x40i32, game)).base.properties;
             fresh12.write_unaligned((fresh12.read_unaligned()) | (0x200u16));
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x4e, 0x3, 0xb753 as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x4e, 0x3, 0xb753 as VoidP), game);
             word! { game, 0; camera_distance_index, croco_target_0688 }
         }
     }
@@ -982,7 +982,7 @@ pub unsafe fn Crocomire_Func_68(game: &mut Game) {
         if word!(game.samus_x_pos) as i32 - 640i32 & 0x8000 != 0 {
             QueueMusic_Delayed8(5, game);
             *(ram_ptr!(game, u16; 0xcd20, 3)) = 256;
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb757 as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb757 as VoidP), game);
             word!(game.camera_distance_index = 6);
             let E0 = Get_Crocomire(0, game);
             (*E0).base.properties =
@@ -1062,7 +1062,7 @@ pub unsafe fn Crocomire_9B65(game: &mut Game) {
     unsafe {
         *(ram_ptr!(game, u16; 0xcd20)) = 257;
         *(ram_ptr!(game, u16; 0xcd20, 2)) = 257;
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x1e, 0x3, 0xb753 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x1e, 0x3, 0xb753 as VoidP), game);
         Crocomire_9BB3(game);
     }
 }
@@ -1126,9 +1126,9 @@ crate::game::callback_dispatch! {
             word!(game.croco_target_0688 = 0);
             let E = Get_Crocomire(0, game);
             (*E).base.properties = ((*E).base.properties & 0x7bff | 0x400);
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x20, 0x3, 0xb753 as VoidP), game);
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x1e, 0x3, 0xb753 as VoidP), game);
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x61, 0xb, 0xb747 as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x20, 0x3, 0xb753 as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x1e, 0x3, 0xb753 as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x61, 0xb, 0xb747 as VoidP), game);
             (*E).var_A = 84;
             enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E1CC as u16, timer = 1}
             (*E).base.x_pos = 576;
@@ -1254,9 +1254,9 @@ crate::game::callback_dispatch! {
             (*E).base.y_pos = 54;
             (*Get_Crocomire(0x80i32, game)).var_D = 80;
             set_fields! {[(*E)], 0; var_E, var_F}
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x20, 0x3, 0xb753 as VoidP), game);
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x1e, 0x3, 0xb757 as VoidP), game);
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x70, 0xb, 0xb747 as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x20, 0x3, 0xb753 as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x1e, 0x3, 0xb757 as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x70, 0xb, 0xb747 as VoidP), game);
             QueueSfx2_Max6(0x29, game);
             enemy_instruction! {[(*E).base]; instruction = addr_kCrocomire_Ilist_E158 as u16, timer = 1}
             (*E).base.palette_index = 0;
@@ -1321,7 +1321,7 @@ crate::game::callback_dispatch! {
             (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(64);
             set_fields! {[(*E).base]; y_pos = ((*E).base.y_pos).wrapping_add(21), y_height = 28,
                 x_width = 40, };
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb753 as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb753 as VoidP), game);
             scatter(DropSource::Crocomire, 0, 0, game);
             Crocomire_9BB3(game);
         };

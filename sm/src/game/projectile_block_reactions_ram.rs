@@ -51,7 +51,7 @@ impl Content for Native {
     }
     fn spawn(&mut self, header: u16, game: &mut Game) {
         unsafe {
-            crate::game::plm_spawning::SpawnPLM(header, game);
+            crate::game::room_mechanisms::spawn_collision(header, game);
         }
     }
 }

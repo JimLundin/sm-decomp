@@ -118,61 +118,54 @@ references; measure build/test time and resource growth before changing the loop
    The earlier under-100,000 milestone is historical: edition 2024's explicit
    unsafe scopes put the current source above that threshold again.
 4. [ ] **Retire bank ownership by gameplay responsibility.** The complete
-   player-projectile subsystem is now adopted in production. Continue with a
+   player-projectile and room-mechanism subsystems are adopted in production. Continue with a
    complete adjacent responsibility and a reviewed owner/caller/deletion proposal;
    do not restart the archived Session or resume isolated shared-consumer work.
 
-   Approved next replacement: complete room mechanisms, including
-   creation/setup, scheduler/pre-actions/commands, drawing, message suspension,
-   lifecycle and actual encounter/room/contact callers. The implementation worker
-   and independent reviewer have agreed the concrete ownership boundary. One
-   RoomMechanisms owns 40 slots, item graphics, drawing and execution state during
-   complete subsystem intervals. Immediate foreign calls consume/publish/relinquish
-   that owner and import the actual returned RAM. Full enable flags, stale released
-   fields, live selectors and the context-bound continuation byte remain intact.
-   The existing 24 RAM adapters plus sm_84, spawning and setup runtime total 3684
-   lines before retaining required native behavior; this is not a savings claim.
-   Consolidate repeated field/effect handling, and price replacement plus checks
-   before adoption. Capture actual old entries through the existing DLL workflow;
-   compare RAM, return/yield, failure prefixes and relevant native effects.
-   Retire all 24 adapters, setup_runtime, plm_spawning and sm_84; migrate drawing
-   and clipping algorithms too. Only Golden Torizo palette and the two generic
-   Samus sound routines relocate intact. Do not retain per-operation RAM fallbacks.
-   Initial estimates were runtime -400..+300 lines and validation +450..800;
-   the baseline alone now totals 926 main lines including exports. Count further
-   verification growth and the complete replacement at adoption; estimates are not
-   measured savings. Old raw source and DLL are preserved in
-   Local/sm-decomp-experiments/20261023/room-mechanisms/pre-consolidation. Capture
-   actual old entries before replacing them. Baseline coverage must distinguish
-   defined old paths from unaligned raw reads and other undefined access; identity
-   counts alone do not prove branch/effect coverage. Implementation is authorized
-   after capture freezes. Persistent ownership additionally needs closure of
-   external writers, whole-RAM adoption and shared continuation context.
+   Room mechanisms are now adopted as one production responsibility: creation,
+   setup, pre-actions, all 110 command identities, scheduler, drawing/clipping,
+   graphics, message suspension, lifecycle and encounter/contact/Xray callers.
+   All 24 RAM adapters and their superseded rules, setup runtime, spawning and
+   sm_84 are deleted (51 files). Only the unrelated Golden Torizo palette and
+   two Samus sound routines relocate intact. One Fields interface consolidates
+   rule state/effects; drawing shares emission and destination calculations.
 
-   First 90 actual old-entry scenarios are captured with full RAM, return values
-   and expected checked failures; release/frontend/verifier build and independent
-   source/output review pass. Source fa6f4ca5605aa26c40767cbd41aeb4d66eecb11eb2e283f7517278fc5fd6da39
-   adds only baseline checks/exports to the unchanged projectile runtime. Frozen
-   baseline-90.dll, baseline-90-inputs and baseline-90-capture.json remain local.
-   The final 1,018-case baseline is captured: 1,015 normal outputs, two exact
-   native exit-2 diagnostics and one bounded nonreturn observation. Setup/scripts,
-   actual effects/messages, outer door continuation, consumers and displacement
-   aliases are covered. All earlier 1,009 outputs match byte for byte. Final source
-   e6101bac42ec1e57472a46c51dd1f378fd1bd8f2f813221c4b1f27c9404628db builds;
-   capture takes 132.00s with all expected outcomes. Frozen baseline-1018.dll,
-   inputs and capture manifest remain local. Expansion adds 609 lines / 5542 tokens /
-   22304 LF bytes, all verification; current main has 109836 Rust lines and 2778
-   counted unsafe declarations (+9 test helpers). No gameplay code changes in this
-   stage. The nonreturn test dynamically observes its two-second timeout only;
-   the preceding clear remains a source-level observation.
-   Remaining closure: eight commands qualified for inherent old undefined accesses. Use
-   independent byte expectations/aligned draw references for replaced algorithms,
-   and exact wrapper ordering around unchanged native effects; do not call optimized
-   old undefined behavior a defined reference. Identity counts are not branch coverage.
-   The complete replacement is underway in owned-draft outside main. The reviewed
-   common Fields/Execution pattern removes separate rule-context and RAM adapters;
-   preserve linear foreign publication and route displacement aliases through the
-   owner. No runtime adoption until complete callers/deletions and combined checks.
+   RoomMechanisms owns 40 slots and graphics/drawing/execution fields during
+   subsystem intervals. Foreign calls publish and consume that owner, then
+   import actual returned RAM. Full flags, stale fields, live selectors, aliases
+   and context-bound continuation remain intact. This is not persistent ownership
+   between operations. Native ROM/effect boundaries remain unsafe and qualified.
+
+   Final source 88265b3ed879c62fb219b6829703f9560c56cc6995def849bb9c44e6102569cd
+   passes release/frontend/verifier builds and the complete frozen baseline:
+   1015 full RAM/return/native-trace outputs match byte for byte, two exact native
+   exit diagnostics match, and one bounded nonreturn is observed. Two additional
+   groups pass for ownership/unwind/aliases and the eight qualified commands.
+   Six formerly unaligned algorithms use independent byte expectations plus
+   existing aligned drawing references; two wrappers check production helpers
+   and statically inspected dispatch/native identities. Their unchanged native
+   pose intervals are not claimed as defined Rust equivalence. The nonreturn
+   case observes a timeout, not its preceding clear dynamically.
+
+   Speed Booster inputs 0..28313 pass (28314 frames, zero failures). All three
+   spawn sources, terrain/drawing, gameplay and message completion are required
+   hits. Message completion occurs at 28193, followed by 120 frames. Coverage:
+   12 rooms, nine enemy definitions, no credits. Existing 106 projectile groups
+   also pass. Independent implementation/caller/check review passes.
+
+   Integration delta: -1154 lines / -12222 tokens / -39458 LF bytes. Include the
+   already-landed 926-line baseline: complete mechanism effort is -228 lines /
+   -4214 tokens / -6464 LF bytes. Current source: 108682 Rust lines, 2732 unsafe
+   declarations (-46 from frozen baseline). The unrelated room-copy correction
+   below is excluded from mechanism savings. No new maintained native/tooling
+   source or dependencies. Local frozen references and integrated-2 artifacts
+   remain in Local/sm-decomp-experiments/20261023/room-mechanisms.
+
+   Next: establish the exact external writers, whole-RAM adoption/reset/load and
+   shared-continuation interactions needed for persistent ownership. Investigate
+   the minimum complete migration before adding more adapters or packages. The
+   accepted engine still requires state owned between operations, explicit
+   backend outputs, all-unsafe elimination and boot-to-credits validation.
 
    Baseline route failure at input 20857 is fixed: the room-content loader introduced
    at f116c8a6 copied overlapping layer2/BTS buffers forward. The actual room size
@@ -189,8 +182,6 @@ references; measure build/test time and resource growth before changing the loop
    The executed observer is preserved in debug-room-copy-20857; its reconstructed
    source hash matches the original probe build. No debug observer remains in main.
    New test exports invalidated the earlier checkpoint; final prefix was regenerated.
-   No new mechanism runtime is integrated. Continue the complete replacement and
-   the finite remaining validation work above.
 
    `game/player_projectiles` owns ten shots, eighteen trail pairs, weapon/charge
    controls and launch history during each complete subsystem interval. One

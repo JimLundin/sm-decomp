@@ -37,11 +37,7 @@ use crate::game::sm_80::{
 use crate::game::sm_81::{
     DrawMenuSpritemap, DrawSpritemap, FileSelectMap, FileSelectMenu, GameOverMenu, SaveToSram,
 };
-use crate::game::plm_spawning::close_door;
-use crate::game::sm_84::{
-    ClearPLMs, ClearSoundsWhenGoingThroughDoor, EnablePLMs, PlaySpinJumpSoundIfSpinJumping,
-    PlmHandler_Async,
-};
+use crate::game::room_mechanisms::{clear, close_door, run, set_enabled};
 use crate::game::sm_86::{ClearEprojs, EnableEprojs, EprojRunAll};
 use crate::game::sm_87::{AnimtilesHandler, ClearAnimtiles, DisableAnimtiles, EnableAnimtiles};
 use crate::game::sm_88::{
@@ -218,7 +214,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
             word! { game, 1; screen_fade_delay, screen_fade_counter }
             EnableNMI(game);
             EnableEprojs(game);
-            EnablePLMs(game);
+            set_enabled(true, game);
             EnablePaletteFx(game);
             EnableHdmaObjects(game);
             EnableAnimtiles(game);
@@ -4154,7 +4150,7 @@ crate::game::callback_dispatch! {
             ClearEprojs(game);
             ClearAnimtiles(game);
             ClearPaletteFXObjects(game);
-            ClearPLMs(game);
+            clear(game);
             initialize_door_objects(game);
             LoadFXHeader(game);
             close_door(game);
@@ -4188,7 +4184,7 @@ crate::game::callback_dispatch! {
             game.set_hdma_objects_enable_flag(game.hdma_objects_enable_flag() | 0x8000);
         }
         if resume <= 2 {
-            let yielded: u8 = PlmHandler_Async(game);
+            let yielded: u8 = run(game);
             if yielded != 0 {
                 game.set_coroutine_state_1(2);
                 return yielded;
@@ -4984,5 +4980,16 @@ pub unsafe fn OptionsMenuControllerFunc_0(game: &mut Game) {
         word!(game.eproj_F[(v4 + 13)] = r18);
         *(ram_ptr!(game, u16; 0x1b23)).offset(((v2 as i32 >> 1) + 13) as isize) = r20;
         OptionsMenuFunc6(game);
+    }
+}
+
+pub unsafe fn ClearSoundsWhenGoingThroughDoor(game: &mut Game) {
+    unsafe {
+        CallSomeSamusCode(0x1d, game);
+    }
+}
+pub unsafe fn PlaySpinJumpSoundIfSpinJumping(game: &mut Game) {
+    unsafe {
+        CallSomeSamusCode(0x1c, game);
     }
 }

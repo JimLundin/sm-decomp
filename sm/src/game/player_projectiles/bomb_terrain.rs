@@ -85,7 +85,7 @@ impl<'g> terrain::Context<Transaction<'g>> for Context {
     }
 
     fn spawn(&mut self, g: Transaction<'g>, header: u16) -> Transaction<'g> {
-        g.foreign(|g| unsafe { crate::game::plm_spawning::SpawnPLM(header, g) })
+        g.foreign(|g| unsafe { crate::game::room_mechanisms::spawn_collision(header, g) })
             .0
     }
 }

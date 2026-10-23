@@ -9,8 +9,8 @@ pub use crate::game::constants::bank_60::*;
 use crate::c_library::memcmp;
 use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
 use crate::game::sm_82::{LoadDestinationRoomThings, NullFunc, ResetSoundQueues};
-use crate::game::plm_spawning::SpawnHardcodedPlm;
-use crate::game::sm_84::{ClearPLMs, LoadRoomPlmGfx};
+use crate::game::room_mechanisms::spawn_hardcoded;
+use crate::game::room_mechanisms::{clear, reload_graphics};
 use crate::game::sm_86::ClearEprojs;
 use crate::game::sm_87::ClearAnimtiles;
 use crate::game::sm_88::{InitializeSpecialEffectsForNewRoom, WaitUntilEndOfVblankAndClearHdma};
@@ -1638,7 +1638,7 @@ pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
             ClearAnimtiles(game);
             WaitUntilEndOfVblankAndClearHdma(game);
             InitializeSpecialEffectsForNewRoom(game);
-            ClearPLMs(game);
+            clear(game);
             ClearEprojs(game);
             ClearPaletteFXObjects(game);
             UpdateBeamTilesAndPalette(game);
@@ -1680,7 +1680,7 @@ pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
                 *resume_state = 3;
                 return yielded;
             }
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x8, 0x8, 0xb7eb as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x8, 0x8, 0xb7eb as VoidP), game);
             word!(game.door_transition_function = ((0x82e737i32) as u16));
         }
         *resume_state = 0;
@@ -1727,7 +1727,7 @@ pub unsafe fn ResumeGameplay(game: &mut Game) {
         load_tiles_and_palette(game);
         BackgroundLoad::Initial.load(game);
         DisplayViewablePartOfRoom(game);
-        LoadRoomPlmGfx(game);
+        reload_graphics(game);
         EnableNMI(game);
         EnableIrqInterrupts(game);
     }

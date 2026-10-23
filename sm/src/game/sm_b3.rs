@@ -11,7 +11,7 @@ pub use crate::game::prelude::*;
 
 use crate::game::progress_flags::{CheckEventHappened, SetBossBitForCurArea};
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
-use crate::game::plm_spawning::SpawnHardcodedPlm;
+use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_a0::{
     CalculateAngleFromXY, CalculateAngleOfSamusFromEnemy, CallEnemyPreInstr,
@@ -415,8 +415,8 @@ crate::game::callback_dispatch! {
     @prefix { let E = Get_Botwoon(word!(game.cur_enemy_index) as i32, game); };
     Botwoon_Init [] {
         if (*ram_ptr!(game; 0xd828, 4) & 2) != 0 {
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xf, 0x4, 0xb797 as VoidP), game);
-            crate::game::mechanism_crumbling_wall_ram::open_passage(game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x4, 0xb797 as VoidP), game);
+            crate::game::room_mechanisms::open_passage(game);
             (*E).base.current_instruction = addr_kBotwoon_Ilist_9389 as u16;
             (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
         } else {
@@ -798,7 +798,7 @@ pub unsafe fn Botwoon_Func_11(k: u16, game: &mut Game) {
 }
 pub unsafe fn Botwoon_Func_17(k: u16, game: &mut Game) {
     unsafe {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xf, 0x4, 0xb79b as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x4, 0xb79b as VoidP), game);
         scatter(DropSource::Botwoon, k, 0, game);
         let E = Get_Botwoon(k as i32, game);
         set_fields! {[(*E)], 0; var_23, var_24, var_25}

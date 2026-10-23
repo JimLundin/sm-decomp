@@ -15,7 +15,7 @@ use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
 use crate::game::sm_80::{
     NextRandom, QueueSfx1_Max3, QueueSfx1_Max6, QueueSfx2_Max1, QueueSfx2_Max3, QueueSfx3_Max3,
 };
-use crate::game::plm_spawning::SpawnPLM;
+use crate::game::room_mechanisms::spawn_collision;
 use crate::game::sm_86::{SpawnEprojWithGfx};
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::Samus_DealDamage;
@@ -1090,7 +1090,7 @@ unsafe fn EnemyBlockCollReact_Spike(_collision: &mut EnemyBlockCollInfo, game: &
         if plm == 0 {
             return 1;
         }
-        SpawnPLM(plm, game);
+        spawn_collision(plm, game);
         0
     }
 }

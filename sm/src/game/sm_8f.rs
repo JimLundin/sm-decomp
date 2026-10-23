@@ -5,7 +5,7 @@ pub use crate::game::prelude::*;
 use crate::game::progress_flags::SetEventHappened;
 use crate::game::scrolling_sky::{initialize_land, initialize_ocean, queue_land_rows, queue_ocean_rows};
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
-use crate::game::plm_spawning::SpawnHardcodedPlm;
+use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_87::SpawnAnimtiles;
 use crate::game::sm_88::FxTypeFunc_2C_Haze;
@@ -107,7 +107,7 @@ crate::game::callback_dispatch! {
     call (game); default { Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
     [9408916] RoomSetup_AfterSavingAnimals [] {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x3d, 0xb, 0xbb30 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x3d, 0xb, 0xbb30 as VoidP), game);
         word! {game; earthquake_type = 24; earthquake_timer = -1i32 as u16; }
     };
     [9408957] RoomSetup_ShakeDuringEscape [] {
@@ -149,7 +149,7 @@ crate::game::callback_dispatch! {
         word! {game; earthquake_type = 21; earthquake_timer = -1i32 as u16; }
     };
     [9423187] RoomCode_Escape4_SetMediumHorizRoomShake [] {
-        SpawnHardcodedPlm(
+        spawn_hardcoded(
             SpawnHardcodedPlmArgs::new(0x10, 0x10, 0xb968 as VoidP),
             game,
         );
@@ -159,7 +159,7 @@ crate::game::callback_dispatch! {
         word!(game.earthquake_timer = -1i32 as u16);
     };
     [9423214] RoomCode_SetCeresDoorSolid [] {
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xf, 0x26, 0xba48 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x26, 0xba48 as VoidP), game);
         FxTypeFunc_2C_Haze(game);
     };
     [9423222] RoomCode_CeresColorMathHdma [] {
@@ -171,11 +171,11 @@ crate::game::callback_dispatch! {
         word!(game.hdma_data_table_in_ceres = 9);
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [9408937] RoomSetup_AutoDestroyWallAfterEscape => SpawnHardcodedPlm(
+    [9408937] RoomSetup_AutoDestroyWallAfterEscape => spawn_hardcoded(
         SpawnHardcodedPlmArgs::new(0x10, 0x87, 0xb964 as VoidP),
         game,
     );
-    [9408946] RoomSetup_TurnWallIntoShotblocks => SpawnHardcodedPlm(
+    [9408946] RoomSetup_TurnWallIntoShotblocks => spawn_hardcoded(
         SpawnHardcodedPlmArgs::new(0xf, 0xa, 0xb9ed as VoidP),
         game,
     );
@@ -185,7 +185,7 @@ crate::game::callback_dispatch! {
     @forward [pub unsafe fn (game: &mut Game)];
     [9423048] RoomCode_8FC8C8 => SpawnEprojWithRoomGfx(addr_kEproj_PrePhantomRoom as u16, 0, game);
     [9423059]
-    RoomCode_SetupShaktoolRoomPlm => SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0, 0, 0xb8eb as VoidP), game);
+    RoomCode_SetupShaktoolRoomPlm => spawn_hardcoded(SpawnHardcodedPlmArgs::new(0, 0, 0xb8eb as VoidP), game);
     @external {
         9408955 | 9408956 | 9408979 | 9408980 | 9408981 | 9408982 | 9409012 | 9409013 | 9409014
                 | 9409015 | 9423047 | 9423056 | 9423057 | 9423058 | 9423068 | 9423134 => [()];
@@ -199,18 +199,18 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (game: &mut Game)];
     [9419121] DoorCode_StartWreckedShipTreadmillWest [] {
         SpawnAnimtiles(addr_kAnimtiles_WreckedShipTradmillRight as u16, game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x4, 0x9, 0xb64b as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x4, 0x9, 0xb64b as VoidP), game);
     };
     [9429464] DoorCode_StartWreckedSkipTreadmill_East [] {
         SpawnAnimtiles(addr_kAnimtiles_WreckedShipTradmillLeft as u16, game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x4, 0x9, 0xb64f as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x4, 0x9, 0xb64f as VoidP), game);
     };
     [9429612] DoorCode_SetupElevatubeFromSouth [] {
         *(ram_ptr!(game, u16; 0x7e1, 4)) = -256i32 as u16;
         *(ram_ptr!(game, u16; 0x7e1, 2)) = 2496;
         *(ram_ptr!(game, u16; 0x7e1, 6)) = -32i32 as u16;
         CallSomeSamusCode(0, game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x1, 0, 0xb8f9 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x1, 0, 0xb8f9 as VoidP), game);
     };
     [9429649] DoorCode_SetupElevatubeFromNorth [] {
         *(ram_ptr!(game, u16; 0x7e1, 4)) = 256;
@@ -223,7 +223,7 @@ crate::game::callback_dispatch! {
             b" \0" as *const u8 as *const c_char,
         );
         CallSomeSamusCode(0, game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x1, 0, 0xb8f9 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x1, 0, 0xb8f9 as VoidP), game);
     };
     [9429761] DoorCode_ResetElevatubeNorthExit [] {
         CallSomeSamusCode(1, game);

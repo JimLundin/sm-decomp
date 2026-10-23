@@ -5,7 +5,7 @@ pub use crate::game::prelude::*;
 
 use crate::game::progress_flags::CheckBossBitForCurArea;
 
-use crate::game::plm_spawning::SpawnPLM;
+use crate::game::room_mechanisms::spawn_collision;
 use crate::game::sm_a0::CalculateAngleFromXY;
 
 use crate::snes::snes::snes_read;
@@ -501,7 +501,7 @@ unsafe fn BlockInsideReact_SpecialAir_70(game: &mut Game) {
     unsafe {
         let sample = game.inside_block_reaction_samus_point();
         if sample == 1 {
-            SpawnPLM(addr_kPlmHeader_B6FF as u16, game);
+            spawn_collision(addr_kPlmHeader_B6FF as u16, game);
         }
     }
 }
@@ -515,17 +515,17 @@ unsafe fn BlockInsideReact_SpecialAir(_ci: *mut CollInfo, game: &mut Game) -> u8
             let area = u16::from_le_bytes([game.g_ram[0x79f], game.g_ram[0x7a0]]);
             let table = SPECIAL_AIR_PLM_TABLES[usize::from(area)];
             let plm = game.read_rom_word(0x940000 | u32::from(table), usize::from(bts & 0x7f) * 2);
-            SpawnPLM(plm, game);
+            spawn_collision(plm, game);
         } else {
             // Preserve the former eighty-entry dispatch table's invalid-BTS panic.
             assert!(bts < 80, "special-air BTS index out of bounds: {bts}");
             match bts {
-                8 => crate::game::mechanism_treadmill_ram::carry(
-                    crate::game::mechanism_treadmill::Direction::Right,
+                8 => crate::game::room_mechanisms::carry(
+                    crate::game::room_mechanisms::Direction::Right,
                     game,
                 ),
-                9 => crate::game::mechanism_treadmill_ram::carry(
-                    crate::game::mechanism_treadmill::Direction::Left,
+                9 => crate::game::room_mechanisms::carry(
+                    crate::game::room_mechanisms::Direction::Left,
                     game,
                 ),
                 10 => BlockInsideReact_SpecialAir_10(game),
@@ -622,7 +622,7 @@ unsafe fn BlockReactGrapple_GrappleBlock(ci: *mut CollInfo, game: &mut Game) -> 
         if *ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) & 0x80 != 0 {
             0
         } else {
-            SpawnPLM(
+            spawn_collision(
                 kBlockReactGrapple_GrappleBlockPlm
                     [*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) as usize],
                 game,
@@ -639,7 +639,7 @@ unsafe fn BlockReactGrapple_SpikeBlock(ci: *mut CollInfo, game: &mut Game) -> u8
         if *ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) & 0x80 != 0 {
             0
         } else {
-            SpawnPLM(
+            spawn_collision(
                 kBlockReactGrapple_SpikeBlockPlm
                     [*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) as usize],
                 game,

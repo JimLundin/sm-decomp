@@ -13,8 +13,8 @@ pub use crate::game::prelude::*;
 use crate::game::progress_flags::{CheckBossBitForCurArea, SetBossBitForCurArea};
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_82::sub_82DAF7;
-use crate::game::plm_spawning::{SpawnHardcodedPlm, SpawnPLM};
-use crate::game::sm_84::SetGoldenTorizoPalette;
+use crate::game::room_mechanisms::{spawn_hardcoded, spawn_collision};
+
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::SpawnBombTorizoHaze;
 use crate::game::sm_8d::SpawnPalfxObject;
@@ -316,7 +316,7 @@ crate::game::callback_dispatch! {
         torizo_fall_until_timer!(E, k, game, addr_kTorizo_Ilist_D203, addr_kTorizo_Ilist_D2BF);
     };
     @external {
-        11192006 => [crate::game::mechanism_torizo_statue_ram::wait(k, game)];
+        11192006 => [crate::game::room_mechanisms::wait_statue(k, game)];
         11191979 => [()];
         11195871 => Torizo_Func_10;
     }
@@ -560,7 +560,7 @@ pub unsafe fn sub_AAE784(game: &mut Game) {
             le(target_palettes, 175) <- table(kChozoStatue_Palettes3, 15),
             le(target_palettes, 159) <- table(kChozoStatue_Palettes2, 15),
         );
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xc, 0x1d, 0xd6d6 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xc, 0x1d, 0xd6d6 as VoidP), game);
     }
 }
 
@@ -717,11 +717,11 @@ crate::game::callback_dispatch! {
                 le(target_palettes, 175) <- table(kChozoStatue_Palettes, 15),
                 le(target_palettes, 159) <- table(kChozoStatue_Palette, 15),
             );
-            SpawnHardcodedPlm(
+            spawn_hardcoded(
                 SpawnHardcodedPlmArgs::new(0x4a, 0x17, 0xd6ee as VoidP),
                 game,
             );
-            SpawnHardcodedPlm(
+            spawn_hardcoded(
                 SpawnHardcodedPlmArgs::new(0x17, 0x1d, 0xd6fc as VoidP),
                 game,
             );
@@ -1325,7 +1325,7 @@ crate::game::callback_dispatch! {
     [11199529] Shaktool_Instr_9 [jp] {
         word! {game; fx_timer = 32; fx_y_vel = 64; }
     };
-    [11199542] Shaktool_Instr_11 [jp] { crate::game::mechanism_hands_ram::lower_acid(game); };
+    [11199542] Shaktool_Instr_11 [jp] { crate::game::room_mechanisms::lower_acid(game); };
     [11199549] Shaktool_Instr_10 [jp] { CallSomeSamusCode(1, game); };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11199871] Shaktool_Instr_8 [jp] { QueueSfx2_Max6(0x1c, game); };
@@ -1344,7 +1344,7 @@ crate::game::callback_dispatch! {
         ) & 0xf000)
             == 0xa000
         {
-            SpawnPLM(addr_kPlmHeader_D113 as u16, game);
+            spawn_collision(addr_kPlmHeader_D113 as u16, game);
             SpawnEprojWithRoomGfx(
                 addr_kEproj_WreckedShipChozoSpikeFootsteps_1 as u16,
                 arg,
@@ -1386,7 +1386,7 @@ crate::game::callback_dispatch! {
         *(ram_ptr!(game, u16; 0xcd20, 8)) = 0;
         *(ram_ptr!(game, u16; 0xcd20, 9)) = 0;
         *(ram_ptr!(game, u16; 0xcd20, 13)) = 1;
-        SpawnHardcodedPlm(
+        spawn_hardcoded(
             SpawnHardcodedPlmArgs::new(0x17, 0x1d, 0xd6fc as VoidP),
             game,
         );
@@ -1526,4 +1526,23 @@ crate::game::callback_dispatch! {
             }
         };
     };
+}
+
+pub unsafe fn SetGoldenTorizoPalette(mut a: u16, game: &mut Game) {
+    unsafe {
+        let mut v1: i16 = ((byte!(a; 1)) as i16) & (0x78i16);
+        if (v1 as u16 & 0x40) != 0 {
+            v1 = 56;
+        }
+        let mut v2: u16 = (4 * v1 as i32 | 0x1e) as u16;
+        for i in (0i32..=30).rev().step_by(2) {
+            let v4: i32 = v2 as i32 >> 1;
+            let v5: i32 = i >> 1;
+            word! { game;
+                palette_buffer[(v5 + 160)] = crate::rtl::rom_table_word!(game, 0x848132, v4 as isize);
+                palette_buffer[(v5 + 144)] = crate::rtl::rom_table_word!(game, 0x848032, v4 as isize);
+            }
+            v2 = (v2).wrapping_sub(2);
+        }
+    }
 }

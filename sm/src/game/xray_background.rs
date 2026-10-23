@@ -1,11 +1,11 @@
 //! X-ray background capture, hidden-block overlay and restoration.
 use crate::game::constants::bank_8f::*;
 use crate::game::prelude::*;
-use crate::game::progress_flags::PrepareBitAccess;
+
 use crate::game::sm_80::QueueSfx1_Max6;
-use crate::game::sm_84::CalculatePlmBlockCoords;
+
 use crate::game::sm_91::{ResponsibleForXrayStandupGlitch, __ASSERT_FUNCTION};
-const RomPtr_84: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x84>;
+
 const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
 const RomPtr_91: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x91>;
 const true_0: i32 = 1;
@@ -512,36 +512,7 @@ pub unsafe fn finish_restore(k: u16, game: &mut Game) {
 
 pub unsafe fn reveal_room_items(game: &mut Game) {
     unsafe {
-        let mut i: i32 = 78;
-        while i >= 0 {
-            let v1: i32 = i >> 1;
-            if word!(game.plm_header_ptr[v1]) as i32 >= 0x84df89 & 0xffff {
-                let k: u16 = i as u16;
-                let v2: u16 = *ram_ptr!(game; 0xd870, PrepareBitAccess(word!(game.plm_room_arguments[v1]), game) as isize)
-                    as u16;
-                i = k as i32;
-                if (word!(game.bitmask) & v2) == 0 {
-                    CalculatePlmBlockCoords(k, game);
-                    let v3 = RomPtr_84(
-                        crate::rtl::rom_table_word!(
-                            game,
-                            0x84839d,
-                            (*(ram_ptr!(game, u16; 0xdf0c)).offset((k >> 1) as isize) >> 1)
-                                as isize,
-                        ),
-                        game,
-                    );
-                    reveal_room_block(
-                        (*(v3.offset(2) as *mut u16)) & (0xfffu16),
-                        word!(game.plm_x_block),
-                        word!(game.plm_y_block),
-                        game,
-                    );
-                    i = k as i32;
-                }
-            }
-            i -= 2;
-        }
+        crate::game::room_mechanisms::reveal_items(game);
         let RS = RomPtr_8F(word!(game.roomdefroomstate_ptr), game) as *const RoomDefRoomstate;
         if (*RS).xray_special_casing_ptr != 0 {
             let mut p = RomPtr_8F((*RS).xray_special_casing_ptr, game) as *const RoomBlock;

@@ -9,7 +9,7 @@ use crate::game::sm_80::{
     InvalidInterrupt_Crash, QueueSfx1_Max6, QueueSfx1_Max9, QueueSfx2_Max6, QueueSfx3_Max6,
     QueueSfx3_Max9,
 };
-use crate::game::sm_84::{DisablePLMs, EnablePLMs};
+use crate::game::room_mechanisms::set_enabled;
 use crate::game::sm_86::{DisableEprojs, EnableEprojs};
 use crate::game::sm_87::{DisableAnimtiles, EnableAnimtiles};
 use crate::game::sm_88::SpawnHdmaObject;
@@ -1409,7 +1409,7 @@ pub unsafe fn Xray_Initialize(game: &mut Game) -> u8 {
         word! {game; time_is_frozen_flag = 1; samus_special_transgfx_index = 5; }
         word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(255));
         DisableEprojs(game);
-        DisablePLMs(game);
+        set_enabled(false, game);
         DisableAnimtiles(game);
         DisablePaletteFx(game);
         mov24(ram_ptr!(game, LongPtr; 0xa88), 0x980001);
@@ -1453,7 +1453,7 @@ pub unsafe fn ResponsibleForXrayStandupGlitch(game: &mut Game) {
             word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
         }
         EnableEprojs(game);
-        EnablePLMs(game);
+        set_enabled(true, game);
         EnableAnimtiles(game);
         EnablePaletteFx(game);
     }

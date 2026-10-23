@@ -14,7 +14,7 @@ pub use crate::game::prelude::*;
 pub use crate::game::constants::bank_86::*;
 
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
-use crate::game::plm_spawning::SpawnHardcodedPlm;
+use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::{sub_88DF34, SpawnBG3ScrollHdmaObject};
 use crate::game::sm_90::{CallSomeSamusCode, Samus_ReleaseFromDraygon_, Samus_SetGrabbedByDraygonPose};
@@ -1212,7 +1212,7 @@ pub unsafe fn SporeSpawn_Func_6(game: &mut Game) {
             enemy_instruction! {[(*E0).base]; instruction = addr_kDraygon_Ilist_E77D as u16, timer = 1}
             crate::update_place! { unaligned_word fresh5 = &raw mut (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize))) => (u16::from_le(fresh5.read_unaligned())) | (2u16); }
             word!(game.scrolling_finished_hook = 0);
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x7, 0x1e, 0xb78f as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x7, 0x1e, 0xb78f as VoidP), game);
         }
     }
 }
@@ -1373,7 +1373,7 @@ crate::game::callback_dispatch! {
             (*E0).var_A = ((0xa5eb1ai32) as u16);
             (*E0).base.properties = ((*E0).base.properties) | (0x8000u16);
             SporeSpawn_Func_5(game);
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x7, 0x1e, 0xb793 as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x7, 0x1e, 0xb793 as VoidP), game);
             word!(game.scrolling_finished_hook = 0);
         } else {
             (*E0).base.current_instruction = addr_kDraygon_Ilist_E6C7 as u16;

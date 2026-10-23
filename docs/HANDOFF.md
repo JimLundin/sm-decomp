@@ -2,25 +2,43 @@
 
 Read [PLAN.md](PLAN.md) first and use [ITERATION.md](ITERATION.md). Preserve the
 complete game and exact behavior while reducing code, extracting content as
-validated data and eliminating all unsafe operations. Item 4, the complete
-player-projectile lifecycle, remains active. Read
+validated data and eliminating all unsafe operations. Item 4, retiring bank ownership by gameplay responsibility, remains active. Read
 [the architecture migration](target-architecture/MIGRATION.md) before changing
 subsystem boundaries or ownership.
 
 ## Current implementation
 
-Latest correction: room loading now preserves overlapping layer-two/BTS source
-contents. The forward-copy bug came from f116c8a6, before projectile consolidation.
-An actual-decoder synthetic regression went red then green; nonoverlap and checked
-failure-prefix cases pass. Final source
-`2e9cd73487ea202c297ea4b07e622bca04c2208eaf4b6f24d8bd7addbdeaea86` passes the
-release/frontend/verifier build and Speed Booster inputs 0..27683 through a fresh
-checkpoint, including the previously failing input 20857. Both copy branches,
-completed loading, gameplay and message probes execute with 120 follow-up frames.
-Current main has 109227 Rust lines; the correction adds 89 (16 runtime/probes, 73 checks).
-Local artifacts in `20261023/room-mechanisms` include `copy-regression-red.json`,
-`copy-regression-fixed.json`, `copy-fixed-prefix.log`, `copy-fixed-message-tail.log`
-and `at-20857-fixed-runtime.smvchk`. All checkpoints/observations remain local.
+Latest adoption: complete room mechanisms in `sm/src/game/room_mechanisms`.
+Creation/setup, rules, all 110 command identities, scheduler, drawing/graphics,
+message suspension and actual callers are integrated. All 51 superseded files
+are deleted. Scope and remaining ownership limits are in PLAN and PROGRESS.
+
+Verified source: `88265b3ed879c62fb219b6829703f9560c56cc6995def849bb9c44e6102569cd`.
+Release/frontend/verifier build passes. Frozen baseline IDs 0..1017 pass: 1015
+normal byte-identical outputs, two exact diagnostics and one bounded nonreturn.
+New IDs 1018 (ownership) and 1019 (qualified commands) pass; 106 projectile groups
+pass. Speed Booster inputs 0..28313 pass, zero failing frames, required creation,
+terrain/drawing/gameplay and message completion probes plus 120 follow-up frames.
+Completion occurs at 28193; no credits coverage. Native pose effects remain qualified.
+
+Current source is 108682 lines. Integration is -1154 lines; baseline preparation
+was +926, so the complete mechanism effort is -228 lines/-4214 tokens/-6464 LF
+bytes. No new dependencies or maintained native/tooling source. Do not report
+only integration savings. Next investigation concerns persistent ownership's
+external writers, adoption/reset/load and shared continuation blockers.
+
+Local evidence: `Local/sm-decomp-experiments/20261023/room-mechanisms/` contains
+`baseline-1018.dll`, its outputs/manifest, `integrated-2.dll`, source overlays,
+`integrated-2-capture.json`, `integrated-2-new-checks.json`,
+`integrated-2-projectile-checks.json`, `integrated-2-oracle.log`,
+`integrated-2-accounting.json`, and `integrated-4-build.log`.
+Do not overwrite references. No compiler or runtime check is left running.
+
+The earlier room-copy correction remains in production; its separate +89 lines
+are excluded from the mechanism accounting. Its old checkpoints may reject the
+new runtime fingerprint: never bypass compatibility checks. Regenerate if needed.
+
+The following projectile figures describe its earlier milestone, not current totals.
 
 Production projectile consolidation is complete. game/player_projectiles now
 owns ten shots, eighteen trail pairs, weapon/charge controls and launch history

@@ -2,7 +2,7 @@
 use crate::game::constants::bank_86::*;
 use crate::game::prelude::*;
 use crate::game::sm_80::QueueSfx2_Max6;
-use crate::game::plm_spawning::SpawnHardcodedPlm;
+use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_a9::WriteColorsToPalette;
 const RomPtr_AD: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xad>;
@@ -115,8 +115,8 @@ pub unsafe fn seal_wall(game: &mut Game) {
         SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, game);
         game.eproj_spawn_pt = Point16U { x: 248, y: 152 };
         SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xf, 0x4, 0xb673 as VoidP), game);
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xf, 0x9, 0xb673 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x4, 0xb673 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x9, 0xb673 as VoidP), game);
         (*Get_MotherBrain(0i32, game)).var_A = ((0xa9881di32) as u16);
     }
 }

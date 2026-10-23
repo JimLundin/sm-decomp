@@ -1,7 +1,7 @@
 //! Room and door metadata, ordered state selection and setup dispatch.
 //! Checked records retain their cartridge allocation; RAM owns the live state.
 use crate::game::decompression::decompress_to_ram;
-use crate::game::plm_spawning::SpawnRoomPLM;
+use crate::game::room_mechanisms::spawn_room;
 use crate::game::progress_flags::{CheckBossBitForCurArea, CheckEventHappened};
 use crate::game::sm_80::{
     CopyToVramNow, DecompressToVRAM, LoadMirrorOfExploredMapTiles, SaveExploredMapTilesToSaved,
@@ -337,7 +337,7 @@ unsafe fn initialize_objects<const INITIAL: bool>(state: crate::rom::RomRecord, 
         let mut cursor = i32::from(state.word(offset_of!(State, room_plm_header_ptr)));
         if cursor != 0 {
             while room_record(cursor as u16, game).word(0) != 0 {
-                SpawnRoomPLM(cursor as u16, game);
+                spawn_room(cursor as u16, game);
                 cursor = if INITIAL {
                     i32::from((cursor as u16).wrapping_add(6))
                 } else {

@@ -11,7 +11,7 @@ use crate::game::sm_80::{
     CalculateLayer2PosAndScrollsWhenScrolling, DebugScrollPosSaveLoad, HandleHudTilemap,
 };
 use crate::game::sm_82::HandleSamusOutOfHealthAndGameTile;
-use crate::game::sm_84::PlmHandler_Async;
+use crate::game::room_mechanisms::run;
 use crate::game::sm_86::EprojRunAll;
 use crate::game::sm_87::AnimtilesHandler;
 use crate::game::sm_8d::PaletteFxHandler;
@@ -75,7 +75,7 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
             EprojRunAll(game);
         }
         if resume != ResumePoint::Skip {
-            let yielded = PlmHandler_Async(game);
+            let yielded = run(game);
             if yielded != 0 {
                 game.set_coroutine_state_1(ResumePoint::RoomObjects as u8);
                 return yielded;

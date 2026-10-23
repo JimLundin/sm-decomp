@@ -122,7 +122,7 @@ impl Context for Fields<'_> {
     }
     fn setup(&mut self, header: u16, displacement: &mut i32) -> u8 {
         unsafe {
-            crate::game::plm_spawning::SpawnPLMWithCollision(
+            crate::game::room_mechanisms::spawn_contact(
                 header,
                 &mut Displacement::Local(displacement),
                 self.0,

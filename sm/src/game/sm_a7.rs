@@ -20,7 +20,7 @@ use crate::game::sm_80::{
     ScreenOff, ScreenOn, WaitForNMI_Async,
 };
 use crate::game::sm_82::AdvancePaletteFade_BgPalette6;
-use crate::game::plm_spawning::SpawnHardcodedPlm;
+use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::{sub_88E487, SpawnHdmaObject};
 use crate::game::sm_a0::{
@@ -822,11 +822,11 @@ pub unsafe fn KraidsFingernail_Fire(k: u16, game: &mut Game) {
     }
 }
 crate::forward_calls! { pub unsafe fn (game: &mut Game);
-    Kraid_SpawnPlmToClearCeiling => SpawnHardcodedPlm(
+    Kraid_SpawnPlmToClearCeiling => spawn_hardcoded(
         SpawnHardcodedPlmArgs::new(0x2, 0x12, 0xb7b7 as VoidP),
         game,
     );
-    Kraid_ClearSomeSpikes => SpawnHardcodedPlm(
+    Kraid_ClearSomeSpikes => spawn_hardcoded(
         SpawnHardcodedPlmArgs::new(0x5, 0x1b, 0xb7bb as VoidP),
         game,
     );
@@ -995,7 +995,7 @@ crate::game::callback_dispatch! {
             addr_kEproj_RocksFallingKraidCeiling as u16,
             game,
         );
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x7, 0x12, 0xb7a7 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x7, 0x12, 0xb7a7 as VoidP), game);
     };
     [10995367] Kraid_CrumbleRightPlatform_Middle [] {
         SpawnEprojWithGfx(
@@ -1004,7 +1004,7 @@ crate::game::callback_dispatch! {
             addr_kEproj_RocksFallingKraidCeiling as u16,
             game,
         );
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xf, 0x12, 0xb7a7 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x12, 0xb7a7 as VoidP), game);
     };
     [10995389] Kraid_CrumbleRightPlatform_Left [] {
         SpawnEprojWithGfx(
@@ -1013,7 +1013,7 @@ crate::game::callback_dispatch! {
             addr_kEproj_RocksFallingKraidCeiling as u16,
             game,
         );
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xe, 0x12, 0xb7af as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xe, 0x12, 0xb7af as VoidP), game);
     };
     [10995411] Kraid_CrumbleLeftPlatform_Right [] {
         SpawnEprojWithGfx(
@@ -1022,7 +1022,7 @@ crate::game::callback_dispatch! {
             addr_kEproj_RocksFallingKraidCeiling as u16,
             game,
         );
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x9, 0x12, 0xb7a7 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x9, 0x12, 0xb7a7 as VoidP), game);
     };
     [10995433] Kraid_CrumbleLeftPlatform_Middle [] {
         SpawnEprojWithGfx(
@@ -1031,7 +1031,7 @@ crate::game::callback_dispatch! {
             addr_kEproj_RocksFallingKraidCeiling as u16,
             game,
         );
-        SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x8, 0x12, 0xb7af as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x8, 0x12, 0xb7af as VoidP), game);
     };
     [10995455] Kraid_CrumbleRightPlatform_Right [] {
         SpawnEprojWithGfx(
@@ -1040,7 +1040,7 @@ crate::game::callback_dispatch! {
             addr_kEproj_RocksFallingKraidCeiling as u16,
             game,
         );
-        SpawnHardcodedPlm(
+        spawn_hardcoded(
             SpawnHardcodedPlmArgs::new(0x10, 0x12, 0xb7af as VoidP),
             game,
         );
@@ -1159,31 +1159,31 @@ crate::game::callback_dispatch! {
             );
             match (*E).kraid_var_F as i32 >> 1 {
                 0 => {
-                    SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x6, 0x12, 0xb7b3 as VoidP), game)
+                    spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x6, 0x12, 0xb7b3 as VoidP), game)
                 }
                 1 => {
-                    SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xd, 0x12, 0xb7ab as VoidP), game)
+                    spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xd, 0x12, 0xb7ab as VoidP), game)
                 }
                 2 => {
-                    SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x2, 0x12, 0xb7a3 as VoidP), game)
+                    spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x2, 0x12, 0xb7a3 as VoidP), game)
                 }
                 3 => {
-                    SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xa, 0x12, 0xb7b3 as VoidP), game)
+                    spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xa, 0x12, 0xb7b3 as VoidP), game)
                 }
                 4 => {
-                    SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x5, 0x12, 0xb7ab as VoidP), game)
+                    spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x5, 0x12, 0xb7ab as VoidP), game)
                 }
                 5 => {
-                    SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xc, 0x12, 0xb7b3 as VoidP), game)
+                    spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xc, 0x12, 0xb7b3 as VoidP), game)
                 }
                 6 => {
-                    SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x3, 0x12, 0xb7ab as VoidP), game)
+                    spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x3, 0x12, 0xb7ab as VoidP), game)
                 }
                 7 => {
-                    SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xb, 0x12, 0xb7ab as VoidP), game)
+                    spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xb, 0x12, 0xb7ab as VoidP), game)
                 }
                 8 => {
-                    SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x4, 0x12, 0xb7b3 as VoidP), game)
+                    spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x4, 0x12, 0xb7b3 as VoidP), game)
                 }
                 _ => {}
             }
@@ -1983,7 +1983,7 @@ crate::game::callback_dispatch! {
             word!(game.cur_enemy_index = 256);
             enemy_death(v4, 0x100, game);
             word!(game.cur_enemy_index = v7);
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0x5, 0x1b, 0xb7bf as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x5, 0x1b, 0xb7bf as VoidP), game);
         }
     };
     @external {
@@ -3538,7 +3538,7 @@ crate::game::callback_dispatch! {
                 (*Get_Phantoon(0x80i32, game)).base.properties = v4;
                 (*Get_Phantoon(0xc0i32, game)).base.properties = v4;
                 crate::update_place! { unaligned_word fresh23 = &raw mut (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize))) => (u16::from_le(fresh23.read_unaligned())) | (1u16); }
-                SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0, 0x6, 0xb78b as VoidP), game);
+                spawn_hardcoded(SpawnHardcodedPlmArgs::new(0, 0x6, 0xb78b as VoidP), game);
                 QueueMusic_Delayed8(3, game);
             }
         }
@@ -4033,7 +4033,7 @@ crate::game::callback_dispatch! {
             (*Get_Phantoon(k as i32 + 128i32, game)).var_B = 0;
             (*EK).var_F = ((0xa7d4eei32) as u16);
             (*EK).var_E = 30;
-            SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0, 0x6, 0xb781 as VoidP), game);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0, 0x6, 0xb781 as VoidP), game);
         }
     };
     [10999022] Phantoon_WaitBetweenSpawningAndSpinningFireballs {

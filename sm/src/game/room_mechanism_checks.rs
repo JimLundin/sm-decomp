@@ -4,7 +4,7 @@
 //! unaligned original loads (grey door, custom draw, turret, item frames and pose).
 use crate::game::{
     enemy_script::{EnemyScript, bank_base},
-    plm_spawning, sm_84 as old,
+    room_mechanisms as mechanisms,
 };
 use crate::{game_state::Game, rom::RomImage};
 use std::panic::{AssertUnwindSafe, catch_unwind};
@@ -12,7 +12,7 @@ const COMMANDS: [u32; 14] = [
     8685236, 8685244, 8685249, 8685258, 8685390, 8685375, 8686138, 8686116, 8686126, 8686194,
     8685412, 8685541, 8686608, 8686913,
 ];
-pub(crate) const CASES: u32 = 1018;
+pub(crate) const CASES: u32 = 1020;
 fn put(g: &mut Game, a: usize, v: u16) {
     g.g_ram[a..a + 2].copy_from_slice(&v.to_le_bytes());
 }
@@ -107,7 +107,7 @@ unsafe fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
                 }
                 match source {
                     0 => {
-                        plm_spawning::SpawnHardcodedPlm(
+                        mechanisms::spawn_hardcoded(
                             crate::types::SpawnHardcodedPlmArgs {
                                 block_x: 3,
                                 block_y: 2,
@@ -117,16 +117,16 @@ unsafe fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
                         );
                         (0, 0)
                     }
-                    1 => (0, u16::from(plm_spawning::SpawnPLM(0x8000, g))),
+                    1 => (0, u16::from(mechanisms::spawn_collision(0x8000, g))),
                     2 => {
-                        plm_spawning::SpawnRoomPLM(0x9000, g);
+                        mechanisms::spawn_room(0x9000, g);
                         (0, 0)
                     }
                     _ => {
                         for (a, v) in [(0x12, 0x8000), (0x14, 0x0203), (0x16, 0x4567)] {
                             put(g, a, v);
                         }
-                        plm_spawning::SpawnRoomPLM(0x12, g);
+                        mechanisms::spawn_room(0x12, g);
                         (0, 0)
                     }
                 }
@@ -138,18 +138,18 @@ unsafe fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
                 put(g, 0x1c2d, 6);
                 put(g, 0x1c2f, 0x9999);
                 match id {
-                    12 => old::ClearPLMs(g),
+                    12 => mechanisms::clear(g),
                     13 => {
                         put(g, 0x1c23, 0x4567);
-                        old::EnablePLMs(g)
+                        mechanisms::set_enabled(true, g)
                     }
                     14 => {
                         put(g, 0x1c23, 0xc567);
-                        old::DisablePLMs(g)
+                        mechanisms::set_enabled(false, g)
                     }
                     _ => {
-                        old::DisablePLMs(g);
-                        old::EnablePLMs(g)
+                        mechanisms::set_enabled(false, g);
+                        mechanisms::set_enabled(true, g)
                     }
                 };
                 (0, 0)
@@ -159,7 +159,7 @@ unsafe fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
                 let k = [0, 1, 80][((id - 16) % 3) as usize];
                 slot(g, 0, 0x8000);
                 put(g, 0x1c2d, 6);
-                result(old::CallPlmInstr(
+                result(mechanisms::checks::command(
                     COMMANDS[choice],
                     EnemyScript::at(image.clone(), crate::rtl::lorom_offset(0x849100) as usize),
                     k,
@@ -186,7 +186,7 @@ unsafe fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
                     6 => g.g_ram[0x613] = 2,
                     _ => g.g_ram[0x613] = 255,
                 }
-                (3, u16::from(old::PlmHandler_Async(g)))
+                (3, u16::from(mechanisms::run(g)))
             }
             66..=81 => {
                 let mode = id - 66;
@@ -222,9 +222,9 @@ unsafe fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
                 if mode == 15 {
                     put(g, 0x1c25, 504);
                 }
-                old::ProcessPlmDrawInstruction(0, g);
-                old::CalculatePlmBlockCoords(0, g);
-                old::DrawPlm(0, g);
+                mechanisms::checks::process_draw(0, g);
+                mechanisms::calculate_coordinates(0, g);
+                mechanisms::checks::draw(0, g);
                 (0, 0)
             }
             82..=85 => {
@@ -232,7 +232,7 @@ unsafe fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
                 put(g, 0x1c2d, 6);
                 let short = RomImage::zeroed(1);
                 short.write(0, 7);
-                result(old::CallPlmInstr(
+                result(mechanisms::checks::command(
                     [8685249, 8685390, 8685412, 8685541][(id - 82) as usize],
                     EnemyScript::at(short, 0),
                     0,
@@ -241,7 +241,7 @@ unsafe fn execute(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
             }
             86..=89 => {
                 put(g, 0x7a5, [0, 16, 256, 0xffff][(id - 86) as usize]);
-                old::CalculatePlmBlockCoords(0, g);
+                mechanisms::calculate_coordinates(0, g);
                 (0, 0)
             }
             _ => unreachable!(),
@@ -302,7 +302,7 @@ unsafe fn setup_case(id: u32, g: &mut Game) -> (u8, i32) {
     }
     let mut displacement = 0x12345i32;
     let returned = unsafe {
-        crate::game::mechanism_setup_runtime::execute(
+        mechanisms::checks::setup_entry(
             SETUPS[index],
             0,
             &mut crate::game::mechanism_displacement::Displacement::Local(&mut displacement),
@@ -418,7 +418,7 @@ unsafe fn pre_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
             if variant & 1 != 0 { 0xff } else { 0 },
         );
     }
-    unsafe { old::CallPlmPreInstr(ea, 0, g) };
+    unsafe { mechanisms::checks::pre(ea, 0, g) };
     (0, 0)
 }
 unsafe fn command_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
@@ -442,7 +442,7 @@ unsafe fn command_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
         put(g, 0xde6c, 0xa000);
     }
     result(unsafe {
-        old::CallPlmInstr(
+        mechanisms::checks::command(
             ea,
             EnemyScript::at(image.clone(), (bank_base(0x84) + 0x9100) as usize),
             0,
@@ -476,7 +476,7 @@ unsafe fn native_effect_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u1
         definition(0x86e659, 8840661);
         definition(0x86e675, 8840666);
         let value = unsafe {
-            crate::game::mechanism_setup_runtime::execute(
+            mechanisms::checks::setup_entry(
                 if n < 2 { 8701630 } else { 8701643 },
                 0,
                 &mut crate::game::mechanism_displacement::Displacement::Absent,
@@ -513,7 +513,7 @@ unsafe fn native_effect_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u1
         if n & 1 == 0 { 8705951 } else { 8705974 }
     };
     let returned = result(unsafe {
-        old::CallPlmInstr(
+        mechanisms::checks::command(
             opcode,
             EnemyScript::at(image.clone(), (bank_base(0x84) + 0x9100) as usize),
             0,
@@ -593,7 +593,7 @@ unsafe fn message_case(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<
         let returned = if door {
             unsafe { crate::game::sm_82::CallDoorTransitionFunction_Async(8578217, g) }
         } else {
-            unsafe { old::PlmHandler_Async(g) }
+            unsafe { mechanisms::run(g) }
         };
         trace.push(returned);
         trace.extend_from_slice(&g.message_box_das0l_value.to_le_bytes());
@@ -681,7 +681,7 @@ unsafe fn consumer_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
                 g.g_ram[0xd8b0] = 1;
             }
         }
-        unsafe { plm_spawning::close_door(g) };
+        unsafe { mechanisms::close_door(g) };
     } else if n < 10 {
         for i in 0..40 {
             slot(g, i, 0);
@@ -704,21 +704,17 @@ unsafe fn consumer_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
     } else if n < 14 {
         let slot = if n & 1 == 0 { 0 } else { 39 };
         put(g, 0x1d77 + 2 * slot, 0xfffe);
-        crate::game::mechanism_mother_brain_glass_ram::add_hits(
-            slot,
-            [0, 1, 0xffff, 0x8000][(n - 10) as usize],
-            g,
-        );
+        mechanisms::add_glass_hits(slot, [0, 1, 0xffff, 0x8000][(n - 10) as usize], g);
     } else if n < 22 {
         let v = n - 14;
         put(g, ram::area_index, if v & 2 == 0 { 0 } else { 3 });
         g.g_ram[0xd828 + 3] = if v & 4 == 0 { 0 } else { 1 };
         put(g, 0xb2e, if v == 7 { 1 } else { 0 });
-        crate::game::mechanism_treadmill_ram::carry(
+        mechanisms::carry(
             if v & 1 == 0 {
-                crate::game::mechanism_treadmill::Direction::Right
+                mechanisms::Direction::Right
             } else {
-                crate::game::mechanism_treadmill::Direction::Left
+                mechanisms::Direction::Left
             },
             g,
         );
@@ -752,7 +748,7 @@ unsafe fn boundary_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
         // Broad/odd selectors are accepted by these original entries. Their
         // destination words can alias another owned lane or neighboring RAM.
         result(unsafe {
-            old::CallPlmInstr(
+            mechanisms::checks::command(
                 COMMANDS[(n / 6) as usize],
                 EnemyScript::at(image.clone(), (bank_base(0x84) + 0x9100) as usize),
                 selector,
@@ -766,7 +762,7 @@ unsafe fn boundary_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
         assert_eq!((g.g_ram.as_ptr() as usize + target) & 1, 0);
         put(g, 0x1e17, target as u16);
         result(unsafe {
-            old::CallPlmInstr(
+            mechanisms::checks::command(
                 8706958,
                 EnemyScript::at(image.clone(), (bank_base(0x84) + 0x9100) as usize),
                 1,
@@ -794,7 +790,7 @@ unsafe fn nonreturn_case(id: u32, g: &mut Game) -> (u8, u16) {
     };
     eprintln!("ROOM_MECHANISM_NONRETURN {id} setup={address:06x}");
     let value = unsafe {
-        crate::game::mechanism_setup_runtime::execute(
+        mechanisms::checks::setup_entry(
             address,
             0,
             &mut crate::game::mechanism_displacement::Displacement::Absent,
@@ -812,7 +808,7 @@ unsafe fn displacement_alias_case(id: u32, g: &mut Game) -> (u8, u16) {
     put(g, crate::ram_map::words::samus_y_dir, 0);
     put(g, 0xa6e, 0);
     let value = unsafe {
-        crate::game::mechanism_setup_runtime::execute(
+        mechanisms::checks::setup_entry(
             8697028,
             0,
             &mut crate::game::mechanism_displacement::Displacement::RamOffset(at),
@@ -848,7 +844,13 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     let mut displacement = None;
     let mut trace = Vec::new();
     let outcome = catch_unwind(AssertUnwindSafe(|| unsafe {
-        if id >= 1015 {
+        if id == 1019 {
+            assert!(mechanisms::qualified_checks(&mut g));
+            (5, 2)
+        } else if id == 1018 {
+            assert!(mechanisms::ownership_checks(&mut g));
+            (5, 1)
+        } else if id >= 1015 {
             displacement_alias_case(id, &mut g)
         } else if id >= 1012 {
             nonreturn_case(id, &mut g)
