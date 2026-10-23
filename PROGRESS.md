@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 13:18 UTC**
+Updated: **2026-10-23 13:28 UTC**
 
 **Player projectiles now run through one owned production subsystem.**
 The broader engine modernization remains unfinished.
@@ -52,10 +52,27 @@ Staging copies are counted once. The rejected experimental Session is archived;
 its removal contributes no claimed production savings. No ROM-derived fixtures
 are committed.
 
-Next: select another complete ownership boundary from the real caller graph,
-with a public interface, actual caller migration and named deletions. Further
-reduction, all-unsafe elimination, persistent state, independent backends and
-boot-to-credits verification remain unfinished.
+## Current work: room-mechanism proposal
+
+The projectile milestone is committed in `04dbc192`. One implementation worker
+and an independent reviewer are assessing the complete room-mechanism subsystem:
+creation, setup, script scheduling, commands, drawing, message suspension, reset
+and the queries used by encounters and room loading. No replacement is adopted yet.
+
+The candidate covers 24 RAM adapters, bank orchestration, spawning and setup
+dispatch: **3,684 existing lines** before retaining required native behavior.
+This is the scope to replace, not a savings claim. The proposal must price the
+replacement and identify repeated field/effect handling that can actually vanish.
+
+Verification will use current production entries and the existing DLL workflow,
+comparing complete RAM plus return/yield values and relevant native effects.
+Message resume, live selectors, partial failures and ROM allocation changes need
+explicit cases. Old experimental results are not new implementation evidence.
+
+Persistent ownership remains blocked by external state writers, whole-RAM state
+replacement and a continuation byte shared with other game modes. Further
+reduction, all-unsafe elimination, independent backends and boot-to-credits
+verification remain unfinished.
 
 See [PLAN](docs/PLAN.md), [HANDOFF](docs/HANDOFF.md), and
 [the accepted architecture](docs/target-architecture/README.md).

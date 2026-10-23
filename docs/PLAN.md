@@ -122,6 +122,19 @@ references; measure build/test time and resource growth before changing the loop
    complete adjacent responsibility and a reviewed owner/caller/deletion proposal;
    do not restart the archived Session or resume isolated shared-consumer work.
 
+   Current next-boundary investigation: complete room mechanisms, including
+   creation/setup, scheduler/pre-actions/commands, drawing, message suspension,
+   lifecycle and actual encounter/room/contact callers. One implementation worker
+   and an independent reviewer are preparing the owner/API/deletion proposal.
+   The existing 24 RAM adapters plus sm_84, spawning and setup runtime total 3684
+   lines before retaining required native behavior; this is not a savings claim.
+   Consolidate repeated field/effect handling, and price replacement plus checks
+   before adoption. Capture actual old entries through the existing DLL workflow;
+   compare RAM, return/yield, failure prefixes and relevant native effects.
+   Persistent ownership additionally needs closure of external writers, whole-RAM
+   adoption and shared continuation context. No new runtime implementation is
+   approved until this proposal is reviewed.
+
    `game/player_projectiles` owns ten shots, eighteen trail pairs, weapon/charge
    controls and launch history during each complete subsystem interval. One
    391-word / 782-byte compatibility map handles canonical, broad, odd and signed
