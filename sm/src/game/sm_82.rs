@@ -22,6 +22,7 @@ pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_82::*;
 
 use crate::game::message_boxes;
+use crate::game::palette_effects;
 use crate::game::progress_flags::CheckEventHappened;
 use crate::game::room_mechanisms::{clear, close_door, run, set_enabled};
 use crate::game::samus_animation::{Samus_DrawDuringDeathAnim, Samus_DrawWhenNotAnimatingOrDying};
@@ -29,7 +30,6 @@ use crate::game::sm_8b::{
     GameState_1_OpeningCinematic_, GameState_37_CeresGoesBoomWithSamus_,
     GameState_39_EndingAndCredits_, LoadTitleSequenceGraphics,
 };
-use crate::game::sm_8d::{ClearPaletteFXObjects, DisablePaletteFx, EnablePaletteFx};
 use crate::game::sm_8f::{PauseHook_DraygonRoom, UnpauseHook_DraygonRoom};
 use crate::game::sm_9b::{
     DrawSamusStartingDeathAnim_, GameState_24_SamusNoHealth_Explosion_Helper,
@@ -214,7 +214,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
             EnableNMI(game);
             EnableEprojs(game);
             set_enabled(true, game);
-            EnablePaletteFx(game);
+            palette_effects::set_enabled(true, game);
             EnableHdmaObjects(game);
             EnableAnimtiles(game);
             SetLiquidPhysicsType(game);
@@ -557,8 +557,8 @@ pub unsafe fn GameState_43_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
         word! { game, 0;
             fx_layer_blending_config_a, cur_irq_handler, irqhandler_next_handler,
         }
-        DisablePaletteFx(game);
-        ClearPaletteFXObjects(game);
+        palette_effects::set_enabled(false, game);
+        palette_effects::clear(game);
         word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
         word_transfers!(game, descending, 270; native(0x996) <- value(0));
         *ram_ptr!(game; 0x6e) = 0;
@@ -4148,7 +4148,7 @@ crate::game::callback_dispatch! {
             LoadRoomMusic(game);
             ClearEprojs(game);
             ClearAnimtiles(game);
-            ClearPaletteFXObjects(game);
+            palette_effects::clear(game);
             clear(game);
             initialize_door_objects(game);
             LoadFXHeader(game);

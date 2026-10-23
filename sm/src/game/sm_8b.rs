@@ -6,11 +6,9 @@ pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_60::*;
 
 use crate::game::explosion_window::spawn_power_bomb;
+use crate::game::palette_effects;
 use crate::game::player_projectiles::draw_projectiles;
 use crate::game::progress_flags::CheckEventHappened;
-use crate::game::sm_8d::{
-    ClearPaletteFXObjects, DisablePaletteFx, EnablePaletteFx, PaletteFxHandler, SpawnPalfxObject,
-};
 use crate::game::sm_80::{
     ClearOamExt, ClearUnusedOam, CopySuperMetroidString, DisableIrqInterrupts, EnableNMI,
     GraphicsAsset, HandleFadeIn, HandleFadeOut, QueueMode7Transfers, QueueSfx1_Max15,
@@ -1482,7 +1480,7 @@ pub unsafe fn GameState_1_OpeningCinematic_(game: &mut Game) -> CoroutineRet {
         );
         HandleCinematicSprites(game);
         HandleMode7Objects(game);
-        PaletteFxHandler(game);
+        palette_effects::advance(game);
         DrawCinematicSpriteObjects_Intro(game);
         MaybeSkipCinematics(game);
         HandleCinematicsTransitions(game);
@@ -1528,9 +1526,9 @@ pub unsafe fn HandleCinematicsTransitions_2(game: &mut Game) {
         word!(game.cinematic_var18 = 3);
         word_transfers!(game, ascending, 128; le(palette_buffer, 128) <- rom(0x8ce1e9, 128));
         word! {game; palette_buffer[201] = 0x7fff; palette_buffer[202] = 32128; }
-        ClearPaletteFXObjects(game);
-        SpawnPalfxObject(addr_kPalfx_E1A0 as u16, game);
-        SpawnPalfxObject(addr_kPalfx_E1A4 as u16, game);
+        palette_effects::clear(game);
+        palette_effects::spawn(addr_kPalfx_E1A0 as u16, game);
+        palette_effects::spawn(addr_kPalfx_E1A4 as u16, game);
         SetPpuBackdropBlack(game);
         *ram_ptr!(game; 0x69) = 17;
         SpawnTitleScreenGradientObjs(game);
@@ -1580,10 +1578,10 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
         EnableNMI(game);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
         EnableHdmaObjects(game);
-        EnablePaletteFx(game);
+        palette_effects::set_enabled(true, game);
         word!(game.fx_layer_blending_config_a = 0);
-        SpawnPalfxObject(addr_kPalfx_E1A0 as u16, game);
-        SpawnPalfxObject(addr_kPalfx_E1A4 as u16, game);
+        palette_effects::spawn(addr_kPalfx_E1A0 as u16, game);
+        palette_effects::spawn(addr_kPalfx_E1A4 as u16, game);
         SpawnMode7Object(
             addr_kMode7ObjBabyMetroidInTitle as u16,
             0x000c, // The second title palette allocation leaves its slot offset in A.
@@ -1622,8 +1620,8 @@ macro_rules! finish_cinematic_and_clear_effects {
             reg_BG3VOFS, cinematic_var5,
         }
         word!($game.cinematic_function = ((0x8b9b68i32) as u16));
-        DisablePaletteFx($game);
-        ClearPaletteFXObjects($game);
+        palette_effects::set_enabled(false, $game);
+        palette_effects::clear($game);
         word_transfers!($game, descending, 329; native(0x1c1d) <- value(0));
         word_transfers!($game, descending, 256; le(hdma_table_1, 255) <- value(0));
         word!($game.game_state = $next_state);
@@ -1681,7 +1679,7 @@ pub unsafe fn GameState_37_CeresGoesBoomWithSamus_(game: &mut Game) -> Coroutine
         HandleMode7Objects(game);
         HandleCinematicBgObjects(game);
         HandleTextGlowObjects(game);
-        PaletteFxHandler(game);
+        palette_effects::advance(game);
         DrawIntroSprites(game);
         HandleMode7TransformationMatrix(game);
         kCoroutineNone as CoroutineRet
@@ -1916,7 +1914,7 @@ pub unsafe fn GameState_39_EndingAndCredits_(game: &mut Game) -> CoroutineRet {
         HandleCinematicSprites(game);
         MaybeHandleCinematicBgObjects(game);
         CreditsObject_Process(game);
-        PaletteFxHandler(game);
+        palette_effects::advance(game);
         DrawCinematicSpriteObjects_Ending(game);
         CinematicFunction_Intro_Func149(game);
         HandleMode7TransformationMatrix(game);
@@ -2282,8 +2280,8 @@ crate::game::callback_dispatch! {
         EnableNMI(game);
         word! { game, 3; screen_fade_delay, screen_fade_counter }
         EnableHdmaObjects(game);
-        ClearPaletteFXObjects(game);
-        EnablePaletteFx(game);
+        palette_effects::clear(game);
+        palette_effects::set_enabled(true, game);
         word! { game, 0; door_def_ptr, layer1_x_pos, layer1_y_pos, cinematic_var16 }
         word_transfers!(game, descending, 1024; cinematic_bg(1023) <- native(0x197fe));
         word_transfers!(game, descending, 128; pause_map(127) <- rom(0x8cd81b, 127));
@@ -2385,8 +2383,8 @@ crate::game::callback_dispatch! {
         reset_cinematic_mode7_transform!(game, 0x38, 56, 0x18, 24);
         word! {game; cinematic_var8 = -72i32 as u16; cinematic_var10 = -104i32 as u16;
             cinematic_var5 = 224; cinematic_var6 = 512; }
-        ClearPaletteFXObjects(game);
-        EnablePaletteFx(game);
+        palette_effects::clear(game);
+        palette_effects::set_enabled(true, game);
         ClearCinematicBgObjects(0, game);
         word!(game.cinematicbg_var3 = 23552);
         EnableNMI(game);
@@ -2430,8 +2428,8 @@ crate::game::callback_dispatch! {
             SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BCE91 as u16, 1, game);
             SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BCF0F as u16, 1, game);
             word!(game.cinematic_function = ((0x8bbfdai32) as u16));
-            SpawnPalfxObject(addr_kPalfx_E1A8 as u16, game);
-            SpawnPalfxObject(addr_kPalfx_E1AC as u16, game);
+            palette_effects::spawn(addr_kPalfx_E1A8 as u16, game);
+            palette_effects::spawn(addr_kPalfx_E1AC as u16, game);
         } else {
             word!(game.cinematic_var6 -= 16);
         };
@@ -2501,8 +2499,8 @@ crate::game::callback_dispatch! {
             cinematic_var5 = 0; cinematic_var6 = 256; }
         DisableHdmaObjects(game);
         WaitUntilEndOfVblankAndClearHdma(game);
-        ClearPaletteFXObjects(game);
-        EnablePaletteFx(game);
+        palette_effects::clear(game);
+        palette_effects::set_enabled(true, game);
         ClearCinematicBgObjects(0x2f, game);
         word!(game.cinematicbg_var3 = 0);
         SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BCE7F as u16, 0, game);
@@ -2523,7 +2521,7 @@ crate::game::callback_dispatch! {
             0x0800, // Palette left in A by the preceding sprite initializer.
             game,
         );
-        SpawnPalfxObject(addr_kPalfx_E1B8 as u16, game);
+        palette_effects::spawn(addr_kPalfx_E1B8 as u16, game);
         EnableNMI(game);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
         word!(game.cinematic_function = ((0x8bc2e4i32) as u16));
@@ -2631,10 +2629,10 @@ crate::game::callback_dispatch! {
         word!(game.cinematic_var6 = 256);
         DisableHdmaObjects(game);
         WaitUntilEndOfVblankAndClearHdma(game);
-        ClearPaletteFXObjects(game);
-        EnablePaletteFx(game);
+        palette_effects::clear(game);
+        palette_effects::set_enabled(true, game);
         *ram_ptr!(game; 0x57) = -127i32 as u8;
-        SpawnPalfxObject(addr_kPalfx_E1A8 as u16, game);
+        palette_effects::spawn(addr_kPalfx_E1A8 as u16, game);
         word!(game.cinematic_function = ((0x8bc79ci32) as u16));
         EnableNMI(game);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
@@ -2762,8 +2760,8 @@ crate::game::callback_dispatch! {
         word! { game, 0;
             cinematic_var8, cinematic_var10, door_def_ptr, layer1_x_pos, layer1_y_pos,
         }
-        ClearPaletteFXObjects(game);
-        EnablePaletteFx(game);
+        palette_effects::clear(game);
+        palette_effects::set_enabled(true, game);
         EnableNMI(game);
         word!(game.eproj_pre_instr[1] = 0);
         *ram_ptr!(game; 0x69) = 17;
@@ -2782,8 +2780,8 @@ crate::game::callback_dispatch! {
     };
     [9164503] CinematicFunction_Intro_Func109 [] {
         if HasQueuedMusic(game) & 1 == 0 {
-            SpawnPalfxObject(addr_kPalfx_E1D8 as u16, game);
-            SpawnPalfxObject(addr_kPalfx_E1DC as u16, game);
+            palette_effects::spawn(addr_kPalfx_E1D8 as u16, game);
+            palette_effects::spawn(addr_kPalfx_E1DC as u16, game);
             word!(game.cinematic_function = ((0x8bd6f2i32) as u16));
         }
     };
@@ -2811,9 +2809,9 @@ crate::game::callback_dispatch! {
         GraphicsAsset::VramWords(0x7e2000, 0x2000, 0x4000).load(game);
         GraphicsAsset::Decompress(0x98ed4f, 0x2000).load(game);
         GraphicsAsset::VramHighBytes(0x7e2000, 0x0000, 0x4000).load(game);
-        ClearPaletteFXObjects(game);
+        palette_effects::clear(game);
         ClearCinematicSprites(game);
-        SpawnPalfxObject(addr_kPalfx_E1E0 as u16, game);
+        palette_effects::spawn(addr_kPalfx_E1E0 as u16, game);
         SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEED3 as u16, 0, game);
         SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEED9 as u16, 0, game);
         SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEEDF as u16, 0, game);
@@ -2853,7 +2851,7 @@ crate::game::callback_dispatch! {
         GraphicsAsset::VramWords(0x7ff800, 0x7c00, 0x800).load(game);
         GraphicsAsset::VramWords(0x7ea000, 0x5000, 0x1000).load(game);
         game.g_ram[0x52] = 2;
-        ClearPaletteFXObjects(game);
+        palette_effects::clear(game);
         ClearCinematicSprites(game);
         word_transfers!(game, ascending, 128; le(palette_buffer, 128) <- rom(0x8cebe9, 128));
         SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEE9D as u16, 0, game);
@@ -2953,8 +2951,8 @@ crate::game::callback_dispatch! {
             *ram_ptr!(game; 0x58) = 0;
             *ram_ptr!(game; 0x5d) = 0;
             word! { game, 0; palette_buffer[0], palette_buffer[16], palette_buffer[128] }
-            SpawnPalfxObject(addr_kPalfx_E1D4 as u16, game);
-            SpawnPalfxObject(addr_kPalfx_E1E4 as u16, game);
+            palette_effects::spawn(addr_kPalfx_E1D4 as u16, game);
+            palette_effects::spawn(addr_kPalfx_E1E4 as u16, game);
             word! {game; reg_M7X = 56; reg_M7Y = 24; cinematic_var8 = -72i32 as u16;
                 cinematic_var10 = -104i32 as u16; cinematic_var6 = 3072;
                 cinematic_var5 = -112i32 as u16; cinematic_var4 = 1; cinematic_var13 = 192;
@@ -3046,7 +3044,7 @@ crate::game::callback_dispatch! {
     [9166464] CinematicFunction_Intro_Func126 [] {
         SetupPpu_7_Mode1(game);
         ClearCinematicSprites(game);
-        ClearPaletteFXObjects(game);
+        palette_effects::clear(game);
         word_transfers!(game, ascending, 128; le(palette_buffer, 0) <- rom(0x8ce9e9, 0));
         GraphicsAsset::Decompress(0x979803, 0x10000).load(game);
         GraphicsAsset::Decompress(0x97b957, 0x2000).load(game);
@@ -3577,7 +3575,7 @@ crate::game::callback_dispatch! {
         j
     };
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
-    [9161125] CinematicSprInstr_C9A5 [j] { SpawnPalfxObject(addr_kPalfx_E1B0 as u16, game); };
+    [9161125] CinematicSprInstr_C9A5 [j] { palette_effects::spawn(addr_kPalfx_E1B0 as u16, game); };
     [9161135] CinematicSprInstr_C9AF [j] {
         if word!(game.japanese_text_flag) != 0 {
             SpawnCinematicSpriteObject(
@@ -3587,7 +3585,7 @@ crate::game::callback_dispatch! {
             );
         }
     };
-    [9161149] CinematicSprInstr_C9BD [j] { SpawnPalfxObject(addr_loc_8BE1B4 as u16, game); };
+    [9161149] CinematicSprInstr_C9BD [j] { palette_effects::spawn(addr_loc_8BE1B4 as u16, game); };
     [9161159] CinematicSprInstr_C9C7 [j] {
         word! {game; cinematic_var8 = 62; cinematic_var10 = -112i32 as u16; cinematic_var5 = 32;
             cinematic_var6 = 16; cinematic_function = ((0x8bc9f9i32) as u16); }
@@ -3603,7 +3601,7 @@ crate::game::callback_dispatch! {
         word! {game; cinematic_var4 = 0; cinematic_function = ((0x8be58ai32) as u16); }
     };
     [9171588] CinematicSprInstr_Func182 [j] {
-        SpawnPalfxObject(addr_kPalfx_E1C4 as u16, game);
+        palette_effects::spawn(addr_kPalfx_E1C4 as u16, game);
         word!(game.palette_buffer[254] = 1);
     };
     [9171605] CinematicSprInstr_Func183 [j] {
@@ -3622,9 +3620,9 @@ crate::game::callback_dispatch! {
         *ram_ptr!(game; 0x59) = 124;
         SpawnCinematicSpriteObjectToR18(addr_kCinematicSpriteObjectDef_8BEEBB as u16, 0, game);
         SpawnCinematicSpriteObjectToR18(addr_kCinematicSpriteObjectDef_8BEEF7 as u16, 2, game);
-        SpawnPalfxObject(addr_kPalfx_E1C8 as u16, game);
-        SpawnPalfxObject(addr_kPalfx_E1D0 as u16, game);
-        SpawnPalfxObject(addr_kPalfx_E1E8 as u16, game);
+        palette_effects::spawn(addr_kPalfx_E1C8 as u16, game);
+        palette_effects::spawn(addr_kPalfx_E1D0 as u16, game);
+        palette_effects::spawn(addr_kPalfx_E1E8 as u16, game);
     };
     [9171706] CinematicSprInstr_Func186 [j] {
         *ram_ptr!(game; 0x69) = 3;
@@ -3633,7 +3631,7 @@ crate::game::callback_dispatch! {
         *ram_ptr!(game; 0x72) = 51;
         *ram_ptr!(game; 0x58) = 116;
         *ram_ptr!(game; 0x59) = 120;
-        SpawnPalfxObject(addr_kPalfx_E1CC as u16, game);
+        palette_effects::spawn(addr_kPalfx_E1CC as u16, game);
         SpawnCinematicSpriteObjectToR18(addr_kCinematicSpriteObjectDef_8BEEC1 as u16, 6, game);
     };
     [9171755] CinematicSprInstr_Func187 [j] {
@@ -4267,7 +4265,7 @@ crate::game::callback_dispatch! {
         if v2 as i32 - 395i32 & 0x8000 != 0 {
             word! {game; cinematicbg_arr7[v1] = 394; cinematicbg_arr8[v1] = 367;
                 cinematicspr_preinstr_func[v1] = ((0x8b93d9i32) as u16); }
-            SpawnPalfxObject(addr_kPalfx_E200 as u16, game);
+            palette_effects::spawn(addr_kPalfx_E200 as u16, game);
         } else {
             word!(game.cinematicspr_goto_timer[v1] += 2);
         };
@@ -4618,17 +4616,17 @@ crate::game::callback_dispatch! {
     [9150131] CinematicSpriteInit_4 [] {
         word! {game; cinematicbg_arr7[v1] = 128; cinematicbg_arr8[v1] = 48;
             cinematicbg_arr9[v1] = 1024; }
-        SpawnPalfxObject(addr_kPalfx_E194 as u16, game);
+        palette_effects::spawn(addr_kPalfx_E194 as u16, game);
     };
     [9150166] CinematicSpriteInit_5 [] {
         word! {game; cinematicbg_arr7[v1] = 128; cinematicbg_arr8[v1] = 81;
             cinematicbg_arr9[v1] = 512; }
-        SpawnPalfxObject(addr_kPalfx_E198 as u16, game);
+        palette_effects::spawn(addr_kPalfx_E198 as u16, game);
     };
     [9150207] CinematicSpriteInit_6 [] {
         word! {game; cinematicbg_arr7[v1] = 128; cinematicbg_arr8[v1] = 196;
             cinematicbg_arr9[v1] = 2048; }
-        SpawnPalfxObject(addr_kPalfx_E19C as u16, game);
+        palette_effects::spawn(addr_kPalfx_E19C as u16, game);
     };
     [9152725] SetSomeStuffForSpriteObject_3 [] {
         word! {game; cinematicbg_arr7[v1] = 112; cinematicbg_arr8[v1] = 155;

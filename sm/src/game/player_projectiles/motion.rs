@@ -474,7 +474,7 @@ pub(super) fn reset(mut o: Transaction<'_>) -> Transaction<'_> {
     }
     if word!(o.hyper_beam_flag) != 0 {
         o = o
-            .foreign(|g| unsafe { crate::game::sm_8d::SpawnPalfxObject(0xe1f0, g) })
+            .foreign(|g| crate::game::palette_effects::spawn(0xe1f0, g))
             .0;
     }
     o

@@ -15,7 +15,7 @@ use crate::game::room_mechanisms::{spawn_collision, spawn_hardcoded};
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_82::sub_82DAF7;
 
-use crate::game::sm_8d::SpawnPalfxObject;
+use crate::game::palette_effects;
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::SpawnBombTorizoHaze;
 use crate::game::sm_90::CallSomeSamusCode;
@@ -888,7 +888,7 @@ crate::game::callback_dispatch! {
     [11188557] Torizo_Instr_5 [jp] { Torizo_C268(game); };
     [11188561] Torizo_Instr_9 [jp] {
         QueueMusic_Delayed8(g_word_AAB098, game);
-        SpawnPalfxObject(addr_stru_8DF759 as u16, game);
+        palette_effects::spawn(addr_stru_8DF759 as u16, game);
     };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11190985] Torizo_Instr_2 [jp] { (*Get_Torizo(k as i32, game)).var_04 = 30583; };
@@ -1125,7 +1125,7 @@ crate::game::callback_dispatch! {
         let E = Get_Torizo(k as i32, game);
         (*E).base.x_width = 18;
         (*E).base.y_height = 48;
-        SpawnPalfxObject(addr_stru_8DF75D as u16, game);
+        palette_effects::spawn(addr_stru_8DF75D as u16, game);
     };
     [11193815] Torizo_Instr_48 [jp] {
         let E = Get_Torizo(k as i32, game);

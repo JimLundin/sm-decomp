@@ -15,7 +15,7 @@ rebuilt from pinned sources. A backend CRLF checksum correction preserves exact
 upstream content. Workflow lint and remote run 39979717734 both pass.
 The manual verify.yml workflow remains separate and has not been migrated.
 
-Latest change: repository-wide default `cargo fmt`; scoped formatting had left
+Earlier formatting change: repository-wide default `cargo fmt`; scoped formatting had left
 GitHub's `cargo fmt --check` failing. The full check and release/frontend/verifier
 build pass locally on source
 `d21e2bb348caf345714758514ae94830749863a57e505b62901eff9dcf085cdf`.
@@ -25,16 +25,31 @@ The local native-config library needed regeneration and its linked SDK copy was
 refreshed; source checks were preserved. PLAN/ITERATION now require CI's exact
 full formatting command before Rust commits.
 
-Palette work is preserved outside main while the formatting fix lands. The
-actual-old 512-case baseline passed on source
-`b166bf625cfd98f304ab431a87cbc42f28d8e6f72a703a17d0b64b9d7c0ca7b8`;
-all earlier 507 outputs remained identical. Evidence and pending source are under
-`Local/sm-decomp-experiments/20261023/palette-effects/baseline-2*`; the four pending
-main files are in `baseline-2-inputs/sm/src`. They were deliberately removed from
-main for a formatting-only commit. The replacement and 13 caller drafts are in
-`palette-effects/game`. Reapply semantic edits onto formatted main, then full
-`cargo fmt`; do not overwrite formatting with old caller snapshots. No palette
-runtime is adopted yet. No compiler or capture session remains active.
+PaletteEffects is now adopted in main: four public operations, eight slots,
+13 caller files, complete sm_8d/palette_ram retirement. It uses the existing
+private ownership transport and remains interval-owned. Final source:
+`6e224f28e382b7caf9c9527c099ef067633ce098c9d83434cfea6a149fb1c171`.
+Release/frontend/verifier builds pass; all 512 frozen old observations match.
+Any% inputs 0..271 pass 272/0, seven required palette probes, 120 follow-up frames;
+no gameplay rooms or credits. All three comparison exports pass null/short/no-write,
+exact known case and invalid-ID checks after sharing their copy implementation.
+Independent review passes. No compiler/capture/replay session remains active.
+
+Evidence: `Local/sm-decomp-experiments/20261023/palette-effects/` contains frozen
+`baseline-2*`, `integrated-1.dll`, `integrated-1-inputs`, `integrated-1-capture.json`,
+`integrated-1-exports.json`, `integrated-1-oracle.log`, and integrated-build-1.log.
+The baseline fingerprint is
+`b166bf625cfd98f304ab431a87cbc42f28d8e6f72a703a17d0b64b9d7c0ca7b8`.
+
+User clarified accounting: exclude verification harness/support from production
+engine reduction, keep separate intentionally and disclose both counts. New
+palette carrier is `sm/src/verification/palette_effects.rs`. This adoption adds
+126 production lines and 370 support lines (496 total); no savings claim. Current
+Rust total 109399 includes verification; unsafe declarations 2728. Reconcile a
+production-only repository total before applying the revised reduction measure.
+PROGRESS now has milestone/status tables; update those as work advances.
+Next responsibility remains to be selected under PLAN, with actual duplicate
+production algorithms/deletion and ownership dependencies identified first.
 
 Earlier change: shared ownership transport in `game/ownership_transport.rs`,
 privately registered under projectiles and room mechanisms. Actual duplicate
@@ -48,8 +63,7 @@ Local `20261023/shared-ownership` contains `transport-build-1.log`,
 `transport-1.dll`, `transport-1-inputs`, `transport-1-capture.json`,
 `transport-checks.json`, `transport-oracle.log`, `transport-price.json` and 104
 fresh `projectile-before-*.bin` references. No compiler/runtime check remains live.
-The worker is preparing the complete palette-interpreter contract; no palette
-replacement is adopted. Read PLAN for the demonstrated alias/persistence limits.
+Read PLAN for the demonstrated alias/persistence limits.
 
 Earlier adoption: complete room mechanisms in `sm/src/game/room_mechanisms`.
 Creation/setup, rules, all 110 command identities, scheduler, drawing/graphics,

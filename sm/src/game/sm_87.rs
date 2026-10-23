@@ -1,10 +1,10 @@
 pub use crate::game::constants::bank_86::*;
 use crate::game::music::QueueMusic_Delayed8;
+use crate::game::palette_effects;
 pub use crate::game::prelude::*;
 use crate::game::progress_flags::{
     CheckBossBitForCurArea, CheckEventHappened, SetBossBitForCurArea, SetEventHappened,
 };
-use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_80::{QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::ram_map::{checked_word, word_arrays};
@@ -202,7 +202,7 @@ pub unsafe fn CallAnimtilesInstr(address: u32, index: u16, cursor: u16, game: &m
             }
             8881010 => {
                 let record = animtiles_record(cursor, game);
-                SpawnPalfxObject(record.word(0), game);
+                palette_effects::spawn(record.word(0), game);
                 cursor.wrapping_add(2)
             }
             8881023 => {

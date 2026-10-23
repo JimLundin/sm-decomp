@@ -20,8 +20,24 @@ pub extern "C" fn sm_verify_player_projectiles() -> u32 {
     std::panic::catch_unwind(sm::verify_player_projectiles).unwrap_or(0)
 }
 
-/// Copy a synthetic projectile scenario's RAM for independent byte comparison.
-///
+unsafe fn copy_case(
+    id: u32,
+    output: *mut u8,
+    capacity: usize,
+    capture: fn(u32) -> Option<Vec<u8>>,
+) -> usize {
+    if output.is_null() {
+        return 0;
+    }
+    match std::panic::catch_unwind(|| capture(id)) {
+        Ok(Some(bytes)) if bytes.len() <= capacity => {
+            unsafe { std::ptr::copy_nonoverlapping(bytes.as_ptr(), output, bytes.len()) };
+            bytes.len()
+        }
+        _ => 0,
+    }
+}
+/// Copy a synthetic projectile scenario's RAM for independent comparison.
 /// # Safety
 /// A non-null output must be writable for at least `capacity` bytes.
 #[unsafe(no_mangle)]
@@ -30,20 +46,9 @@ pub unsafe extern "C" fn sm_verify_player_projectile_ram(
     output: *mut u8,
     capacity: usize,
 ) -> usize {
-    if output.is_null() {
-        return 0;
-    }
-    match std::panic::catch_unwind(|| sm::verify_player_projectile_case(id)) {
-        Ok(Some(bytes)) if bytes.len() <= capacity => {
-            unsafe { std::ptr::copy_nonoverlapping(bytes.as_ptr(), output, bytes.len()) };
-            bytes.len()
-        }
-        _ => 0,
-    }
+    unsafe { copy_case(id, output, capacity, sm::verify_player_projectile_case) }
 }
-
 /// Copy a synthetic mechanism scenario's RAM and return observation.
-///
 /// # Safety
 /// A non-null output must be writable for at least `capacity` bytes.
 #[unsafe(no_mangle)]
@@ -52,16 +57,18 @@ pub unsafe extern "C" fn sm_verify_room_mechanism_case(
     output: *mut u8,
     capacity: usize,
 ) -> usize {
-    if output.is_null() {
-        return 0;
-    }
-    match std::panic::catch_unwind(|| sm::verify_room_mechanism_case(id)) {
-        Ok(Some(bytes)) if bytes.len() <= capacity => {
-            unsafe { std::ptr::copy_nonoverlapping(bytes.as_ptr(), output, bytes.len()) };
-            bytes.len()
-        }
-        _ => 0,
-    }
+    unsafe { copy_case(id, output, capacity, sm::verify_room_mechanism_case) }
+}
+/// Copy a synthetic palette-effect scenario's RAM, return and failure observation.
+/// # Safety
+/// A non-null output must be writable for at least `capacity` bytes.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn sm_verify_palette_effect_case(
+    id: u32,
+    output: *mut u8,
+    capacity: usize,
+) -> usize {
+    unsafe { copy_case(id, output, capacity, sm::verify_palette_effect_case) }
 }
 
 #[unsafe(no_mangle)]

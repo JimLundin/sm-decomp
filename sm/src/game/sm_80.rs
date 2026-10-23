@@ -8,10 +8,10 @@ pub use crate::game::constants::bank_60::*;
 
 use crate::c_library::memcmp;
 use crate::game::enemy_population_ram::load_room_assets;
+use crate::game::palette_effects;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::room_mechanisms::{clear, reload_graphics};
 use crate::game::sm_8b::InitializeIoDisplayLogo_Async;
-use crate::game::sm_8d::ClearPaletteFXObjects;
 use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
 use crate::game::sm_82::{LoadDestinationRoomThings, NullFunc, ResetSoundQueues};
 use crate::game::sm_86::ClearEprojs;
@@ -755,6 +755,7 @@ pub unsafe fn NmiUpdatePalettesAndOam(game: &mut Game) {
             byte(A1B1 as u16, 0x7e); word(DAS1L as u16, 0x0200);
             byte(CGADD as u16, 0); byte(MDMAEN as u16, 3);
         }
+        crate::verify_probe::hit("palette.dma.uploaded");
     }
 }
 unsafe fn transfer_samus_tile_half(descriptor_addr: u16, vram_addr: u16, game: &mut Game) {
@@ -1640,7 +1641,7 @@ pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
             InitializeSpecialEffectsForNewRoom(game);
             clear(game);
             ClearEprojs(game);
-            ClearPaletteFXObjects(game);
+            palette_effects::clear(game);
             UpdateBeamTilesAndPalette(game);
             load_sprite_palettes(game);
             load_room_assets(game);

@@ -5,8 +5,8 @@ pub use crate::game::constants::bank_8f::*;
 pub use crate::game::constants::bank_9b::*;
 pub use crate::game::constants::bank_91::*;
 
+use crate::game::palette_effects;
 use crate::game::room_mechanisms::set_enabled;
-use crate::game::sm_8d::{DisablePaletteFx, EnablePaletteFx, SpawnPalfxObject};
 use crate::game::sm_9b::{GrappleBeamFunc_BD95, GrappleBeamFunc_BEEB};
 use crate::game::sm_80::{
     InvalidInterrupt_Crash, QueueSfx1_Max6, QueueSfx1_Max9, QueueSfx2_Max6, QueueSfx3_Max6,
@@ -1411,7 +1411,7 @@ pub unsafe fn Xray_Initialize(game: &mut Game) -> u8 {
         DisableEprojs(game);
         set_enabled(false, game);
         DisableAnimtiles(game);
-        DisablePaletteFx(game);
+        palette_effects::set_enabled(false, game);
         mov24(ram_ptr!(game, LongPtr; 0xa88), 0x980001);
         *(ram_ptr!(game, u16; 0xa8a, 1)) = 0;
         word!(game.demo_input_prev = -26424i32 as u16);
@@ -1455,7 +1455,7 @@ pub unsafe fn ResponsibleForXrayStandupGlitch(game: &mut Game) {
         EnableEprojs(game);
         set_enabled(true, game);
         EnableAnimtiles(game);
-        EnablePaletteFx(game);
+        palette_effects::set_enabled(true, game);
     }
 }
 pub unsafe fn MakeSamusFaceForward(game: &mut Game) {
@@ -1574,7 +1574,7 @@ pub unsafe fn SomeMotherBrainScripts_3_EnableHyperBeam(game: &mut Game) -> u8 {
     unsafe {
         word!(game.equipped_beams = 4105);
         UpdateBeamTilesAndPalette(game);
-        SpawnPalfxObject(addr_stru_8DE1F0 as u16, game);
+        palette_effects::spawn(addr_stru_8DE1F0 as u16, game);
         word! {game; hyper_beam_flag = ((0x918000i32) as u16); play_resume_charging_beam_sfx = 0; }
         0
     }

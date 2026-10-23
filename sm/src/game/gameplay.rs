@@ -5,10 +5,10 @@
 //! observe live RAM. Only the entry resume point is held across those callbacks.
 use crate::game::enemy_scheduling::{run_enemies, select_enemies};
 use crate::game::message_boxes;
+use crate::game::palette_effects;
 use crate::game::prelude::*;
 use crate::game::room_mechanisms::run;
 use crate::game::scene_drawing::{draw_scene, queue_enemy_tiles};
-use crate::game::sm_8d::PaletteFxHandler;
 use crate::game::sm_8f::RunRoomMainCode;
 use crate::game::sm_80::{
     CalculateLayer2PosAndScrollsWhenScrolling, DebugScrollPosSaveLoad, HandleHudTilemap,
@@ -52,7 +52,7 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
         let resume = ResumePoint::read(game);
         if resume == ResumePoint::Start {
             select_enemies(game);
-            PaletteFxHandler(game);
+            palette_effects::advance(game);
             HandleControllerInputForGamePhysics(game);
             if word!(game.debug_disable_sprite_interact) == 0 {
                 crate::game::projectile_contact::player_projectiles_hit_samus(game);

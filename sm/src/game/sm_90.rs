@@ -16,10 +16,10 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_90::*;
 
 use crate::game::explosion_window::spawn_crystal_flash;
+use crate::game::palette_effects;
 use crate::game::player_projectiles::draw_projectiles;
 use crate::game::progress_flags::CheckEventHappened;
 use crate::game::sm_8b::Samus_CalcPos_Mode7;
-use crate::game::sm_8d::{DisablePaletteFx, SpawnPalfxObject};
 use crate::game::sm_9b::{
     GrappleBeamFunc_BF1B, GrappleBeamHandler, UpdateGrappleBeamTilesAndIncrFlameCtr,
 };
@@ -2254,7 +2254,7 @@ crate::game::callback_dispatch! {
             word!(game.game_state = kGameState_35_TimeUp as u16);
             word_transfers!(game, descending, 256; le(target_palettes, 255) <- value(0x7fff));
             word!(game.frame_handler_gamma = ((0x90e114i32) as u16));
-            DisablePaletteFx(game);
+            palette_effects::set_enabled(false, game);
         }
         if word!(game.timer_status) != 0 {
             DrawTimer(game);
@@ -3442,13 +3442,13 @@ pub unsafe fn SamusCode_08_SetupForCeresStart(game: &mut Game) -> u8 {
 pub unsafe fn SamusCode_08_SetupForZebesStart(game: &mut Game) -> u8 {
     unsafe {
         if (word!(game.equipped_items) & 0x20) != 0 {
-            SpawnPalfxObject(addr_stru_8DE1FC as u16, game);
+            palette_effects::spawn(addr_stru_8DE1FC as u16, game);
             word!(game.samus_pose = kPose_9B_FaceF_VariaGravitySuit as u16);
         } else if (word!(game.equipped_items) & 1) != 0 {
-            SpawnPalfxObject(addr_stru_8DE1F8 as u16, game);
+            palette_effects::spawn(addr_stru_8DE1F8 as u16, game);
             word!(game.samus_pose = kPose_9B_FaceF_VariaGravitySuit as u16);
         } else {
-            SpawnPalfxObject(addr_stru_8DE1F4 as u16, game);
+            palette_effects::spawn(addr_stru_8DE1F4 as u16, game);
             word!(game.samus_pose = kPose_00_FaceF_Powersuit as u16);
         }
         Samus_LoadSuitPalette(game);
@@ -3522,7 +3522,7 @@ pub unsafe fn SamusCode_11_15_Common(game: &mut Game) -> u8 {
 }
 pub unsafe fn SamusCode_11_SetupForDeath(game: &mut Game) -> u8 {
     unsafe {
-        DisablePaletteFx(game);
+        palette_effects::set_enabled(false, game);
         SamusCode_11_15_Common(game)
     }
 }

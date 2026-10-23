@@ -1,8 +1,8 @@
 use crate::game::liquid_effects::{initialize_acid, initialize_lava, initialize_water};
 pub use crate::game::prelude::*;
 
+use crate::game::palette_effects;
 use crate::game::scrolling_sky::{initialize_banded_sky, initialize_land};
-use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_87::SpawnAnimtiles;
 use crate::game::sm_88::{
     FxTypeFunc_2C_Haze, FxTypeFunc_8_Spores, FxTypeFunc_24, FxTypeFunc_26_TourianEntranceStatue,
@@ -125,7 +125,13 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
             );
             kFxTypeFuncPtrs[((*FD).type_0 >> 1) as usize](game);
         }
-        spawn_room_effect_bitset!(FD, palette_fx_bitset, game, 0x83ac46, SpawnPalfxObject);
+        spawn_room_effect_bitset!(
+            FD,
+            palette_fx_bitset,
+            game,
+            0x83ac46,
+            palette_effects::spawn
+        );
         spawn_room_effect_bitset!(FD, animtiles_bitset, game, 0x83ac56, SpawnAnimtiles);
     }
 }

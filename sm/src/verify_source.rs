@@ -521,7 +521,26 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/game/sm_88.rs", include_bytes!("game/sm_88.rs")),
     ("sm/src/game/sm_89.rs", include_bytes!("game/sm_89.rs")),
     ("sm/src/game/sm_8b.rs", include_bytes!("game/sm_8b.rs")),
-    ("sm/src/game/sm_8d.rs", include_bytes!("game/sm_8d.rs")),
+    (
+        "sm/src/game/palette_effects/mod.rs",
+        include_bytes!("game/palette_effects/mod.rs"),
+    ),
+    (
+        "sm/src/game/palette_effects/state.rs",
+        include_bytes!("game/palette_effects/state.rs"),
+    ),
+    (
+        "sm/src/game/palette_effects/execution.rs",
+        include_bytes!("game/palette_effects/execution.rs"),
+    ),
+    (
+        "sm/src/game/palette_effects/diagnostics.rs",
+        include_bytes!("game/palette_effects/diagnostics.rs"),
+    ),
+    (
+        "sm/src/verification/palette_effects.rs",
+        include_bytes!("verification/palette_effects.rs"),
+    ),
     ("sm/src/game/sm_8f.rs", include_bytes!("game/sm_8f.rs")),
     ("sm/src/game/minimap.rs", include_bytes!("game/minimap.rs")),
     ("sm/src/game/sm_90.rs", include_bytes!("game/sm_90.rs")),

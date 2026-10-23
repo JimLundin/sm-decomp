@@ -402,6 +402,7 @@ pub mod game {
     pub mod item_pickups_ram;
     pub(crate) mod mechanism_displacement;
     pub mod music;
+    pub(crate) mod palette_effects;
     pub mod progress_flags;
     pub(crate) mod room_backgrounds;
     pub(crate) mod room_mechanisms;
@@ -421,7 +422,6 @@ pub mod game {
     pub mod sm_88;
     pub mod sm_89;
     pub mod sm_8b;
-    pub mod sm_8d;
     pub mod sm_8f;
     pub mod sm_90;
     pub mod sm_91;
@@ -534,6 +534,14 @@ pub fn verify_player_projectiles() -> u32 {
 #[doc(hidden)]
 pub fn verify_player_projectile_case(id: u32) -> Option<Vec<u8>> {
     game::player_projectiles::checks::capture_case(id)
+}
+
+#[path = "verification/palette_effects.rs"]
+mod palette_effect_checks;
+
+#[doc(hidden)]
+pub fn verify_palette_effect_case(id: u32) -> Option<Vec<u8>> {
+    palette_effect_checks::capture_case(id)
 }
 
 #[doc(hidden)]

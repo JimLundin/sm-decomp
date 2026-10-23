@@ -11,8 +11,8 @@ pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_86::*;
 
 use crate::game::message_boxes;
+use crate::game::palette_effects;
 use crate::game::progress_flags::CheckEventHappened;
-use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_81::SaveToSram;
 use crate::game::sm_86::{
@@ -2199,7 +2199,7 @@ crate::game::callback_dispatch! {
             (*E).var_F = ((0xa2ab60i32) as u16);
             (*Get_GunshipTop(0i32, game)).var_A = 144;
         }
-        SpawnPalfxObject(addr_stru_8DE1C0 as u16, game);
+        palette_effects::spawn(addr_stru_8DE1C0 as u16, game);
         (*Get_GunshipTop(word!(game.cur_enemy_index) as i32, game)).var_D = 1;
         (*Get_GunshipTop(0i32, game)).var_C = 0;
     };

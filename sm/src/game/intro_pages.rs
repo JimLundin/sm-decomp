@@ -4,6 +4,7 @@
 use super::constants::bank_8d::addr_kPalfx_E1BC;
 use super::constants::bank_91::{addr_stru_91877E, addr_stru_918784};
 use super::constants::samus_poses::kPose_02_FaceL_Normal;
+use super::palette_effects;
 use super::sm_8b::{
     CinematicBgInstr_SetSomeStuffForSpriteObject_14, CinematicFunction_Intro_Func20,
     ClearEnglishTextTilemap, ClearJapaneseTextTiles, ClearYColorsFromIndexX, ComposeFadingPalettes,
@@ -17,7 +18,6 @@ use super::sm_8b::{
     addr_kCinematicSpriteObjectDef_8BCE73, addr_kCinematicSpriteObjectDef_8BCE79,
     addr_kCinematicSpriteObjectDef_8BCF27,
 };
-use super::sm_8d::SpawnPalfxObject;
 use super::sm_80::{EnableNMI, HandleFadeOut};
 use super::sm_88::SpawnIntroCutsceneCrossfadeHdma;
 use super::sm_91::{EnableDemoInput, LoadDemoInputObject, ResetDemoData};
@@ -220,7 +220,7 @@ pub(super) unsafe fn fade_to_scene(palette: Palette, game: &mut Game) {
             ClearJapaneseTextTiles(game);
             word!(game.cinematic_function = ((0x8ba391i32) as u16));
             if matches!(palette, Palette::Gameplay) && (word!(game.cinematic_var15) & 0x8000) != 0 {
-                SpawnPalfxObject(addr_kPalfx_E1BC as u16, game);
+                palette_effects::spawn(addr_kPalfx_E1BC as u16, game);
             }
         }
     }

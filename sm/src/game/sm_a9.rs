@@ -17,9 +17,9 @@ pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
 
 use crate::game::mother_brain_visuals::{self, Fade};
+use crate::game::palette_effects;
 use crate::game::progress_flags::{CheckEventHappened, SetBossBitForCurArea, SetEventHappened};
 use crate::game::room_mechanisms::spawn_hardcoded;
-use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_80::{
     NextRandom, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6,
 };
@@ -611,10 +611,10 @@ crate::game::callback_dispatch! {
             );
             QueueMusic_Delayed8(7, game);
             word! {game; earthquake_type = 5; earthquake_timer = -1i32 as u16; }
-            SpawnPalfxObject(addr_kPalfx_FFC9 as u16, game);
-            SpawnPalfxObject(addr_kPalfx_FFCD as u16, game);
-            SpawnPalfxObject(addr_kPalfx_FFD1 as u16, game);
-            SpawnPalfxObject(addr_kPalfx_FFD5 as u16, game);
+            palette_effects::spawn(addr_kPalfx_FFC9 as u16, game);
+            palette_effects::spawn(addr_kPalfx_FFCD as u16, game);
+            palette_effects::spawn(addr_kPalfx_FFD1 as u16, game);
+            palette_effects::spawn(addr_kPalfx_FFD5 as u16, game);
             (*Get_MotherBrain(0x40i32, game)).var_02 = 0;
             SetupZebesEscapeTypewriter(game);
             let E = Get_MotherBrain(0, game);

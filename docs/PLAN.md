@@ -193,13 +193,30 @@ references; measure build/test time and resource growth before changing the loop
    and 120 frames after message completion. No credits claim. Independent review
    passes. Evidence is local under 20261023/shared-ownership.
 
-   Next candidate: complete PaletteEffects interpreter/lifecycle, reusing the
-   private transport and retiring sm_8d plus palette_ram. Preserve broad 16-bit
-   color offsets and immediate effect ordering. The worker must specify the full
-   owner/API/codec/native-effect contract and price complete implementation plus
-   checks before adoption. Actual-old outputs must be frozen before replacement.
-   Existing scope is 363 lines, with an initial 300..500 runtime estimate; no savings
-   or persistent-room-ownership claim follows from that estimate.
+   PaletteEffects is adopted: one eight-slot owner and set_enabled/clear/spawn/
+   advance operations replace sm_8d and its internal palette_ram adapter. All 13
+   caller files migrate in the same change. The private shared transport is reused;
+   color writes retain their broad byte offsets and immediate ordering. Ownership
+   is interval-scoped; this does not close the persistence blockers above.
+
+   Source 6e224f28e382b7caf9c9527c099ef067633ce098c9d83434cfea6a149fb1c171
+   passes release/frontend/verifier builds, all 512 frozen old-output comparisons,
+   and all three shared comparison exports' buffer/known-output checks. Any% boot
+   inputs 0..271 pass 272/0 with all seven palette probes and 120 following frames.
+   This is opening-sequence coverage, not gameplay rooms or credits. Constructed
+   cases cover remaining pre-action/command identities, aliases, wrapping,
+   diagnostic/write prefixes and real music callback state mutations.
+
+   Production delta: +126 lines/+1388 tokens/+2897 LF bytes. Separate verification
+   support: +370/+3683/+14276, including a dedicated verification/palette_effects.rs
+   carrier. Combined Rust is 109399; unsafe declarations 2728. Four fewer unsafe
+   declarations overall, but native diagnostics remain explicit. This adoption
+   improves ownership/safety and retires bank orchestration; it is not net code
+   reduction. Independent final implementation/caller/fixture review passes.
+
+   Next: select a complete gameplay responsibility with named duplicate production
+   code to remove, real caller migrations and explicit remaining state writers.
+   Price production separately from verification under the user's revised rule.
    The accepted engine still needs persistent state, explicit backend outputs,
    all-unsafe elimination and boot-to-credits validation.
 
