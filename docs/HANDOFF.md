@@ -8,6 +8,12 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Public CI repair: `64c450f2` passed GitHub Format, then failed because Ubuntu
+did not provision native archives. CI now separates Ubuntu formatting/progress
+from the supported Windows GNU frontend build, with all seven native archives
+rebuilt from pinned sources. Workflow lint passes; remote execution is pending.
+The manual verify.yml workflow remains separate and has not been migrated.
+
 Latest change: repository-wide default `cargo fmt`; scoped formatting had left
 GitHub's `cargo fmt --check` failing. The full check and release/frontend/verifier
 build pass locally on source

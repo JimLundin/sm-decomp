@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 15:19 UTC**
+Updated: **2026-10-23 15:32 UTC**
 
 **Projectiles and room mechanisms now share one private ownership-transfer
 implementation.** Both production subsystems use it; their state remains separate.
@@ -12,6 +12,14 @@ The full repository now passes `cargo fmt --check` locally, using the same comma
 as GitHub CI. Earlier scoped formatting disabled import/module reordering and did
 not satisfy that check. The iteration instructions now require the full default
 check before every Rust commit.
+
+GitHub's Format step passed on `64c450f2`. That run exposed a separate build
+failure: the Ubuntu job did not provision the native archives, whose current
+desktop/utilities ABI requires Windows GNU. Public CI now keeps formatting and
+progress on Ubuntu and builds the full frontend on Windows GNU, provisioning
+all seven real native archives from pinned sources. Workflow lint passes;
+the first remote build of this repair is pending. The manual ROM verification
+workflow has not been migrated or validated by this change.
 
 Formatting touched 75 Rust files and adds 229 physical lines through layout only.
 This is not implementation growth or a reduction claim. Current source has
