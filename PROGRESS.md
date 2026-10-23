@@ -75,7 +75,7 @@ flowchart TB
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-[Flags build + 51 mutations: PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40036842766)
+[Flags adopted: f88970aa](https://github.com/JimLundin/sm-decomp/commit/f88970aa) · [Build + 51 mutations: PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40036842766)
 
 ```mermaid
 flowchart LR
