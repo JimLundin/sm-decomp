@@ -3,7 +3,8 @@ use crate::game::special_attacks::Kind as SpecialKind;
 use crate::game::special_attacks_ram as special_attacks;
 use crate::game::projectile_initialization::Initialization;
 use crate::game::projectile_initialization_ram::initialize;
-use crate::game::bomb_lifecycle::{Kind as BombKind, SPREAD_FRACTIONS as kBombSpread_Tab3};
+use crate::game::bomb_lifecycle::Kind as BombKind;
+use crate::game::bomb_creation_ram::fire as fire_bombs;
 use crate::game::bomb_lifecycle_ram as bomb_lifecycle;
 use crate::game::music::{PlayRoomMusicTrackAfterAFrames};
 use crate::game::beam_firing_ram::{clear_animation, update_input};
@@ -1971,125 +1972,6 @@ pub unsafe fn ProjectileReflection(r20: u16, game: &mut Game) {
         };
     }
 }
-pub unsafe fn HudSelectionHandler_MorphBall(game: &mut Game) {
-    unsafe {
-        if (word!(game.button_config_shoot_x) & word!(game.joypad1_lastkeys)) != 0 {
-            if word!(game.hud_item_index) == 3 {
-                if (word!(game.power_bomb_flag) & 0x8000) == 0
-                    && HudSelectionHandler_MorphBall_Helper2(game) & 1 != 0
-                    && word!(game.samus_power_bombs) != 0
-                {
-                    if (word!(game.samus_power_bombs -= 1, reread) & 0x8000) == 0 {
-                        word!(game.power_bomb_flag = -1i32 as u16);
-                        let mut v2: u16 = 10;
-                        while word!(game.projectile_type[(v2 >> 1)]) != 0 {
-                            v2 = (v2).wrapping_add(2);
-                            if (((v2) as i16).wrapping_sub(20) < 0) {
-                                continue;
-                            }
-                            v2 = (v2).wrapping_sub(2);
-                            break;
-                        }
-                        let r18: u16 = u16::swap_bytes(word!(game.hud_item_index));
-                        let v4: i32 = v2 as i32 >> 1;
-                        let mut v5: u16 = (r18) | (word!(game.projectile_type[v4]));
-                        word!(game.projectile_type[v4] = v5);
-                        let v6: u8 = byte!(v5; 1);
-                        word!(game.projectile_dir[v4] = 0);
-                        word!(game.projectile_x_pos[v4] = word!(game.samus_x_pos));
-                        word!(game.projectile_y_pos[v4] = word!(game.samus_y_pos));
-                        word!(game.projectile_variables[v4] = 60);
-                        initialize(v2, Initialization::Bomb, game);
-                        word!(game.projectile_bomb_pre_instructions[v4] = ((0x90b0aei32) as u16));
-                        word!(
-                            game.cooldown_timer =
-                                crate::game::projectile_weapon_definitions::COOLDOWNS
-                                    [(v6 as i32 & 0xf) as usize]
-                                    as u16
-                        );
-                        if word!(game.samus_auto_cancel_hud_item_index) != 0 {
-                            word! { game, 0;
-                                hud_item_index, samus_auto_cancel_hud_item_index,
-                            }
-                        } else if word!(game.hud_item_index) == 3
-                            && word!(game.samus_power_bombs) == 0
-                        {
-                            word!(game.hud_item_index = 0);
-                        }
-                    }
-                }
-            } else if HudSelectionHandler_MorphBall_Helper(game) & 1 != 0 {
-                let mut v0: u16 = 10;
-                while word!(game.projectile_type[(v0 >> 1)]) != 0 {
-                    v0 = (v0).wrapping_add(2);
-                    if (((v0) as i16).wrapping_sub(20) < 0) {
-                        continue;
-                    }
-                    v0 = (v0).wrapping_sub(2);
-                    break;
-                }
-                let v1: i32 = v0 as i32 >> 1;
-                word! {game; projectile_type[v1] = 1280; projectile_dir[v1] = 0;
-                projectile_x_pos[v1] = word!(game.samus_x_pos);
-                projectile_y_pos[v1] = word!(game.samus_y_pos); projectile_variables[v1] = 60; }
-                initialize(v0, Initialization::Bomb, game);
-                word!(game.projectile_bomb_pre_instructions[v1] = ((0x90b099i32) as u16));
-                word!(
-                    game.cooldown_timer =
-                        crate::game::projectile_weapon_definitions::COOLDOWNS[5i32 as usize] as u16
-                );
-            }
-        } else if word!(game.flare_counter) != 0 {
-            QueueSfx1_Max9(2, game);
-            word!(game.flare_counter = 0);
-            clear_animation(game);
-            Samus_LoadSuitPalette(game);
-        }
-    }
-}
-pub unsafe fn HudSelectionHandler_MorphBall_Helper(game: &mut Game) -> u8 {
-    unsafe {
-        if (word!(game.equipped_items) & 0x1000) != 0 {
-            if word!(game.flare_counter) as i32 - 60i32 & 0x8000 != 0
-                || word!(game.bomb_counter) != 0
-            {
-                return HudSelectionHandler_MorphBall_Helper2(game);
-            }
-            if (word!(game.joypad1_lastkeys) as i32 & kButton_Down as i32) != 0
-                && (word!(game.bomb_spread_charge_timeout_counter) as i32 & 0xc0) - 192i32 & 0x8000
-                    != 0
-            {
-                word!(game.bomb_spread_charge_timeout_counter += 1);
-            } else {
-                BombSpread(game);
-                Samus_LoadSuitPalette(game);
-                QueueSfx1_Max9(2, game);
-            }
-        }
-        0
-    }
-}
-pub unsafe fn HudSelectionHandler_MorphBall_Helper2(game: &mut Game) -> u8 {
-    unsafe {
-        if (word!(game.button_config_shoot_x) & word!(game.joypad1_newkeys)) == 0
-            || word!(game.bomb_counter) != 0
-                && (word!(game.bomb_counter) as i32 - 5i32 & 0x8000 == 0
-                    || (word!(game.cooldown_timer) as u8) != 0)
-        {
-            if word!(game.flare_counter) != 0 {
-                QueueSfx1_Max9(2, game);
-                word!(game.flare_counter = 0);
-                clear_animation(game);
-                Samus_LoadSuitPalette(game);
-            }
-            0
-        } else {
-            word!(game.cooldown_timer += 1);
-            word!(game.bomb_counter += 1);
-            1
-        }
-    }
-}
 static kRunSwitchedToHudHandler: [Func_U8; 6] = callback_table! { nonnull Func_U8;
     SwitchToHudHandler_Nothing, SwitchToHudHandler_Missiles, SwitchToHudHandler_SuperMissiles,
     SwitchToHudHandler_PowerBombs, SwitchToHudHandler_Grapple, SwitchToHudHandler_Xray,
@@ -2602,48 +2484,15 @@ pub unsafe fn SamusMoveHandler_CrystalFlashMain_2(game: &mut Game) {
         }
     }
 }
-static kBombSpread_Tab0: [u16; 5] = [0x78, 0x6e, 0x64, 0x6e, 0x78];
-static kBombSpread_Tab1: [u16; 5] = [0x8100, 0x8080, 0, 0x80, 0x100];
-static kBombSpread_Tab2: [u16; 5] = [0, 1, 2, 1, 0];
-pub unsafe fn BombSpread(game: &mut Game) {
-    unsafe {
-        if word!(game.bomb_functions[0]) as i32 != 0x90d8f7 & 0xffff {
-            for v0 in (10u16..20).step_by(2) {
-                let v1: i32 = v0 as i32 >> 1;
-                word! {game; projectile_type[v1] = -31488i32 as u16; projectile_dir[v1] = 0;
-                projectile_bomb_pre_instructions[v1] = ((0x90d8f7i32) as u16); }
-                initialize(v0, Initialization::Bomb, game);
-                word! {game; projectile_x_pos[v1] = word!(game.samus_x_pos);
-                projectile_bomb_x_subpos[v1] = 0; projectile_y_pos[v1] = word!(game.samus_y_pos);
-                projectile_bomb_y_subpos[v1] = 0; }
-                let v2: i32 = ((v0).wrapping_sub(10)) as i32 >> 1;
-                word!(game.projectile_bomb_x_speed[v1] = kBombSpread_Tab1[v2 as usize]);
-                word!(game.projectile_timers[v1] = kBombSpread_Tab3[v2 as usize]);
-                let v3: u16 = -((kBombSpread_Tab2[v2 as usize] as i32
-                    + (word!(game.bomb_spread_charge_timeout_counter) as i32 >> 6i32 & 3i32))
-                    as i16 as i32) as u16;
-                word! {game; projectile_bomb_y_speed[v1] = v3; projectile_unk_A[v1] = v3;
-                projectile_variables[v1] = kBombSpread_Tab0[v2 as usize]; }
-            }
-            word!(game.bomb_counter = 5);
-            word!(
-                game.cooldown_timer = crate::game::projectile_weapon_definitions::COOLDOWNS
-                    [(*((ram_ptr!(game, u16; 0xc18)).offset(5) as *mut u8).offset(1,) as i32 & 0xf)
-                        as usize] as u16
-            );
-            word! { game, 0; bomb_spread_charge_timeout_counter, flare_counter }
-        }
-    }
-}
 static kHandleHudSpecificBehaviorAndProjs: [Func_V; 28] = callback_table! { nonnull Func_V;
     HudSelectionHandler_Normal, HudSelectionHandler_Normal, HudSelectionHandler_Normal,
-    HudSelectionHandler_JumpEtc, HudSelectionHandler_MorphBall, HudSelectionHandler_Normal,
-    HudSelectionHandler_Normal, HudSelectionHandler_MorphBall, HudSelectionHandler_MorphBall,
-    HudSelectionHandler_MorphBall, HudSelectionHandler_JumpEtc, HudSelectionHandler_Grappling,
+    HudSelectionHandler_JumpEtc, fire_bombs, HudSelectionHandler_Normal,
+    HudSelectionHandler_Normal, fire_bombs, fire_bombs,
+    fire_bombs, HudSelectionHandler_JumpEtc, HudSelectionHandler_Grappling,
     HudSelectionHandler_Grappling, HudSelectionHandler_JumpEtc,
     HudSelectionHandler_TurningAround, HudSelectionHandler_CrouchEtcTrans,
-    HudSelectionHandler_Normal, HudSelectionHandler_MorphBall, HudSelectionHandler_MorphBall,
-    HudSelectionHandler_MorphBall, HudSelectionHandler_JumpEtc, HudSelectionHandler_Normal,
+    HudSelectionHandler_Normal, fire_bombs, fire_bombs,
+    fire_bombs, HudSelectionHandler_JumpEtc, HudSelectionHandler_Normal,
     HudSelectionHandler_Grappling, HudSelectionHandler_TurningAround,
     HudSelectionHandler_TurningAround, HudSelectionHandler_JumpEtc,
     HudSelectionHandler_GrabbedByDraygon, HudSelectionHandler_JumpEtc,
@@ -2739,7 +2588,7 @@ pub unsafe fn HudSelectionHandler_Xray(game: &mut Game) {
 pub unsafe fn HudSelectionHandler_GrabbedByDraygon(game: &mut Game) {
     unsafe {
         if word!(game.samus_pose) as i32 == kPose_DB as i32 | kPose_04_FaceL_AimU as i32 {
-            HudSelectionHandler_MorphBall(game);
+            fire_bombs(game);
         } else {
             HudSelectionHandler_Normal(game);
         };

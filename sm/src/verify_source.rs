@@ -301,6 +301,14 @@ pub static FILES: &[(&str, &[u8])] = &[
         "sm/src/game/bomb_terrain_ram.rs",
         include_bytes!("game/bomb_terrain_ram.rs"),
     ),
+    (
+        "sm/src/game/bomb_creation.rs",
+        include_bytes!("game/bomb_creation.rs"),
+    ),
+    (
+        "sm/src/game/bomb_creation_ram.rs",
+        include_bytes!("game/bomb_creation_ram.rs"),
+    ),
     ("sm/src/game/projectile_trails.rs", include_bytes!("game/projectile_trails.rs")),
     ("sm/src/game/dialogue.rs", include_bytes!("game/dialogue.rs")),
     ("sm/src/game/dialogue_ram.rs", include_bytes!("game/dialogue_ram.rs")),
