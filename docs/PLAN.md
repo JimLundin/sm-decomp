@@ -447,8 +447,10 @@ references; measure build/test time and resource growth before changing the loop
    Hosted run40036842766 tests30fd121f: full composition/frontend and42detached
    +9DLL mutations running. Branch follow-upb09c2aa3 adds only the reviewed
    comparison-only Python script; its Rust is identical. Main adoption pending.
-   Assembled production grows278lines/+2451tokens/+10942LFbytes; provisional
-   verification Rust+1725 and Python+172, before Kraid additions. No reduction
+   Final assembled production grows281lines/+2451tokens/+10945LFbytes;
+   verification Rust+2349lines and Python+256, including Kraid. Production
+   totals108173lines, verification18469, combined126642; native unchanged.
+   All22 new cfg-only observer lines are counted as verification. No reduction
    claim;18ports and3duplicate helpers retire in the candidate, not yet main.
    Public atlas snapshot4ba01b81 is deployed via40034126172: browser/accessibility
    and Pages pass; live HTTP200 bytes match committed HTML. It reflects adopted

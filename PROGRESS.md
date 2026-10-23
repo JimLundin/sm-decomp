@@ -61,6 +61,24 @@ flowchart TB
 
 [Flags candidate build + 51 mutations: running](https://github.com/JimLundin/sm-decomp/actions/runs/40036842766)
 
+```mermaid
+flowchart LR
+    FB["Composed baseline"]:::active --> FEVENT["Discard event write"]:::pending
+    FB --> FHI["Keep stale event mask"]:::pending
+    FB --> FBOSS["Clear boss mask high byte"]:::pending
+    FB --> FMAP["Write wrong object map"]:::pending
+    FB --> FRNG["Cache scratch before RNG"]:::pending
+    FB --> FEYE["Reuse Eye Door mask"]:::pending
+    FB --> FADJ["Drop adjacent door byte"]:::pending
+    FB --> FPRE["Read door before marking"]:::pending
+    FB --> FCLAMP["Clamp broad flag index"]:::pending
+    FB --> FNATIVE["Lose native high byte"]:::pending
+    class FB,FEVENT,FHI,FBOSS,FMAP,FRNG,FEYE,FADJ,FPRE,FCLAMP,FNATIVE changed
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
 <details>
 <summary>Adopted sprite effects — shared owner and verification</summary>
 
