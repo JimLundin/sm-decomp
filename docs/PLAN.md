@@ -104,41 +104,39 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares crumbling-wall delay, scroll and row movement
-   after Mother Brain glass at `94f84f96`. New `mechanism_crumbling_wall` core and
-   checked adapter retire AB28 setup, AB51 scroll and identical AB59/AB00 movement
-   bodies. Already-dead Botwoon_Init uses the shared scroll helper. Preserve delay64,
-   native-endian0101 scroll encoding, captured block before live width and wrapping
-   row steps. Both modules forbid unsafe; candidate setup/commands share the core.
-   RAM remains authoritative. 89/115 setups are shared;26 remain.
+   Latest verified stage shares Wrecked Ship treadmill setup, activation and
+   player carry after crumbling walls at `b57b55e0`. New `mechanism_treadmill`
+   core/checked adapter retire B04A, AD43/AD58, their sole-use row helper and three
+   private inside-movement routines. Preserve captured origin, clear's wrapped
+   cursor/LE words, activation's widened native-word addresses and interleaved
+   level/BTS writes. Carry preserves lazy area3/boss/speed gating, fractional then
+   whole displacement writes and unconditional normal speed-table reset. Both
+   modules forbid unsafe. RAM remains authoritative;90/115 setups shared,25 remain.
 
-   All21 selected suites pass with225 runtime/267 local identities. New results
-   [15670,0,17,4302]:15,670 defined original/main/candidate direct comparisons,
-   no intended checked failures,17 source/lifecycle groups and4,302 paired cell/frame
-   observations (8,604 collision invocations). Canonical/odd/boundary selectors and
-   wrapping widths/blocks are covered; all-u16 field endpoints statically fit RAM.
-   Actual Botwoon ready/full-pool producer, terminal boss-bit/music/deletion and
-   already-dead reload execute. Full hostile-projectile pool deliberately skips
-   all16 drop constructions;16 RNG steps and final drop point are asserted. Actual
-   Tourian HDMA DC69 checks trigger/frozen/neighbor/full-PLM cases, eventA and script
-   advancement. Native enemy/scroll/HDMA domains are bounded/alignment-guarded.
-   Outer enemy/HDMA behavior remains retained, not independently owned.
+   All22 suites pass with228 runtime/272 local identities. New[11120,18,19,4880]:
+   11,120 defined-original/main/candidate comparisons (10,320 terrain,800 carry);
+   18 separate checked-only invalid-row prefix groups;19 source/reentry groups;
+   4,880 mixed observations (3,024 row-cell checks,1,792 combined inside/projectile
+   samples,64 animation frames). Origins aboveFF8F reach out-of-RAM native terrain;
+   never execute those originals. C800 alias checks prove later BTS bytes overwrite
+   earlier terrain words in the original order. Symbolic tests preserve captured
+   origin, wrapped versus widened stepping, and lazy motion observation order.
 
-   Separate guarded offscreen scripts prove Botwoon first Air draw tick64, nine
-   rows with four4-frame stages each, final ninth move/Delete tick208; reload clear
-   nine cells/Delete tick2; Tourian four-column/six-row passage final sixth move/
-   Delete tick97. All stages are Air from their first draw. Scroll, sound capacity,
-   exact terrain, neighboring cells and post-delete tails pass. PLM scripts do not
-   set boss/event flags. Scoped carrier-only constructor hooks select three headers;
-   draw guards bound y32..40 or32..37 at camera0. Actual-coordinate checks stop at
-   creation. No visible rendering, movie, complete boss/composition runtime or
-   independent backend claim. All eight literal content ranges match bank bytes.
+   Actual door callbacks B971/E1D8 create matching animtiles then B64B/B64F at(4,9),
+   CA08 width64/area3. Sixteen direction/boss/independent-pool combinations execute.
+   First PLM tick activates only after bossbit1, then Delete; setup always clears
+   56 cells, preserving BTS until activation. Actual inside detection verifies
+   signed carry and speed gating; projectile collision stays Air. Reentry after
+   boss/direction changes, neighboring cells, unchanged flags and two post-delete
+   ticks pass. Actual animation wait and pointer cycles execute; no pixel rendering
+   or complete animation backend claim. Scripts contain no DrawPlm; actual-coordinate
+   full scripts are tested without an offscreen substitution. All eight selected
+   content ranges match bank bytes; ROM-derived content remains uncommitted.
 
-   Production release/frontend/verifier/source48.91s, prospective release54.31s,
-   carrier19.49s and harness17.72s pass first attempts. Runtime attempt1 printed all
-   passing results23.23s, but PowerShell returned1 around retained stderr diagnostics.
-   Same fixed DLL/source rerun with explicit subprocess capture exits0, all21 pass
-   23.56s. Both logs preserved; no source changes or failing runtime assertions.
+   Production release/frontend/verifier/source74.05s, prospective release59.99s,
+   carrier25.67s, harness43.17s and all22 runtime suites23.63s pass first attempts,
+   checker process exit0. No post-build source changes. Retained outer door,
+   animation and inside-dispatch code is not independent Session ownership.
 
    Retained limits: `advance_tide` reads native u16 at odd RAM197D on every
    unfrozen lava_surface; never run that as defined-reference evidence. The old
@@ -147,14 +145,14 @@ references; measure build/test time and resource growth before changing the loop
    or resolve the inherited Intro mismatch. Other qualified fixtures remain as
    documented in the local handoffs.
 
-   Main is **105,080 Rust lines in188 files**. Prospective composition is
-   **114,053 (+8,973)** in291 files, unadopted. Stage main adds63 lines/652 lexical
-   tokens/2,244 LF-normalized bytes; complete composition adds96/912/3,476.
-   Retained verification adds787/9,528/32,465; implementation plus checks883 lines.
-   Local production overlaps composition. No dependency/native/installer/launcher
-   source added. Unsafe declarations remain2,884; casts fall two to6,019. Two native
-   scroll-store sites are replaced, but no complete unsafe retirement, persistent
-   ownership, backend independence or net reduction is established.
+   Main is **105,165 Rust lines in190 files**. Prospective composition is
+   **114,176 (+9,011)** in294 files, unadopted. Stage main adds85 lines/916 lexical
+   tokens/3,144 LF-normalized bytes; complete composition adds123/1,177/4,415.
+   Retained verification adds881/10,304/37,127; implementation plus checks1,004
+   lines. Local production overlaps composition. No dependency/native/installer/
+   launcher source added. Unsafe declarations fall four to2,880; casts fall three
+   to6,016. No net reduction, complete unsafe retirement, persistent ownership or
+   backend independence claim.
 
    Next dependencies, in order:
 
@@ -221,12 +219,14 @@ references; measure build/test time and resource growth before changing the loop
      producers; compare actual shots/shards and guarded full script/event tails.
    - [x] Share Botwoon delay/scroll and both crumbling-row commands; compare
      death/reload, Tourian producer and complete guarded terrain/collision tails.
+   - [x] Share Wrecked Ship treadmill clear/activation/carry; compare actual
+     door producers, boss/reentry gates, inside movement and animation cycles.
    - Close remaining room/event/boss setups, then constants/no-op/result routes.
      Preserve synchronous writes, nested displacement and failure prefixes before
      retiring native dispatch. The 115-identity inventory is in the local door
-     handoff; 12 room/event/boss and 14 residual identities remain. Select one
-     coherent responsibility through caller/validation investigation. The crumbling-wall
-     handoff records retained dependencies and guarded drawing limits.
+     handoff; 11 room/event/boss and 14 residual identities remain. Select one
+     coherent responsibility through caller/validation investigation. The treadmill
+     handoff records retained dependencies and native-row domain limits.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -234,8 +234,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified crumbling-wall continuation,
-   with `CRUMBLING_WALL_HANDOFF.md`, `crumbling-wall-price.json` and
+   `runtime-impact-working/` is the verified treadmill continuation,
+   with `TREADMILL_HANDOFF.md`, `treadmill-price.json` and
+   `treadmill-check-attempt1.log`. `treadmill-parent/` preserves prior
+   main/carrier/local/composition inputs. Crumbling-wall evidence remains in `CRUMBLING_WALL_HANDOFF.md`, `crumbling-wall-price.json` and
    `crumbling-wall-check-attempt2.log`. `crumbling-wall-parent/` preserves prior
    main/carrier/local/composition inputs. Glass evidence remains in `MOTHER_BRAIN_GLASS_HANDOFF.md`, `mother-brain-glass-price.json` and
    `mother-brain-glass-check-attempt-1.log`. `mother-brain-glass-parent/` preserves

@@ -420,6 +420,8 @@ pub mod game {
     pub(crate) mod mechanism_mother_brain_glass_ram;
     pub(crate) mod mechanism_crumbling_wall;
     pub(crate) mod mechanism_crumbling_wall_ram;
+    pub(crate) mod mechanism_treadmill;
+    pub(crate) mod mechanism_treadmill_ram;
     pub(crate) mod mechanism_animal_rescue;
     pub(crate) mod mechanism_animal_rescue_ram;
     pub(crate) mod mechanism_shaktool;

@@ -103,24 +103,6 @@ pub fn WriteLevelDataBlockTypeAndBts(k: u16, a: u16, game: &mut Game) {
     game.g_ram[block_high] = (a >> 8) as u8 | (game.g_ram[block_high] & 0x0f);
     game.g_ram[0x16402 + usize::from(k >> 1)] = a as u8;
 }
-pub unsafe fn WriteRowOfLevelDataBlockAndBTS(
-    k: u16,
-    arg0: u16,
-    arg1: u16,
-    arg2: u16,
-    game: &mut Game,
-) {
-    unsafe {
-        let v2: u16 = word!(game.plm_block_indices[(k >> 1)]);
-        let v8: u16 = (v2 >> 1);
-        let mut i: i32 = 0;
-        while i < arg2 as i32 {
-            *(ram_ptr!(game, u16; 0x10002)).offset((v2 as i32 + i * 2 >> 1) as isize) = arg0;
-            *ram_ptr!(game; 0x16402, (v8 as i32 + i) as isize) = arg1 as u8;
-            i += 1;
-        }
-    }
-}
 pub fn EnablePLMs(game: &mut Game) {
     // plm_flag: enable bit 15 while preserving the other flag bits.
     let flags = u16::from_le_bytes([game.g_ram[0x1c23], game.g_ram[0x1c24]]);
@@ -750,14 +732,6 @@ crate::game::callback_dispatch! {
 ) -> u8 => ea;
     call (j, game); default Unreachable(game) as u8;
     @functions [pub unsafe fn (j: u16, game: &mut Game) -> u8];
-    [8695882] PlmSetup_SetrupWreckedShipEntrance [] {
-        let mut v1: u16 = word!(game.plm_block_indices[(j >> 1)]);
-        for _ in 0i16..56i16 {
-            word!(game.level_data[(v1 >> 1)] = 255);
-            v1 = (v1).wrapping_add(2);
-        }
-        0
-    };
     [8698353] sub_84B9F1 [] {
         let v1: u16 = word!(game.plm_block_indices[(j >> 1)]);
         update_level_block_bits((v1 >> 1) as usize, 0xfff, 0x8000, game);
@@ -837,6 +811,7 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (v0: u16, game: &mut Game) -> u8];
     @external {
+        8695882 => [crate::game::mechanism_treadmill_ram::setup(j, game)];
         8694568 => [crate::game::mechanism_crumbling_wall_ram::setup(j, game)];
         8696811 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::Ice, displacement, game)];
         8696840 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::Surface, displacement, game)];
@@ -1668,12 +1643,6 @@ crate::game::callback_dispatch! {
     k: u16,
     game: &mut Game,
 ) -> PlmScript];
-    [8695107] PlmInstr_Draw0x38FramesOfRightTreadmill [plmp] {
-        WriteRowOfLevelDataBlockAndBTS(k, 0x30ff, 0x8, 0x38, game);
-    };
-    [8695128] PlmInstr_Draw0x38FramesOfLeftTreadmill [plmp] {
-        WriteRowOfLevelDataBlockAndBTS(k, 0x30ff, 0x9, 0x38, game);
-    };
     [8695349] PlmInstr_GotoIfSamusHealthFull [PlmScript::jump(plmp.word(0))] {
         if word!(game.samus_max_health) != word!(game.samus_health) {
             return plmp.advance(2);
@@ -1849,6 +1818,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (plmp: PlmScript, k: u16, game: &mut Game) -> PlmScript];
     [8709691] PlmInstr_E63B [plmp] { word!(game.fx_y_vel = -32i32 as u16); };
     @external {
+        8695107 | 8695128 => [{ crate::game::mechanism_treadmill_ram::activate(k, if ea == 8695107 { crate::game::mechanism_treadmill::Direction::Right } else { crate::game::mechanism_treadmill::Direction::Left }, game); j }];
         8694609 => [{ crate::game::mechanism_crumbling_wall_ram::open_passage(game); j }];
         8694528 | 8694617 => [{ crate::game::mechanism_crumbling_wall_ram::move_down(k, game); j }];
         8704761 => [crate::game::mechanism_mother_brain_glass_ram::command(j, k, crate::game::mechanism_mother_brain_glass::Command::Threshold, game, |parameter, game| { SpawnEprojWithRoomGfx(0xcefc, parameter, game); })];

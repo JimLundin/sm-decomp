@@ -9,71 +9,69 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares crumbling walls after Mother Brain glass `94f84f96`.
-Core/checked adapter mechanism_crumbling_wall retire setupAB28,scrollAB51,
-Botwoon moveAB59 and identical Tourian moveAB00. Both forbid unsafe. Botwoon_Init
-already-dead branch shares scroll0101 after B797 creation. Preserve native word
-encoding, delay64 and captured block before live width/wrapped row store.
-Candidate setup/command routes publish/share/import; RAM remains authoritative.
-89/115 setups shared;12 room/event/boss and14 residual identities remain.
+The latest stage shares Wrecked Ship treadmill behavior after crumbling walls
+`b57b55e0`. Core/checked adapter mechanism_treadmill retire B04A setup,AD43/AD58
+activation,the sole-use row helper and three private gate/carry routines. Both
+forbid unsafe. Clear captures origin and writes56 LE00FF words with wrapped
+cursor,leaving BTS except physical aliases. Activation widens offsets and writes native30FF then BTS8/9
+per cell. Carry preserves area3-only boss query/scratch effects, lazy speed read,
+conditional low0/high+2 or-2 writes and unconditional normal speed9F55 reset.
+RAM remains authoritative;90/115 setups shared,11 room/event/boss+14 residual remain.
 
-Main105080 Rust lines/188 files;unsafe2884 unchanged,casts6019(-2). Maintained
-implementation105642; installers/launcher included106552. Candidate114053/291,
-gap8973,unadopted. Main delta[63,652,2244],composition[96,912,3476],verification
-[787,9528,32465] lines/tokens/LF bytes;implementation+checks883 lines. Local
-production+32 overlaps composition. No dependencies/native/installer additions,
-net reduction, complete unsafe retirement, persistent ownership or independence.
+Main105165 Rust lines/190 files;unsafe2880(-4),casts6016(-3). Maintained
+implementation105727; installers/launcher included106637. Candidate114176/294,
+gap9011,unadopted. Main delta[85,916,3144],composition[123,1177,4415],verification
+[881,10304,37127] lines/tokens/LF bytes;implementation+checks1004 lines. Local
+production37lines overlap composition. No dependencies/native/installer additions,
+net reduction, complete unsafe retirement,persistent ownership or independence.
 
-Use `runtime-impact-working/CRUMBLING_WALL_HANDOFF.md`,
-`crumbling-wall-price.json` and `crumbling-wall-check-attempt2.log`.
-All21 suites pass23.5558162s with225 runtime/267 local source identities.
-New[15670,0,17,4302]:15,670 defined frozen-original/main/candidate comparisons,
-all intended successes;17 source/lifecycle groups and4,302 paired cell/frame
-observations (8,604 actual collision calls). Bounded canonical/odd/boundary
-selectors,widths and blocks include wraps; all-u16 field endpoints statically
-fit128KiB. Symbolic core checks captured-block/live-width/write order.
+Use `runtime-impact-working/TREADMILL_HANDOFF.md`, `treadmill-price.json` and
+`treadmill-check-attempt1.log`. All22 suites pass23.628391s,explicit process exit0,
+source identities228 runtime/272 local. New[11120,18,19,4880]:10,320 defined
+terrain comparisons+800 defined carry comparisons;18 SEPARATE checked-only
+invalid-row prefix groups;19 source/reentry groups;4,880 mixed observations.
+The latter are3,024 row-cell checks,1,792 combined inside/projectile samples and
+64 animation frames,with each game counted separately. Do not call this a
+collision-call total. Old origins aboveFF8F reach raw out-of-RAM terrain and are
+never executed. New checked prefixes retain prior writes. C800 overlap explicitly
+proves BTS overwrites earlier terrain words. Symbolic tests distinguish wrapped
+clear from widened activation and preserve lazy movement gates/ordered writes.
 
-Actual Botwoon Func16/17 ready/full-PLM matrix creates B79B at(15,4),width32.
-Full18 hostile-projectile slots deliberately skip16 drop constructions; RNG,
-F293 definition/final point and cleared death fields asserted. Free-slot drop
-initialization is untested. Terminal Func18 sets Maridia bossbit2,Deleted,music3
-and delay8; already-dead Init creates B797 and opens scroll. Neighbor boss bytes
-preserved. Actual HDMA DC69 frozen/trigger/neighbor/full-PLM cases create B773 at
-(6,12); eventA/instruction updates occur even on allocation failure. Native enemy
-extent/alignment, CD20 scroll and9E00 HDMA store are guarded; AddToHiLo is unaligned.
-Scoped carrier constructor hook intercepts onlyB797/B79B/B773 and resets on unwind.
-Outer enemy/HDMA code remains shared, not independent encounter ownership.
+Actual door records89D6/A1F8 target CA08,width64,area3. Callbacks8FB971/8FE1D8
+spawn animtiles8275/827B before B64B/B64F at(4,9). Sixteen direction,boss and
+independent animation/PLM pool combinations compare actual outer callbacks with
+a scoped two-header candidate constructor hook. First PLM tick tests bossbit1,
+optionally installs56 conveyor cells,then deletes. Postdelete/reentry checks
+preserve neighbors/BTS/flags and restore the selected direction after a boss
+change. Actual public inside detection and projectile consumers sample the row;
+independent old private carry checks cover suppressed writes/lazy reads and
+scratch high-byte preservation. Actual animtile object processor waits for boss and
+cycles source pointers both ways; renderer/DMA/backend independence is unproven.
 
-Separate offscreen scripts at y32: Botwoon first Air drawtick64,nine rows of16ticks,
-final ninth move/Delete208; B797 nine-cell clear/Delete2; Tourian four columns by six rows,
-final sixth move/Delete97. All crumble stages are Air from first draw. Exact
-terrain/collision/current-cell, scroll, sound capacity, untouched neighbors and
-two post-delete ticks pass. Scripts preserve event/boss bytes; persistence belongs
-to the outer callers. New guard bounds Botwoon y32..40 and Tourian32..37,camera0;
-prior animal/glass guard unchanged. Real-coordinate checks stop at creation.
-No visible rendering,movie,full boss/composition runtime,boot-to-credits or backend
-independence. All8 literal ranges(175bytes) match primary banks; content stays local.
+No DrawPlm occurs in these scripts: complete actual-coordinate lifecycle runs,
+with no offscreen substitute or guard added. All8 content ranges(110bytes) match
+primary bank bytes. Literal ROM-derived fixtures stay local. No full Phantoon,
+movie,complete composition runtime,boot-to-credits or independent ownership claim.
+Outer door/animation/inside dispatch remains retained.
 
-Production release/frontend/verifier/source48.9084348s;prospective release
-54.3065576s;carrier19.49s;harness17.72s all pass first attempts. Runtime attempt1
-reported all21 passes23.2335463s but PowerShell returned1 around retained stderr
-diagnostics. Same fixed DLL/source rerun through explicit subprocess capture
-exits0,all21pass23.5558162s. Preserve both logs; no runtime assertion or compiler
-failure. Prebuild cursor-name and collision-index mistakes were fixed before
-compilation. Production hash:
-`39c595394850225225aa07d74c3b96cc02727999ab35a43583dd6a2aef612004`.
+Production release/frontend/verifier/source74.052495s;prospective release
+59.9854385s;carrier25.67s;harness43.17s;runtime23.628391s all pass first attempts.
+Production hash:
+`df0474d201f70614ff8e344207b3c9860d1f3e845348b97de5b306305b50fe6b`.
 Changed formatting passes; verify_source's4 inherited hunks exactly unchanged.
 Composition11file delta matches main/transformed local sources and registrations.
-Compiler lane released,DLL unloaded; no source edits after builds.
+Compiler lane released,DLL unloaded; no source edits after builds. Review corrected
+only a prebuild reentry fixture assumption about the next free animation slot.
 
-Retained results:glass8604/1460/22/138,escape16704/5742/10/192,
-doors570/12/30/3,Tourian21924/8700/10/80,animal42008/4628/19/13,
-Shaktool26700/6/4,booster91874/8354/20/21,sound15300/274/2304,
-quota6118/66/112/48,eye13320/3440/56/24,plants1360/1504/8/640,
-cannon3630/1420/46/8,item3476/1320/14/32,scroll5816/1296/52,
-station3240/112/149/6,Chozo592/4/4/16,hands52/163/12,source342/672/47,
-closing74/120/7,collision198/545/176/1. Glass/escape/animal/booster failures
-are included; Tourian8700 are separate checked-only cases, never undefined old runs.
+Retained results:crumbling15670/0/17/4302,glass8604/1460/22/138,
+escape16704/5742/10/192,doors570/12/30/3,Tourian21924/8700/10/80,
+animal42008/4628/19/13,Shaktool26700/6/4,booster91874/8354/20/21,
+sound15300/274/2304,quota6118/66/112/48,eye13320/3440/56/24,
+plants1360/1504/8/640,cannon3630/1420/46/8,item3476/1320/14/32,
+scroll5816/1296/52,station3240/112/149/6,Chozo592/4/4/16,hands52/163/12,
+source342/672/47,closing74/120/7,collision198/545/176/1. Glass/escape/animal/
+booster failures are included; Tourian8700/treadmill18 are separate checked-only
+cases. Crumbling4302 counts paired cell/frame observations(8604 collision calls).
 
 Preserve exclusions: unfrozen advance_tide always reads odd RAM197D; terrain18
 visible restoration reads odd RAM1E67. Neither is defined-reference coverage.
@@ -81,7 +79,7 @@ Current guards do not resolve inherited Intro mismatch. Qualified item/cannon/
 Chozo and full-contact limits remain; eye acid initialization stays excluded.
 Scroll bounded nonreturn observations were not repeated.
 
-`crumbling-wall-parent/` preserves prior main/carrier/local/composition.
+`treadmill-parent/` preserves prior main/carrier/local/composition.
 Historical snapshots/caches/failed logs remain, including animal BE30 routing
 correction; main numeric dispatch was always correct. Never rerun historical
 broad preparation scripts. Composition is `impact-composition/sm/src`.

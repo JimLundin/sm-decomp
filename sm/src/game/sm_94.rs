@@ -1184,33 +1184,9 @@ fn BlockInsideReact_SpecialAir_Default(game: &mut Game) {
     let speed_table = (addr_kSamusSpeedTable_Normal_X as u16).wrapping_add(12);
     game.g_ram[0xa6c..0xa6e].copy_from_slice(&speed_table.to_le_bytes());
 }
-unsafe fn special_air_movement_enabled(game: &mut Game) -> bool {
-    let area = u16::from_le_bytes([game.g_ram[0x79f], game.g_ram[0x7a0]]);
-    if area == 3 && CheckBossBitForCurArea(1, game) & 1 == 0 {
-        return false;
-    }
-    let speed = u16::from_le_bytes([game.g_ram[0xb2e], game.g_ram[0xb2f]]);
-    speed == 0
-}
 fn set_special_air_displacement(displacement: u16, game: &mut Game) {
     game.g_ram[0xb56..0xb58].copy_from_slice(&0u16.to_le_bytes());
     game.g_ram[0xb58..0xb5a].copy_from_slice(&displacement.to_le_bytes());
-}
-unsafe fn BlockInsideReact_SpecialAir_8(game: &mut Game) {
-    unsafe {
-        if special_air_movement_enabled(game) {
-            set_special_air_displacement(2, game);
-        }
-        BlockInsideReact_SpecialAir_Default(game);
-    }
-}
-unsafe fn BlockInsideReact_SpecialAir_9(game: &mut Game) {
-    unsafe {
-        if special_air_movement_enabled(game) {
-            set_special_air_displacement(0xfffe, game);
-        }
-        BlockInsideReact_SpecialAir_Default(game);
-    }
 }
 fn BlockInsideReact_SpecialAir_10(game: &mut Game) {
     set_special_air_displacement(2, game);
@@ -1243,8 +1219,14 @@ unsafe fn BlockInsideReact_SpecialAir(_ci: *mut CollInfo, game: &mut Game) -> u8
             // Preserve the former eighty-entry dispatch table's invalid-BTS panic.
             assert!(bts < 80, "special-air BTS index out of bounds: {bts}");
             match bts {
-                8 => BlockInsideReact_SpecialAir_8(game),
-                9 => BlockInsideReact_SpecialAir_9(game),
+                8 => crate::game::mechanism_treadmill_ram::carry(
+                    crate::game::mechanism_treadmill::Direction::Right,
+                    game,
+                ),
+                9 => crate::game::mechanism_treadmill_ram::carry(
+                    crate::game::mechanism_treadmill::Direction::Left,
+                    game,
+                ),
                 10 => BlockInsideReact_SpecialAir_10(game),
                 11 => BlockInsideReact_SpecialAir_11(game),
                 70 => BlockInsideReact_SpecialAir_70(game),
