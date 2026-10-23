@@ -51,3 +51,32 @@ pub static SINE_COSINE: [i16; 320] = [
     -120i16, -115i16, -109i16, -103i16, -97i16, -92i16, -86i16, -80i16, -74i16, -68i16, -62i16,
     -56i16, -49i16, -43i16, -37i16, -31i16, -25i16, -18i16, -12i16, -6i16,
 ];
+
+pub(crate) fn square_slope_occupied(
+    index: u16,
+    first: u16,
+    last: u16,
+    position: u16,
+    radius: u16,
+    other: u16,
+) -> bool {
+    if first == 0 && radius.wrapping_add(position).wrapping_sub(1) & 8 == 0 {
+        return SLOPE_QUADRANTS[usize::from(index)] != 0;
+    }
+    if first != 0 && first == last && position.wrapping_sub(radius) & 8 != 0 {
+        return SLOPE_QUADRANTS[usize::from(index ^ other)] != 0;
+    }
+    SLOPE_QUADRANTS[usize::from(index)] != 0 || SLOPE_QUADRANTS[usize::from(index ^ other)] != 0
+}
+// A span wholly inside one block must test both of its own edges. The
+// low-byte and full-word edge arithmetic agree on bit 3, including wraparound.
+pub(crate) fn square_slope_single_block(
+    index: u16,
+    position: u16,
+    radius: u16,
+    other: u16,
+) -> bool {
+    (position.wrapping_sub(radius) & 8 == 0 && SLOPE_QUADRANTS[usize::from(index)] != 0)
+        || (radius.wrapping_add(position).wrapping_sub(1) & 8 != 0
+            && SLOPE_QUADRANTS[usize::from(index ^ other)] != 0)
+}

@@ -1,6 +1,8 @@
 //! Independent ownership/source checks for the native-content variant only.
 //! Register directly under enemy_projectiles, separately from baseline carriers.
 #![forbid(unsafe_code)]
+use super::host::{Content as _, NativeRecord as _};
+use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 use crate::rom::RomImage;
 use std::panic::{AssertUnwindSafe, catch_unwind};
@@ -35,13 +37,13 @@ fn check_record_boundary(id: u32) {
         }
         7 => {
             // Word indexes are signed WORDS; the final complete word is legal.
-            assert_eq!(record.word(-1), 0x3412);
-            assert_eq!(record.word(2), 0xf0de);
+            assert_eq!(record.word_le(-1), 0x3412);
+            assert_eq!(record.word_le(2), 0xf0de);
         }
         8 => {
             // Long indexes are signed BYTES, including a negative valid start.
-            assert_eq!(record.long(-2), 0x78563412);
-            assert_eq!(record.long(2), 0xf0debc9a);
+            assert_eq!(record.long_le(-2), 0x78563412);
+            assert_eq!(record.long_le(2), 0xf0debc9a);
         }
         9 => panics_with(
             || {
@@ -53,7 +55,7 @@ fn check_record_boundary(id: u32) {
             let record = NativeRecord::new(image, 7);
             panics_with(
                 || {
-                    let _ = record.word(0);
+                    let _ = record.word_le(0);
                 },
                 "index out of bounds",
             );
@@ -62,7 +64,7 @@ fn check_record_boundary(id: u32) {
             let record = NativeRecord::new(image, 8);
             panics_with(
                 || {
-                    let _ = record.word(0);
+                    let _ = record.word_le(0);
                 },
                 "index out of bounds",
             );
@@ -73,7 +75,7 @@ fn check_record_boundary(id: u32) {
             let record = NativeRecord::new(image, 8 - available);
             panics_with(
                 || {
-                    let _ = record.long(0);
+                    let _ = record.long_le(0);
                 },
                 "index out of bounds",
             );
@@ -104,13 +106,13 @@ fn check_record_boundary(id: u32) {
         ),
         19 => panics_with(
             || {
-                let _ = record.word(isize::MAX);
+                let _ = record.word_le(isize::MAX);
             },
             "native ROM word offset overflow",
         ),
         20 => panics_with(
             || {
-                let _ = record.word(isize::MIN);
+                let _ = record.word_le(isize::MIN);
             },
             "native ROM word offset overflow",
         ),
@@ -118,7 +120,7 @@ fn check_record_boundary(id: u32) {
             let record = NativeRecord::new(image, usize::MAX);
             panics_with(
                 || {
-                    let _ = record.word(1);
+                    let _ = record.word_le(1);
                 },
                 "native ROM offset overflow",
             );
@@ -127,7 +129,7 @@ fn check_record_boundary(id: u32) {
             let record = NativeRecord::new(image, usize::MAX);
             panics_with(
                 || {
-                    let _ = record.long(1);
+                    let _ = record.long_le(1);
                 },
                 "native ROM offset overflow",
             );
@@ -137,32 +139,32 @@ fn check_record_boundary(id: u32) {
             // Bounds failure at lane0 precedes any later signed lane overflow.
             panics_with(
                 || {
-                    let _ = record.long(isize::MAX);
+                    let _ = record.long_le(isize::MAX);
                 },
                 "index out of bounds",
             );
         }
         24 => panics_with(
             || {
-                let _ = record.word(-2);
+                let _ = record.word_le(-2);
             },
             "native ROM offset overflow",
         ),
         25 => panics_with(
             || {
-                let _ = record.long(-3);
+                let _ = record.long_le(-3);
             },
             "native ROM offset overflow",
         ),
         26 => panics_with(
             || {
-                let _ = record.word(isize::MAX / 2);
+                let _ = record.word_le(isize::MAX / 2);
             },
             "index out of bounds",
         ),
         27 => panics_with(
             || {
-                let _ = record.word(isize::MIN / 2);
+                let _ = record.word_le(isize::MIN / 2);
             },
             "native ROM offset overflow",
         ),
@@ -189,22 +191,22 @@ pub(crate) fn check_case(id: u32) -> bool {
     match id {
         0 => {
             game.register_native_rom(first.clone());
-            let record = super::legacy::raw_record(0x86, 0x8000, &mut game);
+            let record = Runtime::new(&mut game).native_record(0x86, 0x8000);
             assert_eq!(record.byte(0), 0x12);
-            assert_eq!(record.word(0), 0x3412);
-            assert_eq!(record.long(0), 0x78563412);
+            assert_eq!(record.word_le(0), 0x3412);
+            assert_eq!(record.long_le(0), 0x78563412);
             assert_eq!(game.capture_native_rom().read(at), 0x12);
             assert_eq!(game.loaded_rom.as_ref().unwrap().read(at), 0xed);
         }
         1 => {
             game.register_native_rom(first.clone());
-            let captured = super::legacy::raw_record(0x86, 0x8000, &mut game);
+            let captured = Runtime::new(&mut game).native_record(0x86, 0x8000);
             game.register_native_rom(second.clone());
             first.write(at, 0x9a);
             drop(first);
-            assert_eq!(captured.word(0), 0x349a);
-            let current = super::legacy::raw_record(0x86, 0x8000, &mut game);
-            assert_eq!(current.word(0), 0xcbed);
+            assert_eq!(captured.word_le(0), 0x349a);
+            let current = Runtime::new(&mut game).native_record(0x86, 0x8000);
+            assert_eq!(current.word_le(0), 0xcbed);
         }
         2 => {
             game.register_native_rom(first.clone());
@@ -235,7 +237,7 @@ pub(crate) fn check_case(id: u32) -> bool {
             // The low-window diagnostic must precede the missing-owner failure.
             assert!(
                 catch_unwind(AssertUnwindSafe(|| {
-                    super::legacy::raw_record(0x86, 0x2000, &mut game)
+                    Runtime::new(&mut game).native_record(0x86, 0x2000)
                 }))
                 .is_err()
             );

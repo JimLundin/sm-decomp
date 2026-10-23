@@ -367,34 +367,9 @@ pub unsafe fn Samus_AlignYPosSlope(game: &mut Game) {
         }
     }
 }
-pub(super) fn square_slope_occupied(
-    index: u16,
-    first: u16,
-    last: u16,
-    position: u16,
-    radius: u16,
-    other: u16,
-) -> bool {
-    if first == 0 && radius.wrapping_add(position).wrapping_sub(1) & 8 == 0 {
-        return kTab948E54[usize::from(index)] != 0;
-    }
-    if first != 0 && first == last && position.wrapping_sub(radius) & 8 != 0 {
-        return kTab948E54[usize::from(index ^ other)] != 0;
-    }
-    kTab948E54[usize::from(index)] != 0 || kTab948E54[usize::from(index ^ other)] != 0
-}
-// A span wholly inside one block must test both of its own edges. The
-// low-byte and full-word edge arithmetic agree on bit 3, including wraparound.
-pub(super) fn square_slope_single_block(
-    index: u16,
-    position: u16,
-    radius: u16,
-    other: u16,
-) -> bool {
-    (position.wrapping_sub(radius) & 8 == 0 && kTab948E54[usize::from(index)] != 0)
-        || (radius.wrapping_add(position).wrapping_sub(1) & 8 != 0
-            && kTab948E54[usize::from(index ^ other)] != 0)
-}
+pub(super) use crate::game::projectile_geometry::{
+    square_slope_occupied, square_slope_single_block,
+};
 
 pub(crate) fn BlockReact_HorizExt(_ci: *mut CollInfo, game: &mut Game) -> u8 {
     if let Some(cell) = crate::game::projectile_block_reactions::redirect(

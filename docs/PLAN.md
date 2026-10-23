@@ -295,11 +295,26 @@ references; measure build/test time and resource growth before changing the loop
    pass, as does the hosted full build. Final replay passes28314frames, all26
    probes and120follow-up frames with zero failures:90.08s replay/90.30s total.
    Baseline97.27s versus90.08s is one paired sample, not a stable speedup claim.
-   Nine DLL mutants remain before adoption.
-   Accounting before that7line fixture correction: production-804lines but
-   +1934tokens/+3915LFbytes, so no net source-reduction claim; verification+1232
-   Rust lines, Python+134. Native unchanged; geometry relocation/formatting are
-   not savings. Complete accounting is local FINAL-ACCOUNTING.md.
+   Hosted run40013612299 passes fully: all7composed and9DLLmutants compile and
+   are rejected by their intended behavior checks; unmodified baselines pass.
+   Complete enemy Session candidate is adopted in this commit.
+   Full root fmt/check and direct verifier build pass29.83s on exactly source
+   21a7453a; all72adoption paths match hosted4d6806b8 after newline normalization.
+   Final accounting: production107459lines (-804), verification12032 (+1239),
+   combined119491 (+435). Production tokens+1934/bytes+3915; verification
+   tokens+11157/bytes+47194; Python+134lines; native unchanged. Unsafe2608/raw21
+   unchanged, casts5720 (+11typed adapter/call spellings).
+   Next complete scope selected: shared palette effects, animated tiles and
+   Samus palette control. Remove both private owners, duplicated inventory/player
+   inputs, raw color copies, unsafe callback dispatch and the animation-to-enemy
+   trampoline through actual caller migration. Four source-only inventories
+   prepare owner/content/codec declarations; review them before implementation.
+   Resolve sm91's void-to-u8 callback behavior from oracle/bank evidence first.
+   Broad palette aliases, legacy writers and reset/backend paths still prevent
+   persistent whole-game ownership; do not claim persistence from composition.
+   Production token/byte growth precludes a net source-reduction claim. Geometry
+   relocation and macro formatting are not savings. Complete accounting is in
+   local FINAL-ACCOUNTING.md and final-source-accounting.json.
 
 
    Room mechanisms are now adopted as one production responsibility: creation,
@@ -750,9 +765,9 @@ do not bypass the block or change security settings.
 
 Edition migration and stable release/compiler/source checks are complete for
 their recorded scope, not new gameplay coverage or unsafe elimination. The
-three crate roots deny `unsafe_op_in_unsafe_fn`. Repository-wide formatting
-already fails on the baseline; format changed files with edition 2024 and
-`skip_children=true,reorder_modules=false,reorder_imports=false`.
+three crate roots deny `unsafe_op_in_unsafe_fn`. Repository-wide formatting is
+now passing. Run root `cargo fmt` and `cargo fmt --check` with the default
+configuration before every Rust commit, as specified below.
 
 The existing DLL/ctypes comparison workflow is permitted. Denied executable or
 build-script attempts remain failed/blocked, not runtime passes. Use the

@@ -1,4 +1,4 @@
-//! Shared state proposal: ordinary fields, one live owner, no RAM storage.
+//! Ordinary gameplay state shared by player, room mechanisms and enemy projectiles.
 #![forbid(unsafe_code)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum PrepareEntry {
@@ -94,6 +94,7 @@ use crate::game::item_pickups::Inventory;
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct Session {
     pub projectiles: Projectiles,
+    pub enemy_projectiles: EnemyProjectiles,
     pub player: Player,
     pub inventory: Inventory,
     pub mechanisms: Mechanisms,
@@ -132,6 +133,9 @@ pub struct Player {
     pub contact: ContactPhysics,
     pub invincibility: u16, // 18A8, distinct from projectile protection18AC.
     pub periodic_damage: u16,
+    pub speed_divisor: u16,
+    pub knockback_timer: u16,
+    pub knockback_x_direction: u16,
 }
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct FixedMotion {
@@ -195,6 +199,7 @@ pub struct Mechanisms {
     pub tilemap: [u16; 256],
     pub custom_draw: [u16; 3],
     pub save_locked: u16,
+    pub statue_finished: u16,
 }
 #[derive(Clone, Copy, Default, Debug, PartialEq)]
 pub struct Cell {
@@ -257,6 +262,9 @@ pub struct Room {
     pub enemy_quota: u16,
     pub loaded_items: u16,
     pub power_bomb_radius: u16,
+    pub enemy_processing_stage: u16,
+    pub collision_detection_index: u16,
+    pub slope_behavior: u16,
 }
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct Feedback {
@@ -291,6 +299,7 @@ impl Default for Mechanisms {
             tilemap: [0; 256],
             custom_draw: [0; 3],
             save_locked: 0,
+            statue_finished: 0,
         }
     }
 }
@@ -300,4 +309,78 @@ pub struct SpawnScratch {
     pub header: u16,
     pub coordinates: u16,
     pub argument: u16,
+}
+
+#[derive(Clone, Copy, Default, Debug, PartialEq)]
+pub struct Position {
+    pub whole: u16,
+    pub fraction: u16,
+}
+
+#[derive(Clone, Copy, Default, Debug, PartialEq)]
+pub struct Point {
+    pub x: u16,
+    pub y: u16,
+}
+
+#[derive(Clone, Copy, Default, Debug, PartialEq)]
+pub struct Rectangle {
+    pub origin: Point,
+    pub extent: Point,
+}
+
+#[derive(Clone, Copy, Default, Debug, PartialEq)]
+pub struct DropMetadata {
+    pub flags: u16,
+    pub enemy_definition: u16,
+    pub killed_enemy: u16,
+}
+
+#[derive(Clone, Copy, Default, Debug, PartialEq)]
+pub struct EnemyProjectile {
+    pub definition: u16,
+    pub graphics: u16,
+    pub counter: u16,
+    pub pre_action: u16,
+    pub x: Position,
+    pub y: Position,
+    pub velocity: Point,
+    // These words have different meanings for different projectile behaviors.
+    // Keep their full stored values until each behavior's valid-state closure is known.
+    pub behavior_a: u16,
+    pub behavior_b: u16,
+    pub program: u16,
+    pub spritemap: u16,
+    pub delay: u16,
+    pub radius: u16,
+    pub properties: u16,
+    pub behavior_c: u16,
+    pub angle: u16,
+    pub drop: DropMetadata,
+}
+
+#[derive(Clone, Copy, Default, Debug, PartialEq)]
+pub struct SpawnContext {
+    pub primary: u16,
+    pub secondary: u16,
+    pub angle: u8,
+    pub rectangle: Rectangle,
+    pub variant: u16,
+    pub point: Point,
+    pub drop_definition: u16,
+}
+
+#[derive(Clone, Default, Debug, PartialEq)]
+pub struct EnemyProjectiles {
+    pub slots: [EnemyProjectile; 18],
+    pub flags: u16,
+    pub selected: u16,
+    pub spawn: SpawnContext,
+    pub drop_bias: u16,
+}
+
+#[derive(Clone, Copy, Default, Debug, PartialEq)]
+pub struct Vector32 {
+    pub x: u32,
+    pub y: u32,
 }

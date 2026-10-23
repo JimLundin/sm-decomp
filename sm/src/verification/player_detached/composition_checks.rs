@@ -1,7 +1,7 @@
 //! Actual producer/consumer checks: there is no codec or refresh between calls.
 use super::{Event, game::player_projectiles as player, player_checks::prepared, room};
 
-fn missile_content(h: &super::Composed) {
+pub(super) fn missile_content(h: &super::Composed) {
     // Actual projectile table index 1, direction-right launch record.
     for (cursor, value) in [
         (0x83f3, 0x8900),

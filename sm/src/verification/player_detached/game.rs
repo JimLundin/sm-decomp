@@ -39,3 +39,14 @@ pub(crate) mod room_mechanisms;
 
 #[path = "../../game/constants.rs"]
 pub(crate) mod constants;
+
+#[path = "../../game/combat_rules.rs"]
+pub(crate) mod combat_rules;
+#[path = "../../game/contact_rules.rs"]
+pub(crate) mod contact_rules;
+#[path = "../../game/drop_rules.rs"]
+pub(crate) mod drop_rules;
+#[path = "enemy_projectiles.rs"]
+pub(crate) mod enemy_projectiles;
+#[path = "../../game/session_access.rs"]
+pub(crate) mod session_access;

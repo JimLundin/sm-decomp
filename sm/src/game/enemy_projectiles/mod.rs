@@ -1,18 +1,25 @@
-//! Enemy-projectile ownership and complete behavior behind one compatibility boundary.
-//! State is exclusive during each operation; legacy effects publish and reacquire it.
+mod access;
+mod actor_runtime;
+pub(crate) mod coordinates;
+mod effects_runtime;
+mod graphics_runtime;
+mod host;
+mod runtime;
+use crate::game::session_runtime::Runtime;
+use host::Effects;
+// Enemy-projectile ownership and complete behavior behind one compatibility boundary.
+// State is exclusive during each operation; legacy effects publish and reacquire it.
 mod attachments_spore_maw;
 mod attachments_spore_maw_facade;
 mod attachments_waffle_botwoon;
-mod attachments_waffle_botwoon_edges;
+mod attachments_waffle_botwoon_facade;
 mod collision;
 mod commands;
-mod compat;
 mod contact;
 mod content;
 mod drops;
-mod edges;
 mod legacy;
-mod lifecycle;
+pub(crate) mod lifecycle;
 mod pre_actions;
 mod pre_helpers;
 mod presentation;
@@ -21,41 +28,34 @@ mod setup;
 mod setup_helpers;
 mod shared;
 mod shared_pre;
-mod state;
 mod tables;
-#[path = "../ownership_transport.rs"]
-mod transport;
 use crate::game::constants::{bank_86::*, bank_a0::*};
-use crate::game::sm_94::kSinCosTable8bit_Sext;
+use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::sm_a0::SignExtend8;
 use crate::game_state::Game;
 use crate::rtl::abs16;
-use crate::types::{Point16U, Point32};
 pub(crate) use attachments_spore_maw_facade::*;
-pub(crate) use attachments_waffle_botwoon_edges::{
+pub(crate) use attachments_waffle_botwoon_facade::{
     advance_botwoon_history, advance_waffle_orbit, follow_botwoon_history, orient_botwoon_body,
     record_botwoon_head,
 };
 use collision::*;
-use compat::Execution;
 pub use drops::DropSource;
 use drops::collect as collect_drop;
-use edges::{calculate_coordinates, room_mechanisms};
 use pre_actions::*;
 pub use presentation::Priority as EprojPriority;
 use setup::*;
 use setup_helpers::*;
 use shared::*;
 use shared_pre::*;
-use state::SlotField;
 use tables::*;
 
 const fnEprojPreInstr_nullsub_83: u32 = 8815867;
 const fnEproj_Init_0x8bde_SkreeDownLeft: u32 = 8817429;
 const fnEprojPreInstr_Empty: i32 = 0x86efdf;
 
-fn with_execution<R>(game: &mut Game, operation: impl FnOnce(&mut Execution<'_>) -> R) -> R {
-    operation(&mut Execution::acquire(game))
+fn with_execution<R>(game: &mut Game, operation: impl FnOnce(&mut Runtime<'_>) -> R) -> R {
+    operation(&mut Runtime::new(game))
 }
 pub fn EnableEprojs(game: &mut Game) {
     with_execution(game, |ctx| lifecycle::set_enabled(ctx, true));
@@ -64,7 +64,7 @@ pub fn DisableEprojs(game: &mut Game) {
     with_execution(game, |ctx| lifecycle::set_enabled(ctx, false));
 }
 pub fn ClearEprojs(game: &mut Game) {
-    with_execution(game, lifecycle::clear);
+    with_execution(game, |ctx| lifecycle::clear(ctx));
 }
 pub fn SpawnEprojWithGfx(parameter: u16, enemy: u16, definition: u16, game: &mut Game) -> u16 {
     with_execution(game, |ctx| {
@@ -77,7 +77,7 @@ pub fn SpawnEprojWithRoomGfx(definition: u16, parameter: u16, game: &mut Game) -
     })
 }
 pub fn EprojRunAll(game: &mut Game) {
-    with_execution(game, lifecycle::advance);
+    with_execution(game, |ctx| lifecycle::advance(ctx));
 }
 pub fn DrawEprojsWithPriority(priority: EprojPriority, game: &mut Game) {
     with_execution(game, |ctx| presentation::draw(priority, ctx));
@@ -89,10 +89,10 @@ pub fn Math_MultByCos(amplitude: u16, angle: u16) -> u16 {
     shared_pre::Math_MultByCos(amplitude, angle)
 }
 pub fn enemy_projectiles_hit_samus(game: &mut Game) {
-    with_execution(game, contact::enemy_projectiles_hit_samus);
+    with_execution(game, |ctx| contact::enemy_projectiles_hit_samus(ctx));
 }
 pub fn shoot_enemy_projectiles(game: &mut Game) {
-    with_execution(game, contact::shoot_enemy_projectiles);
+    with_execution(game, |ctx| contact::shoot_enemy_projectiles(ctx));
 }
 pub fn spawn_drop(definition: u16, index: u16, parameter: u16, game: &mut Game) {
     with_execution(game, |ctx| drops::spawn(definition, index, parameter, ctx));
@@ -101,7 +101,7 @@ pub fn scatter_drop(source: DropSource, index: u16, parameter: u16, game: &mut G
     with_execution(game, |ctx| drops::scatter(source, index, parameter, ctx));
 }
 pub fn reset_room_metadata(game: &mut Game) {
-    with_execution(game, drops::reset_room_metadata);
+    with_execution(game, |ctx| drops::reset_room_metadata(ctx));
 }
 
 #[path = "../../verification/enemy_projectiles_candidate.rs"]

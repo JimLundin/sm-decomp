@@ -33,6 +33,8 @@ pub(crate) struct Inventory {
     pub health: Supply,
     pub reserve_capacity: u16,
     pub reserve_mode: u16,
+    pub reserve_health: u16,
+    pub reserve_missiles: u16,
     pub ammunition: [Supply; 3],
 }
 
@@ -99,5 +101,72 @@ impl Inventory {
             PowerBombs => (VisualUpdate::PowerBombs, Some(4)),
         };
         PickupEffects { visual, message }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Resource {
+    Health,
+    Missiles,
+    SuperMissiles,
+    PowerBombs,
+}
+
+impl Inventory {
+    /// Restore into the sole inventory, preserving signed SNES comparisons.
+    pub(crate) fn restore(&mut self, resource: Resource, amount: u16) {
+        match resource {
+            Resource::Health => {
+                let health = self.health.current.wrapping_add(amount);
+                self.health.current = health;
+                if (health.wrapping_sub(self.health.maximum) as i16) >= 0 {
+                    let mut reserve = self
+                        .reserve_health
+                        .wrapping_add(health)
+                        .wrapping_sub(self.health.maximum);
+                    if (reserve.wrapping_sub(self.reserve_capacity) as i16) >= 0 {
+                        reserve = self.reserve_capacity;
+                    }
+                    self.reserve_health = reserve;
+                    if reserve != 0 && self.reserve_mode == 0 {
+                        self.reserve_mode = 1;
+                    }
+                    self.health.current = self.health.maximum;
+                }
+            }
+            Resource::Missiles => {
+                let missiles = self.ammunition[0].current.wrapping_add(amount);
+                self.ammunition[0].current = missiles;
+                if (missiles.wrapping_sub(self.ammunition[0].maximum) as i16) >= 0 {
+                    // This is the original signed/wrapping branch, not min(max,99).
+                    let reserve_limit = if self.ammunition[0].maximum.wrapping_sub(99) & 0x8000 != 0
+                    {
+                        self.ammunition[0].maximum
+                    } else {
+                        99
+                    };
+                    self.reserve_missiles = self
+                        .reserve_missiles
+                        .wrapping_add(missiles.wrapping_sub(self.ammunition[0].maximum));
+                    if (self.reserve_missiles.wrapping_sub(reserve_limit) as i16) >= 0 {
+                        self.reserve_missiles = reserve_limit;
+                    }
+                    self.ammunition[0].current = self.ammunition[0].maximum;
+                }
+            }
+            Resource::SuperMissiles | Resource::PowerBombs => {
+                let index = if resource == Resource::SuperMissiles {
+                    1
+                } else {
+                    2
+                };
+                let supply = &mut self.ammunition[index];
+                let ammo = supply.current.wrapping_add(amount);
+                supply.current = ammo;
+                if (ammo.wrapping_sub(supply.maximum) as i16) >= 0 && ammo != supply.maximum {
+                    supply.current = supply.maximum;
+                }
+            }
+        }
     }
 }

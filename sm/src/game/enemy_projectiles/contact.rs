@@ -1,114 +1,119 @@
 //! Ordered player and shot contact with owned enemy projectiles.
 #![forbid(unsafe_code)]
-use super::compat::Execution;
-use super::state::SlotField as F;
+use super::access::{enemy, enemy_byte, set_shot_direction, shot_word};
+use super::host::{DefinitionField, Host, LoadedRecord, ShotMember};
 use crate::game::contact_rules::{axis, is_shot};
-use crate::types::EprojDef;
-use core::mem::offset_of;
 
-pub(super) fn enemy_projectiles_hit_samus(ctx: &mut Execution<'_>) {
-    ctx.set_enemy_processing_stage(11);
-    if ctx.player_invincibility() != 0 || ctx.player_contact_damage_index() != 0 {
+pub(super) fn enemy_projectiles_hit_samus(h: &mut impl Host) {
+    h.session_mut().room.enemy_processing_stage = 11;
+    if h.session().player.invincibility != 0 || h.session().player.contact.contact_attack != 0 {
         return;
     }
     for index in (0..18).rev() {
-        if ctx.slot(F::Definition, index) == 0
-            || ctx.slot(F::Properties, index) & 0x2000 != 0
-            || ctx.slot(F::Radius, index) == 0
+        if enemy!(h, index, definition) == 0
+            || enemy!(h, index, properties) & 0x2000 != 0
+            || enemy!(h, index, radius) == 0
         {
             continue;
         }
-        let radii = ctx.slot(F::Radius, index);
+        let radii = enemy!(h, index, radius);
         if axis(
-            ctx.player_x(),
-            ctx.slot(F::X, index),
-            ctx.player_x_radius(),
+            h.session().player.x,
+            enemy!(h, index, x),
+            h.inputs().player_x_radius,
             radii & 0xff,
         ) && axis(
-            ctx.player_y(),
-            ctx.slot(F::Y, index),
-            ctx.player_y_radius(),
+            h.session().player.y,
+            enemy!(h, index, y),
+            h.session().player.contact.radius,
             radii >> 8,
         ) {
-            ctx.set_collision_detection_index((index * 2) as u16);
-            hit_samus((index * 2) as u16, ctx);
+            h.session_mut().room.collision_detection_index = (index * 2) as u16;
+            hit_samus((index * 2) as u16, h);
         }
     }
 }
 
-pub(super) fn hit_samus(offset: u16, ctx: &mut Execution<'_>) {
-    ctx.set_player_invincibility(96);
-    ctx.set_player_knockback(5);
+pub(super) fn hit_samus(offset: u16, h: &mut impl Host) {
+    h.session_mut().player.invincibility = 96;
+    h.session_mut().player.knockback_timer = 5;
     // The original definition access uses an unrounded native byte offset.
     let definition = u16::from_ne_bytes([
-        ctx.slot_byte(F::Definition, offset as isize),
-        ctx.slot_byte(F::Definition, offset as isize + 1),
+        enemy_byte!(h, offset as isize, definition),
+        enemy_byte!(h, offset as isize + 1, definition),
     ]);
-    let definition = ctx.record(0x86, definition);
-    let instruction = definition.word(offset_of!(EprojDef, hit_instruction_list));
+    let definition = h.loaded_record(0x86, definition);
+    let instruction = definition.definition_word(DefinitionField::HitProgram);
     let index = (offset >> 1) as isize;
     if instruction != 0 {
-        ctx.set_slot(F::Program, index, instruction);
-        ctx.set_slot(F::Delay, index, 1);
+        enemy!(h, index, program = instruction);
+        enemy!(h, index, delay = 1);
     }
-    if ctx.slot(F::Properties, index) & 0x4000 == 0 {
-        ctx.set_slot_byte(F::Definition, offset as isize, 0);
-        ctx.set_slot_byte(F::Definition, offset as isize + 1, 0);
+    if enemy!(h, index, properties) & 0x4000 == 0 {
+        enemy_byte!(h, offset as isize, definition = 0);
+        enemy_byte!(h, offset as isize + 1, definition = 0);
     }
-    let damage = ctx.reduce_suit_damage(ctx.slot(F::Properties, index) & 0xfff);
-    ctx.damage_player(damage);
-    let direction = (ctx.player_x().wrapping_sub(ctx.slot(F::X, index)) as i16 >= 0) as u16;
-    ctx.set_knockback_x_dir(direction);
+    let damage = crate::game::combat_rules::suit_damage(
+        enemy!(h, index, properties) & 0xfff,
+        h.session().inventory.equipment.active,
+    );
+    h.damage_player(damage);
+    let direction = (h.session().player.x.wrapping_sub(enemy!(h, index, x)) as i16 >= 0) as u16;
+    h.session_mut().player.knockback_x_direction = direction;
 }
 
-pub(super) fn shoot_enemy_projectiles(ctx: &mut Execution<'_>) {
-    ctx.set_enemy_processing_stage(12);
-    if ctx.player_projectile_count() == 0 {
+pub(super) fn shoot_enemy_projectiles(h: &mut impl Host) {
+    h.session_mut().room.enemy_processing_stage = 12;
+    if h.session().projectiles.count == 0 {
         return;
     }
     for enemy in (0..18).rev() {
-        if ctx.slot(F::Definition, enemy) == 0 || ctx.slot(F::Properties, enemy) & 0x8000 == 0 {
+        if enemy!(h, enemy, definition) == 0 || enemy!(h, enemy, properties) & 0x8000 == 0 {
             continue;
         }
         for shot in 0..5 {
-            if ctx.slot(F::DropFlags, enemy) == 2 {
+            if enemy!(h, enemy, drop_flags) == 2 {
                 break;
             }
-            if is_shot(ctx.player_projectile_type(shot))
-                && ctx.slot(F::X, enemy) & 0xffe0
-                    == ctx.player_projectile_x_pos((shot) as isize) & 0xffe0
-                && ctx.slot(F::Y, enemy) & 0xffe0
-                    == ctx.player_projectile_y_pos((shot) as isize) & 0xffe0
+            if is_shot(shot_word(h, ShotMember::Kind, shot as isize))
+                && enemy!(h, enemy, x) & 0xffe0
+                    == shot_word(h, ShotMember::X, shot as isize) & 0xffe0
+                && enemy!(h, enemy, y) & 0xffe0
+                    == shot_word(h, ShotMember::Y, shot as isize) & 0xffe0
             {
-                hit_enemy_projectile((enemy * 2) as u16, shot * 2, ctx);
+                hit_enemy_projectile((enemy * 2) as u16, shot * 2, h);
             }
         }
     }
 }
 
-pub(super) fn hit_enemy_projectile(enemy_offset: u16, shot_offset: u16, ctx: &mut Execution<'_>) {
+pub(super) fn hit_enemy_projectile(enemy_offset: u16, shot_offset: u16, h: &mut impl Host) {
     let shot = shot_offset >> 1;
     let enemy = (enemy_offset >> 1) as isize;
-    if ctx.player_projectile_type(shot) & 8 == 0 {
-        let direction = ctx.player_projectile_direction(shot) | 0x10;
-        ctx.set_player_projectile_direction(shot, direction);
+    if shot_word(h, ShotMember::Kind, shot as isize) & 8 == 0 {
+        let direction = shot_word(h, ShotMember::Direction, shot as isize) | 0x10;
+        set_shot_direction(h, shot as isize, direction);
     }
-    if ctx.slot(F::DropFlags, enemy) == 1 {
+    if enemy!(h, enemy, drop_flags) == 1 {
         // Preserve the dud's enemy-slot indexing into the player-shot columns.
-        let x = ctx.player_projectile_x_pos((enemy as u16) as isize);
-        let y = ctx.player_projectile_y_pos((enemy as u16) as isize);
-        ctx.create_sprite(x, y, 6, 0);
-        ctx.queue_sound(1, 6, 0x3d);
+        let x = shot_word(h, ShotMember::X, (enemy as u16) as isize);
+        let y = shot_word(h, ShotMember::Y, (enemy as u16) as isize);
+        h.create_sprite(x, y, 6, 0);
+        h.queue_sound(1, 6, 0x3d);
     } else {
-        ctx.set_slot(F::BehaviorC, enemy, ctx.player_projectile_type(shot));
-        let definition = ctx.record(0x86, ctx.slot(F::Definition, enemy));
-        ctx.set_slot(
-            F::Program,
+        enemy!(
+            h,
             enemy,
-            definition.word(offset_of!(EprojDef, shot_instruction_list)),
+            behavior_c = shot_word(h, ShotMember::Kind, shot as isize)
         );
-        ctx.set_slot(F::Delay, enemy, 1);
-        ctx.set_slot(F::PreAction, enemy, 0x84fb);
-        ctx.set_slot(F::Properties, enemy, ctx.slot(F::Properties, enemy) & 0xfff);
+        let definition = h.loaded_record(0x86, enemy!(h, enemy, definition));
+        enemy!(
+            h,
+            enemy,
+            program = definition.definition_word(DefinitionField::ShotProgram)
+        );
+        enemy!(h, enemy, delay = 1);
+        enemy!(h, enemy, pre_action = 0x84fb);
+        enemy!(h, enemy, properties = enemy!(h, enemy, properties) & 0xfff);
     }
 }

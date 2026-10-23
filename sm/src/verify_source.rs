@@ -104,6 +104,14 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/enemy_population_ram.rs"),
     ),
     (
+        "sm/src/game/enemy_projectiles/access.rs",
+        include_bytes!("game/enemy_projectiles/access.rs"),
+    ),
+    (
+        "sm/src/game/enemy_projectiles/actor_runtime.rs",
+        include_bytes!("game/enemy_projectiles/actor_runtime.rs"),
+    ),
+    (
         "sm/src/game/enemy_projectiles/attachments_spore_maw.rs",
         include_bytes!("game/enemy_projectiles/attachments_spore_maw.rs"),
     ),
@@ -116,8 +124,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/enemy_projectiles/attachments_waffle_botwoon.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/attachments_waffle_botwoon_edges.rs",
-        include_bytes!("game/enemy_projectiles/attachments_waffle_botwoon_edges.rs"),
+        "sm/src/game/enemy_projectiles/attachments_waffle_botwoon_facade.rs",
+        include_bytes!("game/enemy_projectiles/attachments_waffle_botwoon_facade.rs"),
     ),
     (
         "sm/src/game/enemy_projectiles/collision.rs",
@@ -128,10 +136,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/enemy_projectiles/commands.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/compat.rs",
-        include_bytes!("game/enemy_projectiles/compat.rs"),
-    ),
-    (
         "sm/src/game/enemy_projectiles/contact.rs",
         include_bytes!("game/enemy_projectiles/contact.rs"),
     ),
@@ -140,12 +144,24 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/enemy_projectiles/content.rs"),
     ),
     (
+        "sm/src/game/enemy_projectiles/coordinates.rs",
+        include_bytes!("game/enemy_projectiles/coordinates.rs"),
+    ),
+    (
         "sm/src/game/enemy_projectiles/drops.rs",
         include_bytes!("game/enemy_projectiles/drops.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/edges.rs",
-        include_bytes!("game/enemy_projectiles/edges.rs"),
+        "sm/src/game/enemy_projectiles/effects_runtime.rs",
+        include_bytes!("game/enemy_projectiles/effects_runtime.rs"),
+    ),
+    (
+        "sm/src/game/enemy_projectiles/graphics_runtime.rs",
+        include_bytes!("game/enemy_projectiles/graphics_runtime.rs"),
+    ),
+    (
+        "sm/src/game/enemy_projectiles/host.rs",
+        include_bytes!("game/enemy_projectiles/host.rs"),
     ),
     (
         "sm/src/game/enemy_projectiles/legacy.rs",
@@ -172,6 +188,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/enemy_projectiles/presentation.rs"),
     ),
     (
+        "sm/src/game/enemy_projectiles/runtime.rs",
+        include_bytes!("game/enemy_projectiles/runtime.rs"),
+    ),
+    (
         "sm/src/game/enemy_projectiles/script.rs",
         include_bytes!("game/enemy_projectiles/script.rs"),
     ),
@@ -190,10 +210,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/enemy_projectiles/shared_pre.rs",
         include_bytes!("game/enemy_projectiles/shared_pre.rs"),
-    ),
-    (
-        "sm/src/game/enemy_projectiles/state.rs",
-        include_bytes!("game/enemy_projectiles/state.rs"),
     ),
     (
         "sm/src/game/enemy_projectiles/tables.rs",
@@ -236,6 +252,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/item_pickups.rs"),
     ),
     (
+        "sm/src/game/item_pickups_runtime.rs",
+        include_bytes!("game/item_pickups_runtime.rs"),
+    ),
+    (
         "sm/src/game/launch_motion.rs",
         include_bytes!("game/launch_motion.rs"),
     ),
@@ -273,10 +293,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/moving_platforms.rs"),
     ),
     ("sm/src/game/music.rs", include_bytes!("game/music.rs")),
-    (
-        "sm/src/game/ownership_transport.rs",
-        include_bytes!("game/ownership_transport.rs"),
-    ),
     (
         "sm/src/game/palette_effects/content.rs",
         include_bytes!("game/palette_effects/content.rs"),
@@ -616,6 +632,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     ),
     ("sm/src/game/session.rs", include_bytes!("game/session.rs")),
     (
+        "sm/src/game/session_access.rs",
+        include_bytes!("game/session_access.rs"),
+    ),
+    (
         "sm/src/game/session_encoding.rs",
         include_bytes!("game/session_encoding.rs"),
     ),
@@ -805,8 +825,16 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("verification/candidate_waffle_cases.rs"),
     ),
     (
+        "sm/src/verification/enemy_native_runtime_cases.rs",
+        include_bytes!("verification/enemy_native_runtime_cases.rs"),
+    ),
+    (
         "sm/src/verification/enemy_projectiles_candidate.rs",
         include_bytes!("verification/enemy_projectiles_candidate.rs"),
+    ),
+    (
+        "sm/src/verification/inventory_restore_cases.rs",
+        include_bytes!("verification/inventory_restore_cases.rs"),
     ),
     (
         "sm/src/verification/native_content_checks.rs",
@@ -839,6 +867,18 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/verification/player_detached/composition_checks.rs",
         include_bytes!("verification/player_detached/composition_checks.rs"),
+    ),
+    (
+        "sm/src/verification/player_detached/enemy_checks.rs",
+        include_bytes!("verification/player_detached/enemy_checks.rs"),
+    ),
+    (
+        "sm/src/verification/player_detached/enemy_host.rs",
+        include_bytes!("verification/player_detached/enemy_host.rs"),
+    ),
+    (
+        "sm/src/verification/player_detached/enemy_projectiles.rs",
+        include_bytes!("verification/player_detached/enemy_projectiles.rs"),
     ),
     (
         "sm/src/verification/player_detached/game.rs",
@@ -875,6 +915,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/verification/player_detached/room_rules.rs",
         include_bytes!("verification/player_detached/room_rules.rs"),
+    ),
+    (
+        "sm/src/verification/player_detached/session_host.rs",
+        include_bytes!("verification/player_detached/session_host.rs"),
     ),
     (
         "sm/src/verification/player_projectiles.rs",
@@ -919,10 +963,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/verification/room_mechanism_drawing_extended.rs",
         include_bytes!("verification/room_mechanism_drawing_extended.rs"),
-    ),
-    (
-        "sm/src/verification/inventory_restore_cases.rs",
-        include_bytes!("verification/inventory_restore_cases.rs"),
     ),
     (
         "sm/src/verification/room_mechanism_getters.rs",

@@ -7,60 +7,60 @@ Green: adopted scope | Blue: draft | Orange: active | Grey: remaining | Red: fai
 
 [Four room mutations / CI PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40005395335) · [Shared Session candidate CI](https://github.com/JimLundin/sm-decomp/actions/runs/40005712881)
 
-### Enemy projectiles / next shared owner
+### Enemy projectiles / shared owner adopted
 
-[Candidate CI / fixture correction](https://github.com/JimLundin/sm-decomp/actions/runs/40013612299)
+[Full build + 16 mutations / PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40013612299)
 
 ```mermaid
 flowchart TB
-    CONTRACT["Complete contract<br/>independent review PASS"]:::checked
-    UNION["49,819 WRAM + 16 native bytes<br/>no duplicate ownership"]:::checked
-    CONTRACT --> API["Concrete Rust interfaces<br/>metadata compile PASS"]:::checked
-    API --> REVIEW["Concrete interface review<br/>PASS / area cache removed"]:::checked
+    CONTRACT["Complete contract<br/>independent review PASS"]:::done
+    UNION["49,819 WRAM + 16 native bytes<br/>no duplicate ownership"]:::done
+    CONTRACT --> API["Concrete Rust interfaces<br/>metadata compile PASS"]:::done
+    API --> REVIEW["Concrete interface review<br/>PASS / area cache removed"]:::done
     UNION --> API
-    REF["1,382 captures + 87 checks<br/>current main PASS"]:::checked
-    API --> S["session.rs / session_encoding.rs"]:::checked
-    S --> R["session_runtime.rs<br/>one owner / native spawn fields"]:::checked
-    API --> SETUP["setup.rs / setup_helpers.rs"]:::checked
-    API --> PRE["pre_actions.rs / shared_pre.rs"]:::checked
-    API --> LIFE["lifecycle.rs / commands.rs"]:::checked
-    API --> CONTACT["contact.rs / collision.rs"]:::checked
-    API --> ATTACH["attachments_spore_maw.rs<br/>attachments_waffle_botwoon.rs"]:::checked
-    API --> DROP["drops.rs"]:::checked
-    DROP --> INV["item_pickups.rs / restore<br/>source review PASS"]:::checked
-    INV --> IRT["item_pickups_runtime.rs<br/>source review PASS"]:::checked
-    INV --> RESOURCE["drop_rules.rs<br/>one Resource / review PASS"]:::checked
-    IRT --> CALL["sm_90.rs / sm_a2.rs / sm_91.rs<br/>7 callers / 4 bodies retired in draft"]:::checked
-    R --> RETIRE["5 files + 5 getters retired<br/>in candidate"]:::checked
-    SETUP --> MERGE["Whole candidate integrated<br/>build PASS"]:::checked
+    REF["1,382 captures + 87 checks<br/>current main PASS"]:::done
+    API --> S["session.rs / session_encoding.rs"]:::done
+    S --> R["session_runtime.rs<br/>one owner / native spawn fields"]:::done
+    API --> SETUP["setup.rs / setup_helpers.rs"]:::done
+    API --> PRE["pre_actions.rs / shared_pre.rs"]:::done
+    API --> LIFE["lifecycle.rs / commands.rs"]:::done
+    API --> CONTACT["contact.rs / collision.rs"]:::done
+    API --> ATTACH["attachments_spore_maw.rs<br/>attachments_waffle_botwoon.rs"]:::done
+    API --> DROP["drops.rs"]:::done
+    DROP --> INV["item_pickups.rs / restore<br/>source review PASS"]:::done
+    INV --> IRT["item_pickups_runtime.rs<br/>source review PASS"]:::done
+    INV --> RESOURCE["drop_rules.rs<br/>one Resource / review PASS"]:::done
+    IRT --> CALL["sm_90.rs / sm_a2.rs / sm_91.rs<br/>7 callers / 4 bodies retired"]:::done
+    R --> RETIRE["5 files + 5 getters retired<br/>adopted"]:::done
+    SETUP --> MERGE["Whole candidate integrated<br/>build PASS"]:::done
     PRE --> MERGE
     LIFE --> MERGE
     CONTACT --> MERGE
     ATTACH --> MERGE
     CALL --> MERGE
     RETIRE --> MERGE
-    RESTORE["58 restoration cases<br/>review + capture PASS"]:::checked --> VERIFY["1,440 comparisons + 87 checks<br/>PASS"]:::checked
-    NATIVE["Native spawn / shared state checks<br/>design review PASS"]:::checked --> VERIFY
-    NATIVE --> NRET["1440 / native return PASS"]:::checked
-    NATIVE --> NPANIC["1441 / foreign panic PASS"]:::checked
-    NATIVE --> CPANIC["1442 / core panic PASS"]:::checked
+    RESTORE["58 restoration cases<br/>review + capture PASS"]:::done --> VERIFY["1,440 comparisons + 87 checks<br/>PASS"]:::done
+    NATIVE["Native spawn / shared state checks<br/>design review PASS"]:::done --> VERIFY
+    NATIVE --> NRET["1440 / native return PASS"]:::done
+    NATIVE --> NPANIC["1441 / foreign panic PASS"]:::done
+    NATIVE --> CPANIC["1442 / core panic PASS"]:::done
     MERGE --> VERIFY
     REF --> VERIFY
-    REF --> BASEPLAY["Baseline replay / 26 probes<br/>28,314 frames / 0 failures"]:::checked
-    MERGE --> ROOM["1,038 room comparisons<br/>PASS"]:::checked
-    MERGE --> HOST["Composed host compile<br/>PASS"]:::checked
+    REF --> BASEPLAY["Baseline replay / 26 probes<br/>28,314 frames / 0 failures"]:::done
+    MERGE --> ROOM["1,038 room comparisons<br/>PASS"]:::done
+    MERGE --> HOST["Composed host compile<br/>PASS"]:::done
     HOST --> HFAIL["Hosted execution failed<br/>1058 fixture too small"]:::failed
-    HFAIL --> HFIX["enemy_checks.rs<br/>case-only fix / execution PASS"]:::checked
-    VERIFY --> MUT["16 targeted mutations<br/>7 killed / 9 pending"]:::active
+    HFAIL --> HFIX["enemy_checks.rs<br/>case-only fix / execution PASS"]:::done
+    VERIFY --> MUT["16 targeted mutations<br/>16 / 16 caught"]:::done
     HFIX --> MUT
-    MERGE --> PLAYER["106 groups / 56 comparisons<br/>2 runtime guards PASS"]:::checked
-    MERGE --> FRONT["Full build + formatting<br/>GitHub PASS"]:::checked
-    PLAYER --> PLAY["28,314 frames / 26 probes<br/>0 failures / 90.08s"]:::checked
-    PLAY --> ADOPT["Enemy shared core adopted"]:::pending
+    MERGE --> PLAYER["106 groups / 56 comparisons<br/>2 runtime guards PASS"]:::done
+    MERGE --> FRONT["Full build + formatting<br/>GitHub PASS"]:::done
+    PLAYER --> PLAY["28,314 frames / 26 probes<br/>0 failures / 90.08s"]:::done
+    PLAY --> ADOPT["Enemy shared core adopted"]:::done
     MUT --> ADOPT
     FRONT --> ADOPT
     class S,R,SETUP,PRE,LIFE,CONTACT,ATTACH,DROP,RETIRE,MERGE,VERIFY,NRET,NPANIC,CPANIC,ROOM,HOST,HFAIL,HFIX,MUT,PLAYER,FRONT,PLAY changed
-    classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
@@ -69,27 +69,49 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    B["Passing baseline"]:::checked --> C["Composed core"]:::checked
-    C --> C1["Beam radius / caught"]:::checked
-    C --> C2["Collision retirement / caught"]:::checked
-    C --> C3["Plant position / caught"]:::checked
-    C --> C4["New beam / caught"]:::checked
-    C --> C5["Private inventory copy / caught"]:::checked
-    C --> C6["Discarded shot mark / caught"]:::checked
-    C --> C7["Stale room selection / caught"]:::checked
-    D["DLL baseline / pending"]:::active --> R["Room scheduler"]:::active
-    R --> R1["Repeated pre-action"]:::pending
-    R --> R2["Repeated delay"]:::pending
-    R --> R3["Early continuation"]:::pending
-    R --> R4["Wrong flag map"]:::pending
-    D --> N["Native ownership"]:::active
-    N --> N1["Missing return import"]:::pending
-    N --> N2["Owner retained on panic"]:::pending
-    N --> N3["Missing panic publication"]:::pending
-    D --> I["Inventory restoration"]:::active
-    I --> I1["Health equality boundary"]:::pending
-    I --> I2["Missile reserve limit"]:::pending
+    B["Passing baseline"]:::done --> C["Composed core"]:::done
+    C --> C1["Beam radius / caught"]:::done
+    C --> C2["Collision retirement / caught"]:::done
+    C --> C3["Plant position / caught"]:::done
+    C --> C4["New beam / caught"]:::done
+    C --> C5["Private inventory copy / caught"]:::done
+    C --> C6["Discarded shot mark / caught"]:::done
+    C --> C7["Stale room selection / caught"]:::done
+    D["9 frozen DLL baselines / PASS"]:::done --> R["Room scheduler"]:::done
+    R --> R1["Repeated pre-action / caught"]:::done
+    R --> R2["Repeated delay / caught"]:::done
+    R --> R3["Early continuation / caught"]:::done
+    R --> R4["Wrong flag map / caught"]:::done
+    D --> N["Native ownership"]:::done
+    N --> N1["Missing return import / caught"]:::done
+    N --> N2["Owner retained on panic / caught"]:::done
+    N --> N3["Missing panic publication / caught"]:::done
+    D --> I["Inventory restoration"]:::done
+    I --> I1["Health equality boundary / caught"]:::done
+    I --> I2["Missile reserve limit / caught"]:::done
     class B,C,C1,C2,C3,C4,C5,C6,C7,D,R,R1,R2,R3,R4,N,N1,N2,N3,I,I1,I2 changed
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
+### Shared visual effects / next scope
+
+```mermaid
+flowchart TB
+    S["session.rs / one owner"]:::pending
+    P["palette_effects/<br/>ownership inventory"]:::active --> S
+    A["animated_tiles/<br/>upload + callbacks"]:::active --> S
+    U["sm_91.rs / Samus palette<br/>complete behavior inventory"]:::active --> S
+    C["Callback return contract<br/>oracle / bank investigation"]:::active --> U
+    B["sm_90.rs / beam palette<br/>two duplicate loops identified"]:::checked --> U
+    V["512 palette + 438 animation cases<br/>coverage inventory"]:::active --> D
+    S --> D["Concrete declarations / review"]:::pending
+    D --> I["Parallel implementation"]:::pending
+    I --> M["Behavior + mutation checks"]:::pending
+    M --> R["Caller migration / old owners retired"]:::pending
+    class S,P,A,U,C,B,V,D,I,M,R changed
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5

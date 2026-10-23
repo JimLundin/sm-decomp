@@ -1,62 +1,61 @@
 //! Shared enemy-projectile rules, with ordered writes and explicit effects.
 #![forbid(unsafe_code)]
-use super::{Execution, SlotField as F};
-use crate::game::sm_94::kSinCosTable8bit_Sext;
-use crate::types::{Point16U, Point32};
+use super::access::{enemy, read_member, read_member_byte, write_member, write_member_byte};
+use super::host::{EnemyMember as F, Host, NativeRecord};
+use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
+use crate::game::session::{Point as Point16U, Vector32 as Point32};
 
-fn move_axis(handle: u16, fraction: F, whole: F, velocity: F, ctx: &mut Execution<'_>) -> u16 {
+fn move_axis(handle: u16, fraction: F, whole: F, velocity: F, ctx: &mut impl Host) -> u16 {
     let index = (handle >> 1) as isize;
-    let speed = ctx.slot(velocity, index);
+    let speed = read_member(ctx, velocity, index);
     let byte_index = isize::try_from(handle).unwrap() + 1;
-    let (fraction_value, carry) = ctx
-        .slot_byte(fraction, byte_index)
-        .overflowing_add(speed as u8);
-    ctx.set_slot_byte(fraction, byte_index, fraction_value);
+    let (fraction_value, carry) =
+        read_member_byte(ctx, fraction, byte_index).overflowing_add(speed as u8);
+    write_member_byte(ctx, fraction, byte_index, fraction_value);
     // Reread whole after the fraction write: broad/odd handles may overlap.
-    let result = ctx
-        .slot(whole, index)
+    let result = read_member(ctx, whole, index)
         .wrapping_add_signed(((speed as i16) >> 8) + i16::from(carry));
-    ctx.set_slot(whole, index, result);
+    write_member(ctx, whole, index, result);
     if speed != 0 {
-        crate::verify_probe::hit("eproj.motion.applied");
+        ctx.probe("eproj.motion.applied");
     }
     result
 }
-pub(super) fn MoveEprojWithVelocityX(k: u16, ctx: &mut Execution<'_>) -> u16 {
+pub(super) fn MoveEprojWithVelocityX(k: u16, ctx: &mut impl Host) -> u16 {
     move_axis(k, F::XFraction, F::X, F::VelocityX, ctx)
 }
-pub(super) fn MoveEprojWithVelocityY(k: u16, ctx: &mut Execution<'_>) -> u16 {
+pub(super) fn MoveEprojWithVelocityY(k: u16, ctx: &mut impl Host) -> u16 {
     move_axis(k, F::YFraction, F::Y, F::VelocityY, ctx)
 }
-pub(super) fn MoveEprojWithVelocity(k: u16, ctx: &mut Execution<'_>) -> u16 {
+pub(super) fn MoveEprojWithVelocity(k: u16, ctx: &mut impl Host) -> u16 {
     MoveEprojWithVelocityX(k, ctx);
     MoveEprojWithVelocityY(k, ctx)
 }
-pub(super) fn SetAreaDependentEprojPropertiesEx(table: u16, j: u16, ctx: &mut Execution<'_>) {
-    let source = ctx.raw_record(0x86, table);
-    let index = if ctx.area() == 2 {
+pub(super) fn SetAreaDependentEprojPropertiesEx(table: u16, j: u16, ctx: &mut impl Host) {
+    let source = ctx.native_record(0x86, table);
+    let index = if ctx.session().room.area == 2 {
         1
-    } else if ctx.area() == 5 {
+    } else if ctx.session().room.area == 5 {
         2
     } else {
         0
     };
-    let value = source.word(index);
-    ctx.set_slot(F::Properties, (j >> 1) as isize, value);
+    let value = source.word_le(index);
+    enemy!(ctx, (j >> 1) as isize, properties = value);
 }
-pub(super) fn SetAreaDependentEprojProperties(j: u16, ctx: &mut Execution<'_>) {
+pub(super) fn SetAreaDependentEprojProperties(j: u16, ctx: &mut impl Host) {
     SetAreaDependentEprojPropertiesEx(
         crate::game::constants::bank_86::addr_kRidleysFireball_Tab0 as u16,
         j,
         ctx,
     );
 }
-pub(super) fn SetEprojSpawnPoint(k: u16, ctx: &mut Execution<'_>) {
-    let x = ctx.slot(F::X, (k >> 1) as isize);
-    let y = ctx.slot(F::Y, (k >> 1) as isize);
-    ctx.state_mut().spawn.point = super::state::Point { x, y };
+pub(super) fn SetEprojSpawnPoint(k: u16, ctx: &mut impl Host) {
+    let x = enemy!(ctx, (k >> 1) as isize, x);
+    let y = enemy!(ctx, (k >> 1) as isize, y);
+    ctx.session_mut().enemy_projectiles.spawn.point = crate::game::session::Point { x, y };
 }
-pub(super) fn sub_86A301(j: u16, ctx: &mut Execution<'_>) {
+pub(super) fn sub_86A301(j: u16, ctx: &mut impl Host) {
     let index = (j >> 1) as isize;
     for field in [
         F::XFraction,
@@ -65,53 +64,58 @@ pub(super) fn sub_86A301(j: u16, ctx: &mut Execution<'_>) {
         F::VelocityY,
         F::Graphics,
     ] {
-        ctx.set_slot(field, index, 0);
+        write_member(ctx, field, index, 0);
     }
-    let x = ctx.player_x();
-    ctx.set_slot(F::X, index, x);
+    let x = ctx.session().player.x;
+    enemy!(ctx, index, x = x);
 }
-pub(super) fn sub_86B279(k: u16, angle: u16, ctx: &mut Execution<'_>) {
+pub(super) fn sub_86B279(k: u16, angle: u16, ctx: &mut impl Host) {
     let index = (k >> 1) as isize;
-    ctx.set_slot(
-        F::VelocityX,
+    enemy!(
+        ctx,
         index,
-        (4 * i32::from(kSinCosTable8bit_Sext[usize::from(angle) + 64])) as u16,
+        velocity_x = (4 * i32::from(kSinCosTable8bit_Sext[usize::from(angle) + 64])) as u16
     );
-    ctx.set_slot(
-        F::VelocityY,
+    enemy!(
+        ctx,
         index,
-        (4 * i32::from(kSinCosTable8bit_Sext[usize::from(angle)])) as u16,
+        velocity_y = (4 * i32::from(kSinCosTable8bit_Sext[usize::from(angle)])) as u16
     );
 }
-pub(super) fn Eproj_InitXYVelRandom(j: u16, table: u16, point: Point16U, ctx: &mut Execution<'_>) {
-    let source = ctx.raw_record(0x86, table);
+pub(super) fn Eproj_InitXYVelRandom(j: u16, table: u16, point: Point16U, ctx: &mut impl Host) {
+    let source = ctx.native_record(0x86, table);
     let index = (j >> 1) as isize;
-    ctx.set_slot(F::Program, index, source.word(0));
-    ctx.set_slot(F::X, index, source.word(1).wrapping_add(point.x));
-    let speed = source.word(2);
+    enemy!(ctx, index, program = source.word_le(0));
+    enemy!(ctx, index, x = source.word_le(1).wrapping_add(point.x));
+    let speed = source.word_le(2);
     let random = ctx.next_random() as u8;
-    ctx.set_slot(
-        F::VelocityX,
+    enemy!(
+        ctx,
         index,
-        speed.wrapping_add(u16::from(random)).wrapping_sub(128),
+        velocity_x = speed.wrapping_add(u16::from(random)).wrapping_sub(128)
     );
-    ctx.set_slot(F::Y, index, source.word(3).wrapping_add(point.y));
-    let speed = source.word(4);
+    enemy!(ctx, index, y = source.word_le(3).wrapping_add(point.y));
+    let speed = source.word_le(4);
     let random = ctx.next_random() as u8;
-    ctx.set_slot(
-        F::VelocityY,
+    enemy!(
+        ctx,
         index,
-        speed.wrapping_add(u16::from(random)).wrapping_sub(128),
+        velocity_y = speed.wrapping_add(u16::from(random)).wrapping_sub(128)
     );
 }
-fn set_random_velocity(k: u16, field: F, minimum: u8, ctx: &mut Execution<'_>) {
+fn set_random_velocity(k: u16, field: F, minimum: u8, ctx: &mut impl Host) {
     let random = ctx.next_random() as u8;
-    ctx.set_slot(field, (k >> 1) as isize, u16::from(random.max(minimum)));
+    write_member(
+        ctx,
+        field,
+        (k >> 1) as isize,
+        u16::from(random.max(minimum)),
+    );
 }
-pub(super) fn Eproj_SetXvelRandom(k: u16, ctx: &mut Execution<'_>) {
+pub(super) fn Eproj_SetXvelRandom(k: u16, ctx: &mut impl Host) {
     set_random_velocity(k, F::VelocityX, 32, ctx);
 }
-pub(super) fn Eproj_SetYvelRandom(k: u16, ctx: &mut Execution<'_>) {
+pub(super) fn Eproj_SetYvelRandom(k: u16, ctx: &mut impl Host) {
     set_random_velocity(k, F::VelocityY, 128, ctx);
 }
 fn scale_sine_word(byte_offset: u16, amplitude: u16) -> u16 {
@@ -134,36 +138,32 @@ pub(super) fn Eproj_PhantomFireballs_Func1(j: u16, amplitude: u16) -> Point16U {
     };
     Point16U { x, y }
 }
-pub(super) fn ConvertAngleToXy(angle: u16, amplitude: u16, ctx: &mut Execution<'_>) -> Point32 {
+pub(super) fn ConvertAngleToXy(angle: u16, amplitude: u16, ctx: &mut impl Host) -> Point32 {
     ctx.convert_angle_to_xy(angle, amplitude)
 }
-pub(super) fn Eproj_AngleToSamus(j: u16, x: u16, y: u16, ctx: &mut Execution<'_>) {
+pub(super) fn Eproj_AngleToSamus(j: u16, x: u16, y: u16, ctx: &mut impl Host) {
     let index = (j >> 1) as isize;
-    ctx.set_slot(F::X, index, x);
-    ctx.set_slot(F::Y, index, y);
-    let x = ctx.player_x().wrapping_sub(ctx.slot(F::X, index));
-    let y = ctx.player_y().wrapping_sub(ctx.slot(F::Y, index));
+    enemy!(ctx, index, x = x);
+    enemy!(ctx, index, y = y);
+    let x = ctx.session().player.x.wrapping_sub(enemy!(ctx, index, x));
+    let y = ctx.session().player.y.wrapping_sub(enemy!(ctx, index, y));
     let angle = 64u16.wrapping_sub(ctx.calculate_angle_from_xy(x, y)) as u8 as u16;
-    ctx.set_slot(F::Angle, index, angle);
-    let point = ctx.convert_angle_to_xy(angle, ctx.state().spawn.primary);
-    ctx.set_slot(F::VelocityX, index, (point.x >> 16) as u16);
-    ctx.set_slot(F::BehaviorA, index, point.x as u16);
-    ctx.set_slot(F::VelocityY, index, (point.y >> 16) as u16);
-    ctx.set_slot(F::BehaviorB, index, point.y as u16);
+    enemy!(ctx, index, angle = angle);
+    let point = ctx.convert_angle_to_xy(angle, ctx.session().enemy_projectiles.spawn.primary);
+    enemy!(ctx, index, velocity_x = (point.x >> 16) as u16);
+    enemy!(ctx, index, behavior_a = point.x as u16);
+    enemy!(ctx, index, velocity_y = (point.y >> 16) as u16);
+    enemy!(ctx, index, behavior_b = point.y as u16);
 }
 
-pub(super) fn SpawnEprojWithRoomGfx(
-    definition: u16,
-    parameter: u16,
-    ctx: &mut Execution<'_>,
-) -> u16 {
+pub(super) fn SpawnEprojWithRoomGfx(definition: u16, parameter: u16, ctx: &mut impl Host) -> u16 {
     super::lifecycle::spawn_room(ctx, definition, parameter)
 }
 pub(super) fn SpawnEprojWithGfx(
     parameter: u16,
     enemy: u16,
     definition: u16,
-    ctx: &mut Execution<'_>,
+    ctx: &mut impl Host,
 ) -> u16 {
     super::lifecycle::spawn_from_enemy(ctx, parameter, enemy, definition)
 }

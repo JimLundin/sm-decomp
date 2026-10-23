@@ -4,18 +4,8 @@ use super::game::player_projectiles::{
     host::{Drawing, Host, PaletteEffect, PlayerStep},
 };
 use super::{Composed, Event, RomImage, RomRecord, colors};
-use crate::game::{external_inputs::ExternalInputs as Inputs, session::Session};
 
 impl Host for Composed {
-    fn session(&self) -> &Session {
-        &self.world.player
-    }
-    fn session_mut(&mut self) -> &mut Session {
-        &mut self.world.player
-    }
-    fn inputs(&self) -> &Inputs {
-        &self.world.player_inputs
-    }
     fn loaded_image(&self) -> Option<RomImage> {
         Some(self.image.clone())
     }

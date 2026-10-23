@@ -6,7 +6,6 @@ pub(crate) struct RoomRecord {
     base: usize,
 }
 use super::game::room_mechanisms::host::*;
-use super::game::{external_inputs::ExternalInputs, session::Session};
 
 impl ImportedAliases for Composed {
     fn saved_graphics_word(&self, index: usize) -> u16 {
@@ -147,7 +146,15 @@ impl Effects for Composed {
     }
 
     fn sound(&mut self, channel: SoundChannel, maximum: u8, cue: u16) {
-        panic!("unprepared room operation: sound")
+        let channel = match channel {
+            SoundChannel::One => 1,
+            SoundChannel::Two => 2,
+            SoundChannel::Three => 3,
+        };
+        self.events.push(Event::RoomSound(channel, maximum, cue));
+        if let Some(callback) = self.on_room_sound {
+            callback(self);
+        }
     }
     fn music(&mut self, track: u16) {
         panic!("unprepared room operation: music")
@@ -211,7 +218,7 @@ impl Effects for Composed {
         panic!("unprepared room operation: save")
     }
     fn enemy_projectile(&mut self, definition: u16, parameter: u16) {
-        panic!("unprepared room operation: enemy_projectile")
+        super::game::enemy_projectiles::spawn_room(self, definition, parameter);
     }
     fn wake_projectile_for_block(&mut self, block: u16) {
         panic!("unprepared room operation: wake_projectile_for_block")
@@ -267,22 +274,9 @@ impl Effects for Composed {
     fn diagnostic(&mut self, diagnostic: Diagnostic) -> u8 {
         panic!("unprepared room operation: diagnostic")
     }
-    fn probe(&self, name: &'static str) {
-        let _ = name;
-    }
 }
 
-impl Host for Composed {
-    fn session(&self) -> &Session {
-        &self.world.player
-    }
-    fn session_mut(&mut self) -> &mut Session {
-        &mut self.world.player
-    }
-    fn inputs(&self) -> &ExternalInputs {
-        &self.world.player_inputs
-    }
-}
+impl Host for Composed {}
 
 impl InstructionRecord for RoomRecord {
     fn byte(&self, offset: isize) -> u8 {

@@ -10,7 +10,11 @@ subsystem boundaries or ownership.
 
 Complete next-enemy candidate is assembled and independently reviewed at
 Local/sm-decomp-experiments/20261023/room-session/next-enemy-session/
-candidate-c8d728c2. Main remains19d4e98f; no candidate adoption yet.
+candidate-c8d728c2. Complete candidate is adopted in the commit containing this
+handoff (parent dcccfede). Root fmt/check and direct verifier build
+pass; main-adoption-build.log records29.83s on exactly the same source21a7453a.
+All72 adoption paths match hosted4d6806b8 after newline normalization. Only
+normalized-equal untouched files were reconciled to preserve source identity.
 Five owner/adapter files and five getters retire; four old restoration bodies
 share Inventory::restore through seven real caller redirects. Ownership is
 interval-scoped, not persistent whole-game state.
@@ -28,10 +32,10 @@ Build session23568 and replay session45393 are terminal. Candidate replay passes
 90.08s replay/90.30s total in candidate-final-movie.log. One sample versus97.27s
 baseline does not establish a stable speedup. No local heavy process active.
 
-Validation branch verify/enemy-session-20261023 at4d6806b8 is running in GitHub
-CI40013612299. Formatting, full build, composed execution and7composed mutants
-pass;9DLL mutants are running. Do not restart the run just because
-a poll times out. Each mutant must compile and fail the intended behavior check;
+Validation branch verify/enemy-session-20261023 at4d6806b8 passes GitHub
+CI40013612299 fully: formatting, full build, composed execution,7composed and
+9DLLmutants. All compile and fail their intended behavior checks, with passing
+unmodified baselines. Each mutant must compile and fail the intended behavior check;
 compiler failures, unrelated panics, crashes and timeouts never count as kills.
 All16faults now have individual nodes in PROGRESS.md.
 
@@ -40,12 +44,27 @@ Combined baseline: main-baseline-movie.log, source dd073b2a...,28314frames,
 Previous restoration CI40009086639 passes. Root alone runs the local compiler/
 capture/replay lane; standalone executable checks stay on hosted Windows.
 
-Before adoption: finish hosted checks, synchronize the
-case1058fix to replacement, reconcile final source and accounting, run full root
-cargo fmt/check and progress, then commit/push the complete candidate.
+Replacement/composition copies and final accounting are synchronized; full root
+fmt/check, direct build, source equality and progress pass. No local heavy process
+remains. Candidate is fully adopted; continue next visual-effects contract work.
 Production delta is-804lines but+1934tokens/+3915LFbytes: no net source reduction.
 Verification Rust is+1239lines after fixture correction; Python support+134.
 Native source unchanged. Final accounting files remain beside the candidate.
+Final production107459lines; verification12032; combined119491. Production
+tokens+1934/bytes+3915; verification tokens+11157/bytes+47194; Python+134lines.
+Unsafe2608/raw offsets21 unchanged; cast-containing lines+11 to5720 reflect
+typed adapters/call spelling. No net source reduction or stable speedup claim.
+
+Next design: complete shared visual effects (palette effects, animated tiles,
+Samus palette control), not just two runtime wrappers. Lead prepares isolated
+next-visual-session contract/declarations; four source-only workers inventory
+palette, animation/upload, Samus behavior and comparisons. No gameplay edits yet.
+Reviewer enemy_projectiles_review investigates sm91's unsound void-to-u8 palette
+callback cast against bank/oracle behavior before any replacement. Retire both
+private owners, duplicate player/inventory snapshots, the unsafe callback table
+and raw color copies, plus animation's enemy-spawn trampoline in the complete
+adoption. Broad palette aliases and remaining legacy/reset/CPU writers mean this
+is still interval ownership. Freeze/review interfaces before implementation.
 
 Restoration verification adopted: enemy IDs1382..1439,58actual-old cases pass;
 20adjacent supplemental outputs unchanged and87independent checks pass. Build/

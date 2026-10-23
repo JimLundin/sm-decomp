@@ -1208,32 +1208,6 @@ pub unsafe fn Samus_LoadSuitTargetPalette(game: &mut Game) {
         };
     }
 }
-pub fn Samus_RestoreHealth(amount: u16, game: &mut Game) {
-    #[cfg(sm_verify_dll)]
-    crate::game::enemy_projectiles::checks::supplemental_cases::restore_cases::observe(
-        0, 0, amount, game,
-    );
-    let health = game.samus_health().wrapping_add(amount);
-    game.set_samus_health(health);
-    if (health.wrapping_sub(game.samus_max_health()) as i16) >= 0 {
-        let mut reserve = game
-            .samus_reserve_health()
-            .wrapping_add(health)
-            .wrapping_sub(game.samus_max_health());
-        if (reserve.wrapping_sub(game.samus_max_reserve_health()) as i16) >= 0 {
-            reserve = game.samus_max_reserve_health();
-        }
-        game.set_samus_reserve_health(reserve);
-        if reserve != 0 && game.reserve_health_mode() == 0 {
-            game.set_reserve_health_mode(1);
-        }
-        game.set_samus_health(game.samus_max_health());
-    }
-    #[cfg(sm_verify_dll)]
-    crate::game::enemy_projectiles::checks::supplemental_cases::restore_cases::observe(
-        0, 1, amount, game,
-    );
-}
 pub unsafe fn Samus_DealDamage(amount: u16, game: &mut Game) {
     unsafe {
         if amount & 0x8000 == 0 {
@@ -1248,76 +1222,6 @@ pub unsafe fn Samus_DealDamage(amount: u16, game: &mut Game) {
             InvalidInterrupt_Crash(game);
         }
     }
-}
-pub fn Samus_RestoreMissiles(amount: u16, game: &mut Game) {
-    #[cfg(sm_verify_dll)]
-    crate::game::enemy_projectiles::checks::supplemental_cases::restore_cases::observe(
-        1, 0, amount, game,
-    );
-    let missiles = game.samus_missiles().wrapping_add(amount);
-    game.set_samus_missiles(missiles);
-    if (missiles.wrapping_sub(game.samus_max_missiles()) as i16) >= 0 {
-        if game.samus_max_missiles().wrapping_sub(99) & 0x8000 != 0 {
-            let reserve = game
-                .samus_reserve_missiles()
-                .wrapping_add(missiles.wrapping_sub(game.samus_max_missiles()));
-            game.set_samus_reserve_missiles(reserve);
-            if (game
-                .samus_reserve_missiles()
-                .wrapping_sub(game.samus_max_missiles()) as i16)
-                >= 0
-            {
-                game.set_samus_reserve_missiles(game.samus_max_missiles());
-            }
-        } else {
-            let reserve = game
-                .samus_reserve_missiles()
-                .wrapping_add(missiles.wrapping_sub(game.samus_max_missiles()));
-            game.set_samus_reserve_missiles(reserve);
-            if game.samus_reserve_missiles().wrapping_sub(99) & 0x8000 == 0 {
-                game.set_samus_reserve_missiles(99);
-            }
-        }
-        game.set_samus_missiles(game.samus_max_missiles());
-    }
-    #[cfg(sm_verify_dll)]
-    crate::game::enemy_projectiles::checks::supplemental_cases::restore_cases::observe(
-        1, 1, amount, game,
-    );
-}
-pub fn Samus_RestoreSuperMissiles(amount: u16, game: &mut Game) {
-    #[cfg(sm_verify_dll)]
-    crate::game::enemy_projectiles::checks::supplemental_cases::restore_cases::observe(
-        2, 0, amount, game,
-    );
-    let ammo = game.samus_super_missiles().wrapping_add(amount);
-    game.set_samus_super_missiles(ammo);
-    if (ammo.wrapping_sub(game.samus_max_super_missiles()) as i16) >= 0
-        && ammo != game.samus_max_super_missiles()
-    {
-        game.set_samus_super_missiles(game.samus_max_super_missiles());
-    }
-    #[cfg(sm_verify_dll)]
-    crate::game::enemy_projectiles::checks::supplemental_cases::restore_cases::observe(
-        2, 1, amount, game,
-    );
-}
-pub fn Samus_RestorePowerBombs(amount: u16, game: &mut Game) {
-    #[cfg(sm_verify_dll)]
-    crate::game::enemy_projectiles::checks::supplemental_cases::restore_cases::observe(
-        3, 0, amount, game,
-    );
-    let ammo = game.samus_power_bombs().wrapping_add(amount);
-    game.set_samus_power_bombs(ammo);
-    if (ammo.wrapping_sub(game.samus_max_power_bombs()) as i16) >= 0
-        && ammo != game.samus_max_power_bombs()
-    {
-        game.set_samus_power_bombs(game.samus_max_power_bombs());
-    }
-    #[cfg(sm_verify_dll)]
-    crate::game::enemy_projectiles::checks::supplemental_cases::restore_cases::observe(
-        3, 1, amount, game,
-    );
 }
 pub unsafe fn Samus_Initialize(game: &mut Game) {
     unsafe {

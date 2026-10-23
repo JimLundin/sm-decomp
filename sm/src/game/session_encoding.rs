@@ -175,6 +175,44 @@ macro_rules! scalar_words {
             $f(0xdebc+index*2,$($borrow)* $s.mechanisms.slots[index].return_program);
             $f(0xdf0c+index*2,$($borrow)* $s.mechanisms.slots[index].work1);
         }
+        $f(0x198d,$($borrow)* $s.enemy_projectiles.flags);
+        $f(0x1991,$($borrow)* $s.enemy_projectiles.selected);
+        $f(0x1993,$($borrow)* $s.enemy_projectiles.spawn.primary);
+        $f(0x1995,$($borrow)* $s.enemy_projectiles.spawn.secondary);
+        $f(ram::health_drop_bias_flag,$($borrow)* $s.enemy_projectiles.drop_bias);
+        $f(ram::samus_reserve_health,$($borrow)* $s.inventory.reserve_health);
+        $f(ram::samus_reserve_missiles,$($borrow)* $s.inventory.reserve_missiles);
+        $f(ram::samus_x_speed_divisor,$($borrow)* $s.player.speed_divisor);
+        $f(ram::samus_knockback_timer,$($borrow)* $s.player.knockback_timer);
+        $f(ram::knockback_x_dir,$($borrow)* $s.player.knockback_x_direction);
+        $f(ram::enemy_processing_stage,$($borrow)* $s.room.enemy_processing_stage);
+        $f(ram::collision_detection_index,$($borrow)* $s.room.collision_detection_index);
+        $f(ram::current_slope_bts,$($borrow)* $s.room.slope_behavior);
+        $f(ram::tourian_entrance_statue_finished,$($borrow)* $s.mechanisms.statue_finished);
+        for index in 0..18 {
+            $f(0x1997+index*2,$($borrow)* $s.enemy_projectiles.slots[index].definition);
+            $f(0x19bb+index*2,$($borrow)* $s.enemy_projectiles.slots[index].graphics);
+            $f(0x19df+index*2,$($borrow)* $s.enemy_projectiles.slots[index].counter);
+            $f(0x1a03+index*2,$($borrow)* $s.enemy_projectiles.slots[index].pre_action);
+            $f(0x1a27+index*2,$($borrow)* $s.enemy_projectiles.slots[index].x.fraction);
+            $f(0x1a4b+index*2,$($borrow)* $s.enemy_projectiles.slots[index].x.whole);
+            $f(0x1a6f+index*2,$($borrow)* $s.enemy_projectiles.slots[index].y.fraction);
+            $f(0x1a93+index*2,$($borrow)* $s.enemy_projectiles.slots[index].y.whole);
+            $f(0x1ab7+index*2,$($borrow)* $s.enemy_projectiles.slots[index].velocity.x);
+            $f(0x1adb+index*2,$($borrow)* $s.enemy_projectiles.slots[index].velocity.y);
+            $f(0x1aff+index*2,$($borrow)* $s.enemy_projectiles.slots[index].behavior_a);
+            $f(0x1b23+index*2,$($borrow)* $s.enemy_projectiles.slots[index].behavior_b);
+            $f(0x1b47+index*2,$($borrow)* $s.enemy_projectiles.slots[index].program);
+            $f(0x1b6b+index*2,$($borrow)* $s.enemy_projectiles.slots[index].spritemap);
+            $f(0x1b8f+index*2,$($borrow)* $s.enemy_projectiles.slots[index].delay);
+            $f(0x1bb3+index*2,$($borrow)* $s.enemy_projectiles.slots[index].radius);
+            $f(0x1bd7+index*2,$($borrow)* $s.enemy_projectiles.slots[index].properties);
+            $f(0x1bfb+index*2,$($borrow)* $s.enemy_projectiles.slots[index].behavior_c);
+            $f(0x97dc+index*2,$($borrow)* $s.enemy_projectiles.slots[index].angle);
+            $f(0xf380+index*2,$($borrow)* $s.enemy_projectiles.slots[index].drop.flags);
+            $f(0xf3c8+index*2,$($borrow)* $s.enemy_projectiles.slots[index].drop.enemy_definition);
+            $f(0xf410+index*2,$($borrow)* $s.enemy_projectiles.slots[index].drop.killed_enemy);
+        }
     };
 }
 
@@ -183,6 +221,7 @@ pub(crate) fn read(bytes: &[u8], at: usize) -> u16 {
 }
 pub(crate) fn decode(bytes: &[u8]) -> Session {
     let mut s = Session::default();
+    s.enemy_projectiles.spawn.angle = bytes[0x60b];
     let mut load = |at: usize, value: &mut u16| *value = read(bytes, at);
     scalar_words!(s,load,(&mut));
     for (index, value) in s.projectiles.launch.displacements.iter_mut().enumerate() {
@@ -217,6 +256,7 @@ pub(crate) fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
     }
 }
 pub(crate) fn encode(s: &Session, bytes: &mut [u8]) {
+    bytes[0x60b] = s.enemy_projectiles.spawn.angle;
     visit(s, |at, value| {
         bytes[at..at + 2].copy_from_slice(&value.to_le_bytes())
     });
@@ -225,6 +265,9 @@ pub(crate) fn encode(s: &Session, bytes: &mut [u8]) {
     }
 }
 pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
+    if at == 0x60b {
+        return Some(s.enemy_projectiles.spawn.angle);
+    }
     if (0x10002..0x16402).contains(&at) {
         let offset = at - 0x10002;
         return Some(s.room.terrain.cells()[offset / 2].level.to_le_bytes()[offset % 2]);
@@ -256,6 +299,10 @@ pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     result
 }
 pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
+    if at == 0x60b {
+        s.enemy_projectiles.spawn.angle = value;
+        return true;
+    }
     if (0x16402..0x19602).contains(&at) {
         s.room.terrain.cells_mut()[at - 0x16402].behavior = value;
         return true;
@@ -308,6 +355,19 @@ pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> boo
 pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
     let w = |at| read(bytes, at);
     ExternalInputs {
+        player_x_radius: w(ram::samus_x_radius),
+        current_enemy: w(ram::cur_enemy_index),
+        random: w(ram::random_number),
+        random_enemy_counter: w(ram::random_enemy_counter),
+        bitmask: w(ram::bitmask),
+        fx_y: w(ram::fx_y_pos),
+        statue_animation: w(ram::tourian_entrance_statue_animstate),
+        drop_origin_x: w(ram::special_death_item_drop_x_origin_pos),
+        drop_origin_y: w(ram::special_death_item_drop_y_origin_pos),
+        grapple_end_x: w(ram::grapple_beam_end_x_pos),
+        grapple_end_y: w(ram::grapple_beam_end_y_pos),
+        nmi_counter_low: bytes[0x5b5],
+
         shoot_button: w(ram::button_config_shoot_x),
         cancel_button: w(ram::button_config_itemcancel_y),
         switch_button: w(ram::button_config_itemswitch),
@@ -323,7 +383,6 @@ pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
         hud_auto_cancel: w(ram::hud_auto_cancel_flag),
         door_definition: w(ram::door_def_ptr),
         door_direction: w(ram::door_direction),
-        tourian_statue_finished: w(ram::tourian_entrance_statue_finished),
         background_page_x: w(0x91d),
         power_bomb_active: w(0x592),
         camera_x: w(ram::layer1_x_pos),

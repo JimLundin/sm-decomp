@@ -1,8 +1,25 @@
 //! Enemy-projectile terrain movement and slope response.
 #![forbid(unsafe_code)]
-use super::compat::Execution;
-use super::state::SlotField as F;
-use crate::game::sm_94::{square_slope_occupied, square_slope_single_block};
+use super::access::{enemy, enemy_byte, read_member, write_member};
+use super::host::{EnemyMember as F, Host, NativeRecord};
+use crate::game::projectile_geometry::{square_slope_occupied, square_slope_single_block};
+
+fn block_behavior(h: &impl Host, block: u16) -> u8 {
+    h.session()
+        .room
+        .terrain
+        .cells()
+        .get(usize::from(block))
+        .map_or_else(|| h.behavior_byte(block), |cell| cell.behavior)
+}
+fn level_block(h: &impl Host, block: u16) -> u16 {
+    h.session()
+        .room
+        .terrain
+        .cells()
+        .get(usize::from(block))
+        .map_or_else(|| h.terrain_word(block), |cell| cell.level)
+}
 
 #[derive(Clone, Copy)]
 enum Axis {
@@ -52,11 +69,12 @@ impl Axis {
             Self::Vertical => c.x_radius,
         }
     }
-    fn position(self, handle: u16, ctx: &Execution<'_>) -> u16 {
-        ctx.slot(self.position_field(), (handle >> 1) as isize)
+    fn position(self, handle: u16, h: &impl Host) -> u16 {
+        read_member(h, self.position_field(), (handle >> 1) as isize)
     }
-    fn perpendicular_position(self, handle: u16, ctx: &Execution<'_>) -> u16 {
-        ctx.slot(
+    fn perpendicular_position(self, handle: u16, h: &impl Host) -> u16 {
+        read_member(
+            h,
             match self {
                 Self::Horizontal => F::Y,
                 Self::Vertical => F::X,
@@ -66,31 +84,31 @@ impl Axis {
     }
 }
 
-fn extend(axis: Axis, ctx: &mut Execution<'_>) -> u8 {
-    if ctx.block_bts(ctx.current_block()) != 0 {
-        let previous = ctx.current_block();
-        let delta = i32::from(ctx.block_bts(ctx.current_block()) as i8);
+fn extend(axis: Axis, h: &mut impl Host) -> u8 {
+    if block_behavior(h, h.session().room.collision_cursor) != 0 {
+        let previous = h.session().room.collision_cursor;
+        let delta = i32::from(block_behavior(h, h.session().room.collision_cursor) as i8);
         let delta = match axis {
             Axis::Horizontal => delta,
-            Axis::Vertical => delta * i32::from(ctx.room_width_in_blocks()),
+            Axis::Vertical => delta * i32::from(h.session().room.width),
         };
         let value = (i32::from(previous) + delta) as u16;
-        ctx.set_current_block(value);
+        h.session_mut().room.collision_cursor = value;
         return 0xff;
     }
     0
 }
 
-fn square_slope(c: &Collision, slope: u16, block: u16, axis: Axis, ctx: &mut Execution<'_>) -> u8 {
-    crate::verify_probe::hit(match axis {
+fn square_slope(c: &Collision, slope: u16, block: u16, axis: Axis, h: &mut impl Host) -> u8 {
+    h.probe(match axis {
         Axis::Horizontal => "square-slope.eproj.horizontal",
         Axis::Vertical => "square-slope.eproj.vertical",
     });
     let captured = match axis {
         Axis::Horizontal => None,
-        Axis::Vertical => Some(ctx.state().selected),
+        Axis::Vertical => Some(h.session().enemy_projectiles.selected),
     };
-    let orientation = u16::from(ctx.block_bts(block) >> 6);
+    let orientation = u16::from(block_behavior(h, block) >> 6);
     let shift = match axis {
         Axis::Horizontal => 3,
         Axis::Vertical => 2,
@@ -102,8 +120,8 @@ fn square_slope(c: &Collision, slope: u16, block: u16, axis: Axis, ctx: &mut Exe
         Axis::Horizontal => 2,
         Axis::Vertical => 1,
     };
-    let handle = captured.unwrap_or_else(|| ctx.state().selected);
-    let position = axis.perpendicular_position(handle, ctx);
+    let handle = captured.unwrap_or_else(|| h.session().enemy_projectiles.selected);
+    let position = axis.perpendicular_position(handle, h);
     let radius = axis.perpendicular_radius(c);
     let occupied = if c.span == 0 {
         square_slope_single_block(index, position, radius, other)
@@ -113,29 +131,29 @@ fn square_slope(c: &Collision, slope: u16, block: u16, axis: Axis, ctx: &mut Exe
     if !occupied {
         return 0;
     }
-    let slot = (ctx.state().selected >> 1) as isize;
-    ctx.set_slot(axis.fraction_field(), slot, 0);
+    let slot = (h.session().enemy_projectiles.selected >> 1) as isize;
+    write_member(h, axis.fraction_field(), slot, 0);
     let position = if c.direction & 0x8000 != 0 {
         axis.radius(c).wrapping_add(c.edge | 7).wrapping_add(1)
     } else {
         (c.edge & 0xfff8).wrapping_sub(axis.radius(c))
     };
-    ctx.set_slot(axis.position_field(), slot, position);
+    write_member(h, axis.position_field(), slot, position);
     1
 }
 
-fn vertical_slope(c: &Collision, ctx: &mut Execution<'_>) -> u8 {
-    let handle = ctx.state().selected;
+fn vertical_slope(c: &Collision, h: &mut impl Host) -> u8 {
+    let handle = h.session().enemy_projectiles.selected;
     let negative = c.direction & 0x8000 != 0;
-    let block = ctx.current_block();
-    let dividend = ctx.current_block();
-    let divisor = ctx.room_width_in_blocks() as u8;
+    let block = h.session().room.collision_cursor;
+    let dividend = h.session().room.collision_cursor;
+    let divisor = h.session().room.width as u8;
     let column = if divisor == 0 {
         dividend
     } else {
         dividend % u16::from(divisor)
     };
-    if ctx.slot(F::X, (handle >> 1) as isize) >> 4 != column {
+    if enemy!(h, (handle >> 1) as isize, x) >> 4 != column {
         return 0;
     }
     let edge_offset = if negative {
@@ -143,23 +161,23 @@ fn vertical_slope(c: &Collision, ctx: &mut Execution<'_>) -> u8 {
     } else {
         c.y_radius.wrapping_add(c.position).wrapping_sub(1) & 15
     };
-    let row = u16::from(ctx.block_bts(block) & 0x1f) * 16;
-    let bts = ctx.block_bts(block);
+    let row = u16::from(block_behavior(h, block) & 0x1f) * 16;
+    let bts = block_behavior(h, block);
     if (bts & 0x80 != 0) != negative {
         return 0;
     }
     let x = if bts & 0x40 != 0 {
-        ctx.slot(F::X, (handle >> 1) as isize) ^ 15
+        enemy!(h, (handle >> 1) as isize, x) ^ 15
     } else {
-        ctx.slot(F::X, (handle >> 1) as isize)
+        enemy!(h, (handle >> 1) as isize, x)
     };
     let index = row.wrapping_add(x & 15);
     // Keep both reads against the original raw-ROM source before any landing store.
-    let height = ctx.raw_slope_height(index) & 0x1f;
+    let height = h.native_record(0x94, 0x8b2b).byte(index as isize) & 0x1f;
     let adjustment = i16::from(height)
         .wrapping_sub(edge_offset as i16)
         .wrapping_sub(1);
-    let height = ctx.raw_slope_height(index) & 0x1f;
+    let height = h.native_record(0x94, 0x8b2b).byte(index as isize) & 0x1f;
     if i32::from(height) - i32::from(edge_offset) != 1 && adjustment >= 0 {
         return 0;
     }
@@ -168,40 +186,40 @@ fn vertical_slope(c: &Collision, ctx: &mut Execution<'_>) -> u8 {
     } else {
         c.position.wrapping_add(adjustment as u16)
     };
-    ctx.set_slot(F::Y, (handle >> 1) as isize, position);
-    ctx.set_slot(
-        F::YFraction,
+    enemy!(h, (handle >> 1) as isize, y = position);
+    enemy!(
+        h,
         (handle >> 1) as isize,
-        if negative { 0 } else { 0xffff },
+        y_fraction = if negative { 0 } else { 0xffff }
     );
     1
 }
 
-fn slope(c: &Collision, axis: Axis, ctx: &mut Execution<'_>) -> u8 {
-    let kind = u16::from(ctx.block_bts(ctx.current_block())) & 0x1f;
+fn slope(c: &Collision, axis: Axis, h: &mut impl Host) -> u8 {
+    let kind = u16::from(block_behavior(h, h.session().room.collision_cursor)) & 0x1f;
     if kind < 5 {
-        square_slope(c, kind, ctx.current_block(), axis, ctx)
+        square_slope(c, kind, h.session().room.collision_cursor, axis, h)
     } else {
         match axis {
             Axis::Horizontal => {
-                let bts = u16::from(ctx.block_bts(ctx.current_block()));
-                ctx.set_current_slope_bts(bts);
+                let bts = u16::from(block_behavior(h, h.session().room.collision_cursor));
+                h.session_mut().room.slope_behavior = bts;
                 0
             }
-            Axis::Vertical => vertical_slope(c, ctx),
+            Axis::Vertical => vertical_slope(c, h),
         }
     }
 }
 
-fn react(c: &Collision, cursor: u16, axis: Axis, ctx: &mut Execution<'_>) -> u8 {
-    ctx.set_current_block(cursor >> 1);
+fn react(c: &Collision, cursor: u16, axis: Axis, h: &mut impl Host) -> u8 {
+    h.session_mut().room.collision_cursor = cursor >> 1;
     loop {
-        let result = match ctx.current_level_block() >> 12 {
+        let result = match level_block(h, h.session().room.collision_cursor) >> 12 {
             0 | 2 | 3 | 4 | 6 | 7 | 14 => 0,
-            1 => slope(c, axis, ctx),
-            5 => extend(Axis::Horizontal, ctx),
+            1 => slope(c, axis, h),
+            5 => extend(Axis::Horizontal, h),
             8 | 9 | 10 | 11 | 12 | 15 => 1,
-            13 => extend(Axis::Vertical, ctx),
+            13 => extend(Axis::Vertical, h),
             _ => unreachable!(),
         };
         if result & 0x80 == 0 {
@@ -210,36 +228,36 @@ fn react(c: &Collision, cursor: u16, axis: Axis, ctx: &mut Execution<'_>) -> u8 
     }
 }
 
-fn move_against_blocks(handle: u16, axis: Axis, ctx: &mut Execution<'_>) -> u8 {
+fn move_against_blocks(handle: u16, axis: Axis, h: &mut impl Host) -> u8 {
     let slot = (handle >> 1) as isize;
-    let amount = i32::from(ctx.slot(axis.velocity_field(), slot) as i16) << 8;
-    let y_radius = u16::from(ctx.slot_byte(F::Radius, slot * 2 + 1));
-    let x_radius = u16::from(ctx.slot_byte(F::Radius, slot * 2));
+    let amount = i32::from(read_member(h, axis.velocity_field(), slot) as i16) << 8;
+    let y_radius = u16::from(enemy_byte!(h, slot * 2 + 1, radius));
+    let x_radius = u16::from(enemy_byte!(h, slot * 2, radius));
     let (radius, perpendicular_radius) = match axis {
         Axis::Horizontal => (x_radius, y_radius),
         Axis::Vertical => (y_radius, x_radius),
     };
     let first_edge = axis
-        .perpendicular_position(handle, ctx)
+        .perpendicular_position(handle, h)
         .wrapping_sub(perpendicular_radius)
         & 0xfff0;
     let span = perpendicular_radius
-        .wrapping_add(axis.perpendicular_position(handle, ctx))
+        .wrapping_add(axis.perpendicular_position(handle, h))
         .wrapping_sub(1)
         .wrapping_sub(first_edge)
         >> 4;
     let horizontal_product = match axis {
         Axis::Horizontal => {
-            u16::from((ctx.slot(F::Y, slot).wrapping_sub(y_radius) >> 4) as u8)
-                * u16::from(ctx.room_width_in_blocks() as u8)
+            u16::from((enemy!(h, slot, y).wrapping_sub(y_radius) >> 4) as u8)
+                * u16::from(h.session().room.width as u8)
         }
         Axis::Vertical => 0,
     };
     let position = ((amount as u32).wrapping_add(
-        (u32::from(axis.position(handle, ctx)) << 16)
-            | u32::from(ctx.slot(axis.fraction_field(), slot)),
+        (u32::from(axis.position(handle, h)) << 16)
+            | u32::from(read_member(h, axis.fraction_field(), slot)),
     ) >> 16) as u16;
-    let fraction = (amount + i32::from(ctx.slot(axis.fraction_field(), slot))) as u16;
+    let fraction = (amount + i32::from(read_member(h, axis.fraction_field(), slot))) as u16;
     let edge = if amount < 0 {
         position.wrapping_sub(radius)
     } else {
@@ -259,27 +277,26 @@ fn move_against_blocks(handle: u16, axis: Axis, ctx: &mut Execution<'_>) -> u8 {
             i32::from((2 * (i32::from(horizontal_product) + i32::from(edge >> 4))) as u16)
         }
         Axis::Vertical => {
-            let product =
-                u16::from((edge >> 4) as u8) * u16::from(ctx.room_width_in_blocks() as u8);
-            let column = (ctx.slot(F::X, slot).wrapping_sub(x_radius) >> 4) as i16;
+            let product = u16::from((edge >> 4) as u8) * u16::from(h.session().room.width as u8);
+            let column = (enemy!(h, slot, x).wrapping_sub(x_radius) >> 4) as i16;
             2 * (i32::from(product) + i32::from(column))
         }
     };
     loop {
-        if react(&c, cursor as u16, axis, ctx) & 1 != 0 {
+        if react(&c, cursor as u16, axis, h) & 1 != 0 {
             break;
         }
         if matches!(axis, Axis::Horizontal) {
             cursor = i32::from(
-                (cursor as u16).wrapping_add((i32::from(ctx.room_width_in_blocks()) * 2) as u16),
+                (cursor as u16).wrapping_add((i32::from(h.session().room.width) * 2) as u16),
             );
         }
         c.remaining = c.remaining.wrapping_sub(1);
         if c.remaining & 0x8000 != 0 {
-            ctx.set_slot(axis.fraction_field(), slot, fraction);
-            ctx.set_slot(axis.position_field(), slot, position);
+            write_member(h, axis.fraction_field(), slot, fraction);
+            write_member(h, axis.position_field(), slot, position);
             if amount != 0 {
-                crate::verify_probe::hit("eproj.motion.applied");
+                h.probe("eproj.motion.applied");
             }
             return 0;
         }
@@ -287,51 +304,56 @@ fn move_against_blocks(handle: u16, axis: Axis, ctx: &mut Execution<'_>) -> u8 {
             cursor += 2;
         }
     }
-    ctx.set_slot(axis.fraction_field(), slot, 0);
+    write_member(h, axis.fraction_field(), slot, 0);
     if amount < 0 {
         let corrected = axis.radius(&c).wrapping_add(c.edge | 15).wrapping_add(1);
-        if corrected <= axis.position(handle, ctx) {
-            ctx.set_slot(axis.position_field(), slot, corrected);
+        if corrected <= axis.position(handle, h) {
+            write_member(h, axis.position_field(), slot, corrected);
         }
     } else {
         let corrected = (c.edge & 0xfff0).wrapping_sub(axis.radius(&c));
-        if corrected >= axis.position(handle, ctx) {
-            ctx.set_slot(axis.position_field(), slot, corrected);
+        if corrected >= axis.position(handle, h) {
+            write_member(h, axis.position_field(), slot, corrected);
         }
     }
     1
 }
 
-pub(super) fn EprojBlockCollisition_Horiz(handle: u16, ctx: &mut Execution<'_>) -> u8 {
-    move_against_blocks(handle, Axis::Horizontal, ctx)
+pub(super) fn EprojBlockCollisition_Horiz(handle: u16, h: &mut impl Host) -> u8 {
+    move_against_blocks(handle, Axis::Horizontal, h)
 }
-pub(super) fn EprojBlockCollisition_Vertical(handle: u16, ctx: &mut Execution<'_>) -> u8 {
-    move_against_blocks(handle, Axis::Vertical, ctx)
+pub(super) fn EprojBlockCollisition_Vertical(handle: u16, h: &mut impl Host) -> u8 {
+    move_against_blocks(handle, Axis::Vertical, h)
 }
 
-pub(super) fn power_bomb(handle: u16, ctx: &mut Execution<'_>) {
-    let radius = u16::from(ctx.power_bomb_radius_high());
-    if ctx.power_bomb_radius_high() != 0 {
+pub(super) fn power_bomb(handle: u16, h: &mut impl Host) {
+    let radius = u16::from((h.session().room.power_bomb_radius >> 8) as u8);
+    if (h.session().room.power_bomb_radius >> 8) as u8 != 0 {
         let vertical_radius = ((i32::from(radius)
-            + (i32::from(ctx.power_bomb_radius_high()) & 1)
-            + (i32::from(ctx.power_bomb_radius()) >> 9)) as u16)
+            + (i32::from((h.session().room.power_bomb_radius >> 8) as u8) & 1)
+            + (i32::from(h.session().room.power_bomb_radius) >> 9))
+            as u16)
             >> 1;
         let slot = (handle >> 1) as isize;
-        if ctx
-            .power_bomb_x()
-            .wrapping_sub(ctx.slot(F::X, slot))
+        if h.session()
+            .projectiles
+            .power_bomb
+            .x
+            .wrapping_sub(enemy!(h, slot, x))
             .cast_signed()
             .unsigned_abs()
             < radius
-            && ctx
-                .power_bomb_y()
-                .wrapping_sub(ctx.slot(F::Y, slot))
+            && h.session()
+                .projectiles
+                .power_bomb
+                .y
+                .wrapping_sub(enemy!(h, slot, y))
                 .cast_signed()
                 .unsigned_abs()
                 < vertical_radius
         {
-            ctx.set_slot(F::Definition, slot, 0);
-            ctx.set_player_speed_divisor(0);
+            enemy!(h, slot, definition = 0);
+            h.session_mut().player.speed_divisor = 0;
         }
     }
 }

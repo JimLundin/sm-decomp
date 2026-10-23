@@ -105,7 +105,7 @@ pub(super) fn run(c: &mut impl Host, ea: u32, k: u16) {
             }
         }
         8699423 => {
-            if c.inputs().tourian_statue_finished & 0x8000 == 0 {
+            if c.session().mechanisms.statue_finished & 0x8000 == 0 {
                 dud(c, slot);
             } else {
                 link(c, slot);
