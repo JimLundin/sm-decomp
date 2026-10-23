@@ -44,10 +44,12 @@ flowchart TB
     EARLY --> MOVIE["52-phase original CPU + OAM<br/>candidate comparison PASS"]:::done
     MOVIE --> HOOKFIX["Isolated original opcode restore<br/>strict guards + capture audit PASS"]:::done
     POOL --> BUILD["Assembled verifier + adapters<br/>format / release build PASS"]:::done
-    BUILD --> HOST["Actual shared harness<br/>compile PASS / execution pending"]:::done
+    BUILD --> HOST["Hosted composition baseline<br/>fixture allocation FAIL"]:::failed
+    HOST --> HOSTFIX["Preserve larger fixture image<br/>reviewed / CI rerun active"]:::active
     GUARD["Runtime + 1,026 bytes guard<br/>execution PASS"]:::done --> VERIFY
     MUT["12 new faults<br/>source review PASS"]:::checked --> KILLS["41 mutations / execution pending"]:::pending
     MAWFIX --> MAWMUT["Two Maw precedence mutations<br/>source review PASS"]:::checked --> KILLS
+    SHARED["35 shared-caller comparisons<br/>+ visual runtime guard PASS"]:::done --> ADOPT
     CODEC --> VERIFY
     WAFFLE --> VERIFY
     METROID --> VERIFY
@@ -56,7 +58,7 @@ flowchart TB
     VERIFY --> ADOPT["Caller migration + retirement<br/>adopt on main"]:::pending
     MOVIE --> ADOPT
     KILLS --> ADOPT
-    class CPU,VERIFY,MAWFIX,MOVIE,HOOKFIX,BUILD,GUARD,MAWMUT changed
+    class HOST,HOSTFIX,SHARED changed
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
@@ -64,6 +66,8 @@ flowchart TB
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
+
+[Sprite candidate CI: running](https://github.com/JimLundin/sm-decomp/actions/runs/40031500027)
 
 [Shared Session adopted: 74948127](https://github.com/JimLundin/sm-decomp/commit/74948127) / [Build + eight mutations: PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40005712881)
 

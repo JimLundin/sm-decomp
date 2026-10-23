@@ -417,8 +417,21 @@ references; measure build/test time and resource growth before changing the loop
    nonzero supplied appearance now pass source review; both assert actual draw
    palette as well as state. Total41mutations (32detached+9DLL). The corrected
    ten-case composed harness compiles; new Maw checks are being assembled.
-   Hosted composition/mutations and selected shared-caller regressions
-   remain before adoption; this is still an unadopted production draft.
+   Candidate build4 passes14.52s onb5cdb4c9, with both new Maw checks assembled.
+   The121sprite comparisons, five Draygon comparisons, Runtimeguard and52phase
+   OAM comparison repeat successfully on that source. Selected shared regressions
+   pass35cached comparisons plus visual Runtimeguard: enemy582/586/590,
+   594..617/1370/1374..1377, room1018, expanded player5/6. Frozen references
+   and results are recorded in candidate-shared-regressions-1/results.json.
+   Hosted branch verify/sprite-session-20261024 matches all336candidate source
+   files after CRLF normalization. CI40031244955 format passes, but composed
+   execution fails before mutations: existing native_drop_then_missile fixture
+   copies the now3MiB image into a fixed1A8000 allocation. Reviewed correction
+   preserves max(existing length,1A8000), full copy and every assertion.
+   Hosted84f03c03 reruns in CI40031500027; no mutation kills claimed yet.
+   The local built candidate still precedes this verification-only allocation
+   correction. Hosted composition/mutations remain before adoption; this is
+   still an unadopted production draft.
    Production draft+711lines; necessary owned-state/unsafe retirement, not a net
    source reduction. Final verification and fullscope accounting remain separate.
    Preserve distinct1022byte room clear and64byte active-pointer retirement.
