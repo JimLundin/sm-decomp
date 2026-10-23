@@ -104,26 +104,32 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares Shaktool room control after booster escape at
-   `766d48f6`. `mechanism_shaktool` retires setup B8DC and polling B8B0. It preserves
-   ordered native-endian scroll pairs, any nonzero Power Bomb status, the live X
-   read after scroll writes, strict X>348 event0D threshold and captured release.
-   Core and checked adapter forbid unsafe; candidate setup/pre routes bypass
-   native fallback. RAM remains authoritative. Eighty-two of 115 setups are shared;
-   33 and native dispatch/authority work remain.
+   Latest verified stage shares animal-rescue passage control after Shaktool at
+   `5c585fdb`. `mechanism_animal_rescue` retires setups B9C5/BB09, commands B9B9/BB25
+   and pre BE30. It preserves captured block/live widths, installer failure prefixes,
+   event0F gates, wrapping passage movement and timer/link/dud order. Core and checked
+   adapter forbid unsafe; candidate setup/pre/command routes bypass native fallback.
+   RAM remains authoritative. Eighty-four of 115 setups are shared; 31 and native
+   dispatch/authority work remain.
 
-   Final checks pass 26,700 frozen-original/main/candidate direct comparisons,
-   six counted main/candidate lifecycle observations and four original-output
-   camera tails. Actual room callback, PreInstr/Sleep, frozen bomb fuse expiry,
-   camera clamp/opening, event selection, unconditional setup reset and subsequent
-   inactive tick execute. Symbolic checks preserve failure prefixes and live versus
-   captured observations. Identities212 runtime/249 local and all14 retained suites
-   pass independent review. Production release/frontend/verifier/source passed
-   (58.17s), prospective release passed (59.57s), carrier/harness passed first
-   attempts (22.00s/20.89s), selected runtime checks passed first execution (20.15s).
-   The fixture explicitly thaws the frozen bomb state before camera consumption;
-   this does not establish natural unfreezing, full bomb explosion or a movie.
-   No complete-composition runtime or rendering ran.
+   Final checks pass 42,008 frozen-original/main/candidate direct comparisons,
+   including 4,628 matching installer failures, 19 counted main/candidate source/
+   scheduler groups and 13 gate/queue/link groups. Actual rescue animation remains
+   Solid while setting the event; the later passage becomes Air. Real room producers
+   are checked separately from explicitly repositioned offscreen script fixtures;
+   actual collision sampling proves both material outcomes. A carrier-only guard
+   asserts y32/cameraY0 before every selected DrawPlm call. The candidate room fixture
+   supplies two retained outer quake writes; it does not own that room callback.
+   No visible rendering, movie or complete-composition runtime claim.
+
+   Identities215 runtime/252 local and all15 retained suites pass independent review.
+   Production release/frontend/verifier/source passed (95.18s). Initial carrier
+   compilation failed on a missing reference type import; corrected carrier passed
+   (21.69s). First runtime execution failed because candidate/fixture used BF30;
+   original decimal8699440 is BE30. Bounded diagnostics confirmed the gate call.
+   Main dispatch was correct and unchanged. Corrected candidate release passed
+   (38.78s), clean harness passed (14.40s), final selected checks passed (20.44s).
+   Failed/diagnostic logs are retained. Do not call the first runtime run a pass.
 
    Liquid limitation: unchanged `advance_tide` dereferences native u16 at odd RAM
    0x197D on every unfrozen `lava_surface` path. Do not execute that path as defined
@@ -136,14 +142,14 @@ references; measure build/test time and resource growth before changing the loop
    comparisons; do not rerun the undefined cases. Current selected suites exclude
    them. Current item restores assert the offscreen guard before that read.
 
-   Main is **104,701 Rust lines in 180 files**. Prospective composition is
-   **113,517 (+8,816)**, unadopted. This stage adds 75 main and 19 owned/wiring
-   lines: **+94 complete lines**, +828 lexical tokens and +3,119 LF-normalized
-   bytes. Verification adds 567 lines; implementation plus checks adds 661.
+   Main is **104,832 Rust lines in 182 files**. Prospective composition is
+   **113,691 (+8,859)**, unadopted. This stage adds 131 main and 43 owned/wiring
+   lines: **+174 complete lines**, +1,662 lexical tokens and +6,306 LF-normalized
+   bytes. Verification adds 855 lines; implementation plus checks adds 1,029.
    The candidate previously delegated these behaviors to native callbacks; no
    duplicate owned algorithm existed to retire. No dependency or native/installer/
    launcher source is added. Unsafe declarations remain 2,885; cast-containing
-   lines remain 6,028. No net reduction, complete unsafe retirement,
+   lines fall two to 6,026. No net reduction, complete unsafe retirement,
    persistent ownership or backend-independence claim.
 
    Next dependencies, in order:
@@ -201,12 +207,14 @@ references; measure build/test time and resource growth before changing the loop
      bodies and compare actual collection, motion and event persistence tails.
    - [x] Share Shaktool room scroll/event control and retire two bodies; compare
      actual room setup, bomb fuse, camera and persistent event consumers.
+   - [x] Share animal-rescue wall/event/passage/door-gate control and retire five
+     bodies; compare actual script, terrain, collision and event consumers.
    - Close remaining room/event/boss setups, then constants/no-op/result routes.
      Preserve synchronous writes, nested displacement and failure prefixes before
      retiring native dispatch. The 115-identity inventory is in the local door
-     handoff; 19 room/event/boss and 14 residual identities remain. Select one
-     coherent responsibility through caller/validation investigation. Animal rescue
-     passage control is next; the Shaktool handoff records retained dependencies.
+     handoff; 17 room/event/boss and 14 residual identities remain. Select one
+     coherent responsibility through caller/validation investigation. The animal-rescue
+     handoff records retained dependencies and the corrected numeric route audit.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -214,7 +222,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified Shaktool continuation, with
+   `runtime-impact-working/` is the verified animal-rescue continuation, with
+   `ANIMAL_RESCUE_HANDOFF.md`, `animal-rescue-price.json` and
+   `animal-rescue-check-attempt-2.log`. `animal-rescue-parent/` preserves prior
+   main/carrier/local/composition inputs. Shaktool evidence remains in
    `SHAKTOOL_HANDOFF.md`, `shaktool-price.json` and `shaktool-check-attempt-1.log`.
    `shaktool-parent/` preserves prior main/carrier/local/composition inputs.
    Booster-escape evidence remains in

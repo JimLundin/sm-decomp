@@ -800,18 +800,6 @@ crate::game::callback_dispatch! {
         );
         0
     };
-    [8698309] PlmSetup_B9ED_CrittersEscapeBlock [] {
-        let v1: u16 = word!(game.plm_block_indices[(j >> 1)]);
-        WriteLevelDataBlockTypeAndBts(v1, 0xc04f, game);
-        let v2: u16 = (v1 as i32 + word!(game.room_width_in_blocks) as i32 * 2) as u16;
-        WriteLevelDataBlockTypeAndBts(v2, 0xd0ff, game);
-        WriteLevelDataBlockTypeAndBts(
-            (v2 as i32 + word!(game.room_width_in_blocks) as i32 * 2) as u16,
-            0xd0ff,
-            game,
-        );
-        0
-    };
     [8698353] sub_84B9F1 [] {
         let v1: u16 = word!(game.plm_block_indices[(j >> 1)]);
         update_level_block_bits((v1 >> 1) as usize, 0xfff, 0x8000, game);
@@ -823,12 +811,6 @@ crate::game::callback_dispatch! {
         update_level_block_bits((v3 >> 1) as usize, 0xfff, 0x8000, game);
         let v4: i32 = (word!(game.room_width_in_blocks) as i32 * 2 + v3 as i32) as u16 as i32 >> 1;
         update_level_block_bits(v4 as usize, 0xfff, 0x8000, game);
-        0
-    };
-    [8698633] PlmSetup_BB30_CrateriaMainstreetEscape [] {
-        if CheckEventHappened(0xf, game) == 0 {
-            word!(game.plm_header_ptr[(j >> 1)] = 0);
-        }
         0
     };
     [8703957] PlmSetup_D0E8_GiveSamusDamage [] {
@@ -986,6 +968,8 @@ crate::game::callback_dispatch! {
         8706700 => [crate::game::mechanism_eye_door_ram::begin(j, crate::game::mechanism_eye_door::Part::Eye, game)];
         8706745 => [crate::game::mechanism_eye_door_ram::begin(j, crate::game::mechanism_eye_door::Part::Body, game)];
         8706846 => [crate::game::mechanism_metroid_quota_ram::begin(j, game)];
+        8698309 => [crate::game::mechanism_animal_rescue_ram::setup(j, crate::game::mechanism_animal_rescue::Setup::RescueWall, game)];
+        8698633 => [crate::game::mechanism_animal_rescue_ram::setup(j, crate::game::mechanism_animal_rescue::Setup::MainStreetPassage, game)];
         8698076 => [crate::game::mechanism_shaktool_ram::begin(game)];
         8698012 => [crate::game::mechanism_booster_escape_ram::begin(j, game)];
         8697795 => [crate::game::mechanism_sound_delay_ram::begin(j, game)];
@@ -1096,13 +1080,6 @@ crate::game::callback_dispatch! {
             PlmPreInstr_PlayDudSound(k, game);
         } else {
             PlmPreInstr_GoToLinkInstruction(k, game);
-        };
-    };
-    [8699440] PlmPreInstr_GotoLinkIfCrittersEscaped [] {
-        if CheckEventHappened(0xf, game) & 1 != 0 {
-            PlmPreInstr_GoToLinkInstruction(k, game);
-        } else {
-            PlmPreInstr_PlayDudSound(k, game);
         };
     };
     [8704348] PlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed [] {
@@ -1238,6 +1215,7 @@ crate::game::callback_dispatch! {
         8697839 => [crate::game::mechanism_booster_escape_ram::poll(crate::game::mechanism_booster_escape::Stage::BoosterCollected, k, game)];
         8697898 => [crate::game::mechanism_booster_escape_ram::poll(crate::game::mechanism_booster_escape::Stage::PlayerFarLeft, k, game)];
         8697926 => [crate::game::mechanism_booster_escape_ram::poll(crate::game::mechanism_booster_escape::Stage::AdvanceLava, k, game)];
+        8699440 => [crate::game::mechanism_animal_rescue_ram::poll_rescue_gate(k, game)];
         8698032 => [crate::game::mechanism_shaktool_ram::poll(k, game)];
         8697821 => [crate::game::mechanism_sound_delay_ram::poll(k, game)];
         8684649 => [()]; 8708008 => [()]; 8685264 => [()]; 8684774 => [()]; 8684861 => [()];
@@ -1324,10 +1302,6 @@ crate::game::callback_dispatch! {
         }
         CallSomeSamusCode(1, game);
         PlmScript::jump(plmp.word(0))
-    };
-    [8698661] PlmInstr_MovePlmRight4Blocks [] {
-        word!(game.plm_block_indices[(k >> 1)] += 8);
-        plmp
     };
     [8699455] PlmInstr_SetGreyDoorPreInstr [] {
         word!(
@@ -1799,7 +1773,6 @@ crate::game::callback_dispatch! {
     k: u16,
     game: &mut Game,
 ) -> PlmScript];
-    [8698297] PlmInstr_SetCrittersEscapedEvent [plmp] { SetEventHappened(0xf, game); };
     @functions [pub unsafe fn (plmp: PlmScript, k: u16, game: &mut Game) -> PlmScript];
     [8698845] PlmInstr_ClearTrigger [plmp] { word!(game.plm_timers[(k >> 1)] = 0); };
     [8698849] PlmInstr_SpawnEproj [plmp.advance(2)] {
@@ -1948,6 +1921,8 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (plmp: PlmScript, k: u16, game: &mut Game) -> PlmScript];
     [8709691] PlmInstr_E63B [plmp] { word!(game.fx_y_vel = -32i32 as u16); };
     @external {
+        8698297 => [{crate::game::mechanism_animal_rescue_ram::mark_rescued(game); j}];
+        8698661 => [{crate::game::mechanism_animal_rescue_ram::move_passage(k, game); j}];
         8685348 => [PlmInstr_Goto(j, k)];
         8694941 => [{crate::game::mechanism_plants_ram::hurt(game); j}];
         8694961 => [{crate::game::mechanism_plants_ram::protect(game); j}];

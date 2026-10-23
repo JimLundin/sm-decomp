@@ -414,6 +414,8 @@ pub mod game {
     pub(crate) mod mechanism_eye_door_ram;
     pub(crate) mod mechanism_metroid_quota;
     pub(crate) mod mechanism_metroid_quota_ram;
+    pub(crate) mod mechanism_animal_rescue;
+    pub(crate) mod mechanism_animal_rescue_ram;
     pub(crate) mod mechanism_shaktool;
     pub(crate) mod mechanism_shaktool_ram;
     pub(crate) mod mechanism_booster_escape;
