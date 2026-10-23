@@ -25,12 +25,13 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    RC["Complete caller + content contract<br/>source review PASS"]:::done --> RD["Concrete declarations<br/>in preparation"]:::active
+    RC["Complete caller + content contract<br/>source review PASS"]:::done --> RD["24 concrete declaration files<br/>source review PASS"]:::done
     RU["84 additional bytes<br/>disjoint union audit PASS"]:::done --> RD
     RR["36 actual room references<br/>execution + independent audit PASS"]:::done --> RI["Production contact / start / IRQ<br/>implementation pending"]:::pending
-    RD --> RB["Declaration compile + review<br/>pending"]:::pending --> RI
+    RD --> RB["Declaration compile<br/>PASS"]:::done --> RS["Simplify private representations<br/>in progress"]:::active
+    RS --> RV["Revised interface review + compile<br/>pending"]:::pending --> RI
     RI --> RT["Supplied topology / actual callers<br/>verification pending"]:::pending
-    class RC,RD,RU,RR,RI,RB,RT changed
+    class RD,RB,RS,RV changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5

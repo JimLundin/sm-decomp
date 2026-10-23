@@ -431,8 +431,14 @@ references; measure build/test time and resource growth before changing the loop
 
    Next complete responsibility: room-entry protocol and configurable connections,
    including actual contact/start/initial/door/IRQ paths, ordered content reads,
-   setup effects and suspension. Private next-room-session declarations are being
-   prepared against reviewed contractv3; no new room implementation is adopted.
+   setup effects and suspension. Private next-room-session's24declaration files
+   pass independent source review and root metadata compilation (0.53s),
+   fingerprint04c37121. No new room implementation is adopted. Complete cost is
+   now estimated+1150..2550production lines, verification separate; no reduction
+   claim. Before implementation, simplify redundant private token wrappers/type
+   tags and host forwarding, and separate persistent assets from transient DMA
+   sources. Preserve full caller/content scope and original read/effect timing;
+   revised declarations require review and compilation before parallel lanes.
    Reuse current owners;84additional disjoint bytes comprise82room-related bytes
    and two shared lossless continuation bytes (proposed union52,373). Retire the
    actual competing orchestration and stale door inputs in the same adoption.
