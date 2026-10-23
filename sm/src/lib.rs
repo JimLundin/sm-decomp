@@ -406,6 +406,9 @@ pub mod game {
     pub(crate) mod mechanism_torizo_statue_ram;
     pub(crate) mod mechanism_noob_tube;
     pub(crate) mod mechanism_noob_tube_ram;
+    pub(crate) mod mechanism_displacement;
+    pub(crate) mod samus_room_contact;
+    pub(crate) mod samus_room_contact_ram;
     pub(crate) mod mechanism_setup;
     pub(crate) mod mechanism_setup_ram;
     pub(crate) mod mechanism_setup_runtime;

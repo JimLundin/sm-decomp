@@ -1,4 +1,5 @@
-//! Native compatibility boundary for setup diagnostics and raw collision displacement.
+//! Native setup effects and diagnostics with explicit contact-displacement transport.
+use crate::game::mechanism_displacement::Displacement;
 use crate::game::mechanism_setup::{self, Contact, Diagnostic};
 use crate::game::mechanism_setup_ram::{self, Boundary};
 use crate::game_state::Game;
@@ -6,12 +7,11 @@ use crate::c_library::__assert_fail;
 use core::ffi::c_char;
 
 /// # Safety
-/// Setup callbacks require initialized runtime state. A non-null displacement
-/// must remain live and writable throughout setup and nested mechanism creation.
+/// Native setup callbacks and fatal diagnostics require initialized runtime state.
 pub unsafe fn execute(
     original: u32,
     j: u16,
-    displacement: *mut i32,
+    displacement: &mut Displacement<'_>,
     accumulator: u16,
     game: &mut Game,
 ) -> u8 {

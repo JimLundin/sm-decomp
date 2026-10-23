@@ -1,5 +1,6 @@
 //! PLM slot allocation and ordered initialization for each source of room objects.
 //! RAM stays authoritative; setup retains the caller's collision displacement.
+use crate::game::mechanism_displacement::Displacement;
 use crate::game::constants::bank_8f::addr_kDoorClosingPlmIds;
 use crate::game::{mechanism_creation::Source, mechanism_creation_ram};
 use crate::game::progress_flags::PrepareBitAccess;
@@ -12,13 +13,13 @@ use core::mem::offset_of;
 const header_record: unsafe fn(u16, &mut Game) -> RomRecord = crate::rtl::rom_bank_record::<0x84>;
 
 pub unsafe fn SpawnHardcodedPlm(args: SpawnHardcodedPlmArgs, game: &mut Game) {
-    unsafe { spawn_hardcoded_plm(args, core::ptr::null_mut(), game) }
+    unsafe { spawn_hardcoded_plm(args, &mut Displacement::Absent, game) }
 }
 
 // Nested setup spawns retain the calling collision's displacement.
 pub(crate) unsafe fn spawn_hardcoded_plm(
     args: SpawnHardcodedPlmArgs,
-    displacement: *mut i32,
+    displacement: &mut Displacement<'_>,
     game: &mut Game,
 ) {
     unsafe {
@@ -36,19 +37,22 @@ pub(crate) unsafe fn spawn_hardcoded_plm(
 
 pub unsafe fn SpawnRoomPLM(address: u16, game: &mut Game) {
     unsafe {
-        mechanism_creation_ram::create(Source::Room { address }, core::ptr::null_mut(), game);
+        mechanism_creation_ram::create(Source::Room { address }, &mut Displacement::Absent, game);
     }
 }
 
 /// Prepare a PLM at the current collision block and invoke its legacy setup.
 pub unsafe fn SpawnPLM(header: u16, game: &mut Game) -> u8 {
-    unsafe { SpawnPLMWithCollision(header, core::ptr::null_mut(), game) }
+    unsafe { SpawnPLMWithCollision(header, &mut Displacement::Absent, game) }
 }
 
 /// # Safety
-/// Setup requires initialized runtime state. A non-null displacement must stay
-/// live and writable through setup and any nested PLM spawns.
-pub unsafe fn SpawnPLMWithCollision(header: u16, displacement: *mut i32, game: &mut Game) -> u8 {
+/// Setup requires initialized runtime state. The active contact remains borrowed through setup and nested PLM spawns.
+pub unsafe fn SpawnPLMWithCollision(
+    header: u16,
+    displacement: &mut Displacement<'_>,
+    game: &mut Game,
+) -> u8 {
     unsafe { mechanism_creation_ram::create(Source::Collision { header }, displacement, game) }
 }
 

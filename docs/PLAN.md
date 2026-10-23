@@ -108,68 +108,57 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage unifies typed setup dispatch after `e5f30bdf`.
-   One full-u32 decoder covers all 115 identities, including the fourteen
-   residual result/diagnostic routes. Captured original identities preserve
-   aliases independently of semantic actions. Main and candidate share the
-   unsafe-forbidden ordinary executor; the native bank dispatcher, six residual
-   bodies and duplicate candidate mappings/forwarders are retired. Raw contact
-   pointers and exact fatal diagnostics remain explicit runtime boundaries.
-   RAM remains authoritative; this does not establish persistent ownership.
+   Latest verified stage shares the complete Samus movement-contact operation
+   from `7553e8c3`. An unsafe-forbidden core owns scan displacement, target, edge
+   and traversal state across material reactions, setup/nested hands and resumed
+   movement. Four bank movement/pose entries and their raw displacement chain are
+   retired; actual sm90/sm91/sm8f callers use the shared adapter. The core accepts
+   opaque content headers and ordinary operations, without Game or RAM. Lazy
+   Absent/Local/RamOffset transport preserves guarded access and aliases without
+   copyback. Persistent Samus/room state remains RAM-authoritative; ROM, physical
+   bus reads, player-lock and native diagnostics remain explicit dependencies.
 
-   All 29 comparison suites passed (27.1911562s suite time), with all 28
-   retained vectors unchanged. New [115,199,62,5] covers semantic routing,
-   residual/boundary observations, creation/consumer observations and raw-pointer
-   cases. These are not 115 independently executed native bodies. Source
-   identities: 244 runtime/299 local. New creator tests execute actual spawning
-   wrappers, grapple and nested hands; historical native lifecycle references
-   otherwise retain frozen creation/dispatch. Five old/new fatal subprocess
-   pairs match output and status77: harness assertion interception, not a
-   shipped frontend exit; no postassert tail execution is claimed.
-   Supplemental gate suite [1348,20,5,4] passed separately in 0.0291543s on
-   the same frozen build, including Down/Up accumulator behavior. Thus 30
-   distinct suites passed, not one 30-suite invocation. Four checked-only gate
-   cases retain undefined-native exclusions. Constructed comparisons do not
-   establish movie or boot-to-credits coverage; prior exclusions/Intro mismatch
-   remain. No new movie frames were run for this dispatch change.
+   All 31 suites pass (27.14353s suite time), with all 30 retained vectors unchanged.
+   New [2248,48,23,9]: 2,248 actual old/new runtime pairs including 48 expected
+   failures; 23 authored owner scenarios; nine boundary groups (two physical bus
+   cases, four ignored-offset groups and three checked access failures). Checks
+   cover all four APIs, slope indices/orientations and movement signs, first/middle/
+   last sample stops, pose probes, live width/position/parity changes, spike guards
+   and damage wrapping, nested hands, and defined missing/truncated-ROM prefixes.
+   Source identities: 252 runtime/302 local. Root independently matched all 199
+   frozen main Rust files to committed `7553e8c3`. Five fatal old/new subprocess
+   pairs match output/status77 under assertion interception, not frontend abort;
+   no postassert tail execution is claimed.
 
-   Production release/frontend/verifier/source passed in 58.98s. Candidate
-   retry passed in 49.48s after a 10.29s private Hand reexport failure. Carrier
-   passed in 19.81s; harness retry passed in 22.01s after an 8.48s fixture-only
-   inferred-i32 literal failure. Failed logs remain local; production source
-   stayed unchanged after its successful build.
+   New scans use actual new adapters against frozen old scans. Retained creation
+   and grapple comparisons explicitly select old/new creation. Other historical
+   native scan/lifecycle references remain frozen. Carrier helpers expose the
+   narrow slope seam; historical spawn/Chozo observer hooks remain test-only.
+   The cross-bank slope case uses initialized SNES bus reads at a direct material
+   seam: its full-scan level index would be outside the old defined domain.
+   Invalid offset tests use checked transport, never fabricated invalid references.
+   These constructed checks establish neither movie nor boot-to-credits coverage.
+   No movie frames were run; earlier native-access exclusions/Intro mismatch remain.
 
-   Main is **105,946 Rust lines in 199 files**. Prospective composition is
-   **114,270 (+8,324)** in 306 files, unadopted. Deltas in lines/lexical tokens/
-   LF-normalized bytes: main [356,512,5078], complete composition
-   [-506,-8463,-32899], complete verification [927,13668,52017], implementation
-   plus checks [421,5205,19118]. Local5 [-862,-8972,-37922] already overlaps
-   composition. Carrier [634,6487,27571] includes main; carrier-only verification
-   [278,5975,22493] is already included in complete verification. No packing or
-   new dependency/native/installer additions. Unsafe declarations: 2,875;
-   cast-containing lines: 5,992. Maintained implementation including C/header:
-   106,508; including installers/launcher: 107,418. Main growth pays for shared
-   safe dispatch while the prospective composition shrinks; complete unsafe
-   retirement and backend independence remain unfinished.
+   Production release/frontend/verifier/source passed first attempt in 57.97s,
+   with final source unchanged. Candidate library release passed in 48.49s after
+   a mistaken frontend-enabled invocation encountered access denied in an optional
+   dependency build script (3.92s); the established library-only command was used.
+   Final carrier/harness builds passed in 13.09s/13.05s. Earlier harness compilation,
+   authored FF expectation and missing historical Chozo observer failures were
+   repaired; logs remain local. No production behavior fixes were needed.
 
-   Active implementation: complete Samus movement-contact transaction from
-   `7553e8c3`. Share an unsafe-forbidden core owning temporary displacement,
-   target/edge/span and traversal state across horizontal/vertical scans,
-   material reactions, setup/nested hands and resumed movement. Migrate
-   Samus_MoveRight_NoSolidColl, Samus_MoveDown_NoSolidColl,
-   WallJumpBlockCollDetect and Samus_CollDetectChangedPose. Delete the six raw
-   displacement producers and raw forwarding through creation/setup/hands.
-   Compatibility transport distinguishes absent, local displacement and lazy
-   checked RAM offsets without an eager borrow or copyback. The core receives
-   ordinary operations; Game, numeric addresses and bus reads stay in adapters.
-   Preserve all live reads, ordered effects and vertical slope's two bus-byte
-   reads (including bank crossing). Persistent Samus/room RAM authority remains.
-   Candidate projectile scans are not evidence for this Samus responsibility.
-   Validate the four actual entries against frozen source, material/slope/door/
-   spike/extension branches, callback changes, pose probes, traversal retries,
-   nested alias effects and diagnostics. Price core/adapters/callers and all
-   checks; source growth is not yet measured. One implementer and independent
-   caller/fixture reviewer are active; root owns registrations and final builds.
+   Main is **105,958 Rust lines in 202 files**; candidate **114,282 (+8,324)**
+   in 309 files remains unadopted. Deltas in lines/lexical tokens/LF bytes:
+   main [12,684,-3563], complete composition [12,695,-3483], complete verification
+   [2410,21832,91394], implementation plus checks [2422,22527,87911]. Local
+   production [0,11,74] already overlaps composition. Carrier-only verification
+   [1246,10908,48311] is included in complete verification. Unsafe declarations
+   fall by 28 to 2,847; cast-containing lines remain 5,992. Maintained implementation
+   including C/header: 106,520; including installers/launcher: 107,430. Canonical
+   formatting passes; no packing or new dependency/native/installer additions.
+   Temporary scan ownership explains the small main growth; persistent Session
+   ownership, all-unsafe retirement and backend independence remain unfinished.
 
    Next dependencies, in order:
 
@@ -254,6 +243,9 @@ references; measure build/test time and resource growth before changing the loop
    - [x] Close the 14 residual setup identities and retire native bank setup
      dispatch. Share full-u32 typed decoding and ordinary execution, preserving
      aliases, synchronous writes, nested displacement and fatal diagnostics.
+   - [x] Share the complete operation-owned Samus movement/contact scan and
+     retire raw displacement forwarding through creation/setup/nested hands;
+     validate all four movement/pose entries, branches and resume/failure tails.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -261,7 +253,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified setup-dispatch continuation,
+   `runtime-impact-working/` is the verified Samus contact continuation,
+   with `SAMUS_CONTACT_HANDOFF.md`, `samus-contact-price.json` and
+   `samus-contact-results.json`; `samus-contact-parent/` preserves frozen inputs.
+   Setup-dispatch evidence remains
    with `SETUP_DISPATCH_HANDOFF.md`, `setup-dispatch-price.json`,
    `setup-dispatch-results.json` and supplemental `setup-dispatch-gate-results.json`.
    `setup-dispatch-parent/` preserves frozen inputs. Noob Tube evidence remains

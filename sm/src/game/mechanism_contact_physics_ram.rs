@@ -1,4 +1,5 @@
-//! Scoped motion fields; raw collision displacement and fatal diagnostics remain boundaries.
+//! Scoped motion fields and lazy displacement access; fatal diagnostics remain native.
+use crate::game::mechanism_displacement::Displacement;
 use crate::game::mechanism_contact_physics::{self, Context, Field, Setup};
 use crate::game_state::Game;
 
@@ -48,11 +49,11 @@ pub unsafe fn missing_displacement(game: &mut Game) {
         crate::rtl::Unreachable(game);
     }
 }
-struct MotionFields<'a> {
+struct MotionFields<'a, 'b> {
     game: &'a mut Game,
-    displacement: *mut i32,
+    displacement: &'a mut Displacement<'b>,
 }
-impl Context for MotionFields<'_> {
+impl Context for MotionFields<'_, '_> {
     fn read(&self, field: Field) -> u16 {
         read(self.game, field)
     }
@@ -63,15 +64,13 @@ impl Context for MotionFields<'_> {
         clear_base_fraction_sign(self.game);
     }
     fn has_displacement(&self) -> bool {
-        !self.displacement.is_null()
+        self.displacement.present()
     }
     fn displacement(&self) -> i32 {
-        unsafe { *self.displacement }
+        self.displacement.read(self.game)
     }
     fn set_displacement(&mut self, value: i32) {
-        unsafe {
-            *self.displacement = value;
-        }
+        self.displacement.write(value, self.game);
     }
     fn missing_displacement(&mut self) {
         unsafe {
@@ -80,8 +79,7 @@ impl Context for MotionFields<'_> {
     }
 }
 /// # Safety
-/// A non-null displacement must remain valid for the guarded reads and writes.
-/// It is retained as a pointer so no exclusive displacement borrow spans RAM access.
-pub unsafe fn setup(kind: Setup, displacement: *mut i32, game: &mut Game) -> u8 {
+/// The missing-displacement diagnostic requires the initialized native runtime.
+pub unsafe fn setup(kind: Setup, displacement: &mut Displacement<'_>, game: &mut Game) -> u8 {
     mechanism_contact_physics::setup(&mut MotionFields { game, displacement }, kind)
 }

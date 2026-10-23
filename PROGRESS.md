@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 07:19 UTC**
+Updated: **2026-10-23 07:33 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -10,42 +10,32 @@ SNES backend remains the comparison oracle during migration.
 
 ## Latest verified milestone
 
-**Shared typed setup dispatch: all 115 setup identities decoded.**
+**Samus movement and room contact now share an operation-owned core.**
 
-- Main and candidate now share decoding and ordinary setup execution.
-- Removed the old bank dispatcher and duplicate candidate mappings while
-  preserving aliases, nested collision behavior and exact diagnostics.
-- Production and candidate release builds passed.
-- **29 comparison suites passed**, with all 28 earlier results unchanged;
-  a supplemental gate suite passed separately on the same build.
-- Five old/new fatal-diagnostic comparisons matched under the test harness.
+- Migrated horizontal/vertical movement, wall-jump collision and pose-change
+  collision, including nested mechanism setup and resumed movement.
+- Removed the raw displacement-pointer chain; temporary scan state has one owner.
+- Production and candidate builds passed. **All 31 comparison suites passed**,
+  with all 30 earlier results unchanged and five matching fatal-diagnostic pairs.
+- Added 2,248 runtime comparison cases, including 48 expected failures, plus
+  authored-state and boundary checks.
 
 | Verified measure | Value |
 | --- | ---: |
 | Setup identities decoded | 115 / 115 |
-| Maintained Rust source | 105,946 lines in 199 files |
-| Counted unsafe function declarations | 2,875 |
-| Prospective composition, not yet adopted | 114,270 lines in 306 files |
+| Maintained Rust source | 105,958 lines in 202 files |
+| Counted unsafe function declarations | 2,847 |
+| Prospective composition, not yet adopted | 114,282 lines in 309 files |
 
-This stage adds 356 lines to main and removes 506 lines from the complete
-prospective composition. Safety work has increased main-source size. The target
-remains below 100,000 maintained Rust lines, with all unsafe operations removed.
+This stage adds 12 lines to main and removes 28 unsafe function declarations.
+The complete composition plus retained verification grows by 2,422 lines.
+The target remains below 100,000 maintained Rust lines, with all unsafe
+operations removed.
 
 ## Work in progress
 
-**Samus movement and room contact: implementation in progress.**
-
-The next shared core will own each movement scan's temporary state and replace
-raw displacement pointers through mechanism setup and nested spawns. It covers
-horizontal/vertical movement, wall-jump collision and pose-change collision.
-Source review and production release/frontend/verifier builds passed. The
-prospective library build also passed. The initial candidate command mistakenly
-enabled frontend dependencies and received an access-denied error; the usual
-library-only command passed. Behavior comparisons, final accounting and the
-implementation commit are still pending. The figures above remain the last
-verified milestone.
-
-Persistent gameplay state remains in RAM. Renderer/audio replacement and an
+Remaining gameplay consumers and state-ownership transfers are next. Persistent
+Samus and room state still live in RAM. Renderer/audio replacement and an
 independently running game slice remain required parts of the destination.
 
 ## Verification limits

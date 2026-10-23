@@ -45,7 +45,6 @@ use crate::game::sm_94::{
     scale_sine_word, BlockCollNoWaveBeamHoriz, BlockCollNoWaveBeamVert, BlockCollWaveBeamHoriz,
     BlockCollWaveBeamVert, BlockInsideDetection, HandleGrappleBeamGfx,
     PostGrappleCollisionDetect_X, PostGrappleCollisionDetect_Y, Samus_AlignYPosSlope,
-    Samus_MoveDown_NoSolidColl, Samus_MoveRight_NoSolidColl, WallJumpBlockCollDetect,
 };
 use crate::game::sm_9b::{
     GrappleBeamFunc_BF1B, GrappleBeamHandler, HandleGrappleBeamFlare,
@@ -311,7 +310,10 @@ unsafe fn move_samus_horizontal_collision<const LEFT: bool>(mut amt: i32, game: 
             }
             Samus_AlignYPosSlope(game);
         } else {
-            amt = Samus_MoveRight_NoSolidColl(if LEFT { -amt } else { amt }, game);
+            amt = crate::game::samus_room_contact_ram::move_right(
+                if LEFT { -amt } else { amt },
+                game,
+            );
             if LEFT {
                 launch_motion_ram::record_movement(game, MovementDirection::Left, amt);
             } else {
@@ -626,7 +628,7 @@ pub unsafe fn Samus_MoveUp(mut amt: i32, game: &mut Game) {
             Samus_MoveUp_SetPoseCalcInput(game);
             Samus_MoveUp_NoColl(amt, game);
         } else {
-            amt = Samus_MoveDown_NoSolidColl(-amt, game);
+            amt = crate::game::samus_room_contact_ram::move_down(-amt, game);
             launch_motion_ram::record_movement(game, MovementDirection::Up, amt);
             Samus_MoveUp_SetPoseCalcInput(game);
         };
@@ -642,7 +644,7 @@ pub unsafe fn Samus_MoveDown(mut amt: i32, game: &mut Game) {
             Samus_MoveDown_SetPoseCalcInput(game);
             Samus_MoveDown_NoColl(amt, game);
         } else {
-            amt = Samus_MoveDown_NoSolidColl(amt, game);
+            amt = crate::game::samus_room_contact_ram::move_down(amt, game);
             launch_motion_ram::record_movement(game, MovementDirection::Down, amt);
             Samus_MoveDown_SetPoseCalcInput(game);
         };
@@ -1129,7 +1131,7 @@ pub unsafe fn Samus_GrappleWallJumpCheck(amt: i32, game: &mut Game) -> u8 {
         game.set_samus_collision_direction(direction);
         let result = Samus_CheckSolidEnemyColl(amt, game);
         if result.collision == 0 {
-            WallJumpBlockCollDetect(result.amt, game);
+            crate::game::samus_room_contact_ram::wall_jump(result.amt, game);
             if game.samus_collision_flag() == 0 {
                 return 0;
             }
@@ -1176,10 +1178,10 @@ pub unsafe fn Samus_WallJumpCheck(amt: i32, game: &mut Game) -> u8 {
         let mut distance = result.amt;
         if !enemy_contact {
             if left {
-                distance = WallJumpBlockCollDetect(distance, game);
+                distance = crate::game::samus_room_contact_ram::wall_jump(distance, game);
             } else {
                 distance = distance.wrapping_neg();
-                WallJumpBlockCollDetect(distance, game);
+                crate::game::samus_room_contact_ram::wall_jump(distance, game);
             }
             if game.samus_collision_flag() == 0 {
                 return 0;
@@ -1253,7 +1255,7 @@ pub unsafe fn Samus_Movement_00_Standing(game: &mut Game) {
         } else {
             if word!(game.elevator_status) != 0 {
                 word!(game.samus_collision_direction = 2);
-                Samus_MoveDown_NoSolidColl((1i16 as i32) << 16, game);
+                crate::game::samus_room_contact_ram::move_down((1i16 as i32) << 16, game);
             }
             word!(game.input_to_pose_calc = 0);
         };
@@ -2768,7 +2770,7 @@ pub unsafe fn Samus_ShinesparkMove_X(game: &mut Game) {
                 })
         };
         if move_right {
-            Samus_MoveRight_NoSolidColl(amt, game);
+            crate::game::samus_room_contact_ram::move_right(amt, game);
             Samus_AlignYPosSlope(game);
         }
         let mut v4: i16 =
@@ -2808,7 +2810,7 @@ pub unsafe fn Samus_ShinesparkMove_Y(game: &mut Game) {
         if cres.collision != 0 {
             word!(game.samus_collision_flag = cres.collision);
         } else {
-            Samus_MoveDown_NoSolidColl(-amt, game);
+            crate::game::samus_room_contact_ram::move_down(-amt, game);
         }
         if word!(game.samus_y_pos) as i32 - word!(game.samus_prev_y_pos) as i32 + 14 & 0x8000 != 0 {
             word!(game.samus_prev_y_pos = (word!(game.samus_y_pos)).wrapping_add(14));

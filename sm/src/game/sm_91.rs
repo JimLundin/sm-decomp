@@ -21,7 +21,6 @@ use crate::game::sm_90::{
     Samus_InitWallJump, Samus_SetSpeedForKnockback_Y, UpdateBeamTilesAndPalette,
     WriteBeamPalette_A,
 };
-use crate::game::sm_94::{Samus_CollDetectChangedPose, Samus_MoveRight_NoSolidColl};
 use crate::game::sm_9b::{GrappleBeamFunc_BD95, GrappleBeamFunc_BEEB};
 use crate::game::sm_a0::Samus_CheckSolidEnemyColl;
 
@@ -2034,7 +2033,7 @@ pub unsafe fn Samus_CheckWalkedIntoSomething(game: &mut Game) {
                 })
         };
         if move_right {
-            Samus_MoveRight_NoSolidColl(amt, game);
+            crate::game::samus_room_contact_ram::move_right(amt, game);
             if (word!(game.samus_collision_flag) == 0) {
                 word!(game.samus_collides_with_solid_enemy = 0);
                 return;
@@ -2173,7 +2172,7 @@ pub unsafe fn Samus_HandleTransitionsA_7(game: &mut Game) {
                     .offset(word!(game.samus_pose) as isize))
                 .y_radius as u16
             );
-            amt = Samus_CollDetectChangedPose(amt, game);
+            amt = crate::game::samus_room_contact_ram::changed_pose(amt, game);
         }
         word!(checked_i32, game.samus_y_pos += (amt >> 16));
         word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
@@ -3460,7 +3459,7 @@ pub unsafe fn HandleCollDueToChangedPose(game: &mut Game) {
             word!(game.samus_pose = word!(game.samus_prev_pose));
             return;
         }
-        amt = Samus_CollDetectChangedPose(
+        amt = crate::game::samus_room_contact_ram::changed_pose(
             (-(word!(game.samus_y_radius_diff) as i32) as i16 as i32) << 16,
             game,
         );
@@ -3468,7 +3467,7 @@ pub unsafe fn HandleCollDueToChangedPose(game: &mut Game) {
             word!(game.block_collision_flags = 1);
         }
         word!(game.samus_space_to_move_up_blocks = (amt >> 16) as u16);
-        amt = Samus_CollDetectChangedPose(
+        amt = crate::game::samus_room_contact_ram::changed_pose(
             (word!(game.samus_y_radius_diff) as i16 as i32) << 16,
             game,
         );
@@ -3522,7 +3521,7 @@ pub unsafe fn HandleCollDueToChangedPose_Solid_CollBelow(game: &mut Game) -> u8 
 }
 pub unsafe fn HandleCollDueToChangedPose_Block_CollAbove(game: &mut Game) -> u8 {
     unsafe {
-        let amt: i32 = Samus_CollDetectChangedPose(
+        let amt: i32 = crate::game::samus_room_contact_ram::changed_pose(
             ((((word!(game.samus_y_radius_diff)) as i16)
                 .wrapping_sub((word!(game.samus_space_to_move_up_blocks)) as i16))
                 as i32)
@@ -3542,7 +3541,7 @@ pub unsafe fn HandleCollDueToChangedPose_Block_CollAbove(game: &mut Game) -> u8 
 }
 pub unsafe fn HandleCollDueToChangedPose_Block_CollBelow(game: &mut Game) -> u8 {
     unsafe {
-        let amt: i32 = Samus_CollDetectChangedPose(
+        let amt: i32 = crate::game::samus_room_contact_ram::changed_pose(
             ((((word!(game.samus_space_to_move_down_blocks)) as i16)
                 .wrapping_sub((word!(game.samus_y_radius_diff)) as i16)) as i32)
                 << 16,

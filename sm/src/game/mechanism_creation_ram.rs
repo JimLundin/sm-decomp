@@ -1,4 +1,5 @@
 //! Checked compatibility boundary for the shared mechanism creation protocol.
+use crate::game::mechanism_displacement::Displacement;
 use crate::game::constants::bank_84::addr_kDefaultPlmDrawInstruction;
 use crate::game::mechanism_creation::{self, Context, Field, Source, SourceKind};
 use crate::game::mechanism_setup_runtime;
@@ -14,11 +15,11 @@ enum Definition {
     Collision(u32),
     Placed(RomRecord, SourceKind),
 }
-struct Adapter<'a> {
+struct Adapter<'a, 'b> {
     game: &'a mut Game,
-    displacement: *mut i32,
+    displacement: &'a mut Displacement<'b>,
 }
-impl Context for Adapter<'_> {
+impl Context for Adapter<'_, '_> {
     type Header = u16;
     type Block = u16;
     type Pre = u16;
@@ -123,8 +124,11 @@ impl Context for Adapter<'_> {
 }
 
 /// # Safety
-/// Setup requires initialized runtime state. A non-null displacement must remain
-/// live and writable throughout setup and its nested mechanism creations.
-pub unsafe fn create(source: Source<u16, u16, u16>, displacement: *mut i32, game: &mut Game) -> u8 {
+/// Setup requires initialized runtime state. The active contact remains borrowed throughout setup and nested creation.
+pub unsafe fn create(
+    source: Source<u16, u16, u16>,
+    displacement: &mut Displacement<'_>,
+    game: &mut Game,
+) -> u8 {
     mechanism_creation::create(&mut Adapter { game, displacement }, source)
 }

@@ -1,4 +1,5 @@
 //! Checked Chozo fields with explicit progression, player-lock and creation effects.
+use crate::game::mechanism_displacement::Displacement;
 use crate::game::mechanism_hands::{self, Context, GroundedPose, Hand, ShipScrollPair};
 use crate::game_state::Game;
 
@@ -91,10 +92,10 @@ impl<E: Effects> Context for HandFields<'_, E> {
         self.put(0x1c37 + 2 * slot, 0);
     }
 }
-struct RuntimeEffects {
-    displacement: *mut i32,
+struct RuntimeEffects<'a, 'b> {
+    displacement: &'a mut Displacement<'b>,
 }
-impl Effects for RuntimeEffects {
+impl Effects for RuntimeEffects<'_, '_> {
     fn boss_defeated(&mut self, game: &mut Game) -> bool {
         crate::game::progress_flags::CheckBossBitForCurArea(1, game) & 1 != 0
     }
@@ -121,9 +122,13 @@ impl Effects for RuntimeEffects {
     }
 }
 /// # Safety
-/// Runtime state must be initialized, and any non-null displacement must remain
-/// valid through the existing player-lock callback and nested mechanism setup.
-pub unsafe fn setup(j: u16, hand: Hand, displacement: *mut i32, game: &mut Game) -> u8 {
+/// Runtime state must satisfy the existing player-lock and nested setup contracts.
+pub unsafe fn setup(
+    j: u16,
+    hand: Hand,
+    displacement: &mut Displacement<'_>,
+    game: &mut Game,
+) -> u8 {
     mechanism_hands::setup(
         &mut HandFields {
             game,
@@ -134,12 +139,25 @@ pub unsafe fn setup(j: u16, hand: Hand, displacement: *mut i32, game: &mut Game)
     )
 }
 
-fn fields(game: &mut Game) -> HandFields<'_, RuntimeEffects> {
+struct NoEffects;
+impl Effects for NoEffects {
+    fn boss_defeated(&mut self, _: &mut Game) -> bool {
+        unreachable!()
+    }
+    fn mark_event(&mut self, _: &mut Game) {
+        unreachable!()
+    }
+    fn lock_player(&mut self, _: &mut Game) {
+        unreachable!()
+    }
+    fn spawn_child(&mut self, _: Hand, _: &mut Game) {
+        unreachable!()
+    }
+}
+fn fields(game: &mut Game) -> HandFields<'_, NoEffects> {
     HandFields {
         game,
-        effects: RuntimeEffects {
-            displacement: core::ptr::null_mut(),
-        },
+        effects: NoEffects,
     }
 }
 pub fn prepare_ship_trigger(j: u16, game: &mut Game) -> u8 {
