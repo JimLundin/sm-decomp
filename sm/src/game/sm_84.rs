@@ -675,35 +675,10 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
         }
     }
 }
-pub fn DeletePlm(j: u16, game: &mut Game) {
-    let header_offset = 0x1c37 + usize::from(j & !1);
-    game.g_ram[header_offset..header_offset + 2].fill(0);
-}
-fn setup_extension_block(j: u16, block_type_and_bts: u16, game: &mut Game) -> u8 {
-    let slot_offset = 0x1c87 + usize::from(j & !1);
-    let block_index = u16::from_le_bytes([game.g_ram[slot_offset], game.g_ram[slot_offset + 1]]);
-    WriteLevelDataBlockTypeAndBts(block_index, block_type_and_bts, game);
-    DeletePlm(j, game);
-    0
-}
 fn advance_plm_instruction(word_index: usize, bytes: u16, game: &mut Game) {
     let offset = 0x1d27 + word_index * 2;
     let instruction = u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]]);
     game.g_ram[offset..offset + 2].copy_from_slice(&instruction.wrapping_add(bytes).to_le_bytes());
-}
-pub fn SkipDebugDrawInstructionsForScrollPlms(j: u16, game: &mut Game) {
-    advance_plm_instruction(usize::from(j >> 1), 4, game);
-}
-fn setup_scroll_block(j: u16, block_type_and_bts: u16, game: &mut Game) -> u8 {
-    let slot_index = usize::from(j & !1);
-    let block_offset = 0x1c87 + slot_index;
-    let block_index = u16::from_le_bytes([game.g_ram[block_offset], game.g_ram[block_offset + 1]]);
-    WriteLevelDataBlockTypeAndBts(block_index, block_type_and_bts, game);
-    let trigger_offset = 0x1e17 + slot_index;
-    game.g_ram[trigger_offset..trigger_offset + 2].fill(0);
-    // Read the live instruction after the level-data/BTS and trigger writes.
-    SkipDebugDrawInstructionsForScrollPlms(j, game);
-    0
 }
 pub fn PlmSetup_ReturnCarryClear(_j: u16) -> u8 {
     0
@@ -996,34 +971,6 @@ crate::game::callback_dispatch! {
         0
     };
     @functions [pub fn (j: u16, game: &mut Game) -> u8];
-    [8696723] PlmSetup_B6FF_ScrollBlockTouch [] {
-        let read_word = |game: &Game, offset: usize| {
-            u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
-        };
-        let write_word = |game: &mut Game, offset: usize, value: u16| {
-            game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
-        };
-        let block_offset = 0x1c87 + usize::from(j & !1);
-        let block_index = read_word(game, block_offset);
-        write_word(game, block_offset, 0);
-        // Search after clearing our block index, including our own slot as before.
-        let Some(slot) = (0..40)
-            .rev()
-            .find(|&slot| read_word(game, 0x1c87 + slot * 2) == block_index)
-        else {
-            // The original handler hangs when no matching scroll PLM exists.
-            loop {}
-        };
-        let index = slot * 2;
-        if read_word(game, 0x1e17 + index) & 0x8000 == 0 {
-            write_word(game, 0x1e17 + index, 0x8000);
-            // Retain both separate instruction writes before setting its timer.
-            advance_plm_instruction(slot, 1, game);
-            advance_plm_instruction(slot, 1, game);
-            write_word(game, 0xde1c + index, 1);
-        }
-        0
-    };
     @functions [pub fn (_j: u16, game: &mut Game) -> u8];
     @functions [pub unsafe fn (j: u16, game: &mut Game) -> u8];
     @prefix { let v1: i32 = j as i32 >> 1; };
@@ -1123,14 +1070,6 @@ crate::game::callback_dispatch! {
         }
         0
     };
-    @forward [pub fn (j: u16, game: &mut Game) -> u8];
-    [8696634] PlmSetup_B638_Rightwards_Extension => setup_extension_block(j, 0x50ff, game);
-    [8696645] PlmSetup_B63F_Leftwards_Extension => setup_extension_block(j, 0x5001, game);
-    [8696656] PlmSetup_B643_Downwards_Extension => setup_extension_block(j, 0xd0ff, game);
-    [8696667] PlmSetup_B647_Upwards_Extension => setup_extension_block(j, 0xd001, game);
-    @forward [pub fn (j: u16, game: &mut Game) -> u8];
-    [8696689] PlmSetup_B703_ScrollPLM => setup_scroll_block(j, 0x3046, game);
-    [8696706] PlmSetup_B707_SolidScrollPLM => setup_scroll_block(j, 0xb046, game);
     @forward [pub unsafe fn (j: u16, game: &mut Game) -> u8];
     [8711757] sub_84EE4D => sub_84EE5F(j, 8, game);
     [8711762] sub_84EE52 => sub_84EE5F(j, 0xa, game);
@@ -1198,6 +1137,13 @@ crate::game::callback_dispatch! {
         8696203 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Place(crate::game::mechanism_stations::Service::Map), game)];
         8696349 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Place(crate::game::mechanism_stations::Service::Energy), game)];
         8696389 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Place(crate::game::mechanism_stations::Service::Missile), game)];
+        8696634 => [crate::game::mechanism_scroll_setup_ram::setup(j, crate::game::mechanism_scroll_setup::Setup::Place(crate::game::mechanism_scroll_setup::Tile::Extension(crate::game::mechanism_scroll_setup::Direction::Right)), game)];
+        8696645 => [crate::game::mechanism_scroll_setup_ram::setup(j, crate::game::mechanism_scroll_setup::Setup::Place(crate::game::mechanism_scroll_setup::Tile::Extension(crate::game::mechanism_scroll_setup::Direction::Left)), game)];
+        8696656 => [crate::game::mechanism_scroll_setup_ram::setup(j, crate::game::mechanism_scroll_setup::Setup::Place(crate::game::mechanism_scroll_setup::Tile::Extension(crate::game::mechanism_scroll_setup::Direction::Down)), game)];
+        8696667 => [crate::game::mechanism_scroll_setup_ram::setup(j, crate::game::mechanism_scroll_setup::Setup::Place(crate::game::mechanism_scroll_setup::Tile::Extension(crate::game::mechanism_scroll_setup::Direction::Up)), game)];
+        8696689 => [crate::game::mechanism_scroll_setup_ram::setup(j, crate::game::mechanism_scroll_setup::Setup::Place(crate::game::mechanism_scroll_setup::Tile::Scroll(crate::game::mechanism_scroll_setup::Solidity::Air)), game)];
+        8696706 => [crate::game::mechanism_scroll_setup_ram::setup(j, crate::game::mechanism_scroll_setup::Setup::Place(crate::game::mechanism_scroll_setup::Tile::Scroll(crate::game::mechanism_scroll_setup::Solidity::Solid)), game)];
+        8696723 => [crate::game::mechanism_scroll_setup_ram::setup(j, crate::game::mechanism_scroll_setup::Setup::Touch, game)];
         8704399 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::LowerNorfair, displacement, game)];
         8705568 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::WreckedShip, displacement, game)];
         8705740 => PlmSetup_D70C_NoobTube;

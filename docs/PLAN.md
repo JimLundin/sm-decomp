@@ -104,38 +104,40 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares all 11 station setups after Chozo contacts at
-   `cf9d1264`. `mechanism_stations` owns map/energy/missile placement and access,
-   descending block-only association, live selected-slot alignment and save
-   trigger clear/search/activation. Eleven bank bodies, their activation helper
-   and sole-use scan macro are retired. Numeric routes remain. Named station
-   tiles keep encoding in the shared checked adapter. Coordinate calculation,
-   player lock and terrain installation remain native/compatibility dependencies.
-   The core forbids unsafe; encoded state stays RAM authoritative. Fifty-one of
-   115 setup identities are shared; 64 and native dispatch/authority work remain.
+   Latest verified stage shares all seven extension/scroll setups after stations
+   at `d9808040`. `mechanism_scroll_setup` owns named tile placement, scroll
+   initialization and touch clear/search/wake sequencing. Seven bank facades and
+   four sole-use helpers are retired; numeric routes remain. Both core and checked
+   adapter forbid unsafe. Missing-target behavior retains the literal nonreturn
+   loop after clearing the trigger block. Encoded state stays RAM authoritative.
+   Fifty-eight of 115 setup identities are shared; 57 and native dispatch/authority
+   work remain. These setups were already checked; this stage advances shared
+   behavior and owned routing, not a new unsafe-elimination claim.
 
-   Final checks pass 3,240 main/owned comparisons over 1,620 defined-domain cases,
-   including 112 matching checked-side failure comparisons. Additional assertions
-   cover 144 actual player-lock/palette/sound cases, one terrain/map-flag alias
-   and four real map/refill/save-used instruction tails. Six initial-terrain
-   out-of-range cases execute checked replacements only; original unchecked
-   access is excluded. Native core tests cover lazy guards, live rereads,
-   associations and injected failure prefixes. Git-derived references and 185
-   runtime / 222 local identities pass. Selected Chozo/hand, source/setup, closing
-   and supplemental runtime collision suites pass. Production release/frontend/
-   verifier/source checks pass (71.74s); prospective release passes (46.75s).
-   No movie, full station scheduler, SRAM save or full-composition runtime ran.
-   Synthetic content and shared native consumers limit these results.
+   Final checks pass 5,816 main/owned comparisons over 2,908 defined terminating
+   cases, including 1,296 expected checked-placement failure comparisons.
+   Twenty-six actual consumer cases produce 52 comparisons: four extension
+   directions through grapple collision and air/solid scroll placement, touch
+   and instruction updates. Native tests cover aliases, clear-before-search,
+   distinct advances and failure prefixes. Three source-checked old/main/candidate
+   subprocesses remain nonreturning for 0.75s after readiness, then are terminated;
+   this is bounded observation, not proof of infinite execution. Git-derived
+   references and 188 runtime / 225 local identities pass. Prior station, Chozo,
+   selected hand, source/setup, closing and runtime-collision suites pass.
+   Production release/frontend/verifier/source checks pass (56.30s); prospective
+   release passes (46.48s). No movie, full scroll producer/scheduler or complete
+   composition runtime ran. Synthetic content and shared native consumers limit
+   these results.
 
-   Main is **103,917 Rust lines in 162 files**. The prospective composition is
-   **112,296 (+8,379)**, unadopted. This stage adds 96 main and 97 owned/wiring
-   lines: **+193 complete lines**, +2,358 lexical tokens and +7,559 LF-normalized
-   bytes. Verification adds 1,148 lines; implementation plus checks adds 1,341.
+   Main is **103,989 Rust lines in 164 files**. The prospective composition is
+   **112,454 (+8,465)**, unadopted. This stage adds 72 main and 86 owned/wiring
+   lines: **+158 complete lines**, +1,629 lexical tokens and +6,304 LF-normalized
+   bytes. Verification adds 784 lines; implementation plus checks adds 942.
    The candidate previously delegated these setups to native callbacks; no
-   duplicate owned station algorithm existed to retire. No dependency or native/
-   installer/launcher source is added. Counted unsafe declarations remain 2,890;
-   cast-containing lines fall by ten to 6,058. No net reduction or complete
-   unsafe-removal claim; persistent ownership and backend independence remain open.
+   duplicate owned algorithm existed to retire. No dependency or native/installer/
+   launcher source is added. Counted unsafe declarations remain 2,890 and
+   cast-containing lines remain 6,058. No net reduction, persistent ownership or
+   backend-independence claim.
 
    Next dependencies, in order:
 
@@ -173,14 +175,16 @@ references; measure build/test time and resource growth before changing the loop
      release, and compare defined paths separately from checked-only old hazards.
    - [x] Share all 11 station setups and their activation helper, preserving
      lazy guards, live aliases and association order; compare actual consumers.
-   - Close remaining mechanism setup families: scroll/items, room/event/boss setup,
+   - [x] Share all seven extension/scroll setups, preserve missing-target
+     nonreturn and ordered aliases, and compare actual redirect/scroll consumers.
+   - Close remaining mechanism setup families: items, room/event/boss setup,
      then residual aliases/diagnostics. Preserve synchronous writes, nested
      displacement and failure prefixes before retiring native dispatch. The
      115-identity inventory is in the local door handoff. The seven
-     contact-physics setups, both Chozo contacts and all 11 stations are shared.
-     Next are scroll/extensions; preserve associations, missing-target behavior
-     and failure prefixes. The station handoff records current scope and retained
-     native dependencies.
+     contact-physics setups, both Chozo contacts, all 11 stations and seven
+     scroll/extensions are shared. Next are item initialization/wakeup; preserve
+     content/slot aliases and failure prefixes. The scroll handoff records current
+     scope and retained consumer dependencies.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -188,10 +192,13 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified station-setup continuation, with
-   `STATION_SETUP_HANDOFF.md`, `station-setup-price.json` and
-   `station-setup-check-attempt-1.log`. `station-setup-parent/` preserves prior
-   main/carrier/local/composition inputs. Chozo evidence remains in
+   `runtime-impact-working/` is the verified scroll-setup continuation, with
+   `SCROLL_SETUP_HANDOFF.md`, `scroll-setup-price.json`,
+   `scroll-setup-check-attempt-2.log` and three `scroll-missing-*.log` files.
+   `scroll-setup-parent/` preserves prior main/carrier/local/composition inputs.
+   Station evidence remains in `STATION_SETUP_HANDOFF.md`,
+   `station-setup-price.json` and `station-setup-check-attempt-1.log`;
+   `station-setup-parent/` preserves its prior inputs. Chozo evidence remains in
    `CHOZO_CONTACT_HANDOFF.md`, `chozo-contact-price.json` and
    `chozo-contact-check-attempt-5.log`; `chozo-contact-parent/` preserves its
    prior inputs. Physics evidence remains in
@@ -372,9 +379,9 @@ content.
 
 ## Progress and references
 
-Verified station-setup stage: Rust 103,917; maintained C bridge 266 and headers
-296 = **104,479 implementation lines**. Including 803 dependency-installer and
-107 verifier-launcher lines gives **105,389**. The separate prospective owned
+Verified scroll-setup stage: Rust 103,989; maintained C bridge 266 and headers
+296 = **104,551 implementation lines**. Including 803 dependency-installer and
+107 verifier-launcher lines gives **105,461**. The separate prospective owned
 composition and local comparison additions are disclosed above.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
 unsafe declarations 2,890; cast-containing lines 6,058. These narrow counters do
