@@ -245,8 +245,15 @@ references; measure build/test time and resource growth before changing the loop
    b03f593e0eed142c9dc79a287ad269b33212881de84c05457a6844cd3438a451.
    Separate verification workers draft
    actual restoration boundary cases and shared/native ownership checks.
-   Concrete declaration metadata compilation passes; final interface review is
-   active before four lane implementation. Composition design passes independent
+   Corrected concrete declarations pass metadata compilation and independent
+   interface review; duplicate ExternalInputs.area was removed in favor of the
+   existing Session.room.area. Four isolated implementation lanes are now active
+   fromc8d728c2: shared owner/runtime/content; setup/attachments; pre/motion; and
+   lifecycle/contact/drops/owned restoration. Root alone integrates and compiles.
+   Two verification lanes bind detached composition and real native-owner tests;
+   IDs1440..1442 cover native return, foreign panic and core panic, preserving
+   existing0..1439. These new-owner invariants are not old/new differential claims.
+   Composition design passes independent
    review after correcting actual scheduler continuation, shot mask and drop bias.
    Restoration verification now has58 passing actual-old cases at1382..1439:
    46 literal arithmetic boundaries,9 Crystal Flash callers and3 Gunship callers.

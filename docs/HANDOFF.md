@@ -8,6 +8,20 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Four enemy implementation lanes now ACTIVE fromc8d728c2 in
+next-enemy-session/replacement: A foreign_edges shared state/runtime/content;
+B setup_callbacks setup/attachments; C pre_callbacks pre/motion/access macros;
+D collision lifecycle/contact/drops/presentation/Inventory restoration/callers.
+Corrected declarations independently approved and metadata compilation passes
+(declaration-build-final.log); ExternalInputs.area removed, use Session.room.area.
+First review chunks: C access.rs, A complete shared owner/native transfer/content.
+Root compiles only a combined source candidate, not incomplete gameplay stubs.
+Detached composition bindings are with torizo_implementation; native Runtime
+cases1440..1442 and mutations with torizo_review. IDs0..1439 remain unchanged.
+Owner reviewer session_review and caller/ordering reviewer enemy_projectiles_review
+need followup_task on frozen chunks if completed; send_message alone will not resume.
+Main c8d728c2 CI40009086639 is running; earlier getter and adoption CI pass.
+
 Restoration verification adopted: enemy IDs1382..1439,58actual-old cases pass;
 20adjacent supplemental outputs unchanged and87independent checks pass. Build/
 fmt/check/source registration pass on

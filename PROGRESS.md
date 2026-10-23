@@ -14,18 +14,18 @@ flowchart TB
     CONTRACT["Complete contract<br/>independent review PASS"]:::checked
     UNION["49,819 WRAM + 16 native bytes<br/>no duplicate ownership"]:::checked
     CONTRACT --> API["Concrete Rust interfaces<br/>metadata compile PASS"]:::checked
-    API --> REVIEW["Concrete interface review"]:::active
+    API --> REVIEW["Concrete interface review<br/>PASS / area cache removed"]:::checked
     UNION --> API
     REF["1,382 captures + 87 checks<br/>current main PASS"]:::checked
-    API --> S["session.rs / session_encoding.rs"]:::pending
-    S --> R["session_runtime.rs<br/>one owner / native spawn fields"]:::pending
-    API --> SETUP["setup.rs / setup_helpers.rs"]:::pending
-    API --> PRE["pre_actions.rs / shared_pre.rs"]:::pending
-    API --> LIFE["lifecycle.rs / commands.rs"]:::pending
-    API --> CONTACT["contact.rs / collision.rs"]:::pending
-    API --> ATTACH["attachments_spore_maw.rs<br/>attachments_waffle_botwoon.rs"]:::pending
-    API --> DROP["drops.rs / Inventory.restore"]:::pending
-    DROP --> CALL["sm_90.rs / sm_a2.rs / sm_91.rs<br/>one restoration implementation"]:::pending
+    API --> S["session.rs / session_encoding.rs"]:::active
+    S --> R["session_runtime.rs<br/>one owner / native spawn fields"]:::active
+    API --> SETUP["setup.rs / setup_helpers.rs"]:::active
+    API --> PRE["pre_actions.rs / shared_pre.rs"]:::active
+    API --> LIFE["lifecycle.rs / commands.rs"]:::active
+    API --> CONTACT["contact.rs / collision.rs"]:::active
+    API --> ATTACH["attachments_spore_maw.rs<br/>attachments_waffle_botwoon.rs"]:::active
+    API --> DROP["drops.rs / Inventory.restore"]:::active
+    DROP --> CALL["sm_90.rs / sm_a2.rs / sm_91.rs<br/>one restoration implementation"]:::active
     R --> RETIRE["Retire compat.rs<br/>and ownership_transport.rs"]:::pending
     SETUP --> MERGE["Whole candidate integration"]:::pending
     PRE --> MERGE
@@ -36,12 +36,15 @@ flowchart TB
     RETIRE --> MERGE
     RESTORE["58 restoration cases<br/>review + capture PASS"]:::checked --> VERIFY["Comparisons / composed checks"]:::pending
     NATIVE["Native spawn / shared state checks<br/>design review PASS"]:::checked --> VERIFY
+    NATIVE --> NRET["1440 / native return"]:::active
+    NATIVE --> NPANIC["1441 / foreign panic"]:::active
+    NATIVE --> CPANIC["1442 / core panic"]:::active
     MERGE --> VERIFY
     REF --> VERIFY
     VERIFY --> MUT["Targeted mutations"]:::pending
     MUT --> PLAY["Exercised replay / runtime cost"]:::pending
     PLAY --> ADOPT["Enemy shared core adopted"]:::pending
-    class API,REVIEW,RESTORE,NATIVE changed
+    class REVIEW,S,R,SETUP,PRE,LIFE,CONTACT,ATTACH,DROP,CALL,NRET,NPANIC,CPANIC changed
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
