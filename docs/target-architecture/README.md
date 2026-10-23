@@ -6,6 +6,8 @@ Open the [interactive report](report.html) for the simplified overview: Architec
 
 The agreed architecture combines an owned deterministic `Session`, our GPU renderer and sound engine, and an application that coordinates validated content revisions, devices, and development tools. All five packages are our Rust code, organized into straightforward private modules. Small platform libraries such as `winit`, `wgpu`, and `cpal` provide device access. The completed target game runs without SNES emulation, recovered-C gameplay, or external engine/ECS modules.
 
+Map Rando integration is a core requirement, reaffirmed by the user on 2026-10-23. The small modular core must support custom sprites/palettes, configurable room and door graphs, and explicit opt-in mechanics such as re-spin and other quality-of-life options. Vanilla remains the first fidelity profile. See the [integration contract](ARCHITECTURE.md#map-rando-integration); this is a target requirement, not a claim that the current migration already supports Map Rando.
+
 The user confirmed a staged migration on 2026-10-22. Windows workers may keep the current Rust implementation's emulated backend and original-ROM comparisons while replacing responsibilities. Continue the current tasks and checks in [the work plan](../PLAN.md). Read [Migration](MIGRATION.md) before changing subsystem boundaries or choosing a backend; it explains Windows resource limits, comparison seams, and the existing reduction objective.
 
 From the repository root in PowerShell, open the report with:

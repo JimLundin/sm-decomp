@@ -125,6 +125,8 @@ If audio is lost, a reset/stop control path cannot be blocked behind ordinary cu
 
 The gameplay fingerprint includes canonical gameplay data, behavior/build compatibility ID, arithmetic and input policy versions, and the Reference profile. It does not depend on file paths, serialization map order, or source timestamps. A release build records reproducible provenance; a changed rule cannot accidentally reuse an old fingerprint.
 
+This includes the supplied room/door topology and the explicit gameplay options used for Map Rando integration, including supported re-spin and quality-of-life settings. Session opening, saves, checkpoints and replay inputs must resolve the same gameplay profile or follow an explicit compatibility policy. A seed/settings importer must not silently ignore unsupported options. Vanilla defaults and enabled options have separate fidelity expectations; an intentional rule change is not a vanilla mismatch to suppress.
+
 Media revision identifies visual/sound resources that do not feed back into the Session. Stable authored IDs survive pack reordering. Record-layout/schema versions are explicit. Frames and audio commands carry the appropriate revision lease; a raw integer asset index cannot accidentally resolve against a different pack.
 
 Media-only classification is semantic: hitboxes, collision, animation timing, gameplay sequence timing, and RNG-affecting parameters change gameplay even when the source file is associated with art. Pixel/palette/sample changes can be media-only when their record contracts remain compatible. Sound timing is still independently checked for content fidelity.

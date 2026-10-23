@@ -8,6 +8,14 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+User reaffirmation: easy Super Metroid Map Rando integration is a core
+architecture requirement now. Custom sprites/palettes, supplied room/door graphs
+and explicit opt-in re-spin/QoL rules belong at content/world/gameplay-profile
+boundaries. Vanilla remains the fidelity baseline; it is not a reason to defer
+those design requirements. Accepted architecture, contracts, report and validation
+now record this. Lead notified to audit visual asset assumptions without changing
+current ROM provenance or inserting unrelated mechanics into the visual refactor.
+
 Active visual iteration: next-visual-session/CONTRACT.md and declarations are
 frozen after two independent reviews and root metadata compilation. Union:
 51053distinctWRAM bytes plus16native; no overlaps. Existing512palette and438

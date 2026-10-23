@@ -3,6 +3,23 @@
 Green: adopted scope | Blue: draft | Orange: active | Grey: remaining | Red: failed
 **Purple outline: changed since previous report.** Folder branches show containment; check arrows show prerequisites.
 
+```mermaid
+flowchart LR
+    CORE["Small owned game core"]:::active
+    CORE --> VANILLA["Vanilla fidelity profile"]:::active
+    CORE --> MEDIA["Custom sprites + palettes"]:::pending
+    CORE --> WORLD["Room + door graph"]:::pending
+    CORE --> RULES["Opt-in re-spin + QoL"]:::pending
+    MEDIA --> MR["Map Rando integration"]:::pending
+    WORLD --> MR
+    RULES --> MR
+    MR --> REPLAY["Seed + settings + replay compatibility"]:::pending
+    class CORE,VANILLA,MEDIA,WORLD,RULES,MR,REPLAY changed
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
 [Shared Session adopted: 74948127](https://github.com/JimLundin/sm-decomp/commit/74948127) / [Build + eight mutations: PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40005712881)
 
 [Four room mutations / CI PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40005395335) · [Shared Session candidate CI](https://github.com/JimLundin/sm-decomp/actions/runs/40005712881)

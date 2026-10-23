@@ -3,7 +3,13 @@
 Goal: a compact Super Metroid game engine with descriptive gameplay routines,
 playing from boot to credits. SNES emulation remains the current video/audio
 backend and verification oracle; it is not the long-term engine architecture.
-Map Rando support comes after vanilla.
+Easy integration with Super Metroid Map Rando is a core architecture goal:
+custom sprites/palettes, reordered rooms and door connections, and opt-in
+mechanics such as re-spin and other quality-of-life rules. Vanilla is the first
+fidelity profile; integration requirements shape the design now, not after the
+engine is finished. Keep content, world topology and explicit gameplay options
+separate from platform code and legacy ROM/RAM compatibility. See the accepted
+[Map Rando requirements](target-architecture/ARCHITECTURE.md#map-rando-integration).
 
 Public progress: keep [PROGRESS.md](../PROGRESS.md) current and push it with
 verified milestone commits or material status changes, as requested by the user

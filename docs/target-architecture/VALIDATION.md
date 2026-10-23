@@ -12,6 +12,8 @@ Choose minimum desktop hardware and intended operating systems. Define measurabl
 
 Exit evidence: a versioned Reference profile, at least one independently captured trace/image/audio fixture, and a reproducible capture procedure. Without this, later “matches the original” claims have no stable meaning.
 
+Map Rando integration is part of final acceptance, not established by a vanilla playthrough. Pin the upstream version/input contracts and demonstrate import of a real seed/settings set and custom sprite assets. Verify reordered room/door transitions, map and progression persistence, and custom sprite/palette rendering through the same runtime interfaces. Test supported opt-in rules such as re-spin disabled, enabled and in relevant combinations against the corresponding reference behavior. Use discriminating mutations for option selection and graph/asset resolution; require wrong-profile saves/replays to follow the documented compatibility policy. Keep ROM-derived fixtures local. These requirements shape the current architecture but do not block the staged vanilla refactors in PLAN.
+
 ## Gate 1 · Prove the real seams
 
 Build the proposed package graph and a native one-room slice. Use the actual window/controller path, an owned Session, actual rendering, one scheduled sound, and headless input replay. Compile headless `sm_game`/`sm_tools` without window, GPU, or sound-device dependencies.

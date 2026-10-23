@@ -34,7 +34,7 @@
 </div></header>
 
 <main class="page" id="main" tabindex="-1">
-  <div class="intro" id="top"><p class="agreement"><span aria-hidden="true"></span>Agreed architecture</p><h1>Super Metroid,<br><span>rebuilt in Rust.</span></h1><p class="intro-copy">A standalone game and engine we write in Rust, preserving the original gameplay and content.</p><p class="map-note">Windows workers can keep the current emulated backend for development and comparison while moving toward this design. <a href="MIGRATION.md">Read the migration handoff ↗</a></p></div>
+  <div class="intro" id="top"><p class="agreement"><span aria-hidden="true"></span>Agreed architecture</p><h1>Super Metroid,<br><span>rebuilt in Rust.</span></h1><p class="intro-copy">A small modular game core: vanilla fidelity, custom sprites, configurable rooms, and opt-in Map Rando mechanics.</p><p class="map-note">Map Rando integration is part of the target architecture. <a href="ARCHITECTURE.md#map-rando-integration">Sprites, world graphs and gameplay profiles ↗</a> Windows workers retain the current emulated backend during migration. <a href="MIGRATION.md">Migration handoff ↗</a></p></div>
 
   <section class="report-section" id="architecture" aria-labelledby="architecture-title">
     <div class="section-heading"><h2 id="architecture-title">The architecture</h2><p>Five packages in our workspace. Choose one to explore.</p></div>

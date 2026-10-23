@@ -30,6 +30,8 @@ These are responsibility destinations, not a file-renaming plan. Existing cohesi
 
 The five-package dependency graph is the intended finished organization. Introduce packages when an actual responsibility can meet its contract; the handoff itself adds no code, dependencies, or skeleton framework.
 
+Map Rando integration constrains these replacements now. Preserve an explicit path from imported seed/settings and custom media to validated content, room connections and a gameplay profile. Stable room/asset identities must survive reordering; optional mechanics belong in their gameplay modules with explicit configuration, not in emulator patches or scattered platform conditionals. Vanilla comparisons validate the disabled/default profile; intentional options need their own reference and interaction checks. Current numeric ROM tables and WRAM projections remain transitional and do not establish integration readiness. Continue complete responsibilities in PLAN order; this clarification does not insert unrelated mechanics into the visual-effects change.
+
 ## Comparison during migration
 
 The current built-in oracle and its Windows host are useful infrastructure. Keep the normal rendering/audio advancement, mismatch checks, required probes, and source validation for checks that use them. Current checkpoint compatibility follows the existing verifier's rules.

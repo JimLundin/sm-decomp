@@ -14,6 +14,21 @@ Movement techniques, weapon interactions, room persistence, and unusual but esta
 
 The completed target runtime excludes SNES CPU, bus, PPU, and APU emulation, recovered-C gameplay, and external engine/ECS implementations. It also needs no plugin ecosystem, networking, general script VM, custom level-editor framework, or arbitrary live-state migration. Original observable behavior is implemented directly in our game and engine.
 
+## Map Rando integration
+
+Easy integration with the Super Metroid Map Rando project is part of the core destination, reaffirmed on 2026-10-23. Modularity serves concrete game modifications: custom sprites and palettes, reordered rooms and connections, and opt-in mechanics such as re-spin and other quality-of-life changes. Vanilla is an explicit fidelity profile, not an assumption baked into every content consumer.
+
+| Variation | Owning boundary | Required behavior |
+| --- | --- | --- |
+| Custom sprites and palettes | Prepared media and stable asset IDs | Replace appearance through data without rewriting gameplay or fixed ROM offsets. Preserve animation/pose/palette contracts; changes to hitboxes or gameplay timing are gameplay changes. |
+| Room order, layout and door connections | Validated world definitions and stable room/door IDs | Traverse the supplied graph, including destination/spawn/map metadata, without treating array position or vanilla order as identity. Persistence and progression use stable identities. |
+| Re-spin and other optional mechanics | Explicit gameplay profile and the responsible rule modules | Vanilla defaults preserve current behavior. Supported options have named semantics, enabled/disabled checks and relevant interaction tests; they are not accidental refactor changes. |
+| Map Rando seed, settings and asset input | A versioned import/integration adapter feeding these same definitions | Preserve upstream meaning and diagnose unsupported settings. Actual upstream formats and supported versions must be established from Map Rando sources and integration tests, not invented here. |
+
+Map Rando input must not require manually rebuilding a seed in Tiled. The adapter and optional authoring tools feed the same validated runtime representation. Select the world, media and gameplay profile when opening a Session; keep the choice reproducible in saves, checkpoints and replays under the existing compatibility rules. Gameplay-affecting options and topology participate in the gameplay fingerprint. Appearance-only replacements use the media revision when their behavioral contracts are unchanged.
+
+This remains a purpose-built Super Metroid core. Implement supported optional rules as ordinary code in the relevant player/combat/room modules; no generic plugin system or script engine is required. Original ROM layout, patch addresses and the current comparison backend stay in migration/import adapters. Completing safe interval ownership alone does not prove these integration boundaries are implemented.
+
 ## Implementation ownership
 
 We write the gameplay and engine in straightforward Rust: ordinary structs and enums for state, direct functions for rules, private modules for organization, and explicit update order. We own collision, Actor storage, room transitions, rendering passes and shaders, sound sequencing/mixing, content loading, saves, and development tools. Small GPU shaders are our source too, even though the shader language is not Rust.
