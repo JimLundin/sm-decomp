@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 12:23 UTC**
+Updated: **2026-10-23 12:25 UTC**
 
 **Status: active development. The owned engine is not yet consolidated into production.**
 
@@ -79,11 +79,17 @@ Foreign calls publish the owner and reacquire their actual returned state.
 The complete scope includes both missing motions, all lifecycle callers, drawing,
 feedback, reflection/reset/impact, and ordered launch history. The first local
 source draft exercises ownership and animation through this boundary. Review found
-a bytewise-versus-atomic write mismatch, now being corrected and checked. This is
-experimental work, not production adoption or new gameplay verification.
+and corrected a bytewise-versus-atomic write mismatch. All **nine focused checks
+pass** through the established Python/DLL workflow (exit 0), covering all 366 owned
+bytes, boundary-crossing aliases, live selection, partial writes, foreign returned
+state/unwind and the unchanged shared animation core for five selectors. Storage
+and content are simplified test substitutes: this proves the access mechanism,
+not production gameplay or complete subsystem integration. The standalone test
+executable was blocked by Windows policy; security settings were not changed.
+Full isolated subsystem implementation is now proceeding from this design.
 
-The full replacement is estimated at 2,370-3,690 new production lines, against the
-conservative 2,213-line retirement inventory: approximately **+160 to +1,480
+The full replacement is estimated at 2,270-3,690 new production lines, against the
+conservative 2,213-line retirement inventory: approximately **+60 to +1,480
 production lines**. Verification additions are estimated separately at 600-1,200
 lines. These are planning ranges, not measured patch results or claimed savings.
 The structural gain must be one authoritative implementation with retired old paths;

@@ -149,13 +149,22 @@ references; measure build/test time and resource growth before changing the loop
    animation, initialization/playback/placement/lifecycle, beam/missile/bomb/special
    and coordinator adapters, plus mixed bank/trail/palette orchestration; retain
    shared output/content and genuine foreign consumers once. Full new-source
-   estimate 2,370-3,690 lines versus the conservative 2,213 retirement inventory
-   means approximately +160 to +1,480 production lines, plus an estimated 600-1,200
+   estimate 2,270-3,690 lines versus the conservative 2,213 retirement inventory
+   means approximately +60 to +1,480 production lines, plus an estimated 600-1,200
    verification lines. These are planning ranges, not savings or final patch cost.
    Review and test the alias/ownership seam before extending the implementation;
    no isolated draft or outer wrapper lands as subsystem adoption. Preserve the
    60-suite baseline and require real integrated callers plus both missing motions,
    broad/odd aliases, failure prefixes and returned-image checks before adoption.
+
+   The first access draft compiles and passes nine focused checks via the existing
+   Python/DLL workflow (exit0, 0.0378s). Root verified all five frozen source/core/
+   artifact hashes. Coverage: 366 owned bytes, crossing aliases, live selection,
+   separate bytewise/slice failure prefixes, foreign returned image/unwind, explicit
+   endian operations and unchanged playback for five selectors. Game storage and
+   Show content are test substitutes; no integrated gameplay claim. Standalone EXE
+   execution was blocked by Defender1121; security settings remain unchanged.
+   Full isolated replacement implementation follows; main production is unchanged.
 
    Latest verified stage shares the complete charged-shot palette consumer from
    `8fa61a7c`. Main HandleBeamChargePalettes and owned advance_weapon_palette use
