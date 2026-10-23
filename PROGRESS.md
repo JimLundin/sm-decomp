@@ -1,9 +1,34 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 14:30 UTC**
+Updated: **2026-10-23 14:40 UTC**
 
 **Player projectiles now run through one owned production subsystem.**
 The broader engine modernization remains unfinished.
+
+## How this reaches the engine structure
+
+Production consolidation has advanced; net code reduction has not. Removing
+unsafe calls alone does not establish the intended engine. The projectile change
+retired 14 adapters but added 596 runtime/probe lines and 793 verification lines.
+That is an ownership improvement with a real source-size cost.
+
+The next concrete delivery is one room-mechanism subsystem replacing creation,
+setup, scheduling, commands and drawing together. Its isolated implementation now
+shares field/effect access across rule families and shares drawing tile emission
+and destination calculations. Those are draft deduplications, not landed savings.
+Caller integration, deletion of all 24 adapters and the old bank implementation,
+runtime comparison and complete source accounting remain before adoption.
+
+Each adoption must show the public operations, state owner, migrated callers,
+deleted implementations and total size change. Merely moving files or adding
+another safe adapter does not meet that milestone.
+
+After responsibility consolidation, state must remain owned between operations:
+external writers, reset/load and suspension must use those owners consistently.
+Gameplay can then communicate with rendering and audio through explicit outputs
+instead of shared emulated memory. Persistent ownership and replacement of the
+emulated backend are still unfinished architectural steps. The accepted destination
+is described in [the architecture](docs/target-architecture/README.md).
 
 ## Latest consolidation
 
