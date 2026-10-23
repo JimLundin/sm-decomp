@@ -34,16 +34,27 @@ flowchart LR
     RI --> RCONTENT["content.rs / live captures"]:::active
     RI --> RSTATE["state.rs / 82 room + 2 shared bytes"]:::active
     RI --> RCODEC["session_encoding.rs / one projection"]:::active
-    RI --> ROWNER["game_state.rs / supplied world"]:::active
-    RI --> RSELECT["selection.rs"]:::active
-    RI --> RINSTALL["installation.rs"]:::active
+    RI --> ROWNER["game_state.rs / supplied world"]:::draft
+    RI --> RSELECT["selection.rs"]:::draft
+    RI --> RINSTALL["installation.rs"]:::draft
+    ROWNER --> ROWNERCHECK["Constructor + lifecycle<br/>source review PASS"]:::done
+    RSELECT --> RSELECTCHECK["Selection + partial writes<br/>source review PASS"]:::done
+    RINSTALL --> RINSTALLCHECK["Installation + retained captures<br/>source review PASS"]:::done
     RI --> RPROTO["protocol.rs / suspend + resume"]:::active
     RI --> RBG["background.rs"]:::active
     RI --> RCOMPAT["compatibility.rs / actual callers"]:::active
     RI --> RPLM["creation.rs / shared door inputs"]:::active
     RI --> RT["Supplied topology / actual callers<br/>verification pending"]:::pending
-    class RR,RS,RV,RI,RW,RCONTENT,RSTATE,RCODEC,ROWNER,RSELECT,RINSTALL,RPROTO,RBG,RCOMPAT,RPLM changed
+    ROWNERCHECK --> RT
+    RSELECTCHECK --> RT
+    RINSTALLCHECK --> RT
+    RBG --> RBPLAN["37 background / scroll / DMA cases<br/>plan review PASS"]:::done
+    RBPLAN --> RBFIX["Actual-device fixtures<br/>implementation"]:::active
+    RBFIX --> RBCAP["Reference capture + audit<br/>pending"]:::pending
+    RT --> RMUT["Room mutation execution<br/>pending"]:::pending
+    class ROWNER,RSELECT,RINSTALL,ROWNERCHECK,RSELECTCHECK,RINSTALLCHECK,RBPLAN,RBFIX,RBCAP,RMUT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
@@ -79,7 +90,6 @@ flowchart TB
     FKODD --> FKCOMPARE
     FKCOMPARE --> FADOPT
     FMUT --> FADOPT["Progression owner<br/>adopted on main"]:::done
-    class FCORE,FCODEC,FPLM,FVIS,FEPR,FLEG,FSAVE,FMUT,FADOPT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -101,7 +111,6 @@ flowchart LR
     FB --> FPRE["Read door before marking"]:::done
     FB --> FCLAMP["Clamp broad flag index"]:::done
     FB --> FNATIVE["Lose native high byte"]:::done
-    class FB,FEVENT,FHI,FBOSS,FMAP,FRNG,FEYE,FADJ,FPRE,FCLAMP,FNATIVE changed
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px

@@ -445,6 +445,13 @@ references; measure build/test time and resource growth before changing the loop
    compatibility-bound prepared backgrounds in this staged backend; resource and
    backend independence remain unfinished. Separate workers cover actual GameOwner
    integration, runtime invariants, predecessor captures and mutation checks.
+   Selection/installation and constructor/lifecycle drafts now pass independent
+   source review; combined compilation and execution remain pending. Canonical
+   constructors retain RM_BOTH; prepared worlds start in RM_MINE. The reviewed
+   37-case background/scroll/DMA reference plan is in fixture implementation,
+   using actual devices and ordered register observations with isolated cases.
+   Preserve existing56references and level-copy cases; no new mutation kills
+   or production adoption are claimed from these source reviews.
    Reuse current owners;84additional disjoint bytes comprise82room-related bytes
    and two shared lossless continuation bytes (proposed union52,373). Retire the
    actual competing orchestration and stale door inputs in the same adoption.
