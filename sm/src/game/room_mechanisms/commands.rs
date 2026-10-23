@@ -47,7 +47,7 @@ impl Execution<'_> {
             }
             8685323 => self.call_function(p, super::effects::instruction_function),
             8685390 => {
-                self.port_mut().put_byte(0x1d77 + usize::from(k), p.byte(0));
+                self.port_mut().set_byte(0x1d77 + usize::from(k), p.byte(0));
                 p.advance(1)
             }
             8686194 => {
@@ -56,7 +56,7 @@ impl Execution<'_> {
                     return p.advance(2);
                 }
                 let index = self.bit_index(argument);
-                if self.port().word(0x5e7) & u16::from(self.port().byte(0xd8b0 + index)) != 0 {
+                if self.port().read_le(0x5e7) & u16::from(self.port().byte(0xd8b0 + index)) != 0 {
                     Script::jump(p.word(0))
                 } else {
                     p.advance(2)
@@ -128,7 +128,7 @@ impl Execution<'_> {
                 let old = self.slot(Column::Counter, slot);
                 // The old unaligned update decodes and writes little endian.
                 self.port_mut()
-                    .put_word(0x1d77 + slot * 2, old.wrapping_sub(1));
+                    .write_slice_le(0x1d77 + slot * 2, old.wrapping_sub(1));
                 if old == 1 {
                     p.advance(2)
                 } else {
@@ -160,7 +160,7 @@ impl Execution<'_> {
             8685541 => self.copy_vram(p),
             8686735 => {
                 let area = usize::from(self.global(Global::Area));
-                self.port_mut().put_byte(0xd908 + area, 255);
+                self.port_mut().set_byte(0xd908 + area, 255);
                 self.queue_message(0x14);
                 self.foreign(|g| g.set_has_area_map(1));
                 p
@@ -188,7 +188,7 @@ impl Execution<'_> {
                 let index = self.bit_index(argument);
                 let base = if ea == 8685640 { 0xd830 } else { 0xd870 };
                 if argument & 0x8000 == 0
-                    && self.port().word(0x5e7) & u16::from(self.port().byte(base + index)) != 0
+                    && self.port().read_le(0x5e7) & u16::from(self.port().byte(base + index)) != 0
                 {
                     Script::jump(p.word(0))
                 } else {
@@ -200,8 +200,8 @@ impl Execution<'_> {
                 if argument & 0x8000 == 0 {
                     let index = self.bit_index(argument);
                     let base = if ea == 8685669 { 0xd830 } else { 0xd870 };
-                    let value = self.port().byte(base + index) | self.port().word(0x5e7) as u8;
-                    self.port_mut().put_byte(base + index, value);
+                    let value = self.port().byte(base + index) | self.port().read_le(0x5e7) as u8;
+                    self.port_mut().set_byte(base + index, value);
                 }
                 p
             }
@@ -227,12 +227,12 @@ impl Execution<'_> {
                 if argument & 0x8000 == 0 {
                     let index = self.bit_index(argument);
                     let address = 0xd8b0 + index;
-                    let value = self.port().byte(address) | self.port().word(0x5e7) as u8;
-                    self.port_mut().put_byte(address, value);
+                    let value = self.port().byte(address) | self.port().read_le(0x5e7) as u8;
+                    self.port_mut().set_byte(address, value);
                     self.set_slot(
                         Column::RoomArgument,
                         slot,
-                        self.port().word(address) | 0x8000,
+                        self.port().read_le(address) | 0x8000,
                     );
                 }
                 self.set_slot(Column::PreAction, slot, 0x8aa6);
@@ -257,9 +257,9 @@ impl Execution<'_> {
             8686341 | 8686359 => {
                 let block = self.slot(Column::Work0, slot);
                 self.set_level(self.slot(Column::Block, slot), block);
-                self.port_mut().put_word(0x1e69, block);
-                self.port_mut().put_word(0x1e67, 1);
-                self.port_mut().put_word(0x1e6b, 0);
+                self.port_mut().write_slice_le(0x1e69, block);
+                self.port_mut().write_slice_le(0x1e67, 1);
+                self.port_mut().write_slice_le(0x1e6b, 0);
                 self.set_slot(Column::InstructionDelay, slot, 1);
                 self.set_slot(Column::DrawProgram, slot, 0x1e67);
                 self.set_slot(Column::Program, slot, p.offset_from(bank_base(0x84)) as u16);
@@ -278,7 +278,7 @@ impl Execution<'_> {
                 while unsafe { entries.byte(offset) } & 0x80 == 0 {
                     let value = unsafe { entries.byte(offset + 1) };
                     let index = unsafe { entries.byte(offset) };
-                    self.port_mut().put_byte(0xcd20 + usize::from(index), value);
+                    self.port_mut().set_byte(0xcd20 + usize::from(index), value);
                     offset += 2;
                 }
                 let block = self.slot(Column::Block, slot);
@@ -333,13 +333,14 @@ impl Execution<'_> {
                     0,
                 );
                 let selected = usize::from(self.global(Global::Selected) >> 1);
-                let station = self.port().native_word(0x1dc7 + selected * 2) & 7;
-                self.port_mut().put_word(ram::load_station_index, station);
-                self.bit_index(self.port().word(ram::load_station_index));
+                let station = self.port().read_native(0x1dc7 + selected * 2) & 7;
+                self.port_mut()
+                    .write_slice_le(ram::load_station_index, station);
+                self.bit_index(self.port().read_le(ram::load_station_index));
                 let address = 0xd8f8 + usize::from(self.global(Global::Area)) * 2;
-                let value = self.port().byte(address) | self.port().word(0x5e7) as u8;
-                self.port_mut().put_byte(address, value);
-                let save = self.port().word(ram::selected_save_slot);
+                let value = self.port().byte(address) | self.port().read_le(0x5e7) as u8;
+                self.port_mut().set_byte(address, value);
+                let save = self.port().read_le(ram::selected_save_slot);
                 self.foreign(|g| super::effects::save(save, g));
                 p.advance(2)
             }
@@ -368,7 +369,7 @@ impl Execution<'_> {
                     if block
                         == self
                             .port()
-                            .word(crate::ram_map::word_arrays::eproj_E + index as usize)
+                            .read_le(crate::ram_map::word_arrays::eproj_E + index as usize)
                     {
                         break;
                     }
@@ -378,9 +379,9 @@ impl Execution<'_> {
                     + index as isize) as usize;
                 let program = (crate::ram_map::word_arrays::eproj_instr_list_ptr as isize
                     + index as isize) as usize;
-                self.port_mut().put_word(timer, 1);
-                let value = self.port().word(program).wrapping_add(2);
-                self.port_mut().put_word(program, value);
+                self.port_mut().write_slice_le(timer, 1);
+                let value = self.port().read_le(program).wrapping_add(2);
+                self.port_mut().write_slice_le(program, value);
                 p.advance(2)
             }
             8704983 | 8705012 => {
@@ -432,7 +433,7 @@ impl Execution<'_> {
                 Script::Stop
             }
             8708765 => {
-                self.port_mut().put_word(ram::flare_counter, 0);
+                self.port_mut().write_slice_le(ram::flare_counter, 0);
                 p
             }
             8709691 => {
@@ -551,7 +552,7 @@ impl Execution<'_> {
     }
     fn damage_turret(&mut self, ea: u32, slot: usize) {
         let target = usize::from(self.slot(Column::Work0, slot));
-        self.port_mut().put_native_word(target, 1);
+        self.port_mut().write_slice_native(target, 1);
         let block = self.slot(Column::Block, slot);
         self.install(block, 0xa003);
         if ea == 8706958 || ea == 8707126 {
@@ -565,7 +566,7 @@ impl Execution<'_> {
         self.install(block.wrapping_add(step), if down { 0xa003 } else { 0 });
         let origin = if ea == 8707000 {
             self.port()
-                .native_word(0x1c87 + usize::from(self.global(Global::Selected) >> 1) * 2)
+                .read_native(0x1c87 + usize::from(self.global(Global::Selected) >> 1) * 2)
         } else {
             block
         };

@@ -17,10 +17,10 @@ impl Execution<'_> {
             let mut image = crate::rom::RomImage::default();
             let mut script = Script::Stop;
             if resume == 0 {
-                if self.port().word(0x1c23) & 0x8000 == 0 {
+                if self.port().read_le(0x1c23) & 0x8000 == 0 {
                     return 0;
                 }
-                self.port_mut().put_word(0x1c25, 0);
+                self.port_mut().write_slice_le(0x1c25, 0);
                 self.set_global(Global::Selected, 78);
             }
             loop {
@@ -30,7 +30,7 @@ impl Execution<'_> {
                         break;
                     }
                     let slot = usize::from(self.global(Global::Selected) >> 1);
-                    if self.port().native_word(0x1c37 + slot * 2) == 0 {
+                    if self.port().read_native(0x1c37 + slot * 2) == 0 {
                         self.set_global(
                             Global::Selected,
                             self.global(Global::Selected).wrapping_sub(2),
@@ -38,7 +38,7 @@ impl Execution<'_> {
                         continue;
                     }
                     let pre =
-                        u32::from(self.port().native_word(
+                        u32::from(self.port().read_native(
                             0x1cd7 + usize::from(self.global(Global::Selected) >> 1) * 2,
                         )) | 0x840000;
                     self.pre(pre, self.global(Global::Selected));
@@ -52,11 +52,11 @@ impl Execution<'_> {
                         );
                         continue;
                     }
-                    image = self.port().rom_image();
+                    image = self.port().rom();
                     script = Script::at(
                         image.clone(),
                         (base
-                            + self.port().native_word(
+                            + self.port().read_native(
                                 0x1d27 + usize::from(self.global(Global::Selected) >> 1) * 2,
                             ) as isize) as usize,
                     );
@@ -66,21 +66,21 @@ impl Execution<'_> {
                         crate::verify_probe::hit("coroutine.plm.message");
                         let queued = self
                             .port()
-                            .word(crate::ram_map::words::queued_message_box_index);
+                            .read_le(crate::ram_map::words::queued_message_box_index);
                         let yielded =
                             self.foreign(|g| unsafe { message_boxes::display(queued, g) });
                         if let Err(yielded) = handoff.after_display(yielded) {
-                            self.port_mut().put_byte(0x613, handoff.continuation());
+                            self.port_mut().set_byte(0x613, handoff.continuation());
                             return yielded;
                         }
                         crate::verify_probe::hit("coroutine.plm.message.completed");
                         self.port_mut()
-                            .put_word(crate::ram_map::words::queued_message_box_index, 0);
-                        image = self.port().rom_image();
+                            .write_slice_le(crate::ram_map::words::queued_message_box_index, 0);
+                        image = self.port().rom();
                         script = Script::at(
                             image.clone(),
                             (base
-                                + self.port().native_word(
+                                + self.port().read_native(
                                     0x1d27 + usize::from(self.global(Global::Selected) >> 1) * 2,
                                 ) as isize) as usize,
                         );
@@ -112,11 +112,11 @@ impl Execution<'_> {
                     script = next;
                     if handoff.after_instruction(
                         self.port()
-                            .word(crate::ram_map::words::queued_message_box_index),
+                            .read_le(crate::ram_map::words::queued_message_box_index),
                     ) {
                         let address = 0x1d27 + usize::from(self.global(Global::Selected) >> 1) * 2;
                         self.port_mut()
-                            .put_native_word(address, script.offset_from(base) as u16);
+                            .write_slice_native(address, script.offset_from(base) as u16);
                     }
                 }
                 self.set_global(
@@ -125,7 +125,7 @@ impl Execution<'_> {
                 );
             }
         }
-        self.port_mut().put_byte(0x613, 0);
+        self.port_mut().set_byte(0x613, 0);
         0
     }
 }

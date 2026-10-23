@@ -464,6 +464,23 @@ fn lane_projection() {
 }
 fn publication() {
     let mut g = Game::new();
+    let mut o = Transaction::acquire(&mut g);
+    assert!(o.capture_rom().is_none());
+    let order = std::cell::Cell::new(0);
+    word!(
+        o.projectile_x_pos[{
+            assert_eq!(order.get(), 1);
+            order.set(2);
+            0
+        }] = {
+            assert_eq!(order.get(), 0);
+            order.set(1);
+            0x2468
+        }
+    );
+    assert_eq!(order.get(), 2);
+    assert_eq!(o.state.shots[0].x, 0x2468);
+    o.release();
     let end = g.g_ram.len() - 1;
     let failed = catch_unwind(AssertUnwindSafe(|| {
         let mut o = Transaction::acquire(&mut g);
@@ -479,9 +496,13 @@ fn publication() {
     }));
     assert!(failed.is_err());
     assert_eq!(g.g_ram[end], 0xbb);
+    put(&mut g, 0x1c37, 0x4321);
     let mut o = Transaction::acquire(&mut g);
     o.write_word_le(19, 0xdde);
     let (o, result) = o.foreign(|g| {
+        assert_eq!(&g.g_ram[0xdde..0xde0], &[19, 0]);
+        crate::game::room_mechanisms::clear(g);
+        assert_eq!(&g.g_ram[0x1c37..0x1c39], &[0, 0]);
         assert_eq!(&g.g_ram[0xdde..0xde0], &[19, 0]);
         put(g, 0xdde, 31);
         put(g, 0xb64, 47);
@@ -491,6 +512,7 @@ fn publication() {
     assert_eq!(o.state.selected, 31);
     assert_eq!(o.state.shots[0].x, 47);
     o.release();
+    assert_eq!(&g.g_ram[0x1c37..0x1c39], &[0, 0]);
     let failed = catch_unwind(AssertUnwindSafe(|| {
         let o = Transaction::acquire(&mut g);
         let _ = o.foreign(|g| {

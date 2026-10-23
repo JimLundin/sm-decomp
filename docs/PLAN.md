@@ -161,11 +161,40 @@ references; measure build/test time and resource growth before changing the loop
    source or dependencies. Local frozen references and integrated-2 artifacts
    remain in Local/sm-decomp-experiments/20261023/room-mechanisms.
 
-   Next: establish the exact external writers, whole-RAM adoption/reset/load and
-   shared-continuation interactions needed for persistent ownership. Investigate
-   the minimum complete migration before adding more adapters or packages. The
-   accepted engine still requires state owned between operations, explicit
-   backend outputs, all-unsafe elimination and boot-to-credits validation.
+   Ownership audit found a concrete remaining alias writer: PalFx_ProcessOne
+   writes palette_buffer + (color & !1); color 06C8 reaches mechanism tilemap C6C8
+   and color 1E1C reaches instruction timers DE1C. Both are defined in-bounds paths.
+   Whole-RAM restore/reset/load, replay patches, CPU/DMA and the shared 613
+   continuation also prevent persistent ownership. Do not clamp these offsets
+   or claim persistence from adding a long-lived field or two bus hooks.
+
+   Shared ownership transport is adopted: projectile Transaction and mechanism
+   RoomPort use one private maintained implementation, registered privately under
+   each namespace. The separate semantic codecs remain independent. Duplicate
+   acquire/publish/release/foreign/drop and checked-write implementations are
+   removed; the constructor exposes no new game-wide byte or state interface.
+   Strengthened existing checks cover optional ROM absence, value-before-index
+   evaluation and nested calls between the two actual owners. Final delta including
+   registration/checks is -8 lines/-5 tokens/-133 LF bytes. Current Rust 108674;
+   unsafe/cast/native counters unchanged. This is modest deduplication, not a
+   persistent owner or backend replacement.
+
+   Source 06c88508786a98d3bda75f0bfbb1b2a33d65398ac3783f7bffb81f8f2096667d passes
+   release/frontend/verifier build, 106 projectile groups, 104 fresh projectile RAM
+   comparisons, all 1018 mechanism baseline outcomes and groups 1018/1019. The
+   28314-frame Speed Booster route again passes with all seven required probes
+   and 120 frames after message completion. No credits claim. Independent review
+   passes. Evidence is local under 20261023/shared-ownership.
+
+   Next candidate: complete PaletteEffects interpreter/lifecycle, reusing the
+   private transport and retiring sm_8d plus palette_ram. Preserve broad 16-bit
+   color offsets and immediate effect ordering. The worker must specify the full
+   owner/API/codec/native-effect contract and price complete implementation plus
+   checks before adoption. Actual-old outputs must be frozen before replacement.
+   Existing scope is 363 lines, with an initial 300..500 runtime estimate; no savings
+   or persistent-room-ownership claim follows from that estimate.
+   The accepted engine still needs persistent state, explicit backend outputs,
+   all-unsafe elimination and boot-to-credits validation.
 
    Baseline route failure at input 20857 is fixed: the room-content loader introduced
    at f116c8a6 copied overlapping layer2/BTS buffers forward. The actual room size

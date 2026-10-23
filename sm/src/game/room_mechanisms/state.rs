@@ -168,7 +168,9 @@ impl RoomMechanisms {
             },
         }
     }
-    pub(super) fn decode(ram: &[u8]) -> Self {
+}
+impl super::transport::Codec for RoomMechanisms {
+    fn decode(ram: &[u8]) -> Self {
         let mut state = Self {
             slots: [Slot::default(); 40],
             flags: 0,
@@ -190,7 +192,7 @@ impl RoomMechanisms {
         }
         state
     }
-    pub(super) fn encode(&self, ram: &mut [u8]) {
+    fn encode(&self, ram: &mut [u8]) {
         for (base, count) in REGIONS {
             for i in 0..count {
                 let at = base + 2 * i;
@@ -198,11 +200,11 @@ impl RoomMechanisms {
             }
         }
     }
-    pub(super) fn byte(&self, address: usize) -> Option<u8> {
+    fn byte(&self, address: usize) -> Option<u8> {
         let (location, lane) = location(address)?;
         Some(self.word(location).to_le_bytes()[lane])
     }
-    pub(super) fn put_byte(&mut self, address: usize, value: u8) -> bool {
+    fn put_byte(&mut self, address: usize, value: u8) -> bool {
         let Some((location, lane)) = location(address) else {
             return false;
         };

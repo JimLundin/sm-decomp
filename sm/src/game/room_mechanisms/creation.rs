@@ -155,7 +155,7 @@ impl Execution<'_> {
         )
     }
     pub(super) fn close_door(&mut self) {
-        let door = self.record::<0x83>(self.port().word(crate::ram_map::words::door_def_ptr));
+        let door = self.record::<0x83>(self.port().read_le(crate::ram_map::words::door_def_ptr));
         let row = u16::from(door.byte(5)) * u16::from(self.global(Global::RoomWidth) as u8);
         let block = row.wrapping_add(u16::from(door.byte(4))).wrapping_mul(2);
         if let Some(slot) = (0..40)
@@ -177,15 +177,16 @@ impl Execution<'_> {
         }
         let address = self
             .port()
-            .word(crate::ram_map::words::door_direction)
+            .read_le(crate::ram_map::words::door_direction)
             .wrapping_mul(2)
             .wrapping_add(0xe68a);
         let header = self.record::<0x8f>(address);
         if header.word(0) != 0 {
-            self.port_mut().put_native_word(0x12, header.word(0));
-            let door = self.record::<0x83>(self.port().word(crate::ram_map::words::door_def_ptr));
-            self.port_mut().put_native_word(0x14, door.word(4));
-            self.port_mut().put_native_word(0x16, 0);
+            self.port_mut().write_slice_native(0x12, header.word(0));
+            let door =
+                self.record::<0x83>(self.port().read_le(crate::ram_map::words::door_def_ptr));
+            self.port_mut().write_slice_native(0x14, door.word(4));
+            self.port_mut().write_slice_native(0x16, 0);
             self.spawn(Source::Room { address: 0x12 }, &mut Displacement::Absent);
         }
     }

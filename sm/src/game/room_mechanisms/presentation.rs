@@ -16,7 +16,7 @@ impl Execution<'_> {
         crate::verify_probe::hit("mechanisms.terrain");
         let address = self.port().field(Column::DrawProgram, usize::from(k >> 1));
         let image = if address & 0x8000 != 0 {
-            Some(self.port().rom_image())
+            Some(self.port().rom())
         } else {
             if address >= 0x2000 {
                 self.foreign(|_| validate_ram_draw_address(address));
@@ -41,14 +41,14 @@ impl Execution<'_> {
             let command = read(cursor, self);
             cursor += 2;
             let stride = if command & 0x8000 != 0 {
-                usize::from(self.port().word(0x7a5)) * 2
+                usize::from(self.port().read_le(0x7a5)) * 2
             } else {
                 2
             };
             for block in 0..usize::from(command as u8) {
                 let value = read(cursor, self);
                 cursor += 2;
-                self.port_mut().put_word(
+                self.port_mut().write_slice_le(
                     0x10002 + ((usize::from(destination) + block * stride) >> 1) * 2,
                     value,
                 );
@@ -59,7 +59,7 @@ impl Execution<'_> {
             }
             let x = i32::from(displacement as u8 as i8);
             let y = i32::from((displacement >> 8) as u8 as i8);
-            let width = i32::from(self.port().word(0x7a5));
+            let width = i32::from(self.port().read_le(0x7a5));
             destination = (i32::from(origin) + 2 * (x + y * width)) as u16;
             cursor += 2;
         }
@@ -71,7 +71,7 @@ impl Execution<'_> {
         let mut destination = ((y & 15) * 64)
             .wrapping_add(if right { 0x53e0 } else { 0x5000 })
             .wrapping_add(2 * column);
-        if self.port().word(0x91d) & 0x100 != 0 {
+        if self.port().read_le(0x91d) & 0x100 != 0 {
             destination = if right {
                 destination.wrapping_sub(1024)
             } else {
@@ -84,16 +84,16 @@ impl Execution<'_> {
     fn queue_pair(&mut self, destination: u16, tail: u16, count: u16, mode: u16) {
         let entry = 0xd0 + usize::from(tail);
         self.port_mut()
-            .put_native_word(entry + 5, mode | destination);
+            .write_slice_native(entry + 5, mode | destination);
         let size = 4u16.wrapping_mul(count);
-        let source = self.port().word(DRAW_INDEX).wrapping_add(0xc6c8);
-        self.port_mut().put_native_word(entry, size);
-        self.port_mut().put_native_word(entry + 7, size);
-        self.port_mut().put_native_word(entry + 2, source);
-        self.port_mut().put_byte(entry + 4, 126);
+        let source = self.port().read_le(DRAW_INDEX).wrapping_add(0xc6c8);
+        self.port_mut().write_slice_native(entry, size);
+        self.port_mut().write_slice_native(entry + 7, size);
+        self.port_mut().write_slice_native(entry + 2, source);
+        self.port_mut().set_byte(entry + 4, 126);
         self.port_mut()
-            .put_native_word(entry + 9, source.wrapping_add(size));
-        self.port_mut().put_byte(entry + 11, 126);
+            .write_slice_native(entry + 9, source.wrapping_add(size));
+        self.port_mut().set_byte(entry + 11, 126);
     }
 
     /// Each tile is read immediately before writing: destinations can alias later sources.
@@ -111,9 +111,9 @@ impl Execution<'_> {
         for (corner, destination) in corners.into_iter().zip(destinations) {
             let tile = self
                 .port()
-                .word(0xa000 + usize::from(first_tile + (corner ^ flip)) * 2)
+                .read_le(0xa000 + usize::from(first_tile + (corner ^ flip)) * 2)
                 ^ ((block & 0xc00) << 4);
-            self.port_mut().put_word(destination, tile);
+            self.port_mut().write_slice_le(destination, tile);
         }
     }
 
@@ -122,11 +122,11 @@ impl Execution<'_> {
         crate::verify_probe::hit("mechanisms.draw");
         unsafe {
             let mut command_address = self.port().field(Column::DrawProgram, usize::from(k >> 1));
-            let mut x = self.port().word(BLOCK_X);
-            let mut y = self.port().word(BLOCK_Y);
+            let mut x = self.port().read_le(BLOCK_X);
+            let mut y = self.port().read_le(BLOCK_Y);
             loop {
-                let mut top = self.port().word(CAMERA_Y) >> 4;
-                if ((self.port().word(CAMERA_Y) as i32 >> 4) + 15 - y as i32) & 0x8000 != 0 {
+                let mut top = self.port().read_le(CAMERA_Y) >> 4;
+                if ((self.port().read_le(CAMERA_Y) as i32 >> 4) + 15 - y as i32) & 0x8000 != 0 {
                     return;
                 }
                 let command = self.draw_word(command_address);
@@ -138,12 +138,12 @@ impl Execution<'_> {
                 let first;
                 let second;
                 if vertical {
-                    if !(self.port().word(CAMERA_X) as i32 >> 4 == x as i32
-                        || (((self.port().word(CAMERA_X) as i32 >> 4) - x as i32) as i16) < 0)
+                    if !(self.port().read_le(CAMERA_X) as i32 >> 4 == x as i32
+                        || (((self.port().read_le(CAMERA_X) as i32 >> 4) - x as i32) as i16) < 0)
                     {
                         return;
                     }
-                    let right = ((self.port().word(CAMERA_X) as i32 >> 4) + 17) as i16;
+                    let right = ((self.port().read_le(CAMERA_X) as i32 >> 4) + 17) as i16;
                     if !(right as i32 != x as i32 && right.wrapping_sub(x as i16) >= 0) {
                         return;
                     }
@@ -173,9 +173,9 @@ impl Execution<'_> {
                             return;
                         }
                     }
-                    let tail = self.port().word(QUEUE_TAIL);
-                    if !((self.port().word(QUEUE_TAIL) as i16).wrapping_sub(240) < 0
-                        && (((512u16.wrapping_sub(self.port().word(DRAW_INDEX)) as i32 >> 3)
+                    let tail = self.port().read_le(QUEUE_TAIL);
+                    if !((self.port().read_le(QUEUE_TAIL) as i16).wrapping_sub(240) < 0
+                        && (((512u16.wrapping_sub(self.port().read_le(DRAW_INDEX)) as i32 >> 3)
                             - count as i32)
                             & 0x8000)
                             == 0)
@@ -183,20 +183,21 @@ impl Execution<'_> {
                         return;
                     }
                     let destination = self.tilemap_destination(left, top);
-                    self.queue_pair(destination, self.port().word(QUEUE_TAIL), count, 0x8000);
+                    self.queue_pair(destination, self.port().read_le(QUEUE_TAIL), count, 0x8000);
                     let entry = 0xd0 + usize::from(tail);
-                    let destination = self.port().native_word(entry + 5).wrapping_add(1);
-                    self.port_mut().put_native_word(entry + 12, destination);
-                    first = usize::from(self.port().native_word(entry + 2));
-                    second = usize::from(self.port().native_word(entry + 9));
-                    self.port_mut().put_word(QUEUE_TAIL, tail.wrapping_add(14));
+                    let destination = self.port().read_native(entry + 5).wrapping_add(1);
+                    self.port_mut().write_slice_native(entry + 12, destination);
+                    first = usize::from(self.port().read_native(entry + 2));
+                    second = usize::from(self.port().read_native(entry + 9));
+                    self.port_mut()
+                        .write_slice_le(QUEUE_TAIL, tail.wrapping_add(14));
                 } else {
                     if (y as i32 - top as i32) & 0x8000 != 0 {
                         return;
                     }
                     top = y;
                     trailing =
-                        ((self.port().word(CAMERA_X).wrapping_add(15) as i32 >> 4) - 1) as u16;
+                        ((self.port().read_le(CAMERA_X).wrapping_add(15) as i32 >> 4) - 1) as u16;
                     if (trailing as i16).wrapping_sub(x as i16) >= 0 && trailing != x {
                         skip = trailing.wrapping_sub(x);
                         if x as i32 + count as i32 == trailing as i32
@@ -218,9 +219,9 @@ impl Execution<'_> {
                             return;
                         }
                     }
-                    let tail = self.port().word(QUEUE_TAIL);
-                    if !((self.port().word(QUEUE_TAIL) as i16).wrapping_sub(480) < 0
-                        && (((512u16.wrapping_sub(self.port().word(DRAW_INDEX)) as i32 >> 3)
+                    let tail = self.port().read_le(QUEUE_TAIL);
+                    if !((self.port().read_le(QUEUE_TAIL) as i16).wrapping_sub(480) < 0
+                        && (((512u16.wrapping_sub(self.port().read_le(DRAW_INDEX)) as i32 >> 3)
                             - count as i32)
                             & 0x8000)
                             == 0)
@@ -237,41 +238,43 @@ impl Execution<'_> {
                             return;
                         }
                         let size = (2 * (32 - column as i32)) as u16;
-                        self.port_mut().put_native_word(entry, size);
-                        self.port_mut().put_native_word(entry + 14, size);
-                        self.port_mut().put_native_word(entry + 5, destination);
+                        self.port_mut().write_slice_native(entry, size);
+                        self.port_mut().write_slice_native(entry + 14, size);
+                        self.port_mut().write_slice_native(entry + 5, destination);
                         self.port_mut()
-                            .put_native_word(entry + 12, (destination & 0xffe0) ^ 0x400);
-                        let next = self.port().native_word(entry + 12).wrapping_add(32);
-                        self.port_mut().put_native_word(entry + 26, next);
-                        let next = self.port().native_word(entry + 5).wrapping_add(32);
-                        self.port_mut().put_native_word(entry + 19, next);
+                            .write_slice_native(entry + 12, (destination & 0xffe0) ^ 0x400);
+                        let next = self.port().read_native(entry + 12).wrapping_add(32);
+                        self.port_mut().write_slice_native(entry + 26, next);
+                        let next = self.port().read_native(entry + 5).wrapping_add(32);
+                        self.port_mut().write_slice_native(entry + 19, next);
                         let remaining =
-                            (4 * count as i32 - self.port().native_word(entry) as i32) as u16;
-                        self.port_mut().put_native_word(entry + 7, remaining);
-                        self.port_mut().put_native_word(entry + 21, remaining);
-                        let source = self.port().word(DRAW_INDEX).wrapping_sub(14648);
-                        let live_source = self.port().word(DRAW_INDEX).wrapping_sub(14648);
-                        self.port_mut().put_native_word(entry + 2, live_source);
+                            (4 * count as i32 - self.port().read_native(entry) as i32) as u16;
+                        self.port_mut().write_slice_native(entry + 7, remaining);
+                        self.port_mut().write_slice_native(entry + 21, remaining);
+                        let source = self.port().read_le(DRAW_INDEX).wrapping_sub(14648);
+                        let live_source = self.port().read_le(DRAW_INDEX).wrapping_sub(14648);
+                        self.port_mut().write_slice_native(entry + 2, live_source);
                         first = usize::from(source);
-                        let next = self.port().native_word(entry).wrapping_add(source);
-                        self.port_mut().put_native_word(entry + 9, next);
-                        let next = self.port().native_word(entry + 7).wrapping_add(next);
-                        self.port_mut().put_native_word(entry + 16, next);
+                        let next = self.port().read_native(entry).wrapping_add(source);
+                        self.port_mut().write_slice_native(entry + 9, next);
+                        let next = self.port().read_native(entry + 7).wrapping_add(next);
+                        self.port_mut().write_slice_native(entry + 16, next);
                         second = usize::from(next);
-                        let next = self.port().native_word(entry + 14).wrapping_add(next);
-                        self.port_mut().put_native_word(entry + 23, next);
+                        let next = self.port().read_native(entry + 14).wrapping_add(next);
+                        self.port_mut().write_slice_native(entry + 23, next);
                         for index in 0..4 {
-                            self.port_mut().put_byte(entry + index * 7 + 4, 126);
+                            self.port_mut().set_byte(entry + index * 7 + 4, 126);
                         }
-                        self.port_mut().put_word(QUEUE_TAIL, tail.wrapping_add(28));
+                        self.port_mut()
+                            .write_slice_le(QUEUE_TAIL, tail.wrapping_add(28));
                     } else {
                         self.queue_pair(destination, tail, count, 0);
-                        let next = self.port().native_word(entry + 5).wrapping_add(32);
-                        self.port_mut().put_native_word(entry + 12, next);
-                        first = usize::from(self.port().native_word(entry + 2));
-                        second = usize::from(self.port().native_word(entry + 9));
-                        self.port_mut().put_word(QUEUE_TAIL, tail.wrapping_add(14));
+                        let next = self.port().read_native(entry + 5).wrapping_add(32);
+                        self.port_mut().write_slice_native(entry + 12, next);
+                        first = usize::from(self.port().read_native(entry + 2));
+                        second = usize::from(self.port().read_native(entry + 9));
+                        self.port_mut()
+                            .write_slice_le(QUEUE_TAIL, tail.wrapping_add(14));
                     }
                 }
                 let mut cursor = skip
@@ -285,9 +288,9 @@ impl Execution<'_> {
                     self.emit_block(block, first, second, offset, vertical);
                     offset = offset.wrapping_add(4);
                     cursor = cursor.wrapping_add(2);
-                    let index = self.port().word(DRAW_INDEX).wrapping_add(8);
-                    self.port_mut().put_word(DRAW_INDEX, index);
-                    if (self.port().word(DRAW_INDEX) as i32 - 512) & 0x8000 == 0 {
+                    let index = self.port().read_le(DRAW_INDEX).wrapping_add(8);
+                    self.port_mut().write_slice_le(DRAW_INDEX, index);
+                    if (self.port().read_le(DRAW_INDEX) as i32 - 512) & 0x8000 == 0 {
                         return;
                     }
                     count = count.wrapping_sub(1);
@@ -304,11 +307,11 @@ impl Execution<'_> {
                 }
                 x = self
                     .port()
-                    .word(BLOCK_X)
+                    .read_le(BLOCK_X)
                     .wrapping_add(displacement as i8 as u16);
                 let next = cursor.wrapping_add(1);
                 // Native/RAM selection and the byte read happen again for Y.
-                let base_y = self.port().word(BLOCK_Y);
+                let base_y = self.port().read_le(BLOCK_Y);
                 y = base_y.wrapping_add(self.draw_byte(next) as i8 as u16);
                 command_address = next.wrapping_add(1);
             }

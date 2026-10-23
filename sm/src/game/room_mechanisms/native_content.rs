@@ -42,7 +42,7 @@ impl Execution<'_> {
             if address >= 0x2000 {
                 self.foreign(|_| validate_ram_draw_address(address));
             }
-            self.port().native_word(usize::from(address))
+            self.port().read_native(usize::from(address))
         }
     }
     pub(super) unsafe fn draw_byte(&mut self, address: u16) -> u8 {

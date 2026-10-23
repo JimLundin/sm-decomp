@@ -1,9 +1,28 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 14:52 UTC**
+Updated: **2026-10-23 15:06 UTC**
 
-**Room mechanisms now use one production subsystem, with the superseded code
-removed.** The complete engine modernization remains unfinished.
+**Projectiles and room mechanisms now share one private ownership-transfer
+implementation.** Both production subsystems use it; their state remains separate.
+The complete engine modernization remains unfinished.
+
+## Latest deduplication
+
+[Ownership transport](sm/src/game/ownership_transport.rs) replaces duplicated
+import, publication, callback recovery, destruction and checked-write algorithms.
+The source is privately registered under each owner to preserve API visibility.
+Both production users migrated; no forwarding layer or third copy remains.
+
+Existing tests now also cover optional ROM absence, value-before-index evaluation
+and nested calls between the two subsystems. The final change removes **8 Rust
+lines, 5 lexical tokens and 133 LF bytes**, including registration and checks.
+This is a small net reduction: production removes 49 lines, registration adds one
+and strengthened checks add 40. It does not establish persistent state ownership.
+
+The final build passes, all 104 projectile RAM outputs and 1,015 mechanism outputs
+match their references, the expected diagnostic/nonreturn cases and ownership
+checks pass, and all 106 projectile groups pass. The 28,314-frame oracle route
+again passes with zero failures and 120 frames after message completion.
 
 ## What changed
 
@@ -38,7 +57,7 @@ The nonreturn check observes a timeout, not the preceding RAM write dynamically.
 
 ## Complete cost
 
-The current source has **108,682 Rust lines** and **2,732 unsafe declarations**.
+The current source has **108,674 Rust lines** and **2,732 unsafe declarations**.
 
 | Room-mechanism work | Lines | Tokens | LF bytes |
 | --- | ---: | ---: | ---: |

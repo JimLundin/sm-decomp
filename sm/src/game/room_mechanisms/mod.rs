@@ -12,6 +12,8 @@ mod presentation;
 mod scheduler;
 mod setup;
 mod state;
+#[path = "../ownership_transport.rs"]
+mod transport;
 mod rules {
     pub(super) mod hands;
     pub(super) mod stations;
@@ -89,8 +91,8 @@ pub(crate) unsafe fn run(game: &mut Game) -> u8 {
 }
 pub(crate) fn set_enabled(enabled: bool, game: &mut Game) {
     let mut e = Execution::new(game);
-    let flags = e.port().word(0x1c23);
-    e.port_mut().put_word(
+    let flags = e.port().read_le(0x1c23);
+    e.port_mut().write_slice_le(
         0x1c23,
         if enabled {
             flags | 0x8000
@@ -104,7 +106,7 @@ pub(crate) fn clear(game: &mut Game) {
     for slot in (0..40).rev() {
         e.release(slot);
     }
-    e.port_mut().put_word(0x1c2d, 0);
+    e.port_mut().write_slice_le(0x1c2d, 0);
 }
 /// Publish the coordinate side effect before the caller's later field reads.
 pub(crate) fn calculate_coordinates(k: u16, game: &mut Game) {
@@ -119,7 +121,7 @@ pub(crate) fn block_index(k: u16, game: &mut Game) -> u16 {
 pub(crate) fn projectile_argument(k: u16, game: &mut Game) -> u16 {
     Execution::new(game)
         .port()
-        .native_word(0x1dc7 + usize::from(k >> 1) * 2)
+        .read_native(0x1dc7 + usize::from(k >> 1) * 2)
 }
 pub(crate) fn block_x(game: &mut Game) -> u16 {
     Execution::new(game).global(Global::BlockX)
@@ -147,18 +149,18 @@ pub(crate) fn wait_statue(index: u16, game: &mut Game) {
     let mut e = Execution::new(game);
     let actor = 0xf78 + usize::from(index);
     let properties = actor + core::mem::offset_of!(crate::types::EnemyData, properties);
-    let value = e.port().native_word(properties) | 0x400;
-    e.port_mut().put_native_word(properties, value);
+    let value = e.port().read_native(properties) | 0x400;
+    e.port_mut().write_slice_native(properties, value);
     if rules::torizo_statue::present(&e) {
         return;
     }
     e.music(6);
-    let value = e.port().native_word(properties) & !0x400;
-    e.port_mut().put_native_word(properties, value);
+    let value = e.port().read_native(properties) & !0x400;
+    e.port_mut().write_slice_native(properties, value);
     let instruction = actor + core::mem::offset_of!(crate::types::EnemyData, current_instruction);
-    let value = e.port().native_word(instruction).wrapping_add(2);
-    e.port_mut().put_native_word(instruction, value);
-    e.port_mut().put_native_word(
+    let value = e.port().read_native(instruction).wrapping_add(2);
+    e.port_mut().write_slice_native(instruction, value);
+    e.port_mut().write_slice_native(
         actor + core::mem::offset_of!(crate::types::EnemyData, instruction_timer),
         1,
     );
@@ -174,12 +176,12 @@ pub(crate) unsafe fn reveal_items(game: &mut Game) {
         let argument = e.slot(Column::RoomArgument, slot);
         let index = e.foreign(|g| crate::game::progress_flags::PrepareBitAccess(argument, g));
         let item = u16::from(e.port().byte(0xd870 + usize::from(index)));
-        if e.port().word(0x5e7) & item != 0 {
+        if e.port().read_le(0x5e7) & item != 0 {
             continue;
         }
         e.coordinates(slot);
-        let graphic = e.port().native_word(0xdf0c + slot * 2) >> 1;
-        let address = e.port().rom_image().table_word(
+        let graphic = e.port().read_native(0xdf0c + slot * 2) >> 1;
+        let address = e.port().rom().table_word(
             crate::rtl::lorom_offset(0x84839d) as usize,
             isize::try_from(graphic).unwrap(),
         );

@@ -1,5 +1,7 @@
-//! Complete owned player-projectile subsystem (integration in progress).
+//! Complete owned player-projectile subsystem.
 mod state;
+#[path = "../ownership_transport.rs"]
+mod transport;
 #[macro_use]
 mod encoded;
 pub(crate) mod checks;

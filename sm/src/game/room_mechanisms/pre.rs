@@ -102,7 +102,7 @@ impl Execution<'_> {
             8699423 => {
                 if self
                     .port()
-                    .word(crate::ram_map::words::tourian_entrance_statue_finished)
+                    .read_le(crate::ram_map::words::tourian_entrance_statue_finished)
                     & 0x8000
                     == 0
                 {

@@ -97,64 +97,64 @@ impl Fields for Execution<'_> {
         self.port().byte(column.address() + 2 * slot + lane)
     }
     fn global(&self, field: Global) -> u16 {
-        self.port().word(field.address())
+        self.port().read_le(field.address())
     }
     fn set_global(&mut self, field: Global, value: u16) {
-        self.port_mut().put_word(field.address(), value);
+        self.port_mut().write_slice_le(field.address(), value);
     }
     fn level(&self, block: u16) -> u16 {
-        self.port().word(0x10002 + usize::from(block & !1))
+        self.port().read_le(0x10002 + usize::from(block & !1))
     }
     fn set_level(&mut self, block: u16, value: u16) {
         self.port_mut()
-            .put_word(0x10002 + usize::from(block & !1), value);
+            .write_slice_le(0x10002 + usize::from(block & !1), value);
     }
     fn level_high(&self, block: u16) -> u8 {
         self.port().byte(0x10003 + usize::from(block))
     }
     fn set_level_high(&mut self, block: u16, value: u8) {
         self.port_mut()
-            .put_byte(0x10003 + usize::from(block), value);
+            .set_byte(0x10003 + usize::from(block), value);
     }
     fn set_behavior(&mut self, block: u16, value: u8) {
         self.port_mut()
-            .put_byte(0x16402 + usize::from(block >> 1), value);
+            .set_byte(0x16402 + usize::from(block >> 1), value);
     }
     fn projectile_word(&self, index: isize) -> u16 {
         let at = 0xc18usize
             .checked_add_signed(2 * index)
             .expect("projectile word offset");
-        self.port().native_word(at)
+        self.port().read_native(at)
     }
     fn native_level(&self, block: u16) -> u16 {
-        self.port().native_word(0x10002 + usize::from(block & !1))
+        self.port().read_native(0x10002 + usize::from(block & !1))
     }
     fn projectile_little_word(&self, index: isize) -> u16 {
         let at = 0xc18usize
             .checked_add_signed(2 * index)
             .expect("projectile word offset");
-        self.port().word(at)
+        self.port().read_le(at)
     }
     fn behavior(&self, block: u16, lane: usize) -> u8 {
         self.port().byte(0x16402 + usize::from(block >> 1) + lane)
     }
     fn set_behavior_word(&mut self, block: u16, value: u16) {
         self.port_mut()
-            .put_native_word(0x16402 + usize::from(block >> 1), value);
+            .write_slice_native(0x16402 + usize::from(block >> 1), value);
     }
     fn set_signed_slot(&mut self, column: Column, slot: isize, value: u16) {
         let at = column
             .address()
             .checked_add_signed(slot * 2)
             .expect("mechanism signed slot");
-        self.port_mut().put_word(at, value);
+        self.port_mut().write_slice_le(at, value);
     }
     fn missing_scroll(&mut self) -> ! {
         self.foreign(|_| loop {})
     }
     fn clear_base_fraction_sign(&mut self) {
         let value = self.port().byte(0xb49) & 0x7f;
-        self.port_mut().put_byte(0xb49, value);
+        self.port_mut().set_byte(0xb49, value);
     }
     fn displacement(&self, value: &Displacement<'_>) -> i32 {
         match value {
@@ -169,7 +169,7 @@ impl Fields for Execution<'_> {
         match target {
             Displacement::Absent => panic!("missing contact displacement"),
             Displacement::Local(target) => **target = value,
-            Displacement::RamOffset(at) => self.port_mut().put_slice(*at, &value.to_ne_bytes()),
+            Displacement::RamOffset(at) => self.port_mut().write_slice(*at, &value.to_ne_bytes()),
         }
     }
     fn missing_displacement(&mut self) {
@@ -191,7 +191,8 @@ impl Fields for Execution<'_> {
         self.foreign(|g| crate::game::music::QueueMusic_Delayed8(track, g));
     }
     fn native_scroll_pair(&mut self, byte_index: usize, value: u16) {
-        self.port_mut().put_native_word(0xcd20 + byte_index, value);
+        self.port_mut()
+            .write_slice_native(0xcd20 + byte_index, value);
     }
     fn content_word(&self, table: ContentTable, index: isize) -> u16 {
         let base = match table {
@@ -200,7 +201,7 @@ impl Fields for Execution<'_> {
                 crate::rtl::lorom_offset(if up { 0x84c764 } else { 0x84c70a }) as usize + offset
             }
         };
-        self.port().rom_image().table_word(base, index)
+        self.port().rom().table_word(base, index)
     }
     fn eproj(&mut self, definition: u16, parameter: u16) {
         self.foreign(|g| super::effects::eproj(definition, parameter, g));
@@ -221,16 +222,16 @@ impl Fields for Execution<'_> {
             WordOrder::Little => value.to_le_bytes(),
             WordOrder::Native => value.to_ne_bytes(),
         };
-        self.port_mut().put_slice(0x10002 + (block & !1), &bytes);
+        self.port_mut().write_slice(0x10002 + (block & !1), &bytes);
     }
     fn set_wide_behavior(&mut self, block: usize, value: u8) {
-        self.port_mut().put_byte(0x16402 + (block >> 1), value);
+        self.port_mut().set_byte(0x16402 + (block >> 1), value);
     }
     fn behavior_at(&self, index: usize, lane: usize) -> u8 {
         self.port().byte(0x16402 + index + lane)
     }
     fn set_behavior_at(&mut self, index: usize, value: u16) {
-        self.port_mut().put_native_word(0x16402 + index, value);
+        self.port_mut().write_slice_native(0x16402 + index, value);
     }
     fn global_byte(&self, field: Global, lane: usize) -> u8 {
         self.port().byte(field.address() + lane)
@@ -241,7 +242,7 @@ impl Fields for Execution<'_> {
             != 0
     }
     fn statue_signal(&mut self) {
-        self.port_mut().put_native_word(
+        self.port_mut().write_slice_native(
             0xf78 + core::mem::offset_of!(crate::types::EnemyData, parameter_1),
             1,
         );

@@ -1,8 +1,8 @@
 //! One checked byte-lane projection; no canonical or broad algorithm fallback.
 #![forbid(unsafe_code)]
 use super::state::*;
-use crate::game_state::Game;
-use crate::ram_map::{words as ram, word_arrays as arrays};
+use super::transport::{Codec, Port};
+use crate::ram_map::{word_arrays as arrays, words as ram};
 // Compatibility layout is private. Each physical owned word has exactly ONE
 // representation, including the preinstruction/bomb-function overlap.
 const SHOTS: usize = 0xb64;
@@ -294,111 +294,35 @@ fn owned_words() -> impl Iterator<Item = usize> {
         .chain((0xdaa..0xdba).step_by(2))
 }
 
-// Only the production integration module can create this type. Game is private,
-// cannot escape through an accessor, and canonical bytes are never read from it
-// while this owner exists. This is not a persistent shadow state or RAM clone.
-pub(crate) struct Transaction<'g> {
-    pub(super) state: PlayerProjectiles,
-    game: Option<&'g mut Game>,
-}
-impl<'g> Transaction<'g> {
-    pub(crate) fn acquire(game: &'g mut Game) -> Self {
-        let mut state = PlayerProjectiles::default();
+// Both the codec and transport stay inside the projectile integration namespace.
+pub(super) type Transaction<'g> = Port<'g, PlayerProjectiles>;
+impl Codec for PlayerProjectiles {
+    fn decode(ram: &[u8]) -> Self {
+        let mut state = Self::default();
         for address in owned_words() {
             let (field, _) = field(address).unwrap();
-            state.set_word(
-                field,
-                u16::from_le_bytes([game.g_ram[address], game.g_ram[address + 1]]),
-            );
+            state.set_word(field, u16::from_le_bytes([ram[address], ram[address + 1]]));
         }
-        Self {
-            state,
-            game: Some(game),
-        }
+        state
     }
-    pub(super) fn capture_rom(&self) -> Option<crate::rom::RomImage> {
-        self.game.as_ref().unwrap().loaded_rom.clone()
-    }
-    pub(super) fn rom(&self) -> crate::rom::RomImage {
-        self.game
-            .as_ref()
-            .unwrap()
-            .loaded_rom
-            .as_ref()
-            .expect("ROM must be loaded")
-            .clone()
-    }
-    pub(super) fn byte(&self, address: usize) -> u8 {
-        match field(address) {
-            Some((field, lane)) => self.state.word(field).to_le_bytes()[lane],
-            None => self.game.as_ref().unwrap().g_ram[address],
+    fn encode(&self, ram: &mut [u8]) {
+        for address in owned_words() {
+            let (field, _) = field(address).unwrap();
+            ram[address..address + 2].copy_from_slice(&self.word(field).to_le_bytes());
         }
     }
-    pub(super) fn set_byte(&mut self, address: usize, value: u8) {
-        match field(address) {
-            Some((field, lane)) => {
-                let mut bytes = self.state.word(field).to_le_bytes();
-                bytes[lane] = value;
-                self.state.set_word(field, u16::from_le_bytes(bytes));
-            }
-            None => self.game.as_mut().unwrap().g_ram[address] = value,
-        }
+    fn byte(&self, address: usize) -> Option<u8> {
+        let (field, lane) = field(address)?;
+        Some(self.word(field).to_le_bytes()[lane])
     }
-    pub(super) fn read_le(&self, address: usize) -> u16 {
-        u16::from_le_bytes([self.byte(address), self.byte(address + 1)])
-    }
-    pub(super) fn read_native(&self, address: usize) -> u16 {
-        u16::from_ne_bytes([self.byte(address), self.byte(address + 1)])
-    }
-    fn write_bytes(&mut self, address: usize, bytes: [u8; 2]) {
-        // Match the original checked two-byte slice assignment: validate the
-        // whole range BEFORE either lane changes. Bytewise source operations
-        // instead call set_byte in their original sequence.
-        let _ = &self.game.as_ref().unwrap().g_ram[address..address + 2];
-        self.set_byte(address, bytes[0]);
-        self.set_byte(address + 1, bytes[1]);
-    }
-    pub(super) fn write_slice_le(&mut self, address: usize, value: u16) {
-        self.write_bytes(address, value.to_le_bytes());
-    }
-    pub(super) fn write_slice_native(&mut self, address: usize, value: u16) {
-        self.write_bytes(address, value.to_ne_bytes());
-    }
-    pub(super) fn write_word_le(&mut self, value: u16, address: usize) {
-        // checked_word! assignment evaluates value then address and writes
-        // independent lanes; preserve the low-byte prefix if high-byte fails.
-        let bytes = value.to_le_bytes();
-        self.set_byte(address, bytes[0]);
-        self.set_byte(address + 1, bytes[1]);
-    }
-    fn publish(&mut self) {
-        if let Some(game) = self.game.as_mut() {
-            // Fixed validated addresses; no content access or callback here.
-            for address in owned_words() {
-                let (field, _) = field(address).unwrap();
-                game.g_ram[address..address + 2]
-                    .copy_from_slice(&self.state.word(field).to_le_bytes());
-            }
-        }
-    }
-    pub(crate) fn release(mut self) -> &'g mut Game {
-        self.publish();
-        self.game.take().unwrap()
-    }
-    // This is private to the integration module. Public domain API exposes named
-    // effects, never arbitrary closures, Game, or byte addresses.
-    pub(super) fn foreign<R>(self, call: impl FnOnce(&mut Game) -> R) -> (Self, R) {
-        let game = self.release();
-        let result = call(game);
-        (Self::acquire(game), result)
-    }
-}
-impl Drop for Transaction<'_> {
-    fn drop(&mut self) {
-        // Rust unwinding publishes the exact successful mutation prefix during
-        // unwinding, before catch returns. Panic hooks run earlier; aborts do not unwind.
-        // release() removes Game, so ordinary transfer does not publish twice.
-        self.publish();
+    fn put_byte(&mut self, address: usize, value: u8) -> bool {
+        let Some((field, lane)) = field(address) else {
+            return false;
+        };
+        let mut bytes = self.word(field).to_le_bytes();
+        bytes[lane] = value;
+        self.set_word(field, u16::from_le_bytes(bytes));
+        true
     }
 }
 
