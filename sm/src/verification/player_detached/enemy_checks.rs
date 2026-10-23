@@ -276,8 +276,8 @@ fn contact_failure_prefix() {
 fn native_drop_then_missile() {
     let mut h = prepared();
     // This case also writes A0:983A and B4:9900..9905. Keep the default
-    // one-MiB fixtures unchanged; extend this image through bank B4 only.
-    let image = super::RomImage::zeroed(0x1a8000);
+    // fixtures intact; ensure bank B4 fits without shrinking a larger image.
+    let image = super::RomImage::zeroed(h.image.len().max(0x1a8000));
     for offset in 0..h.image.len() {
         image.write(offset, h.image.read(offset));
     }
