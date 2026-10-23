@@ -1,4 +1,4 @@
-# Engine reduction continuation - 2026-10-22
+# Engine reduction continuation - 2026-10-23
 
 Read [PLAN.md](PLAN.md) first and use [ITERATION.md](ITERATION.md). Preserve the
 complete game and exact behavior while reducing code, extracting content as
@@ -9,91 +9,118 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-Latest verified stage shares complete morph bomb, power-bomb and spread-bomb
-creation from `4e0b2dcf`. Safe owner-generic rules now own admission, reservation,
-ammo/flag order, initialization, cooldown, charge cancellation and all five
-spread placements. Main movement-HUD/Draygon callers and the owned model use
-these rules. Four bank producers and duplicate owned algorithms are retired;
-only the real owned fire_bombs delegate and lifetime consumers remain.
-Generated direct-test helper overlays are counted as verification, not production.
-Persistent Session authority and candidate adoption remain unfinished.
+Latest verified stage shares complete HUD switching, cooldown and weapon
+coordination from `e2a25fba`. Safe weapon_selection and weapon_coordinator rules
+replace duplicate main/owned algorithms. Both normal/demo preparation entries
+call the checked adapter; SamusCode04/06 retain their shared deselection identity
+and return value. Old bank tables/handlers are retired. Generic cooldown consumers
+use the same pure rule. Persistent Session authority and candidate adoption remain
+unfinished.
 
-Preserve reservation without ammo rollback, count-zero cooldown bypass, slot9
-fallback, captured power-bomb branch/slot/native byte, and spread's live physical
-byte0xC23 after all five initializers. Spread reads charge and position live at
-each original boundary. Shared rules retain exact palette/sound/flare order,
-complete-owner failure prefixes and byte-compatible RAM; adapters encode kinds
-and cooldown keys without hiding transaction sequencing.
+The production Leaf::SwitchHud no-op publication/reimport is gone. Its input
+refresh remains in memory AFTER cooldown and only on nonfront paths: the common
+input decoder reads external fields, then eight projections come from authoritative
+Session inventory. Dirty projectile/pool/queue/continuation state stays owned.
+Direct grapple cancellation writes external 0xD32 without a transfer because it
+preserves the imported inactive=false predicate; returning grapple to inactive retains
+its existing effect transport. Preserve captured/live selectors, signed/wrapped
+counters, palette-before-clear for grapple versus clear-before-palette otherwise,
+front poses updating despite freeze and postdispatch live freeze gating.
 
-All **54 suites pass** in 35.512303s with checker subprocess exit0 and all
-**51 retained vectors unchanged**. New [1838,1347,88,12,1206,8,655] means 1,838
-three-way RAM/APU/g_fail comparisons, 1,347 ordered postoperation observations,
-88 failure scenarios, 12 natural chains, 1,206 ticks, eight independent typed
-sequences and 655 authored scenarios. Observations are not actual effect counts.
-Failures comprise 74 triplets, two direct dirty-owner cooldown lookups and twelve
-checked-only real short-record initializer failures. The latter cover ordinary
-creation and each spread slot with missing damage/script data; dirty Session
-state and pending type/direction/motion writes are verified in the published failure prefix.
-The fourteen checked-only failures and typed sequences are excluded from triplets.
-Source identities: 274 carrier and 327 local entries.
+All **58 suites pass**, suite loop 35.273620s / full invocation 36.083148s, subprocess
+exit0, with all **54 retained vectors unchanged**. New HUD [1194,378,43,15,774,13,443]
+means 1,194 three-way RAM/APU/g_fail comparisons, 378 post-consumer observations,
+43 failing cases, 15 natural chains, 774 steps, 13 typed scenarios and 443 authored
+scenarios. Comparisons comprise 409 matrix cases, one genuine initializer failure,
+774 natural steps and 10 next-frame checks. Failures are 42 planned matrix failures
+plus one selected-power-bomb short-record failure after damage publication.
+The latter asserts selection, consumed ammo, flag/type/damage/fuse and dirty-owner
+prefix; it is not an observer throw. Observations are not actual effect counts.
+Five owned-specific checks and 13 typed cases are excluded from the triplet count.
 
-Nine ordinary chains enter actual movement-HUD creation (eight modes plus a
-static wall), reach natural fuse/explosion/retirement in 62 ticks each, and run
-next preparation. Spread earns charge through real input, then a constructed
-morph-mode transition; release/timeout chains take 185/374 ticks. Every spread
-slot flashes, explodes and clears type/damage. Per-slot terrain masks prove
-terrain processing; separate static-wall checks prove aggregate actual mechanism
-creation. Synthetic playback content and constructed schedules are explicit.
-Actual power-bomb HUD creation consumes one fuse tick (59), then real ROM HDMA
-growth reaches the Noob Tube trigger at tick 87, radius 0x2B60; 89 counted steps
-include creation and 88 subsequent HDMA/update steps. This is the tube signal/wait endpoint,
-not full rupture, explosion or Crystal Flash completion. Typed PB startup is
-separately authored. No movie frames, full-game or rendering coverage is claimed.
+Three owned-only cases discriminate stale cached freeze from fresh RAM at the
+correct boundary and all eight inventory projections. Nonfront RAM stays entirely
+unchanged with zero effects. Both front poses advance an admitted bomb 60 to 59,
+retain dirty owner state and permit only its proved direct block-index scratch
+write 34 to 0. Two further dirty-inventory selector/producer pairs compare with
+staged native state. A raw-frozen native entry would compute cooldown 32 rather
+than the deliberately stale owner's 6, so stale-cache checks are not native triplets.
 
-Frozen reference producers remain independent: all 212 parent main Rust files
-match committed `4e0b2dcf`; reference bodies match after removing observation-only
-inserts. Independent review approved exact final fixture hashes, all-five slot
-checks and genuine initializer failures. Five native fatal pairs remain setup-only
-stdout/stderr/status77 checks. Native-access exclusions, inherited Intro mismatch
-and little-endian Windows limits remain; no new failing movie frames were added.
+Ten natural weapon chains start from actual switch/cancel input through normal
+and demo preparation: beam 37, missile 36, super 17, ordinary bomb 63 and earned
+spread 183 steps for each handler. Both Super chains create an extension on the
+creation frame; all five spread slots flash, explode and clear type/damage. These
+scenes configure dormant input handler 0xE90E and a constructed morph transition;
+they do not establish active pose physics or demo playback. Separate runtime-only
+checks pass [74,345,4], exercising active handlers 0xE913/0xE918/0xE926, normal/demo,
+fluid/suit environments and four real-leaf failure prefixes.
 
-Production release/frontend/verifier/source and candidate release builds passed
-first attempts in 54.87s/51.06s. Carrier retry passed in 19.90s after missing fixture
-imports; harness retries corrected typed fixture arguments. A source-change guard
-rejected a midbuild fixture edit; the final frozen harness passed in 18.38s. Logs retain
-all attempts, including unchanged reuse of 0.13s and prior focused pass in 1.46s. Production
-source stayed frozen throughout fixture corrections. Formatting and progress pass.
+Two real grapple chains decrement CF6 and clear only flag bit0. Two Xray chains
+clear the high bit of all four initially enabled scheduler flags, preserve their
+low bits, allocate HDMA and change DMA. An unfrozen control advances a bomb;
+Xray suppresses it, the next frozen step writes cooldown 32, and front poses still
+advance it. A separate direct-HUD power-bomb chain compares switch and fire steps
+before real HDMA reaches Noob Tube at tick 87/radius 0x2B60 (90 linked steps).
+These are bounded activation/terrain endpoints, not full grapple flight, Xray
+rendering, power-bomb explosion or Crystal Flash completion. Natural successes
+require g_fail clear. No movie frames ran; native-access/Intro exclusions remain.
 
-Main is **106,997 Rust lines in 214 files**; candidate **115,494 (+8,497)** in 323
-files remains unadopted. Deltas in lines/lexical tokens/LF UTF-8 bytes: main
-[182,2119,4755], local production [-31,50,-793], composition [151,2169,3959],
-carrier-only verification [207,2412,11206], complete verification [2181,22507,86676],
-implementation plus checks [2332,24676,90635]. Local production overlaps composition;
+Typed coverage uses symbolic state and actual shared bomb creation/lifecycle/
+playback/release. Beam/missile typed actions assert dispatch/order only; their
+actual lifetimes are covered by runtime chains. Generic selection/cancellation
+[3427,3214,479] and runtime feedback [122,401,1,6] also pass. Five exact native fatal
+pairs remain setup-only stdout/stderr/status77 checks. Source identities are 278
+carrier/333 local; all 798 verification freeze entries match. Independent review
+approved the final source, references, runtime results and complete accounting.
+
+An added historical preparation suite exposed an obsolete controlled
+CheckInitialCollision observation. The exact frozen parent reproduces the same
+case and six byte differences; this is not a new HUD regression. Both original
+exports/source are preserved and explicitly excluded from the new default run;
+the valid runtime() subset runs separately. No obsolete callback was fabricated
+and no real scan suppressed. Baseline 1074 files matched before building; afterward
+1072 still match and two build stamps are regenerated. Evidence remains in
+hud-baseline-preparation.log/json and hud-baseline-check/.
+
+Production release/frontend/source passes first attempt in 70.72s. Candidate passes
+in 53.16s after restoring an accidentally removed generic impl boundary around
+slot release (first attempt 11.47s failed). Main source stayed frozen. Carrier
+passes in 26.40s; final harness compile 19.45s (19.94s wall). Ten harness attempts
+include verification visibility/setup/assertion corrections and the runtime-only
+export; every log remains. Independent baseline carrier/harness pass after fixing
+an omitted installer support-file layout. See the local build-attempt ledger.
+
+Main is **107,176 Rust lines in 217 files**; candidate **115,590 (+8,414)** in 326
+files remains unadopted. Net lines/tokens/LF UTF-8 bytes: main [179,2377,5113],
+local production [-83,-122,-1577], composition [96,2255,3551], carrier-only
+verification [325,3656,16854], complete verification [2540,26896,103471], combined
+implementation plus checks [2636,29151,107022]. Local production overlaps composition;
 carrier verification is included in complete verification. Root independently
-recounted explicit UTF-8 bytes and unions including deleted paths. Main/composition
-growth is below the estimated ranges due to narrower adapters and full retirement,
-not trimmed scope; verification and combined cost fit estimates.
-Reference/observation/overlay code totals 414 lines, exceeding its component
-upper estimate of 392 by 22; aggregate estimates still hold. Unsafe declarations
-fall by four to 2,810; cast-containing lines fall by 14 to 5,935. No size-reduction,
+recounted unions including deleted paths. Main/composition growth is below estimates
+because of compact adapters/full retirement, not trimmed scope. Verification and
+combined costs fit estimates; reference/observation/overlays total 712 lines against
+upper 650, a 62-line component overrun. Typed client 309 lines reuses an existing safe
+bomb adapter, with reuse/visibility costs counted. Unsafe declarations fall by 16
+to 2,794; cast-containing lines by 13 to 5,922. Formatting/progress pass. No reduction,
 new dependency, backend-independence or persistent-ownership claim.
 
-Next: share complete HUD switching, cooldown and weapon coordination, including
-actual player-frame callers and SamusCode04/06 deselection. Trace live selectors,
-front-pose/freeze update behavior and grapple/Xray effects before implementation.
-Persistent authority still needs external-writer/reset/load/rewind closure.
+Next: audit the remaining player preparation phase and its finalization against
+external-writer/reset/load/rewind closure. Preparation is not a whole player frame:
+gameplay can run contacts/enemies and suspend before the beta phase; demo input
+restoration belongs to beta. Choose the next complete responsibility from these
+actual dependencies before implementation.
 
 Final production source hash:
-`6ab5422ecbd533726ee1d23fc924a7ce34e05fb812179dd2caa6fc53f09e8ac0`.
-Use `runtime-impact-working/MORPH_BOMB_TRANSACTION_HANDOFF.md`,
-`morph-bomb-transaction-results.json`, `morph-bomb-transaction-fatal.json`,
-`morph-bomb-transaction-price.json` and `morph-complete-check-1.log` for local
-evidence. Set PYTHONUTF8=1 for Python source comparisons/pricing. Prior missile,
-charge/special/bomb handoffs and frozen snapshots remain available.
+`bf6a7b3fa055e4317a9660bae90b6ae0cd582124c707dd660a728e8833848e30`.
+Use `runtime-impact-working/HUD_COORDINATOR_HANDOFF.md`,
+`hud-coordinator-results.json`, `hud-coordinator-fatal.json`,
+`hud-coordinator-price.json`, `hud-coordinator-build-attempts.json` and
+`hud-full-2.log` for local evidence. Set PYTHONUTF8=1 for source comparison/pricing.
+Prior morph-bomb/missile/charge/special handoffs and frozen snapshots remain.
 
 Retained setup dispatch [115,199,62,5] covers all 115 semantic identities;
 these are routing/source coverage, not 115 independently executed native bodies.
-Gate [1348,20,5,4] now runs in the full 54-suite invocation. Its four checked-only
+Gate [1348,20,5,4] now runs in the full 58-suite invocation. Its four checked-only
 cases retain native undefined-access exclusions. Prior stage details remain in
 SETUP_DISPATCH_HANDOFF.md.
 

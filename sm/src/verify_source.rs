@@ -309,6 +309,18 @@ pub static FILES: &[(&str, &[u8])] = &[
         "sm/src/game/bomb_creation_ram.rs",
         include_bytes!("game/bomb_creation_ram.rs"),
     ),
+    (
+        "sm/src/game/weapon_selection.rs",
+        include_bytes!("game/weapon_selection.rs"),
+    ),
+    (
+        "sm/src/game/weapon_coordinator.rs",
+        include_bytes!("game/weapon_coordinator.rs"),
+    ),
+    (
+        "sm/src/game/weapon_coordinator_ram.rs",
+        include_bytes!("game/weapon_coordinator_ram.rs"),
+    ),
     ("sm/src/game/projectile_trails.rs", include_bytes!("game/projectile_trails.rs")),
     ("sm/src/game/dialogue.rs", include_bytes!("game/dialogue.rs")),
     ("sm/src/game/dialogue_ram.rs", include_bytes!("game/dialogue_ram.rs")),

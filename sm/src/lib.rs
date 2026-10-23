@@ -341,6 +341,9 @@ pub mod game {
     pub(crate) mod bomb_terrain_ram;
     pub(crate) mod bomb_creation;
     pub(crate) mod bomb_creation_ram;
+    pub(crate) mod weapon_selection;
+    pub(crate) mod weapon_coordinator;
+    pub(crate) mod weapon_coordinator_ram;
     pub(crate) mod beam_firing;
     pub(crate) mod beam_firing_ram;
     pub(crate) mod beam_definitions;

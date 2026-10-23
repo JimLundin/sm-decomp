@@ -1,13 +1,11 @@
-use crate::game::missile_firing_ram::fire as fire_missile;
 use crate::game::special_attacks::Kind as SpecialKind;
 use crate::game::special_attacks_ram as special_attacks;
 use crate::game::projectile_initialization::Initialization;
 use crate::game::projectile_initialization_ram::initialize;
 use crate::game::bomb_lifecycle::Kind as BombKind;
-use crate::game::bomb_creation_ram::fire as fire_bombs;
 use crate::game::bomb_lifecycle_ram as bomb_lifecycle;
 use crate::game::music::{PlayRoomMusicTrackAfterAFrames};
-use crate::game::beam_firing_ram::{clear_animation, update_input};
+use crate::game::beam_firing_ram::clear_animation;
 use crate::game::launch_motion::MovementDirection;
 use crate::game::launch_motion_ram;
 pub use crate::game::prelude::*;
@@ -1549,20 +1547,6 @@ pub use self::Samus_Movement_02_NormalJumping as Samus_Movement_19_DamageBoost;
 pub use self::Samus_Movement_07_Unused as Samus_Movement_1A_GrabbedByDraygon;
 pub use self::Samus_Movement_07_Unused as Samus_Movement_1B_ShinesparkEtc;
 pub use self::Samus_Movement_17_TurningAroundJumping as Samus_Movement_18_TurningAroundFalling;
-pub unsafe fn Samus_HandleCooldown(game: &mut Game) {
-    unsafe {
-        if word!(game.time_is_frozen_flag) != 0 {
-            word!(game.cooldown_timer = 32);
-        } else if word!(game.cooldown_timer) != 0
-            && ((word!(game.cooldown_timer) & 0x8000) != 0 || {
-                word!(game.cooldown_timer -= 1);
-                (word!(game.cooldown_timer) & 0x8000) != 0
-            })
-        {
-            word!(game.cooldown_timer = 0);
-        }
-    }
-}
 pub unsafe fn UpdateBeamTilesAndPalette(game: &mut Game) {
     unsafe {
         let v0: u16 = (2 * (word!(game.equipped_beams) as i32 & 0xfff)) as u16;
@@ -1972,125 +1956,6 @@ pub unsafe fn ProjectileReflection(r20: u16, game: &mut Game) {
         };
     }
 }
-static kRunSwitchedToHudHandler: [Func_U8; 6] = callback_table! { nonnull Func_U8;
-    SwitchToHudHandler_Nothing, SwitchToHudHandler_Missiles, SwitchToHudHandler_SuperMissiles,
-    SwitchToHudHandler_PowerBombs, SwitchToHudHandler_Grapple, SwitchToHudHandler_Xray,
-};
-pub unsafe fn HandleSwitchingHudSelection(game: &mut Game) {
-    unsafe {
-        let mut r22: u16 = 0;
-        let r18: u16 = word!(game.hud_item_index);
-        let selection =
-            if (word!(game.button_config_itemcancel_y) & word!(game.joypad1_newkeys)) != 0 {
-                word!(game.samus_auto_cancel_hud_item_index = 0);
-                Some(0)
-            } else {
-                r22 = ((word!(game.button_config_itemcancel_y) & word!(game.joypad1_lastkeys)) != 0)
-                    as u16;
-                if (word!(game.button_config_itemswitch) & word!(game.joypad1_newkeys)) == 0 {
-                    None
-                } else {
-                    let next = (word!(game.hud_item_index)).wrapping_add(1);
-                    Some(if word!(game.hud_item_index) as i32 - 5i32 & 0x8000 == 0 {
-                        0
-                    } else {
-                        next
-                    })
-                }
-            };
-        if let Some(mut v0) = selection {
-            word!(game.hud_item_index = v0);
-            while kRunSwitchedToHudHandler[v0 as usize](game) & 1 != 0 {
-                v0 = (word!(game.hud_item_index)).wrapping_add(1);
-                word!(game.hud_item_index = v0);
-                if v0 as i32 - 6i32 & 0x8000 == 0 {
-                    v0 = 0;
-                    word!(game.hud_item_index = 0);
-                }
-            }
-            if r22 != 0 {
-                word!(game.samus_auto_cancel_hud_item_index = word!(game.hud_item_index));
-            } else {
-                word!(game.samus_auto_cancel_hud_item_index = 0);
-            }
-        }
-        if word!(game.hud_item_index) == r18 {
-            let mut v1: u16 = (word!(game.hud_item_changed_this_frame)).wrapping_add(1);
-            if word!(game.hud_item_changed_this_frame) as i32 - 2i32 & 0x8000 == 0 {
-                v1 = 2;
-            }
-            word!(game.hud_item_changed_this_frame = v1);
-        } else {
-            word!(game.hud_item_changed_this_frame = 1);
-        };
-    }
-}
-pub unsafe fn SwitchToHudHandler_Nothing(game: &mut Game) -> u8 {
-    unsafe {
-        word!(game.flare_counter = 0);
-        clear_animation(game);
-        Samus_LoadSuitPalette(game);
-        0
-    }
-}
-pub unsafe fn SwitchToHudHandler_Missiles(game: &mut Game) -> u8 {
-    unsafe {
-        if word!(game.samus_missiles) == 0 {
-            return 1;
-        }
-        word!(game.flare_counter = 0);
-        clear_animation(game);
-        Samus_LoadSuitPalette(game);
-        0
-    }
-}
-pub unsafe fn SwitchToHudHandler_SuperMissiles(game: &mut Game) -> u8 {
-    unsafe {
-        if word!(game.samus_super_missiles) == 0 {
-            return 1;
-        }
-        word!(game.flare_counter = 0);
-        clear_animation(game);
-        Samus_LoadSuitPalette(game);
-        0
-    }
-}
-pub unsafe fn SwitchToHudHandler_PowerBombs(game: &mut Game) -> u8 {
-    unsafe {
-        if word!(game.samus_power_bombs) == 0 {
-            return 1;
-        }
-        word!(game.flare_counter = 0);
-        clear_animation(game);
-        Samus_LoadSuitPalette(game);
-        0
-    }
-}
-pub unsafe fn SwitchToHudHandler_Grapple(game: &mut Game) -> u8 {
-    unsafe {
-        if (word!(game.equipped_items) & 0x4000) == 0 {
-            return 1;
-        }
-        if word!(game.grapple_beam_function) as i32 == 0x9bc4f0 & 0xffff {
-            Samus_LoadSuitPalette(game);
-            word!(game.flare_counter = 0);
-            clear_animation(game);
-            word!(game.grapple_beam_function = ((0x9bc4f0i32) as u16));
-        }
-        0
-    }
-}
-pub unsafe fn SwitchToHudHandler_Xray(game: &mut Game) -> u8 {
-    unsafe {
-        if (word!(game.equipped_items) & 0x8000) == 0 {
-            return 1;
-        }
-        word!(game.flare_counter = 0);
-        clear_animation(game);
-        Samus_LoadSuitPalette(game);
-        0
-    }
-}
 pub unsafe fn HandleArmCannonOpenState(game: &mut Game) {
     unsafe {
         if *ram_ptr!(game; 0xaa7) != 0 || UpdateArmCannonIsOpenFlag(game) & 1 != 0 {
@@ -2482,116 +2347,6 @@ pub unsafe fn SamusMoveHandler_CrystalFlashMain_2(game: &mut Game) {
                 samus_anim_frame = 12; }
             }
         }
-    }
-}
-static kHandleHudSpecificBehaviorAndProjs: [Func_V; 28] = callback_table! { nonnull Func_V;
-    HudSelectionHandler_Normal, HudSelectionHandler_Normal, HudSelectionHandler_Normal,
-    HudSelectionHandler_JumpEtc, fire_bombs, HudSelectionHandler_Normal,
-    HudSelectionHandler_Normal, fire_bombs, fire_bombs,
-    fire_bombs, HudSelectionHandler_JumpEtc, HudSelectionHandler_Grappling,
-    HudSelectionHandler_Grappling, HudSelectionHandler_JumpEtc,
-    HudSelectionHandler_TurningAround, HudSelectionHandler_CrouchEtcTrans,
-    HudSelectionHandler_Normal, fire_bombs, fire_bombs,
-    fire_bombs, HudSelectionHandler_JumpEtc, HudSelectionHandler_Normal,
-    HudSelectionHandler_Grappling, HudSelectionHandler_TurningAround,
-    HudSelectionHandler_TurningAround, HudSelectionHandler_JumpEtc,
-    HudSelectionHandler_GrabbedByDraygon, HudSelectionHandler_JumpEtc,
-};
-pub unsafe fn Samus_HandleHudSpecificBehaviorAndProjs(game: &mut Game) {
-    unsafe {
-        if word!(game.samus_pose) as i32 == kPose_00_FaceF_Powersuit as i32
-            || word!(game.samus_pose) as i32 == kPose_9B_FaceF_VariaGravitySuit as i32
-            || {
-                Samus_HandleCooldown(game);
-                HandleSwitchingHudSelection(game);
-                kHandleHudSpecificBehaviorAndProjs[*ram_ptr!(game; 0xa1f) as usize](game);
-                word!(game.time_is_frozen_flag) == 0
-            }
-        {
-            HandleProjectile(game);
-        }
-    }
-}
-pub unsafe fn HudSelectionHandler_Normal(game: &mut Game) {
-    unsafe {
-        static kHudSelectionHandler_Normal: [Func_V; 7] = callback_table! { nonnull Func_V;
-            update_input, fire_missile,
-            fire_missile, update_input,
-            HudSelectionHandler_Grappling, HudSelectionHandler_Xray, HudSelectionHandler_TurningAround,
-        };
-        let mut v0: u16 = if word!(game.grapple_beam_function) as i32 == 0x9bc4f0 & 0xffff {
-            if word!(game.time_is_frozen_flag) != 0 {
-                10
-            } else {
-                (2u16).wrapping_mul(word!(game.hud_item_index))
-            }
-        } else {
-            8
-        };
-        kHudSelectionHandler_Normal[(v0 >> 1) as usize](game);
-    }
-}
-pub unsafe fn HudSelectionHandler_Grappling(game: &mut Game) {
-    unsafe {
-        GrappleBeamHandler(game);
-    }
-}
-pub unsafe fn HudSelectionHandler_TurningAround(game: &mut Game) {
-    unsafe {
-        if word!(game.new_projectile_direction_changed_pose) != 0 {
-            HudSelectionHandler_Normal(game);
-        } else if word!(game.grapple_beam_function) as i32 != 0x9bc4f0 & 0xffff {
-            word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
-        }
-    }
-}
-pub unsafe fn HudSelectionHandler_CrouchEtcTrans(game: &mut Game) {
-    unsafe {
-        static byte_90DDAA: [u8; 12] = [0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1];
-        let handle_normal_selection: bool =
-            (word!(game.samus_pose) as i32 - kPose_F1_FaceR_CrouchTrans_AimU as i32 & 0x8000 == 0)
-                || ({
-                    if word!(game.samus_pose) as i32 - kPose_DB as i32 & 0x8000 == 0 {
-                        return;
-                    }
-                    !(byte_90DDAA[((word!(game.samus_pose)).wrapping_sub(53)) as usize] != 0)
-                        || ({
-                            if word!(game.grapple_beam_function) as i32 != 0x9bc4f0 & 0xffff {
-                                word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
-                                HudSelectionHandler_Normal(game);
-                            }
-                            false
-                        })
-                });
-        if handle_normal_selection {
-            HudSelectionHandler_Normal(game);
-        };
-    }
-}
-pub unsafe fn HudSelectionHandler_JumpEtc(game: &mut Game) {
-    unsafe {
-        if word!(game.grapple_beam_function) as i32 != 0x9bc4f0 & 0xffff {
-            word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
-            HudSelectionHandler_Normal(game);
-        }
-    }
-}
-pub unsafe fn HudSelectionHandler_Xray(game: &mut Game) {
-    unsafe {
-        if (word!(game.button_config_run_b) & word!(game.joypad1_lastkeys)) != 0 {
-            XrayRunHandler(game);
-        } else {
-            update_input(game);
-        };
-    }
-}
-pub unsafe fn HudSelectionHandler_GrabbedByDraygon(game: &mut Game) {
-    unsafe {
-        if word!(game.samus_pose) as i32 == kPose_DB as i32 | kPose_04_FaceL_AimU as i32 {
-            fire_bombs(game);
-        } else {
-            HudSelectionHandler_Normal(game);
-        };
     }
 }
 static kSamusHitInterrupts: [Func_U8; 28] = callback_table! { nonnull Func_U8;
@@ -3111,7 +2866,7 @@ crate::game::callback_dispatch! {
         Samus_UpdateSuitPaletteIndex(game);
         Samus_DetermineAccel_Y(game);
         BlockInsideDetection(game);
-        Samus_HandleHudSpecificBehaviorAndProjs(game);
+        crate::game::weapon_coordinator_ram::coordinate(game);
         Samus_Func10(game);
     };
     [9496265] Samus_FrameHandlerAlfa_Func12 [] {
@@ -3129,7 +2884,7 @@ crate::game::callback_dispatch! {
         Samus_CallInputHandler(game);
         Samus_DetermineAccel_Y(game);
         BlockInsideDetection(game);
-        Samus_HandleHudSpecificBehaviorAndProjs(game);
+        crate::game::weapon_coordinator_ram::coordinate(game);
         Samus_Func10(game);
     };
     [9496339] Samus_FrameHandlerAlfa_Func13 [] {
@@ -4004,7 +3759,7 @@ pub unsafe fn SamusCode_03(game: &mut Game) -> u8 {
         1
     }
 }
-pub use self::SwitchToHudHandler_Nothing as SamusCode_04_06_Common;
+pub use crate::game::weapon_coordinator_ram::deselect as SamusCode_04_06_Common;
 pub unsafe fn SamusCode_04(game: &mut Game) -> u8 {
     unsafe {
         word!(game.samus_charge_palette_index = 0);

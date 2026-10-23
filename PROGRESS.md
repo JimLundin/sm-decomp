@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 10:42 UTC**
+Updated: **2026-10-23 11:10 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -10,49 +10,43 @@ SNES backend remains the comparison oracle during migration.
 
 ## Latest verified milestone
 
-**Bomb, power-bomb and spread-bomb creation now share safe rules.**
+**HUD switching, cooldown and weapon coordination now share safe rules.**
 
-Implementation: [shared bomb creation](sm/src/game/bomb_creation.rs).
+Implementation: [weapon coordination](sm/src/game/weapon_coordinator.rs).
 
-- Retired duplicate bank and owned creation algorithms, with actual movement-HUD
-  and Draygon callers using the shared rules.
-- Production and candidate builds passed. **All 54 comparison suites passed**,
-  with all 51 retained result vectors unchanged.
-- Added 1,838 three-way RAM/APU/failure-state comparisons, 14 separate checked
-  failure cases and eight independent typed sequences.
-- Twelve natural chains cover 1,206 ticks. Spread charge comes from actual input;
-  all five bombs flash, explode and retire. Actual power-bomb firing reaches the
-  Noob Tube trigger through natural fuse expiry and real HDMA growth.
-- These are component checks with documented constructed scenes and limits,
-  not full-game or rendering coverage.
+- Retired duplicate bank and owned algorithms. Actual normal/demo preparation
+  and deselection callers now use the shared rules.
+- Removed an unnecessary Session transfer while preserving its inventory/input
+  refresh in memory, at the original point in the sequence.
+- Production and candidate builds passed. **All 58 selected suites passed**,
+  with all 54 retained result vectors unchanged.
+- New HUD checks include 1,194 three-way state comparisons and 15 natural chains.
+  They cover selection through weapon retirement, all five spread bombs, real
+  grapple/Xray scheduling, and power-bomb HDMA reaching the Noob Tube trigger.
+- Separate active-input preparation checks passed 74 comparisons. An older
+  controlled fixture fails identically on the untouched parent; its obsolete
+  callback expectations are documented in the detailed handoff.
 
 | Verified measure | Value |
 | --- | ---: |
 | Setup identities decoded | 115 / 115 |
-| Maintained Rust source | 106,997 lines in 214 files |
-| Counted unsafe function declarations | 2,810 |
-| Prospective composition, not yet adopted | 115,494 lines in 323 files |
+| Maintained Rust source | 107,176 lines in 217 files |
+| Counted unsafe function declarations | 2,794 |
+| Prospective composition, not yet adopted | 115,590 lines in 326 files |
 
-This stage adds 182 lines to main and removes four unsafe function declarations.
-The complete composition adds 151 lines; including retained verification, growth
-is 2,332 lines. Safe adapters and independent checks are included in those costs.
-The target remains below 100,000 maintained Rust lines, with all unsafe
-operations removed.
+This stage adds 179 lines to main and removes 16 unsafe function declarations.
+The complete composition adds 96 lines; including retained verification, growth
+is 2,636 lines. Adapters, generated test overlays and independent checks are
+included. The target remains below 100,000 maintained Rust lines, with all
+unsafe operations removed.
 
 ## Work in progress
 
-**Continue the player-projectile lifecycle and its remaining consumers.**
+**Continue the remaining player consumers and state-ownership work.**
 
-Complete HUD switching, cooldown and weapon coordination has passed source
-review and both production/candidate builds. The shared rules now replace the
-duplicate algorithms, and an in-memory input refresh replaces an unnecessary
-Session transfer. The candidate required one correction to preserve existing
-generic bounds on slot release; its rebuild passed.
-
-Behavior checks are in preparation, covering selection input through weapon
-lifecycles, dirty inventory state, and real grapple/Xray scheduling effects.
-These source changes are uncommitted. The verified results above remain the
-bomb-creation milestone.
+The next dependency audit covers the player preparation phase, its finalization,
+and external writers. Preparation is only part of a player frame; contacts,
+enemies, suspension and later movement must retain their ordering.
 
 Persistent room and scheduler state still live in RAM. Persistent Session
 ownership, renderer/audio replacement and an independently running game slice
