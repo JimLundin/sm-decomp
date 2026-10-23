@@ -104,26 +104,34 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares the deferred sound gate after quota work at
-   `52c49173`. `mechanism_sound_delay` retires setup B7C3 and polling B7DD. It
-   preserves area6's 32-tick delay versus 240 elsewhere, both timer reads, wrapping
-   decrement, old-value expiry and enable-before-release ordering. Core and
-   checked adapter forbid unsafe; candidate setup/pre routes use shared logic.
-   RAM remains authoritative. Eighty of 115 setup identities are shared; 35 and
-   native dispatch/authority work remain.
+   Latest verified stage shares the Speed Booster escape controller after sound
+   work at `cdce9669`. `mechanism_booster_escape` retires setup B89C and polling
+   B7EF/B82A/B846. It preserves collection/target gates, two separate live program
+   increments, the AE0 threshold, the flat ten-word progress table (including odd
+   and non-row indices), bounds panics and event15 persistence. Core and checked
+   adapter forbid unsafe; candidate setup/pre routes bypass native fallback.
+   RAM remains authoritative. Eighty-one of 115 setups are shared; 34 and native
+   dispatch/authority work remain.
 
-   Final checks pass 15,300 direct frozen-original/main/candidate comparisons,
-   274 main/candidate scheduler observations and 2,304 actual queue-gate cases.
-   Actual hardcoded creation, Sleep and full32/240 countdowns execute; queue
-   capacity writes, other gates and malformed-index behavior are checked.
-   Independent old-reference coverage is direct setup/poll; scheduler comparisons
-   share the current core. Initial mute is seeded, so startup reachability and
-   audio playback are not established. Compiled identities206 runtime/243 local
-   and all selected prior regressions pass independent review. Production
-   release/frontend/verifier/source passed after recovery (59.02s); prospective
-   release passed (52.17s). A tool-host interruption terminated the first build
-   without a completion result; its log is preserved, not counted as a pass.
-   No movie or complete-composition runtime ran.
+   Final checks pass 91,874 frozen-original/main/candidate direct comparisons,
+   including 8,354 matching pre-effect bounds failures, 20 main/candidate scheduler
+   observations and 21 liquid-motion observations. Actual collection, creation,
+   three-stage PreInstr/Sleep scheduling, motion delay/fraction/arrival, quake/queue
+   effects, completion setup and room-event selection execute. Symbolic checks
+   cover order, failure prefixes and changing observations. Independent original
+   evidence comes from the four frozen bodies and their motion tails; scheduler
+   comparisons share the current core. Identities209 runtime/246 local and all
+   selected prior regressions pass independent review. Production release/frontend/
+   verifier/source passed (54.98s), prospective release passed (51.68s), selected
+   runtime checks passed first execution (19.95s). A first harness compile failed
+   on private test exposure and integer inference; carrier-only/fixture corrections
+   passed on rebuild. Production sources stayed fixed. No movie or complete-
+   composition runtime ran.
+
+   Liquid limitation: unchanged `advance_tide` dereferences native u16 at odd RAM
+   0x197D on every unfrozen `lava_surface` path. Do not execute that path as defined
+   reference evidence. This stage exposes only unchanged `advance_motion` in the
+   carrier; it establishes no tide, rendering or complete liquid-engine fidelity.
 
    Historical correction: the terrain stage's 18 visible restore/render cases
    reach a native u16 read at odd RAM address 0x1E67. Those results are not
@@ -131,14 +139,14 @@ references; measure build/test time and resource growth before changing the loop
    comparisons; do not rerun the undefined cases. Current selected suites exclude
    them. Current item restores assert the offscreen guard before that read.
 
-   Main is **104,512 Rust lines in 176 files**. Prospective composition is
-   **113,275 (+8,763)**, unadopted. This stage adds 64 main and 20 owned/wiring
-   lines: **+84 complete lines**, +757 lexical tokens and +2,681 LF-normalized
-   bytes. Verification adds 509 lines; implementation plus checks adds 593.
+   Main is **104,626 Rust lines in 178 files**. Prospective composition is
+   **113,423 (+8,797)**, unadopted. This stage adds 114 main and 34 owned/wiring
+   lines: **+148 complete lines**, +1,205 lexical tokens and +4,909 LF-normalized
+   bytes. Verification adds 812 lines; implementation plus checks adds 960.
    The candidate previously delegated these behaviors to native callbacks; no
    duplicate owned algorithm existed to retire. No dependency or native/installer/
    launcher source is added. Unsafe declarations remain 2,885; cast-containing
-   lines fall one to 6,033. No net reduction, complete unsafe retirement,
+   lines fall five to 6,028. No net reduction, complete unsafe retirement,
    persistent ownership or backend-independence claim.
 
    Next dependencies, in order:
@@ -192,12 +200,14 @@ references; measure build/test time and resource growth before changing the loop
      bodies, and compare actual death/persistence/room-selection interactions.
    - [x] Share deferred sound setup/countdown and retire two bodies; compare
      actual creation, scheduler expiry and queue rejection/acceptance.
+   - [x] Share Speed Booster escape setup/three-stage controller, retire four
+     bodies and compare actual collection, motion and event persistence tails.
    - Close remaining room/event/boss setups, then constants/no-op/result routes.
      Preserve synchronous writes, nested displacement and failure prefixes before
      retiring native dispatch. The 115-identity inventory is in the local door
-     handoff; 21 room/event/boss and 14 residual identities remain. Select one
-     coherent responsibility through caller/validation investigation. The sound-delay
-     handoff records current scope and retained consumer dependencies.
+     handoff; 20 room/event/boss and 14 residual identities remain. Select one
+     coherent responsibility through caller/validation investigation. Shaktool room
+     control is next; the booster-escape handoff records retained dependencies.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -205,7 +215,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified sound-delay continuation, with
+   `runtime-impact-working/` is the verified booster-escape continuation, with
+   `BOOSTER_ESCAPE_HANDOFF.md`, `booster-escape-price.json` and
+   `booster-escape-check-attempt-1.log`. `booster-escape-parent/` preserves prior
+   main/carrier/local/composition inputs. Sound evidence remains in
    `SOUND_DELAY_HANDOFF.md`, `sound-delay-price.json` and
    `sound-delay-check-attempt-1.log`. `sound-delay-parent/` preserves prior
    main/carrier/local/composition inputs. Quota evidence remains in

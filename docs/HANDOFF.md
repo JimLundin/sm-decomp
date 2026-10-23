@@ -9,80 +9,77 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares the deferred sound gate after quota work at `52c49173`.
-Setup B7C3 and polling B7DD retire. Both modules forbid unsafe. Setup chooses32
-only in area6, otherwise240, writes timer then callback. Polling retains two
-separate timer reads, writes the wrapping decrement, and when the captured old
-value equals1 enables sounds before releasing the captured slot. Zero wrapsFFFF.
-Candidate setup and typed preinstruction routes bypass native fallback. RAM is
-authoritative; 80/115 setups are shared, 35 remain.
+The latest stage shares the Speed Booster escape controller after `cdce9669`.
+Setup B89C and polls B7EF/B82A/B846 retire. Core/checked adapter forbid unsafe;
+candidate setup and pre routes bypass native fallback. Preserve collection and
+high-target gates, two separate live program increments, AE0 threshold, flat
+progress-table odd/non-row windows, bounds panics, event scratch effects and
+release order. RAM remains authoritative; 81/115 setups shared, 34 remain.
 
-Main: **104,512 Rust lines in 176 files**, unsafe declarations2,885 unchanged,
-casts6,033 (-1). Maintained implementation105,074; installers/launcher included
-105,984. Prospective composition: **113,275 in 273 files**, **+8,763 over main**,
-unadopted. Main cost +64 lines/+567 tokens/+1,899 normalized bytes; complete
-implementation +84/+757/+2,681. Retained verification +509/+6,367/+21,873;
-implementation plus checks593 lines. Local production +19 lines overlaps the
+Main: **104,626 Rust lines in 178 files**, unsafe declarations2,885 unchanged,
+casts6,028 (-5). Maintained implementation105,188; installers/launcher included
+106,098. Prospective composition: **113,423 in 276 files**, **+8,797 over main**,
+unadopted. Main cost +114 lines/+937 tokens/+3,556 normalized bytes; complete
+implementation +148/+1,205/+4,909. Retained verification +812/+9,347/+32,760;
+implementation plus checks960 lines. Local production +33 lines overlaps the
 composition. No duplicate owned algorithm existed. No dependency/native/installer/
 launcher additions, net reduction, full unsafe retirement, persistent authority
 or backend-independence claim.
 
-Use `runtime-impact-working/SOUND_DELAY_HANDOFF.md`, `sound-delay-price.json`
-and `sound-delay-check-attempt-1.log`. Selected run passes in19.01s with source
-identities206 runtime/243 local: 15,300 direct frozen-original/main/candidate
-comparisons, 274 current-main/candidate scheduler observations, and2,304 common
-actual queue-gate cases. Direct tests cover broad/odd slots, areas, timer values,
-and expiry order; symbolic tests distinguish both timer reads and failure prefixes.
+Use `runtime-impact-working/BOOSTER_ESCAPE_HANDOFF.md`, `booster-escape-price.json`
+and `booster-escape-check-attempt-1.log`. Selected run passes in19.95s with source
+identities209 runtime/246 local: 91,874 frozen-original/main/candidate direct
+comparisons (including8,354 matching pre-effect table-bound failures), 20 current-
+main/candidate scheduler observations and21 actual motion observations. Symbolic
+checks prove failure prefixes and captured versus changing state observations.
 
-Actual main SpawnHardcodedPlm and candidate hardcoded creation use(8,8,B7EB),
-header(B7C3,B7E9) and Sleep86B4. Actual PlmHandler_Async and candidate mechanism
-pass run full32/240 tick sequences, checking completion, instruction timer wrap,
-Sleep, expiry and release. QueueSfx2_Max6 checks mute/capacity/game-state/power-
-bomb rejection, unconditional capacity-byte writes, accepted ring advancement,
-next-slot clearing and malformed-index priority. Candidate fallback traps cover
-its migrated polling route. Scheduler comparisons share the current core;
-independent frozen-original evidence is limited to direct setup/poll comparisons.
+Actual hardcoded creation uses(8,8,B8AC), header(B89C,B88A), three SetPre/Sleep
+pairs and the unchanged item equipment producer. Main/candidate scheduling follows
+collection, far-left motion start and waypoint advancement to event15. Unchanged
+liquid motion checks delay, six exact height/fraction positions, target arrival,
+quake and queue effects. Frozen original outputs also drive actual motion tails.
+Actual event selection and completed setup consume the completion flag. Independent
+reference evidence is the four frozen controller bodies plus their motion tails;
+scheduler comparisons share the current core. No startup, room-load, movie,
+rendering or complete composition/game runtime claim.
 
-Initial muteFFFF is seeded from the unexecuted startup prefix. An artificial
-music resume value2 is not used: real startup completion requires initialized
-SNES state. Thus startup reachability, audio playback, movie execution and full
-composition/game runtime remain unproven. Sound-engine replacement remains open.
+Liquid limitation: `advance_tide` always reads native u16 at odd RAM0x197D, reached
+by every unfrozen `lava_surface`. Do not execute that path as defined-reference
+evidence. Carrier-only wrappers expose unchanged `advance_motion`; full liquid
+engine, tide and rendering remain uncovered.
 
 Historical correction: 18 visible terrain restore/render cases (nine kinds by
-two aliases) reach DrawPlm's native u16 dereference at odd RAM 0x1E67. They are
+two aliases) reach DrawPlm's native u16 dereference at odd RAM0x1E67. They are
 not defined-native fidelity evidence. Preserve logs and independent setup results;
-do not rerun the undefined cases. They occur only in the standalone terrain
-export, excluded from current selected suites. This does not diagnose the
-inherited Intro mismatch in `DRAWING_HANDOFF.md`.
+do not rerun the undefined cases. Current selected suites exclude them. This does
+not diagnose the inherited Intro mismatch in `DRAWING_HANDOFF.md`.
 
-Quota6118/66/112/48, eye-door13320/3440/56/24, plants1360/1504/8/640,
-cannon3630/1420/46/8, item3476/1320/14/32, scroll5816/1296/52,
-station3240/112/149/6, Chozo592/4/4/16, hands52/163/12,
+Sound15300/274/2304, quota6118/66/112/48, eye-door13320/3440/56/24,
+plants1360/1504/8/640, cannon3630/1420/46/8, item3476/1320/14/32,
+scroll5816/1296/52, station3240/112/149/6, Chozo592/4/4/16, hands52/163/12,
 source342/672/47, closing74/120/7 and collision198/545/176/1 pass.
 Historical qualified graphics/cannon/Chozo evidence and full-contact limits
 remain unchanged; eye acid initialization stays excluded. Unchanged scroll
 bounded nonreturn observations were not repeated.
 
-The tool host interrupted the first production build and removed both worker
-handles. Its session was missing, no compiler process remained, and its log had
-no completion result. `sound-delay-interrupted-build.log` preserves that output.
-Source/snapshots and composition sync survived and were checked before resuming.
-Replacement workers completed missing fixtures; production recovery passed59.02s,
-composition52.17s, carrier20.52s and harness28.72s. Carrier/harness and selected
-runtime checks passed first attempt after recovery. No code correction followed
-those checks. Production hash:
-`e931260d9a0b5cd70bb0ba6d1f105d759ec374f2de0ffe5a54da4030cfec7802`.
+Production release/frontend/verifier/source passed54.98s, composition51.68s.
+Carrier first passed18.38s; first harness compile failed7.25s on private test
+exposure and integer inference. Carrier-only root forwarding and fixture type
+corrections passed: carrier11.13s, harness18.31s. The first runtime execution
+passed19.95s; failed compiler log retained. Production stayed fixed. Production hash:
+`c90ef7184e93c0bf60554a7cda28dcdca03739b5e3230539ac75da09fa525bbd`.
 Changed gameplay/root formatting and diff checks pass; manifest additions conform
 with baseline formatting differences unchanged. Compiler lane released; DLL unloaded.
 
-`sound-delay-parent/` preserves prior main/carrier/local/composition sources.
-Earlier snapshots/caches remain. Do not rerun historical preparation scripts;
-composition lives under `impact-composition/sm/src`. Speed Booster escape is the
-next proposed interaction among21 remaining room/event/boss setups, then14
-residual identities. Runtime promotion needs reset/load/rewind/external-writer
-checks; boot-to-credits and independent renderer/audio remain unfinished.
-The parallel movie/state investigation is documented in
-[MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md); it implements no pipeline.
+`booster-escape-parent/` preserves prior main/carrier/local/composition sources.
+Earlier snapshots/caches and the sound-stage interrupted-build log remain. Do not
+rerun historical preparation scripts; composition lives under
+`impact-composition/sm/src`. Shaktool room control is the next proposed interaction
+among20 remaining room/event/boss setups, then14 residual identities. Runtime
+promotion needs reset/load/rewind/external-writer checks; boot-to-credits and
+independent renderer/audio remain unfinished. The parallel movie/state investigation
+is documented in [MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md); it
+implements no pipeline.
 
 ## Paused launch draft
 
