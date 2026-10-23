@@ -18,7 +18,10 @@ failure: the Ubuntu job did not provision the native archives, whose current
 desktop/utilities ABI requires Windows GNU. Public CI now keeps formatting and
 progress on Ubuntu and builds the full frontend on Windows GNU, provisioning
 all seven real native archives from pinned sources. Workflow lint passes;
-the first remote build of this repair is pending. The manual ROM verification
+the first remote run exposed CRLF hashes in the backend installer. Its seven
+files exactly match pinned upstream content after line-ending normalization;
+the installer now checks canonical LF bytes and retains the compilation inputs.
+The corrected remote build is pending. The manual ROM verification
 workflow has not been migrated or validated by this change.
 
 Formatting touched 75 Rust files and adds 229 physical lines through layout only.
