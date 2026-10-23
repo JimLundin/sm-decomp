@@ -19,6 +19,41 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
+### Sprite effects / next shared owner
+
+```mermaid
+flowchart TB
+    CONTRACT["Complete responsibility<br/>source review PASS"]:::done
+    UNION["1,026 new bytes / no overlap<br/>source review PASS"]:::done
+    CONTRACT --> DECL["Concrete Rust interfaces<br/>metadata compile PASS"]:::done
+    UNION --> DECL
+    DECL --> REVIEW["Independent interface review"]:::active
+    DECL --> OWNER["session.rs / sprite state<br/>52,079-byte proposed union"]:::pending
+    OWNER --> CODEC["session_encoding.rs / runtime"]:::pending
+    DECL --> POOL["sprite_objects.rs replacement<br/>spawn / advance / draw / clear"]:::pending
+    POOL --> WAFFLE["enemy_projectiles/<br/>spawn + Waffle controllers"]:::pending
+    POOL --> METROID["sm_a3.rs / Metroid controllers"]:::pending
+    POOL --> DRAYGON["sm_a5.rs / Draygon controllers"]:::pending
+    POOL --> MAW["sm_a8.rs / Maw controllers"]:::pending
+    BASE["Actual predecessor captures<br/>in preparation"]:::active --> VERIFY["Candidate comparisons"]:::pending
+    CPU["Draygon motion / original CPU<br/>unaligned Rust reference excluded"]:::active --> VERIFY
+    PROBE["Sprite lifecycle + draw probes<br/>in preparation"]:::active --> MOVIE["Exercised oracle replay"]:::pending
+    MUT["Meaningful fault scenarios<br/>in preparation"]:::active --> KILLS["Compiling mutants rejected"]:::pending
+    CODEC --> VERIFY
+    WAFFLE --> VERIFY
+    METROID --> VERIFY
+    DRAYGON --> VERIFY
+    MAW --> VERIFY
+    VERIFY --> ADOPT["Caller migration + retirement<br/>adopt on main"]:::pending
+    MOVIE --> ADOPT
+    KILLS --> ADOPT
+    class CONTRACT,UNION,DECL,REVIEW,OWNER,CODEC,POOL,WAFFLE,METROID,DRAYGON,MAW,BASE,CPU,VERIFY,PROBE,MOVIE,MUT,KILLS,ADOPT changed
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
 [Shared Session adopted: 74948127](https://github.com/JimLundin/sm-decomp/commit/74948127) / [Build + eight mutations: PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40005712881)
 
 [Four room mutations / CI PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40005395335) · [Shared Session candidate CI](https://github.com/JimLundin/sm-decomp/actions/runs/40005712881)
@@ -161,7 +196,6 @@ flowchart TB
     B91 --> SP
     EP --> PE
     AE --> EP
-    class S,VS,EI,VH,SE,SR,VR,PE,PM,AE,AM,AN,SP,LS,B90,B91,EP,EG,PF,PP,RAM,RTL changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
@@ -199,7 +233,6 @@ flowchart TB
     OLD --> ADOPT
     NEW --> ADOPT
     FMT --> ADOPT["Shared visual owner adopted"]:::done
-    class REVIEW,UNION,BUILD,PAL,ANI,SAM,CPU,GUARD,ENEMY,ROOM,PLAYER,REPLAY,HOST,DLL,DETACHED,OLD,NEW,FMT,RETIRE,ADOPT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
@@ -226,7 +259,6 @@ flowchart TB
         M10["replace_charge_carry_with_signed_branch / caught"]:::done
         M11["replace_grapple_carry_with_signed_branch / caught"]:::done
     end
-    class M1,M2,M3,M4,M5,M6,M7,M8,M9,M10,M11 changed
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d

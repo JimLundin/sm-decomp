@@ -370,7 +370,13 @@ references; measure build/test time and resource growth before changing the loop
    Next proposal: complete sprite-effect pool with actual Waffle/Metroid/Draygon/
    Maw controllers, shared ownership and explicit content inputs. Independent
    caller and design/union source reviews pass:1026newbytes,52079WRAM total,
-   native unchanged. Concrete interfaces and executable union checks remain.
+   native unchanged. Concrete interfaces compile as a safe metadata-only crate;
+   independent interface review and executable union checks remain. Defined
+   predecessor captures, lifecycle/draw probes and mutation scenarios are drafted
+   in parallel under next-sprite-session. Draygon46's natural nonnegative cursor
+   reaches an unaligned raw u16 read at nativeA5CE07: do not execute that Rust
+   path as a reference. A bounded actual65816A13E capture is being prepared;
+   distinguish native wide-offset compatibility from SNES bank wrapping.
    Preserve distinct1022byte room clear and64byte active-pointer retirement.
    This is not prepared-media independence or Map Rando integration readiness.
 

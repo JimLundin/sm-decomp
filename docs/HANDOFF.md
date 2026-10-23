@@ -8,6 +8,15 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Active sprite iteration: room-session/next-sprite-session/CONTRACT.md and
+DECLARATION-HANDOFF.md. Root rustfmt and metadata compile of declarations/lib.rs
+pass; artifact declarations-1.rmeta, log declarations-compile-1.log. Independent
+interface review pending. Baseline-verification, probe and mutation drafts run
+in parallel; no gameplay implementation split yet. Draygon46 natural nonnegative
+cursor reads native16bit data at oddA5CE07, undefined in predecessor Rust. Use
+the independent originalCPU A13E oracle draft; do not freeze that Rust execution.
+No local heavy process is active. Main visual adoption is e7cca70c.
+
 User reaffirmation: easy Super Metroid Map Rando integration is a core
 architecture requirement now. Custom sprites/palettes, supplied room/door graphs
 and explicit opt-in re-spin/QoL rules belong at content/world/gameplay-profile
