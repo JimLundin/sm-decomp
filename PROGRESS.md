@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 07:39 UTC**
+Updated: **2026-10-23 07:53 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -41,8 +41,10 @@ operations removed.
 The approved next change will share fuse, movement and terrain rules, and keep
 candidate projectile state owned while scanning terrain. The validation plan
 includes actual power-bomb radius growth reaching Noob Tube from a separated
-origin. Implementation and checks are pending; the figures above describe the
-last verified milestone.
+origin. Source review and production/frontend/verifier and candidate library
+builds passed on their first attempts. Behavior comparisons and the real-radius
+integration check are pending; the figures above describe the last committed,
+verified milestone.
 
 Persistent room and scheduler state still live in RAM. Renderer/audio replacement
 and an independently running game slice remain required parts of the destination.
