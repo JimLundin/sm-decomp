@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 13:28 UTC**
+Updated: **2026-10-23 13:40 UTC**
 
 **Player projectiles now run through one owned production subsystem.**
 The broader engine modernization remains unfinished.
@@ -36,7 +36,7 @@ movie segment proves complete-game coverage.
 
 ## Code size and remaining work
 
-Main source is **108,821 Rust lines in 226 files**. The change adds 1,389 main lines:
+The projectile milestone has **108,821 Rust lines in 226 files**. It adds 1,389 main lines:
 596 for runtime/probes and 793 for verification. Unsafe function declarations fall
 by 22 to 2,767. The codebase grew; the structural gain is one production owner and
 retirement of the superseded execution paths.
@@ -52,22 +52,50 @@ Staging copies are counted once. The rejected experimental Session is archived;
 its removal contributes no claimed production savings. No ROM-derived fixtures
 are committed.
 
-## Current work: room-mechanism proposal
+## Current work: room-mechanism replacement
 
 The projectile milestone is committed in `04dbc192`. One implementation worker
-and an independent reviewer are assessing the complete room-mechanism subsystem:
+and an independent reviewer have agreed the complete room-mechanism boundary:
 creation, setup, script scheduling, commands, drawing, message suspension, reset
-and the queries used by encounters and room loading. No replacement is adopted yet.
+and the queries used by encounters and room loading. Baseline preparation is active;
+implementation follows capture of the old behavior. No replacement is adopted yet.
+
+One owner will hold 40 mechanism slots, item graphics, drawing and execution
+state during subsystem operations. Native calls must receive its published state;
+execution then imports their returned state. This does not establish ownership
+between frames. All drawing/clipping algorithms move with the subsystem; three
+unrelated palette/sound routines relocate intact.
 
 The candidate covers 24 RAM adapters, bank orchestration, spawning and setup
 dispatch: **3,684 existing lines** before retaining required native behavior.
-This is the scope to replace, not a savings claim. The proposal must price the
-replacement and identify repeated field/effect handling that can actually vanish.
+This is the scope to replace, not a savings claim. Estimated runtime change is
+**-400 to +300 lines**, plus **450–800 validation lines**. These are planning
+ranges; actual code, tokens and bytes will be counted before adoption. Repeated
+field/effect handling must be consolidated with the old adapters removed.
 
 Verification will use current production entries and the existing DLL workflow,
 comparing complete RAM plus return/yield values and relevant native effects.
 Message resume, live selectors, partial failures and ROM allocation changes need
-explicit cases. Old experimental results are not new implementation evidence.
+explicit cases. Exact old source and the verified DLL are preserved locally.
+Unaligned raw reads in old code require qualified evidence; they cannot count as
+defined Rust equivalence. Old experimental results are not new integration proof.
+
+The first **90 actual-production baseline cases are captured and independently
+checked**, including RAM, return values and expected checked failures. The
+release/frontend/verifier build passes. These are reference observations, not a
+pass for the replacement; setup, script, suspension and caller coverage is expanding.
+Baseline checks and their exports add 317 lines, bringing current main source to
+109,138 Rust lines. Two unsafe declarations call old entries and expose the test
+buffer; current count is 2,769. No runtime reduction is claimed for this preparation.
+
+**Newly discovered baseline failure:** the unchanged projectile-stage runtime
+fails Speed Booster input **20,857**, with 13,405 differing RAM bytes. It precedes
+the first mechanism-message probe at 27,563. The earlier 8,780-frame result remains
+valid for its scope, but the longer run fails. A local checkpoint now reproduces
+the failure in one frame in under half a second; the preceding frame passes.
+Its cause and whether it predates projectile consolidation are under investigation.
+It is distinct from the historical synthetic Intro mismatch. No new mechanism
+runtime code has been integrated.
 
 Persistent ownership remains blocked by external state writers, whole-RAM state
 replacement and a continuation byte shared with other game modes. Further

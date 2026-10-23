@@ -379,6 +379,7 @@ pub mod game {
     pub(crate) mod launch_motion_ram;
 
     pub(crate) mod player_projectiles;
+    pub(crate) mod room_mechanism_checks;
     pub(crate) mod projectile_flight_control;
     pub(crate) mod projectile_placement;
 
@@ -583,6 +584,11 @@ pub fn verify_player_projectiles() -> u32 {
 #[doc(hidden)]
 pub fn verify_player_projectile_case(id: u32) -> Option<Vec<u8>> {
     game::player_projectiles::checks::capture_case(id)
+}
+
+#[doc(hidden)]
+pub fn verify_room_mechanism_case(id: u32) -> Option<Vec<u8>> {
+    game::room_mechanism_checks::capture_case(id)
 }
 
 pub(crate) mod native_audio;

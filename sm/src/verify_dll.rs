@@ -37,6 +37,28 @@ pub unsafe extern "C" fn sm_verify_player_projectile_ram(
     }
 }
 
+/// Copy a synthetic mechanism scenario's RAM and return observation.
+///
+/// # Safety
+/// A non-null output must be writable for at least `capacity` bytes.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn sm_verify_room_mechanism_case(
+    id: u32,
+    output: *mut u8,
+    capacity: usize,
+) -> usize {
+    if output.is_null() {
+        return 0;
+    }
+    match std::panic::catch_unwind(|| sm::verify_room_mechanism_case(id)) {
+        Ok(Some(bytes)) if bytes.len() <= capacity => {
+            unsafe { std::ptr::copy_nonoverlapping(bytes.as_ptr(), output, bytes.len()) };
+            bytes.len()
+        }
+        _ => 0,
+    }
+}
+
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn sm_verify_backend_source_hash() -> *const c_char {
     unsafe {

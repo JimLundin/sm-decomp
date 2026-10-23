@@ -122,18 +122,48 @@ references; measure build/test time and resource growth before changing the loop
    complete adjacent responsibility and a reviewed owner/caller/deletion proposal;
    do not restart the archived Session or resume isolated shared-consumer work.
 
-   Current next-boundary investigation: complete room mechanisms, including
+   Approved next replacement: complete room mechanisms, including
    creation/setup, scheduler/pre-actions/commands, drawing, message suspension,
-   lifecycle and actual encounter/room/contact callers. One implementation worker
-   and an independent reviewer are preparing the owner/API/deletion proposal.
+   lifecycle and actual encounter/room/contact callers. The implementation worker
+   and independent reviewer have agreed the concrete ownership boundary. One
+   RoomMechanisms owns 40 slots, item graphics, drawing and execution state during
+   complete subsystem intervals. Immediate foreign calls consume/publish/relinquish
+   that owner and import the actual returned RAM. Full enable flags, stale released
+   fields, live selectors and the context-bound continuation byte remain intact.
    The existing 24 RAM adapters plus sm_84, spawning and setup runtime total 3684
    lines before retaining required native behavior; this is not a savings claim.
    Consolidate repeated field/effect handling, and price replacement plus checks
    before adoption. Capture actual old entries through the existing DLL workflow;
    compare RAM, return/yield, failure prefixes and relevant native effects.
-   Persistent ownership additionally needs closure of external writers, whole-RAM
-   adoption and shared continuation context. No new runtime implementation is
-   approved until this proposal is reviewed.
+   Retire all 24 adapters, setup_runtime, plm_spawning and sm_84; migrate drawing
+   and clipping algorithms too. Only Golden Torizo palette and the two generic
+   Samus sound routines relocate intact. Do not retain per-operation RAM fallbacks.
+   Estimated runtime delta is -400..+300 lines, validation +450..800; these are
+   planning ranges, not measured savings. Old raw source and DLL are preserved in
+   Local/sm-decomp-experiments/20261023/room-mechanisms/pre-consolidation. Capture
+   actual old entries before replacing them. Baseline coverage must distinguish
+   defined old paths from unaligned raw reads and other undefined access; identity
+   counts alone do not prove branch/effect coverage. Implementation is authorized
+   after capture freezes. Persistent ownership additionally needs closure of
+   external writers, whole-RAM adoption and shared continuation context.
+
+   First 90 actual old-entry scenarios are captured with full RAM, return values
+   and expected checked failures; release/frontend/verifier build and independent
+   source/output review pass. Source fa6f4ca5605aa26c40767cbd41aeb4d66eecb11eb2e283f7517278fc5fd6da39
+   adds only baseline checks/exports to the unchanged projectile runtime. Frozen
+   baseline-90.dll, baseline-90-inputs and baseline-90-capture.json remain local.
+   Full setup/script/message/external coverage is still being prepared.
+
+   Baseline route discovery found a previously unverified failure at Speed Booster
+   input20857: 13405 RAM bytes differ, exit1. Original 24bd source reaches the
+   first coroutine.plm.message probe at27563 and stops after120follow-up frames
+   at27683; this longer run is not green. A fa6f checkpoint before20857 reproduces
+   the same failure in one frame (0.384s invocation), with20856passing. No new
+   mechanism implementation is integrated. Diagnose this baseline issue before
+   claiming an oracle pass; it is unrelated to the historical synthetic Intro
+   mismatch unless further evidence establishes a link. The relation to earlier
+   projectile adoption remains unknown. Artifacts: baseline-message-route.log,
+   before-20857-prefix.log, at-20857.smvchk and20857-repro-one.log in room-mechanisms.
 
    `game/player_projectiles` owns ten shots, eighteen trail pairs, weapon/charge
    controls and launch history during each complete subsystem interval. One
