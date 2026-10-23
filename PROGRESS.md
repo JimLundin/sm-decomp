@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 12:25 UTC**
+Updated: **2026-10-23 12:33 UTC**
 
 **Status: active development. The owned engine is not yet consolidated into production.**
 
@@ -86,7 +86,18 @@ state/unwind and the unchanged shared animation core for five selectors. Storage
 and content are simplified test substitutes: this proves the access mechanism,
 not production gameplay or complete subsystem integration. The standalone test
 executable was blocked by Windows policy; security settings were not changed.
-Full isolated subsystem implementation is now proceeding from this design.
+Full isolated subsystem implementation is proceeding from this design. The full
+state mapping has passed independent source review: 391 distinct words / 782 bytes
+cover shots, trails, controls and launch history without overlapping ownership.
+Direct flight, animation, lifecycle, beam, missile, bomb and special-attack bindings
+are authored; collision, presentation and caller migration remain in progress.
+These replacement sources have not yet been built or validated as an integrated game.
+
+The current production baseline was rechecked on the Speed Booster route from boot:
+**8,780 frames, zero failing frames, exit 0** (26.09 seconds of replay). It reaches
+427 gameplay frames in one room and no credits. This establishes the parent result
+for a relevant animation/drawing/trail route; it does not validate the replacement
+or cover special attacks and reflection. Those still need focused integrated checks.
 
 The full replacement is estimated at 2,270-3,690 new production lines, against the
 conservative 2,213-line retirement inventory: approximately **+60 to +1,480

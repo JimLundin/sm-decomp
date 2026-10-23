@@ -164,7 +164,21 @@ references; measure build/test time and resource growth before changing the loop
    endian operations and unchanged playback for five selectors. Game storage and
    Show content are test substitutes; no integrated gameplay claim. Standalone EXE
    execution was blocked by Defender1121; security settings remain unchanged.
-   Full isolated replacement implementation follows; main production is unchanged.
+   Full isolated replacement implementation is underway; main is unchanged. The
+   expanded mapping has independent source review: 391 unique aligned words / 782
+   bytes (180 shot, 180 trail, 23 control, eight launch-history words), no overlap.
+   Full Context bindings and caller/deletion integration still require builds and
+   actual-code checks; the nine draft tests do not validate this expanded source.
+
+   Parent oracle route revalidated on 2026-10-23: current production fingerprint
+   d7e5c27e681f8c689b8f9162715af36e1b2647aeaa39c0f5a883116474ce24eb,
+   speed-booster.inputs from boot for 8,780 frames, zero failures, exit0; replay
+   26.09s / invocation 26.8067s. Actual coverage is 427 gameplay frames, room DF45,
+   enemy E23F, zero credits. Command: tools/verify_dll.py rom/sm.smc
+   movies/speed-booster.inputs --cargo --no-build --frames 8780. This is the parent
+   baseline, not replacement evidence. Final source needs explicit relevant probes
+   and focused cases for branches this route does not reach; do not extend this
+   movie merely to seek fixed initialization (historical 12,000 frames had no hit).
 
    Latest verified stage shares the complete charged-shot palette consumer from
    `8fa61a7c`. Main HandleBeamChargePalettes and owned advance_weapon_palette use
