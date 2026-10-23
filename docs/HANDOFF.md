@@ -9,49 +9,49 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares animal-rescue passage control after Shaktool at `5c585fdb`.
-Setups B9C5/BB09, commands B9B9/BB25 and pre BE30 retire. Core/checked adapter
-forbid unsafe; candidate setup/pre/command routes bypass native fallback. Preserve
-captured block/live row widths, exact installer failure prefixes, event0F scratch
-mask80, wrapping four-block movement, timer-clear/live-link/instruction ordering
-and optional dud before timer clear. BDB2/BE1C helpers retain real other callers.
-RAM remains authoritative; 84/115 setups shared, 31 remain.
+The latest stage shares the paired Tourian invisible walls after `373b0203`.
+Setups B551/B56F (source integers8697169/8697199) retire into a safe core/checked
+adapter. Actual headers B763/B767 use those setups and AAE3 Delete. Both modules
+forbid unsafe. Preserve captured origin, rounded odd terrain offsets, low twelve
+bits, ten writes and ten subsequent live width observations. The final computed
+next block is not accessed. Candidate typed setup paths publish/share/reimport;
+RAM remains authoritative. 86/115 setups are shared, 29 remain.
 
-Main: **104,832 Rust lines in 182 files**, unsafe declarations2,885 unchanged,
-casts6,026 (-2). Maintained implementation105,394; installers/launcher included
-106,304. Prospective composition: **113,691 in 282 files**, **+8,859 over main**,
-unadopted. Main cost +131 lines/+1,281 tokens/+4,479 normalized bytes; complete
-implementation +174/+1,662/+6,306. Retained verification +855/+10,431/+35,308;
-implementation plus checks1,029 lines. Local production +42 lines overlaps the
+Main: **104,882 Rust lines in 184 files**, unsafe declarations2,885 unchanged,
+casts6,024 (-2). Maintained implementation105,444; installers/launcher included
+106,354. Prospective composition: **113,769 in 285 files**, **+8,887 over main**,
+unadopted. Main cost +50 lines/+515 tokens/+1,731 normalized bytes; complete
+implementation +78/+785/+2,888. Retained verification +526/+6,879/+22,530;
+implementation plus checks604 lines. Local production +27 lines overlaps the
 composition. No duplicate owned algorithm existed. No dependency/native/installer/
 launcher additions, net reduction, full unsafe retirement, persistent authority
 or backend-independence claim.
 
-Use `runtime-impact-working/ANIMAL_RESCUE_HANDOFF.md`, `animal-rescue-price.json`
-and `animal-rescue-check-attempt-2.log`. Final selected run passes20.44s with
-identities215 runtime/252 local: 42,008 frozen-original/main/candidate direct
-comparisons, including4,628 matching installer failures (37,380 completing),
-19 counted source/scheduler groups and13 gate/queue/link groups. Frozen pre helpers
-are retained in the reference; symbolic checks cover complete effect prefixes,
-terrain kinds, captured blocks, changing widths/link and dud-before-clear.
+Use `runtime-impact-working/TOURIAN_WALL_HANDOFF.md`, `tourian-wall-price.json`
+and `tourian-wall-check-attempt-1.log`. Selected run passes25.56s with identities
+218 runtime/255 local: 21,924 defined-original/main/candidate direct comparisons,
+8,700 separate checked-only failure-prefix comparisons, ten actual producer groups
+and80 collision samples. Every original sequence is preflighted across its ten
+visited terrain words. Reached FFFE/FFFF offsets access outside RAM in the original;
+never execute them as fidelity evidence. Checked main/candidate failures retain
+valid preceding writes. FFFC/FFFD are valid; an unused final next-block FFFE/FFFF
+is also valid. Symbolic tests assert all31 observation/effect failure positions,
+changed widths/origin and every write value, including the tenth width read.
 
-Actual room constructors install the wall at(15,10) and gate the passage at(61,11).
-Their real coordinates are checked before explicitly moving to block1024,width16
-for offscreen scripts. Main executes actual room callbacks; candidate uses its
-hardcoded creator. Its AfterSavingAnimals fixture supplies the retained outer
-quake24/timerFFFF writes, which are not candidate-owned. Rescue shot setup B978
-is shared and reused. B9A2 executes queue/crumble4/4/4/1, marks rescue and deletes;
-BB19 draws, moves four blocks, draws again and deletes. Actual terrain processing
-and bounded projectile collision establish the quirk: final rescue tiles80FF stay
-Solid, while the later passage00FF becomes Air. A carrier-only atomic guard asserts
-actual calculated y32/cameraY0 before each selected DrawPlm call, returning before
-native odd reads. This supplies no visible-render or natural route evidence.
+Actual main A9EFE6 close and A9F138 open callbacks run with bounded aligned
+EnemyLayout40 overlays and native scroll alignment assertions. Camera512/513 and
+countdown0/1 cover their trigger boundaries; actual acceleration runs at the
+selected stationary target. Both wall sources spawn in order at(48,3),(31,3).
+One-free-slot cases assert allocation order and are not scheduled with fake occupied
+headers. Actual AAE3 Delete releases normally created slots. Real collision sampling
+checks all20 cells in each normally allocated wall pair, Air versus Solid, preserved
+low bits, current-block selection and scan state.
 
-Actual room event selection consumes event0F. The gate checks rejected/accepted
-queue behavior and executes its linked Delete through the real current schedulers.
-Independent original evidence is the five frozen bodies plus their two helpers;
-current scheduler comparisons share the new core and unchanged consumers. No full
-room load, startup, movie, rendering/audio or complete composition/gameplay claim.
+Candidate constructors are compared after normalizing explicitly asserted outer
+A9 enemy/camera/scroll writes. This is wall/PLM evidence, not an independent owned
+encounter callback. No old whole-enemy callback, full enemy sequence, room loading,
+startup, rendering/audio, movie or complete composition/gameplay claim. Selected
+streams contain only Delete; drawing callbacks are unexercised.
 
 Liquid limitation: `advance_tide` always reads native u16 at odd RAM0x197D, reached
 by every unfrozen `lava_surface`. Do not execute that path as defined-reference
@@ -64,39 +64,33 @@ not defined-native fidelity evidence. Preserve logs and independent setup result
 do not rerun the undefined cases. Current selected suites exclude them. This does
 not diagnose the inherited Intro mismatch in `DRAWING_HANDOFF.md`.
 
-Shaktool26700/6/4, booster91874/8354/20/21, sound15300/274/2304,
-quota6118/66/112/48, eye-door13320/3440/56/24, plants1360/1504/8/640,
-cannon3630/1420/46/8, item3476/1320/14/32, scroll5816/1296/52,
-station3240/112/149/6, Chozo592/4/4/16, hands52/163/12, source342/672/47,
-closing74/120/7 and collision198/545/176/1 pass. Booster's direct total includes
-its bounds failures. Historical qualified graphics/cannon/Chozo evidence and
-full-contact limits remain unchanged; eye acid initialization stays excluded.
-Unchanged scroll bounded nonreturn observations were not repeated.
+Animal42008/4628/19/13, Shaktool26700/6/4, booster91874/8354/20/21,
+sound15300/274/2304, quota6118/66/112/48, eye-door13320/3440/56/24,
+plants1360/1504/8/640, cannon3630/1420/46/8, item3476/1320/14/32,
+scroll5816/1296/52, station3240/112/149/6, Chozo592/4/4/16, hands52/163/12,
+source342/672/47, closing74/120/7 and collision198/545/176/1 pass. Animal and
+booster direct totals include their matching bounds failures; Tourian's checked-only
+count is separate from original-defined comparisons. Historical qualified graphics/
+cannon/Chozo evidence and full-contact limits remain unchanged; eye acid initialization
+stays excluded. Unchanged scroll bounded nonreturn observations were not repeated.
 
-Production release/frontend/verifier/source passed95.18s; its source stayed fixed.
-First carrier compile failed12.16s on a missing PlmScript reference alias; corrected
-carrier passed21.69s and harness23.46s. First runtime check aborted in Unreachable:
-proposal/candidate/fixture used BF30, but source decimal8699440 is BE30. Diagnostic
-harness13.73s localized the failing gate call. This was a candidate route defect
-plus fixture address error; main retained the correct numeric route. Candidate
-BE30 and all fixture addresses were corrected, all five routes/helpers/room codes
-independently re-audited, and temporary prints removed. Initial composition59.13s
-predates the fix; corrected composition passed38.78s, final clean harness14.40s,
-selected checks20.44s. Carrier source was unchanged after its passing build and
-reused. Failed and diagnostic logs remain; those runs are not passing evidence.
-Production hash remains:
-`1b3e9e506e38ec3b53c14a0d2069e11b32b3ac5719927abcdea72ea2d5ebeee8`.
+Production release/frontend/verifier/source passed59.58s; prospective release56.33s,
+carrier21.78s, harness26.05s and selected checks25.56s all passed first attempts.
+No source changes followed builds. Production hash:
+`6c76eabad1724d1b588697e012ea550247f3d4344b81435e60b283455969db26`.
 Changed gameplay/root formatting and diff checks pass; manifest additions conform
 with baseline formatting differences unchanged. Compiler lane released; DLL unloaded.
 
-`animal-rescue-parent/` preserves prior main/carrier/local/composition sources.
-Earlier snapshots/caches and failed logs remain. Do not rerun historical preparation
-scripts; composition lives under `impact-composition/sm/src`. Continue the next
-coherent responsibility among17 remaining room/event/boss setups, then14 residual
-identities. Runtime promotion needs reset/load/rewind/external-writer checks;
-boot-to-credits and independent renderer/audio remain unfinished. The parallel
-movie/state investigation is documented in
-[MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md); it implements no pipeline.
+`tourian-wall-parent/` preserves prior main/carrier/local/composition sources.
+Earlier snapshots/caches and failed logs remain. Animal rescue's candidate/fixture
+BE30 correction and failed/diagnostic runs remain documented in its handoff; main
+numeric dispatch was unchanged. Do not rerun historical preparation scripts;
+composition lives under `impact-composition/sm/src`. Continue the next coherent
+responsibility among15 remaining room/event/boss setups, then14 residual identities.
+Runtime promotion needs reset/load/rewind/external-writer checks; boot-to-credits
+and independent renderer/audio remain unfinished. The parallel movie/state
+investigation is documented in [MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md);
+it implements no pipeline.
 
 ## Paused launch draft
 

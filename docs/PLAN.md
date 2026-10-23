@@ -104,32 +104,28 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares animal-rescue passage control after Shaktool at
-   `5c585fdb`. `mechanism_animal_rescue` retires setups B9C5/BB09, commands B9B9/BB25
-   and pre BE30. It preserves captured block/live widths, installer failure prefixes,
-   event0F gates, wrapping passage movement and timer/link/dud order. Core and checked
-   adapter forbid unsafe; candidate setup/pre/command routes bypass native fallback.
-   RAM remains authoritative. Eighty-four of 115 setups are shared; 31 and native
-   dispatch/authority work remain.
+   Latest verified stage shares the paired Tourian invisible-wall controls after
+   animal rescue at `373b0203`. `mechanism_tourian_wall` retires setups B551/B56F.
+   It preserves captured origin, odd-offset rounding, low twelve terrain bits,
+   wrapping row steps and all ten live width reads, including the final unused
+   next-block calculation. Core/checked adapter forbid unsafe; both candidate
+   setup routes use shared logic. RAM remains authoritative. Eighty-six of 115
+   setups are shared; 29 and native dispatch/authority work remain.
 
-   Final checks pass 42,008 frozen-original/main/candidate direct comparisons,
-   including 4,628 matching installer failures, 19 counted main/candidate source/
-   scheduler groups and 13 gate/queue/link groups. Actual rescue animation remains
-   Solid while setting the event; the later passage becomes Air. Real room producers
-   are checked separately from explicitly repositioned offscreen script fixtures;
-   actual collision sampling proves both material outcomes. A carrier-only guard
-   asserts y32/cameraY0 before every selected DrawPlm call. The candidate room fixture
-   supplies two retained outer quake writes; it does not own that room callback.
-   No visible rendering, movie or complete-composition runtime claim.
+   Final checks pass 21,924 defined-original/main/candidate comparisons, 8,700
+   separate checked-only failure-prefix cases, ten actual main enemy-producer
+   groups and 80 collision observations. Original FFFE/FFFF visited terrain words
+   are outside RAM and undefined: preflight excludes those original executions.
+   A final computed but unvisited FFFE/FFFF remains valid. Actual close/open enemy
+   callbacks, two ordered spawns (including one-free-slot capacity), AAE3 deletion
+   and Air/Solid collision effects execute. Native enemy/scroll alignment and bounds
+   are asserted. Candidate comparisons normalize explicitly asserted outer enemy,
+   camera and scroll fields; this does not establish independent encounter ownership.
 
-   Identities215 runtime/252 local and all15 retained suites pass independent review.
-   Production release/frontend/verifier/source passed (95.18s). Initial carrier
-   compilation failed on a missing reference type import; corrected carrier passed
-   (21.69s). First runtime execution failed because candidate/fixture used BF30;
-   original decimal8699440 is BE30. Bounded diagnostics confirmed the gate call.
-   Main dispatch was correct and unchanged. Corrected candidate release passed
-   (38.78s), clean harness passed (14.40s), final selected checks passed (20.44s).
-   Failed/diagnostic logs are retained. Do not call the first runtime run a pass.
+   Identities218 runtime/255 local and all17 selected suites pass independent review.
+   Production release/frontend/verifier/source (59.58s), prospective release (56.33s),
+   carrier (21.78s), harness (26.05s) and selected checks (25.56s) passed first attempts.
+   No rendering, movie, complete-composition runtime or full enemy sequence ran.
 
    Liquid limitation: unchanged `advance_tide` dereferences native u16 at odd RAM
    0x197D on every unfrozen `lava_surface` path. Do not execute that path as defined
@@ -142,14 +138,14 @@ references; measure build/test time and resource growth before changing the loop
    comparisons; do not rerun the undefined cases. Current selected suites exclude
    them. Current item restores assert the offscreen guard before that read.
 
-   Main is **104,832 Rust lines in 182 files**. Prospective composition is
-   **113,691 (+8,859)**, unadopted. This stage adds 131 main and 43 owned/wiring
-   lines: **+174 complete lines**, +1,662 lexical tokens and +6,306 LF-normalized
-   bytes. Verification adds 855 lines; implementation plus checks adds 1,029.
+   Main is **104,882 Rust lines in 184 files**. Prospective composition is
+   **113,769 (+8,887)**, unadopted. This stage adds 50 main and 28 owned/wiring
+   lines: **+78 complete lines**, +785 lexical tokens and +2,888 LF-normalized
+   bytes. Verification adds 526 lines; implementation plus checks adds 604.
    The candidate previously delegated these behaviors to native callbacks; no
    duplicate owned algorithm existed to retire. No dependency or native/installer/
    launcher source is added. Unsafe declarations remain 2,885; cast-containing
-   lines fall two to 6,026. No net reduction, complete unsafe retirement,
+   lines fall two to 6,024. No net reduction, complete unsafe retirement,
    persistent ownership or backend-independence claim.
 
    Next dependencies, in order:
@@ -209,12 +205,14 @@ references; measure build/test time and resource growth before changing the loop
      actual room setup, bomb fuse, camera and persistent event consumers.
    - [x] Share animal-rescue wall/event/passage/door-gate control and retire five
      bodies; compare actual script, terrain, collision and event consumers.
+   - [x] Share paired Tourian invisible-wall controls and retire both bodies;
+     compare actual enemy producers, deletion and material collision effects.
    - Close remaining room/event/boss setups, then constants/no-op/result routes.
      Preserve synchronous writes, nested displacement and failure prefixes before
      retiring native dispatch. The 115-identity inventory is in the local door
-     handoff; 17 room/event/boss and 14 residual identities remain. Select one
-     coherent responsibility through caller/validation investigation. The animal-rescue
-     handoff records retained dependencies and the corrected numeric route audit.
+     handoff; 15 room/event/boss and 14 residual identities remain. Select one
+     coherent responsibility through caller/validation investigation. The Tourian-wall
+     handoff records retained dependencies and original-memory-domain exclusions.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -222,7 +220,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified animal-rescue continuation, with
+   `runtime-impact-working/` is the verified Tourian-wall continuation, with
+   `TOURIAN_WALL_HANDOFF.md`, `tourian-wall-price.json` and
+   `tourian-wall-check-attempt-1.log`. `tourian-wall-parent/` preserves prior
+   main/carrier/local/composition inputs. Animal-rescue evidence remains in
    `ANIMAL_RESCUE_HANDOFF.md`, `animal-rescue-price.json` and
    `animal-rescue-check-attempt-2.log`. `animal-rescue-parent/` preserves prior
    main/carrier/local/composition inputs. Shaktool evidence remains in

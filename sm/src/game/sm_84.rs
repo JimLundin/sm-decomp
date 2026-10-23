@@ -768,24 +768,6 @@ crate::game::callback_dispatch! {
         }
         0
     };
-    [8697169] PlmSetup_ClearShitroidInvisibleWall [] {
-        let mut v1: u16 = word!(game.plm_block_indices[(j >> 1)]);
-        for _ in 0i16..10i16 {
-            word!(game.level_data[(v1 >> 1)] &= (0xfffu16));
-            v1 = (v1 as i32 + word!(game.room_width_in_blocks) as i32 * 2) as u16;
-        }
-        0
-    };
-    [8697199] PlmSetup_B767_ClearShitroidInvisibleWall [] {
-        let mut v1: u16 = word!(game.plm_block_indices[(j >> 1)]);
-        for _ in 0i16..10i16 {
-            word!(
-                game.level_data[(v1 >> 1)] = (word!(game.level_data[(v1 >> 1)]) & 0xfff | 0x8000)
-            );
-            v1 = (v1 as i32 + word!(game.room_width_in_blocks) as i32 * 2) as u16;
-        }
-        0
-    };
     [8697336] PlmSetup_MotherBrainRoomEscapeDoor [] {
         let v1: u16 = word!(game.plm_block_indices[(j >> 1)]);
         WriteLevelDataBlockTypeAndBts(v1, 0x9001, game);
@@ -968,6 +950,8 @@ crate::game::callback_dispatch! {
         8706700 => [crate::game::mechanism_eye_door_ram::begin(j, crate::game::mechanism_eye_door::Part::Eye, game)];
         8706745 => [crate::game::mechanism_eye_door_ram::begin(j, crate::game::mechanism_eye_door::Part::Body, game)];
         8706846 => [crate::game::mechanism_metroid_quota_ram::begin(j, game)];
+        8697169 => [crate::game::mechanism_tourian_wall_ram::setup(j, crate::game::mechanism_tourian_wall::Setup::Open, game)];
+        8697199 => [crate::game::mechanism_tourian_wall_ram::setup(j, crate::game::mechanism_tourian_wall::Setup::Close, game)];
         8698309 => [crate::game::mechanism_animal_rescue_ram::setup(j, crate::game::mechanism_animal_rescue::Setup::RescueWall, game)];
         8698633 => [crate::game::mechanism_animal_rescue_ram::setup(j, crate::game::mechanism_animal_rescue::Setup::MainStreetPassage, game)];
         8698076 => [crate::game::mechanism_shaktool_ram::begin(game)];
