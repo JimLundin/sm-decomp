@@ -1,44 +1,8 @@
 //! Checked charge-palette fields and the existing suit/visor output consumers.
-use crate::game::beam_charge_palette::{self as shared, Context, Field, Input, Output};
+use crate::game::beam_charge_palette::Output;
 use crate::game_state::Game;
 use crate::ram_map::{checked_word as word, words};
 use crate::rom::RomImage;
-
-fn offset(field: Field) -> usize {
-    match field {
-        Field::Glow => words::charged_shot_glow_timer,
-        Field::Phase => words::samus_charge_palette_index,
-    }
-}
-struct Runtime;
-impl<'g> Context<&'g mut Game> for Runtime {
-    fn field(&self, game: &&'g mut Game, field: Field) -> u16 {
-        let at = offset(field);
-        u16::from_le_bytes([game.g_ram[at], game.g_ram[at + 1]])
-    }
-    fn set_field(&mut self, game: &mut &'g mut Game, field: Field, value: u16) {
-        let at = offset(field);
-        game.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
-    }
-    fn input(&self, game: &&'g mut Game, input: Input) -> u16 {
-        match input {
-            Input::Hyper => word!(game.hyper_beam_flag),
-            Input::GrappleInactive => u16::from(word!(game.grapple_beam_function) == 0xc4f0),
-            Input::Charge => word!(game.flare_counter),
-            Input::ContactAttack => u16::from(word!(game.samus_contact_damage_index) == 4),
-            Input::Suit => word!(game.samus_suit_palette_index),
-        }
-    }
-    fn output(&mut self, game: &'g mut Game, output: Output) -> (&'g mut Game, u8) {
-        let result = output_with_image(game, output, |g| {
-            g.loaded_rom.as_ref().expect("ROM must be loaded").clone()
-        });
-        (game, result)
-    }
-}
-pub fn advance(game: &mut Game) -> u8 {
-    shared::advance(game, &mut Runtime).1
-}
 
 /// Table images are acquired at each original read. The generic native copy
 /// deliberately resolves its own current bank-9B source through Game.

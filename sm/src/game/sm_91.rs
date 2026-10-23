@@ -752,7 +752,7 @@ pub unsafe fn Samus_HandlePalette(game: &mut Game) {
         HandleMiscSamusPalette(game);
     }
 }
-pub use crate::game::beam_charge_palette_ram::advance as HandleBeamChargePalettes;
+pub(crate) use crate::game::player_projectiles::charge_palette as HandleBeamChargePalettes;
 pub unsafe fn HandleVisorPalette(game: &mut Game) -> u8 {
     unsafe {
         if word!(game.timer_for_shine_timer) == 8 {

@@ -4,7 +4,7 @@ use crate::game::music::HandleMusicQueue;
 pub use crate::game::prelude::*;
 
 use crate::game::sm_80::{QueueSfx1_Max6, ReadJoypadInputs, WaitForNMI_NoUpdate_Async};
-use crate::game::sm_82::{CancelSoundEffects, HandleSoundEffects, QueueSamusMovementSfx};
+use crate::game::sm_82::{CancelSoundEffects, HandleSoundEffects};
 
 use crate::rtl::ReadReg;
 
@@ -319,7 +319,7 @@ impl crate::game::dialogue::Context for LegacyDialogue<'_> {
                 SaveSound => QueueSfx1_Max6(0x2e, self.0),
                 AdvanceAudio => advance_audio(self.0),
                 RestoreDisplay => RestorePpuForMessageBox(self.0),
-                ResumeMovementSound => QueueSamusMovementSfx(self.0),
+                ResumeMovementSound => crate::game::player_projectiles::restore_sound(self.0),
                 SelectPause => dialogue_ram::select_pause(self.0),
                 DrawRadius => MsgBoxMakeHdmaTable(self.0),
                 DrawSelection => DrawSaveConfirmationSelection(self.0),

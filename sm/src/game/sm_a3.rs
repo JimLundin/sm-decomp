@@ -18,7 +18,7 @@ use crate::game::sm_80::{
     Multiply16x16, NextRandom, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6,
 };
 use crate::game::sm_86::SpawnEprojWithGfx;
-use crate::game::sm_90::{CallSomeSamusCode, ProjectileReflection, ResetProjectileData};
+use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_a0::{
     Abs16, CalculateAngleOfSamusFromEnemy, CalculateBlockContainingPixelPos, CallEnemyPreInstr,
@@ -404,7 +404,7 @@ pub unsafe fn Elevator_Func_1(game: &mut Game) {
             QueueSfx3_Max6(0xb, game);
             QueueSfx1_Max6(0x32, game);
             CallSomeSamusCode(7, game);
-            ResetProjectileData(game);
+            crate::game::player_projectiles::reset(game);
             Elevator_Func_4(game);
             word!(game.elevator_status += 1);
         } else {
@@ -2042,7 +2042,7 @@ crate::game::callback_dispatch! {
             let v5: i32 = v0 as i32 >> 1;
             word!(game.projectile_dir[v5] = v4 as u16);
             word!(game.projectile_type[v5] &= !(0x8000));
-            ProjectileReflection(v0, game);
+            crate::game::player_projectiles::reflect(v0, game);
             QueueSfx2_Max6(0x57, game);
         };
     };

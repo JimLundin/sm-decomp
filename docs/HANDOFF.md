@@ -9,142 +9,97 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-Latest verified stage shares the complete charged-shot palette consumer from
-`8fa61a7c`. Main HandleBeamChargePalettes and owned advance_weapon_palette use
-one safe rule; local output handling reuses the main resolver. Actual coordinator
-and beta callers keep their schedule. Hyper copies before live glow decrement;
-ordinary glow decrements before highlight; phase updates after output using its
-live value; visor sees phase zero and returns its complete byte. ROM getter order,
-low-pointer diagnostics and current native copy-image selection are preserved.
-The secondary word read is checked; generic native copy and visor remain debts.
+Production projectile consolidation is complete. game/player_projectiles now
+owns ten shots, eighteen trail pairs, weapon/charge controls and launch history
+through one private 391-word / 782-byte Transaction. Actual player, cinematic,
+door, enemy, scene and message callers use it. Fourteen complete adapters and
+superseded bank bodies are deleted. Speed Echo (90D4D2) and suit pickup (90EFD3)
+execute their real motions.
 
-All **60 selected suites pass**, with **59 retained vectors unchanged** and nine
-unchanged native assertion pairs (five setup, four preparation). Suite time
-35.104971s; invocation 36.533343s, explicit exit0. New vector
-[378,188,33,17,166,87,318] counts comparisons, post-output observations, compared
-failures, chains, calls, typed scenarios and authored scenarios. The 378 include
-202 matrix triplets, ten getter pairs and 166 chain comparisons; they are not all
-three-way. The 33 failures include 24 injected output failures, two existing
-checked-table failures, six getter failures and one real coordinator bounds panic.
-Two new checked-only secondary cases are separate from native equivalence.
+Canonical, broad, odd and signed accesses use the same algorithms and byte-lane
+resolver. Foreign calls publish and relinquish ownership, then import returned
+RAM. Ownership does not persist across native gameplay, frame return, reset/load
+or oracle intervals. Drop preserves successful mutation prefixes during unwind,
+not before panic hooks or abort. Checked word writes publish the low byte before
+high-byte failure; atomic slices retain preflight behavior. Signed arithmetic,
+evaluation order and native-versus-LE reads remain significant.
 
-Real charged/Hyper producers reach glow expiry in four/21 palette calls and
-projectile retirement; held input crosses 59 to 60 and cycles colors before
-release. Actual coordinator/beta cases distinguish short circuit, base overwrite,
-Xray/visor output and later demo-input restoration. Rainbow writes the shared
-phase by +1, disable clears it and next charge uses +2. Hurt39-to40 requests
-resumed audio and actual Samus_ShootCheck consumes it. Selected-image tests restore
-Hyper1/glow4/phase8/ammo19/cursor99, apply corrective glow2, and require Hyper
-colors and returned glow1. This proves scoped import behavior, not host adoption.
+Flare tables read loaded_rom; sequence bytes use captured g_rom, which can
+differ. Native content capture/read APIs retain explicit unsafe assumptions.
+Persistent ownership, backend independence, all-unsafe elimination, reduction
+and boot-to-credits coverage remain unfinished.
 
-Caller tests use E90E no-op movement and disabled minimap. Typed outputs are
-modeled separately from actual runtime output. Old unaligned/out-of-allocation
-secondary reads are not used as native equivalence evidence; odd/short checked
-cases are qualified. Generic native memcpy is unchanged and not claimed safe.
-No movie/full-renderer run or persistent Session adoption is established.
-Historical controlled preparation exclusions remain exactly as documented in
-PLAYER_PREPARATION_HANDOFF.md; their valid runtime subset still passes.
+Final source fingerprint:
+24bd3d424dea880173b5ae8ebaa9b25dd4fa9f1d0e57696deaac1621bda3e8b7.
 
-Main release/frontend passed86.857s and candidate release53.468s. Final carrier
-passed22.053s and harness19.922s. The initial test-hook name collision is retained
-as a failed build; no production edits were needed after the frozen builds.
-Main5/local2/composition341/verification815 hashes match; generator is idempotent;
-source identities cover284 carrier and338 local files. Independent final review
-and root audit approved sources, outcomes, counts and costs.
+- Release library/frontend/verifier build passes in 50.7995 seconds.
+- 106 maintained groups pass. All 104 synthetic old/new scenarios compare all
+  131072 RAM bytes directly, with zero differences; two groups exercise ownership
+  and publication. Checks plus direct comparison take 0.8045 seconds.
+- Three expected caught panics cover bytewise bounds, slice preflight and foreign
+  callback unwind. Producer cases cover actual launch/motion, impact, expiry and
+  Power Bomb DMA configuration. No-op family cases alone prove no flight.
+- Oracle inputs 0..8779: 8780 frames, zero failures, exit 0, 24.70 seconds replay.
+  Seven required probes all execute, followed by 120 frames: weapons 1649,
+  history 1900, flight 85, playback 42, projectile draw 135, explosion draw 22,
+  trails 3604. Last first hit is input 8659. Coverage is 427 gameplay frames,
+  one room DF45, enemy E23F, no credits. Draw entries alone do not prove emitted
+  OAM tiles. Synthetic cases are not exhaustive.
+- Independent implementation/caller/provenance/outcome/accounting review approved.
+  Formatting passes for all 19 new module files.
 
-Main is **107,432 Rust lines in 221 files**; candidate **115,832 in 330 files**
-remains unadopted. Net lines/tokens/LF UTF-8 bytes: main [110,1136,3703], local
-[1,0,-142], composition [111,1136,3567], verification [1491,16076,62226], combined
-[1602,17212,65793]. Every maintained adapter/helper/overlay is counted; no category
-overrun or dependency. Unsafe declarations2789(-1), cast lines5918(-4).
-Preparation plus palette adds256 main lines. This is algorithm sharing and
-partial safety progress, not net simplification or a consolidated owned engine.
+Main source: 108821 Rust lines / 226 files. Net increase is 1389 lines /
+11644 lexical tokens / 43988 LF UTF-8 bytes: runtime/probes +596 lines,
+maintained verification +793. Unsafe declarations 2767 (-22); cast lines 5892
+(-26); no_mangle 67; C ABI metric 7. External retained reference/fixture source
+adds 136 lines / 4316 tokens / 11355 bytes; initial ownership experiment adds
+478 / 5029 / 20068. Complete incremental authored source is +2003 lines /
++20989 tokens / +75411 bytes. Staging copies count once. Archiving the rejected
+experimental Session earns no production deletion credit.
 
-Next, per the user's correction: propose production adoption of a complete owned
-subsystem with a clear API, real callers and named bank/adapter deletions. Price
-adoption plus deletion together. If adoption is blocked, name the exact missing
-interactions and minimum closing work. Do not start another isolated shared
-consumer, local-only cleanup or package move. Persistent ownership, complete-game
-coverage and independent rendering/audio remain unfinished.
+Reproduce with the Windows environment in ITERATION.md:
 
-Source hash: `d7e5c27e681f8c689b8f9162715af36e1b2647aeaa39c0f5a883116474ce24eb`.
-Local evidence in runtime-impact-working: CHARGE_PALETTE_HANDOFF.md,
-charge-palette-results.json, charge-palette-price.json,
-charge-palette-final-audit.json, charge-palette-build-attempts.json,
-charge-palette-full-1.log and the two charge-palette fatal JSON files. Prior
-preparation/HUD/weapon-stage handoffs and snapshots remain preserved.
+```text
+python tools/verify_dll.py --build-only --frontend-check
+python tools/verify_dll.py rom/sm.smc movies/speed-booster.inputs --cargo --no-build --frames 8780 --after-hits 120 --require-hit player_projectiles.prepare.weapons --require-hit player_projectiles.history.finished --require-hit player_projectiles.flight --require-hit player_projectiles.playback.frame --require-hit player_projectiles.draw.projectile --require-hit player_projectiles.draw.explosion --require-hit trails.update
+```
 
-Retained setup dispatch [115,199,62,5] covers all 115 semantic identities;
-these are routing/source coverage, not 115 independently executed native bodies.
-Gate [1348,20,5,4] now runs in the full 58-suite invocation. Its four checked-only
-cases retain native undefined-access exclusions. Prior stage details remain in
-SETUP_DISPATCH_HANDOFF.md.
+Maintained checks use the existing source-checked DLL workflow:
 
-Retained Noob Tube [15308,9172,7716,1840] remains in NOOB_TUBE_HANDOFF.md.
-Projectile classes use the real beam-terrain producer, not power-bomb radius
-simulation. Unused siblings stop before absent callbacks D409/D476/D489/D4BE.
-An already-waiting duplicate survives event B; a fresh tube deletes. No visible
-renderer, full room decompression or full-game claim.
+```python
+import ctypes, runpy
+from pathlib import Path
+v = runpy.run_path("tools/verify_dll.py")
+root = Path.cwd()
+host = v["load_host"](root / "target/verify-dll/sm_verify.dll")
+v["check_source"](host, v["source_hash"](root))
+v["check_library"](host, root)
+host.sm_verify_player_projectiles.restype = ctypes.c_uint32
+assert host.sm_verify_player_projectiles() == 106
+```
 
-Retained Torizo [3696,1155,64,1382] remains in TORIZO_STATUE_HANDOFF.md.
-Actual Bomb room selection and guarded full statue script are covered; Golden
-death uses area2 direct setup. Full death pool excludes pickup initialization.
-No visible renderer, DMA execution, debris motion, full encounter or movie claim.
+sm_verify_player_projectile_ram(id, output, capacity) copies 131072 bytes for
+IDs 0..103, or returns zero on failure. Direct old/new comparisons are recorded
+locally in consolidation-main-byte-comparisons.json.
 
-Retained block-reaction [3740,1020,224,974] remains in
-BLOCK_REACTION_HANDOFF.md. D127 parent deletes5; D064 starts alongside it,
-restores409/deletes410, checked through411. Unused headers and constructed
-offscreen placement do not establish vanilla room or visible rendering.
+Evidence root:
+C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/runtime-impact-working/.
 
-Retained Chozo results [3570,126,126,340,185] include separate native watcher
-prefixes and qualified completions; never claim native true-arm completion.
-Its constructed offscreen footstep/renderer limits remain documented in
-CHOZO_TERRAIN_HANDOFF.md. All prior snapshots and failed logs remain.
+Final artifacts: consolidation-main-final-build-2.log,
+consolidation-main-final-checks.json, consolidation-main-final-checks.log,
+consolidation-main-byte-comparisons.json, consolidation-main-final-oracle.log.
+Old observations are in consolidation-old-observations.json (0..8),
+consolidation-matrix-observations.json (9..98) and
+consolidation-end-observations.json (99..103), with corresponding raw
+consolidation-{old,matrix-old,end-old}-ID.ram files. These stay local.
+consolidation-parent-766c6246-sm-src/ preserves old main;
+consolidation-before-source/ preserves the old experimental composition.
 
-Retained periodic results [9784,260,52,144] include 260 separate negative
-crash-entry comparisons only; no abort/nonreturn-tail claim. See its handoff
-and logs. All 24 retained suites are unchanged.
-
-Retained Ceres results: [8800,10912,9,300], all eight source groups admitted.
-Only four free-HDMA groups reach native alignment guards; four full pools
-return before argument reads. Ceres setup's 10912 checked-failure comparisons
-are separate from 8800 successes. See CERES_DOOR_HANDOFF.md and its logs.
-
-Retained treadmill results: [11120,18,19,4880]. See TREADMILL_HANDOFF.md,
-treadmill-price.json and treadmill-check-attempt1.log for row/carry details,
-C800 aliases and the native FF8F origin limit. Those 18 checked-only prefixes
-are separate from defined-original comparisons; never execute invalid originals.
-
-Retained results:crumbling15670/0/17/4302,glass8604/1460/22/138,
-escape16704/5742/10/192,doors570/12/30/3,Tourian21924/8700/10/80,
-animal42008/4628/19/13,Shaktool26700/6/4,booster91874/8354/20/21,
-sound15300/274/2304,quota6118/66/112/48,eye13320/3440/56/24,
-plants1360/1504/8/640,cannon3630/1420/46/8,item3476/1320/14/32,
-scroll5816/1296/52,station3240/112/149/6,Chozo592/4/4/16,hands52/163/12,
-source342/672/47,closing74/120/7,collision198/545/176/1. Glass/escape/animal/
-booster failures are included; Tourian8700/treadmill18 are separate checked-only
-cases. Crumbling4302 counts paired cell/frame observations(8604 collision calls).
-
-Preserve exclusions: unfrozen advance_tide always reads odd RAM197D; terrain18
-visible restoration reads odd RAM1E67. Neither is defined-reference coverage.
-Current guards do not resolve inherited Intro mismatch. Qualified item/cannon/
-Chozo and full-contact limits remain; eye acid initialization stays excluded.
-Scroll bounded nonreturn observations were not repeated.
-
-`noob-tube-parent/` preserves prior main/carrier/local/composition;
-`torizo-statue-parent/`,
-`block-reaction-parent/`,
-`chozo-terrain-parent/`,
-`periodic-damage-parent/`,
-`ceres-door-parent/`,
-`treadmill-parent/` and earlier snapshots remain intact.
-Historical snapshots/caches/failed logs remain, including animal BE30 routing
-correction; main numeric dispatch was always correct. Never rerun historical
-broad preparation scripts. Composition is `impact-composition/sm/src`.
-Continue remaining setups, then native dispatch and authority dependencies.
-Ownership promotion requires reset/load/rewind/external-writer checks. The
-parallel movie/state investigation in [MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md)
-implements no pipeline.
+The prior charge-palette 60-suite/59-vector result and nine fatal pairs remain
+historical evidence, not new integration coverage. Its artifacts, 815 verification
+freeze entries and 284 runtime/338 harness embedded inputs remain unchanged.
+consolidation-palette-reference-sm-src/ reconstructs its exact 341-file
+composition; original archives and prior handoffs remain preserved.
 
 ## Paused launch draft
 
@@ -275,14 +230,10 @@ to reproduce the local owned work; a fresh Git checkout alone lacks that work.
 
 ## Next dependency
 
-The next milestone is production consolidation, not another shared leaf.
-Assess the complete owned projectile subsystem first: public API/state owner,
-actual callers, imported-image/foreign-call boundaries, bank orchestration and
-per-operation adapters that can retire together. Count the entire candidate
-adoption and deletion. If closure is incomplete, identify its concrete missing
-producer/consumer interactions and the minimum changes needed, with validation.
-No new implementation is authorized before that proposal is reviewed. Preserve
-the accepted architecture and the user's correction at the top of PLAN.
+Projectile consolidation is complete. Select a complete adjacent responsibility
+from actual callers, with a reviewed public API/state owner, migration and named
+deletions before implementation. Price adoption and retirement together. Do not
+restart the archived Session or isolated shared-consumer queue.
 
 Keep these verified ordering/access constraints through subsequent changes:
 
@@ -297,7 +248,7 @@ Keep these verified ordering/access constraints through subsequent changes:
 - Offscreen positions are native-endian, camera values LE. Read Y only after
   X passes. Extension cleanup visits slots 8, 6, 4, 2, 0.
 - Preserve odd/broad selectors, overlapping fields, captured versus live reads,
-  callback order, canonical admission and complete-owner fallbacks.
+  callback order and the unified byte-lane resolver.
 - Extension activity reads the unrounded parent selector's following byte;
   low-speed follow and positive-speed placement read LE positions, while the
   negative-speed displacement path alone uses a native word. On collision
@@ -306,7 +257,8 @@ Keep these verified ordering/access constraints through subsequent changes:
 
 Use the existing controlled `old_flight.rs` / `flight_checks.rs`, native fixtures,
 actual-runtime compatibility and room/session/beam consumers. Choose cases for
-the changed branches; no relevant movie segment is currently established.
+the changed branches. The projectile segment above establishes only its recorded
+coverage; another responsibility needs its own exercised checks.
 PLAN permits constructed comparisons with explicit limits. Unrelated green
 frames add no coverage. Keep the independent reference separate from new code.
 

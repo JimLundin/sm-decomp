@@ -117,152 +117,61 @@ references; measure build/test time and resource growth before changing the loop
 3. [x] **Implement the strongest measured replacements and recount.** Landed.
    The earlier under-100,000 milestone is historical: edition 2024's explicit
    unsafe scopes put the current source above that threshold again.
-4. [ ] **Retire bank ownership by gameplay responsibility.** Continue the
-   complete player-projectile lifecycle and its consumers/authority transfers.
-   Share algorithms between the checked RAM path and owned model, then remove
-   their superseded implementations. Do not adopt the outer wiring alone.
+4. [ ] **Retire bank ownership by gameplay responsibility.** The complete
+   player-projectile subsystem is now adopted in production. Continue with a
+   complete adjacent responsibility and a reviewed owner/caller/deletion proposal;
+   do not restart the archived Session or resume isolated shared-consumer work.
 
-   Consolidation audit (2026-10-23): the local candidate is not deletion-ready.
-   runtime_external_flight still calls main flight, playback, ClearProjectile
-   and CallProjPreInstr. Supported SpeedEcho/UnknownProj8027 motions and broad-index
-   continuation must be included in the replacement. Complete the projectile-only
-   ownership/caller cut and full adoption-minus-deletion price before coding;
-   exclude accidental mechanism/dialogue Session coupling. Migrate selection,
-   firing, updates, retirement, trails, drawing and feedback with explicit foreign
-   boundaries and preserved ordering. Do not merge the current wrapper or claim
-   its gross retirement ceiling as savings. See public PROGRESS.md for status.
+   `game/player_projectiles` owns ten shots, eighteen trail pairs, weapon/charge
+   controls and launch history during each complete subsystem interval. One
+   391-word / 782-byte compatibility map handles canonical, broad, odd and signed
+   access through the same algorithms. Foreign calls publish and relinquish the
+   owner, then reacquire their actual returned RAM. No owner persists across native
+   gameplay, reset/load or oracle intervals. Unwind preserves successful writes;
+   this is not a claim about pre-panic-hook or abort publication.
 
-   The completed candidate inventory is 5,236 composition lines against 2,213
-   practical retirement lines (+3,023 before closure). Reject that direct copy.
-   Accepted replacement design: concrete reversible projectile fields, one private
-   byte-lane compatibility resolver, and direct Context bindings to existing shared
-   algorithms. Remove candidate representation generics, forwarding layers and
-   per-operation fallback execution; keep live inputs after aliases. One owner
-   spans each complete subsystem interval, publishing before actual foreign calls
-   and importing their returned image. No owner survives native/reset/load/oracle
-   intervals. Distinguish bytewise checked writes from atomic slice writes; Drop
-   covers catch-after-unwind state only, while diagnostics publish before calling.
+   Fourteen whole adapters are retired, along with old bank dispatch/reset/update/
+   reflection/flare and sound orchestration. Actual player, door, enemy, cinematic,
+   scene, message and beta callers are migrated. Both formerly missing motions
+   90D4D2 and 90EFD3 execute their real behavior. Native output/content remains
+   explicit: flare tables use loaded_rom while sequences retain captured g_rom.
+   The unchecked native sequence boundary is still unsafe. Persistent ownership,
+   backend independence, complete-game coverage and the reduction goal remain open.
 
-   Implement the complete replacement in the isolated composition first: state,
-   compatibility, weapons, motion, animation, bombs, collision, presentation,
-   feedback, preparation and real caller gateways. Retire the old flight,
-   animation, initialization/playback/placement/lifecycle, beam/missile/bomb/special
-   and coordinator adapters, plus mixed bank/trail/palette orchestration; retain
-   shared output/content and genuine foreign consumers once. Full new-source
-   estimate 2,270-3,690 lines versus the conservative 2,213 retirement inventory
-   means approximately +60 to +1,480 production lines, plus an estimated 600-1,200
-   verification lines. These are planning ranges, not savings or final patch cost.
-   Review and test the alias/ownership seam before extending the implementation;
-   no isolated draft or outer wrapper lands as subsystem adoption. Preserve the
-   60-suite baseline and require real integrated callers plus both missing motions,
-   broad/odd aliases, failure prefixes and returned-image checks before adoption.
+   Final source `24bd3d424dea880173b5ae8ebaa9b25dd4fa9f1d0e57696deaac1621bda3e8b7`:
+   release library/frontend/verifier build passes; 106 regression groups pass.
+   All 104 synthetic scenarios also compare the entire 131072-byte RAM image
+   directly against independently executed old entries, with zero differences.
+   The two ownership groups cover every typed field/lane, broad/odd/signed aliases,
+   partial versus atomic writes and foreign returned-RAM/unwind behavior.
+   Producer assertions establish actual beam/missile/bomb/SBA/spread creation and
+   motion, playback and history tails. Expiry/contact cases include native Power
+   Bomb DMA setup and channel assertions. No ROM-derived fixtures are committed.
 
-   The first access draft compiles and passes nine focused checks via the existing
-   Python/DLL workflow (exit0, 0.0378s). Root verified all five frozen source/core/
-   artifact hashes. Coverage: 366 owned bytes, crossing aliases, live selection,
-   separate bytewise/slice failure prefixes, foreign returned image/unwind, explicit
-   endian operations and unchanged playback for five selectors. Game storage and
-   Show content are test substitutes; no integrated gameplay claim. Standalone EXE
-   execution was blocked by Defender1121; security settings remain unchanged.
-   The complete replacement is now integrated into the local main worktree, not
-   committed. Fourteen whole adapters and superseded bank bodies are removed; real
-   caller migration and retained output boundaries passed independent source review.
-   Final isolated library build passed (42.2696s), then main's normal release/
-   frontend/verifier build passed (68.6949s). First regression/probe build passed
-   (47.6626s), fingerprint ee6fc2c85366560d8c3c6c01fba6cd5f9c12e1b4faa7f89a110c3dfc43c784e6.
+   Final oracle replay: 8780 frames, zero failures, exit0, 24.70s replay/25.0235s
+   invocation. Seven required probes execute with 120 follow-up frames: weapons
+   1649; history 1900; flight 85; playback 42; projectile draw path 135; explosion
+   draw path 22; trails 3604. Last first hit is input8659, final input8779. Coverage
+   is 427 gameplay frames, room DF45, enemy E23F, no credits. Synthetic cases are
+   not exhaustive; family cases with no-op motion do not establish flight coverage.
 
-   Actual new-code first batch: 11 groups pass (nine independently captured old
-   full-RAM cases plus complete typed/byte mapping and publication). All 391 words /
-   782 bytes are checked through their typed fields. Both missing native motions
-   and differing loaded/native flare views are exercised. Flare's unchecked native
-   content access remains explicitly unsafe. Wider lifecycle/producer/expiry checks
-   remain open; the retained old 60 suites are not new-code integration evidence.
+   Main: 108821 Rust lines / 226 files, +1389 lines / +11644 lexical tokens /
+   +43988 LF bytes. Runtime plus probes accounts for +596 lines; maintained
+   verification adds 793. Counted unsafe declarations 2767 (-22), cast lines5892
+   (-26). Two verifier exports account for no_mangle growth to67; C ABI metric7.
+   Retained external reference/fixture source adds136/4316/11355; the initial
+   ownership experiment adds478/5029/20068. Complete incremental authored source:
+   +2003 lines / +20989 tokens / +75411 LF bytes. Staging copies are counted once;
+   archiving the old experimental candidate earns no production retirement credit.
+   Independent source, caller, outcome, provenance and price review approved.
 
-   New source passes the 8,780-frame oracle route with all seven required probes
-   and 120 follow-up frames, zero failures, exit0 (27.29s replay). Counts: weapons
-   1649; history completion 1900; flight 85; playback frames 42; projectile draw
-   path 135; explosion draw path 22; trails 3604. Last first hit is explosion
-   drawing at input8659; final input8779. This is one-room coverage, not credits or
-   all weapons. Keep these probes for final source checks and revalidate changes.
-
-   Preliminary production cost is about +600 lines and -23 unsafe declarations;
-   verification source must be included in the final complete cost. The archived
-   experimental candidate is outside shipping source and earns no production
-   retirement credit. Final adoption awaits the remaining actual-code checks.
-   Parent oracle route revalidated on 2026-10-23: current production fingerprint
-   d7e5c27e681f8c689b8f9162715af36e1b2647aeaa39c0f5a883116474ce24eb,
-   speed-booster.inputs from boot for 8,780 frames, zero failures, exit0; replay
-   26.09s / invocation 26.8067s. Actual coverage is 427 gameplay frames, room DF45,
-   enemy E23F, zero credits. Command: tools/verify_dll.py rom/sm.smc
-   movies/speed-booster.inputs --cargo --no-build --frames 8780. This is the parent
-   baseline, not replacement evidence. Final source needs explicit relevant probes
-   and focused cases for branches this route does not reach; do not extend this
-   movie merely to seek fixed initialization (historical 12,000 frames had no hit).
-
-   Latest verified stage shares the complete charged-shot palette consumer from
-   `8fa61a7c`. Main HandleBeamChargePalettes and owned advance_weapon_palette use
-   one safe rule; local output handling reuses the main resolver. Actual coordinator
-   and beta callers keep their schedule. Hyper copies before live glow decrement;
-   ordinary glow decrements before highlight; phase updates after output using its
-   live value; visor sees phase zero and returns its complete byte. ROM getter order,
-   low-pointer diagnostics and current native copy-image selection are preserved.
-   The secondary word read is checked; generic native copy and visor remain debts.
-
-   All **60 selected suites pass**, with **59 retained vectors unchanged** and nine
-   unchanged native assertion pairs (five setup, four preparation). Suite time
-   35.104971s; invocation 36.533343s, explicit exit0. New vector
-   [378,188,33,17,166,87,318] counts comparisons, post-output observations, compared
-   failures, chains, calls, typed scenarios and authored scenarios. The 378 include
-   202 matrix triplets, ten getter pairs and 166 chain comparisons; they are not all
-   three-way. The 33 failures include 24 injected output failures, two existing
-   checked-table failures, six getter failures and one real coordinator bounds panic.
-   Two new checked-only secondary cases are separate from native equivalence.
-
-   Real charged/Hyper producers reach glow expiry in four/21 palette calls and
-   projectile retirement; held input crosses 59 to 60 and cycles colors before
-   release. Actual coordinator/beta cases distinguish short circuit, base overwrite,
-   Xray/visor output and later demo-input restoration. Rainbow writes the shared
-   phase by +1, disable clears it and next charge uses +2. Hurt39-to40 requests
-   resumed audio and actual Samus_ShootCheck consumes it. Selected-image tests restore
-   Hyper1/glow4/phase8/ammo19/cursor99, apply corrective glow2, and require Hyper
-   colors and returned glow1. This proves scoped import behavior, not host adoption.
-
-   Caller tests use E90E no-op movement and disabled minimap. Typed outputs are
-   modeled separately from actual runtime output. Old unaligned/out-of-allocation
-   secondary reads are not used as native equivalence evidence; odd/short checked
-   cases are qualified. Generic native memcpy is unchanged and not claimed safe.
-   No movie/full-renderer run or persistent Session adoption is established.
-   Historical controlled preparation exclusions remain exactly as documented in
-   PLAYER_PREPARATION_HANDOFF.md; their valid runtime subset still passes.
-
-   Main release/frontend passed86.857s and candidate release53.468s. Final carrier
-   passed22.053s and harness19.922s. The initial test-hook name collision is retained
-   as a failed build; no production edits were needed after the frozen builds.
-   Main5/local2/composition341/verification815 hashes match; generator is idempotent;
-   source identities cover284 carrier and338 local files. Independent final review
-   and root audit approved sources, outcomes, counts and costs.
-
-   Main is **107,432 Rust lines in 221 files**; candidate **115,832 in 330 files**
-   remains unadopted. Net lines/tokens/LF UTF-8 bytes: main [110,1136,3703], local
-   [1,0,-142], composition [111,1136,3567], verification [1491,16076,62226], combined
-   [1602,17212,65793]. Every maintained adapter/helper/overlay is counted; no category
-   overrun or dependency. Unsafe declarations2789(-1), cast lines5918(-4).
-   Preparation plus palette adds256 main lines. This is algorithm sharing and
-   partial safety progress, not net simplification or a consolidated owned engine.
-
-   Next, per the user's correction: propose production adoption of a complete owned
-   subsystem with a clear API, real callers and named bank/adapter deletions. Price
-   adoption plus deletion together. If adoption is blocked, name the exact missing
-   interactions and minimum closing work. Do not start another isolated shared
-   consumer, local-only cleanup or package move. Persistent ownership, complete-game
-   coverage and independent rendering/audio remain unfinished.
-
-   Source hash: `d7e5c27e681f8c689b8f9162715af36e1b2647aeaa39c0f5a883116474ce24eb`.
-   Local evidence in runtime-impact-working: CHARGE_PALETTE_HANDOFF.md,
-   charge-palette-results.json, charge-palette-price.json,
-   charge-palette-final-audit.json, charge-palette-build-attempts.json,
-   charge-palette-full-1.log and the two charge-palette fatal JSON files. Prior
-   preparation/HUD/weapon-stage handoffs and snapshots remain preserved.
+   The previous 60-suite/59-vector palette result and nine fatal pairs remain
+   unchanged historical baseline evidence, not new integration tests. All compiled
+   runtime284/harness338 inputs and recorded artifacts match. The 341-file
+   historical composition is restored exactly in consolidation-palette-reference-
+   sm-src; the original archive is preserved. See HANDOFF for commands and local
+   evidence. The next proposal must choose a complete responsibility from current
+   callers and price its adoption/deletion; another wrapper layer is insufficient.
 
    Next dependencies, in order:
 
@@ -369,15 +278,15 @@ references; measure build/test time and resource growth before changing the loop
      intro gating, aliases and failure prefixes.
    - [x] Share complete charged-shot palette feedback and output resolution;
      validate actual producer/coordinator/beta/Misc and next-feedback chains.
-   - Consolidate a complete owned subsystem into production with actual callers
-     and named bank/adapter deletions; no further isolated consumer sharing.
-     Recount the whole adopted replacement. Owner promotion needs
-     the reset/load/rewind and external-writer checks from state migration.
-     Independent caller/fixture investigation can run alongside implementation.
+   - [x] Adopt the complete owned projectile subsystem with real callers and
+     retire its bank/operation adapters; validate actual old/new entries and oracle.
+   - [ ] Select the next complete ownership boundary from current production
+     callers; specify state, foreign interactions, deletions and validation before
+     implementation. Keep persistent ownership and backend migration explicit.
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified palette continuation, with
+   `runtime-impact-working/` contains the verified consolidation and historical palette evidence, with
    `CHARGE_PALETTE_HANDOFF.md`, `charge-palette-price.json`,
    `charge-palette-results.json` and the charge-palette fatal JSON files;
    `charge-palette-parent/` preserves frozen inputs. Prior preparation evidence

@@ -333,26 +333,26 @@ pub mod game {
     }
 
     pub(crate) mod special_attacks;
-    pub(crate) mod special_attacks_ram;
+
     pub(crate) mod special_geometry;
     pub(crate) mod bomb_lifecycle;
-    pub(crate) mod bomb_lifecycle_ram;
+
     pub(crate) mod bomb_terrain;
-    pub(crate) mod bomb_terrain_ram;
+
     pub(crate) mod bomb_creation;
-    pub(crate) mod bomb_creation_ram;
+
     pub(crate) mod weapon_selection;
     pub(crate) mod weapon_coordinator;
-    pub(crate) mod weapon_coordinator_ram;
+
     pub(crate) mod player_preparation;
-    pub(crate) mod player_preparation_ram;
+
     pub(crate) mod beam_charge_palette;
     pub(crate) mod beam_charge_palette_ram;
     pub(crate) mod beam_firing;
-    pub(crate) mod beam_firing_ram;
+
     pub(crate) mod beam_definitions;
     pub(crate) mod missile_firing;
-    pub(crate) mod missile_firing_ram;
+
     pub(crate) mod projectile_weapon_definitions;
     pub(crate) mod beam_windows;
     pub mod constants;
@@ -377,14 +377,15 @@ pub mod game {
     pub(crate) mod prelude;
     pub(crate) mod launch_motion;
     pub(crate) mod launch_motion_ram;
-    pub(crate) mod projectile_flight;
+
+    pub(crate) mod player_projectiles;
     pub(crate) mod projectile_flight_control;
     pub(crate) mod projectile_placement;
-    pub(crate) mod projectile_placement_ram;
+
     pub(crate) mod projectile_initialization;
-    pub(crate) mod projectile_initialization_ram;
+
     pub(crate) mod projectile_playback;
-    pub(crate) mod projectile_playback_ram;
+
     pub(crate) mod projectile_trail_selection;
     pub(crate) mod projectile_trail_emission;
     pub(crate) mod projectile_trail_playback;
@@ -394,7 +395,7 @@ pub mod game {
     pub(crate) mod projectile_block_reactions;
     pub(crate) mod projectile_block_reactions_ram;
     pub(crate) mod projectile_lifecycle;
-    pub(crate) mod projectile_lifecycle_ram;
+
     pub(crate) mod room_backgrounds;
     pub(crate) mod room_scrolls;
     pub mod samus_animation;
@@ -474,7 +475,7 @@ pub mod game {
     pub mod sm_8f;
     pub mod sm_90;
     pub mod sm_91;
-    pub mod projectile_animation;
+
     pub(crate) mod projectile_trails;
     pub mod sm_94;
     pub mod sm_9b;
@@ -573,6 +574,16 @@ pub mod verify_probe;
 
 #[doc(hidden)]
 pub mod verify_source;
+
+#[doc(hidden)]
+pub fn verify_player_projectiles() -> u32 {
+    game::player_projectiles::checks::run()
+}
+
+#[doc(hidden)]
+pub fn verify_player_projectile_case(id: u32) -> Option<Vec<u8>> {
+    game::player_projectiles::checks::capture_case(id)
+}
 
 pub(crate) mod native_audio;
 mod native_player_ram;

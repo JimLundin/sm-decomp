@@ -1,11 +1,7 @@
-use crate::game::special_attacks::Kind as SpecialKind;
-use crate::game::special_attacks_ram as special_attacks;
 use crate::game::projectile_initialization::Initialization;
-use crate::game::projectile_initialization_ram::initialize;
-use crate::game::bomb_lifecycle::Kind as BombKind;
-use crate::game::bomb_lifecycle_ram as bomb_lifecycle;
+use crate::game::player_projectiles::initialize;
 use crate::game::music::{PlayRoomMusicTrackAfterAFrames};
-use crate::game::beam_firing_ram::clear_animation;
+use crate::game::player_projectiles::clear_animation;
 use crate::game::launch_motion::MovementDirection;
 use crate::game::launch_motion_ram;
 pub use crate::game::prelude::*;
@@ -21,10 +17,7 @@ pub use crate::game::constants::bank_90::*;
 
 use crate::game::explosion_window::spawn_crystal_flash;
 use crate::game::progress_flags::CheckEventHappened;
-use crate::game::projectile_animation::start_impact;
-use crate::game::projectile_presentation_ram::draw_projectiles;
-use crate::game::projectile_playback_ram::advance;
-use crate::game::projectile_flight::{self, Flight};
+use crate::game::player_projectiles::draw_projectiles;
 use crate::game::sm_80::{
     DrawTimer, HandleAutoscrolling_X, HandleAutoscrolling_Y,
     HandleScrollingWhenTriggeringScrollDown, HandleScrollingWhenTriggeringScrollLeft,
@@ -44,12 +37,11 @@ use crate::game::sm_91::{
     Samus_LoadSuitTargetPalette, Samus_RestoreHealth, XrayRunHandler,
 };
 use crate::game::sm_94::{
-    scale_sine_word, BlockCollNoWaveBeamHoriz, BlockCollNoWaveBeamVert, BlockCollWaveBeamHoriz,
-    BlockCollWaveBeamVert, BlockInsideDetection, HandleGrappleBeamGfx,
+    scale_sine_word, BlockInsideDetection, HandleGrappleBeamGfx,
     PostGrappleCollisionDetect_X, PostGrappleCollisionDetect_Y, Samus_AlignYPosSlope,
 };
 use crate::game::sm_9b::{
-    GrappleBeamFunc_BF1B, GrappleBeamHandler, HandleGrappleBeamFlare,
+    GrappleBeamFunc_BF1B, GrappleBeamHandler,
     UpdateGrappleBeamTilesAndIncrFlameCtr,
 };
 use crate::game::sm_a0::Samus_CheckSolidEnemyColl;
@@ -1594,281 +1586,6 @@ pub unsafe fn LoadProjectilePalette(a: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn ResetProjectileData(game: &mut Game) {
-    unsafe {
-        word_transfers!(game, ascending, 10;
-            le(projectile_timers, 0) <- value(0),
-            le(projectile_x_pos, 0) <- value(0),
-            le(projectile_y_pos, 0) <- value(0),
-            le(projectile_dir, 0) <- value(0),
-            le(projectile_bomb_x_speed, 0) <- value(0),
-            le(projectile_bomb_y_speed, 0) <- value(0),
-            le(projectile_x_radius, 0) <- value(0),
-            le(projectile_y_radius, 0) <- value(0),
-            le(projectile_type, 0) <- value(0),
-            le(projectile_damage, 0) <- value(0),
-            le(projectile_bomb_instruction_ptr, 0) <- value(0),
-            le(projectile_bomb_instruction_timers, 0) <- value(0),
-            le(projectile_variables, 0) <- value(0),
-            le(projectile_spritemap_pointers, 0) <- value(0),
-            le(projectile_bomb_pre_instructions, 0) <- value(((0x90b169i32) as u16)),
-        );
-        word! { game, 0; bomb_counter, cooldown_timer, projectile_counter, power_bomb_flag }
-        if word!(game.hud_auto_cancel_flag) != 0 {
-            word! { game, 0; hud_item_index, samus_auto_cancel_hud_item_index }
-        }
-        word! { game, 0;
-            speed_echo_xpos[0], speed_echo_xpos[1], speed_echo_xpos[2], speed_echo_xpos[3],
-            speed_echo_ypos[0], speed_echo_ypos[1], speed_echo_ypos[2], speed_echo_ypos[3],
-            speed_echo_xspeed[0], speed_echo_xspeed[1], speed_echo_xspeed[2], speed_echo_xspeed[3],
-            speed_echoes_index,
-        }
-        if word!(game.samus_special_super_palette_flags) != 0 {
-            word!(game.samus_special_super_palette_flags = 0);
-            Samus_LoadSuitTargetPalette(game);
-        }
-        if word!(game.hyper_beam_flag) != 0 {
-            SpawnPalfxObject(addr_stru_8DE1F0 as u16, game);
-        }
-    }
-}
-#[forbid(unsafe_code)]
-pub fn ClearProjectile(k: u16, game: &mut Game) {
-    use crate::ram_map::checked_word as word;
-    use crate::ram_map::{word_arrays::*, words};
-    let slot = usize::from(k >> 1);
-    for field in [
-        projectile_x_pos,
-        projectile_y_pos,
-        projectile_bomb_x_subpos,
-        projectile_bomb_y_subpos,
-        projectile_dir,
-        projectile_bomb_x_speed,
-        projectile_bomb_y_speed,
-        projectile_x_radius,
-        projectile_y_radius,
-        projectile_type,
-        projectile_damage,
-        projectile_bomb_instruction_ptr,
-        projectile_bomb_instruction_timers,
-        projectile_variables,
-        projectile_spritemap_pointers,
-    ] {
-        word!(game, field + 2 * slot; = 0);
-    }
-    word!(game.projectile_bomb_pre_instructions[slot] = 0xb169);
-    let counter = if (k as i16).wrapping_sub(10) >= 0 {
-        words::bomb_counter
-    } else {
-        words::projectile_counter
-    };
-    word!(game, counter; = word!(game, counter;).wrapping_sub(1));
-    if word!(game, counter;) & 0x8000 != 0 {
-        word!(game, counter; = 0);
-    }
-}
-#[forbid(unsafe_code)]
-pub fn KillProjectile(k: u16, game: &mut Game) {
-    crate::game::projectile_lifecycle_ram::retire(k, game);
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallProjPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
-    call (k, game); default { Unreachable(game); };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [9491666] ProjPreInstr_SpeedEcho [] {
-        let mut v5: i16 = 0;
-        let v1: i32 = k as i32 >> 1;
-        word!(game.projectile_bomb_x_speed[v1] += 8);
-        let pt: Point16U = Projectile_SinLookup(
-            word!(game.projectile_variables[v1]),
-            byte!(@pointer (ram_ptr!(game, u16; 0xbdc)).offset(v1 as isize); 0) as u16,
-        );
-        let v2: u16 = (pt.x).wrapping_add(word!(game.samus_x_pos));
-        *(ram_ptr!(game, u16; 0xaae, k as i32 as isize)) =
-            (pt.x).wrapping_add(word!(game.samus_x_pos));
-        word!(game.projectile_x_pos[v1] = v2);
-        let mut v3: i16 = ((v2) as i16).wrapping_sub((word!(game.layer1_x_pos)) as i16);
-        if v3 < 0
-            || v3 as i32 - 256i32 & 0x8000 == 0
-            || {
-                let mut v4: u16 = (pt.y).wrapping_add(word!(game.samus_y_pos));
-                word!(
-                    game.speed_echo_xpos[(v1 + 3)] = (pt.y).wrapping_add(word!(game.samus_y_pos))
-                );
-                word!(game.projectile_y_pos[v1] = v4);
-                v5 = ((v4) as i16).wrapping_sub((word!(game.layer1_y_pos)) as i16);
-                v5 < 0
-            }
-            || v5 as i32 - 256i32 & 0x8000 == 0
-        {
-            word!(game.speed_echo_ypos[(v1 + 3)] = 0);
-            *(ram_ptr!(game, u16; 0xaae, k as i32 as isize)) = 0;
-            word!(game.speed_echo_xpos[(v1 + 3)] = 0);
-            ClearProjectile(k, game);
-        }
-    };
-    [9498579] ProjPreInstr_UnknownProj8027 [] {
-        static kProjPreInstr_UnknownProj8027_X: [i16; 4] = [-4, -4, 4, 4];
-        static kProjPreInstr_UnknownProj8027_Y: [i16; 4] = [4, -4, -4, 4];
-        static kProjPreInstr_UnknownProj8027_X2: [i16; 4] = [0x80, 0x80, -0x80, -0x80];
-        static kProjPreInstr_UnknownProj8027_Y2: [i16; 4] = [-0x80, 0x80, 0x80, -0x80];
-        let v1: i32 = k as i32 >> 1;
-        word!(game.projectile_x_pos[v1] += (kProjPreInstr_UnknownProj8027_X[v1 as usize]) as u16);
-        let v2: u16 = ((kProjPreInstr_UnknownProj8027_Y[v1 as usize]) as u16)
-            .wrapping_add(word!(game.projectile_y_pos[v1]));
-        word!(game.projectile_y_pos[v1] = v2);
-        if v2 == word!(game.samus_y_pos) {
-            if word!(game.projectile_variables[v1]) == 1 {
-                if k == 6 {
-                    word!(game.samus_movement_handler = ((0x90f04bi32) as u16));
-                }
-                ClearProjectile(k, game);
-            } else {
-                let v3: i32 = k as i32 >> 1;
-                word!(game.projectile_variables[v3] += 1);
-                word! { game;
-                    samus_shine_timer = 180;
-                    timer_for_shine_timer = 1;
-                    special_samus_palette_frame = 0;
-                    projectile_x_pos[v3] = ((kProjPreInstr_UnknownProj8027_X2[v3 as usize]) as u16)
-                        .wrapping_add(word!(game.samus_x_pos));
-                    projectile_y_pos[v3] = ((kProjPreInstr_UnknownProj8027_Y2[v3 as usize]) as u16)
-                        .wrapping_add(word!(game.samus_y_pos));
-                }
-            }
-        }
-    };
-    @external {
-        9492371 => [special_attacks::update(k, SpecialKind::Plasma, game)];
-        9490185 => [special_attacks::update(k, SpecialKind::Ice, game)];
-        9490298 => [special_attacks::update(k, SpecialKind::IceReleased, game)];
-        9493000 => [special_attacks::update(k, SpecialKind::Wave, game)];
-        9493254 => [special_attacks::update(k, SpecialKind::Spazer, game)];
-        9493660 => [special_attacks::update(k, SpecialKind::SpazerReleased, game)];
-        9492449 => [special_attacks::plasma_radius(k, false, game)];
-        9492474 => [special_attacks::plasma_radius(k, true, game)];
-        9492499 => [special_attacks::depart_plasma(k, game)];
-        9482393 => [bomb_lifecycle::update(k, BombKind::Bomb, game)];
-        9482414 => [bomb_lifecycle::update(k, BombKind::PowerBomb, game)];
-        9492727 => [bomb_lifecycle::update(k, BombKind::Spread, game)];
-        9482601 => [()];
-        9481971 => [projectile_flight::update(k, Flight::NonWave, 4, game)];
-        9482058 => [projectile_flight::collide(2, Flight::NonWave, game)];
-        9482066 => [projectile_flight::collide(3, Flight::NonWave, game)];
-        9482080 => [projectile_flight::collide(1, Flight::NonWave, game)];
-        9482088 => [projectile_flight::update(k, Flight::Missile, 4, game)];
-        9482183 => [projectile_flight::collide(2, Flight::Missile, game)];
-        9482191 => [projectile_flight::collide(3, Flight::Missile, game)];
-        9482205 => [projectile_flight::collide(1, Flight::Missile, game)];
-        9482213 => [projectile_flight::update(k, Flight::SuperMissile, 2, game)];
-        9482311 => [projectile_flight::collide(2, Flight::SuperMissile, game)];
-        9482322 => [projectile_flight::collide(3, Flight::SuperMissile, game)];
-        9482346 => [projectile_flight::collide(1, Flight::SuperMissile, game)];
-        9482357 => [projectile_flight::update_extension(k, game)];
-        9482435 => [projectile_flight::update(k, Flight::Wave, 4, game)];
-        9482468 => [projectile_flight::update(k, Flight::Wave, 3, game)];
-        9482499 => [projectile_flight::advance(k, Flight::Wave, game)];
-        9482555 => [projectile_flight::collide(2, Flight::Wave, game)];
-        9482563 => [projectile_flight::collide(3, Flight::Wave, game)];
-        9482577 => [projectile_flight::collide(1, Flight::Wave, game)];
-        9482585 => [projectile_flight::update(k, Flight::Wave, 0, game)];
-    }
-}
-pub unsafe fn HandleProjectile(game: &mut Game) {
-    unsafe {
-        word!(game.projectile_index = 18);
-        let mut i: i32 = 18;
-        while i >= 0 {
-            let v1: i32 = i >> 1;
-            if word!(game.projectile_bomb_instruction_ptr[v1]) != 0 {
-                CallProjPreInstr(
-                    ((word!(game.projectile_bomb_pre_instructions[v1])) as u32) | (0x900000u32),
-                    i as u16,
-                    game,
-                );
-                advance(game);
-                i = word!(game.projectile_index) as i32;
-            }
-            i -= 2;
-            word!(game.projectile_index = i as u16);
-        }
-    }
-}
-pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
-    unsafe {
-        if word!(game.hyper_beam_flag) != 0 {
-            if word!(game.flare_counter) != 0 {
-                let mut i: i32 = 4;
-                while i >= 0 {
-                    let mut v7: bool = *(ram_ptr!(game, u16; 0xcdc, i as isize)) == 1;
-                    crate::update_place! { unaligned_word fresh17 = &raw mut (*(ram_ptr!(game, u16; 0xcdc, i as isize))) => (u16::from_le(fresh17.read_unaligned())).wrapping_sub(1); }
-                    let v8: bool = (u16::from_le(fresh17.read_unaligned()) & 0x8000) != 0;
-                    if v7 || v8 {
-                        crate::update_place! { unaligned_word fresh20 [fresh21] = &raw mut (*(ram_ptr!(game, u16; 0xcd6, i as isize))) => (u16::from_le(fresh20.read_unaligned())).wrapping_sub(1); }
-                        v7 = fresh21 == 1;
-                        if v7 {
-                            if i == 4 {
-                                word!(game.flare_counter = 0);
-                            }
-                        } else {
-                            *(ram_ptr!(game, u16; 0xcdc, i as isize)) = 3;
-                        }
-                    }
-                    DrawFlareAnimationComponent(i as u16, game);
-                    i -= 2;
-                }
-            }
-        } else if (word!(game.flare_counter) as i16) > 0 {
-            if word!(game.flare_counter) == 1 {
-                word! { game, 0;
-                    flare_animation_frame, flare_slow_sparks_anim_frame, flare_fast_sparks_anim_frame,
-                }
-                word! {game; flare_animation_timer = 3; flare_slow_sparks_anim_timer = 5;
-                flare_fast_sparks_anim_timer = 4; }
-            }
-            if word!(game.flare_counter) as i32 - 15i32 & 0x8000 == 0 {
-                if word!(game.flare_counter) == 16 {
-                    QueueSfx1_Max9(8, game);
-                }
-                let mut v0: u16 = 0;
-                do_until! { (((v9) as i16).wrapping_sub(4) >= 0);
-                    let mut v1: i16 = ((*(ram_ptr!(game, u16; 0xcdc, v0 as i32 as isize)))
-                        as i16)
-                        .wrapping_sub(1);
-                    *(ram_ptr!(game, u16; 0xcdc, v0 as i32 as isize)) =
-                        v1 as u16;
-                    if v1 < 0 {
-                        let v2: u16 = (*(ram_ptr!(game, u16; 0xcd6, v0 as i32 as isize)))
-                            .wrapping_add(1);
-                        *(ram_ptr!(game, u16; 0xcd6, v0 as i32 as isize)) = v2;
-                        let mut v3: u16 = v2;
-                        let r0 = RomPtr_90(
-                            crate::rtl::rom_table_word!(game, 0x90c481, (v0 >> 1) as isize),
-                            game,
-                        );
-                        let mut v4: i16 = *r0.offset(v2 as isize) as i16;
-                        if v4 == 255 {
-                            *(ram_ptr!(game, u16; 0xcd6, v0 as i32 as isize)) = 0;
-                            v3 = 0;
-                        } else if v4 == 254 {
-                            let v5: u16 = (*(ram_ptr!(game, u16; 0xcd6, v0 as i32 as isize)))
-                                .wrapping_sub((*r0.offset((v3 as i32 + 1) as isize)) as u16);
-                            *(ram_ptr!(game, u16; 0xcd6, v0 as i32 as isize)) = v5;
-                            v3 = v5;
-                        }
-                        *(ram_ptr!(game, u16; 0xcdc, v0 as i32 as isize)) = *r0.offset(v3 as isize) as u16;
-                    }
-                    let mut v9: u16 = v0;
-                    DrawFlareAnimationComponent(v0, game);
-                    if word!(game.flare_counter) as i32 - 30i32 & 0x8000 != 0 {
-                        break;
-                    }
-                    v0 = (v0).wrapping_add(2);
-                }
-            }
-        }
-    }
-}
 static kProjectileOriginOffsets_X: [i16; 13] =
     [2, 18, 15, 17, 3, -4, -17, -15, -18, -2, -4, -4, -4];
 static kProjectileOriginOffsets_Y: [i16; 13] = [-28, -19, 1, 6, 17, 17, 6, 1, -20, -28, -20, -2, 8];
@@ -1923,37 +1640,6 @@ pub unsafe fn DrawFlareAnimationComponent(k: u16, game: &mut Game) {
                 word! {game; samus_y_pos = old_y; samus_x_pos = old_x; }
             }
         }
-    }
-}
-pub unsafe fn ProjectileReflection(r20: u16, game: &mut Game) {
-    unsafe {
-        let v0: u16 = r20;
-        let v1: i32 = r20 as i32 >> 1;
-        let v2: u16 = word!(game.projectile_type[v1]);
-        if (v2 & 0x100) != 0 {
-            initialize(r20, Initialization::Projectile, game);
-            word!(game.projectile_bomb_pre_instructions[v1] = ((0x90af68i32) as u16));
-            word!(game.projectile_variables[v1] = 240);
-        } else if (v2 & 0x200) != 0 {
-            let k: u16 = r20;
-            ClearProjectile(
-                byte!(@pointer (ram_ptr!(game, u16; 0xc7c)).offset(v1 as isize); 0) as u16,
-                game,
-            );
-            initialize(k, Initialization::Projectile, game);
-            let v3: i32 = k as i32 >> 1;
-            word!(game.projectile_bomb_pre_instructions[v3] = ((0x90afe5i32) as u16));
-            word!(game.projectile_variables[v3] = 240);
-        } else {
-            projectile_flight::initialize_beam_speed(r20, game);
-            initialize(v0, Initialization::Projectile, game);
-            word!(
-                game.projectile_bomb_pre_instructions[v1] =
-                    crate::game::beam_firing_ram::charged_instruction(
-                        (word!(game.projectile_type[v1]) & 15) as usize
-                    )
-            );
-        };
     }
 }
 pub unsafe fn HandleArmCannonOpenState(game: &mut Game) {
@@ -2851,8 +2537,8 @@ pub unsafe fn Samus_MoveDown_SetPoseCalcInput(game: &mut Game) {
         }
     }
 }
-pub use crate::game::player_preparation_ram::{
-    dispatch as CallFrameHandlerAlfa, prepare as HandleControllerInputForGamePhysics,
+pub(crate) use crate::game::player_projectiles::{
+    prepare_entry as CallFrameHandlerAlfa, prepare as HandleControllerInputForGamePhysics,
 };
 crate::game::callback_dispatch! {
     pub unsafe fn CallFrameHandlerBeta(ea: u32, game: &mut Game) => ea;
@@ -3378,7 +3064,7 @@ crate::game::callback_dispatch! {
     call (game); default { Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
     [9497426] SamusDrawHandler_Default [] {
-        HandleChargingBeamGfxAudio(game);
+        crate::game::player_projectiles::flare(game);
         sub_90EB55(game);
     };
     [9497478] sub_90EB86 [] {
@@ -3391,7 +3077,7 @@ crate::game::callback_dispatch! {
         {
             GrappleBeamFunc_BF1B(game);
         }
-        HandleGrappleBeamFlare(game);
+        crate::game::player_projectiles::grapple_flare(game);
         if (word!(game.arm_cannon_drawing_mode) & 0xf) != 0 {
             if (word!(game.arm_cannon_drawing_mode) & 0xf) == 2 {
                 HandleAtmosphericEffects(game);
@@ -3702,7 +3388,7 @@ pub unsafe fn SamusCode_03(game: &mut Game) -> u8 {
         1
     }
 }
-pub use crate::game::weapon_coordinator_ram::deselect as SamusCode_04_06_Common;
+pub(crate) use crate::game::player_projectiles::deselect as SamusCode_04_06_Common;
 pub unsafe fn SamusCode_04(game: &mut Game) -> u8 {
     unsafe {
         word!(game.samus_charge_palette_index = 0);
@@ -4023,33 +3709,7 @@ pub unsafe fn SamusCode_1F(game: &mut Game) -> u8 {
 }
 pub unsafe fn Samus_ShootCheck(game: &mut Game) {
     unsafe {
-        let resume_charge_sound: bool = ((word!(game.play_resume_charging_beam_sfx) & 0x8000) != 0)
-            || ({
-                if word!(game.play_resume_charging_beam_sfx) != 0 {
-                    if (word!(game.button_config_shoot_x) & word!(game.joypad1_lastkeys)) != 0 {
-                        QueueSfx1_Max9(0x41, game);
-                    }
-                    word!(game.play_resume_charging_beam_sfx = 0);
-                }
-                if word!(game.samus_echoes_sound_flag) != 0
-                    && (word!(game.speed_boost_counter) & 0x400) == 0
-                {
-                    word!(game.samus_echoes_sound_flag = 0);
-                    QueueSfx3_Max15(0x25, game);
-                }
-                ((*ram_ptr!(game; 0xa11) == 3 || *ram_ptr!(game; 0xa11) == 20)
-                    && *ram_ptr!(game; 0xa1f) as i32 != kMovementType_03_SpinJumping as i32
-                    && *ram_ptr!(game; 0xa1f) as i32 != kMovementType_14_WallJumping as i32)
-                    && ({
-                        QueueSfx1_Max15(0x32, game);
-                        (word!(game.flare_counter) as i32 - 16i32 & 0x8000 == 0
-                            && (word!(game.button_config_shoot_x) & word!(game.joypad1_lastkeys))
-                                != 0)
-                    })
-            });
-        if resume_charge_sound {
-            word!(game.play_resume_charging_beam_sfx = 1);
-        }
+        crate::game::player_projectiles::movement_sound(game);
         if word!(game.enable_debug) != 0 {
             if word!(game.samus_pose) as i32 == kPose_00_FaceF_Powersuit as i32
                 || word!(game.samus_pose) as i32 == kPose_9B_FaceF_VariaGravitySuit as i32

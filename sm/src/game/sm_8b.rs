@@ -7,7 +7,7 @@ pub use crate::game::constants::bank_8d::*;
 
 use crate::game::explosion_window::spawn_power_bomb;
 use crate::game::progress_flags::CheckEventHappened;
-use crate::game::projectile_presentation_ram::draw_projectiles;
+use crate::game::player_projectiles::draw_projectiles;
 use crate::game::sm_80::{
     memset7E, ClearOamExt, ClearUnusedOam, CopySuperMetroidString, DisableIrqInterrupts, EnableNMI,
     GraphicsAsset, HandleFadeIn, HandleFadeOut, QueueMode7Transfers, QueueSfx1_Max15,
@@ -23,7 +23,7 @@ use crate::game::sm_8d::{
 };
 use crate::game::sm_90::{
     DrawSamusAndProjectiles, HandleControllerInputForGamePhysics, HandleSamusMovementAndPause,
-    KillProjectile, UpdateBeamTilesAndPalette,
+    UpdateBeamTilesAndPalette,
 };
 use crate::game::sm_91::Samus_Initialize;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
@@ -3785,7 +3785,7 @@ crate::game::callback_dispatch! {
             }
         }
         if word!(game.projectile_x_pos[(v1 >> 1)]) as i32 - 84i32 & 0x8000 != 0 {
-            KillProjectile(v1, game);
+            crate::game::player_projectiles::retire(v1, game);
             let v2: i32 = k as i32 >> 1;
             word!(game.cinematicspr_arr6[v2] = 8);
             let v3: u16 = (word!(game.cinematicspr_goto_timer[v2])).wrapping_add(1);

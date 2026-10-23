@@ -56,7 +56,7 @@ use crate::game::sm_8b::{
 use crate::game::sm_8d::{ClearPaletteFXObjects, DisablePaletteFx, EnablePaletteFx};
 use crate::game::sm_8f::{PauseHook_DraygonRoom, UnpauseHook_DraygonRoom};
 use crate::game::sm_90::{
-    CallSomeSamusCode, ResetProjectileData, Samus_LowHealthCheck_0, SetLiquidPhysicsType,
+    CallSomeSamusCode, Samus_LowHealthCheck_0, SetLiquidPhysicsType,
     UpdateBeamTilesAndPalette,
 };
 use crate::game::sm_91::{GameState_28_Unused_, Samus_Initialize, Samus_LoadSuitTargetPalette};
@@ -1601,7 +1601,7 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
             }
             EnableHdmaObjects(game);
             EnableAnimtiles(game);
-            QueueSamusMovementSfx(game);
+            crate::game::player_projectiles::restore_sound(game);
             word!(game.game_state += 1);
         }
         *_state_variable_ = 0;
@@ -3621,17 +3621,6 @@ pub unsafe fn CancelSoundEffects(game: &mut Game) {
     QueueSfx2_Max6(0x71, game);
     QueueSfx3_Max6(1, game);
 }
-pub unsafe fn QueueSamusMovementSfx(game: &mut Game) {
-    unsafe {
-        if (word!(game.speed_boost_counter) & 0xff00) == 1024 {
-            QueueSfx3_Max6(0x2b, game);
-        }
-        if word!(game.flare_counter) as i32 - 16i32 & 0x8000 == 0 {
-            QueueSfx1_Max6(0x41, game);
-        }
-        CallSomeSamusCode(0x14, game);
-    }
-}
 pub unsafe fn AdvancePaletteFadeForAllPalettes_0xc(game: &mut Game) -> u8 {
     unsafe {
         word!(game.palette_change_denom = 12);
@@ -4173,7 +4162,7 @@ crate::game::callback_dispatch! {
             load_sprite_palettes(game);
             load_room_assets(game);
             initialize_room(game);
-            ResetProjectileData(game);
+            crate::game::player_projectiles::reset(game);
             Samus_LoadSuitTargetPalette(game);
             BackgroundLoad::Door.load(game);
         }

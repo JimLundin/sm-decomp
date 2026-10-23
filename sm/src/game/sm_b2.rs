@@ -13,7 +13,6 @@ pub use crate::game::prelude::*;
 
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
-use crate::game::sm_90::ProjectileReflection;
 use crate::game::sm_a0::{
     CosineMult8bit, EnemyFunc_BBBF, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
     IsSamusWithinEnemy_Y, SineMult8bit,
@@ -131,7 +130,7 @@ pub unsafe fn WalkingSpacePirates_883E(game: &mut Game) {
             5
         };
         word!(game.projectile_dir[v1] = v2);
-        ProjectileReflection(v0, game);
+        crate::game::player_projectiles::reflect(v0, game);
         QueueSfx2_Max6(0x66, game);
     }
 }

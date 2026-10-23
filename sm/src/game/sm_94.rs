@@ -1,3 +1,4 @@
+use crate::game::projectile_room::Axis as ShotAxis;
 pub use crate::game::constants::bank_84::*;
 pub use crate::game::constants::bank_90::*;
 pub use crate::game::prelude::*;
@@ -5,7 +6,6 @@ pub use crate::game::prelude::*;
 use crate::game::progress_flags::CheckBossBitForCurArea;
 
 use crate::game::plm_spawning::SpawnPLM;
-use crate::game::sm_90::KillProjectile;
 use crate::game::sm_a0::CalculateAngleFromXY;
 
 use crate::snes::snes::snes_read;
@@ -615,97 +615,6 @@ fn CalculateBlockAt(x: u16, y: u16, x_offset: u16, y_offset: u16, game: &mut Gam
     };
     game.set_cur_block_index(block);
 }
-use crate::game::projectile_room::{self as room_scan, Axis as ShotAxis, Field, Kind, Scan};
-
-#[forbid(unsafe_code)]
-impl ShotAxis {
-    fn pair(self) -> (usize, usize) {
-        match self {
-            Self::X => (0xb64, 0xb8c),
-            Self::Y => (0xb78, 0xba0),
-        }
-    }
-    fn radius(self) -> usize {
-        match self {
-            Self::X => 0xbb4,
-            Self::Y => 0xbc8,
-        }
-    }
-}
-#[forbid(unsafe_code)]
-fn shot_word(base: usize, k: u16, game: &Game) -> u16 {
-    let at = base + usize::from(k >> 1) * 2;
-    u16::from_ne_bytes([game.g_ram[at], game.g_ram[at + 1]])
-}
-#[forbid(unsafe_code)]
-impl room_scan::State for &mut Game {
-    fn field(&self, slot: u16, axis: ShotAxis, field: Field) -> u16 {
-        let base = match field {
-            Field::Position => axis.pair().0,
-            Field::Fraction => axis.pair().1,
-            Field::Radius => axis.radius(),
-            Field::Speed => {
-                if axis == ShotAxis::X {
-                    0xbdc
-                } else {
-                    0xbf0
-                }
-            }
-            Field::ScreenHigh => {
-                return u16::from(self.g_ram[axis.pair().0 + usize::from(slot >> 1) * 2 + 1]);
-            }
-        };
-        shot_word(base, slot, self)
-    }
-    fn move_by(&mut self, slot: u16, axis: ShotAxis, amount: i32) {
-        let (position, fraction) = axis.pair();
-        let low = u32::from(shot_word(fraction, slot, self));
-        let high = u32::from(shot_word(position, slot, self));
-        let sum = (low | high << 16).wrapping_add(amount as u32);
-        let at = usize::from(slot >> 1) * 2;
-        self.g_ram[fraction + at..fraction + at + 2].copy_from_slice(&(sum as u16).to_ne_bytes());
-        self.g_ram[position + at..position + at + 2]
-            .copy_from_slice(&((sum >> 16) as u16).to_ne_bytes());
-    }
-}
-struct RoomScan;
-impl<'a> room_scan::Context<&'a mut Game> for RoomScan {
-    fn width(&self, owner: &&mut Game) -> u16 {
-        crate::ram_map::checked_word!(owner.room_width_in_blocks)
-    }
-    fn scrolls(&self, owner: &&mut Game, axis: ShotAxis) -> u16 {
-        match axis {
-            ShotAxis::X => crate::ram_map::checked_word!(owner.room_width_in_scrolls),
-            ShotAxis::Y => crate::ram_map::checked_word!(owner.room_height_in_scrolls),
-        }
-    }
-    fn react(
-        &mut self,
-        game: &'a mut Game,
-        axis: ShotAxis,
-        block: u16,
-        mut scan: Scan,
-    ) -> (&'a mut Game, Scan, u8) {
-        let hit = crate::game::projectile_block_reactions_ram::react(&mut scan, block, axis, game);
-        (game, scan, hit)
-    }
-    fn retire(&mut self, game: &'a mut Game, slot: u16) -> &'a mut Game {
-        unsafe { KillProjectile(slot, game) };
-        game
-    }
-}
-unsafe fn scan_room(k: u16, axis: ShotAxis, kind: Kind, game: &mut Game) -> u8 {
-    room_scan::collide(game, k, axis, kind, &mut RoomScan).1
-}
-crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game) -> u8;
-    BlockCollNoWaveBeamHoriz => scan_room(k, ShotAxis::X, Kind::Beam, game);
-    BlockCollNoWaveBeamVert => scan_room(k, ShotAxis::Y, Kind::Beam, game);
-    BlockCollWaveBeamHoriz => scan_room(k, ShotAxis::X, Kind::Wave, game);
-    BlockCollWaveBeamVert => scan_room(k, ShotAxis::Y, Kind::Wave, game);
-    BlockCollMissileHoriz => scan_room(k, ShotAxis::X, Kind::Missile, game);
-    BlockCollMissileVert => scan_room(k, ShotAxis::Y, Kind::Missile, game);
-}
-
 unsafe fn BlockReactGrapple_GrappleBlock(ci: *mut CollInfo, game: &mut Game) -> u8 {
     unsafe {
         static kBlockReactGrapple_GrappleBlockPlm: [u16; 4] = [0xd0d8, 0xd0dc, 0xd0e0, 0xd0d8];

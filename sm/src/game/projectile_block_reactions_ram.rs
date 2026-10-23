@@ -180,20 +180,6 @@ impl SlopeInputs for Game {
     }
 }
 #[forbid(unsafe_code)]
-pub fn react(scan: &mut impl Progress, block: u16, axis: Axis, game: &mut Game) -> u8 {
-    reactions::react_progress(
-        (),
-        axis,
-        block,
-        scan,
-        &mut Room {
-            game,
-            content: Native,
-        },
-    )
-    .1
-}
-#[forbid(unsafe_code)]
 pub fn trigger(scan: &mut impl Progress, bombable: bool, solid: bool, game: &mut Game) -> u8 {
     reactions::trigger(
         (),

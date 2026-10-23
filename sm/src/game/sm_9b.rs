@@ -532,51 +532,6 @@ pub unsafe fn UpdateGrappleBeamTiles(game: &mut Game) {
         word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
     }
 }
-pub unsafe fn HandleGrappleBeamFlare(game: &mut Game) {
-    unsafe {
-        if word!(game.flare_counter) != 0 {
-            if word!(game.flare_counter) == 1 {
-                word! {game; flare_animation_frame = 16; flare_animation_timer = 3; }
-            }
-            if (word!(game.flare_animation_timer -= 1, reread) & 0x8000) != 0 {
-                let mut v0: u16 = word!(game.flare_animation_frame += 1, reread);
-                if byte!(@pointer rom_ptr!(game; 0x90c487); word!(game.flare_animation_frame) as isize)
-                    == 254
-                {
-                    word!(
-                        game.flare_animation_frame -=
-                            (*(rom_ptr!(game, u8; 0x90c487)).offset(
-                                ((word!(game.flare_animation_frame)).wrapping_add(1)) as isize,
-                            )) as u16
-                    );
-                    v0 = word!(game.flare_animation_frame);
-                }
-                word!(
-                    game.flare_animation_timer =
-                        *(rom_ptr!(game, u8; 0x90c487)).offset(v0 as isize) as u16
-                );
-            }
-            let mut r22: u16 = if *ram_ptr!(game; 0xa1e) == 4 {
-                (word!(game.flare_animation_frame))
-                    .wrapping_add(crate::rtl::rom_table_word!(game, 0x93a22b, 0))
-            } else {
-                (word!(game.flare_animation_frame))
-                    .wrapping_add(crate::rtl::rom_table_word!(game, 0x93a225, 0))
-            };
-            let r20: u16 = (word!(game.x_pos_of_start_of_grapple_beam_prevframe))
-                .wrapping_sub(word!(game.layer1_x_pos));
-            let r18: u16 = (word!(game.y_pos_of_start_of_grapple_beam_prevframe))
-                .wrapping_sub(word!(game.layer1_y_pos));
-            if ((word!(game.y_pos_of_start_of_grapple_beam_prevframe) as i32
-                - word!(game.layer1_y_pos) as i32
-                & 0xff00)
-                == 0)
-            {
-                DrawBeamGrappleSpritemap(r22, r20, r18, game);
-            }
-        }
-    }
-}
 pub unsafe fn GrappleBeamHandler(game: &mut Game) {
     unsafe {
         let mut r18: u16 = 0;

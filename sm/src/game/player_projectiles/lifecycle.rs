@@ -1,14 +1,9 @@
-//! Checked SNES encoding of projectile impact and retirement.
-#![forbid(unsafe_code)]
-use crate::game::{
-    projectile_lifecycle::{self as life, *},
-    projectile_room::Axis,
-};
+//! One direct impact/retirement binding, including broad byte aliases.
+use super::{Context, Transaction};
+use crate::game::projectile_lifecycle::{self as life, *};
+use crate::game::projectile_room::Axis;
 use crate::game::sm_80::QueueSfx2_Max6;
-use crate::game::sm_90::ClearProjectile;
-use crate::game_state::Game;
-use crate::ram_map::{checked_word as word, word_arrays as arrays};
-
+use crate::ram_map::word_arrays as arrays;
 impl Kind for u16 {
     fn impact_family(self) -> Family {
         if self & 0xf00 == 0 {
@@ -28,7 +23,7 @@ impl Kind for u16 {
             }
     }
 }
-impl State for &mut Game {
+impl State for Transaction<'_> {
     type Kind = u16;
     type Cursor = u16;
     fn kind(&self, slot: usize) -> u16 {
@@ -54,22 +49,23 @@ impl State for &mut Game {
         word!(self.projectile_damage[slot] = 8);
     }
 }
-struct Ram;
-impl<'a> Definitions<&'a mut Game> for Ram {
-    fn entry(&mut self, game: &'a mut Game, entry: Entry) -> (&'a mut Game, u16) {
+impl<'a> Definitions<Transaction<'a>> for Context {
+    fn entry(&mut self, game: Transaction<'a>, entry: Entry) -> (Transaction<'a>, u16) {
         let address = match entry {
             Entry::BeamImpact => 0x93867b,
             Entry::MissileImpact => 0x93867f,
             Entry::HeavyImpact => 0x938693,
             Entry::BombExplosion => 0x938683,
         };
-        let cursor = crate::rtl::rom_table_word!(game, address, 0);
+        let cursor = game
+            .rom()
+            .table_word(crate::rtl::lorom_offset(address) as usize, 0);
         (game, cursor)
     }
-    fn feedback(&mut self, game: &'a mut Game, feedback: Feedback) -> &'a mut Game {
+    fn feedback(&mut self, mut game: Transaction<'a>, feedback: Feedback) -> Transaction<'a> {
         match feedback {
-            Feedback::BeamImpact => QueueSfx2_Max6(12, game),
-            Feedback::MissileImpact => QueueSfx2_Max6(7, game),
+            Feedback::BeamImpact => game = game.foreign(|g| QueueSfx2_Max6(12, g)).0,
+            Feedback::MissileImpact => game = game.foreign(|g| QueueSfx2_Max6(7, g)).0,
             Feedback::HeavyImpactShake => {
                 word!(game.earthquake_type = 20);
                 word!(game.earthquake_timer = 30);
@@ -78,15 +74,15 @@ impl<'a> Definitions<&'a mut Game> for Ram {
         game
     }
 }
-impl<'a> RetirementContext<&'a mut Game> for Ram {
-    fn retirement(&self, game: &&mut Game, slot: u16) -> Retirement {
+impl<'a> RetirementContext<Transaction<'a>> for Context {
+    fn retirement(&self, game: &Transaction<'_>, slot: u16) -> Retirement {
         match word!(game.projectile_type[(slot >> 1)]) & 0xf00 {
             0 => Retirement::Beam,
             0x100 | 0x200 => Retirement::Missile,
             _ => Retirement::Release,
         }
     }
-    fn move_to_impact(&mut self, game: &'a mut Game, slot: u16) -> &'a mut Game {
+    fn move_to_impact(&mut self, mut game: Transaction<'a>, slot: u16) -> Transaction<'a> {
         let direction = usize::from(word!(game.projectile_dir[(slot >> 1)]) & 0xf);
         let directions = DIRECTIONS[direction];
         let index = usize::from(slot & !1);
@@ -96,27 +92,26 @@ impl<'a> RetirementContext<&'a mut Game> for Ram {
                 Axis::Y => (arrays::projectile_y_pos, arrays::projectile_y_radius),
             };
             let at = position + index;
-            let position = u16::from_le_bytes([game.g_ram[at], game.g_ram[at + 1]]);
+            let position = game.read_le(at);
             let radius = radius + index;
-            let radius = u16::from_le_bytes([game.g_ram[radius], game.g_ram[radius + 1]]);
-            game.g_ram[at..at + 2].copy_from_slice(&offset(position, radius, step).to_le_bytes());
+            let radius = game.read_le(radius);
+            game.write_slice_le(at, offset(position, radius, step));
         });
         game
     }
-    fn impact(&mut self, game: &'a mut Game, slot: u16) -> &'a mut Game {
+    fn impact(&mut self, game: Transaction<'a>, slot: u16) -> Transaction<'a> {
         life::impact(game, usize::from(slot >> 1), self)
     }
-    fn release(&mut self, game: &'a mut Game, slot: u16) -> &'a mut Game {
-        ClearProjectile(slot, game);
-        game
+    fn release(&mut self, game: Transaction<'a>, slot: u16) -> Transaction<'a> {
+        super::motion::clear(slot, game)
     }
-    fn stop(&mut self, game: &mut &'a mut Game, slot: u16) {
+    fn stop(&mut self, game: &mut Transaction<'a>, slot: u16) {
         word!(game.projectile_bomb_pre_instructions[(slot >> 1)] = 0xb169);
     }
 }
-pub fn impact(slot: u16, game: &mut Game) {
-    life::impact(game, usize::from(slot >> 1), &mut Ram);
+pub(super) fn impact(slot: u16, game: Transaction<'_>) -> Transaction<'_> {
+    life::impact(game, usize::from(slot >> 1), &mut Context::default())
 }
-pub fn retire(slot: u16, game: &mut Game) {
-    life::retire(game, slot, &mut Ram);
+pub(super) fn retire(slot: u16, game: Transaction<'_>) -> Transaction<'_> {
+    life::retire(game, slot, &mut Context::default())
 }

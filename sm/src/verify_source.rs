@@ -3,6 +3,26 @@
 //! New library source files must be listed here; missing entries fail closed.
 
 pub static FILES: &[(&str, &[u8])] = &[
+    ("sm/src/game/player_projectiles/animation.rs", include_bytes!("game/player_projectiles/animation.rs")),
+    ("sm/src/game/player_projectiles/bomb_creation.rs", include_bytes!("game/player_projectiles/bomb_creation.rs")),
+    ("sm/src/game/player_projectiles/bomb_terrain.rs", include_bytes!("game/player_projectiles/bomb_terrain.rs")),
+    ("sm/src/game/player_projectiles/bombs.rs", include_bytes!("game/player_projectiles/bombs.rs")),
+    ("sm/src/game/player_projectiles/collision.rs", include_bytes!("game/player_projectiles/collision.rs")),
+    ("sm/src/game/player_projectiles/encoded.rs", include_bytes!("game/player_projectiles/encoded.rs")),
+    ("sm/src/game/player_projectiles/feedback.rs", include_bytes!("game/player_projectiles/feedback.rs")),
+    ("sm/src/game/player_projectiles/lifecycle.rs", include_bytes!("game/player_projectiles/lifecycle.rs")),
+    ("sm/src/game/player_projectiles/missiles.rs", include_bytes!("game/player_projectiles/missiles.rs")),
+    ("sm/src/game/player_projectiles/mod.rs", include_bytes!("game/player_projectiles/mod.rs")),
+    ("sm/src/game/player_projectiles/motion.rs", include_bytes!("game/player_projectiles/motion.rs")),
+    ("sm/src/game/player_projectiles/native_content.rs", include_bytes!("game/player_projectiles/native_content.rs")),
+    ("sm/src/game/player_projectiles/placement.rs", include_bytes!("game/player_projectiles/placement.rs")),
+    ("sm/src/game/player_projectiles/preparation.rs", include_bytes!("game/player_projectiles/preparation.rs")),
+    ("sm/src/game/player_projectiles/presentation.rs", include_bytes!("game/player_projectiles/presentation.rs")),
+    ("sm/src/game/player_projectiles/specials.rs", include_bytes!("game/player_projectiles/specials.rs")),
+    ("sm/src/game/player_projectiles/state.rs", include_bytes!("game/player_projectiles/state.rs")),
+    ("sm/src/game/player_projectiles/checks.rs", include_bytes!("game/player_projectiles/checks.rs")),
+    ("sm/src/game/player_projectiles/weapons.rs", include_bytes!("game/player_projectiles/weapons.rs")),
+
     (
         "sm/src/game/mechanism_treadmill.rs",
         include_bytes!("game/mechanism_treadmill.rs"),
@@ -240,10 +260,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/projectile_playback.rs"),
     ),
     (
-        "sm/src/game/projectile_playback_ram.rs",
-        include_bytes!("game/projectile_playback_ram.rs"),
-    ),
-    (
         "sm/src/game/projectile_trail_selection.rs",
         include_bytes!("game/projectile_trail_selection.rs"),
     ),
@@ -252,16 +268,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/projectile_initialization.rs"),
     ),
     (
-        "sm/src/game/projectile_initialization_ram.rs",
-        include_bytes!("game/projectile_initialization_ram.rs"),
-    ),
-    (
         "sm/src/game/projectile_placement.rs",
         include_bytes!("game/projectile_placement.rs"),
-    ),
-    (
-        "sm/src/game/projectile_placement_ram.rs",
-        include_bytes!("game/projectile_placement_ram.rs"),
     ),
     (
         "sm/src/game/projectile_flight_control.rs",
@@ -272,42 +280,22 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/projectile_lifecycle.rs"),
     ),
     (
-        "sm/src/game/projectile_lifecycle_ram.rs",
-        include_bytes!("game/projectile_lifecycle_ram.rs"),
-    ),
-    (
         "sm/src/game/projectile_room.rs",
         include_bytes!("game/projectile_room.rs"),
     ),
     ("sm/src/game/special_attacks.rs", include_bytes!("game/special_attacks.rs")),
-    (
-        "sm/src/game/special_attacks_ram.rs",
-        include_bytes!("game/special_attacks_ram.rs"),
-    ),
     (
         "sm/src/game/special_geometry.rs",
         include_bytes!("game/special_geometry.rs"),
     ),
     ("sm/src/game/bomb_lifecycle.rs", include_bytes!("game/bomb_lifecycle.rs")),
     (
-        "sm/src/game/bomb_lifecycle_ram.rs",
-        include_bytes!("game/bomb_lifecycle_ram.rs"),
-    ),
-    (
         "sm/src/game/bomb_terrain.rs",
         include_bytes!("game/bomb_terrain.rs"),
     ),
     (
-        "sm/src/game/bomb_terrain_ram.rs",
-        include_bytes!("game/bomb_terrain_ram.rs"),
-    ),
-    (
         "sm/src/game/bomb_creation.rs",
         include_bytes!("game/bomb_creation.rs"),
-    ),
-    (
-        "sm/src/game/bomb_creation_ram.rs",
-        include_bytes!("game/bomb_creation_ram.rs"),
     ),
     (
         "sm/src/game/weapon_selection.rs",
@@ -318,16 +306,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/weapon_coordinator.rs"),
     ),
     (
-        "sm/src/game/weapon_coordinator_ram.rs",
-        include_bytes!("game/weapon_coordinator_ram.rs"),
-    ),
-    (
         "sm/src/game/player_preparation.rs",
         include_bytes!("game/player_preparation.rs"),
-    ),
-    (
-        "sm/src/game/player_preparation_ram.rs",
-        include_bytes!("game/player_preparation_ram.rs"),
     ),
     (
         "sm/src/game/beam_charge_palette.rs",
@@ -401,10 +381,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/explosion_window.rs"),
     ),
     (
-        "sm/src/game/projectile_flight.rs",
-        include_bytes!("game/projectile_flight.rs"),
-    ),
-    (
         "sm/src/game/moving_platforms.rs",
         include_bytes!("game/moving_platforms.rs"),
     ),
@@ -452,20 +428,12 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/beam_firing.rs"),
     ),
     (
-        "sm/src/game/beam_firing_ram.rs",
-        include_bytes!("game/beam_firing_ram.rs"),
-    ),
-    (
         "sm/src/game/beam_definitions.rs",
         include_bytes!("game/beam_definitions.rs"),
     ),
     (
         "sm/src/game/missile_firing.rs",
         include_bytes!("game/missile_firing.rs"),
-    ),
-    (
-        "sm/src/game/missile_firing_ram.rs",
-        include_bytes!("game/missile_firing_ram.rs"),
     ),
     (
         "sm/src/game/projectile_weapon_definitions.rs",
@@ -540,10 +508,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/samus_periodic_damage_ram.rs",
         include_bytes!("game/samus_periodic_damage_ram.rs"),
-    ),
-    (
-        "sm/src/game/projectile_animation.rs",
-        include_bytes!("game/projectile_animation.rs"),
     ),
     (
         "sm/src/game/grapple_swing.rs",
