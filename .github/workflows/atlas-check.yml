@@ -16,7 +16,10 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install playwright==1.56.0
       - run: google-chrome --version
+      - run: npm install --prefix /tmp/atlas-browser-deps --no-audit --no-fund axe-core@4.10.3
       - run: python docs/codebase-map/check_atlas.py
+        env:
+          AXE_PATH: /tmp/atlas-browser-deps/node_modules/axe-core/axe.min.js
       - uses: actions/upload-artifact@v4
         if: always()
         with:
