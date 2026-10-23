@@ -856,88 +856,6 @@ pub unsafe fn WakePlmIfSamusIsBelowAndRightOfTarget(
 pub fn PlmSetup_B974(j: u16) -> u8 {
     0
 }
-crate::forward_calls! { pub unsafe fn (j: u16, game: &mut Game) -> u8;
-    sub_84C63F => sub_84C64C(
-        j,
-        (word!(game.plm_block_indices[(j >> 1)])).wrapping_add(2),
-        game,
-    );
-    sub_84C647 => sub_84C64C(
-        j,
-        (word!(game.plm_block_indices[(j >> 1)])).wrapping_sub(2),
-        game,
-    );
-}
-pub unsafe fn sub_84C64C(j: u16, a: u16, game: &mut Game) -> u8 {
-    unsafe {
-        find_plm_at_block!(found_plm, v2, a, game);
-        if found_plm {
-            let mut v3: i32 = v2 as i32 >> 1;
-            if word!(game.plm_timers[v3]) == 0 {
-                word!(game.plm_timers[v3] += 1);
-            }
-        }
-        word!(game.plm_header_ptr[(j >> 1)] = 0);
-        1
-    }
-}
-pub unsafe fn SetBts0x10FiveStepsDown(j: u16, game: &mut Game) {
-    unsafe {
-        let v1: u16 = SetBtsTo0x10AdvanceRow((word!(game.plm_block_indices[(j >> 1)]) >> 1), game);
-        let v2: u16 = SetBtsTo0x10AdvanceRow(v1, game);
-        let v3: u16 = SetBtsTo0x10AdvanceRow(v2, game);
-        let v4: u16 = SetBtsTo0x10AdvanceRow(v3, game);
-        SetBtsTo0x10AdvanceRow(v4, game);
-    }
-}
-pub unsafe fn SetBtsTo0x10AdvanceRow(k: u16, game: &mut Game) -> u16 {
-    unsafe {
-        *(ram_ptr!(game, u16; 0x16402, k as isize)) =
-            ((*ram_ptr!(game; 0x16402, (k as i32 + 1) as isize) as i32) << 8 | 0x10) as u16;
-        (word!(game.room_width_in_blocks)).wrapping_add(k)
-    }
-}
-pub unsafe fn SetBts0x10FiveStepsUp(j: u16, game: &mut Game) {
-    unsafe {
-        let v1: u16 =
-            SetBtsTo0x10AdvanceRowUp((word!(game.plm_block_indices[(j >> 1)]) >> 1), game);
-        let v2: u16 = SetBtsTo0x10AdvanceRowUp(v1, game);
-        let v3: u16 = SetBtsTo0x10AdvanceRowUp(v2, game);
-        let v4: u16 = SetBtsTo0x10AdvanceRowUp(v3, game);
-        SetBtsTo0x10AdvanceRowUp(v4, game);
-    }
-}
-pub unsafe fn SetBtsTo0x10AdvanceRowUp(k: u16, game: &mut Game) -> u16 {
-    unsafe {
-        *(ram_ptr!(game, u16; 0x16402, k as isize)) =
-            ((*ram_ptr!(game; 0x16402, (k as i32 + 1) as isize) as i32) << 8 | 0x10) as u16;
-        (k).wrapping_sub(word!(game.room_width_in_blocks))
-    }
-}
-pub unsafe fn PlmSetup_C82A_DownwardsClosedGate(j: u16, setup_a: u16, game: &mut Game) -> u8 {
-    unsafe {
-        SpawnEprojWithRoomGfx(0xe659, setup_a, game);
-        SetBts0x10FiveStepsDown(j, game);
-        0
-    }
-}
-macro_rules! install_optional_gate_block {
-    ($game:ident, $block_table:literal, $plm_index:ident, $neighbor_operation:ident) => {
-        let v2: u16 = crate::rtl::rom_table_word!(
-            $game,
-            $block_table,
-            (word!($game.plm_room_arguments[$plm_index]) >> 1) as isize
-        );
-        if v2 != 0 {
-            WriteLevelDataBlockTypeAndBts(
-                (word!($game.plm_block_indices[$plm_index])).$neighbor_operation(2),
-                v2,
-                $game,
-            );
-        }
-    };
-}
-
 pub fn PlmSetup_D0D8_SetVFlag(j: u16) -> u8 {
     0x41
 }
@@ -1298,108 +1216,6 @@ crate::game::callback_dispatch! {
         }
         0
     };
-    [8701261] PlmSetup_C806_LeftGreenGateTrigger [] {
-        if (*(ram_ptr!(game, u16; 0xc18)).offset((word!(game.projectile_index) >> 1) as isize)
-            & 0xfff)
-            == 512
-        {
-            return sub_84C63F(j, game);
-        }
-        QueueSfx2_Max6(0x57, game);
-        word!(game.plm_header_ptr[(j >> 1)] = 0);
-        0
-    };
-    [8701292] PlmSetup_C80A_RightGreenGateTrigger [] {
-        if (*(ram_ptr!(game, u16; 0xc18)).offset((word!(game.projectile_index) >> 1) as isize)
-            & 0xfff)
-            == 512
-        {
-            return sub_84C647(j, game);
-        }
-        QueueSfx2_Max6(0x57, game);
-        word!(game.plm_header_ptr[(j >> 1)] = 0);
-        0
-    };
-    [8701323] PlmSetup_C80E_LeftRedGateTrigger [] {
-        let mut v1: i16 = ((*(ram_ptr!(game, u16; 0xc18))
-            .offset((word!(game.projectile_index) >> 1) as isize))
-            as i16)
-            & (0xfffi16);
-        if v1 == 256 || v1 == 512 {
-            return sub_84C63F(j, game);
-        }
-        QueueSfx2_Max6(0x57, game);
-        word!(game.plm_header_ptr[(j >> 1)] = 0);
-        0
-    };
-    [8701359] PlmSetup_C812_RightRedGateTrigger [] {
-        let mut v1: i16 = ((*(ram_ptr!(game, u16; 0xc18))
-            .offset((word!(game.projectile_index) >> 1) as isize))
-            as i16)
-            & (0xfffi16);
-        if v1 == 256 || v1 == 512 {
-            return sub_84C647(j, game);
-        }
-        QueueSfx2_Max6(0x57, game);
-        word!(game.plm_header_ptr[(j >> 1)] = 0);
-        0
-    };
-    [8701425] PlmSetup_C822_RightYellowGateTrigger [] {
-        if (*(ram_ptr!(game, u16; 0xc18)).offset((word!(game.projectile_index) >> 1) as isize)
-            & 0xfff)
-            != 768
-        {
-            return sub_84C647(j, game);
-        }
-        QueueSfx2_Max6(0x57, game);
-        word!(game.plm_header_ptr[(j >> 1)] = 0);
-        0
-    };
-    [8701395] PlmSetup_C81E_LeftYellowGateTrigger [] {
-        if (*(ram_ptr!(game, u16; 0xc18)).offset((word!(game.projectile_index) >> 1) as isize)
-            & 0xfff)
-            == 768
-        {
-            return sub_84C63F(j, game);
-        }
-        QueueSfx2_Max6(0x57, game);
-        let v1: i32 = j as i32 >> 1;
-        word!(game.plm_header_ptr[v1] = 0);
-        PlmSetup_C822_RightYellowGateTrigger(j, game)
-    };
-    [8701479] PlmSetup_C81A_RightBlueGateTrigger [] {
-        if (*(ram_ptr!(game, u16; 0xc18)).offset((word!(game.projectile_index) >> 1) as isize)
-            & 0xfff)
-            != 768
-        {
-            return sub_84C647(j, game);
-        }
-        word!(game.plm_header_ptr[(j >> 1)] = 0);
-        0
-    };
-    [8701456] PlmSetup_C816_LeftBlueGateTrigger [] {
-        if (*(ram_ptr!(game, u16; 0xc18)).offset((word!(game.projectile_index) >> 1) as isize)
-            & 0xfff)
-            != 768
-        {
-            return sub_84C63F(j, game);
-        }
-        word!(game.plm_header_ptr[(j >> 1)] = 0);
-        PlmSetup_C81A_RightBlueGateTrigger(j, game)
-    };
-    [8701643] PlmSetup_C832_UpwardsClosedGate [] {
-        SpawnEprojWithRoomGfx(0xe675, 0, game);
-        SetBts0x10FiveStepsUp(j, game);
-        0
-    };
-    [8701656] PlmSetup_C826_DownwardsOpenGate [] {
-        SetBts0x10FiveStepsDown(j, game);
-        0
-    };
-    [8701660] PlmSetup_C82E_UpwardsOpenGate [] {
-        SetBts0x10FiveStepsUp(j, game);
-        0
-    };
     [8703957] PlmSetup_D0E8_GiveSamusDamage [] {
         word!(game.samus_periodic_damage += 1);
         0x41
@@ -1606,30 +1422,6 @@ crate::game::callback_dispatch! {
         );
         0
     };
-    [8701664] PlmSetup_C836_DownwardsGateShootblock [] {
-        word!(
-            game.plm_instr_list_ptrs[v1] = crate::rtl::rom_table_word!(
-                game,
-                0x84c70a,
-                (word!(game.plm_room_arguments[v1]) >> 1) as isize,
-            )
-        );
-        install_optional_gate_block!(game, 0x84c71a, v1, wrapping_sub);
-        install_optional_gate_block!(game, 0x84c72a, v1, wrapping_add);
-        0
-    };
-    [8701754] PlmSetup_C73A_UpwardsGateShootblock [] {
-        word!(
-            game.plm_instr_list_ptrs[v1] = crate::rtl::rom_table_word!(
-                game,
-                0x84c764,
-                (word!(game.plm_room_arguments[v1]) >> 1) as isize,
-            )
-        );
-        install_optional_gate_block!(game, 0x84c774, v1, wrapping_sub);
-        install_optional_gate_block!(game, 0x84c784, v1, wrapping_add);
-        0
-    };
     [8705526] PlmSetup_MotherBrainGlass [] {
         word!(game.plm_room_arguments[v1] = 0);
         WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[v1]), 0x8044, game);
@@ -1745,6 +1537,20 @@ crate::game::callback_dispatch! {
     [8711809] sub_84EE81 => sub_84EE89(j, 0xc, game);
     [8711814] sub_84EE86 => sub_84EE89(j, 0xe, game);
     @external {
+        8701261 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Left,Color::Green), setup_a, game) }];
+        8701292 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Right,Color::Green), setup_a, game) }];
+        8701323 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Left,Color::Red), setup_a, game) }];
+        8701359 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Right,Color::Red), setup_a, game) }];
+        8701395 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Left,Color::Yellow), setup_a, game) }];
+        8701425 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Right,Color::Yellow), setup_a, game) }];
+        8701456 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Left,Color::Blue), setup_a, game) }];
+        8701479 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Right,Color::Blue), setup_a, game) }];
+        8701630 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Placement(Direction::Down,true), setup_a, game) }];
+        8701643 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Placement(Direction::Up,true), setup_a, game) }];
+        8701656 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Placement(Direction::Down,false), setup_a, game) }];
+        8701660 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Placement(Direction::Up,false), setup_a, game) }];
+        8701664 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Shootblock(Direction::Down), setup_a, game) }];
+        8701754 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Shootblock(Direction::Up), setup_a, game) }];
         8703426 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::ScrewAttack, game)];
         8703466 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::SpeedBoost, game)];
         8703543 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::Crumble, game)];
@@ -1768,7 +1574,6 @@ crate::game::callback_dispatch! {
         8697028 => [PlmSetup_QuicksandSurfaceB(j, displacement, game)];
         8697167 => [PlmSetup_B73B_B73F_SandFalls(j)];
         8698220 => [PlmSetup_B974(j)];
-        8701630 => [PlmSetup_C82A_DownwardsClosedGate(j, setup_a, game)];
         8703949 => [PlmSetup_D0D8_SetVFlag(j)];
         8703953 => [PlmSetup_D0D8_ClearVflag(j)];
         8704399 => [PlmSetup_D6DA_LowerNorfairChozoHandTrigger(j, displacement, game)];

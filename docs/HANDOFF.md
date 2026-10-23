@@ -9,59 +9,58 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares all 13 break/reveal/respawn/retained-terrain setups after
-doors at `56fd8a2b`. `mechanism_terrain_setup` and its checked RAM adapter forbid
-unsafe. Thirteen bank bodies and a dead helper are removed; numeric routes stay.
-Candidate duplicate shot-reveal behavior is retired. Preserve lazy gates,
-0/1/0x41 results, captured saved-then-level writes, instruction-before-terrain
-ordering, CF2E LE versus other native projectile reads, byte-offset native BTS
-stores and broad slot aliases. Encoded state stays RAM authoritative; authored
-native cells share the core. Seventeen of 115 setup identities are shared.
+The latest stage shares all 14 gate trigger/placement/shootblock setups after
+terrain at `228efa94`. The shared core forbids unsafe. Its checked RAM adapter
+retains one actual unsafe enemy-projectile spawn call; sound queuing was already
+safe. Fourteen bank bodies and unused gate helpers are retired. Preserve numeric
+routes, asymmetric fallthrough, live projectile/block rereads, sound-before-delete,
+setup accumulator, captured slot versus live initializer selection, five native
+BTS writes/full-width reads, and ROM capture before each live table argument.
+Encoded state stays RAM authoritative; native authored cells share the core.
+Thirty-one of 115 setup identities are shared. Native dispatch, remaining effects
+and persistent ownership are unfinished.
 
-Main: **103,488 Rust lines in 154 files**, unsafe declarations 2,897, casts 6,080.
-Maintained implementation 104,050; including installers/launcher 104,960.
-Prospective composition: **111,760**, **+8,272 over main**, unadopted.
-Stage adds 92 main and 15 owned lines: **+107 complete lines**, +861 lexical
-tokens and +3,772 LF-normalized bytes. Verification adds 970 lines; combined
-implementation/checks add 1,077. No dependency/native/installer/launcher additions.
-Cast lines fall by 34; counted unsafe declarations are unchanged and omit
-removed generated bodies. No net reduction or persistent-ownership claim.
+Main: **103,539 Rust lines in 156 files**, unsafe declarations 2,890, casts 6,076.
+Maintained implementation 104,101; including installers/launcher 105,011.
+Prospective composition: **111,897**, **+8,358 over main**, unadopted.
+Stage adds 51 main and 86 owned lines: **+137 complete lines**, +2,327 tokens
+and +7,496 LF-normalized bytes. Verification adds 1,086 lines; combined cost
+is 1,223 lines. No dependency/native/installer/launcher additions. Seven counted
+unsafe declarations and four cast-containing lines are removed. No net reduction.
 
-Use `runtime-impact-working/TERRAIN_SETUP_HANDOFF.md`, `terrain-setup-price.json`
-and `terrain-setup-final.log`. Results: 1,486 comparisons over 743 defined cases,
-12 matching failures, 21 successful tails, five new-only checked cases. Tails
-include 18 restore/render comparisons for nine reveal variants through both
-instruction aliases, two changed-solidity scans and the grapple source's 0x41
-continuation. Native examples assert all 13 variants and three program cases.
-The five new-only cases are three bounds failures and two successful unaligned
-BTS writes. The actual grapple source also uses unaligned BTS; neither it nor
-those five cases prove equivalence to undefined old raw-memory behavior.
+Use `runtime-impact-working/GATE_SETUP_HANDOFF.md`, `gate-setup-price.json`
+and `gate-setup-final.log`. Final results: 1,348 comparisons over 674 defined
+cases, 20 matching failures, five actual tails, four checked-only cases.
+Tails cover signal wake-up, both closed-gate projectile constructors and wake-up,
+plus actual horizontal/vertical shot scans through creation/trigger/signaling.
+The scans and existing runtime collision are integration checks; independent
+gate equivalence comes from frozen old bodies. Four outside-old-domain cases
+are two successful unaligned placements and two bounds failures with prior-write
+assertions. Native all-14 examples verify operation order and mutation/failure.
+Source/setup 342/672/47 and closing 74/120/7 pass; runtime collision
+198/545/176/1 means 176 setup hits and one failure, supplemental integration.
+Git-based extraction and 176 runtime / 213 local compiled identities pass;
+reviewer independently inspected compiled changed/reference bytes in the DLL.
 
-Source/setup 342/672/47 and closing 74/120/7 pass. Runtime collision
-198/545/176/1 is supplemental shared-leaf integration: 176 setup hits, one
-matching failure. Fresh frozen setup/helper/restore bodies match Git; 173 runtime
-and 210 local identities pass. Downstream drawing helpers are unchanged real
-implementations shared by the restore comparisons. Visible output is asserted.
+Production Rust 2024 release/frontend/verifier/source checks pass: first 50.74s,
+then final 32.96s after removing unnecessary sound unsafe. Composition first
+51.09s, then final 33.30s after late candidate formatting. Format candidate
+production before future stable handoffs to avoid this repeat. Carrier 26.93s
+then 12.41s; harness 23.63s then final 11.69s. Two fixture compilation errors
+(private ROM access and boxed Game reset) were fixed; no production failure.
+No movie/full-composition runtime ran. Synthetic content, retained native effects,
+shared unchanged downstream consumers and untested big-endian remain limitations.
+Production hash: `993fdcdd1ab6822717870e3b781ddefdd2a24fe509f28699b92bb0e60f96653e`.
 
-Production Rust 2024 release/frontend/verifier/source checks pass (46.56s);
-prospective headless release passes (51.21s). Carrier 22.18s; harness 27.94s,
-then 8.69s for added super-missile restore coverage. One prior fixture compilation
-failed on a missing native field (6.85s), fixed without production edits. Final
-checks took 0.92s. Formatting and independent review pass. No movie or full
-composition runtime ran; synthetic content, controlled callbacks and untested
-big-endian execution remain limits. Production hash:
-`c0733cd0dc7ac28d7210846d70c9fbb7de40cbe96bac58c9548c4fb40e18f23d`.
-
-`terrain-setup-parent/` preserves prior main/carrier/local/composition sources.
-All earlier snapshots/caches remain; do not run historical preparation scripts
-over the current carrier. Composition sources are under `impact-composition/sm/src`
-with distinct module wiring. The inherited Intro mismatch remains unresolved in
-`DRAWING_HANDOFF.md`. The local door handoff retains the 115-identity inventory.
-Next are 14 gate trigger/placement variants, followed by contact physics/Chozo,
-stations/scroll/items, room/event/boss and residual routes. Native dispatch,
-remaining consumers and runtime promotion remain unfinished; promotion requires
-reset/load/rewind/external-writer checks. Rendering, sound and boot-to-credits
-completion remain outside this stage's evidence.
+`gate-setup-parent/` preserves prior main/carrier/local/composition sources.
+Earlier snapshots/caches remain. Do not rerun historical preparation scripts;
+composition sources live under `impact-composition/sm/src` with distinct wiring.
+The inherited Intro mismatch remains unresolved in `DRAWING_HANDOFF.md`.
+Next trace seven contact-physics and two Chozo-contact setups, including full
+nested displacement and state-transfer dependencies, before choosing the seam.
+Then stations/scroll/items, room/event/boss and residual routes remain. Runtime
+promotion requires reset/load/rewind/external-writer checks. Rendering, sound and
+boot-to-credits completion remain outside this stage's evidence.
 The parallel movie/state investigation is documented in
 [MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md); it implements no pipeline.
 
