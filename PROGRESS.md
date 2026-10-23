@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 08:24 UTC**
+Updated: **2026-10-23 08:38 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -41,8 +41,10 @@ operations removed.
 
 The approved next change shares special-beam attack creation and all six motion
 states. Its checks will follow actual beam input through creation and motion to
-natural retirement for all four attacks. Implementation has started; it is not
-yet verified.
+natural retirement for all four attacks. Production source review and both main
+and candidate builds passed on their first attempts. The comparison tests are
+being reviewed before execution; behavior verification and the source commit
+are still pending. The figures above describe the last committed milestone.
 
 Persistent room and scheduler state still live in RAM. Persistent Session
 ownership, renderer/audio replacement and an independently running game slice
