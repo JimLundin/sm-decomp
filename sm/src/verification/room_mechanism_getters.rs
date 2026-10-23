@@ -1,11 +1,11 @@
-//! Run unchanged against baseline and optimized actual compatibility getters.
+//! Shared Session scalar imports and actual enemy setup coordinate helpers.
 #![forbid(unsafe_code)]
-use crate::game::room_mechanisms;
+use crate::game::{enemy_projectiles::coordinates, session::Session, session_runtime::Runtime};
 use crate::game_state::Game;
 use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
 
 /// Captures deterministic observations while checking fresh reads and read-only
-/// behavior. No native ROM is needed for these five compatibility queries.
+/// behavior. No native ROM is needed for these shared-state observations.
 pub(crate) fn capture(game: &mut Game) -> Vec<u8> {
     let saved = game.g_ram.to_vec();
     let result = catch_unwind(AssertUnwindSafe(|| {
@@ -14,16 +14,16 @@ pub(crate) fn capture(game: &mut Game) -> Vec<u8> {
         }
         let mut expected = game.g_ram.to_vec();
         let mut output = Vec::new();
-        let scalar_queries: [(usize, fn(&mut Game) -> u16); 3] = [
-            (0x1c27, room_mechanisms::selected),
-            (0x1c29, room_mechanisms::block_x),
-            (0x1c2b, room_mechanisms::block_y),
+        let scalar_queries: [(usize, fn(&Session) -> u16); 3] = [
+            (0x1c27, |session| session.mechanisms.selected),
+            (0x1c29, |session| session.mechanisms.block_x),
+            (0x1c2b, |session| session.mechanisms.block_y),
         ];
         for (address, query) in scalar_queries {
             for bytes in [[0x35, 0xc2], [0xa7, 0x19]] {
                 game.g_ram[address..address + 2].copy_from_slice(&bytes);
                 expected[address..address + 2].copy_from_slice(&bytes);
-                let actual = query(game);
+                let actual = query(Runtime::new(game).session());
                 assert_eq!(actual, u16::from_le_bytes(bytes), "scalar live read");
                 output.extend_from_slice(&actual.to_le_bytes());
                 assert_eq!(&game.g_ram[..], expected.as_slice(), "getter changed RAM");
@@ -48,7 +48,7 @@ pub(crate) fn capture(game: &mut Game) -> Vec<u8> {
             for bytes in [[0x12, 0xb4], [0xe3, 0x56]] {
                 game.g_ram[block..block + 2].copy_from_slice(&bytes);
                 expected[block..block + 2].copy_from_slice(&bytes);
-                let actual = room_mechanisms::block_index(handle, game);
+                let actual = coordinates::block_index(handle, &Runtime::new(game));
                 assert_eq!(actual, u16::from_le_bytes(bytes), "block alias/live read");
                 output.extend_from_slice(&actual.to_le_bytes());
                 assert_eq!(
@@ -59,7 +59,7 @@ pub(crate) fn capture(game: &mut Game) -> Vec<u8> {
                 let native = [bytes[1], bytes[0]];
                 game.g_ram[argument..argument + 2].copy_from_slice(&native);
                 expected[argument..argument + 2].copy_from_slice(&native);
-                let actual = room_mechanisms::projectile_argument(handle, game);
+                let actual = coordinates::projectile_argument(handle, &Runtime::new(game));
                 assert_eq!(
                     actual,
                     u16::from_ne_bytes(native),

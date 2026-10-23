@@ -1,6 +1,6 @@
-//! Standalone compilable declaration contract; no gameplay bodies.
+//! Room mechanism behavior over the shared Session and explicit effects.
 #![forbid(unsafe_code)]
-use crate::game::{external_inputs::ExternalInputs, session::Session};
+use crate::game::session_access::SessionAccess;
 use core::num::NonZeroU8;
 
 #[derive(Clone, Copy)]
@@ -235,10 +235,5 @@ pub trait Effects {
     fn statue_signal(&mut self);
     fn statue_wait_actor(&mut self, actor: u16, waiting: bool);
     fn diagnostic(&mut self, diagnostic: Diagnostic) -> u8;
-    fn probe(&self, name: &'static str);
 }
-pub trait Host: ImportedAliases + Content + Graphics + Effects {
-    fn session(&self) -> &Session;
-    fn session_mut(&mut self) -> &mut Session;
-    fn inputs(&self) -> &ExternalInputs;
-}
+pub trait Host: SessionAccess + ImportedAliases + Content + Graphics + Effects {}

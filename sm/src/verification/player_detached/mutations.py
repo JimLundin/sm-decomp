@@ -18,9 +18,24 @@ MUTATIONS = (
     ("ignore_plant_position", "room_mechanisms/rules/plants.rs", "c.session_mut().player.x = mechanism!(c, slot, work0);", "let _ = mechanism!(c, slot, work0);"),
     ("ignore_new_beam", "player_projectiles/weapons.rs", "let kind = h.session().inventory.beams.active | 0x8000;", "let kind = 0x8000;"),
 )
+# New mutants require their named assertion, not just any panic in a check file.
+NEW_MUTATIONS = (
+    ("award_to_private_inventory_copy", "enemy_projectiles/drops.rs",
+     "h.session_mut().inventory.restore(resource, amount);",
+     "h.session().inventory.clone().restore(resource, amount);",
+     "1053 actual drop award before sound"),
+    ("discard_shared_shot_mark", "enemy_projectiles/contact.rs",
+     "set_shot_direction(h, shot as isize, direction);",
+     "let _ = direction;",
+     "1052 shared shot mark"),
+    ("stale_room_selected_after_spawn", "room_mechanisms/scheduler.rs",
+     "let selected = h.session().mechanisms.selected;\n            let Some(next) = commands::run(h, identity, current.advance(2), selected) else {",
+     "let selected = 2;\n            let Some(next) = commands::run(h, identity, current.advance(2), selected) else {",
+     "1050 captured old program"),
+)
 SUCCESS = "player/animation/palette composed core checks passed"
 ASSERTION = re.compile(
-    r"panicked at [^\r\n]*[\\/](?:player_checks|composition_checks)\.rs:(\d+):\d+:\r?\n"
+    r"panicked at [^\r\n]*[\\/](?:player_checks|composition_checks|enemy_checks)\.rs:(\d+):\d+:\r?\n"
     r"assertion `left == right` failed"
 )
 
@@ -32,7 +47,7 @@ def run(command, timeout):
     )
 
 
-def check(source, work, name, mutation=None):
+def check(source, work, name, mutation=None, expected_assertion=None):
     # Every build starts from the untouched source tree, never another mutant.
     copied = work / name / "src"
     shutil.copytree(source, copied)
@@ -65,6 +80,8 @@ def check(source, work, name, mutation=None):
             f"{name}: EXECUTION ERROR; expected gameplay equality assertion panic (exit 101), "
             f"got exit {result.returncode}\n{result.stdout}\n{result.stderr}"
         )
+    if expected_assertion is not None and expected_assertion not in result.stderr:
+        raise RuntimeError(f"{name}: EXECUTION ERROR; wrong equality assertion, expected {expected_assertion}\n{result.stderr}")
     print(f"{name}: KILLED by gameplay assertion at line {assertion.group(1)} equality assertion", flush=True)
 
 
@@ -80,7 +97,9 @@ def main():
         check(source, work, "baseline")
         for name, relative, before, after in MUTATIONS:
             check(source, work, name, (relative, before, after))
-    print(f"mutation checks: {len(MUTATIONS)}/{len(MUTATIONS)} killed; baseline passed", flush=True)
+        for name, relative, before, after, marker in NEW_MUTATIONS:
+            check(source, work, name, (relative, before, after), marker)
+    print(f"mutation checks: {len(MUTATIONS)+len(NEW_MUTATIONS)}/{len(MUTATIONS)+len(NEW_MUTATIONS)} killed; baseline passed", flush=True)
 
 
 if __name__ == "__main__":

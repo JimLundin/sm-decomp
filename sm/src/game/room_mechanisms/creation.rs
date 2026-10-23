@@ -206,9 +206,13 @@ pub(super) fn close_door(c: &mut impl Host) {
 }
 
 pub(super) fn coordinates(c: &mut impl Host, slot: usize) {
-    let block = mechanism!(c, slot, block) >> 1;
-    let width = u16::from(c.session().room.width as u8);
-    c.session_mut().mechanisms.block_y = if width == 0 { 0xffff } else { block / width };
-    let width = u16::from(c.session().room.width as u8);
-    c.session_mut().mechanisms.block_x = if width == 0 { block } else { block % width };
+    let byte_block = mechanism!(c, slot, block);
+    coordinates_from_block(c.session_mut(), byte_block);
+}
+pub(crate) fn coordinates_from_block(session: &mut crate::game::session::Session, byte_block: u16) {
+    let block = byte_block >> 1;
+    let width = u16::from(session.room.width as u8);
+    session.mechanisms.block_y = if width == 0 { 0xffff } else { block / width };
+    let width = u16::from(session.room.width as u8);
+    session.mechanisms.block_x = if width == 0 { block } else { block % width };
 }

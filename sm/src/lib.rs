@@ -383,6 +383,7 @@ pub mod game {
     pub mod enemy_projectiles;
     pub(crate) mod external_inputs;
     pub mod item_pickups;
+    pub(crate) mod item_pickups_runtime;
     pub(crate) mod mechanism_displacement;
     pub mod music;
     pub(crate) mod palette_effects;
@@ -398,6 +399,7 @@ pub mod game {
     pub(crate) mod samus_room_contact;
     pub(crate) mod samus_room_contact_ram;
     pub(crate) mod session;
+    pub(crate) mod session_access;
     pub(crate) mod session_encoding;
     pub(crate) mod session_runtime;
     pub mod sm_80;

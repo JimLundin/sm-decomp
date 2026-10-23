@@ -4,6 +4,7 @@ use crate::game::player_projectiles::{
     content,
     host::{Drawing, Host, PaletteEffect, PlayerStep},
 };
+use crate::game::session_access::SessionAccess;
 use crate::game::{
     external_inputs::ExternalInputs, session::Session, session_encoding as encoding,
 };
@@ -63,7 +64,7 @@ pub(crate) struct Runtime<'g> {
 impl<'g> Runtime<'g> {
     pub fn new(game: &'g mut Game) -> Self {
         Self {
-            state: Some(encoding::decode(&game.g_ram)),
+            state: Some(import_session(game)),
             inputs: encoding::inputs(&game.g_ram),
             game,
         }
@@ -73,10 +74,10 @@ impl<'g> Runtime<'g> {
             .state
             .take()
             .expect("projectile state unavailable during external effect");
-        encoding::encode(&state, &mut self.game.g_ram);
+        export_session(&state, self.game);
         drop(state);
         let result = action(self.game);
-        self.state = Some(encoding::decode(&self.game.g_ram));
+        self.state = Some(import_session(self.game));
         self.inputs = encoding::inputs(&self.game.g_ram);
         result
     }
@@ -149,7 +150,7 @@ impl<'g> Runtime<'g> {
 impl Drop for Runtime<'_> {
     fn drop(&mut self) {
         if let Some(state) = self.state.take() {
-            encoding::encode(&state, &mut self.game.g_ram);
+            export_session(&state, self.game);
         }
     }
 }
@@ -177,22 +178,6 @@ fn shot_address(lane: ShotLane, raw: u16) -> usize {
     base + usize::from(raw & !1)
 }
 impl Host for Runtime<'_> {
-    fn probe(&self, name: &'static str) {
-        crate::verify_probe::hit(name);
-    }
-    fn session(&self) -> &Session {
-        self.state
-            .as_ref()
-            .expect("projectile state unavailable during external effect")
-    }
-    fn session_mut(&mut self) -> &mut Session {
-        self.state
-            .as_mut()
-            .expect("projectile state unavailable during external effect")
-    }
-    fn inputs(&self) -> &ExternalInputs {
-        &self.inputs
-    }
     fn loaded_image(&self) -> Option<RomImage> {
         self.game.loaded_rom.clone()
     }
@@ -395,5 +380,53 @@ pub(crate) fn run_mechanisms(
                 value.get()
             }
         },
+    }
+}
+
+fn import_session(game: &Game) -> Session {
+    let mut state = encoding::decode(&game.g_ram);
+    import_native_spawn(&mut state, game);
+    state
+}
+fn export_session(state: &Session, game: &mut Game) {
+    encoding::encode(state, &mut game.g_ram);
+    export_native_spawn(state, game);
+}
+#[forbid(unsafe_code)]
+pub(crate) fn import_native_spawn(state: &mut Session, game: &Game) {
+    let spawn = &mut state.enemy_projectiles.spawn;
+    spawn.rectangle.origin.x = game.eproj_spawn_rect.x;
+    spawn.rectangle.origin.y = game.eproj_spawn_rect.y;
+    spawn.rectangle.extent.x = game.eproj_spawn_rect.w;
+    spawn.rectangle.extent.y = game.eproj_spawn_rect.h;
+    spawn.variant = game.eproj_spawn_r22;
+    spawn.point.x = game.eproj_spawn_pt.x;
+    spawn.point.y = game.eproj_spawn_pt.y;
+    spawn.drop_definition = game.eproj_spawn_varE24;
+}
+#[forbid(unsafe_code)]
+pub(crate) fn export_native_spawn(state: &Session, game: &mut Game) {
+    let spawn = &state.enemy_projectiles.spawn;
+    game.eproj_spawn_rect.x = spawn.rectangle.origin.x;
+    game.eproj_spawn_rect.y = spawn.rectangle.origin.y;
+    game.eproj_spawn_rect.w = spawn.rectangle.extent.x;
+    game.eproj_spawn_rect.h = spawn.rectangle.extent.y;
+    game.eproj_spawn_r22 = spawn.variant;
+    game.eproj_spawn_pt.x = spawn.point.x;
+    game.eproj_spawn_pt.y = spawn.point.y;
+    game.eproj_spawn_varE24 = spawn.drop_definition;
+}
+impl SessionAccess for Runtime<'_> {
+    fn session(&self) -> &Session {
+        Runtime::session(self)
+    }
+    fn session_mut(&mut self) -> &mut Session {
+        Runtime::session_mut(self)
+    }
+    fn inputs(&self) -> &ExternalInputs {
+        Runtime::inputs(self)
+    }
+    fn probe(&self, name: &'static str) {
+        crate::verify_probe::hit(name);
     }
 }

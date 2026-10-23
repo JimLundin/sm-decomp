@@ -3,14 +3,19 @@
 #![allow(dead_code)]
 mod animation;
 mod composition_checks;
+mod enemy_checks;
+mod enemy_host;
 mod game;
 mod palette;
 mod player;
 mod player_checks;
 mod room_host;
+mod session_host;
 use game::room_mechanisms as room;
 #[path = "../../rom.rs"]
 mod rom;
+#[path = "../../verify_probe.rs"]
+mod verify_probe;
 mod types {
     // These scalar aliases match types.rs:641; constants are actual source.
     pub(crate) type Buttons = u32;
@@ -36,6 +41,16 @@ mod types {
     pub(crate) type SamusMovementType = u32;
     pub(crate) type SamusPose = u32;
 
+    // Exact numeric Hitbox layout from types.rs, for shared contact_rules offsets.
+    #[repr(C, packed)]
+    pub(crate) struct Hitbox {
+        pub left: u16,
+        pub top: u16,
+        pub right: u16,
+        pub bottom: u16,
+        pub func_ptr: u16,
+        pub func_ptrA: u16,
+    }
     pub(crate) struct LongPtr {
         pub addr: u16,
         pub bank: u8,
@@ -89,6 +104,10 @@ impl Default for World {
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Event {
+    EnemySound(u8, u8, u16),
+    EnemyRandom,
+    EnemyGrapple,
+    RoomSound(u8, u8, u16),
     RoomMessage(u16, u16),
     RoomVisual(u16),
     RoomMusic(u16),
@@ -112,6 +131,11 @@ struct Composed {
     late_message: Option<u8>,
     message_yields: std::collections::VecDeque<u8>,
     on_upload: Option<fn(&mut World)>,
+    on_enemy_random: Option<fn(&mut Composed)>,
+    on_enemy_sound: Option<fn(&mut Composed)>,
+    expected_drop_award: Option<u16>,
+    on_room_sound: Option<fn(&mut Composed)>,
+    enemy_random: std::collections::VecDeque<u16>,
 }
 impl Composed {
     fn new() -> Self {
@@ -123,6 +147,11 @@ impl Composed {
             late_message: None,
             message_yields: Default::default(),
             on_upload: None,
+            on_enemy_random: None,
+            on_enemy_sound: None,
+            expected_drop_award: None,
+            on_room_sound: None,
+            enemy_random: Default::default(),
         }
     }
     fn byte(&self, bank: u8, cursor: u16, byte: u8) {
@@ -291,5 +320,6 @@ mod checks;
 fn main() {
     checks::run();
     composition_checks::run();
+    enemy_checks::run();
     println!("player/animation/palette composed core checks passed");
 }

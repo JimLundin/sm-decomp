@@ -1,7 +1,7 @@
 //! Candidate adapter for the frozen actual-old 354-case observations.
 //! Declare as a private child of enemy_projectiles to exercise real production paths.
 //! This first tranche does not cover all setup/pre-action/contact/drawing families.
-use super::script::EprojScript;
+type EprojScript = super::script::EprojScript<crate::rom::RomImage>;
 use super::{
     ClearEprojs, DisableEprojs, EnableEprojs, EprojRunAll, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
 };
@@ -10,6 +10,7 @@ use super::{
 // exclusive owner on normal return or unwind before the unchanged observations.
 fn CallEprojInstr(ea: u32, k: u16, script: &EprojScript, game: &mut Game) -> Option<usize> {
     super::with_execution(game, |ctx| super::commands::dispatch(ea, k, script, ctx))
+        .map(|position| position.0)
 }
 fn MoveEprojWithVelocity(k: u16, game: &mut Game) -> u16 {
     super::with_execution(game, |ctx| super::shared::MoveEprojWithVelocity(k, ctx))

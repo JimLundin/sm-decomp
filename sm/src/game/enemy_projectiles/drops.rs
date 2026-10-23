@@ -1,22 +1,18 @@
 //! Synchronous enemy drop generation and checked definition access.
 #![forbid(unsafe_code)]
+use super::access::{enemy, enemy_byte};
+use super::host::{DefinitionField, Host, LoadedRecord};
 pub use crate::game::drop_rules::DropSource;
 use crate::game::drop_rules::{PICKUPS, Spread, Weights};
 
-use super::pre_helpers::store;
-use super::{Execution, SlotField as F};
-
-use crate::types::EnemyDef;
-use core::mem::offset_of;
-
-pub(super) fn spawn(definition: u16, index: u16, parameter: u16, ctx: &mut Execution<'_>) {
-    ctx.state_mut().spawn.drop_definition = definition;
+pub(super) fn spawn(definition: u16, index: u16, parameter: u16, h: &mut impl Host) {
+    h.session_mut().enemy_projectiles.spawn.drop_definition = definition;
     {
-        super::lifecycle::spawn_from_enemy(ctx, parameter, index, 0xf337);
+        super::lifecycle::spawn_from_enemy(h, parameter, index, 0xf337);
     }
 }
 
-pub(super) fn scatter(source: DropSource, index: u16, parameter: u16, ctx: &mut Execution<'_>) {
+pub(super) fn scatter(source: DropSource, index: u16, parameter: u16, h: &mut impl Host) {
     let (definition, spread) = source.pattern();
     let count = match spread {
         Spread::Nearby(count) => count,
@@ -26,71 +22,81 @@ pub(super) fn scatter(source: DropSource, index: u16, parameter: u16, ctx: &mut 
         match spread {
             Spread::Nearby(_) => {
                 // X precedes RNG; Y and the random high byte are live afterward.
-                let x = ctx.special_death_item_drop_x_origin_pos();
-                let random = { ctx.next_random() };
-                ctx.state_mut().spawn.point.x = x.wrapping_add(random & 0x1f).wrapping_sub(16);
-                ctx.state_mut().spawn.point.y = ctx
-                    .special_death_item_drop_y_origin_pos()
-                    .wrapping_add((ctx.random_number() & 0x1f00) >> 8)
+                let x = h.inputs().drop_origin_x;
+                let random = { h.next_random() };
+                h.session_mut().enemy_projectiles.spawn.point.x =
+                    x.wrapping_add(random & 0x1f).wrapping_sub(16);
+                h.session_mut().enemy_projectiles.spawn.point.y = h
+                    .inputs()
+                    .drop_origin_y
+                    .wrapping_add((h.inputs().random & 0x1f00) >> 8)
                     .wrapping_sub(16);
             }
             Spread::Area(x, y, mask) => {
-                ctx.state_mut().spawn.point.x = ({ ctx.next_random() } & mask).wrapping_add(x);
-                ctx.state_mut().spawn.point.y =
-                    ((ctx.random_number() & 0x3f00) >> 8).wrapping_add(y);
+                h.session_mut().enemy_projectiles.spawn.point.x =
+                    ({ h.next_random() } & mask).wrapping_add(x);
+                h.session_mut().enemy_projectiles.spawn.point.y =
+                    ((h.inputs().random & 0x3f00) >> 8).wrapping_add(y);
             }
         }
         {
-            spawn(definition, index, parameter, ctx);
+            spawn(definition, index, parameter, h);
         }
     }
 }
 
-pub(super) fn select(index: u16, ctx: &mut Execution<'_>) -> u16 {
-    let definition = ctx.slot(F::DropDefinition, (index >> 1) as isize);
+pub(super) fn select(index: u16, h: &mut impl Host) -> u16 {
+    let definition = enemy!(h, (index >> 1) as isize, drop_definition);
     if definition == 0 {
         return 6;
     }
     let address =
-        { ctx.record(0xa0, definition) }.word(offset_of!(EnemyDef, item_drop_chances_ptr));
+        { h.loaded_record(0xa0, definition) }.definition_word(DefinitionField::EnemyDropTable);
     if address == 0 {
         return 6;
     }
     let random = loop {
-        let value = { ctx.next_random() } as u8;
+        let value = { h.next_random() } as u8;
         if value != 0 {
             break value;
         }
     };
-    let health = ctx.samus_reserve_health().wrapping_add(ctx.samus_health());
+    let health = h
+        .session()
+        .inventory
+        .reserve_health
+        .wrapping_add(h.session().inventory.health.current);
     if health < 30 {
         {
             let value = 1;
-            ctx.set_health_drop_bias_flag(value);
+            h.session_mut().enemy_projectiles.drop_bias = value;
         };
     } else if health >= 50 {
         {
             let value = 0;
-            ctx.set_health_drop_bias_flag(value);
+            h.session_mut().enemy_projectiles.drop_bias = value;
         };
     }
-    let table = { ctx.record(0xb4, address) };
+    let table = { h.loaded_record(0xb4, address) };
     let weights = Weights::new(
-        ctx.health_drop_bias_flag() as u8 != 0,
+        h.session().enemy_projectiles.drop_bias as u8 != 0,
         [
-            ctx.samus_health() != ctx.samus_max_health()
-                || ctx.samus_reserve_health() != ctx.samus_max_reserve_health(),
-            ctx.samus_missiles() != ctx.samus_max_missiles(),
-            ctx.samus_super_missiles() != ctx.samus_max_super_missiles(),
-            ctx.samus_power_bombs() != ctx.samus_max_power_bombs(),
+            h.session().inventory.health.current != h.session().inventory.health.maximum
+                || h.session().inventory.reserve_health != h.session().inventory.reserve_capacity,
+            h.session().inventory.ammunition[0].current
+                != h.session().inventory.ammunition[0].maximum,
+            h.session().inventory.ammunition[1].current
+                != h.session().inventory.ammunition[1].maximum,
+            h.session().inventory.ammunition[2].current
+                != h.session().inventory.ammunition[2].maximum,
         ],
-        |offset| table.byte(offset),
+        |offset| table.byte(offset as isize),
     );
     let mut cumulative = 0u16;
     for (slot, pickup) in PICKUPS.into_iter().enumerate() {
         if weights.enabled(slot) {
             // Each selected row diagnoses and captures the then-current ROM separately.
-            let value = { ctx.record(0xb4, address.wrapping_add(slot as u16)) }.byte(0);
+            let value = { h.loaded_record(0xb4, address.wrapping_add(slot as u16)) }.byte(0);
             cumulative = cumulative.wrapping_add(weights.contribution(slot, value));
             if cumulative >= u16::from(random) {
                 return pickup;
@@ -100,144 +106,124 @@ pub(super) fn select(index: u16, ctx: &mut Execution<'_>) -> u16 {
     6
 }
 
-fn award(slot: usize, ctx: &mut Execution<'_>) {
-    use crate::game::drop_rules::{REWARDS, Resource};
+fn award(slot: usize, h: &mut impl Host) {
+    use crate::game::drop_rules::REWARDS;
 
     let (resource, amount, sound) = REWARDS
-        [usize::from(ctx.slot(F::BehaviorA, (slot) as isize) >> 1)]
+        [usize::from(enemy!(h, (slot) as isize, behavior_a) >> 1)]
     .expect("non-null function pointer");
-    match resource {
-        Resource::Health => ctx.restore_health(amount),
-        Resource::Missiles => ctx.restore_missiles(amount),
-        Resource::SuperMissiles => ctx.restore_super_missiles(amount),
-        Resource::PowerBombs => ctx.restore_power_bombs(amount),
-    }
-    ctx.queue_sound(2, 1, u16::from(sound));
+    h.session_mut().inventory.restore(resource, amount);
+    h.queue_sound(2, 1, u16::from(sound));
 }
 
 /// Advance expiry, then attempt grapple collection before body contact.
-pub(super) fn collect(index: u16, ctx: &mut Execution<'_>) {
+pub(super) fn collect(index: u16, h: &mut impl Host) {
     use crate::game::contact_rules::axis;
     let slot = usize::from(index >> 1);
-    let remaining = ctx.slot(F::BehaviorB, slot as isize).wrapping_sub(1);
-    ctx.set_slot(F::BehaviorB, slot as isize, remaining);
+    let remaining = enemy!(h, slot as isize, behavior_b).wrapping_sub(1);
+    enemy!(h, slot as isize, behavior_b = remaining);
     if remaining != 0 {
         // The query precedes the live lifetime and coordinate reads.
-        let grapple = { ctx.grapple_pickup_query() } != 0
-            && ctx.slot(F::BehaviorB, (slot) as isize).wrapping_sub(384) & 0x8000 != 0
-            && ((ctx
-                .slot(F::X, (slot) as isize)
-                .wrapping_sub(ctx.grapple_beam_end_x_pos()) as i16)
+        let grapple = { h.grapple_pickup_query() } != 0
+            && enemy!(h, (slot) as isize, behavior_b).wrapping_sub(384) & 0x8000 != 0
+            && ((enemy!(h, (slot) as isize, x).wrapping_sub(h.inputs().grapple_end_x) as i16)
                 .wrapping_abs() as u16)
                 < 16
-            && ((ctx
-                .slot(F::Y, (slot) as isize)
-                .wrapping_sub(ctx.grapple_beam_end_y_pos()) as i16)
+            && ((enemy!(h, (slot) as isize, y).wrapping_sub(h.inputs().grapple_end_y) as i16)
                 .wrapping_abs() as u16)
                 < 16;
         if !grapple {
-            let x_radius = u16::from(ctx.slot_byte(F::Radius, slot as isize * 2));
-            let y_radius = u16::from(ctx.slot_byte(F::Radius, slot as isize * 2 + 1));
+            let x_radius = u16::from(enemy_byte!(h, slot as isize * 2, radius));
+            let y_radius = u16::from(enemy_byte!(h, slot as isize * 2 + 1, radius));
             if !axis(
-                ctx.player_x(),
-                ctx.slot(F::X, (index >> 1) as isize),
-                ctx.player_x_radius(),
+                h.session().player.x,
+                enemy!(h, (index >> 1) as isize, x),
+                h.inputs().player_x_radius,
                 x_radius,
             ) || !axis(
-                ctx.player_y(),
-                ctx.slot(F::Y, (index >> 1) as isize),
-                ctx.player_y_radius(),
+                h.session().player.y,
+                enemy!(h, (index >> 1) as isize, y),
+                h.session().player.contact.radius,
                 y_radius,
             ) {
                 return;
             }
         }
-        award(slot, ctx);
+        award(slot, h);
     }
     // Award and sound complete before the original slot changes to its exit script.
-    dismiss(slot, ctx);
+    dismiss(slot, h);
 }
 
 #[forbid(unsafe_code)]
-fn dismiss(slot: usize, ctx: &mut Execution<'_>) {
-    store(0xeca3, F::Program, (slot) as isize, ctx);
-    store(1, F::Delay, (slot) as isize, ctx);
-    store(0x3000, F::Properties, (slot) as isize, ctx);
-    store(0xefdf, F::PreAction, (slot) as isize, ctx);
+fn dismiss(slot: usize, h: &mut impl Host) {
+    enemy!(h, 0xeca3 => (slot) as isize, program);
+    enemy!(h, 1 => (slot) as isize, delay);
+    enemy!(h, 0x3000 => (slot) as isize, properties);
+    enemy!(h, 0xefdf => (slot) as isize, pre_action);
 }
 
 #[forbid(unsafe_code)]
-fn begin_pickup(slot: usize, kind: u16, ctx: &mut Execution<'_>) {
+fn begin_pickup(slot: usize, kind: u16, h: &mut impl Host) {
     let code = kind.wrapping_mul(2);
-    store(code, F::BehaviorA, (slot) as isize, ctx);
-    let instruction = ctx.image().table_word(
-        crate::rtl::lorom_offset(0x86ef04) as usize,
-        (code >> 1) as isize,
-    );
-    store(instruction, F::Program, (slot) as isize, ctx);
-    store(1, F::Delay, (slot) as isize, ctx);
-    store(400, F::BehaviorB, (slot) as isize, ctx);
+    enemy!(h, code => (slot) as isize, behavior_a);
+    let instruction = h
+        .loaded_record(0x86, 0xef04)
+        .native_word((code >> 1) as isize * 2);
+    enemy!(h, instruction => (slot) as isize, program);
+    enemy!(h, 1 => (slot) as isize, delay);
+    enemy!(h, 400 => (slot) as isize, behavior_b);
 }
 
-pub(super) fn initialize(index: u16, ctx: &mut Execution<'_>) {
+pub(super) fn initialize(index: u16, h: &mut impl Host) {
     let slot = usize::from(index >> 1);
-    store(ctx.state().spawn.point.x, F::X, (slot) as isize, ctx);
-    store(ctx.state().spawn.point.y, F::Y, (slot) as isize, ctx);
-    store(0, F::Graphics, (slot) as isize, ctx);
-    store(
-        ctx.state().spawn.drop_definition,
-        F::DropDefinition,
-        (slot) as isize,
-        ctx,
-    );
-    let kind = { select(index, ctx) };
+    enemy!(h, h.session().enemy_projectiles.spawn.point.x => (slot) as isize, x);
+    enemy!(h, h.session().enemy_projectiles.spawn.point.y => (slot) as isize, y);
+    enemy!(h, 0 => (slot) as isize, graphics);
+    enemy!(h, h.session().enemy_projectiles.spawn.drop_definition => (slot) as isize, drop_definition);
+    let kind = { select(index, h) };
     if kind != 0 && kind.wrapping_sub(6) & 0x8000 != 0 {
-        begin_pickup(slot, kind, ctx);
-        store(0xffff, F::KilledEnemy, (slot) as isize, ctx);
+        begin_pickup(slot, kind, h);
+        enemy!(h, 0xffff => (slot) as isize, killed_enemy);
     } else {
-        dismiss(slot, ctx);
+        dismiss(slot, h);
     }
 }
 
-pub(super) fn convert(index: u16, ctx: &mut Execution<'_>) -> u16 {
-    let kind = { select(index, ctx) };
+pub(super) fn convert(index: u16, h: &mut impl Host) -> u16 {
+    let kind = { select(index, h) };
     let slot = usize::from(index >> 1);
     // Conversion tests the incoming index, unlike initialization's drop-code test.
     if index != 0 && kind.wrapping_sub(6) & 0x8000 != 0 {
-        begin_pickup(slot, kind, ctx);
-        store(0xefe0, F::PreAction, (slot) as isize, ctx);
-        store(
-            ctx.slot(F::Properties, (slot) as isize) & !0x4000,
-            F::Properties,
-            (slot) as isize,
-            ctx,
-        );
-        ctx.slot(F::Program, (slot) as isize)
+        begin_pickup(slot, kind, h);
+        enemy!(h, 0xefe0 => (slot) as isize, pre_action);
+        enemy!(h, enemy!(h, (slot) as isize, properties) & !0x4000 => (slot) as isize, properties);
+        enemy!(h, (slot) as isize, program)
     } else {
         // Conversion writes its exit address last.
-        store(1, F::Delay, (slot) as isize, ctx);
-        store(0x3000, F::Properties, (slot) as isize, ctx);
-        store(0xefdf, F::PreAction, (slot) as isize, ctx);
-        store(0xeca3, F::Program, (slot) as isize, ctx);
+        enemy!(h, 1 => (slot) as isize, delay);
+        enemy!(h, 0x3000 => (slot) as isize, properties);
+        enemy!(h, 0xefdf => (slot) as isize, pre_action);
+        enemy!(h, 0xeca3 => (slot) as isize, program);
         0xeca3
     }
 }
 
 /// Read the original marker before the population respawn effect can mutate slots.
-pub(super) fn respawn(index: u16, ctx: &mut Execution<'_>) {
-    let marker = ctx.slot(F::KilledEnemy, (index >> 1) as isize);
+pub(super) fn respawn(index: u16, h: &mut impl Host) {
+    let marker = enemy!(h, (index >> 1) as isize, killed_enemy);
     if (marker as i16) <= -2 {
-        ctx.respawn_enemy(marker & 0x7fff);
+        h.respawn_enemy(marker & 0x7fff);
     }
 }
 
-pub(super) fn reset_room_metadata(ctx: &mut Execution<'_>) {
+pub(super) fn reset_room_metadata(h: &mut impl Host) {
     // The original 144-word span includes other columns and foreign bytes.
     // Preserve its descending order through the qualified compatibility edge.
     for i in (0..144).rev() {
-        ctx.set_slot(F::DropFlags, i, 0);
+        enemy!(h, i, drop_flags = 0);
     }
     for i in (0..18).rev() {
-        ctx.set_slot(F::KilledEnemy, i, 0xffff);
+        enemy!(h, i, killed_enemy = 0xffff);
     }
 }

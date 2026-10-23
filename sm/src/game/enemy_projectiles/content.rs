@@ -1,16 +1,57 @@
-//! Captured ownership of the native source, distinct from the loaded image.
+//! Owned native and loaded records; source selection remains an adapter decision.
 #![forbid(unsafe_code)]
+use super::{host, script::ScriptBytes};
 use crate::rom::RomImage;
-
-pub(super) struct NativeRecord {
+impl ScriptBytes for RomImage {
+    fn read_byte(&self, position: usize) -> u8 {
+        self.read(position)
+    }
+}
+pub(crate) struct LoadedRecord {
+    image: RomImage,
+    base: usize,
+}
+impl LoadedRecord {
+    pub(crate) fn new(image: RomImage, base: usize) -> Self {
+        Self { image, base }
+    }
+}
+impl host::LoadedRecord for LoadedRecord {
+    fn byte(&self, offset: isize) -> u8 {
+        self.image.read(
+            self.base
+                .checked_add_signed(offset)
+                .expect("loaded record offset overflow"),
+        )
+    }
+    fn native_word(&self, offset: isize) -> u16 {
+        u16::from_ne_bytes([self.byte(offset), self.byte(offset + 1)])
+    }
+    fn definition_word(&self, field: host::DefinitionField) -> u16 {
+        use host::DefinitionField::*;
+        self.native_word(match field {
+            Initialize => 0,
+            PreAction => 2,
+            Program => 4,
+            Radius => 6,
+            Properties => 8,
+            HitProgram => 10,
+            ShotProgram => 12,
+            EnemyDropTable => 0x3a,
+        })
+    }
+}
+pub(crate) struct NativeRecord {
     image: RomImage,
     base: usize,
 }
 impl NativeRecord {
-    pub(super) fn new(image: RomImage, base: usize) -> Self {
+    pub(crate) fn new(image: RomImage, base: usize) -> Self {
         Self { image, base }
     }
-    pub(super) fn byte(&self, index: isize) -> u8 {
+}
+impl host::NativeRecord for NativeRecord {
+    fn byte(&self, index: isize) -> u8 {
         let offset = self
             .base
             .checked_add_signed(index)
@@ -19,7 +60,7 @@ impl NativeRecord {
         crate::verify_probe::hit("eproj.native_content.read");
         value
     }
-    pub(super) fn word(&self, index: isize) -> u16 {
+    fn word_le(&self, index: isize) -> u16 {
         let offset = index
             .checked_mul(2)
             .expect("native ROM word offset overflow");
@@ -28,12 +69,13 @@ impl NativeRecord {
             .expect("native ROM word extent overflow");
         u16::from_le_bytes([self.byte(offset), self.byte(high)])
     }
-    pub(super) fn long(&self, index: isize) -> u32 {
+    fn long_le(&self, index: isize) -> u32 {
         u32::from_le_bytes(core::array::from_fn(|lane| {
-            let offset = index
-                .checked_add(lane as isize)
-                .expect("native ROM long extent overflow");
-            self.byte(offset)
+            self.byte(
+                index
+                    .checked_add(lane as isize)
+                    .expect("native ROM long extent overflow"),
+            )
         }))
     }
 }

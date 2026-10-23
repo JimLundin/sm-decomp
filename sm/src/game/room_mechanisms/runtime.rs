@@ -135,17 +135,7 @@ impl ImportedAliases for Runtime<'_> {
         }
     }
 }
-impl Host for Runtime<'_> {
-    fn session(&self) -> &crate::game::session::Session {
-        Runtime::session(self)
-    }
-    fn session_mut(&mut self) -> &mut crate::game::session::Session {
-        Runtime::session_mut(self)
-    }
-    fn inputs(&self) -> &crate::game::external_inputs::ExternalInputs {
-        Runtime::inputs(self)
-    }
-}
+impl Host for Runtime<'_> {}
 impl Runtime<'_> {
     fn bit_index(&mut self, value: u16) -> usize {
         self.foreign(|game| usize::from(crate::game::progress_flags::PrepareBitAccess(value, game)))
@@ -247,18 +237,23 @@ impl Effects for Runtime<'_> {
         });
     }
     fn enemy_projectile(&mut self, definition: u16, parameter: u16) {
-        self.foreign(|game| {
-            crate::game::enemy_projectiles::SpawnEprojWithRoomGfx(definition, parameter, game)
-        });
+        crate::game::enemy_projectiles::lifecycle::spawn_room(self, definition, parameter);
     }
     fn wake_projectile_for_block(&mut self, block: u16) {
-        let mut index = 34isize;
-        while index >= 0 {
-            if block == self.word(arrays::eproj_E.checked_add_signed(index).unwrap()) {
-                break;
-            }
-            index -= 2;
+        if let Some(slot) = self
+            .session_mut()
+            .enemy_projectiles
+            .slots
+            .iter_mut()
+            .rev()
+            .find(|slot| slot.behavior_a == block)
+        {
+            slot.delay = 1;
+            slot.program = slot.program.wrapping_add(2);
+            return;
         }
+        // The legacy failed search uses byte index -2; retain its exceptional alias.
+        let index = -2isize;
         let timer = arrays::eproj_instr_timers
             .checked_add_signed(index)
             .unwrap();
@@ -359,8 +354,5 @@ impl Effects for Runtime<'_> {
                 unsafe{crate::native_assertion! { '_c2rust_label: address < 0x2000; b"addr < 0x2000\0", b"src/sm_84.c\0", 265, b"uint8 *RomPtr_84orRAM(uint16_t)\0" };}0
             },
         })
-    }
-    fn probe(&self, name: &'static str) {
-        crate::verify_probe::hit(name);
     }
 }

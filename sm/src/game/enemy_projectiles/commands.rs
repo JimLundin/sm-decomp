@@ -1,39 +1,37 @@
 //! Enemy-projectile command identities, ordered state changes and captured operands.
 #![forbid(unsafe_code)]
-use super::script::EprojScript;
-use super::state::Point;
-use super::{Execution, SlotField as F};
+use super::access::{enemy, enemy_byte};
+use super::host::{EnemyMember as F, Host, NativeRecord, ScriptPosition, ScriptRecord};
 use crate::game::constants::{bank_86::*, bank_a0::*};
-use crate::game::sm_94::kSinCosTable8bit_Sext;
+use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
+use crate::game::session::Point;
 
-fn reset_position(ctx: &mut Execution<'_>, slot: isize) {
-    ctx.set_slot(F::X, slot, ctx.slot(F::BehaviorA, slot));
-    ctx.set_slot(F::Y, slot, ctx.slot(F::BehaviorB, slot));
+fn reset_position(h: &mut impl Host, slot: isize) {
+    enemy!(h, slot, x = enemy!(h, slot, behavior_a));
+    enemy!(h, slot, y = enemy!(h, slot, behavior_b));
 }
-fn drop_at_projectile(ctx: &mut Execution<'_>, k: u16, definition: u16) {
+fn drop_at_projectile(h: &mut impl Host, k: u16, definition: u16) {
     let slot = (k >> 1) as isize;
-    ctx.state_mut().spawn.point = Point {
-        x: ctx.slot(F::X, slot),
-        y: ctx.slot(F::Y, slot),
+    h.session_mut().enemy_projectiles.spawn.point = Point {
+        x: enemy!(h, slot, x),
+        y: enemy!(h, slot, y),
     };
-    super::drops::spawn(definition, k, 0, ctx);
+    super::drops::spawn(definition, k, 0, h);
 }
-fn random_sprite(ctx: &mut Execution<'_>, k: u16, script: &EprojScript, mask: u16, half: u16) {
+fn random_sprite(h: &mut impl Host, k: u16, script: &impl ScriptRecord, mask: u16, half: u16) {
     let slot = (k >> 1) as isize;
-    let x = ctx
-        .slot(F::X, slot)
-        .wrapping_add(ctx.next_random() & mask)
+    let x = enemy!(h, slot, x)
+        .wrapping_add(h.next_random() & mask)
         .wrapping_sub(half);
-    let y = ctx
-        .slot(F::Y, slot)
-        .wrapping_add((ctx.random_number() & (mask << 8)) >> 8)
+    let y = enemy!(h, slot, y)
+        .wrapping_add((h.inputs().random & (mask << 8)) >> 8)
         .wrapping_sub(half);
-    ctx.create_sprite(x, y, script.word(0), 0);
+    h.create_sprite(x, y, script.native_word(0), 0);
 }
-fn random_move(ctx: &mut Execution<'_>, slot: isize, script: &EprojScript) {
-    let signs = ctx.next_random();
+fn random_move(h: &mut impl Host, slot: isize, script: &impl ScriptRecord) {
+    let signs = h.next_random();
     let x = loop {
-        let random = ctx.next_random() as i8;
+        let random = h.next_random() as i8;
         let amount =
             ((i32::from(script.byte(0)) & i32::from(random)) - i32::from(script.byte(1))) as i8;
         if amount >= 0 {
@@ -45,13 +43,9 @@ fn random_move(ctx: &mut Execution<'_>, slot: isize, script: &EprojScript) {
     } else {
         i32::from(x)
     };
-    ctx.set_slot(
-        F::X,
-        slot,
-        (i32::from(ctx.slot(F::X, slot)) + amount) as u16,
-    );
+    enemy!(h, slot, x = (i32::from(enemy!(h, slot, x)) + amount) as u16);
     let y = loop {
-        let random = ctx.next_random() as u8;
+        let random = h.next_random() as u8;
         let amount =
             ((i32::from(script.byte(2)) & i32::from(random)) - i32::from(script.byte(3))) as u8;
         if amount & 0x80 == 0 {
@@ -63,75 +57,76 @@ fn random_move(ctx: &mut Execution<'_>, slot: isize, script: &EprojScript) {
     } else {
         i16::from(y)
     };
-    ctx.set_slot(F::Y, slot, ctx.slot(F::Y, slot).wrapping_add(amount as u16));
+    enemy!(h, slot, y = enemy!(h, slot, y).wrapping_add(amount as u16));
 }
-fn set_velocity_toward(ctx: &mut Execution<'_>, k: u16, angle: u16) {
+fn set_velocity_toward(h: &mut impl Host, k: u16, angle: u16) {
     let slot = (k >> 1) as isize;
-    ctx.set_slot(
-        F::VelocityX,
+    enemy!(
+        h,
         slot,
-        (4 * i32::from(kSinCosTable8bit_Sext[usize::from(angle) + 64])) as u16,
+        velocity_x = (4 * i32::from(kSinCosTable8bit_Sext[usize::from(angle) + 64])) as u16
     );
-    ctx.set_slot(
-        F::VelocityY,
+    enemy!(
+        h,
         slot,
-        (4 * i32::from(kSinCosTable8bit_Sext[usize::from(angle)])) as u16,
+        velocity_y = (4 * i32::from(kSinCosTable8bit_Sext[usize::from(angle)])) as u16
     );
 }
 pub(super) fn dispatch(
     ea: u32,
     k: u16,
-    script: &EprojScript,
-    ctx: &mut Execution<'_>,
-) -> Option<usize> {
+    script: &impl ScriptRecord,
+    h: &mut impl Host,
+) -> Option<ScriptPosition> {
     let slot = (k >> 1) as isize;
     let result = match ea {
         8814932 => {
-            ctx.set_slot(F::Definition, slot, 0);
+            enemy!(h, slot, definition = 0);
             None
         }
         8814937 => {
-            ctx.set_slot(F::Program, slot, script.bank_address().wrapping_sub(2));
+            enemy!(h, slot, program = script.bank_address().wrapping_sub(2));
             None
         }
         8814945 | 8822864 => {
-            ctx.set_slot(F::PreAction, slot, script.word(0));
+            enemy!(h, slot, pre_action = script.native_word(0));
             script.offset(if ea == 8814945 { 2 } else { 0 })
         }
         8814954 => {
-            ctx.set_slot(F::PreAction, slot, 0x8170);
+            enemy!(h, slot, pre_action = 0x8170);
             script.offset(0)
         }
         8826770 => {
-            ctx.set_slot(F::Y, slot, ctx.slot(F::Y, slot).wrapping_sub(4));
+            enemy!(h, slot, y = enemy!(h, slot, y).wrapping_sub(4));
             script.offset(0)
         }
         8814961 => {
-            match script.long() {
-                8833019 => super::shared_pre::SpawnMotherBrainDeathBeam(k, ctx),
-                _ => ctx.unreachable(),
+            match script.long24() {
+                8833019 => super::shared_pre::SpawnMotherBrainDeathBeam(k, h),
+                _ => h.unreachable(),
             }
             script.offset(3)
         }
         8815061 => {
-            ctx.set_slot(F::Counter, slot, script.word(0));
+            enemy!(h, slot, counter = script.native_word(0));
             script.offset(2)
         }
         8818073 => {
-            super::collision::power_bomb(k, ctx);
-            let divisor = ctx.player_speed_divisor().wrapping_add(1);
-            if (i32::from(ctx.player_speed_divisor()) - 5) & 0x8000 != 0 {
-                ctx.set_player_speed_divisor(ctx.player_speed_divisor().wrapping_add(1));
-                ctx.set_slot(F::BehaviorB, slot, divisor);
-                ctx.set_slot(F::BehaviorA, slot, 256);
-                ctx.set_slot(F::PreAction, slot, 0x8dca);
-                ctx.set_slot(
-                    F::Properties,
+            super::collision::power_bomb(k, h);
+            let divisor = h.session().player.speed_divisor.wrapping_add(1);
+            if (i32::from(h.session().player.speed_divisor) - 5) & 0x8000 != 0 {
+                h.session_mut().player.speed_divisor =
+                    h.session().player.speed_divisor.wrapping_add(1);
+                enemy!(h, slot, behavior_b = divisor);
+                enemy!(h, slot, behavior_a = 256);
+                enemy!(h, slot, pre_action = 0x8dca);
+                enemy!(
+                    h,
                     slot,
-                    ctx.slot(F::Properties, slot) & 0x5fff | 0x2000,
+                    properties = enemy!(h, slot, properties) & 0x5fff | 0x2000
                 );
-                ctx.set_player_invincibility(0);
-                ctx.set_player_knockback(0);
+                h.session_mut().player.invincibility = 0;
+                h.session_mut().player.knockback_timer = 0;
             }
             script.offset(0)
         }
@@ -144,78 +139,83 @@ pub(super) fn dispatch(
                 8835534 => addr_kEnemyDef_E7FF,
                 _ => addr_kEnemyDef_DF7F,
             } as u16;
-            drop_at_projectile(ctx, k, definition);
+            drop_at_projectile(h, k, definition);
             script.offset(0)
         }
         8823742 | 8826678 | 8827958 => {
-            reset_position(ctx, slot);
+            reset_position(h, slot);
             script.offset(0)
         }
         8825738 => {
-            ctx.state_mut().spawn.point = Point {
-                x: ctx.slot(F::X, slot),
-                y: ctx.slot(F::Y, slot),
+            h.session_mut().enemy_projectiles.spawn.point = Point {
+                x: enemy!(h, slot, x),
+                y: enemy!(h, slot, y),
             };
-            let definition = script.word(if ctx.area() != 0 { 2 } else { 0 });
-            super::drops::spawn(definition, k, 0, ctx);
+            let definition = script.native_word(if h.session().room.area != 0 { 2 } else { 0 });
+            super::drops::spawn(definition, k, 0, h);
             script.offset(4)
         }
-        8827198 => script.jump(if ctx.slot(F::BehaviorA, slot) & 0x8000 != 0 {
+        8827198 => script.jump(if enemy!(h, slot, behavior_a) & 0x8000 != 0 {
             addr_off_86B166 as u16
         } else {
             addr_off_86B14B as u16
         }),
         8828917 => {
-            ctx.set_earthquake_type(1);
-            ctx.set_earthquake_timer(ctx.earthquake_timer() | 0x20);
+            h.session_mut().feedback.earthquake_kind = 1;
+            h.session_mut().feedback.earthquake_timer =
+                h.session().feedback.earthquake_timer | 0x20;
             script.offset(0)
         }
         8828993 => {
-            let old = ctx.slot(F::Y, slot);
-            ctx.set_slot(
-                F::Y,
+            let old = enemy!(h, slot, y);
+            enemy!(
+                h,
                 slot,
-                (i32::from(old) + i32::from(script.word(0))) as u16,
+                y = (i32::from(old) + i32::from(script.native_word(0))) as u16
             );
             script.offset(2)
         }
         8833232 => {
-            ctx.set_slot(F::Y, slot, ctx.slot(F::Y, slot).wrapping_add(12));
+            enemy!(h, slot, y = enemy!(h, slot, y).wrapping_add(12));
             script.offset(0)
         }
         8840499 => {
-            ctx.set_slot(F::VelocityY, slot, script.word(0));
+            enemy!(h, slot, velocity_y = script.native_word(0));
             script.offset(2)
         }
         8815046 => {
-            if ctx.decrement(F::Counter, slot) == 1 {
+            let old = enemy!(h, slot, counter);
+            enemy!(h, slot, counter = old.wrapping_sub(1));
+            if old == 1 {
                 script.offset(2)
             } else {
-                script.jump(script.word(0))
+                script.jump(script.native_word(0))
             }
         }
         8815054 => {
-            if ctx.decrement(F::Counter, slot) == 1 {
+            let old = enemy!(h, slot, counter);
+            enemy!(h, slot, counter = old.wrapping_sub(1));
+            if old == 1 {
                 script.offset(1)
             } else {
                 script.offset(script.byte(0) as i8 as isize)
             }
         }
         8815071 => {
-            random_move(ctx, slot, script);
+            random_move(h, slot, script);
             script.offset(4)
         }
         8815152 | 8815164 => {
-            let old = ctx.slot(F::Properties, slot);
-            let mask = script.word(0);
-            ctx.set_slot(
-                F::Properties,
+            let old = enemy!(h, slot, properties);
+            let mask = script.native_word(0);
+            enemy!(
+                h,
                 slot,
-                if ea == 8815152 {
+                properties = if ea == 8815152 {
                     old | mask
                 } else {
                     old & mask
-                },
+                }
             );
             script.offset(2)
         }
@@ -230,44 +230,48 @@ pub(super) fn dispatch(
                 8815236 => (0x1000, true),
                 _ => (0x1000, false),
             };
-            let old = ctx.slot(F::Properties, slot);
-            ctx.set_slot(
-                F::Properties,
+            let old = enemy!(h, slot, properties);
+            enemy!(
+                h,
                 slot,
-                if set { old | mask } else { old & !mask },
+                properties = if set { old | mask } else { old & !mask }
             );
             script.offset(0)
         }
         8815256 => {
-            ctx.set_slot(F::Radius, slot, script.word(0));
+            enemy!(h, slot, radius = script.native_word(0));
             script.offset(2)
         }
         8815265 => {
-            ctx.set_slot(F::Radius, slot, 0);
+            enemy!(h, slot, radius = 0);
             script.offset(0)
         }
         8815269 => {
-            let x = ctx.player_x().wrapping_sub(ctx.slot(F::X, slot));
-            let y = ctx.player_y().wrapping_sub(ctx.slot(F::Y, slot));
-            let angle = ctx.calculate_angle_from_xy(x, y).wrapping_mul(2);
-            let selected = (ctx.state().selected >> 1) as isize;
-            ctx.set_slot(F::BehaviorA, selected, angle);
+            let x = h.session().player.x.wrapping_sub(enemy!(h, slot, x));
+            let y = h.session().player.y.wrapping_sub(enemy!(h, slot, y));
+            let angle = h.calculate_angle_from_xy(x, y).wrapping_mul(2);
+            let selected = (h.session().enemy_projectiles.selected >> 1) as isize;
+            enemy!(h, selected, behavior_a = angle);
             let index = usize::from(angle >> 1);
-            ctx.set_slot(
-                F::VelocityX,
+            enemy!(
+                h,
                 selected,
-                kSinCosTable8bit_Sext[index + 64] as u16,
+                velocity_x = kSinCosTable8bit_Sext[index + 64] as u16
             );
-            ctx.set_slot(F::VelocityY, selected, kSinCosTable8bit_Sext[index] as u16);
+            enemy!(
+                h,
+                selected,
+                velocity_y = kSinCosTable8bit_Sext[index] as u16
+            );
             script.offset(0)
         }
         8815317 => {
-            let mut color = script.word(2);
+            let mut color = script.native_word(2);
             let mut remaining = i32::from(script.byte(4));
-            let mut source = script.word(0);
+            let mut source = script.native_word(0);
             loop {
-                let value = ctx.raw_rom_word(0x86, source);
-                ctx.set_palette_word(color >> 1, value);
+                let value = h.native_record(0x86, source).word_le(0);
+                h.set_palette_buffer((color >> 1) as isize, value);
                 source = source.wrapping_add(2);
                 color = color.wrapping_add(2);
                 remaining -= 1;
@@ -278,12 +282,12 @@ pub(super) fn dispatch(
             script.offset(5)
         }
         8815357 => {
-            ctx.queue_music(u16::from(script.byte(0)));
+            h.queue_music(u16::from(script.byte(0)));
             script.offset(1)
         }
         8815369..=8815495 if (ea - 8815369) % 9 == 0 => {
             let command = (ea - 8815369) / 9;
-            ctx.queue_sound(
+            h.queue_sound(
                 (command % 3 + 1) as u8,
                 [6, 15, 3, 9, 1][(command / 3) as usize],
                 u16::from(script.byte(0)),
@@ -291,20 +295,22 @@ pub(super) fn dispatch(
             script.offset(1)
         }
         8823894 => {
-            if ctx.next_random() & 0xc000 == 0xc000 {
-                script.jump(script.word(0))
+            if h.next_random() & 0xc000 == 0xc000 {
+                script.jump(script.native_word(0))
             } else {
                 script.offset(2)
             }
         }
         8826258 => {
-            let amount = (i32::from(ctx.slot(F::VelocityX, slot) as i16) << 8) as u32;
-            ctx.add_split(F::X, F::XFraction, slot, amount);
-            script.jump(script.word(if ctx.slot(F::VelocityX, slot) & 0x8000 == 0 {
-                2
-            } else {
-                0
-            }))
+            let amount = (i32::from(enemy!(h, slot, velocity_x) as i16) << 8) as u32;
+            super::pre_helpers::add_split(F::X, F::XFraction, slot, amount, h);
+            script.jump(
+                script.native_word(if enemy!(h, slot, velocity_x) & 0x8000 == 0 {
+                    2
+                } else {
+                    0
+                }),
+            )
         }
         8828906 | 8828952 => {
             let definition = if ea == 8828906 {
@@ -312,26 +318,30 @@ pub(super) fn dispatch(
             } else {
                 addr_kEproj_TourianStatueUnlockingParticleTail
             } as u16;
-            super::lifecycle::spawn_room(ctx, definition, k);
+            super::lifecycle::spawn_room(h, definition, k);
             script.offset(0)
         }
         8833774 => {
-            ctx.set_mother_brain_purple_breath_active(0);
+            h.set_mother_brain_purple_breath_active(0);
             script.offset(0)
         }
         8836577 | 8836762 => {
-            ctx.next_random();
-            ctx.set_slot(F::VelocityX, slot, ctx.random_shifted_word());
+            h.next_random();
+            enemy!(
+                h,
+                slot,
+                velocity_x = ((h.inputs().random >> 8) | (h.inputs().bitmask << 8))
+            );
             if ea == 8836577 {
-                ctx.set_slot(F::VelocityY, slot, 192);
+                enemy!(h, slot, velocity_y = 192);
             }
             script.offset(0)
         }
         8817910 | 8817917 => {
-            ctx.set_slot(
-                F::PreAction,
+            enemy!(
+                h,
                 slot,
-                if ea == 8817910 { 0x8dff } else { 0x8dca },
+                pre_action = if ea == 8817910 { 0x8dff } else { 0x8dca }
             );
             script.offset(0)
         }
@@ -342,24 +352,24 @@ pub(super) fn dispatch(
                 [addr_stru_869688, addr_stru_869696]
             };
             for definition in definitions {
-                ctx.state_mut().spawn.secondary = 0;
-                super::lifecycle::spawn_room(ctx, definition as u16, k);
+                h.session_mut().enemy_projectiles.spawn.secondary = 0;
+                super::lifecycle::spawn_room(h, definition as u16, k);
             }
             script.offset(0)
         }
         8820256 => {
-            let count = ctx.slot_byte(F::BehaviorA, k as isize).wrapping_sub(1);
-            ctx.set_slot_byte(F::BehaviorA, k as isize, count);
+            let count = enemy_byte!(h, k as isize, behavior_a).wrapping_sub(1);
+            enemy_byte!(h, k as isize, behavior_a = count);
             if count as i8 >= 0 {
-                let handler = ctx.slot(F::BehaviorB, slot);
-                super::lifecycle::spawn_room(ctx, handler, k);
+                let handler = enemy!(h, slot, behavior_b);
+                super::lifecycle::spawn_room(h, handler, k);
             }
             script.offset(0)
         }
         8827497 | 8827506 => {
-            let angle = ctx.angle_to_player(k);
+            let angle = super::pre_helpers::angle_to_player(k, h);
             set_velocity_toward(
-                ctx,
+                h,
                 k,
                 if ea == 8827497 {
                     angle & 0x7f
@@ -370,24 +380,24 @@ pub(super) fn dispatch(
             script.offset(0)
         }
         8827832 => {
-            if ctx.kraid_health_eighth(ctx.slot(F::BehaviorB, slot)) & 0x8000 == 0 {
-                script.jump(script.word(0))
+            if h.kraid_health_eighth(enemy!(h, slot, behavior_b)) & 0x8000 == 0 {
+                script.jump(script.native_word(0))
             } else {
                 script.offset(2)
             }
         }
-        8831347 => script.jump(script.word(ctx.slot(F::BehaviorA, slot) as isize)),
+        8831347 => script.jump(script.native_word(enemy!(h, slot, behavior_a) as isize)),
         8831412 | 8835527 => {
-            ctx.set_slot(F::Graphics, slot, 0);
+            enemy!(h, slot, graphics = 0);
             script.offset(0)
         }
         8835420 => {
-            super::pre_actions::EprojPreInstr_KagosBugs_Func1(k, ctx);
-            super::pre_actions::EprojPreInstr_KagosBugs_Func2(k, ctx);
-            let mut direction = (ctx.random_number() & 0x300).wrapping_add(2048);
-            ctx.set_slot(F::VelocityY, slot, direction.wrapping_neg());
-            let enemy = ctx.slot(F::BehaviorB, slot);
-            let distance = ctx.enemy_x(enemy).wrapping_sub(ctx.slot(F::X, slot));
+            super::pre_actions::EprojPreInstr_KagosBugs_Func1(k, h);
+            super::pre_actions::EprojPreInstr_KagosBugs_Func2(k, h);
+            let mut direction = (h.inputs().random & 0x300).wrapping_add(2048);
+            enemy!(h, slot, velocity_y = direction.wrapping_neg());
+            let enemy = enemy!(h, slot, behavior_b);
+            let distance = h.enemy_x(enemy).wrapping_sub(enemy!(h, slot, x));
             let absolute = if distance & 0x8000 != 0 {
                 distance.wrapping_neg()
             } else {
@@ -396,68 +406,72 @@ pub(super) fn dispatch(
             if (absolute as i16).wrapping_sub(0x30) >= 0 {
                 direction = if distance & 0x8000 != 0 { 0xffff } else { 0 };
             }
-            ctx.set_slot(
-                F::VelocityX,
+            enemy!(
+                h,
                 slot,
-                if direction & 0x100 != 0 {
+                velocity_x = if direction & 0x100 != 0 {
                     (-0x200i16) as u16
                 } else {
                     0x200
-                },
+                }
             );
-            ctx.set_slot(F::PreAction, slot, 0xd0ec);
+            enemy!(h, slot, pre_action = 0xd0ec);
             script.offset(0)
         }
         8835510 => {
-            ctx.set_slot(
-                F::BehaviorC,
+            enemy!(
+                h,
                 slot,
-                (ctx.random_number() & 0x1f).wrapping_add(1),
+                behavior_c = (h.inputs().random & 0x1f).wrapping_add(1)
             );
-            ctx.set_slot(F::PreAction, slot, 0xd0ca);
+            enemy!(h, slot, pre_action = 0xd0ca);
             script.offset(0)
         }
         8836594 => {
-            let odd = ctx.nmi_frame() & 1 != 0;
-            ctx.set_slot(
-                F::X,
+            let odd = h.inputs().frame & 1 != 0;
+            enemy!(
+                h,
                 slot,
-                if odd {
-                    ctx.slot(F::BehaviorB, slot)
+                x = if odd {
+                    enemy!(h, slot, behavior_b)
                 } else {
-                    (256 - i32::from(ctx.slot(F::BehaviorB, slot))) as u16
-                },
+                    (256 - i32::from(enemy!(h, slot, behavior_b))) as u16
+                }
             );
-            ctx.set_slot(F::Spritemap, slot, script.word(if odd { 0 } else { 2 }));
-            ctx.set_slot(F::Program, slot, script.bank_address().wrapping_add(4));
-            ctx.set_slot(F::Delay, slot, 1);
+            enemy!(
+                h,
+                slot,
+                spritemap = script.native_word(if odd { 0 } else { 2 })
+            );
+            enemy!(h, slot, program = script.bank_address().wrapping_add(4));
+            enemy!(h, slot, delay = 1);
             None
         }
         8836650 => {
-            ctx.set_slot(
-                F::X,
+            enemy!(
+                h,
                 slot,
-                if ctx.nmi_frame() & 1 != 0 {
-                    ctx.slot(F::BehaviorB, slot)
+                x = if h.inputs().frame & 1 != 0 {
+                    enemy!(h, slot, behavior_b)
                 } else {
                     (-4608i16) as u16
-                },
+                }
             );
-            ctx.set_slot(F::Spritemap, slot, script.word(0));
-            ctx.set_slot(F::Program, slot, script.bank_address().wrapping_add(2));
-            ctx.set_slot(F::Delay, slot, 1);
+            enemy!(h, slot, spritemap = script.native_word(0));
+            enemy!(h, slot, program = script.bank_address().wrapping_add(2));
+            enemy!(h, slot, delay = 1);
             None
         }
         8838234 => {
-            ctx.set_slot(F::Properties, slot, 12288);
+            enemy!(h, slot, properties = 12288);
             script.offset(0)
         }
         8838263 => {
-            ctx.state_mut().spawn.point = Point {
-                x: ctx.slot(F::X, slot),
-                y: ctx.slot(F::Y, slot),
+            h.session_mut().enemy_projectiles.spawn.point = Point {
+                x: enemy!(h, slot, x),
+                y: enemy!(h, slot, y),
             };
-            super::lifecycle::spawn_room(ctx, addr_kEproj_Spores as u16, 0);
+            super::lifecycle::spawn_room(h, addr_kEproj_Spores as u16, 0);
             script.offset(0)
         }
         8842467 | 8842519 => {
@@ -466,11 +480,11 @@ pub(super) fn dispatch(
             } else {
                 (0x1f, 16)
             };
-            random_sprite(ctx, k, script, mask, half);
+            random_sprite(h, k, script, mask, half);
             script.offset(2)
         }
         8842891 | 8842903 | 8842915 => {
-            ctx.queue_sound(
+            h.queue_sound(
                 2,
                 1,
                 match ea {
@@ -481,27 +495,27 @@ pub(super) fn dispatch(
             );
             script.offset(0)
         }
-        8842927 => script.jump(super::drops::convert(k, ctx)),
+        8842927 => script.jump(super::drops::convert(k, h)),
         8843024 => {
-            super::drops::respawn(k, ctx);
+            super::drops::respawn(k, h);
             script.offset(0)
         }
-        8815019 => script.jump(script.word(0)),
+        8815019 => script.jump(script.native_word(0)),
         8815024 => script.offset(script.byte(0) as i8 as isize),
         8822906 => {
-            super::pre_actions::EprojPreInstr_PirateMotherBrainLaser_MoveRight(k, ctx);
+            super::pre_actions::EprojPreInstr_PirateMotherBrainLaser_MoveRight(k, h);
             script.offset(0)
         }
         8822876 => {
-            super::pre_actions::EprojPreInstr_PirateMotherBrainLaser_MoveLeft(k, ctx);
+            super::pre_actions::EprojPreInstr_PirateMotherBrainLaser_MoveLeft(k, h);
             script.offset(0)
         }
         8815070 => script.offset(0),
         _ => {
-            ctx.unreachable();
+            h.unreachable();
             None
         }
     };
-    crate::verify_probe::hit("eproj.command.executed");
+    h.probe("eproj.command.executed");
     result
 }

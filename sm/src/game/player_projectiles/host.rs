@@ -1,7 +1,7 @@
-//! Synchronous semantic host proposal; no Game, RAM, unsafe, generic control IDs.
+//! Player-projectile effects and finite aliases over the shared Session.
 #![forbid(unsafe_code)]
 use super::access::{ShotLane, Store};
-use crate::game::{external_inputs::ExternalInputs, session::Session};
+use crate::game::session_access::SessionAccess;
 use crate::rom::{RomImage, RomRecord};
 
 #[derive(Clone, Copy)]
@@ -28,11 +28,7 @@ pub enum Drawing {
     Beam { sprite: u16, x: u16, y: u16 },
     CrashEchoes,
 }
-pub trait Host {
-    fn probe(&self, _name: &'static str) {}
-    fn session(&self) -> &Session;
-    fn session_mut(&mut self) -> &mut Session;
-    fn inputs(&self) -> &ExternalInputs;
+pub trait Host: SessionAccess {
     fn loaded_image(&self) -> Option<RomImage>;
     fn native_image(&self) -> RomImage;
     // Loaded low-window diagnostic runs before acquiring the fresh allocation.

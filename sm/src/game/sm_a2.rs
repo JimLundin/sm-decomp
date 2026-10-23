@@ -19,10 +19,7 @@ use crate::game::progress_flags::CheckEventHappened;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_81::SaveToSram;
 use crate::game::sm_90::CallSomeSamusCode;
-use crate::game::sm_91::{
-    MakeSamusFaceForward, Samus_RestoreHealth, Samus_RestoreMissiles, Samus_RestorePowerBombs,
-    Samus_RestoreSuperMissiles,
-};
+use crate::game::sm_91::MakeSamusFaceForward;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::{
     CalculateAngleFromXY, CalculateAngleOfSamusFromEnemy, CallEnemyPreInstr,
@@ -3151,10 +3148,10 @@ crate::game::callback_dispatch! {
             *(ram_ptr!(game, u16; 0xdf2)) = 0;
             CallSomeSamusCode(0xa, game);
         } else {
-            Samus_RestoreHealth(2, game);
-            Samus_RestoreMissiles(2, game);
-            Samus_RestoreSuperMissiles(2, game);
-            Samus_RestorePowerBombs(2, game);
+            crate::game::item_pickups_runtime::restore(crate::game::item_pickups::Resource::Health, 2, game);
+            crate::game::item_pickups_runtime::restore(crate::game::item_pickups::Resource::Missiles, 2, game);
+            crate::game::item_pickups_runtime::restore(crate::game::item_pickups::Resource::SuperMissiles, 2, game);
+            crate::game::item_pickups_runtime::restore(crate::game::item_pickups::Resource::PowerBombs, 2, game);
             if ((word!(game.samus_reserve_health)) as i16)
                 .wrapping_sub((word!(game.samus_max_reserve_health)) as i16)
                 >= 0

@@ -117,14 +117,15 @@ fn finish_trace() -> Vec<u8> {
 // This is the only dispatch to retarget when Inventory owns these algorithms.
 // The cases and literal expectations stay unchanged.
 fn restore(resource: u8, amount: u16, game: &mut Game) {
-    use crate::game::sm_91;
-    match resource {
-        0 => sm_91::Samus_RestoreHealth(amount, game),
-        1 => sm_91::Samus_RestoreMissiles(amount, game),
-        2 => sm_91::Samus_RestoreSuperMissiles(amount, game),
-        3 => sm_91::Samus_RestorePowerBombs(amount, game),
+    use crate::game::item_pickups::Resource;
+    let resource = match resource {
+        0 => Resource::Health,
+        1 => Resource::Missiles,
+        2 => Resource::SuperMissiles,
+        3 => Resource::PowerBombs,
         _ => unreachable!(),
-    }
+    };
+    crate::game::item_pickups_runtime::restore(resource, amount, game);
 }
 fn boundary(id: u32, game: &mut Game) {
     let (resource, row) = match id {
@@ -159,6 +160,10 @@ fn boundary(id: u32, game: &mut Game) {
     put(&mut expected_ram, reserve_at, expected[1]);
     put(&mut expected_ram, w::reserve_health_mode, expected[2]);
     restore(resource, amount, game);
+    let resource_name = ["health", "missile", "super-missile", "power-bomb"][resource as usize];
+    let actual = [current_at, reserve_at, w::reserve_health_mode]
+        .map(|at| u16::from_le_bytes([game.g_ram[at], game.g_ram[at + 1]]));
+    assert_eq!(actual, expected, "{resource_name} restore boundary {id}");
     assert_eq!(&game.g_ram[..], &expected_ram[..], "restore boundary {id}");
 }
 
@@ -302,10 +307,7 @@ unsafe fn gunship(id: u32, game: &mut Game) -> Vec<u8> {
     trace
 }
 
-pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
-    if id >= CASES {
-        return None;
-    }
+fn capture_checked(id: u32) -> Vec<u8> {
     let mut game = Game::new();
     // Nonzero unchanged surroundings catch collateral writes and owner defaults.
     game.g_ram.fill(0x5a);
@@ -334,5 +336,14 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     output.extend_from_slice(&[0; 11]); // Existing carrier: no return/panic/diagnostic.
     output.extend_from_slice(&(trace.len() as u32).to_le_bytes());
     output.extend_from_slice(&trace);
-    Some(output)
+    output
+}
+
+pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
+    if id >= CASES {
+        return None;
+    }
+    let outcome = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| capture_checked(id)));
+    assert_eq!(outcome.is_ok(), true, "restore case {} failed", 1382 + id);
+    outcome.ok()
 }

@@ -1,7 +1,20 @@
-//! Exact retained observations; moved fields are specified in state.rs, with one owner.
+//! External observations refreshed at foreign and imported-alias boundaries.
 #![forbid(unsafe_code)]
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct ExternalInputs {
+    pub player_x_radius: u16,
+    pub current_enemy: u16,
+    pub random: u16,
+    pub random_enemy_counter: u16,
+    pub bitmask: u16,
+    pub fx_y: u16,
+    pub statue_animation: u16,
+    pub nmi_counter_low: u8,
+    pub drop_origin_x: u16,
+    pub drop_origin_y: u16,
+    pub grapple_end_x: u16,
+    pub grapple_end_y: u16,
+
     pub shoot_button: u16,
     pub cancel_button: u16,
     pub switch_button: u16,
@@ -20,7 +33,6 @@ pub struct ExternalInputs {
     pub power_bomb_active: u16,
     pub door_definition: u16,
     pub door_direction: u16,
-    pub tourian_statue_finished: u16,
     pub camera_y: u16,
     pub frame: u16,
     pub ceres: u16,

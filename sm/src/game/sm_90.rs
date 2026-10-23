@@ -35,8 +35,8 @@ use crate::game::sm_88::EnableHdmaObjects;
 use crate::game::sm_91::{
     DemoObjectInputHandler, MakeSamusFaceForward, Samus_CancelSpeedBoost, Samus_Func20,
     Samus_HandlePalette, Samus_HandleTransFromBlockColl, Samus_HandleTransitions,
-    Samus_InputHandler, Samus_LoadSuitPalette, Samus_LoadSuitTargetPalette, Samus_RestoreHealth,
-    SamusFunc_E633, SamusFunc_F433, XrayRunHandler,
+    Samus_InputHandler, Samus_LoadSuitPalette, Samus_LoadSuitTargetPalette, SamusFunc_E633,
+    SamusFunc_F433, XrayRunHandler,
 };
 use crate::game::sm_94::{
     BlockInsideDetection, HandleGrappleBeamGfx, PostGrappleCollisionDetect_X,
@@ -1942,7 +1942,11 @@ pub unsafe fn SamusMoveHandler_CrystalFlashMain_0(game: &mut Game) {
     unsafe {
         if (word!(game.nmi_frame_counter_word) & 7) == 0 {
             word!(game.samus_missiles -= 1);
-            Samus_RestoreHealth(0x32, game);
+            crate::game::item_pickups_runtime::restore(
+                crate::game::item_pickups::Resource::Health,
+                0x32,
+                game,
+            );
             let v0: bool = ((word!(game.substate)) as i16).wrapping_sub(1) < 0;
             if word!(game.substate -= 1, reread) == 0 || v0 {
                 word!(game.substate = 10);
@@ -1955,7 +1959,11 @@ pub unsafe fn SamusMoveHandler_CrystalFlashMain_1(game: &mut Game) {
     unsafe {
         if (word!(game.nmi_frame_counter_word) & 7) == 0 {
             word!(game.samus_super_missiles -= 1);
-            Samus_RestoreHealth(0x32, game);
+            crate::game::item_pickups_runtime::restore(
+                crate::game::item_pickups::Resource::Health,
+                0x32,
+                game,
+            );
             let v0: bool = ((word!(game.substate)) as i16).wrapping_sub(1) < 0;
             if word!(game.substate -= 1, reread) == 0 || v0 {
                 word!(game.substate = 10);
@@ -1968,7 +1976,11 @@ pub unsafe fn SamusMoveHandler_CrystalFlashMain_2(game: &mut Game) {
     unsafe {
         if (word!(game.nmi_frame_counter_word) & 7) == 0 {
             word!(game.samus_power_bombs -= 1);
-            Samus_RestoreHealth(0x32, game);
+            crate::game::item_pickups_runtime::restore(
+                crate::game::item_pickups::Resource::Health,
+                0x32,
+                game,
+            );
             let v0: bool = ((word!(game.substate)) as i16).wrapping_sub(1) < 0;
             if word!(game.substate -= 1, reread) == 0 || v0 {
                 word! {game; samus_movement_handler = ((0x90d75bi32) as u16);

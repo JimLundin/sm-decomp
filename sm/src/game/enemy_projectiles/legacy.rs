@@ -1,10 +1,5 @@
 //! Qualified legacy effects; these are not counted as unsafe elimination.
-use crate::{game_state::Game, rom::RomRecord};
-
-pub(super) fn record(bank: u8, cursor: u16, game: &mut Game) -> RomRecord {
-    // Retains the original low-window printf and failure flag before capture.
-    unsafe { crate::rtl::rom_record(bank, cursor, game) }
-}
+use crate::game_state::Game;
 
 pub(super) fn next_random(game: &mut Game) -> u16 {
     unsafe { crate::game::sm_80::NextRandom(game) }
@@ -56,21 +51,6 @@ pub(super) fn draw_spritemap(
             );
         }
     }
-}
-/// Keep the old low-window diagnostic before capturing the native allocation.
-/// All record reads themselves are safe and retain this exact owned source.
-pub(super) fn raw_record(bank: u8, cursor: u16, game: &mut Game) -> super::content::NativeRecord {
-    let address = (u32::from(bank) << 16) | u32::from(cursor);
-    if address & 0x8000 == 0 {
-        unsafe {
-            crate::c_library::printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), address);
-        }
-        game.g_fail = true;
-    }
-    super::content::NativeRecord::new(
-        game.capture_native_rom(),
-        crate::rtl::lorom_offset(address) as usize,
-    )
 }
 
 pub(super) fn respawn_enemy(index: u16, game: &mut Game) {
