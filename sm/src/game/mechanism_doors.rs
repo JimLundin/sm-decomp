@@ -7,6 +7,7 @@ pub enum Setup {
     Colored,
     Blue,
     ShotSignal,
+    MotherBrainEscape,
 }
 
 /// Field accesses retain the caller's captured slot. Block identities need not
@@ -14,6 +15,7 @@ pub enum Setup {
 pub trait Context {
     type Block: Copy + Eq;
     fn block(&self, slot: usize) -> Self::Block;
+    fn below(&self, block: Self::Block) -> Self::Block;
     fn clear_block(&mut self, slot: usize);
     fn release(&mut self, slot: usize);
     fn argument_high(&self, slot: usize) -> u8;
@@ -30,6 +32,12 @@ pub trait Context {
     fn set_behavior(&mut self, block: Self::Block, value: u8);
 }
 
+fn install<C: Context>(c: &mut C, block: C::Block, kind: u16) {
+    let high = c.level_high(block) & 15 | (kind >> 8) as u8;
+    c.set_level_high(block, high);
+    c.set_behavior(block, kind as u8);
+}
+
 pub fn setup(c: &mut impl Context, slot: usize, kind: Setup) -> u8 {
     match kind {
         Setup::Grey | Setup::Colored => {
@@ -40,9 +48,15 @@ pub fn setup(c: &mut impl Context, slot: usize, kind: Setup) -> u8 {
                 c.set_argument(slot, argument);
             }
             let block = c.block(slot);
-            let high = c.level_high(block) & 15 | 0xc0;
-            c.set_level_high(block, high);
-            c.set_behavior(block, 0x44);
+            install(c, block, 0xc044);
+        }
+        Setup::MotherBrainEscape => {
+            let mut block = c.block(slot);
+            install(c, block, 0x9001);
+            for _ in 0..3 {
+                block = c.below(block);
+                install(c, block, 0xd0ff);
+            }
         }
         Setup::Blue => {
             let selected = c.projectile_selection();

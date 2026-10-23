@@ -768,20 +768,6 @@ crate::game::callback_dispatch! {
         }
         0
     };
-    [8697336] PlmSetup_MotherBrainRoomEscapeDoor [] {
-        let v1: u16 = word!(game.plm_block_indices[(j >> 1)]);
-        WriteLevelDataBlockTypeAndBts(v1, 0x9001, game);
-        let v2: u16 = (word!(game.room_width_in_blocks) as i32 * 2 + v1 as i32) as u16;
-        WriteLevelDataBlockTypeAndBts(v2, 0xd0ff, game);
-        let v3: u16 = (word!(game.room_width_in_blocks) as i32 * 2 + v2 as i32) as u16;
-        WriteLevelDataBlockTypeAndBts(v3, 0xd0ff, game);
-        WriteLevelDataBlockTypeAndBts(
-            (word!(game.room_width_in_blocks) as i32 * 2 + v3 as i32) as u16,
-            0xd0ff,
-            game,
-        );
-        0
-    };
     [8698353] sub_84B9F1 [] {
         let v1: u16 = word!(game.plm_block_indices[(j >> 1)]);
         update_level_block_bits((v1 >> 1) as usize, 0xfff, 0x8000, game);
@@ -950,6 +936,7 @@ crate::game::callback_dispatch! {
         8706700 => [crate::game::mechanism_eye_door_ram::begin(j, crate::game::mechanism_eye_door::Part::Eye, game)];
         8706745 => [crate::game::mechanism_eye_door_ram::begin(j, crate::game::mechanism_eye_door::Part::Body, game)];
         8706846 => [crate::game::mechanism_metroid_quota_ram::begin(j, game)];
+        8697336 => [crate::game::mechanism_doors_ram::setup(j, crate::game::mechanism_doors::Setup::MotherBrainEscape, game)];
         8697169 => [crate::game::mechanism_tourian_wall_ram::setup(j, crate::game::mechanism_tourian_wall::Setup::Open, game)];
         8697199 => [crate::game::mechanism_tourian_wall_ram::setup(j, crate::game::mechanism_tourian_wall::Setup::Close, game)];
         8698309 => [crate::game::mechanism_animal_rescue_ram::setup(j, crate::game::mechanism_animal_rescue::Setup::RescueWall, game)];

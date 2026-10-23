@@ -104,49 +104,49 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares the paired Tourian invisible-wall controls after
-   animal rescue at `373b0203`. `mechanism_tourian_wall` retires setups B551/B56F.
-   It preserves captured origin, odd-offset rounding, low twelve terrain bits,
-   wrapping row steps and all ten live width reads, including the final unused
-   next-block calculation. Core/checked adapter forbid unsafe; both candidate
-   setup routes use shared logic. RAM remains authoritative. Eighty-six of 115
-   setups are shared; 29 and native dispatch/authority work remain.
+   Latest verified stage shares Mother Brain's escape-door setup B5F8 after
+   Tourian walls at `8112c7df`. Existing `mechanism_doors` now installs the door
+   and three extension cells below it, preserving captured origin, exact odd-byte
+   terrain access, BTS indexing and exactly three live width reads. The factored
+   installer also preserves Grey/Colored door sequencing. Both modules forbid
+   unsafe. The candidate uses the shared Door route; RAM remains authoritative.
+   Eighty-seven of 115 setups are shared; 28 and native dispatch/authority remain.
 
-   Final checks pass 21,924 defined-original/main/candidate comparisons, 8,700
-   separate checked-only failure-prefix cases, ten actual main enemy-producer
-   groups and 80 collision observations. Original FFFE/FFFF visited terrain words
-   are outside RAM and undefined: preflight excludes those original executions.
-   A final computed but unvisited FFFE/FFFF remains valid. Actual close/open enemy
-   callbacks, two ordered spawns (including one-free-slot capacity), AAE3 deletion
-   and Air/Solid collision effects execute. Native enemy/scroll alignment and bounds
-   are asserted. Candidate comparisons normalize explicitly asserted outer enemy,
-   camera and scroll fields; this does not establish independent encounter ownership.
+   All19 selected suites pass with identities219 runtime/257 local. Escape-door
+   checks pass 16,704 original/main/candidate comparisons INCLUDING 5,742 matching
+   checked installer failure-prefix cases, ten producer/script groups and192
+   collision observations. Unlike Tourian raw terrain reads, B5F8's original
+   installer already rejects FFFD..FFFF through checked indexing. Symbolic checks
+   assert all16 observation/failure positions and captured origin/live widths.
+   Retained ordinary-door checks pass570 comparisons/12 failures/30 tails/3
+   checked-only cases. Actual A9B32A runs eight debris attempts, advances AI and
+   spawns B677 at(0,6); capacity cases preserve effect order. Actual Samus horizontal
+   and vertical collisions follow extensions to BTS1, DDBC->AA8C->DE4D, setting
+   the door transition. Candidate explicitly retains native debris/outer AI work.
 
-   Identities218 runtime/255 local and all17 selected suites pass independent review.
-   Production release/frontend/verifier/source (59.58s), prospective release (56.33s),
-   carrier (21.78s), harness (26.05s) and selected checks (25.56s) passed first attempts.
-   No rendering, movie, complete-composition runtime or full enemy sequence ran.
+   Separate synthetic B677 at(0,32), guarded y32/cameraY0 before every DrawPlm,
+   executes AC0B's real draw94B1 and Delete. Four Door/extension cells and four Air
+   cells retain their expected BTS and collision effects. Actual source-coordinate
+   drawing is not executed: visible odd native drawing remains undefined. No
+   movie, rendering fidelity, complete encounter or independent ownership claim.
+   Production release/frontend/verifier/source48.12s, prospective release43.47s,
+   carrier16.81s, harness18.21s and selected checks22.23s pass first attempts.
 
-   Liquid limitation: unchanged `advance_tide` dereferences native u16 at odd RAM
-   0x197D on every unfrozen `lava_surface` path. Do not execute that path as defined
-   reference evidence. Booster-escape checks expose only unchanged `advance_motion`
-   in the carrier; they establish no tide, rendering or complete liquid fidelity.
+   Retained limits: `advance_tide` reads native u16 at odd RAM197D on every
+   unfrozen lava_surface; never run that as defined-reference evidence. The old
+   terrain18 visible restore cases reach odd RAM1E67 and remain excluded. Preserve
+   their logs. Current guarded offscreen draws do not establish rendering fidelity
+   or resolve the inherited Intro mismatch. Other qualified fixtures remain as
+   documented in the local handoffs.
 
-   Historical correction: the terrain stage's 18 visible restore/render cases
-   reach a native u16 read at odd RAM address 0x1E67. Those results are not
-   defined-native fidelity evidence. Preserve their logs and independent setup
-   comparisons; do not rerun the undefined cases. Current selected suites exclude
-   them. Current item restores assert the offscreen guard before that read.
-
-   Main is **104,882 Rust lines in 184 files**. Prospective composition is
-   **113,769 (+8,887)**, unadopted. This stage adds 50 main and 28 owned/wiring
-   lines: **+78 complete lines**, +785 lexical tokens and +2,888 LF-normalized
-   bytes. Verification adds 526 lines; implementation plus checks adds 604.
-   The candidate previously delegated these behaviors to native callbacks; no
-   duplicate owned algorithm existed to retire. No dependency or native/installer/
-   launcher source is added. Unsafe declarations remain 2,885; cast-containing
-   lines fall two to 6,024. No net reduction, complete unsafe retirement,
-   persistent ownership or backend-independence claim.
+   Main is **104,886 Rust lines in 184 files**. Prospective composition is
+   **113,775 (+8,889)**, unadopted. This stage adds4 main lines/52 lexical tokens/
+   23 LF-normalized bytes; complete composition adds6/92/187. Retained verification
+   adds601/7,628/25,381; implementation plus checks607 lines. Local production's
+   two lines overlap composition. No dependencies or native/installer/launcher
+   source added. Unsafe declarations remain2,885; cast-containing lines fall three
+   to6,021. No net reduction, complete unsafe retirement, persistent ownership or
+   backend-independence claim.
 
    Next dependencies, in order:
 
@@ -207,12 +207,14 @@ references; measure build/test time and resource growth before changing the loop
      bodies; compare actual script, terrain, collision and event consumers.
    - [x] Share paired Tourian invisible-wall controls and retire both bodies;
      compare actual enemy producers, deletion and material collision effects.
+   - [x] Share Mother Brain escape-door setup through the existing door core;
+     compare actual debris/door producer, player transition and offscreen script.
    - Close remaining room/event/boss setups, then constants/no-op/result routes.
      Preserve synchronous writes, nested displacement and failure prefixes before
      retiring native dispatch. The 115-identity inventory is in the local door
-     handoff; 15 room/event/boss and 14 residual identities remain. Select one
-     coherent responsibility through caller/validation investigation. The Tourian-wall
-     handoff records retained dependencies and original-memory-domain exclusions.
+     handoff; 14 room/event/boss and 14 residual identities remain. Select one
+     coherent responsibility through caller/validation investigation. The escape-door
+     handoff records retained dependencies and guarded drawing limits.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -220,7 +222,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified Tourian-wall continuation, with
+   `runtime-impact-working/` is the verified Mother Brain escape-door continuation,
+   with `MOTHER_BRAIN_DOOR_HANDOFF.md`, `mother-brain-door-price.json` and
+   `mother-brain-door-check-attempt-1.log`. `mother-brain-door-parent/` preserves
+   prior main/carrier/local/composition inputs. Tourian evidence remains in
    `TOURIAN_WALL_HANDOFF.md`, `tourian-wall-price.json` and
    `tourian-wall-check-attempt-1.log`. `tourian-wall-parent/` preserves prior
    main/carrier/local/composition inputs. Animal-rescue evidence remains in

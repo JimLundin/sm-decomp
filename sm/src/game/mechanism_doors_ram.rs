@@ -18,6 +18,9 @@ impl Context for DoorFields<'_> {
     fn block(&self, slot: usize) -> u16 {
         self.word(0x1c87 + 2 * slot)
     }
+    fn below(&self, block: u16) -> u16 {
+        block.wrapping_add(self.word(0x7a5).wrapping_mul(2))
+    }
     fn clear_block(&mut self, slot: usize) {
         self.put(0x1c87 + 2 * slot, 0);
     }

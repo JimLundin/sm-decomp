@@ -9,88 +9,72 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares the paired Tourian invisible walls after `373b0203`.
-Setups B551/B56F (source integers8697169/8697199) retire into a safe core/checked
-adapter. Actual headers B763/B767 use those setups and AAE3 Delete. Both modules
-forbid unsafe. Preserve captured origin, rounded odd terrain offsets, low twelve
-bits, ten writes and ten subsequent live width observations. The final computed
-next block is not accessed. Candidate typed setup paths publish/share/reimport;
-RAM remains authoritative. 86/115 setups are shared, 29 remain.
+The latest stage shares Mother Brain escape-door setup B5F8 (8697336) after
+Tourian walls at `8112c7df`. Existing mechanism_doors/checked adapter preserve
+captured origin, exact odd-byte high access, BTS indexing and three live widths:
+9001 followed by D0FF three times. The common installer also serves Grey/Colored
+without changing their observation order. Both modules forbid unsafe. Candidate
+Door routing publishes/shared-runs/reimports; RAM remains authoritative.
+87/115 setups are shared;14 room/event/boss and14 residual identities remain.
 
-Main: **104,882 Rust lines in 184 files**, unsafe declarations2,885 unchanged,
-casts6,024 (-2). Maintained implementation105,444; installers/launcher included
-106,354. Prospective composition: **113,769 in 285 files**, **+8,887 over main**,
-unadopted. Main cost +50 lines/+515 tokens/+1,731 normalized bytes; complete
-implementation +78/+785/+2,888. Retained verification +526/+6,879/+22,530;
-implementation plus checks604 lines. Local production +27 lines overlaps the
-composition. No duplicate owned algorithm existed. No dependency/native/installer/
-launcher additions, net reduction, full unsafe retirement, persistent authority
-or backend-independence claim.
+Main104886 Rust lines/184 files; unsafe2885 unchanged,casts6021(-3). Maintained
+implementation105448; installers/launcher included106358. Candidate113775/285,
+gap8889, unadopted. Stage main[4,52,23],composition[6,92,187],verification
+[601,7628,25381] in lines/tokens/LF bytes; implementation+checks607 lines. Local
+production+2 overlaps composition. No dependency/native/installer additions,
+net reduction, independent ownership or backend completion claim.
 
-Use `runtime-impact-working/TOURIAN_WALL_HANDOFF.md`, `tourian-wall-price.json`
-and `tourian-wall-check-attempt-1.log`. Selected run passes25.56s with identities
-218 runtime/255 local: 21,924 defined-original/main/candidate direct comparisons,
-8,700 separate checked-only failure-prefix comparisons, ten actual producer groups
-and80 collision samples. Every original sequence is preflighted across its ten
-visited terrain words. Reached FFFE/FFFF offsets access outside RAM in the original;
-never execute them as fidelity evidence. Checked main/candidate failures retain
-valid preceding writes. FFFC/FFFD are valid; an unused final next-block FFFE/FFFF
-is also valid. Symbolic tests assert all31 observation/effect failure positions,
-changed widths/origin and every write value, including the tenth width read.
+Use `runtime-impact-working/MOTHER_BRAIN_DOOR_HANDOFF.md`,
+`mother-brain-door-price.json` and `mother-brain-door-check-attempt-1.log`.
+All19 suites pass22.229812s with219 runtime/257 local source identities.
+Escape[16704,5742,10,192]: direct total INCLUDES5742 matching checked original
+failures. Original B5F8 installer already bounds-checks FFFD..FFFF; preceding
+writes survive. This differs from Tourian's separate checked-only UB exclusions.
+Symbolic cases assert all16 ordered observations/failures, changed widths and
+captured origin. Ordinary doors remain[570,12,30,3].
 
-Actual main A9EFE6 close and A9F138 open callbacks run with bounded aligned
-EnemyLayout40 overlays and native scroll alignment assertions. Camera512/513 and
-countdown0/1 cover their trigger boundaries; actual acceleration runs at the
-selected stationary target. Both wall sources spawn in order at(48,3),(31,3).
-One-free-slot cases assert allocation order and are not scheduled with fake occupied
-headers. Actual AAE3 Delete releases normally created slots. Real collision sampling
-checks all20 cells in each normally allocated wall pair, Air versus Solid, preserved
-low bits, current-block selection and scan state.
+Eight actual A9B32A producer groups cover zero/one/eight/eighteen free debris
+slots and available/full PLM pools. Source spawns at(0,6), after eight native
+CB21 attempts and AIvar_A=B33C. Full overlays are bounds/alignment guarded.
+Candidate explicitly retains native debris and outer AI; this is not owned
+encounter evidence. Real Samus both-axis collision traverses D0FF to Door BTS1,
+using DDBC->AA8C->DE4D, setting E17D/door/state9. Projectile effects also checked.
 
-Candidate constructors are compared after normalizing explicitly asserted outer
-A9 enemy/camera/scroll writes. This is wall/PLM evidence, not an independent owned
-encounter callback. No old whole-enemy callback, full enemy sequence, room loading,
-startup, rendering/audio, movie or complete composition/gameplay claim. Selected
-streams contain only Delete; drawing callbacks are unexercised.
+Separate synthetic B677 at(0,32) runs real AC0B draw94B1 and Delete over two ticks;
+carrier asserts y32/cameraY0 before every Emit. Four left Door/extension cells
+and four right Air cells retain BTS and consumer behavior. No visible native
+DrawPlm or actual source-coordinate script/rendering claim. No movie, whole
+encounter, complete composition runtime, boot-to-credits or independent backend.
 
-Liquid limitation: `advance_tide` always reads native u16 at odd RAM0x197D, reached
-by every unfrozen `lava_surface`. Do not execute that path as defined-reference
-evidence. Carrier-only wrappers expose unchanged `advance_motion`; full liquid
-engine, tide and rendering remain uncovered.
+Production release/frontend/verifier/source48.1155174s; prospective release
+43.4677616s; carrier16.81s; harness18.21s. All first attempts pass. Production hash:
+`03b9d310264a1df0354f9f9e66f95eb9e8235d824ce943b281dbfe1ee80904b6`.
+Three main files are formatted and byte-identical in composition; its fourth
+changed file is exactly transformed mechanisms_ram. No main registrations
+changed. Inputs remain frozen after builds; compiler lane released/DLL unloaded.
 
-Historical correction: 18 visible terrain restore/render cases (nine kinds by
-two aliases) reach DrawPlm's native u16 dereference at odd RAM0x1E67. They are
-not defined-native fidelity evidence. Preserve logs and independent setup results;
-do not rerun the undefined cases. Current selected suites exclude them. This does
-not diagnose the inherited Intro mismatch in `DRAWING_HANDOFF.md`.
+Retained selected results: Tourian21924/8700/10/80,animal42008/4628/19/13,
+Shaktool26700/6/4,booster91874/8354/20/21,sound15300/274/2304,
+quota6118/66/112/48,eye13320/3440/56/24,plants1360/1504/8/640,
+cannon3630/1420/46/8,item3476/1320/14/32,scroll5816/1296/52,
+station3240/112/149/6,Chozo592/4/4/16,hands52/163/12,source342/672/47,
+closing74/120/7,collision198/545/176/1. Animal/booster failures are included;
+Tourian8700 are separate checked-only cases, never undefined original execution.
 
-Animal42008/4628/19/13, Shaktool26700/6/4, booster91874/8354/20/21,
-sound15300/274/2304, quota6118/66/112/48, eye-door13320/3440/56/24,
-plants1360/1504/8/640, cannon3630/1420/46/8, item3476/1320/14/32,
-scroll5816/1296/52, station3240/112/149/6, Chozo592/4/4/16, hands52/163/12,
-source342/672/47, closing74/120/7 and collision198/545/176/1 pass. Animal and
-booster direct totals include their matching bounds failures; Tourian's checked-only
-count is separate from original-defined comparisons. Historical qualified graphics/
-cannon/Chozo evidence and full-contact limits remain unchanged; eye acid initialization
-stays excluded. Unchanged scroll bounded nonreturn observations were not repeated.
+Preserve historical exclusions: unfrozen advance_tide always reads odd RAM197D;
+terrain18 visible restoration reads odd RAM1E67. Neither is defined-reference
+coverage. Current offscreen guards do not resolve inherited Intro mismatch.
+Qualified item/cannon/Chozo and full-contact limits remain; eye acid initialization
+stays excluded. Scroll bounded nonreturn observations were not repeated.
 
-Production release/frontend/verifier/source passed59.58s; prospective release56.33s,
-carrier21.78s, harness26.05s and selected checks25.56s all passed first attempts.
-No source changes followed builds. Production hash:
-`6c76eabad1724d1b588697e012ea550247f3d4344b81435e60b283455969db26`.
-Changed gameplay/root formatting and diff checks pass; manifest additions conform
-with baseline formatting differences unchanged. Compiler lane released; DLL unloaded.
-
-`tourian-wall-parent/` preserves prior main/carrier/local/composition sources.
-Earlier snapshots/caches and failed logs remain. Animal rescue's candidate/fixture
-BE30 correction and failed/diagnostic runs remain documented in its handoff; main
-numeric dispatch was unchanged. Do not rerun historical preparation scripts;
-composition lives under `impact-composition/sm/src`. Continue the next coherent
-responsibility among15 remaining room/event/boss setups, then14 residual identities.
-Runtime promotion needs reset/load/rewind/external-writer checks; boot-to-credits
-and independent renderer/audio remain unfinished. The parallel movie/state
-investigation is documented in [MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md);
-it implements no pipeline.
+`mother-brain-door-parent/` preserves preceding main/carrier/local/composition.
+All historical snapshots/caches/failed logs remain, including animal BE30 routing
+correction; main numeric dispatch was always correct. Never rerun historical
+broad preparation scripts. Composition is `impact-composition/sm/src`.
+Continue remaining setups, then native dispatch and authority dependencies.
+Ownership promotion requires reset/load/rewind/external-writer checks. The
+parallel movie/state investigation in [MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md)
+implements no pipeline.
 
 ## Paused launch draft
 
