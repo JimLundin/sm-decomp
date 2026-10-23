@@ -46,7 +46,7 @@ flowchart TB
     FCHECK --> FSHARED["39 shared-consumer comparisons<br/>+ visual guard PASS"]:::done
     FLEG --> FKEVEN["Kraid / 8 even-area references<br/>actual caller execution PASS"]:::done
     FLEG --> FKODD["Kraid / original CPU<br/>12 cases / 36 stages match"]:::done
-    FSHARED --> FMUT["42 detached + 9 DLL mutations<br/>GitHub running"]:::active
+    FSHARED --> FMUT["42 detached / stage PASS<br/>9 DLL + detailed audit pending"]:::active
     FKEVEN --> FKCOMPARE["Kraid candidate comparisons<br/>8 defined + 12 CPU PASS"]:::done
     FKODD --> FKCOMPARE
     FKCOMPARE --> FADOPT
@@ -63,7 +63,7 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    FB["Composed baseline"]:::active --> FEVENT["Discard event write"]:::pending
+    FB["Composed baseline / PASS<br/>mutation outcomes await log audit"]:::done --> FEVENT["Discard event write"]:::pending
     FB --> FHI["Keep stale event mask"]:::pending
     FB --> FBOSS["Clear boss mask high byte"]:::pending
     FB --> FMAP["Write wrong object map"]:::pending
@@ -77,6 +77,7 @@ flowchart LR
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
 ```
 
 <details>

@@ -444,8 +444,9 @@ references; measure build/test time and resource growth before changing the loop
    compared, candidate stack bytes preserved. Old odd-address Rust never executes.
    Independent output audit passes;71flags/2saves/39shared/guards also pass again
    on this source. Root format/release build and detached compilation pass.
-   Hosted run40036842766 tests30fd121f: full composition/frontend and42detached
-   +9DLL mutations running. Branch follow-upb09c2aa3 adds only the reviewed
+   Hosted run40036842766 tests30fd121f: format, composed baselines and42detached
+   mutation stage pass; frontend/9DLL mutations and detailed log audit pending.
+   Branch follow-upb09c2aa3 adds only the reviewed
    comparison-only Python script; its Rust is identical. Main adoption pending.
    Final assembled production grows281lines/+2451tokens/+10945LFbytes;
    verification Rust+2349lines and Python+256, including Kraid. Production
