@@ -47,8 +47,8 @@ flowchart TB
     BUILD --> HOST["Hosted composition baseline<br/>execution PASS"]:::done
     HOST --> HOSTFIX["Preserve larger fixture image<br/>corrected / baseline PASS"]:::done
     GUARD["Runtime + 1,026 bytes guard<br/>execution PASS"]:::done --> VERIFY
-    MUT["12 new faults<br/>source review PASS"]:::checked --> KILLS["41 mutations<br/>hosted execution active"]:::active
-    MAWFIX --> MAWMUT["Two Maw precedence mutations<br/>source review PASS"]:::checked --> KILLS
+    MUT["32 detached mutations<br/>caught / stage PASS"]:::done --> KILLS["9 DLL mutations<br/>pending"]:::pending
+    MAWFIX --> MAWMUT["Two Maw precedence mutations<br/>caught / PASS"]:::done --> MUT
     SHARED["35 shared-caller comparisons<br/>+ visual runtime guard PASS"]:::done --> ADOPT
     CODEC --> VERIFY
     WAFFLE --> VERIFY
@@ -58,7 +58,7 @@ flowchart TB
     VERIFY --> ADOPT["Caller migration + retirement<br/>adopt on main"]:::pending
     MOVIE --> ADOPT
     KILLS --> ADOPT
-    class HOST,HOSTFIX,KILLS changed
+    class MUT,MAWMUT,KILLS changed
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
@@ -68,6 +68,35 @@ flowchart TB
 ```
 
 [Sprite candidate CI: running](https://github.com/JimLundin/sm-decomp/actions/runs/40031500027)
+
+```mermaid
+flowchart LR
+    subgraph pool["Sprite pool faults / caught"]
+        A["Wrong free slot"]:::done
+        B["Clear slot zero"]:::done
+        C["Keep compatibility tails"]:::done
+        D["Retirement clears timers"]:::done
+        E["Cache selected slot"]:::done
+        F["Read content before callback"]:::done
+    end
+    subgraph drawing["Drawing faults / caught"]
+        G["Reverse draw order"]:::done
+        H["Cache future draw slots"]:::done
+    end
+    subgraph controllers["Controller faults / caught"]
+        I["Drop fractional carry"]:::done
+        J["Cache actor Y"]:::done
+        K["Cache first timer read"]:::done
+        L["Cache second timer read"]:::done
+        M["Wrong first Maw mask"]:::done
+        N["Wrong final Maw mask"]:::done
+    end
+    pool --> drawing
+    pool --> controllers
+    class A,B,C,D,E,F,G,H,I,J,K,L,M,N changed
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
 
 [Shared Session adopted: 74948127](https://github.com/JimLundin/sm-decomp/commit/74948127) / [Build + eight mutations: PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40005712881)
 

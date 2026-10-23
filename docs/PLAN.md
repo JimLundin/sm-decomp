@@ -429,7 +429,10 @@ references; measure build/test time and resource growth before changing the loop
    copies the now3MiB image into a fixed1A8000 allocation. Reviewed correction
    preserves max(existing length,1A8000), full copy and every assertion.
    Hosted84f03c03 reruns in CI40031500027: clean composed baseline now passes;
-   detached mutation execution is active, with no final kill count yet.
+   detached mutation stage passes all32faults (18retained+14sprite, including
+   both Maw grouping regressions). The runner requires passing baselines,
+   compiling faults and intended assertion rejection; crashes/timeouts do not
+   count. Full hosted build and nine DLL mutations remain pending.
    Local build5 incorporates the fixture correction: format/release pass13.59s
    on6aa14eb6. All121sprite and35shared comparisons, fiveDraygon cases,52phase
    OAM comparison and both ownership guards repeat successfully on that source.
