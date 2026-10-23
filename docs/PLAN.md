@@ -12,6 +12,10 @@ The report is graphical: show module-level ownership, callers and individual
 validation steps. Update affected node colors on every implementation commit;
 outline nodes changed since the previous report. Keep prose and accounting in
 linked technical documents, and distinguish checked drafts from committed work.
+Use individual file nodes for the active responsibility, with separate nodes for
+each verification step. Highlight touched files even when their status color
+stays the same. Keep adopted folder maps expandable and the active work visible;
+show failed checks in red. No percentage based on file or node counts.
 
 This is the active plan. Read the current work order and validation strategy
 below. For the step-by-step refactor process, task boundaries and parallel work,
@@ -157,12 +161,10 @@ references; measure build/test time and resource growth before changing the loop
    player-projectile typed core, absorbing twelve singleton algorithm/binding
    layers and actual flare decisions (5294lines plus adjacent scope). Reviewed
    state/host contract is frozen; producers, flight and presentation/runtime
-   workers have completed the reviewed candidate. Validation branch
-   verify/player-session-20261023 passes local build,106groups+56comparisons and
-   11549frames with all12probes and zero failures. Hosted independent execution
-   is pending before adoption. Full production change is-1937lines; verification
-   +1068; maintained Rust-869. The actual three-core host compiles without Game/
-   backend modules; runtime still uses scoped ownership across legacy calls.
+   workers completed the candidate on verify/player-session-20261023 (026ab1a2).
+   Local release/frontend/format,106groups+56comparisons and11549frames with
+   all12probes pass. Hosted independent execution failed in run39996910420;
+   adoption remains pending. Production-1937lines; verification+1068lines.
 
 
    Room mechanisms are now adopted as one production responsibility: creation,
