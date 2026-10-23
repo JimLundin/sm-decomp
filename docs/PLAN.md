@@ -108,58 +108,49 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares Noob Tube rupture and related block installation
-   after `9a33c52a`. D67F/D689/D693 setups and live D6CC alias, D4BF key
-   watcher and six commands D525/D52C/D536/D543/D5E6/D5EE use a safe core
-   and checked adapter. Ten bank bodies and the obsolete public alias are retired;
-   all eleven numeric identities remain. Preserve D693 live block/width reads,
-   exact level-byte/BTS addresses, two separate wake increments, ordered effects
-   and actual Samus control resets. RAM remains authoritative. 101/115 setups
-   are shared; only 14 constant/no-op/result/diagnostic identities remain.
+   Latest verified stage unifies typed setup dispatch after `e5f30bdf`.
+   One full-u32 decoder covers all 115 identities, including the fourteen
+   residual result/diagnostic routes. Captured original identities preserve
+   aliases independently of semantic actions. Main and candidate share the
+   unsafe-forbidden ordinary executor; the native bank dispatcher, six residual
+   bodies and duplicate candidate mappings/forwarders are retired. Raw contact
+   pointers and exact fatal diagnostics remain explicit runtime boundaries.
+   RAM remains authoritative; this does not establish persistent ownership.
 
-   All 28 suites pass with 240 runtime/297 local source identities. New result
-   [15308,9172,7716,1840]: 15,308 successful setup comparisons, 9,172 separate
-   matching checked failures, 7,650 key-wake comparisons, 60 command comparisons
-   and six ordered effect-observer cases. Independent expected byte maps cover
-   exact odd offsets, wrapping, D693 self-aliases and failure prefixes. The
-   1,840 mixed lifecycle observations cover actual room selection, supported
-   sibling scripts, complete rupture, duplicate waits and event reentry.
-   All 27 retained suite vectors remain unchanged.
+   All 29 comparison suites passed (27.1911562s suite time), with all 28
+   retained vectors unchanged. New [115,199,62,5] covers semantic routing,
+   residual/boundary observations, creation/consumer observations and raw-pointer
+   cases. These are not 115 independently executed native bodies. Source
+   identities: 244 runtime/299 local. New creator tests execute actual spawning
+   wrappers, grapple and nested hands; historical native lifecycle references
+   otherwise retain frozen creation/dispatch. Five old/new fatal subprocess
+   pairs match output and status77: harness assertion interception, not a
+   shipped frontend exit; no postassert tail execution is claimed.
+   Supplemental gate suite [1348,20,5,4] passed separately in 0.0291543s on
+   the same frozen build, including Down/Up accumulator behavior. Thus 30
+   distinct suites passed, not one 30-suite invocation. Four checked-only gate
+   cases retain undefined-native exclusions. Constructed comparisons do not
+   establish movie or boot-to-credits coverage; prior exclusions/Intro mismatch
+   remain. No new movie frames were run for this dispatch change.
 
-   Room CEFB selects CF0D/CF27 and list C37D; actual record C3D1 places the
-   tube at (2,21). Initial drawing makes it class C/BTS44. Constructed projectile
-   classes pass through the real beam-terrain producer into the retained BD26
-   watcher; this is not power-bomb explosion/radius simulation. Power-bomb class
-   acceptance installs a distinct keypress wait. Relative to the accepted key,
-   lock/crack occurs at 0, draws at 48/49, shatter/quake at 50 and event B,
-   water/unlock/delete at 146. Free/partial/full pools and actual control resets
-   are covered. Event B does not cancel an already-waiting duplicate, while a
-   newly created tube takes the broken-state deletion path.
+   Production release/frontend/verifier/source passed in 58.98s. Candidate
+   retry passed in 49.48s after a 10.29s private Hand reexport failure. Carrier
+   passed in 19.81s; harness retry passed in 22.01s after an 8.48s fixture-only
+   inferred-i32 literal failure. Failed logs remain local; production source
+   stayed unchanged after its successful build.
 
-   Unused D700/D704/D708 use constructed placement, initial draws and real
-   shot-signal consumers; D704/D708 also reach their first post-signal draw.
-   Later callbacks D409/D476/D489/D4BE are absent from current source; checks
-   stop before unsupported paths. No full unused-script claim. Draw guards
-   clip at actual tube rows 21..26 and constructed sibling rows 29..32. No
-   visible rendering, effect motion, full room decompression, power-bomb movie
-   or full-game claim. Broken-state metadata selection does not prove broken
-   terrain decompression. Earlier native-access limits and Intro mismatch remain.
-
-   Production release/frontend/verifier/source 93.54s, prospective release
-   50.88s and carrier 20.82s pass first attempts. Harness retry passes in 26.70s
-   after a 9.01s fixture-only return-type failure. All checks pass in 27.96s,
-   explicit exit 0. A production callback type mismatch was caught and fixed
-   during review before builds; production stayed unchanged after final builds.
-
-   Main is **105,590 Rust lines in 196 files**. Prospective composition is
-   **114,776 (+9,186)** in 303 files, unadopted. Stage main adds 120 lines,
-   1,000 lexical tokens and 2,668 LF-normalized bytes; complete composition adds
-   193/1,649/5,558. Retained verification adds 1,131/13,202/48,081; implementation
-   plus checks adds 1,324/14,851/53,639. Local production overlaps composition.
-   No dependency, native, installer or launcher additions. Unsafe declarations
-   fall to 2,876; cast-containing lines to 5,992. Safe behavior and checked access
-   explain growth; no net reduction, complete unsafe retirement, persistent
-   ownership or backend independence claim.
+   Main is **105,946 Rust lines in 199 files**. Prospective composition is
+   **114,270 (+8,324)** in 306 files, unadopted. Deltas in lines/lexical tokens/
+   LF-normalized bytes: main [356,512,5078], complete composition
+   [-506,-8463,-32899], complete verification [927,13668,52017], implementation
+   plus checks [421,5205,19118]. Local5 [-862,-8972,-37922] already overlaps
+   composition. Carrier [634,6487,27571] includes main; carrier-only verification
+   [278,5975,22493] is already included in complete verification. No packing or
+   new dependency/native/installer additions. Unsafe declarations: 2,875;
+   cast-containing lines: 5,992. Maintained implementation including C/header:
+   106,508; including installers/launcher: 107,418. Main growth pays for shared
+   safe dispatch while the prospective composition shrinks; complete unsafe
+   retirement and backend independence remain unfinished.
 
    Next dependencies, in order:
 
@@ -241,11 +232,9 @@ references; measure build/test time and resource growth before changing the loop
    - [x] Share Noob Tube rupture and D67F/D689/D693 installations/live D6CC
      alias; compare real room selection, supported sibling prefixes and full
      rupture/event/duplicate tails with explicit projectile-class injection.
-   - Close the 14 constant/no-op/result/diagnostic setup identities, then retire
-     native setup dispatch. Design shared typed decoding/dispatch across main
-     and candidate to remove duplicated mappings. Preserve numeric aliases,
-     synchronous writes, nested displacement, diagnostics and failure prefixes.
-     The complete 115-identity inventory remains in the local door handoff.
+   - [x] Close the 14 residual setup identities and retire native bank setup
+     dispatch. Share full-u32 typed decoding and ordinary execution, preserving
+     aliases, synchronous writes, nested displacement and fatal diagnostics.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -253,7 +242,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified Noob Tube continuation,
+   `runtime-impact-working/` is the verified setup-dispatch continuation,
+   with `SETUP_DISPATCH_HANDOFF.md`, `setup-dispatch-price.json`,
+   `setup-dispatch-results.json` and supplemental `setup-dispatch-gate-results.json`.
+   `setup-dispatch-parent/` preserves frozen inputs. Noob Tube evidence remains
    with `NOOB_TUBE_HANDOFF.md`, `noob-tube-price.json` and
    `noob-tube-check-2.log`. `noob-tube-parent/` preserves prior
    main/carrier/local/composition inputs. Torizo evidence remains

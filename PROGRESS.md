@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 06:52 UTC**
+Updated: **2026-10-23 07:05 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -10,46 +10,34 @@ SNES backend remains the comparison oracle during migration.
 
 ## Latest verified milestone
 
-**Noob Tube rupture and related block setups**, committed as
-[`e5f30bdf`](https://github.com/JimLundin/sm-decomp/commit/e5f30bdf352c34a7890dcf7afac1e964e436673e).
+**Shared typed setup dispatch: all 115 setup identities decoded.**
 
-- Shared the setup, keypress wait, rupture effects, water change and control resets.
-- Removed ten bank bodies while retaining all eleven numeric dispatch identities.
-- Production and candidate release builds passed; **all 28 comparison suites passed**.
-- All 27 earlier suite results remained unchanged.
-- Checked partial/full effect pools, room reentry, duplicate tubes and supported
-  prefixes of the related unused scripts.
+- Main and candidate now share decoding and ordinary setup execution.
+- Removed the old bank dispatcher and duplicate candidate mappings while
+  preserving aliases, nested collision behavior and exact diagnostics.
+- Production and candidate release builds passed.
+- **29 comparison suites passed**, with all 28 earlier results unchanged;
+  a supplemental gate suite passed separately on the same build.
+- Five old/new fatal-diagnostic comparisons matched under the test harness.
 
-| Verified committed measure | Value |
+| Verified measure | Value |
 | --- | ---: |
-| Setup identities shared | 101 / 115 |
-| Maintained Rust source | 105,590 lines in 196 files |
-| Counted unsafe function declarations | 2,876 |
-| Prospective composition, not yet adopted | 114,776 lines in 303 files |
+| Setup identities decoded | 115 / 115 |
+| Maintained Rust source | 105,946 lines in 199 files |
+| Counted unsafe function declarations | 2,875 |
+| Prospective composition, not yet adopted | 114,270 lines in 306 files |
 
-Safety work has increased main-source size. The reduction target remains below
-100,000 maintained Rust lines; moving code or adding wrappers does not count as
-completing either reduction or unsafe removal.
+This stage adds 356 lines to main and removes 506 lines from the complete
+prospective composition. Safety work has increased main-source size. The target
+remains below 100,000 maintained Rust lines, with all unsafe operations removed.
 
 ## Work in progress
 
-**Shared typed setup dispatch and closure of the remaining fourteen identities.**
-
-- The new decoder contains all 115 identities and retains the original address
-  separately from its semantic action.
-- The implementation removes duplicated decoding, reverse mapping and setup
-  forwarding, while preserving authored callbacks and nested collision behavior.
-- Source review and the production release/frontend/verifier checks passed.
-- The first candidate build found a private re-export error; the fix is prepared
-  and the candidate rebuild is next.
-- Component verification, fatal-diagnostic checks, final accounting and commit
-  remain pending. These changes are not included in the verified figures above.
-
-## What follows
-
-Finish setup-dispatch validation and retirement, then continue the remaining
-gameplay consumers and state-ownership transfers. Renderer/audio replacement and
-an independently running game slice remain required parts of the destination.
+Setup dispatch is verified. Remaining creation/contact consumers and state
+ownership transfers are next. RAM still owns the current gameplay state; raw
+contact pointers and fatal diagnostics remain explicit compatibility boundaries.
+Renderer/audio replacement and an independently running game slice remain
+required parts of the destination.
 
 ## Verification limits
 

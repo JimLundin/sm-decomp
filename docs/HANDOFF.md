@@ -9,66 +9,65 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares Noob Tube rupture and related block installations after
-`9a33c52a`: D67F/D689/D693 and live D6CC alias, D4BF key watcher, and commands
-D525/D52C/D536/D543/D5E6/D5EE. Ten bank bodies and an obsolete public alias are
-retired, all eleven numeric identities retained. Core and checked adapter forbid
-unsafe code; actual projectile initialization and Samus controls remain explicit
-runtime dependencies. Preserve D693 live block/width reads, exact level byte and
-rounded BTS writes, two wake increments, effect order and control resets.
-RAM remains authoritative. 101/115 setups shared; 14 residual identities remain.
+Latest verified stage unifies typed setup dispatch after `e5f30bdf`.
+One full-u32 decoder covers all 115 identities, including the fourteen
+residual result/diagnostic routes. Captured original identities preserve
+aliases independently of semantic actions. Main and candidate share the
+unsafe-forbidden ordinary executor; the native bank dispatcher, six residual
+bodies and duplicate candidate mappings/forwarders are retired. Raw contact
+pointers and exact fatal diagnostics remain explicit runtime boundaries.
+RAM remains authoritative; this does not establish persistent ownership.
 
-Main 105590 Rust lines/196 files; unsafe 2876, casts 5992.
-Maintained implementation 106152; installers/launcher included 107062.
-Candidate 114776/303, gap 9186, unadopted. Main delta [120,1000,2668],
-composition [193,1649,5558], verification [1131,13202,48081] lines/tokens/LF
-bytes; implementation plus checks [1324,14851,53639]. Local production
-[72,643,2834] overlaps composition. No dependency/native/installer additions,
-net reduction, complete unsafe retirement, persistent ownership or backend
-independence claim. Safe behavior and checked access explain source growth.
+All 29 comparison suites passed (27.1911562s suite time), with all 28
+retained vectors unchanged. New [115,199,62,5] covers semantic routing,
+residual/boundary observations, creation/consumer observations and raw-pointer
+cases. These are not 115 independently executed native bodies. Source
+identities: 244 runtime/299 local. New creator tests execute actual spawning
+wrappers, grapple and nested hands; historical native lifecycle references
+otherwise retain frozen creation/dispatch. Five old/new fatal subprocess
+pairs match output and status77: harness assertion interception, not a
+shipped frontend exit; no postassert tail execution is claimed.
+Supplemental gate suite [1348,20,5,4] passed separately in 0.0291543s on
+the same frozen build, including Down/Up accumulator behavior. Thus 30
+distinct suites passed, not one 30-suite invocation. Four checked-only gate
+cases retain undefined-native exclusions. Constructed comparisons do not
+establish movie or boot-to-credits coverage; prior exclusions/Intro mismatch
+remain. No new movie frames were run for this dispatch change.
 
-Use `runtime-impact-working/NOOB_TUBE_HANDOFF.md`, `noob-tube-price.json`
-and `noob-tube-check-2.log`. All 28 suites pass, 240 runtime/297 local identities.
-New [15308,9172,7716,1840]: 15308 successful setup comparisons and 9172
-separate matching checked failures; 7650 key-wake, 60 command and 6 ordered
-effect-observer comparisons; 1840 mixed lifecycle observations. Independent
-expected byte maps test odd offsets, wrapping and D693 self-alias/failure prefixes.
-All 27 retained suite vectors remain unchanged.
+Production release/frontend/verifier/source passed in 58.98s. Candidate
+retry passed in 49.48s after a 10.29s private Hand reexport failure. Carrier
+passed in 19.81s; harness retry passed in 22.01s after an 8.48s fixture-only
+inferred-i32 literal failure. Failed logs remain local; production source
+stayed unchanged after its successful build.
 
-Actual CEFB header/state selection reads C37D and spawns record C3D1 at(2,21).
-Constructed projectile-class injection through real BlockCollNoWaveBeamHoriz
-feeds C540/BTS44/C83E/C7E2 into BD26; this is not a power-bomb explosion or
-radius simulation. The power-bomb class and accepted new key are separate
-suspension points. Key-relative ticks: lock/crack0, draws48/49, shatter/quake50,
-event B/water/unlock/delete146. All five effect-pool occupancy levels pass.
-The crack plus ten shards and six bubbles makes17 attempted effects. Actual
-Samus handlers and all six pose/movement resets are checked. An older waiting
-duplicate survives event B; a fresh tube deletes via broken-state selection.
+Main is **105,946 Rust lines in 199 files**. Prospective composition is
+**114,270 (+8,324)** in 306 files, unadopted. Deltas in lines/lexical tokens/
+LF-normalized bytes: main [356,512,5078], complete composition
+[-506,-8463,-32899], complete verification [927,13668,52017], implementation
+plus checks [421,5205,19118]. Local5 [-862,-8972,-37922] already overlaps
+composition. Carrier [634,6487,27571] includes main; carrier-only verification
+[278,5975,22493] is already included in complete verification. No packing or
+new dependency/native/installer additions. Unsafe declarations: 2,875;
+cast-containing lines: 5,992. Maintained implementation including C/header:
+106,508; including installers/launcher: 107,418. Main growth pays for shared
+safe dispatch while the prospective composition shrinks; complete unsafe
+retirement and backend independence remain unfinished.
 
-Unused D700/D704/D708 run actual constructed placement, initial draws and
-real shot-signal consumers; D704/D708 reach their first supported post-signal
-draw. Missing current-source callbacks D409/D476/D489/D4BE prevent full
-unused-script coverage. Guards clip actual tube rows21..26 and constructed
-sibling rows29..32. No visible renderer, effect motion, full room decompression,
-full unused-script, power-bomb movie or full-game claim. Broken-state level
-metadata selection does not establish decompressed broken terrain. Content and
-frozen references remain local; earlier exclusions and Intro mismatch remain.
+Final production source hash:
+`e136464e54168def038430830c4b3908cc30c410ced9df7020c6a3f8c936a06e`.
+Detailed fixtures, build failures, results and frozen snapshots remain in
+`runtime-impact-working/SETUP_DISPATCH_HANDOFF.md` and `setup-dispatch-*` files.
+The final price above includes the supplemental Python gate export addition.
 
-Production release/frontend/verifier/source93.537344s, candidate50.881762s,
-carrier20.817542s, harness26.701465s and all28 checks27.961570s pass exit0.
-Suite time27.568134s. Harness first attempt failed9.005774s on fixture-only
-return-type mismatch; repaired and preserved log. Production callback return
-mismatch was fixed during review before compilation. Other builds/checks pass
-first attempts. Final source hash:
-`1621827d9a42fbfbeb747de224e9d58c8835499057aae7538cd5ec6aeb76582d`.
-Formatting passes, inherited verify_source diff unchanged from parent, and
-12-file candidate synchronization reviewed. Production unchanged after builds.
+Next: trace remaining creation/contact consumers and runtime authority transfers,
+then select a complete safety/ownership change. Preserve RAM authority until
+reset/load/rewind and external-writer checks support promotion.
 
-Next: close14 constant/no-op/result/diagnostic setup identities and design shared
-typed setup decoding/dispatch across main and candidate. Retire duplicated
-mappings and native bank setup dispatch while preserving aliases, diagnostics,
-setup accumulator and nested collision displacement. Do not claim persistent
-ownership while RAM remains authoritative.
+Retained Noob Tube [15308,9172,7716,1840] remains in NOOB_TUBE_HANDOFF.md.
+Projectile classes use the real beam-terrain producer, not power-bomb radius
+simulation. Unused siblings stop before absent callbacks D409/D476/D489/D4BE.
+An already-waiting duplicate survives event B; a fresh tube deletes. No visible
+renderer, full room decompression or full-game claim.
 
 Retained Torizo [3696,1155,64,1382] remains in TORIZO_STATUE_HANDOFF.md.
 Actual Bomb room selection and guarded full statue script are covered; Golden

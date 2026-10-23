@@ -657,27 +657,11 @@ fn advance_plm_instruction(word_index: usize, bytes: u16, game: &mut Game) {
     let instruction = u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]]);
     game.g_ram[offset..offset + 2].copy_from_slice(&instruction.wrapping_add(bytes).to_le_bytes());
 }
-pub fn PlmSetup_ReturnCarryClear(_j: u16) -> u8 {
-    0
-}
-pub fn PlmSetup_ReturnCarrySet(_j: u16) -> u8 {
-    1
-}
 fn update_level_block_bits(word_index: usize, mask: u16, bits: u16, game: &mut Game) {
     let offset = 0x10002 + word_index * 2;
     let block = u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]]);
     game.g_ram[offset..offset + 2].copy_from_slice(&((block & mask) | bits).to_le_bytes());
 }
-pub unsafe fn UNUSED_sub_84B3E3(j: u16) -> u8 {
-    unsafe {
-        crate::native_assertion! {
-            '_c2rust_label;
-            b"0\0", b"src/sm_84.c\0", 1370, b"uint8 UNUSED_sub_84B3E3(uint16)\0"
-        };
-        0
-    }
-}
-pub use self::PlmSetup_ReturnCarryClear as PlmSetup_B73B_B73F_SandFalls;
 pub unsafe fn WakePlmIfSamusIsBelowAndRightOfTarget(
     k: u16,
     x_r18: u16,
@@ -694,147 +678,12 @@ pub unsafe fn WakePlmIfSamusIsBelowAndRightOfTarget(
         true_0 as u8
     }
 }
-pub fn PlmSetup_B974(j: u16) -> u8 {
-    0
-}
-pub fn PlmSetup_D0D8_SetVFlag(j: u16) -> u8 {
-    0x41
-}
-pub fn PlmSetup_D0D8_ClearVflag(j: u16) -> u8 {
-    1
-}
-
 pub unsafe fn SetPlmVarPtr(k: u16, a: u16, game: &mut Game) {
     unsafe {
         *(ram_ptr!(game, u16; word!(game.plm_variable[(k >> 1)]) as isize)) = a;
     }
 }
 pub use self::PlmInstr_DamageDraygonTurret as PlmInstr_DamageDraygonTurret2;
-crate::game::callback_dispatch! {
-    /// Dispatch setup with the active collision displacement, or null outside collision.
-/// `setup_a` preserves the spawner accumulator for setup routines that consume it.
-///
-/// # Safety
-/// Legacy setup callbacks require initialized runtime state. A non-null
-/// `displacement` must remain live and writable throughout the setup call.
-    pub unsafe fn CallPlmHeaderFunc(
-    ea: u32,
-    j: u16,
-    displacement: *mut i32,
-    setup_a: u16,
-    game: &mut Game,
-) -> u8 => ea;
-    call (j, game); default Unreachable(game) as u8;
-    @external {
-        8705663 => [crate::game::mechanism_noob_tube_ram::setup(j, crate::game::mechanism_noob_tube::Setup::Air, game)];
-        8705673 | 8705740 => [crate::game::mechanism_noob_tube_ram::setup(j, crate::game::mechanism_noob_tube::Setup::Solid, game)];
-        8705683 => [crate::game::mechanism_noob_tube_ram::setup(j, crate::game::mechanism_noob_tube::Setup::FourBlocks, game)];
-        8705542 => [crate::game::mechanism_torizo_statue_ram::setup(j, game)];
-        8704279 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::ShotBlock, game)];
-        8704299 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::GrappleBlock, game)];
-        8704264 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::Blank, game)];
-        8705558 => [crate::game::mechanism_hands_ram::prepare_ship_trigger(j, game)];
-        8703957 => [crate::game::samus_periodic_damage_ram::grapple_contact(game)];
-        8698353 => [crate::game::mechanism_doors_ram::setup(j, crate::game::mechanism_doors::Setup::CeresEscape, game)];
-        8695882 => [crate::game::mechanism_treadmill_ram::setup(j, game)];
-        8694568 => [crate::game::mechanism_crumbling_wall_ram::setup(j, game)];
-        8696811 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::Ice, displacement, game)];
-        8696840 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::Surface, displacement, game)];
-        8696983 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::Submerge, displacement, game)];
-        8697000 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::SlowFall, displacement, game)];
-        8697014 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::FastFall, displacement, game)];
-        8697153 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::StopVertical, displacement, game)];
-        8697028 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::CollisionSurface, displacement, game)];
-        8701261 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Left,Color::Green), setup_a, game) }];
-        8701292 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Right,Color::Green), setup_a, game) }];
-        8701323 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Left,Color::Red), setup_a, game) }];
-        8701359 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Right,Color::Red), setup_a, game) }];
-        8701395 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Left,Color::Yellow), setup_a, game) }];
-        8701425 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Right,Color::Yellow), setup_a, game) }];
-        8701456 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Left,Color::Blue), setup_a, game) }];
-        8701479 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Right,Color::Blue), setup_a, game) }];
-        8701630 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Placement(Direction::Down,true), setup_a, game) }];
-        8701643 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Placement(Direction::Up,true), setup_a, game) }];
-        8701656 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Placement(Direction::Down,false), setup_a, game) }];
-        8701660 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Placement(Direction::Up,false), setup_a, game) }];
-        8701664 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Shootblock(Direction::Down), setup_a, game) }];
-        8701754 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Shootblock(Direction::Up), setup_a, game) }];
-        8703426 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::ScrewAttack, game)];
-        8703466 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::SpeedBoost, game)];
-        8703543 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::Crumble, game)];
-        8703595 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::Shot, game)];
-        8703619 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::BombContact, game)];
-        8703706 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::BombShot, game)];
-        8703790 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::PowerBombShot, game)];
-        8703847 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::SuperMissileShot, game)];
-        8703904 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::PowerBombTrigger, game)];
-        8698232 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::CrittersEscape, game)];
-        8703925 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::Grapple, game)];
-        8696769 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::Deactivate, game)];
-        8696788 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::EnemyBreakable, game)];
-        8701844 => [crate::game::mechanism_doors_ram::setup(j, crate::game::mechanism_doors::Setup::Grey, game)];
-        8701873 => [crate::game::mechanism_doors_ram::setup(j, crate::game::mechanism_doors::Setup::Colored, game)];
-        8701883 => [crate::game::mechanism_doors_ram::setup(j, crate::game::mechanism_doors::Setup::Blue, game)];
-        8701922 => [crate::game::mechanism_doors_ram::setup(j, crate::game::mechanism_doors::Setup::ShotSignal, game)];
-        8694567 | 8696783 | 8698095 | 8698618 | 8705782 | 8705783 | 8704398 => [0];
-        8696784 => [PlmSetup_ReturnCarryClear(j)]; 8696786 => [PlmSetup_ReturnCarrySet(j)];
-        8696803 => [UNUSED_sub_84B3E3(j)];
-        8697167 => [PlmSetup_B73B_B73F_SandFalls(j)];
-        8698220 => [PlmSetup_B974(j)];
-        8703949 => [PlmSetup_D0D8_SetVFlag(j)];
-        8703953 => [PlmSetup_D0D8_ClearVflag(j)];
-        8696264 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Access(crate::game::mechanism_stations::Service::Map, crate::game::mechanism_stations::Side::Right), game)];
-        8696304 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Access(crate::game::mechanism_stations::Service::Map, crate::game::mechanism_stations::Side::Left), game)];
-        8696429 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Access(crate::game::mechanism_stations::Service::Energy, crate::game::mechanism_stations::Side::Right), game)];
-        8696477 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Access(crate::game::mechanism_stations::Service::Energy, crate::game::mechanism_stations::Side::Left), game)];
-        8696528 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Access(crate::game::mechanism_stations::Service::Missile, crate::game::mechanism_stations::Side::Right), game)];
-        8696576 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Access(crate::game::mechanism_stations::Service::Missile, crate::game::mechanism_stations::Side::Left), game)];
-        8697232 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::SaveTrigger, game)];
-        8697326 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Save, game)];
-        8696203 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Place(crate::game::mechanism_stations::Service::Map), game)];
-        8696349 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Place(crate::game::mechanism_stations::Service::Energy), game)];
-        8696389 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Place(crate::game::mechanism_stations::Service::Missile), game)];
-        8696634 => [crate::game::mechanism_scroll_setup_ram::setup(j, crate::game::mechanism_scroll_setup::Setup::Place(crate::game::mechanism_scroll_setup::Tile::Extension(crate::game::mechanism_scroll_setup::Direction::Right)), game)];
-        8696645 => [crate::game::mechanism_scroll_setup_ram::setup(j, crate::game::mechanism_scroll_setup::Setup::Place(crate::game::mechanism_scroll_setup::Tile::Extension(crate::game::mechanism_scroll_setup::Direction::Left)), game)];
-        8696656 => [crate::game::mechanism_scroll_setup_ram::setup(j, crate::game::mechanism_scroll_setup::Setup::Place(crate::game::mechanism_scroll_setup::Tile::Extension(crate::game::mechanism_scroll_setup::Direction::Down)), game)];
-        8696667 => [crate::game::mechanism_scroll_setup_ram::setup(j, crate::game::mechanism_scroll_setup::Setup::Place(crate::game::mechanism_scroll_setup::Tile::Extension(crate::game::mechanism_scroll_setup::Direction::Up)), game)];
-        8696689 => [crate::game::mechanism_scroll_setup_ram::setup(j, crate::game::mechanism_scroll_setup::Setup::Place(crate::game::mechanism_scroll_setup::Tile::Scroll(crate::game::mechanism_scroll_setup::Solidity::Air)), game)];
-        8696706 => [crate::game::mechanism_scroll_setup_ram::setup(j, crate::game::mechanism_scroll_setup::Setup::Place(crate::game::mechanism_scroll_setup::Tile::Scroll(crate::game::mechanism_scroll_setup::Solidity::Solid)), game)];
-        8696723 => [crate::game::mechanism_scroll_setup_ram::setup(j, crate::game::mechanism_scroll_setup::Setup::Touch, game)];
-        8711757 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::Visible,Some(crate::game::mechanism_item_setup::Graphic::EnergyTank)), game)];
-        8711762 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::Visible,Some(crate::game::mechanism_item_setup::Graphic::MissileTank)), game)];
-        8711767 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::Visible,Some(crate::game::mechanism_item_setup::Graphic::SuperMissileTank)), game)];
-        8711772 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::Visible,Some(crate::game::mechanism_item_setup::Graphic::PowerBombTank)), game)];
-        8711780 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::Visible,None), game)];
-        8711799 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::ShotBlock,Some(crate::game::mechanism_item_setup::Graphic::EnergyTank)), game)];
-        8711804 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::ShotBlock,Some(crate::game::mechanism_item_setup::Graphic::MissileTank)), game)];
-        8711809 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::ShotBlock,Some(crate::game::mechanism_item_setup::Graphic::SuperMissileTank)), game)];
-        8711814 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::ShotBlock,Some(crate::game::mechanism_item_setup::Graphic::PowerBombTank)), game)];
-        8711822 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::ShotBlock,None), game)];
-        8711851 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Trigger, game)];
-        8707732 => [crate::game::mechanism_cannon_setup_ram::setup(j, crate::game::mechanism_cannon_setup::Setup::Right, game)];
-        8707769 => [crate::game::mechanism_cannon_setup_ram::setup(j, crate::game::mechanism_cannon_setup::Setup::DiagonalRight, game)];
-        8707824 => [crate::game::mechanism_cannon_setup_ram::setup(j, crate::game::mechanism_cannon_setup::Setup::Left, game)];
-        8707861 => [crate::game::mechanism_cannon_setup_ram::setup(j, crate::game::mechanism_cannon_setup::Setup::DiagonalLeft, game)];
-        8707916 => [crate::game::mechanism_cannon_setup_ram::setup(j, crate::game::mechanism_cannon_setup::Setup::Unshielded, game)];
-        8696028 => [crate::game::mechanism_plants_ram::begin(j, crate::game::mechanism_plants::Surface::Floor, game)];
-        8696083 => [crate::game::mechanism_plants_ram::begin(j, crate::game::mechanism_plants::Surface::Ceiling, game)];
-        8706700 => [crate::game::mechanism_eye_door_ram::begin(j, crate::game::mechanism_eye_door::Part::Eye, game)];
-        8706745 => [crate::game::mechanism_eye_door_ram::begin(j, crate::game::mechanism_eye_door::Part::Body, game)];
-        8706846 => [crate::game::mechanism_metroid_quota_ram::begin(j, game)];
-        8705526 => [crate::game::mechanism_mother_brain_glass_ram::setup(j, game)];
-        8697336 => [crate::game::mechanism_doors_ram::setup(j, crate::game::mechanism_doors::Setup::MotherBrainEscape, game)];
-        8697169 => [crate::game::mechanism_tourian_wall_ram::setup(j, crate::game::mechanism_tourian_wall::Setup::Open, game)];
-        8697199 => [crate::game::mechanism_tourian_wall_ram::setup(j, crate::game::mechanism_tourian_wall::Setup::Close, game)];
-        8698309 => [crate::game::mechanism_animal_rescue_ram::setup(j, crate::game::mechanism_animal_rescue::Setup::RescueWall, game)];
-        8698633 => [crate::game::mechanism_animal_rescue_ram::setup(j, crate::game::mechanism_animal_rescue::Setup::MainStreetPassage, game)];
-        8698076 => [crate::game::mechanism_shaktool_ram::begin(game)];
-        8698012 => [crate::game::mechanism_booster_escape_ram::begin(j, game)];
-        8697795 => [crate::game::mechanism_sound_delay_ram::begin(j, game)];
-        8704399 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::LowerNorfair, displacement, game)];
-        8705568 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::WreckedShip, displacement, game)];
-    }
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallPlmPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
     call (k, game); default { Unreachable(game); };

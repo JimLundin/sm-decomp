@@ -148,6 +148,18 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/mechanism_noob_tube_ram.rs"),
     ),
     (
+        "sm/src/game/mechanism_setup.rs",
+        include_bytes!("game/mechanism_setup.rs"),
+    ),
+    (
+        "sm/src/game/mechanism_setup_ram.rs",
+        include_bytes!("game/mechanism_setup_ram.rs"),
+    ),
+    (
+        "sm/src/game/mechanism_setup_runtime.rs",
+        include_bytes!("game/mechanism_setup_runtime.rs"),
+    ),
+    (
         "sm/src/game/mechanism_contact_physics.rs",
         include_bytes!("game/mechanism_contact_physics.rs"),
     ),

@@ -1,7 +1,7 @@
 //! Checked compatibility boundary for the shared mechanism creation protocol.
 use crate::game::constants::bank_84::addr_kDefaultPlmDrawInstruction;
 use crate::game::mechanism_creation::{self, Context, Field, Source, SourceKind};
-use crate::game::sm_84::CallPlmHeaderFunc;
+use crate::game::mechanism_setup_runtime;
 use crate::game_state::Game;
 use crate::ram_map::checked_word;
 use crate::rom::RomRecord;
@@ -111,7 +111,7 @@ impl Context for Adapter<'_> {
             addr_kDefaultPlmDrawInstruction as u16
         };
         unsafe {
-            CallPlmHeaderFunc(
+            mechanism_setup_runtime::execute(
                 0x840000 | u32::from(setup),
                 (slot * 2) as u16,
                 self.displacement,
