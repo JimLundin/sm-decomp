@@ -90,9 +90,16 @@ adoption. The next milestone must address that structural gap explicitly.
   named consumers and an explicit deletion step. Redirect actual callers and
   remove retired bank facades; keep old entries only for real identity/caller
   contracts. Ordinary functions, enums or data should simplify the full behavior.
-- Price every helper, table, wrapper, adapter, caller, registration, maintained
-  native source and added installer/verifier code. Disclose external dependencies
-  separately. Count overlaps once; independent draft savings are not additive.
+- User accounting clarification (2026-10-23): measure production engine code
+  separately from verification harnesses and adjacent verification support.
+  Exclude that verification code from the engine-reduction total, and keep it
+  intentionally separate where practical. Report its count and the combined
+  maintained total alongside production; do not disguise runtime adapters as
+  verification. Existing unseparated historical totals remain historical.
+- Price production helpers, tables, wrappers, adapters, callers, registration
+  and maintained native source together. Report installers and verification
+  support separately; disclose external dependencies separately too.
+  Count overlaps once; independent draft savings are not additive.
   File moves, line packing, formatting compression and moving implementation
   outside `sm/src` are not reductions. Retain token/text checks against packing.
 - A renderer replacement cannot retire backend code still used by gameplay or
