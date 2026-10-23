@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 12:33 UTC**
+Updated: **2026-10-23 13:07 UTC**
 
 **Status: active development. The owned engine is not yet consolidated into production.**
 
@@ -8,7 +8,7 @@ The destination is a purpose-built Rust engine that plays Super Metroid from boo
 to credits, with owned gameplay state and its own rendering and audio. The SNES
 backend remains the comparison oracle during migration.
 
-## Latest verified change
+## Latest committed gameplay change
 
 **Charged-shot palette rules and output selection are shared.**
 
@@ -24,7 +24,7 @@ demo restoration, rainbow updates and resumed audio are covered by the new check
 
 | Measure | Current value |
 | --- | ---: |
-| Main Rust source | 107,432 lines in 221 files |
+| Committed main Rust source | 107,432 lines in 221 files |
 | Counted unsafe function declarations | 2,789 |
 | Prospective composition, not adopted | 115,832 lines in 330 files |
 | This change: main growth | 110 lines |
@@ -86,19 +86,28 @@ state/unwind and the unchanged shared animation core for five selectors. Storage
 and content are simplified test substitutes: this proves the access mechanism,
 not production gameplay or complete subsystem integration. The standalone test
 executable was blocked by Windows policy; security settings were not changed.
-Full isolated subsystem implementation is proceeding from this design. The full
-state mapping has passed independent source review: 391 distinct words / 782 bytes
-cover shots, trails, controls and launch history without overlapping ownership.
-Direct flight, animation, lifecycle, beam, missile, bomb and special-attack bindings
-are authored; collision, presentation and caller migration remain in progress.
-These replacement sources have not yet been built or validated as an integrated game.
+The complete replacement is now integrated into the **local main working tree**,
+with fourteen whole adapters removed and actual callers migrated. It is not yet
+committed. The normal release library, frontend and verifier builds pass.
 
-The current production baseline was rechecked on the Speed Booster route from boot:
-**8,780 frames, zero failing frames, exit 0** (26.09 seconds of replay). It reaches
-427 gameplay frames in one room and no credits. This establishes the parent result
-for a relevant animation/drawing/trail route; it does not validate the replacement
-or cover special attacks and reflection. Those still need focused integrated checks.
+The replacement passed **8,780 oracle frames with zero failures**, requiring seven
+execution probes and 120 frames after the last first hit. The probes confirm weapon
+preparation, history completion, actual flight and playback, projectile/explosion
+draw paths, and trails. This route covers 427 gameplay frames in one room; it does
+not reach credits or exercise every weapon and special attack.
 
+The first actual-code regression batch also passes **11 groups**: nine whole-RAM
+comparisons against independently captured old behavior, plus full 391-word /
+782-byte ownership and publication checks. These include both previously missing
+motions and distinct native/table ROM views for flare animation. Native content
+access remains explicit unsafe debt; the subsystem is not backend-independent.
+
+Broader old/new weapon, lifecycle, rendering and expiry comparisons are underway.
+The production change is currently about **600 net added lines**, with 23 fewer
+unsafe function declarations; verification additions are counted separately and
+will be included in the final maintained-source total. The old experimental
+implementation is archived outside the shipping source and contributes no claimed
+production deletion. The full change remains uncommitted until validation closes.
 The full replacement is estimated at 2,270-3,690 new production lines, against the
 conservative 2,213-line retirement inventory: approximately **+60 to +1,480
 production lines**. Verification additions are estimated separately at 600-1,200

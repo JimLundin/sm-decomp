@@ -164,12 +164,31 @@ references; measure build/test time and resource growth before changing the loop
    endian operations and unchanged playback for five selectors. Game storage and
    Show content are test substitutes; no integrated gameplay claim. Standalone EXE
    execution was blocked by Defender1121; security settings remain unchanged.
-   Full isolated replacement implementation is underway; main is unchanged. The
-   expanded mapping has independent source review: 391 unique aligned words / 782
-   bytes (180 shot, 180 trail, 23 control, eight launch-history words), no overlap.
-   Full Context bindings and caller/deletion integration still require builds and
-   actual-code checks; the nine draft tests do not validate this expanded source.
+   The complete replacement is now integrated into the local main worktree, not
+   committed. Fourteen whole adapters and superseded bank bodies are removed; real
+   caller migration and retained output boundaries passed independent source review.
+   Final isolated library build passed (42.2696s), then main's normal release/
+   frontend/verifier build passed (68.6949s). First regression/probe build passed
+   (47.6626s), fingerprint ee6fc2c85366560d8c3c6c01fba6cd5f9c12e1b4faa7f89a110c3dfc43c784e6.
 
+   Actual new-code first batch: 11 groups pass (nine independently captured old
+   full-RAM cases plus complete typed/byte mapping and publication). All 391 words /
+   782 bytes are checked through their typed fields. Both missing native motions
+   and differing loaded/native flare views are exercised. Flare's unchecked native
+   content access remains explicitly unsafe. Wider lifecycle/producer/expiry checks
+   remain open; the retained old 60 suites are not new-code integration evidence.
+
+   New source passes the 8,780-frame oracle route with all seven required probes
+   and 120 follow-up frames, zero failures, exit0 (27.29s replay). Counts: weapons
+   1649; history completion 1900; flight 85; playback frames 42; projectile draw
+   path 135; explosion draw path 22; trails 3604. Last first hit is explosion
+   drawing at input8659; final input8779. This is one-room coverage, not credits or
+   all weapons. Keep these probes for final source checks and revalidate changes.
+
+   Preliminary production cost is about +600 lines and -23 unsafe declarations;
+   verification source must be included in the final complete cost. The archived
+   experimental candidate is outside shipping source and earns no production
+   retirement credit. Final adoption awaits the remaining actual-code checks.
    Parent oracle route revalidated on 2026-10-23: current production fingerprint
    d7e5c27e681f8c689b8f9162715af36e1b2647aeaa39c0f5a883116474ce24eb,
    speed-booster.inputs from boot for 8,780 frames, zero failures, exit0; replay
