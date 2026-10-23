@@ -177,6 +177,33 @@ references; measure build/test time and resource growth before changing the loop
    authored failure/byte-order checks and natural chains are fully counted. No line
    reduction, new dependency/native/installer or backend-independence claim.
 
+   Active implementation from `fe6a0d0f`: share complete charge input and
+   ordinary/charged/hyper firing, including reservation, placement, definition
+   selection, initialization, collision, launch and resumed finish/flare tails.
+   Preserve the independent typed client; no encoded kind/sound in the shared
+   transaction core. Retire both initial collision direction tables and eight
+   wrappers, and run ordinary owned scans directly through the existing room core.
+   Actual setup/effect/failure boundaries publish the full Session; broad selectors
+   use the same checked implementation through explicit compatibility transfers.
+   Direction7 writes XSpeed at0xBDC: selected0x202 aliases projectile_index0xDDE,
+   so scan must retain the captured selector. Diagonal Y likewise retains its
+   pre-X selector. Preserve Wave's original slot, nonwave/hyper live selectors,
+   reservation/cancellation order and native main versus logical owned finish gate.
+   Share definitions with Reflection and special-attack consumers before retiring
+   their old tables. Redirect every real flare-clear/input caller.
+   Close pending-owner failure gaps in material/extension/slope and BTS/area reads
+   with narrow owner-carrying reads; no whole-transaction catch/replay or stale RAM
+   restoration. Fallible slope sampling precedes local Scan progress writes;
+   do not invent persistent RAM scan fields. Verify that ordering in implementation.
+   Keep all36 suites and add actual HUD/Xray input through initial terrain contact,
+   launch, travel/impact and retirement, including aliases, callback mutations and
+   failure prefixes. Estimates: main+160..390 lines, local-205..45, complete
+   composition-45..435, verification+1190..1760, combined+1145..2195. Count every
+   adapter, retained export and verifier source; no advance reduction claim.
+   `charge-transaction-parent/` preserves the baseline; the local
+   `CHARGE_TRANSACTION_PROPOSAL.md` records the full scope. Persistent Session
+   ownership and backend independence remain unfinished.
+
    Next dependencies, in order:
 
    - [x] Resolve the preserved beam-launch draft, synchronize the carrier and
