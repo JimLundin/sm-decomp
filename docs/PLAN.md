@@ -152,6 +152,25 @@ references; measure build/test time and resource growth before changing the loop
    safe dispatch while the prospective composition shrinks; complete unsafe
    retirement and backend independence remain unfinished.
 
+   Active implementation: complete Samus movement-contact transaction from
+   `7553e8c3`. Share an unsafe-forbidden core owning temporary displacement,
+   target/edge/span and traversal state across horizontal/vertical scans,
+   material reactions, setup/nested hands and resumed movement. Migrate
+   Samus_MoveRight_NoSolidColl, Samus_MoveDown_NoSolidColl,
+   WallJumpBlockCollDetect and Samus_CollDetectChangedPose. Delete the six raw
+   displacement producers and raw forwarding through creation/setup/hands.
+   Compatibility transport distinguishes absent, local displacement and lazy
+   checked RAM offsets without an eager borrow or copyback. The core receives
+   ordinary operations; Game, numeric addresses and bus reads stay in adapters.
+   Preserve all live reads, ordered effects and vertical slope's two bus-byte
+   reads (including bank crossing). Persistent Samus/room RAM authority remains.
+   Candidate projectile scans are not evidence for this Samus responsibility.
+   Validate the four actual entries against frozen source, material/slope/door/
+   spike/extension branches, callback changes, pose probes, traversal retries,
+   nested alias effects and diagnostics. Price core/adapters/callers and all
+   checks; source growth is not yet measured. One implementer and independent
+   caller/fixture reviewer are active; root owns registrations and final builds.
+
    Next dependencies, in order:
 
    - [x] Resolve the preserved beam-launch draft, synchronize the carrier and

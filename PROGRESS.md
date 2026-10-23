@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 07:05 UTC**
+Updated: **2026-10-23 07:09 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -33,11 +33,17 @@ remains below 100,000 maintained Rust lines, with all unsafe operations removed.
 
 ## Work in progress
 
-Setup dispatch is verified. Remaining creation/contact consumers and state
-ownership transfers are next. RAM still owns the current gameplay state; raw
-contact pointers and fatal diagnostics remain explicit compatibility boundaries.
-Renderer/audio replacement and an independently running game slice remain
-required parts of the destination.
+**Samus movement and room contact: implementation in progress.**
+
+The next shared core will own each movement scan's temporary state and replace
+raw displacement pointers through mechanism setup and nested spawns. It covers
+horizontal/vertical movement, wall-jump collision and pose-change collision.
+An independent reviewer is checking callers and the required comparison cases.
+This work is not yet built or verified; the figures above remain the last
+verified milestone.
+
+Persistent gameplay state remains in RAM. Renderer/audio replacement and an
+independently running game slice remain required parts of the destination.
 
 ## Verification limits
 
