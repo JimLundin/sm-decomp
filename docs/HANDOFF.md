@@ -9,45 +9,47 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares all 11 item initialization/wakeup setups after
-scroll/extensions at `ed292dce`. The safe core and checked RAM adapter retire
-11 bank facades and two helpers, retaining numeric identities. Optional graphic
-writes precede installation; shot-block setup rereads the live block, captures
-native-endian terrain into a little-endian saved word, then increments the live
-loaded count. Trigger clears before descending block-only association, including
-inactive/self/zero matches. Missing association returns normally after signaling
-255 at RAM 0x1D75, the original preceding program-word alias. Both modules forbid
-unsafe. RAM remains authoritative; 69/115 setup identities are shared, 46 remain.
+The latest stage shares all five Draygon cannon setups after items at
+`66465eb3`. The safe core and checked adapter retire four bodies and one left
+alias. Five numeric identities remain distinct. Damage linkage is saved before
+hit-count initialization; geometry captures the origin afterward and reads live
+width only after top/adjacent writes. Unshielded initialization only saves the
+link and writes three. Both modules forbid unsafe. RAM remains authoritative;
+74/115 setup identities are shared, 41 remain. SetPlmVarPtr and damage consumers
+remain pending their complete safety migration.
 
-Main: **104,086 Rust lines in 166 files**, unsafe declarations 2,886 (-4), casts
-6,057 (-1). Maintained implementation 104,648; installers/launcher included
-105,558. Prospective composition: **112,657**, **+8,571 over main**, unadopted.
-Stage main cost is +97 lines/+1,339 lexical tokens/+5,207 normalized bytes;
-complete implementation is +203/+2,461/+10,392. Retained verification adds
-774/+8,821/+29,862; implementation plus checks adds 977 lines. Local production
-+105 lines is already represented in composition and must not be added again.
-No duplicate owned algorithm existed: these routes previously used External.
-No dependency/native/installer/launcher additions, net reduction, full unsafe
-retirement, persistent authority or backend-independence claim.
+Main: **104,167 Rust lines in 168 files**, unsafe declarations 2,886 unchanged,
+casts 6,054 (-3). Maintained implementation 104,729; installers/launcher included
+105,639. Prospective composition: **112,772 in 261 files**, **+8,605 over main**,
+unadopted. Stage main cost is +81 lines/+783 lexical tokens/+2,518 normalized
+bytes; complete implementation is +115/+1,173/+4,143. Retained verification adds
+690/+7,715/+26,936; implementation plus checks adds 805 lines. Local production
++33 lines is already represented in composition. No duplicate owned algorithm
+existed: these routes previously used External. No dependency/native/installer/
+launcher additions, net reduction, full unsafe retirement, persistent authority
+or backend-independence claim.
 
-Use `runtime-impact-working/ITEM_SETUP_HANDOFF.md`, `item-setup-price.json` and
-`item-setup-check-attempt-1.log`. Final checks pass on first execution (18.00s):
-3,476 comparisons = 1,738 defined setup cases against main and candidate,
-including 1,320 checked-install failure comparisons. Native-domain preflight
-simulates preceding writes and checks the actual live capture address; no
-requested case was excluded. Cases include graphic/block/count aliases and
-missing-target self-alias. Native Context checks cover order and failure prefixes.
+Use `runtime-impact-working/CANNON_SETUP_HANDOFF.md`, `cannon-setup-price.json`
+and `cannon-setup-check-attempt-1.log`. Final checks pass on first execution
+(17.95s): 3,630 comparisons = 1,815 defined setup cases against main and candidate,
+including 1,420 checked-install failure comparisons. Cases include broad/odd
+slots, wrapping geometry, saved-link/block aliases and failure prefixes. Native
+Context checks validate effect ordering and late width observations.
 
-Fourteen actual consumer comparisons cover two timer255 wakeup consumers and
-five shot-block restores, each against main and candidate. Restores execute
-DrawPlmBlock and checked ProcessPlmDrawInstruction, then assert Y32/offscreen
-before DrawPlm can read the odd RAM list. They prove saved-tile consumption,
-not visible rendering. Thirty-two graphics comparisons cover eight graphic
-setups and two frames against each path. The copied consumer substitutes exactly
-two unaligned native ROM table reads at 84E05F/84E077 with checked native-byte
-reads; all remaining source and actual common/Process/offscreen paths remain.
-These are source-preserved checked-reference integration, not defined-original
-graphics equivalence. Main graphics consumers remain unchanged and unretired.
+Forty-six actual consumer comparisons cover no shot/power-bomb rejection,
+three missile hits, one super missile, unshielded direct damage, generic damage
+and its alias, up-right/down-left/up-left footprints, and aligned flag-store
+aliases that alter the live origin. DB64 sets super count119; actual8ACD reads
+the low argument byte and branches at threshold3. These tails use even slots.
+Native flag targets are validated immediately before SetPlmVarPtr.
+
+Eight down-right comparisons preserve the source except exactly one odd native
+read at RAM1C87, replaced by checked native-byte access. They retain the distinct
+live plm_id selection after flag and first-row writes, including aliases changing
+that selector. These are checked-reference consumer integration, not original
+native equivalence. Production consumers remain unchanged. No movie, full
+Draygon scheduler, rendering or full-composition runtime ran; authored content
+and shared retained consumers limit the evidence.
 
 Historical correction: 18 visible terrain restore/render cases (nine kinds by
 two aliases) reach DrawPlm's native u16 dereference at odd RAM 0x1E67. They are
@@ -56,29 +58,27 @@ do not rerun the undefined cases. They occur only in the standalone terrain
 export, excluded from current selected suites. This does not diagnose the
 inherited Intro mismatch in `DRAWING_HANDOFF.md`.
 
-Scroll 5816/1296/52, station 3240/112/149/6, Chozo 592/4/4/16, selected hands
-52/163/12, source/setup 342/672/47, closing 74/120/7 and supplemental runtime
-collision 198/545/176/1 pass. Git-frozen references and 191 runtime / 228 local
-compiled identities pass independent review. Historical full contact checks
-remain excluded because of stale simulated-null-handler assumptions. Unchanged
-scroll bounded nonreturn checks were not repeated; their evidence remains.
+Item 3476/1320/14/32, scroll 5816/1296/52, station 3240/112/149/6,
+Chozo 592/4/4/16, selected hands 52/163/12, source/setup 342/672/47,
+closing 74/120/7 and runtime collision 198/545/176/1 pass. Item graphics remain
+qualified checked-reference comparisons; its actual restore tails are offscreen.
+Git-frozen references and 194 runtime / 231 local compiled identities pass.
+Historical full contact checks remain excluded for stale simulated-null-handler
+assumptions. Unchanged scroll bounded nonreturn checks were not repeated.
 
-Production Rust 2024 release/frontend/verifier/source passes (74.78s), prospective
-headless release passes (51.70s), carrier 21.22s and harness 27.54s. All builds
-and behavioral checks pass first attempt, with final production/fixture sources frozen.
+Production Rust 2024 release/frontend/verifier/source passes (63.00s), prospective
+headless release passes (48.88s), carrier18.38s and harness20.91s, all first-pass.
 Changed gameplay/root formatting and diff checks pass. Full verify_source.rs
 formatting retains baseline differences; added entries conform, and an exact
 comparison confirms all remaining formatter differences are inherited from HEAD.
 Production hash:
-`7014c1177b23acd8b2eaa46b279dff771546b5955abf530c195698035ed4f0b9`.
-No movie, full item producer/scheduler, visible/VRAM rendering or complete
-composition runtime ran; synthetic content and retained native consumers limit
-coverage. Compiler lane is released and DLL unloaded.
+`60ca99f9933554ca3c438510fd9bcc79ab84c3e38d33020a085e43d0cd02fb6f`.
+Compiler lane is released and DLL unloaded.
 
-`item-setup-parent/` preserves prior main/carrier/local/composition sources.
-Earlier snapshots/caches and scroll evidence remain. Do not rerun historical
+`cannon-setup-parent/` preserves prior main/carrier/local/composition sources.
+Earlier snapshots/caches and item evidence remain. Do not rerun historical
 preparation scripts; composition lives under `impact-composition/sm/src`.
-Next: select a coherent responsibility from 32 room/event/boss setups, then
+Next: select a coherent responsibility from 27 room/event/boss setups, then
 14 constants/no-op/result identities. Runtime promotion needs reset/load/rewind/
 external-writer checks; rendering, sound and boot-to-credits remain unfinished.
 The parallel movie/state investigation is documented in

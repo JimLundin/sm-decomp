@@ -104,26 +104,27 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares all 11 item initialization/wakeup setups after
-   scroll/extensions at `ed292dce`. `mechanism_item_setup` owns optional graphic
-   selection, visible/shot-block installation, saved terrain, loaded counts and
-   trigger association. Eleven bank facades and two helpers are retired. Both
-   core and checked adapter forbid unsafe; numeric routes and live aliases remain.
-   Missing association returns after writing timer 255 at the original preceding
-   program-word alias. Encoded state remains RAM authoritative. Sixty-nine of
-   115 setup identities are shared; 46 and native dispatch/authority work remain.
+   Latest verified stage shares all five Draygon cannon setups after item
+   initialization at `66465eb3`. `mechanism_cannon_setup` owns damage-link capture,
+   hit-count initialization and vertical/diagonal collision footprints. Four bank
+   bodies and one alias are retired; both core and checked adapter forbid unsafe.
+   Numeric identities, captured origin and late live-width reads remain. Encoded
+   state stays RAM authoritative. Seventy-four of 115 setup identities are shared;
+   41 and native dispatch/authority work remain. Existing damage consumers and
+   SetPlmVarPtr remain until their complete safety migration.
 
-   Final checks pass 3,476 comparisons over 1,738 defined cases, including 1,320
-   expected checked-install failure comparisons. Fourteen actual consumer
-   comparisons cover wakeup and offscreen saved-tile restore; 32 separately
-   classified graphics comparisons replace exactly two unaligned native ROM
-   reads with checked native-byte reads. These are checked-reference integration,
-   not defined-original graphics equivalence. Independent source/domain review
-   and 191 runtime / 228 local compiled identities pass. Selected scroll, station,
-   Chozo, hand, source/setup, closing and runtime-collision checks also pass.
-   Production release/frontend/verifier/source passes (74.78s); prospective
-   release passes (51.70s). No movie, full item producer/scheduler, visible/VRAM
-   rendering or full-composition runtime ran.
+   Final checks pass 3,630 comparisons over 1,815 defined setup cases, including
+   1,420 expected checked-install failure comparisons. Forty-six actual consumer
+   comparisons cover rejected shots, three missiles, one super missile, unshielded
+   direct damage and aligned flag aliases. Eight separately classified down-right
+   comparisons replace exactly one odd native selected-block read with checked
+   native-byte access; they are checked-reference integration, not defined-original
+   equivalence. Independent source/domain review and 194 runtime / 231 local
+   compiled identities pass. Selected item, scroll, station, Chozo, hand,
+   source/setup, closing and runtime-collision checks also pass. Production
+   release/frontend/verifier/source passes (63.00s); prospective release passes
+   (48.88s). No movie, full Draygon scheduler, rendering or full-composition
+   runtime ran; authored fixtures and retained native consumers limit coverage.
 
    Historical correction: the terrain stage's 18 visible restore/render cases
    reach a native u16 read at odd RAM address 0x1E67. Those results are not
@@ -131,15 +132,15 @@ references; measure build/test time and resource growth before changing the loop
    comparisons; do not rerun the undefined cases. Current selected suites exclude
    them. Current item restores assert the offscreen guard before that read.
 
-   Main is **104,086 Rust lines in 166 files**. Prospective composition is
-   **112,657 (+8,571)**, unadopted. This stage adds 97 main and 106 owned/wiring
-   lines: **+203 complete lines**, +2,461 lexical tokens and +10,392 LF-normalized
-   bytes. Verification adds 774 lines; implementation plus checks adds 977.
+   Main is **104,167 Rust lines in 168 files**. Prospective composition is
+   **112,772 (+8,605)**, unadopted. This stage adds 81 main and 34 owned/wiring
+   lines: **+115 complete lines**, +1,173 lexical tokens and +4,143 LF-normalized
+   bytes. Verification adds 690 lines; implementation plus checks adds 805.
    The candidate previously delegated these setups to native callbacks; no
    duplicate owned algorithm existed to retire. No dependency or native/installer/
-   launcher source is added. Unsafe declarations fall four to 2,886 and
-   cast-containing lines fall one to 6,057. No net reduction, complete unsafe
-   retirement, persistent ownership or backend-independence claim.
+   launcher source is added. Unsafe declarations remain 2,886; cast-containing
+   lines fall three to 6,054. No net reduction, complete unsafe retirement,
+   persistent ownership or backend-independence claim.
 
    Next dependencies, in order:
 
@@ -182,11 +183,13 @@ references; measure build/test time and resource growth before changing the loop
      nonreturn and ordered aliases, and compare actual redirect/scroll consumers.
    - [x] Share all 11 item initialization/wakeup setups, preserve live aliases
      and missing association, and compare defined setup and qualified consumers.
+   - [x] Share all five cannon setups, preserve damage linkage and ordered
+     geometry, and compare shot-count/damage consumers with qualified down-right.
    - Close remaining room/event/boss setups, then constants/no-op/result routes.
      Preserve synchronous writes, nested displacement and failure prefixes before
      retiring native dispatch. The 115-identity inventory is in the local door
-     handoff; 32 room/event/boss and 14 residual identities remain. Select one
-     coherent responsibility through caller/validation investigation. The item
+     handoff; 27 room/event/boss and 14 residual identities remain. Select one
+     coherent responsibility through caller/validation investigation. The cannon
      handoff records current scope and retained consumer dependencies.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
@@ -195,7 +198,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified item-setup continuation, with
+   `runtime-impact-working/` is the verified cannon-setup continuation, with
+   `CANNON_SETUP_HANDOFF.md`, `cannon-setup-price.json` and
+   `cannon-setup-check-attempt-1.log`. `cannon-setup-parent/` preserves prior
+   main/carrier/local/composition inputs. Item evidence remains in
    `ITEM_SETUP_HANDOFF.md`, `item-setup-price.json` and
    `item-setup-check-attempt-1.log`. `item-setup-parent/` preserves prior
    main/carrier/local/composition inputs. Scroll evidence remains in
@@ -385,12 +391,12 @@ content.
 
 ## Progress and references
 
-Verified item-setup stage: Rust 104,086; maintained C bridge 266 and headers
-296 = **104,648 implementation lines**. Including 803 dependency-installer and
-107 verifier-launcher lines gives **105,558**. The separate prospective owned
+Verified cannon-setup stage: Rust 104,167; maintained C bridge 266 and headers
+296 = **104,729 implementation lines**. Including 803 dependency-installer and
+107 verifier-launcher lines gives **105,639**. The separate prospective owned
 composition and local comparison additions are disclosed above.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
-unsafe declarations 2,886; cast-containing lines 6,057. These narrow counters do
+unsafe declarations 2,886; cast-containing lines 6,054. These narrow counters do
 not count all unsafe operations. Use the actual checkout's progress output for
 new changes; uncommitted drafts are not landed savings.
 The isolated launch draft is now synchronized and verified; its original source

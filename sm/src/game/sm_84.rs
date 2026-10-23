@@ -753,7 +753,6 @@ pub unsafe fn SetPlmVarPtr(k: u16, a: u16, game: &mut Game) {
     }
 }
 pub use self::PlmInstr_DamageDraygonTurret as PlmInstr_DamageDraygonTurret2;
-pub use self::PlmSetup_DraygonCannonFacingRight as PlmSetup_DraygonCannonFacingLeft;
 crate::game::callback_dispatch! {
     /// Dispatch setup with the active collision displacement, or null outside collision.
 /// `setup_a` preserves the spawner accumulator for setup routines that consume it.
@@ -986,45 +985,6 @@ crate::game::callback_dispatch! {
         );
         0
     };
-    [8707732] PlmSetup_DraygonCannonFacingRight [] {
-        word!(game.plm_variable[v1] = word!(game.plm_room_arguments[v1]));
-        word!(game.plm_room_arguments[v1] = 0);
-        let v2: u16 = word!(game.plm_block_indices[v1]);
-        WriteLevelDataBlockTypeAndBts(v2, 0xc044, game);
-        WriteLevelDataBlockTypeAndBts(
-            (word!(game.room_width_in_blocks) as i32 * 2 + v2 as i32) as u16,
-            0xd0ff,
-            game,
-        );
-        0
-    };
-    [8707769] PlmSetup_DraygonCannonFacingDiagonalRight [] {
-        word!(game.plm_variable[v1] = word!(game.plm_room_arguments[v1]));
-        word!(game.plm_room_arguments[v1] = 0);
-        let v2: u16 = word!(game.plm_block_indices[v1]);
-        WriteLevelDataBlockTypeAndBts(v2, 0xc044, game);
-        WriteLevelDataBlockTypeAndBts((v2).wrapping_add(2), 0x50ff, game);
-        let v3: u16 = (word!(game.room_width_in_blocks) as i32 * 2 + v2 as i32) as u16;
-        WriteLevelDataBlockTypeAndBts(v3, 0xd0ff, game);
-        WriteLevelDataBlockTypeAndBts((v3).wrapping_add(2), 0xd0ff, game);
-        0
-    };
-    [8707861] PlmSetup_DraygonCannonFacingDiagonalLeft [] {
-        word!(game.plm_variable[v1] = word!(game.plm_room_arguments[v1]));
-        word!(game.plm_room_arguments[v1] = 0);
-        let v2: u16 = word!(game.plm_block_indices[v1]);
-        WriteLevelDataBlockTypeAndBts(v2, 0xc044, game);
-        WriteLevelDataBlockTypeAndBts((v2).wrapping_sub(2), 0x5001, game);
-        let v3: u16 = (word!(game.room_width_in_blocks) as i32 * 2 + v2 as i32) as u16;
-        WriteLevelDataBlockTypeAndBts(v3, 0xd0ff, game);
-        WriteLevelDataBlockTypeAndBts((v3).wrapping_sub(2), 0xd0ff, game);
-        0
-    };
-    [8707916] PlmSetup_DraygonCannon [] {
-        word!(game.plm_variable[v1] = word!(game.plm_room_arguments[v1]));
-        word!(game.plm_room_arguments[v1] = 3);
-        0
-    };
     @functions [pub unsafe fn (v0: u16, game: &mut Game) -> u8];
     @external {
         8696811 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::Ice, displacement, game)];
@@ -1101,10 +1061,14 @@ crate::game::callback_dispatch! {
         8711814 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::ShotBlock,Some(crate::game::mechanism_item_setup::Graphic::PowerBombTank)), game)];
         8711822 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Initialize(crate::game::mechanism_item_setup::Container::ShotBlock,None), game)];
         8711851 => [crate::game::mechanism_item_setup_ram::setup(j, crate::game::mechanism_item_setup::Setup::Trigger, game)];
+        8707732 => [crate::game::mechanism_cannon_setup_ram::setup(j, crate::game::mechanism_cannon_setup::Setup::Right, game)];
+        8707769 => [crate::game::mechanism_cannon_setup_ram::setup(j, crate::game::mechanism_cannon_setup::Setup::DiagonalRight, game)];
+        8707824 => [crate::game::mechanism_cannon_setup_ram::setup(j, crate::game::mechanism_cannon_setup::Setup::Left, game)];
+        8707861 => [crate::game::mechanism_cannon_setup_ram::setup(j, crate::game::mechanism_cannon_setup::Setup::DiagonalLeft, game)];
+        8707916 => [crate::game::mechanism_cannon_setup_ram::setup(j, crate::game::mechanism_cannon_setup::Setup::Unshielded, game)];
         8704399 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::LowerNorfair, displacement, game)];
         8705568 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::WreckedShip, displacement, game)];
         8705740 => PlmSetup_D70C_NoobTube;
-        8707824 => PlmSetup_DraygonCannonFacingLeft;
     }
 }
 crate::game::callback_dispatch! {

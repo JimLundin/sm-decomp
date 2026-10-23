@@ -406,6 +406,8 @@ pub mod game {
     pub(crate) mod mechanism_scroll_setup_ram;
     pub(crate) mod mechanism_item_setup;
     pub(crate) mod mechanism_item_setup_ram;
+    pub(crate) mod mechanism_cannon_setup;
+    pub(crate) mod mechanism_cannon_setup_ram;
     pub mod sm_84;
     pub mod item_pickups;
     pub mod item_pickups_ram;
