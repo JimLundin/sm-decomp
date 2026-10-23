@@ -8,6 +8,21 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+First frozen next-enemy chunk independently source-reviewed: replacement/
+item_pickups.rs, item_pickups_runtime.rs, sm_90.rs, sm_91.rs, sm_a2.rs,
+verification/inventory_restore_cases.rs and shared/drop_rules.rs. One Resource,
+shared signed/wrapping restoration,7actualcaller redirects,4old bodies retired.
+Enemy drops.rs still active; no partial integration/runtime equivalence claim.
+Complete candidate target: next-enemy-session/candidate-c8d728c2, not built yet.
+Native cases1440..1442 draft is verification/enemy_native_runtime_cases.rs;
+session_review reactivated for concrete review (do not rely on queued messages
+to a completed agent). Detached binding drafted, waiting on complete cores.
+
+Combined baseline route PASS on current source dd073b2a...: main-baseline-movie.log
+contains28314frames,26required probes,zero failures,120frames after completion,
+97.27s replay/97.52s total. Process32198 completed; no localheavy process active.
+Restoration CI40009086639 now fully PASS. Worker source drafts remain isolated.
+
 Four enemy implementation lanes now ACTIVE fromc8d728c2 in
 next-enemy-session/replacement: A foreign_edges shared state/runtime/content;
 B setup_callbacks setup/attachments; C pre_callbacks pre/motion/access macros;

@@ -265,6 +265,17 @@ references; measure build/test time and resource growth before changing the loop
    Two additional unsafe declarations are existing native caller test entries.
    Restoration mutation designs remain unexecuted until the owned core exists.
    Getter CI40007332386 and shared adoption CI40007039503 both pass fully.
+   Restoration baseline commitc8d728c2 CI40009086639 also passes fully. Current
+   main combined route passes28314frames, all26 room/player/enemy probes, zero
+   failures and120frames after message completion:97.27s replay/97.52s total.
+   This is the next candidate's timing/coverage reference, not a credits claim.
+   First implementation chunk passes independent source review: one Resource
+   type, owned restoration arithmetic, all7 real caller redirects and retirement
+   of4 old sm91 bodies; fixtures unchanged except dispatch. Enemy drop integration
+   is still active, so this chunk is not yet adopted or runtime-verified.
+   Existing pure projectile_geometry sine table is reused directly; no new math
+   implementation or detached fake. Native cases1440..1442 are drafted for actual
+   Runtime publication/reimport and panic behavior; source review/capture pending.
 
 
    Room mechanisms are now adopted as one production responsibility: creation,

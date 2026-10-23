@@ -24,8 +24,11 @@ flowchart TB
     API --> LIFE["lifecycle.rs / commands.rs"]:::active
     API --> CONTACT["contact.rs / collision.rs"]:::active
     API --> ATTACH["attachments_spore_maw.rs<br/>attachments_waffle_botwoon.rs"]:::active
-    API --> DROP["drops.rs / Inventory.restore"]:::active
-    DROP --> CALL["sm_90.rs / sm_a2.rs / sm_91.rs<br/>one restoration implementation"]:::active
+    API --> DROP["drops.rs"]:::active
+    DROP --> INV["item_pickups.rs / restore<br/>source review PASS"]:::checked
+    INV --> IRT["item_pickups_runtime.rs<br/>source review PASS"]:::checked
+    INV --> RESOURCE["drop_rules.rs<br/>one Resource / review PASS"]:::checked
+    IRT --> CALL["sm_90.rs / sm_a2.rs / sm_91.rs<br/>7 callers / 4 bodies retired in draft"]:::checked
     R --> RETIRE["Retire compat.rs<br/>and ownership_transport.rs"]:::pending
     SETUP --> MERGE["Whole candidate integration"]:::pending
     PRE --> MERGE
@@ -41,10 +44,11 @@ flowchart TB
     NATIVE --> CPANIC["1442 / core panic"]:::active
     MERGE --> VERIFY
     REF --> VERIFY
+    REF --> BASEPLAY["Baseline replay / 26 probes<br/>28,314 frames / 0 failures"]:::checked
     VERIFY --> MUT["Targeted mutations"]:::pending
     MUT --> PLAY["Exercised replay / runtime cost"]:::pending
     PLAY --> ADOPT["Enemy shared core adopted"]:::pending
-    class REVIEW,S,R,SETUP,PRE,LIFE,CONTACT,ATTACH,DROP,CALL,NRET,NPANIC,CPANIC changed
+    class DROP,INV,IRT,RESOURCE,CALL,BASEPLAY changed
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
