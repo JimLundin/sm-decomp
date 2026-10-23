@@ -1339,7 +1339,7 @@ crate::game::callback_dispatch! {
     [11199529] Shaktool_Instr_9 [jp] {
         word! {game; fx_timer = 32; fx_y_vel = 64; }
     };
-    [11199542] Shaktool_Instr_11 [jp] { word!(game.fx_base_y_pos = 722); };
+    [11199542] Shaktool_Instr_11 [jp] { crate::game::mechanism_hands_ram::lower_acid(game); };
     [11199549] Shaktool_Instr_10 [jp] { CallSomeSamusCode(1, game); };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11199871] Shaktool_Instr_8 [jp] { QueueSfx2_Max6(0x1c, game); };

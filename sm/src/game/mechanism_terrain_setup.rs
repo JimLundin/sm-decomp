@@ -16,6 +16,7 @@ pub enum Setup {
     Grapple,
     Deactivate,
     EnemyBreakable,
+    Blank,
 }
 #[derive(Clone, Copy)]
 pub enum ProjectileWord {
@@ -149,6 +150,7 @@ pub fn setup(c: &mut impl Context, slot: usize, kind: Setup) -> u8 {
             c.set_behavior_word(block, u16::from(next) << 8);
             return 0x41;
         }
+        Setup::Blank => c.set_level(c.block(slot), 0),
         Setup::Deactivate | Setup::EnemyBreakable => {
             let block = c.block(slot);
             let mask = if kind == Setup::Deactivate {

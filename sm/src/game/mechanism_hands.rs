@@ -20,6 +20,10 @@ pub enum ShipScrollPair {
 
 pub trait Context {
     type Block: Copy;
+    fn block_at(&self, x: u8, y: u8) -> Self::Block;
+    fn install_trigger(&mut self, block: Self::Block, hand: Hand);
+    fn selected_slot(&self) -> usize;
+    fn set_acid_base(&mut self, level: u16);
     fn space_jump(&self) -> bool;
     fn boss_defeated(&mut self) -> bool;
     fn downward(&self) -> bool;
@@ -63,4 +67,20 @@ pub fn setup(c: &mut impl Context, slot: usize, hand: Hand) -> u8 {
     // The child or another callback can reuse this captured slot.
     c.release(slot);
     1
+}
+
+pub fn prepare_ship_trigger(c: &mut impl Context, slot: usize) -> u8 {
+    c.install_trigger(c.block(slot), Hand::WreckedShip);
+    0
+}
+pub fn monitor_norfair(c: &mut impl Context) {
+    let block = c.block_at(4, 8);
+    if c.level(block) == 0xff {
+        c.install_trigger(block, Hand::LowerNorfair);
+        // The running PLM selection is read after installing the trigger.
+        c.release(c.selected_slot());
+    }
+}
+pub fn lower_acid(c: &mut impl Context) {
+    c.set_acid_base(722);
 }

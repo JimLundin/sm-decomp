@@ -9,61 +9,70 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares broken-turret grapple damage and periodic health
-application after Ceres commit `ce3e62c4`. New samus_periodic_damage core and
-checked adapter forbid unsafe. CFD5 (header D0E8, decimal 8703957) adds one
-whole pending damage and returns 0x41. The old Samus_HandlePeriodicDamage body
-is retired; the sole frame-handler caller applies the safe result and retains
-InvalidInterrupt_Crash on negative pending damage. Frozen frames clear pending
-without health reads. Preserve LE pending high/low assembly, native health
-low/high arithmetic and stores, Gravity-before-Varia masking with 0x00FFFF00,
-LE health sign/clamp and fraction-before-whole clears. RAM remains authoritative;
-92/115 setups shared, 9 room/event/boss + 14 residual identities remain.
+The latest stage shares Chozo plug clearing, hand-trigger installation,
+Lower Norfair monitoring and acid-base commands after `9fb0e85d`. Existing
+terrain and hand cores retire D108, D616, D15C and D155; AAE436 calls the same
+acid adapter. No module/registration added. Preserve zero/floored plug writes,
+exact high-byte and rounded BTS addressing, width low byte, exact 00FF test,
+live selection after trigger installation and target 722. RAM remains
+authoritative; 94/115 setups shared, 7 room/event/boss + 14 residual remain.
 
-Main 105266 Rust lines/192 files; unsafe 2879 (-1), casts 6010 (-1).
-Maintained implementation 105828; installers/launcher included 106738.
-Candidate 114297/297, gap 9031, unadopted. Main delta [97,809,3004],
-composition [115,966,3676] lines/tokens/LF bytes. Verification adds
-[659,8322,30954]; implementation plus checks adds [774,9288,34630].
-Local production overlaps composition. No dependencies/native/installer additions,
-net reduction, complete unsafe retirement or persistent ownership claim.
+Main 105310 Rust lines/192 files; unsafe 2879 unchanged, casts 6009 (-1).
+Maintained implementation 105872; installers/launcher included 106782.
+Candidate 114373/297, gap 9063, unadopted. Main delta [44,431,1498],
+composition [76,706,2699], verification [1005,12264,42383] lines/tokens/LF bytes;
+implementation plus checks [1081,12970,45082]. Local production 32 lines
+overlaps composition. No dependencies/native/installer additions, net reduction,
+complete unsafe retirement or persistent ownership claim.
 
-Use `runtime-impact-working/PERIODIC_DAMAGE_HANDOFF.md`,
-`periodic-damage-price.json` and `periodic-damage-check-1.log`. All 24 suites
-pass in 25.3209581s (suite 25.0369278s), explicit exit 0, with 232 runtime/280
-local source identities. New [9784,260,52,144]: 9784 successful comparisons
-(3024 setup + 6760 apply), 260 separate negative diagnostic-entry comparisons,
-52 interaction groups and 144 mixed observations. Diagnostic cases assert the
-exact scoped crash-entry panic and unchanged RAM in frozen-original/main/local
-paths. No execution or equivalence claim for abort/nonreturn tail; production
-InvalidInterrupt_Crash remains unchanged. Symbolic contexts exercise ordering,
-lazy reads and failure prefixes.
+Use `runtime-impact-working/CHOZO_TERRAIN_HANDOFF.md`,
+`chozo-terrain-price.json` and `chozo-terrain-check-1.log`. All 25 suites pass
+in 27.3007927s (suite 25.3352754s), explicit exit 0, 233 runtime/284 local
+source identities. New [3570,126,126,340,185]: 3570 defined comparisons include
+1360 Blank successes, 1700 trigger comparisons (510 checked failures), 504
+original false-watcher cases and six acid comparisons. Separate counts:
+126 original true-arm prefixes, 126 qualified completions, 340 checked-only
+invalid Blank cases. Never execute native Blank FFFE/FFFF outside RAM.
 
-Two actual straight-turret commands install A003 terrain. Direct, initial-beam
-and held-grapple calls allocate D0E8 and return collision/connection flags;
-first PLM tick deletes, followed by two empty ticks. Full pools, repeated held
-contact, frozen clearing, later health loss and BTS domain branches pass.
-Actual heat/lava/acid callbacks feed the consumer for four suit combinations.
-Selected liquid paths use actual pose-1 radius 21 and skip unrelated graphics
-and sound; they never enter the unsafe unfrozen liquid_effects::advance_tide.
-Three primary-bank content ranges totaling 11 bytes stay local.
+The original watcher's true arm has an always-odd native header store.
+Intercept immediately before that store, preserving live selector/pointer
+calculation, with exact panic identity and one hit. Compare its defined prefix
+to independent full-RAM expectations. Completion replaces only the store in
+a checked reference and independently applies two zero bytes at the live
+header address. Both terrain-overlap aliases, odd/max selectors and low-byte
+width truncation pass. No native true-arm completion claim. False branches
+execute the original completely; symbolic tests check live reads and ordering.
 
-The 52 groups are 36 turret/grapple, 4 BTS-domain and 12 environmental cases.
-The 144 observations mix 36 paired initial-grapple observations, 12 paired
-held-contact cycles and 96 individual environmental observations. They are
-not a uniform frame/collision-call count. No visible turret animation, complete
-frame, encounter/movie, boot-to-credits or independent backend claim. Other
-periodic RAM writers (plants, spikes, grapple, liquids, heat and sky) remain.
+Actual Lower Norfair statue initialization installs the monitor; B083 downward
+Samus contact marks event C, signals/locks the player and attempts a nested
+plug allocation. Full child/monitor pools and event reentry are checked.
+D113 changes tiles 0053/0054/0055/00FF on ticks 1/5/9/13 and deletes on 14;
+16 ticks are checked. Acid/unlock commands and Wrecked Ship trigger/source
+calls execute. Footstep instructions/operands are actual source data, but
+x192/y436/width48 is constructed offscreen placement. The draw guard asserts
+camera zero and y>15; it does not skip drawing code. The existing renderer
+returns before odd ROM access. No visible renderer or full-statue playback.
 
-Production release/frontend/verifier/source 53.7129753s and candidate release
-50.0259405s pass first attempts. Carrier passes 18.4661272s; harness attempt 1
-fails 6.1147483s on ambiguous fixture integer types, corrected by explicit
-annotations only. Harness attempt 2 passes 19.5795814s; all checks pass first
-run in 25.3209581s. Failed logs remain. Production hash:
-`93aaf684d3cd695104f3201e16943e314df7b8876327ca6ae889810d925b5864`.
-Formatting passes and verify_source's four inherited formatting hunks remain
-unchanged. Composition's exact ten changed files match main/local transforms
-and registrations. No production changes after final builds.
+Twenty real Samus passage samples check two solid controls and 18 post-clear/
+post-tail states, with full-RAM equality and state restored afterward. The 185
+mixed observations comprise 144 PLM ticks, 20 paired passage samples, 16
+footstep groups, two acid/unlock tails, one event reentry, one full monitor
+pool and one ship-trigger deletion. They are not a uniform frame/collision
+count. Sixteen content ranges (118 bytes) match primary banks and stay local.
+
+Production release/frontend/verifier/source 43.5043635s and candidate release
+43.2824016s pass first attempts; carrier 22.091831s passes. Harness attempt 1
+fails 5.209317s on a legacy exhaustive fixture match missing Blank; the old
+case list excludes it and new tests cover it. Adding the unreachable match
+arm gives attempt 2 PASS 21.0693746s. All checks pass first run 27.3007927s.
+Failed logs remain. Production hash:
+`7d45e2e5a81ff24873000fe9b0111fd57fec81a76ecbb226364f7e316f49d206`.
+Formatting and exact eight-file composition sync pass; no registrations or
+verify_source changes. Production source is unchanged after final builds.
+
+Retained periodic results [9784,260,52,144] include 260 separate negative
+crash-entry comparisons only; no abort/nonreturn-tail claim. See its handoff
+and logs. All 24 retained suites are unchanged.
 
 Retained Ceres results: [8800,10912,9,300], all eight source groups admitted.
 Only four free-HDMA groups reach native alignment guards; four full pools
@@ -91,7 +100,8 @@ Current guards do not resolve inherited Intro mismatch. Qualified item/cannon/
 Chozo and full-contact limits remain; eye acid initialization stays excluded.
 Scroll bounded nonreturn observations were not repeated.
 
-`periodic-damage-parent/` preserves prior main/carrier/local/composition;
+`chozo-terrain-parent/` preserves prior main/carrier/local/composition;
+`periodic-damage-parent/`,
 `ceres-door-parent/`,
 `treadmill-parent/` and earlier snapshots remain intact.
 Historical snapshots/caches/failed logs remain, including animal BE30 routing

@@ -22,6 +22,25 @@ impl<E> HandFields<'_, E> {
 }
 impl<E: Effects> Context for HandFields<'_, E> {
     type Block = u16;
+    fn block_at(&self, x: u8, y: u8) -> u16 {
+        (u16::from(y) * u16::from(self.word(0x7a5) as u8) + u16::from(x)).wrapping_mul(2)
+    }
+    fn install_trigger(&mut self, block: u16, hand: Hand) {
+        // Preserve the exact level-byte offset and rounded BTS index.
+        let high = 0x10003 + usize::from(block);
+        self.game.g_ram[high] = (self.game.g_ram[high] & 0xf) | 0xb0;
+        self.game.g_ram[0x16402 + usize::from(block >> 1)] = match hand {
+            Hand::LowerNorfair => 0x83,
+            Hand::WreckedShip => 0x80,
+        };
+    }
+    fn selected_slot(&self) -> usize {
+        usize::from(self.word(0x1c27) >> 1)
+    }
+    fn set_acid_base(&mut self, level: u16) {
+        self.put(0x1978, level);
+    }
+
     fn space_jump(&self) -> bool {
         self.word(0x9a4) & 0x200 != 0
     }
@@ -113,4 +132,22 @@ pub unsafe fn setup(j: u16, hand: Hand, displacement: *mut i32, game: &mut Game)
         usize::from(j >> 1),
         hand,
     )
+}
+
+fn fields(game: &mut Game) -> HandFields<'_, RuntimeEffects> {
+    HandFields {
+        game,
+        effects: RuntimeEffects {
+            displacement: core::ptr::null_mut(),
+        },
+    }
+}
+pub fn prepare_ship_trigger(j: u16, game: &mut Game) -> u8 {
+    mechanism_hands::prepare_ship_trigger(&mut fields(game), usize::from(j >> 1))
+}
+pub fn monitor_norfair(game: &mut Game) {
+    mechanism_hands::monitor_norfair(&mut fields(game));
+}
+pub fn lower_acid(game: &mut Game) {
+    mechanism_hands::lower_acid(&mut fields(game));
 }

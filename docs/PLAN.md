@@ -104,46 +104,47 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares broken-turret grapple damage and periodic health
-   application after Ceres commit `ce3e62c4`. New `samus_periodic_damage` core
-   and checked adapter forbid unsafe. Setup CFD5 (header D0E8, decimal 8703957)
-   adds one whole pending damage and returns 0x41. The old periodic consumer
-   body is retired; its sole frame-handler caller uses the safe result and
-   retains the original InvalidInterrupt_Crash boundary for negative damage.
-   Preserve frozen clearing, LE pending assembly, native health arithmetic,
-   suit precedence and 0x00FFFF00 truncation, LE health sign/clamp and ordered
-   fraction-then-whole clears. RAM remains authoritative; 92/115 setups shared,
-   with 9 room/event/boss and 14 residual identities remaining.
+   Latest verified stage shares Chozo plug clearing, hand trigger installation,
+   the Lower Norfair watcher and both acid-base commands after periodic damage
+   commit `9fb0e85d`. Existing terrain and hand cores retire D108, D616, D15C
+   and D155; AAE436 shares the acid target. No new module or registration.
+   Preserve full zero/floored plug addressing, exact high-byte/BTS installation,
+   low-byte room width, exact 00FF test, live PLM selection after terrain writes
+   and acid target 722. RAM remains authoritative; 94/115 setups shared,
+   with 7 room/event/boss and 14 residual identities remaining.
 
-   All 24 suites pass with 232 runtime/280 local identities. New result
-   [9784,260,52,144]: 9,784 successful comparisons (3,024 setup + 6,760 apply),
-   260 separate diagnostic-entry comparisons, 52 interaction groups and 144
-   mixed observations. Negative cases assert the exact scoped diagnostic panic
-   and unchanged RAM; they stop at crash entry and do not execute or establish
-   the abort/nonreturn tail. Symbolic contexts check lazy reads, ordered writes
-   and failure prefixes. The production crash implementation remains unchanged.
+   All 25 suites pass with 233 runtime/284 local identities. New result
+   [3570,126,126,340,185]: 3,570 defined comparisons include 510 matching checked
+   trigger failures; 126 intercepted original watcher prefixes; 126 separate
+   qualified checked completions; 340 separate checked-only invalid plug cases;
+   185 mixed lifecycle observations. D108 FFFE/FFFF accesses are outside RAM
+   and never executed natively. The original watcher's true arm always reaches
+   an odd native header store: intercept immediately before it and assert exact
+   panic identity/hit count. False branches execute the original completely.
+   True completion uses a checked reference plus independently computed bytes,
+   including both terrain/header aliases. No native true-completion claim.
 
-   Actual straight-turret commands install A003 terrain; initial, direct and
-   held-grapple consumers allocate D0E8, return connection flags and delete on
-   the first PLM tick. Repeated contact, freeze, health loss, full allocation
-   pools and BTS table failures/negative returns pass. Actual heat, lava and
-   acid callbacks accumulate damage before application for four suit states.
-   Selected liquid callbacks use the real pose-1 radius byte and RAM branches
-   without graphics/sound dispatch; this does not exercise the unsafe unfrozen
-   liquid backend. Three literal ranges (11 bytes) match primary banks.
-   No visible turret animation, full frame/encounter/movie or backend claim.
+   Actual Lower Norfair statue initialization, B083 player contact, nested plug
+   allocation/exhaustion, event C reentry, acid/unlock and the Wrecked Ship
+   footstep instruction execute. Footstep operands are real; x192/y436/width48
+   is constructed offscreen placement. The plug script changes tiles on ticks
+   1/5/9/13 and deletes on 14; all 16 ticks are checked. Scoped draw assertions
+   require camera zero and block row greater than 15; the original renderer then returns
+   before odd ROM reads. This is no visible renderer or full-statue proof.
+   Twenty actual Samus passage samples distinguish solid before clearing from
+   air afterward. Sixteen content ranges (118 bytes) match primary banks.
 
-   The 52 groups are 36 turret/grapple, 4 BTS-domain and 12 environmental cases.
-   The 144 mixed observations are 36 paired initial-grapple observations,
-   12 paired held-contact cycles and 96 individual environmental observations;
-   do not label them a uniform frame or collision-call count. All retained
-   suites pass unchanged. Other periodic RAM writers remain authoritative.
+   The 185 observations mix 144 PLM ticks, 20 paired passage samples, 16
+   footstep groups, two acid/unlock tails, one event reentry, one full monitor
+   pool and one ship-trigger deletion. Do not label them a uniform frame or
+   collision-call count. All 24 retained suites remain unchanged.
 
-   Production release/frontend/verifier/source 53.71s and prospective release
-   50.03s pass first attempts; carrier 18.47s passes. Harness attempt 1 fails
-   solely on an ambiguous fixture integer type (6.11s); explicit annotations
-   fix it and attempt 2 passes (19.58s). All 24 checks pass first run in 25.32s,
-   explicit exit 0. Production source remains unchanged; failed logs preserved.
+   Production release/frontend/verifier/source 43.50s and prospective release
+   43.28s pass first attempts; carrier 22.09s passes. Harness attempt 1 fails
+   because an old fixture match omitted Blank (5.21s); its explicit case list
+   excludes Blank, which the new suite covers. The exhaustive-match fix gives
+   attempt 2 PASS (21.07s). All 25 checks pass first run in 27.30s, explicit
+   exit 0. Production source remains unchanged; failed logs preserved.
 
    Retained limits: `advance_tide` reads native u16 at odd RAM197D on every
    unfrozen lava_surface; never run that as defined-reference evidence. The old
@@ -152,15 +153,14 @@ references; measure build/test time and resource growth before changing the loop
    or resolve the inherited Intro mismatch. Other qualified fixtures remain as
    documented in the local handoffs.
 
-   Main is **105,266 Rust lines in 192 files**. Prospective composition is
-   **114,297 (+9,031)** in 297 files, unadopted. Stage main adds 97 lines,
-   809 lexical tokens and 3,004 LF-normalized bytes; complete composition adds
-   115/966/3,676. Retained verification adds 659/8,322/30,954;
-   implementation plus checks adds 774 lines/9,288 tokens/34,630 bytes.
-   Local production overlaps composition. No dependency, native, installer or
-   launcher additions. Unsafe declarations fall one to 2,879; casts fall one
-   to 6,010. No net reduction, complete unsafe retirement, persistent ownership
-   or backend independence claim.
+   Main is **105,310 Rust lines in 192 files**. Prospective composition is
+   **114,373 (+9,063)** in 297 files, unadopted. Stage main adds 44 lines,
+   431 lexical tokens and 1,498 LF-normalized bytes; complete composition adds
+   76/706/2,699. Retained verification adds 1,005/12,264/42,383; implementation
+   plus checks adds 1,081/12,970/45,082. Local production overlaps composition.
+   No dependency, native, installer or launcher additions. Unsafe declarations
+   remain 2,879; casts fall one to 6,009. No net reduction, complete unsafe
+   retirement, persistent ownership or backend independence claim.
 
    Next dependencies, in order:
 
@@ -233,12 +233,14 @@ references; measure build/test time and resource growth before changing the loop
      actual room-state selection, allocation, deletion and collision/reentry tails.
    - [x] Share broken-turret grapple damage and periodic health application;
      compare allocation/held contact, diagnostic entry and environmental producers.
+   - [x] Share Chozo plug/trigger/watcher/acid behavior; compare both producers,
+     qualified watcher prefixes/completions, nested allocation and passage tails.
    - Close remaining room/event/boss setups, then constants/no-op/result routes.
      Preserve synchronous writes, nested displacement and failure prefixes before
      retiring native dispatch. The 115-identity inventory is in the local door
-     handoff; 9 room/event/boss and 14 residual identities remain. Select one
-     coherent responsibility through caller/validation investigation. The periodic-damage
-     handoff records retained writers and diagnostic-prefix limits.
+     handoff; 7 room/event/boss and 14 residual identities remain. Select one
+     coherent responsibility through caller/validation investigation. The Chozo-terrain
+     handoff records native domains and qualified watcher/draw limits.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -246,7 +248,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified periodic-damage continuation,
+   `runtime-impact-working/` is the verified Chozo-terrain continuation,
+   with `CHOZO_TERRAIN_HANDOFF.md`, `chozo-terrain-price.json` and
+   `chozo-terrain-check-1.log`. `chozo-terrain-parent/` preserves prior
+   main/carrier/local/composition inputs. Periodic-damage evidence remains
    with `PERIODIC_DAMAGE_HANDOFF.md`, `periodic-damage-price.json` and
    `periodic-damage-check-1.log`. `periodic-damage-parent/` preserves prior
    main/carrier/local/composition inputs. Ceres evidence remains
