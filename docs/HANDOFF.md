@@ -9,52 +9,71 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares Bomb Torizo statue setup D606, bombs watcher D33B,
-debris D357, music D3C7 and actor wait AA:C6C6 after `0a194127`. The core
-and checked adapter forbid unsafe code; five bank bodies and the sole-use
-music constant are retired. Captured selectors, native actor fields, descending
-statue scan and live post-music rereads remain exact. RAM is authoritative.
-97/115 setups shared; 4 room/event/boss and 14 residual identities remain.
+The latest stage shares Noob Tube rupture and related block installations after
+`9a33c52a`: D67F/D689/D693 and live D6CC alias, D4BF key watcher, and commands
+D525/D52C/D536/D543/D5E6/D5EE. Ten bank bodies and an obsolete public alias are
+retired, all eleven numeric identities retained. Core and checked adapter forbid
+unsafe code; actual projectile initialization and Samus controls remain explicit
+runtime dependencies. Preserve D693 live block/width reads, exact level byte and
+rounded BTS writes, two wake increments, effect order and control resets.
+RAM remains authoritative. 101/115 setups shared; 14 residual identities remain.
 
-Main 105470 Rust lines/194 files; unsafe 2879, casts 6006.
-Maintained implementation 106032; installers/launcher included 106942.
-Candidate 114583/300, gap 9113, unadopted. Main delta [135,1227,4197],
-composition [181,1581,5829], verification [931,11235,39600] lines/tokens/LF
-bytes; implementation plus checks [1112,12816,45429]. Local production overlaps
-composition. No dependency/native/installer additions, net reduction, complete
-unsafe retirement, persistent ownership or backend independence claim.
+Main 105590 Rust lines/196 files; unsafe 2876, casts 5992.
+Maintained implementation 106152; installers/launcher included 107062.
+Candidate 114776/303, gap 9186, unadopted. Main delta [120,1000,2668],
+composition [193,1649,5558], verification [1131,13202,48081] lines/tokens/LF
+bytes; implementation plus checks [1324,14851,53639]. Local production
+[72,643,2834] overlaps composition. No dependency/native/installer additions,
+net reduction, complete unsafe retirement, persistent ownership or backend
+independence claim. Safe behavior and checked access explain source growth.
 
-Use `runtime-impact-working/TORIZO_STATUE_HANDOFF.md`,
-`torizo-statue-price.json` and `torizo-statue-check-1.log`. All 27 suites pass,
-237 runtime/292 local identities. New [3696,1155,64,1382]: 2112 setup and
-1584 watcher comparisons; 1152 native actor comparisons, one injected callback
-and two real music aliases; 32 debris and 32 music commands; 1382 mixed lifecycle
-observations. All 26 retained result vectors remain unchanged.
+Use `runtime-impact-working/NOOB_TUBE_HANDOFF.md`, `noob-tube-price.json`
+and `noob-tube-check-2.log`. All 28 suites pass, 240 runtime/297 local identities.
+New [15308,9172,7716,1840]: 15308 successful setup comparisons and 9172
+separate matching checked failures; 7650 key-wake, 60 command and 6 ordered
+effect-observer comparisons; 1840 mixed lifecycle observations. Independent
+expected byte maps test odd offsets, wrapping and D693 self-alias/failure prefixes.
+All 27 retained suite vectors remain unchanged.
 
-Actual room9804 header/state selection reads list83FE and spawns third record
-840A; no other room PLMs are loaded. Separate guarded offscreen row20 scripts
-run bombs wake, 1024-byte transfer at relative tick120, eight debris emissions
-at216/264/279/293/306/318/329/339 and music/delete at340. These times start
-at the resumed120-frame draw. Actual actor waits then releases, including
-full pools and duplicate statues. Actual death checks persistent bit4, 16 RNG
-steps and final drop definition/points with a full pool. Bomb uses actual room
-reentry; Golden uses direct setup under retained area2. Native actor cases
-are even selectors; debris parameters are actual even0..14. No debris motion,
-visible rendering, DMA transfer execution, admitted death pickups, full boss encounter, full room load,
-movie or full-game claim. Content and frozen references remain local.
+Actual CEFB header/state selection reads C37D and spawns record C3D1 at(2,21).
+Constructed projectile-class injection through real BlockCollNoWaveBeamHoriz
+feeds C540/BTS44/C83E/C7E2 into BD26; this is not a power-bomb explosion or
+radius simulation. The power-bomb class and accepted new key are separate
+suspension points. Key-relative ticks: lock/crack0, draws48/49, shatter/quake50,
+event B/water/unlock/delete146. All five effect-pool occupancy levels pass.
+The crack plus ten shards and six bubbles makes17 attempted effects. Actual
+Samus handlers and all six pose/movement resets are checked. An older waiting
+duplicate survives event B; a fresh tube deletes via broken-state selection.
 
-Production release/frontend/verifier/source61.137277s, candidate50.430216s,
-carrier18.399432s, harness24.816798s and all27 checks26.170132s pass exit0.
-Suite time25.793148s. Carrier first attempt failed in9.415847s on fixture-only
-imports/private helper; corrected frozen-reference imports/pointer macro and
-preserved failed log. Other builds/checks pass first attempts. Source hash:
-`a3ca9702b37c284c002c59feebfa541ca9a13c5ba41db86abb1500b8dd87f9da`.
-Formatting passes, inherited verify_source formatting diff unchanged from
-parent, and 13-file candidate sync reviewed. Production unchanged after builds.
+Unused D700/D704/D708 run actual constructed placement, initial draws and
+real shot-signal consumers; D704/D708 reach their first supported post-signal
+draw. Missing current-source callbacks D409/D476/D489/D4BE prevent full
+unused-script coverage. Guards clip actual tube rows21..26 and constructed
+sibling rows29..32. No visible renderer, effect motion, full room decompression,
+full unused-script, power-bomb movie or full-game claim. Broken-state level
+metadata selection does not establish decompressed broken terrain. Content and
+frozen references remain local; earlier exclusions and Intro mismatch remain.
 
-Next: complete Noob Tube rupture and related D67F/D689/D693 block installations;
-preserve D6CC's live alias of D689. Trace both waits and event/lock/water tails
-before implementation. Remaining constants/no-op/result routes follow.
+Production release/frontend/verifier/source93.537344s, candidate50.881762s,
+carrier20.817542s, harness26.701465s and all28 checks27.961570s pass exit0.
+Suite time27.568134s. Harness first attempt failed9.005774s on fixture-only
+return-type mismatch; repaired and preserved log. Production callback return
+mismatch was fixed during review before compilation. Other builds/checks pass
+first attempts. Final source hash:
+`1621827d9a42fbfbeb747de224e9d58c8835499057aae7538cd5ec6aeb76582d`.
+Formatting passes, inherited verify_source diff unchanged from parent, and
+12-file candidate synchronization reviewed. Production unchanged after builds.
+
+Next: close14 constant/no-op/result/diagnostic setup identities and design shared
+typed setup decoding/dispatch across main and candidate. Retire duplicated
+mappings and native bank setup dispatch while preserving aliases, diagnostics,
+setup accumulator and nested collision displacement. Do not claim persistent
+ownership while RAM remains authoritative.
+
+Retained Torizo [3696,1155,64,1382] remains in TORIZO_STATUE_HANDOFF.md.
+Actual Bomb room selection and guarded full statue script are covered; Golden
+death uses area2 direct setup. Full death pool excludes pickup initialization.
+No visible renderer, DMA execution, debris motion, full encounter or movie claim.
 
 Retained block-reaction [3740,1020,224,974] remains in
 BLOCK_REACTION_HANDOFF.md. D127 parent deletes5; D064 starts alongside it,
@@ -96,7 +115,8 @@ Current guards do not resolve inherited Intro mismatch. Qualified item/cannon/
 Chozo and full-contact limits remain; eye acid initialization stays excluded.
 Scroll bounded nonreturn observations were not repeated.
 
-`torizo-statue-parent/` preserves prior main/carrier/local/composition;
+`noob-tube-parent/` preserves prior main/carrier/local/composition;
+`torizo-statue-parent/`,
 `block-reaction-parent/`,
 `chozo-terrain-parent/`,
 `periodic-damage-parent/`,

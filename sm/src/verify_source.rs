@@ -140,6 +140,14 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/mechanism_torizo_statue_ram.rs"),
     ),
     (
+        "sm/src/game/mechanism_noob_tube.rs",
+        include_bytes!("game/mechanism_noob_tube.rs"),
+    ),
+    (
+        "sm/src/game/mechanism_noob_tube_ram.rs",
+        include_bytes!("game/mechanism_noob_tube_ram.rs"),
+    ),
+    (
         "sm/src/game/mechanism_contact_physics.rs",
         include_bytes!("game/mechanism_contact_physics.rs"),
     ),

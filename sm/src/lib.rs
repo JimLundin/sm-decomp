@@ -404,6 +404,8 @@ pub mod game {
     pub(crate) mod mechanism_hands_ram;
     pub(crate) mod mechanism_torizo_statue;
     pub(crate) mod mechanism_torizo_statue_ram;
+    pub(crate) mod mechanism_noob_tube;
+    pub(crate) mod mechanism_noob_tube_ram;
     pub(crate) mod mechanism_stations;
     pub(crate) mod mechanism_stations_ram;
     pub(crate) mod mechanism_scroll_setup;

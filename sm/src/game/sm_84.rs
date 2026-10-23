@@ -704,7 +704,6 @@ pub fn PlmSetup_D0D8_ClearVflag(j: u16) -> u8 {
     1
 }
 
-pub use self::PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused as PlmSetup_D70C_NoobTube;
 pub unsafe fn SetPlmVarPtr(k: u16, a: u16, game: &mut Game) {
     unsafe {
         *(ram_ptr!(game, u16; word!(game.plm_variable[(k >> 1)]) as isize)) = a;
@@ -726,45 +725,10 @@ crate::game::callback_dispatch! {
     game: &mut Game,
 ) -> u8 => ea;
     call (j, game); default Unreachable(game) as u8;
-    @functions [pub unsafe fn (j: u16, game: &mut Game) -> u8];
-    [8705663] PlmSetup_D700_MakePlmAirBlock_Unused [] {
-        WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[(j >> 1)]), 0x44, game);
-        0
-    };
-    [8705673] PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused [] {
-        WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[(j >> 1)]), 0x8044, game);
-        0
-    };
-    @functions [pub fn (j: u16, game: &mut Game) -> u8];
-    @functions [pub fn (_j: u16, game: &mut Game) -> u8];
-    @functions [pub unsafe fn (j: u16, game: &mut Game) -> u8];
-    @prefix { let v1: i32 = j as i32 >> 1; };
-    [8705683] PlmSetup_D708_LowerNorfairChozoBlockUnused [] {
-        WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[v1]), 0x8044, game);
-        WriteLevelDataBlockTypeAndBts(
-            (word!(game.plm_block_indices[v1])).wrapping_add(2),
-            0x50ff,
-            game,
-        );
-        WriteLevelDataBlockTypeAndBts(
-            (word!(game.room_width_in_blocks) as i32
-                + word!(game.room_width_in_blocks) as i32
-                + word!(game.plm_block_indices[v1]) as i32) as u16,
-            0xd0ff,
-            game,
-        );
-        WriteLevelDataBlockTypeAndBts(
-            (word!(game.room_width_in_blocks) as i32
-                + word!(game.room_width_in_blocks) as i32
-                + word!(game.plm_block_indices[v1]) as i32
-                + 2) as u16,
-            0xd0ff,
-            game,
-        );
-        0
-    };
-    @functions [pub unsafe fn (v0: u16, game: &mut Game) -> u8];
     @external {
+        8705663 => [crate::game::mechanism_noob_tube_ram::setup(j, crate::game::mechanism_noob_tube::Setup::Air, game)];
+        8705673 | 8705740 => [crate::game::mechanism_noob_tube_ram::setup(j, crate::game::mechanism_noob_tube::Setup::Solid, game)];
+        8705683 => [crate::game::mechanism_noob_tube_ram::setup(j, crate::game::mechanism_noob_tube::Setup::FourBlocks, game)];
         8705542 => [crate::game::mechanism_torizo_statue_ram::setup(j, game)];
         8704279 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::ShotBlock, game)];
         8704299 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::GrappleBlock, game)];
@@ -869,7 +833,6 @@ crate::game::callback_dispatch! {
         8697795 => [crate::game::mechanism_sound_delay_ram::begin(j, game)];
         8704399 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::LowerNorfair, displacement, game)];
         8705568 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::WreckedShip, displacement, game)];
-        8705740 => PlmSetup_D70C_NoobTube;
     }
 }
 crate::game::callback_dispatch! {
@@ -976,22 +939,6 @@ crate::game::callback_dispatch! {
             PlmPreInstr_GoToLinkInstruction(k, game);
         };
     };
-    [8705215] PlmPreInstr_WakeOnKeyPress [] {
-        if (word!(game.joypad1_newkeys)
-            & (kButton_B as i32
-                | kButton_Y as i32
-                | kButton_Left as i32
-                | kButton_Right as i32
-                | kButton_A as i32
-                | kButton_X as i32) as u16)
-            != 0
-        {
-            let v2: i32 = k as i32 >> 1;
-            word!(game.plm_instruction_timer[v2] = 1);
-            word!(game.plm_instr_list_ptrs[v2] += 1);
-            word!(game.plm_instr_list_ptrs[v2] += 1);
-        }
-    };
     [8706916] PlmPreInstr_GotoLinkIfShotWithSuperMissile [] {
         let mut v1: i16 = ((word!(game.plm_timers[(k >> 1)])) as i16) & (0xf00i16);
         if v1 == 512 {
@@ -1077,6 +1024,7 @@ crate::game::callback_dispatch! {
         }
     };
     @external {
+        8705215 => [crate::game::mechanism_noob_tube_ram::poll(k, game)];
         8704827 => [crate::game::mechanism_torizo_statue_ram::poll(k, game)];
         8704348 => [crate::game::mechanism_hands_ram::monitor_norfair(game)];
         8704486 => [crate::game::mechanism_mother_brain_glass_ram::poll(k, game)];
@@ -1184,14 +1132,6 @@ crate::game::callback_dispatch! {
         *ram_ptr!(game; 0x16402, (word!(game.plm_block_indices[(k >> 1)]) >> 1) as isize) = 1;
         plmp
     };
-    [8705317] PlmInstr_EnableWaterPhysics [] {
-        word!(game.fx_liquid_options &= !(4));
-        plmp
-    };
-    [8705334] PlmInstr_DiagonalEarthquake [] {
-        word! {game; earthquake_type = 11; earthquake_timer = 64; }
-        plmp
-    };
     [8705951] PlmInstr_SpawnTwoEyeDoorSmoke [] {
         SpawnEprojWithRoomGfx(0xe517, 0x30a, game);
         SpawnEprojWithRoomGfx(0xe517, 0x30a, game);
@@ -1250,25 +1190,6 @@ crate::game::callback_dispatch! {
         } else {
             PlmScript::jump(plmp.word(0))
         }
-    };
-    [8705347] PlmInstr_Spawn10shardsAnd6n00bs [] {
-        SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as u16, 0, game);
-        SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as u16, 2, game);
-        SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as u16, 4, game);
-        SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as u16, 6, game);
-        SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as u16, 8, game);
-        SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as u16, 0xa, game);
-        SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as u16, 0xc, game);
-        SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as u16, 0xe, game);
-        SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as u16, 0x10, game);
-        SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as u16, 0x12, game);
-        SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeReleasedAirBubbles as u16, 0, game);
-        SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeReleasedAirBubbles as u16, 2, game);
-        SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeReleasedAirBubbles as u16, 4, game);
-        SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeReleasedAirBubbles as u16, 6, game);
-        SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeReleasedAirBubbles as u16, 8, game);
-        SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeReleasedAirBubbles as u16, 0xa, game);
-        plmp
     };
     @functions [pub unsafe fn (mut plmp: PlmScript, k: u16, game: &mut Game) -> PlmScript];
     [8685412] PlmInstr_LoadItemPlmGfx [] {
@@ -1651,10 +1572,7 @@ crate::game::callback_dispatch! {
     k: u16,
     game: &mut Game,
 ) -> PlmScript];
-    [8705324] PlmInstr_SpawnN00bTubeCrackEproj [plmp] { SpawnEprojWithRoomGfx(0xd904, 0, game); };
     @functions [pub unsafe fn (plmp: PlmScript, k: u16, game: &mut Game) -> PlmScript];
-    [8705510] PlmInstr_DisableSamusControls [plmp] { CallSomeSamusCode(0, game); };
-    [8705518] PlmInstr_EnableSamusControls [plmp] { CallSomeSamusCode(1, game); };
     @functions [pub unsafe fn (
     plmp: PlmScript,
     k: u16,
@@ -1759,6 +1677,15 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (plmp: PlmScript, k: u16, game: &mut Game) -> PlmScript];
     [8709691] PlmInstr_E63B [plmp] { word!(game.fx_y_vel = -32i32 as u16); };
     @external {
+        8705317 | 8705324 | 8705334 | 8705347 | 8705510 | 8705518 => [{crate::game::mechanism_noob_tube_ram::command(ea as u16, game, |effect, game| {
+            use crate::game::mechanism_noob_tube::Effect;
+            match effect {
+                Effect::Crack => { SpawnEprojWithRoomGfx(0xd904, 0, game); },
+                Effect::Shard(index) => { SpawnEprojWithRoomGfx(0xd912, u16::from(index) * 2, game); },
+                Effect::Bubble(index) => { SpawnEprojWithRoomGfx(0xd920, u16::from(index) * 2, game); },
+                Effect::Controls(enabled) => { CallSomeSamusCode(u16::from(enabled), game); }
+            }
+        }); j}];
         8704855 => [crate::game::mechanism_torizo_statue_ram::debris(j, game, |parameter, game| { SpawnEprojWithRoomGfx(0xa993, parameter, game); })];
         8704967 => [{crate::game::mechanism_torizo_statue_ram::music(game); j}];
         8704341 => [{ crate::game::mechanism_hands_ram::lower_acid(game); j }];
