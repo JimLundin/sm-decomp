@@ -1,6 +1,6 @@
 # Engine migration
 
-Green: adopted scope | Blue: draft | Orange: active | Grey: remaining | Red: failed
+Green: adopted scope / passed check | Blue: draft | Orange: active | Grey: remaining | Red: failed
 **Purple outline: changed since previous report.** Folder branches show containment; check arrows show prerequisites.
 
 ```mermaid
@@ -14,7 +14,6 @@ flowchart LR
     WORLD --> MR
     RULES --> MR
     MR --> REPLAY["Seed + settings + replay compatibility"]:::pending
-    class CORE,VANILLA,MEDIA,WORLD,RULES,MR,REPLAY changed
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
@@ -76,7 +75,6 @@ flowchart TB
     PLAY --> ADOPT["Enemy shared core adopted"]:::done
     MUT --> ADOPT
     FRONT --> ADOPT
-    class S,R,SETUP,PRE,LIFE,CONTACT,ATTACH,DROP,RETIRE,MERGE,VERIFY,NRET,NPANIC,CPANIC,ROOM,HOST,HFAIL,HFIX,MUT,PLAYER,FRONT,PLAY changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
@@ -106,52 +104,51 @@ flowchart LR
     D --> I["Inventory restoration"]:::done
     I --> I1["Health equality boundary / caught"]:::done
     I --> I2["Missile reserve limit / caught"]:::done
-    class B,C,C1,C2,C3,C4,C5,C6,C7,D,R,R1,R2,R3,R4,N,N1,N2,N3,I,I1,I2 changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-### Shared visual effects / integrated candidate under validation
+### Shared visual effects / shared owner adopted
 
-Blue files are reviewed candidate changes; green checks have passed. Adoption is pending.
+[Full build + 27 mutations / PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40021042750)
 
 ```mermaid
 flowchart TB
     subgraph owner["Shared owner / game/"]
-        S["session.rs"]:::checked
-        VS["visual_state.rs"]:::checked
-        EI["external_inputs.rs"]:::checked
-        VH["visual_host.rs"]:::checked
-        SE["session_encoding.rs"]:::checked
-        SR["session_runtime.rs"]:::checked
-        VR["visual_runtime.rs"]:::checked
+        S["session.rs"]:::done
+        VS["visual_state.rs"]:::done
+        EI["external_inputs.rs"]:::done
+        VH["visual_host.rs"]:::done
+        SE["session_encoding.rs"]:::done
+        SR["session_runtime.rs"]:::done
+        VR["visual_runtime.rs"]:::done
     end
     subgraph palette["palette_effects/"]
-        PE["execution.rs"]:::checked
-        PM["mod.rs"]:::checked
+        PE["execution.rs"]:::done
+        PM["mod.rs"]:::done
     end
     subgraph animation["animated_tiles/"]
-        AE["execution.rs"]:::checked
-        AM["mod.rs"]:::checked
-        AN["native.rs"]:::checked
+        AE["execution.rs"]:::done
+        AM["mod.rs"]:::done
+        AN["native.rs"]:::done
     end
     subgraph player["Samus / beam consumers"]
-        SP["game/samus_palette.rs"]:::checked
-        LS["game/liquid_surface.rs"]:::checked
-        B90["sm_90.rs"]:::checked
-        B91["sm_91.rs"]:::checked
+        SP["game/samus_palette.rs"]:::done
+        LS["game/liquid_surface.rs"]:::done
+        B90["sm_90.rs"]:::done
+        B91["sm_91.rs"]:::done
     end
     subgraph callers["Other shared-state consumers / game/"]
-        EP["enemy_projectiles/pre_actions.rs"]:::checked
-        EG["enemy_projectiles/graphics_runtime.rs"]:::checked
-        PF["player_projectiles/feedback.rs"]:::checked
-        PP["player_projectiles/mod.rs"]:::checked
+        EP["enemy_projectiles/pre_actions.rs"]:::done
+        EG["enemy_projectiles/graphics_runtime.rs"]:::done
+        PF["player_projectiles/feedback.rs"]:::done
+        PP["player_projectiles/mod.rs"]:::done
     end
     subgraph compatibility["Compatibility boundary / src/"]
-        RAM["ram_map.rs"]:::checked
-        RTL["rtl.rs / pointer writer relocated"]:::checked
+        RAM["ram_map.rs"]:::done
+        RTL["rtl.rs / pointer writer relocated"]:::done
     end
     S --> VS
     S --> EI
@@ -165,7 +162,7 @@ flowchart TB
     EP --> PE
     AE --> EP
     class S,VS,EI,VH,SE,SR,VR,PE,PM,AE,AM,AN,SP,LS,B90,B91,EP,EG,PF,PP,RAM,RTL changed
-    classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
@@ -181,14 +178,14 @@ flowchart TB
     BUILD --> ENEMY["Enemy regression<br/>1,443 cases + 87 checks PASS"]:::done
     BUILD --> ROOM["Room comparisons<br/>1,038 PASS"]:::done
     BUILD --> PLAYER["Player regression<br/>106 groups + 56 comparisons PASS"]:::done
-    BUILD --> REPLAY["Replay / 38 required probes<br/>RUNNING"]:::active
+    BUILD --> REPLAY["Replay / 38 required probes<br/>28,314 frames / 0 failures"]:::done
     BUILD --> HOST["Hosted full build<br/>PASS"]:::done
-    HOST --> DLL["Hosted DLL mutations<br/>RUNNING"]:::active
+    HOST --> DLL["Hosted DLL mutations<br/>9 / 9 caught"]:::done
     BUILD --> DETACHED["Shared detached harness<br/>execution PASS"]:::done
     DETACHED --> OLD["7 existing detached mutants<br/>7 / 7 caught"]:::done
     DETACHED --> NEW["11 new visual mutants<br/>11 / 11 caught"]:::done
     BUILD --> FMT["Root + hosted formatting<br/>PASS"]:::done
-    RETIRE["7 old production files retired<br/>candidate / 666 gross lines"]:::checked --> ADOPT
+    RETIRE["7 old production files retired<br/>adopted / 666 gross lines"]:::done --> ADOPT
     PAL --> ADOPT
     ANI --> ADOPT
     SAM --> ADOPT
@@ -201,10 +198,9 @@ flowchart TB
     DLL --> ADOPT
     OLD --> ADOPT
     NEW --> ADOPT
-    FMT --> ADOPT["Adopt on main + publish<br/>PENDING"]:::pending
+    FMT --> ADOPT["Shared visual owner adopted"]:::done
     class REVIEW,UNION,BUILD,PAL,ANI,SAM,CPU,GUARD,ENEMY,ROOM,PLAYER,REPLAY,HOST,DLL,DETACHED,OLD,NEW,FMT,RETIRE,ADOPT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
-    classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
@@ -237,6 +233,7 @@ flowchart TB
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 [Hosted validation](https://github.com/JimLundin/sm-decomp/actions/runs/40021042750)
+
 
 <details>
 <summary>Room mechanisms / shared typed core adopted</summary>
@@ -297,7 +294,6 @@ flowchart TB
     GET --> GTEST["room_mechanism_getters.rs<br/>54 queries + 16 nested cases PASS"]:::done
     GTEST --> GMOV["28,314 frames / 0 failures<br/>no measured speedup"]:::done
     GTEST --> GCI["New frozen getter baseline<br/>CI PASS"]:::done
-    class GET,GTEST,GMOV,GCI changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -331,7 +327,6 @@ flowchart LR
     C34["1034 / room flag clear<br/>reference + candidate PASS"]:::done
     C35["1035 / item flag set<br/>reference + candidate PASS"]:::done
     C36["1036 / item flag clear<br/>reference + candidate PASS"]:::done
-    class C33,C34,C35,C36,MF changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

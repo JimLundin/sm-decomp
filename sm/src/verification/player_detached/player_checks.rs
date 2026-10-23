@@ -143,14 +143,17 @@ fn reset_palette_composition() {
     ] {
         h.word(0x8d, cursor, value);
     }
-    h.world.palette.set_enabled(true);
+    colors::set_enabled(&mut h.world.player, true);
     player::reset(&mut h);
     assert_eq!(h.events, [Event::PaletteSpawn(0xe1f0)]);
-    assert_eq!(h.world.palette.effects.slots[7].id, 0xe1f0);
+    assert_eq!(
+        h.world.player.visual.palette_effects.slots[7].definition,
+        0xe1f0
+    );
     assert_eq!(h.world.player.projectiles.shots[0].x_fraction, 0xabcd);
     assert_eq!(h.world.player.projectiles.shots[0].auxiliary, 0x1234);
     colors::advance(&mut h);
-    assert_eq!(h.world.palette.colors[0], 0x3456);
+    assert_eq!(h.world.player.visual.colors[0], 0x3456);
     assert_eq!(
         h.events,
         [Event::PaletteSpawn(0xe1f0), Event::Color(0, 0x3456)]

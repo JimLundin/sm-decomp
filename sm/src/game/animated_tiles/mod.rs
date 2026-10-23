@@ -1,18 +1,15 @@
-//! Owned animated-tile execution with an explicit runtime compatibility edge.
-mod content;
-mod execution;
-mod native;
-mod runtime;
-mod state;
-use crate::game_state::Game;
-use execution::Host;
-use runtime::Runtime;
-use state::Upload;
+//! Animated tiles compose on the shared Session at each legacy entry.
+pub(crate) mod execution;
+pub(crate) mod native;
+use crate::{
+    game::{session_access::SessionAccess, session_runtime::Runtime},
+    game_state::Game,
+};
 pub(crate) fn set_enabled(enabled: bool, game: &mut Game) {
-    Runtime::new(game).tiles_mut().set_enabled(enabled);
+    execution::set_enabled(Runtime::new(game).session_mut(), enabled);
 }
 pub(crate) fn clear(game: &mut Game) {
-    Runtime::new(game).tiles_mut().clear();
+    execution::clear(Runtime::new(game).session_mut());
 }
 pub(crate) fn spawn(definition: u16, game: &mut Game) {
     execution::spawn(&mut Runtime::new(game), definition);

@@ -1,18 +1,13 @@
-//! Complete palette Session core with one explicit runtime compatibility edge.
-mod content;
-mod diagnostics;
-mod execution;
-mod runtime;
-mod state;
+//! Palette effects using the shared gameplay Session and runtime.
+pub(crate) mod execution;
+use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
-use execution::Host;
-use runtime::Runtime;
 
 pub(crate) fn set_enabled(enabled: bool, game: &mut Game) {
-    Runtime::new(game).session_mut().set_enabled(enabled);
+    execution::set_enabled(Runtime::new(game).session_mut(), enabled);
 }
 pub(crate) fn clear(game: &mut Game) {
-    Runtime::new(game).session_mut().clear();
+    execution::clear(Runtime::new(game).session_mut());
 }
 pub(crate) fn spawn(definition: u16, game: &mut Game) {
     execution::spawn(&mut Runtime::new(game), definition);
@@ -24,7 +19,7 @@ pub(crate) fn advance(game: &mut Game) {
 /// Numeric identities remain private to the existing actual-code comparison carrier.
 pub(crate) mod checks {
     pub(crate) fn guard(game: &mut crate::game_state::Game) -> bool {
-        super::runtime::check_guard(game)
+        crate::game::visual_runtime::check_palette_guard(game)
     }
     use super::*;
     pub(crate) fn setup(ea: u32, _k: u16, slot: u16, game: &mut Game) {

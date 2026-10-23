@@ -2,13 +2,18 @@
 #![forbid(unsafe_code)]
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct ExternalInputs {
+    pub enemy_zero_health: u16,
+    pub frame_handler_beta: u16,
+    pub blending_config: u16,
+    pub player_animation_frame: u16,
+    pub demo_input_pre_action: u16,
+    pub lava_y: u16,
     pub player_x_radius: u16,
     pub current_enemy: u16,
     pub random: u16,
     pub random_enemy_counter: u16,
     pub bitmask: u16,
     pub fx_y: u16,
-    pub statue_animation: u16,
     pub nmi_counter_low: u8,
     pub drop_origin_x: u16,
     pub drop_origin_y: u16,
@@ -26,7 +31,6 @@ pub struct ExternalInputs {
     pub hyper: u16,
     pub frozen: u16,
     pub cinematic: u16,
-    pub suit_palette: u16,
     pub hud_auto_cancel: u16,
     pub camera_x: u16,
     pub background_page_x: u16,

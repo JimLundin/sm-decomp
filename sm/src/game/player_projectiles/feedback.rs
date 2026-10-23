@@ -26,7 +26,7 @@ impl<'a, H: Host> shared::Context<&'a mut H> for Palette {
             Input::GrappleInactive => u16::from(h.session().player.grapple == 0xc4f0),
             Input::Charge => h.session().projectiles.controls.charge,
             Input::ContactAttack => u16::from(h.session().player.contact.contact_attack == 4),
-            Input::Suit => h.inputs().suit_palette,
+            Input::Suit => h.session().player.palette.suit_index,
         }
     }
     fn output(&mut self, h: &'a mut H, output: Output) -> (&'a mut H, u8) {

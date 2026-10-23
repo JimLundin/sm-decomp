@@ -57,11 +57,16 @@ Oracle comparison excludes only fixture stack[1FEB,2000) and charge scratch
 [24,26) forIDs21..24; candidate excluded bytes stay at entry values.
 Hosted verify/visual-session-20261023 commit7f14e21/run40021042750 passes
 formatting, allthree detached executions,18/18composed mutants and full Cargo
-build. Nine DLL mutants remain pending. Final replay is active in session68037.
+build. Hosted40021042750 is fully successful: all nine frozen DLL baselines
+pass and all nine compiling DLL faults trigger their intended checks. Combined
+mutation result27/27 (18detached+9DLL), independently log-audited. Final replay passes28314frames/all38probes/0failures,
+120follow-upframes,97.49s versus94.68s baseline (one paired sample).
 The first replay-launch script failed reading a UTF16 log, before gameplay;
-encoding corrected without source changes. No failed gameplay frames so far.
-Candidate source remains unadopted. Preserve candidate library/defined adapter
-and source registry when integrating; no old legacy adapter overlay. Pointer
+encoding corrected without source changes. No failed gameplay frames.
+Complete visual Session source is adopted on main with this commit.
+All314tracked sm files are byte-identical to the frozen candidate. Rootfmt/check
+and direct release build pass28.18s onf3840efe; session13604 is terminal.
+Candidate library/defined adapter and source registry are preserved. Pointer
 writer relocation is exact, not unsafe elimination. Main MapRando docs persist.
 
 The final matching route uses38requiredprobes,28314frames,120aftermessage;
@@ -885,3 +890,11 @@ Preparation does not compile; reuse unchanged libraries. Formatter:
 `rustfmt --edition 2024 --config skip_children=true,reorder_modules=false,reorder_imports=false`.
 Repository-wide formatting already fails on the baseline. Do not format
 `verify_source.rs` wholesale or introduce unrelated formatting changes.
+
+Next design-only scope: next-visual-session/SPRITE-EFFECT-SESSION-CONTRACT.md.
+Complete sprite-effect lifecycle plus actual Waffle/Metroid/Draygon/Maw
+controllers; preserve two clear footprints and legacy content provenance.
+Independent caller/union source reviews pass:1026newbytes,52079WRAM total,
+native unchanged. Concrete interfaces and executable union checks remain.
+No sprite implementation has started. Prepared content/Map Rando integration
+and persistent whole-game ownership remain unfinished.

@@ -53,3 +53,7 @@ pub(crate) fn prepare(h: &mut impl Host) {
 pub(crate) fn fire_missile(h: &mut impl Host) {
     missiles::fire(h);
 }
+
+pub(crate) fn charge_palette(h: &mut impl Host) -> u8 {
+    feedback::palette(h)
+}

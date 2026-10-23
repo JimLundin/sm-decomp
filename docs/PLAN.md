@@ -347,9 +347,17 @@ references; measure build/test time and resource growth before changing the loop
    1174visual comparisons (512palette,438animation,224definedSamus), all33oracle
    comparisons and three Runtime guards. Enemy1443cases/87checks pass. Hosted
    7f14e21/run40021042750 passes full Cargo build and all18composed mutants;
-   1038room comparisons and106player groups/56comparisons also pass. Nine DLL
-   mutants and final38probe replay remain.
-   Candidate is not adopted until those checks pass.
+   1038room comparisons and106player groups/56comparisons also pass. All nine DLL
+   frozen baselines pass and all nine compiling mutants are rejected by intended
+   checks; hosted40021042750 passes fully (27/27total mutations). Final38probe replay passes28314frames/0failures and120frames
+   after message completion:97.49s versus94.68s baseline (one paired sample).
+   All314tracked sm paths on main match frozen candidate bytes; root fmt/check
+   and direct release build pass28.18s on sourcef3840efe. No behavior checks repeated
+   solely for integration because source identity is exact.
+   Complete visual Session candidate is adopted in this commit. Two private
+   owners, seven production files and duplicate beam/suit copies retire. Unsafe
+   declarations2612->2603; rawoffsets21unchanged. Verification adds oneCexport
+   and two no_mangle spellings; the relocated pointer writer remains unsafe.
    Broad palette aliases, legacy writers and reset/backend paths still prevent
    persistent whole-game ownership; do not claim persistence from composition.
    Production lexical size is nearly unchanged; no material algorithm-size
@@ -359,6 +367,12 @@ references; measure build/test time and resource growth before changing the loop
    Seven production files retire (666gross lines, replacements counted). Geometry
    relocation and macro formatting are not savings. Complete accounting is in
    local FINAL-ACCOUNTING.md and final-source-accounting.json.
+   Next proposal: complete sprite-effect pool with actual Waffle/Metroid/Draygon/
+   Maw controllers, shared ownership and explicit content inputs. Independent
+   caller and design/union source reviews pass:1026newbytes,52079WRAM total,
+   native unchanged. Concrete interfaces and executable union checks remain.
+   Preserve distinct1022byte room clear and64byte active-pointer retirement.
+   This is not prepared-media independence or Map Rando integration readiness.
 
 
    Room mechanisms are now adopted as one production responsibility: creation,

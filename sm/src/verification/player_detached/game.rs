@@ -50,3 +50,18 @@ pub(crate) mod drop_rules;
 pub(crate) mod enemy_projectiles;
 #[path = "../../game/session_access.rs"]
 pub(crate) mod session_access;
+
+#[path = "../../game/visual_state.rs"]
+pub(crate) mod visual_state;
+
+#[path = "../../game/visual_host.rs"]
+pub(crate) mod visual_host;
+
+#[path = "../../game/samus_palette.rs"]
+pub(crate) mod samus_palette;
+
+#[path = "../../game/liquid_surface.rs"]
+pub(crate) mod liquid_surface;
+
+#[path = "../../game/session_encoding.rs"]
+pub(crate) mod session_encoding;
