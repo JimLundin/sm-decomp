@@ -48,10 +48,16 @@ zero failures and120frames after message completion (candidate-movie-1.log).
 Same-route baseline passes:88.18s versus candidate94.81s, a single sample +7.5%.
 Getter aggregate cost investigation is assigned; candidate remains frozen.
 Validation branch verify/shared-session-20261023 at7ba1e33a has hosted composed
-execution and format PASS, eight mutations/build still running in40005712881.
-Main flag-map verification commit dcb97630 CI40005395335 remains running.
+execution, full build, format and four composed mutants PASS in40005712881;
+four candidate room mutants remain running. Main flag-map verification commit
+dcb97630 CI40005395335 passes all four room mutants and frozen baselines.
 Full format changed only import/layout in two candidate verification files;
-local final frontend build is running (candidate-frontend-final.log).
+Local frontend build was blocked by Defender event1121 for khronos_api build
+script, ASR01443614-CD74-433A-B99E-2ECDC07BFC25; preserve the block and use CI.
+Formatted direct verifier build5 passes on source
+8a4ee812de0eaa7b25dcecd6877c2f08d6000aae282a8efbe257ba27d286d31d.
+Five-getter optimization is assigned to an isolated getter-optimization draft;
+do not overlay while candidate validation runs. Independent design review passed.
 Production+890lines, verification Rust+673 including four formatting lines,
 mutation Python+34; no reduction claim. No candidate adoption yet.
 Native source line endings match installed archives after normalized equality.

@@ -197,7 +197,8 @@ references; measure build/test time and resource growth before changing the loop
    Comparison caught reversed D830/D870 command flag maps; all four branches
    are corrected. New reference cases1033..1036 distinguish both maps and both
    query outcomes; independent review and old-reference capture pass. The fourth
-   mutation deliberately swaps the query map; reviewed runner awaits hosted CI.
+   mutation deliberately swaps the query map; hosted CI40005395335 passes all
+   three frozen baselines and all four room mutants on main.
    Composed host compilation,106 player groups,56 player comparisons and both
    animation/palette runtime guards pass. Speed Booster replay passes28314frames,
    all19 mechanism/player probes, zero failures and120frames after message
@@ -208,7 +209,14 @@ references; measure build/test time and resource growth before changing the loop
    full formatting (two verification files needed import/layout formatting only).
    Production+890lines; verification Rust+673 after formatting; Python+34.
    Caller/ownership/retirement review and hosted composed execution pass.
-   Eight hosted mutations and final frontend build remain pending.
+   Hosted candidate full build and four composed mutants pass; four candidate
+   room mutations remain running in40005712881. Local frontend build was blocked
+   by Defender ASR01443614-CD74-433A-B99E-2ECDC07BFC25 executing khronos_api's
+   build script (event1121); use the hosted build, preserve the block. Formatted
+   local direct verifier build5 passes on source
+   8a4ee812de0eaa7b25dcecd6877c2f08d6000aae282a8efbe257ba27d286d31d.
+   Independently approved five-getter direct-read optimization is being drafted
+   separately; preserve individual RAM-authoritative reads and broad aliases.
 
 
    Room mechanisms are now adopted as one production responsibility: creation,

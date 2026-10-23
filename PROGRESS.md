@@ -5,7 +5,7 @@ Green: adopted scope | Blue: draft | Orange: active | Grey: remaining | Red: fai
 
 [Latest verification: e216f0ef](https://github.com/JimLundin/sm-decomp/commit/e216f0efb0a4d7c75a9dcb7b13124ed4981fc5b6) / [CI + 3 scheduler mutants: PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40001171992)
 
-[Flag-map checks / CI](https://github.com/JimLundin/sm-decomp/actions/runs/40005395335) · [Shared Session validation branch](https://github.com/JimLundin/sm-decomp/tree/verify/shared-session-20261023)
+[Four room mutations / CI PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40005395335) · [Shared Session candidate CI](https://github.com/JimLundin/sm-decomp/actions/runs/40005712881)
 
 ### Room mechanisms / next typed-core conversion
 
@@ -53,12 +53,15 @@ flowchart TB
     COMPARE --> HC["Composed host compile<br/>PASS"]:::checked
     HC --> HE["Composed host execution<br/>CI PASS"]:::checked
     HE --> MUT["Candidate mutation checks"]:::pending
+    HE --> CM["4 composed mutants<br/>KILLED / CI PASS"]:::checked
+    CM --> MUT
+    BUILD --> FRONT["Full frontend build<br/>CI PASS / local ASR block"]:::checked
     REG --> MOVIE["28,314 frames / 19 probes<br/>0 failures / PASS"]:::checked
     MUT --> MOVIE
     MOVIE --> PERF["Runtime cost<br/>94.81s vs 88.18s / investigate"]:::active
     PERF --> ADOPT
     MOVIE --> ADOPT["Typed core adopted"]:::pending
-    class REG,HE,MOVIE,PERF changed
+    class REG,HE,MOVIE,PERF,CM,FRONT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -86,10 +89,10 @@ flowchart LR
     C20["1020 / resumed pre + timer"]:::done --> MP["Mutant: repeat pre<br/>KILLED / CI PASS"]:::done
     C20 --> MD["Mutant: repeat delay<br/>KILLED / CI PASS"]:::done
     C21 --> MC["Mutant: publish continuation early<br/>KILLED / CI PASS"]:::done
-    C33["1033 / room flag set<br/>reference + candidate PASS"]:::checked --> MF["Mutant: wrong flag map<br/>review PASS / CI pending"]:::active
-    C34["1034 / room flag clear<br/>reference + candidate PASS"]:::checked
-    C35["1035 / item flag set<br/>reference + candidate PASS"]:::checked
-    C36["1036 / item flag clear<br/>reference + candidate PASS"]:::checked
+    C33["1033 / room flag set<br/>reference + candidate PASS"]:::done --> MF["Mutant: wrong flag map<br/>KILLED / CI PASS"]:::done
+    C34["1034 / room flag clear<br/>reference + candidate PASS"]:::done
+    C35["1035 / item flag set<br/>reference + candidate PASS"]:::done
+    C36["1036 / item flag clear<br/>reference + candidate PASS"]:::done
     class C33,C34,C35,C36,MF changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
