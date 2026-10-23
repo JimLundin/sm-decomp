@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::host::*;
+use crate::game::progress_flags as flags;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Stage {
     BoosterCollected,
@@ -10,7 +11,7 @@ pub enum Stage {
 }
 
 pub fn begin(c: &mut impl Host, slot: usize) -> u8 {
-    if c.event(0x15) {
+    if flags::event_happened(c, 0x15) {
         mechanism!(c, slot, header = 0)
     }
     0
@@ -62,7 +63,7 @@ pub fn poll(c: &mut impl Host, stage: Stage, slot: usize) {
             let index = usize::from(progress >> 1);
             let threshold = STEPS[index];
             if threshold & 0x8000 != 0 {
-                c.mark_event(0x15)
+                flags::set_event(c, 0x15)
             } else if threshold >= c.session().player.x {
                 if STEPS[index + 1] < c.session().room.liquid_height {
                     c.session_mut().room.liquid_height = STEPS[index + 1]

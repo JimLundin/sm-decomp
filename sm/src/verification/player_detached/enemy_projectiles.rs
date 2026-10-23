@@ -79,3 +79,14 @@ pub(crate) fn sprite_command(h: &mut impl Host, k: u16, address: u16) {
     let script = h.script(address);
     assert!(commands::dispatch(8842467, k, &script, h).is_some());
 }
+
+// Expose actual maintained flag-dependent entrypoints; no behavior is duplicated.
+pub(crate) fn flag_command(h: &mut impl Host, identity: u32, k: u16, address: u16) -> usize {
+    let script = h.script(address);
+    commands::dispatch(identity, k, &script, h)
+        .expect("flag command continues")
+        .0
+}
+pub(crate) fn eye_door(h: &mut impl Host, k: u16) {
+    pre_actions::EprojPreInstr_EyeDoorProjectile(k, h);
+}

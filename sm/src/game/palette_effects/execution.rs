@@ -1,6 +1,8 @@
 //! Palette instructions on the sole shared gameplay Session.
 #![forbid(unsafe_code)]
 use crate::game::{
+    gameplay_flag_host::BossWordOrder,
+    progress_flags,
     session::Session,
     visual_host::{Host, PaletteMember, Record, Source},
 };
@@ -269,7 +271,10 @@ pub(crate) fn pre(host: &mut impl Host, ea: u32, k: u16) {
             }
         }
         9301701 => {
-            if host.miniboss_defeated() {
+            if progress_flags::boss_word_at(host, host.session().room.area, BossWordOrder::Native)
+                & 2
+                != 0
+            {
                 put!(host, definition, k, 0);
             }
         }
@@ -378,7 +383,10 @@ pub(crate) fn setup(host: &mut impl Host, ea: u32, slot: u16) {
             put!(host, program, slot, script);
         }
         9303856 => {
-            if host.miniboss_defeated() {
+            if progress_flags::boss_word_at(host, host.session().room.area, BossWordOrder::Native)
+                & 2
+                != 0
+            {
                 put!(host, definition, slot, 0);
             }
         }

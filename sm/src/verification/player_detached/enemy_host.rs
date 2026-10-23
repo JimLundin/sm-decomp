@@ -30,9 +30,6 @@ impl ImportedAliases for Composed {
     fn behavior_byte(&self, block_index: u16) -> u8 {
         panic!("unprepared enemy operation: behavior_byte")
     }
-    fn door_flag_byte(&self, signed_byte_index: isize) -> u8 {
-        panic!("unprepared enemy operation: door_flag_byte")
-    }
 }
 impl ActorAccess for Composed {
     fn mini_kraid_spit_x_velocity(&self, index: u16) -> u16 {
@@ -292,9 +289,6 @@ impl Effects for Composed {
     }
     fn resume_player_after_elevator(&mut self) -> u16 {
         panic!("unprepared enemy operation: resume_player_after_elevator")
-    }
-    fn prepare_bit_access(&mut self, value: u16) -> u16 {
-        panic!("unprepared enemy operation: prepare_bit_access")
     }
     fn calculate_angle_from_xy(&mut self, x: u16, y: u16) -> u16 {
         panic!("unprepared enemy operation: calculate_angle_from_xy")

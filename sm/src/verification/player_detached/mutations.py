@@ -195,6 +195,82 @@ SPRITE_MUTATIONS = (
           '                (appearance | old) & 0xf1ff\n            );'),
      )),
 )
+# Actual gameplay flags faults; each uses a real composed producer/consumer selection.
+FLAGS_MUTATIONS = (
+    ('flags_event_write_discarded', 'plm_visual',
+     'flags.plm.animation_event_alias',
+     (
+         ('progress_flags.rs',
+          '    mark(host, Column::Events, event);',
+          '    prepare_flag_mask(host.session_mut(), event);'),
+     )),
+    ('flags_event_keeps_stale_high_mask', 'plm_visual',
+     'flags.scratch.full_mask',
+     (
+         ('progress_flags.rs',
+          '    session.flag_compatibility.bitmask = 1u16 << (bit & 7);',
+          '    session.flag_compatibility.bitmask = (session.flag_compatibility.bitmask & 0xff00) | (1u16 << (bit & 7));'),
+     )),
+    ('flags_boss_clears_high_mask', 'plm_visual',
+     'flags.scratch.boss_low_only',
+     (
+         ('progress_flags.rs',
+          '        (session.flag_compatibility.bitmask & 0xff00) | u16::from(low);',
+          '        u16::from(low);'),
+     )),
+    ('flags_room_object_mark_uses_item_map', 'collections',
+     'flags.plm.collection_identity',
+     (
+         ('progress_flags.rs',
+          '    mark(host, Column::RoomObjects, object);',
+          '    mark(host, Column::Items, object);'),
+     )),
+    ('flags_rng_caches_prior_scratch', 'rng_scratch',
+     'flags.eproj.rng_live_scratch',
+     (
+         ('enemy_projectiles/commands.rs',
+          '        8836577 | 8836762 => {\n            h.next_random();',
+          '        8836577 | 8836762 => {\n            let mutation_mask = h.session().flag_compatibility.bitmask;\n            h.next_random();'),
+         ('enemy_projectiles/commands.rs',
+          '                    ((h.inputs().random >> 8) | (h.session().flag_compatibility.bitmask << 8))',
+          '                    ((h.inputs().random >> 8) | (mutation_mask << 8))'),
+     )),
+    ('flags_query_uses_prior_mask', 'eye_door',
+     'flags.eproj.eye_door_current_mask',
+     (
+         ('progress_flags.rs',
+          '    let index = prepare_flag_mask(host.session_mut(), bit);\n    read(host, column, index) & host.session().flag_compatibility.bitmask as u8 != 0',
+          '    let mutation_mask = host.session().flag_compatibility.bitmask;\n    let index = prepare_flag_mask(host.session_mut(), bit);\n    read(host, column, index) & mutation_mask as u8 != 0'),
+     )),
+    ('flags_door_adjacent_drops_external_byte', 'door511',
+     'flags.plm.door511_adjacent',
+     (
+         ('progress_flags.rs',
+          '        None => host.door_adjacent_word_le(index as isize),',
+          '        None => u16::from(bytes[usize::from(index)]),'),
+     )),
+    ('flags_door_adjacent_reads_before_mark', 'door511',
+     'flags.plm.door511_adjacent',
+     (
+         ('progress_flags.rs',
+          'pub(crate) fn open_door_and_read_adjacent_flags(host: &mut impl Host, door: u16) -> u16 {\n    let index = mark(host, Column::Doors, door);\n    let bytes = &host.session().gameplay_flags.opened_doors;\n    match bytes.get(usize::from(index)..usize::from(index) + 2) {\n        Some(pair) => u16::from_le_bytes([pair[0], pair[1]]),\n        None => host.door_adjacent_word_le(index as isize),\n    }\n}',
+          'pub(crate) fn open_door_and_read_adjacent_flags(host: &mut impl Host, door: u16) -> u16 {\n    let index = prepare_flag_mask(host.session_mut(), door);\n    let bytes = &host.session().gameplay_flags.opened_doors;\n    let before = match bytes.get(usize::from(index)..usize::from(index) + 2) {\n        Some(pair) => u16::from_le_bytes([pair[0], pair[1]]),\n        None => host.door_adjacent_word_le(index as isize),\n    };\n    mark(host, Column::Doors, door);\n    before\n}'),
+     )),
+    ('flags_clamp_bit_index_to_events', 'aliases',
+     'flags.alias.event_wide_index',
+     (
+         ('progress_flags.rs',
+          '    bit >> 3\n}',
+          '    (bit >> 3) & 7\n}'),
+     )),
+    ('flags_boss_boundary_drops_high_byte', 'aliases',
+     'flags.alias.boss_word_cross_owner',
+     (
+         ('progress_flags.rs',
+          '        None => host.boss_word(area, order),',
+          '        None => host.boss_word(area, order) & 0xff,'),
+     )),
+)
 VISUAL_SUCCESS = "visual composition case passed: "
 VISUAL_PANIC = re.compile(
     r"(?:^|\n)thread '[^\n]+'(?: \(\d+\))? panicked at ([^\n]+):\n([^\n]*)\n"
@@ -285,7 +361,7 @@ def check(source, work, name, mutation=None, expected_assertion=None):
 def check_visual(source, work, mutation, baseline_binary, family="visual"):
     name, case, label, edits = mutation
     environment = dict(os.environ, RUST_BACKTRACE="0")
-    assertion_source = "sprite_checks.rs" if family == "sprite" else "visual_checks.rs"
+    assertion_source = {"sprite": "sprite_checks.rs", "flags": "flag_checks.rs"}.get(family, "visual_checks.rs")
     upload_failure = family == "visual" and case == "upload_failure"
     def execute(binary):
         return subprocess.run(
@@ -294,7 +370,7 @@ def check_visual(source, work, mutation, baseline_binary, family="visual"):
             check=False, env=environment,
         )
     baseline = execute(baseline_binary)
-    success = ("sprite composition case passed: " if family == "sprite" else VISUAL_SUCCESS) + case
+    success = {"sprite": "sprite composition case passed: ", "flags": "flags composition case passed: "}.get(family, VISUAL_SUCCESS) + case
     if baseline.returncode != 0 or baseline.stdout.strip() != success or not visual_stderr_matches(baseline.stderr, upload_failure=upload_failure, assertion_source=assertion_source):
         raise RuntimeError(f"{name}: selected baseline must pass\n{baseline.stdout}\n{baseline.stderr}")
     print(f"{name}: selected baseline PASS", flush=True)
@@ -338,7 +414,9 @@ def main():
             check_visual(source, work, mutation, baseline_binary)
         for mutation in SPRITE_MUTATIONS:
             check_visual(source, work, mutation, baseline_binary, family="sprite")
-    print(f"mutation checks: {len(MUTATIONS)+len(NEW_MUTATIONS)+len(VISUAL_MUTATIONS)+len(SPRITE_MUTATIONS)}/{len(MUTATIONS)+len(NEW_MUTATIONS)+len(VISUAL_MUTATIONS)+len(SPRITE_MUTATIONS)} killed; baseline passed", flush=True)
+        for mutation in FLAGS_MUTATIONS:
+            check_visual(source, work, mutation, baseline_binary, family="flags")
+    print(f"mutation checks: {len(MUTATIONS)+len(NEW_MUTATIONS)+len(VISUAL_MUTATIONS)+len(SPRITE_MUTATIONS)+len(FLAGS_MUTATIONS)}/{len(MUTATIONS)+len(NEW_MUTATIONS)+len(VISUAL_MUTATIONS)+len(SPRITE_MUTATIONS)+len(FLAGS_MUTATIONS)} killed; baseline passed", flush=True)
 
 
 if __name__ == "__main__":

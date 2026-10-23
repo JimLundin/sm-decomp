@@ -6,9 +6,9 @@ pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_60::*;
 
 use crate::game::explosion_window::spawn_power_bomb;
+use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::palette_effects;
 use crate::game::player_projectiles::draw_projectiles;
-use crate::game::progress_flags::CheckEventHappened;
 use crate::game::sm_80::{
     ClearOamExt, ClearUnusedOam, CopySuperMetroidString, DisableIrqInterrupts, EnableNMI,
     GraphicsAsset, HandleFadeIn, HandleFadeOut, QueueMode7Transfers, QueueSfx1_Max15,

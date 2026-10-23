@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::host::*;
+use crate::game::progress_flags as flags;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Room {
     First,
@@ -20,11 +21,14 @@ pub fn begin(c: &mut impl Host, slot: usize) -> u8 {
 }
 pub fn poll(c: &mut impl Host, room: Room) {
     if c.session().room.enemy_deaths >= c.session().room.enemy_quota {
-        c.mark_event(match room {
-            Room::First => 0x10,
-            Room::Second => 0x11,
-            Room::Third => 0x12,
-            Room::Fourth => 0x13,
-        });
+        flags::set_event(
+            c,
+            match room {
+                Room::First => 0x10,
+                Room::Second => 0x11,
+                Room::Third => 0x12,
+                Room::Fourth => 0x13,
+            },
+        );
     }
 }

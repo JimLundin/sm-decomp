@@ -136,20 +136,6 @@ impl ImportedAliases for Runtime<'_> {
     }
 }
 impl Host for Runtime<'_> {}
-impl Runtime<'_> {
-    fn bit_index(&mut self, value: u16) -> usize {
-        self.foreign(|game| usize::from(crate::game::progress_flags::PrepareBitAccess(value, game)))
-    }
-    fn flag_present(&mut self, base: usize, value: u16) -> bool {
-        let index = self.bit_index(value);
-        self.word(0x5e7) & u16::from(self.byte(base + index)) != 0
-    }
-    fn mark_flag(&mut self, base: usize, value: u16) {
-        let index = self.bit_index(value);
-        let byte = self.byte(base + index) | self.word(0x5e7) as u8;
-        self.set_byte(base + index, byte);
-    }
-}
 impl Effects for Runtime<'_> {
     fn sound(&mut self, channel: SoundChannel, maximum: u8, cue: u16) {
         self.foreign(|game| {
@@ -264,44 +250,6 @@ impl Effects for Runtime<'_> {
         let value = self.word(program).wrapping_add(2);
         self.write_slice_le(program, value);
     }
-    fn event(&mut self, event: u16) -> bool {
-        self.foreign(|game| crate::game::progress_flags::CheckEventHappened(event, game) != 0)
-    }
-    fn mark_event(&mut self, event: u16) {
-        self.foreign(|game| crate::game::progress_flags::SetEventHappened(event, game));
-    }
-    fn boss(&mut self, mask: u16) -> u16 {
-        self.foreign(|game| {
-            u16::from(crate::game::progress_flags::CheckBossBitForCurArea(
-                mask, game,
-            ))
-        })
-    }
-    fn door_opened(&mut self, door: u16) -> bool {
-        self.flag_present(0xd8b0, door)
-    }
-    fn mark_door_opened(&mut self, door: u16) {
-        self.mark_flag(0xd8b0, door);
-    }
-    fn item_collected(&mut self, item: u16) -> bool {
-        self.flag_present(0xd870, item)
-    }
-    fn mark_item_collected(&mut self, item: u16) {
-        self.mark_flag(0xd870, item);
-    }
-    fn room_object_used(&mut self, object: u16) -> bool {
-        self.flag_present(0xd830, object)
-    }
-    fn mark_room_object_used(&mut self, object: u16) {
-        self.mark_flag(0xd830, object);
-    }
-    fn open_door_and_read_adjacent_flags(&mut self, door: u16) -> u16 {
-        let index = self.bit_index(door);
-        let address = 0xd8b0 + index;
-        let value = self.byte(address) | self.word(0x5e7) as u8;
-        self.set_byte(address, value);
-        self.word(address)
-    }
     fn map_used(&self) -> bool {
         self.byte(0xd908 + usize::from(self.session().room.area)) != 0
     }
@@ -314,9 +262,10 @@ impl Effects for Runtime<'_> {
     }
     fn mark_save_station(&mut self, station: u16) {
         self.write_slice_le(ram::load_station_index, station);
-        self.bit_index(self.word(ram::load_station_index));
+        let station = self.word(ram::load_station_index);
+        crate::game::progress_flags::prepare_flag_mask(self.session_mut(), station);
         let address = 0xd8f8 + usize::from(self.session().room.area) * 2;
-        let value = self.byte(address) | self.word(0x5e7) as u8;
+        let value = self.byte(address) | self.session().flag_compatibility.bitmask as u8;
         self.set_byte(address, value);
     }
     fn selected_save_slot(&self) -> u16 {

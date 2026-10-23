@@ -727,8 +727,8 @@ pub(super) fn EprojPreInstr_EyeDoorProjectile(k: u16, ctx: &mut impl Host) {
             let value = ((old as i32) + (kSinCosTable8bit_Sext[v1 as usize] as i32 >> 4)) as u16;
             enemy!(ctx, (index) as isize, velocity_y = value);
         };
-        let t: i32 = ctx.prepare_bit_access(enemy!(ctx, (v3) as isize, behavior_b)) as i32;
-        if ((ctx.inputs().bitmask & ctx.door_flag_byte(t as isize) as u16) == 0) {
+        let door = enemy!(ctx, (v3) as isize, behavior_b);
+        if !crate::game::progress_flags::door_opened(ctx, door) {
             return;
         }
     }

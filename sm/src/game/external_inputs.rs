@@ -13,7 +13,6 @@ pub struct ExternalInputs {
     pub current_enemy: u16,
     pub random: u16,
     pub random_enemy_counter: u16,
-    pub bitmask: u16,
     pub fx_y: u16,
     pub nmi_counter_low: u8,
     pub drop_origin_x: u16,

@@ -6,6 +6,8 @@ use crate::game::enemy_combat::{
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
+use crate::game::gameplay_flag_host::BossWordOrder;
+use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
 use crate::rtl::rom_record;
@@ -289,7 +291,11 @@ pub unsafe fn Kraid_Arm_Shot(j: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Kraid_CheckIfDead(game: &mut Game) -> u16 {
-    unsafe { ((*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) & 1) != 0) as u16 }
+    unsafe {
+        ((gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game)
+            & 1)
+            != 0) as u16
+    }
 }
 pub unsafe fn Kraid_SetEnemyPropsToDead(game: &mut Game) {
     unsafe {
@@ -1562,18 +1568,27 @@ crate::game::callback_dispatch! {
         word!(game.vram_write_queue_tail = (v0).wrapping_add(7));
     };
     [10995733] Kraid_FadeInBg_FadeInBp6 [] {
+        #[cfg(sm_verify_dll)]
+        crate::kraid_flags_observer::observe(0, game);
         if AdvancePaletteFade_BgPalette6(game) & 1 != 0 {
+            #[cfg(sm_verify_dll)]
+            crate::kraid_flags_observer::observe(1, game);
             QueueMusic_Delayed8(3, game);
+            #[cfg(sm_verify_dll)]
+            crate::kraid_flags_observer::observe(2, game);
             let mut v0: i16 =
-                *(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) as i16;
+                gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game) as i16;
             if (v0 as u16 & 1) != 0 {
                 (*Get_Kraid(0i32, game)).kraid_var_A = ((0xa7c851i32) as u16);
             } else {
-                *(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) =
-                    ((v0) as u16) | (1u16);
+                gameplay_flag_runtime::set_boss_word_native(
+                    word!(game.area_index), ((v0) as u16) | (1u16), game,
+                );
                 (*Get_Kraid(0i32, game)).kraid_var_A = ((0xa7c843i32) as u16);
             }
         }
+        #[cfg(sm_verify_dll)]
+        crate::kraid_flags_observer::observe(3, game);
     };
     [10995779] Kraid_FadeInBg_SetEnemyDead_KraidWasAlive [] {
         if Kraid_CheckIfDead(game) == 0 || word!(game.layer1_x_pos) != 0 {
@@ -3537,7 +3552,9 @@ crate::game::callback_dispatch! {
                 (*E1).base.properties = v4;
                 (*Get_Phantoon(0x80i32, game)).base.properties = v4;
                 (*Get_Phantoon(0xc0i32, game)).base.properties = v4;
-                crate::update_place! { unaligned_word fresh23 = &raw mut (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize))) => (u16::from_le(fresh23.read_unaligned())) | (1u16); }
+                let area = word!(game.area_index);
+                let bits = gameplay_flag_runtime::boss_word_at(area, BossWordOrder::Little, game);
+                gameplay_flag_runtime::set_boss_word_le(area, bits | 1, game);
                 spawn_hardcoded(SpawnHardcodedPlmArgs::new(0, 0x6, 0xb78b as VoidP), game);
                 QueueMusic_Delayed8(3, game);
             }

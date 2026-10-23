@@ -365,6 +365,18 @@ pub static FILES: &[(&str, &[u8])] = &[
         "sm/src/game/player_projectiles/weapons.rs",
         include_bytes!("game/player_projectiles/weapons.rs"),
     ),
+    (
+        "sm/src/game/gameplay_flag_host.rs",
+        include_bytes!("game/gameplay_flag_host.rs"),
+    ),
+    (
+        "sm/src/game/gameplay_flag_runtime.rs",
+        include_bytes!("game/gameplay_flag_runtime.rs"),
+    ),
+    (
+        "sm/src/game/gameplay_flag_state.rs",
+        include_bytes!("game/gameplay_flag_state.rs"),
+    ),
     ("sm/src/game/prelude.rs", include_bytes!("game/prelude.rs")),
     (
         "sm/src/game/progress_flags.rs",
@@ -1096,5 +1108,85 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/verification/sprite_runtime_checks.rs",
         include_bytes!("verification/sprite_runtime_checks.rs"),
+    ),
+    (
+        "sm/src/verification/flags_cases.rs",
+        include_bytes!("verification/flags_cases.rs"),
+    ),
+    (
+        "sm/src/verification/flags_candidate.rs",
+        include_bytes!("verification/flags_candidate.rs"),
+    ),
+    (
+        "sm/src/verification/flags_dll.rs",
+        include_bytes!("verification/flags_dll.rs"),
+    ),
+    (
+        "sm/src/verification/flags_save_case.rs",
+        include_bytes!("verification/flags_save_case.rs"),
+    ),
+    (
+        "sm/src/verification/flags_save_observer.rs",
+        include_bytes!("verification/flags_save_observer.rs"),
+    ),
+    (
+        "sm/src/verification/flags_save_oracle.rs",
+        include_bytes!("verification/flags_save_oracle.rs"),
+    ),
+    (
+        "sm/src/verification/flags_save_dll.rs",
+        include_bytes!("verification/flags_save_dll.rs"),
+    ),
+    (
+        "sm/src/verification/flags_save_candidate.rs",
+        include_bytes!("verification/flags_save_candidate.rs"),
+    ),
+    (
+        "sm/src/verification/flags_save_candidate_dll.rs",
+        include_bytes!("verification/flags_save_candidate_dll.rs"),
+    ),
+    (
+        "sm/src/verification/flags_runtime_checks.rs",
+        include_bytes!("verification/flags_runtime_checks.rs"),
+    ),
+    (
+        "sm/src/verification/player_detached/flag_checks.rs",
+        include_bytes!("verification/player_detached/flag_checks.rs"),
+    ),
+    (
+        "sm/src/verification/player_detached/flag_host.rs",
+        include_bytes!("verification/player_detached/flag_host.rs"),
+    ),
+    (
+        "sm/src/verification/flags_kraid_cases.rs",
+        include_bytes!("verification/flags_kraid_cases.rs"),
+    ),
+    (
+        "sm/src/verification/flags_kraid_dll.rs",
+        include_bytes!("verification/flags_kraid_dll.rs"),
+    ),
+    (
+        "sm/src/verification/kraid_flags_case.rs",
+        include_bytes!("verification/kraid_flags_case.rs"),
+    ),
+    (
+        "sm/src/verification/kraid_flags_observer.rs",
+        include_bytes!("verification/kraid_flags_observer.rs"),
+    ),
+    (
+        "sm/src/verification/kraid_flags_oracle.rs",
+        include_bytes!("verification/kraid_flags_oracle.rs"),
+    ),
+    (
+        "sm/src/verification/kraid_flags_candidate.rs",
+        include_bytes!("verification/kraid_flags_candidate.rs"),
+    ),
+    (
+        "sm/src/verification/kraid_flags_dll.rs",
+        include_bytes!("verification/kraid_flags_dll.rs"),
+    ),
+    (
+        "sm/src/verification/kraid_flags_candidate_dll.rs",
+        include_bytes!("verification/kraid_flags_candidate_dll.rs"),
     ),
 ];

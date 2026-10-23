@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::host::*;
+use crate::game::progress_flags as flags;
 #[derive(Clone, Copy)]
 pub enum Direction {
     Right,
@@ -33,7 +34,7 @@ pub fn activate(c: &mut impl Host, slot: usize, direction: Direction) {
 }
 
 pub fn carry(c: &mut impl Host, direction: Direction) {
-    if (c.session().room.area != 3 || c.boss(1) & 1 != 0)
+    if (c.session().room.area != 3 || flags::boss_defeated(c, 1))
         && c.session().player.contact.y_speed.whole == 0
     {
         c.session_mut().player.contact.external_x.fraction = 0;

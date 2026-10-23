@@ -3,6 +3,7 @@
 use super::super::access::*;
 use super::super::host::*;
 use super::terrain_setup as terrain;
+use crate::game::progress_flags as flags;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Setup {
     RescueWall,
@@ -20,7 +21,7 @@ pub fn setup(c: &mut impl Host, slot: usize, kind: Setup) -> u8 {
             terrain::install(c, below, 0xd0ff);
         }
         Setup::MainStreetPassage => {
-            if !c.event(0xf) {
+            if !flags::event_happened(c, 0xf) {
                 mechanism!(c, slot, header = 0)
             }
         }
@@ -28,7 +29,7 @@ pub fn setup(c: &mut impl Host, slot: usize, kind: Setup) -> u8 {
     0
 }
 pub fn mark_rescued(c: &mut impl Host) {
-    c.mark_event(0xf)
+    flags::set_event(c, 0xf)
 }
 pub fn move_passage(c: &mut impl Host, slot: usize) {
     let block = mechanism!(c, slot, block);
@@ -36,7 +37,7 @@ pub fn move_passage(c: &mut impl Host, slot: usize) {
     mechanism!(c, slot, block = next)
 }
 pub fn poll_rescue_gate(c: &mut impl Host, slot: usize) {
-    if c.event(0xf) {
+    if flags::event_happened(c, 0xf) {
         mechanism!(c, slot, counter = 0);
         let link = mechanism!(c, slot, return_program);
         mechanism!(c, slot, program = link);

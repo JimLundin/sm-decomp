@@ -73,9 +73,9 @@ MUTATIONS = (
         (
             (COMMANDS,
              """            let found = if ea == 8685640 {
-                h.room_object_used(argument)""",
+                flags::room_object_used(h, argument)""",
              """            let found = if ea == 8685640 {
-                h.item_collected(argument)"""),
+                flags::item_collected(h, argument)"""),
         ),
     ),
     (

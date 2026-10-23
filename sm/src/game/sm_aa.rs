@@ -7,10 +7,12 @@ use crate::game::enemy_combat::{
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
+use crate::game::gameplay_flag_host::BossWordOrder;
+use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
 
-use crate::game::progress_flags::{CheckBossBitForCurArea, SetBossBitForCurArea};
+use crate::game::gameplay_flag_runtime::{CheckBossBitForCurArea, SetBossBitForCurArea};
 use crate::game::room_mechanisms::{spawn_collision, spawn_hardcoded};
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_82::sub_82DAF7;
@@ -1407,7 +1409,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11200430] Shaktool_PreInstr_0 [] {
-        if (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) & 1) != 0 {
+        if (gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game) & 1) != 0 {
             let E = Get_Shaktool(k as i32, game);
             if (*E).parameter_1 != 0 {
                 enemy_instruction! {[(*E).base]; instruction = addr_kShaktool_Ilist_E461 as u16, timer = 1}

@@ -93,6 +93,8 @@ pub struct PowerBomb {
 use crate::game::item_pickups::Inventory;
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct Session {
+    pub(crate) gameplay_flags: crate::game::gameplay_flag_state::GameplayFlags,
+    pub(crate) flag_compatibility: crate::game::gameplay_flag_state::FlagCompatibility,
     pub sprite_effects: crate::game::sprite_effect_state::SpriteEffects,
     pub sprite_compatibility: crate::game::sprite_effect_state::SpriteCompatibilityTails,
     pub visual: crate::game::visual_state::Visuals,

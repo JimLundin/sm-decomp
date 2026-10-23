@@ -98,9 +98,6 @@ impl visual_host::Aliases for Runtime<'_> {
             .expect("palette address overflow");
         self.write_word_le(value, at);
     }
-    fn miniboss_defeated(&self) -> bool {
-        self.native_word(0xd828 + usize::from(self.session().room.area)) & 2 != 0
-    }
 }
 impl visual_host::Effects for Runtime<'_> {
     fn sound(&mut self, channel: u8, limit: u8, sound: u16) {
@@ -108,23 +105,6 @@ impl visual_host::Effects for Runtime<'_> {
     }
     fn music_delayed8(&mut self, track: u16) {
         self.foreign(|game| crate::game::music::QueueMusic_Delayed8(track, game));
-    }
-    fn check_boss(&mut self, mask: u16) -> bool {
-        self.foreign(|game| {
-            crate::game::progress_flags::CheckBossBitForCurArea(mask, game) & 1 != 0
-        })
-    }
-    fn set_boss(&mut self, mask: u16) {
-        self.foreign(|game| crate::game::progress_flags::SetBossBitForCurArea(mask, game));
-    }
-    fn check_event(&mut self, event: u16) -> bool {
-        self.foreign(|game| crate::game::progress_flags::CheckEventHappened(event, game) & 1 != 0)
-    }
-    fn set_event(&mut self, event: u16) {
-        self.foreign(|game| crate::game::progress_flags::SetEventHappened(event, game));
-    }
-    fn boss_at(&mut self, area: u8) -> u8 {
-        self.foreign(|game| game.g_ram[0xd828 + usize::from(area)])
     }
     fn resume_movement_sound(&mut self) {
         #[cfg(sm_verify_dll)]

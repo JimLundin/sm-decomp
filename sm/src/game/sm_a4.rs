@@ -2,6 +2,8 @@ use crate::game::enemy_combat::{apply_contact, apply_shot};
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
+use crate::game::gameplay_flag_host::BossWordOrder;
+use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
 
@@ -1075,7 +1077,9 @@ pub unsafe fn Crocomire_9B86(game: &mut Game) {
     unsafe {
         QueueMusic_Delayed8(6, game);
         word!(game.camera_distance_index = 0);
-        crate::update_place! { unaligned_word fresh10 = &raw mut (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize))) => (u16::from_le(fresh10.read_unaligned())) | (2u16); }
+        let area = word!(game.area_index);
+        let bits = gameplay_flag_runtime::boss_word_at(area, BossWordOrder::Little, game);
+        gameplay_flag_runtime::set_boss_word_le(area, bits | 2, game);
         QueueMusic_Delayed8(6, game);
         Crocomire_Func_87(EnemyScript::Stop, 0xfff0, game);
         Crocomire_Func_87(EnemyScript::Stop, 0x10, game);
@@ -1120,7 +1124,7 @@ crate::game::callback_dispatch! {
     [10783322] Crocomire_Init [] {
         word!(game.boss_id = 6);
         word_transfers!(game, ascending, 2048; le(tilemap_stuff, 0) <- value(824));
-        if (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) & 2) != 0 {
+        if (gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game) & 2) != 0 {
             *(ram_ptr!(game, u16; 0xcd20)) = 257;
             *(ram_ptr!(game, u16; 0xcd20, 2)) = 257;
             word!(game.croco_target_0688 = 0);
@@ -1504,7 +1508,7 @@ crate::game::callback_dispatch! {
         Crocomire_9BB3(game);
     };
     [10811002] CrocomireTongue_Init [] {
-        if (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) & 2) != 0 {
+        if (gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game) & 2) != 0 {
             (*E).base.properties = ((*E).base.properties & 0xdcff | 0x300);
         } else {
             (*E).base.current_instruction = addr_kCrocomire_Ilist_BE56 as u16;

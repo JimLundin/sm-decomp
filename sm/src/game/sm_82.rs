@@ -2,6 +2,7 @@ use crate::game::decompression::decompress_to_ram;
 use crate::game::enemy_population_ram::{initialize_room, load_room_assets};
 use crate::game::enemy_scheduling::{run_enemies, select_enemies};
 use crate::game::gameplay::advance as AdvanceGameplay;
+use crate::game::gameplay_flag_runtime;
 use crate::game::music::{
     HasQueuedMusic, LoadNewMusicTrackIfChanged, LoadRoomMusic, QueueMusic_Delayed8,
     QueueMusic_DelayedY,
@@ -23,9 +24,9 @@ pub use crate::game::constants::bank_82::*;
 
 use crate::game::animated_tiles;
 use crate::game::enemy_projectiles::{ClearEprojs, EnableEprojs, EprojRunAll};
+use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::message_boxes;
 use crate::game::palette_effects;
-use crate::game::progress_flags::CheckEventHappened;
 use crate::game::room_mechanisms::{clear, close_door, run_door as run, set_enabled};
 use crate::game::samus_animation::{Samus_DrawDuringDeathAnim, Samus_DrawWhenNotAnimatingOrDying};
 use crate::game::sm_8b::{
@@ -162,7 +163,7 @@ crate::game::callback_dispatch! {
         (*(ram_ptr!(game, EnemyData; 0xf78))).ai_preinstr = 60;
     };
     [8554802] DemoRoom_SetBrinstarBossBits [] {
-        *ram_ptr!(game; 0xd828, 1) = 1;
+        gameplay_flag_runtime::set_boss_byte_at(1, 1, game);
     };
     @external {
         8554788 => [()];
@@ -3295,7 +3296,8 @@ pub unsafe fn CheckIfMapPositionIsExplored(k: u16, j: u16, game: &mut Game) -> u
 }
 pub unsafe fn DrawBossMapIcons(a: u16, k: u16, game: &mut Game) {
     unsafe {
-        let mut bits: i32 = *ram_ptr!(game; 0xd828, word!(game.area_index) as isize) as i32;
+        let mut bits: i32 =
+            gameplay_flag_runtime::boss_byte_at(word!(game.area_index), game) as i32;
         let t: i32 = *(RomPtr_82((k as i32 + 2 * word!(game.area_index) as i32) as u16, game)
             as *mut u16) as i32;
         if t == 0 {

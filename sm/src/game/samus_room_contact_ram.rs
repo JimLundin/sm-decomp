@@ -97,7 +97,7 @@ impl Context for Fields<'_> {
         }
     }
     fn boss_defeated(&mut self) -> bool {
-        crate::game::progress_flags::CheckBossBitForCurArea(1, self.0) & 1 != 0
+        crate::game::gameplay_flag_runtime::CheckBossBitForCurArea(1, self.0) & 1 != 0
     }
     fn special_header(&mut self, bts: u8, solid: bool) -> u16 {
         if bts & 0x80 != 0 {

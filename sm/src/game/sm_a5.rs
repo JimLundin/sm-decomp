@@ -5,6 +5,8 @@ use crate::game::enemy_combat::{
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
+use crate::game::gameplay_flag_host::BossWordOrder;
+use crate::game::gameplay_flag_runtime;
 use crate::game::minimap;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
@@ -358,7 +360,9 @@ crate::game::callback_dispatch! {
             (*E).base.properties = v1;
             (*Get_Draygon(0x40i32, game)).base.properties = v1;
             let v2: u16 = word!(game.area_index);
-            crate::update_place! { unaligned_word fresh3 = &raw mut (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize))) => (u16::from_le(fresh3.read_unaligned())) | (1u16); }
+            let area = word!(game.area_index);
+            let bits = gameplay_flag_runtime::boss_word_at(area, BossWordOrder::Little, game);
+            gameplay_flag_runtime::set_boss_word_le(area, bits | 1, game);
             scatter(DropSource::Draygon, v2, 0, game);
             Draygon_Func_44(game);
         }
@@ -1073,7 +1077,9 @@ pub unsafe fn SporeSpawn_Func_6(game: &mut Game) {
             (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
             word_transfers!(game, descending, 14; native(0x19b1) <- value(0));
             enemy_instruction! {[(*E0).base]; instruction = addr_kDraygon_Ilist_E77D as u16, timer = 1}
-            crate::update_place! { unaligned_word fresh5 = &raw mut (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize))) => (u16::from_le(fresh5.read_unaligned())) | (2u16); }
+            let area = word!(game.area_index);
+            let bits = gameplay_flag_runtime::boss_word_at(area, BossWordOrder::Little, game);
+            gameplay_flag_runtime::set_boss_word_le(area, bits | 2, game);
             word!(game.scrolling_finished_hook = 0);
             spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x7, 0x1e, 0xb78f as VoidP), game);
         }
@@ -1231,7 +1237,7 @@ crate::game::callback_dispatch! {
         let E0 = Get_SporeSpawn(0, game);
         set_fields! {[(*E)]; var_04 = (*E).base.x_pos, var_05 = ((*E).base.y_pos).wrapping_sub(72),
         var_C = (*E).base.x_pos, var_D = (*E).base.y_pos, var_F = 0, };
-        if (*ram_ptr!(game; 0xd828, word!(game.area_index) as isize) & 2) != 0 {
+        if (gameplay_flag_runtime::boss_byte_at(word!(game.area_index), game) & 2) != 0 {
             (*E0).base.current_instruction = addr_kDraygon_Ilist_E6B9 as u16;
             (*E0).var_A = ((0xa5eb1ai32) as u16);
             (*E0).base.properties = ((*E0).base.properties) | (0x8000u16);

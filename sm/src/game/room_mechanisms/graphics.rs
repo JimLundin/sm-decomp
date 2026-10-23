@@ -7,6 +7,7 @@ use super::{
         StoreOrder, TilemapDestination,
     },
 };
+use crate::game::progress_flags as flags;
 
 pub fn load_graphics<H: Host>(
     h: &mut H,
@@ -76,7 +77,7 @@ pub fn reveal_items(h: &mut impl Host) {
             continue;
         }
         let argument = h.session().mechanisms.slots[slot].room_argument;
-        if h.item_collected(argument) {
+        if flags::item_collected(h, argument) {
             continue;
         }
         super::creation::coordinates(h, slot);

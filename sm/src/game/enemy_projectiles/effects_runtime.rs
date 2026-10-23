@@ -12,9 +12,6 @@ impl Effects for Runtime<'_> {
     fn resume_player_after_elevator(&mut self) -> u16 {
         self.foreign(|game| super::legacy::call_player_code(0xe, game))
     }
-    fn prepare_bit_access(&mut self, value: u16) -> u16 {
-        self.foreign(|game| crate::game::progress_flags::PrepareBitAccess(value, game))
-    }
     fn calculate_angle_from_xy(&mut self, x: u16, y: u16) -> u16 {
         self.foreign(|game| super::legacy::calculate_angle_from_xy(x, y, game))
     }
