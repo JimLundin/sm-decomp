@@ -398,6 +398,7 @@ pub mod game {
     pub(crate) mod projectile_trail_playback;
     pub(crate) mod projectile_trail_selection;
 
+    pub mod animated_tiles;
     pub mod eproj_script;
     pub mod item_pickups;
     pub mod item_pickups_ram;
@@ -419,7 +420,6 @@ pub mod game {
     pub mod sm_81;
     pub mod sm_82;
     pub mod sm_86;
-    pub mod sm_87;
     pub mod sm_88;
     pub mod sm_89;
     pub mod sm_8b;

@@ -1,9 +1,9 @@
 use crate::game::liquid_effects::{initialize_acid, initialize_lava, initialize_water};
 pub use crate::game::prelude::*;
 
+use crate::game::animated_tiles;
 use crate::game::palette_effects;
 use crate::game::scrolling_sky::{initialize_banded_sky, initialize_land};
-use crate::game::sm_87::SpawnAnimtiles;
 use crate::game::sm_88::{
     FxTypeFunc_2C_Haze, FxTypeFunc_8_Spores, FxTypeFunc_24, FxTypeFunc_26_TourianEntranceStatue,
     FxTypeFunc_28_CeresRidley, FxTypeFunc_A_Rain, FxTypeFunc_C, FxTypeFunc_CeresElevator,
@@ -132,7 +132,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
             0x83ac46,
             palette_effects::spawn
         );
-        spawn_room_effect_bitset!(FD, animtiles_bitset, game, 0x83ac56, SpawnAnimtiles);
+        spawn_room_effect_bitset!(FD, animtiles_bitset, game, 0x83ac56, animated_tiles::spawn);
     }
 }
 pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {

@@ -8,31 +8,27 @@ const COMMANDS: [u32; 24] = [
     8880978, 8880987, 8881010, 8881023,
 ];
 pub(crate) const CASES: u32 = 438;
-// Root replaces these six wrappers with candidate calls after freezing old outputs.
+// Entry selection only; frozen case inputs and observations remain unchanged.
 fn enabled(value: bool, g: &mut Game) {
-    if value {
-        crate::game::sm_87::EnableAnimtiles(g)
-    } else {
-        crate::game::sm_87::DisableAnimtiles(g)
-    }
+    crate::game::animated_tiles::set_enabled(value, g)
 }
 fn clear(g: &mut Game) {
-    crate::game::sm_87::ClearAnimtiles(g)
+    crate::game::animated_tiles::clear(g)
 }
 fn spawn(def: u16, g: &mut Game) {
-    unsafe { crate::game::sm_87::SpawnAnimtiles(def, g) }
+    crate::game::animated_tiles::spawn(def, g)
 }
 fn advance(g: &mut Game) {
-    unsafe { crate::game::sm_87::AnimtilesHandler(g) }
+    crate::game::animated_tiles::advance(g)
 }
 fn process(g: &mut Game) {
-    unsafe { crate::game::sm_87::ProcessAnimtilesObject(g) }
+    crate::game::animated_tiles::checks::process_one(g)
 }
 fn command(ea: u32, k: u16, j: u16, g: &mut Game) -> u16 {
-    unsafe { crate::game::sm_87::CallAnimtilesInstr(ea, k, j, g) }
+    crate::game::animated_tiles::checks::command(ea, k, j, g)
 }
 fn upload(g: &mut Game) {
-    unsafe { crate::game::sm_80::NmiProcessAnimtilesVramTransfers(g) }
+    crate::game::animated_tiles::upload_pending(g)
 }
 fn put(g: &mut Game, at: usize, value: u16) {
     g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());

@@ -537,7 +537,30 @@ pub static FILES: &[(&str, &[u8])] = &[
         "sm/src/game/eproj_script.rs",
         include_bytes!("game/eproj_script.rs"),
     ),
-    ("sm/src/game/sm_87.rs", include_bytes!("game/sm_87.rs")),
+    (
+        "sm/src/game/animated_tiles/mod.rs",
+        include_bytes!("game/animated_tiles/mod.rs"),
+    ),
+    (
+        "sm/src/game/animated_tiles/state.rs",
+        include_bytes!("game/animated_tiles/state.rs"),
+    ),
+    (
+        "sm/src/game/animated_tiles/compatibility.rs",
+        include_bytes!("game/animated_tiles/compatibility.rs"),
+    ),
+    (
+        "sm/src/game/animated_tiles/execution.rs",
+        include_bytes!("game/animated_tiles/execution.rs"),
+    ),
+    (
+        "sm/src/game/animated_tiles/native.rs",
+        include_bytes!("game/animated_tiles/native.rs"),
+    ),
+    (
+        "sm/src/game/animated_tiles/checks.rs",
+        include_bytes!("game/animated_tiles/checks.rs"),
+    ),
     (
         "sm/src/game/layer_blending.rs",
         include_bytes!("game/layer_blending.rs"),

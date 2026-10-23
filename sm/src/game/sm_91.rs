@@ -5,6 +5,7 @@ pub use crate::game::constants::bank_8f::*;
 pub use crate::game::constants::bank_9b::*;
 pub use crate::game::constants::bank_91::*;
 
+use crate::game::animated_tiles;
 use crate::game::palette_effects;
 use crate::game::room_mechanisms::set_enabled;
 use crate::game::sm_9b::{GrappleBeamFunc_BD95, GrappleBeamFunc_BEEB};
@@ -13,7 +14,6 @@ use crate::game::sm_80::{
     QueueSfx3_Max9,
 };
 use crate::game::sm_86::{DisableEprojs, EnableEprojs};
-use crate::game::sm_87::{DisableAnimtiles, EnableAnimtiles};
 use crate::game::sm_88::SpawnHdmaObject;
 use crate::game::sm_90::{
     CallSomeSamusCode, LoadProjectilePalette, Projectile_Func7_Shinespark,
@@ -1410,7 +1410,7 @@ pub unsafe fn Xray_Initialize(game: &mut Game) -> u8 {
         word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(255));
         DisableEprojs(game);
         set_enabled(false, game);
-        DisableAnimtiles(game);
+        animated_tiles::set_enabled(false, game);
         palette_effects::set_enabled(false, game);
         mov24(ram_ptr!(game, LongPtr; 0xa88), 0x980001);
         *(ram_ptr!(game, u16; 0xa8a, 1)) = 0;
@@ -1454,7 +1454,7 @@ pub unsafe fn ResponsibleForXrayStandupGlitch(game: &mut Game) {
         }
         EnableEprojs(game);
         set_enabled(true, game);
-        EnableAnimtiles(game);
+        animated_tiles::set_enabled(true, game);
         palette_effects::set_enabled(true, game);
     }
 }

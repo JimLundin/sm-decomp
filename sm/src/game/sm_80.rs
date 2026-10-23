@@ -7,6 +7,7 @@ use crate::game::room_state::{load_sprite_palettes, load_tiles_and_palette};
 pub use crate::game::constants::bank_60::*;
 
 use crate::c_library::memcmp;
+use crate::game::animated_tiles;
 use crate::game::enemy_population_ram::load_room_assets;
 use crate::game::palette_effects;
 use crate::game::room_mechanisms::spawn_hardcoded;
@@ -15,7 +16,6 @@ use crate::game::sm_8b::InitializeIoDisplayLogo_Async;
 use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
 use crate::game::sm_82::{LoadDestinationRoomThings, NullFunc, ResetSoundQueues};
 use crate::game::sm_86::ClearEprojs;
-use crate::game::sm_87::ClearAnimtiles;
 use crate::game::sm_88::{InitializeSpecialEffectsForNewRoom, WaitUntilEndOfVblankAndClearHdma};
 use crate::game::sm_89::LoadFXHeader;
 use crate::game::sm_90::UpdateBeamTilesAndPalette;
@@ -800,43 +800,6 @@ pub unsafe fn NmiTransferSamusToVram(game: &mut Game) {
         }
     }
 }
-pub unsafe fn NmiProcessAnimtilesVramTransfers(game: &mut Game) {
-    unsafe {
-        // Only bit 15 of animtiles_enable_flag enables transfers.
-        if game.g_ram[0x1ef2] & 0x80 == 0 {
-            return;
-        }
-        for slot in (0..6).rev() {
-            let offset = slot * 2;
-            let id = u16::from_le_bytes([game.g_ram[0x1ef5 + offset], game.g_ram[0x1ef6 + offset]]);
-            if id == 0 {
-                continue;
-            }
-            let source_index = 0x1f25 + offset;
-            let source =
-                u16::from_le_bytes([game.g_ram[source_index], game.g_ram[source_index + 1]]);
-            if source == 0 {
-                continue;
-            }
-
-            crate::rtl::register_writes! { game;
-                word(A1T0L as u16, source); byte(A1B0 as u16, 0x87);
-                word(DMAP0 as u16, 0x1801);
-            }
-            let size =
-                u16::from_le_bytes([game.g_ram[0x1f31 + offset], game.g_ram[0x1f32 + offset]]);
-            WriteRegWord(DAS0L as u16, size, game);
-            let vram_addr =
-                u16::from_le_bytes([game.g_ram[0x1f3d + offset], game.g_ram[0x1f3e + offset]]);
-            crate::rtl::register_writes! { game;
-                word(VMADDL as u16, vram_addr); byte(VMAIN as u16, 0x80);
-                byte(MDMAEN as u16, 1);
-            }
-            // Consume the request only after its transfer completes.
-            game.g_ram[source_index..source_index + 2].fill(0);
-        }
-    }
-}
 pub unsafe fn ReadJoypadInputs(game: &mut Game) {
     unsafe {
         let RegWord: u16 = ReadRegWord(JOY1L as u16, game);
@@ -944,7 +907,7 @@ pub unsafe fn Vector_NMI(game: &mut Game) {
         if game.g_ram[WAITING_FOR_NMI] != 0 {
             NmiUpdatePalettesAndOam(game);
             NmiTransferSamusToVram(game);
-            NmiProcessAnimtilesVramTransfers(game);
+            animated_tiles::upload_pending(game);
             NmiUpdateIoRegisters(game);
             for slot in 0..6 {
                 let offset = slot * 2;
@@ -1636,7 +1599,7 @@ pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
                 *resume_state = 1;
                 return yielded;
             }
-            ClearAnimtiles(game);
+            animated_tiles::clear(game);
             WaitUntilEndOfVblankAndClearHdma(game);
             InitializeSpecialEffectsForNewRoom(game);
             clear(game);

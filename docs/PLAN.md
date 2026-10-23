@@ -8,6 +8,10 @@ Map Rando support comes after vanilla.
 Public progress: keep [PROGRESS.md](../PROGRESS.md) current and push it with
 verified milestone commits or material status changes, as requested by the user
 on 2026-10-23. Distinguish committed results from work still under validation.
+The report is graphical: show module-level ownership, callers and individual
+validation steps. Update affected node colors on every implementation commit;
+outline nodes changed since the previous report. Keep prose and accounting in
+linked technical documents, and distinguish checked drafts from committed work.
 
 This is the active plan. Read the current work order and validation strategy
 below. For the step-by-step refactor process, task boundaries and parallel work,
@@ -254,8 +258,21 @@ references; measure build/test time and resource growth before changing the loop
    Production adds 227 lines; verification adds 328; CI/Cargo adds 13. This is
    architectural progress, not reduction or persistent whole-game ownership.
    Local Defender ASR 1121 / 01443614-CD74-433A-B99E-2ECDC07BFC25 still blocks
-   the standalone executable; preserve that block. Animated tiles are next for
-   integration; enemy-projectile caller closure continues in isolated drafts.
+   the standalone executable; preserve that block. Enemy-projectile caller
+   closure continues in isolated drafts.
+
+   Animated tiles are now adopted: six typed slots, all 24 commands, explicit
+   upload/acknowledgement and 21 call sites across eight files replace sm_87 and
+   the old NMI upload body. Source
+   23fd5fb6a109c2b6bc6105e52523a1ebb579200abb14f0dff6f61935844fccb2
+   passes release/frontend/verifier builds, full formatting and all 438 frozen
+   comparisons. Speed Booster from boot passes 20947 frames, zero failures:
+   spawn first at 20857, upload at 20894, command at 20944, then two follow-up
+   frames. Earlier frames are setup, not animation coverage. Production adds
+   199 lines; verification/support adds 35. Rust total 111035; unsafe declarations
+   2725. Independent review passes. Execution still uses the compatibility Port;
+   the next isolated animation/palette composition removes that dependency.
+   This is not persistent Session ownership or independent backend completion.
    The accepted engine still needs persistent state, explicit backend outputs,
    all-unsafe elimination and boot-to-credits validation.
 

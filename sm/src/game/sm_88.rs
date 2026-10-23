@@ -8,13 +8,13 @@ pub use crate::game::constants::bank_8f::*;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_87::*;
 
+use crate::game::animated_tiles;
 use crate::game::explosion_window::{self, Phase};
 use crate::game::progress_flags::{CheckBossBitForCurArea, CheckEventHappened, SetEventHappened};
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_8b::ConfigureTitleSequenceGradientHDMA;
 use crate::game::sm_80::{QueueSfx1_Max6, QueueSfx2_Max6};
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
-use crate::game::sm_87::SpawnAnimtiles;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::{InitializeSuitPickupHdma, Samus_LoadSuitPalette};
 use crate::game::sm_94::kSinCosTable8bit_Sext;
@@ -706,7 +706,7 @@ pub unsafe fn FxTypeFunc_A_Rain(game: &mut Game) {
         *ram_ptr!(game; 0x5b) = 92;
         SpawnHdmaObject(0x88, &raw const unk_88D95C as *const c_void, game);
         SpawnBG3ScrollHdmaObject(game);
-        SpawnAnimtiles(addr_kAnimtiles_Rain as u16, game);
+        animated_tiles::spawn(addr_kAnimtiles_Rain as u16, game);
     }
 }
 pub unsafe fn HdmaobjInstr_1938_RandomNumber(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
@@ -753,7 +753,7 @@ pub unsafe fn FxTypeFunc_8_Spores(game: &mut Game) {
             SpawnHdmaObject_Args::new(0x42, 0x11, 0xda2d as VoidP);
         SpawnHdmaObject(0x88, &raw const unk_88DA1D as *const c_void, game);
         SpawnBG3ScrollHdmaObject(game);
-        SpawnAnimtiles(addr_kAnimtiles_Spores as u16, game);
+        animated_tiles::spawn(addr_kAnimtiles_Spores as u16, game);
     }
 }
 pub unsafe fn HdmaobjPreInstr_SporesBG3Xscroll(k: u16, game: &mut Game) {

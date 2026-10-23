@@ -21,6 +21,7 @@ pub use crate::game::constants::bank_8f::*;
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_82::*;
 
+use crate::game::animated_tiles;
 use crate::game::message_boxes;
 use crate::game::palette_effects;
 use crate::game::progress_flags::CheckEventHappened;
@@ -49,7 +50,6 @@ use crate::game::sm_81::{
     DrawMenuSpritemap, DrawSpritemap, FileSelectMap, FileSelectMenu, GameOverMenu, SaveToSram,
 };
 use crate::game::sm_86::{ClearEprojs, EnableEprojs, EprojRunAll};
-use crate::game::sm_87::{AnimtilesHandler, ClearAnimtiles, DisableAnimtiles, EnableAnimtiles};
 use crate::game::sm_88::{
     DisableHdmaObjects, EnableHdmaObjects, HdmaObjectHandler, InitializeSpecialEffectsForNewRoom,
     SpawnBG3ScrollHdmaObject, WaitUntilEndOfVblankAndClearHdma, sub_8882AC,
@@ -216,7 +216,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
             set_enabled(true, game);
             palette_effects::set_enabled(true, game);
             EnableHdmaObjects(game);
-            EnableAnimtiles(game);
+            animated_tiles::set_enabled(true, game);
             SetLiquidPhysicsType(game);
             if word!(game.game_state) as i32 == kGameState_40_TransitionToDemo as i32 {
                 word!(game.loop_counter_transfer_enemies_to_vram = 6);
@@ -1147,7 +1147,7 @@ pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
     unsafe {
         DisableHdmaObjects(game);
         crate::rtl::write_register_and_mirror(HDMAEN as u16, 0, 0x85, true, game);
-        DisableAnimtiles(game);
+        animated_tiles::set_enabled(false, game);
         BackupBG2TilemapForPauseMenu(game);
         CallPauseHook(Load24(ram_ptr!(game, LongPtr; 0x601)), game);
         CancelSoundEffects(game);
@@ -1595,7 +1595,7 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
                 return _coret_;
             }
             EnableHdmaObjects(game);
-            EnableAnimtiles(game);
+            animated_tiles::set_enabled(true, game);
             crate::game::player_projectiles::restore_sound(game);
             word!(game.game_state += 1);
         }
@@ -4147,7 +4147,7 @@ crate::game::callback_dispatch! {
             load_enemy_graphics(game);
             LoadRoomMusic(game);
             ClearEprojs(game);
-            ClearAnimtiles(game);
+            animated_tiles::clear(game);
             palette_effects::clear(game);
             clear(game);
             initialize_door_objects(game);
@@ -4201,7 +4201,7 @@ crate::game::callback_dispatch! {
         0 as CoroutineRet
     };
     [8578649] DoorTransition_C_HandleAnimTiles [] {
-        AnimtilesHandler(game);
+        animated_tiles::advance(game);
         game.set_door_transition_function(fnDoorTransition_WaitForMusicToClear as u16);
         kCoroutineNone as CoroutineRet
     };
@@ -4244,7 +4244,7 @@ crate::game::callback_dispatch! {
         kCoroutineNone as CoroutineRet
     };
     [8578871] DoorTransition_FadeInScreenAndFinish [] {
-        AnimtilesHandler(game);
+        animated_tiles::advance(game);
         select_enemies(game);
         run_enemies(game);
         EprojRunAll(game);

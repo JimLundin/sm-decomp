@@ -1,8 +1,8 @@
 //! Liquid setup, rising motion, tide and background HDMA tables.
+use crate::game::animated_tiles;
 use crate::game::constants::bank_87::{addr_kAnimtiles_Acid, addr_kAnimtiles_Lava};
 use crate::game::prelude::*;
 use crate::game::sm_80::QueueSfx2_Max6;
-use crate::game::sm_87::SpawnAnimtiles;
 use crate::game::sm_88::{HandleEarthquakeSoundEffect, SpawnBG3ScrollHdmaObject, SpawnHdmaObject};
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 
@@ -27,7 +27,7 @@ unsafe fn initialize_hot(tiles: u16, game: &mut Game) {
         SpawnHdmaObject(0x88, &raw const SURFACE as *const c_void, game);
         SpawnHdmaObject(0x88, &raw const BACKGROUND as *const c_void, game);
         SpawnBG3ScrollHdmaObject(game);
-        SpawnAnimtiles(tiles, game);
+        animated_tiles::spawn(tiles, game);
     }
 }
 pub unsafe fn initialize_water(game: &mut Game) {

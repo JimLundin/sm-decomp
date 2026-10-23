@@ -8,6 +8,24 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Animated tiles adopted on source
+`23fd5fb6a109c2b6bc6105e52523a1ebb579200abb14f0dff6f61935844fccb2`.
+Full cargo fmt/check, release/frontend/verifier build, independent review and
+438 frozen comparisons pass. Speed Booster from boot: 20947 frames, zero failures;
+spawn first 20857, frame/upload first 20894, command 20944, two follow-up frames.
+All five animated_tiles probes hit. Production +199 lines; verification +35;
+combined +234. Rust total111035; unsafe declarations2725. Frozen inputs/DLL and
+capture results are under animated-tiles/integrated-1*. The successful replay log
+is integrated-1-oracle-2.log; the first attempt had invalid CLI spacing and did
+not execute. Build/source unchanged through all successful checks.
+
+Next: isolated animation/palette composition removes animation execution's
+Port/Game dependency and invokes the actual palette core with one colors owner.
+Enemy-projectile typecheck-1/check-headless-3.log passes library source checking
+including the candidate354 adapter; no candidate runtime equivalence yet. Full
+adoption-1 caller draft is unverified, production +3757 lines before further
+review, not a reduction. Expanded reference drafts remain uncaptured.
+
 Palette core 601f8da3 is adopted in main after GitHub Windows run
 39986571000 passed standalone execution, frontend build and formatting. Source
 `6d2231c8c7324cdd6ed5fd26e4c309eff23b11651b983203df147f5437bcd621`
@@ -33,12 +51,6 @@ grey remaining milestones, purple verification/integration. Keep its node states
 current rather than expanding the prose.
 
 Isolated work under `Local/sm-decomp-experiments/20261023` (not adopted):
-- `animated-tiles`: complete typed six-slot state, 24-command interpreter,
-  explicit per-upload request/acknowledgement, eight caller drafts. Normal fields
-  are direct; odd/broad access is confined to compatibility.rs. Draft +199 runtime
-  lines, 11 check-facade lines before carrier. All 438 actual-old cases now
-  captured. The 31 expected caught panics and all process exits pass; review of
-  observed hardware/alias traces is completing.
 - `enemy-projectiles`: reviewed 801-RAM-byte +16-native-byte state projection,
   private shared-transport import/export extension staged only in the draft,
   direct typed state/motion and full closure contract. Remaining implementation
@@ -59,8 +71,7 @@ separate processes with source fixed. Local combined build log is under
 animated-tiles/combined-baseline-build-1.log. No capture/compiler process remains.
 
 Next: adopt/refine typed candidates only against these frozen old references.
-Palette is adopted and verified as described above. Integrate animated tiles next,
-then verify all 438 frozen references and an exercised animation/DMA segment.
+Palette is adopted and verified as described above. Animated tiles are adopted with the checks above.
 Enemy-projectile source checking and caller closure remain in isolated drafts.
 Current Rust is 110801; palette adds 227 production and 328 verification lines,
 plus 13 CI/Cargo lines. Keep the local standalone ASR block intact.

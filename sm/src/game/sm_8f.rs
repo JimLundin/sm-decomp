@@ -1,4 +1,5 @@
 use crate::c_library::strcpy;
+use crate::game::animated_tiles;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_87::*;
 pub use crate::game::prelude::*;
@@ -9,7 +10,6 @@ use crate::game::scrolling_sky::{
 };
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_86::SpawnEprojWithRoomGfx;
-use crate::game::sm_87::SpawnAnimtiles;
 use crate::game::sm_88::FxTypeFunc_2C_Haze;
 use crate::game::sm_89::RoomCode_CeresElevatorShaft;
 use crate::game::sm_90::CallSomeSamusCode;
@@ -117,10 +117,10 @@ crate::game::callback_dispatch! {
         initialize_land(game);
     };
     [9408983] RoomSetup_RunStatueUnlockAnims [] {
-        SpawnAnimtiles(addr_kAnimtiles_TourianStatue_Kraid as u16, game);
-        SpawnAnimtiles(addr_kAnimtiles_TourianStatue_Phantoon as u16, game);
-        SpawnAnimtiles(addr_kAnimtiles_TourianStatue_Draygon as u16, game);
-        SpawnAnimtiles(addr_kAnimtiles_TourianStatue_Ridley as u16, game);
+        animated_tiles::spawn(addr_kAnimtiles_TourianStatue_Kraid as u16, game);
+        animated_tiles::spawn(addr_kAnimtiles_TourianStatue_Phantoon as u16, game);
+        animated_tiles::spawn(addr_kAnimtiles_TourianStatue_Draygon as u16, game);
+        animated_tiles::spawn(addr_kAnimtiles_TourianStatue_Ridley as u16, game);
     };
     [9423069] RoomCode_SetPauseCodeForDraygon [] {
         mov24(
@@ -200,11 +200,11 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (game: &mut Game)];
     [9419121] DoorCode_StartWreckedShipTreadmillWest [] {
-        SpawnAnimtiles(addr_kAnimtiles_WreckedShipTradmillRight as u16, game);
+        animated_tiles::spawn(addr_kAnimtiles_WreckedShipTradmillRight as u16, game);
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x4, 0x9, 0xb64b as VoidP), game);
     };
     [9429464] DoorCode_StartWreckedSkipTreadmill_East [] {
-        SpawnAnimtiles(addr_kAnimtiles_WreckedShipTradmillLeft as u16, game);
+        animated_tiles::spawn(addr_kAnimtiles_WreckedShipTradmillLeft as u16, game);
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x4, 0x9, 0xb64f as VoidP), game);
     };
     [9429612] DoorCode_SetupElevatubeFromSouth [] {
