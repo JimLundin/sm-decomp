@@ -73,3 +73,9 @@ use tables::*;
 const fnEprojPreInstr_nullsub_83: u32 = 8815867;
 const fnEproj_Init_0x8bde_SkreeDownLeft: u32 = 8817429;
 const fnEprojPreInstr_Empty: i32 = 0x86efdf;
+
+// Expose the maintained command dispatcher, without reimplementing its spawn rule.
+pub(crate) fn sprite_command(h: &mut impl Host, k: u16, address: u16) {
+    let script = h.script(address);
+    assert!(commands::dispatch(8842467, k, &script, h).is_some());
+}

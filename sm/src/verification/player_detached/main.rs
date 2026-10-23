@@ -13,6 +13,8 @@ mod player;
 mod player_checks;
 mod room_host;
 mod session_host;
+mod sprite_checks;
+mod sprite_host;
 mod visual_checks;
 mod visual_host;
 use game::room_mechanisms as room;
@@ -117,6 +119,7 @@ enum Event {
     Sound(u8, u16),
     Projectile(game::visual_host::StatueProjectile, u16),
     Upload(Upload),
+    Sprite(u16, u16, u16, u16, u16),
 }
 struct Composed {
     world: World,
@@ -135,12 +138,14 @@ struct Composed {
     on_visual_sound: Option<fn(&mut Composed)>,
     on_visual_music: Option<fn(&mut Composed)>,
     visual_records: Vec<(game::visual_host::Source, u8, u16)>,
+    on_sprite_draw: Option<fn(&mut Composed)>,
+    on_sprite_record: Option<fn(&mut Composed, u16)>,
 }
 impl Composed {
     fn new() -> Self {
         Self {
             world: World::default(),
-            image: RomImage::zeroed(0x100000),
+            image: RomImage::zeroed(0x300000),
             events: Vec::new(),
             fail_upload: false,
             animation_invalid_result: None,
@@ -155,6 +160,8 @@ impl Composed {
             on_visual_sound: None,
             on_visual_music: None,
             visual_records: Vec::new(),
+            on_sprite_draw: None,
+            on_sprite_record: None,
         }
     }
     fn byte(&self, bank: u8, cursor: u16, byte: u8) {
@@ -182,10 +189,17 @@ fn main() {
         println!("visual composition case passed: {case}");
         return;
     }
+    if args.get(1).map(String::as_str) == Some("--sprite-mutation") {
+        let case = args.get(2).expect("sprite case name required");
+        sprite_checks::run_selected(case);
+        println!("sprite composition case passed: {case}");
+        return;
+    }
     checks::run();
     composition_checks::run();
     enemy_checks::run();
     visual_checks::run();
+    sprite_checks::run();
     palette_independent_checks::run();
     animation_independent_checks::run();
     println!("player/animation/palette composed core checks passed");

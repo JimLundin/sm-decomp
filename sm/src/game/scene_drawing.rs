@@ -10,7 +10,7 @@ use crate::game::sm_81::{
 };
 use crate::game::sm_90::DrawSamusAndProjectiles;
 use crate::game::sm_a0::CallEnemyGfxDrawHook;
-use crate::game::sprite_objects::draw_sprites;
+use crate::game::sprite_effect_runtime::draw_sprites;
 use crate::game_state::Game;
 use crate::ram_map::checked_word as word;
 use crate::rtl::{Unreachable, rom_record};

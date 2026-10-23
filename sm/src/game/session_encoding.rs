@@ -2,8 +2,63 @@
 #![forbid(unsafe_code)]
 use crate::game::{external_inputs::ExternalInputs, session::Session};
 use crate::ram_map::{word_arrays as arrays, words as ram};
+// Direct projection for the 1,024-byte pool. Normal gameplay uses typed members;
+// this is solely the active/tail compatibility mapping, shared by reads/writes.
+macro_rules! sprite_projection {
+    ($s:ident,$offset:ident,($($borrow:tt)*)) => {{
+        let index = ($offset % 128) / 2;
+        let column = $offset / 128;
+        if index < 32 {
+            let slot = $($borrow)* $s.sprite_effects.active[index];
+            match column {
+                0 => $($borrow)* slot.instruction,
+                1 => $($borrow)* slot.timer,
+                2 => $($borrow)* slot.appearance,
+                3 => $($borrow)* slot.x.whole,
+                4 => $($borrow)* slot.x.fraction,
+                5 => $($borrow)* slot.y.whole,
+                6 => $($borrow)* slot.y.fraction,
+                7 => $($borrow)* slot.disable_flags,
+                _ => unreachable!(),
+            }
+        } else {
+            let index = index - 32;
+            let tail = $($borrow)* $s.sprite_compatibility;
+            match column {
+                0 => $($borrow)* tail.instruction[index],
+                1 => $($borrow)* tail.timer[index],
+                2 => $($borrow)* tail.appearance[index],
+                3 => $($borrow)* tail.x[index],
+                4 => $($borrow)* tail.x_fraction[index],
+                5 => $($borrow)* tail.y[index],
+                6 => $($borrow)* tail.y_fraction[index],
+                7 => $($borrow)* tail.disable_flags[index],
+                _ => unreachable!(),
+            }
+        }
+    }};
+}
 macro_rules! scalar_words {
     ($s:ident,$f:ident,($($borrow:tt)*))=>{
+        $f(0x1844,$($borrow)* $s.sprite_effects.selected);
+        for index in 0..32 {
+            $f(0xef78+index*2,$($borrow)* $s.sprite_effects.active[index].instruction);
+            $f(0xeff8+index*2,$($borrow)* $s.sprite_effects.active[index].timer);
+            $f(0xf078+index*2,$($borrow)* $s.sprite_effects.active[index].appearance);
+            $f(0xf0f8+index*2,$($borrow)* $s.sprite_effects.active[index].x.whole);
+            $f(0xf178+index*2,$($borrow)* $s.sprite_effects.active[index].x.fraction);
+            $f(0xf1f8+index*2,$($borrow)* $s.sprite_effects.active[index].y.whole);
+            $f(0xf278+index*2,$($borrow)* $s.sprite_effects.active[index].y.fraction);
+            $f(0xf2f8+index*2,$($borrow)* $s.sprite_effects.active[index].disable_flags);
+            $f(0xefb8+index*2,$($borrow)* $s.sprite_compatibility.instruction[index]);
+            $f(0xf038+index*2,$($borrow)* $s.sprite_compatibility.timer[index]);
+            $f(0xf0b8+index*2,$($borrow)* $s.sprite_compatibility.appearance[index]);
+            $f(0xf138+index*2,$($borrow)* $s.sprite_compatibility.x[index]);
+            $f(0xf1b8+index*2,$($borrow)* $s.sprite_compatibility.x_fraction[index]);
+            $f(0xf238+index*2,$($borrow)* $s.sprite_compatibility.y[index]);
+            $f(0xf2b8+index*2,$($borrow)* $s.sprite_compatibility.y_fraction[index]);
+            $f(0xf338+index*2,$($borrow)* $s.sprite_compatibility.disable_flags[index]);
+        }
         $f(0xa48,$($borrow)* $s.player.palette.hurt_flash);
         $f(0xa72,$($borrow)* $s.player.palette.visor_timer);
         $f(0xa74,$($borrow)* $s.player.palette.suit_index);
@@ -303,6 +358,11 @@ pub(crate) fn encode(s: &Session, bytes: &mut [u8]) {
     }
 }
 pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
+    if (0xef78..0xf378).contains(&at) {
+        let offset = at - 0xef78;
+        let word = sprite_projection!(s,offset,(&));
+        return Some(word.to_le_bytes()[offset % 2]);
+    }
     if (0xc000..0xc400).contains(&at) {
         let offset = at - 0xc000;
         let colors = if offset < 512 {
@@ -346,6 +406,14 @@ pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     result
 }
 pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
+    if (0xef78..0xf378).contains(&at) {
+        let offset = at - 0xef78;
+        let word = sprite_projection!(s,offset,(&mut));
+        let mut bytes = word.to_le_bytes();
+        bytes[offset % 2] = value;
+        *word = u16::from_le_bytes(bytes);
+        return true;
+    }
     if (0xc000..0xc400).contains(&at) {
         let offset = at - 0xc000;
         let colors = if offset < 512 {
@@ -415,6 +483,7 @@ pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> boo
 pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
     let w = |at| read(bytes, at);
     ExternalInputs {
+        debug_enemy_freeze: w(ram::debug_time_frozen_for_enemies),
         enemy_zero_health: u16::from_ne_bytes([bytes[0xf8c], bytes[0xf8d]]),
         frame_handler_beta: w(0xa44),
         blending_config: w(0x1982),

@@ -5,7 +5,7 @@ use crate::game::enemy_combat::enemy_death;
 use crate::game::enemy_ram::{EnemyField as F, EnemySlot, native_write};
 use crate::game::scene_drawing::queue_enemy;
 use crate::game::sm_a0::{CallEnemyAi, EnemyWithNormalSpritesIsOffScreen};
-use crate::game::sprite_objects::update_sprites;
+use crate::game::sprite_effect_runtime::update_sprites;
 use crate::game_state::Game;
 use crate::ram_map::{checked_word as word, word_arrays as arrays};
 use crate::rtl::rom_record;

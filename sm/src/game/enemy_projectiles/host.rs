@@ -220,10 +220,6 @@ pub trait ActorAccess {
     fn set_waffle_field(&mut self, enemy: usize, field: WaffleField, value: u16);
     fn botwoon_field(&self, enemy: usize, field: BotwoonField) -> u16;
     fn set_botwoon_field(&mut self, enemy: usize, field: BotwoonField, value: u16);
-    fn waffle_sprite_x(&self, index: u16) -> u16;
-    fn set_waffle_sprite_x(&mut self, index: u16, value: u16);
-    fn waffle_sprite_y(&self, index: u16) -> u16;
-    fn set_waffle_sprite_y(&mut self, index: u16, value: u16);
     fn botwoon_history_x(&self, cursor: u16) -> u16;
     fn set_botwoon_history_x(&mut self, cursor: u16, value: u16);
     fn botwoon_history_y(&self, cursor: u16) -> u16;
@@ -236,7 +232,6 @@ pub trait Effects {
     fn prepare_bit_access(&mut self, value: u16) -> u16;
     fn calculate_angle_from_xy(&mut self, x: u16, y: u16) -> u16;
     fn damage_player(&mut self, damage: u16) -> ();
-    fn create_sprite(&mut self, x: u16, y: u16, id: u16, graphics: u16) -> u16;
     fn ridley_offscreen(&mut self, x: u16, y: u16) -> u8;
     fn queue_music(&mut self, track: u16) -> ();
     fn convert_angle_to_xy(&mut self, angle: u16, amplitude: u16) -> Vector32;
@@ -266,6 +261,12 @@ pub trait Graphics {
     fn set_palette_buffer(&mut self, index: isize, value: u16);
 }
 pub trait Host:
-    SessionAccess + Content + ImportedAliases + ActorAccess + Effects + Graphics
+    SessionAccess
+    + Content
+    + ImportedAliases
+    + ActorAccess
+    + Effects
+    + Graphics
+    + crate::game::sprite_effect_host::Host
 {
 }

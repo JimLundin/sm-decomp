@@ -11,7 +11,7 @@ use crate::game::enemy_ram::{EnemyField as F, EnemySlot, native_write as write};
 use crate::game::sm_80::{QueueSfx1_Max3, QueueSfx2_Max1, QueueSfx2_Max3, QueueSfx3_Max3};
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::Samus_DealDamage;
-use crate::game::sprite_objects::create_sprite;
+use crate::game::sprite_effect_runtime::create_sprite;
 use crate::game_state::Game;
 use crate::ram_map::checked_word as word;
 use crate::rom::RomRecord as Record;

@@ -335,18 +335,6 @@ impl ActorAccess for Runtime<'_> {
     fn set_botwoon_field(&mut self, enemy: usize, field: BotwoonField, value: u16) {
         self.write_slice_le(0xf78 + enemy + botwoon_offset(field), value);
     }
-    fn waffle_sprite_x(&self, index: u16) -> u16 {
-        self.word(A::sprite_x_pos + usize::from(index) * 2)
-    }
-    fn set_waffle_sprite_x(&mut self, index: u16, value: u16) {
-        self.write_slice_le(A::sprite_x_pos + usize::from(index) * 2, value);
-    }
-    fn waffle_sprite_y(&self, index: u16) -> u16 {
-        self.word(A::sprite_y_pos + usize::from(index) * 2)
-    }
-    fn set_waffle_sprite_y(&mut self, index: u16, value: u16) {
-        self.write_slice_le(A::sprite_y_pos + usize::from(index) * 2, value);
-    }
     fn botwoon_history_x(&self, cursor: u16) -> u16 {
         self.word(0x9000 + usize::from(cursor))
     }

@@ -14,7 +14,7 @@ use crate::game::sm_88::FxTypeFunc_2C_Haze;
 use crate::game::sm_89::RoomCode_CeresElevatorShaft;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_a6::HandleCeresRidleyGetawayCutscene;
-use crate::game::sprite_objects::create_sprite;
+use crate::game::sprite_effect_runtime::create_sprite;
 
 crate::game::constants::typed_constants! { i32;
     kCoroutineNone = 0,

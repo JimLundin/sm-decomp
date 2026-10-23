@@ -27,7 +27,15 @@ impl Record for RomRecord {
 impl Content for Composed {
     type Record = RomRecord;
     fn record(&mut self, source: Source, bank: u8, address: u16) -> RomRecord {
-        assert!(address & 0x8000 != 0, "unprepared visual low-window record");
+        if bank == 0xb4 && address & 0x8000 == 0 {
+            if let Some(callback) = self.on_sprite_record {
+                callback(self, address);
+            } else {
+                assert!(address & 0x8000 != 0, "unprepared sprite low-window record");
+            }
+        } else {
+            assert!(address & 0x8000 != 0, "unprepared visual low-window record");
+        }
         self.visual_records.push((source, bank, address));
         RomRecord {
             image: self.image.clone(),

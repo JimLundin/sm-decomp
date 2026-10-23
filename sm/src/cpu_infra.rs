@@ -1265,3 +1265,9 @@ pub unsafe fn RtlRunFrameCompare(input: u16, run_what: i32, game: &mut Game) {
 
 #[path = "verification/samus_palette_oracle.rs"]
 pub mod samus_palette_oracle;
+
+#[path = "verification/draygon_sprite_oracle.rs"]
+pub mod draygon_sprite_oracle;
+
+#[path = "verification/sprite_pool_oracle.rs"]
+pub mod sprite_pool_oracle;

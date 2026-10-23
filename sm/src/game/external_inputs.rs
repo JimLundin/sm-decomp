@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct ExternalInputs {
+    pub debug_enemy_freeze: u16,
     pub enemy_zero_health: u16,
     pub frame_handler_beta: u16,
     pub blending_config: u16,

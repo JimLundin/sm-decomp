@@ -14,7 +14,7 @@ use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_80::{QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_88::SpawnHdmaObject;
 use crate::game::sm_a0::Enemy_MoveRight_IgnoreSlopes;
-use crate::game::sprite_objects::create_sprite;
+use crate::game::sprite_effect_runtime::create_sprite;
 
 pub type Enemy_Crocomire = crate::game::enemy_layouts::EnemyLayout72;
 

@@ -21,9 +21,6 @@ impl Effects for Runtime<'_> {
     fn damage_player(&mut self, damage: u16) -> () {
         self.foreign(|game| super::legacy::damage_player(damage, game))
     }
-    fn create_sprite(&mut self, x: u16, y: u16, id: u16, graphics: u16) -> u16 {
-        self.foreign(|game| super::legacy::create_sprite(x, y, id, graphics, game))
-    }
     fn ridley_offscreen(&mut self, x: u16, y: u16) -> u8 {
         self.foreign(|game| super::legacy::ridley_offscreen(x, y, game))
     }

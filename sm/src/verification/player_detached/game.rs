@@ -65,3 +65,15 @@ pub(crate) mod liquid_surface;
 
 #[path = "../../game/session_encoding.rs"]
 pub(crate) mod session_encoding;
+
+#[path = "../../game/sprite_effect_state.rs"]
+pub(crate) mod sprite_effect_state;
+
+#[path = "../../game/sprite_effect_host.rs"]
+pub(crate) mod sprite_effect_host;
+
+#[path = "../../game/sprite_objects.rs"]
+pub(crate) mod sprite_objects;
+
+#[path = "../../game/sprite_effect_controllers.rs"]
+pub(crate) mod sprite_effect_controllers;

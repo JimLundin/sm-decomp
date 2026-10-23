@@ -655,6 +655,22 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/sprite_drawing.rs"),
     ),
     (
+        "sm/src/game/sprite_effect_state.rs",
+        include_bytes!("game/sprite_effect_state.rs"),
+    ),
+    (
+        "sm/src/game/sprite_effect_host.rs",
+        include_bytes!("game/sprite_effect_host.rs"),
+    ),
+    (
+        "sm/src/game/sprite_effect_controllers.rs",
+        include_bytes!("game/sprite_effect_controllers.rs"),
+    ),
+    (
+        "sm/src/game/sprite_effect_runtime.rs",
+        include_bytes!("game/sprite_effect_runtime.rs"),
+    ),
+    (
         "sm/src/game/sprite_objects.rs",
         include_bytes!("game/sprite_objects.rs"),
     ),
@@ -1008,5 +1024,77 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/word_transfers.rs",
         include_bytes!("word_transfers.rs"),
+    ),
+    (
+        "sm/src/verification/player_detached/sprite_checks.rs",
+        include_bytes!("verification/player_detached/sprite_checks.rs"),
+    ),
+    (
+        "sm/src/verification/player_detached/sprite_host.rs",
+        include_bytes!("verification/player_detached/sprite_host.rs"),
+    ),
+    (
+        "sm/src/verification/sprite_effect_cases.rs",
+        include_bytes!("verification/sprite_effect_cases.rs"),
+    ),
+    (
+        "sm/src/verification/sprite_controller_cases.rs",
+        include_bytes!("verification/sprite_controller_cases.rs"),
+    ),
+    (
+        "sm/src/verification/sprite_effect_observer.rs",
+        include_bytes!("verification/sprite_effect_observer.rs"),
+    ),
+    (
+        "sm/src/verification/sprite_effect_dll.rs",
+        include_bytes!("verification/sprite_effect_dll.rs"),
+    ),
+    (
+        "sm/src/verification/sprite_alias_cases.rs",
+        include_bytes!("verification/sprite_alias_cases.rs"),
+    ),
+    (
+        "sm/src/verification/sprite_effect_candidate.rs",
+        include_bytes!("verification/sprite_effect_candidate.rs"),
+    ),
+    (
+        "sm/src/verification/draygon_sprite_oracle.rs",
+        include_bytes!("verification/draygon_sprite_oracle.rs"),
+    ),
+    (
+        "sm/src/verification/draygon_sprite_dll.rs",
+        include_bytes!("verification/draygon_sprite_dll.rs"),
+    ),
+    (
+        "sm/src/verification/draygon_sprite_candidate.rs",
+        include_bytes!("verification/draygon_sprite_candidate.rs"),
+    ),
+    (
+        "sm/src/verification/draygon_sprite_candidate_dll.rs",
+        include_bytes!("verification/draygon_sprite_candidate_dll.rs"),
+    ),
+    (
+        "sm/src/verification/sprite_pool_case.rs",
+        include_bytes!("verification/sprite_pool_case.rs"),
+    ),
+    (
+        "sm/src/verification/sprite_pool_oracle.rs",
+        include_bytes!("verification/sprite_pool_oracle.rs"),
+    ),
+    (
+        "sm/src/verification/sprite_pool_dll.rs",
+        include_bytes!("verification/sprite_pool_dll.rs"),
+    ),
+    (
+        "sm/src/verification/sprite_pool_candidate.rs",
+        include_bytes!("verification/sprite_pool_candidate.rs"),
+    ),
+    (
+        "sm/src/verification/sprite_pool_candidate_dll.rs",
+        include_bytes!("verification/sprite_pool_candidate_dll.rs"),
+    ),
+    (
+        "sm/src/verification/sprite_runtime_checks.rs",
+        include_bytes!("verification/sprite_runtime_checks.rs"),
     ),
 ];

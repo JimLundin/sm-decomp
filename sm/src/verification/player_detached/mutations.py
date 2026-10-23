@@ -91,17 +91,121 @@ VISUAL_MUTATIONS = (
      (("samus_palette.rs", "            return carry(grapple >= 0xc856);",
        "            return carry(grapple.wrapping_sub(0xc856) & 0x8000 == 0);"),)),
 )
+# Actual sprite faults use the same strict selected-case build and assertion rules.
+SPRITE_MUTATIONS = (
+    ('sprite_allocate_lowest_free', 'allocation',
+     'sprite.mutation.allocation_captured_highest',
+     (
+         ('sprite_objects.rs',
+          '        .rposition(|slot| slot.instruction == 0)',
+          '        .position(|slot| slot.instruction == 0)'),
+     )),
+    ('sprite_population_clear_slot_zero', 'clears',
+     'sprite.mutation.population_clear_extent',
+     (
+         ('sprite_objects.rs',
+          '        if index != 0 {\n            slot.instruction = 0;',
+          '        if true {\n            slot.instruction = 0;'),
+     )),
+    ('sprite_population_preserve_tails', 'clears',
+     'sprite.mutation.population_clear_extent',
+     (
+         ('sprite_objects.rs',
+          '    let tails = &mut session.sprite_compatibility;\n    tails.instruction.fill(0);\n    tails.timer.fill(0);\n    tails.appearance.fill(0);\n    tails.x.fill(0);\n    tails.x_fraction.fill(0);\n    tails.y.fill(0);\n    tails.y_fraction.fill(0);\n    tails.disable_flags.fill(0);\n',
+          '    // Mutation: leave serialized compatibility tails unchanged.\n'),
+     )),
+    ('sprite_retire_clears_timers', 'clears',
+     'sprite.mutation.retirement_preserves_columns',
+     (
+         ('sprite_objects.rs',
+          'pub(crate) fn retire_all(session: &mut Session) {\n    for slot in &mut session.sprite_effects.active {\n        slot.instruction = 0;',
+          'pub(crate) fn retire_all(session: &mut Session) {\n    for slot in &mut session.sprite_effects.active {\n        slot.instruction = 0;\n        slot.timer = 0;'),
+     )),
+    ('sprite_update_captured_timer_slot', 'live_selected',
+     'sprite.update.live-selected',
+     (
+         ('sprite_objects.rs',
+          '                    if timer & 0x8000 == 0 {\n                        write_selected_native!(host, timer, Timer, timer);',
+          '                    if timer & 0x8000 == 0 {\n                        write_slot!(host, index, timer, Timer, timer);'),
+     )),
+    ('sprite_capture_content_before_diagnostic', 'live_selected',
+     'sprite.content.post-diagnostic',
+     (
+         ('sprite_objects.rs',
+          '                    let record = host.record(Source::Loaded, 0xb4, next);\n                    timer = record.native_word(0);',
+          '                    let record = host.table(Source::Loaded, 0xb40000 | u32::from(next));\n                    let _diagnosed = host.record(Source::Loaded, 0xb4, next);\n                    timer = record.native_word(0);'),
+     )),
+    ('sprite_draw_ascending', 'draw_live',
+     'sprite.mutation.draw_order_and_live_next',
+     (
+         ('sprite_objects.rs',
+          '    for index in (0..32).rev() {',
+          '    for index in 0..32 {'),
+     )),
+    ('sprite_draw_cached_future_slots', 'draw_live',
+     'sprite.mutation.draw_order_and_live_next',
+     (
+         ('sprite_objects.rs',
+          'pub(crate) fn draw(host: &mut impl Host) {\n    for index in (0..32).rev() {\n        if host.session().sprite_effects.active[index].instruction == 0 {\n            continue;\n        }\n        let x = host.session().sprite_effects.active[index]\n            .x\n            .whole\n            .wrapping_sub(host.inputs().camera_x);\n        if (x as i16).wrapping_add(16) < 0 || (i32::from(x) - 272) & 0x8000 == 0 {\n            continue;\n        }\n        let y = (host.session().sprite_effects.active[index].y.whole as i16)\n            .wrapping_sub(host.inputs().camera_y as i16);\n        if y < 0 || (i32::from(y) - 272) & 0x8000 == 0 {\n            continue;\n        }\n        let palette = host.session().sprite_effects.active[index].appearance & 0xe00;\n        let base_tile = host.session().sprite_effects.active[index].appearance & 0x1ff;\n        let cursor = host.session().sprite_effects.active[index].instruction;\n        let record = host.record(Source::Loaded, 0xb4, cursor);\n        let map = LegacySpriteMap(record.native_word(2));\n        host.submit_sprite(SpriteDraw {\n            map,\n            position: Point { x, y: y as u16 },\n            palette,\n            base_tile,\n        });\n        host.probe("sprite.draw.submitted");\n    }\n}',
+          'pub(crate) fn draw(host: &mut impl Host) {\n    let mutation_slots = host.session().sprite_effects.active;\n    for index in (0..32).rev() {\n        if mutation_slots[index].instruction == 0 {\n            continue;\n        }\n        let x = mutation_slots[index]\n            .x\n            .whole\n            .wrapping_sub(host.inputs().camera_x);\n        if (x as i16).wrapping_add(16) < 0 || (i32::from(x) - 272) & 0x8000 == 0 {\n            continue;\n        }\n        let y = (mutation_slots[index].y.whole as i16)\n            .wrapping_sub(host.inputs().camera_y as i16);\n        if y < 0 || (i32::from(y) - 272) & 0x8000 == 0 {\n            continue;\n        }\n        let palette = mutation_slots[index].appearance & 0xe00;\n        let base_tile = mutation_slots[index].appearance & 0x1ff;\n        let cursor = mutation_slots[index].instruction;\n        let record = host.record(Source::Loaded, 0xb4, cursor);\n        let map = LegacySpriteMap(record.native_word(2));\n        host.submit_sprite(SpriteDraw {\n            map,\n            position: Point { x, y: y as u16 },\n            palette,\n            base_tile,\n        });\n        host.probe("sprite.draw.submitted");\n    }\n}'),
+     )),
+    ('sprite_drop_fractional_carry', 'draygon',
+     'sprite.draygon42.carry-borrow',
+     (
+         ('sprite_effect_controllers.rs',
+          '    let value = (u32::from(fraction) | (u32::from(whole) << 16)).wrapping_add(delta);',
+          '    let value = (u32::from(fraction).wrapping_add(delta) & 0xffff)\n        | (u32::from(whole.wrapping_add((delta >> 16) as u16)) << 16);'),
+     )),
+    ('sprite_actor_cache_y_before_x_write', 'actor_alias',
+     'sprite.actor.attach_live_y_alias',
+     (
+         ('sprite_effect_controllers.rs',
+          '    let x = host.attachment_x(enemy);\n    write!(host, index, X, x.whole, x);\n    let y = host.attachment_y(enemy);',
+          '    let x = host.attachment_x(enemy);\n    let y = host.attachment_y(enemy);\n    write!(host, index, X, x.whole, x);'),
+     )),
+    ('sprite_actor_cache_timer_before_clear', 'actor_alias',
+     'sprite.actor.maw_live_first_timer',
+     (
+         ('sprite_effect_controllers.rs',
+          'pub(crate) fn maw_appearance(\n    host: &mut impl Host,\n    handle: LegacySpriteHandle,\n    appearance: u16,\n    enemy: u16,\n) {',
+          'pub(crate) fn maw_appearance(\n    host: &mut impl Host,\n    handle: LegacySpriteHandle,\n    appearance: u16,\n    enemy: u16,\n) {\n    let mutation_frozen_timer = host.attachment_frozen_timer(enemy);'),
+         ('sprite_effect_controllers.rs',
+          '    if host.attachment_frozen_timer(enemy) != 0 {',
+          '    if mutation_frozen_timer != 0 {'),
+     )),
+    ('sprite_actor_cache_timer_before_freeze', 'actor_alias',
+     'sprite.actor.maw_live_second_timer',
+     (
+         ('sprite_effect_controllers.rs',
+          '    if host.attachment_frozen_timer(enemy) != 0 {\n        let old = read!(host, index, Appearance, appearance);\n        write!(host, index, Appearance, appearance, (old & 0xf1ff) | 0xc00);\n        let frozen_timer = host.attachment_frozen_timer(enemy);',
+          '    if host.attachment_frozen_timer(enemy) != 0 {\n        let frozen_timer = host.attachment_frozen_timer(enemy);\n        let old = read!(host, index, Appearance, appearance);\n        write!(host, index, Appearance, appearance, (old & 0xf1ff) | 0xc00);'),
+     )),
+    ('sprite_maw_group_first_or_before_mask', 'maw_first_grouping',
+     'sprite.maw.first_write_grouping',
+     (
+         ('sprite_effect_controllers.rs',
+          '        appearance | (old & 0xf1ff)\n    );\n    if host.attachment_frozen_timer(enemy) != 0 {',
+          '        (appearance | old) & 0xf1ff\n    );\n    if host.attachment_frozen_timer(enemy) != 0 {'),
+     )),
+    ('sprite_maw_group_final_or_before_mask', 'maw_final_grouping',
+     'sprite.maw.final_restore_grouping',
+     (
+         ('sprite_effect_controllers.rs',
+          '                appearance | (old & 0xf1ff)\n            );',
+          '                (appearance | old) & 0xf1ff\n            );'),
+     )),
+)
 VISUAL_SUCCESS = "visual composition case passed: "
 VISUAL_PANIC = re.compile(
     r"(?:^|\n)thread '[^\n]+'(?: \(\d+\))? panicked at ([^\n]+):\n([^\n]*)\n"
 )
 
 
-def visual_stderr_matches(stderr, label=None, upload_failure=False):
+def visual_stderr_matches(stderr, label=None, upload_failure=False, assertion_source="visual_checks.rs"):
     text = stderr.replace("\r\n", "\n")
     expected = [("visual_host.rs", "intentional upload failure")] if upload_failure else []
     if label is not None:
-        expected.append(("visual_checks.rs", "assertion `left == right` failed: " + label))
+        expected.append((assertion_source, "assertion `left == right` failed: " + label))
     panics = list(VISUAL_PANIC.finditer(text))
     if len(panics) != len(expected):
         return False
@@ -178,18 +282,20 @@ def check(source, work, name, mutation=None, expected_assertion=None):
     print(f"{name}: KILLED by gameplay assertion at line {assertion.group(1)} equality assertion", flush=True)
 
 
-def check_visual(source, work, mutation, baseline_binary):
+def check_visual(source, work, mutation, baseline_binary, family="visual"):
     name, case, label, edits = mutation
     environment = dict(os.environ, RUST_BACKTRACE="0")
+    assertion_source = "sprite_checks.rs" if family == "sprite" else "visual_checks.rs"
+    upload_failure = family == "visual" and case == "upload_failure"
     def execute(binary):
         return subprocess.run(
-            [str(binary), "--visual-mutation", case], capture_output=True,
+            [str(binary), f"--{family}-mutation", case], capture_output=True,
             text=True, encoding="utf-8", errors="replace", timeout=30,
             check=False, env=environment,
         )
     baseline = execute(baseline_binary)
-    success = VISUAL_SUCCESS + case
-    if baseline.returncode != 0 or baseline.stdout.strip() != success or not visual_stderr_matches(baseline.stderr, upload_failure=case == "upload_failure"):
+    success = ("sprite composition case passed: " if family == "sprite" else VISUAL_SUCCESS) + case
+    if baseline.returncode != 0 or baseline.stdout.strip() != success or not visual_stderr_matches(baseline.stderr, upload_failure=upload_failure, assertion_source=assertion_source):
         raise RuntimeError(f"{name}: selected baseline must pass\n{baseline.stdout}\n{baseline.stderr}")
     print(f"{name}: selected baseline PASS", flush=True)
     copied = work / name / "src"
@@ -208,7 +314,7 @@ def check_visual(source, work, mutation, baseline_binary):
     print(f"{name}: compile PASS", flush=True)
     result = execute(binary)
     if (result.returncode != 101 or result.stdout.strip()
-            or not visual_stderr_matches(result.stderr, label, case == "upload_failure")):
+            or not visual_stderr_matches(result.stderr, label, upload_failure, assertion_source)):
         raise RuntimeError(f"{name}: expected only named assertion, exit101, no success marker; "
                            f"survival/crash/unrelated panic is not a kill\n{result.stdout}\n{result.stderr}")
     print(f"{name}: KILLED by {label}", flush=True)
@@ -230,7 +336,9 @@ def main():
             check(source, work, name, (relative, before, after), marker)
         for mutation in VISUAL_MUTATIONS:
             check_visual(source, work, mutation, baseline_binary)
-    print(f"mutation checks: {len(MUTATIONS)+len(NEW_MUTATIONS)+len(VISUAL_MUTATIONS)}/{len(MUTATIONS)+len(NEW_MUTATIONS)+len(VISUAL_MUTATIONS)} killed; baseline passed", flush=True)
+        for mutation in SPRITE_MUTATIONS:
+            check_visual(source, work, mutation, baseline_binary, family="sprite")
+    print(f"mutation checks: {len(MUTATIONS)+len(NEW_MUTATIONS)+len(VISUAL_MUTATIONS)+len(SPRITE_MUTATIONS)}/{len(MUTATIONS)+len(NEW_MUTATIONS)+len(VISUAL_MUTATIONS)+len(SPRITE_MUTATIONS)} killed; baseline passed", flush=True)
 
 
 if __name__ == "__main__":
