@@ -9,114 +9,74 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-Latest verified stage shares complete HUD switching, cooldown and weapon
-coordination from `e2a25fba`. Safe weapon_selection and weapon_coordinator rules
-replace duplicate main/owned algorithms. Both normal/demo preparation entries
-call the checked adapter; SamusCode04/06 retain their shared deselection identity
-and return value. Old bank tables/handlers are retired. Generic cooldown consumers
-use the same pure rule. Persistent Session authority and candidate adoption remain
-unfinished.
+Latest verified stage shares the complete player preparation phase from
+`41617e35`: captured entry, setup/demo backups, ordered real leaves, shared HUD
+or projectile update, and exact finalization. The safe shared core and checked
+RAM adapter retire Func11/12/13 sequencing and Samus_Func10; real gameplay and
+intro callers retain their identities through aliases. The candidate uses the
+same core and keeps pending aim owned. Other fields and external leaves retain
+their existing authority transfers. This is not persistent Session adoption.
 
-The production Leaf::SwitchHud no-op publication/reimport is gone. Its input
-refresh remains in memory AFTER cooldown and only on nonfront paths: the common
-input decoder reads external fields, then eight projections come from authoritative
-Session inventory. Dirty projectile/pool/queue/continuation state stays owned.
-Direct grapple cancellation writes external 0xD32 without a transfer because it
-preserves the imported inactive=false predicate; returning grapple to inactive retains
-its existing effect transport. Preserve captured/live selectors, signed/wrapped
-counters, palette-before-clear for grapple versus clear-before-palette otherwise,
-front poses updating despite freeze and postdispatch live freeze gating.
+All **59 selected suites pass**, with **58 retained vectors unchanged**.
+The suite took 35.730834s; full invocation 37.319585s, explicit exit0.
+Preparation [883,311,21,12,799,17,119] means 883 three-way comparisons,
+311 post-leaf observations, 21 failing cases, 12 unique chains, 799 calls,
+17 typed scenarios and 119 authored scenarios. Observations are not effect counts.
+The 84 matrix comparisons cover entry/setup/tail, aliases, live input and frozen
+state, captured handlers and failure prefixes. Four genuine short-content cases
+exercise radius and demo reads. Unobserved dirty-owner cases prove inactive
+no-publication and active projectile-only update/tail without an effect transfer.
 
-All **58 suites pass**, suite loop 35.273620s / full invocation 36.083148s, subprocess
-exit0, with all **54 retained vectors unchanged**. New HUD [1194,378,43,15,774,13,443]
-means 1,194 three-way RAM/APU/g_fail comparisons, 378 post-consumer observations,
-43 failing cases, 15 natural chains, 774 steps, 13 typed scenarios and 443 authored
-scenarios. Comparisons comprise 409 matrix cases, one genuine initializer failure,
-774 natural steps and 10 next-frame checks. Failures are 42 planned matrix failures
-plus one selected-power-bomb short-record failure after damage publication.
-The latter asserts selection, consumed ammo, flag/type/damage/fuse and dirty-owner
-prefix; it is not an observer throw. Observations are not actual effect counts.
-Five owned-specific checks and 13 typed cases are excluded from the triplet count.
+The 799 chain calls comprise one frozen projectile-only update, 18 demo calls,
+four intro cases and two real gameplay dialogue chains of 388 calls each.
+These are calls/resumptions, not movie frames. Finite E91D records produce a
+beam before real E7F5/E833 beta restoration, including the overlapping A91 HDMA
+word. Actual demo instruction 85FC changes future alfa/beta selectors without
+redirecting the captured current phase. EnemyMessage resumption runs preparation
+only once and beta after dialogue completion. Intro tests cover zero/high-bit
+activation and zero/nonzero timers in a frozen scene. Movement uses E90E;
+minimap is disabled. No active movement/knockback physics or full demo claim.
+Typed tests reuse safe bomb creation/lifecycle/playback through retirement;
+their preparation leaves are modeled. The actual gameplay scheduler invokes
+owned preparation, not a persistently owned outer scheduler.
 
-Three owned-only cases discriminate stale cached freeze from fresh RAM at the
-correct boundary and all eight inventory projections. Nonfront RAM stays entirely
-unchanged with zero effects. Both front poses advance an admitted bomb 60 to 59,
-retain dirty owner state and permit only its proved direct block-index scratch
-write 34 to 0. Two further dirty-inventory selector/producer pairs compare with
-staged native state. A raw-frozen native entry would compute cooldown 32 rather
-than the deliberately stale owner's 6, so stale-cache checks are not native triplets.
+Five inherited setup assertion pairs and four new invalid-preparation pairs
+match exact stdout/stderr/status77 through the existing harness assertion handler.
+The latter run actual Unreachable calls and check unchanged prefix sentinels;
+they are not an OS-native abort claim. Historical controlled preparation exports
+remain preserved/excluded because the exact parent reproduces their obsolete
+CheckInitialCollision expectations. The valid 74-case runtime subset still passes.
+No movie frames ran; known native-access/Intro exclusions remain unresolved.
 
-Ten natural weapon chains start from actual switch/cancel input through normal
-and demo preparation: beam 37, missile 36, super 17, ordinary bomb 63 and earned
-spread 183 steps for each handler. Both Super chains create an extension on the
-creation frame; all five spread slots flash, explode and clear type/damage. These
-scenes configure dormant input handler 0xE90E and a constructed morph transition;
-they do not establish active pose physics or demo playback. Separate runtime-only
-checks pass [74,345,4], exercising active handlers 0xE913/0xE918/0xE926, normal/demo,
-fluid/suit environments and four real-leaf failure prefixes.
+Main release/frontend passed in 61.15s; candidate release in 52.024s. Fresh
+carrier passed (27.58s compiler); final harness passed in 15.784s. Failed generator,
+old-artifact reuse, fixture corrections and duplicate-call correction are retained
+in local logs; none is presented as passing final evidence. Final generation is
+idempotent. Main5/local1/composition339/verification806 frozen inputs match;
+embedded identities cover 281 carrier and 335 local files.
 
-Two real grapple chains decrement CF6 and clear only flag bit0. Two Xray chains
-clear the high bit of all four initially enabled scheduler flags, preserve their
-low bits, allocate HDMA and change DMA. An unfrozen control advances a bomb;
-Xray suppresses it, the next frozen step writes cooldown 32, and front poses still
-advance it. A separate direct-HUD power-bomb chain compares switch and fire steps
-before real HDMA reaches Noob Tube at tick 87/radius 0x2B60 (90 linked steps).
-These are bounded activation/terrain endpoints, not full grapple flight, Xray
-rendering, power-bomb explosion or Crystal Flash completion. Natural successes
-require g_fail clear. No movie frames ran; native-access/Intro exclusions remain.
+Main is **107,322 Rust lines in 219 files**; candidate **115,721 in 328 files**
+remains unadopted. Net lines/tokens/LF UTF-8 bytes: main [146,1215,4993], local
+[-15,-4,-326], composition [131,1211,4673], complete verification
+[1516,17446,64563], combined [1647,18657,69236]. All replacement/verification
+costs and compatibility overlays are counted; no new dependency. The generator/
+checker/registration category is 240 lines, exceeding its estimate by 20; the
+complete change remains below the aggregate estimate. Unsafe function
+declarations fall by four to 2,790; cast-containing lines remain 5,922. This is
+safe shared sequencing and duplicate retirement, not a net reduction.
 
-Typed coverage uses symbolic state and actual shared bomb creation/lifecycle/
-playback/release. Beam/missile typed actions assert dispatch/order only; their
-actual lifetimes are covered by runtime chains. Generic selection/cancellation
-[3427,3214,479] and runtime feedback [122,401,1,6] also pass. Five exact native fatal
-pairs remain setup-only stdout/stderr/status77 checks. Source identities are 278
-carrier/333 local; all 798 verification freeze entries match. Independent review
-approved the final source, references, runtime results and complete accounting.
+Next: close external-writer/reset/load/oracle-rewind authority and decide the
+next complete state-ownership responsibility. Preparation and later beta remain
+separated by contacts, enemies and possible suspension; beta owns demo restoration.
+Persistent Session ownership, complete-game coverage and independent rendering/
+audio remain unfinished. Do not adopt outer wiring alone.
 
-An added historical preparation suite exposed an obsolete controlled
-CheckInitialCollision observation. The exact frozen parent reproduces the same
-case and six byte differences; this is not a new HUD regression. Both original
-exports/source are preserved and explicitly excluded from the new default run;
-the valid runtime() subset runs separately. No obsolete callback was fabricated
-and no real scan suppressed. Baseline 1074 files matched before building; afterward
-1072 still match and two build stamps are regenerated. Evidence remains in
-hud-baseline-preparation.log/json and hud-baseline-check/.
-
-Production release/frontend/source passes first attempt in 70.72s. Candidate passes
-in 53.16s after restoring an accidentally removed generic impl boundary around
-slot release (first attempt 11.47s failed). Main source stayed frozen. Carrier
-passes in 26.40s; final harness compile 19.45s (19.94s wall). Ten harness attempts
-include verification visibility/setup/assertion corrections and the runtime-only
-export; every log remains. Independent baseline carrier/harness pass after fixing
-an omitted installer support-file layout. See the local build-attempt ledger.
-
-Main is **107,176 Rust lines in 217 files**; candidate **115,590 (+8,414)** in 326
-files remains unadopted. Net lines/tokens/LF UTF-8 bytes: main [179,2377,5113],
-local production [-83,-122,-1577], composition [96,2255,3551], carrier-only
-verification [325,3656,16854], complete verification [2540,26896,103471], combined
-implementation plus checks [2636,29151,107022]. Local production overlaps composition;
-carrier verification is included in complete verification. Root independently
-recounted unions including deleted paths. Main/composition growth is below estimates
-because of compact adapters/full retirement, not trimmed scope. Verification and
-combined costs fit estimates; reference/observation/overlays total 712 lines against
-upper 650, a 62-line component overrun. Typed client 309 lines reuses an existing safe
-bomb adapter, with reuse/visibility costs counted. Unsafe declarations fall by 16
-to 2,794; cast-containing lines by 13 to 5,922. Formatting/progress pass. No reduction,
-new dependency, backend-independence or persistent-ownership claim.
-
-Next: audit the remaining player preparation phase and its finalization against
-external-writer/reset/load/rewind closure. Preparation is not a whole player frame:
-gameplay can run contacts/enemies and suspend before the beta phase; demo input
-restoration belongs to beta. Choose the next complete responsibility from these
-actual dependencies before implementation.
-
-Final production source hash:
-`bf6a7b3fa055e4317a9660bae90b6ae0cd582124c707dd660a728e8833848e30`.
-Use `runtime-impact-working/HUD_COORDINATOR_HANDOFF.md`,
-`hud-coordinator-results.json`, `hud-coordinator-fatal.json`,
-`hud-coordinator-price.json`, `hud-coordinator-build-attempts.json` and
-`hud-full-2.log` for local evidence. Set PYTHONUTF8=1 for source comparison/pricing.
-Prior morph-bomb/missile/charge/special handoffs and frozen snapshots remain.
+Production source hash:
+`83527e0e9443df7987634ce74d09f4d6dcc053190512e2d579f93102a2581290`.
+Local evidence: `PLAYER_PREPARATION_HANDOFF.md`, `player-preparation-results.json`,
+`player-preparation-price.json`, `player-preparation-final-audit.json`,
+`player-preparation-build-attempts.json`, both preparation fatal JSON files and
+`preparation-full-1.log` in the existing runtime-impact-working directory.
 
 Retained setup dispatch [115,199,62,5] covers all 115 semantic identities;
 these are routing/source coverage, not 115 independently executed native bodies.

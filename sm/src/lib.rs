@@ -344,6 +344,8 @@ pub mod game {
     pub(crate) mod weapon_selection;
     pub(crate) mod weapon_coordinator;
     pub(crate) mod weapon_coordinator_ram;
+    pub(crate) mod player_preparation;
+    pub(crate) mod player_preparation_ram;
     pub(crate) mod beam_firing;
     pub(crate) mod beam_firing_ram;
     pub(crate) mod beam_definitions;

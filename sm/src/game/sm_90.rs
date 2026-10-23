@@ -2851,58 +2851,9 @@ pub unsafe fn Samus_MoveDown_SetPoseCalcInput(game: &mut Game) {
         }
     }
 }
-crate::game::callback_dispatch! {
-    pub unsafe fn CallFrameHandlerAlfa(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [9496213] Samus_FrameHandlerAlfa_Func11 [] {
-        word! {game; samus_new_pose = -1i32 as u16; samus_new_pose_interrupted = -1i32 as u16;
-            samus_new_pose_transitional = -1i32 as u16; }
-        word! { game, 0;
-            samus_momentum_routine_index, samus_special_transgfx_index, samus_hurt_switch_index,
-        }
-        Samus_SetRadius(game);
-        Samus_CallInputHandler(game);
-        Samus_UpdateSuitPaletteIndex(game);
-        Samus_DetermineAccel_Y(game);
-        BlockInsideDetection(game);
-        crate::game::weapon_coordinator_ram::coordinate(game);
-        Samus_Func10(game);
-    };
-    [9496265] Samus_FrameHandlerAlfa_Func12 [] {
-        word! {game; samus_new_pose = -1i32 as u16; samus_new_pose_interrupted = -1i32 as u16;
-            samus_new_pose_transitional = -1i32 as u16; }
-        word! { game, 0;
-            samus_momentum_routine_index, samus_special_transgfx_index, samus_hurt_switch_index,
-        }
-        word! {game; controller1_input_for_demo = word!(game.joypad1_lastkeys);
-            controller1_new_input_for_demo = word!(game.joypad1_newkeys);
-            demo_backup_prev_controller_input = word!(game.joypad1_input_samusfilter);
-            demo_backup_prev_controller_input_new = word!(game.joypad1_newinput_samusfilter); }
-        Samus_SetRadius(game);
-        Samus_UpdateSuitPaletteIndex(game);
-        Samus_CallInputHandler(game);
-        Samus_DetermineAccel_Y(game);
-        BlockInsideDetection(game);
-        crate::game::weapon_coordinator_ram::coordinate(game);
-        Samus_Func10(game);
-    };
-    [9496339] Samus_FrameHandlerAlfa_Func13 [] {
-        HandleProjectile(game);
-        Samus_Func10(game);
-    };
-    @external {
-        9496781 => [()];
-    }
-}
-pub unsafe fn HandleControllerInputForGamePhysics(game: &mut Game) {
-    unsafe {
-        CallFrameHandlerAlfa(
-            ((word!(game.frame_handler_alfa)) as u32) | (0x900000u32),
-            game,
-        );
-    }
-}
+pub use crate::game::player_preparation_ram::{
+    dispatch as CallFrameHandlerAlfa, prepare as HandleControllerInputForGamePhysics,
+};
 crate::game::callback_dispatch! {
     pub unsafe fn CallFrameHandlerBeta(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -3412,14 +3363,6 @@ pub unsafe fn Samus_JumpCheck(game: &mut Game) {
         if update_health_reference {
             word!(game.samus_prev_health_for_flash = word!(game.samus_health));
         };
-    }
-}
-pub unsafe fn Samus_Func10(game: &mut Game) {
-    unsafe {
-        launch_motion_ram::finish_projectile_phase(game);
-        word! { game, 0; samus_anim_frame_skip, new_projectile_direction_changed_pose }
-        word!(checked_i32, game.UNUSED_word_7E0DFA <<= 8);
-        *(ram_ptr!(game, u16; 0xa10)) = *(ram_ptr!(game, u16; 0xa1e));
     }
 }
 pub unsafe fn DrawSamusAndProjectiles(game: &mut Game) {

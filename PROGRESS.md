@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 11:27 UTC**
+Updated: **2026-10-23 11:41 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -10,66 +10,59 @@ SNES backend remains the comparison oracle during migration.
 
 ## Latest verified milestone
 
-**HUD switching, cooldown and weapon coordination now share safe rules.**
+**Player preparation now uses one shared safe sequence.**
 
-Implementation: [weapon coordination](sm/src/game/weapon_coordinator.rs).
+Implementation: [player preparation](sm/src/game/player_preparation.rs).
 
-- Retired duplicate bank and owned algorithms. Actual normal/demo preparation
-  and deselection callers now use the shared rules.
-- Removed an unnecessary Session transfer while preserving its inventory/input
-  refresh in memory, at the original point in the sequence.
-- Production and candidate builds passed. **All 58 selected suites passed**,
-  with all 54 retained result vectors unchanged.
-- New HUD checks include 1,194 three-way state comparisons and 15 natural chains.
-  They cover selection through weapon retirement, all five spread bombs, real
-  grapple/Xray scheduling, and power-bomb HDMA reaching the Noob Tube trigger.
-- Separate active-input preparation checks passed 74 comparisons. An older
-  controlled fixture fails identically on the untouched parent; its obsolete
-  callback expectations are documented in the detailed handoff.
+- Replaced duplicate normal/demo setup, weapon coordination and finalization.
+  Actual gameplay and intro callers use the shared implementation.
+- Preserved captured handlers, live reads, packed memory aliases, later demo
+  input restoration and message suspension between preparation and movement.
+- Production and candidate builds passed. **All 59 selected suites passed**,
+  with all 58 retained result vectors unchanged.
+- New checks cover 883 three-way comparisons across 119 authored scenarios,
+  including real demo input and weapon creation, later beta restoration,
+  inactive/frozen paths and dirty owned state without premature publication.
+- Two real dialogue chains each take 388 calls and run preparation only once
+  across suspension. These are calls/resumptions, not movie frames.
+- Four invalid-preparation assertion pairs match the frozen implementation;
+  five inherited setup assertion pairs also remain unchanged.
 
 | Verified measure | Value |
 | --- | ---: |
-| Setup identities decoded | 115 / 115 |
-| Maintained Rust source | 107,176 lines in 217 files |
-| Counted unsafe function declarations | 2,794 |
-| Prospective composition, not yet adopted | 115,590 lines in 326 files |
+| Maintained Rust source | 107,322 lines in 219 files |
+| Counted unsafe function declarations | 2,790 |
+| Prospective composition, not yet adopted | 115,721 lines in 328 files |
 
-This stage adds 179 lines to main and removes 16 unsafe function declarations.
-The complete composition adds 96 lines; including retained verification, growth
-is 2,636 lines. Adapters, generated test overlays and independent checks are
-included. The target remains below 100,000 maintained Rust lines, with all
-unsafe operations removed.
+This stage adds 146 lines to main and removes four unsafe function declarations.
+The complete composition adds 131 lines; including retained verification, growth
+is 1,647 lines. All adapters, test overlays and helper changes are counted. One
+verification category exceeds its estimate by 20 lines; the aggregate is below
+its estimate. This is a safety and shared-behavior improvement, not a net reduction.
 
 ## Work in progress
 
-**Player preparation replacement is implemented locally; behavior checks are underway.**
+**Close remaining state-ownership and external-writer boundaries.**
 
-The implementer and independent reviewer have agreed the scope: share entry
-setup, normal/demo ordering, weapon dispatch and finalization, then retire the
-duplicate bank and candidate implementations. New checks will cover real demo
-input and later restoration, message suspension, intro gating and failure
-prefixes. The frozen production patch passed independent review, formatting,
-the main release/frontend build (61.15 seconds), and the candidate release build
-(52.02 seconds). Behavior checks are still being completed; the implementation
-has not been committed or accepted as a verified milestone.
-
-Preparation is only part of a player frame; contacts, enemies, suspension and
-later movement retain their ordering. The current uncommitted main patch adds
-146 Rust lines and removes four counted unsafe function declarations. Complete
-candidate and verification costs are still pending. This change claims neither
-a source reduction nor persistent ownership.
-
-Persistent room and scheduler state still live in RAM. Persistent Session
-ownership, renderer/audio replacement and an independently running game slice
-remain required parts of the destination.
+Persistent Session ownership still requires reset/load/oracle-rewind and external
+writer handling. Preparation remains separate from later movement and scheduler
+suspension. Renderer/audio replacement and an independently running game slice
+remain required parts of the destination. The target remains below 100,000
+maintained Rust lines, with all unsafe operations removed.
 
 ## Verification limits
 
 The comparison suites exercise selected real implementations and constructed
-scenarios. They do **not** establish boot-to-credits coverage, visible rendering
-fidelity, full room decompression or an independent backend. Known native-access
-exclusions and the inherited Intro mismatch remain unresolved. ROMs and
-ROM-derived fixtures stay local and are not published here.
+scenarios. Demo tests use a no-op movement handler, and intro timer tests use a
+frozen scene; they do not establish active movement/knockback physics or full
+demo playback. Typed preparation callbacks are modeled; their bomb consumer is
+real shared safe code. Assertion tests use the existing harness assertion handler.
+
+These results do **not** establish boot-to-credits coverage, visible rendering
+fidelity or an independent backend. Known native-access exclusions and the
+inherited Intro mismatch remain unresolved. Older controlled preparation fixtures
+fail identically on the untouched parent and remain explicitly excluded; their
+valid active-input subset still passes. ROM-derived fixtures stay local.
 
 This file is updated and pushed when verified milestones land or material work
 status changes. See [the active plan](docs/PLAN.md),
