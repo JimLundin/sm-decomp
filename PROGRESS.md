@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 11:19 UTC**
+Updated: **2026-10-23 11:27 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -42,18 +42,22 @@ unsafe operations removed.
 
 ## Work in progress
 
-**Player preparation replacement is approved and being implemented.**
+**Player preparation replacement is implemented locally; behavior checks are underway.**
 
 The implementer and independent reviewer have agreed the scope: share entry
 setup, normal/demo ordering, weapon dispatch and finalization, then retire the
 duplicate bank and candidate implementations. New checks will cover real demo
 input and later restoration, message suspension, intro gating and failure
-prefixes. These changes have not yet been built or verified.
+prefixes. The frozen production patch passed independent review, formatting,
+the main release/frontend build (61.15 seconds), and the candidate release build
+(52.02 seconds). Behavior checks are still being completed; the implementation
+has not been committed or accepted as a verified milestone.
 
 Preparation is only part of a player frame; contacts, enemies, suspension and
-later movement retain their ordering. The proposal estimates 150–280 additional
-main-source lines for safe shared sequencing and adapters; it claims neither a
-source reduction nor persistent ownership.
+later movement retain their ordering. The current uncommitted main patch adds
+146 Rust lines and removes four counted unsafe function declarations. Complete
+candidate and verification costs are still pending. This change claims neither
+a source reduction nor persistent ownership.
 
 Persistent room and scheduler state still live in RAM. Persistent Session
 ownership, renderer/audio replacement and an independently running game slice
