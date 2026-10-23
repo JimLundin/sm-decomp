@@ -8,6 +8,33 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Player typed-core validation branch verify/player-session-20261023 is ready for
+hosted independent execution; not yet adopted in main. Source
+8da52a46f05b73235b04623499f5b1c92b13da9e973c39c4ed3b966cb80180a1 passes full
+formatting, release/frontend/verifier build, standalone compilation, existing106
+groups and all56 new full-RAM/status comparisons. Adjacent mechanism ownership/
+qualified checks and palette/animation runtime guards pass. Final source review
+accepts exact core/path/registration/probe changes.
+
+Speed Booster from boot stops after11549frames, zero failures, all12 required
+probes plus two follow-up frames. First preparation/history2218; motion/flight/
+playback/draw2308; firing/initial collision8654; terrain/explosion8659; reset11546.
+The route includes one gameplay room and one enemy definition, no credits.
+The prefix includes scripted-sequence execution; do not claim broad game coverage.
+Independent host composes actual player/animation/palette algorithms with one
+palette owner and fixed prepared terrain/content; unsupported dependencies fail
+explicitly. Local executable not run under the retained Defender restriction.
+
+Full price: production -1937lines/-18470tokens/-70009LFbytes; verification/support
++1068/+9554/+34899; combined maintained Rust -869/-8916/-35110. Detached harness
+is697 of the added verification lines. Fifteen outer singleton layers and old
+owner bindings retire; enum/shared geometry remains for real consumers. Cargo/CI
+support is separate. Final accounting: projectile-session/main-final-source-accounting.json.
+Evidence: integrated-build-1.log, integrated-56-results/results.json,
+integrated-1-adjacent.json, integrated-1-oracle.log, detached-integrated-compile-1.log.
+Persistent whole-game ownership and remaining unsafe effects are unfinished.
+
+
 Enemy-projectile owner and native ROM ownership are adopted on source
 8594f83d2cca0e79fc345e5a7e83bd50ea8e6fb09b87312432206acbf0f52a5c.
 GitHub run39993911476 also passes full build and formatting.

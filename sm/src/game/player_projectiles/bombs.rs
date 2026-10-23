@@ -1,96 +1,112 @@
-//! Direct bomb fuse/contact/update binding; HDMA creation is an actual foreign boundary.
-use super::{Context, Transaction};
-use crate::game::bomb_lifecycle::{self as lifecycle, Field, Fields, Kind};
-use crate::ram_map::word_arrays as arrays;
-fn offset(field: Field) -> usize {
-    use Field::*;
-    match field {
-        Type => arrays::projectile_type,
-        Direction => arrays::projectile_dir,
-        Variable => arrays::projectile_variables,
-        X => arrays::projectile_x_pos,
-        Y => arrays::projectile_y_pos,
-        XFraction => arrays::projectile_bomb_x_subpos,
-        YFraction => arrays::projectile_bomb_y_subpos,
-        XSpeed => arrays::projectile_bomb_x_speed,
-        YSpeed => arrays::projectile_bomb_y_speed,
-        SpeedFraction => arrays::projectile_timers,
-        YRadius => arrays::projectile_y_radius,
-        Auxiliary => arrays::projectile_unk_A,
-    }
+//! Bomb fuses, spread motion and contact over ordinary session fields.
+#![forbid(unsafe_code)]
+use super::{Host, bomb_terrain, content, motion};
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Kind {
+    Bomb,
+    PowerBomb,
+    Spread,
 }
-impl<'g> Fields<Transaction<'g>> for Context {
-    fn selected(&self, g: &Transaction<'g>) -> u16 {
-        word!(g.projectile_index)
-    }
-    fn read(&self, g: &Transaction<'g>, slot: u16, field: Field) -> u16 {
-        let at = offset(field) + usize::from(slot & !1);
-        g.read_native(at)
-    }
-    fn write(&mut self, g: &mut Transaction<'g>, slot: u16, field: Field, value: u16) {
-        let at = offset(field) + usize::from(slot & !1);
-        g.write_slice_native(at, value);
-    }
-    fn invalid(&mut self, _: Transaction<'g>, index: usize, length: usize) -> ! {
-        panic!("index out of bounds: the len is {length} but the index is {index}")
-    }
-}
-impl<'g> lifecycle::Context<Transaction<'g>> for Context {
-    fn power_active(&self, g: &Transaction<'g>) -> bool {
-        word!(g.power_bomb_flag) != 0
-    }
-    fn gravity(&self, g: &Transaction<'g>) -> u32 {
-        (u32::from(word!(g.samus_y_accel)) << 16) | u32::from(word!(g.samus_y_subaccel))
-    }
-    fn clear(&mut self, mut g: Transaction<'g>, slot: u16) -> Transaction<'g> {
-        super::motion::clear(slot, g)
-    }
-    fn origin(&mut self, mut g: Transaction<'g>, slot: u16) -> Transaction<'g> {
-        word!(g.power_bomb_explosion_x_pos = word!(g.projectile_x_pos[slot >> 1]));
-        word!(g.power_bomb_explosion_y_pos = word!(g.projectile_y_pos[slot >> 1]));
-        g
-    }
-    fn enable_hdma(&mut self, mut g: Transaction<'g>) -> Transaction<'g> {
-        g.foreign(|g| unsafe { crate::game::sm_88::EnableHdmaObjects(g) })
-            .0
-    }
-    fn spawn_power_bomb(&mut self, mut g: Transaction<'g>) -> Transaction<'g> {
-        g.foreign(|g| unsafe { crate::game::explosion_window::spawn_power_bomb(g) })
-            .0
-    }
-    fn sound(&mut self, mut g: Transaction<'g>) -> Transaction<'g> {
-        g.foreign(|g| crate::game::sm_80::QueueSfx2_Max6(8, g)).0
-    }
-    fn flash_animation(&mut self, mut g: Transaction<'g>, slot: u16) -> Transaction<'g> {
-        word!(g.projectile_bomb_instruction_ptr[slot >> 1] += 28);
-        g
-    }
-    fn explosion_animation(&mut self, mut g: Transaction<'g>, slot: u16) -> Transaction<'g> {
-        {
-            let pointer = g
-                .rom()
-                .table_word(crate::rtl::lorom_offset(0x938683) as usize, 0);
-            word!(g.projectile_bomb_instruction_ptr[slot >> 1] = pointer);
-            word!(g.projectile_bomb_instruction_timers[slot >> 1] = 1);
-            g
+pub(super) const SPREAD_FRACTIONS: [u16; 5] = [0, 0, 0x8000, 0, 0];
+pub(super) fn advance_fuse(h: &mut impl Host, power: bool) {
+    let selected = h.session().selected;
+    let raw = h.session().selected;
+    let remaining = shot_native!(h, raw, variable);
+    if remaining == 0 {
+        if power && h.session().power_bomb.flag == 0 {
+            let live = h.session().selected;
+            motion::clear(h, live);
         }
+        return;
     }
-    fn contact(
-        &mut self,
-        mut g: Transaction<'g>,
-        slot: u16,
-        spread: bool,
-    ) -> (Transaction<'g>, u8) {
-        if spread {
-            crate::game::bomb_terrain::spread(g, slot, self)
+    let remaining = remaining.wrapping_sub(1);
+    shot!(h,raw,variable = remaining; SliceNative);
+    if remaining == 15 {
+        let old = shot!(h, raw, cursor);
+        shot!(h, raw, cursor = old.wrapping_add(28));
+    } else if remaining == 0 {
+        if power {
+            h.session_mut().power_bomb.x = shot!(h, raw, x);
+            h.session_mut().power_bomb.y = shot!(h, raw, y);
+            h.enable_hdma();
+            h.spawn_power_bomb();
+            shot!(h,selected,variable = 0xffff; SliceNative);
         } else {
-            (crate::game::bomb_terrain::explode(g, slot, self), 0)
+            h.sound(2, 6, 8);
+            let cursor = content::table(h, 0x938683, 0);
+            shot!(h, selected, cursor = cursor);
+            shot!(h, selected, remaining = 1);
         }
     }
 }
-pub(super) fn advance_fuse(power: bool, game: Transaction<'_>) -> Transaction<'_> {
-    lifecycle::advance_fuse(game, power, &mut Context::default())
+fn velocity(h: &impl Host, raw: u16) -> u32 {
+    (u32::from(shot_native!(h, raw, y_speed)) << 16) | u32::from(shot_native!(h, raw, trail_time))
 }
-pub(super) fn bomb_update(selected: u16, kind: Kind, game: Transaction<'_>) -> Transaction<'_> {
-    lifecycle::update(game, selected, kind, &mut Context::default())
+fn add_y(h: &mut impl Host, raw: u16, amount: u32) {
+    let fraction = u32::from(shot_native!(h, raw, y_fraction));
+    let high = u32::from(shot_native!(h, raw, y));
+    let sum = (fraction | (high << 16)).wrapping_add(amount);
+    shot!(h,raw,y_fraction = sum as u16; SliceNative);
+    shot!(h,raw,y = (sum>>16) as u16; SliceNative);
+}
+fn horizontal(speed: u16) -> u32 {
+    let magnitude = u32::from(speed & 0x7fff) << 8;
+    if speed & 0x8000 != 0 {
+        magnitude.wrapping_neg()
+    } else {
+        magnitude
+    }
+}
+fn add_x(h: &mut impl Host, raw: u16, amount: u32) {
+    let fraction = u32::from(shot_native!(h, raw, x_fraction));
+    let high = u32::from(shot_native!(h, raw, x));
+    let sum = (fraction | (high << 16)).wrapping_add(amount);
+    shot!(h,raw,x_fraction = sum as u16; SliceNative);
+    shot!(h,raw,x = (sum>>16) as u16; SliceNative);
+}
+pub(super) fn bomb_update(h: &mut impl Host, raw: u16, kind: Kind) {
+    if shot_native!(h, raw, direction) & 0xf0 != 0 {
+        motion::clear(h, raw);
+        return;
+    }
+    advance_fuse(h, kind == Kind::PowerBomb);
+    if kind != Kind::Spread {
+        bomb_terrain::explode(h, raw);
+        return;
+    }
+    if shot_native!(h, raw, variable) != 0 {
+        let gravity = (u32::from(h.inputs().y_acceleration) << 16)
+            | u32::from(h.inputs().y_fractional_acceleration);
+        // The low speed lane is read before the high lane, then published first.
+        let low = u32::from(shot_native!(h, raw, trail_time));
+        let high = u32::from(shot_native!(h, raw, y_speed));
+        let sum = (low | (high << 16)).wrapping_add(gravity);
+        shot!(h,raw,trail_time = sum as u16; SliceNative);
+        shot!(h,raw,y_speed = (sum>>16) as u16; SliceNative);
+        let step = velocity(h, raw);
+        add_y(h, raw, step);
+        if bomb_terrain::spread(h, raw) & 1 != 0 {
+            let reverse = velocity(h, raw).wrapping_neg();
+            add_y(h, raw, reverse);
+            if shot_native!(h, raw, y_speed) & 0x8000 != 0 {
+                shot!(h,raw,y_speed = 0; SliceNative);
+                shot!(h,raw,y_radius = 0; SliceNative);
+            } else {
+                let index = usize::from(raw >> 1).wrapping_sub(5);
+                let fraction = SPREAD_FRACTIONS[index];
+                shot!(h,raw,trail_time = fraction; SliceNative);
+                let speed = shot_native!(h, raw, auxiliary);
+                shot!(h,raw,y_speed = speed; SliceNative);
+            }
+            return;
+        }
+        let step = horizontal(shot_native!(h, raw, x_speed));
+        add_x(h, raw, step);
+    }
+    if bomb_terrain::spread(h, raw) & 1 != 0 {
+        let speed = shot_native!(h, raw, x_speed);
+        let live = shot_native!(h, raw, x_speed) ^ 0x8000;
+        shot!(h,raw,x_speed = live; SliceNative);
+        add_x(h, raw, horizontal(speed).wrapping_neg());
+    }
 }

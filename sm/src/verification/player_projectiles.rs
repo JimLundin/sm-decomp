@@ -338,7 +338,7 @@ fn physical_words() -> Vec<usize> {
     a
 }
 // Read every owned value directly, so an accidentally external lane cannot pass.
-fn typed_image(state: &state::PlayerProjectiles, bytes: &[u8]) {
+fn typed_image(state: &state::Session, bytes: &[u8]) {
     let expect = |at: usize, v: u16| {
         assert_eq!(
             v,
@@ -352,20 +352,20 @@ fn typed_image(state: &state::PlayerProjectiles, bytes: &[u8]) {
             s.y,
             s.x_fraction,
             s.y_fraction,
-            s.animation.x_radius,
-            s.animation.y_radius,
+            s.x_radius,
+            s.y_radius,
             s.x_speed,
             s.y_speed,
             s.direction,
-            s.kind.0,
+            s.kind,
             s.damage,
-            s.animation.cursor.0,
-            s.animation.remaining,
-            s.motion.0,
+            s.cursor,
+            s.remaining,
+            s.motion,
             s.variable,
             s.trail_time,
             s.auxiliary,
-            s.animation.sprite.0,
+            s.sprite,
         ]
         .into_iter()
         .enumerate()
@@ -373,9 +373,9 @@ fn typed_image(state: &state::PlayerProjectiles, bytes: &[u8]) {
             expect(0xb64 + 20 * column + 2 * i, value);
         }
     }
-    for (i, p) in state.trails.pairs.iter().enumerate() {
+    for (i, p) in state.trails.iter().enumerate() {
         for (side, s) in [&p.left, &p.right].into_iter().enumerate() {
-            for (column, value) in [s.remaining, s.cursor.0, s.tile, s.position.x, s.position.y]
+            for (column, value) in [s.remaining, s.cursor, s.tile, s.x, s.y]
                 .into_iter()
                 .enumerate()
             {
@@ -418,88 +418,97 @@ fn typed_image(state: &state::PlayerProjectiles, bytes: &[u8]) {
 }
 
 fn lane_projection() {
+    use super::access::Store;
     let mut g = Game::new();
     for (a, b) in g.g_ram.iter_mut().enumerate() {
         *b = (a.wrapping_mul(37) ^ a / 17) as u8;
     }
     let mut expected = g.g_ram.to_vec();
     let addresses = physical_words();
-    let mut owner = Transaction::acquire(&mut g);
-    typed_image(&owner.state, &expected);
+    let mut owner = Runtime::new(&mut g);
+    typed_image(owner.session(), &expected);
     for &a in &addresses {
         for lane in 0..2 {
             assert_eq!(owner.byte(a + lane), expected[a + lane]);
             let value = expected[a + lane] ^ 0xa5;
-            owner.set_byte(a + lane, value);
+            owner.foreign(|g| g.g_ram[a + lane] = value);
             expected[a + lane] = value;
         }
     }
-    typed_image(&owner.state, &expected);
+    typed_image(owner.session(), &expected);
     for &a in &addresses {
         assert_eq!(
-            owner.read_le(a),
+            u16::from_le_bytes([owner.byte(a), owner.byte(a + 1)]),
             u16::from_le_bytes([expected[a], expected[a + 1]])
         );
     }
     for a in [0xda9, 0xd7bf] {
-        owner.write_slice_le(a, 0x5ac3);
+        owner.store(a, 0x5ac3, Store::SliceLe);
         expected[a..a + 2].copy_from_slice(&0x5ac3u16.to_le_bytes());
     }
-    owner.write_word_le(0x9182, 0xda8);
+    owner.store(0xda8, 0x9182, Store::PrefixLe);
     expected[0xda8..0xdaa].copy_from_slice(&0x9182u16.to_le_bytes());
-    use crate::game::projectile_playback::{Owner, Write};
     for (slot, address) in [(0x1f6, 0xdaa), (0x22a, 0xdde), (0xcaa4, 0xd658)] {
-        owner.write(slot, Write::XRadius(0x1234));
-        assert_eq!(owner.read_le(address), 0x1234);
+        shot!(owner, slot, x_radius = 0x1234);
+        assert_eq!(
+            u16::from_le_bytes([owner.byte(address), owner.byte(address + 1)]),
+            0x1234
+        );
         expected[address..address + 2].copy_from_slice(&0x1234u16.to_le_bytes());
     }
-    assert_eq!((owner.state.launch.displacements[0] as u32) >> 16, 0x1234);
-    assert_eq!(owner.state.selected, 0x1234);
-    assert_eq!(owner.state.trails.pairs[0].left.remaining, 0x1234);
-    word!(owner.projectile_x_pos[-1isize] = 0x3456);
-    assert_eq!(owner.state.controls.charge_palette, 0x3456);
+    assert_eq!(
+        (owner.session().launch.displacements[0] as u32) >> 16,
+        0x1234
+    );
+    assert_eq!(owner.session().selected, 0x1234);
+    assert_eq!(owner.session().trails[0].left.remaining, 0x1234);
+    // The old negative-array verification case addresses the same physical word.
+    owner.store(0xb62, 0x3456, Store::PrefixLe);
+    assert_eq!(owner.session().controls.charge_palette, 0x3456);
     expected[0xb62..0xb64].copy_from_slice(&0x3456u16.to_le_bytes());
-    owner.release();
+    drop(owner);
     assert_eq!(g.g_ram.as_slice(), expected);
 }
 fn publication() {
+    use super::access::Store;
     let mut g = Game::new();
-    let mut o = Transaction::acquire(&mut g);
-    assert!(o.capture_rom().is_none());
+    let mut owner = Runtime::new(&mut g);
+    assert!(owner.loaded_image().is_none());
     let order = std::cell::Cell::new(0);
-    word!(
-        o.projectile_x_pos[{
+    shot!(
+        owner,
+        {
             assert_eq!(order.get(), 1);
             order.set(2);
             0
-        }] = {
+        },
+        x = {
             assert_eq!(order.get(), 0);
             order.set(1);
             0x2468
         }
     );
     assert_eq!(order.get(), 2);
-    assert_eq!(o.state.shots[0].x, 0x2468);
-    o.release();
+    assert_eq!(owner.session().shots[0].x, 0x2468);
+    drop(owner);
     let end = g.g_ram.len() - 1;
     let failed = catch_unwind(AssertUnwindSafe(|| {
-        let mut o = Transaction::acquire(&mut g);
-        o.write_word_le(0x1234, 0xb64);
-        o.write_word_le(0xaabb, end);
+        let mut owner = Runtime::new(&mut g);
+        owner.session_mut().shots[0].x = 0x1234;
+        owner.store(end, 0xaabb, Store::PrefixLe);
     }));
     assert!(failed.is_err());
     assert_eq!(&g.g_ram[0xb64..0xb66], &[0x34, 0x12]);
     assert_eq!(g.g_ram[end], 0xbb);
     let failed = catch_unwind(AssertUnwindSafe(|| {
-        let mut o = Transaction::acquire(&mut g);
-        o.write_slice_le(end, 0xccdd);
+        Runtime::new(&mut g).store(end, 0xccdd, Store::SliceLe);
     }));
     assert!(failed.is_err());
     assert_eq!(g.g_ram[end], 0xbb);
     put(&mut g, 0x1c37, 0x4321);
-    let mut o = Transaction::acquire(&mut g);
-    o.write_word_le(19, 0xdde);
-    let (o, result) = o.foreign(|g| {
+    let mut owner = Runtime::new(&mut g);
+    owner.session_mut().selected = 19;
+    let result = owner.foreign(|g| {
         assert_eq!(&g.g_ram[0xdde..0xde0], &[19, 0]);
         crate::game::room_mechanisms::clear(g);
         assert_eq!(&g.g_ram[0x1c37..0x1c39], &[0, 0]);
@@ -509,20 +518,29 @@ fn publication() {
         17
     });
     assert_eq!(result, 17);
-    assert_eq!(o.state.selected, 31);
-    assert_eq!(o.state.shots[0].x, 47);
-    o.release();
+    assert_eq!(owner.session().selected, 31);
+    assert_eq!(owner.session().shots[0].x, 47);
+    drop(owner);
     assert_eq!(&g.g_ram[0x1c37..0x1c39], &[0, 0]);
     let failed = catch_unwind(AssertUnwindSafe(|| {
-        let o = Transaction::acquire(&mut g);
-        let _ = o.foreign(|g| {
+        Runtime::new(&mut g).foreign(|g| {
             put(g, 0xdde, 55);
             panic!("callback unwind")
         });
     }));
     assert!(failed.is_err());
     assert_eq!(&g.g_ram[0xdde..0xde0], &[55, 0]);
+    let failed = catch_unwind(AssertUnwindSafe(|| {
+        let mut owner = Runtime::new(&mut g);
+        owner.session_mut().selected = 73;
+        owner.session_mut().player.missiles = 11;
+        panic!("core unwind");
+    }));
+    assert!(failed.is_err());
+    assert_eq!(&g.g_ram[0xdde..0xde0], &[73, 0]);
+    assert_eq!(&g.g_ram[0x9c6..0x9c8], &[11, 0]);
 }
+
 pub(crate) fn run() -> u32 {
     lane_projection();
     publication();
@@ -774,3 +792,9 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     assert!(!g.g_fail, "native diagnostic {id}");
     Some(g.g_ram.to_vec())
 }
+
+#[path = "player_projectiles_expanded.rs"]
+pub(crate) mod expanded;
+
+#[path = "player_projectiles_presentation_reset.rs"]
+pub(crate) mod presentation_reset;

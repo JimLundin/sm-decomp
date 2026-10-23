@@ -1,117 +1,75 @@
-//! One direct impact/retirement binding, including broad byte aliases.
-use super::{Context, Transaction};
-use crate::game::projectile_lifecycle::{self as life, *};
-use crate::game::projectile_room::Axis;
-use crate::game::sm_80::QueueSfx2_Max6;
-use crate::ram_map::word_arrays as arrays;
-impl Kind for u16 {
-    fn impact_family(self) -> Family {
-        if self & 0xf00 == 0 {
-            Family::Beam
-        } else {
-            Family::Ballistic
+//! Ordered impacts and retirement over the live projectile session.
+#![forbid(unsafe_code)]
+use super::{Host, content, motion};
+const DIRECTIONS: [(i8, i8); 10] = [
+    (0, -1),
+    (1, -1),
+    (1, 0),
+    (1, 1),
+    (0, 1),
+    (0, 1),
+    (-1, 1),
+    (-1, 0),
+    (-1, -1),
+    (0, -1),
+];
+pub(super) fn impact(h: &mut impl Host, raw: u16) {
+    let ballistic = shot!(h, raw, kind) & 0xf00 != 0;
+    if ballistic && h.inputs().cinematic == 0 {
+        h.sound(2, 6, 7);
+    }
+    // Sound may replace kind and content; family retains its original decision.
+    let kind = shot!(h, raw, kind);
+    shot!(
+        h,
+        raw,
+        kind = kind & 0xf0ff | if ballistic { 0x800 } else { 0x700 }
+    );
+    let heavy = ballistic && kind & 0x200 != 0;
+    let address = if !ballistic {
+        0x93867b
+    } else if heavy {
+        0x938693
+    } else {
+        0x93867f
+    };
+    let cursor = content::table(h, address, 0);
+    shot!(h, raw, cursor = cursor);
+    if ballistic {
+        if heavy {
+            h.session_mut().earthquake_kind = 20;
+            h.session_mut().earthquake_timer = 30;
         }
+        if h.session().controls.cooldown.wrapping_sub(21) & 0x8000 == 0 {
+            h.session_mut().controls.cooldown = 20;
+        }
+    } else {
+        h.sound(2, 6, 12);
     }
-    fn uses_heavy_impact(self) -> bool {
-        self & 0x200 != 0
-    }
-    fn enter_impact(self, family: Family) -> Self {
-        self & 0xf0ff
-            | match family {
-                Family::Beam => 0x700,
-                Family::Ballistic => 0x800,
+    shot!(h, raw, remaining = 1);
+    shot!(h, raw, damage = 8);
+}
+pub(super) fn retire(h: &mut impl Host, raw: u16) {
+    match shot!(h, raw, kind) & 0xf00 {
+        0 => {
+            let (dx, dy) = DIRECTIONS[usize::from(shot!(h, raw, direction) & 15)];
+            if dx != 0 {
+                let position = shot!(h, raw, x);
+                let radius = shot!(h, raw, x_radius);
+                shot!(h,raw,x = if dx>0 {position.wrapping_add(radius)} else {position.wrapping_sub(radius)}; SliceLe);
             }
-    }
-}
-impl State for Transaction<'_> {
-    type Kind = u16;
-    type Cursor = u16;
-    fn kind(&self, slot: usize) -> u16 {
-        word!(self.projectile_type[slot])
-    }
-    fn set_kind(&mut self, slot: usize, kind: u16) {
-        word!(self.projectile_type[slot] = kind);
-    }
-    fn cinematic(&self) -> bool {
-        word!(self.cinematic_function) != 0
-    }
-    fn set_cursor(&mut self, slot: usize, cursor: u16) {
-        word!(self.projectile_bomb_instruction_ptr[slot] = cursor);
-    }
-    fn cooldown(&self) -> u16 {
-        word!(self.cooldown_timer)
-    }
-    fn set_cooldown(&mut self, cooldown: u16) {
-        word!(self.cooldown_timer = cooldown);
-    }
-    fn finish_impact(&mut self, slot: usize) {
-        word!(self.projectile_bomb_instruction_timers[slot] = 1);
-        word!(self.projectile_damage[slot] = 8);
-    }
-}
-impl<'a> Definitions<Transaction<'a>> for Context {
-    fn entry(&mut self, game: Transaction<'a>, entry: Entry) -> (Transaction<'a>, u16) {
-        let address = match entry {
-            Entry::BeamImpact => 0x93867b,
-            Entry::MissileImpact => 0x93867f,
-            Entry::HeavyImpact => 0x938693,
-            Entry::BombExplosion => 0x938683,
-        };
-        let cursor = game
-            .rom()
-            .table_word(crate::rtl::lorom_offset(address) as usize, 0);
-        (game, cursor)
-    }
-    fn feedback(&mut self, mut game: Transaction<'a>, feedback: Feedback) -> Transaction<'a> {
-        match feedback {
-            Feedback::BeamImpact => game = game.foreign(|g| QueueSfx2_Max6(12, g)).0,
-            Feedback::MissileImpact => game = game.foreign(|g| QueueSfx2_Max6(7, g)).0,
-            Feedback::HeavyImpactShake => {
-                word!(game.earthquake_type = 20);
-                word!(game.earthquake_timer = 30);
+            if dy != 0 {
+                let position = shot!(h, raw, y);
+                let radius = shot!(h, raw, y_radius);
+                shot!(h,raw,y = if dy>0 {position.wrapping_add(radius)} else {position.wrapping_sub(radius)}; SliceLe);
             }
         }
-        game
-    }
-}
-impl<'a> RetirementContext<Transaction<'a>> for Context {
-    fn retirement(&self, game: &Transaction<'_>, slot: u16) -> Retirement {
-        match word!(game.projectile_type[(slot >> 1)]) & 0xf00 {
-            0 => Retirement::Beam,
-            0x100 | 0x200 => Retirement::Missile,
-            _ => Retirement::Release,
+        0x100 | 0x200 => {}
+        _ => {
+            motion::clear(h, raw);
+            return;
         }
     }
-    fn move_to_impact(&mut self, mut game: Transaction<'a>, slot: u16) -> Transaction<'a> {
-        let direction = usize::from(word!(game.projectile_dir[(slot >> 1)]) & 0xf);
-        let directions = DIRECTIONS[direction];
-        let index = usize::from(slot & !1);
-        impact_offsets(directions, |axis, step| {
-            let (position, radius) = match axis {
-                Axis::X => (arrays::projectile_x_pos, arrays::projectile_x_radius),
-                Axis::Y => (arrays::projectile_y_pos, arrays::projectile_y_radius),
-            };
-            let at = position + index;
-            let position = game.read_le(at);
-            let radius = radius + index;
-            let radius = game.read_le(radius);
-            game.write_slice_le(at, offset(position, radius, step));
-        });
-        game
-    }
-    fn impact(&mut self, game: Transaction<'a>, slot: u16) -> Transaction<'a> {
-        life::impact(game, usize::from(slot >> 1), self)
-    }
-    fn release(&mut self, game: Transaction<'a>, slot: u16) -> Transaction<'a> {
-        super::motion::clear(slot, game)
-    }
-    fn stop(&mut self, game: &mut Transaction<'a>, slot: u16) {
-        word!(game.projectile_bomb_pre_instructions[(slot >> 1)] = 0xb169);
-    }
-}
-pub(super) fn impact(slot: u16, game: Transaction<'_>) -> Transaction<'_> {
-    life::impact(game, usize::from(slot >> 1), &mut Context::default())
-}
-pub(super) fn retire(slot: u16, game: Transaction<'_>) -> Transaction<'_> {
-    life::retire(game, slot, &mut Context::default())
+    impact(h, raw);
+    shot!(h, raw, motion = 0xb169);
 }

@@ -1,13 +1,14 @@
-//! Direct shared initialization/playback bindings, for every native selector.
-use super::{Context, Transaction};
-use crate::game::projectile_initialization::{self as initialization, Field, Initialization};
+//! Projectile launch records and the shared animation/trail playback kernels.
+#![forbid(unsafe_code)]
+use super::{Host, content};
+use crate::game::projectile_initialization::Initialization;
 use crate::game::projectile_playback::{
     self as playback, Command, Definitions, Frame, Owner, Write,
 };
 use crate::game::projectile_trail_selection::{self as trail, Source, TrailDefinitions};
 use crate::rom::RomRecord;
-#[forbid(unsafe_code)]
-pub(crate) fn table(kind: Initialization, flags: u16) -> (u32, isize) {
+
+pub fn table(kind: Initialization, flags: u16) -> (u32, isize) {
     match kind {
         Initialization::SuperMissile => (0x93842b, ((flags >> 8) & 15) as isize),
         Initialization::Bomb => (0x9383f1, ((flags >> 8) & 15) as isize),
@@ -26,116 +27,64 @@ pub(crate) fn table(kind: Initialization, flags: u16) -> (u32, isize) {
         ),
     }
 }
-impl initialization::Launch for RomRecord {
-    fn damage(&self) -> u16 {
-        self.word(0)
-    }
-}
-impl<'a> initialization::Context<Transaction<'a>> for Context {
-    type Weapon = (Initialization, u16);
-    type Launch = RomRecord;
-    type Cursor = u16;
-    type Frame = RomRecord;
-    fn weapon(
-        &mut self,
-        game: Transaction<'a>,
-        (kind, flags): Self::Weapon,
-    ) -> (Transaction<'a>, RomRecord) {
-        let (address, selector) = table(kind, flags);
-        let pointer = game
-            .rom()
-            .table_word(crate::rtl::lorom_offset(address) as usize, selector);
-        Context::record(game, 0x93, pointer)
-    }
-    fn set(&mut self, game: &mut Transaction<'a>, field: Field, value: u16) {
-        match field {
-            Field::Damage => word!(game.projectile_damage[self.slot] = value),
-            Field::XRadius => word!(game.projectile_x_radius[self.slot] = value),
-            Field::YRadius => word!(game.projectile_y_radius[self.slot] = value),
-            Field::Timer => word!(game.projectile_bomb_instruction_timers[self.slot] = value),
-        }
-    }
-    fn invalid_damage(&mut self, game: Transaction<'a>) -> Transaction<'a> {
-        game.foreign(|g| unsafe { crate::game::sm_80::InvalidInterrupt_Crash(g) })
-            .0
-    }
-    fn entry(
-        &mut self,
-        game: Transaction<'a>,
-        launch: &RomRecord,
-        direction: Option<usize>,
-    ) -> (Transaction<'a>, u16) {
-        let offset = direction.map_or(2, |direction| {
-            [2, 4, 6, 8, 10, 12, 14, 16, 18, 20][direction]
-        });
-        (game, launch.word(offset))
-    }
-    fn set_cursor(&mut self, game: &mut Transaction<'a>, cursor: u16) {
-        word!(game.projectile_bomb_instruction_ptr[self.slot] = cursor);
-    }
-    fn frame(&mut self, game: Transaction<'a>, cursor: u16) -> (Transaction<'a>, RomRecord) {
-        Context::record(game, 0x93, cursor)
-    }
-    fn radius(
-        &mut self,
-        game: Transaction<'a>,
-        frame: &RomRecord,
-        field: Field,
-    ) -> (Transaction<'a>, u16) {
-        let offset = match field {
-            Field::XRadius => 4,
-            Field::YRadius => 5,
-            _ => unreachable!(),
-        };
-        (game, u16::from(frame.byte(offset)))
-    }
-}
-pub(super) fn initialize<'g>(
-    k: u16,
-    kind: Initialization,
-    game: Transaction<'g>,
-) -> Transaction<'g> {
-    let slot = usize::from(k >> 1);
+pub fn initialize(h: &mut impl Host, slot: u16, kind: Initialization) {
     let direction = matches!(kind, Initialization::Projectile | Initialization::Echo)
-        .then(|| usize::from(word!(game.projectile_dir[slot]) & 15));
-    let flags = word!(game.projectile_type[slot]);
-    initialization::initialize(
-        game,
-        (kind, flags),
-        kind,
-        direction,
-        &mut Context {
-            slot,
-            ..Context::default()
-        },
-    )
+        .then(|| usize::from(shot!(h, slot, direction) & 15));
+    let (address, index) = table(kind, shot!(h, slot, kind));
+    let pointer = content::table(h, address, index);
+    let launch = h.record(0x93, pointer);
+    let damage = launch.word(0);
+    if kind != Initialization::Projectile {
+        shot!(h, slot, damage = damage);
+    }
+    let checked = if kind == Initialization::Echo {
+        launch.word(0)
+    } else {
+        damage
+    };
+    if checked & 0x8000 != 0 {
+        h.invalid_damage();
+    }
+    if kind == Initialization::Projectile {
+        shot!(h, slot, damage = launch.word(0));
+    }
+    let field = direction.map_or(2, |direction| {
+        [2, 4, 6, 8, 10, 12, 14, 16, 18, 20][direction]
+    });
+    let cursor = launch.word(field);
+    shot!(h, slot, cursor = cursor);
+    if kind == Initialization::Projectile {
+        let frame = h.record(0x93, cursor);
+        shot!(h, slot, x_radius = u16::from(frame.byte(4)));
+        shot!(h, slot, y_radius = u16::from(frame.byte(5)));
+    }
+    shot!(h, slot, remaining = 1);
 }
 
-impl Owner for Transaction<'_> {
+impl<H: Host> Owner for &mut H {
     type Cursor = u16;
     type Sprite = u16;
     type Slot = u16;
     fn remaining(&self, slot: u16) -> u16 {
-        word!(self.projectile_bomb_instruction_timers[slot >> 1])
+        shot!(self, slot, remaining)
     }
     fn cursor(&self, slot: u16) -> u16 {
-        word!(self.projectile_bomb_instruction_ptr[slot >> 1])
+        shot!(self, slot, cursor)
     }
     fn write(&mut self, slot: u16, value: Write<u16, u16>) {
-        let slot = usize::from(slot >> 1);
         match value {
-            Write::Timer(v) => word!(self.projectile_bomb_instruction_timers[slot] = v),
+            Write::Timer(v) => shot!(self, slot, remaining = v),
             Write::Cursor(v) => {
-                word!(self.projectile_bomb_instruction_ptr[slot] = v);
-                crate::verify_probe::hit("player_projectiles.playback.frame");
+                shot!(self, slot, cursor = v);
+                self.probe("player_projectiles.playback.frame");
             }
-            Write::Sprite(v) => word!(self.projectile_spritemap_pointers[slot] = v),
-            Write::XRadius(v) => word!(self.projectile_x_radius[slot] = v),
-            Write::YRadius(v) => word!(self.projectile_y_radius[slot] = v),
+            Write::Sprite(v) => shot!(self, slot, sprite = v),
+            Write::XRadius(v) => shot!(self, slot, x_radius = v),
+            Write::YRadius(v) => shot!(self, slot, y_radius = v),
         }
     }
 }
-pub(super) struct View {
+pub struct View {
     data: RomRecord,
     cursor: u16,
 }
@@ -161,54 +110,42 @@ impl Frame<u16, u16> for View {
         self.cursor.wrapping_add(8)
     }
 }
-impl<'a> Definitions<Transaction<'a>> for Context {
+struct Playback;
+impl<'a, H: Host> Definitions<&'a mut H> for Playback {
     type Frame = View;
-    fn open(&mut self, game: Transaction<'a>, cursor: u16) -> (Transaction<'a>, View) {
-        let (game, data) = Context::record(game, 0x93, cursor);
-        (game, View { data, cursor })
+    fn open(&mut self, h: &'a mut H, cursor: u16) -> (&'a mut H, View) {
+        let data = h.record(0x93, cursor);
+        (h, View { data, cursor })
     }
-    fn follow_jump(
-        &mut self,
-        game: Transaction<'a>,
-        cursor: u16,
-    ) -> (Transaction<'a>, Option<u16>) {
-        let (game, frame) = self.open(game, cursor.wrapping_add(2));
-        let target = frame.data.word(0);
-        (game, (target != 0).then_some(target))
+    fn follow_jump(&mut self, h: &'a mut H, cursor: u16) -> (&'a mut H, Option<u16>) {
+        let data = h.record(0x93, cursor.wrapping_add(2));
+        let target = data.word(0);
+        (h, (target != 0).then_some(target))
     }
-    fn unknown(&mut self, game: Transaction<'a>) -> (Transaction<'a>, Option<u16>) {
-        let (game, result) = game.foreign(|g| unsafe { crate::rtl::Unreachable(g) });
-        (game, result.then_some(1))
+    fn unknown(&mut self, h: &'a mut H) -> (&'a mut H, Option<u16>) {
+        let result = h.unknown();
+        (h, result.then_some(1))
     }
 }
-impl<'a> TrailDefinitions<Transaction<'a>> for Context {
+impl<'a, H: Host> TrailDefinitions<&'a mut H> for Playback {
     type Marker = u16;
-    fn sample_trail(
-        &mut self,
-        game: Transaction<'a>,
-        cursor: u16,
-        source: Source,
-    ) -> (Transaction<'a>, u16) {
+    fn sample_trail(&mut self, h: &'a mut H, cursor: u16, source: Source) -> (&'a mut H, u16) {
         let cursor = if source == Source::Upcoming {
             cursor
         } else {
             cursor.wrapping_sub(8)
         };
-        let (game, frame) = self.open(game, cursor);
-        (game, frame.data.word(6))
+        let data = h.record(0x93, cursor);
+        (h, data.word(6))
     }
 }
-
-pub(super) fn advance(mut owner: Transaction<'_>) -> Transaction<'_> {
-    let selected = word!(owner.projectile_index);
-    let (next, outcome) = playback::advance(owner, selected, &mut Context::default());
-    owner = next;
+pub fn advance(h: &mut impl Host) {
+    let selected = h.session().selected;
+    let (h, outcome) = playback::advance(h, selected, &mut Playback);
     if outcome == playback::Outcome::Release {
-        super::motion::clear(selected, owner)
-    } else {
-        owner
+        super::motion::clear(h, selected);
     }
 }
-pub(super) fn trail_frame(slot: u16, owner: Transaction<'_>) -> (Transaction<'_>, u16) {
-    trail::sample(owner, slot, &mut Context::default())
+pub fn trail_frame(h: &mut impl Host, slot: u16) -> u16 {
+    trail::sample(h, slot, &mut Playback).1
 }

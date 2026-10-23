@@ -1,200 +1,280 @@
-//! Complete preparation/weapon/update/history interval, interrupted only by native player leaves.
-use super::{Context, Transaction};
-use crate::game::player_preparation::{self as shared, Entry, Field, Input, Step};
-use crate::game::{weapon_coordinator as coordinator, weapon_selection as selection};
-use crate::ram_map::words as ram;
-#[forbid(unsafe_code)]
-pub fn read(game: &Transaction<'_>, input: Input) -> u16 {
-    let address = match input {
-        Input::Held => ram::joypad1_lastkeys,
-        Input::Pressed => ram::joypad1_newkeys,
-        Input::FilteredHeld => ram::joypad1_input_samusfilter,
-        Input::FilteredPressed => ram::joypad1_newinput_samusfilter,
-        Input::AimHistory => ram::UNUSED_word_7E0DFA,
-        Input::MovementAndFacing => 0xa1e,
-    };
-    game.read_le(address)
+//! Player preparation, weapon selection and launch history over ordinary state.
+#![forbid(unsafe_code)]
+use super::{
+    host::{Host, PaletteEffect, PlayerStep},
+    state::PrepareEntry,
+};
+#[derive(Clone, Copy, PartialEq)]
+enum Choice {
+    Beam,
+    Missiles,
+    SuperMissiles,
+    PowerBombs,
+    Grapple,
+    Xray,
 }
-#[forbid(unsafe_code)]
-pub fn write(game: &mut Transaction<'_>, field: Field, value: u16) {
-    let address = match field {
-        Field::NextPose => ram::samus_new_pose,
-        Field::InterruptedPose => ram::samus_new_pose_interrupted,
-        Field::TransitionalPose => ram::samus_new_pose_transitional,
-        Field::MomentumRoutine => ram::samus_momentum_routine_index,
-        Field::SpecialGraphics => ram::samus_special_transgfx_index,
-        Field::HurtSwitch => ram::samus_hurt_switch_index,
-        Field::DemoHeld => ram::controller1_input_for_demo,
-        Field::DemoPressed => ram::controller1_new_input_for_demo,
-        Field::DemoFilteredHeld => ram::demo_backup_prev_controller_input,
-        Field::DemoFilteredPressed => ram::demo_backup_prev_controller_input_new,
-        Field::AnimationSkip => ram::samus_anim_frame_skip,
-        Field::PendingAim => ram::new_projectile_direction_changed_pose,
-        Field::AimHistory => ram::UNUSED_word_7E0DFA,
-        // Includes previous movement at A11; A22 belongs to a different pose history.
-        Field::PreviousMovementAndFacing => 0xa10,
-    };
-    game.write_slice_le(address, value);
+#[derive(Clone, Copy)]
+enum Mode {
+    Normal,
+    Jump,
+    Bomb,
+    Grapple,
+    Turning,
+    Crouch,
+    Draygon,
 }
-impl<'a> shared::Context<Transaction<'a>> for Context {
-    fn read(&self, game: &Transaction<'a>, input: Input) -> u16 {
-        read(game, input)
-    }
-    fn write(&mut self, game: &mut Transaction<'a>, field: Field, value: u16) {
-        write(game, field, value);
-    }
-    fn clear_launch_history(&mut self, game: &mut Transaction<'a>) {
-        game.state.launch.finish_projectile_phase();
-        crate::verify_probe::hit("player_projectiles.history.finished");
-    }
-    fn step(&mut self, game: Transaction<'a>, step: Step) -> Transaction<'a> {
-        use crate::game::{sm_90, sm_94};
-        match step {
-            Step::Radius => game.foreign(|g| sm_90::Samus_SetRadius(g)).0,
-            Step::Input => {
-                game.foreign(|g| unsafe { sm_90::Samus_CallInputHandler(g) })
-                    .0
-            }
-            Step::SuitIndex => {
-                game.foreign(|g| unsafe { sm_90::Samus_UpdateSuitPaletteIndex(g) })
-                    .0
-            }
-            Step::Acceleration => {
-                game.foreign(|g| unsafe { sm_90::Samus_DetermineAccel_Y(g) })
-                    .0
-            }
-            Step::InsideBlock => {
-                game.foreign(|g| unsafe { sm_94::BlockInsideDetection(g) })
-                    .0
-            }
-            Step::Weapons => {
-                crate::verify_probe::hit("player_projectiles.prepare.weapons");
-                coordinator::coordinate(game, self)
-            }
-            Step::Projectiles => super::motion::advance_all(game),
-        }
-    }
+#[derive(Clone, Copy)]
+enum Table {
+    Selection,
+    Movement,
+    Normal,
+    Crouch,
 }
-fn invalid(table: selection::Table, index: usize) -> ! {
+fn invalid(table: Table, index: usize) -> ! {
     match table {
-        selection::Table::Selection => {
+        Table::Selection => {
             let _ = [(); 6][index];
         }
-        selection::Table::Movement => {
+        Table::Movement => {
             let _ = [(); 28][index];
         }
-        selection::Table::Normal => {
+        Table::Normal => {
             let _ = [(); 7][index];
         }
-        selection::Table::Crouch => {
+        Table::Crouch => {
             let _ = [(); 12][index];
         }
     }
     unreachable!()
 }
-impl<'g> selection::Context<Transaction<'g>> for Context {
-    fn input(&self, g: &Transaction<'g>, input: selection::Input) -> u16 {
-        match input {
-            selection::Input::CancelButton => word!(g.button_config_itemcancel_y),
-            selection::Input::SwitchButton => word!(g.button_config_itemswitch),
-            selection::Input::Pressed => word!(g.joypad1_newkeys),
-            selection::Input::Held => word!(g.joypad1_lastkeys),
-        }
-    }
-    fn field(&self, g: &Transaction<'g>, f: selection::Field) -> u16 {
-        match f {
-            selection::Field::Selected => word!(g.hud_item_index),
-            selection::Field::Automatic => word!(g.samus_auto_cancel_hud_item_index),
-            selection::Field::Changed => word!(g.hud_item_changed_this_frame),
-            selection::Field::Charge => word!(g.flare_counter),
-        }
-    }
-    fn write(&mut self, g: &mut Transaction<'g>, f: selection::Field, v: u16) {
-        match f {
-            selection::Field::Selected => word!(g.hud_item_index = v),
-            selection::Field::Automatic => word!(g.samus_auto_cancel_hud_item_index = v),
-            selection::Field::Changed => word!(g.hud_item_changed_this_frame = v),
-            selection::Field::Charge => word!(g.flare_counter = v),
-        }
-    }
-    fn available(&self, g: &Transaction<'g>, c: selection::Choice) -> bool {
-        match c {
-            selection::Choice::Beam => true,
-            selection::Choice::Missiles => word!(g.samus_missiles) != 0,
-            selection::Choice::SuperMissiles => word!(g.samus_super_missiles) != 0,
-            selection::Choice::PowerBombs => word!(g.samus_power_bombs) != 0,
-            selection::Choice::Grapple => word!(g.equipped_items) & 0x4000 != 0,
-            selection::Choice::Xray => word!(g.equipped_items) & 0x8000 != 0,
-        }
-    }
-    fn grapple_inactive(&self, g: &Transaction<'g>) -> bool {
-        word!(g.grapple_beam_function) == 0xc4f0
-    }
-    fn clear_animation(&mut self, g: &mut Transaction<'g>) {
-        super::weapons::clear_animation(g);
-    }
-    fn palette(&mut self, mut g: Transaction<'g>) -> Transaction<'g> {
-        g.foreign(|g| unsafe { crate::game::sm_91::Samus_LoadSuitPalette(g) })
-            .0
-    }
-    fn return_grapple_inactive(&mut self, mut g: Transaction<'g>) -> Transaction<'g> {
-        word!(g.grapple_beam_function = 0xc4f0);
-        g
-    }
-    fn invalid(&mut self, _: Transaction<'g>, t: selection::Table, i: usize, _: usize) -> ! {
-        invalid(t, i)
-    }
-}
-impl<'g> coordinator::Context<Transaction<'g>> for Context {
-    fn input(&self, g: &Transaction<'g>, input: coordinator::Input) -> u16 {
-        match input {
-            coordinator::Input::Pose => word!(g.samus_pose),
-            coordinator::Input::Movement => u16::from(g.byte(0xa1f)),
-            coordinator::Input::PendingAim => word!(g.new_projectile_direction_changed_pose),
-            coordinator::Input::Frozen => word!(g.time_is_frozen_flag),
-            coordinator::Input::RunButton => word!(g.button_config_run_b),
-            coordinator::Input::Held => word!(g.joypad1_lastkeys),
-            coordinator::Input::Selected => word!(g.hud_item_index),
-        }
-    }
-    fn cooldown(&self, g: &Transaction<'g>) -> u16 {
-        word!(g.cooldown_timer)
-    }
-    fn set_cooldown(&mut self, g: &mut Transaction<'g>, v: u16) {
-        word!(g.cooldown_timer = v);
-    }
-    fn grapple_active(&self, g: &Transaction<'g>) -> bool {
-        word!(g.grapple_beam_function) != 0xc4f0
-    }
-    fn switch(&mut self, mut g: Transaction<'g>) -> Transaction<'g> {
-        selection::switch(g, self)
-    }
-    fn cancel_grapple(&mut self, g: &mut Transaction<'g>) {
-        word!(g.grapple_beam_function = 0xc856);
-    }
-    fn run(&mut self, mut g: Transaction<'g>, action: coordinator::Action) -> Transaction<'g> {
-        match action {
-            coordinator::Action::BeamInput => super::weapons::update_input(g),
-            coordinator::Action::Missile => super::missiles::fire(g),
-            coordinator::Action::Bomb => super::bomb_creation::fire(g),
-            coordinator::Action::Grapple => {
-                g.foreign(|g| unsafe { crate::game::sm_9b::GrappleBeamHandler(g) })
-                    .0
+pub(super) fn prepare(h: &mut impl Host, entry: PrepareEntry) {
+    match entry {
+        PrepareEntry::Inactive => return,
+        PrepareEntry::ProjectilesOnly => super::motion::advance_all(h),
+        PrepareEntry::Normal | PrepareEntry::Demo => {
+            h.session_mut().preparation.next_pose = 0xffff;
+            h.session_mut().preparation.interrupted_pose = 0xffff;
+            h.session_mut().preparation.transitional_pose = 0xffff;
+            h.session_mut().preparation.momentum_routine = 0;
+            h.session_mut().preparation.special_graphics = 0;
+            h.session_mut().preparation.hurt_switch = 0;
+            if entry == PrepareEntry::Demo {
+                h.session_mut().preparation.demo_held = h.inputs().held;
+                h.session_mut().preparation.demo_pressed = h.inputs().pressed;
+                h.session_mut().preparation.demo_filtered_held = h.inputs().filtered_held;
+                h.session_mut().preparation.demo_filtered_pressed = h.inputs().filtered_pressed;
             }
-            coordinator::Action::Xray => {
-                g.foreign(|g| unsafe { crate::game::sm_91::XrayRunHandler(g) })
-                    .0
+            h.player_step(PlayerStep::Radius);
+            for step in if entry == PrepareEntry::Normal {
+                [PlayerStep::Input, PlayerStep::SuitIndex]
+            } else {
+                [PlayerStep::SuitIndex, PlayerStep::Input]
+            } {
+                h.player_step(step);
             }
-            coordinator::Action::UpdateProjectiles => super::motion::advance_all(g),
+            h.player_step(PlayerStep::Acceleration);
+            h.player_step(PlayerStep::InsideBlock);
+            h.probe("player_projectiles.prepare.weapons");
+            coordinate(h);
         }
     }
-    fn invalid(&mut self, _: Transaction<'g>, t: selection::Table, i: usize, _: usize) -> ! {
-        invalid(t, i)
+    h.session_mut().launch.finish_projectile_phase();
+    h.probe("player_projectiles.history.finished");
+    h.session_mut().preparation.animation_skip = 0;
+    h.session_mut().controls.pending_aim = 0;
+    h.session_mut().preparation.aim_history = h.session().preparation.aim_history.wrapping_shl(8);
+    h.session_mut().preparation.previous_movement_and_facing = h.inputs().movement_and_facing;
+}
+fn available(h: &impl Host, choice: Choice) -> bool {
+    match choice {
+        Choice::Beam => true,
+        Choice::Missiles => h.session().player.missiles != 0,
+        Choice::SuperMissiles => h.session().player.super_missiles != 0,
+        Choice::PowerBombs => h.session().player.power_bombs != 0,
+        Choice::Grapple => h.inputs().equipped_items & 0x4000 != 0,
+        Choice::Xray => h.inputs().equipped_items & 0x8000 != 0,
     }
 }
-pub(super) fn prepare(entry: Entry, owner: Transaction<'_>) -> Transaction<'_> {
-    shared::prepare(owner, entry, &mut Context::default())
+fn select(h: &mut impl Host, choice: Choice) -> bool {
+    if !available(h, choice) {
+        return false;
+    }
+    if choice == Choice::Grapple {
+        if h.session().player.grapple == 0xc4f0 {
+            h.palette(PaletteEffect::Suit);
+            h.session_mut().controls.charge = 0;
+            super::weapons::clear_animation(h);
+            h.session_mut().player.grapple = 0xc4f0;
+        }
+    } else {
+        h.session_mut().controls.charge = 0;
+        super::weapons::clear_animation(h);
+        h.palette(PaletteEffect::Suit);
+    }
+    true
 }
-pub(super) fn deselect(owner: Transaction<'_>) -> Transaction<'_> {
-    selection::select(owner, selection::Choice::Beam, &mut Context::default()).0
+pub(super) fn deselect(h: &mut impl Host) {
+    select(h, Choice::Beam);
+}
+fn switch(h: &mut impl Host) {
+    let previous = h.session().controls.selected_weapon;
+    let mut automatic = false;
+    let selection = if h.inputs().cancel_button & h.inputs().pressed != 0 {
+        h.session_mut().controls.automatic_weapon = 0;
+        Some(0)
+    } else {
+        automatic = h.inputs().cancel_button & h.inputs().held != 0;
+        if h.inputs().switch_button & h.inputs().pressed == 0 {
+            None
+        } else {
+            let next = h.session().controls.selected_weapon.wrapping_add(1);
+            Some(
+                if h.session().controls.selected_weapon.wrapping_sub(5) & 0x8000 == 0 {
+                    0
+                } else {
+                    next
+                },
+            )
+        }
+    };
+    if let Some(mut selected) = selection {
+        h.session_mut().controls.selected_weapon = selected;
+        loop {
+            let choices = [
+                Choice::Beam,
+                Choice::Missiles,
+                Choice::SuperMissiles,
+                Choice::PowerBombs,
+                Choice::Grapple,
+                Choice::Xray,
+            ];
+            let Some(&choice) = choices.get(usize::from(selected)) else {
+                invalid(Table::Selection, usize::from(selected));
+            };
+            if select(h, choice) {
+                break;
+            }
+            selected = h.session().controls.selected_weapon.wrapping_add(1);
+            h.session_mut().controls.selected_weapon = selected;
+            if selected.wrapping_sub(6) & 0x8000 == 0 {
+                selected = 0;
+                h.session_mut().controls.selected_weapon = 0;
+            }
+        }
+        h.session_mut().controls.automatic_weapon = if automatic {
+            h.session().controls.selected_weapon
+        } else {
+            0
+        };
+    }
+    h.session_mut().controls.weapon_changed = if h.session().controls.selected_weapon == previous {
+        let next = h.session().controls.weapon_changed.wrapping_add(1);
+        if h.session().controls.weapon_changed.wrapping_sub(2) & 0x8000 == 0 {
+            2
+        } else {
+            next
+        }
+    } else {
+        1
+    };
+}
+fn coordinate(h: &mut impl Host) {
+    if h.inputs().pose == 0 || h.inputs().pose == 0x9b {
+        return super::motion::advance_all(h);
+    }
+    let cooldown = h.session().controls.cooldown;
+    h.session_mut().controls.cooldown = if h.inputs().frozen != 0 {
+        32
+    } else if cooldown == 0 || cooldown & 0x8000 != 0 {
+        0
+    } else {
+        let next = cooldown.wrapping_sub(1);
+        if next & 0x8000 != 0 { 0 } else { next }
+    };
+    switch(h);
+    use Mode::*;
+    let modes = [
+        Normal, Normal, Normal, Jump, Bomb, Normal, Normal, Bomb, Bomb, Bomb, Jump, Grapple,
+        Grapple, Jump, Turning, Crouch, Normal, Bomb, Bomb, Bomb, Jump, Normal, Grapple, Turning,
+        Turning, Jump, Draygon, Jump,
+    ];
+    let index = usize::from(h.inputs().movement_and_facing >> 8);
+    let Some(&mode) = modes.get(index) else {
+        invalid(Table::Movement, index);
+    };
+    match mode {
+        Normal => normal(h),
+        Jump => jump(h),
+        Bomb => super::bomb_creation::fire(h),
+        Grapple => h.player_step(PlayerStep::Grapple),
+        Turning => turning(h),
+        Crouch => crouch(h),
+        Draygon => {
+            if h.inputs().pose == 0xdf {
+                super::bomb_creation::fire(h);
+            } else {
+                normal(h);
+            }
+        }
+    }
+    if h.inputs().frozen == 0 {
+        super::motion::advance_all(h);
+    }
+}
+fn normal(h: &mut impl Host) {
+    let index = if h.session().player.grapple != 0xc4f0 {
+        4
+    } else if h.inputs().frozen != 0 {
+        5
+    } else {
+        h.session().controls.selected_weapon.wrapping_mul(2) >> 1
+    };
+    match index {
+        0 | 3 => super::weapons::update_input(h),
+        1 | 2 => super::missiles::fire(h),
+        4 => h.player_step(PlayerStep::Grapple),
+        5 => {
+            if h.inputs().run_button & h.inputs().held != 0 {
+                h.player_step(PlayerStep::Xray);
+            } else {
+                super::weapons::update_input(h);
+            }
+        }
+        6 => turning(h),
+        _ => invalid(Table::Normal, usize::from(index)),
+    }
+}
+fn turning(h: &mut impl Host) {
+    if h.session().controls.pending_aim != 0 {
+        return normal(h);
+    }
+    if h.session().player.grapple != 0xc4f0 {
+        h.session_mut().player.grapple = 0xc856;
+    }
+}
+fn jump(h: &mut impl Host) {
+    if h.session().player.grapple != 0xc4f0 {
+        h.session_mut().player.grapple = 0xc856;
+        normal(h);
+    }
+}
+fn crouch(h: &mut impl Host) {
+    if h.inputs().pose.wrapping_sub(0xf1) & 0x8000 == 0 {
+        return normal(h);
+    }
+    if h.inputs().pose.wrapping_sub(0xdb) & 0x8000 == 0 {
+        return;
+    }
+    let index = usize::from(h.inputs().pose.wrapping_sub(53));
+    let choices = [
+        false, false, true, true, true, true, false, false, true, true, true, true,
+    ];
+    let Some(&cancel) = choices.get(index) else {
+        invalid(Table::Crouch, index);
+    };
+    if cancel {
+        jump(h);
+    } else {
+        normal(h);
+    }
 }

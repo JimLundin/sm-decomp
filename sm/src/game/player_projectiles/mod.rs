@@ -1,125 +1,100 @@
-//! Complete owned player-projectile subsystem.
-mod state;
-#[path = "../ownership_transport.rs"]
-mod transport;
+//! Player-projectile lifecycle, producers, trails and charge feedback.
 #[macro_use]
-mod encoded;
+mod access;
 mod animation;
 mod bomb_creation;
 mod bomb_terrain;
 mod bombs;
-#[path = "../../verification/player_projectiles.rs"]
-pub(crate) mod checks;
 mod collision;
+mod content;
+mod encoding;
 mod feedback;
+mod host;
 mod lifecycle;
 mod missiles;
 mod motion;
-mod native_content;
 mod placement;
 mod preparation;
 mod presentation;
+mod runtime;
 mod specials;
+mod state;
 mod weapons;
-use encoded::Transaction;
-#[derive(Default)]
-struct Context {
-    slot: usize,
-    image: Option<crate::rom::RomImage>,
-    frozen: bool,
-}
-impl Context {
-    fn record<'g>(
-        owner: Transaction<'g>,
-        bank: u8,
-        cursor: u16,
-    ) -> (Transaction<'g>, crate::rom::RomRecord) {
-        if cursor & 0x8000 == 0 {
-            // The real low-window diagnostic observes already-published state.
-            return owner.foreign(|game| unsafe { crate::rtl::rom_record(bank, cursor, game) });
-        }
-        let image = owner.rom();
-        let base = crate::rtl::lorom_offset((u32::from(bank) << 16) | u32::from(cursor)) as usize;
-        (owner, crate::rom::RomRecord { image, base })
-    }
-}
-
-// Game-facing integration entries. Domain state and shared cores never expose
-// Game; these complete transactions consume ownership before returning it.
 use crate::game_state::Game;
-fn transaction<'g>(game: &'g mut Game, action: impl FnOnce(Transaction<'g>) -> Transaction<'g>) {
-    action(Transaction::acquire(game)).release();
-}
+use host::Host;
+use runtime::Runtime;
+#[path = "../../verification/player_projectiles.rs"]
+pub(crate) mod checks;
+
 pub(crate) fn prepare(game: &mut Game) {
     let address = 0x900000
-        | u32::from(u16::from_le_bytes([
-            game.g_ram[crate::ram_map::words::frame_handler_alfa],
-            game.g_ram[crate::ram_map::words::frame_handler_alfa + 1],
-        ]));
+        | u32::from(encoding::read(
+            &game.g_ram,
+            crate::ram_map::words::frame_handler_alfa,
+        ));
     prepare_entry(address, game);
 }
 pub(crate) fn prepare_entry(address: u32, game: &mut Game) {
-    use crate::game::player_preparation::Entry;
+    use state::PrepareEntry;
     let entry = match address {
-        0x90e695 => Entry::Normal,
-        0x90e6c9 => Entry::Demo,
-        0x90e713 => Entry::ProjectilesOnly,
-        0x90e8cd => Entry::Inactive,
+        0x90e695 => PrepareEntry::Normal,
+        0x90e6c9 => PrepareEntry::Demo,
+        0x90e713 => PrepareEntry::ProjectilesOnly,
+        0x90e8cd => PrepareEntry::Inactive,
         _ => {
-            unsafe {
-                crate::rtl::Unreachable(game);
-            }
+            Runtime::new(game).unknown();
             return;
         }
     };
-    transaction(game, |owner| preparation::prepare(entry, owner));
+    preparation::prepare(&mut Runtime::new(game), entry);
 }
 pub(crate) fn update(game: &mut Game) {
-    transaction(game, motion::advance_all);
+    motion::advance_all(&mut Runtime::new(game));
 }
 pub(crate) fn reset(game: &mut Game) {
-    transaction(game, motion::reset);
+    motion::reset(&mut Runtime::new(game));
 }
 pub(crate) fn clear(slot: u16, game: &mut Game) {
-    transaction(game, |o| motion::clear(slot, o));
+    motion::clear(&mut Runtime::new(game), slot);
 }
 pub(crate) fn impact(slot: u16, game: &mut Game) {
-    transaction(game, |o| lifecycle::impact(slot, o));
+    lifecycle::impact(&mut Runtime::new(game), slot);
 }
 pub(crate) fn retire(slot: u16, game: &mut Game) {
-    transaction(game, |o| lifecycle::retire(slot, o));
+    lifecycle::retire(&mut Runtime::new(game), slot);
 }
 pub(crate) fn reflect(slot: u16, game: &mut Game) {
-    transaction(game, |o| motion::reflect(slot, o));
+    motion::reflect(&mut Runtime::new(game), slot);
 }
 pub(crate) fn draw_projectiles(game: &mut Game) {
-    transaction(game, presentation::draw_projectiles);
+    presentation::draw_projectiles(&mut Runtime::new(game));
 }
 pub(crate) fn draw_explosions(game: &mut Game) {
-    transaction(game, presentation::draw_explosions);
+    presentation::draw_explosions(&mut Runtime::new(game));
 }
 pub(crate) fn update_trails(game: &mut Game) {
-    transaction(game, presentation::update_trails);
+    presentation::update_trails(&mut Runtime::new(game));
 }
 pub(crate) fn flare(game: &mut Game) {
-    transaction(game, feedback::flare);
+    feedback::flare(&mut Runtime::new(game));
 }
 pub(crate) fn grapple_flare(game: &mut Game) {
-    transaction(game, feedback::grapple_flare);
+    feedback::grapple_flare(&mut Runtime::new(game));
+}
+pub(crate) fn draw_flare(slot: u16, game: &mut Game) {
+    feedback::draw_flare(&mut Runtime::new(game), slot);
 }
 pub(crate) fn movement_sound(game: &mut Game) {
-    transaction(game, feedback::movement_sound);
+    feedback::movement_sound(&mut Runtime::new(game));
 }
 pub(crate) fn restore_sound(game: &mut Game) {
-    transaction(game, feedback::restore_sound);
+    feedback::restore_sound(&mut Runtime::new(game));
 }
 pub(crate) fn charge_palette(game: &mut Game) -> u8 {
-    let (owner, result) = feedback::palette(Transaction::acquire(game));
-    owner.release();
-    result
+    feedback::palette(&mut Runtime::new(game))
 }
 pub(crate) fn deselect(game: &mut Game) -> u8 {
-    transaction(game, preparation::deselect);
+    preparation::deselect(&mut Runtime::new(game));
     0
 }
 pub(crate) fn initialize(
@@ -127,20 +102,16 @@ pub(crate) fn initialize(
     kind: crate::game::projectile_initialization::Initialization,
     game: &mut Game,
 ) {
-    transaction(game, |o| animation::initialize(slot, kind, o));
+    animation::initialize(&mut Runtime::new(game), slot, kind);
 }
 pub(crate) fn call_motion(address: u32, slot: u16, game: &mut Game) {
+    let mut h = Runtime::new(game);
     if address >> 16 != 0x90 {
-        unsafe {
-            crate::rtl::Unreachable(game);
-        }
+        h.unknown();
         return;
     }
-    transaction(game, |o| motion::run(address as u16, slot, o));
+    motion::run(&mut h, address as u16, slot);
 }
 pub(crate) fn clear_animation(game: &mut Game) {
-    transaction(game, |mut owner| {
-        weapons::clear_animation(&mut owner);
-        owner
-    });
+    weapons::clear_animation(&mut Runtime::new(game));
 }

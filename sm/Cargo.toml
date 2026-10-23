@@ -34,6 +34,12 @@ name = "animated_detached"
 path = "src/verification/animated_detached/main.rs"
 test = false
 
+# Direct CI compilation checks actual projectile, animation and palette composition.
+[[example]]
+name = "player_detached"
+path = "src/verification/player_detached/main.rs"
+test = false
+
 [dependencies]
 gl = { version = "0.14.0", optional = true }
 sdl2-sys = { version = "0.38.0", optional = true }

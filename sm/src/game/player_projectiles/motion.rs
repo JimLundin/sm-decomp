@@ -1,281 +1,280 @@
-//! Flight, numeric motion identities, reflection and release on one owner.
-use super::{Context, Transaction, animation};
-use crate::game::projectile_flight_control::{self as control, Flight};
+//! Flight, release, reflection and numeric motion dispatch on ordinary session state.
+#![forbid(unsafe_code)]
+use super::{Host, animation, presentation};
 use crate::game::projectile_initialization::Initialization;
 use crate::game::projectile_room::Axis;
-use crate::ram_map::word_arrays as arrays;
-pub(super) fn clear(k: u16, mut game: Transaction<'_>) -> Transaction<'_> {
-    use crate::ram_map::{word_arrays::*, words};
-    let slot = usize::from(k >> 1);
-    for field in [
-        projectile_x_pos,
-        projectile_y_pos,
-        projectile_bomb_x_subpos,
-        projectile_bomb_y_subpos,
-        projectile_dir,
-        projectile_bomb_x_speed,
-        projectile_bomb_y_speed,
-        projectile_x_radius,
-        projectile_y_radius,
-        projectile_type,
-        projectile_damage,
-        projectile_bomb_instruction_ptr,
-        projectile_bomb_instruction_timers,
-        projectile_variables,
-        projectile_spritemap_pointers,
-    ] {
-        word!(game, field + 2 * slot; = 0);
-    }
-    word!(game.projectile_bomb_pre_instructions[slot] = 0xb169);
-    let counter = if (k as i16).wrapping_sub(10) >= 0 {
-        words::bomb_counter
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Flight {
+    NonWave,
+    Wave,
+    Missile,
+    SuperMissile,
+}
+const AXES: [u8; 10] = [2, 3, 1, 3, 2, 2, 3, 1, 3, 2];
+const X_ACCELERATION: [i16; 10] = [0, 16, 16, 16, 0, 0, -16, -16, -16, 0];
+const Y_ACCELERATION: [i16; 10] = [-16, -16, 0, 16, 16, 16, 16, 0, -16, -16];
+pub(super) fn clear(h: &mut impl Host, raw: u16) {
+    shot!(h, raw, x = 0);
+    shot!(h, raw, y = 0);
+    shot!(h, raw, x_fraction = 0);
+    shot!(h, raw, y_fraction = 0);
+    shot!(h, raw, direction = 0);
+    shot!(h, raw, x_speed = 0);
+    shot!(h, raw, y_speed = 0);
+    shot!(h, raw, x_radius = 0);
+    shot!(h, raw, y_radius = 0);
+    shot!(h, raw, kind = 0);
+    shot!(h, raw, damage = 0);
+    shot!(h, raw, cursor = 0);
+    shot!(h, raw, remaining = 0);
+    shot!(h, raw, variable = 0);
+    shot!(h, raw, sprite = 0);
+    shot!(h, raw, motion = 0xb169);
+    let count = if (raw as i16).wrapping_sub(10) >= 0 {
+        &mut h.session_mut().bomb_count
     } else {
-        words::projectile_counter
+        &mut h.session_mut().count
     };
-    word!(game, counter; = word!(game, counter;).wrapping_sub(1));
-    if word!(game, counter;) & 0x8000 != 0 {
-        word!(game, counter; = 0);
+    *count = count.wrapping_sub(1);
+    if *count & 0x8000 != 0 {
+        *count = 0;
     }
-    game
 }
-
-impl<'g> control::Context<Transaction<'g>> for Context {
-    type Direction = usize;
-    fn selected(&self, o: &Transaction<'g>) -> u16 {
-        word!(o.projectile_index)
+fn clear_extensions(h: &mut impl Host) {
+    for raw in (0..5).rev().map(|i| i * 2) {
+        if shot!(h, raw, kind) & 0xfff == 0x200 {
+            clear(h, raw);
+        }
     }
-    fn retiring(&self, o: &Transaction<'g>, slot: u16) -> bool {
-        word!(o.projectile_dir[slot >> 1]) & 0xf0 != 0
+}
+pub(super) fn update(h: &mut impl Host, mut raw: u16, kind: Flight, interval: u16) {
+    h.probe("player_projectiles.flight");
+    if shot!(h, raw, direction) & 0xf0 != 0 {
+        clear(h, raw);
+        if kind == Flight::SuperMissile {
+            clear_extensions(h);
+        }
+        return;
     }
-    fn extension(&self, o: &Transaction<'g>, slot: u16) -> bool {
-        word!(o.projectile_type[slot >> 1]) & 0xfff == 0x200
-    }
-    fn release(&mut self, o: Transaction<'g>, slot: u16) -> Transaction<'g> {
-        clear(slot, o)
-    }
-    fn trail_ready(&mut self, o: &mut Transaction<'g>, slot: u16, interval: u16) -> bool {
-        let at = arrays::projectile_timers + usize::from(slot >> 1) * 2;
-        let previous = o.read_native(at);
-        o.write_slice_native(at, previous.wrapping_sub(1));
+    if interval != 0 {
+        let previous = shot_native!(h, raw, trail_time);
+        shot!(h,raw,trail_time = previous.wrapping_sub(1); SliceNative);
         if previous == 1 {
-            word!(o.projectile_timers[slot >> 1] = interval);
-        }
-        previous == 1
-    }
-    fn trail(&mut self, o: Transaction<'g>, slot: u16) -> Transaction<'g> {
-        super::presentation::emit(slot, o)
-    }
-    fn advance(&mut self, o: Transaction<'g>, slot: u16, kind: Flight) -> Transaction<'g> {
-        control::advance(o, slot, kind, self)
-    }
-    fn direction(&self, o: &Transaction<'g>, slot: u16) -> usize {
-        usize::from(word!(o.projectile_dir[slot >> 1]) & 0xf)
-    }
-    fn accelerate(
-        &mut self,
-        mut o: Transaction<'g>,
-        slot: u16,
-        direction: usize,
-    ) -> Transaction<'g> {
-        word!(o.projectile_bomb_x_speed[slot >> 1] += control::X_ACCELERATION[direction] as u16);
-        word!(o.projectile_bomb_y_speed[slot >> 1] += control::Y_ACCELERATION[direction] as u16);
-        o
-    }
-    fn axes(&mut self, o: Transaction<'g>, direction: usize) -> (Transaction<'g>, u8) {
-        (o, control::AXES[direction])
-    }
-    fn missile(&mut self, o: Transaction<'g>, slot: u16) -> Transaction<'g> {
-        let variable = word!(o.projectile_variables[slot >> 1]);
-        control::accelerate_missile(o, slot, variable, self)
-    }
-    fn collide(
-        &mut self,
-        o: Transaction<'g>,
-        slot: u16,
-        kind: Flight,
-        axis: Axis,
-    ) -> (Transaction<'g>, u8) {
-        super::collision::scan(slot, kind, axis, o)
-    }
-    fn extension_collision(&mut self, o: Transaction<'g>, axis: Axis) -> Transaction<'g> {
-        let parent = word!(o.projectile_index);
-        if !matches!(word!(o.projectile_type[parent >> 1]) & 0xf00, 0x200 | 0x800) {
-            return o;
-        }
-        let child = u16::from(word!(o.projectile_variables[parent >> 1]) as u8);
-        // The active byte deliberately uses the unrounded parent selector.
-        if o.byte(arrays::projectile_variables + usize::from(parent) + 1) != 0 {
-            control::contact_extension(o, parent, child, axis, self)
-        } else {
-            o
+            shot!(h, raw, trail_time = interval);
+            presentation::emit(h, raw);
+            raw = h.session().selected;
         }
     }
-    fn cull(&mut self, o: Transaction<'g>) -> (Transaction<'g>, bool) {
-        let position = |base, o: &Transaction<'g>| {
-            o.read_native(base + usize::from(word!(o.projectile_index) >> 1) * 2)
-        };
-        if control::visible(position(0xb64, &o), word!(o.layer1_x_pos))
-            && control::visible(position(0xb78, &o), word!(o.layer1_y_pos))
-        {
-            return (o, false);
-        }
-        let selected = word!(o.projectile_index);
-        (clear(selected, o), true)
+    advance(h, raw, kind);
+}
+pub(super) fn advance(h: &mut impl Host, raw: u16, kind: Flight) {
+    let direction = usize::from(shot!(h, raw, direction) & 15);
+    if kind != Flight::SuperMissile {
+        let old = shot!(h, raw, x_speed);
+        shot!(
+            h,
+            raw,
+            x_speed = old.wrapping_add(X_ACCELERATION[direction] as u16)
+        );
+        let old = shot!(h, raw, y_speed);
+        shot!(
+            h,
+            raw,
+            y_speed = old.wrapping_add(Y_ACCELERATION[direction] as u16)
+        );
+    }
+    if matches!(kind, Flight::Missile | Flight::SuperMissile) {
+        accelerate_missile(h, raw);
+    }
+    let axes = AXES[direction];
+    collide(h, axes, kind);
+    if cull(h) && kind == Flight::SuperMissile {
+        clear_extensions(h);
     }
 }
-pub(super) fn update(
-    slot: u16,
-    kind: Flight,
-    interval: u16,
-    o: Transaction<'_>,
-) -> Transaction<'_> {
-    crate::verify_probe::hit("player_projectiles.flight");
-    control::update(o, slot, kind, interval, &mut Context::default())
-}
-pub(super) fn advance(slot: u16, kind: Flight, o: Transaction<'_>) -> Transaction<'_> {
-    control::advance(o, slot, kind, &mut Context::default())
-}
-pub(super) fn collide(axes: u8, kind: Flight, o: Transaction<'_>) -> Transaction<'_> {
-    control::collide(o, axes, kind, &mut Context::default())
-}
-pub(super) fn update_extension(slot: u16, o: Transaction<'_>) -> Transaction<'_> {
-    control::update_extension(o, slot, &mut Context::default())
-}
-pub(super) fn initialize_speed(slot: u16, speed: u16, mut o: Transaction<'_>) -> Transaction<'_> {
-    use crate::game::launch_motion::Aim;
-    let offset = usize::from(slot >> 1) * 2;
-    o.write_slice_le(0xb8c + offset, 0);
-    o.write_slice_le(0xba0 + offset, 0);
-    let Some(aim) = Aim::from_direction(o.read_le(0xc04 + offset)) else {
-        return o.foreign(|g| unsafe { crate::rtl::Unreachable(g) }).0;
+pub(super) fn collide(h: &mut impl Host, axes: u8, kind: Flight) {
+    // Both axes retain the selected slot across horizontal callbacks.
+    let raw = h.session().selected;
+    let collision = if kind == Flight::SuperMissile {
+        Flight::Missile
+    } else {
+        kind
     };
-    let velocity = o.state.launch.launch(aim, speed, o.read_le(0xda8));
-    o.write_slice_le(0xbf0 + offset, velocity.y as u16);
-    // A broad vertical write can alter this same owned history at DAC.
-    let velocity = o.state.launch.launch(aim, speed, o.read_le(0xda8));
-    o.write_slice_le(0xbdc + offset, velocity.x as u16);
-    o
-}
-pub(super) fn initialize_beam_speed(slot: u16, mut o: Transaction<'_>) -> Transaction<'_> {
-    use crate::game::launch_motion::{BEAM_SPEEDS, beam_selection};
-    let (index, invalid) = beam_selection(
-        word!(o.projectile_type[slot >> 1]),
-        word!(o.projectile_dir[slot >> 1]),
-    );
-    if invalid {
-        o = o.foreign(|g| unsafe { crate::rtl::Unreachable(g) }).0;
-    }
-    initialize_speed(slot, BEAM_SPEEDS[index], o)
-}
-impl<'g> control::MissileContext<Transaction<'g>> for Context {
-    type Record = crate::rom::RomRecord;
-    fn activate(&mut self, o: &mut Transaction<'g>, slot: u16, variable: u16) {
-        word!(o.projectile_variables[slot >> 1] = variable);
-    }
-    fn acceleration(&mut self, o: Transaction<'g>, slot: u16) -> (Transaction<'g>, Self::Record) {
-        let address = control::missile_acceleration_address(
-            word!(o.projectile_type[slot >> 1]),
-            word!(o.projectile_dir[slot >> 1]),
-        );
-        Context::record(o, 0x90, address)
-    }
-    fn add_acceleration(
-        &mut self,
-        mut o: Transaction<'g>,
-        slot: u16,
-        record: &Self::Record,
-        axis: Axis,
-    ) -> Transaction<'g> {
-        match axis {
-            Axis::X => word!(o.projectile_bomb_x_speed[slot >> 1] += record.word(0)),
-            Axis::Y => word!(o.projectile_bomb_y_speed[slot >> 1] += record.word(2)),
-        }
-        o
-    }
-    fn launch(&mut self, o: Transaction<'g>, slot: u16, speed: u16) -> Transaction<'g> {
-        initialize_speed(slot, speed, o)
-    }
-    fn heavy(&self, o: &Transaction<'g>, slot: u16) -> bool {
-        word!(o.projectile_type[slot >> 1]) & 0x200 != 0
-    }
-    fn spawn(&mut self, o: Transaction<'g>) -> Transaction<'g> {
-        control::spawn_extension(o, self)
-    }
-}
-impl<'g> control::ExtensionContext<Transaction<'g>> for Context {
-    fn speed(&self, o: &Transaction<'g>, slot: u16, axis: Axis) -> i16 {
-        (match axis {
-            Axis::X => word!(o.projectile_bomb_x_speed[slot >> 1]),
-            Axis::Y => word!(o.projectile_bomb_y_speed[slot >> 1]),
-        }) as i16
-    }
-    fn impacted(&self, o: &Transaction<'g>, slot: u16) -> bool {
-        word!(o.projectile_type[slot >> 1]) & 0xf00 == 0x800
-    }
-    fn shift_extension(
-        &mut self,
-        o: &mut Transaction<'g>,
-        parent: u16,
-        child: u16,
-        axis: Axis,
-        delta: i16,
-    ) {
-        let base = match axis {
-            Axis::X => arrays::projectile_x_pos,
-            Axis::Y => arrays::projectile_y_pos,
-        };
-        let at = base + usize::from(parent & !1);
-        let position = if delta > 0 {
-            o.read_native(at)
+    if axes & 1 != 0 {
+        let value = super::collision::scan(h, raw, collision, Axis::X);
+        let hit = if matches!(kind, Flight::NonWave | Flight::Wave) {
+            value & 1 != 0
         } else {
-            o.read_le(at)
+            value != 0
         };
-        o.write_slice_le(
-            base + usize::from(child & !1),
-            position.wrapping_add_signed(delta),
-        );
+        if kind == Flight::SuperMissile {
+            extension_collision(h, Axis::X);
+        }
+        if hit || axes & 2 == 0 {
+            return;
+        }
     }
-    fn select(&mut self, o: &mut Transaction<'g>, slot: u16) {
-        word!(o.projectile_index = slot);
+    // The original empty mask takes the vertical path too.
+    super::collision::scan(h, raw, collision, Axis::Y);
+    if kind == Flight::SuperMissile {
+        extension_collision(h, Axis::Y);
     }
 }
-pub(super) fn link_extension(slot: u16, mut o: Transaction<'_>) -> Transaction<'_> {
-    let address = arrays::projectile_variables + usize::from(word!(o.projectile_index) & !1);
-    let value = o.read_native(address);
-    o.write_slice_native(address, (value & 0xff00).wrapping_add(slot));
-    o
+pub(super) fn update_extension(h: &mut impl Host, raw: u16) {
+    if shot!(h, raw, direction) & 0xf0 != 0 {
+        clear(h, raw);
+        clear_extensions(h);
+    }
 }
-impl<'g> control::CreationContext<Transaction<'g>> for Context {
-    fn occupied(&self, o: &Transaction<'g>, slot: u16) -> bool {
-        word!(o.projectile_damage[slot >> 1]) != 0
+fn visible(position: u16, camera: u16) -> bool {
+    let delta = position.wrapping_sub(camera);
+    delta.wrapping_add(64) & 0x8000 == 0 && delta.wrapping_sub(320) & 0x8000 != 0
+}
+fn cull(h: &mut impl Host) -> bool {
+    if visible(
+        shot_native!(h, h.session().selected, x),
+        h.inputs().camera_x,
+    ) && visible(
+        shot_native!(h, h.session().selected, y),
+        h.inputs().camera_y,
+    ) {
+        return false;
     }
-    fn prepare(&mut self, mut o: Transaction<'g>, slot: u16) -> (Transaction<'g>, bool) {
-        let child = slot >> 1;
-        word!(o.projectile_type[child] = word!(o.projectile_type[child]) | 0x8200);
-        let parent = word!(o.projectile_index) >> 1;
-        word!(o.projectile_x_pos[child] = word!(o.projectile_x_pos[parent]));
-        word!(o.projectile_y_pos[child] = word!(o.projectile_y_pos[parent]));
-        word!(o.projectile_dir[child] = word!(o.projectile_dir[parent]));
-        (o, true)
+    let raw = h.session().selected;
+    clear(h, raw);
+    true
+}
+pub(super) fn initialize_speed(h: &mut impl Host, raw: u16, speed: u16) {
+    use crate::game::launch_motion::Aim;
+    shot!(h,raw,x_fraction = 0; SliceLe);
+    shot!(h,raw,y_fraction = 0; SliceLe);
+    let Some(aim) = Aim::from_direction(shot!(h, raw, direction)) else {
+        h.unknown();
+        return;
+    };
+    let velocity = h
+        .session()
+        .launch
+        .launch(aim, speed, h.inputs().absolute_y_fraction);
+    shot!(h,raw,y_speed = velocity.y as u16; SliceLe);
+    // A broad Y-speed write can change the launch history observed by X.
+    let velocity = h
+        .session()
+        .launch
+        .launch(aim, speed, h.inputs().absolute_y_fraction);
+    shot!(h,raw,x_speed = velocity.x as u16; SliceLe);
+}
+pub(super) fn initialize_beam_speed(h: &mut impl Host, raw: u16) {
+    use crate::game::launch_motion::{BEAM_SPEEDS, beam_selection};
+    let (index, invalid) = beam_selection(shot!(h, raw, kind), shot!(h, raw, direction));
+    if invalid {
+        h.unknown();
     }
-    fn place(&mut self, o: Transaction<'g>, slot: u16) -> Transaction<'g> {
-        super::placement::place(slot, o).0
+    initialize_speed(h, raw, BEAM_SPEEDS[index]);
+}
+fn accelerate_missile(h: &mut impl Host, raw: u16) {
+    let variable = shot!(h, raw, variable);
+    if variable & 0xff00 != 0 {
+        let kind = shot!(h, raw, kind);
+        let direction = shot!(h, raw, direction);
+        let address = if kind & 0x200 != 0 { 0xc32b } else { 0xc303 } + 4 * (direction & 15);
+        let record = h.record(0x90, address);
+        let old = shot!(h, raw, x_speed);
+        shot!(h, raw, x_speed = old.wrapping_add(record.word(0)));
+        let old = shot!(h, raw, y_speed);
+        shot!(h, raw, y_speed = old.wrapping_add(record.word(2)));
+    } else {
+        let speed = variable + 0x100;
+        shot!(h, raw, variable = speed);
+        initialize_speed(h, raw, speed);
+        if shot!(h, raw, kind) & 0x200 != 0 {
+            spawn_extension(h);
+        }
     }
-    fn initialize(&mut self, o: Transaction<'g>, slot: u16) -> Transaction<'g> {
-        animation::initialize(slot, Initialization::SuperMissile, o)
+}
+fn extension_collision(h: &mut impl Host, axis: Axis) {
+    let parent = h.session().selected;
+    if !matches!(shot!(h, parent, kind) & 0xf00, 0x200 | 0x800) {
+        return;
     }
-    fn arm(&mut self, o: &mut Transaction<'g>, slot: u16) {
-        word!(o.projectile_bomb_pre_instructions[slot >> 1] = 0xb075);
+    let child = u16::from(shot!(h, parent, variable) as u8);
+    // Unlike word access, this high lane uses raw parent+1 without rounding.
+    if h.variable_byte(parent, true) != 0 {
+        contact_extension(h, parent, child, axis);
     }
-    fn link(&mut self, o: Transaction<'g>, slot: u16) -> Transaction<'g> {
-        link_extension(slot, o)
+}
+fn shift_extension(h: &mut impl Host, parent: u16, child: u16, axis: Axis, delta: i16) {
+    match axis {
+        Axis::X => {
+            let value = if delta > 0 {
+                shot_native!(h, parent, x)
+            } else {
+                shot!(h, parent, x)
+            };
+            shot!(h,child,x = value.wrapping_add_signed(delta); SliceLe);
+        }
+        Axis::Y => {
+            let value = if delta > 0 {
+                shot_native!(h, parent, y)
+            } else {
+                shot!(h, parent, y)
+            };
+            shot!(h,child,y = value.wrapping_add_signed(delta); SliceLe);
+        }
     }
-    fn count(&mut self, o: &mut Transaction<'g>) {
-        word!(o.projectile_counter = word!(o.projectile_counter).wrapping_add(1));
+}
+fn contact_extension(h: &mut impl Host, parent: u16, child: u16, axis: Axis) {
+    let speed = (match axis {
+        Axis::X => shot!(h, parent, x_speed),
+        Axis::Y => shot!(h, parent, y_speed),
+    }) as i16;
+    let magnitude = speed.unsigned_abs() & 0xff00;
+    if magnitude.wrapping_sub(0xb00) & 0x8000 != 0 {
+        if shot!(h, parent, kind) & 0xf00 == 0x800 {
+            clear(h, child);
+            return;
+        }
+        shift_extension(h, parent, child, axis, 0);
+    } else {
+        let distance = (magnitude >> 8) as i16 - 10;
+        let delta = if speed < 0 { distance } else { -distance };
+        shift_extension(h, parent, child, axis, delta);
+        h.session_mut().selected = child;
+        super::collision::scan(h, child, Flight::Missile, axis);
+        // Restore only after the child collision returns successfully.
+        h.session_mut().selected = parent;
+        if shot!(h, parent, kind) & 0xf00 == 0x800 {
+            clear(h, child);
+        }
     }
+}
+pub(super) fn link_extension(h: &mut impl Host, raw: u16) {
+    let parent = h.session().selected;
+    let value = shot_native!(h, parent, variable);
+    shot!(h,parent,variable = (value&0xff00).wrapping_add(raw); SliceNative);
+}
+fn spawn_extension(h: &mut impl Host) {
+    let Some(child) = (0..5)
+        .map(|i| i * 2)
+        .find(|&raw| shot!(h, raw, damage) == 0)
+    else {
+        return;
+    };
+    let kind = shot!(h, child, kind);
+    shot!(h, child, kind = kind | 0x8200);
+    let parent = h.session().selected;
+    shot!(h, child, x = shot!(h, parent, x));
+    shot!(h, child, y = shot!(h, parent, y));
+    shot!(h, child, direction = shot!(h, parent, direction));
+    // Rejected placement still initializes, arms, links and counts this child.
+    super::placement::place(h, child);
+    animation::initialize(h, child, Initialization::SuperMissile);
+    shot!(h, child, motion = 0xb075);
+    link_extension(h, child);
+    h.session_mut().count = h.session().count.wrapping_add(1);
 }
 pub(super) fn point(angle: u16, radius: u16) -> (u16, u16) {
-    let table = &crate::game::sm_94::kSinCosTable8bit_Sext;
+    let table = &crate::game::projectile_geometry::SINE_COSINE;
     crate::game::special_geometry::point(angle, radius, table.len(), |index| {
         table.get(index).map(|&v| u16::from_le(v as u16))
     })
@@ -284,198 +283,185 @@ pub(super) fn point(angle: u16, radius: u16) -> (u16, u16) {
         unreachable!()
     })
 }
-fn speed_echo(slot: u16, mut o: Transaction<'_>) -> Transaction<'_> {
-    let index = usize::from(slot >> 1);
-    word!(o.projectile_bomb_x_speed[index] += 8);
+fn speed_echo(h: &mut impl Host, raw: u16) {
+    let index = usize::from(raw >> 1);
+    let speed = shot!(h, raw, x_speed);
+    shot!(h, raw, x_speed = speed.wrapping_add(8));
     let (x, y) = point(
-        word!(o.projectile_variables[index]),
-        u16::from(o.byte(0xbdc + 2 * index)),
+        shot!(h, raw, variable),
+        u16::from(shot!(h, raw, x_speed) as u8),
     );
-    let position = x.wrapping_add(word!(o.samus_x_pos));
-    // This original u16 pointer store used native byte order and raw byte k.
-    o.write_slice_native(
-        0xaae + usize::from(slot),
-        x.wrapping_add(word!(o.samus_x_pos)),
-    );
-    word!(o.projectile_x_pos[index] = position);
-    let dx = (position as i16).wrapping_sub(word!(o.layer1_x_pos) as i16);
+    let position = x.wrapping_add(h.session().player.x);
+    h.set_echo_index_native(raw, x.wrapping_add(h.session().player.x));
+    shot!(h, raw, x = position);
+    let dx = (position as i16).wrapping_sub(h.inputs().camera_x as i16);
     let outside = if dx < 0 || (i32::from(dx) - 256) & 0x8000 == 0 {
         true
     } else {
-        let position = y.wrapping_add(word!(o.samus_y_pos));
-        word!(o.speed_echo_xpos[index + 3] = y.wrapping_add(word!(o.samus_y_pos)));
-        word!(o.projectile_y_pos[index] = position);
-        let dy = (position as i16).wrapping_sub(word!(o.layer1_y_pos) as i16);
+        let position = y.wrapping_add(h.session().player.y);
+        h.set_echo_x(index + 3, y.wrapping_add(h.session().player.y));
+        shot!(h, raw, y = position);
+        let dy = (position as i16).wrapping_sub(h.inputs().camera_y as i16);
         dy < 0 || (i32::from(dy) - 256) & 0x8000 == 0
     };
     if outside {
-        word!(o.speed_echo_ypos[index + 3] = 0);
-        o.write_slice_native(0xaae + usize::from(slot), 0);
-        word!(o.speed_echo_xpos[index + 3] = 0);
-        o = clear(slot, o);
+        h.set_echo_y(index + 3, 0);
+        h.set_echo_index_native(raw, 0);
+        h.set_echo_x(index + 3, 0);
+        clear(h, raw);
     }
-    o
 }
-fn suit_pickup_shot(slot: u16, mut o: Transaction<'_>) -> Transaction<'_> {
+fn suit_pickup_shot(h: &mut impl Host, raw: u16) {
     const X: [i16; 4] = [-4, -4, 4, 4];
     const Y: [i16; 4] = [4, -4, -4, 4];
     const RESTART_X: [i16; 4] = [0x80, 0x80, -0x80, -0x80];
     const RESTART_Y: [i16; 4] = [-0x80, 0x80, 0x80, -0x80];
-    let index = usize::from(slot >> 1);
-    word!(o.projectile_x_pos[index] += X[index] as u16);
-    let y = (Y[index] as u16).wrapping_add(word!(o.projectile_y_pos[index]));
-    word!(o.projectile_y_pos[index] = y);
-    if y == word!(o.samus_y_pos) {
-        if word!(o.projectile_variables[index]) == 1 {
-            if slot == 6 {
-                word!(o.samus_movement_handler = 0xf04b);
+    let index = usize::from(raw >> 1);
+    let old = shot!(h, raw, x);
+    shot!(h, raw, x = old.wrapping_add(X[index] as u16));
+    let y = (Y[index] as u16).wrapping_add(shot!(h, raw, y));
+    shot!(h, raw, y = y);
+    if y == h.session().player.y {
+        if shot!(h, raw, variable) == 1 {
+            if raw == 6 {
+                h.session_mut().player.movement_handler = 0xf04b;
             }
-            o = clear(slot, o);
+            clear(h, raw);
         } else {
-            word!(o.projectile_variables[index] += 1);
-            word!(o.samus_shine_timer = 180);
-            word!(o.timer_for_shine_timer = 1);
-            word!(o.special_samus_palette_frame = 0);
-            word!(
-                o.projectile_x_pos[index] =
-                    (RESTART_X[index] as u16).wrapping_add(word!(o.samus_x_pos))
+            let old = shot!(h, raw, variable);
+            shot!(h, raw, variable = old.wrapping_add(1));
+            h.session_mut().player.shine_timer = 180;
+            h.session_mut().player.shine_tick = 1;
+            h.session_mut().player.palette_frame = 0;
+            shot!(
+                h,
+                raw,
+                x = (RESTART_X[index] as u16).wrapping_add(h.session().player.x)
             );
-            word!(
-                o.projectile_y_pos[index] =
-                    (RESTART_Y[index] as u16).wrapping_add(word!(o.samus_y_pos))
+            shot!(
+                h,
+                raw,
+                y = (RESTART_Y[index] as u16).wrapping_add(h.session().player.y)
             );
         }
     }
-    o
 }
-pub(super) fn reflect(slot: u16, mut o: Transaction<'_>) -> Transaction<'_> {
-    let index = usize::from(slot >> 1);
-    let kind = word!(o.projectile_type[index]);
+pub(super) fn reflect(h: &mut impl Host, raw: u16) {
+    let kind = shot!(h, raw, kind);
     if kind & 0x100 != 0 {
-        o = animation::initialize(slot, Initialization::Projectile, o);
-        word!(o.projectile_bomb_pre_instructions[index] = 0xaf68);
-        word!(o.projectile_variables[index] = 240);
+        animation::initialize(h, raw, Initialization::Projectile);
+        shot!(h, raw, motion = 0xaf68);
+        shot!(h, raw, variable = 240);
     } else if kind & 0x200 != 0 {
-        let child = u16::from(o.byte(0xc7c + 2 * index));
-        o = clear(child, o);
-        o = animation::initialize(slot, Initialization::Projectile, o);
-        word!(o.projectile_bomb_pre_instructions[index] = 0xafe5);
-        word!(o.projectile_variables[index] = 240);
+        let child = u16::from(shot!(h, raw, variable) as u8);
+        clear(h, child);
+        animation::initialize(h, raw, Initialization::Projectile);
+        shot!(h, raw, motion = 0xafe5);
+        shot!(h, raw, variable = 240);
     } else {
-        o = initialize_beam_speed(slot, o);
-        o = animation::initialize(slot, Initialization::Projectile, o);
-        word!(
-            o.projectile_bomb_pre_instructions[index] = super::weapons::charged_instruction(
-                usize::from(word!(o.projectile_type[index]) & 15)
-            )
+        initialize_beam_speed(h, raw);
+        animation::initialize(h, raw, Initialization::Projectile);
+        shot!(
+            h,
+            raw,
+            motion = super::weapons::charged_instruction(usize::from(shot!(h, raw, kind) & 15))
         );
     }
-    o
 }
-pub(super) fn advance_all(mut o: Transaction<'_>) -> Transaction<'_> {
-    word!(o.projectile_index = 18);
-    let mut cursor: i32 = 18;
+pub(super) fn advance_all(h: &mut impl Host) {
+    h.session_mut().selected = 18;
+    let mut cursor = 18i32;
     while cursor >= 0 {
-        let index = (cursor >> 1) as usize;
-        if word!(o.projectile_bomb_instruction_ptr[index]) != 0 {
-            let motion = word!(o.projectile_bomb_pre_instructions[index]);
-            o = run(motion, cursor as u16, o);
-            o = animation::advance(o);
-            cursor = i32::from(word!(o.projectile_index));
+        let raw = cursor as u16;
+        if shot!(h, raw, cursor) != 0 {
+            let code = shot!(h, raw, motion);
+            run(h, code, raw);
+            animation::advance(h);
+            cursor = i32::from(h.session().selected);
         }
         cursor -= 2;
-        word!(o.projectile_index = cursor as u16);
-    }
-    o
-}
-pub(super) fn run(motion: u16, slot: u16, o: Transaction<'_>) -> Transaction<'_> {
-    use crate::game::{bomb_lifecycle::Kind as Bomb, special_attacks::Kind as Special};
-    match motion {
-        0xd4d2 => speed_echo(slot, o),
-        0xefd3 => suit_pickup_shot(slot, o),
-        0xd793 => super::specials::update(slot, Special::Plasma, o),
-        0xcf09 => super::specials::update(slot, Special::Ice, o),
-        0xcf7a => super::specials::update(slot, Special::IceReleased, o),
-        0xda08 => super::specials::update(slot, Special::Wave, o),
-        0xdb06 => super::specials::update(slot, Special::Spazer, o),
-        0xdc9c => super::specials::update(slot, Special::SpazerReleased, o),
-        0xd7e1 => super::specials::plasma_radius(slot, false, o),
-        0xd7fa => super::specials::plasma_radius(slot, true, o),
-        0xd813 => super::specials::depart_plasma(slot, o),
-        0xb099 => super::bombs::bomb_update(slot, Bomb::Bomb, o),
-        0xb0ae => super::bombs::bomb_update(slot, Bomb::PowerBomb, o),
-        0xd8f7 => super::bombs::bomb_update(slot, Bomb::Spread, o),
-        0xb169 => o,
-        0xaef3 => update(slot, Flight::NonWave, 4, o),
-        0xaf4a => collide(2, Flight::NonWave, o),
-        0xaf52 => collide(3, Flight::NonWave, o),
-        0xaf60 => collide(1, Flight::NonWave, o),
-        0xaf68 => update(slot, Flight::Missile, 4, o),
-        0xafc7 => collide(2, Flight::Missile, o),
-        0xafcf => collide(3, Flight::Missile, o),
-        0xafdd => collide(1, Flight::Missile, o),
-        0xafe5 => update(slot, Flight::SuperMissile, 2, o),
-        0xb047 => collide(2, Flight::SuperMissile, o),
-        0xb052 => collide(3, Flight::SuperMissile, o),
-        0xb06a => collide(1, Flight::SuperMissile, o),
-        0xb075 => update_extension(slot, o),
-        0xb0c3 => update(slot, Flight::Wave, 4, o),
-        0xb0e4 => update(slot, Flight::Wave, 3, o),
-        0xb103 => advance(slot, Flight::Wave, o),
-        0xb13b => collide(2, Flight::Wave, o),
-        0xb143 => collide(3, Flight::Wave, o),
-        0xb151 => collide(1, Flight::Wave, o),
-        0xb159 => update(slot, Flight::Wave, 0, o),
-        _ => o.foreign(|g| unsafe { crate::rtl::Unreachable(g) }).0,
+        h.session_mut().selected = cursor as u16;
     }
 }
-pub(super) fn reset(mut o: Transaction<'_>) -> Transaction<'_> {
-    use crate::ram_map::word_arrays::*;
-    for index in 0..10 {
-        for field in [
-            projectile_timers,
-            projectile_x_pos,
-            projectile_y_pos,
-            projectile_dir,
-            projectile_bomb_x_speed,
-            projectile_bomb_y_speed,
-            projectile_x_radius,
-            projectile_y_radius,
-            projectile_type,
-            projectile_damage,
-            projectile_bomb_instruction_ptr,
-            projectile_bomb_instruction_timers,
-            projectile_variables,
-            projectile_spritemap_pointers,
-        ] {
-            o.write_word_le(0, field + 2 * index);
+pub(super) fn run(h: &mut impl Host, code: u16, raw: u16) {
+    use super::{bombs::Kind as Bomb, specials::Kind as Special};
+    match code {
+        0xd4d2 => speed_echo(h, raw),
+        0xefd3 => suit_pickup_shot(h, raw),
+        0xd793 => super::specials::update(h, raw, Special::Plasma),
+        0xcf09 => super::specials::update(h, raw, Special::Ice),
+        0xcf7a => super::specials::update(h, raw, Special::IceReleased),
+        0xda08 => super::specials::update(h, raw, Special::Wave),
+        0xdb06 => super::specials::update(h, raw, Special::Spazer),
+        0xdc9c => super::specials::update(h, raw, Special::SpazerReleased),
+        0xd7e1 => super::specials::plasma_radius(h, raw, false),
+        0xd7fa => super::specials::plasma_radius(h, raw, true),
+        0xd813 => super::specials::depart_plasma(h, raw),
+        0xb099 => super::bombs::bomb_update(h, raw, Bomb::Bomb),
+        0xb0ae => super::bombs::bomb_update(h, raw, Bomb::PowerBomb),
+        0xd8f7 => super::bombs::bomb_update(h, raw, Bomb::Spread),
+        0xb169 => (),
+        0xaef3 => update(h, raw, Flight::NonWave, 4),
+        0xaf4a => collide(h, 2, Flight::NonWave),
+        0xaf52 => collide(h, 3, Flight::NonWave),
+        0xaf60 => collide(h, 1, Flight::NonWave),
+        0xaf68 => update(h, raw, Flight::Missile, 4),
+        0xafc7 => collide(h, 2, Flight::Missile),
+        0xafcf => collide(h, 3, Flight::Missile),
+        0xafdd => collide(h, 1, Flight::Missile),
+        0xafe5 => update(h, raw, Flight::SuperMissile, 2),
+        0xb047 => collide(h, 2, Flight::SuperMissile),
+        0xb052 => collide(h, 3, Flight::SuperMissile),
+        0xb06a => collide(h, 1, Flight::SuperMissile),
+        0xb075 => update_extension(h, raw),
+        0xb0c3 => update(h, raw, Flight::Wave, 4),
+        0xb0e4 => update(h, raw, Flight::Wave, 3),
+        0xb103 => advance(h, raw, Flight::Wave),
+        0xb13b => collide(h, 2, Flight::Wave),
+        0xb143 => collide(h, 3, Flight::Wave),
+        0xb151 => collide(h, 1, Flight::Wave),
+        0xb159 => update(h, raw, Flight::Wave, 0),
+        _ => {
+            h.unknown();
         }
-        word!(o.projectile_bomb_pre_instructions[index] = 0xb169);
     }
-    word!(o.bomb_counter = 0);
-    word!(o.cooldown_timer = 0);
-    word!(o.projectile_counter = 0);
-    word!(o.power_bomb_flag = 0);
-    if word!(o.hud_auto_cancel_flag) != 0 {
-        word!(o.hud_item_index = 0);
-        word!(o.samus_auto_cancel_hud_item_index = 0);
+}
+pub(super) fn reset(h: &mut impl Host) {
+    for shot in &mut h.session_mut().shots {
+        shot.trail_time = 0;
+        shot.x = 0;
+        shot.y = 0;
+        shot.direction = 0;
+        shot.x_speed = 0;
+        shot.y_speed = 0;
+        shot.x_radius = 0;
+        shot.y_radius = 0;
+        shot.kind = 0;
+        shot.damage = 0;
+        shot.cursor = 0;
+        shot.remaining = 0;
+        shot.variable = 0;
+        shot.sprite = 0;
+        shot.motion = 0xb169;
     }
-    for field in [speed_echo_xpos, speed_echo_ypos, speed_echo_xspeed] {
-        for index in 0..4 {
-            o.write_word_le(0, field + 2 * index);
-        }
+    h.session_mut().bomb_count = 0;
+    h.session_mut().controls.cooldown = 0;
+    h.session_mut().count = 0;
+    h.session_mut().power_bomb.flag = 0;
+    if h.inputs().hud_auto_cancel != 0 {
+        h.session_mut().controls.selected_weapon = 0;
+        h.session_mut().controls.automatic_weapon = 0;
     }
-    word!(o.speed_echoes_index = 0);
-    if word!(o.samus_special_super_palette_flags) != 0 {
-        word!(o.samus_special_super_palette_flags = 0);
-        o = o
-            .foreign(|g| unsafe { crate::game::sm_91::Samus_LoadSuitTargetPalette(g) })
-            .0;
+    h.session_mut().echoes.x.fill(0);
+    h.session_mut().echoes.y.fill(0);
+    h.session_mut().echoes.x_speed.fill(0);
+    h.session_mut().echoes.index = 0;
+    if h.session().player.special_palette_flags != 0 {
+        h.session_mut().player.special_palette_flags = 0;
+        h.palette(super::host::PaletteEffect::SuitTarget);
     }
-    if word!(o.hyper_beam_flag) != 0 {
-        o = o
-            .foreign(|g| crate::game::palette_effects::spawn(0xe1f0, g))
-            .0;
+    if h.inputs().hyper != 0 {
+        h.palette(super::host::PaletteEffect::Spawn(0xe1f0));
     }
-    o
+    h.probe("player_projectiles.reset.completed");
 }

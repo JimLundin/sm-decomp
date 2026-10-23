@@ -1,212 +1,186 @@
-//! Direct room traversal and one owner-holding binding for legacy-shaped reaction traits.
-use super::{Context, Transaction};
+//! Live typed inputs to the shared room traversal and terrain-reaction kernels.
+#![forbid(unsafe_code)]
+use super::{Host, motion::Flight};
 use crate::game::projectile_block_reactions::{
     self as reactions, Definitions, Material, Mechanism, Progress, SlopeInputs,
 };
-use crate::game::projectile_flight_control::Flight;
 use crate::game::projectile_room::{self as room, Axis, Field, Kind, Scan};
 use crate::rom::RomRecord;
-impl SlopeInputs for Transaction<'_> {
+// This is a borrow of the actual host, never a second owned state snapshot.
+pub(super) struct Room<'a, H: Host>(pub(super) &'a mut H);
+impl<H: Host> SlopeInputs for Room<'_, H> {
     fn block(&self) -> u16 {
-        word!(self.cur_block_index)
+        self.0.session().room_cursor
     }
     fn selected(&self) -> u16 {
-        word!(self.projectile_index)
+        self.0.session().selected
     }
     fn width(&self) -> u16 {
-        word!(self.room_width_in_blocks)
+        self.0.inputs().room_width
     }
     fn bts(&self, block: u16) -> u8 {
-        self.byte(0x16402 + usize::from(block))
+        self.0.room_bts(block)
     }
-    fn position(&self, slot: u16, axis: Axis) -> u16 {
+    fn position(&self, raw: u16, axis: Axis) -> u16 {
+        let h = &*self.0;
         match axis {
-            Axis::X => word!(self.projectile_x_pos[slot >> 1]),
-            Axis::Y => word!(self.projectile_y_pos[slot >> 1]),
+            Axis::X => shot!(h, raw, x),
+            Axis::Y => shot!(h, raw, y),
         }
     }
-    fn radius(&self, slot: u16, axis: Axis) -> u16 {
+    fn radius(&self, raw: u16, axis: Axis) -> u16 {
+        let h = &*self.0;
         match axis {
-            Axis::X => word!(self.projectile_x_radius[slot >> 1]),
-            Axis::Y => word!(self.projectile_y_radius[slot >> 1]),
+            Axis::X => shot!(h, raw, x_radius),
+            Axis::Y => shot!(h, raw, y_radius),
         }
     }
-    fn square_position(&self, slot: u16, axis: Axis) -> u16 {
-        let at = if axis == Axis::X { 0xb64 } else { 0xb78 } + 2 * usize::from(slot >> 1);
-        self.read_native(at)
+    fn square_position(&self, raw: u16, axis: Axis) -> u16 {
+        let h = &*self.0;
+        match axis {
+            Axis::X => shot_native!(h, raw, x),
+            Axis::Y => shot_native!(h, raw, y),
+        }
     }
-    fn square_radius(&self, slot: u16, axis: Axis) -> u16 {
-        let at = if axis == Axis::X { 0xbb4 } else { 0xbc8 } + 2 * usize::from(slot >> 1);
-        self.read_native(at)
+    fn square_radius(&self, raw: u16, axis: Axis) -> u16 {
+        let h = &*self.0;
+        match axis {
+            Axis::X => shot_native!(h, raw, x_radius),
+            Axis::Y => shot_native!(h, raw, y_radius),
+        }
     }
     fn square_probe(&self, axis: Axis) {
-        crate::verify_probe::hit(if axis == Axis::X {
+        self.0.probe(if axis == Axis::X {
             "square-slope.shot.horizontal"
         } else {
             "square-slope.shot.vertical"
         });
     }
     fn quadrant(&self, index: usize) -> bool {
-        crate::game::sm_94::kTab948E54[index] != 0
+        crate::game::projectile_geometry::SLOPE_QUADRANTS[index] != 0
     }
     fn height(&self, index: usize) -> u8 {
-        crate::game::sm_94::kAlignYPos_Tab0[index]
+        crate::game::projectile_geometry::SLOPE_HEIGHTS[index]
     }
 }
-fn position(axis: Axis) -> usize {
-    match axis {
-        Axis::X => 0xb64,
-        Axis::Y => 0xb78,
+impl<H: Host> room::State for Room<'_, H> {
+    fn field(&self, raw: u16, axis: Axis, field: Field) -> u16 {
+        let h = &*self.0;
+        match (axis, field) {
+            (Axis::X, Field::Position) => shot_native!(h, raw, x),
+            (Axis::Y, Field::Position) => shot_native!(h, raw, y),
+            (Axis::X, Field::Fraction) => shot_native!(h, raw, x_fraction),
+            (Axis::Y, Field::Fraction) => shot_native!(h, raw, y_fraction),
+            (Axis::X, Field::Radius) => shot_native!(h, raw, x_radius),
+            (Axis::Y, Field::Radius) => shot_native!(h, raw, y_radius),
+            (Axis::X, Field::Speed) => shot_native!(h, raw, x_speed),
+            (Axis::Y, Field::Speed) => shot_native!(h, raw, y_speed),
+            (Axis::X, Field::ScreenHigh) => shot!(h, raw, x) >> 8,
+            (Axis::Y, Field::ScreenHigh) => shot!(h, raw, y) >> 8,
+        }
     }
-}
-fn fraction(axis: Axis) -> usize {
-    match axis {
-        Axis::X => 0xb8c,
-        Axis::Y => 0xba0,
-    }
-}
-impl room::State for Transaction<'_> {
-    fn field(&self, slot: u16, axis: Axis, field: Field) -> u16 {
-        let offset = usize::from(slot >> 1) * 2;
-        let base = match field {
-            Field::Position => position(axis),
-            Field::Fraction => fraction(axis),
-            Field::Radius => {
-                if axis == Axis::X {
-                    0xbb4
-                } else {
-                    0xbc8
-                }
-            }
-            Field::Speed => {
-                if axis == Axis::X {
-                    0xbdc
-                } else {
-                    0xbf0
-                }
-            }
-            Field::ScreenHigh => return u16::from(self.byte(position(axis) + offset + 1)),
-        };
-        self.read_native(base + offset)
-    }
-    fn move_by(&mut self, slot: u16, axis: Axis, amount: i32) {
-        let offset = usize::from(slot >> 1) * 2;
-        let low = u32::from(self.read_native(fraction(axis) + offset));
-        let high = u32::from(self.read_native(position(axis) + offset));
-        let sum = (low | high << 16).wrapping_add(amount as u32);
-        self.write_slice_native(fraction(axis) + offset, sum as u16);
-        self.write_slice_native(position(axis) + offset, (sum >> 16) as u16);
-    }
-}
-impl<'g> room::Context<Transaction<'g>> for Context {
-    fn width(&self, owner: &Transaction<'g>) -> u16 {
-        word!(owner.room_width_in_blocks)
-    }
-    fn scrolls(&self, owner: &Transaction<'g>, axis: Axis) -> u16 {
+    fn move_by(&mut self, raw: u16, axis: Axis, amount: i32) {
+        let h = &mut *self.0;
         match axis {
-            Axis::X => word!(owner.room_width_in_scrolls),
-            Axis::Y => word!(owner.room_height_in_scrolls),
+            Axis::X => {
+                let low = u32::from(shot_native!(h, raw, x_fraction));
+                let high = u32::from(shot_native!(h, raw, x));
+                let sum = (low | (high << 16)).wrapping_add(amount as u32);
+                shot!(h,raw,x_fraction = sum as u16; SliceNative);
+                shot!(h,raw,x = (sum>>16) as u16; SliceNative);
+            }
+            Axis::Y => {
+                let low = u32::from(shot_native!(h, raw, y_fraction));
+                let high = u32::from(shot_native!(h, raw, y));
+                let sum = (low | (high << 16)).wrapping_add(amount as u32);
+                shot!(h,raw,y_fraction = sum as u16; SliceNative);
+                shot!(h,raw,y = (sum>>16) as u16; SliceNative);
+            }
+        }
+        if amount != 0 {
+            h.probe("player_projectiles.motion.applied");
+        }
+    }
+}
+struct Traversal;
+impl<'a, H: Host> room::Context<Room<'a, H>> for Traversal {
+    fn width(&self, g: &Room<'a, H>) -> u16 {
+        g.0.inputs().room_width
+    }
+    fn scrolls(&self, g: &Room<'a, H>, axis: Axis) -> u16 {
+        match axis {
+            Axis::X => g.0.inputs().room_scroll_width,
+            Axis::Y => g.0.inputs().room_scroll_height,
         }
     }
     fn react(
         &mut self,
-        owner: Transaction<'g>,
+        mut g: Room<'a, H>,
         axis: Axis,
         block: u16,
         scan: Scan,
-    ) -> (Transaction<'g>, Scan, u8) {
-        let mut context = Room(Some(owner));
-        let (_, scan, hit) = reactions::react((), axis, block, scan, &mut context);
-        (context.finish(), scan, hit)
+    ) -> (Room<'a, H>, Scan, u8) {
+        let (_, scan, hit) = reactions::react((), axis, block, scan, &mut g);
+        (g, scan, hit)
     }
-    fn retire(&mut self, owner: Transaction<'g>, slot: u16) -> Transaction<'g> {
-        super::lifecycle::retire(slot, owner)
+    fn retire(&mut self, g: Room<'a, H>, raw: u16) -> Room<'a, H> {
+        super::lifecycle::retire(g.0, raw);
+        g.0.probe("player_projectiles.terrain.retired");
+        g
     }
 }
-pub(super) fn scan(
-    slot: u16,
-    flight: Flight,
-    axis: Axis,
-    owner: Transaction<'_>,
-) -> (Transaction<'_>, u8) {
+pub(super) fn scan(h: &mut impl Host, raw: u16, flight: Flight, axis: Axis) -> u8 {
     let kind = match flight {
         Flight::NonWave => Kind::Beam,
         Flight::Wave => Kind::Wave,
         Flight::Missile | Flight::SuperMissile => Kind::Missile,
     };
-    room::collide(owner, slot, axis, kind, &mut Context::default())
-}
-
-// Reaction traits have owner-less reads and cursor writes. Hold the SAME owner
-// here for that call, rather than caching inputs or keeping a second RAM view.
-pub(super) struct Room<'g>(pub(super) Option<Transaction<'g>>);
-impl<'g> Room<'g> {
-    fn owner(&self) -> &Transaction<'g> {
-        self.0.as_ref().unwrap()
-    }
-    pub(super) fn finish(mut self) -> Transaction<'g> {
-        self.0.take().unwrap()
-    }
+    room::collide(Room(h), raw, axis, kind, &mut Traversal).1
 }
 impl reactions::Table for RomRecord {
     fn word(&self, index: usize) -> u16 {
         self.image.table_word(self.base, index as isize)
     }
 }
-impl Definitions<()> for Room<'_> {
+impl<H: Host> Definitions<()> for Room<'_, H> {
     type Table = RomRecord;
     fn resolve(&mut self, _: (), address: u32) -> ((), RomRecord) {
-        let owner = self.0.take().unwrap();
-        let (owner, record) = Context::record(owner, (address >> 16) as u8, address as u16);
-        self.0 = Some(owner);
-        ((), record)
+        ((), self.0.record((address >> 16) as u8, address as u16))
     }
     fn bts(&self) -> u8 {
-        let owner = self.owner();
-        owner.byte(0x16402 + usize::from(word!(owner.cur_block_index)))
+        self.0.room_bts(self.0.session().room_cursor)
     }
     fn area(&self) -> u16 {
-        let owner = self.owner();
-        word!(owner.area_index)
+        self.0.inputs().area
     }
 }
-impl reactions::Context<()> for Room<'_> {
+impl<H: Host> reactions::Context<()> for Room<'_, H> {
     type Header = u16;
     fn byte_limit(&self) -> u16 {
-        let owner = self.owner();
-        word!(owner.room_size_in_blocks)
+        self.0.inputs().room_bytes
     }
     fn cursor(&self) -> u16 {
-        let owner = self.owner();
-        word!(owner.cur_block_index)
+        self.0.session().room_cursor
     }
     fn select(&mut self, cell: u16) {
-        let owner = self.0.as_mut().unwrap();
-        word!(owner.cur_block_index = cell);
+        self.0.session_mut().room_cursor = cell;
     }
     fn material(&self) -> Material {
-        let owner = self.owner();
-        reactions::material(owner.read_le(0x10002 + usize::from(word!(owner.cur_block_index)) * 2))
+        reactions::material(self.0.room_level(self.0.session().room_cursor))
     }
     fn extension(&self) -> i16 {
-        i16::from(self.bts() as i8)
+        i16::from(Definitions::bts(self) as i8)
     }
     fn width(&self) -> u16 {
-        let owner = self.owner();
-        word!(owner.room_width_in_blocks)
+        self.0.inputs().room_width
     }
     fn slope(&self, _: &(), axis: Axis, scan: &mut impl Progress) -> bool {
-        reactions::slope(axis, scan, self.owner())
+        reactions::slope(axis, scan, self)
     }
     fn mechanism(&mut self, _: (), bombable: bool, solid: bool) -> ((), Option<Mechanism<u16>>) {
         reactions::mechanism((), bombable, solid, self)
     }
     fn spawn(&mut self, _: (), header: u16) {
-        let owner = self.0.take().unwrap();
-        self.0 = Some(
-            owner
-                .foreign(|g| unsafe { crate::game::room_mechanisms::spawn_collision(header, g) })
-                .0,
-        );
+        self.0.spawn_mechanism(header);
     }
 }

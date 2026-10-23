@@ -157,8 +157,12 @@ references; measure build/test time and resource growth before changing the loop
    player-projectile typed core, absorbing twelve singleton algorithm/binding
    layers and actual flare decisions (5294lines plus adjacent scope). Reviewed
    state/host contract is frozen; producers, flight and presentation/runtime
-   workers implement isolated drafts. Baseline104 existing cases and44 new
-   captures are retained; extra presentation/reset cases are being prepared.
+   workers have completed the reviewed candidate. Validation branch
+   verify/player-session-20261023 passes local build,106groups+56comparisons and
+   11549frames with all12probes and zero failures. Hosted independent execution
+   is pending before adoption. Full production change is-1937lines; verification
+   +1068; maintained Rust-869. The actual three-core host compiles without Game/
+   backend modules; runtime still uses scoped ownership across legacy calls.
 
 
    Room mechanisms are now adopted as one production responsibility: creation,

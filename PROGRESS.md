@@ -1,8 +1,8 @@
 # Engine migration
 
-2026-10-23 17:24 UTC
+2026-10-23 17:39 UTC
 
-🟩 Committed | 🟦 Checked, uncommitted | 🟧 In progress | ⬜ Remaining | **Purple border: changed since previous report**
+🟩 Committed | 🟦 Checked draft | 🟧 In progress | ⬜ Remaining | **Purple border: changed since previous report**
 
 ```mermaid
 flowchart TB
@@ -12,7 +12,7 @@ flowchart TB
     ROOT --> PAL
     ROOT --> ANIM
     ROOT --> ENEMY
-    PP --> PCORE["Player projectile typed core<br/>contract reviewed / implementing"]:::active
+    PP --> PCORE["Player projectile typed core<br/>local checks passed"]:::checked
     PCORE --> PERSIST
     ROOT --> REST
     PP["player_projectiles/<br/>interval owner + callers"]:::done
@@ -124,16 +124,22 @@ flowchart LR
 flowchart LR
     CONTRACT["player_projectiles/<br/>typed state / host contract"]:::checked
     BASE["verification/<br/>44 new old-code references captured"]:::checked
-    CONTRACT --> PROD["weapons / preparation / placement<br/>IMPLEMENTING"]:::active
-    CONTRACT --> FLIGHT["flight / collision / lifecycle<br/>IMPLEMENTING"]:::active
-    CONTRACT --> DRAW["animation / trails / flare<br/>IMPLEMENTING"]:::active
-    PROD --> DELETE["12 singleton binding layers<br/>absorb algorithms / retire adapters"]:::active
+    CONTRACT --> PROD["weapons / preparation / placement<br/>comparison checks: PASS"]:::checked
+    CONTRACT --> FLIGHT["flight / collision / lifecycle<br/>comparison checks: PASS"]:::checked
+    CONTRACT --> DRAW["animation / trails / flare<br/>comparison checks: PASS"]:::checked
+    PROD --> DELETE["15 singleton layers retired<br/>production: 1,937 fewer lines"]:::checked
     FLIGHT --> DELETE
     DRAW --> DELETE
     EXTRA["12 flare / reset references<br/>CAPTURED"]:::checked --> VERIFY
-    BASE --> VERIFY["Comparison + composed-host checks"]:::pending
+    BASE --> VERIFY["106 groups + 56 references<br/>PASS"]:::checked
     DELETE --> VERIFY
-    class EXTRA changed
+    VERIFY --> PBUILD["Release / frontend / format<br/>PASS"]:::checked
+    PBUILD --> PMOVIE["11,549 frames / 0 failures<br/>12 required probes: PASS"]:::checked
+    PBUILD --> PDET["Three-core standalone compilation<br/>PASS"]:::checked
+    PDET --> PHOST["Independent host execution<br/>GitHub Windows: QUEUED"]:::active
+    PMOVIE --> PADOPT["Adopt typed player core"]:::pending
+    PHOST --> PADOPT
+    class PROD,FLIGHT,DRAW,DELETE,VERIFY,PBUILD,PMOVIE,PDET,PHOST changed
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5

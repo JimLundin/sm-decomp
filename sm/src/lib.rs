@@ -331,27 +331,11 @@ pub mod game {
             $($enemy)*.current_instruction = $instruction;
         };
     }
-
-    pub(crate) mod special_attacks;
-
-    pub(crate) mod bomb_lifecycle;
     pub(crate) mod special_geometry;
 
-    pub(crate) mod bomb_terrain;
-
-    pub(crate) mod bomb_creation;
-
-    pub(crate) mod weapon_coordinator;
-    pub(crate) mod weapon_selection;
-
-    pub(crate) mod player_preparation;
-
     pub(crate) mod beam_charge_palette;
-    pub(crate) mod beam_charge_palette_ram;
-    pub(crate) mod beam_firing;
 
     pub(crate) mod beam_definitions;
-    pub(crate) mod missile_firing;
 
     pub(crate) mod beam_windows;
     pub mod constants;
@@ -379,19 +363,16 @@ pub mod game {
     pub(crate) mod xray_background;
 
     pub(crate) mod player_projectiles;
-    pub(crate) mod projectile_flight_control;
-    pub(crate) mod projectile_placement;
     #[path = "../verification/room_mechanisms.rs"]
     pub(crate) mod room_mechanism_checks;
 
+    pub(crate) mod projectile_geometry;
     pub(crate) mod projectile_initialization;
 
     pub(crate) mod projectile_playback;
 
     pub(crate) mod projectile_block_reactions;
     pub(crate) mod projectile_block_reactions_ram;
-    pub(crate) mod projectile_lifecycle;
-    pub(crate) mod projectile_presentation;
     pub(crate) mod projectile_presentation_ram;
     pub(crate) mod projectile_room;
     pub(crate) mod projectile_trail_emission;
@@ -439,7 +420,6 @@ pub mod game {
     pub mod enemy_script;
     pub(crate) mod mother_brain_visuals;
     pub mod projectile_contact;
-    pub(crate) mod projectile_trails;
     pub mod scene_drawing;
     pub mod sm_94;
     pub mod sm_9b;
@@ -607,4 +587,14 @@ pub fn verify_enemy_projectile_qualified_case(id: u32) -> bool {
         _ => false,
     })
     .unwrap_or(false)
+}
+
+#[doc(hidden)]
+pub fn verify_player_projectile_expanded_case(id: u32) -> Option<Vec<u8>> {
+    game::player_projectiles::checks::expanded::capture(id)
+}
+
+#[doc(hidden)]
+pub fn verify_player_projectile_presentation_reset_case(id: u32) -> Option<Vec<u8>> {
+    game::player_projectiles::checks::presentation_reset::capture(id)
 }

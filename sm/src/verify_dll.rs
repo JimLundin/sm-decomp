@@ -298,3 +298,41 @@ unsafe fn run(args: &[String]) -> c_int {
 pub extern "C" fn sm_verify_enemy_projectile_qualified_case(id: u32) -> bool {
     sm::verify_enemy_projectile_qualified_case(id)
 }
+
+/// Copy panic, g_fail and RAM.
+/// # Safety
+/// Output must contain capacity writable bytes.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn sm_verify_player_projectile_expanded_case(
+    id: u32,
+    output: *mut u8,
+    capacity: usize,
+) -> usize {
+    unsafe {
+        copy_case(
+            id,
+            output,
+            capacity,
+            sm::verify_player_projectile_expanded_case,
+        )
+    }
+}
+
+/// Copy panic, g_fail and RAM.
+/// # Safety
+/// Output must contain capacity writable bytes.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn sm_verify_player_projectile_presentation_reset_case(
+    id: u32,
+    output: *mut u8,
+    capacity: usize,
+) -> usize {
+    unsafe {
+        copy_case(
+            id,
+            output,
+            capacity,
+            sm::verify_player_projectile_presentation_reset_case,
+        )
+    }
+}

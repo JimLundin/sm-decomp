@@ -20,7 +20,6 @@ use crate::game::explosion_window::spawn_crystal_flash;
 use crate::game::palette_effects;
 use crate::game::player_projectiles::draw_projectiles;
 use crate::game::progress_flags::CheckEventHappened;
-use crate::game::sm_8b::Samus_CalcPos_Mode7;
 use crate::game::sm_9b::{
     GrappleBeamFunc_BF1B, GrappleBeamHandler, UpdateGrappleBeamTilesAndIncrFlameCtr,
 };
@@ -1585,62 +1584,7 @@ pub unsafe fn LoadProjectilePalette(a: u16, game: &mut Game) {
         }
     }
 }
-static kProjectileOriginOffsets_X: [i16; 13] =
-    [2, 18, 15, 17, 3, -4, -17, -15, -18, -2, -4, -4, -4];
-static kProjectileOriginOffsets_Y: [i16; 13] = [-28, -19, 1, 6, 17, 17, 6, 1, -20, -28, -20, -2, 8];
-static kProjectileOriginOffsets2_X: [i16; 10] = [2, 19, 20, 18, 3, -4, -18, -20, -19, -2];
-static kProjectileOriginOffsets2_Y: [i16; 10] = [-32, -22, -3, 6, 25, 25, 6, -3, -20, -32];
-pub unsafe fn DrawFlareAnimationComponent(k: u16, game: &mut Game) {
-    unsafe {
-        static word_93A225: [u16; 3] = [0, 0x1e, 0x24];
-        static word_93A22B: [u16; 3] = [0, 0x2a, 0x30];
-        let mut r20: u16 = 0;
-        let mut r18: u16 = byte!(@pointer ram_ptr!(game, u16; 0xcd6); k as i32 as isize) as u16;
-        let mut v1: u16 = if *ram_ptr!(game; 0xa1e) == 4 {
-            word_93A22B[(k >> 1) as usize]
-        } else {
-            word_93A225[(k >> 1) as usize]
-        };
-        let r22: u16 = (r18).wrapping_add(v1);
-        let r24: u16 = (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
-            .offset(word!(game.samus_pose) as isize))
-        .y_offset_to_gfx as u16;
-        let mut v2: i16 = (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
-            .offset(word!(game.samus_pose) as isize))
-        .direction_shots_fired as i16;
-        if v2 != 255 && v2 != 16 {
-            let v3: u16 = (2 * (v2 as i32 & 0xf)) as u16;
-            let old_x: u16 = word!(game.samus_x_pos);
-            let old_y: u16 = word!(game.samus_y_pos);
-            if (word!(game.ceres_status) & 0x8000) != 0 {
-                Samus_CalcPos_Mode7(game);
-            }
-            let v4: i32 = v3 as i32 >> 1;
-            let mut v5: u16 = if *ram_ptr!(game; 0xa1f) == 1 {
-                r20 = (word!(game.samus_x_pos) as i32
-                    + kProjectileOriginOffsets2_X[v4 as usize] as i32
-                    - word!(game.layer1_x_pos) as i32) as u16;
-                (word!(game.samus_y_pos) as i32 + kProjectileOriginOffsets2_Y[v4 as usize] as i32
-                    - r24 as i32
-                    - word!(game.layer1_y_pos) as i32) as u16
-            } else {
-                r20 = (word!(game.samus_x_pos) as i32
-                    + kProjectileOriginOffsets_X[v4 as usize] as i32
-                    - word!(game.layer1_x_pos) as i32) as u16;
-                (word!(game.samus_y_pos) as i32 + kProjectileOriginOffsets_Y[v4 as usize] as i32
-                    - r24 as i32
-                    - word!(game.layer1_y_pos) as i32) as u16
-            };
-            r18 = v5;
-            if (v5 & 0xff00) == 0 {
-                DrawBeamGrappleSpritemap(r22, r20, r18, game);
-            }
-            if (word!(game.ceres_status) & 0x8000) != 0 {
-                word! {game; samus_y_pos = old_y; samus_x_pos = old_x; }
-            }
-        }
-    }
-}
+pub(crate) use crate::game::player_projectiles::draw_flare as DrawFlareAnimationComponent;
 pub unsafe fn HandleArmCannonOpenState(game: &mut Game) {
     unsafe {
         if *ram_ptr!(game; 0xaa7) != 0 || UpdateArmCannonIsOpenFlag(game) & 1 != 0 {
