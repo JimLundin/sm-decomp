@@ -8,6 +8,7 @@ mod animation;
 mod bomb_creation;
 mod bomb_terrain;
 mod bombs;
+#[path = "../../verification/player_projectiles.rs"]
 pub(crate) mod checks;
 mod collision;
 mod feedback;

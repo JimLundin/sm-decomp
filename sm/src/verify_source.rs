@@ -4,12 +4,16 @@
 
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/verification/room_level_copy.rs",
+        include_bytes!("verification/room_level_copy.rs"),
+    ),
+    (
         "sm/src/game/ownership_transport.rs",
         include_bytes!("game/ownership_transport.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/qualified_checks.rs",
-        include_bytes!("game/room_mechanisms/qualified_checks.rs"),
+        "sm/src/verification/room_mechanism_qualified.rs",
+        include_bytes!("verification/room_mechanism_qualified.rs"),
     ),
     (
         "sm/src/game/room_mechanisms/commands.rs",
@@ -44,8 +48,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/room_mechanisms/native_content.rs"),
     ),
     (
-        "sm/src/game/room_mechanisms/ownership_checks.rs",
-        include_bytes!("game/room_mechanisms/ownership_checks.rs"),
+        "sm/src/verification/room_mechanism_ownership.rs",
+        include_bytes!("verification/room_mechanism_ownership.rs"),
     ),
     (
         "sm/src/game/room_mechanisms/port.rs",
@@ -160,8 +164,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/room_mechanisms/state.rs"),
     ),
     (
-        "sm/src/game/room_mechanism_checks.rs",
-        include_bytes!("game/room_mechanism_checks.rs"),
+        "sm/src/verification/room_mechanisms.rs",
+        include_bytes!("verification/room_mechanisms.rs"),
     ),
     (
         "sm/src/game/player_projectiles/animation.rs",
@@ -232,8 +236,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/player_projectiles/state.rs"),
     ),
     (
-        "sm/src/game/player_projectiles/checks.rs",
-        include_bytes!("game/player_projectiles/checks.rs"),
+        "sm/src/verification/player_projectiles.rs",
+        include_bytes!("verification/player_projectiles.rs"),
     ),
     (
         "sm/src/game/player_projectiles/weapons.rs",

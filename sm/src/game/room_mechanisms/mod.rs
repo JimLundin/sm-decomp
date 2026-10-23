@@ -221,11 +221,13 @@ pub(crate) mod checks {
     }
 }
 
+#[path = "../../verification/room_mechanism_ownership.rs"]
 mod ownership_checks;
 pub(crate) fn ownership_checks(game: &mut Game) -> bool {
     ownership_checks::run(game)
 }
 
+#[path = "../../verification/room_mechanism_qualified.rs"]
 mod qualified_checks;
 pub(crate) fn qualified_checks(game: &mut Game) -> bool {
     qualified_checks::run(game)

@@ -8,6 +8,20 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Verification carriers are now physically grouped in `sm/src/verification`.
+The existing logical modules and private access remain unchanged through path
+registrations. Four files are byte-identical after normalization; the room-copy
+test body is identical with a private parent import and re-export. This is
+organization, not production reduction. Registration/imports add 13 support lines.
+Current total 109412 Rust lines: 4266 in dedicated verification files and 105146
+elsewhere (the latter still includes mixed verification support).
+
+Source `e279c7b426e060bd45f58ab5b83a8aa23cea7ef23b8d6d1121c29625c042a8b2`
+passes release/frontend/verifier builds, 106 projectile groups, all three
+room-copy cases, mechanism ownership/qualified checks and a frozen normal output.
+Source correspondence proves no production behavior changed; no gameplay replay
+was warranted. Local evidence is under `20261023/verification-layout`.
+
 Public CI repair: `64c450f2` passed GitHub Format, then failed because Ubuntu
 did not provision native archives. CI now separates Ubuntu formatting/progress
 from the supported Windows GNU frontend build, with all seven native archives

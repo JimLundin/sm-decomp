@@ -381,6 +381,7 @@ pub mod game {
     pub(crate) mod player_projectiles;
     pub(crate) mod projectile_flight_control;
     pub(crate) mod projectile_placement;
+    #[path = "../verification/room_mechanisms.rs"]
     pub(crate) mod room_mechanism_checks;
 
     pub(crate) mod projectile_initialization;
