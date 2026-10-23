@@ -422,12 +422,19 @@ references; measure build/test time and resource growth before changing the loop
    Implementation is split across shared core/codec, PLM, visual, projectile
    and legacy/persistence lanes. The14PLM/4visual/5projectile/18legacy file drafts
    pass independent source review, including the save alignment repair and
-   seven observation points. Shared-core review and all behavior checks remain.
-   Frozen71case fixture bundle is under review; root baseline-4ba01b81 reuses
-   the source-checked473905fc DLL without changing production. NewSave/demo/load
-   and defined odd-area Spore callers are included; old Rust SaveToSram is never
-   executed as a reference. Full210byte Runtimeguard is drafted; its actual
-   failed-load reentry case awaits the shared fixture helper.
+   seven observation points. Shared-core/codec and full210byte Runtimeguard now
+   pass source review, including actual successful/failed-load reentry. Fifty
+   frozen production overlay files retire the reviewed ports/helpers; draft
+   production cost+270lines, with verification counted separately.
+   Baseline build28.98s on54419923 passes71actual flag/reset/load/Spore captures
+   and two originalCPU saves. Independent byte audit passes every capture.
+   Separate alignment-only build28.69s on1cc2d6c8 passes both repaired SaveToSram
+   captures against originalCPU: all7RAM/SRAM stages, exact27CPU-only bytes,
+   gameplay scratch05E7/05E8 fully compared. Never execute old Rust SaveToSram.
+   Local next-flags-session/reference-1 and save-alignment-results-1 retain
+   source-checked captures and comparisons. This qualifies the narrow save
+   repair for those scenarios; full progression replacement comparisons,
+   composed execution and mutation checks remain pending.
    Public atlas snapshot4ba01b81 is deployed via40034126172: browser/accessibility
    and Pages pass; live HTTP200 bytes match committed HTML. It reflects adopted
    sprite ownership, while this progression work remains a draft.

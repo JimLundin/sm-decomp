@@ -27,16 +27,16 @@ flowchart LR
 flowchart TB
     FCONTRACT["Interface + declarations<br/>review / compile PASS"]:::done
     FUNION["210 proposed bytes<br/>overlap audit PASS"]:::done
-    FCONTRACT --> FCORE["progress_flags.rs<br/>shared rules in progress"]:::active
-    FUNION --> FCODEC["Session + codec + Runtime<br/>in progress"]:::active
+    FCONTRACT --> FCORE["progress_flags.rs<br/>draft source review PASS"]:::draft
+    FUNION --> FCODEC["Session + codec + Runtime<br/>draft source review PASS"]:::draft
     FCORE --> FPLM["room_mechanisms / 14 files<br/>draft source review PASS"]:::draft
     FCORE --> FVIS["palette + animation / 4 files<br/>draft source review PASS"]:::draft
     FCORE --> FEPR["projectiles / 5 files<br/>draft source review PASS"]:::draft
     FCORE --> FLEG["legacy callers / 18 files<br/>draft source review PASS"]:::draft
     FLEG --> FSAVE["sm_81 save alignment repair<br/>draft source review PASS"]:::draft
-    FSAVE --> FCPU["Original CPU save capsule<br/>in preparation"]:::active
-    FCODEC --> FGUARD["210-byte ownership guard<br/>failed-load case in progress"]:::active
-    FBASE["71 reference cases<br/>source review pending"]:::active --> FCHECK["Behavior comparisons<br/>pending"]:::pending
+    FSAVE --> FCPU["Save alignment / original CPU<br/>2 × 7 stages match"]:::done
+    FCODEC --> FGUARD["210-byte ownership guard<br/>draft source review PASS"]:::draft
+    FBASE["71 reference captures<br/>execution + audit PASS"]:::done --> FCHECK["Full replacement comparisons<br/>pending"]:::pending
     FPLM --> FCHECK
     FVIS --> FCHECK
     FEPR --> FCHECK
@@ -45,7 +45,7 @@ flowchart TB
     FGUARD --> FCHECK
     FCHECK --> FMUT["Shared-consumer checks + mutations<br/>pending"]:::pending
     FMUT --> FADOPT["Adopt progression owner<br/>pending"]:::pending
-    class FCONTRACT,FUNION,FCORE,FCODEC,FPLM,FVIS,FEPR,FLEG,FSAVE,FCPU,FGUARD,FBASE,FCHECK,FMUT,FADOPT changed
+    class FCORE,FCODEC,FCPU,FGUARD,FBASE changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
