@@ -3,7 +3,7 @@ use crate::game::enemy_combat::{
     apply_contact, apply_shot, contact_without_death, enemy_death, power_bomb_without_death,
     select_frozen_ai, shot_reaction,
 };
-use crate::game::enemy_drops::{DropSource, scatter};
+use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::music::QueueMusic_Delayed8;
@@ -14,6 +14,7 @@ use core::mem::offset_of;
 pub use crate::game::constants::bank_86::*;
 
 use crate::game::enemy_layouts::enemy_layout;
+use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::minimap;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_80::{
@@ -21,7 +22,6 @@ use crate::game::sm_80::{
     ScreenOff, ScreenOn, WaitForNMI_Async,
 };
 use crate::game::sm_82::AdvancePaletteFade_BgPalette6;
-use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::{SpawnHdmaObject, sub_88E487};
 use crate::game::sm_a0::{
     CallEnemyPreInstr, CheckIfEnemyTouchesSamus, DetermineDirectionOfSamusFromEnemy,

@@ -4,7 +4,7 @@ pub use crate::game::constants::bank_86::*;
 use crate::game::enemy_combat::{
     apply_contact, apply_shot, contact_without_death, select_frozen_ai, shot_reaction,
 };
-use crate::game::enemy_drops::{DropSource, scatter};
+use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::music::QueueMusic_Delayed8;
@@ -15,8 +15,8 @@ use crate::game::room_mechanisms::{spawn_collision, spawn_hardcoded};
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_82::sub_82DAF7;
 
+use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::palette_effects;
-use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::SpawnBombTorizoHaze;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_94::kSinCosTable8bit_Sext;

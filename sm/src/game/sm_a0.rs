@@ -11,12 +11,12 @@ pub use crate::game::constants::bank_a0::*;
 pub use crate::game::constants::bank_a4::*;
 pub use crate::game::constants::bank_b4::*;
 
+use crate::game::enemy_projectiles::SpawnEprojWithGfx;
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
 use crate::game::room_mechanisms::spawn_collision;
 use crate::game::sm_80::{
     NextRandom, QueueSfx1_Max3, QueueSfx1_Max6, QueueSfx2_Max1, QueueSfx2_Max3, QueueSfx3_Max3,
 };
-use crate::game::sm_86::SpawnEprojWithGfx;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_94::square_slope_occupied;
@@ -1015,17 +1015,6 @@ pub fn EnemyFunc_BF8A(k: u16, a: u16, amt: i32, game: &mut Game) -> u8 {
         ((position >> 16) as u16).wrapping_sub(game.enemy_coordinates(k).y_height())
     };
     scan_enemy_collision_block_row!(edge, game, left, columns);
-}
-pub unsafe fn CalculateAngleOfSamusFromEproj(k: u16, game: &mut Game) -> u16 {
-    unsafe {
-        let x = game
-            .samus_x_pos()
-            .wrapping_sub(game.enemy_projectile_x_pos(k));
-        let y = game
-            .samus_y_pos()
-            .wrapping_sub(game.enemy_projectile_y_pos(k));
-        CalculateAngleFromXY(x, y, game)
-    }
 }
 pub unsafe fn CalculateAngleOfSamusFromEnemy(k: u16, game: &mut Game) -> u16 {
     unsafe {

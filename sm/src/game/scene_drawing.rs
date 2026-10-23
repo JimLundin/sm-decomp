@@ -1,5 +1,6 @@
 //! Layer-ordered scene drawing and live enemy graphics compatibility.
 #![deny(unsafe_op_in_unsafe_fn)]
+use crate::game::enemy_projectiles::{DrawEprojsWithPriority, EprojPriority};
 use crate::game::enemy_ram::{
     EnemyField as F, EnemySlot, native_read as read, native_write as write,
 };
@@ -7,7 +8,6 @@ use crate::game::player_projectiles::draw_explosions;
 use crate::game::sm_81::{
     DrawSpritemapWithBaseTile, DrawSpritemapWithBaseTile2, DrawSpritemapWithBaseTileOffscreen,
 };
-use crate::game::sm_86::{DrawEprojsWithPriority, EprojPriority};
 use crate::game::sm_90::DrawSamusAndProjectiles;
 use crate::game::sm_a0::CallEnemyGfxDrawHook;
 use crate::game::sprite_objects::draw_sprites;

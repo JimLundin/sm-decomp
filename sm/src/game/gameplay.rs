@@ -4,6 +4,7 @@
 //! message suspension separate it from movement/pose completion. Callbacks
 //! observe live RAM. Only the entry resume point is held across those callbacks.
 use crate::game::animated_tiles;
+use crate::game::enemy_projectiles::EprojRunAll;
 use crate::game::enemy_scheduling::{run_enemies, select_enemies};
 use crate::game::message_boxes;
 use crate::game::palette_effects;
@@ -15,7 +16,6 @@ use crate::game::sm_80::{
     CalculateLayer2PosAndScrollsWhenScrolling, DebugScrollPosSaveLoad, HandleHudTilemap,
 };
 use crate::game::sm_82::HandleSamusOutOfHealthAndGameTile;
-use crate::game::sm_86::EprojRunAll;
 use crate::game::sm_90::{
     HandleControllerInputForGamePhysics, HandleSamusMovementAndPause, MainScrollingRoutine,
 };
@@ -83,8 +83,8 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
             animated_tiles::advance(game);
             // This is a new read: earlier callbacks may change interaction policy.
             if word!(game.debug_disable_sprite_interact) == 0 {
-                crate::game::projectile_contact::enemy_projectiles_hit_samus(game);
-                crate::game::projectile_contact::shoot_enemy_projectiles(game);
+                crate::game::enemy_projectiles::enemy_projectiles_hit_samus(game);
+                crate::game::enemy_projectiles::shoot_enemy_projectiles(game);
                 crate::game::enemy_contact::power_bomb_enemies(game);
             }
             MainScrollingRoutine(game);

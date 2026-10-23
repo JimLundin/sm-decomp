@@ -293,3 +293,8 @@ unsafe fn run(args: &[String]) -> c_int {
         verify::run_args(args, &mut game)
     }
 }
+
+#[unsafe(no_mangle)]
+pub extern "C" fn sm_verify_enemy_projectile_qualified_case(id: u32) -> bool {
+    sm::verify_enemy_projectile_qualified_case(id)
+}

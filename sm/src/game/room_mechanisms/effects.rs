@@ -38,7 +38,7 @@ pub(super) fn sound(
 
 pub(super) fn eproj(definition: u16, parameter: u16, game: &mut Game) {
     unsafe {
-        crate::game::sm_86::SpawnEprojWithRoomGfx(definition, parameter, game);
+        crate::game::enemy_projectiles::SpawnEprojWithRoomGfx(definition, parameter, game);
     }
 }
 pub(super) fn player_control(operation: u16, game: &mut Game) {

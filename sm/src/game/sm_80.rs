@@ -9,13 +9,13 @@ pub use crate::game::constants::bank_60::*;
 use crate::c_library::memcmp;
 use crate::game::animated_tiles;
 use crate::game::enemy_population_ram::load_room_assets;
+use crate::game::enemy_projectiles::ClearEprojs;
 use crate::game::palette_effects;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::room_mechanisms::{clear, reload_graphics};
 use crate::game::sm_8b::InitializeIoDisplayLogo_Async;
 use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
 use crate::game::sm_82::{LoadDestinationRoomThings, NullFunc, ResetSoundQueues};
-use crate::game::sm_86::ClearEprojs;
 use crate::game::sm_88::{InitializeSpecialEffectsForNewRoom, WaitUntilEndOfVblankAndClearHdma};
 use crate::game::sm_89::LoadFXHeader;
 use crate::game::sm_90::UpdateBeamTilesAndPalette;
@@ -558,7 +558,7 @@ pub unsafe fn Nmi_ProcessVertScrollingDma(game: &mut Game) {
     }
 }
 // Byte-backed queue layout from ram_map: three channels, sixteen slots each.
-fn queue_sfx(channel: usize, sound: u8, max_queued: u8, game: &mut Game) {
+pub(crate) fn queue_sfx(channel: usize, sound: u8, max_queued: u8, game: &mut Game) {
     let read_pos = 0x643 + channel;
     let write_pos = 0x646 + channel;
     let limit_pos = 0x653 + channel;

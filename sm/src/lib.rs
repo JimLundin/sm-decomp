@@ -399,7 +399,7 @@ pub mod game {
     pub(crate) mod projectile_trail_selection;
 
     pub mod animated_tiles;
-    pub mod eproj_script;
+    pub mod enemy_projectiles;
     pub mod item_pickups;
     pub mod item_pickups_ram;
     pub(crate) mod mechanism_displacement;
@@ -419,7 +419,6 @@ pub mod game {
     pub mod sm_80;
     pub mod sm_81;
     pub mod sm_82;
-    pub mod sm_86;
     pub mod sm_88;
     pub mod sm_89;
     pub mod sm_8b;
@@ -434,7 +433,6 @@ pub mod game {
     pub mod enemy_animation;
     pub mod enemy_combat;
     pub mod enemy_contact;
-    pub mod enemy_drops;
     pub mod enemy_population;
     pub mod enemy_population_ram;
     pub mod enemy_scheduling;
@@ -552,7 +550,13 @@ pub fn verify_animated_tile_case(id: u32) -> Option<Vec<u8>> {
 
 #[doc(hidden)]
 pub fn verify_enemy_projectile_case(id: u32) -> Option<Vec<u8>> {
-    game::sm_86::checks::capture_case(id)
+    if id < game::enemy_projectiles::checks::CASES {
+        game::enemy_projectiles::checks::capture_case(id)
+    } else {
+        game::enemy_projectiles::checks::supplemental_cases::capture_case(
+            id - game::enemy_projectiles::checks::CASES,
+        )
+    }
 }
 
 #[path = "verification/palette_effects.rs"]
@@ -587,3 +591,20 @@ macro_rules! type_aliases {
     };
 }
 pub(crate) use type_aliases;
+
+#[doc(hidden)]
+pub fn verify_enemy_projectile_qualified_case(id: u32) -> bool {
+    std::panic::catch_unwind(|| match id {
+        0..=23 => game::enemy_projectiles::checks::qualified_checks::check_case(id),
+        24..=27 => game::enemy_projectiles::checks::qualified_motion_checks::check_case(id - 24),
+        28 => {
+            game::enemy_projectiles::reset_metadata_checks::check();
+            true
+        }
+        29..=56 => game::enemy_projectiles::native_content_checks::check_case(id - 29),
+        57..=70 => game::enemy_projectiles::checks::qualified_lavaquake_checks::check_case(id - 57),
+        71..=86 => game::enemy_projectiles::checks::qualified_turret_checks::check_case(id - 71),
+        _ => false,
+    })
+    .unwrap_or(false)
+}

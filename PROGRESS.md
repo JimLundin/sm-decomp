@@ -1,6 +1,6 @@
 # Engine migration
 
-2026-10-23 17:01 UTC
+2026-10-23 17:17 UTC
 
 🟩 Committed | 🟦 Checked, uncommitted | 🟧 In progress | ⬜ Remaining | **Purple border: changed since previous report**
 
@@ -12,12 +12,14 @@ flowchart TB
     ROOT --> PAL
     ROOT --> ANIM
     ROOT --> ENEMY
+    PP --> PCORE["Player projectile typed core<br/>contract reviewed / implementing"]:::active
+    PCORE --> PERSIST
     ROOT --> REST
     PP["player_projectiles/<br/>interval owner + callers"]:::done
     RM["room_mechanisms/<br/>interval owner + callers"]:::done
     PAL["palette_effects/<br/>independent typed core"]:::done
     ANIM["animated_tiles/<br/>independent typed core"]:::done
-    ENEMY["enemy_projectiles/<br/>isolated replacement"]:::active
+    ENEMY["enemy_projectiles/<br/>owner + callers adopted"]:::done
     REST["player / enemies / rooms<br/>remaining typed-core migrations"]:::pending
     PP --> PERSIST
     RM --> PERSIST
@@ -77,26 +79,27 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    subgraph enemy["enemy_projectiles/ / isolated work"]
+    subgraph enemy["enemy_projectiles/ / committed"]
         direction TB
-        ES["state + compatibility<br/>801 RAM bytes / 16 native"]:::checked --> EL["allocation + scheduler"]:::checked
-        EL --> SETUP["setup callbacks"]:::checked
-        EL --> PRE["pre-action callbacks"]:::checked
-        EL --> CMD["commands + movement"]:::checked
-        SETUP --> EC["library source check<br/>PASS"]:::checked
+        ES["state + compatibility<br/>801 RAM bytes / 16 native"]:::done --> EL["allocation + scheduler"]:::done
+        EL --> SETUP["setup callbacks"]:::done
+        EL --> PRE["pre-action callbacks"]:::done
+        EL --> CMD["commands + movement"]:::done
+        SETUP --> EC["library source check<br/>PASS"]:::done
         PRE --> EC
         CMD --> EC
-        ATT["Spore / Maw / Waffle / Botwoon<br/>actual producer migration"]:::active --> CALL["caller retirement draft"]:::active
-        DROP["drops + contact + reset"]:::active --> CALL
-        CALL --> FULL["Full adoption checks"]:::pending
-        EC --> CORE["1,362 old / new comparisons<br/>PASS"]:::checked
+        ATT["Spore / Maw / Waffle / Botwoon<br/>actual producer migration"]:::done --> CALL["old banks / callers retired"]:::done
+        DROP["drops + contact + reset"]:::done --> CALL
+        CALL --> FULL["Build / review / comparisons<br/>PASS"]:::done
+        EC --> CORE["1,382 old / new comparisons<br/>PASS"]:::done
         OLD["354 old references<br/>captured"]:::done --> CORE
-        MORE["1,362 old references<br/>captured / corrected"]:::checked --> FULL
-        ROM["Native ROM owner<br/>g_rom field retired in draft"]:::checked --> RECORD["Captured RomImage records<br/>checked reads verified"]:::checked
-        RECORD --> QUAL["57 independent checks<br/>bytes / reset / ownership: PASS"]:::checked
+        MORE["1,382 old references<br/>captured / corrected"]:::done --> FULL
+        ROM["Native ROM owner<br/>g_rom field retired"]:::done --> RECORD["Captured RomImage records<br/>checked reads verified"]:::done
+        RECORD --> QUAL["87 independent checks<br/>bytes / reset / ownership: PASS"]:::done
         QUAL --> FULL
         CORE --> FULL
-        FULL --> ECOMMIT["Commit adoption"]:::pending
+        FULL --> EMOVIE["18,216 frames / 0 failures<br/>7 required probes: PASS"]:::done
+        EMOVIE --> ECOMMIT["Owner adopted"]:::done
     end
     subgraph composition["independent animation + palette - committed"]
         direction TB
@@ -115,7 +118,26 @@ flowchart LR
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
-    class CORE,MORE,ROM,RECORD,QUAL changed
+    class ES,EL,SETUP,PRE,CMD,EC,ATT,DROP,CALL,CORE,MORE,ROM,RECORD,QUAL,FULL,EMOVIE,ECOMMIT changed
+```
+
+```mermaid
+flowchart LR
+    CONTRACT["player_projectiles/<br/>typed state / host contract"]:::checked
+    BASE["verification/<br/>44 new old-code references captured"]:::checked
+    CONTRACT --> PROD["weapons / preparation / placement<br/>IMPLEMENTING"]:::active
+    CONTRACT --> FLIGHT["flight / collision / lifecycle<br/>IMPLEMENTING"]:::active
+    CONTRACT --> DRAW["animation / trails / flare<br/>IMPLEMENTING"]:::active
+    PROD --> DELETE["12 singleton binding layers<br/>absorb algorithms / retire adapters"]:::active
+    FLIGHT --> DELETE
+    DRAW --> DELETE
+    BASE --> VERIFY["Comparison + composed-host checks"]:::pending
+    DELETE --> VERIFY
+    classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef changed stroke:#a21caf,stroke-width:5px
+    class CONTRACT,BASE,PROD,FLIGHT,DRAW,DELETE changed
 ```
 
 [Plan](docs/PLAN.md) / [Checks and accounting](docs/HANDOFF.md) / [Target architecture](docs/target-architecture/README.md)

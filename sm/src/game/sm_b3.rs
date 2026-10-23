@@ -3,16 +3,16 @@ use crate::game::enemy_combat::{
     apply_contact, apply_shot, contact_without_death, grapple_death, power_bomb_without_death,
     select_frozen_ai, shot_reaction,
 };
-use crate::game::enemy_drops::{DropSource, scatter};
+use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
 
+use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::progress_flags::{CheckEventHappened, SetBossBitForCurArea};
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
-use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_a0::{
     CalculateAngleFromXY, CalculateAngleOfSamusFromEnemy, CallEnemyPreInstr,
     CheckIfEnemyIsOnScreen, ConvertAngleToXy, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
@@ -511,11 +511,11 @@ crate::game::callback_dispatch! {
             }
         } else {
             CallBotwoonFuncVarE((((*E).var_E) as u32) | (0xb30000u32), game);
-            Botwoon_Func_22(game);
-            Botwoon_Func_23(game);
+            crate::game::enemy_projectiles::record_botwoon_head(game);
+            crate::game::enemy_projectiles::follow_botwoon_history(game);
             CallEnemyPreInstr((((*E).var_F) as u32) | (0xb30000u32), game);
-            Botwoon_Func_25(game);
-            Botwoon_Func_24(game);
+            crate::game::enemy_projectiles::orient_botwoon_body(game);
+            crate::game::enemy_projectiles::advance_botwoon_history(game);
             Botwoon_Func_31(word!(game.cur_enemy_index), game);
         };
     };
@@ -540,11 +540,11 @@ crate::game::callback_dispatch! {
             }
         } else {
             CallBotwoonFuncVarE((((*E).var_E) as u32) | (0xb30000u32), game);
-            Botwoon_Func_22(game);
-            Botwoon_Func_23(game);
+            crate::game::enemy_projectiles::record_botwoon_head(game);
+            crate::game::enemy_projectiles::follow_botwoon_history(game);
             CallEnemyPreInstr((((*E).var_F) as u32) | (0xb30000u32), game);
-            Botwoon_Func_25(game);
-            Botwoon_Func_24(game);
+            crate::game::enemy_projectiles::orient_botwoon_body(game);
+            crate::game::enemy_projectiles::advance_botwoon_history(game);
         };
     };
     [11770340] Botwoon_Func_13 [] {
@@ -610,77 +610,6 @@ crate::game::callback_dispatch! {
     Botwoon_Func_21 [] {
         let pt: Point32 = ConvertAngleToXy((*E).var_3A, (*E).var_38, game);
         EnemyFunc_B691((*E).var_3A, pt, game);
-    };
-    Botwoon_Func_22 [] {
-        let botwoon_var_B: u16 = (*E).var_B;
-        *(ram_ptr!(game, u16; 0x9000, botwoon_var_B as i32 as isize)) =
-            (*E).base.x_pos;
-        *(ram_ptr!(game, u16; 0x9002, botwoon_var_B as i32 as isize)) =
-            (*E).base.y_pos;
-    };
-    Botwoon_Func_23 [] {
-        let mut r18: u16 = ((*E).var_B as i32 - (*E).var_C as i32 & 0x3ff) as u16;
-        for n in (0i32..=24).rev().step_by(2) {
-            let ET = Get_Botwoon(n, game);
-            let botwoo_var_00: u16 = (*ET).var_00;
-            if (*E).var_36 == r18 {
-                let v2: u16 = n as u16;
-                let v4: bool = (*ET).var_10 == 1;
-                (*ET).var_10 = ((*ET).var_10) ^ (1u16);
-                if v4 {
-                    word!(game.eproj_properties[(botwoo_var_00 >> 1)] &= !(0x2000));
-                    *(ram_ptr!(game, u16; 0xf380)).offset((botwoo_var_00 >> 1) as isize) = 1;
-                } else {
-                    word!(game.eproj_properties[(botwoo_var_00 >> 1)] |= (0x2000u16));
-                    *(ram_ptr!(game, u16; 0xf380)).offset((botwoo_var_00 >> 1) as isize) = 2;
-                }
-                if v2 == 0 {
-                    set_fields! {[(*E)], 0; var_35, var_3E}
-                    (*E).var_36 = -1i32 as u16;
-                    if (*E).var_33 == 0 {
-                        (*E).var_3E = 1;
-                    }
-                }
-            }
-            let v7: i32 = botwoo_var_00 as i32 >> 1;
-            word! { game;
-                eproj_x_pos[v7] =
-                    *(ram_ptr!(game, u16; 0x9000, r18 as i32 as isize));
-                eproj_y_pos[v7] =
-                    *(ram_ptr!(game, u16; 0x9002, r18 as i32 as isize));
-            }
-            r18 = (r18 as i32 - (*E).var_C as i32 & 0x3ff) as u16;
-        }
-    };
-    Botwoon_Func_24 [] {
-        (*E).var_B = ((*E).var_B as i32 + 4 & 0x3ff) as u16;
-    };
-    Botwoon_Func_25 [] {
-        for n in (0i32..=24).rev().step_by(2) {
-            let mut r24: u16 = 0;
-            let ERR = Get_Botwoon(n, game);
-            let botwoo_var_00: u16 = (*ERR).var_00;
-            if (*ERR).var_10 != 0 {
-                r24 = 256;
-            }
-            let mut x: u16 = 0;
-            let mut y: u16 = if n == 24 {
-                let v4: i32 = botwoo_var_00 as i32 >> 1;
-                x = ((*E).base.x_pos).wrapping_sub(word!(game.eproj_x_pos[v4]));
-                ((*E).base.y_pos).wrapping_sub(word!(game.eproj_y_pos[v4]))
-            } else {
-                if n == 0 {
-                    r24 = (r24).wrapping_add(512);
-                }
-                let v2: i32 = botwoo_var_00 as i32 >> 1;
-                x = (word!(game.eproj_x_pos[(v2 + 1)])).wrapping_sub(word!(game.eproj_x_pos[v2]));
-                (word!(game.eproj_y_pos[(v2 + 1)])).wrapping_sub(word!(game.eproj_y_pos[v2]))
-            };
-            word!(
-                game.eproj_E[(botwoo_var_00 >> 1)] =
-                    (2 * (((r24).wrapping_add(CalculateAngleFromXY(x, y, game))) as i32 >> 5)) as u16
-            );
-        }
     };
     Botwoon_Shot [] {
         (*E).var_4C = (*E).base.health;

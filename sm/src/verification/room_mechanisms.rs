@@ -828,7 +828,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     let image = RomImage::zeroed(0x200000);
     seed(&mut g, &image);
     g.loaded_rom = Some(image.clone());
-    g.g_rom = image.as_mut_ptr();
+    g.register_native_rom(image.clone());
     if (66..=81).contains(&id) || id == 63 || id >= 318 {
         assert_eq!(
             (image.as_mut_ptr() as usize + crate::rtl::lorom_offset(0x84a000) as usize) & 1,

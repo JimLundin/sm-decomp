@@ -660,7 +660,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     };
     fixture(seed, &mut g, &loaded, &native);
     g.loaded_rom = Some(loaded);
-    g.g_rom = native.as_mut_ptr();
+    g.register_native_rom(native.clone());
     // Real bus dependencies reached by Power Bomb's HDMA allocation.
     let hardware = if id == 100 {
         use crate::initial_state::InitialState;

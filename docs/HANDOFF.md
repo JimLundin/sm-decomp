@@ -8,23 +8,49 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-Enemy candidate-native-1362 passes all1362 actual-old comparisons and57 independent
-checks on source b2028c95ed0f23911a9bdf3e709f7e624b456162fb182c36640761991f7575b7.
-Headless library sourcecheck and direct production DLL build pass. Full caller
-adoption/native-ROM ownership/dedup remains isolated; main integration and movie
-checks are next. Results: candidate-native-1362-results/results.json and
-candidate-native-1362/qualified-1.json. Price: production+3489lines, verification
-+1261lines before final probes/registration. This includes genuine338line
-consolidation and70lines of native ownership, not a net reduction.
+Enemy-projectile owner and native ROM ownership are adopted on source
+8594f83d2cca0e79fc345e5a7e83bd50ea8e6fb09b87312432206acbf0f52a5c.
+Final full formatting, release/frontend/verifier build, all1382 full-memory
+comparisons and87 independent checks pass. Independent final source review
+passes. Adjacent106 player groups, mechanism ownership/qualified checks and
+both palette/animation runtime guards pass after native binding migration.
 
-Reference lineage: old-1362 sourcea10c9aa4... produced1358 valid outputs and four
-invalid intended-success respawn fixtures622..625. Their initializer selected
-A28A75 from the wrong dispatch table; actual CallEnemyAi no-op isA2804C. Sole
-fixture literal/comment correction is source-audited. old-1362-v2 source
-b932a4c7ab9c9129bf18e936cbd01f6764d6a55b2843d0023e94acd49b28338e freshly captures
-those four successfully. Other1358 are unchanged, each case owns fresh input
-state, and the original594 observations also match earlier frozen references.
-Keep failed fixture artifacts; do not count native exit as a full-memory result.
+Speed Booster from boot stops after18216frames with zero failures and all seven
+required probes plus two follow-up frames. Spawn first8323; pre/draw/frame8324;
+command8325; nonzero motion18120; native read18213. Prefix is setup. Six rooms,
+three enemy definitions, no credits. The earlier28314-frame attempt had zero
+frame differences but FAILED the missing-motion probe; collision movement
+bypassed the original helper probes. Final probe sits after successful nonzero
+collision fraction/position writes. Do not count the earlier attempt as a pass.
+
+The owner retires sm_86, eproj_script, enemy_drops, old contact/attachment
+operations and actual callers; it covers801 RAM bytes plus16 native spawn bytes.
+Game.g_rom is removed. Captured native RomImage records preserve distinct native
+and loaded allocation provenance; remaining legacy pointer consumers derive their
+pointer from the owner. Production remains interval-owned with explicit legacy
+unsafe effects; no persistent Session or all-unsafe-elimination claim.
+
+Final price against11653c1b: production+3490lines, verification+2160, combined
++5650. Includes338 lines of genuine consolidation and70 lines of native ownership
+cost versus earlier drafts. Rust117396; unsafe declarations2611 (-114), counted
+cast lines5725. No net reduction claim. Native ownership's57 earlier independent
+checks expanded to87 with lavaquake/turret expectations, not old undefined runs.
+
+Evidence: enemy-projectiles/integrated-2-results/results.json,
+integrated-2-qualified.json, integrated-2-adjacent.json, integrated-2-oracle.log,
+integrated-build-2.log, main-integration-price.json. Corrected old respawn622..625
+use A2804C initializer; source-audited1358 unaffected observations retained.
+Supplement20 references are under old-supplement-20-results; rejected fixtures
+remain preserved separately. All artifacts stay local.
+
+Next: player-projectile complete typed-core conversion includes5294 affected
+production lines plus actual flare decisions and twelve singleton binding layers.
+Contract reviewed; producers, flight and presentation/runtime work are isolated.
+Expanded44 old references captured at projectile-session/expanded-44-results;
+case43 intentionally panics, others do not. Snapshot baseline-11653c1b build3
+passes after proven line-ending-only native inputs were aligned with installed
+archive source bytes. Extra12 presentation/reset cases are still unbuilt drafts.
+No independent-core/reduction claim until complete adoption is checked.
 
 Composed animation/palette core354f1fb5 is adopted in main after GitHub
 run39989858734 passed independent execution, full build and formatting. Source

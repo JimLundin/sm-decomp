@@ -8,7 +8,7 @@ pub(super) fn unreachable(game: &mut Game) -> u16 {
 }
 pub(super) fn projectile(definition: u16, parameter: u16, game: &mut Game) {
     unsafe {
-        crate::game::sm_86::SpawnEprojWithRoomGfx(definition, parameter, game);
+        crate::game::enemy_projectiles::SpawnEprojWithRoomGfx(definition, parameter, game);
     }
 }
 pub(super) fn upload(request: super::Upload, game: &mut Game) {

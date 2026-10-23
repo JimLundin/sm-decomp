@@ -9,12 +9,12 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_87::*;
 
 use crate::game::animated_tiles;
+use crate::game::enemy_projectiles::SpawnEprojWithRoomGfx;
 use crate::game::explosion_window::{self, Phase};
 use crate::game::progress_flags::{CheckBossBitForCurArea, CheckEventHappened, SetEventHappened};
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_8b::ConfigureTitleSequenceGradientHDMA;
 use crate::game::sm_80::{QueueSfx1_Max6, QueueSfx2_Max6};
-use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::{InitializeSuitPickupHdma, Samus_LoadSuitPalette};
 use crate::game::sm_94::kSinCosTable8bit_Sext;

@@ -2,7 +2,7 @@ use crate::game::enemy_combat::{
     apply_contact, apply_power_bomb, apply_shot, enemy_death, grapple_death, select_frozen_ai,
     shot_reaction,
 };
-use crate::game::enemy_drops::{DropSource, scatter};
+use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
 pub use crate::game::prelude::*;
@@ -14,10 +14,10 @@ use crate::cpu_infra::Call;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_b4::*;
 
+use crate::game::enemy_projectiles::SpawnEprojWithGfx;
 use crate::game::sm_80::{
     Multiply16x16, NextRandom, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6,
 };
-use crate::game::sm_86::SpawnEprojWithGfx;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_a0::{

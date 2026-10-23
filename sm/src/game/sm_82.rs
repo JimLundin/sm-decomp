@@ -22,6 +22,7 @@ pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_82::*;
 
 use crate::game::animated_tiles;
+use crate::game::enemy_projectiles::{ClearEprojs, EnableEprojs, EprojRunAll};
 use crate::game::message_boxes;
 use crate::game::palette_effects;
 use crate::game::progress_flags::CheckEventHappened;
@@ -49,7 +50,6 @@ use crate::game::sm_80::{
 use crate::game::sm_81::{
     DrawMenuSpritemap, DrawSpritemap, FileSelectMap, FileSelectMenu, GameOverMenu, SaveToSram,
 };
-use crate::game::sm_86::{ClearEprojs, EnableEprojs, EprojRunAll};
 use crate::game::sm_88::{
     DisableHdmaObjects, EnableHdmaObjects, HdmaObjectHandler, InitializeSpecialEffectsForNewRoom,
     SpawnBG3ScrollHdmaObject, WaitUntilEndOfVblankAndClearHdma, sub_8882AC,

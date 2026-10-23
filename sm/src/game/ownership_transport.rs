@@ -3,6 +3,12 @@
 #![forbid(unsafe_code)]
 use crate::game_state::Game;
 pub(super) trait Codec: Sized {
+    fn import(game: &Game) -> Self {
+        Self::decode(&game.g_ram)
+    }
+    fn export(&self, game: &mut Game) {
+        self.encode(&mut game.g_ram);
+    }
     fn decode(ram: &[u8]) -> Self;
     fn encode(&self, ram: &mut [u8]);
     fn byte(&self, address: usize) -> Option<u8>;
@@ -15,7 +21,7 @@ pub(super) struct Port<'g, S: Codec> {
 impl<'g, S: Codec> Port<'g, S> {
     pub(super) fn acquire(game: &'g mut Game) -> Self {
         Self {
-            state: S::decode(&game.g_ram),
+            state: S::import(game),
             game: Some(game),
         }
     }
@@ -66,7 +72,7 @@ impl<'g, S: Codec> Port<'g, S> {
     }
     fn publish(&mut self) {
         if let Some(game) = self.game.as_deref_mut() {
-            self.state.encode(&mut game.g_ram);
+            self.state.export(game);
         }
     }
     pub(super) fn release(mut self) -> &'g mut Game {

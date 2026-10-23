@@ -15,6 +15,7 @@ pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_90::*;
 
+use crate::game::enemy_projectiles::{EnableEprojs, SpawnEprojWithGfx};
 use crate::game::explosion_window::spawn_crystal_flash;
 use crate::game::palette_effects;
 use crate::game::player_projectiles::draw_projectiles;
@@ -31,7 +32,6 @@ use crate::game::sm_80::{
     QueueSfx2_Max6, QueueSfx3_Max6, QueueSfx3_Max9, QueueSfx3_Max15,
 };
 use crate::game::sm_81::DrawBeamGrappleSpritemap;
-use crate::game::sm_86::{EnableEprojs, SpawnEprojWithGfx};
 use crate::game::sm_88::EnableHdmaObjects;
 use crate::game::sm_91::{
     DemoObjectInputHandler, MakeSamusFaceForward, Samus_CancelSpeedBoost, Samus_Func20,

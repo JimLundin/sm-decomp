@@ -446,11 +446,11 @@ macro_rules! place_samus_relative_to_grapple_origin {
     ($game:ident, $offset_table:literal, $offset_index:ident) => {
         word! { $game;
             samus_x_pos = (word!($game.x_pos_of_start_of_grapple_beam)).wrapping_add(
-                (*($game.g_rom.offset(crate::rtl::lorom_offset($offset_table)) as *mut u8)
+                (*($game.legacy_native_rom_ptr().offset(crate::rtl::lorom_offset($offset_table)) as *mut u8)
                     .offset($offset_index as isize) as i8) as u16,
             );
             samus_y_pos = (word!($game.y_pos_of_start_of_grapple_beam)).wrapping_add(
-                (*($game.g_rom.offset(crate::rtl::lorom_offset($offset_table)) as *mut u8)
+                (*($game.legacy_native_rom_ptr().offset(crate::rtl::lorom_offset($offset_table)) as *mut u8)
                     .offset(($offset_index as i32 + 1) as isize) as i8) as u16,
             );
         }

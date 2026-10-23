@@ -149,6 +149,18 @@ references; measure build/test time and resource growth before changing the loop
    complete adjacent responsibility and a reviewed owner/caller/deletion proposal;
    do not restart the archived Session or resume isolated shared-consumer work.
 
+   Enemy-projectile adoption is complete for the reviewed scope: full caller and
+   bank retirement, owned native ROM,1382 comparisons/87 independent checks and
+   18216 exercised frames pass (all seven probes, zero failures). Production
+   grows3490lines; verification grows2160. Ownership remains interval-scoped;
+   unsafe legacy effects and persistent state migration remain. Next is the full
+   player-projectile typed core, absorbing twelve singleton algorithm/binding
+   layers and actual flare decisions (5294lines plus adjacent scope). Reviewed
+   state/host contract is frozen; producers, flight and presentation/runtime
+   workers implement isolated drafts. Baseline104 existing cases and44 new
+   captures are retained; extra presentation/reset cases are being prepared.
+
+
    Room mechanisms are now adopted as one production responsibility: creation,
    setup, pre-actions, all 110 command identities, scheduler, drawing/clipping,
    graphics, message suspension, lifecycle and encounter/contact/Xray callers.

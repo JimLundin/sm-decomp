@@ -292,7 +292,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     let image = RomImage::zeroed(0x80000);
     seed(&mut game, &image);
     game.loaded_rom = Some(image.clone());
-    game.g_rom = image.as_mut_ptr();
+    game.register_native_rom(image.clone());
     let result = catch_unwind(AssertUnwindSafe(|| execute(id, &mut game, &image)));
     let expected_panic = id == 7 || matches!(id, 475 | 476 | 478 | 481 | 482);
     assert_eq!(result.is_err(), expected_panic, "palette scenario {id}");

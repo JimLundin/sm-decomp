@@ -2,8 +2,8 @@ use crate::game::enemy_combat::{
     apply_contact, apply_shot, contact_without_death, enemy_death, power_bomb_without_death,
     reduce_suit_damage, select_frozen_ai, shot_reaction,
 };
-use crate::game::enemy_drops::{DropSource, scatter};
 use crate::game::enemy_population_ram::spawn_enemy;
+use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::minimap;
@@ -14,6 +14,9 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
 
+use crate::game::enemy_projectiles::{
+    Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
+};
 use crate::game::progress_flags::{
     CheckEventHappened, ClearEventHappened, SetBossBitForCurArea, SetEventHappened,
 };
@@ -23,9 +26,6 @@ use crate::game::sm_80::{
     QueueSfx3_Max3, QueueSfx3_Max6,
 };
 use crate::game::sm_81::DrawSpritemap;
-use crate::game::sm_86::{
-    Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
-};
 use crate::game::sm_90::{CallSomeSamusCode, Samus_SetPushedOutOfCeresRidley};
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
@@ -543,173 +543,8 @@ crate::game::callback_dispatch! {
         }
     };
     [10917506] NuclearWaffle_Func_2 [] {
-        let E = Get_NuclearWaffle(word!(game.cur_enemy_index) as i32, game);
-        let varE32: u16 = (*E).var_D;
-        let pair: PairU16 = NuclearWaffle_Func_6((*E).var_21, game);
-        let v8: u16 = pair.j;
-        if pair.j != (*E).var_33 {
-            create_sprite((*E).base.x_pos, (*E).base.y_pos, 46, (*E).var_34, game);
-            create_sprite(
-                (*E).base.x_pos,
-                (*E).base.y_pos,
-                (pair.k).wrapping_add(44),
-                (*E).var_34,
-                game,
-            );
-            NuclearWaffle_Func_7(pair.j, game);
-        }
-        (*E).var_33 = v8;
-        let mut tmp: u16 = 0;
-        let v4: u16 = NuclearWaffle_Func_5((*E).var_21, &raw mut tmp, game);
-        (*E).base.x_pos = ((*E).var_26).wrapping_add(CosineMult8bit(v4, (*E).var_D, game));
-        let v5: u16 = NuclearWaffle_Func_5((*E).var_21, &raw mut tmp, game);
-        (*E).base.y_pos = ((*E).var_27).wrapping_add(SineMult8bit(v5, (*E).var_D, game));
-        NuclearWaffle_Func_3(varE32, game);
-        NuclearWaffle_Func_4(varE32, game);
-        words!((*E), var_21, var_20 += words!((*E), var_25, var_24));
+        crate::game::enemy_projectiles::advance_waffle_orbit(game);
     };
-}
-pub unsafe fn NuclearWaffle_Func_3(varE32: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_NuclearWaffle(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_2A = 8;
-        let mut R36: u16 = ((*E).var_2C).wrapping_add((*E).var_21);
-        let mut r28: u16 = 0;
-        do_until! { (v12 == 0);
-            R36 = (R36).wrapping_sub((*E).var_2B);
-            let ET = Get_NuclearWaffle(
-                word!(game.cur_enemy_index) as i32 + (*E).var_2A as i32,
-                game,
-            );
-            let nwe_var_00: u16 = (*ET).var_00;
-            let pair: PairU16 = NuclearWaffle_Func_6(R36, game);
-            let v13: u16 = pair.j;
-            if pair.j != (*ET).var_08 {
-                let v5: i32 = nwe_var_00 as i32 >> 1;
-                create_sprite(
-                    word!(game.eproj_x_pos[v5]),
-                    word!(game.eproj_y_pos[v5]),
-                    46,
-                    (*E).var_34,
-                    game,
-                );
-                create_sprite(
-                    word!(game.eproj_x_pos[v5]),
-                    word!(game.eproj_y_pos[v5]),
-                    (pair.k).wrapping_add(44),
-                    (*E).var_34,
-                    game,
-                );
-                NuclearWaffle_Func_7(pair.j, game);
-            }
-            (*ET).var_08 = v13;
-            let v7: u16 = NuclearWaffle_Func_5(R36, &raw mut r28, game);
-            let v10: i32 = nwe_var_00 as i32 >> 1;
-            word!(game.eproj_x_pos[v10] = ((*E).var_26).wrapping_add(CosineMult8bit(v7, varE32, game)));
-            let v11: u16 = NuclearWaffle_Func_5(R36, &raw mut r28, game);
-            word!(game.eproj_y_pos[v10] = ((*E).var_27).wrapping_add(SineMult8bit(v11, varE32, game)));
-            let mut v12: u16 = ((*E).var_2A).wrapping_sub(2);
-            (*E).var_2A = v12;
-        }
-        if r28 != 0 {
-            (*E).var_A = ((0xa69615i32) as u16);
-            (*E).base.properties =
-                ((*E).base.properties as i32 & !(kEnemyProps_ProcessedOffscreen as i32)) as u16;
-        }
-    }
-}
-pub unsafe fn NuclearWaffle_Func_4(varE32: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_NuclearWaffle(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_2A = 6;
-        let mut R36: u16 = (*E).var_21;
-        let mut r28: u16 = 0;
-        do_until! { (v12 == 0);
-            R36 = (R36).wrapping_sub((*E).var_2B);
-            let ET = Get_NuclearWaffle(
-                word!(game.cur_enemy_index) as i32 + (*E).var_2A as i32,
-                game,
-            );
-            let nwe_var_10: u16 = (*ET).var_10;
-            let pair: PairU16 = NuclearWaffle_Func_6(R36, game);
-            let v13: u16 = pair.j;
-            if pair.j != (*ET).var_18 {
-                let r38: u16 = (*E).var_34;
-                let v5: i32 = nwe_var_10 as i32 >> 1;
-                create_sprite(
-                    word!(game.sprite_x_pos[v5]),
-                    word!(game.sprite_y_pos[v5]),
-                    46,
-                    r38,
-                    game,
-                );
-                create_sprite(
-                    word!(game.sprite_x_pos[v5]),
-                    word!(game.sprite_y_pos[v5]),
-                    (pair.k).wrapping_add(44),
-                    r38,
-                    game,
-                );
-                NuclearWaffle_Func_7(pair.j, game);
-            }
-            (*ET).var_18 = v13;
-            let v6: u16 = NuclearWaffle_Func_5(R36, &raw mut r28, game);
-            let v7: u16 = CosineMult8bit(v6, varE32, game);
-            let R32: u16 = ((*E).var_26).wrapping_add(v7);
-            let v9: u16 = NuclearWaffle_Func_5(R36, &raw mut r28, game);
-            let R34: u16 = ((*E).var_27).wrapping_add(SineMult8bit(v9, varE32, game));
-            word!(game.sprite_x_pos[(nwe_var_10 >> 1)] = R32);
-            word!(game.sprite_y_pos[(nwe_var_10 >> 1)] = R34);
-            let mut v12: u16 = ((*E).var_2A).wrapping_sub(2);
-            (*E).var_2A = v12;
-        }
-    }
-}
-pub unsafe fn NuclearWaffle_Func_5(a: u16, r28_out: *mut u16, game: &mut Game) -> u16 {
-    unsafe {
-        *r28_out = 0;
-        let E = Get_NuclearWaffle(word!(game.cur_enemy_index) as i32, game);
-        if (*E).var_E == 0 {
-            if ((a) as i16).wrapping_sub(((*E).var_2E) as i16) >= 0 {
-                if ((a) as i16).wrapping_sub(((*E).var_23) as i16) < 0 {
-                    return a;
-                }
-                return (*E).var_23;
-            }
-        } else if (((a) as i16).wrapping_sub(((*E).var_2E) as i16) < 0) {
-            if ((a) as i16).wrapping_sub(((*E).var_23) as i16) < 0 {
-                return (*E).var_23;
-            }
-            return a;
-        }
-        *r28_out = (*r28_out).wrapping_add(1);
-        (*E).var_2E
-    }
-}
-unsafe fn NuclearWaffle_Func_6(a: u16, game: &mut Game) -> PairU16 {
-    unsafe {
-        let E = Get_NuclearWaffle(word!(game.cur_enemy_index) as i32, game);
-        if (*E).var_E != 0 {
-            if ((a) as i16).wrapping_sub(((*E).var_2F) as i16) >= 0 {
-                PairU16 { k: 1, j: 2 }
-            } else if ((a) as i16).wrapping_sub(((*E).var_30) as i16) >= 0 {
-                PairU16 { k: 0, j: 1 }
-            } else {
-                PairU16 { k: 0, j: 0 }
-            }
-        } else if ((a) as i16).wrapping_sub(((*E).var_2F) as i16) < 0 {
-            PairU16 { k: 0, j: 2 }
-        } else if ((a) as i16).wrapping_sub(((*E).var_30) as i16) < 0 {
-            PairU16 { k: 1, j: 1 }
-        } else {
-            PairU16 { k: 0, j: 0 }
-        }
-    }
-}
-pub unsafe fn NuclearWaffle_Func_7(r30: u16, game: &mut Game) {
-    if r30 != 2 {
-        QueueSfx2_Max6(0x5e, game);
-    }
 }
 pub unsafe fn FakeKraid_Func_1(k: u16, j: u16, game: &mut Game) {
     unsafe {

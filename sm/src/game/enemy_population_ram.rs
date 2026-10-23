@@ -250,16 +250,11 @@ pub unsafe fn load_graphics(population: u16, index: u16, game: &mut Game) {
 }
 
 pub unsafe fn initialize_room(game: &mut Game) {
-    game.g_ram[0x7000..0x9800].fill(0);
+    crate::game::enemy_projectiles::reset_room_enemy_workspace(game);
     word!(game.num_enemies_in_room = 0);
     word!(game.num_enemies_killed_in_room = 0);
     word!(game.flag_process_all_enemies = 0);
-    for i in (0..144).rev() {
-        word!(game.eproj_flags[i] = 0);
-    }
-    for i in (0..18).rev() {
-        word!(game.eproj_killed_enemy_index[i] = 0xffff);
-    }
+    crate::game::enemy_projectiles::reset_room_metadata(game);
     let mut population = word!(game.room_enemy_population_ptr);
     if unsafe { rom_record(0xa1, word!(game.room_enemy_population_ptr), game) }.word(0) == 0xffff {
         return;
@@ -473,14 +468,7 @@ unsafe fn load_tile_data(game: &mut Game) {
     word!(game.enemy_tile_load_data_write_pos = 0);
 }
 
-pub unsafe fn respawn_from_drop(projectile: u16, game: &mut Game) {
-    let marker = word!(game.eproj_killed_enemy_index[projectile >> 1]);
-    if (marker as i16) <= -2 {
-        unsafe { respawn(marker & 0x7fff, game) };
-    }
-}
-
-unsafe fn respawn(index: u16, game: &mut Game) {
+pub(super) unsafe fn respawn(index: u16, game: &mut Game) {
     use crate::game::enemy_ram::{EnemyField as F, EnemySlot};
     let enemy = EnemySlot::new(index);
     let target = slot(index);

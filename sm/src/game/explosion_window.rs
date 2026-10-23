@@ -347,10 +347,11 @@ unsafe fn calculate_explosion_hdma_table_pointers(k: u16, pre_explosion: bool, g
 unsafe fn set_explosion_fixed_color(table: u32, pos: i32, game: &mut Game) {
     unsafe {
         for (channel, mask) in [(0, 0x20), (1, 0x40), (2, 0x80)] {
-            *ram_ptr!(game; 0x74, channel as isize) =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(table)))
-                    .offset((pos + channel) as isize)
-                    | mask;
+            *ram_ptr!(game; 0x74, channel as isize) = *(game
+                .legacy_native_rom_ptr()
+                .offset(crate::rtl::lorom_offset(table)))
+            .offset((pos + channel) as isize)
+                | mask;
         }
     }
 }

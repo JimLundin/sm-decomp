@@ -2,7 +2,7 @@ use crate::game::enemy_combat::{
     apply_contact, apply_shot, contact_without_death, flash_on_shot, power_bomb_without_death,
     reduce_suit_damage, select_frozen_ai, shot_reaction,
 };
-use crate::game::enemy_drops::{DropSource, scatter};
+use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::minimap;
@@ -13,9 +13,9 @@ use core::mem::offset_of;
 
 pub use crate::game::constants::bank_86::*;
 
+use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
-use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_88::{SpawnBG3ScrollHdmaObject, sub_88DF34};
 use crate::game::sm_90::{
     CallSomeSamusCode, Samus_ReleaseFromDraygon_, Samus_SetGrabbedByDraygonPose,
@@ -364,7 +364,7 @@ crate::game::callback_dispatch! {
         }
     };
     [10873627] SporeSpawn_Func_1 [] {
-        SporeSpawn_Func_5(game);
+        crate::game::enemy_projectiles::update_spore_stem(game);
         let E = Get_SporeSpawn(word!(game.cur_enemy_index) as i32, game);
         let v1: u16 = ((*E).base.y_pos).wrapping_add(1);
         (*E).base.y_pos = v1;
@@ -411,7 +411,7 @@ crate::game::callback_dispatch! {
                 (*E0).var_A = ((0xa5eb1ai32) as u16);
             }
         }
-        SporeSpawn_Func_5(game);
+        crate::game::enemy_projectiles::update_spore_stem(game);
         sub_A5E9F5(game);
     };
     @functions [pub unsafe fn (game: &mut Game)];
@@ -1131,7 +1131,7 @@ crate::game::address_dispatch! {
 }
 pub unsafe fn SporeSpawn_Func_2(k: u16, game: &mut Game) {
     unsafe {
-        SporeSpawn_Func_5(game);
+        crate::game::enemy_projectiles::update_spore_stem(game);
         let E0 = Get_SporeSpawn(0, game);
         let E = Get_SporeSpawn(k as i32, game);
         (*E).base.x_pos =
@@ -1144,60 +1144,7 @@ pub unsafe fn SporeSpawn_Func_2(k: u16, game: &mut Game) {
         (*E0).var_0A = ((byte!((*E0).var_0C; 0)).wrapping_add(((*E0).var_0A) as u8)) as u16;
     }
 }
-pub unsafe fn SporeSpawn_Func_5(game: &mut Game) {
-    unsafe {
-        let E = Get_SporeSpawn(0, game);
-        let v1: u16 = ((*E).base.x_pos).wrapping_sub((*E).var_04);
-        let mut r18: u16 = 0;
-        let mut r20: u16 = 0;
-        let mut r22: u16 = 0;
-        let mut v2: u16 = if (v1 & 0x8000) == 0 {
-            r18 = (v1 >> 1);
-            r20 = (v1 >> 2);
-            r22 = ((v1 as i32 >> 1) + (v1 as i32 >> 2)) as u16;
-            word!(game.eproj_x_pos[14] = 128);
-            word!(game.eproj_x_pos[15] = ((*E).var_04 as i32 + (v1 as i32 >> 2)) as u16);
-            (*E).var_20 = word!(game.eproj_x_pos[15]);
-            word!(game.eproj_x_pos[16] = ((*E).var_04).wrapping_add(r18));
-            (*E).var_21 = word!(game.eproj_x_pos[16]);
-            ((*E).var_04).wrapping_add(r22)
-        } else {
-            r18 = ((((*E).var_04).wrapping_sub((*E).base.x_pos)) >> 1);
-            r20 = (-(v1 as i32) as u16 >> 2);
-            r22 = (r18).wrapping_add(r20);
-            word! {game; eproj_x_pos[14] = 128; eproj_x_pos[15] = ((*E).var_04).wrapping_sub(r20); }
-            (*E).var_20 = word!(game.eproj_x_pos[15]);
-            word!(game.eproj_x_pos[16] = ((*E).var_04).wrapping_sub(r18));
-            (*E).var_21 = word!(game.eproj_x_pos[16]);
-            ((*E).var_04).wrapping_sub(r22)
-        };
-        word!(game.eproj_x_pos[17] = v2);
-        (*E).var_22 = v2;
-        let v3: u16 = ((*E).base.y_pos as i32 - 40i32 - (*E).var_05 as i32) as u16;
-        let mut v4: u16 = if (v3 & 0x8000) == 0 {
-            r18 = (v3 >> 1);
-            r20 = (v3 >> 2);
-            r22 = ((v3 as i32 >> 1) + (v3 as i32 >> 2)) as u16;
-            word!(game.eproj_y_pos[14] = 560);
-            word!(game.eproj_y_pos[15] = ((*E).var_05 as i32 + (v3 as i32 >> 2)) as u16);
-            (*E).var_23 = word!(game.eproj_y_pos[15]);
-            word!(game.eproj_y_pos[16] = ((*E).var_05).wrapping_add(r18));
-            (*E).var_24 = word!(game.eproj_y_pos[16]);
-            ((*E).var_05).wrapping_add(r22)
-        } else {
-            r18 = (((*E).var_05 as i32 - ((*E).base.y_pos as i32 - 40i32)) as u16 >> 1);
-            r20 = (-(v3 as i32) as u16 >> 2);
-            r22 = (r18).wrapping_add(r20);
-            word! {game; eproj_y_pos[14] = 560; eproj_y_pos[15] = ((*E).var_05).wrapping_sub(r20); }
-            (*E).var_23 = word!(game.eproj_y_pos[15]);
-            word!(game.eproj_y_pos[16] = ((*E).var_05).wrapping_sub(r18));
-            (*E).var_24 = word!(game.eproj_y_pos[16]);
-            ((*E).var_05).wrapping_sub(r22)
-        };
-        word!(game.eproj_y_pos[17] = v4);
-        (*E).var_25 = v4;
-    }
-}
+
 pub unsafe fn SporeSpawn_Func_6(game: &mut Game) {
     unsafe {
         if (*Get_SporeSpawn(word!(game.cur_enemy_index) as i32, game))
@@ -1374,7 +1321,7 @@ crate::game::callback_dispatch! {
             (*E0).base.current_instruction = addr_kDraygon_Ilist_E6B9 as u16;
             (*E0).var_A = ((0xa5eb1ai32) as u16);
             (*E0).base.properties = ((*E0).base.properties) | (0x8000u16);
-            SporeSpawn_Func_5(game);
+            crate::game::enemy_projectiles::update_spore_stem(game);
             spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x7, 0x1e, 0xb793 as VoidP), game);
             word!(game.scrolling_finished_hook = 0);
         } else {
@@ -1388,7 +1335,7 @@ crate::game::callback_dispatch! {
             SpawnEprojWithGfx(1, v5, addr_kEproj_SporeSpawners as u16, game);
             SpawnEprojWithGfx(2, v5, addr_kEproj_SporeSpawners as u16, game);
             SpawnEprojWithGfx(3, v5, addr_kEproj_SporeSpawners as u16, game);
-            SporeSpawn_Func_5(game);
+            crate::game::enemy_projectiles::update_spore_stem(game);
         };
     };
     [10873619] SporeSpawn_Main [] {

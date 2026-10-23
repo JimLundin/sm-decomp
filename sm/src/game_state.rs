@@ -8,8 +8,8 @@ use std::ffi::c_int;
 /// fixed while the emulated hardware holds pointers into `g_ram`.
 pub struct Game {
     pub g_ram: [u8; 131072],
-    pub g_rom: *const u8,
     pub(crate) loaded_rom: Option<crate::rom::RomImage>,
+    native_rom: Option<crate::rom::RomImage>,
     pub decompress_src: u32,
     pub eproj_spawn_rect: Rect16U,
     pub eproj_spawn_r22: u16,
@@ -497,6 +497,42 @@ impl Game {
         set_room_width_in_blocks: 0x7a5;
     }
 
+    /// Bind the native source to its sole owner. Loaded-ROM reads retain their
+    /// separate registration and may deliberately select another allocation.
+    #[forbid(unsafe_code)]
+    pub(crate) fn register_native_rom(&mut self, image: crate::rom::RomImage) {
+        self.native_rom = Some(image);
+    }
+
+    /// Capture the exact native allocation; never substitute the loaded image.
+    #[forbid(unsafe_code)]
+    pub(crate) fn capture_native_rom(&self) -> crate::rom::RomImage {
+        self.native_rom
+            .as_ref()
+            .expect("native ROM must be registered")
+            .clone()
+    }
+
+    /// Temporary pointer for unmigrated consumers; they retain their explicit
+    /// unsafe read operations. Missing-source behavior remains a null pointer.
+    #[forbid(unsafe_code)]
+    pub(crate) fn legacy_native_rom_ptr(&self) -> *const u8 {
+        self.native_rom
+            .as_ref()
+            .map_or(core::ptr::null(), |image| image.as_mut_ptr().cast_const())
+    }
+
+    /// Preserve an optional binding for comparisons, including startup.
+    #[forbid(unsafe_code)]
+    pub(crate) fn capture_native_rom_binding(&self) -> Option<crate::rom::RomImage> {
+        self.native_rom.clone()
+    }
+
+    #[forbid(unsafe_code)]
+    pub(crate) fn restore_native_rom_binding(&mut self, image: Option<crate::rom::RomImage>) {
+        self.native_rom = image;
+    }
+
     /// Share the cartridge image without copying or borrowing its allocation.
     pub(crate) fn register_rom(&mut self, image: crate::rom::RomImage) {
         self.loaded_rom = Some(image);
@@ -665,18 +701,6 @@ impl Game {
         self.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
     }
 
-    /// Enemy projectile X position ($7E:1A4B in ram_map); odd indexes round down.
-    pub fn enemy_projectile_x_pos(&self, index: u16) -> u16 {
-        let offset = 0x1a4b + usize::from(index & !1);
-        u16::from_le_bytes([self.g_ram[offset], self.g_ram[offset + 1]])
-    }
-
-    /// Enemy projectile Y position ($7E:1A93 in ram_map); odd indexes round down.
-    pub fn enemy_projectile_y_pos(&self, index: u16) -> u16 {
-        let offset = 0x1a93 + usize::from(index & !1);
-        u16::from_le_bytes([self.g_ram[offset], self.g_ram[offset + 1]])
-    }
-
     pub fn write_vram_queue_byte(&mut self, cursor: u16, field: usize, value: u8) {
         self.g_ram[0xd0 + usize::from(cursor) + field] = value;
     }
@@ -692,8 +716,8 @@ impl Game {
     pub fn new() -> Box<Self> {
         Box::new(Self {
             g_ram: [0; 131072],
-            g_rom: core::ptr::null(),
             loaded_rom: None,
+            native_rom: None,
             decompress_src: 0,
             eproj_spawn_rect: Rect16U {
                 x: 0,

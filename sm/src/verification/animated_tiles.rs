@@ -435,7 +435,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     let image = RomImage::zeroed(0x80000);
     seed(&mut g, &image);
     g.loaded_rom = Some(image.clone());
-    g.g_rom = image.as_mut_ptr();
+    g.register_native_rom(image.clone());
     let mut trace = Vec::new();
     let result = catch_unwind(AssertUnwindSafe(|| execute(id, &mut g, &image, &mut trace)));
     let panicked = result.is_err();

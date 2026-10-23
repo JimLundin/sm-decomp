@@ -16,15 +16,15 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a6::*;
 pub use crate::game::constants::bank_a9::*;
 
+use crate::game::enemy_projectiles::{
+    Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
+};
 use crate::game::mother_brain_visuals::{self, Fade};
 use crate::game::palette_effects;
 use crate::game::progress_flags::{CheckEventHappened, SetBossBitForCurArea, SetEventHappened};
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_80::{
     NextRandom, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6,
-};
-use crate::game::sm_86::{
-    Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
 };
 use crate::game::sm_88::{MotherBrainRisingHdmaObject, SpawnMotherBrainRainbowBeamHdma};
 use crate::game::sm_89::LoadFxEntry;

@@ -21,7 +21,7 @@ fn prepare(game: &mut Game, image: &RomImage) {
     // Force Draw's ordinary queue-full return after its stream/visibility reads.
     put(&mut game.g_ram, 0x330, 480);
     game.loaded_rom = Some(image.clone());
-    game.g_rom = image.as_mut_ptr();
+    game.register_native_rom(image.clone());
 }
 fn script(image: &RomImage) -> EnemyScript {
     EnemyScript::at(image.clone(), crate::rtl::lorom_offset(0x849000) as usize)
@@ -39,7 +39,7 @@ fn observe_station(game: &mut Game) {
 pub(super) fn run(game: &mut Game) -> bool {
     let saved_ram = game.g_ram.to_vec();
     let saved_rom = game.loaded_rom.clone();
-    let saved_native = game.g_rom;
+    let saved_native = game.capture_native_rom_binding();
     let result = catch_unwind(AssertUnwindSafe(|| {
         let image = RomImage::zeroed(0x300000);
         // Grey-door selector reads the deliberately odd native table as two bytes.
@@ -172,6 +172,6 @@ pub(super) fn run(game: &mut Game) -> bool {
     }));
     game.g_ram.copy_from_slice(&saved_ram);
     game.loaded_rom = saved_rom;
-    game.g_rom = saved_native;
+    game.restore_native_rom_binding(saved_native);
     result.is_ok()
 }

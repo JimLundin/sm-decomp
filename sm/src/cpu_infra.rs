@@ -929,7 +929,7 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
             return null_mut::<Snes>();
         }
         game.g_sram = (*(*game.g_snes).cart).ram.clone();
-        game.g_rom = (*(*game.g_snes).cart).rom.as_mut_ptr();
+        game.register_native_rom((*(*game.g_snes).cart).rom.clone());
         game.register_rom((*(*game.g_snes).cart).rom.clone());
         RtlSetupEmuCallbacks(
             null_mut::<u8>(),

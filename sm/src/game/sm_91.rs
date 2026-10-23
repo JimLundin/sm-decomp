@@ -6,6 +6,7 @@ pub use crate::game::constants::bank_9b::*;
 pub use crate::game::constants::bank_91::*;
 
 use crate::game::animated_tiles;
+use crate::game::enemy_projectiles::{DisableEprojs, EnableEprojs};
 use crate::game::palette_effects;
 use crate::game::room_mechanisms::set_enabled;
 use crate::game::sm_9b::{GrappleBeamFunc_BD95, GrappleBeamFunc_BEEB};
@@ -13,7 +14,6 @@ use crate::game::sm_80::{
     InvalidInterrupt_Crash, QueueSfx1_Max6, QueueSfx1_Max9, QueueSfx2_Max6, QueueSfx3_Max6,
     QueueSfx3_Max9,
 };
-use crate::game::sm_86::{DisableEprojs, EnableEprojs};
 use crate::game::sm_88::SpawnHdmaObject;
 use crate::game::sm_90::{
     CallSomeSamusCode, LoadProjectilePalette, Projectile_Func7_Shinespark,
@@ -2526,7 +2526,10 @@ static g_word_909EB7: u16 = 0;
 unsafe fn turn_samus_in_air(pose_table: u32, game: &mut Game) -> u8 {
     unsafe {
         word!(
-            game.samus_pose = *(game.g_rom.offset(crate::rtl::lorom_offset(pose_table)) as *mut u8)
+            game.samus_pose = *(game
+                .legacy_native_rom_ptr()
+                .offset(crate::rtl::lorom_offset(pose_table))
+                as *mut u8)
                 .offset(
                     (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
                         .offset(word!(game.samus_prev_pose) as isize))

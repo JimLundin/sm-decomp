@@ -92,7 +92,7 @@ unsafe fn WriteMessageTilemap(game: &mut Game) -> u16 {
         game.g_ram[0x3000..0x30e0].fill(0);
         let message = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) as isize;
         let configs = game
-            .g_rom
+            .legacy_native_rom_ptr()
             .add(crate::rtl::lorom_offset(0x85869b) as usize)
             .cast::<MsgBoxConfig>();
         let start = (*configs.offset(message - 1)).message_tilemap;
@@ -232,14 +232,14 @@ unsafe fn InitializeMessageBox(game: &mut Game) {
     unsafe {
         let index = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) as isize - 1;
         let draw = (*game
-            .g_rom
+            .legacy_native_rom_ptr()
             .add(crate::rtl::lorom_offset(0x85869b) as usize)
             .cast::<MsgBoxConfig>()
             .offset(index))
         .draw_initial_tilemap;
         CallMsgBoxDraw(0x850000 | u32::from(draw), game);
         let modify = (*game
-            .g_rom
+            .legacy_native_rom_ptr()
             .add(crate::rtl::lorom_offset(0x85869b) as usize)
             .cast::<MsgBoxConfig>()
             .offset(index))

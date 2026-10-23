@@ -68,10 +68,14 @@ pub(crate) use register_writes;
 /// Construct a fixed LoROM pointer at the caller, before any later offsets.
 macro_rules! rom_ptr {
     ($game:ident; $address:literal) => {
-        $game.g_rom.offset($crate::rtl::lorom_offset($address))
+        $game
+            .legacy_native_rom_ptr()
+            .offset($crate::rtl::lorom_offset($address))
     };
     ($game:ident, $target:ty; $address:literal) => {
-        $game.g_rom.offset($crate::rtl::lorom_offset($address)) as *mut $target
+        $game
+            .legacy_native_rom_ptr()
+            .offset($crate::rtl::lorom_offset($address)) as *mut $target
     };
 }
 pub(crate) use rom_ptr;
@@ -791,7 +795,8 @@ pub unsafe fn RomPtr(addr: u32, game: &mut Game) -> *const u8 {
             printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), addr);
             game.g_fail = true_0 != 0;
         }
-        game.g_rom.offset(crate::rtl::lorom_offset(addr))
+        game.legacy_native_rom_ptr()
+            .offset(crate::rtl::lorom_offset(addr))
     }
 }
 /// Preserve the setup sequence's explicit RAM mirror and bus-write order.

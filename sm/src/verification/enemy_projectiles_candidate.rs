@@ -1,11 +1,25 @@
-//! Synthetic actual-old enemy-projectile core observations; no ROM-derived data.
-//! Initially declared as a private child of sm_86 to exercise its real dispatch.
+//! Candidate adapter for the frozen actual-old 354-case observations.
+//! Declare as a private child of enemy_projectiles to exercise real production paths.
 //! This first tranche does not cover all setup/pre-action/contact/drawing families.
+use super::script::EprojScript;
 use super::{
-    CallEprojInstr, ClearEprojs, DisableEprojs, EnableEprojs, EprojRunAll, MoveEprojWithVelocity,
-    MoveEprojWithVelocityX, MoveEprojWithVelocityY, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
+    ClearEprojs, DisableEprojs, EnableEprojs, EprojRunAll, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
 };
-use crate::game::eproj_script::EprojScript;
+
+// Candidate-only adapters invoke the maintained implementation and publish the
+// exclusive owner on normal return or unwind before the unchanged observations.
+fn CallEprojInstr(ea: u32, k: u16, script: &EprojScript, game: &mut Game) -> Option<usize> {
+    super::with_execution(game, |ctx| super::commands::dispatch(ea, k, script, ctx))
+}
+fn MoveEprojWithVelocity(k: u16, game: &mut Game) -> u16 {
+    super::with_execution(game, |ctx| super::shared::MoveEprojWithVelocity(k, ctx))
+}
+fn MoveEprojWithVelocityX(k: u16, game: &mut Game) -> u16 {
+    super::with_execution(game, |ctx| super::shared::MoveEprojWithVelocityX(k, ctx))
+}
+fn MoveEprojWithVelocityY(k: u16, game: &mut Game) -> u16 {
+    super::with_execution(game, |ctx| super::shared::MoveEprojWithVelocityY(k, ctx))
+}
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays as a, words as w};
 use crate::rom::RomImage;
@@ -27,7 +41,32 @@ const CORE: u32 = 24;
 const QUEUE_START: u32 = CORE + COMMANDS.len() as u32 * 6;
 const MOTION_START: u32 = QUEUE_START + QUEUES.len() as u32 * 4;
 const SHORT_START: u32 = MOTION_START + 36;
-pub(crate) const CASES: u32 = SHORT_START + 8;
+const ORIGINAL_CASES: u32 = SHORT_START + 8;
+#[path = "candidate_attachment_cases.rs"]
+mod attachment_cases;
+#[path = "candidate_collision_cases.rs"]
+mod collision_cases;
+#[path = "candidate_drop_contact_cases.rs"]
+mod drop_contact_cases;
+#[path = "candidate_family_cases.rs"]
+mod family_cases;
+#[path = "candidate_pre_family_cases.rs"]
+mod pre_family_cases;
+#[path = "candidate_respawn_cases.rs"]
+mod respawn_cases;
+#[path = "candidate_setup_family_cases.rs"]
+mod setup_family_cases;
+#[path = "candidate_waffle_cases.rs"]
+mod waffle_cases;
+pub(crate) const CASES: u32 = ORIGINAL_CASES
+    + family_cases::CASES
+    + attachment_cases::CASES
+    + drop_contact_cases::CASES
+    + waffle_cases::CASES
+    + respawn_cases::CASES
+    + pre_family_cases::CASES
+    + collision_cases::CASES
+    + setup_family_cases::CASES;
 pub(crate) const OUTPUT_BYTES: usize = 131099;
 
 fn put(game: &mut Game, at: usize, value: u16) {
@@ -192,6 +231,42 @@ unsafe fn core_case(id: u32, game: &mut Game, image: &RomImage) -> Option<usize>
 }
 
 unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Option<usize> {
+    if id >= ORIGINAL_CASES {
+        let id = id - ORIGINAL_CASES;
+        unsafe {
+            if id < family_cases::CASES {
+                return family_cases::execute(id, game, image);
+            }
+            let id = id - family_cases::CASES;
+            if id < attachment_cases::CASES {
+                return attachment_cases::execute(id, game);
+            }
+            let id = id - attachment_cases::CASES;
+            if id < drop_contact_cases::CASES {
+                return drop_contact_cases::execute(id, game, image);
+            }
+            let id = id - drop_contact_cases::CASES;
+            if id < waffle_cases::CASES {
+                return waffle_cases::execute(id, game, image);
+            }
+            let id = id - waffle_cases::CASES;
+            if id < respawn_cases::CASES {
+                return respawn_cases::execute(id, game, image);
+            }
+            let id = id - respawn_cases::CASES;
+            if id < pre_family_cases::CASES {
+                return pre_family_cases::execute(id, game);
+            }
+            let id = id - pre_family_cases::CASES;
+            if id < collision_cases::CASES {
+                return collision_cases::execute(id, game, image);
+            }
+            return setup_family_cases::execute(id - collision_cases::CASES, game, image);
+        }
+    }
+    unsafe { original_execute(id, game, image) }
+}
+unsafe fn original_execute(id: u32, game: &mut Game, image: &RomImage) -> Option<usize> {
     unsafe {
         if id < CORE {
             return core_case(id, game, image);
@@ -290,12 +365,13 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     let image = RomImage::zeroed(match id {
         11 => 0x30005,
         12 => 0x30009,
+        _ if id >= ORIGINAL_CASES => family_cases::IMAGE_BYTES,
         _ => 0x80000,
     });
     let mut game = Game::new();
     seed(&mut game, &image);
     game.loaded_rom = Some(image.clone());
-    game.g_rom = image.as_mut_ptr();
+    game.register_native_rom(image.clone());
     let result = catch_unwind(AssertUnwindSafe(|| unsafe {
         execute(id, &mut game, &image)
     }));
@@ -332,3 +408,14 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     assert_eq!(output.len(), OUTPUT_BYTES);
     Some(output)
 }
+
+#[path = "qualified_checks.rs"]
+pub(crate) mod qualified_checks;
+#[path = "qualified_lavaquake_checks.rs"]
+pub(crate) mod qualified_lavaquake_checks;
+#[path = "qualified_motion_checks.rs"]
+pub(crate) mod qualified_motion_checks;
+#[path = "qualified_turret_checks.rs"]
+pub(crate) mod qualified_turret_checks;
+#[path = "candidate_supplemental_cases.rs"]
+pub(crate) mod supplemental_cases;

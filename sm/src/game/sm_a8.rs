@@ -8,8 +8,8 @@ pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_86::*;
 
+use crate::game::enemy_projectiles::SpawnEprojWithGfx;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx2_Max9, QueueSfx3_Max6};
-use crate::game::sm_86::SpawnEprojWithGfx;
 use crate::game::sm_88::SpawnMorphBallEyeBeamHdma;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_a0::{
@@ -682,10 +682,10 @@ crate::game::callback_dispatch! {
         (*E).var_35 = (*E).var_35.wrapping_sub(1);
         (*E).var_36 = CheckIfEnemyIsOnScreen(game);
         CallYappingMawFunc((((*E).var_A) as u32) | (0xa80000u32), game);
-        YappingMaw_Func_15(game);
-        YappingMaw_Func_14(game);
-        YappingMaw_Func_13(game);
-        YappingMaw_Func_12(game);
+        crate::game::enemy_projectiles::update_maw_segment(3, game);
+        crate::game::enemy_projectiles::update_maw_segment(2, game);
+        crate::game::enemy_projectiles::update_maw_segment(1, game);
+        crate::game::enemy_projectiles::update_maw_segment(0, game);
     };
     [11051573] YappingMaw_Func_1 [] {
         let pair: PairU16 = EnemyFunc_ACA8(
@@ -849,25 +849,10 @@ crate::game::callback_dispatch! {
             (*E).var_A = ((0xa8a235i32) as u16);
         }
     };
-    YappingMaw_Func_12 [] {
-        let v1: i32 = (*E).var_40 as i32 >> 1;
-        word! {game; eproj_x_pos[v1] = (*E).var_0C; eproj_y_pos[v1] = (*E).var_0D; }
-    };
-    YappingMaw_Func_13 [] {
-        let v1: i32 = (*E).var_41 as i32 >> 1;
-        word!(game.eproj_x_pos[v1] = ((*E).var_00).wrapping_add((*E).var_0C));
-        word!(game.eproj_y_pos[v1] = ((*E).var_01).wrapping_add((*E).var_0D));
-    };
-    YappingMaw_Func_14 [] {
-        let v1: i32 = (*E).var_42 as i32 >> 1;
-        word!(game.eproj_x_pos[v1] = ((*E).var_02).wrapping_add((*E).var_0C));
-        word!(game.eproj_y_pos[v1] = ((*E).var_03).wrapping_add((*E).var_0D));
-    };
-    YappingMaw_Func_15 [] {
-        let v1: i32 = (*E).var_43 as i32 >> 1;
-        word!(game.eproj_x_pos[v1] = ((*E).var_04).wrapping_add((*E).var_0C));
-        word!(game.eproj_y_pos[v1] = ((*E).var_05).wrapping_add((*E).var_0D));
-    };
+
+
+
+
     YappingMaw_Touch [] {
         if ((*E).var_35 & 0x8000) != 0 && (*E).var_30 == 0 {
             (*E).var_35 = 0;
@@ -944,22 +929,7 @@ pub unsafe fn YappingMaw_Func_17(a: u16, varE32: u16, game: &mut Game) -> u16 {
         r22
     }
 }
-pub unsafe fn YappingMaw_Func_18(j: u16, game: &mut Game) {
-    unsafe {
-        let v1: i32 = j as i32 >> 1;
-        let E = Get_YappingMaw(word!(game.cur_enemy_index) as i32, game);
-        word!(game.eproj_gfx_idx[v1] = ((*E).var_45 | word!(game.eproj_gfx_idx[v1]) & 0xf1ff));
-        if (*E).base.frozen_timer != 0 {
-            word!(game.eproj_gfx_idx[v1] = (word!(game.eproj_gfx_idx[v1]) & 0xf1ff | 0xc00));
-            let frozen_timer: u16 = (*E).base.frozen_timer;
-            if frozen_timer as i32 - 90i32 & 0x8000 != 0 && (frozen_timer & 2) == 0 {
-                word!(
-                    game.eproj_gfx_idx[v1] = ((*E).var_45 | word!(game.eproj_gfx_idx[v1]) & 0xf1ff)
-                );
-            }
-        }
-    }
-}
+
 crate::game::callback_dispatch! {
     pub unsafe fn CallKagoFunc(ea: u32, k: u16, game: &mut Game) => ea;
     call (k, game); default { Unreachable(game); };
@@ -2618,10 +2588,10 @@ crate::game::callback_dispatch! {
     [11053109] YappingMaw_Frozen [] {
         Enemy_NormalFrozenAI_A8(game);
         let E = Get_YappingMaw(word!(game.cur_enemy_index) as i32, game);
-        YappingMaw_Func_18((*E).var_40, game);
-        YappingMaw_Func_18((*E).var_41, game);
-        YappingMaw_Func_18((*E).var_42, game);
-        YappingMaw_Func_18((*E).var_43, game);
+        crate::game::enemy_projectiles::update_maw_palette((*E).var_40, game);
+        crate::game::enemy_projectiles::update_maw_palette((*E).var_41, game);
+        crate::game::enemy_projectiles::update_maw_palette((*E).var_42, game);
+        crate::game::enemy_projectiles::update_maw_palette((*E).var_43, game);
         YappingMaw_Func_19(game);
     };
     [11053894] Kago_Init [] {

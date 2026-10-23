@@ -10,14 +10,14 @@ pub use crate::game::prelude::*;
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_86::*;
 
+use crate::game::enemy_projectiles::{
+    Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
+};
 use crate::game::message_boxes;
 use crate::game::palette_effects;
 use crate::game::progress_flags::CheckEventHappened;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_81::SaveToSram;
-use crate::game::sm_86::{
-    Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
-};
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::{
     MakeSamusFaceForward, Samus_RestoreHealth, Samus_RestoreMissiles, Samus_RestorePowerBombs,
