@@ -13,7 +13,8 @@ center43 plus motion4:1000 has leading edge48, already touching the wall.
 Both reviewers traced this to the expectation, not a production change. The
 revised fixture starts center41 and checks two ticks; original center43 remains
 as an explicit first-tick impact and stationary-playback test. Full root format
-and standalone compilation pass; hosted execution is pending. Actual production
+and standalone compilation pass; hosted run39998215217 passes all checks.
+The player typed core is adopted on main through36470e60. Actual production
 source remains unchanged from026ab1a2, so recorded gameplay evidence below still
 applies to that source. The correction adds41 verification Rust lines; totals
 are production-1937, verification+1109, combined-828 Rust lines. Prior token/byte
@@ -22,11 +23,12 @@ figures below describe026ab1a2, before this harness correction.
 Mutation testing is required by PLAN. The adjacent mutations.py compiles an
 unchanged baseline and two isolated production faults (ignore beam radius;
 skip impact retirement). Each must compile and fail a player_checks equality
-assertion; unrelated failures do not count. Execution remains hosted only.
-Python mutation support and CI wiring are additional non-Rust verification cost.
+assertion; unrelated failures do not count. Hosted run39998215217 confirms the
+baseline passes, missing-radius is killed at player_checks.rs:106, and skipped
+retirement at line60. Execution remains hosted only. Python mutation support
+adds83lines and CI wiring7lines, separate from Rust verification accounting.
 
-Player typed-core validation branch verify/player-session-20261023 is ready for
-hosted independent execution; not yet adopted in main. Source
+The adopted player typed core's locally compared source
 8da52a46f05b73235b04623499f5b1c92b13da9e973c39c4ed3b966cb80180a1 passes full
 formatting, release/frontend/verifier build, standalone compilation, existing106
 groups and all56 new full-RAM/status comparisons. Adjacent mechanism ownership/
@@ -42,7 +44,7 @@ Independent host composes actual player/animation/palette algorithms with one
 palette owner and fixed prepared terrain/content; unsupported dependencies fail
 explicitly. Local executable not run under the retained Defender restriction.
 
-Full price: production -1937lines/-18470tokens/-70009LFbytes; verification/support
+Pre-fixture-correction price: production -1937lines/-18470tokens/-70009LFbytes; verification/support
 +1068/+9554/+34899; combined maintained Rust -869/-8916/-35110. Detached harness
 is697 of the added verification lines. Fifteen outer singleton layers and old
 owner bindings retire; enum/shared geometry remains for real consumers. Cargo/CI

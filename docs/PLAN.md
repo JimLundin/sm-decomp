@@ -157,17 +157,25 @@ references; measure build/test time and resource growth before changing the loop
    bank retirement, owned native ROM,1382 comparisons/87 independent checks and
    18216 exercised frames pass (all seven probes, zero failures). Production
    grows3490lines; verification grows2160. Ownership remains interval-scoped;
-   unsafe legacy effects and persistent state migration remain. Next is the full
-   player-projectile typed core, absorbing twelve singleton algorithm/binding
-   layers and actual flare decisions (5294lines plus adjacent scope). Reviewed
-   state/host contract is frozen; producers, flight and presentation/runtime
-   workers completed the candidate on verify/player-session-20261023 (026ab1a2).
+   unsafe legacy effects and persistent state migration remain.
+
+   Player-projectile typed core is adopted through36470e60: fifteen singleton
+   layers retire and actual flare decisions move into ordinary owned state.
    Local release/frontend/format,106groups+56comparisons and11549frames with
-   all12probes pass. Hosted independent execution failed in run39996910420;
-   the fixture ignored the beam leading edge. Corrected two-tick and original
-   first-tick boundary checks pass source review/compilation; hosted retry and
-   two targeted mutation checks are pending. Adoption remains pending.
-   Production-1937lines; verification Rust+1109lines after the fixture fix.
+   all12probes pass. GitHub run39998215217 passes independent composed execution,
+   two targeted mutation checks, formatting and full build. The earlier failed
+   fixture ignored the beam leading edge; corrected two-tick and original
+   first-tick boundary checks both pass. Production-1937lines; verification
+   Rust+1109lines; combined-828. Mutation Python/CI support is separate.
+
+   Next: complete room-mechanism typed core composed with one shared player,
+   inventory and terrain owner. Concrete interface skeleton is under independent
+   review; resolve finite terrain aliases, continuation publication and live
+   graphics transfers before splitting implementation. Retire Fields/Port routing
+   and migrate real callers in the same adoption. Existing interval owners are
+   not persistent whole-game state. Refresh mechanism references from the verified
+   player-build DLL and extend suspension/shared-inventory/drawing checks and
+   their discriminating mutations.
 
 
    Room mechanisms are now adopted as one production responsibility: creation,

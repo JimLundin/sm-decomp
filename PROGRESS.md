@@ -3,46 +3,76 @@
 Green: adopted scope | Blue: locally checked draft | Orange: active | Grey: remaining | Red: failed
 **Purple outline: changed since previous report.** Folder branches show containment; check arrows show prerequisites.
 
-[Player draft: 026ab1a2](https://github.com/JimLundin/sm-decomp/commit/026ab1a25efcc7bd329cb631f1219dbca172fa32) / [Previous CI failure](https://github.com/JimLundin/sm-decomp/actions/runs/39996910420) / [Latest CI](https://github.com/JimLundin/sm-decomp/actions?query=branch%3Averify%2Fplayer-session-20261023)
+[Adopted: 36470e60](https://github.com/JimLundin/sm-decomp/commit/36470e60e58bfdaad873d45f6d0067994b764e0f) / [CI + mutations: PASS](https://github.com/JimLundin/sm-decomp/actions/runs/39998215217)
 
-### Player projectiles / typed-core migration
+### Room mechanisms / next typed-core conversion
+
+```mermaid
+flowchart LR
+    CONTRACT["State / effects contract"]:::active --> SLOTS["40 ordinary slots"]:::pending
+    CONTRACT --> INVENTORY["Shared player inventory"]:::pending
+    CONTRACT --> RESUME["Message suspension"]:::pending
+    SLOTS --> CREATE["creation.rs / setup.rs"]:::pending
+    SLOTS --> TICK["scheduler.rs / pre.rs"]:::pending
+    INVENTORY --> RULES["commands.rs / rules/"]:::pending
+    RESUME --> TICK
+    CONTRACT --> DRAW["presentation.rs / graphics.rs"]:::pending
+    CREATE --> EDGE["Runtime ownership edge"]:::pending
+    TICK --> EDGE
+    RULES --> EDGE
+    DRAW --> EDGE
+    EDGE --> CALLERS["Gameplay / door / contact / X-ray"]:::pending
+    CALLERS --> DELETE["Retire Fields / Port routing"]:::pending
+    DELETE --> COMPARE["Reference comparisons"]:::pending
+    COMPARE --> MOVIE["Exercised movie probes"]:::pending
+    MOVIE --> ADOPT["Typed core adopted"]:::pending
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
+### Player projectiles / adopted typed core
 
 ```mermaid
 flowchart TB
     subgraph group0["Owned state"]
         direction LR
-        p0_0["state.rs"]:::checked
-        p0_1["host.rs"]:::checked
-        p0_2["access.rs"]:::checked
-        p0_3["encoding.rs"]:::checked
-        p0_4["runtime.rs"]:::checked
-        p0_5["content.rs"]:::checked
-        p0_6["mod.rs"]:::checked
+        p0_0["state.rs"]:::done
+        p0_1["host.rs"]:::done
+        p0_2["access.rs"]:::done
+        p0_3["encoding.rs"]:::done
+        p0_4["runtime.rs"]:::done
+        p0_5["content.rs"]:::done
+        p0_6["mod.rs"]:::done
     end
     subgraph group1["Creation"]
         direction LR
-        p1_0["weapons.rs"]:::checked
-        p1_1["preparation.rs"]:::checked
-        p1_2["placement.rs"]:::checked
-        p1_3["missiles.rs"]:::checked
-        p1_4["bomb_creation.rs"]:::checked
+        p1_0["weapons.rs"]:::done
+        p1_1["preparation.rs"]:::done
+        p1_2["placement.rs"]:::done
+        p1_3["missiles.rs"]:::done
+        p1_4["bomb_creation.rs"]:::done
     end
     subgraph group2["Simulation"]
         direction LR
-        p2_0["motion.rs"]:::checked
-        p2_1["collision.rs"]:::checked
-        p2_2["lifecycle.rs"]:::checked
-        p2_3["bombs.rs"]:::checked
-        p2_4["bomb_terrain.rs"]:::checked
-        p2_5["specials.rs"]:::checked
+        p2_0["motion.rs"]:::done
+        p2_1["collision.rs"]:::done
+        p2_2["lifecycle.rs"]:::done
+        p2_3["bombs.rs"]:::done
+        p2_4["bomb_terrain.rs"]:::done
+        p2_5["specials.rs"]:::done
     end
     subgraph group3["Presentation"]
         direction LR
-        p3_0["animation.rs"]:::checked
-        p3_1["presentation.rs"]:::checked
-        p3_2["feedback.rs"]:::checked
+        p3_0["animation.rs"]:::done
+        p3_1["presentation.rs"]:::done
+        p3_2["feedback.rs"]:::done
     end
 
+    class p0_0,p0_1,p0_2,p0_3,p0_4,p0_5,p0_6,p1_0,p1_1,p1_2,p1_3,p1_4,p2_0,p2_1,p2_2,p2_3,p2_4,p2_5,p3_0,p3_1,p3_2 changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -53,20 +83,20 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    REF["106 groups<br/>56 comparisons"]:::checked --> LOCAL["Local checks PASS"]:::checked
-    FMT["cargo fmt<br/>CI PASS"]:::checked --> LOCAL
-    BUILD["Release + frontend<br/>local PASS"]:::checked --> LOCAL
-    MOVIE["11,549 frames<br/>12 probes / 0 failures"]:::checked --> LOCAL
-    COMPILE["Three-core host<br/>compile PASS"]:::checked --> HOST["Independent execution<br/>corrected fixture / retry queued"]:::active
-    LOCAL --> ADOPT["Adopt on main"]:::pending
+    REF["106 groups<br/>56 comparisons"]:::done --> LOCAL["Local checks PASS"]:::done
+    FMT["cargo fmt<br/>PASS"]:::done --> LOCAL
+    BUILD["Release + frontend<br/>local PASS"]:::done --> LOCAL
+    MOVIE["11,549 frames<br/>12 probes / 0 failures"]:::done --> LOCAL
+    COMPILE["Three-core host<br/>compile PASS"]:::done --> HOST["Independent execution<br/>CI PASS"]:::done
+    LOCAL --> ADOPT["Adopted on main"]:::done
     HOST --> ADOPT
-    RETIRE["15 old layers retired<br/>in draft"]:::checked --> ADOPT
-    FIX["player_checks.rs<br/>boundary fixture corrected"]:::checked --> HOST
-    HOST --> MUT1["Mutation: ignore radius<br/>execution pending"]:::active
-    HOST --> MUT2["Mutation: skip retirement<br/>execution pending"]:::active
+    RETIRE["15 old layers retired<br/>adopted"]:::done --> ADOPT
+    FIX["player_checks.rs<br/>boundary fixture corrected"]:::done --> HOST
+    HOST --> MUT1["Mutation: ignore radius<br/>KILLED / CI PASS"]:::done
+    HOST --> MUT2["Mutation: skip retirement<br/>KILLED / CI PASS"]:::done
     MUT1 --> ADOPT
     MUT2 --> ADOPT
-    class FIX,MUT1,MUT2,HOST changed
+    class REF,FMT,BUILD,MOVIE,COMPILE,RETIRE,FIX,MUT1,MUT2,HOST,ADOPT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -85,7 +115,7 @@ flowchart TB
     GAME --> EP["enemy_projectiles/<br/>interval owner adopted"]:::done
     GAME --> PAL["palette_effects/<br/>typed core adopted"]:::done
     GAME --> AT["animated_tiles/<br/>typed core adopted"]:::done
-    PP --> PPT["Player typed core<br/>local PASS / CI failed"]:::checked
+    PP --> PPT["Player typed core<br/>adopted / checks PASS"]:::done
     RM --> RMT["Mechanism typed core"]:::pending
     EP --> EPT["Enemy projectile typed core"]:::pending
     GAME --> SAMUS["Samus"]:::pending
@@ -112,35 +142,7 @@ flowchart TB
     AUDIO --> SHIP
     SHIP --> CREDITS["Boot to credits verified"]:::pending
     SHIP --> SAFE["Zero unsafe / manual memory"]:::pending
-    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
-    classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
-    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
-    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
-    classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
-    classDef changed stroke:#a21caf,stroke-width:5px
-```
-
-### Room mechanisms / next typed-core conversion
-
-```mermaid
-flowchart LR
-    CONTRACT["State / effects contract"]:::active --> SLOTS["40 ordinary slots"]:::pending
-    CONTRACT --> INVENTORY["Shared player inventory"]:::pending
-    CONTRACT --> RESUME["Message suspension"]:::pending
-    SLOTS --> CREATE["creation.rs / setup.rs"]:::pending
-    SLOTS --> TICK["scheduler.rs / pre.rs"]:::pending
-    INVENTORY --> RULES["commands.rs / rules/"]:::pending
-    RESUME --> TICK
-    CONTRACT --> DRAW["presentation.rs / graphics.rs"]:::pending
-    CREATE --> EDGE["Runtime ownership edge"]:::pending
-    TICK --> EDGE
-    RULES --> EDGE
-    DRAW --> EDGE
-    EDGE --> CALLERS["Gameplay / door / contact / X-ray"]:::pending
-    CALLERS --> DELETE["Retire Fields / Port routing"]:::pending
-    DELETE --> COMPARE["Reference comparisons"]:::pending
-    COMPARE --> MOVIE["Exercised movie probes"]:::pending
-    MOVIE --> ADOPT["Typed core adopted"]:::pending
+    class PPT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
