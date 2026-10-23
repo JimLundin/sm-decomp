@@ -13,7 +13,8 @@ Green: adopted scope | Blue: draft | Orange: active | Grey: remaining | Red: fai
 flowchart TB
     CONTRACT["Complete contract<br/>independent review PASS"]:::checked
     UNION["49,819 WRAM + 16 native bytes<br/>no duplicate ownership"]:::checked
-    CONTRACT --> API["Concrete Rust interfaces<br/>preparing"]:::active
+    CONTRACT --> API["Concrete Rust interfaces<br/>metadata compile PASS"]:::checked
+    API --> REVIEW["Concrete interface review"]:::active
     UNION --> API
     REF["1,382 captures + 87 checks<br/>current main PASS"]:::checked
     API --> S["session.rs / session_encoding.rs"]:::pending
@@ -33,14 +34,14 @@ flowchart TB
     ATTACH --> MERGE
     CALL --> MERGE
     RETIRE --> MERGE
-    RESTORE["Restoration boundary checks<br/>drafting"]:::active --> VERIFY["Comparisons / composed checks"]:::pending
-    NATIVE["Native spawn / shared state checks<br/>drafting"]:::active --> VERIFY
+    RESTORE["58 restoration cases<br/>review + capture PASS"]:::checked --> VERIFY["Comparisons / composed checks"]:::pending
+    NATIVE["Native spawn / shared state checks<br/>design review PASS"]:::checked --> VERIFY
     MERGE --> VERIFY
     REF --> VERIFY
     VERIFY --> MUT["Targeted mutations"]:::pending
     MUT --> PLAY["Exercised replay / runtime cost"]:::pending
     PLAY --> ADOPT["Enemy shared core adopted"]:::pending
-    class CONTRACT,UNION,API,REF,RESTORE,NATIVE changed
+    class API,REVIEW,RESTORE,NATIVE changed
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
@@ -105,7 +106,7 @@ flowchart TB
     ADOPT --> GET["mod.rs / five getters<br/>aggregate copies removed"]:::done
     GET --> GTEST["room_mechanism_getters.rs<br/>54 queries + 16 nested cases PASS"]:::done
     GTEST --> GMOV["28,314 frames / 0 failures<br/>no measured speedup"]:::done
-    GTEST --> GCI["New frozen getter baseline<br/>CI pending"]:::active
+    GTEST --> GCI["New frozen getter baseline<br/>CI PASS"]:::done
     class GET,GTEST,GMOV,GCI changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a

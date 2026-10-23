@@ -8,6 +8,24 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Restoration verification adopted: enemy IDs1382..1439,58actual-old cases pass;
+20adjacent supplemental outputs unchanged and87independent checks pass. Build/
+fmt/check/source registration pass on
+dd073b2a550012b4cc8218a14ab5f82f320536aa5616b9a29c3834ad7b77bef9.
+Evidence: next-enemy-session/restoration-reference/results.json and frozen DLL/
+bins; restoration-build.log. Process21606 complete. New output lengths up to
+131391bytes require the existing export's variable-capacity buffer. No ROM needed.
+Eight cfg(sm_verify_dll) observers at four restore entry/returns are inert unless
+armed; owned implementation moves them to legacy Runtime restore entry only.
+Production algorithms unchanged;347 verification/registration lines +32hook lines;
+two verification unsafe entry declarations. No executed restoration mutants yet.
+
+Concrete enemy declarations metadata build PASS: next-enemy-session/declarations/
+lib.rs -> enemy-contract.rmeta, declaration-build.log (four visibility/style
+warnings only). Prose contract accepted; concrete review active with session_review.
+Four implementation lanes await that review. Composition design independently
+approved. Main getter CI40007332386 and adoption CI40007039503 both PASS.
+
 Next enemy Session design contract accepted; concrete Rust interfaces and lane
 ownership still being prepared by enemy_projectiles_implementation before source
 split. Independent audits confirm48998+801+20=49819 disjoint WRAM bytes plus16

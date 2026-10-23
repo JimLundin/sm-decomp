@@ -12,10 +12,15 @@ fn CallNorfairLavaquakeRocksFunc(ea: u32, k: u16, game: &mut Game) {
 use crate::game_state::Game;
 use crate::ram_map::{word_arrays as a, words as w};
 use crate::rom::RomImage;
-pub(crate) const CASES: u32 = 20;
+#[path = "inventory_restore_cases.rs"]
+pub(crate) mod restore_cases;
+pub(crate) const CASES: u32 = 20 + restore_cases::CASES;
 pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     if id >= CASES {
         return None;
+    }
+    if id >= 20 {
+        return restore_cases::capture_case(id - 20);
     }
     let image = RomImage::zeroed(0x200000);
     let mut game = Game::new();

@@ -245,6 +245,19 @@ references; measure build/test time and resource growth before changing the loop
    b03f593e0eed142c9dc79a287ad269b33212881de84c05457a6844cd3438a451.
    Separate verification workers draft
    actual restoration boundary cases and shared/native ownership checks.
+   Concrete declaration metadata compilation passes; final interface review is
+   active before four lane implementation. Composition design passes independent
+   review after correcting actual scheduler continuation, shot mask and drop bias.
+   Restoration verification now has58 passing actual-old cases at1382..1439:
+   46 literal arithmetic boundaries,9 Crystal Flash callers and3 Gunship callers.
+   Twenty existing supplemental captures remain byte-identical and87 independent
+   checks pass (11.57s). Full root fmt/check and direct release verifier pass on
+   dd073b2a550012b4cc8218a14ab5f82f320536aa5616b9a29c3834ad7b77bef9.
+   Cost:347 verification/registration Rust lines plus32 verifier-only observer
+   lines in sm91; no normal-build hook calls or production algorithm change.
+   Two additional unsafe declarations are existing native caller test entries.
+   Restoration mutation designs remain unexecuted until the owned core exists.
+   Getter CI40007332386 and shared adoption CI40007039503 both pass fully.
 
 
    Room mechanisms are now adopted as one production responsibility: creation,
