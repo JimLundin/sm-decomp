@@ -1,143 +1,279 @@
 # Engine migration
 
-2026-10-23 17:24 UTC
+Green: adopted scope | Blue: locally checked draft | Orange: active | Grey: remaining | Red: failed
+**Purple outline: changed since previous report.** Folder branches show containment; check arrows show prerequisites.
 
-🟩 Committed | 🟦 Checked, uncommitted | 🟧 In progress | ⬜ Remaining | **Purple border: changed since previous report**
+[Player draft: 026ab1a2](https://github.com/JimLundin/sm-decomp/commit/026ab1a25efcc7bd329cb631f1219dbca172fa32) / [CI](https://github.com/JimLundin/sm-decomp/actions/runs/39996910420)
+
+### Player projectiles / typed-core migration
 
 ```mermaid
 flowchart TB
-    ROOT["sm/src/game / owned Session"]:::active
-    ROOT --> PP
-    ROOT --> RM
-    ROOT --> PAL
-    ROOT --> ANIM
-    ROOT --> ENEMY
-    PP --> PCORE["Player projectile typed core<br/>contract reviewed / implementing"]:::active
-    PCORE --> PERSIST
-    ROOT --> REST
-    PP["player_projectiles/<br/>interval owner + callers"]:::done
-    RM["room_mechanisms/<br/>interval owner + callers"]:::done
-    PAL["palette_effects/<br/>independent typed core"]:::done
-    ANIM["animated_tiles/<br/>independent typed core"]:::done
-    ENEMY["enemy_projectiles/<br/>owner + callers adopted"]:::done
-    REST["player / enemies / rooms<br/>remaining typed-core migrations"]:::pending
-    PP --> PERSIST
-    RM --> PERSIST
-    PAL --> COMPOSE
-    ANIM --> COMPOSE
-    ENEMY --> PERSIST
-    REST --> PERSIST
-    COMPOSE["Session composition<br/>animation + palette"]:::done
-    COMPOSE --> PERSIST
-    PERSIST["Persistent Session<br/>reset / load / replay / external writers"]:::pending
-    PERSIST --> SCENE["Scene / sound outputs"]:::pending
-    SCENE --> GPU["Our renderer"]:::pending
-    SCENE --> AUDIO["Our audio engine"]:::pending
-    GPU --> SHIP["Independent shipping game"]:::pending
+    subgraph group0["Owned state"]
+        direction LR
+        p0_0["state.rs"]:::checked
+        p0_1["host.rs"]:::checked
+        p0_2["access.rs"]:::checked
+        p0_3["encoding.rs"]:::checked
+        p0_4["runtime.rs"]:::checked
+        p0_5["content.rs"]:::checked
+        p0_6["mod.rs"]:::checked
+    end
+    subgraph group1["Creation"]
+        direction LR
+        p1_0["weapons.rs"]:::checked
+        p1_1["preparation.rs"]:::checked
+        p1_2["placement.rs"]:::checked
+        p1_3["missiles.rs"]:::checked
+        p1_4["bomb_creation.rs"]:::checked
+    end
+    subgraph group2["Simulation"]
+        direction LR
+        p2_0["motion.rs"]:::checked
+        p2_1["collision.rs"]:::checked
+        p2_2["lifecycle.rs"]:::checked
+        p2_3["bombs.rs"]:::checked
+        p2_4["bomb_terrain.rs"]:::checked
+        p2_5["specials.rs"]:::checked
+    end
+    subgraph group3["Presentation"]
+        direction LR
+        p3_0["animation.rs"]:::checked
+        p3_1["presentation.rs"]:::checked
+        p3_2["feedback.rs"]:::checked
+    end
+    class p0_0,p0_1,p0_2,p0_3,p0_4,p0_5,p0_6,p1_0,p1_1,p1_2,p1_3,p1_4,p2_0,p2_1,p2_2,p2_3,p2_4,p2_5,p3_0,p3_1,p3_2 changed
+
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
+```mermaid
+flowchart LR
+    REF["106 groups<br/>56 comparisons"]:::checked --> LOCAL["Local checks PASS"]:::checked
+    FMT["cargo fmt<br/>CI PASS"]:::checked --> LOCAL
+    BUILD["Release + frontend<br/>local PASS"]:::checked --> LOCAL
+    MOVIE["11,549 frames<br/>12 probes / 0 failures"]:::checked --> LOCAL
+    COMPILE["Three-core host<br/>compile PASS"]:::checked --> HOST["Independent execution<br/>CI FAIL"]:::failed
+    LOCAL --> ADOPT["Adopt on main"]:::pending
+    HOST --> ADOPT
+    RETIRE["15 old layers retired<br/>in draft"]:::checked --> ADOPT
+    class REF,FMT,BUILD,MOVIE,COMPILE,RETIRE,HOST changed
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
+### Destination
+
+```mermaid
+flowchart TB
+    GAME["sm/src/game/"]:::active
+    GAME --> PP["player_projectiles/<br/>interval owner adopted"]:::done
+    GAME --> RM["room_mechanisms/<br/>interval owner adopted"]:::done
+    GAME --> EP["enemy_projectiles/<br/>interval owner adopted"]:::done
+    GAME --> PAL["palette_effects/<br/>typed core adopted"]:::done
+    GAME --> AT["animated_tiles/<br/>typed core adopted"]:::done
+    PP --> PPT["Player typed core<br/>local PASS / CI failed"]:::checked
+    RM --> RMT["Mechanism typed core"]:::pending
+    EP --> EPT["Enemy projectile typed core"]:::pending
+    GAME --> SAMUS["Samus"]:::pending
+    GAME --> ENEMIES["Enemies / bosses"]:::pending
+    GAME --> ROOMS["Rooms / transitions"]:::pending
+    PAL --> COMPOSE["Composed animation + palette"]:::done
+    AT --> COMPOSE
+    PPT --> OWN["Persistent Session"]:::pending
+    RMT --> OWN
+    EPT --> OWN
+    COMPOSE --> OWN
+    SAMUS --> OWN
+    ENEMIES --> OWN
+    ROOMS --> OWN
+    OWN --> RESET["Reset / load"]:::pending
+    OWN --> REPLAY["Snapshot / replay"]:::pending
+    OWN --> WRITERS["External writers retired"]:::pending
+    RESET --> OUTPUT["Scene / sound outputs"]:::pending
+    REPLAY --> OUTPUT
+    WRITERS --> OUTPUT
+    OUTPUT --> GPU["GPU renderer"]:::pending
+    OUTPUT --> AUDIO["Audio engine"]:::pending
+    GPU --> SHIP["Independent game"]:::pending
     AUDIO --> SHIP
-    SHIP --> END["Boot / credits<br/>zero unsafe / manual memory"]:::pending
+    SHIP --> CREDITS["Boot to credits verified"]:::pending
+    SHIP --> SAFE["Zero unsafe / manual memory"]:::pending
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef changed stroke:#a21caf,stroke-width:5px
-
 ```
+
+### Room mechanisms / next typed-core conversion
 
 ```mermaid
 flowchart LR
-    subgraph palette["palette_effects/ / committed"]
-        direction TB
-        PS["state.rs<br/>slots + colors"]:::done --> PE["execution.rs<br/>typed interpreter"]:::done
-        PC["content.rs<br/>captured reads"]:::done --> PE
-        PE --> PR["runtime.rs<br/>legacy ownership edge"]:::done
-        PR --> PCL["13 caller files<br/>sm_8d retired"]:::done
-        PE --> PD["verification/palette_detached.rs<br/>independent host: PASS"]:::done
-        PR --> PG["runtime guard checks<br/>aliases + unwind: PASS"]:::done
-        PCL --> PV["512 comparisons<br/>272 opening frames: PASS"]:::done
-    end
-    subgraph animation["animated_tiles/ / committed"]
-        direction TB
-        AS["state.rs<br/>6 slots + upload / ack"]:::done --> AE["execution.rs<br/>24 commands / no Game"]:::done
-        AC["runtime.rs<br/>byte layout + ownership edge"]:::done --> AE
-        CONTENT["content.rs<br/>captured records"]:::done --> AE
-        AE --> AN["native.rs<br/>ordered graphics upload"]:::done
-        AN --> ACL["21 calls / 8 files<br/>sm_87 + old NMI retired"]:::done
-        ACL --> AB["release + frontend + format<br/>PASS"]:::done
-        AB --> AV["438 frozen comparisons<br/>PASS"]:::done
-        AV --> AM["movie: create / upload / ack<br/>20,947 frames / 0 failures"]:::done
-        AM --> LAND["Adoption committed"]:::done
-    end
-
+    CONTRACT["State / effects contract"]:::active --> SLOTS["40 ordinary slots"]:::pending
+    CONTRACT --> INVENTORY["Shared player inventory"]:::pending
+    CONTRACT --> RESUME["Message suspension"]:::pending
+    SLOTS --> CREATE["creation.rs / setup.rs"]:::pending
+    SLOTS --> TICK["scheduler.rs / pre.rs"]:::pending
+    INVENTORY --> RULES["commands.rs / rules/"]:::pending
+    RESUME --> TICK
+    CONTRACT --> DRAW["presentation.rs / graphics.rs"]:::pending
+    CREATE --> EDGE["Runtime ownership edge"]:::pending
+    TICK --> EDGE
+    RULES --> EDGE
+    DRAW --> EDGE
+    EDGE --> CALLERS["Gameplay / door / contact / X-ray"]:::pending
+    CALLERS --> DELETE["Retire Fields / Port routing"]:::pending
+    DELETE --> COMPARE["Reference comparisons"]:::pending
+    COMPARE --> MOVIE["Exercised movie probes"]:::pending
+    MOVIE --> ADOPT["Typed core adopted"]:::pending
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef changed stroke:#a21caf,stroke-width:5px
-
 ```
+
+<details>
+<summary>Adopted modules / expand folder maps</summary>
+
+Green below means adopted responsibility; runtime and legacy edges still exist.
+
+#### palette_effects/
 
 ```mermaid
 flowchart LR
-    subgraph enemy["enemy_projectiles/ / committed"]
-        direction TB
-        ES["state + compatibility<br/>801 RAM bytes / 16 native"]:::done --> EL["allocation + scheduler"]:::done
-        EL --> SETUP["setup callbacks"]:::done
-        EL --> PRE["pre-action callbacks"]:::done
-        EL --> CMD["commands + movement"]:::done
-        SETUP --> EC["library source check<br/>PASS"]:::done
-        PRE --> EC
-        CMD --> EC
-        ATT["Spore / Maw / Waffle / Botwoon<br/>actual producer migration"]:::done --> CALL["old banks / callers retired"]:::done
-        DROP["drops + contact + reset"]:::done --> CALL
-        CALL --> FULL["Build / review / comparisons<br/>PASS"]:::done
-        EC --> CORE["1,382 old / new comparisons<br/>PASS"]:::done
-        OLD["354 old references<br/>captured"]:::done --> CORE
-        MORE["1,382 old references<br/>captured / corrected"]:::done --> FULL
-        ROM["Native ROM owner<br/>g_rom field retired"]:::done --> RECORD["Captured RomImage records<br/>checked reads verified"]:::done
-        RECORD --> QUAL["87 independent checks<br/>bytes / reset / ownership: PASS"]:::done
-        QUAL --> FULL
-        CORE --> FULL
-        FULL --> EMOVIE["18,216 frames / 0 failures<br/>7 required probes: PASS"]:::done
-        EMOVIE --> ECOMMIT["Owner adopted"]:::done
-    end
-    subgraph composition["independent animation + palette - committed"]
-        direction TB
-        HOST["animation execution<br/>no Port / Game dependency"]:::done --> ONE["One Session<br/>one palette color array"]:::done
-        ONE --> BUILD["standalone + production builds<br/>PASS"]:::done
-        BUILD --> GUARD["actual runtime guards<br/>aliases + unwind: PASS"]:::done
-        GUARD --> REF["438 old / new comparisons<br/>PASS"]:::done
-        REF --> MOVIE["animation / upload replay<br/>20,947 frames / 0 failures"]:::done
-        BUILD --> REPLAY["tick / reset / snapshot / replay<br/>independent execution: PASS"]:::done
-        REPLAY --> CI["Independent host execution<br/>GitHub Windows: PASS"]:::done
-        MOVIE --> CI
-        CI --> CCOMMIT["Composed core adopted"]:::done
-    end
+    ROOT["palette_effects/"]:::done
+    ROOT --> f0["content.rs"]:::done
+    ROOT --> f1["diagnostics.rs"]:::done
+    ROOT --> f2["execution.rs"]:::done
+    ROOT --> f3["mod.rs"]:::done
+    ROOT --> f4["runtime.rs"]:::done
+    ROOT --> f5["state.rs"]:::done
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
+#### animated_tiles/
+
 ```mermaid
 flowchart LR
-    CONTRACT["player_projectiles/<br/>typed state / host contract"]:::checked
-    BASE["verification/<br/>44 new old-code references captured"]:::checked
-    CONTRACT --> PROD["weapons / preparation / placement<br/>IMPLEMENTING"]:::active
-    CONTRACT --> FLIGHT["flight / collision / lifecycle<br/>IMPLEMENTING"]:::active
-    CONTRACT --> DRAW["animation / trails / flare<br/>IMPLEMENTING"]:::active
-    PROD --> DELETE["12 singleton binding layers<br/>absorb algorithms / retire adapters"]:::active
-    FLIGHT --> DELETE
-    DRAW --> DELETE
-    EXTRA["12 flare / reset references<br/>CAPTURED"]:::checked --> VERIFY
-    BASE --> VERIFY["Comparison + composed-host checks"]:::pending
-    DELETE --> VERIFY
-    class EXTRA changed
+    ROOT["animated_tiles/"]:::done
+    ROOT --> f0["content.rs"]:::done
+    ROOT --> f1["execution.rs"]:::done
+    ROOT --> f2["mod.rs"]:::done
+    ROOT --> f3["native.rs"]:::done
+    ROOT --> f4["runtime.rs"]:::done
+    ROOT --> f5["state.rs"]:::done
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
+
+#### enemy_projectiles/
+
+```mermaid
+flowchart LR
+    ROOT["enemy_projectiles/"]:::done
+    ROOT --> f0["attachments_spore_maw.rs"]:::done
+    ROOT --> f1["attachments_spore_maw_facade.rs"]:::done
+    ROOT --> f2["attachments_waffle_botwoon.rs"]:::done
+    ROOT --> f3["attachments_waffle_botwoon_edges.rs"]:::done
+    ROOT --> f4["collision.rs"]:::done
+    ROOT --> f5["commands.rs"]:::done
+    ROOT --> f6["compat.rs"]:::done
+    ROOT --> f7["contact.rs"]:::done
+    ROOT --> f8["content.rs"]:::done
+    ROOT --> f9["drops.rs"]:::done
+    ROOT --> f10["edges.rs"]:::done
+    ROOT --> f11["legacy.rs"]:::done
+    ROOT --> f12["lifecycle.rs"]:::done
+    ROOT --> f13["mod.rs"]:::done
+    ROOT --> f14["pre_actions.rs"]:::done
+    ROOT --> f15["pre_helpers.rs"]:::done
+    ROOT --> f16["presentation.rs"]:::done
+    ROOT --> f17["script.rs"]:::done
+    ROOT --> f18["setup.rs"]:::done
+    ROOT --> f19["setup_helpers.rs"]:::done
+    ROOT --> f20["shared.rs"]:::done
+    ROOT --> f21["shared_pre.rs"]:::done
+    ROOT --> f22["state.rs"]:::done
+    ROOT --> f23["tables.rs"]:::done
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
+#### room_mechanisms/
+
+```mermaid
+flowchart LR
+    ROOT["room_mechanisms/"]:::done
+    ROOT --> f0["commands.rs"]:::done
+    ROOT --> f1["creation.rs"]:::done
+    ROOT --> f2["effects.rs"]:::done
+    ROOT --> f3["fields.rs"]:::done
+    ROOT --> f4["fields_runtime.rs"]:::done
+    ROOT --> f5["graphics.rs"]:::done
+    ROOT --> f6["mod.rs"]:::done
+    ROOT --> f7["native_content.rs"]:::done
+    ROOT --> f8["port.rs"]:::done
+    ROOT --> f9["pre.rs"]:::done
+    ROOT --> f10["presentation.rs"]:::done
+    ROOT --> f11["rules/animal_rescue.rs"]:::done
+    ROOT --> f12["rules/booster_escape.rs"]:::done
+    ROOT --> f13["rules/cannon_setup.rs"]:::done
+    ROOT --> f14["rules/contact_physics.rs"]:::done
+    ROOT --> f15["rules/crumbling_wall.rs"]:::done
+    ROOT --> f16["rules/doors.rs"]:::done
+    ROOT --> f17["rules/eye_door.rs"]:::done
+    ROOT --> f18["rules/gates.rs"]:::done
+    ROOT --> f19["rules/hands.rs"]:::done
+    ROOT --> f20["rules/item_setup.rs"]:::done
+    ROOT --> f21["rules/metroid_quota.rs"]:::done
+    ROOT --> f22["rules/mother_brain_glass.rs"]:::done
+    ROOT --> f23["rules/noob_tube.rs"]:::done
+    ROOT --> f24["rules/plants.rs"]:::done
+    ROOT --> f25["rules/scroll_setup.rs"]:::done
+    ROOT --> f26["rules/shaktool.rs"]:::done
+    ROOT --> f27["rules/sound_delay.rs"]:::done
+    ROOT --> f28["rules/stations.rs"]:::done
+    ROOT --> f29["rules/terrain_setup.rs"]:::done
+    ROOT --> f30["rules/torizo_statue.rs"]:::done
+    ROOT --> f31["rules/tourian_wall.rs"]:::done
+    ROOT --> f32["rules/treadmill.rs"]:::done
+    ROOT --> f33["scheduler.rs"]:::done
+    ROOT --> f34["setup.rs"]:::done
+    ROOT --> f35["state.rs"]:::done
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
+</details>
 
 [Plan](docs/PLAN.md) / [Checks and accounting](docs/HANDOFF.md) / [Target architecture](docs/target-architecture/README.md)
