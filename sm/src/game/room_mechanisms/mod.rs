@@ -36,13 +36,14 @@ mod rules {
     pub(super) mod tourian_wall;
     pub(super) mod treadmill;
 }
+use crate::game::session_encoding::read;
 use crate::game::{
     mechanism_displacement::Displacement,
     session_runtime::{self, Runtime},
 };
+use crate::ram_map::{word_arrays as arrays, words as ram};
 use crate::{game_state::Game, types::SpawnHardcodedPlmArgs};
-use access::mechanism;
-use host::{Contact, ContactIdentity, Host, ImportedAliases, SpawnSource};
+use host::{Contact, ContactIdentity, Host, SpawnSource};
 pub(crate) use rules::treadmill::Direction;
 
 pub(crate) unsafe fn spawn_hardcoded(args: SpawnHardcodedPlmArgs, game: &mut Game) {
@@ -121,24 +122,30 @@ pub(crate) fn clear(game: &mut Game) {
 pub(crate) fn calculate_coordinates(k: u16, game: &mut Game) {
     creation::coordinates(&mut Runtime::new(game), usize::from(k >> 1));
 }
-// Actual enemy-projectile compatibility consumers still require ordered live
-// reads. Their owner is separate; do not replace these calls with an eager tuple.
+// Enemy-projectile foreign calls publish their owner before these live reads.
+// RAM is authoritative here; a read needs no aggregate import/export. Keep
+// separate calls, broad array aliases and the original native argument order.
 pub(crate) fn selected(game: &mut Game) -> u16 {
-    Runtime::new(game).session().mechanisms.selected
+    read(&game.g_ram, ram::plm_id)
 }
 pub(crate) fn block_index(k: u16, game: &mut Game) -> u16 {
-    let h = Runtime::new(game);
-    mechanism!(h, k >> 1, block)
+    read(
+        &game.g_ram,
+        arrays::plm_block_indices + usize::from(k >> 1) * 2,
+    )
 }
 pub(crate) fn projectile_argument(k: u16, game: &mut Game) -> u16 {
-    let h = Runtime::new(game);
-    u16::from_ne_bytes(mechanism!(h, k >> 1, room_argument).to_le_bytes())
+    let value = read(
+        &game.g_ram,
+        arrays::plm_room_arguments + usize::from(k >> 1) * 2,
+    );
+    u16::from_ne_bytes(value.to_le_bytes())
 }
 pub(crate) fn block_x(game: &mut Game) -> u16 {
-    Runtime::new(game).session().mechanisms.block_x
+    read(&game.g_ram, ram::plm_x_block)
 }
 pub(crate) fn block_y(game: &mut Game) -> u16 {
-    Runtime::new(game).session().mechanisms.block_y
+    read(&game.g_ram, ram::plm_y_block)
 }
 pub(crate) fn carry(direction: Direction, game: &mut Game) {
     rules::treadmill::carry(&mut Runtime::new(game), direction);

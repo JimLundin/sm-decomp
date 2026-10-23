@@ -3,7 +3,7 @@
 Green: adopted scope | Blue: draft | Orange: active | Grey: remaining | Red: failed
 **Purple outline: changed since previous report.** Folder branches show containment; check arrows show prerequisites.
 
-[Latest verification: e216f0ef](https://github.com/JimLundin/sm-decomp/commit/e216f0efb0a4d7c75a9dcb7b13124ed4981fc5b6) / [CI + 3 scheduler mutants: PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40001171992)
+[Shared Session adopted: 74948127](https://github.com/JimLundin/sm-decomp/commit/74948127) / [Build + eight mutations: PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40005712881)
 
 [Four room mutations / CI PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40005395335) · [Shared Session candidate CI](https://github.com/JimLundin/sm-decomp/actions/runs/40005712881)
 
@@ -61,8 +61,11 @@ flowchart TB
     MOVIE --> PERF["Runtime cost<br/>94.81s vs 88.18s / measured"]:::done
     PERF --> ADOPT
     MOVIE --> ADOPT["Shared typed core adopted"]:::done
-    ADOPT --> GET["Five compatibility getters<br/>54 queries PASS / replay running"]:::active
-    class S,CODEC,PLAYER,RT,HOST,CREATE,SETUP,PRE,RULES,SCHED,CMD,PICKUP,DRAW,GRAPHICS,CONTENT,CR,GR,CALLERS,DELETE,BUILD,COMPARE,REG,HC,HE,MUT,CM,FRONT,MOVIE,PERF,ADOPT,GET changed
+    ADOPT --> GET["mod.rs / five getters<br/>aggregate copies removed"]:::done
+    GET --> GTEST["room_mechanism_getters.rs<br/>54 queries + 16 nested cases PASS"]:::done
+    GTEST --> GMOV["28,314 frames / 0 failures<br/>no measured speedup"]:::done
+    GTEST --> GCI["New frozen getter baseline<br/>CI pending"]:::active
+    class GET,GTEST,GMOV,GCI changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

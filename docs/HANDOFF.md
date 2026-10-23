@@ -21,8 +21,14 @@ retire. Legacy callbacks still require interval publication; no persistence clai
 Next focused draft: getter-validation passes identical54query capture against
 unoptimized and optimized code, SHA b59dac4de27781371d9d709b96a7b0dbff7819afc5a6bc075fd63276bb38e02f.
 Optimized source71b1fad86b22adba3bf4d222f9d143f8ce21669903c1a510a2f4d159aaade943;
-movie handle81316 is running; inspect before restarting. Needs room cases864..879
-against candidate-1037-formatted-results. Full enemy suite does not cover these
+movie handle81316 completed PASS28314frames/19probes/zero failures,96.14s;
+no measured speedup. Room cases864..879 match candidate-1037-formatted-results.
+Main rebuilt source b03f593e0eed142c9dc79a287ad269b33212881de84c05457a6844cd3438a451
+passes those16 cases,54getter queries and106player groups (main-getters-results.json).
+Case1037 and its frozen baseline are integrated into the maintained CI runner;
+four mutation definitions and kill criteria unchanged. Final review and formatting
+pass. Getter delta: production+7, verification Rust+93, Python+2.
+Full enemy suite does not cover these
 initializers; nested EyeDoorProjectile argument path remains unexercised.
 Next enemy Session contract is assigned to enemy_projectiles_implementation,
 design-only under next-enemy-session. Main/candidate are not its edit targets.

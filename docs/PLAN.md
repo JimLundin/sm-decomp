@@ -219,8 +219,15 @@ references; measure build/test time and resource growth before changing the loop
    build script (event1121); use the hosted build, preserve the block. Formatted
    local direct verifier build5 passes on source
    8a4ee812de0eaa7b25dcecd6877c2f08d6000aae282a8efbe257ba27d286d31d.
-   Independently approved five-getter direct-read optimization is being drafted
-   separately; preserve individual RAM-authoritative reads and broad aliases.
+   Five compatibility getters now use checked live reads at their existing
+   RAM-authoritative boundary, removing aggregate import/export per read.
+   Independent review passes;54 direct queries and16 nested room/enemy cases
+   match frozen outputs,106player groups pass on main's rebuilt verifier.
+   Case1037 adds an exact frozen CI baseline; old case IDs and mutation kill
+   criteria are unchanged. Optimized replay28314frames/19probes/zero failures
+   takes96.14s: no measured speedup versus94.81s before. Production+7lines,
+   verification Rust+93, Python+2; unsafe count unchanged. Nested EyeDoorProjectile
+   argument callback is not covered; direct getter address/endian/live checks are.
    Next complete ownership scope: compose the18-slot enemy-projectile pool with
    this Session, redirect room/enemy interactions, remove enemy compat.rs and the
    last ownership_transport user, and replace ordinary per-field edges routing.

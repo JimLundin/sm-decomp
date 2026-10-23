@@ -19,7 +19,9 @@ mod drawing_extended;
 pub(crate) use callback_edges::{
     display as observe_message_display, native_read as observe_native_draw_read,
 };
-pub(crate) const CASES: u32 = 1037;
+#[path = "room_mechanism_getters.rs"]
+mod getter_checks;
+pub(crate) const CASES: u32 = 1038;
 fn put(g: &mut Game, a: usize, v: u16) {
     g.g_ram[a..a + 2].copy_from_slice(&v.to_le_bytes());
 }
@@ -913,6 +915,9 @@ unsafe fn distinct_flag_query_case(id: u32, g: &mut Game, image: &RomImage) -> (
 }
 
 pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
+    if id == 1037 {
+        return Some(getter_checks::capture(&mut Game::new()));
+    }
     if id >= CASES {
         return None;
     }

@@ -921,6 +921,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("verification/room_mechanism_drawing_extended.rs"),
     ),
     (
+        "sm/src/verification/room_mechanism_getters.rs",
+        include_bytes!("verification/room_mechanism_getters.rs"),
+    ),
+    (
         "sm/src/verification/room_mechanism_ownership.rs",
         include_bytes!("verification/room_mechanism_ownership.rs"),
     ),

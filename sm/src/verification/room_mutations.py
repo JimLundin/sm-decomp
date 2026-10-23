@@ -82,6 +82,8 @@ EXPECTED = {
     1020: (7682778, "2a00ad7662f052c45a810bc61222e249e46faa8274462cd363a74a4d77cc2c4d", [3, 0, 0, 0]),
     1021: (7683014, "7a382ef319cad77105f4e62e1f71564fe0c439dd58bddd00a7a222109eba3a0e", [3, 0, 0, 0]),
     1033: (131076, "437d32b0e20950d0dd6fc5e2a68ba4629078666d83156af92f0075de88706dbe", [1, 52, 146, 0]),
+    # Getter observations precede RAM; this four-byte slice is frozen RAM data.
+    1037: (131180, "b59dac4de27781371d9d709b96a7b0dbff7819afc5a6bc075fd63276bb38e02f", [155, 118, 81, 44]),
 }
 
 
@@ -196,7 +198,7 @@ def main():
     if len(sys.argv) == 4 and sys.argv[1] == "--capture":
         case = int(sys.argv[3])
         if case not in EXPECTED:
-            raise RuntimeError("only the three room-mechanism observation cases are permitted")
+            raise RuntimeError("only the four room-mechanism observation cases are permitted")
         capture_child(Path(sys.argv[2]).resolve(), case)
         return
     if len(sys.argv) != 1:
@@ -214,7 +216,7 @@ def main():
         build_and_capture(root, work, paths, "baseline")
         for mutation in MUTATIONS:
             build_and_capture(root, work, paths, mutation[0], mutation)
-    print("room mechanism mutation checks: 4/4 killed; all three frozen baselines passed", flush=True)
+    print("room mechanism mutation checks: 4/4 killed; all four frozen baselines passed", flush=True)
 
 
 if __name__ == "__main__":
