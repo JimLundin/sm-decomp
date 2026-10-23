@@ -42,8 +42,18 @@ Old-reference capture and review pass (reference1036-results/results.json).
 This increment adds38 verification Rust lines and a reviewed fourth flag-query
 mutation to room_mutations.py; hosted execution remains pending. Candidate
 runner uses its actual typed query helper. Composed host compilation passes.
-Player regression checks, hosted execution/mutations, exercised movie, final
-source price and runtime cost remain pending; no candidate adoption yet.
+106 player groups,56 comparisons and both palette/animation guards pass:
+candidate-player-regression.json. Candidate movie passes28314frames,19probes,
+zero failures and120frames after message completion (candidate-movie-1.log).
+Same-route baseline passes:88.18s versus candidate94.81s, a single sample +7.5%.
+Getter aggregate cost investigation is assigned; candidate remains frozen.
+Validation branch verify/shared-session-20261023 at7ba1e33a has hosted composed
+execution and format PASS, eight mutations/build still running in40005712881.
+Main flag-map verification commit dcb97630 CI40005395335 remains running.
+Full format changed only import/layout in two candidate verification files;
+local final frontend build is running (candidate-frontend-final.log).
+Production+890lines, verification Rust+673 including four formatting lines,
+mutation Python+34; no reduction claim. No candidate adoption yet.
 Native source line endings match installed archives after normalized equality.
 
 Room contract v2 is frozen and four isolated production lanes are active under

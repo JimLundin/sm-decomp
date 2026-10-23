@@ -198,8 +198,17 @@ references; measure build/test time and resource growth before changing the loop
    are corrected. New reference cases1033..1036 distinguish both maps and both
    query outcomes; independent review and old-reference capture pass. The fourth
    mutation deliberately swaps the query map; reviewed runner awaits hosted CI.
-   Composed host compilation passes; execution, player regression checks,
-   exercised movie, final accounting and performance measurement remain pending.
+   Composed host compilation,106 player groups,56 player comparisons and both
+   animation/palette runtime guards pass. Speed Booster replay passes28314frames,
+   all19 mechanism/player probes, zero failures and120frames after message
+   completion. Candidate movie94.81s versus same-route baseline88.18s (+7.5%
+   in one paired sample, not a stable performance estimate). Investigate the
+   aggregate decoding cost of compatibility getters before further cleanup.
+   Hosted validation branch verify/shared-session-20261023 at7ba1e33a includes
+   full formatting (two verification files needed import/layout formatting only).
+   Production+890lines; verification Rust+673 after formatting; Python+34.
+   Caller/ownership/retirement review and hosted composed execution pass.
+   Eight hosted mutations and final frontend build remain pending.
 
 
    Room mechanisms are now adopted as one production responsibility: creation,

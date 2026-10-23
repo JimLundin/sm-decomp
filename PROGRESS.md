@@ -5,6 +5,8 @@ Green: adopted scope | Blue: draft | Orange: active | Grey: remaining | Red: fai
 
 [Latest verification: e216f0ef](https://github.com/JimLundin/sm-decomp/commit/e216f0efb0a4d7c75a9dcb7b13124ed4981fc5b6) / [CI + 3 scheduler mutants: PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40001171992)
 
+[Flag-map checks / CI](https://github.com/JimLundin/sm-decomp/actions/runs/40005395335) · [Shared Session validation branch](https://github.com/JimLundin/sm-decomp/tree/verify/shared-session-20261023)
+
 ### Room mechanisms / next typed-core conversion
 
 ```mermaid
@@ -47,16 +49,16 @@ flowchart TB
     GAP["Cases 1021-1032<br/>adopted / PASS"]:::done --> COMPARE
     SHAREDTEST["Pickup / refill / hold<br/>actual player consumers"]:::checked --> COMPARE
     FLAGS["commands.rs<br/>four flag-map branches fixed"]:::checked --> COMPARE
-    COMPARE --> REG["106 player groups<br/>56 comparisons"]:::pending
+    COMPARE --> REG["106 player groups / 56 comparisons<br/>2 runtime guards / PASS"]:::checked
     COMPARE --> HC["Composed host compile<br/>PASS"]:::checked
-    HC --> HE["Composed host execution"]:::pending
+    HC --> HE["Composed host execution<br/>CI PASS"]:::checked
     HE --> MUT["Candidate mutation checks"]:::pending
-    REG --> MOVIE["Exercised movie probes"]:::pending
+    REG --> MOVIE["28,314 frames / 19 probes<br/>0 failures / PASS"]:::checked
     MUT --> MOVIE
-    MOVIE --> PERF["Runtime cost comparison"]:::pending
+    MOVIE --> PERF["Runtime cost<br/>94.81s vs 88.18s / investigate"]:::active
     PERF --> ADOPT
     MOVIE --> ADOPT["Typed core adopted"]:::pending
-    class BASE,BUILD,COMPARE,FLAGS,REG,HC,HE,MUT,PERF changed
+    class REG,HE,MOVIE,PERF changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
