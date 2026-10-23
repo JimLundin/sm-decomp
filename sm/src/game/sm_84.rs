@@ -800,11 +800,6 @@ crate::game::callback_dispatch! {
         );
         0
     };
-    [8698076] PlmSetup_ShaktoolsRoom [] {
-        *(ram_ptr!(game, u16; 0xcd20)) = 1;
-        *(ram_ptr!(game, u16; 0xcd20, 2)) = 0;
-        0
-    };
     [8698309] PlmSetup_B9ED_CrittersEscapeBlock [] {
         let v1: u16 = word!(game.plm_block_indices[(j >> 1)]);
         WriteLevelDataBlockTypeAndBts(v1, 0xc04f, game);
@@ -991,6 +986,7 @@ crate::game::callback_dispatch! {
         8706700 => [crate::game::mechanism_eye_door_ram::begin(j, crate::game::mechanism_eye_door::Part::Eye, game)];
         8706745 => [crate::game::mechanism_eye_door_ram::begin(j, crate::game::mechanism_eye_door::Part::Body, game)];
         8706846 => [crate::game::mechanism_metroid_quota_ram::begin(j, game)];
+        8698076 => [crate::game::mechanism_shaktool_ram::begin(game)];
         8698012 => [crate::game::mechanism_booster_escape_ram::begin(j, game)];
         8697795 => [crate::game::mechanism_sound_delay_ram::begin(j, game)];
         8704399 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::LowerNorfair, displacement, game)];
@@ -1002,16 +998,6 @@ crate::game::callback_dispatch! {
     pub unsafe fn CallPlmPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
     call (k, game); default { Unreachable(game); };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [8698032] PlmPreInstr_ShaktoolsRoom [] {
-        if word!(game.power_bomb_explosion_status) != 0 {
-            *(ram_ptr!(game, u16; 0xcd20)) = 257;
-            *(ram_ptr!(game, u16; 0xcd20, 2)) = 257;
-        }
-        if word!(game.samus_x_pos) > 0x348 {
-            SetEventHappened(0xd, game);
-            word!(game.plm_header_ptr[(k >> 1)] = 0);
-        }
-    };
     [8698151] PlmPreInstr_OldTourianEscapeShaftEscape [] {
         if WakePlmIfSamusIsBelowAndRightOfTarget(k, 240, 2080, game) == 0 {
             SpawnEprojWithRoomGfx(0xb4b1, 0, game);
@@ -1252,6 +1238,7 @@ crate::game::callback_dispatch! {
         8697839 => [crate::game::mechanism_booster_escape_ram::poll(crate::game::mechanism_booster_escape::Stage::BoosterCollected, k, game)];
         8697898 => [crate::game::mechanism_booster_escape_ram::poll(crate::game::mechanism_booster_escape::Stage::PlayerFarLeft, k, game)];
         8697926 => [crate::game::mechanism_booster_escape_ram::poll(crate::game::mechanism_booster_escape::Stage::AdvanceLava, k, game)];
+        8698032 => [crate::game::mechanism_shaktool_ram::poll(k, game)];
         8697821 => [crate::game::mechanism_sound_delay_ram::poll(k, game)];
         8684649 => [()]; 8708008 => [()]; 8685264 => [()]; 8684774 => [()]; 8684861 => [()];
         8686246 => [()]; 8698787 => [()]; 8704854 => [()]; 8698618 => [()];

@@ -9,39 +9,46 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares the Speed Booster escape controller after `cdce9669`.
-Setup B89C and polls B7EF/B82A/B846 retire. Core/checked adapter forbid unsafe;
-candidate setup and pre routes bypass native fallback. Preserve collection and
-high-target gates, two separate live program increments, AE0 threshold, flat
-progress-table odd/non-row windows, bounds panics, event scratch effects and
-release order. RAM remains authoritative; 81/115 setups shared, 34 remain.
+The latest stage shares Shaktool room control after booster escape at `766d48f6`.
+Setup B8DC and polling B8B0 retire. Core/checked adapter forbid unsafe; candidate
+setup and direct pre routes bypass native fallback. Preserve native-endian scroll
+pair writes in order, all nonzero bomb status values, subsequent live player X,
+strict X>348 threshold, event0D scratch effects and captured release. Setup always
+resets the scrolls, even after the event. RAM remains authoritative; 82/115 setups
+shared, 33 remain.
 
-Main: **104,626 Rust lines in 178 files**, unsafe declarations2,885 unchanged,
-casts6,028 (-5). Maintained implementation105,188; installers/launcher included
-106,098. Prospective composition: **113,423 in 276 files**, **+8,797 over main**,
-unadopted. Main cost +114 lines/+937 tokens/+3,556 normalized bytes; complete
-implementation +148/+1,205/+4,909. Retained verification +812/+9,347/+32,760;
-implementation plus checks960 lines. Local production +33 lines overlaps the
-composition. No duplicate owned algorithm existed. No dependency/native/installer/
-launcher additions, net reduction, full unsafe retirement, persistent authority
-or backend-independence claim.
+Main: **104,701 Rust lines in 180 files**, unsafe declarations2,885 and casts6,028
+unchanged. Maintained implementation105,263; installers/launcher included106,173.
+Prospective composition: **113,517 in 279 files**, **+8,816 over main**, unadopted.
+Main cost +75 lines/+640 tokens/+2,388 normalized bytes; complete implementation
++94/+828/+3,119. Retained verification +567/+6,900/+23,456; implementation plus
+checks661 lines. Local production +18 lines overlaps the composition. No duplicate
+owned algorithm existed. No dependency/native/installer/launcher additions, net
+reduction, full unsafe retirement, persistent authority or backend-independence claim.
 
-Use `runtime-impact-working/BOOSTER_ESCAPE_HANDOFF.md`, `booster-escape-price.json`
-and `booster-escape-check-attempt-1.log`. Selected run passes in19.95s with source
-identities209 runtime/246 local: 91,874 frozen-original/main/candidate direct
-comparisons (including8,354 matching pre-effect table-bound failures), 20 current-
-main/candidate scheduler observations and21 actual motion observations. Symbolic
-checks prove failure prefixes and captured versus changing state observations.
+Use `runtime-impact-working/SHAKTOOL_HANDOFF.md`, `shaktool-price.json` and
+`shaktool-check-attempt-1.log`. Selected run passes20.15s with identities212
+runtime/249 local: 26,700 frozen-original/main/candidate direct comparisons,
+six counted main/candidate lifecycle observations and four original-output camera
+tails. Broad/odd selectors include scroll/header and event/header aliases. Native
+original pair alignment/bounds are asserted. Symbolic checks cover every failure
+prefix, live X after scroll writes and captured release after event effects.
 
-Actual hardcoded creation uses(8,8,B8AC), header(B89C,B88A), three SetPre/Sleep
-pairs and the unchanged item equipment producer. Main/candidate scheduling follows
-collection, far-left motion start and waypoint advancement to event15. Unchanged
-liquid motion checks delay, six exact height/fraction positions, target arrival,
-quake and queue effects. Frozen original outputs also drive actual motion tails.
-Actual event selection and completed setup consume the completion flag. Independent
-reference evidence is the four frozen controller bodies plus their motion tails;
-scheduler comparisons share the current core. No startup, room-load, movie,
-rendering or complete composition/game runtime claim.
+Actual room callback8FC8D3 and candidate hardcoded creation use(0,0,B8EB),
+header(B8DC,B8D6), PreInstrB8B0 and SleepB8DA. Actual frozen power-bomb fuse expiry
+produces4000, captured fuseFFFF, copied explosion positions and HDMA enable.
+The controller opens both scroll pairs. Bounded actual HandleAutoscrolling_X
+changes from red-next clamp7E to open80. Threshold crossing sets event0D/releases;
+actual room selection consumes it. Subsequent setup resets the scrolls even with
+the event set. A further actual scheduler tick with inactive header and active
+bomb4000 preserves that reset. Frozen original controller outputs separately feed
+the same actual camera consumer. Scheduler comparisons share the current core.
+
+The fixture explicitly thaws the frozen bomb state before camera consumption.
+Natural unfreezing, full bomb explosion, rendering, startup/room loading, movie
+execution and complete composition/game runtime remain unproven. The unfrozen
+bomb producer's packed HDMA argument path is not executed. No backend ownership
+or complete camera/bomb-engine replacement claim.
 
 Liquid limitation: `advance_tide` always reads native u16 at odd RAM0x197D, reached
 by every unfrozen `lava_surface`. Do not execute that path as defined-reference
@@ -54,32 +61,31 @@ not defined-native fidelity evidence. Preserve logs and independent setup result
 do not rerun the undefined cases. Current selected suites exclude them. This does
 not diagnose the inherited Intro mismatch in `DRAWING_HANDOFF.md`.
 
-Sound15300/274/2304, quota6118/66/112/48, eye-door13320/3440/56/24,
-plants1360/1504/8/640, cannon3630/1420/46/8, item3476/1320/14/32,
-scroll5816/1296/52, station3240/112/149/6, Chozo592/4/4/16, hands52/163/12,
-source342/672/47, closing74/120/7 and collision198/545/176/1 pass.
-Historical qualified graphics/cannon/Chozo evidence and full-contact limits
-remain unchanged; eye acid initialization stays excluded. Unchanged scroll
-bounded nonreturn observations were not repeated.
+Booster91874/8354/20/21, sound15300/274/2304, quota6118/66/112/48,
+eye-door13320/3440/56/24, plants1360/1504/8/640, cannon3630/1420/46/8,
+item3476/1320/14/32, scroll5816/1296/52, station3240/112/149/6,
+Chozo592/4/4/16, hands52/163/12, source342/672/47, closing74/120/7
+and collision198/545/176/1 pass. Booster's direct total includes its bounds
+failures. Historical qualified graphics/cannon/Chozo evidence and full-contact
+limits remain unchanged; eye acid initialization stays excluded. Unchanged
+scroll bounded nonreturn observations were not repeated.
 
-Production release/frontend/verifier/source passed54.98s, composition51.68s.
-Carrier first passed18.38s; first harness compile failed7.25s on private test
-exposure and integer inference. Carrier-only root forwarding and fixture type
-corrections passed: carrier11.13s, harness18.31s. The first runtime execution
-passed19.95s; failed compiler log retained. Production stayed fixed. Production hash:
-`c90ef7184e93c0bf60554a7cda28dcdca03739b5e3230539ac75da09fa525bbd`.
+Production release/frontend/verifier/source passed58.17s, composition59.57s,
+carrier22.00s and harness20.89s. All first attempts; selected checks first execution
+passed20.15s. Production stayed fixed. Production hash:
+`5c1bc5b7ee69d5186d7e5e16c9d2d2d55b33833b53b994687bbd0bc2ee71e6c1`.
 Changed gameplay/root formatting and diff checks pass; manifest additions conform
 with baseline formatting differences unchanged. Compiler lane released; DLL unloaded.
 
-`booster-escape-parent/` preserves prior main/carrier/local/composition sources.
-Earlier snapshots/caches and the sound-stage interrupted-build log remain. Do not
-rerun historical preparation scripts; composition lives under
-`impact-composition/sm/src`. Shaktool room control is the next proposed interaction
-among20 remaining room/event/boss setups, then14 residual identities. Runtime
-promotion needs reset/load/rewind/external-writer checks; boot-to-credits and
-independent renderer/audio remain unfinished. The parallel movie/state investigation
-is documented in [MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md); it
-implements no pipeline.
+`shaktool-parent/` preserves prior main/carrier/local/composition sources. Earlier
+snapshots/caches, booster fixture compiler failure and sound interrupted-build
+logs remain. Do not rerun historical preparation scripts; composition lives under
+`impact-composition/sm/src`. Animal rescue passage control is the next proposed
+interaction among19 remaining room/event/boss setups, then14 residual identities.
+Runtime promotion needs reset/load/rewind/external-writer checks; boot-to-credits
+and independent renderer/audio remain unfinished. The parallel movie/state
+investigation is documented in [MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md);
+it implements no pipeline.
 
 ## Paused launch draft
 

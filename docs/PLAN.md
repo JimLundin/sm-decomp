@@ -104,34 +104,31 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares the Speed Booster escape controller after sound
-   work at `cdce9669`. `mechanism_booster_escape` retires setup B89C and polling
-   B7EF/B82A/B846. It preserves collection/target gates, two separate live program
-   increments, the AE0 threshold, the flat ten-word progress table (including odd
-   and non-row indices), bounds panics and event15 persistence. Core and checked
-   adapter forbid unsafe; candidate setup/pre routes bypass native fallback.
-   RAM remains authoritative. Eighty-one of 115 setups are shared; 34 and native
-   dispatch/authority work remain.
+   Latest verified stage shares Shaktool room control after booster escape at
+   `766d48f6`. `mechanism_shaktool` retires setup B8DC and polling B8B0. It preserves
+   ordered native-endian scroll pairs, any nonzero Power Bomb status, the live X
+   read after scroll writes, strict X>348 event0D threshold and captured release.
+   Core and checked adapter forbid unsafe; candidate setup/pre routes bypass
+   native fallback. RAM remains authoritative. Eighty-two of 115 setups are shared;
+   33 and native dispatch/authority work remain.
 
-   Final checks pass 91,874 frozen-original/main/candidate direct comparisons,
-   including 8,354 matching pre-effect bounds failures, 20 main/candidate scheduler
-   observations and 21 liquid-motion observations. Actual collection, creation,
-   three-stage PreInstr/Sleep scheduling, motion delay/fraction/arrival, quake/queue
-   effects, completion setup and room-event selection execute. Symbolic checks
-   cover order, failure prefixes and changing observations. Independent original
-   evidence comes from the four frozen bodies and their motion tails; scheduler
-   comparisons share the current core. Identities209 runtime/246 local and all
-   selected prior regressions pass independent review. Production release/frontend/
-   verifier/source passed (54.98s), prospective release passed (51.68s), selected
-   runtime checks passed first execution (19.95s). A first harness compile failed
-   on private test exposure and integer inference; carrier-only/fixture corrections
-   passed on rebuild. Production sources stayed fixed. No movie or complete-
-   composition runtime ran.
+   Final checks pass 26,700 frozen-original/main/candidate direct comparisons,
+   six counted main/candidate lifecycle observations and four original-output
+   camera tails. Actual room callback, PreInstr/Sleep, frozen bomb fuse expiry,
+   camera clamp/opening, event selection, unconditional setup reset and subsequent
+   inactive tick execute. Symbolic checks preserve failure prefixes and live versus
+   captured observations. Identities212 runtime/249 local and all14 retained suites
+   pass independent review. Production release/frontend/verifier/source passed
+   (58.17s), prospective release passed (59.57s), carrier/harness passed first
+   attempts (22.00s/20.89s), selected runtime checks passed first execution (20.15s).
+   The fixture explicitly thaws the frozen bomb state before camera consumption;
+   this does not establish natural unfreezing, full bomb explosion or a movie.
+   No complete-composition runtime or rendering ran.
 
    Liquid limitation: unchanged `advance_tide` dereferences native u16 at odd RAM
    0x197D on every unfrozen `lava_surface` path. Do not execute that path as defined
-   reference evidence. This stage exposes only unchanged `advance_motion` in the
-   carrier; it establishes no tide, rendering or complete liquid-engine fidelity.
+   reference evidence. Booster-escape checks expose only unchanged `advance_motion`
+   in the carrier; they establish no tide, rendering or complete liquid fidelity.
 
    Historical correction: the terrain stage's 18 visible restore/render cases
    reach a native u16 read at odd RAM address 0x1E67. Those results are not
@@ -139,14 +136,14 @@ references; measure build/test time and resource growth before changing the loop
    comparisons; do not rerun the undefined cases. Current selected suites exclude
    them. Current item restores assert the offscreen guard before that read.
 
-   Main is **104,626 Rust lines in 178 files**. Prospective composition is
-   **113,423 (+8,797)**, unadopted. This stage adds 114 main and 34 owned/wiring
-   lines: **+148 complete lines**, +1,205 lexical tokens and +4,909 LF-normalized
-   bytes. Verification adds 812 lines; implementation plus checks adds 960.
+   Main is **104,701 Rust lines in 180 files**. Prospective composition is
+   **113,517 (+8,816)**, unadopted. This stage adds 75 main and 19 owned/wiring
+   lines: **+94 complete lines**, +828 lexical tokens and +3,119 LF-normalized
+   bytes. Verification adds 567 lines; implementation plus checks adds 661.
    The candidate previously delegated these behaviors to native callbacks; no
    duplicate owned algorithm existed to retire. No dependency or native/installer/
    launcher source is added. Unsafe declarations remain 2,885; cast-containing
-   lines fall five to 6,028. No net reduction, complete unsafe retirement,
+   lines remain 6,028. No net reduction, complete unsafe retirement,
    persistent ownership or backend-independence claim.
 
    Next dependencies, in order:
@@ -202,12 +199,14 @@ references; measure build/test time and resource growth before changing the loop
      actual creation, scheduler expiry and queue rejection/acceptance.
    - [x] Share Speed Booster escape setup/three-stage controller, retire four
      bodies and compare actual collection, motion and event persistence tails.
+   - [x] Share Shaktool room scroll/event control and retire two bodies; compare
+     actual room setup, bomb fuse, camera and persistent event consumers.
    - Close remaining room/event/boss setups, then constants/no-op/result routes.
      Preserve synchronous writes, nested displacement and failure prefixes before
      retiring native dispatch. The 115-identity inventory is in the local door
-     handoff; 20 room/event/boss and 14 residual identities remain. Select one
-     coherent responsibility through caller/validation investigation. Shaktool room
-     control is next; the booster-escape handoff records retained dependencies.
+     handoff; 19 room/event/boss and 14 residual identities remain. Select one
+     coherent responsibility through caller/validation investigation. Animal rescue
+     passage control is next; the Shaktool handoff records retained dependencies.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -215,7 +214,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified booster-escape continuation, with
+   `runtime-impact-working/` is the verified Shaktool continuation, with
+   `SHAKTOOL_HANDOFF.md`, `shaktool-price.json` and `shaktool-check-attempt-1.log`.
+   `shaktool-parent/` preserves prior main/carrier/local/composition inputs.
+   Booster-escape evidence remains in
    `BOOSTER_ESCAPE_HANDOFF.md`, `booster-escape-price.json` and
    `booster-escape-check-attempt-1.log`. `booster-escape-parent/` preserves prior
    main/carrier/local/composition inputs. Sound evidence remains in
