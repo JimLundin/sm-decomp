@@ -8,6 +8,42 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Parallel direction (user request 2026-10-23): six worker roles in three paired
+lanes, with one root compiler/integration lane. Ordinary typed state and an owned
+Session are the destination; wrapping existing address-based ports is insufficient.
+PROGRESS is now primarily a Mermaid graph: green delivered steps, orange drafts,
+grey remaining milestones, purple verification/integration. Keep its node states
+current rather than expanding the prose.
+
+Isolated work under `Local/sm-decomp-experiments/20261023` (not adopted):
+- `animated-tiles`: complete typed six-slot state, 24-command interpreter,
+  explicit per-upload request/acknowledgement, eight caller drafts. Normal fields
+  are direct; odd/broad access is confined to compatibility.rs. Draft +199 runtime
+  lines, 11 check-facade lines before carrier. Reviewer prepared 424 actual-old
+  cases in verification/animated_tiles.rs; not yet compiled/captured.
+- `palette-session`: complete direct-field palette core and edge-scoped
+  Option<Session> guard, with no Game/Port/offsets in the core. Opaque effects
+  publish/drop the owner before legacy code, then import actual returned state.
+  Core panic publishes successful prefixes; foreign panic cannot publish stale
+  state. Detached actual-core host exercises ticks/reset/snapshot/outputs with
+  backend modules unavailable. Replacement/detached drafts exist, review ongoing;
+  no build yet. Existing 512 references remain valid for comparison after adoption.
+- `enemy-projectiles`: reviewed 801-RAM-byte +16-native-byte state projection,
+  private shared-transport import/export extension staged only in the draft,
+  direct typed state/motion and full closure contract. Remaining implementation
+  includes roughly 310 callback identities, drops/contact and attached-body
+  producers. A first 354-case core carrier exists as core_checks.rs (not built);
+  it does not cover the full family scope. Its logical parent must remain sm_86
+  until old reference capture. Additional family workers may split only fixed,
+  disjoint interfaces. Metadata gaps and all native spawn context are observable.
+
+Root should next integrate both OLD reference carriers into the separate
+verification directory, add the usual hidden exports/source registration, build
+once, then capture each case in an isolated process. Do not adopt candidates
+before actual-old outputs are frozen. Keep coverage qualifications and the
+single compiler lane. Session aggregation into a persistent Game field remains
+unjustified because opaque memory writers and oracle/load adoption still exist.
+
 Verification carriers are now physically grouped in `sm/src/verification`.
 The existing logical modules and private access remain unchanged through path
 registrations. Four files are byte-identical after normalization; the room-copy

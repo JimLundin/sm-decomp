@@ -1,65 +1,81 @@
-# Engine modernization progress
+# Engine modernization
 
-Updated: **2026-10-23 15:46 UTC**
+Updated: **2026-10-23 16:00 UTC**
 
-**We are consolidating the old bank-organized code into complete gameplay systems.**
-Projectiles, room mechanisms and palette effects are delivered.
+**Target: an owned Rust Session, without manual memory access or unsafe gameplay.**
+Green means that specific step is delivered, not that the entire subsystem is finished.
 
-## Road to the engine
+```mermaid
+flowchart TB
+    subgraph delivered["DELIVERED"]
+        direction LR
+        P["Player projectiles<br/>14 adapters retired"]:::done
+        M["Room mechanisms<br/>51 old files retired"]:::done
+        C["Palette effects<br/>old bank retired"]:::done
+    end
 
-| Stage | Status | What reaching it means |
+    subgraph parallel["NOW: 3 worker pairs"]
+        direction LR
+        PC["Palette core<br/>typed fields + effects<br/>DRAFT / REVIEW"]:::active
+        AT["Animated tiles<br/>typed upload requests<br/>DRAFT"]:::active
+        EP["Enemy projectiles<br/>state + callers<br/>DESIGN / DRAFT"]:::active
+    end
+
+    C --> PC
+    P --> EP
+    M --> EP
+    PC --> CHECK
+    AT --> CHECK
+    EP --> CHECK
+    CHECK{{"Existing verification harness<br/>build + behavior comparisons<br/>ONE integration lane"}}:::gate
+    CHECK --> SESSION["All gameplay on typed state<br/>persistent owned Session<br/>NOT INTEGRATED"]:::pending
+    SESSION --> OUTPUT["Explicit game outputs<br/>graphics + audio contracts"]:::pending
+    AT -. "first upload contract" .-> OUTPUT
+    OUTPUT --> BACKEND["Independent renderer + audio<br/>remove shipping SNES backend"]:::pending
+    BACKEND --> FINISH["Boot-to-credits verified<br/>all unsafe / manual memory removed"]:::pending
+
+    classDef done fill:#d1fae5,stroke:#047857,color:#064e3b,stroke-width:2px
+    classDef active fill:#ffedd5,stroke:#c2410c,color:#7c2d12,stroke-width:3px
+    classDef pending fill:#f1f5f9,stroke:#64748b,color:#334155,stroke-dasharray:5 5
+    classDef gate fill:#ede9fe,stroke:#7c3aed,color:#4c1d95,stroke-width:2px
+```
+
+**Green: delivered step. Orange: active work. Grey: remaining work. Purple: verification gate.**
+Arrows show migration dependencies, not current runtime calls.
+
+| Active lane | Workers | Next visible change |
 | :--- | :---: | :--- |
-| 1. Agree the destination | ✅ Done | A documented engine design and migration approach. |
-| **2. Consolidate gameplay systems** | **▶ CURRENT** | Put each system's behavior and state together; migrate callers and delete the old implementations. |
-| 3. Keep game state owned between updates | ◻ Ahead | Systems retain their state without relying on shared SNES memory as the authority. |
-| 4. Separate the graphics and audio backend | ◻ Ahead | The game supplies explicit drawing/audio outputs and runs independently of SNES emulation. |
-| 5. Demonstrate the complete game | ◻ Ahead | Validate the finished engine from boot to credits. |
+| Palette / Session seed | Implementer + reviewer | Palette behavior uses ordinary fields; a core can execute with the backend unavailable. |
+| Animated tiles | Implementer + reviewer | Scripts produce typed upload requests; actual graphics upload consumes and acknowledges them. |
+| Enemy projectiles | Implementer + reviewer | One owner replaces scattered projectile state, drops, contact handling and attached-body writes. |
 
-These are milestones, not equal portions of the remaining work. Code reduction
-and removal of unsafe operations continue throughout the migration.
+**Six workers; one compiler/integration lane.** More implementation work can split
+once interfaces are fixed. Current drafts are not yet adopted in main.
 
-## Current delivery: palette effects
+<details>
+<summary>Counts and latest verified deliveries</summary>
 
-**Purpose:** one place owns effect creation, timing, script execution and color
-changes, replacing the old bank module and its memory-access adapter.
+| Measure | Current result |
+| :--- | ---: |
+| Total Rust lines | 109,412 |
+| Dedicated verification files | 4,266 |
+| Remaining Rust, including mixed verification support | 105,146 |
+| Latest palette comparison | 512 cases match |
+| Latest palette opening replay | 272 frames, zero failures |
+| Latest mechanism game route | 28,314 frames, zero failures |
 
-| Step | Status | Evidence / next action |
-| :--- | :---: | :--- |
-| Capture the existing behavior | ✅ Done | 512 reference cases saved before replacement. |
-| Implement and connect the replacement | ✅ Done | All 13 caller files migrated; old `sm_8d` and its memory adapter deleted. |
-| Build and compare behavior | ✅ Done | Build passes; all 512 comparisons match. Opening sequence: 272 frames, zero failures, palette changes and screen upload observed. |
-| Publish the verified change | ✅ Done | Replacement, separate harness and independent review delivered together. |
+Verification is excluded from the engine-reduction measure. The remaining-Rust
+figure is conservative: some verification is still mixed into production files.
+Moving tests earns **no reduction credit**. Their relocation adds 13 support lines;
+production algorithms are unchanged. Release/frontend/verifier builds, 106
+projectile groups, three room-copy cases and mechanism ownership/qualified checks
+pass after relocation.
 
-Its state ownership lasts during an operation; persistent ownership is still
-stage 3. **Production: +126 lines. Verification support: +370 lines**, excluded
-from the engine-reduction measure. This is an ownership/safety improvement,
-not a code-reduction claim.
+- [Palette adoption](https://github.com/JimLundin/sm-decomp/commit/67d6c676): production +126 lines; verification +370. Ownership/safety progress, not size reduction.
+- [Separate verification files](https://github.com/JimLundin/sm-decomp/commit/d4cd71c3).
+- [Public CI formatting and frontend build pass](https://github.com/JimLundin/sm-decomp/actions/runs/39979717734).
 
-**Next:** select the next complete gameplay system, naming the duplicate code
-to remove and its remaining shared-memory dependencies before implementation.
-
-## Delivered milestones
-
-| Delivery | Visible result | Verification | On GitHub |
-| :--- | :--- | :--- | :--- |
-| Player projectiles | One system for shots, trails and weapon updates; 14 adapters retired. | 106 regression groups; full-memory comparisons. | ✅ Delivered |
-| Room mechanisms | Creation, scripts, drawing and interactions consolidated; **51 old files deleted**, including 24 adapters. | 1,018 baseline outcomes; **28,314 game frames, zero failures**. | [81a524cc](https://github.com/JimLundin/sm-decomp/commit/81a524cc) |
-| Shared state transfer | Projectile and mechanism systems use one implementation for passing state to legacy calls and recovering it. | Both systems' comparisons and game route pass. | [15d75180](https://github.com/JimLundin/sm-decomp/commit/15d75180) |
-| Palette effects | One owner for eight effects; four public operations replace bank entry points across 13 caller files. | 512 comparisons; 272 opening frames, zero failures. | [Implementation](sm/src/game/palette_effects/mod.rs) |
-| Formatting and public CI | Full repository formatting enforced; Windows frontend build provisioned. | [Format and release build pass](https://github.com/JimLundin/sm-decomp/actions/runs/39979717734). | [7ddd6331](https://github.com/JimLundin/sm-decomp/commit/7ddd6331) |
-
-## How we count progress
-
-| Measure | Reporting rule |
-| :--- | :--- |
-| **Production code** | Engine/game behavior, runtime adapters and their callers count toward the reduction goal. |
-| **Verification support** | Harnesses, comparison exports and probes are shown separately and excluded from the engine-reduction total. New palette cases live in a dedicated verification directory. |
-| **Total maintained code** | Still disclosed so verification and build-support costs remain visible. |
-| **Real simplification** | Count deleted implementations and shared algorithms; file moves and formatting changes earn no reduction credit. |
-
-Current committed Rust total: **109,399 lines, including verification**.
-A reconciled production-only total is pending; the raw total is not the new
-engine-size measure. Historical mixed totals below retain their original meaning.
+</details>
 
 <details>
 <summary>Technical evidence and limits</summary>
@@ -102,5 +118,5 @@ engine-size measure. Historical mixed totals below retain their original meaning
 
 </details>
 
-[Work plan](docs/PLAN.md) · [Technical handoff](docs/HANDOFF.md) ·
+[Work plan](docs/PLAN.md) Â· [Technical handoff](docs/HANDOFF.md) Â·
 [Accepted engine design](docs/target-architecture/README.md)

@@ -111,8 +111,21 @@ adoption. The next milestone must address that structural gap explicitly.
 **Coordinated iterations (2026-10-22): the user authorized ongoing worker
 supervision, lifecycle/commit coordination and resource oversight.** The
 beam launch, missile acceleration, extension creation, placement, initialization and playback are shared below;
-remaining consumers and unsafe dependencies are next. One implementer and one independent read-only caller/
-validation investigator work through a single integration/compiler lane.
+remaining consumers and unsafe dependencies are next. User direction on
+2026-10-23 expands useful parallelism: three paired lanes (six workers), each with
+an implementer and independent caller/validation investigator, feed one serial
+integration/compiler lane. Current lanes are animated tiles, complete enemy
+projectiles, and a direct typed palette core as a Session seed. Use isolated
+drafts and freeze interfaces before splitting more implementation; no concurrent
+main edits or builds. Increase parallel source work when genuinely independent
+work is ready, while preserving this machine's single heavy compiler limit.
+
+The Session target requires ordinary owned data structures, not a composition
+of existing address-codec ports. New designs must put direct typed state in the
+core, confine byte compatibility to explicit edges, and replace real production
+paths. Do not add an always-live duplicate Session beside writable RAM. The
+palette lane must demonstrate its core with backend modules unavailable while
+preserving production partial writes and exclusive legacy transitions.
 Build-pipeline preparation is complete; previous task queues and ownership
 experiments are not automatically restarted. Preserve active caches and saved
 references; measure build/test time and resource growth before changing the loop.
@@ -214,9 +227,17 @@ references; measure build/test time and resource growth before changing the loop
    improves ownership/safety and retires bank orchestration; it is not net code
    reduction. Independent final implementation/caller/fixture review passes.
 
-   Next: select a complete gameplay responsibility with named duplicate production
-   code to remove, real caller migrations and explicit remaining state writers.
-   Price production separately from verification under the user's revised rule.
+   Parallel next work: complete animated tiles including its actual NMI consumer
+   and typed per-upload/acknowledgement contract; complete enemy-projectile state,
+   drops/contact/attached-body producer closure; direct-field palette lifecycle/
+   interpreter with semantic effects and an independent Session seed. These are
+   isolated drafts/designs, not adopted runtime. The source audits did not establish
+   large duplication savings for animated tiles or enemy projectiles. Do not claim
+   generic interpreter sharing: their cursor capture, selector and failure rules
+   differ. Safety/architecture work may grow production; report its cost honestly.
+   The explicit upload and backend-free typed-core scopes must advance the actual
+   destination, rather than add more memory-access wrappers. Price production and
+   verification separately. Persistent whole-runtime ownership remains unproven.
    The accepted engine still needs persistent state, explicit backend outputs,
    all-unsafe elimination and boot-to-credits validation.
 
