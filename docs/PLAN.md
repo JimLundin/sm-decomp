@@ -164,8 +164,18 @@ references; measure build/test time and resource growth before changing the loop
    declarations fall by four to 2,790; cast-containing lines remain 5,922. This is
    safe shared sequencing and duplicate retirement, not a net reduction.
 
-   Next: close external-writer/reset/load/oracle-rewind authority and decide the
-   next complete state-ownership responsibility. Preparation and later beta remain
+   In progress: reviewed charged-shot palette consumer replacement from `8fa61a7c`
+   shares the complete main HandleBeamChargePalettes and owned advance_weapon_palette
+   rule plus their output resolver. Preserve getter/image selection, signed/wrapped
+   rules, live post-output fields, full visor return, and native copy/visor leaves.
+   Required checks follow real producers through coordinator/beta and Misc palette
+   writes into the next charge/audio consumer. Main growth estimate 117–220 lines;
+   composition 87–235, verification 1,340–2,070. Implementation is worker-owned,
+   independently reviewed; root owns registration, integration, builds and Git.
+   The candidate-only Session-bridge conversion cleanup is deferred: it removes
+   redundancy but contributes no production change and is not required for adoption.
+   External-writer/reset/load/oracle-rewind authority remains unfinished.
+   Preparation and later beta remain
    separated by contacts, enemies and possible suspension; beta owns demo restoration.
    Persistent Session ownership, complete-game coverage and independent rendering/
    audio remain unfinished. Do not adopt outer wiring alone.

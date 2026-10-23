@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 11:41 UTC**
+Updated: **2026-10-23 11:53 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -42,7 +42,18 @@ its estimate. This is a safety and shared-behavior improvement, not a net reduct
 
 ## Work in progress
 
-**Close remaining state-ownership and external-writer boundaries.**
+**Charged-shot palette feedback replacement is approved for implementation.**
+
+The next change shares glow timing, charge-palette cycling and output selection
+between main and the owned candidate, retiring both duplicate rule bodies.
+Checks will follow real weapon producers through palette updates, beta callers,
+rainbow palette changes and resumed charge audio. The proposal estimates
+117–220 additional main-source lines; it preserves existing transfers around
+external palette writers and does not claim persistent ownership. Implementation
+and verification are pending.
+
+A candidate-only callback-conversion optimization was deferred because it has
+no production contribution and is not required for adoption.
 
 Persistent Session ownership still requires reset/load/oracle-rewind and external
 writer handling. Preparation remains separate from later movement and scheduler
