@@ -342,11 +342,21 @@ references; measure build/test time and resource growth before changing the loop
    CI now compiles the normal Cargo verifier host alongside the game to detect
    that configuration mismatch. VerificationRust+331; gameplay unchanged.
    Baseline38probe route passes28314frames/0failures/120follow-upframes,94.68s;
-   paletteDMA and96animation uploads acknowledged. Full candidate build, actual
-   comparisons and27mutation executions remain;11newfaults are source-reviewed.
+   paletteDMA and96animation uploads acknowledged. Frozen candidate f3840efe
+   passes root formatting/direct release build, all three detached compilations,
+   1174visual comparisons (512palette,438animation,224definedSamus), all33oracle
+   comparisons and three Runtime guards. Enemy1443cases/87checks pass. Hosted
+   7f14e21/run40021042750 passes full Cargo build and all18composed mutants;
+   1038room comparisons and106player groups/56comparisons also pass. Nine DLL
+   mutants and final38probe replay remain.
+   Candidate is not adopted until those checks pass.
    Broad palette aliases, legacy writers and reset/backend paths still prevent
    persistent whole-game ownership; do not claim persistence from composition.
-   Production token/byte growth precludes a net source-reduction claim. Geometry
+   Production lexical size is nearly unchanged; no material algorithm-size
+   reduction is claimed. Candidate production107301->107122lines (-179),
+   tokens+25/bytes-4061; verification12844->13377lines (+533), combined+354.
+   Reference preparation adds654verificationlines separately; Python+301.
+   Seven production files retire (666gross lines, replacements counted). Geometry
    relocation and macro formatting are not savings. Complete accounting is in
    local FINAL-ACCOUNTING.md and final-source-accounting.json.
 

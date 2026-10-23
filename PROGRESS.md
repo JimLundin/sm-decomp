@@ -113,41 +113,130 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-### Shared visual effects / next scope
+### Shared visual effects / integrated candidate under validation
+
+Blue files are reviewed candidate changes; green checks have passed. Adoption is pending.
 
 ```mermaid
 flowchart TB
-    S["session.rs / 51,053 WRAM bytes<br/>ownership review PASS"]:::checked
-    P["palette_effects/<br/>source review PASS"]:::checked --> S
-    A["animated_tiles/<br/>source review PASS"]:::checked --> S
-    U["samus_palette.rs / beam copies<br/>source + caller review PASS"]:::checked --> S
-    S --> CODEC["session_encoding.rs<br/>51,053-byte union review PASS"]:::checked
-    CODEC --> RT["visual_runtime.rs / session_runtime.rs<br/>source review PASS"]:::checked
-    C["samus_palette_oracle.rs<br/>33 cases / original carry PASS"]:::done --> U
-    C --> H["Hurt / 12 cases PASS"]:::done
-    C --> F["Special flags / 3 cases PASS"]:::done
-    C --> W["Spin + wall jump / 2 cases PASS"]:::done
-    C --> Q["Flare + shoot / 8 cases PASS"]:::done
-    C --> G["Grapple / 4 cases PASS"]:::done
-    C --> INJECT["Injected callback transitions<br/>4 cases PASS"]:::done
-    B["sm_90.rs / beam palette<br/>two duplicate loops identified"]:::checked --> U
-    V["512 palette + 438 animation cases<br/>current baseline + 2 guards PASS"]:::checked --> D
-    DEF["samus_palette_defined_cases.rs<br/>224 predecessor captures PASS"]:::done --> D
-    REPLAY["Baseline / 38 required probes<br/>28,314 frames / 0 failures"]:::checked --> D
-    S --> D["Concrete declarations<br/>compile + 2 reviews PASS"]:::checked
-    D --> I["Whole candidate assembled<br/>source reviews PASS"]:::checked
-    I --> T["Actual shared-core composition<br/>source review PASS"]:::checked
-    I --> X["Samus cases + Runtime guards<br/>source review PASS"]:::checked
-    I --> Y["11 new mutation drafts<br/>source review PASS"]:::checked
-    I --> M["Build / behavior / 27 mutations"]:::pending
-    M --> R["Caller migration / old owners retired"]:::pending
-    class S,P,A,U,CODEC,RT,C,H,F,W,Q,G,INJECT,B,V,DEF,REPLAY,D,I,T,X,Y,M,R changed
+    subgraph owner["Shared owner / game/"]
+        S["session.rs"]:::checked
+        VS["visual_state.rs"]:::checked
+        EI["external_inputs.rs"]:::checked
+        VH["visual_host.rs"]:::checked
+        SE["session_encoding.rs"]:::checked
+        SR["session_runtime.rs"]:::checked
+        VR["visual_runtime.rs"]:::checked
+    end
+    subgraph palette["palette_effects/"]
+        PE["execution.rs"]:::checked
+        PM["mod.rs"]:::checked
+    end
+    subgraph animation["animated_tiles/"]
+        AE["execution.rs"]:::checked
+        AM["mod.rs"]:::checked
+        AN["native.rs"]:::checked
+    end
+    subgraph player["Samus / beam consumers"]
+        SP["game/samus_palette.rs"]:::checked
+        LS["game/liquid_surface.rs"]:::checked
+        B90["sm_90.rs"]:::checked
+        B91["sm_91.rs"]:::checked
+    end
+    subgraph callers["Other shared-state consumers / game/"]
+        EP["enemy_projectiles/pre_actions.rs"]:::checked
+        EG["enemy_projectiles/graphics_runtime.rs"]:::checked
+        PF["player_projectiles/feedback.rs"]:::checked
+        PP["player_projectiles/mod.rs"]:::checked
+    end
+    subgraph compatibility["Compatibility boundary / src/"]
+        RAM["ram_map.rs"]:::checked
+        RTL["rtl.rs / pointer writer relocated"]:::checked
+    end
+    S --> VS
+    S --> EI
+    S --> SE --> SR --> VR
+    VH --> VR
+    PE --> VH
+    AE --> VH
+    SP --> VH
+    B90 --> SP
+    B91 --> SP
+    EP --> PE
+    AE --> EP
+    class S,VS,EI,VH,SE,SR,VR,PE,PM,AE,AM,AN,SP,LS,B90,B91,EP,EG,PF,PP,RAM,RTL changed
+    classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
+```mermaid
+flowchart TB
+    REVIEW["Production + caller reviews<br/>PASS"]:::done --> BUILD["Complete candidate build<br/>PASS"]:::done
+    UNION["51,053 disjoint WRAM bytes<br/>zero duplicate ownership / PASS"]:::done --> BUILD
+    BUILD --> PAL["Palette comparisons<br/>512 PASS"]:::done
+    BUILD --> ANI["Animation comparisons<br/>438 PASS"]:::done
+    BUILD --> SAM["Defined Samus comparisons<br/>224 PASS"]:::done
+    BUILD --> CPU["Original-CPU oracle comparisons<br/>33 PASS"]:::done
+    BUILD --> GUARD["Runtime guards<br/>3 PASS"]:::done
+    BUILD --> ENEMY["Enemy regression<br/>1,443 cases + 87 checks PASS"]:::done
+    BUILD --> ROOM["Room comparisons<br/>1,038 PASS"]:::done
+    BUILD --> PLAYER["Player regression<br/>106 groups + 56 comparisons PASS"]:::done
+    BUILD --> REPLAY["Replay / 38 required probes<br/>RUNNING"]:::active
+    BUILD --> HOST["Hosted full build<br/>PASS"]:::done
+    HOST --> DLL["Hosted DLL mutations<br/>RUNNING"]:::active
+    BUILD --> DETACHED["Shared detached harness<br/>execution PASS"]:::done
+    DETACHED --> OLD["7 existing detached mutants<br/>7 / 7 caught"]:::done
+    DETACHED --> NEW["11 new visual mutants<br/>11 / 11 caught"]:::done
+    BUILD --> FMT["Root + hosted formatting<br/>PASS"]:::done
+    RETIRE["7 old production files retired<br/>candidate / 666 gross lines"]:::checked --> ADOPT
+    PAL --> ADOPT
+    ANI --> ADOPT
+    SAM --> ADOPT
+    CPU --> ADOPT
+    GUARD --> ADOPT
+    ENEMY --> ADOPT
+    ROOM --> ADOPT
+    PLAYER --> ADOPT
+    REPLAY --> ADOPT
+    DLL --> ADOPT
+    OLD --> ADOPT
+    NEW --> ADOPT
+    FMT --> ADOPT["Adopt on main + publish<br/>PENDING"]:::pending
+    class REVIEW,UNION,BUILD,PAL,ANI,SAM,CPU,GUARD,ENEMY,ROOM,PLAYER,REPLAY,HOST,DLL,DETACHED,OLD,NEW,FMT,RETIRE,ADOPT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
+
+```mermaid
+flowchart TB
+    subgraph palette_mutants["Palette mutations / compiling faults caught"]
+        M1["omit_fractional_heat / caught"]:::done
+        M2["cache_heat_equipment_before_sound / caught"]:::done
+        M3["discard_palette_cross_owner_alias / caught"]:::done
+        M6["discard_shared_palette_color / caught"]:::done
+        M7["discard_eye_palette_producer / caught"]:::done
+    end
+    subgraph upload_mutants["Upload mutations / compiling faults caught"]
+        M4["acknowledge_live_upload_selection / caught"]:::done
+        M5["acknowledge_failed_upload / caught"]:::done
+    end
+    subgraph samus_mutants["Samus mutations / compiling faults caught"]
+        M8["replace_misc_carry_with_signed_branch / caught"]:::done
+        M9["omit_selector2_final_misc / caught"]:::done
+        M10["replace_charge_carry_with_signed_branch / caught"]:::done
+        M11["replace_grapple_carry_with_signed_branch / caught"]:::done
+    end
+    class M1,M2,M3,M4,M5,M6,M7,M8,M9,M10,M11 changed
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+[Hosted validation](https://github.com/JimLundin/sm-decomp/actions/runs/40021042750)
 
 <details>
 <summary>Room mechanisms / shared typed core adopted</summary>

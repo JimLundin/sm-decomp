@@ -48,23 +48,22 @@ exports15,no_mangle79; all new declarations belong to verification.
 Local oracle-c30c16ba now holds the extended checked snapshot45f182a3;
 oracle-results-1 retains the original29captures/results/frozenDLL.
 capture_palette_oracle.py reruns the extended33 bounded cases.
-Build sessions75284/55933 and reference session85814 are terminal.
-Later build/capture sessions70583,64098,1542,64713,92290,48222,75845,91626
-are also terminal. No localheavy process is active.
+Frozen candidate source f3840efe2167f37f5e3bd48c4063c575fa8448f18417b7fd7a589f4501878f91
+at next-visual-session/candidate-1eb5bed9 passes root fmt/check/direct build,
+three detached compiles,1174visual comparisons,33originalCPU comparisons,
+three Runtime guards,1443enemy cases/87checks,1038room comparisons and
+106player groups/56comparisons. Compared artifacts remain under candidate-*-1.
+Oracle comparison excludes only fixture stack[1FEB,2000) and charge scratch
+[24,26) forIDs21..24; candidate excluded bytes stay at entry values.
+Hosted verify/visual-session-20261023 commit7f14e21/run40021042750 passes
+formatting, allthree detached executions,18/18composed mutants and full Cargo
+build. Nine DLL mutants remain pending. Final replay is active in session68037.
+The first replay-launch script failed reading a UTF16 log, before gameplay;
+encoding corrected without source changes. No failed gameplay frames so far.
+Candidate source remains unadopted. Preserve candidate library/defined adapter
+and source registry when integrating; no old legacy adapter overlay. Pointer
+writer relocation is exact, not unsafe elimination. Main MapRando docs persist.
 
-Upcoming typed comparison uses allRAM at each checkpoint, excluding only
-fixture CPUstack[1FEB,2000) and charge scratch[24,26) forIDs21..24. Require
-candidate bytes in excluded regions to stay at their entry values, and report
-oracle values separately. No blanket frame normalizer. Soundlimit653, visorA72,
-chargephaseB62, carry/branch/two misc calls and ordered effects remain exact.
-
-Complete reviewed candidate is frozen at next-visual-session/candidate-1eb5bed9.
-Before its first build, overlay latest root oracle/CI/unchanged definedfixtures,
-preserving candidate lib/adapter/registry additions and main MapRando documents.
-Then compile and run actual comparisons/guards/33oracleprojections and hosted
-composition/27mutants. Source reviews pass, including two fixes (sound3/max9 and
-postcharge negativecarry), old standalone assertion preservation and exact pointer
-writer relocation. Relocation enables real schema reuse, not unsafe elimination.
 The final matching route uses38requiredprobes,28314frames,120aftermessage;
 baseline94.68s/0failures on8d7f67b4 is in main-baseline-38probes.log.
 
