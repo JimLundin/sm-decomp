@@ -104,53 +104,52 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares the unused shot/grapple installation pair after
-   Chozo commit `08e4b98c`. D117/header D127 and D12B/header D13B route through
-   the existing terrain core with typed Shot/Grapple reactions. The exact
-   checked byte-write helper moves to its adapter; the old public name is a
-   re-export preserving every retained caller. No module or registration added.
-   Preserve captured block, exact high-byte address, rounded BTS index, ordered
-   writes and checked failure prefixes. RAM remains authoritative; 96/115
-   setups shared, with 5 room/event/boss and 14 residual identities remaining.
+   Latest verified stage shares the Bomb Torizo statue PLM and actor wait after
+   `0a194127`. D606 setup, D33B bombs watcher, D357 debris and D3C7 music
+   commands, and AA:C6C6 actor wait use a safe core and checked RAM adapter.
+   Both modules forbid unsafe code. Retired five bank bodies and sole-use music
+   constant; preserve all dispatch identities, captured selectors, ordered effects,
+   native actor fields and live post-music rereads. RAM remains authoritative;
+   97/115 setups shared, with 4 room/event/boss and 14 residual identities left.
 
-   All 26 suites pass with 234 runtime/287 local identities. New result
-   [3740,1020,224,974]: 3,740 successful setup comparisons and 1,020 separate
-   matching checked failures; 224 primitive comparisons include 48 matching
-   failures. Independent expected byte maps cover odd blocks, captured-selector
-   mutation and terrain/BTS overlap. The frozen helper reference is independent
-   of the moved production helper. FFFD/FFFE/FFFF fail before BTS modification.
+   All 27 suites pass with 237 runtime/292 local source identities. New result
+   [3696,1155,64,1382]: 2,112 setup and 1,584 bombs-watcher comparisons;
+   1,152 native actor comparisons plus one injected callback and two real music
+   alias cases; 32 debris and 32 music command comparisons. The 1,382 mixed
+   lifecycle observations include actual room-state selection/placement, complete
+   guarded script ticks, actor release, duplicates and death/reentry checks.
+   All 26 retained suite vectors remain unchanged.
 
-   Both entries are unused in vanilla: no room-producer or movie claim.
-   Constructed placement runs their real scripts and five actual shot/grapple
-   consumers with free/full pools. D127 changes type C to solid type 8 on tick
-   1 and deletes on 5; D13B retains type E and deletes on 2. The actual D064
-   child starts alongside its live parent, which deletes on tick 5. CADF restores
-   on 409 and deletes on 410; checks run through 411. Generic D0D8 deletion
-   also executes. Offscreen row 29/camera zero keeps the
-   original renderer's clip before odd reads; visible rendering is unproven.
-   The 974 mixed observations are 8 placements, 18 primary-script ticks,
-   120 consumer/pool pairs, 822 CADF ticks and 6 grapple-child ticks.
-   All 25 retained suite results remain unchanged.
+   Actual room 9804 selects default 981B or boss-dead 9835, reads list 83FE,
+   and spawns its third record 840A through the real allocator. Other room PLMs
+   are not loaded. Separate constructed offscreen runs relocate the statue to
+   row 20 before D368 drawing: bombs wake it, 1,024 bytes queue at relative
+   tick 120, eight debris emissions occur at 216..339, and music/deletion at
+   340 releases the actor. Relative ticks start at the resumed 120-frame draw.
+   Full/free pools and duplicate statues are covered. Actual death callbacks
+   check bit 4, 16 RNG steps and final drop points with a full pool; Bomb death
+   uses actual room reentry, Golden death checks setup under retained area 2.
 
-   Production release/frontend/verifier/source 52.16s, prospective release
-   44.35s, carrier 19.62s, harness 34.56s and all 26 checks 26.53s pass first
-   attempts with explicit exit 0. No failed builds/checks or source changes
-   after final builds. Content and frozen references remain local.
+   Native actor checks use even selectors; debris operands are actual even
+   values 0..14. No debris motion/rendering, admitted death-pickup initialization,
+   full boss encounter, visible renderer, full-room load or movie claim.
+   Retain all earlier limits: odd native advance_tide/terrain18 accesses remain
+   excluded, Chozo watcher completion remains qualified, and inherited Intro
+   mismatch is unresolved. Detailed limits remain in local handoffs.
 
-   Retained limits: `advance_tide` reads native u16 at odd RAM197D on every
-   unfrozen lava_surface; never run that as defined-reference evidence. The old
-   terrain18 visible restore cases reach odd RAM1E67 and remain excluded. Preserve
-   their logs. Current guarded offscreen draws do not establish rendering fidelity
-   or resolve the inherited Intro mismatch. Chozo watcher true-arm completion
-   remains qualified, not native completion; other limits remain in handoffs.
+   Production release/frontend/verifier/source 61.14s and prospective release
+   50.43s pass first attempts. Carrier retry passes in 18.40s after a 9.42s
+   fixture-reference import/private-helper failure; harness passes in 24.82s.
+   All checks pass in 26.17s, explicit exit 0. Production stayed unchanged.
 
-   Main is **105,335 Rust lines in 192 files**. Prospective composition is
-   **114,402 (+9,067)** in 297 files, unadopted. Stage main adds 25 lines,
-   168 lexical tokens and 862 LF-normalized bytes; complete composition adds
-   29/248/1,208. Retained verification adds 579/8,082/27,346; implementation
-   plus checks adds 608/8,330/28,554. Local production overlaps composition.
+   Main is **105,470 Rust lines in 194 files**. Prospective composition is
+   **114,583 (+9,113)** in 300 files, unadopted. Stage main adds 135 lines,
+   1,227 lexical tokens and 4,197 LF-normalized bytes; complete composition adds
+   181/1,581/5,829. Retained verification adds 931/11,235/39,600; implementation
+   plus checks adds 1,112/12,816/45,429. Local production overlaps composition.
    No dependency, native, installer or launcher additions. Unsafe declarations
-   remain 2,879 and casts 6,009. No net reduction, complete unsafe retirement,
+   remain 2,879; cast-containing lines fall to 6,006. Added safe behavior and
+   checked access explain growth; no net reduction, complete unsafe retirement,
    persistent ownership or backend independence claim.
 
    Next dependencies, in order:
@@ -228,12 +227,14 @@ references; measure build/test time and resource growth before changing the loop
      qualified watcher prefixes/completions, nested allocation and passage tails.
    - [x] Share unused shot/grapple installation and the exact legacy helper;
      compare constructed scripts, actual collision consumers and respawn tails.
+   - [x] Share Bomb Torizo statue setup/wake/debris/music and actor wait;
+     compare actual room selection, guarded full script and death/reentry tails.
    - Close remaining room/event/boss setups, then constants/no-op/result routes.
      Preserve synchronous writes, nested displacement and failure prefixes before
      retiring native dispatch. The 115-identity inventory is in the local door
-     handoff; 5 room/event/boss and 14 residual identities remain. Select one
-     coherent responsibility through caller/validation investigation. The block-reaction
-     handoff records unused-entry scope, collision tails and draw limits.
+     handoff; 4 room/event/boss and 14 residual identities remain. Trace the
+     complete Noob Tube rupture responsibility and D67F/D689/D693 installations,
+     preserving the live D6CC alias before retiring their setup bodies.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -241,7 +242,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified block-reaction continuation,
+   `runtime-impact-working/` is the verified Torizo continuation,
+   with `TORIZO_STATUE_HANDOFF.md`, `torizo-statue-price.json` and
+   `torizo-statue-check-1.log`. `torizo-statue-parent/` preserves prior
+   main/carrier/local/composition inputs. Block-reaction evidence remains
    with `BLOCK_REACTION_HANDOFF.md`, `block-reaction-price.json` and
    `block-reaction-check-1.log`. `block-reaction-parent/` preserves prior
    main/carrier/local/composition inputs. Chozo-terrain evidence remains

@@ -54,7 +54,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_Shaktool(o: i32) -> Enemy_Shaktool = [0xf78, o as isize];
     Get_Torizo(o: i32) -> Enemy_Torizo = [0xf78, o as isize];
 }
-static g_word_AAB096: u16 = 6;
 static g_word_AAB098: u16 = 5;
 static g_word_AAB09A: u16 = 3;
 static g_word_AAC3EE: [i16; 16] = [-9, -6, -7, 5, -16, -7, 0, 0, 9, 6, 7, -5, 16, 7, 0, 0];
@@ -292,20 +291,6 @@ crate::game::callback_dispatch! {
             (*E).var_B = ((*E).var_B).wrapping_add(40);
         };
     };
-    [11192006] Torizo_Func_4 [] {
-        (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
-        let mut v2: u16 = 78;
-        while word!(game.plm_header_ptr[(v2 >> 1)]) as i32 != addr_kPlmHeader_D6EA as i32 {
-            v2 = (v2).wrapping_sub(2);
-            if (v2 & 0x8000) != 0 {
-                QueueMusic_Delayed8(g_word_AAB096, game);
-                (*E).base.properties =
-                    ((*E).base.properties as i32 & !(kEnemyProps_Tangible as i32)) as u16;
-                enemy_instruction! {[(*E).base]; instruction = ((*E).base.current_instruction).wrapping_add(2), timer = 1}
-                return;
-            }
-        }
-    };
     Torizo_Func_5 [] {
         if ((*E).parameter_2 & 0x4000) != 0 {
             torizo_fall_until_timer!(E, k, game, addr_kTorizo_Ilist_BD0E, addr_kTorizo_Ilist_C188);
@@ -331,6 +316,7 @@ crate::game::callback_dispatch! {
         torizo_fall_until_timer!(E, k, game, addr_kTorizo_Ilist_D203, addr_kTorizo_Ilist_D2BF);
     };
     @external {
+        11192006 => [crate::game::mechanism_torizo_statue_ram::wait(k, game)];
         11191979 => [()];
         11195871 => Torizo_Func_10;
     }

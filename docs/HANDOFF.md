@@ -9,55 +9,57 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares unused shot/grapple installation after `08e4b98c`.
-D117/header D127 and D12B/header D13B (misnamed D138 in the old source) use
-existing terrain Setup variants and a typed BlockReaction. The exact checked
-helper moves to the terrain adapter, with its old public name re-exported
-from sm84 for all retained callers. No module or registration added. Preserve
-captured block, exact level-high byte, rounded BTS index, ordered writes and
-checked failures. RAM remains authoritative; 96/115 setups shared, with
-5 room/event/boss and 14 residual identities remaining.
+The latest stage shares Bomb Torizo statue setup D606, bombs watcher D33B,
+debris D357, music D3C7 and actor wait AA:C6C6 after `0a194127`. The core
+and checked adapter forbid unsafe code; five bank bodies and the sole-use
+music constant are retired. Captured selectors, native actor fields, descending
+statue scan and live post-music rereads remain exact. RAM is authoritative.
+97/115 setups shared; 4 room/event/boss and 14 residual identities remain.
 
-Main 105335 Rust lines/192 files; unsafe 2879 and casts 6009 unchanged.
-Maintained implementation 105897; installers/launcher included 106807.
-Candidate 114402/297, gap 9067, unadopted. Main delta [25,168,862],
-composition [29,248,1208], verification [579,8082,27346] lines/tokens/LF bytes;
-implementation plus checks [608,8330,28554]. Local production four lines
-overlap composition. No dependencies/native/installer additions, net reduction,
-complete unsafe retirement or persistent ownership claim.
+Main 105470 Rust lines/194 files; unsafe 2879, casts 6006.
+Maintained implementation 106032; installers/launcher included 106942.
+Candidate 114583/300, gap 9113, unadopted. Main delta [135,1227,4197],
+composition [181,1581,5829], verification [931,11235,39600] lines/tokens/LF
+bytes; implementation plus checks [1112,12816,45429]. Local production overlaps
+composition. No dependency/native/installer additions, net reduction, complete
+unsafe retirement, persistent ownership or backend independence claim.
 
-Use `runtime-impact-working/BLOCK_REACTION_HANDOFF.md`,
-`block-reaction-price.json` and `block-reaction-check-1.log`. All 26 suites
-pass in 26.5340703s (suite 26.2485893s), explicit exit 0, 234 runtime/287 local
-identities. New [3740,1020,224,974]: 3740 successful setup comparisons and
-1020 separate matching checked failures. The 224 primitive comparisons include
-176 successes and 48 checked failures. Independent expected byte maps and a
-frozen helper copy check the exact helper move, its re-export, odd addresses,
-selected-field mutation and coincident terrain/BTS writes. FFFD/FFFE/FFFF
-fail before BTS; there is no undefined native setup domain in these checks.
+Use `runtime-impact-working/TORIZO_STATUE_HANDOFF.md`,
+`torizo-statue-price.json` and `torizo-statue-check-1.log`. All 27 suites pass,
+237 runtime/292 local identities. New [3696,1155,64,1382]: 2112 setup and
+1584 watcher comparisons; 1152 native actor comparisons, one injected callback
+and two real music aliases; 32 debris and 32 music commands; 1382 mixed lifecycle
+observations. All 26 retained result vectors remain unchanged.
 
-Both headers are explicitly unused in vanilla, so placement is constructed
-at (12,29), width 48, camera zero. Actual script content and five real
-shot/grapple consumers execute before and after drawing/deletion with both
-allocation states. D127 draws 8052 on tick 1 (changing C to solid 8), then
-deletes on tick 5. D13B draws E0B7 and deletes on tick 2. Pre-draw shot contact
-creates D064; its full CADF break/384-tick wait/restore/delete sequence runs
-through tick 411. It starts alongside the live parent, which deletes on tick 5;
-the child restores on 409 and deletes on 410. D0D8 grapple-child deletion runs.
-The offscreen guard asserts clipping before odd ROM and RAM draw reads;
-no visible renderer, vanilla room-producer, movie or full-game claim.
+Actual room9804 header/state selection reads list83FE and spawns third record
+840A; no other room PLMs are loaded. Separate guarded offscreen row20 scripts
+run bombs wake, 1024-byte transfer at relative tick120, eight debris emissions
+at216/264/279/293/306/318/329/339 and music/delete at340. These times start
+at the resumed120-frame draw. Actual actor waits then releases, including
+full pools and duplicate statues. Actual death checks persistent bit4, 16 RNG
+steps and final drop definition/points with a full pool. Bomb uses actual room
+reentry; Golden uses direct setup under retained area2. Native actor cases
+are even selectors; debris parameters are actual even0..14. No debris motion,
+visible rendering, DMA transfer execution, admitted death pickups, full boss encounter, full room load,
+movie or full-game claim. Content and frozen references remain local.
 
-The 974 mixed observations are 8 constructed spawn results, 18 primary-script
-ticks, 120 consumer/pool pairs, 822 CADF ticks and 6 D0D8 tail ticks. They are
-not a uniform frame/collision count. All 25 retained suite vectors are unchanged.
-Primary content and all ROM-derived fixtures stay local.
+Production release/frontend/verifier/source61.137277s, candidate50.430216s,
+carrier18.399432s, harness24.816798s and all27 checks26.170132s pass exit0.
+Suite time25.793148s. Carrier first attempt failed in9.415847s on fixture-only
+imports/private helper; corrected frozen-reference imports/pointer macro and
+preserved failed log. Other builds/checks pass first attempts. Source hash:
+`a3ca9702b37c284c002c59feebfa541ca9a13c5ba41db86abb1500b8dd87f9da`.
+Formatting passes, inherited verify_source formatting diff unchanged from
+parent, and 13-file candidate sync reviewed. Production unchanged after builds.
 
-Production release/frontend/verifier/source 52.1550398s, candidate release
-44.3540261s, carrier 19.620197s, harness 34.5581483s and checks 26.5340703s
-all pass first attempts, explicit exit 0. No failures or retries. Source hash:
-`47ea31a92bd9c05f531f510ab017c4673ea5aa8b982d64055a0ee7c67f4991b8`.
-Formatting and exact four-file composition sync pass; no registrations or
-verify_source changes. Production source is unchanged after final builds.
+Next: complete Noob Tube rupture and related D67F/D689/D693 block installations;
+preserve D6CC's live alias of D689. Trace both waits and event/lock/water tails
+before implementation. Remaining constants/no-op/result routes follow.
+
+Retained block-reaction [3740,1020,224,974] remains in
+BLOCK_REACTION_HANDOFF.md. D127 parent deletes5; D064 starts alongside it,
+restores409/deletes410, checked through411. Unused headers and constructed
+offscreen placement do not establish vanilla room or visible rendering.
 
 Retained Chozo results [3570,126,126,340,185] include separate native watcher
 prefixes and qualified completions; never claim native true-arm completion.
@@ -94,7 +96,8 @@ Current guards do not resolve inherited Intro mismatch. Qualified item/cannon/
 Chozo and full-contact limits remain; eye acid initialization stays excluded.
 Scroll bounded nonreturn observations were not repeated.
 
-`block-reaction-parent/` preserves prior main/carrier/local/composition;
+`torizo-statue-parent/` preserves prior main/carrier/local/composition;
+`block-reaction-parent/`,
 `chozo-terrain-parent/`,
 `periodic-damage-parent/`,
 `ceres-door-parent/`,

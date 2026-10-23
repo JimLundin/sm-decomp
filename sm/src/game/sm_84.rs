@@ -727,12 +727,6 @@ crate::game::callback_dispatch! {
 ) -> u8 => ea;
     call (j, game); default Unreachable(game) as u8;
     @functions [pub unsafe fn (j: u16, game: &mut Game) -> u8];
-    [8705542] PlmSetup_DeletePlmIfAreaTorizoDead [] {
-        if CheckBossBitForCurArea(4, game) & 1 != 0 {
-            word!(game.plm_header_ptr[(j >> 1)] = 0);
-        }
-        0
-    };
     [8705663] PlmSetup_D700_MakePlmAirBlock_Unused [] {
         WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[(j >> 1)]), 0x44, game);
         0
@@ -771,6 +765,7 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (v0: u16, game: &mut Game) -> u8];
     @external {
+        8705542 => [crate::game::mechanism_torizo_statue_ram::setup(j, game)];
         8704279 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::ShotBlock, game)];
         8704299 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::GrappleBlock, game)];
         8704264 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::Blank, game)];
@@ -981,14 +976,6 @@ crate::game::callback_dispatch! {
             PlmPreInstr_GoToLinkInstruction(k, game);
         };
     };
-    [8704827] PlmPreInstr_WakePlmIfSamusHasBombs [] {
-        if (word!(game.collected_items) & 0x1000) != 0 {
-            let v1: i32 = k as i32 >> 1;
-            word!(game.plm_instruction_timer[v1] = 1);
-            advance_plm_instruction(v1 as usize, 2, game);
-            word!(game.plm_pre_instrs[v1] = ((0x84d356i32) as u16));
-        }
-    };
     [8705215] PlmPreInstr_WakeOnKeyPress [] {
         if (word!(game.joypad1_newkeys)
             & (kButton_B as i32
@@ -1090,6 +1077,7 @@ crate::game::callback_dispatch! {
         }
     };
     @external {
+        8704827 => [crate::game::mechanism_torizo_statue_ram::poll(k, game)];
         8704348 => [crate::game::mechanism_hands_ram::monitor_norfair(game)];
         8704486 => [crate::game::mechanism_mother_brain_glass_ram::poll(k, game)];
         8694921 => [crate::game::mechanism_plants_ram::hold(k, game)];
@@ -1262,10 +1250,6 @@ crate::game::callback_dispatch! {
         } else {
             PlmScript::jump(plmp.word(0))
         }
-    };
-    [8704855] PlmInstr_SpawnTorizoStatueBreaking [] {
-        SpawnEprojWithRoomGfx(0xa993, plmp.word(0), game);
-        plmp.advance(2)
     };
     [8705347] PlmInstr_Spawn10shardsAnd6n00bs [] {
         SpawnEprojWithRoomGfx(addr_kEproj_N00bTubeShards as u16, 0, game);
@@ -1649,7 +1633,6 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (plmp: PlmScript, k: u16, game: &mut Game) -> PlmScript];
     @functions [pub unsafe fn (plmp: PlmScript, k: u16, game: &mut Game) -> PlmScript];
-    [8704967] PlmInstr_QueueSong1MusicTrack [plmp] { QueueMusic_Delayed8(6, game); };
     @functions [pub unsafe fn (
     plmp: PlmScript,
     k: u16,
@@ -1776,6 +1759,8 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (plmp: PlmScript, k: u16, game: &mut Game) -> PlmScript];
     [8709691] PlmInstr_E63B [plmp] { word!(game.fx_y_vel = -32i32 as u16); };
     @external {
+        8704855 => [crate::game::mechanism_torizo_statue_ram::debris(j, game, |parameter, game| { SpawnEprojWithRoomGfx(0xa993, parameter, game); })];
+        8704967 => [{crate::game::mechanism_torizo_statue_ram::music(game); j}];
         8704341 => [{ crate::game::mechanism_hands_ram::lower_acid(game); j }];
         8695107 | 8695128 => [{ crate::game::mechanism_treadmill_ram::activate(k, if ea == 8695107 { crate::game::mechanism_treadmill::Direction::Right } else { crate::game::mechanism_treadmill::Direction::Left }, game); j }];
         8694609 => [{ crate::game::mechanism_crumbling_wall_ram::open_passage(game); j }];
