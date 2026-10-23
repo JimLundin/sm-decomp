@@ -396,6 +396,8 @@ pub mod game {
     pub(crate) mod mechanism_terrain_setup_ram;
     pub(crate) mod mechanism_gates;
     pub(crate) mod mechanism_gates_ram;
+    pub(crate) mod mechanism_contact_physics;
+    pub(crate) mod mechanism_contact_physics_ram;
     pub mod sm_84;
     pub mod item_pickups;
     pub mod item_pickups_ram;

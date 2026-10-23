@@ -9,58 +9,56 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares all 14 gate trigger/placement/shootblock setups after
-terrain at `228efa94`. The shared core forbids unsafe. Its checked RAM adapter
-retains one actual unsafe enemy-projectile spawn call; sound queuing was already
-safe. Fourteen bank bodies and unused gate helpers are retired. Preserve numeric
-routes, asymmetric fallthrough, live projectile/block rereads, sound-before-delete,
-setup accumulator, captured slot versus live initializer selection, five native
-BTS writes/full-width reads, and ROM capture before each live table argument.
-Encoded state stays RAM authoritative; native authored cells share the core.
-Thirty-one of 115 setup identities are shared. Native dispatch, remaining effects
-and persistent ownership are unfinished.
+The latest stage shares all seven ice/sand/quicksand physics setups after gates
+at `09ee6c79`. `mechanism_contact_physics` forbids unsafe and owns ordered
+named-field writes, middle-word clamps and lazy collision handling. Six bank
+bodies, SurfaceB, three surface helpers/tables and the candidate's eager
+quicksand algorithm are retired. Numeric routes remain. Preserve full-word Ice
+writes, overlapping words, null-check order and displacement-to-RAM rereads.
+RAM adapter retains guarded raw displacement and fatal diagnostics. Encoded
+state stays RAM authoritative. Thirty-eight of 115 setup identities are shared.
 
-Main: **103,539 Rust lines in 156 files**, unsafe declarations 2,890, casts 6,076.
-Maintained implementation 104,101; including installers/launcher 105,011.
-Prospective composition: **111,897**, **+8,358 over main**, unadopted.
-Stage adds 51 main and 86 owned lines: **+137 complete lines**, +2,327 tokens
-and +7,496 LF-normalized bytes. Verification adds 1,086 lines; combined cost
-is 1,223 lines. No dependency/native/installer/launcher additions. Seven counted
-unsafe declarations and four cast-containing lines are removed. No net reduction.
+Main: **103,683 Rust lines in 158 files**, unsafe declarations 2,891, casts 6,076.
+Maintained implementation 104,245; including installers/launcher 105,155.
+Prospective composition: **112,045**, **+8,362 over main**, unadopted.
+Stage adds 144 main and four owned lines: **+148 complete lines**, +681 tokens
+and +3,652 LF-normalized bytes. Verification adds 957 lines; combined cost
+is 1,105. No dependency/native/installer/launcher additions. Unsafe declaration
+counter rises by one for retained adapter boundaries; casts unchanged.
+No net reduction or complete raw-pointer/diagnostic retirement claim.
 
-Use `runtime-impact-working/GATE_SETUP_HANDOFF.md`, `gate-setup-price.json`
-and `gate-setup-final.log`. Final results: 1,348 comparisons over 674 defined
-cases, 20 matching failures, five actual tails, four checked-only cases.
-Tails cover signal wake-up, both closed-gate projectile constructors and wake-up,
-plus actual horizontal/vertical shot scans through creation/trigger/signaling.
-The scans and existing runtime collision are integration checks; independent
-gate equivalence comes from frozen old bodies. Four outside-old-domain cases
-are two successful unaligned placements and two bounds failures with prior-write
-assertions. Native all-14 examples verify operation order and mutation/failure.
-Source/setup 342/672/47 and closing 74/120/7 pass; runtime collision
-198/545/176/1 means 176 setup hits and one failure, supplemental integration.
-Git-based extraction and 176 runtime / 213 local compiled identities pass;
-reviewer independently inspected compiled changed/reference bytes in the DLL.
+Use `runtime-impact-working/CONTACT_PHYSICS_HANDOFF.md`,
+`contact-physics-price.json` and `contact-physics-final.log`. Final results:
+2,604 comparisons over 1,302 ordinary cases, zero ordinary failures, nine actual
+consumer sequences, three aligned raw-displacement old/main alias comparisons.
+Nine sequences: five setup-to-Y-movement, one Ice-to-speed calculation, one
+three-sample inside-detection integration, two collision-to-quicksand-to-downward
+movement integrations. Explicit position, flag, return and alias outputs pass.
+Two separate fatal subprocesses require exact source diagnostic plus exit 77;
+these use the harness fatal binding, not production CRT abort. Native all-seven
+examples pass. Source/setup 342/672/47, closing 74/120/7 and supplemental runtime
+collision 198/545/176/1 pass (176 setup hits, one matching failure).
+Independent Git-based references and 179 runtime / 216 local identities pass;
+reviewer also inspected compiled source/reference bytes directly.
 
-Production Rust 2024 release/frontend/verifier/source checks pass: first 50.74s,
-then final 32.96s after removing unnecessary sound unsafe. Composition first
-51.09s, then final 33.30s after late candidate formatting. Format candidate
-production before future stable handoffs to avoid this repeat. Carrier 26.93s
-then 12.41s; harness 23.63s then final 11.69s. Two fixture compilation errors
-(private ROM access and boxed Game reset) were fixed; no production failure.
-No movie/full-composition runtime ran. Synthetic content, retained native effects,
-shared unchanged downstream consumers and untested big-endian remain limitations.
-Production hash: `993fdcdd1ab6822717870e3b781ddefdd2a24fe509f28699b92bb0e60f96653e`.
+Production Rust 2024 release/frontend/verifier/source checks pass (50.31s);
+prospective headless release passes (47.29s). Library 18.29s; initial harness
+15.77s; final harness 11.61s after meaningful consumer-fixture corrections.
+No production defects or failed fixture executions were recorded in this stage.
+No movie or full-composition runtime ran. Synthetic content, shared native
+consumers and the fatal binding limit the evidence. Production hash:
+`9596d612d1c54c4d40f9473117f1abb53d64182fb7287ee91c5eff447079dd1a`.
 
-`gate-setup-parent/` preserves prior main/carrier/local/composition sources.
+`contact-physics-parent/` preserves prior main/carrier/local/composition sources.
 Earlier snapshots/caches remain. Do not rerun historical preparation scripts;
-composition sources live under `impact-composition/sm/src` with distinct wiring.
+composition lives under `impact-composition/sm/src` with distinct module wiring.
 The inherited Intro mismatch remains unresolved in `DRAWING_HANDOFF.md`.
-Next trace seven contact-physics and two Chozo-contact setups, including full
-nested displacement and state-transfer dependencies, before choosing the seam.
-Then stations/scroll/items, room/event/boss and residual routes remain. Runtime
-promotion requires reset/load/rewind/external-writer checks. Rendering, sound and
-boot-to-credits completion remain outside this stage's evidence.
+Next are two Chozo contacts. Preserve nested displacement, captured parent
+release/reuse and native lock/child dependencies. WreckedShip accepted raw stores
+are unaligned: use explicitly classified checked/source-preserved evidence,
+not old-defined equivalence. Then stations/scroll/items, room/event/boss and
+residual routes remain. Runtime promotion needs reset/load/rewind/external-writer
+checks; rendering, sound and boot-to-credits completion remain outside this stage.
 The parallel movie/state investigation is documented in
 [MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md); it implements no pipeline.
 

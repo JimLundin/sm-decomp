@@ -761,81 +761,6 @@ pub unsafe fn UNUSED_sub_84B3E3(j: u16) -> u8 {
         0
     }
 }
-static g_word_84B48B: [u16; 2] = [0x200, 0x200];
-static g_word_84B48F: [u16; 2] = [0x120, 0x100];
-static g_word_84B493: [u16; 2] = [0x280, 0x380];
-pub fn PlmSetup_QuicksandSurface_0(j: u16, game: &mut Game) {
-    game.g_ram[0xb2c..0xb2e].fill(0);
-    game.g_ram[0xb2e..0xb30].fill(0);
-    game.g_ram[0xb5a..0xb5c].fill(0);
-    game.g_ram[0xb5c..0xb5e].fill(0);
-    // Write the middle word of the extra 16.16 Y displacement.
-    game.g_ram[0xb5b..0xb5d].copy_from_slice(&g_word_84B48F[usize::from(j >> 1)].to_le_bytes());
-}
-pub fn PlmSetup_QuicksandSurface_1(j: u16, game: &mut Game) {
-    let physics_index = usize::from(j >> 1);
-    let y_speed_middle = u16::from_le_bytes([game.g_ram[0xb2d], game.g_ram[0xb2e]]);
-    if g_word_84B493[physics_index] < y_speed_middle {
-        game.g_ram[0xb2c..0xb2e].fill(0);
-        game.g_ram[0xb2e..0xb30].fill(0);
-        game.g_ram[0xb2d..0xb2f].copy_from_slice(&g_word_84B493[physics_index].to_le_bytes());
-    }
-    game.g_ram[0xb5a..0xb5c].fill(0);
-    game.g_ram[0xb5c..0xb5e].fill(0);
-    game.g_ram[0xb5b..0xb5d].copy_from_slice(&g_word_84B48B[physics_index].to_le_bytes());
-}
-pub fn PlmSetup_QuicksandSurface_2(j: u16, game: &mut Game) {
-    game.g_ram[0xb5a..0xb5c].fill(0);
-    game.g_ram[0xb5c..0xb5e].fill(0);
-    game.g_ram[0xb5b..0xb5d].copy_from_slice(&g_word_84B48B[usize::from(j >> 1)].to_le_bytes());
-    game.g_ram[0xaf4..0xaf6].fill(0);
-}
-/// Apply the collision-side quicksand reaction to the active displacement.
-///
-/// # Safety
-/// A non-null `displacement` must point to a live, writable i32 for the
-/// duration of this call, as passed through collision PLM setup.
-pub unsafe fn PlmSetup_QuicksandSurfaceB(_j: u16, displacement: *mut i32, game: &mut Game) -> u8 {
-    unsafe {
-        let read_word = |game: &Game, offset: usize| {
-            u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
-        };
-        if read_word(game, 0xb02) & 2 == 0 {
-            return 0;
-        }
-        if displacement.is_null() {
-            printf(c"ERROR: PlmSetup_QuicksandSurfaceB is broken!!\n".as_ptr());
-            Unreachable(game);
-            return 0;
-        }
-        match read_word(game, 0xb36) & 3 {
-            0 | 3 => {
-                if read_word(game, 0xb02) & 0x0f == 3 {
-                    if read_word(game, 0xa6e) == 1 {
-                        *displacement = 0;
-                        return 1;
-                    }
-                    // Compare the unsigned middle word; retain both outside bytes.
-                    if (*displacement >> 8) as u16 > 0x30 {
-                        *displacement = ((*displacement as u32 & 0xff0000ff) | 0x3000) as i32;
-                    }
-                    let in_quicksand = read_word(game, 0x1e71).wrapping_add(1);
-                    game.g_ram[0x1e71..0x1e73].copy_from_slice(&in_quicksand.to_le_bytes());
-                }
-            }
-            2 => {
-                if read_word(game, 0xa6e) == 1 {
-                    *displacement = 0;
-                    return 1;
-                }
-                let in_quicksand = read_word(game, 0x1e71).wrapping_add(1);
-                game.g_ram[0x1e71..0x1e73].copy_from_slice(&in_quicksand.to_le_bytes());
-            }
-            _ => {}
-        }
-        0
-    }
-}
 pub use self::PlmSetup_ReturnCarryClear as PlmSetup_B73B_B73F_SandFalls;
 pub unsafe fn WakePlmIfSamusIsBelowAndRightOfTarget(
     k: u16,
@@ -1318,59 +1243,6 @@ crate::game::callback_dispatch! {
         0
     };
     @functions [pub fn (_j: u16, game: &mut Game) -> u8];
-    [8696811] PlmSetup_B70F_IcePhysics [] {
-        let y_radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
-        let y_pos = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
-        let bottom = y_pos.wrapping_add(y_radius).wrapping_sub(1);
-        if bottom & 0x0f == 7 || bottom & 0x0f == 15 {
-            game.g_ram[0xb4c..0xb4e].copy_from_slice(&16u16.to_le_bytes());
-        }
-        0
-    };
-    [8696840] PlmSetup_QuicksandSurface [] {
-        // Clear momentum, boost and extra running speed in the original order.
-        for offset in [0xb3c, 0xb3e, 0xb40, 0xb44, 0xb42] {
-            game.g_ram[offset..offset + 2].fill(0);
-        }
-        game.g_ram[0xb49] &= 0x7f;
-        game.g_ram[0xb46..0xb48].fill(0);
-        let equipped_items = u16::from_le_bytes([game.g_ram[0x9a2], game.g_ram[0x9a3]]);
-        let physics_index = if equipped_items & 0x20 != 0 { 2 } else { 0 };
-        let reaction_point = u16::from_le_bytes([game.g_ram[0x1e73], game.g_ram[0x1e74]]);
-        if reaction_point == 0 {
-            let y_direction = u16::from_le_bytes([game.g_ram[0xb36], game.g_ram[0xb37]]);
-            match y_direction & 3 {
-                0 | 3 => PlmSetup_QuicksandSurface_0(physics_index, game),
-                1 => PlmSetup_QuicksandSurface_1(physics_index, game),
-                2 => PlmSetup_QuicksandSurface_2(physics_index, game),
-                _ => unreachable!(),
-            }
-        }
-        0
-    };
-    [8696983] PlmSetup_B71F_SubmergingQuicksand [] {
-        game.g_ram[0xaf4..0xaf6].fill(0);
-        game.g_ram[0xb5a..0xb5c].copy_from_slice(&0x2000u16.to_le_bytes());
-        game.g_ram[0xb5c..0xb5e].copy_from_slice(&1u16.to_le_bytes());
-        0
-    };
-    [8697000] PlmSetup_B723_SandfallsSlow [] {
-        game.g_ram[0xb5a..0xb5c].copy_from_slice(&0x4000u16.to_le_bytes());
-        game.g_ram[0xb5c..0xb5e].copy_from_slice(&1u16.to_le_bytes());
-        0
-    };
-    [8697014] PlmSetup_B727_SandFallsFast [] {
-        game.g_ram[0xb5a..0xb5c].copy_from_slice(&0xc000u16.to_le_bytes());
-        game.g_ram[0xb5c..0xb5e].copy_from_slice(&1u16.to_le_bytes());
-        0
-    };
-    [8697153] PlmSetup_B737_SubmergingQuicksand [] {
-        game.g_ram[0xb2c..0xb2e].fill(0);
-        game.g_ram[0xb2e..0xb30].fill(0);
-        game.g_ram[0xb32..0xb34].fill(0);
-        game.g_ram[0xb34..0xb36].fill(0);
-        0
-    };
     @functions [pub unsafe fn (j: u16, game: &mut Game) -> u8];
     @prefix { let v1: i32 = j as i32 >> 1; };
     [8696203] PlmSetup_B6D3_MapStation [] {
@@ -1537,6 +1409,13 @@ crate::game::callback_dispatch! {
     [8711809] sub_84EE81 => sub_84EE89(j, 0xc, game);
     [8711814] sub_84EE86 => sub_84EE89(j, 0xe, game);
     @external {
+        8696811 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::Ice, displacement, game)];
+        8696840 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::Surface, displacement, game)];
+        8696983 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::Submerge, displacement, game)];
+        8697000 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::SlowFall, displacement, game)];
+        8697014 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::FastFall, displacement, game)];
+        8697153 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::StopVertical, displacement, game)];
+        8697028 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::CollisionSurface, displacement, game)];
         8701261 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Left,Color::Green), setup_a, game) }];
         8701292 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Right,Color::Green), setup_a, game) }];
         8701323 => [{ use crate::game::mechanism_gates::{Setup,Side,Color,Direction}; crate::game::mechanism_gates_ram::setup(j, Setup::Trigger(Side::Left,Color::Red), setup_a, game) }];
@@ -1571,7 +1450,6 @@ crate::game::callback_dispatch! {
         8694567 | 8696783 | 8698095 | 8698618 | 8705782 | 8705783 | 8704398 => [0];
         8696784 => [PlmSetup_ReturnCarryClear(j)]; 8696786 => [PlmSetup_ReturnCarrySet(j)];
         8696803 => [UNUSED_sub_84B3E3(j)];
-        8697028 => [PlmSetup_QuicksandSurfaceB(j, displacement, game)];
         8697167 => [PlmSetup_B73B_B73F_SandFalls(j)];
         8698220 => [PlmSetup_B974(j)];
         8703949 => [PlmSetup_D0D8_SetVFlag(j)];

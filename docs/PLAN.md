@@ -104,39 +104,39 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares all 14 gate trigger/placement/shootblock setups
-   after terrain at `228efa94`. `mechanism_gates` forbids unsafe; its checked RAM
-   adapter retains one unsafe enemy-projectile spawn call. Sound queuing was
-   already safe. Fourteen bodies and their unused helpers are retired; numeric
-   routes remain. Preserve asymmetric yellow/blue fallthrough and live rereads,
-   descending block-only association, sound-before-delete, setup accumulator,
-   captured setup slot versus live projectile-initializer selection, five native
-   BTS writes/full-width rereads, and per-table ROM capture before live arguments.
-   Encoded state stays RAM authoritative; native authored state shares the core.
-   Thirty-one of the initial 115 setup identities are shared; 84 remain.
+   Latest verified stage shares all seven ice/sand/quicksand physics setups
+   after gates at `09ee6c79`. `mechanism_contact_physics` owns ordered named-field
+   writes, middle-word clamps and lazy collision-displacement handling. Six bank
+   bodies, SurfaceB, three helpers/tables and the candidate's eager quicksand
+   algorithm are retired. Numeric routes remain. Preserve full-word Ice writes,
+   overlapping speed/external-displacement words, exact null-guard order and
+   displacement writes before live RAM rereads. The core forbids unsafe; its RAM
+   adapter retains guarded raw displacement and fatal diagnostic boundaries.
+   Encoded state stays RAM authoritative. Thirty-eight of 115 identities are
+   shared; 77 and native dispatch/authority dependencies remain.
 
-   Final checks pass 1,348 main/owned comparisons over 674 defined cases, with
-   20 matching failures and explicit prefixes/results. Five actual tails cover
-   gate signal wake-up, both projectile constructors and their wake consumer,
-   and horizontal/vertical shot scans through gate creation and signaling.
-   Scan tails and existing runtime collision are supplemental integration;
-   independent equivalence comes from frozen setup bodies. Four checked-only
-   cases cover two unaligned successes and two bounds failures with prior writes,
-   outside old raw-pointer defined behavior. Native cases exercise all 14 and
-   ordered mutation/failure contracts. Git-derived references and 176 runtime /
-   213 local compiled identities pass. Production release/frontend/verifier/source
-   checks pass (32.96s final); prospective release passes (33.30s final).
-   No movie or full-composition runtime ran. Synthetic content, retained native
-   effects/shared downstream consumers and untested big-endian execution limit
-   these results. Native projectile safety and runtime authority remain open.
+   Final checks pass 2,604 main/owned comparisons over 1,302 ordinary cases,
+   with zero ordinary failures, nine actual consumer sequences and three aligned
+   old/main displacement-alias comparisons. Consumers cover five Y-movement
+   tails, Ice deceleration, three-point inside sampling and two collision-driven
+   downward movements. Inside/collision tails are integration checks; independent
+   setup equivalence uses frozen bodies. Two separate fatal subprocesses match
+   the source diagnostic and fixture exit 77, exercising the harness fatal
+   binding rather than the production CRT abort. Native examples cover all seven.
+   Git-derived references and 179 runtime / 216 local compiled identities pass.
+   Source/setup, closing and supplemental runtime-collision suites pass.
+   Production release/frontend/verifier/source checks pass (50.31s); prospective
+   release passes (47.29s). No movie or full-composition runtime ran. Synthetic
+   content, shared native consumers and the fatal binding limit these results.
 
-   Main is **103,539 Rust lines in 156 files**. The prospective composition is
-   **111,897 (+8,358)**, unadopted. This stage adds 51 main and 86 owned lines:
-   **+137 complete lines**, +2,327 lexical tokens and +7,496 LF-normalized bytes.
-   Verification adds 1,086 lines; implementation plus checks adds 1,223.
+   Main is **103,683 Rust lines in 158 files**. The prospective composition is
+   **112,045 (+8,362)**, unadopted. This stage adds 144 main and four owned lines:
+   **+148 complete lines**, +681 lexical tokens and +3,652 LF-normalized bytes.
+   Verification adds 957 lines; implementation plus checks adds 1,105.
    No dependency or native/installer/launcher source is added. Counted unsafe
-   declarations fall by seven to 2,890; cast-containing lines fall by four to
-   6,076. This is priced safety/sharing, not net reduction or backend independence.
+   declarations rise by one to 2,891 for the explicit retained adapter boundaries;
+   cast-containing lines remain 6,076. No reduction or complete unsafe-removal
+   claim; persistent ownership and backend independence remain open.
 
    Next dependencies, in order:
 
@@ -168,13 +168,16 @@ references; measure build/test time and resource growth before changing the loop
      duplicate bodies with independent restore/render and actual caller checks.
    - [x] Share all 14 gate trigger/placement/shootblock setups, retire helpers
      and compare actual signal, projectile-init/wake and shot-scan tails.
-   - Close remaining mechanism setup families: contact physics/Chozo,
+   - [x] Share all seven contact-physics setups and compare actual movement,
+     inside-sampling, aligned displacement aliases and fatal null handling.
+   - Close remaining mechanism setup families: Chozo contacts,
      stations/scroll/items, room/event/boss setup,
      then residual aliases/diagnostics. Preserve synchronous writes, nested
      displacement and failure prefixes before retiring native dispatch. The
-     115-identity inventory is in the local door handoff. Next are seven
-     contact-physics setups and two Chozo contacts; settle their complete
-     dependencies before editing. The gate handoff records current scope.
+     115-identity inventory is in the local door handoff. The seven
+     contact-physics setups are shared. Next are two Chozo contacts; preserve
+     nested displacement/parent release and classify unaligned old stores
+     separately. The physics handoff records current scope.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -182,8 +185,11 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified gate-setup continuation, with
-   `GATE_SETUP_HANDOFF.md`, `gate-setup-price.json` and `gate-setup-final.log`.
+   `runtime-impact-working/` is the verified contact-physics continuation, with
+   `CONTACT_PHYSICS_HANDOFF.md`, `contact-physics-price.json` and
+   `contact-physics-final.log`. `contact-physics-parent/` preserves prior inputs.
+   Gate results remain in `GATE_SETUP_HANDOFF.md`, `gate-setup-price.json`
+   and `gate-setup-final.log`.
    `gate-setup-parent/` preserves prior main/carrier/local/composition sources.
    Terrain results remain in `TERRAIN_SETUP_HANDOFF.md`, `terrain-setup-price.json`
    and `terrain-setup-final.log`; `terrain-setup-parent/` preserves prior inputs.
@@ -357,12 +363,12 @@ content.
 
 ## Progress and references
 
-Verified gate-setup stage: Rust 103,539; maintained C bridge 266 and headers
-296 = **104,101 implementation lines**. Including 803 dependency-installer and
-107 verifier-launcher lines gives **105,011**. The separate prospective owned
+Verified contact-physics stage: Rust 103,683; maintained C bridge 266 and headers
+296 = **104,245 implementation lines**. Including 803 dependency-installer and
+107 verifier-launcher lines gives **105,155**. The separate prospective owned
 composition and local comparison additions are disclosed above.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
-unsafe declarations 2,890; cast-containing lines 6,076. These narrow counters do
+unsafe declarations 2,891; cast-containing lines 6,076. These narrow counters do
 not count all unsafe operations. Use the actual checkout's progress output for
 new changes; uncommitted drafts are not landed savings.
 The isolated launch draft is now synchronized and verified; its original source
