@@ -4,7 +4,6 @@ pub use crate::game::constants::bank_86::*;
 use crate::game::enemy_script::{bank_base, EnemyScript as PlmScript};
 use crate::game::item_pickups::{MessageHandoff, PickupKind, VisualUpdate};
 use crate::game::music::{PlayRoomMusicTrackAfterAFrames, QueueMusic_Delayed8};
-use crate::game::plm_spawning::spawn_hardcoded_plm;
 pub use crate::game::prelude::*;
 
 use crate::game::message_boxes;
@@ -787,66 +786,13 @@ pub fn PlmSetup_D0D8_SetVFlag(j: u16) -> u8 {
 pub fn PlmSetup_D0D8_ClearVflag(j: u16) -> u8 {
     1
 }
-pub unsafe fn PlmSetup_D6DA_LowerNorfairChozoHandTrigger(
-    j: u16,
-    displacement: *mut i32,
-    game: &mut Game,
-) -> u8 {
-    unsafe {
-        if (word!(game.collected_items) & 0x200) != 0
-            && (word!(game.samus_collision_direction) & 0xf) == 3
-            && (word!(game.samus_pose) as i32 == kPose_1D_FaceR_Morphball_Ground as i32
-                || word!(game.samus_pose) as i32 == kPose_79_FaceR_Springball_Ground as i32
-                || word!(game.samus_pose) as i32 == kPose_7A_FaceL_Springball_Ground as i32)
-        {
-            SetEventHappened(0xc, game);
-            (*(ram_ptr!(game, EnemyData; 0xf78))).parameter_1 = 1;
-            let v2: i32 = word!(game.plm_block_indices[(j >> 1)]) as i32 >> 1;
-            word!(game.level_data[v2] &= (0xfffu16));
-            CallSomeSamusCode(0, game);
-            spawn_hardcoded_plm(
-                SpawnHardcodedPlmArgs::new(0xc, 0x1d, 0xd113 as VoidP),
-                displacement,
-                game,
-            );
-        }
-        word!(game.plm_header_ptr[(j >> 1)] = 0);
-        1
-    }
-}
+
 pub unsafe fn SpawnMotherBrainGlassShatteringShard(a: u16, game: &mut Game) {
     unsafe {
         SpawnEprojWithRoomGfx(0xcefc, a, game);
     }
 }
-pub unsafe fn PlmSetup_D6F2_WreckedShipChozoHandTrigger(
-    j: u16,
-    displacement: *mut i32,
-    game: &mut Game,
-) -> u8 {
-    unsafe {
-        if CheckBossBitForCurArea(1, game) & 1 != 0
-            && (word!(game.samus_collision_direction) & 0xf) == 3
-            && (word!(game.samus_pose) as i32 == kPose_1D_FaceR_Morphball_Ground as i32
-                || word!(game.samus_pose) as i32 == kPose_79_FaceR_Springball_Ground as i32
-                || word!(game.samus_pose) as i32 == kPose_7A_FaceL_Springball_Ground as i32)
-        {
-            (*(ram_ptr!(game, EnemyData; 0xf78))).parameter_1 = 1;
-            *(ram_ptr!(game, u16; 0xcd20, 7)) = 514;
-            *(ram_ptr!(game, u16; 0xcd20, 13)) = 257;
-            let v1: i32 = word!(game.plm_block_indices[(j >> 1)]) as i32 >> 1;
-            word!(game.level_data[v1] &= (0xfffu16));
-            CallSomeSamusCode(0, game);
-            spawn_hardcoded_plm(
-                SpawnHardcodedPlmArgs::new(0x17, 0x1d, 0xd6f8 as VoidP),
-                displacement,
-                game,
-            );
-        }
-        word!(game.plm_header_ptr[(j >> 1)] = 0);
-        1
-    }
-}
+
 pub use self::PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused as PlmSetup_D70C_NoobTube;
 pub unsafe fn sub_84D7EF(k: u16, game: &mut Game) {
     unsafe {
@@ -1454,8 +1400,8 @@ crate::game::callback_dispatch! {
         8698220 => [PlmSetup_B974(j)];
         8703949 => [PlmSetup_D0D8_SetVFlag(j)];
         8703953 => [PlmSetup_D0D8_ClearVflag(j)];
-        8704399 => [PlmSetup_D6DA_LowerNorfairChozoHandTrigger(j, displacement, game)];
-        8705568 => [PlmSetup_D6F2_WreckedShipChozoHandTrigger(j, displacement, game)];
+        8704399 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::LowerNorfair, displacement, game)];
+        8705568 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::WreckedShip, displacement, game)];
         8705740 => PlmSetup_D70C_NoobTube;
         8707824 => PlmSetup_DraygonCannonFacingLeft;
     }

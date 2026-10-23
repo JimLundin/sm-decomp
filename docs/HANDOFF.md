@@ -9,56 +9,65 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares all seven ice/sand/quicksand physics setups after gates
-at `09ee6c79`. `mechanism_contact_physics` forbids unsafe and owns ordered
-named-field writes, middle-word clamps and lazy collision handling. Six bank
-bodies, SurfaceB, three surface helpers/tables and the candidate's eager
-quicksand algorithm are retired. Numeric routes remain. Preserve full-word Ice
-writes, overlapping words, null-check order and displacement-to-RAM rereads.
-RAM adapter retains guarded raw displacement and fatal diagnostics. Encoded
-state stays RAM authoritative. Thirty-eight of 115 setup identities are shared.
+The latest stage shares both Chozo hand contacts after physics at `7fa90817`.
+`mechanism_hands` forbids unsafe and owns lazy guards, ordered progression/enemy/
+scroll writes, live terrain lookup, player lock, nested child creation and captured
+parent release. Two bank bodies and duplicate owned hand policy are retired.
+Numeric identities remain. Shared checked fields preserve native enemy/scroll
+bytes and LE terrain words; native lock and child setup remain dependencies.
+Encoded state stays RAM authoritative. Forty of 115 setup identities are shared.
 
-Main: **103,683 Rust lines in 158 files**, unsafe declarations 2,891, casts 6,076.
-Maintained implementation 104,245; including installers/launcher 105,155.
-Prospective composition: **112,045**, **+8,362 over main**, unadopted.
-Stage adds 144 main and four owned lines: **+148 complete lines**, +681 tokens
-and +3,652 LF-normalized bytes. Verification adds 957 lines; combined cost
-is 1,105. No dependency/native/installer/launcher additions. Unsafe declaration
-counter rises by one for retained adapter boundaries; casts unchanged.
-No net reduction or complete raw-pointer/diagnostic retirement claim.
+Main: **103,821 Rust lines in 160 files**, unsafe declarations 2,890, casts 6,068.
+Maintained implementation 104,383; including installers/launcher 105,293.
+Prospective composition: **112,103**, **+8,282 over main**, unadopted.
+Stage adds 138 main lines and removes 80 net owned/wiring lines: **+58 complete
+lines**, +366 tokens and +1,466 LF-normalized bytes. Verification adds 936 lines;
+combined cost is 994. No dependency/native/installer/launcher additions. No net
+reduction, persistent authority or complete unsafe-retirement claim.
 
-Use `runtime-impact-working/CONTACT_PHYSICS_HANDOFF.md`,
-`contact-physics-price.json` and `contact-physics-final.log`. Final results:
-2,604 comparisons over 1,302 ordinary cases, zero ordinary failures, nine actual
-consumer sequences, three aligned raw-displacement old/main alias comparisons.
-Nine sequences: five setup-to-Y-movement, one Ice-to-speed calculation, one
-three-sample inside-detection integration, two collision-to-quicksand-to-downward
-movement integrations. Explicit position, flag, return and alias outputs pass.
-Two separate fatal subprocesses require exact source diagnostic plus exit 77;
-these use the harness fatal binding, not production CRT abort. Native all-seven
-examples pass. Source/setup 342/672/47, closing 74/120/7 and supplemental runtime
-collision 198/545/176/1 pass (176 setup hits, one matching failure).
-Independent Git-based references and 179 runtime / 216 local identities pass;
-reviewer also inspected compiled source/reference bytes directly.
+Use `runtime-impact-working/CHOZO_CONTACT_HANDOFF.md`, `chozo-contact-price.json`
+and `chozo-contact-check-attempt-5.log`. Final results: 592 comparisons over
+296 defined-domain cases, including four matching child-content failures;
+four actual consumer sequences; 16 checked-only cases, including five failures.
+Accepted original WreckedShip stores are unaligned; invalid terrain accesses are
+out of bounds in original code. Neither executes in the final direct original
+comparison. Checked paths assert exact native-byte effects and failure prefixes.
+Native core cases cover lazy reads, effect order, callback failures and captured
+reuse. Actual tails cover child setup/reuse, displacement forwarding and both
+enemy wake routines; player lock field assertions pass.
 
-Production Rust 2024 release/frontend/verifier/source checks pass (50.31s);
-prospective headless release passes (47.29s). Library 18.29s; initial harness
-15.77s; final harness 11.61s after meaningful consumer-fixture corrections.
-No production defects or failed fixture executions were recorded in this stage.
-No movie or full-composition runtime ran. Synthetic content, shared native
-consumers and the fatal binding limit the evidence. Production hash:
-`9596d612d1c54c4d40f9473117f1abb53d64182fb7287ee91c5eff447079dd1a`.
+Selected hand integration passes 52 cases / 163 observations / 12 matching
+instrumented failures. Its accepted WreckedShip reference changes exactly two
+unaligned stores to checked native-byte copies, preserving source order; this is
+source-preserved checked-reference integration, not original defined equivalence.
+The historical full contact suite exits 77 on an inherited physics null-handler
+fixture assumption. Final selection excludes physics-only and null-child model
+cases; the full suite and its routes remain unchanged. Dedicated physics fatal
+checks remain recorded in the previous handoff, not newly run by this stage.
+Source/setup 342/672/47, closing 74/120/7 and supplemental runtime collision
+198/545/176/1 pass. Git-frozen references and 182 runtime / 219 local identities
+pass. Final selected checks take 1.876s.
 
-`contact-physics-parent/` preserves prior main/carrier/local/composition sources.
-Earlier snapshots/caches remain. Do not rerun historical preparation scripts;
-composition lives under `impact-composition/sm/src` with distinct module wiring.
-The inherited Intro mismatch remains unresolved in `DRAWING_HANDOFF.md`.
-Next are two Chozo contacts. Preserve nested displacement, captured parent
-release/reuse and native lock/child dependencies. WreckedShip accepted raw stores
-are unaligned: use explicitly classified checked/source-preserved evidence,
-not old-defined equivalence. Then stations/scroll/items, room/event/boss and
-residual routes remain. Runtime promotion needs reset/load/rewind/external-writer
-checks; rendering, sound and boot-to-credits completion remain outside this stage.
+Production Rust 2024 release/frontend/verifier/source checks pass (56.28s);
+final prospective headless release passes (33.79s). Carrier 20.74s; final harness
+12.03s. Earlier composition compilation found and corrected private reexport
+visibility; import cleanup required the final rebuild. Fixture attempts corrected
+mismatched content bindings, rejected a stale source manifest, and reclassified
+two invalid original-domain terrain cases. That invalid reference execution is
+not equivalence evidence. Full attempt logs remain in the local handoff.
+No production gameplay correction, movie or full-composition runtime is claimed.
+Synthetic content, shared native consumers and instrumented boundaries limit
+coverage. Production hash:
+`293dbbd7e4a2db141c7fa60076f9f3b9eaea062829c2239bc898c661d1945587`.
+
+`chozo-contact-parent/` preserves prior main/carrier/local/composition sources.
+Earlier snapshots/caches remain, including `CONTACT_PHYSICS_HANDOFF.md` and its
+results. Do not rerun historical preparation scripts; composition lives under
+`impact-composition/sm/src` with distinct module wiring. The inherited Intro
+mismatch remains unresolved in `DRAWING_HANDOFF.md`.
+Next are stations, then scroll/items, room/event/boss and residual routes.
+Runtime promotion needs reset/load/rewind/external-writer checks; rendering,
+sound and boot-to-credits completion remain outside this stage.
 The parallel movie/state investigation is documented in
 [MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md); it implements no pipeline.
 
