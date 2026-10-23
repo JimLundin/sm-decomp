@@ -8,28 +8,47 @@ Green: adopted scope | Blue: locally checked draft | Orange: active | Grey: rema
 ### Room mechanisms / next typed-core conversion
 
 ```mermaid
-flowchart LR
-    CONTRACT["State / effects contract"]:::active --> DECL["Shared Session declarations<br/>compile PASS"]:::checked
-    DECL --> REVIEW["Ownership / drawing review"]:::active
-    BASE["1,020 reference cases captured<br/>historical outputs unchanged"]:::checked --> COMPARE
-    class DECL,BASE changed
-    CONTRACT --> SLOTS["40 ordinary slots"]:::pending
-    CONTRACT --> INVENTORY["Shared player inventory"]:::pending
-    CONTRACT --> RESUME["Message suspension"]:::pending
-    SLOTS --> CREATE["creation.rs / setup.rs"]:::pending
-    SLOTS --> TICK["scheduler.rs / pre.rs"]:::pending
-    INVENTORY --> RULES["commands.rs / rules/"]:::pending
-    RESUME --> TICK
-    CONTRACT --> DRAW["presentation.rs / graphics.rs"]:::pending
-    CREATE --> EDGE["Runtime ownership edge"]:::pending
-    TICK --> EDGE
-    RULES --> EDGE
-    DRAW --> EDGE
-    EDGE --> CALLERS["Gameplay / door / contact / X-ray"]:::pending
+flowchart TB
+    CONTRACT["Shared contract v2<br/>review + compile PASS"]:::checked
+    subgraph shared["Shared ownership / lane A"]
+        S["session.rs"]:::active --> CODEC["Aggregate codec"]:::active
+        S --> PLAYER["player_projectiles/<br/>same shared inventory"]:::active
+        CODEC --> RT["session_runtime.rs"]:::active
+        RT --> HOST["host.rs / runtime.rs"]:::active
+    end
+    subgraph creation["Creation / rules / lane B"]
+        CREATE["creation.rs"]:::active --> SETUP["setup.rs"]:::active
+        SETUP --> PRE["pre.rs"]:::active
+        SETUP --> RULES["rules/ / 22 modules"]:::active
+    end
+    subgraph execution["Messages / pickups / lane C"]
+        SCHED["scheduler.rs"]:::active --> CMD["commands.rs"]:::active
+        CMD --> PICKUP["Pickups / shared Inventory"]:::active
+    end
+    subgraph drawing["Drawing / content / lane D"]
+        DRAW["presentation.rs"]:::active --> GRAPHICS["graphics.rs"]:::active
+        CONTENT["content.rs"]:::active --> DRAW
+        CONTENT --> CR["content_runtime.rs"]:::active
+        GRAPHICS --> GR["graphics_runtime.rs"]:::active
+    end
+    CONTRACT --> S
+    CONTRACT --> CREATE
+    CONTRACT --> SCHED
+    CONTRACT --> CONTENT
+    HOST --> CALLERS["Actual caller migration"]:::active
+    RULES --> CALLERS
+    PICKUP --> CALLERS
+    GR --> CALLERS
     CALLERS --> DELETE["Retire Fields / Port routing"]:::pending
-    DELETE --> COMPARE["Reference comparisons"]:::pending
-    COMPARE --> MOVIE["Exercised movie probes"]:::pending
+    BASE["1,020 references captured"]:::checked --> COMPARE["Candidate comparisons"]:::pending
+    RESUME["Case 1020: real message resume<br/>pre + timer preservation PASS"]:::done --> COMPARE
+    DELETE --> COMPARE
+    GAP["Continuation / draw overlap cases"]:::active --> COMPARE
+    SHAREDTEST["Pickup / refill / hold<br/>actual player consumers"]:::active --> COMPARE
+    COMPARE --> MUT["Mechanism mutations rejected"]:::pending
+    MUT --> MOVIE["Exercised movie probes"]:::pending
     MOVIE --> ADOPT["Typed core adopted"]:::pending
+    class CONTRACT,S,CODEC,PLAYER,RT,HOST,CREATE,SETUP,PRE,RULES,SCHED,CMD,PICKUP,DRAW,GRAPHICS,CONTENT,CR,GR,CALLERS,RESUME,GAP,SHAREDTEST changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

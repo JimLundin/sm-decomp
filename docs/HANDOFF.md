@@ -8,6 +8,24 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Room contract v2 is frozen and four isolated production lanes are active under
+enemy_projectiles_implementation. Outputs: room-session/replacement; ownership
+and exact paths: room-session/contract/IMPLEMENTATION.md. No candidate runtime
+adoption yet. Session/caller/verification reviewers work separately; root alone
+builds and captures.
+
+New actual-old message case1020 passes: real dud pre-action clears initial
+counter, suspension injects5500/delay13, completion produces5507/delay13 with
+613zero. It detects repeated pre-action or timer work on resume; proposed
+mutations still need execution. IDs880/1009/1018/1019 retain exact captured
+outputs (ownership tests include intentional caught panics). Release DLL build,
+full root format and final source hash all pass. Source
+14ad11246e7fdaf2816bad4191ac214f8c66eaf9e36d68d94f630bd11a298d49;
+DLL0bf5e36b2c9e8ce5980cc9121e0a6b14acd9b07f09bc54160bd61a6d0609fb9a.
+Evidence: room-session/baseline-current-1020-results/results.json and
+baseline-current-1020-build.log. This change adds27 verification Rust lines,
+zero production lines; no new gameplay replay needed for the harness-only edit.
+
 Next room reference set: room-session/baseline-026ab1a2/results.json captures
 1020 IDs in101seconds:1017returning cases,1012/1013 expected exit2,1014 expected
 nonreturn with marker. All overlapping historical baseline1018 outputs match.
@@ -15,8 +33,8 @@ Frozen DLL SHA25668b9c9f39f28c52a406573c14076f50dc374231b088f2accd8f91f40df5ecda
 source8da52a46f05b73235b04623499f5b1c92b13da9e973c39c4ed3b966cb80180a1.
 This reuses the verified player-production build; detached fixture-only changes
 do not change mechanism source. It is not claimed as a current-source rebuild.
-Contract files are at room-session/contract/: rustc metadata compilation passes;
-independent ownership/alias/drawing review remains open before lane freeze.
+Contract files are at room-session/contract/: rustc metadata compilation and
+independent ownership/alias/drawing review pass for frozen v2.
 
 Hosted run39996910420 failed the detached fixture's first collision assertion:
 center43 plus motion4:1000 has leading edge48, already touching the wall.

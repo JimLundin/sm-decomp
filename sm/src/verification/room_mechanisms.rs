@@ -12,7 +12,7 @@ const COMMANDS: [u32; 14] = [
     8685236, 8685244, 8685249, 8685258, 8685390, 8685375, 8686138, 8686116, 8686126, 8686194,
     8685412, 8685541, 8686608, 8686913,
 ];
-pub(crate) const CASES: u32 = 1020;
+pub(crate) const CASES: u32 = 1021;
 fn put(g: &mut Game, a: usize, v: u16) {
     g.g_ram[a..a + 2].copy_from_slice(&v.to_le_bytes());
 }
@@ -531,8 +531,14 @@ unsafe fn native_effect_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u1
 // Each call records RAM, serialized PPU/DMA/SNES fields and the ordered APU queue.
 unsafe fn message_case(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> (u8, u16) {
     use crate::initial_state::InitialState;
-    let door = id >= 1009;
-    let variant = if door { 0 } else { id - 880 };
+    let door = (1009..=1011).contains(&id);
+    let variant = if id == 1020 {
+        6
+    } else if door {
+        0
+    } else {
+        id - 880
+    };
     let mut snes = Box::new(crate::types::Snes::INITIAL);
     let mut ppu = Box::new(crate::types::Ppu::INITIAL);
     let mut dma = Box::new(crate::types::Dma::INITIAL);
@@ -569,6 +575,10 @@ unsafe fn message_case(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<
         slot(g, i, 0);
     }
     slot(g, 39, 0x8000);
+    if variant == 6 {
+        // Actual grey-door dud pre: emit sound for a hit, then clear Counter.
+        put(g, 0x1cd7 + 78, 8699420u32 as u16);
+    }
     rom_word(image, 0x849000, 8686735u32 as u16); // ActivateMapStation.
     rom_word(image, 0x849002, 8685390u32 as u16); // SetTimer 7; Sleep.
     rom_word(image, 0x849004, 0xb407);
@@ -607,6 +617,12 @@ unsafe fn message_case(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<
         trace.extend_from_slice(&crate::audio_snapshot::ApuQueueSnapshot::capture(g).to_bytes());
         if call == 0 {
             assert_ne!(returned, 0, "message did not suspend");
+            if variant == 6 {
+                assert_eq!(
+                    u16::from_le_bytes([g.g_ram[0x1d77 + 78], g.g_ram[0x1d78 + 78]]),
+                    0
+                );
+            }
         }
         if returned == 0 {
             final_return = returned;
@@ -635,10 +651,19 @@ unsafe fn message_case(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<
                 5 => {
                     g.g_ram[0x614] = 255;
                 }
+                6 => {
+                    // A repeated pre would clear this high byte; SetTimer writes only low.
+                    put(g, 0x1d77 + 78, 0x5500);
+                    put(g, 0xde1c + 78, 13);
+                }
                 _ => {}
             }
         }
         assert!(call < 79, "message exceeded bounded completion");
+    }
+    if variant == 6 {
+        assert_eq!(&g.g_ram[0x1d77 + 78..0x1d79 + 78], &0x5507u16.to_le_bytes());
+        assert_eq!(&g.g_ram[0xde1c + 78..0xde1e + 78], &13u16.to_le_bytes());
     }
     if door {
         assert_eq!(
@@ -844,7 +869,9 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     let mut displacement = None;
     let mut trace = Vec::new();
     let outcome = catch_unwind(AssertUnwindSafe(|| unsafe {
-        if id == 1019 {
+        if id == 1020 {
+            message_case(id, &mut g, &image, &mut trace)
+        } else if id == 1019 {
             assert!(mechanisms::qualified_checks(&mut g));
             (5, 2)
         } else if id == 1018 {
