@@ -273,16 +273,15 @@ references; measure build/test time and resource growth before changing the loop
    2725. Independent review passes. Execution still uses the compatibility Port;
    the next isolated animation/palette composition removes that dependency.
    This is not persistent Session ownership or independent backend completion.
-   Follow-on validation branch verify/animated-session-20261023 now removes
-   Port/Game from animation execution and composes the actual animation/palette
-   cores with a single color owner. Local build,438comparisons, runtime guards
-   and20947frames pass; standalone compiles. Hosted independent execution is
-   pending before adoption. Production+124lines, verification+587, CI/Cargo+13;
-   no net reduction. Keep corresponding report nodes checked/uncommitted until
-   hosted execution passes. Enemy-projectile dual594cases pass; broader cases,
-   full caller adoption and native ROM ownership remain isolated work.
-   The accepted engine still needs persistent state, explicit backend outputs,
-   all-unsafe elimination and boot-to-credits validation.
+   Follow-on composed core is adopted at354f1fb5. It removes Port/Game from
+   animation execution and composes the actual animation/palette cores with one
+   color owner. Full GitHub run39989858734 passes independent-host execution,
+   frontend build and formatting. Local438comparisons, both runtime guards and
+   20947frames pass. Production+124lines, verification+587, CI/Cargo+13; no net
+   reduction. The independent host is a bounded prepared slice; production
+   ownership remains interval-scoped. Enemy dual594cases pass; old1362references
+   are now being captured. Full caller adoption, deduplication and native-ROM
+   ownership changes remain isolated pending validation.
 
    Baseline route failure at input 20857 is fixed: the room-content loader introduced
    at f116c8a6 copied overlapping layer2/BTS buffers forward. The actual room size

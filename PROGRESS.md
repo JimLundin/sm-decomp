@@ -1,6 +1,6 @@
 # Engine migration
 
-2026-10-23 16:47 UTC
+2026-10-23 16:52 UTC
 
 🟩 Committed | 🟦 Checked, uncommitted | 🟧 In progress | ⬜ Remaining | **Purple border: changed since previous report**
 
@@ -16,7 +16,7 @@ flowchart TB
     PP["player_projectiles/<br/>interval owner + callers"]:::done
     RM["room_mechanisms/<br/>interval owner + callers"]:::done
     PAL["palette_effects/<br/>independent typed core"]:::done
-    ANIM["animated_tiles/<br/>owner + upload contract"]:::done
+    ANIM["animated_tiles/<br/>independent typed core"]:::done
     ENEMY["enemy_projectiles/<br/>isolated replacement"]:::active
     REST["player / enemies / rooms<br/>remaining typed-core migrations"]:::pending
     PP --> PERSIST
@@ -25,7 +25,7 @@ flowchart TB
     ANIM --> COMPOSE
     ENEMY --> PERSIST
     REST --> PERSIST
-    COMPOSE["Session composition<br/>animation + palette"]:::active
+    COMPOSE["Session composition<br/>animation + palette"]:::done
     COMPOSE --> PERSIST
     PERSIST["Persistent Session<br/>reset / load / replay / external writers"]:::pending
     PERSIST --> SCENE["Scene / sound outputs"]:::pending
@@ -39,7 +39,7 @@ flowchart TB
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
-    class COMPOSE changed
+    class ANIM,COMPOSE changed
 ```
 
 ```mermaid
@@ -56,8 +56,9 @@ flowchart LR
     end
     subgraph animation["animated_tiles/ / committed"]
         direction TB
-        AS["state.rs<br/>6 slots + upload / ack"]:::done --> AE["execution.rs<br/>24 commands"]:::done
-        AC["compatibility.rs<br/>byte layout + aliases"]:::done --> AE
+        AS["state.rs<br/>6 slots + upload / ack"]:::done --> AE["execution.rs<br/>24 commands / no Game"]:::done
+        AC["runtime.rs<br/>byte layout + ownership edge"]:::done --> AE
+        CONTENT["content.rs<br/>captured records"]:::done --> AE
         AE --> AN["native.rs<br/>ordered graphics upload"]:::done
         AN --> ACL["21 calls / 8 files<br/>sm_87 + old NMI retired"]:::done
         ACL --> AB["release + frontend + format<br/>PASS"]:::done
@@ -65,6 +66,7 @@ flowchart LR
         AV --> AM["movie: create / upload / ack<br/>20,947 frames / 0 failures"]:::done
         AM --> LAND["Adoption committed"]:::done
     end
+    class AE,AC,CONTENT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -89,28 +91,30 @@ flowchart LR
         CALL --> FULL["Full adoption checks"]:::pending
         EC --> CORE["594 old / new comparisons<br/>PASS"]:::checked
         OLD["354 old references<br/>captured"]:::done --> CORE
-        MORE["setup / pre / attachment / contact<br/>expanded cases being prepared"]:::active --> FULL
+        MORE["1,362 old references<br/>CAPTURING"]:::active --> FULL
+        ROM["Native ROM owner<br/>remove g_rom field"]:::active --> RECORD["Captured RomImage records<br/>remove projectile raw reads"]:::active
+        RECORD --> FULL
         CORE --> FULL
         FULL --> ECOMMIT["Commit adoption"]:::pending
     end
-    subgraph composition["next: independent animation + palette"]
+    subgraph composition["independent animation + palette - committed"]
         direction TB
-        HOST["animation execution<br/>no Port / Game dependency"]:::checked --> ONE["One Session<br/>one palette color array"]:::checked
-        ONE --> BUILD["standalone + production builds<br/>PASS"]:::checked
-        BUILD --> GUARD["actual runtime guards<br/>aliases + unwind: PASS"]:::checked
-        GUARD --> REF["438 old / new comparisons<br/>PASS"]:::checked
-        REF --> MOVIE["animation / upload replay<br/>20,947 frames / 0 failures"]:::checked
-        BUILD --> REPLAY["tick / reset / snapshot / replay<br/>independent execution pending"]:::active
-        REPLAY --> CI["Independent host execution<br/>GitHub Windows: QUEUED"]:::pending
+        HOST["animation execution<br/>no Port / Game dependency"]:::done --> ONE["One Session<br/>one palette color array"]:::done
+        ONE --> BUILD["standalone + production builds<br/>PASS"]:::done
+        BUILD --> GUARD["actual runtime guards<br/>aliases + unwind: PASS"]:::done
+        GUARD --> REF["438 old / new comparisons<br/>PASS"]:::done
+        REF --> MOVIE["animation / upload replay<br/>20,947 frames / 0 failures"]:::done
+        BUILD --> REPLAY["tick / reset / snapshot / replay<br/>independent execution: PASS"]:::done
+        REPLAY --> CI["Independent host execution<br/>GitHub Windows: PASS"]:::done
         MOVIE --> CI
-        CI --> CCOMMIT["Commit composed core"]:::pending
+        CI --> CCOMMIT["Composed core adopted"]:::done
     end
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
-    class CORE,HOST,ONE,BUILD,GUARD,REF,MOVIE,REPLAY,CI changed
+    class HOST,ONE,BUILD,GUARD,REF,MOVIE,REPLAY,CI,CCOMMIT,MORE,ROM,RECORD changed
 ```
 
 [Plan](docs/PLAN.md) / [Checks and accounting](docs/HANDOFF.md) / [Target architecture](docs/target-architecture/README.md)

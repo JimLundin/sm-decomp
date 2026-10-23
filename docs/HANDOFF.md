@@ -8,16 +8,16 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-Validation branch `verify/animated-session-20261023` contains the composed
-animation/palette core replacement, not yet adopted to main. Source
+Composed animation/palette core354f1fb5 is adopted in main after GitHub
+run39989858734 passed independent execution, full build and formatting. Source
 `fe7c93f85d6d98e706096f001b3028b40bfcf1d5c33bc9c27e9b55c5b9e1af15`
 passes full formatting, release/frontend/verifier builds, standalone compilation,
 438 frozen animation comparisons, actual animation and palette runtime guards,
 and the 20947-frame Speed Booster prefix with zero failures. All five required
 animation probes hit (spawn20857, upload20894, command20944), plus two follow-up
 frames. Prefix is setup, no credits. Final independent source review passes.
-Hosted independent execution remains required before adoption; do not launch the
-standalone executable locally under the retained Defender restriction.
+Hosted independent execution passed. Do not launch the standalone executable
+locally under the retained Defender restriction.
 
 Animation core uses ordinary state without Game/Port/RAM modules; the composed
 host invokes the actual palette core synchronously with one current-colors array.
@@ -34,7 +34,9 @@ match, and first354 old outputs match frozen baseline-1. Source
 `0b814eceb2164f3cf426c1b75030d45fdd2809a08fd2f378b77f6d352121243b`;
 results in enemy-projectiles/comparison-2-results/results.json. Headless library
 check and direct production DLL build pass; no frontend or full adoption claim.
-Expanded1362 references and qualified/native-owner checks are still drafts.
+Old1362 source a10c9aa4a8b949b4eac59444b815473df83a06158339e0d3d84ae079f182af0f
+passes its direct DLL build; capture is running in old-1362-results. Candidate
+native-ROM owner/simplifications and qualified checks remain unverified drafts.
 
 Animated tiles adopted on source
 `23fd5fb6a109c2b6bc6105e52523a1ebb579200abb14f0dff6f61935844fccb2`.
