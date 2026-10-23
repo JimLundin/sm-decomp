@@ -9,65 +9,76 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares Mother Brain escape-door setup B5F8 (8697336) after
-Tourian walls at `8112c7df`. Existing mechanism_doors/checked adapter preserve
-captured origin, exact odd-byte high access, BTS indexing and three live widths:
-9001 followed by D0FF three times. The common installer also serves Grey/Colored
-without changing their observation order. Both modules forbid unsafe. Candidate
-Door routing publishes/shared-runs/reimports; RAM remains authoritative.
-87/115 setups are shared;14 room/event/boss and14 residual identities remain.
+The latest stage shares Mother Brain glass after escape-door `eac7c0d3`.
+Core/checked adapter mechanism_mother_brain_glass retire D5F6 setup, D1E6 hit
+polling, D2F9 threshold, D30B burst and D331 helper. Both forbid unsafe. A9 phase0
+uses shared add_hits at fixed39, preserving its table lookup and subsequent
+sound/flash/combat; PLM polling uses its captured selected slot. Setup clears count
+before block capture. Threshold reads count then threshold, lazily reads target.
+Burst queues sound before four interleaved operand reads/spawn attempts and
+advances only afterward. Native CEFC spawning stays an explicit callback. RAM
+remains authoritative; enemy and hostile-projectile ownership remain unfinished.
+88/115 setups shared;13 room/event/boss and14 residual identities remain.
 
-Main104886 Rust lines/184 files; unsafe2885 unchanged,casts6021(-3). Maintained
-implementation105448; installers/launcher included106358. Candidate113775/285,
-gap8889, unadopted. Stage main[4,52,23],composition[6,92,187],verification
-[601,7628,25381] in lines/tokens/LF bytes; implementation+checks607 lines. Local
-production+2 overlaps composition. No dependency/native/installer additions,
-net reduction, independent ownership or backend completion claim.
+Main105017 Rust lines/186 files;unsafe2884(-1),casts6021 unchanged. Maintained
+implementation105579; installers/launcher included106489. Candidate113957/288,
+gap8940,unadopted. Main delta[131,1192,4144],composition[182,1601,6145],
+verification[1169,13925,48757] lines/tokens/LF bytes;implementation+checks1351
+lines. Count local production once, inside composition. No dependencies/native/
+installer additions, net reduction, complete unsafe retirement or independence.
 
-Use `runtime-impact-working/MOTHER_BRAIN_DOOR_HANDOFF.md`,
-`mother-brain-door-price.json` and `mother-brain-door-check-attempt-1.log`.
-All19 suites pass22.229812s with219 runtime/257 local source identities.
-Escape[16704,5742,10,192]: direct total INCLUDES5742 matching checked original
-failures. Original B5F8 installer already bounds-checks FFFD..FFFF; preceding
-writes survive. This differs from Tourian's separate checked-only UB exclusions.
-Symbolic cases assert all16 ordered observations/failures, changed widths and
-captured origin. Ordinary doors remain[570,12,30,3].
+Use `runtime-impact-working/MOTHER_BRAIN_GLASS_HANDOFF.md`,
+`mother-brain-glass-price.json` and `mother-brain-glass-check-attempt-1.log`.
+All20 suites pass24.0208878s,source identities222 runtime/262 local.
+Glass[8604,1460,22,138]: direct total INCLUDES1460 matching checked failures;
+expected success/failure is asserted separately. Covers setup indexing/aliases,
+wrapping counts, truncated operands, lazy targets and skipped invalid parameters
+when no shard slot is free. Symbolic checks observe all ordered failure prefixes
+and mutate operands between spawns. Frozen original bodies/helper remain separate.
 
-Eight actual A9B32A producer groups cover zero/one/eight/eighteen free debris
-slots and available/full PLM pools. Source spawns at(0,6), after eight native
-CB21 attempts and AIvar_A=B33C. Full overlays are bounds/alignment guarded.
-Candidate explicitly retains native debris and outer AI; this is not owned
-encounter evidence. Real Samus both-axis collision traverses D0FF to Door BTS1,
-using DDBC->AA8C->DE4D, setting E17D/door/state9. Projectile effects also checked.
+Actual room entry C84F places D6DE at(9,5), with count reset and solid/BTS44.
+Eighteen actual A9 shot/flash combinations advance fixed39 and feed the shared
+threshold; outer native AI/combat is explicitly retained. Real-position shard
+initialization and movement/gravity, retirement, sparkle admission/rejection,
+RNG draw counts, pool counts and sparkle-script deletion are asserted.
 
-Separate synthetic B677 at(0,32) runs real AC0B draw94B1 and Delete over two ticks;
-carrier asserts y32/cameraY0 before every Emit. Four left Door/extension cells
-and four right Air cells retain BTS and consumer behavior. No visible native
-DrawPlm or actual source-coordinate script/rendering claim. No movie, whole
-encounter, complete composition runtime, boot-to-credits or independent backend.
+Separate synthetic room entry at(9,32) runs complete D202 with guard y32/cameraY0
+before every Emit. Actual shot-BTS44 collision supplies the counter signals.
+All glass stages/thresholds2..18 execute; ten bursts make40 attempts/18 admissions.
+Final event2 stays clear for exactly48 ticks, then sets alongside Delete. Boss
+and event bypasses and final Air consumers pass. The138 observations comprise
+96 collision samples,36 shard-pre cases and6 sparkle-deletion tails. The22 groups
+are one actual source,18 A9 producer combinations and3 script paths.
+No visible rendering, movie, complete encounter, full composition runtime,
+boot-to-credits or independent backend claim. All nine literal content ranges
+match primary bank bytes; ROM-derived content stays local and uncommitted.
 
-Production release/frontend/verifier/source48.1155174s; prospective release
-43.4677616s; carrier16.81s; harness18.21s. All first attempts pass. Production hash:
-`03b9d310264a1df0354f9f9e66f95eb9e8235d824ce943b281dbfe1ee80904b6`.
-Three main files are formatted and byte-identical in composition; its fourth
-changed file is exactly transformed mechanisms_ram. No main registrations
-changed. Inputs remain frozen after builds; compiler lane released/DLL unloaded.
+Production release/frontend/verifier/source50.4409085s;prospective release
+49.0714945s;carrier18.60s pass first attempt. Harness attempt1 failed7.47s due
+ambiguous fixture imports/private dispatcher access. Fixture-only explicit import
+and direct public same-body call pass attempt2 in19.34s. Runtime attempt1 passes.
+Failures preserved; no main/candidate changes after builds. Production hash:
+`ad3e316feb930a6746a93fadcad2cbe9d454a70aaca499f6a31c4afda9118fa4`.
+Main changed formatting passes; verify_source's four inherited formatting hunks
+are exactly unchanged. Composition's13 changed files match main/transformed local
+sources and registrations. Compiler lane released; DLL unloaded.
 
-Retained selected results: Tourian21924/8700/10/80,animal42008/4628/19/13,
-Shaktool26700/6/4,booster91874/8354/20/21,sound15300/274/2304,
-quota6118/66/112/48,eye13320/3440/56/24,plants1360/1504/8/640,
-cannon3630/1420/46/8,item3476/1320/14/32,scroll5816/1296/52,
-station3240/112/149/6,Chozo592/4/4/16,hands52/163/12,source342/672/47,
-closing74/120/7,collision198/545/176/1. Animal/booster failures are included;
-Tourian8700 are separate checked-only cases, never undefined original execution.
+Retained results: escape16704/5742/10/192,doors570/12/30/3,
+Tourian21924/8700/10/80,animal42008/4628/19/13,Shaktool26700/6/4,
+booster91874/8354/20/21,sound15300/274/2304,quota6118/66/112/48,
+eye13320/3440/56/24,plants1360/1504/8/640,cannon3630/1420/46/8,
+item3476/1320/14/32,scroll5816/1296/52,station3240/112/149/6,
+Chozo592/4/4/16,hands52/163/12,source342/672/47,closing74/120/7,
+collision198/545/176/1. Glass/escape/animal/booster failure counts are included;
+Tourian8700 are separate checked-only cases, never undefined original executions.
 
-Preserve historical exclusions: unfrozen advance_tide always reads odd RAM197D;
-terrain18 visible restoration reads odd RAM1E67. Neither is defined-reference
-coverage. Current offscreen guards do not resolve inherited Intro mismatch.
-Qualified item/cannon/Chozo and full-contact limits remain; eye acid initialization
-stays excluded. Scroll bounded nonreturn observations were not repeated.
+Preserve exclusions: unfrozen advance_tide always reads odd RAM197D; terrain18
+visible restoration reads odd RAM1E67. Neither is defined-reference coverage.
+Current guards do not resolve the inherited Intro mismatch. Qualified item/
+cannon/Chozo and full-contact limits remain; eye acid initialization stays
+excluded. Scroll bounded nonreturn observations were not repeated.
 
-`mother-brain-door-parent/` preserves preceding main/carrier/local/composition.
+`mother-brain-glass-parent/` preserves prior main/carrier/local/composition.
 All historical snapshots/caches/failed logs remain, including animal BE30 routing
 correction; main numeric dispatch was always correct. Never rerun historical
 broad preparation scripts. Composition is `impact-composition/sm/src`.

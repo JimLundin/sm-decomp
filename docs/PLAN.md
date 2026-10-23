@@ -104,33 +104,39 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares Mother Brain's escape-door setup B5F8 after
-   Tourian walls at `8112c7df`. Existing `mechanism_doors` now installs the door
-   and three extension cells below it, preserving captured origin, exact odd-byte
-   terrain access, BTS indexing and exactly three live width reads. The factored
-   installer also preserves Grey/Colored door sequencing. Both modules forbid
-   unsafe. The candidate uses the shared Door route; RAM remains authoritative.
-   Eighty-seven of 115 setups are shared; 28 and native dispatch/authority remain.
+   Latest verified stage shares Mother Brain glass after escape-door `eac7c0d3`.
+   New `mechanism_mother_brain_glass` core/checked adapter retire setup D5F6,
+   pre D1E6, threshold D2F9, burst D30B and its D331 helper. The phase-zero A9
+   shot producer now uses shared wrapping add_hits at fixed slot39; the PLM pre
+   retains its selected slot. Preserve clear-count-before-block, live count reads,
+   lazy threshold target, sound before four interleaved operand/spawn pairs and
+   final cursor advancement. Both modules forbid unsafe. Native shard construction
+   remains an explicit callback. RAM remains authoritative; no encounter ownership
+   or hostile-projectile lifecycle retirement claim. 88/115 setups shared;27 remain.
 
-   All19 selected suites pass with identities219 runtime/257 local. Escape-door
-   checks pass 16,704 original/main/candidate comparisons INCLUDING 5,742 matching
-   checked installer failure-prefix cases, ten producer/script groups and192
-   collision observations. Unlike Tourian raw terrain reads, B5F8's original
-   installer already rejects FFFD..FFFF through checked indexing. Symbolic checks
-   assert all16 observation/failure positions and captured origin/live widths.
-   Retained ordinary-door checks pass570 comparisons/12 failures/30 tails/3
-   checked-only cases. Actual A9B32A runs eight debris attempts, advances AI and
-   spawns B677 at(0,6); capacity cases preserve effect order. Actual Samus horizontal
-   and vertical collisions follow extensions to BTS1, DDBC->AA8C->DE4D, setting
-   the door transition. Candidate explicitly retains native debris/outer AI work.
+   All20 selected suites pass with identities222 runtime/262 local. Glass results
+   [8604,1460,22,138]: direct comparisons INCLUDE1,460 matching checked failures;
+   intended success/failure domains are asserted. Setup bounds, broad selectors,
+   aliases, wrapping counts, truncated operands, lazy branch reads and pool-skipped
+   invalid shard parameters are covered. Symbolic checks preserve observation and
+   failure order, including mutable operand data between spawns. Actual C84F room
+   entry places D6DE at(9,5);18 bounded A9 producer cases feed the shared threshold.
+   Native enemy sound/flash/combat remains retained. Real-position shard cases
+   exercise initialization, trajectory, gravity, retirement, sparkle admission/
+   rejection, RNG consumption and sparkle script deletion.
 
-   Separate synthetic B677 at(0,32), guarded y32/cameraY0 before every DrawPlm,
-   executes AC0B's real draw94B1 and Delete. Four Door/extension cells and four Air
-   cells retain their expected BTS and collision effects. Actual source-coordinate
-   drawing is not executed: visible odd native drawing remains undefined. No
-   movie, rendering fidelity, complete encounter or independent ownership claim.
-   Production release/frontend/verifier/source48.12s, prospective release43.47s,
-   carrier16.81s, harness18.21s and selected checks22.23s pass first attempts.
+   Separate synthetic room entry at(9,32), guarded y32/cameraY0 before every Emit,
+   executes all D202 glass stages, thresholds2..18, ten bursts/40 spawn attempts
+   with18 admissions, then exactly48 ticks before event2 and Delete. Boss/event
+   bypasses and final Air collision samples pass. Actual BTS44 collision supplies
+   shot signals. No visible drawing, movie, full encounter, complete composition
+   runtime or independent backend claim. Primary bank bytes match all nine selected
+   local content ranges; ROM-derived content remains uncommitted.
+
+   Production release/frontend/verifier/source50.44s, prospective release49.07s,
+   carrier18.60s pass first attempts. Harness attempt1 failed7.47s on fixture import
+   ambiguity/private dispatcher access; fixture-only corrections pass attempt2 in
+   19.34s. All20 runtime suites pass first attempt24.02s. Failed log preserved.
 
    Retained limits: `advance_tide` reads native u16 at odd RAM197D on every
    unfrozen lava_surface; never run that as defined-reference evidence. The old
@@ -139,14 +145,14 @@ references; measure build/test time and resource growth before changing the loop
    or resolve the inherited Intro mismatch. Other qualified fixtures remain as
    documented in the local handoffs.
 
-   Main is **104,886 Rust lines in 184 files**. Prospective composition is
-   **113,775 (+8,889)**, unadopted. This stage adds4 main lines/52 lexical tokens/
-   23 LF-normalized bytes; complete composition adds6/92/187. Retained verification
-   adds601/7,628/25,381; implementation plus checks607 lines. Local production's
-   two lines overlap composition. No dependencies or native/installer/launcher
-   source added. Unsafe declarations remain2,885; cast-containing lines fall three
-   to6,021. No net reduction, complete unsafe retirement, persistent ownership or
-   backend-independence claim.
+   Main is **105,017 Rust lines in 186 files**. Prospective composition is
+   **113,957 (+8,940)** in288 files, unadopted. Stage main adds131 lines/1,192 lexical
+   tokens/4,144 LF-normalized bytes; complete composition adds182/1,601/6,145.
+   Retained verification adds1,169/13,925/48,757; implementation plus checks1,351
+   lines. Local production overlaps composition. No dependency/native/installer/
+   launcher source added. Unsafe declarations fall one to2,884; casts remain6,021.
+   No net reduction, complete unsafe retirement, persistent ownership or backend
+   independence claim.
 
    Next dependencies, in order:
 
@@ -209,11 +215,13 @@ references; measure build/test time and resource growth before changing the loop
      compare actual enemy producers, deletion and material collision effects.
    - [x] Share Mother Brain escape-door setup through the existing door core;
      compare actual debris/door producer, player transition and offscreen script.
+   - [x] Share Mother Brain glass setup/hits/threshold/burst and both count
+     producers; compare actual shots/shards and guarded full script/event tails.
    - Close remaining room/event/boss setups, then constants/no-op/result routes.
      Preserve synchronous writes, nested displacement and failure prefixes before
      retiring native dispatch. The 115-identity inventory is in the local door
-     handoff; 14 room/event/boss and 14 residual identities remain. Select one
-     coherent responsibility through caller/validation investigation. The escape-door
+     handoff; 13 room/event/boss and 14 residual identities remain. Select one
+     coherent responsibility through caller/validation investigation. The glass
      handoff records retained dependencies and guarded drawing limits.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
@@ -222,8 +230,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified Mother Brain escape-door continuation,
-   with `MOTHER_BRAIN_DOOR_HANDOFF.md`, `mother-brain-door-price.json` and
+   `runtime-impact-working/` is the verified Mother Brain glass continuation,
+   with `MOTHER_BRAIN_GLASS_HANDOFF.md`, `mother-brain-glass-price.json` and
+   `mother-brain-glass-check-attempt-1.log`. `mother-brain-glass-parent/` preserves
+   prior main/carrier/local/composition inputs. Escape-door evidence remains in `MOTHER_BRAIN_DOOR_HANDOFF.md`, `mother-brain-door-price.json` and
    `mother-brain-door-check-attempt-1.log`. `mother-brain-door-parent/` preserves
    prior main/carrier/local/composition inputs. Tourian evidence remains in
    `TOURIAN_WALL_HANDOFF.md`, `tourian-wall-price.json` and

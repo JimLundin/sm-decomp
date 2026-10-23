@@ -727,12 +727,6 @@ pub fn PlmSetup_D0D8_ClearVflag(j: u16) -> u8 {
     1
 }
 
-pub unsafe fn SpawnMotherBrainGlassShatteringShard(a: u16, game: &mut Game) {
-    unsafe {
-        SpawnEprojWithRoomGfx(0xcefc, a, game);
-    }
-}
-
 pub use self::PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused as PlmSetup_D70C_NoobTube;
 pub unsafe fn SetPlmVarPtr(k: u16, a: u16, game: &mut Game) {
     unsafe {
@@ -821,11 +815,6 @@ crate::game::callback_dispatch! {
     @functions [pub fn (_j: u16, game: &mut Game) -> u8];
     @functions [pub unsafe fn (j: u16, game: &mut Game) -> u8];
     @prefix { let v1: i32 = j as i32 >> 1; };
-    [8705526] PlmSetup_MotherBrainGlass [] {
-        word!(game.plm_room_arguments[v1] = 0);
-        WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[v1]), 0x8044, game);
-        0
-    };
     [8705683] PlmSetup_D708_LowerNorfairChozoBlockUnused [] {
         WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[v1]), 0x8044, game);
         WriteLevelDataBlockTypeAndBts(
@@ -936,6 +925,7 @@ crate::game::callback_dispatch! {
         8706700 => [crate::game::mechanism_eye_door_ram::begin(j, crate::game::mechanism_eye_door::Part::Eye, game)];
         8706745 => [crate::game::mechanism_eye_door_ram::begin(j, crate::game::mechanism_eye_door::Part::Body, game)];
         8706846 => [crate::game::mechanism_metroid_quota_ram::begin(j, game)];
+        8705526 => [crate::game::mechanism_mother_brain_glass_ram::setup(j, game)];
         8697336 => [crate::game::mechanism_doors_ram::setup(j, crate::game::mechanism_doors::Setup::MotherBrainEscape, game)];
         8697169 => [crate::game::mechanism_tourian_wall_ram::setup(j, crate::game::mechanism_tourian_wall::Setup::Open, game)];
         8697199 => [crate::game::mechanism_tourian_wall_ram::setup(j, crate::game::mechanism_tourian_wall::Setup::Close, game)];
@@ -1153,13 +1143,6 @@ crate::game::callback_dispatch! {
             word!(game.plm_pre_instrs[v1] = addr_locret_84BB6A as u16);
         }
     };
-    [8704486] PlmPreInstr_IncrementRoomArgIfShotBySuperMissile [] {
-        let v2: u16 = word!(game.plm_timers[v1]);
-        if (v2 & 0xf00) == 512 || (v2 & 0xf00) == 256 {
-            word!(game.plm_room_arguments[v1] += 1);
-        }
-        word!(game.plm_timers[v1] = 0);
-    };
     [8707977] PlmPreInstr_GotoLinkIfTriggered [] {
         if byte!(@pointer (ram_ptr!(game, u16; 0x1d77)).offset(v1 as isize); 0) == 255 {
             word!(game.plm_pre_instrs[v1] = ((0x84dfa8i32) as u16));
@@ -1177,6 +1160,7 @@ crate::game::callback_dispatch! {
         }
     };
     @external {
+        8704486 => [crate::game::mechanism_mother_brain_glass_ram::poll(k, game)];
         8694921 => [crate::game::mechanism_plants_ram::hold(k, game)];
         8705875 => [crate::game::mechanism_eye_door_ram::wake(k, game)];
         8706782 => [crate::game::mechanism_metroid_quota_ram::poll(crate::game::mechanism_metroid_quota::Room::First, game)];
@@ -1285,13 +1269,6 @@ crate::game::callback_dispatch! {
         *ram_ptr!(game; 0x16402, (word!(game.plm_block_indices[(k >> 1)]) >> 1) as isize) = 1;
         plmp
     };
-    [8704761] PlmInstr_GotoIfRoomArgLess [] {
-        if word!(game.plm_room_arguments[(k >> 1)]) >= plmp.word(0) {
-            plmp.advance(4)
-        } else {
-            PlmScript::jump(plmp.word(2))
-        }
-    };
     [8705317] PlmInstr_EnableWaterPhysics [] {
         word!(game.fx_liquid_options &= !(4));
         plmp
@@ -1362,14 +1339,6 @@ crate::game::callback_dispatch! {
         } else {
             PlmScript::jump(plmp.word(0))
         }
-    };
-    [8704779] PlmInstr_SpawnFourMotherBrainGlass [] {
-        QueueSfx3_Max15(0x2e, game);
-        SpawnMotherBrainGlassShatteringShard(plmp.word(0), game);
-        SpawnMotherBrainGlassShatteringShard(plmp.word(2), game);
-        SpawnMotherBrainGlassShatteringShard(plmp.word(4), game);
-        SpawnMotherBrainGlassShatteringShard(plmp.word(6), game);
-        plmp.advance(8)
     };
     [8704855] PlmInstr_SpawnTorizoStatueBreaking [] {
         SpawnEprojWithRoomGfx(0xa993, plmp.word(0), game);
@@ -1892,6 +1861,8 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (plmp: PlmScript, k: u16, game: &mut Game) -> PlmScript];
     [8709691] PlmInstr_E63B [plmp] { word!(game.fx_y_vel = -32i32 as u16); };
     @external {
+        8704761 => [crate::game::mechanism_mother_brain_glass_ram::command(j, k, crate::game::mechanism_mother_brain_glass::Command::Threshold, game, |parameter, game| { SpawnEprojWithRoomGfx(0xcefc, parameter, game); })];
+        8704779 => [crate::game::mechanism_mother_brain_glass_ram::command(j, k, crate::game::mechanism_mother_brain_glass::Command::Shatter, game, |parameter, game| { SpawnEprojWithRoomGfx(0xcefc, parameter, game); })];
         8698297 => [{crate::game::mechanism_animal_rescue_ram::mark_rescued(game); j}];
         8698661 => [{crate::game::mechanism_animal_rescue_ram::move_passage(k, game); j}];
         8685348 => [PlmInstr_Goto(j, k)];

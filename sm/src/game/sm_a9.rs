@@ -1147,7 +1147,11 @@ crate::game::callback_dispatch! {
                 as u16)
                 & (7u16);
             if g_byte_A9B546[v1 as usize] != 0 {
-                word!(game.plm_room_arguments[39] += (g_byte_A9B546[v1 as usize]) as u16);
+                crate::game::mechanism_mother_brain_glass_ram::add_hits(
+                    39,
+                    u16::from(g_byte_A9B546[v1 as usize]),
+                    game,
+                );
                 QueueSfx2_Max6(0x6e, game);
                 let mut v2: i16 = 13;
                 let E1 = Get_MotherBrain(0x40, game);
