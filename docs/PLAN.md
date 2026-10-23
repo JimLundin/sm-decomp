@@ -104,39 +104,41 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares Mother Brain glass after escape-door `eac7c0d3`.
-   New `mechanism_mother_brain_glass` core/checked adapter retire setup D5F6,
-   pre D1E6, threshold D2F9, burst D30B and its D331 helper. The phase-zero A9
-   shot producer now uses shared wrapping add_hits at fixed slot39; the PLM pre
-   retains its selected slot. Preserve clear-count-before-block, live count reads,
-   lazy threshold target, sound before four interleaved operand/spawn pairs and
-   final cursor advancement. Both modules forbid unsafe. Native shard construction
-   remains an explicit callback. RAM remains authoritative; no encounter ownership
-   or hostile-projectile lifecycle retirement claim. 88/115 setups shared;27 remain.
+   Latest verified stage shares crumbling-wall delay, scroll and row movement
+   after Mother Brain glass at `94f84f96`. New `mechanism_crumbling_wall` core and
+   checked adapter retire AB28 setup, AB51 scroll and identical AB59/AB00 movement
+   bodies. Already-dead Botwoon_Init uses the shared scroll helper. Preserve delay64,
+   native-endian0101 scroll encoding, captured block before live width and wrapping
+   row steps. Both modules forbid unsafe; candidate setup/commands share the core.
+   RAM remains authoritative. 89/115 setups are shared;26 remain.
 
-   All20 selected suites pass with identities222 runtime/262 local. Glass results
-   [8604,1460,22,138]: direct comparisons INCLUDE1,460 matching checked failures;
-   intended success/failure domains are asserted. Setup bounds, broad selectors,
-   aliases, wrapping counts, truncated operands, lazy branch reads and pool-skipped
-   invalid shard parameters are covered. Symbolic checks preserve observation and
-   failure order, including mutable operand data between spawns. Actual C84F room
-   entry places D6DE at(9,5);18 bounded A9 producer cases feed the shared threshold.
-   Native enemy sound/flash/combat remains retained. Real-position shard cases
-   exercise initialization, trajectory, gravity, retirement, sparkle admission/
-   rejection, RNG consumption and sparkle script deletion.
+   All21 selected suites pass with225 runtime/267 local identities. New results
+   [15670,0,17,4302]:15,670 defined original/main/candidate direct comparisons,
+   no intended checked failures,17 source/lifecycle groups and4,302 paired cell/frame
+   observations (8,604 collision invocations). Canonical/odd/boundary selectors and
+   wrapping widths/blocks are covered; all-u16 field endpoints statically fit RAM.
+   Actual Botwoon ready/full-pool producer, terminal boss-bit/music/deletion and
+   already-dead reload execute. Full hostile-projectile pool deliberately skips
+   all16 drop constructions;16 RNG steps and final drop point are asserted. Actual
+   Tourian HDMA DC69 checks trigger/frozen/neighbor/full-PLM cases, eventA and script
+   advancement. Native enemy/scroll/HDMA domains are bounded/alignment-guarded.
+   Outer enemy/HDMA behavior remains retained, not independently owned.
 
-   Separate synthetic room entry at(9,32), guarded y32/cameraY0 before every Emit,
-   executes all D202 glass stages, thresholds2..18, ten bursts/40 spawn attempts
-   with18 admissions, then exactly48 ticks before event2 and Delete. Boss/event
-   bypasses and final Air collision samples pass. Actual BTS44 collision supplies
-   shot signals. No visible drawing, movie, full encounter, complete composition
-   runtime or independent backend claim. Primary bank bytes match all nine selected
-   local content ranges; ROM-derived content remains uncommitted.
+   Separate guarded offscreen scripts prove Botwoon first Air draw tick64, nine
+   rows with four4-frame stages each, final ninth move/Delete tick208; reload clear
+   nine cells/Delete tick2; Tourian four-column/six-row passage final sixth move/
+   Delete tick97. All stages are Air from their first draw. Scroll, sound capacity,
+   exact terrain, neighboring cells and post-delete tails pass. PLM scripts do not
+   set boss/event flags. Scoped carrier-only constructor hooks select three headers;
+   draw guards bound y32..40 or32..37 at camera0. Actual-coordinate checks stop at
+   creation. No visible rendering, movie, complete boss/composition runtime or
+   independent backend claim. All eight literal content ranges match bank bytes.
 
-   Production release/frontend/verifier/source50.44s, prospective release49.07s,
-   carrier18.60s pass first attempts. Harness attempt1 failed7.47s on fixture import
-   ambiguity/private dispatcher access; fixture-only corrections pass attempt2 in
-   19.34s. All20 runtime suites pass first attempt24.02s. Failed log preserved.
+   Production release/frontend/verifier/source48.91s, prospective release54.31s,
+   carrier19.49s and harness17.72s pass first attempts. Runtime attempt1 printed all
+   passing results23.23s, but PowerShell returned1 around retained stderr diagnostics.
+   Same fixed DLL/source rerun with explicit subprocess capture exits0, all21 pass
+   23.56s. Both logs preserved; no source changes or failing runtime assertions.
 
    Retained limits: `advance_tide` reads native u16 at odd RAM197D on every
    unfrozen lava_surface; never run that as defined-reference evidence. The old
@@ -145,14 +147,14 @@ references; measure build/test time and resource growth before changing the loop
    or resolve the inherited Intro mismatch. Other qualified fixtures remain as
    documented in the local handoffs.
 
-   Main is **105,017 Rust lines in 186 files**. Prospective composition is
-   **113,957 (+8,940)** in288 files, unadopted. Stage main adds131 lines/1,192 lexical
-   tokens/4,144 LF-normalized bytes; complete composition adds182/1,601/6,145.
-   Retained verification adds1,169/13,925/48,757; implementation plus checks1,351
-   lines. Local production overlaps composition. No dependency/native/installer/
-   launcher source added. Unsafe declarations fall one to2,884; casts remain6,021.
-   No net reduction, complete unsafe retirement, persistent ownership or backend
-   independence claim.
+   Main is **105,080 Rust lines in188 files**. Prospective composition is
+   **114,053 (+8,973)** in291 files, unadopted. Stage main adds63 lines/652 lexical
+   tokens/2,244 LF-normalized bytes; complete composition adds96/912/3,476.
+   Retained verification adds787/9,528/32,465; implementation plus checks883 lines.
+   Local production overlaps composition. No dependency/native/installer/launcher
+   source added. Unsafe declarations remain2,884; casts fall two to6,019. Two native
+   scroll-store sites are replaced, but no complete unsafe retirement, persistent
+   ownership, backend independence or net reduction is established.
 
    Next dependencies, in order:
 
@@ -217,11 +219,13 @@ references; measure build/test time and resource growth before changing the loop
      compare actual debris/door producer, player transition and offscreen script.
    - [x] Share Mother Brain glass setup/hits/threshold/burst and both count
      producers; compare actual shots/shards and guarded full script/event tails.
+   - [x] Share Botwoon delay/scroll and both crumbling-row commands; compare
+     death/reload, Tourian producer and complete guarded terrain/collision tails.
    - Close remaining room/event/boss setups, then constants/no-op/result routes.
      Preserve synchronous writes, nested displacement and failure prefixes before
      retiring native dispatch. The 115-identity inventory is in the local door
-     handoff; 13 room/event/boss and 14 residual identities remain. Select one
-     coherent responsibility through caller/validation investigation. The glass
+     handoff; 12 room/event/boss and 14 residual identities remain. Select one
+     coherent responsibility through caller/validation investigation. The crumbling-wall
      handoff records retained dependencies and guarded drawing limits.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
@@ -230,8 +234,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified Mother Brain glass continuation,
-   with `MOTHER_BRAIN_GLASS_HANDOFF.md`, `mother-brain-glass-price.json` and
+   `runtime-impact-working/` is the verified crumbling-wall continuation,
+   with `CRUMBLING_WALL_HANDOFF.md`, `crumbling-wall-price.json` and
+   `crumbling-wall-check-attempt2.log`. `crumbling-wall-parent/` preserves prior
+   main/carrier/local/composition inputs. Glass evidence remains in `MOTHER_BRAIN_GLASS_HANDOFF.md`, `mother-brain-glass-price.json` and
    `mother-brain-glass-check-attempt-1.log`. `mother-brain-glass-parent/` preserves
    prior main/carrier/local/composition inputs. Escape-door evidence remains in `MOTHER_BRAIN_DOOR_HANDOFF.md`, `mother-brain-door-price.json` and
    `mother-brain-door-check-attempt-1.log`. `mother-brain-door-parent/` preserves

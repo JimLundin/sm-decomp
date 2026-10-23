@@ -750,10 +750,6 @@ crate::game::callback_dispatch! {
 ) -> u8 => ea;
     call (j, game); default Unreachable(game) as u8;
     @functions [pub unsafe fn (j: u16, game: &mut Game) -> u8];
-    [8694568] PlmSetup_CrumbleBotwoonWall [] {
-        word!(game.plm_instruction_timer[(j >> 1)] = 64);
-        0
-    };
     [8695882] PlmSetup_SetrupWreckedShipEntrance [] {
         let mut v1: u16 = word!(game.plm_block_indices[(j >> 1)]);
         for _ in 0i16..56i16 {
@@ -841,6 +837,7 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (v0: u16, game: &mut Game) -> u8];
     @external {
+        8694568 => [crate::game::mechanism_crumbling_wall_ram::setup(j, game)];
         8696811 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::Ice, displacement, game)];
         8696840 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::Surface, displacement, game)];
         8696983 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::Submerge, displacement, game)];
@@ -1243,10 +1240,6 @@ crate::game::callback_dispatch! {
             plmp.advance(4)
         }
     };
-    [8694528] PlmInstr_MovePlmDownOneBlock [] {
-        word!(checked_i32, game.plm_block_indices[(k >> 1)] += 2 * word!(game.room_width_in_blocks) as i32);
-        plmp
-    };
     [8694742] PlmInstr_ABD6 [] {
         word!(game.plm_block_indices[(k >> 1)] += 2);
         plmp
@@ -1328,10 +1321,6 @@ crate::game::callback_dispatch! {
         crate::game::music::clear_queue(game);
         QueueMusic_Delayed8(plmp.byte(0) as u16, game);
         plmp.advance(1)
-    };
-    [8694617] PlmInstr_MovePlmDownOneBlock_0 [] {
-        word!(checked_i32, game.plm_block_indices[(k >> 1)] += 2 * word!(game.room_width_in_blocks) as i32);
-        plmp
     };
     [8698479] PlmInstr_JumpIfSamusHasNoBombs [] {
         if (word!(game.collected_items) & 0x1000) != 0 {
@@ -1673,7 +1662,6 @@ crate::game::callback_dispatch! {
         SaveToSram(word!(game.selected_save_slot), game);
     };
     @functions [pub unsafe fn (plmp: PlmScript, k: u16, game: &mut Game) -> PlmScript];
-    [8694609] PlmInstr_Scroll_0_1_Blue [plmp] { *(ram_ptr!(game, u16; 0xcd20)) = 257; };
     @functions [pub unsafe fn (plmp: PlmScript, k: u16, game: &mut Game) -> PlmScript];
     @functions [pub unsafe fn (
     plmp: PlmScript,
@@ -1861,6 +1849,8 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (plmp: PlmScript, k: u16, game: &mut Game) -> PlmScript];
     [8709691] PlmInstr_E63B [plmp] { word!(game.fx_y_vel = -32i32 as u16); };
     @external {
+        8694609 => [{ crate::game::mechanism_crumbling_wall_ram::open_passage(game); j }];
+        8694528 | 8694617 => [{ crate::game::mechanism_crumbling_wall_ram::move_down(k, game); j }];
         8704761 => [crate::game::mechanism_mother_brain_glass_ram::command(j, k, crate::game::mechanism_mother_brain_glass::Command::Threshold, game, |parameter, game| { SpawnEprojWithRoomGfx(0xcefc, parameter, game); })];
         8704779 => [crate::game::mechanism_mother_brain_glass_ram::command(j, k, crate::game::mechanism_mother_brain_glass::Command::Shatter, game, |parameter, game| { SpawnEprojWithRoomGfx(0xcefc, parameter, game); })];
         8698297 => [{crate::game::mechanism_animal_rescue_ram::mark_rescued(game); j}];

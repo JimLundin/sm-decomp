@@ -416,7 +416,7 @@ crate::game::callback_dispatch! {
     Botwoon_Init [] {
         if (*ram_ptr!(game; 0xd828, 4) & 2) != 0 {
             SpawnHardcodedPlm(SpawnHardcodedPlmArgs::new(0xf, 0x4, 0xb797 as VoidP), game);
-            *(ram_ptr!(game, u16; 0xcd20)) = 257;
+            crate::game::mechanism_crumbling_wall_ram::open_passage(game);
             (*E).base.current_instruction = addr_kBotwoon_Ilist_9389 as u16;
             (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
         } else {
