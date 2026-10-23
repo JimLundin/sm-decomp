@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 07:09 UTC**
+Updated: **2026-10-23 07:19 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -38,8 +38,11 @@ remains below 100,000 maintained Rust lines, with all unsafe operations removed.
 The next shared core will own each movement scan's temporary state and replace
 raw displacement pointers through mechanism setup and nested spawns. It covers
 horizontal/vertical movement, wall-jump collision and pose-change collision.
-An independent reviewer is checking callers and the required comparison cases.
-This work is not yet built or verified; the figures above remain the last
+Source review and production release/frontend/verifier builds passed. The
+prospective library build also passed. The initial candidate command mistakenly
+enabled frontend dependencies and received an access-denied error; the usual
+library-only command passed. Behavior comparisons, final accounting and the
+implementation commit are still pending. The figures above remain the last
 verified milestone.
 
 Persistent gameplay state remains in RAM. Renderer/audio replacement and an
