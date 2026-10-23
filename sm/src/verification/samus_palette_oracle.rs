@@ -38,6 +38,9 @@ struct Case {
     movement: u16,
     flare: u16,
     shoot: u16,
+    // (charge palette index, timer) injected at D712, never at routine entry.
+    // These are explicit callback-transition experiments, not natural SNES paths.
+    injected_transition: Option<(u16, u16)>,
 }
 
 fn cases() -> Vec<Case> {
@@ -48,6 +51,7 @@ fn cases() -> Vec<Case> {
         movement: 0,
         flare: 0,
         shoot: 0,
+        injected_transition: None,
     };
     let mut cases = Vec::new();
     for hurt in [0, 1, 2, 6, 7, 38, 58, 59, 60, 0x803a, 0x803b, 0xffff] {
@@ -77,6 +81,14 @@ fn cases() -> Vec<Case> {
         cases.push(Case {
             hurt: 39,
             grapple,
+            ..base
+        });
+    }
+    // IDs 0..28 retain the exact prior seed and byte-observation contract.
+    // IDs 29..32 are injected callback transitions, in this fixed order.
+    for index_timer in [(0, 2), (9, 2), (0, 1), (9, 1)] {
+        cases.push(Case {
+            injected_transition: Some(index_timer),
             ..base
         });
     }
@@ -182,6 +194,7 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
             let mut tail = false;
             let mut misc_calls = 0u8;
             let mut branch_pending = false;
+            let mut injected = false;
             for _ in 0..20_000 {
                 let pc = u32::from((*game.g_cpu).k) << 16 | u32::from((*game.g_cpu).pc);
                 if branch_pending {
@@ -193,6 +206,38 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                 }
                 match pc {
                     0x91d6f7 => observation(&mut output, 1, game, true),
+                    0x91d712 => {
+                        if let Some((index, timer)) = case.injected_transition {
+                            if injected {
+                                return Err("duplicate injected callback transition".into());
+                            }
+                            // Charge processing and selector ASL/TAX have really
+                            // executed. Preserve their CPU register/flag result;
+                            // change only the three explicitly tagged RAM words.
+                            if (*game.g_cpu).a != 4
+                                || (*game.g_cpu).x != 4
+                                || (*game.g_cpu).c
+                                || (*game.g_cpu).mf
+                                || (*game.g_cpu).xf
+                            {
+                                return Err(
+                                    "injected transition has wrong dispatch CPU state".into()
+                                );
+                            }
+                            let mut writes = pc.to_le_bytes().to_vec();
+                            for (address, value) in
+                                [(0x0a4au32, 0x8000), (0x0b62, index), (0x0ad0, timer)]
+                            {
+                                put(game, address as usize, value);
+                                writes.extend_from_slice(&address.to_le_bytes());
+                                writes.extend_from_slice(&value.to_le_bytes());
+                            }
+                            // Tag 9: injected-callback-transition, PC:u32 then
+                            // exactly three (RAM-address:u32, value:u16) pairs.
+                            record(&mut output, 9, &writes);
+                            injected = true;
+                        }
+                    }
                     0x91d715 => {
                         if branch {
                             return Err("duplicate selector branch".into());
@@ -218,6 +263,9 @@ pub unsafe fn capture(id: u32, original: &[u8], game: &mut Game) -> Result<Vec<u
                     // After outer PLP, immediately before RTL: no artificial
                     // return address is necessary. C here is NOT the decision.
                     0x91d726 => {
+                        if injected != case.injected_transition.is_some() {
+                            return Err("missing injected callback transition".into());
+                        }
                         if !branch || !tail || misc_calls != 2 {
                             return Err("missing selector-2 branch or misc call".into());
                         }

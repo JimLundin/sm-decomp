@@ -603,3 +603,11 @@ pub fn verify_player_projectile_expanded_case(id: u32) -> Option<Vec<u8>> {
 pub fn verify_player_projectile_presentation_reset_case(id: u32) -> Option<Vec<u8>> {
     game::player_projectiles::checks::presentation_reset::capture(id)
 }
+
+#[path = "verification/samus_palette_defined_cases.rs"]
+mod samus_defined_cases;
+#[path = "verification/samus_palette_defined_legacy.rs"]
+mod samus_defined_legacy;
+pub fn verify_samus_palette_defined_case(id: u32) -> Option<Vec<u8>> {
+    samus_defined_legacy::capture_case(id)
+}

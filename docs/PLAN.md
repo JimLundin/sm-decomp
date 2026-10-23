@@ -326,8 +326,24 @@ references; measure build/test time and resource growth before changing the loop
    root fmt/check/direct verifier and29oracle captures; production unchanged.
    Cost323verification/registrationRust lines; unsafe+3 verification functions,
    one DLL export. All captures remain local next-visual-session/oracle-results-1.
-   Four isolated implementation lanes now active (shared owner/codec, palette,
-   animation, fullSamuspalette), plus independent composition/cases/mutation work.
+   Four isolated implementation lanes completed shared owner/codec, palette,
+   animation and fullSamuspalette; independent composition/cases/mutation drafts
+   are also complete.
+   Complete visual candidate is now assembled at candidate-1eb5bed9; all source
+   reviews pass, including old standalone assertion preservation. Review caught
+   and fixed missing sound3/max9 and negative flags injected after charge. The
+   33case oracle includes four explicitly injected transitions; original29 outputs
+   remain byte-identical. All224 defined-Samus predecessor cases pass, excluding
+   the undefined selector2call. Final reference sourcecf34ec68 passes rootfmt/check,
+   direct release build and257byte comparisons (224defined+33oracle,18.98s).
+   Reference setup corrected a nonexistent getter and a compiled-out DLL export;
+   those failed attempts executed no cases. Verification modules/exports follow
+   the existing always-compiled convention; only production observer hooks usecfg.
+   CI now compiles the normal Cargo verifier host alongside the game to detect
+   that configuration mismatch. VerificationRust+331; gameplay unchanged.
+   Baseline38probe route passes28314frames/0failures/120follow-upframes,94.68s;
+   paletteDMA and96animation uploads acknowledged. Full candidate build, actual
+   comparisons and27mutation executions remain;11newfaults are source-reviewed.
    Broad palette aliases, legacy writers and reset/backend paths still prevent
    persistent whole-game ownership; do not claim persistence from composition.
    Production token/byte growth precludes a net source-reduction claim. Geometry

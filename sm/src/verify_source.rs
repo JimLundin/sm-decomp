@@ -2,6 +2,14 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/verification/samus_palette_defined_legacy.rs",
+        include_bytes!("verification/samus_palette_defined_legacy.rs"),
+    ),
+    (
+        "sm/src/verification/samus_palette_defined_cases.rs",
+        include_bytes!("verification/samus_palette_defined_cases.rs"),
+    ),
+    (
         "sm/src/verification/samus_palette_oracle.rs",
         include_bytes!("verification/samus_palette_oracle.rs"),
     ),

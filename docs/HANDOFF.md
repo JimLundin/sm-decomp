@@ -22,18 +22,35 @@ frozen after two independent reviews and root metadata compilation. Union:
 animation outputs all match prior integrated-1references on c30c16ba/source21a7453a;
 both guards pass,92.70s. Evidence reference-c30c16ba/results.json and frozenDLL.
 
-Oracle prerequisite is complete:29actual65816 selector2 captures match expected
+The original29actual65816 selector2 captures match expected
 D715carry, D717/D721branch and exactlytwo misc calls. Independent audit adds174
 phase/effect/footprint checks. No execution of the mismatched old Rust callback.
 Reusable capture source is adopted with this handoff: verification/
-samus_palette_oracle.rs, cfg-only cpu_infra registration, DLL export and source
+samus_palette_oracle.rs, cpu_infra registration, DLL export and source
 registration.323verificationRust lines, unsafe+3 verificationfunctions, export+1;
 production gameplay unchanged. Root fmt/check/direct build passes20.73s on
 8d7f67b461472e538a6cb16580db21d135309b9f2678d022d7c83e16e95b668a.
 All originalROM/code guards passed; no ROM bytes or captures are committed.
-Local oracle-c30c16ba is the exact checked snapshot; oracle-results-1 contains
-29captures/results/frozenDLL; capture_palette_oracle.py reruns the bounded cases.
+The latest oracle-results-2 extends the original29 with four explicit callback
+injections at D712; old29bytes match exactly. IDs29..32 produce carries0001,
+with exact phase/timer and conditional normal-copy observations. These injected
+transitions are not a claim of naturally reachable SNES states.
+All224 defined-Samus predecessor cases pass in samus-defined-reference-2 on
+source97e4b367. Build1 corrected a nonexistent getter; capture1 found a compiled-out
+DLL export, with no cases executed. Corrected modules/lib bridges/exports follow
+the existing always-compiled convention; only production observercalls aregated.
+CI now also builds the normal Cargo sm_verify example to catch configuration gaps.
+Final main sourcecf34ec681c8952d3f77f2b538b1cc160838577859aab0fac3ca500b32952e28a
+passes rootfmt/check/direct build19.59s and all257referencebyte comparisons
+(224defined+33oracle,18.98s) in main-reference-results-1. This reference increment
+adds331verificationRust lines; no production gameplay change. Unsafe2612,
+exports15,no_mangle79; all new declarations belong to verification.
+Local oracle-c30c16ba now holds the extended checked snapshot45f182a3;
+oracle-results-1 retains the original29captures/results/frozenDLL.
+capture_palette_oracle.py reruns the extended33 bounded cases.
 Build sessions75284/55933 and reference session85814 are terminal.
+Later build/capture sessions70583,64098,1542,64713,92290,48222,75845,91626
+are also terminal. No localheavy process is active.
 
 Upcoming typed comparison uses allRAM at each checkpoint, excluding only
 fixture CPUstack[1FEB,2000) and charge scratch[24,26) forIDs21..24. Require
@@ -41,13 +58,23 @@ candidate bytes in excluded regions to stay at their entry values, and report
 oracle values separately. No blanket frame normalizer. Soundlimit653, visorA72,
 chargephaseB62, carry/branch/two misc calls and ordered effects remain exact.
 
+Complete reviewed candidate is frozen at next-visual-session/candidate-1eb5bed9.
+Before its first build, overlay latest root oracle/CI/unchanged definedfixtures,
+preserving candidate lib/adapter/registry additions and main MapRando documents.
+Then compile and run actual comparisons/guards/33oracleprojections and hosted
+composition/27mutants. Source reviews pass, including two fixes (sound3/max9 and
+postcharge negativecarry), old standalone assertion preservation and exact pointer
+writer relocation. Relocation enables real schema reuse, not unsafe elimination.
+The final matching route uses38requiredprobes,28314frames,120aftermessage;
+baseline94.68s/0failures on8d7f67b4 is in main-baseline-38probes.log.
+
 Lead enemy_projectiles_implementation owns shared state/codec/runtime/callers.
 Its foreign_edges worker owns palette, setup_callbacks animation, pre_callbacks
 fullSamuspalette/sm90/sm91. Collision owns hostedSamus/oraclecases/Runtimeguards;
 torizo_implementation owns detachedcompositionRust/README; torizo_review owns
-both mutation runners, preserving existing7+9faults. Gameplay implementation is
-active in isolated replacement only. Root alone integrates/builds; review frozen
-chunks and preserve complete caller/deletion scope. Do not adopt partial wiring.
+both mutation runners, preserving existing7+9faults and adding11reviewed drafts.
+Gameplay implementation remains isolated and unadopted. Root alone integrates/
+builds; preserve complete caller/deletion scope. Do not adopt partial wiring.
 
 Complete next-enemy candidate is assembled and independently reviewed at
 Local/sm-decomp-experiments/20261023/room-session/next-enemy-session/
