@@ -8,7 +8,7 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-Validation branch verify/room-reference-20261023: twelve new reference cases
+Adopted through e216f0ef: twelve new reference cases
 1021..1032 pass, alongside seven unchanged adjacent cases. The two scoped
 callback hooks retain actual message/native algorithms and compile out of normal
 production. Normal-library metadata compilation passes; final release verifier,
@@ -24,12 +24,21 @@ The finite room_mutations.py runner builds fresh baseline and three copies of
 the actual scheduler on hosted Windows: repeated resumed pre-action, repeated
 delay decrement and early613 publication. Compilation must pass; each mutant
 must fail its named assertion and the matching carrier assertion, returning no
-observation. Baselines must match frozen full outputs. Hosted execution pending;
+observation. Hosted run40001171992 passes both frozen baselines and all three
+mutants, plus the full build, format and existing independent-core checks;
 these faults must be retargeted to actual typed code during replacement.
 Incremental cost:369 verification/registration Rust lines,12 verifier-only hook
 lines in game files (zero normal-build hook calls),181 Python lines and4 CI lines.
-Normal production algorithms are unchanged. The extra unsafe declaration is
-the verification wrapper around the existing native message call.
+Normal production algorithms are unchanged. The two extra unsafe declarations
+are verification entry points for the existing native message and drawing calls.
+
+Complete shared-state candidate: room-session/candidate-e216f0ef. First compile
+failed15 integration errors; candidate-build-1.log records exact diagnostics.
+Coordinator is fixing field paths/conversions/trait import/verification scopes.
+No behavior verification claimed. Before compilation, native source
+line endings were matched to installed archives only after normalized equality
+was proved. Composed host and all mutation runners are included. Candidate
+behavior, final source price and runtime cost remain unverified.
 
 Room contract v2 is frozen and four isolated production lanes are active under
 enemy_projectiles_implementation. Outputs: room-session/replacement; ownership

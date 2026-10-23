@@ -182,15 +182,20 @@ references; measure build/test time and resource growth before changing the loop
    mutations before adopting the next core. Case1020 is adopted verification:
    actual pre-action/message suspension preserves counter5507 and delay13 on
    completion; four adjacent cases retain exact outputs. No mechanism typed-core
-   implementation is adopted yet; its new mutation cases remain unexecuted.
-   Validation branch verify/room-reference-20261023 adds cases1021..1032 for
+   implementation is adopted yet.
+   Adopted through e216f0ef: cases1021..1032 for
    continuation timing, native provenance/rebinding, overlapping tile reads,
    full emission, transfer layouts and wide/live streams. Nineteen local cases
-   match frozen outputs; release verifier and formatting pass. Three actual
-   scheduler faults are wired for hosted mutation execution before adoption.
+   match frozen outputs; release verifier and formatting pass. Hosted run
+   40001171992 passes full build, both frozen baselines and all three actual
+   scheduler mutations (repeated pre, repeated delay, early continuation publish).
    Contract v2.1 preserves lazy graphics failures and live scratch/odd offsets;
-   actual aggregate codec/runtime source review passes, implementation integration
-   and execution remain pending.
+   actual aggregate codec/runtime source review passes. Complete candidate at
+   room-session/candidate-e216f0ef has ten superseded files retired and upgraded
+   composed checks. First compile found15 integration errors (field paths,
+   conversions, trait import and verification unsafe scopes); fixes are active.
+   Runtime comparisons,
+   candidate mutation execution and performance measurement remain pending.
 
 
    Room mechanisms are now adopted as one production responsibility: creation,

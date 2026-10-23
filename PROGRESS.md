@@ -1,9 +1,9 @@
 # Engine migration
 
-Green: adopted scope | Blue: locally checked draft | Orange: active | Grey: remaining | Red: failed
+Green: adopted scope | Blue: draft | Orange: active | Grey: remaining | Red: failed
 **Purple outline: changed since previous report.** Folder branches show containment; check arrows show prerequisites.
 
-[Adopted: 36470e60](https://github.com/JimLundin/sm-decomp/commit/36470e60e58bfdaad873d45f6d0067994b764e0f) / [CI + mutations: PASS](https://github.com/JimLundin/sm-decomp/actions/runs/39998215217)
+[Latest verification: e216f0ef](https://github.com/JimLundin/sm-decomp/commit/e216f0efb0a4d7c75a9dcb7b13124ed4981fc5b6) / [CI + 3 scheduler mutants: PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40001171992)
 
 ### Room mechanisms / next typed-core conversion
 
@@ -11,43 +11,45 @@ Green: adopted scope | Blue: locally checked draft | Orange: active | Grey: rema
 flowchart TB
     CONTRACT["Shared contract v2<br/>review + compile PASS"]:::checked
     subgraph shared["Shared ownership / lane A"]
-        S["session.rs"]:::active --> CODEC["Aggregate codec<br/>source review PASS"]:::checked
-        S --> PLAYER["player_projectiles/<br/>same shared inventory"]:::active
-        CODEC --> RT["session_runtime.rs"]:::active
-        RT --> HOST["host.rs / runtime.rs"]:::active
+        S["session.rs"]:::checked --> CODEC["Aggregate codec<br/>source review PASS"]:::checked
+        S --> PLAYER["player_projectiles/<br/>same shared inventory"]:::checked
+        CODEC --> RT["session_runtime.rs"]:::checked
+        RT --> HOST["host.rs / runtime.rs"]:::checked
     end
     subgraph creation["Creation / rules / lane B"]
-        CREATE["creation.rs"]:::active --> SETUP["setup.rs"]:::active
-        SETUP --> PRE["pre.rs"]:::active
-        SETUP --> RULES["rules/ / 22 modules"]:::active
+        CREATE["creation.rs"]:::checked --> SETUP["setup.rs"]:::checked
+        SETUP --> PRE["pre.rs"]:::checked
+        SETUP --> RULES["rules/ / 22 modules"]:::checked
     end
     subgraph execution["Messages / pickups / lane C"]
-        SCHED["scheduler.rs"]:::active --> CMD["commands.rs"]:::active
-        CMD --> PICKUP["Pickups / shared Inventory"]:::active
+        SCHED["scheduler.rs"]:::checked --> CMD["commands.rs"]:::checked
+        CMD --> PICKUP["Pickups / shared Inventory"]:::checked
     end
     subgraph drawing["Drawing / content / lane D"]
-        DRAW["presentation.rs"]:::active --> GRAPHICS["graphics.rs"]:::active
-        CONTENT["content.rs"]:::active --> DRAW
-        CONTENT --> CR["content_runtime.rs"]:::active
-        GRAPHICS --> GR["graphics_runtime.rs"]:::active
+        DRAW["presentation.rs"]:::checked --> GRAPHICS["graphics.rs"]:::checked
+        CONTENT["content.rs"]:::checked --> DRAW
+        CONTENT --> CR["content_runtime.rs"]:::checked
+        GRAPHICS --> GR["graphics_runtime.rs"]:::checked
     end
     CONTRACT --> S
     CONTRACT --> CREATE
     CONTRACT --> SCHED
     CONTRACT --> CONTENT
-    HOST --> CALLERS["Actual caller migration"]:::active
+    HOST --> CALLERS["Actual caller migration"]:::checked
     RULES --> CALLERS
     PICKUP --> CALLERS
     GR --> CALLERS
-    CALLERS --> DELETE["Retire Fields / Port routing"]:::pending
+    CALLERS --> DELETE["10 superseded files retired<br/>in candidate"]:::checked
     BASE["1,020 references captured"]:::checked --> COMPARE["Candidate comparisons"]:::pending
     RESUME["Case 1020: real message resume<br/>pre + timer preservation PASS"]:::done --> COMPARE
-    DELETE --> COMPARE
-    GAP["Cases 1021-1032<br/>local PASS"]:::checked --> COMPARE
-    SHAREDTEST["Pickup / refill / hold<br/>actual player consumers"]:::active --> COMPARE
+    DELETE --> BUILD["Integrated candidate compile<br/>15 errors / fixes active"]:::failed
+    BUILD --> COMPARE
+    GAP["Cases 1021-1032<br/>adopted / PASS"]:::done --> COMPARE
+    SHAREDTEST["Pickup / refill / hold<br/>actual player consumers"]:::checked --> COMPARE
     COMPARE --> MUT["Candidate mutation checks"]:::pending
     MUT --> MOVIE["Exercised movie probes"]:::pending
     MOVIE --> ADOPT["Typed core adopted"]:::pending
+    class S,CODEC,PLAYER,RT,HOST,CREATE,SETUP,PRE,RULES,SCHED,CMD,PICKUP,DRAW,GRAPHICS,CONTENT,CR,GR,CALLERS,DELETE,BUILD,GAP,SHAREDTEST changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -60,21 +62,21 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    C21["1021 / callback continuation"]:::checked
-    C22["1022 / loaded vs native"]:::checked
-    C23["1023 / native rebind"]:::checked
-    C24["1024 / overlapping tile reads"]:::checked
-    C25["1025 / custom draw A"]:::checked
-    C26["1026 / custom draw B"]:::checked
-    C27["1027 / item draw A"]:::checked
-    C28["1028 / item draw B"]:::checked
-    C29["1029 / wide ROM cursor"]:::checked
-    C30["1030 / four transfers"]:::checked
-    C31["1031 / vertical transfers"]:::checked
-    C32["1032 / live RAM stream"]:::checked
-    C20["1020 / resumed pre + timer"]:::done --> MP["Mutant: repeat pre<br/>hosted pending"]:::active
-    C20 --> MD["Mutant: repeat delay<br/>hosted pending"]:::active
-    C21 --> MC["Mutant: publish continuation early<br/>hosted pending"]:::active
+    C21["1021 / callback continuation"]:::done
+    C22["1022 / loaded vs native"]:::done
+    C23["1023 / native rebind"]:::done
+    C24["1024 / overlapping tile reads"]:::done
+    C25["1025 / custom draw A"]:::done
+    C26["1026 / custom draw B"]:::done
+    C27["1027 / item draw A"]:::done
+    C28["1028 / item draw B"]:::done
+    C29["1029 / wide ROM cursor"]:::done
+    C30["1030 / four transfers"]:::done
+    C31["1031 / vertical transfers"]:::done
+    C32["1032 / live RAM stream"]:::done
+    C20["1020 / resumed pre + timer"]:::done --> MP["Mutant: repeat pre<br/>KILLED / CI PASS"]:::done
+    C20 --> MD["Mutant: repeat delay<br/>KILLED / CI PASS"]:::done
+    C21 --> MC["Mutant: publish continuation early<br/>KILLED / CI PASS"]:::done
     class C21,C22,C23,C24,C25,C26,C27,C28,C29,C30,C31,C32,MP,MD,MC changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
