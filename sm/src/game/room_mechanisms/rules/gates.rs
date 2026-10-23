@@ -1,9 +1,8 @@
 //! Gate triggering, placement and shootblock selection.
 #![forbid(unsafe_code)]
-use super::super::{
-    fields::{ContentTable, Fields, Global, SoundChannel},
-    state::Column,
-};
+use super::super::access::*;
+use super::super::host::*;
+use super::terrain_setup as terrain;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Side {
@@ -29,24 +28,27 @@ pub enum Setup {
     Shootblock(Direction),
 }
 
-fn activate(c: &mut impl Fields, slot: usize, side: Side) -> u8 {
-    let block = neighbor(c.slot(Column::Block, slot), side);
+fn activate(c: &mut impl Host, slot: usize, side: Side) -> u8 {
+    let block = neighbor(mechanism!(c, slot, block), side);
     for found in (0..40).rev() {
-        if c.slot(Column::Block, found) == block {
-            if c.slot(Column::Counter, found) == 0 {
-                let value = c.slot(Column::Counter, found).wrapping_add(1);
-                c.set_slot(Column::Counter, found, value);
+        if mechanism!(c, found, block) == block {
+            if mechanism!(c, found, counter) == 0 {
+                let value = mechanism!(c, found, counter).wrapping_add(1);
+                mechanism!(c, found, counter = value);
             }
             break;
         }
     }
-    c.release(slot);
+    mechanism!(c, slot, header = 0);
     1
 }
 
-fn trigger(c: &mut impl Fields, slot: usize, side: Side, color: Color) -> u8 {
-    let projectile =
-        c.projectile_word((c.global(Global::ProjectileSelection) >> 1) as isize) & 0xfff;
+fn trigger(c: &mut impl Host, slot: usize, side: Side, color: Color) -> u8 {
+    let projectile = projectile_kind(
+        c,
+        (c.session().projectiles.selected >> 1) as isize,
+        ByteOrder::Native,
+    ) & 0xfff;
     let accepted = match color {
         Color::Green => projectile == 0x200,
         Color::Red => matches!(projectile, 0x100 | 0x200),
@@ -67,19 +69,19 @@ fn trigger(c: &mut impl Fields, slot: usize, side: Side, color: Color) -> u8 {
     if color != Color::Blue {
         c.sound(SoundChannel::Two, 6, 0x57);
     }
-    c.release(slot);
+    mechanism!(c, slot, header = 0);
     if side == Side::Left && matches!(color, Color::Yellow | Color::Blue) {
         return trigger(c, slot, Side::Right, color);
     }
     0
 }
 
-pub fn setup(c: &mut impl Fields, slot: usize, kind: Setup, accumulator: u16) -> u8 {
+pub fn setup(c: &mut impl Host, slot: usize, kind: Setup, accumulator: u16) -> u8 {
     match kind {
         Setup::Trigger(side, color) => return trigger(c, slot, side, color),
         Setup::Placement(direction, closed) => {
             if closed {
-                c.eproj(
+                c.enemy_projectile(
                     if direction == Direction::Down {
                         0xe659
                     } else {
@@ -92,24 +94,24 @@ pub fn setup(c: &mut impl Fields, slot: usize, kind: Setup, accumulator: u16) ->
                     },
                 );
             }
-            let mut row = c.slot(Column::Block, slot) >> 1;
+            let mut row = mechanism!(c, slot, block) >> 1;
             for _ in 0..5 {
-                let next = c.behavior_at(usize::from(row), 1);
-                c.set_behavior_at(usize::from(row), u16::from(next) << 8 | 0x10);
+                let next = behavior_byte(c, usize::from(row) + 1);
+                set_behavior_pair(c, usize::from(row), u16::from(next) << 8 | 0x10);
                 row = match direction {
-                    Direction::Down => row.wrapping_add(c.global(Global::RoomWidth)),
-                    Direction::Up => row.wrapping_sub(c.global(Global::RoomWidth)),
+                    Direction::Down => row.wrapping_add(c.session().room.width),
+                    Direction::Up => row.wrapping_sub(c.session().room.width),
                 };
             }
         }
         Setup::Shootblock(direction) => {
             let program = table(c, slot, direction, 0);
-            c.set_slot(Column::Program, slot, program);
+            mechanism!(c, slot, program = program);
             for side in [Side::Left, Side::Right] {
                 let value = table(c, slot, direction, if side == Side::Left { 16 } else { 32 });
                 if value != 0 {
-                    let block = neighbor(c.slot(Column::Block, slot), side);
-                    c.install(block, value);
+                    let block = neighbor(mechanism!(c, slot, block), side);
+                    terrain::install(c, block, value);
                 }
             }
         }
@@ -123,12 +125,12 @@ fn neighbor(block: u16, side: Side) -> u16 {
         Side::Right => block.wrapping_add(2),
     }
 }
-fn table(c: &impl Fields, slot: usize, direction: Direction, offset: usize) -> u16 {
-    c.content_word(
+fn table(c: &impl Host, slot: usize, direction: Direction, offset: usize) -> u16 {
+    c.table_word(
         ContentTable::Gate {
             up: direction == Direction::Up,
-            offset,
+            byte_offset: offset,
         },
-        (c.slot(Column::RoomArgument, slot) >> 1) as isize,
+        (mechanism!(c, slot, room_argument) >> 1) as isize,
     )
 }

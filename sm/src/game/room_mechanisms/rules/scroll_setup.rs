@@ -1,6 +1,8 @@
 //! Extension placement and scroll-mechanism activation.
 #![forbid(unsafe_code)]
-use super::super::{fields::Fields, state::Column};
+use super::super::access::*;
+use super::super::host::*;
+use super::terrain_setup as terrain;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Direction {
     Right,
@@ -24,11 +26,12 @@ pub enum Setup {
     Touch,
 }
 
-pub fn setup(c: &mut impl Fields, slot: usize, kind: Setup) -> u8 {
+pub fn setup(c: &mut impl Host, slot: usize, kind: Setup) -> u8 {
     match kind {
         Setup::Place(tile) => {
-            c.install(
-                c.slot(Column::Block, slot),
+            terrain::install(
+                c,
+                mechanism!(c, slot, block),
                 match tile {
                     Tile::Extension(Direction::Right) => 0x50ff,
                     Tile::Extension(Direction::Left) => 0x5001,
@@ -39,28 +42,45 @@ pub fn setup(c: &mut impl Fields, slot: usize, kind: Setup) -> u8 {
                 },
             );
             match tile {
-                Tile::Extension(_) => c.release(slot),
+                Tile::Extension(_) => mechanism!(c, slot, header = 0),
                 Tile::Scroll(_) => {
-                    c.set_slot(Column::Work0, slot, 0);
-                    c.advance(slot, 4);
+                    mechanism!(c, slot, work0 = 0);
+                    {
+                        let index = slot;
+                        let value = mechanism!(c, index, program).wrapping_add(4);
+                        mechanism!(c, index, program = value);
+                    };
                 }
             }
         }
         Setup::Touch => {
-            let block = c.slot(Column::Block, slot);
-            c.set_slot(Column::Block, slot, 0);
+            let block = mechanism!(c, slot, block);
+            mechanism!(c, slot, block = 0);
             let Some(found) = (0..40)
                 .rev()
-                .find(|&found| c.slot(Column::Block, found) == block)
+                .find(|&found| mechanism!(c, found, block) == block)
             else {
                 // Preserve the missing-scroll-target nonreturn after clearing the trigger block.
-                c.missing_scroll()
+                {
+                    c.diagnostic(Diagnostic::MissingScroll);
+                    loop {
+                        core::hint::spin_loop();
+                    }
+                }
             };
-            if c.slot(Column::Work0, found) & 0x8000 == 0 {
-                c.set_slot(Column::Work0, found, 0x8000);
-                c.advance(found, 1);
-                c.advance(found, 1);
-                c.set_slot(Column::InstructionDelay, found, 1);
+            if mechanism!(c, found, work0) & 0x8000 == 0 {
+                mechanism!(c, found, work0 = 0x8000);
+                {
+                    let index = found;
+                    let value = mechanism!(c, index, program).wrapping_add(1);
+                    mechanism!(c, index, program = value);
+                };
+                {
+                    let index = found;
+                    let value = mechanism!(c, index, program).wrapping_add(1);
+                    mechanism!(c, index, program = value);
+                };
+                mechanism!(c, found, instruction_delay = 1);
             }
         }
     }

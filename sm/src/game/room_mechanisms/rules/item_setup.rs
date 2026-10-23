@@ -1,9 +1,8 @@
 //! Item placement and collision-trigger association.
 #![forbid(unsafe_code)]
-use super::super::{
-    fields::{Fields, Global},
-    state::Column,
-};
+use super::super::access::*;
+use super::super::host::*;
+use super::terrain_setup as terrain;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Container {
     Visible,
@@ -22,23 +21,24 @@ pub enum Setup {
     Trigger,
 }
 
-pub fn setup(c: &mut impl Fields, slot: usize, kind: Setup) -> u8 {
+pub fn setup(c: &mut impl Host, slot: usize, kind: Setup) -> u8 {
     match kind {
         Setup::Initialize(container, graphic) => {
             if let Some(graphic) = graphic {
-                c.set_slot(
-                    Column::Work1,
+                mechanism!(
+                    c,
                     slot,
-                    match graphic {
+                    work1 = match graphic {
                         Graphic::EnergyTank => 8,
                         Graphic::MissileTank => 10,
                         Graphic::SuperMissileTank => 12,
                         Graphic::PowerBombTank => 14,
-                    },
+                    }
                 );
             }
-            c.install(
-                c.slot(Column::Block, slot),
+            terrain::install(
+                c,
+                mechanism!(c, slot, block),
                 if container == Container::Visible {
                     0x45
                 } else {
@@ -46,27 +46,31 @@ pub fn setup(c: &mut impl Fields, slot: usize, kind: Setup) -> u8 {
                 },
             );
             if container == Container::ShotBlock {
-                c.set_slot(
-                    Column::Work0,
+                mechanism!(
+                    c,
                     slot,
-                    c.native_level(c.slot(Column::Block, slot)),
+                    work0 = terrain_word(
+                        c,
+                        usize::from((mechanism!(c, slot, block)) & !1),
+                        ByteOrder::Native
+                    )
                 );
             }
-            c.set_global(
-                Global::LoadedItems,
-                c.global(Global::LoadedItems).wrapping_add(1),
-            );
+            c.session_mut().room.loaded_items = c.session().room.loaded_items.wrapping_add(1);
         }
         Setup::Trigger => {
-            if c.global(Global::FrozenTime) != 0 {
-                c.release(slot);
+            if c.inputs().frozen != 0 {
+                mechanism!(c, slot, header = 0);
             } else {
-                let block = c.slot(Column::Block, slot);
-                c.set_slot(Column::Block, slot, 0);
+                let block = mechanism!(c, slot, block);
+                mechanism!(c, slot, block = 0);
                 let found = (0..40)
                     .rev()
-                    .find(|&found| c.slot(Column::Block, found) == block);
-                c.set_signed_slot(Column::Counter, found.map_or(-1, |slot| slot as isize), 255);
+                    .find(|&found| mechanism!(c, found, block) == block);
+                {
+                    let index = found.map_or(-1, |slot| slot as isize);
+                    mechanism!(c, index, counter = 255)
+                };
             }
         }
     }

@@ -1,9 +1,9 @@
 //! Station placement, access alignment and save-trigger activation.
 #![forbid(unsafe_code)]
-use super::super::{
-    fields::{Fields, Global},
-    state::Column,
-};
+use super::super::access::*;
+use super::super::creation;
+use super::super::host::*;
+use super::terrain_setup as terrain;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Service {
     Map,
@@ -35,12 +35,12 @@ pub enum Pose {
     StandingLeft,
 }
 
-fn associated<C: Fields>(c: &C, block: u16) -> Option<usize> {
+fn associated<C: Host>(c: &C, block: u16) -> Option<usize> {
     (0..40)
         .rev()
-        .find(|&slot| c.slot(Column::Block, slot) == block)
+        .find(|&slot| mechanism!(c, slot, block) == block)
 }
-fn access(c: &mut impl Fields, slot: usize, service: Service, side: Side) {
+fn access(c: &mut impl Host, slot: usize, service: Service, side: Side) {
     let (direction, pose, displacement) = match side {
         Side::Right => (0, Pose::FacingLeftWall, -2),
         Side::Left => (
@@ -49,62 +49,73 @@ fn access(c: &mut impl Fields, slot: usize, service: Service, side: Side) {
             if service == Service::Map { 4 } else { 2 },
         ),
     };
-    if c.global(Global::CollisionDirection) & 15 == direction
+    if c.session().player.contact.collision_direction & 15 == direction
         && pose_matches(c, pose)
-        && c.global_byte(Global::Facing, 0) & if side == Side::Right { 4 } else { 8 } != 0
+        && (c.session().player.movement_and_facing.to_le_bytes()[0])
+            & if side == Side::Right { 4 } else { 8 }
+            != 0
         && (service == Service::Map || needs_service(c, service))
     {
-        let block = (c.slot(Column::Block, slot)).wrapping_add((displacement) as u16);
+        let block = (mechanism!(c, slot, block)).wrapping_add((displacement) as u16);
         if let Some(found) = associated(c, block) {
-            c.coordinates(usize::from(c.global(Global::Selected) >> 1));
-            if (16u16.wrapping_mul(c.global(Global::BlockY)) | 0xb) == c.global(Global::PlayerY) {
-                c.set_slot(Column::Program, found, c.slot(Column::ReturnProgram, found));
-                c.set_slot(Column::InstructionDelay, found, 1);
+            let selected = usize::from(c.session().mechanisms.selected >> 1);
+            creation::coordinates(c, selected);
+            if (16u16.wrapping_mul(c.session().mechanisms.block_y) | 0xb) == c.session().player.y {
+                mechanism!(c, found, program = mechanism!(c, found, return_program));
+                mechanism!(c, found, instruction_delay = 1);
                 c.player_control(6);
                 return;
             }
         }
     }
-    c.release(slot);
+    mechanism!(c, slot, header = 0);
 }
-fn place(c: &mut impl Fields, slot: usize, service: Service) {
-    solidify(c.slot(Column::Block, slot), c);
+fn place(c: &mut impl Host, slot: usize, service: Service) {
+    solidify(mechanism!(c, slot, block), c);
     if service == Service::Map && c.map_used() {
-        c.set_slot(Column::Program, slot, 0xad76);
+        mechanism!(c, slot, program = 0xad76);
     } else {
         let displacement = if service == Service::Map { -4 } else { -2 };
         install(
-            (c.slot(Column::Block, slot)).wrapping_add((2) as u16),
+            (mechanism!(c, slot, block)).wrapping_add((2) as u16),
             StationBlock::Access(service, Side::Right),
             c,
         );
         install(
-            (c.slot(Column::Block, slot)).wrapping_add((displacement) as u16),
+            (mechanism!(c, slot, block)).wrapping_add((displacement) as u16),
             StationBlock::Access(service, Side::Left),
             c,
         );
     }
 }
-fn save_trigger(c: &mut impl Fields, slot: usize) {
-    if c.global(Global::PowerBombActive) == 0
+fn save_trigger(c: &mut impl Host, slot: usize) {
+    if c.inputs().power_bomb_active == 0
         && (pose_matches(c, Pose::StandingRight) || pose_matches(c, Pose::StandingLeft))
-        && c.global(Global::SaveLocked) == 0
-        && c.global(Global::CollisionDirection) & 15 == 3
+        && c.session().mechanisms.save_locked == 0
+        && c.session().player.contact.collision_direction & 15 == 3
     {
-        c.coordinates(slot);
-        if c.global(Global::PlayerX).wrapping_sub(8) >> 4 == c.global(Global::BlockX) {
-            let block = c.slot(Column::Block, slot);
-            c.set_slot(Column::Block, slot, 0);
-            c.release(slot);
+        creation::coordinates(c, slot);
+        if c.session().player.x.wrapping_sub(8) >> 4 == c.session().mechanisms.block_x {
+            let block = mechanism!(c, slot, block);
+            mechanism!(c, slot, block = 0);
+            mechanism!(c, slot, header = 0);
             if let Some(found) = associated(c, block) {
-                c.advance(found, 1);
-                c.advance(found, 1);
-                c.set_slot(Column::InstructionDelay, found, 1);
+                {
+                    let index = found;
+                    let value = mechanism!(c, index, program).wrapping_add(1);
+                    mechanism!(c, index, program = value);
+                };
+                {
+                    let index = found;
+                    let value = mechanism!(c, index, program).wrapping_add(1);
+                    mechanism!(c, index, program = value);
+                };
+                mechanism!(c, found, instruction_delay = 1);
             }
         }
     }
 }
-pub fn setup(c: &mut impl Fields, slot: usize, setup: Setup) -> u8 {
+pub fn setup(c: &mut impl Host, slot: usize, setup: Setup) -> u8 {
     match setup {
         Setup::Access(service, side) => {
             access(c, slot, service, side);
@@ -119,17 +130,18 @@ pub fn setup(c: &mut impl Fields, slot: usize, setup: Setup) -> u8 {
             1
         }
         Setup::Save => {
-            install(c.slot(Column::Block, slot), StationBlock::Save, c);
+            install(mechanism!(c, slot, block), StationBlock::Save, c);
             0
         }
     }
 }
 
-fn solidify(block: u16, c: &mut impl Fields) {
-    c.set_level(block, c.level(block) & 0xfff | 0x8000);
+fn solidify(block: u16, c: &mut impl Host) {
+    let level = terrain::level(c, block) & 0xfff | 0x8000;
+    terrain::set_level(c, block, level);
 }
-fn pose_matches(c: &impl Fields, pose: Pose) -> bool {
-    c.global(Global::Pose)
+fn pose_matches(c: &impl Host, pose: Pose) -> bool {
+    c.session().player.pose
         == match pose {
             Pose::FacingLeftWall => 0x8a,
             Pose::FacingRightWall => 0x89,
@@ -137,15 +149,21 @@ fn pose_matches(c: &impl Fields, pose: Pose) -> bool {
             Pose::StandingLeft => 2,
         }
 }
-fn needs_service(c: &impl Fields, service: Service) -> bool {
+fn needs_service(c: &impl Host, service: Service) -> bool {
     match service {
-        Service::Energy => c.global(Global::Health) != c.global(Global::MaxHealth),
-        Service::Missile => c.global(Global::Missiles) != c.global(Global::MaxMissiles),
+        Service::Energy => {
+            c.session().inventory.health.current != c.session().inventory.health.maximum
+        }
+        Service::Missile => {
+            c.session().inventory.ammunition[0].current
+                != c.session().inventory.ammunition[0].maximum
+        }
         Service::Map => unreachable!(),
     }
 }
-fn install(block: u16, tile: StationBlock, c: &mut impl Fields) {
-    c.install(
+fn install(block: u16, tile: StationBlock, c: &mut impl Host) {
+    terrain::install(
+        c,
         block,
         match tile {
             StationBlock::Access(Service::Map, Side::Right) => 0xb047,

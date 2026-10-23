@@ -26,3 +26,16 @@ pub(crate) mod projectile_trail_selection;
 pub(crate) mod projectile_weapon_definitions;
 #[path = "../../game/special_geometry.rs"]
 pub(crate) mod special_geometry;
+
+#[path = "../../game/external_inputs.rs"]
+pub(crate) mod external_inputs;
+#[path = "../../game/item_pickups.rs"]
+pub(crate) mod item_pickups;
+#[path = "../../game/session.rs"]
+pub(crate) mod session;
+
+#[path = "room.rs"]
+pub(crate) mod room_mechanisms;
+
+#[path = "../../game/constants.rs"]
+pub(crate) mod constants;

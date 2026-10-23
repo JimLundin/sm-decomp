@@ -10,16 +10,16 @@ use crate::rom::RomRecord;
 pub(super) struct Room<'a, H: Host>(pub(super) &'a mut H);
 impl<H: Host> SlopeInputs for Room<'_, H> {
     fn block(&self) -> u16 {
-        self.0.session().room_cursor
+        self.0.session().room.collision_cursor
     }
     fn selected(&self) -> u16 {
-        self.0.session().selected
+        self.0.session().projectiles.selected
     }
     fn width(&self) -> u16 {
-        self.0.inputs().room_width
+        self.0.session().room.width
     }
     fn bts(&self, block: u16) -> u8 {
-        self.0.room_bts(block)
+        super::access::room_bts(self.0, block)
     }
     fn position(&self, raw: u16, axis: Axis) -> u16 {
         let h = &*self.0;
@@ -105,12 +105,12 @@ impl<H: Host> room::State for Room<'_, H> {
 struct Traversal;
 impl<'a, H: Host> room::Context<Room<'a, H>> for Traversal {
     fn width(&self, g: &Room<'a, H>) -> u16 {
-        g.0.inputs().room_width
+        g.0.session().room.width
     }
     fn scrolls(&self, g: &Room<'a, H>, axis: Axis) -> u16 {
         match axis {
-            Axis::X => g.0.inputs().room_scroll_width,
-            Axis::Y => g.0.inputs().room_scroll_height,
+            Axis::X => g.0.session().room.scroll_width,
+            Axis::Y => g.0.session().room.scroll_height,
         }
     }
     fn react(
@@ -148,31 +148,34 @@ impl<H: Host> Definitions<()> for Room<'_, H> {
         ((), self.0.record((address >> 16) as u8, address as u16))
     }
     fn bts(&self) -> u8 {
-        self.0.room_bts(self.0.session().room_cursor)
+        super::access::room_bts(self.0, self.0.session().room.collision_cursor)
     }
     fn area(&self) -> u16 {
-        self.0.inputs().area
+        self.0.session().room.area
     }
 }
 impl<H: Host> reactions::Context<()> for Room<'_, H> {
     type Header = u16;
     fn byte_limit(&self) -> u16 {
-        self.0.inputs().room_bytes
+        self.0.session().room.size_bytes
     }
     fn cursor(&self) -> u16 {
-        self.0.session().room_cursor
+        self.0.session().room.collision_cursor
     }
     fn select(&mut self, cell: u16) {
-        self.0.session_mut().room_cursor = cell;
+        self.0.session_mut().room.collision_cursor = cell;
     }
     fn material(&self) -> Material {
-        reactions::material(self.0.room_level(self.0.session().room_cursor))
+        reactions::material(super::access::room_level(
+            self.0,
+            self.0.session().room.collision_cursor,
+        ))
     }
     fn extension(&self) -> i16 {
         i16::from(Definitions::bts(self) as i8)
     }
     fn width(&self) -> u16 {
-        self.0.inputs().room_width
+        self.0.session().room.width
     }
     fn slope(&self, _: &(), axis: Axis, scan: &mut impl Progress) -> bool {
         reactions::slope(axis, scan, self)

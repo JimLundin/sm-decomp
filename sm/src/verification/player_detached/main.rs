@@ -2,13 +2,40 @@
 #![forbid(unsafe_code)]
 #![allow(dead_code)]
 mod animation;
+mod composition_checks;
 mod game;
 mod palette;
 mod player;
 mod player_checks;
+mod room_host;
+use game::room_mechanisms as room;
 #[path = "../../rom.rs"]
 mod rom;
 mod types {
+    // These scalar aliases match types.rs:641; constants are actual source.
+    pub(crate) type Buttons = u32;
+    pub(crate) type Consts_60 = u32;
+    pub(crate) type Consts_82 = u32;
+    pub(crate) type Consts_84 = u32;
+    pub(crate) type Consts_86 = u32;
+    pub(crate) type Consts_87 = u32;
+    pub(crate) type Consts_8D = u32;
+    pub(crate) type Consts_8F = u32;
+    pub(crate) type Consts_90 = u32;
+    pub(crate) type Consts_91 = u32;
+    pub(crate) type Consts_9B = u32;
+    pub(crate) type Consts_A0 = u32;
+    pub(crate) type Consts_A4 = u32;
+    pub(crate) type Consts_A6 = u32;
+    pub(crate) type Consts_A9 = u32;
+    pub(crate) type Consts_B4 = u32;
+    pub(crate) type EnemyProps = u32;
+    pub(crate) type GameState = u32;
+    pub(crate) type LoadingGameState = u32;
+    pub(crate) type ProjectileType = u32;
+    pub(crate) type SamusMovementType = u32;
+    pub(crate) type SamusPose = u32;
+
     pub(crate) struct LongPtr {
         pub addr: u16,
         pub bank: u8,
@@ -39,8 +66,8 @@ impl Progression {
 }
 #[derive(Clone, Debug, PartialEq)]
 struct World {
-    player: game::player_projectiles::state::Session,
-    player_inputs: game::player_projectiles::state::Inputs,
+    player: game::session::Session,
+    player_inputs: game::external_inputs::ExternalInputs,
     animation: AnimatedTiles,
     palette: palette::state::Session,
     target_colors: [u16; 256],
@@ -62,6 +89,10 @@ impl Default for World {
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Event {
+    RoomMessage(u16, u16),
+    RoomVisual(u16),
+    RoomMusic(u16),
+    RoomControl(u16, u16, u16),
     PlayerSound(u8, u8, u16),
     Shot(u16, u16, u16),
     Beam(u16, u16, u16),
@@ -76,10 +107,10 @@ enum Event {
 struct Composed {
     world: World,
     image: RomImage,
-    terrain: Vec<u16>,
-    bts: Vec<u8>,
     events: Vec<Event>,
     fail_upload: bool,
+    late_message: Option<u8>,
+    message_yields: std::collections::VecDeque<u8>,
     on_upload: Option<fn(&mut World)>,
 }
 impl Composed {
@@ -87,10 +118,10 @@ impl Composed {
         Self {
             world: World::default(),
             image: RomImage::zeroed(0x100000),
-            terrain: vec![0; 1024],
-            bts: vec![0; 1024],
             events: Vec::new(),
             fail_upload: false,
+            late_message: None,
+            message_yields: Default::default(),
             on_upload: None,
         }
     }
@@ -259,5 +290,6 @@ impl colors::Host for Composed {
 mod checks;
 fn main() {
     checks::run();
+    composition_checks::run();
     println!("player/animation/palette composed core checks passed");
 }

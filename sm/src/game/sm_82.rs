@@ -26,7 +26,7 @@ use crate::game::enemy_projectiles::{ClearEprojs, EnableEprojs, EprojRunAll};
 use crate::game::message_boxes;
 use crate::game::palette_effects;
 use crate::game::progress_flags::CheckEventHappened;
-use crate::game::room_mechanisms::{clear, close_door, run, set_enabled};
+use crate::game::room_mechanisms::{clear, close_door, run_door as run, set_enabled};
 use crate::game::samus_animation::{Samus_DrawDuringDeathAnim, Samus_DrawWhenNotAnimatingOrDying};
 use crate::game::sm_8b::{
     GameState_1_OpeningCinematic_, GameState_37_CeresGoesBoomWithSamus_,

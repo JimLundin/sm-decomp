@@ -52,10 +52,10 @@ macro_rules! pursue {
     }};
 }
 pub(super) fn fire(h: &mut impl Host) -> u8 {
-    if h.session().controls.selected_weapon != 3 {
+    if h.session().projectiles.controls.selected_weapon != 3 {
         return 0;
     }
-    let selector = usize::from(h.inputs().equipped_beams & 15);
+    let selector = usize::from(h.session().inventory.beams.active & 15);
     let costs = [0i16, 1, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0];
     let Some(&cost) = costs.get(selector) else {
         panic!(
@@ -64,10 +64,10 @@ pub(super) fn fire(h: &mut impl Host) -> u8 {
             selector
         );
     };
-    let remaining = (h.session().player.power_bombs as i16)
+    let remaining = (h.session().inventory.ammunition[2].current as i16)
         .wrapping_sub(cost)
         .max(0) as u16;
-    h.session_mut().player.power_bombs = remaining;
+    h.session_mut().inventory.ammunition[2].current = remaining;
     let attack = match selector {
         1 => Some(Attack::Wave),
         2 => Some(Attack::Ice),
@@ -80,9 +80,9 @@ pub(super) fn fire(h: &mut impl Host) -> u8 {
     } else {
         0
     };
-    if h.session().player.power_bombs == 0 {
-        h.session_mut().controls.selected_weapon = 0;
-        h.session_mut().controls.automatic_weapon = 0;
+    if h.session().inventory.ammunition[2].current == 0 {
+        h.session_mut().projectiles.controls.selected_weapon = 0;
+        h.session_mut().projectiles.controls.automatic_weapon = 0;
     }
     result
 }
@@ -99,7 +99,7 @@ pub(super) fn create(h: &mut impl Host, attack: Attack) -> u8 {
         let initialization = match attack {
             Attack::Wave => {
                 shot!(h, slot, trail_time = 4; SliceLe);
-                let weapon = h.inputs().equipped_beams & 0x100f | 0x8010;
+                let weapon = h.session().inventory.beams.active & 0x100f | 0x8010;
                 shot!(h, slot, kind = weapon; SliceLe);
                 shot!(h, slot, direction = 0; SliceLe);
                 shot!(h, slot, motion = instruction(Kind::Wave));
@@ -124,7 +124,7 @@ pub(super) fn create(h: &mut impl Host, attack: Attack) -> u8 {
             }
             Attack::Ice => {
                 shot!(h, slot, trail_time = 4; SliceLe);
-                let weapon = h.inputs().equipped_beams & 0x100f | 0x8010;
+                let weapon = h.session().inventory.beams.active & 0x100f | 0x8010;
                 shot!(h, slot, kind = weapon; SliceLe);
                 shot!(h, slot, direction = 0; SliceLe);
                 shot!(h, slot, motion = instruction(Kind::Ice));
@@ -146,13 +146,13 @@ pub(super) fn create(h: &mut impl Host, attack: Attack) -> u8 {
                     shot!(h, slot, kind = 0x8024; SliceLe);
                     Initialization::Echo
                 } else {
-                    let weapon = h.inputs().equipped_beams & 0x100f | 0x8010;
+                    let weapon = h.session().inventory.beams.active & 0x100f | 0x8010;
                     shot!(h, slot, kind = weapon; SliceLe);
                     Initialization::SpecialAttack
                 }
             }
             Attack::Plasma => {
-                let weapon = h.inputs().equipped_beams & 0x100f | 0x8010;
+                let weapon = h.session().inventory.beams.active & 0x100f | 0x8010;
                 shot!(h, slot, kind = weapon; SliceLe);
                 shot!(h, slot, direction = 0; SliceLe);
                 shot!(h, slot, motion = instruction(Kind::Plasma));
@@ -164,22 +164,22 @@ pub(super) fn create(h: &mut impl Host, attack: Attack) -> u8 {
         };
         super::animation::initialize(h, slot, initialization);
     }
-    h.session_mut().count = 4;
+    h.session_mut().projectiles.count = 4;
     let index = usize::from(shot!(h, 0, kind) & 0x3f);
     let cooldown = u16::from(crate::game::beam_definitions::MANUAL_COOLDOWN[index]);
-    h.session_mut().controls.cooldown = cooldown;
+    h.session_mut().projectiles.controls.cooldown = cooldown;
     let step = match attack {
         Attack::Wave => 4,
         Attack::Spazer => 0,
         _ => {
-            if u16::from(h.inputs().movement_and_facing as u8) == 4 {
+            if u16::from(h.session().player.movement_and_facing as u8) == 4 {
                 0xfffc
             } else {
                 4
             }
         }
     };
-    h.session_mut().controls.orbit_step = step;
+    h.session_mut().projectiles.controls.orbit_step = step;
     h.sound(
         1,
         6,
@@ -244,7 +244,7 @@ pub(super) fn update(h: &mut impl Host, mut selected: u16, kind: Kind) {
     if previous == 1 {
         shot!(h, slot, trail_time = 4; SliceLe);
         super::presentation::emit(h, selected);
-        selected = h.session().selected;
+        selected = h.session().projectiles.selected;
     }
     resume(h, selected, kind, slot, previous_x)
 }
@@ -409,12 +409,12 @@ pub(super) fn finish_spazer(h: &mut impl Host, selected: u16) {
 }
 
 pub(super) fn hold(h: &mut impl Host) {
-    h.session_mut().controls.cooldown = 2;
-    h.session_mut().controls.charge = 0;
+    h.session_mut().projectiles.controls.cooldown = 2;
+    h.session_mut().projectiles.controls.charge = 0;
 }
 pub(super) fn orbit_step(h: &mut impl Host, slot: u16) {
-    let angle =
-        (h.session().controls.orbit_step as u8).wrapping_add(shot!(h, slot, variable) as u8);
+    let angle = (h.session().projectiles.controls.orbit_step as u8)
+        .wrapping_add(shot!(h, slot, variable) as u8);
     shot!(h, slot, variable = u16::from(angle); SliceLe);
 }
 fn outside(position: u16, camera: u16, lower: u16, upper: u16) -> bool {

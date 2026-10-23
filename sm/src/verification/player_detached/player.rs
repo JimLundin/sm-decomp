@@ -2,9 +2,9 @@
 use super::game::player_projectiles::{
     access::{ShotLane, Store},
     host::{Drawing, Host, PaletteEffect, PlayerStep},
-    state::{Inputs, Session},
 };
 use super::{Composed, Event, RomImage, RomRecord, colors};
+use crate::game::{external_inputs::ExternalInputs as Inputs, session::Session};
 
 impl Host for Composed {
     fn session(&self) -> &Session {
@@ -74,10 +74,10 @@ impl Host for Composed {
         panic!("unknown prepared projectile operation")
     }
     fn room_level(&self, cell: u16) -> u16 {
-        self.terrain[usize::from(cell)]
+        self.world.player.room.terrain.cells()[usize::from(cell)].level
     }
     fn room_bts(&self, cell: u16) -> u8 {
-        self.bts[usize::from(cell)]
+        self.world.player.room.terrain.cells()[usize::from(cell)].behavior
     }
     fn alias_shot_read(&self, _: ShotLane, _: u16) -> u16 {
         panic!("shot alias outside prepared scope")
@@ -90,21 +90,21 @@ impl Host for Composed {
             raw & 1 == 0 && raw < 20,
             "variable alias outside prepared scope"
         );
-        self.world.player.shots[usize::from(raw >> 1)]
+        self.world.player.projectiles.shots[usize::from(raw >> 1)]
             .variable
             .to_le_bytes()[usize::from(high)]
     }
     fn echo_x(&self, index: usize) -> u16 {
-        self.world.player.echoes.x[index]
+        self.world.player.projectiles.echoes.x[index]
     }
     fn set_echo_x(&mut self, index: usize, value: u16) {
-        self.world.player.echoes.x[index] = value;
+        self.world.player.projectiles.echoes.x[index] = value;
     }
     fn set_echo_y(&mut self, index: usize, value: u16) {
-        self.world.player.echoes.y[index] = value;
+        self.world.player.projectiles.echoes.y[index] = value;
     }
     fn set_echo_index_native(&mut self, raw: u16, value: u16) {
         assert_eq!(raw, 0, "echo overlap outside prepared scope");
-        self.world.player.echoes.index = u16::from_le_bytes(value.to_ne_bytes());
+        self.world.player.projectiles.echoes.index = u16::from_le_bytes(value.to_ne_bytes());
     }
 }

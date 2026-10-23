@@ -8,14 +8,14 @@ use crate::game::projectile_trail_playback::{
 use crate::rom::RomRecord;
 
 fn side(h: &impl Host, pair: usize, half: Half) -> &Trail {
-    let pair = &h.session().trails[pair];
+    let pair = &h.session().projectiles.trails[pair];
     match half {
         Half::Left => &pair.left,
         Half::Right => &pair.right,
     }
 }
 fn side_mut(h: &mut impl Host, pair: usize, half: Half) -> &mut Trail {
-    let pair = &mut h.session_mut().trails[pair];
+    let pair = &mut h.session_mut().projectiles.trails[pair];
     match half {
         Half::Left => &mut pair.left,
         Half::Right => &mut pair.right,
@@ -87,7 +87,7 @@ impl<'a, H: Host> emission::Context<&'a mut H> for Trails {
         (h, cursor)
     }
     fn selected_projectile(&self, h: &&'a mut H) -> u16 {
-        h.session().selected
+        h.session().projectiles.selected
     }
     fn marker(&mut self, h: &'a mut H, slot: u16) -> (&'a mut H, u16) {
         let marker = super::animation::trail_frame(h, slot);
@@ -251,7 +251,7 @@ pub fn draw_explosions(h: &mut impl Host) {
 fn present(h: &mut impl Host, explosions: bool) {
     let mut index = if explosions { 18 } else { 8 };
     let (mut x, mut y) = (0, 0);
-    h.session_mut().selected = index;
+    h.session_mut().projectiles.selected = index;
     loop {
         if shot!(h, index, cursor) != 0 {
             let kind = shot!(h, index, kind);
@@ -297,12 +297,12 @@ fn present(h: &mut impl Host, explosions: bool) {
                         });
                         h.draw(Drawing::Projectile { slot: index, x, y });
                     }
-                    index = h.session().selected;
+                    index = h.session().projectiles.selected;
                 }
             }
         }
         index = index.wrapping_sub(2);
-        h.session_mut().selected = index;
+        h.session_mut().projectiles.selected = index;
         if index & 0x8000 != 0 {
             return;
         }

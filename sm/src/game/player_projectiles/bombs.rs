@@ -9,12 +9,12 @@ pub enum Kind {
 }
 pub(super) const SPREAD_FRACTIONS: [u16; 5] = [0, 0, 0x8000, 0, 0];
 pub(super) fn advance_fuse(h: &mut impl Host, power: bool) {
-    let selected = h.session().selected;
-    let raw = h.session().selected;
+    let selected = h.session().projectiles.selected;
+    let raw = h.session().projectiles.selected;
     let remaining = shot_native!(h, raw, variable);
     if remaining == 0 {
-        if power && h.session().power_bomb.flag == 0 {
-            let live = h.session().selected;
+        if power && h.session().projectiles.power_bomb.flag == 0 {
+            let live = h.session().projectiles.selected;
             motion::clear(h, live);
         }
         return;
@@ -26,8 +26,8 @@ pub(super) fn advance_fuse(h: &mut impl Host, power: bool) {
         shot!(h, raw, cursor = old.wrapping_add(28));
     } else if remaining == 0 {
         if power {
-            h.session_mut().power_bomb.x = shot!(h, raw, x);
-            h.session_mut().power_bomb.y = shot!(h, raw, y);
+            h.session_mut().projectiles.power_bomb.x = shot!(h, raw, x);
+            h.session_mut().projectiles.power_bomb.y = shot!(h, raw, y);
             h.enable_hdma();
             h.spawn_power_bomb();
             shot!(h,selected,variable = 0xffff; SliceNative);
@@ -75,8 +75,8 @@ pub(super) fn bomb_update(h: &mut impl Host, raw: u16, kind: Kind) {
         return;
     }
     if shot_native!(h, raw, variable) != 0 {
-        let gravity = (u32::from(h.inputs().y_acceleration) << 16)
-            | u32::from(h.inputs().y_fractional_acceleration);
+        let gravity = (u32::from(h.session().player.contact.y_acceleration.whole) << 16)
+            | u32::from(h.session().player.contact.y_acceleration.fraction);
         // The low speed lane is read before the high lane, then published first.
         let low = u32::from(shot_native!(h, raw, trail_time));
         let high = u32::from(shot_native!(h, raw, y_speed));

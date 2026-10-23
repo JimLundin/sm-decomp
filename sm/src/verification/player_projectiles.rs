@@ -338,7 +338,7 @@ fn physical_words() -> Vec<usize> {
     a
 }
 // Read every owned value directly, so an accidentally external lane cannot pass.
-fn typed_image(state: &state::Session, bytes: &[u8]) {
+fn typed_image(state: &crate::game::session::Session, bytes: &[u8]) {
     let expect = |at: usize, v: u16| {
         assert_eq!(
             v,
@@ -346,7 +346,7 @@ fn typed_image(state: &state::Session, bytes: &[u8]) {
             "typed word {at:x}"
         )
     };
-    for (i, s) in state.shots.iter().enumerate() {
+    for (i, s) in state.projectiles.shots.iter().enumerate() {
         for (column, value) in [
             s.x,
             s.y,
@@ -373,7 +373,7 @@ fn typed_image(state: &state::Session, bytes: &[u8]) {
             expect(0xb64 + 20 * column + 2 * i, value);
         }
     }
-    for (i, p) in state.trails.iter().enumerate() {
+    for (i, p) in state.projectiles.trails.iter().enumerate() {
         for (side, s) in [&p.left, &p.right].into_iter().enumerate() {
             for (column, value) in [s.remaining, s.cursor, s.tile, s.x, s.y]
                 .into_iter()
@@ -383,15 +383,15 @@ fn typed_image(state: &state::Session, bytes: &[u8]) {
             }
         }
     }
-    for (i, &v) in state.launch.displacements.iter().enumerate() {
+    for (i, &v) in state.projectiles.launch.displacements.iter().enumerate() {
         expect(0xdaa + 4 * i, ((v as u32) >> 16) as u16);
         expect(0xdac + 4 * i, v as u16);
     }
-    let c = &state.controls;
+    let c = &state.projectiles.controls;
     for (address, value) in [
-        (0xcce, state.count),
-        (0xcd2, state.bomb_count),
-        (0xdde, state.selected),
+        (0xcce, state.projectiles.count),
+        (0xcd2, state.projectiles.bomb_count),
+        (0xdde, state.projectiles.selected),
         (0xccc, c.cooldown),
         (0xcd4, c.spread_charge),
         (0xb60, c.orbit_step),
@@ -457,14 +457,14 @@ fn lane_projection() {
         expected[address..address + 2].copy_from_slice(&0x1234u16.to_le_bytes());
     }
     assert_eq!(
-        (owner.session().launch.displacements[0] as u32) >> 16,
+        (owner.session().projectiles.launch.displacements[0] as u32) >> 16,
         0x1234
     );
-    assert_eq!(owner.session().selected, 0x1234);
-    assert_eq!(owner.session().trails[0].left.remaining, 0x1234);
+    assert_eq!(owner.session().projectiles.selected, 0x1234);
+    assert_eq!(owner.session().projectiles.trails[0].left.remaining, 0x1234);
     // The old negative-array verification case addresses the same physical word.
     owner.store(0xb62, 0x3456, Store::PrefixLe);
-    assert_eq!(owner.session().controls.charge_palette, 0x3456);
+    assert_eq!(owner.session().projectiles.controls.charge_palette, 0x3456);
     expected[0xb62..0xb64].copy_from_slice(&0x3456u16.to_le_bytes());
     drop(owner);
     assert_eq!(g.g_ram.as_slice(), expected);
@@ -489,12 +489,12 @@ fn publication() {
         }
     );
     assert_eq!(order.get(), 2);
-    assert_eq!(owner.session().shots[0].x, 0x2468);
+    assert_eq!(owner.session().projectiles.shots[0].x, 0x2468);
     drop(owner);
     let end = g.g_ram.len() - 1;
     let failed = catch_unwind(AssertUnwindSafe(|| {
         let mut owner = Runtime::new(&mut g);
-        owner.session_mut().shots[0].x = 0x1234;
+        owner.session_mut().projectiles.shots[0].x = 0x1234;
         owner.store(end, 0xaabb, Store::PrefixLe);
     }));
     assert!(failed.is_err());
@@ -507,7 +507,7 @@ fn publication() {
     assert_eq!(g.g_ram[end], 0xbb);
     put(&mut g, 0x1c37, 0x4321);
     let mut owner = Runtime::new(&mut g);
-    owner.session_mut().selected = 19;
+    owner.session_mut().projectiles.selected = 19;
     let result = owner.foreign(|g| {
         assert_eq!(&g.g_ram[0xdde..0xde0], &[19, 0]);
         crate::game::room_mechanisms::clear(g);
@@ -518,8 +518,8 @@ fn publication() {
         17
     });
     assert_eq!(result, 17);
-    assert_eq!(owner.session().selected, 31);
-    assert_eq!(owner.session().shots[0].x, 47);
+    assert_eq!(owner.session().projectiles.selected, 31);
+    assert_eq!(owner.session().projectiles.shots[0].x, 47);
     drop(owner);
     assert_eq!(&g.g_ram[0x1c37..0x1c39], &[0, 0]);
     let failed = catch_unwind(AssertUnwindSafe(|| {
@@ -532,8 +532,8 @@ fn publication() {
     assert_eq!(&g.g_ram[0xdde..0xde0], &[55, 0]);
     let failed = catch_unwind(AssertUnwindSafe(|| {
         let mut owner = Runtime::new(&mut g);
-        owner.session_mut().selected = 73;
-        owner.session_mut().player.missiles = 11;
+        owner.session_mut().projectiles.selected = 73;
+        owner.session_mut().inventory.ammunition[0].current = 11;
         panic!("core unwind");
     }));
     assert!(failed.is_err());

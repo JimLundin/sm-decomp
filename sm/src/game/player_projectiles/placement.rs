@@ -9,31 +9,31 @@ pub(super) fn place(h: &mut impl Host, raw: u16) -> bool {
             .expect("ROM must be loaded")
             .read(0x8b629 + 8 * usize::from(pose) + offset)
     };
-    let mut pose = h.inputs().pose;
-    let pending = h.session().controls.pending_aim;
+    let mut pose = h.session().player.pose;
+    let pending = h.session().projectiles.controls.pending_aim;
     let direction = if pending != 0 {
-        h.session_mut().controls.pending_aim = 0;
+        h.session_mut().projectiles.controls.pending_aim = 0;
         pending as u8
     } else {
         let mut direction = pose_byte(pose, 3);
         if direction & 0xf0 != 0 {
             if direction == 0x10 {
-                direction = pose_byte(h.inputs().previous_pose, 3);
+                direction = pose_byte(h.session().player.previous_pose, 3);
             }
             if direction & 0xf0 != 0 {
-                h.session_mut().count = h.session().count.wrapping_sub(1);
+                h.session_mut().projectiles.count = h.session().projectiles.count.wrapping_sub(1);
                 return false;
             }
-            pose = h.inputs().pose;
+            pose = h.session().player.pose;
         }
         direction
     };
     shot!(h, raw, direction = u16::from(direction));
     let height = pose_byte(pose, 4);
     let direction = usize::from(shot!(h, raw, direction) & 15);
-    let (xs, ys) = if h.inputs().pose == 0x75
-        || h.inputs().pose == 0x76
-        || h.inputs().movement_and_facing >> 8 == 1
+    let (xs, ys) = if h.session().player.pose == 0x75
+        || h.session().player.pose == 0x76
+        || h.session().player.movement_and_facing >> 8 == 1
     {
         (&RUNNING_X, &RUNNING_Y)
     } else {

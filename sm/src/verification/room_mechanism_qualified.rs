@@ -1,8 +1,10 @@
 //! Independent checks for six former unaligned algorithms and two player wrappers.
 //! Native pose callees are deliberately not executed: their existing odd ROM loads
 //! remain a qualified interval requiring separate route coverage.
-use super::port::Execution;
+use super::{checks, content::Script};
 use crate::game::enemy_script::{EnemyScript, bank_base};
+use crate::game::session_runtime::Runtime;
+use crate::rom::RomRecord;
 use crate::{game_state::Game, rom::RomImage};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 fn put(bytes: &mut [u8], at: usize, value: u16) {
@@ -36,6 +38,53 @@ fn observe_station(game: &mut Game) {
     assert_eq!(&game.g_ram[0xaf6..0xaf8], &[0x30, 0x12]);
     game.g_ram[0x20] = 0xa5;
 }
+// These verification-only adapters preserve the old qualified mock interval.
+// They exercise maintained Script reads/advancement and aggregate publication,
+// but deliberately do not claim execution of Varia/Gravity/face-forward callees.
+fn captured(position: EnemyScript) -> Script<RomRecord> {
+    let EnemyScript::At { image, position } = position else {
+        panic!("qualified mock requires readable script");
+    };
+    let origin = (position as isize - bank_base(0x84)) as u16;
+    Script::new(
+        RomRecord {
+            image,
+            base: position,
+        },
+        origin,
+    )
+}
+fn returned(position: Script<RomRecord>) -> EnemyScript {
+    let (record, cursor) = position.into_parts();
+    EnemyScript::at(
+        record.image,
+        record
+            .base
+            .checked_add_signed(cursor)
+            .expect("qualified script position"),
+    )
+}
+fn qualified_call_function(
+    game: &mut Game,
+    position: EnemyScript,
+    call: fn(u32, &mut Game),
+) -> EnemyScript {
+    let mut runtime = Runtime::new(game);
+    let position = captured(position);
+    runtime.foreign(|game| call(position.load24(0), game));
+    returned(position.advance(3))
+}
+fn qualified_place_on_station(
+    game: &mut Game,
+    position: EnemyScript,
+    call: fn(&mut Game),
+) -> EnemyScript {
+    let mut runtime = Runtime::new(game);
+    let position = captured(position);
+    runtime.session_mut().player.x = runtime.session().player.x.wrapping_add(8) & 0xfff0;
+    runtime.foreign(call);
+    returned(position)
+}
 pub(super) fn run(game: &mut Game) -> bool {
     let saved_ram = game.g_ram.to_vec();
     let saved_rom = game.loaded_rom.clone();
@@ -48,7 +97,9 @@ pub(super) fn run(game: &mut Game) -> bool {
         rom(&image, 0x84be4d, &[0x34, 0x12]);
         let mut expected = game.g_ram.to_vec();
         put(&mut expected, 0x1cd7, u16::from_ne_bytes([0x34, 0x12]));
-        let returned = unsafe { Execution::new(game).command(0x84be3f, script(&image), 0) };
+        // SAFETY: prepare registered the complete synthetic ROM and initialized
+        // the RAM inputs required by this selected command fixture.
+        let returned = unsafe { checks::command(0x84be3f, script(&image), 0, game) };
         assert_eq!(returned.offset_from(bank_base(0x84)), 0x9000);
         assert_eq!(&game.g_ram[..], &expected[..]);
         // Both identities retain the command slot for terrain, but use Selected
@@ -77,7 +128,9 @@ pub(super) fn run(game: &mut Game) -> bool {
                 ] {
                     put(&mut expected, at, value);
                 }
-                let returned = unsafe { Execution::new(game).command(opcode, script(&image), 0) };
+                // SAFETY: prepare registered the complete synthetic ROM and initialized
+                // the RAM inputs required by this selected command fixture.
+                let returned = unsafe { checks::command(opcode, script(&image), 0, game) };
                 assert!(matches!(returned, EnemyScript::Stop));
                 assert_eq!(&game.g_ram[..], &expected[..]);
             }
@@ -103,7 +156,9 @@ pub(super) fn run(game: &mut Game) -> bool {
             expected[0x10003 + block] = high;
             expected[0x16402 + block / 2] = bts;
         }
-        let returned = unsafe { Execution::new(game).command(0x84dbb8, script(&image), 2) };
+        // SAFETY: prepare registered the complete synthetic ROM and initialized
+        // the RAM inputs required by this selected command fixture.
+        let returned = unsafe { checks::command(0x84dbb8, script(&image), 2, game) };
         assert_eq!(returned.offset_from(bank_base(0x84)), 0x9000);
         assert_eq!(&game.g_ram[..], &expected[..]);
         // Both frame tables, both adjacent cells, and Selected != command slot.
@@ -139,20 +194,21 @@ pub(super) fn run(game: &mut Game) -> bool {
                     ] {
                         put(&mut expected, at, value);
                     }
-                    let returned =
-                        unsafe { Execution::new(game).command(opcode, script(&image), 0) };
+                    // SAFETY: prepare registered the complete synthetic ROM and initialized
+                    // the RAM inputs required by this selected command fixture.
+                    let returned = unsafe { checks::command(opcode, script(&image), 0, game) };
                     assert!(matches!(returned, EnemyScript::Stop));
                     assert_eq!(&game.g_ram[..], &expected[..]);
                 }
             }
         }
-        // Exercise production wrapper helpers with a recording boundary. Varia and
+        // Exercise content extraction with a verification-only recording boundary. Varia and
         // Gravity identity extraction includes and masks the adjacent fourth byte.
         for identity in [0x91d4e4u32, 0x91d5ba] {
             prepare(game, &image);
             let bytes = (identity | 0xa5000000).to_ne_bytes();
             rom(&image, 0x849000, &bytes);
-            let returned = Execution::new(game).call_function(script(&image), record_call);
+            let returned = qualified_call_function(game, script(&image), record_call);
             assert_eq!(&game.g_ram[0x20..0x24], &identity.to_le_bytes());
             assert_eq!(returned.offset_from(bank_base(0x84)), 0x9003);
         }
@@ -160,13 +216,13 @@ pub(super) fn run(game: &mut Game) -> bool {
         prepare(game, &image);
         let short = RomImage::zeroed(3);
         let failed = catch_unwind(AssertUnwindSafe(|| {
-            Execution::new(game).call_function(EnemyScript::at(short, 0), record_call);
+            qualified_call_function(game, EnemyScript::at(short, 0), record_call);
         }));
         assert!(failed.is_err());
         assert_eq!(&game.g_ram[0x20..0x24], &[0, 0, 0, 0]);
         prepare(game, &image);
         put(&mut game.g_ram, 0xaf6, 0x1229);
-        let returned = Execution::new(game).place_on_station(script(&image), observe_station);
+        let returned = qualified_place_on_station(game, script(&image), observe_station);
         assert_eq!(returned.offset_from(bank_base(0x84)), 0x9000);
         assert_eq!(game.g_ram[0x20], 0xa5);
     }));

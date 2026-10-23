@@ -12,37 +12,68 @@ import tempfile
 
 SCHEDULER = "sm/src/game/room_mechanisms/scheduler.rs"
 COMMANDS = "sm/src/game/room_mechanisms/commands.rs"
-FLAG_QUERY = "                let base = if ea == 8685640 { 0xd830 } else { 0xd870 };"
-DISPLAY_EDGE = "                        let yielded = self.foreign(|g| unsafe {"
+RUNTIME = "sm/src/game/room_mechanisms/runtime.rs"
+ENTRY = '    h.probe("coroutine.plm");'
+DISPLAY_EDGE = "                let queued = h.session().messages.queued;"
+RESUMED_ENTRY = "    let mutation_resumed = matches!(pass, Pass::DisplayMessage);\n" + ENTRY
+# Inject only after Runtime published/dropped the owner, before the display
+# observation callback. No mutable RAM surface is introduced into gameplay.
+RUNTIME_DISPLAY_EDGE = """    fn display_message(&mut self, request: u16) -> u8 {
+        self.foreign(|game| unsafe {
+            #[cfg(sm_verify_dll)]
+            {
+                crate::game::room_mechanism_checks::observe_message_display(request, game)
+"""
+RUNTIME_EARLY_PASS = """    fn display_message(&mut self, request: u16) -> u8 {
+        self.foreign(|game| unsafe {
+            game.g_ram[0x613] = 1;
+            #[cfg(sm_verify_dll)]
+            {
+                crate::game::room_mechanism_checks::observe_message_display(request, game)
+"""
+# Each edit names its actual production file and must match exactly once.
+# The first two faults remember entry continuation, so fresh messages do not
+# accidentally exercise the resumed-pass mutation.
 MUTATIONS = (
     (
         "repeat_resumed_pre", 1020, "resumed pre-action changed counter",
-        """                        if resume != 0 {
-                            let selected = self.global(Global::Selected);
-                            let pre = self.port().read_native(
-                                0x1cd7 + usize::from(selected >> 1) * 2,
-                            );
-                            self.pre(u32::from(pre) | 0x840000, selected);
-                        }
-""",
+        (
+            (SCHEDULER, ENTRY, RESUMED_ENTRY),
+            (SCHEDULER, DISPLAY_EDGE, """                if mutation_resumed {
+                    let selected = h.session().mechanisms.selected;
+                    let identity = u32::from(mechanism!(h, (selected >> 1) as isize, pre_action)) | 0x840000;
+                    pre::run(h, identity, selected);
+                }
+""" + DISPLAY_EDGE),
+        ),
     ),
     (
         "repeat_resumed_delay", 1020, "resumed scheduler changed delay",
-        """                        if resume != 0 {
-                            let slot = usize::from(self.global(Global::Selected) >> 1);
-                            let remaining = self.slot(Column::InstructionDelay, slot).wrapping_sub(1);
-                            self.set_slot(Column::InstructionDelay, slot, remaining);
-                        }
-""",
+        (
+            (SCHEDULER, ENTRY, RESUMED_ENTRY),
+            (SCHEDULER, DISPLAY_EDGE, """                if mutation_resumed {
+                    let slot = (h.session().mechanisms.selected >> 1) as isize;
+                    let remaining = mechanism!(h, slot, instruction_delay).wrapping_sub(1);
+                    mechanism!(h, slot, instruction_delay = remaining);
+                }
+""" + DISPLAY_EDGE),
+        ),
     ),
     (
         "publish_pass_before_display", 1021, "local Pass leaked into callback publication",
-        """                        self.port_mut().set_byte(0x613, 1);
-""",
+        (
+            (RUNTIME, RUNTIME_DISPLAY_EDGE, RUNTIME_EARLY_PASS),
+        ),
     ),
     (
         "query_wrong_flag_map", 1033, "persistent query selected wrong flag map",
-        "                let base = if ea == 8685640 { 0xd870 } else { 0xd870 };",
+        (
+            (COMMANDS,
+             """            let found = if ea == 8685640 {
+                h.room_object_used(argument)""",
+             """            let found = if ea == 8685640 {
+                h.item_collected(argument)"""),
+        ),
     ),
 )
 # Synthetic observations frozen before faults were introduced. They contain no
@@ -99,15 +130,14 @@ def build_and_capture(root, work, paths, name, mutation=None):
     copied = work / name
     copy_tracked(root, copied, paths)
     if mutation is not None:
-        _, _, _, fault = mutation
-        flag_query = name == "query_wrong_flag_map"
-        target = copied / (COMMANDS if flag_query else SCHEDULER)
-        anchor = FLAG_QUERY if flag_query else DISPLAY_EDGE
-        replacement = fault if flag_query else fault + DISPLAY_EDGE
-        original = target.read_text(encoding="utf-8")
-        if original.count(anchor) != 1:
-            raise RuntimeError(f"{name}: production mutation anchor must occur exactly once")
-        target.write_text(original.replace(anchor, replacement, 1), encoding="utf-8")
+        for source_path, anchor, replacement in mutation[3]:
+            target = copied / source_path
+            original = target.read_text(encoding="utf-8")
+            if original.count(anchor) != 1:
+                raise RuntimeError(
+                    f"{name}: {source_path} mutation anchor must occur exactly once"
+                )
+            target.write_text(original.replace(anchor, replacement, 1), encoding="utf-8")
 
     # Inherit the CI native archive/SDK/linker environment unchanged. Reuse the
     # maintained direct build and its embedded-source/native-library checks.
@@ -176,7 +206,7 @@ def main():
     if tracked.returncode != 0:
         raise RuntimeError(f"cannot enumerate tracked source\n{tracked.stderr}")
     paths = tracked.stdout.rstrip("\0").split("\0")
-    required = {SCHEDULER, COMMANDS, "tools/verify_dll.py", "sm/src/verification/room_mechanism_callback_edges.rs"}
+    required = {SCHEDULER, COMMANDS, RUNTIME, "tools/verify_dll.py", "sm/src/verification/room_mechanism_callback_edges.rs"}
     if not required.issubset(paths):
         raise RuntimeError("install this runner with the adopted room verification carrier")
     with tempfile.TemporaryDirectory(prefix="room-scheduler-mutations-") as directory:

@@ -1,27 +1,25 @@
 //! Bomb Torizo statue release and the actor waiting for its removal.
 #![forbid(unsafe_code)]
-use super::super::{
-    fields::{Fields, Global},
-    state::Column,
-};
+use super::super::access::*;
+use super::super::host::*;
 
-pub fn setup(c: &mut impl Fields, slot: usize) -> u8 {
+pub fn setup(c: &mut impl Host, slot: usize) -> u8 {
     if c.boss(4) != 0 {
-        c.release(slot);
+        mechanism!(c, slot, header = 0);
     }
     0
 }
-pub fn poll(c: &mut impl Fields, slot: usize) {
-    if c.global(Global::CollectedItems) & 0x1000 != 0 {
-        c.set_slot(Column::InstructionDelay, slot, 1);
-        let instruction = c.slot(Column::Program, slot).wrapping_add(2);
-        c.set_slot(Column::Program, slot, instruction);
-        c.set_slot(Column::PreAction, slot, 0xd356);
+pub fn poll(c: &mut impl Host, slot: usize) {
+    if c.session().inventory.equipment.owned & 0x1000 != 0 {
+        mechanism!(c, slot, instruction_delay = 1);
+        let instruction = mechanism!(c, slot, program).wrapping_add(2);
+        mechanism!(c, slot, program = instruction);
+        mechanism!(c, slot, pre_action = 0xd356);
     }
 }
 
-pub fn present(c: &impl Fields) -> bool {
+pub fn present(c: &impl Host) -> bool {
     (0..40)
         .rev()
-        .any(|slot| c.slot(Column::Header, slot) == 0xd6ea)
+        .any(|slot| mechanism!(c, slot, header) == 0xd6ea)
 }

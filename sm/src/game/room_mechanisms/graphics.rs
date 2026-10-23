@@ -1,57 +1,94 @@
-//! Item graphics installation and packed VRAM transfer records.
+//! Item graphics and reveal algorithms over shared owned room state.
 #![forbid(unsafe_code)]
-use super::{fields::Fields, port::Execution, state::Column};
-use crate::game::enemy_script::{EnemyScript as Script, bank_base};
-impl Execution<'_> {
-    pub(super) fn load_graphics(&mut self, mut p: Script, k: u16) -> Script {
-        let gfx_index = self.port().read_le(0x1c2d);
-        let current_index = self.port().read_le(0x1c2d);
-        self.set_slot(Column::Work1, usize::from(k >> 1), current_index);
-        self.port_mut()
-            .write_slice_le(0x1c2d, gfx_index.wrapping_add(2) & 6);
-        let table_offset = usize::from(gfx_index >> 1) * 2;
-        let destination = self.foreign(|g| g.read_rom_word(0x8487cd, table_offset));
-        let tile_offset = usize::from(self.foreign(|g| g.read_rom_word(0x8487d5, table_offset)));
-        let mut tile_number = self.foreign(|g| g.read_rom_word(0x8487dd, table_offset));
-        let instruction = p.offset_from(bank_base(0x84)) as u16;
-        self.port_mut()
-            .write_slice_le(0x1c2f + usize::from(gfx_index >> 1) * 2, instruction);
-        let tail = self.port().read_le(0x330);
-        let entry = 0xd0 + usize::from(self.port().read_le(0x330));
-        self.port_mut().write_slice_le(entry, 256);
-        self.port_mut().write_slice_le(entry + 2, p.word(0));
-        self.port_mut().set_byte(entry + 4, 0x89);
-        self.port_mut().write_slice_le(entry + 5, destination);
-        self.port_mut().write_slice_le(0x330, tail.wrapping_add(7));
-        p = p.advance(2);
-        for tile in 0..8 {
-            let attributes = u16::from(p.byte(0)) << 10;
-            let value = tile_number.wrapping_add(attributes);
-            self.port_mut()
-                .write_slice_le(0xa000 + tile_offset + tile * 2, value);
-            tile_number = tile_number.wrapping_add(1);
-            p = p.advance(1);
-        }
-        p
+use super::{
+    content::Script,
+    host::{
+        ContentAddress, ContentTable, GraphicsTransferKind, Host, InstructionRecord, SlotMember,
+        StoreOrder, TilemapDestination,
+    },
+};
+
+pub fn load_graphics<H: Host>(
+    h: &mut H,
+    mut p: Script<H::Record>,
+    handle: u16,
+) -> Script<H::Record> {
+    let graphic = h.session().mechanisms.next_graphics;
+    let current = h.session().mechanisms.next_graphics;
+    let slot = usize::from(handle >> 1);
+    if let Some(item) = h.session_mut().mechanisms.slots.get_mut(slot) {
+        item.work1 = current;
+    } else {
+        h.set_mechanism_word(
+            SlotMember::Work1,
+            slot as isize,
+            current,
+            StoreOrder::SliceLittle,
+        );
     }
-    pub(super) fn copy_vram(&mut self, p: Script) -> Script {
-        let tail = self.port().read_le(0x330);
-        let entry = 0xd0 + usize::from(self.port().read_le(0x330));
-        self.port_mut().write_slice_le(entry, p.word(0));
-        self.port_mut().write_slice_le(entry + 2, p.word(2));
-        self.port_mut().set_byte(entry + 4, p.byte(4));
-        self.port_mut().write_slice_le(entry + 5, p.word(5));
-        self.port_mut().write_slice_le(0x330, tail.wrapping_add(7));
-        p.advance(7)
+    h.session_mut().mechanisms.next_graphics = graphic.wrapping_add(2) & 6;
+    let index = usize::from(graphic >> 1);
+    let destination = h.table_word(ContentTable::ItemGraphicDestination, index as isize);
+    let tile_offset = usize::from(h.table_word(ContentTable::ItemTileOffset, index as isize));
+    let mut tile_number = h.table_word(ContentTable::ItemTileNumber, index as isize);
+    let instruction = p.position();
+    if let Some(saved) = h.session_mut().mechanisms.saved_graphics.get_mut(index) {
+        *saved = instruction;
+    } else {
+        h.set_saved_graphics_word(index, instruction, StoreOrder::SliceLittle);
     }
-    pub(super) fn reload_graphics(&mut self) {
-        self.port_mut().write_slice_le(0x1c2d, 0);
-        for k in (0..8).step_by(2) {
-            if self.port().read_le(0x1c2f + k) != 0 {
-                let address = self.port().read_le(0x1c2f + k);
-                let record = self.record::<0x84>(address);
-                self.load_graphics(Script::at(record.image, record.base), k as u16);
-            }
+    h.queue_graphics_transfer(
+        &p,
+        GraphicsTransferKind::Item {
+            destination: TilemapDestination(destination),
+        },
+    );
+    p = p.advance(2);
+    for tile in 0..8 {
+        let attributes = u16::from(p.byte(0)) << 10;
+        let value = tile_number.wrapping_add(attributes);
+        h.set_item_tile_definition(tile_offset + tile * 2, value);
+        tile_number = tile_number.wrapping_add(1);
+        p = p.advance(1);
+    }
+    p
+}
+pub fn copy_vram<H: Host>(h: &mut H, p: Script<H::Record>) -> Script<H::Record> {
+    h.queue_graphics_transfer(&p, GraphicsTransferKind::CopyScript);
+    p.advance(7)
+}
+pub fn reload_graphics(h: &mut impl Host) {
+    h.session_mut().mechanisms.next_graphics = 0;
+    for index in 0..4 {
+        if h.session().mechanisms.saved_graphics[index] != 0 {
+            let address = h.session().mechanisms.saved_graphics[index];
+            let record = h.loaded_record(ContentAddress {
+                bank: 0x84,
+                offset: address,
+            });
+            load_graphics(h, Script::new(record, address | 0x8000), (index * 2) as u16);
         }
+    }
+}
+pub fn reveal_items(h: &mut impl Host) {
+    for slot in (0..40).rev() {
+        if h.session().mechanisms.slots[slot].header < 0xdf89 {
+            continue;
+        }
+        let argument = h.session().mechanisms.slots[slot].room_argument;
+        if h.item_collected(argument) {
+            continue;
+        }
+        super::creation::coordinates(h, slot);
+        let graphic = h.session().mechanisms.slots[slot].work1 >> 1;
+        let address = h.table_word(ContentTable::ItemReveal, graphic as isize);
+        let sequence = h.native_record(ContentAddress {
+            bank: 0x84,
+            offset: address,
+        });
+        let block = sequence.word(2) & 0xfff;
+        let x = h.session().mechanisms.block_x;
+        let y = h.session().mechanisms.block_y;
+        h.reveal_block(block, x, y);
     }
 }
