@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 08:38 UTC**
+Updated: **2026-10-23 08:49 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -10,28 +10,28 @@ SNES backend remains the comparison oracle during migration.
 
 ## Latest verified milestone
 
-**Bomb, power-bomb and spread-bomb lifecycle and terrain contact now share safe cores.**
+**Special-beam attack creation and all six motion states now share safe rules.**
 
-- Removed the old bank traversal and duplicate lifecycle rules. The candidate
-  scans terrain directly with owned projectile state.
-- Production and candidate builds passed. **All 34 comparison suites passed**,
-  with all 31 retained results unchanged and five matching fatal-diagnostic pairs.
-- Added 1,892 runtime comparison pairs, including 54 expected failures, plus two
-  checked-only failure groups and 15 authored-state scenarios.
-- Actual firing with a 60-tick fuse and real HDMA radius generation reached a
-  separated Noob Tube at tick 88. This constructed check uses clipped drawing;
-  it does not establish rendering or movie coverage.
+- Retired duplicate creation, movement and retirement algorithms. Actual beam
+  input and motion dispatch use the shared implementation.
+- Production and candidate builds passed. **All 36 comparison suites passed**,
+  with all 34 retained results unchanged.
+- Added 6,015 three-way operation comparisons, including 126 expected failures,
+  plus authored-state and geometry checks.
+- All four attacks reached natural retirement from actual charged beam input,
+  without injected phases or lifetimes: Wave 600 ticks, Ice 620, Spazer 109,
+  Plasma 99. These are component tests, not full-game or rendering coverage.
 
 | Verified measure | Value |
 | --- | ---: |
 | Setup identities decoded | 115 / 115 |
-| Maintained Rust source | 106,183 lines in 205 files |
-| Counted unsafe function declarations | 2,834 |
-| Prospective composition, not yet adopted | 114,712 lines in 313 files |
+| Maintained Rust source | 106,407 lines in 207 files |
+| Counted unsafe function declarations | 2,829 |
+| Prospective composition, not yet adopted | 114,725 lines in 316 files |
 
-This stage adds 225 lines to main and removes 13 unsafe function declarations.
-The complete composition plus retained verification grows by 2,850 lines.
-Adapters and preservation of owner state on failure account for the growth.
+This stage adds 224 lines to main and removes five unsafe function declarations.
+The complete composition adds 13 lines; including retained verification, growth
+is 2,151 lines. Safe adapters and independent checks are included in those costs.
 The target remains below 100,000 maintained Rust lines, with all unsafe
 operations removed.
 
@@ -39,13 +39,7 @@ operations removed.
 
 **Continue the player-projectile lifecycle and its remaining consumers.**
 
-The approved next change shares special-beam attack creation and all six motion
-states. Its checks will follow actual beam input through creation and motion to
-natural retirement for all four attacks. Production source review and both main
-and candidate builds passed on their first attempts. The comparison tests are
-being reviewed before execution; behavior verification and the source commit
-are still pending. The figures above describe the last committed milestone.
-
+The next scope under investigation is ordinary beam charge input and firing.
 Persistent room and scheduler state still live in RAM. Persistent Session
 ownership, renderer/audio replacement and an independently running game slice
 remain required parts of the destination.

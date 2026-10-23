@@ -5,8 +5,7 @@ use crate::game::projectile_flight;
 use crate::game::sm_80::QueueSfx1_Max15;
 use crate::game::sm_90::{
     fnProjPreInstr_BeamOrIceWave, fnProjPreInstr_Beam_NoWaveBeam, fnProjPreInstr_WavePlasmaEtc,
-    kFireChargedBeam_Funcs, kProjectileCooldown_Uncharged, CheckBeamCollByDir, FireSba,
-    WaveBeam_CheckColl,
+    kFireChargedBeam_Funcs, kProjectileCooldown_Uncharged, CheckBeamCollByDir, WaveBeam_CheckColl,
 };
 use crate::game::sm_91::Samus_LoadSuitPalette;
 use crate::game_state::Game;
@@ -35,7 +34,7 @@ pub(crate) unsafe fn update_input(game: &mut Game) {
                     clear_animation(game);
                     fire(false, game);
                 }
-            } else if FireSba(game) & 1 != 0 {
+            } else if crate::game::special_attacks_ram::fire(game) & 1 != 0 {
                 word!(game.flare_counter = 0);
                 clear_animation(game);
                 Samus_LoadSuitPalette(game);

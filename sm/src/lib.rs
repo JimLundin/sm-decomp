@@ -333,6 +333,8 @@ pub mod game {
     }
 
     pub(crate) mod special_attacks;
+    pub(crate) mod special_attacks_ram;
+    pub(crate) mod special_geometry;
     pub(crate) mod bomb_lifecycle;
     pub(crate) mod bomb_lifecycle_ram;
     pub(crate) mod bomb_terrain;
