@@ -210,18 +210,23 @@ impl Host for Runtime<'_> {
                 (1, 15) => QueueSfx1_Max15(sound, g),
                 (2, 6) => QueueSfx2_Max6(sound, g),
                 (3, 6) => QueueSfx3_Max6(sound, g),
+                (3, 9) => QueueSfx3_Max9(sound, g),
                 (3, 15) => QueueSfx3_Max15(sound, g),
                 _ => unreachable!("unknown projectile sound queue"),
             }
         });
     }
     fn player_step(&mut self, step: PlayerStep) {
+        if matches!(step, PlayerStep::SuitIndex) {
+            crate::game::samus_palette::update_suit_index(self.session_mut());
+            return;
+        }
         self.foreign(|g| unsafe {
             use crate::game::{sm_9b, sm_90, sm_91, sm_94};
             match step {
                 PlayerStep::Radius => sm_90::Samus_SetRadius(g),
                 PlayerStep::Input => sm_90::Samus_CallInputHandler(g),
-                PlayerStep::SuitIndex => sm_90::Samus_UpdateSuitPaletteIndex(g),
+                PlayerStep::SuitIndex => unreachable!("suit index handled by shared owner"),
                 PlayerStep::Acceleration => sm_90::Samus_DetermineAccel_Y(g),
                 PlayerStep::InsideBlock => sm_94::BlockInsideDetection(g),
                 PlayerStep::Grapple => sm_9b::GrappleBeamHandler(g),
@@ -233,21 +238,22 @@ impl Host for Runtime<'_> {
         });
     }
     fn palette(&mut self, effect: PaletteEffect) -> u8 {
-        self.foreign(|g| match effect {
+        use crate::game::{samus_palette, visual_state::PaletteBuffer};
+        match effect {
             PaletteEffect::Suit => {
-                unsafe { crate::game::sm_91::Samus_LoadSuitPalette(g) };
+                samus_palette::load_suit(self, PaletteBuffer::Current);
                 0
             }
             PaletteEffect::SuitTarget => {
-                unsafe { crate::game::sm_91::Samus_LoadSuitTargetPalette(g) };
+                samus_palette::load_suit(self, PaletteBuffer::Target);
                 0
             }
             PaletteEffect::Spawn(definition) => {
-                crate::game::palette_effects::spawn(definition, g);
+                crate::game::palette_effects::execution::spawn(self, definition);
                 0
             }
-            PaletteEffect::Charge(output) => charge_palette(g, output),
-        })
+            PaletteEffect::Charge(output) => samus_palette::apply_charge_output(self, output),
+        }
     }
     fn enable_hdma(&mut self) {
         self.foreign(|g| unsafe { crate::game::sm_88::EnableHdmaObjects(g) });
@@ -314,44 +320,6 @@ impl Host for Runtime<'_> {
     fn set_echo_index_native(&mut self, raw: u16, value: u16) {
         self.store(0xaae + usize::from(raw), value, Store::SliceNative);
     }
-}
-
-// This is the sole charge-palette output edge formerly in the singleton
-// beam_charge_palette_ram adapter. Its source allocation is recaptured at the
-// original reads, including after the low-window diagnostic.
-fn charge_palette(game: &mut Game, output: crate::game::beam_charge_palette::Output) -> u8 {
-    use crate::game::beam_charge_palette::Output;
-    let image = |g: &Game| g.loaded_rom.as_ref().expect("ROM must be loaded").clone();
-    let palette = match output {
-        Output::Hyper(phase) => image(game).table_word(content::offset(0x91d829), phase as isize),
-        Output::Charge {
-            contact_attack,
-            suit,
-            phase,
-        } => {
-            let base = image(game).table_word(
-                content::offset(if contact_attack { 0x91d7ff } else { 0x91d7d5 }),
-                (suit >> 1) as isize,
-            );
-            let address = 0x910000 | u32::from(base.wrapping_add(phase));
-            if address & 0x8000 == 0 {
-                invalid_window(game, address);
-            }
-            image(game).table_word(content::offset(address), 0)
-        }
-        Output::Highlight => {
-            for i in 0..15 {
-                let at = 0xc19e - 2 * i;
-                game.g_ram[at..at + 2].copy_from_slice(&1023u16.to_le_bytes());
-            }
-            return 0;
-        }
-        Output::Visor => return unsafe { crate::game::sm_91::HandleVisorPalette(game) },
-    };
-    unsafe {
-        crate::game::sm_91::CopyToSamusSuitPalette(palette, game);
-    }
-    0
 }
 
 /// Shared continuation belongs to the calling context, never to Session encoding.
@@ -427,6 +395,8 @@ impl SessionAccess for Runtime<'_> {
         Runtime::inputs(self)
     }
     fn probe(&self, name: &'static str) {
+        #[cfg(sm_verify_dll)]
+        crate::game::visual_runtime::samus_observer::observe(name, self.session(), self.game);
         crate::verify_probe::hit(name);
     }
 }

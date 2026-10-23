@@ -377,7 +377,8 @@ impl Graphics for Composed {
         panic!("unprepared enemy operation: set_bg2_y_scroll")
     }
     fn set_palette_buffer(&mut self, index: isize, value: u16) {
-        panic!("unprepared enemy operation: set_palette_buffer")
+        self.world.player.visual.colors[usize::try_from(index).expect("negative palette index")] =
+            value;
     }
 }
 impl Host for Composed {}

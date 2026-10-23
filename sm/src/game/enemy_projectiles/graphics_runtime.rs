@@ -26,6 +26,12 @@ impl Graphics for Runtime<'_> {
         self.write_slice_le(W::bg2_y_scroll, value);
     }
     fn set_palette_buffer(&mut self, index: isize, value: u16) {
+        if let Ok(slot) = usize::try_from(index) {
+            if let Some(color) = self.session_mut().visual.colors.get_mut(slot) {
+                *color = value;
+                return;
+            }
+        }
         self.write_slice_le(
             A::palette_buffer
                 .checked_add_signed(index.checked_mul(2).unwrap())

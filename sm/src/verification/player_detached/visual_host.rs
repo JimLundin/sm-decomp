@@ -1,0 +1,166 @@
+//! Shared visual host: actual core composition and explicitly prepared external edges.
+#![allow(unused_variables)]
+use super::game::{
+    session_access::SessionAccess,
+    visual_host::*,
+    visual_state::{PaletteBuffer, Upload},
+};
+use super::{Composed, Event, RomRecord, animated, colors};
+impl Record for RomRecord {
+    fn byte(&self, offset: usize) -> u8 {
+        RomRecord::byte(self, offset)
+    }
+    fn native_word(&self, offset: usize) -> u16 {
+        RomRecord::word(self, offset)
+    }
+    fn bytes<const N: usize>(&self, offset: usize) -> [u8; N] {
+        core::array::from_fn(|i| {
+            RomRecord::byte(
+                self,
+                offset
+                    .checked_add(i)
+                    .expect("prepared visual record overflow"),
+            )
+        })
+    }
+}
+impl Content for Composed {
+    type Record = RomRecord;
+    fn record(&mut self, source: Source, bank: u8, address: u16) -> RomRecord {
+        assert!(address & 0x8000 != 0, "unprepared visual low-window record");
+        self.visual_records.push((source, bank, address));
+        RomRecord {
+            image: self.image.clone(),
+            base: usize::from(bank & 0x7f) * 0x8000 + usize::from(address & 0x7fff),
+        }
+    }
+    fn table(&self, source: Source, address: u32) -> RomRecord {
+        RomRecord {
+            image: self.image.clone(),
+            base: ((address as usize >> 16) & 0x7f) * 0x8000 + (address as usize & 0x7fff),
+        }
+    }
+}
+impl Aliases for Composed {
+    fn palette_word(&self, _: PaletteMember, _: u16) -> u16 {
+        panic!("unprepared palette field alias")
+    }
+    fn set_palette_word_slice(&mut self, _: PaletteMember, _: u16, _: u16) {
+        panic!("unprepared palette field alias")
+    }
+    fn set_palette_counter_byte(&mut self, _: u16, _: u8) {
+        panic!("unprepared palette counter alias")
+    }
+    fn palette_flag_native(&self, _: u16) -> u16 {
+        panic!("unprepared palette flag alias")
+    }
+    fn animation_word(&self, _: AnimationMember, _: u16) -> u16 {
+        panic!("unprepared animation field alias")
+    }
+    fn set_animation_word_prefix(&mut self, _: AnimationMember, _: u16, _: u16) {
+        panic!("unprepared animation field alias")
+    }
+    fn set_animation_counter_byte(&mut self, _: u16, _: u8) {
+        panic!("unprepared animation counter alias")
+    }
+    fn set_palette_color_slice(&mut self, displacement: u16, value: u16) {
+        let start = 0xc000 + usize::from(displacement & !1);
+        // Actual aggregate projection, with whole-word preflight before slice write.
+        assert!(super::game::session_encoding::projected_byte(&self.world.player, start).is_some());
+        assert!(
+            super::game::session_encoding::projected_byte(&self.world.player, start + 1).is_some()
+        );
+        for (offset, byte) in value.to_le_bytes().into_iter().enumerate() {
+            assert!(super::game::session_encoding::write_projected_byte(
+                &mut self.world.player,
+                start + offset,
+                byte
+            ));
+        }
+    }
+    fn set_color_prefix(&mut self, _: PaletteBuffer, _: usize, _: u16) {
+        panic!("unprepared animation color alias")
+    }
+    fn miniboss_defeated(&self) -> bool {
+        let area = usize::from(self.world.player.room.area);
+        let bosses = &self.world.progression.bosses;
+        u16::from_ne_bytes([bosses[area], bosses.get(area + 1).copied().unwrap_or(0)]) & 2 != 0
+    }
+}
+impl Effects for Composed {
+    fn sound(&mut self, channel: u8, limit: u8, sound: u16) {
+        self.events.push(Event::Sound(channel, sound));
+        if let Some(callback) = self.on_visual_sound {
+            callback(self);
+        }
+    }
+    fn music_delayed8(&mut self, track: u16) {
+        self.events.push(Event::Music(track));
+        if let Some(callback) = self.on_visual_music {
+            callback(self);
+        }
+    }
+    fn check_boss(&mut self, mask: u16) -> bool {
+        let p = &mut self.world.progression;
+        p.scratch = (p.scratch & 0xff00) | u16::from(mask as u8);
+        p.bosses[usize::from(self.world.player.room.area)] & mask as u8 != 0
+    }
+    fn set_boss(&mut self, mask: u16) {
+        let p = &mut self.world.progression;
+        p.scratch = (p.scratch & 0xff00) | u16::from(mask as u8);
+        p.bosses[usize::from(self.world.player.room.area)] |= mask as u8;
+    }
+    fn check_event(&mut self, event: u16) -> bool {
+        let p = &mut self.world.progression;
+        p.scratch = 1 << (event & 7);
+        let mask = p.scratch as u8;
+        *p.event_byte(usize::from(event >> 3)) & mask != 0
+    }
+    fn set_event(&mut self, event: u16) {
+        let p = &mut self.world.progression;
+        p.scratch = 1 << (event & 7);
+        let mask = p.scratch as u8;
+        *p.event_byte(usize::from(event >> 3)) |= mask;
+    }
+    fn boss_at(&mut self, area: u8) -> u8 {
+        self.world.progression.bosses[usize::from(area)]
+    }
+    fn resume_movement_sound(&mut self) {
+        panic!("unprepared visual movement sound")
+    }
+    fn upload(&mut self, request: Upload) {
+        self.events.push(Event::Upload(request));
+        if let Some(update) = self.on_upload.take() {
+            update(&mut self.world);
+        }
+        assert!(!self.fail_upload, "intentional upload failure");
+    }
+    fn invalid_palette_instruction(&mut self) {
+        panic!("invalid palette command")
+    }
+    fn invalid_animation_instruction(&mut self) -> u16 {
+        self.animation_invalid_result
+            .unwrap_or_else(|| panic!("invalid animation instruction"))
+    }
+    fn color_written(&mut self, index: u16, value: u16) {
+        self.events.push(Event::Color(usize::from(index), value));
+    }
+}
+impl Composition for Composed {
+    fn spawn_palette(&mut self, definition: u16) {
+        self.events.push(Event::PaletteSpawn(definition));
+        colors::spawn(self, definition);
+    }
+    fn spawn_statue_projectile(&mut self, kind: StatueProjectile, parameter: u16) {
+        self.events.push(Event::Projectile(kind, parameter));
+        let definition = match kind {
+            StatueProjectile::EyeGlow => 0xba6a,
+            StatueProjectile::Soul => 0xba94,
+        };
+        super::game::enemy_projectiles::spawn_room(self, definition, parameter);
+    }
+    fn advance_charge_palette(&mut self) -> u8 {
+        super::game::player_projectiles::charge_palette(self)
+    }
+}
+impl Host for Composed {}

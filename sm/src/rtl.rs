@@ -1078,3 +1078,14 @@ pub unsafe fn RtlWriteSram(game: &mut Game) {
         };
     }
 }
+
+/// Store one SNES word without imposing host alignment.
+///
+/// # Safety
+/// `destination` must be valid for writing two bytes. It may be unaligned.
+#[inline]
+pub(crate) unsafe fn write_word(value: u16, destination: *mut u16) {
+    unsafe {
+        destination.write_unaligned(value.to_le());
+    }
+}

@@ -748,7 +748,7 @@ pub(super) fn EprojPreInstr_TourianStatueUnlockingParticleWaterSplash(k: u16, ct
 }
 
 pub(super) fn EprojPreInstr_TourianStatueStuff(k: u16, ctx: &mut impl Host) {
-    if ctx.inputs().statue_animation == 0 {
+    if ctx.session().mechanisms.statue_animation == 0 {
         {
             let old = ctx.session().mechanisms.statue_finished;
             let value = old | (0x8000);

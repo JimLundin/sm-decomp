@@ -4,6 +4,44 @@ use crate::game::{external_inputs::ExternalInputs, session::Session};
 use crate::ram_map::{word_arrays as arrays, words as ram};
 macro_rules! scalar_words {
     ($s:ident,$f:ident,($($borrow:tt)*))=>{
+        $f(0xa48,$($borrow)* $s.player.palette.hurt_flash);
+        $f(0xa72,$($borrow)* $s.player.palette.visor_timer);
+        $f(0xa74,$($borrow)* $s.player.palette.suit_index);
+        $f(0xa80,$($borrow)* $s.player.palette.xray_progress);
+        $f(0xad0,$($borrow)* $s.player.palette.timer);
+        $f(0xdf2,$($borrow)* $s.player.palette.crystal_flash_delay);
+        $f(0xa4e,$($borrow)* $s.player.periodic_damage_fraction);
+        $f(0x1e6f,$($borrow)* $s.mechanisms.statue_animation);
+        for index in 0..256 {
+            $f(0xc000+index*2,$($borrow)* $s.visual.colors[index]);
+        }
+        for index in 0..256 {
+            $f(0xc200+index*2,$($borrow)* $s.visual.targets[index]);
+        }
+        for index in 0..8 {
+            $f(0x1e7d+index*2,$($borrow)* $s.visual.palette_effects.slots[index].definition);
+            $f(0x1e8d+index*2,$($borrow)* $s.visual.palette_effects.slots[index].color_offset);
+            $f(0x1ead+index*2,$($borrow)* $s.visual.palette_effects.slots[index].pre_action);
+            $f(0x1ebd+index*2,$($borrow)* $s.visual.palette_effects.slots[index].program);
+            $f(0x1ecd+index*2,$($borrow)* $s.visual.palette_effects.slots[index].delay);
+            $f(0x1edd+index*2,$($borrow)* $s.visual.palette_effects.slots[index].counter);
+        }
+        for index in 0..6 {
+            $f(0x1ef5+index*2,$($borrow)* $s.visual.animated_tiles.slots[index].definition);
+            $f(0x1f01+index*2,$($borrow)* $s.visual.animated_tiles.slots[index].counter);
+            $f(0x1f0d+index*2,$($borrow)* $s.visual.animated_tiles.slots[index].program);
+            $f(0x1f19+index*2,$($borrow)* $s.visual.animated_tiles.slots[index].delay);
+            $f(0x1f25+index*2,$($borrow)* $s.visual.animated_tiles.slots[index].source);
+            $f(0x1f31+index*2,$($borrow)* $s.visual.animated_tiles.slots[index].size);
+            $f(0x1f3d+index*2,$($borrow)* $s.visual.animated_tiles.slots[index].vram);
+        }
+        $f(0x1e79,$($borrow)* $s.visual.palette_effects.flags);
+        $f(0x1e7b,$($borrow)* $s.visual.palette_effects.selected);
+        $f(0x1eed,$($borrow)* $s.visual.palette_effects.heat);
+        $f(0x1eef,$($borrow)* $s.visual.palette_effects.previous_heat);
+        $f(0x1ef1,$($borrow)* $s.visual.animated_tiles.flags);
+        $f(0x1ef3,$($borrow)* $s.visual.animated_tiles.selected);
+        $f(0x1f49,$($borrow)* $s.visual.animated_tiles.last_instruction);
         $f(ram::projectile_counter,$($borrow)* $s.projectiles.count);
         $f(ram::bomb_counter,$($borrow)* $s.projectiles.bomb_count);
         $f(ram::projectile_index,$($borrow)* $s.projectiles.selected);
@@ -265,6 +303,15 @@ pub(crate) fn encode(s: &Session, bytes: &mut [u8]) {
     }
 }
 pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
+    if (0xc000..0xc400).contains(&at) {
+        let offset = at - 0xc000;
+        let colors = if offset < 512 {
+            &s.visual.colors
+        } else {
+            &s.visual.targets
+        };
+        return Some(colors[(offset % 512) / 2].to_le_bytes()[offset % 2]);
+    }
     if at == 0x60b {
         return Some(s.enemy_projectiles.spawn.angle);
     }
@@ -299,6 +346,19 @@ pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     result
 }
 pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
+    if (0xc000..0xc400).contains(&at) {
+        let offset = at - 0xc000;
+        let colors = if offset < 512 {
+            &mut s.visual.colors
+        } else {
+            &mut s.visual.targets
+        };
+        let color = &mut colors[(offset % 512) / 2];
+        let mut bytes = color.to_le_bytes();
+        bytes[offset % 2] = value;
+        *color = u16::from_le_bytes(bytes);
+        return true;
+    }
     if at == 0x60b {
         s.enemy_projectiles.spawn.angle = value;
         return true;
@@ -355,13 +415,18 @@ pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> boo
 pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
     let w = |at| read(bytes, at);
     ExternalInputs {
+        enemy_zero_health: u16::from_ne_bytes([bytes[0xf8c], bytes[0xf8d]]),
+        frame_handler_beta: w(0xa44),
+        blending_config: w(0x1982),
+        player_animation_frame: w(0xa96),
+        demo_input_pre_action: w(0xa7a),
+        lava_y: w(0x1962),
         player_x_radius: w(ram::samus_x_radius),
         current_enemy: w(ram::cur_enemy_index),
         random: w(ram::random_number),
         random_enemy_counter: w(ram::random_enemy_counter),
         bitmask: w(ram::bitmask),
         fx_y: w(ram::fx_y_pos),
-        statue_animation: w(ram::tourian_entrance_statue_animstate),
         drop_origin_x: w(ram::special_death_item_drop_x_origin_pos),
         drop_origin_y: w(ram::special_death_item_drop_y_origin_pos),
         grapple_end_x: w(ram::grapple_beam_end_x_pos),
@@ -379,7 +444,6 @@ pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
         hyper: w(ram::hyper_beam_flag),
         frozen: w(ram::time_is_frozen_flag),
         cinematic: w(ram::cinematic_function),
-        suit_palette: w(ram::samus_suit_palette_index),
         hud_auto_cancel: w(ram::hud_auto_cancel_flag),
         door_definition: w(ram::door_def_ptr),
         door_direction: w(ram::door_direction),

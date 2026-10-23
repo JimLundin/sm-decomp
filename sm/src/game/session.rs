@@ -93,6 +93,7 @@ pub struct PowerBomb {
 use crate::game::item_pickups::Inventory;
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct Session {
+    pub visual: crate::game::visual_state::Visuals,
     pub projectiles: Projectiles,
     pub enemy_projectiles: EnemyProjectiles,
     pub player: Player,
@@ -119,6 +120,8 @@ pub struct Projectiles {
 // Implementation retains existing LaunchMotion rather than a second algorithm.
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct Player {
+    pub palette: crate::game::visual_state::PlayerPalette,
+    pub periodic_damage_fraction: u16,
     pub x: u16,
     pub y: u16,
     pub pose: u16,
@@ -200,6 +203,7 @@ pub struct Mechanisms {
     pub custom_draw: [u16; 3],
     pub save_locked: u16,
     pub statue_finished: u16,
+    pub statue_animation: u16,
 }
 #[derive(Clone, Copy, Default, Debug, PartialEq)]
 pub struct Cell {
@@ -300,6 +304,7 @@ impl Default for Mechanisms {
             custom_draw: [0; 3],
             save_locked: 0,
             statue_finished: 0,
+            statue_animation: 0,
         }
     }
 }

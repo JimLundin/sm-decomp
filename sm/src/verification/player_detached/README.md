@@ -1,53 +1,74 @@
-# Enemy / room / player detached composition
+# Shared visual detached composition
 
-Install the Rust files and mutations.py over the maintained
-sm/src/verification/player_detached in the complete integrated enemy-session
-candidate. Existing player/room/animation/palette checks remain. DESIGN.md records
-the independently approved cases and separates native-runtime work.
+Overlay these Rust files onto sm/src/verification/player_detached in the complete
+next-visual-session candidate. This extends the maintained harness from main
+c30c16ba; existing player/room/enemy checks and labels remain. Mutation scripts are
+owned separately by torizo_review and must be overlaid from that worker's output.
 
-One SessionAccess implementation returns World.player for all three gameplay Hosts.
-The new enemy wrapper imports actual candidate algorithms. Its content provider
-uses actual generic EprojScript<RomImage> and actual LoadedRecord/NativeRecord;
-verify_probe.rs is also the actual source. No Game, RAM codec, second inventory or
-second enemy pool is included. Unsupported actor/backend operations panic.
+World.player is the only Session. Current/target colors, palette effects, animation
+slots, Samus palette fields and statue animation now live in that Session. Removed
+old World.animation, World.palette and World.target_colors allocations. The same
+SessionAccess implements all gameplay Hosts. No Game or second RAM-backed owner is
+constructed. Palette alias writes use the actual session_encoding projected-byte
+implementation, with whole-word preflight. Tests therefore reach real shared
+mechanism timers through the maintained codec rather than a fabricated timer map.
 
-New detached cases:
+The harness includes actual animation/palette execution, Samus palette, player
+charge feedback, enemy initialization and room scheduler files. Composition methods
+call those cores on the same Composed value. Content adapters implement the frozen
+Record interface on the maintained RomRecord. Prepared loaded/native sources share
+one synthetic cartridge allocation here; source-rebinding/low-window/native-runtime
+coverage belongs to the separate native/defined carriers. Unprepared actor/backend
+operations panic explicitly. Upload records a request and applies the prepared
+synchronous callback; it does not emulate DMA registers or claim native DMA coverage.
 
-- 1050 actual EyeDoor room command, enemy setup, post-spawn sound observation and
-  same-scheduler live selection plus lower-slot iteration.
-- 1051 actual EyeDoorSmoke final RNG effect redirects selection inside enemy setup;
-  same room scheduler resumes its captured script with live selected.
-- 1052 actual player beam, enemy contact marks its real slot, actual player motion
-  consumes the mark; plasma mask0008 sibling continues actual flight.
-- 1053 actual drop body contact awards Inventory before sound and captured-slot
-  dismissal, then actual missile consumes it; normal and capped ammunition cases.
-- 1054 explicit unprepared DamagePlayer failure with actual contact's committed
-  invincibility/knockback/hit-list prefix and distinct projectile protection.
-  This does not simulate or validate the native damage routine.
-- 1058 actual spawn_drop and forced missile selection consume shared spawn point
-  and drop metadata; actual collection and missile firing consume the same owner.
-  Native storage transfer itself is not tested by this detached check.
+New selected cases and labels:
 
-1055–1057 belong to torizo_review's real Runtime/native carrier. Labels are detached
-case identifiers, not claims that corresponding DLL exports were allocated.
+- eye: actual animation command creates actual EyeGlow enemy, whose four colors
+  immediately reach shared palette; animation then spawns actual palette effect
+  and its interpreter replaces just one of those shared colors.
+- alias: actual palette script writes displacement1E1C; actual aggregate projection
+  updates mechanism0 timer, then actual room scheduler executes the awakened script.
+- heat: fractionF001/amount7 becomes3001/8 before sound; sound changes equipment
+  and heat, and actual palette pre selects gravity's new program and consumes it.
+- upload_ack: callback redirects selected, reuses captured source, disables
+  animation and queues a later slot; captured slot is acknowledged and the later
+  zero-size request still executes, while inactive slot0's source stays intact.
+- upload_failure: intentional callback panic is caught; source remains pending
+  and callback inventory mutation remains visible.
+- samus: actual inventory-driven suit index/current/target copy, real player charge
+  decisions into Samus output, then real uncharged feedback into visor timer/color.
+- samus_carry: selector2 hurt803B reaches803D through two actual misc calls. Real
+  source-capture observation proves no intervening default9300 copy despite the
+  negative signed subtraction; hurt8 independently verifies two increments to10.
 
-Mutation runner retains the four existing mutants and adds three specific-assertion
-checks: restore into a private inventory copy, discard the shared shot-direction
-mark, and use stale room selected after nested spawn. The unchanged baseline must execute successfully before any mutant. New
-mutants must fail their named enemy check equality assertion, not an unrelated
-panic. Survived mutants, compile errors and execution errors remain distinct.
-Mutation execution retains the existing CI-only policy.
+The old animation color/target host notifications were internal adapter events,
+not retained visual effects. Their state/order checks now assert shared values at
+the real music effect and afterward. Canonical palette color_written notifications
+remain in the event trace; exceptional aliases must not synthesize them. Existing
+snapshot/replay comparisons now include the full shared visual Session.
 
-Integrator commands after complete production overlay (not executed by worker):
+Mutation-author contract: `--visual-mutation <case>` runs exactly one selected case
+and prints `visual composition case passed: <case>`. Assertions carry exact
+`visual.composition.*` labels in visual_checks.rs. upload_failure emits the expected
+caught panic `intentional upload failure` from visual_host.rs before success; other
+selected cases must not panic. The full run retains its existing success text.
 
-    rustc --edition=2024 -O sm/src/verification/player_detached/main.rs -o <isolated>/composed.exe
-    <isolated>/composed.exe
-    # Existing CI-only mutation run:
-    python sm/src/verification/player_detached/mutations.py
+Worker validation: Rust syntax formatted with skip_children; frozen visual Host
+method set matched; no retired state paths remain. No compilation, gameplay run or
+mutation execution performed. Root owns all builds and verdicts. Independent source
+review requested from session_review; runtime guards/Samus oracle remain D's scope.
 
-Status: source binding complete against current A-D replacement files. Rust files
-parsed/formatted with skip_children and Python runner syntax parsed. All three
-Host method sets match, and each new mutation target occurs exactly once in its
-actual source. No compiler, execution or mutation verdict. Integrator must install
-all production changes, including shared slope helpers in projectile_geometry,
-before compiling this harness. Recheck against the final assembled candidate.
+
+Legacy entry preservation: palette_independent_checks.rs (A) and
+animation_independent_checks.rs (B) preserve the additional old standalone
+assertions. The old CI/Cargo entry files become thin wrappers around this host via
+run_legacy_palette/run_legacy_animation. Full main and each legacy wrapper run their
+shared assertions once. Optional animation_invalid_result preserves the old
+explicit unknown-dispatch return fixture and defaults to the prior panic behavior.
+
+Source review: session_review approved the initial shared cases and host. Subsequent
+additions include direct misc unsigned charge/grapple carry cases and A/B's legacy
+assertion ports; coordinator arranges final integrated source review. All Rust
+files are frozen/formatted for overlay. Compilation and execution remain unrun by
+this worker.

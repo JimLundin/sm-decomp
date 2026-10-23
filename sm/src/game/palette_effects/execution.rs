@@ -1,68 +1,98 @@
-//! Complete palette execution over ordinary state and ordered semantic effects.
+//! Palette instructions on the sole shared gameplay Session.
 #![forbid(unsafe_code)]
-use super::state::{Field, Session};
-use Field::*;
+use crate::game::{
+    session::Session,
+    visual_host::{Host, PaletteMember, Record, Source},
+};
 
-/// One captured record retains its image for exactly the lifetime of that record.
-pub(crate) trait Record {
-    fn byte(&self, displacement: usize) -> u8;
-    fn word(&self, displacement: usize) -> u16;
+// Only exceptional handles use a semantic selector. Valid slots access members directly.
+macro_rules! alias_member {
+    (definition) => {
+        PaletteMember::Definition
+    };
+    (color_offset) => {
+        PaletteMember::ColorOffset
+    };
+    (pre_action) => {
+        PaletteMember::PreAction
+    };
+    (program) => {
+        PaletteMember::Program
+    };
+    (delay) => {
+        PaletteMember::Delay
+    };
+    (counter) => {
+        PaletteMember::Counter
+    };
 }
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum SoundChannel {
-    One,
-    Two,
-    Three,
+macro_rules! field {
+    ($host:expr,$member:ident,$handle:expr $(,)?) => {{
+        let handle = $handle;
+        match $host
+            .session()
+            .visual
+            .palette_effects
+            .slots
+            .get(usize::from(handle >> 1))
+        {
+            Some(slot) => slot.$member,
+            None => $host.palette_word(alias_member!($member), handle),
+        }
+    }};
 }
-
-/// The host retains the sole Session while the core executes. Opaque effects
-/// may consume it and install a fresh observation; no state borrow crosses them.
-pub(crate) trait Host {
-    type Record: Record;
-    fn session(&self) -> &Session;
-    fn session_mut(&mut self) -> &mut Session;
-    fn record(&mut self, address: u16) -> Self::Record;
-    fn sound(&mut self, channel: SoundChannel, sound: u16);
-    fn music(&mut self, track: u16);
-    fn unreachable(&mut self);
-    // Compatibility exceptions are explicitly outside the ordinary slot/color domain.
-    fn outside_field(&mut self, field: Field, index: u16) -> u16;
-    fn put_outside_field(&mut self, field: Field, index: u16, value: u16);
-    fn put_outside_counter_byte(&mut self, index: u16, value: u8);
-    fn outside_flag(&mut self, index: u16) -> u16;
-    fn outside_color(&mut self, displacement: u16, value: u16);
-    fn color_written(&mut self, _index: u16, _value: u16) {}
-    fn probe(&mut self, _name: &'static str) {}
+macro_rules! put {
+    ($host:expr,$member:ident,$handle:expr,$value:expr $(,)?) => {{
+        let handle = $handle;
+        let value = $value;
+        match $host
+            .session_mut()
+            .visual
+            .palette_effects
+            .slots
+            .get_mut(usize::from(handle >> 1))
+        {
+            Some(slot) => slot.$member = value,
+            None => $host.set_palette_word_slice(alias_member!($member), handle, value),
+        }
+    }};
 }
-fn field(host: &mut impl Host, column: Field, index: u16) -> u16 {
-    match host.session().effects.slots.get(usize::from(index >> 1)) {
-        Some(slot) => slot.field(column),
-        None => host.outside_field(column, index),
+macro_rules! put_native {
+    ($host:expr,$member:ident,$handle:expr,$value:expr $(,)?) => {
+        put!(
+            $host,
+            $member,
+            $handle,
+            u16::from_le_bytes(($value).to_ne_bytes())
+        )
+    };
+}
+macro_rules! decrement {
+    ($host:expr,$member:ident,$handle:expr $(,)?) => {{
+        let handle = $handle;
+        let old = field!($host, $member, handle);
+        put!($host, $member, handle, old.wrapping_sub(1));
+        old
+    }};
+}
+pub(crate) fn set_enabled(session: &mut Session, enabled: bool) {
+    let flags = &mut session.visual.palette_effects.flags;
+    *flags = if enabled {
+        *flags | 0x8000
+    } else {
+        *flags & !0x8000
+    };
+}
+pub(crate) fn clear(session: &mut Session) {
+    for slot in session.visual.palette_effects.slots.iter_mut().rev() {
+        slot.definition = 0;
     }
-}
-fn put(host: &mut impl Host, column: Field, index: u16, value: u16) {
-    match host
-        .session_mut()
-        .effects
-        .slots
-        .get_mut(usize::from(index >> 1))
-    {
-        Some(slot) => *slot.field_mut(column) = value,
-        None => host.put_outside_field(column, index, value),
-    }
-}
-fn put_native(host: &mut impl Host, column: Field, index: u16, value: u16) {
-    put(host, column, index, u16::from_le_bytes(value.to_ne_bytes()));
-}
-fn decrement(host: &mut impl Host, column: Field, index: u16) -> u16 {
-    let old = field(host, column, index);
-    put(host, column, index, old.wrapping_sub(1));
-    old
 }
 fn counter_byte(host: &mut impl Host, index: u16, value: u8) {
     match host
         .session_mut()
-        .effects
+        .visual
+        .palette_effects
         .slots
         .get_mut(usize::from(index >> 1))
     {
@@ -71,77 +101,80 @@ fn counter_byte(host: &mut impl Host, index: u16, value: u8) {
             bytes[usize::from(index & 1)] = value;
             slot.counter = u16::from_le_bytes(bytes);
         }
-        None => host.put_outside_counter_byte(index, value),
+        None => host.set_palette_counter_byte(index, value),
     }
 }
 fn flag_word(host: &mut impl Host, index: u16) -> u16 {
     // This pre-action intentionally tests flags, the selector, or a neighboring ID.
     // Odd and wider accesses are compatibility exceptions, not bounded slot reads.
     let value = match index {
-        0 => host.session().effects.flags,
-        2 => host.session().effects.selected,
-        4..=18 if index & 1 == 0 => host.session().effects.slots[usize::from((index - 4) / 2)].id,
-        _ => return host.outside_flag(index),
+        0 => host.session().visual.palette_effects.flags,
+        2 => host.session().visual.palette_effects.selected,
+        4..=18 if index & 1 == 0 => {
+            host.session().visual.palette_effects.slots[usize::from((index - 4) / 2)].definition
+        }
+        _ => return host.palette_flag_native(index),
     };
     u16::from_ne_bytes(value.to_le_bytes())
 }
 fn color(host: &mut impl Host, displacement: u16, value: u16) {
     let index = displacement >> 1;
-    match host.session_mut().colors.get_mut(usize::from(index)) {
+    match host.session_mut().visual.colors.get_mut(usize::from(index)) {
         Some(color) => {
             *color = value;
             host.color_written(index, value);
         }
-        None => host.outside_color(displacement, value),
+        None => host.set_palette_color_slice(displacement, value),
     }
     host.probe("palette.color.write");
 }
 pub(crate) fn spawn(host: &mut impl Host, definition: u16) {
     let Some(slot) = host
         .session()
-        .effects
+        .visual
+        .palette_effects
         .slots
         .iter()
-        .rposition(|slot| slot.id == 0)
+        .rposition(|slot| slot.definition == 0)
     else {
         return;
     };
     let slot = (slot * 2) as u16;
     host.probe("palette.spawn.allocated");
-    put(host, Id, slot, definition);
-    put(host, Color, slot, 0);
-    put(host, PreAction, slot, 0xc526);
-    let data = host.record(definition);
-    put(host, Program, slot, data.word(2));
-    put(host, Delay, slot, 1);
-    put(host, Counter, slot, 0);
-    let data = host.record(definition);
-    setup(host, 0x8d0000 | u32::from(data.word(0)), slot);
+    put!(host, definition, slot, definition);
+    put!(host, color_offset, slot, 0);
+    put!(host, pre_action, slot, 0xc526);
+    let data = host.record(Source::Loaded, 0x8d, definition);
+    put!(host, program, slot, data.native_word(2));
+    put!(host, delay, slot, 1);
+    put!(host, counter, slot, 0);
+    let data = host.record(Source::Loaded, 0x8d, definition);
+    setup(host, 0x8d0000 | u32::from(data.native_word(0)), slot);
 }
 pub(crate) fn advance(host: &mut impl Host) {
-    if host.session().effects.flags & 0x8000 != 0 {
+    if host.session().visual.palette_effects.flags & 0x8000 != 0 {
         let mut slot = 14i32;
         while slot >= 0 {
-            host.session_mut().effects.selected = slot as u16;
-            if field(host, Id, slot as u16) != 0 {
+            host.session_mut().visual.palette_effects.selected = slot as u16;
+            if field!(host, definition, slot as u16) != 0 {
                 process(host, slot as u16);
-                slot = i32::from(host.session().effects.selected);
+                slot = i32::from(host.session().visual.palette_effects.selected);
             }
             slot -= 2;
         }
     }
 }
 pub(crate) fn process(host: &mut impl Host, k: u16) {
-    let before = 0x8d0000 | u32::from(field(host, PreAction, k));
+    let before = 0x8d0000 | u32::from(field!(host, pre_action, k));
     pre(host, before, k);
-    let mut slot = host.session().effects.selected;
-    if decrement(host, Delay, slot) != 1 {
+    let mut slot = host.session().visual.palette_effects.selected;
+    if decrement!(host, delay, slot) != 1 {
         return;
     }
-    let mut cursor = field(host, Program, slot);
+    let mut cursor = field!(host, program, slot);
     let duration = loop {
-        let data = host.record(cursor);
-        let instruction = data.word(0);
+        let data = host.record(Source::Loaded, 0x8d, cursor);
+        let instruction = data.native_word(0);
         if instruction & 0x8000 == 0 {
             break instruction;
         }
@@ -155,13 +188,13 @@ pub(crate) fn process(host: &mut impl Host, k: u16) {
             return;
         }
     };
-    put(host, Delay, slot, duration);
+    put!(host, delay, slot, duration);
     host.probe("palette.phase.colors");
-    let mut destination = field(host, Color, slot);
+    let mut destination = field!(host, color_offset, slot);
     loop {
         let instruction = loop {
-            let data = host.record(cursor);
-            let value = data.word(2);
+            let data = host.record(Source::Loaded, 0x8d, cursor);
+            let value = data.native_word(2);
             if value & 0x8000 != 0 {
                 break value;
             }
@@ -180,72 +213,80 @@ pub(crate) fn pre(host: &mut impl Host, ea: u32, k: u16) {
     match ea {
         9291046 => {}
         9298443 => {
-            if host.session().inputs.cinematic == 0xb35f {
-                put(host, Program, k, 0xe192);
-                put(host, Delay, k, 1);
+            if host.inputs().cinematic == 0xb35f {
+                put!(host, program, k, 0xe192);
+                put!(host, delay, k, 1);
             }
         }
         9298656 => {
-            if host.session().inputs.enemy_health == 0 {
-                put(host, Id, k, 0);
+            if host.inputs().enemy_zero_health == 0 {
+                put!(host, definition, k, 0);
             }
         }
         9298809 => {
-            if host.session().inputs.equipped_items & 0x21 == 0 {
-                let damage = host.session().damage;
-                let damage = (u32::from(damage.fraction) | (u32::from(damage.amount) << 16))
-                    .wrapping_add(0x4000);
-                host.session_mut().damage.fraction = damage as u16;
-                host.session_mut().damage.amount = (damage >> 16) as u16;
-                if host.session().inputs.frame & 7 == 0 && host.session().inputs.health > 0x46 {
-                    host.sound(SoundChannel::Three, 0x2d);
+            if host.session().inventory.equipment.active & 0x21 == 0 {
+                let fraction = u16::from_ne_bytes(
+                    host.session().player.periodic_damage_fraction.to_le_bytes(),
+                );
+                let amount =
+                    u16::from_ne_bytes(host.session().player.periodic_damage.to_le_bytes());
+                let damage = (u32::from(fraction) | (u32::from(amount) << 16)).wrapping_add(0x4000);
+                host.session_mut().player.periodic_damage_fraction =
+                    u16::from_le_bytes((damage as u16).to_ne_bytes());
+                host.session_mut().player.periodic_damage =
+                    u16::from_le_bytes(((damage >> 16) as u16).to_ne_bytes());
+                if host.inputs().frame & 7 == 0 && host.session().inventory.health.current > 0x46 {
+                    host.sound(3, 6, 0x2d);
                 }
             }
-            if host.session().effects.heat != host.session().effects.previous_heat {
-                host.session_mut().effects.previous_heat = host.session().effects.heat;
-                let offset = host.session().effects.heat.wrapping_mul(2);
-                put(host, Delay, k, 1);
-                let table = if host.session().inputs.equipped_items & 0x20 != 0 {
+            if host.session().visual.palette_effects.heat
+                != host.session().visual.palette_effects.previous_heat
+            {
+                host.session_mut().visual.palette_effects.previous_heat =
+                    host.session().visual.palette_effects.heat;
+                let offset = host.session().visual.palette_effects.heat.wrapping_mul(2);
+                put!(host, delay, k, 1);
+                let table = if host.session().inventory.equipment.active & 0x20 != 0 {
                     0xe3e0
-                } else if host.session().inputs.equipped_items & 1 != 0 {
+                } else if host.session().inventory.equipment.active & 1 != 0 {
                     0xe400
                 } else {
                     0xe420
                 };
-                let data = host.record(table);
-                put(host, Program, k, data.word(usize::from(offset)));
+                let data = host.record(Source::Loaded, 0x8d, table);
+                put!(host, program, k, data.native_word(usize::from(offset)));
             }
         }
         9301081 | 9301380 => {
-            if host.session().inputs.player_y < 0x380 {
-                put(host, Delay, k, 1);
-                put(
+            if host.session().player.y < 0x380 {
+                put!(host, delay, k, 1);
+                put!(
                     host,
-                    Program,
+                    program,
                     k,
                     if ea == 9301081 { 0xeb43 } else { 0xec76 },
                 );
             }
         }
         9301701 => {
-            if host.session().inputs.miniboss_dead {
-                put(host, Id, k, 0);
+            if host.miniboss_defeated() {
+                put!(host, definition, k, 0);
             }
         }
         9303585 => {
             if flag_word(host, k) != 0 {
-                put(host, Id, k, 0);
+                put!(host, definition, k, 0);
             }
         }
-        _ => host.unreachable(),
+        _ => host.invalid_palette_instruction(),
     }
 }
 pub(crate) fn command(host: &mut impl Host, ea: u32, k: u16, j: u16) -> (u16, u16) {
     host.probe("palette.command");
     match ea {
         9291157 => {
-            let selected = host.session().effects.selected;
-            put_native(host, Program, selected, j.wrapping_add(4));
+            let selected = host.session().visual.palette_effects.selected;
+            put_native!(host, program, selected, j.wrapping_add(4));
             host.probe("palette.continuation.save");
             (0, 0)
         }
@@ -256,66 +297,67 @@ pub(crate) fn command(host: &mut impl Host, ea: u32, k: u16, j: u16) -> (u16, u1
         9291197 => (k.wrapping_add(18), j.wrapping_add(2)),
         9291206 => (k.wrapping_add(30), j.wrapping_add(2)),
         9291215 => {
-            put(host, Id, k, 0);
+            put!(host, definition, k, 0);
             (k, 0)
         }
         9291220 => {
-            let data = host.record(j);
-            put(host, PreAction, k, data.word(0));
+            let data = host.record(Source::Loaded, 0x8d, j);
+            put!(host, pre_action, k, data.native_word(0));
             (k, j.wrapping_add(2))
         }
         9291229 => {
-            put(host, PreAction, k, 0xc5e3);
+            put!(host, pre_action, k, 0xc5e3);
             (k, j)
         }
         9291294 => {
-            let data = host.record(j);
-            (k, data.word(0))
+            let data = host.record(Source::Loaded, 0x8d, j);
+            (k, data.native_word(0))
         }
         9291321 => {
-            let cursor = if decrement(host, Counter, k) == 1 {
+            let cursor = if decrement!(host, counter, k) == 1 {
                 j.wrapping_add(2)
             } else {
-                let data = host.record(j);
-                data.word(0)
+                let data = host.record(Source::Loaded, 0x8d, j);
+                data.native_word(0)
             };
             (k, cursor)
         }
         9291336 => {
-            let data = host.record(j);
+            let data = host.record(Source::Loaded, 0x8d, j);
             counter_byte(host, k, data.byte(0));
             (k, j.wrapping_add(1))
         }
         9291349 => {
-            let data = host.record(j);
-            put(host, Color, k, data.word(0));
+            let data = host.record(Source::Loaded, 0x8d, j);
+            put!(host, color_offset, k, data.native_word(0));
             (k, j.wrapping_add(2))
         }
         9291358 => {
-            let data = host.record(j);
-            host.music(u16::from(data.byte(0)));
+            let data = host.record(Source::Loaded, 0x8d, j);
+            host.music_delayed8(u16::from(data.byte(0)));
             (k, j.wrapping_add(1))
         }
         9291370 | 9291379 | 9291388 => {
-            let data = host.record(j);
-            let sound = data.word(0);
+            let data = host.record(Source::Loaded, 0x8d, j);
+            let sound = data.native_word(0);
             host.sound(
                 match ea {
-                    9291370 => SoundChannel::One,
-                    9291379 => SoundChannel::Two,
-                    _ => SoundChannel::Three,
+                    9291370 => 1,
+                    9291379 => 2,
+                    _ => 3,
                 },
+                6,
                 sound,
             );
             (k, j.wrapping_add(1))
         }
         9302470 => {
-            let data = host.record(j);
-            host.session_mut().effects.heat = u16::from(data.byte(0));
+            let data = host.record(Source::Loaded, 0x8d, j);
+            host.session_mut().visual.palette_effects.heat = u16::from(data.byte(0));
             (k, j.wrapping_add(1))
         }
         _ => {
-            host.unreachable();
+            host.invalid_palette_instruction();
             (0, 0)
         }
     }
@@ -324,22 +366,22 @@ pub(crate) fn setup(host: &mut impl Host, ea: u32, slot: u16) {
     host.probe("palette.setup");
     match ea {
         9291397 => {}
-        9298436 => put(host, PreAction, slot, 0xe20b),
+        9298436 => put!(host, pre_action, slot, 0xe20b),
         9299008 => {
-            let script = if host.session().inputs.equipped_items & 0x20 != 0 {
+            let script = if host.session().inventory.equipment.active & 0x20 != 0 {
                 0xe8b6
-            } else if host.session().inputs.equipped_items & 1 != 0 {
+            } else if host.session().inventory.equipment.active & 1 != 0 {
                 0xe68a
             } else {
                 0xe45e
             };
-            put(host, Program, slot, script);
+            put!(host, program, slot, script);
         }
         9303856 => {
-            if host.session().inputs.miniboss_dead {
-                put(host, Id, slot, 0);
+            if host.miniboss_defeated() {
+                put!(host, definition, slot, 0);
             }
         }
-        _ => host.unreachable(),
+        _ => host.invalid_palette_instruction(),
     }
 }

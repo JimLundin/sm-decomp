@@ -8,7 +8,7 @@ mod bombs;
 mod collision;
 pub(crate) mod content;
 use crate::game::session_encoding as encoding;
-mod feedback;
+pub(crate) mod feedback;
 pub(crate) mod host;
 mod lifecycle;
 mod missiles;

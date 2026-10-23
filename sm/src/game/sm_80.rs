@@ -559,6 +559,8 @@ pub unsafe fn Nmi_ProcessVertScrollingDma(game: &mut Game) {
 }
 // Byte-backed queue layout from ram_map: three channels, sixteen slots each.
 pub(crate) fn queue_sfx(channel: usize, sound: u8, max_queued: u8, game: &mut Game) {
+    #[cfg(sm_verify_dll)]
+    crate::game::visual_runtime::samus_observer::sound(channel, sound, max_queued);
     let read_pos = 0x643 + channel;
     let write_pos = 0x646 + channel;
     let limit_pos = 0x653 + channel;

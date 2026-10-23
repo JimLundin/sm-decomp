@@ -61,7 +61,7 @@ macro_rules! update_place {
     (unaligned_word $destination:ident $([$old:ident])? = $pointer:expr => $value:expr;) => {
         let $destination: *mut u16 = $pointer;
         $(let $old = u16::from_le($destination.read_unaligned());)?
-        $crate::ram_map::write_word($value, $destination);
+        $crate::rtl::write_word($value, $destination);
     };
 }
 
@@ -384,6 +384,7 @@ pub mod game {
     pub(crate) mod external_inputs;
     pub mod item_pickups;
     pub(crate) mod item_pickups_runtime;
+    pub(crate) mod liquid_surface;
     pub(crate) mod mechanism_displacement;
     pub mod music;
     pub(crate) mod palette_effects;
@@ -393,6 +394,7 @@ pub mod game {
     pub(crate) mod room_scrolls;
     pub mod room_state;
     pub mod samus_animation;
+    pub(crate) mod samus_palette;
     pub(crate) mod samus_periodic_damage;
     pub(crate) mod samus_periodic_damage_ram;
     pub(crate) mod samus_pose;
@@ -412,6 +414,9 @@ pub mod game {
     pub mod sm_90;
     pub mod sm_91;
     pub(crate) mod sprite_drawing;
+    pub(crate) mod visual_host;
+    pub(crate) mod visual_runtime;
+    pub(crate) mod visual_state;
 
     pub mod combat_rules;
     pub mod contact_rules;
@@ -604,10 +609,25 @@ pub fn verify_player_projectile_presentation_reset_case(id: u32) -> Option<Vec<u
     game::player_projectiles::checks::presentation_reset::capture(id)
 }
 
+#[doc(hidden)]
+pub fn verify_samus_palette_candidate(
+    id: u32,
+    game: &mut game_state::Game,
+) -> Result<Vec<u8>, String> {
+    game::visual_runtime::samus_observer::capture(id, game)
+}
+
+#[path = "verification/samus_palette_defined_candidate.rs"]
+mod samus_defined_adapter;
 #[path = "verification/samus_palette_defined_cases.rs"]
 mod samus_defined_cases;
-#[path = "verification/samus_palette_defined_legacy.rs"]
-mod samus_defined_legacy;
+#[doc(hidden)]
 pub fn verify_samus_palette_defined_case(id: u32) -> Option<Vec<u8>> {
-    samus_defined_legacy::capture_case(id)
+    samus_defined_adapter::capture_case(id)
+}
+#[path = "verification/visual_runtime_checks.rs"]
+mod visual_runtime_checks;
+#[doc(hidden)]
+pub fn verify_visual_runtime_guard() -> bool {
+    visual_runtime_checks::run()
 }

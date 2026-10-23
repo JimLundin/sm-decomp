@@ -1,18 +1,6 @@
 //! Source bytes captured by the game library compilation.
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
-    (
-        "sm/src/verification/samus_palette_defined_legacy.rs",
-        include_bytes!("verification/samus_palette_defined_legacy.rs"),
-    ),
-    (
-        "sm/src/verification/samus_palette_defined_cases.rs",
-        include_bytes!("verification/samus_palette_defined_cases.rs"),
-    ),
-    (
-        "sm/src/verification/samus_palette_oracle.rs",
-        include_bytes!("verification/samus_palette_oracle.rs"),
-    ),
     ("sm/src/apu_queue.rs", include_bytes!("apu_queue.rs")),
     ("sm/src/apu_ram.rs", include_bytes!("apu_ram.rs")),
     (
@@ -24,10 +12,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/config.rs", include_bytes!("config.rs")),
     ("sm/src/cpu_infra.rs", include_bytes!("cpu_infra.rs")),
     (
-        "sm/src/game/animated_tiles/content.rs",
-        include_bytes!("game/animated_tiles/content.rs"),
-    ),
-    (
         "sm/src/game/animated_tiles/execution.rs",
         include_bytes!("game/animated_tiles/execution.rs"),
     ),
@@ -38,14 +22,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/animated_tiles/native.rs",
         include_bytes!("game/animated_tiles/native.rs"),
-    ),
-    (
-        "sm/src/game/animated_tiles/runtime.rs",
-        include_bytes!("game/animated_tiles/runtime.rs"),
-    ),
-    (
-        "sm/src/game/animated_tiles/state.rs",
-        include_bytes!("game/animated_tiles/state.rs"),
     ),
     (
         "sm/src/game/beam_charge_palette.rs",
@@ -284,6 +260,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/liquid_effects.rs"),
     ),
     (
+        "sm/src/game/liquid_surface.rs",
+        include_bytes!("game/liquid_surface.rs"),
+    ),
+    (
         "sm/src/game/mechanism_displacement.rs",
         include_bytes!("game/mechanism_displacement.rs"),
     ),
@@ -306,28 +286,12 @@ pub static FILES: &[(&str, &[u8])] = &[
     ),
     ("sm/src/game/music.rs", include_bytes!("game/music.rs")),
     (
-        "sm/src/game/palette_effects/content.rs",
-        include_bytes!("game/palette_effects/content.rs"),
-    ),
-    (
-        "sm/src/game/palette_effects/diagnostics.rs",
-        include_bytes!("game/palette_effects/diagnostics.rs"),
-    ),
-    (
         "sm/src/game/palette_effects/execution.rs",
         include_bytes!("game/palette_effects/execution.rs"),
     ),
     (
         "sm/src/game/palette_effects/mod.rs",
         include_bytes!("game/palette_effects/mod.rs"),
-    ),
-    (
-        "sm/src/game/palette_effects/runtime.rs",
-        include_bytes!("game/palette_effects/runtime.rs"),
-    ),
-    (
-        "sm/src/game/palette_effects/state.rs",
-        include_bytes!("game/palette_effects/state.rs"),
     ),
     (
         "sm/src/game/player_projectiles/access.rs",
@@ -615,6 +579,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/samus_animation.rs"),
     ),
     (
+        "sm/src/game/samus_palette.rs",
+        include_bytes!("game/samus_palette.rs"),
+    ),
+    (
         "sm/src/game/samus_periodic_damage.rs",
         include_bytes!("game/samus_periodic_damage.rs"),
     ),
@@ -689,6 +657,18 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/sprite_objects.rs",
         include_bytes!("game/sprite_objects.rs"),
+    ),
+    (
+        "sm/src/game/visual_host.rs",
+        include_bytes!("game/visual_host.rs"),
+    ),
+    (
+        "sm/src/game/visual_runtime.rs",
+        include_bytes!("game/visual_runtime.rs"),
+    ),
+    (
+        "sm/src/game/visual_state.rs",
+        include_bytes!("game/visual_state.rs"),
     ),
     (
         "sm/src/game/vram_read_queue.rs",
@@ -773,20 +753,8 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/types.rs", include_bytes!("types.rs")),
     ("sm/src/util.rs", include_bytes!("util.rs")),
     (
-        "sm/src/verification/animated_detached/animation.rs",
-        include_bytes!("verification/animated_detached/animation.rs"),
-    ),
-    (
-        "sm/src/verification/animated_detached/checks.rs",
-        include_bytes!("verification/animated_detached/checks.rs"),
-    ),
-    (
         "sm/src/verification/animated_detached/main.rs",
         include_bytes!("verification/animated_detached/main.rs"),
-    ),
-    (
-        "sm/src/verification/animated_detached/palette.rs",
-        include_bytes!("verification/animated_detached/palette.rs"),
     ),
     (
         "sm/src/verification/animated_entries.rs",
@@ -857,10 +825,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("verification/palette_detached.rs"),
     ),
     (
-        "sm/src/verification/palette_detached_checks.rs",
-        include_bytes!("verification/palette_detached_checks.rs"),
-    ),
-    (
         "sm/src/verification/palette_effects.rs",
         include_bytes!("verification/palette_effects.rs"),
     ),
@@ -871,6 +835,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/verification/player_detached/animation.rs",
         include_bytes!("verification/player_detached/animation.rs"),
+    ),
+    (
+        "sm/src/verification/player_detached/animation_independent_checks.rs",
+        include_bytes!("verification/player_detached/animation_independent_checks.rs"),
     ),
     (
         "sm/src/verification/player_detached/checks.rs",
@@ -905,6 +873,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("verification/player_detached/palette.rs"),
     ),
     (
+        "sm/src/verification/player_detached/palette_independent_checks.rs",
+        include_bytes!("verification/player_detached/palette_independent_checks.rs"),
+    ),
+    (
         "sm/src/verification/player_detached/player.rs",
         include_bytes!("verification/player_detached/player.rs"),
     ),
@@ -931,6 +903,14 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/verification/player_detached/session_host.rs",
         include_bytes!("verification/player_detached/session_host.rs"),
+    ),
+    (
+        "sm/src/verification/player_detached/visual_checks.rs",
+        include_bytes!("verification/player_detached/visual_checks.rs"),
+    ),
+    (
+        "sm/src/verification/player_detached/visual_host.rs",
+        include_bytes!("verification/player_detached/visual_host.rs"),
     ),
     (
         "sm/src/verification/player_projectiles.rs",
@@ -991,6 +971,34 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/verification/room_mechanisms.rs",
         include_bytes!("verification/room_mechanisms.rs"),
+    ),
+    (
+        "sm/src/verification/samus_palette_candidate_dll.rs",
+        include_bytes!("verification/samus_palette_candidate_dll.rs"),
+    ),
+    (
+        "sm/src/verification/samus_palette_defined_candidate.rs",
+        include_bytes!("verification/samus_palette_defined_candidate.rs"),
+    ),
+    (
+        "sm/src/verification/samus_palette_defined_cases.rs",
+        include_bytes!("verification/samus_palette_defined_cases.rs"),
+    ),
+    (
+        "sm/src/verification/samus_palette_defined_dll.rs",
+        include_bytes!("verification/samus_palette_defined_dll.rs"),
+    ),
+    (
+        "sm/src/verification/samus_palette_observer.rs",
+        include_bytes!("verification/samus_palette_observer.rs"),
+    ),
+    (
+        "sm/src/verification/samus_palette_oracle.rs",
+        include_bytes!("verification/samus_palette_oracle.rs"),
+    ),
+    (
+        "sm/src/verification/visual_runtime_checks.rs",
+        include_bytes!("verification/visual_runtime_checks.rs"),
     ),
     ("sm/src/verify_probe.rs", include_bytes!("verify_probe.rs")),
     (

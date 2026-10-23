@@ -8,5 +8,5 @@ pub(crate) fn process_one(game: &mut Game) {
     execution::process(&mut Runtime::new(game));
 }
 pub(crate) fn guard(game: &mut Game) -> bool {
-    runtime::check_guard(game)
+    crate::game::visual_runtime::check_animation_guard(game)
 }

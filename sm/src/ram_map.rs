@@ -158,7 +158,7 @@ macro_rules! word {
         )
     };
     ($game:ident.$field:ident[$index:expr] = $value:expr $(,)?) => {
-        $crate::ram_map::write_word(
+        $crate::rtl::write_word(
             $value,
             (&raw mut $game.g_ram)
                 .cast::<u8>()
@@ -168,7 +168,7 @@ macro_rules! word {
         )
     };
     ($game:ident.$field:ident = $value:expr $(,)?) => {
-        $crate::ram_map::write_word(
+        $crate::rtl::write_word(
             $value,
             (&raw mut $game.g_ram)
                 .cast::<u8>()
@@ -195,7 +195,7 @@ macro_rules! word {
             .cast::<u16>()
             .offset(($index) as isize);
         let $old = u16::from_le(destination.read_unaligned());
-        $crate::ram_map::write_word($value, destination);
+        $crate::rtl::write_word($value, destination);
         $crate::ram_map::word!(@result destination $(, $result)?)
     }};
     ($game:ident.$field:ident, |$old:ident| $value:expr $(, $result:ident)? $(,)?) => {{
@@ -204,7 +204,7 @@ macro_rules! word {
             .add($crate::ram_map::words::$field)
             .cast::<u16>();
         let $old = u16::from_le(destination.read_unaligned());
-        $crate::ram_map::write_word($value, destination);
+        $crate::rtl::write_word($value, destination);
         $crate::ram_map::word!(@result destination $(, $result)?)
     }};
     (@result $destination:ident) => { () };
@@ -251,17 +251,6 @@ macro_rules! checked_word {
     }};
 }
 pub(crate) use checked_word;
-
-/// Store one SNES word without imposing host alignment.
-///
-/// # Safety
-/// `destination` must be valid for writing two bytes. It may be unaligned.
-#[inline]
-pub(crate) unsafe fn write_word(value: u16, destination: *mut u16) {
-    unsafe {
-        destination.write_unaligned(value.to_le());
-    }
-}
 
 ram_vars! {
     0x00012 stride 2, uint16 Scalar => [REMOVED_R18, REMOVED_R20, REMOVED_R22];

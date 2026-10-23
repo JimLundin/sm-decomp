@@ -2,8 +2,18 @@
 #![forbid(unsafe_code)]
 use super::{Composed, Event, Upload, World, animated};
 
-fn composition() {
+fn initial_music(host: &mut Composed) {
+    assert_eq!(&host.world.player.visual.colors[..3], &[0, 0, 0]);
+    assert_eq!(
+        &host.world.player.visual.targets[..8],
+        &[
+            0x3800, 0x7f58, 0x6ed5, 0x5a71, 0x49ee, 0x356a, 0x24e7, 0x1083
+        ]
+    );
+}
+pub(super) fn composition() {
     let mut host = Composed::new();
+    host.on_visual_music = Some(initial_music);
     for (cursor, value) in [
         (0x8000, 0x9000),
         (0x8002, 0x40),
@@ -40,25 +50,12 @@ fn composition() {
     ] {
         host.word(0x8d, cursor, value);
     }
-    host.world.palette.colors.fill(0x7777);
-    host.world.animation.set_enabled(true);
-    host.world.palette.set_enabled(true);
+    host.world.player.visual.colors.fill(0x7777);
+    animated::set_enabled(&mut host.world.player, true);
+    super::colors::set_enabled(&mut host.world.player, true);
     animated::spawn(&mut host, 0x8000);
     host.tick();
-    let mut expected = vec![
-        Event::PaletteSpawn(0x8000),
-        Event::Color(0, 0),
-        Event::Color(1, 0),
-        Event::Color(2, 0),
-    ];
-    expected.extend(
-        [
-            0x3800, 0x7f58, 0x6ed5, 0x5a71, 0x49ee, 0x356a, 0x24e7, 0x1083,
-        ]
-        .into_iter()
-        .enumerate()
-        .map(|(i, v)| Event::Target(i, v)),
-    );
+    let mut expected = vec![Event::PaletteSpawn(0x8000)];
     expected.extend([
         Event::Music(7),
         Event::Sound(1, 9),
@@ -70,14 +67,29 @@ fn composition() {
         }),
     ]);
     assert_eq!(host.events, expected);
-    assert_eq!(host.world.palette.effects.slots[7].id, 0x8000);
-    assert_eq!(host.world.palette.effects.slots[7].program, 0x9006);
-    assert_eq!(&host.world.palette.colors[..4], &[0x1234, 0, 0, 0x7777]);
+    assert_eq!(
+        &host.world.player.visual.targets[..8],
+        &[
+            0x3800, 0x7f58, 0x6ed5, 0x5a71, 0x49ee, 0x356a, 0x24e7, 0x1083
+        ]
+    );
+    assert_eq!(
+        host.world.player.visual.palette_effects.slots[7].definition,
+        0x8000
+    );
+    assert_eq!(
+        host.world.player.visual.palette_effects.slots[7].program,
+        0x9006
+    );
+    assert_eq!(
+        &host.world.player.visual.colors[..4],
+        &[0x1234, 0, 0, 0x7777]
+    );
     assert_eq!(host.world.progression.events[1], 2);
     assert_eq!(host.world.progression.bosses[0], 2);
     assert_eq!(host.world.progression.scratch, 2);
-    assert!(host.world.palette.inputs.miniboss_dead);
-    assert_eq!(host.world.animation.slots[5].source, 0);
+    assert!(super::game::visual_host::Aliases::miniboss_defeated(&host));
+    assert_eq!(host.world.player.visual.animated_tiles.slots[5].source, 0);
     let snapshot = host.world.clone();
     host.events.clear();
     host.tick();

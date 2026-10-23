@@ -25,8 +25,13 @@ impl Host for Composed {
     fn sound(&mut self, bank: u8, limit: u8, sound: u16) {
         self.events.push(Event::PlayerSound(bank, limit, sound));
     }
-    fn player_step(&mut self, _: PlayerStep) {
-        panic!("Samus simulation outside prepared scope")
+    fn player_step(&mut self, step: PlayerStep) {
+        match step {
+            PlayerStep::SuitIndex => {
+                super::game::samus_palette::update_suit_index(&mut self.world.player)
+            }
+            _ => panic!("Samus simulation outside prepared scope"),
+        }
     }
     fn palette(&mut self, effect: PaletteEffect) -> u8 {
         match effect {
@@ -35,7 +40,23 @@ impl Host for Composed {
                 colors::spawn(self, definition);
                 0
             }
-            _ => panic!("Samus palette operation outside prepared scope"),
+            PaletteEffect::Suit => {
+                super::game::samus_palette::load_suit(
+                    self,
+                    super::game::visual_state::PaletteBuffer::Current,
+                );
+                0
+            }
+            PaletteEffect::SuitTarget => {
+                super::game::samus_palette::load_suit(
+                    self,
+                    super::game::visual_state::PaletteBuffer::Target,
+                );
+                0
+            }
+            PaletteEffect::Charge(output) => {
+                super::game::samus_palette::apply_charge_output(self, output)
+            }
         }
     }
     fn enable_hdma(&mut self) {

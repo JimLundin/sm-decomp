@@ -108,33 +108,10 @@ crate::game::constants::typed_constants! { u32;
     fnSamusMovementType_Xray = 9496911,
     fnsub_90EB86 = 9497478,
 }
-/// Which liquid contains a vertical position. This query deliberately ignores
-/// equipment: movement and graphics callers apply different suit rules.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) enum LiquidAtHeight {
-    None,
-    Water,
-    LavaAcid,
-}
-
+pub(crate) use crate::game::liquid_surface::LiquidAtHeight;
 pub(crate) fn liquid_at_height(game: &Game, y: u16) -> LiquidAtHeight {
-    let water_y = u16::from_le_bytes([game.g_ram[0x195e], game.g_ram[0x195f]]);
-    // A present water surface takes precedence, even above the queried height.
-    // Preserve the SNES sign-bit test on subtraction, including wraparound.
-    if water_y & 0x8000 == 0 {
-        if water_y.wrapping_sub(y) & 0x8000 != 0 {
-            let options = u16::from_le_bytes([game.g_ram[0x197e], game.g_ram[0x197f]]);
-            if options & 4 == 0 {
-                return LiquidAtHeight::Water;
-            }
-        }
-    } else {
-        let lava_y = u16::from_le_bytes([game.g_ram[0x1962], game.g_ram[0x1963]]);
-        if lava_y & 0x8000 == 0 && lava_y.wrapping_sub(y) & 0x8000 != 0 {
-            return LiquidAtHeight::LavaAcid;
-        }
-    }
-    LiquidAtHeight::None
+    let word = |at| u16::from_le_bytes([game.g_ram[at], game.g_ram[at + 1]]);
+    crate::game::liquid_surface::at_height(word(0x195e), word(0x1962), word(0x197e), y)
 }
 
 pub unsafe fn SetLiquidPhysicsType(game: &mut Game) {
@@ -1558,31 +1535,22 @@ pub unsafe fn UpdateBeamTilesAndPalette(game: &mut Game) {
     }
 }
 pub unsafe fn WriteBeamPalette_A(a: u16, game: &mut Game) {
-    unsafe {
-        WriteBeamPalette_Y((2 * (a as i32 & 0xfff)) as u16, game);
-    }
+    crate::game::samus_palette::write_beam_palette(
+        &mut crate::game::session_runtime::Runtime::new(game),
+        a & 0xfff,
+    );
 }
 pub unsafe fn WriteBeamPalette_Y(j: u16, game: &mut Game) {
-    unsafe {
-        let r0: u16 = crate::rtl::rom_table_word!(game, 0x90c3c9, (j >> 1) as isize);
-        let mut v2: u16 = 0;
-        for v1 in (0u16..32).step_by(2) {
-            *(ram_ptr!(game, u16; 0xc000)).offset(((v2 as i32 >> 1) + 224) as isize) =
-                *(RomPtr_90((r0).wrapping_add(v1), game) as *mut u16);
-            v2 = (v2).wrapping_add(2);
-        }
-    }
+    crate::game::samus_palette::write_beam_palette(
+        &mut crate::game::session_runtime::Runtime::new(game),
+        j >> 1,
+    );
 }
 pub unsafe fn LoadProjectilePalette(a: u16, game: &mut Game) {
-    unsafe {
-        let r0: u16 = crate::rtl::rom_table_word!(game, 0x90c3c9, (a as i32 & 0xfff) as isize);
-        let mut v2: u16 = 0;
-        for v1 in (0u16..32).step_by(2) {
-            *(ram_ptr!(game, u16; 0xc000)).offset(((v2 as i32 >> 1) + 224) as isize) =
-                *(RomPtr_90((r0).wrapping_add(v1), game) as *mut u16);
-            v2 = (v2).wrapping_add(2);
-        }
-    }
+    crate::game::samus_palette::write_beam_palette(
+        &mut crate::game::session_runtime::Runtime::new(game),
+        a & 0xfff,
+    );
 }
 pub(crate) use crate::game::player_projectiles::draw_flare as DrawFlareAnimationComponent;
 pub unsafe fn HandleArmCannonOpenState(game: &mut Game) {
@@ -3136,15 +3104,8 @@ pub fn Samus_AlignBottomWithPrevPose(game: &mut Game) {
     game.set_samus_prev_y_pos(game.samus_prev_y_pos().wrapping_add(adjustment));
 }
 pub unsafe fn Samus_UpdateSuitPaletteIndex(game: &mut Game) {
-    unsafe {
-        if (word!(game.equipped_items) & 0x20) != 0 {
-            word!(game.samus_suit_palette_index = 4);
-        } else if (word!(game.equipped_items) & 1) != 0 {
-            word!(game.samus_suit_palette_index = 2);
-        } else {
-            word!(game.samus_suit_palette_index = 0);
-        };
-    }
+    let mut runtime = crate::game::session_runtime::Runtime::new(game);
+    crate::game::samus_palette::update_suit_index(runtime.session_mut());
 }
 static byte_90ED50: [u8; 28] = [
     0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0,

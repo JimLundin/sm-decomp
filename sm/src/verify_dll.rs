@@ -398,14 +398,10 @@ pub unsafe extern "C" fn sm_verify_samus_palette_oracle(
     }
 }
 
-/// Copy a defined Samus palette synthetic observation.
-/// # Safety
-/// Output must contain capacity writable bytes.
+include!("verification/samus_palette_candidate_dll.rs");
+
+include!("verification/samus_palette_defined_dll.rs");
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn sm_verify_samus_palette_defined_case(
-    id: u32,
-    output: *mut u8,
-    capacity: usize,
-) -> usize {
-    unsafe { copy_case(id, output, capacity, sm::verify_samus_palette_defined_case) }
+pub extern "C" fn sm_verify_visual_runtime_guard() -> bool {
+    sm::verify_visual_runtime_guard()
 }
