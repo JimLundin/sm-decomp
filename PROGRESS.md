@@ -35,17 +35,23 @@ flowchart TB
     FCORE --> FLEG["legacy callers / 18 files<br/>draft source review PASS"]:::draft
     FLEG --> FSAVE["sm_81 save alignment repair<br/>draft source review PASS"]:::draft
     FSAVE --> FCPU["Save alignment / original CPU<br/>2 × 7 stages match"]:::done
-    FCODEC --> FGUARD["210-byte ownership guard<br/>draft source review PASS"]:::draft
-    FBASE["71 reference captures<br/>execution + audit PASS"]:::done --> FCHECK["Full replacement comparisons<br/>pending"]:::pending
+    FCODEC --> FGUARD["210-byte ownership guard<br/>candidate execution PASS"]:::done
+    FBASE["71 reference captures<br/>execution + audit PASS"]:::done --> FCHECK["Candidate comparisons<br/>71 / 71 match + 2 saves match"]:::done
     FPLM --> FCHECK
     FVIS --> FCHECK
     FEPR --> FCHECK
     FLEG --> FCHECK
     FCPU --> FCHECK
     FGUARD --> FCHECK
-    FCHECK --> FMUT["Shared-consumer checks + mutations<br/>pending"]:::pending
+    FCHECK --> FSHARED["39 shared-consumer comparisons<br/>+ visual guard PASS"]:::done
+    FLEG --> FKEVEN["Kraid / 8 even-area references<br/>actual caller execution PASS"]:::done
+    FLEG --> FKODD["Kraid / odd-area CPU comparison<br/>in preparation"]:::active
+    FSHARED --> FMUT["42 detached + 9 DLL mutations<br/>execution pending"]:::pending
+    FKEVEN --> FKCOMPARE["Kraid candidate comparisons<br/>pending"]:::pending
+    FKODD --> FKCOMPARE
+    FKCOMPARE --> FADOPT
     FMUT --> FADOPT["Adopt progression owner<br/>pending"]:::pending
-    class FCORE,FCODEC,FCPU,FGUARD,FBASE changed
+    class FGUARD,FCHECK,FSHARED,FKEVEN,FKODD,FKCOMPARE,FMUT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

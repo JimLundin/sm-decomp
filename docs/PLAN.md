@@ -433,8 +433,17 @@ references; measure build/test time and resource growth before changing the loop
    gameplay scratch05E7/05E8 fully compared. Never execute old Rust SaveToSram.
    Local next-flags-session/reference-1 and save-alignment-results-1 retain
    source-checked captures and comparisons. This qualifies the narrow save
-   repair for those scenarios; full progression replacement comparisons,
-   composed execution and mutation checks remain pending.
+   repair for those scenarios. Assembled candidate00688569 passes root formatting,
+   direct release build (27.54s), all71 flag comparisons, both7-stage CPU-qualified
+   saves, the210-byte Runtime guard,39 shared-consumer comparisons and visual
+   Runtime guard. These are constructed actual-code scenarios, not movie coverage.
+   Eight additional defined even-area Kraid predecessor captures pass ondd007402;
+   actual odd-area native reads/stores require originalCPU qualification because
+   the old Rust typed accesses are undefined there. Kraid candidate comparisons,
+   hosted composition and42detached+9DLL mutations remain pending.
+   Assembled production grows278lines/+2451tokens/+10942LFbytes; provisional
+   verification Rust+1725 and Python+172, before Kraid additions. No reduction
+   claim;18ports and3duplicate helpers retire in the candidate, not yet main.
    Public atlas snapshot4ba01b81 is deployed via40034126172: browser/accessibility
    and Pages pass; live HTTP200 bytes match committed HTML. It reflects adopted
    sprite ownership, while this progression work remains a draft.
