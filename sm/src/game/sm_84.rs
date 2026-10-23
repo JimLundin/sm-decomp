@@ -734,19 +734,6 @@ pub unsafe fn SpawnMotherBrainGlassShatteringShard(a: u16, game: &mut Game) {
 }
 
 pub use self::PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused as PlmSetup_D70C_NoobTube;
-pub unsafe fn sub_84D7EF(k: u16, game: &mut Game) {
-    unsafe {
-        let v1: u16 = (word!(game.room_width_in_blocks) as i32 * 2 + k as i32) as u16;
-        WriteLevelDataBlockTypeAndBts(v1, 0xd0ff, game);
-        let v2: u16 = (word!(game.room_width_in_blocks) as i32 * 2 + v1 as i32) as u16;
-        WriteLevelDataBlockTypeAndBts(v2, 0xd0fe, game);
-        WriteLevelDataBlockTypeAndBts(
-            (word!(game.room_width_in_blocks) as i32 * 2 + v2 as i32) as u16,
-            0xd0fd,
-            game,
-        );
-    }
-}
 pub unsafe fn SetPlmVarPtr(k: u16, a: u16, game: &mut Game) {
     unsafe {
         *(ram_ptr!(game, u16; word!(game.plm_variable[(k >> 1)]) as isize)) = a;
@@ -897,27 +884,6 @@ crate::game::callback_dispatch! {
         WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[(j >> 1)]), 0x8044, game);
         0
     };
-    [8706700] PlmSetup_EyeDoorEye [] {
-        let idx: i32 = PrepareBitAccess(word!(game.plm_room_arguments[(j >> 1)]), game) as i32;
-        if (word!(game.bitmask) & *ram_ptr!(game; 0xd8b0, idx as isize) as u16) == 0 {
-            let v1: i32 = j as i32 >> 1;
-            WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[v1]), 0xc044, game);
-            WriteLevelDataBlockTypeAndBts(
-                (2 * word!(game.room_width_in_blocks) as i32
-                    + word!(game.plm_block_indices[v1]) as i32) as u16,
-                0xd0ff,
-                game,
-            );
-        }
-        0
-    };
-    [8706745] PlmSetup_EyeDoor [] {
-        let idx: i32 = PrepareBitAccess(word!(game.plm_room_arguments[(j >> 1)]), game) as i32;
-        if (word!(game.bitmask) & *ram_ptr!(game; 0xd8b0, idx as isize) as u16) == 0 {
-            WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[(j >> 1)]), 0xa000, game);
-        }
-        0
-    };
     [8706846] PlmSetup_SetMetroidRequiredClearState [] {
         word!(
             game.plm_pre_instrs[(j >> 1)] = crate::rtl::rom_table_word!(
@@ -1044,6 +1010,8 @@ crate::game::callback_dispatch! {
         8707916 => [crate::game::mechanism_cannon_setup_ram::setup(j, crate::game::mechanism_cannon_setup::Setup::Unshielded, game)];
         8696028 => [crate::game::mechanism_plants_ram::begin(j, crate::game::mechanism_plants::Surface::Floor, game)];
         8696083 => [crate::game::mechanism_plants_ram::begin(j, crate::game::mechanism_plants::Surface::Ceiling, game)];
+        8706700 => [crate::game::mechanism_eye_door_ram::begin(j, crate::game::mechanism_eye_door::Part::Eye, game)];
+        8706745 => [crate::game::mechanism_eye_door_ram::begin(j, crate::game::mechanism_eye_door::Part::Body, game)];
         8704399 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::LowerNorfair, displacement, game)];
         8705568 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::WreckedShip, displacement, game)];
         8705740 => PlmSetup_D70C_NoobTube;
@@ -1333,15 +1301,6 @@ crate::game::callback_dispatch! {
         }
         word!(game.plm_timers[v2] = 0);
     };
-    [8705875] PlmPreInstr_WakePlmIfRoomArgumentDoorIsSet [] {
-        let idx: i32 = PrepareBitAccess(word!(game.plm_room_arguments[v2]), game) as i32;
-        if (word!(game.bitmask) & *ram_ptr!(game; 0xd8b0, idx as isize) as u16) != 0 {
-            let v3: i32 = k as i32 >> 1;
-            word!(game.plm_pre_instrs[v3] = addr_locret_84D779 as u16);
-            word!(game.plm_instr_list_ptrs[v3] = word!(game.plm_instruction_list_link_reg[v3]));
-            word!(game.plm_instruction_timer[v3] = 1);
-        }
-    };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     @prefix { let v1: i32 = k as i32 >> 1; };
     [8698706] PlmPreInstr_WakePlmIfTriggered [] {
@@ -1377,6 +1336,7 @@ crate::game::callback_dispatch! {
     };
     @external {
         8694921 => [crate::game::mechanism_plants_ram::hold(k, game)];
+        8705875 => [crate::game::mechanism_eye_door_ram::wake(k, game)];
         8684649 => [()]; 8708008 => [()]; 8685264 => [()]; 8684774 => [()]; 8684861 => [()];
         8686246 => [()]; 8698787 => [()]; 8704854 => [()]; 8698618 => [()];
         8696028 => [{
@@ -2005,18 +1965,6 @@ crate::game::callback_dispatch! {
     [8705974] PlmInstr_SpawnEyeDoorSmokeProjectile [plmp] {
         SpawnEprojWithRoomGfx(addr_kEproj_EyeDoorSmoke as u16, 0xb, game);
     };
-    [8705987] PlmInstr_MoveUpAndMakeBlueDoorFacingRight [plmp] {
-        let v2: i32 = k as i32 >> 1;
-        let blk: u16 = word!(checked_i32, game.plm_block_indices[v2] -= word!(game.room_width_in_blocks) as i32 * 2, reread);
-        WriteLevelDataBlockTypeAndBts(blk, 0xc041, game);
-        sub_84D7EF(blk, game);
-    };
-    [8706010] PlmInstr_MoveUpAndMakeBlueDoorFacingLeft [plmp] {
-        let v2: i32 = k as i32 >> 1;
-        let blk: u16 = word!(checked_i32, game.plm_block_indices[v2] -= word!(game.room_width_in_blocks) as i32 * 2, reread);
-        WriteLevelDataBlockTypeAndBts(blk, 0xc040, game);
-        sub_84D7EF(blk, game);
-    };
     @functions [pub unsafe fn (
     plmp: PlmScript,
     k: u16,
@@ -2100,6 +2048,8 @@ crate::game::callback_dispatch! {
         8685348 => [PlmInstr_Goto(j, k)];
         8694941 => [{crate::game::mechanism_plants_ram::hurt(game); j}];
         8694961 => [{crate::game::mechanism_plants_ram::protect(game); j}];
+        8705987 => [{crate::game::mechanism_eye_door_ram::convert(k, crate::game::mechanism_eye_door::Side::Right, game); j}];
+        8706010 => [{crate::game::mechanism_eye_door_ram::convert(k, crate::game::mechanism_eye_door::Side::Left, game); j}];
         8707126 => PlmInstr_DamageDraygonTurret2;
     }
 }

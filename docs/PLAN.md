@@ -104,29 +104,28 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares the complete nonvisual plant capture/hold/
-   damage/protection interaction after cannons at `2352e9c`. `mechanism_plants`
-   owns floor/ceiling alignment, terrain deactivation, saved coordinates, ordered
-   player holding, periodic damage and release protection. Five bank bodies are
-   retired. Setup and preinstruction re-entry routes remain numeric; the owned
-   scheduler adapter intercepts all three preinstructions and both commands
-   without native fallback. Core and checked adapter forbid unsafe. Encoded state
-   stays RAM authoritative. Seventy-six of 115 setup identities are shared; 39
-   and native dispatch/authority work remain. Generic scheduling/drawing remains.
+   Latest verified stage shares eye-door placement, persistent-open wakeup and
+   blue-door conversion after plants at `dd13b47e`. `mechanism_eye_door` retires
+   five bank bodies and their sole-use extension helper. Setup queries always
+   preserve scratch writes, including high-bit arguments; eye placement rereads
+   live block after its first tile, and conversion preserves store/reread plus
+   per-extension width reads. Core and checked adapter forbid unsafe. Candidate
+   wake/conversion routes bypass native dispatch. Encoded state stays RAM
+   authoritative. Seventy-eight of 115 setup identities are shared; 37 and native
+   dispatch/authority work remain. Projectile initialization/drawing remain.
 
-   Final checks pass 1,360 defined setup comparisons, 1,504 preinstruction/update
-   comparisons (1,360 setup re-entries plus 144 hold/damage/protection sequences),
-   eight complete nonvisual lifecycle comparisons and 640 replacement-only bounds
-   checks. Accepted original terrain FFFE/FFFF would be out of bounds and is never
-   executed; rejection at those indices remains defined. Four/eight-cycle tails
-   exercise actual counted branches, protection reset, clearpre and deletion.
-   Native fallback traps prove the candidate uses its new safe routes. Independent
-   source/domain review and 197 runtime / 234 local compiled identities pass.
-   Selected cannon, item, scroll, station, Chozo, hand, source/setup, closing and
-   runtime-collision checks pass. Production release/frontend/verifier/source
-   passes (46.50s); prospective release passes (47.27s). No movie, full scheduler,
-   visible rendering or full-composition runtime ran; authored nonvisual sequences
-   do not establish those results.
+   Final checks pass 13,320 defined direct comparisons, including 3,440 expected
+   checked-placement failures, plus 56 progress/query/hit comparisons and 24 body
+   collision comparisons. Actual shot delivery feeds BD50 and 8A91, then body
+   wake/deletion, conversion, blue-door collision and SetBTS/Delete. Cases cover
+   all four collision positions, loaded-open/high-bit query distinctions,
+   hit-count wrap and body damage gates. Independent source/domain review and
+   200 runtime / 237 local compiled identities pass. Selected plants, cannon,
+   item, scroll, station, Chozo, hand, source/setup, closing and runtime-collision
+   checks pass. Production release/frontend/verifier/source passes (48.95s);
+   prospective release passes (46.18s). No movie, full scheduler, visible
+   rendering or full-composition runtime ran. The retained acid initializer's
+   unaligned native argument read is not executed or claimed as defined evidence.
 
    Historical correction: the terrain stage's 18 visible restore/render cases
    reach a native u16 read at odd RAM address 0x1E67. Those results are not
@@ -134,15 +133,15 @@ references; measure build/test time and resource growth before changing the loop
    comparisons; do not rerun the undefined cases. Current selected suites exclude
    them. Current item restores assert the offscreen guard before that read.
 
-   Main is **104,281 Rust lines in 170 files**. Prospective composition is
-   **112,945 (+8,664)**, unadopted. This stage adds 114 main and 59 owned/wiring
-   lines: **+173 complete lines**, +1,511 lexical tokens and +5,488 LF-normalized
-   bytes. Verification adds 668 lines; implementation plus checks adds 841.
+   Main is **104,386 Rust lines in 172 files**. Prospective composition is
+   **113,094 (+8,708)**, unadopted. This stage adds 105 main and 44 owned/wiring
+   lines: **+149 complete lines**, +1,448 lexical tokens and +4,687 LF-normalized
+   bytes. Verification adds 977 lines; implementation plus checks adds 1,126.
    The candidate previously delegated these behaviors to native callbacks; no
    duplicate owned algorithm existed to retire. No dependency or native/installer/
-   launcher source is added. Unsafe declarations remain 2,886; cast-containing
-   lines fall six to 6,048. No net reduction, complete unsafe retirement,
-   persistent ownership or backend-independence claim.
+   launcher source is added. Unsafe declarations fall one to 2,885;
+   cast-containing lines fall fourteen to 6,034. No net reduction, complete unsafe
+   retirement, persistent ownership or backend-independence claim.
 
    Next dependencies, in order:
 
@@ -189,11 +188,13 @@ references; measure build/test time and resource growth before changing the loop
      geometry, and compare shot-count/damage consumers with qualified down-right.
    - [x] Share plant capture/hold/damage/protection, retire five bodies and
      bypass native candidate callbacks; compare complete nonvisual release tails.
+   - [x] Share eye-door placement/open wakeup/blue conversion, retire five
+     bodies and helper, and compare actual progress and collision/deletion tails.
    - Close remaining room/event/boss setups, then constants/no-op/result routes.
      Preserve synchronous writes, nested displacement and failure prefixes before
      retiring native dispatch. The 115-identity inventory is in the local door
-     handoff; 25 room/event/boss and 14 residual identities remain. Select one
-     coherent responsibility through caller/validation investigation. The plants
+     handoff; 23 room/event/boss and 14 residual identities remain. Select one
+     coherent responsibility through caller/validation investigation. The eye-door
      handoff records current scope and retained consumer dependencies.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
@@ -202,7 +203,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified plants continuation, with
+   `runtime-impact-working/` is the verified eye-door continuation, with
+   `EYE_DOOR_HANDOFF.md`, `eye-door-price.json` and
+   `eye-door-check-attempt-1.log`. `eye-door-parent/` preserves prior
+   main/carrier/local/composition inputs. Plants evidence remains in
    `PLANTS_HANDOFF.md`, `plants-price.json` and `plants-check-attempt-1.log`.
    `plants-parent/` preserves prior main/carrier/local/composition inputs.
    Cannon evidence remains in
@@ -398,12 +402,12 @@ content.
 
 ## Progress and references
 
-Verified plants stage: Rust 104,281; maintained C bridge 266 and headers
-296 = **104,843 implementation lines**. Including 803 dependency-installer and
-107 verifier-launcher lines gives **105,753**. The separate prospective owned
+Verified eye-door stage: Rust 104,386; maintained C bridge 266 and headers
+296 = **104,948 implementation lines**. Including 803 dependency-installer and
+107 verifier-launcher lines gives **105,858**. The separate prospective owned
 composition and local comparison additions are disclosed above.
 Residue counters: raw offsets 21; C blocks 7; counted C exports 6; no_mangle 65;
-unsafe declarations 2,886; cast-containing lines 6,048. These narrow counters do
+unsafe declarations 2,885; cast-containing lines 6,034. These narrow counters do
 not count all unsafe operations. Use the actual checkout's progress output for
 new changes; uncommitted drafts are not landed savings.
 The isolated launch draft is now synchronized and verified; its original source

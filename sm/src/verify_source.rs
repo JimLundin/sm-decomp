@@ -4,6 +4,14 @@
 
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/game/mechanism_eye_door.rs",
+        include_bytes!("game/mechanism_eye_door.rs"),
+    ),
+    (
+        "sm/src/game/mechanism_eye_door_ram.rs",
+        include_bytes!("game/mechanism_eye_door_ram.rs"),
+    ),
+    (
         "sm/src/game/mechanism_plants.rs",
         include_bytes!("game/mechanism_plants.rs"),
     ),

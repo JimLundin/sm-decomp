@@ -9,49 +9,54 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares complete nonvisual plant capture/hold/damage/protection
-following cannons at `2352e9c`. Five bank bodies are retired: floor/ceiling setup,
-position hold, periodic damage and release protection. Both setup identities
-remain available as preinstruction re-entry routes. The candidate's safe
-encoded_mechanism_pass adapter intercepts three preinstructions and two commands,
-publishing consumed state, using the shared core/fields, and importing again.
-Trap bindings prove those routes bypass native fallback. Native operands remain
-unchanged; the owned opcode cursor advances two bytes with the same image.
+The latest stage shares eye-door placement, persistent-open wakeup and blue-door
+conversion after plants at `dd13b47e`. Five bank bodies and helper D7EF retire.
+Setup2, wake D753 and conversion D7C3/D7DA keep numeric identities; the candidate
+intercepts wake/conversion in its safe typed adapter, preserving cursor+2.
+Both new modules forbid unsafe and reuse checked PrepareBitAccess. RAM remains
+authoritative; 78/115 setup identities are shared, 37 remain.
 
-Both new modules forbid unsafe. Floor alignment observes radius then Y; ceiling
-observes Y then radius. Accepted capture masks terrain8FFF before reading live X
-and Y, saving Y minus/plus one. Holding writes X, then reads/writes Y, then ORs
-live protection10. Damage wraps by two; release protection overwrites48. Numeric
-routes and aliases remain. RAM is authoritative; 76/115 setups are shared,
-39 remain. Generic scheduling, drawing and persistent ownership are unfinished.
+Setup/wake always query progress with scratch writes even for high-bit arguments;
+retained generic 8A72 skips those arguments and preserves scratch. Eye installation
+reads width then live block after the first tile. Wake stops its preinstruction
+before reading the live link. Conversion captures old block before width, stores
+and rereads the moved block, then reads width again for each chained extension.
+These orderings and exact C041/C040, D0FF/D0FE/D0FD encodings remain.
 
-Main: **104,281 Rust lines in 170 files**, unsafe declarations 2,886 unchanged,
-casts 6,048 (-6). Maintained implementation 104,843; installers/launcher included
-105,753. Prospective composition: **112,945 in 264 files**, **+8,664 over main**,
-unadopted. Stage main cost is +114 lines/+1,053 lexical tokens/+3,351 normalized
-bytes; complete implementation is +173/+1,511/+5,488. Retained verification adds
-668/+8,149/+26,868; implementation plus checks adds 841 lines. Local production
-+58 lines is already represented in composition. These behaviors previously
-used native callbacks; no duplicate owned algorithm existed to retire. No
-external dependency/native/installer/launcher additions, net reduction, full
-unsafe retirement, persistent authority or backend-independence claim.
+Main: **104,386 Rust lines in 172 files**, unsafe declarations 2,885 (-1), casts
+6,034 (-14). Maintained implementation 104,948; installers/launcher included
+105,858. Prospective composition: **113,094 in 267 files**, **+8,708 over main**,
+unadopted. Stage main cost is +105 lines/+1,055 lexical tokens/+2,991 normalized
+bytes; complete implementation is +149/+1,448/+4,687. Retained verification adds
+977/+10,459/+36,726; implementation plus checks adds 1,126 lines. Local production
++43 lines is already represented in composition. Previously these routes used
+native callbacks; no duplicate owned algorithm existed. No dependency/native/
+installer/launcher additions, net reduction, full unsafe retirement, persistent
+authority or backend-independence claim.
 
-Use `runtime-impact-working/PLANTS_HANDOFF.md`, `plants-price.json` and
-`plants-check-attempt-1.log`. First execution passes (18.29s): 1,360 defined setup
-comparisons; 1,504 preinstruction/update comparisons comprising 1,360 re-entries
-and 144 hold/damage/protection sequences; eight nonvisual lifecycle comparisons;
-640 replacement-only bounds checks. Accepted original FFFE/FFFF terrain access
-would leave RAM bounds and is never invoked; rejected capture at those indices
-is defined, and accepted FFFD is valid. New bounds failures leave RAM unchanged.
-Old field access is raw unaligned LE, with defined bounds checked by fixtures.
+Use `runtime-impact-working/EYE_DOOR_HANDOFF.md`, `eye-door-price.json` and
+`eye-door-check-attempt-1.log`. First execution passes (18.56s): 13,320 defined
+direct comparisons, including 3,440 matching checked-placement failures; 56
+progress/query/hit comparisons; 24 body collision comparisons. Raw unaligned LE
+fields and door-byte accesses stay in bounds for selected u16 inputs. Tile helper
+high-byte writes are checked; FFFC is the highest valid block, FFFD/FFFE/FFFF
+fail where reached. Prefix simulation preserves live aliases and expected status;
+whole-RAM parity covers preceding writes. Native symbolic tests cover ordering
+and injected failure prefixes; candidate fallback traps cover migrated routes.
 
-Directed cases cover saved-coordinate/terrain aliases, broad/odd slots, alignment
-and wrapping values. Native symbolic Context checks preserve lazy reads, changed
-values across effects, and failure prefixes. Actual nonvisual floor/ceiling tails
-execute four/eight counted cycles with repeated holding and damage, actual timer
-branches, protection48, clearpre and deletion. Authored scripts and direct
-operation calls do not establish scheduler timing, movie or visible rendering
-coverage. Rendering remains a separate dependency.
+Actual closed-eye extension collision spawns C83E and delivers missile/super
+signals to BD50. Three missiles or one super reach the retained 8A91 threshold,
+including its following-byte word copy to room argument. Body/bottom D753 wake
+and delete, eye conversion places blue geometry, and independent scenes probe
+all four positions before actual SetBTS40/41 and deletion. Additional cases
+cover loaded-open/high-bit query scratch, low-byte hit-counter wrap/high-bit
+skip, and body spike damage's area/boss/protection gates with wrapping damage.
+Review corrected repeated collision probes to use fresh geometry before runs.
+
+The acid projectile initializer still has an always-unaligned native argument
+read at 1DC7+2slot and is not invoked. Projectile/draw lifetime remains a separate
+dependency. These authored nonvisual sequences establish no movie, complete
+scheduler, visible/VRAM rendering or full-composition runtime result.
 
 Historical correction: 18 visible terrain restore/render cases (nine kinds by
 two aliases) reach DrawPlm's native u16 dereference at odd RAM 0x1E67. They are
@@ -60,32 +65,32 @@ do not rerun the undefined cases. They occur only in the standalone terrain
 export, excluded from current selected suites. This does not diagnose the
 inherited Intro mismatch in `DRAWING_HANDOFF.md`.
 
-Cannon 3630/1420/46/8, item 3476/1320/14/32, scroll 5816/1296/52,
-station 3240/112/149/6, Chozo 592/4/4/16, selected hands 52/163/12,
-source/setup 342/672/47, closing 74/120/7 and runtime collision 198/545/176/1
-pass. Cannon down-right and item graphics retain their qualified checked-source
-classifications; item actual restore tails remain offscreen. Git-frozen references
-and 197 runtime / 234 local compiled identities pass. Historical full contact
-checks remain excluded for stale simulated-null-handler assumptions. Unchanged
-scroll bounded nonreturn checks were not repeated.
+Plants 1360/1504/8/640, cannon 3630/1420/46/8, item 3476/1320/14/32,
+scroll 5816/1296/52, station 3240/112/149/6, Chozo 592/4/4/16,
+selected hands 52/163/12, source/setup 342/672/47, closing 74/120/7 and
+runtime collision 198/545/176/1 pass. Cannon down-right and item graphics retain
+their checked-source classifications; item actual restores remain offscreen.
+Git-frozen references and 200 runtime / 237 local compiled identities pass.
+Historical full contact checks remain excluded for stale simulated-null-handler
+assumptions. Unchanged scroll bounded nonreturn checks were not repeated.
 
-Production Rust 2024 release/frontend/verifier/source passes (46.50s), prospective
-headless release passes (47.27s), carrier17.96s and harness18.46s, all first-pass.
+Production Rust 2024 release/frontend/verifier/source passes (48.95s), prospective
+headless release passes (46.18s), carrier18.01s and harness17.80s, all first-pass.
 Changed gameplay/root formatting and diff checks pass. Full verify_source.rs
 formatting retains baseline differences; added entries conform, and an exact
 comparison confirms all remaining formatter differences are inherited from HEAD.
 Production hash:
-`180d9b13d519f64935b93a098a2bcadec86a6137a35d7f0136dac1f43e6ae70b`.
+`730f0cb57d8cfcdcfe4692168136535bcfbbc07333b988afff56bf959eb4cade`.
 Compiler lane is released and DLL unloaded.
 
-`plants-parent/` preserves prior main/carrier/local/composition sources. Earlier
+`eye-door-parent/` preserves prior main/carrier/local/composition sources. Earlier
 snapshots/caches remain. Do not rerun historical preparation scripts; composition
-lives under `impact-composition/sm/src`. The eye-door persistent-open interaction
-is the next proposed responsibility among 25 remaining room/event/boss setups,
-followed by 14 residual identities. Runtime promotion needs reset/load/rewind/
-external-writer checks; rendering, sound and boot-to-credits remain unfinished.
-The parallel movie/state investigation is documented in
-[MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md); it implements no pipeline.
+lives under `impact-composition/sm/src`. Select the next complete responsibility
+among 23 remaining room/event/boss setups, followed by 14 residual identities.
+Runtime promotion needs reset/load/rewind/external-writer checks; rendering,
+sound and boot-to-credits remain unfinished. The parallel movie/state investigation
+is documented in [MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md);
+it implements no pipeline.
 
 ## Paused launch draft
 
