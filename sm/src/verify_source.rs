@@ -424,6 +424,18 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/beam_definitions.rs"),
     ),
     (
+        "sm/src/game/missile_firing.rs",
+        include_bytes!("game/missile_firing.rs"),
+    ),
+    (
+        "sm/src/game/missile_firing_ram.rs",
+        include_bytes!("game/missile_firing_ram.rs"),
+    ),
+    (
+        "sm/src/game/projectile_weapon_definitions.rs",
+        include_bytes!("game/projectile_weapon_definitions.rs"),
+    ),
+    (
         "sm/src/game/room_backgrounds.rs",
         include_bytes!("game/room_backgrounds.rs"),
     ),

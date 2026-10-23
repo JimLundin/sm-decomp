@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 09:46 UTC**
+Updated: **2026-10-23 09:58 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -10,31 +10,30 @@ SNES backend remains the comparison oracle during migration.
 
 ## Latest verified milestone
 
-**Beam charge, firing and initial collision now share safe rules.**
+**Missile and super-missile firing now share safe rules.**
 
-Implementation: [shared beam rules](sm/src/game/beam_firing.rs).
+Implementation: [shared missile rules](sm/src/game/missile_firing.rs).
 
-- Retired duplicate firing and collision dispatch. Ordinary owned collision
-  scans execute directly, including selector aliases and failure handling.
-- Production and candidate builds passed. **All 46 comparison suites passed**.
-  All 36 previous behavior suites remain; two deliberately removed compatibility
-  transfers explain the sole retained counter change.
-- Added 1,294 three-way RAM/APU/failure-state comparisons, including 14 failing
-  cases, plus five separate injected read-failure checks.
-- Ten chains reach retirement from actual ordinary, charged or hyper input,
-  through initial terrain and 628 travel/playback ticks, without injected phases
-  or lifetimes. These are component tests, not full-game or rendering coverage.
+- Retired duplicate reservation and firing algorithms. Shared definitions also
+  serve bomb, power-bomb and spread-bomb callers.
+- Production and candidate builds passed. **All 51 comparison suites passed**,
+  with all 46 retained result vectors unchanged.
+- Added 463 three-way RAM/APU/failure-state comparisons, including 64 failing
+  cases, plus two separate failure-publication checks and six typed sequences.
+- Eight chains reach retirement from actual missile/super input through 190
+  ticks. All four Super Missile chains create extensions, and all four static-wall
+  chains impact. These are component tests, not full-game or rendering coverage.
 
 | Verified measure | Value |
 | --- | ---: |
 | Setup identities decoded | 115 / 115 |
-| Maintained Rust source | 106,659 lines in 209 files |
-| Counted unsafe function declarations | 2,816 |
-| Prospective composition, not yet adopted | 115,151 lines in 318 files |
+| Maintained Rust source | 106,815 lines in 212 files |
+| Counted unsafe function declarations | 2,814 |
+| Prospective composition, not yet adopted | 115,343 lines in 321 files |
 
-This stage adds 252 lines to main and removes 13 unsafe function declarations.
-The complete composition adds 426 lines; including retained verification, growth
-is 1,874 lines. Safe adapters and independent checks are included in those costs.
+This stage adds 156 lines to main and removes two unsafe function declarations.
+The complete composition adds 192 lines; including retained verification, growth
+is 1,641 lines. Safe adapters and independent checks are included in those costs.
 The target remains below 100,000 maintained Rust lines, with all unsafe
 operations removed.
 
@@ -42,12 +41,10 @@ operations removed.
 
 **Continue the player-projectile lifecycle and its remaining consumers.**
 
-The complete missile and super-missile firing implementation has passed source
-review, formatting checks and production/candidate builds. It covers reservation,
-ammunition, placement, launch and cancellation. The comparison fixtures and
-independent typed client are being reviewed; behavior verification is pending.
-These source changes are not committed yet. The verified results above remain
-the beam milestone.
+Next is complete bomb, power-bomb and spread-bomb creation: input, reservation,
+ammunition, charge/cancellation and initialization through their existing lifetime
+and terrain rules. Caller and ordering review is complete; implementation design
+and cost estimates come next.
 
 Persistent room and scheduler state still live in RAM. Persistent Session
 ownership, renderer/audio replacement and an independently running game slice

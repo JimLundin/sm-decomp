@@ -9,106 +9,106 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-Latest verified stage shares complete charge input and ordinary/charged/hyper
-beam firing from `fe6a0d0f`. The safe owner-generic core covers reservation,
-placement, initialization, initial collision, launch and resumed finish/flare
-and special-return tails. Actual HUD Normal0/3, Xray release and flare-clear
-callers use the checked RAM adapter. Shared definitions also serve Reflection
-and special attacks. Both initial-direction tables, dispatchers and eight
-wrappers are retired; the independent typed beam client remains supported.
-
-Ordinary owned initial scans run directly through the existing room core.
-Actual effects publish/reimport the full Session; broad selectors transfer to
-the same shared rules. Per-axis live-selector checks preserve captured Y after
-an X callback redirects selection. Material/extension/slope/BTS/area failures
-publish pending state and resume the original payload. Fallible slope sampling
-precedes local Scan progress writes; there is no replay or stale restoration.
+Latest verified stage shares the complete missile/super firing transaction
+from `d17497e0`. The safe owner-generic core covers input admission, reservation,
+placement, ammo spending, launch/initialization, cooldown and final cancellation.
+Actual main HUD1/2 calls the checked RAM adapter; the owned model uses the same
+rules with complete-Session effect transfers. The old bank handler, sole-use
+reservation helper, local algorithm and duplicated sound/cooldown tables are
+retired. Shared definitions also serve bomb, power-bomb and spread consumers.
 Persistent Session authority and candidate adoption remain unfinished.
 
-All **46 suites pass** in 32.687263s with a clean checker subprocess exit0.
-All 36 previous behavior suites remain; 35 retained vectors are unchanged.
-Runtime collision changes [198,545,176,1] to [198,543,176,1]: the effect-dispatch
-count loses one CheckInitialCollision transfer in each air/solid preparation
-case because initial scans now execute directly. Cases, setups, failures and
-full-state comparisons are unchanged. Explicit assertions reject that old
-transfer in both cases; no artificial effects preserve the old count.
+Preserve pressed/filtered input, wrapping count/cooldown admission, ammo-before-
+slot search, placement-owned rollback and live HUD selection for spending.
+Sound capture precedes kind construction; cinematic suppression skips lookup.
+The original slot survives callback selector changes. Motion precedes cooldown
+lookup; main uses the captured logical word's native byte1, while owned encoded
+rules retain the logical high byte. Power-bomb keeps its captured byte; spread
+reads physical0xC23 live after all five initializers. Cancellation preserves
+unrelated HUD/charge/flare fields. No extra mutable ammo authority is introduced.
 
-New charge [1294,4,19,10,628,53] means 1,294 three-way RAM/APU/g_fail comparisons, four
-actual diagonal setup scenarios, 19 expected failures, ten natural chains,
-628 travel/playback ticks and 53 authored scenarios. Failures are 14 triplets
-(12 invalid-direction cases and two setup failures) plus five checked-only read
-injections, which are excluded from the 1,294 comparisons. Retained runtime
-beam [338,817,32,52,3] covers reservation, charge/input boundaries, selectors,
-live definition reads and sound/init/collision/launch mutations and failures.
-Its repeated-input steps are separate from the natural travel checks.
+All **51 suites pass** in 32.297793s with checker subprocess exit0 and all
+**46 retained vectors unchanged**. New [463,903,66,8,190,6,273] means 463 three-way
+RAM/APU/g_fail comparisons, 903 ordered postoperation observations, 66 failure
+scenarios, eight natural chains, 190 natural ticks, six independent typed
+sequences and 273 authored scenarios. Failures are 64 triplets plus two
+checked-only direct dirty-owner sound/cooldown lookups; these two and the six
+typed sequences are excluded from the 463 comparisons. Observations are not a
+count of actual effects. Source identities: 271 carrier and 323 local entries.
 
-Natural chains use actual main HUD input and owned input, synthetic definitions,
-real initial terrain and numeric travel/playback through retirement, without
-injected phases or lifetimes. Air/solid tick counts: ordinary HUD0 48/2, Wave
-HUD3 48/48, charged HUD0 108/62, charged Wave Xray release fallback 108/108,
-Hyper HUD0 48/48. Charged cases hold for 60 ticks before release. This is bounded
-component scheduling, not XrayRunHandler, rendering/movie or boot-to-credits
-coverage. No movie frames ran; prior native exclusions/Intro mismatch remain.
+Eight chains enter actual main HUD1/2 and direct owned creation, then real
+numeric/owned projectile updates through retirement and the next actual HUD
+preparation on both paths. Missile air/static-wall chains take 43/22 ticks;
+Super air/static-wall chains take 19/11 ticks, each with both last-ammo and
+auto-cancellation cases. All four Super chains create extensions; all four wall
+chains impact. Static walls exist before firing; no phase, motion or lifetime
+is injected. These are constructed component schedules with synthetic content,
+not full-frame, renderer/movie or boot-to-credits coverage. No movie frames ran;
+prior native-access exclusions and the inherited Intro mismatch remain.
 
-Direction7 selected0x202 writes native XSpeed at0xBDC+0x202=0xDDE, aliasing projectile_index
-to0xFFFF, while scanning captured0x202. Diagonal X setup selects20; captured Y0
-moves81 to89 before slope sampling through the alias. BTS6 column9 hits where
-stale column1 misses; nonwave impact then backs Y to88, while Wave stays89.
-Full-state and impact-kind checks distinguish the paths. Invalid directions
-preserve main native String versus local literal panic payloads. Five read
-injections check complete pending projectile/mechanism/queued-message/continuation
-publication and unchanged local Scan. Native versus logical word interpretations
-remain explicit; Windows little-endian execution is not non-LE equivalence proof.
+The matrix covers reservation, slot/admission failures, callback mutation and
+failure after placement/spend/sound/speed/initialization, cinematic sound
+suppression, original-slot tails, live ammo/HUD and motion-before-lookup failure.
+Two direct lookup checks stage unsent projectile, mechanism, queue and
+continuation state without prior publication and verify the full failure prefix.
+Six symbolic typed-client sequences exercise shared creation and safe placement,
+launch, initialization, authored impact/playback/release. Placement, damage,
+radii, cursor, animation and cooldown assertions precede impact. Their authored
+impact coverage is separate from the natural terrain/extension checks.
 
-Source identities: 267 carrier/319 local entries checked before execution;
-all 207 frozen parent Rust files were matched to committed `fe6a0d0f`.
-Frozen beam/direction/table references remain independent of new rules.
-Opt-in before/after observations preserve callback checks for ordinary and
-broad scans; disabled hooks introduce no transfer. All prior special natural
-chains remain unchanged. Five fatal subprocess pairs remain setup-only exact
-stdout/stderr/status77 checks; no new beam fatal-termination claim is made.
+Frozen parent handler/reservation/table bodies remain independent; root matched
+all 209 parent Rust files to committed `d17497e0`. Opt-in postoperation observers
+preserve mutation/failure checks; the disabled path adds no publication.
+Observation-only spend markers cannot execute real ammo spending. All prior
+beam/special/bomb behavior suites remain intact. Five fatal subprocess pairs
+still test only retained setup stdout/stderr/status77; no missile fatal-output
+claim. Native/logical byte contracts remain explicit; little-endian Windows
+execution does not establish non-LE cross-side equivalence.
 
-Final production release/frontend/verifier/source passes in 35.70s after a
-format-only correction; the earlier production build passed in 66.34s.
-Candidate release passes in 51.41s after fixing two stale integration calls.
-Final carrier/harness builds pass in 10.65s/16.88s. Isolated verification fixes
-addressed registrations/imports, repeat generation, reference visibility,
-observations and fixture expectations. All attempt logs remain local. No
-production behavior correction followed the reviewed source freeze.
+Final production release/frontend/verifier/source passes in 50.79s; candidate
+release passes in 51.79s. The first production compile rejected unsupported
+checked compound assignments and qualified callback-table entries; explicit
+reads/writes and an import alias preserve reviewed order. Carrier/harness pass
+first attempt in 26.15s/29.31s. The first source-only checker attempt stopped on
+Windows cp1252 decoding of a UTF-8 BOM; PYTHONUTF8=1 fixes the checker environment,
+with no source change or gameplay execution in that failed attempt. Production
+remains frozen after the syntax correction; all attempt logs are retained.
 
-Main is **106,659 Rust lines in 209 files**; candidate **115,151 (+8,492)**
-in 318 files remains unadopted. Deltas in lines/lexical tokens/LF bytes:
-main [252,3024,7047], complete composition [426,5264,13419], complete verification
-[1448,16222,63550], implementation plus checks [1874,21486,76969]. Local production
-[174,2240,6313] overlaps composition; carrier-only verification [327,2876,14283]
-is included in complete verification. Unsafe declarations fall by 13 to 2,816;
-cast-containing lines fall by 11 to 5,954. Maintained implementation including
-C/header is 107,221; including installers/launcher is 108,131. Changed-source
+Main is **106,815 Rust lines in 212 files**; candidate **115,343 (+8,528)**
+in 321 files remains unadopted. Deltas in lines/lexical tokens/LF UTF-8 bytes:
+main [156,1687,5514], complete composition [192,2049,6665], complete verification
+[1449,15154,57601], implementation plus checks [1641,17203,64266]. Local production
+[36,362,1139] overlaps composition; carrier-only verification [109,1253,5526]
+is included in complete verification. Unsafe declarations fall by two to 2,814;
+cast-containing lines fall by five to 5,949. Maintained implementation including
+C/header is 107,377; including installers/launcher is 108,287. Changed-source
 formatting passes; inherited verify_source formatting is preserved. Independent
-recount includes all retained adapters, references and checks. Local growth
-exceeds its estimated upper45 by129 lines due to the typed bridge, bound scans,
-per-axis alias handling and owner-carrying failures. Main/composition/verification/
-combined growth stay within estimates. No reduction or new dependency claim.
+recount uses explicit UTF-8 and normalized bytes, correcting preliminary BOM
+accounting. Aggregate growth fits estimates; the 348-line typed client exceeds
+its component upper180 by168 lines for complete authored consumer checks.
+No reduction, new external dependency or backend-independence claim.
 
-Next: design and price the complete missile/super firing transaction, from
-actual HUD1/2 reservation and ammo through placement, spend, sound, launch/init,
-motion/cooldown and auto/last-ammo cancellation. Retire duplicate bank/owned
-algorithms and migrate all nonbeam-definition consumers together. Preserve
-captured slots, live rereads and complete-owner failures; require actual natural
-travel/extension/impact/retirement checks. Persistent ownership still requires
-external-writer/reset/load/rewind closure after remaining consumers migrate.
+Next: design and price the complete morph bomb/power-bomb/spread creation
+transaction, including actual movement-HUD and Draygon callers, reservation,
+ammo/flag ordering, charge/release cancellation and all five spread initializers.
+Retire duplicated bank/owned producers; retain already-shared fuse/terrain rules.
+Preserve no-ammo/nonrollback quirks, slot9 fallback, captured versus live byte
+selectors and callback failure prefixes. Require actual input through fuse,
+spread retirement and power-bomb terrain effects with explicit HDMA limits.
+HUD switching remains separate. Persistent authority still needs external-
+writer/reset/load/rewind closure after remaining consumers migrate.
 
 Final production source hash:
-`942255e63dd4f82dd8beb935d16e9d22c7dac9ac02499eb366fa030051f005cb`.
-Use `runtime-impact-working/CHARGE_TRANSACTION_HANDOFF.md`,
-`charge-transaction-results.json`, `charge-transaction-fatal.json`,
-`charge-transaction-price.json`, `charge-transaction-build-attempts.json` and
-`charge-all-3.log` for local evidence. The exact direct-scan effect traces are in
-`charge-collision-direct.log`. Prior special/bomb handoffs remain preserved.
+`8eda12b181b5a8e28ce11f0e47d060b26d3ebe1c184d3faace7f9788e520537d`.
+Use `runtime-impact-working/MISSILE_TRANSACTION_HANDOFF.md`,
+`missile-transaction-results.json`, `missile-transaction-fatal.json`,
+`missile-transaction-price.json`, `missile-transaction-build-attempts.json` and
+`missile-complete-check-1.log` for local evidence. Set PYTHONUTF8=1 for local
+Python source comparisons/pricing. Prior charge/special/bomb handoffs remain.
 
 Retained setup dispatch [115,199,62,5] covers all 115 semantic identities;
 these are routing/source coverage, not 115 independently executed native bodies.
-Gate [1348,20,5,4] now runs in the full 46-suite invocation. Its four checked-only
+Gate [1348,20,5,4] now runs in the full 51-suite invocation. Its four checked-only
 cases retain native undefined-access exclusions. Prior stage details remain in
 SETUP_DISPATCH_HANDOFF.md.
 
