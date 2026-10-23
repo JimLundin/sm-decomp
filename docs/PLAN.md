@@ -437,10 +437,16 @@ references; measure build/test time and resource growth before changing the loop
    direct release build (27.54s), all71 flag comparisons, both7-stage CPU-qualified
    saves, the210-byte Runtime guard,39 shared-consumer comparisons and visual
    Runtime guard. These are constructed actual-code scenarios, not movie coverage.
-   Eight additional defined even-area Kraid predecessor captures pass ondd007402;
-   actual odd-area native reads/stores require originalCPU qualification because
-   the old Rust typed accesses are undefined there. Kraid candidate comparisons,
-   hosted composition and42detached+9DLL mutations remain pending.
+   Final candidate887e7e4c also passes all8 defined even-area Kraid comparisons
+   and12 originalCPU odd-area comparisons (36 fullRAM/SRAM stages), including
+   actual palette completion/music queue/native store and return values. Only
+   exact executed CPU stack bytes are excluded; scratch and adjacent bytes remain
+   compared, candidate stack bytes preserved. Old odd-address Rust never executes.
+   Independent output audit passes;71flags/2saves/39shared/guards also pass again
+   on this source. Root format/release build and detached compilation pass.
+   Hosted run40036842766 tests30fd121f: full composition/frontend and42detached
+   +9DLL mutations running. Branch follow-upb09c2aa3 adds only the reviewed
+   comparison-only Python script; its Rust is identical. Main adoption pending.
    Assembled production grows278lines/+2451tokens/+10942LFbytes; provisional
    verification Rust+1725 and Python+172, before Kraid additions. No reduction
    claim;18ports and3duplicate helpers retire in the candidate, not yet main.

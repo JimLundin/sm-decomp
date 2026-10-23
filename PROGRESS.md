@@ -45,19 +45,21 @@ flowchart TB
     FGUARD --> FCHECK
     FCHECK --> FSHARED["39 shared-consumer comparisons<br/>+ visual guard PASS"]:::done
     FLEG --> FKEVEN["Kraid / 8 even-area references<br/>actual caller execution PASS"]:::done
-    FLEG --> FKODD["Kraid / odd-area CPU comparison<br/>in preparation"]:::active
-    FSHARED --> FMUT["42 detached + 9 DLL mutations<br/>execution pending"]:::pending
-    FKEVEN --> FKCOMPARE["Kraid candidate comparisons<br/>pending"]:::pending
+    FLEG --> FKODD["Kraid / original CPU<br/>12 cases / 36 stages match"]:::done
+    FSHARED --> FMUT["42 detached + 9 DLL mutations<br/>GitHub running"]:::active
+    FKEVEN --> FKCOMPARE["Kraid candidate comparisons<br/>8 defined + 12 CPU PASS"]:::done
     FKODD --> FKCOMPARE
     FKCOMPARE --> FADOPT
     FMUT --> FADOPT["Adopt progression owner<br/>pending"]:::pending
-    class FGUARD,FCHECK,FSHARED,FKEVEN,FKODD,FKCOMPARE,FMUT changed
+    class FKODD,FKCOMPARE,FMUT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
+
+[Flags candidate build + 51 mutations: running](https://github.com/JimLundin/sm-decomp/actions/runs/40036842766)
 
 <details>
 <summary>Adopted sprite effects — shared owner and verification</summary>
