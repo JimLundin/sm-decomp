@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 12:17 UTC**
+Updated: **2026-10-23 12:23 UTC**
 
 **Status: active development. The owned engine is not yet consolidated into production.**
 
@@ -64,11 +64,30 @@ Interactions with Samus, enemies, room objects and the backend must have explici
 boundaries that preserve effect order and returned state. Persistent whole-engine
 ownership remains a later milestone; RAM cannot have a competing mutable owner.
 
-Before implementation, finish the caller/deletion map and count the complete
-replacement against actual deletions. The candidate's size is still under audit;
-there is no established net reduction to report. No additional gameplay code has
-been added for this audit. Success means a production subsystem with one behavior
-implementation and retired old paths, with any remaining size increase explained.
+The completed source inventory counts **5,236 candidate lines** against **2,213
+lines of practical retirement**: **+3,023 lines before missing work**. The candidate
+count was independently checked against the actual composition files; retirement
+is a reviewed body inventory, not yet a buildable deletion patch. Direct adoption
+of this candidate is rejected.
+
+The replacement design uses concrete projectile state and one private compatibility
+boundary. Existing shared algorithms bind directly to that state. A single byte
+mapping handles ordinary selectors and overlapping legacy accesses, replacing the
+candidate's repeated encoded/runtime forwarding and old-algorithm fallbacks.
+Foreign calls publish the owner and reacquire their actual returned state.
+
+The complete scope includes both missing motions, all lifecycle callers, drawing,
+feedback, reflection/reset/impact, and ordered launch history. The first local
+source draft exercises ownership and animation through this boundary. Review found
+a bytewise-versus-atomic write mismatch, now being corrected and checked. This is
+experimental work, not production adoption or new gameplay verification.
+
+The full replacement is estimated at 2,370-3,690 new production lines, against the
+conservative 2,213-line retirement inventory: approximately **+160 to +1,480
+production lines**. Verification additions are estimated separately at 600-1,200
+lines. These are planning ranges, not measured patch results or claimed savings.
+The structural gain must be one authoritative implementation with retired old paths;
+actual total cost and behavior checks are required before integration.
 
 ## Verification limits
 

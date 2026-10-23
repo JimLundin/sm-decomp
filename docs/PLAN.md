@@ -132,6 +132,31 @@ references; measure build/test time and resource growth before changing the loop
    boundaries and preserved ordering. Do not merge the current wrapper or claim
    its gross retirement ceiling as savings. See public PROGRESS.md for status.
 
+   The completed candidate inventory is 5,236 composition lines against 2,213
+   practical retirement lines (+3,023 before closure). Reject that direct copy.
+   Accepted replacement design: concrete reversible projectile fields, one private
+   byte-lane compatibility resolver, and direct Context bindings to existing shared
+   algorithms. Remove candidate representation generics, forwarding layers and
+   per-operation fallback execution; keep live inputs after aliases. One owner
+   spans each complete subsystem interval, publishing before actual foreign calls
+   and importing their returned image. No owner survives native/reset/load/oracle
+   intervals. Distinguish bytewise checked writes from atomic slice writes; Drop
+   covers catch-after-unwind state only, while diagnostics publish before calling.
+
+   Implement the complete replacement in the isolated composition first: state,
+   compatibility, weapons, motion, animation, bombs, collision, presentation,
+   feedback, preparation and real caller gateways. Retire the old flight,
+   animation, initialization/playback/placement/lifecycle, beam/missile/bomb/special
+   and coordinator adapters, plus mixed bank/trail/palette orchestration; retain
+   shared output/content and genuine foreign consumers once. Full new-source
+   estimate 2,370-3,690 lines versus the conservative 2,213 retirement inventory
+   means approximately +160 to +1,480 production lines, plus an estimated 600-1,200
+   verification lines. These are planning ranges, not savings or final patch cost.
+   Review and test the alias/ownership seam before extending the implementation;
+   no isolated draft or outer wrapper lands as subsystem adoption. Preserve the
+   60-suite baseline and require real integrated callers plus both missing motions,
+   broad/odd aliases, failure prefixes and returned-image checks before adoption.
+
    Latest verified stage shares the complete charged-shot palette consumer from
    `8fa61a7c`. Main HandleBeamChargePalettes and owned advance_weapon_palette use
    one safe rule; local output handling reuses the main resolver. Actual coordinator
