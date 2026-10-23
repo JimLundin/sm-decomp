@@ -9,59 +9,62 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares Wrecked Ship treadmill behavior after crumbling walls
-`b57b55e0`. Core/checked adapter mechanism_treadmill retire B04A setup,AD43/AD58
-activation,the sole-use row helper and three private gate/carry routines. Both
-forbid unsafe. Clear captures origin and writes56 LE00FF words with wrapped
-cursor,leaving BTS except physical aliases. Activation widens offsets and writes native30FF then BTS8/9
-per cell. Carry preserves area3-only boss query/scratch effects, lazy speed read,
-conditional low0/high+2 or-2 writes and unconditional normal speed9F55 reset.
-RAM remains authoritative;90/115 setups shared,11 room/event/boss+14 residual remain.
+The latest stage shares the Ceres escape doorway after treadmill commit
+`c0ad5aad`. Existing mechanism_doors gains CeresEscape and shares make_solid
+with Blue doors; B9F1 routes through the existing checked adapter. No module,
+trait method or registration added. Four cells preserve lower 12 bits and gain
+solid type 8. Origin is captured; each wrapped stride observes width after the
+preceding write. The original middle pair of consecutive immutable width reads
+has no intervening observer and equals the existing doubled-width operation.
+RAM remains authoritative; 91/115 setups shared, 10 room/event/boss + 14 residual.
 
-Main105165 Rust lines/190 files;unsafe2880(-4),casts6016(-3). Maintained
-implementation105727; installers/launcher included106637. Candidate114176/294,
-gap9011,unadopted. Main delta[85,916,3144],composition[123,1177,4415],verification
-[881,10304,37127] lines/tokens/LF bytes;implementation+checks1004 lines. Local
-production37lines overlap composition. No dependencies/native/installer additions,
-net reduction, complete unsafe retirement,persistent ownership or independence.
+Main 105169 Rust lines/190 files; unsafe 2880 unchanged, casts 6011 (-5).
+Maintained implementation 105731; installers/launcher included 106641.
+Candidate 114182/294, gap 9013, unadopted. Main delta [4,-42,-102],
+composition [6,-2,50], verification [517,7137,24052] lines/tokens/LF bytes;
+implementation plus checks [523,7135,24102]. Local production two lines overlap
+composition. No dependency/native/installer additions or net reduction claim.
 
-Use `runtime-impact-working/TREADMILL_HANDOFF.md`, `treadmill-price.json` and
-`treadmill-check-attempt1.log`. All22 suites pass23.628391s,explicit process exit0,
-source identities228 runtime/272 local. New[11120,18,19,4880]:10,320 defined
-terrain comparisons+800 defined carry comparisons;18 SEPARATE checked-only
-invalid-row prefix groups;19 source/reentry groups;4,880 mixed observations.
-The latter are3,024 row-cell checks,1,792 combined inside/projectile samples and
-64 animation frames,with each game counted separately. Do not call this a
-collision-call total. Old origins aboveFF8F reach raw out-of-RAM terrain and are
-never executed. New checked prefixes retain prior writes. C800 overlap explicitly
-proves BTS overwrites earlier terrain words. Symbolic tests distinguish wrapped
-clear from widened activation and preserve lazy movement gates/ordered writes.
+Use `runtime-impact-working/CERES_DOOR_HANDOFF.md`, `ceres-door-price.json`
+and `ceres-door-check.log`. All 23 suites pass in 24.272693s (suite 23.9583265s),
+explicit process exit 0, source identities 229 runtime/275 local. New result
+[8800,10912,9,300]: 8800 successful and 10912 matching checked-failure comparisons,
+9 source/reentry groups and 300 mixed observations. The failures are part of
+19712 comparisons with the actual frozen original: its checked helper fails
+when any reached row cursor is FFFE/FFFF and retains prior writes. No undefined
+native execution. Symbolic cases cover captured origin, live strides and every
+operation's failure prefix. Retained Blue door comparisons still pass.
 
-Actual door records89D6/A1F8 target CA08,width64,area3. Callbacks8FB971/8FE1D8
-spawn animtiles8275/827B before B64B/B64F at(4,9). Sixteen direction,boss and
-independent animation/PLM pool combinations compare actual outer callbacks with
-a scoped two-header candidate constructor hook. First PLM tick tests bossbit1,
-optionally installs56 conveyor cells,then deletes. Postdelete/reentry checks
-preserve neighbors/BTS/flags and restore the selected direction after a boss
-change. Actual public inside detection and projectile consumers sample the row;
-independent old private carry checks cover suppressed writes/lazy reads and
-scratch high-byte preservation. Actual animtile object processor waits for boss and
-cycles source pointers both ways; renderer/DMA/backend independence is unproven.
+Actual DF45 room header selects DF57 by default and DF71 with boss bit 1.
+Escape callback C96E spawns BA48 at (15,38), then haze; default C976 only haze.
+Room width 16, height 48. Eight boss/PLM/HDMA pool combinations plus one
+flag-change/repeated-entry group pass. BA48 uses B9F1 and AAE3 Delete, so the
+first PLM tick deletes it without a draw, followed by two empty ticks.
+Real player movement and both projectile axes check the four solid cells and
+neighboring rows. Whole-RAM collision tails, boss/event/BTS preservation and
+retained haze allocation/DMA state agree. The 300 observations count each game:
+156 row checks, 48 player movement checks and 96 projectile reactions.
 
-No DrawPlm occurs in these scripts: complete actual-coordinate lifecycle runs,
-with no offscreen substitute or guard added. All8 content ranges(110bytes) match
-primary bank bytes. Literal ROM-derived fixtures stay local. No full Phantoon,
-movie,complete composition runtime,boot-to-credits or independent ownership claim.
-Outer door/animation/inside dispatch remains retained.
+Packed haze arguments are checked for alignment before any native dereference
+or write. All eight source groups admitted, zero exclusions. Hardware holders
+remain live during hardware access; later full-pool reentry needs no backend.
+Three literal ranges totaling 76 bytes independently match primary banks;
+ROM-derived fixtures stay local. Static doorway setup is covered, not the
+retained CeresDoor actor, haze rendering, full encounter/movie, complete
+composition runtime, boot-to-credits or persistent Session ownership.
 
-Production release/frontend/verifier/source74.052495s;prospective release
-59.9854385s;carrier25.67s;harness43.17s;runtime23.628391s all pass first attempts.
-Production hash:
-`df0474d201f70614ff8e344207b3c9860d1f3e845348b97de5b306305b50fe6b`.
-Changed formatting passes; verify_source's4 inherited hunks exactly unchanged.
-Composition11file delta matches main/transformed local sources and registrations.
-Compiler lane released,DLL unloaded; no source edits after builds. Review corrected
-only a prebuild reentry fixture assumption about the next free animation slot.
+Production release/frontend/verifier/source 50.033665s; candidate release
+41.5264568s; carrier 17.3172993s; harness 16.4909373s; checks 24.272693s,
+all first attempts, explicit exit 0. Production hash:
+`dc529dccede5c84b8b30699a275fc7ae31f74fb241f26eb0493eb91f8863623f`.
+Changed formatting passes; no lib/verify_source changes. Composition has exactly
+three changed files matching main and transformed local source. No production
+source edits after builds. Review strengthened fixture assertions before builds.
+
+Retained treadmill results: [11120,18,19,4880]. See TREADMILL_HANDOFF.md,
+treadmill-price.json and treadmill-check-attempt1.log for row/carry details,
+C800 aliases and the native FF8F origin limit. Those 18 checked-only prefixes
+are separate from defined-original comparisons; never execute invalid originals.
 
 Retained results:crumbling15670/0/17/4302,glass8604/1460/22/138,
 escape16704/5742/10/192,doors570/12/30/3,Tourian21924/8700/10/80,
@@ -79,7 +82,8 @@ Current guards do not resolve inherited Intro mismatch. Qualified item/cannon/
 Chozo and full-contact limits remain; eye acid initialization stays excluded.
 Scroll bounded nonreturn observations were not repeated.
 
-`treadmill-parent/` preserves prior main/carrier/local/composition.
+`ceres-door-parent/` preserves prior main/carrier/local/composition;
+`treadmill-parent/` and earlier snapshots remain intact.
 Historical snapshots/caches/failed logs remain, including animal BE30 routing
 correction; main numeric dispatch was always correct. Never rerun historical
 broad preparation scripts. Composition is `impact-composition/sm/src`.

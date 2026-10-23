@@ -8,6 +8,7 @@ pub enum Setup {
     Blue,
     ShotSignal,
     MotherBrainEscape,
+    CeresEscape,
 }
 
 /// Field accesses retain the caller's captured slot. Block identities need not
@@ -38,6 +39,11 @@ fn install<C: Context>(c: &mut C, block: C::Block, kind: u16) {
     c.set_behavior(block, kind as u8);
 }
 
+fn make_solid<C: Context>(c: &mut C, block: C::Block) {
+    let level = c.level_word(block) & 0xfff | 0x8000;
+    c.set_level_word(block, level);
+}
+
 pub fn setup(c: &mut impl Context, slot: usize, kind: Setup) -> u8 {
     match kind {
         Setup::Grey | Setup::Colored => {
@@ -58,6 +64,17 @@ pub fn setup(c: &mut impl Context, slot: usize, kind: Setup) -> u8 {
                 install(c, block, 0xd0ff);
             }
         }
+        // The original middle stride adds two consecutive immutable width reads.
+        // Each transition still observes width after the preceding terrain write.
+        Setup::CeresEscape => {
+            let mut block = c.block(slot);
+            for row in 0..4 {
+                make_solid(c, block);
+                if row != 3 {
+                    block = c.below(block);
+                }
+            }
+        }
         Setup::Blue => {
             let selected = c.projectile_selection();
             if selected & 0x8000 == 0
@@ -66,8 +83,7 @@ pub fn setup(c: &mut impl Context, slot: usize, kind: Setup) -> u8 {
                 c.release(slot);
             } else {
                 let block = c.block(slot);
-                let level = c.level_word(block) & 0xfff | 0x8000;
-                c.set_level_word(block, level);
+                make_solid(c, block);
             }
         }
         Setup::ShotSignal => {

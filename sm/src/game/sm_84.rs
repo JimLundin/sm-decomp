@@ -732,19 +732,6 @@ crate::game::callback_dispatch! {
 ) -> u8 => ea;
     call (j, game); default Unreachable(game) as u8;
     @functions [pub unsafe fn (j: u16, game: &mut Game) -> u8];
-    [8698353] sub_84B9F1 [] {
-        let v1: u16 = word!(game.plm_block_indices[(j >> 1)]);
-        update_level_block_bits((v1 >> 1) as usize, 0xfff, 0x8000, game);
-        let v2: u16 = (word!(game.room_width_in_blocks) as i32 * 2 + v1 as i32) as u16;
-        update_level_block_bits((v2 >> 1) as usize, 0xfff, 0x8000, game);
-        let v3: u16 = (word!(game.room_width_in_blocks) as i32
-            + word!(game.room_width_in_blocks) as i32
-            + v2 as i32) as u16;
-        update_level_block_bits((v3 >> 1) as usize, 0xfff, 0x8000, game);
-        let v4: i32 = (word!(game.room_width_in_blocks) as i32 * 2 + v3 as i32) as u16 as i32 >> 1;
-        update_level_block_bits(v4 as usize, 0xfff, 0x8000, game);
-        0
-    };
     [8703957] PlmSetup_D0E8_GiveSamusDamage [] {
         word!(game.samus_periodic_damage += 1);
         0x41
@@ -811,6 +798,7 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (v0: u16, game: &mut Game) -> u8];
     @external {
+        8698353 => [crate::game::mechanism_doors_ram::setup(j, crate::game::mechanism_doors::Setup::CeresEscape, game)];
         8695882 => [crate::game::mechanism_treadmill_ram::setup(j, game)];
         8694568 => [crate::game::mechanism_crumbling_wall_ram::setup(j, game)];
         8696811 => [crate::game::mechanism_contact_physics_ram::setup(crate::game::mechanism_contact_physics::Setup::Ice, displacement, game)];

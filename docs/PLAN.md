@@ -104,39 +104,40 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares Wrecked Ship treadmill setup, activation and
-   player carry after crumbling walls at `b57b55e0`. New `mechanism_treadmill`
-   core/checked adapter retire B04A, AD43/AD58, their sole-use row helper and three
-   private inside-movement routines. Preserve captured origin, clear's wrapped
-   cursor/LE words, activation's widened native-word addresses and interleaved
-   level/BTS writes. Carry preserves lazy area3/boss/speed gating, fractional then
-   whole displacement writes and unconditional normal speed-table reset. Both
-   modules forbid unsafe. RAM remains authoritative;90/115 setups shared,25 remain.
+   Latest verified stage shares the Ceres escape doorway after treadmill
+   commit `c0ad5aad`. Existing `mechanism_doors` gains CeresEscape and shares
+   its solid-block operation with Blue doors; B9F1 routes through the existing
+   checked adapter. No new module, trait method or registration. Capture origin,
+   preserve each cell's lower 12 bits, write four solid cells and observe live
+   width between writes with wrapped u16 strides. The middle pair of adjacent
+   immutable width reads has no intervening observer and equals the existing
+   doubled-width operation. RAM remains authoritative; 91/115 setups shared,
+   with 10 room/event/boss and 14 residual identities remaining.
 
-   All22 suites pass with228 runtime/272 local identities. New[11120,18,19,4880]:
-   11,120 defined-original/main/candidate comparisons (10,320 terrain,800 carry);
-   18 separate checked-only invalid-row prefix groups;19 source/reentry groups;
-   4,880 mixed observations (3,024 row-cell checks,1,792 combined inside/projectile
-   samples,64 animation frames). Origins aboveFF8F reach out-of-RAM native terrain;
-   never execute those originals. C800 alias checks prove later BTS bytes overwrite
-   earlier terrain words in the original order. Symbolic tests preserve captured
-   origin, wrapped versus widened stepping, and lazy motion observation order.
+   All 23 suites pass with 229 runtime/275 local identities. New result
+   [8800,10912,9,300]: 8,800 successful and 10,912 matching checked-failure
+   comparisons, 9 source/reentry groups and 300 mixed observations. The original
+   B9F1 helper already checks bounds; reaching FFFE/FFFF at any row gives a
+   defined panic with prior writes retained. These failures are part of the
+   19,712 original/main/candidate comparisons, not undefined native executions.
+   Symbolic checks cover captured origin, live strides and every effect prefix.
 
-   Actual door callbacks B971/E1D8 create matching animtiles then B64B/B64F at(4,9),
-   CA08 width64/area3. Sixteen direction/boss/independent-pool combinations execute.
-   First PLM tick activates only after bossbit1, then Delete; setup always clears
-   56 cells, preserving BTS until activation. Actual inside detection verifies
-   signed carry and speed gating; projectile collision stays Air. Reentry after
-   boss/direction changes, neighboring cells, unchanged flags and two post-delete
-   ticks pass. Actual animation wait and pointer cycles execute; no pixel rendering
-   or complete animation backend claim. Scripts contain no DrawPlm; actual-coordinate
-   full scripts are tested without an offscreen substitution. All eight selected
-   content ranges match bank bytes; ROM-derived content remains uncommitted.
+   Actual DF45 room headers select default DF57 or boss-bit-1 state DF71.
+   Escape callback C96E spawns BA48 at (15,38) before haze; default C976 only
+   initializes haze. Eight boss/PLM/HDMA pool combinations and a flag-change/
+   repeated-entry group pass. Actual BA48 script deletes on its first tick,
+   with two post-delete ticks; no DrawPlm or offscreen substitution. Player and
+   projectile collisions check four doorway cells and neighboring rows. Boss,
+   event and BTS preservation, retained haze allocation and DMA state agree.
+   All eight source groups pass; free-HDMA calls pass alignment guards before dereference, with zero exclusions. Full pools return before argument reads. Three content ranges (76 bytes) match
+   primary banks. This covers static doorway setup, not the CeresDoor actor,
+   haze rendering, complete encounter, movie or independent backend execution.
 
-   Production release/frontend/verifier/source74.05s, prospective release59.99s,
-   carrier25.67s, harness43.17s and all22 runtime suites23.63s pass first attempts,
-   checker process exit0. No post-build source changes. Retained outer door,
-   animation and inside-dispatch code is not independent Session ownership.
+   Production release/frontend/verifier/source 50.03s, prospective release
+   41.53s, carrier 17.32s, harness 16.49s and all 23 suites 24.27s pass first
+   attempts with explicit exit 0. Production source remains unchanged.
+   The 300 observations count both games: 156 row checks, 48 player movement
+   checks and 96 projectile reactions. Retained Blue door comparisons pass.
 
    Retained limits: `advance_tide` reads native u16 at odd RAM197D on every
    unfrozen lava_surface; never run that as defined-reference evidence. The old
@@ -145,14 +146,14 @@ references; measure build/test time and resource growth before changing the loop
    or resolve the inherited Intro mismatch. Other qualified fixtures remain as
    documented in the local handoffs.
 
-   Main is **105,165 Rust lines in190 files**. Prospective composition is
-   **114,176 (+9,011)** in294 files, unadopted. Stage main adds85 lines/916 lexical
-   tokens/3,144 LF-normalized bytes; complete composition adds123/1,177/4,415.
-   Retained verification adds881/10,304/37,127; implementation plus checks1,004
-   lines. Local production overlaps composition. No dependency/native/installer/
-   launcher source added. Unsafe declarations fall four to2,880; casts fall three
-   to6,016. No net reduction, complete unsafe retirement, persistent ownership or
-   backend independence claim.
+   Main is **105,169 Rust lines in 190 files**. Prospective composition is
+   **114,182 (+9,013)** in 294 files, unadopted. Stage main delta is
+   +4 lines/-42 lexical tokens/-102 LF-normalized bytes; complete composition
+   +6/-2/+50. Retained verification adds 517/7,137/24,052; implementation plus
+   checks adds 523 lines. Local production overlaps composition. No dependency,
+   native, installer or launcher additions. Unsafe declarations remain 2,880;
+   casts fall five to 6,011. No net reduction, complete unsafe retirement,
+   persistent ownership or backend independence claim.
 
    Next dependencies, in order:
 
@@ -221,12 +222,14 @@ references; measure build/test time and resource growth before changing the loop
      death/reload, Tourian producer and complete guarded terrain/collision tails.
    - [x] Share Wrecked Ship treadmill clear/activation/carry; compare actual
      door producers, boss/reentry gates, inside movement and animation cycles.
+   - [x] Share Ceres escape-door setup through the existing door core; compare
+     actual room-state selection, allocation, deletion and collision/reentry tails.
    - Close remaining room/event/boss setups, then constants/no-op/result routes.
      Preserve synchronous writes, nested displacement and failure prefixes before
      retiring native dispatch. The 115-identity inventory is in the local door
-     handoff; 11 room/event/boss and 14 residual identities remain. Select one
-     coherent responsibility through caller/validation investigation. The treadmill
-     handoff records retained dependencies and native-row domain limits.
+     handoff; 10 room/event/boss and 14 residual identities remain. Select one
+     coherent responsibility through caller/validation investigation. The Ceres
+     handoff records retained dependencies and checked-failure coverage.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -234,7 +237,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified treadmill continuation,
+   `runtime-impact-working/` is the verified Ceres doorway continuation,
+   with `CERES_DOOR_HANDOFF.md`, `ceres-door-price.json` and
+   `ceres-door-check.log`. `ceres-door-parent/` preserves prior
+   main/carrier/local/composition inputs. Treadmill evidence remains
    with `TREADMILL_HANDOFF.md`, `treadmill-price.json` and
    `treadmill-check-attempt1.log`. `treadmill-parent/` preserves prior
    main/carrier/local/composition inputs. Crumbling-wall evidence remains in `CRUMBLING_WALL_HANDOFF.md`, `crumbling-wall-price.json` and
