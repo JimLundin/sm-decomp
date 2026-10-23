@@ -281,6 +281,18 @@ pub static FILES: &[(&str, &[u8])] = &[
     ),
     ("sm/src/game/special_attacks.rs", include_bytes!("game/special_attacks.rs")),
     ("sm/src/game/bomb_lifecycle.rs", include_bytes!("game/bomb_lifecycle.rs")),
+    (
+        "sm/src/game/bomb_lifecycle_ram.rs",
+        include_bytes!("game/bomb_lifecycle_ram.rs"),
+    ),
+    (
+        "sm/src/game/bomb_terrain.rs",
+        include_bytes!("game/bomb_terrain.rs"),
+    ),
+    (
+        "sm/src/game/bomb_terrain_ram.rs",
+        include_bytes!("game/bomb_terrain_ram.rs"),
+    ),
     ("sm/src/game/projectile_trails.rs", include_bytes!("game/projectile_trails.rs")),
     ("sm/src/game/dialogue.rs", include_bytes!("game/dialogue.rs")),
     ("sm/src/game/dialogue_ram.rs", include_bytes!("game/dialogue_ram.rs")),

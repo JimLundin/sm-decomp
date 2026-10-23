@@ -1,7 +1,8 @@
 use crate::game::special_attacks::{self, Kind as SpecialKind};
 use crate::game::projectile_initialization::Initialization;
 use crate::game::projectile_initialization_ram::initialize;
-use crate::game::bomb_lifecycle::{self, Kind as BombKind, SPREAD_FRACTIONS as kBombSpread_Tab3};
+use crate::game::bomb_lifecycle::{Kind as BombKind, SPREAD_FRACTIONS as kBombSpread_Tab3};
+use crate::game::bomb_lifecycle_ram as bomb_lifecycle;
 use crate::game::music::{PlayRoomMusicTrackAfterAFrames};
 use crate::game::beam_firing::{clear_animation, update_input};
 use crate::game::launch_motion::MovementDirection;

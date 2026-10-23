@@ -334,6 +334,9 @@ pub mod game {
 
     pub(crate) mod special_attacks;
     pub(crate) mod bomb_lifecycle;
+    pub(crate) mod bomb_lifecycle_ram;
+    pub(crate) mod bomb_terrain;
+    pub(crate) mod bomb_terrain_ram;
     pub(crate) mod beam_firing;
     pub(crate) mod beam_windows;
     pub mod constants;

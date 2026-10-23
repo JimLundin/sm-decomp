@@ -1,104 +1,95 @@
-//! Bomb fuse transitions and spread motion; legacy callbacks still own their effects.
-use crate::game::explosion_window::spawn_power_bomb;
-use crate::game::projectile_animation::start_bomb_explosion;
-use crate::game::sm_80::QueueSfx2_Max6;
-use crate::game::sm_88::EnableHdmaObjects;
-use crate::game::sm_90::ClearProjectile;
-use crate::game::sm_94::{BlockCollSpreadBomb, BombOrPowerBomb_Func1};
-use crate::game_state::Game;
-use crate::ram_map::{checked_word as word, word_arrays as arrays};
-
-#[derive(Clone, Copy, PartialEq)]
+//! Complete bomb fuse and motion transactions over an explicit projectile owner.
+#![forbid(unsafe_code)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Kind {
     Bomb,
     PowerBomb,
     Spread,
 }
-
-pub(crate) const SPREAD_FRACTIONS: [u16; 5] = [0, 0, 0x8000, 0, 0];
-const X: (usize, usize) = (arrays::projectile_x_pos, arrays::projectile_bomb_x_subpos);
-const Y: (usize, usize) = (arrays::projectile_y_pos, arrays::projectile_bomb_y_subpos);
-const Y_SPEED: (usize, usize) = (arrays::projectile_bomb_y_speed, arrays::projectile_timers);
-
-pub unsafe fn advance_fuse(power: bool, game: &mut Game) {
-    let selected = word!(game.projectile_index);
-    let slot = usize::from(word!(game.projectile_index) >> 1);
-    let remaining = word!(game.projectile_variables[slot]);
+#[derive(Clone, Copy)]
+pub enum Field {
+    Type,
+    Direction,
+    Variable,
+    X,
+    Y,
+    XFraction,
+    YFraction,
+    XSpeed,
+    YSpeed,
+    SpeedFraction,
+    YRadius,
+    Auxiliary,
+}
+pub const SPREAD_FRACTIONS: [u16; 5] = [0, 0, 0x8000, 0, 0];
+pub trait Fields<O> {
+    fn selected(&self, owner: &O) -> u16;
+    fn read(&self, owner: &O, slot: u16, field: Field) -> u16;
+    fn write(&mut self, owner: &mut O, slot: u16, field: Field, value: u16);
+    fn invalid(&mut self, owner: O, index: usize, length: usize) -> !;
+}
+pub trait Context<O>: Fields<O> {
+    fn fuse(&mut self, owner: O, power: bool) -> O
+    where
+        Self: Sized,
+    {
+        advance_fuse(owner, power, self)
+    }
+    fn power_active(&self, owner: &O) -> bool;
+    fn gravity(&self, owner: &O) -> u32;
+    fn clear(&mut self, owner: O, slot: u16) -> O;
+    /// Publish X before reading and publishing Y, including broad-index aliases.
+    fn origin(&mut self, owner: O, slot: u16) -> O;
+    fn enable_hdma(&mut self, owner: O) -> O;
+    fn spawn_power_bomb(&mut self, owner: O) -> O;
+    fn sound(&mut self, owner: O) -> O;
+    fn flash_animation(&mut self, owner: O, slot: u16) -> O;
+    fn explosion_animation(&mut self, owner: O, slot: u16) -> O;
+    fn contact(&mut self, owner: O, slot: u16, spread: bool) -> (O, u8);
+}
+pub fn advance_fuse<O>(mut owner: O, power: bool, c: &mut impl Context<O>) -> O {
+    use Field::*;
+    let selected = c.selected(&owner);
+    let slot = c.selected(&owner);
+    let remaining = c.read(&owner, slot, Variable);
     if remaining == 0 {
-        if power && word!(game.power_bomb_flag) == 0 {
-            unsafe { ClearProjectile(word!(game.projectile_index), game) };
+        if power && !c.power_active(&owner) {
+            let live = c.selected(&owner);
+            owner = c.clear(owner, live);
         }
-        return;
+        return owner;
     }
     let remaining = remaining.wrapping_sub(1);
-    word!(game.projectile_variables[slot] = remaining);
+    c.write(&mut owner, slot, Variable, remaining);
     if remaining == 15 {
-        word!(game.projectile_bomb_instruction_ptr[slot] += 28);
+        owner = c.flash_animation(owner, slot);
     } else if remaining == 0 {
         if power {
-            word!(game.power_bomb_explosion_x_pos = word!(game.projectile_x_pos[slot]));
-            word!(game.power_bomb_explosion_y_pos = word!(game.projectile_y_pos[slot]));
-            unsafe {
-                EnableHdmaObjects(game);
-                spawn_power_bomb(game);
-            }
-            // Effects may change the live selector; the armed slot stays captured.
-            word!(game.projectile_variables[(selected >> 1)] = 0xffff);
+            owner = c.origin(owner, slot);
+            owner = c.enable_hdma(owner);
+            owner = c.spawn_power_bomb(owner);
+            c.write(&mut owner, selected, Variable, 0xffff);
         } else {
-            unsafe { QueueSfx2_Max6(8, game) };
-            start_bomb_explosion(selected, game);
+            owner = c.sound(owner);
+            owner = c.explosion_animation(owner, selected);
         }
     }
+    owner
 }
-
-pub unsafe fn update(selected: u16, kind: Kind, game: &mut Game) {
-    let slot = usize::from(selected >> 1);
-    if word!(game.projectile_dir[slot]) & 0xf0 != 0 {
-        unsafe { ClearProjectile(selected, game) };
-        return;
-    }
-    // The fuse follows the live selector, while motion/contact retain the caller's slot.
-    unsafe { advance_fuse(kind == Kind::PowerBomb, game) };
-    if kind != Kind::Spread {
-        unsafe { BombOrPowerBomb_Func1(selected, game) };
-        return;
-    }
-    if word!(game.projectile_variables[slot]) != 0 {
-        let gravity =
-            (u32::from(word!(game.samus_y_accel)) << 16) | u32::from(word!(game.samus_y_subaccel));
-        add_pair(game, slot, Y_SPEED, gravity);
-        let velocity = vertical_step(slot, game);
-        add_pair(game, slot, Y, velocity);
-        if unsafe { BlockCollSpreadBomb(selected, game) } & 1 != 0 {
-            let reverse = vertical_step(slot, game).wrapping_neg();
-            add_pair(game, slot, Y, reverse);
-            if word!(game.projectile_bomb_y_speed[slot]) & 0x8000 != 0 {
-                word!(game.projectile_bomb_y_speed[slot] = 0);
-                word!(game.projectile_y_radius[slot] = 0);
-            } else {
-                word!(game.projectile_timers[slot] = SPREAD_FRACTIONS[slot.wrapping_sub(5)]);
-                word!(game.projectile_bomb_y_speed[slot] = word!(game.projectile_unk_A[slot]));
-            }
-            return;
-        }
-        let step = horizontal_step(word!(game.projectile_bomb_x_speed[slot]));
-        add_pair(game, slot, X, step);
-    }
-    if unsafe { BlockCollSpreadBomb(selected, game) } & 1 != 0 {
-        let speed = word!(game.projectile_bomb_x_speed[slot]);
-        word!(game.projectile_bomb_x_speed[slot] ^= 0x8000);
-        add_pair(game, slot, X, horizontal_step(speed).wrapping_neg());
-    }
+fn pair<O>(owner: &O, slot: u16, high: Field, low: Field, c: &impl Fields<O>) -> u32 {
+    let fraction = u32::from(c.read(owner, slot, low));
+    fraction | (u32::from(c.read(owner, slot, high)) << 16)
 }
-
-#[forbid(unsafe_code)]
-fn vertical_step(slot: usize, game: &Game) -> u32 {
-    (u32::from(word!(game.projectile_bomb_y_speed[slot])) << 16)
-        | u32::from(word!(game.projectile_timers[slot]))
+fn velocity<O>(owner: &O, slot: u16, c: &impl Fields<O>) -> u32 {
+    (u32::from(c.read(owner, slot, Field::YSpeed)) << 16)
+        | u32::from(c.read(owner, slot, Field::SpeedFraction))
 }
-
-#[forbid(unsafe_code)]
-fn horizontal_step(speed: u16) -> u32 {
+fn add<O>(owner: &mut O, slot: u16, high: Field, low: Field, delta: u32, c: &mut impl Fields<O>) {
+    let sum = pair(owner, slot, high, low, c).wrapping_add(delta);
+    c.write(owner, slot, low, sum as u16);
+    c.write(owner, slot, high, (sum >> 16) as u16);
+}
+fn horizontal(speed: u16) -> u32 {
     let magnitude = u32::from(speed & 0x7fff) << 8;
     if speed & 0x8000 != 0 {
         magnitude.wrapping_neg()
@@ -106,16 +97,56 @@ fn horizontal_step(speed: u16) -> u32 {
         magnitude
     }
 }
-
-#[forbid(unsafe_code)]
-fn add_pair(game: &mut Game, slot: usize, pair: (usize, usize), delta: u32) {
-    let (high, low) = pair;
-    let low = low + 2 * slot;
-    let high = high + 2 * slot;
-    // These pairs used native unaligned words, with low-before-high reads and writes.
-    let fraction = u32::from(u16::from_ne_bytes([game.g_ram[low], game.g_ram[low + 1]]));
-    let whole = u32::from(u16::from_ne_bytes([game.g_ram[high], game.g_ram[high + 1]]));
-    let sum = (fraction | (whole << 16)).wrapping_add(delta);
-    game.g_ram[low..low + 2].copy_from_slice(&(sum as u16).to_ne_bytes());
-    game.g_ram[high..high + 2].copy_from_slice(&((sum >> 16) as u16).to_ne_bytes());
+pub fn update<O>(mut owner: O, slot: u16, kind: Kind, c: &mut impl Context<O>) -> O {
+    use Field::*;
+    if c.read(&owner, slot, Direction) & 0xf0 != 0 {
+        return c.clear(owner, slot);
+    }
+    owner = c.fuse(owner, kind == Kind::PowerBomb);
+    if kind != Kind::Spread {
+        return c.contact(owner, slot, false).0;
+    }
+    if c.read(&owner, slot, Variable) != 0 {
+        let gravity = c.gravity(&owner);
+        add(&mut owner, slot, YSpeed, SpeedFraction, gravity, c);
+        let step = velocity(&owner, slot, c);
+        add(&mut owner, slot, Y, YFraction, step, c);
+        let hit;
+        (owner, hit) = c.contact(owner, slot, true);
+        if hit & 1 != 0 {
+            let reverse = velocity(&owner, slot, c).wrapping_neg();
+            add(&mut owner, slot, Y, YFraction, reverse, c);
+            if c.read(&owner, slot, YSpeed) & 0x8000 != 0 {
+                c.write(&mut owner, slot, YSpeed, 0);
+                c.write(&mut owner, slot, YRadius, 0);
+            } else {
+                let index = usize::from(slot >> 1).wrapping_sub(5);
+                let Some(&fraction) = SPREAD_FRACTIONS.get(index) else {
+                    c.invalid(owner, index, SPREAD_FRACTIONS.len());
+                };
+                c.write(&mut owner, slot, SpeedFraction, fraction);
+                let speed = c.read(&owner, slot, Auxiliary);
+                c.write(&mut owner, slot, YSpeed, speed);
+            }
+            return owner;
+        }
+        let step = horizontal(c.read(&owner, slot, XSpeed));
+        add(&mut owner, slot, X, XFraction, step, c);
+    }
+    let hit;
+    (owner, hit) = c.contact(owner, slot, true);
+    if hit & 1 != 0 {
+        let speed = c.read(&owner, slot, XSpeed);
+        let live = c.read(&owner, slot, XSpeed) ^ 0x8000;
+        c.write(&mut owner, slot, XSpeed, live);
+        add(
+            &mut owner,
+            slot,
+            X,
+            XFraction,
+            horizontal(speed).wrapping_neg(),
+            c,
+        );
+    }
+    owner
 }

@@ -81,6 +81,9 @@ pub trait Table {
 pub trait Definitions<O> {
     type Table: Table;
     fn resolve(&mut self, owner: O, address: u32) -> (O, Self::Table);
+    fn word(&mut self, owner: O, table: &Self::Table, index: usize) -> (O, u16) {
+        (owner, table.word(index))
+    }
     fn bts(&self) -> u8;
     fn area(&self) -> u16;
 }
@@ -98,7 +101,7 @@ pub fn mechanism<O>(
         if bts & 128 != 0 {
             return (owner, None);
         }
-        header = table.word(usize::from(bts));
+        (owner, header) = content.word(owner, &table, usize::from(bts));
     } else {
         let bts = content.bts();
         if bts & 128 != 0 {
@@ -107,19 +110,21 @@ pub fn mechanism<O>(
             }
             let (next, table) = content.resolve(owner, 0x949fc6);
             owner = next;
-            let cursor = table.word(usize::from(content.area()));
+            let cursor;
+            (owner, cursor) = content.word(owner, &table, usize::from(content.area()));
             let (next, table) = content.resolve(owner, 0x940000 | u32::from(cursor));
+            let (next, header) = content.word(next, &table, usize::from(bts & 127));
             return (
                 next,
                 Some(Mechanism {
-                    header: table.word(usize::from(bts & 127)),
+                    header,
                     end_scan: false,
                 }),
             );
         }
         let (next, table) = content.resolve(owner, 0x949ea6);
         owner = next;
-        header = table.word(usize::from(bts));
+        (owner, header) = content.word(owner, &table, usize::from(bts));
     }
     (
         owner,

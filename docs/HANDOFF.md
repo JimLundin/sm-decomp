@@ -9,63 +9,70 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-Latest verified stage shares the complete Samus movement-contact operation
-from `7553e8c3`. An unsafe-forbidden core owns scan displacement, target, edge
-and traversal state across material reactions, setup/nested hands and resumed
-movement. Four bank movement/pose entries and their raw displacement chain are
-retired; actual sm90/sm91/sm8f callers use the shared adapter. The core accepts
-opaque content headers and ordinary operations, without Game or RAM. Lazy
-Absent/Local/RamOffset transport preserves guarded access and aliases without
-copyback. Persistent Samus/room state remains RAM-authoritative; ROM, physical
-bus reads, player-lock and native diagnostics remain explicit dependencies.
+Latest verified stage shares the complete Bomb/PowerBomb/Spread fuse, motion,
+terrain/setup and resumed-motion operation from `26d6b986`. Safe shared cores
+replace the old main lifecycle and duplicated candidate rules; sm94 bomb contact
+entries, class tables, cross/perimeter walkers, special lookup and spread-only
+slope wrappers are retired. Actual sm90 callers use the new RAM adapter. Normal
+candidate terrain runs directly with its projectile owner. Setup effects publish
+and reimport the full Session; lookup failures publish its current state before
+resuming the failure. Broad selectors explicitly transfer to the same checked
+implementation. Shared inside/grapple helpers stay
+for their remaining callers. Room, geometry and scheduler state remains in RAM;
+this does not promote persistent Session authority or adopt the candidate.
 
-All 31 suites pass (27.14353s suite time), with all 30 retained vectors unchanged.
-New [2248,48,23,9]: 2,248 actual old/new runtime pairs including 48 expected
-failures; 23 authored owner scenarios; nine boundary groups (two physical bus
-cases, four ignored-offset groups and three checked access failures). Checks
-cover all four APIs, slope indices/orientations and movement signs, first/middle/
-last sample stops, pose probes, live width/position/parity changes, spike guards
-and damage wrapping, nested hands, and defined missing/truncated-ROM prefixes.
-Source identities: 252 runtime/302 local. Root independently matched all 199
-frozen main Rust files to committed `7553e8c3`. Five fatal old/new subprocess
-pairs match output/status77 under assertion interception, not frontend abort;
-no postassert tail execution is claimed.
+All **34 suites pass** in 28.81819s, with all **31 retained vectors unchanged**.
+New terrain [1892,56,15,1] means 1,892 actual old/new pairs including 54 expected
+failures, plus two checked-only special-ROM failure groups, 15 authored owner
+scenarios and one real-ROM three-way integration. The old raw special lookup is
+not executed outside its allocation. Checks cover class failure indices, signed
+coordinates, mark-before-invalid-block behavior, material/extension/slope paths,
+regional tables, traversal order, duplicated corners, live width versus captured
+bounds, callback mutation, resumed motion and full-owner failure publication.
+Reactivated runtime bomb [62,646,195,4,0] and broad compatibility
+[207,230,15,79,12] pass. Actual effect counts exclude the removed native contact
+transfer; separate verification-only entry observations prove direct execution.
 
-New scans use actual new adapters against frozen old scans. Retained creation
-and grapple comparisons explicitly select old/new creation. Other historical
-native scan/lifecycle references remain frozen. Carrier helpers expose the
-narrow slope seam; historical spawn/Chozo observer hooks remain test-only.
-The cross-bank slope case uses initialized SNES bus reads at a direct material
-seam: its full-scan level index would be outside the old defined domain.
-Invalid offset tests use checked transport, never fabricated invalid references.
-These constructed checks establish neither movie nor boot-to-credits coverage.
-No movie frames were run; earlier native-access exclusions/Intro mismatch remain.
+The integration uses actual firing with a 60-tick fuse at (88,344), authentic
+HDMA advancement before bomb updates, and actual Noob Tube setup/polling. It
+reaches the separated tube at tick 88, radius 0x2B60, observes signal 0x8300 and
+installation D4BF. Camera Y=0 keeps tube drawing clipped before the inherited
+native odd-ROM access exclusion. This proves a bounded constructed interaction,
+not rendered output, full expansion termination, Crystal Flash or movie coverage.
+No movie frames ran; earlier native-access exclusions and Intro mismatch remain.
 
-Production release/frontend/verifier/source passed first attempt in 57.97s,
-with final source unchanged. Candidate library release passed in 48.49s after
-a mistaken frontend-enabled invocation encountered access denied in an optional
-dependency build script (3.92s); the established library-only command was used.
-Final carrier/harness builds passed in 13.09s/13.05s. Earlier harness compilation,
-authored FF expectation and missing historical Chozo observer failures were
-repaired; logs remain local. No production behavior fixes were needed.
+Source identities: 258 runtime/309 local. The reference retains independent old
+bomb lifecycle, sm94 traversal and block lookup code. Carrier-only observation
+hooks preserve retained mutation tests; disabled direct-entry observation neither
+publishes state nor emits effects. Original and instrumented sources are checked.
+Shaktool now exercises the actual new fuse adapter. Other historical lifecycle
+references remain frozen. Five fatal subprocess pairs match output/status77 under
+assertion interception, not shipped frontend exit or postassert execution.
 
-Main is **105,958 Rust lines in 202 files**; candidate **114,282 (+8,324)**
-in 309 files remains unadopted. Deltas in lines/lexical tokens/LF bytes:
-main [12,684,-3563], complete composition [12,695,-3483], complete verification
-[2410,21832,91394], implementation plus checks [2422,22527,87911]. Local
-production [0,11,74] already overlaps composition. Carrier-only verification
-[1246,10908,48311] is included in complete verification. Unsafe declarations
-fall by 28 to 2,847; cast-containing lines remain 5,992. Maintained implementation
-including C/header: 106,520; including installers/launcher: 107,430. Canonical
-formatting passes; no packing or new dependency/native/installer additions.
-Temporary scan ownership explains the small main growth; persistent Session
-ownership, all-unsafe retirement and backend independence remain unfinished.
+Production release/frontend/verifier/source passed first attempt in 56.98s;
+candidate library passed first attempt in 54.65s. Final production source stayed
+unchanged. Carrier passed in 25.02s; final harness in 17.80s. Earlier retained-API
+compilation, authored traversal expectation, camera selection and obsolete native
+contact-effect assertions were corrected in verification only; logs are retained.
+
+Main is **106,183 Rust lines in 205 files**; candidate **114,712 (+8,529)**
+in 313 files remains unadopted. Deltas in lines/lexical tokens/LF bytes:
+main [225,2310,5989], complete composition [430,4258,13141], complete verification
+[2420,24181,91360], implementation plus checks [2850,28439,104501]. Local production
+[204,1945,7095] already overlaps composition; carrier-only verification
+[986,8811,34502] is included in complete verification. Unsafe declarations fall
+by 13 to 2,834; cast-containing lines fall by 19 to 5,973. Maintained implementation
+including C/header is 106,745; including installers/launcher is 107,655. Canonical
+changed-source formatting passes; inherited verify_source formatting is preserved.
+Adapters and full-owner failure handling explain the growth, including local
+production exceeding the initial +10..110 estimate. No reduction, new dependency,
+native/installer addition or persistent ownership/backend-independence claim.
 
 Final production source hash:
-`e4edb44bd67ba9cf3bbfbc7b74f67a1e1ded5cc9e12d53f3e920a2e9e97e4156`.
-Use `runtime-impact-working/SAMUS_CONTACT_HANDOFF.md`, `samus-contact-results.json`,
-`samus-contact-fatal.json`, `samus-contact-price.json` and
-`samus-contact-build-attempts.json` for detailed local results and limits.
+`b1cc8fcf0b3ada04ae2eb94c94228d4cb2d28e8f59f112b170fcffb6f233fca6`.
+Use `runtime-impact-working/BOMB_TERRAIN_HANDOFF.md`, `bomb-terrain-results.json`,
+`bomb-terrain-fatal.json`, `bomb-terrain-price.json` and
+`bomb-terrain-build-attempts.json` for local results and limits.
 
 Next: close remaining gameplay consumers and runtime authority transfers. Select
 a complete safety/ownership interaction with named retirement and real-code
@@ -73,7 +80,7 @@ checks; preserve RAM authority until external-writer/reset/load/rewind closure.
 
 Retained setup dispatch [115,199,62,5] covers all 115 semantic identities;
 these are routing/source coverage, not 115 independently executed native bodies.
-Gate [1348,20,5,4] now runs in the full 31-suite invocation. Its four checked-only
+Gate [1348,20,5,4] now runs in the full 34-suite invocation. Its four checked-only
 cases retain native undefined-access exclusions. Prior stage details remain in
 SETUP_DISPATCH_HANDOFF.md.
 
