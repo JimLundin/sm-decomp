@@ -1,6 +1,6 @@
 # Engine migration
 
-2026-10-23 16:52 UTC
+2026-10-23 17:01 UTC
 
 🟩 Committed | 🟦 Checked, uncommitted | 🟧 In progress | ⬜ Remaining | **Purple border: changed since previous report**
 
@@ -39,7 +39,7 @@ flowchart TB
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
-    class ANIM,COMPOSE changed
+
 ```
 
 ```mermaid
@@ -66,7 +66,7 @@ flowchart LR
         AV --> AM["movie: create / upload / ack<br/>20,947 frames / 0 failures"]:::done
         AM --> LAND["Adoption committed"]:::done
     end
-    class AE,AC,CONTENT changed
+
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -89,11 +89,12 @@ flowchart LR
         ATT["Spore / Maw / Waffle / Botwoon<br/>actual producer migration"]:::active --> CALL["caller retirement draft"]:::active
         DROP["drops + contact + reset"]:::active --> CALL
         CALL --> FULL["Full adoption checks"]:::pending
-        EC --> CORE["594 old / new comparisons<br/>PASS"]:::checked
+        EC --> CORE["1,362 old / new comparisons<br/>PASS"]:::checked
         OLD["354 old references<br/>captured"]:::done --> CORE
-        MORE["1,362 old references<br/>CAPTURING"]:::active --> FULL
-        ROM["Native ROM owner<br/>remove g_rom field"]:::active --> RECORD["Captured RomImage records<br/>remove projectile raw reads"]:::active
-        RECORD --> FULL
+        MORE["1,362 old references<br/>captured / corrected"]:::checked --> FULL
+        ROM["Native ROM owner<br/>g_rom field retired in draft"]:::checked --> RECORD["Captured RomImage records<br/>checked reads verified"]:::checked
+        RECORD --> QUAL["57 independent checks<br/>bytes / reset / ownership: PASS"]:::checked
+        QUAL --> FULL
         CORE --> FULL
         FULL --> ECOMMIT["Commit adoption"]:::pending
     end
@@ -114,7 +115,7 @@ flowchart LR
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
-    class HOST,ONE,BUILD,GUARD,REF,MOVIE,REPLAY,CI,CCOMMIT,MORE,ROM,RECORD changed
+    class CORE,MORE,ROM,RECORD,QUAL changed
 ```
 
 [Plan](docs/PLAN.md) / [Checks and accounting](docs/HANDOFF.md) / [Target architecture](docs/target-architecture/README.md)

@@ -8,6 +8,24 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Enemy candidate-native-1362 passes all1362 actual-old comparisons and57 independent
+checks on source b2028c95ed0f23911a9bdf3e709f7e624b456162fb182c36640761991f7575b7.
+Headless library sourcecheck and direct production DLL build pass. Full caller
+adoption/native-ROM ownership/dedup remains isolated; main integration and movie
+checks are next. Results: candidate-native-1362-results/results.json and
+candidate-native-1362/qualified-1.json. Price: production+3489lines, verification
++1261lines before final probes/registration. This includes genuine338line
+consolidation and70lines of native ownership, not a net reduction.
+
+Reference lineage: old-1362 sourcea10c9aa4... produced1358 valid outputs and four
+invalid intended-success respawn fixtures622..625. Their initializer selected
+A28A75 from the wrong dispatch table; actual CallEnemyAi no-op isA2804C. Sole
+fixture literal/comment correction is source-audited. old-1362-v2 source
+b932a4c7ab9c9129bf18e936cbd01f6764d6a55b2843d0023e94acd49b28338e freshly captures
+those four successfully. Other1358 are unchanged, each case owns fresh input
+state, and the original594 observations also match earlier frozen references.
+Keep failed fixture artifacts; do not count native exit as a full-memory result.
+
 Composed animation/palette core354f1fb5 is adopted in main after GitHub
 run39989858734 passed independent execution, full build and formatting. Source
 `fe7c93f85d6d98e706096f001b3028b40bfcf1d5c33bc9c27e9b55c5b9e1af15`
