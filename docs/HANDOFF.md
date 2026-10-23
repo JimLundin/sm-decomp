@@ -8,34 +8,44 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-First frozen next-enemy chunk independently source-reviewed: replacement/
-item_pickups.rs, item_pickups_runtime.rs, sm_90.rs, sm_91.rs, sm_a2.rs,
-verification/inventory_restore_cases.rs and shared/drop_rules.rs. One Resource,
-shared signed/wrapping restoration,7actualcaller redirects,4old bodies retired.
-Enemy drops.rs still active; no partial integration/runtime equivalence claim.
-Complete candidate target: next-enemy-session/candidate-c8d728c2, not built yet.
-Native cases1440..1442 draft is verification/enemy_native_runtime_cases.rs;
-session_review reactivated for concrete review (do not rely on queued messages
-to a completed agent). Detached binding drafted, waiting on complete cores.
+Complete next-enemy candidate is assembled and independently reviewed at
+Local/sm-decomp-experiments/20261023/room-session/next-enemy-session/
+candidate-c8d728c2. Main remains19d4e98f; no candidate adoption yet.
+Five owner/adapter files and five getters retire; four old restoration bodies
+share Inventory::restore through seven real caller redirects. Ownership is
+interval-scoped, not persistent whole-game state.
 
-Combined baseline route PASS on current source dd073b2a...: main-baseline-movie.log
-contains28314frames,26required probes,zero failures,120frames after completion,
-97.27s replay/97.52s total. Process32198 completed; no localheavy process active.
-Restoration CI40009086639 now fully PASS. Worker source drafts remain isolated.
+Source8ef18286 passes1440 frozen enemy/restoration comparisons,3new native
+invariants,87independent checks and1038room comparisons. Frozen results are in
+candidate-comparisons-1/ and candidate-room-results-1/. Hosted40012943588 failed
+before gameplay because case1058's synthetic image was too small. Independently
+reviewed case-only expansion adds7verification lines, no production change.
+Corrected source21a7453a40213efa46d98267074b1b9c8bc2f5de2792f46a32bb80052e617e70
+passes final direct verifier build (candidate-build-4.log),106player groups,
+56comparisons and2runtime guards (candidate-player-regression-final.json).
+Build session23568 and replay session45393 are terminal. Candidate replay passes
+28314frames, all26probes and120frames after completion with zero failures:
+90.08s replay/90.30s total in candidate-final-movie.log. One sample versus97.27s
+baseline does not establish a stable speedup. No local heavy process active.
 
-Four enemy implementation lanes now ACTIVE fromc8d728c2 in
-next-enemy-session/replacement: A foreign_edges shared state/runtime/content;
-B setup_callbacks setup/attachments; C pre_callbacks pre/motion/access macros;
-D collision lifecycle/contact/drops/presentation/Inventory restoration/callers.
-Corrected declarations independently approved and metadata compilation passes
-(declaration-build-final.log); ExternalInputs.area removed, use Session.room.area.
-First review chunks: C access.rs, A complete shared owner/native transfer/content.
-Root compiles only a combined source candidate, not incomplete gameplay stubs.
-Detached composition bindings are with torizo_implementation; native Runtime
-cases1440..1442 and mutations with torizo_review. IDs0..1439 remain unchanged.
-Owner reviewer session_review and caller/ordering reviewer enemy_projectiles_review
-need followup_task on frozen chunks if completed; send_message alone will not resume.
-Main c8d728c2 CI40009086639 is running; earlier getter and adoption CI pass.
+Validation branch verify/enemy-session-20261023 at4d6806b8 is running in GitHub
+CI40013612299. Formatting, full build, composed execution and7composed mutants
+pass;9DLL mutants are running. Do not restart the run just because
+a poll times out. Each mutant must compile and fail the intended behavior check;
+compiler failures, unrelated panics, crashes and timeouts never count as kills.
+All16faults now have individual nodes in PROGRESS.md.
+
+Combined baseline: main-baseline-movie.log, source dd073b2a...,28314frames,
+26required probes,zero failures,120frames after completion,97.27s replay.
+Previous restoration CI40009086639 passes. Root alone runs the local compiler/
+capture/replay lane; standalone executable checks stay on hosted Windows.
+
+Before adoption: finish hosted checks, synchronize the
+case1058fix to replacement, reconcile final source and accounting, run full root
+cargo fmt/check and progress, then commit/push the complete candidate.
+Production delta is-804lines but+1934tokens/+3915LFbytes: no net source reduction.
+Verification Rust is+1239lines after fixture correction; Python support+134.
+Native source unchanged. Final accounting files remain beside the candidate.
 
 Restoration verification adopted: enemy IDs1382..1439,58actual-old cases pass;
 20adjacent supplemental outputs unchanged and87independent checks pass. Build/

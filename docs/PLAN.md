@@ -276,6 +276,30 @@ references; measure build/test time and resource growth before changing the loop
    Existing pure projectile_geometry sine table is reused directly; no new math
    implementation or detached fake. Native cases1440..1442 are drafted for actual
    Runtime publication/reimport and panic behavior; source review/capture pending.
+   Complete candidate-c8d728c2 is now assembled and independently source-reviewed.
+   Five old owner/adapter files and five obsolete room getters retire; case1037
+   now observes actual shared fields/coordinate helpers with unchanged bytes.
+   First build's15 integration errors fixed; final verifier and composed-host
+   compilation pass. Native-source stamps required only normalized-equal newline
+   reconciliation, including installer inputs; no native algorithm/dependency change.
+   Source8ef18286b2783b5e7f030c3fdfadf87bcf7716c54ab0ba3126daf07aa58c4061 passes
+   all1440 frozen enemy/restoration comparisons,3 new native invariants and87
+   independent checks (143.04s), plus1038room comparisons (109.30s).
+   Hosted197ace53 run40012943588 failed during case1058 synthetic image setup:
+   A0:983A write exceeded its1MiB image before gameplay. Reviewed case-only image
+   expansion preserves prepared bytes and other fixtures; validation branch
+   4d6806b8/run40013612299 reruns composed execution, full build and16mutants.
+   Corrected source21a7453a40213efa46d98267074b1b9c8bc2f5de2792f46a32bb80052e617e70
+   passes the direct verifier build,106player groups,56comparisons and both
+   animation/palette guards. Hosted composed execution and all7composed mutants
+   pass, as does the hosted full build. Final replay passes28314frames, all26
+   probes and120follow-up frames with zero failures:90.08s replay/90.30s total.
+   Baseline97.27s versus90.08s is one paired sample, not a stable speedup claim.
+   Nine DLL mutants remain before adoption.
+   Accounting before that7line fixture correction: production-804lines but
+   +1934tokens/+3915LFbytes, so no net source-reduction claim; verification+1232
+   Rust lines, Python+134. Native unchanged; geometry relocation/formatting are
+   not savings. Complete accounting is local FINAL-ACCOUNTING.md.
 
 
    Room mechanisms are now adopted as one production responsibility: creation,
@@ -744,6 +768,8 @@ production behavior (boundaries, state updates, ordering or ownership), confirm
 the unmodified checks pass, then confirm those checks reject each compiling
 mutant. Use isolated source copies; never adopt mutant code. Compile failures,
 unrelated crashes and unexecuted checks do not count as detected mutations.
+Timeouts and unrelated panic assertions do not count either. Keep individual
+mutation results visible in the progress graph as each validation batch completes.
 Investigate surviving mutants and improve coverage or explain equivalence.
 Keep mutation support with verification code and report its scope separately;
 a few detected mutants do not establish comprehensive mutation coverage.
