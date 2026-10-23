@@ -51,10 +51,16 @@ with sync_playwright() as playwright:
     expect(page.locator("#details")).to_contain_text("Why these files are connected")
     page.screenshot(path=str(output / "connection-evidence.png"))
 
-    page.evaluate("atlas.navigate('scope', 'sm/src/game/room_mechanisms/rules')")
+    page.locator("#search").fill("")
+    page.locator('#tree [data-scope="sm/src/game"]').click()
+    page.locator('#tree [data-scope="sm/src/game/room_mechanisms"]').click()
+    page.locator('#tree [data-scope="sm/src/game/room_mechanisms/rules"]').click()
     expect(page.locator("#view-title")).to_contain_text("rules")
     assert page.locator("#extra [data-file]").count() > 0
     page.screenshot(path=str(output / "folder-drilldown.png"))
+    page.locator("#back").click()
+    assert page.evaluate("atlas.getState().id") == "sm/src/game/room_mechanisms"
+    page.locator("#back").click()
     page.locator("#back").click()
     assert page.evaluate("atlas.getState().id") == "sm/src/game/session_runtime.rs"
     page.locator("#reset").click()
@@ -70,6 +76,7 @@ with sync_playwright() as playwright:
     page.set_viewport_size({"width": 390, "height": 844})
     page.locator("#reset").click()
     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1")
+    assert "pan-y" in page.locator("#graph").evaluate("element => getComputedStyle(element).touchAction")
     page.screenshot(path=str(output / "overview-mobile.png"))
     audit_accessibility(page, "overview-mobile")
     page.locator("#tree-toggle").click()
@@ -80,6 +87,10 @@ with sync_playwright() as playwright:
     expect(page.get_by_test_id("source-link")).to_be_visible()
     page.screenshot(path=str(output / "file-mobile.png"))
     audit_accessibility(page, "file-mobile")
+    page.locator("#details .drawer-close").click()
+    assert not page.evaluate("document.querySelector('#layout').classList.contains('show-detail')")
+    page.screenshot(path=str(output / "file-graph-mobile.png"))
+    page.locator("#details-toggle").click()
     page.keyboard.press("Escape")
     assert not page.evaluate("document.querySelector('#layout').classList.contains('show-detail')")
     assert not errors, errors
