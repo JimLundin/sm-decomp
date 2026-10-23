@@ -89,11 +89,6 @@ impl Aliases for Composed {
     fn set_color_prefix(&mut self, _: PaletteBuffer, _: usize, _: u16) {
         panic!("unprepared animation color alias")
     }
-    fn miniboss_defeated(&self) -> bool {
-        let area = usize::from(self.world.player.room.area);
-        let bosses = &self.world.progression.bosses;
-        u16::from_ne_bytes([bosses[area], bosses.get(area + 1).copied().unwrap_or(0)]) & 2 != 0
-    }
 }
 impl Effects for Composed {
     fn sound(&mut self, channel: u8, limit: u8, sound: u16) {
@@ -107,31 +102,6 @@ impl Effects for Composed {
         if let Some(callback) = self.on_visual_music {
             callback(self);
         }
-    }
-    fn check_boss(&mut self, mask: u16) -> bool {
-        let p = &mut self.world.progression;
-        p.scratch = (p.scratch & 0xff00) | u16::from(mask as u8);
-        p.bosses[usize::from(self.world.player.room.area)] & mask as u8 != 0
-    }
-    fn set_boss(&mut self, mask: u16) {
-        let p = &mut self.world.progression;
-        p.scratch = (p.scratch & 0xff00) | u16::from(mask as u8);
-        p.bosses[usize::from(self.world.player.room.area)] |= mask as u8;
-    }
-    fn check_event(&mut self, event: u16) -> bool {
-        let p = &mut self.world.progression;
-        p.scratch = 1 << (event & 7);
-        let mask = p.scratch as u8;
-        *p.event_byte(usize::from(event >> 3)) & mask != 0
-    }
-    fn set_event(&mut self, event: u16) {
-        let p = &mut self.world.progression;
-        p.scratch = 1 << (event & 7);
-        let mask = p.scratch as u8;
-        *p.event_byte(usize::from(event >> 3)) |= mask;
-    }
-    fn boss_at(&mut self, area: u8) -> u8 {
-        self.world.progression.bosses[usize::from(area)]
     }
     fn resume_movement_sound(&mut self) {
         panic!("unprepared visual movement sound")

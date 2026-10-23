@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 use super::super::access::*;
 use super::super::host::*;
+use crate::game::progress_flags as flags;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ScrollPair {
     Near,
@@ -25,7 +26,7 @@ pub fn poll(c: &mut impl Host, slot: usize) {
         set_scroll_pair(c, ScrollPair::Far, Access::Open);
     }
     if c.session().player.x > 0x348 {
-        c.mark_event(0xd);
+        flags::set_event(c, 0xd);
         mechanism!(c, slot, header = 0);
     }
 }

@@ -3,6 +3,7 @@
 use super::super::access::*;
 use super::super::host::*;
 use super::terrain_setup as terrain;
+use crate::game::progress_flags as flags;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Part {
     Eye,
@@ -22,7 +23,8 @@ pub enum Tile {
 }
 
 pub fn begin(c: &mut impl Host, slot: usize, part: Part) -> u8 {
-    if !c.door_opened(mechanism!(c, slot, room_argument)) {
+    let argument = mechanism!(c, slot, room_argument);
+    if !flags::door_opened(c, argument) {
         install(
             mechanism!(c, slot, block),
             if part == Part::Eye {
@@ -41,7 +43,8 @@ pub fn begin(c: &mut impl Host, slot: usize, part: Part) -> u8 {
     0
 }
 pub fn wake(c: &mut impl Host, slot: usize) {
-    if c.door_opened(mechanism!(c, slot, room_argument)) {
+    let argument = mechanism!(c, slot, room_argument);
+    if flags::door_opened(c, argument) {
         mechanism!(c, slot, pre_action = 0xd779);
         mechanism!(c, slot, program = mechanism!(c, slot, return_program));
         mechanism!(c, slot, instruction_delay = 1);

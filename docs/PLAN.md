@@ -410,52 +410,45 @@ references; measure build/test time and resource growth before changing the loop
    interval ownership and controller safety, not net reduction, persistent whole-
    game ownership or Map Rando integration readiness.
 
-   Next responsibility: shared gameplay progression flags and actual callers.
-   Reviewed declarations compile; proposed210bytes are disjoint (52,289 total).
-   Retire18PLM/visual/enemy ports, three duplicate bit helpers and stale bitmask
-   input while migrating raw boss callers and reset/save/load edges. Preserve
-   scratch-byte distinctions, broad aliases, LE/native words and failed-checksum
-   RAM effects. SaveToSram's odd07F7 native read needs a narrow safe repair backed
-   by originalCPU save observations before using Rust save captures. No flags
-   implementation adopted yet; maps, room topology and persistent authority
-   across snapshots remain separate unfinished work.
-   Implementation is split across shared core/codec, PLM, visual, projectile
-   and legacy/persistence lanes. The14PLM/4visual/5projectile/18legacy file drafts
-   pass independent source review, including the save alignment repair and
-   seven observation points. Shared-core/codec and full210byte Runtimeguard now
-   pass source review, including actual successful/failed-load reentry. Fifty
-   frozen production overlay files retire the reviewed ports/helpers; draft
-   production cost+270lines, with verification counted separately.
-   Baseline build28.98s on54419923 passes71actual flag/reset/load/Spore captures
-   and two originalCPU saves. Independent byte audit passes every capture.
-   Separate alignment-only build28.69s on1cc2d6c8 passes both repaired SaveToSram
-   captures against originalCPU: all7RAM/SRAM stages, exact27CPU-only bytes,
-   gameplay scratch05E7/05E8 fully compared. Never execute old Rust SaveToSram.
-   Local next-flags-session/reference-1 and save-alignment-results-1 retain
-   source-checked captures and comparisons. This qualifies the narrow save
-   repair for those scenarios. Assembled candidate00688569 passes root formatting,
-   direct release build (27.54s), all71 flag comparisons, both7-stage CPU-qualified
-   saves, the210-byte Runtime guard,39 shared-consumer comparisons and visual
-   Runtime guard. These are constructed actual-code scenarios, not movie coverage.
-   Final candidate887e7e4c also passes all8 defined even-area Kraid comparisons
-   and12 originalCPU odd-area comparisons (36 fullRAM/SRAM stages), including
-   actual palette completion/music queue/native store and return values. Only
-   exact executed CPU stack bytes are excluded; scratch and adjacent bytes remain
-   compared, candidate stack bytes preserved. Old odd-address Rust never executes.
-   Independent output audit passes;71flags/2saves/39shared/guards also pass again
-   on this source. Root format/release build and detached compilation pass.
-   Hosted run40036842766 tests30fd121f: format, composed baselines and42detached
-   mutation stage pass; frontend/9DLL mutations and detailed log audit pending.
-   Branch follow-upb09c2aa3 adds only the reviewed
-   comparison-only Python script; its Rust is identical. Main adoption pending.
-   Final assembled production grows281lines/+2451tokens/+10945LFbytes;
-   verification Rust+2349lines and Python+256, including Kraid. Production
-   totals108173lines, verification18469, combined126642; native unchanged.
-   All22 new cfg-only observer lines are counted as verification. No reduction
-   claim;18ports and3duplicate helpers retire in the candidate, not yet main.
-   Public atlas snapshot4ba01b81 is deployed via40034126172: browser/accessibility
-   and Pages pass; live HTTP200 bytes match committed HTML. It reflects adopted
-   sprite ownership, while this progression work remains a draft.
+   Shared gameplay progression flags are adopted from reviewed b09c2aa3:
+   210 additional disjoint WRAM bytes (52,289 total), one typed flag owner,
+   18 retired ports and three duplicate helpers, actual raw boss callers and
+   reset/save/load edges. Preserve scratch distinctions, broad aliases, native/LE
+   words and failed-checksum RAM effects. The narrow SaveToSram alignment repair
+   matches originalCPU in two seven-stage fullRAM/SRAM scenarios; old unaligned
+   Rust save and odd native boss bodies never serve as references.
+   Final candidate887e7e4c passes71flag comparisons, twoCPU-qualified saves,
+   39shared comparisons, ownership/visual guards, eight defined Kraid comparisons
+   and12originalCPU Kraid comparisons (36stages). Independent output audits pass.
+   Hosted40036842766 at30fd121f passes frontend/library/verifier build, formatting,
+   composed baselines and all51mutations (42detached+9DLL); exact compile/kill
+   inventory and assertions independently audited. Follow-upb09c2aa3 adds only
+   the reviewed comparison-only Python script; Rust is identical.
+   Production+281lines/+2451tokens/+10945LFbytes; verificationRust+2349lines,
+   Python+256, native unchanged. Production108173, verification18469, combined
+   Rust126642. All22new cfg-only observer lines count as verification. No net
+   reduction, persistent whole-game ownership or Map Rando integration claim.
+
+   Next complete responsibility: room-entry protocol and configurable connections,
+   including actual contact/start/initial/door/IRQ paths, ordered content reads,
+   setup effects and suspension. Private next-room-session declarations are being
+   prepared against reviewed contractv3; no new room implementation is adopted.
+   Reuse current owners;84additional disjoint bytes comprise82room-related bytes
+   and two shared lossless continuation bytes (proposed union52,373). Retire the
+   actual competing orchestration and stale door inputs in the same adoption.
+   Public GameOwner::with_world must supply the actual production path; a detached
+   graph alone is insufficient. One immutable binding perGame preserves reset and
+   in-process rewind; prepared-world disk formats require identity protection and
+   remain unfinished. Vanilla persistence stays supported. Persistent Session
+   authority remains a separate complete frame/lifecycle migration requirement.
+   Contract and union source reviews pass. Source21995e54 passes36actual existing
+   room selection/header/state/door captures, including six exact checked failure
+   prefixes and two diagnostic allocation-replacement cases. FullRAM/outcome/hash
+   audit passes independently. These are synthetic references, not a new room
+   implementation or movie coverage. Main adoption and maintained fixture support
+   remain separate from the private source-checked reference snapshot.
+   Refresh public atlas from this adopted flags commit, then run hosted browser,
+   accessibility and Pages checks; the current live snapshot still reflects4ba01b81.
 
    Room mechanisms are now adopted as one production responsibility: creation,
    setup, pre-actions, all 110 command identities, scheduler, drawing/clipping,

@@ -53,17 +53,10 @@ pub trait Aliases {
     fn set_palette_color_slice(&mut self, displacement: u16, value: u16);
     /// Animation: widened word index, ordered low/high bytes, no hidden u16 wrap.
     fn set_color_prefix(&mut self, buffer: PaletteBuffer, index: usize, value: u16);
-    /// Native word at D828 + current shared area, including broad/odd aliases.
-    fn miniboss_defeated(&self) -> bool;
 }
 pub trait Effects {
     fn sound(&mut self, channel: u8, limit: u8, sound: u16);
     fn music_delayed8(&mut self, track: u16);
-    fn check_boss(&mut self, mask: u16) -> bool;
-    fn set_boss(&mut self, mask: u16);
-    fn check_event(&mut self, event: u16) -> bool;
-    fn set_event(&mut self, event: u16);
-    fn boss_at(&mut self, area: u8) -> u8;
     /// Existing SamusCode_1C sound selection; synchronous external interval.
     fn resume_movement_sound(&mut self);
     /// Synchronous backend request; caller acknowledges captured slot only on success.
@@ -84,4 +77,7 @@ pub trait Composition {
     fn spawn_statue_projectile(&mut self, kind: StatueProjectile, parameter: u16);
     fn advance_charge_palette(&mut self) -> u8;
 }
-pub trait Host: SessionAccess + Content + Aliases + Effects + Composition {}
+pub trait Host:
+    SessionAccess + Content + Aliases + Effects + Composition + crate::game::gameplay_flag_host::Host
+{
+}

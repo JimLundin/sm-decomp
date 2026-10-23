@@ -6,6 +6,8 @@ mod animation_independent_checks;
 mod composition_checks;
 mod enemy_checks;
 mod enemy_host;
+mod flag_checks;
+mod flag_host;
 pub(crate) mod game;
 mod palette;
 mod palette_independent_checks;
@@ -69,33 +71,18 @@ use game::visual_state::Upload;
 use palette::execution as colors;
 use rom::{RomImage, RomRecord};
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
-struct Progression {
-    events: [u8; 8],
-    bosses: [u8; 8],
-    scratch: u16,
-}
-impl Progression {
-    fn event_byte(&mut self, index: usize) -> &mut u8 {
-        match index {
-            0..=7 => &mut self.events[index],
-            8..=15 => &mut self.bosses[index - 8],
-            _ => panic!("event outside prepared progression"),
-        }
-    }
-}
 #[derive(Clone, Debug, PartialEq)]
 struct World {
     player: game::session::Session,
     player_inputs: game::external_inputs::ExternalInputs,
-    progression: Progression,
+    flag_external: flag_host::ExternalBytes,
 }
 impl Default for World {
     fn default() -> Self {
         Self {
             player: Default::default(),
             player_inputs: Default::default(),
-            progression: Progression::default(),
+            flag_external: Default::default(),
         }
     }
 }
@@ -195,11 +182,18 @@ fn main() {
         println!("sprite composition case passed: {case}");
         return;
     }
+    if args.get(1).map(String::as_str) == Some("--flags-mutation") {
+        let case = args.get(2).expect("flags case name required");
+        flag_checks::run_selected(case);
+        println!("flags composition case passed: {case}");
+        return;
+    }
     checks::run();
     composition_checks::run();
     enemy_checks::run();
     visual_checks::run();
     sprite_checks::run();
+    flag_checks::run();
     palette_independent_checks::run();
     animation_independent_checks::run();
     println!("player/animation/palette composed core checks passed");

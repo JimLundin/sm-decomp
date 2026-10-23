@@ -77,3 +77,12 @@ pub(crate) mod sprite_objects;
 
 #[path = "../../game/sprite_effect_controllers.rs"]
 pub(crate) mod sprite_effect_controllers;
+
+#[path = "../../game/gameplay_flag_state.rs"]
+pub(crate) mod gameplay_flag_state;
+
+#[path = "../../game/gameplay_flag_host.rs"]
+pub(crate) mod gameplay_flag_host;
+
+#[path = "../../game/progress_flags.rs"]
+pub(crate) mod progress_flags;

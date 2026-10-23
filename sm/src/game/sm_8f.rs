@@ -3,8 +3,8 @@ use crate::game::animated_tiles;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_87::*;
 use crate::game::enemy_projectiles::SpawnEprojWithRoomGfx;
+use crate::game::gameplay_flag_runtime::SetEventHappened;
 pub use crate::game::prelude::*;
-use crate::game::progress_flags::SetEventHappened;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::scrolling_sky::{
     initialize_land, initialize_ocean, queue_land_rows, queue_ocean_rows,

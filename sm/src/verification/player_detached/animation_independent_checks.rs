@@ -9,26 +9,26 @@ use std::panic::{AssertUnwindSafe, catch_unwind};
 // shared with visual_checks; keep one fixture for those assertions.
 fn progression_and_operands() {
     let mut host = Composed::new();
-    host.world.progression.bosses[0] = 2;
-    host.world.progression.scratch = 0xab55;
+    host.world.player.gameplay_flags.bosses_by_area[0] = 2;
+    host.world.player.flag_compatibility.bitmask = 0xab55;
     host.byte(0x87, 0x8500, 2);
     host.word(0x87, 0x8501, 0x9123);
     assert_eq!(animated::command(&mut host, 8880416, 0, 0x8500), 0x9123);
-    assert_eq!(host.world.progression.scratch, 0xab02);
-    host.world.progression.scratch = 0xbeef;
+    assert_eq!(host.world.player.flag_compatibility.bitmask, 0xab02);
+    host.world.player.flag_compatibility.bitmask = 0xbeef;
     host.byte(0x87, 0x8510, 2);
     host.byte(0x87, 0x8511, 0);
     host.word(0x87, 0x8512, 0x9345);
     assert_eq!(animated::command(&mut host, 8880899, 0, 0x8510), 0x9345);
-    assert_eq!(host.world.progression.scratch, 0xbeef); // explicit area has no scratch write
-    host.world.progression.events[1] = 2;
+    assert_eq!(host.world.player.flag_compatibility.bitmask, 0xbeef); // explicit area has no scratch write
+    host.world.player.gameplay_flags.events[1] = 2;
     host.word(0x87, 0x8520, 9);
     host.word(0x87, 0x8522, 0x9567);
     assert_eq!(animated::command(&mut host, 8880447, 0, 0x8520), 0x9567);
-    assert_eq!(host.world.progression.scratch, 2); // full event mask replaces high byte
+    assert_eq!(host.world.player.flag_compatibility.bitmask, 2); // full event mask replaces high byte
     host.word(0x87, 0x8530, 64);
     animated::command(&mut host, 8880464, 0, 0x8530);
-    assert_eq!(host.world.progression.bosses[0], 3); // event byte eight aliases area-zero flags
+    assert_eq!(host.world.player.gameplay_flags.bosses_by_area[0], 3); // event byte eight aliases area-zero flags
     host.word(0x87, 0x8600, 0xab09);
     host.word(0x8d, 0x8600, 0xab09);
     assert_eq!(animated::command(&mut host, 8880380, 0, 0x8600), 0x8601);

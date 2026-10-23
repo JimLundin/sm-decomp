@@ -1,6 +1,7 @@
 //! Animated-tile execution over the shared visual Session.
 #![forbid(unsafe_code)]
 use crate::game::{
+    progress_flags,
     session::Session,
     visual_host::{AnimationMember, Host, Record, Source, StatueProjectile},
     visual_state::{PaletteBuffer, Upload},
@@ -183,9 +184,15 @@ pub(crate) fn command(host: &mut impl Host, address: u32, index: u16, cursor: u1
         8880416 | 8880447 | 8880899 => {
             let data = host.record(Source::Loaded, 0x87, cursor);
             let (width, taken) = match address {
-                8880416 => (1, host.check_boss(u16::from(data.native_word(0) as u8))),
-                8880447 => (2, host.check_event(data.native_word(0))),
-                _ => (2, data.byte(0) & host.boss_at(data.byte(1)) != 0),
+                8880416 => (
+                    1,
+                    progress_flags::boss_defeated(host, u16::from(data.native_word(0) as u8)),
+                ),
+                8880447 => (2, progress_flags::event_happened(host, data.native_word(0))),
+                _ => (
+                    2,
+                    data.byte(0) & progress_flags::boss_byte_at(host, u16::from(data.byte(1))) != 0,
+                ),
             };
             let next = cursor.wrapping_add(width);
             if taken {
@@ -197,15 +204,15 @@ pub(crate) fn command(host: &mut impl Host, address: u32, index: u16, cursor: u1
         8880435 | 8880464 => {
             let data = host.record(Source::Loaded, 0x87, cursor);
             if address == 8880435 {
-                host.set_boss(u16::from(data.byte(0)));
+                progress_flags::mark_boss_defeated(host, u16::from(data.byte(0)));
                 cursor.wrapping_add(1)
             } else {
-                host.set_event(data.native_word(0));
+                progress_flags::set_event(host, data.native_word(0));
                 cursor.wrapping_add(2)
             }
         }
         8880570 => {
-            if !host.check_boss(1) {
+            if !progress_flags::boss_defeated(host, 1) {
                 animation!(host, index, delay = 1);
                 0
             } else {

@@ -3,7 +3,7 @@ pub use crate::game::constants::bank_90::*;
 pub use crate::game::prelude::*;
 use crate::game::projectile_room::Axis as ShotAxis;
 
-use crate::game::progress_flags::CheckBossBitForCurArea;
+use crate::game::gameplay_flag_runtime::CheckBossBitForCurArea;
 
 use crate::game::room_mechanisms::spawn_collision;
 use crate::game::sm_a0::CalculateAngleFromXY;

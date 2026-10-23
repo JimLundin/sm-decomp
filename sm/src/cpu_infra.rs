@@ -1271,3 +1271,14 @@ pub mod draygon_sprite_oracle;
 
 #[path = "verification/sprite_pool_oracle.rs"]
 pub mod sprite_pool_oracle;
+
+#[path = "verification/flags_save_oracle.rs"]
+pub mod flags_save_oracle;
+
+#[path = "verification/flags_save_candidate.rs"]
+pub mod flags_save_candidate;
+
+#[path = "verification/kraid_flags_candidate.rs"]
+pub mod kraid_flags_candidate;
+#[path = "verification/kraid_flags_oracle.rs"]
+pub mod kraid_flags_oracle;

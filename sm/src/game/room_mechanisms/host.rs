@@ -217,16 +217,6 @@ pub trait Effects {
     fn save(&mut self, slot: u16);
     fn enemy_projectile(&mut self, definition: u16, parameter: u16);
     fn wake_projectile_for_block(&mut self, block: u16);
-    fn event(&mut self, event: u16) -> bool;
-    fn mark_event(&mut self, event: u16);
-    fn boss(&mut self, mask: u16) -> u16;
-    fn door_opened(&mut self, door: u16) -> bool;
-    fn mark_door_opened(&mut self, door: u16);
-    fn item_collected(&mut self, item: u16) -> bool;
-    fn mark_item_collected(&mut self, item: u16);
-    fn room_object_used(&mut self, object: u16) -> bool;
-    fn mark_room_object_used(&mut self, object: u16);
-    fn open_door_and_read_adjacent_flags(&mut self, door: u16) -> u16;
     fn map_used(&self) -> bool;
     fn mark_map_used(&mut self);
     fn set_has_area_map(&mut self, value: u16);
@@ -236,4 +226,12 @@ pub trait Effects {
     fn statue_wait_actor(&mut self, actor: u16, waiting: bool);
     fn diagnostic(&mut self, diagnostic: Diagnostic) -> u8;
 }
-pub trait Host: SessionAccess + ImportedAliases + Content + Graphics + Effects {}
+pub trait Host:
+    SessionAccess
+    + crate::game::gameplay_flag_host::Host
+    + ImportedAliases
+    + Content
+    + Graphics
+    + Effects
+{
+}

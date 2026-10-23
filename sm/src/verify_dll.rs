@@ -416,3 +416,19 @@ include!("verification/sprite_pool_candidate_dll.rs");
 pub unsafe extern "C" fn sm_verify_sprite_runtime_guard() -> bool {
     sm::verify_sprite_runtime_guard()
 }
+
+include!("verification/flags_dll.rs");
+
+include!("verification/flags_save_dll.rs");
+
+include!("verification/flags_save_candidate_dll.rs");
+
+#[unsafe(no_mangle)]
+pub extern "C" fn sm_verify_flags_runtime_guard() -> bool {
+    sm::verify_flags_runtime_guard()
+}
+
+include!("verification/flags_kraid_dll.rs");
+
+include!("verification/kraid_flags_dll.rs");
+include!("verification/kraid_flags_candidate_dll.rs");

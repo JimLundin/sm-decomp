@@ -21,19 +21,35 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-### Progression flags / active
+### Room entry + configurable connections / declarations
+
+```mermaid
+flowchart LR
+    RC["Complete caller + content contract<br/>source review PASS"]:::done --> RD["Concrete declarations<br/>in preparation"]:::active
+    RU["84 additional bytes<br/>disjoint union audit PASS"]:::done --> RD
+    RR["36 actual room references<br/>execution + independent audit PASS"]:::done --> RI["Production contact / start / IRQ<br/>implementation pending"]:::pending
+    RD --> RB["Declaration compile + review<br/>pending"]:::pending --> RI
+    RI --> RT["Supplied topology / actual callers<br/>verification pending"]:::pending
+    class RC,RD,RU,RR,RI,RB,RT changed
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
+### Progression flags / adopted
 
 ```mermaid
 flowchart TB
     FCONTRACT["Interface + declarations<br/>review / compile PASS"]:::done
-    FUNION["210 proposed bytes<br/>overlap audit PASS"]:::done
-    FCONTRACT --> FCORE["progress_flags.rs<br/>draft source review PASS"]:::draft
-    FUNION --> FCODEC["Session + codec + Runtime<br/>draft source review PASS"]:::draft
-    FCORE --> FPLM["room_mechanisms / 14 files<br/>draft source review PASS"]:::draft
-    FCORE --> FVIS["palette + animation / 4 files<br/>draft source review PASS"]:::draft
-    FCORE --> FEPR["projectiles / 5 files<br/>draft source review PASS"]:::draft
-    FCORE --> FLEG["legacy callers / 18 files<br/>draft source review PASS"]:::draft
-    FLEG --> FSAVE["sm_81 save alignment repair<br/>draft source review PASS"]:::draft
+    FUNION["210 new bytes<br/>overlap audit PASS"]:::done
+    FCONTRACT --> FCORE["progress_flags.rs<br/>adopted / reviewed"]:::done
+    FUNION --> FCODEC["Session + codec + Runtime<br/>adopted / reviewed"]:::done
+    FCORE --> FPLM["room_mechanisms / 14 files<br/>adopted / reviewed"]:::done
+    FCORE --> FVIS["palette + animation / 4 files<br/>adopted / reviewed"]:::done
+    FCORE --> FEPR["projectiles / 5 files<br/>adopted / reviewed"]:::done
+    FCORE --> FLEG["legacy callers / 18 files<br/>adopted / reviewed"]:::done
+    FLEG --> FSAVE["sm_81 save alignment repair<br/>adopted / reviewed"]:::done
     FSAVE --> FCPU["Save alignment / original CPU<br/>2 × 7 stages match"]:::done
     FCODEC --> FGUARD["210-byte ownership guard<br/>candidate execution PASS"]:::done
     FBASE["71 reference captures<br/>execution + audit PASS"]:::done --> FCHECK["Candidate comparisons<br/>71 / 71 match + 2 saves match"]:::done
@@ -46,12 +62,12 @@ flowchart TB
     FCHECK --> FSHARED["39 shared-consumer comparisons<br/>+ visual guard PASS"]:::done
     FLEG --> FKEVEN["Kraid / 8 even-area references<br/>actual caller execution PASS"]:::done
     FLEG --> FKODD["Kraid / original CPU<br/>12 cases / 36 stages match"]:::done
-    FSHARED --> FMUT["42 detached / stage PASS<br/>9 DLL + detailed audit pending"]:::active
+    FSHARED --> FMUT["42 detached + 9 DLL mutations<br/>51 / 51 caught"]:::done
     FKEVEN --> FKCOMPARE["Kraid candidate comparisons<br/>8 defined + 12 CPU PASS"]:::done
     FKODD --> FKCOMPARE
     FKCOMPARE --> FADOPT
-    FMUT --> FADOPT["Adopt progression owner<br/>pending"]:::pending
-    class FKODD,FKCOMPARE,FMUT changed
+    FMUT --> FADOPT["Progression owner<br/>adopted on main"]:::done
+    class FCORE,FCODEC,FPLM,FVIS,FEPR,FLEG,FSAVE,FMUT,FADOPT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -59,20 +75,20 @@ flowchart TB
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-[Flags candidate build + 51 mutations: running](https://github.com/JimLundin/sm-decomp/actions/runs/40036842766)
+[Flags build + 51 mutations: PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40036842766)
 
 ```mermaid
 flowchart LR
-    FB["Composed baseline / PASS<br/>mutation outcomes await log audit"]:::done --> FEVENT["Discard event write"]:::pending
-    FB --> FHI["Keep stale event mask"]:::pending
-    FB --> FBOSS["Clear boss mask high byte"]:::pending
-    FB --> FMAP["Write wrong object map"]:::pending
-    FB --> FRNG["Cache scratch before RNG"]:::pending
-    FB --> FEYE["Reuse Eye Door mask"]:::pending
-    FB --> FADJ["Drop adjacent door byte"]:::pending
-    FB --> FPRE["Read door before marking"]:::pending
-    FB --> FCLAMP["Clamp broad flag index"]:::pending
-    FB --> FNATIVE["Lose native high byte"]:::pending
+    FB["Composed baseline / PASS"]:::done --> FEVENT["Discard event write"]:::done
+    FB --> FHI["Keep stale event mask"]:::done
+    FB --> FBOSS["Clear boss mask high byte"]:::done
+    FB --> FMAP["Write wrong object map"]:::done
+    FB --> FRNG["Cache scratch before RNG"]:::done
+    FB --> FEYE["Reuse Eye Door mask"]:::done
+    FB --> FADJ["Drop adjacent door byte"]:::done
+    FB --> FPRE["Read door before marking"]:::done
+    FB --> FCLAMP["Clamp broad flag index"]:::done
+    FB --> FNATIVE["Lose native high byte"]:::done
     class FB,FEVENT,FHI,FBOSS,FMAP,FRNG,FEYE,FADJ,FPRE,FCLAMP,FNATIVE changed
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5

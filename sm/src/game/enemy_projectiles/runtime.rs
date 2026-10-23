@@ -115,7 +115,4 @@ impl ImportedAliases for Runtime<'_> {
     fn behavior_byte(&self, block_index: u16) -> u8 {
         self.byte(0x16402 + usize::from(block_index))
     }
-    fn door_flag_byte(&self, signed_byte_index: isize) -> u8 {
-        self.byte(0xd8b0usize.checked_add_signed(signed_byte_index).unwrap())
-    }
 }

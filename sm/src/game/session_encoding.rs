@@ -38,8 +38,22 @@ macro_rules! sprite_projection {
         }
     }};
 }
+// Byte collections have one compatibility projection, shared by reads/writes.
+macro_rules! flag_projection {
+    ($s:ident,$offset:ident,($($borrow:tt)*)) => {
+        match $offset {
+            0..=7 => $($borrow)* $s.gameplay_flags.events[$offset],
+            8..=15 => $($borrow)* $s.gameplay_flags.bosses_by_area[$offset - 8],
+            16..=79 => $($borrow)* $s.gameplay_flags.used_room_objects[$offset - 16],
+            80..=143 => $($borrow)* $s.gameplay_flags.collected_locations[$offset - 80],
+            144..=207 => $($borrow)* $s.gameplay_flags.opened_doors[$offset - 144],
+            _ => unreachable!(),
+        }
+    };
+}
 macro_rules! scalar_words {
     ($s:ident,$f:ident,($($borrow:tt)*))=>{
+        $f(0x05e7,$($borrow)* $s.flag_compatibility.bitmask);
         $f(0x1844,$($borrow)* $s.sprite_effects.selected);
         for index in 0..32 {
             $f(0xef78+index*2,$($borrow)* $s.sprite_effects.active[index].instruction);
@@ -314,6 +328,16 @@ pub(crate) fn read(bytes: &[u8], at: usize) -> u16 {
 }
 pub(crate) fn decode(bytes: &[u8]) -> Session {
     let mut s = Session::default();
+    for (base, flags) in [
+        (0xd820, s.gameplay_flags.events.as_mut_slice()),
+        (0xd828, s.gameplay_flags.bosses_by_area.as_mut_slice()),
+        (0xd830, s.gameplay_flags.used_room_objects.as_mut_slice()),
+        (0xd870, s.gameplay_flags.collected_locations.as_mut_slice()),
+        (0xd8b0, s.gameplay_flags.opened_doors.as_mut_slice()),
+    ] {
+        let end = base + flags.len();
+        flags.copy_from_slice(&bytes[base..end]);
+    }
     s.enemy_projectiles.spawn.angle = bytes[0x60b];
     let mut load = |at: usize, value: &mut u16| *value = read(bytes, at);
     scalar_words!(s,load,(&mut));
@@ -333,6 +357,17 @@ pub(crate) fn decode(bytes: &[u8]) -> Session {
     s
 }
 pub(crate) fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
+    for (base, flags) in [
+        (0xd820, s.gameplay_flags.events.as_slice()),
+        (0xd828, s.gameplay_flags.bosses_by_area.as_slice()),
+        (0xd830, s.gameplay_flags.used_room_objects.as_slice()),
+        (0xd870, s.gameplay_flags.collected_locations.as_slice()),
+        (0xd8b0, s.gameplay_flags.opened_doors.as_slice()),
+    ] {
+        for (index, pair) in flags.chunks_exact(2).enumerate() {
+            visit(base + index * 2, u16::from_le_bytes([pair[0], pair[1]]));
+        }
+    }
     let mut emit = |at: usize, value: &u16| visit(at, *value);
     scalar_words!(s,emit,(&));
     for (index, &value) in s.projectiles.launch.displacements.iter().enumerate() {
@@ -358,6 +393,10 @@ pub(crate) fn encode(s: &Session, bytes: &mut [u8]) {
     }
 }
 pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
+    if (0xd820..0xd8f0).contains(&at) {
+        let offset = at - 0xd820;
+        return Some(flag_projection!(s, offset, ()));
+    }
     if (0xef78..0xf378).contains(&at) {
         let offset = at - 0xef78;
         let word = sprite_projection!(s,offset,(&));
@@ -406,6 +445,11 @@ pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     result
 }
 pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
+    if (0xd820..0xd8f0).contains(&at) {
+        let offset = at - 0xd820;
+        *flag_projection!(s,offset,(&mut)) = value;
+        return true;
+    }
     if (0xef78..0xf378).contains(&at) {
         let offset = at - 0xef78;
         let word = sprite_projection!(s,offset,(&mut));
@@ -494,7 +538,6 @@ pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
         current_enemy: w(ram::cur_enemy_index),
         random: w(ram::random_number),
         random_enemy_counter: w(ram::random_enemy_counter),
-        bitmask: w(ram::bitmask),
         fx_y: w(ram::fx_y_pos),
         drop_origin_x: w(ram::special_death_item_drop_x_origin_pos),
         drop_origin_y: w(ram::special_death_item_drop_y_origin_pos),

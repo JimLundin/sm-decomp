@@ -11,6 +11,7 @@ use super::{
     presentation, rules,
 };
 use crate::game::item_pickups::PickupKind;
+use crate::game::progress_flags as flags;
 fn collect<H: Host>(
     h: &mut H,
     p: Script<H::Record>,
@@ -62,7 +63,7 @@ pub(super) fn run<H: Host>(
             if argument & 0x8000 != 0 {
                 return Some(p.advance(2));
             }
-            if h.door_opened(argument) {
+            if flags::door_opened(h, argument) {
                 p.jump_word(0)
             } else {
                 Some(p.advance(2))
@@ -178,29 +179,29 @@ pub(super) fn run<H: Host>(
             Some(p)
         }
         8685582 => {
-            if h.boss(u16::from(p.byte(0))) != 0 {
+            if flags::boss_defeated(h, u16::from(p.byte(0))) {
                 p.jump_word(1)
             } else {
                 Some(p.advance(3))
             }
         }
         8685613 => {
-            if h.event(p.word(0)) {
+            if flags::event_happened(h, p.word(0)) {
                 p.jump_word(2)
             } else {
                 Some(p.advance(4))
             }
         }
         8685630 => {
-            h.mark_event(p.word(0));
+            flags::set_event(h, p.word(0));
             Some(p.advance(2))
         }
         8685640 | 8685692 => {
             let argument = mechanism!(h, slot as isize, room_argument);
             let found = if ea == 8685640 {
-                h.room_object_used(argument)
+                flags::room_object_used(h, argument)
             } else {
-                h.item_collected(argument)
+                flags::item_collected(h, argument)
             };
             if argument & 0x8000 == 0 && found {
                 p.jump_word(0)
@@ -212,9 +213,9 @@ pub(super) fn run<H: Host>(
             let argument = mechanism!(h, slot as isize, room_argument);
             if argument & 0x8000 == 0 {
                 if ea == 8685669 {
-                    h.mark_room_object_used(argument);
+                    flags::use_room_object(h, argument);
                 } else {
-                    h.mark_item_collected(argument);
+                    flags::collect_item(h, argument);
                 }
             }
             Some(p)
@@ -239,7 +240,7 @@ pub(super) fn run<H: Host>(
             }
             let argument = mechanism!(h, slot as isize, room_argument);
             if argument & 0x8000 == 0 {
-                let flags = h.open_door_and_read_adjacent_flags(argument);
+                let flags = flags::open_door_and_read_adjacent_flags(h, argument);
                 mechanism!(h, slot as isize, room_argument = flags | 0x8000);
             }
             mechanism!(h, slot as isize, pre_action = 0x8aa6);

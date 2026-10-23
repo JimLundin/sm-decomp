@@ -17,9 +17,9 @@ pub use crate::game::constants::bank_90::*;
 
 use crate::game::enemy_projectiles::{EnableEprojs, SpawnEprojWithGfx};
 use crate::game::explosion_window::spawn_crystal_flash;
+use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::palette_effects;
 use crate::game::player_projectiles::draw_projectiles;
-use crate::game::progress_flags::CheckEventHappened;
 use crate::game::sm_9b::{
     GrappleBeamFunc_BF1B, GrappleBeamHandler, UpdateGrappleBeamTilesAndIncrFlameCtr,
 };

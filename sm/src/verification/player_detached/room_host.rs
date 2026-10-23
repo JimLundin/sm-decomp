@@ -223,36 +223,6 @@ impl Effects for Composed {
     fn wake_projectile_for_block(&mut self, block: u16) {
         panic!("unprepared room operation: wake_projectile_for_block")
     }
-    fn event(&mut self, event: u16) -> bool {
-        panic!("unprepared room operation: event")
-    }
-    fn mark_event(&mut self, event: u16) {
-        panic!("unprepared room operation: mark_event")
-    }
-    fn boss(&mut self, mask: u16) -> u16 {
-        panic!("unprepared room operation: boss")
-    }
-    fn door_opened(&mut self, door: u16) -> bool {
-        panic!("unprepared room operation: door_opened")
-    }
-    fn mark_door_opened(&mut self, door: u16) {
-        panic!("unprepared room operation: mark_door_opened")
-    }
-    fn item_collected(&mut self, item: u16) -> bool {
-        panic!("unprepared room operation: item_collected")
-    }
-    fn mark_item_collected(&mut self, item: u16) {
-        panic!("unprepared room operation: mark_item_collected")
-    }
-    fn room_object_used(&mut self, object: u16) -> bool {
-        panic!("unprepared room operation: room_object_used")
-    }
-    fn mark_room_object_used(&mut self, object: u16) {
-        panic!("unprepared room operation: mark_room_object_used")
-    }
-    fn open_door_and_read_adjacent_flags(&mut self, door: u16) -> u16 {
-        panic!("unprepared room operation: open_door_and_read_adjacent_flags")
-    }
     fn map_used(&self) -> bool {
         panic!("unprepared room operation: map_used")
     }

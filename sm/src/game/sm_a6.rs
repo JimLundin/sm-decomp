@@ -6,6 +6,8 @@ use crate::game::enemy_population_ram::spawn_enemy;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
+use crate::game::gameplay_flag_host::BossWordOrder;
+use crate::game::gameplay_flag_runtime;
 use crate::game::minimap;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
@@ -17,7 +19,7 @@ pub use crate::game::constants::bank_a9::*;
 use crate::game::enemy_projectiles::{
     Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
 };
-use crate::game::progress_flags::{
+use crate::game::gameplay_flag_runtime::{
     CheckEventHappened, ClearEventHappened, SetBossBitForCurArea, SetEventHappened,
 };
 use crate::game::sm_8b::CalcCeresSteamPos_Mode7;
@@ -1260,7 +1262,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E = Get_CeresRidley(0, game); };
     CeresRidley_Init [] {
-        if (*ram_ptr!(game; 0xd828, word!(game.area_index) as isize) & 1) != 0 {
+        if (gameplay_flag_runtime::boss_byte_at(word!(game.area_index), game) & 1) != 0 {
             (*E).base.properties = ((*E).base.properties as i32
                 | (kEnemyProps_Tangible as i32
                     | kEnemyProps_Deleted as i32
@@ -4782,7 +4784,7 @@ crate::game::callback_dispatch! {
         }
     };
     [10942058] CeresDoor_Instr_4 [] {
-        if *(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) & 1 != 0 {
+        if gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game) & 1 != 0 {
             jp.offset(1)
         } else {
             EnemyScript::jump(jp.word(0))

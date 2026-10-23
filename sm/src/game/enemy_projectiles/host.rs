@@ -101,7 +101,6 @@ pub trait ImportedAliases {
     fn mechanism_word(&self, member: MechanismMember, signed_slot: isize) -> u16;
     fn terrain_word(&self, block_index: u16) -> u16;
     fn behavior_byte(&self, block_index: u16) -> u8;
-    fn door_flag_byte(&self, signed_byte_index: isize) -> u8;
 }
 #[derive(Clone, Copy)]
 pub enum WaffleField {
@@ -229,7 +228,6 @@ pub trait Effects {
     fn next_random(&mut self) -> u16;
     fn grapple_pickup_query(&mut self) -> u16;
     fn resume_player_after_elevator(&mut self) -> u16;
-    fn prepare_bit_access(&mut self, value: u16) -> u16;
     fn calculate_angle_from_xy(&mut self, x: u16, y: u16) -> u16;
     fn damage_player(&mut self, damage: u16) -> ();
     fn ridley_offscreen(&mut self, x: u16, y: u16) -> u8;
@@ -268,5 +266,6 @@ pub trait Host:
     + Effects
     + Graphics
     + crate::game::sprite_effect_host::Host
+    + crate::game::gameplay_flag_host::Host
 {
 }

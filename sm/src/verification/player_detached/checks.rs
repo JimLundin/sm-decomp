@@ -85,10 +85,17 @@ pub(super) fn composition() {
         &host.world.player.visual.colors[..4],
         &[0x1234, 0, 0, 0x7777]
     );
-    assert_eq!(host.world.progression.events[1], 2);
-    assert_eq!(host.world.progression.bosses[0], 2);
-    assert_eq!(host.world.progression.scratch, 2);
-    assert!(super::game::visual_host::Aliases::miniboss_defeated(&host));
+    assert_eq!(host.world.player.gameplay_flags.events[1], 2);
+    assert_eq!(host.world.player.gameplay_flags.bosses_by_area[0], 2);
+    assert_eq!(host.world.player.flag_compatibility.bitmask, 2);
+    assert!(
+        super::game::progress_flags::boss_word_at(
+            &host,
+            host.world.player.room.area,
+            super::game::gameplay_flag_host::BossWordOrder::Native,
+        ) & 2
+            != 0
+    );
     assert_eq!(host.world.player.visual.animated_tiles.slots[5].source, 0);
     let snapshot = host.world.clone();
     host.events.clear();

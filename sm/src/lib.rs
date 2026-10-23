@@ -382,6 +382,9 @@ pub mod game {
     pub mod animated_tiles;
     pub mod enemy_projectiles;
     pub(crate) mod external_inputs;
+    pub(crate) mod gameplay_flag_host;
+    pub(crate) mod gameplay_flag_runtime;
+    pub(crate) mod gameplay_flag_state;
     pub mod item_pickups;
     pub(crate) mod item_pickups_runtime;
     pub(crate) mod liquid_surface;
@@ -669,3 +672,36 @@ pub fn verify_sprite_pool_candidate(
 pub fn verify_sprite_runtime_guard() -> bool {
     sprite_runtime_checks::run()
 }
+
+#[path = "verification/flags_cases.rs"]
+pub(crate) mod flags_cases;
+
+#[path = "verification/flags_candidate.rs"]
+pub(crate) mod flags_candidate;
+
+#[path = "verification/flags_save_case.rs"]
+pub(crate) mod flags_save_case;
+
+#[path = "verification/flags_save_observer.rs"]
+pub(crate) mod flags_save_observer;
+
+#[path = "verification/flags_runtime_checks.rs"]
+pub(crate) mod flags_runtime_checks;
+
+pub fn verify_gameplay_flags_case(id: u32) -> Option<Vec<u8>> {
+    flags_candidate::capture_case(id)
+}
+pub fn verify_flags_runtime_guard() -> bool {
+    flags_runtime_checks::run()
+}
+
+#[path = "verification/flags_kraid_cases.rs"]
+mod flags_kraid_cases;
+pub fn verify_gameplay_flags_kraid_case(id: u32) -> Option<Vec<u8>> {
+    flags_kraid_cases::capture_case(id)
+}
+
+#[path = "verification/kraid_flags_case.rs"]
+pub mod kraid_flags_case;
+#[path = "verification/kraid_flags_observer.rs"]
+pub mod kraid_flags_observer;

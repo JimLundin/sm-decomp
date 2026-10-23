@@ -1,7 +1,7 @@
 //! Room and door metadata, ordered state selection and setup dispatch.
 //! Checked records retain their cartridge allocation; RAM owns the live state.
 use crate::game::decompression::decompress_to_ram;
-use crate::game::progress_flags::{CheckBossBitForCurArea, CheckEventHappened};
+use crate::game::gameplay_flag_runtime::{CheckBossBitForCurArea, CheckEventHappened};
 use crate::game::room_mechanisms::spawn_room;
 use crate::game::sm_8f::{CallDoorDefSetupCode, CallRoomSetupCode};
 use crate::game::sm_80::{

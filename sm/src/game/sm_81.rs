@@ -68,21 +68,34 @@ pub unsafe fn SoftReset(game: &mut Game) {
 }
 pub unsafe fn SaveToSram(a: u16, game: &mut Game) {
     unsafe {
+        #[cfg(sm_verify_dll)]
+        crate::flags_save_observer::observe(0, game);
         let mut r20: u16 = 0;
         let r18: u16 = (2 * (a as i32 & 3)) as u16;
         word_transfers!(game, descending, 48; le(player_data_saved, 47) <- native(0xa00));
+        #[cfg(sm_verify_dll)]
+        crate::flags_save_observer::observe(1, game);
         let mut v3: u16 = (word!(game.area_index)).wrapping_mul(256);
         let mut v4: u16 = 0;
         do_until! { (((v4) as i16).wrapping_sub(256) >= 0);
             word!(
-                game.explored_map_tiles_saved[(v3 >> 1)] = *(ram_ptr!(game, u16; 0x7f7, v4 as isize))
+                game.explored_map_tiles_saved[(v3 >> 1)] = u16::from_ne_bytes(
+                    game.g_ram[0x7f7 + usize::from(v4)..0x7f9 + usize::from(v4)]
+                        .try_into().unwrap()
+                )
             );
             v4 = (v4).wrapping_add(2);
             v3 = (v3).wrapping_add(2);
         }
+        #[cfg(sm_verify_dll)]
+        crate::flags_save_observer::observe(2, game);
         PackMapToSave(game);
+        #[cfg(sm_verify_dll)]
+        crate::flags_save_observer::observe(3, game);
         word!(game.sram_save_station_index = word!(game.load_station_index));
         word!(game.sram_area_index = word!(game.area_index));
+        #[cfg(sm_verify_dll)]
+        crate::flags_save_observer::observe(4, game);
         let mut v5: u16 = crate::rtl::rom_table_word!(game, 0x81812b, (r18 >> 1) as isize);
         for offset in (0xd7c0..0xde1c).step_by(2) {
             let v7 = u16::from_ne_bytes(game.g_ram[offset..offset + 2].try_into().unwrap());
@@ -90,6 +103,8 @@ pub unsafe fn SaveToSram(a: u16, game: &mut Game) {
             r20 = (r20).wrapping_add(v7);
             v5 = (v5).wrapping_add(2);
         }
+        #[cfg(sm_verify_dll)]
+        crate::flags_save_observer::observe(5, game);
         let v8: u16 = r18;
         let v9: u16 = r20;
         let v10: i32 = r18 as i32 >> 1;
@@ -98,6 +113,8 @@ pub unsafe fn SaveToSram(a: u16, game: &mut Game) {
         let mut v11: u16 = !(v9 as i32) as u16;
         game.g_sram.set_word((2 * v10 + 8) as usize, v11);
         game.g_sram.set_word((2 * v10 + 0x1ff8) as usize, v11);
+        #[cfg(sm_verify_dll)]
+        crate::flags_save_observer::observe(6, game);
         RtlWriteSram(game);
     }
 }

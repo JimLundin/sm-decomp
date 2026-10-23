@@ -4,6 +4,8 @@ use crate::game::enemy_combat::{
 };
 use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
+use crate::game::gameplay_flag_host::BossWordOrder;
+use crate::game::gameplay_flag_runtime;
 pub use crate::game::prelude::*;
 
 pub use crate::game::constants::bank_86::*;
@@ -2724,7 +2726,7 @@ crate::game::callback_dispatch! {
         };
     };
     [11062135] WreckedShipRobot_Init [] {
-        if (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) & 1) != 0 {
+        if (gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game) & 1) != 0 {
             (*(ram_ptr!(game, LongPtr; 0x178c))).bank = -88i32 as u8;
             (*(ram_ptr!(game, LongPtr; 0x178c))).addr = ((0xa8cc67i32) as u16);
             let E = Get_WreckedShipRobot(word!(game.cur_enemy_index) as i32, game);
@@ -2785,7 +2787,7 @@ crate::game::callback_dispatch! {
         apply_shot(game);
     };
     [11063698] WreckedShipRobot_Shot [] {
-        if (*(ram_ptr!(game, u16; 0xd828, word!(game.area_index) as isize)) & 1) != 0 {
+        if (gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game) & 1) != 0 {
             apply_shot(game);
             let E = Get_WreckedShipRobot(word!(game.cur_enemy_index) as i32, game);
             if (*E).base.health != 0 {
@@ -2856,7 +2858,7 @@ crate::game::callback_dispatch! {
         enemy_instruction! {[(*E).base]; timer = 1, instruction = crate::rtl::rom_table_word!(game, 0xa8e682, v2 as isize)}
         (*E).base.timer = 0;
         (*E).base.instruction_timer = 1;
-        if (*ram_ptr!(game; 0xd828, word!(game.area_index) as isize) & 1) == 0 {
+        if (gameplay_flag_runtime::boss_byte_at(word!(game.area_index), game) & 1) == 0 {
             (*E).base.properties = ((*E).base.properties)
                 | (*((&raw mut (*(gVramWriteEntry
                     as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(

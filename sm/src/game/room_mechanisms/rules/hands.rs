@@ -6,6 +6,7 @@ use super::super::host::Contact as Displacement;
 use super::super::host::SpawnSource as Source;
 use super::super::host::*;
 use super::terrain_setup as terrain;
+use crate::game::progress_flags as flags;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Hand {
@@ -27,7 +28,7 @@ pub fn setup(
 ) -> u8 {
     let enabled = match hand {
         Hand::LowerNorfair => c.session().inventory.equipment.owned & 0x200 != 0,
-        Hand::WreckedShip => c.boss(1) & 1 != 0,
+        Hand::WreckedShip => flags::boss_defeated(c, 1),
     };
     if enabled
         && c.session().player.contact.collision_direction & 15 == 3
@@ -36,7 +37,7 @@ pub fn setup(
             || pose_matches(c, GroundedPose::SpringLeft))
     {
         if hand == Hand::LowerNorfair {
-            c.mark_event(0xc);
+            flags::set_event(c, 0xc);
         }
         c.statue_signal();
         if hand == Hand::WreckedShip {

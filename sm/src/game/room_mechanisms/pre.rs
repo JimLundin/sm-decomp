@@ -4,6 +4,7 @@ use super::access::*;
 use super::creation;
 use super::host::*;
 use super::rules;
+use crate::game::progress_flags as flags;
 
 fn link(c: &mut impl Host, slot: usize) {
     mechanism!(c, slot, counter = 0);
@@ -89,8 +90,7 @@ pub(super) fn run(c: &mut impl Host, ea: u32, k: u16) {
             } else {
                 4
             };
-            let boss = c.boss(mask);
-            if boss & 1 != 0 {
+            if flags::boss_defeated(c, mask) {
                 link(c, slot);
             } else {
                 dud(c, slot);
@@ -100,7 +100,7 @@ pub(super) fn run(c: &mut impl Host, ea: u32, k: u16) {
             if c.session().room.enemy_deaths < c.session().room.enemy_quota {
                 dud(c, slot);
             } else {
-                c.mark_event(0);
+                flags::set_event(c, 0);
                 link(c, slot);
             }
         }

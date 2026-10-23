@@ -6,11 +6,12 @@ use crate::game::enemy_combat::{
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
+use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
 
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
-use crate::game::progress_flags::{CheckEventHappened, SetBossBitForCurArea};
+use crate::game::gameplay_flag_runtime::{CheckEventHappened, SetBossBitForCurArea};
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_a0::{
@@ -414,7 +415,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E = Get_Botwoon(word!(game.cur_enemy_index) as i32, game); };
     Botwoon_Init [] {
-        if (*ram_ptr!(game; 0xd828, 4) & 2) != 0 {
+        if (gameplay_flag_runtime::boss_byte_at(4, game) & 2) != 0 {
             spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x4, 0xb797 as VoidP), game);
             crate::game::room_mechanisms::open_passage(game);
             (*E).base.current_instruction = addr_kBotwoon_Ilist_9389 as u16;

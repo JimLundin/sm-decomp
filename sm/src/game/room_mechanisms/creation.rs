@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 use super::access::*;
 use super::host::*;
+use crate::game::progress_flags as flags;
 #[derive(Clone, Copy, PartialEq)]
 enum SourceKind {
     Collision,
@@ -164,7 +165,7 @@ pub(super) fn close_door(c: &mut impl Host) {
     {
         if c.session().mechanisms.slots[slot].header != 0 {
             let argument = c.session().mechanisms.slots[slot].room_argument;
-            if argument & 0x8000 != 0 || !c.door_opened(argument) {
+            if argument & 0x8000 != 0 || !flags::door_opened(c, argument) {
                 c.session_mut().mechanisms.slots[slot].instruction_delay = 1;
                 let header = c.session().mechanisms.slots[slot].header;
                 if header != 0 {
