@@ -152,18 +152,27 @@ references; measure build/test time and resource growth before changing the loop
    source/output review pass. Source fa6f4ca5605aa26c40767cbd41aeb4d66eecb11eb2e283f7517278fc5fd6da39
    adds only baseline checks/exports to the unchanged projectile runtime. Frozen
    baseline-90.dll, baseline-90-inputs and baseline-90-capture.json remain local.
-   Full setup/script/message/external coverage is still being prepared.
+   The isolated baseline_boundaries.rs draft now has 1,009 source-reviewed cases,
+   including setup/scripts, actual effects/messages, consumers and selected aliases.
+   Runtime capture and remaining coverage qualifications precede replacement;
+   identity counts are not complete branch coverage. Preserve the first 90 references.
 
-   Baseline route discovery found a previously unverified failure at Speed Booster
-   input20857: 13405 RAM bytes differ, exit1. Original 24bd source reaches the
-   first coroutine.plm.message probe at27563 and stops after120follow-up frames
-   at27683; this longer run is not green. A fa6f checkpoint before20857 reproduces
-   the same failure in one frame (0.384s invocation), with20856passing. No new
-   mechanism implementation is integrated. Diagnose this baseline issue before
-   claiming an oracle pass; it is unrelated to the historical synthetic Intro
-   mismatch unless further evidence establishes a link. The relation to earlier
-   projectile adoption remains unknown. Artifacts: baseline-message-route.log,
-   before-20857-prefix.log, at-20857.smvchk and20857-repro-one.log in room-mechanisms.
+   Baseline route failure at input 20857 is fixed: the room-content loader introduced
+   at f116c8a6 copied overlapping layer2/BTS buffers forward. The actual room size
+   is 5A00. Valid in-bounds overlaps now preserve entry source contents; nonoverlap
+   and invalid-extent partial writes retain their prior behavior. This agrees with
+   native descending-word copies for normal room layouts, not malformed odd sizes.
+   The actual decoder/split regression fails before the fix and passes afterward;
+   boundary and partial-failure cases pass on both. Final source
+   2e9cd73487ea202c297ea4b07e622bca04c2208eaf4b6f24d8bd7addbdeaea86 builds and
+   verifies inputs 0..27683 with no failures (fresh 20857-frame prefix + 6827-frame suffix), both
+   corrected-copy probes, completed loading, gameplay and message execution plus
+   120 follow-up frames. No credits coverage. Main +89 lines / +951 tokens / +3581 LF bytes;
+   local diagnostic +10 / +282 / +858; total 99 / 1233 / 4439. Current main: 109227 Rust lines.
+   The executed observer is preserved in debug-room-copy-20857; its reconstructed
+   source hash matches the original probe build. No debug observer remains in main.
+   New test exports invalidated the earlier checkpoint; final prefix was regenerated.
+   No new mechanism runtime is integrated. Continue baseline capture next.
 
    `game/player_projectiles` owns ten shots, eighteen trail pairs, weapon/charge
    controls and launch history during each complete subsystem interval. One

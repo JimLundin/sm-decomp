@@ -9,6 +9,19 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Latest correction: room loading now preserves overlapping layer-two/BTS source
+contents. The forward-copy bug came from f116c8a6, before projectile consolidation.
+An actual-decoder synthetic regression went red then green; nonoverlap and checked
+failure-prefix cases pass. Final source
+`2e9cd73487ea202c297ea4b07e622bca04c2208eaf4b6f24d8bd7addbdeaea86` passes the
+release/frontend/verifier build and Speed Booster inputs 0..27683 through a fresh
+checkpoint, including the previously failing input 20857. Both copy branches,
+completed loading, gameplay and message probes execute with 120 follow-up frames.
+Current main has 109227 Rust lines; the correction adds 89 (16 runtime/probes, 73 checks).
+Local artifacts in `20261023/room-mechanisms` include `copy-regression-red.json`,
+`copy-regression-fixed.json`, `copy-fixed-prefix.log`, `copy-fixed-message-tail.log`
+and `at-20857-fixed-runtime.smvchk`. All checkpoints/observations remain local.
+
 Production projectile consolidation is complete. game/player_projectiles now
 owns ten shots, eighteen trail pairs, weapon/charge controls and launch history
 through one private 391-word / 782-byte Transaction. Actual player, cinematic,
@@ -29,7 +42,7 @@ differ. Native content capture/read APIs retain explicit unsafe assumptions.
 Persistent ownership, backend independence, all-unsafe elimination, reduction
 and boot-to-credits coverage remain unfinished.
 
-Final source fingerprint:
+Projectile milestone source fingerprint:
 24bd3d424dea880173b5ae8ebaa9b25dd4fa9f1d0e57696deaac1621bda3e8b7.
 
 - Release library/frontend/verifier build passes in 50.7995 seconds.
@@ -230,10 +243,13 @@ to reproduce the local owned work; a fresh Git checkout alone lacks that work.
 
 ## Next dependency
 
-Projectile consolidation is complete. Select a complete adjacent responsibility
-from actual callers, with a reviewed public API/state owner, migration and named
-deletions before implementation. Price adoption and retirement together. Do not
-restart the archived Session or isolated shared-consumer queue.
+The complete RoomMechanisms proposal and linear foreign-call ownership contract
+are reviewed. Capture the source-reviewed 1009-case `baseline_boundaries.rs` draft
+from `20261023/room-mechanisms` before runtime replacement. The first 90 actual-old
+cases are frozen in `baseline-90-capture.json` and matching binary outputs/DLL.
+Preserve those cases byte for byte. Remaining coverage exclusions and actual
+runtime outcomes still require review. Follow PLAN's full caller/deletion scope;
+do not restart the archived Session or isolated shared-consumer queue.
 
 Keep these verified ordering/access constraints through subsequent changes:
 

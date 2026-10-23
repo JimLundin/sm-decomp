@@ -11,6 +11,11 @@ use std::sync::atomic::{AtomicBool, Ordering};
 mod verify;
 
 #[unsafe(no_mangle)]
+pub extern "C" fn sm_verify_room_level_copy(case: u32) -> bool {
+    std::panic::catch_unwind(|| sm::verify_room_level_copy(case)).is_ok()
+}
+
+#[unsafe(no_mangle)]
 pub extern "C" fn sm_verify_player_projectiles() -> u32 {
     std::panic::catch_unwind(sm::verify_player_projectiles).unwrap_or(0)
 }

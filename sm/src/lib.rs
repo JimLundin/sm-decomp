@@ -591,6 +591,11 @@ pub fn verify_room_mechanism_case(id: u32) -> Option<Vec<u8>> {
     game::room_mechanism_checks::capture_case(id)
 }
 
+#[doc(hidden)]
+pub fn verify_room_level_copy(case: u32) {
+    game::room_state::check_level_copy(case)
+}
+
 pub(crate) mod native_audio;
 mod native_player_ram;
 

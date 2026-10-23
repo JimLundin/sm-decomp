@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 13:40 UTC**
+Updated: **2026-10-23 13:59 UTC**
 
 **Player projectiles now run through one owned production subsystem.**
 The broader engine modernization remains unfinished.
@@ -84,18 +84,35 @@ The first **90 actual-production baseline cases are captured and independently
 checked**, including RAM, return values and expected checked failures. The
 release/frontend/verifier build passes. These are reference observations, not a
 pass for the replacement; setup, script, suspension and caller coverage is expanding.
-Baseline checks and their exports add 317 lines, bringing current main source to
-109,138 Rust lines. Two unsafe declarations call old entries and expose the test
-buffer; current count is 2,769. No runtime reduction is claimed for this preparation.
+Baseline checks and their exports add 317 lines. Two unsafe declarations call old
+entries and expose the test buffer; current count is 2,769. No runtime reduction
+is claimed for this preparation.
 
-**Newly discovered baseline failure:** the unchanged projectile-stage runtime
-fails Speed Booster input **20,857**, with 13,405 differing RAM bytes. It precedes
-the first mechanism-message probe at 27,563. The earlier 8,780-frame result remains
-valid for its scope, but the longer run fails. A local checkpoint now reproduces
-the failure in one frame in under half a second; the preceding frame passes.
-Its cause and whether it predates projectile consolidation are under investigation.
-It is distinct from the historical synthetic Intro mismatch. No new mechanism
-runtime code has been integrated.
+The expanded **1,009-case baseline draft has passed source review** and awaits
+runtime capture. It includes setup/script identities, actual native effects,
+message suspension, external consumers and selected aliases. Coverage exclusions
+remain explicit; this is not exhaustive branch coverage or replacement validation.
+
+## Room-loading correction
+
+The baseline investigation found and fixed a room-loading bug predating projectile
+consolidation. Forward copies corrupted overlapping layer-two and BTS data in the
+large landing-site room, causing 13,405 differing bytes at input 20,857. Valid
+overlaps now preserve their source contents; non-overlap behavior and checked
+failure prefixes remain intact. This matches the native copy result for the
+normal room layout. Malformed odd layouts gain no new native-equivalence claim.
+
+The regression failed before the fix and now passes, alongside boundary and
+failure-prefix cases. The final build passes **27,684 consecutive input frames**
+through a regenerated checkpoint: 20,857 prefix frames plus 6,827 resumed frames,
+zero failures. Required probes confirm both corrected copies, completed loading,
+gameplay and the message sequence, with 120 follow-up frames. No credits coverage.
+
+The correction adds 89 main lines: 16 runtime/probe lines and 73 check/export lines.
+Current main source is **109,227 Rust lines**. Main delta is +951 lexical tokens /
++3,581 LF bytes; retained local diagnostics add 10 lines / 282 tokens / 858 bytes.
+Complete incremental authored cost is 99 lines / 1,233 tokens / 4,439 bytes;
+staging copies count once. No new mechanism runtime is integrated yet.
 
 Persistent ownership remains blocked by external state writers, whole-RAM state
 replacement and a continuation byte shared with other game modes. Further
