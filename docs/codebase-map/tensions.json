@@ -10,8 +10,8 @@
     "evidence": [
       {
         "path": "sm/src/game/session_runtime.rs",
-        "line": 59,
-        "expected": "pub(crate) struct Runtime<'g> {"
+        "line": 72,
+        "expected": "pub fn foreign<R>(&mut self, action: impl FnOnce(&mut Game) -> R) -> R {"
       },
       {
         "path": "sm/src/game/session.rs",
@@ -20,7 +20,7 @@
       },
       {
         "path": "sm/src/game/session_encoding.rs",
-        "line": 305,
+        "line": 360,
         "expected": "pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {"
       }
     ]
@@ -36,8 +36,8 @@
     "evidence": [
       {
         "path": "sm/src/game/visual_runtime.rs",
-        "line": 44,
-        "expected": "}"
+        "line": 66,
+        "expected": "impl visual_host::Aliases for Runtime<'_> {"
       },
       {
         "path": "sm/src/game/session_runtime.rs",
@@ -46,7 +46,7 @@
       },
       {
         "path": "sm/src/game/session_encoding.rs",
-        "line": 348,
+        "line": 408,
         "expected": "pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {"
       }
     ]
@@ -83,6 +83,7 @@
     "files": [
       "sm/src/game/scene_drawing.rs",
       "sm/src/game/sprite_objects.rs",
+      "sm/src/game/sprite_effect_runtime.rs",
       "sm/src/main.rs",
       "sm/src/rtl.rs"
     ],
@@ -94,8 +95,13 @@
       },
       {
         "path": "sm/src/game/sprite_objects.rs",
-        "line": 101,
-        "expected": "}"
+        "line": 183,
+        "expected": "pub(crate) fn draw(host: &mut impl Host) {"
+      },
+      {
+        "path": "sm/src/game/sprite_effect_runtime.rs",
+        "line": 65,
+        "expected": "crate::game::sm_81::DrawSpritemapWithBaseTile("
       },
       {
         "path": "sm/src/main.rs",
@@ -136,34 +142,41 @@
     ]
   },
   {
-    "title": "Sprite effects remain outside Session",
-    "description": "The 32-slot RAM pool is the next complete migration. Enemy projectiles still create sprites through a foreign call and expose four coordinate ports.",
+    "title": "Sprites share state, but retain legacy edges",
+    "description": "The 32-slot sprite pool and projectile attachments use the shared Session. Broad compatibility handles, ROM-based definitions and foreign drawing still connect this typed core to the legacy game.",
     "files": [
       "sm/src/game/sprite_objects.rs",
-      "sm/src/game/enemy_projectiles/effects_runtime.rs",
-      "sm/src/game/enemy_projectiles/actor_runtime.rs"
+      "sm/src/game/session.rs",
+      "sm/src/game/sprite_effect_runtime.rs",
+      "sm/src/game/sprite_effect_state.rs",
+      "sm/src/game/enemy_projectiles/attachments_waffle_botwoon.rs"
     ],
     "evidence": [
       {
+        "path": "sm/src/game/session.rs",
+        "line": 96,
+        "expected": "pub sprite_effects: crate::game::sprite_effect_state::SpriteEffects,"
+      },
+      {
         "path": "sm/src/game/sprite_objects.rs",
-        "line": 18,
-        "expected": "pub(crate) unsafe fn create_sprite("
+        "line": 67,
+        "expected": "pub(crate) fn spawn(host: &mut impl Host, request: SpriteSpawn) -> SpawnResult {"
       },
       {
-        "path": "sm/src/game/enemy_projectiles/effects_runtime.rs",
-        "line": 24,
-        "expected": "fn create_sprite(&mut self, x: u16, y: u16, id: u16, graphics: u16) -> u16 {"
+        "path": "sm/src/game/sprite_effect_runtime.rs",
+        "line": 15,
+        "expected": "fn address(member: SpriteMember, index: LegacySpriteWordIndex) -> usize {"
       },
       {
-        "path": "sm/src/game/enemy_projectiles/actor_runtime.rs",
-        "line": 338,
-        "expected": "fn waffle_sprite_x(&self, index: u16) -> u16 {"
+        "path": "sm/src/game/sprite_effect_state.rs",
+        "line": 45,
+        "expected": "pub struct LegacySpriteDefinition(pub u16);"
       }
     ]
   },
   {
     "title": "Verification shares compilation infrastructure",
-    "description": "Verification is counted separately here, but the library, application and verifier examples still share a crate. A category color does not imply an independent build boundary.",
+    "description": "Verification is counted separately here, but the library, application and verifier examples still share a Cargo package. A category color does not imply an independent build boundary.",
     "files": [
       "sm/Cargo.toml",
       "sm/src/lib.rs",
