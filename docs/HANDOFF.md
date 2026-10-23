@@ -9,63 +9,68 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares both Chozo hand contacts after physics at `7fa90817`.
-`mechanism_hands` forbids unsafe and owns lazy guards, ordered progression/enemy/
-scroll writes, live terrain lookup, player lock, nested child creation and captured
-parent release. Two bank bodies and duplicate owned hand policy are retired.
-Numeric identities remain. Shared checked fields preserve native enemy/scroll
-bytes and LE terrain words; native lock and child setup remain dependencies.
-Encoded state stays RAM authoritative. Forty of 115 setup identities are shared.
+The latest stage shares all 11 station setups after Chozo contacts at `cf9d1264`.
+`mechanism_stations` forbids unsafe and owns map/energy/missile placement and
+access, descending block-only association, live selected-slot alignment, and
+save trigger clear/search/activation. Eleven bank bodies, the activation helper
+and sole-use scan macro are retired. Numeric identities remain. Named station
+tiles keep compatibility encoding in the shared checked fields. Coordinate
+calculation, player lock and terrain installation remain explicit dependencies.
+Encoded state stays RAM authoritative. Fifty-one of 115 setup identities are shared.
 
-Main: **103,821 Rust lines in 160 files**, unsafe declarations 2,890, casts 6,068.
-Maintained implementation 104,383; including installers/launcher 105,293.
-Prospective composition: **112,103**, **+8,282 over main**, unadopted.
-Stage adds 138 main lines and removes 80 net owned/wiring lines: **+58 complete
-lines**, +366 tokens and +1,466 LF-normalized bytes. Verification adds 936 lines;
-combined cost is 994. No dependency/native/installer/launcher additions. No net
-reduction, persistent authority or complete unsafe-retirement claim.
+Main: **103,917 Rust lines in 162 files**, unsafe declarations 2,890, casts 6,058.
+Maintained implementation 104,479; including installers/launcher 105,389.
+Prospective composition: **112,296**, **+8,379 over main**, unadopted.
+Stage adds 96 main and 97 owned/wiring lines: **+193 complete lines**, +2,358
+lexical tokens and +7,559 LF-normalized bytes. Verification adds 1,148 lines;
+combined cost is 1,341. The candidate previously delegated all 11 setups to
+native callbacks; no duplicate owned station algorithm existed to retire.
+No dependency/native/installer/launcher additions. No net reduction, persistent
+authority or complete unsafe-retirement claim.
 
-Use `runtime-impact-working/CHOZO_CONTACT_HANDOFF.md`, `chozo-contact-price.json`
-and `chozo-contact-check-attempt-5.log`. Final results: 592 comparisons over
-296 defined-domain cases, including four matching child-content failures;
-four actual consumer sequences; 16 checked-only cases, including five failures.
-Accepted original WreckedShip stores are unaligned; invalid terrain accesses are
-out of bounds in original code. Neither executes in the final direct original
-comparison. Checked paths assert exact native-byte effects and failure prefixes.
-Native core cases cover lazy reads, effect order, callback failures and captured
-reuse. Actual tails cover child setup/reuse, displacement forwarding and both
-enemy wake routines; player lock field assertions pass.
+Use `runtime-impact-working/STATION_SETUP_HANDOFF.md`, `station-setup-price.json`
+and `station-setup-check-attempt-1.log`. Final results: 3,240 comparisons over
+1,620 defined-domain cases, including 112 matching checked-side failures;
+149 additional observations comprise 144 player-lock/palette/sound assertions,
+one terrain/map-flag alias assertion and four real instruction consumer tails.
+Six checked-only cases reject invalid initial terrain; the original unchecked
+read is never executed there. Explicit expected completion and return values
+pass, alongside whole-RAM comparisons and native core tests for lazy guards,
+association order, live aliases and injected callback failure prefixes.
 
-Selected hand integration passes 52 cases / 163 observations / 12 matching
-instrumented failures. Its accepted WreckedShip reference changes exactly two
-unaligned stores to checked native-byte copies, preserving source order; this is
-source-preserved checked-reference integration, not original defined equivalence.
-The historical full contact suite exits 77 on an inherited physics null-handler
-fixture assumption. Final selection excludes physics-only and null-child model
-cases; the full suite and its routes remain unchanged. Dedicated physics fatal
-checks remain recorded in the previous handoff, not newly run by this stage.
-Source/setup 342/672/47, closing 74/120/7 and supplemental runtime collision
-198/545/176/1 pass. Git-frozen references and 182 runtime / 219 local identities
-pass. Final selected checks take 1.876s.
+Preserved quirks include map-left offset +4 versus refill-left +2, coordinates
+from live selected slot for access versus captured slot for save, retention of
+successful access triggers and rejected save triggers, and clear-before-search
+save activation with two ordered instruction advances. Directed aliases prove
+initial solidification and side writes precede live block/progress rereads.
+Actual code6 tests check E713/E8D6 handlers, retained poses/momentum, flare reset,
+suit palettes and signed-threshold sound. Map/refill/save-used tails read the
+woken program/timer and dispatch real instructions against authored content.
+These are direct dispatch tails, not full scheduler or SRAM save tests.
 
-Production Rust 2024 release/frontend/verifier/source checks pass (56.28s);
-final prospective headless release passes (33.79s). Carrier 20.74s; final harness
-12.03s. Earlier composition compilation found and corrected private reexport
-visibility; import cleanup required the final rebuild. Fixture attempts corrected
-mismatched content bindings, rejected a stale source manifest, and reclassified
-two invalid original-domain terrain cases. That invalid reference execution is
-not equivalence evidence. Full attempt logs remain in the local handoff.
-No production gameplay correction, movie or full-composition runtime is claimed.
-Synthetic content, shared native consumers and instrumented boundaries limit
-coverage. Production hash:
-`293dbbd7e4a2db141c7fa60076f9f3b9eaea062829c2239bc898c661d1945587`.
+Chozo 592/4/4/16, selected hand integration 52/163/12, source/setup 342/672/47,
+closing 74/120/7 and supplemental runtime collision 198/545/176/1 pass.
+Git-frozen references and 185 runtime / 222 local compiled identities pass,
+independently inspected by the reviewer. All selected checks take 7.564s.
+The historical full contact suite remains outside this selection because of its
+simulated-null-handler assumptions; its earlier exit 77 and exact exclusions
+remain documented in `CHOZO_CONTACT_HANDOFF.md`.
 
-`chozo-contact-parent/` preserves prior main/carrier/local/composition sources.
-Earlier snapshots/caches remain, including `CONTACT_PHYSICS_HANDOFF.md` and its
-results. Do not rerun historical preparation scripts; composition lives under
-`impact-composition/sm/src` with distinct module wiring. The inherited Intro
-mismatch remains unresolved in `DRAWING_HANDOFF.md`.
-Next are stations, then scroll/items, room/event/boss and residual routes.
+Production Rust 2024 release/frontend/verifier/source checks pass (71.74s);
+prospective headless release passes (46.75s), both on final production inputs.
+Carrier 20.98s; final harness 20.56s. Initial harness compilation failed after
+6.68s because an older fixture lacked the new station trait method; its explicit
+unreachable fixture implementation was added. First runtime execution passed.
+No production defect, movie or full-composition runtime is claimed. Synthetic
+content, shared native consumers and retained runtime dependencies limit coverage.
+Production hash:
+`60af63ffdfd2c6c30e3d4d5a1cf33a46027ff9cd6c0e57aa01d33fbc0e16bc43`.
+
+`station-setup-parent/` preserves prior main/carrier/local/composition sources.
+Earlier snapshots/caches remain. Do not rerun historical preparation scripts;
+composition lives under `impact-composition/sm/src` with distinct module wiring.
+The inherited Intro mismatch remains unresolved in `DRAWING_HANDOFF.md`.
+Next are scroll/extensions, then items, room/event/boss and residual routes.
 Runtime promotion needs reset/load/rewind/external-writer checks; rendering,
 sound and boot-to-credits completion remain outside this stage.
 The parallel movie/state investigation is documented in

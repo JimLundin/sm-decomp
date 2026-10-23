@@ -400,6 +400,8 @@ pub mod game {
     pub(crate) mod mechanism_contact_physics_ram;
     pub(crate) mod mechanism_hands;
     pub(crate) mod mechanism_hands_ram;
+    pub(crate) mod mechanism_stations;
+    pub(crate) mod mechanism_stations_ram;
     pub mod sm_84;
     pub mod item_pickups;
     pub mod item_pickups_ram;

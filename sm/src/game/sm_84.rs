@@ -675,41 +675,6 @@ pub unsafe fn DrawPlm(mut k: u16, game: &mut Game) {
         }
     }
 }
-macro_rules! find_plm_at_block {
-    ($found:ident, $plm_offset:ident, $block:ident, $game:ident) => {
-        let $found: bool;
-        let mut $plm_offset: u16 = 78;
-        loop {
-            if ($block == word!($game.plm_block_indices[($plm_offset >> 1)])) {
-                $found = true;
-                break;
-            }
-            $plm_offset = ($plm_offset).wrapping_sub(2);
-            if ($plm_offset & 0x8000) != 0 {
-                $found = false;
-                break;
-            }
-        }
-    };
-}
-
-pub unsafe fn ActivateStationIfSamusCannonLinedUp(a: u16, j: u16, game: &mut Game) -> u8 {
-    unsafe {
-        find_plm_at_block!(found_plm, v2, a, game);
-        if found_plm {
-            CalculatePlmBlockCoords(word!(game.plm_id), game);
-            if ((16u16).wrapping_mul(word!(game.plm_y_block))) | 0xb == word!(game.samus_y_pos) {
-                let v3: i32 = v2 as i32 >> 1;
-                word!(game.plm_instr_list_ptrs[v3] = word!(game.plm_instruction_list_link_reg[v3]));
-                word!(game.plm_instruction_timer[v3] = 1);
-                CallSomeSamusCode(6, game);
-                return 1;
-            }
-        }
-        word!(game.plm_header_ptr[(j >> 1)] = 0);
-        1
-    }
-}
 pub fn DeletePlm(j: u16, game: &mut Game) {
     let header_offset = 0x1c37 + usize::from(j & !1);
     game.g_ram[header_offset..header_offset + 2].fill(0);
@@ -878,96 +843,6 @@ crate::game::callback_dispatch! {
         }
         0
     };
-    [8696264] PlmSetup_Bts47_MapStationRightAccess [] {
-        if (word!(game.samus_collision_direction) & 0xf) == 0
-            && word!(game.samus_pose) as i32 == kPose_8A_FaceL_Ranintowall as i32
-            && (*ram_ptr!(game; 0xa1e) & 4) != 0
-        {
-            return ActivateStationIfSamusCannonLinedUp(
-                (word!(game.plm_block_indices[(j >> 1)])).wrapping_sub(2),
-                j,
-                game,
-            );
-        }
-        word!(game.plm_header_ptr[(j >> 1)] = 0);
-        1
-    };
-    [8696304] PlmSetup_Bts4_MapStationLeftAccess [] {
-        if (word!(game.samus_collision_direction) & 0xf) == 1
-            && word!(game.samus_pose) as i32 == kPose_89_FaceR_Ranintowall as i32
-            && (*ram_ptr!(game; 0xa1e) & 8) != 0
-        {
-            return ActivateStationIfSamusCannonLinedUp(
-                (word!(game.plm_block_indices[(j >> 1)])).wrapping_add(4),
-                j,
-                game,
-            );
-        }
-        word!(game.plm_header_ptr[(j >> 1)] = 0);
-        1
-    };
-    [8696429] PlmSetup_B6E3_EnergyStationRightAccess [] {
-        if (word!(game.samus_collision_direction) & 0xf) != 0
-            || word!(game.samus_pose) as i32 != kPose_8A_FaceL_Ranintowall as i32
-            || (*ram_ptr!(game; 0xa1e) & 4) == 0
-            || word!(game.samus_health) == word!(game.samus_max_health)
-        {
-            word!(game.plm_header_ptr[(j >> 1)] = 0);
-            1
-        } else {
-            ActivateStationIfSamusCannonLinedUp(
-                (word!(game.plm_block_indices[(j >> 1)])).wrapping_sub(2),
-                j,
-                game,
-            )
-        }
-    };
-    [8696477] PlmSetup_B6E7_EnergyStationLeftAccess [] {
-        if (word!(game.samus_collision_direction) & 0xf) == 1
-            && word!(game.samus_pose) as i32 == kPose_89_FaceR_Ranintowall as i32
-            && (*ram_ptr!(game; 0xa1e) & 8) != 0
-            && word!(game.samus_health) != word!(game.samus_max_health)
-        {
-            return ActivateStationIfSamusCannonLinedUp(
-                (word!(game.plm_block_indices[(j >> 1)])).wrapping_add(2),
-                j,
-                game,
-            );
-        }
-        word!(game.plm_header_ptr[(j >> 1)] = 0);
-        1
-    };
-    [8696528] PlmSetup_B6EF_MissileStationRightAccess [] {
-        if (word!(game.samus_collision_direction) & 0xf) != 0
-            || word!(game.samus_pose) as i32 != kPose_8A_FaceL_Ranintowall as i32
-            || (*ram_ptr!(game; 0xa1e) & 4) == 0
-            || word!(game.samus_missiles) == word!(game.samus_max_missiles)
-        {
-            word!(game.plm_header_ptr[(j >> 1)] = 0);
-            return 1;
-        }
-        ActivateStationIfSamusCannonLinedUp(
-            (word!(game.plm_block_indices[(j >> 1)])).wrapping_sub(2),
-            j,
-            game,
-        )
-    };
-    [8696576] PlmSetup_B6F3_MissileStationLeftAccess [] {
-        if (word!(game.samus_collision_direction) & 0xf) == 1
-            && word!(game.samus_pose) as i32 == kPose_89_FaceR_Ranintowall as i32
-            && (*ram_ptr!(game; 0xa1e) & 8) != 0
-            && word!(game.samus_missiles) != word!(game.samus_max_missiles)
-        {
-            ActivateStationIfSamusCannonLinedUp(
-                (word!(game.plm_block_indices[(j >> 1)])).wrapping_add(2),
-                j,
-                game,
-            )
-        } else {
-            word!(game.plm_header_ptr[(j >> 1)] = 0);
-            1
-        }
-    };
     [8697169] PlmSetup_ClearShitroidInvisibleWall [] {
         let mut v1: u16 = word!(game.plm_block_indices[(j >> 1)]);
         for _ in 0i16..10i16 {
@@ -984,45 +859,6 @@ crate::game::callback_dispatch! {
             );
             v1 = (v1 as i32 + word!(game.room_width_in_blocks) as i32 * 2) as u16;
         }
-        0
-    };
-    [8697232] PlmSetup_B76B_SaveStationTrigger [] {
-        let read_word = |game: &Game, offset: usize| {
-            u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
-        };
-        if read_word(game, 0x592) == 0 // power_bomb_explosion_status
-        && (game.samus_pose() == kPose_01_FaceR_Normal as u16
-            || game.samus_pose() == kPose_02_FaceL_Normal as u16)
-        && read_word(game, 0x1e75) == 0 // save_station_lockout_flag
-        && game.samus_collision_direction() & 0xf == 3
-        {
-            CalculatePlmBlockCoords(j, game);
-            let samus_block = game.samus_x_pos().wrapping_sub(8) >> 4;
-            let station_block = read_word(game, 0x1c29); // plm_x_block
-            if samus_block == station_block {
-                let trigger_offset = usize::from(j >> 1) * 2;
-                let block_index = read_word(game, 0x1c87 + trigger_offset);
-                // Remove the temporary trigger before finding the station's PLM.
-                game.g_ram[0x1c87 + trigger_offset..0x1c89 + trigger_offset]
-                    .copy_from_slice(&0u16.to_le_bytes());
-                game.g_ram[0x1c37 + trigger_offset..0x1c39 + trigger_offset]
-                    .copy_from_slice(&0u16.to_le_bytes());
-                for slot in (0..40).rev() {
-                    let slot_offset = slot * 2;
-                    if read_word(game, 0x1c87 + slot_offset) == block_index {
-                        advance_plm_instruction(slot, 1, game);
-                        advance_plm_instruction(slot, 1, game);
-                        game.g_ram[0xde1c + slot_offset..0xde1e + slot_offset]
-                            .copy_from_slice(&1u16.to_le_bytes());
-                        break;
-                    }
-                }
-            }
-        }
-        1
-    };
-    [8697326] PlmSetup_B76F_SaveStation [] {
-        WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[(j >> 1)]), 0xb04d, game);
         0
     };
     [8697336] PlmSetup_MotherBrainRoomEscapeDoor [] {
@@ -1191,55 +1027,6 @@ crate::game::callback_dispatch! {
     @functions [pub fn (_j: u16, game: &mut Game) -> u8];
     @functions [pub unsafe fn (j: u16, game: &mut Game) -> u8];
     @prefix { let v1: i32 = j as i32 >> 1; };
-    [8696203] PlmSetup_B6D3_MapStation [] {
-        let v2: i32 = word!(game.plm_block_indices[v1]) as i32 >> 1;
-        word!(game.level_data[v2] = (word!(game.level_data[v2]) & 0xfff | 0x8000));
-        if *ram_ptr!(game; 0xd908, word!(game.area_index) as isize) != 0 {
-            word!(game.plm_instr_list_ptrs[v1] = addr_word_84AD76 as u16);
-        } else {
-            WriteLevelDataBlockTypeAndBts(
-                (word!(game.plm_block_indices[v1])).wrapping_add(2),
-                0xb047,
-                game,
-            );
-            WriteLevelDataBlockTypeAndBts(
-                (word!(game.plm_block_indices[v1])).wrapping_sub(4),
-                0xb048,
-                game,
-            );
-        }
-        0
-    };
-    [8696349] PlmSetup_PlmB6DF_EnergyStation [] {
-        let v2: i32 = word!(game.plm_block_indices[v1]) as i32 >> 1;
-        word!(game.level_data[v2] = (word!(game.level_data[v2]) & 0xfff | 0x8000));
-        WriteLevelDataBlockTypeAndBts(
-            (word!(game.plm_block_indices[v1])).wrapping_add(2),
-            0xb049,
-            game,
-        );
-        WriteLevelDataBlockTypeAndBts(
-            (word!(game.plm_block_indices[v1])).wrapping_sub(2),
-            ((0x84b04ai32) as u16),
-            game,
-        );
-        0
-    };
-    [8696389] PlmSetup_PlmB6EB_EnergyStation [] {
-        let v2: i32 = word!(game.plm_block_indices[v1]) as i32 >> 1;
-        word!(game.level_data[v2] = (word!(game.level_data[v2]) & 0xfff | 0x8000));
-        WriteLevelDataBlockTypeAndBts(
-            (word!(game.plm_block_indices[v1])).wrapping_add(2),
-            0xb04b,
-            game,
-        );
-        WriteLevelDataBlockTypeAndBts(
-            (word!(game.plm_block_indices[v1])).wrapping_sub(2),
-            0xb04c,
-            game,
-        );
-        0
-    };
     [8705526] PlmSetup_MotherBrainGlass [] {
         word!(game.plm_room_arguments[v1] = 0);
         WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[v1]), 0x8044, game);
@@ -1400,6 +1187,17 @@ crate::game::callback_dispatch! {
         8698220 => [PlmSetup_B974(j)];
         8703949 => [PlmSetup_D0D8_SetVFlag(j)];
         8703953 => [PlmSetup_D0D8_ClearVflag(j)];
+        8696264 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Access(crate::game::mechanism_stations::Service::Map, crate::game::mechanism_stations::Side::Right), game)];
+        8696304 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Access(crate::game::mechanism_stations::Service::Map, crate::game::mechanism_stations::Side::Left), game)];
+        8696429 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Access(crate::game::mechanism_stations::Service::Energy, crate::game::mechanism_stations::Side::Right), game)];
+        8696477 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Access(crate::game::mechanism_stations::Service::Energy, crate::game::mechanism_stations::Side::Left), game)];
+        8696528 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Access(crate::game::mechanism_stations::Service::Missile, crate::game::mechanism_stations::Side::Right), game)];
+        8696576 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Access(crate::game::mechanism_stations::Service::Missile, crate::game::mechanism_stations::Side::Left), game)];
+        8697232 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::SaveTrigger, game)];
+        8697326 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Save, game)];
+        8696203 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Place(crate::game::mechanism_stations::Service::Map), game)];
+        8696349 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Place(crate::game::mechanism_stations::Service::Energy), game)];
+        8696389 => [crate::game::mechanism_stations_ram::setup(j, crate::game::mechanism_stations::Setup::Place(crate::game::mechanism_stations::Service::Missile), game)];
         8704399 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::LowerNorfair, displacement, game)];
         8705568 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::WreckedShip, displacement, game)];
         8705740 => PlmSetup_D70C_NoobTube;
