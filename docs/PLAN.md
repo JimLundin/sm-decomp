@@ -390,9 +390,21 @@ references; measure build/test time and resource growth before changing the loop
    spriteactivity. Actual Ceres roomdata selects debris/no-op/getaway, not the
    inferred explosion producer. Do not lengthen those unrelated routes. A52phase
    actualCPU sprite lifecycle+OAM component oracle is drafted for downstream proof;
-   it is not a movie/fullframe claim. NewRuntimeguard and12newfaults source-review
-   pass (target39mutations including old27); execution remains. Complete candidate
-   comparison/capsule adapters are being integrated under next-sprite-session.
+   it is not a movie/fullframe claim. Its first capture fails the strict original
+   opcode guard at818AB8: SnesInit installs a known startup hook there. A narrow
+   original-file-byte restoration with scoped cleanup is drafted for review;
+   keep the strict original-code guards. No lifecycle capture pass yet.
+   Assembled candidate format/check and release build pass23.42s on a2964c46.
+   Actual candidate121captures:117exact matches;96/97/99/103FAIL. Investigation
+   found Maw appearance precedence differs from the predecessor; correction
+   remains under review. All four explicit actor-alias cases117..120 match.
+   New1026byte Runtimeguard passes execution, including expected foreign unwind
+   and owner relinquishment. All five Draygon actualCPU/candidate comparisons
+   pass ordered events, four intermediate RAM phases and final RAM. Local
+   next-sprite-session/candidate-alias-results-2, candidate-runtime-guard-1.json
+   and candidate-draygon-results-1 retain source-checked results.
+   Twelve new faults pass source review (target39mutations including old27);
+   mutation execution remains. Do not adopt the failing production draft.
    Production draft+711lines; necessary owned-state/unsafe retirement, not a net
    source reduction. Final verification and fullscope accounting remain separate.
    Preserve distinct1022byte room clear and64byte active-pointer retirement.

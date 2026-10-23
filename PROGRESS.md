@@ -37,13 +37,15 @@ flowchart TB
     POOL --> METROID["sm_a3.rs / Metroid controllers"]:::checked
     POOL --> DRAYGON["sm_a5.rs / Draygon controllers"]:::checked
     POOL --> MAW["sm_a8.rs / Maw controllers"]:::checked
-    BASE["121 predecessor cases<br/>captures + alias assertions PASS"]:::done --> VERIFY["Candidate comparisons<br/>assembling"]:::active
-    CPU["Draygon motion / original CPU<br/>5 captures + phase audit PASS"]:::done --> VERIFY
+    BASE["121 predecessor cases<br/>captures + alias assertions PASS"]:::done --> VERIFY["Candidate comparisons<br/>117 match / 4 FAIL"]:::failed
+    VERIFY --> MAWFIX["Maw appearance precedence<br/>correction under review"]:::active
+    CPU["Draygon motion / original CPU<br/>5 candidate phase comparisons PASS"]:::done --> VERIFY
     PROBE["Sprite lifecycle + draw probes<br/>source review PASS"]:::checked --> EARLY["Two early routes / missing hits<br/>0 failing frames / coverage FAIL"]:::failed
-    EARLY --> MOVIE["52-phase original CPU + OAM<br/>component oracle in preparation"]:::active
-    POOL --> BUILD["Whole production verifier<br/>release build PASS"]:::done
+    EARLY --> MOVIE["52-phase original CPU + OAM<br/>startup opcode guard FAIL"]:::failed
+    MOVIE --> HOOKFIX["Isolated original opcode restore<br/>correction under review"]:::active
+    POOL --> BUILD["Assembled verifier + adapters<br/>format / release build PASS"]:::done
     BUILD --> HOST["Actual shared harness<br/>compile PASS / execution pending"]:::done
-    GUARD["Runtime + 1,026 bytes guard<br/>source review PASS"]:::checked --> VERIFY
+    GUARD["Runtime + 1,026 bytes guard<br/>execution PASS"]:::done --> VERIFY
     MUT["12 new faults<br/>source review PASS"]:::checked --> KILLS["39 mutations / execution pending"]:::pending
     CODEC --> VERIFY
     WAFFLE --> VERIFY
@@ -53,7 +55,7 @@ flowchart TB
     VERIFY --> ADOPT["Caller migration + retirement<br/>adopt on main"]:::pending
     MOVIE --> ADOPT
     KILLS --> ADOPT
-    class CONTRACT,UNION,DECL,REVIEW,OWNER,CODEC,POOL,WAFFLE,METROID,DRAYGON,MAW,BASE,CPU,VERIFY,PROBE,EARLY,MOVIE,BUILD,HOST,GUARD,MUT,KILLS,ADOPT changed
+    class CPU,VERIFY,MAWFIX,MOVIE,HOOKFIX,BUILD,GUARD changed
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
