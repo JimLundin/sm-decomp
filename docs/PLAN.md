@@ -173,9 +173,11 @@ references; measure build/test time and resource growth before changing the loop
    review; resolve finite terrain aliases, continuation publication and live
    graphics transfers before splitting implementation. Retire Fields/Port routing
    and migrate real callers in the same adoption. Existing interval owners are
-   not persistent whole-game state. Refresh mechanism references from the verified
-   player-build DLL and extend suspension/shared-inventory/drawing checks and
-   their discriminating mutations.
+   not persistent whole-game state. Shared declarations compile. Refreshed1020
+   mechanism reference IDs from the verified player-build DLL:1017returning,
+   two expected fatal and one expected nonreturn; no historical output differences.
+   Extend suspension/shared-inventory/drawing checks and their discriminating
+   mutations before adopting the next core.
 
 
    Room mechanisms are now adopted as one production responsibility: creation,

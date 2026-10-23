@@ -9,7 +9,11 @@ Green: adopted scope | Blue: locally checked draft | Orange: active | Grey: rema
 
 ```mermaid
 flowchart LR
-    CONTRACT["State / effects contract"]:::active --> SLOTS["40 ordinary slots"]:::pending
+    CONTRACT["State / effects contract"]:::active --> DECL["Shared Session declarations<br/>compile PASS"]:::checked
+    DECL --> REVIEW["Ownership / drawing review"]:::active
+    BASE["1,020 reference cases captured<br/>historical outputs unchanged"]:::checked --> COMPARE
+    class DECL,BASE changed
+    CONTRACT --> SLOTS["40 ordinary slots"]:::pending
     CONTRACT --> INVENTORY["Shared player inventory"]:::pending
     CONTRACT --> RESUME["Message suspension"]:::pending
     SLOTS --> CREATE["creation.rs / setup.rs"]:::pending
@@ -72,7 +76,6 @@ flowchart TB
         p3_2["feedback.rs"]:::done
     end
 
-    class p0_0,p0_1,p0_2,p0_3,p0_4,p0_5,p0_6,p1_0,p1_1,p1_2,p1_3,p1_4,p2_0,p2_1,p2_2,p2_3,p2_4,p2_5,p3_0,p3_1,p3_2 changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -96,7 +99,6 @@ flowchart LR
     HOST --> MUT2["Mutation: skip retirement<br/>KILLED / CI PASS"]:::done
     MUT1 --> ADOPT
     MUT2 --> ADOPT
-    class REF,FMT,BUILD,MOVIE,COMPILE,RETIRE,FIX,MUT1,MUT2,HOST,ADOPT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -142,7 +144,6 @@ flowchart TB
     AUDIO --> SHIP
     SHIP --> CREDITS["Boot to credits verified"]:::pending
     SHIP --> SAFE["Zero unsafe / manual memory"]:::pending
-    class PPT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

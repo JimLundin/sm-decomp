@@ -8,6 +8,16 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Next room reference set: room-session/baseline-026ab1a2/results.json captures
+1020 IDs in101seconds:1017returning cases,1012/1013 expected exit2,1014 expected
+nonreturn with marker. All overlapping historical baseline1018 outputs match.
+Frozen DLL SHA25668b9c9f39f28c52a406573c14076f50dc374231b088f2accd8f91f40df5ecdae,
+source8da52a46f05b73235b04623499f5b1c92b13da9e973c39c4ed3b966cb80180a1.
+This reuses the verified player-production build; detached fixture-only changes
+do not change mechanism source. It is not claimed as a current-source rebuild.
+Contract files are at room-session/contract/: rustc metadata compilation passes;
+independent ownership/alias/drawing review remains open before lane freeze.
+
 Hosted run39996910420 failed the detached fixture's first collision assertion:
 center43 plus motion4:1000 has leading edge48, already touching the wall.
 Both reviewers traced this to the expectation, not a production change. The
