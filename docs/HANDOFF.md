@@ -9,66 +9,60 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares Chozo plug clearing, hand-trigger installation,
-Lower Norfair monitoring and acid-base commands after `9fb0e85d`. Existing
-terrain and hand cores retire D108, D616, D15C and D155; AAE436 calls the same
-acid adapter. No module/registration added. Preserve zero/floored plug writes,
-exact high-byte and rounded BTS addressing, width low byte, exact 00FF test,
-live selection after trigger installation and target 722. RAM remains
-authoritative; 94/115 setups shared, 7 room/event/boss + 14 residual remain.
+The latest stage shares unused shot/grapple installation after `08e4b98c`.
+D117/header D127 and D12B/header D13B (misnamed D138 in the old source) use
+existing terrain Setup variants and a typed BlockReaction. The exact checked
+helper moves to the terrain adapter, with its old public name re-exported
+from sm84 for all retained callers. No module or registration added. Preserve
+captured block, exact level-high byte, rounded BTS index, ordered writes and
+checked failures. RAM remains authoritative; 96/115 setups shared, with
+5 room/event/boss and 14 residual identities remaining.
 
-Main 105310 Rust lines/192 files; unsafe 2879 unchanged, casts 6009 (-1).
-Maintained implementation 105872; installers/launcher included 106782.
-Candidate 114373/297, gap 9063, unadopted. Main delta [44,431,1498],
-composition [76,706,2699], verification [1005,12264,42383] lines/tokens/LF bytes;
-implementation plus checks [1081,12970,45082]. Local production 32 lines
-overlaps composition. No dependencies/native/installer additions, net reduction,
+Main 105335 Rust lines/192 files; unsafe 2879 and casts 6009 unchanged.
+Maintained implementation 105897; installers/launcher included 106807.
+Candidate 114402/297, gap 9067, unadopted. Main delta [25,168,862],
+composition [29,248,1208], verification [579,8082,27346] lines/tokens/LF bytes;
+implementation plus checks [608,8330,28554]. Local production four lines
+overlap composition. No dependencies/native/installer additions, net reduction,
 complete unsafe retirement or persistent ownership claim.
 
-Use `runtime-impact-working/CHOZO_TERRAIN_HANDOFF.md`,
-`chozo-terrain-price.json` and `chozo-terrain-check-1.log`. All 25 suites pass
-in 27.3007927s (suite 25.3352754s), explicit exit 0, 233 runtime/284 local
-source identities. New [3570,126,126,340,185]: 3570 defined comparisons include
-1360 Blank successes, 1700 trigger comparisons (510 checked failures), 504
-original false-watcher cases and six acid comparisons. Separate counts:
-126 original true-arm prefixes, 126 qualified completions, 340 checked-only
-invalid Blank cases. Never execute native Blank FFFE/FFFF outside RAM.
+Use `runtime-impact-working/BLOCK_REACTION_HANDOFF.md`,
+`block-reaction-price.json` and `block-reaction-check-1.log`. All 26 suites
+pass in 26.5340703s (suite 26.2485893s), explicit exit 0, 234 runtime/287 local
+identities. New [3740,1020,224,974]: 3740 successful setup comparisons and
+1020 separate matching checked failures. The 224 primitive comparisons include
+176 successes and 48 checked failures. Independent expected byte maps and a
+frozen helper copy check the exact helper move, its re-export, odd addresses,
+selected-field mutation and coincident terrain/BTS writes. FFFD/FFFE/FFFF
+fail before BTS; there is no undefined native setup domain in these checks.
 
-The original watcher's true arm has an always-odd native header store.
-Intercept immediately before that store, preserving live selector/pointer
-calculation, with exact panic identity and one hit. Compare its defined prefix
-to independent full-RAM expectations. Completion replaces only the store in
-a checked reference and independently applies two zero bytes at the live
-header address. Both terrain-overlap aliases, odd/max selectors and low-byte
-width truncation pass. No native true-arm completion claim. False branches
-execute the original completely; symbolic tests check live reads and ordering.
+Both headers are explicitly unused in vanilla, so placement is constructed
+at (12,29), width 48, camera zero. Actual script content and five real
+shot/grapple consumers execute before and after drawing/deletion with both
+allocation states. D127 draws 8052 on tick 1 (changing C to solid 8), then
+deletes on tick 5. D13B draws E0B7 and deletes on tick 2. Pre-draw shot contact
+creates D064; its full CADF break/384-tick wait/restore/delete sequence runs
+through tick 411. It starts alongside the live parent, which deletes on tick 5;
+the child restores on 409 and deletes on 410. D0D8 grapple-child deletion runs.
+The offscreen guard asserts clipping before odd ROM and RAM draw reads;
+no visible renderer, vanilla room-producer, movie or full-game claim.
 
-Actual Lower Norfair statue initialization installs the monitor; B083 downward
-Samus contact marks event C, signals/locks the player and attempts a nested
-plug allocation. Full child/monitor pools and event reentry are checked.
-D113 changes tiles 0053/0054/0055/00FF on ticks 1/5/9/13 and deletes on 14;
-16 ticks are checked. Acid/unlock commands and Wrecked Ship trigger/source
-calls execute. Footstep instructions/operands are actual source data, but
-x192/y436/width48 is constructed offscreen placement. The draw guard asserts
-camera zero and y>15; it does not skip drawing code. The existing renderer
-returns before odd ROM access. No visible renderer or full-statue playback.
+The 974 mixed observations are 8 constructed spawn results, 18 primary-script
+ticks, 120 consumer/pool pairs, 822 CADF ticks and 6 D0D8 tail ticks. They are
+not a uniform frame/collision count. All 25 retained suite vectors are unchanged.
+Primary content and all ROM-derived fixtures stay local.
 
-Twenty real Samus passage samples check two solid controls and 18 post-clear/
-post-tail states, with full-RAM equality and state restored afterward. The 185
-mixed observations comprise 144 PLM ticks, 20 paired passage samples, 16
-footstep groups, two acid/unlock tails, one event reentry, one full monitor
-pool and one ship-trigger deletion. They are not a uniform frame/collision
-count. Sixteen content ranges (118 bytes) match primary banks and stay local.
-
-Production release/frontend/verifier/source 43.5043635s and candidate release
-43.2824016s pass first attempts; carrier 22.091831s passes. Harness attempt 1
-fails 5.209317s on a legacy exhaustive fixture match missing Blank; the old
-case list excludes it and new tests cover it. Adding the unreachable match
-arm gives attempt 2 PASS 21.0693746s. All checks pass first run 27.3007927s.
-Failed logs remain. Production hash:
-`7d45e2e5a81ff24873000fe9b0111fd57fec81a76ecbb226364f7e316f49d206`.
-Formatting and exact eight-file composition sync pass; no registrations or
+Production release/frontend/verifier/source 52.1550398s, candidate release
+44.3540261s, carrier 19.620197s, harness 34.5581483s and checks 26.5340703s
+all pass first attempts, explicit exit 0. No failures or retries. Source hash:
+`47ea31a92bd9c05f531f510ab017c4673ea5aa8b982d64055a0ee7c67f4991b8`.
+Formatting and exact four-file composition sync pass; no registrations or
 verify_source changes. Production source is unchanged after final builds.
+
+Retained Chozo results [3570,126,126,340,185] include separate native watcher
+prefixes and qualified completions; never claim native true-arm completion.
+Its constructed offscreen footstep/renderer limits remain documented in
+CHOZO_TERRAIN_HANDOFF.md. All prior snapshots and failed logs remain.
 
 Retained periodic results [9784,260,52,144] include 260 separate negative
 crash-entry comparisons only; no abort/nonreturn-tail claim. See its handoff
@@ -100,7 +94,8 @@ Current guards do not resolve inherited Intro mismatch. Qualified item/cannon/
 Chozo and full-contact limits remain; eye acid initialization stays excluded.
 Scroll bounded nonreturn observations were not repeated.
 
-`chozo-terrain-parent/` preserves prior main/carrier/local/composition;
+`block-reaction-parent/` preserves prior main/carrier/local/composition;
+`chozo-terrain-parent/`,
 `periodic-damage-parent/`,
 `ceres-door-parent/`,
 `treadmill-parent/` and earlier snapshots remain intact.

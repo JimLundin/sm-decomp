@@ -97,12 +97,7 @@ pub unsafe fn CalculatePlmBlockCoords(k: u16, game: &mut Game) {
         game.g_ram[0x1c29..0x1c2b].copy_from_slice(&x.to_le_bytes()); // plm_x_block
     }
 }
-pub fn WriteLevelDataBlockTypeAndBts(k: u16, a: u16, game: &mut Game) {
-    // The level-data byte uses the exact offset, while BTS rounds down to a word.
-    let block_high = 0x10003 + usize::from(k);
-    game.g_ram[block_high] = (a >> 8) as u8 | (game.g_ram[block_high] & 0x0f);
-    game.g_ram[0x16402 + usize::from(k >> 1)] = a as u8;
-}
+pub use crate::game::mechanism_terrain_setup_ram::install_block as WriteLevelDataBlockTypeAndBts;
 pub fn EnablePLMs(game: &mut Game) {
     // plm_flag: enable bit 15 while preserving the other flag bits.
     let flags = u16::from_le_bytes([game.g_ram[0x1c23], game.g_ram[0x1c24]]);
@@ -732,14 +727,6 @@ crate::game::callback_dispatch! {
 ) -> u8 => ea;
     call (j, game); default Unreachable(game) as u8;
     @functions [pub unsafe fn (j: u16, game: &mut Game) -> u8];
-    [8704279] PlmSetup_D127 [] {
-        WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[(j >> 1)]), 0xc000, game);
-        0
-    };
-    [8704299] PlmSetup_D138 [] {
-        WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[(j >> 1)]), 0xe000, game);
-        0
-    };
     [8705542] PlmSetup_DeletePlmIfAreaTorizoDead [] {
         if CheckBossBitForCurArea(4, game) & 1 != 0 {
             word!(game.plm_header_ptr[(j >> 1)] = 0);
@@ -784,6 +771,8 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (v0: u16, game: &mut Game) -> u8];
     @external {
+        8704279 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::ShotBlock, game)];
+        8704299 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::GrappleBlock, game)];
         8704264 => [crate::game::mechanism_terrain_setup_ram::setup(j, crate::game::mechanism_terrain_setup::Setup::Blank, game)];
         8705558 => [crate::game::mechanism_hands_ram::prepare_ship_trigger(j, game)];
         8703957 => [crate::game::samus_periodic_damage_ram::grapple_contact(game)];

@@ -104,63 +104,54 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
-   Latest verified stage shares Chozo plug clearing, hand trigger installation,
-   the Lower Norfair watcher and both acid-base commands after periodic damage
-   commit `9fb0e85d`. Existing terrain and hand cores retire D108, D616, D15C
-   and D155; AAE436 shares the acid target. No new module or registration.
-   Preserve full zero/floored plug addressing, exact high-byte/BTS installation,
-   low-byte room width, exact 00FF test, live PLM selection after terrain writes
-   and acid target 722. RAM remains authoritative; 94/115 setups shared,
-   with 7 room/event/boss and 14 residual identities remaining.
+   Latest verified stage shares the unused shot/grapple installation pair after
+   Chozo commit `08e4b98c`. D117/header D127 and D12B/header D13B route through
+   the existing terrain core with typed Shot/Grapple reactions. The exact
+   checked byte-write helper moves to its adapter; the old public name is a
+   re-export preserving every retained caller. No module or registration added.
+   Preserve captured block, exact high-byte address, rounded BTS index, ordered
+   writes and checked failure prefixes. RAM remains authoritative; 96/115
+   setups shared, with 5 room/event/boss and 14 residual identities remaining.
 
-   All 25 suites pass with 233 runtime/284 local identities. New result
-   [3570,126,126,340,185]: 3,570 defined comparisons include 510 matching checked
-   trigger failures; 126 intercepted original watcher prefixes; 126 separate
-   qualified checked completions; 340 separate checked-only invalid plug cases;
-   185 mixed lifecycle observations. D108 FFFE/FFFF accesses are outside RAM
-   and never executed natively. The original watcher's true arm always reaches
-   an odd native header store: intercept immediately before it and assert exact
-   panic identity/hit count. False branches execute the original completely.
-   True completion uses a checked reference plus independently computed bytes,
-   including both terrain/header aliases. No native true-completion claim.
+   All 26 suites pass with 234 runtime/287 local identities. New result
+   [3740,1020,224,974]: 3,740 successful setup comparisons and 1,020 separate
+   matching checked failures; 224 primitive comparisons include 48 matching
+   failures. Independent expected byte maps cover odd blocks, captured-selector
+   mutation and terrain/BTS overlap. The frozen helper reference is independent
+   of the moved production helper. FFFD/FFFE/FFFF fail before BTS modification.
 
-   Actual Lower Norfair statue initialization, B083 player contact, nested plug
-   allocation/exhaustion, event C reentry, acid/unlock and the Wrecked Ship
-   footstep instruction execute. Footstep operands are real; x192/y436/width48
-   is constructed offscreen placement. The plug script changes tiles on ticks
-   1/5/9/13 and deletes on 14; all 16 ticks are checked. Scoped draw assertions
-   require camera zero and block row greater than 15; the original renderer then returns
-   before odd ROM reads. This is no visible renderer or full-statue proof.
-   Twenty actual Samus passage samples distinguish solid before clearing from
-   air afterward. Sixteen content ranges (118 bytes) match primary banks.
+   Both entries are unused in vanilla: no room-producer or movie claim.
+   Constructed placement runs their real scripts and five actual shot/grapple
+   consumers with free/full pools. D127 changes type C to solid type 8 on tick
+   1 and deletes on 5; D13B retains type E and deletes on 2. The actual D064
+   child starts alongside its live parent, which deletes on tick 5. CADF restores
+   on 409 and deletes on 410; checks run through 411. Generic D0D8 deletion
+   also executes. Offscreen row 29/camera zero keeps the
+   original renderer's clip before odd reads; visible rendering is unproven.
+   The 974 mixed observations are 8 placements, 18 primary-script ticks,
+   120 consumer/pool pairs, 822 CADF ticks and 6 grapple-child ticks.
+   All 25 retained suite results remain unchanged.
 
-   The 185 observations mix 144 PLM ticks, 20 paired passage samples, 16
-   footstep groups, two acid/unlock tails, one event reentry, one full monitor
-   pool and one ship-trigger deletion. Do not label them a uniform frame or
-   collision-call count. All 24 retained suites remain unchanged.
-
-   Production release/frontend/verifier/source 43.50s and prospective release
-   43.28s pass first attempts; carrier 22.09s passes. Harness attempt 1 fails
-   because an old fixture match omitted Blank (5.21s); its explicit case list
-   excludes Blank, which the new suite covers. The exhaustive-match fix gives
-   attempt 2 PASS (21.07s). All 25 checks pass first run in 27.30s, explicit
-   exit 0. Production source remains unchanged; failed logs preserved.
+   Production release/frontend/verifier/source 52.16s, prospective release
+   44.35s, carrier 19.62s, harness 34.56s and all 26 checks 26.53s pass first
+   attempts with explicit exit 0. No failed builds/checks or source changes
+   after final builds. Content and frozen references remain local.
 
    Retained limits: `advance_tide` reads native u16 at odd RAM197D on every
    unfrozen lava_surface; never run that as defined-reference evidence. The old
    terrain18 visible restore cases reach odd RAM1E67 and remain excluded. Preserve
    their logs. Current guarded offscreen draws do not establish rendering fidelity
-   or resolve the inherited Intro mismatch. Other qualified fixtures remain as
-   documented in the local handoffs.
+   or resolve the inherited Intro mismatch. Chozo watcher true-arm completion
+   remains qualified, not native completion; other limits remain in handoffs.
 
-   Main is **105,310 Rust lines in 192 files**. Prospective composition is
-   **114,373 (+9,063)** in 297 files, unadopted. Stage main adds 44 lines,
-   431 lexical tokens and 1,498 LF-normalized bytes; complete composition adds
-   76/706/2,699. Retained verification adds 1,005/12,264/42,383; implementation
-   plus checks adds 1,081/12,970/45,082. Local production overlaps composition.
+   Main is **105,335 Rust lines in 192 files**. Prospective composition is
+   **114,402 (+9,067)** in 297 files, unadopted. Stage main adds 25 lines,
+   168 lexical tokens and 862 LF-normalized bytes; complete composition adds
+   29/248/1,208. Retained verification adds 579/8,082/27,346; implementation
+   plus checks adds 608/8,330/28,554. Local production overlaps composition.
    No dependency, native, installer or launcher additions. Unsafe declarations
-   remain 2,879; casts fall one to 6,009. No net reduction, complete unsafe
-   retirement, persistent ownership or backend independence claim.
+   remain 2,879 and casts 6,009. No net reduction, complete unsafe retirement,
+   persistent ownership or backend independence claim.
 
    Next dependencies, in order:
 
@@ -235,12 +226,14 @@ references; measure build/test time and resource growth before changing the loop
      compare allocation/held contact, diagnostic entry and environmental producers.
    - [x] Share Chozo plug/trigger/watcher/acid behavior; compare both producers,
      qualified watcher prefixes/completions, nested allocation and passage tails.
+   - [x] Share unused shot/grapple installation and the exact legacy helper;
+     compare constructed scripts, actual collision consumers and respawn tails.
    - Close remaining room/event/boss setups, then constants/no-op/result routes.
      Preserve synchronous writes, nested displacement and failure prefixes before
      retiring native dispatch. The 115-identity inventory is in the local door
-     handoff; 7 room/event/boss and 14 residual identities remain. Select one
-     coherent responsibility through caller/validation investigation. The Chozo-terrain
-     handoff records native domains and qualified watcher/draw limits.
+     handoff; 5 room/event/boss and 14 residual identities remain. Select one
+     coherent responsibility through caller/validation investigation. The block-reaction
+     handoff records unused-entry scope, collision tails and draw limits.
    - Close remaining consumers and runtime authority transfers, validate the
      combined replacement and recount all retained code. Owner promotion needs
      the reset/load/rewind and external-writer checks from state migration.
@@ -248,7 +241,10 @@ references; measure build/test time and resource growth before changing the loop
 
    Continue the durable candidate at
    `C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261022/player-projectiles/`.
-   `runtime-impact-working/` is the verified Chozo-terrain continuation,
+   `runtime-impact-working/` is the verified block-reaction continuation,
+   with `BLOCK_REACTION_HANDOFF.md`, `block-reaction-price.json` and
+   `block-reaction-check-1.log`. `block-reaction-parent/` preserves prior
+   main/carrier/local/composition inputs. Chozo-terrain evidence remains
    with `CHOZO_TERRAIN_HANDOFF.md`, `chozo-terrain-price.json` and
    `chozo-terrain-check-1.log`. `chozo-terrain-parent/` preserves prior
    main/carrier/local/composition inputs. Periodic-damage evidence remains

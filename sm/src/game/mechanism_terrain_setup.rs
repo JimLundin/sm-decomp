@@ -17,6 +17,13 @@ pub enum Setup {
     Deactivate,
     EnemyBreakable,
     Blank,
+    ShotBlock,
+    GrappleBlock,
+}
+#[derive(Clone, Copy)]
+pub enum BlockReaction {
+    Shot,
+    Grapple,
 }
 #[derive(Clone, Copy)]
 pub enum ProjectileWord {
@@ -35,6 +42,7 @@ pub trait Context {
     fn release(&mut self, slot: usize);
     fn level(&self, block: Self::Block) -> u16;
     fn set_level(&mut self, block: Self::Block, value: u16);
+    fn install(&mut self, block: Self::Block, reaction: BlockReaction);
     fn set_saved(&mut self, slot: usize, value: u16);
     fn instruction(&self, slot: usize) -> u16;
     fn set_instruction(&mut self, slot: usize, value: u16);
@@ -151,6 +159,15 @@ pub fn setup(c: &mut impl Context, slot: usize, kind: Setup) -> u8 {
             return 0x41;
         }
         Setup::Blank => c.set_level(c.block(slot), 0),
+        Setup::ShotBlock | Setup::GrappleBlock => {
+            let block = c.block(slot);
+            let reaction = if kind == Setup::ShotBlock {
+                BlockReaction::Shot
+            } else {
+                BlockReaction::Grapple
+            };
+            c.install(block, reaction);
+        }
         Setup::Deactivate | Setup::EnemyBreakable => {
             let block = c.block(slot);
             let mask = if kind == Setup::Deactivate {

@@ -1,7 +1,16 @@
 //! Scoped encoded field access for breakable terrain setup.
 #![forbid(unsafe_code)]
-use crate::game::mechanism_terrain_setup::{self, Context, ProjectileWord, RejectionProgram, Setup};
+use crate::game::mechanism_terrain_setup::{
+    self, BlockReaction, Context, ProjectileWord, RejectionProgram, Setup,
+};
 use crate::game_state::Game;
+
+pub fn install_block(k: u16, a: u16, game: &mut Game) {
+    // The level-data byte uses the exact offset, while BTS rounds down to a word.
+    let block_high = 0x10003 + usize::from(k);
+    game.g_ram[block_high] = (a >> 8) as u8 | (game.g_ram[block_high] & 0x0f);
+    game.g_ram[0x16402 + usize::from(k >> 1)] = a as u8;
+}
 
 pub struct TerrainFields<'a>(pub &'a mut Game);
 impl TerrainFields<'_> {
@@ -25,6 +34,16 @@ impl Context for TerrainFields<'_> {
     }
     fn set_level(&mut self, block: u16, value: u16) {
         self.put(0x10002 + 2 * usize::from(block >> 1), value);
+    }
+    fn install(&mut self, block: u16, reaction: BlockReaction) {
+        install_block(
+            block,
+            match reaction {
+                BlockReaction::Shot => 0xc000,
+                BlockReaction::Grapple => 0xe000,
+            },
+            self.0,
+        );
     }
     fn set_saved(&mut self, slot: usize, value: u16) {
         self.put(0x1e17 + 2 * slot, value);
