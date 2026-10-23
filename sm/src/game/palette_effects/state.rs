@@ -1,127 +1,111 @@
-//! Private palette execution state and exact byte-lane codec.
+//! Ordinary palette state: no cartridge addresses, RAM projection or backend.
+//! A Session can live across ticks in the independent host. The compatibility
+//! host consumes it whenever opaque legacy code takes authority.
 #![forbid(unsafe_code)]
-use super::transport::Codec;
-#[derive(Clone, Copy)]
-#[repr(usize)]
-pub(super) enum Column {
-    Id = 0x1e7d,
-    Color = 0x1e8d,
-    PreAction = 0x1ead,
-    Program = 0x1ebd,
-    Delay = 0x1ecd,
-    Counter = 0x1edd,
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(crate) struct Slot {
+    pub id: u16,
+    pub color: u16,
+    pub pre_action: u16,
+    pub program: u16,
+    pub delay: u16,
+    pub counter: u16,
 }
-impl Column {
-    pub(super) fn address(self, index: u16) -> usize {
-        self as usize + usize::from(index & !1)
-    }
-}
-#[derive(Clone, Copy, Default)]
-struct Slot {
-    id: u16,
-    color: u16,
-    pre_action: u16,
-    program: u16,
-    delay: u16,
-    counter: u16,
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum Field {
+    Id,
+    Color,
+    PreAction,
+    Program,
+    Delay,
+    Counter,
 }
 impl Slot {
-    fn word(&mut self, column: usize) -> &mut u16 {
-        match column {
-            0 => &mut self.id,
-            1 => &mut self.color,
-            2 => &mut self.pre_action,
-            3 => &mut self.program,
-            4 => &mut self.delay,
-            _ => &mut self.counter,
+    pub(crate) fn field(&self, field: Field) -> u16 {
+        match field {
+            Field::Id => self.id,
+            Field::Color => self.color,
+            Field::PreAction => self.pre_action,
+            Field::Program => self.program,
+            Field::Delay => self.delay,
+            Field::Counter => self.counter,
+        }
+    }
+    pub(crate) fn field_mut(&mut self, field: Field) -> &mut u16 {
+        match field {
+            Field::Id => &mut self.id,
+            Field::Color => &mut self.color,
+            Field::PreAction => &mut self.pre_action,
+            Field::Program => &mut self.program,
+            Field::Delay => &mut self.delay,
+            Field::Counter => &mut self.counter,
         }
     }
 }
-#[derive(Default)]
-pub(super) struct PaletteEffects {
-    slots: [Slot; 8],
-    flags: u16,
-    selected: u16,
-    heat: u16,
-    previous_heat: u16,
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub(crate) struct PaletteEffects {
+    pub slots: [Slot; 8],
+    pub flags: u16,
+    pub selected: u16,
+    pub heat: u16,
+    pub previous_heat: u16,
 }
-const REGIONS: [(usize, usize); 2] = [(0x1e79, 18), (0x1ead, 34)];
-fn location(address: usize) -> Option<(usize, usize, usize)> {
-    for (column, base) in [0x1e7d, 0x1e8d, 0x1ead, 0x1ebd, 0x1ecd, 0x1edd]
-        .into_iter()
-        .enumerate()
-    {
-        if (base..base + 16).contains(&address) {
-            return Some((column, (address - base) / 2, (address - base) % 2));
+/// Inputs stay fixed until an explicit host effect returns a new observation.
+/// They are sampled values, not a second writable copy of player/room state.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub(crate) struct Inputs {
+    pub cinematic: u16,
+    pub enemy_health: u16,
+    pub equipped_items: u16,
+    pub frame: u16,
+    pub health: u16,
+    pub player_y: u16,
+    pub miniboss_dead: bool,
+}
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(crate) struct PeriodicDamage {
+    pub fraction: u16,
+    pub amount: u16,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct Session {
+    pub effects: PaletteEffects,
+    pub colors: [u16; 256],
+    pub inputs: Inputs,
+    pub damage: PeriodicDamage,
+}
+impl Default for Session {
+    fn default() -> Self {
+        Self {
+            effects: PaletteEffects::default(),
+            colors: [0; 256],
+            inputs: Inputs::default(),
+            damage: PeriodicDamage::default(),
         }
     }
-    for (index, base) in [0x1e79, 0x1e7b, 0x1eed, 0x1eef].into_iter().enumerate() {
-        if (base..base + 2).contains(&address) {
-            return Some((6, index, address - base));
-        }
-    }
-    None
 }
-impl PaletteEffects {
-    fn word(&mut self, column: usize, index: usize) -> &mut u16 {
-        if column < 6 {
-            self.slots[index].word(column)
+impl Session {
+    /// Reset the independent session. Runtime hardware resets import their actual bytes.
+    pub(crate) fn reset(&mut self) {
+        *self = Self::default();
+    }
+    pub(crate) fn snapshot(&self) -> Self {
+        self.clone()
+    }
+    pub(crate) fn restore(&mut self, snapshot: Self) {
+        *self = snapshot;
+    }
+    pub(crate) fn set_enabled(&mut self, enabled: bool) {
+        self.effects.flags = if enabled {
+            self.effects.flags | 0x8000
         } else {
-            match index {
-                0 => &mut self.flags,
-                1 => &mut self.selected,
-                2 => &mut self.heat,
-                _ => &mut self.previous_heat,
-            }
-        }
-    }
-    fn value(&self, column: usize, index: usize) -> u16 {
-        if column < 6 {
-            let mut slot = self.slots[index];
-            *slot.word(column)
-        } else {
-            match index {
-                0 => self.flags,
-                1 => self.selected,
-                2 => self.heat,
-                _ => self.previous_heat,
-            }
-        }
-    }
-}
-impl Codec for PaletteEffects {
-    fn decode(ram: &[u8]) -> Self {
-        let mut state = Self::default();
-        for (base, count) in REGIONS {
-            for i in 0..count {
-                let at = base + 2 * i;
-                let (c, s, _) = location(at).unwrap();
-                *state.word(c, s) = u16::from_le_bytes([ram[at], ram[at + 1]]);
-            }
-        }
-        state
-    }
-    fn encode(&self, ram: &mut [u8]) {
-        for (base, count) in REGIONS {
-            for i in 0..count {
-                let at = base + 2 * i;
-                let (c, s, _) = location(at).unwrap();
-                ram[at..at + 2].copy_from_slice(&self.value(c, s).to_le_bytes());
-            }
-        }
-    }
-    fn byte(&self, address: usize) -> Option<u8> {
-        let (c, s, lane) = location(address)?;
-        Some(self.value(c, s).to_le_bytes()[lane])
-    }
-    fn put_byte(&mut self, address: usize, value: u8) -> bool {
-        let Some((c, s, lane)) = location(address) else {
-            return false;
+            self.effects.flags & !0x8000
         };
-        let word = self.word(c, s);
-        let mut bytes = word.to_le_bytes();
-        bytes[lane] = value;
-        *word = u16::from_le_bytes(bytes);
-        true
+    }
+    pub(crate) fn clear(&mut self) {
+        for slot in self.effects.slots.iter_mut().rev() {
+            slot.id = 0;
+        }
     }
 }

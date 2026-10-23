@@ -8,6 +8,23 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Palette validation branch `verify/palette-session-20261023` is ready for hosted
+standalone execution. Source
+`6d2231c8c7324cdd6ed5fd26e4c309eff23b11651b983203df147f5437bcd621`
+passes release/frontend/verifier builds, all512 frozen comparisons, the actual
+runtime guard checks,15 actual animated-tile palette-spawn cases and the272/0
+opening replay with all7required probes and120follow-up frames. No gameplay rooms.
+The standalone target is `sm/src/verification/palette_detached.rs`; CI compiles it
+directly with rustc before provisioning native dependencies, then runs it on the
+Windows runner. Local ASR-blocked standalone execution remains blocked, not passed.
+Do not adopt this branch to main until hosted standalone checks pass.
+
+The complete replacement removes palette's address-based execution/Port binding.
+Pure state/core/content are separate from runtime compatibility. Full cost vs
+13bca2c3: +227production lines, +328verification-support lines, +13CI/Cargo lines.
+Price and local build/comparison/guard/replay evidence are in palette-session/.
+Shared transport remains for other systems; no global persistent Session claim.
+
 Parallel direction (user request 2026-10-23): eight worker roles in three paired
 lanes, with one root compiler/integration lane. Ordinary typed state and an owned
 Session are the destination; wrapping existing address-based ports is insufficient.

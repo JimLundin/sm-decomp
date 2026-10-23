@@ -4,6 +4,26 @@
 
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/game/palette_effects/content.rs",
+        include_bytes!("game/palette_effects/content.rs"),
+    ),
+    (
+        "sm/src/game/palette_effects/runtime.rs",
+        include_bytes!("game/palette_effects/runtime.rs"),
+    ),
+    (
+        "sm/src/verification/palette_runtime_checks.rs",
+        include_bytes!("verification/palette_runtime_checks.rs"),
+    ),
+    (
+        "sm/src/verification/palette_detached.rs",
+        include_bytes!("verification/palette_detached.rs"),
+    ),
+    (
+        "sm/src/verification/palette_detached_checks.rs",
+        include_bytes!("verification/palette_detached_checks.rs"),
+    ),
+    (
         "sm/src/verification/animated_tiles.rs",
         include_bytes!("verification/animated_tiles.rs"),
     ),

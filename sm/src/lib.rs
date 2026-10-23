@@ -554,6 +554,11 @@ pub fn verify_enemy_projectile_case(id: u32) -> Option<Vec<u8>> {
 mod palette_effect_checks;
 
 #[doc(hidden)]
+pub fn verify_palette_runtime_guard() -> bool {
+    game::palette_effects::checks::guard(&mut game_state::Game::new())
+}
+
+#[doc(hidden)]
 pub fn verify_palette_effect_case(id: u32) -> Option<Vec<u8>> {
     palette_effect_checks::capture_case(id)
 }

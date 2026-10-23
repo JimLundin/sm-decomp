@@ -1,179 +1,226 @@
-//! Exact numeric identities and live execution; encoded access stays owner-private.
+//! Complete palette execution over ordinary state and ordered semantic effects.
 #![forbid(unsafe_code)]
-use super::{
-    Owner,
-    state::Column::{self, *},
-};
-use crate::game::music::QueueMusic_Delayed8;
-use crate::game::sm_80::{QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx3_Max6};
-use crate::ram_map::words as ram;
-use crate::rom::RomRecord;
+use super::state::{Field, Session};
+use Field::*;
 
-fn field(owner: &Owner<'_>, column: Column, index: u16) -> u16 {
-    owner.read_le(column.address(index))
+/// One captured record retains its image for exactly the lifetime of that record.
+pub(crate) trait Record {
+    fn byte(&self, displacement: usize) -> u8;
+    fn word(&self, displacement: usize) -> u16;
 }
-fn put(owner: &mut Owner<'_>, column: Column, index: u16, value: u16) {
-    owner.write_slice_le(column.address(index), value);
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum SoundChannel {
+    One,
+    Two,
+    Three,
 }
-fn decrement(owner: &mut Owner<'_>, column: Column, index: u16) -> u16 {
-    let old = field(owner, column, index);
-    put(owner, column, index, old.wrapping_sub(1));
+
+/// The host retains the sole Session while the core executes. Opaque effects
+/// may consume it and install a fresh observation; no state borrow crosses them.
+pub(crate) trait Host {
+    type Record: Record;
+    fn session(&self) -> &Session;
+    fn session_mut(&mut self) -> &mut Session;
+    fn record(&mut self, address: u16) -> Self::Record;
+    fn sound(&mut self, channel: SoundChannel, sound: u16);
+    fn music(&mut self, track: u16);
+    fn unreachable(&mut self);
+    // Compatibility exceptions are explicitly outside the ordinary slot/color domain.
+    fn outside_field(&mut self, field: Field, index: u16) -> u16;
+    fn put_outside_field(&mut self, field: Field, index: u16, value: u16);
+    fn put_outside_counter_byte(&mut self, index: u16, value: u8);
+    fn outside_flag(&mut self, index: u16) -> u16;
+    fn outside_color(&mut self, displacement: u16, value: u16);
+    fn color_written(&mut self, _index: u16, _value: u16) {}
+    fn probe(&mut self, _name: &'static str) {}
+}
+fn field(host: &mut impl Host, column: Field, index: u16) -> u16 {
+    match host.session().effects.slots.get(usize::from(index >> 1)) {
+        Some(slot) => slot.field(column),
+        None => host.outside_field(column, index),
+    }
+}
+fn put(host: &mut impl Host, column: Field, index: u16, value: u16) {
+    match host
+        .session_mut()
+        .effects
+        .slots
+        .get_mut(usize::from(index >> 1))
+    {
+        Some(slot) => *slot.field_mut(column) = value,
+        None => host.put_outside_field(column, index, value),
+    }
+}
+fn put_native(host: &mut impl Host, column: Field, index: u16, value: u16) {
+    put(host, column, index, u16::from_le_bytes(value.to_ne_bytes()));
+}
+fn decrement(host: &mut impl Host, column: Field, index: u16) -> u16 {
+    let old = field(host, column, index);
+    put(host, column, index, old.wrapping_sub(1));
     old
 }
-fn miniboss_dead(owner: &Owner<'_>) -> bool {
-    owner.read_native(0xd828 + usize::from(owner.read_le(ram::area_index))) & 2 != 0
-}
-/// High-window records use the current owned image. Low windows preserve the
-/// exact old diagnostic and g_fail side effect, after publishing pending state.
-fn record(owner: Owner<'_>, address: u16) -> (Owner<'_>, RomRecord) {
-    if address & 0x8000 == 0 {
-        return owner.foreign(|g| super::diagnostics::low_record(address, g));
+fn counter_byte(host: &mut impl Host, index: u16, value: u8) {
+    match host
+        .session_mut()
+        .effects
+        .slots
+        .get_mut(usize::from(index >> 1))
+    {
+        Some(slot) => {
+            let mut bytes = slot.counter.to_le_bytes();
+            bytes[usize::from(index & 1)] = value;
+            slot.counter = u16::from_le_bytes(bytes);
+        }
+        None => host.put_outside_counter_byte(index, value),
     }
-    let image = owner.rom();
-    let base = crate::rtl::lorom_offset(0x8d0000 | u32::from(address)) as usize;
-    (owner, RomRecord { image, base })
 }
-pub(super) fn spawn(mut owner: Owner<'_>, definition: u16) -> Owner<'_> {
-    let Some(slot) = (0..8)
-        .rev()
-        .map(|i| 2 * i)
-        .find(|&i| field(&owner, Id, i) == 0)
-    else {
-        return owner;
+fn flag_word(host: &mut impl Host, index: u16) -> u16 {
+    // This pre-action intentionally tests flags, the selector, or a neighboring ID.
+    // Odd and wider accesses are compatibility exceptions, not bounded slot reads.
+    let value = match index {
+        0 => host.session().effects.flags,
+        2 => host.session().effects.selected,
+        4..=18 if index & 1 == 0 => host.session().effects.slots[usize::from((index - 4) / 2)].id,
+        _ => return host.outside_flag(index),
     };
-    crate::verify_probe::hit("palette.spawn.allocated");
-    put(&mut owner, Id, slot, definition);
-    put(&mut owner, Color, slot, 0);
-    put(&mut owner, PreAction, slot, 0xc526);
-    let data;
-    (owner, data) = record(owner, definition);
-    put(&mut owner, Program, slot, data.word(2));
-    put(&mut owner, Delay, slot, 1);
-    put(&mut owner, Counter, slot, 0);
-    let data;
-    (owner, data) = record(owner, definition);
-    setup(owner, 0x8d0000 | u32::from(data.word(0)), slot)
+    u16::from_ne_bytes(value.to_le_bytes())
 }
-pub(super) fn advance(mut owner: Owner<'_>) -> Owner<'_> {
-    if owner.read_le(ram::flag_for_palette_fx_objects) & 0x8000 != 0 {
+fn color(host: &mut impl Host, displacement: u16, value: u16) {
+    let index = displacement >> 1;
+    match host.session_mut().colors.get_mut(usize::from(index)) {
+        Some(color) => {
+            *color = value;
+            host.color_written(index, value);
+        }
+        None => host.outside_color(displacement, value),
+    }
+    host.probe("palette.color.write");
+}
+pub(crate) fn spawn(host: &mut impl Host, definition: u16) {
+    let Some(slot) = host
+        .session()
+        .effects
+        .slots
+        .iter()
+        .rposition(|slot| slot.id == 0)
+    else {
+        return;
+    };
+    let slot = (slot * 2) as u16;
+    host.probe("palette.spawn.allocated");
+    put(host, Id, slot, definition);
+    put(host, Color, slot, 0);
+    put(host, PreAction, slot, 0xc526);
+    let data = host.record(definition);
+    put(host, Program, slot, data.word(2));
+    put(host, Delay, slot, 1);
+    put(host, Counter, slot, 0);
+    let data = host.record(definition);
+    setup(host, 0x8d0000 | u32::from(data.word(0)), slot);
+}
+pub(crate) fn advance(host: &mut impl Host) {
+    if host.session().effects.flags & 0x8000 != 0 {
         let mut slot = 14i32;
         while slot >= 0 {
-            owner.write_slice_le(ram::palettefx_index, slot as u16);
-            if field(&owner, Id, slot as u16) != 0 {
-                owner = process(owner, slot as u16);
-                slot = i32::from(owner.read_le(ram::palettefx_index));
+            host.session_mut().effects.selected = slot as u16;
+            if field(host, Id, slot as u16) != 0 {
+                process(host, slot as u16);
+                slot = i32::from(host.session().effects.selected);
             }
             slot -= 2;
         }
     }
-    owner
 }
-pub(super) fn process(mut owner: Owner<'_>, k: u16) -> Owner<'_> {
-    let before = 0x8d0000 | u32::from(field(&owner, PreAction, k));
-    owner = pre(owner, before, k);
-    let mut slot = owner.read_le(ram::palettefx_index);
-    if decrement(&mut owner, Delay, slot) != 1 {
-        return owner;
+pub(crate) fn process(host: &mut impl Host, k: u16) {
+    let before = 0x8d0000 | u32::from(field(host, PreAction, k));
+    pre(host, before, k);
+    let mut slot = host.session().effects.selected;
+    if decrement(host, Delay, slot) != 1 {
+        return;
     }
-    let mut cursor = field(&owner, Program, slot);
+    let mut cursor = field(host, Program, slot);
     let duration = loop {
-        let data;
-        (owner, data) = record(owner, cursor);
+        let data = host.record(cursor);
         let instruction = data.word(0);
         if instruction & 0x8000 == 0 {
             break instruction;
         }
-        (owner, slot, cursor) = command(
-            owner,
+        (slot, cursor) = command(
+            host,
             0x8d0000 | u32::from(instruction),
             slot,
             cursor.wrapping_add(2),
         );
         if cursor == 0 {
-            return owner;
+            return;
         }
     };
-    put(&mut owner, Delay, slot, duration);
-    crate::verify_probe::hit("palette.phase.colors");
-    let mut color = field(&owner, Color, slot);
+    put(host, Delay, slot, duration);
+    host.probe("palette.phase.colors");
+    let mut destination = field(host, Color, slot);
     loop {
         let instruction = loop {
-            let data;
-            (owner, data) = record(owner, cursor);
+            let data = host.record(cursor);
             let value = data.word(2);
             if value & 0x8000 != 0 {
                 break value;
             }
-            // This is a byte displacement, not a bounded palette index. Apply each
-            // write immediately: later script commands and other owners can observe it.
-            owner.write_slice_le(0xc000 + usize::from(color & !1), value);
-            crate::verify_probe::hit("palette.color.write");
-            color = color.wrapping_add(2);
+            color(host, destination, value);
+            destination = destination.wrapping_add(2);
             cursor = cursor.wrapping_add(2);
         };
-        (owner, color, cursor) = command(owner, 0x8d0000 | u32::from(instruction), color, cursor);
+        (destination, cursor) =
+            command(host, 0x8d0000 | u32::from(instruction), destination, cursor);
         if cursor == 0 {
-            return owner;
+            return;
         }
     }
 }
-pub(super) fn pre(mut owner: Owner<'_>, ea: u32, k: u16) -> Owner<'_> {
+pub(crate) fn pre(host: &mut impl Host, ea: u32, k: u16) {
     match ea {
         9291046 => {}
         9298443 => {
-            if owner.read_le(ram::cinematic_function) == 0xb35f {
-                put(&mut owner, Program, k, 0xe192);
-                put(&mut owner, Delay, k, 1);
+            if host.session().inputs.cinematic == 0xb35f {
+                put(host, Program, k, 0xe192);
+                put(host, Delay, k, 1);
             }
         }
         9298656 => {
-            if owner.read_native(0xf78 + core::mem::offset_of!(crate::types::EnemyData, health))
-                == 0
-            {
-                put(&mut owner, Id, k, 0);
+            if host.session().inputs.enemy_health == 0 {
+                put(host, Id, k, 0);
             }
         }
         9298809 => {
-            if owner.read_le(ram::equipped_items) & 0x21 == 0 {
-                let low = u32::from(owner.read_native(ram::samus_periodic_subdamage));
-                let high = u32::from(owner.read_native(ram::samus_periodic_damage));
-                let damage = (low | (high << 16)).wrapping_add(0x4000);
-                owner.write_slice_native(ram::samus_periodic_subdamage, damage as u16);
-                owner.write_slice_native(ram::samus_periodic_damage, (damage >> 16) as u16);
-                if owner.read_le(ram::nmi_frame_counter_word) & 7 == 0
-                    && owner.read_le(ram::samus_health) > 0x46
-                {
-                    owner = owner.foreign(|g| QueueSfx3_Max6(0x2d, g)).0;
+            if host.session().inputs.equipped_items & 0x21 == 0 {
+                let damage = host.session().damage;
+                let damage = (u32::from(damage.fraction) | (u32::from(damage.amount) << 16))
+                    .wrapping_add(0x4000);
+                host.session_mut().damage.fraction = damage as u16;
+                host.session_mut().damage.amount = (damage >> 16) as u16;
+                if host.session().inputs.frame & 7 == 0 && host.session().inputs.health > 0x46 {
+                    host.sound(SoundChannel::Three, 0x2d);
                 }
             }
-            if owner.read_le(ram::samus_in_heat_palfx_index)
-                != owner.read_le(ram::samus_in_heat_palettefx_prev_index)
-            {
-                owner.write_slice_le(
-                    ram::samus_in_heat_palettefx_prev_index,
-                    owner.read_le(ram::samus_in_heat_palfx_index),
-                );
-                let offset = owner
-                    .read_le(ram::samus_in_heat_palfx_index)
-                    .wrapping_mul(2);
-                put(&mut owner, Delay, k, 1);
-                let table = if owner.read_le(ram::equipped_items) & 0x20 != 0 {
+            if host.session().effects.heat != host.session().effects.previous_heat {
+                host.session_mut().effects.previous_heat = host.session().effects.heat;
+                let offset = host.session().effects.heat.wrapping_mul(2);
+                put(host, Delay, k, 1);
+                let table = if host.session().inputs.equipped_items & 0x20 != 0 {
                     0xe3e0
-                } else if owner.read_le(ram::equipped_items) & 1 != 0 {
+                } else if host.session().inputs.equipped_items & 1 != 0 {
                     0xe400
                 } else {
                     0xe420
                 };
-                let data;
-                (owner, data) = record(owner, table);
-                put(&mut owner, Program, k, data.word(usize::from(offset)));
+                let data = host.record(table);
+                put(host, Program, k, data.word(usize::from(offset)));
             }
         }
         9301081 | 9301380 => {
-            if owner.read_le(ram::samus_y_pos) < 0x380 {
-                put(&mut owner, Delay, k, 1);
+            if host.session().inputs.player_y < 0x380 {
+                put(host, Delay, k, 1);
                 put(
-                    &mut owner,
+                    host,
                     Program,
                     k,
                     if ea == 9301081 { 0xeb43 } else { 0xec76 },
@@ -181,30 +228,25 @@ pub(super) fn pre(mut owner: Owner<'_>, ea: u32, k: u16) -> Owner<'_> {
             }
         }
         9301701 => {
-            if miniboss_dead(&owner) {
-                put(&mut owner, Id, k, 0);
+            if host.session().inputs.miniboss_dead {
+                put(host, Id, k, 0);
             }
         }
         9303585 => {
-            if owner.read_native(ram::flag_for_palette_fx_objects + usize::from(k)) != 0 {
-                put(&mut owner, Id, k, 0);
+            if flag_word(host, k) != 0 {
+                put(host, Id, k, 0);
             }
         }
-        _ => {
-            owner = owner.foreign(super::diagnostics::unreachable).0;
-        }
+        _ => host.unreachable(),
     }
-    owner
 }
-pub(super) fn command(mut owner: Owner<'_>, ea: u32, k: u16, j: u16) -> (Owner<'_>, u16, u16) {
-    crate::verify_probe::hit("palette.command");
-    let (k, j) = match ea {
+pub(crate) fn command(host: &mut impl Host, ea: u32, k: u16, j: u16) -> (u16, u16) {
+    host.probe("palette.command");
+    match ea {
         9291157 => {
-            owner.write_slice_native(
-                Program.address(owner.read_le(ram::palettefx_index)),
-                j.wrapping_add(4),
-            );
-            crate::verify_probe::hit("palette.continuation.save");
+            let selected = host.session().effects.selected;
+            put_native(host, Program, selected, j.wrapping_add(4));
+            host.probe("palette.continuation.save");
             (0, 0)
         }
         9291161 => (k.wrapping_add(4), j.wrapping_add(2)),
@@ -214,103 +256,90 @@ pub(super) fn command(mut owner: Owner<'_>, ea: u32, k: u16, j: u16) -> (Owner<'
         9291197 => (k.wrapping_add(18), j.wrapping_add(2)),
         9291206 => (k.wrapping_add(30), j.wrapping_add(2)),
         9291215 => {
-            put(&mut owner, Id, k, 0);
+            put(host, Id, k, 0);
             (k, 0)
         }
         9291220 => {
-            let data;
-            (owner, data) = record(owner, j);
-            put(&mut owner, PreAction, k, data.word(0));
+            let data = host.record(j);
+            put(host, PreAction, k, data.word(0));
             (k, j.wrapping_add(2))
         }
         9291229 => {
-            put(&mut owner, PreAction, k, 0xc5e3);
+            put(host, PreAction, k, 0xc5e3);
             (k, j)
         }
         9291294 => {
-            let data;
-            (owner, data) = record(owner, j);
+            let data = host.record(j);
             (k, data.word(0))
         }
         9291321 => {
-            let cursor = if decrement(&mut owner, Counter, k) == 1 {
+            let cursor = if decrement(host, Counter, k) == 1 {
                 j.wrapping_add(2)
             } else {
-                let data;
-                (owner, data) = record(owner, j);
+                let data = host.record(j);
                 data.word(0)
             };
             (k, cursor)
         }
         9291336 => {
-            let data;
-            (owner, data) = record(owner, j);
-            owner.set_byte(0x1edd + usize::from(k), data.byte(0));
+            let data = host.record(j);
+            counter_byte(host, k, data.byte(0));
             (k, j.wrapping_add(1))
         }
         9291349 => {
-            let data;
-            (owner, data) = record(owner, j);
-            put(&mut owner, Color, k, data.word(0));
+            let data = host.record(j);
+            put(host, Color, k, data.word(0));
             (k, j.wrapping_add(2))
         }
         9291358 => {
-            let data;
-            (owner, data) = record(owner, j);
-            owner = owner
-                .foreign(|g| QueueMusic_Delayed8(u16::from(data.byte(0)), g))
-                .0;
+            let data = host.record(j);
+            host.music(u16::from(data.byte(0)));
             (k, j.wrapping_add(1))
         }
         9291370 | 9291379 | 9291388 => {
-            let data;
-            (owner, data) = record(owner, j);
+            let data = host.record(j);
             let sound = data.word(0);
-            owner = owner
-                .foreign(|g| match ea {
-                    9291370 => QueueSfx1_Max6(sound, g),
-                    9291379 => QueueSfx2_Max6(sound, g),
-                    _ => QueueSfx3_Max6(sound, g),
-                })
-                .0;
+            host.sound(
+                match ea {
+                    9291370 => SoundChannel::One,
+                    9291379 => SoundChannel::Two,
+                    _ => SoundChannel::Three,
+                },
+                sound,
+            );
             (k, j.wrapping_add(1))
         }
         9302470 => {
-            let data;
-            (owner, data) = record(owner, j);
-            owner.write_slice_le(ram::samus_in_heat_palfx_index, u16::from(data.byte(0)));
+            let data = host.record(j);
+            host.session_mut().effects.heat = u16::from(data.byte(0));
             (k, j.wrapping_add(1))
         }
         _ => {
-            owner = owner.foreign(super::diagnostics::unreachable).0;
+            host.unreachable();
             (0, 0)
         }
-    };
-    (owner, k, j)
+    }
 }
-pub(super) fn setup(mut owner: Owner<'_>, ea: u32, slot: u16) -> Owner<'_> {
-    crate::verify_probe::hit("palette.setup");
+pub(crate) fn setup(host: &mut impl Host, ea: u32, slot: u16) {
+    host.probe("palette.setup");
     match ea {
         9291397 => {}
-        9298436 => put(&mut owner, PreAction, slot, 0xe20b),
+        9298436 => put(host, PreAction, slot, 0xe20b),
         9299008 => {
-            let script = if owner.read_le(ram::equipped_items) & 0x20 != 0 {
+            let script = if host.session().inputs.equipped_items & 0x20 != 0 {
                 0xe8b6
-            } else if owner.read_le(ram::equipped_items) & 1 != 0 {
+            } else if host.session().inputs.equipped_items & 1 != 0 {
                 0xe68a
             } else {
                 0xe45e
             };
-            put(&mut owner, Program, slot, script);
+            put(host, Program, slot, script);
         }
         9303856 => {
-            if miniboss_dead(&owner) {
-                put(&mut owner, Id, slot, 0);
+            if host.session().inputs.miniboss_dead {
+                put(host, Id, slot, 0);
             }
         }
-        _ => {
-            owner = owner.foreign(super::diagnostics::unreachable).0;
-        }
+        _ => host.unreachable(),
     }
-    owner
 }
