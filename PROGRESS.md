@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 07:53 UTC**
+Updated: **2026-10-23 08:13 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -42,9 +42,17 @@ The approved next change will share fuse, movement and terrain rules, and keep
 candidate projectile state owned while scanning terrain. The validation plan
 includes actual power-bomb radius growth reaching Noob Tube from a separated
 origin. Source review and production/frontend/verifier and candidate library
-builds passed on their first attempts. Behavior comparisons and the real-radius
-integration check are pending; the figures above describe the last committed,
-verified milestone.
+builds passed on their first attempts. The new terrain comparison suite and the
+broad lifecycle compatibility suite now pass. Actual firing with a 60-tick fuse,
+followed by the retained HDMA radius producer, reached the separated Noob Tube
+at tick 88 with radius `0x2b60`. This is a constructed gameplay check with clipped
+drawing, not a rendering or movie test.
+
+Remaining regression checks and final review are in progress. One retained test
+still expected the native terrain callback that this change deliberately removes;
+its coverage assertion is being updated to observe direct owned execution.
+The bomb source is not yet committed. The figures above describe the last
+committed, fully verified milestone.
 
 Persistent room and scheduler state still live in RAM. Renderer/audio replacement
 and an independently running game slice remain required parts of the destination.
