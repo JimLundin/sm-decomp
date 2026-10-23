@@ -122,6 +122,16 @@ references; measure build/test time and resource growth before changing the loop
    Share algorithms between the checked RAM path and owned model, then remove
    their superseded implementations. Do not adopt the outer wiring alone.
 
+   Consolidation audit (2026-10-23): the local candidate is not deletion-ready.
+   runtime_external_flight still calls main flight, playback, ClearProjectile
+   and CallProjPreInstr. Supported SpeedEcho/UnknownProj8027 motions and broad-index
+   continuation must be included in the replacement. Complete the projectile-only
+   ownership/caller cut and full adoption-minus-deletion price before coding;
+   exclude accidental mechanism/dialogue Session coupling. Migrate selection,
+   firing, updates, retirement, trails, drawing and feedback with explicit foreign
+   boundaries and preserved ordering. Do not merge the current wrapper or claim
+   its gross retirement ceiling as savings. See public PROGRESS.md for status.
+
    Latest verified stage shares the complete charged-shot palette consumer from
    `8fa61a7c`. Main HandleBeamChargePalettes and owned advance_weapon_palette use
    one safe rule; local output handling reuses the main resolver. Actual coordinator

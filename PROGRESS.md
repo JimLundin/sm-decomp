@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 12:08 UTC**
+Updated: **2026-10-23 12:17 UTC**
 
 **Status: active development. The owned engine is not yet consolidated into production.**
 
@@ -47,6 +47,28 @@ identify the specific blockers and minimum closing work before more coding.
 Further isolated shared consumers, package moves and candidate-only cleanup are
 not the next milestone. Persistent Session ownership, full-game coverage and
 independent rendering/audio remain unfinished.
+
+## Consolidation audit: current blocker
+
+The current owned projectile candidate is **not ready for production adoption**.
+Its flight bridge still calls production flight, animation playback, clear and
+numeric motion dispatch. Adopting that wrapper would retain the implementations
+we need to retire. Two supported motions (Speed Echo and UnknownProj8027) and
+broad-index update continuation still depend on the old dispatch path.
+
+The next replacement must cover the complete projectile lifecycle: selection,
+firing, updates, retirement, trails, drawing and weapon feedback. It must reuse
+existing shared algorithms under one projectile owner, migrate actual callers,
+and remove superseded bank orchestration and per-operation RAM adapters.
+Interactions with Samus, enemies, room objects and the backend must have explicit
+boundaries that preserve effect order and returned state. Persistent whole-engine
+ownership remains a later milestone; RAM cannot have a competing mutable owner.
+
+Before implementation, finish the caller/deletion map and count the complete
+replacement against actual deletions. The candidate's size is still under audit;
+there is no established net reduction to report. No additional gameplay code has
+been added for this audit. Success means a production subsystem with one behavior
+implementation and retired old paths, with any remaining size increase explained.
 
 ## Verification limits
 
