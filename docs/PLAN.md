@@ -203,6 +203,10 @@ references; measure build/test time and resource growth before changing the loop
    `charge-transaction-parent/` preserves the baseline; the local
    `CHARGE_TRANSACTION_PROPOSAL.md` records the full scope. Persistent Session
    ownership and backend independence remain unfinished.
+   The frozen implementation has passed independent source review, changed-source
+   formatting and production/candidate release builds. Candidate integration
+   required two compatibility-call redirects; behavior comparisons and fixture
+   review are still pending. The verified milestone above remains unchanged.
 
    Next dependencies, in order:
 

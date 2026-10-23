@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 09:09 UTC**
+Updated: **2026-10-23 09:15 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -43,10 +43,12 @@ operations removed.
 
 The approved next change shares ordinary beam charge input, firing and initial
 collision dispatch, including direct owned scans and their failure handling.
-The first implementation is written and undergoing independent source review.
-Final corrections, production/candidate builds and behavior comparisons are
-pending. These source changes are not yet committed; the verified results and
-counts above still describe the special-attack milestone.
+The implementation has passed independent source review, formatting checks,
+the production release/frontend/verifier build and the candidate release build.
+The candidate build exposed two stale integration calls, which are now corrected.
+Behavior comparisons are pending while test fixtures undergo independent review.
+These source changes are not yet committed; the verified results and counts
+above still describe the special-attack milestone.
 
 Persistent room and scheduler state still live in RAM. Persistent Session
 ownership, renderer/audio replacement and an independently running game slice
