@@ -275,6 +275,13 @@ fn contact_failure_prefix() {
 }
 fn native_drop_then_missile() {
     let mut h = prepared();
+    // This case also writes A0:983A and B4:9900..9905. Keep the default
+    // one-MiB fixtures unchanged; extend this image through bank B4 only.
+    let image = super::RomImage::zeroed(0x1a8000);
+    for offset in 0..h.image.len() {
+        image.write(offset, h.image.read(offset));
+    }
+    h.image = image;
     missile_content(&h);
     h.world.player_inputs.player_x_radius = 8;
     h.world.player.player.contact.radius = 8;
