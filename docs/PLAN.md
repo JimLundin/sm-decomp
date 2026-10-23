@@ -187,15 +187,29 @@ references; measure build/test time and resource growth before changing the loop
    its component upper180 by168 lines for complete authored consumer checks.
    No reduction, new external dependency or backend-independence claim.
 
-   Next: design and price the complete morph bomb/power-bomb/spread creation
-   transaction, including actual movement-HUD and Draygon callers, reservation,
+   Active implementation from `4e0b2dcf`: share complete morph bomb/power-bomb/
+   spread creation, including actual movement-HUD and Draygon callers, reservation,
    ammo/flag ordering, charge/release cancellation and all five spread initializers.
-   Retire duplicated bank/owned producers; retain already-shared fuse/terrain rules.
-   Preserve no-ammo/nonrollback quirks, slot9 fallback, captured versus live byte
-   selectors and callback failure prefixes. Require actual input through fuse,
-   spread retirement and power-bomb terrain effects with explicit HDMA limits.
-   HUD switching remains separate. Persistent authority still needs external-
-   writer/reset/load/rewind closure after remaining consumers migrate.
+   Retire duplicate bank/owned producers and tables; keep only the real fire_bombs
+   delegate and lifetime consumers. Test-only helper wrappers belong in generated
+   verification overlays, not production. Shared rules own every postinitializer
+   live read and ordered field write; adapters encode types and cooldown keys.
+   Preserve no-ammo/nonrollback quirks, slot9 fallback, captured power byte versus
+   live spread byte0xC23, and complete-owner failure prefixes. Independent typed
+   consumers and all51 retained suites remain required.
+   Ordinary/spread checks must reach natural fuse/terrain/retirement. Spread must
+   earn charge through real input; a constructed morph-mode transition is qualified.
+   Power bombs must reach real terrain/NoobTube effects through actual input,
+   natural fuse and real HDMA progression; startup alone is insufficient. Full
+   explosion/Crystal Flash completion remains outside this bounded endpoint.
+   `MORPH_BOMB_TRANSACTION_PROPOSAL.md` is approved. Estimates: main+200..345,
+   local+6..92, composition+206..437, verification+1766..2702, combined+1972..3139
+   lines, including all registrations, typed clients and generated test wrappers.
+   Record full UTF-8 token/byte costs and overlaps, with no reduction claim.
+   `morph-bomb-transaction-parent/` preserves exact inputs; root matched all212
+   main Rust files to committed `4e0b2dcf`. Source review/builds/behavior checks
+   are pending. HUD switching and persistent external-writer/reset/load/rewind
+   authority closure remain separate dependencies.
 
    Next dependencies, in order:
 

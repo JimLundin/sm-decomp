@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 09:58 UTC**
+Updated: **2026-10-23 10:10 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -41,10 +41,11 @@ operations removed.
 
 **Continue the player-projectile lifecycle and its remaining consumers.**
 
-Next is complete bomb, power-bomb and spread-bomb creation: input, reservation,
-ammunition, charge/cancellation and initialization through their existing lifetime
-and terrain rules. Caller and ordering review is complete; implementation design
-and cost estimates come next.
+Implementation is starting on the approved bomb, power-bomb and spread-bomb
+creation change: input, reservation, ammunition, charge/cancellation and ordered
+initialization. Validation will follow natural fuse and terrain behavior, including
+real power-bomb HDMA progression. Source review, builds and comparisons are pending;
+the verified results above remain the missile milestone.
 
 Persistent room and scheduler state still live in RAM. Persistent Session
 ownership, renderer/audio replacement and an independently running game slice
