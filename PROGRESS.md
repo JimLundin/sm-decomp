@@ -7,7 +7,48 @@ Green: adopted scope | Blue: draft | Orange: active | Grey: remaining | Red: fai
 
 [Four room mutations / CI PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40005395335) · [Shared Session candidate CI](https://github.com/JimLundin/sm-decomp/actions/runs/40005712881)
 
-### Room mechanisms / shared typed core adopted
+### Enemy projectiles / next shared owner
+
+```mermaid
+flowchart TB
+    CONTRACT["Complete contract<br/>independent review PASS"]:::checked
+    UNION["49,819 WRAM + 16 native bytes<br/>no duplicate ownership"]:::checked
+    CONTRACT --> API["Concrete Rust interfaces<br/>preparing"]:::active
+    UNION --> API
+    REF["1,382 captures + 87 checks<br/>current main PASS"]:::checked
+    API --> S["session.rs / session_encoding.rs"]:::pending
+    S --> R["session_runtime.rs<br/>one owner / native spawn fields"]:::pending
+    API --> SETUP["setup.rs / setup_helpers.rs"]:::pending
+    API --> PRE["pre_actions.rs / shared_pre.rs"]:::pending
+    API --> LIFE["lifecycle.rs / commands.rs"]:::pending
+    API --> CONTACT["contact.rs / collision.rs"]:::pending
+    API --> ATTACH["attachments_spore_maw.rs<br/>attachments_waffle_botwoon.rs"]:::pending
+    API --> DROP["drops.rs / Inventory.restore"]:::pending
+    DROP --> CALL["sm_90.rs / sm_a2.rs / sm_91.rs<br/>one restoration implementation"]:::pending
+    R --> RETIRE["Retire compat.rs<br/>and ownership_transport.rs"]:::pending
+    SETUP --> MERGE["Whole candidate integration"]:::pending
+    PRE --> MERGE
+    LIFE --> MERGE
+    CONTACT --> MERGE
+    ATTACH --> MERGE
+    CALL --> MERGE
+    RETIRE --> MERGE
+    RESTORE["Restoration boundary checks<br/>drafting"]:::active --> VERIFY["Comparisons / composed checks"]:::pending
+    NATIVE["Native spawn / shared state checks<br/>drafting"]:::active --> VERIFY
+    MERGE --> VERIFY
+    REF --> VERIFY
+    VERIFY --> MUT["Targeted mutations"]:::pending
+    MUT --> PLAY["Exercised replay / runtime cost"]:::pending
+    PLAY --> ADOPT["Enemy shared core adopted"]:::pending
+    class CONTRACT,UNION,API,REF,RESTORE,NATIVE changed
+    classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
+<details>
+<summary>Room mechanisms / shared typed core adopted</summary>
 
 ```mermaid
 flowchart TB
@@ -73,6 +114,8 @@ flowchart TB
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
+
+</details>
 
 ### New mechanism verification
 

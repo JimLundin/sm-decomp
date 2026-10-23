@@ -234,6 +234,17 @@ references; measure build/test time and resource growth before changing the loop
    Freeze full setup/pre/contact/drop/attachment/effects contract before splitting
    implementation. Reuse1382comparisons/87checks, extend shared-state mutations;
    no net deletion claim until complete replacement is counted.
+   Design contract now independently accepted under next-enemy-session. Union
+   audit:48998 existing +801enemy +20new scalar bytes =49819 disjoint WRAM bytes;
+   native spawn16bytes separate. Remove the old cached statue-finished input when
+   it becomes owned. Preserve18A8 invincibility,18AA knockback and18AC projectile
+   protection as distinct fields. Concrete Rust interfaces and lane ownership
+   are being prepared; no gameplay implementation split yet. Refreshed all
+   1382captures/87checks from main1f0cb0a6: every case passes and all frozen
+   captures match,133.85s on source
+   b03f593e0eed142c9dc79a287ad269b33212881de84c05457a6844cd3438a451.
+   Separate verification workers draft
+   actual restoration boundary cases and shared/native ownership checks.
 
 
    Room mechanisms are now adopted as one production responsibility: creation,

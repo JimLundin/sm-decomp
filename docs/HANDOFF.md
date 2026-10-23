@@ -8,6 +8,20 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Next enemy Session design contract accepted; concrete Rust interfaces and lane
+ownership still being prepared by enemy_projectiles_implementation before source
+split. Independent audits confirm48998+801+20=49819 disjoint WRAM bytes plus16
+native spawn bytes. Restoration and shared/native composition verification drafts
+are assigned separately to torizo_review and torizo_implementation. Restoration
+cases append existing enemy supplemental carrier at1382 onward; no new export.
+
+Reference refresh completed: next-enemy-session/reference-main1f0cb0a6/results.json,
+1382/1382 outputs identical to integrated-2 references,87/87 independent checks,
+133.85s; source b03f593e0eed142c9dc79a287ad269b33212881de84c05457a6844cd3438a451.
+Frozen DLL and every captured bin retained there. Process1740 completed; no local
+compiler/capture remains running. Main CI74948127=40007039503 and getter
+1f0cb0a6=40007332386 remain running; poll exact runs, do not restart them.
+
 Shared room/player Session adopted from7ba1e33a. Full hosted CI40005712881
 passes build, composed execution and all eight targeted mutations. Formatted
 source8a4ee812de0eaa7b25dcecd6877c2f08d6000aae282a8efbe257ba27d286d31d
