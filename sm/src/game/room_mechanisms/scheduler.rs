@@ -67,8 +67,18 @@ impl Execution<'_> {
                         let queued = self
                             .port()
                             .read_le(crate::ram_map::words::queued_message_box_index);
-                        let yielded =
-                            self.foreign(|g| unsafe { message_boxes::display(queued, g) });
+                        let yielded = self.foreign(|g| unsafe {
+                            #[cfg(sm_verify_dll)]
+                            {
+                                crate::game::room_mechanism_checks::observe_message_display(
+                                    queued, g,
+                                )
+                            }
+                            #[cfg(not(sm_verify_dll))]
+                            {
+                                message_boxes::display(queued, g)
+                            }
+                        });
                         if let Err(yielded) = handoff.after_display(yielded) {
                             self.port_mut().set_byte(0x613, handoff.continuation());
                             return yielded;

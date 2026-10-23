@@ -908,6 +908,14 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("verification/room_mechanism_qualified.rs"),
     ),
     (
+        "sm/src/verification/room_mechanism_callback_edges.rs",
+        include_bytes!("verification/room_mechanism_callback_edges.rs"),
+    ),
+    (
+        "sm/src/verification/room_mechanism_drawing_extended.rs",
+        include_bytes!("verification/room_mechanism_drawing_extended.rs"),
+    ),
+    (
         "sm/src/verification/room_mechanisms.rs",
         include_bytes!("verification/room_mechanisms.rs"),
     ),

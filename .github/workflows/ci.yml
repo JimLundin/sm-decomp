@@ -131,3 +131,7 @@ jobs:
           }
           cargo build --release --locked
           if ($LASTEXITCODE -ne 0) { throw 'Cargo build failed' }
+      - name: Reject room scheduler resumption mutations
+        run: |
+          python sm/src/verification/room_mutations.py
+          if ($LASTEXITCODE -ne 0) { throw 'Room scheduler mutation checks failed' }

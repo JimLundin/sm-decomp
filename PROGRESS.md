@@ -11,7 +11,7 @@ Green: adopted scope | Blue: locally checked draft | Orange: active | Grey: rema
 flowchart TB
     CONTRACT["Shared contract v2<br/>review + compile PASS"]:::checked
     subgraph shared["Shared ownership / lane A"]
-        S["session.rs"]:::active --> CODEC["Aggregate codec"]:::active
+        S["session.rs"]:::active --> CODEC["Aggregate codec<br/>source review PASS"]:::checked
         S --> PLAYER["player_projectiles/<br/>same shared inventory"]:::active
         CODEC --> RT["session_runtime.rs"]:::active
         RT --> HOST["host.rs / runtime.rs"]:::active
@@ -43,12 +43,39 @@ flowchart TB
     BASE["1,020 references captured"]:::checked --> COMPARE["Candidate comparisons"]:::pending
     RESUME["Case 1020: real message resume<br/>pre + timer preservation PASS"]:::done --> COMPARE
     DELETE --> COMPARE
-    GAP["Continuation / draw overlap cases"]:::active --> COMPARE
+    GAP["Cases 1021-1032<br/>local PASS"]:::checked --> COMPARE
     SHAREDTEST["Pickup / refill / hold<br/>actual player consumers"]:::active --> COMPARE
-    COMPARE --> MUT["Mechanism mutations rejected"]:::pending
+    COMPARE --> MUT["Candidate mutation checks"]:::pending
     MUT --> MOVIE["Exercised movie probes"]:::pending
     MOVIE --> ADOPT["Typed core adopted"]:::pending
-    class CONTRACT,S,CODEC,PLAYER,RT,HOST,CREATE,SETUP,PRE,RULES,SCHED,CMD,PICKUP,DRAW,GRAPHICS,CONTENT,CR,GR,CALLERS,RESUME,GAP,SHAREDTEST changed
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
+### New mechanism verification
+
+```mermaid
+flowchart LR
+    C21["1021 / callback continuation"]:::checked
+    C22["1022 / loaded vs native"]:::checked
+    C23["1023 / native rebind"]:::checked
+    C24["1024 / overlapping tile reads"]:::checked
+    C25["1025 / custom draw A"]:::checked
+    C26["1026 / custom draw B"]:::checked
+    C27["1027 / item draw A"]:::checked
+    C28["1028 / item draw B"]:::checked
+    C29["1029 / wide ROM cursor"]:::checked
+    C30["1030 / four transfers"]:::checked
+    C31["1031 / vertical transfers"]:::checked
+    C32["1032 / live RAM stream"]:::checked
+    C20["1020 / resumed pre + timer"]:::done --> MP["Mutant: repeat pre<br/>hosted pending"]:::active
+    C20 --> MD["Mutant: repeat delay<br/>hosted pending"]:::active
+    C21 --> MC["Mutant: publish continuation early<br/>hosted pending"]:::active
+    class C21,C22,C23,C24,C25,C26,C27,C28,C29,C30,C31,C32,MP,MD,MC changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

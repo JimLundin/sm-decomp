@@ -12,7 +12,14 @@ const COMMANDS: [u32; 14] = [
     8685236, 8685244, 8685249, 8685258, 8685390, 8685375, 8686138, 8686116, 8686126, 8686194,
     8685412, 8685541, 8686608, 8686913,
 ];
-pub(crate) const CASES: u32 = 1021;
+#[path = "room_mechanism_callback_edges.rs"]
+mod callback_edges;
+#[path = "room_mechanism_drawing_extended.rs"]
+mod drawing_extended;
+pub(crate) use callback_edges::{
+    display as observe_message_display, native_read as observe_native_draw_read,
+};
+pub(crate) const CASES: u32 = 1033;
 fn put(g: &mut Game, a: usize, v: u16) {
     g.g_ram[a..a + 2].copy_from_slice(&v.to_le_bytes());
 }
@@ -532,8 +539,8 @@ unsafe fn native_effect_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u1
 unsafe fn message_case(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<u8>) -> (u8, u16) {
     use crate::initial_state::InitialState;
     let door = (1009..=1011).contains(&id);
-    let variant = if id == 1020 {
-        6
+    let variant = if (1020..=1021).contains(&id) {
+        id - 1014
     } else if door {
         0
     } else {
@@ -592,6 +599,9 @@ unsafe fn message_case(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<
         put(g, crate::ram_map::words::door_direction, (id - 1009) as u16);
         put(g, crate::ram_map::words::door_transition_function, 0xe4a9);
     }
+    if variant == 7 {
+        callback_edges::begin_message();
+    }
     let mut final_return = 0;
     for call in 0..80u32 {
         // Alternate released/held A so the real edge detector can dismiss.
@@ -605,6 +615,13 @@ unsafe fn message_case(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<
         } else {
             unsafe { mechanisms::run(g) }
         };
+        if variant == 7 {
+            assert_eq!(
+                g.g_ram[0x613],
+                u8::from(returned != 0),
+                "only the scheduler return exports Pass"
+            );
+        }
         trace.push(returned);
         trace.extend_from_slice(&g.message_box_das0l_value.to_le_bytes());
         trace.extend_from_slice(&g.g_ram);
@@ -661,9 +678,23 @@ unsafe fn message_case(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<
         }
         assert!(call < 79, "message exceeded bounded completion");
     }
+    if variant == 7 {
+        let edges = callback_edges::finish_message();
+        trace.extend_from_slice(b"613E");
+        trace.extend_from_slice(&(edges.len() as u32).to_le_bytes());
+        trace.extend_from_slice(&edges);
+    }
     if variant == 6 {
-        assert_eq!(&g.g_ram[0x1d77 + 78..0x1d79 + 78], &0x5507u16.to_le_bytes());
-        assert_eq!(&g.g_ram[0xde1c + 78..0xde1e + 78], &13u16.to_le_bytes());
+        assert_eq!(
+            &g.g_ram[0x1d77 + 78..0x1d79 + 78],
+            &0x5507u16.to_le_bytes(),
+            "resumed pre-action changed counter"
+        );
+        assert_eq!(
+            &g.g_ram[0xde1c + 78..0xde1e + 78],
+            &13u16.to_le_bytes(),
+            "resumed scheduler changed delay"
+        );
     }
     if door {
         assert_eq!(
@@ -869,7 +900,9 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     let mut displacement = None;
     let mut trace = Vec::new();
     let outcome = catch_unwind(AssertUnwindSafe(|| unsafe {
-        if id == 1020 {
+        if id >= 1022 {
+            drawing_extended::run(id, &mut g, &image, &mut trace)
+        } else if id >= 1020 {
             message_case(id, &mut g, &image, &mut trace)
         } else if id == 1019 {
             assert!(mechanisms::qualified_checks(&mut g));

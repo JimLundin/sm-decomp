@@ -21,6 +21,8 @@ pub(super) unsafe fn sequence(
     cursor: u16,
 ) -> NativeSequence {
     execution.foreign(|game| {
+        #[cfg(sm_verify_dll)]
+        crate::game::room_mechanism_checks::observe_native_draw_read(bank, cursor, game);
         NativeSequence(unsafe {
             crate::rtl::RomPtr((u32::from(bank) << 16) | u32::from(cursor), game)
         })

@@ -8,6 +8,29 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
+Validation branch verify/room-reference-20261023: twelve new reference cases
+1021..1032 pass, alongside seven unchanged adjacent cases. The two scoped
+callback hooks retain actual message/native algorithms and compile out of normal
+production. Normal-library metadata compilation passes; final release verifier,
+full root fmt/check and19 exact outputs pass on source
+be544523a6cd737e3daafefe013f5550ac6049b757b7209dd164668f9433c369.
+Frozen initial reference source is
+fad78a44223447f1c20ed504ec1b1eebd26d75587067d4583f737ed29e224b12;
+final differences are descriptive assertion labels, not fixtures or behavior.
+Evidence: room-session/main-reference1032-results/results.json,
+main-reference1032-build.log and baseline-current-1032-results/results.json.
+
+The finite room_mutations.py runner builds fresh baseline and three copies of
+the actual scheduler on hosted Windows: repeated resumed pre-action, repeated
+delay decrement and early613 publication. Compilation must pass; each mutant
+must fail its named assertion and the matching carrier assertion, returning no
+observation. Baselines must match frozen full outputs. Hosted execution pending;
+these faults must be retargeted to actual typed code during replacement.
+Incremental cost:369 verification/registration Rust lines,12 verifier-only hook
+lines in game files (zero normal-build hook calls),181 Python lines and4 CI lines.
+Normal production algorithms are unchanged. The extra unsafe declaration is
+the verification wrapper around the existing native message call.
+
 Room contract v2 is frozen and four isolated production lanes are active under
 enemy_projectiles_implementation. Outputs: room-session/replacement; ownership
 and exact paths: room-session/contract/IMPLEMENTATION.md. No candidate runtime
