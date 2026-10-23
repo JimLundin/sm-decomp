@@ -21,17 +21,28 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-### Room entry + configurable connections / declarations
+### Room entry + configurable connections / implementation
 
 ```mermaid
 flowchart LR
     RC["Complete caller + content contract<br/>source review PASS"]:::done --> RD["24 concrete declaration files<br/>source review PASS"]:::done
     RU["84 additional bytes<br/>disjoint union audit PASS"]:::done --> RD
-    RR["36 actual room references<br/>execution + independent audit PASS"]:::done --> RI["Production contact / start / IRQ<br/>implementation pending"]:::pending
-    RD --> RB["Declaration compile<br/>PASS"]:::done --> RS["Simplify private representations<br/>in progress"]:::active
-    RS --> RV["Revised interface review + compile<br/>pending"]:::pending --> RI
+    RR["36 room + 20 contact/start references<br/>execution + independent audit PASS"]:::done --> RI["Production contact / start / IRQ<br/>parallel implementation"]:::active
+    RD --> RB["Declaration compile<br/>PASS"]:::done --> RS["Remove duplicate representations<br/>52 → 19 host methods"]:::done
+    RS --> RV["25-file revised interface<br/>review + compile PASS"]:::done --> RI
+    RI --> RW["world.rs / immutable bindings"]:::active
+    RI --> RCONTENT["content.rs / live captures"]:::active
+    RI --> RSTATE["state.rs / 82 room + 2 shared bytes"]:::active
+    RI --> RCODEC["session_encoding.rs / one projection"]:::active
+    RI --> ROWNER["game_state.rs / supplied world"]:::active
+    RI --> RSELECT["selection.rs"]:::active
+    RI --> RINSTALL["installation.rs"]:::active
+    RI --> RPROTO["protocol.rs / suspend + resume"]:::active
+    RI --> RBG["background.rs"]:::active
+    RI --> RCOMPAT["compatibility.rs / actual callers"]:::active
+    RI --> RPLM["creation.rs / shared door inputs"]:::active
     RI --> RT["Supplied topology / actual callers<br/>verification pending"]:::pending
-    class RD,RB,RS,RV changed
+    class RR,RS,RV,RI,RW,RCONTENT,RSTATE,RCODEC,ROWNER,RSELECT,RINSTALL,RPROTO,RBG,RCOMPAT,RPLM changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5

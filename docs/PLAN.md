@@ -435,10 +435,16 @@ references; measure build/test time and resource growth before changing the loop
    pass independent source review and root metadata compilation (0.53s),
    fingerprint04c37121. No new room implementation is adopted. Complete cost is
    now estimated+1150..2550production lines, verification separate; no reduction
-   claim. Before implementation, simplify redundant private token wrappers/type
-   tags and host forwarding, and separate persistent assets from transient DMA
-   sources. Preserve full caller/content scope and original read/effect timing;
-   revised declarations require review and compilation before parallel lanes.
+   claim. V2 removes redundant token wrappers/type tags and host forwarding,
+   separates stored assets from transfer sources, and reduces content host methods
+   from52to19. All25files at591d2385 pass independent semantic/size review and
+   root metadata compilation (0.44s). Four private implementation lanes are now
+   authorized: world/content/owner/codec, selection/installation, protocol/background,
+   and compatibility/actual callers. Full scope and conservative cost accepted;
+   final adopted accounting and retirement proof still required. Keep reviewed
+   compatibility-bound prepared backgrounds in this staged backend; resource and
+   backend independence remain unfinished. Separate workers cover actual GameOwner
+   integration, runtime invariants, predecessor captures and mutation checks.
    Reuse current owners;84additional disjoint bytes comprise82room-related bytes
    and two shared lossless continuation bytes (proposed union52,373). Retire the
    actual competing orchestration and stale door inputs in the same adoption.
@@ -449,8 +455,11 @@ references; measure build/test time and resource growth before changing the loop
    authority remains a separate complete frame/lifecycle migration requirement.
    Contract and union source reviews pass. Source21995e54 passes36actual existing
    room selection/header/state/door captures, including six exact checked failure
-   prefixes and two diagnostic allocation-replacement cases. FullRAM/outcome/hash
-   audit passes independently. These are synthetic references, not a new room
+   prefixes and two diagnostic allocation-replacement cases. Additional20actual
+   contact/start captures pass on0ef1d9a5 with fullRAM/outcome/diagnostic audit;
+   all36earlier room results remain byte-identical. Raw truncated native station
+   records are not valid predecessor cases; checked replacement safety needs
+   separate tests. These are synthetic references, not a new room
    implementation or movie coverage. Main adoption and maintained fixture support
    remain separate from the private source-checked reference snapshot.
    Atlas snapshotf88970aa is live:429files/2071edges and all24curated anchors
