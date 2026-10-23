@@ -1,6 +1,6 @@
 # Engine modernization progress
 
-Updated: **2026-10-23 08:17 UTC**
+Updated: **2026-10-23 08:24 UTC**
 
 **Status: active development. The complete modernized engine is not finished.**
 
@@ -39,10 +39,14 @@ operations removed.
 
 **Continue the player-projectile lifecycle and its remaining consumers.**
 
-The next scope under investigation is the duplicated special-beam attack
-production and motion rules. Persistent room and scheduler state still live in
-RAM. Persistent Session ownership, renderer/audio replacement and an independently
-running game slice remain required parts of the destination.
+The approved next change shares special-beam attack creation and all six motion
+states. Its checks will follow actual beam input through creation and motion to
+natural retirement for all four attacks. Implementation has started; it is not
+yet verified.
+
+Persistent room and scheduler state still live in RAM. Persistent Session
+ownership, renderer/audio replacement and an independently running game slice
+remain required parts of the destination.
 
 ## Verification limits
 

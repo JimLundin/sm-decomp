@@ -167,6 +167,26 @@ references; measure build/test time and resource growth before changing the loop
    production exceeding the initial +10..110 estimate. No reduction, new dependency,
    native/installer addition or persistent ownership/backend-independence claim.
 
+   Active implementation from `8f49e625`: share complete special-beam selection,
+   ammunition, four-shot creation, all six motion states, resumed trail handling
+   and three independently dispatched plasma phase entries. Retire sm90 FireSba
+   tables/family and duplicated main/local rules; redirect actual beam input and
+   numeric motion callers. The generic safe core carries the owner through real
+   initializer/trail/sound/clear effects. Preserve descending creation order,
+   live callback rereads, Wave's captured slot, paired Spazer retirement, native
+   byte lanes and full-owner failure prefixes. Broad compatibility uses the same
+   new checked implementation. Share special geometry with table input; retain
+   general sine helpers for SpeedEcho, Shinespark and sm86 consumers. Only angles
+   0..0x80ff are in the old defined orbit domain; larger angles are checked-only.
+   Compare actual beam input through creation/numeric motion to natural retirement
+   for all four attacks without injected phase/lifetime changes; separately retain
+   forced-transition tests. Cover all direct plasma phase entries, producer guards,
+   callback mutations and failures, and all 34 retained suites. Estimated deltas:
+   main +130..310 lines, local -225..-115, composition -95..+195, complete verification
+   +1100..1900. Recount all adapters/checks; no advance reduction claim. The baseline
+   is preserved in `special-transaction-parent/`; scope is recorded locally in
+   `SPECIAL_TRANSACTION_PROPOSAL.md`. Persistent ownership remains unfinished.
+
    Next dependencies, in order:
 
    - [x] Resolve the preserved beam-launch draft, synchronize the carrier and
