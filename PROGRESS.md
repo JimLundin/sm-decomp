@@ -1,6 +1,6 @@
 # Engine modernization
 
-Updated: **2026-10-23 16:14 UTC**
+Updated: **2026-10-23 16:30 UTC**
 
 **Target: an owned Rust Session, without manual memory access or unsafe gameplay.**
 Green means that specific step is delivered, not that the entire subsystem is finished.
@@ -12,13 +12,13 @@ flowchart TB
         P["Player projectiles<br/>14 adapters retired"]:::done
         M["Room mechanisms<br/>51 old files retired"]:::done
         C["Palette effects<br/>old bank retired"]:::done
+        PC["Palette typed core<br/>independent execution verified"]:::done
     end
 
-    subgraph parallel["NOW: 3 parallel lanes"]
+    subgraph parallel["NOW: 2 remaining implementation lanes"]
         direction LR
-        PC["Palette core<br/>typed fields + effects<br/>VERIFYING"]:::active
-        AT["Animated tiles<br/>typed upload requests<br/>REFERENCES CAPTURED"]:::active
-        EP["Enemy projectiles<br/>state + callers<br/>CORE CHECKS READY"]:::active
+        AT["Animated tiles<br/>typed upload requests<br/>438 REFERENCES READY<br/>integration next"]:::active
+        EP["Enemy projectiles<br/>state + callers<br/>354 CORE REFERENCES READY<br/>caller migration active"]:::active
     end
 
     C --> PC
@@ -28,7 +28,7 @@ flowchart TB
     AT --> CHECK
     EP --> CHECK
     CHECK{{"Existing verification harness<br/>build + behavior comparisons<br/>ONE integration lane"}}:::gate
-    CHECK --> SESSION["All gameplay on typed state<br/>persistent owned Session<br/>NOT INTEGRATED"]:::pending
+    CHECK --> SESSION["Remaining gameplay on typed state<br/>persistent owned Session<br/>NOT INTEGRATED"]:::pending
     SESSION --> OUTPUT["Explicit game outputs<br/>graphics + audio contracts"]:::pending
     AT -. "first upload contract" .-> OUTPUT
     OUTPUT --> BACKEND["Independent renderer + audio<br/>remove shipping SNES backend"]:::pending
@@ -45,28 +45,31 @@ Arrows show migration dependencies, not current runtime calls.
 
 | Active lane | Workers | Next visible change |
 | :--- | :---: | :--- |
-| Palette / Session seed | Implementer + reviewer | Palette behavior uses ordinary fields; a core can execute with the backend unavailable. |
+| Palette / Session seed | Complete | **Delivered:** typed core executes independently; production uses it through a compatibility edge. |
 | Animated tiles | Implementer + reviewer | Scripts produce typed upload requests; actual graphics upload consumes and acknowledges them. |
-| Enemy projectiles | Lead + reviewer + 2 callback workers | One owner replaces scattered projectile state, drops, contact handling and attached-body writes. |
+| Enemy projectiles | Lead + reviewer + 4 focused workers | One owner replaces scattered projectile state, drops, contact handling and attached-body writes. |
 
-**Eight worker roles; one local compiler/integration lane.** Current drafts are
-not yet adopted in main. Both old-code reference suites are captured: 438 animated
-tile cases and 354 enemy-projectile core cases; callback-family coverage is next.
+**Two remaining implementation lanes feed one local compiler/integration lane.**
+Palette is adopted. Animated tiles await integration; enemy projectiles still need
+complete caller migration and broader verification. Node colors track verified
+milestones, not a percentage inferred from code volume.
 
 <details>
 <summary>Counts and latest verified deliveries</summary>
 
 | Measure | Current result |
 | :--- | ---: |
-| Total Rust lines | 110,246 |
-| Dedicated verification files | 5,084 |
-| Remaining Rust, including mixed verification support | 105,162 |
+| Total Rust lines | 110,801 |
+| Latest typed-core production change | +227 lines |
+| Separate verification change | +328 lines |
+| Separate CI / Cargo change | +13 lines |
 | Latest palette comparison | 512 cases match |
 | Latest palette opening replay | 272 frames, zero failures |
 | Latest mechanism game route | 28,314 frames, zero failures |
 
-Verification is excluded from the engine-reduction measure. The remaining-Rust
-figure is conservative: some verification is still mixed into production files.
+Verification is excluded from the engine-reduction measure. Some historical verification remains mixed into production files; the latest
+change is priced separately above. The typed core improves architecture, but
+does not reduce production size.
 The new reference carriers and registrations add 834 verification-support lines,
 with no production algorithm change. All 792 captures pass; the enemy suite is
 core coverage, not full callback/attachment coverage.
@@ -78,9 +81,11 @@ pass after relocation.
 - [Palette adoption](https://github.com/JimLundin/sm-decomp/commit/67d6c676): production +126 lines; verification +370. Ownership/safety progress, not size reduction.
 - [Separate verification files](https://github.com/JimLundin/sm-decomp/commit/d4cd71c3).
 - [Public CI formatting and frontend build pass](https://github.com/JimLundin/sm-decomp/actions/runs/39979717734).
-- The detached palette core compiles without Game/backend modules. Local Defender
-  ASR blocked the new executable; standalone execution will be checked on the
-  GitHub Windows runner before adoption. This is not a local runtime pass.
+- [Typed palette core adopted](https://github.com/JimLundin/sm-decomp/commit/601f8da3): no Game, RAM offsets or generic Port in the core.
+- [Independent execution, frontend build and formatting passed](https://github.com/JimLundin/sm-decomp/actions/runs/39986571000) on GitHub Windows.
+  Local Defender's standalone executable block remains respected.
+- Actual runtime guard checks and 15 animated-tile callers also match; the
+  production owner remains interval-scoped, not a persistent whole-game Session.
 
 </details>
 

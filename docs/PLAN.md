@@ -119,8 +119,9 @@ projectiles, and a direct typed palette core as a Session seed. Use isolated
 drafts and freeze interfaces before splitting more implementation; no concurrent
 main edits or builds. Increase parallel source work when genuinely independent
 work is ready, while preserving this machine's single heavy compiler limit.
-Enemy-projectile setup and pre-action families now have two additional workers
-on fixed private interfaces: eight worker roles across the three lanes.
+Enemy-projectile setup and pre-action families now have four additional workers
+on fixed private interfaces. Palette implementation/review is complete; animated
+tiles and enemy projectiles continue through the single integration lane.
 
 The Session target requires ordinary owned data structures, not a composition
 of existing address-codec ports. New designs must put direct typed state in the
@@ -246,10 +247,15 @@ references; measure build/test time and resource growth before changing the loop
    cases cover all 24 commands, near/broad aliases and actual DMA/partial transfer;
    enemy core cases are not full callback/drop/contact/attachment coverage.
    Their carriers/registration add 834 verification-support lines, no production
-   algorithm changes. Detached typed palette core compiles, but local executable
-   launch is blocked by Defender ASR 1121 / 01443614-CD74-433A-B99E-2ECDC07BFC25.
-   Preserve that block. Use the GitHub Windows runner for its independent-host
-   execution before adoption; do not count a blocked launch as a runtime pass.
+   algorithm changes. The direct-field palette core is now adopted at 601f8da3.
+   GitHub Windows run 39986571000 passes independent core execution, frontend
+   build and formatting. Local checks pass 512 frozen observations, runtime
+   guard checks, 15 animated-tile callers and 272 opening frames with zero failures.
+   Production adds 227 lines; verification adds 328; CI/Cargo adds 13. This is
+   architectural progress, not reduction or persistent whole-game ownership.
+   Local Defender ASR 1121 / 01443614-CD74-433A-B99E-2ECDC07BFC25 still blocks
+   the standalone executable; preserve that block. Animated tiles are next for
+   integration; enemy-projectile caller closure continues in isolated drafts.
    The accepted engine still needs persistent state, explicit backend outputs,
    all-unsafe elimination and boot-to-credits validation.
 

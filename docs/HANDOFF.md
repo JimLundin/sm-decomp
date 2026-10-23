@@ -8,8 +8,8 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-Palette validation branch `verify/palette-session-20261023` is ready for hosted
-standalone execution. Source
+Palette core 601f8da3 is adopted in main after GitHub Windows run
+39986571000 passed standalone execution, frontend build and formatting. Source
 `6d2231c8c7324cdd6ed5fd26e4c309eff23b11651b983203df147f5437bcd621`
 passes release/frontend/verifier builds, all512 frozen comparisons, the actual
 runtime guard checks,15 actual animated-tile palette-spawn cases and the272/0
@@ -17,7 +17,7 @@ opening replay with all7required probes and120follow-up frames. No gameplay room
 The standalone target is `sm/src/verification/palette_detached.rs`; CI compiles it
 directly with rustc before provisioning native dependencies, then runs it on the
 Windows runner. Local ASR-blocked standalone execution remains blocked, not passed.
-Do not adopt this branch to main until hosted standalone checks pass.
+Production ownership remains interval-scoped; persistent whole-game Session is unfinished.
 
 The complete replacement removes palette's address-based execution/Port binding.
 Pure state/core/content are separate from runtime compatibility. Full cost vs
@@ -25,8 +25,8 @@ Pure state/core/content are separate from runtime compatibility. Full cost vs
 Price and local build/comparison/guard/replay evidence are in palette-session/.
 Shared transport remains for other systems; no global persistent Session claim.
 
-Parallel direction (user request 2026-10-23): eight worker roles in three paired
-lanes, with one root compiler/integration lane. Ordinary typed state and an owned
+Parallel direction (user request 2026-10-23): three original paired lanes, now with palette complete and four
+additional enemy-projectile workers, with one root compiler/integration lane. Ordinary typed state and an owned
 Session are the destination; wrapping existing address-based ports is insufficient.
 PROGRESS is now primarily a Mermaid graph: green delivered steps, orange drafts,
 grey remaining milestones, purple verification/integration. Keep its node states
@@ -39,16 +39,6 @@ Isolated work under `Local/sm-decomp-experiments/20261023` (not adopted):
   lines, 11 check-facade lines before carrier. All 438 actual-old cases now
   captured. The 31 expected caught panics and all process exits pass; review of
   observed hardware/alias traces is completing.
-- `palette-session`: complete direct-field palette core and edge-scoped
-  Option<Session> guard, with no Game/Port/offsets in the core. Opaque effects
-  publish/drop the owner before legacy code, then import actual returned state.
-  Core panic publishes successful prefixes; foreign panic cannot publish stale
-  state. Detached actual-core host exercises ticks/reset/snapshot/outputs with
-  backend modules unavailable. Replacement/detached drafts exist, review ongoing;
-  detached compilation passed, but local launch was blocked by Defender ASR1121
-  rule01443614-CD74-433A-B99E-2ECDC07BFC25. Do not retry/bypass that execution;
-  run the standalone host on GitHub Windows after integrating/reviewing the exact
-  candidate on a validation branch. Existing 512 references remain valid.
 - `enemy-projectiles`: reviewed 801-RAM-byte +16-native-byte state projection,
   private shared-transport import/export extension staged only in the draft,
   direct typed state/motion and full closure contract. Remaining implementation
@@ -69,13 +59,12 @@ separate processes with source fixed. Local combined build log is under
 animated-tiles/combined-baseline-build-1.log. No capture/compiler process remains.
 
 Next: adopt/refine typed candidates only against these frozen old references.
-Palette Session candidate has existing512references and extra real runtime-guard
-checks plus detached checks. Root can integrate on a temporary validation branch,
-run local production checks, then publish the backend-free standalone check to
-GitHub Windows CI before adopting main. Keep the local ASR block intact; it is
-not grounds for recompiling the blocked standalone program into another host.
-Current Rust110246 includes5084dedicated verification lines;105162remaining lines
-still include mixed support. New834lines are all verification/support.
+Palette is adopted and verified as described above. Integrate animated tiles next,
+then verify all 438 frozen references and an exercised animation/DMA segment.
+Enemy-projectile source checking and caller closure remain in isolated drafts.
+Current Rust is 110801; palette adds 227 production and 328 verification lines,
+plus 13 CI/Cargo lines. Keep the local standalone ASR block intact.
+
 
 Verification carriers are now physically grouped in `sm/src/verification`.
 The existing logical modules and private access remain unchanged through path
