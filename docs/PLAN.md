@@ -5,6 +5,10 @@ playing from boot to credits. SNES emulation remains the current video/audio
 backend and verification oracle; it is not the long-term engine architecture.
 Map Rando support comes after vanilla.
 
+Public progress: keep [PROGRESS.md](../PROGRESS.md) current and push it with
+verified milestone commits or material status changes, as requested by the user
+on 2026-10-23. Distinguish committed results from work still under validation.
+
 This is the active plan. Read the current work order and validation strategy
 below. For the step-by-step refactor process, task boundaries and parallel work,
 use [the iteration guide](ITERATION.md). Consult reference documents only for
