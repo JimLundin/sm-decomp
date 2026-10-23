@@ -40,16 +40,23 @@ flowchart TB
     PICKUP --> CALLERS
     GR --> CALLERS
     CALLERS --> DELETE["10 superseded files retired<br/>in candidate"]:::checked
-    BASE["1,020 references captured"]:::checked --> COMPARE["Candidate comparisons"]:::pending
+    BASE["1,037 reference outcomes"]:::checked --> COMPARE["Candidate comparisons<br/>1,037 / 1,037 PASS"]:::checked
     RESUME["Case 1020: real message resume<br/>pre + timer preservation PASS"]:::done --> COMPARE
-    DELETE --> BUILD["Integrated candidate compile<br/>15 errors / fixes active"]:::failed
+    DELETE --> BUILD["Integrated candidate compile<br/>build 4 PASS"]:::checked
     BUILD --> COMPARE
     GAP["Cases 1021-1032<br/>adopted / PASS"]:::done --> COMPARE
     SHAREDTEST["Pickup / refill / hold<br/>actual player consumers"]:::checked --> COMPARE
-    COMPARE --> MUT["Candidate mutation checks"]:::pending
-    MUT --> MOVIE["Exercised movie probes"]:::pending
+    FLAGS["commands.rs<br/>four flag-map branches fixed"]:::checked --> COMPARE
+    COMPARE --> REG["106 player groups<br/>56 comparisons"]:::pending
+    COMPARE --> HC["Composed host compile<br/>PASS"]:::checked
+    HC --> HE["Composed host execution"]:::pending
+    HE --> MUT["Candidate mutation checks"]:::pending
+    REG --> MOVIE["Exercised movie probes"]:::pending
+    MUT --> MOVIE
+    MOVIE --> PERF["Runtime cost comparison"]:::pending
+    PERF --> ADOPT
     MOVIE --> ADOPT["Typed core adopted"]:::pending
-    class S,CODEC,PLAYER,RT,HOST,CREATE,SETUP,PRE,RULES,SCHED,CMD,PICKUP,DRAW,GRAPHICS,CONTENT,CR,GR,CALLERS,DELETE,BUILD,GAP,SHAREDTEST changed
+    class BASE,BUILD,COMPARE,FLAGS,REG,HC,HE,MUT,PERF changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -77,7 +84,11 @@ flowchart LR
     C20["1020 / resumed pre + timer"]:::done --> MP["Mutant: repeat pre<br/>KILLED / CI PASS"]:::done
     C20 --> MD["Mutant: repeat delay<br/>KILLED / CI PASS"]:::done
     C21 --> MC["Mutant: publish continuation early<br/>KILLED / CI PASS"]:::done
-    class C21,C22,C23,C24,C25,C26,C27,C28,C29,C30,C31,C32,MP,MD,MC changed
+    C33["1033 / room flag set<br/>reference + candidate PASS"]:::checked --> MF["Mutant: wrong flag map<br/>review PASS / CI pending"]:::active
+    C34["1034 / room flag clear<br/>reference + candidate PASS"]:::checked
+    C35["1035 / item flag set<br/>reference + candidate PASS"]:::checked
+    C36["1036 / item flag clear<br/>reference + candidate PASS"]:::checked
+    class C33,C34,C35,C36,MF changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

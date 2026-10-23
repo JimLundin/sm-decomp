@@ -1,4 +1,4 @@
-"""Three actual room-scheduler mutation checks; Windows GitHub CI only."""
+"""Four actual room-mechanism mutation checks; Windows GitHub CI only."""
 
 import hashlib
 import json
@@ -11,6 +11,8 @@ import tempfile
 
 
 SCHEDULER = "sm/src/game/room_mechanisms/scheduler.rs"
+COMMANDS = "sm/src/game/room_mechanisms/commands.rs"
+FLAG_QUERY = "                let base = if ea == 8685640 { 0xd830 } else { 0xd870 };"
 DISPLAY_EDGE = "                        let yielded = self.foreign(|g| unsafe {"
 MUTATIONS = (
     (
@@ -38,12 +40,17 @@ MUTATIONS = (
         """                        self.port_mut().set_byte(0x613, 1);
 """,
     ),
+    (
+        "query_wrong_flag_map", 1033, "persistent query selected wrong flag map",
+        "                let base = if ea == 8685640 { 0xd870 } else { 0xd870 };",
+    ),
 )
 # Synthetic observations frozen before faults were introduced. They contain no
 # ROM/movie inputs. Assertion labels do not alter successful observation bytes.
 EXPECTED = {
-    1020: (7682778, "2a00ad7662f052c45a810bc61222e249e46faa8274462cd363a74a4d77cc2c4d"),
-    1021: (7683014, "7a382ef319cad77105f4e62e1f71564fe0c439dd58bddd00a7a222109eba3a0e"),
+    1020: (7682778, "2a00ad7662f052c45a810bc61222e249e46faa8274462cd363a74a4d77cc2c4d", [3, 0, 0, 0]),
+    1021: (7683014, "7a382ef319cad77105f4e62e1f71564fe0c439dd58bddd00a7a222109eba3a0e", [3, 0, 0, 0]),
+    1033: (131076, "437d32b0e20950d0dd6fc5e2a68ba4629078666d83156af92f0075de88706dbe", [1, 52, 146, 0]),
 }
 
 
@@ -93,11 +100,14 @@ def build_and_capture(root, work, paths, name, mutation=None):
     copy_tracked(root, copied, paths)
     if mutation is not None:
         _, _, _, fault = mutation
-        target = copied / SCHEDULER
+        flag_query = name == "query_wrong_flag_map"
+        target = copied / (COMMANDS if flag_query else SCHEDULER)
+        anchor = FLAG_QUERY if flag_query else DISPLAY_EDGE
+        replacement = fault if flag_query else fault + DISPLAY_EDGE
         original = target.read_text(encoding="utf-8")
-        if original.count(DISPLAY_EDGE) != 1:
-            raise RuntimeError(f"{name}: scheduler display edge must occur exactly once")
-        target.write_text(original.replace(DISPLAY_EDGE, fault + DISPLAY_EDGE, 1), encoding="utf-8")
+        if original.count(anchor) != 1:
+            raise RuntimeError(f"{name}: production mutation anchor must occur exactly once")
+        target.write_text(original.replace(anchor, replacement, 1), encoding="utf-8")
 
     # Inherit the CI native archive/SDK/linker environment unchanged. Reuse the
     # maintained direct build and its embedded-source/native-library checks.
@@ -126,10 +136,10 @@ def build_and_capture(root, work, paths, name, mutation=None):
         if observation.get("case") != case:
             raise RuntimeError(f"{name}: wrong case output: {observation}")
         if mutation is None:
-            size, digest = EXPECTED[case]
+            size, digest, expected_result = EXPECTED[case]
             if (observation.get("bytes") != size
                     or observation.get("sha256") != digest
-                    or observation.get("result") != [3, 0, 0, 0]
+                    or observation.get("result") != expected_result
                     or result.stderr):
                 raise RuntimeError(f"baseline/{case}: frozen observation must pass\n{observation}\n{result.stderr}")
             print(f"baseline/{case}: frozen bytes PASS", flush=True)
@@ -156,7 +166,7 @@ def main():
     if len(sys.argv) == 4 and sys.argv[1] == "--capture":
         case = int(sys.argv[3])
         if case not in EXPECTED:
-            raise RuntimeError("only the two scheduler observation cases are permitted")
+            raise RuntimeError("only the three room-mechanism observation cases are permitted")
         capture_child(Path(sys.argv[2]).resolve(), case)
         return
     if len(sys.argv) != 1:
@@ -166,7 +176,7 @@ def main():
     if tracked.returncode != 0:
         raise RuntimeError(f"cannot enumerate tracked source\n{tracked.stderr}")
     paths = tracked.stdout.rstrip("\0").split("\0")
-    required = {SCHEDULER, "tools/verify_dll.py", "sm/src/verification/room_mechanism_callback_edges.rs"}
+    required = {SCHEDULER, COMMANDS, "tools/verify_dll.py", "sm/src/verification/room_mechanism_callback_edges.rs"}
     if not required.issubset(paths):
         raise RuntimeError("install this runner with the adopted room verification carrier")
     with tempfile.TemporaryDirectory(prefix="room-scheduler-mutations-") as directory:
@@ -174,7 +184,7 @@ def main():
         build_and_capture(root, work, paths, "baseline")
         for mutation in MUTATIONS:
             build_and_capture(root, work, paths, mutation[0], mutation)
-    print("room scheduler mutation checks: 3/3 killed; both frozen baselines passed", flush=True)
+    print("room mechanism mutation checks: 4/4 killed; all three frozen baselines passed", flush=True)
 
 
 if __name__ == "__main__":

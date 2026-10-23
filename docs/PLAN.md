@@ -192,10 +192,14 @@ references; measure build/test time and resource growth before changing the loop
    Contract v2.1 preserves lazy graphics failures and live scratch/odd offsets;
    actual aggregate codec/runtime source review passes. Complete candidate at
    room-session/candidate-e216f0ef has ten superseded files retired and upgraded
-   composed checks. First compile found15 integration errors (field paths,
-   conversions, trait import and verification unsafe scopes); fixes are active.
-   Runtime comparisons,
-   candidate mutation execution and performance measurement remain pending.
+   composed checks. Build4 and all1037 mechanism comparisons now pass on source
+   0b5ef619789d78be13116549d652aca87edb5596d393441444dde47f450f0a31.
+   Comparison caught reversed D830/D870 command flag maps; all four branches
+   are corrected. New reference cases1033..1036 distinguish both maps and both
+   query outcomes; independent review and old-reference capture pass. The fourth
+   mutation deliberately swaps the query map; reviewed runner awaits hosted CI.
+   Composed host compilation passes; execution, player regression checks,
+   exercised movie, final accounting and performance measurement remain pending.
 
 
    Room mechanisms are now adopted as one production responsibility: creation,

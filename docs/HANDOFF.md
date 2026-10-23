@@ -32,13 +32,19 @@ lines in game files (zero normal-build hook calls),181 Python lines and4 CI line
 Normal production algorithms are unchanged. The two extra unsafe declarations
 are verification entry points for the existing native message and drawing calls.
 
-Complete shared-state candidate: room-session/candidate-e216f0ef. First compile
-failed15 integration errors; candidate-build-1.log records exact diagnostics.
-Coordinator is fixing field paths/conversions/trait import/verification scopes.
-No behavior verification claimed. Before compilation, native source
-line endings were matched to installed archives only after normalized equality
-was proved. Composed host and all mutation runners are included. Candidate
-behavior, final source price and runtime cost remain unverified.
+Complete shared-state candidate: room-session/candidate-e216f0ef. Build4 and
+1037/1037 comparisons pass on source
+0b5ef619789d78be13116549d652aca87edb5596d393441444dde47f450f0a31;
+evidence: candidate-build-4.log and candidate-1037-results-2/results.json.
+Comparison caught reversed D830/D870 query/mark maps; all four branches were
+corrected. Cases1033..1036 independently distinguish both maps and outcomes.
+Old-reference capture and review pass (reference1036-results/results.json).
+This increment adds38 verification Rust lines and a reviewed fourth flag-query
+mutation to room_mutations.py; hosted execution remains pending. Candidate
+runner uses its actual typed query helper. Composed host compilation passes.
+Player regression checks, hosted execution/mutations, exercised movie, final
+source price and runtime cost remain pending; no candidate adoption yet.
+Native source line endings match installed archives after normalized equality.
 
 Room contract v2 is frozen and four isolated production lanes are active under
 enemy_projectiles_implementation. Outputs: room-session/replacement; ownership

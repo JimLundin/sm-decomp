@@ -19,7 +19,7 @@ mod drawing_extended;
 pub(crate) use callback_edges::{
     display as observe_message_display, native_read as observe_native_draw_read,
 };
-pub(crate) const CASES: u32 = 1033;
+pub(crate) const CASES: u32 = 1037;
 fn put(g: &mut Game, a: usize, v: u16) {
     g.g_ram[a..a + 2].copy_from_slice(&v.to_le_bytes());
 }
@@ -876,6 +876,42 @@ unsafe fn displacement_alias_case(id: u32, g: &mut Game) -> (u8, u16) {
     (4, u16::from(value))
 }
 
+// Opposite map bytes distinguish the two persistent-flag query identities.
+// PrepareBitAccess is observable even though the queries do not change flags.
+unsafe fn distinct_flag_query_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
+    let object_query = id < 1035;
+    let taken = id == 1033 || id == 1035;
+    let selected_base = if object_query { 0xd830 } else { 0xd870 };
+    let other_base = if object_query { 0xd870 } else { 0xd830 };
+    // Bit21 selects byte2, mask20; the other map has exactly the opposite result.
+    put(g, 0x1dc7, 21);
+    put(g, 0x5e7, 0xa55a);
+    g.g_ram[selected_base + 2] = if taken { 0x20 } else { 0x40 };
+    g.g_ram[other_base + 2] = if taken { 0x40 } else { 0x20 };
+    rom_word(image, 0x849100, 0x9234);
+    let mut expected_ram = g.g_ram.to_vec();
+    expected_ram[0x5e7..0x5e9].copy_from_slice(&0x20u16.to_le_bytes());
+    let returned = result(unsafe {
+        mechanisms::checks::command(
+            if object_query { 8685640 } else { 8685692 },
+            EnemyScript::at(image.clone(), (bank_base(0x84) + 0x9100) as usize),
+            0,
+            g,
+        )
+    });
+    assert_eq!(
+        returned,
+        if taken { (1, 0x9234) } else { (2, 0x9102) },
+        "persistent query selected wrong flag map"
+    );
+    assert_eq!(
+        &g.g_ram[..],
+        &expected_ram[..],
+        "persistent query must write only its two-byte scratch mask"
+    );
+    returned
+}
+
 pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     if id >= CASES {
         return None;
@@ -900,7 +936,9 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
     let mut displacement = None;
     let mut trace = Vec::new();
     let outcome = catch_unwind(AssertUnwindSafe(|| unsafe {
-        if id >= 1022 {
+        if id >= 1033 {
+            distinct_flag_query_case(id, &mut g, &image)
+        } else if id >= 1022 {
             drawing_extended::run(id, &mut g, &image, &mut trace)
         } else if id >= 1020 {
             message_case(id, &mut g, &image, &mut trace)
