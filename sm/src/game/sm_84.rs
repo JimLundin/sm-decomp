@@ -884,16 +884,6 @@ crate::game::callback_dispatch! {
         WriteLevelDataBlockTypeAndBts(word!(game.plm_block_indices[(j >> 1)]), 0x8044, game);
         0
     };
-    [8706846] PlmSetup_SetMetroidRequiredClearState [] {
-        word!(
-            game.plm_pre_instrs[(j >> 1)] = crate::rtl::rom_table_word!(
-                game,
-                0x84db28,
-                (word!(game.plm_room_arguments[(j >> 1)]) >> 1) as isize,
-            )
-        );
-        0
-    };
     @functions [pub fn (j: u16, game: &mut Game) -> u8];
     @functions [pub fn (_j: u16, game: &mut Game) -> u8];
     @functions [pub unsafe fn (j: u16, game: &mut Game) -> u8];
@@ -1012,6 +1002,7 @@ crate::game::callback_dispatch! {
         8696083 => [crate::game::mechanism_plants_ram::begin(j, crate::game::mechanism_plants::Surface::Ceiling, game)];
         8706700 => [crate::game::mechanism_eye_door_ram::begin(j, crate::game::mechanism_eye_door::Part::Eye, game)];
         8706745 => [crate::game::mechanism_eye_door_ram::begin(j, crate::game::mechanism_eye_door::Part::Body, game)];
+        8706846 => [crate::game::mechanism_metroid_quota_ram::begin(j, game)];
         8704399 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::LowerNorfair, displacement, game)];
         8705568 => [crate::game::mechanism_hands_ram::setup(j, crate::game::mechanism_hands::Hand::WreckedShip, displacement, game)];
         8705740 => PlmSetup_D70C_NoobTube;
@@ -1217,26 +1208,6 @@ crate::game::callback_dispatch! {
             word!(game.plm_instr_list_ptrs[v2] += 1);
         }
     };
-    [8706782] PlmPreInstr_SetMetroidsClearState_Ev0x10 [] {
-        if word!(game.num_enemies_killed_in_room) >= word!(game.num_enemy_deaths_left_to_clear) {
-            SetEventHappened(0x10, game);
-        }
-    };
-    [8706798] PlmPreInstr_SetMetroidsClearState_Ev0x11 [] {
-        if word!(game.num_enemies_killed_in_room) >= word!(game.num_enemy_deaths_left_to_clear) {
-            SetEventHappened(0x11, game);
-        }
-    };
-    [8706814] PlmPreInstr_SetMetroidsClearState_Ev0x12 [] {
-        if word!(game.num_enemies_killed_in_room) >= word!(game.num_enemy_deaths_left_to_clear) {
-            SetEventHappened(0x12, game);
-        }
-    };
-    [8706830] PlmPreInstr_SetMetroidsClearState_Ev0x13 [] {
-        if word!(game.num_enemies_killed_in_room) >= word!(game.num_enemy_deaths_left_to_clear) {
-            SetEventHappened(0x13, game);
-        }
-    };
     [8706916] PlmPreInstr_GotoLinkIfShotWithSuperMissile [] {
         let mut v1: i16 = ((word!(game.plm_timers[(k >> 1)])) as i16) & (0xf00i16);
         if v1 == 512 {
@@ -1337,6 +1308,10 @@ crate::game::callback_dispatch! {
     @external {
         8694921 => [crate::game::mechanism_plants_ram::hold(k, game)];
         8705875 => [crate::game::mechanism_eye_door_ram::wake(k, game)];
+        8706782 => [crate::game::mechanism_metroid_quota_ram::poll(crate::game::mechanism_metroid_quota::Room::First, game)];
+        8706798 => [crate::game::mechanism_metroid_quota_ram::poll(crate::game::mechanism_metroid_quota::Room::Second, game)];
+        8706814 => [crate::game::mechanism_metroid_quota_ram::poll(crate::game::mechanism_metroid_quota::Room::Third, game)];
+        8706830 => [crate::game::mechanism_metroid_quota_ram::poll(crate::game::mechanism_metroid_quota::Room::Fourth, game)];
         8684649 => [()]; 8708008 => [()]; 8685264 => [()]; 8684774 => [()]; 8684861 => [()];
         8686246 => [()]; 8698787 => [()]; 8704854 => [()]; 8698618 => [()];
         8696028 => [{

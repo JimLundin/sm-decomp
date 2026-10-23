@@ -9,54 +9,46 @@ subsystem boundaries or ownership.
 
 ## Current implementation
 
-The latest stage shares eye-door placement, persistent-open wakeup and blue-door
-conversion after plants at `dd13b47e`. Five bank bodies and helper D7EF retire.
-Setup2, wake D753 and conversion D7C3/D7DA keep numeric identities; the candidate
-intercepts wake/conversion in its safe typed adapter, preserving cursor+2.
-Both new modules forbid unsafe and reuse checked PrepareBitAccess. RAM remains
-authoritative; 78/115 setup identities are shared, 37 remain.
+The latest stage shares Metroid callback selection and population-clear polling
+following eye doors at `75d6572a`. Setup DB1E and four event-poll bodies retire.
+The safe core preserves arbitrary callback identities; the adapter clones the
+loaded image before reading the argument, then reads native bytes at linear
+25B28+2*(argument>>1), including odd arguments and cross-bank positions. Failed
+lookups leave RAM unchanged. Polls read deaths then required population and
+conditionally set events10..13 with their full scratch-mask writes. Candidate
+preinstruction routes bypass native fallback; both new modules forbid unsafe.
+RAM remains authoritative; 79/115 setups are shared, 36 remain.
 
-Setup/wake always query progress with scratch writes even for high-bit arguments;
-retained generic 8A72 skips those arguments and preserves scratch. Eye installation
-reads width then live block after the first tile. Wake stops its preinstruction
-before reading the live link. Conversion captures old block before width, stores
-and rereads the moved block, then reads width again for each chained extension.
-These orderings and exact C041/C040, D0FF/D0FE/D0FD encodings remain.
+Main: **104,448 Rust lines in 174 files**, unsafe declarations 2,885 and casts
+6,034 unchanged. Maintained implementation 105,010; installers/launcher included
+105,920. Prospective composition: **113,191 in 270 files**, **+8,743 over main**,
+unadopted. Stage main cost is +62 lines/+652 lexical tokens/+2,108 normalized
+bytes; complete implementation is +97/+945/+3,512. Retained verification adds
+553/+6,572/+23,581; implementation plus checks adds 650 lines. Local production
++36 lines overlaps composition and is not additive. No duplicate owned algorithm
+existed. No dependency/native/installer/launcher additions, net reduction, full
+unsafe retirement, persistent authority or backend-independence claim.
 
-Main: **104,386 Rust lines in 172 files**, unsafe declarations 2,885 (-1), casts
-6,034 (-14). Maintained implementation 104,948; installers/launcher included
-105,858. Prospective composition: **113,094 in 267 files**, **+8,708 over main**,
-unadopted. Stage main cost is +105 lines/+1,055 lexical tokens/+2,991 normalized
-bytes; complete implementation is +149/+1,448/+4,687. Retained verification adds
-977/+10,459/+36,726; implementation plus checks adds 1,126 lines. Local production
-+43 lines is already represented in composition. Previously these routes used
-native callbacks; no duplicate owned algorithm existed. No dependency/native/
-installer/launcher additions, net reduction, full unsafe retirement, persistent
-authority or backend-independence claim.
+Use `runtime-impact-working/METROID_QUOTA_HANDOFF.md`, `metroid-quota-price.json`
+and `metroid-quota-check-attempt-1.log`. First execution passes (18.63s): 6,118
+direct comparisons including 66 lookup-failure comparisons, 112 lifecycle
+comparisons, and 48 selector boundary comparisons. Tests cover arbitrary/odd/
+broad callback selection, missing/short images, quota boundaries, scratch writes,
+already-set flags, wrap and persistence. Actual lifecycles use vanilla arguments
+12/14/16/18 hexadecimal and trap accidental native poll fallback.
 
-Use `runtime-impact-working/EYE_DOOR_HANDOFF.md`, `eye-door-price.json` and
-`eye-door-check-attempt-1.log`. First execution passes (18.56s): 13,320 defined
-direct comparisons, including 3,440 matching checked-placement failures; 56
-progress/query/hit comparisons; 24 body collision comparisons. Raw unaligned LE
-fields and door-byte accesses stay in bounds for selected u16 inputs. Tile helper
-high-byte writes are checked; FFFC is the highest valid block, FFFD/FFFE/FFFF
-fail where reached. Prefix simulation preserves live aliases and expected status;
-whole-RAM parity covers preceding writes. Native symbolic tests cover ordering
-and injected failure prefixes; candidate fallback traps cover migrated routes.
+Actual enemy_combat::enemy_death clears canonical slot64 and increments the count,
+with grapple and preserve-property variants. Its full projectile-pool branch is
+executed; explosion initialization is not. Required population is seeded, so
+population loading and its empty-population early-return quirk remain outside
+coverage. Actual room_state::select_entry runs via a carrier-only wrapper,
+without expanding the production API. False selection skips target bytes; true
+selection reads the native target and updates the pointer. Truncated records
+check lazy failure and scratch effects. A later unmet quota leaves events set.
 
-Actual closed-eye extension collision spawns C83E and delivers missile/super
-signals to BD50. Three missiles or one super reach the retained 8A91 threshold,
-including its following-byte word copy to room argument. Body/bottom D753 wake
-and delete, eye conversion places blue geometry, and independent scenes probe
-all four positions before actual SetBTS40/41 and deletion. Additional cases
-cover loaded-open/high-bit query scratch, low-byte hit-counter wrap/high-bit
-skip, and body spike damage's area/boss/protection gates with wrapping damage.
-Review corrected repeated collision probes to use fresh geometry before runs.
-
-The acid projectile initializer still has an always-unaligned native argument
-read at 1DC7+2slot and is not invoked. Projectile/draw lifetime remains a separate
-dependency. These authored nonvisual sequences establish no movie, complete
-scheduler, visible/VRAM rendering or full-composition runtime result.
+These authored actual-code interactions establish no movie, full enemy scheduler,
+complete room loading, rendering/audio, or full-composition runtime result.
+Population initialization and free-pool death effects remain retained dependencies.
 
 Historical correction: 18 visible terrain restore/render cases (nine kinds by
 two aliases) reach DrawPlm's native u16 dereference at odd RAM 0x1E67. They are
@@ -65,32 +57,33 @@ do not rerun the undefined cases. They occur only in the standalone terrain
 export, excluded from current selected suites. This does not diagnose the
 inherited Intro mismatch in `DRAWING_HANDOFF.md`.
 
-Plants 1360/1504/8/640, cannon 3630/1420/46/8, item 3476/1320/14/32,
-scroll 5816/1296/52, station 3240/112/149/6, Chozo 592/4/4/16,
-selected hands 52/163/12, source/setup 342/672/47, closing 74/120/7 and
-runtime collision 198/545/176/1 pass. Cannon down-right and item graphics retain
-their checked-source classifications; item actual restores remain offscreen.
-Git-frozen references and 200 runtime / 237 local compiled identities pass.
-Historical full contact checks remain excluded for stale simulated-null-handler
-assumptions. Unchanged scroll bounded nonreturn checks were not repeated.
+Eye-door 13320/3440/56/24, plants 1360/1504/8/640, cannon 3630/1420/46/8,
+item 3476/1320/14/32, scroll 5816/1296/52, station 3240/112/149/6,
+Chozo 592/4/4/16, selected hands 52/163/12, source/setup 342/672/47,
+closing 74/120/7 and collision 198/545/176/1 pass. Historical qualified graphics,
+cannon down-right, offscreen restore, Chozo stores and full-contact limitations
+remain unchanged. Eye acid initialization remains excluded. Git-frozen references
+and 203 runtime / 240 local compiled identities pass. Unchanged scroll bounded
+nonreturn checks were not repeated.
 
-Production Rust 2024 release/frontend/verifier/source passes (48.95s), prospective
-headless release passes (46.18s), carrier18.01s and harness17.80s, all first-pass.
-Changed gameplay/root formatting and diff checks pass. Full verify_source.rs
-formatting retains baseline differences; added entries conform, and an exact
-comparison confirms all remaining formatter differences are inherited from HEAD.
-Production hash:
-`730f0cb57d8cfcdcfe4692168136535bcfbbc07333b988afff56bf959eb4cade`.
-Compiler lane is released and DLL unloaded.
+Production release/frontend/verifier/source passes (57.22s), prospective release
+passes (47.70s), carrier18.16s and harness17.79s, all first-pass. Changed gameplay/
+root formatting and diff checks pass; new source-manifest entries conform while
+inherited formatter differences remain unchanged. Production hash:
+`74fc01a3c75be0cf254a54e0f6edb0232b2252db165e46dd182da515262d61fd`.
+The parent snapshot initially included root's early lib/verify registrations;
+those captured files remain in `metroid-quota-parent/early-registered-main/`.
+Main baseline copies were restored from Git before final cost accounting; code
+and tests were unaffected. Compiler lane is released and DLL unloaded.
 
-`eye-door-parent/` preserves prior main/carrier/local/composition sources. Earlier
-snapshots/caches remain. Do not rerun historical preparation scripts; composition
-lives under `impact-composition/sm/src`. Select the next complete responsibility
-among 23 remaining room/event/boss setups, followed by 14 residual identities.
-Runtime promotion needs reset/load/rewind/external-writer checks; rendering,
-sound and boot-to-credits remain unfinished. The parallel movie/state investigation
-is documented in [MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md);
-it implements no pipeline.
+`metroid-quota-parent/` preserves prior main/carrier/local/composition sources.
+Earlier snapshots/caches remain. Do not rerun historical preparation scripts;
+composition lives under `impact-composition/sm/src`. The deferred sound gate is
+the next proposed complete interaction among 22 remaining room/event/boss setups,
+then 14 residual identities. Runtime promotion needs reset/load/rewind/external-
+writer checks; rendering, sound-engine replacement and boot-to-credits remain
+unfinished. The parallel movie/state investigation is documented in
+[MOVIE_STATE_TRANSLATION.md](MOVIE_STATE_TRANSLATION.md); it implements no pipeline.
 
 ## Paused launch draft
 

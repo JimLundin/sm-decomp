@@ -4,6 +4,14 @@
 
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/game/mechanism_metroid_quota.rs",
+        include_bytes!("game/mechanism_metroid_quota.rs"),
+    ),
+    (
+        "sm/src/game/mechanism_metroid_quota_ram.rs",
+        include_bytes!("game/mechanism_metroid_quota_ram.rs"),
+    ),
+    (
         "sm/src/game/mechanism_eye_door.rs",
         include_bytes!("game/mechanism_eye_door.rs"),
     ),
