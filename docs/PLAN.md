@@ -376,84 +376,49 @@ references; measure build/test time and resource growth before changing the loop
    Seven production files retire (666gross lines, replacements counted). Geometry
    relocation and macro formatting are not savings. Complete accounting is in
    local FINAL-ACCOUNTING.md and final-source-accounting.json.
-   Active scope: complete sprite-effect pool with actual Waffle/Metroid/Draygon/
-   Maw controllers. Full production source/alias/caller reviews pass; one shared
-   owner adds1026bytes (52079WRAM total), native unchanged. Whole production
-   verifier build passes42.97s on2782a16a; detached host compiles after correcting
-   verification helper visibility. No standalone execution occurred locally.
-   Frozen predecessor121cases and five originalCPU captures pass; old117+5 bytes
-   remain exact. Four actual actor-alias cases enforce live Maw timer and Metroid
-   position reads. Naturalpositive Draygon46 oldRust is unalignedUB; originalA13E
-   phase/event/footprint audit passes independently. Preserve nativewide offset
-   qualification; no bank-wrap equivalence claim.
-   Any15000 and SpeedBooster19000 routes have0failingframes but MISS required
-   spriteactivity. Actual Ceres roomdata selects debris/no-op/getaway, not the
-   inferred explosion producer. Do not lengthen those unrelated routes. A52phase
-   actualCPU sprite lifecycle+OAM component oracle is drafted for downstream proof;
-   it is not a movie/fullframe claim. Its first capture fails the strict original
-   opcode guard at818AB8: SnesInit installs a known startup hook there. Reviewed
-   one-byte original-file restoration with scoped cleanup preserves all strict
-   guards. Reference build17.11s and52phase capture pass on297fc7ac; independent
-   binary audit confirms exact23byte scratch/stack union, OAM transitions and
-   retirement at24. No broad DP mask, movie or full-frame claim.
-   Assembled candidate format/check and release build pass23.42s on a2964c46.
-   Actual candidate121captures:117exact matches;96/97/99/103FAIL. Investigation
-   found Maw appearance precedence differs from the predecessor; correction
-   is now reviewed and applied to both writes; references remain unchanged.
-   Corrected candidate format/check and release build pass18.03s on2bf8b6c8.
-   All121comparisons now match, including the four failures and actor aliases.
-   Actual52phase candidate lifecycle/OAM comparison passes against the independently
-   audited original capture (pool-candidate-results-2/comparison.json).
-   New1026byte Runtimeguard passes execution, including expected foreign unwind
-   and owner relinquishment. All five Draygon actualCPU/candidate comparisons
-   pass ordered events, four intermediate RAM phases and final RAM. Local
-   next-sprite-session/candidate-alias-results-2, candidate-runtime-guard-1.json
-   and candidate-draygon-results-1 retain source-checked initial results. Corrected
-   source repeats the Runtimeguard and five Draygon phase comparisons successfully
-   in candidate-runtime-guard-2.json and candidate-draygon-results-2; the121pass
-   captures are in candidate-alias-results-3.
-   Twelve new faults pass source review (target39mutations including old27);
-   mutation execution remains. Two independent Maw grouping mutants using
-   nonzero supplied appearance now pass source review; both assert actual draw
-   palette as well as state. Total41mutations (32detached+9DLL). The corrected
-   ten-case composed harness compiles; new Maw checks are being assembled.
-   Candidate build4 passes14.52s onb5cdb4c9, with both new Maw checks assembled.
-   The121sprite comparisons, five Draygon comparisons, Runtimeguard and52phase
-   OAM comparison repeat successfully on that source. Selected shared regressions
-   pass35cached comparisons plus visual Runtimeguard: enemy582/586/590,
-   594..617/1370/1374..1377, room1018, expanded player5/6. Frozen references
-   and results are recorded in candidate-shared-regressions-1/results.json.
-   Hosted branch verify/sprite-session-20261024 matches all336candidate source
-   files after CRLF normalization. CI40031244955 format passes, but composed
-   execution fails before mutations: existing native_drop_then_missile fixture
-   copies the now3MiB image into a fixed1A8000 allocation. Reviewed correction
-   preserves max(existing length,1A8000), full copy and every assertion.
-   Hosted84f03c03 reruns in CI40031500027: clean composed baseline now passes;
-   detached mutation stage passes all32faults (18retained+14sprite, including
-   both Maw grouping regressions). The runner requires passing baselines,
-   compiling faults and intended assertion rejection; crashes/timeouts do not
-   count. Full hosted build and nine DLL mutations remain pending.
-   Local build5 incorporates the fixture correction: format/release pass13.59s
-   on6aa14eb6. All121sprite and35shared comparisons, fiveDraygon cases,52phase
-   OAM comparison and both ownership guards repeat successfully on that source.
-   Final captures use candidate-alias-results-final, candidate-shared-regressions-final,
-   candidate-draygon-results-final, pool-candidate-results-final and
-   candidate-runtime-guard-final.json under next-sprite-session.
-   Hosted composition/mutations/full build remain before adoption; this is
-   still an unadopted production draft. Shared random-sprite commands differ only
-   in unchanged constants; the exercised8842467 path covers the changed helper.
-   No direct8842519 execution claim is made.
-   Final same-method accounting againsta758c6ba: production+719Rust lines,
-   +5450tokens/+25272LFbytes; verificationRust+2794lines, Python support+331,
-   native unchanged. CombinedRust+3513lines. Exactly43cfg-only observer lines
-   are excluded from production; runtime adapters remain counted. Final production
-   is107892lines, verification16120, combined124012. Necessary ownership/unsafe
-   retirement, not net source reduction. Local FINAL-ACCOUNTING.md and
-   final-source-accounting.json retain classification and source identity.
-   Preserve distinct1022byte room clear and64byte active-pointer retirement.
-   No sprite adoption, persistentwholegameownership or MapRando readiness yet.
+   Adopted: complete sprite-effect pool and Waffle/Metroid/Draygon/Maw callers
+   share the Session. Adds1,026 disjoint WRAM bytes (52,079 total); native16bytes
+   unchanged. Retires the old RAM pool/instruction dispatcher, legacy projectile
+   sprite-spawn roundtrip, four Waffle coordinate ports, raw controller sprite
+   writes and duplicated retirement loops. Four safe production modules use
+   forbid(unsafe_code); Game/ROM/OAM compatibility adapters remain.
+   Main format/release pass29.56s on473905fc;121frozen sprite comparisons,
+   35shared-caller comparisons, five Draygon CPU phase comparisons,52phase
+   originalCPU/OAM lifecycle and sprite/visual ownership guards pass. Source-
+   checked results are local next-sprite-session/main-* and pool-candidate-results-main.
+   Hosted CI40031500027 at84f03c03 passes full build, composed execution and all
+   41mutations (32detached+9DLL); independent audit confirms passing baselines,
+   compiling faults and intended rejections, with no skipped/surviving mutants.
+   Four original comparison failures exposed two Maw precedence errors; corrected
+   writes preserve appearance | (old & F1FF). Two separate mutations now catch
+   both errors. The composed fixture's image-growth copy is corrected without
+   removing assertions. No standalone executable was run locally.
+   Lifecycle CPU capture restores only the known818AB8 startup-hook byte from
+   the original file and restores initialized state afterward. Strict original
+   guards remain; independent audit confirms exact23byte CPU scratch/stack union,
+   nonempty OAM and retirement at24. Naturalpositive Draygon46 oldRust remains
+   excluded as unalignedUB; CPU comparisons qualify only the tested offset range.
+   Any15000/SpeedBooster19000 routes miss spriteactivity despite0failingframes;
+   no movie/fullframe/audio/credits coverage is claimed. Shared random command
+   8842467 exercises the changed helper;8842519 differs only in unchanged constants.
+   Preserve the1022byte room clear versus64byte active-pointer retirement.
+   Same-method accounting: production+719Rust lines/+5450tokens/+25272LFbytes;
+   verificationRust+2794lines, Python+331, native unchanged. CombinedRust+3513.
+   Production107892lines, verification16120, combined124012. Exactly43cfg-only
+   observer lines are excluded; runtime adapters remain production. Increases in
+   verifier ABI/unsafe counts come from new verification support. This establishes
+   interval ownership and controller safety, not net reduction, persistent whole-
+   game ownership or Map Rando integration readiness.
 
-
+   Next responsibility: shared gameplay progression flags and actual callers.
+   Reviewed declarations compile; proposed210bytes are disjoint (52,289 total).
+   Retire18PLM/visual/enemy ports, three duplicate bit helpers and stale bitmask
+   input while migrating raw boss callers and reset/save/load edges. Preserve
+   scratch-byte distinctions, broad aliases, LE/native words and failed-checksum
+   RAM effects. SaveToSram's odd07F7 native read needs a narrow safe repair backed
+   by originalCPU save observations before using Rust save captures. No flags
+   implementation adopted yet; maps, room topology and persistent authority
+   across snapshots remain separate unfinished work.
 
    Room mechanisms are now adopted as one production responsibility: creation,
    setup, pre-actions, all 110 command identities, scheduler, drawing/clipping,

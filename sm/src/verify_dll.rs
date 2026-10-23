@@ -405,3 +405,14 @@ include!("verification/samus_palette_defined_dll.rs");
 pub extern "C" fn sm_verify_visual_runtime_guard() -> bool {
     sm::verify_visual_runtime_guard()
 }
+
+include!("verification/sprite_effect_dll.rs");
+include!("verification/draygon_sprite_dll.rs");
+include!("verification/draygon_sprite_candidate_dll.rs");
+
+include!("verification/sprite_pool_dll.rs");
+include!("verification/sprite_pool_candidate_dll.rs");
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn sm_verify_sprite_runtime_guard() -> bool {
+    sm::verify_sprite_runtime_guard()
+}

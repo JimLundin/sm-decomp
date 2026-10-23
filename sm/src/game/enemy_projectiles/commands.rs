@@ -5,6 +5,10 @@ use super::host::{EnemyMember as F, Host, NativeRecord, ScriptPosition, ScriptRe
 use crate::game::constants::{bank_86::*, bank_a0::*};
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session::Point;
+use crate::game::{
+    sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn},
+    sprite_objects,
+};
 
 fn reset_position(h: &mut impl Host, slot: isize) {
     enemy!(h, slot, x = enemy!(h, slot, behavior_a));
@@ -26,7 +30,14 @@ fn random_sprite(h: &mut impl Host, k: u16, script: &impl ScriptRecord, mask: u1
     let y = enemy!(h, slot, y)
         .wrapping_add((h.inputs().random & (mask << 8)) >> 8)
         .wrapping_sub(half);
-    h.create_sprite(x, y, script.native_word(0), 0);
+    sprite_objects::spawn(
+        h,
+        SpriteSpawn {
+            position: Point { x, y },
+            definition: LegacySpriteDefinition(script.native_word(0)),
+            appearance: 0,
+        },
+    );
 }
 fn random_move(h: &mut impl Host, slot: isize, script: &impl ScriptRecord) {
     let signs = h.next_random();

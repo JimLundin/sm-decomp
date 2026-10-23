@@ -3,6 +3,11 @@
 use super::access::{enemy, enemy_byte, set_shot_direction, shot_word};
 use super::host::{DefinitionField, Host, LoadedRecord, ShotMember};
 use crate::game::contact_rules::{axis, is_shot};
+use crate::game::session::Point;
+use crate::game::{
+    sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn},
+    sprite_objects,
+};
 
 pub(super) fn enemy_projectiles_hit_samus(h: &mut impl Host) {
     h.session_mut().room.enemy_processing_stage = 11;
@@ -98,7 +103,14 @@ pub(super) fn hit_enemy_projectile(enemy_offset: u16, shot_offset: u16, h: &mut 
         // Preserve the dud's enemy-slot indexing into the player-shot columns.
         let x = shot_word(h, ShotMember::X, (enemy as u16) as isize);
         let y = shot_word(h, ShotMember::Y, (enemy as u16) as isize);
-        h.create_sprite(x, y, 6, 0);
+        sprite_objects::spawn(
+            h,
+            SpriteSpawn {
+                position: Point { x, y },
+                definition: LegacySpriteDefinition(6),
+                appearance: 0,
+            },
+        );
         h.queue_sound(1, 6, 0x3d);
     } else {
         enemy!(

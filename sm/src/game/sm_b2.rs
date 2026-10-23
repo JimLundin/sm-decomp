@@ -17,7 +17,7 @@ use crate::game::sm_a0::{
     CosineMult8bit, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, EnemyFunc_BBBF,
     IsSamusWithinEnemy_Y, SineMult8bit,
 };
-use crate::game::sprite_objects::create_sprite;
+use crate::game::sprite_effect_runtime::create_sprite;
 
 pub use crate::types::Consts_B2;
 

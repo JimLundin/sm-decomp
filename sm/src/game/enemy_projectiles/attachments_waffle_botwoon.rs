@@ -2,6 +2,12 @@
 #![forbid(unsafe_code)]
 use super::access::enemy;
 use super::host::*;
+use crate::game::{
+    session::Point,
+    sprite_effect_controllers,
+    sprite_effect_state::{LegacySpriteDefinition, LegacySpriteHandle, SpriteSpawn},
+    sprite_objects,
+};
 
 use BotwoonField as B;
 use WaffleField as W;
@@ -69,11 +75,25 @@ pub(super) fn advance_waffle_orbit(ctx: &mut impl Host) {
         let x = ctx.waffle_field(enemy, W::X);
         let y = ctx.waffle_field(enemy, W::Y);
         let palette = ctx.waffle_field(enemy, W::Palette);
-        ctx.create_sprite(x, y, 46, palette);
+        sprite_objects::spawn(
+            ctx,
+            SpriteSpawn {
+                position: Point { x, y },
+                definition: LegacySpriteDefinition(46),
+                appearance: palette,
+            },
+        );
         let x = ctx.waffle_field(enemy, W::X);
         let y = ctx.waffle_field(enemy, W::Y);
         let palette = ctx.waffle_field(enemy, W::Palette);
-        ctx.create_sprite(x, y, sprite.wrapping_add(44), palette);
+        sprite_objects::spawn(
+            ctx,
+            SpriteSpawn {
+                position: Point { x, y },
+                definition: LegacySpriteDefinition(sprite.wrapping_add(44)),
+                appearance: palette,
+            },
+        );
         phase_sound(stage, ctx);
     }
     ctx.set_waffle_field(enemy, W::HeadStage, stage);
@@ -118,11 +138,25 @@ fn advance_waffle_parts(radius: u16, ctx: &mut impl Host) {
             let x = enemy!(ctx, slot, x);
             let y = enemy!(ctx, slot, y);
             let palette = ctx.waffle_field(enemy, W::Palette);
-            ctx.create_sprite(x, y, 46, palette);
+            sprite_objects::spawn(
+                ctx,
+                SpriteSpawn {
+                    position: Point { x, y },
+                    definition: LegacySpriteDefinition(46),
+                    appearance: palette,
+                },
+            );
             let x = enemy!(ctx, slot, x);
             let y = enemy!(ctx, slot, y);
             let palette = ctx.waffle_field(enemy, W::Palette);
-            ctx.create_sprite(x, y, sprite.wrapping_add(44), palette);
+            sprite_objects::spawn(
+                ctx,
+                SpriteSpawn {
+                    position: Point { x, y },
+                    definition: LegacySpriteDefinition(sprite.wrapping_add(44)),
+                    appearance: palette,
+                },
+            );
             phase_sound(stage, ctx);
         }
         ctx.set_waffle_field(part, W::PartStage, stage);
@@ -164,13 +198,26 @@ fn advance_waffle_sprites(radius: u16, ctx: &mut impl Host) {
         let (stage, sprite) = classify_phase(phase, ctx);
         if stage != ctx.waffle_field(part, W::SpriteStage) {
             let palette = ctx.waffle_field(enemy, W::Palette);
-            let slot = sprite_handle >> 1;
-            let x = ctx.waffle_sprite_x(slot);
-            let y = ctx.waffle_sprite_y(slot);
-            ctx.create_sprite(x, y, 46, palette);
-            let x = ctx.waffle_sprite_x(slot);
-            let y = ctx.waffle_sprite_y(slot);
-            ctx.create_sprite(x, y, sprite.wrapping_add(44), palette);
+            let handle = LegacySpriteHandle(sprite_handle);
+            let position = sprite_effect_controllers::position(ctx, handle);
+            sprite_objects::spawn(
+                ctx,
+                SpriteSpawn {
+                    position,
+                    definition: LegacySpriteDefinition(46),
+                    appearance: palette,
+                },
+            );
+            // Allocation and content diagnostics can change this same slot.
+            let position = sprite_effect_controllers::position(ctx, handle);
+            sprite_objects::spawn(
+                ctx,
+                SpriteSpawn {
+                    position,
+                    definition: LegacySpriteDefinition(sprite.wrapping_add(44)),
+                    appearance: palette,
+                },
+            );
             phase_sound(stage, ctx);
         }
         ctx.set_waffle_field(part, W::SpriteStage, stage);
@@ -180,8 +227,12 @@ fn advance_waffle_sprites(radius: u16, ctx: &mut impl Host) {
         let (clamped, _) = clamp_phase(phase, ctx);
         let center = ctx.waffle_field(enemy, W::CenterY);
         let y = center.wrapping_add(orbit_component(clamped, radius, 128, ctx));
-        ctx.set_waffle_sprite_x(sprite_handle >> 1, x);
-        ctx.set_waffle_sprite_y(sprite_handle >> 1, y);
+        sprite_effect_controllers::set_position(
+            ctx,
+            LegacySpriteHandle(sprite_handle),
+            Point { x, y },
+        );
+        crate::verify_probe::hit("sprite.waffle.pose");
         let next = ctx.waffle_field(enemy, W::PartCursor).wrapping_sub(2);
         ctx.set_waffle_field(enemy, W::PartCursor, next);
         if next == 0 {

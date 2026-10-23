@@ -37,7 +37,7 @@ use crate::game::sm_a9::{
     ComputeCosMult, ComputeSinMult, MoveEnemyWithVelocity, Shitroid_Func_2, WriteColorsToPalette,
     WriteColorsToTargetPalette,
 };
-use crate::game::sprite_objects::create_sprite;
+use crate::game::sprite_effect_runtime::create_sprite;
 
 pub type Enemy_Ridley = crate::game::enemy_layouts::EnemyLayout104;
 

@@ -28,7 +28,7 @@ use crate::game::sm_a0::{
     EnemyFunc_C8AD, GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsSamusWithinEnemy_X,
     IsSamusWithinEnemy_Y, SignExtend8, SineMult8bit, SineMult8bitFull,
 };
-use crate::game::sprite_objects::create_sprite;
+use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
 pub use crate::game::waver::{Waver_Init, Waver_Instr_1, Waver_Main};
 
 #[derive(Copy, Clone)]
@@ -1685,12 +1685,10 @@ pub unsafe fn Metroid_Powerbomb(k: u16, game: &mut Game) {
         apply_power_bomb(game);
         if (*Get_Metroid(k as i32, game)).base.health == 0 {
             CallSomeSamusCode(0x13, game);
-            *(ram_ptr!(game, u16; 0xef78)).offset(
-                ((*Get_Metroid(word!(game.cur_enemy_index) as i32, game)).var_00 >> 1) as isize,
-            ) = 0;
-            *(ram_ptr!(game, u16; 0xef78)).offset(
-                ((*Get_Metroid(word!(game.cur_enemy_index) as i32, game)).var_01 >> 1) as isize,
-            ) = 0;
+            let first = (*Get_Metroid(word!(game.cur_enemy_index) as i32, game)).var_00;
+            sprite_effects::retire_native(first, game);
+            let second = (*Get_Metroid(word!(game.cur_enemy_index) as i32, game)).var_01;
+            sprite_effects::retire_native(second, game);
         }
     }
 }
@@ -2101,63 +2099,64 @@ crate::game::callback_dispatch! {
         CallEnemyPreInstr((((*E).var_F) as u32) | (0xa30000u32), game);
     };
     [10742351] Metroid_Init [] {
-        let E = Get_Metroid(word!(game.cur_enemy_index) as i32, game);
-        (*E).base.current_instruction = addr_kMetroid_Ilist_E9CF as u16;
-        (*E).var_00 = create_sprite(
-            (*E).base.x_pos,
-            (*E).base.y_pos,
-            50,
-            ((*E).base.vram_tiles_index) | ((*E).base.palette_index),
-            game,
-        );
-        (*E).var_01 = create_sprite(
-            (*E).base.x_pos,
-            (*E).base.y_pos,
-            52,
-            ((*E).base.vram_tiles_index) | ((*E).base.palette_index),
-            game,
-        );
-        (*E).var_02 = 0;
+        let enemy = word!(game.cur_enemy_index);
+        (*Get_Metroid(enemy as i32, game)).base.current_instruction = addr_kMetroid_Ilist_E9CF as u16;
+        let (x, y, appearance) = {
+            let e = Get_Metroid(enemy as i32, game);
+            ((*e).base.x_pos, (*e).base.y_pos, (*e).base.vram_tiles_index | (*e).base.palette_index)
+        };
+        let first = create_sprite(x, y, 50, appearance, game);
+        (*Get_Metroid(enemy as i32, game)).var_00 = first;
+        let (x, y, appearance) = {
+            let e = Get_Metroid(enemy as i32, game);
+            ((*e).base.x_pos, (*e).base.y_pos, (*e).base.vram_tiles_index | (*e).base.palette_index)
+        };
+        let second = create_sprite(x, y, 52, appearance, game);
+        (*Get_Metroid(enemy as i32, game)).var_01 = second;
+        (*Get_Metroid(enemy as i32, game)).var_02 = 0;
+        crate::verify_probe::hit("sprite.metroid.init");
     };
     [10742502] Metroid_Frozen [] {
         Enemy_NormalFrozenAI_A3(game);
-        let E = Get_Metroid(word!(game.cur_enemy_index) as i32, game);
-        if (*E).var_E != 0 {
-            (*E).var_E = (*E).var_E.wrapping_sub(1);
-            (*E).base.flash_timer = 2;
+        let enemy = word!(game.cur_enemy_index);
+        {
+            let e = Get_Metroid(enemy as i32, game);
+            if (*e).var_E != 0 {
+                (*e).var_E = (*e).var_E.wrapping_sub(1);
+                (*e).base.flash_timer = 2;
+            }
         }
-        let v1: i32 = (*E).var_00 as i32 >> 1;
-        word! {game; sprite_palettes[v1] = 3072; sprite_disable_flag[v1] = 1;
-        sprite_instr_list_ptrs[v1] = addr_kSpriteObject_Ilist_C3BA as u16; }
-        let v2: i32 = (*E).var_01 as i32 >> 1;
-        word! {game; sprite_palettes[v2] = 3072; sprite_disable_flag[v2] = 1;
-        sprite_instr_list_ptrs[v2] = addr_kSpriteObject_Ilist_C4B6 as u16; }
+        let first = (*Get_Metroid(enemy as i32, game)).var_00;
+        sprite_effects::freeze_attachment(first, 3072, addr_kSpriteObject_Ilist_C3BA as u16, game);
+        let second = (*Get_Metroid(enemy as i32, game)).var_01;
+        sprite_effects::freeze_attachment(second, 3072, addr_kSpriteObject_Ilist_C4B6 as u16, game);
+        crate::verify_probe::hit("sprite.metroid.frozen");
     };
     [10742579] Metroid_Hurt [] {
-        let E = Get_Metroid(word!(game.cur_enemy_index) as i32, game);
-        if ((*E).base.flash_timer & 2) != 0 {
-            let r18: u16 = (*E).base.palette_index;
-            let v1: i32 = (*E).var_00 as i32 >> 1;
-            word!(game.sprite_palettes[v1] = (r18 | word!(game.sprite_palettes[v1]) & 0xf1ff));
-            let v2: i32 = (*E).var_01 as i32 >> 1;
-            word!(game.sprite_palettes[v2] = (r18 | word!(game.sprite_palettes[v2]) & 0xf1ff));
-        } else {
-            let v3: i32 = (*E).var_00 as i32 >> 1;
-            word!(game.sprite_palettes[v3] &= (0xf1ffu16));
-            let metroid_var_01: u16 = (*E).var_01;
-            word!(game.sprite_palettes[(metroid_var_01 >> 1)] &= (0xf1ffu16));
+        let enemy = word!(game.cur_enemy_index);
+        let appearance = {
+            let e = Get_Metroid(enemy as i32, game);
+            if (*e).base.flash_timer & 2 != 0 { (*e).base.palette_index } else { 0 }
         };
+        let first = (*Get_Metroid(enemy as i32, game)).var_00;
+        sprite_effects::flash_attachment(first, appearance, game);
+        let second = (*Get_Metroid(enemy as i32, game)).var_01;
+        sprite_effects::flash_attachment(second, appearance, game);
+        crate::verify_probe::hit("sprite.metroid.hurt");
     };
     [10742680] Metroid_Main [] {
-        let E = Get_Metroid(word!(game.cur_enemy_index) as i32, game);
-        off_A3EC09[(*E).var_F as usize]((word!(game.samus_y_pos)).wrapping_sub(8), game);
-        let r24: u16 = ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
-        let v2: i32 = (*E).var_00 as i32 >> 1;
-        word! {game; sprite_x_pos[v2] = (*E).base.x_pos; sprite_y_pos[v2] = (*E).base.y_pos;
-        sprite_palettes[v2] = r24; sprite_disable_flag[v2] = 0; }
-        let v4: i32 = (*E).var_01 as i32 >> 1;
-        word! {game; sprite_x_pos[v4] = (*E).base.x_pos; sprite_y_pos[v4] = (*E).base.y_pos;
-        sprite_palettes[v4] = r24; sprite_disable_flag[v4] = 0; }
+        let enemy = word!(game.cur_enemy_index);
+        let action = (*Get_Metroid(enemy as i32, game)).var_F;
+        off_A3EC09[action as usize]((word!(game.samus_y_pos)).wrapping_sub(8), game);
+        let appearance = {
+            let e = Get_Metroid(enemy as i32, game);
+            (*e).base.vram_tiles_index | (*e).base.palette_index
+        };
+        let first = (*Get_Metroid(enemy as i32, game)).var_00;
+        sprite_effects::attach_actor(first, enemy, appearance, game);
+        let second = (*Get_Metroid(enemy as i32, game)).var_01;
+        sprite_effects::attach_actor(second, enemy, appearance, game);
+        crate::verify_probe::hit("sprite.metroid.main");
     };
     [10743275] Metroid_Touch [] {
         let E = Get_Metroid(word!(game.cur_enemy_index) as i32, game);
@@ -2204,7 +2203,8 @@ crate::game::callback_dispatch! {
     };
     [10743559] Metroid_Shot [] {
         let v0: u16 = (2u16).wrapping_mul(word!(game.collision_detection_index));
-        let E = Get_Metroid(word!(game.cur_enemy_index) as i32, game);
+        let enemy = word!(game.cur_enemy_index);
+        let E = Get_Metroid(enemy as i32, game);
         if (*E).base.frozen_timer != 0 {
             let v3: u16 = (word!(game.projectile_type[(v0 >> 1)])) & (0xf00u16);
             if v3 == 256 || v3 == 512 {
@@ -2215,9 +2215,10 @@ crate::game::callback_dispatch! {
                     (*E).var_B = 0;
                     enemy_death(word!(game.cur_enemy_index), 4, game);
                     CallSomeSamusCode(0x13, game);
-                    *(ram_ptr!(game, u16; 0xef78)).offset(((*E).var_00 >> 1) as isize) = 0;
-                    let metroid_var_01: u16 = (*E).var_01;
-                    *(ram_ptr!(game, u16; 0xef78)).offset((metroid_var_01 >> 1) as isize) = 0;
+                    let first = (*Get_Metroid(enemy as i32, game)).var_00;
+                    sprite_effects::retire_native(first, game);
+                    let metroid_var_01 = (*Get_Metroid(enemy as i32, game)).var_01;
+                    sprite_effects::retire_native(metroid_var_01, game);
                     scatter(DropSource::Metroid, metroid_var_01, 0, game);
                 }
             }

@@ -6,7 +6,7 @@ use crate::game::enemy_population::{
 };
 use crate::game::enemy_ram::{native_read as read, native_write as write};
 use crate::game::sm_a0::CallEnemyAi;
-use crate::game::sprite_objects::clear_sprites;
+use crate::game::sprite_effect_runtime::clear_sprites;
 use crate::game_state::Game;
 use crate::ram_map::checked_word as word;
 use crate::rom::RomRecord as Record;

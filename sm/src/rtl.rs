@@ -758,6 +758,8 @@ pub(crate) unsafe fn rom_record(bank: u8, addr: u16, game: &mut Game) -> crate::
         if address & 0x8000 == 0 {
             printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), address);
             game.g_fail = true;
+            #[cfg(sm_verify_dll)]
+            crate::sprite_effect_observer::diagnostic(address, game);
         }
         crate::rom::RomRecord {
             image: game

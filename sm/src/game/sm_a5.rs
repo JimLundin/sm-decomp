@@ -25,7 +25,7 @@ use crate::game::sm_a0::{
     Abs16, CalculateAngleFromXY, ConvertAngleToXy, CosineMult8bit, EnemyFunc_B7A1, EnemyFunc_B691,
     EnemyFunc_Divide, SignExtend8, SineMult8bit,
 };
-use crate::game::sprite_objects::create_sprite;
+use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
 
 pub use crate::types::Consts_A5;
 
@@ -927,112 +927,26 @@ unsafe fn Draygon_Func_47(game: &mut Game) -> Point16U {
     }
 }
 pub unsafe fn Draygon_Func_42(varE24: u16, game: &mut Game) {
-    unsafe {
-        let mut v0: u16 = 62;
-        for i in (0i32..=20).rev().step_by(4) {
-            let v2: i32 = i >> 1;
-            let v3: i32 = v0 as i32 >> 1;
-            if (crate::rtl::rom_table_word!(game, 0xa5a1df, v2 as isize) as i32 + 64 & 0x80) != 0 {
-                AddToHiLo(
-                    (ram_ptr!(game, u16; 0xf0f8)).offset(v3 as isize),
-                    (ram_ptr!(game, u16; 0xf178)).offset(v3 as isize),
-                    crate::rtl::rom_table_word!(game, 0xa5a1af, v2 as isize) as u32,
-                );
-            } else {
-                AddToHiLo(
-                    (ram_ptr!(game, u16; 0xf0f8)).offset(v3 as isize),
-                    (ram_ptr!(game, u16; 0xf178)).offset(v3 as isize),
-                    (-(crate::rtl::rom_table_word!(game, 0xa5a1af, v2 as isize) as i32)
-                        - ((varE24 as i32) << 16)) as u32,
-                );
-            }
-            let v8: u16 = word!(game.sprite_y_subpos[v3]);
-            if (crate::rtl::rom_table_word!(game, 0xa5a1df, v2 as isize) as i32 + 128 & 0x80) != 0 {
-                AddToHiLo(
-                    (ram_ptr!(game, u16; 0xf1f8)).offset(v3 as isize),
-                    (ram_ptr!(game, u16; 0xf278)).offset(v3 as isize),
-                    crate::rtl::rom_table_word!(game, 0xa5a1af, (v2 + 1) as isize) as u32,
-                );
-            } else {
-                AddToHiLo(
-                    (ram_ptr!(game, u16; 0xf1f8)).offset(v3 as isize),
-                    (ram_ptr!(game, u16; 0xf278)).offset(v3 as isize),
-                    -(crate::rtl::rom_table_word!(game, 0xa5a1af, (v2 + 1) as isize) as i32) as u32,
-                );
-            }
-            v0 = (v0).wrapping_sub(2);
-        }
-    }
+    sprite_effects::draygon_motion(varE24, game);
+    crate::verify_probe::hit("sprite.draygon.42");
 }
 pub unsafe fn Draygon_Func_43(game: &mut Game) {
-    unsafe {
-        word_transfers!(game, descending, 32; le(sprite_instr_list_ptrs, 31) <- value(0));
-        let mut v2: u16 = 20;
-        for _ in 0i16..=2i16 {
-            let v3: i32 = v2 as i32 >> 1;
-            create_sprite(
-                crate::rtl::rom_table_word!(game, 0xa5a1c7, v3 as isize),
-                crate::rtl::rom_table_word!(game, 0xa5a1c7, (v3 + 1) as isize),
-                59,
-                0xe00,
-                game,
-            );
-            v2 = (v2).wrapping_sub(4);
-        }
-        for _ in 0i16..=2i16 {
-            let v5: i32 = v2 as i32 >> 1;
-            create_sprite(
-                crate::rtl::rom_table_word!(game, 0xa5a1c7, v5 as isize),
-                crate::rtl::rom_table_word!(game, 0xa5a1c7, (v5 + 1) as isize),
-                60,
-                0xe00,
-                game,
-            );
-            v2 = (v2).wrapping_sub(4);
-        }
-    }
+    sprite_effects::draygon_spawn_ring(game);
+    crate::verify_probe::hit("sprite.draygon.43");
 }
 pub unsafe fn Draygon_Func_44(game: &mut Game) {
-    word_transfers!(game, descending, 32; le(sprite_instr_list_ptrs, 31) <- value(0));
+    sprite_effects::retire_all(game);
+    crate::verify_probe::hit("sprite.draygon.44");
 }
 pub unsafe fn Draygon_Func_45(game: &mut Game) {
-    unsafe {
-        create_sprite(16, 384, 59, 0xe00, game);
-        create_sprite(16, 384, 59, 0xe00, game);
-        create_sprite(16, 384, 59, 0xe00, game);
-        create_sprite(16, 384, 59, 0xe00, game);
-    }
+    sprite_effects::draygon_spawn_trails(game);
+    crate::verify_probe::hit("sprite.draygon.45");
 }
 pub unsafe fn Draygon_Func_46(game: &mut Game) {
     unsafe {
-        for v0 in (56u16..=62).rev().step_by(2) {
-            let v1: u16 =
-                ((*Get_Draygon(0i32, game)).var_46).wrapping_add(crate::rtl::rom_table_word!(
-                    game,
-                    0xa5a19f,
-                    (((v0).wrapping_sub(56)) >> 1) as isize
-                ));
-            if (v1 & 0x8000) == 0 {
-                let v2: u16 = v1;
-                if *((rom_ptr!(game, u8; 0xa5ce07)).offset(v1 as isize) as *mut u16) == 0x8080 {
-                    word!(game.sprite_instr_list_ptrs[(v0 >> 1)] = 0);
-                } else {
-                    let v3: i32 = v0 as i32 >> 1;
-                    word!(
-                        game.sprite_x_pos[v3] += SignExtend8(
-                            *(rom_ptr!(game, u8; 0xa5ce07)).offset(v1 as isize) as u16,
-                        )
-                    );
-                    word!(
-                        game.sprite_y_pos[v3] += SignExtend8(
-                            *(rom_ptr!(game, u8; 0xa5ce07)).offset((v2 as i32 + 1) as isize) as u16,
-                        )
-                    );
-                }
-            }
-        }
-        let E = Get_Draygon(0, game);
-        (*E).var_46 = ((*E).var_46).wrapping_add(4);
+        let cursor = (*Get_Draygon(0, game)).var_46;
+        let next = sprite_effects::draygon_trajectory(cursor, game);
+        (*Get_Draygon(0, game)).var_46 = next;
     }
 }
 pub unsafe fn Draygon_Func_48(k: u16, game: &mut Game) {

@@ -17,10 +17,6 @@ pub(super) fn damage_player(damage: u16, game: &mut Game) -> () {
     unsafe { crate::game::sm_91::Samus_DealDamage(damage, game) }
 }
 
-pub(super) fn create_sprite(x: u16, y: u16, id: u16, graphics: u16, game: &mut Game) -> u16 {
-    unsafe { crate::game::sprite_objects::create_sprite(x, y, id, graphics, game) }
-}
-
 pub(super) fn ridley_offscreen(x: u16, y: u16, game: &mut Game) -> u8 {
     unsafe { crate::game::sm_a6::Ridley_Func_103(x, y, game) }
 }

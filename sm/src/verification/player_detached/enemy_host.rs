@@ -262,18 +262,7 @@ impl ActorAccess for Composed {
     fn set_botwoon_field(&mut self, enemy: usize, field: BotwoonField, value: u16) {
         panic!("unprepared enemy operation: set_botwoon_field")
     }
-    fn waffle_sprite_x(&self, index: u16) -> u16 {
-        panic!("unprepared enemy operation: waffle_sprite_x")
-    }
-    fn set_waffle_sprite_x(&mut self, index: u16, value: u16) {
-        panic!("unprepared enemy operation: set_waffle_sprite_x")
-    }
-    fn waffle_sprite_y(&self, index: u16) -> u16 {
-        panic!("unprepared enemy operation: waffle_sprite_y")
-    }
-    fn set_waffle_sprite_y(&mut self, index: u16, value: u16) {
-        panic!("unprepared enemy operation: set_waffle_sprite_y")
-    }
+
     fn botwoon_history_x(&self, cursor: u16) -> u16 {
         panic!("unprepared enemy operation: botwoon_history_x")
     }
@@ -314,9 +303,7 @@ impl Effects for Composed {
         assert_eq!(damage, 10, "1054 actual suit damage argument");
         panic!("unprepared enemy operation: damage_player")
     }
-    fn create_sprite(&mut self, x: u16, y: u16, id: u16, graphics: u16) -> u16 {
-        panic!("unprepared enemy operation: create_sprite")
-    }
+
     fn ridley_offscreen(&mut self, x: u16, y: u16) -> u8 {
         panic!("unprepared enemy operation: ridley_offscreen")
     }

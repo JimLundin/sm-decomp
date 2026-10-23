@@ -19,7 +19,7 @@ use crate::game::sm_a0::{
     EnemyFunc_B691, GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsEnemyLeavingScreen,
     IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y, SignExtend8,
 };
-use crate::game::sprite_objects::create_sprite;
+use crate::game::sprite_effect_runtime::create_sprite;
 
 pub use crate::types::Consts_B3;
 

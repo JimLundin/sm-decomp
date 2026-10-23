@@ -7,6 +7,10 @@ use super::shared::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use super::*;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session::Point;
+use crate::game::{
+    sprite_effect_state::{LegacySpriteDefinition, SpriteSpawn},
+    sprite_objects,
+};
 
 pub(super) fn dispatch(ea: u32, k: u16, ctx: &mut impl Host) {
     match ea {
@@ -2105,12 +2109,15 @@ pub(super) fn EprojPreInstr_Sparks(k: u16, ctx: &mut impl Host) {
         ctx,
     );
     if (ctx.inputs().nmi_counter_low & 3) == 0 {
-        ctx.create_sprite(
-            enemy!(ctx, (v1) as isize, x),
-            enemy!(ctx, (v1) as isize, y),
-            48,
-            enemy!(ctx, (v1) as isize, graphics),
-        );
+        let request = SpriteSpawn {
+            position: Point {
+                x: enemy!(ctx, (v1) as isize, x),
+                y: enemy!(ctx, (v1) as isize, y),
+            },
+            definition: LegacySpriteDefinition(48),
+            appearance: enemy!(ctx, (v1) as isize, graphics),
+        };
+        sprite_objects::spawn(ctx, request);
     }
 }
 

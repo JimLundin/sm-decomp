@@ -19,7 +19,7 @@ use crate::game::sm_a0::{
     EnemyFunc_C8AD, GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsSamusWithinEnemy_X,
     IsSamusWithinEnemy_Y, SignExtend8, SineMult8bit, SineMult8bitFull,
 };
-use crate::game::sprite_objects::create_sprite;
+use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
 
 pub use crate::types::Consts_A8;
 
@@ -639,6 +639,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E = Get_YappingMaw(word!(game.cur_enemy_index) as i32, game); };
     YappingMaw_Init [] {
+        let sprite_owner = word!(game.cur_enemy_index);
         (*E).var_0C = (*E).base.x_pos;
         (*E).var_0D = (*E).base.y_pos;
         set_fields! {[(*E)], 0; var_00, var_01, var_02, var_03, var_04, var_05, var_06, var_07, var_30}
@@ -670,13 +671,14 @@ crate::game::callback_dispatch! {
 }
         let v3: u16 = ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
         (*E).var_47 = v3;
-        (*E).var_46 = create_sprite(
+        let sprite = create_sprite(
             (*E).base.x_pos,
             (R34).wrapping_add((*E).base.y_pos),
             R36,
             v3,
             game,
         );
+        (*Get_YappingMaw(sprite_owner as i32, game)).var_46 = sprite;
     };
     YappingMaw_Main [] {
         (*E).var_35 = (*E).var_35.wrapping_sub(1);
@@ -861,24 +863,11 @@ crate::game::callback_dispatch! {
         }
     };
     YappingMaw_Func_19 [] {
-        let r18: u16 = (*E).var_45;
-        let r20: u16 = (*E).var_46;
-        word!(
-            game.sprite_palettes[(r20 >> 1)] = (r18 | word!(game.sprite_palettes[(r20 >> 1)]) & 0xf1ff)
-        );
-        if (*E).base.frozen_timer != 0 {
-            word!(
-                game.sprite_palettes[(r20 >> 1)] =
-                    (word!(game.sprite_palettes[(r20 >> 1)]) & 0xf1ff | 0xc00)
-            );
-            let frozen_timer: u16 = (*E).base.frozen_timer;
-            if frozen_timer as i32 - 90i32 & 0x8000 != 0 && (frozen_timer & 2) == 0 {
-                word!(
-                    game.sprite_palettes[(r20 >> 1)] =
-                        (r18 | word!(game.sprite_palettes[(r20 >> 1)]) & 0xf1ff)
-                );
-            }
-        }
+        let enemy = word!(game.cur_enemy_index);
+        let appearance = (*E).var_45;
+        let handle = (*E).var_46;
+        sprite_effects::maw_appearance(handle, appearance, enemy, game);
+        crate::verify_probe::hit("sprite.maw.appearance");
     };
 }
 pub unsafe fn YappingMaw_Func_9(k: u16, game: &mut Game) {
@@ -2578,7 +2567,8 @@ crate::game::callback_dispatch! {
             *(ram_ptr!(game, u16; 0x1997, (*E).var_41 as i32 as isize)) = 0;
             *(ram_ptr!(game, u16; 0x1997, (*E).var_42 as i32 as isize)) = 0;
             *(ram_ptr!(game, u16; 0x1997, (*E).var_43 as i32 as isize)) = 0;
-            word!(game.sprite_instr_list_ptrs[((*E).var_46 >> 1)] = 0);
+            let sprite = (*E).var_46;
+            sprite_effects::retire(sprite, game);
             if word!(game.samus_input_handler) as i32 != 0x90e91d & 0xffff {
                 word!(game.samus_input_handler = ((0x90e913i32) as u16));
             }

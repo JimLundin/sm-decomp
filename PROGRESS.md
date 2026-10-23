@@ -21,7 +21,7 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-### Sprite effects / next shared owner
+### Sprite effects / shared owner adopted
 
 ```mermaid
 flowchart TB
@@ -30,13 +30,13 @@ flowchart TB
     CONTRACT --> DECL["Concrete Rust interfaces<br/>metadata compile PASS"]:::done
     UNION --> DECL
     DECL --> REVIEW["Independent interface review<br/>PASS / live actor reads"]:::done
-    DECL --> OWNER["session.rs / sprite state<br/>52,079-byte proposed union"]:::checked
-    OWNER --> CODEC["session_encoding.rs / runtime"]:::checked
-    DECL --> POOL["sprite_objects.rs replacement<br/>spawn / advance / draw / clear"]:::checked
-    POOL --> WAFFLE["enemy_projectiles/<br/>spawn + Waffle controllers"]:::checked
-    POOL --> METROID["sm_a3.rs / Metroid controllers"]:::checked
-    POOL --> DRAYGON["sm_a5.rs / Draygon controllers"]:::checked
-    POOL --> MAW["sm_a8.rs / Maw controllers"]:::checked
+    DECL --> OWNER["session.rs / sprite state<br/>52,079-byte owned union"]:::done
+    OWNER --> CODEC["session_encoding.rs / runtime"]:::done
+    DECL --> POOL["sprite_objects.rs replacement<br/>spawn / advance / draw / clear"]:::done
+    POOL --> WAFFLE["enemy_projectiles/<br/>spawn + Waffle controllers"]:::done
+    POOL --> METROID["sm_a3.rs / Metroid controllers"]:::done
+    POOL --> DRAYGON["sm_a5.rs / Draygon controllers"]:::done
+    POOL --> MAW["sm_a8.rs / Maw controllers"]:::done
     BASE["121 predecessor cases<br/>captures + alias assertions PASS"]:::done --> VERIFY["Candidate comparisons<br/>121 / 121 match"]:::done
     VERIFY --> MAWFIX["Maw appearance precedence<br/>both writes corrected / PASS"]:::done
     CPU["Draygon motion / original CPU<br/>5 candidate phase comparisons PASS"]:::done --> VERIFY
@@ -47,7 +47,7 @@ flowchart TB
     BUILD --> HOST["Hosted composition baseline<br/>execution PASS"]:::done
     HOST --> HOSTFIX["Preserve larger fixture image<br/>corrected / baseline PASS"]:::done
     GUARD["Runtime + 1,026 bytes guard<br/>execution PASS"]:::done --> VERIFY
-    MUT["32 detached mutations<br/>caught / stage PASS"]:::done --> KILLS["9 DLL mutations<br/>pending"]:::pending
+    MUT["32 detached mutations<br/>caught / stage PASS"]:::done --> KILLS["9 DLL mutations<br/>caught / PASS"]:::done
     MAWFIX --> MAWMUT["Two Maw precedence mutations<br/>caught / PASS"]:::done --> MUT
     SHARED["35 shared-caller comparisons<br/>+ visual runtime guard PASS"]:::done --> ADOPT
     CODEC --> VERIFY
@@ -55,10 +55,10 @@ flowchart TB
     METROID --> VERIFY
     DRAYGON --> VERIFY
     MAW --> VERIFY
-    VERIFY --> ADOPT["Caller migration + retirement<br/>adopt on main"]:::pending
+    VERIFY --> ADOPT["Caller migration + retirement<br/>adopted on main"]:::done
     MOVIE --> ADOPT
     KILLS --> ADOPT
-    class MUT,MAWMUT,KILLS changed
+    class OWNER,CODEC,POOL,WAFFLE,METROID,DRAYGON,MAW,KILLS,ADOPT changed
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
@@ -67,7 +67,7 @@ flowchart TB
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-[Sprite candidate CI: running](https://github.com/JimLundin/sm-decomp/actions/runs/40031500027)
+[Sprite build + 41 mutations: PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40031500027)
 
 ```mermaid
 flowchart LR

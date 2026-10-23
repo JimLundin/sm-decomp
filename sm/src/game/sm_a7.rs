@@ -28,7 +28,7 @@ use crate::game::sm_a0::{
     Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, EnemyFunc_BBBF, EnemyFunc_C8AD,
     IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
 };
-use crate::game::sprite_objects::create_sprite;
+use crate::game::sprite_effect_runtime::create_sprite;
 
 crate::typed_struct! {
     [

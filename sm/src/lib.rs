@@ -414,6 +414,10 @@ pub mod game {
     pub mod sm_90;
     pub mod sm_91;
     pub(crate) mod sprite_drawing;
+    pub(crate) mod sprite_effect_controllers;
+    pub(crate) mod sprite_effect_host;
+    pub(crate) mod sprite_effect_runtime;
+    pub(crate) mod sprite_effect_state;
     pub(crate) mod visual_host;
     pub(crate) mod visual_runtime;
     pub(crate) mod visual_state;
@@ -630,4 +634,38 @@ mod visual_runtime_checks;
 #[doc(hidden)]
 pub fn verify_visual_runtime_guard() -> bool {
     visual_runtime_checks::run()
+}
+
+#[path = "verification/sprite_alias_cases.rs"]
+pub(crate) mod sprite_alias_cases;
+#[path = "verification/sprite_controller_cases.rs"]
+pub(crate) mod sprite_controller_cases;
+#[path = "verification/sprite_effect_candidate.rs"]
+pub(crate) mod sprite_effect_candidate;
+#[path = "verification/sprite_effect_cases.rs"]
+pub(crate) mod sprite_effect_cases;
+#[path = "verification/sprite_effect_observer.rs"]
+pub(crate) mod sprite_effect_observer;
+
+#[path = "verification/draygon_sprite_candidate.rs"]
+pub mod draygon_sprite_candidate;
+pub fn verify_sprite_effect_case(id: u32) -> Option<Vec<u8>> {
+    sprite_effect_candidate::capture_case(id)
+}
+
+#[path = "verification/sprite_pool_candidate.rs"]
+pub(crate) mod sprite_pool_candidate;
+#[path = "verification/sprite_pool_case.rs"]
+pub(crate) mod sprite_pool_case;
+#[path = "verification/sprite_runtime_checks.rs"]
+pub(crate) mod sprite_runtime_checks;
+
+pub fn verify_sprite_pool_candidate(
+    id: u32,
+    game: &mut crate::game_state::Game,
+) -> Result<Vec<u8>, String> {
+    sprite_pool_candidate::capture(id, game)
+}
+pub fn verify_sprite_runtime_guard() -> bool {
+    sprite_runtime_checks::run()
 }
