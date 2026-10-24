@@ -103,3 +103,6 @@ pub(crate) mod player_transitions_host;
 #[cfg(test)]
 #[path = "../player_collision_owned_checks.rs"]
 pub(crate) mod player_collision_owned_checks;
+
+#[path = "../../game/player_movement/mod.rs"]
+pub(crate) mod player_movement;

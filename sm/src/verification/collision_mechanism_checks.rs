@@ -225,6 +225,14 @@ pub(crate) fn run(g: &mut Game, local: u32) {
         } else {
             stale(g);
             failed_setup(g);
+            acceleration_stale(g);
+            acceleration_loaded_failure(g);
+            acceleration_success(g);
+            assert_eq!(super::player_movement_edges::run(g), 6);
+            assert_eq!(
+                super::player_spin_bounds::run(g),
+                super::player_spin_bounds::COUNT
+            );
         }
         assert!(!g.g_fail);
     }));
@@ -235,4 +243,137 @@ pub(crate) fn run(g: &mut Game, local: u32) {
     if let Err(payload) = result {
         std::panic::resume_unwind(payload);
     }
+}
+
+fn acceleration_step(runtime: &mut Runtime<'_>) {
+    crate::game::player_projectiles::host::Host::player_step(
+        runtime,
+        crate::game::player_projectiles::host::PlayerStep::Acceleration,
+    );
+}
+fn acceleration_stale(g: &mut Game) {
+    seed(g);
+    put(&mut g.g_ram, crate::ram_map::words::equipped_items, 0x20);
+    g.loaded_rom = None; // Gravity must need no pose content, but still preflight.
+    let before = g.g_ram.to_vec();
+    let mut expected = before.clone();
+    put(&mut expected, 0xaf6, 0x3456);
+    let world = g.world().clone();
+    let (result, held, unpublished) = {
+        let mut runtime = Runtime::new(g);
+        runtime.session_mut().player.x = 0x3456;
+        runtime.session_mut().world = Arc::new((*world).clone());
+        let result = caught("Session belongs to a different world binding", || {
+            acceleration_step(&mut runtime);
+        });
+        let held = runtime.has_session_for_verification();
+        let unpublished = runtime.game.g_ram.as_slice() == before.as_slice();
+        if held {
+            runtime.session_mut().world = world;
+        }
+        (result, held, unpublished)
+    };
+    require_panic(result, "Session belongs to a different world binding");
+    assert!(
+        held && unpublished,
+        "acceleration preflight precedes Gravity no-read path"
+    );
+    assert_eq!(g.g_ram.as_slice(), expected.as_slice());
+    assert!(!g.actor_identity_is_with_session());
+}
+fn acceleration_loaded_failure(g: &mut Game) {
+    seed(g);
+    g.loaded_rom = None;
+    put(&mut g.g_ram, crate::ram_map::words::samus_y_accel, 0x5678);
+    put(
+        &mut g.g_ram,
+        crate::ram_map::words::samus_y_subaccel,
+        0x9abc,
+    );
+    let mut expected = g.g_ram.to_vec();
+    put(&mut expected, 0xaf6, 0x3456);
+    let (result, held, prefix, identity_returned) = {
+        let mut runtime = Runtime::new(g);
+        runtime.session_mut().player.x = 0x3456;
+        let result = caught("ROM must be loaded", || acceleration_step(&mut runtime));
+        let held = runtime.has_session_for_verification();
+        let prefix = runtime.game.g_ram.to_vec();
+        let identity_returned = !runtime.game.actor_identity_is_with_session();
+        (result, held, prefix, identity_returned)
+    };
+    require_panic(result, "ROM must be loaded");
+    assert!(
+        !held && identity_returned,
+        "acceleration Loaded failure returns authority before outer Drop"
+    );
+    assert_eq!(
+        prefix, expected,
+        "acceleration Loaded failure publishes prior owner without acceleration writes"
+    );
+    assert_eq!(
+        g.g_ram.as_slice(),
+        expected.as_slice(),
+        "empty outer Drop preserves failed acceleration prefix"
+    );
+}
+fn acceleration_success(g: &mut Game) {
+    seed(g);
+    put(&mut g.g_ram, crate::ram_map::words::equipped_items, 0x20);
+    put(&mut g.g_ram, crate::ram_map::words::samus_y_accel, 0x5678);
+    put(
+        &mut g.g_ram,
+        crate::ram_map::words::samus_y_subaccel,
+        0x9abc,
+    );
+    g.loaded_rom = None;
+    let mut expected = g.g_ram.to_vec();
+    put(&mut expected, 0xaf6, 0x3456);
+    put(&mut expected, crate::ram_map::words::samus_y_accel, 0);
+    put(
+        &mut expected,
+        crate::ram_map::words::samus_y_subaccel,
+        0x1c00,
+    );
+    for (at, value) in [
+        (0xf8c, 0x1234),
+        (0xe54, 0x0040),
+        (0xe44, 0x2345),
+        (0x185e, 0x3456),
+    ] {
+        put(&mut expected, at, value);
+    }
+    {
+        let mut runtime = Runtime::new(g);
+        runtime.session_mut().player.x = 0x3456;
+        for (at, value) in [
+            (0xf8c, 0x1234u16),
+            (0xe54, 0x0040),
+            (0xe44, 0x2345),
+            (0x185e, 0x3456),
+        ] {
+            for (lane, byte) in value.to_le_bytes().into_iter().enumerate() {
+                assert!(session_encoding::write_projected_byte(
+                    runtime.session_mut(),
+                    at + lane,
+                    byte
+                ));
+            }
+        }
+        acceleration_step(&mut runtime);
+        assert_eq!(
+            runtime.inputs.enemy_zero_health,
+            u16::from_ne_bytes(0x1234u16.to_le_bytes())
+        );
+        assert_eq!(runtime.inputs.current_enemy, 0x0040);
+        assert_eq!(runtime.inputs.random_enemy_counter, 0x2345);
+        assert_eq!(runtime.inputs.debug_enemy_freeze, 0x3456);
+        let mut projected = runtime.game.g_ram.to_vec();
+        session_encoding::encode(runtime.session(), &mut projected);
+        assert_eq!(
+            projected, expected,
+            "actual Gravity acceleration and refreshed aliases"
+        );
+    }
+    assert_eq!(g.g_ram.as_slice(), expected.as_slice());
+    assert!(!g.actor_identity_is_with_session());
 }

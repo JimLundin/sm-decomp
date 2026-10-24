@@ -1,11 +1,7 @@
 //! Verification-only authored inputs and observations for composed collision.
 //! Registered at verification root; safe actor access is a separate child module.
 #![deny(unsafe_op_in_unsafe_fn)]
-use crate::{
-    game::{session_runtime::Runtime, sm_90},
-    game_state::Game,
-    ram_map::words as ram,
-};
+use crate::{game::session_runtime::Runtime, game_state::Game, ram_map::words as ram};
 fn put(g: &mut Game, at: usize, value: u16) {
     g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
 }
@@ -180,7 +176,7 @@ pub(crate) unsafe fn run(g: &mut Game, reversed: bool, out: &mut Vec<u8>) {
         ] {
             put(g, at, value);
         }
-        sm_90::Samus_SpinJumpMovement(g);
+        crate::game::player_movement::speed::spin_jumping(&mut Runtime::new(g));
         assert_eq!(
             word(g, ram::input_to_pose_calc),
             5,

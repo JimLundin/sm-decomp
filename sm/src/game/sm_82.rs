@@ -47,9 +47,7 @@ use crate::game::sm_88::{
     SpawnBG3ScrollHdmaObject, WaitUntilEndOfVblankAndClearHdma, sub_8882AC,
 };
 use crate::game::sm_89::LoadFXHeader;
-use crate::game::sm_90::{
-    CallSomeSamusCode, Samus_LowHealthCheck_0, SetLiquidPhysicsType, UpdateBeamTilesAndPalette,
-};
+use crate::game::sm_90::{CallSomeSamusCode, Samus_LowHealthCheck_0, UpdateBeamTilesAndPalette};
 use crate::game::sm_91::{GameState_28_Unused_, Samus_Initialize, Samus_LoadSuitTargetPalette};
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
@@ -209,7 +207,9 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
             palette_effects::set_enabled(true, game);
             EnableHdmaObjects(game);
             animated_tiles::set_enabled(true, game);
-            SetLiquidPhysicsType(game);
+            crate::game::player_movement::speed::set_liquid_physics(
+                &mut crate::game::session_runtime::Runtime::new(game),
+            );
             if word!(game.game_state) as i32 == kGameState_40_TransitionToDemo as i32 {
                 word!(game.loop_counter_transfer_enemies_to_vram = 6);
                 stage = 2;

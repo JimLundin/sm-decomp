@@ -2,13 +2,13 @@
 
 ```mermaid
 flowchart LR
-    DONE["DONE: Collision + transitions<br/>shared owned state"]:::done
-    NOW["NOW: Walk / jump / ball<br/>draft; 48 paired checks pass"]:::active
-    NEXT["NEXT: Verify + adopt<br/>retire 52 old routines"]:::pending
-    THEN["THEN: Join owned systems<br/>remove RAM transfers"]:::pending
+    DONE["DONE: Owned movement<br/>52 legacy routines retired"]:::done
+    NOW["NOW: Shared player update<br/>movement + map + settlement design"]:::active
+    NEXT["NEXT: One update owner<br/>remove repeated RAM transfers"]:::pending
+    THEN["THEN: Modular gameplay<br/>explicit content + options"]:::pending
     TARGET["TARGET: Safe modular engine<br/>Map Rando: rooms / sprites / rules"]:::pending
     DONE --> NOW --> NEXT --> THEN --> TARGET
-    class NOW,NEXT changed
+    class DONE,NOW,NEXT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
@@ -21,33 +21,42 @@ Green: adopted scope / passed check | Blue: draft | Orange: active | Grey: remai
 **Purple outline: changed since previous report.** Folder branches show containment; check arrows show prerequisites.
 
 <details>
-<summary>Current work: movement draft and remaining checks</summary>
+<summary>Movement adopted: files and local checks</summary>
 
 ```mermaid
 flowchart LR
-    MOVE["player_movement/"]:::draft
-    MOVE --> API["mod.rs / advance_normal"]:::draft
-    MOVE --> SPEED["speed.rs / shared motion rules"]:::draft
-    MOVE --> MODES["selectors.rs / 28 movement modes"]:::draft
-    MOVE --> FX["presentation.rs / footsteps + echoes"]:::draft
-    MOVE --> DATA["content.rs"]:::draft
-    MOVE --> EFFECT["effects.rs"]:::draft
-    MOVE --> HOST["player_movement_runtime.rs"]:::draft
-    HOST --> CALL["Actual callers + legacy retirement"]:::draft
+    MOVE["player_movement/"]:::done
+    MOVE --> API["mod.rs / advance_normal"]:::done
+    MOVE --> SPEED["speed.rs / shared motion rules"]:::done
+    MOVE --> MODES["selectors.rs / 28 movement modes"]:::done
+    MOVE --> FX["presentation.rs / footsteps + echoes"]:::done
+    MOVE --> DATA["content.rs"]:::done
+    MOVE --> EFFECT["effects.rs"]:::done
+    MOVE --> HOST["player_movement_runtime.rs"]:::done
+    HOST --> CALL["Actual callers + 52 routines retired"]:::done
     CALL --> BUILD["Format + normal compile + DLL / PASS"]:::done
     BUILD --> MODES28["28 modes + 20 edge comparisons / PASS"]:::done
     BUILD --> OWN["Shared ownership + 192 spin checks / PASS"]:::done
     BUILD --> SHARED["4 shared-producer comparisons / PASS"]:::done
     MOVE --> DETACHED["Compile without backend / PASS"]:::done
-    MODES28 --> EDGE["Exceptional aliases + failure paths"]:::active
+    MODES28 --> EDGE["6 exceptional alias / failure checks / PASS"]:::done
     BUILD --> AUDIT["Caller + deletion audit / PASS"]:::done
     MODES28 --> REPLAY["8,774 frames / 0 failures<br/>5 required probes + follow-up / PASS"]:::done
-    MODES28 --> MUT["Local mutation kills"]:::pending
-    EDGE --> ADOPT["Adopt on main"]:::pending
+    MODES28 --> MUT["9 local mutation kills / audited"]:::done
+    MUT --> M1["Native content"]:::done
+    MUT --> M2["Dry speed-table retention"]:::done
+    MUT --> M3["Echo wrap"]:::done
+    MUT --> M4["Signed fraction"]:::done
+    MUT --> M5["Scaled deceleration"]:::done
+    MUT --> M6["Spin speed bytes"]:::done
+    MUT --> M7["Unwind cleanup"]:::done
+    MUT --> M8["Input refresh"]:::done
+    MUT --> M9["Entry preflight"]:::done
+    EDGE --> ADOPT["Adopted / -162 production lines"]:::done
     AUDIT --> ADOPT
     REPLAY --> ADOPT
     MUT --> ADOPT
-    class MODES28,OWN,SHARED,DETACHED,EDGE,AUDIT,REPLAY changed
+    class MOVE,API,SPEED,MODES,FX,DATA,EFFECT,HOST,CALL,EDGE,MUT,M1,M2,M3,M4,M5,M6,M7,M8,M9,ADOPT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -55,7 +64,7 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-[Checked draft 1bd54ec3; scope and limits](docs/PLAN.md#work-order). Main counts below exclude this draft.
+[Adopted movement](sm/src/game/player_movement/mod.rs) | [Local checks and limits](docs/PLAN.md#work-order).
 
 </details>
 
@@ -129,11 +138,11 @@ flowchart LR
 
 | Rust accounting | Main | Latest adoption |
 | --- | ---: | ---: |
-| Production, including adapters | 116,938 | +16 |
-| Verification and check support | 33,981 | +247 |
-| Combined maintained Rust | 150,919 | +263 |
+| Production, including adapters | 116,776 | -162 |
+| Verification and check support | 35,026 | +1,045 |
+| Combined maintained Rust | 151,802 | +883 |
 
-**33,981 verification lines excluded, not deleted.** [Scope and local evidence](docs/PLAN.md#work-order).
+**35,026 verification lines excluded, not deleted.** Separate support: +334 Python/JSON lines. [Scope and local evidence](docs/PLAN.md#work-order).
 
 <details>
 <summary>Verification details and earlier migrations</summary>

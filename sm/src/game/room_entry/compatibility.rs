@@ -99,7 +99,7 @@ impl EntryEffects for Runtime<'_> {
                     game::sm_82::PlaySpinJumpSoundIfSpinJumping(game);
                 }
                 LeafEffect::SetLiquidPhysics => {
-                    game::sm_90::SetLiquidPhysicsType(game);
+                    game::player_movement::speed::set_liquid_physics(&mut Runtime::new(game));
                 }
                 LeafEffect::StopHdmaEffects => {
                     game::sm_88::sub_8882AC(game);

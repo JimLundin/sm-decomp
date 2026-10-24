@@ -236,6 +236,7 @@ macro_rules! scalar_words {
         $f(0x0a9e,$($borrow)* $s.player.transitions.grapple_walljump_timer);
         $f(0x0aa0,$($borrow)* $s.player.transitions.elevator_fade_timer);
         $f(0x0aa2,$($borrow)* $s.player.transitions.shinespark_start_stop_timer);
+        $f(0x0aa4,$($borrow)* $s.player.crouch_transition_work);
         $f(0x0ad2,$($borrow)* $s.player.transitions.liquid_physics);
         $f(0x0b1a,$($borrow)* $s.player.transitions.landing_motion_compatibility);
         $f(0x0b22,$($borrow)* $s.player.transitions.falling);

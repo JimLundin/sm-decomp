@@ -403,7 +403,19 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 put(g, w::samus_x_base_subspeed, 7);
                 put(g, w::samus_collision_flag, 0xffff);
                 put(g, w::extra_samus_x_displacement, 1);
-                bank::verify_player_collision_air(id == 23, 0x50007, g);
+                {
+                    use crate::game::{
+                        player_collision::operations as collision, player_movement::speed,
+                        session_runtime::Runtime,
+                    };
+                    let mut runtime = Runtime::new(g);
+                    let request = if id == 23 {
+                        speed::horizontal_air::<true>(&runtime, 0x50007)
+                    } else {
+                        speed::horizontal_air::<false>(&runtime, 0x50007)
+                    };
+                    collision::horizontal_control(&mut runtime, request);
+                }
                 expect(g, w::samus_x_base_speed, 0, "at-rest base reset");
                 expect(g, w::samus_x_base_subspeed, 0, "at-rest fraction reset");
                 expect(
@@ -601,10 +613,14 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 put(g, w::samus_y_dir, 2);
                 g.g_ram[0xa1f] = if id == 33 { 20 } else { 3 };
                 match id {
-                    32 | 33 => bank::Samus_JumpingMovement(g),
+                    32 | 33 => crate::game::player_movement::speed::jumping(
+                        &mut crate::game::session_runtime::Runtime::new(g),
+                    ),
                     34 => {
                         put(g, w::joypad1_lastkeys, 0x200);
-                        bank::Samus_SpinJumpMovement(g);
+                        crate::game::player_movement::speed::spin_jumping(
+                            &mut crate::game::session_runtime::Runtime::new(g),
+                        );
                     }
                     _ => bank::Samus_MoveHandler_ReleaseFromGrapple(g),
                 }

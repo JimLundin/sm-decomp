@@ -2,6 +2,18 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/verification/player_movement_edges.rs",
+        include_bytes!("verification/player_movement_edges.rs"),
+    ),
+    (
+        "sm/src/verification/player_spin_bounds.rs",
+        include_bytes!("verification/player_spin_bounds.rs"),
+    ),
+    (
+        "sm/src/verification/player_locomotion.rs",
+        include_bytes!("verification/player_locomotion.rs"),
+    ),
+    (
         "sm/src/verification/collision_mechanism_checks.rs",
         include_bytes!("verification/collision_mechanism_checks.rs"),
     ),
@@ -176,6 +188,34 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/player_collision/pose.rs",
         include_bytes!("game/player_collision/pose.rs"),
+    ),
+    (
+        "sm/src/game/player_movement/content.rs",
+        include_bytes!("game/player_movement/content.rs"),
+    ),
+    (
+        "sm/src/game/player_movement/effects.rs",
+        include_bytes!("game/player_movement/effects.rs"),
+    ),
+    (
+        "sm/src/game/player_movement/mod.rs",
+        include_bytes!("game/player_movement/mod.rs"),
+    ),
+    (
+        "sm/src/game/player_movement/presentation.rs",
+        include_bytes!("game/player_movement/presentation.rs"),
+    ),
+    (
+        "sm/src/game/player_movement/selectors.rs",
+        include_bytes!("game/player_movement/selectors.rs"),
+    ),
+    (
+        "sm/src/game/player_movement/speed.rs",
+        include_bytes!("game/player_movement/speed.rs"),
+    ),
+    (
+        "sm/src/game/player_movement_runtime.rs",
+        include_bytes!("game/player_movement_runtime.rs"),
     ),
     (
         "sm/src/game/player_collision_runtime.rs",

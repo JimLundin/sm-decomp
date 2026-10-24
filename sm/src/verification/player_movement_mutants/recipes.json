@@ -1,0 +1,155 @@
+{
+  "source_root": "C:\\Users\\Jim.Lundin\\AppData\\Local\\sm-decomp-experiments\\20261024\\locomotion-1",
+  "recipes": [
+    {
+      "fault": "MOVE_NATIVE",
+      "selected": "locomotion:4037",
+      "edits": [
+        {
+          "path": "sm/src/game/player_movement_runtime.rs",
+          "before": "visual_host::Content::table(self, Source::Native, 0x900000 | u32::from(cursor))",
+          "after": "visual_host::Content::table(self, Source::Loaded, 0x900000 | u32::from(cursor))"
+        }
+      ],
+      "assertion_source": "player_locomotion.rs",
+      "assertion_message": "assertion `left == right` failed: Native speed table clamp at 0b46",
+      "expected_values": [
+        "6",
+        "8"
+      ]
+    },
+    {
+      "fault": "MOVE_RETAIN_TABLE",
+      "selected": "locomotion:4034",
+      "edits": [
+        {
+          "path": "sm/src/game/player_movement_runtime.rs",
+          "before": "LiquidAtHeight::None => None,",
+          "after": "LiquidAtHeight::None => Some(0x9f49),"
+        }
+      ],
+      "assertion_source": "player_locomotion.rs",
+      "assertion_message": "assertion `left == right` failed: disabled water/gravity keeps table at 0a6c",
+      "expected_values": [
+        "40777",
+        "57344"
+      ]
+    },
+    {
+      "fault": "MOVE_ECHO_WRAP",
+      "selected": "locomotion:4031",
+      "edits": [
+        {
+          "path": "sm/src/game/player_movement/presentation.rs",
+          "before": "        if (next as i16).wrapping_sub(4) >= 0 {",
+          "after": "        if (next as i16).wrapping_sub(6) >= 0 {"
+        }
+      ],
+      "assertion_source": "player_locomotion.rs",
+      "assertion_message": "assertion `left == right` failed: echo wraps after slot1 at 0aae",
+      "expected_values": [
+        "4",
+        "0"
+      ]
+    },
+    {
+      "fault": "MOVE_CLAMP",
+      "selected": "locomotion:4036",
+      "edits": [
+        {
+          "path": "sm/src/game/player_movement/speed.rs",
+          "before": "(fraction as i16).wrapping_sub(maximum_fraction as i16) >= 0",
+          "after": "fraction >= maximum_fraction"
+        }
+      ],
+      "assertion_source": "player_locomotion.rs",
+      "assertion_message": "assertion `left == right` failed: quirked signed fraction retained at 0b48",
+      "expected_values": [
+        "0",
+        "32768"
+      ]
+    },
+    {
+      "fault": "MOVE_DECEL",
+      "selected": "locomotion:4048",
+      "edits": [
+        {
+          "path": "sm/src/game/player_movement/speed.rs",
+          "before": "let divisor = h.session().player.contact.deceleration as u8;",
+          "after": "let divisor = 0u8;"
+        }
+      ],
+      "assertion_source": "player_locomotion.rs",
+      "assertion_message": "assertion `left == right` failed: scaled deceleration uses high product byte at 0b46",
+      "expected_values": [
+        "1",
+        "2"
+      ]
+    },
+    {
+      "fault": "MOVE_SPIN_MIDDLE",
+      "selected": "collision:37",
+      "edits": [
+        {
+          "path": "sm/src/game/player_movement/selectors.rs",
+          "before": "let middle = h.session().player.contact.y_speed.middle() as i16;",
+          "after": "let middle = h.session().player.contact.y_speed.whole as i16;"
+        }
+      ],
+      "assertion_source": "player_spin_bounds.rs",
+      "assertion_message": "assertion `left == right` failed: owned spin window: liquid=1 middle=0080 low=00 high=00",
+      "expected_values": [
+        "42330",
+        "42241"
+      ]
+    },
+    {
+      "selected": "collision:37",
+      "assertion_source": "collision_mechanism_checks.rs",
+      "edits": [
+        {
+          "path": "sm/src/game/session_runtime.rs",
+          "before": "                    self.runtime.relinquish();",
+          "after": "                    // Fault: omit relinquishment on incomplete call."
+        }
+      ],
+      "fault": "CONTACT_GUARD",
+      "forbidden_arbitrary_failure": true,
+      "assertion_message": "failed setup returns authority even with outer Runtime alive"
+    },
+    {
+      "fault": "CONTACT_REFRESH",
+      "expected_values": [
+        "0",
+        "4660"
+      ],
+      "forbidden_arbitrary_failure": true,
+      "selected": "collision:36",
+      "assertion_expression": "runtime.inputs.enemy_zero_health",
+      "assertion_source": "collision_mechanism_checks.rs",
+      "edits": [
+        {
+          "path": "sm/src/game/session_runtime.rs",
+          "before": "        call.runtime.inputs.enemy_zero_health = call.runtime.native_word(0xF8C);\n        call.runtime.inputs.current_enemy = call.runtime.word(0xE54);\n        call.runtime.inputs.random_enemy_counter = call.runtime.word(0xE44);\n        call.runtime.inputs.debug_enemy_freeze = call.runtime.word(0x185E);",
+          "after": "        // Fault: omit the four success input refreshes."
+        }
+      ],
+      "assertion_message": "assertion `left == right` failed"
+    },
+    {
+      "selected": "collision:37",
+      "assertion_source": "collision_mechanism_checks.rs",
+      "edits": [
+        {
+          "path": "sm/src/game/session_runtime.rs",
+          "before": "    pub(crate) fn owned_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {\n        preflight_export(self.session(), self.game);",
+          "after": "    pub(crate) fn owned_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {\n        // Fault: omit shared owned-call entry preflight."
+        }
+      ],
+      "fault": "CONTACT_PREFLIGHT",
+      "forbidden_arbitrary_failure": true,
+      "assertion_message": "selected actual call must reach its defined failure: ()"
+    }
+  ],
+  "note": "Six finite movement faults plus three existing shared owned_call faults; no fixture edits. Each applies independently."
+}

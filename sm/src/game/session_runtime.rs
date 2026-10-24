@@ -85,6 +85,33 @@ impl<'g> Runtime<'g> {
         self.inputs = encoding::inputs(&self.game.g_ram);
         result
     }
+    /// Compose an already-owned operation while retaining the former foreign
+    /// entry's preflight, unwind publication, and refreshed input observations.
+    pub(crate) fn owned_call<R>(&mut self, action: impl FnOnce(&mut Self) -> R) -> R {
+        preflight_export(self.session(), self.game);
+        struct OwnedCall<'a, 'g> {
+            runtime: &'a mut Runtime<'g>,
+            completed: bool,
+        }
+        impl Drop for OwnedCall<'_, '_> {
+            fn drop(&mut self) {
+                if !self.completed {
+                    self.runtime.relinquish();
+                }
+            }
+        }
+        let mut call = OwnedCall {
+            runtime: self,
+            completed: false,
+        };
+        let result = action(&mut *call.runtime);
+        call.runtime.inputs.enemy_zero_health = call.runtime.native_word(0xF8C);
+        call.runtime.inputs.current_enemy = call.runtime.word(0xE54);
+        call.runtime.inputs.random_enemy_counter = call.runtime.word(0xE44);
+        call.runtime.inputs.debug_enemy_freeze = call.runtime.word(0x185E);
+        call.completed = true;
+        result
+    }
     fn relinquish(&mut self) {
         if let Some(state) = self.state.take() {
             let matching = std::sync::Arc::ptr_eq(&state.world, self.game.world())
@@ -242,13 +269,19 @@ impl Host for Runtime<'_> {
             crate::game::samus_palette::update_suit_index(self.session_mut());
             return;
         }
+        if matches!(step, PlayerStep::Acceleration) {
+            self.owned_call(|runtime| {
+                crate::game::player_movement::speed::update_vertical_acceleration(runtime);
+            });
+            return;
+        }
         self.foreign(|g| unsafe {
             use crate::game::{sm_9b, sm_90, sm_91, sm_94};
             match step {
                 PlayerStep::Radius => sm_90::Samus_SetRadius(g),
                 PlayerStep::Input => sm_90::Samus_CallInputHandler(g),
                 PlayerStep::SuitIndex => unreachable!("suit index handled by shared owner"),
-                PlayerStep::Acceleration => sm_90::Samus_DetermineAccel_Y(g),
+                PlayerStep::Acceleration => unreachable!("acceleration handled by shared owner"),
                 PlayerStep::InsideBlock => sm_94::BlockInsideDetection(g),
                 PlayerStep::Grapple => sm_9b::GrappleBeamHandler(g),
                 PlayerStep::Xray => sm_91::XrayRunHandler(g),
@@ -645,9 +678,19 @@ impl Runtime<'_> {
 
 #[path = "player_collision_runtime.rs"]
 mod player_collision_runtime;
+#[path = "player_movement_runtime.rs"]
+mod player_movement_runtime;
 #[path = "player_transitions_runtime.rs"]
 mod player_transitions_runtime;
 
 #[cfg(sm_verify_dll)]
 #[path = "../verification/collision_mechanism_checks.rs"]
 pub(crate) mod collision_mechanism_checks;
+
+#[cfg(sm_verify_dll)]
+#[path = "../verification/player_spin_bounds.rs"]
+pub(crate) mod player_spin_bounds;
+
+#[cfg(sm_verify_dll)]
+#[path = "../verification/player_movement_edges.rs"]
+pub(crate) mod player_movement_edges;

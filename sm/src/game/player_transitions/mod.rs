@@ -26,8 +26,9 @@ pub(crate) use jump::{initialize_jump, start_shinespark};
 #[cfg(sm_verify_dll)]
 pub(crate) use normalization::normalize as verify_normalize;
 pub(crate) use pose::{
-    align_bottom_with_previous_pose, clamp_previous_position, finish_pose_change,
-    record_pose_history, refresh_pose, refresh_pose_rules, reset_pose_animation,
+    align_bottom_with_previous_pose, clamp_previous_position, finish_pose_change, liquid_at_height,
+    loaded_bottom, loaded_top, record_pose_history, refresh_pose, refresh_pose_rules,
+    reset_pose_animation,
 };
 pub(crate) use requests::request_pose;
 

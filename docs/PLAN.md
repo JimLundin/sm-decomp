@@ -271,47 +271,61 @@ Complete cost is +16 production and +247 verification Rust lines; production
 116,938, verification33,981, total150,919. One unsafe function and one unsafe block
 are removed. This is ownership/transfer consolidation, not net line reduction.
 
-Next complete responsibility: normal player locomotion, with
-player_movement::advance_normal on the existing Session. Preserve the frozen gate,
-all28movement selectors, horizontal/vertical collision ordering, motion-specific
-pose/contact behavior and echo tail. Retire the normal dispatch table/bank bodies,
-crouch table, raw speed-pointer record/calculation, movement helpers, grounded-ball
-macro and old footstep/echo bodies in the same adoption. Migrate shared producer
-callers (bomb movement, grapple release, drained crouch, knockback, shinespark echo
-and preparation acceleration); those outer special state machines remain distinct.
-One owner closes state/content/observation contracts while independent production
-and selected-reference/check lanes work in isolated source. Begin implementation
-without waiting for every fixture. Reuse collision checks and cover actual normal
-selectors, speed/liquid/clamp/jump/ball/footstep/echo behavior and mechanism effects
-between axes. The approximately1,050old-line scope and750..1,000replacement estimate
-are provisional, not measured savings. Input-to-pose remains adjoining read-only
-design work, not an additional adoption. Local compilation remains serialized.
+Normal locomotion is adopted on the existing Session through
+player_movement::advance_normal: all28selectors, the frozen gate, shared speed and
+vertical rules, footsteps and ordered echoes. Actual normal and shared producer
+callers migrate together;52legacy routines, dispatch tables, raw speed records
+and repeated movement macros retire. Bomb/grapple/knockback/shinespark outer
+state machines remain distinct. Preparation acceleration and collision mechanism
+creation share one owned-call guard and input refresh. Only the crouch work word
+adds owned state; spin history reuses its existing projectile owner.
 
-The complete locomotion draft has actual caller redirects and legacy retirement.
-Checked source 1bd54ec3e17cf0336bb7f266caeba407716c7b17aea56f17b33f96b6fa105b6b
-passes full formatting, normal library compilation and a local release DLL build.
-All 28 normal-selector cases and 20 edge cases match predecessor captures exactly;
-four shared-producer comparisons (collision48..51) also match. Independent raw
-audits check framing, content provenance, full RAM, ordered effects and quiet exits.
-Collision36/37 pass, including three acceleration ownership checks and 192 actual
-owned spin-boundary calls. Case4039 passes authored assertions only: the old Rust
-unaligned read is not fidelity evidence. The independent boundary checks vary all
-four speed bytes; they are not original-CPU comparisons. The corrected crouch-floor
-case passes. Caller/deletion review caught an unrelated scrolling callback and
-unused bank-91 alias; both are restored in the checked source.
+Final source65a54a73d4d2089519bce2b5386651f9bea1f988c145475b5008694c202164da
+passes full root formatting, normal and backend-free metadata compilation, release
+DLL checks and exact main-source correspondence. All48movement comparisons and
+four shared-producer comparisons match predecessor captures. Collision36/37 cover
+three acceleration ownership cases,192actual owned spin-boundary calls and six
+finite lazy-content/partial-write/invalid-selector/frozen/echo-alias checks.
+Case4039 passes authored assertions only; the predecessor's unaligned Rust load
+is not fidelity evidence. The spin-boundary cases are independent byte-pattern
+checks, not original-CPU comparisons. Full-RAM/effect capture audits pass.
 
-The bounded any-input replay passes 8,774 frames with zero failures. Required hits:
-normal movement return 1,882 calls at2218..8773; settlement return318 at8456..8773;
-jumping1 at8653; spinning61 at2478..8669; falling30 at2396..2425. All five probes
-have120follow-up frames. This covers one gameplay room, not the complete game.
-Checked draft accounting: production -162, verification Rust +776; main is unchanged.
-The exact source and DLL are preserved locally before further harness changes.
-Adding the actual movement module to the existing detached harness also passes
-metadata compilation without the backend; this is compilation, not test execution.
-Adoption remains pending finite exceptional-echo/lazy-content-failure checks and
-targeted local mutation kills. Nine mutation recipes and their classifier have
-independent source review; none has yet executed. Rebuild the final harness and
-recount before adoption; do not report draft savings as committed reductions.
+The bounded any-input replay on final main source passes8,774frames with zero
+failures. Required hits: normal movement return1,882 at2218..8773; settlement
+return318 at8456..8773; jumping1 at8653; spinning61 at2478..8669; falling30 at2396..2425.
+All five probes have120follow-up frames. This covers one gameplay room, not credits.
+All nine local DLL mutations compile and are rejected at their exact intended
+assertions: Native content, dry-table retention, echo wrap, signed fraction,
+scaled deceleration, spin middle bytes, unwind cleanup, input refresh and entry
+preflight. Each recaptures the passing baseline; crashes and unrelated failures
+do not count. Independent audits verify outputs, exact one-edit source trees,
+compiled bytes and hashes. No CI result is used.
+
+Complete adoption: production -162 to116,776; verification Rust +1,045 to35,026;
+combined +883 to151,802. Separate maintained support adds334physical Python/JSON
+lines. Production removes50explicit unsafe declarations and48unsafe blocks;
+verification adds one of each. This completes normal locomotion ownership, not
+persistent whole-engine ownership. The prior source/DLL and checked results remain
+in the existing local experiment directory. Reproducible local capture and mutation
+scripts are in sm/src/verification/capture_locomotion.py and player_movement_mutants/.
+
+Next complete responsibility: player_update::advance(host, mode), joining normal
+movement, an owned minimap, fresh gamma selection and settlement for beta17/14/15/19.
+Adopt the real map algorithm and remaining map/boss callers together; a foreign map
+wrapper cannot remove the intervening RAM transfer. Reuse movement and transitions;
+normal/no-op-gamma paths should have one outer Session lifetime. Active gamma and
+special movement retain real foreign boundaries. Keep special movement/contact-clear
+ordering, post-return pause/crash/low-health and demo input restoration unchanged.
+
+The reviewed ownership scope is288new bytes:256exploration,15HUD words and one
+suppression word. Preserve load/save/pause-map and room-entry aliases, exploration
+before content reads, partial HUD stores and refreshed inputs before late gamma
+selection. Content interfaces must support room identity and configurable map
+origin/visibility/tiles/boss marks for Map Rando. Retire the repeated beta chains
+and full legacy minimap implementation. Current +150..300production estimate is
+provisional consolidation cost, not promised savings. Freeze the concrete shared
+contract, then implement and author relevant checks in parallel on isolated files.
+Do not expand into active gamma, preparation or input-to-pose in this adoption.
 
 The public report must foreground owned behavior, production caller migration,
 legacy deletion and adoption. Keep verification detail expandable below those

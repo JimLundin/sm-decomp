@@ -407,6 +407,7 @@ pub mod game {
     #[cfg(any(test, sm_verify_dll))]
     #[path = "../verification/player_collision_owned_checks.rs"]
     pub(crate) mod player_collision_owned_checks;
+    pub(crate) mod player_movement;
     pub(crate) mod player_transitions;
 
     pub mod progress_flags;
