@@ -451,10 +451,12 @@ references; measure build/test time and resource growth before changing the loop
    passes full formatting and `cargo check -p sm --lib --no-default-features --locked
    -j 1` after integration corrections. Six old common-actor modules are retired in
    the private candidate; retained species AI dispatch is independently checked.
-   The first combined DLL passes source/native checks and all79component captures
-   match the frozen references byte-for-byte (candidate source46db10e5). Independent
-   comparison audit is pending. This precedes the final caller/palette receipt overlay;
-   complete ownership/media routes, oracle segments and mutation tests remain unverified.
+   The first79comparison audit passes (source46db10e5). Final caller/palette receipt
+   cleanup now retires seven files and remaining transfer/distance facades; its DLL
+   passes source/native checks and all79comparisons again (source5031b517). All six
+   shared Runtime guards and five new actual ownership/media/room cases pass. Eighteen
+   detached contract tests compile; their execution remains hosted. Final-output audit,
+   remaining composed semantic routes, oracle segments and mutation tests are pending.
    Preserve56existing mutants and add the
    nine selected actor faults, including discarded-future handle rejection.
    Scope includes population/assets, spawn/respawn/death, separate select/update,
