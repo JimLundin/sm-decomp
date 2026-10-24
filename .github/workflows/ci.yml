@@ -130,6 +130,25 @@ jobs:
           }
           cargo build --release --locked --lib --bin sm --example sm_verify
           if ($LASTEXITCODE -ne 0) { throw 'Cargo build failed' }
+      - name: Check Cargo verifier configuration and actor exports
+        run: |
+          python tools/verify_dll.py --build-only --cargo
+          if ($LASTEXITCODE -ne 0) { throw 'Cargo verifier configuration build failed' }
+          @'
+          from pathlib import Path
+          import runpy
+          root = Path.cwd()
+          verifier = runpy.run_path(str(root / 'tools/verify_dll.py'))
+          host = verifier['load_host'](root / 'target/verify-dll/sm_verify.dll')
+          verifier['check_source'](host, verifier['source_hash'](root))
+          verifier['check_library'](host, root)
+          for name in ('sm_verify_actor_movement_case', 'sm_verify_actor_movement_table_case',
+                       'sm_verify_actor_population_animation_case'):
+              if not hasattr(host, name):
+                  raise SystemExit('Cargo verifier missing required export: ' + name)
+          print('Cargo verifier source and all three actor exports match')
+          '@ | python -B -
+          if ($LASTEXITCODE -ne 0) { throw 'Cargo verifier actor export check failed' }
       - name: Reject projectile collision and retirement mutations
         # Mutation execution remains hosted under the local Defender restriction.
         # The preceding baseline must pass before deliberately broken variants run.

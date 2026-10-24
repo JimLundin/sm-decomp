@@ -444,6 +444,9 @@ pub extern "C" fn sm_verify_room_runtime_guard() -> bool {
 }
 
 include!("verification/room_background_dll.rs");
+#[cfg(sm_verify_dll)]
 include!("verification/actor_movement_dll.rs");
+#[cfg(sm_verify_dll)]
 include!("verification/actor_movement_table_dll.rs");
+#[cfg(sm_verify_dll)]
 include!("verification/actor_population_animation_dll.rs");

@@ -111,20 +111,29 @@ def cargo_host(root, rustc, output, source, frontend=False, retry=True):
     cargo = shutil.which("cargo") or str(Path(rustc).with_name("cargo.exe"))
     # Backdated files in another checkout can look fresh in a shared target
     # directory. Keep this game's and host's artifacts with their source.
-    # Use the same flags as cargo build. Per-host rustc flags make alternating
-    # normal builds and replays compile the DLL again on unchanged source.
+    # The launcher requests the full verification configuration for both the
+    # library and example. Ordinary cargo builds keep the non-verifier profile.
     command = [cargo, "build", "-p", "sm", "--release", "--example", "sm_verify",
                "--locked", "-j", "1", "--target-dir", str(root / "target"),
                "--message-format=json"]
     if frontend:
         command.extend(["--lib", "--bin", "sm"])
+    environment = dict(os.environ, RUSTC=rustc, SM_VERIFY_SOURCE_HASH=source)
+    # CARGO_ENCODED_RUSTFLAGS has Cargo's highest environment precedence. If it
+    # is absent, preserve RUSTFLAGS using Cargo's whitespace-separated format.
+    flags = environment.get("CARGO_ENCODED_RUSTFLAGS")
+    if flags is None:
+        flags = "\x1f".join(environment.get("RUSTFLAGS", "").split())
+    environment["CARGO_ENCODED_RUSTFLAGS"] = (
+        flags + ("\x1f" if flags else "") + "--cfg\x1fsm_verify_dll"
+    )
     dll = None
     compiled = []
     log_path = output / "build.log"
     with log_path.open("w", encoding="utf-8") as log:
         process = subprocess.Popen(
             command, cwd=root,
-            env=dict(os.environ, RUSTC=rustc, SM_VERIFY_SOURCE_HASH=source),
+            env=environment,
             text=True, encoding="utf-8", stdout=subprocess.PIPE, stderr=log,
         )
         try:
@@ -247,6 +256,7 @@ def build(root, rustc, use_cargo=None, frontend=False):
     )
     subprocess.run(
         common + ["--crate-name", "sm_verify", "--crate-type", "cdylib",
+                  "--cfg", "sm_verify_dll",
                   "-C", f"linker={linker}", "-C", "linker-flavor=ld",
                   "-C", f"incremental={output / 'incremental-host'}", "sm/src/verify_dll.rs",
                   "--extern", f"sm={library}", "-o", str(dll)],
