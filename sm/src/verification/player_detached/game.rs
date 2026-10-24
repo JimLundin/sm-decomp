@@ -34,6 +34,9 @@ pub(crate) mod item_pickups;
 #[path = "../../game/session.rs"]
 pub(crate) mod session;
 
+#[path = "room_entry.rs"]
+pub(crate) mod room_entry;
+
 #[path = "room.rs"]
 pub(crate) mod room_mechanisms;
 

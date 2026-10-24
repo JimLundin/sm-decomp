@@ -12,7 +12,7 @@ pub(crate) mod feedback;
 pub(crate) mod host;
 mod lifecycle;
 mod missiles;
-mod motion;
+pub(crate) mod motion;
 mod placement;
 mod preparation;
 mod presentation;

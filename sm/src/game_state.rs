@@ -1,12 +1,15 @@
 //! Explicit per-game ownership; RAM bytes retain their exact SNES layout.
 use crate::cpu_infra::Snapshot;
+use crate::game::room_entry::world::WorldBinding;
 use crate::initial_state::InitialState;
 use crate::rtl::StateRecorder;
 use crate::types::*;
 use std::ffi::c_int;
+use std::sync::Arc;
 /// State for one game and its differential oracle. Keep this heap allocation
 /// fixed while the emulated hardware holds pointers into `g_ram`.
 pub struct Game {
+    world: Arc<WorldBinding>,
     pub g_ram: [u8; 131072],
     pub(crate) loaded_rom: Option<crate::rom::RomImage>,
     native_rom: Option<crate::rom::RomImage>,
@@ -77,6 +80,15 @@ macro_rules! ram_word_accessors {
 
 // Oracle snapshots own separate allocations, keeping construction stack usage bounded.
 impl Game {
+    pub(crate) fn world(&self) -> &Arc<WorldBinding> {
+        &self.world
+    }
+
+    /// Legacy files have no world identity and support only the canonical world.
+    pub fn supports_legacy_persistence(&self) -> bool {
+        self.world.is_canonical_legacy()
+    }
+
     /// APU upload flag at $7E:0617.
     pub fn uploading_apu(&self) -> bool {
         self.g_ram[0x617] != 0 || self.g_ram[0x618] != 0
@@ -714,7 +726,19 @@ impl Game {
     /// Preserve the original zero initialization, including RM_BOTH (0).
     #[forbid(unsafe_code)]
     pub fn new() -> Box<Self> {
+        Self::with_world(WorldBinding::canonical_legacy())
+    }
+
+    /// Construct the actual game with a validated immutable world binding.
+    #[forbid(unsafe_code)]
+    pub fn with_world(world: Arc<WorldBinding>) -> Box<Self> {
+        let run_mode = if world.is_canonical_legacy() {
+            crate::cpu_infra::RM_BOTH
+        } else {
+            crate::cpu_infra::RM_MINE
+        };
         Box::new(Self {
+            world,
             g_ram: [0; 131072],
             loaded_rom: None,
             native_rom: None,
@@ -736,7 +760,7 @@ impl Game {
             g_rtl_syncall: None,
             state_recorder: StateRecorder::default(),
             apu_queue: Default::default(),
-            g_runmode: 0,
+            g_runmode: run_mode as u8,
             g_snes: core::ptr::null_mut(),
             g_cpu: core::ptr::null_mut(),
             g_calling_asm_from_c: false,
@@ -778,9 +802,12 @@ pub struct GameOwner {
 unsafe impl Sync for GameOwner {}
 impl GameOwner {
     pub fn new() -> Box<Self> {
+        Self::with_world(WorldBinding::canonical_legacy())
+    }
+    pub fn with_world(world: Arc<WorldBinding>) -> Box<Self> {
         Box::new(Self {
             gate: std::sync::Mutex::new(()),
-            game: std::cell::UnsafeCell::new(Game::new()),
+            game: std::cell::UnsafeCell::new(Game::with_world(world)),
         })
     }
     pub fn with<R>(&self, operation: impl FnOnce(&mut Game) -> R) -> R {

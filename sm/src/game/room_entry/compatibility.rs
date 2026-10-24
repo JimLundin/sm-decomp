@@ -1,0 +1,377 @@
+//! Exact retained room-entry effects on the one Session runtime boundary.
+use super::{api::EntryWait, content::*, effects::*};
+use crate::{
+    game::{self, room_mechanisms, session_runtime::Runtime},
+    ram_map::words as W,
+    snes::registers::*,
+};
+fn external_address(field: ExternalField) -> usize {
+    match field {
+        ExternalField::GameMode => W::game_state,
+        ExternalField::DebugMinimap => W::debug_disable_minimap,
+        ExternalField::TimerStatus => W::timer_status,
+        ExternalField::PreviousPlayerX => W::samus_prev_x_pos,
+        ExternalField::PreviousPlayerY => W::samus_prev_y_pos,
+        ExternalField::MusicDataIndex => W::music_data_index,
+        ExternalField::MusicTrackIndex => W::music_track_index,
+        ExternalField::HdmaEnabled => W::hdma_objects_enable_flag,
+        ExternalField::NextIrqHandler => W::irqhandler_next_handler,
+        ExternalField::FxTilemap => W::fx_tilemap_ptr,
+        ExternalField::BackgroundCopyByte => 0x5e,
+        ExternalField::DisplayAndObjectSelect => 0x51,
+        ExternalField::LoadingLowByte => 0x5f7,
+    }
+}
+fn camera_address(field: CameraField) -> usize {
+    match field {
+        CameraField::Layer1X => W::layer1_x_pos,
+        CameraField::Layer1Y => W::layer1_y_pos,
+        CameraField::Layer2X => W::layer2_x_pos,
+        CameraField::Layer2Y => W::layer2_y_pos,
+        CameraField::Bg1XOffset => W::bg1_x_offset,
+        CameraField::Bg1YOffset => W::bg1_y_offset,
+        CameraField::Bg2XScroll => W::bg2_x_scroll,
+        CameraField::Bg2YScroll => W::bg2_y_scroll,
+        CameraField::Bg1Hofs => W::reg_BG1HOFS,
+        CameraField::Bg1Vofs => W::reg_BG1VOFS,
+        CameraField::Bg2Hofs => W::reg_BG2HOFS,
+        CameraField::Bg2Vofs => W::reg_BG2VOFS,
+    }
+}
+impl EntryHost for Runtime<'_> {}
+impl EntryEffects for Runtime<'_> {
+    fn read_external(&mut self, field: ExternalField) -> u16 {
+        let at = external_address(field);
+        match field {
+            ExternalField::BackgroundCopyByte | ExternalField::LoadingLowByte => {
+                u16::from(self.byte(at))
+            }
+            _ => self.word(at),
+        }
+    }
+    fn write_external(&mut self, field: ExternalField, value: u16) {
+        let at = external_address(field);
+        match field {
+            ExternalField::BackgroundCopyByte | ExternalField::LoadingLowByte => {
+                self.set_byte(at, value as u8)
+            }
+            _ => self.write_slice_le(at, value),
+        }
+    }
+    fn read_camera(&mut self, field: CameraField) -> u16 {
+        self.word(camera_address(field))
+    }
+    fn write_camera(&mut self, field: CameraField, value: u16) {
+        self.write_slice_le(camera_address(field), value);
+    }
+    fn call(&mut self, effect: LeafEffect) {
+        self.foreign(|game| unsafe {
+            match effect {
+                LeafEffect::QueueDoorSound => {
+                    game::sm_80::QueueSfx2_Max15(0x71, game);
+                }
+                LeafEffect::ResetSoundQueues => {
+                    game::sm_82::ResetSoundQueues(game);
+                }
+                LeafEffect::ClearTransitionSounds => {
+                    game::sm_82::ClearSoundsWhenGoingThroughDoor(game);
+                }
+                LeafEffect::SelectEnemies => {
+                    game::enemy_scheduling::select_enemies(game);
+                }
+                LeafEffect::RunEnemies => {
+                    game::enemy_scheduling::run_enemies(game);
+                }
+                LeafEffect::DrawScene => {
+                    game::scene_drawing::draw_scene(game);
+                }
+                LeafEffect::EnsureSamusDrawn => {
+                    game::sm_82::EnsureSamusDrawnEachFrame(game);
+                }
+                LeafEffect::QueueEnemyTiles => {
+                    game::scene_drawing::queue_enemy_tiles(game);
+                }
+                LeafEffect::DrawTimer => {
+                    game::sm_80::DrawTimer(game);
+                }
+                LeafEffect::SpinJumpSound => {
+                    game::sm_82::PlaySpinJumpSoundIfSpinJumping(game);
+                }
+                LeafEffect::SetLiquidPhysics => {
+                    game::sm_90::SetLiquidPhysicsType(game);
+                }
+                LeafEffect::StopHdmaEffects => {
+                    game::sm_88::sub_8882AC(game);
+                }
+                LeafEffect::InitializeRoomSpecialEffects => {
+                    game::sm_88::InitializeSpecialEffectsForNewRoom(game);
+                }
+                LeafEffect::LoadFxHeader => {
+                    game::sm_89::LoadFXHeader(game);
+                }
+                LeafEffect::InitializeEnemies => {
+                    game::enemy_population_ram::initialize_room(game);
+                }
+                LeafEffect::LoadEnemyGraphics => {
+                    game::room_state::load_enemy_graphics(game);
+                }
+                LeafEffect::LoadRoomMusic => {
+                    game::music::LoadRoomMusic(game);
+                }
+                LeafEffect::UpdateMusicTrack => {
+                    game::music::UpdateMusicTrackIndex(game);
+                }
+                LeafEffect::LoadChangedMusic => {
+                    game::music::LoadNewMusicTrackIfChanged(game);
+                }
+                LeafEffect::UpdateBeamTilesAndPalette => {
+                    game::sm_90::UpdateBeamTilesAndPalette(game);
+                }
+                LeafEffect::LoadSpritePalettes => {
+                    game::room_state::load_sprite_palettes(game);
+                }
+                LeafEffect::LoadRoomAssets => {
+                    game::enemy_population_ram::load_room_assets(game);
+                }
+                LeafEffect::LoadSuitTargetPalette => {
+                    game::sm_91::Samus_LoadSuitTargetPalette(game);
+                }
+                LeafEffect::SpawnBg3ScrollHdma => {
+                    game::sm_88::SpawnBG3ScrollHdmaObject(game);
+                }
+                LeafEffect::SaveExploredMap => {
+                    game::sm_80::SaveExploredMapTilesToSaved(game);
+                }
+                LeafEffect::LoadExploredMap => {
+                    game::sm_80::LoadMirrorOfExploredMapTiles(game);
+                }
+                LeafEffect::MarkElevatorsUsed => {
+                    game::sm_80::SetElevatorsAsUsed(game);
+                }
+                LeafEffect::EnableNmi => {
+                    game::sm_80::EnableNMI(game);
+                }
+                LeafEffect::DisableNmi => {
+                    game::sm_80::DisableNMI(game);
+                }
+                LeafEffect::EnableIrq => {
+                    game::sm_80::EnableIrqInterrupts(game);
+                }
+                LeafEffect::DisableIrq => {
+                    game::sm_80::DisableIrqInterrupts(game);
+                }
+                LeafEffect::WaitVblankClearHdma => {
+                    game::sm_88::WaitUntilEndOfVblankAndClearHdma(game);
+                }
+                LeafEffect::WaitVblankEnableIrq => {
+                    game::sm_82::WaitUntilEndOfVblankAndEnableIrq(game);
+                }
+            }
+        });
+    }
+    fn camera_call(&mut self, effect: CameraEffect) -> u8 {
+        self.foreign(|game| unsafe {
+            match effect {
+                CameraEffect::CalculateLayer2X => game::sm_80::CalculateLayer2Xpos(game),
+                CameraEffect::CalculateLayer2Y => game::sm_80::CalculateLayer2Ypos(game),
+                CameraEffect::CalculateLayer2AndScrolls => {
+                    game::sm_80::CalculateLayer2PosAndScrollsWhenScrolling(game);
+                    0
+                }
+                CameraEffect::CalculateBgScrolls => {
+                    game::sm_80::CalculateBgScrolls(game);
+                    0
+                }
+                CameraEffect::DisplayVisibleRoom => {
+                    game::sm_80::DisplayViewablePartOfRoom(game);
+                    0
+                }
+                CameraEffect::FixDoorMovingUp => {
+                    game::sm_80::FixDoorsMovingUp(game);
+                    0
+                }
+                CameraEffect::SetupDoorScroll => {
+                    game::sm_80::DoorTransitionScrollingSetup(game);
+                    0
+                }
+                CameraEffect::StepDoorScrollRight => game::sm_80::DoorTransition_Right(game),
+                CameraEffect::StepDoorScrollLeft => game::sm_80::DoorTransition_Left(game),
+                CameraEffect::StepDoorScrollDown => game::sm_80::DoorTransition_Down(game),
+                CameraEffect::StepDoorScrollUp => game::sm_80::DoorTransition_Up(game),
+            }
+        })
+    }
+    fn palette_fade(&mut self) -> u8 {
+        self.foreign(|game| unsafe { game::sm_82::AdvancePaletteFadeForAllPalettes_0xc(game) })
+    }
+    fn wait(&mut self, cause: EntryWait) -> u8 {
+        self.foreign(|game| unsafe {
+            match cause {
+                EntryWait::Nmi => game::sm_80::WaitForNMI_Async(game),
+                EntryWait::Music => game::sm_80::Play20FramesOfMusic_Async(game),
+                EntryWait::Mechanisms => room_mechanisms::run_door(game),
+            }
+        })
+    }
+    fn sfx_empty(&mut self, queue: SfxQueue) -> bool {
+        let index = match queue {
+            SfxQueue::One => 0,
+            SfxQueue::Two => 1,
+            SfxQueue::Three => 2,
+        };
+        self.foreign(|game| game.sfx_queue_is_empty(index))
+    }
+    fn queued_music(&mut self) -> u8 {
+        self.foreign(game::music::HasQueuedMusic)
+    }
+    fn samus_command(&mut self, command: u16) {
+        self.foreign(|game| unsafe { game::sm_90::CallSomeSamusCode(command, game) });
+    }
+    fn spawn_initial_hardcoded_object(&mut self) {
+        room_mechanisms::creation::spawn(
+            self,
+            room_mechanisms::host::SpawnSource::Hardcoded {
+                x: 8,
+                y: 8,
+                header: 0xb7eb,
+            },
+            &mut room_mechanisms::host::Contact::Absent,
+        );
+    }
+    fn close_door(&mut self) {
+        room_mechanisms::creation::close_door(self);
+    }
+    fn write_scroll_byte(&mut self, cell: u8, value: u8) {
+        self.set_byte(0xcd20 + usize::from(cell), value);
+    }
+    fn write_scroll_pair(&mut self, byte_offset: u16, value: [u8; 2]) {
+        self.write_slice(0xcd20 + usize::from(byte_offset), &value);
+    }
+    fn device_word(&mut self, register: DeviceWord, value: u16) {
+        let reg = match register {
+            DeviceWord::VramIncrement => VMAIN,
+            DeviceWord::Dma1Mode => DMAP1,
+            DeviceWord::Dma1SourceLow => A1T1L,
+            DeviceWord::Dma1SourceBank => A1B1,
+            DeviceWord::Dma1Count => DAS1L,
+            DeviceWord::DmaEnable => MDMAEN,
+        };
+        self.foreign(|game| unsafe { crate::rtl::WriteRegWord(reg as u16, value, game) });
+    }
+    fn device_byte(&mut self, register: DeviceByte, value: u8) {
+        let reg = match register {
+            DeviceByte::VramIncrement => VMAIN,
+            DeviceByte::DmaEnable => MDMAEN,
+        };
+        self.foreign(|game| unsafe { crate::rtl::WriteReg(reg as u16, value, game) });
+    }
+    fn clear_buffer(&mut self, operation: BufferClear) {
+        self.foreign(|game| unsafe {
+            match operation {
+                BufferClear::InitialLevel => {
+                    word_transfers!(game, descending, 12800;
+                    le(level_data, 12799) <- value(0x8000));
+                }
+                BufferClear::DoorLevel => {
+                    word_transfers!(game, descending, 3200;
+                    le(level_data, 3199) <- value(0x8000),
+                    native(0x13200) <- value(0x8000),
+                    native(0x14b00) <- value(0x8000),
+                    native(0x16400) <- value(0x8000));
+                }
+                BufferClear::InitialFx => game::room_backgrounds::clear_fx(LoadMode::Initial, game),
+                BufferClear::InitialBg2 => {
+                    game::room_backgrounds::clear_bg2(LoadMode::Initial, game)
+                }
+                BufferClear::DoorFx => game::room_backgrounds::clear_fx(LoadMode::Door, game),
+                BufferClear::DoorBg2 => game::room_backgrounds::clear_bg2(LoadMode::Door, game),
+                BufferClear::DoorDualBg => game::room_backgrounds::clear_dual_bg(game),
+                BufferClear::TransitionXray => {
+                    word_transfers!(game, descending, 256;
+                    little(0x9dfe) <- value(0), little(0x9ffe) <- value(0));
+                }
+            }
+        });
+    }
+    fn invalid_stage(&mut self, _full_address: u32) -> u8 {
+        self.foreign(|game| unsafe { crate::rtl::Unreachable(game) as u8 })
+    }
+    fn device_vram_address(&mut self, destination: VramDestination) {
+        let value = destination.compatibility_word();
+        self.foreign(|game| unsafe { crate::rtl::WriteRegWord(VMADDL as u16, value, game) });
+    }
+    fn decompress(&mut self, source: AssetSource, destination: InstallBuffer) {
+        let source = source.compatibility_address(&self.session().world);
+        let at = match destination {
+            InstallBuffer::Tiles => 0x2000,
+            InstallBuffer::CreTiles => 0x7000,
+            InstallBuffer::Palette => 0xc200,
+            InstallBuffer::TileTablePrimary => 0xa000,
+            InstallBuffer::TileTableAfterCre => 0xa800,
+            InstallBuffer::Background(target) => target.compatibility_offset(),
+        };
+        self.foreign(|game| game::decompression::decompress_to_ram(source, at, game));
+    }
+    fn decompress_vram(&mut self, source: AssetSource, destination: VramDecodeTarget) {
+        let source = source.compatibility_address(&self.session().world);
+        let target = match destination {
+            VramDecodeTarget::MainTiles => 0,
+            VramDecodeTarget::Cre => 0x5000,
+        };
+        self.foreign(|game| unsafe { game::sm_80::DecompressToVRAM(source, target, game) });
+    }
+    fn copy_vram(&mut self, destination: VramDestination, source: AssetSource, bytes: u16) {
+        let destination = destination.compatibility_word();
+        let source = source.compatibility_address(&self.session().world);
+        self.foreign(|game| unsafe {
+            game::sm_80::CopyToVramNow(destination, source, bytes, game)
+        });
+    }
+    fn decode_level_and_copy_planes(&mut self, source: AssetSource) {
+        let source = source.compatibility_address(&self.session().world);
+        self.foreign(|game| game::room_state::decompress_level(source, game));
+    }
+    fn setup(&mut self, action: SetupAction) {
+        let (kind, code) = action.compatibility_code(&self.session().world);
+        self.foreign(|game| unsafe {
+            match kind {
+                SetupKind::Room => game::sm_8f::CallRoomSetupCode(0x8f0000 | u32::from(code), game),
+                SetupKind::Door => {
+                    game::sm_8f::CallDoorDefSetupCode(0x8f0000 | u32::from(code), game)
+                }
+            }
+        });
+    }
+    fn spawn_room_object(&mut self, cursor: &ObjectCursor) {
+        match cursor.spawn_object(&self.session().world) {
+            SpawnObject::Legacy(address) => {
+                room_mechanisms::creation::spawn(
+                    self,
+                    room_mechanisms::host::SpawnSource::Room {
+                        entry: room_mechanisms::host::ProgramCursor(address),
+                    },
+                    &mut room_mechanisms::host::Contact::Absent,
+                );
+            }
+            SpawnObject::Prepared {
+                x,
+                y,
+                definition,
+                argument,
+            } => {
+                self.session_mut().spawn_scratch.header =
+                    u16::from_le_bytes(definition.to_ne_bytes());
+                self.session_mut().spawn_scratch.coordinates = u16::from_le_bytes([x, y]);
+                self.session_mut().spawn_scratch.argument =
+                    u16::from_le_bytes(argument.to_ne_bytes());
+                room_mechanisms::creation::spawn(
+                    self,
+                    room_mechanisms::host::SpawnSource::Room {
+                        entry: room_mechanisms::host::ProgramCursor(0x12),
+                    },
+                    &mut room_mechanisms::host::Contact::Absent,
+                );
+            }
+        }
+    }
+}

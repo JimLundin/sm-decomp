@@ -254,6 +254,10 @@ pub unsafe fn RtlReset(mode: i32, game: &mut Game) {
 }
 pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Game) {
     unsafe {
+        if !game.supports_legacy_persistence() {
+            eprintln!("StateRecorder_Load: legacy persistence is unavailable for a prepared world");
+            return;
+        }
         let mut hdr: [u32; 16] = [0i32 as u32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let is_old: bool = false_0 != 0;
         let mut is_reset: bool = false_0 != 0;
@@ -398,6 +402,10 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
 }
 pub unsafe fn StateRecorder_Save(f: *mut FILE, saving_with_bug: bool, game: &mut Game) {
     unsafe {
+        if !game.supports_legacy_persistence() {
+            eprintln!("StateRecorder_Save: legacy persistence is unavailable for a prepared world");
+            return;
+        }
         let mut hdr: [u32; 16] = [0i32 as u32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         let mut arr = RecordingBytes::default();
         snes_saveload(game.g_snes, &mut SnapshotIo::Save(&mut arr));
@@ -581,6 +589,12 @@ pub fn RtlStopReplay(game: &mut Game) {
 }
 pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {
     unsafe {
+        if !game.supports_legacy_persistence()
+            && u32::from(game.g_runmode) != crate::cpu_infra::RM_MINE
+        {
+            eprintln!("RtlRunFrame: CPU authority is unavailable for a prepared world");
+            return false;
+        }
         // TAS verification preserves every recorded button, including opposites.
         if !game.VERIFY_ACTIVE {
             if inputs & 0x30 == 0x30 {
@@ -626,6 +640,10 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {
 }
 pub unsafe fn RtlSaveSnapshot(filename: *const c_char, saving_with_bug: bool, game: &mut Game) {
     unsafe {
+        if !game.supports_legacy_persistence() {
+            eprintln!("RtlSaveSnapshot: legacy persistence is unavailable for a prepared world");
+            return;
+        }
         let f = fopen(filename, c"wb".as_ptr()) as *mut FILE;
         RtlApuLock();
         RtlSaveMusicStateToRam_Locked(game, true);
@@ -640,6 +658,10 @@ static kBugSaves: crate::types::ImmutableCStringPointers<7> = crate::types::immu
 };
 pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, game: &mut Game) {
     unsafe {
+        if !game.supports_legacy_persistence() {
+            eprintln!("RtlSaveLoad: legacy persistence is unavailable for a prepared world");
+            return;
+        }
         let mut name: [c_char; 128] = [0; 128];
         if slot >= 256 {
             let i: i32 = slot - 256i32;
@@ -760,6 +782,10 @@ pub(crate) unsafe fn rom_record(bank: u8, addr: u16, game: &mut Game) -> crate::
             game.g_fail = true;
             #[cfg(sm_verify_dll)]
             crate::sprite_effect_observer::diagnostic(address, game);
+            #[cfg(sm_verify_dll)]
+            crate::room_reference_observer::diagnostic(address, game);
+            #[cfg(sm_verify_dll)]
+            crate::room_background_observer::diagnostic(address, game);
         }
         crate::rom::RomRecord {
             image: game
@@ -796,6 +822,8 @@ pub unsafe fn RomPtr(addr: u32, game: &mut Game) -> *const u8 {
         if addr & 0x8000 == 0 {
             printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), addr);
             game.g_fail = true_0 != 0;
+            #[cfg(sm_verify_dll)]
+            crate::room_contact_start_observer::diagnostic(addr, game);
         }
         game.legacy_native_rom_ptr()
             .offset(crate::rtl::lorom_offset(addr))
@@ -823,6 +851,8 @@ pub(crate) unsafe fn write_register_and_mirror(
 pub unsafe fn WriteReg(reg: u16, value: u8, game: &mut Game) {
     unsafe {
         snes_write(game.g_snes, reg as u32, value, game);
+        #[cfg(sm_verify_dll)]
+        crate::room_background_observer::written(reg, value, game);
     }
 }
 /// Magnitude of a signed SNES word; 0x8000 remains the unsigned value 0x8000.
@@ -1047,6 +1077,10 @@ pub unsafe fn RtlCheat(c: c_char, game: &mut Game) {
 }
 pub unsafe fn RtlReadSram(game: &mut Game) {
     unsafe {
+        if !game.supports_legacy_persistence() {
+            eprintln!("RtlReadSram: legacy persistence is unavailable for a prepared world");
+            return;
+        }
         let f = fopen(c"saves/sm.srm".as_ptr(), c"rb".as_ptr()) as *mut FILE;
         if !f.is_null() {
             let mut bytes = game.g_sram.bytes(0..8192);
@@ -1067,6 +1101,10 @@ pub unsafe fn RtlReadSram(game: &mut Game) {
 pub unsafe fn RtlWriteSram(game: &mut Game) {
     unsafe {
         if game.VERIFY_ACTIVE {
+            return;
+        }
+        if !game.supports_legacy_persistence() {
+            eprintln!("RtlWriteSram: legacy persistence is unavailable for a prepared world");
             return;
         }
         rename(c"saves/sm.srm".as_ptr(), c"saves/sm.srm.bak".as_ptr());

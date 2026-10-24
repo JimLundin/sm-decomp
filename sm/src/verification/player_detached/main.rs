@@ -80,7 +80,9 @@ struct World {
 impl Default for World {
     fn default() -> Self {
         Self {
-            player: Default::default(),
+            player: game::session::Session::with_world(
+                game::room_entry::world::WorldBinding::canonical_legacy(),
+            ),
             player_inputs: Default::default(),
             flag_external: Default::default(),
         }

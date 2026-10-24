@@ -3,7 +3,7 @@ mod actor_runtime;
 pub(crate) mod coordinates;
 mod effects_runtime;
 mod graphics_runtime;
-mod host;
+pub(crate) mod host;
 mod runtime;
 use crate::game::session_runtime::Runtime;
 use host::Effects;

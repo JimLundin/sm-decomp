@@ -68,10 +68,13 @@ pub(super) fn run(game: &mut Game) -> bool {
         }
         assert_eq!(game.g_ram.as_slice(), expected);
         assert_eq!(
-            crate::game::session_encoding::decode(&game.g_ram)
-                .visual
-                .animated_tiles
-                .selected,
+            crate::game::session_encoding::decode(
+                &game.g_ram,
+                std::sync::Arc::clone(game.world()),
+            )
+            .visual
+            .animated_tiles
+            .selected,
             0x3456
         );
     }));

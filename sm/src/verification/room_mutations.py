@@ -10,6 +10,8 @@ import subprocess
 import sys
 import tempfile
 
+import room_entry_mutations
+
 
 INVENTORY = "sm/src/game/item_pickups.rs"
 SESSION_RUNTIME = "sm/src/game/session_runtime.rs"
@@ -82,7 +84,7 @@ MUTATIONS = (
         "omit_native_return_import", 1440, "native return import: native word 0",
         ((SESSION_RUNTIME,
           "        self.state = Some(import_session(self.game));",
-          "        self.state = Some(encoding::decode(&self.game.g_ram));"),),
+          "        self.state = Some(encoding::decode(&self.game.g_ram, std::sync::Arc::clone(self.game.world())));"),),
     ),
     (
         "retain_native_owner_on_callback_panic", 1441,
@@ -307,6 +309,9 @@ def main():
         raise RuntimeError("mutation builds and execution are restricted to GitHub CI")
     if os.name != "nt":
         raise RuntimeError("room scheduler mutation DLL requires Windows")
+    if len(sys.argv) == 4 and sys.argv[1] == "--entry-capture":
+        room_entry_mutations.capture_child(Path(sys.argv[2]).resolve(), sys.argv[3])
+        return
     if len(sys.argv) == 4 and sys.argv[1] == "--capture":
         case = int(sys.argv[3])
         if case not in EXPECTED:
@@ -331,6 +336,7 @@ def main():
         build_and_capture(root, work, paths, "baseline")
         for mutation in MUTATIONS:
             build_and_capture(root, work, paths, mutation[0], mutation)
+        room_entry_mutations.run_checks(root, work, paths, run, copy_tracked)
     print("room/native/restore mutation checks: 9/9 killed; all nine frozen baselines passed", flush=True)
 
 

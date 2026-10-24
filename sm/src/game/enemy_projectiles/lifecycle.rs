@@ -11,7 +11,7 @@ pub(super) fn set_enabled(h: &mut impl Host, enabled: bool) {
         flags & !0x8000
     };
 }
-pub(super) fn clear(h: &mut impl Host) {
+pub(crate) fn clear(h: &mut impl Host) {
     for slot in h.session_mut().enemy_projectiles.slots.iter_mut().rev() {
         slot.definition = 0;
     }
@@ -88,7 +88,7 @@ pub(super) fn process(h: &mut impl Host, handle: u16) {
     enemy!(h, index, program = script.bank_address().wrapping_add(4));
     h.probe("eproj.frame.saved");
 }
-pub(super) fn advance(h: &mut impl Host) {
+pub(crate) fn advance(h: &mut impl Host) {
     if h.session().enemy_projectiles.flags & 0x8000 == 0 {
         return;
     }

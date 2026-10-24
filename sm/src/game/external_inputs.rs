@@ -35,8 +35,6 @@ pub struct ExternalInputs {
     pub camera_x: u16,
     pub background_page_x: u16,
     pub power_bomb_active: u16,
-    pub door_definition: u16,
-    pub door_direction: u16,
     pub camera_y: u16,
     pub frame: u16,
     pub ceres: u16,

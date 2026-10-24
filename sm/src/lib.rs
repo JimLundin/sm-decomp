@@ -393,6 +393,7 @@ pub mod game {
     pub(crate) mod palette_effects;
     pub mod progress_flags;
     pub(crate) mod room_backgrounds;
+    pub mod room_entry;
     pub(crate) mod room_mechanisms;
     pub(crate) mod room_scrolls;
     pub mod room_state;
@@ -705,3 +706,54 @@ pub fn verify_gameplay_flags_kraid_case(id: u32) -> Option<Vec<u8>> {
 pub mod kraid_flags_case;
 #[path = "verification/kraid_flags_observer.rs"]
 pub mod kraid_flags_observer;
+
+#[path = "verification/room_reference_cases.rs"]
+pub(crate) mod room_reference_cases;
+#[path = "verification/room_reference_observer.rs"]
+pub(crate) mod room_reference_observer;
+pub fn verify_room_reference_case(id: u32) -> Option<Vec<u8>> {
+    room_reference_cases::capture_case(id, room_reference_cases::run)
+}
+
+#[path = "verification/room_contact_start_cases.rs"]
+pub(crate) mod room_contact_start_cases;
+#[path = "verification/room_contact_start_observer.rs"]
+pub(crate) mod room_contact_start_observer;
+pub fn verify_room_contact_start_case(id: u32) -> Option<Vec<u8>> {
+    room_contact_start_cases::capture_case(id, room_contact_start_cases::run)
+}
+
+#[path = "verification/room_runtime_checks.rs"]
+pub(crate) mod room_runtime_checks;
+#[path = "verification/room_world_cases.rs"]
+pub(crate) mod room_world_cases;
+#[path = "verification/room_world_fixture.rs"]
+pub(crate) mod room_world_fixture;
+#[path = "verification/room_world_resources.rs"]
+pub(crate) mod room_world_resources;
+pub fn verify_room_runtime_guard() -> bool {
+    room_runtime_checks::run()
+}
+pub fn verify_room_world_owner(id: u32) -> Box<game_state::GameOwner> {
+    room_world_cases::owner(id)
+}
+pub fn verify_room_world_case(id: u32, owner: &game_state::GameOwner) -> Option<Vec<u8>> {
+    room_world_cases::capture(id, owner)
+}
+
+#[path = "verification/room_background_cases.rs"]
+pub(crate) mod room_background_cases;
+#[path = "verification/room_background_observer.rs"]
+pub(crate) mod room_background_observer;
+#[path = "verification/room_background_offset_case.rs"]
+pub(crate) mod room_background_offset_case;
+#[path = "verification/room_background_support.rs"]
+pub(crate) mod room_background_support;
+
+pub fn verify_room_background_case(id: u32) -> Option<Vec<u8>> {
+    if id == 37 {
+        room_background_offset_case::capture(room_background_cases::run)
+    } else {
+        room_background_cases::capture_case(id, room_background_cases::run)
+    }
+}

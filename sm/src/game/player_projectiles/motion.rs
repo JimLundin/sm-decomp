@@ -428,7 +428,7 @@ pub(super) fn run(h: &mut impl Host, code: u16, raw: u16) {
         }
     }
 }
-pub(super) fn reset(h: &mut impl Host) {
+pub(crate) fn reset(h: &mut impl Host) {
     for shot in &mut h.session_mut().projectiles.shots {
         shot.trail_time = 0;
         shot.x = 0;

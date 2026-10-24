@@ -991,6 +991,12 @@ pub unsafe fn RunCpuUntilPC(pc1: u32, pc2: u32, game: &mut Game) -> u32 {
 }
 pub unsafe fn RunOneFrameOfGame_Emulated(game: &mut Game) {
     unsafe {
+        if !game.supports_legacy_persistence() {
+            eprintln!(
+                "RunOneFrameOfGame_Emulated: CPU authority is unavailable for a prepared world"
+            );
+            return;
+        }
         let bug_fix_bak: u16 = word!(game.bug_fix_counter);
         let cpu = (*game.g_snes).cpu;
         if (*cpu).k == 0x80 && (*cpu).pc == 0x8459 {
@@ -1084,6 +1090,10 @@ unsafe fn report_first_verify_failure(game: &mut Game) {
 }
 pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
     unsafe {
+        if !game.supports_legacy_persistence() {
+            eprintln!("RunOneFrameOfGame_Both: CPU authority is unavailable for a prepared world");
+            return;
+        }
         (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
         MakeSnapshot(
             &mut game.g_snapshot_before,
@@ -1248,6 +1258,10 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
 }
 pub unsafe fn RtlRunFrameCompare(input: u16, run_what: i32, game: &mut Game) {
     unsafe {
+        if !game.supports_legacy_persistence() && u32::from(game.g_runmode) != RM_MINE {
+            eprintln!("RtlRunFrameCompare: CPU authority is unavailable for a prepared world");
+            return;
+        }
         (*(*game.g_snes).input1).currentState = input;
         if game.g_runmode as i32 == RM_THEIRS as i32 {
             RunOneFrameOfGame_Emulated(game);

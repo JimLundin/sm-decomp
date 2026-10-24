@@ -23,6 +23,9 @@ fn compatibility() -> u64 {
         include_str!("checkpoint.rs"),
         include_str!("../types.rs"),
         include_str!("../initial_state.rs"),
+        include_str!("../game/room_entry/world.rs"),
+        include_str!("../game/session.rs"),
+        include_str!("../game/session_encoding.rs"),
         include_str!("../game/enemy_layouts.rs"),
         include_str!("../verify.rs"),
         include_str!("../verify_dll.rs"),
@@ -419,6 +422,9 @@ pub(super) unsafe fn save(
     completed: usize,
 ) -> Result<(), String> {
     unsafe {
+        if !game.supports_legacy_persistence() {
+            return Err("legacy checkpoints are unavailable for a prepared world".into());
+        }
         let payload = capture(game)?;
         let mut bytes = Vec::from(MAGIC.as_slice());
         for word in [
@@ -452,6 +458,9 @@ pub(super) unsafe fn load(
     inputs: &[u16],
 ) -> Result<usize, String> {
     unsafe {
+        if !game.supports_legacy_persistence() {
+            return Err("legacy checkpoints are unavailable for a prepared world".into());
+        }
         let bytes = std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?;
         if bytes.len() < 56 || &bytes[..8] != MAGIC {
             return Err("not a verifier checkpoint".into());

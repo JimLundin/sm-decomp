@@ -33,8 +33,6 @@ pub enum Field {
     Damage,
     Knockback,
     Facing,
-    Pose,
-    DoorBlocked,
 }
 /// The scan's displacement and geometry have one owner across every setup and retry.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -52,8 +50,8 @@ pub struct Result {
 }
 /// Player and room fields stay live; content and effects are explicit synchronous dependencies.
 pub trait Context {
-    type Door: Copy;
     type Header;
+    fn try_enter_door(&mut self) -> bool;
     fn read(&self, field: Field) -> u16;
     fn write(&mut self, field: Field, value: u16);
     fn position(&self, axis: Axis) -> u16;
@@ -72,10 +70,6 @@ pub trait Context {
     fn special_header(&mut self, bts: u8, solid: bool) -> Self::Header;
     fn bomb_header(&mut self, bts: u8) -> Self::Header;
     fn setup(&mut self, header: Self::Header, displacement: &mut i32) -> u8;
-    fn mark_door_contact(&mut self);
-    fn door(&mut self, bts: u8) -> Self::Door;
-    fn door_has_destination(&mut self, door: Self::Door) -> bool;
-    fn enter_door(&mut self, door: Self::Door);
 }
 pub(crate) fn span(position: u16, radius: u16) -> u16 {
     radius
@@ -234,19 +228,13 @@ fn spike(c: &mut impl Context, s: &mut Scan, axis: Axis) -> u8 {
     solid(c, s, axis, 15)
 }
 fn door(c: &mut impl Context, s: &mut Scan, axis: Axis) -> u8 {
-    c.mark_door_contact();
-    let bts = c.bts(c.read(Field::Block));
-    let door = c.door(bts);
-    if !c.door_has_destination(door) {
-        if c.read(Field::Pose) < 9 {
-            c.write(Field::DoorBlocked, 1);
-        }
-        solid(c, s, axis, 15)
-    } else {
-        c.enter_door(door);
+    if c.try_enter_door() {
         0
+    } else {
+        solid(c, s, axis, 15)
     }
 }
+
 fn special(c: &mut impl Context, s: &mut Scan, axis: Axis, solid_block: bool) -> u8 {
     let bts = c.bts(c.read(Field::Block));
     let header = c.special_header(bts, solid_block);

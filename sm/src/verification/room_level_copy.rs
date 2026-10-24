@@ -49,7 +49,8 @@ pub(crate) fn check_level_copy(case: u32) {
         expected[0x19602..0x19602 + size].copy_from_slice(&raw[2 + size + size / 2..]);
         expected[0x16402..0x16402 + size / 2].copy_from_slice(&raw[2 + size..2 + size + size / 2]);
     }
-    let outcome = catch_unwind(AssertUnwindSafe(|| decompress_level(&mut game)));
+    let source = u32::from_ne_bytes(game.g_ram[0x7bd..0x7c1].try_into().unwrap()) & 0xffffff;
+    let outcome = catch_unwind(AssertUnwindSafe(|| decompress_level(source, &mut game)));
     assert_eq!(
         outcome.is_err(),
         case == 2,
