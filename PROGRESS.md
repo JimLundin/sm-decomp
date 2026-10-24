@@ -48,7 +48,8 @@ flowchart LR
     AXPOP --> AXAUDIT["75 captures / independent audit PASS"]:::done
     AXMOVE --> AXAUDIT
     AX --> AXTABLE["4 table-boundary references<br/>capture + independent audit PASS"]:::done
-    AB --> ACOMPILE["First combined compile<br/>15 integration errors / fixing"]:::failed
+    AB --> ACOMPILE["Combined actor library<br/>format + cargo check PASS"]:::done
+    AB --> ARETIRE["6 old common-actor modules<br/>retired in private candidate"]:::draft
     ACOMPILE --> AVERIFY
     AXTABLE --> AVERIFY
     AXAUDIT --> AVERIFY["Actual routes + oracle + mutations"]:::pending
@@ -59,7 +60,7 @@ flowchart LR
     BORROW --> BCOPY["Actor move out of view<br/>compiler rejects / PASS"]:::done
     BORROW --> BSCOPY["Spawn move out of view<br/>compiler rejects / PASS"]:::done
     AVERIFY --> AA["Caller retirement + adoption"]:::pending
-    class AXTABLE,ACOMPILE changed
+    class ACOMPILE,ARETIRE changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
