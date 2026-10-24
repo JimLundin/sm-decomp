@@ -142,14 +142,19 @@ the same adopted candidate. The2,223-line retirement scope is gross, not promise
 net savings; count the complete replacement and retained adapters separately from
 verification. A declaration, reference capture or outer facade is not adoption.
 
-The isolated owned candidate now contains all nine gameplay implementation files
-plus shared state/content/Runtime integration. Concrete operations replace the
-declaration-only traits; finish_movement composes the four stages. Existing flare
-clearing has one owned Controls implementation. Full formatting, normal-library,
-verifier and backend-free detached-test metadata compilation pass on eed6c4d4.
-No replacement gameplay has executed yet. Caller migration, bank-body retirement
-and adapting the existing captures to actual owned operations proceed in parallel;
-do not count the compiled draft as production adoption or measured net reduction.
+The isolated owned candidate now contains the nine gameplay implementations,
+shared state/content/Runtime integration, actual production caller redirects and
+legacy body/pose-facade retirement. The three repeated four-call chains use one
+finish_movement operation. Existing collision verification callers now invoke
+the owned operations too. Normal and detached metadata compilation pass after
+retirement; reviewed real-core observer integration, verifier compilation, full
+formatting and release DLL build pass on 86b5d30f. All 65 candidate comparisons
+pass with 130 empty child logs: 59 exact prior streams including 11 CPU
+comparisons, 48 animation checks and six pose/history checks.
+The six pose streams also exactly match the frozen predecessor. Minimal
+request/jump, composed interaction and actual caller checks are
+being integrated separately in parallel. No replacement is adopted on main yet;
+full replacement accounting and targeted mutations remain required.
 
 Existing references and in-flight checks remain valid work. The65-case batch now
 passes:59prior captures are byte-identical, including11CPU comparisons, and six

@@ -32,12 +32,14 @@ flowchart LR
     ANIM --> OWNER["One Session owner<br/>integrated draft compiled"]:::draft
     REQUEST --> OWNER
     POSE --> OWNER
-    OWNER --> CALLERS["Production caller migration"]:::active
-    CALLERS --> DELETE["3 repeated chains + legacy bodies<br/>retirement"]:::active
+    OWNER --> CALLERS["Production callers redirected<br/>draft integrated"]:::draft
+    CALLERS --> DELETE["3 repeated chains consolidated<br/>legacy bodies + pose facade removed"]:::draft
     DELETE --> ADOPT["Complete subsystem adopted<br/>behavior + mutations pass"]:::pending
-    CHECKS["Targeted verification<br/>parallel"]:::active --> ADOPT
+    DELETE --> BUILD["Release DLL + formatting<br/>PASS / 86b5d30f"]:::done
+    BUILD --> COMPARE["65 owned/reference comparisons<br/>PASS / retired candidate"]:::done --> ADOPT
+    CHECKS["Composed interaction + caller checks<br/>parallel"]:::active --> ADOPT
     ADOPT --> NEXT["Longer shared ownership<br/>fewer RAM transfers"]:::pending
-    class ANIM,REQUEST,POSE,OWNER,CALLERS,DELETE,ADOPT,CHECKS,NEXT changed
+    class CALLERS,DELETE,BUILD,COMPARE,CHECKS changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
