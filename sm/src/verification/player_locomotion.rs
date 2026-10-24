@@ -6,7 +6,7 @@ use crate::{
     initial_state::InitialState, player_transitions_rust_observer as observer, rom::RomImage,
 };
 pub const FIRST: u32 = 4000;
-pub const LAST: u32 = 4048;
+pub const LAST: u32 = 4082;
 fn put(g: &mut Game, at: usize, v: u16) {
     g.g_ram[at..at + 2].copy_from_slice(&v.to_le_bytes());
 }
@@ -66,7 +66,13 @@ fn seed(id: u32, g: &mut Game) -> (RomImage, RomImage, Vec<u8>, Vec<u8>) {
     author(&loaded, 0x90a514, &[0; 10], &mut lm);
     g.register_rom(loaded.clone());
     g.register_native_rom(native.clone());
-    let local = id - FIRST;
+    let seed_id = match id {
+        4049 => 4030,
+        4050 => 4031,
+        4051..=4082 => 4001,
+        _ => id,
+    };
+    let local = seed_id - FIRST;
     let selector = if local < 28 {
         local as u16
     } else {
@@ -209,6 +215,9 @@ fn seed(id: u32, g: &mut Game) -> (RomImage, RomImage, Vec<u8>, Vec<u8>) {
             put(g, 0xb4c, 0x80);
         }
         _ => {}
+    }
+    if id >= 4049 {
+        atmosphere_seed(id, g, &loaded, &native, &mut lm, &mut nm);
     }
     (loaded, native, lm, nm)
 }
@@ -368,8 +377,256 @@ fn check(id: u32, g: &Game, before: &[u8]) {
         _ => {}
     }
 }
-unsafe fn invoke(_id: u32, g: &mut Game) {
+
+// Authored atmosphere lifecycle/content. No copied ROM data or expected algorithm.
+fn atmosphere_seed(
+    id: u32,
+    g: &mut Game,
+    loaded: &RomImage,
+    native: &RomImage,
+    lm: &mut Vec<u8>,
+    nm: &mut Vec<u8>,
+) {
+    for (image, manifest, decoy) in [(loaded, lm, false), (native, nm, true)] {
+        for kind in 0..8u16 {
+            for (address, value) in [
+                (0x908b93, if decoy { 0x9040 } else { 0x9000 }),
+                (0x908bef, if decoy { 1 } else { 3 }),
+                (0x908bff, if decoy { 0x9400 } else { 0x9200 + kind * 0x20 }),
+            ] {
+                author(
+                    image,
+                    address + u32::from(kind) * 2,
+                    &value.to_le_bytes(),
+                    manifest,
+                );
+            }
+            for frame in 0..4u16 {
+                author(
+                    image,
+                    0x909200 + u32::from(kind * 0x20 + frame * 2),
+                    &(if decoy {
+                        0x4000 + kind * 0x100 + frame
+                    } else {
+                        0x7000
+                    })
+                    .to_le_bytes(),
+                    manifest,
+                );
+            }
+        }
+        for frame in 0..256u16 {
+            author(
+                image,
+                0x909000 + u32::from(frame) * 2,
+                &(if decoy { 3 + frame } else { 9 }).to_le_bytes(),
+                manifest,
+            );
+        }
+        for index in 390..=402u16 {
+            author(
+                image,
+                0x92808d + u32::from(index) * 2,
+                &0xa000u16.to_le_bytes(),
+                manifest,
+            );
+        }
+        author(
+            image,
+            0x92a000,
+            &[1, 0, 0, 0, 0, if decoy { 0x99 } else { 0x21 }, 0x43],
+            manifest,
+        );
+    }
+    g.g_ram[0x370..0x390].fill(0xcc);
+    if id <= 4050 {
+        return;
+    }
+    if matches!(id, 4051..=4053) {
+        put(g, w::fx_type, if id == 4053 { 2 } else { 6 });
+        put(g, w::fx_y_pos, 100);
+        put(g, w::lava_acid_y_pos, 135);
+        put(g, w::equipped_items, 0);
+        g.g_ram[0x5b5] = u8::from(id == 4051);
+        return;
+    }
+    if id == 4054 {
+        put(g, w::area_index, 2);
+        put(g, w::input_to_pose_calc, 0x401);
+        return;
+    }
+    let kind = if id <= 4061 { (id - 4054) as u16 } else { 1 };
+    put(g, a::atmospheric_gfx_frame_and_type, kind << 8);
+    put(
+        g,
+        a::atmospheric_gfx_anim_timer,
+        match id {
+            4062 => 0,
+            4063 | 4067 | 4068 => 1,
+            4064 => 0x8000,
+            4065 => 0x8001,
+            4066 => 0xffff,
+            _ => 2,
+        },
+    );
+    put(g, a::atmospheric_gfx_x_pos, 136);
+    put(g, a::atmospheric_gfx_y_pos, 100);
+    match id {
+        4067 => put(g, a::atmospheric_gfx_frame_and_type, 0x102),
+        4068 => put(g, a::atmospheric_gfx_frame_and_type, 0x1ff),
+        4069..=4072 => put(
+            g,
+            a::atmospheric_gfx_x_pos,
+            [3, 4, 259, 260][(id - 4069) as usize],
+        ),
+        4073..=4076 => put(
+            g,
+            a::atmospheric_gfx_y_pos,
+            [3, 4, 259, 260][(id - 4073) as usize],
+        ),
+        4077 => put(g, w::oam_next_ptr, 0x220), // Output overwrites its live cursor.
+        4078 => put(g, w::oam_next_ptr, 0x774), // X store changes the following Y read.
+        4079 => put(g, w::oam_next_ptr, 0x786), // Output aliases owned Samus X/fraction.
+        4080 => {
+            for slot in 0..4 {
+                put(g, a::atmospheric_gfx_frame_and_type + slot * 2, 0x100);
+                put(g, a::atmospheric_gfx_anim_timer + slot * 2, 2);
+                put(
+                    g,
+                    a::atmospheric_gfx_x_pos + slot * 2,
+                    10 + slot as u16 * 10,
+                );
+                put(g, a::atmospheric_gfx_y_pos + slot * 2, 100);
+            }
+        }
+        4081 => {
+            put(g, w::oam_next_ptr, 0x77c);
+            put(g, a::atmospheric_gfx_y_pos, 5);
+        }
+        4082 => {
+            put(g, a::atmospheric_gfx_x_pos, 1);
+            put(g, w::layer1_x_pos, 0xfffd);
+        }
+        _ => {}
+    }
+}
+unsafe fn atmosphere_invoke(id: u32, g: &mut Game) {
+    use crate::game::{player_transitions as transitions, session_runtime::Runtime};
+    if id <= 4050 {
+        unsafe {
+            crate::game::sm_90::Samus_MovementHandler_Normal(g);
+        }
+        assert_ne!(
+            get(g, a::atmospheric_gfx_frame_and_type),
+            0,
+            "atmosphere.lifecycle.footstep_producer"
+        );
+    } else if id <= 4053 {
+        transitions::advance_animation(
+            &mut Runtime::new(g),
+            transitions::state::AnimationStep::Gameplay,
+        );
+        assert_ne!(
+            get(g, a::atmospheric_gfx_frame_and_type),
+            0,
+            "atmosphere.lifecycle.liquid_producer"
+        );
+    } else if id == 4054 {
+        transitions::verify_momentum_action(
+            &mut Runtime::new(g),
+            transitions::state::MomentumAction::from_raw(5),
+        );
+        assert_eq!(
+            get(g, a::atmospheric_gfx_frame_and_type + 4),
+            0x600,
+            "atmosphere.lifecycle.landing_producer"
+        );
+    }
+    for tick in 0..if id <= 4054 { 4 } else { 1 } {
+        transitions::draw_atmospheric(&mut Runtime::new(g));
+        observer::observe(450 + tick, g);
+    }
+    match id {
+        4062 => expect(
+            g,
+            a::atmospheric_gfx_anim_timer,
+            0xffff,
+            "zero timer wraps and waits",
+        ),
+        4063 => expect(
+            g,
+            a::atmospheric_gfx_frame_and_type,
+            0x101,
+            "timer expiry advances frame",
+        ),
+        4064 => expect(
+            g,
+            a::atmospheric_gfx_anim_timer,
+            0x7fff,
+            "signed timer boundary draws",
+        ),
+        4065 => expect(
+            g,
+            a::atmospheric_gfx_frame_and_type,
+            0x100,
+            "delayed activation retains frame",
+        ),
+        4067 => expect(
+            g,
+            a::atmospheric_gfx_frame_and_type,
+            0,
+            "terminal frame retires",
+        ),
+        4068 => expect(
+            g,
+            a::atmospheric_gfx_frame_and_type,
+            0x200,
+            "frame carry retains captured dispatch",
+        ),
+        4073 | 4076 => {
+            assert_eq!(g.g_ram[0x370], 132, "Y clipping retains X write");
+            assert_eq!(g.g_ram[0x371], 0xcc);
+            expect(g, w::oam_next_ptr, 0, "Y clipping leaves cursor");
+        }
+        4077 => expect(
+            g,
+            w::oam_next_ptr,
+            0x224,
+            "captured cursor survives its own alias",
+        ),
+        4078 => expect(
+            g,
+            a::atmospheric_gfx_y_pos,
+            0x8084,
+            "X output precedes live Y reread",
+        ),
+        4079 => expect(g, w::samus_x_pos, 0x6084, "OAM writes publish into Session"),
+        4080 => assert_eq!(
+            [
+                g.g_ram[0x370],
+                g.g_ram[0x374],
+                g.g_ram[0x378],
+                g.g_ram[0x37c]
+            ],
+            [36, 26, 16, 6],
+            "descending slots preserve render order"
+        ),
+        4081 => expect(
+            g,
+            a::atmospheric_gfx_frame_and_type,
+            0x184,
+            "frame sampled before OAM alias",
+        ),
+        _ => {}
+    }
+}
+
+unsafe fn invoke(id: u32, g: &mut Game) {
     unsafe {
+        if id >= 4049 {
+            atmosphere_invoke(id, g);
+            return;
+        }
         crate::game::sm_90::Samus_MovementHandler_Normal(g);
     }
 }

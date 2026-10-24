@@ -88,6 +88,8 @@ impl Default for World {
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Event {
+    AtmosphericTile(usize, u16, u16, u16, u16),
+    SamusSprite(u16, u16, u16),
     EnemySound(u8, u8, u16),
     EnemyRandom,
     EnemyGrapple,

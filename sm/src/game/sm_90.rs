@@ -8,8 +8,8 @@ use crate::game::player_projectiles::initialize;
 pub use crate::game::prelude::*;
 use crate::game::projectile_initialization::Initialization;
 use crate::game::samus_animation::{
-    HandleAtmosphericEffects, PlaySamusFanfare, Samus_Draw, Samus_DrawEchoes,
-    Samus_DrawShinesparkCrashEchoes, Samus_DrawWhenNotAnimatingOrDying,
+    PlaySamusFanfare, Samus_Draw, Samus_DrawEchoes, Samus_DrawShinesparkCrashEchoes,
+    Samus_DrawWhenNotAnimatingOrDying,
 };
 use crate::game::session_runtime::Runtime;
 use crate::game::{
@@ -1426,7 +1426,7 @@ crate::game::callback_dispatch! {
         crate::game::player_projectiles::grapple_flare(game);
         if (word!(game.arm_cannon_drawing_mode) & 0xf) != 0 {
             if (word!(game.arm_cannon_drawing_mode) & 0xf) == 2 {
-                HandleAtmosphericEffects(game);
+                pt::draw_atmospheric(&mut Runtime::new(game));
                 Samus_Draw(game);
                 Samus_ArmCannon_Draw(game);
                 UpdateGrappleBeamTilesAndIncrFlameCtr(game);
@@ -1434,7 +1434,7 @@ crate::game::callback_dispatch! {
                     return;
                 }
             } else {
-                HandleAtmosphericEffects(game);
+                pt::draw_atmospheric(&mut Runtime::new(game));
                 Samus_ArmCannon_Draw(game);
                 Samus_Draw(game);
                 UpdateGrappleBeamTilesAndIncrFlameCtr(game);
@@ -1443,7 +1443,7 @@ crate::game::callback_dispatch! {
                 }
             }
         } else {
-            HandleAtmosphericEffects(game);
+            pt::draw_atmospheric(&mut Runtime::new(game));
             Samus_Draw(game);
             UpdateGrappleBeamTilesAndIncrFlameCtr(game);
             if word!(game.grapple_beam_length) == 0 {
@@ -1483,17 +1483,17 @@ pub unsafe fn sub_90EB55(game: &mut Game) {
     unsafe {
         if (word!(game.arm_cannon_drawing_mode) & 0xf) != 0 {
             if (word!(game.arm_cannon_drawing_mode) & 0xf) == 2 {
-                HandleAtmosphericEffects(game);
+                pt::draw_atmospheric(&mut Runtime::new(game));
                 Samus_Draw(game);
                 Samus_ArmCannon_Draw(game);
             } else {
-                HandleAtmosphericEffects(game);
+                pt::draw_atmospheric(&mut Runtime::new(game));
                 Samus_ArmCannon_Draw(game);
                 Samus_Draw(game);
             }
             Samus_DrawEchoes(game);
         } else {
-            HandleAtmosphericEffects(game);
+            pt::draw_atmospheric(&mut Runtime::new(game));
             Samus_Draw(game);
             Samus_DrawEchoes(game);
         };

@@ -17,6 +17,7 @@ pub(crate) mod state;
 #[cfg(sm_verify_dll)]
 pub(crate) use actions::momentum as verify_momentum_action;
 pub(crate) use animation::advance_animation;
+pub(crate) use atmosphere::draw_atmospheric;
 // Existing finite verification cases exercise the actual private core entries.
 #[cfg(sm_verify_dll)]
 pub(crate) fn verify_interpret(host: &mut impl effects::Host) {

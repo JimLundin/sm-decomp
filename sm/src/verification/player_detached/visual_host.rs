@@ -95,6 +95,26 @@ impl Aliases for Composed {
     }
 }
 impl Effects for Composed {
+    fn draw_samus_sprite(&mut self, index: u16, x: u16, y: u16) {
+        self.events.push(Event::SamusSprite(index, x, y));
+        if let Some(callback) = self.on_sprite_draw {
+            callback(self);
+        }
+    }
+    fn draw_atmospheric_tile(&mut self, slot: usize, kind: u16) {
+        let s = &self.world.player.atmospheric.slots[slot];
+        self.events.push(Event::AtmosphericTile(
+            slot,
+            kind,
+            s.frame_and_kind,
+            s.x,
+            s.y,
+        ));
+        if let Some(callback) = self.on_sprite_draw {
+            callback(self);
+        }
+    }
+
     fn sound(&mut self, channel: u8, limit: u8, sound: u16) {
         self.events.push(Event::Sound(channel, sound));
         if let Some(callback) = self.on_visual_sound {

@@ -613,8 +613,137 @@ fn charge_caller() {
     assert_eq!(h.visual_records, [(Source::Native, 0x9b, 0x98a0)]);
 }
 
+fn atmosphere_fixture(frame: u16, timer: u16) -> Composed {
+    let mut h = Composed::new();
+    for kind in 0..9 {
+        h.word(0x90, 0x8b93 + kind * 2, 0x9000);
+        h.word(0x90, 0x8bef + kind * 2, 3);
+    }
+    h.transition_contract.loaded_image = Some(h.image.clone());
+    h.image = super::RomImage::zeroed(0x100000);
+    h.word(0x90, 0x9000, 7);
+    h.word(0x90, 0x9002, 8);
+    h.word(0x90, 0x9004, 9);
+    h.word(0x90, 0x91fe, 10);
+    let slot = &mut h.world.player.atmospheric.slots[0];
+    slot.frame_and_kind = frame;
+    slot.remaining = timer;
+    slot.x = 136;
+    slot.y = 100;
+    h
+}
+fn atmosphere_boundaries() {
+    use super::game::player_transitions::draw_atmospheric;
+    for (frame, timer, next, remaining, draws) in [
+        (0x100, 0, 0x100, 0xffff, 0),
+        (0x100, 1, 0x101, 7, 1),
+        (0x100, 0x8000, 0x100, 0x7fff, 1),
+        (0x100, 0x8001, 0x100, 7, 1),
+        (0x100, 0xffff, 0x100, 0xfffe, 0),
+        (0x102, 1, 0, 9, 0),
+        (0x1ff, 1, 0x200, 10, 1),
+    ] {
+        let mut h = atmosphere_fixture(frame, timer);
+        draw_atmospheric(&mut h);
+        let slot = &h.world.player.atmospheric.slots[0];
+        assert_eq!(
+            (slot.frame_and_kind, slot.remaining, h.events.len()),
+            (next, remaining, draws),
+            "atmosphere.boundary.{frame}.{timer}"
+        );
+        if draws != 0 {
+            assert_eq!(h.events, [Event::AtmosphericTile(0, 1, next, 136, 100)]);
+        }
+    }
+}
+fn atmosphere_live() {
+    use super::game::{player_transitions::draw_atmospheric, visual_host::Source};
+    let mut h = atmosphere_fixture(0x100, 1);
+    h.on_visual_record = Some(|h, source, bank, at| {
+        assert_eq!((source, bank, at), (Source::Native, 0x90, 0x9000));
+        assert_eq!(h.world.player.atmospheric.slots[0].remaining, 0);
+        h.world.player.atmospheric.slots[0].frame_and_kind = 0x700;
+    });
+    draw_atmospheric(&mut h);
+    assert_eq!(
+        h.events,
+        [Event::AtmosphericTile(0, 1, 0x701, 136, 100)],
+        "atmosphere.live.captured_kind_live_frame"
+    );
+    let mut h = atmosphere_fixture(0x300, 2);
+    h.world.player_inputs.fx_y = 120;
+    h.world.player_inputs.camera_x = 4;
+    h.world.player_inputs.camera_y = 10;
+    draw_atmospheric(&mut h);
+    assert_eq!(
+        h.events,
+        [Event::SamusSprite(399, 132, 110)],
+        "atmosphere.live.dive_position"
+    );
+    assert_eq!(h.world.player.atmospheric.slots[0].y, 120);
+}
+fn atmosphere_failure() {
+    use super::game::player_transitions::draw_atmospheric;
+    for invalid in [1, 0x800] {
+        let mut h = atmosphere_fixture(invalid, 2);
+        h.world.player.atmospheric.slots[3] =
+            super::game::player_transitions::state::AtmosphericSlot {
+                frame_and_kind: 0x400,
+                remaining: 2,
+                x: 8,
+                y: 10,
+            };
+        assert!(catch_unwind(AssertUnwindSafe(|| draw_atmospheric(&mut h))).is_err());
+        assert_eq!(
+            h.world.player.atmospheric.slots[0].remaining, 1,
+            "atmosphere.failure.invalid_timer_prefix"
+        );
+        assert_eq!(
+            h.events,
+            [Event::AtmosphericTile(3, 4, 0x400, 7, 9)],
+            "atmosphere.failure.previous_slot_prefix"
+        );
+    }
+    let mut h = atmosphere_fixture(0x100, 1);
+    // Safe owned record has one byte available. No undefined predecessor is run.
+    h.image = super::RomImage::zeroed(0x81001);
+    assert!(catch_unwind(AssertUnwindSafe(|| draw_atmospheric(&mut h))).is_err());
+    assert_eq!(
+        (
+            h.world.player.atmospheric.slots[0].frame_and_kind,
+            h.world.player.atmospheric.slots[0].remaining
+        ),
+        (0x100, 0),
+        "atmosphere.failure.short_timer_prefix"
+    );
+    assert!(h.events.is_empty());
+    let mut h = atmosphere_fixture(0x400, 2);
+    h.on_sprite_draw = Some(|h| {
+        h.world.player.inventory.health.current = 7;
+        panic!("intentional atmospheric render failure");
+    });
+    assert!(catch_unwind(AssertUnwindSafe(|| draw_atmospheric(&mut h))).is_err());
+    let slot = &h.world.player.atmospheric.slots[0];
+    assert_eq!(
+        (slot.remaining, slot.x, slot.y),
+        (1, 137, 99),
+        "atmosphere.failure.motion_before_render"
+    );
+    assert_eq!(
+        h.world.player.inventory.health.current, 7,
+        "atmosphere.failure.effect_prefix"
+    );
+}
+#[test]
+fn owned_atmospheric_boundaries() {
+    atmosphere_boundaries();
+}
+
 pub(super) fn run_selected(case: &str) {
     match case {
+        "atmosphere_boundaries" => atmosphere_boundaries(),
+        "atmosphere_live" => atmosphere_live(),
+        "atmosphere_failure" => atmosphere_failure(),
         "eye" => eye_then_palette(),
         "alias" => palette_timer_alias(),
         "heat" => heat_callback(),
@@ -632,6 +761,9 @@ pub(super) fn run_selected(case: &str) {
 }
 pub(super) fn run() {
     for case in [
+        "atmosphere_boundaries",
+        "atmosphere_live",
+        "atmosphere_failure",
         "eye",
         "alias",
         "heat",

@@ -20,6 +20,10 @@ pub trait Content {
     type Record: Record;
     /// Logical pointer: low-window diagnostic before fresh source capture.
     fn record(&mut self, source: Source, bank: u8, address: u16) -> Self::Record;
+    /// Atmospheric bank90 pointers retain their legacy diagnostic before capture.
+    fn atmospheric_record(&mut self, address: u16) -> Self::Record {
+        self.record(Source::Native, 0x90, address)
+    }
     /// Fixed table: no low-window diagnostic; index arithmetic happens AFTER capture.
     /// The returned record's byte offsets are linear, never bank-wrapped.
     fn table(&self, source: Source, address: u32) -> Self::Record;
@@ -55,6 +59,9 @@ pub trait Aliases {
     fn set_color_prefix(&mut self, buffer: PaletteBuffer, index: usize, value: u16);
 }
 pub trait Effects {
+    fn draw_samus_sprite(&mut self, index: u16, x: u16, y: u16);
+    /// Live frame and ordered OAM writes; kind was captured before timer callbacks.
+    fn draw_atmospheric_tile(&mut self, slot: usize, kind: u16);
     fn sound(&mut self, channel: u8, limit: u8, sound: u16);
     fn music_delayed8(&mut self, track: u16);
     /// Existing SamusCode_1C sound selection; synchronous external interval.

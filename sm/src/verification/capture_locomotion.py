@@ -7,7 +7,7 @@ CAPACITY=2097152
 def digest(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 def write(path,value):path.write_text(json.dumps(value,indent=2),encoding='utf-8')
 def check(case,data,h):
-    assert 4000<=case<=4048
+    assert 4000<=case<=4082
     records=h.records(data,b'PTRS1')
     def span(address,b):return struct.pack('<II',address,len(b))+b
     poses=bytes([8,0,0,0,0,0,3,0])*256
@@ -16,7 +16,17 @@ def check(case,data,h):
         table=struct.pack('<6H',0,0,maximum,0,2,0)*28
         for address in (0x90e000,0x909f49,0x90a08d,0x90a1dd):manifest+=span(address,table)
         manifest+=span(0x9b9800,b''.join(struct.pack('<H',0x4100+i) for i in range(16)))
-        return manifest+span(0x90a514,bytes([splash])*10)
+        manifest+=span(0x90a514,bytes([splash])*10)
+        if case>=4049:
+            decoy=splash==1
+            for kind in range(8):
+                for address,value in ((0x908b93,0x9040 if decoy else 0x9000),(0x908bef,1 if decoy else 3),(0x908bff,0x9400 if decoy else 0x9200+kind*0x20)):
+                    manifest+=span(address+kind*2,struct.pack('<H',value))
+                for frame in range(4):manifest+=span(0x909200+kind*0x20+frame*2,struct.pack('<H',0x4000+kind*0x100+frame if decoy else 0x7000))
+            for frame in range(256):manifest+=span(0x909000+frame*2,struct.pack('<H',3+frame if decoy else 9))
+            for index in range(390,403):manifest+=span(0x92808d+index*2,struct.pack('<H',0xa000))
+            manifest+=span(0x92a000,bytes([1,0,0,0,0,0x99 if decoy else 0x21,0x43]))
+        return manifest
     assert records[:4]==[h.Record(0,struct.pack('<IB',case,1)),h.Record(8,content(8,1)),h.Record(10,content(6,0)),h.Record(12,struct.pack('<II',2097152,2097152))],'exact content metadata'
     body=records[4:];assert body and body[0].tag==2 and body[-1].tag==2
     phases=[];sounds=[]
@@ -34,13 +44,22 @@ def check(case,data,h):
     assert sum(rec.tag==4 for rec in body)==1
     # Exact native queued sound event: observer channel is zero based.
     wanted={4030:[[2,6,6]],4040:[[0,6,47]]}.get(case,[])
+    if case>=4049:
+        assert [p for p in phases if 450<=p<=453]==list(range(450,454 if case<=4054 else 451)),('missing consumer lifecycle',case,phases)
+        if case==4049:wanted=[[2,6,6]]
+        elif case==4051:wanted=[[1,6,13]]
+        elif case==4052:
+            assert sounds[:1]==[[1,6,13]] and sounds[1:] in ([[1,6,15]],[[1,6,17]]),('bubble sound',sounds)
+            wanted=sounds
+        elif case==4053:wanted=[[1,6,16]]
+        elif case==4054:wanted=[[2,6,5]]
     assert sounds==wanted,('unexpected sound effects',case,sounds)
     return dict(case=case,bytes=len(data),records=len(records),phases=phases,sounds=sounds,sha256=hashlib.sha256(data).hexdigest())
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--root',type=Path,required=True);p.add_argument('--out',type=Path,required=True);p.add_argument('--rom',type=Path,required=True)
     p.add_argument('--first',type=int,default=4000);p.add_argument('--last',type=int,default=4048);p.add_argument('--reference',type=Path);p.add_argument('--child',type=int)
-    args=p.parse_args();root=args.root.resolve();out=args.out.resolve();rom=args.rom.resolve();assert 4000<=args.first<=args.last<=4048
+    args=p.parse_args();root=args.root.resolve();out=args.out.resolve();rom=args.rom.resolve();assert 4000<=args.first<=args.last<=4082
     sys.path.insert(0,str(root/'tools'));import verify_dll,player_transitions_compare as comparator
     if args.child is not None:
         case=args.child;assert args.first<=case<=args.last

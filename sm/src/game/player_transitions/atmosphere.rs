@@ -176,3 +176,98 @@ fn submerged_lava_acid(h: &mut impl Host) {
     }
     clear_buffer_if_suited(h);
 }
+
+/// Advance the four owned effects in their original descending draw order.
+pub(crate) fn draw_atmospheric(h: &mut impl crate::game::visual_host::Host) {
+    use crate::game::visual_host::{Record, Source};
+    h.probe("atmosphere.advance");
+    for slot in (0..4).rev() {
+        let initial = h.session().atmospheric.slots[slot].frame_and_kind;
+        if initial == 0 {
+            continue;
+        }
+        let kind = initial >> 8;
+        let frame_offset = 2 * u16::from(initial as u8);
+        let remaining = h.session().atmospheric.slots[slot]
+            .remaining
+            .wrapping_sub(1);
+        h.session_mut().atmospheric.slots[slot].remaining = remaining;
+        if remaining == 0 || remaining == 0x8000 {
+            h.probe("atmosphere.reload");
+            let pointer = h
+                .table(Source::Loaded, 0x908b93)
+                .native_word(2 * usize::from(kind));
+            let duration = h
+                .atmospheric_record(pointer.wrapping_add(frame_offset))
+                .native_word(0);
+            h.session_mut().atmospheric.slots[slot].remaining = duration;
+            if remaining == 0 {
+                let next = h.session().atmospheric.slots[slot]
+                    .frame_and_kind
+                    .wrapping_add(1);
+                h.session_mut().atmospheric.slots[slot].frame_and_kind = next;
+                let count = h
+                    .table(Source::Loaded, 0x908bef)
+                    .native_word(2 * usize::from(kind));
+                if i16::from(next as u8).wrapping_sub(count as i16) >= 0 {
+                    h.session_mut().atmospheric.slots[slot].frame_and_kind = 0;
+                    h.probe("atmosphere.retire");
+                    continue;
+                }
+            }
+        } else if remaining & 0x8000 != 0 {
+            continue;
+        }
+        // Preserve the checked dispatch and null slot after the timer's effects.
+        match [0, 1, 1, 3, 4, 5, 6, 6][usize::from(kind)] {
+            0 => panic!("non-null function pointer"),
+            1 => {
+                h.probe("atmosphere.footstep");
+                h.draw_atmospheric_tile(slot, kind);
+            }
+            3 | 5 => {
+                let frame = u16::from(h.session().atmospheric.slots[slot].frame_and_kind as u8);
+                let sprite = if kind == 3 {
+                    h.probe("atmosphere.dive");
+                    h.session_mut().atmospheric.slots[slot].y = h.inputs().fx_y;
+                    frame.wrapping_add(399)
+                } else {
+                    h.probe("atmosphere.bubbles");
+                    frame.wrapping_add(390)
+                };
+                if h.session().atmospheric.slots[slot]
+                    .y
+                    .wrapping_sub(h.inputs().camera_y)
+                    & 0xff00
+                    == 0
+                {
+                    h.draw_samus_sprite(
+                        sprite,
+                        h.session().atmospheric.slots[slot]
+                            .x
+                            .wrapping_sub(h.inputs().camera_x),
+                        h.session().atmospheric.slots[slot]
+                            .y
+                            .wrapping_sub(h.inputs().camera_y),
+                    );
+                }
+            }
+            _ => {
+                if kind == 4 {
+                    h.probe("atmosphere.lava");
+                    let x = h.session().atmospheric.slots[slot].x;
+                    h.session_mut().atmospheric.slots[slot].x = if slot & 2 != 0 {
+                        x.wrapping_sub(1)
+                    } else {
+                        x.wrapping_add(1)
+                    };
+                } else {
+                    h.probe("atmosphere.dust");
+                }
+                h.session_mut().atmospheric.slots[slot].y =
+                    h.session().atmospheric.slots[slot].y.wrapping_sub(1);
+                h.draw_atmospheric_tile(slot, kind);
+            }
+        }
+    }
+}

@@ -34,6 +34,17 @@ impl visual_host::Content for Runtime<'_> {
             Source::Native => player_projectiles::host::Host::native_record(self, bank, address),
         }
     }
+    fn atmospheric_record(&mut self, address: u16) -> RomRecord {
+        let address = 0x900000 | u32::from(address);
+        if address & 0x8000 == 0 {
+            self.foreign(|game| {
+                crate::game::session_runtime::invalid_window(game, address);
+                #[cfg(sm_verify_dll)]
+                crate::room_contact_start_observer::diagnostic(address, game);
+            });
+        }
+        player_projectiles::content::captured(self.native_image(), address)
+    }
     fn table(&self, source: Source, address: u32) -> RomRecord {
         let image = match source {
             Source::Loaded => self.loaded_image().expect("ROM must be loaded"),
@@ -100,6 +111,55 @@ impl visual_host::Aliases for Runtime<'_> {
     }
 }
 impl visual_host::Effects for Runtime<'_> {
+    fn draw_samus_sprite(&mut self, index: u16, x: u16, y: u16) {
+        self.foreign(|game| crate::game::sm_81::DrawSamusSpritemap(index, x, y, game));
+    }
+    fn draw_atmospheric_tile(&mut self, slot: usize, kind: u16) {
+        use visual_host::{Content, Record};
+        let frame_offset =
+            2 * u16::from(self.session().atmospheric.slots[slot].frame_and_kind as u8);
+        let saved = self.word(0x590);
+        let x = self.session().atmospheric.slots[slot]
+            .x
+            .wrapping_sub(self.word(0x911))
+            .wrapping_sub(4);
+        if x as i16 >= 0
+            && self.session().atmospheric.slots[slot]
+                .x
+                .wrapping_sub(self.word(0x911))
+                .wrapping_sub(260)
+                & 0x8000
+                != 0
+        {
+            let entry = 0x370 + usize::from(self.word(0x590));
+            self.set_byte(entry, x as u8);
+            // X may alias the y coordinate, camera, cursor or another owned field.
+            let y = self.session().atmospheric.slots[slot]
+                .y
+                .wrapping_sub(self.word(0x915))
+                .wrapping_sub(4);
+            if y as i16 >= 0
+                && self.session().atmospheric.slots[slot]
+                    .y
+                    .wrapping_sub(self.word(0x915))
+                    .wrapping_sub(260)
+                    & 0x8000
+                    != 0
+            {
+                self.set_byte(entry + 1, y as u8);
+                let pointer = self
+                    .table(Source::Loaded, 0x908bff)
+                    .native_word(2 * usize::from(kind));
+                let tile = self
+                    .atmospheric_record(pointer.wrapping_add(frame_offset))
+                    .native_word(0);
+                self.write_slice_native(entry + 2, tile);
+                self.write_word_le(saved.wrapping_add(4), 0x590);
+                crate::game::session_access::SessionAccess::probe(self, "atmosphere.tile.written");
+            }
+        }
+    }
+
     fn sound(&mut self, channel: u8, limit: u8, sound: u16) {
         player_projectiles::host::Host::sound(self, channel, limit, sound);
     }

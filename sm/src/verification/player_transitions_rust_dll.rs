@@ -9,11 +9,16 @@ pub unsafe extern "C" fn sm_verify_player_transitions_rust(
     capacity: usize,
 ) -> usize {
     unsafe {
-        if rom.is_null() || output.is_null() || capacity < sm::cpu_infra::player_transitions_rust::CAPACITY {
+        if rom.is_null()
+            || output.is_null()
+            || capacity < sm::cpu_infra::player_transitions_rust::CAPACITY
+        {
             return 0;
         }
         if STARTED.swap(true, Ordering::SeqCst) {
-            eprintln!("defined player transition predecessor: use a separate Python process for each capture");
+            eprintln!(
+                "defined player transition predecessor: use a separate Python process for each capture"
+            );
             return 0;
         }
         let result = std::panic::catch_unwind(|| {
@@ -42,23 +47,54 @@ pub unsafe extern "C" fn sm_verify_player_transitions_rust(
             initialize_verify_audio(&mut game)?;
             match id {
                 0..=10 => sm::cpu_infra::player_transitions_rust::capture(
-                    id, &original[header..], &mut game,
+                    id,
+                    &original[header..],
+                    &mut game,
                 ),
-                100..=104 | 300..=304 | 400..=407 | 500..=509 | 600..=605
-                | 700..=702 | 900..=901 | 1000..=1001 | 1100..=1106 => {
+                100..=104
+                | 300..=304
+                | 400..=407
+                | 500..=509
+                | 600..=605
+                | 700..=702
+                | 900..=901
+                | 1000..=1001
+                | 1100..=1106 => {
                     sm::player_transitions_animation::capture(id, &original[header..], &mut game)
                 }
                 2100..=2102 | 2200..=2202 => {
                     sm::cpu_infra::player_transitions_pose_families::capture(
-                        id, &original[header..], &mut game,
+                        id,
+                        &original[header..],
+                        &mut game,
                     )
                 }
-                2759 | 2763 | 3004 | 3036 | 3062 | 3086 => sm::cpu_infra::player_transitions_selected::capture(id, &original[header..], &mut game),
-                3700..=3702 => sm::cpu_infra::player_transitions_composed::capture(id, &original[header..], &mut game),
-                3800..=3804 => sm::cpu_infra::player_transitions_callers::capture(id, &original[header..], &mut game),
-                3900..=3907 => sm::cpu_infra::player_settlement::capture(id, &original[header..], &mut game),
-                4000..=4048 => sm::cpu_infra::player_locomotion::capture(id, &original[header..], &mut game),
-                4100..=4105 => sm::cpu_infra::player_update_cases::capture(id, &original[header..], &mut game),
+                2759 | 2763 | 3004 | 3036 | 3062 | 3086 => {
+                    sm::cpu_infra::player_transitions_selected::capture(
+                        id,
+                        &original[header..],
+                        &mut game,
+                    )
+                }
+                3700..=3702 => sm::cpu_infra::player_transitions_composed::capture(
+                    id,
+                    &original[header..],
+                    &mut game,
+                ),
+                3800..=3804 => sm::cpu_infra::player_transitions_callers::capture(
+                    id,
+                    &original[header..],
+                    &mut game,
+                ),
+                3900..=3907 => {
+                    sm::cpu_infra::player_settlement::capture(id, &original[header..], &mut game)
+                }
+                4000..=4082 => {
+                    sm::cpu_infra::player_locomotion::capture(id, &original[header..], &mut game)
+                }
+                4100..=4105 => {
+                    sm::cpu_infra::player_update_cases::capture(id, &original[header..], &mut game)
+                }
                 _ => Err("unknown player transition fixture".into()),
             }
         });
