@@ -40,8 +40,8 @@ flowchart LR
     CHECKS["14 request / jump / composed / caller checks<br/>PASS / exact paired captures"]:::done --> ADOPT
     CHECKS --> MOVIE["Normal gameplay caller + 120-frame tail<br/>8,577 frames / zero failures"]:::done
     MOVIE --> MUT["Owned mutation tests<br/>hosted running"]:::active --> ADOPT
-    ADOPT --> NEXT["Longer shared ownership<br/>fewer RAM transfers"]:::pending
-    class BUILD,COMPARE,CHECKS,MOVIE,MUT changed
+    ADOPT --> NEXT["One interval: transitions / palette / damage<br/>isolated implementation"]:::active
+    class NEXT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

@@ -186,6 +186,21 @@ Reviews and targeted checks run alongside implementation; fidelity, full caller
 closure, backend-free core compilation and meaningful mutations still gate
 adoption. No unverified gameplay is adopted to meet a schedule.
 
+While the fixed transition candidate completes hosted validation, an isolated
+next draft may extend ownership through transitions, palette and pending-damage
+consumption. Base it on 5e546bdc and keep that validation source unchanged.
+All three beta callers retain one Session through transitions and palette; only
+the normal gameplay caller consumes pending damage. Add the missing fractional
+health word beside health in Inventory, preserving existing refill semantics,
+native arithmetic and the later little-endian sign check. Release ownership
+before pause/low-health checks, demo control restoration or an invalid-damage
+crash. Retire the three-caller palette wrapper, periodic-damage RAM adapter and
+its transport interface together. This removes one redundant aggregate transfer
+pair per caller; real legacy effects still require their existing handoffs.
+Implement and verify in parallel using existing harnesses, with focused damage,
+fraction/suit/frozen/error-prefix and shared-owner checks. Do not adopt this
+follow-on before the current transition candidate passes its remaining checks.
+
 The public report must foreground owned behavior, production caller migration,
 legacy deletion and adoption. Keep verification detail expandable below those
 outcomes. Following this subsystem, prioritize extending shared Session ownership
