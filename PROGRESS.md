@@ -115,7 +115,6 @@ flowchart LR
     MUTBUILD --> MFRENDER["Flash / frozen palette bits"]:::done
     MUTBUILD --> MFKWRITE["Kraid live shot-gate write"]:::done
     MUTBUILD --> MFKREAD["Contact reads live shot gate"]:::done
-    class AS,AV,AE,AM,AB,APR,ARETIRE,APDLL,AVERIFY,AA,MUTRECIPES,MUTBUILD,MF1,MF2,MF3,MF4,MF5,MF6,MF7,MF8,MFRENDER,MFKWRITE,MFKREAD changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -124,7 +123,7 @@ flowchart LR
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
 ```
 
-### Player collision / next design
+### Player collision / parallel implementation drafts
 
 ```mermaid
 flowchart LR
@@ -141,7 +140,7 @@ flowchart LR
     PCOMP --> PBE["Guarded edit escapes<br/>compiler rejects / PASS"]:::done
     PCOMP --> PAUDIT["Compiler evidence<br/>independent audit PASS"]:::done
     PAUDIT --> PAP["Seven operations / one Session<br/>design approved"]:::done
-    PAP --> PI["Implementation after actor adoption"]:::pending
+    PAP --> PI["Five authors + caller integrator<br/>adopted actor baseline ddd21882"]:::active
     PV --> PI
     PV --> PREF["74 predecessor cases<br/>assembly review PASS"]:::done
     PREF --> PMOVE["36 movement / speed cases<br/>source review PASS"]:::done
@@ -161,6 +160,34 @@ flowchart LR
     PEXEC --> PWALK["Walked-obstacle source + admission<br/>review PASS"]:::done
     PWALK --> PWREF["9 additive cases 88–96<br/>format + DLL + captures PASS"]:::done
     PWREF --> PWAUDIT["Current / pending + native / loaded<br/>9-case execution audit PASS"]:::done
+    PI --> PCS["state.rs"]:::active
+    PCS --> PCSE["session.rs + session_encoding.rs"]:::active
+    PCSE --> PCIN["external_inputs.rs + shared consumers"]:::active
+    PI --> PCG["geometry.rs"]:::active
+    PI --> PCM["motion.rs"]:::active
+    PI --> PCC["control.rs"]:::active
+    PCC --> PCJ["jump.rs"]:::active
+    PCC --> PCP["pose.rs"]:::active
+    PI --> PCRT["Runtime adapters / 16 dependencies"]:::active
+    PI --> PCAPI["operations.rs + effects.rs + mod.rs"]:::active
+    PCAPI --> PCCALL["33 bank routines / actual callers"]:::active
+    PCCALL --> PCDEL["2 contact modules + 3 actor helpers<br/>retirement pending"]:::pending
+    PWAUDIT --> PCOWN["Candidate ownership / ordering checks"]:::active
+    PCOWN --> PCFAULT["Targeted mutation recipes"]:::active
+    PCIN --> PCMERGE["Combined candidate / no stubs"]:::pending
+    PCG --> PCMERGE
+    PCM --> PCMERGE
+    PCJ --> PCMERGE
+    PCP --> PCMERGE
+    PCRT --> PCMERGE
+    PCDEL --> PCMERGE
+    PCMERGE --> PCFMT["Format + build"]:::pending
+    PCFMT --> PCCOMPARE["74 + 9 frozen comparisons"]:::pending
+    PCFMT --> PCDET["Backend-free core checks"]:::pending
+    PCFMT --> PCORACLE["Required oracle probes + effect tail"]:::pending
+    PCFAULT --> PCMUT["Passing baseline + compiled fault<br/>intended assertion"]:::pending
+    PCFMT --> PCMUT
+    class PI,PCS,PCSE,PCIN,PCG,PCM,PCC,PCJ,PCP,PCRT,PCAPI,PCCALL,PCDEL,PCOWN,PCFAULT,PCMERGE,PCFMT,PCCOMPARE,PCDET,PCORACLE,PCMUT changed
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a

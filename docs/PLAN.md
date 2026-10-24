@@ -517,6 +517,12 @@ references; measure build/test time and resource growth before changing the loop
    Seven obsolete actor modules and their migrated bank facades retire. This is
    shared interval ownership; species effects and backend independence remain.
    Player collision implementation can now start from this adopted baseline.
+   Five isolated authors are implementing state/codecs/shared consumers, geometry,
+   motion, control/jump/pose and finite Runtime adapters againstddd21882. One caller
+   integrator owns facades, registrations and the complete1694-line retirement;
+   independent verification covers candidate-owned state and ordered effects.
+   The ported declaration-only candidate must not execute until stubs are replaced.
+   Preserve74fc9 and9sixf predecessor batches, all actor fixes and runtime guards.
    Local compilation remains serialized.
    Added13verification Rust lines (complete actor increment5406), no gameplay.
    Ordinary builds now
