@@ -480,7 +480,8 @@ references; measure build/test time and resource growth before changing the loop
    and room-case bounds. Both cfg-mode Cargo example metadata checks pass; direct DLL
    source520323af exposes all3captures with predecessor-identical sample outputs.
    Full CI40058485171 adds a Cargo-launcher source/export check and retains all73faults,
-   including25remaining DLL faults (14existing+11actor). Ordinary builds now
+   including25remaining DLL faults (14existing+11actor). Its full build and Cargo
+   verifier/export check now pass; mutation rerun continues. Ordinary builds now
    precede long mutations; measured prior35minute runtime warrants a60minute limit.
    Selected
    ten-probe oracle replay passes21015frames with zero failures and120frames after
@@ -498,8 +499,14 @@ references; measure build/test time and resource growth before changing the loop
    shared/alias/reset/snapshot writers. Gross retirement1694lines; conservative full
    replacement1800..2700 (+106..1006), not an established reduction. Root authorized
    isolated concrete interface declarations against23780fd9 while actor CI runs.
-   Gameplay implementation waits for actor adoption and independent declaration
-   review; retain one Session owner and retire both contact modules with callers.
+   The reviewed carrier now passes normal, actual Runtime and backend-free compiler
+   checks; all5negative borrow examples fail for their intended diagnostics. Compiler
+   evidence audit passes: all21declaration hashes and five isolated diagnostic
+   failures match the reviewed sources. Missing pinned root tool includes in the initial carrier
+   were corrected without declaration changes. Workers prepare predecessor fixtures
+   on complete50cec3e0, never the declaration stubs. Gameplay implementation waits for
+   actor adoption and declaration approval; retain one Session owner and retire both
+   contact modules with callers.
    Preserve56existing mutants and add the
    nine selected actor faults, including discarded-future handle rejection.
    Scope includes population/assets, spawn/respawn/death, separate select/update,

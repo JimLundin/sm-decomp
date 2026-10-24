@@ -74,7 +74,8 @@ flowchart LR
     AHF --> AHFIX["Shared crate-root declarations<br/>all 3 harnesses hosted PASS"]:::done
     AHFIX --> ACFG["Second CI / ordinary verifier<br/>configuration compile FAIL"]:::failed
     ACFG --> ACFGLOCAL["Both modes compile + 3 captures<br/>configuration fix PASS"]:::done
-    ACFGLOCAL --> AHRUN["Full CI / 50cec3e0<br/>Cargo launcher + 73 mutations"]:::active
+    ACFGLOCAL --> AHOSTBUILD["Hosted full build + Cargo exports<br/>PASS"]:::done
+    AHOSTBUILD --> AHRUN["Full CI / 50cec3e0<br/>73 mutation rerun active"]:::active
     ADLL --> AORACLE["21,015 frames / 10 probes<br/>0 failures + 120-frame tail / PASS"]:::done
     ADLL --> KWRITE["Kraid live-definition write + consumer<br/>PASS"]:::done
     KWRITE --> KRESTORE["Actual CPU snapshot restore<br/>definition retained / PASS"]:::done
@@ -109,7 +110,7 @@ flowchart LR
     MUTBUILD --> MFRENDER["Flash / frozen palette bits"]:::pending
     MUTBUILD --> MFKWRITE["Kraid live shot-gate write"]:::pending
     MUTBUILD --> MFKREAD["Contact reads live shot gate"]:::pending
-    class AP,MUTWIRE,AHFIX,ACFG,ACFGLOCAL,AHRUN changed
+    class AHOSTBUILD,AHRUN changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -125,10 +126,19 @@ flowchart LR
     PC["Player collision + displacement"]:::draft --> PS["58 state bytes / all writers<br/>source closure PASS"]:::done
     PC --> PR["33 bank routines + 2 modules<br/>retirement review PASS"]:::done
     PC --> PV["Directed routes + 10 fault witnesses<br/>validation design reviewed"]:::draft
-    PS --> PD["Concrete owned interface<br/>declaration design active"]:::active
+    PS --> PD["Concrete owned interface<br/>declaration review PASS"]:::done
     PR --> PD
-    PD --> PI["Implementation after actor adoption<br/>and declaration review"]:::pending
+    PD --> PCOMP["Normal + Runtime + backend-free<br/>compile PASS"]:::done
+    PCOMP --> PBA["Actor borrow across effect<br/>compiler rejects / PASS"]:::done
+    PCOMP --> PBP["Player borrow across effect<br/>compiler rejects / PASS"]:::done
+    PCOMP --> PBT["Terrain borrow across effect<br/>compiler rejects / PASS"]:::done
+    PCOMP --> PBS["Schedule borrow across effect<br/>compiler rejects / PASS"]:::done
+    PCOMP --> PBE["Guarded edit escapes<br/>compiler rejects / PASS"]:::done
+    PCOMP --> PAUDIT["Compiler evidence<br/>independent audit PASS"]:::done
+    PAUDIT --> PI["Implementation after actor adoption<br/>and declaration approval"]:::pending
     PV --> PI
+    PV --> PREF["Predecessor fixture source<br/>parallel authoring"]:::active
+    class PD,PCOMP,PBA,PBP,PBT,PBS,PBE,PAUDIT,PREF changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
