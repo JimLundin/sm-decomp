@@ -548,12 +548,21 @@ references; measure build/test time and resource growth before changing the loop
    interaction (gameplay animation, hit/bomb and block requests, arbitration,
    normalization/jump startup and history). Three repeated four-call chains can
    consolidate; narrow scripted and death-clock callers remain distinct. Workers
-   are closing state/content/caller contracts before implementation approval.
+   have closed state/content/caller contracts:64new bytes,14rehomed without
+   duplication, and57external helper callers. Independent review and root normal,
+   verifier and actual detached-test metadata compilation pass. This declaration
+   snapshot has no replacement gameplay implementation and must not execute.
    Gross retirement potential2223lines is not savings; full production estimate
-   2300..3500 includes adapters. Original-game observations are required for
+   2300..3500 includes adapters. Original-CPU references now pass11cases for
    potentially unaligned native word reads in animation command12 and pose
-   normalization F433/F468; successful undefined-Rust captures cannot establish
-   their fidelity. Reuse the existing oracle capture seam, not a new framework.
+   normalization F433/F468:7original-data and4authored-data instruction cases.
+   Independent capture/provenance audits pass; stack/direct-page qualifications
+   remain explicit. The first capture rejected a known initialized speed hook;
+   scoped original-byte restoration fixed setup without weakening opcode guards.
+   Capture code and registrations add574verification/support Rust lines, with
+   no gameplay changes. Next prepare a defined predecessor using the existing
+   native-record reads, compare it to these references, then capture the remaining
+   transition families. Successful undefined-Rust captures remain inadmissible.
    Added13verification Rust lines (complete actor increment5406), no gameplay.
    Ordinary builds now
    precede long mutations; measured prior35minute runtime warrants a60minute limit.

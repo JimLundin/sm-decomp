@@ -399,6 +399,7 @@ pub unsafe extern "C" fn sm_verify_samus_palette_oracle(
 }
 
 include!("verification/samus_palette_candidate_dll.rs");
+include!("verification/player_transitions_oracle_dll.rs");
 
 include!("verification/samus_palette_defined_dll.rs");
 #[unsafe(no_mangle)]

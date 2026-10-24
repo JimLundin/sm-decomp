@@ -202,7 +202,6 @@ flowchart LR
     PCFMT --> PCMUT
     PCMUT --> PCMD["54 detached faults caught<br/>independent audit PASS"]:::done
     PCMUT --> PCML["37 DLL faults caught<br/>independent audit PASS"]:::done
-    class PC,PV,PI,PCS,PCSE,PCIN,PCG,PCM,PCC,PCJ,PCP,PCRT,PCAPI,PCCALL,PCDEL,PCOWN,PCFAULT,PCMERGE,PCMUT,PCML changed
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
@@ -215,16 +214,19 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    TS["Complete interaction scope"]:::done --> TO["State + aliases + callers"]:::active
-    TS --> TC["Content + finite effects"]:::active
-    TO --> TI["Concrete interface review"]:::pending
+    TS["Complete interaction scope"]:::done --> TO["64 new bytes / 14 rehomed<br/>ownership + caller review PASS"]:::done
+    TS --> TC["Content + finite effects<br/>review PASS"]:::done
+    TO --> TI["Normal / verifier / detached<br/>interface compilation PASS"]:::done
     TC --> TI
-    TC --> TU["Native word reads<br/>original-game observations"]:::pending
+    TC --> TU["Native word reads / 11 CPU references<br/>7 original + 4 authored PASS"]:::done
     TI --> TA["Animation + liquid effects"]:::pending
     TI --> TH["Hit / bomb + block requests"]:::pending
     TA --> TR["Arbitration + pose + jump + history"]:::pending
     TH --> TR
-    TU --> TV["Predecessor checks + mutation design"]:::pending
+    TU --> TUA["Capture + provenance audits PASS"]:::done
+    TUA --> TUD["Defined predecessor<br/>native-read correction"]:::active
+    TUD --> TV["Remaining predecessor families<br/>+ mutation checks"]:::pending
+    class TO,TC,TI,TU,TUA,TUD,TV changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5

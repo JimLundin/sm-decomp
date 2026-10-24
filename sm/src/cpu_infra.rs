@@ -1306,6 +1306,8 @@ pub unsafe fn RtlRunFrameCompare(input: u16, run_what: i32, game: &mut Game) {
     }
 }
 
+#[path = "verification/player_transitions_oracle.rs"]
+pub mod player_transitions_oracle;
 #[path = "verification/samus_palette_oracle.rs"]
 pub mod samus_palette_oracle;
 
