@@ -158,7 +158,8 @@ probes execute earlier in the demo phase; they are not claimed as later normal
 play coverage. The route covers one gameplay room, not the complete game.
 
 The final candidate is committed as 5e546bdc on
-verify/player-transitions-owned-20261024. Hosted full run 40078990293 is active;
+verify/player-transitions-owned-20261024. Hosted full run 40078990293 has passed
+formatting and the detached job; its native mutation job remains active;
 no replacement is adopted on main yet. Three exact composed faults extend the
 existing runner, and the two earlier transition faults now target actual owned
 sites. The preceding full CI run 40074629985 passed all 93 distinct faults at
@@ -186,20 +187,35 @@ Reviews and targeted checks run alongside implementation; fidelity, full caller
 closure, backend-free core compilation and meaningful mutations still gate
 adoption. No unverified gameplay is adopted to meet a schedule.
 
-While the fixed transition candidate completes hosted validation, an isolated
-next draft may extend ownership through transitions, palette and pending-damage
-consumption. Base it on 5e546bdc and keep that validation source unchanged.
-All three beta callers retain one Session through transitions and palette; only
-the normal gameplay caller consumes pending damage. Add the missing fractional
-health word beside health in Inventory, preserving existing refill semantics,
-native arithmetic and the later little-endian sign check. Release ownership
-before pause/low-health checks, demo control restoration or an invalid-damage
-crash. Retire the three-caller palette wrapper, periodic-damage RAM adapter and
-its transport interface together. This removes one redundant aggregate transfer
-pair per caller; real legacy effects still require their existing handoffs.
-Implement and verify in parallel using existing harnesses, with focused damage,
-fraction/suit/frozen/error-prefix and shared-owner checks. Do not adopt this
-follow-on before the current transition candidate passes its remaining checks.
+The isolated follow-on draft now extends one Session interval through
+transitions, palette and pending-damage consumption, based on 5e546bdc.
+All three beta callers share transitions and palette; only normal gameplay
+consumes pending damage. Two fractional-health bytes join Inventory ownership.
+The palette wrapper, periodic-damage RAM adapter, Context interface and unused
+grapple transport are retired. Native arithmetic, later LE sign checks and
+existing pickup/refill fraction behavior remain unchanged. Ownership is released
+before pause/low-health, demo restoration and invalid-damage crash paths.
+
+The follow-on is committed as 11f95a69 on verify/player-settlement-20261024.
+Full hosted run 40081065327 is active on that exact commit and formatting passes.
+The redundant ordinary run was cancelled after confirming the full dispatch.
+Follow-on source 85e16c54 passes full formatting, normal/verifier/detached
+compilation and release DLL build. All 87 component cases pass: the original 79
+and eight exact paired settlement captures, independently audited. The bounded
+any-input replay passes 8,577 frames with zero failures and 121 settlement-return
+hits plus 120 follow-up frames. The direct invalid/clamp cases validate owned
+composition and state prefixes, not execution of the fatal caller path.
+
+This follow-on removes 64 production Rust lines and adds 311 verification Rust
+lines: net +247 to 150,656. Separate support adds 155 Python and 50 JSON lines.
+One production unsafe wrapper is removed and two verification unsafe functions
+are added; the combined declaration count rises by one to 2,428. It removes one unnecessary Session export/import
+pair per beta invocation; no measured speedup is claimed. Two additional exact
+mutation checks are prepared in the existing hosted runner (early damage
+consumption and lost fractional-health publication); the next full run selects
+98 faults. Both drafts remain unadopted until their required hosted checks pass.
+The four transition representation tests are included in the existing unfiltered
+detached mutation baseline; no separate CI step or local executable is needed.
 
 The public report must foreground owned behavior, production caller migration,
 legacy deletion and adoption. Keep verification detail expandable below those
