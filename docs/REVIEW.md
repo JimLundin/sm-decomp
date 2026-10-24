@@ -8,6 +8,12 @@ earlier versions; this file holds only current findings.
 
 ## Check-ins
 
+- **2026-10-24 22:52 (98aafd4):** 4 agent source commits since 2754947 (3 code,
+  1 map SVG), 0 docs-only; no stall. **Coverage flat at 24/44** (no recipe commit;
+  Power Bomb route advanced only in PLAN text). Production 117,104 → 116,960 (−144);
+  verification 37,843 → 38,884 (**+1,041, 7× the deletion**); unsafe 4,978 → 4,965;
+  warnings 339 unique (cargo; PROGRESS 378). PLAN.md 202 lines. Map: SVG text only,
+  fits; brief items (a)/(b) untouched for a second check-in.
 - **2026-10-24 21:52 (2754947):** 2 agent source commits since 3222fe3, 0
   docs-only; no stall. **Coverage moving again:** 23 → 24/44 (Norfair Reserve,
   9787aa2). Production 117,662 → 117,104 (−558, four projectile modules retired
@@ -51,26 +57,17 @@ earlier versions; this file holds only current findings.
   Adoption correctly held. Watch: corpus `.inputs` files are gitignored with
   only checksums committed; a fresh agent must be able to rebuild them.
 
-## Corpus watch (2026-10-24 21:52)
+## Corpus watch (2026-10-24 22:52)
 
-- Both asks from 20:52 landed: Norfair Reserve recipe (named segment
-  `pickup-reserve`, 567 frames, 0 failures) and a whole-layer projectile
-  deletion (−558) whose commit names Ice/Reserve segments and states that
-  special beams and transformed Ceres are fixture-only coverage. Good shape.
-- Still slow: one check and one consolidation per hour. At −558/hour,
-  110,000 is ~13 hours away; keep commits at whole-layer size.
-- The agent rewrote the coverage sentence in the directive after meeting it
-  (2754947); substance kept, accepted.
-
-## Corpus watch (2026-10-24 19:55, earlier)
-
-- Coverage track stalled two check-ins: no new passing check since 17:41, while
-  the held snapshot-comparison draft waits on "another gameplay check". The
-  Power Bomb → Crocomire route needs a long hand-authored continuation. Land
-  the nearest pending row reachable from an existing end state first, and
-  record the Power Bomb blocker under work item 1 if it is not done in an hour.
-- PLAN.md item 1-2 text now logs each commit's results (235 lines). Those
-  belong in commit messages; PLAN keeps only the current state and next step.
+- Consolidation is clean (no unsafe added, verify cfg kept behind diagnostic
+  calls, coverage named per commit: Crateria 800, Ceres 8340–8780, boot 77381+),
+  but small: −144 production/hour puts 110,000 ~48 hours out. 98aafd4 is +5
+  production for 7 unsafe functions retired; acceptable, stated.
+- Verification grew 7× faster than production fell, mostly hand-written fixture
+  checks per adoption. Directive now caps verification added at production
+  deleted per adoption; checkpoint segments are the preferred evidence.
+- Coverage produced no commit this hour. If the Power Bomb route is not a checked
+  segment by next check-in, that is a coverage stall for the third time today.
 
 ## Codebase map (user request, 2026-10-24)
 

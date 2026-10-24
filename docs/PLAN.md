@@ -21,9 +21,9 @@ preserve others' work. Do not delete another process's lock or force-push main.
 Read [the external review](REVIEW.md) next. Hygiene and process reduction are done.
 One agent expands checkpoint recipes; others consolidate exercised subsystems in
 parallel, naming coverage per commit. Prefer legacy-bank retirement; production
-must fall. A docs-only commit needs a code commit beside it. Continue coverage
-from the preserved Power Bomb route after Norfair Reserve. Continue deleting
-redundant layers in covered subsystems. Keep this plan under ~200 lines, with
+must fall. A docs-only commit needs a code commit beside it. Commit the Power Bomb
+route as a checked segment as soon as it reaches A3AE. Delete whole redundant layers;
+verification added per adoption must not exceed production deleted (prefer segments). Keep this plan under ~200 lines, with
 current rules/state; results belong in commit messages (~8 lines maximum).
 Direct user instructions take precedence. Historical queues,
 gates and results in [HISTORY.md](HISTORY.md) are not current rules.
