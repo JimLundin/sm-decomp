@@ -90,11 +90,12 @@ The complete input draft `e956dffa` is held, not adopted. Preserve its checked
 source/reference snapshots and audits under
 `%LOCALAPPDATA%/sm-decomp-experiments/20261024/player-input-*`; do not rerun or
 replace them without a source/coverage reason. Reprice/revalidate it against the
-then-current base before adoption. Latest checks: `2de4d058`, 49 compiler-proven
-unnecessary unsafe blocks removed; normal/DLL builds and 20 verifier tests pass.
-Warnings 482 -> 433; 42 generic-macro unsafe warnings remain. Line-count shifts
-are formatting only. Last logic reductions remain projectile helpers -26 and
-actor movement -18. Shared projectile slot access is the next consolidation.
+then-current base before adoption. Latest checks: `03889077`, shared projectile
+slot access removes 120 production lines with no verification growth. All 384
+component captures match; 13 independent checks pass. Fresh setup 0..50329 and
+Bomb Torizo 50329..51993 pass with six projectile probes; four compiling faults
+are caught. No full-game claim. Unused bank helpers are next. Prior 49 unnecessary
+unsafe removals left 433 warnings, including 42 generic-macro unsafe warnings.
 Snapshot comparison separation is verified but held at `2a3c7792` on
 `draft/snapshot-comparison-2a3c7792` until another gameplay check lands; it moves
 390 verification lines, adds 15 wiring lines and deletes no logic.
