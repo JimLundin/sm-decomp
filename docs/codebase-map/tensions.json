@@ -1,7 +1,7 @@
 [
   {
     "title": "Session ownership is interval-scoped",
-    "description": "The runtime imports state on entry, publishes it before foreign calls, and reimports on return. The shared owner is not yet persistent across the whole game.",
+    "description": "The runtime imports state on entry, publishes it before foreign calls, and reimports on return. Actor identity moves with that handoff; the shared Session is not yet persistent across the whole game.",
     "files": [
       "sm/src/game/session_runtime.rs",
       "sm/src/game/session.rs",
@@ -10,7 +10,7 @@
     "evidence": [
       {
         "path": "sm/src/game/session_runtime.rs",
-        "line": 72,
+        "line": 76,
         "expected": "pub fn foreign<R>(&mut self, action: impl FnOnce(&mut Game) -> R) -> R {"
       },
       {
@@ -20,8 +20,13 @@
       },
       {
         "path": "sm/src/game/session_encoding.rs",
-        "line": 360,
+        "line": 492,
         "expected": "pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {"
+      },
+      {
+        "path": "sm/src/game/session_runtime.rs",
+        "line": 376,
+        "expected": "state.actor_identity = game.take_actor_identity();"
       }
     ]
   },
@@ -41,24 +46,26 @@
       },
       {
         "path": "sm/src/game/session_runtime.rs",
-        "line": 84,
+        "line": 88,
         "expected": "pub(crate) fn byte(&self, at: usize) -> u8 {"
       },
       {
         "path": "sm/src/game/session_encoding.rs",
-        "line": 408,
+        "line": 570,
         "expected": "pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {"
       }
     ]
   },
   {
     "title": "Assets retain ROM compatibility",
-    "description": "Room topology has validated stable IDs and configurable connections. Assets still use ROM compatibility bindings and loaded/native image provenance; a Map Rando importer remains unfinished.",
+    "description": "Room topology has stable IDs and configurable connections, and actor catalogs support compatible per-instance appearances. Assets still resolve ROM-backed resources and pre-staged palette rows; the Map Rando importer remains unfinished.",
     "files": [
       "sm/src/game/visual_host.rs",
       "sm/src/game/visual_runtime.rs",
       "sm/src/game_state.rs",
-      "sm/src/game/room_entry/world.rs"
+      "sm/src/game/room_entry/world.rs",
+      "sm/src/game/actors/content_runtime.rs",
+      "sm/src/game/actors/media_runtime.rs"
     ],
     "evidence": [
       {
@@ -73,26 +80,43 @@
       },
       {
         "path": "sm/src/game_state.rs",
-        "line": 503,
+        "line": 517,
         "expected": "pub(crate) fn register_native_rom(&mut self, image: crate::rom::RomImage) {"
       },
       {
         "path": "sm/src/game/room_entry/world.rs",
-        "line": 257,
+        "line": 263,
         "expected": "validate(&world)?;"
       },
       {
         "path": "sm/src/game/room_entry/world.rs",
         "line": 160,
         "expected": "/// This milestone binds retained compatible resources; it adds no importer or setup interpreter."
+      },
+      {
+        "path": "sm/src/game/room_entry/world.rs",
+        "line": 749,
+        "expected": "pub fn prepared_with_actors("
+      },
+      {
+        "path": "sm/src/game/actors/media_runtime.rs",
+        "line": 157,
+        "expected": "ResourceKey::Long(LegacyAddress24([low, high, bank])) => {"
+      },
+      {
+        "path": "sm/src/game/actors/media_runtime.rs",
+        "line": 1,
+        "expected": "//! Compatible resource emission; material rows must already be staged at room preparation."
       }
     ]
   },
   {
     "title": "Drawing still targets the emulated backend",
-    "description": "Gameplay submits spritemaps and OAM, then the existing PPU presents the frame. An independent renderer is a destination, not the current structure.",
+    "description": "Common actors now produce semantic visual selections, but compatible sprite/tilemap emission still feeds the existing OAM/PPU path. The independent renderer remains a destination.",
     "files": [
-      "sm/src/game/scene_drawing.rs",
+      "sm/src/game/actors/drawing.rs",
+      "sm/src/game/actors/media_runtime.rs",
+      "sm/src/game/session_runtime.rs",
       "sm/src/game/sprite_objects.rs",
       "sm/src/game/sprite_effect_runtime.rs",
       "sm/src/main.rs",
@@ -100,9 +124,19 @@
     ],
     "evidence": [
       {
-        "path": "sm/src/game/scene_drawing.rs",
-        "line": 46,
-        "expected": "pub(crate) unsafe fn draw_scene(game: &mut Game) {"
+        "path": "sm/src/game/actors/drawing.rs",
+        "line": 52,
+        "expected": "pub(in crate::game) fn draw_scene<H: ActorHost + EprojHost + ShotHost>(h: &mut H) {"
+      },
+      {
+        "path": "sm/src/game/actors/media_runtime.rs",
+        "line": 48,
+        "expected": "ActorVisualSelection::Prepared(visual) => match visual.form {"
+      },
+      {
+        "path": "sm/src/game/session_runtime.rs",
+        "line": 524,
+        "expected": "pub(crate) fn actor_draw_compatible("
       },
       {
         "path": "sm/src/game/sprite_objects.rs",
@@ -121,7 +155,7 @@
       },
       {
         "path": "sm/src/rtl.rs",
-        "line": 582,
+        "line": 597,
         "expected": "pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {"
       }
     ]
@@ -137,18 +171,67 @@
     "evidence": [
       {
         "path": "sm/src/game_state.rs",
-        "line": 9,
+        "line": 11,
         "expected": "pub struct Game {"
       },
       {
         "path": "sm/src/cpu_infra.rs",
-        "line": 1249,
+        "line": 1288,
         "expected": "pub unsafe fn RtlRunFrameCompare(input: u16, run_what: i32, game: &mut Game) {"
       },
       {
         "path": "sm/src/rtl.rs",
         "line": 112,
         "expected": "use crate::snes::snes::{snes_catchupApu, snes_read, snes_reset, snes_saveload, snes_write};"
+      }
+    ]
+  },
+  {
+    "title": "Common actors are owned; species effects remain legacy",
+    "description": "The common actor pool, lifecycle and gameplay rules share the Session. Species AI, instruction and hitbox effects still cross back into Game through foreign calls, so the safe common module is not an independent whole-game engine.",
+    "files": [
+      "sm/src/game/actors/mod.rs",
+      "sm/src/game/actors/state.rs",
+      "sm/src/game/actors/runtime.rs",
+      "sm/src/game/session.rs",
+      "sm/src/game/session_runtime.rs",
+      "sm/src/game/sm_a0.rs"
+    ],
+    "evidence": [
+      {
+        "path": "sm/src/game/actors/mod.rs",
+        "line": 2,
+        "expected": "#![forbid(unsafe_code)]"
+      },
+      {
+        "path": "sm/src/game/actors/state.rs",
+        "line": 53,
+        "expected": "pub(super) slots: [Actor; 32],"
+      },
+      {
+        "path": "sm/src/game/session.rs",
+        "line": 97,
+        "expected": "pub(in crate::game) actors: crate::game::actors::Actors,"
+      },
+      {
+        "path": "sm/src/game/actors/runtime.rs",
+        "line": 103,
+        "expected": "self.actor_ai_legacy(routine.0);"
+      },
+      {
+        "path": "sm/src/game/session_runtime.rs",
+        "line": 502,
+        "expected": "self.foreign(|game| unsafe { crate::game::sm_a0::CallEnemyAi(routine, game) });"
+      },
+      {
+        "path": "sm/src/game/session_runtime.rs",
+        "line": 510,
+        "expected": "self.foreign(|game| unsafe { actor_species_instruction(routine, actor, script, game) })"
+      },
+      {
+        "path": "sm/src/game/session_runtime.rs",
+        "line": 513,
+        "expected": "self.foreign(|game| unsafe { crate::game::sm_a0::CallHitboxTouch(routine, game) });"
       }
     ]
   },
@@ -165,7 +248,7 @@
     "evidence": [
       {
         "path": "sm/src/game/session.rs",
-        "line": 96,
+        "line": 103,
         "expected": "pub sprite_effects: crate::game::sprite_effect_state::SpriteEffects,"
       },
       {
@@ -201,7 +284,7 @@
       },
       {
         "path": "sm/src/lib.rs",
-        "line": 366,
+        "line": 378,
         "expected": "#[path = \"../verification/room_mechanisms.rs\"]"
       },
       {
