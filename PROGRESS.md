@@ -3,7 +3,7 @@
 ```mermaid
 flowchart LR
     DONE["DONE: Collision + transitions<br/>shared owned state"]:::done
-    NOW["NOW: Walk / jump / ball<br/>draft; 28/28 mode checks"]:::active
+    NOW["NOW: Walk / jump / ball<br/>draft; 48 paired checks pass"]:::active
     NEXT["NEXT: Verify + adopt<br/>retire 52 old routines"]:::pending
     THEN["THEN: Join owned systems<br/>remove RAM transfers"]:::pending
     TARGET["TARGET: Safe modular engine<br/>Map Rando: rooms / sprites / rules"]:::pending
@@ -35,16 +35,19 @@ flowchart LR
     MOVE --> HOST["player_movement_runtime.rs"]:::draft
     HOST --> CALL["Actual callers + legacy retirement"]:::draft
     CALL --> BUILD["Format + normal compile + DLL / PASS"]:::done
-    BUILD --> MODES28["28/28 paired mode comparisons / PASS"]:::done
-    MODES28 --> EDGE["Edge cases + ownership checks"]:::active
-    BUILD --> AUDIT["Caller + deletion audit"]:::active
-    MODES28 --> REPLAY["Exercised replay + downstream effects"]:::pending
+    BUILD --> MODES28["28 modes + 20 edge comparisons / PASS"]:::done
+    BUILD --> OWN["Shared ownership + 192 spin checks / PASS"]:::done
+    BUILD --> SHARED["4 shared-producer comparisons / PASS"]:::done
+    MOVE --> DETACHED["Compile without backend / PASS"]:::done
+    MODES28 --> EDGE["Exceptional aliases + failure paths"]:::active
+    BUILD --> AUDIT["Caller + deletion audit / PASS"]:::done
+    MODES28 --> REPLAY["8,774 frames / 0 failures<br/>5 required probes + follow-up / PASS"]:::done
     MODES28 --> MUT["Local mutation kills"]:::pending
     EDGE --> ADOPT["Adopt on main"]:::pending
     AUDIT --> ADOPT
     REPLAY --> ADOPT
     MUT --> ADOPT
-    class MOVE,API,SPEED,MODES,FX,DATA,EFFECT,HOST,CALL,BUILD,MODES28,EDGE,AUDIT changed
+    class MODES28,OWN,SHARED,DETACHED,EDGE,AUDIT,REPLAY changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -52,7 +55,7 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-[Local draft cd90713a; checks and limits](docs/PLAN.md#work-order). Main counts below exclude this draft.
+[Checked draft 1bd54ec3; scope and limits](docs/PLAN.md#work-order). Main counts below exclude this draft.
 
 </details>
 

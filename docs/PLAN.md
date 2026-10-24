@@ -288,17 +288,30 @@ are provisional, not measured savings. Input-to-pose remains adjoining read-only
 design work, not an additional adoption. Local compilation remains serialized.
 
 The complete locomotion draft has actual caller redirects and legacy retirement.
-Source cd90713ab3f89d494173e1f94911ee042246432a815b42577216e629aed06bc5
+Checked source 1bd54ec3e17cf0336bb7f266caeba407716c7b17aea56f17b33f96b6fa105b6b
 passes full formatting, normal library compilation and a local release DLL build.
-All 28 normal-selector cases (4000..4027) match the predecessor captures exactly;
-child diagnostics are empty. These are component comparisons, not movie coverage.
-Adoption remains pending edge cases, shared ownership checks, exercised replay,
-targeted local mutation kills and final caller/deletion review. The latter caught
-an unrelated scrolling callback removed by an over-wide splice; it was restored
-before this passing build. Restore the unrelated unused bank-91 alias too before
-the final freeze and recount. Do not credit provisional line savings as adopted.
-The spin boundary case needs independent proof because its predecessor performs
-an unaligned word read; the crouch-floor fixture needs its reviewed correction.
+All 28 normal-selector cases and 20 edge cases match predecessor captures exactly;
+four shared-producer comparisons (collision48..51) also match. Independent raw
+audits check framing, content provenance, full RAM, ordered effects and quiet exits.
+Collision36/37 pass, including three acceleration ownership checks and 192 actual
+owned spin-boundary calls. Case4039 passes authored assertions only: the old Rust
+unaligned read is not fidelity evidence. The independent boundary checks vary all
+four speed bytes; they are not original-CPU comparisons. The corrected crouch-floor
+case passes. Caller/deletion review caught an unrelated scrolling callback and
+unused bank-91 alias; both are restored in the checked source.
+
+The bounded any-input replay passes 8,774 frames with zero failures. Required hits:
+normal movement return 1,882 calls at2218..8773; settlement return318 at8456..8773;
+jumping1 at8653; spinning61 at2478..8669; falling30 at2396..2425. All five probes
+have120follow-up frames. This covers one gameplay room, not the complete game.
+Checked draft accounting: production -162, verification Rust +776; main is unchanged.
+The exact source and DLL are preserved locally before further harness changes.
+Adding the actual movement module to the existing detached harness also passes
+metadata compilation without the backend; this is compilation, not test execution.
+Adoption remains pending finite exceptional-echo/lazy-content-failure checks and
+targeted local mutation kills. Nine mutation recipes and their classifier have
+independent source review; none has yet executed. Rebuild the final harness and
+recount before adoption; do not report draft savings as committed reductions.
 
 The public report must foreground owned behavior, production caller migration,
 legacy deletion and adoption. Keep verification detail expandable below those
