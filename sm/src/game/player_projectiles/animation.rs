@@ -1,12 +1,7 @@
-//! Projectile launch records and the shared animation/trail playback kernels.
+//! Projectile launch records, animation and trail markers on the owned Session.
 #![forbid(unsafe_code)]
 use super::{Host, content};
 use crate::game::projectile_initialization::Initialization;
-use crate::game::projectile_playback::{
-    self as playback, Command, Definitions, Frame, Owner, Write,
-};
-use crate::game::projectile_trail_selection::{self as trail, Source, TrailDefinitions};
-use crate::rom::RomRecord;
 
 pub fn table(kind: Initialization, flags: u16) -> (u32, isize) {
     match kind {
@@ -61,91 +56,55 @@ pub fn initialize(h: &mut impl Host, slot: u16, kind: Initialization) {
     shot!(h, slot, remaining = 1);
 }
 
-impl<H: Host> Owner for &mut H {
-    type Cursor = u16;
-    type Sprite = u16;
-    type Slot = u16;
-    fn remaining(&self, slot: u16) -> u16 {
-        shot!(self, slot, remaining)
-    }
-    fn cursor(&self, slot: u16) -> u16 {
-        shot!(self, slot, cursor)
-    }
-    fn write(&mut self, slot: u16, value: Write<u16, u16>) {
-        match value {
-            Write::Timer(v) => shot!(self, slot, remaining = v),
-            Write::Cursor(v) => {
-                shot!(self, slot, cursor = v);
-                self.probe("player_projectiles.playback.frame");
-            }
-            Write::Sprite(v) => shot!(self, slot, sprite = v),
-            Write::XRadius(v) => shot!(self, slot, x_radius = v),
-            Write::YRadius(v) => shot!(self, slot, y_radius = v),
-        }
-    }
-}
-pub struct View {
-    data: RomRecord,
-    cursor: u16,
-}
-impl Frame<u16, u16> for View {
-    fn command(&self) -> Command {
-        match self.data.word(0) {
-            0x822f => Command::Release,
-            0x8239 => Command::Jump,
-            duration if duration & 0x8000 == 0 => Command::Show { duration },
-            _ => Command::Unknown,
-        }
-    }
-    fn sprite(&self) -> u16 {
-        self.data.word(2)
-    }
-    fn x_radius(&self) -> u16 {
-        u16::from(self.data.byte(4))
-    }
-    fn y_radius(&self) -> u16 {
-        u16::from(self.data.byte(5))
-    }
-    fn next(&self) -> u16 {
-        self.cursor.wrapping_add(8)
-    }
-}
-struct Playback;
-impl<'a, H: Host> Definitions<&'a mut H> for Playback {
-    type Frame = View;
-    fn open(&mut self, h: &'a mut H, cursor: u16) -> (&'a mut H, View) {
-        let data = h.record(0x93, cursor);
-        (h, View { data, cursor })
-    }
-    fn follow_jump(&mut self, h: &'a mut H, cursor: u16) -> (&'a mut H, Option<u16>) {
-        let data = h.record(0x93, cursor.wrapping_add(2));
-        let target = data.word(0);
-        (h, (target != 0).then_some(target))
-    }
-    fn unknown(&mut self, h: &'a mut H) -> (&'a mut H, Option<u16>) {
-        let result = h.unknown();
-        (h, result.then_some(1))
-    }
-}
-impl<'a, H: Host> TrailDefinitions<&'a mut H> for Playback {
-    type Marker = u16;
-    fn sample_trail(&mut self, h: &'a mut H, cursor: u16, source: Source) -> (&'a mut H, u16) {
-        let cursor = if source == Source::Upcoming {
-            cursor
-        } else {
-            cursor.wrapping_sub(8)
-        };
-        let data = h.record(0x93, cursor);
-        (h, data.word(6))
-    }
-}
 pub fn advance(h: &mut impl Host) {
     let selected = h.session().projectiles.selected;
-    let (h, outcome) = playback::advance(h, selected, &mut Playback);
-    if outcome == playback::Outcome::Release {
-        super::motion::clear(h, selected);
+    let prior = shot!(h, selected, remaining);
+    shot!(h, selected, remaining = prior.wrapping_sub(1));
+    if prior != 1 {
+        return;
+    }
+    let mut cursor = shot!(h, selected, cursor);
+    loop {
+        let frame = h.record(0x93, cursor);
+        match frame.word(0) {
+            0x822f => {
+                super::motion::clear(h, selected);
+                return;
+            }
+            0x8239 => {
+                let target = h.record(0x93, cursor.wrapping_add(2)).word(0);
+                if target == 0 {
+                    return;
+                }
+                cursor = target;
+            }
+            duration if duration & 0x8000 == 0 => {
+                // Keep this captured record and publish each field before the next read.
+                shot!(h, selected, remaining = duration);
+                shot!(h, selected, sprite = frame.word(2));
+                shot!(h, selected, x_radius = u16::from(frame.byte(4)));
+                shot!(h, selected, y_radius = u16::from(frame.byte(5)));
+                shot!(h, selected, cursor = cursor.wrapping_add(8));
+                h.probe("player_projectiles.playback.frame");
+                return;
+            }
+            _ => {
+                if !h.unknown() {
+                    return;
+                }
+                cursor = 1;
+            }
+        }
     }
 }
 pub fn trail_frame(h: &mut impl Host, slot: u16) -> u16 {
-    trail::sample(h, slot, &mut Playback).1
+    let cursor = shot!(h, slot, cursor);
+    let upcoming = shot!(h, slot, remaining) == 1 && h.record(0x93, cursor).word(0) & 0x8000 == 0;
+    let cursor = if upcoming {
+        cursor
+    } else {
+        cursor.wrapping_sub(8)
+    };
+    // A diagnostic on the first lookup can replace the loaded allocation.
+    h.record(0x93, cursor).word(6)
 }

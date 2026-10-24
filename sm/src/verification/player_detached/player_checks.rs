@@ -169,9 +169,177 @@ fn unsupported_does_not_succeed() {
     assert!(h.events.is_empty());
 }
 
+
+// Captured records and synchronous callbacks in the existing composed Host.
+fn trail_definitions(h: &Composed) {
+    for (bank, cursor, value) in [
+        (0x90, 0xb5bb, 0x8100), (0x90, 0xb609, 0x8400),
+        (0x90, 0x8100, 2), (0x90, 0x8102, 0x2222),
+        (0x90, 0x8400, 2), (0x90, 0x8402, 0x3333),
+        (0x93, 0x9000, 9), (0x93, 0x9002, 0x1111), (0x93, 0x9004, 0x0705),
+        (0x93, 0x9006, 2), (0x93, 0x8ffe, 1),
+        (0x9b, 0xa4b3, 0xa800), (0x9b, 0xa804, 0xb000),
+        (0x9b, 0xb008, 0x0806), (0x9b, 0xb00a, 0x0c0a),
+        (0x9b, 0xb00c, 0x1210), (0x9b, 0xb00e, 0x1614),
+    ] { h.word(bank, cursor, value); }
+}
+fn trail_host() -> Composed {
+    let mut h = prepared();
+    trail_definitions(&h);
+    h.world.player.projectiles.selected = 0;
+    let shot = &mut h.world.player.projectiles.shots[0];
+    shot.kind = 0; shot.direction = 2; shot.cursor = 0x9000;
+    shot.remaining = 1; shot.trail_time = 1; shot.x = 50; shot.y = 60;
+    h
+}
+fn trail_event(h: &mut Composed, pair: usize, right: bool, frozen: bool) {
+    let pair_value = &h.world.player.projectiles.trails[pair];
+    let side = if right { &pair_value.right } else { &pair_value.left };
+    h.events.push(Event::Trail(pair, right, frozen, side.x, side.y));
+}
+fn animation_capture_and_unknown() {
+    let mut h = trail_host();
+    h.on_player_record = Some(|h, bank, cursor| {
+        assert_eq!((bank, cursor), (0x93, 0x9000));
+        assert_eq!(h.world.player.projectiles.shots[0].remaining, 0);
+        let old = h.image.clone();
+        h.image = super::RomImage::zeroed(0x300000);
+        h.world.player.projectiles.selected = 2;
+        Some(super::RomRecord { image: old, base: 0x99000 })
+    });
+    player::animation::advance(&mut h);
+    let shot = &h.world.player.projectiles.shots[0];
+    assert_eq!((shot.remaining, shot.sprite, shot.x_radius, shot.y_radius, shot.cursor),
+        (9, 0x1111, 5, 7, 0x9008));
+    assert_eq!(h.world.player.projectiles.shots[1].remaining, 0);
+    let mut h = trail_host();
+    h.word(0x93, 0x9000, 0x822f);
+    h.world.player.projectiles.shots[1].kind = 0x3456;
+    h.on_player_record = Some(|h, _, _| { h.world.player.projectiles.selected = 2; None });
+    player::animation::advance(&mut h);
+    assert_eq!(h.world.player.projectiles.shots[0].cursor, 0);
+    assert_eq!(h.world.player.projectiles.shots[1].kind, 0x3456);
+    for continuing in [false, true] {
+        let mut h = trail_host();
+        h.word(0x93, 0x9000, 0xffff);
+        h.word(0x93, 0x9100, 4); h.word(0x93, 0x9102, 0x4444);
+        h.on_player_unknown = Some(if continuing { |h| {
+            h.world.player.projectiles.selected = 2; true
+        }} else { |_| false });
+        h.on_player_record = Some(|h, bank, cursor| {
+            h.events.push(Event::PlayerRecord(bank, cursor));
+            (cursor == 1).then(|| super::RomRecord { image: h.image.clone(), base: 0x99100 })
+        });
+        player::animation::advance(&mut h);
+        assert_eq!(h.world.player.projectiles.shots[0].remaining, if continuing { 4 } else { 0 });
+        assert_eq!(h.world.player.projectiles.shots[0].cursor, if continuing { 9 } else { 0x9000 });
+        assert_eq!(h.events.len(), if continuing { 2 } else { 1 });
+    }
+}
+fn emission_record_recapture() {
+    let mut h = trail_host();
+    h.on_player_record = Some(|h, bank, cursor| {
+        let first = h.events.is_empty();
+        h.events.push(Event::PlayerRecord(bank, cursor));
+        if !first { return None; }
+        let pair = &h.world.player.projectiles.trails[17];
+        assert_eq!((pair.left.remaining, pair.right.remaining, pair.left.cursor, pair.right.cursor),
+            (1, 1, 0x8100, 0x8400));
+        let old = h.image.clone();
+        h.image = super::RomImage::zeroed(0x300000);
+        trail_definitions(h);
+        h.word(0x93, 0x9000, 0x8239); h.word(0x93, 0x9006, 3);
+        h.world.player.projectiles.selected = 2;
+        h.world.player.projectiles.shots[0].x = 150;
+        h.world.player.projectiles.shots[0].y = 200;
+        Some(super::RomRecord { image: old, base: 0x99000 })
+    });
+    player::presentation::emit(&mut h, 0);
+    let pair = &h.world.player.projectiles.trails[17];
+    assert_eq!((pair.left.y, pair.left.x, pair.right.y, pair.right.x), (214, 162, 218, 166));
+    assert_eq!(h.events, [Event::PlayerRecord(0x93, 0x9000), Event::PlayerRecord(0x93, 0x9000),
+        Event::PlayerRecord(0x9b, 0xa804), Event::PlayerRecord(0x9b, 0xb00c)]);
+}
+fn emission_caller_reload() {
+    for code in [0xaef3, 0xdc9c] {
+        let mut h = trail_host();
+        for cell in h.world.player.room.terrain.cells_mut() { cell.level = 0; cell.behavior = 0; }
+        let next = &mut h.world.player.projectiles.shots[1];
+        next.direction = 2; next.x = 100; next.y = 120; next.x_speed = 0x200;
+        h.on_player_record = Some(|h, bank, cursor| {
+            h.world.player.projectiles.selected = 2;
+            h.events.push(Event::PlayerRecord(bank, cursor)); None
+        });
+        player::call_motion(&mut h, code, 0);
+        assert_eq!(h.world.player.projectiles.shots[0].x, 50);
+        assert_eq!(h.world.player.projectiles.shots[0].y, 60);
+        let next = &h.world.player.projectiles.shots[1];
+        assert_eq!((next.x, next.y), if code == 0xaef3 { (102, 120) } else { (100, 128) });
+        assert_eq!(h.world.player.projectiles.shots[0].trail_time, 4);
+        let pair = &h.world.player.projectiles.trails[17];
+        assert_eq!((pair.left.x, pair.left.y), (52, 64));
+    }
+}
+fn trail_frame_recapture_and_unknown() {
+    let mut h = trail_host();
+    h.world.player.projectiles.trails[17].left.remaining = 1;
+    h.world.player.projectiles.trails[17].left.cursor = 0x8100;
+    h.on_player_record = Some(|h, bank, cursor| {
+        let first = h.events.is_empty();
+        h.events.push(Event::PlayerRecord(bank, cursor));
+        if !first {
+            assert_eq!(h.world.player.projectiles.trails[17].left.remaining, 2);
+            return None;
+        }
+        let old = h.image.clone();
+        h.image = super::RomImage::zeroed(0x300000);
+        h.word(0x90, 0x8100, 8); h.word(0x90, 0x8102, 0x5555);
+        Some(super::RomRecord { image: old, base: 0x80100 })
+    });
+    h.on_player_trail = Some(trail_event);
+    player::presentation::update_trails(&mut h);
+    let trail = &h.world.player.projectiles.trails[17].left;
+    assert_eq!((trail.remaining, trail.tile, trail.cursor), (2, 0x5555, 0x8104));
+    let mut h = trail_host();
+    h.word(0x90, 0x8100, 0xffff); h.word(0x90, 0x8102, 2); h.word(0x90, 0x8104, 0x6666);
+    h.world.player.projectiles.trails[17].left.remaining = 1;
+    h.world.player.projectiles.trails[17].left.cursor = 0x8100;
+    h.on_player_unknown = Some(|h| { h.world.player.projectiles.trails[17].left.y = 45; false });
+    h.on_player_trail = Some(trail_event);
+    player::presentation::update_trails(&mut h);
+    let trail = &h.world.player.projectiles.trails[17].left;
+    assert_eq!((trail.remaining, trail.tile, trail.cursor, trail.y), (2, 0x6666, 0x8106, 45));
+}
+fn trail_draw_reentry() {
+    let mut h = trail_host();
+    h.world.player_inputs.frozen = 1;
+    h.world.player.projectiles.trails[17].left.remaining = 2;
+    h.world.player.projectiles.trails[17].right.remaining = 3;
+    h.on_player_trail = Some(|h, pair, right, frozen| {
+        trail_event(h, pair, right, frozen);
+        if h.events.len() == 1 {
+            let mut replacement = h.world.player.clone();
+            replacement.projectiles.trails[17].right.remaining = 0;
+            replacement.projectiles.trails[16].left.remaining = 1;
+            replacement.projectiles.trails[16].left.cursor = 0x8100;
+            replacement.projectiles.trails[16].left.x = 77;
+            h.world.player = replacement;
+            h.world.player_inputs.frozen = 0;
+        }
+    });
+    player::presentation::update_trails(&mut h);
+    assert_eq!(h.events, [Event::Trail(17, false, true, 0, 0), Event::Trail(16, false, true, 77, 0)]);
+    assert_eq!(h.world.player.projectiles.trails[16].left.remaining, 1);
+}
+
 pub(super) fn run() {
     firing_and_replay();
     first_frame_boundary();
     reset_palette_composition();
     unsupported_does_not_succeed();
+    animation_capture_and_unknown();
+    emission_record_recapture();
+    emission_caller_reload();
+    trail_frame_recapture_and_unknown();
+    trail_draw_reentry();
 }

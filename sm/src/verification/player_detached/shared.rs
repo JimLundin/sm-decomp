@@ -97,6 +97,8 @@ enum Event {
     RoomMusic(u16),
     RoomControl(u16, u16, u16),
     PlayerSound(u8, u8, u16),
+    PlayerRecord(u8, u16),
+    Trail(usize, bool, bool, u16, u16),
     Shot(u16, u16, u16),
     Beam(u16, u16, u16),
     PaletteSpawn(u16),
@@ -129,6 +131,9 @@ struct Composed {
     visual_records: Vec<(game::visual_host::Source, u8, u16)>,
     on_sprite_draw: Option<fn(&mut Composed)>,
     on_sprite_record: Option<fn(&mut Composed, u16)>,
+    on_player_record: Option<fn(&mut Composed, u8, u16) -> Option<RomRecord>>,
+    on_player_trail: Option<fn(&mut Composed, usize, bool, bool)>,
+    on_player_unknown: Option<fn(&mut Composed) -> bool>,
 }
 impl Composed {
     fn new() -> Self {
@@ -153,6 +158,9 @@ impl Composed {
             visual_records: Vec::new(),
             on_sprite_draw: None,
             on_sprite_record: None,
+            on_player_record: None,
+            on_player_trail: None,
+            on_player_unknown: None,
         }
     }
     fn byte(&self, bank: u8, cursor: u16, byte: u8) {

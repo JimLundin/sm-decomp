@@ -57,3 +57,7 @@ pub(crate) fn fire_missile(h: &mut impl Host) {
 pub(crate) fn charge_palette(h: &mut impl Host) -> u8 {
     feedback::palette(h)
 }
+
+pub(crate) fn call_motion(h: &mut impl Host, code: u16, slot: u16) {
+    motion::run(h, code, slot);
+}

@@ -22,9 +22,9 @@ Read [the external review](REVIEW.md) next. Hygiene and process reduction are do
 One agent expands checkpoint recipes; others consolidate exercised subsystems in
 parallel, naming coverage per commit. Prefer legacy-bank retirement; production
 must fall. A docs-only commit needs a code commit beside it. Continue coverage
-from the preserved Power Bomb route after Norfair Reserve. The next consolidation
-commit deletes a whole projectile layer. Keep this plan
-under ~200 lines, with current state and rules only; results belong in commits
+from the preserved Power Bomb route after Norfair Reserve. Continue deleting
+redundant layers in covered subsystems. Keep this plan under ~200 lines, with
+current state and rules only; results belong in commits
 (at most ~8 lines). Direct user instructions take precedence. Historical queues,
 gates and results in [HISTORY.md](HISTORY.md) are not current rules.
 
@@ -48,13 +48,13 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Current recipes: 24/44 required checks pass; 20 remain pending. Three additional
    checks (in-memory save, upward elevator, Ice return) pass; the corpus is unfinished.
    Next: Power Bomb, then Crocomire.
-   Power Bomb route is preserved at Red Tower's stone ledge (frame 171113); the long
-   climb still blocks A3AE's pickup. Crocomire needs Power Bombs or the far gate side.
+   Power Bomb route is at Red Tower's upper right shelf (frame 172183, y731);
+   finish the climb to A3AE. Crocomire needs Power Bombs or the far gate side.
    `python tools/verify_dll.py --unit-tests --direct` runs 20 observer tests, not
    gameplay checks. Regenerate incompatible checkpoints from boot; preserve the
    old checked navigation build.
-2. **Current - consolidate covered owned subsystems.** Simplify projectile animation
-   and trails around their sole Session owner. Name coverage; hold uncovered contexts.
+2. **Current - consolidate covered owned subsystems.** Projectile animation/trails
+   consolidation is adopted; simplify charge feedback next. Name coverage; hold gaps.
    Report added production and deleted legacy lines together; net growth needs a
    reason. Get production below 110,000 before starting another subsystem. Reuse
    existing Host/effects/adapters unless they demonstrably cannot serve. Route
@@ -69,9 +69,9 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    platform libraries, remove the game runtime's SNES-backend dependency, and verify
    boot-to-credits plus custom sprites, reordered rooms/doors and opt-in mechanics.
 
-Owned Session intervals exist; persistent whole-engine ownership and backend
-independence remain open. Larger reductions need live consolidation/caller migration;
-the unused-bank scan found no larger removable family. Do not auto-rename macro-shared parameters.
+Persistent whole-engine ownership and backend independence remain open. Larger
+reductions need live caller migration; no unused-bank family remains removable.
+Do not auto-rename macro-shared parameters.
 Held scrolling consolidation needs `scroll_tiles.row.bg2` coverage, absent in Ceres.
 Keep input draft `e956dffa` and `%LOCALAPPDATA%/sm-decomp-experiments/20261024/player-input-*`
 snapshots; reprice/revalidate against current main before adoption, without unrelated reruns.

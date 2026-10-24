@@ -13,6 +13,9 @@ impl Host for Composed {
         self.image.clone()
     }
     fn record(&mut self, bank: u8, cursor: u16) -> RomRecord {
+        if let Some(record) = self.on_player_record.and_then(|hook| hook(self, bank, cursor)) {
+            return record;
+        }
         assert!(cursor & 0x8000 != 0, "unprepared low-window content");
         RomRecord {
             image: self.image.clone(),
@@ -75,13 +78,17 @@ impl Host for Composed {
             Drawing::CrashEchoes => panic!("crash echo rendering outside prepared scope"),
         }
     }
-    fn draw_trail(&mut self, _: usize, _: bool, _: bool) {
+    fn draw_trail(&mut self, pair: usize, right: bool, frozen: bool) {
+        if let Some(hook) = self.on_player_trail {
+            return hook(self, pair, right, frozen);
+        }
         panic!("trail output outside prepared scope")
     }
     fn invalid_damage(&mut self) {
         panic!("invalid prepared projectile damage")
     }
     fn unknown(&mut self) -> bool {
+        if let Some(hook) = self.on_player_unknown { return hook(self); }
         panic!("unknown prepared projectile operation")
     }
     fn room_level(&self, cell: u16) -> u16 {

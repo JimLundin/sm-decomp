@@ -14,16 +14,8 @@ pub(crate) mod projectile_block_reactions;
 pub(crate) mod projectile_geometry;
 #[path = "../../game/projectile_initialization.rs"]
 pub(crate) mod projectile_initialization;
-#[path = "../../game/projectile_playback.rs"]
-pub(crate) mod projectile_playback;
 #[path = "../../game/projectile_room.rs"]
 pub(crate) mod projectile_room;
-#[path = "../../game/projectile_trail_emission.rs"]
-pub(crate) mod projectile_trail_emission;
-#[path = "../../game/projectile_trail_playback.rs"]
-pub(crate) mod projectile_trail_playback;
-#[path = "../../game/projectile_trail_selection.rs"]
-pub(crate) mod projectile_trail_selection;
 #[path = "../../game/projectile_weapon_definitions.rs"]
 pub(crate) mod projectile_weapon_definitions;
 #[path = "../../game/special_geometry.rs"]

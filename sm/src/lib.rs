@@ -380,15 +380,10 @@ pub mod game {
     pub(crate) mod projectile_geometry;
     pub(crate) mod projectile_initialization;
 
-    pub(crate) mod projectile_playback;
-
     pub(crate) mod projectile_block_reactions;
     pub(crate) mod projectile_block_reactions_ram;
     pub(crate) mod projectile_presentation_ram;
     pub(crate) mod projectile_room;
-    pub(crate) mod projectile_trail_emission;
-    pub(crate) mod projectile_trail_playback;
-    pub(crate) mod projectile_trail_selection;
 
     pub mod animated_tiles;
     pub mod enemy_projectiles;

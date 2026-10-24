@@ -774,28 +774,12 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/projectile_initialization.rs"),
     ),
     (
-        "sm/src/game/projectile_playback.rs",
-        include_bytes!("game/projectile_playback.rs"),
-    ),
-    (
         "sm/src/game/projectile_presentation_ram.rs",
         include_bytes!("game/projectile_presentation_ram.rs"),
     ),
     (
         "sm/src/game/projectile_room.rs",
         include_bytes!("game/projectile_room.rs"),
-    ),
-    (
-        "sm/src/game/projectile_trail_emission.rs",
-        include_bytes!("game/projectile_trail_emission.rs"),
-    ),
-    (
-        "sm/src/game/projectile_trail_playback.rs",
-        include_bytes!("game/projectile_trail_playback.rs"),
-    ),
-    (
-        "sm/src/game/projectile_trail_selection.rs",
-        include_bytes!("game/projectile_trail_selection.rs"),
     ),
     (
         "sm/src/game/projectile_weapon_definitions.rs",
