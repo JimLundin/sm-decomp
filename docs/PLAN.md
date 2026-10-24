@@ -474,6 +474,15 @@ references; measure build/test time and resource growth before changing the loop
    +118573LFbytes, verificationRust+2908lines, Python+42bytes, native unchanged.
    This exceeds the prior upper estimate by700production lines; adapters remain
    charged to production. Four new mutation patches are drafted, not executed.
+   Fixture corrections now pass full world execution: actual renderer buffers
+   and source-room asset initialization restore normal prerequisites without
+   weakening route assertions. Source77e1681a builds (22.11s); all11prepared-world
+   cases pass and independent output/source/DLL audit confirms every RAM phase,
+   swapped destinations/level markers, complete transitions, reset and mapped
+   stations. Earlier failed captures remain preserved. Four new mutation checks
+   are source-reviewed and integrated, execution pending. Separate case37 adds
+   a real VRAM back-reference to distinguish byte/word offset units; source
+   review passes, predecessor/candidate execution remains pending.
    Reuse current owners;84additional disjoint bytes comprise82room-related bytes
    and two shared lossless continuation bytes (proposed union52,373). Retire the
    actual competing orchestration and stale door inputs in the same adoption.
