@@ -27,7 +27,7 @@ flowchart LR
 ```mermaid
 flowchart LR
     AC["Complete callers + retirement<br/>design review PASS"]:::done --> AD["49-file declaration carrier<br/>source review PASS"]:::done
-    AU["4,660 new bytes / union 57,033<br/>independent audit PASS"]:::done --> AD
+    AU["4,668 new bytes / union 57,041<br/>shared player scope audit PASS"]:::done --> AD
     AI["Per-instance appearance + lifecycle<br/>independent review PASS"]:::done --> AD
     AR["Typed read lookup + guarded edits<br/>design review PASS"]:::done --> AD
     AP["Full production cost reviewed<br/>estimate +973..3,105 lines"]:::done --> AD
@@ -45,11 +45,17 @@ flowchart LR
     AB --> AX["Combined predecessor<br/>format + build + source checks PASS"]:::done
     AX --> AXPOP["35 population / animation references<br/>capture PASS"]:::done
     AX --> AXMOVE["40 movement / contact references<br/>capture PASS"]:::done
-    AXPOP --> AXAUDIT["Independent capture audit"]:::active
+    AXPOP --> AXAUDIT["75 captures / independent audit PASS"]:::done
     AXMOVE --> AXAUDIT
     AXAUDIT --> AVERIFY["Actual routes + oracle + mutations"]:::pending
+    AV --> BORROW["Actual state/access compiler carrier<br/>positive control PASS"]:::done
+    BORROW --> BREAD["Actor read across edit<br/>compiler rejects / PASS"]:::done
+    BORROW --> BSREAD["Spawn read across edit<br/>compiler rejects / PASS"]:::done
+    BORROW --> BESC["Mutable edit escape<br/>compiler rejects / PASS"]:::done
+    BORROW --> BCOPY["Actor move out of view<br/>compiler rejects / PASS"]:::done
+    BORROW --> BSCOPY["Spawn move out of view<br/>compiler rejects / PASS"]:::done
     AVERIFY --> AA["Caller retirement + adoption"]:::pending
-    class AX,AXPOP,AXMOVE,AXAUDIT changed
+    class AU,AXAUDIT,BORROW,BREAD,BSREAD,BESC,BCOPY,BSCOPY changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

@@ -442,8 +442,10 @@ references; measure build/test time and resource growth before changing the loop
    Root alone integrates and builds. Separately,35population/animation and40movement/
    contact reference cases pass source qualification. The combined predecessor passes
    formatting, build and source/native checks; all75captures pass exact fixture
-   assertions and protocol checks (source7c2f9197). Independent output audit is
-   pending; these are predecessor references, not replacement comparisons.
+   assertions and protocol checks (source7c2f9197). Independent output audit passes;
+   these are predecessor references, not replacement comparisons. Actual state/access/
+   codec metadata carrier passes its positive compile control; five negative borrow,
+   edit-escape and non-Copy probes fail for their intended compiler diagnostics.
    Preserve56existing mutants and add the
    nine selected actor faults, including discarded-future handle rejection.
    Scope includes population/assets, spawn/respawn/death, separate select/update,
@@ -451,7 +453,8 @@ references; measure build/test time and resource growth before changing the loop
    actual drawing and shared projectile consumers. Retire common slot/coordinate/
    instruction views and field facades with their callers; retain explicitly
    priced native utilities/species effects. Reuse existing pure rules.
-   The reviewed17-range union adds4660unique bytes to52373, yielding57033;
+   The reviewed17-range actor union adds4660unique bytes to52373. Complete shared
+   player closure adds4grapple-endpoint and4position-fraction bytes, yielding57041;
    7800..97DC stays Game-owned and existing projectile angles retain their owner.
    Use direct typed Actor reads through a lifetime-bound borrowed/projected view;
    guarded edit scopes preserve exceptional aliases and unwind prefixes without
