@@ -79,14 +79,18 @@ pub trait Table {
     fn word(&self, index: usize) -> u16;
 }
 /// Resolve and spawn mechanism definitions without requiring projectile geometry.
-pub trait Definitions {
+pub(crate) trait Definitions {
     type Table: Table;
     fn resolve(&mut self, address: u32) -> Self::Table;
     fn bts(&self) -> u8;
     fn area(&self) -> u16;
     fn spawn(&mut self, header: u16);
 }
-pub fn mechanism(bombable: bool, solid: bool, content: &mut impl Definitions) -> Option<Mechanism> {
+pub(crate) fn mechanism(
+    bombable: bool,
+    solid: bool,
+    content: &mut impl Definitions,
+) -> Option<Mechanism> {
     let header;
     if bombable {
         let table = content.resolve(0x94a012);
@@ -118,7 +122,7 @@ pub fn mechanism(bombable: bool, solid: bool, content: &mut impl Definitions) ->
         end_scan: !bombable && header == 0xb974,
     })
 }
-pub fn trigger(
+pub(crate) fn trigger(
     bombable: bool,
     solid: bool,
     progress: &mut impl Progress,
@@ -132,7 +136,7 @@ pub fn trigger(
         context.spawn(mechanism.header);
     }
 }
-pub trait Context: Definitions {
+pub(crate) trait Context: Definitions {
     fn byte_limit(&self) -> u16;
     fn cursor(&self) -> u16;
     fn select(&mut self, cell: u16);
@@ -141,7 +145,7 @@ pub trait Context: Definitions {
     fn width(&self) -> u16;
     fn slope(&self, axis: Axis, scan: &mut impl Progress) -> bool;
 }
-pub fn react(
+pub(crate) fn react(
     axis: Axis,
     byte_offset: u16,
     mut scan: Scan,
@@ -150,7 +154,7 @@ pub fn react(
     let result = react_progress(axis, byte_offset, &mut scan, context);
     (scan, result)
 }
-pub fn react_progress(
+pub(crate) fn react_progress(
     axis: Axis,
     byte_offset: u16,
     scan: &mut impl Progress,

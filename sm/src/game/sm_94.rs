@@ -2,6 +2,7 @@ use crate::game::actors::api as actor_api;
 pub use crate::game::constants::bank_84::*;
 pub use crate::game::constants::bank_90::*;
 pub use crate::game::prelude::*;
+use crate::game::projectile_block_reactions as reactions;
 use crate::game::projectile_room::Axis as ShotAxis;
 
 use crate::game::room_mechanisms::spawn_collision;
@@ -11,14 +12,6 @@ pub use crate::types::Consts_94;
 crate::game::constants::typed_constants! { Consts_94;
     addr_word_94B197 = 45463, addr_word_94B193 = 45459,
     addr_word_94B18F = 45455, addr_word_94B18B = 45451,
-}
-crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C)]
-    pub struct CollInfo {
-        pub ci_r18_r20: i32;
-        pub ci_r24, ci_r26, ci_r28, ci_r30, ci_r32, ci_r38, ci_r40: u16;
-    }
 }
 
 /// Stack-owned sample state for checking Samus's edges after releasing grapple.
@@ -311,7 +304,7 @@ pub fn PostGrappleCollisionDetect_Y(game: &mut Game) {
 
 pub(super) use crate::game::projectile_geometry::square_slope_occupied;
 
-pub(crate) fn BlockReact_HorizExt(_ci: *mut CollInfo, game: &mut Game) -> u8 {
+pub(crate) fn BlockReact_HorizExt(game: &mut Game) -> u8 {
     if let Some(cell) = crate::game::projectile_block_reactions::redirect(
         ShotAxis::X,
         i16::from(game.current_block_bts() as i8),
@@ -324,7 +317,7 @@ pub(crate) fn BlockReact_HorizExt(_ci: *mut CollInfo, game: &mut Game) -> u8 {
         0
     }
 }
-pub(crate) fn BlockReact_VertExt(_ci: *mut CollInfo, game: &mut Game) -> u8 {
+pub(crate) fn BlockReact_VertExt(game: &mut Game) -> u8 {
     if let Some(cell) = crate::game::projectile_block_reactions::redirect(
         ShotAxis::Y,
         i16::from(game.current_block_bts() as i8),
@@ -338,10 +331,10 @@ pub(crate) fn BlockReact_VertExt(_ci: *mut CollInfo, game: &mut Game) -> u8 {
     }
 }
 
-fn BlockInsideReact_Slope(_ci: *mut CollInfo, _game: &mut Game) -> u8 {
+fn BlockInsideReact_Slope(_game: &mut Game) -> u8 {
     0
 }
-fn BlockInsideReact_ShootableAir(_ci: *mut CollInfo, game: &mut Game) -> u8 {
+fn BlockInsideReact_ShootableAir(game: &mut Game) -> u8 {
     BlockInsideReact_SpecialAir_Default(game);
     0
 }
@@ -361,7 +354,7 @@ fn BlockInsideReact_SpikeAir_BTS2(game: &mut Game) {
     }
     BlockInsideReact_SpecialAir_Default(game);
 }
-fn BlockInsideReact_SpikeAir(_ci: *mut CollInfo, game: &mut Game) -> u8 {
+fn BlockInsideReact_SpikeAir(game: &mut Game) -> u8 {
     let bts = game.current_block_bts();
     // Keep the former sixteen-entry table's rejection of invalid BTS values.
     assert!(bts < 16, "spike-air BTS index out of bounds: {bts}");
@@ -370,7 +363,7 @@ fn BlockInsideReact_SpikeAir(_ci: *mut CollInfo, game: &mut Game) -> u8 {
     }
     0
 }
-fn BlockInsideReact_Special_(_ci: *mut CollInfo, game: &mut Game) -> u8 {
+fn BlockInsideReact_Special_(game: &mut Game) -> u8 {
     BlockInsideReact_SpecialAir_Default(game);
     0
 }
@@ -401,7 +394,7 @@ unsafe fn BlockInsideReact_SpecialAir_70(game: &mut Game) {
 const SPECIAL_AIR_PLM_TABLES: [u16; 8] = [
     0x9a06, 0x9a26, 0x9a46, 0x9a66, 0x9a86, 0x9aa6, 0x9ac6, 0x9ae6,
 ];
-unsafe fn BlockInsideReact_SpecialAir(_ci: *mut CollInfo, game: &mut Game) -> u8 {
+unsafe fn BlockInsideReact_SpecialAir(game: &mut Game) -> u8 {
     unsafe {
         let bts = game.current_block_bts();
         if bts & 0x80 != 0 {
@@ -430,36 +423,23 @@ unsafe fn BlockInsideReact_SpecialAir(_ci: *mut CollInfo, game: &mut Game) -> u8
         0
     }
 }
-unsafe fn dispatch_block_inside(block_type: u16, ci: *mut CollInfo, game: &mut Game) -> u8 {
+unsafe fn dispatch_block_inside(block_type: u16, game: &mut Game) -> u8 {
     unsafe {
         match block_type {
-            0 | 4 | 6 | 7 => BlockInsideReact_ShootableAir(ci, game),
-            1 => BlockInsideReact_Slope(ci, game),
-            2 => BlockInsideReact_SpikeAir(ci, game),
-            3 => BlockInsideReact_SpecialAir(ci, game),
-            5 => BlockReact_HorizExt(ci, game),
-            13 => BlockReact_VertExt(ci, game),
-            _ => BlockInsideReact_Special_(ci, game),
+            0 | 4 | 6 | 7 => BlockInsideReact_ShootableAir(game),
+            1 => BlockInsideReact_Slope(game),
+            2 => BlockInsideReact_SpikeAir(game),
+            3 => BlockInsideReact_SpecialAir(game),
+            5 => BlockReact_HorizExt(game),
+            13 => BlockReact_VertExt(game),
+            _ => BlockInsideReact_Special_(game),
         }
     }
 }
 unsafe fn react_inside_sample(x: u16, y: u16, game: &mut Game) {
     unsafe {
         CalculateBlockAt(x, y, 0, 0, game);
-        let mut context = CollInfo {
-            ci_r18_r20: 0,
-            ci_r24: 0,
-            ci_r26: x,
-            ci_r28: y,
-            ci_r30: 0,
-            ci_r32: 0,
-            ci_r38: 0,
-            ci_r40: 0,
-        };
-        // Keep the same context alive across retries and callback-adjusted block indexes.
-        game.react_to_block(|block_type, game| {
-            dispatch_block_inside(block_type, &raw mut context, game)
-        });
+        game.react_to_block(|block_type, game| dispatch_block_inside(block_type, game));
     }
 }
 pub unsafe fn BlockInsideDetection(game: &mut Game) {
@@ -508,7 +488,7 @@ fn CalculateBlockAt(x: u16, y: u16, x_offset: u16, y_offset: u16, game: &mut Gam
     };
     game.set_cur_block_index(block);
 }
-unsafe fn BlockReactGrapple_GrappleBlock(ci: *mut CollInfo, game: &mut Game) -> u8 {
+unsafe fn BlockReactGrapple_GrappleBlock(game: &mut Game) -> u8 {
     unsafe {
         static kBlockReactGrapple_GrappleBlockPlm: [u16; 4] = [0xd0d8, 0xd0dc, 0xd0e0, 0xd0d8];
         word!(game.grapple_beam_flags &= !(0x8000));
@@ -523,7 +503,7 @@ unsafe fn BlockReactGrapple_GrappleBlock(ci: *mut CollInfo, game: &mut Game) -> 
         }
     }
 }
-unsafe fn BlockReactGrapple_SpikeBlock(ci: *mut CollInfo, game: &mut Game) -> u8 {
+unsafe fn BlockReactGrapple_SpikeBlock(game: &mut Game) -> u8 {
     unsafe {
         static kBlockReactGrapple_SpikeBlockPlm: [u16; 16] = [
             0xd0e4, 0xd0e4, 0xd0e4, 0xd0e8, 0xd0e4, 0xd0e4, 0xd0e4, 0xd0e4, 0xd0e4, 0xd0e4, 0xd0e4,
@@ -596,27 +576,20 @@ pub unsafe fn BlockReactGrapple(game: &mut Game) -> u8 {
         );
         let mut v0: i16 = (word!(game.grapple_beam_end_x_pos) >> 4) as i16;
         word!(game.cur_block_index = (prod).wrapping_add((v0) as u16));
-        let mut ci: CollInfo = CollInfo {
-            ci_r18_r20: 0,
-            ci_r24: 0,
-            ci_r26: 0,
-            ci_r28: 0,
-            ci_r30: 0,
-            ci_r32: 0,
-            ci_r38: 0,
-            ci_r40: 0,
-        };
         game.react_to_block(|block_type, game| match block_type {
             0 | 2 | 3 | 6 => 0,
             1 | 8 | 9 | 11 => 1,
-            4 => crate::game::projectile_block_reactions_ram::trigger(&mut ci, false, false, game),
-            5 => BlockReact_HorizExt(&raw mut ci, game),
-            7 => crate::game::projectile_block_reactions_ram::trigger(&mut ci, true, false, game),
-            10 => BlockReactGrapple_SpikeBlock(&raw mut ci, game),
-            12 => crate::game::projectile_block_reactions_ram::trigger(&mut ci, false, true, game),
-            13 => BlockReact_VertExt(&raw mut ci, game),
-            14 => BlockReactGrapple_GrappleBlock(&raw mut ci, game),
-            15 => crate::game::projectile_block_reactions_ram::trigger(&mut ci, true, true, game),
+            kind @ (4 | 7 | 12 | 15) => {
+                let solid = matches!(kind, 12 | 15);
+                if let Some(mechanism) = reactions::mechanism(matches!(kind, 7 | 15), solid, game) {
+                    reactions::Definitions::spawn(game, mechanism.header);
+                }
+                u8::from(solid)
+            }
+            5 => BlockReact_HorizExt(game),
+            10 => BlockReactGrapple_SpikeBlock(game),
+            13 => BlockReact_VertExt(game),
+            14 => BlockReactGrapple_GrappleBlock(game),
             _ => unreachable!(),
         })
     }

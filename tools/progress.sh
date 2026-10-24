@@ -5,6 +5,7 @@
 set -eu
 src=sm/src
 count() { grep -rE "$1" "$src" --include='*.rs' | wc -l | tr -d ' '; }
+legacy=$(find "$src/game" -maxdepth 1 -type f -name 'sm_*.rs' -exec cat {} + | wc -l | tr -d ' ')
 
 # Markdown is stdout only; keep the hand-maintained compact graph above it.
 # Supply current local measurements explicitly, never cached/CI values:
@@ -40,12 +41,13 @@ case "${1-}" in
       }
       END { print production+0, verification+0, unsafe_lines+0 }
     ' {} +)
-    printf '%s\n' "$metrics" | awk -v warnings="$warning_count" -v segments="$checkpoint_counts" '
+    printf '%s\n' "$metrics" | awk -v warnings="$warning_count" -v segments="$checkpoint_counts" -v legacy="$legacy" '
       { production += $1; verification += $2; unsafe_lines += $3 }
       END {
         print "| Measure | Count |"
         print "| --- | ---: |"
         print "| Production Rust lines* | " production " |"
+        print "| Legacy bank Rust lines | " legacy " |"
         print "| Verification Rust lines | " verification " |"
         print "| Total Rust | " production + verification " |"
         print "| Lines containing `unsafe` | " unsafe_lines " |"
@@ -66,4 +68,5 @@ printf '%-34s %8s\n' 'extern "C" fns (C ABI exports)' "$(count 'pub unsafe exter
 printf '%-34s %8s\n' '#[no_mangle]'                 "$(count 'no_mangle')"
 printf '%-34s %8s\n' 'unsafe fns'                    "$(count 'unsafe (extern "C" )?fn ')"
 printf '%-34s %8s\n' 'i32/c_int cast lines'         "$(count 'as (i32|::core::ffi::c_int)([^[:alnum:]_]|$)')"
+printf '%-34s %8s\n' 'legacy bank Rust lines'       "$legacy"
 printf '%-34s %8s\n' 'lines of Rust'                 "$(find "$src" -name '*.rs' -exec cat {} + | wc -l | tr -d ' ')"

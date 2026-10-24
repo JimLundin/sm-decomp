@@ -47,15 +47,15 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Each adoption names segments exercising changed behavior and downstream effects.
    Current recipes: 24/44 required checks pass; 20 remain pending. Three additional
    checks (in-memory save, upward elevator, Ice return) pass; the corpus is unfinished.
-   Next: Power Bomb, then Crocomire.
+   Next: Power Bomb, then Spore Spawn, then Crocomire.
    Power Bomb entry recipe reaches A3AE on frozen navigation source 992845a3;
-   qualify current-main history and collect the pickup next.
+   pickup/message/tail now checked there; qualify current-main history next.
    Crocomire needs Power Bombs or the far gate side.
    `python tools/verify_dll.py --unit-tests --direct` runs 20 observer tests, not
    gameplay checks. Regenerate incompatible checkpoints from boot; preserve the
    old checked navigation build.
-2. **Current - consolidate covered owned subsystems.** Projectile reaction interfaces are retired.
-   Next: remove the redundant RAM reaction bridge using existing grapple checks; preserve diagnostics.
+2. **Current - lane B bank retirement.** Retire `sm_94`; parallel drafts own `sm_91` and `sm_90`.
+   The obsolete collision record/bridge is retired; finish the remaining `sm_94` families and delete its file.
    Report added production and deleted legacy lines together; net growth needs a
    reason. Get production below 110,000 before starting another subsystem. Reuse
    existing Host/effects/adapters unless they demonstrably cannot serve. Route
@@ -74,8 +74,8 @@ Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
 Do not auto-rename macro-shared parameters.
 Held scrolling consolidation needs `scroll_tiles.row.bg2` coverage, absent in Ceres.
-Keep input draft `e956dffa` and `%LOCALAPPDATA%/sm-decomp-experiments/20261024/player-input-*`
-snapshots; reprice/revalidate against current main before adoption, without unrelated reruns.
+Keep input `e956dffa` / `%LOCALAPPDATA%/sm-decomp-experiments/20261024/player-input-*` held:
+repriced at +25 production / +1,235 verification lines; no final-source movie found.
 Snapshot separation `2a3c7792` is lower priority: 390 verification lines moved,
 15 wiring lines added, no logic deleted.
 

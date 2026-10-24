@@ -64,9 +64,9 @@ unsafe fn contact(game: &mut Game) -> u8 {
             0 | 3 | 4 | 6 | 7 => 0,
             1 | 8 | 9 | 11 | 12 | 14 | 15 => 1,
             2 => spike_contact(false, game),
-            5 => BlockReact_HorizExt(null_mut(), game),
+            5 => BlockReact_HorizExt(game),
             10 => spike_contact(true, game),
-            13 => BlockReact_VertExt(null_mut(), game),
+            13 => BlockReact_VertExt(game),
             _ => unreachable!(),
         })
     }
