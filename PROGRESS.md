@@ -47,14 +47,15 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-| Rust accounting | Current main | Transition-read candidate change |
+| Rust accounting | Current main | Owned transition draft change |
 | --- | ---: | ---: |
-| Production, including runtime adapters | 116,748 | +14 |
-| Verification and check support | 31,009 | +631 |
-| Combined maintained Rust | 147,757 | +645 |
+| Production, including runtime adapters | 116,748 | +238 |
+| Verification and check support | 31,009 | +1,545 |
+| Combined maintained Rust | 147,757 | +1,783 |
 
 31,009 verification lines are excluded from the production target, **not deleted**.
-Candidate changes are not yet adopted. Legacy retirement is measured separately.
+Draft 86b5d30f removes 2,235 old bank/animation/pose lines; complete replacement
+and integration still grow production by 238 lines. Not yet adopted.
 
 <details>
 <summary>Verification details and earlier migrations</summary>

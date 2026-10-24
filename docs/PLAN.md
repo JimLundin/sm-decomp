@@ -154,7 +154,13 @@ comparisons, 48 animation checks and six pose/history checks.
 The six pose streams also exactly match the frozen predecessor. Minimal
 request/jump, composed interaction and actual caller checks are
 being integrated separately in parallel. No replacement is adopted on main yet;
-full replacement accounting and targeted mutations remain required.
+targeted mutations remain required. Independent raw audit confirms all 65
+streams and empty logs. Complete draft accounting against current main: production
++238 lines, verification/support +1,545, combined +1,783 to 149,540 Rust lines.
+The old bank/animation/pose files shrink by 2,235 lines, offset by the owned core
+and integration. This is consolidation and ownership progress, not net code
+reduction. Unsafe-function declarations fall by 125 overall (129 production
+removed, four verification added); remaining unsafe operations still need removal.
 
 Existing references and in-flight checks remain valid work. The65-case batch now
 passes:59prior captures are byte-identical, including11CPU comparisons, and six
