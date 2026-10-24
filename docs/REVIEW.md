@@ -8,6 +8,12 @@ earlier versions; this file holds only current findings.
 
 ## Check-ins
 
+- **2026-10-24 21:52 (2754947):** 2 agent source commits since 3222fe3, 0
+  docs-only; no stall. **Coverage moving again:** 23 → 24/44 (Norfair Reserve,
+  9787aa2). Production 117,662 → 117,104 (−558, four projectile modules retired
+  in one layer deletion, as asked); verification 37,843 (+339, tests moved out of
+  production); unsafe 4,978 (−4); warnings 380 unique. PLAN.md 202 lines.
+  Map: only the PROGRESS SVG text changed; rendered, fits.
 - **2026-10-24 20:52 (3222fe3):** 1 agent source commit since 674d87a (code,
   −24 production, behaviour-equivalent helper reuse), 0 docs-only; no commits in
   the last 50 min. Not a full stall, but **coverage stalled a third check-in**
@@ -45,16 +51,16 @@ earlier versions; this file holds only current findings.
   Adoption correctly held. Watch: corpus `.inputs` files are gitignored with
   only checksums committed; a fresh agent must be able to rebuild them.
 
-## Corpus watch (2026-10-24 20:52)
+## Corpus watch (2026-10-24 21:52)
 
-- Third flat check-in on coverage. The agents did what was asked on paper
-  (Power Bomb blocker recorded under item 1, Norfair Reserve named as the
-  nearest check) but no recipe landed. If the coverage agent is still running,
-  its next commit is the Norfair Reserve recipe or a written failure for it.
-- Consolidation pace (−24/hour) puts 110,000 about 30 hours away. The
-  projectile animation/trails state-access layer named in item 2 should land as
-  one commit that deletes a whole layer, not another line-level dedup.
-- Directive compressed by an agent (3222fe3): substance kept; accepted.
+- Both asks from 20:52 landed: Norfair Reserve recipe (named segment
+  `pickup-reserve`, 567 frames, 0 failures) and a whole-layer projectile
+  deletion (−558) whose commit names Ice/Reserve segments and states that
+  special beams and transformed Ceres are fixture-only coverage. Good shape.
+- Still slow: one check and one consolidation per hour. At −558/hour,
+  110,000 is ~13 hours away; keep commits at whole-layer size.
+- The agent rewrote the coverage sentence in the directive after meeting it
+  (2754947); substance kept, accepted.
 
 ## Corpus watch (2026-10-24 19:55, earlier)
 
@@ -65,20 +71,6 @@ earlier versions; this file holds only current findings.
   record the Power Bomb blocker under work item 1 if it is not done in an hour.
 - PLAN.md item 1-2 text now logs each commit's results (235 lines). Those
   belong in commit messages; PLAN keeps only the current state and next step.
-
-## Corpus watch (2026-10-24 17:52, earlier)
-
-- Throughput: the imported any% TAS desyncs from this runtime, so every
-  remaining check needs a hand-authored continuation (`tools/movie_inputs.py`
-  `extend_*`). The last hour landed one check; 21 remain, including endgame
-  and credits. Serialising consolidation behind that is the main reason
-  production has not moved for three check-ins, so it now runs in parallel.
-- Option for the user: a measured input-timing alignment (lag-frame map from
-  the reference emulator, not a guessed offset) might let the imported TAS
-  reach credits and replace most hand-authoring. PLAN forbids guessed changes;
-  a measured one would need the user's go-ahead.
-- PROGRESS.md's graph was rewritten again in its own commit (2f18ba6). Update
-  it inside the code commit that changes the status, not separately.
 
 ## Codebase map (user request, 2026-10-24)
 
