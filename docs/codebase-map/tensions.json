@@ -10,22 +10,22 @@
     "evidence": [
       {
         "path": "sm/src/game/session_runtime.rs",
-        "line": 76,
+        "line": 80,
         "expected": "pub fn foreign<R>(&mut self, action: impl FnOnce(&mut Game) -> R) -> R {"
       },
       {
         "path": "sm/src/game/session.rs",
-        "line": 95,
+        "line": 100,
         "expected": "pub struct Session {"
       },
       {
         "path": "sm/src/game/session_encoding.rs",
-        "line": 521,
+        "line": 621,
         "expected": "pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {"
       },
       {
         "path": "sm/src/game/session_runtime.rs",
-        "line": 376,
+        "line": 421,
         "expected": "state.actor_identity = game.take_actor_identity();"
       }
     ]
@@ -46,12 +46,12 @@
       },
       {
         "path": "sm/src/game/session_runtime.rs",
-        "line": 88,
+        "line": 132,
         "expected": "pub(crate) fn byte(&self, at: usize) -> u8 {"
       },
       {
         "path": "sm/src/game/session_encoding.rs",
-        "line": 599,
+        "line": 710,
         "expected": "pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {"
       }
     ]
@@ -135,7 +135,7 @@
       },
       {
         "path": "sm/src/game/session_runtime.rs",
-        "line": 524,
+        "line": 573,
         "expected": "pub(crate) fn actor_draw_compatible("
       },
       {
@@ -210,7 +210,7 @@
       },
       {
         "path": "sm/src/game/session.rs",
-        "line": 97,
+        "line": 102,
         "expected": "pub(in crate::game) actors: crate::game::actors::Actors,"
       },
       {
@@ -220,17 +220,17 @@
       },
       {
         "path": "sm/src/game/session_runtime.rs",
-        "line": 502,
+        "line": 551,
         "expected": "self.foreign(|game| unsafe { crate::game::sm_a0::CallEnemyAi(routine, game) });"
       },
       {
         "path": "sm/src/game/session_runtime.rs",
-        "line": 510,
+        "line": 559,
         "expected": "self.foreign(|game| unsafe { actor_species_instruction(routine, actor, script, game) })"
       },
       {
         "path": "sm/src/game/session_runtime.rs",
-        "line": 513,
+        "line": 562,
         "expected": "self.foreign(|game| unsafe { crate::game::sm_a0::CallHitboxTouch(routine, game) });"
       }
     ]
@@ -248,7 +248,7 @@
     "evidence": [
       {
         "path": "sm/src/game/session.rs",
-        "line": 103,
+        "line": 108,
         "expected": "pub sprite_effects: crate::game::sprite_effect_state::SpriteEffects,"
       },
       {
@@ -284,7 +284,7 @@
       },
       {
         "path": "sm/src/lib.rs",
-        "line": 378,
+        "line": 377,
         "expected": "#[path = \"../verification/room_mechanisms.rs\"]"
       },
       {
@@ -295,9 +295,12 @@
     ]
   },
   {
-    "title": "Normal movement and collision are owned; backend edges remain",
-    "description": "Normal locomotion now runs with collision and pose clearance in Session. Special movement callbacks remain in sm_90; Runtime still resolves ROM content and reads physical SNES slope bytes.",
+    "title": "Player update and movement are owned; legacy effects remain",
+    "description": "Normal movement, ordered player update and minimap projection run with collision and pose clearance in Session. Special movement and gamma effects remain in sm_90; map and physics content still use legacy ROM and SNES sources.",
     "files": [
+      "sm/src/game/player_update/mod.rs",
+      "sm/src/game/player_update/minimap.rs",
+      "sm/src/game/player_update_runtime.rs",
       "sm/src/game/player_movement/mod.rs",
       "sm/src/game/player_movement_runtime.rs",
       "sm/src/game/sm_90.rs",
@@ -309,18 +312,33 @@
     ],
     "evidence": [
       {
+        "path": "sm/src/game/player_update/mod.rs",
+        "line": 30,
+        "expected": "pub(crate) fn advance("
+      },
+      {
+        "path": "sm/src/game/session.rs",
+        "line": 115,
+        "expected": "pub minimap: crate::game::player_update::state::State,"
+      },
+      {
+        "path": "sm/src/game/player_update_runtime.rs",
+        "line": 77,
+        "expected": "crate::game::sm_90::CallFrameHandlerGamma(0x900000 | u32::from(selector), game);"
+      },
+      {
+        "path": "sm/src/game/player_update_runtime.rs",
+        "line": 31,
+        "expected": "let table = visual_host::Content::table(self, Source::Native, 0x82964a);"
+      },
+      {
         "path": "sm/src/game/player_movement/mod.rs",
         "line": 11,
         "expected": "pub(crate) fn advance_normal(h: &mut impl effects::Host) {"
       },
       {
-        "path": "sm/src/game/player_movement_runtime.rs",
-        "line": 29,
-        "expected": "visual_host::Content::table(self, Source::Native, 0x900000 | u32::from(cursor))"
-      },
-      {
         "path": "sm/src/game/sm_90.rs",
-        "line": 1280,
+        "line": 1272,
         "expected": "[9494328] Samus_MoveHandler_Knockback [] {"
       },
       {
@@ -329,28 +347,13 @@
         "expected": "#![forbid(unsafe_code)]"
       },
       {
-        "path": "sm/src/game/player_collision/geometry.rs",
-        "line": 1,
-        "expected": "//! Shared player solid contact, terrain traversal and slope alignment over owned state."
-      },
-      {
         "path": "sm/src/game/session.rs",
-        "line": 177,
+        "line": 189,
         "expected": "pub(in crate::game) collision: crate::game::player_collision::state::CollisionState,"
       },
       {
         "path": "sm/src/game/player_collision_runtime.rs",
-        "line": 23,
-        "expected": "visual_host::Content::table(self, Source::Loaded, 0x91eb74)"
-      },
-      {
-        "path": "sm/src/game/player_collision_runtime.rs",
-        "line": 82,
-        "expected": "fn apply_mechanism(&mut self, header: MechanismHeader, displacement: &mut i32) -> u8 {"
-      },
-      {
-        "path": "sm/src/game/player_collision_runtime.rs",
-        "line": 107,
+        "line": 110,
         "expected": "let low = crate::snes::snes::snes_read(game.g_snes, address, game);"
       }
     ]

@@ -54,6 +54,10 @@ def module_map(sources):
      for scope in inline:parent/=scope
      pre=text[max(0,pos-300):pos]
      attr=re.search(r'#\[path\s*=\s*"([^"]+)"\](?:\s*#\[[^\]]*\])*\s*(?:pub(?:\([^)]*\))?\s*)?$',pre)
+     # An external #[path] on a non-inline module is relative to the
+     # containing source file, even when that file is not lib.rs/mod.rs.
+     # Inside an inline module, Rust retains its module-directory prefix.
+     if attr and not inline:parent=Path(path).parent
      opts=[parent/attr.group(1)] if attr else [parent/(name+'.rs'),parent/name/'mod.rs']
      for candidate in opts:
       normalized=str(Path(__import__('os').path.normpath(candidate))).replace('\\','/')
