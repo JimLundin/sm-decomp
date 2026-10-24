@@ -430,10 +430,19 @@ references; measure build/test time and resource growth before changing the loop
    reduction, persistent whole-game ownership or Map Rando integration claim.
 
    **Next: complete common actor ownership.** The final private proposal
-   A537D952 and independent design/cost review pass. Root authorizes concrete
-   declarations from adopted room source4c572a4a; gameplay implementation waits
-   for declaration review and root metadata compilation. One declaration owner
-   coordinates isolated worker lanes; root alone integrates and builds.
+   A537D952 and independent design/cost review pass. The49-file declaration carrier
+   passes independent source review, root metadata compilation and a separate
+   external-constructor compile (combined source76d102fc). This checks declared
+   contracts and Runtime-shaped examples, not real Game/Runtime integration.
+   Root authorizes isolated complete implementation lanes for state/access,
+   population/animation, movement, common rules/drawing, caller retirement and
+   identity/media; the lead owns shared integration. Finite exceptional saved-record,
+   staging/list/queue projection helpers are being finalized against accepted aliases;
+   unaffected implementation proceeds. No new per-field facade or whole-RAM owner.
+   Root alone integrates and builds. Separately,35population/animation and40movement/
+   contact reference cases pass source qualification; the combined predecessor build
+   is running, with no capture pass yet. Preserve56existing mutants and add the
+   nine selected actor faults, including discarded-future handle rejection.
    Scope includes population/assets, spawn/respawn/death, separate select/update,
    common animation/contact/combat, the complete969-line movement/query scope,
    actual drawing and shared projectile consumers. Retire common slot/coordinate/
@@ -444,7 +453,9 @@ references; measure build/test time and resource growth before changing the loop
    Use direct typed Actor reads through a lifetime-bound borrowed/projected view;
    guarded edit scopes preserve exceptional aliases and unwind prefixes without
    per-field ports or duplicate gameplay algorithms. Prepared per-instance
-   appearance identity is sole movable state, paired with snapshots. Named
+   appearance identity is sole movable state, paired with snapshots. Restore retains
+   saved lineage/counters under a newly checked live handle epoch; DAFF conversion
+   retains occurrence/appearance/generation. Named
    lifecycle operations change identity; generic byte writes change effective
    compatibility state without inventing births. Canonical CPU adoption retains
    its existing authority and reconstructs a compatibility epoch. Keep live ROM
