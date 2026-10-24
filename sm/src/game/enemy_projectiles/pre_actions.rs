@@ -164,24 +164,7 @@ pub(super) fn dispatch(ea: u32, k: u16, ctx: &mut impl Host) {
 
 pub(super) fn Eproj_PreInstr_SkreeParticle(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
-    let split_amount =
-        ((enemy!(ctx, (v1 as usize) as isize, velocity_x) as i16 as i32) << 8) as u32;
-    add_split(
-        SlotField::X,
-        SlotField::XFraction,
-        (v1 as usize) as isize,
-        split_amount,
-        ctx,
-    );
-    let split_amount =
-        ((enemy!(ctx, (v1 as usize) as isize, velocity_y) as i16 as i32) << 8) as u32;
-    add_split(
-        SlotField::Y,
-        SlotField::YFraction,
-        (v1 as usize) as isize,
-        split_amount,
-        ctx,
-    );
+    integrate_shard(v1 as isize, SlotField::X, SlotField::XFraction, ctx);
     enemy_add!(ctx, (v1 as usize) as isize, velocity_y, 80);
     if CheckIfEprojIsOffScreen(k, ctx) != 0 {
         enemy!(ctx, (v1 as usize) as isize, definition = 0);
@@ -1585,14 +1568,7 @@ pub(super) fn EprojPreInstr_TourianStatueUnlockingParticle(k: u16, ctx: &mut imp
 
 pub(super) fn EprojPreInstr_TourianStatueSoul(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
-    let amt: i32 = (enemy!(ctx, (v1) as isize, velocity_y) as i16 as i32) << 8;
-    add_split(
-        SlotField::Y,
-        SlotField::YFraction,
-        v1 as isize,
-        amt as u32,
-        ctx,
-    );
+    EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k, ctx);
     if (enemy!(ctx, (v1) as isize, y) & 0x100) != 0 {
         enemy!(ctx, addr_off_86B79F as u16 => (v1) as isize, program);
         enemy!(ctx, 1 => (v1) as isize, delay);

@@ -1,18 +1,15 @@
 # Plan
 
-Goal: a compact Super Metroid engine that plays from boot to credits, with
-owned, safe Rust gameplay and clear module boundaries. Remove unsafe calls and
-raw-memory operations, including retained native interfaces and verification;
-wrappers that hide them do not complete the goal. Target below 100,000 production
-lines; 90,000 is a stretch checkpoint, not a promised deletion budget.
+Goal: a compact Super Metroid engine playing boot to credits with owned, safe Rust
+gameplay and clear modules. Remove unsafe/raw-memory operations from gameplay,
+retained native interfaces and verification; hiding them in wrappers is incomplete.
+Target below 100,000 production lines; 90,000 is a stretch, not promised deletions.
 
-Map Rando is a core requirement: custom sprites/palettes, reordered rooms and
-door connections, and opt-in re-spin/QoL rules. Keep content, topology and gameplay
-options separate from platform code and ROM/RAM compatibility. Vanilla is the
-first fidelity profile. Follow the [accepted target](target-architecture/README.md):
-owned deterministic Session, our renderer/audio and small platform libraries.
-The final engine must run independently of SNES emulation; the current Windows
-migration may keep its emulated backend and ROM oracle while replacing behavior.
+Map Rando requires custom sprites/palettes, reordered rooms/doors and opt-in re-spin/QoL.
+Separate content, topology and options from platform code and ROM/RAM compatibility;
+vanilla is the first fidelity profile. The [target](target-architecture/README.md)
+is an owned deterministic Session, our renderer/audio and small platform libraries,
+independent of SNES emulation. Windows migration may retain the emulated backend/oracle.
 
 Git concurrency: never reserve or hold index/ref locks. Use Git's own short-lived
 locks only during actual writes; no locks during builds, checks, reasoning or waits.
@@ -21,29 +18,24 @@ preserve others' work. Do not delete another process's lock or force-push main.
 
 ## Review directives (user direction, 2026-10-24)
 
-Read [the external review](REVIEW.md) after this plan. Hygiene and process
-reduction are done. Two tracks now (overrides "resume only after the corpus"):
-(a) one agent continues checkpoint coverage as recipe data; (b) the others start
-consolidation (work order 2) on subsystems whose changed behaviour the 23
-passing checks exercise, naming those segments per commit. Production must
-start falling; a docs-only commit needs a code commit beside it. 19:55: −183/hour,
-good; keep retiring legacy-bank lines. Coverage stalled (23/44 since 17:41): land
-the nearest pending check reachable from an existing end state before Power Bomb;
-if Power Bomb is not landed within an hour, write its blocker under item 1. Do not
-log per-commit results in this plan; keep it under ~200 lines. Commit messages: at most ~8 lines. Direct user instructions take precedence. Historical work is in
-[HISTORY.md](HISTORY.md); its old queues, gates and results are not current rules.
+Read [the external review](REVIEW.md) next. Hygiene and process reduction are done.
+One agent expands checkpoint recipes; others consolidate exercised subsystems in
+parallel, naming coverage per commit. Prefer legacy-bank retirement; production
+must fall. A docs-only commit needs a code commit beside it. Coverage is stalled:
+land the nearest pending check from an existing endpoint before Power Bomb; record
+its blocker under item 1 if Power Bomb is not landed within an hour. Keep this plan
+under ~200 lines, with current state and rules only; results belong in commits
+(at most ~8 lines). Direct user instructions take precedence. Historical queues,
+gates and results in [HISTORY.md](HISTORY.md) are not current rules.
 
-**Codebase map:** the [simplified view](https://jimlundin.github.io/sm-decomp/)
-shows gameplay responsibilities and owned / partly / legacy status, with support
-files hidden and contextual dependencies. Desktop/phone checks pass locally.
-The five-box current-work graph above the map is also shown in PROGRESS; update
-its shared SVG with adopted milestones. Pages generates from HEAD; do not commit
-generated HTML or JSON. One map agent owns further user-requested changes.
+**Codebase map:** the [view](https://jimlundin.github.io/sm-decomp/) shows gameplay
+responsibilities, ownership and contextual dependencies; support files are hidden.
+Update its shared five-box SVG in PROGRESS with adopted milestones. Pages generates
+from HEAD; do not commit generated HTML/JSON. One map agent owns requested changes.
 
-**Local validation:** do not rely on or routinely observe CI. Use hosted checks
-only for explicitly selected research/experiments that cannot run on this Windows
-host. The review's known-red-main rule does not authorize CI polling; address any
-already-known failing change before further adoption. Local results gate adoption.
+**Local validation:** do not rely on or observe CI except for explicitly selected
+research/experiments unavailable on Windows. Fix already-known failing changes
+before further adoption; the review's red-main rule does not authorize CI polling.
 
 ## Work order
 
@@ -55,15 +47,14 @@ already-known failing change before further adoption. Local results gate adoptio
    Each adoption names segments exercising changed behavior and downstream effects.
    Current recipes: 23/44 required checks pass; 21 remain pending. Three additional
    checks (in-memory save, upward elevator, Ice return) pass; the corpus is unfinished.
-   Next coverage: Power Bomb pickup, then Crocomire. The ordinary approaches need
-   power bombs or the far side of a green gate. The verified Ice return ends in
-   Business Center; return through Red Tower's energy station toward A3AE's pickup.
-   Existing verifier tests now execute locally: `python tools/verify_dll.py
-   --unit-tests --direct` passes all 20 unchanged bodies. This is observer coverage,
-   not additional gameplay checks. The runner changes checkpoint compatibility;
-   regenerate from boot on this source. Preserve the old checked navigation build.
-2. **Current - consolidate covered owned subsystems.** Name the existing corpus
-   segments exercising each changed behavior; hold uncovered contexts.
+   Next: Norfair Reserve (two rooms from prefix 145574), then Power Bomb/Crocomire.
+   Power Bomb route is preserved at Red Tower's stone ledge (frame 171113); the long
+   climb still blocks A3AE's pickup. Crocomire needs Power Bombs or the far gate side.
+   `python tools/verify_dll.py --unit-tests --direct` runs 20 observer tests, not
+   gameplay checks. Regenerate incompatible checkpoints from boot; preserve the
+   old checked navigation build. No runner changes before another gameplay check.
+2. **Current - consolidate covered owned subsystems.** Simplify projectile animation
+   and trails around their sole Session owner. Name coverage; hold uncovered contexts.
    Report added production and deleted legacy lines together; net growth needs a
    reason. Get production below 110,000 before starting another subsystem. Reuse
    existing Host/effects/adapters unless they demonstrably cannot serve. Route
@@ -78,29 +69,14 @@ already-known failing change before further adoption. Local results gate adoptio
    platform libraries, remove the game runtime's SNES-backend dependency, and verify
    boot-to-credits plus custom sprites, reordered rooms/doors and opt-in mechanics.
 
-Completed hygiene: [300eaf15](https://github.com/JimLundin/sm-decomp/commit/300eaf15)
-reduces local library warnings 2,073 -> 482; full replay 148,406 frames / 0 failures,
-55 rooms, no credits. PLAN/PROGRESS now use a short queue, graph and generated table.
-Use `CARGO_INCREMENTAL=0` for comparable warning counts; do not auto-rename
-macro-shared parameters.
-
-Adopted player movement, transitions, settlement and minimap share owned Session
-intervals; persistent whole-engine ownership and backend independence remain open.
-The complete input draft `e956dffa` is held, not adopted. Preserve its checked
-source/reference snapshots and audits under
-`%LOCALAPPDATA%/sm-decomp-experiments/20261024/player-input-*`; do not rerun or
-replace them without a source/coverage reason. Reprice/revalidate it against the
-then-current base before adoption. Latest: `16cf1f15` retires 59 unused bank lines,
-including 11 unsafe-containing lines; reference, fmt, normal/backend-free and DLL
-checks pass, 432 warnings. No replay or mutation claim for unused-code retirement.
-Prior `eef7e957` removes 120 duplicate projectile-access lines: 384 captures match,
-13 checks pass; fresh setup 0..50329 and Bomb Torizo 50329..51993 pass with six
-probes, and four compiling faults are caught. No verification growth or full-game
-claim. Next reductions need live-code consolidation or actual caller migration;
-the orphan scan found no larger removable family. 42 generic-macro unsafe warnings remain.
-Snapshot comparison separation is verified but held at `2a3c7792` on
-`draft/snapshot-comparison-2a3c7792` until another gameplay check lands; it moves
-390 verification lines, adds 15 wiring lines and deletes no logic.
+Owned Session intervals exist; persistent whole-engine ownership and backend
+independence remain open. Larger reductions need live consolidation/caller migration;
+the unused-bank scan found no larger removable family. Do not auto-rename macro-shared parameters.
+Held scrolling consolidation needs `scroll_tiles.row.bg2` coverage, absent in Ceres.
+Keep input draft `e956dffa` and `%LOCALAPPDATA%/sm-decomp-experiments/20261024/player-input-*`
+snapshots; reprice/revalidate against current main before adoption, without unrelated reruns.
+Snapshot separation `2a3c7792` on `draft/snapshot-comparison-2a3c7792` waits for another
+gameplay check: 390 verification lines relocated, 15 wiring lines added, no logic deleted.
 
 ## Implementation rules
 
@@ -112,11 +88,10 @@ Snapshot comparison separation is verified but held at `2a3c7792` on
   Consult [engine design](ENGINE_DESIGN.md) and [RAM ownership](RAM_OWNERSHIP.md)
   for the changed interaction; [state migration](ENGINE_STATE_MIGRATION.md) governs
   reset/load, replay, CPU writes and oracle rewind/adoption.
-- Keep `g_ram` byte-compatible with SNES layout. Preserve numeric dispatch/identity,
-  ROM formats, content provenance, native/LE words, ordered effects, lazy reads,
-  aliasing, suspension and failure prefixes.
-  Keep descriptive gameplay names. A legacy interval has one authoritative state;
-  never leave a mutable owned copy beside writable authoritative RAM.
+- Keep `g_ram` byte-compatible with SNES layout; preserve numeric dispatch/identity,
+  ROM formats, provenance, native/LE words, ordered effects, lazy reads, aliasing,
+  suspension and failure prefixes. Use descriptive gameplay names and one authoritative
+  state per legacy interval, never a mutable owned copy beside writable authoritative RAM.
 - Move complete producer/consumer interactions into owned state before retiring
   their RAM communication. Completed cores forbid unsafe and need no Game, RAM,
   raw pointers or backend modules. Safe wrappers and package moves are transitional.
@@ -126,15 +101,13 @@ Snapshot comparison separation is verified but held at `2a3c7792` on
   callers and retirement. Adopt actual caller migration and legacy deletion together.
   Small preparation needs named consumers and an explicit deletion step; isolated
   shared consumers or forwarding facades are not subsystem completion.
-- Reuse prior checks and fixtures; add verification only for a named uncovered
-  behavior/ownership/order/failure contract. Do not grow a harness per subsystem.
-  Implementation and independent review/check preparation may run in parallel
-  on fixed interfaces and isolated files, feeding one integration/build lane.
-- Count all production helpers, tables, adapters, registration, callers and
-  maintained native code. Separate verification Rust, support/installers, external
-  dependencies and combined maintained totals. Runtime adapters are production;
-  mixed-file verification exclusions must be identified explicitly and reproducibly.
-  Compare like-for-like classifications; path-only historical totals differ.
+- Reuse checks/fixtures; add verification only for named uncovered behavior, ownership,
+  order or failure contracts. No harness per subsystem. Parallel implementation and
+  independent review use fixed interfaces, isolated files and one integration/build lane.
+- Count all production helpers, tables, adapters, registration, callers and maintained
+  native code. Separate verification, support/installers, external dependencies and
+  combined totals. Runtime adapters are production; identify mixed-file exclusions
+  reproducibly. Compare like-for-like classifications; historical path totals differ.
 - File moves, code packing, formatting compression and moving code outside `sm/src`
   are not reductions. Count overlaps once and check tokens/text against packing.
   Do not add independent draft savings or claim gross retirement as net savings.
@@ -187,8 +160,7 @@ Snapshot comparison separation is verified but held at `2a3c7792` on
    Keep mutation support separate and disclose scope; a few kills are not comprehensive.
    Add ordinary `#[test]` coverage for pure owned logic; report blocked/unexecuted
    tests accurately rather than bypassing Windows restrictions.
-   Repair before reuse: `SETTLEMENT_EARLY_CONSUME` has a stale anchor;
-   `room_export_before_binding_check` has an ambiguous anchor.
+   Repair stale `SETTLEMENT_EARLY_CONSUME` / ambiguous `room_export_before_binding_check` anchors before reuse.
 
 Commands and checkpoint rules: [movies/README.md](../movies/README.md).
 When touched, inspect `cpu_infra.rs` masks, `PatchBugs`, hardware/audio limits and
@@ -196,14 +168,12 @@ persistence behavior. Do not weaken comparisons to make a replacement pass.
 
 ## Toolchain and Windows constraints
 
-Use edition 2024, stable `1.99.1 (58cf8f9c3 2026-10-13)`, target
-`x86_64-pc-windows-gnu`. The installed `nightly-2026-10-22` compiler remains blocked
-by Defender ASR (event 1121); the nightly migration is unfinished.
-Do not change security settings or spoof hosted environment variables. Standalone
-test executables and denied compiler/build-script launches remain restricted.
-Use permitted DLL/ctypes execution; denied launches never count as passes.
-Cargo frontend linking is blocked by the khronos_api build script; cached-dependency
-frontend metadata and the direct DLL path pass. Keep crate-root unsafe-op enforcement.
+Use edition 2024, stable `1.99.1 (58cf8f9c3 2026-10-13)`, target `x86_64-pc-windows-gnu`.
+Nightly `2026-10-22` remains blocked by Defender ASR event 1121; migration is unfinished.
+Do not change security settings or spoof hosted environment variables. Standalone tests
+and denied compiler/build-script launches stay restricted. Use permitted DLL/ctypes;
+denials never pass. khronos_api blocks frontend linking; cached frontend metadata and
+direct DLL builds work. Keep crate-root unsafe-op enforcement.
 
 Only one heavy compiler/capture job at a time across the machine; root coordinates
 integration. `-j 1` does not coordinate separate Cargo processes. Never rebuild a
@@ -219,17 +189,14 @@ and safely resolve the intended path. Never delete another worker's artifacts.
 
 ## Definition of done for any change
 
-Applicable final-source checks pass and changed behavior executes with no new failing
-frames. Run `sh tools/progress.sh`; explain every increase and report complete
-production/verification/support accounting. Recheck HEAD/index, reconcile and commit
-the focused change to main with commands, probes/frame ranges, results and limits.
-Update this plan only when the active item, direction or blocker changes. Publish
-PROGRESS with adopted milestones (or explicit user requests): the short graph plus
-production/verification/unsafe/warning/checkpoint metrics, distinguishing held drafts.
-Generate the table with `sh tools/progress.sh --markdown WARNINGS [PASSED/TOTAL]`;
-use current measured values or leave unknowns explicit. The path split includes inline hooks.
-Do not refresh atlas/architecture reports unless the user asks. Do not invent progress
-percentages from files/nodes or claim unadopted savings.
+Pass applicable final-source checks and execute changed behavior without new failing frames.
+Run `sh tools/progress.sh`; explain increases and full production/verification/support costs.
+Recheck HEAD/index, reconcile and commit to main with commands, probes/frames, results and limits.
+Update this plan only for active-item, direction or blocker changes; results belong in commits.
+Publish PROGRESS at adopted milestones or user request: shared graph and measured metrics,
+held drafts distinct. Generate its table with `sh tools/progress.sh --markdown WARNINGS [PASSED/TOTAL]`;
+leave unknowns explicit (path counts include inline hooks). No atlas/architecture refresh
+unless requested, invented percentages from nodes/files, or claims of unadopted savings.
 
 Pre-transpile work is archived in `archive/pre-transpile-2026-10-17`; its
 `.scratch/`, readiness gates, acceptance pointers and translation scopes are inactive.
