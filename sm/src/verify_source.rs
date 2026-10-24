@@ -977,6 +977,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("verification/player_detached/main.rs"),
     ),
     (
+        "sm/src/verification/player_detached/shared.rs",
+        include_bytes!("verification/player_detached/shared.rs"),
+    ),
+    (
         "sm/src/verification/player_detached/palette.rs",
         include_bytes!("verification/player_detached/palette.rs"),
     ),
