@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the Windows verifier DLL, then run one replay via ctypes."""
+"""Build the Windows verifier DLL, then run a replay or corpus via ctypes."""
 import argparse
 import ctypes
 import hashlib
@@ -272,6 +272,233 @@ def build(root, rustc, use_cargo=None, frontend=False):
     return dll
 
 
+
+def corpus_child(command, root):
+    """Stream existing verifier output and recognize only pre-replay cache rejection."""
+    errors, replayed = [], False
+    process = subprocess.Popen(command, cwd=root, stdout=subprocess.PIPE,
+                               stderr=subprocess.STDOUT, text=True, encoding="utf-8",
+                               errors="replace")
+    try:
+        for line in process.stdout:
+            print(line, end="", flush=True)
+            replayed |= line.startswith("Verified ") or line.startswith("Checkpoint segment:")
+            if line.startswith("verify: "):
+                errors.append(line.strip().removeprefix("verify: "))
+        result = process.wait()
+    finally:
+        process.stdout.close()
+        if process.poll() is None:
+            process.terminate()
+            process.wait()
+    rejected = {
+        "not a verifier checkpoint", "checkpoint frame overflow",
+        "checkpoint runtime changed; regenerate from boot", "checkpoint ROM differs",
+        "checkpoint input prefix differs", "checkpoint audio backend differs",
+        "checkpoint payload is corrupt", "checkpoint has extra state bytes",
+        "checkpoint state did not round-trip", "truncated checkpoint",
+        "invalid checkpoint boolean", "checkpoint log length overflow",
+        "truncated checkpoint log",
+    }
+    return result, result == 2 and not replayed and len(errors) == 1 and errors[0] in rejected
+
+
+def run_corpus(root, args):
+    import tomllib
+    import uuid
+
+    recipe_path = args.corpus.resolve()
+    with recipe_path.open("rb") as file:
+        recipe = tomllib.load(file)
+    if (set(recipe) - {"version", "required", "segment"}
+            or type(recipe.get("version")) is not int or recipe["version"] != 1):
+        raise ValueError("corpus requires version=1 and only required/segment tables")
+
+    def strings(value, field):
+        if (not isinstance(value, list) or any(not isinstance(x, str) or not x for x in value)
+                or len(set(value)) != len(value)):
+            raise ValueError(f"corpus {field} must be a list of distinct nonempty strings")
+        return value
+
+    def integer(value, field, minimum):
+        if type(value) is not int or not minimum <= value <= 2**64 - 1:
+            raise ValueError(f"corpus {field} must be an integer in {minimum}..u64::MAX")
+        return value
+
+    required = strings(recipe.get("required"), "required")
+    if not required or not isinstance(recipe.get("segment", []), list):
+        raise ValueError("corpus requires nonempty required IDs and segment tables")
+    segments = {}
+    for segment in recipe.get("segment", []):
+        allowed = {"id", "inputs", "input_sha256", "start_frame", "frames", "require_hit",
+                   "after_hits", "expect", "after_expectations", "pending"}
+        if not isinstance(segment, dict) or set(segment) - allowed:
+            raise ValueError("corpus segment has unknown fields")
+        name = segment.get("id")
+        if not isinstance(name, str) or not name or name in segments:
+            raise ValueError("corpus segment IDs must be distinct nonempty strings")
+        if "pending" in segment:
+            if not isinstance(segment["pending"], str) or not segment["pending"]:
+                raise ValueError(f"corpus {name}: pending requires a reason")
+        else:
+            if not isinstance(segment.get("inputs"), str) or not segment["inputs"]:
+                raise ValueError(f"corpus {name}: inputs path required")
+            segment["inputs"] = (recipe_path.parent / segment["inputs"]).resolve()
+            digest = segment.get("input_sha256", "")
+            if (not isinstance(digest, str) or len(digest) != 64
+                    or any(c not in "0123456789abcdef" for c in digest)):
+                raise ValueError(f"corpus {name}: lowercase input_sha256 required")
+            segment["start_frame"] = integer(segment.get("start_frame", 0), name + " start_frame", 0)
+            integer(segment.get("frames"), name + " frames", 1)
+            for key, tail in (("require_hit", "after_hits"), ("expect", "after_expectations")):
+                segment[key] = strings(segment.get(key, []), name + " " + key)
+                if tail in segment:
+                    integer(segment[tail], name + " " + tail, 0)
+                    if not segment[key]:
+                        raise ValueError(f"corpus {name}: {tail} requires {key}")
+            if not segment["require_hit"] and not segment["expect"]:
+                raise ValueError(f"corpus {name}: require_hit or expect must demonstrate coverage")
+        segments[name] = segment
+    selected = strings(args.segment, "selection") if args.segment else list(dict.fromkeys(required + list(segments)))
+    for name in selected:
+        segments.setdefault(name, {"id": name, "pending": "required or selected recipe is missing"})
+    partial = bool(args.segment) or not set(required).issubset(selected)
+    print(f"Corpus {'PARTIAL selection' if partial else 'full required scope'}: "
+          f"{len(selected)} selected, {len(required)} required; {recipe_path}", flush=True)
+    def input_matches(segment):
+        return hashlib.sha256(segment["inputs"].read_bytes()).hexdigest() == segment["input_sha256"]
+
+    failures = set()
+    runnable = []
+    for name in selected:
+        segment = segments[name]
+        if "pending" in segment:
+            print(f"FAIL {name}: pending - {segment['pending']}", flush=True)
+            failures.add(name)
+        else:
+            try:
+                if not input_matches(segment):
+                    raise ValueError("input_sha256 does not match the recipe")
+                runnable.append(segment)
+            except (OSError, ValueError) as error:
+                print(f"FAIL {name}: {error}", flush=True)
+                failures.add(name)
+    if not runnable:
+        print(f"Corpus: 0/{len(selected)} selected passed; 0/{len(required)} required passed", flush=True)
+        return 2
+    rom = args.rom.resolve()
+    rom_hash = hashlib.sha256(rom.read_bytes()).hexdigest()
+    command = [sys.executable, str(root / "tools/verify_dll.py")]
+    # Corpus mode chooses direct compilation unless Cargo is explicitly requested.
+    build_command = command + ["--build-only", "--rustc", args.rustc,
+                               "--cargo" if args.cargo else "--direct"]
+    if args.no_build:
+        build_command.append("--no-build")
+    if args.frontend_check:
+        build_command.append("--frontend-check")
+    source = source_hash(root)
+    result, _ = corpus_child(build_command, root)
+    if result:
+        for segment in runnable:
+            print(f"FAIL {segment['id']}: build/source check failed", flush=True)
+        return result
+    cache = root / "target" / "verify-corpus"
+
+    def cache_directory(segment):
+        # One digest retains the full identity without three long Windows path components.
+        identity = "\0".join((source, rom_hash, segment["input_sha256"]))
+        return cache / hashlib.sha256(identity.encode("ascii")).hexdigest()
+
+    def checkpoint_frame(path):
+        with path.open("rb") as file:
+            header = file.read(56)
+        return int.from_bytes(header[32:40], "little") if len(header) == 56 and header[:8] == b"SMVERIFY" else None
+
+    def prefix(segment, force_boot=False):
+        start = segment["start_frame"]
+        directory = cache_directory(segment)
+        directory.mkdir(parents=True, exist_ok=True)
+        candidates = []
+        if not force_boot:
+            for path in directory.glob("*.smvchk"):
+                frame = checkpoint_frame(path)
+                if frame is not None and 0 < frame <= start:
+                    candidates.append((frame, path))
+            candidates.sort(key=lambda pair: (pair[0], pair[1].stat().st_mtime_ns), reverse=True)
+        previous, checkpoint = candidates[0] if candidates else (0, None)
+        if previous == start:
+            return checkpoint
+        for attempt in range(2):
+            output = directory / f"{start}-{uuid.uuid4().hex}.smvchk"
+            setup = command + [str(rom), str(segment["inputs"]), "--no-build",
+                               "--frames", str(start - previous), "--checkpoint-out", str(output)]
+            if checkpoint:
+                setup += ["--checkpoint-in", str(checkpoint)]
+            print(f"SETUP {segment['id']}: input frames {previous}..{start}", flush=True)
+            code, rejected = corpus_child(setup, root)
+            if code == 0:
+                if checkpoint_frame(output) != start:
+                    raise RuntimeError("generated checkpoint has an unexpected input frame")
+                return output
+            if not checkpoint or not rejected or attempt:
+                return None
+            print(f"Checkpoint rejected for {segment['id']}; regenerate prefix from boot", flush=True)
+            previous, checkpoint = 0, None
+        return None
+
+    # Same-input segments run in start order so setup can advance existing checkpoints.
+    passed = set()
+    for segment in sorted(runnable, key=lambda item: (str(item["inputs"]), item["start_frame"])):
+        name = segment["id"]
+        try:
+            if source_hash(root) != source:
+                raise RuntimeError("source changed during corpus; rebuild before continuing")
+            if not input_matches(segment):
+                raise ValueError("input_sha256 does not match the recipe")
+            start = segment["start_frame"]
+            checkpoint = prefix(segment) if start else None
+            if start and checkpoint is None:
+                raise RuntimeError("checkpoint setup failed")
+            replay = command + [str(rom), str(segment["inputs"]), "--no-build",
+                                "--frames", str(segment["frames"])]
+            for key in ("require_hit", "expect"):
+                for value in segment[key]:
+                    replay += ["--" + key.replace("_", "-"), value]
+            for key in ("after_hits", "after_expectations"):
+                if key in segment:
+                    replay += ["--" + key.replace("_", "-"), str(segment[key])]
+            for attempt in range(2):
+                directory = cache_directory(segment)
+                directory.mkdir(parents=True, exist_ok=True)
+                output = directory / f"segment-{uuid.uuid4().hex}.smvchk"
+                print(f"SEGMENT {name}: start {start}, budget {segment['frames']} frames", flush=True)
+                code, rejected = corpus_child(
+                    replay + ["--checkpoint-out", str(output)]
+                    + (["--checkpoint-in", str(checkpoint)] if checkpoint else []), root)
+                if code == 0 or not checkpoint or not rejected or attempt:
+                    break
+                checkpoint = prefix(segment, force_boot=True)
+                if checkpoint is None:
+                    raise RuntimeError("checkpoint regeneration failed")
+            if not input_matches(segment):
+                raise RuntimeError("inputs changed during corpus segment")
+            if code:
+                failures.add(name)
+                print(f"FAIL {name}: verifier exit {code}", flush=True)
+            else:
+                end = checkpoint_frame(output)
+                if end is None or not start < end <= start + segment["frames"]:
+                    raise RuntimeError("segment checkpoint has an unexpected input frame")
+                passed.add(name)
+                print(f"PASS {name}", flush=True)
+        except (OSError, RuntimeError, ValueError) as error:
+            failures.add(name)
+            print(f"FAIL {name}: {error}", flush=True)
+    print(f"Corpus {'PARTIAL' if partial else 'FULL'}: {len(passed)}/{len(selected)} selected passed; "
+          f"{len(passed.intersection(required))}/{len(required)} required passed", flush=True)
+    return 1 if failures else 0
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("rom", type=Path, nargs="?")
@@ -287,6 +514,13 @@ def main():
                         help="save a new local verifier checkpoint after the last frame")
     parser.add_argument("--require-hit", action="append", default=[], metavar="PROBE",
                         help="require an explicit routine/branch probe to execute (repeatable)")
+    parser.add_argument("--expect", action="append", default=[], metavar="EXPECTATION",
+                        help="require an observed gameplay condition (repeatable)")
+    parser.add_argument("--after-expectations", type=int, metavar="N",
+                        help="observe N additional frames after all expectations are met")
+    parser.add_argument("--corpus", type=Path, help="run required replay segments from a TOML recipe")
+    parser.add_argument("--segment", action="append", default=[], metavar="ID",
+                        help="run selected corpus segments only; reports partial coverage")
     parser.add_argument("--after-hits", type=int, metavar="N",
                         help="stop N additional frames after all required probes first execute; "
                              "fail if the movie or --frames limit ends earlier")
@@ -302,13 +536,14 @@ def main():
     args = parser.parse_args()
     if os.name != "nt":
         parser.error("use cargo run --release -- verify on Linux")
-    if not args.build_only and (args.rom is None or args.inputs is None):
+    if not args.build_only and (args.rom is None or (args.inputs is None and args.corpus is None)):
         parser.error("rom and inputs are required unless --build-only is used")
     if args.frontend_check and args.no_build:
         parser.error("--frontend-check requires a build")
     if args.build_only and (args.frames is not None or args.checkpoint_in is not None
                            or args.checkpoint_out is not None or args.require_hit
-                           or args.after_hits is not None):
+                           or args.after_hits is not None or args.expect
+                           or args.after_expectations is not None or args.corpus is not None):
         parser.error("--build-only cannot request replay frames, checkpoints or probes")
     if args.frames is not None and not 1 <= args.frames <= 2**64 - 1:
         parser.error("--frames must be a positive u64")
@@ -317,7 +552,18 @@ def main():
             parser.error("--after-hits must be a nonnegative u64")
         if not args.require_hit:
             parser.error("--after-hits requires at least one --require-hit")
+    if args.after_expectations is not None:
+        if not 0 <= args.after_expectations <= 2**64 - 1 or not args.expect:
+            parser.error("--after-expectations requires --expect and a nonnegative u64")
+    if args.segment and args.corpus is None:
+        parser.error("--segment requires --corpus")
     root = Path(__file__).resolve().parents[1]
+    if args.corpus is not None:
+        if (args.inputs is not None or args.frames is not None or args.checkpoint_in is not None
+                or args.checkpoint_out is not None or args.require_hit or args.expect
+                or args.after_hits is not None or args.after_expectations is not None):
+            parser.error("--corpus takes inputs, frames, checkpoints and expectations from its recipe")
+        return run_corpus(root, args)
     started = time.perf_counter()
     source = source_hash(root)
     # Paths are resolved before changing cwd so invocation works from anywhere.
@@ -330,6 +576,10 @@ def main():
         replay_args.extend(["--require-hit", probe])
     if args.after_hits is not None:
         replay_args.extend(["--after-hits", str(args.after_hits)])
+    for expectation in args.expect:
+        replay_args.extend(["--expect", expectation])
+    if args.after_expectations is not None:
+        replay_args.extend(["--after-expectations", str(args.after_expectations)])
     for option, path in (("--checkpoint-in", args.checkpoint_in),
                          ("--checkpoint-out", args.checkpoint_out)):
         if path is not None:
@@ -347,7 +597,8 @@ def main():
           file=sys.stderr, flush=True)
     if args.build_only:
         return 0
-    if args.checkpoint_in is not None or args.checkpoint_out is not None or args.require_hit:
+    if (args.checkpoint_in is not None or args.checkpoint_out is not None
+            or args.require_hit or args.expect):
         if not hasattr(host, "sm_verify_args"):
             raise RuntimeError("cached DLL predates segment options; run without --no-build")
         host.sm_verify_args.argtypes = [ctypes.c_uint32, ctypes.POINTER(ctypes.c_char_p)]

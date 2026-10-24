@@ -1,4 +1,4 @@
-//! Inert unless the actual repaired save capture has explicitly begun.
+//! Actual save stages for captures and explicitly requested replay probes.
 #![forbid(unsafe_code)]
 use crate::{flags_save_case as case, game_state::Game};
 use std::cell::RefCell;
@@ -11,6 +11,10 @@ pub fn begin(id: u32) {
     });
 }
 pub fn observe(stage: u8, game: &Game) {
+    if stage == 6 {
+        // All in-memory save data and both checksum pairs have been written.
+        crate::verify_probe::hit("save.sram.committed");
+    }
     CAPTURE.with(|capture| {
         if let Some((output, next)) = capture.borrow_mut().as_mut() {
             assert_eq!(stage, *next, "actual save observer stage order");

@@ -157,3 +157,48 @@ timing differs from this runtime, and the any% input currently visits six
 rooms without reaching credits. Every rewritten routine still needs actual
 execution in a verification scenario; see the
 [definition of done](../docs/PLAN.md#definition-of-done-for-any-change).
+
+## Checkpoint corpus
+
+[segments.toml](segments.toml) defines required scenarios and explicit gaps. Its
+runnable recipes are candidates until the current verifier reports their results;
+adding a recipe does not establish coverage. Full mode exits nonzero while any
+required scenario is pending, missing or fails.
+
+Generate the shared authored route from the any% movie above, then run the corpus:
+
+```powershell
+python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-speed-booster.inputs --rom rom/sm.smc --route speed-booster
+python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-speed-booster-settled.inputs --rom rom/sm.smc --route speed-booster-settled
+python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --direct
+```
+
+The canonical route has 148,406 frames and SHA256
+`bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6`.
+Its controller words match the historical route; canonical casing/newlines change
+its byte hash. Use the new filename to preserve existing local inputs.
+The settled route appends 120 released-button frames (148,526 total), allowing
+the Speed Booster check its full follow-up after message completion at input 148298.
+
+For focused work, add repeatable `--segment ID`, for example
+`--segment item-morph-ball`. Selection reports PARTIAL coverage and does not
+establish the complete required corpus. The runner prints each segment's result
+and the existing room/coverage output. It builds once through the selected local
+path and runs each segment in a fresh Python process; `--no-build` still checks sources.
+
+Checkpoint setup is separate from segment coverage. The runner advances earlier
+same-input checkpoints, checks source/ROM/input identity and all existing checkpoint
+invariants, and creates new output paths under `target/verify-corpus`. An incompatible
+checkpoint can regenerate from boot; gameplay or expectation failures never cause
+a retry. Input paths resolve relative to the TOML file, so an isolated source snapshot
+can use the main checkout's absolute TOML path and its local movies. Keep ROMs,
+movies, inputs and checkpoints uncommitted.
+
+Ordinary pickup rows require a newly observed award, actual message completion and
+120 follow-up frames. Varia waits for its award and restored player handlers instead.
+Kraid requires fresh defeat state plus actual death/background completion probes.
+Loaded inventory or boss flags cannot satisfy event expectations. Door/elevator
+completion, save-death-reload, missing bosses/items/areas and credits remain explicit
+gaps until their own routes and completion checks exist. The additional `save-memory`
+check covers in-memory SRAM/checksum completion, not disk persistence or reload.
+The `credits` expectation observes script progress; it does not prove the entire roll completed.

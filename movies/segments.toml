@@ -1,0 +1,298 @@
+# Candidate checks, not pass records. Full coverage stays incomplete while any required row is pending.
+version = 1
+required = [
+    "area-ceres", "area-crateria", "area-brinstar", "area-norfair",
+    "area-wrecked-ship", "area-maridia", "area-tourian", "boss-ceres-ridley",
+    "boss-bomb-torizo", "boss-spore-spawn", "boss-kraid", "boss-crocomire",
+    "boss-phantoon", "boss-botwoon", "boss-draygon", "boss-golden-torizo",
+    "boss-ridley", "boss-mother-brain", "item-morph-ball", "item-bombs",
+    "item-charge", "item-spazer", "item-hi-jump", "item-varia",
+    "item-speed-booster", "item-ice", "item-wave", "item-grapple",
+    "item-x-ray", "item-gravity", "item-space-jump", "item-spring-ball",
+    "item-plasma", "item-screw-attack", "pickup-missile", "pickup-super",
+    "pickup-power-bomb", "pickup-energy", "pickup-reserve", "door-transition",
+    "elevator-traversal", "save-death-reload", "death", "credits",
+]
+
+[[segment]]
+id = "area-ceres"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 8340
+frames = 300
+expect = ["area:ceres", "room:DF45"]
+after_expectations = 120
+
+[[segment]]
+id = "area-crateria"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 20900
+frames = 300
+expect = ["area:crateria", "room:91F8"]
+after_expectations = 120
+
+[[segment]]
+id = "area-brinstar"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 27400
+frames = 250
+expect = ["area:brinstar", "room:9E9F"]
+after_expectations = 120
+
+[[segment]]
+id = "area-norfair"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 98522
+frames = 250
+expect = ["area:norfair", "room:A9E5"]
+after_expectations = 120
+
+[[segment]]
+id = "area-wrecked-ship"
+pending = "The current route does not reach this area; add an exercised route segment."
+
+[[segment]]
+id = "area-maridia"
+pending = "The current route does not reach this area; add an exercised route segment."
+
+[[segment]]
+id = "area-tourian"
+pending = "The current route does not reach this area; add an exercised route segment."
+
+[[segment]]
+id = "boss-ceres-ridley"
+pending = "Route exists, but Ceres encounter/escape completion needs a fresh encounter-to-escape observer; this is not Norfair Ridley defeat."
+
+[[segment]]
+id = "boss-bomb-torizo"
+pending = "Route exists, but a fresh fight/death observation must accompany the boss-bit edge; room presence or a preloaded flag is insufficient."
+
+[[segment]]
+id = "boss-spore-spawn"
+pending = "No qualified encounter-to-completion route with fresh boss state and precise encounter/death observations."
+
+[[segment]]
+id = "boss-kraid"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 115663
+frames = 5560
+require_hit = ["actors.kraid.shot_ai.disabled", "boss.kraid.background_restored"]
+after_hits = 120
+expect = ["boss:kraid", "room:A59F"]
+after_expectations = 120
+
+[[segment]]
+id = "boss-crocomire"
+pending = "No qualified encounter-to-completion route with fresh boss state and precise encounter/death observations."
+
+[[segment]]
+id = "boss-phantoon"
+pending = "No qualified encounter-to-completion route with fresh boss state and precise encounter/death observations."
+
+[[segment]]
+id = "boss-botwoon"
+pending = "No qualified encounter-to-completion route with fresh boss state and precise encounter/death observations."
+
+[[segment]]
+id = "boss-draygon"
+pending = "No qualified encounter-to-completion route with fresh boss state and precise encounter/death observations."
+
+[[segment]]
+id = "boss-golden-torizo"
+pending = "No qualified encounter-to-completion route with fresh boss state and precise encounter/death observations."
+
+[[segment]]
+id = "boss-ridley"
+pending = "No qualified encounter-to-completion route with fresh boss state and precise encounter/death observations."
+
+[[segment]]
+id = "boss-mother-brain"
+pending = "No qualified encounter-to-completion route with fresh boss state and precise encounter/death observations."
+
+[[segment]]
+id = "item-morph-ball"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 27500
+frames = 950
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+expect = ["item:morph-ball", "room:9E9F"]
+after_expectations = 120
+
+[[segment]]
+id = "item-bombs"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 48930
+frames = 1400
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+expect = ["item:bombs", "room:9804"]
+after_expectations = 120
+
+[[segment]]
+id = "item-charge"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 77381
+frames = 1119
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+expect = ["item:charge", "room:9D19"]
+after_expectations = 120
+
+[[segment]]
+id = "item-spazer"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 90166
+frames = 740
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+expect = ["item:spazer", "room:A447"]
+after_expectations = 120
+
+[[segment]]
+id = "item-hi-jump"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 98522
+frames = 869
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+expect = ["item:hi-jump", "room:A9E5"]
+after_expectations = 120
+
+[[segment]]
+id = "item-varia"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 121351
+frames = 1581
+expect = ["item:varia", "room:A6E2"]
+after_expectations = 120
+
+[[segment]]
+id = "item-speed-booster"
+inputs = "corpus-speed-booster-settled.inputs"
+input_sha256 = "9548c119742b6e2ffec65c5c0871403c96915671b83fe8b4c3930cc4bf60a00d"
+start_frame = 147834
+frames = 692
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+expect = ["item:speed-booster", "room:AD1B"]
+after_expectations = 120
+
+[[segment]]
+id = "item-ice"
+pending = "No qualified acquisition-to-completion segment on the current route."
+
+[[segment]]
+id = "item-wave"
+pending = "No qualified acquisition-to-completion segment on the current route."
+
+[[segment]]
+id = "item-grapple"
+pending = "No qualified acquisition-to-completion segment on the current route."
+
+[[segment]]
+id = "item-x-ray"
+pending = "No qualified acquisition-to-completion segment on the current route."
+
+[[segment]]
+id = "item-gravity"
+pending = "No qualified acquisition-to-completion segment on the current route."
+
+[[segment]]
+id = "item-space-jump"
+pending = "No qualified acquisition-to-completion segment on the current route."
+
+[[segment]]
+id = "item-spring-ball"
+pending = "No qualified acquisition-to-completion segment on the current route."
+
+[[segment]]
+id = "item-plasma"
+pending = "No qualified acquisition-to-completion segment on the current route."
+
+[[segment]]
+id = "item-screw-attack"
+pending = "No qualified acquisition-to-completion segment on the current route."
+
+[[segment]]
+id = "pickup-missile"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 31780
+frames = 1050
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+expect = ["pickup:missile", "room:A107"]
+after_expectations = 120
+
+[[segment]]
+id = "pickup-super"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 68096
+frames = 1804
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+expect = ["pickup:super", "room:9BC8"]
+after_expectations = 120
+
+[[segment]]
+id = "pickup-power-bomb"
+pending = "No qualified capacity-increase, message-completion and follow-up segment on the current route."
+
+[[segment]]
+id = "pickup-energy"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 129201
+frames = 801
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+expect = ["pickup:energy", "room:A4B1"]
+after_expectations = 120
+
+[[segment]]
+id = "pickup-reserve"
+pending = "No qualified capacity-increase, message-completion and follow-up segment on the current route."
+
+[[segment]]
+id = "door-transition"
+pending = "Need an observed admission-to-destination completion episode; door coroutine entry or destination room presence alone is insufficient."
+
+[[segment]]
+id = "elevator-traversal"
+pending = "Need an observed elevator departure, room transition and landed/unlocked destination; arrival or a zero status alone is insufficient."
+
+[[segment]]
+id = "save-death-reload"
+pending = "Route includes in-memory save, but no authored death/reload suffix or successful reload completion observation; in-memory SRAM is not disk persistence."
+
+# Additional diagnostic; does not satisfy the required save-death-reload scenario.
+[[segment]]
+id = "save-memory"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 70000
+frames = 1800
+require_hit = ["save.sram.committed"]
+after_hits = 120
+expect = ["room:A201"]
+after_expectations = 120
+
+[[segment]]
+id = "death"
+pending = "No authored fresh death sequence through game-over and its follow-up menu frames."
+
+[[segment]]
+id = "credits"
+pending = "No route to real credits processing and full-roll completion; state 39 presence or initial script advancement alone is not completion."

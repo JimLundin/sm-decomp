@@ -50,7 +50,7 @@ case "${1-}" in
         print "| Total Rust | " production + verification " |"
         print "| Lines containing `unsafe` | " unsafe_lines " |"
         print "| Warnings (no-default library) | " warnings " |"
-        print "| Checkpoint segments passing | " segments " |"
+        print "| Required checkpoint checks passing | " segments " |"
         print ""
         print "*Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`."
       }

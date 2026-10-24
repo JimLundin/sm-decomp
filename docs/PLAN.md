@@ -39,6 +39,8 @@ already-known failing change before further adoption. Local results gate adoptio
    main pickups, doors/elevators, save/load, death and credits. Report results and rooms.
    Commit only recipes. Preserve input/NMI timing; no guessed lag/offset changes.
    Each adoption names segments exercising changed behavior and downstream effects.
+   Current recipes: 15/44 required checks pass; 29 remain pending. The additional
+   in-memory save check passes too; the complete corpus is still unfinished.
 2. **Next - consolidate existing owned subsystems.** Resume only after the corpus.
    Report added production and deleted legacy lines together; net growth needs a
    reason. Get production below 110,000 before starting another subsystem. Reuse
@@ -57,7 +59,8 @@ already-known failing change before further adoption. Local results gate adoptio
 Completed hygiene: [300eaf15](https://github.com/JimLundin/sm-decomp/commit/300eaf15)
 reduces local library warnings 2,073 -> 482; full replay 148,406 frames / 0 failures,
 55 rooms, no credits. PLAN/PROGRESS now use a short queue, graph and generated table.
-Keep the same warning-check scope and do not auto-rename macro-shared parameters.
+Use `CARGO_INCREMENTAL=0` for comparable warning counts; do not auto-rename
+macro-shared parameters.
 
 Adopted player movement, transitions, settlement and minimap share owned Session
 intervals; persistent whole-engine ownership and backend independence remain open.
@@ -65,7 +68,7 @@ The complete input draft `e956dffa` is held, not adopted. Preserve its checked
 source/reference snapshots and audits under
 `%LOCALAPPDATA%/sm-decomp-experiments/20261024/player-input-*`; do not rerun or
 replace them without a source/coverage reason. Reprice/revalidate it against the
-then-current base before adoption. Latest checked source: `fb7dd005` (hygiene).
+then-current base before adoption. Latest checked source: `1ee6978a` (partial corpus).
 
 ## Implementation rules
 

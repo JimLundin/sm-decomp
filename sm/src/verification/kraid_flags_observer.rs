@@ -1,4 +1,4 @@
-//! Actual Kraid phase observer; inert outside explicit candidate capture.
+//! Actual Kraid phases for captures and explicitly requested replay probes.
 #![forbid(unsafe_code)]
 use crate::{game_state::Game, kraid_flags_case as case};
 use std::cell::RefCell;
@@ -14,6 +14,10 @@ pub fn observe(stage: u8, game: &Game) {
     observe_result(stage, 0xffff, game);
 }
 pub fn observe_result(stage: u8, result: u16, game: &Game) {
+    if stage == 2 {
+        // Background fade completed; the following branch publishes the boss bit.
+        crate::verify_probe::hit("boss.kraid.background_restored");
+    }
     CAPTURE.with(|c| {
         if let Some((out, next)) = c.borrow_mut().as_mut() {
             assert_eq!(stage, *next, "actual Kraid phase order");
