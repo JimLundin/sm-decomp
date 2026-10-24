@@ -135,10 +135,11 @@ flowchart LR
     PCOMP --> PBS["Schedule borrow across effect<br/>compiler rejects / PASS"]:::done
     PCOMP --> PBE["Guarded edit escapes<br/>compiler rejects / PASS"]:::done
     PCOMP --> PAUDIT["Compiler evidence<br/>independent audit PASS"]:::done
-    PAUDIT --> PI["Implementation after actor adoption<br/>and declaration approval"]:::pending
+    PAUDIT --> PAP["Seven operations / one Session<br/>design approved"]:::done
+    PAP --> PI["Implementation after actor adoption"]:::pending
     PV --> PI
     PV --> PREF["Predecessor fixture source<br/>parallel authoring"]:::active
-    class PD,PCOMP,PBA,PBP,PBT,PBS,PBE,PAUDIT,PREF changed
+    class PAP,PI changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

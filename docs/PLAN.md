@@ -505,8 +505,12 @@ references; measure build/test time and resource growth before changing the loop
    failures match the reviewed sources. Missing pinned root tool includes in the initial carrier
    were corrected without declaration changes. Workers prepare predecessor fixtures
    on complete50cec3e0, never the declaration stubs. Gameplay implementation waits for
-   actor adoption and declaration approval; retain one Session owner and retire both
-   contact modules with callers.
+   actor adoption. Root approves the frozen21-file declaration design after final
+   architecture review: seven semantic operations, one Session authority and finite
+   internal compatibility effects. Retain the complete1694-line retirement scope,
+   both contact modules and their actual callers; preserve capture/effect order and
+   authority transfer on unwind. This approval establishes no gameplay fidelity or
+   backend independence.
    Preserve56existing mutants and add the
    nine selected actor faults, including discarded-future handle rejection.
    Scope includes population/assets, spawn/respawn/death, separate select/update,
