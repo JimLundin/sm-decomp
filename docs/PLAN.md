@@ -429,6 +429,34 @@ references; measure build/test time and resource growth before changing the loop
    Rust126642. All22new cfg-only observer lines count as verification. No net
    reduction, persistent whole-game ownership or Map Rando integration claim.
 
+   **Next: complete common actor ownership.** The final private proposal
+   A537D952 and independent design/cost review pass. Root authorizes concrete
+   declarations from adopted room source4c572a4a; gameplay implementation waits
+   for declaration review and root metadata compilation. One declaration owner
+   coordinates isolated worker lanes; root alone integrates and builds.
+   Scope includes population/assets, spawn/respawn/death, separate select/update,
+   common animation/contact/combat, the complete969-line movement/query scope,
+   actual drawing and shared projectile consumers. Retire common slot/coordinate/
+   instruction views and field facades with their callers; retain explicitly
+   priced native utilities/species effects. Reuse existing pure rules.
+   The reviewed17-range union adds4660unique bytes to52373, yielding57033;
+   7800..97DC stays Game-owned and existing projectile angles retain their owner.
+   Use direct typed Actor reads through a lifetime-bound borrowed/projected view;
+   guarded edit scopes preserve exceptional aliases and unwind prefixes without
+   per-field ports or duplicate gameplay algorithms. Prepared per-instance
+   appearance identity is sole movable state, paired with snapshots. Named
+   lifecycle operations change identity; generic byte writes change effective
+   compatibility state without inventing births. Canonical CPU adoption retains
+   its existing authority and reconstructs a compatibility epoch. Keep live ROM
+   definition allocation lifetime, media/gameplay identity separation and collision
+   poses independent of appearance. Custom pixel import/backend independence remain
+   later work. Complete planning estimate4572..6704production lines against3599
+   matched old lines: +973..3105, not measured savings. Lookup/edit machinery targets
+   73..272lines versus335old view/facade lines. Verification is separately estimated
+   1120..1920Rust lines plus120..200support. Require actual room-to-actor-to-door
+   routes, nested spawn/respawn, two appearances of one species, collision invariance,
+   lifecycle/alias checks and compiling targeted mutants before adoption.
+
    **Room entry and configurable connections adopted.** Verified source
    [7b5b41ac](https://github.com/JimLundin/sm-decomp/commit/7b5b41acb9e6a5cc275585735c93c6850888c509)
    consolidates actual contact, load-station, initial, door and IRQ entry paths.

@@ -23,6 +23,33 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
+### Common actors / declarations
+
+```mermaid
+flowchart LR
+    AC["Complete callers + retirement<br/>design review PASS"]:::done --> AD["Concrete Rust declarations"]:::active
+    AU["4,660 new bytes / union 57,033<br/>independent audit PASS"]:::done --> AD
+    AI["Per-instance appearance + lifecycle<br/>independent review PASS"]:::done --> AD
+    AR["Typed read lookup + guarded edits<br/>design review PASS"]:::done --> AD
+    AP["Full production cost reviewed<br/>estimate +973..3,105 lines"]:::done --> AD
+    AD --> AS["Actor + SpawnRecord types"]:::pending
+    AD --> AV["Borrowed / projected read view"]:::pending
+    AD --> AE["Content + effects interfaces"]:::pending
+    AD --> AM["Identity + media + scene types"]:::pending
+    AS --> AT["Declaration review + compilation"]:::pending
+    AV --> AT
+    AE --> AT
+    AM --> AT
+    AT --> AB["Complete actor implementation"]:::pending
+    AB --> AX["Actual routes + oracle + mutations"]:::pending
+    AX --> AA["Caller retirement + adoption"]:::pending
+    class AC,AU,AI,AR,AP,AD,AS,AV,AE,AM,AT,AB,AX,AA changed
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
 ### Room entry + configurable connections / adopted
 
 ```mermaid
