@@ -13,12 +13,7 @@ enum Mode {
     Hyper,
 }
 pub(super) fn clear_animation(h: &mut impl Host) {
-    for i in 0..3 {
-        h.session_mut().projectiles.controls.flare_frames[i] = 0;
-    }
-    for i in 0..3 {
-        h.session_mut().projectiles.controls.flare_timers[i] = 0;
-    }
+    h.session_mut().projectiles.controls.clear_flare_animation();
 }
 pub(super) fn update_input(h: &mut impl Host) {
     h.session_mut().projectiles.controls.previous_charge = h.session().projectiles.controls.charge;

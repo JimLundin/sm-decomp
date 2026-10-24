@@ -24,7 +24,7 @@ fn walking_transition<H: Host>(h: &mut H, current: bool) -> u16 {
     let pose = if current {
         h.session().player.pose
     } else {
-        h.session().projectiles.preparation.next_pose
+        h.session().player.transitions.ordinary.to_raw()
     };
     let direction = poses.byte(usize::from(pose) * 8 + 3);
     transitions.native_word(usize::from(direction) * 2)
@@ -35,16 +35,17 @@ pub(crate) fn walked_obstacle<H: Host>(h: &mut H) {
         && h.session().player.movement_and_facing >> 8 == 1
     {
         let next = walking_transition(h, true);
-        h.session_mut().projectiles.preparation.next_pose = next;
+        h.session_mut().player.transitions.ordinary =
+            crate::game::player_transitions::state::PoseRequestWord::from_raw(next);
         h.session_mut().player.collision.solid_actor_flags = 0;
         return;
     }
-    if h.session().projectiles.preparation.next_pose == 0xffff {
+    if h.session().player.transitions.ordinary.to_raw() == 0xffff {
         h.session_mut().player.collision.solid_actor_flags = 0;
         return;
     }
     let poses = h.pose_table();
-    let pending = h.session().projectiles.preparation.next_pose;
+    let pending = h.session().player.transitions.ordinary.to_raw();
     if poses.byte(usize::from(pending) * 8 + 1) != 1 {
         h.session_mut().player.collision.solid_actor_flags = 0;
         return;
@@ -62,7 +63,8 @@ pub(crate) fn walked_obstacle<H: Host>(h: &mut H) {
         }
     }
     let next = walking_transition(h, false);
-    h.session_mut().projectiles.preparation.next_pose = next;
+    h.session_mut().player.transitions.ordinary =
+        crate::game::player_transitions::state::PoseRequestWord::from_raw(next);
     h.session_mut().player.collision.solid_actor_flags = 0;
 }
 

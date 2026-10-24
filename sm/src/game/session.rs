@@ -60,19 +60,24 @@ pub struct Controls {
     pub flare_frames: [u16; 3],
     pub flare_timers: [u16; 3],
 }
+impl Controls {
+    /// Clear every flare frame before clearing any flare timer.
+    pub(crate) fn clear_flare_animation(&mut self) {
+        for i in 0..3 {
+            self.flare_frames[i] = 0;
+        }
+        for i in 0..3 {
+            self.flare_timers[i] = 0;
+        }
+    }
+}
+
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct Preparation {
-    pub next_pose: u16,
-    pub interrupted_pose: u16,
-    pub transitional_pose: u16,
-    pub momentum_routine: u16,
-    pub special_graphics: u16,
-    pub hurt_switch: u16,
     pub demo_held: u16,
     pub demo_pressed: u16,
     pub demo_filtered_held: u16,
     pub demo_filtered_pressed: u16,
-    pub animation_skip: u16,
     pub aim_history: u16,
     pub previous_movement_and_facing: u16,
 }
@@ -106,6 +111,7 @@ pub struct Session {
     pub projectiles: Projectiles,
     pub enemy_projectiles: EnemyProjectiles,
     pub player: Player,
+    pub atmospheric: crate::game::player_transitions::state::AtmosphericEffects,
     pub inventory: Inventory,
     pub mechanisms: Mechanisms,
     pub room: Room,
@@ -137,6 +143,7 @@ impl Session {
             projectiles: Default::default(),
             enemy_projectiles: Default::default(),
             player: Default::default(),
+            atmospheric: Default::default(),
             inventory: Default::default(),
             mechanisms: Default::default(),
             feedback: Default::default(),
@@ -163,6 +170,7 @@ pub struct Projectiles {
 // Implementation retains existing LaunchMotion rather than a second algorithm.
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct Player {
+    pub transitions: crate::game::player_transitions::state::PlayerTransitions,
     pub x_fraction: u16,
     pub y_fraction: u16,
     pub grapple_endpoint: Point,
@@ -178,7 +186,7 @@ pub struct Player {
     pub(in crate::game) clearance: crate::game::player_collision::state::PoseClearance,
     pub movement_and_facing: u16,
     pub grapple: u16,
-    pub movement_handler: u16,
+    pub movement_handler: crate::game::player_transitions::state::MovementMode,
     pub shine_timer: u16,
     pub shine_tick: u16,
     pub palette_frame: u16,

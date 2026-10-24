@@ -326,7 +326,8 @@ fn suit_pickup_shot(h: &mut impl Host, raw: u16) {
     if y == h.session().player.y {
         if shot!(h, raw, variable) == 1 {
             if raw == 6 {
-                h.session_mut().player.movement_handler = 0xf04b;
+                h.session_mut().player.movement_handler =
+                    crate::game::player_transitions::state::MovementMode::ShinesparkProjectileResponse;
             }
             clear(h, raw);
         } else {

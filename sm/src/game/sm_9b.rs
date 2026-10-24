@@ -2,7 +2,9 @@ use crate::game::actors;
 use crate::game::actors::api as actor_api;
 use crate::game::combat_rules::GrappleOutcome;
 use crate::game::grapple_swing::{advance_swing, change_length, place_rope_origin};
+use crate::game::player_transitions as pt;
 pub use crate::game::prelude::*;
+use crate::game::session_access::SessionAccess;
 use crate::game::session_runtime::Runtime;
 use crate::game::{
     player_collision::operations as player_collision, session_runtime::Runtime as CollisionRuntime,
@@ -73,7 +75,7 @@ pub unsafe fn StartSamusDeathAnimation(game: &mut Game) {
         } else {
             word!(game.samus_pose = kPose_D7_FaceR_CrystalFlashEnd as u16);
         }
-        crate::game::samus_pose::finish_pose_change(game);
+        pt::finish_pose_change(&mut Runtime::new(game));
         word! {game; samus_anim_frame_skip = 0; samus_anim_frame = v1; }
         word!(game.samus_x_pos -= word!(game.layer1_x_pos));
         word!(game.samus_y_pos -= word!(game.layer1_y_pos));
@@ -872,7 +874,7 @@ crate::game::callback_dispatch! {
     [10206872] GrappleBeamFunc_BE98 [] {
         let mut v0: i16 =
             ((word!(game.samus_x_pos)) as i16).wrapping_sub((word!(game.samus_prev_x_pos)) as i16);
-        crate::game::sm_91::clamp_previous_samus_position!(game, v0);
+        pt::clamp_previous_position(Runtime::new(game).session_mut(), v0);
     };
     [10206955] GrappleBeamFunc_BEEB [] {
         let v0: i32 = word!(game.grapple_beam_direction) as i32;

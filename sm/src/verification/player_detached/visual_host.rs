@@ -14,14 +14,10 @@ impl Record for RomRecord {
         RomRecord::word(self, offset)
     }
     fn bytes<const N: usize>(&self, offset: usize) -> [u8; N] {
-        core::array::from_fn(|i| {
-            RomRecord::byte(
-                self,
-                offset
-                    .checked_add(i)
-                    .expect("prepared visual record overflow"),
-            )
-        })
+        let start = self.base.checked_add(offset).expect("prepared visual record overflow");
+        let end = start.checked_add(N).expect("prepared visual record extent overflow");
+        assert!(end <= self.image.len(), "prepared visual record extent");
+        core::array::from_fn(|i| self.image.read(start + i))
     }
 }
 impl Content for Composed {
@@ -38,13 +34,13 @@ impl Content for Composed {
         }
         self.visual_records.push((source, bank, address));
         RomRecord {
-            image: self.image.clone(),
+            image: self.transition_image(source),
             base: usize::from(bank & 0x7f) * 0x8000 + usize::from(address & 0x7fff),
         }
     }
     fn table(&self, source: Source, address: u32) -> RomRecord {
         RomRecord {
-            image: self.image.clone(),
+            image: self.transition_image(source),
             base: ((address as usize >> 16) & 0x7f) * 0x8000 + (address as usize & 0x7fff),
         }
     }

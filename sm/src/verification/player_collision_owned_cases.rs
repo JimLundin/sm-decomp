@@ -2,11 +2,8 @@
 //! The room-world export supplies a real initialized SnesInit/audio/PPU host.
 #![deny(unsafe_op_in_unsafe_fn)]
 use crate::{
-    game::{player_collision_owned_checks as checks, sm_91},
-    game_state::Game,
-    ram_map::words as ram,
-    rom::RomImage,
-    types::EnemyData,
+    game::player_collision_owned_checks as checks, game_state::Game, ram_map::words as ram,
+    rom::RomImage, types::EnemyData,
 };
 use core::mem::offset_of;
 
@@ -72,9 +69,12 @@ pub(crate) fn run(local: u32, g: &mut Game) -> Vec<u8> {
     match local {
         0 => checks::foreign_sequence_then_move(g),
         1 => checks::same_interval_radius_runtime(g),
-        2 => checks::transition_a7_single_commit(g, |game| unsafe {
-            // Actual retained bank caller, never a simulated commit sequence.
-            sm_91::Samus_HandleTransitionsA_7(game);
+        2 => checks::transition_a7_single_commit(g, |game| {
+            let mut runtime = crate::game::session_runtime::Runtime::new(game);
+            crate::game::player_transitions::verify_momentum_action(
+                &mut runtime,
+                crate::game::player_transitions::state::MomentumAction::from_raw(7),
+            );
         }),
         _ => unreachable!(),
     }

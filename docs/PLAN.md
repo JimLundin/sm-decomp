@@ -157,20 +157,19 @@ The bounded any-input replay passes 8,577 frames with zero failures, including
 probes execute earlier in the demo phase; they are not claimed as later normal
 play coverage. The route covers one gameplay room, not the complete game.
 
-The final candidate is committed as 5e546bdc on
-verify/player-transitions-owned-20261024. Hosted full run 40078990293 has passed
-formatting and the detached job; its native mutation job remains active;
-no replacement is adopted on main yet. Three exact composed faults extend the
-existing runner, and the two earlier transition faults now target actual owned
-sites. The preceding full CI run 40074629985 passed all 93 distinct faults at
-4055d8db, independently audited from receipts/logs and classifier source; that
-run does not validate mutations of this owned candidate. The new full run selects
-96 faults. The redundant same-head ordinary run was cancelled after the full
-dispatch was confirmed active; cancellation is not a pass. Crashes, timeouts and
-compile failures do not count as detections.
+The complete replacement is adopted on main from verified 5e546bdc
+(verify/player-transitions-owned-20261024), with identical production and
+verification source. Hosted full run 40078990293 passed all three jobs.
+Independent logs/receipts and classifier-source audit confirms 96 distinct
+intended kills: 54 detached and 42 native. The prior 93 faults are retained,
+with three composed faults added; the two earlier transition faults now target
+the owned core. Completed full-stream mismatches establish the three composed
+kills. Crashes, timeouts and compile failures are not credited. The four
+representation tests execute in the unfiltered detached baseline. This audit
+uses hosted logs and classifier source, not uploaded mutant binaries.
 
-Complete draft accounting: production +238 lines, verification/support +2,414,
-combined +2,652 to 150,409 Rust lines. The old bank/animation/pose files shrink
+Adopted accounting: production +238 lines, verification/support +2,414,
+combined +2,652 to 150,409 Rust lines (116,986 production; 33,423 verification). The old bank/animation/pose files shrink
 by 2,235 lines, offset by the owned core and integration. This is consolidation
 and ownership progress, not net code reduction. Production unsafe-function
 declarations fall by 129; verification adds nine, so the combined count falls
@@ -213,7 +212,7 @@ are added; the combined declaration count rises by one to 2,428. It removes one 
 pair per beta invocation; no measured speedup is claimed. Two additional exact
 mutation checks are prepared in the existing hosted runner (early damage
 consumption and lost fractional-health publication); the next full run selects
-98 faults. Both drafts remain unadopted until their required hosted checks pass.
+98 faults. This follow-on remains unadopted until its required hosted checks pass.
 The four transition representation tests are included in the existing unfiltered
 detached mutation baseline; no separate CI step or local executable is needed.
 

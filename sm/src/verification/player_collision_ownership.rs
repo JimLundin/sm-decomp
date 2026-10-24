@@ -1,10 +1,10 @@
 //! Predecessor ownership-sensitive observations; child of cpu_infra for real snapshots.
-//! Uses production entries from 50cec3e0, never the declaration carrier.
+//! Uses actual owned transition entries; retains the original expected RAM observations.
 #![deny(unsafe_op_in_unsafe_fn)]
 use crate::{
     game::{
-        player_projectiles::access::Store, samus_animation, samus_pose, session_runtime::Runtime,
-        sm_80, sm_88, sm_90, sm_91, sm_a9,
+        player_projectiles::access::Store, player_transitions as pt, session_access::SessionAccess,
+        session_runtime::Runtime, sm_80, sm_88, sm_90, sm_91, sm_a9,
     },
     game_state::Game,
     rom::{RomImage, lorom_offset},
@@ -56,13 +56,13 @@ fn history(g: &mut Game, out: &mut Vec<u8>) {
     let mut expected = g.g_ram.to_vec();
     record(out, 0, 0, g);
     expected[0xa20..0xa28].copy_from_slice(&[0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88]);
-    samus_pose::record_pose_history(g);
+    pt::record_pose_history(Runtime::new(g).session_mut());
     assert_ram(g, &expected, "collision.owner.history.first_rotation");
     record(out, 1, 0, g);
     expected[0xa24..0xa28].copy_from_slice(&[0x11, 0x22, 0x33, 0x44]);
     {
         let mut rt = Runtime::new(g);
-        rt.foreign(samus_pose::record_pose_history);
+        rt.foreign(|g| pt::record_pose_history(Runtime::new(g).session_mut()));
         assert_eq!(
             rt.word(0xa24),
             0x2211,
@@ -127,13 +127,15 @@ unsafe fn animation(g: &mut Game, out: &mut Vec<u8>) {
     put(&mut g.g_ram, 0xb36, 1);
     let mut expected = g.g_ram.to_vec();
     record(out, 0, 0, g);
-    unsafe { samus_animation::Samus_Animate(g) };
+    pt::advance_animation(&mut Runtime::new(g), pt::state::AnimationStep::Gameplay);
     put(&mut expected, 0xa94, 3);
     assert_ram(g, &expected, "collision.owner.animation.held_jump_timer");
     record(out, 1, 0, g);
     {
         let mut rt = Runtime::new(g);
-        rt.foreign(|g| unsafe { samus_animation::Samus_Animate(g) });
+        rt.foreign(|g| {
+            pt::advance_animation(&mut Runtime::new(g), pt::state::AnimationStep::Gameplay)
+        });
         assert_eq!(
             rt.word(0xa94),
             2,

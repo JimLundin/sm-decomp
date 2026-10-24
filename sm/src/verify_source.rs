@@ -2,6 +2,102 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/verification/player_transitions_callers.rs",
+        include_bytes!("verification/player_transitions_callers.rs"),
+    ),
+    (
+        "sm/src/verification/player_transitions_selected.rs",
+        include_bytes!("verification/player_transitions_selected.rs"),
+    ),
+    (
+        "sm/src/verification/player_transitions_composed.rs",
+        include_bytes!("verification/player_transitions_composed.rs"),
+    ),
+    (
+        "sm/src/game/player_transitions/requests.rs",
+        include_bytes!("game/player_transitions/requests.rs"),
+    ),
+    (
+        "sm/src/game/player_transitions/actions.rs",
+        include_bytes!("game/player_transitions/actions.rs"),
+    ),
+    (
+        "sm/src/game/player_transitions/resolver.rs",
+        include_bytes!("game/player_transitions/resolver.rs"),
+    ),
+    (
+        "sm/src/game/player_transitions/pose.rs",
+        include_bytes!("game/player_transitions/pose.rs"),
+    ),
+    (
+        "sm/src/game/player_transitions/normalization.rs",
+        include_bytes!("game/player_transitions/normalization.rs"),
+    ),
+    (
+        "sm/src/game/player_transitions/jump.rs",
+        include_bytes!("game/player_transitions/jump.rs"),
+    ),
+    (
+        "sm/src/game/player_transitions/animation.rs",
+        include_bytes!("game/player_transitions/animation.rs"),
+    ),
+    (
+        "sm/src/game/player_transitions/atmosphere.rs",
+        include_bytes!("game/player_transitions/atmosphere.rs"),
+    ),
+    (
+        "sm/src/game/player_transitions/landing.rs",
+        include_bytes!("game/player_transitions/landing.rs"),
+    ),
+    (
+        "sm/src/game/player_transitions/mod.rs",
+        include_bytes!("game/player_transitions/mod.rs"),
+    ),
+    (
+        "sm/src/game/player_transitions/state.rs",
+        include_bytes!("game/player_transitions/state.rs"),
+    ),
+    (
+        "sm/src/game/player_transitions/representation_tests.rs",
+        include_bytes!("game/player_transitions/representation_tests.rs"),
+    ),
+    (
+        "sm/src/game/player_transitions/content.rs",
+        include_bytes!("game/player_transitions/content.rs"),
+    ),
+    (
+        "sm/src/game/player_transitions/effects.rs",
+        include_bytes!("game/player_transitions/effects.rs"),
+    ),
+    (
+        "sm/src/game/player_transitions_runtime.rs",
+        include_bytes!("game/player_transitions_runtime.rs"),
+    ),
+    (
+        "sm/src/verification/player_detached/player_transitions_host.rs",
+        include_bytes!("verification/player_detached/player_transitions_host.rs"),
+    ),
+    (
+        "sm/src/verification/player_transitions_pose_families.rs",
+        include_bytes!("verification/player_transitions_pose_families.rs"),
+    ),
+    (
+        "sm/src/verification/player_transitions_animation.rs",
+        include_bytes!("verification/player_transitions_animation.rs"),
+    ),
+    (
+        "sm/src/verification/player_transitions_rust.rs",
+        include_bytes!("verification/player_transitions_rust.rs"),
+    ),
+    (
+        "sm/src/verification/player_transitions_rust_dll.rs",
+        include_bytes!("verification/player_transitions_rust_dll.rs"),
+    ),
+    (
+        "sm/src/verification/player_transitions_rust_observer.rs",
+        include_bytes!("verification/player_transitions_rust_observer.rs"),
+    ),
+    (
         "sm/src/verification/player_transitions_oracle.rs",
         include_bytes!("verification/player_transitions_oracle.rs"),
     ),
@@ -781,10 +877,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/samus_periodic_damage_ram.rs",
         include_bytes!("game/samus_periodic_damage_ram.rs"),
-    ),
-    (
-        "sm/src/game/samus_pose.rs",
-        include_bytes!("game/samus_pose.rs"),
     ),
     (
         "sm/src/game/scrolling_sky.rs",

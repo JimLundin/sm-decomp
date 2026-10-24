@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct ExternalInputs {
+    pub transitions: super::player_transitions::state::TransitionObservations,
     pub debug_enemy_freeze: u16,
     pub enemy_zero_health: u16,
     pub frame_handler_beta: u16,

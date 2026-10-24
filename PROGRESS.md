@@ -22,51 +22,48 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-### Next adoption: owned player transitions
+### Player transitions / adopted
 
 ```mermaid
 flowchart LR
-    DESIGN["Owned interface + state contract<br/>reviewed / compiled"]:::done --> ANIM["Animation + FX<br/>owned draft compiled"]:::draft
-    DESIGN --> REQUEST["Hit / bomb / block + arbitration<br/>owned draft compiled"]:::draft
-    DESIGN --> POSE["Pose + jump + history<br/>owned draft compiled"]:::draft
-    ANIM --> OWNER["One Session owner<br/>integrated draft compiled"]:::draft
-    REQUEST --> OWNER
-    POSE --> OWNER
-    OWNER --> CALLERS["Production callers redirected<br/>draft integrated"]:::draft
-    CALLERS --> DELETE["3 repeated chains consolidated<br/>legacy bodies + pose facade removed"]:::draft
-    DELETE --> ADOPT["Complete subsystem adopted<br/>behavior + mutations pass"]:::pending
-    DELETE --> BUILD["Release DLL + formatting<br/>PASS / bcdbd482"]:::done
-    BUILD --> DET["Hosted detached job<br/>PASS / parent candidate"]:::done
-    DET --> ADOPT
-    BUILD --> COMPARE["65 owned/reference comparisons<br/>PASS / retired candidate"]:::done --> ADOPT
-    CHECKS["14 request / jump / composed / caller checks<br/>PASS / exact paired captures"]:::done --> ADOPT
-    CHECKS --> MOVIE["Normal gameplay caller + 120-frame tail<br/>8,577 frames / zero failures"]:::done
-    MOVIE --> MUT["Owned mutation tests<br/>hosted running"]:::active --> ADOPT
-    ADOPT --> NEXT["One interval: transitions / palette / damage<br/>owned draft / 64 production lines removed"]:::draft
-    NEXT --> STEST["87 components + 8,577 frames<br/>PASS / zero failures"]:::done
-    STEST --> SMUT["Two settlement mutations<br/>hosted running"]:::active
-    class DET,NEXT,STEST,SMUT changed
+    SESSION["Session + shared Runtime"]:::done --> CORE["player_transitions/"]:::done
+    CORE --> A["animation.rs"]:::done
+    CORE --> B["atmosphere.rs"]:::done
+    CORE --> C["landing.rs"]:::done
+    CORE --> D["requests.rs"]:::done
+    CORE --> E["actions.rs"]:::done
+    CORE --> F["resolver.rs"]:::done
+    CORE --> G["pose.rs"]:::done
+    CORE --> H["normalization.rs"]:::done
+    CORE --> I["jump.rs"]:::done
+    CORE --> CALL["3 callers ? finish_movement"]:::done
+    CALL --> RET["Legacy bodies + pose facade retired"]:::done
+    RET --> BUILD["Format + DLL + detached compilation ?"]:::done
+    BUILD --> CASES["79 component comparisons ?"]:::done
+    BUILD --> MOVIE["8,577 frames / 0 failures ?"]:::done
+    BUILD --> MUT["96 mutation kills / hosted ?"]:::done
+    CALL --> NEXT["Shared transitions + palette interval"]:::draft
+    NEXT --> DAMAGE["Owned fractional health + damage"]:::draft
+    DAMAGE --> DEL["RAM adapter retired / ?64 production lines"]:::draft
+    DEL --> LOCAL["87 cases + 8,577 frames ?"]:::done
+    LOCAL --> CI["98 mutations / hosted running"]:::active
+    class SESSION,CORE,A,B,C,D,E,F,G,H,I,CALL,RET,MUT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
-    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-[Candidate source](https://github.com/JimLundin/sm-decomp/tree/5e546bdc85c8d6f5216c4bf69f247b0299ec1e20/sm/src/game/player_transitions) / [Hosted checks](https://github.com/JimLundin/sm-decomp/actions/runs/40078990293)
+[Adopted source](https://github.com/JimLundin/sm-decomp/tree/5e546bdc85c8d6f5216c4bf69f247b0299ec1e20/sm/src/game/player_transitions) ? [96 checks](https://github.com/JimLundin/sm-decomp/actions/runs/40078990293) ? [Follow-on checks](https://github.com/JimLundin/sm-decomp/actions/runs/40081065327)
 
-[Follow-on source](https://github.com/JimLundin/sm-decomp/tree/11f95a69a8d9c873e0ff8064f839ca2ccd6b61b8) / [Follow-on checks](https://github.com/JimLundin/sm-decomp/actions/runs/40081065327)
-
-| Rust accounting | Current main | Transitions draft ? | Follow-on draft ? |
+| Rust accounting | Main | Adopted change | Follow-on draft |
 | --- | ---: | ---: | ---: |
-| Production, including runtime adapters | 116,748 | +238 | ?64 |
-| Verification and check support | 31,009 | +2,414 | +311 |
-| Combined maintained Rust | 147,757 | +2,652 | +247 |
+| Production, including adapters | 116,986 | +238 | ?64 |
+| Verification and check support | 33,423 | +2,414 | +311 |
+| Combined maintained Rust | 150,409 | +2,652 | +247 |
 
-31,009 verification lines are excluded from the production target, **not deleted**.
-Draft bcdbd482 removes 2,235 old bank/animation/pose lines; complete replacement
-and integration still grow production by 238 lines. The follow-on removes a
-second state transfer and the damage RAM adapter. Both drafts await adoption.
+**33,423 verification lines excluded, not deleted.** Legacy retirement: 2,235 lines;
+complete production replacement: +238. [Scope and evidence](docs/PLAN.md#work-order).
 
 <details>
 <summary>Verification details and earlier migrations</summary>
