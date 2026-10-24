@@ -200,7 +200,14 @@ after_expectations = 120
 
 [[segment]]
 id = "item-ice"
-pending = "No qualified acquisition-to-completion segment on the current route."
+inputs = "corpus-ice-beam-settled.inputs"
+input_sha256 = "d5700c8c8bfd3bcbc9fa5d4d05aa805dd594e98130a0c9d0ade163695201e093"
+start_frame = 160925
+frames = 808
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+expect = ["item:ice", "room:A890"]
+after_expectations = 120
 
 [[segment]]
 id = "item-wave"

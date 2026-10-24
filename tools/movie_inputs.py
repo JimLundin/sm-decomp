@@ -111,6 +111,8 @@ ROUTES = {
     'warehouse-return': (128547, '2fba8c0b64d929b6206ccb12d349d965d2f8bec60ebd504dfb5db36ded390d8a'),
     'warehouse-energy': (129802, '18f230ec4d4891261df5552bb84af789d3a2345d4e135f93c086d996c19dee5d'),
     'bubble-mountain': (138749, '06344dfe6f82874f0bca8b4fac2e7e712abb6f21540b2997edfd0599f85558da'),
+    'ice-beam': (161613, 'd730b6de3ceef1bcff05d07af3775b679bd70c8c731ae128ed5b573e21be8d21'),
+    'ice-beam-settled': (161733, 'd5700c8c8bfd3bcbc9fa5d4d05aa805dd594e98130a0c9d0ade163695201e093'),
     'speed-booster': (148406, 'bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6'),
     'speed-booster-settled': (148526, '9548c119742b6e2ffec65c5c0871403c96915671b83fe8b4c3930cc4bf60a00d'),
 }
@@ -897,6 +899,121 @@ def extend_redtower(a):
     return a
 
 
+def extend_ice(a):
+    """Authored Speed148406 -> Ice161613, without input/NMI timing changes.
+
+    Archived 2026-10-19 sessions01a153bb-3fca-7c60-acb7-ef6509fc3f25
+    and01a15498-a511-7142-a1de-18b74cb2ac99; ordinals identify original commands.
+    """
+    # First session: selected return route and farm refill.
+    assert len(a) == 148406
+    a = list(a)
+    a.extend(_holds('Left:8 Left+X:190 None:15'))  # ice-return-room-exit; ordinal 5510
+    a.extend(_holds('Left+A:20 Left+X:190 None:15'))  # ice-return-hall; ordinal 5519
+    a.extend(_holds('B+Left:300'))  # ice-hall-run-a; ordinal 5531
+    a.extend(_holds('B+Left+X:210 None:15'))  # ice-farm-return; ordinal 5540
+    a.extend(_holds('None:25 Left:10 Left+A+X:50 Up:35'))  # ice-farm-perch; ordinal 5549
+    a.extend(_holds('Down:1 None:10 Down:1 None:10') + _holds('X:1 None:19') * 20)  # ice-farm-bombs; ordinal 5558
+    a.extend(_holds('Right+X:20 None:8') + _holds('X:1 None:19') * 30)  # ice-farm-center-bombs; ordinal 5586
+    a.extend(_holds('X:1 None:19') * 30 + _holds('None:60'))  # ice-farm-full-refill; ordinal 5596
+    a.extend(_holds('Up:1 None:10 Up:1 None:10 Right:1 Right+A+X:60 None:20'))  # ice-farm-descend-align; ordinal 5610
+    a.extend(_holds('Right:13 Down:1 None:10 Down:1 None:10 X:1 None:100'))  # ice-farm-shaft-bomb; ordinal 5621
+    a.extend(_holds('Down:1 None:10 Down:1 None:10 Left:11 None:10 X:1 None:120'))  # ice-farm-morph-drop; ordinal 5630
+    a.extend(_holds('Right:5 None:10 X:1 None:140'))  # ice-farm-shaft-enter; ordinal 5639
+    a.extend(_holds('Right:4 None:75'))  # ice-farm-middle-drop; ordinal 5649
+    a.extend(_holds('Left:7 None:10 X:1 None:140'))  # ice-farm-lower-drop; ordinal 5658
+    a.extend(_holds('None:10 Up:1 None:10 Up:1 None:10 Left:1 Left+A+X:35 Up:1 Up+X:1 None:30'))  # ice-farm-bottom-hop; ordinal 5667
+    a.extend(_holds('Left:1 Left+A+X:52 Left:1 Left+X:180 None:15'))  # ice-bubble-arrival; ordinal 5692
+    a.extend(_holds('B+Left+X:180'))  # ice-bubble-west-descent; ordinal 5714
+    a.extend(_holds('Left+A:100 None:10'))  # ice-bubble-central-hop; ordinal 5723
+    a.extend(_holds('None:110 Left:80 None:20'))  # ice-bubble-lower-landing; ordinal 5732
+    a.extend(_holds('Left+A:100 Left:50 Left+X:160 None:15'))  # ice-green-bubbles-return; ordinal 5741
+    a.extend(_holds('Right:15 None:45 Left:50 None:10'))  # ice-bubble-west-foot; ordinal 5750
+    a.extend(_holds('Right:25 None:50 Left:75 None:10'))  # ice-bubble-low-door; ordinal 5759
+    a.extend(_holds('Left+X:170 None:15'))  # ice-green-tunnel-entry; ordinal 5770
+    a.extend(_holds('Left+X:20 B+Left+A:60 B+Left:20'))  # ice-green-tunnel-hop-a; ordinal 5785
+    a.extend(_holds('B+Left+A+X:1 B+Left+A:14') * 7 + _holds('B+Left:10'))  # ice-green-tunnel-hop-b; ordinal 5799
+    a.extend(_holds('B+Left+A+X:35 Up:1 None:50'))  # ice-green-tunnel-perch; ordinal 5808
+    a.extend(_holds('B+Left:3 B+Left+A+X:55 Up:1 None:20'))  # ice-green-tunnel-hop-c; ordinal 5817
+    a.extend(_holds('B+Left:3 B+Left+A+X:43 Up:1 None:30'))  # ice-green-tunnel-hop-d; ordinal 5826
+    # Second session: selected Ice approach, pickup and dismissed message.
+    assert len(a) == 154091
+    a.extend(_holds('B+Left+A+X:110 B+Left+X:12'))  # ice-dragon-west-b; ordinal 49
+    a.extend(_holds('B+Left+A+X:60 B+Left+X:2 B+Left+A+X:60 B+Left+X:2'))  # ice-dragon-west-c; ordinal 56
+    a.extend(_holds('B+Left+A+X:85 B+Left+X:2 B+Left+A+X:85 B+Left+X:2 B+Left+A+X:85 B+Left+X:2'))  # ice-dragon-west-d; ordinal 63
+    a.extend(_holds('B+Left+A+X:80 B+Left+X:2 B+Left+A+X:80 B+Left+X:2 B+Left+A+X:80 B+Left+X:2 B+Left+A+X:80 B+Left+X:2'))  # ice-dragon-west-e; ordinal 72
+    a.extend(_holds('B+Right+A:38 A:34 None:4'))  # ice-dragon-west-step-b; ordinal 109
+    a.extend(_holds('B+Left+A+X:48 A+X:36 None:3'))  # ice-dragon-west-high-a; ordinal 116
+    a.extend(_holds('B+Left+A+X:68 B+Left+X:2 B+Left+A+X:75 B+Left+X:2 B+Left+A+X:75 B+Left+X:2'))  # ice-dragon-west-f; ordinal 123
+    a.extend(_holds('B+Left+A+X:27 A+X:50 None:3'))  # ice-dragon-west-step-d; ordinal 144
+    a.extend(_holds('B+Left+A+X:68 B+Left+X:90'))  # ice-dragon-west-exit-b; ordinal 153
+    a.extend(_holds('B+Left+X:80'))  # ice-cathedral-entry; ordinal 160
+    a.extend(_holds('B+Left+A+X:42 A+X:28 None:3'))  # ice-cathedral-climb-a; ordinal 167
+    a.extend(_holds('B+Right:20 B+Right+A:12 A:16 B+Left+A:32 A:35 None:3'))  # ice-cathedral-climb-b; ordinal 188
+    a.extend(_holds('B+Right:25 None:12'))  # ice-cathedral-rightbase; ordinal 195
+    a.extend(_holds('B+Left+A+X:62 A+X:28 None:3'))  # ice-cathedral-climb-c; ordinal 202
+    a.extend(_holds('Right:19 None:12'))  # ice-cathedral-midbase; ordinal 209
+    a.extend(_holds('A:28 Left+A:24 A:35 None:3'))  # ice-cathedral-climb-d; ordinal 216
+    a.extend(_holds('B+Left+A+X:67 A+X:25 None:3'))  # ice-cathedral-high-a; ordinal 223
+    a.extend(_holds('B+Left:4 B+Left+A+X:85 B+Left+X:8'))  # ice-cathedral-west-a; ordinal 235
+    a.extend(_holds('B+Left+X:35'))  # ice-cathedral-midfall; ordinal 244
+    a.extend(_holds('Right:19 None:12 B+Right+A:31 A:48 None:3'))  # ice-cathedral-middle-step; ordinal 258
+    a.extend(_holds('B+Right+A+X:40 A+X:45 None:3'))  # ice-cathedral-middle-step-b; ordinal 265
+    a.extend(_holds('B+Left+A+X:61 A+X:25 None:3'))  # ice-cathedral-middle-high; ordinal 272
+    a.extend(_holds('X:10 B+Left+A+X:38 A+X:50 None:3'))  # ice-cathedral-center-top; ordinal 279
+    a.extend(_holds('B+Left:8 B+Left+A+X:72 X:12'))  # ice-cathedral-west-b; ordinal 286
+    a.extend(_holds('X:5 B+Left+A+X:39 A+X:52 None:3'))  # ice-cathedral-left-climb; ordinal 293
+    a.extend(_holds('B+Left+A+X:50 A+X:43 None:3'))  # ice-cathedral-left-top; ordinal 307
+    a.extend(_holds('B+Left:10 B+Left+A+X:65 X:20'))  # ice-cathedral-west-c; ordinal 314
+    a.extend(_holds('Up+X:3 Up:1 B+Left+A+X:70 B+Left+X:100'))  # ice-cathedral-west-exit-d; ordinal 344
+    a.extend(_holds('B+Left+X:80 B+Left:1 B+Left+X:63 B+Left+X+L:3 B+Left+L:1 B+Select+Left:1 B+Left:1 B+Select+Left:1 B+Left+X:1 B+Left:15 B+Left+X:1 B+Left:15 B+Left+X:1 B+Left:15 B+Y+Left:1 B+Left+X:80'))  # ice-entrance-safer-cross-c; ordinal 615
+    assert len(a) == 157527
+    # Ordinal 622: safer-cross-c + walljump-c[157525:158325].
+    # The following original climb holds ARE that 800-frame donor tail.
+    # Original donor crossing351 ended157525; replacement615 ends157527.
+    # Preserve the authored two-frame difference; no timing compensation.
+    a.extend(_holds('B+Left:4 B+Left+A:55 A:40 None:3'))  # ice-cathedral-entrance-climb-a; ordinal 367
+    a.extend(_holds('Up+X:65 Up:1 B+Left+A+X:60 A+X:40 None:3'))  # ice-cathedral-entrance-climb-b; ordinal 374
+    a.extend(_holds('B+Right:13'))  # ice-cathedral-entrance-leftledge; ordinal 383
+    a.extend(_holds('B+Right+A:20 B+Left+A:18 B+Right:3 B+Right+A:12 Up+A:1 Up+X:10'))  # ice-cathedral-entrance-walljump-b; ordinal 470
+    a.extend(_holds('Up:1 Up+X:1 Up:10 Up+X:1 Up:10 Up+X:1 Up:10 Up+X:1 Up:10 Up+X:1 Up:20'))  # ice-cathedral-entrance-openfloor; ordinal 520
+    a.extend(_holds('A+X:35 B+Left+A+X:43 X:30'))  # ice-cathedral-entrance-climb-c; ordinal 527
+    a.extend(_holds('X:10 B+Left+A+X:65 X:25 B+Right:13'))  # ice-cathedral-entrance-climb-d; ordinal 536
+    a.extend(_holds('B+Right+A:40 B+Left:3 B+Left+A:32 B+Left+X:90'))  # ice-cathedral-entrance-walljump-c; ordinal 543
+    assert len(a) == 158327
+    a.extend(_holds('None:140'))  # ice-business-healthier-entry; ordinal 634
+    a.extend(_holds('R:3 X+R:1 R:10 X+R:1 R:10 X+R:1 R:10 X+R:1 R:25'))  # ice-business-dragon-kill; ordinal 648
+    a.extend(_holds('B+Left+A+X:33 A+X:40 None:3'))  # ice-business-dragon-drop; ordinal 662
+    a.extend(_holds('B+Left+X:45 B+Select+Left:1 B+Left:1 B+Select+Left:1 B+Left+X:1 B+Left:135'))  # ice-business-ice-door; ordinal 671
+    a.extend(_holds('B+Y+Left:1 B+Left+X:220'))  # ice-access-run-a; ordinal 678
+    a.extend(_holds('B+Y+Left:1 B+Left+A+X:65 B+Left+X:105'))  # ice-access-west-exit; ordinal 685
+    a.extend(_holds('B+Left+A+X:35 B+Left+X:2'))  # ice-tripper-hop-b; ordinal 706
+    a.extend(_holds('B+Left+X:20'))  # ice-tripper-ledge-a; ordinal 713
+    a.extend(_holds('B+Left+X:12 B+Left+A+X:60 B+Left+X:2'))  # ice-tripper-hop-e; ordinal 741
+    a.extend(_holds('B+Left+X:5 B+Left+A+X:60 B+Left+X:130'))  # ice-tripper-west-exit; ordinal 748
+    a.extend(_holds('B+Left:1 B+Left+X:1 B+Left:140'))  # ice-tripper-west-door; ordinal 755
+    a.extend(_holds('B+Left+X:8 B+Left+A+X:35 X:20'))  # ice-pre-shaft-climb-a; ordinal 771
+    a.extend(_holds('B+Left:15 B+Right+A+X:43 X:20'))  # ice-pre-shaft-climb-b; ordinal 778
+    a.extend(_holds('B+Right:15 B+Left+A+X:43 X:20 B+Left:15 B+Right+A+X:43 X:20'))  # ice-pre-shaft-climb-c; ordinal 794
+    a.extend(_holds('B+Right:15 B+Left+A+X:43 X:20 B+Left:15 B+Right+A+X:43 X:20 B+Right:15 B+Left+A+X:43 X:20 B+Left:15 B+Right+A+X:43 X:20'))  # ice-pre-shaft-climb-d; ordinal 808
+    a.extend(_holds('B+Right+X:40 X:12'))  # ice-pre-shaft-top-right; ordinal 817
+    a.extend(_holds('Down:1 None:8 Down:1 None:10 Left:10 None:10 X:1 None:65'))  # ice-pre-shaft-bomb-floor; ordinal 824
+    a.extend(_holds('Down:1 None:20 Down:1 None:20 Left:8 None:10 X:1 None:65'))  # ice-pre-shaft-morph-a; ordinal 831
+    a.extend(_holds('None:64'))  # ice-pre-shaft-drop-a; ordinal 838
+    a.extend(_holds('Right:30'))  # ice-pre-shaft-crawl-a; ordinal 847
+    a.extend(_holds('Left:20'))  # ice-pre-shaft-drop-b; ordinal 854
+    a.extend(_holds('None:10 Right:24'))  # ice-pre-shaft-crawl-b; ordinal 861
+    a.extend(_holds('B+Right+X:1 B+Right:12 B+Right+X:1 B+Right:12 B+Right+X:1 B+Right:12 B+Right+X:1 B+Right:12'))  # ice-pre-shaft-crawl-c; ordinal 876
+    a.extend(_holds('Up:1 None:20 B+Right+X:50 B+Right:1 B+Right+X:1 B+Right:110'))  # ice-room-entry; ordinal 883
+    a.extend(_holds('B+Right+A+X:65 B+Right:1 B+Right+X:1 B+Right:130'))  # ice-room-entry-hop; ordinal 890
+    a.extend(_holds('B+Right+X:1 B+Right:18 B+Right+A+X:40 None:90'))  # ice-pickup-a; ordinal 897
+    a.extend(_holds('A:1 None:90'))  # ice-pickup-dismiss-a; ordinal 905
+    a.extend(_holds('None:160 A:1 None:90'))  # ice-beam-dismissed-161613; ordinal 928
+    # Ordinal 949 copies this exact route to ice-beam-161613.
+    assert len(a) == 161613
+    return a
+
+
 def route_frames(source, name):
     """Reproduce authored controller holds/splices; do not adjust emulator timing.
 
@@ -915,6 +1032,10 @@ def route_frames(source, name):
         # Retain the saved-slot route through observed contact input 72760.
         # Authored idle exposure, then fresh A presses for Continue and both maps.
         return a[:72761] + _holds('None:1800 A:1 None:300 A:1 None:300 A:1 None:900')
+    if name in ('ice-beam', 'ice-beam-settled'):
+        frames = extend_ice(extend_redtower(a))
+        # Authored neutral tail for 120 follow-up frames after Ice's message.
+        return frames + _hold('', 120) if name == 'ice-beam-settled' else frames
     if name == 'speed-booster-settled':
         # Authored follow-up: release all buttons after the late pickup message.
         return extend_redtower(a) + _hold('', 120)

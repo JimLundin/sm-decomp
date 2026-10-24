@@ -39,9 +39,9 @@ already-known failing change before further adoption. Local results gate adoptio
    main pickups, doors/elevators, save/load, death and credits. Report results and rooms.
    Commit only recipes. Preserve input/NMI timing; no guessed lag/offset changes.
    Each adoption names segments exercising changed behavior and downstream effects.
-   Current recipes: 21/44 required checks pass; 23 remain pending. Two additional
+   Current recipes: 22/44 required checks pass; 22 remain pending. Two additional
    checks (in-memory save and upward elevator) pass too; the corpus is unfinished.
-   Next coverage candidate: Ice Beam; current-source qualification is pending.
+   Next coverage route: Crocomire, starting from the verified Ice Beam exit.
 2. **Next - consolidate existing owned subsystems.** Resume only after the corpus.
    Report added production and deleted legacy lines together; net growth needs a
    reason. Get production below 110,000 before starting another subsystem. Reuse

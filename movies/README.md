@@ -171,6 +171,7 @@ Generate the shared authored route from the any% movie above, then run the corpu
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-speed-booster.inputs --rom rom/sm.smc --route speed-booster
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-speed-booster-settled.inputs --rom rom/sm.smc --route speed-booster-settled
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-save-death-continue.inputs --rom rom/sm.smc --route save-death-continue
+python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-ice-beam-settled.inputs --rom rom/sm.smc --route ice-beam-settled
 python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --direct
 ```
 
@@ -180,6 +181,8 @@ Its controller words match the historical route; canonical casing/newlines chang
 its byte hash. Use the new filename to preserve existing local inputs.
 The settled route appends 120 released-button frames (148,526 total), allowing
 the Speed Booster check its full follow-up after message completion at input 148298.
+The Ice route similarly preserves the original 161,613 inputs as `ice-beam`;
+`ice-beam-settled` appends 120 releases for the message's follow-up at input 161535.
 
 For focused work, add repeatable `--segment ID`, for example
 `--segment item-morph-ball`. Selection reports PARTIAL coverage and does not
