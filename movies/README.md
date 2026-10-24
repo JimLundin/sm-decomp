@@ -172,6 +172,7 @@ python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-sp
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-speed-booster-settled.inputs --rom rom/sm.smc --route speed-booster-settled
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-save-death-continue.inputs --rom rom/sm.smc --route save-death-continue
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-ice-beam-settled.inputs --rom rom/sm.smc --route ice-beam-settled
+python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-ice-return-business.inputs --rom rom/sm.smc --route ice-return-business
 python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --direct
 ```
 
@@ -183,6 +184,9 @@ The settled route appends 120 released-button frames (148,526 total), allowing
 the Speed Booster check its full follow-up after message completion at input 148298.
 The Ice route similarly preserves the original 161,613 inputs as `ice-beam`;
 `ice-beam-settled` appends 120 releases for the message's follow-up at input 161535.
+`ice-return-business` retains that settled prefix, then traverses the upper shutter
+bypass and collects health drops in Business Center. Its optional segment runs
+all 4,426 selected frames; it does not qualify Crocomire or the Power Bomb pickup.
 
 For focused work, add repeatable `--segment ID`, for example
 `--segment item-morph-ball`. Selection reports PARTIAL coverage and does not

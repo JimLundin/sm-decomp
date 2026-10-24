@@ -2,9 +2,9 @@
 
 ```mermaid
 flowchart TB
-    DONE["JUST VERIFIED · Ice Beam<br/>21 → 22 of 44 checks · 0 failing frames"]:::done
-    NOW["NOW · Route to Crocomire<br/>Capture and verify boss checkpoint"]:::active
-    NEXT["NEXT · Finish 44/44 checks<br/>All areas, bosses, pickups and credits"]:::pending
+    DONE["JUST VERIFIED · Maridia entry + Ice return<br/>23 / 44 required checks pass"]:::done
+    NOW["NOW · Power Bomb pickup<br/>Opens the route to Crocomire"]:::active
+    NEXT["NEXT · Crocomire → remaining checks<br/>Finish full-game coverage"]:::pending
     DELETE["THEN · Consolidate owned gameplay<br/>Delete duplicate logic · production below 110k"]:::pending
     TARGET["TARGET · Safe, independent engine · below 100k<br/>Map Rando: sprites, rooms/doors, opt-in QoL"]:::pending
     DONE --> NOW --> NEXT
@@ -22,7 +22,7 @@ flowchart TB
 | Total Rust | 155342 |
 | Lines containing `unsafe` | 5042 |
 | Warnings (no-default library) | 482 |
-| Required checkpoint checks passing | 22/44 |
+| Required checkpoint checks passing | 23/44 |
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 

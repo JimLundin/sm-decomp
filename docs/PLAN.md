@@ -45,9 +45,11 @@ already-known failing change before further adoption. Local results gate adoptio
    main pickups, doors/elevators, save/load, death and credits. Report results and rooms.
    Commit only recipes. Preserve input/NMI timing; no guessed lag/offset changes.
    Each adoption names segments exercising changed behavior and downstream effects.
-   Current recipes: 22/44 required checks pass; 22 remain pending. Two additional
-   checks (in-memory save and upward elevator) pass too; the corpus is unfinished.
-   Next coverage route: Crocomire, starting from the verified Ice Beam exit.
+   Current recipes: 23/44 required checks pass; 21 remain pending. Three additional
+   checks (in-memory save, upward elevator, Ice return) pass; the corpus is unfinished.
+   Next coverage: Power Bomb pickup, then Crocomire. The ordinary approaches need
+   power bombs or the far side of a green gate. The verified Ice return ends in
+   Business Center; return through Red Tower's energy station toward A3AE's pickup.
 2. **Next - consolidate existing owned subsystems.** Resume only after the corpus.
    Report added production and deleted legacy lines together; net growth needs a
    reason. Get production below 110,000 before starting another subsystem. Reuse

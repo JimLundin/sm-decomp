@@ -56,7 +56,12 @@ pending = "The current route does not reach this area; add an exercised route se
 
 [[segment]]
 id = "area-maridia"
-pending = "The current route does not reach this area; add an exercised route segment."
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 91930
+frames = 300
+expect = ["area:maridia", "room:CF54", "door:CF54"]
+after_expectations = 120
 
 [[segment]]
 id = "area-tourian"
@@ -208,6 +213,16 @@ require_hit = ["coroutine.plm.message.completed"]
 after_hits = 120
 expect = ["item:ice", "room:A890"]
 after_expectations = 120
+
+# Optional navigation/refill route; does not satisfy Crocomire or Power Bomb coverage.
+# Run the entire window, including the health drops after the last door.
+[[segment]]
+id = "ice-return-business"
+inputs = "corpus-ice-return-business.inputs"
+input_sha256 = "4b4090a970f52658d27d4f69fe0e6d30da43739519cf781ef722dacbecdb5721"
+start_frame = 161656
+frames = 4426
+expect = ["door:A8B9", "door:A75D", "door:A815", "door:A7DE"]
 
 [[segment]]
 id = "item-wave"

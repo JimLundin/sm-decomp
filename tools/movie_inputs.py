@@ -112,6 +112,7 @@ ROUTES = {
     'warehouse-energy': (129802, '18f230ec4d4891261df5552bb84af789d3a2345d4e135f93c086d996c19dee5d'),
     'bubble-mountain': (138749, '06344dfe6f82874f0bca8b4fac2e7e712abb6f21540b2997edfd0599f85558da'),
     'ice-beam': (161613, 'd730b6de3ceef1bcff05d07af3775b679bd70c8c731ae128ed5b573e21be8d21'),
+    'ice-return-business': (166082, '4b4090a970f52658d27d4f69fe0e6d30da43739519cf781ef722dacbecdb5721'),
     'ice-beam-settled': (161733, 'd5700c8c8bfd3bcbc9fa5d4d05aa805dd594e98130a0c9d0ade163695201e093'),
     'speed-booster': (148406, 'bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6'),
     'speed-booster-settled': (148526, '9548c119742b6e2ffec65c5c0871403c96915671b83fe8b4c3930cc4bf60a00d'),
@@ -1014,6 +1015,65 @@ def extend_ice(a):
     return a
 
 
+def extend_ice_return(a):
+    """Authored 2026-10-24 Ice return, including upper shutter bypass and health drops.
+
+    Controller expressions preserve the selected checked branches exactly.
+    This reaches Business Center; it does not qualify Crocomire or its approach.
+    """
+    assert len(a) == 161733
+    # Ice west exit, then jump/morph through the pre-Ice shaft passage.
+    a.extend(_holds('Y:1 None:1 Left:8 Left+X:1 Left:160 None:120'))
+    a.extend(_holds('Left:60 Left+A:14 Left+Down:1 Left:3 Left+Down:1 Left:110 None:30'))
+    a.extend(_holds('None:1 A:16 Down:1 Left:24 None:1'))
+    a.extend(_holds('Down:1 None:12 Down:1 None:12 Left:40 None:1'))
+    a.extend(_holds('Left:25 None:50 Right:16 None:18 Left:16 None:35'))
+    a.extend(_holds('None:15 Up:1 None:12 Up:1 None:12 Right:8 Right+X:1 Right:80 None:120'))
+    assert len(a) == 162763
+    # Trippers: fresh jump/shoot edges; selected branch ends on the third ledge.
+    a.extend(_holds('B+Right:1'))
+    a.extend(_holds('B+Right+A+X:1 B+Right+A:11') * 4)
+    a.extend(_holds('B+Right:2 B+Right+A+X:1 B+Right+A:23 None:1 B+Right:34'))
+    a.extend(_holds('B+Right+A+X:1 B+Right+A:11') * 5)
+    a.extend(_holds('B+Right:8'))
+    a.extend(_holds('B+Right+A+X:1 B+Right+A:11') * 5)
+    assert len(a) == 163001
+    a.extend(_holds('B+Right:25'))
+    a.extend(_holds('B+Right+A+X:1 B+Right+A:11') * 7)
+    a.extend(_holds('None:1'))
+    a.extend(_holds('Right+A+X:1 Right+A:11') * 8)
+    # Replace the final76 idle frames of the earlier exit trial at first gameplay.
+    a.extend(_holds('Right:30 None:34'))
+    assert len(a) == 163271
+    a.extend(_holds('B+Right+X:1 B+Right:11') * 20)
+    a.extend(_holds('None:120'))
+    # Closed growing shutters: ordinary bombs open the upper return tunnel.
+    # Early Down edges retain A to preserve jump height during airborne morph.
+    a.extend(_holds('Left:68 None:1 A:2 A+Down:1 A:2 A+Down:1 A:8 X:1 None:65'))
+    a.extend(_holds('Left:12 None:1 Up:1 None:12 Up:1 None:12 A:2 A+Down:1 A:2 A+Down:1 A:14 Right+A:24 Right:30 None:1'))
+    a.extend(_holds('Left:16 None:1'))
+    a.extend(_holds('Up:1 None:12 Up:1 None:12 A:2 A+Down:1 A:2 A+Down:1 A:20 Right+A:20 Right:15 None:1'))
+    a.extend(_holds('X:1 None:65 Right:18 None:1 Right:70 None:1'))
+    assert len(a) == 164155
+    # Wait for the tunnel Sova to return, bomb it from range, collect its drop.
+    a.extend(_holds('Right:60 None:800 None:38 X:1 Left:20 None:70 Right:28 None:1'))
+    a.extend(_holds('Right:165 None:35'))
+    a.extend(_holds('None:6 Up:1 None:12 Up:1 None:12 Right:1 Right+X:1 Right:60 None:130'))
+    assert len(a) == 165597
+    # Business Center: ranged freezing/kills and body contact with health drops.
+    a.extend(_holds('Right:10 None:8 R:3'))
+    a.extend(_holds('R+X:1 R:11') * 20)
+    a.extend(_holds('Right:8 Right+A:8 Right:24 Left:18 None:1 Down:1'))
+    a.extend(_holds('Down+X:1 Down:11') * 4)
+    a.extend(_holds('None:1 Up:1'))
+    a.extend(_holds('Up+X:1 Up:11') * 4)
+    a.extend(_holds('None:1 Right:2 None:1 A:12 A+Down:1'))
+    a.extend(_holds('Down+X:1 Down:11') * 4)
+    a.extend(_holds('None:1'))
+    assert len(a) == 166082
+    return a
+
+
 def route_frames(source, name):
     """Reproduce authored controller holds/splices; do not adjust emulator timing.
 
@@ -1032,6 +1092,8 @@ def route_frames(source, name):
         # Retain the saved-slot route through observed contact input 72760.
         # Authored idle exposure, then fresh A presses for Continue and both maps.
         return a[:72761] + _holds('None:1800 A:1 None:300 A:1 None:300 A:1 None:900')
+    if name == 'ice-return-business':
+        return extend_ice_return(extend_ice(extend_redtower(a)) + _hold('', 120))
     if name in ('ice-beam', 'ice-beam-settled'):
         frames = extend_ice(extend_redtower(a))
         # Authored neutral tail for 120 follow-up frames after Ice's message.
