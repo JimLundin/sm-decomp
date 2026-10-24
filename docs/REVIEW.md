@@ -8,6 +8,12 @@ earlier versions; this file holds only current findings.
 
 ## Check-ins
 
+- **2026-10-24 18:52 (f0f163d):** 6 agent source commits since 2f18ba6, 0
+  docs-only; no stall. Corpus flat 23/44 (hour spent making 20 unit tests run,
+  which also reset checkpoint compatibility). Production 117,913 → 117,869 (−44,
+  first decline; 0 legacy-bank lines retired); verification 37,482 (+53); unsafe
+  5,042 flat; warnings 431. PLAN.md 228 lines. Map: brief largely met (see below).
+  Changed: directive asks for legacy deletion, the unsafe-block quick win, shorter commits.
 - **2026-10-24 17:52 (2f18ba6):** 1 agent source commit since a1d8ee2
   (a56fdd1: Maridia + Ice-return recipes, Python/TOML only), 1 docs-only
   (PROGRESS graph rewrite) = 50%. No stall, but corpus slowed 7 → 1 check/hour
@@ -56,6 +62,16 @@ earlier versions; this file holds only current findings.
   it if the user likes it, but it must not grow beyond the five boxes.
 
 ## Codebase map (user request, 2026-10-24)
+
+**Status 18:52 (rendered f0f163d, 1440x900 and 390x844):** items 1-3, 5 and 6
+done. First screen shows ten game-responsibility tiles with Owned / Partly /
+Legacy, the 110k/100k gap, three contextual notes, and Kraid/Grapple/Doors
+buttons; support files hidden; phone layout works; no page errors. Remaining,
+in order: (a) "Kraid" finds only `sm_a7.rs` in the sidebar and does not open it;
+show plain labels for bank files ("Kraid, Phantoon (sm_a7.rs)") and open the
+match. (b) The desktop file tree still lists ~35 root files beside the tiles;
+collapse it by default. Watch: the template packs 48 KB into 77 lines (up 10 KB);
+measure growth in bytes, not lines.
 
 The user finds the [codebase map](https://jimlundin.github.io/sm-decomp/) too
 overwhelming. Reviewed at snapshot a20e890d (already behind `main`).

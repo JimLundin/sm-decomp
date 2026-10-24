@@ -26,7 +26,11 @@ reduction are done. Two tracks now (overrides "resume only after the corpus"):
 (a) one agent continues checkpoint coverage as recipe data; (b) the others start
 consolidation (work order 2) on subsystems whose changed behaviour the 23
 passing checks exercise, naming those segments per commit. Production must
-start falling; a docs-only commit needs a code commit beside it. Direct user instructions take precedence. Historical work is in
+start falling; a docs-only commit needs a code commit beside it. 18:52: −44/hour
+is too slow (110k is ~180 hours away). Prefer retiring legacy-bank lines (0 so
+far) over merging owned code; quick win: drop the 91 unnecessary `unsafe` blocks
+in one mechanical commit. Coverage: land a new passing check before any further
+runner change. Commit messages: at most ~8 lines. Direct user instructions take precedence. Historical work is in
 [HISTORY.md](HISTORY.md); its old queues, gates and results are not current rules.
 
 **Codebase map:** the [simplified view](https://jimlundin.github.io/sm-decomp/)
