@@ -537,8 +537,13 @@ references; measure build/test time and resource growth before changing the loop
    verification/support Rust lines, no gameplay changes; six ancillary native
    source/tool inputs differ only in newline bytes.
    Implementation preparation identified an operation5 directed-coverage gap:
-   the74-case batch has no direct walked-obstacle witness. Workers prepare additive
-   cases from88 without changing existing IDs. Source correction: walked tableEB74
+   the74-case batch had no direct walked-obstacle witness. Nine additive cases88..96
+   now pass format, normal library, DLL/source/native checks and captures on6f115848.
+   Both host/library bounds are97; existing IDs0..87 and all old parsers remain
+   unchanged. Root reparsed all74old payloads identically; priorfc9source is preserved.
+   Added201verification Rust lines brings this fixture batch to2254, gameplay0;
+   private parser+4lines separate. Independent additive execution audit is pending.
+   Source correction: walked tableEB74
    captures loaded ROM before nativeB629/index evaluation; its early branch uses
    current pose, later blocked branch pending pose. Preserve this provenance/order
    in the declaration comment and implementation. Shared geometry must also retain

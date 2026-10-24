@@ -155,9 +155,10 @@ flowchart LR
     PFINAL --> PCAP["74 predecessor captures<br/>PASS"]:::done
     PFINAL --> POLD["13 original world cases<br/>byte-identical"]:::done
     PCAP --> PEXEC["74 captures / 18,089,181 bytes<br/>independent audit PASS"]:::done
-    PEXEC --> PWALK["Walked-obstacle operation<br/>directed witness missing"]:::failed
-    PWALK --> PWREF["Additive cases 88+<br/>native / loaded table distinction"]:::active
-    class PWALK,PWREF changed
+    PEXEC --> PWALK["Walked-obstacle source + admission<br/>review PASS"]:::done
+    PWALK --> PWREF["9 additive cases 88–96<br/>format + DLL + captures PASS"]:::done
+    PWREF --> PWAUDIT["Current / pending + native / loaded<br/>execution audit"]:::active
+    class PWALK,PWREF,PWAUDIT changed
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
