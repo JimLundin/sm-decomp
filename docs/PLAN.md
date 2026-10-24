@@ -145,22 +145,36 @@ verification. A declaration, reference capture or outer facade is not adoption.
 The isolated owned candidate now contains the nine gameplay implementations,
 shared state/content/Runtime integration, actual production caller redirects and
 legacy body/pose-facade retirement. The three repeated four-call chains use one
-finish_movement operation. Existing collision verification callers now invoke
-the owned operations too. Normal and detached metadata compilation pass after
-retirement; reviewed real-core observer integration, verifier compilation, full
-formatting and release DLL build pass on 86b5d30f. All 65 candidate comparisons
-pass with 130 empty child logs: 59 exact prior streams including 11 CPU
-comparisons, 48 animation checks and six pose/history checks.
-The six pose streams also exactly match the frozen predecessor. Minimal
-request/jump, composed interaction and actual caller checks are
-being integrated separately in parallel. No replacement is adopted on main yet;
-targeted mutations remain required. Independent raw audit confirms all 65
-streams and empty logs. Complete draft accounting against current main: production
-+238 lines, verification/support +1,545, combined +1,783 to 149,540 Rust lines.
-The old bank/animation/pose files shrink by 2,235 lines, offset by the owned core
-and integration. This is consolidation and ownership progress, not net code
-reduction. Unsafe-function declarations fall by 125 overall (129 production
-removed, four verification added); remaining unsafe operations still need removal.
+finish_movement operation. Existing collision verification callers use the owned
+operations too. Source bcdbd482 passes full formatting, normal/verifier/detached
+metadata compilation and release DLL build. All 79 component comparisons pass:
+65 prior streams and 14 added request/jump/composed/actual demo/intro caller
+streams, with exact predecessor equality and independent raw audits. The first
+11 retain their original CPU comparisons. All child diagnostics are empty.
+
+The bounded any-input replay passes 8,577 frames with zero failures, including
+121 actual normal-gameplay caller returns and 120 follow-up frames. Jump/fall
+probes execute earlier in the demo phase; they are not claimed as later normal
+play coverage. The route covers one gameplay room, not the complete game.
+
+The final candidate is committed as 5e546bdc on
+verify/player-transitions-owned-20261024. Hosted full run 40078990293 is active;
+no replacement is adopted on main yet. Three exact composed faults extend the
+existing runner, and the two earlier transition faults now target actual owned
+sites. The preceding full CI run 40074629985 passed all 93 distinct faults at
+4055d8db, independently audited from receipts/logs and classifier source; that
+run does not validate mutations of this owned candidate. The new full run selects
+96 faults. The redundant same-head ordinary run was cancelled after the full
+dispatch was confirmed active; cancellation is not a pass. Crashes, timeouts and
+compile failures do not count as detections.
+
+Complete draft accounting: production +238 lines, verification/support +2,414,
+combined +2,652 to 150,409 Rust lines. The old bank/animation/pose files shrink
+by 2,235 lines, offset by the owned core and integration. This is consolidation
+and ownership progress, not net code reduction. Production unsafe-function
+declarations fall by 129; verification adds nine, so the combined count falls
+by 120. Maintained mutation/comparison support adds 761 Python and 208 JSON
+lines separately. Remaining unsafe operations still need removal.
 
 Existing references and in-flight checks remain valid work. The65-case batch now
 passes:59prior captures are byte-identical, including11CPU comparisons, and six

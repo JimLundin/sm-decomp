@@ -35,11 +35,13 @@ flowchart LR
     OWNER --> CALLERS["Production callers redirected<br/>draft integrated"]:::draft
     CALLERS --> DELETE["3 repeated chains consolidated<br/>legacy bodies + pose facade removed"]:::draft
     DELETE --> ADOPT["Complete subsystem adopted<br/>behavior + mutations pass"]:::pending
-    DELETE --> BUILD["Release DLL + formatting<br/>PASS / 86b5d30f"]:::done
+    DELETE --> BUILD["Release DLL + formatting<br/>PASS / bcdbd482"]:::done
     BUILD --> COMPARE["65 owned/reference comparisons<br/>PASS / retired candidate"]:::done --> ADOPT
-    CHECKS["Composed interaction + caller checks<br/>parallel"]:::active --> ADOPT
+    CHECKS["14 request / jump / composed / caller checks<br/>PASS / exact paired captures"]:::done --> ADOPT
+    CHECKS --> MOVIE["Normal gameplay caller + 120-frame tail<br/>8,577 frames / zero failures"]:::done
+    MOVIE --> MUT["Owned mutation tests<br/>hosted running"]:::active --> ADOPT
     ADOPT --> NEXT["Longer shared ownership<br/>fewer RAM transfers"]:::pending
-    class CALLERS,DELETE,BUILD,COMPARE,CHECKS changed
+    class BUILD,COMPARE,CHECKS,MOVIE,MUT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -47,14 +49,16 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
+[Candidate source](https://github.com/JimLundin/sm-decomp/tree/5e546bdc85c8d6f5216c4bf69f247b0299ec1e20/sm/src/game/player_transitions) / [Hosted checks](https://github.com/JimLundin/sm-decomp/actions/runs/40078990293)
+
 | Rust accounting | Current main | Owned transition draft change |
 | --- | ---: | ---: |
 | Production, including runtime adapters | 116,748 | +238 |
-| Verification and check support | 31,009 | +1,545 |
-| Combined maintained Rust | 147,757 | +1,783 |
+| Verification and check support | 31,009 | +2,414 |
+| Combined maintained Rust | 147,757 | +2,652 |
 
 31,009 verification lines are excluded from the production target, **not deleted**.
-Draft 86b5d30f removes 2,235 old bank/animation/pose lines; complete replacement
+Draft bcdbd482 removes 2,235 old bank/animation/pose lines; complete replacement
 and integration still grow production by 238 lines. Not yet adopted.
 
 <details>
