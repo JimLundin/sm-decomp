@@ -536,6 +536,14 @@ references; measure build/test time and resource growth before changing the loop
    Corrected formatted accounting is2053
    verification/support Rust lines, no gameplay changes; six ancillary native
    source/tool inputs differ only in newline bytes.
+   Implementation preparation identified an operation5 directed-coverage gap:
+   the74-case batch has no direct walked-obstacle witness. Workers prepare additive
+   cases from88 without changing existing IDs. Source correction: walked tableEB74
+   captures loaded ROM before nativeB629/index evaluation; its early branch uses
+   current pose, later blocked branch pending pose. Preserve this provenance/order
+   in the declaration comment and implementation. Shared geometry must also retain
+   actor-blocked cancellation before commit versus terrain-path commit before
+   cancellation; do not force both through a single reordered publication path.
    Preserve56existing mutants and add the
    nine selected actor faults, including discarded-future handle rejection.
    Scope includes population/assets, spawn/respawn/death, separate select/update,
