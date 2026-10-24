@@ -33,7 +33,7 @@ def capture_child(root, selected, rom=None):
         observation = {'selected': selected, 'passed': bool(function())}
     else:
         case = int(selected.split(':')[1])
-        output = ctypes.create_string_buffer(1024 * 1024)
+        output = ctypes.create_string_buffer(4 * 1024 * 1024)
         if selected.startswith('world:'):
             if rom is None or not Path(rom).is_file():
                 raise RuntimeError('initialized actor mutation requires an existing --actor-rom path')
