@@ -14,6 +14,9 @@ separate from platform code and legacy ROM/RAM compatibility. See the accepted
 Public progress: keep [PROGRESS.md](../PROGRESS.md) current and push it with
 verified milestone commits or material status changes, as requested by the user
 on 2026-10-23. Distinguish committed results from work still under validation.
+Lead with a compact graph of completed foundation, current work, next adoption,
+its architectural benefit and the Map Rando engine target. Refresh it on every
+report update; keep file maps and check detail expandable below it.
 The report is graphical: show module-level ownership, callers and individual
 validation steps. Update affected node colors on every implementation commit;
 outline nodes changed since the previous report. Keep prose and accounting in
@@ -283,6 +286,19 @@ selectors, speed/liquid/clamp/jump/ball/footstep/echo behavior and mechanism eff
 between axes. The approximately1,050old-line scope and750..1,000replacement estimate
 are provisional, not measured savings. Input-to-pose remains adjoining read-only
 design work, not an additional adoption. Local compilation remains serialized.
+
+The complete locomotion draft has actual caller redirects and legacy retirement.
+Source cd90713ab3f89d494173e1f94911ee042246432a815b42577216e629aed06bc5
+passes full formatting, normal library compilation and a local release DLL build.
+All 28 normal-selector cases (4000..4027) match the predecessor captures exactly;
+child diagnostics are empty. These are component comparisons, not movie coverage.
+Adoption remains pending edge cases, shared ownership checks, exercised replay,
+targeted local mutation kills and final caller/deletion review. The latter caught
+an unrelated scrolling callback removed by an over-wide splice; it was restored
+before this passing build. Restore the unrelated unused bank-91 alias too before
+the final freeze and recount. Do not credit provisional line savings as adopted.
+The spin boundary case needs independent proof because its predecessor performs
+an unaligned word read; the crouch-floor fixture needs its reviewed correction.
 
 The public report must foreground owned behavior, production caller migration,
 legacy deletion and adoption. Keep verification detail expandable below those

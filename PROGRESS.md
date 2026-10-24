@@ -1,9 +1,63 @@
 # Engine migration
 
+```mermaid
+flowchart LR
+    DONE["DONE: Collision + transitions<br/>shared owned state"]:::done
+    NOW["NOW: Walk / jump / ball<br/>draft; 28/28 mode checks"]:::active
+    NEXT["NEXT: Verify + adopt<br/>retire 52 old routines"]:::pending
+    THEN["THEN: Join owned systems<br/>remove RAM transfers"]:::pending
+    TARGET["TARGET: Safe modular engine<br/>Map Rando: rooms / sprites / rules"]:::pending
+    DONE --> NOW --> NEXT --> THEN --> TARGET
+    class NOW,NEXT changed
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
 [Navigate the current codebase →](https://jimlundin.github.io/sm-decomp/)
 
 Green: adopted scope / passed check | Blue: draft | Orange: active | Grey: remaining | Red: failed
 **Purple outline: changed since previous report.** Folder branches show containment; check arrows show prerequisites.
+
+<details>
+<summary>Current work: movement draft and remaining checks</summary>
+
+```mermaid
+flowchart LR
+    MOVE["player_movement/"]:::draft
+    MOVE --> API["mod.rs / advance_normal"]:::draft
+    MOVE --> SPEED["speed.rs / shared motion rules"]:::draft
+    MOVE --> MODES["selectors.rs / 28 movement modes"]:::draft
+    MOVE --> FX["presentation.rs / footsteps + echoes"]:::draft
+    MOVE --> DATA["content.rs"]:::draft
+    MOVE --> EFFECT["effects.rs"]:::draft
+    MOVE --> HOST["player_movement_runtime.rs"]:::draft
+    HOST --> CALL["Actual callers + legacy retirement"]:::draft
+    CALL --> BUILD["Format + normal compile + DLL / PASS"]:::done
+    BUILD --> MODES28["28/28 paired mode comparisons / PASS"]:::done
+    MODES28 --> EDGE["Edge cases + ownership checks"]:::active
+    BUILD --> AUDIT["Caller + deletion audit"]:::active
+    MODES28 --> REPLAY["Exercised replay + downstream effects"]:::pending
+    MODES28 --> MUT["Local mutation kills"]:::pending
+    EDGE --> ADOPT["Adopt on main"]:::pending
+    AUDIT --> ADOPT
+    REPLAY --> ADOPT
+    MUT --> ADOPT
+    class MOVE,API,SPEED,MODES,FX,DATA,EFFECT,HOST,CALL,BUILD,MODES28,EDGE,AUDIT changed
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
+[Local draft cd90713a; checks and limits](docs/PLAN.md#work-order). Main counts below exclude this draft.
+
+</details>
+
+<details>
+<summary>Architecture and adopted player work</summary>
 
 ```mermaid
 flowchart LR
@@ -59,11 +113,6 @@ flowchart LR
     CMOVIE --> M2["Input refresh / local kill ?"]:::done
     CMOVIE --> M3["Entry preflight / local kill ?"]:::done
     CMOVIE --> M4["Displacement / local kill ?"]:::done
-    CM --> MOVE["Next: normal locomotion / 28 selectors<br/>state + caller contract"]:::active
-    MOVE --> SPEED["Shared speed + vertical rules"]:::pending
-    MOVE --> MODES["Movement modes + footsteps + echoes"]:::pending
-    MOVE --> MCHECK["Selected references + local checks"]:::active
-    class CM,CALLER,WRAPPER,CLEANUP,CHECK,CBUILD,CMOVIE,M1,M2,M3,M4,MOVE,MCHECK changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -72,6 +121,8 @@ flowchart LR
 ```
 
 [Adopted source](https://github.com/JimLundin/sm-decomp/tree/5e546bdc85c8d6f5216c4bf69f247b0299ec1e20/sm/src/game/player_transitions) ? [96 checks](https://github.com/JimLundin/sm-decomp/actions/runs/40078990293) ? [Local validation](docs/PLAN.md#work-order)
+
+</details>
 
 | Rust accounting | Main | Latest adoption |
 | --- | ---: | ---: |
