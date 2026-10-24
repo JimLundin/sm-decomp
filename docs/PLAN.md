@@ -309,7 +309,7 @@ persistent whole-engine ownership. The prior source/DLL and checked results rema
 in the existing local experiment directory. Reproducible local capture and mutation
 scripts are in sm/src/verification/capture_locomotion.py and player_movement_mutants/.
 
-Next complete responsibility: player_update::advance(host, mode), joining normal
+Current complete responsibility: player_update::advance(host, mode, movement), joining normal
 movement, an owned minimap, fresh gamma selection and settlement for beta17/14/15/19.
 Adopt the real map algorithm and remaining map/boss callers together; a foreign map
 wrapper cannot remove the intervening RAM transfer. Reuse movement and transitions;
@@ -323,9 +323,26 @@ before content reads, partial HUD stores and refreshed inputs before late gamma
 selection. Content interfaces must support room identity and configurable map
 origin/visibility/tiles/boss marks for Map Rando. Retire the repeated beta chains
 and full legacy minimap implementation. Current +150..300production estimate is
-provisional consolidation cost, not promised savings. Freeze the concrete shared
-contract, then implement and author relevant checks in parallel on isolated files.
+provisional consolidation cost, not promised savings. The reviewed candidate now
+implements the shared contract, migrates actual beta/map/boss callers and deletes
+the old minimap and two forwarding wrappers. Its five core files forbid unsafe
+and compile with backend modules unavailable. Special movement runs before Runtime
+construction while RAM is authoritative; late gamma selection reads live state.
 Do not expand into active gamma, preparation or input-to-pose in this adoption.
+
+Draft source1cf3d82c passes formatting, normal/detached compilation, release DLL,
+six exact actual-beta comparisons and six authored enabled-minimap checks. The
+enabled-map oracle route passes8,577frames with zero failures: minimap253calls,
+update1,696calls and settlement121calls, each required probe plus120follow-up
+frames. The route covers one gameplay room, not credits. Paired beta cases suppress
+the map; enabled-map checks use independent byte contracts and the CPU oracle,
+because predecessor enabled-map Rust contains unaligned loads.
+
+Next: execute the reviewed alias, boss, boundary, codec and legacy-writer checks;
+measure actual Runtime import/export counts; run targeted update/minimap mutations;
+then complete accounting and adopt the checked boundary. These new mutations and
+ownership measurements have not executed. Main remains the adopted locomotion
+source65a54a73; checked draft progress is not committed gameplay or net savings.
 
 The public report must foreground owned behavior, production caller migration,
 legacy deletion and adoption. Keep verification detail expandable below those

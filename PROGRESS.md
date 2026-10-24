@@ -3,12 +3,12 @@
 ```mermaid
 flowchart LR
     DONE["DONE: Owned movement<br/>52 legacy routines retired"]:::done
-    NOW["NOW: Shared player update<br/>movement + map + settlement design"]:::active
-    NEXT["NEXT: One update owner<br/>remove repeated RAM transfers"]:::pending
-    THEN["THEN: Modular gameplay<br/>explicit content + options"]:::pending
+    NOW["NOW: Verify shared player update<br/>movement + minimap + settlement"]:::active
+    NEXT["NEXT: Adopt checked draft<br/>retire old minimap + repeated calls"]:::pending
+    THEN["GAIN: One owner across the update<br/>fewer RAM transfers between systems"]:::pending
     TARGET["TARGET: Safe modular engine<br/>Map Rando: rooms / sprites / rules"]:::pending
     DONE --> NOW --> NEXT --> THEN --> TARGET
-    class DONE,NOW,NEXT changed
+    class NOW,NEXT,THEN changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
@@ -19,6 +19,45 @@ flowchart LR
 
 Green: adopted scope / passed check | Blue: draft | Orange: active | Grey: remaining | Red: failed
 **Purple outline: changed since previous report.** Folder branches show containment; check arrows show prerequisites.
+
+<details>
+<summary>Current work: shared player update / draft under local validation</summary>
+
+```mermaid
+flowchart LR
+    UPDATE["player_update/ / DRAFT"]:::draft
+    UPDATE --> API["mod.rs / one update operation"]:::draft
+    UPDATE --> MAP["minimap.rs / exploration + HUD + bosses"]:::draft
+    UPDATE --> STATE["state.rs / 288 owned bytes"]:::draft
+    UPDATE --> CONTENT["content.rs / map inputs"]:::draft
+    UPDATE --> EFFECTS["effects.rs / ordered effects"]:::draft
+    UPDATE --> HOST["player_update_runtime.rs / compatibility edge"]:::draft
+    STATE --> SESSION["session.rs + session_encoding.rs<br/>shared owner + byte compatibility"]:::draft
+    HOST --> CALLERS["sm_90.rs + 5 boss bank files<br/>actual callers migrated in draft"]:::draft
+    CALLERS --> RETIRE["Old minimap + 2 wrappers<br/>deleted in draft"]:::draft
+    API --> BUILD["Formatting + compile + DLL / PASS"]:::done
+    UPDATE --> PURE["Core compiles without backend / PASS"]:::done
+    BUILD --> BETA["6 actual update comparisons / PASS"]:::done
+    BUILD --> ENABLED["6 enabled-minimap checks / PASS"]:::done
+    BUILD --> MOVIE["8,577 frames / 0 failures<br/>3 required probes + follow-up / PASS"]:::done
+    ENABLED --> EDGES["Aliases + boss marks + byte boundaries<br/>source reviewed / execution NEXT"]:::active
+    BETA --> TRANSFERS["Actual ownership transfer counts<br/>source reviewed / execution NEXT"]:::active
+    EDGES --> MUT["New map + update mutations / NEXT"]:::pending
+    TRANSFERS --> MUT
+    RETIRE --> ADOPT["Adopt on main / pending"]:::pending
+    MOVIE --> ADOPT
+    MUT --> ADOPT
+    class UPDATE,API,MAP,STATE,CONTENT,EFFECTS,HOST,SESSION,CALLERS,RETIRE,BUILD,PURE,BETA,ENABLED,MOVIE,EDGES,TRANSFERS,MUT,ADOPT changed
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
+[Draft checks and limits](docs/PLAN.md#work-order) / source `1cf3d82c` / not yet adopted.
+
+</details>
 
 <details>
 <summary>Movement adopted: files and local checks</summary>
@@ -56,7 +95,6 @@ flowchart LR
     AUDIT --> ADOPT
     REPLAY --> ADOPT
     MUT --> ADOPT
-    class MOVE,API,SPEED,MODES,FX,DATA,EFFECT,HOST,CALL,EDGE,MUT,M1,M2,M3,M4,M5,M6,M7,M8,M9,ADOPT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
