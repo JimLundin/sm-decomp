@@ -53,10 +53,10 @@ already-known failing change before further adoption. Local results gate adoptio
    Next coverage: Power Bomb pickup, then Crocomire. The ordinary approaches need
    power bombs or the far side of a green gate. The verified Ice return ends in
    Business Center; return through Red Tower's energy station toward A3AE's pickup.
-  Existing verifier tests now execute locally: `python tools/verify_dll.py
-  --unit-tests --direct` passes all 20 unchanged bodies. This is observer coverage,
-  not additional gameplay checks. The runner changes checkpoint compatibility;
-  regenerate from boot on this source. Preserve the old checked navigation build.
+   Existing verifier tests now execute locally: `python tools/verify_dll.py
+   --unit-tests --direct` passes all 20 unchanged bodies. This is observer coverage,
+   not additional gameplay checks. The runner changes checkpoint compatibility;
+   regenerate from boot on this source. Preserve the old checked navigation build.
 2. **Current - consolidate covered owned subsystems.** Name the existing corpus
    segments exercising each changed behavior; hold uncovered contexts.
    Report added production and deleted legacy lines together; net growth needs a
@@ -85,8 +85,10 @@ The complete input draft `e956dffa` is held, not adopted. Preserve its checked
 source/reference snapshots and audits under
 `%LOCALAPPDATA%/sm-decomp-experiments/20261024/player-input-*`; do not rerun or
 replace them without a source/coverage reason. Reprice/revalidate it against the
-then-current base before adoption. Gameplay corpus source: `992845a3` (partial);
-current `e4a83bad` adds only the checked unit runner, with unchanged gameplay.
+then-current base before adoption. Latest checked source: `5a4def1e`, shared actor
+terrain movement (-18 production lines): 44 existing cases, all four movement
+branches in Bomb Torizo (1,664 frames, zero failures), three compiling faults caught.
+This is scoped adoption evidence; the full corpus remains unfinished.
 
 ## Implementation rules
 

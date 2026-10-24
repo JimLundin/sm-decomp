@@ -298,137 +298,119 @@ fn react<H: ActorHost + MechanismHost>(
         }
     }
 }
+fn coordinate(actor: &mut super::state::Actor, vertical: bool) -> &mut Position {
+    if vertical { &mut actor.y } else { &mut actor.x }
+}
+fn move_axis<H: ActorHost + MechanismHost>(
+    h: &mut H,
+    key: ActorKey,
+    amount: i32,
+    slopes: SlopePolicy,
+    vertical: bool,
+) -> MovementResult {
+    if amount == 0 {
+        return MovementResult::Clear;
+    }
+    let (first, extent, position, edge) = {
+        let actor = h.resolve_actor(key, LittleEndian);
+        let (along, radius, across, across_radius) = if vertical {
+            (actor.y, actor.radius.y, actor.x.whole, actor.radius.x)
+        } else {
+            (actor.x, actor.radius.x, actor.y.whole, actor.radius.y)
+        };
+        let (first, extent) = extent(across, across_radius);
+        (
+            first,
+            extent,
+            packed(along).wrapping_add(amount as u32),
+            leading(amount, along, radius),
+        )
+    };
+    let (row, column) = if vertical {
+        (edge, first)
+    } else {
+        (first, edge)
+    };
+    let row_offset = u16::from((row >> 4) as u8) * u16::from(h.session().room.width as u8);
+    let mut scan = MoveScan {
+        displacement: amount,
+        proposed_coordinate: (position >> 16) as u16,
+        leading_edge: edge,
+        remaining_extent: extent,
+        original_extent: extent,
+        slopes,
+    };
+    let mut block = row_offset.wrapping_add(column >> 4).wrapping_mul(2);
+    while !react(h, &mut scan, block, vertical) {
+        if !vertical {
+            block = block.wrapping_add(h.session().room.width.wrapping_mul(2));
+        }
+        scan.remaining_extent = scan.remaining_extent.wrapping_sub(1);
+        if scan.remaining_extent & 0x8000 != 0 {
+            // Only horizontal movement rereads position and scaled displacement after callbacks.
+            let position = if vertical {
+                position
+            } else {
+                packed(h.resolve_actor(key, LittleEndian).x).wrapping_add(scan.displacement as u32)
+            };
+            h.edit_actor(key, LittleEndian, |a| {
+                coordinate(a, vertical).fraction = position as u16;
+            });
+            h.edit_actor(key, LittleEndian, |a| {
+                coordinate(a, vertical).whole = (position >> 16) as u16;
+            });
+            h.probe(if vertical {
+                "actors.movement.vertical.clear"
+            } else {
+                "actors.movement.horizontal.clear"
+            });
+            return MovementResult::Clear;
+        }
+        if vertical {
+            block = block.wrapping_add(2);
+        }
+    }
+    let negative = amount < 0;
+    h.edit_actor(key, LittleEndian, |a| {
+        let radius = if vertical { a.radius.y } else { a.radius.x };
+        let boundary = if negative {
+            radius.wrapping_add(1).wrapping_add(scan.leading_edge | 0xf)
+        } else {
+            (scan.leading_edge & 0xfff0).wrapping_sub(radius)
+        };
+        let position = coordinate(a, vertical);
+        if if negative {
+            boundary <= position.whole
+        } else {
+            boundary >= position.whole
+        } {
+            position.whole = boundary;
+        }
+    });
+    h.edit_actor(key, LittleEndian, |a| {
+        coordinate(a, vertical).fraction = if negative { 0 } else { u16::MAX };
+    });
+    h.probe(if vertical {
+        "actors.movement.vertical.blocked"
+    } else {
+        "actors.movement.horizontal.blocked"
+    });
+    MovementResult::Blocked
+}
 pub(in crate::game) fn move_horizontal<H: ActorHost + MechanismHost>(
     h: &mut H,
     key: ActorKey,
     amount: i32,
     slopes: SlopePolicy,
 ) -> MovementResult {
-    if amount == 0 {
-        return MovementResult::Clear;
-    }
-    let (top, rows, position, edge) = {
-        let actor = h.resolve_actor(key, LittleEndian);
-        let (top, rows) = extent(actor.y.whole, actor.radius.y);
-        (
-            top,
-            rows,
-            packed(actor.x).wrapping_add(amount as u32),
-            leading(amount, actor.x, actor.radius.x),
-        )
-    };
-    let row_offset = u16::from((top >> 4) as u8) * u16::from(h.session().room.width as u8);
-    let mut scan = MoveScan {
-        displacement: amount,
-        proposed_coordinate: (position >> 16) as u16,
-        leading_edge: edge,
-        remaining_extent: rows,
-        original_extent: rows,
-        slopes,
-    };
-    let mut block = row_offset.wrapping_add(edge >> 4).wrapping_mul(2);
-    while !react(h, &mut scan, block, false) {
-        block = block.wrapping_add(h.session().room.width.wrapping_mul(2));
-        scan.remaining_extent = scan.remaining_extent.wrapping_sub(1);
-        if scan.remaining_extent & 0x8000 != 0 {
-            let position =
-                packed(h.resolve_actor(key, LittleEndian).x).wrapping_add(scan.displacement as u32);
-            h.edit_actor(key, LittleEndian, |a| {
-                a.x.fraction = position as u16;
-            });
-            h.edit_actor(key, LittleEndian, |a| {
-                a.x.whole = (position >> 16) as u16;
-            });
-            return MovementResult::Clear;
-        }
-    }
-    let left = amount < 0;
-    h.edit_actor(key, LittleEndian, |a| {
-        let boundary = if left {
-            a.radius
-                .x
-                .wrapping_add(1)
-                .wrapping_add(scan.leading_edge | 0xf)
-        } else {
-            (scan.leading_edge & 0xfff0).wrapping_sub(a.radius.x)
-        };
-        if if left {
-            boundary <= a.x.whole
-        } else {
-            boundary >= a.x.whole
-        } {
-            a.x.whole = boundary;
-        }
-    });
-    h.edit_actor(key, LittleEndian, |a| {
-        a.x.fraction = if left { 0 } else { u16::MAX };
-    });
-    MovementResult::Blocked
+    move_axis(h, key, amount, slopes, false)
 }
 pub(in crate::game) fn move_vertical<H: ActorHost + MechanismHost>(
     h: &mut H,
     key: ActorKey,
     amount: i32,
 ) -> MovementResult {
-    if amount == 0 {
-        return MovementResult::Clear;
-    }
-    let (left, columns, position, edge) = {
-        let actor = h.resolve_actor(key, LittleEndian);
-        let (left, columns) = extent(actor.x.whole, actor.radius.x);
-        (
-            left,
-            columns,
-            packed(actor.y).wrapping_add(amount as u32),
-            leading(amount, actor.y, actor.radius.y),
-        )
-    };
-    let row_offset = u16::from((edge >> 4) as u8) * u16::from(h.session().room.width as u8);
-    let mut scan = MoveScan {
-        displacement: amount,
-        proposed_coordinate: (position >> 16) as u16,
-        leading_edge: edge,
-        remaining_extent: columns,
-        original_extent: columns,
-        slopes: SlopePolicy::Ignore,
-    };
-    let mut block = row_offset.wrapping_add(left >> 4).wrapping_mul(2);
-    while !react(h, &mut scan, block, true) {
-        scan.remaining_extent = scan.remaining_extent.wrapping_sub(1);
-        if scan.remaining_extent & 0x8000 != 0 {
-            // Precomputed vertical position survives callback mutations.
-            h.edit_actor(key, LittleEndian, |a| {
-                a.y.fraction = position as u16;
-            });
-            h.edit_actor(key, LittleEndian, |a| {
-                a.y.whole = (position >> 16) as u16;
-            });
-            return MovementResult::Clear;
-        }
-        block = block.wrapping_add(2);
-    }
-    let up = amount < 0;
-    h.edit_actor(key, LittleEndian, |a| {
-        let boundary = if up {
-            a.radius
-                .y
-                .wrapping_add(1)
-                .wrapping_add(scan.leading_edge | 0xf)
-        } else {
-            (scan.leading_edge & 0xfff0).wrapping_sub(a.radius.y)
-        };
-        if if up {
-            boundary <= a.y.whole
-        } else {
-            boundary >= a.y.whole
-        } {
-            a.y.whole = boundary;
-        }
-    });
-    h.edit_actor(key, LittleEndian, |a| {
-        a.y.fraction = if up { 0 } else { u16::MAX };
-    });
-    MovementResult::Blocked
+    move_axis(h, key, amount, SlopePolicy::Ignore, true)
 }
 pub(in crate::game) fn select_block_at<H: ActorAccess>(h: &mut H, point: Point) {
     let product = u16::from((point.y >> 4) as u8) * u16::from(h.session().room.width as u8);
