@@ -131,6 +131,32 @@ adoption. The next milestone must address that structural gap explicitly.
 
 ## Work order
 
+**Priority correction (2026-10-24): deliver architectural adoption, not an
+expanding reference inventory.** The next milestone is the complete owned
+post-movement player interaction on the accepted compiled interfaces. Production
+authoring is authorized now: animation/FX; hit/bomb/block requests and arbitration;
+pose normalization/jump/history; and shared state/content/Runtime integration with
+actual caller migration and retirement. Keep each author's files isolated.
+Replace the three repeated four-call chains and retire superseded routines in
+the same adopted candidate. The2,223-line retirement scope is gross, not promised
+net savings; count the complete replacement and retained adapters separately from
+verification. A declaration, reference capture or outer facade is not adoption.
+
+Existing references and in-flight checks remain valid work. The65-case batch now
+passes:59prior captures are byte-identical, including11CPU comparisons, and six
+authored pose/history checks pass on1a0c8dfa. Preserve its source and audit outputs.
+Do not require every proposed fixture family before implementation begins.
+Add or integrate further verification only for a named missing behavior,
+ownership, ordering or failure contract needed to validate the replacement.
+Reviews and targeted checks run alongside implementation; fidelity, full caller
+closure, backend-free core compilation and meaningful mutations still gate
+adoption. No unverified gameplay is adopted to meet a schedule.
+
+The public report must foreground owned behavior, production caller migration,
+legacy deletion and adoption. Keep verification detail expandable below those
+outcomes. Following this subsystem, prioritize extending shared Session ownership
+and removing repeated compatibility transfers across migrated systems.
+
 **Coordinated iterations (2026-10-22): the user authorized ongoing worker
 supervision, lifecycle/commit coordination and resource oversight.** The
 beam launch, missile acceleration, extension creation, placement, initialization and playback are shared below;

@@ -22,6 +22,40 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
+### Next adoption: owned player transitions
+
+```mermaid
+flowchart LR
+    DESIGN["Owned interface + state contract<br/>reviewed / compiled"]:::done --> ANIM["Animation + FX<br/>implementation"]:::active
+    DESIGN --> REQUEST["Hit / bomb / block + arbitration<br/>implementation"]:::active
+    DESIGN --> POSE["Pose + jump + history<br/>implementation"]:::active
+    ANIM --> OWNER["One Session owner<br/>integrated rules"]:::pending
+    REQUEST --> OWNER
+    POSE --> OWNER
+    OWNER --> CALLERS["Production callers migrated"]:::pending
+    CALLERS --> DELETE["3 repeated chains + legacy bodies<br/>retired"]:::pending
+    DELETE --> ADOPT["Complete subsystem adopted<br/>behavior + mutations pass"]:::pending
+    CHECKS["Targeted verification<br/>parallel"]:::active --> ADOPT
+    ADOPT --> NEXT["Longer shared ownership<br/>fewer RAM transfers"]:::pending
+    class ANIM,REQUEST,POSE,OWNER,CALLERS,DELETE,ADOPT,CHECKS,NEXT changed
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
+| Rust accounting | Current main | Transition-read candidate change |
+| --- | ---: | ---: |
+| Production, including runtime adapters | 116,748 | +14 |
+| Verification and check support | 31,009 | +631 |
+| Combined maintained Rust | 147,757 | +645 |
+
+31,009 verification lines are excluded from the production target, **not deleted**.
+Candidate changes are not yet adopted. Legacy retirement is measured separately.
+
+<details>
+<summary>Verification details and earlier migrations</summary>
+
 ### Common actors / adopted
 
 ```mermaid
@@ -1033,6 +1067,8 @@ flowchart LR
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
+
+</details>
 
 </details>
 
