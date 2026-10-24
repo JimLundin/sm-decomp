@@ -59,7 +59,9 @@ with sync_playwright() as playwright:
     assert page.locator("#graph").get_attribute("viewBox") != old_box
     page.locator("#zoom-fit").click()
     assert page.locator("#graph").get_attribute("viewBox") == old_box
-    page.locator("#graph .edge").first.click(force=True)
+    # Dashed paths can have empty space at their bounding-box center.
+    page.locator("#graph .edge").first.focus()
+    page.keyboard.press("Enter")
     expect(page.locator("#details")).to_contain_text("Why these files are connected")
     page.screenshot(path=str(output / "connection-evidence.png"))
 
