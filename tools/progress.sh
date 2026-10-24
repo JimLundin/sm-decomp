@@ -45,8 +45,8 @@ case "${1-}" in
       END {
         print "| Measure | Count |"
         print "| --- | ---: |"
-        print "| Production files* | " production " |"
-        print "| Verification files | " verification " |"
+        print "| Production Rust lines* | " production " |"
+        print "| Verification Rust lines | " verification " |"
         print "| Total Rust | " production + verification " |"
         print "| Lines containing `unsafe` | " unsafe_lines " |"
         print "| Warnings (no-default library) | " warnings " |"

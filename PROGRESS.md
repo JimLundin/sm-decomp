@@ -2,22 +2,21 @@
 
 ```mermaid
 flowchart LR
-    NOW["NOW · Build replay coverage<br/>Areas · bosses · save/load · ending"]:::active
-    NEXT["NEXT · Consolidate player logic<br/>Retire RAM glue · shrink production"]:::pending
-    GAIN["ENABLES<br/>Safe, owned game state"]:::pending
-    TARGET["TARGET · Map Rando<br/>Rooms · sprites · opt-in rules"]:::pending
-    HELD["HELD · Input draft<br/>Checks pass · not adopted"]:::draft
-    NOW --> NEXT --> GAIN --> TARGET
-    HELD -.-> NEXT
+    NOW["NOW · Game checkpoints<br/>Verify areas, bosses & game events"]:::active
+    NEXT["NEXT · Delete duplicate logic<br/>Production below 110k lines"]:::pending
+    GAIN["THEN · Owned, independent engine<br/>Safe gameplay · own video/audio"]:::pending
+    TARGET["TARGET · Map Rando<br/>Custom rooms · sprites · optional QoL"]:::pending
+    NOW -->|Catch regressions| NEXT
+    NEXT -->|Smaller core to finish| GAIN
+    GAIN -->|Configurable game| TARGET
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
-    classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
 ```
 
 | Measure | Count |
 | --- | ---: |
-| Production files* | 117911 |
-| Verification files | 35653 |
+| Production Rust lines* | 117911 |
+| Verification Rust lines | 35653 |
 | Total Rust | 153564 |
 | Lines containing `unsafe` | 5042 |
 | Warnings (no-default library) | 482 |
