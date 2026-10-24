@@ -2,15 +2,15 @@
 
 ```mermaid
 flowchart TB
-    DONE["JUST VERIFIED · Maridia entry + Ice return<br/>23 / 44 required checks pass"]:::done
-    NOW["NOW · Power Bomb pickup<br/>Opens the route to Crocomire"]:::active
-    NEXT["NEXT · Crocomire → remaining checks<br/>Finish full-game coverage"]:::pending
-    DELETE["THEN · Consolidate owned gameplay<br/>Delete duplicate logic · production below 110k"]:::pending
-    TARGET["TARGET · Safe, independent engine · below 100k<br/>Map Rando: sprites, rooms/doors, opt-in QoL"]:::pending
-    DONE --> NOW --> NEXT
-    NEXT -->|Protect behavior during deletion| DELETE
-    DELETE -->|Finish safe ownership + own video/audio| TARGET
-    classDef done fill:#dcfce7,stroke:#15803d,color:#14532d
+    NOW["NOW · Power Bomb route → Crocomire<br/>Gameplay checks: 23 / 44 passing"]:::active
+    NEXT["NEXT · Remaining areas, bosses + ending<br/>Complete all 44 required checks"]:::pending
+    DELETE["THEN · Merge duplicate gameplay logic<br/>Production: 117,913 → below 110k lines"]:::pending
+    OWN["THEN · Finish safe game state<br/>Remove manual memory management"]:::pending
+    TARGET["TARGET · Modular engine · below 100k lines<br/>Map Rando: custom sprites, rooms/doors, opt-in QoL"]:::pending
+    NOW --> NEXT
+    NEXT -->|Catch regressions while deleting code| DELETE
+    DELETE -->|One owner for each game responsibility| OWN
+    OWN -->|Own video/audio; remove SNES runtime dependency| TARGET
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
 ```
