@@ -30,7 +30,7 @@ flowchart LR
     AU["4,668 new bytes / union 57,041<br/>shared player scope audit PASS"]:::done --> AD
     AI["Per-instance appearance + lifecycle<br/>independent review PASS"]:::done --> AD
     AR["Typed read lookup + guarded edits<br/>design review PASS"]:::done --> AD
-    AP["Production +4,998 / verification +5,385<br/>accounting + retirement audit PASS"]:::done --> AD
+    AP["Production +4,998 / verification +5,393<br/>accounting + retirement audit PASS"]:::done --> AD
     AD --> AS["state.rs + codec.rs"]:::draft
     AD --> AV["access.rs / typed reads + edits"]:::draft
     AD --> AE["content.rs + effects.rs"]:::draft
@@ -69,10 +69,12 @@ flowchart LR
     AB --> AROUTEBUILD["Composed route / normal library + DLL<br/>format + compile PASS"]:::done
     AROUTEBUILD --> AROUTE["Two-room routes / cases 12 + 13<br/>execution + byte audit PASS"]:::done
     AROUTE --> AOLDWORLD["11 existing supplied-world routes<br/>byte-identical"]:::done
-    AVERIFY --> MUTWIRE["Hosted / 48 detections audited<br/>25 DLL faults pending / 23780fd9"]:::active
+    AVERIFY --> MUTWIRE["Hosted / 48 detections audited<br/>25 DLL faults pending / 50cec3e0"]:::active
     MUTWIRE --> AHF["First CI / animation harness<br/>compile FAIL"]:::failed
-    AHF --> AHFIX["Shared crate-root declarations<br/>all 3 harnesses compile PASS"]:::done
-    AHFIX --> AHRUN["Full CI rerun<br/>build + 73 mutations"]:::active
+    AHF --> AHFIX["Shared crate-root declarations<br/>all 3 harnesses hosted PASS"]:::done
+    AHFIX --> ACFG["Second CI / ordinary verifier<br/>configuration compile FAIL"]:::failed
+    ACFG --> ACFGLOCAL["Both modes compile + 3 captures<br/>configuration fix PASS"]:::done
+    ACFGLOCAL --> AHRUN["Full CI / 50cec3e0<br/>Cargo launcher + 73 mutations"]:::active
     ADLL --> AORACLE["21,015 frames / 10 probes<br/>0 failures + 120-frame tail / PASS"]:::done
     ADLL --> KWRITE["Kraid live-definition write + consumer<br/>PASS"]:::done
     KWRITE --> KRESTORE["Actual CPU snapshot restore<br/>definition retained / PASS"]:::done
@@ -107,6 +109,7 @@ flowchart LR
     MUTBUILD --> MFRENDER["Flash / frozen palette bits"]:::pending
     MUTBUILD --> MFKWRITE["Kraid live shot-gate write"]:::pending
     MUTBUILD --> MFKREAD["Contact reads live shot gate"]:::pending
+    class AP,MUTWIRE,AHFIX,ACFG,ACFGLOCAL,AHRUN changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -126,7 +129,6 @@ flowchart LR
     PR --> PD
     PD --> PI["Implementation after actor adoption<br/>and declaration review"]:::pending
     PV --> PI
-    class PC,PS,PR,PV,PD,PI changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

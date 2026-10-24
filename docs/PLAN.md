@@ -474,13 +474,18 @@ references; measure build/test time and resource growth before changing the loop
    and48audited mutation detections (42existing+6actor, F9 counted once), then fails
    compiling the adjacent animation harness. Shared declarations now live at each
    actual crate root; all3harnesses and player-test metadata compile. Verification-only
-   fix23780fd9 preserves the gameplay implementation; full CI40057364187 reruns all
-   checks, including25remaining DLL faults (14existing+11actor). Ordinary builds now
+   fix23780fd9 preserves gameplay. CI40057364187 passes all3detached harnesses, then
+   finds3actor host exports referencing disabled library functions in the ordinary
+   verifier example. Fix50cec3e0 aligns host/library cfg in direct and Cargo launchers
+   and room-case bounds. Both cfg-mode Cargo example metadata checks pass; direct DLL
+   source520323af exposes all3captures with predecessor-identical sample outputs.
+   Full CI40058485171 adds a Cargo-launcher source/export check and retains all73faults,
+   including25remaining DLL faults (14existing+11actor). Ordinary builds now
    precede long mutations; measured prior35minute runtime warrants a60minute limit.
    Selected
    ten-probe oracle replay passes21015frames with zero failures and120frames after
    actual Landing Site actor emission. Formatted production grows4998lines beyond
-   the earlier estimate; verificationRust grows5385separately. Independent cost and
+   the earlier estimate; verificationRust grows5393separately. Independent cost and
    complete caller-retirement audit passes. This is ownership migration, not a net
    source reduction: actor rules3187lines, state/access/codec910, content/identity/
    media2162 and actor adapters/API1160 replace3351old module/bank lines, with930
