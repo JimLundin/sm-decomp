@@ -9,7 +9,7 @@ pub unsafe extern "C" fn sm_verify_room_world_case(
     capacity: usize,
 ) -> usize {
     unsafe {
-        if rom.is_null() || output.is_null() || id >= 11 || capacity < 524_288 {
+        if rom.is_null() || output.is_null() || id >= 14 || capacity < 524_288 {
             return 0;
         }
         if STARTED.swap(true, Ordering::SeqCst) {

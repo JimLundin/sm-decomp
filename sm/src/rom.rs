@@ -81,3 +81,17 @@ impl RomRecord {
         }
     }
 }
+
+/// Map a banked LoROM address to an offset in the ROM allocation.
+/// Callers keep their window/bounds checks and add linear table offsets afterward.
+#[inline]
+pub const fn lorom_offset(address: u32) -> isize {
+    (((address >> 16) << 15 | address & 0x7fff) & 0x3fffff) as isize
+}
+
+impl RomImage {
+    /// Allocation provenance only; mutable ROM contents are not copied or compared.
+    pub(crate) fn same_allocation(&self, other: &Self) -> bool {
+        std::rc::Rc::ptr_eq(&self.0, &other.0)
+    }
+}

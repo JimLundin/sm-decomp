@@ -6,6 +6,7 @@ use super::pre_actions::*;
 use super::pre_helpers::*;
 use super::shared::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use super::*;
+use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session::Point;
 
@@ -208,11 +209,14 @@ pub(super) fn Eproj_CheckForEnemyCollisionWithRect(
     ctx: &mut impl Host,
 ) -> u8 {
     let v1 = k;
-    (((((ctx.enemy_x(v1) as i32 - rect.x as i32) as u16) as i16).unsigned_abs() as i32
-        - ctx.enemy_width(v1) as i32)
+    (((((ctx.resolve_actor(Key::from_legacy(v1), Le).x.whole as i32 - rect.x as i32) as u16) as i16)
+        .unsigned_abs() as i32
+        - ctx.resolve_actor(Key::from_legacy(v1), Le).radius.x as i32)
         < rect.w as i32
-        && ((((ctx.enemy_y(v1) as i32 - rect.y as i32) as u16) as i16).unsigned_abs() as i32
-            - ctx.enemy_height(v1) as i32)
+        && ((((ctx.resolve_actor(Key::from_legacy(v1), Le).y.whole as i32 - rect.y as i32) as u16)
+            as i16)
+            .unsigned_abs() as i32
+            - ctx.resolve_actor(Key::from_legacy(v1), Le).radius.y as i32)
             < rect.h as i32) as u8
 }
 
@@ -248,7 +252,11 @@ pub(super) fn CheckForCollisionWithShitroid_DoubleRet(v0: u16, ctx: &mut impl Ho
     if ctx.mother_brain_target_enemy() == 0 {
         return 0;
     }
-    if ctx.enemy_health(ctx.mother_brain_target_enemy()) != 0 {
+    if ctx
+        .resolve_actor(Key::from_legacy(ctx.mother_brain_target_enemy()), Le)
+        .health
+        != 0
+    {
         let rect: CollisionRect = Eproj_GetCollDetectRect(v0, ctx);
         return Eproj_CheckForEnemyCollisionWithRect(ctx.mother_brain_target_enemy(), rect, ctx);
     }

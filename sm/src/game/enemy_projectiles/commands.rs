@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 use super::access::{enemy, enemy_byte};
 use super::host::{EnemyMember as F, Host, NativeRecord, ScriptPosition, ScriptRecord};
+use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 use crate::game::constants::{bank_86::*, bank_a0::*};
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session::Point;
@@ -409,7 +410,11 @@ pub(super) fn dispatch(
             let mut direction = (h.inputs().random & 0x300).wrapping_add(2048);
             enemy!(h, slot, velocity_y = direction.wrapping_neg());
             let enemy = enemy!(h, slot, behavior_b);
-            let distance = h.enemy_x(enemy).wrapping_sub(enemy!(h, slot, x));
+            let distance = h
+                .resolve_actor(Key::from_legacy(enemy), Le)
+                .x
+                .whole
+                .wrapping_sub(enemy!(h, slot, x));
             let absolute = if distance & 0x8000 != 0 {
                 distance.wrapping_neg()
             } else {

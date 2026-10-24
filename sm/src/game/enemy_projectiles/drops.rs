@@ -126,10 +126,12 @@ pub(super) fn collect(index: u16, h: &mut impl Host) {
         // The query precedes the live lifetime and coordinate reads.
         let grapple = { h.grapple_pickup_query() } != 0
             && enemy!(h, (slot) as isize, behavior_b).wrapping_sub(384) & 0x8000 != 0
-            && ((enemy!(h, (slot) as isize, x).wrapping_sub(h.inputs().grapple_end_x) as i16)
+            && ((enemy!(h, (slot) as isize, x).wrapping_sub(h.session().player.grapple_endpoint.x)
+                as i16)
                 .wrapping_abs() as u16)
                 < 16
-            && ((enemy!(h, (slot) as isize, y).wrapping_sub(h.inputs().grapple_end_y) as i16)
+            && ((enemy!(h, (slot) as isize, y).wrapping_sub(h.session().player.grapple_endpoint.y)
+                as i16)
                 .wrapping_abs() as u16)
                 < 16;
         if !grapple {
@@ -217,7 +219,7 @@ pub(super) fn respawn(index: u16, h: &mut impl Host) {
     }
 }
 
-pub(super) fn reset_room_metadata(h: &mut impl Host) {
+pub(crate) fn reset_room_metadata(h: &mut impl Host) {
     // The original 144-word span includes other columns and foreign bytes.
     // Preserve its descending order through the qualified compatibility edge.
     for i in (0..144).rev() {

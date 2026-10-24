@@ -1,11 +1,13 @@
-use crate::game::enemy_combat::{apply_contact, apply_shot};
+use crate::game::actors;
+use crate::game::actors::access::ActorKey as Key;
+use crate::game::actors::api as actor_api;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
-use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
+use crate::game::session_runtime::Runtime;
 
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a4::*;
@@ -15,7 +17,7 @@ use crate::game::minimap;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_80::{QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_88::SpawnHdmaObject;
-use crate::game::sm_a0::Enemy_MoveRight_IgnoreSlopes;
+
 use crate::game::sprite_effect_runtime::create_sprite;
 
 pub type Enemy_Crocomire = crate::game::enemy_layouts::EnemyLayout72;
@@ -1089,7 +1091,10 @@ pub unsafe fn Crocomire_9B86(game: &mut Game) {
 pub use self::Crocomire_Func_89 as Crocomire_Func_91;
 pub unsafe fn Crocomire_Func_92(game: &mut Game) {
     unsafe {
-        apply_contact(game);
+        actors::combat::contact_reaction(
+            &mut Runtime::new(game),
+            actors::api::DeathHandling::Finalize,
+        );
         let E = Get_Crocomire(0, game);
         (*E).var_B = ((*E).var_B) | (0x4000u16);
         word!(game.extra_samus_x_displacement = -4i32 as u16);
@@ -1178,7 +1183,7 @@ crate::game::callback_dispatch! {
                 - word!(game.samus_x_pos) as i32) as i16)
                 < 0
         {
-            apply_contact(game);
+            actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
             word!(
                 game.samus_x_pos = ((*E).base.x_pos as i32
                     - (*E).base.x_width as i32
@@ -1519,9 +1524,9 @@ crate::game::callback_dispatch! {
         };
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [10780707] Enemy_NormalTouchAI_A4 => apply_contact(game);
-    [10780717] Enemy_NormalShotAI_A4 => apply_shot(game);
-    [10780737] Enemy_NormalFrozenAI_A4 => update_frozen_enemy(game);
+    [10780707] Enemy_NormalTouchAI_A4 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
+    [10780717] Enemy_NormalShotAI_A4 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
+    [10780737] Enemy_NormalFrozenAI_A4 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
 }
 
 crate::game::callback_dispatch! {
@@ -1571,22 +1576,14 @@ crate::game::callback_dispatch! {
     };
     [10784735] Crocomire_Instr_4 [jp] {
         if ((*Get_Crocomire(0, game)).var_B & 0x800) == 0 {
-            Enemy_MoveRight_IgnoreSlopes(
-                word!(game.cur_enemy_index),
-                (-4i16 as i32) << 16,
-                game,
-            );
+            ({ let (actor, amount) = (word!(game.cur_enemy_index), (-4i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 });
         }
     };
     [10784762] Crocomire_Instr_3 [Crocomire_Instr_4(k, jp, game)] { Crocomire_Func_43(game); };
     [10784767] Crocomire_Instr_15 [Crocomire_Instr_4(k, jp, game)] { Crocomire_Func_43(game); };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10784797] Crocomire_Instr_16 [] {
-        if Enemy_MoveRight_IgnoreSlopes(
-            word!(game.cur_enemy_index),
-            (-4i16 as i32) << 16,
-            game,
-        ) != 0
+        if ({ let (actor, amount) = (word!(game.cur_enemy_index), (-4i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
         {
             (*Get_Crocomire(0, game)).var_C = 14;
             EnemyScript::jump(addr_kCrocomire_Ilist_BF3C as u16)
@@ -1610,15 +1607,11 @@ crate::game::callback_dispatch! {
             - word!(game.layer1_x_pos) as i32) as i16)
             < 0
         {
-            Enemy_MoveRight_IgnoreSlopes(
-                word!(game.cur_enemy_index),
-                (4i16 as i32) << 16,
-                game,
-            );
+            ({ let (actor, amount) = (word!(game.cur_enemy_index), (4i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 });
         }
     };
     [10784895]
-    Crocomire_Instr_18 [jp] { Enemy_MoveRight_IgnoreSlopes(k, (4i16 as i32) << 16, game); };
+    Crocomire_Instr_18 [jp] { ({ let (actor, amount) = (k, (4i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }); };
     [10784911] Crocomire_Instr_12 [Crocomire_Instr_13(k, jp, game)] { Crocomire_Func_43(game); };
     [10784916] Crocomire_Instr_17 [Crocomire_Instr_18(k, jp, game)] { Crocomire_Func_43(game); };
     @forward [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];

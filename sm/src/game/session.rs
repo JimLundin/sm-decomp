@@ -93,6 +93,9 @@ pub struct PowerBomb {
 use crate::game::item_pickups::Inventory;
 #[derive(Clone, Debug, PartialEq)]
 pub struct Session {
+    pub(in crate::game) actor_identity: crate::game::actors::identity::ActorIdentityState,
+    pub(in crate::game) actors: crate::game::actors::Actors,
+    pub(in crate::game) timing: Timing,
     pub(crate) world: std::sync::Arc<crate::game::room_entry::world::WorldBinding>,
     pub(crate) continuations: crate::game::room_entry::state::SharedContinuations,
     pub(crate) gameplay_flags: crate::game::gameplay_flag_state::GameplayFlags,
@@ -115,6 +118,9 @@ impl Session {
         world: std::sync::Arc<crate::game::room_entry::world::WorldBinding>,
     ) -> Self {
         Self {
+            actor_identity: crate::game::actors::identity::ActorIdentityState::empty(),
+            actors: Default::default(),
+            timing: Default::default(),
             room: Room::with_world(&world),
             world,
             continuations: crate::game::room_entry::state::SharedContinuations {
@@ -153,6 +159,9 @@ pub struct Projectiles {
 // Implementation retains existing LaunchMotion rather than a second algorithm.
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct Player {
+    pub x_fraction: u16,
+    pub y_fraction: u16,
+    pub grapple_endpoint: Point,
     pub palette: crate::game::visual_state::PlayerPalette,
     pub periodic_damage_fraction: u16,
     pub x: u16,
@@ -491,4 +500,9 @@ pub struct EnemyProjectiles {
 pub struct Vector32 {
     pub x: u32,
     pub y: u32,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub(in crate::game) struct Timing {
+    pub(in crate::game) frame_counter: u16,
 }

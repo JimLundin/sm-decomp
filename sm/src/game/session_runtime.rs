@@ -56,6 +56,10 @@ fn draw_trail(game: &mut Game, pair: usize, right: bool, frozen: bool) {
     }
 }
 
+#[cfg(sm_verify_dll)]
+#[path = "../verification/actor_movement_runtime_observer.rs"]
+mod actor_movement_runtime_observer;
+
 pub(crate) struct Runtime<'g> {
     game: &'g mut Game,
     state: Option<Session>,
@@ -70,12 +74,12 @@ impl<'g> Runtime<'g> {
         }
     }
     pub fn foreign<R>(&mut self, action: impl FnOnce(&mut Game) -> R) -> R {
+        preflight_export(self.session(), self.game);
         let state = self
             .state
             .take()
             .expect("projectile state unavailable during external effect");
-        export_session(&state, self.game);
-        drop(state);
+        export_session(state, self.game);
         let result = action(self.game);
         self.state = Some(import_session(self.game));
         self.inputs = encoding::inputs(&self.game.g_ram);
@@ -150,7 +154,15 @@ impl<'g> Runtime<'g> {
 impl Drop for Runtime<'_> {
     fn drop(&mut self) {
         if let Some(state) = self.state.take() {
-            export_session(&state, self.game);
+            let matching = std::sync::Arc::ptr_eq(&state.world, self.game.world())
+                && state.world.revision() == self.game.world().revision();
+            if matching && self.game.actor_identity_is_with_session() {
+                export_session(state, self.game);
+            } else if self.game.actor_identity_is_with_session() {
+                // A rejected foreign call retains this Runtime's identity owner;
+                // discard invalid byte/native publication rather than panic again.
+                self.game.return_actor_identity(state.actor_identity);
+            }
         }
     }
 }
@@ -353,19 +365,45 @@ pub(crate) fn run_mechanisms(
     }
 }
 
-pub(crate) fn import_session(game: &Game) -> Session {
+pub(crate) fn import_session(game: &mut Game) -> Session {
     let mut state = encoding::decode(&game.g_ram, game.world().clone());
     import_native_spawn(&mut state, game);
+    state.actor_identity = game.take_actor_identity();
     state
 }
-pub(crate) fn export_session(state: &Session, game: &mut Game) {
+fn preflight_export(state: &Session, game: &Game) {
     assert!(
         std::sync::Arc::ptr_eq(&state.world, game.world())
             && state.world.revision() == game.world().revision(),
         "Session belongs to a different world binding"
     );
-    encoding::encode(state, &mut game.g_ram);
-    export_native_spawn(state, game);
+    assert!(
+        game.actor_identity_is_with_session(),
+        "Game already owns actor identity"
+    );
+}
+/// Holds identity until it is returned, including an unwind after partial encoding.
+struct ExportIdentity<'g> {
+    state: Option<Session>,
+    game: &'g mut Game,
+}
+impl Drop for ExportIdentity<'_> {
+    fn drop(&mut self) {
+        if let Some(state) = self.state.take() {
+            self.game.return_actor_identity(state.actor_identity);
+        }
+    }
+}
+pub(crate) fn export_session(state: Session, game: &mut Game) {
+    preflight_export(&state, game);
+    let guard = ExportIdentity {
+        state: Some(state),
+        game,
+    };
+    let state = guard.state.as_ref().expect("export owns Session");
+    encoding::encode(state, &mut guard.game.g_ram);
+    export_native_spawn(state, guard.game);
+    // Drop moves identity exactly once, after the byte/native publication.
 }
 #[forbid(unsafe_code)]
 pub(crate) fn import_native_spawn(state: &mut Session, game: &Game) {
@@ -405,5 +443,193 @@ impl SessionAccess for Runtime<'_> {
         #[cfg(sm_verify_dll)]
         crate::game::visual_runtime::samus_observer::observe(name, self.session(), self.game);
         crate::verify_probe::hit(name);
+    }
+}
+
+impl Runtime<'_> {
+    /// Preserve the actor content diagnostic observer and allocation capture order.
+    pub(crate) fn actor_legacy_record(&mut self, bank: u8, address: u16) -> RomRecord {
+        if address & 0x8000 == 0 {
+            self.foreign(|game| unsafe { crate::rtl::rom_record(bank, address, game) })
+        } else {
+            content::captured(
+                content::image(self),
+                (u32::from(bank) << 16) | u32::from(address),
+            )
+        }
+    }
+}
+
+use crate::game::enemy_script::EnemyScript;
+use crate::game::{sm_a2, sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b2, sm_b3};
+crate::game::callback_dispatch! {
+    unsafe fn actor_species_instruction(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
+    call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
+    @external {
+
+        10651845 => [sm_a2::BouncingGoofball_Instr_88C5(k, j)];
+        10716899 => sm_a3::Waver_Instr_1;
+        10991155 => [sm_a7::Kraid_Instr_1(k, j)];
+        11056990 => [sm_a8::Beetom_Instr_1(k, j)];
+        11062987 => [sm_a8::WreckedShipRobot_Instr_7(k, j)];
+        11063490 => [sm_a8::WreckedShipRobot_Instr_10(k, j)];
+        11128756 => [sm_a9::Shitroid_Instr_1(k, j)];
+        11128778 => [sm_a9::Shitroid_Instr_2(k, j)];
+        11139360 => [sm_a9::Shitroid_Instr_3(k, j)]; 11139382 => [sm_a9::Shitroid_Instr_4(k, j)];
+        11139472 => [sm_a9::Shitroid_Instr_6(k, j)];
+        11190984 => [sm_aa::Torizo_Instr_7(k, j)];
+        11196831 => [sm_aa::Shaktool_Instr_6(k, j)];
+        0xa20000..=0xa2ffff => [sm_a2::DispatchEnemyInstr(ea, k, j, game)];
+        0xa30000..=0xa3ffff => [sm_a3::DispatchEnemyInstr(ea, k, j, game)];
+        0xa40000..=0xa4ffff => [sm_a4::DispatchEnemyInstr(ea, k, j, game)];
+        0xa50000..=0xa5ffff => [sm_a5::DispatchEnemyInstr(ea, k, j, game)];
+        0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyInstr(ea, k, j, game)];
+        0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyInstr(ea, k, j, game)];
+        0xa80000..=0xa8ffff => [sm_a8::DispatchEnemyInstr(ea, k, j, game)];
+        0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyInstr(ea, k, j, game)];
+        0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyInstr(ea, k, j, game)];
+        0xb20000..=0xb2ffff => [sm_b2::DispatchEnemyInstr(ea, k, j, game)];
+        0xb30000..=0xb3ffff => [sm_b3::DispatchEnemyInstr(ea, k, j, game)];
+    }
+}
+impl Runtime<'_> {
+    pub(crate) fn actor_ai_legacy(&mut self, routine: u32) {
+        self.foreign(|game| unsafe { crate::game::sm_a0::CallEnemyAi(routine, game) });
+    }
+    pub(crate) fn actor_instruction_legacy(
+        &mut self,
+        routine: u32,
+        actor: u16,
+        script: EnemyScript,
+    ) -> EnemyScript {
+        self.foreign(|game| unsafe { actor_species_instruction(routine, actor, script, game) })
+    }
+    pub(crate) fn actor_touch_legacy(&mut self, routine: u32) {
+        self.foreign(|game| unsafe { crate::game::sm_a0::CallHitboxTouch(routine, game) });
+    }
+    pub(crate) fn actor_shot_legacy(&mut self, routine: u32, argument: u16) {
+        self.foreign(|game| unsafe { crate::game::sm_a0::CallHitboxShot(routine, argument, game) });
+    }
+    pub(crate) fn actor_hook_legacy(&mut self, routine: u32) {
+        self.foreign(|game| unsafe { crate::game::sm_a0::CallEnemyGfxDrawHook(routine, game) });
+    }
+    pub(crate) fn actor_player_scene_legacy(&mut self) {
+        self.foreign(|game| unsafe { crate::game::sm_90::DrawSamusAndProjectiles(game) });
+    }
+    pub(crate) fn actor_draw_compatible(
+        &mut self,
+        bank: u8,
+        address: u16,
+        x: u16,
+        y: u16,
+        palette: u16,
+        tile: u16,
+        base: bool,
+        offscreen: bool,
+    ) {
+        self.foreign(|game| unsafe {
+            use crate::game::sm_81::{
+                DrawSpritemapWithBaseTile, DrawSpritemapWithBaseTile2,
+                DrawSpritemapWithBaseTileOffscreen,
+            };
+            let draw = if base {
+                DrawSpritemapWithBaseTile
+            } else if offscreen {
+                DrawSpritemapWithBaseTileOffscreen
+            } else {
+                DrawSpritemapWithBaseTile2
+            };
+            draw(bank, address, x, y, palette, tile, game);
+        });
+    }
+    pub(crate) fn actor_copy_legacy_tilemap(&mut self, bank: u8, address: u16) {
+        self.actor_copy_tilemap(bank, address, None);
+    }
+    pub(crate) fn actor_copy_prepared_tilemap(
+        &mut self,
+        bank: u8,
+        address: u16,
+        palette_bits: u16,
+    ) {
+        self.actor_copy_tilemap(bank, address, Some(palette_bits));
+    }
+    fn actor_copy_tilemap(&mut self, bank: u8, address: u16, palette_bits: Option<u16>) {
+        let mut record = self.actor_legacy_record(bank, address.wrapping_add(2));
+        loop {
+            let destination = usize::from(record.word(0));
+            if destination == 0xffff {
+                break;
+            }
+            let bytes = usize::from(record.word(2)) * 2;
+            record.base += 4;
+            let _ = &self.game.g_ram[destination..destination + bytes];
+            for i in 0..bytes {
+                let mut value = record.byte(i);
+                if i & 1 != 0 {
+                    if let Some(bits) = palette_bits {
+                        value = (value & !0x1c) | ((bits >> 8) as u8);
+                    }
+                }
+                self.set_byte(destination + i, value);
+            }
+            record.base += bytes;
+        }
+    }
+    pub(crate) fn actor_assertion_legacy(&mut self, drawing: bool) {
+        self.foreign(|_game| unsafe {
+            if drawing {
+                crate::c_library::__assert_fail(
+                    c"addr < 0x2000".as_ptr(),
+                    c"src/sm_rtl.h".as_ptr(),
+                    51,
+                    c"uint8 *RomPtr_RAM(uint16_t)".as_ptr(),
+                );
+            } else {
+                crate::c_library::__assert_fail(
+                    c"E->current_instruction & 0x8000".as_ptr(),
+                    c"src/sm_a0.c".as_ptr(),
+                    3399,
+                    c"void ProcessEnemyInstructions(void)".as_ptr(),
+                );
+            }
+        });
+    }
+}
+
+impl Runtime<'_> {
+    pub(crate) fn actor_draw_prepared(
+        &mut self,
+        bank: u8,
+        address: u16,
+        x: u16,
+        y: u16,
+        palette: u16,
+        tile: u16,
+        base: bool,
+        offscreen: bool,
+    ) {
+        self.foreign(|game| {
+            use crate::game::{
+                projectile_presentation_ram::{Native, sprite_map},
+                sprite_drawing::Clip,
+            };
+            if base && address == 0 {
+                return;
+            }
+            let map = sprite_map(bank, address, game, &mut Native);
+            let clip = if base {
+                Clip::None
+            } else if offscreen {
+                Clip::Outside
+            } else {
+                Clip::Inside
+            };
+            map.draw(
+                (x, y),
+                |entry| (entry.wrapping_add(tile) & 0xf1ff) | palette,
+                clip,
+                game,
+            );
+        });
     }
 }

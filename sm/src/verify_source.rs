@@ -1,6 +1,114 @@
 //! Source bytes captured by the game library compilation.
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
+    (
+        "sm/src/verification/actor_population_animation_cases.rs",
+        include_bytes!("verification/actor_population_animation_cases.rs"),
+    ),
+    (
+        "sm/src/verification/actor_population_animation_observer.rs",
+        include_bytes!("verification/actor_population_animation_observer.rs"),
+    ),
+    (
+        "sm/src/verification/actor_population_animation_entry.rs",
+        include_bytes!("verification/actor_population_animation_entry.rs"),
+    ),
+    (
+        "sm/src/verification/actor_population_animation_dll.rs",
+        include_bytes!("verification/actor_population_animation_dll.rs"),
+    ),
+    (
+        "sm/src/game/actors/access.rs",
+        include_bytes!("game/actors/access.rs"),
+    ),
+    (
+        "sm/src/game/actors/api.rs",
+        include_bytes!("game/actors/api.rs"),
+    ),
+    (
+        "sm/src/game/actors/codec.rs",
+        include_bytes!("game/actors/codec.rs"),
+    ),
+    (
+        "sm/src/game/actors/content.rs",
+        include_bytes!("game/actors/content.rs"),
+    ),
+    (
+        "sm/src/game/actors/content_runtime.rs",
+        include_bytes!("game/actors/content_runtime.rs"),
+    ),
+    (
+        "sm/src/game/actors/effects.rs",
+        include_bytes!("game/actors/effects.rs"),
+    ),
+    (
+        "sm/src/game/actors/identity.rs",
+        include_bytes!("game/actors/identity.rs"),
+    ),
+    (
+        "sm/src/game/actors/media.rs",
+        include_bytes!("game/actors/media.rs"),
+    ),
+    (
+        "sm/src/game/actors/media_runtime.rs",
+        include_bytes!("game/actors/media_runtime.rs"),
+    ),
+    (
+        "sm/src/game/actors/mod.rs",
+        include_bytes!("game/actors/mod.rs"),
+    ),
+    (
+        "sm/src/game/actors/runtime.rs",
+        include_bytes!("game/actors/runtime.rs"),
+    ),
+    (
+        "sm/src/game/actors/scene.rs",
+        include_bytes!("game/actors/scene.rs"),
+    ),
+    (
+        "sm/src/game/actors/snapshot.rs",
+        include_bytes!("game/actors/snapshot.rs"),
+    ),
+    (
+        "sm/src/game/actors/state.rs",
+        include_bytes!("game/actors/state.rs"),
+    ),
+    (
+        "sm/src/game/actors/population.rs",
+        include_bytes!("game/actors/population.rs"),
+    ),
+    (
+        "sm/src/game/actors/animation.rs",
+        include_bytes!("game/actors/animation.rs"),
+    ),
+    (
+        "sm/src/game/actors/staging.rs",
+        include_bytes!("game/actors/staging.rs"),
+    ),
+    (
+        "sm/src/game/actors/movement.rs",
+        include_bytes!("game/actors/movement.rs"),
+    ),
+    (
+        "sm/src/game/actors/queries.rs",
+        include_bytes!("game/actors/queries.rs"),
+    ),
+    (
+        "sm/src/game/actors/scheduling.rs",
+        include_bytes!("game/actors/scheduling.rs"),
+    ),
+    (
+        "sm/src/game/actors/contacts.rs",
+        include_bytes!("game/actors/contacts.rs"),
+    ),
+    (
+        "sm/src/game/actors/combat.rs",
+        include_bytes!("game/actors/combat.rs"),
+    ),
+    (
+        "sm/src/game/actors/drawing.rs",
+        include_bytes!("game/actors/drawing.rs"),
+    ),
     ("sm/src/apu_queue.rs", include_bytes!("apu_queue.rs")),
     ("sm/src/apu_ram.rs", include_bytes!("apu_ram.rs")),
     (
@@ -68,28 +176,12 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/drop_rules.rs"),
     ),
     (
-        "sm/src/game/enemy_animation.rs",
-        include_bytes!("game/enemy_animation.rs"),
-    ),
-    (
-        "sm/src/game/enemy_combat.rs",
-        include_bytes!("game/enemy_combat.rs"),
-    ),
-    (
-        "sm/src/game/enemy_contact.rs",
-        include_bytes!("game/enemy_contact.rs"),
-    ),
-    (
         "sm/src/game/enemy_layouts.rs",
         include_bytes!("game/enemy_layouts.rs"),
     ),
     (
         "sm/src/game/enemy_population.rs",
         include_bytes!("game/enemy_population.rs"),
-    ),
-    (
-        "sm/src/game/enemy_population_ram.rs",
-        include_bytes!("game/enemy_population_ram.rs"),
     ),
     (
         "sm/src/game/enemy_projectiles/access.rs",
@@ -202,14 +294,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/enemy_projectiles/tables.rs",
         include_bytes!("game/enemy_projectiles/tables.rs"),
-    ),
-    (
-        "sm/src/game/enemy_ram.rs",
-        include_bytes!("game/enemy_ram.rs"),
-    ),
-    (
-        "sm/src/game/enemy_scheduling.rs",
-        include_bytes!("game/enemy_scheduling.rs"),
     ),
     (
         "sm/src/game/enemy_script.rs",
@@ -613,10 +697,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/samus_room_contact_ram.rs",
         include_bytes!("game/samus_room_contact_ram.rs"),
-    ),
-    (
-        "sm/src/game/scene_drawing.rs",
-        include_bytes!("game/scene_drawing.rs"),
     ),
     (
         "sm/src/game/scrolling_sky.rs",
@@ -1202,6 +1282,26 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("verification/room_reference_dll.rs"),
     ),
     (
+        "sm/src/verification/actor_movement_cases.rs",
+        include_bytes!("verification/actor_movement_cases.rs"),
+    ),
+    (
+        "sm/src/verification/actor_movement_observer.rs",
+        include_bytes!("verification/actor_movement_observer.rs"),
+    ),
+    (
+        "sm/src/verification/actor_movement_candidate.rs",
+        include_bytes!("verification/actor_movement_candidate.rs"),
+    ),
+    (
+        "sm/src/verification/actor_movement_runtime_observer.rs",
+        include_bytes!("verification/actor_movement_runtime_observer.rs"),
+    ),
+    (
+        "sm/src/verification/actor_movement_dll.rs",
+        include_bytes!("verification/actor_movement_dll.rs"),
+    ),
+    (
         "sm/src/verification/room_contact_start_cases.rs",
         include_bytes!("verification/room_contact_start_cases.rs"),
     ),
@@ -1312,5 +1412,85 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/verification/room_background_offset_case.rs",
         include_bytes!("verification/room_background_offset_case.rs"),
+    ),
+    (
+        "sm/src/verification/actor_movement_table_cases.rs",
+        include_bytes!("verification/actor_movement_table_cases.rs"),
+    ),
+    (
+        "sm/src/verification/actor_movement_table_dll.rs",
+        include_bytes!("verification/actor_movement_table_dll.rs"),
+    ),
+    (
+        "sm/src/verification/player_detached/actors.rs",
+        include_bytes!("verification/player_detached/actors.rs"),
+    ),
+    (
+        "sm/src/verification/player_detached/actors_host.rs",
+        include_bytes!("verification/player_detached/actors_host.rs"),
+    ),
+    (
+        "sm/src/verification/actor_identity_checks.rs",
+        include_bytes!("verification/actor_identity_checks.rs"),
+    ),
+    (
+        "sm/src/verification/actor_codec_checks.rs",
+        include_bytes!("verification/actor_codec_checks.rs"),
+    ),
+    (
+        "sm/src/verification/actor_catalog_checks.rs",
+        include_bytes!("verification/actor_catalog_checks.rs"),
+    ),
+    (
+        "sm/src/verification/actor_runtime_checks.rs",
+        include_bytes!("verification/actor_runtime_checks.rs"),
+    ),
+    (
+        "sm/src/verification/actor_fixture.rs",
+        include_bytes!("verification/actor_fixture.rs"),
+    ),
+    (
+        "sm/src/verification/actor_palette_checks.rs",
+        include_bytes!("verification/actor_palette_checks.rs"),
+    ),
+    (
+        "sm/src/verification/actor_media_runtime_checks.rs",
+        include_bytes!("verification/actor_media_runtime_checks.rs"),
+    ),
+    (
+        "sm/src/verification/actor_kraid_writer_entry.rs",
+        include_bytes!("verification/actor_kraid_writer_entry.rs"),
+    ),
+    (
+        "sm/src/verification/actor_mutable_content_checks.rs",
+        include_bytes!("verification/actor_mutable_content_checks.rs"),
+    ),
+    (
+        "sm/src/verification/actor_mutable_cpu_checks.rs",
+        include_bytes!("verification/actor_mutable_cpu_checks.rs"),
+    ),
+    (
+        "sm/src/verification/actor_initializer_checks.rs",
+        include_bytes!("verification/actor_initializer_checks.rs"),
+    ),
+    (
+        "sm/src/verification/actor_owner_checks.rs",
+        include_bytes!("verification/actor_owner_checks.rs"),
+    ),
+    (
+        "sm/src/verification/actor_contact_checks.rs",
+        include_bytes!("verification/actor_contact_checks.rs"),
+    ),
+    (
+        "sm/src/verification/actor_composed_fixture.rs",
+        include_bytes!("verification/actor_composed_fixture.rs"),
+    ),
+    (
+        "sm/src/verification/actor_composed_checks.rs",
+        include_bytes!("verification/actor_composed_checks.rs"),
+    ),
+    (
+        "sm/src/verification/actor_composed_route.rs",
+        include_bytes!("verification/actor_composed_route.rs"),
     ),
 ];

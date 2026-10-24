@@ -8,7 +8,7 @@ pub enum Priority {
     Low,
     High,
 }
-pub(super) fn draw(priority: Priority, h: &mut impl Host) {
+pub(in crate::game) fn draw(priority: Priority, h: &mut impl Host) {
     let shake = screen_shake(h);
     let low = matches!(priority, Priority::Low);
     for slot in (0..18).rev() {

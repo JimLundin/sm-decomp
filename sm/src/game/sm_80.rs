@@ -7,7 +7,6 @@ pub use crate::game::constants::bank_60::*;
 
 use crate::c_library::memcmp;
 use crate::game::animated_tiles;
-use crate::game::enemy_population_ram::load_room_assets;
 use crate::game::enemy_projectiles::ClearEprojs;
 use crate::game::palette_effects;
 use crate::game::room_mechanisms::spawn_hardcoded;

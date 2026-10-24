@@ -1,4 +1,5 @@
 //! Qualified legacy effects; these are not counted as unsafe elimination.
+use crate::game::{actors, session_runtime::Runtime};
 use crate::game_state::Game;
 
 pub(super) fn next_random(game: &mut Game) -> u16 {
@@ -9,8 +10,8 @@ pub(super) fn call_player_code(code: u16, game: &mut Game) -> u16 {
     unsafe { crate::game::sm_90::CallSomeSamusCode(code, game) }
 }
 
-pub(super) fn calculate_angle_from_xy(x: u16, y: u16, game: &mut Game) -> u16 {
-    unsafe { crate::game::sm_a0::CalculateAngleFromXY(x, y, game) }
+pub(super) fn calculate_angle_from_xy(x: u16, y: u16, _game: &mut Game) -> u16 {
+    crate::game::actors::api::angle_from_delta(x, y)
 }
 
 pub(super) fn damage_player(damage: u16, game: &mut Game) -> () {
@@ -50,7 +51,8 @@ pub(super) fn draw_spritemap(
 }
 
 pub(super) fn respawn_enemy(index: u16, game: &mut Game) {
-    unsafe {
-        crate::game::enemy_population_ram::respawn(index, game);
-    }
+    actors::population::respawn(
+        &mut Runtime::new(game),
+        actors::access::ActorKey::from_legacy(index),
+    );
 }

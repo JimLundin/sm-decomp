@@ -3,14 +3,14 @@
 //! Samus preparation includes projectile work; enemy processing and a possible
 //! message suspension separate it from movement/pose completion. Callbacks
 //! observe live RAM. Only the entry resume point is held across those callbacks.
+use crate::game::actors;
 use crate::game::animated_tiles;
 use crate::game::enemy_projectiles::EprojRunAll;
-use crate::game::enemy_scheduling::{run_enemies, select_enemies};
 use crate::game::message_boxes;
 use crate::game::palette_effects;
 use crate::game::prelude::*;
 use crate::game::room_mechanisms::run;
-use crate::game::scene_drawing::{draw_scene, queue_enemy_tiles};
+use crate::game::session_runtime::Runtime;
 use crate::game::sm_8f::RunRoomMainCode;
 use crate::game::sm_80::{
     CalculateLayer2PosAndScrollsWhenScrolling, DebugScrollPosSaveLoad, HandleHudTilemap,
@@ -51,13 +51,13 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
         crate::verify_probe::hit("coroutine.gameplay");
         let resume = ResumePoint::read(game);
         if resume == ResumePoint::Start {
-            select_enemies(game);
+            actors::scheduling::select(&mut Runtime::new(game));
             palette_effects::advance(game);
             HandleControllerInputForGamePhysics(game);
             if word!(game.debug_disable_sprite_interact) == 0 {
                 crate::game::projectile_contact::player_projectiles_hit_samus(game);
             }
-            run_enemies(game);
+            actors::scheduling::advance_selected(&mut Runtime::new(game));
         }
         // Read the queue after enemy callbacks, even when they changed it this pass.
         if resume == ResumePoint::EnemyMessage
@@ -85,15 +85,15 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
             if word!(game.debug_disable_sprite_interact) == 0 {
                 crate::game::enemy_projectiles::enemy_projectiles_hit_samus(game);
                 crate::game::enemy_projectiles::shoot_enemy_projectiles(game);
-                crate::game::enemy_contact::power_bomb_enemies(game);
+                actors::contacts::apply_power_bomb_to_enemies(&mut Runtime::new(game));
             }
             MainScrollingRoutine(game);
             let debug_scrolling_enabled: i32 = 0;
             if debug_scrolling_enabled != 0 {
                 DebugScrollPosSaveLoad(game);
             }
-            draw_scene(game);
-            queue_enemy_tiles(game);
+            actors::drawing::draw_scene(&mut Runtime::new(game));
+            actors::staging::queue_actor_tiles(&mut Runtime::new(game));
             HandleHudTilemap(game);
             CalculateLayer2PosAndScrollsWhenScrolling(game);
             RunRoomMainCode(game);

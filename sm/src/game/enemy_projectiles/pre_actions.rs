@@ -5,6 +5,7 @@ use super::host::{EnemyMember as SlotField, Host, LoadedRecord};
 use super::pre_helpers::*;
 use super::shared::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use super::*;
+use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session::Point;
 use crate::game::{
@@ -317,7 +318,7 @@ pub(super) fn EprojPreInstr_CrocomireProjectile(k: u16, ctx: &mut impl Host) {
     let y: u16 = {
         let record = ctx.loaded_record(0x86, 0x9059);
         record.native_word(
-            ((ctx.enemy_ai_preinstr(0) >> 1) as isize)
+            ((ctx.resolve_actor(Key::from_legacy(0), Le).pre_instruction >> 1) as isize)
                 .checked_mul(2)
                 .unwrap(),
         )
@@ -422,7 +423,7 @@ pub(super) fn EprojPreInstr_PhantoonDestroyableFireballs_3(k: u16, ctx: &mut imp
 }
 
 pub(super) fn EprojPreInstr_PhantoonStartingFireballsB(k: u16, ctx: &mut impl Host) {
-    if ctx.enemy_ai_var_B(0) != 0 {
+    if ctx.resolve_actor(Key::from_legacy(0), Le).variables[1] != 0 {
         let v1: i32 = k as i32 >> 1;
         {
             enemy!(ctx, (0x869b41 & 0xffff) as u16 => (v1) as isize, pre_action);
@@ -870,15 +871,15 @@ pub(super) fn EprojPreInstr_MotherBrainBomb(k: u16, ctx: &mut impl Host) {
 
 pub(super) fn EprojPreInstr_MotherBrainRainbowBeam(k: u16, ctx: &mut impl Host) {
     let v2: i32 = k as i32 >> 1;
-    enemy!(ctx, ctx.enemy_x(64) => (v2) as isize, x);
-    enemy!(ctx, ctx.enemy_y(64) => (v2) as isize, y);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(64), Le).x.whole => (v2) as isize, x);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(64), Le).y.whole => (v2) as isize, y);
 }
 
 pub(super) fn EprojPreInit_MotherBrainsDeathExplosion_0(k: u16, ctx: &mut impl Host) {
     let v2: i32 = k as i32 >> 1;
     {
-        enemy!(ctx, (ctx.enemy_x(0) as i32 + enemy!(ctx, (v2) as isize, velocity_x) as i32) as u16 => (v2) as isize, x);
-        enemy!(ctx, (ctx.enemy_y(0) as i32 + enemy!(ctx, (v2) as isize, velocity_y) as i32) as u16 => (v2) as isize, y);
+        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).x.whole as i32 + enemy!(ctx, (v2) as isize, velocity_x) as i32) as u16 => (v2) as isize, x);
+        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + enemy!(ctx, (v2) as isize, velocity_y) as i32) as u16 => (v2) as isize, y);
     }
 }
 
@@ -1370,8 +1371,8 @@ pub(super) fn EprojPreInstr_PhantoonStartingFireballsB_2(k: u16, ctx: &mut impl 
         enemy!(ctx, v3 => (v1) as isize, velocity_y);
         if (v3 == 0) {
             {
-                enemy!(ctx, ctx.enemy_x(0) => (v1) as isize, x);
-                enemy!(ctx, (ctx.enemy_y(0) as i32 + 16) as u16 => (v1) as isize, y);
+                enemy!(ctx, ctx.resolve_actor(Key::from_legacy(0), Le).x.whole => (v1) as isize, x);
+                enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);
                 enemy!(ctx, 1 => (v1) as isize, delay);
                 enemy!(ctx, addr_off_8697F8 as u16 => (v1) as isize, program);
             }
@@ -1382,8 +1383,8 @@ pub(super) fn EprojPreInstr_PhantoonStartingFireballsB_2(k: u16, ctx: &mut impl 
     enemy!(ctx, v4 as u16 => (v1) as isize, behavior_a);
     let pt = Eproj_PhantomFireballs_Func1(v4 as u16, enemy!(ctx, (v1) as isize, velocity_y));
     {
-        enemy!(ctx, (pt.x as i32 + ctx.enemy_x(0) as i32) as u16 => (v1) as isize, x);
-        enemy!(ctx, (pt.y as i32 + ctx.enemy_y(0) as i32 + 16) as u16 => (v1) as isize, y);
+        enemy!(ctx, (pt.x as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).x.whole as i32) as u16 => (v1) as isize, x);
+        enemy!(ctx, (pt.y as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);
     }
 }
 
@@ -1487,13 +1488,13 @@ pub(super) fn EprojPreInstr_GoldenTorizoEgg(k: u16, ctx: &mut impl Host) {
 pub(super) fn EprojPreInstr_GoldenTorizoSuperMissile(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2 = enemy!(ctx, (v1) as isize, behavior_a);
-    let v3: i32 = if (ctx.enemy_parameter_1(v2) & 0x8000) != 0 {
+    let v3: i32 = if (ctx.resolve_actor(Key::from_legacy(v2), Le).parameters[0] & 0x8000) != 0 {
         32
     } else {
         -32i32
     };
-    enemy!(ctx, (ctx.enemy_x(v2) as i32 + v3) as u16 => (v1) as isize, x);
-    enemy!(ctx, (ctx.enemy_y(v2) as i32 - 52i32) as u16 => (v1) as isize, y);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v2), Le).x.whole as i32 + v3) as u16 => (v1) as isize, x);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v2), Le).y.whole as i32 - 52i32) as u16 => (v1) as isize, y);
 }
 
 pub(super) fn sub_86B535(k: u16, ctx: &mut impl Host) {
@@ -1672,8 +1673,8 @@ pub(super) fn EprojPreInstr_MotherBrainRoomTurretBullets(k: u16, ctx: &mut impl 
 pub(super) fn sub_86C320(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     {
-        enemy!(ctx, (ctx.enemy_x(64) as i32 + 10) as u16 => (v1) as isize, x);
-        enemy!(ctx, (ctx.enemy_y(64) as i32 + 16) as u16 => (v1) as isize, y);
+        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).x.whole as i32 + 10) as u16 => (v1) as isize, x);
+        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);
     }
 }
 
@@ -1700,11 +1701,10 @@ pub(super) fn Eproj_MoveToBlueRingSpawnPosition(k: u16, ctx: &mut impl Host) {
                 ctx.set_enemy_extra_health_fraction(target, 0, 16);
             }
             let v4 = v3;
-            let mut v5: i16 = (ctx.enemy_health(v4) as i32 - 80i32) as i16;
-            if v5 < 0 {
-                v5 = 0;
-            }
-            ctx.set_enemy_health(v4, v5 as u16);
+            ctx.edit_actor(Key::from_legacy(v4), Le, |actor| {
+                let health = (i32::from(actor.health) - 80) as i16;
+                actor.health = if health < 0 { 0 } else { health as u16 };
+            });
         } else if Eproj_CheckForCollisionWithSamus(k, ctx) & 1 != 0 {
             BlueRingContactExplosion(k, ctx);
             {
@@ -1751,8 +1751,8 @@ pub(super) fn EprojPreInstr_C84D(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2: i32 = (4 * enemy!(ctx, (v1) as isize, behavior_a) as i32) as u16 as i32 >> 1;
     {
-        enemy!(ctx, (ctx.enemy_x(64) as i32 + kEprojInit_MotherBrainsDrool[v2 as usize] as i32) as u16 => (v1) as isize, x);
-        enemy!(ctx, (ctx.enemy_y(64) as i32 + kEprojInit_MotherBrainsDrool[(v2 + 1) as usize] as i32)
+        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).x.whole as i32 + kEprojInit_MotherBrainsDrool[v2 as usize] as i32) as u16 => (v1) as isize, x);
+        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).y.whole as i32 + kEprojInit_MotherBrainsDrool[(v2 + 1) as usize] as i32)
                 as u16 => (v1) as isize, y);
     }
     {
@@ -1875,8 +1875,8 @@ pub(super) fn EprojPreInstr_KagosBugs_Func1(k: u16, ctx: &mut impl Host) {
 pub(super) fn EprojPreInstr_KagosBugs_Func2(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let enemy_index = enemy!(ctx, (v1) as isize, behavior_b);
-    let v3: u16 = (((ctx.enemy_x(enemy_index)).wrapping_sub(enemy!(ctx, (k >> 1) as isize, x)))
-        as i16)
+    let v3: u16 = (((ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole)
+        .wrapping_sub(enemy!(ctx, (k >> 1) as isize, x))) as i16)
         .unsigned_abs();
     if v3 as i32 - 23i32 & 0x8000 == 0 {
         set_property_bits((v1 as usize) as isize, 0x8000, ctx);
@@ -2051,7 +2051,9 @@ pub(super) fn Eproj_BotwoonsBodyHurtFlashHandling1(k: u16, ctx: &mut impl Host) 
         let value = old | (0xe00);
         enemy!(ctx, (index) as isize, graphics = value);
     };
-    if ctx.enemy_flash_timer(0) != 0 && (ctx.inputs().random_enemy_counter & 2) != 0 {
+    if ctx.resolve_actor(Key::from_legacy(0), Le).flash != 0
+        && (ctx.inputs().random_enemy_counter & 2) != 0
+    {
         {
             let index = (v1) as isize;
             let old = enemy!(ctx, (index) as isize, graphics);

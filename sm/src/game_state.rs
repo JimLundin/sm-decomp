@@ -9,6 +9,8 @@ use std::sync::Arc;
 /// State for one game and its differential oracle. Keep this heap allocation
 /// fixed while the emulated hardware holds pointers into `g_ram`.
 pub struct Game {
+    actor_identity: Option<crate::game::actors::identity::ActorIdentityState>,
+    pub(crate) actor_snapshots: crate::game::actors::snapshot::ActorSnapshotSidecars,
     world: Arc<WorldBinding>,
     pub g_ram: [u8; 131072],
     pub(crate) loaded_rom: Option<crate::rom::RomImage>,
@@ -739,6 +741,8 @@ impl Game {
         };
         Box::new(Self {
             world,
+            actor_identity: Some(crate::game::actors::identity::ActorIdentityState::empty()),
+            actor_snapshots: Default::default(),
             g_ram: [0; 131072],
             loaded_rom: None,
             native_rom: None,
@@ -813,5 +817,67 @@ impl GameOwner {
     pub fn with<R>(&self, operation: impl FnOnce(&mut Game) -> R) -> R {
         let _guard = self.gate.lock().unwrap();
         operation(unsafe { &mut **self.game.get() })
+    }
+}
+
+impl Game {
+    pub(crate) fn take_actor_identity(
+        &mut self,
+    ) -> crate::game::actors::identity::ActorIdentityState {
+        self.actor_identity
+            .take()
+            .expect("actor identity already owned by Session")
+    }
+    pub(crate) fn return_actor_identity(
+        &mut self,
+        identity: crate::game::actors::identity::ActorIdentityState,
+    ) {
+        assert!(
+            self.actor_identity.is_none(),
+            "Game already owns actor identity"
+        );
+        self.actor_identity = Some(identity);
+    }
+    pub(crate) fn actor_identity(&self) -> &crate::game::actors::identity::ActorIdentityState {
+        self.actor_identity
+            .as_ref()
+            .expect("actor identity currently owned by Session")
+    }
+    pub(crate) fn actor_identity_mut(
+        &mut self,
+    ) -> &mut crate::game::actors::identity::ActorIdentityState {
+        self.actor_identity
+            .as_mut()
+            .expect("actor identity currently owned by Session")
+    }
+    pub(crate) fn actor_identity_is_with_session(&self) -> bool {
+        self.actor_identity.is_none()
+    }
+}
+
+impl Game {
+    pub(crate) fn prepare_actor_canonical(
+        &self,
+    ) -> crate::game::actors::identity::PreparedCanonicalTransition {
+        self.actor_identity()
+            .prepare_canonical_transition()
+            .expect("actor handle epoch exhausted")
+    }
+    pub(crate) fn commit_actor_canonical(
+        &mut self,
+        transition: crate::game::actors::identity::PreparedCanonicalTransition,
+    ) {
+        self.actor_identity
+            .as_mut()
+            .expect("Game owns actors during canonical adoption")
+            .commit_canonical_transition(transition, &self.g_ram);
+    }
+    pub(crate) fn capture_actor_snapshot(
+        &self,
+    ) -> crate::game::actors::snapshot::ActorSnapshotPayload {
+        crate::game::actors::snapshot::ActorSnapshotPayload::capture(
+            self.actor_identity(),
+            self.world(),
+        )
     }
 }

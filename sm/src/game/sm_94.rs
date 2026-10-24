@@ -1,3 +1,4 @@
+use crate::game::actors::api as actor_api;
 pub use crate::game::constants::bank_84::*;
 pub use crate::game::constants::bank_90::*;
 pub use crate::game::prelude::*;
@@ -6,7 +7,6 @@ use crate::game::projectile_room::Axis as ShotAxis;
 use crate::game::gameplay_flag_runtime::CheckBossBitForCurArea;
 
 use crate::game::room_mechanisms::spawn_collision;
-use crate::game::sm_a0::CalculateAngleFromXY;
 
 use crate::snes::snes::snes_read;
 
@@ -720,12 +720,11 @@ pub unsafe fn CallGrappleInstr(ea: u32, j: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
     unsafe {
-        let v1: i32 = CalculateAngleFromXY(
+        let v1: i32 = actor_api::angle_from_delta(
             (word!(game.grapple_beam_end_x_pos))
                 .wrapping_sub(word!(game.x_pos_of_start_of_grapple_beam_prevframe)),
             (word!(game.grapple_beam_end_y_pos))
                 .wrapping_sub(word!(game.y_pos_of_start_of_grapple_beam_prevframe)),
-            game,
         ) as i32;
         let r28_r26: u32 = ((kSinCosTable8bit_Sext[(v1 + 64) as usize] as i32) << 11) as u32;
         let r32_r30: u32 = ((kSinCosTable8bit_Sext[v1 as usize] as i32) << 11) as u32;

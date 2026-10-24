@@ -1,5 +1,6 @@
 //! Exact retained room-entry effects on the one Session runtime boundary.
 use super::{api::EntryWait, content::*, effects::*};
+use crate::game::actors;
 use crate::{
     game::{self, room_mechanisms, session_runtime::Runtime},
     ram_map::words as W,
@@ -77,19 +78,19 @@ impl EntryEffects for Runtime<'_> {
                     game::sm_82::ClearSoundsWhenGoingThroughDoor(game);
                 }
                 LeafEffect::SelectEnemies => {
-                    game::enemy_scheduling::select_enemies(game);
+                    actors::scheduling::select(&mut Runtime::new(game));
                 }
                 LeafEffect::RunEnemies => {
-                    game::enemy_scheduling::run_enemies(game);
+                    actors::scheduling::advance_selected(&mut Runtime::new(game));
                 }
                 LeafEffect::DrawScene => {
-                    game::scene_drawing::draw_scene(game);
+                    actors::drawing::draw_scene(&mut Runtime::new(game));
                 }
                 LeafEffect::EnsureSamusDrawn => {
                     game::sm_82::EnsureSamusDrawnEachFrame(game);
                 }
                 LeafEffect::QueueEnemyTiles => {
-                    game::scene_drawing::queue_enemy_tiles(game);
+                    actors::staging::queue_actor_tiles(&mut Runtime::new(game));
                 }
                 LeafEffect::DrawTimer => {
                     game::sm_80::DrawTimer(game);
@@ -110,7 +111,7 @@ impl EntryEffects for Runtime<'_> {
                     game::sm_89::LoadFXHeader(game);
                 }
                 LeafEffect::InitializeEnemies => {
-                    game::enemy_population_ram::initialize_room(game);
+                    actors::population::install_population(&mut Runtime::new(game));
                 }
                 LeafEffect::LoadEnemyGraphics => {
                     game::room_state::load_enemy_graphics(game);
@@ -131,7 +132,7 @@ impl EntryEffects for Runtime<'_> {
                     game::room_state::load_sprite_palettes(game);
                 }
                 LeafEffect::LoadRoomAssets => {
-                    game::enemy_population_ram::load_room_assets(game);
+                    actors::staging::prepare_room_assets(&mut Runtime::new(game));
                 }
                 LeafEffect::LoadSuitTargetPalette => {
                     game::sm_91::Samus_LoadSuitTargetPalette(game);
@@ -301,6 +302,15 @@ impl EntryEffects for Runtime<'_> {
         self.foreign(|game| unsafe { crate::rtl::WriteRegWord(VMADDL as u16, value, game) });
     }
     fn decompress(&mut self, source: AssetSource, destination: InstallBuffer) {
+        let palette = matches!(destination, InstallBuffer::Palette);
+        let palette_resource = match &source {
+            AssetSource::Bound(AssetRef::Prepared(resource)) => Some(*resource),
+            _ => None,
+        };
+        let palette_image = if palette { self.loaded_image() } else { None };
+        if palette {
+            self.session_mut().actor_identity.clear_palette_residency();
+        }
         let source = source.compatibility_address(&self.session().world);
         let at = match destination {
             InstallBuffer::Tiles => 0x2000,
@@ -310,7 +320,24 @@ impl EntryEffects for Runtime<'_> {
             InstallBuffer::TileTableAfterCre => 0xa800,
             InstallBuffer::Background(target) => target.compatibility_offset(),
         };
-        self.foreign(|game| game::decompression::decompress_to_ram(source, at, game));
+        let produced =
+            self.foreign(|game| game::decompression::decompress_to_ram(source, at, game));
+        if let Some(image) = palette_image {
+            // Only complete BG rows emitted by this actual decode establish residency.
+            // Actor staging later establishes OBJ rows without erasing these receipts.
+            for row in 0..(produced / 32).min(8) {
+                self.session_mut().actor_identity.record_palette_residency(
+                    row as u16,
+                    palette_resource,
+                    image.clone(),
+                );
+            }
+        }
+        #[cfg(sm_verify_dll)]
+        if palette {
+            crate::game::actors::composed_checks::palette_phase(self);
+            crate::game::actors::composed_checks::reject_unstaged_spawn(self);
+        }
     }
     fn decompress_vram(&mut self, source: AssetSource, destination: VramDecodeTarget) {
         let source = source.compatibility_address(&self.session().world);

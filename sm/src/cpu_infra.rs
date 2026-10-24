@@ -997,6 +997,7 @@ pub unsafe fn RunOneFrameOfGame_Emulated(game: &mut Game) {
             );
             return;
         }
+        let actor_transition = game.prepare_actor_canonical();
         let bug_fix_bak: u16 = word!(game.bug_fix_counter);
         let cpu = (*game.g_snes).cpu;
         if (*cpu).k == 0x80 && (*cpu).pc == 0x8459 {
@@ -1007,6 +1008,7 @@ pub unsafe fn RunOneFrameOfGame_Emulated(game: &mut Game) {
         (*(*game.g_snes).cpu).nmiWanted = true_0 != 0;
         RunCpuUntilPC(0x80834a, 0x858142, game);
         word!(game.bug_fix_counter = bug_fix_bak);
+        game.commit_actor_canonical(actor_transition);
     }
 }
 pub unsafe fn DrawFrameToPpu(game: &mut Game) {
@@ -1101,6 +1103,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             &*game.g_cpu,
             game.g_spc_player,
         );
+        game.actor_snapshots.before = Some(game.capture_actor_snapshot());
         let queue_before = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
         let apu_before = queue_before.pending;
         let apu_queue_before = queue_before.size;
@@ -1118,6 +1121,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                 &*game.g_cpu,
                 game.g_spc_player,
             );
+            game.actor_snapshots.theirs = Some(game.capture_actor_snapshot());
             let queue_theirs = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
             let apu_theirs = queue_theirs.pending;
             queue_before.restore(game);
@@ -1125,7 +1129,15 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             game.g_snapshot_mine.apu_upload_count = 0;
             game.g_snapshot_mine.apu_startup_upload = false;
             (*game.g_snes).ppu = (*game.g_snes).my_ppu;
+            let actor_restore = game
+                .actor_snapshots
+                .before
+                .as_ref()
+                .expect("paired actor snapshot missing")
+                .preflight(game.actor_identity(), game.world())
+                .expect("actor restore rejected");
             RestoreSnapshot(&game.g_snapshot_before, &mut *game.g_snes, &mut *game.g_cpu);
+            actor_restore.commit(game.actor_identity_mut());
             (*game.g_snes).runningWhichVersion = 2;
             RunOneFrameOfGame(game);
             DrawFrameToPpu(game);
@@ -1136,6 +1148,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                 &*game.g_cpu,
                 game.g_spc_player,
             );
+            game.actor_snapshots.mine = Some(game.capture_actor_snapshot());
             (*game.g_snes).runningWhichVersion = 0xff;
             VerifySnapshotsEq(
                 &raw mut *game.g_snapshot_mine,
@@ -1196,7 +1209,15 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             // frame would leave those bytes stale.
             if failed && !game.VERIFY_ACTIVE {
                 (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
+                let actor_restore = game
+                    .actor_snapshots
+                    .before
+                    .as_ref()
+                    .expect("paired actor snapshot missing")
+                    .preflight(game.actor_identity(), game.world())
+                    .expect("actor restore rejected");
                 RestoreSnapshot(&game.g_snapshot_before, &mut *game.g_snes, &mut *game.g_cpu);
+                actor_restore.commit(game.actor_identity_mut());
                 if game.g_use_my_apu_code {
                     game.g_snapshot_mine.player.restore(game.g_spc_player);
                 } else {
@@ -1221,7 +1242,15 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                 break;
             } else {
                 (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
+                let actor_restore = game
+                    .actor_snapshots
+                    .theirs
+                    .as_ref()
+                    .expect("paired actor snapshot missing")
+                    .preflight(game.actor_identity(), game.world())
+                    .expect("actor restore rejected");
                 RestoreSnapshot(&game.g_snapshot_theirs, &mut *game.g_snes, &mut *game.g_cpu);
+                actor_restore.commit(game.actor_identity_mut());
                 if game.g_use_my_apu_code {
                     game.g_snapshot_mine.player.restore(game.g_spc_player);
                 } else {
@@ -1296,3 +1325,7 @@ pub mod flags_save_candidate;
 pub mod kraid_flags_candidate;
 #[path = "verification/kraid_flags_oracle.rs"]
 pub mod kraid_flags_oracle;
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/actor_mutable_cpu_checks.rs"]
+pub(crate) mod actor_mutable_cpu_checks;

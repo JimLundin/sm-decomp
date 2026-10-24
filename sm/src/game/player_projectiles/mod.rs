@@ -10,12 +10,12 @@ pub(crate) mod content;
 use crate::game::session_encoding as encoding;
 pub(crate) mod feedback;
 pub(crate) mod host;
-mod lifecycle;
+pub(in crate::game) mod lifecycle;
 mod missiles;
 pub(crate) mod motion;
 mod placement;
 mod preparation;
-mod presentation;
+pub(in crate::game) mod presentation;
 
 mod specials;
 use crate::game::session as state;

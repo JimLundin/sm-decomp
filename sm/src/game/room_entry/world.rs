@@ -167,6 +167,8 @@ pub enum ResourceKind {
     Fx,
     EnemyPopulation,
     EnemyTilesets,
+    ActorSprites,
+    ActorTilemap,
     RoomObject,
     DoorSetup,
     RoomSetup,
@@ -195,8 +197,10 @@ pub struct CompatibilityKeys {
     pub door_lists: BTreeMap<DoorListId, u16>,
     pub resources: BTreeMap<ResourceId, ResourceKey>,
 }
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct WorldBinding {
+    actor_catalog: Arc<crate::game::actors::content::ActorCatalog>,
+    actor_media: Arc<crate::game::actors::media::ActorMediaCatalog>,
     pub(super) revision: WorldRevision,
     pub(super) content: BoundContent,
     pub(super) keys: CompatibilityKeys,
@@ -232,6 +236,8 @@ pub enum WorldDefinitionError {
 impl WorldBinding {
     pub fn canonical_legacy() -> Arc<Self> {
         Arc::new(Self {
+            actor_catalog: Arc::new(crate::game::actors::content::ActorCatalog::LegacyBound),
+            actor_media: Arc::new(crate::game::actors::media::ActorMediaCatalog::LegacyBound),
             revision: WorldRevision([0; 32]),
             content: BoundContent::CanonicalLegacy,
             keys: CompatibilityKeys {
@@ -279,6 +285,8 @@ impl WorldBinding {
             bytes.copy_from_slice(&hasher.finish().to_le_bytes());
         }
         Ok(Arc::new(Self {
+            actor_catalog: Arc::new(crate::game::actors::content::ActorCatalog::LegacyBound),
+            actor_media: Arc::new(crate::game::actors::media::ActorMediaCatalog::LegacyBound),
             revision: WorldRevision(revision),
             content: BoundContent::Prepared(world),
             keys,
@@ -544,7 +552,7 @@ fn validate_resource(
 ) -> Result<(), WorldDefinitionError> {
     use ResourceKind::*;
     let bank = match kind {
-        Level | TileTable | Tiles | Palette | Background => None,
+        Level | TileTable | Tiles | Palette | Background | ActorSprites | ActorTilemap => None,
         Fx => Some(0x83),
         EnemyPopulation => Some(0xa1),
         EnemyTilesets => Some(0xb4),
@@ -718,5 +726,54 @@ fn supported_setup(kind: ResourceKind, offset: u16) -> bool {
                 | 0xe950
         ),
         _ => false,
+    }
+}
+
+// Public constructor vocabulary, reachable without exposing Session or actor storage.
+pub use crate::game::actors::content::{
+    ActorCallbackId, ActorCompatibilityKeys, ActorContentError, ActorDefinitions,
+    ActorProgramDefinition, ActorProgramId, ActorTemplateId, BehaviorId, CollisionBox,
+    CollisionLayout, CollisionLayoutId, CollisionPart, GameplayRevision, PartRoleId,
+    PopulationDefinition, PopulationEntry, PopulationEntryId, PopulationId, PoseDefinition, PoseId,
+    PosePart, SpeciesDefinition, SpeciesId,
+};
+pub use crate::game::actors::media::{
+    ActorMaterialDefinition, ActorMediaDefinitions, ActorVisualResource, AppearanceDefinition,
+    AppearanceId, FrameDefinition, FrameId, MaterialId, MediaRevision, VisualPieceDefinition,
+    VisualResourceId,
+};
+pub use crate::game::session::Point;
+impl WorldBinding {
+    /// Validates all authored references before a Game can be opened. Later template
+    /// parts remain compatible live records; this constructor authors part zero only.
+    pub fn prepared_with_actors(
+        world: WorldDefinition,
+        keys: CompatibilityKeys,
+        actors: ActorDefinitions,
+        actor_keys: ActorCompatibilityKeys,
+        media: ActorMediaDefinitions,
+    ) -> Result<Arc<Self>, ActorContentError> {
+        let mut binding = Self::prepared(world, keys).map_err(ActorContentError::World)?;
+        let actors = crate::game::actors::content::ActorCatalog::prepared(
+            actors, actor_keys, &binding, &media,
+        )?;
+        let media =
+            crate::game::actors::media::ActorMediaCatalog::prepared(media, &actors, &binding)?;
+        let owned = Arc::get_mut(&mut binding).expect("new unshared world binding");
+        owned.actor_catalog = Arc::new(actors);
+        owned.actor_media = Arc::new(media);
+        Ok(binding)
+    }
+    pub(crate) fn actors(&self) -> &crate::game::actors::content::ActorCatalog {
+        &self.actor_catalog
+    }
+    pub(crate) fn actor_media(&self) -> &crate::game::actors::media::ActorMediaCatalog {
+        &self.actor_media
+    }
+    pub fn actor_gameplay_revision(&self) -> Option<GameplayRevision> {
+        self.actor_catalog.revision()
+    }
+    pub fn actor_media_revision(&self) -> Option<MediaRevision> {
+        self.actor_media.revision()
     }
 }

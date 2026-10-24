@@ -1,12 +1,11 @@
-use crate::game::enemy_combat::{
-    apply_contact, apply_power_bomb, apply_shot, enemy_death, grapple_death, select_frozen_ai,
-    shot_reaction,
-};
-use crate::game::enemy_scheduling::update_frozen_enemy;
+use crate::game::actors;
+use crate::game::actors::access::ActorKey as Key;
+use crate::game::actors::api as actor_api;
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
 pub use crate::game::prelude::*;
+use crate::game::session_runtime::Runtime;
 
 pub use crate::game::constants::bank_86::*;
 
@@ -15,11 +14,8 @@ use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx2_Max9, QueueSfx3_M
 use crate::game::sm_88::SpawnMorphBallEyeBeamHdma;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_a0::{
-    Abs16, CalculateAngleFromXY, CalculateAngleOfSamusFromEnemy, CallEnemyPreInstr,
-    CheckIfEnemyIsOnScreen, CheckIfEnemyTouchesSamus, CosineMult8bit, CosineMult8bitFull,
-    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, EnemyFunc_ACA8, EnemyFunc_ADA3, EnemyFunc_B7A1,
-    EnemyFunc_C8AD, GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsSamusWithinEnemy_X,
-    IsSamusWithinEnemy_Y, SignExtend8, SineMult8bit, SineMult8bitFull,
+    Abs16, CallEnemyPreInstr, CosineMult8bit, CosineMult8bitFull, EnemyFunc_B7A1, SignExtend8,
+    SineMult8bit, SineMult8bitFull,
 };
 use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
 
@@ -188,8 +184,16 @@ static g_word_A8F184: u16 = 0;
 static g_byte_A8F186: u8 = 0x30;
 pub unsafe fn MiniDraygon_Func_1(game: &mut Game) {
     unsafe {
-        (*Get_MiniDraygon(word!(game.cur_enemy_index) as i32, game)).var_B =
-            ((GetSamusEnemyDelta_X(word!(game.cur_enemy_index), game) & 0x8000) == 0) as u16;
+        (*Get_MiniDraygon(word!(game.cur_enemy_index) as i32, game)).var_B = (({
+            let actor = word!(game.cur_enemy_index);
+            actor_api::player_delta(
+                &Runtime::new(game),
+                Key::from_legacy(actor),
+                actor_api::Axis::X,
+            )
+        } & 0x8000)
+            == 0)
+            as u16;
         let E = Get_MiniDraygon(word!(game.cur_enemy_index) as i32, game);
         (*E).var_02 = addr_kMiniDraygon_Ilist_86A7 as u16;
         if (*E).var_B != 0 {
@@ -293,9 +297,20 @@ pub unsafe fn MiniDraygon_Func_6(game: &mut Game) {
 }
 pub unsafe fn MiniDraygon_Func_7(game: &mut Game) {
     unsafe {
-        if IsSamusWithinEnemy_X((word!(game.cur_enemy_index)).wrapping_sub(128), 0x80, game) != 0 {
-            let r22: u16 = -((((CalculateAngleOfSamusFromEnemy(word!(game.cur_enemy_index), game))
-                as u8)
+        if {
+            let (actor, distance) = ((word!(game.cur_enemy_index)).wrapping_sub(128), 0x80);
+            u16::from(actor_api::player_within(
+                &Runtime::new(game),
+                Key::from_legacy(actor),
+                actor_api::Axis::X,
+                distance,
+            ))
+        } != 0
+        {
+            let r22: u16 = -(((({
+                let actor = word!(game.cur_enemy_index);
+                actor_api::angle_to_player(&Runtime::new(game), Key::from_legacy(actor))
+            }) as u8)
                 .wrapping_sub(64u8)) as i32) as u16;
             let E = Get_MiniDraygon(word!(game.cur_enemy_index) as i32, game);
             words!((*E), var_07, var_08 = CosineMult8bitFull(r22, 4, game));
@@ -309,7 +324,13 @@ pub unsafe fn MiniDraygon_Func_7(game: &mut Game) {
 }
 pub unsafe fn MiniDraygon_Func_11(game: &mut Game) {
     unsafe {
-        if EnemyFunc_ADA3(0x100, game) != 0
+        if {
+            let padding = 0x100;
+            u16::from(actor_api::current_outside_padded_screen(
+                &Runtime::new(game),
+                padding,
+            ))
+        } != 0
             && *(ram_ptr!(game, u16; 0xe84))
                 .offset(((word!(game.cur_enemy_index) as i32 >> 1) + 77) as isize)
                 == 0
@@ -379,7 +400,15 @@ crate::game::callback_dispatch! {
 pub unsafe fn Fune_Func_3(game: &mut Game) -> u16 {
     unsafe {
         let E = Get_Fune(word!(game.cur_enemy_index) as i32, game);
-        IsSamusWithinEnemy_Y(word!(game.cur_enemy_index), (*E).var_C, game)
+        {
+            let (actor, distance) = (word!(game.cur_enemy_index), (*E).var_C);
+            u16::from(actor_api::player_within(
+                &Runtime::new(game),
+                Key::from_legacy(actor),
+                actor_api::Axis::Y,
+                distance,
+            ))
+        }
     }
 }
 crate::game::callback_dispatch! {
@@ -684,7 +713,7 @@ crate::game::callback_dispatch! {
     };
     YappingMaw_Main [] {
         (*E).var_35 = (*E).var_35.wrapping_sub(1);
-        (*E).var_36 = CheckIfEnemyIsOnScreen(game);
+        (*E).var_36 = u16::from(actor_api::current_outside_screen(&Runtime::new(game)));
         CallYappingMawFunc((((*E).var_A) as u32) | (0xa80000u32), game);
         crate::game::enemy_projectiles::update_maw_segment(3, game);
         crate::game::enemy_projectiles::update_maw_segment(2, game);
@@ -692,17 +721,13 @@ crate::game::callback_dispatch! {
         crate::game::enemy_projectiles::update_maw_segment(0, game);
     };
     [11051573] YappingMaw_Func_1 [] {
-        let pair: PairU16 = EnemyFunc_ACA8(
-            Point16U {
+        let pair: PairU16 = ({ let (origin, target) = (Point16U {
                 x: (*E).base.x_pos,
                 y: (*E).base.y_pos,
-            },
-            Point16U {
+            }, Point16U {
                 x: word!(game.samus_x_pos),
                 y: word!(game.samus_y_pos),
-            },
-            game,
-        );
+            }); { let result = actor_api::distance_and_direction(&mut Runtime::new(game), crate::game::session::Point { x: origin.x, y: origin.y }, crate::game::session::Point { x: target.x, y: target.y }); crate::types::PairU16 { k: result.distance, j: result.direction } } });
         let v2: u16 = Abs16(pair.k);
         (*E).var_08 = v2;
         if v2 as i32 - 32i32 & 0x8000 != 0 {
@@ -1069,13 +1094,25 @@ unsafe fn walk_beetom<const LEFT: bool>(game: &mut Game) {
             (*E).var_C = ((0xa8b814i32) as u16);
         } else {
             (*E).base.x_pos = (*E).base.x_pos.wrapping_add(if LEFT { 0xfff8 } else { 8 });
-            if Enemy_MoveDown(word!(game.cur_enemy_index), (1i16 as i32) << 16, game) != 0 {
+            if {
+                let (actor, amount) = (word!(game.cur_enemy_index), (1i16 as i32) << 16);
+                (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
+                    == actor_api::MovementResult::Blocked) as u8
+            } != 0
+            {
                 (*E).base.x_pos = (*E).base.x_pos.wrapping_add(if LEFT { 8 } else { 0xfff8 });
-                if Enemy_MoveRight_IgnoreSlopes(
-                    word!(game.cur_enemy_index),
-                    if LEFT { -16384 } else { 16384 },
-                    game,
-                ) != 0
+                if {
+                    let (actor, amount) = (
+                        word!(game.cur_enemy_index),
+                        if LEFT { -16384 } else { 16384 },
+                    );
+                    (actor_api::move_horizontal(
+                        &mut Runtime::new(game),
+                        Key::from_legacy(actor),
+                        amount,
+                        actor_api::SlopePolicy::Ignore,
+                    ) == actor_api::MovementResult::Blocked) as u8
+                } != 0
                 {
                     (*E).var_C = if LEFT { 0xb873 } else { 0xb85f };
                 }
@@ -1092,12 +1129,8 @@ macro_rules! advance_beetom_jump_descent {
     ($enemy_index:ident, $game:ident, $frame_step:literal) => {
         let E = Get_Beetom($enemy_index as i32, $game);
         let v2: i32 = 8 * (*E).var_B as i32 >> 1;
-        if Enemy_MoveDown(
-            $enemy_index,
-            *($crate::rtl::rom_ptr!($game, u32; 0xa0cbc7))
-                .offset((v2 >> 1) as isize) as i32,
-            $game,
-        ) != 0
+        if ({ let (actor, amount) = ($enemy_index, *($crate::rtl::rom_ptr!($game, u32; 0xa0cbc7))
+                .offset((v2 >> 1) as isize) as i32); (actor_api::move_vertical(&mut Runtime::new($game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
         {
             (*E).var_C = ((0xa8b814i32) as u16);
         } else {
@@ -1128,11 +1161,14 @@ unsafe fn advance_beetom_jump<const FALLING: bool, const STEP: u16, const CAPTUR
         let E = Get_Beetom(k as i32, game);
         let index: i32 = 8 * (*E).var_B as i32 >> 1;
         let index = (index + if FALLING { 0 } else { 2 }) >> 1;
-        if Enemy_MoveDown(
-            k,
-            *(rom_ptr!(game, u32; 0xa0cbc7)).offset(index as isize) as i32,
-            game,
-        ) != 0
+        if {
+            let (actor, amount) = (
+                k,
+                *(rom_ptr!(game, u32; 0xa0cbc7)).offset(index as isize) as i32,
+            );
+            (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
+                == actor_api::MovementResult::Blocked) as u8
+        } != 0
         {
             (*E).var_C = if FALLING { 0xb814 } else { 0xb97a };
         } else {
@@ -1175,7 +1211,16 @@ unsafe fn move_beetom_hop(
         } else {
             rise(word!(game.cur_enemy_index), game);
         }
-        if Enemy_MoveRight_IgnoreSlopes(word!(game.cur_enemy_index), horizontal, game) != 0 {
+        if {
+            let (actor, amount) = (word!(game.cur_enemy_index), horizontal);
+            (actor_api::move_horizontal(
+                &mut Runtime::new(game),
+                Key::from_legacy(actor),
+                amount,
+                actor_api::SlopePolicy::Ignore,
+            ) == actor_api::MovementResult::Blocked) as u8
+        } != 0
+        {
             (*E).var_09 = ((*E).var_09) ^ (1u16);
             (*E).var_C = ((0xa8b97ai32) as u16);
         }
@@ -1186,7 +1231,16 @@ pub unsafe fn Beetom_Func_37(k: u16, game: &mut Game) {
         crate::verify_probe::hit("hop.Beetom_Func_37");
         let E = advance_beetom_jump::<true, 1, true>(k, game);
         let v4: u16 = (if (*E).var_09 != 0 { -2i32 } else { 2 }) as u16;
-        if Enemy_MoveRight_IgnoreSlopes(k, (words!((v4, 0u16))) as i32, game) != 0 {
+        if {
+            let (actor, amount) = (k, (words!((v4, 0u16))) as i32);
+            (actor_api::move_horizontal(
+                &mut Runtime::new(game),
+                Key::from_legacy(actor),
+                amount,
+                actor_api::SlopePolicy::Ignore,
+            ) == actor_api::MovementResult::Blocked) as u8
+        } != 0
+        {
             (*E).var_09 = ((*E).var_09) ^ (1u16);
             (*E).var_C = ((0xa8b97ai32) as u16);
         }
@@ -1198,7 +1252,7 @@ crate::game::callback_dispatch! {
     call (game); default { Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
     [11057172] Beetom_Func_3 [] {
-        if IsSamusWithinEnemy_X(word!(game.cur_enemy_index), 0x60, game) != 0 {
+        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x60); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0 {
             (*Get_Beetom(word!(game.cur_enemy_index) as i32, game)).var_C = ((0xa8b90fi32) as u16);
         } else {
             (*Get_Beetom(word!(game.cur_enemy_index) as i32, game)).var_C = ((0xa8b82fi32) as u16);
@@ -1215,11 +1269,7 @@ crate::game::callback_dispatch! {
         (*E).var_09 = (word!(game.random_number)) & (1u16);
     };
     [11058589] Beetom_Func_35 [] {
-        if Enemy_MoveDown(
-            word!(game.cur_enemy_index),
-            ((3u32) << 16 | 0u16 as u32) as i32,
-            game,
-        ) != 0
+        if ({ let (actor, amount) = (word!(game.cur_enemy_index), ((3u32) << 16 | 0u16 as u32) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
         {
             let E = Get_Beetom(word!(game.cur_enemy_index) as i32, game);
             if (*E).var_09 != 0 {
@@ -1247,7 +1297,7 @@ crate::game::callback_dispatch! {
         (*E).var_03 = Beetom_Func_2(0x4000, 5, game);
         (*E).var_04 = Beetom_Func_2(12288, 3, game);
         (*E).var_00 = addr_kBeetom_Ilist_B6F2 as u16;
-        if (GetSamusEnemyDelta_X(word!(game.cur_enemy_index), game) & 0x8000) != 0 {
+        if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) != 0 {
             (*E).var_00 = addr_kBeetom_Ilist_B696 as u16;
         }
         Beetom_Func_1(game);
@@ -1272,7 +1322,7 @@ crate::game::callback_dispatch! {
         (*E).var_00 = addr_kBeetom_Ilist_B708 as u16;
         (*E).var_C = ((0xa8bc5ai32) as u16);
         (*E).var_09 = 1;
-        if (GetSamusEnemyDelta_X(word!(game.cur_enemy_index), game) & 0x8000) != 0 {
+        if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) != 0 {
             (*E).var_00 = addr_kBeetom_Ilist_B6AC as u16;
             (*E).var_C = ((0xa8bc26i32) as u16);
             (*E).var_09 = 0;
@@ -1321,18 +1371,10 @@ crate::game::callback_dispatch! {
             (*E).base.y_pos = (word!(game.samus_y_pos)).wrapping_sub(4);
             Beetom_Func_34(game);
         } else {
-            if Enemy_MoveRight_IgnoreSlopes(
-                word!(game.cur_enemy_index),
-                ((16u32) << 16 | 0u16 as u32) as i32,
-                game,
-            ) != 0
+            if ({ let (actor, amount) = (word!(game.cur_enemy_index), ((16u32) << 16 | 0u16 as u32) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
             {
                 (*E).var_09 = 1;
-                Enemy_MoveRight_IgnoreSlopes(
-                    word!(game.cur_enemy_index),
-                    (words!((-32i32, 0u16))) as i32,
-                    game,
-                );
+                ({ let (actor, amount) = (word!(game.cur_enemy_index), (words!((-32i32, 0u16))) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 });
             }
             (*E).var_08 = 0;
             (*E).var_C = ((0xa8b9a2i32) as u16);
@@ -1344,18 +1386,10 @@ crate::game::callback_dispatch! {
             (*E).base.y_pos = (word!(game.samus_y_pos)).wrapping_sub(4);
             Beetom_Func_34(game);
         } else {
-            if Enemy_MoveRight_IgnoreSlopes(
-                word!(game.cur_enemy_index),
-                (words!((-16i32, 0u16))) as i32,
-                game,
-            ) != 0
+            if ({ let (actor, amount) = (word!(game.cur_enemy_index), (words!((-16i32, 0u16))) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
             {
                 (*E).var_09 = 0;
-                Enemy_MoveRight_IgnoreSlopes(
-                    word!(game.cur_enemy_index),
-                    ((32u32) << 16 | 0u16 as u32) as i32,
-                    game,
-                );
+                ({ let (actor, amount) = (word!(game.cur_enemy_index), ((32u32) << 16 | 0u16 as u32) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 });
             }
             (*E).var_08 = 0;
             (*E).var_C = ((0xa8b9a2i32) as u16);
@@ -1528,12 +1562,27 @@ unsafe fn move_wrecked_ship_robot(
         WreckedShipRobot_Func_2(word!(game.cur_enemy_index), game);
         let robot = Get_WreckedShipRobot(word!(game.cur_enemy_index) as i32, game);
         (*robot).var_A = facing;
-        if Enemy_MoveRight_IgnoreSlopes(word!(game.cur_enemy_index), (step as i32) << 16, game) != 0
+        if {
+            let (actor, amount) = (word!(game.cur_enemy_index), (step as i32) << 16);
+            (actor_api::move_horizontal(
+                &mut Runtime::new(game),
+                Key::from_legacy(actor),
+                amount,
+                actor_api::SlopePolicy::Ignore,
+            ) == actor_api::MovementResult::Blocked) as u8
+        } != 0
         {
             (*robot).var_B = (*robot).var_B.wrapping_add(8);
             return EnemyScript::jump(wall_instruction);
         }
-        if CheckIfEnemyTouchesSamus(word!(game.cur_enemy_index), game) != 0 {
+        if {
+            let actor = word!(game.cur_enemy_index);
+            0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(
+                &Runtime::new(game),
+                Key::from_legacy(actor),
+            )))
+        } != 0
+        {
             word! {game; extra_samus_x_subdisplacement = 0; extra_samus_x_displacement = step as u16; }
         }
         let Some(edge_instruction) = edge_instruction else {
@@ -1547,7 +1596,11 @@ unsafe fn move_wrecked_ship_robot(
         } else {
             ((*robot).base.x_width as i32 + (*robot).base.x_width as i32 + x as i32) as u16
         };
-        let ground = Enemy_MoveDown(word!(game.cur_enemy_index), 1 << 16, game) != 0;
+        let ground = {
+            let (actor, amount) = (word!(game.cur_enemy_index), 1 << 16);
+            (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
+                == actor_api::MovementResult::Blocked) as u8
+        } != 0;
         if !ground {
             (*robot).var_B = (*robot).var_B.wrapping_add(8);
         }
@@ -1641,7 +1694,7 @@ crate::game::callback_dispatch! {
     call (game); default { Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
     [11065664] MaridiaPuffer_Func_2 [] {
-        let v1: u8 = ((CalculateAngleOfSamusFromEnemy(word!(game.cur_enemy_index), game)) as u8)
+        let v1: u8 = ((({ let actor = word!(game.cur_enemy_index); actor_api::angle_to_player(&Runtime::new(game), Key::from_legacy(actor)) })) as u8)
             .wrapping_sub(64);
         let E = Get_MaridiaPuffer(word!(game.cur_enemy_index) as i32, game);
         (*E).var_01 = v1 as u16;
@@ -1742,7 +1795,10 @@ crate::game::callback_dispatch! {
 }
 pub unsafe fn MaridiaPuffer_Func_5(game: &mut Game) {
     unsafe {
-        let v1: u8 = ((CalculateAngleOfSamusFromEnemy(word!(game.cur_enemy_index), game)) as u8)
+        let v1: u8 = (({
+            let actor = word!(game.cur_enemy_index);
+            actor_api::angle_to_player(&Runtime::new(game), Key::from_legacy(actor))
+        }) as u8)
             .wrapping_sub(64);
         let E = Get_MaridiaPuffer(word!(game.cur_enemy_index) as i32, game);
         (*E).var_01 = v1 as u16;
@@ -1783,7 +1839,7 @@ crate::game::callback_dispatch! {
     call (k, game); default { Unreachable(game); };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     [11066955] WalkingLavaSeahorse_Func_7 [] {
-        Enemy_MoveDown(k, (2i16 as i32) << 16, game);
+        ({ let (actor, amount) = (k, (2i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
         let E = Get_WalkingLavaSeahorse(k as i32, game);
         if ((abs16(((*E).var_02).wrapping_sub((*E).base.x_pos))) as i16)
             .wrapping_sub((g_word_A8DCCB) as i16)
@@ -1852,7 +1908,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11066885] WalkingLavaSeahorse_Func_6 [] {
-        if Enemy_MoveDown(k, (words!((*E), var_B, var_C)) as i32, game) != 0 {
+        if ({ let (actor, amount) = (k, (words!((*E), var_B, var_C)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             let t: i32 = word!(game.samus_x_pos) as i32 - (*E).base.x_pos as i32;
             let mut v2: u16 = addr_kWalkingLavaSeahorse_Ilist_DBE7 as u16;
             let mut v3: i16 = -2i16;
@@ -1923,13 +1979,13 @@ crate::game::callback_dispatch! {
     };
     WreckedShipOrbs_Func_1 [] {
         (*E).var_A = ((0xa8e405i32) as u16);
-        if (GetSamusEnemyDelta_Y(word!(game.cur_enemy_index), game) & 0x8000) == 0 {
+        if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y) }) & 0x8000) == 0 {
             (*E).var_A = ((0xa8e424i32) as u16);
         }
     };
     WreckedShipOrbs_Func_2 [] {
         (*E).var_B = ((0xa8e443i32) as u16);
-        if (GetSamusEnemyDelta_X(word!(game.cur_enemy_index), game) & 0x8000) == 0 {
+        if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) == 0 {
             (*E).var_B = ((0xa8e462i32) as u16);
         }
     };
@@ -2031,7 +2087,7 @@ crate::game::callback_dispatch! {
         let mut v4: i16 = 0;
         let E = Get_KiHunter(k as i32, game);
         let update_velocity: bool =
-            if Enemy_MoveDown(k, (words!((*E), var_09, var_08)) as i32, game) != 0 {
+            if ({ let (actor, amount) = (k, (words!((*E), var_09, var_08)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
                 v4 = -((*E).var_09 as i32) as i16;
                 true
             } else {
@@ -2050,7 +2106,7 @@ crate::game::callback_dispatch! {
         if update_velocity {
             (*E).var_09 = v4 as u16;
         }
-        if Enemy_MoveRight_IgnoreSlopes(k, (words!((*E), var_07, var_06)) as i32, game) != 0 {
+        if ({ let (actor, amount) = (k, (words!((*E), var_07, var_06)) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             let mut v5: u16 = 0;
             let v6: bool = (-((*E).var_07 as i32) & 0x8000) != 0;
             (*E).var_07 = -((*E).var_07 as i32) as u16;
@@ -2066,7 +2122,7 @@ crate::game::callback_dispatch! {
             (*E).base.instruction_timer = 1;
             (*E1).base.instruction_timer = 1;
         }
-        EnemyFunc_C8AD(k, game);
+        ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
         let r18: u16 = (word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos);
         let r20: u16 = abs16(r18);
         if ((r20) as i16).wrapping_sub((g_word_A8F180) as i16) < 0
@@ -2158,7 +2214,7 @@ crate::game::callback_dispatch! {
         }
         let mut r20: u16 = ((*E).var_B as i32 + CosineMult8bit((*E).var_F, (*E).var_11, game) as i32
             - (*E).base.x_pos as i32) as u16;
-        let collided = if Enemy_MoveRight_IgnoreSlopes(k, (r20 as i16 as i32) << 16, game) != 0 {
+        let collided = if ({ let (actor, amount) = (k, (r20 as i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             if ((*E).var_04 & 0x8000) == 0 {
                 (*E).var_06 = 0;
                 (*E).var_07 = -1i32 as u16;
@@ -2168,10 +2224,10 @@ crate::game::callback_dispatch! {
             }
             true
         } else {
-            EnemyFunc_C8AD(k, game);
+            ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
             r20 = ((*E).var_C as i32 + SineMult8bit((*E).var_F, (*E).var_12, game) as i32
                 - (*E).base.y_pos as i32) as u16;
-            Enemy_MoveDown(k, (r20 as i16 as i32) << 16, game) != 0
+            ({ let (actor, amount) = (k, (r20 as i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
         };
         if collided {
             (*E).var_A = ((0xa8f4edi32) as u16);
@@ -2180,10 +2236,10 @@ crate::game::callback_dispatch! {
         };
     };
     [11072749] KiHunter_Func_3 [] {
-        if Enemy_MoveRight_IgnoreSlopes(k, (words!((*E), var_07, var_06)) as i32, game) != 0
+        if ({ let (actor, amount) = (k, (words!((*E), var_07, var_06)) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
             || {
-                EnemyFunc_C8AD(k, game);
-                Enemy_MoveDown(k, (words!((*E), var_09, var_08)) as i32, game) != 0
+                ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
+                ({ let (actor, amount) = (k, (words!((*E), var_09, var_08)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
             }
             || (((*E).base.y_pos) as i16).wrapping_sub(((*E).var_0D) as i16) < 0
         {
@@ -2191,7 +2247,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11072858] KiHunter_Func_4 [] {
-        if Enemy_MoveDown(k, (words!((*E), var_09, var_08)) as i32, game) != 0 {
+        if ({ let (actor, amount) = (k, (words!((*E), var_09, var_08)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             (*E).var_A = ((0xa8f58bi32) as u16);
         } else {
             words!(
@@ -2217,7 +2273,7 @@ crate::game::callback_dispatch! {
         (*E).base.instruction_timer = 1;
     };
     [11073008] KiHunter_Func_6 [] {
-        if Enemy_MoveDown(k, (words!((*E), var_09, var_08)) as i32, game) != 0 {
+        if ({ let (actor, amount) = (k, (words!((*E), var_09, var_08)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             if ((*E).var_09 & 0x8000) != 0 {
                 (*E).var_09 = 1;
             } else {
@@ -2231,10 +2287,10 @@ crate::game::callback_dispatch! {
                 }
                 enemy_instruction! {[(*E).base]; instruction = v4, timer = 1}
             }
-        } else if Enemy_MoveRight_IgnoreSlopes(k, (words!((*E), var_07, var_06)) as i32, game) != 0 {
+        } else if ({ let (actor, amount) = (k, (words!((*E), var_07, var_06)) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             (*E).var_07 = -((*E).var_07 as i32) as u16;
         } else {
-            EnemyFunc_C8AD(k, game);
+            ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
             words!(
                 (*E),
                 var_09,
@@ -2290,7 +2346,7 @@ crate::game::callback_dispatch! {
             + SineMult8bit(byte!((*E).var_F; 1) as u16, g_byte_A8F186 as u16, game) as i32
             - (*E).var_02 as i32
             - (*E).base.y_pos as i32) as u16;
-        if Enemy_MoveDown(word!(game.cur_enemy_index), (r20 as i16 as i32) << 16, game) != 0 {
+        if ({ let (actor, amount) = (word!(game.cur_enemy_index), (r20 as i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
             (*E).base.x_pos = (*E).var_08;
             khr_var_07 = (*E).var_07 as i16;
@@ -2496,7 +2552,7 @@ crate::game::callback_dispatch! {
         MiniDraygon_Func_13(game);
     };
     [11045650] MiniDraygon_Shot [] {
-        apply_shot(game);
+        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
         MiniDraygon_Func_13(game);
     };
     [11047000] MorphBallEye_Init [] {
@@ -2555,7 +2611,7 @@ crate::game::callback_dispatch! {
         );
     };
     [11052989] YappingMaw_Shot [] {
-        apply_shot(game);
+        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
         let E = Get_YappingMaw(word!(game.cur_enemy_index) as i32, game);
         if (*E).base.health != 0 {
             if (*E).base.frozen_timer != 0 {
@@ -2606,7 +2662,7 @@ crate::game::callback_dispatch! {
         );
     };
     [11053955] Kago_Shot [] {
-        apply_shot(game);
+        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
         word! {game; earthquake_type = 2; earthquake_timer = 16; }
         let E = Get_Kago(word!(game.cur_enemy_index) as i32, game);
         if (*E).var_B == 0 {
@@ -2616,7 +2672,7 @@ crate::game::callback_dispatch! {
         let mut v2: i16 = (((*E).var_04) as i16).wrapping_sub(1);
         (*E).var_04 = v2 as u16;
         if v2 < 0 {
-            enemy_death(word!(game.cur_enemy_index), 4, game);
+            ({ let (_ignored_key, animation) = (word!(game.cur_enemy_index), 4); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
             (*E).var_F = 1;
         }
         SpawnEprojWithGfx(
@@ -2643,7 +2699,7 @@ crate::game::callback_dispatch! {
         NorfairLavaMan_Common(game);
     };
     [11056140] NorfairLavaMan_Shot [] {
-        apply_shot(game);
+        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
         NorfairLavaMan_Common(game);
     };
     [11058860] Beetom_Shot [] {
@@ -2682,7 +2738,7 @@ crate::game::callback_dispatch! {
         let E = Get_MaridiaFloater(word!(game.cur_enemy_index) as i32, game);
         if (*E).parameter_2 == 0 {
             let palette_index: u16 = (*E).base.palette_index;
-            apply_contact(game);
+            actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
             if (*E).base.health == 0 {
                 word!(game.enemy_drawing_queue[((word!(game.cur_enemy_index) as i32 >> 1) + 97)] |= (0x200u16));
                 (*E).base.palette_index = palette_index;
@@ -2694,7 +2750,7 @@ crate::game::callback_dispatch! {
     [11060719] MaridiaFloater_Shot [] {
         let E = Get_MaridiaFloater(word!(game.cur_enemy_index) as i32, game);
         if (*E).parameter_2 == 0 {
-            shot_reaction(game);
+            actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::ReactionOnly);
             if ((*E).base.ai_handler_bits & 4) != 0 {
                 let v2: i32 = word!(game.cur_enemy_index) as i32 >> 1;
                 word!(game.enemy_drawing_queue[(v2 + 109)] = (*E).base.frozen_timer);
@@ -2763,11 +2819,7 @@ crate::game::callback_dispatch! {
     };
     [11062326] WreckedShipRobot_Main [] {
         let E = Get_WreckedShipRobot(word!(game.cur_enemy_index) as i32, game);
-        if Enemy_MoveDown(
-            word!(game.cur_enemy_index),
-            (words!((*E), var_F, var_E)) as i32,
-            game,
-        ) == 0
+        if ({ let (actor, amount) = (word!(game.cur_enemy_index), (words!((*E), var_F, var_E)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) == 0
         {
             (*E).base.instruction_timer = (*E).base.instruction_timer.wrapping_add(1);
             words!((*E), var_F, var_E += 0x8000);
@@ -2784,11 +2836,11 @@ crate::game::callback_dispatch! {
         };
     };
     [11063693] WreckedShipRobotDeactivated_Shot [] {
-        apply_shot(game);
+        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
     };
     [11063698] WreckedShipRobot_Shot [] {
         if (gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game) & 1) != 0 {
-            apply_shot(game);
+            actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
             let E = Get_WreckedShipRobot(word!(game.cur_enemy_index) as i32, game);
             if (*E).base.health != 0 {
                 let mut v1: u16 = if ((*E).var_A & 0x8000) != 0 {
@@ -2823,11 +2875,7 @@ crate::game::callback_dispatch! {
         do_until! { ((WalkingLavaSeahorse_Func_2(word!(game.cur_enemy_index), game) & 0x8000) == 0);
             words!((*E).base, y_pos, y_subpos += words!((*E), var_B, var_C));
         }
-        while (Enemy_MoveDown(
-            word!(game.cur_enemy_index),
-            (words!((*E), var_B, var_C)) as i32,
-            game,
-        ) == 0)
+        while (({ let (actor, amount) = (word!(game.cur_enemy_index), (words!((*E), var_B, var_C)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) == 0)
         {
             WalkingLavaSeahorse_Func_2(word!(game.cur_enemy_index), game);
         }
@@ -2907,11 +2955,11 @@ crate::game::callback_dispatch! {
             );
             if (*v1).ai_var_A == 0 {
                 let SamusEnemyDelta_Y: u16 =
-                    GetSamusEnemyDelta_Y(word!(game.cur_enemy_index), game);
+                    ({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y) });
                 if ((Abs16(SamusEnemyDelta_Y)) as i16).wrapping_sub(((*v1).parameter_1) as i16) < 0
                 {
                     let SamusEnemyDelta_X: u16 =
-                        GetSamusEnemyDelta_X(word!(game.cur_enemy_index), game);
+                        ({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) });
                     (*v1).ai_var_B = SamusEnemyDelta_X;
                     if ((Abs16(SamusEnemyDelta_X)) as i16).wrapping_sub(((*v1).parameter_1) as i16)
                         < 0
@@ -2933,7 +2981,7 @@ crate::game::callback_dispatch! {
         word!(game.projectile_dir[word!(game.collision_detection_index)] &= !(0x10));
     };
     [11073281] KiHunter_Shot [] {
-        apply_shot(game);
+        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
         let old_cur_enemy_index: u16 = word!(game.cur_enemy_index);
         let EK = Get_KiHunter(word!(game.cur_enemy_index) as i32, game);
         let E1 = Get_KiHunter(word!(game.cur_enemy_index) as i32 + 64, game);
@@ -2980,7 +3028,7 @@ crate::game::callback_dispatch! {
     NorfairLavaMan_Func_1 [] {
         set_fields! {[(*E)], 0; var_C, var_00, var_02}
         (*E).var_03 = (*E).base.y_pos;
-        if (GetSamusEnemyDelta_X(word!(game.cur_enemy_index), game) & 0x8000) != 0 {
+        if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) != 0 {
             (*E).var_00 = 1;
         }
         (*E).var_D = addr_kNorfairLavaMan_Ilist_AC9C as u16;
@@ -3054,13 +3102,13 @@ crate::game::callback_dispatch! {
         }
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [11042826] Enemy_GrappleReact_KillEnemy_A8 => grapple_death(game);
-    [11042831] Enemy_GrappleReact_CancelBeam_A8 => select_frozen_ai(game);
-    [11042846] Enemy_GrappleReact_HurtSamus_A8 => select_frozen_ai(game);
-    [11042851] Enemy_NormalTouchAI_A8 => apply_contact(game);
-    [11042861] Enemy_NormalShotAI_A8 => apply_shot(game);
-    Enemy_NormalPowerBombAI_A8 => apply_power_bomb(game);
-    [11042881] Enemy_NormalFrozenAI_A8 => update_frozen_enemy(game);
+    [11042826] Enemy_GrappleReact_KillEnemy_A8 => actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Grapple);
+    [11042831] Enemy_GrappleReact_CancelBeam_A8 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
+    [11042846] Enemy_GrappleReact_HurtSamus_A8 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
+    [11042851] Enemy_NormalTouchAI_A8 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
+    [11042861] Enemy_NormalShotAI_A8 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
+    Enemy_NormalPowerBombAI_A8 => actors::combat::power_bomb_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
+    [11042881] Enemy_NormalFrozenAI_A8 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
 }
 
 crate::game::callback_dispatch! {
@@ -3199,7 +3247,7 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11054610] NorfairLavaMan_Instr_1 [jp.offset(1)] {
-        if CheckIfEnemyIsOnScreen(game) == 0 {
+        if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) == 0 {
             QueueSfx2_Max6(jp.word(0), game);
         }
     };
@@ -3363,11 +3411,7 @@ crate::game::callback_dispatch! {
 ) -> EnemyScript];
     [11067249] WalkingLavaSeahorse_Instr_1 [] {
         let E = Get_WalkingLavaSeahorse(word!(game.cur_enemy_index) as i32, game);
-        if Enemy_MoveRight_IgnoreSlopes(
-            word!(game.cur_enemy_index),
-            ((*E).var_D as i16 as i32) << 16,
-            game,
-        ) != 0
+        if ({ let (actor, amount) = (word!(game.cur_enemy_index), ((*E).var_D as i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
         {
             jp = EnemyScript::jump(addr_stru_A8DBE9 as u16);
             let mut wlse_var_D: i16 = (*E).var_D as i16;
@@ -3376,7 +3420,7 @@ crate::game::callback_dispatch! {
             }
             (*E).var_D = -(wlse_var_D as i32) as u16;
         } else {
-            EnemyFunc_C8AD(word!(game.cur_enemy_index), game);
+            ({ let actor = word!(game.cur_enemy_index); actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
         }
         jp
     };
@@ -3499,8 +3543,8 @@ crate::game::callback_dispatch! {
     call (k, game); default { crate::rtl::Unreachable(game); };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     [11047153] MorphBallEye_Func_1 [] {
-        if IsSamusWithinEnemy_Y(k, g_word_A89054, game) != 0
-            && IsSamusWithinEnemy_X(k, g_word_A89050, game) != 0
+        if ({ let (actor, distance) = (k, g_word_A89054); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
+            && ({ let (actor, distance) = (k, g_word_A89050); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
         {
             let E = Get_MorphBallEye(k as i32, game);
             (*E).var_E = 32;
@@ -3515,14 +3559,10 @@ crate::game::callback_dispatch! {
     };
     [11047264] MorphBallEye_Func_3 [] {
         let E = Get_MorphBallEye(k as i32, game);
-        if IsSamusWithinEnemy_Y(k, g_word_A89056, game) != 0
-            && IsSamusWithinEnemy_X(k, g_word_A89052, game) != 0
+        if ({ let (actor, distance) = (k, g_word_A89056); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
+            && ({ let (actor, distance) = (k, g_word_A89052); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
         {
-            let v3: u16 = CalculateAngleFromXY(
-                (word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos),
-                (word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos),
-                game,
-            );
+            let v3: u16 = actor_api::angle_from_delta((word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos), (word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos));
             (*E).var_D = v3;
             (*E).base.current_instruction = (((v3 as i32 & 0xf0) >> 2) - 28756i32) as u16;
         } else {
@@ -3552,7 +3592,7 @@ crate::game::callback_dispatch! {
             let E = Get_NorfairLavaMan(word!(game.cur_enemy_index) as i32, game);
             (*E).var_D = addr_kNorfairLavaMan_Ilist_ACB0 as u16;
             (*E).var_B = 0;
-            if (GetSamusEnemyDelta_X(word!(game.cur_enemy_index), game) & 0x8000) == 0 {
+            if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) == 0 {
                 (*E).var_D = addr_kNorfairLavaMan_Ilist_AD50 as u16;
                 (*E).var_B = 1;
             }
@@ -3616,7 +3656,7 @@ crate::game::callback_dispatch! {
     [11055386] NorfairLavaMan_Func_7 [] {
         (*E).var_00 = 0;
         (*E).var_D = addr_kNorfairLavaMan_Ilist_AC9C as u16;
-        if (GetSamusEnemyDelta_X(word!(game.cur_enemy_index), game) & 0x8000) == 0 {
+        if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) == 0 {
             (*E).var_D = addr_kNorfairLavaMan_Ilist_AD3C as u16;
             (*E).var_00 = 1;
         }
@@ -3624,11 +3664,7 @@ crate::game::callback_dispatch! {
         let E2 = Get_NorfairLavaMan(word!(game.cur_enemy_index) as i32 + 128, game);
         if ((*E2).var_04 & 0x8000) != 0 {
             (*E2).var_04 = 0;
-            if IsSamusWithinEnemy_X(
-                word!(game.cur_enemy_index),
-                byte!((*E).parameter_2; 0) as u16,
-                game,
-            ) != 0
+            if ({ let (actor, distance) = (word!(game.cur_enemy_index), byte!((*E).parameter_2; 0) as u16); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
             {
                 (*E).var_D = addr_kNorfairLavaMan_Ilist_ACDE as u16;
                 if (*E).var_00 != 0 {
@@ -3649,7 +3685,7 @@ crate::game::callback_dispatch! {
     [11055507] sub_A8B193 [] {
         if (*E).var_02 == 0 {
             (*E).var_D = addr_kNorfairLavaMan_Ilist_AD0C as u16;
-            if (GetSamusEnemyDelta_X(word!(game.cur_enemy_index), game) & 0x8000) == 0 {
+            if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) == 0 {
                 (*E).var_D = addr_kNorfairLavaMan_Ilist_ADAC as u16;
             }
             NorfairLavaMan_Func_20(game);
@@ -3659,7 +3695,7 @@ crate::game::callback_dispatch! {
     [11055544] NorfairLavaMan_Func_9 [] {
         if (*E).var_01 == 0 {
             (*E).var_D = addr_kNorfairLavaMan_Ilist_AC9C as u16;
-            if (GetSamusEnemyDelta_X(word!(game.cur_enemy_index), game) & 0x8000) == 0 {
+            if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) == 0 {
                 (*E).var_D = addr_kNorfairLavaMan_Ilist_AD3C as u16;
             }
             NorfairLavaMan_Func_20(game);
@@ -3709,7 +3745,7 @@ crate::game::callback_dispatch! {
         } else {
             advance_maridia_floater_bob!(E, k, game);
             words!((*E), var_A, var_B += words!((g_word_A8C1B9, g_word_A8C1BB)));
-            if Enemy_MoveDown(k, (words!((*E), var_A, var_B)) as i32, game) != 0
+            if ({ let (actor, amount) = (k, (words!((*E), var_A, var_B)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
                 || ((*(ram_ptr!(game, u16; 0xf68)).offset(((k as i32 >> 1) + 1) as isize) as i32
                     - g_word_A8C19F as i32
                     - (*E).base.y_pos as i32) as i16)
@@ -3758,7 +3794,7 @@ crate::game::callback_dispatch! {
             });
         if move_down {
             words!((*E), var_A, var_B += words!((g_word_A8C1B9, g_word_A8C1BB)));
-            Enemy_MoveDown(k, (words!((*E), var_A, var_B)) as i32, game);
+            ({ let (actor, amount) = (k, (words!((*E), var_A, var_B)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
         }
         MaridiaFloater_Func_2(k, game);
     };
@@ -3766,7 +3802,7 @@ crate::game::callback_dispatch! {
         if ((*E).base.ai_handler_bits & 1) != 0 {
             advance_maridia_floater_bob!(E, k, game);
             words!((*E), var_A, var_B += words!((g_word_A8C1B9, g_word_A8C1BB)));
-            if Enemy_MoveDown(k, (words!((*E), var_A, var_B)) as i32, game) != 0
+            if ({ let (actor, amount) = (k, (words!((*E), var_A, var_B)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
                 || ((*(ram_ptr!(game, u16; 0xf68)).offset(((k as i32 >> 1) + 1) as isize) as i32
                     - *(ram_ptr!(game, u16; 0xf68)).offset(((k as i32 >> 1) + 3) as isize) as i32
                     - (*E).base.y_pos as i32) as i16)
@@ -3813,7 +3849,7 @@ crate::game::callback_dispatch! {
             });
         if move_down {
             words!((*E), var_A, var_B += words!((g_word_A8C1B9, g_word_A8C1BB)));
-            Enemy_MoveDown(k, (words!((*E), var_A, var_B)) as i32, game);
+            ({ let (actor, amount) = (k, (words!((*E), var_A, var_B)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
         }
         MaridiaFloater_Func_2(k, game);
     };
@@ -3829,7 +3865,7 @@ crate::game::callback_dispatch! {
     };
     [11060509] MaridiaFloater_Func_11 [] {
         words!((*E), var_A, var_B += words!((g_word_A8C1BD, g_word_A8C1BF)));
-        Enemy_MoveDown(k, (words!((*E), var_A, var_B)) as i32, game);
+        ({ let (actor, amount) = (k, (words!((*E), var_A, var_B)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
         let v4: i32 = k as i32 >> 1;
         if (((*E).base.y_pos) as i16)
             .wrapping_sub((word!(game.enemy_drawing_queue_sizes[(v4 + 1)])) as i16)
@@ -3854,11 +3890,7 @@ crate::game::callback_dispatch! {
         QueueSfx2_Max6(0x17, game);
         SpawnMorphBallEyeBeamHdma(game);
         (*E).var_F = ((0xa89160i32) as u16);
-        (*E).var_D = CalculateAngleFromXY(
-            (word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos),
-            (word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos),
-            game,
-        );
+        (*E).var_D = actor_api::angle_from_delta((word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos), (word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos));
     };
     [11047374] MorphBallEye_Func_4 {
         (*E).var_F = ((0xa890f1i32) as u16);
@@ -3901,7 +3933,7 @@ crate::game::callback_dispatch! {
         word!(game.enemy_drawing_queue[(v4 + 97)] |= (0x200u16));
         MaridiaFloater_Func_1(k, game);
         let mut v5: u16 = 0;
-        enemy_death(k, v5, game);
+        ({ let (_ignored_key, animation) = (k, v5); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
     } else {
         MaridiaFloater_Func_2(k, game);
     } after { ; };

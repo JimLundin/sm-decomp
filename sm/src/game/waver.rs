@@ -1,9 +1,12 @@
 //! Waver: horizontal 16.16 motion with a sine-wave vertical phase.
 //! RAM views are scoped between legacy movement calls. Animation words are
 //! read from the loaded ROM; no ROM-derived data is stored in this module.
+use crate::game::actors::access::ActorKey as Key;
+use crate::game::actors::api as actor_api;
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::enemy_script::{EnemyScript, bank_base};
-use crate::game::sm_a0::{Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, SineMult8bit};
+use crate::game::session_runtime::Runtime;
+use crate::game::sm_a0::SineMult8bit;
 use crate::game_state::Game;
 use crate::types::EnemyBase;
 
@@ -147,7 +150,16 @@ pub unsafe fn Waver_Main(game: &mut Game) {
             ((u32::from(enemy.velocity_integer()) << 16) | u32::from(enemy.velocity_fraction()))
                 as i32
         };
-        if Enemy_MoveRight_IgnoreSlopes(index, horizontal_velocity, game) != 0 {
+        if {
+            let (actor, amount) = (index, horizontal_velocity);
+            (actor_api::move_horizontal(
+                &mut Runtime::new(game),
+                Key::from_legacy(actor),
+                amount,
+                actor_api::SlopePolicy::Ignore,
+            ) == actor_api::MovementResult::Blocked) as u8
+        } != 0
+        {
             {
                 let mut enemy = WaverRam::new(game, index);
                 // The ROM reverses the middle two bytes of the 16.16 velocity.
@@ -165,7 +177,11 @@ pub unsafe fn Waver_Main(game: &mut Game) {
             let vertical_index = game.cur_enemy_index();
             let phase = WaverRam::new(game, index).sine_phase() as u8 as u16;
             let vertical_velocity = i32::from(SineMult8bit(phase, 4, game) as i16) << 16;
-            let collided = Enemy_MoveDown(vertical_index, vertical_velocity, game) != 0;
+            let collided = {
+                let (actor, amount) = (vertical_index, vertical_velocity);
+                (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
+                    == actor_api::MovementResult::Blocked) as u8
+            } != 0;
             let mut enemy = WaverRam::new(game, index);
             if collided {
                 enemy.set_sine_phase(enemy.sine_phase().wrapping_add(0x80) as u8 as u16);

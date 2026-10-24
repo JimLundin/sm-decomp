@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 use super::access::enemy;
 use super::host::*;
+use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 use crate::game::{
     session::Point,
     sprite_effect_controllers,
@@ -72,8 +73,14 @@ pub(super) fn advance_waffle_orbit(ctx: &mut impl Host) {
     let radius = ctx.waffle_field(enemy, W::Radius);
     let (stage, sprite) = classify_phase(ctx.waffle_field(enemy, W::Phase), ctx);
     if stage != ctx.waffle_field(enemy, W::HeadStage) {
-        let x = ctx.waffle_field(enemy, W::X);
-        let y = ctx.waffle_field(enemy, W::Y);
+        let x = ctx
+            .resolve_actor(Key::from_legacy(enemy as u16), Le)
+            .x
+            .whole;
+        let y = ctx
+            .resolve_actor(Key::from_legacy(enemy as u16), Le)
+            .y
+            .whole;
         let palette = ctx.waffle_field(enemy, W::Palette);
         sprite_objects::spawn(
             ctx,
@@ -83,8 +90,14 @@ pub(super) fn advance_waffle_orbit(ctx: &mut impl Host) {
                 appearance: palette,
             },
         );
-        let x = ctx.waffle_field(enemy, W::X);
-        let y = ctx.waffle_field(enemy, W::Y);
+        let x = ctx
+            .resolve_actor(Key::from_legacy(enemy as u16), Le)
+            .x
+            .whole;
+        let y = ctx
+            .resolve_actor(Key::from_legacy(enemy as u16), Le)
+            .y
+            .whole;
         let palette = ctx.waffle_field(enemy, W::Palette);
         sprite_objects::spawn(
             ctx,
@@ -101,12 +114,16 @@ pub(super) fn advance_waffle_orbit(ctx: &mut impl Host) {
     let center = ctx.waffle_field(enemy, W::CenterX);
     let amplitude = ctx.waffle_field(enemy, W::Radius);
     let x = center.wrapping_add(orbit_component(phase, amplitude, 64, ctx));
-    ctx.set_waffle_field(enemy, W::X, x);
+    ctx.edit_actor(Key::from_legacy(enemy as u16), Le, |actor| {
+        actor.x.whole = x
+    });
     let (phase, _) = clamp_phase(ctx.waffle_field(enemy, W::Phase), ctx);
     let center = ctx.waffle_field(enemy, W::CenterY);
     let amplitude = ctx.waffle_field(enemy, W::Radius);
     let y = center.wrapping_add(orbit_component(phase, amplitude, 128, ctx));
-    ctx.set_waffle_field(enemy, W::Y, y);
+    ctx.edit_actor(Key::from_legacy(enemy as u16), Le, |actor| {
+        actor.y.whole = y
+    });
     advance_waffle_parts(radius, ctx);
     advance_waffle_sprites(radius, ctx);
     // Original AddToHiLo captures speed high/low, reads phase low/high,
@@ -178,11 +195,9 @@ fn advance_waffle_parts(radius: u16, ctx: &mut impl Host) {
     }
     if reached_end {
         ctx.set_waffle_field(enemy, W::Behavior, 0x9615);
-        ctx.set_waffle_field(
-            enemy,
-            W::Properties,
-            ctx.waffle_field(enemy, W::Properties) & !0x800,
-        );
+        ctx.edit_actor(Key::from_legacy(enemy as u16), Le, |actor| {
+            actor.properties &= !0x800
+        });
     }
 }
 
@@ -244,8 +259,18 @@ fn advance_waffle_sprites(radius: u16, ctx: &mut impl Host) {
 pub(super) fn record_botwoon_head(ctx: &mut impl Host) {
     let enemy = usize::from(ctx.inputs().current_enemy);
     let cursor = ctx.botwoon_field(enemy, B::HistoryCursor);
-    ctx.set_botwoon_history_x(cursor, ctx.botwoon_field(enemy, B::X));
-    ctx.set_botwoon_history_y(cursor, ctx.botwoon_field(enemy, B::Y));
+    ctx.set_botwoon_history_x(
+        cursor,
+        ctx.resolve_actor(Key::from_legacy(enemy as u16), Le)
+            .x
+            .whole,
+    );
+    ctx.set_botwoon_history_y(
+        cursor,
+        ctx.resolve_actor(Key::from_legacy(enemy as u16), Le)
+            .y
+            .whole,
+    );
 }
 
 pub(super) fn follow_botwoon_history(ctx: &mut impl Host) {
@@ -309,10 +334,14 @@ pub(super) fn orient_botwoon_body(ctx: &mut impl Host) {
         let slot = (projectile >> 1) as isize;
         let (x, y) = if part == 24 {
             let x = ctx
-                .botwoon_field(enemy, B::X)
+                .resolve_actor(Key::from_legacy(enemy as u16), Le)
+                .x
+                .whole
                 .wrapping_sub(enemy!(ctx, slot, x));
             let y = ctx
-                .botwoon_field(enemy, B::Y)
+                .resolve_actor(Key::from_legacy(enemy as u16), Le)
+                .y
+                .whole
                 .wrapping_sub(enemy!(ctx, slot, y));
             (x, y)
         } else {

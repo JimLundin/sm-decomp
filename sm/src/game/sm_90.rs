@@ -1,3 +1,4 @@
+use crate::game::actors::api as actor_api;
 use crate::game::launch_motion::MovementDirection;
 use crate::game::launch_motion_ram;
 use crate::game::music::PlayRoomMusicTrackAfterAFrames;
@@ -9,6 +10,7 @@ use crate::game::samus_animation::{
     HandleAtmosphericEffects, PlaySamusFanfare, Samus_Animate, Samus_Draw, Samus_DrawEchoes,
     Samus_DrawShinesparkCrashEchoes, Samus_DrawWhenNotAnimatingOrDying,
 };
+use crate::game::session_runtime::Runtime;
 
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_60::*;
@@ -42,7 +44,6 @@ use crate::game::sm_94::{
     BlockInsideDetection, HandleGrappleBeamGfx, PostGrappleCollisionDetect_X,
     PostGrappleCollisionDetect_Y, Samus_AlignYPosSlope, scale_sine_word,
 };
-use crate::game::sm_a0::Samus_CheckSolidEnemyColl;
 
 pub use crate::types::{Func_V_A, HandlerFunc};
 
@@ -261,7 +262,23 @@ unsafe fn move_samus_horizontal_collision<const LEFT: bool>(mut amt: i32, game: 
         if LEFT {
             amt = -amt;
         }
-        let cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(amt, game);
+        let cres: CheckEnemyColl_Result = {
+            let amount = amt;
+            match actor_api::probe_player_solid_contact(&mut Runtime::new(game), amount) {
+                actor_api::SolidContact::Clear { amount } => {
+                    crate::types::CheckSolidEnemyColl_Result {
+                        collision: 0,
+                        amt: amount,
+                    }
+                }
+                actor_api::SolidContact::Blocked { amount } => {
+                    crate::types::CheckSolidEnemyColl_Result {
+                        collision: 0xffff,
+                        amt: amount,
+                    }
+                }
+            }
+        };
         word!(game.samus_collision_flag = cres.collision);
         amt = cres.amt;
         if word!(game.samus_collision_flag) != 0 {
@@ -584,7 +601,23 @@ pub unsafe fn Samus_MoveRight(amt: i32, game: &mut Game) {
 pub unsafe fn Samus_MoveUp(mut amt: i32, game: &mut Game) {
     unsafe {
         word!(game.samus_collision_direction = 2);
-        let cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(-amt, game);
+        let cres: CheckEnemyColl_Result = {
+            let amount = -amt;
+            match actor_api::probe_player_solid_contact(&mut Runtime::new(game), amount) {
+                actor_api::SolidContact::Clear { amount } => {
+                    crate::types::CheckSolidEnemyColl_Result {
+                        collision: 0,
+                        amt: amount,
+                    }
+                }
+                actor_api::SolidContact::Blocked { amount } => {
+                    crate::types::CheckSolidEnemyColl_Result {
+                        collision: 0xffff,
+                        amt: amount,
+                    }
+                }
+            }
+        };
         word!(game.samus_collision_flag = cres.collision);
         amt = cres.amt;
         if word!(game.samus_collision_flag) != 0 {
@@ -600,7 +633,23 @@ pub unsafe fn Samus_MoveUp(mut amt: i32, game: &mut Game) {
 pub unsafe fn Samus_MoveDown(mut amt: i32, game: &mut Game) {
     unsafe {
         word!(game.samus_collision_direction = 3);
-        let cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(amt, game);
+        let cres: CheckEnemyColl_Result = {
+            let amount = amt;
+            match actor_api::probe_player_solid_contact(&mut Runtime::new(game), amount) {
+                actor_api::SolidContact::Clear { amount } => {
+                    crate::types::CheckSolidEnemyColl_Result {
+                        collision: 0,
+                        amt: amount,
+                    }
+                }
+                actor_api::SolidContact::Blocked { amount } => {
+                    crate::types::CheckSolidEnemyColl_Result {
+                        collision: 0xffff,
+                        amt: amount,
+                    }
+                }
+            }
+        };
         word!(game.samus_collision_flag = cres.collision);
         amt = cres.amt;
         if word!(game.samus_collision_flag) != 0 {
@@ -1092,7 +1141,23 @@ pub unsafe fn Samus_GrappleWallJumpCheck(amt: i32, game: &mut Game) -> u8 {
             _ => return 0,
         };
         game.set_samus_collision_direction(direction);
-        let result = Samus_CheckSolidEnemyColl(amt, game);
+        let result = {
+            let amount = amt;
+            match actor_api::probe_player_solid_contact(&mut Runtime::new(game), amount) {
+                actor_api::SolidContact::Clear { amount } => {
+                    crate::types::CheckSolidEnemyColl_Result {
+                        collision: 0,
+                        amt: amount,
+                    }
+                }
+                actor_api::SolidContact::Blocked { amount } => {
+                    crate::types::CheckSolidEnemyColl_Result {
+                        collision: 0xffff,
+                        amt: amount,
+                    }
+                }
+            }
+        };
         if result.collision == 0 {
             crate::game::samus_room_contact_ram::wall_jump(result.amt, game);
             if game.samus_collision_flag() == 0 {
@@ -1136,7 +1201,23 @@ pub unsafe fn Samus_WallJumpCheck(amt: i32, game: &mut Game) -> u8 {
             return 0;
         };
         game.set_samus_collision_direction(u16::from(left));
-        let result = Samus_CheckSolidEnemyColl(amt, game);
+        let result = {
+            let amount = amt;
+            match actor_api::probe_player_solid_contact(&mut Runtime::new(game), amount) {
+                actor_api::SolidContact::Clear { amount } => {
+                    crate::types::CheckSolidEnemyColl_Result {
+                        collision: 0,
+                        amt: amount,
+                    }
+                }
+                actor_api::SolidContact::Blocked { amount } => {
+                    crate::types::CheckSolidEnemyColl_Result {
+                        collision: 0xffff,
+                        amt: amount,
+                    }
+                }
+            }
+        };
         let enemy_contact = result.collision != 0;
         let mut distance = result.amt;
         if !enemy_contact {
@@ -1758,7 +1839,23 @@ pub unsafe fn Samus_ShinesparkMove_X(game: &mut Game) {
         let mut amt: i32 = 0;
         let move_right: bool = if *ram_ptr!(game; 0xa1e) == 4 {
             amt = Samus_ClampSpeedHi(-Samus_CalcDisplacementMoveLeft(amt, game), 15) as i32;
-            let cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(amt, game);
+            let cres: CheckEnemyColl_Result = {
+                let amount = amt;
+                match actor_api::probe_player_solid_contact(&mut Runtime::new(game), amount) {
+                    actor_api::SolidContact::Clear { amount } => {
+                        crate::types::CheckSolidEnemyColl_Result {
+                            collision: 0,
+                            amt: amount,
+                        }
+                    }
+                    actor_api::SolidContact::Blocked { amount } => {
+                        crate::types::CheckSolidEnemyColl_Result {
+                            collision: 0xffff,
+                            amt: amount,
+                        }
+                    }
+                }
+            };
             amt = cres.amt;
             if cres.collision != 0 {
                 word!(game.samus_collision_flag = cres.collision);
@@ -1769,7 +1866,23 @@ pub unsafe fn Samus_ShinesparkMove_X(game: &mut Game) {
             }
         } else {
             amt = Samus_ClampSpeedHi(Samus_CalcDisplacementMoveRight(amt, game), 25) as i32;
-            let cres_0: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(amt, game);
+            let cres_0: CheckEnemyColl_Result = {
+                let amount = amt;
+                match actor_api::probe_player_solid_contact(&mut Runtime::new(game), amount) {
+                    actor_api::SolidContact::Clear { amount } => {
+                        crate::types::CheckSolidEnemyColl_Result {
+                            collision: 0,
+                            amt: amount,
+                        }
+                    }
+                    actor_api::SolidContact::Blocked { amount } => {
+                        crate::types::CheckSolidEnemyColl_Result {
+                            collision: 0xffff,
+                            amt: amount,
+                        }
+                    }
+                }
+            };
             amt = cres_0.amt;
             !(cres_0.collision != 0)
                 || ({
@@ -1812,8 +1925,23 @@ pub unsafe fn Samus_ShinesparkMove_Y(game: &mut Game) {
             extra_samus_y_subdisplacement
         )) as i32;
         word!(game.samus_collision_direction = 2);
-        let cres: CheckEnemyColl_Result =
-            Samus_CheckSolidEnemyColl(Samus_ClampSpeedHi(amt, 15) as i32, game);
+        let cres: CheckEnemyColl_Result = {
+            let amount = Samus_ClampSpeedHi(amt, 15) as i32;
+            match actor_api::probe_player_solid_contact(&mut Runtime::new(game), amount) {
+                actor_api::SolidContact::Clear { amount } => {
+                    crate::types::CheckSolidEnemyColl_Result {
+                        collision: 0,
+                        amt: amount,
+                    }
+                }
+                actor_api::SolidContact::Blocked { amount } => {
+                    crate::types::CheckSolidEnemyColl_Result {
+                        collision: 0xffff,
+                        amt: amount,
+                    }
+                }
+            }
+        };
         amt = cres.amt;
         if cres.collision != 0 {
             word!(game.samus_collision_flag = cres.collision);

@@ -207,7 +207,19 @@ pub(crate) use set_fields;
 #[macro_use]
 mod word_transfers;
 
+#[cfg(sm_verify_dll)]
+#[path = "verification/actor_population_animation_cases.rs"]
+pub(crate) mod actor_population_animation_cases;
+#[cfg(sm_verify_dll)]
+#[path = "verification/actor_population_animation_observer.rs"]
+pub(crate) mod actor_population_animation_observer;
+#[cfg(sm_verify_dll)]
+pub fn verify_actor_population_animation_case(id: u32) -> Option<Vec<u8>> {
+    actor_population_animation_cases::capture_case(id, actor_population_animation_cases::run)
+}
+
 pub mod game {
+    pub(crate) mod actors;
     // Share the exact countdown prefix and expiry test across named callbacks.
     macro_rules! countdown_callbacks {
         (
@@ -343,7 +355,7 @@ pub mod game {
     pub(crate) mod dialogue;
     pub(crate) mod dialogue_ram;
     pub(crate) mod enemy_layouts;
-    pub(crate) mod enemy_ram;
+
     pub(crate) mod explosion_window;
     pub(crate) mod gameplay;
     pub(crate) mod grapple_swing;
@@ -429,16 +441,10 @@ pub mod game {
     pub mod combat_rules;
     pub mod contact_rules;
     pub mod drop_rules;
-    pub mod enemy_animation;
-    pub mod enemy_combat;
-    pub mod enemy_contact;
     pub mod enemy_population;
-    pub mod enemy_population_ram;
-    pub mod enemy_scheduling;
     pub mod enemy_script;
     pub(crate) mod mother_brain_visuals;
     pub mod projectile_contact;
-    pub mod scene_drawing;
     pub mod sm_94;
     pub mod sm_9b;
     pub mod sm_a0;
@@ -715,6 +721,17 @@ pub fn verify_room_reference_case(id: u32) -> Option<Vec<u8>> {
     room_reference_cases::capture_case(id, room_reference_cases::run)
 }
 
+#[cfg(sm_verify_dll)]
+#[path = "verification/actor_movement_cases.rs"]
+pub(crate) mod actor_movement_cases;
+#[cfg(sm_verify_dll)]
+#[path = "verification/actor_movement_observer.rs"]
+pub(crate) mod actor_movement_observer;
+#[cfg(sm_verify_dll)]
+pub fn verify_actor_movement_case(id: u32) -> Option<Vec<u8>> {
+    actor_movement_cases::capture_case(id, actor_movement_cases::run)
+}
+
 #[path = "verification/room_contact_start_cases.rs"]
 pub(crate) mod room_contact_start_cases;
 #[path = "verification/room_contact_start_observer.rs"]
@@ -757,3 +774,16 @@ pub fn verify_room_background_case(id: u32) -> Option<Vec<u8>> {
         room_background_cases::capture_case(id, room_background_cases::run)
     }
 }
+
+#[cfg(sm_verify_dll)]
+pub fn verify_actor_movement_table_case(id: u32) -> Option<Vec<u8>> {
+    actor_movement_cases::capture_table_case(id, actor_movement_cases::run)
+}
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/actor_kraid_writer_entry.rs"]
+pub(crate) mod actor_kraid_writer_entry;
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/actor_composed_route.rs"]
+pub(crate) mod actor_composed_route;

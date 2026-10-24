@@ -12,7 +12,7 @@ pub enum EnemyScript {
 }
 
 pub(crate) fn bank_base(bank: u8) -> isize {
-    crate::rtl::lorom_offset((u32::from(bank) << 16) | 0x8000) - 0x8000
+    crate::rom::lorom_offset((u32::from(bank) << 16) | 0x8000) - 0x8000
 }
 
 impl EnemyScript {

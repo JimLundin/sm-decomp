@@ -1,8 +1,8 @@
 //! Player/enemy projectile contact, with ordered damage and reaction effects.
 #![deny(unsafe_op_in_unsafe_fn)]
+use crate::game::actors;
 use crate::game::contact_rules::axis;
-use crate::game::enemy_combat::reduce_suit_damage;
-use crate::game::enemy_ram::native_read;
+use crate::game::session_runtime::Runtime;
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game_state::Game;
 use crate::ram_map::{checked_word as word, word_arrays as arrays};
@@ -55,7 +55,10 @@ pub unsafe fn player_projectiles_hit_samus(game: &mut Game) {
             mark(index, game);
             unsafe {
                 Samus_DealDamage(
-                    reduce_suit_damage(word!(game.projectile_damage[index]), game),
+                    ({
+                        let amount = word!(game.projectile_damage[index]);
+                        actors::combat::suit_damage(&mut Runtime::new(game), amount)
+                    }),
                     game,
                 );
             }
@@ -70,9 +73,10 @@ pub unsafe fn player_projectiles_hit_samus(game: &mut Game) {
                 );
             }
             word!(
-                game.knockback_x_dir = (word!(game.samus_x_pos)
-                    .wrapping_sub(native_read(game, arrays::eproj_x_pos))
-                    as i16
+                game.knockback_x_dir = (word!(game.samus_x_pos).wrapping_sub(u16::from_ne_bytes([
+                    game.g_ram[arrays::eproj_x_pos],
+                    game.g_ram[arrays::eproj_x_pos + 1]
+                ])) as i16
                     >= 0) as u16
             );
             return;

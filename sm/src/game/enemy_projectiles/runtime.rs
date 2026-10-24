@@ -90,6 +90,7 @@ impl ImportedAliases for Runtime<'_> {
     fn shot_word(&self, member: ShotMember, signed_slot: isize) -> u16 {
         let base = match member {
             ShotMember::Kind => A::projectile_type,
+            ShotMember::Damage => A::projectile_damage,
             ShotMember::Direction => A::projectile_dir,
             ShotMember::Variable => A::projectile_variables,
             ShotMember::X => A::projectile_x_pos,

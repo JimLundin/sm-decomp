@@ -1,16 +1,16 @@
+use crate::game::actors;
+use crate::game::actors::access::ActorKey as Key;
+use crate::game::actors::api as actor_api;
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_84::*;
 pub use crate::game::constants::bank_86::*;
-use crate::game::enemy_combat::{
-    apply_contact, apply_shot, contact_without_death, select_frozen_ai, shot_reaction,
-};
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
-use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
+use crate::game::session_runtime::Runtime;
 
 use crate::game::gameplay_flag_runtime::{CheckBossBitForCurArea, SetBossBitForCurArea};
 use crate::game::room_mechanisms::{spawn_collision, spawn_hardcoded};
@@ -22,10 +22,7 @@ use crate::game::palette_effects;
 use crate::game::sm_88::SpawnBombTorizoHaze;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
-use crate::game::sm_a0::{
-    CalculateAngleOfEnemyXfromEnemyY, CalculateBlockContainingPixelPos, CallEnemyPreInstr,
-    CompareDistToSamus_X, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, EnemyFunc_C8AD,
-};
+use crate::game::sm_a0::CallEnemyPreInstr;
 
 pub use crate::types::Consts_AA;
 
@@ -196,7 +193,15 @@ macro_rules! torizo_fall_until_timer {
             if v10 >= 0x10 {
                 v10 = 15;
             }
-            if Enemy_MoveDown($enemy_index, (v10 as i16 as i32) << 16, $game) == 0 {
+            if {
+                let (actor, amount) = ($enemy_index, (v10 as i16 as i32) << 16);
+                (actor_api::move_vertical(
+                    &mut Runtime::new($game),
+                    Key::from_legacy(actor),
+                    amount,
+                ) == actor_api::MovementResult::Blocked) as u8
+            } == 0
+            {
                 let mut v11: u16 = if ((*$enemy).parameter_1 & 0x8000) != 0 {
                     addr_off_AAC0F2 as u16
                 } else {
@@ -283,7 +288,7 @@ crate::game::callback_dispatch! {
         (*E).base.instruction_timer = 1;
     };
     Torizo_C643 [] {
-        if Enemy_MoveDown(k, ((*E).var_B as i16 as i32) << 8, game) != 0 {
+        if ({ let (actor, amount) = (k, ((*E).var_B as i16 as i32) << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             let v3: i16 = (*E).var_B as i16;
             if v3 >= 0 && v3 != 256 {
                 word! {game; earthquake_type = 4; earthquake_timer = 32; }
@@ -301,9 +306,9 @@ crate::game::callback_dispatch! {
         };
     };
     Torizo_Func_7 [] {
-        Enemy_MoveRight_IgnoreSlopes(k, ((*E).var_A as i16 as i32) << 8, game);
-        EnemyFunc_C8AD(k, game);
-        if Enemy_MoveDown(k, ((*E).var_B as i16 as i32) << 8, game) != 0 {
+        ({ let (actor, amount) = (k, ((*E).var_A as i16 as i32) << 8); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 });
+        ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
+        if ({ let (actor, amount) = (k, ((*E).var_B as i16 as i32) << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             enemy_instruction! {[(*E).base]; instruction = (*E).var_00, timer = 1}
             (*E).var_B = 256;
             word! {game; earthquake_type = 4; earthquake_timer = 32; }
@@ -339,7 +344,10 @@ pub unsafe fn Torizo_Func_12(k: u16, game: &mut Game) -> u16 {
 pub use self::Torizo_Func_3 as Torizo_Func_10;
 pub unsafe fn Torizo_D6A6(game: &mut Game) {
     unsafe {
-        shot_reaction(game);
+        actors::combat::shot_reaction(
+            &mut Runtime::new(game),
+            actors::api::ShotHandling::ReactionOnly,
+        );
         let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
         if (*E).base.health == 0 {
             enemy_instruction! {[(*E).base]; instruction = addr_kTorizo_Ilist_B1C8 as u16, timer = 1}
@@ -587,7 +595,7 @@ crate::game::callback_dispatch! {
         };
     };
     [11192695] GoldTorizo_Touch [] {
-        contact_without_death(game);
+        actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
     };
     [11192700] Torizo_Shot [] {
         if word!(game.area_index) != 0 {
@@ -595,7 +603,7 @@ crate::game::callback_dispatch! {
         } else {
             let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game);
             if (*E).var_04 | (*E).base.flash_timer == 0 {
-                shot_reaction(game);
+                actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::ReactionOnly);
                 if (*E).base.health == 0 {
                     (*E).var_E = ((0xaac6abi32) as u16);
                     enemy_instruction! {[(*E).base]; instruction = addr_kTorizo_Ilist_B1C8 as u16, timer = 1}
@@ -666,10 +674,10 @@ crate::game::callback_dispatch! {
         }
     };
     [11198255] Shaktool_Touch [] {
-        apply_contact(game);
+        actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
     };
     [11198260] Shaktool_Shot [] {
-        apply_shot(game);
+        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
         let E = Get_Shaktool(word!(game.cur_enemy_index) as i32, game);
         if (*E).base.health == 0 {
             let shakto_var_E: u16 = (*E).var_E;
@@ -834,8 +842,8 @@ crate::game::callback_dispatch! {
         }
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [11173903] Enemy_GrappleReact_CancelBeam_AA => select_frozen_ai(game);
-    [11173953] Enemy_NormalFrozenAI_AA => update_frozen_enemy(game);
+    [11173903] Enemy_GrappleReact_CancelBeam_AA => actors::combat::select_frozen_ai(&mut Runtime::new(game));
+    [11173953] Enemy_NormalFrozenAI_AA => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
 }
 
 crate::game::callback_dispatch! {
@@ -988,7 +996,7 @@ crate::game::callback_dispatch! {
     [11191408] Torizo_Instr_16 [] {
         let E = Get_Torizo(k as i32, game);
         (*E).var_A = g_word_AAC4BD[(jp.word(0) >> 1) as usize] as u16;
-        if Enemy_MoveRight_IgnoreSlopes(k, ((*E).var_A as i16 as i32) << 16, game) != 0 {
+        if ({ let (actor, amount) = (k, ((*E).var_A as i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             (*E).var_03 = 0;
             if ((*E).parameter_1 & 0x8000) != 0 {
                 EnemyScript::jump(addr_kTorizo_Ilist_B962 as u16)
@@ -996,7 +1004,7 @@ crate::game::callback_dispatch! {
                 EnemyScript::jump(addr_kTorizo_Ilist_BDD8 as u16)
             }
         } else {
-            EnemyFunc_C8AD(k, game);
+            ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
             if (((*E).parameter_1 as i32
                 ^ word!(game.samus_x_pos) as i32 - (*E).base.x_pos as i32)
                 & 0x8000)
@@ -1014,7 +1022,7 @@ crate::game::callback_dispatch! {
     [11191525] Torizo_Instr_27 [] {
         let E = Get_Torizo(k as i32, game);
         (*E).var_A = g_word_AAC532[(jp.word(0) >> 1) as usize] as u16;
-        if Enemy_MoveRight_IgnoreSlopes(k, ((*E).var_A as i16 as i32) << 16, game) != 0 {
+        if ({ let (actor, amount) = (k, ((*E).var_A as i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             (*E).var_03 = 0;
             if ((*E).parameter_1 & 0x8000) != 0 {
                 EnemyScript::jump(addr_kTorizo_Ilist_BD0E as u16)
@@ -1022,7 +1030,7 @@ crate::game::callback_dispatch! {
                 EnemyScript::jump(addr_kTorizo_Ilist_C188 as u16)
             }
         } else {
-            EnemyFunc_C8AD(k, game);
+            ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
             if (((*E).parameter_1 as i32
                 ^ word!(game.samus_x_pos) as i32 - (*E).base.x_pos as i32)
                 & 0x8000)
@@ -1045,7 +1053,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11191655] Torizo_Instr_14 [EnemyScript::jump(jp.word(0))] {
-        if CompareDistToSamus_X(k, 0x38, game) & 1 != 0 {
+        if ({ let (actor, threshold) = (k, 0x38); let delta = actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X); u8::from((delta as i16).wrapping_abs() as u16 >= threshold) }) & 1 != 0 {
             return jp.offset(1);
         }
         let E = Get_Torizo(k as i32, game);
@@ -1060,7 +1068,7 @@ crate::game::callback_dispatch! {
             as c_long as u16;
     };
     [11191691] Torizo_Instr_15 [EnemyScript::jump(jp.word(0))] {
-        if CompareDistToSamus_X(k, 0x20, game) & 1 != 0 || (Torizo_Func_12(k, game) & 0x8000) != 0 {
+        if ({ let (actor, threshold) = (k, 0x20); let delta = actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X); u8::from((delta as i16).wrapping_abs() as u16 >= threshold) }) & 1 != 0 || (Torizo_Func_12(k, game) & 0x8000) != 0 {
             return jp.offset(1);
         }
         Torizo_C22D(k, game);
@@ -1160,8 +1168,8 @@ crate::game::callback_dispatch! {
     };
     [11195370] Torizo_Instr_49 [EnemyScript::jump(jp.word(0))] {
         if (Torizo_Func_12(k, game) & 0x8000) == 0
-            || CompareDistToSamus_X(k, 4, game) & 1 == 0
-            || CompareDistToSamus_X(k, 0x28, game) & 1 != 0
+            || ({ let (actor, threshold) = (k, 4); let delta = actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X); u8::from((delta as i16).wrapping_abs() as u16 >= threshold) }) & 1 == 0
+            || ({ let (actor, threshold) = (k, 0x28); let delta = actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X); u8::from((delta as i16).wrapping_abs() as u16 >= threshold) }) & 1 != 0
             || word!(game.samus_pose) as i32 != kPose_1D_FaceR_Morphball_Ground as i32
                 && word!(game.samus_pose) as i32 != kPose_1E_MoveR_Morphball_Ground as i32
                 && word!(game.samus_pose) as i32 != kPose_1F_MoveL_Morphball_Ground as i32
@@ -1179,8 +1187,8 @@ crate::game::callback_dispatch! {
     };
     [11195461] Torizo_Instr_53 [EnemyScript::jump(jp.word(0))] {
         if (Torizo_Func_12(k, game) & 0x8000) != 0
-            || CompareDistToSamus_X(k, 0x20, game) & 1 == 0
-            || CompareDistToSamus_X(k, 0x60, game) & 1 != 0
+            || ({ let (actor, threshold) = (k, 0x20); let delta = actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X); u8::from((delta as i16).wrapping_abs() as u16 >= threshold) }) & 1 == 0
+            || ({ let (actor, threshold) = (k, 0x60); let delta = actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X); u8::from((delta as i16).wrapping_abs() as u16 >= threshold) }) & 1 != 0
             || (NextRandom(game) & 0x110) != 0
         {
             return jp.offset(1);
@@ -1209,7 +1217,7 @@ crate::game::callback_dispatch! {
             as c_long as u16;
     };
     [11195578] Torizo_Instr_50 [EnemyScript::jump(jp.word(0))] {
-        if CompareDistToSamus_X(k, 0x70, game) & 1 == 0 {
+        if ({ let (actor, threshold) = (k, 0x70); let delta = actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X); u8::from((delta as i16).wrapping_abs() as u16 >= threshold) }) & 1 == 0 {
             return jp.offset(1);
         }
         if (Torizo_Func_12(k, game) & 0x8000) != 0 {
@@ -1230,7 +1238,7 @@ crate::game::callback_dispatch! {
     [11195645] Torizo_Instr_51 [EnemyScript::jump(jp.word(0))] {
         let E = Get_Torizo(k as i32, game);
         if (*E).var_09 < 8
-            && (CompareDistToSamus_X(k, 0x20, game) & 1 != 0
+            && (({ let (actor, threshold) = (k, 0x20); let delta = actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X); u8::from((delta as i16).wrapping_abs() as u16 >= threshold) }) & 1 != 0
                 || (Torizo_Func_12(k, game) & 0x8000) != 0)
         {
             return jp.offset(1);
@@ -1257,7 +1265,7 @@ crate::game::callback_dispatch! {
     [11195725] Torizo_Instr_54 [] {
         let E = Get_Torizo(k as i32, game);
         (*E).var_A = g_word_AAD59A[(jp.word(0) >> 1) as usize] as u16;
-        if Enemy_MoveRight_IgnoreSlopes(k, ((*E).var_A as i16 as i32) << 16, game) != 0 {
+        if ({ let (actor, amount) = (k, ((*E).var_A as i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             (*E).var_03 = 0;
             if ((*E).parameter_1 & 0x8000) != 0 {
                 EnemyScript::jump(addr_kTorizo_Ilist_D203 as u16)
@@ -1265,7 +1273,7 @@ crate::game::callback_dispatch! {
                 EnemyScript::jump(addr_kTorizo_Ilist_D2BF as u16)
             }
         } else {
-            EnemyFunc_C8AD(k, game);
+            ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
             if (((*E).parameter_1 as i32
                 ^ word!(game.samus_x_pos) as i32 - (*E).base.x_pos as i32)
                 & 0x8000)
@@ -1335,11 +1343,7 @@ crate::game::callback_dispatch! {
     [11199887] Shaktool_Instr_12 [jp.offset(1)] {
         let e = Get_Shaktool(k as i32, game);
         let arg: u16 = jp.word(0);
-        CalculateBlockContainingPixelPos(
-            ((*e).base.x_pos).wrapping_add(arg),
-            ((*e).base.y_pos).wrapping_add(28),
-            game,
-        );
+        ({ let (x, y) = (((*e).base.x_pos).wrapping_add(arg), ((*e).base.y_pos).wrapping_add(28)); actor_api::select_block_at(&mut Runtime::new(game), crate::game::session::Point { x, y }) });
         if (*(ram_ptr!(game, u16; 0x10002)).offset(
             (word!(game.room_width_in_blocks) as i32 + word!(game.cur_block_index) as i32)
                 as isize,
@@ -1357,23 +1361,15 @@ crate::game::callback_dispatch! {
     [11199960] Shaktool_Instr_7 [jp.offset(1)] {
         let E = Get_Shaktool(k as i32, game);
         (*E).var_C = jp.word(0);
-        Enemy_MoveRight_IgnoreSlopes(
-            k,
-            (crate::rtl::rom_table_word!(game, 0xaae630, ((*E).var_C >> 1) as isize) as i16 as i32)
-                << 8,
-            game,
-        );
-        Enemy_MoveDown(
-            k,
-            (abs16(crate::rtl::rom_table_word!(
+        ({ let (actor, amount) = (k, (crate::rtl::rom_table_word!(game, 0xaae630, ((*E).var_C >> 1) as isize) as i16 as i32)
+                << 8); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 });
+        ({ let (actor, amount) = (k, (abs16(crate::rtl::rom_table_word!(
                 game,
                 0xaae630,
                 ((*E).var_C >> 1) as isize
             )) as i16 as i32)
-                << 8,
-            game,
-        );
-        EnemyFunc_C8AD(k, game);
+                << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
+        ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
         let v6: i32 = (*E).var_C as i32 >> 1;
         word! { game;
             samus_x_pos = (crate::rtl::rom_table_word!(game, 0xaae670, v6 as isize))
@@ -1461,18 +1457,10 @@ crate::game::callback_dispatch! {
         let v12: u16 = (*E).base.y_pos;
         crate::update_place! { previous v11: u16 = (*E).base.x_pos => x_pos; }
         (*E).base.y_pos = y_pos;
-        if Enemy_MoveRight_IgnoreSlopes(
-            k,
-            ((((v11) as i16).wrapping_sub((x_pos) as i16)) as i32) << 16,
-            game,
-        ) != 0
+        if ({ let (actor, amount) = (k, ((((v11) as i16).wrapping_sub((x_pos) as i16)) as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
             || {
                 (*E).base.y_pos = y_pos;
-                Enemy_MoveDown(
-                    k,
-                    ((((v12) as i16).wrapping_sub((y_pos) as i16)) as i32) << 16,
-                    game,
-                ) != 0
+                ({ let (actor, amount) = (k, ((((v12) as i16).wrapping_sub((y_pos) as i16)) as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
             }
         {
             if ((*E).parameter_1 & 0x2000) != 0 {
@@ -1493,7 +1481,7 @@ crate::game::callback_dispatch! {
                 );
             }
             (*E).var_D = 0;
-            let v5: u16 = CalculateAngleOfEnemyXfromEnemyY(k, (*E).var_E, game);
+            let v5: u16 = ({ let (actor, target) = (k, (*E).var_E); actor_api::angle_between(&Runtime::new(game), Key::from_legacy(actor), Key::from_legacy(target)) });
             let mut v7: i16 = ((v5 as i32) << 8) as i16;
             let mut v8: u16 = if ((*E).parameter_1 & 0x8000) != 0 {
                 ((v7) as u16).wrapping_sub(0x4000)

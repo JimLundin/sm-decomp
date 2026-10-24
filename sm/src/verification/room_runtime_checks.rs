@@ -91,6 +91,10 @@ pub(crate) fn run() -> bool {
         constructors();
         round_trip(fixture::binding(false));
         mismatch();
+        #[cfg(sm_verify_dll)]
+        crate::game::actors::verify_runtime_ownership();
+        #[cfg(sm_verify_dll)]
+        crate::game::actors::mutable_content_checks::run_checked();
     }))
     .is_ok()
 }

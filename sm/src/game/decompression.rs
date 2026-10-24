@@ -33,6 +33,7 @@ pub(super) fn next_byte(game: &mut Game) -> u8 {
 struct RamOutput<'a> {
     game: &'a mut Game,
     base: usize,
+    produced: usize,
 }
 impl Output for RamOutput<'_> {
     fn next_byte(&mut self) -> u8 {
@@ -43,18 +44,21 @@ impl Output for RamOutput<'_> {
     }
     fn write(&mut self, position: i32, value: u8, _back_reference: bool) {
         self.game.g_ram[self.base.checked_add_signed(position as isize).unwrap()] = value;
+        self.produced = self
+            .produced
+            .max(usize::try_from(position).expect("RAM output position") + 1);
     }
 }
 
-pub(crate) fn decompress_to_ram(source: u32, destination: usize, game: &mut Game) {
+pub(crate) fn decompress_to_ram(source: u32, destination: usize, game: &mut Game) -> usize {
     game.decompress_src = source;
-    decode(
-        0,
-        &mut RamOutput {
-            game,
-            base: destination,
-        },
-    );
+    let mut output = RamOutput {
+        game,
+        base: destination,
+        produced: 0,
+    };
+    decode(0, &mut output);
+    output.produced
 }
 
 pub(super) fn decode(start: i32, output: &mut impl Output) {

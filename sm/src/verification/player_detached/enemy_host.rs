@@ -31,7 +31,7 @@ impl ImportedAliases for Composed {
         panic!("unprepared enemy operation: behavior_byte")
     }
 }
-impl ActorAccess for Composed {
+impl SpeciesActors for Composed {
     fn mini_kraid_spit_x_velocity(&self, index: u16) -> u16 {
         panic!("unprepared enemy operation: mini_kraid_spit_x_velocity")
     }
@@ -43,65 +43,6 @@ impl ActorAccess for Composed {
     }
     fn kraid_unk9000(&self) -> u16 {
         panic!("unprepared enemy operation: kraid_unk9000")
-    }
-    fn enemy_x(&self, index: u16) -> u16 {
-        panic!("unprepared enemy operation: enemy_x")
-    }
-    fn enemy_y(&self, index: u16) -> u16 {
-        panic!("unprepared enemy operation: enemy_y")
-    }
-    fn enemy_x_fraction(&self, index: u16) -> u16 {
-        panic!("unprepared enemy operation: enemy_x_fraction")
-    }
-    fn enemy_y_fraction(&self, index: u16) -> u16 {
-        panic!("unprepared enemy operation: enemy_y_fraction")
-    }
-    fn enemy_definition(&self, index: u16) -> u16 {
-        panic!("unprepared enemy operation: enemy_definition")
-    }
-    fn enemy_width(&self, index: u16) -> u16 {
-        panic!("unprepared enemy operation: enemy_width")
-    }
-    fn enemy_height(&self, index: u16) -> u16 {
-        panic!("unprepared enemy operation: enemy_height")
-    }
-    fn enemy_properties(&self, index: u16) -> u16 {
-        panic!("unprepared enemy operation: enemy_properties")
-    }
-    fn enemy_parameter_1(&self, index: u16) -> u16 {
-        panic!("unprepared enemy operation: enemy_parameter_1")
-    }
-    fn enemy_parameter_2(&self, index: u16) -> u16 {
-        panic!("unprepared enemy operation: enemy_parameter_2")
-    }
-    fn enemy_ai_a(&self, index: u16) -> u16 {
-        panic!("unprepared enemy operation: enemy_ai_a")
-    }
-    fn enemy_ai_d(&self, index: u16) -> u16 {
-        panic!("unprepared enemy operation: enemy_ai_d")
-    }
-    fn enemy_ai_preinstr(&self, index: u16) -> u16 {
-        panic!("unprepared enemy operation: enemy_ai_preinstr")
-    }
-    fn enemy_ai_var_B(&self, index: u16) -> u16 {
-        panic!("unprepared enemy operation: enemy_ai_var_B")
-    }
-    fn enemy_flash_timer(&self, index: u16) -> u16 {
-        panic!("unprepared enemy operation: enemy_flash_timer")
-    }
-    fn enemy_health(&self, index: u16) -> u16 {
-        panic!("unprepared enemy operation: enemy_health")
-    }
-    fn enemy_tile(&self, index: u16) -> u16 {
-        assert_eq!(index, 0);
-        0
-    }
-    fn enemy_palette(&self, index: u16) -> u16 {
-        assert_eq!(index, 0);
-        0
-    }
-    fn set_enemy_health(&mut self, index: u16, value: u16) {
-        panic!("unprepared enemy operation: set_enemy_health")
     }
     fn nuclear_waffle_part_offset(&self, index: u16) -> u16 {
         panic!("unprepared enemy operation: nuclear_waffle_part_offset")
@@ -240,9 +181,6 @@ impl ActorAccess for Composed {
     }
     fn maw_palette(&self, enemy: u16) -> u16 {
         panic!("unprepared enemy operation: maw_palette")
-    }
-    fn maw_frozen_timer(&self, enemy: u16) -> u16 {
-        panic!("unprepared enemy operation: maw_frozen_timer")
     }
     fn expanding_square_origin(&self) -> u16 {
         panic!("unprepared enemy operation: expanding_square_origin")
