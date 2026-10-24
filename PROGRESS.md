@@ -30,7 +30,7 @@ flowchart LR
     AU["4,668 new bytes / union 57,041<br/>shared player scope audit PASS"]:::done --> AD
     AI["Per-instance appearance + lifecycle<br/>independent review PASS"]:::done --> AD
     AR["Typed read lookup + guarded edits<br/>design review PASS"]:::done --> AD
-    AP["Production +4,998 / verification +5,379<br/>accounting + retirement audit PASS"]:::done --> AD
+    AP["Production +4,998 / verification +5,385<br/>accounting + retirement audit PASS"]:::done --> AD
     AD --> AS["state.rs + codec.rs"]:::draft
     AD --> AV["access.rs / typed reads + edits"]:::draft
     AD --> AE["content.rs + effects.rs"]:::draft
@@ -69,12 +69,15 @@ flowchart LR
     AB --> AROUTEBUILD["Composed route / normal library + DLL<br/>format + compile PASS"]:::done
     AROUTEBUILD --> AROUTE["Two-room routes / cases 12 + 13<br/>execution + byte audit PASS"]:::done
     AROUTE --> AOLDWORLD["11 existing supplied-world routes<br/>byte-identical"]:::done
-    AVERIFY --> MUTWIRE["Hosted runner / 56 old + 17 new faults<br/>CI running / ed447a34"]:::active
+    AVERIFY --> MUTWIRE["Hosted / 48 detections audited<br/>25 DLL faults pending / 23780fd9"]:::active
+    MUTWIRE --> AHF["First CI / animation harness<br/>compile FAIL"]:::failed
+    AHF --> AHFIX["Shared crate-root declarations<br/>all 3 harnesses compile PASS"]:::done
+    AHFIX --> AHRUN["Full CI rerun<br/>build + 73 mutations"]:::active
     ADLL --> AORACLE["21,015 frames / 10 probes<br/>0 failures + 120-frame tail / PASS"]:::done
     ADLL --> KWRITE["Kraid live-definition write + consumer<br/>PASS"]:::done
     KWRITE --> KRESTORE["Actual CPU snapshot restore<br/>definition retained / PASS"]:::done
     KRESTORE --> KRESET["Actual reset + seeded consumer<br/>definition retained / PASS"]:::done
-    AB --> ACONTRACT["18 detached contract tests<br/>compile PASS / execution pending"]:::draft
+    AB --> ACONTRACT["18 detached contract tests<br/>hosted execution PASS"]:::done
     AXTABLE --> AVERIFY
     AXAUDIT --> AVERIFY["Actual routes + oracle + mutations"]:::pending
     AV --> BORROW["Actual state/access compiler carrier<br/>positive control PASS"]:::done
@@ -84,9 +87,9 @@ flowchart LR
     BORROW --> BCOPY["Actor move out of view<br/>compiler rejects / PASS"]:::done
     BORROW --> BSCOPY["Spawn move out of view<br/>compiler rejects / PASS"]:::done
     AVERIFY --> AA["Caller retirement + adoption"]:::pending
-    AVERIFY --> MUTRECIPES["9 fault recipes authored<br/>execution pending"]:::draft
-    MUTRECIPES --> MUTBASE["Mutation baselines"]:::pending
-    MUTBASE --> MUTBUILD["Compile faulty variants"]:::pending
+    AVERIFY --> MUTRECIPES["17 unique actor faults<br/>6 detected / 11 pending"]:::active
+    MUTRECIPES --> MUTBASE["Detached baselines PASS<br/>DLL baselines pending"]:::active
+    MUTBASE --> MUTBUILD["Mutant compilation<br/>detached PASS / DLL pending"]:::active
     MUTBUILD --> MF1["Multipart stop"]:::pending
     MUTBUILD --> MF2["Birth publication"]:::pending
     MUTBUILD --> MF3["Live selector"]:::pending
@@ -95,8 +98,16 @@ flowchart LR
     MUTBUILD --> MF6["Unwind identity"]:::pending
     MUTBUILD --> MF7["Alias publication"]:::pending
     MUTBUILD --> MF8["Skin / collision independence"]:::pending
-    MUTBUILD --> MF9["Discarded-future handles"]:::pending
-    class AOLDWORLD changed
+    MUTBUILD --> MF9["Discarded-future handles<br/>KILLED"]:::done
+    MUTBUILD --> MFROW["Old palette receipts<br/>KILLED"]:::done
+    MUTBUILD --> MFRES["Skip appearance residency<br/>KILLED"]:::done
+    MUTBUILD --> MFEDIT["Discard guarded edits<br/>KILLED"]:::done
+    MUTBUILD --> MFDAFF["Retire converted occurrence<br/>KILLED"]:::done
+    MUTBUILD --> MFMEDIA["Omit default appearance revision<br/>KILLED"]:::done
+    MUTBUILD --> MFRENDER["Flash / frozen palette bits"]:::pending
+    MUTBUILD --> MFKWRITE["Kraid live shot-gate write"]:::pending
+    MUTBUILD --> MFKREAD["Contact reads live shot gate"]:::pending
+    class AP,MUTWIRE,AHF,AHFIX,AHRUN,ACONTRACT,MUTRECIPES,MUTBASE,MUTBUILD,MF9,MFROW,MFRES,MFEDIT,MFDAFF,MFMEDIA,MFRENDER,MFKWRITE,MFKREAD changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

@@ -470,11 +470,17 @@ references; measure build/test time and resource growth before changing the loop
    and initialized Kraid case11 pass on this source. All11existing supplied-world
    routes also remain byte-identical to their adopted captures. Ordinary library compilation
    passes after verification cfg fixes. Candidate ed447a34 is published only on
-   verify/owned-actors-20261024. Hosted CI40055904563 runs56existing plus17unique
-   actor faults (F9 shares the epoch fault); no mutation kill claimed yet. Selected
+   verify/owned-actors-20261024. Hosted CI40055904563 passes18actor contract tests
+   and48audited mutation detections (42existing+6actor, F9 counted once), then fails
+   compiling the adjacent animation harness. Shared declarations now live at each
+   actual crate root; all3harnesses and player-test metadata compile. Verification-only
+   fix23780fd9 preserves the gameplay implementation; full CI40057364187 reruns all
+   checks, including25remaining DLL faults (14existing+11actor). Ordinary builds now
+   precede long mutations; measured prior35minute runtime warrants a60minute limit.
+   Selected
    ten-probe oracle replay passes21015frames with zero failures and120frames after
    actual Landing Site actor emission. Formatted production grows4998lines beyond
-   the earlier estimate; verificationRust grows5379separately. Independent cost and
+   the earlier estimate; verificationRust grows5385separately. Independent cost and
    complete caller-retirement audit passes. This is ownership migration, not a net
    source reduction: actor rules3187lines, state/access/codec910, content/identity/
    media2162 and actor adapters/API1160 replace3351old module/bank lines, with930
