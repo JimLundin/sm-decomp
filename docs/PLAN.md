@@ -459,7 +459,11 @@ references; measure build/test time and resource growth before changing the loop
    passes. Added Kraid actual writer/consumer and initialized CPU snapshot/reset checks
    pass at sourceb67f3432: the live definition survives both actual transitions. The
    post-reset consumer reseeds its RAM inputs; this is not a CPU replay claim. Remaining
-   composed semantic routes, oracle segments and nine authored mutation faults are pending.
+   oracle segments and mutation execution are pending. Added real initializer,
+   single-angle-owner and contact/appearance baselines pass at sourcefc41c0af;
+   independent audit confirms the seven expected panics and successful return.
+   All79comparisons remain byte-identical with these verification hooks installed.
+   Composed production staging/two-room route source review passes; execution pending.
    Preserve56existing mutants and add the
    nine selected actor faults, including discarded-future handle rejection.
    Scope includes population/assets, spawn/respawn/death, separate select/update,

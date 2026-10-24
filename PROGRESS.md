@@ -30,7 +30,7 @@ flowchart LR
     AU["4,668 new bytes / union 57,041<br/>shared player scope audit PASS"]:::done --> AD
     AI["Per-instance appearance + lifecycle<br/>independent review PASS"]:::done --> AD
     AR["Typed read lookup + guarded edits<br/>design review PASS"]:::done --> AD
-    AP["Full production cost reviewed<br/>estimate +973..3,105 lines"]:::done --> AD
+    AP["Production estimate +973..3,105 lines<br/>final formatted recount pending"]:::draft --> AD
     AD --> AS["state.rs + codec.rs"]:::draft
     AD --> AV["access.rs / typed reads + edits"]:::draft
     AD --> AE["content.rs + effects.rs"]:::draft
@@ -60,6 +60,13 @@ flowchart LR
     ACAUDIT --> AVERIFY
     ADLL --> ARUN["5 ownership / prepared-media cases<br/>actual execution PASS"]:::done
     ADLL --> ASHARED["6 shared Runtime guards<br/>PASS"]:::done
+    ADLL --> AINIT["Real spawn + nested initializer<br/>publication / unwind baseline PASS"]:::done
+    ADLL --> AANGLE["18 angle aliases / foreign + drop<br/>single-owner baseline PASS"]:::done
+    ADLL --> ACONTACT["Touch alias + two-skin collision<br/>baseline PASS"]:::done
+    AINIT --> AHOOK["Observer hooks / 79 comparisons<br/>byte-identical"]:::done
+    AANGLE --> AHOOK
+    ACONTACT --> AHOOK
+    AB --> AROUTE["Production staging + two-room route<br/>source review PASS / execution pending"]:::draft
     ADLL --> KWRITE["Kraid live-definition write + consumer<br/>PASS"]:::done
     KWRITE --> KRESTORE["Actual CPU snapshot restore<br/>definition retained / PASS"]:::done
     KRESTORE --> KRESET["Actual reset + seeded consumer<br/>definition retained / PASS"]:::done
@@ -85,7 +92,7 @@ flowchart LR
     MUTBUILD --> MF7["Alias publication"]:::pending
     MUTBUILD --> MF8["Skin / collision independence"]:::pending
     MUTBUILD --> MF9["Discarded-future handles"]:::pending
-    class ACAUDIT,KWRITE,KRESTORE,KRESET,MUTRECIPES changed
+    class AP,AINIT,AANGLE,ACONTACT,AHOOK,AROUTE changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
