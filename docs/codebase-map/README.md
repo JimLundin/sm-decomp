@@ -2,6 +2,10 @@
 
 [Open the interactive map](https://jimlundin.github.io/sm-decomp/).
 
+The five-box work summary shows the two current tracks, next step and engine target.
+`work-summary.svg` is shared with `PROGRESS.md`; update it with the milestone that
+changes the work. The generator embeds the SVG and its accessible description.
+
 Start with gameplay responsibilities. Tile area represents production Rust lines;
 colour and the bottom strip show Owned / Partly owned / Legacy. Open a tile for
 its files, then a file for incoming users and outgoing references. Select an edge

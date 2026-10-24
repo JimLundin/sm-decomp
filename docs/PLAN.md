@@ -32,8 +32,9 @@ start falling; a docs-only commit needs a code commit beside it. Direct user ins
 **Codebase map:** the [simplified view](https://jimlundin.github.io/sm-decomp/)
 shows gameplay responsibilities and owned / partly / legacy status, with support
 files hidden and contextual dependencies. Desktop/phone checks pass locally.
-Pages generates from HEAD; do not commit generated HTML or JSON. Current work
-links to PROGRESS. One map agent owns any further user-requested changes.
+The five-box current-work graph above the map is also shown in PROGRESS; update
+its shared SVG with adopted milestones. Pages generates from HEAD; do not commit
+generated HTML or JSON. One map agent owns further user-requested changes.
 
 **Local validation:** do not rely on or routinely observe CI. Use hosted checks
 only for explicitly selected research/experiments that cannot run on this Windows

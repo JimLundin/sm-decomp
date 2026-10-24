@@ -22,6 +22,8 @@ with sync_playwright() as playwright:
     page.goto((root / "index.html").as_uri())
     page.wait_for_function("window.atlas && window.atlas.data.files.length > 300")
     assert page.evaluate("new Set(atlas.data.files.map(f => f.id)).size === atlas.data.files.length")
+    expect(page.locator("#work-summary")).to_be_visible()
+    assert page.locator("#work-summary").evaluate("image => image.complete && image.naturalWidth > 0")
     expect(page.get_by_test_id("responsibility-tile")).to_have_count(10)
     assert page.evaluate("[...document.querySelectorAll('.responsibility-tile')].every(n=>n.getBoundingClientRect().bottom<=innerHeight)")
     assert page.locator(".overview-next .tension-card").count() <= 3
