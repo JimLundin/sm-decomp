@@ -463,7 +463,12 @@ references; measure build/test time and resource growth before changing the loop
    single-angle-owner and contact/appearance baselines pass at sourcefc41c0af;
    independent audit confirms the seven expected panics and successful return.
    All79comparisons remain byte-identical with these verification hooks installed.
-   Composed production staging/two-room route source review passes; execution pending.
+   Composed production staging/two-room route builds (source5d09a1b8), including
+   ordinary library compilation after verification cfg fixes. Actual case12 aborts:
+   fixture AI bank A0/804C is not a valid dispatch; correcting the fixture's bank
+   and dependent script/media addresses before rerunning. Earlier source review
+   missed this distinction. Hosted runner integration preserves56existing faults
+   and adds17unique actor faults (F9 shares the epoch fault); execution pending.
    Preserve56existing mutants and add the
    nine selected actor faults, including discarded-future handle rejection.
    Scope includes population/assets, spawn/respawn/death, separate select/update,

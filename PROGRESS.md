@@ -66,7 +66,9 @@ flowchart LR
     AINIT --> AHOOK["Observer hooks / 79 comparisons<br/>byte-identical"]:::done
     AANGLE --> AHOOK
     ACONTACT --> AHOOK
-    AB --> AROUTE["Production staging + two-room route<br/>source review PASS / execution pending"]:::draft
+    AB --> AROUTEBUILD["Composed route / normal library + DLL<br/>format + compile PASS"]:::done
+    AROUTEBUILD --> AROUTE["Two-room route / case 12<br/>fixture callback abort / fixing"]:::failed
+    AVERIFY --> MUTWIRE["Hosted runner / 56 old + 17 new faults<br/>integrated / source review PASS"]:::draft
     ADLL --> KWRITE["Kraid live-definition write + consumer<br/>PASS"]:::done
     KWRITE --> KRESTORE["Actual CPU snapshot restore<br/>definition retained / PASS"]:::done
     KRESTORE --> KRESET["Actual reset + seeded consumer<br/>definition retained / PASS"]:::done
@@ -92,7 +94,7 @@ flowchart LR
     MUTBUILD --> MF7["Alias publication"]:::pending
     MUTBUILD --> MF8["Skin / collision independence"]:::pending
     MUTBUILD --> MF9["Discarded-future handles"]:::pending
-    class AP,AINIT,AANGLE,ACONTACT,AHOOK,AROUTE changed
+    class AROUTEBUILD,AROUTE,MUTWIRE changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
