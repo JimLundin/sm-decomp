@@ -30,29 +30,35 @@ flowchart LR
     RR["36 room + 20 contact/start references<br/>execution + independent audit PASS"]:::done --> RI["Production contact / start / IRQ<br/>parallel implementation"]:::active
     RD --> RB["Declaration compile<br/>PASS"]:::done --> RS["Remove duplicate representations<br/>52 → 19 host methods"]:::done
     RS --> RV["25-file revised interface<br/>review + compile PASS"]:::done --> RI
-    RI --> RW["world.rs / immutable bindings"]:::active
-    RI --> RCONTENT["content.rs / live captures"]:::active
-    RI --> RSTATE["state.rs / 82 room + 2 shared bytes"]:::active
-    RI --> RCODEC["session_encoding.rs / one projection"]:::active
+    RI --> RW["world.rs / immutable bindings"]:::draft
+    RI --> RCONTENT["content.rs / live captures"]:::draft
+    RI --> RSTATE["state.rs / 82 room + 2 shared bytes"]:::draft
+    RI --> RCODEC["session_encoding.rs / one projection"]:::draft
     RI --> ROWNER["game_state.rs / supplied world"]:::draft
     RI --> RSELECT["selection.rs"]:::draft
     RI --> RINSTALL["installation.rs"]:::draft
     ROWNER --> ROWNERCHECK["Constructor + lifecycle<br/>source review PASS"]:::done
     RSELECT --> RSELECTCHECK["Selection + partial writes<br/>source review PASS"]:::done
     RINSTALL --> RINSTALLCHECK["Installation + retained captures<br/>source review PASS"]:::done
-    RI --> RPROTO["protocol.rs / suspend + resume"]:::active
-    RI --> RBG["background.rs"]:::active
-    RI --> RCOMPAT["compatibility.rs / actual callers"]:::active
-    RI --> RPLM["creation.rs / shared door inputs"]:::active
+    RI --> RPROTO["protocol.rs / suspend + resume"]:::draft
+    RI --> RBG["background.rs"]:::draft
+    RI --> RCOMPAT["compatibility.rs / actual callers"]:::draft
+    RI --> RPLM["creation.rs / shared door inputs"]:::draft
     RI --> RT["Supplied topology / actual callers<br/>verification pending"]:::pending
     ROWNERCHECK --> RT
     RSELECTCHECK --> RT
     RINSTALLCHECK --> RT
     RBG --> RBPLAN["37 background / scroll / DMA cases<br/>plan review PASS"]:::done
-    RBPLAN --> RBFIX["Actual-device fixtures<br/>implementation"]:::active
-    RBFIX --> RBCAP["Reference capture + audit<br/>pending"]:::pending
+    RBPLAN --> RBFIX["Actual-device fixtures<br/>37 cases / source review PASS"]:::done
+    RBFIX --> RBCAP["37 reference captures<br/>execution + byte audit PASS"]:::done
+    RI --> RBUILD["Combined candidate<br/>format + build PASS"]:::done
+    RBUILD --> RCOMPARE["Room / contact / start<br/>56 comparisons match"]:::done
+    RCODEC --> RGUARD["Runtime + world ownership<br/>execution PASS"]:::done
+    RBCAP --> RBVERIFY["Replacement background comparisons<br/>pending"]:::pending
+    RCOMPARE --> RT
+    RGUARD --> RT
     RT --> RMUT["Room mutation execution<br/>pending"]:::pending
-    class ROWNER,RSELECT,RINSTALL,ROWNERCHECK,RSELECTCHECK,RINSTALLCHECK,RBPLAN,RBFIX,RBCAP,RMUT changed
+    class RW,RCONTENT,RSTATE,RCODEC,RPROTO,RBG,RCOMPAT,RPLM,RBFIX,RBCAP,RBUILD,RCOMPARE,RGUARD,RBVERIFY changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

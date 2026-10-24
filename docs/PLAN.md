@@ -452,6 +452,18 @@ references; measure build/test time and resource growth before changing the loop
    using actual devices and ordered register observations with isolated cases.
    Preserve existing56references and level-copy cases; no new mutation kills
    or production adoption are claimed from these source reviews.
+   Complete private candidate now compiles after an omitted background-pattern
+   field was fixed and the actual load-station caller was redirected. Root
+   formatting and direct verifier build pass (32.62s), source819390db; all56
+   room/contact/start comparisons match frozen bytes and the actual Runtime/world
+   ownership guard passes. Background predecessor sourcea1633c09 passes37cases,
+   56unchanged references and3level-copy checks; independent audit includes full
+   RAM/VRAM, ordered effects and66intermediate DMA snapshots. Replacement background
+   comparisons, full prepared routes and new mutations remain pending. Prepared
+   hardware fixtures required valid room geometry and music setup corrections;
+   these are not execution passes. Preliminary new room module is3795production
+   lines, above the earlier estimate; final complete accounting/repricing is
+   required before adoption. No reduction or persistent-Session claim.
    Reuse current owners;84additional disjoint bytes comprise82room-related bytes
    and two shared lossless continuation bytes (proposed union52,373). Retire the
    actual competing orchestration and stale door inputs in the same adoption.
