@@ -523,6 +523,14 @@ references; measure build/test time and resource growth before changing the loop
    independent verification covers candidate-owned state and ordered effects.
    The ported declaration-only candidate must not execute until stubs are replaced.
    Preserve74fc9 and9sixf predecessor batches, all actor fixes and runtime guards.
+   Complete collision production draft and actual caller retirement are assembled.
+   Independent state, motion, pose/control, geometry and31Runtime-scope reviews pass.
+   Root formatting, normal and verifier library metadata, and detached test metadata
+   pass. Integration corrected two imports preceding module attributes and exposed
+   only the operation module crate-wide for existing verification callers.
+   Fifteen new detached tests and owned-state checks are compiled, not executed.
+   Reviewed geometry/motion branch probes are installed;83fixture adaptation,
+   final release DLL, comparisons, oracle and qualified mutations remain pending.
    Local compilation remains serialized.
    Added13verification Rust lines (complete actor increment5406), no gameplay.
    Ordinary builds now

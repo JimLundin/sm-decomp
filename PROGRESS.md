@@ -173,26 +173,28 @@ flowchart LR
     PCM --> PCMR["Motion / arithmetic source review PASS"]:::done
     PCP --> PCPR["Pose / control source review PASS"]:::done
     PCRT --> PCAR["Adapter / effect source review PASS"]:::done
-    PCG --> PCGR["Geometry arithmetic review"]:::active
-    PI --> PCAPI["operations.rs + effects.rs + mod.rs"]:::active
-    PCAPI --> PCCALL["33 bank routines / actual callers"]:::active
-    PCCALL --> PCDEL["2 contact modules + 3 actor helpers<br/>retirement pending"]:::pending
+    PCG --> PCGR["Geometry arithmetic source review PASS"]:::done
+    PI --> PCAPI["operations.rs + effects.rs + mod.rs"]:::draft
+    PCAPI --> PCCALL["33 bank routines / actual callers"]:::draft
+    PCCALL --> PCDEL["2 contact modules + 3 actor helpers<br/>retired in draft"]:::draft
     PWAUDIT --> PCOWN["Candidate ownership / ordering checks"]:::active
     PCOWN --> PCFAULT["Targeted mutation recipes"]:::active
-    PCIN --> PCMERGE["Combined candidate / no stubs"]:::pending
+    PCIN --> PCMERGE["Combined candidate / no stubs"]:::draft
     PCG --> PCMERGE
     PCM --> PCMERGE
     PCJ --> PCMERGE
     PCP --> PCMERGE
     PCRT --> PCMERGE
     PCDEL --> PCMERGE
-    PCMERGE --> PCFMT["Format + build"]:::pending
+    PCMERGE --> PCFMT["Format + normal / verifier metadata<br/>PASS"]:::done
+    PCFMT --> PCTESTMETA["Detached test metadata PASS<br/>15 new tests / execution pending"]:::done
+    PCFMT --> PCRELEASE["Final overlays + release DLL"]:::pending
     PCFMT --> PCCOMPARE["74 + 9 frozen comparisons"]:::pending
     PCFMT --> PCDET["Backend-free core checks"]:::pending
     PCFMT --> PCORACLE["Required oracle probes + effect tail"]:::pending
     PCFAULT --> PCMUT["Passing baseline + compiled fault<br/>intended assertion"]:::pending
     PCFMT --> PCMUT
-    class PCS,PCSE,PCIN,PCG,PCM,PCC,PCJ,PCP,PCRT,PCSR,PCMR,PCPR,PCAR,PCGR changed
+    class PCGR,PCAPI,PCCALL,PCDEL,PCMERGE,PCFMT,PCTESTMETA,PCRELEASE changed
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
