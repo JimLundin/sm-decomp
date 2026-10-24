@@ -210,7 +210,7 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-### Player animation + transitions / design
+### Player animation + transitions / verified draft
 
 ```mermaid
 flowchart LR
@@ -224,11 +224,22 @@ flowchart LR
     TA --> TR["Arbitration + pose + jump + history"]:::pending
     TH --> TR
     TU --> TUA["Capture + provenance audits PASS"]:::done
-    TUA --> TUD["Defined predecessor<br/>native-read correction"]:::active
-    TUD --> TV["Remaining predecessor families<br/>+ mutation checks"]:::pending
-    class TO,TC,TI,TU,TUA,TUD,TV changed
+    TUA --> TUD["Native-read correction / isolated draft<br/>format + normal + release build PASS"]:::done
+    TUD --> TUF["Attempt 1 / allocation preflight FAIL"]:::failed
+    TUF --> TUX["Exact loader extent + original spans<br/>review PASS"]:::done
+    TUX --> TUG["Attempt 2 / comparator mapping FAIL"]:::failed
+    TUG --> TUH["Separate snapshot / store tracking<br/>review PASS"]:::done
+    TUH --> TN["7 normalization comparisons<br/>PASS"]:::done
+    TUH --> TM["4 authored animation comparisons<br/>PASS"]:::done
+    TN --> TVAUD["Output + provenance audit"]:::active
+    TM --> TVAUD
+    TVAUD --> TV["36 remaining fixture families"]:::active
+    TVAUD --> TMT1["Metadata reload mutation<br/>reviewed / unrun"]:::pending
+    TVAUD --> TMT2["Animation mask mutation<br/>reviewed / unrun"]:::pending
+    class TUD,TUF,TUX,TUG,TUH,TN,TM,TVAUD,TV,TMT1,TMT2 changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
 ```

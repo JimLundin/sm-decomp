@@ -560,9 +560,20 @@ references; measure build/test time and resource growth before changing the loop
    remain explicit. The first capture rejected a known initialized speed hook;
    scoped original-byte restoration fixed setup without weakening opcode guards.
    Capture code and registrations add574verification/support Rust lines, with
-   no gameplay changes. Next prepare a defined predecessor using the existing
-   native-record reads, compare it to these references, then capture the remaining
-   transition families. Successful undefined-Rust captures remain inadmissible.
+   no gameplay changes. Isolated defined predecessor now passes formatting,
+   normal compilation, release DLL build and11fresh-child semantic comparisons
+   against these frozen CPU references on sourcedaa1de95. Ordered publications,
+   effects and qualified full RAM agree; CPU-only excluded bytes stay unchanged.
+   Attempt1 rejected a mistaken3MiB allocation precondition: the existing loader
+   mirrors the3MiB payload into4MiB. Reviewed correction checks exact loader
+   extents and same allocation while constraining selected reads to original data.
+   Attempt2 exposed shared snapshot/store-PC bookkeeping in the comparator;
+   separate tracking fixes it without changing expected observations or masks.
+   Both failures remain preserved. Output/provenance audit is pending; two targeted
+   mutation recipes are reviewed but unexecuted. Next capture the remaining36
+   transition families with per-family defined-path audits, then implement the
+   complete owned responsibility. No corrected gameplay is adopted yet.
+   Successful undefined-Rust captures remain inadmissible.
    Added13verification Rust lines (complete actor increment5406), no gameplay.
    Ordinary builds now
    precede long mutations; measured prior35minute runtime warrants a60minute limit.
