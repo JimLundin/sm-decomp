@@ -486,7 +486,13 @@ references; measure build/test time and resource growth before changing the loop
    19faults remain unexecuted. Actor identity cleanup now neutralizes this fault's
    post-Drop publication, so workers are adding a pre-Drop ownership witness while
    retaining the same mutation and all strict failure/byte checks. No kill is
-   credited for the survivor. Ordinary builds now
+   credited for the survivor. Verification fixefdd9cda observes Runtime before
+   Drop, with matching verifier configuration gates. Source review, normal library,
+   format and DLL/native/source checks pass;1440..1442 retain all frozen bytes and
+   exact expected diagnostics. Full CI40061379593 reruns73faults with initialized
+   checks selected; the corrected fault runs first after unchanged baselines.
+   Added13verification Rust lines (complete actor increment5406), no gameplay.
+   Ordinary builds now
    precede long mutations; measured prior35minute runtime warrants a60minute limit.
    Selected
    ten-probe oracle replay passes21015frames with zero failures and120frames after
@@ -525,7 +531,9 @@ references; measure build/test time and resource growth before changing the loop
    that lint. Exact known-good native input newlines restore source checks without
    changing the shared SDK. Final DLL/source/native checks pass onfc9eaf71;
    all74captures pass and13original world cases remain byte-identical (4063411bytes).
-   Independent execution audit continues. Corrected formatted accounting is2053
+   Independent execution audit passes all74captures/18089181bytes with source,
+   DLL, exact framing, expected diagnostics and decoded state witnesses checked.
+   Corrected formatted accounting is2053
    verification/support Rust lines, no gameplay changes; six ancillary native
    source/tool inputs differ only in newline bytes.
    Preserve56existing mutants and add the

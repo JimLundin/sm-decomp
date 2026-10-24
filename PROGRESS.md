@@ -30,7 +30,7 @@ flowchart LR
     AU["4,668 new bytes / union 57,041<br/>shared player scope audit PASS"]:::done --> AD
     AI["Per-instance appearance + lifecycle<br/>independent review PASS"]:::done --> AD
     AR["Typed read lookup + guarded edits<br/>design review PASS"]:::done --> AD
-    AP["Production +4,998 / verification +5,393<br/>accounting + retirement audit PASS"]:::done --> AD
+    AP["Production +4,998 / verification +5,406<br/>accounting + retirement audit PASS"]:::done --> AD
     AD --> AS["state.rs + codec.rs"]:::draft
     AD --> AV["access.rs / typed reads + edits"]:::draft
     AD --> AE["content.rs + effects.rs"]:::draft
@@ -76,7 +76,8 @@ flowchart LR
     ACFG --> ACFGLOCAL["Both modes compile + 3 captures<br/>configuration fix PASS"]:::done
     ACFGLOCAL --> AHOSTBUILD["Hosted full build + Cargo exports<br/>PASS"]:::done
     AHOSTBUILD --> AHRUN["Full CI / 50cec3e0 FAIL<br/>53 killed / 1 survived / 19 unrun"]:::failed
-    AHRUN --> ANATIVE["Unwind ownership witness<br/>observe before compensating cleanup"]:::active
+    AHRUN --> ANATIVE["Pre-Drop ownership witness<br/>review + compile + 3 baselines PASS"]:::done
+    ANATIVE --> ARETRY["Full CI / efdd9cda<br/>73 faults / active"]:::active
     ADLL --> AORACLE["21,015 frames / 10 probes<br/>0 failures + 120-frame tail / PASS"]:::done
     ADLL --> KWRITE["Kraid live-definition write + consumer<br/>PASS"]:::done
     KWRITE --> KRESTORE["Actual CPU snapshot restore<br/>definition retained / PASS"]:::done
@@ -111,7 +112,7 @@ flowchart LR
     MUTBUILD --> MFRENDER["Flash / frozen palette bits"]:::pending
     MUTBUILD --> MFKWRITE["Kraid live shot-gate write"]:::pending
     MUTBUILD --> MFKREAD["Contact reads live shot gate"]:::pending
-    class MUTWIRE,AHRUN,ANATIVE changed
+    class AP,ANATIVE,ARETRY changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -153,8 +154,8 @@ flowchart LR
     PFIX --> PFINAL["Format + DLL + native/source checks<br/>PASS"]:::done
     PFINAL --> PCAP["74 predecessor captures<br/>PASS"]:::done
     PFINAL --> POLD["13 original world cases<br/>byte-identical"]:::done
-    PCAP --> PEXEC["Execution evidence<br/>independent audit"]:::active
-    class PFIX,PFINAL,PCAP,POLD,PEXEC changed
+    PCAP --> PEXEC["74 captures / 18,089,181 bytes<br/>independent audit PASS"]:::done
+    class PEXEC changed
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
