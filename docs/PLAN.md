@@ -491,6 +491,8 @@ references; measure build/test time and resource growth before changing the loop
    format and DLL/native/source checks pass;1440..1442 retain all frozen bytes and
    exact expected diagnostics. Full CI40061379593 reruns73faults with initialized
    checks selected; the corrected fault runs first after unchanged baselines.
+   Its ordinary build, Cargo verifier/export check, detached mutations and
+   initialized-ROM setup pass; DLL mutation checks are running.
    Added13verification Rust lines (complete actor increment5406), no gameplay.
    Ordinary builds now
    precede long mutations; measured prior35minute runtime warrants a60minute limit.

@@ -77,7 +77,7 @@ flowchart LR
     ACFGLOCAL --> AHOSTBUILD["Hosted full build + Cargo exports<br/>PASS"]:::done
     AHOSTBUILD --> AHRUN["Full CI / 50cec3e0 FAIL<br/>53 killed / 1 survived / 19 unrun"]:::failed
     AHRUN --> ANATIVE["Pre-Drop ownership witness<br/>review + compile + 3 baselines PASS"]:::done
-    ANATIVE --> ARETRY["Full CI / efdd9cda<br/>73 faults / active"]:::active
+    ANATIVE --> ARETRY["Full CI / efdd9cda<br/>detached PASS / DLL faults active"]:::active
     ADLL --> AORACLE["21,015 frames / 10 probes<br/>0 failures + 120-frame tail / PASS"]:::done
     ADLL --> KWRITE["Kraid live-definition write + consumer<br/>PASS"]:::done
     KWRITE --> KRESTORE["Actual CPU snapshot restore<br/>definition retained / PASS"]:::done
@@ -112,7 +112,7 @@ flowchart LR
     MUTBUILD --> MFRENDER["Flash / frozen palette bits"]:::pending
     MUTBUILD --> MFKWRITE["Kraid live shot-gate write"]:::pending
     MUTBUILD --> MFKREAD["Contact reads live shot gate"]:::pending
-    class AP,ANATIVE,ARETRY changed
+    class ARETRY changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
