@@ -8,6 +8,12 @@ earlier versions; this file holds only current findings.
 
 ## Check-ins
 
+- **2026-10-24 20:52 (3222fe3):** 1 agent source commit since 674d87a (code,
+  −24 production, behaviour-equivalent helper reuse), 0 docs-only; no commits in
+  the last 50 min. Not a full stall, but **coverage stalled a third check-in**
+  (23/44, no recipe since 17:41) and throughput fell 4 → 1 commit. Production
+  117,662 (−24); verification 37,504, unsafe 4,982 flat; warnings 381 unique.
+  PLAN.md 202 lines (fixed). Map: SVG text only; re-rendered, fine on both widths.
 - **2026-10-24 19:55 (674d87a):** 4 agent source commits since f0f163d (3 code,
   1 map), 0 docs-only; no overall stall, but **coverage stalled**: 23/44 for a
   second check-in, no recipe commit since a56fdd1 (17:41). Production 117,869 →
@@ -39,7 +45,18 @@ earlier versions; this file holds only current findings.
   Adoption correctly held. Watch: corpus `.inputs` files are gitignored with
   only checksums committed; a fresh agent must be able to rebuild them.
 
-## Corpus watch (2026-10-24 19:55)
+## Corpus watch (2026-10-24 20:52)
+
+- Third flat check-in on coverage. The agents did what was asked on paper
+  (Power Bomb blocker recorded under item 1, Norfair Reserve named as the
+  nearest check) but no recipe landed. If the coverage agent is still running,
+  its next commit is the Norfair Reserve recipe or a written failure for it.
+- Consolidation pace (−24/hour) puts 110,000 about 30 hours away. The
+  projectile animation/trails state-access layer named in item 2 should land as
+  one commit that deletes a whole layer, not another line-level dedup.
+- Directive compressed by an agent (3222fe3): substance kept; accepted.
+
+## Corpus watch (2026-10-24 19:55, earlier)
 
 - Coverage track stalled two check-ins: no new passing check since 17:41, while
   the held snapshot-comparison draft waits on "another gameplay check". The
@@ -62,20 +79,6 @@ earlier versions; this file holds only current findings.
   a measured one would need the user's go-ahead.
 - PROGRESS.md's graph was rewritten again in its own commit (2f18ba6). Update
   it inside the code commit that changes the status, not separately.
-
-## Corpus watch (2026-10-24 16:52, earlier)
-
-- Good: one coverage route per commit, accounting in every message, no ROM
-  files, the single new production hook is `cfg`-gated and counted.
-- Verification cost: six checks cost ~1,100 bespoke Rust lines of episode
-  state machines in `verify.rs` (now 2,080). At that rate the remaining 22
-  add ~4,000. Express new checks as data in `movies/segments.toml` over the
-  existing episode kinds (door, item, boss death, save/continue); add a new
-  Rust episode only for a genuinely new kind of event.
-- The verifier's `#[test]` bodies were compiled but not run. Run them in the
-  local check (`cargo test` on the verifier module) before adding more.
-- PROGRESS.md's hand-edited mermaid graph is rewritten each milestone. Keep
-  it if the user likes it, but it must not grow beyond the five boxes.
 
 ## Codebase map (user request, 2026-10-24)
 

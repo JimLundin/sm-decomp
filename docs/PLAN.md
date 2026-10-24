@@ -21,9 +21,9 @@ preserve others' work. Do not delete another process's lock or force-push main.
 Read [the external review](REVIEW.md) next. Hygiene and process reduction are done.
 One agent expands checkpoint recipes; others consolidate exercised subsystems in
 parallel, naming coverage per commit. Prefer legacy-bank retirement; production
-must fall. A docs-only commit needs a code commit beside it. Coverage is stalled:
-land the nearest pending check from an existing endpoint before Power Bomb; record
-its blocker under item 1 if Power Bomb is not landed within an hour. Keep this plan
+must fall. A docs-only commit needs a code commit beside it. Coverage flat since
+17:41: the next coverage commit is the Norfair Reserve recipe or its exact failure
+under item 1. Next consolidation commit deletes a whole projectile layer. Keep this plan
 under ~200 lines, with current state and rules only; results belong in commits
 (at most ~8 lines). Direct user instructions take precedence. Historical queues,
 gates and results in [HISTORY.md](HISTORY.md) are not current rules.
