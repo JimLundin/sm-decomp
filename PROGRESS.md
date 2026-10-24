@@ -188,13 +188,15 @@ flowchart LR
     PCDEL --> PCMERGE
     PCMERGE --> PCFMT["Format + normal / verifier metadata<br/>PASS"]:::done
     PCFMT --> PCTESTMETA["Detached test metadata PASS<br/>15 new tests / execution pending"]:::done
-    PCFMT --> PCRELEASE["Final overlays + release DLL"]:::pending
-    PCFMT --> PCCOMPARE["74 + 9 frozen comparisons"]:::pending
+    PCFMT --> PCRELEASE["Final overlays + release DLL<br/>source / native checks PASS"]:::done
+    PCFMT --> PCCOMPARE["74 + 9 frozen comparisons<br/>20,448,594 bytes identical"]:::done
+    PCCOMPARE --> PCINVAR["3 actual Runtime invariants PASS"]:::done
+    PCCOMPARE --> PCOLD["13 old world / composed cases<br/>4,063,411 bytes identical"]:::done
     PCFMT --> PCDET["Backend-free core checks"]:::pending
-    PCFMT --> PCORACLE["Required oracle probes + effect tail"]:::pending
-    PCFAULT --> PCMUT["Passing baseline + compiled fault<br/>intended assertion"]:::pending
+    PCFMT --> PCORACLE["21,015 frames / 14 probes<br/>0 failures + 120-frame tail PASS"]:::done
+    PCFAULT --> PCMUT["Hosted CI / 91 selected faults<br/>running"]:::active
     PCFMT --> PCMUT
-    class PCGR,PCAPI,PCCALL,PCDEL,PCMERGE,PCFMT,PCTESTMETA,PCRELEASE changed
+    class PCRELEASE,PCCOMPARE,PCINVAR,PCOLD,PCORACLE,PCMUT changed
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a

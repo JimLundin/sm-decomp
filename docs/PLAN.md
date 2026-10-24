@@ -529,8 +529,19 @@ references; measure build/test time and resource growth before changing the loop
    pass. Integration corrected two imports preceding module attributes and exposed
    only the operation module crate-wide for existing verification callers.
    Fifteen new detached tests and owned-state checks are compiled, not executed.
-   Reviewed geometry/motion branch probes are installed;83fixture adaptation,
-   final release DLL, comparisons, oracle and qualified mutations remain pending.
+   Reviewed probes and83fixture adaptation are installed. Release DLL/native/source
+   checks pass after restoring six known-good newline encodings (no semantic/native
+   SDK change). All83cases match20,448,594bytes exactly on16fc5cfe; independent
+   execution audits pass. Three additive Runtime invariants97..99 pass on c4c70733,
+   including actualA7 and foreign-byte mutation followed by actual movement.
+   Production preservation and all old parsers are independently checked.
+   Existing13world/composed regressions match4,063,411bytes. Bounded clean-boot
+   oracle passes21,015frames,14required probes and120follow-up frames,0failures;
+   independent audit confirms actual terrain/door/horizontal paths,7rooms and
+   5definitions. No credits or unreported optional-branch coverage is claimed.
+   Candidate9b37afb1 is published on verify/owned-player-collision-20261024 only.
+   Full CI40068610664 runs91selected faults (73preserved+18new); formatting passes,
+   builds/mutations remain active. Adjacent Runtime guards remain to be completed.
    Local compilation remains serialized.
    Added13verification Rust lines (complete actor increment5406), no gameplay.
    Ordinary builds now
