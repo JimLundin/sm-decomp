@@ -3270,7 +3270,6 @@ pub unsafe fn Ridley_Func_93(j: u16, k: u16, game: &mut Game) {
     }
 }
 crate::forward_calls! { pub unsafe fn (game: &mut Game);
-    Ridley_Func_94 => Ridley_Func_D3DC(0, game);
     Ridley_Func_95 => Ridley_Func_D3DC(0x8000, game);
 }
 pub unsafe fn Ridley_Func_D3DC(a: u16, game: &mut Game) {
@@ -3837,21 +3836,6 @@ pub unsafe fn Ridley_Func_124(rect: Rect16U, game: &mut Game) -> u8 {
 }
 crate::forward_calls! { pub unsafe fn (game: &mut Game);
     sub_A6DF59 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
-    sub_A6DF60 => Ridley_Func_125(game);
-}
-pub unsafe fn Ridley_Func_125(game: &mut Game) {
-    unsafe {
-        Ridley_Func_98(game);
-        word!(game.samus_invincibility_timer = 96);
-        word!(game.samus_knockback_timer = 5);
-        word!(
-            game.knockback_x_dir = (((word!(game.samus_x_pos)) as i16).wrapping_sub(
-                ((*Get_Ridley(word!(game.cur_enemy_index) as i32, game))
-                    .base
-                    .x_pos) as i16,
-            ) >= 0) as u16
-        );
-    }
 }
 pub unsafe fn Ridley_Func_127(game: &mut Game) {
     unsafe {

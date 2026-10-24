@@ -69,7 +69,6 @@ crate::game::constants::typed_constants! { i32;
     fnGrappleBeamFunc_Cancel = 0x9bc856, fnGrappleBeam_Func2 = 0x9bc8c5,
 }
 const RomPtr_90: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x90>;
-const RomPtr_91: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x91>;
 crate::ram_map::ram_pointer_functions! {
     gOamEnt(v: i32) -> OamEnt = [(0x370 + v) as isize];
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
@@ -86,11 +85,6 @@ crate::game::constants::typed_constants! { u32;
     fnSamus_Func20_ = 9496856,
     fnSamusMovementType_Xray = 9496911,
     fnsub_90EB86 = 9497478,
-}
-pub(crate) use crate::game::liquid_surface::LiquidAtHeight;
-pub(crate) fn liquid_at_height(game: &Game, y: u16) -> LiquidAtHeight {
-    let word = |at| u16::from_le_bytes([game.g_ram[at], game.g_ram[at + 1]]);
-    crate::game::liquid_surface::at_height(word(0x195e), word(0x1962), word(0x197e), y)
 }
 
 pub unsafe fn Samus_BombJumpRisingYMovement_(game: &mut Game) {
@@ -350,12 +344,6 @@ pub unsafe fn UpdateBeamTilesAndPalette(game: &mut Game) {
         word!(game.vram_write_queue_tail = (v1).wrapping_add(2));
         WriteBeamPalette_Y(v0, game);
     }
-}
-pub unsafe fn WriteBeamPalette_A(a: u16, game: &mut Game) {
-    crate::game::samus_palette::write_beam_palette(
-        &mut crate::game::session_runtime::Runtime::new(game),
-        a & 0xfff,
-    );
 }
 pub unsafe fn WriteBeamPalette_Y(j: u16, game: &mut Game) {
     crate::game::samus_palette::write_beam_palette(
@@ -1523,16 +1511,6 @@ pub fn Samus_GetBottom_R18(game: &Game) -> u16 {
     let pose_offset = usize::from(game.samus_pose()) * 8;
     let radius = game.read_rom_byte(0x91b629, pose_offset + 6);
     y.wrapping_add(u16::from(radius)).wrapping_sub(1)
-}
-pub fn Samus_GetTop_R20(game: &Game) -> u16 {
-    let y = game.samus_y_pos();
-    let pose_offset = usize::from(game.samus_pose()) * 8;
-    let radius = game.read_rom_byte(0x91b629, pose_offset + 6);
-    y.wrapping_sub(u16::from(radius))
-}
-pub unsafe fn Samus_UpdateSuitPaletteIndex(game: &mut Game) {
-    let mut runtime = crate::game::session_runtime::Runtime::new(game);
-    crate::game::samus_palette::update_suit_index(runtime.session_mut());
 }
 pub fn Samus_PostGrappleCollisionDetect(game: &mut Game) {
     PostGrappleCollisionDetect_X(game);

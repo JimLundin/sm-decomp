@@ -42,7 +42,6 @@ crate::game::constants::typed_constants! { i32;
     fnPauseHook_Empty = 0x8883e1,
     fnCinematicFunctionOpening = 0x8b9b68,
 }
-const RomPtr_88: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x88>;
 #[inline]
 unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
     unsafe {
@@ -1032,12 +1031,8 @@ pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingOut(k: u16, game: &mu
     }
 }
 static unk_88DF38: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0, 0x2c, 0xdf4f as VoidP);
-static unk_88DF41: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0, 0x2c, 0xdf6b as VoidP);
-static unk_88DF4A: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x2, 0x12, 0xdf77 as VoidP);
 crate::forward_calls! { pub unsafe fn (game: &mut Game);
     sub_88DF34 => SpawnHdmaObject(0x88, &raw const unk_88DF38 as *const c_void, game);
-    sub_88DF3D => SpawnHdmaObject(0x88, &raw const unk_88DF41 as *const c_void, game);
-    sub_88DF46 => SpawnHdmaObject(0x88, &raw const unk_88DF4A as *const c_void, game);
 }
 pub unsafe fn HdmaobjPreInstr_DF94(v0: u16, game: &mut Game) {
     unsafe {

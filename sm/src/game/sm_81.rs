@@ -691,11 +691,6 @@ unsafe fn draw_file_copy_row(slot: u16, game: &mut Game) {
         LoadMenuTilemap(base + 8, label as u16, game);
     }
 }
-crate::forward_calls! { pub unsafe fn (game: &mut Game);
-    DrawFileCopySaveSlotAInfo => draw_file_copy_row(0, game);
-    DrawFileCopySaveSlotBInfo => draw_file_copy_row(1, game);
-    DrawFileCopySaveSlotCInfo => draw_file_copy_row(2, game);
-}
 pub unsafe fn DrawFileCopySaveFileInfo(game: &mut Game) {
     unsafe {
         draw_file_copy_rows(FileRowEmphasis::Occupied, game);

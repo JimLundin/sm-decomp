@@ -79,7 +79,6 @@ unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
     }
 }
 const RomPtr_91: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x91>;
-const RomPtr_9B: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x9b>;
 #[inline]
 unsafe fn get_PoseEntry(a: u16, game: &mut Game) -> *mut PoseEntry {
     unsafe { RomPtr((0x910000u32) | ((a) as u32), game) as *mut PoseEntry }
@@ -733,10 +732,6 @@ pub unsafe fn Samus_LoadSuitTargetPalette(game: &mut Game) {
         crate::game::visual_state::PaletteBuffer::Target,
     );
 }
-// Shared by unrelated transition/collision aliases below as well as old palette mode10.
-pub fn nullsub_164(_game: &mut Game) -> u8 {
-    0
-}
 pub unsafe fn Samus_DealDamage(amount: u16, game: &mut Game) {
     unsafe {
         if amount & 0x8000 == 0 {
@@ -1197,7 +1192,6 @@ pub unsafe fn SamusFunc_E633_20(game: &mut Game) {
         };
     }
 }
-pub fn nullsub_18(game: &mut Game) {}
 pub unsafe fn Samus_Func20(game: &mut Game) {
     unsafe {
         if *ram_ptr!(game; 0xa1f) == 14 {

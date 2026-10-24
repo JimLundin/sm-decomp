@@ -90,12 +90,14 @@ The complete input draft `e956dffa` is held, not adopted. Preserve its checked
 source/reference snapshots and audits under
 `%LOCALAPPDATA%/sm-decomp-experiments/20261024/player-input-*`; do not rerun or
 replace them without a source/coverage reason. Reprice/revalidate it against the
-then-current base before adoption. Latest checks: `03889077`, shared projectile
-slot access removes 120 production lines with no verification growth. All 384
-component captures match; 13 independent checks pass. Fresh setup 0..50329 and
-Bomb Torizo 50329..51993 pass with six projectile probes; four compiling faults
-are caught. No full-game claim. Unused bank helpers are next. Prior 49 unnecessary
-unsafe removals left 433 warnings, including 42 generic-macro unsafe warnings.
+then-current base before adoption. Latest: `16cf1f15` retires 59 unused bank lines,
+including 11 unsafe-containing lines; reference, fmt, normal/backend-free and DLL
+checks pass, 432 warnings. No replay or mutation claim for unused-code retirement.
+Prior `eef7e957` removes 120 duplicate projectile-access lines: 384 captures match,
+13 checks pass; fresh setup 0..50329 and Bomb Torizo 50329..51993 pass with six
+probes, and four compiling faults are caught. No verification growth or full-game
+claim. Next reductions need live-code consolidation or actual caller migration;
+the orphan scan found no larger removable family. 42 generic-macro unsafe warnings remain.
 Snapshot comparison separation is verified but held at `2a3c7792` on
 `draft/snapshot-comparison-2a3c7792` until another gameplay check lands; it moves
 390 verification lines, adds 15 wiring lines and deletes no logic.

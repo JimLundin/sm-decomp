@@ -4,15 +4,15 @@
 
 | Measure | Count |
 | --- | ---: |
-| Production Rust lines* | 117745 |
+| Production Rust lines* | 117686 |
 | Verification Rust lines | 37504 |
-| Total Rust | 155249 |
-| Lines containing `unsafe` | 4993 |
-| Warnings (no-default library) | 433 |
+| Total Rust | 155190 |
+| Lines containing `unsafe` | 4982 |
+| Warnings (no-default library) | 432 |
 | Required checkpoint checks passing | 23/44 |
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-This change: 120 production lines deleted; no verification, support or native code added.
+This change: 59 unused legacy-bank lines deleted; no code added. Previous change: 120 duplicate production lines deleted.
 
 [Current plan](docs/PLAN.md#work-order) · [Checkpoint recipes](movies/segments.toml) · [Codebase map](https://jimlundin.github.io/sm-decomp/)

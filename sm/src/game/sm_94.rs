@@ -33,14 +33,9 @@ crate::game::constants::typed_constants! { i32;
     fnDoorTransitionFunction_HandleElevator = 0x82e17d,
     fnGrappleBeam_Func2 = 0x9bc8c5,
 }
-const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
 const RomPtr_94: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x94>;
 crate::ram_map::ram_pointer_functions! {
     gOamEnt(v: i32) -> OamEnt = [(0x370 + v) as isize];
-}
-#[inline]
-unsafe fn get_DoorDef(a: u16, game: &mut Game) -> *mut DoorDef {
-    unsafe { RomPtr((0x830000u32) | ((a) as u32), game) as *mut DoorDef }
 }
 
 static kAlignPos_Tab1: [u8; 512] = [
