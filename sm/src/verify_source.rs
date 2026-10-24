@@ -2,6 +2,94 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/verification/player_collision_owned_cases.rs",
+        include_bytes!("verification/player_collision_owned_cases.rs"),
+    ),
+    (
+        "sm/src/verification/player_collision_composed_actor.rs",
+        include_bytes!("verification/player_collision_composed_actor.rs"),
+    ),
+    (
+        "sm/src/verification/player_collision_movement_cases.rs",
+        include_bytes!("verification/player_collision_movement_cases.rs"),
+    ),
+    (
+        "sm/src/verification/player_collision_pose_cases.rs",
+        include_bytes!("verification/player_collision_pose_cases.rs"),
+    ),
+    (
+        "sm/src/verification/player_collision_walked_cases.rs",
+        include_bytes!("verification/player_collision_walked_cases.rs"),
+    ),
+    (
+        "sm/src/verification/player_collision_ownership.rs",
+        include_bytes!("verification/player_collision_ownership.rs"),
+    ),
+    (
+        "sm/src/verification/player_collision_composed_route.rs",
+        include_bytes!("verification/player_collision_composed_route.rs"),
+    ),
+    (
+        "sm/src/verification/player_collision_composed_steps.rs",
+        include_bytes!("verification/player_collision_composed_steps.rs"),
+    ),
+    (
+        "sm/src/verification/player_detached/player_collision_host.rs",
+        include_bytes!("verification/player_detached/player_collision_host.rs"),
+    ),
+    (
+        "sm/src/verification/player_collision_owned_checks.rs",
+        include_bytes!("verification/player_collision_owned_checks.rs"),
+    ),
+    (
+        "sm/src/verification/player_collision_entry_adapters.rs",
+        include_bytes!("verification/player_collision_entry_adapters.rs"),
+    ),
+    (
+        "sm/src/game/player_collision/geometry.rs",
+        include_bytes!("game/player_collision/geometry.rs"),
+    ),
+    (
+        "sm/src/game/player_collision/motion.rs",
+        include_bytes!("game/player_collision/motion.rs"),
+    ),
+    (
+        "sm/src/game/player_collision/control.rs",
+        include_bytes!("game/player_collision/control.rs"),
+    ),
+    (
+        "sm/src/game/player_collision/jump.rs",
+        include_bytes!("game/player_collision/jump.rs"),
+    ),
+    (
+        "sm/src/game/player_collision/pose.rs",
+        include_bytes!("game/player_collision/pose.rs"),
+    ),
+    (
+        "sm/src/game/player_collision_runtime.rs",
+        include_bytes!("game/player_collision_runtime.rs"),
+    ),
+    (
+        "sm/src/game/actors/overlap.rs",
+        include_bytes!("game/actors/overlap.rs"),
+    ),
+    (
+        "sm/src/game/player_collision/mod.rs",
+        include_bytes!("game/player_collision/mod.rs"),
+    ),
+    (
+        "sm/src/game/player_collision/state.rs",
+        include_bytes!("game/player_collision/state.rs"),
+    ),
+    (
+        "sm/src/game/player_collision/effects.rs",
+        include_bytes!("game/player_collision/effects.rs"),
+    ),
+    (
+        "sm/src/game/player_collision/operations.rs",
+        include_bytes!("game/player_collision/operations.rs"),
+    ),
+    (
         "sm/src/verification/actor_population_animation_cases.rs",
         include_bytes!("verification/actor_population_animation_cases.rs"),
     ),
@@ -689,14 +777,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/samus_pose.rs",
         include_bytes!("game/samus_pose.rs"),
-    ),
-    (
-        "sm/src/game/samus_room_contact.rs",
-        include_bytes!("game/samus_room_contact.rs"),
-    ),
-    (
-        "sm/src/game/samus_room_contact_ram.rs",
-        include_bytes!("game/samus_room_contact_ram.rs"),
     ),
     (
         "sm/src/game/scrolling_sky.rs",

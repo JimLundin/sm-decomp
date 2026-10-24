@@ -18,7 +18,7 @@ pub(super) fn place(h: &mut impl Host, raw: u16) -> bool {
         let mut direction = pose_byte(pose, 3);
         if direction & 0xf0 != 0 {
             if direction == 0x10 {
-                direction = pose_byte(h.session().player.previous_pose, 3);
+                direction = pose_byte(h.session().player.history.last_different.pose, 3);
             }
             if direction & 0xf0 != 0 {
                 h.session_mut().projectiles.count = h.session().projectiles.count.wrapping_sub(1);

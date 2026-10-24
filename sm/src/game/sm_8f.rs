@@ -15,6 +15,9 @@ use crate::game::sm_89::RoomCode_CeresElevatorShaft;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_a6::HandleCeresRidleyGetawayCutscene;
 use crate::game::sprite_effect_runtime::create_sprite;
+use crate::game::{
+    player_collision::operations as player_collision, session_runtime::Runtime as CollisionRuntime,
+};
 
 crate::game::constants::typed_constants! { i32;
     kCoroutineNone = 0,
@@ -293,7 +296,7 @@ crate::game::callback_dispatch! {
         let mut v0: u16 = ((amt as u32).wrapping_add(*(ram_ptr!(game, u32; 0x7e1))) >> 16) as u16;
         crate::update_place! { unaligned_word fresh13 = &raw mut (*(ram_ptr!(game, u16; 0x7e1))) => (u16::from_le(fresh13.read_unaligned()) as i32 + amt) as u16; }
         *(ram_ptr!(game, u16; 0x7e1, 2)) = v0;
-        crate::game::samus_room_contact_ram::move_down(amt, game);
+        { let collision_request = player_collision::DisplacementRequest::TerrainOnly { axis: player_collision::Axis::Y, amount: amt }; player_collision::displace(&mut CollisionRuntime::new(game), collision_request).displacement };
         if ((*(ram_ptr!(game, u16; 0x7e1, 6)) as i32
             + *(ram_ptr!(game, u16; 0x7e1, 4)) as i32
             + 3616) as u16)

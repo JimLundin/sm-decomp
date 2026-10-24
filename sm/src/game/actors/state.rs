@@ -52,17 +52,17 @@ pub(super) struct SpawnRecord {
 pub(in crate::game) struct Actors {
     pub(super) slots: [Actor; 32],
     pub(super) saved: [SpawnRecord; 32],
-    pub(super) controls: ActorControls,
+    pub(in crate::game) controls: ActorControls,
     pub(super) combat: ActorCombat,
     pub(super) staging: ActorStaging,
     pub(super) graphics: ActorGraphics,
     pub(super) drawing: ActorDrawing,
-    pub(super) schedule: ActorSchedule,
+    pub(in crate::game) schedule: ActorSchedule,
     pub(super) compatibility: ActorCompatibility,
     pub(super) diagnostics: ActorDiagnostics,
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub(super) struct ActorControls {
+pub(in crate::game) struct ActorControls {
     pub(super) phase_counter: u16,
     pub(super) selection_visits: u16,
     pub(super) population_scratch: u16,
@@ -72,7 +72,7 @@ pub(super) struct ActorControls {
     pub(super) selected: u16,
     pub(super) compatibility_selected_backup: u16,
     pub(super) compatibility_data_pointer: u16,
-    pub(super) shake_request: u16,
+    pub(in crate::game) shake_request: u16,
     pub(super) projectile_contacts_disabled: u16,
     pub(super) process_all: u16,
 }
@@ -118,16 +118,16 @@ impl Default for ActorDrawing {
     }
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub(super) struct ActorSchedule {
+pub(in crate::game) struct ActorSchedule {
     pub(super) boss_id: u16,
     pub(super) compatibility_179e: [u16; 3],
     pub(super) active_write_position: u16,
-    pub(super) interactive_write_position: u16,
+    pub(in crate::game) interactive_write_position: u16,
     pub(super) compatibility_active_cursor: u16,
     pub(super) compatibility_interactive_cursor: u16,
     pub(super) active: [u16; 32],
-    pub(super) interactive: [u16; 32],
-    pub(super) colliding: [u16; 4],
+    pub(in crate::game) interactive: [u16; 32],
+    pub(in crate::game) colliding: [u16; 4],
     pub(super) compatibility_distances: [u16; 4],
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq)]

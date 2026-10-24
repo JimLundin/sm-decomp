@@ -1,8 +1,9 @@
 //! Common actor/player spatial queries over borrowed actor state.
 #![forbid(unsafe_code)]
+use super::overlap::axis_overlaps;
 use super::{
-    access::{AccessMode::LittleEndian, ActorAccess, ActorCollections, ActorKey, CollectionWindow},
-    api::{Axis, DistanceDirection, PlayerDirection, SolidContact},
+    access::{AccessMode::LittleEndian, ActorAccess, ActorKey},
+    api::{Axis, DistanceDirection, PlayerDirection},
     content::ActorContent,
     effects::ActorHost,
 };
@@ -11,157 +12,13 @@ use crate::game::session::Point;
 fn current(h: &impl ActorAccess) -> ActorKey {
     ActorKey::from_legacy(h.session().actors.controls.selected)
 }
-fn axis_overlaps(actor: u16, player: u16, actor_radius: u16, player_radius: u16) -> bool {
-    let distance = (actor.wrapping_sub(player) as i16).wrapping_abs() as u16;
-    distance < actor_radius || distance.wrapping_sub(actor_radius) < player_radius
-}
 
-fn probe_coordinate(position: u16, fraction: u16, amount: i32, negative: bool) -> u16 {
-    let integer = (amount >> 16) as u16;
-    let fractional = amount as u16;
-    if negative {
-        let mut coordinate = position.wrapping_sub(integer);
-        let mut exact = fraction == fractional;
-        if fraction < fractional {
-            // Equality is tested before borrowing the integer coordinate.
-            exact = coordinate == 1;
-            coordinate = coordinate.wrapping_sub(1);
-        }
-        if !exact {
-            coordinate = coordinate.wrapping_sub(1);
-        }
-        coordinate
-    } else {
-        let mut coordinate = position.wrapping_add(integer);
-        let sum = u32::from(fraction) + u32::from(fractional);
-        let mut exact = sum == 0;
-        if sum > 0xffff {
-            exact = coordinate == 0xffff;
-            coordinate = coordinate.wrapping_add(1);
-        }
-        if !exact {
-            coordinate = coordinate.wrapping_add(1);
-        }
-        coordinate
-    }
-}
-fn player_probe(h: &impl ActorAccess, amount: i32) -> (Point, Point) {
-    let direction = h.session().player.contact.collision_direction & 3;
-    let position = if direction < 2 {
-        Point {
-            x: probe_coordinate(
-                h.session().player.x,
-                h.session().player.x_fraction,
-                amount,
-                direction == 0,
-            ),
-            y: h.session().player.y,
-        }
-    } else {
-        let y = probe_coordinate(
-            h.session().player.y,
-            h.session().player.y_fraction,
-            amount,
-            direction == 2,
-        );
-        Point {
-            x: h.session().player.x,
-            y,
-        }
-    };
-    (
-        position,
-        Point {
-            x: h.inputs().player_x_radius,
-            y: h.session().player.contact.radius,
-        },
-    )
-}
-pub(in crate::game) fn probe_player_solid_contact<H: ActorAccess + ActorCollections>(
-    h: &mut H,
-    amount: i32,
-) -> SolidContact {
-    if h.session().actors.schedule.interactive_write_position == 0 {
-        return SolidContact::Clear { amount };
-    }
-    let (position, radius) = player_probe(h, amount);
-    h.session_mut().room.collision_detection_index = 0;
-    let mut list_index = 0usize;
-    loop {
-        let index = if let Some(index) = h.session().actors.schedule.interactive.get(list_index) {
-            *index
-        } else {
-            h.collection_word(CollectionWindow::Interactive, list_index * 2, LittleEndian)
-        };
-        if index == 0xffff {
-            break;
-        }
-        h.session_mut().room.collision_detection_index = index;
-        let contact = {
-            let actor = h.resolve_actor(ActorKey::from_legacy(index), LittleEndian);
-            if (actor.frozen != 0 || actor.properties & 0x8000 != 0)
-                && axis_overlaps(actor.x.whole, position.x, actor.radius.x, radius.x)
-                && axis_overlaps(actor.y.whole, position.y, actor.radius.y, radius.y)
-            {
-                let direction = h.session().player.contact.collision_direction & 3;
-                let (player_position, player_radius, actor_position, actor_radius) =
-                    if direction < 2 {
-                        (
-                            h.session().player.x,
-                            h.inputs().player_x_radius,
-                            actor.x.whole,
-                            actor.radius.x,
-                        )
-                    } else {
-                        (
-                            h.session().player.y,
-                            h.session().player.contact.radius,
-                            actor.y.whole,
-                            actor.radius.y,
-                        )
-                    };
-                Some(if direction == 0 || direction == 2 {
-                    let actor_edge = actor_position.wrapping_add(actor_radius);
-                    let player_edge = i32::from(player_position) - i32::from(player_radius);
-                    (
-                        (player_edge - i32::from(actor_edge)) as i16,
-                        player_edge == i32::from(actor_edge),
-                    )
-                } else {
-                    let distance = (i32::from(actor_position)
-                        - i32::from(actor_radius)
-                        - i32::from(player_radius)
-                        - i32::from(player_position)) as i16;
-                    (distance, distance == 0)
-                })
-            } else {
-                None
-            }
-        };
-        if let Some((distance, exact)) = contact {
-            if exact || distance >= 0 {
-                if exact {
-                    h.session_mut().player.y_fraction = 0;
-                }
-                let index = h.session().room.collision_detection_index;
-                let direction = h.session().player.contact.collision_direction;
-                // The actual Game setter masks direction before its slice write.
-                h.session_mut().actors.schedule.colliding[usize::from(direction & 3)] = index;
-                return SolidContact::Blocked {
-                    amount: if exact { 0 } else { i32::from(distance) << 16 },
-                };
-            }
-        }
-        list_index += 1;
-    }
-    SolidContact::Clear { amount }
-}
 pub(in crate::game) fn touches_player_from_above<H: ActorAccess>(h: &H, key: ActorKey) -> bool {
     let actor = h.resolve_actor(key, LittleEndian);
     if !axis_overlaps(
         h.session().player.x,
         actor.x.whole,
-        h.inputs().player_x_radius,
+        h.session().player.contact.x_radius,
         actor.radius.x,
     ) {
         return false;
@@ -178,7 +35,7 @@ pub(in crate::game) fn touches_player_from_above<H: ActorAccess>(h: &H, key: Act
 pub(in crate::game) fn overlaps_player_with_padding<H: ActorAccess>(h: &H, key: ActorKey) -> bool {
     let actor = h.resolve_actor(key, LittleEndian);
     let distance = (h.session().player.x.wrapping_sub(actor.x.whole) as i16).wrapping_abs() as u16;
-    let radius = h.inputs().player_x_radius;
+    let radius = h.session().player.contact.x_radius;
     let gap = distance.wrapping_sub(radius);
     if distance >= radius && gap >= actor.radius.x && gap >= 8 {
         return false;

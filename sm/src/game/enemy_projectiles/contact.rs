@@ -25,7 +25,7 @@ pub(super) fn enemy_projectiles_hit_samus(h: &mut impl Host) {
         if axis(
             h.session().player.x,
             enemy!(h, index, x),
-            h.inputs().player_x_radius,
+            h.session().player.contact.x_radius,
             radii & 0xff,
         ) && axis(
             h.session().player.y,

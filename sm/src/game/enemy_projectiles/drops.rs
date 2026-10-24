@@ -140,7 +140,7 @@ pub(super) fn collect(index: u16, h: &mut impl Host) {
             if !axis(
                 h.session().player.x,
                 enemy!(h, (index >> 1) as isize, x),
-                h.inputs().player_x_radius,
+                h.session().player.contact.x_radius,
                 x_radius,
             ) || !axis(
                 h.session().player.y,

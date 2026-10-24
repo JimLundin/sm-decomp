@@ -100,7 +100,7 @@ fn touch_body<H: ActorHost>(h: &mut H) {
         axis(
             h.session().player.x,
             actor.x.whole,
-            h.inputs().player_x_radius,
+            h.session().player.contact.x_radius,
             actor.radius.x,
         ) && axis(
             h.session().player.y,
@@ -137,7 +137,7 @@ fn touch_hitboxes<H: ActorHost>(h: &mut H) {
     let bounds = Bounds::new(
         h.session().player.x,
         h.session().player.y,
-        h.inputs().player_x_radius,
+        h.session().player.contact.x_radius,
         h.session().player.contact.radius,
     );
     let pose = h.capture_actor_pose(key);

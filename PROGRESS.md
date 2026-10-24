@@ -123,13 +123,13 @@ flowchart LR
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
 ```
 
-### Player collision / parallel implementation drafts
+### Player collision / adopted
 
 ```mermaid
 flowchart LR
-    PC["Player collision + displacement"]:::draft --> PS["58 state bytes / all writers<br/>source closure PASS"]:::done
+    PC["Player collision + displacement"]:::done --> PS["58 state bytes / all writers<br/>source closure PASS"]:::done
     PC --> PR["33 bank routines + 2 modules<br/>retirement review PASS"]:::done
-    PC --> PV["Directed routes + 10 fault witnesses<br/>validation design reviewed"]:::draft
+    PC --> PV["Directed routes + 10 fault witnesses<br/>validation design reviewed"]:::done
     PS --> PD["Concrete owned interface<br/>declaration review PASS"]:::done
     PR --> PD
     PD --> PCOMP["Normal + Runtime + backend-free<br/>compile PASS"]:::done
@@ -140,7 +140,7 @@ flowchart LR
     PCOMP --> PBE["Guarded edit escapes<br/>compiler rejects / PASS"]:::done
     PCOMP --> PAUDIT["Compiler evidence<br/>independent audit PASS"]:::done
     PAUDIT --> PAP["Seven operations / one Session<br/>design approved"]:::done
-    PAP --> PI["Five authors + caller integrator<br/>adopted actor baseline ddd21882"]:::active
+    PAP --> PI["Five authors + caller integrator<br/>adopted actor baseline ddd21882"]:::done
     PV --> PI
     PV --> PREF["74 predecessor cases<br/>assembly review PASS"]:::done
     PREF --> PMOVE["36 movement / speed cases<br/>source review PASS"]:::done
@@ -160,26 +160,26 @@ flowchart LR
     PEXEC --> PWALK["Walked-obstacle source + admission<br/>review PASS"]:::done
     PWALK --> PWREF["9 additive cases 88–96<br/>format + DLL + captures PASS"]:::done
     PWREF --> PWAUDIT["Current / pending + native / loaded<br/>9-case execution audit PASS"]:::done
-    PI --> PCS["state.rs"]:::draft
-    PCS --> PCSE["session.rs + session_encoding.rs"]:::draft
-    PCSE --> PCIN["external_inputs.rs + shared consumers"]:::draft
-    PI --> PCG["geometry.rs"]:::draft
-    PI --> PCM["motion.rs"]:::draft
-    PI --> PCC["control.rs"]:::draft
-    PCC --> PCJ["jump.rs"]:::draft
-    PCC --> PCP["pose.rs"]:::draft
-    PI --> PCRT["Runtime adapters / 16 dependencies"]:::draft
+    PI --> PCS["state.rs"]:::done
+    PCS --> PCSE["session.rs + session_encoding.rs"]:::done
+    PCSE --> PCIN["external_inputs.rs + shared consumers"]:::done
+    PI --> PCG["geometry.rs"]:::done
+    PI --> PCM["motion.rs"]:::done
+    PI --> PCC["control.rs"]:::done
+    PCC --> PCJ["jump.rs"]:::done
+    PCC --> PCP["pose.rs"]:::done
+    PI --> PCRT["Runtime adapters / 16 dependencies"]:::done
     PCIN --> PCSR["State / codec source audit PASS"]:::done
     PCM --> PCMR["Motion / arithmetic source review PASS"]:::done
     PCP --> PCPR["Pose / control source review PASS"]:::done
     PCRT --> PCAR["Adapter / effect source review PASS"]:::done
     PCG --> PCGR["Geometry arithmetic source review PASS"]:::done
-    PI --> PCAPI["operations.rs + effects.rs + mod.rs"]:::draft
-    PCAPI --> PCCALL["33 bank routines / actual callers"]:::draft
-    PCCALL --> PCDEL["2 contact modules + 3 actor helpers<br/>retired in draft"]:::draft
-    PWAUDIT --> PCOWN["Candidate ownership / ordering checks"]:::active
-    PCOWN --> PCFAULT["Targeted mutation recipes"]:::active
-    PCIN --> PCMERGE["Combined candidate / no stubs"]:::draft
+    PI --> PCAPI["operations.rs + effects.rs + mod.rs"]:::done
+    PCAPI --> PCCALL["33 bank routines / actual callers"]:::done
+    PCCALL --> PCDEL["2 contact modules + 3 actor helpers<br/>retired in production"]:::done
+    PWAUDIT --> PCOWN["Owned-state / ordering checks PASS"]:::done
+    PCOWN --> PCFAULT["Targeted mutation recipes"]:::done
+    PCIN --> PCMERGE["Combined candidate / no stubs"]:::done
     PCG --> PCMERGE
     PCM --> PCMERGE
     PCJ --> PCMERGE
@@ -198,11 +198,11 @@ flowchart LR
     PCFMT --> PCDET["3 backend-free core checks<br/>hosted PASS"]:::done
     PCFMT --> PCBUILD["Hosted game build + Cargo exports<br/>PASS"]:::done
     PCFMT --> PCORACLE["21,015 frames / 14 probes<br/>0 failures + 120-frame tail PASS"]:::done
-    PCFAULT --> PCMUT["Hosted CI / 91 selected faults<br/>running"]:::active
+    PCFAULT --> PCMUT["Hosted CI / 91 faults caught<br/>independent audit PASS"]:::done
     PCFMT --> PCMUT
     PCMUT --> PCMD["54 detached faults caught<br/>independent audit PASS"]:::done
-    PCMUT --> PCML["37 DLL faults<br/>running"]:::active
-    class PCTESTMETA,PCMD,PCML changed
+    PCMUT --> PCML["37 DLL faults caught<br/>independent audit PASS"]:::done
+    class PC,PV,PI,PCS,PCSE,PCIN,PCG,PCM,PCC,PCJ,PCP,PCRT,PCAPI,PCCALL,PCDEL,PCOWN,PCFAULT,PCMERGE,PCMUT,PCML changed
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a

@@ -144,7 +144,6 @@ pub(in crate::game) use super::queries::leaving_screen;
 pub(in crate::game) use super::queries::overlaps_player_with_padding;
 pub(in crate::game) use super::queries::player_delta;
 pub(in crate::game) use super::queries::player_within;
-pub(in crate::game) use super::queries::probe_player_solid_contact;
 pub(in crate::game) use super::queries::touches_player_from_above;
 pub(in crate::game) use super::scheduling::advance_selected;
 pub(in crate::game) use super::scheduling::select;

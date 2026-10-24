@@ -251,9 +251,9 @@ fn post_grapple_traverse(horizontal: bool, positive: bool, game: &mut Game) {
     game.set_samus_collision_direction(direction);
     game.g_ram[distance_offset..distance_offset + 2].fill(0);
     let span = if horizontal {
-        crate::game::samus_room_contact::span(game.samus_y_pos(), game.samus_y_radius())
+        crate::game::contact_rules::collision_span(game.samus_y_pos(), game.samus_y_radius())
     } else {
-        crate::game::samus_room_contact::span(game.samus_x_pos(), game.samus_x_radius())
+        crate::game::contact_rules::collision_span(game.samus_x_pos(), game.samus_x_radius())
     };
     let (position, radius) = if horizontal {
         (game.samus_x_pos(), game.samus_x_radius())
@@ -318,55 +318,6 @@ pub fn PostGrappleCollisionDetect_Y(game: &mut Game) {
     post_grapple_traverse(false, false, game);
 }
 
-pub unsafe fn Samus_AlignYPosSlope(game: &mut Game) {
-    let movement_flags = u16::from_le_bytes([game.g_ram[0xa46], game.g_ram[0xa47]]);
-    if movement_flags & 2 == 0 {
-        return;
-    }
-    let x = game.samus_x_pos();
-    let y = game.samus_y_pos();
-    let radius = game.samus_y_radius();
-    CalculateBlockAt(x, radius.wrapping_add(y).wrapping_sub(1), 0, 0, game);
-    if game.current_level_block() & 0xf000 == 0x1000 && game.current_block_bts() & 0x1f >= 5 {
-        let radius = game.samus_y_radius();
-        let y = game.samus_y_pos();
-        let offset = radius.wrapping_add(y).wrapping_sub(1) & 15;
-        let bts = game.current_block_bts();
-        if bts & 0x80 == 0 {
-            let x = game.samus_x_pos();
-            let x = if bts & 0x40 != 0 { x ^ 15 } else { x };
-            let index = usize::from(bts & 0x1f) * 16 + usize::from(x & 15);
-            let adjustment = i16::from(kAlignYPos_Tab0[index] & 0x1f) - offset as i16 - 1;
-            if adjustment < 0 {
-                game.g_ram[0xafa..0xafc]
-                    .copy_from_slice(&y.wrapping_add(adjustment as u16).to_le_bytes());
-                game.set_samus_pos_adjusted_by_slope_flag(1);
-            }
-        }
-    }
-    // Re-read the position after the bottom-edge alignment before looking up the top block.
-    let x = game.samus_x_pos();
-    let y = game.samus_y_pos();
-    let radius = game.samus_y_radius();
-    CalculateBlockAt(x, y.wrapping_sub(radius), 0, 0, game);
-    if game.current_level_block() & 0xf000 == 0x1000 && game.current_block_bts() & 0x1f >= 5 {
-        let y = game.samus_y_pos();
-        let radius = game.samus_y_radius();
-        let offset = (y.wrapping_sub(radius) & 15) ^ 15;
-        let bts = game.current_block_bts();
-        if bts & 0x80 != 0 {
-            let x = game.samus_x_pos();
-            let x = if bts & 0x40 != 0 { x ^ 15 } else { x };
-            let index = usize::from(bts & 0x1f) * 16 + usize::from(x & 15);
-            let adjustment = i16::from(kAlignYPos_Tab0[index] & 0x1f) - offset as i16 - 1;
-            if adjustment <= 0 {
-                game.g_ram[0xafa..0xafc]
-                    .copy_from_slice(&y.wrapping_sub(adjustment as u16).to_le_bytes());
-                game.set_samus_pos_adjusted_by_slope_flag(1);
-            }
-        }
-    }
-}
 pub(super) use crate::game::projectile_geometry::{
     square_slope_occupied, square_slope_single_block,
 };

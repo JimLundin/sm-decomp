@@ -4,6 +4,9 @@ use crate::game::combat_rules::GrappleOutcome;
 use crate::game::grapple_swing::{advance_swing, change_length, place_rope_origin};
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
+use crate::game::{
+    player_collision::operations as player_collision, session_runtime::Runtime as CollisionRuntime,
+};
 
 pub use crate::game::constants::bank_9b::*;
 
@@ -12,8 +15,7 @@ use crate::game::samus_animation::Samus_DrawStartingDeathAnim;
 use crate::game::sm_80::{Multiply16x16, QueueSfx1_Max1, QueueSfx1_Max6, QueueSfx1_Max15};
 use crate::game::sm_81::DrawBeamGrappleSpritemap;
 use crate::game::sm_90::{
-    CallSomeSamusCode, LoadProjectilePalette, Samus_GetBottom_R18, Samus_GrappleWallJumpCheck,
-    Samus_PostGrappleCollisionDetect,
+    CallSomeSamusCode, LoadProjectilePalette, Samus_GetBottom_R18, Samus_PostGrappleCollisionDetect,
 };
 use crate::game::sm_91::{Samus_DealDamage, Samus_LoadSuitPalette, Samus_Pose_CancelGrapple};
 use crate::game::sm_94::{
@@ -1073,7 +1075,7 @@ crate::game::callback_dispatch! {
     };
     [10209330] GrappleBeamFunc_C832 [] {
         if (word!(game.grapple_walljump_timer -= 1, reread) & 0x8000) == 0 {
-            if Samus_GrappleWallJumpCheck((16i16 as i32) << 16, game) != 0 {
+            if { let collision_request = player_collision::JumpRequest { kind: player_collision::JumpKind::Grapple, amount: (16i16 as i32) << 16 }; player_collision::jump_admission(&mut CollisionRuntime::new(game), collision_request) } {
                 word!(game.grapple_beam_function = ((0x9bc9cei32) as u16));
             }
         } else {

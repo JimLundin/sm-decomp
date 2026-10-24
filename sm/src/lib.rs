@@ -403,6 +403,11 @@ pub mod game {
     pub(crate) mod mechanism_displacement;
     pub mod music;
     pub(crate) mod palette_effects;
+    pub(crate) mod player_collision;
+    #[cfg(any(test, sm_verify_dll))]
+    #[path = "../verification/player_collision_owned_checks.rs"]
+    pub(crate) mod player_collision_owned_checks;
+
     pub mod progress_flags;
     pub(crate) mod room_backgrounds;
     pub mod room_entry;
@@ -414,8 +419,6 @@ pub mod game {
     pub(crate) mod samus_periodic_damage;
     pub(crate) mod samus_periodic_damage_ram;
     pub(crate) mod samus_pose;
-    pub(crate) mod samus_room_contact;
-    pub(crate) mod samus_room_contact_ram;
     pub(crate) mod session;
     pub(crate) mod session_access;
     pub(crate) mod session_encoding;
@@ -787,3 +790,26 @@ pub(crate) mod actor_kraid_writer_entry;
 #[cfg(sm_verify_dll)]
 #[path = "verification/actor_composed_route.rs"]
 pub(crate) mod actor_composed_route;
+#[cfg(sm_verify_dll)]
+#[path = "verification/player_collision_composed_route.rs"]
+pub(crate) mod player_collision_composed_route;
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/player_collision_movement_cases.rs"]
+pub(crate) mod player_collision_movement_cases;
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/player_collision_pose_cases.rs"]
+pub(crate) mod player_collision_pose_cases;
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/player_collision_composed_steps.rs"]
+pub(crate) mod player_collision_composed_steps;
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/player_collision_walked_cases.rs"]
+pub(crate) mod player_collision_walked_cases;
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/player_collision_owned_cases.rs"]
+pub(crate) mod player_collision_owned_cases;

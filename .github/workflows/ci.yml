@@ -256,6 +256,6 @@ jobs:
           if ($env:FULL_ACTOR_CHECKS -eq 'true') { $actorMutationArgs = @('--actor-rom', 'rom/sm.smc') }
           python sm/src/verification/room_mutations.py @actorMutationArgs
           if ($LASTEXITCODE -ne 0) { throw 'Room, native ownership or restoration mutation checks failed' }
-      - name: Report initialized actor checks not selected
+      - name: Report ROM-dependent mutation checks not selected
         if: github.event_name != 'workflow_dispatch' || !inputs.full_actor_checks
-        run: Write-Output 'Initialized Kraid mutations 2 not selected; no ROM requested. These cases are not counted as passes or killed mutations.'
+        run: Write-Output '2 initialized Kraid and 12 player collision DLL mutations not selected; no ROM requested. Ordinary runs select 77 faults; full dispatch selects 91. Skipped cases are not counted as passes or killed mutations.'

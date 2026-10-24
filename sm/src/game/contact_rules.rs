@@ -51,3 +51,11 @@ pub(crate) fn axis(a: u16, b: u16, radius: u16, enemy_radius: u16) -> bool {
 pub(crate) fn is_shot(kind: u16) -> bool {
     kind != 0 && kind & 0xf00 != 0x300 && kind & 0xf00 != 0x500 && kind & 0xf00 < 0x700
 }
+
+pub(crate) fn collision_span(position: u16, radius: u16) -> u16 {
+    radius
+        .wrapping_add(position)
+        .wrapping_sub(1)
+        .wrapping_sub(position.wrapping_sub(radius) & 0xfff0)
+        >> 4
+}

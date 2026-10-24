@@ -516,42 +516,34 @@ references; measure build/test time and resource growth before changing the loop
    verification26906 (+5406), combined143319; unsafe declarations2564 (-50).
    Seven obsolete actor modules and their migrated bank facades retire. This is
    shared interval ownership; species effects and backend independence remain.
-   Player collision implementation can now start from this adopted baseline.
-   Five isolated authors are implementing state/codecs/shared consumers, geometry,
-   motion, control/jump/pose and finite Runtime adapters againstddd21882. One caller
-   integrator owns facades, registrations and the complete1694-line retirement;
-   independent verification covers candidate-owned state and ordered effects.
-   The ported declaration-only candidate must not execute until stubs are replaced.
-   Preserve74fc9 and9sixf predecessor batches, all actor fixes and runtime guards.
-   Complete collision production draft and actual caller retirement are assembled.
-   Independent state, motion, pose/control, geometry and31Runtime-scope reviews pass.
-   Root formatting, normal and verifier library metadata, and detached test metadata
-   pass. Integration corrected two imports preceding module attributes and exposed
-   only the operation module crate-wide for existing verification callers.
-   Fifteen new detached tests and owned-state checks are compiled, not executed.
-   Reviewed probes and83fixture adaptation are installed. Release DLL/native/source
-   checks pass after restoring six known-good newline encodings (no semantic/native
-   SDK change). All83cases match20,448,594bytes exactly on16fc5cfe; independent
-   execution audits pass. Three additive Runtime invariants97..99 pass on c4c70733,
-   including actualA7 and foreign-byte mutation followed by actual movement.
-   Production preservation and all old parsers are independently checked.
-   Existing13world/composed regressions match4,063,411bytes. Bounded clean-boot
-   oracle passes21,015frames,14required probes and120follow-up frames,0failures;
-   independent audit confirms actual terrain/door/horizontal paths,7rooms and
-   5definitions. No credits or unreported optional-branch coverage is claimed.
-   Candidate9b37afb1 is published on verify/owned-player-collision-20261024 only.
-   Full CI40068610664 runs91selected faults (73preserved+18new); formatting,
-   full game build, Cargo exports and three backend-free core checks pass;
-   detached job passes54exact unique faults (42general+6actor+6collision), with
-   independent log/source audit. Successful runner enforces all15collision tests;
-   raw passing test transcript is not printed. The37DLL faults remain active.
-   Six adjacent Runtime guards pass with21expected
-   panics; nine actor cases match1,442,111bytes and11contact cases match3,670,343bytes.
-   Independent output/diagnostic audits pass. Per-child exit receipts were not
-   saved separately; successful execution is coordinator-observed, not independently
-   attested by those files. Ordinary pushes select77faults, excluding2initialized
-   Kraid and12collision DLL faults; only the explicit full dispatch selects91.
-   Local compilation remains serialized.
+   Player collision is adopted from reviewed9b37afb1: seven owned operations,
+   58new shared-state bytes,33bank routines and two contact modules retired,
+   with three actor query helpers and13repeated solid-result conversions removed.
+   State, geometry, motion, pose/control and31Runtime-scope source reviews pass.
+   Full CI40068610664 passes:91exact unique mutation kills (54detached+37DLL),
+   including initialized Kraid, full build, Cargo exports and15collision tests.
+   Independent log/source audit passes; successful child baselines/compilation
+   are runner-enforced where individual transcripts are not printed.
+   All83frozen comparisons match20,448,594bytes on16fc5cfe. Three additional
+   Runtime invariants97..99 pass on c4c70733; source-preservation audit connects
+   the additive checks. Bounded clean-boot oracle passes21,015frames,14required
+   probes and120follow-up frames,0failures (7rooms/5definitions). Optional
+   unreported branches and credits remain unproven.
+   Adjacent13world/composed cases match4,063,411bytes; nine actor cases match
+   1,442,111bytes;11contact cases match3,670,343bytes. Six Runtime guards pass
+   with21expected panics. Independent output/diagnostic audits pass; separate
+   per-child exit receipts were not saved for these adjacent runs, so their
+   execution provenance remains coordinator-observed.
+   Final production116748Rust lines (+334), verification30435 (+3530), combined
+   147183 (+3864). Maintained native562unchanged; Python+137 and JSON+278 are
+   separate support. Production tokens+5277/bytes+17596: no net reduction claim.
+   Exact classifier baseline116414/26905 differs from historical116413/26906 by
+   one pre-cfg verification-helper comment, with combined143319 unchanged.
+   Unsafe declarations2544 (-20overall; production-36/verification+16), casts5630
+   (-38). One shared interval owner is established; persistent Session ownership,
+   removal of retained unsafe effects and backend independence remain unfinished.
+   Ordinary pushes select77faults;2initialized Kraid and12collision DLL faults
+   require the explicit full dispatch. Local compilation remains serialized.
    Next design scope accepted for preparation: the complete post-movement player
    interaction (gameplay animation, hit/bomb and block requests, arbitration,
    normalization/jump startup and history). Three repeated four-call chains can
@@ -575,7 +567,7 @@ references; measure build/test time and resource growth before changing the loop
    additional integration lines. Repeated movement-result/solid-contact conversions
    and distance predicates remain consolidation opportunities; do not remove safety checks
    or disguise adapters to fit the original estimate.
-   Next source-qualified responsibility: complete player collision/displacement,
+   Adopted collision design basis: complete player collision/displacement,
    including solid actors, terrain, wall/grapple, pose fitting, shinespark and speed
    publication. Independent closure covers58new owned bytes,33bank bodies and all
    shared/alias/reset/snapshot writers. Gross retirement1694lines; conservative full

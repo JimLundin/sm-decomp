@@ -11,6 +11,10 @@ import sys
 import room_entry_mutations as entry
 
 RECIPES = json.loads(Path(__file__).with_name('actor_dll_mutation_recipes.json').read_text(encoding='utf-8-sig'))
+COLLISION_RECIPES = json.loads(Path(__file__).with_name('player_collision_dll_mutation_recipes.json').read_text(encoding='utf-8-sig'))
+COLLISION_BASELINES = json.loads(Path(__file__).with_name('player_collision_dll_baselines.json').read_text(encoding='utf-8-sig'))
+if len(COLLISION_RECIPES) != 12 or len({m['name'] for m in COLLISION_RECIPES}) != 12:
+    raise RuntimeError('all twelve PC1-PC10 fault variants must remain present')
 ROOM_PANICS = entry.GUARD_PANICS[:3]
 INITIALIZER_PANIC = ('actor_initializer_checks.rs', 'actor initializer fixture deliberate nested dispatch unwind')
 GUARD_PANICS = entry.GUARD_PANICS
@@ -19,7 +23,7 @@ EMPTY_HASH = hashlib.sha256(b'').hexdigest()
 
 def capture_child(root, selected, rom=None):
     """Reuse source-stamped DLL loading; never build or keep a native host alive here."""
-    if selected not in {m['selected'] for m in RECIPES}:
+    if selected not in {m['selected'] for m in RECIPES + COLLISION_RECIPES}:
         raise RuntimeError('unknown actor mutation selected case')
     os.environ['RUST_BACKTRACE'] = '0'
     verifier = runpy.run_path(str(root / 'tools/verify_dll.py'))
@@ -34,7 +38,7 @@ def capture_child(root, selected, rom=None):
     else:
         case = int(selected.split(':')[1])
         output = ctypes.create_string_buffer(4 * 1024 * 1024)
-        if selected.startswith('world:'):
+        if selected.startswith(('world:', 'collision:')):
             if rom is None or not Path(rom).is_file():
                 raise RuntimeError('initialized actor mutation requires an existing --actor-rom path')
             function = host.sm_verify_room_world_case
@@ -50,9 +54,24 @@ def capture_child(root, selected, rom=None):
             raise RuntimeError('actor capture exceeds output capacity')
         data = output.raw[:size]
         if data:
-            prefix = b'AKMC1' if selected.startswith('world:') else b'APAN1' + case.to_bytes(4, 'little')
-            if not data.startswith(prefix) or (selected.startswith('world:') and len(data) != 131079):
-                raise RuntimeError('wrong actor fixture capture header or size')
+            if selected.startswith('collision:'):
+                if case == 97:
+                    valid = (len(data) == 262156 and data.startswith(b'PCOWN1' + (0).to_bytes(4, 'little'))
+                             and data[131082] == 0 and data[-1] == 0)
+                elif 16 <= case <= 51:
+                    # Frozen size includes every cancellation row and intermediate checkpoint.
+                    valid = len(data) == COLLISION_BASELINES[selected]['bytes'] and data[131077] == 0
+                elif 52 <= case <= 75:
+                    valid = (len(data) == COLLISION_BASELINES[selected]['bytes']
+                             and data.startswith(b'PCPOSE1' + (case - 52).to_bytes(4, 'little')))
+                else:
+                    valid = False
+                if not valid:
+                    raise RuntimeError('wrong collision fixture capture header or size')
+            else:
+                prefix = b'AKMC1' if selected.startswith('world:') else b'APAN1' + case.to_bytes(4, 'little')
+                if not data.startswith(prefix) or (selected.startswith('world:') and len(data) != 131079):
+                    raise RuntimeError('wrong actor fixture capture header or size')
         observation = {'selected': selected, 'bytes': size, 'sha256': hashlib.sha256(data).hexdigest()}
     print(json.dumps(observation), flush=True)
 
@@ -80,6 +99,9 @@ def baseline(copied, selected, run, rom=None):
     else:
         valid = (observation.get('selected') == selected and observation.get('bytes', 0) > 0
                  and re.fullmatch('[0-9a-f]{64}', observation.get('sha256', '')) is not None)
+    if selected.startswith('collision:') and selected in COLLISION_BASELINES:
+        expected = dict(COLLISION_BASELINES[selected], selected=selected)
+        valid = observation == expected
     if not valid or not entry.stderr_matches(stderr, panics):
         raise RuntimeError(f'{selected}: unchanged selected baseline must pass\n{observation}\n{stderr}')
     return observation
@@ -94,7 +116,7 @@ def qualify(mutation, observation, stderr):
     else:
         expected = {'selected': selected, 'bytes': 0, 'sha256': EMPTY_HASH}
         prior = ()
-        footer = ('Room world: room world assertions failed' if selected.startswith('world:')
+        footer = ('Room world: room world assertions failed' if selected.startswith(('world:', 'collision:'))
                   else f"actor population/animation case {selected.split(':')[1]} assertion failed")
     wanted = prior + ((mutation['assertion_source'], mutation['assertion_message']),)
     if observation != expected or not entry.stderr_matches(stderr, wanted, footer):
@@ -120,15 +142,20 @@ def build(root, work, paths, name, run, copy_tracked, edits=()):
     return copied
 
 
-def run_checks(root, work, paths, run, copy_tracked, rom=None, kraid_only=False):
+def run_checks(root, work, paths, run, copy_tracked, rom=None, kraid_only=False, collision_only=False):
     if os.environ.get('GITHUB_ACTIONS') != 'true' or os.name != 'nt':
         raise RuntimeError('actor DLL mutation builds require Windows GitHub CI')
-    selected_mutations = [m for m in RECIPES if m['selected'].startswith('world:') == kraid_only]
+    if kraid_only and collision_only:
+        raise RuntimeError('select the existing actor or collision suite separately')
+    selected_mutations = (COLLISION_RECIPES if collision_only else
+                          [m for m in RECIPES if m['selected'].startswith('world:') == kraid_only])
     if not selected_mutations:
         raise RuntimeError('no actor mutation recipes selected')
-    if kraid_only and (rom is None or not Path(rom).is_file()):
+    if (kraid_only or collision_only) and (rom is None or not Path(rom).is_file()):
         raise RuntimeError('Kraid mutation suite requires --actor-rom PATH; no cases skipped or credited')
     required = {'sm/src/verification/actor_dll_mutations.py', 'sm/src/verification/actor_dll_mutation_recipes.json'}
+    required.update({'sm/src/verification/player_collision_dll_mutation_recipes.json',
+                     'sm/src/verification/player_collision_dll_baselines.json'})
     required.update(e['path'] for m in selected_mutations for e in m['edits'])
     if not required.issubset(paths):
         raise RuntimeError('actor mutation sources must be tracked')
@@ -146,6 +173,7 @@ def run_checks(root, work, paths, run, copy_tracked, rom=None, kraid_only=False)
         observation, stderr = capture(copied, mutation['selected'], run, rom)
         qualify(mutation, observation, stderr)
         print(f"{mutation['name']}: KILLED by {mutation['required_assertion']}", flush=True)
-    print(f'actor DLL mutations: {len(selected_mutations)}/{len(selected_mutations)} unique faults killed; selected baselines passed', flush=True)
-    if not kraid_only:
+    family = 'collision' if collision_only else 'actor'
+    print(f'{family} DLL mutations: {len(selected_mutations)}/{len(selected_mutations)} unique faults killed; selected baselines passed', flush=True)
+    if not kraid_only and not collision_only:
         print('F9 maps to the detached actor_restore_reuses_live_epoch result; it is not a second independent mutant.', flush=True)

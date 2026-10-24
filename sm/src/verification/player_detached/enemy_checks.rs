@@ -199,7 +199,7 @@ fn drop_then_missile() {
     for (before, awarded, spent) in [(0, 2, 1), (6, 7, 6)] {
         let mut h = prepared();
         missile_content(&h);
-        h.world.player_inputs.player_x_radius = 8;
+        h.world.player.player.contact.x_radius = 8;
         h.world.player.player.contact.radius = 8;
         h.world.player.inventory.ammunition[0].current = before;
         h.world.player.inventory.ammunition[0].maximum = 7;
@@ -242,7 +242,7 @@ fn drop_then_missile() {
 }
 fn contact_failure_prefix() {
     let mut h = prepared();
-    h.world.player_inputs.player_x_radius = 8;
+    h.world.player.player.contact.x_radius = 8;
     h.world.player.player.contact.radius = 8;
     h.world.player.inventory.health.current = 50;
     h.world.player.inventory.health.maximum = 99;
@@ -283,7 +283,7 @@ fn native_drop_then_missile() {
     }
     h.image = image;
     missile_content(&h);
-    h.world.player_inputs.player_x_radius = 8;
+    h.world.player.player.contact.x_radius = 8;
     h.world.player.player.contact.radius = 8;
     h.world.player.inventory.health.current = 99;
     h.world.player.inventory.health.maximum = 99;
