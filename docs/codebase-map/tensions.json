@@ -1,7 +1,7 @@
 [
   {
-    "title": "Session ownership is interval-scoped",
-    "description": "The runtime imports state on entry, publishes it before foreign calls, and reimports on return. Actor identity moves with that handoff; the shared Session is not yet persistent across the whole game.",
+    "title": "State still passes through the old game",
+    "description": "Owned state is still copied into the old game for some work, then read back.",
     "files": [
       "sm/src/game/session_runtime.rs",
       "sm/src/game/session.rs",
@@ -28,11 +28,12 @@
         "line": 421,
         "expected": "state.actor_identity = game.take_actor_identity();"
       }
-    ]
+    ],
+    "resolve": "Keep one Session alive through the whole frame and remove those handoffs."
   },
   {
-    "title": "Compatibility aliases cross domains",
-    "description": "Legacy offsets can reach fields in other owned subsystems or remaining RAM. Removing the compatibility layer requires migrating those interactions, not clamping their addresses.",
+    "title": "Some features still share RAM addresses",
+    "description": "Older code can reach another feature by using its memory address.",
     "files": [
       "sm/src/game/visual_runtime.rs",
       "sm/src/game/session_runtime.rs",
@@ -54,11 +55,12 @@
         "line": 710,
         "expected": "pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {"
       }
-    ]
+    ],
+    "resolve": "Replace those callers with explicit state and operations."
   },
   {
-    "title": "Assets retain ROM compatibility",
-    "description": "Room topology has stable IDs and configurable connections, and actor catalogs support compatible per-instance appearances. Assets still resolve ROM-backed resources and pre-staged palette rows; the Map Rando importer remains unfinished.",
+    "title": "Assets still come from the ROM",
+    "description": "Rooms and actor appearances are configurable, but their assets still use ROM data.",
     "files": [
       "sm/src/game/visual_host.rs",
       "sm/src/game/visual_runtime.rs",
@@ -108,11 +110,12 @@
         "line": 1,
         "expected": "//! Compatible resource emission; material rows must already be staged at room preparation."
       }
-    ]
+    ],
+    "resolve": "Finish validated asset loading and the Map Rando importer."
   },
   {
-    "title": "Drawing still targets the emulated backend",
-    "description": "Common actors now produce semantic visual selections, but compatible sprite/tilemap emission still feeds the existing OAM/PPU path. The independent renderer remains a destination.",
+    "title": "Drawing still uses the SNES model",
+    "description": "Game objects still become sprites and tiles for the emulated SNES display.",
     "files": [
       "sm/src/game/actors/drawing.rs",
       "sm/src/game/actors/media_runtime.rs",
@@ -158,11 +161,12 @@
         "line": 597,
         "expected": "pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {"
       }
-    ]
+    ],
+    "resolve": "Connect the game output to the independent renderer."
   },
   {
-    "title": "Game still owns emulator pointers",
-    "description": "The outer Game contains WRAM and CPU/SNES pointers. Gameplay and the comparison backend still share this compatibility state.",
+    "title": "The game still contains emulator state",
+    "description": "The outer game still holds SNES memory and CPU state.",
     "files": [
       "sm/src/game_state.rs",
       "sm/src/cpu_infra.rs",
@@ -184,11 +188,12 @@
         "line": 112,
         "expected": "use crate::snes::snes::{snes_catchupApu, snes_read, snes_reset, snes_saveload, snes_write};"
       }
-    ]
+    ],
+    "resolve": "Separate game state from the comparison and display backends."
   },
   {
-    "title": "Common actors are owned; species effects remain legacy",
-    "description": "The common actor pool, lifecycle and gameplay rules share the Session. Species AI, instruction and hitbox effects still cross back into Game through foreign calls, so the safe common module is not an independent whole-game engine.",
+    "title": "Enemy species still use older code",
+    "description": "The shared enemy pool is owned, but individual species still call old routines.",
     "files": [
       "sm/src/game/actors/mod.rs",
       "sm/src/game/actors/state.rs",
@@ -233,11 +238,12 @@
         "line": 562,
         "expected": "self.foreign(|game| unsafe { crate::game::sm_a0::CallHitboxTouch(routine, game) });"
       }
-    ]
+    ],
+    "resolve": "Move complete species behavior into the owned enemy core."
   },
   {
-    "title": "Sprites share state, but retain legacy edges",
-    "description": "The 32-slot sprite pool and projectile attachments use the shared Session. Broad compatibility handles, ROM-based definitions and foreign drawing still connect this typed core to the legacy game.",
+    "title": "Sprites still need older services",
+    "description": "Sprite state is owned, but asset reads and drawing still cross into older code.",
     "files": [
       "sm/src/game/sprite_objects.rs",
       "sm/src/game/session.rs",
@@ -266,11 +272,12 @@
         "line": 45,
         "expected": "pub struct LegacySpriteDefinition(pub u16);"
       }
-    ]
+    ],
+    "resolve": "Replace the remaining asset and drawing connections."
   },
   {
-    "title": "Verification shares compilation infrastructure",
-    "description": "Verification is counted separately here, but the library, application and verifier examples still share a Cargo package. A category color does not imply an independent build boundary.",
+    "title": "Tests and game share the build",
+    "description": "Verification is counted separately but still builds alongside game code.",
     "files": [
       "sm/Cargo.toml",
       "sm/src/lib.rs",
@@ -292,11 +299,12 @@
         "line": 1,
         "expected": "//! Single-threaded replay through the same differential oracle as the UI."
       }
-    ]
+    ],
+    "resolve": "Keep reference execution outside the shipping game."
   },
   {
-    "title": "Player update and movement are owned; legacy effects remain",
-    "description": "Normal movement, ordered player update and minimap projection run with collision and pose clearance in Session. Special movement and gamma effects remain in sm_90; map and physics content still use legacy ROM and SNES sources.",
+    "title": "Samus still calls older routines",
+    "description": "Movement, collision and the minimap are owned, but special moves and some frame work still use old routines.",
     "files": [
       "sm/src/game/player_update/mod.rs",
       "sm/src/game/player_update/minimap.rs",
@@ -356,6 +364,7 @@
         "line": 110,
         "expected": "let low = crate::snes::snes::snes_read(game.g_snes, address, game);"
       }
-    ]
+    ],
+    "resolve": "Finish those interactions without adding another copy of player state."
   }
 ]

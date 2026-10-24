@@ -28,6 +28,35 @@ def group(path):
  if path.startswith('sm/src/'): return 'state'
  if path.startswith('tools/') or path.startswith('.github/') or name.startswith('Cargo.') or name in {'build.rs','rust-toolchain.toml'}: return 'build'
  return 'docs'
+RESPONSIBILITIES = [
+ ('movement','Samus movement'),('samus','Samus actions'),('enemies','Enemies'),
+ ('bosses','Bosses'),('rooms','Rooms & doors'),('projectiles','Projectiles'),
+ ('hud','HUD & scenes'),('graphics','Sprites & palettes'),('audio','Audio'),('engine','Engine & devices'),
+]
+ALIASES = {'kraid':['sm/src/game/sm_a7.rs'], 'grapple':['sm/src/game/grapple_swing.rs','sm/src/game/sm_9b.rs'],
+ 'doors':['sm/src/game/room_entry/mod.rs','sm/src/game/sm_8f.rs','sm/src/game/room_entry/'], 'ridley':['sm/src/game/sm_a6.rs'],
+ 'draygon':['sm/src/game/sm_a5.rs'], 'mother brain':['sm/src/game/sm_a9.rs'],
+ 'minimap':['sm/src/game/player_update/minimap.rs'], 'samus':['sm/src/game/player_movement/']}
+def responsibility(path):
+ name=Path(path).name;low=path.lower()
+ if re.fullmatch(r'sm_a[45679]\.rs',name):return 'bosses'
+ if any(x in low for x in ('spc','audio','dsp','music','sound')):return 'audio'
+ if any(x in low for x in ('player_movement','player_collision')):return 'movement'
+ if any(x in low for x in ('projectile','beam_')) or name=='sm_93.rs':return 'projectiles'
+ if any(x in low for x in ('minimap','hud','menu','message_box','intro_','dialogue')) or name in ('sm_81.rs','sm_8b.rs','sm_8c.rs','sm_8d.rs','sm_8e.rs'):return 'hud'
+ if any(x in low for x in ('room_','door','mechanism','elevator')) or name in ('sm_82.rs','sm_8f.rs'):return 'rooms'
+ if any(x in low for x in ('samus','player_','grapple')) or name in ('sm_90.rs','sm_91.rs','sm_92.rs','sm_94.rs','sm_9b.rs'):return 'samus'
+ if '/actors/' in low or 'enemy' in name or re.fullmatch(r'sm_(a[0238]|b[23])\.rs',name):return 'enemies'
+ if any(x in low for x in ('palette','sprite','animated_tiles','drawing','blend','hdma','mode7','liquid_effect')) or name in ('sm_83.rs','sm_88.rs'):return 'graphics'
+ return 'engine'
+def source_status(path,text,clean,markers):
+ unsafe=any(m['kind']=='unsafe' for m in markers);raw=any(m['kind']=='WRAM' for m in markers)
+ forbid=any(m['kind']=='forbid unsafe' for m in markers)
+ whole=bool(re.search(r'^#!\[forbid\(unsafe_code\)\]',text,re.M))
+ if re.fullmatch(r'sm_[0-9a-f]{2}\.rs',Path(path).name):return 'legacy'
+ if whole and not unsafe and not raw and not re.search(r'\bGame\b|\.foreign\s*\(',clean):return 'owned'
+ if unsafe and not forbid:return 'legacy'
+ return 'partial'
 TOKEN=re.compile(r'//[^\n]*|/\*[\s\S]*?\*/|r\#*"[\s\S]*?"\#*|"(?:\\.|[^"\\])*"|\b[a-zA-Z_]\w*\b|::|[^\s]')
 def tokens(text): return [(m.group(),m.start()) for m in TOKEN.finditer(text) if not m.group().startswith(('//','/*'))]
 def physical_module(path):
@@ -120,7 +149,9 @@ def generate(root, template, output, revision):
   for title,pattern in [('unsafe',r'\bunsafe\b'),('WRAM',r'\bg_ram\b'),('native ABI',r'extern\s+"C"'),('forbid unsafe',r'forbid\(unsafe_code\)')]:
    matches=list(re.finditer(pattern,text if title in ('native ABI','forbid unsafe') else clean)) if p.suffix=='.rs' else []
    if matches:markers.append({'kind':title,'count':len(matches),'line':text.count('\n',0,matches[0].start())+1})
-  files.append(dict(id=path,path=path,name=p.name,group=group(path),lines=len(text.splitlines()) if text else None,bytes=len(raw),summary=' '.join(docs)[:330],markers=markers,ext=p.suffix or 'file'))
+  production=path.startswith('sm/src/') and p.suffix=='.rs' and not re.search(r'/(verification|verify)/|/verify[^/]*[.]rs$',path)
+  gameplay=production or (path.startswith('sm/') and p.suffix in ('.c','.h'))
+  files.append(dict(id=path,path=path,name=p.name,group=group(path),lines=len(text.splitlines()) if text else None,bytes=len(raw),summary=' '.join(docs)[:330],markers=markers,ext=p.suffix or 'file',production=production,gameplay=gameplay,responsibility=responsibility(path),status=source_status(path,text,clean,markers) if production else 'legacy'))
  mapping,declared,contexts=module_map(sources); edge_map={}; occurrences=set()
  def add(a,b,kind,line):
   if a==b:return
@@ -165,18 +196,23 @@ def generate(root, template, output, revision):
   outside=''.join(outside)
   for m in re.finditer(r'\b(?:crate|self|super|sm)(?:::[A-Za-z_]\w*)+',outside):resolve(m.group().split('::'),outside.count('\n',0,m.start())+1)
 
- data=dict(commit=commit,generated=datetime.datetime.now(datetime.timezone.utc).isoformat(),groups=[dict(id=g,title=t,description=d,color=c) for g,t,d,c in GROUPS],files=files,edges=list(edge_map.values()),unresolved=unresolved,tensions=[])
+ totals={status:sum(f['lines'] or 0 for f in files if f['production'] and f['status']==status) for status in ('owned','partial','legacy')}
+ data=dict(commit=commit,generated=datetime.datetime.now(datetime.timezone.utc).isoformat(),groups=[dict(id=g,title=t,description=d,color=c) for g,t,d,c in GROUPS],responsibilities=[dict(id=i,title=t) for i,t in RESPONSIBILITIES],aliases=ALIASES,production=totals,files=files,edges=list(edge_map.values()),unresolved=unresolved,tensions=[],stale_tensions=[])
  tensions_path=template.parent/'tensions.json'
  if tensions_path.exists():
-  data['tensions']=json.loads(tensions_path.read_text(encoding='utf-8-sig'))
-  for tension in data['tensions']:
-   for evidence in tension['evidence']:
-    lines=sources[evidence['path']].splitlines();expected=evidence.get('expected')
-    if not expected:raise ValueError('Tension evidence needs an expected source line: '+str(evidence))
-    if lines[evidence['line']-1].strip()!=expected:
-     matches=[i+1 for i,line in enumerate(lines) if line.strip()==expected]
-     if len(matches)!=1:raise ValueError('Review changed/ambiguous tension evidence: '+str(evidence))
-     evidence['line']=matches[0]
+  for tension in json.loads(tensions_path.read_text(encoding='utf-8-sig')):
+   try:
+    for evidence in tension['evidence']:
+     lines=sources[evidence['path']].splitlines();expected=evidence.get('expected')
+     if not expected:raise ValueError('missing expected source')
+     if evidence['line']>len(lines) or lines[evidence['line']-1].strip()!=expected:
+      matches=[i+1 for i,line in enumerate(lines) if line.strip()==expected]
+      if len(matches)!=1:raise ValueError('changed or ambiguous source')
+      evidence['line']=matches[0]
+    data['tensions'].append(tension)
+   except (KeyError,ValueError):
+    # Automatic HEAD builds must never publish an outdated architecture claim.
+    data['stale_tensions'].append(tension['title'])
 
  payload=json.dumps(data,ensure_ascii=False,separators=(',',':')).replace('</','<\\/')
  output.parent.mkdir(parents=True,exist_ok=True)

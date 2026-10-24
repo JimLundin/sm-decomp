@@ -14,3 +14,6 @@ __pycache__/
 /saves/
 *.smvchk
 *.log
+# Generated codebase map; keep authored sources only.
+/docs/codebase-map/index.html
+/docs/codebase-map/atlas-data.json

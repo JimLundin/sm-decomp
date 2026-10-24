@@ -22,13 +22,25 @@ with sync_playwright() as playwright:
     page.goto((root / "index.html").as_uri())
     page.wait_for_function("window.atlas && window.atlas.data.files.length > 300")
     assert page.evaluate("new Set(atlas.data.files.map(f => f.id)).size === atlas.data.files.length")
-    expect(page.locator("#graph .graph-node").first).to_be_visible()
+    expect(page.get_by_test_id("responsibility-tile")).to_have_count(10)
+    assert page.evaluate("[...document.querySelectorAll('.responsibility-tile')].every(n=>n.getBoundingClientRect().bottom<=innerHeight)")
+    assert page.locator(".overview-next .tension-card").count() <= 3
+    assert not page.evaluate("atlas.getState().extras")
+    assert not page.locator('#tree [data-file*="/verification/"]').count()
+    page.locator("#show-extras").check()
+    assert page.locator('#tree [data-file*="/verification/"]').count() > 0
+    page.locator("#show-extras").uncheck()
+    assert page.evaluate("atlas.searchMatches('grapple')[0].path") == "sm/src/game/grapple_swing.rs"
+    assert page.evaluate("atlas.searchMatches('doors')[0].path") == "sm/src/game/room_entry/mod.rs"
     expect(page.locator("#direction-label")).not_to_be_visible()
     page.screenshot(path=str(output / "overview-desktop.png"))
     audit_accessibility(page, "overview-desktop")
 
     page.keyboard.press("/")
     expect(page.locator("#search")).to_be_focused()
+    page.locator("#search").fill("Kraid")
+    page.keyboard.press("Enter")
+    assert page.evaluate("atlas.getState().id") == "sm/src/game/sm_a7.rs"
     page.locator("#search").fill("session_runtime.rs")
     page.get_by_test_id("search-result").first.click()
     assert page.evaluate("atlas.getState().id") == "sm/src/game/session_runtime.rs"
@@ -65,6 +77,7 @@ with sync_playwright() as playwright:
     assert page.evaluate("atlas.getState().id") == "sm/src/game/session_runtime.rs"
     page.locator("#reset").click()
     assert page.evaluate("atlas.getState().type") == "overview"
+    page.get_by_test_id("responsibility-tile").first.click()
     page.locator("#tensions").uncheck()
     assert not page.evaluate("atlas.getState().tensions")
     page.locator("#tensions").check()
@@ -76,6 +89,8 @@ with sync_playwright() as playwright:
     page.set_viewport_size({"width": 390, "height": 844})
     page.locator("#reset").click()
     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1")
+    assert page.evaluate("[...document.querySelectorAll('.responsibility-tile')].every(n=>n.getBoundingClientRect().bottom<=innerHeight && n.scrollWidth<=n.clientWidth && n.scrollHeight<=n.clientHeight)")
+    assert page.locator('.quick-find [data-file="sm/src/game/sm_a7.rs"]').bounding_box()["y"] < 844
     assert "pan-y" in page.locator("#graph").evaluate("element => getComputedStyle(element).touchAction")
     page.screenshot(path=str(output / "overview-mobile.png"))
     audit_accessibility(page, "overview-mobile")

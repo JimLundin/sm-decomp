@@ -1,62 +1,53 @@
-# Current-codebase atlas
+# Current codebase map
 
-[Open the hosted atlas](https://jimlundin.github.io/sm-decomp/).
+[Open the interactive map](https://jimlundin.github.io/sm-decomp/).
 
-Open `index.html` directly, or serve this directory as static files. Everything
-needed to navigate is embedded; the page makes no network requests. Source and
-architecture links open the analyzed commit on GitHub.
+Start with gameplay responsibilities. Tile area represents production Rust lines;
+colour and the bottom strip show Owned / Partly owned / Legacy. Open a tile for
+its files, then a file for incoming users and outgoing references. Select an edge
+for source evidence. These responsibilities are navigation groups, not crates.
 
-The first screen groups responsibilities for navigation. They are not separate
-packages or crates. Open a region or folder, search a file, or choose a guided starting point.
-Selecting a file shows incoming users on the left and outgoing source references
-on the right. Select an edge for its first source occurrence. All neighbors remain
-listed beneath the focused graph when the graph shows only its first ten per side.
+Search understands Kraid, grapple and doors; Enter opens the first match. `/`
+focuses search. The file tree, breadcrumbs and Back button follow your selection.
+Graph nodes support Enter/Space, drag and zoom. The URL saves selection and filters.
+Tests, documentation and tools are hidden until their checkbox is enabled.
+Contextual notes explain remaining dependencies and what resolves them; the
+Current work link opens the live repository progress report.
 
-The tree follows the actual repository. The graph can be dragged and zoomed;
-`Fit` restores its view. `/` focuses search. Graph nodes support Enter/Space.
-The URL fragment preserves selection and link/direction/tension filters.
+## Generation
 
-## Refresh
-
-From the repository root:
+The Pages workflow generates and checks the map from HEAD on every main push.
+Generated HTML and JSON are local/build outputs, not committed snapshots.
+To generate a standalone offline page from the repository root:
 
 ```powershell
 python docs/codebase-map/generate_atlas.py --root . --revision HEAD
 ```
 
-The generator reads immutable Git blobs from the selected revision, not modified
-working files. Snapshot labels and source links therefore describe the same
-revision. Uncommitted additions are intentionally absent. Commit source changes
-first, regenerate, and publish the resulting snapshot in a subsequent commit.
+Open the resulting `docs/codebase-map/index.html` directly. Navigation makes no
+network requests; source links open the analyzed commit on GitHub. The generator
+reads immutable Git blobs, excluding uncommitted work. Only Python's standard
+library is required. `atlas.template.html` owns the UI; `tensions.json` supplies
+curated notes with exact source evidence. Changed or ambiguous evidence omits
+that note, recording its title in the diagnostic JSON for later source review.
 
-`atlas.template.html` owns the interaction and visual design. `tensions.json`
-contains the small curated architecture annotations with exact source evidence.
-`index.html` is the self-contained deliverable; `atlas-data.json` is its inspectable
-data companion for local inspection; it need not be published. Python's standard library is the only generation dependency.
+## Reading the colours
 
-## Evidence limits
+Production accounting matches `tools/progress.sh`: Rust under `sm/src`, excluding
+verification/verify directories and `verify*.rs` files. Inline verification hooks
+remain production. The 110k and 100k figures are total production size targets.
 
-- Every tracked file in the selected revision is an inventory node.
-- Module edges resolve Rust `mod`/`#[path]` declarations. Reference edges resolve
-  lexical source paths in the primary library/application contexts.
-- References can be imports, type references or calls. This is not a compiler call
-  graph. Macro expansion, traits, runtime callback identities, independent detached
-  crate contexts, and non-Rust dependencies are incomplete.
-- The overview shows the strongest cross-region source relationships. Folder
-  drill-down is containment; focused file neighborhoods expose exact edges.
-- Rust `unsafe`, `g_ram`, native ABI and `forbid(unsafe_code)` markers are syntax
-  observations. They do not measure safety, migration completion or runtime risk.
-- Curated tensions distinguish the current implementation from the target owned
-  architecture. They need source review when the relevant responsibilities change.
+- Owned: a whole-file `forbid(unsafe_code)` marker without observed unsafe, RAM,
+  Game or foreign-call markers.
+- Legacy: a legacy bank file, or observed unsafe without that whole-file marker.
+- Partly owned: remaining production files. Mixed responsibility tiles also use
+  this colour; their bottom strip shows the actual line proportions.
 
-No ROMs, captures, assets or full source-file contents are embedded in the data.
+These source observations do not prove fidelity or completed migration. Read
+About this map for extraction limits. Edges are lexical Rust module/reference
+relationships, not a complete runtime call graph; callbacks, macros, traits and
+non-Rust dependencies may be absent. All resolved neighbors remain listed below
+the graph even when it displays only the first few. No ROM data is embedded.
 
-Curated tension evidence stores exact expected source lines. Generation reanchors
-only a unique unchanged match; a changed or ambiguous match stops generation for
-manual source review instead of publishing a misleading source link.
-
-The Pages workflow publishes only the checked standalone HTML. Hosted Chrome
-checks search, folder and dependency navigation, saved selections, keyboard and
-mobile interactions, offline operation, and WCAG 2/2.1 AA rules in four views.
-The initial browser/source review passed in GitHub run 40026991467; this is
-navigation evidence, not gameplay verification.
+The existing browser check covers navigation, offline behavior, responsive views,
+keyboard interaction and axe WCAG 2/2.1 AA rules. UI checks do not verify gameplay.

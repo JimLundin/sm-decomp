@@ -1,10 +1,7 @@
 name: Codebase atlas
 on:
   push:
-    branches: [main, verify/codebase-atlas-20261023]
-    paths:
-      - 'docs/codebase-map/**'
-      - '.github/workflows/atlas-check.yml'
+    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
@@ -20,6 +17,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: Generate the current source map
+        run: python docs/codebase-map/generate_atlas.py --root . --revision HEAD
       - run: python -m pip install playwright==1.56.0
       - run: google-chrome --version
       - run: npm install --prefix /tmp/atlas-browser-deps --no-audit --no-fund axe-core@4.10.3
