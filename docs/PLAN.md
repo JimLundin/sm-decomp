@@ -21,9 +21,9 @@ preserve others' work. Do not delete another process's lock or force-push main.
 Read [the external review](REVIEW.md) next. Hygiene and process reduction are done.
 One agent expands checkpoint recipes; others consolidate exercised subsystems in
 parallel, naming coverage per commit. Prefer legacy-bank retirement; production
-must fall. A docs-only commit needs a code commit beside it. Coverage flat since
-17:41: the next coverage commit is the Norfair Reserve recipe or its exact failure
-under item 1. Next consolidation commit deletes a whole projectile layer. Keep this plan
+must fall. A docs-only commit needs a code commit beside it. Continue coverage
+from the preserved Power Bomb route after Norfair Reserve. The next consolidation
+commit deletes a whole projectile layer. Keep this plan
 under ~200 lines, with current state and rules only; results belong in commits
 (at most ~8 lines). Direct user instructions take precedence. Historical queues,
 gates and results in [HISTORY.md](HISTORY.md) are not current rules.
@@ -45,14 +45,14 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    main pickups, doors/elevators, save/load, death and credits. Report results and rooms.
    Commit only recipes. Preserve input/NMI timing; no guessed lag/offset changes.
    Each adoption names segments exercising changed behavior and downstream effects.
-   Current recipes: 23/44 required checks pass; 21 remain pending. Three additional
+   Current recipes: 24/44 required checks pass; 20 remain pending. Three additional
    checks (in-memory save, upward elevator, Ice return) pass; the corpus is unfinished.
-   Next: Norfair Reserve (two rooms from prefix 145574), then Power Bomb/Crocomire.
+   Next: Power Bomb, then Crocomire.
    Power Bomb route is preserved at Red Tower's stone ledge (frame 171113); the long
    climb still blocks A3AE's pickup. Crocomire needs Power Bombs or the far gate side.
    `python tools/verify_dll.py --unit-tests --direct` runs 20 observer tests, not
    gameplay checks. Regenerate incompatible checkpoints from boot; preserve the
-   old checked navigation build. No runner changes before another gameplay check.
+   old checked navigation build.
 2. **Current - consolidate covered owned subsystems.** Simplify projectile animation
    and trails around their sole Session owner. Name coverage; hold uncovered contexts.
    Report added production and deleted legacy lines together; net growth needs a
@@ -75,8 +75,8 @@ the unused-bank scan found no larger removable family. Do not auto-rename macro-
 Held scrolling consolidation needs `scroll_tiles.row.bg2` coverage, absent in Ceres.
 Keep input draft `e956dffa` and `%LOCALAPPDATA%/sm-decomp-experiments/20261024/player-input-*`
 snapshots; reprice/revalidate against current main before adoption, without unrelated reruns.
-Snapshot separation `2a3c7792` on `draft/snapshot-comparison-2a3c7792` waits for another
-gameplay check: 390 verification lines relocated, 15 wiring lines added, no logic deleted.
+Snapshot separation `2a3c7792` remains lower priority than production consolidation:
+390 verification lines relocated, 15 wiring lines added, no logic deleted.
 
 ## Implementation rules
 

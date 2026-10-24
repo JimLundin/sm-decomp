@@ -116,6 +116,7 @@ ROUTES = {
     'ice-beam-settled': (161733, 'd5700c8c8bfd3bcbc9fa5d4d05aa805dd594e98130a0c9d0ade163695201e093'),
     'speed-booster': (148406, 'bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6'),
     'speed-booster-settled': (148526, '9548c119742b6e2ffec65c5c0871403c96915671b83fe8b4c3930cc4bf60a00d'),
+    'norfair-reserve': (147887, '968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d'),
 }
 
 
@@ -1074,6 +1075,38 @@ def extend_ice_return(a):
     return a
 
 
+def extend_reserve(a):
+    """Norfair Reserve branch from the authored Bubble Mountain upper-west landing.
+
+    Preserve the selected controller sequence, including the intermediate missile
+    message. The final reserve message completes before the neutral follow-up.
+    """
+    assert len(a) == 148406
+    a = list(a[:145574])
+    a.extend(_holds('Select:1 None:1 Select:1 None:5 Left+X:140 None:15'))  # reserve-ac83-entry
+    a.extend(_holds('Y:1 X:1 None:10 X:1 None:10 X:1 None:10 X:1 None:10 X:1 None:10'))  # reserve-geruta-clear
+    a.extend(_holds('Left+A:43 Up+A:1 None:15'))  # reserve-first-pillar
+    a.extend(_holds('Left:6 Left+A:52 Up+A:1 None:12'))  # reserve-second-pillar-near
+    a.extend(_holds('Left:4 None:8'))  # reserve-second-pillar-settle
+    a.extend(_holds('None:180 A:1 None:60'))  # reserve-missile-message
+    a.extend(_holds('None:110 A:1 None:40'))  # reserve-missile-dismiss
+    a.extend(_holds('R:2 X+R:1 None:20'))  # reserve-aperture-shot
+    a.extend(_holds('Left:6 Left+A:10 A+X:1 Down+A:1 A:1 Down+A:1 Left+A:35'))  # reserve-aperture-close-morph
+    a.extend(_holds('Left:25'))  # reserve-aperture-through
+    a.extend(_holds('Left:60 Up:1 None:10 Up:1 Left+X:45 None:120'))  # reserve-ac5a-entry
+    a.extend(_holds('Left:45 None:120'))  # reserve-ac5a-cross
+    a.extend(_holds('Left:8 Left+A:50 Up+A:1 None:15'))  # reserve-room-first-stone
+    a.extend(_holds('Left+A:50 Up+A:1 None:15'))  # reserve-room-second-stone
+    a.extend(_holds('Left:6 Left+A:28 Down+A:1 A:1 A+X:1 A:10'))  # reserve-third-early-shot
+    a.extend(_holds('Left+A:12 A+L:2 A+X+L:1 Left+A:4 Up+A:1 None:10'))  # reserve-third-land-aimed
+    a.extend(_holds('Left:18 None:8'))  # reserve-third-recover
+    a.extend(_holds('Left+A:50 Up+A:1 None:15'))  # reserve-room-fourth-stone
+    a.extend(_holds('Left+A:50 Up+A:1 None:15 Left+A:50 Up+A:1 None:15'))  # reserve-tank-ledge
+    a.extend(_holds('L:2 X+L:1 None:12 Left:18 None:400 A:1 None:180'))  # reserve-collected
+    assert len(a) == 147887
+    return a
+
+
 def route_frames(source, name):
     """Reproduce authored controller holds/splices; do not adjust emulator timing.
 
@@ -1092,6 +1125,8 @@ def route_frames(source, name):
         # Retain the saved-slot route through observed contact input 72760.
         # Authored idle exposure, then fresh A presses for Continue and both maps.
         return a[:72761] + _holds('None:1800 A:1 None:300 A:1 None:300 A:1 None:900')
+    if name == 'norfair-reserve':
+        return extend_reserve(extend_redtower(a))
     if name == 'ice-return-business':
         return extend_ice_return(extend_ice(extend_redtower(a)) + _hold('', 120))
     if name in ('ice-beam', 'ice-beam-settled'):

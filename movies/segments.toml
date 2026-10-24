@@ -295,7 +295,14 @@ after_expectations = 120
 
 [[segment]]
 id = "pickup-reserve"
-pending = "No qualified capacity-increase, message-completion and follow-up segment on the current route."
+inputs = "corpus-norfair-reserve.inputs"
+input_sha256 = "968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d"
+start_frame = 147273
+frames = 614
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+expect = ["pickup:reserve", "room:AC5A"]
+after_expectations = 120
 
 [[segment]]
 id = "door-transition"
