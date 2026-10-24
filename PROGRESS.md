@@ -160,15 +160,20 @@ flowchart LR
     PEXEC --> PWALK["Walked-obstacle source + admission<br/>review PASS"]:::done
     PWALK --> PWREF["9 additive cases 88–96<br/>format + DLL + captures PASS"]:::done
     PWREF --> PWAUDIT["Current / pending + native / loaded<br/>9-case execution audit PASS"]:::done
-    PI --> PCS["state.rs"]:::active
-    PCS --> PCSE["session.rs + session_encoding.rs"]:::active
-    PCSE --> PCIN["external_inputs.rs + shared consumers"]:::active
-    PI --> PCG["geometry.rs"]:::active
-    PI --> PCM["motion.rs"]:::active
-    PI --> PCC["control.rs"]:::active
-    PCC --> PCJ["jump.rs"]:::active
-    PCC --> PCP["pose.rs"]:::active
-    PI --> PCRT["Runtime adapters / 16 dependencies"]:::active
+    PI --> PCS["state.rs"]:::draft
+    PCS --> PCSE["session.rs + session_encoding.rs"]:::draft
+    PCSE --> PCIN["external_inputs.rs + shared consumers"]:::draft
+    PI --> PCG["geometry.rs"]:::draft
+    PI --> PCM["motion.rs"]:::draft
+    PI --> PCC["control.rs"]:::draft
+    PCC --> PCJ["jump.rs"]:::draft
+    PCC --> PCP["pose.rs"]:::draft
+    PI --> PCRT["Runtime adapters / 16 dependencies"]:::draft
+    PCIN --> PCSR["State / codec source audit PASS"]:::done
+    PCM --> PCMR["Motion / arithmetic source review PASS"]:::done
+    PCP --> PCPR["Pose / control source review PASS"]:::done
+    PCRT --> PCAR["Adapter / effect source review PASS"]:::done
+    PCG --> PCGR["Geometry arithmetic review"]:::active
     PI --> PCAPI["operations.rs + effects.rs + mod.rs"]:::active
     PCAPI --> PCCALL["33 bank routines / actual callers"]:::active
     PCCALL --> PCDEL["2 contact modules + 3 actor helpers<br/>retirement pending"]:::pending
@@ -187,7 +192,7 @@ flowchart LR
     PCFMT --> PCORACLE["Required oracle probes + effect tail"]:::pending
     PCFAULT --> PCMUT["Passing baseline + compiled fault<br/>intended assertion"]:::pending
     PCFMT --> PCMUT
-    class PI,PCS,PCSE,PCIN,PCG,PCM,PCC,PCJ,PCP,PCRT,PCAPI,PCCALL,PCDEL,PCOWN,PCFAULT,PCMERGE,PCFMT,PCCOMPARE,PCDET,PCORACLE,PCMUT changed
+    class PCS,PCSE,PCIN,PCG,PCM,PCC,PCJ,PCP,PCRT,PCSR,PCMR,PCPR,PCAR,PCGR changed
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
