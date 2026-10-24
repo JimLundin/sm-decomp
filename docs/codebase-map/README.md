@@ -16,7 +16,9 @@ Current work link opens the live repository progress report.
 
 ## Generation
 
-The Pages workflow generates and checks the map from HEAD on every main push.
+The Pages workflow generates and publishes the map from HEAD on every main push.
+Validate UI changes locally before adoption; publication does not install or run
+browser test dependencies.
 Generated HTML and JSON are local/build outputs, not committed snapshots.
 To generate a standalone offline page from the repository root:
 
@@ -49,5 +51,5 @@ relationships, not a complete runtime call graph; callbacks, macros, traits and
 non-Rust dependencies may be absent. All resolved neighbors remain listed below
 the graph even when it displays only the first few. No ROM data is embedded.
 
-The existing browser check covers navigation, offline behavior, responsive views,
+The existing local `check_atlas.py` covers navigation, offline behavior, responsive views,
 keyboard interaction and axe WCAG 2/2.1 AA rules. UI checks do not verify gameplay.

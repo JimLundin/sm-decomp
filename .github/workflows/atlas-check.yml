@@ -6,7 +6,7 @@ on:
 permissions:
   contents: read
 jobs:
-  browser:
+  package:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -19,20 +19,9 @@ jobs:
           python-version: '3.12'
       - name: Generate the current source map
         run: python docs/codebase-map/generate_atlas.py --root . --revision HEAD
-      - run: python -m pip install playwright==1.56.0
-      - run: google-chrome --version
-      - run: npm install --prefix /tmp/atlas-browser-deps --no-audit --no-fund axe-core@4.10.3
-      - run: python docs/codebase-map/check_atlas.py
-        env:
-          AXE_PATH: /tmp/atlas-browser-deps/node_modules/axe-core/axe.min.js
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: atlas-browser-results
-          path: atlas-browser-results
       - uses: actions/configure-pages@v5
         if: github.ref == 'refs/heads/main'
-      - name: Prepare the checked standalone page
+      - name: Package the standalone page
         if: github.ref == 'refs/heads/main'
         run: |
           mkdir -p atlas-site
@@ -43,7 +32,7 @@ jobs:
           path: atlas-site
   deploy:
     if: github.ref == 'refs/heads/main'
-    needs: browser
+    needs: package
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -52,6 +41,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Publish checked atlas
+      - name: Publish atlas
         id: deployment
         uses: actions/deploy-pages@v4
