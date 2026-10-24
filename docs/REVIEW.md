@@ -18,14 +18,35 @@ unsafe lines** (of 116,960 production and 4,965 unsafe total).
 `legacy` = `cat sm/src/game/sm_*.rs | wc -l`. First lane-B commit adds that row
 to `tools/progress.sh`.
 
-**Lane A — coverage (one agent).** Land required checks in this order; reorder
-only when the route forces it, and say so in the commit: pickup-power-bomb →
-boss-spore-spawn → boss-crocomire → item-wave → item-grapple → area-wrecked-ship
-→ boss-phantoon → item-gravity → boss-botwoon → item-space-jump → boss-draygon →
-item-spring-ball → item-plasma → item-x-ray → item-screw-attack →
-boss-golden-torizo → boss-ridley → area-tourian → boss-mother-brain → credits.
-One commit per passing check (recipe + expectation only). If one check takes
-over 3 hours, write the blocker under work item 1 and move to the next row.
+**Lane A — coverage (one agent).** User direction 2026-10-24: drive coverage
+with the published any% and 100% TASes (`movies/manifest.toml`), not hand-authored
+holds. The 33 current routes in `tools/movie_inputs.py` are hand-written button
+holds spliced onto an any% prefix; at ~1 check/hour they cannot reach 44/44.
+Working hypothesis: the TAS desyncs because it was recorded on bsnes v085, where
+some frames lag (the game misses an NMI and ignores input), while this engine
+runs exactly one game frame per input word. Steps, one commit each:
+
+- **A0.1 Locate.** Replay the full any% import on main with room logging; record
+  under work item 1 the first frame and room where Samus leaves the TAS's route.
+- **A0.2 Measure lag.** Play the same movie in the recording emulator (lsnes
+  rr2-beta23, bsnes v085 core; Windows build exists) with a short Lua script that
+  logs WRAM `$05B6` (`nmi_frame_counter_word`) and `$05B8` (`…_including_lag`)
+  per movie frame. Frames where `$05B6` does not advance are lag frames. The log
+  stays local and gitignored like `.inputs`; commit only its SHA-256 in the
+  manifest and the Lua script in `tools/`.
+- **A0.3 Align.** Add `--lag-log` to `tools/movie_inputs.py`: drop exactly the
+  logged lag frames, keeping the word the game latched. Every removed frame comes
+  from the log; no guessed offsets (PLAN's timing rule still holds).
+- **A0.4 Replay.** Aligned any% from boot to credits, 0 failures; then 100%
+  (222,788 frames) and low%.
+- **A0.5 Map.** Point pending `segments.toml` rows at frame windows of the
+  aligned any%/100% runs with their existing expectations; many rows may flip in
+  one commit, each named.
+
+If A0.2 shows no lag, or the aligned movie still desyncs, record the first
+divergence and its cause (boot alignment, input latch, RNG, APU handshake) under
+work item 1 and fix that cause; hand routes are the fallback only after a
+written finding. Time-box A0 to 8 hours of work before reporting.
 
 **Lane B — bank retirement (other agents, one bank each).** Order: `sm_94`
 (761) → `sm_91` (1,237) → `sm_90` (1,955) → `sm_88` (1,956) → `sm_81` (2,572)
@@ -39,19 +60,21 @@ segments that exercise it. A bank is done when its file is deleted. Total
 production must fall with each bank; unsafe lines must fall with every commit.
 Drafts not adopted within 2 hours are recorded in one line and dropped.
 
-**Waypoints** (review clock; a miss gets a diagnosis, not a new plan):
+**Waypoints** (Europe/Stockholm; review clock; a miss gets a diagnosis, not a new plan):
 
 | By | Checks | Banks deleted | Legacy | Production |
 | --- | ---: | --- | ---: | ---: |
-| 10-25 06:00 | ≥27/44 | sm_94 | ≤54,600 | ≤116,500 |
-| 10-25 18:00 | ≥32/44 | + sm_91, sm_90 | ≤51,500 | ≤114,000 |
-| 10-26 18:00 | ≥38/44 | + sm_88, sm_81, sm_80 | ≤44,500 | ≤110,000 |
+| 10-25 06:00 | A0.4 any% to credits | sm_94 | ≤54,600 | ≤116,500 |
+| 10-25 18:00 | ≥34/44 | + sm_91, sm_90 | ≤51,500 | ≤114,000 |
+| 10-26 18:00 | 44/44 | + sm_88, sm_81, sm_80 | ≤44,500 | ≤110,000 |
 | 10-27 18:00 | 44/44 | + sm_82, sm_8b | ≤35,000 | ≤104,000 |
 
 Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
+- **2026-10-24 23:30 (user direction):** Lane A switched from hand-authored routes
+  to aligning the published any%/100% TASes (A0.1–A0.5 above); waypoints moved.
 - **2026-10-24 23:52 (c1fe795):** 2 agent source commits in the ~20 min since
   8499a33, both lane B (`B:sm_94`), 0 docs-only; no stall. Milestone plan picked up
   at once: subjects prefixed, `Score:` line present, `progress.sh` reports legacy.

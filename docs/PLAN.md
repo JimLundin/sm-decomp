@@ -20,7 +20,7 @@ preserve others' work. Do not delete another process's lock or force-push main.
 
 Read [the external review](REVIEW.md) next. **The [milestone plan](REVIEW.md#milestone-plan-2026-10-24)
 there is binding and executes work order items 1-2.** Two lanes only: lane A (one
-agent) lands required checks in its route order; lane B (all others, one agent per
+agent) aligns the published any%/100% TASes (A0) and maps checks onto them; lane B (all others, one agent per
 bank) retires legacy `game/sm_*.rs` banks in its bank order, deleting each file. Every
 commit subject starts `A:` or `B:sm_XX`, and its body ends with the scoreboard line
 the milestone plan defines. A docs-only commit needs a code commit beside it.
