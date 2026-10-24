@@ -481,7 +481,8 @@ references; measure build/test time and resource growth before changing the loop
    source520323af exposes all3captures with predecessor-identical sample outputs.
    Full CI40058485171 adds a Cargo-launcher source/export check and retains all73faults,
    including25remaining DLL faults (14existing+11actor). Its full build and Cargo
-   verifier/export check now pass; mutation rerun continues. Ordinary builds now
+   verifier/export check now pass; detached mutations and initialized-ROM setup
+   pass, DLL mutation execution continues. Ordinary builds now
    precede long mutations; measured prior35minute runtime warrants a60minute limit.
    Selected
    ten-probe oracle replay passes21015frames with zero failures and120frames after
@@ -511,6 +512,14 @@ references; measure build/test time and resource growth before changing the loop
    both contact modules and their actual callers; preserve capture/effect order and
    authority transfer on unwind. This approval establishes no gameplay fidelity or
    backend independence.
+   Predecessor fixtures are assembled on50cec3e0:72directed +2composed cases,
+   IDs14..87, preserving0..13. Four source reviews and the13-file integration
+   audit pass; whole-RAM checkpoints retain intermediate effects before fixture
+   edits. Root formatting and normal library compilation pass. Verifier compilation
+   rejects the unsafe composed helper nested under actors' forbid(unsafe_code).
+   Workers are separating verification choreography while preserving that lint;
+   captures wait for the corrected build. This adds1921verification/support Rust
+   lines before formatting, no gameplay code.
    Preserve56existing mutants and add the
    nine selected actor faults, including discarded-future handle rejection.
    Scope includes population/assets, spawn/respawn/death, separate select/update,

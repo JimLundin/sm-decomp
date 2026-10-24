@@ -75,7 +75,7 @@ flowchart LR
     AHFIX --> ACFG["Second CI / ordinary verifier<br/>configuration compile FAIL"]:::failed
     ACFG --> ACFGLOCAL["Both modes compile + 3 captures<br/>configuration fix PASS"]:::done
     ACFGLOCAL --> AHOSTBUILD["Hosted full build + Cargo exports<br/>PASS"]:::done
-    AHOSTBUILD --> AHRUN["Full CI / 50cec3e0<br/>73 mutation rerun active"]:::active
+    AHOSTBUILD --> AHRUN["Full CI / 50cec3e0<br/>detached PASS / DLL faults active"]:::active
     ADLL --> AORACLE["21,015 frames / 10 probes<br/>0 failures + 120-frame tail / PASS"]:::done
     ADLL --> KWRITE["Kraid live-definition write + consumer<br/>PASS"]:::done
     KWRITE --> KRESTORE["Actual CPU snapshot restore<br/>definition retained / PASS"]:::done
@@ -110,7 +110,7 @@ flowchart LR
     MUTBUILD --> MFRENDER["Flash / frozen palette bits"]:::pending
     MUTBUILD --> MFKWRITE["Kraid live shot-gate write"]:::pending
     MUTBUILD --> MFKREAD["Contact reads live shot gate"]:::pending
-    class AHOSTBUILD,AHRUN changed
+    class AHRUN changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -138,8 +138,20 @@ flowchart LR
     PAUDIT --> PAP["Seven operations / one Session<br/>design approved"]:::done
     PAP --> PI["Implementation after actor adoption"]:::pending
     PV --> PI
-    PV --> PREF["Predecessor fixture source<br/>parallel authoring"]:::active
-    class PAP,PI changed
+    PV --> PREF["74 predecessor cases<br/>assembly review PASS"]:::done
+    PREF --> PMOVE["36 movement / speed cases<br/>source review PASS"]:::done
+    PREF --> PPOSE["24 wall / pose cases<br/>source review PASS"]:::done
+    PREF --> POWN["12 history / ownership cases<br/>source review PASS"]:::done
+    PREF --> PROUTE["2 composed routes / full phase RAM<br/>source review PASS"]:::done
+    PMOVE --> PBUILD["Format + normal library<br/>compile PASS"]:::done
+    PPOSE --> PBUILD
+    POWN --> PBUILD
+    PROUTE --> PBUILD
+    PBUILD --> PDLL["Verifier compile FAIL<br/>unsafe helper in safe actor module"]:::failed
+    PDLL --> PFIX["Separate verification choreography<br/>preserve forbid unsafe"]:::active
+    PFIX --> PCAP["Predecessor captures"]:::pending
+    class PREF,PMOVE,PPOSE,POWN,PROUTE,PBUILD,PDLL,PFIX,PCAP changed
+    classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
