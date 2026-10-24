@@ -4,7 +4,7 @@
 use super::*;
 use crate::game::projectile_initialization::Initialization;
 
-pub(crate) const CASES: u32 = 82;
+pub(crate) const CASES: u32 = 92;
 
 pub(crate) fn capture(id: u32) -> Option<Vec<u8>> {
     if id >= CASES {
@@ -14,7 +14,7 @@ pub(crate) fn capture(id: u32) -> Option<Vec<u8>> {
     let loaded = RomImage::zeroed(0x200000);
     let native = RomImage::zeroed(0x200000);
     let seed = match id {
-        0..=9 | 30..=35 | 44..=81 => 9,
+        0..=9 | 30..=35 | 44..=91 => 9,
         10..=15 => 77,
         16..=19 => 79,
         20..=27 => 7,
@@ -30,7 +30,124 @@ pub(crate) fn capture(id: u32) -> Option<Vec<u8>> {
         }
     };
     let mut limit = None;
-    if id >= 44 {
+    if id >= 82 {
+        // Actual numeric collision callers; no initializer substitutes for a scan.
+        g.g_ram[0xb64..0xcd4].fill(0);
+        for (at, value) in [
+            (0x7a5, 8),
+            (0x7a7, 8),
+            (0x7a9, 2),
+            (0x7ab, 2),
+            (0x7b9, 128),
+            (0xb64, 32),
+            (0xb78, 32),
+            (0xb8c, 0xf000),
+            (0xba0, 0xf000),
+            (0xbb4, 2),
+            (0xbc8, 2),
+            (0xbdc, 0x180),
+            (0xbf0, 0x180),
+            (0xc04, 2),
+            (0xc18, 0x8000),
+            (0xc2c, 20),
+            (0xc40, 0x9400),
+            (0xc54, 1),
+            (0xc68, 0xb169),
+            (0xcce, 1),
+        ] {
+            put(&mut g, at, value);
+        }
+        put(&mut g, crate::ram_map::words::projectile_index, 0);
+        put(&mut g, crate::ram_map::words::cur_block_index, 0x7777);
+        match id {
+            82..=84 => {
+                // Parent raw0 links child raw2; child actually moves into terrain.
+                for (at, value) in [
+                    (0xb8c, 0),
+                    (0xba0, 0),
+                    (0xc18, 0x8200),
+                    (0xc7c, 0x102),
+                    (0xb66, 32),
+                    (0xb7a, 32),
+                    (0xbb6, 2),
+                    (0xbca, 2),
+                    (0xc06, 2),
+                    (0xc1a, 0x8200),
+                    (0xc2e, 20),
+                    (0xc42, 0x9400),
+                    (0xc56, 1),
+                    (0xc6a, 0xb075),
+                    (0xcce, 2),
+                ] {
+                    put(&mut g, at, value);
+                }
+                if id == 83 {
+                    put(&mut g, 0xb78, 60);
+                    put(&mut g, 0xbf0, 0xf400);
+                    put(&mut g, 0xbf2, 0xfa00);
+                    put(&mut g, 0xc04, 0);
+                    put(&mut g, 0xc06, 0);
+                    put(&mut g, 0x10002 + 18 * 2, 0x8000);
+                } else {
+                    put(&mut g, 0xbdc, 0xc00);
+                    put(&mut g, 0xbde, 0x600);
+                    put(
+                        &mut g,
+                        0x10002 + 19 * 2,
+                        if id == 84 { 0xc000 } else { 0x8000 },
+                    );
+                    if id == 84 {
+                        // Parent scan succeeds; child fails in reaction table word.
+                        limit = Some(lorom(0x949ea6) + 1);
+                    }
+                }
+            }
+            85 | 89 => {
+                put(&mut g, 0xbc8, 9);
+                for cell in [10, 18] {
+                    put(
+                        &mut g,
+                        0x10002 + cell * 2,
+                        if id == 85 { 0x8000 } else { 0x1000 },
+                    );
+                    g.g_ram[0x16402 + cell] = 4; // Fully occupied square slope.
+                }
+                if id == 85 {
+                    put(&mut g, 0xc18, 0x8001);
+                }
+            }
+            86 => {
+                put(&mut g, 0xbb4, 9);
+                put(&mut g, 0xc18, 0x8001);
+                for cell in [17, 18] {
+                    put(&mut g, 0x10002 + cell * 2, 0x1000);
+                    g.g_ram[0x16402 + cell] = 4;
+                }
+            }
+            87 => {
+                put(&mut g, 0xc18, 0x8001);
+                put(&mut g, 0xb78, 0x8000); // Opposite stored high byte rejects after X move.
+            }
+            88 => {
+                put(&mut g, 0xc18, 0x8001);
+                put(&mut g, 0xb78, 511); // Y moves to513 before its window rejection.
+            }
+            90 => {
+                put(&mut g, 0xb64, 31);
+                put(&mut g, 0xb78, 40);
+                put(&mut g, 0xbb4, 9);
+                put(&mut g, 0xc04, 4);
+                put(&mut g, 0x10002 + 17 * 2, 0x1000);
+                g.g_ram[0x16402 + 17] = 7; // Height8: first cell ends the two-column scan.
+            }
+            91 => {
+                put(&mut g, 0xb78, 256);
+                put(&mut g, 0xbc8, 129); // Span17 rejects after the fractional X move.
+            }
+            _ => unreachable!(),
+        }
+    }
+    if (44..=81).contains(&id) {
         // Synthetic animation/trail definitions, deliberately distinct by frame,
         // style, direction and side. These are inputs, never expected algorithms.
         g.g_ram[0xd658..0xd7c0].fill(0);
@@ -303,7 +420,7 @@ pub(crate) fn capture(id: u32) -> Option<Vec<u8>> {
         43 => {
             put(&mut g, 0x9d2, 0xffff);
         }
-        44..=81 => {}
+        44..=91 => {}
         _ => unreachable!(),
     }
     g.loaded_rom = Some(if let Some(length) = limit {
@@ -318,6 +435,19 @@ pub(crate) fn capture(id: u32) -> Option<Vec<u8>> {
     // Candidate installation changes only this binding to register_native_rom.
     g.register_native_rom(native.clone());
     let result = catch_unwind(AssertUnwindSafe(|| match id {
+        82..=91 => call_motion(
+            match id {
+                82 | 84 => 0x90b06a,
+                83 => 0x90b047,
+                85 | 87 => 0x90b151,
+                86 | 88 => 0x90b13b,
+                89 | 91 => 0x90af60,
+                90 => 0x90af4a,
+                _ => unreachable!(),
+            },
+            0,
+            &mut g,
+        ),
         0..=4 => initialize(
             0,
             [

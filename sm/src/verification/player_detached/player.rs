@@ -65,7 +65,11 @@ impl Host for Composed {
     fn spawn_power_bomb(&mut self) {
         panic!("power-bomb backend outside prepared scope")
     }
-    fn spawn_mechanism(&mut self, _: u16) {
+    fn spawn_mechanism(&mut self, header: u16) {
+        if let Some(hook) = self.on_player_mechanism {
+            self.events.push(Event::PlayerMechanism(header));
+            return hook(self, header);
+        }
         panic!("room mechanism outside prepared scope")
     }
     fn draw(&mut self, drawing: Drawing) {

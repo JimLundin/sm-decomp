@@ -53,8 +53,8 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    `python tools/verify_dll.py --unit-tests --direct` runs 20 observer tests, not
    gameplay checks. Regenerate incompatible checkpoints from boot; preserve the
    old checked navigation build.
-2. **Current - consolidate covered owned subsystems.** Charge feedback is consolidated.
-   Next: projectile terrain traversal, then atmospheric consumers. Name coverage; hold gaps.
+2. **Current - consolidate covered owned subsystems.** Projectile terrain is consolidated.
+   Next: retire atmospheric RAM consumers, then more covered callers. Name coverage; hold gaps.
    Report added production and deleted legacy lines together; net growth needs a
    reason. Get production below 110,000 before starting another subsystem. Reuse
    existing Host/effects/adapters unless they demonstrably cannot serve. Route
