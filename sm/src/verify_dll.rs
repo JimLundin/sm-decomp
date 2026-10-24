@@ -282,6 +282,9 @@ unsafe fn run(args: &[String]) -> c_int {
             eprintln!("verify: use a separate Python process for each replay");
             return 2;
         }
+        if args.len() == 1 && args[0] == "--unit-tests" {
+            return std::panic::catch_unwind(verify::run_unit_tests).unwrap_or(2);
+        }
         let mut game = Game::new();
         sm::host::install_host_hooks(sm::host::HostHooks {
             die: host_die,

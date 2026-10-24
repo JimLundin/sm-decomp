@@ -42,7 +42,7 @@ already-known failing change before further adoption. Local results gate adoptio
 
 ## Work order
 
-1. **Current - checkpoint corpus before further adoption.** Recover reproducible
+1. **Current - expand checkpoint coverage in parallel.** Recover reproducible
    route recipes and extend the existing verifier with per-segment expectations.
    Cover Crateria, Brinstar, Norfair, Wrecked Ship, Maridia and Tourian; every boss;
    main pickups, doors/elevators, save/load, death and credits. Report results and rooms.
@@ -53,7 +53,12 @@ already-known failing change before further adoption. Local results gate adoptio
    Next coverage: Power Bomb pickup, then Crocomire. The ordinary approaches need
    power bombs or the far side of a green gate. The verified Ice return ends in
    Business Center; return through Red Tower's energy station toward A3AE's pickup.
-2. **Next - consolidate existing owned subsystems.** Resume only after the corpus.
+  Existing verifier tests now execute locally: `python tools/verify_dll.py
+  --unit-tests --direct` passes all 20 unchanged bodies. This is observer coverage,
+  not additional gameplay checks. The runner changes checkpoint compatibility;
+  regenerate from boot on this source. Preserve the old checked navigation build.
+2. **Current - consolidate covered owned subsystems.** Name the existing corpus
+   segments exercising each changed behavior; hold uncovered contexts.
    Report added production and deleted legacy lines together; net growth needs a
    reason. Get production below 110,000 before starting another subsystem. Reuse
    existing Host/effects/adapters unless they demonstrably cannot serve. Route
@@ -80,7 +85,8 @@ The complete input draft `e956dffa` is held, not adopted. Preserve its checked
 source/reference snapshots and audits under
 `%LOCALAPPDATA%/sm-decomp-experiments/20261024/player-input-*`; do not rerun or
 replace them without a source/coverage reason. Reprice/revalidate it against the
-then-current base before adoption. Latest checked source: `992845a3` (partial corpus).
+then-current base before adoption. Gameplay corpus source: `992845a3` (partial);
+current `e4a83bad` adds only the checked unit runner, with unchanged gameplay.
 
 ## Implementation rules
 

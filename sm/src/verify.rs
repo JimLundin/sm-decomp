@@ -1171,9 +1171,59 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     }
 }
 
-#[cfg(test)]
+#[cfg(sm_verify_dll)]
+pub(super) fn run_unit_tests() -> i32 {
+    coverage_checks::run()
+}
+
+#[cfg(any(test, sm_verify_dll))]
 mod coverage_checks {
     use super::*;
+
+    #[cfg(sm_verify_dll)]
+    pub(super) fn run() -> i32 {
+        // Keep names and function pointers paired without duplicating assertions.
+        macro_rules! cases {
+            ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
+        }
+        let tests: [(&str, fn()); 20] = cases![
+            expectation_parser_rejects_unknown_or_malformed_values,
+            inventory_events_require_a_new_award_inside_the_same_live_room,
+            boss_flags_require_a_rising_bit_in_the_corresponding_area,
+            credits_require_enabled_script_advancement_not_ending_presence,
+            death_must_begin_in_the_segment_and_reach_game_over,
+            every_expectation_is_required_and_repeated_hits_keep_the_first_frame,
+            suit_award_waits_for_later_hdma_and_control_return,
+            door_requires_fresh_admission_and_the_same_completed_destination,
+            elevator_landing_requires_the_linked_traversal_and_fresh_unlock,
+            ceres_requires_observed_combat_and_the_same_encounter_escape_edge,
+            bomb_requires_observed_damage_death_and_later_completion,
+            bomb_deletion_only_finishes_an_already_observed_death,
+            bomb_resets_on_room_actor_or_gameplay_discontinuity,
+            bomb_does_not_reuse_an_episode_after_healing_or_completion,
+            fresh_save_death_selected_restore_and_initialized_arrival_complete_once,
+            loaded_history_and_unordered_restore_do_not_qualify,
+            reset_and_slot_change_discard_save_history,
+            state_rollbacks_discard_episode,
+            wrong_first_arrival_cannot_be_repaired_by_later_room_entry,
+            restoration_and_gameplay_initialization_are_required,
+        ];
+        let mut failed = 0usize;
+        for (name, test) in &tests {
+            let passed = std::panic::catch_unwind(*test).is_ok();
+            println!(
+                "test verify::coverage_checks::{name} ... {}",
+                if passed { "ok" } else { "FAILED" }
+            );
+            failed += usize::from(!passed);
+        }
+        println!(
+            "Verifier unit tests: {} passed; {failed} failed; {} total",
+            tests.len() - failed,
+            tests.len()
+        );
+        i32::from(failed != 0)
+    }
 
     fn gameplay() -> CoverageState {
         CoverageState {
@@ -1193,7 +1243,7 @@ mod coverage_checks {
         }
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn expectation_parser_rejects_unknown_or_malformed_values() {
         for value in [
             "",
@@ -1237,7 +1287,7 @@ mod coverage_checks {
         );
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn inventory_events_require_a_new_award_inside_the_same_live_room() {
         let before = gameplay();
         let mut after = before;
@@ -1266,7 +1316,7 @@ mod coverage_checks {
         assert!(!item.observed(&CoverageState { state: 7, ..before }, &after, false));
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn boss_flags_require_a_rising_bit_in_the_corresponding_area() {
         let boss = Expectation::parse("boss:mother-brain").unwrap();
         let before = CoverageState {
@@ -1286,7 +1336,7 @@ mod coverage_checks {
         ));
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn credits_require_enabled_script_advancement_not_ending_presence() {
         let ending = CoverageState {
             state: 39,
@@ -1321,7 +1371,7 @@ mod coverage_checks {
         ));
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn death_must_begin_in_the_segment_and_reach_game_over() {
         let mut coverage = ReplayCoverage {
             previous: gameplay(),
@@ -1373,7 +1423,7 @@ mod coverage_checks {
         );
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn every_expectation_is_required_and_repeated_hits_keep_the_first_frame() {
         let mut coverage = ReplayCoverage {
             previous: gameplay(),
@@ -1391,7 +1441,7 @@ mod coverage_checks {
         coverage.observe_expectations(after, 300);
         assert_eq!(coverage.all_expected_frame(), Some(200));
     }
-    #[test]
+    #[cfg_attr(test, test)]
     fn suit_award_waits_for_later_hdma_and_control_return() {
         for (name, mask) in [("item:varia", 1), ("item:gravity", 0x20)] {
             let before = CoverageState {
@@ -1548,7 +1598,7 @@ mod coverage_checks {
         coverage
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn door_requires_fresh_admission_and_the_same_completed_destination() {
         let route = traversal();
         assert_eq!(episode("door:A7DE", &route).all_expected_frame(), Some(5));
@@ -1596,7 +1646,7 @@ mod coverage_checks {
         );
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn elevator_landing_requires_the_linked_traversal_and_fresh_unlock() {
         let mut route = traversal();
         for sample in &mut route[1..4] {
@@ -1722,7 +1772,7 @@ mod coverage_checks {
         }
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn ceres_requires_observed_combat_and_the_same_encounter_escape_edge() {
         let combat = CoverageState {
             area: 6,
@@ -1837,7 +1887,7 @@ mod coverage_checks {
         hits
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn bomb_requires_observed_damage_death_and_later_completion() {
         let live = frame(100, false, false);
         let damage = frame(50, false, false);
@@ -1861,7 +1911,7 @@ mod coverage_checks {
         assert!(hits(&[live, frame(0, false, false), done]).is_empty());
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn bomb_deletion_only_finishes_an_already_observed_death() {
         let live = frame(100, false, false);
         let death = frame(0, true, false);
@@ -1896,7 +1946,7 @@ mod coverage_checks {
         );
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn bomb_resets_on_room_actor_or_gameplay_discontinuity() {
         let live = frame(100, false, false);
         let death = frame(0, true, false);
@@ -1919,7 +1969,7 @@ mod coverage_checks {
         }
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn bomb_does_not_reuse_an_episode_after_healing_or_completion() {
         let live = frame(100, false, false);
         let death = frame(0, true, false);
@@ -1977,14 +2027,14 @@ mod coverage_checks {
         step(c, s, false, false)
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn fresh_save_death_selected_restore_and_initialized_arrival_complete_once() {
         let (mut c, s) = through_restore();
         assert!(finish(&mut c, s));
         assert!(!step(&mut c, saved_state(), false, false));
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn loaded_history_and_unordered_restore_do_not_qualify() {
         let mut s = saved_state();
         let mut c = ReplayCoverage {
@@ -2003,7 +2053,7 @@ mod coverage_checks {
         assert!(!finish(&mut c, s));
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn reset_and_slot_change_discard_save_history() {
         for state in [0, 1, 4, 5, 6, 7, 27, 31, 39] {
             let mut s = saved_state();
@@ -2022,7 +2072,7 @@ mod coverage_checks {
         assert!(c.save_episode.is_none());
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn state_rollbacks_discard_episode() {
         let mut s = saved_state();
         let mut c = ReplayCoverage {
@@ -2043,7 +2093,7 @@ mod coverage_checks {
         assert!(c.save_episode.is_none());
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn wrong_first_arrival_cannot_be_repaired_by_later_room_entry() {
         let (mut c, mut s) = through_restore();
         for state in [5, 6, 7, 8] {
@@ -2055,7 +2105,7 @@ mod coverage_checks {
         assert!(!step(&mut c, s, false, false));
     }
 
-    #[test]
+    #[cfg_attr(test, test)]
     fn restoration_and_gameplay_initialization_are_required() {
         let (mut c, mut s) = through_restore();
         for state in [5, 6, 7] {

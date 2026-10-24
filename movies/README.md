@@ -31,6 +31,16 @@ the same verifier through Python without SDL2:
 python tools/verify_dll.py rom/sm.smc movies/any.inputs
 ```
 
+Run the verifier's existing unit tests without a ROM or standalone test executable:
+
+```powershell
+python tools/verify_dll.py --unit-tests --direct
+```
+
+This executes the same test bodies discovered by Cargo, reports each result,
+and exits nonzero on failure. Keep the named case list in `coverage_checks::run`
+in sync when adding tests. Unit tests do not count as gameplay coverage.
+
 With the installed SDL2 SDK on `LIBRARY_PATH`, the launcher automatically uses
 Cargo's normal release artifacts. `--cargo` selects it explicitly. This mode needs Cargo and the SDL2
 MinGW SDK. Set `LIBRARY_PATH` to the SDK's `lib` directory; runtime DLLs are

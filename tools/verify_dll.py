@@ -505,6 +505,8 @@ def main():
     parser.add_argument("inputs", type=Path, nargs="?")
     parser.add_argument("--build-only", action="store_true",
                         help="build and check compiled sources without starting a replay")
+    parser.add_argument("--unit-tests", action="store_true",
+                        help="run the existing verifier unit tests through the DLL, without a ROM")
     parser.add_argument("--frontend-check", action="store_true",
                         help="include release library/frontend checks in the same Cargo build")
     parser.add_argument("--frames", type=int)
@@ -536,8 +538,17 @@ def main():
     args = parser.parse_args()
     if os.name != "nt":
         parser.error("use cargo run --release -- verify on Linux")
-    if not args.build_only and (args.rom is None or (args.inputs is None and args.corpus is None)):
-        parser.error("rom and inputs are required unless --build-only is used")
+    if args.unit_tests and (args.build_only or args.frontend_check or args.rom is not None
+                           or args.inputs is not None or args.corpus is not None or args.segment
+                           or args.frames is not None or args.checkpoint_in is not None
+                           or args.checkpoint_out is not None or args.require_hit or args.expect
+                           or args.after_hits is not None or args.after_expectations is not None):
+        parser.error("--unit-tests cannot combine replay, build-only or frontend checks")
+    if not (args.build_only or args.unit_tests) and (
+            args.rom is None or (args.inputs is None and args.corpus is None)):
+        parser.error("rom and inputs are required unless --build-only or --unit-tests is used")
+    if args.unit_tests and args.cargo is None:
+        args.cargo = False
     if args.frontend_check and args.no_build:
         parser.error("--frontend-check requires a build")
     if args.build_only and (args.frames is not None or args.checkpoint_in is not None
@@ -569,7 +580,7 @@ def main():
     # Paths are resolved before changing cwd so invocation works from anywhere.
     rom = args.rom.resolve() if args.rom else None
     inputs = args.inputs.resolve() if args.inputs else None
-    replay_args = [str(rom), str(inputs)]
+    replay_args = ["--unit-tests"] if args.unit_tests else [str(rom), str(inputs)]
     if args.frames is not None:
         replay_args.extend(["--frames", str(args.frames)])
     for probe in args.require_hit:
@@ -597,7 +608,7 @@ def main():
           file=sys.stderr, flush=True)
     if args.build_only:
         return 0
-    if (args.checkpoint_in is not None or args.checkpoint_out is not None
+    if (args.unit_tests or args.checkpoint_in is not None or args.checkpoint_out is not None
             or args.require_hit or args.expect):
         if not hasattr(host, "sm_verify_args"):
             raise RuntimeError("cached DLL predates segment options; run without --no-build")
