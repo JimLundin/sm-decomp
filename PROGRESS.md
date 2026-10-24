@@ -3,12 +3,12 @@
 ```mermaid
 flowchart LR
     DONE["DONE: Shared player update<br/>movement + minimap + settlement"]:::done
-    NOW["NOW: Design owned input preparation<br/>controls + movement rules + pose requests"]:::active
+    NOW["NOW: Implement owned input preparation<br/>controls + movement rules + pose requests"]:::active
     NEXT["NEXT: Migrate input callers<br/>remove 2 more RAM handoffs"]:::pending
     THEN["GAIN: Shared player state<br/>less duplicate coordination"]:::pending
     TARGET["TARGET: Safe modular engine<br/>Map Rando: rooms / sprites / rules"]:::pending
     DONE --> NOW --> NEXT --> THEN --> TARGET
-    class DONE,NOW,NEXT,THEN changed
+    class NOW changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
@@ -19,6 +19,41 @@ flowchart LR
 
 Green: adopted scope / passed check | Blue: draft | Orange: active | Grey: remaining | Red: failed
 **Purple outline: changed since previous report.** Folder branches show containment; check arrows show prerequisites.
+
+<details>
+<summary>Current input work: implementation and verification in parallel</summary>
+
+```mermaid
+flowchart LR
+    OWNER["Ownership contract / reviewed<br/>0 new gameplay bytes"]:::done
+    OWNER --> INPUT["player_input/"]:::active
+    INPUT --> RULES["mod.rs / 28 rules + pose requests"]:::active
+    INPUT --> CONTENT["content.rs / lazy pose rules"]:::active
+    INPUT --> EFFECTS["effects.rs / demo + temporary input"]:::active
+    INPUT --> HOST["player_input_runtime.rs"]:::active
+    HOST --> CALLERS["preparation.rs / sm_90.rs / sm_9b.rs<br/>actual caller migration"]:::active
+    CALLERS --> RETIRE["sm_91.rs + sm_90.rs<br/>retire old input rules + adapters"]:::active
+    OWNER --> REFERENCES["28 selectors + bindings + lookup<br/>reference checks being authored"]:::active
+    RULES --> BUILD["Compile + backend-free core / pending"]:::pending
+    REFERENCES --> COMPARE["Exact comparisons / pending"]:::pending
+    BUILD --> COMPARE
+    COMPARE --> TRANSFERS["Measure removed RAM handoffs / pending"]:::pending
+    COMPARE --> MUT["Input + ordering mutations / pending"]:::pending
+    COMPARE --> REPLAY["Exercised gameplay replay / pending"]:::pending
+    RETIRE --> ADOPT["Adoption + complete accounting / pending"]:::pending
+    TRANSFERS --> ADOPT
+    MUT --> ADOPT
+    REPLAY --> ADOPT
+    class OWNER,INPUT,RULES,CONTENT,EFFECTS,HOST,CALLERS,RETIRE,REFERENCES,BUILD,COMPARE,TRANSFERS,MUT,REPLAY,ADOPT changed
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
+[Scope and remaining checks](docs/PLAN.md#work-order). Draft work is not adopted gameplay.
+
+</details>
 
 <details>
 <summary>Shared player update: adopted / files and local checks</summary>
@@ -54,7 +89,6 @@ flowchart LR
     RETIRE --> ADOPT["Adopted / +225 production lines"]:::done
     MOVIE --> ADOPT
     MUT --> ADOPT
-    class UPDATE,API,MAP,STATE,CONTENT,EFFECTS,HOST,SESSION,CALLERS,RETIRE,ALIASES,BOSS,EDGES,CODEC,LEGACY,TRANSFERS,MUT,M1,M2,M3,ADOPT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

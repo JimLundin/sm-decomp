@@ -348,7 +348,7 @@ Production removes four unsafe declarations and two unsafe blocks; verification
 adds one declaration and three blocks. This is ownership consolidation, with
 net production growth. It does not complete persistent whole-engine ownership.
 
-Next complete responsibility under design: owned player input preparation,
+Current complete responsibility under implementation: owned player input preparation,
 from radius and selected input through bindings, all28 movement-input rules and
 pose-request publication. Compose it with the existing projectile preparation
 Runtime; migrate Normal/Demo alpha producers, beta16 radius and the retained
@@ -359,14 +359,21 @@ remove an outer lifetime. Do not fuse alpha with beta across actor work and
 message suspension. Keep demo scripting as a named foreign effect, then reread
 live inputs; preserve Normal/Demo input-versus-suit ordering.
 
-Before implementation, freeze the complete input API/owner/caller/deletion
-contract. Preserve first-record sentinel versus exhausted-search fallback,
+The complete input API/owner/caller/deletion contract is reviewed and frozen:
+update_radius, advance_selected and request_default_pose on the existing Session.
+All 19 directly accessed gameplay words already have owners: zero new owned
+bytes. Four configured binding observations extend ExternalInputs; temporary
+autojump presses use one finite setter on the existing external channel.
+Keep the preparation-only input Host bound narrow and preserve each former
+foreign operation's preflight/unwind/refresh using the existing owned_call guard.
+Preserve first-record sentinel versus exhausted-search fallback,
 first-match priority, same-pose no-op behavior, momentum-before-fallback writes,
 autojump success-only restoration and frozen pose/history rules. Reuse already
 owned player fields and avoid duplicating input authority. The initial estimate
 is roughly300 retired lines against320..480 replacement lines; +20..180 net
-production is provisional, not measured savings. Author implementation and
-checks in parallel once the contract is ready: all selectors, remapped commands,
+production is provisional, not measured savings. Implementation, caller retirement
+and finite reference/check authoring now run in parallel on isolated files:
+all selectors, remapped commands,
 priority/sentinels, autojump/failure prefixes, frozen turns, live callback input,
 measured transfer removal and targeted ordering/input mutations.
 
