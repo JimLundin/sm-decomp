@@ -16,7 +16,6 @@ flowchart LR
     WORLD --> MR
     RULES --> MR
     MR --> REPLAY["Seed + settings + replay compatibility"]:::pending
-    class WORLD changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
@@ -131,7 +130,6 @@ flowchart LR
     RI --> RLIFE["Persistent Session<br/>frame/lifecycle ownership remains"]:::pending
     RW --> RIMPORT["Map Rando importer<br/>portable prepared save/replay remains"]:::pending
     RCOMPAT --> RBACKEND["Independent assets + graphics/audio backend<br/>ROM compatibility + unsafe leaves remain"]:::pending
-    class RI,RW,RCONTENT,RSTATE,RCODEC,ROWNER,RSELECT,RINSTALL,RPROTO,RBG,RCOMPAT,RPLM,RAPI,RMODULE,RCSTATE,RCBG,RCRUNTIME,REFFECTS,RSESSION,RRUNTIME,RCPU,RRTL,RSM80,RSM82,RCONTACT,RCONTACTRAM,REXTERNAL,ROLDSTATE,ROLDBG,RMUT,MMARK,MLOCK,MAREA,MBIND,MOFFSET,RMUTAUDIT,RCOUNT,RLIFE,RIMPORT,RBACKEND,RALL,RAUDIT,RSHARED changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
