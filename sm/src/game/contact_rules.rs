@@ -1,8 +1,12 @@
 //! Shared geometry and projectile eligibility for contact scans.
 #![forbid(unsafe_code)]
-use crate::rom::RomRecord;
-use crate::types::Hitbox;
-use core::mem::offset_of;
+#[derive(Clone, Copy)]
+pub(crate) enum HitboxEdge {
+    Left,
+    Right,
+    Top,
+    Bottom,
+}
 pub(crate) struct Bounds {
     left: u16,
     right: u16,
@@ -18,18 +22,24 @@ impl Bounds {
             bottom: y.wrapping_add(height),
         }
     }
-    pub fn hits(&self, x: u16, y: u16, record: &RomRecord, at: usize, touch: bool) -> bool {
-        let edge = |field, origin: u16| record.word(at + field).wrapping_add(origin);
+    pub fn hits(
+        &self,
+        x: u16,
+        y: u16,
+        mut read: impl FnMut(HitboxEdge) -> u16,
+        touch: bool,
+    ) -> bool {
+        let mut edge = |field, origin: u16| read(field).wrapping_add(origin);
         if touch {
-            (edge(offset_of!(Hitbox, left), x).wrapping_sub(self.right) as i16) < 0
-                && (edge(offset_of!(Hitbox, right), x).wrapping_sub(self.left) as i16) >= 0
-                && (edge(offset_of!(Hitbox, top), y).wrapping_sub(self.bottom) as i16) < 0
-                && (edge(offset_of!(Hitbox, bottom), y).wrapping_sub(self.top) as i16) >= 0
+            (edge(HitboxEdge::Left, x).wrapping_sub(self.right) as i16) < 0
+                && (edge(HitboxEdge::Right, x).wrapping_sub(self.left) as i16) >= 0
+                && (edge(HitboxEdge::Top, y).wrapping_sub(self.bottom) as i16) < 0
+                && (edge(HitboxEdge::Bottom, y).wrapping_sub(self.top) as i16) >= 0
         } else {
-            (self.right.wrapping_sub(edge(offset_of!(Hitbox, left), x)) as i16) >= 0
-                && (self.left.wrapping_sub(edge(offset_of!(Hitbox, right), x)) as i16) < 0
-                && (self.bottom.wrapping_sub(edge(offset_of!(Hitbox, top), y)) as i16) >= 0
-                && (self.top.wrapping_sub(edge(offset_of!(Hitbox, bottom), y)) as i16) < 0
+            (self.right.wrapping_sub(edge(HitboxEdge::Left, x)) as i16) >= 0
+                && (self.left.wrapping_sub(edge(HitboxEdge::Right, x)) as i16) < 0
+                && (self.bottom.wrapping_sub(edge(HitboxEdge::Top, y)) as i16) >= 0
+                && (self.top.wrapping_sub(edge(HitboxEdge::Bottom, y)) as i16) < 0
         }
     }
 }

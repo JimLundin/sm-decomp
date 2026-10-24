@@ -506,7 +506,18 @@ references; measure build/test time and resource growth before changing the loop
    actor runner enforces at least18baseline tests; its successful test transcript
    is not printed. The oldest four classifiers retain their broader equality
    assertion matching. Full build, Cargo exports and initialized-ROM setup pass;
-   the25DLL faults are still running. Local compilation remains serialized.
+   all25DLL faults also pass. Final independent audit confirms73exact unique kills,
+   including both initialized Kraid faults, with all selected baselines passing.
+   Actor scope is adopted on main from the complete six-commit candidate through
+   bdbb7968. Final root cargo fmt and fmt --check pass; sm/tools/workflow inputs
+   match that passing CI revision exactly. Prior79comparisons and21015-frame
+   oracle evidence remain applicable through the independently audited production
+   preservation bridge, not a claim of a new oracle run. Production116413 (+4998),
+   verification26906 (+5406), combined143319; unsafe declarations2564 (-50).
+   Seven obsolete actor modules and their migrated bank facades retire. This is
+   shared interval ownership; species effects and backend independence remain.
+   Player collision implementation can now start from this adopted baseline.
+   Local compilation remains serialized.
    Added13verification Rust lines (complete actor increment5406), no gameplay.
    Ordinary builds now
    precede long mutations; measured prior35minute runtime warrants a60minute limit.
@@ -532,7 +543,7 @@ references; measure build/test time and resource growth before changing the loop
    failures match the reviewed sources. Missing pinned root tool includes in the initial carrier
    were corrected without declaration changes. Workers prepare predecessor fixtures
    on complete50cec3e0, never the declaration stubs. Gameplay implementation waits for
-   actor adoption. Root approves the frozen21-file declaration design after final
+   actor adoption, now complete. Root approves the frozen21-file declaration design after final
    architecture review: seven semantic operations, one Session authority and finite
    internal compatibility effects. Retain the complete1694-line retirement scope,
    both contact modules and their actual callers; preserve capture/effect order and

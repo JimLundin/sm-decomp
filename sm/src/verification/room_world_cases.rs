@@ -14,6 +14,9 @@ use std::{
     sync::Arc,
 };
 
+#[cfg(sm_verify_dll)]
+pub(crate) const CASES: u32 = 14;
+#[cfg(not(sm_verify_dll))]
 pub(crate) const CASES: u32 = 11;
 fn put(g: &mut Game, at: usize, value: u16) {
     g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
@@ -28,6 +31,10 @@ fn record(out: &mut Vec<u8>, phase: u8, g: &Game) {
 }
 /// Uses the real constructor route; exported DLL initializes hardware via owner.with.
 pub(crate) fn owner(id: u32) -> Box<GameOwner> {
+    #[cfg(sm_verify_dll)]
+    if (12..14).contains(&id) {
+        return GameOwner::with_world(crate::game::actors::composed_fixture::binding(id == 13));
+    }
     GameOwner::with_world(fixture::binding(id & 1 != 0))
 }
 pub(crate) fn capture(id: u32, owner: &GameOwner) -> Option<Vec<u8>> {
@@ -44,6 +51,14 @@ unsafe fn nmi_and_draw(g: &mut Game) {
 }
 unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
     unsafe {
+        #[cfg(sm_verify_dll)]
+        if (12..14).contains(&id) {
+            return crate::actor_composed_route::run(id, g);
+        }
+        #[cfg(sm_verify_dll)]
+        if id == 11 {
+            return crate::cpu_infra::actor_mutable_cpu_checks::run(g);
+        }
         let world = g.world().clone();
         assert_eq!(
             g.g_runmode,
@@ -129,7 +144,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 room_entry::installation::load_state(&mut h);
             }
             assert_eq!(word(g, 0xe7a), 0, "room.world.source-tile-staging-empty");
-            crate::game::enemy_population_ram::load_room_assets(g);
+            crate::game::actors::prepare_room_assets(&mut Runtime::new(g));
             assert!(!g.g_fail, "room.world.source-assets-no-diagnostic");
             assert_eq!(word(g, 0x178c), 0x804c, "room.world.source-draw-hook");
             assert_eq!(g.g_ram[0x178e], 0xa0, "room.world.source-draw-hook-bank");

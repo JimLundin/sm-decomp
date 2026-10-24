@@ -331,6 +331,7 @@ pub(super) fn shot_word(h: &impl Host, member: super::host::ShotMember, index: i
             super::host::ShotMember::Y => shot.y,
             super::host::ShotMember::XRadius => shot.x_radius,
             super::host::ShotMember::YRadius => shot.y_radius,
+            super::host::ShotMember::Damage => shot.damage,
         }
     } else {
         h.shot_word(member, index)

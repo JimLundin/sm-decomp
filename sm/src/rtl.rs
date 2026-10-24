@@ -237,6 +237,7 @@ pub unsafe fn ReadFromFile(f: *mut FILE, data: *mut c_void, n: size_t) {
 }
 pub unsafe fn RtlReset(mode: i32, game: &mut Game) {
     unsafe {
+        let actor_transition = game.prepare_actor_canonical();
         game.snes_frame_counter = 0;
         snes_reset(game.g_snes, true_0 != 0, game);
         if mode & 1 == 0 {
@@ -247,6 +248,7 @@ pub unsafe fn RtlReset(mode: i32, game: &mut Game) {
         RtlRestoreMusicAfterLoad_Locked(true_0 != 0, game);
         RtlApuUnlock();
         RtlSynchronizeWholeState(game);
+        game.commit_actor_canonical(actor_transition);
         if mode & 2 == 0 {
             game.state_recorder = StateRecorder::default();
         }
@@ -287,6 +289,7 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
                 b"void StateRecorder_Load(StateRecorder *, FILE *, _Bool)\0"
             };
         }
+        let mut actor_transition = Some(game.prepare_actor_canonical());
         game.state_recorder.total_frames = hdr[1i32 as usize];
         recording_allocation(game.state_recorder.log.resize(hdr[2] as usize));
         ReadFromFile(
@@ -321,6 +324,7 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
                     b"void StateRecorder_Load(StateRecorder *, FILE *, _Bool)\0"
                 };
             } else {
+                drop(actor_transition.take());
                 RtlReset(2, game);
                 if game.state_recorder.base_snapshot.size == 8192 as size_t {
                     game.g_sram
@@ -398,6 +402,9 @@ pub unsafe fn StateRecorder_Load(f: *mut FILE, replay_mode: bool, game: &mut Gam
             }
         }
         RtlUpdateSnesPatchForBugfix(game);
+        if let Some(transition) = actor_transition {
+            game.commit_actor_canonical(transition);
+        }
     }
 }
 pub unsafe fn StateRecorder_Save(f: *mut FILE, saving_with_bug: bool, game: &mut Game) {
@@ -766,12 +773,7 @@ pub unsafe fn Unreachable(game: &mut Game) -> bool {
         false_0 != 0
     }
 }
-/// Map a banked LoROM address to an offset in the ROM allocation.
-/// Callers keep their window/bounds checks and add linear table offsets afterward.
-#[inline]
-pub const fn lorom_offset(address: u32) -> isize {
-    (((address >> 16) << 15 | address & 0x7fff) & 0x3fffff) as isize
-}
+pub use crate::rom::lorom_offset;
 
 /// Capture a checked record while preserving the legacy low-window diagnostic.
 pub(crate) unsafe fn rom_record(bank: u8, addr: u16, game: &mut Game) -> crate::rom::RomRecord {
@@ -786,6 +788,8 @@ pub(crate) unsafe fn rom_record(bank: u8, addr: u16, game: &mut Game) -> crate::
             crate::room_reference_observer::diagnostic(address, game);
             #[cfg(sm_verify_dll)]
             crate::room_background_observer::diagnostic(address, game);
+            #[cfg(sm_verify_dll)]
+            crate::actor_population_animation_observer::diagnostic(address, game);
         }
         crate::rom::RomRecord {
             image: game

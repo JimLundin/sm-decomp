@@ -1,8 +1,8 @@
-//! Legacy animation check entry, sharing the actual composed host and modules.
+//! Legacy animation checks using the shared host at its actual crate root.
 #![forbid(unsafe_code)]
-#[path = "../player_detached/main.rs"]
-mod common;
-pub(crate) use common::{game, ram_map, rom, types, verify_probe};
+#![allow(dead_code)]
+include!("../player_detached/shared.rs");
+
 fn main() {
-    common::run_legacy_animation();
+    run_legacy_animation();
 }

@@ -3,6 +3,12 @@ name: CI
 on:
   push:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      full_actor_checks:
+        description: Run initialized actor mutation checks using the private original ROM
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -19,11 +25,10 @@ jobs:
       - name: Progress
         run: sh tools/progress.sh
 
-  build:
-    # Native desktop/utilities currently require the Windows GNU ABI.
-    # Build every real dependency and the frontend; public CI needs no ROM.
+  detached:
+    # Independent hosted machine: detached checks run alongside the native build.
     runs-on: windows-2022
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       RUSTUP_TOOLCHAIN: stable-x86_64-pc-windows-gnu
       CARGO_BUILD_JOBS: 1
@@ -57,13 +62,6 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Detached projectile compilation failed' }
           & $playerDetached
           if ($LASTEXITCODE -ne 0) { throw 'Detached projectile checks failed' }
-      - name: Reject projectile collision and retirement mutations
-        # Mutation execution remains hosted under the local Defender restriction.
-        # The preceding baseline must pass before deliberately broken variants run.
-        # Keep each fault isolated from the production checkout.
-        run: |
-          python sm/src/verification/player_detached/mutations.py
-          if ($LASTEXITCODE -ne 0) { throw 'Projectile mutation checks failed' }
       - name: Verify composed animation and palette cores without the game backend
         run: |
           $animationDetached = Join-Path $env:RUNNER_TEMP 'animated-detached.exe'
@@ -78,6 +76,45 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Detached palette compilation failed' }
           & $detached
           if ($LASTEXITCODE -ne 0) { throw 'Detached palette checks failed' }
+      - name: Reject projectile collision and retirement mutations
+        # Mutation execution remains hosted under the local Defender restriction.
+        # The preceding baseline must pass before deliberately broken variants run.
+        # Keep each fault isolated from the production checkout.
+        run: |
+          python sm/src/verification/player_detached/mutations.py
+          if ($LASTEXITCODE -ne 0) { throw 'Projectile mutation checks failed' }
+
+  build:
+    # Native desktop/utilities currently require the Windows GNU ABI.
+    # Build every real dependency and the frontend; public CI needs no ROM.
+    runs-on: windows-2022
+    timeout-minutes: 60
+    env:
+      RUSTUP_TOOLCHAIN: stable-x86_64-pc-windows-gnu
+      CARGO_BUILD_JOBS: 1
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: msys2/setup-msys2@v2
+        id: msys
+        with:
+          msystem: MINGW64
+          install: mingw-w64-x86_64-gcc
+      - name: Install the GNU Rust toolchain and linker
+        env:
+          MSYS_LOCATION: ${{ steps.msys.outputs.msys2-location }}
+        run: |
+          rustup toolchain install stable-x86_64-pc-windows-gnu --profile minimal
+          if ($LASTEXITCODE -ne 0) { throw 'Rust toolchain installation failed' }
+          $linker = Join-Path $env:MSYS_LOCATION 'mingw64/bin'
+          if (!(Test-Path -LiteralPath "$linker/gcc.exe")) { throw 'MinGW GCC is missing' }
+          $linker | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=$linker/gcc.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Install pinned Zig and SDL2 SDK
         run: |
           $native = Join-Path $env:RUNNER_TEMP 'sm-native'
@@ -131,7 +168,94 @@ jobs:
           }
           cargo build --release --locked --lib --bin sm --example sm_verify
           if ($LASTEXITCODE -ne 0) { throw 'Cargo build failed' }
-      - name: Reject room, native ownership and restoration mutations
+      - name: Check Cargo verifier configuration and actor exports
         run: |
-          python sm/src/verification/room_mutations.py
+          python tools/verify_dll.py --build-only --cargo
+          if ($LASTEXITCODE -ne 0) { throw 'Cargo verifier configuration build failed' }
+          @'
+          from pathlib import Path
+          import runpy
+          root = Path.cwd()
+          verifier = runpy.run_path(str(root / 'tools/verify_dll.py'))
+          host = verifier['load_host'](root / 'target/verify-dll/sm_verify.dll')
+          verifier['check_source'](host, verifier['source_hash'](root))
+          verifier['check_library'](host, root)
+          for name in ('sm_verify_actor_movement_case', 'sm_verify_actor_movement_table_case',
+                       'sm_verify_actor_population_animation_case'):
+              if not hasattr(host, name):
+                  raise SystemExit('Cargo verifier missing required export: ' + name)
+          print('Cargo verifier source and all three actor exports match')
+          '@ | python -B -
+          if ($LASTEXITCODE -ne 0) { throw 'Cargo verifier actor export check failed' }
+      - name: Prepare ROM for requested initialized actor checks
+        if: github.event_name == 'workflow_dispatch' && inputs.full_actor_checks
+        env:
+          ROM_00: ${{ secrets.SM_ROM_00 }}
+          ROM_01: ${{ secrets.SM_ROM_01 }}
+          ROM_02: ${{ secrets.SM_ROM_02 }}
+          ROM_03: ${{ secrets.SM_ROM_03 }}
+          ROM_04: ${{ secrets.SM_ROM_04 }}
+          ROM_05: ${{ secrets.SM_ROM_05 }}
+          ROM_06: ${{ secrets.SM_ROM_06 }}
+          ROM_07: ${{ secrets.SM_ROM_07 }}
+          ROM_08: ${{ secrets.SM_ROM_08 }}
+          ROM_09: ${{ secrets.SM_ROM_09 }}
+          ROM_10: ${{ secrets.SM_ROM_10 }}
+          ROM_11: ${{ secrets.SM_ROM_11 }}
+          ROM_12: ${{ secrets.SM_ROM_12 }}
+          ROM_13: ${{ secrets.SM_ROM_13 }}
+          ROM_14: ${{ secrets.SM_ROM_14 }}
+          ROM_15: ${{ secrets.SM_ROM_15 }}
+          ROM_16: ${{ secrets.SM_ROM_16 }}
+          ROM_17: ${{ secrets.SM_ROM_17 }}
+          ROM_18: ${{ secrets.SM_ROM_18 }}
+          ROM_19: ${{ secrets.SM_ROM_19 }}
+          ROM_20: ${{ secrets.SM_ROM_20 }}
+          ROM_21: ${{ secrets.SM_ROM_21 }}
+          ROM_22: ${{ secrets.SM_ROM_22 }}
+          ROM_23: ${{ secrets.SM_ROM_23 }}
+          ROM_24: ${{ secrets.SM_ROM_24 }}
+          ROM_25: ${{ secrets.SM_ROM_25 }}
+          ROM_26: ${{ secrets.SM_ROM_26 }}
+          ROM_27: ${{ secrets.SM_ROM_27 }}
+          ROM_28: ${{ secrets.SM_ROM_28 }}
+          ROM_29: ${{ secrets.SM_ROM_29 }}
+          ROM_30: ${{ secrets.SM_ROM_30 }}
+          ROM_31: ${{ secrets.SM_ROM_31 }}
+          ROM_32: ${{ secrets.SM_ROM_32 }}
+          ROM_33: ${{ secrets.SM_ROM_33 }}
+          ROM_34: ${{ secrets.SM_ROM_34 }}
+          ROM_35: ${{ secrets.SM_ROM_35 }}
+          ROM_36: ${{ secrets.SM_ROM_36 }}
+          ROM_37: ${{ secrets.SM_ROM_37 }}
+          ROM_38: ${{ secrets.SM_ROM_38 }}
+          ROM_39: ${{ secrets.SM_ROM_39 }}
+          ROM_40: ${{ secrets.SM_ROM_40 }}
+          ROM_41: ${{ secrets.SM_ROM_41 }}
+          ROM_42: ${{ secrets.SM_ROM_42 }}
+          ROM_43: ${{ secrets.SM_ROM_43 }}
+          ROM_44: ${{ secrets.SM_ROM_44 }}
+        run: |
+          @'
+          import base64, gzip, hashlib, os, pathlib
+          encoded = "".join(os.environ[f"ROM_{i:02d}"] for i in range(45))
+          if not encoded:
+              raise SystemExit("ROM secrets are missing")
+          rom = gzip.decompress(base64.b64decode(encoded))
+          if hashlib.sha1(rom).hexdigest() != 'da957f0d63d14cb441d215462904c4fa8519c613':
+              raise SystemExit('wrong ROM')
+          pathlib.Path('rom').mkdir(exist_ok=True)
+          pathlib.Path('rom/sm.smc').write_bytes(rom)
+          '@ | python -B -
+          if ($LASTEXITCODE -ne 0) { throw 'Actor ROM preparation failed' }
+      - name: Reject room, native ownership and restoration mutations
+        env:
+          FULL_ACTOR_CHECKS: ${{ github.event_name == 'workflow_dispatch' && inputs.full_actor_checks }}
+        run: |
+          $actorMutationArgs = @()
+          if ($env:FULL_ACTOR_CHECKS -eq 'true') { $actorMutationArgs = @('--actor-rom', 'rom/sm.smc') }
+          python sm/src/verification/room_mutations.py @actorMutationArgs
           if ($LASTEXITCODE -ne 0) { throw 'Room, native ownership or restoration mutation checks failed' }
+      - name: Report initialized actor checks not selected
+        if: github.event_name != 'workflow_dispatch' || !inputs.full_actor_checks
+        run: Write-Output 'Initialized Kraid mutations 2 not selected; no ROM requested. These cases are not counted as passes or killed mutations.'

@@ -1,25 +1,19 @@
+use crate::game::actors;
+use crate::game::actors::access::ActorKey as Key;
+use crate::game::actors::api as actor_api;
 pub use crate::game::constants::bank_86::*;
-use crate::game::enemy_combat::{
-    apply_contact, apply_shot, contact_without_death, grapple_death, power_bomb_without_death,
-    select_frozen_ai, shot_reaction,
-};
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
-use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
+use crate::game::session_runtime::Runtime;
 
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::gameplay_flag_runtime::{CheckEventHappened, SetBossBitForCurArea};
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
-use crate::game::sm_a0::{
-    CalculateAngleFromXY, CalculateAngleOfSamusFromEnemy, CallEnemyPreInstr,
-    CheckIfEnemyIsOnScreen, ConvertAngleToXy, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
-    EnemyFunc_B691, GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsEnemyLeavingScreen,
-    IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y, SignExtend8,
-};
+use crate::game::sm_a0::{CallEnemyPreInstr, ConvertAngleToXy, SignExtend8};
 use crate::game::sprite_effect_runtime::create_sprite;
 
 pub use crate::types::Consts_B3;
@@ -64,7 +58,7 @@ static g_word_B39E77: [i16; 3] = [2, 3, 4];
 pub fn UnusedSpinningTurtleEye_Main() {}
 pub unsafe fn NorfairPipeBug_8BA8(game: &mut Game) {
     unsafe {
-        if CheckIfEnemyIsOnScreen(game) != 0 {
+        if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) != 0 {
             let PipeBug = Get_PipeBug(word!(game.cur_enemy_index) as i32, game);
             (*PipeBug).base.properties =
                 ((*PipeBug).base.properties) | ((kEnemyProps_Invisible) as u16);
@@ -158,17 +152,13 @@ crate::game::callback_dispatch! {
     [11766783] NorfairPipeBug_Func_2 [] {
         let k: i32 = word!(game.cur_enemy_index) as i32;
         let PipeBug = Get_PipeBug(word!(game.cur_enemy_index) as i32, game);
-        if IsSamusWithinEnemy_X(
-            word!(game.cur_enemy_index),
-            byte!((*PipeBug).parameter_2; 0) as u16,
-            game,
-        ) != 0
+        if ({ let (actor, distance) = (word!(game.cur_enemy_index), byte!((*PipeBug).parameter_2; 0) as u16); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
             && (((*PipeBug).base.y_pos) as i16).wrapping_sub((word!(game.samus_y_pos)) as i16) >= 0
         {
             (*PipeBug).var_C = (*PipeBug).var_C.wrapping_add(1);
             (*PipeBug).base.instruction_timer = 1;
             (*PipeBug).base.timer = 0;
-            if (GetSamusEnemyDelta_X(k as u16, game) & 0x8000) == 0 {
+            if (({ let actor = k as u16; actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) == 0 {
                 (*Get_PipeBug(k, game)).base.current_instruction =
                     addr_kNorfairPipeBug_Ilist_8B21 as u16;
                 (*Get_PipeBug(k + 64i32, game)).base.current_instruction =
@@ -210,7 +200,7 @@ crate::game::callback_dispatch! {
             (*E).var_01 = (*E).base.y_pos;
             (*E).base.instruction_timer = 1;
             (*E).base.timer = 0;
-            if (GetSamusEnemyDelta_X(word!(game.cur_enemy_index), game) & 0x8000) == 0 {
+            if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) == 0 {
                 (*E).base.current_instruction = addr_kNorfairPipeBug_Ilist_8B21 as u16;
             } else {
                 (*E).base.current_instruction = addr_kNorfairPipeBug_Ilist_8AE1 as u16;
@@ -259,7 +249,7 @@ crate::game::callback_dispatch! {
             (*E).base.timer = 0;
             (*E).var_A = ((0xb38e14i32) as u16);
             (*E).base.current_instruction = addr_kNorfairPipeBug_Ilist_8B05 as u16;
-            if (GetSamusEnemyDelta_X(word!(game.cur_enemy_index), game) & 0x8000) == 0 {
+            if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) == 0 {
                 (*E).var_A = ((0xb38e35i32) as u16);
                 (*E).base.current_instruction = addr_kNorfairPipeBug_Ilist_8B45 as u16;
             }
@@ -293,13 +283,13 @@ crate::game::callback_dispatch! {
 
         let samus_in_x_range: bool = if (*E).parameter_1 != 0 {
             let mut SamusEnemyDelta_X: i16 =
-                GetSamusEnemyDelta_X(word!(game.cur_enemy_index), game) as i16;
+                ({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) as i16;
             (SamusEnemyDelta_X < 0 && SamusEnemyDelta_X as i32 + 192 & 0x8000 == 0)
         } else {
-            let mut v2: i16 = GetSamusEnemyDelta_X(word!(game.cur_enemy_index), game) as i16;
+            let mut v2: i16 = ({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) as i16;
             (v2 >= 0 && v2 as i32 - 192i32 & 0x8000 != 0)
         };
-        if samus_in_x_range && IsSamusWithinEnemy_Y(word!(game.cur_enemy_index), 0x30, game) != 0 {
+        if samus_in_x_range && ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x30); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
             (*E).base.properties =
                 ((*E).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
             (*E).var_20 = 24;
@@ -308,7 +298,7 @@ crate::game::callback_dispatch! {
     };
     [11767848] BrinstarYellowPipeBug_Func_3 [] {
         BrinstarYellowPipeBug_Func_4(word!(game.cur_enemy_index), game);
-        if CheckIfEnemyIsOnScreen(game) != 0 {
+        if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) != 0 {
             (*E).base.x_pos = (*E).var_07;
             (*E).base.y_pos = (*E).var_08;
             set_fields! {[(*E).base], 0; x_subpos, y_subpos}
@@ -329,7 +319,7 @@ crate::game::callback_dispatch! {
     };
     [11767997] BrinstarYellowPipeBug_Func_5 [] {
         BrinstarYellowPipeBug_Func_6(word!(game.cur_enemy_index), game);
-        if CheckIfEnemyIsOnScreen(game) != 0 {
+        if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) != 0 {
             (*E).base.x_pos = (*E).var_07;
             (*E).base.y_pos = (*E).var_08;
             set_fields! {[(*E).base], 0; x_subpos, y_subpos}
@@ -349,7 +339,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11768154] BrinstarYellowPipeBug_Func_7 [] {
-        if CheckIfEnemyIsOnScreen(game) != 0 {
+        if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) != 0 {
             (*E).base.x_pos = (*E).var_07;
             (*E).base.y_pos = (*E).var_08;
             set_fields! {[(*E).base], 0; x_subpos, y_subpos}
@@ -374,7 +364,7 @@ crate::game::callback_dispatch! {
         };
     };
     [11768280] BrinstarYellowPipeBug_Func_8 [] {
-        if CheckIfEnemyIsOnScreen(game) != 0 {
+        if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) != 0 {
             (*E).base.x_pos = (*E).var_07;
             (*E).base.y_pos = (*E).var_08;
             set_fields! {[(*E).base], 0; x_subpos, y_subpos}
@@ -610,7 +600,7 @@ crate::game::callback_dispatch! {
     };
     Botwoon_Func_21 [] {
         let pt: Point32 = ConvertAngleToXy((*E).var_3A, (*E).var_38, game);
-        EnemyFunc_B691((*E).var_3A, pt, game);
+        ({ let (phase, point) = ((*E).var_3A, pt); actor_api::apply_vector(&mut Runtime::new(game), phase, crate::game::session::Vector32 { x: point.x, y: point.y }) });
     };
     Botwoon_Shot [] {
         (*E).var_4C = (*E).base.health;
@@ -643,7 +633,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (game: &mut Game)];
     [11770807] Botwoon_Func_19 [] {
         let pt: Point16U = Botwoon_Func_20(word!(game.cur_enemy_index), game);
-        let v1: u16 = CalculateAngleFromXY(pt.x, pt.y, game);
+        let v1: u16 = actor_api::angle_from_delta(pt.x, pt.y);
         let E = Get_Botwoon(word!(game.cur_enemy_index) as i32, game);
         (*E).var_39 = v1;
         (*E).var_3A = ((64u8).wrapping_sub((v1) as u8)) as u16;
@@ -915,14 +905,14 @@ crate::game::callback_dispatch! {
         NorfairPipeBug_8BA8(game);
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [11763722] Enemy_GrappleReact_KillEnemy_B3 => grapple_death(game);
-    [11763727] Enemy_GrappleReact_CancelBeam_B3 => select_frozen_ai(game);
-    [11763747] Enemy_NormalTouchAI_B3 => apply_contact(game);
-    Enemy_NormalTouchAI_SkipDeathAnim_B3 => contact_without_death(game);
-    [11763757] Enemy_NormalShotAI_B3 => apply_shot(game);
-    Enemy_NormalShotAI_SkipSomeParts_B3 => shot_reaction(game);
-    Enemy_NormalPowerBombAI_SkipDeathAnim_B3 => power_bomb_without_death(game);
-    [11763777] Enemy_NormalFrozenAI_B3 => update_frozen_enemy(game);
+    [11763722] Enemy_GrappleReact_KillEnemy_B3 => actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Grapple);
+    [11763727] Enemy_GrappleReact_CancelBeam_B3 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
+    [11763747] Enemy_NormalTouchAI_B3 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
+    Enemy_NormalTouchAI_SkipDeathAnim_B3 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
+    [11763757] Enemy_NormalShotAI_B3 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
+    Enemy_NormalShotAI_SkipSomeParts_B3 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::ReactionOnly);
+    Enemy_NormalPowerBombAI_SkipDeathAnim_B3 => actors::combat::power_bomb_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
+    [11763777] Enemy_NormalFrozenAI_B3 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
 }
 
 crate::game::callback_dispatch! {
@@ -990,15 +980,15 @@ crate::game::callback_dispatch! {
     call (k, game); default { crate::rtl::Unreachable(game); };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     [11765888] BrinstarPipeBug_PreInstr_1 [] {
-        if CheckIfEnemyIsOnScreen(game) == 0 {
+        if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) == 0 {
             (*Get_PipeBug(word!(game.cur_enemy_index) as i32, game)).var_F = ((0xb38890i32) as u16);
         }
     };
     [11765904] BrinstarPipeBug_PreInstr_2 [] {
-        let mut SamusEnemyDelta_Y: i16 = GetSamusEnemyDelta_Y(k, game) as i16;
+        let mut SamusEnemyDelta_Y: i16 = ({ let actor = k; actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y) }) as i16;
         if SamusEnemyDelta_Y < 0 && SamusEnemyDelta_Y as i32 + 96 & 0x8000 == 0 {
             let PipeBug = Get_PipeBug(k as i32, game);
-            let a: u16 = GetSamusEnemyDelta_X(k, game);
+            let a: u16 = ({ let actor = k; actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) });
             (*PipeBug).var_A = ((*PipeBug).var_A & 0x7fff | a & 0x8000);
             if abs16(((*PipeBug).base.x_pos).wrapping_sub(word!(game.samus_x_pos))) < 0x40 {
                 (*PipeBug).var_F = ((0xb388e3i32) as u16);
@@ -1037,7 +1027,7 @@ crate::game::callback_dispatch! {
             (*PipeBug).base.x_subpos = (*PipeBug).base.x_subpos;
             (*PipeBug).base.x_pos = ((*PipeBug).base.x_pos).wrapping_sub(2);
         }
-        if IsEnemyLeavingScreen(k, game) & 1 != 0 {
+        if ({ let actor = k; actor_api::leaving_screen(&Runtime::new(game), Key::from_legacy(actor)) as u8 }) & 1 != 0 {
             (*PipeBug).base.x_pos = (*PipeBug).var_B;
             (*PipeBug).base.x_subpos = 0;
             let pbg_var_C: u16 = (*PipeBug).var_C;
@@ -1078,7 +1068,7 @@ crate::game::callback_dispatch! {
     };
     [11789952] EscapeEtecoon_E680 [] {
         let E = Get_EscapeEtecoon(k as i32, game);
-        if Enemy_MoveRight_IgnoreSlopes(k, ((*E).var_A as i16 as i32) << 8, game) != 0 {
+        if ({ let (actor, amount) = (k, ((*E).var_A as i16 as i32) << 8); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             (*E).base.instruction_timer = 1;
             let v3: bool = (-((*E).var_A as i32) & 0x8000) != 0;
             (*E).var_A = -((*E).var_A as i32) as u16;
@@ -1091,7 +1081,7 @@ crate::game::callback_dispatch! {
                 (*E).base.current_instruction = addr_kEscapeEtecoon_Ilist_E5AE as u16;
             }
         }
-        Enemy_MoveDown(k, (1i16 as i32) << 16, game);
+        ({ let (actor, amount) = (k, (1i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
     };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     @prefix { let E = Get_PipeBug(k as i32, game); };
@@ -1153,7 +1143,7 @@ crate::game::callback_dispatch! {
     [11771328] Botwoon_Func_26 [] {
         let x: u16 = ((*E).base.x_pos).wrapping_sub((*E).var_56);
         let y: u16 = ((*E).base.y_pos).wrapping_sub((*E).var_57);
-        let r22: u16 = CalculateAngleFromXY(x, y, game);
+        let r22: u16 = actor_api::angle_from_delta(x, y);
         if x != 0 || y != 0 {
             let mut v1: u16 = if (*E).var_33 != 0 {
                 (*E).base.layer = 7;
@@ -1181,7 +1171,7 @@ crate::game::callback_dispatch! {
     };
     [11771517] Botwoon_Func_27 [] {
         (*E).base.layer = 2;
-        let v2: u16 = CalculateAngleOfSamusFromEnemy(word!(game.cur_enemy_index), game);
+        let v2: u16 = ({ let actor = word!(game.cur_enemy_index); actor_api::angle_to_player(&Runtime::new(game), Key::from_legacy(actor)) });
         (*E).var_3D = v2;
         let v3: u16 = crate::rtl::rom_table_word!(
             game,

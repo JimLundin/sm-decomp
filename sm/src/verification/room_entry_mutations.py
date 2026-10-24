@@ -31,25 +31,20 @@ GUARD_PANICS = (
     (GUARD_SOURCE, "intentional room foreign unwind"),
     (RUNTIME_SOURCE, "aggregate unavailable during external effect"),
     (RUNTIME_SOURCE, "Session belongs to a different world binding"),
+    ("actor_initializer_checks.rs", "actor initializer fixture deliberate nested dispatch unwind"),
+    (RUNTIME_SOURCE, "Game already owns actor identity"),
+    (RUNTIME_SOURCE, "Session belongs to a different world binding"),
+    ("actor_runtime_checks.rs", "actor runtime nested fixture unwind"),
 )
-EXPORT = """pub(crate) fn export_session(state: &Session, game: &mut Game) {
-    assert!(
-        std::sync::Arc::ptr_eq(&state.world, game.world())
-            && state.world.revision() == game.world().revision(),
-        "Session belongs to a different world binding"
-    );
+# Owned Session now preflights at Runtime::foreign before taking state and again
+# at export_session. Inject the same write-before-binding-check fault into that
+# shared preflight so the real mismatched foreign entry remains discriminating.
+EXPORT = """fn preflight_export(state: &Session, game: &Game) {
+    assert!("""
+EARLY_EXPORT = """fn preflight_export(state: &Session, game: &mut Game) {
     encoding::encode(state, &mut game.g_ram);
-    export_native_spawn(state, game);
-}"""
-EARLY_EXPORT = """pub(crate) fn export_session(state: &Session, game: &mut Game) {
-    encoding::encode(state, &mut game.g_ram);
-    assert!(
-        std::sync::Arc::ptr_eq(&state.world, game.world())
-            && state.world.revision() == game.world().revision(),
-        "Session belongs to a different world binding"
-    );
-    export_native_spawn(state, game);
-}"""
+    assert!("""
+
 
 # Name, selected actual export/case, equality label, exact-once production edits.
 MUTATIONS = (
@@ -82,7 +77,10 @@ MUTATIONS = (
     (
         "room_export_before_binding_check", "guard",
         "room.guard.mismatch-before-writes",
-        ((RUNTIME, EXPORT, EARLY_EXPORT),),
+        ((RUNTIME, EXPORT, EARLY_EXPORT),
+         (RUNTIME,
+          "preflight_export(self.session(), self.game);",
+          'preflight_export(self.state.as_ref().expect("aggregate unavailable during external effect"), self.game);')),
     ),
     (
         "room_cre_vram_word_as_byte_offset", "background:37",
@@ -175,6 +173,8 @@ def check_capture(copied, selected, run, mutation=None):
     except json.JSONDecodeError as error:
         raise RuntimeError(f"{selected}: invalid capture output\n{result.stdout}\n{result.stderr}") from error
     expected_panics = list(baseline_panics(selected))
+    if mutation is not None and selected == "guard":
+        expected_panics = expected_panics[:3]  # Binding assertion stops before actor checks.
     footer = None
     if selected == "guard":
         expected_result = {"selected": selected, "passed": mutation is None}

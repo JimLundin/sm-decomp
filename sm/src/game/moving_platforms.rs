@@ -2,12 +2,13 @@
 // All RAM access below is checked. Unsafe scopes identify the remaining ROM,
 // damage and failure interfaces that still need migration.
 #![deny(unsafe_op_in_unsafe_fn)]
-use crate::game::enemy_combat::{apply_shot, shot_reaction};
+use crate::game::actors;
+use crate::game::actors::access::ActorKey as Key;
+use crate::game::actors::api as actor_api;
 use crate::game::enemy_layouts::{EnemyLayout72, EnemyLayout72Late};
+use crate::game::session_runtime::Runtime;
 use crate::game::sm_80::QueueSfx3_Max6;
-use crate::game::sm_a0::{
-    CheckIfEnemyIsOnScreen, CheckIfEnemyTouchesSamus, EnemyFunc_AC67, IsSamusWithinEnemy_X,
-};
+
 use crate::game_state::Game;
 use crate::ram_map::checked_word as word;
 use crate::rtl::Unreachable;
@@ -94,7 +95,7 @@ macro_rules! field {
 }
 #[forbid(unsafe_code)]
 fn movement_sound(game: &mut Game) {
-    if CheckIfEnemyIsOnScreen(game) == 0 {
+    if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) == 0 {
         QueueSfx3_Max6(0xe, game);
     }
 }
@@ -269,8 +270,16 @@ pub(crate) unsafe fn update(kind: Kind, game: &mut Game) {
                     old == 1
                 }
                 1 => {
-                    IsSamusWithinEnemy_X(word!(game.cur_enemy_index), field!(game, e, var_06), game)
-                        != 0
+                    ({
+                        let (actor, distance) =
+                            (word!(game.cur_enemy_index), field!(game, e, var_06));
+                        u16::from(actor_api::player_within(
+                            &Runtime::new(game),
+                            Key::from_legacy(actor),
+                            actor_api::Axis::X,
+                            distance,
+                        ))
+                    }) != 0
                 }
                 2 => true,
                 3 | 4 => false,
@@ -352,7 +361,13 @@ fn travel(p: &Motion, positive: bool, game: &mut Game) {
     let (pos, limit) = if p.horizontal {
         field!(game, e, var_0D = field!(game, e, base.x_pos));
         field!(game, e, var_13 = 0);
-        if EnemyFunc_AC67(word!(game.cur_enemy_index), game) != 0
+        if ({
+            let actor = word!(game.cur_enemy_index);
+            0u16.wrapping_sub(u16::from(actor_api::overlaps_player_with_padding(
+                &Runtime::new(game),
+                Key::from_legacy(actor),
+            )))
+        }) != 0
             && (((word!(game.samus_x_pos) as i16).wrapping_sub(field!(game, e, base.x_pos) as i16)
                 >= 0)
                 == positive)
@@ -380,7 +395,14 @@ fn travel(p: &Motion, positive: bool, game: &mut Game) {
     } else {
         field!(game, e, var_0E = field!(game, e, base.y_pos));
         field!(game, e, var_0A = 0);
-        if CheckIfEnemyTouchesSamus(word!(game.cur_enemy_index), game) != 0 {
+        if ({
+            let actor = word!(game.cur_enemy_index);
+            0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(
+                &Runtime::new(game),
+                Key::from_legacy(actor),
+            )))
+        }) != 0
+        {
             field!(game, e, var_0A = 1);
         }
         let next = (u32::from(field!(game, e, base.y_subpos))
@@ -479,8 +501,18 @@ fn activate(p: &Motion, game: &mut Game) {
 pub(crate) unsafe fn react(kind: Kind, event: Event, game: &mut Game) {
     if let Event::Shot = event {
         match kind {
-            Kind::VerticalShutter => unsafe { apply_shot(game) },
-            Kind::HorizontalShutter => unsafe { shot_reaction(game) },
+            Kind::VerticalShutter => unsafe {
+                actors::combat::shot_reaction(
+                    &mut Runtime::new(game),
+                    actors::api::ShotHandling::Finalize,
+                )
+            },
+            Kind::HorizontalShutter => unsafe {
+                actors::combat::shot_reaction(
+                    &mut Runtime::new(game),
+                    actors::api::ShotHandling::ReactionOnly,
+                )
+            },
             _ => {}
         }
     }
@@ -507,11 +539,16 @@ unsafe fn update_timed(game: &mut Game) {
         0xeabd | 0xead1 | 0xeae7 | 0xeafd => {
             let proximity = field!(game, e, var_A) == 0xead1 || field!(game, e, var_A) == 0xeae7;
             let ready = if proximity {
-                IsSamusWithinEnemy_X(
-                    word!(game.cur_enemy_index),
-                    field!(game, e, parameter_1),
-                    game,
-                ) != 0
+                ({
+                    let (actor, distance) =
+                        (word!(game.cur_enemy_index), field!(game, e, parameter_1));
+                    u16::from(actor_api::player_within(
+                        &Runtime::new(game),
+                        Key::from_legacy(actor),
+                        actor_api::Axis::X,
+                        distance,
+                    ))
+                }) != 0
             } else if field!(game, e, parameter_1) != 0 {
                 field!(
                     game,
@@ -588,7 +625,15 @@ unsafe fn update_timed(game: &mut Game) {
                     }
                 }
             }
-            if opening && CheckIfEnemyTouchesSamus(word!(game.cur_enemy_index), game) != 0 {
+            if opening
+                && ({
+                    let actor = word!(game.cur_enemy_index);
+                    0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(
+                        &Runtime::new(game),
+                        Key::from_legacy(actor),
+                    )))
+                }) != 0
+            {
                 let displacement =
                     field!(game, e, base.y_pos).wrapping_sub(field!(game, e, var_40));
                 if (displacement as i16) < 0 {

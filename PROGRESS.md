@@ -22,7 +22,7 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-### Common actors / verification branch
+### Common actors / adopted
 
 ```mermaid
 flowchart LR
@@ -31,17 +31,17 @@ flowchart LR
     AI["Per-instance appearance + lifecycle<br/>independent review PASS"]:::done --> AD
     AR["Typed read lookup + guarded edits<br/>design review PASS"]:::done --> AD
     AP["Production +4,998 / verification +5,406<br/>accounting + retirement audit PASS"]:::done --> AD
-    AD --> AS["state.rs + codec.rs"]:::draft
-    AD --> AV["access.rs / typed reads + edits"]:::draft
-    AD --> AE["content.rs + effects.rs"]:::draft
-    AD --> AM["identity / media / scene / snapshots"]:::draft
+    AD --> AS["state.rs + codec.rs"]:::done
+    AD --> AV["access.rs / typed reads + edits"]:::done
+    AD --> AE["content.rs + effects.rs"]:::done
+    AD --> AM["identity / media / scene / snapshots"]:::done
     AS --> AT["Independent declaration review<br/>PASS"]:::done
     AV --> AT
     AE --> AT
     AM --> AT
     AT --> ATC["Metadata + external constructor<br/>compile PASS"]:::done
-    ATC --> AB["Parallel actor implementation"]:::active
-    AV --> APR["Exceptional buffers<br/>helper review"]:::active --> AB
+    ATC --> AB["Parallel actor implementation"]:::done
+    AV --> APR["Exceptional buffers<br/>helper review"]:::done --> AB
     AB --> AX["Combined predecessor<br/>format + build + source checks PASS"]:::done
     AX --> AXPOP["35 population / animation references<br/>capture PASS"]:::done
     AX --> AXMOVE["40 movement / contact references<br/>capture PASS"]:::done
@@ -49,7 +49,7 @@ flowchart LR
     AXMOVE --> AXAUDIT
     AX --> AXTABLE["4 table-boundary references<br/>capture + independent audit PASS"]:::done
     AB --> ACOMPILE["Combined actor library<br/>format + cargo check PASS"]:::done
-    AB --> ARETIRE["7 old actor modules + facades<br/>retired in private candidate"]:::draft
+    AB --> ARETIRE["7 old actor modules + facades<br/>retired in production"]:::done
     ACOMPILE --> ADLL["79-case DLL<br/>build + source checks PASS"]:::done
     ADLL --> APCOMP["35 population / animation<br/>byte-identical"]:::done
     ADLL --> AMCOMP["40 movement / contact<br/>byte-identical"]:::done
@@ -80,42 +80,42 @@ flowchart LR
     ANATIVE --> ARETRY["CI efdd9cda / 62 killed<br/>actor baseline buffer FAIL"]:::failed
     ARETRY --> ABUFFER["4 MiB buffer / all 5 selections<br/>local baselines PASS"]:::done
     ABUFFER --> APDET["Parallel CI bdbb7968<br/>48 / 48 detached faults KILLED"]:::done
-    ABUFFER --> APDLL["Parallel CI bdbb7968<br/>25 DLL faults active"]:::active
+    ABUFFER --> APDLL["Parallel CI bdbb7968<br/>25 / 25 DLL faults KILLED"]:::done
     ADLL --> AORACLE["21,015 frames / 10 probes<br/>0 failures + 120-frame tail / PASS"]:::done
     ADLL --> KWRITE["Kraid live-definition write + consumer<br/>PASS"]:::done
     KWRITE --> KRESTORE["Actual CPU snapshot restore<br/>definition retained / PASS"]:::done
     KRESTORE --> KRESET["Actual reset + seeded consumer<br/>definition retained / PASS"]:::done
     AB --> ACONTRACT["18 detached contract tests<br/>hosted execution PASS"]:::done
     AXTABLE --> AVERIFY
-    AXAUDIT --> AVERIFY["Actual routes + oracle + mutations"]:::pending
+    AXAUDIT --> AVERIFY["Actual routes + oracle + mutations"]:::done
     AV --> BORROW["Actual state/access compiler carrier<br/>positive control PASS"]:::done
     BORROW --> BREAD["Actor read across edit<br/>compiler rejects / PASS"]:::done
     BORROW --> BSREAD["Spawn read across edit<br/>compiler rejects / PASS"]:::done
     BORROW --> BESC["Mutable edit escape<br/>compiler rejects / PASS"]:::done
     BORROW --> BCOPY["Actor move out of view<br/>compiler rejects / PASS"]:::done
     BORROW --> BSCOPY["Spawn move out of view<br/>compiler rejects / PASS"]:::done
-    AVERIFY --> AA["Caller retirement + adoption"]:::pending
-    AVERIFY --> MUTRECIPES["17 unique actor faults<br/>6 detected / 11 pending"]:::active
+    AVERIFY --> AA["Caller retirement + adoption PASS"]:::done
+    AVERIFY --> MUTRECIPES["17 unique actor faults<br/>17 / 17 KILLED"]:::done
     MUTRECIPES --> MUTBASE["Detached + selected DLL baselines<br/>PASS"]:::done
-    MUTBASE --> MUTBUILD["Mutant compilation<br/>detached PASS / DLL pending"]:::active
-    MUTBUILD --> MF1["Multipart stop"]:::pending
-    MUTBUILD --> MF2["Birth publication"]:::pending
-    MUTBUILD --> MF3["Live selector"]:::pending
-    MUTBUILD --> MF4["Respawn preservation"]:::pending
-    MUTBUILD --> MF5["One angle owner"]:::pending
-    MUTBUILD --> MF6["Unwind identity"]:::pending
-    MUTBUILD --> MF7["Alias publication"]:::pending
-    MUTBUILD --> MF8["Skin / collision independence"]:::pending
+    MUTBASE --> MUTBUILD["Mutant compilation<br/>detached + DLL PASS"]:::done
+    MUTBUILD --> MF1["Multipart stop"]:::done
+    MUTBUILD --> MF2["Birth publication"]:::done
+    MUTBUILD --> MF3["Live selector"]:::done
+    MUTBUILD --> MF4["Respawn preservation"]:::done
+    MUTBUILD --> MF5["One angle owner"]:::done
+    MUTBUILD --> MF6["Unwind identity"]:::done
+    MUTBUILD --> MF7["Alias publication"]:::done
+    MUTBUILD --> MF8["Skin / collision independence"]:::done
     MUTBUILD --> MF9["Discarded-future handles<br/>KILLED"]:::done
     MUTBUILD --> MFROW["Old palette receipts<br/>KILLED"]:::done
     MUTBUILD --> MFRES["Skip appearance residency<br/>KILLED"]:::done
     MUTBUILD --> MFEDIT["Discard guarded edits<br/>KILLED"]:::done
     MUTBUILD --> MFDAFF["Retire converted occurrence<br/>KILLED"]:::done
     MUTBUILD --> MFMEDIA["Omit default appearance revision<br/>KILLED"]:::done
-    MUTBUILD --> MFRENDER["Flash / frozen palette bits"]:::pending
-    MUTBUILD --> MFKWRITE["Kraid live shot-gate write"]:::pending
-    MUTBUILD --> MFKREAD["Contact reads live shot gate"]:::pending
-    class APDET changed
+    MUTBUILD --> MFRENDER["Flash / frozen palette bits"]:::done
+    MUTBUILD --> MFKWRITE["Kraid live shot-gate write"]:::done
+    MUTBUILD --> MFKREAD["Contact reads live shot gate"]:::done
+    class AS,AV,AE,AM,AB,APR,ARETIRE,APDLL,AVERIFY,AA,MUTRECIPES,MUTBUILD,MF1,MF2,MF3,MF4,MF5,MF6,MF7,MF8,MFRENDER,MFKWRITE,MFKREAD changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

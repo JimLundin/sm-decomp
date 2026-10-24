@@ -8,8 +8,13 @@ pub unsafe extern "C" fn sm_verify_room_world_case(
     output: *mut u8,
     capacity: usize,
 ) -> usize {
+    // Match the library's room_world_cases::CASES before consuming STARTED.
+    #[cfg(sm_verify_dll)]
+    const CASES: u32 = 14;
+    #[cfg(not(sm_verify_dll))]
+    const CASES: u32 = 11;
     unsafe {
-        if rom.is_null() || output.is_null() || id >= 11 || capacity < 524_288 {
+        if rom.is_null() || output.is_null() || id >= CASES || capacity < 524_288 {
             return 0;
         }
         if STARTED.swap(true, Ordering::SeqCst) {

@@ -17,8 +17,6 @@ pub struct ExternalInputs {
     pub nmi_counter_low: u8,
     pub drop_origin_x: u16,
     pub drop_origin_y: u16,
-    pub grapple_end_x: u16,
-    pub grapple_end_y: u16,
 
     pub shoot_button: u16,
     pub cancel_button: u16,

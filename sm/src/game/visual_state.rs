@@ -36,6 +36,7 @@ pub struct AnimatedTiles {
 }
 #[derive(Clone, Debug, PartialEq)]
 pub struct Visuals {
+    pub(in crate::game) fireflea: FirefleaLighting,
     pub colors: [u16; 256],
     pub targets: [u16; 256],
     pub palette_effects: PaletteEffects,
@@ -44,6 +45,7 @@ pub struct Visuals {
 impl Default for Visuals {
     fn default() -> Self {
         Self {
+            fireflea: Default::default(),
             colors: [0; 256],
             targets: [0; 256],
             palette_effects: PaletteEffects::default(),
@@ -77,4 +79,14 @@ pub enum PaletteBuffer {
 pub enum PaletteCarry {
     Clear,
     Set,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub(in crate::game) struct FirefleaLighting {
+    pub(in crate::game) timer: u16,
+    pub(in crate::game) flash_index: u16,
+    pub(in crate::game) compatibility_word: u16,
+    pub(in crate::game) darkness: u16,
+    pub(in crate::game) compatibility_limit: u16,
+    pub(in crate::game) compatibility_shade: u16,
 }

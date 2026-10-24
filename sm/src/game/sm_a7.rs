@@ -1,15 +1,14 @@
+use crate::game::actors;
+use crate::game::actors::access::ActorKey as Key;
+use crate::game::actors::api as actor_api;
 use crate::game::decompression::decompress_to_ram;
-use crate::game::enemy_combat::{
-    apply_contact, apply_shot, contact_without_death, enemy_death, power_bomb_without_death,
-    select_frozen_ai, shot_reaction,
-};
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
-use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
+use crate::game::session_runtime::Runtime;
 use crate::rtl::rom_record;
 use core::mem::offset_of;
 
@@ -25,11 +24,7 @@ use crate::game::sm_80::{
 };
 use crate::game::sm_82::AdvancePaletteFade_BgPalette6;
 use crate::game::sm_88::{SpawnHdmaObject, sub_88E487};
-use crate::game::sm_a0::{
-    CallEnemyPreInstr, CheckIfEnemyTouchesSamus, DetermineDirectionOfSamusFromEnemy,
-    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, EnemyFunc_BBBF, EnemyFunc_C8AD,
-    IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
-};
+use crate::game::sm_a0::CallEnemyPreInstr;
 use crate::game::sprite_effect_runtime::create_sprite;
 
 crate::typed_struct! {
@@ -276,7 +271,10 @@ crate::game::callback_dispatch! {
 }
 pub unsafe fn Kraid_Touch_ArmFoot(game: &mut Game) {
     unsafe {
-        apply_contact(game);
+        actors::combat::contact_reaction(
+            &mut Runtime::new(game),
+            actors::api::DeathHandling::Finalize,
+        );
     }
 }
 pub unsafe fn Kraid_Func_1(game: &mut Game) {
@@ -496,7 +494,7 @@ pub unsafe fn Kraid_Shot_Mouth(game: &mut Game) {
                         if skip_mouth_hit {
                         } else {
                             word!(game.collision_detection_index = (v6 >> 1));
-                            shot_reaction(game);
+                            actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::ReactionOnly);
                             word!(game.projectile_dir[(v6 >> 1)] |= (0x10u16));
                             v3 = 1;
                             v6 = 0;
@@ -651,7 +649,14 @@ pub unsafe fn KraidLint_FireLint(k: u16, game: &mut Game) {
             (*E).kraid_next = ((0xa7b832i32) as u16);
             (*E).kraid_var_B = 0;
         }
-        if CheckIfEnemyTouchesSamus(k, game) != 0 {
+        if {
+            let actor = k;
+            0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(
+                &Runtime::new(game),
+                Key::from_legacy(actor),
+            )))
+        } != 0
+        {
             words!(
                 game.extra_samus_x_displacement,
                 extra_samus_x_subdisplacement +=
@@ -745,7 +750,10 @@ pub unsafe fn Kraid_EnemyTouch_Lint(k: u16, game: &mut Game) {
                             v2 = 16;
                         }
                         word!(game.extra_samus_x_displacement = v2);
-                        apply_contact(game);
+                        actors::combat::contact_reaction(
+                            &mut Runtime::new(game),
+                            actors::api::DeathHandling::Finalize,
+                        );
                         (*E).base.properties =
                             ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
                     }
@@ -789,7 +797,16 @@ pub unsafe fn KraidFingernailInit(k: u16, game: &mut Game) {
 pub unsafe fn KraidsFingernail_Fire(k: u16, game: &mut Game) {
     unsafe {
         let v1 = gEnemyData(k as i32, game);
-        if Enemy_MoveRight_IgnoreSlopes(k, (words!((*v1), ai_var_C, ai_var_B)) as i32, game) != 0 {
+        if {
+            let (actor, amount) = (k, (words!((*v1), ai_var_C, ai_var_B)) as i32);
+            (actor_api::move_horizontal(
+                &mut Runtime::new(game),
+                Key::from_legacy(actor),
+                amount,
+                actor_api::SlopePolicy::Ignore,
+            ) == actor_api::MovementResult::Blocked) as u8
+        } != 0
+        {
             (*v1).ai_var_B = -((*v1).ai_var_B as i32) as u16;
             (*v1).ai_var_C = -((*v1).ai_var_C as i32) as u16;
         } else {
@@ -818,7 +835,12 @@ pub unsafe fn KraidsFingernail_Fire(k: u16, game: &mut Game) {
             }
         }
         let v5 = gEnemyData(k as i32, game);
-        if Enemy_MoveDown(k, (words!((*v5), ai_var_E, ai_var_D)) as i32, game) != 0 {
+        if {
+            let (actor, amount) = (k, (words!((*v5), ai_var_E, ai_var_D)) as i32);
+            (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
+                == actor_api::MovementResult::Blocked) as u8
+        } != 0
+        {
             words!(
                 (*v5),
                 ai_var_E,
@@ -1488,6 +1510,8 @@ crate::game::callback_dispatch! {
                 .base
                 .enemy_ptr;
             rom_record(0xa0, enemy_ptr, game).set_word(offset_of!(EnemyDef, shot_ai), ((0xa7804ci32) as u16));
+            #[cfg(sm_verify_dll)]
+            crate::verify_probe::hit("actors.kraid.shot_ai.disabled");
             let E1 = Get_Kraid(0x40, game);
             let v3: u16 = ((*E1).base.properties as i32
                 | kEnemyProps_Tangible as i32
@@ -1706,7 +1730,7 @@ crate::game::callback_dispatch! {
                 word!(game.samus_prev_y_pos = kraid_min_y_pos_eject);
                 Kraid_Func_1(game);
                 if word!(game.samus_invincibility_timer) == 0 {
-                    apply_contact(game);
+                    actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
                 }
             }
         }
@@ -1986,17 +2010,17 @@ crate::game::callback_dispatch! {
             let E6 = Get_Kraid(0x180, game);
             (*E6).base.properties = ((*E6).base.properties & !(0x4000));
             word!(game.cur_enemy_index = 384);
-            enemy_death(v4, 0x180, game);
+            ({ let (_ignored_key, animation) = (v4, 0x180); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
             let E7 = Get_Kraid(0x1c0, game);
             (*E7).base.properties = ((*E7).base.properties & !(0x4000));
             word!(game.cur_enemy_index = 448);
-            enemy_death(v4, 0x1c0, game);
+            ({ let (_ignored_key, animation) = (v4, 0x1c0); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
             word!(game.cur_enemy_index = 128);
-            enemy_death(v4, 0x80, game);
+            ({ let (_ignored_key, animation) = (v4, 0x80); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
             word!(game.cur_enemy_index = 192);
-            enemy_death(v4, 0xc0, game);
+            ({ let (_ignored_key, animation) = (v4, 0xc0); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
             word!(game.cur_enemy_index = 256);
-            enemy_death(v4, 0x100, game);
+            ({ let (_ignored_key, animation) = (v4, 0x100); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
             word!(game.cur_enemy_index = v7);
             spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x5, 0x1b, 0xb7bf as VoidP), game);
         }
@@ -2326,7 +2350,18 @@ pub unsafe fn Phantoon_BeginSwoopingPattern(k: u16, game: &mut Game) {
 }
 pub unsafe fn Phantoon_ChangeEyeSpriteBasedOnSamusDist(game: &mut Game) {
     unsafe {
-        let v0: u16 = (2u16).wrapping_mul(DetermineDirectionOfSamusFromEnemy(game));
+        let v0: u16 = (2u16).wrapping_mul({
+            match actor_api::direction_to_player(&Runtime::new(game)) {
+                actor_api::PlayerDirection::Up => 0u16,
+                actor_api::PlayerDirection::UpRight => 1u16,
+                actor_api::PlayerDirection::Right => 2u16,
+                actor_api::PlayerDirection::DownRight => 3u16,
+                actor_api::PlayerDirection::Down => 4u16,
+                actor_api::PlayerDirection::DownLeft => 6u16,
+                actor_api::PlayerDirection::Left => 7u16,
+                actor_api::PlayerDirection::UpLeft => 8u16,
+            }
+        });
         let E = Get_Phantoon(0x40, game);
         enemy_instruction! {[(*E).base]; timer = 1, instruction = crate::rtl::rom_table_word!(game, 0xa7d40d, (v0 >> 1) as isize)}
     }
@@ -2539,7 +2574,15 @@ pub unsafe fn Etecoon_Func_1(k: u16, game: &mut Game) {
 pub unsafe fn Etecoon_Func_2(k: u16, game: &mut Game) -> u8 {
     unsafe {
         let E = Get_Etecoon(k as i32, game);
-        Enemy_MoveRight_IgnoreSlopes(k, (words!((*E), var_C, var_D)) as i32, game)
+        {
+            let (actor, amount) = (k, (words!((*E), var_C, var_D)) as i32);
+            (actor_api::move_horizontal(
+                &mut Runtime::new(game),
+                Key::from_legacy(actor),
+                amount,
+                actor_api::SlopePolicy::Ignore,
+            ) == actor_api::MovementResult::Blocked) as u8
+        }
     }
 }
 pub unsafe fn Etecoon_Func_3(k: u16, game: &mut Game) -> u8 {
@@ -2553,7 +2596,11 @@ pub unsafe fn Etecoon_Func_3(k: u16, game: &mut Game) -> u8 {
                 var_B += words!(game.samus_y_accel, samus_y_subaccel)
             );
         }
-        Enemy_MoveDown(k, amt, game)
+        {
+            let (actor, amount) = (k, amt);
+            (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
+                == actor_api::MovementResult::Blocked) as u8
+        }
     }
 }
 static funcs_A2A79: [Func_Y_V; 3] = callback_table! { nonnull Func_Y_V;
@@ -2627,7 +2674,11 @@ pub unsafe fn Dachora_Func_6(k: u16, game: &mut Game) -> i32 {
                 }
             }
         }
-        Enemy_MoveDown(k, (1i16 as i32) << 16, game);
+        {
+            let (actor, amount) = (k, (1i16 as i32) << 16);
+            (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
+                == actor_api::MovementResult::Blocked) as u8
+        };
         if (((*E).var_A) as i16).wrapping_sub((g_word_A7F4D5) as i16) >= 0
             && (((*E).var_B) as i16).wrapping_sub((g_word_A7F4D7) as i16) >= 0
         {
@@ -2889,8 +2940,8 @@ crate::game::callback_dispatch! {
     [10992847 | 10992862] KraidsGoodFingernail_Touch [] {
         let v0: u16 = 0;
         printf(b"X undefined\n\0" as *const u8 as *const c_char);
-        apply_contact(game);
-        enemy_death(word!(game.cur_enemy_index), v0, game);
+        actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
+        ({ let (_ignored_key, animation) = (word!(game.cur_enemy_index), v0); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
     };
     [10992946] KraidsGoodFingernail_Main [] {
         let v0 = gEnemyData(0, game);
@@ -3017,7 +3068,7 @@ crate::game::callback_dispatch! {
         (*E3).parameter_2 = byte!((*E3).parameter_2; 0) as u16;
     };
     [11001237] Phantoon_Touch [] {
-        contact_without_death(game);
+        actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
     };
     [11001243] Phantoon_Shot [] {
         let E0 = Get_Phantoon(0, game);
@@ -3027,7 +3078,7 @@ crate::game::callback_dispatch! {
         let v1: u16 = word!(game.cur_enemy_index);
         let EK = Get_Phantoon(word!(game.cur_enemy_index) as i32, game);
         let mut health: u16 = (*EK).base.health;
-        shot_reaction(game);
+        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::ReactionOnly);
         if (*EK).base.health == 0 {
             QueueSfx2_Max6(0x73, game);
             (*Get_Phantoon(0x80i32, game)).parameter_2 = 1;
@@ -3140,14 +3191,14 @@ crate::game::callback_dispatch! {
         CallEnemyPreInstr((((*E).var_F) as u32) | (0xa70000u32), game);
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [10977295] Enemy_GrappleReact_CancelBeam_A7 => select_frozen_ai(game);
-    [10977325] Enemy_NormalShotAI_A7 => apply_shot(game);
+    [10977295] Enemy_GrappleReact_CancelBeam_A7 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
+    [10977325] Enemy_NormalShotAI_A7 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
     [10977340]
-    Enemy_NormalPowerBombAI_SkipDeathAnim_A7 => power_bomb_without_death(game);
-    [10977345] Enemy_NormalFrozenAI_A7 => update_frozen_enemy(game);
+    Enemy_NormalPowerBombAI_SkipDeathAnim_A7 => actors::combat::power_bomb_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
+    [10977345] Enemy_NormalFrozenAI_A7 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
     @forward [pub unsafe fn (game: &mut Game)];
-    [10982559] Kraid_Touch => contact_without_death(game);
-    Kraid_Shot => apply_shot(game);
+    [10982559] Kraid_Touch => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
+    Kraid_Shot => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
     @forward [pub unsafe fn (game: &mut Game)];
     [10992879] KraidsGoodFingernail_Init => KraidFingernailInit(word!(game.cur_enemy_index), game);
     [10992941] KraidsBadFingernail_Init => KraidFingernailInit(word!(game.cur_enemy_index), game);
@@ -3202,7 +3253,7 @@ crate::game::callback_dispatch! {
             let mut v3: u16 = ((*E).kraid_target_x).wrapping_sub(1);
             (*E).kraid_target_x = v3;
             (*E).kraid_target_x == 0
-        }) && Enemy_MoveRight_IgnoreSlopes(0, (g_word_A7A922 as i16 as i32) << 16, game) != 0
+        }) && ({ let (actor, amount) = (0, (g_word_A7A922 as i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
         {
             word! {game; earthquake_type = 0; earthquake_timer = 7; }
             let x_pos: u16 = (*Get_Kraid(0, game)).base.x_pos;
@@ -3572,7 +3623,7 @@ crate::game::callback_dispatch! {
                     (*E).var_F = ((0xa7ea00i32) as u16);
                     (*E).var_E = 11;
                 }
-            } else if IsSamusWithinEnemy_Y(k, 0x80, game) != 0 {
+            } else if ({ let (actor, distance) = (k, 0x80); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
                 if ((*E).parameter_2 & 3) == 0 {
                     QueueSfx2_Max15(0x35, game);
                 }
@@ -3585,10 +3636,10 @@ crate::game::callback_dispatch! {
         if Etecoon_Func_3(k, game) & 1 != 0 {
             let E = Get_Etecoon(k as i32, game);
             if ((*E).var_A & 0x8000) == 0 {
-                if IsSamusWithinEnemy_Y(k, 0x40, game) != 0
-                    && IsSamusWithinEnemy_X(k, g_word_A7E910, game) != 0
+                if ({ let (actor, distance) = (k, 0x40); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
+                    && ({ let (actor, distance) = (k, g_word_A7E910); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
                 {
-                    let v2: u16 = DetermineDirectionOfSamusFromEnemy(game);
+                    let v2: u16 = { match actor_api::direction_to_player(&Runtime::new(game)) { actor_api::PlayerDirection::Up=>0u16,actor_api::PlayerDirection::UpRight=>1u16,actor_api::PlayerDirection::Right=>2u16,actor_api::PlayerDirection::DownRight=>3u16,actor_api::PlayerDirection::Down=>4u16,actor_api::PlayerDirection::DownLeft=>6u16,actor_api::PlayerDirection::Left=>7u16,actor_api::PlayerDirection::UpLeft=>8u16 } };
                     if v2 as i32 - 5i32 & 0x8000 != 0 {
                         (*E).base.current_instruction = addr_kEtecoon_Ilist_E81E as u16;
                         (*E).parameter_1 = 0;
@@ -3621,7 +3672,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11004716] Etecoon_Func_9 [] {
-        if EnemyFunc_BBBF(k, ((32u32) << 16 | 0u16 as u32) as i32, game) != 0 {
+        if ({ let (actor, amount) = (k, ((32u32) << 16 | 0u16 as u32) as i32); (actor_api::probe_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             let E = Get_Etecoon(k as i32, game);
             enemy_instruction! {[(*E).base]; timer = 1, instruction = addr_stru_A7E898 as u16}
             (*E).var_F = ((0xa7eb50i32) as u16);
@@ -3790,7 +3841,7 @@ crate::game::callback_dispatch! {
         (*E).var_E = (*E).var_E.wrapping_sub(1);
         let v3: bool = ((*E).var_E & 0x8000) != 0;
         if v2 || v3 {
-            if IsSamusWithinEnemy_Y(k, 0x40, game) != 0 && IsSamusWithinEnemy_X(k, 0x30, game) != 0
+            if ({ let (actor, distance) = (k, 0x40); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 && ({ let (actor, distance) = (k, 0x30); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
             {
                 (*E).base.current_instruction = addr_stru_A7E880 as u16;
                 (*E).var_F = ((0xa7ecdfi32) as u16);
@@ -3824,9 +3875,9 @@ crate::game::callback_dispatch! {
         }
     };
     [11007344] Dachora_Func_2 [] {
-        Enemy_MoveDown(k, ((1u32) << 16 | 0u16 as u32) as i32, game);
-        if IsSamusWithinEnemy_Y(k, 0x40, game) != 0
-            && IsSamusWithinEnemy_X(k, g_word_A7F4C9, game) != 0
+        ({ let (actor, amount) = (k, ((1u32) << 16 | 0u16 as u32) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
+        if ({ let (actor, distance) = (k, 0x40); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
+            && ({ let (actor, distance) = (k, g_word_A7F4C9); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
         {
             let E = Get_Dachora(k as i32, game);
             if (*E).parameter_1 != 0 {
@@ -3858,8 +3909,8 @@ crate::game::callback_dispatch! {
     [11007469] Dachora_Func_4 [] {
         let amt: i32 = -Dachora_Func_6(k, game);
         let E = Get_Dachora(k as i32, game);
-        if Enemy_MoveRight_IgnoreSlopes(k, amt, game) != 0 || {
-            EnemyFunc_C8AD(k, game);
+        if ({ let (actor, amount) = (k, amt); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 || {
+            ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
             (*E).base.x_pos as i32 - 96i32 & 0x8000 != 0
         } {
             (*E).base.current_instruction = addr_kDachora_Ilist_F407 as u16;
@@ -3873,14 +3924,14 @@ crate::game::callback_dispatch! {
     [11007582] Dachora_Func_5 [] {
         let amt: i32 = Dachora_Func_6(k, game);
         let E = Get_Dachora(k as i32, game);
-        if Enemy_MoveRight_IgnoreSlopes(k, amt, game) != 0 {
+        if ({ let (actor, amount) = (k, amt); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             QueueSfx2_Max15(0x71, game);
             (*E).base.current_instruction = addr_kDachora_Ilist_F345 as u16;
             (*E).var_F = ((0xa7f5edi32) as u16);
             set_fields! {[(*E)], 0; parameter_1, var_A}
             Dachora_Func_1(addr_kDachora_Palette as u16, k, game);
         } else {
-            EnemyFunc_C8AD(k, game);
+            ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
             if (*E).base.x_pos as i32 - 1152i32 & 0x8000 == 0 {
                 (*E).base.current_instruction = addr_kDachora_Ilist_F4B3 as u16;
                 (*E).var_F = ((0xa7f78fi32) as u16);
@@ -3965,7 +4016,7 @@ crate::game::callback_dispatch! {
             v6 = 15;
         }
         let amt: i32 = (words!((v6, (*E).var_B))) as i32;
-        if Enemy_MoveDown(k, -amt, game) != 0 {
+        if ({ let (actor, amount) = (k, -amt); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             if (*E).parameter_1 != 0 {
                 (*E).base.current_instruction = addr_kDachora_Ilist_F3FF as u16;
                 (*E).parameter_1 = 0;
@@ -3991,7 +4042,7 @@ crate::game::callback_dispatch! {
         if (amt >> 16) - 10i32 & 0x8000 == 0 {
             amt = (10i16 as i32) << 16;
         }
-        if Enemy_MoveDown(k, amt, game) != 0 {
+        if ({ let (actor, amount) = (k, amt); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             if (*E).parameter_1 != 0 {
                 (*E).base.current_instruction = addr_kDachora_Ilist_F407 as u16;
                 (*E).var_F = ((0xa7f65ei32) as u16);

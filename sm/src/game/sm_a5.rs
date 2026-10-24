@@ -1,15 +1,13 @@
-use crate::game::enemy_combat::{
-    apply_contact, apply_shot, contact_without_death, flash_on_shot, power_bomb_without_death,
-    reduce_suit_damage, select_frozen_ai, shot_reaction,
-};
+use crate::game::actors;
+use crate::game::actors::api as actor_api;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
-use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
 use crate::game::minimap;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
+use crate::game::session_runtime::Runtime;
 use crate::rtl::rom_record;
 use core::mem::offset_of;
 
@@ -24,8 +22,8 @@ use crate::game::sm_90::{
 };
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_a0::{
-    Abs16, CalculateAngleFromXY, ConvertAngleToXy, CosineMult8bit, EnemyFunc_B7A1, EnemyFunc_B691,
-    EnemyFunc_Divide, SignExtend8, SineMult8bit,
+    Abs16, ConvertAngleToXy, CosineMult8bit, EnemyFunc_B7A1, EnemyFunc_Divide, SignExtend8,
+    SineMult8bit,
 };
 use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
 
@@ -383,11 +381,7 @@ crate::game::callback_dispatch! {
     [10873755] SporeSpawn_Func_3 [] {
         let E0 = Get_SporeSpawn(0, game);
         (*E0).var_43 = ((64u8).wrapping_sub(
-            (CalculateAngleFromXY(
-                (128u16).wrapping_sub((*E0).base.x_pos),
-                (624u16).wrapping_sub((*E0).base.y_pos),
-                game,
-            )) as u8,
+            (actor_api::angle_from_delta((128u16).wrapping_sub((*E0).base.x_pos), (624u16).wrapping_sub((*E0).base.y_pos))) as u8,
         )) as u16;
         let E = Get_SporeSpawn(word!(game.cur_enemy_index) as i32, game);
         let pt: Point32 = ConvertAngleToXy(byte!((*E0).var_43; 0) as u16, 1, game);
@@ -400,14 +394,10 @@ crate::game::callback_dispatch! {
         let E = Get_SporeSpawn(word!(game.cur_enemy_index) as i32, game);
         let E0 = Get_SporeSpawn(0, game);
         let varE20: u16 = byte!((*E0).var_43; 0) as u16;
-        EnemyFunc_B691(
-            varE20,
-            Point32 {
+        ({ let (phase, point) = (varE20, Point32 {
                 x: words!((*E), var_28, var_29),
                 y: words!((*E), var_2A, var_2B),
-            },
-            game,
-        );
+            }); actor_api::apply_vector(&mut Runtime::new(game), phase, crate::game::session::Vector32 { x: point.x, y: point.y }) });
         let v2: u16 = Abs16(((*E0).base.x_pos).wrapping_sub(128));
         if v2 as i32 - 8i32 & 0x8000 != 0 {
             let v3: u16 = Abs16(((*E0).base.y_pos).wrapping_sub(624));
@@ -554,14 +544,10 @@ crate::game::callback_dispatch! {
                 }
             } else {
                 let varE20: u16 = ((64u8).wrapping_sub(
-                    (CalculateAngleFromXY(
-                        (word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos),
-                        (word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos),
-                        game,
-                    )) as u8,
+                    (actor_api::angle_from_delta((word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos), (word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos))) as u8,
                 )) as u16;
                 let pt: Point32 = ConvertAngleToXy(varE20, 2, game);
-                EnemyFunc_B691(varE20, pt, game);
+                ({ let (phase, point) = (varE20, pt); actor_api::apply_vector(&mut Runtime::new(game), phase, crate::game::session::Vector32 { x: point.x, y: point.y }) });
             }
         } else {
             (*E).var_A = ((0xa59154i32) as u16);
@@ -583,14 +569,10 @@ crate::game::callback_dispatch! {
             create_sprite(x, y, 61, 0, game);
         }
         (*E).var_43 = ((64u8).wrapping_sub(
-            (CalculateAngleFromXY(
-                (64 - ((*E).base.x_pos as i32 >> 2)) as u16,
-                (120 - ((*E).base.y_pos as i32 >> 2)) as u16,
-                game,
-            )) as u8,
+            (actor_api::angle_from_delta((64 - ((*E).base.x_pos as i32 >> 2)) as u16, (120 - ((*E).base.y_pos as i32 >> 2)) as u16)) as u8,
         )) as u16;
         let pt: Point32 = ConvertAngleToXy(byte!((*E).var_43; 0) as u16, 1, game);
-        EnemyFunc_B691(byte!((*E).var_43; 0) as u16, pt, game);
+        ({ let (phase, point) = (byte!((*E).var_43; 0) as u16, pt); actor_api::apply_vector(&mut Runtime::new(game), phase, crate::game::session::Vector32 { x: point.x, y: point.y }) });
         let v3: u16 = Abs16(((*E).base.x_pos).wrapping_sub(256));
         if v3 as i32 - 4i32 & 0x8000 != 0 {
             let v4: u16 = Abs16(((*E).base.y_pos).wrapping_sub(480));
@@ -627,7 +609,7 @@ crate::game::callback_dispatch! {
         if (*E).var_0F as i32 - 152i32 & 0x8000 != 0 {
             (*E).var_0F = ((*E).var_0F).wrapping_add(8);
         }
-        shot_reaction(game);
+        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::ReactionOnly);
         sub_A5960D(game);
     };
     Draygon_Func_41 [] {
@@ -722,14 +704,23 @@ pub unsafe fn Draygon_Func_24(k: u16, game: &mut Game) {
                 (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
             } else {
                 let varE20: u16 = ((64u8).wrapping_sub(
-                    (CalculateAngleFromXY(
+                    (actor_api::angle_from_delta(
                         (256u16).wrapping_sub((*E).base.x_pos),
                         (384u16).wrapping_sub((*E).base.y_pos),
-                        game,
                     )) as u8,
                 )) as u16;
                 let pt: Point32 = ConvertAngleToXy(varE20, 2, game);
-                EnemyFunc_B691(varE20, pt, game);
+                {
+                    let (phase, point) = (varE20, pt);
+                    actor_api::apply_vector(
+                        &mut Runtime::new(game),
+                        phase,
+                        crate::game::session::Vector32 {
+                            x: point.x,
+                            y: point.y,
+                        },
+                    )
+                };
                 Draygon_Func_40(k, game);
             }
         };
@@ -904,10 +895,9 @@ pub unsafe fn sub_A5960D(game: &mut Game) {
             Samus_ReleaseFromDraygon_(game);
             word!(game.samus_grapple_flags = 0);
             (*E).var_43 = ((64u8).wrapping_sub(
-                (CalculateAngleFromXY(
+                (actor_api::angle_from_delta(
                     (256u16).wrapping_sub((*E).base.x_pos),
                     (480u16).wrapping_sub((*E).base.y_pos),
-                    game,
                 )) as u8,
             )) as u16;
             let pt: Point32 = ConvertAngleToXy(byte!((*E).var_43; 0) as u16, 1, game);
@@ -964,10 +954,9 @@ pub unsafe fn Draygon_Func_48(k: u16, game: &mut Game) {
             SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x18, game);
         }
         let E0 = Get_Draygon(0, game);
-        let v4: u16 = CalculateAngleFromXY(
+        let v4: u16 = actor_api::angle_from_delta(
             (word!(game.samus_x_pos) as i32 - ((*E0).base.x_pos as i32 - 24i32)) as u16,
             (word!(game.samus_y_pos) as i32 - ((*E0).base.y_pos as i32 - 32i32)) as u16,
-            game,
         );
         let E = Get_Draygon(word!(game.cur_enemy_index) as i32, game);
         if v4 != (*E).var_F {
@@ -1000,10 +989,9 @@ pub unsafe fn Draygon_Func_49(k: u16, game: &mut Game) {
             };
             SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x18, game);
         }
-        let v4: u16 = CalculateAngleFromXY(
+        let v4: u16 = actor_api::angle_from_delta(
             (word!(game.samus_x_pos) as i32 - ((*E0).base.x_pos as i32 + 24)) as u16,
             (word!(game.samus_y_pos) as i32 - ((*E0).base.y_pos as i32 - 32i32)) as u16,
-            game,
         );
         let E = Get_Draygon(word!(game.cur_enemy_index) as i32, game);
         if v4 != (*E).var_F {
@@ -1176,11 +1164,11 @@ crate::game::callback_dispatch! {
         }
     };
     [10851818] Draygon_Touch [] {
-        contact_without_death(game);
+        actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
         sub_A5960D(game);
     };
     [10851847] Draygon_Powerbomb [] {
-        power_bomb_without_death(game);
+        actors::combat::power_bomb_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
         sub_A5960D(game);
     };
     [10863723] DraygonsEye_Init [] {
@@ -1266,7 +1254,7 @@ crate::game::callback_dispatch! {
         let mut v0: u16 = (2u16).wrapping_mul(word!(game.collision_detection_index));
         let v1: u16 = word!(game.projectile_type[word!(game.collision_detection_index)]);
         if (v1 & 0x700) != 0 || (v1 & 0x10) != 0 {
-            flash_on_shot(game);
+            actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Flash);
             v0 = word!(game.cur_enemy_index);
             let EK = Get_SporeSpawn(v0 as i32, game);
             if (*EK).base.flash_timer != 0 {
@@ -1304,14 +1292,14 @@ crate::game::callback_dispatch! {
         }
     };
     [10874348] SporeSpawn_Touch [] {
-        contact_without_death(game);
+        actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
         SporeSpawn_Func_6(game);
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [10846223] Enemy_GrappleReact_CancelBeam_A5 => select_frozen_ai(game);
-    [10846243] Enemy_NormalTouchAI_A5 => apply_contact(game);
-    [10846253] Enemy_NormalShotAI_A5 => apply_shot(game);
-    [10846273] Enemy_NormalFrozenAI_A5 => update_frozen_enemy(game);
+    [10846223] Enemy_GrappleReact_CancelBeam_A5 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
+    [10846243] Enemy_NormalTouchAI_A5 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
+    [10846253] Enemy_NormalShotAI_A5 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
+    [10846273] Enemy_NormalFrozenAI_A5 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
 }
 
 crate::game::callback_dispatch! {
@@ -1353,7 +1341,7 @@ crate::game::callback_dispatch! {
         let E = Get_Draygon(0, game);
         (*E).var_0F = 24;
         let v3 = RomPtr_A0((*E).base.enemy_ptr, game);
-        Samus_DealDamage(reduce_suit_damage(*(v3.offset(6) as *mut u16), game), game);
+        Samus_DealDamage(({ let amount = *(v3.offset(6) as *mut u16); actors::combat::suit_damage(&mut Runtime::new(game), amount) }), game);
         word! {game; earthquake_timer = 32; earthquake_type = 7; }
         create_sprite(
             word!(game.samus_x_pos),

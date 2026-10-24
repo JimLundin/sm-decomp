@@ -1,8 +1,10 @@
+use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
 use crate::game::beam_windows::calculate_xray_window;
 use crate::game::liquid_effects;
 use crate::game::music::{HandleMusicQueue, QueueMusic_Delayed8};
 pub use crate::game::prelude::*;
 use crate::game::scrolling_sky;
+use crate::game::session_runtime::Runtime;
 
 pub use crate::game::constants::bank_8f::*;
 pub use crate::game::constants::bank_86::*;
@@ -1583,8 +1585,7 @@ pub fn HdmaobjInstr_InitMorphBallEyeBeamHdma(k: u16, hdp: *const u8, game: &mut 
     game.g_ram[0x9000..0x900b].copy_from_slice(&[
         0xe4, 0x00, 0x91, 0xe4, 0xc8, 0x91, 0x98, 0x90, 0x92, 0x00, 0x00,
     ]);
-    let active_offset = 0xf78 + 0x40 + core::mem::offset_of!(EnemyData, ai_var_C);
-    game.g_ram[active_offset..active_offset + 2].copy_from_slice(&1u16.to_le_bytes());
+    Runtime::new(game).edit_actor(Key::from_legacy(0x40), Le, |actor| actor.variables[2] = 1);
     let slot = usize::from(k & !1);
     let width_offset = 0x192c + slot;
     game.g_ram[width_offset..width_offset + 2].copy_from_slice(&0u16.to_le_bytes());
@@ -1599,20 +1600,22 @@ pub unsafe fn UpdateMorphBallEyeBeamHdma(k: u16, game: &mut Game) {
     unsafe {
         // The beam's origin and angle belong to enemy slot 1.
         const BEAM_ENEMY: u16 = 0x40;
-        let angle_offset =
-            0xf78 + usize::from(BEAM_ENEMY) + core::mem::offset_of!(EnemyData, ai_var_D);
-        let angle = u16::from_le_bytes([game.g_ram[angle_offset], game.g_ram[angle_offset + 1]]);
+        let angle = Runtime::new(game)
+            .resolve_actor(Key::from_legacy(BEAM_ENEMY), Le)
+            .variables[3];
         // HDMA object C uses a word index; the colors below keep the byte index.
         let width_offset = 0x192c + usize::from(k & !1);
         let width = u16::from_le_bytes([game.g_ram[width_offset], game.g_ram[width_offset + 1]]);
-        let relative_y = game
-            .enemy_coordinates(BEAM_ENEMY)
-            .y_pos()
-            .wrapping_sub(game.layer1_y_pos());
-        let relative_x = game
-            .enemy_coordinates(BEAM_ENEMY)
-            .x_pos()
-            .wrapping_sub(game.layer1_x_pos());
+        let origin_y = Runtime::new(game)
+            .resolve_actor(Key::from_legacy(BEAM_ENEMY), Le)
+            .y
+            .whole;
+        let relative_y = origin_y.wrapping_sub(game.layer1_y_pos());
+        let origin_x = Runtime::new(game)
+            .resolve_actor(Key::from_legacy(BEAM_ENEMY), Le)
+            .x
+            .whole;
+        let relative_x = origin_x.wrapping_sub(game.layer1_x_pos());
         calculate_xray_window(
             relative_x,
             relative_y,

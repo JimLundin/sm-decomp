@@ -4,18 +4,19 @@ use super::coordinates::{block_index, calculate_coordinates};
 use super::host::*;
 use super::setup::*;
 use super::shared::*;
+use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 
 /// Keep live enemy reads interleaved with writes, including broad slot aliases.
 pub(super) fn copy_enemy_position(slot: isize, enemy: u16, y_offset: i16, ctx: &mut impl Host) {
-    enemy!(ctx, ctx.enemy_x(enemy) => slot, x);
-    enemy!(ctx, ctx.enemy_x_fraction(enemy) => slot, x_fraction);
-    enemy!(ctx, (ctx.enemy_y(enemy) as i32 + y_offset as i32) as u16 => slot, y);
-    enemy!(ctx, ctx.enemy_y_fraction(enemy) => slot, y_fraction);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy), Le).x.whole => slot, x);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy), Le).x.fraction => slot, x_fraction);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(enemy), Le).y.whole as i32 + y_offset as i32) as u16 => slot, y);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy), Le).y.fraction => slot, y_fraction);
 }
 
 pub(super) fn init_robot_laser(j: u16, y_velocity: u16, clear_graphics: bool, ctx: &mut impl Host) {
     let slot = (j >> 1) as isize;
-    enemy!(ctx, ctx.enemy_ai_a(ctx.inputs().current_enemy) => slot, velocity_x);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(ctx.inputs().current_enemy), Le).variables[0] => slot, velocity_x);
     enemy!(ctx, y_velocity => slot, velocity_y);
     if clear_graphics {
         enemy!(ctx, 0 => slot, graphics);
@@ -26,8 +27,8 @@ pub(super) fn init_robot_laser(j: u16, y_velocity: u16, clear_graphics: bool, ct
 pub(super) fn init_landing_dust(j: u16, x_offset: i16, ctx: &mut impl Host) {
     let enemy = ctx.inputs().current_enemy;
     let slot = (j >> 1) as isize;
-    enemy!(ctx, ctx.enemy_y(enemy).wrapping_add(48) => slot, y);
-    enemy!(ctx, ctx.enemy_x(enemy).wrapping_add_signed(x_offset) => slot, x);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy), Le).y.whole.wrapping_add(48) => slot, y);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy), Le).x.whole.wrapping_add_signed(x_offset) => slot, x);
 }
 
 pub(super) fn init_statue_piece(j: u16, x: u16, y: u16, ctx: &mut impl Host) {
@@ -48,10 +49,14 @@ pub(super) fn init_skree_particle(
 ) {
     let enemy_index = ctx.inputs().current_enemy;
     let word_index = usize::from(j >> 1);
-    let y = ctx.enemy_y(enemy_index);
+    let y = ctx.resolve_actor(Key::from_legacy(enemy_index), Le).y.whole;
     enemy!(ctx, word_index as isize, y = y);
     enemy!(ctx, word_index as isize, velocity_y = y_velocity as u16);
-    let x = ctx.enemy_x(enemy_index).wrapping_add_signed(x_offset);
+    let x = ctx
+        .resolve_actor(Key::from_legacy(enemy_index), Le)
+        .x
+        .whole
+        .wrapping_add_signed(x_offset);
     enemy!(ctx, word_index as isize, x = x);
     enemy!(ctx, word_index as isize, velocity_x = x_velocity as u16);
 }
@@ -74,8 +79,8 @@ pub(super) fn EprojInit_MiniKraidSpikes(j: u16, a: u16, ctx: &mut impl Host) {
             [(ctx.mini_kraid_spike_variant(ctx.inputs().current_enemy) >> 1) as usize]
             as u16;
         let enemy_index = ctx.inputs().current_enemy;
-        enemy!(ctx, ctx.enemy_x(enemy_index) => (v2) as isize, x);
-        enemy!(ctx, (r18).wrapping_add(ctx.enemy_y(enemy_index)) => (v2) as isize, y);
+        enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole => (v2) as isize, x);
+        enemy!(ctx, (r18).wrapping_add(ctx.resolve_actor(Key::from_legacy(enemy_index), Le).y.whole) => (v2) as isize, y);
 
         enemy!(ctx, 0 => (v2) as isize, y_fraction);
         enemy!(ctx, 0 => (v2) as isize, x_fraction);
@@ -87,7 +92,7 @@ pub(super) fn EprojInit_KiHunterAcidSpitCommon(k: u16, j: u16, ctx: &mut impl Ho
     {
         let v2: i32 = j as i32 >> 1;
         enemy!(ctx, 0 => (v2) as isize, velocity_y);
-        enemy!(ctx, (ctx.enemy_y(k) as i32 - 16i32) as u16 => (v2) as isize, y);
+        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(k), Le).y.whole as i32 - 16i32) as u16 => (v2) as isize, y);
 
         enemy!(ctx, 0 => (v2) as isize, y_fraction);
         enemy!(ctx, 0 => (v2) as isize, x_fraction);
@@ -98,9 +103,9 @@ pub(super) fn EprojInit_WreckedShipRobotLaserCommon(k: u16, j: u16, ctx: &mut im
     {
         let v2 = k;
         let v3: i32 = j as i32 >> 1;
-        enemy!(ctx, (ctx.enemy_y(v2) as i32 - 16i32) as u16 => (v3) as isize, y);
+        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v2), Le).y.whole as i32 - 16i32) as u16 => (v3) as isize, y);
         {
-            let value = (ctx.enemy_x(v2) as i32
+            let value = (ctx.resolve_actor(Key::from_legacy(v2), Le).x.whole as i32
                 + (if enemy!(ctx, (v3) as isize, velocity_x) & 0x8000 != 0 {
                     -4i32
                 } else {
@@ -112,18 +117,23 @@ pub(super) fn EprojInit_WreckedShipRobotLaserCommon(k: u16, j: u16, ctx: &mut im
         enemy!(ctx, 0 => (v3) as isize, y_fraction);
         enemy!(ctx, 0 => (v3) as isize, x_fraction);
 
-        if ((ctx.enemy_width(v2) as i32 + ctx.enemy_x(v2) as i32 - ctx.inputs().camera_x as i32)
-            as i16)
+        if ((ctx.resolve_actor(Key::from_legacy(v2), Le).radius.x as i32
+            + ctx.resolve_actor(Key::from_legacy(v2), Le).x.whole as i32
+            - ctx.inputs().camera_x as i32) as i16)
             >= 0
-            && ((ctx.enemy_x(v2) as i32
-                - ctx.enemy_width(v2) as i32
+            && ((ctx.resolve_actor(Key::from_legacy(v2), Le).x.whole as i32
+                - ctx.resolve_actor(Key::from_legacy(v2), Le).radius.x as i32
                 - 257i32
                 - ctx.inputs().camera_x as i32) as i16)
                 < 0
-            && ((ctx.enemy_height(v2) as i32 + ctx.enemy_y(v2) as i32
+            && ((ctx.resolve_actor(Key::from_legacy(v2), Le).radius.y as i32
+                + ctx.resolve_actor(Key::from_legacy(v2), Le).y.whole as i32
                 - ctx.inputs().camera_y as i32) as i16)
                 >= 0
-            && ((ctx.enemy_y(v2) as i32 - ctx.enemy_height(v2) as i32 - 224i32) as i16) < 0
+            && ((ctx.resolve_actor(Key::from_legacy(v2), Le).y.whole as i32
+                - ctx.resolve_actor(Key::from_legacy(v2), Le).radius.y as i32
+                - 224i32) as i16)
+                < 0
         {
             ctx.queue_sound(2, 6, 0x67);
         }

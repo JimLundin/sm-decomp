@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 use super::access::enemy;
 use super::host::{DefinitionField, Host, LoadedRecord, ScriptRecord};
+use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 
 pub(super) fn set_enabled(h: &mut impl Host, enabled: bool) {
     let flags = h.session().enemy_projectiles.flags;
@@ -51,14 +52,15 @@ pub(crate) fn spawn_room(h: &mut impl Host, definition: u16, parameter: u16) -> 
     h.session_mut().enemy_projectiles.spawn.primary = parameter;
     allocate(h, definition, 0).unwrap_or_else(|| enemy!(h, 0, definition))
 }
-pub(super) fn spawn_from_enemy(
+pub(in crate::game) fn spawn_from_enemy(
     h: &mut impl Host,
     parameter: u16,
     enemy: u16,
     definition: u16,
 ) -> u16 {
     h.session_mut().enemy_projectiles.spawn.primary = parameter;
-    let graphics = h.enemy_tile(enemy) | h.enemy_palette(enemy);
+    let graphics = h.resolve_actor(Key::from_legacy(enemy), Le).tile
+        | h.resolve_actor(Key::from_legacy(enemy), Le).palette;
     allocate(h, definition, graphics).unwrap_or(graphics)
 }
 pub(super) fn process(h: &mut impl Host, handle: u16) {

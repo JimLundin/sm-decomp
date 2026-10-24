@@ -6,6 +6,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+from actor_contract_mutations import check_actor_contracts
 
 
 LEADING_EDGE = """        owner
@@ -416,7 +417,9 @@ def main():
             check_visual(source, work, mutation, baseline_binary, family="sprite")
         for mutation in FLAGS_MUTATIONS:
             check_visual(source, work, mutation, baseline_binary, family="flags")
+        actor_contract_count = check_actor_contracts(source, work, run)
     print(f"mutation checks: {len(MUTATIONS)+len(NEW_MUTATIONS)+len(VISUAL_MUTATIONS)+len(SPRITE_MUTATIONS)+len(FLAGS_MUTATIONS)}/{len(MUTATIONS)+len(NEW_MUTATIONS)+len(VISUAL_MUTATIONS)+len(SPRITE_MUTATIONS)+len(FLAGS_MUTATIONS)} killed; baseline passed", flush=True)
+    print(f"actor contract mutation checks: {actor_contract_count}/{actor_contract_count} killed; selected baselines passed", flush=True)
 
 
 if __name__ == "__main__":

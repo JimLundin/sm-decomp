@@ -1,6 +1,4 @@
 use crate::game::decompression::decompress_to_ram;
-use crate::game::enemy_population_ram::{initialize_room, load_room_assets};
-use crate::game::enemy_scheduling::{run_enemies, select_enemies};
 use crate::game::gameplay::advance as AdvanceGameplay;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::{
@@ -8,7 +6,6 @@ use crate::game::music::{
     QueueMusic_DelayedY,
 };
 pub use crate::game::prelude::*;
-use crate::game::scene_drawing::{draw_scene, queue_enemy_tiles};
 
 use crate::cpu_infra::DebugGameOverMenu;
 
@@ -54,12 +51,12 @@ use crate::game::sm_90::{
     CallSomeSamusCode, Samus_LowHealthCheck_0, SetLiquidPhysicsType, UpdateBeamTilesAndPalette,
 };
 use crate::game::sm_91::{GameState_28_Unused_, Samus_Initialize, Samus_LoadSuitTargetPalette};
-use crate::game::sm_a0::TransferEnemyTilesToVramAndInit;
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
     UnpauseHook_Kraid_IsDead,
 };
 use crate::game::sm_a9::MotherBrainsBody_UnpauseHook;
+use crate::game::{actors, session_runtime::Runtime};
 
 use crate::host::{Die, Warning};
 
@@ -235,7 +232,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
             });
             loop {
                 if !waiting {
-                    TransferEnemyTilesToVramAndInit(game);
+                    actors::staging::transfer_actor_tiles_and_initialize(&mut Runtime::new(game));
                 }
                 let yielded: u8 = WaitForNMI_Async(game);
                 if yielded != 0 {

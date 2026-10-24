@@ -1,11 +1,12 @@
+use crate::game::actors;
+use crate::game::actors::api as actor_api;
 use crate::game::combat_rules::GrappleOutcome;
-use crate::game::enemy_combat::resolve_grapple;
 use crate::game::grapple_swing::{advance_swing, change_length, place_rope_origin};
 pub use crate::game::prelude::*;
+use crate::game::session_runtime::Runtime;
 
 pub use crate::game::constants::bank_9b::*;
 
-use crate::game::enemy_contact::grapple_enemy;
 use crate::game::samus_animation::DrawSamusSuitExploding;
 use crate::game::samus_animation::Samus_DrawStartingDeathAnim;
 use crate::game::sm_80::{Multiply16x16, QueueSfx1_Max1, QueueSfx1_Max6, QueueSfx1_Max15};
@@ -18,7 +19,6 @@ use crate::game::sm_91::{Samus_DealDamage, Samus_LoadSuitPalette, Samus_Pose_Can
 use crate::game::sm_94::{
     BlockCollGrappleBeam, BlockReactGrapple, GrappleFunc_AF87, kSinCosTable8bit_Sext,
 };
-use crate::game::sm_a0::CalculateAngleFromXY;
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]
@@ -367,10 +367,9 @@ pub unsafe fn HandleConnectingGrapple(game: &mut Game) {
 macro_rules! initialize_connected_grapple_angle {
     ($game:ident, $transition_graphics:literal) => {
         word!($game.samus_special_transgfx_index = $transition_graphics);
-        let v0: u16 = u16::swap_bytes(CalculateAngleFromXY(
+        let v0: u16 = u16::swap_bytes(actor_api::angle_from_delta(
             (word!($game.samus_x_pos)).wrapping_sub(word!($game.grapple_beam_end_x_pos)),
             (word!($game.samus_y_pos)).wrapping_sub(word!($game.grapple_beam_end_y_pos)),
-            $game,
         ));
         word!($game.grapple_beam_end_angle16 = v0);
         word!($game.grapple_beam_end_angles_mirror = v0);
@@ -993,8 +992,12 @@ crate::game::callback_dispatch! {
             word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
             return;
         }
-        let pair: PairU16 = grapple_enemy(game);
-        match resolve_grapple(pair.k, pair.j, game) {
+        let contact = actors::contacts::grapple_contact(&mut Runtime::new(game));
+        let outcome = match contact {
+            Some(contact) => actors::combat::resolve_grapple(&mut Runtime::new(game), contact),
+            None => GrappleOutcome::Miss,
+        };
+        match outcome {
             GrappleOutcome::Attach => {},
             GrappleOutcome::Cancel => {
                 word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
@@ -1018,7 +1021,7 @@ crate::game::callback_dispatch! {
     };
     [10209150] GrappleBeamFunc_ConnectedLockedInPlace [] {
         if !((word!(game.button_config_shoot_x) & word!(game.joypad1_lastkeys)) != 0
-            && (grapple_enemy(game).k != 0
+            && (actors::contacts::grapple_contact(&mut Runtime::new(game)).is_some_and(|contact| contact.has_reaction())
                 || CheckIfGrappleIsConnectedToBlock(game) != 0))
         {
             word!(game.grapple_beam_function = ((0x9bc856i32) as u16));
@@ -1039,7 +1042,7 @@ crate::game::callback_dispatch! {
             {
                 return;
             }
-            let keep_swinging: bool = if grapple_enemy(game).k != 0 {
+            let keep_swinging: bool = if actors::contacts::grapple_contact(&mut Runtime::new(game)).is_some_and(|contact| contact.has_reaction()) {
                 word!(game.grapple_beam_flags |= (0x8000u16));
                 false
             } else {

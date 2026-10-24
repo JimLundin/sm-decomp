@@ -78,6 +78,7 @@ pub enum EnemyMember {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ShotMember {
     Kind,
+    Damage,
     Direction,
     Variable,
     X,
@@ -126,9 +127,6 @@ pub enum WaffleField {
     PartStage,
     Sprite,
     SpriteStage,
-    X,
-    Y,
-    Properties,
 }
 #[derive(Clone, Copy)]
 pub enum BotwoonField {
@@ -140,33 +138,12 @@ pub enum BotwoonField {
     TransitionCursor,
     TailState,
     Pattern,
-    X,
-    Y,
 }
-pub trait ActorAccess {
+pub trait SpeciesActors {
     fn mini_kraid_spit_x_velocity(&self, index: u16) -> u16;
     fn mini_kraid_spit_y_velocity(&self, index: u16) -> u16;
     fn mini_kraid_spit_x_offset(&self, index: u16) -> u16;
     fn kraid_unk9000(&self) -> u16;
-    fn enemy_x(&self, index: u16) -> u16;
-    fn enemy_y(&self, index: u16) -> u16;
-    fn enemy_x_fraction(&self, index: u16) -> u16;
-    fn enemy_y_fraction(&self, index: u16) -> u16;
-    fn enemy_definition(&self, index: u16) -> u16;
-    fn enemy_width(&self, index: u16) -> u16;
-    fn enemy_height(&self, index: u16) -> u16;
-    fn enemy_properties(&self, index: u16) -> u16;
-    fn enemy_parameter_1(&self, index: u16) -> u16;
-    fn enemy_parameter_2(&self, index: u16) -> u16;
-    fn enemy_ai_a(&self, index: u16) -> u16;
-    fn enemy_ai_d(&self, index: u16) -> u16;
-    fn enemy_ai_preinstr(&self, index: u16) -> u16;
-    fn enemy_ai_var_B(&self, index: u16) -> u16;
-    fn enemy_flash_timer(&self, index: u16) -> u16;
-    fn enemy_health(&self, index: u16) -> u16;
-    fn enemy_tile(&self, index: u16) -> u16;
-    fn enemy_palette(&self, index: u16) -> u16;
-    fn set_enemy_health(&mut self, index: u16, value: u16);
     fn nuclear_waffle_part_offset(&self, index: u16) -> u16;
     fn enemy_projectile_origin_x(&self, index: u16) -> u16;
     fn enemy_projectile_origin_y(&self, index: u16) -> u16;
@@ -213,7 +190,6 @@ pub trait ActorAccess {
     fn maw_segment_offset_x(&self, enemy: u16, part: u8) -> u16;
     fn maw_segment_offset_y(&self, enemy: u16, part: u8) -> u16;
     fn maw_palette(&self, enemy: u16) -> u16;
-    fn maw_frozen_timer(&self, enemy: u16) -> u16;
     fn expanding_square_origin(&self) -> u16;
     fn waffle_field(&self, enemy: usize, field: WaffleField) -> u16;
     fn set_waffle_field(&mut self, enemy: usize, field: WaffleField, value: u16);
@@ -262,7 +238,8 @@ pub trait Host:
     SessionAccess
     + Content
     + ImportedAliases
-    + ActorAccess
+    + SpeciesActors
+    + crate::game::actors::access::ActorAccess
     + Effects
     + Graphics
     + crate::game::sprite_effect_host::Host

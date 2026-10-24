@@ -1,16 +1,14 @@
-use crate::game::enemy_combat::{
-    apply_contact, apply_shot, contact_without_death, enemy_death, power_bomb_without_death,
-    reduce_suit_damage, select_frozen_ai, shot_reaction,
-};
-use crate::game::enemy_population_ram::spawn_enemy;
+use crate::game::actors;
+use crate::game::actors::access::ActorKey as Key;
+use crate::game::actors::api as actor_api;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
-use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
 use crate::game::minimap;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
+use crate::game::session_runtime::Runtime;
 
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a6::*;
@@ -31,10 +29,7 @@ use crate::game::sm_81::DrawSpritemap;
 use crate::game::sm_90::{CallSomeSamusCode, Samus_SetPushedOutOfCeresRidley};
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
-use crate::game::sm_a0::{
-    CalculateAngleFromXY, CheckIfEnemyIsOnScreen, CosineMult8bit, Enemy_MoveDown,
-    Enemy_MoveRight_IgnoreSlopes, GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, SineMult8bit,
-};
+use crate::game::sm_a0::{CosineMult8bit, SineMult8bit};
 use crate::game::sm_a9::{
     ComputeCosMult, ComputeSinMult, MoveEnemyWithVelocity, Shitroid_Func_2, WriteColorsToPalette,
     WriteColorsToTargetPalette,
@@ -168,13 +163,13 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (game: &mut Game)];
     [10913690] Boulder_Func_1 [] {
         let mut SamusEnemyDelta_Y: i16 =
-            GetSamusEnemyDelta_Y(word!(game.cur_enemy_index), game) as i16;
+            ({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y) }) as i16;
         if SamusEnemyDelta_Y >= 0 {
             let E = Get_Boulder(word!(game.cur_enemy_index) as i32, game);
             if (SamusEnemyDelta_Y).wrapping_sub(((*E).var_06) as i16) < 0 {
                 if (*E).var_E != 0 {
                     let mut SamusEnemyDelta_X: i16 =
-                        GetSamusEnemyDelta_X(word!(game.cur_enemy_index), game) as i16;
+                        ({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) as i16;
                     if SamusEnemyDelta_X < 0
                         && (SamusEnemyDelta_X).wrapping_sub(((*E).var_00) as i16) >= 0
                     {
@@ -185,7 +180,7 @@ crate::game::callback_dispatch! {
                     }
                 } else {
                     let mut v3: i16 =
-                        GetSamusEnemyDelta_X(word!(game.cur_enemy_index), game) as i16;
+                        ({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) as i16;
                     if v3 >= 0 && (v3).wrapping_sub(((*E).var_00) as i16) < 0 {
                         (*E).var_A = ((0xa687edi32) as u16);
                         if (*E).var_07 != 0 {
@@ -266,11 +261,7 @@ crate::game::callback_dispatch! {
     };
     [10913931] Boulder_Func_4 [] {
         let v1: i32 = 8 * byte!((*E).var_C; 1) as i32 >> 1;
-        if Enemy_MoveDown(
-            word!(game.cur_enemy_index),
-            *(rom_ptr!(game, u32; 0xa0cbc7)).offset((v1 >> 1) as isize) as i32,
-            game,
-        ) != 0
+        if ({ let (actor, amount) = (word!(game.cur_enemy_index), *(rom_ptr!(game, u32; 0xa0cbc7)).offset((v1 >> 1) as isize) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
         {
             QueueSfx2_Max6(0x42, game);
             if (*E).var_E == 2 {
@@ -308,22 +299,14 @@ crate::game::callback_dispatch! {
     [10914114] Boulder_Func_5 [] {
         let mut v2: u16 = (8u16).wrapping_mul((byte!((*E).var_B; 1)) as u16);
         let v3: i32 = v2 as i32 >> 1;
-        Enemy_MoveDown(
-            word!(game.cur_enemy_index),
-            (*(rom_ptr!(game, u32; 0xa0cbc7)).offset((v3 >> 1i32) as isize))
-                .wrapping_add((((*E).var_01 as i32) << 16) as u32) as i32,
-            game,
-        );
+        ({ let (actor, amount) = (word!(game.cur_enemy_index), (*(rom_ptr!(game, u32; 0xa0cbc7)).offset((v3 >> 1i32) as isize))
+                .wrapping_add((((*E).var_01 as i32) << 16) as u32) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_sub((*E).var_01);
         if (*E).var_E != 0 {
             v2 = (v2).wrapping_add(4);
         }
         let v4: i32 = v2 as i32 >> 1;
-        if Enemy_MoveRight_IgnoreSlopes(
-            word!(game.cur_enemy_index),
-            *(rom_ptr!(game, u32; 0xa0cbc7)).offset((v4 >> 1) as isize) as i32,
-            game,
-        ) != 0
+        if ({ let (actor, amount) = (word!(game.cur_enemy_index), *(rom_ptr!(game, u32; 0xa0cbc7)).offset((v4 >> 1) as isize) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
         {
             (*E).base.properties = ((*E).base.properties) | (0x300u16);
             (*E).var_A = ((0xa689fci32) as u16);
@@ -564,7 +547,7 @@ pub unsafe fn FakeKraid_Func_1(k: u16, j: u16, game: &mut Game) {
                 v6 = addr_kEproj_MiniKraidSpikesRight as u16;
             }
             SpawnEprojWithGfx(fkd_var_C as u16, k, v6, game);
-            if CheckIfEnemyIsOnScreen(game) == 0 {
+            if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) == 0 {
                 QueueSfx2_Max6(0x3f, game);
             }
         };
@@ -600,7 +583,13 @@ pub unsafe fn FakeKraid_9C50(game: &mut Game) {
         {
             // The death animation remains in the ROM spawn parameter for all four drops.
             let death_animation = 3;
-            enemy_death(word!(game.cur_enemy_index), death_animation, game);
+            ({
+                let (_ignored_key, animation) = (word!(game.cur_enemy_index), death_animation);
+                actors::combat::die(
+                    &mut Runtime::new(game),
+                    actors::api::DeathKind::Normal { animation },
+                )
+            });
             scatter(
                 DropSource::MiniKraid,
                 word!(game.cur_enemy_index),
@@ -673,8 +662,14 @@ pub unsafe fn CeresRidley_Func_12(game: &mut Game) -> u8 {
 }
 pub unsafe fn CeresRidley_Func_25(game: &mut Game) {
     unsafe {
-        spawn_enemy(0xa6, addr_stru_A6AA2F as u16, game);
-        spawn_enemy(0xa6, addr_stru_A6AA3F as u16, game);
+        ({
+            let (bank, population) = (0xa6, addr_stru_A6AA2F as u16);
+            actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
+        });
+        ({
+            let (bank, population) = (0xa6, addr_stru_A6AA3F as u16);
+            actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
+        });
     }
 }
 pub unsafe fn CeresRidley_Func_27(game: &mut Game) {
@@ -2728,18 +2723,54 @@ pub unsafe fn RidleysExplosion_Func_1(k: u16, game: &mut Game) {
 }
 pub unsafe fn RidleysExplosion_Func_2(game: &mut Game) {
     unsafe {
-        spawn_enemy(0xa6, addr_stru_A6C9E7 as u16, game);
-        spawn_enemy(0xa6, addr_stru_A6C9D7 as u16, game);
-        spawn_enemy(0xa6, addr_stru_A6C9C7 as u16, game);
-        spawn_enemy(0xa6, addr_stru_A6C9B7 as u16, game);
-        spawn_enemy(0xa6, addr_stru_A6C9A7 as u16, game);
-        spawn_enemy(0xa6, addr_stru_A6C997 as u16, game);
-        spawn_enemy(0xa6, addr_stru_A6C987 as u16, game);
-        spawn_enemy(0xa6, addr_stru_A6C9F7 as u16, game);
-        spawn_enemy(0xa6, addr_stru_A6CA07 as u16, game);
-        spawn_enemy(0xa6, addr_stru_A6CA27 as u16, game);
-        spawn_enemy(0xa6, addr_stru_A6CA17 as u16, game);
-        spawn_enemy(0xa6, addr_stru_A6CA37 as u16, game);
+        ({
+            let (bank, population) = (0xa6, addr_stru_A6C9E7 as u16);
+            actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
+        });
+        ({
+            let (bank, population) = (0xa6, addr_stru_A6C9D7 as u16);
+            actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
+        });
+        ({
+            let (bank, population) = (0xa6, addr_stru_A6C9C7 as u16);
+            actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
+        });
+        ({
+            let (bank, population) = (0xa6, addr_stru_A6C9B7 as u16);
+            actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
+        });
+        ({
+            let (bank, population) = (0xa6, addr_stru_A6C9A7 as u16);
+            actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
+        });
+        ({
+            let (bank, population) = (0xa6, addr_stru_A6C997 as u16);
+            actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
+        });
+        ({
+            let (bank, population) = (0xa6, addr_stru_A6C987 as u16);
+            actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
+        });
+        ({
+            let (bank, population) = (0xa6, addr_stru_A6C9F7 as u16);
+            actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
+        });
+        ({
+            let (bank, population) = (0xa6, addr_stru_A6CA07 as u16);
+            actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
+        });
+        ({
+            let (bank, population) = (0xa6, addr_stru_A6CA27 as u16);
+            actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
+        });
+        ({
+            let (bank, population) = (0xa6, addr_stru_A6CA17 as u16);
+            actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
+        });
+        ({
+            let (bank, population) = (0xa6, addr_stru_A6CA37 as u16);
+            actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
+        });
     }
 }
 pub fn locret_A6CB20(game: &mut Game) {}
@@ -3144,7 +3175,7 @@ pub unsafe fn Ridley_Func_89(a: u16, game: &mut Game) {
                 r20 = (word!(game.samus_y_pos) as i32 + 24 - word!(game.tilemap_stuff[23]) as i32)
                     as u16;
             }
-            r18 = -(CalculateAngleFromXY(r18, r20, game) as i32 + 0x80i32) as u8 as u16;
+            r18 = -(actor_api::angle_from_delta(r18, r20) as i32 + 0x80i32) as u8 as u16;
             if (*E).var_10 != 0 {
                 let mut v7: u16 = r18;
                 if r18 >= 0x18 && r18 < 0xe8 {
@@ -3270,7 +3301,13 @@ pub unsafe fn Ridley_Func_98(game: &mut Game) {
             .base
             .enemy_ptr;
         let v1 = RomPtr_A0(enemy_ptr, game);
-        Samus_DealDamage(reduce_suit_damage(*(v1.offset(6) as *mut u16), game), game);
+        Samus_DealDamage(
+            ({
+                let amount = *(v1.offset(6) as *mut u16);
+                actors::combat::suit_damage(&mut Runtime::new(game), amount)
+            }),
+            game,
+        );
     }
 }
 pub unsafe fn Ridley_Func_99(a: u16, game: &mut Game) {
@@ -3799,7 +3836,7 @@ pub unsafe fn Ridley_Func_124(rect: Rect16U, game: &mut Game) -> u8 {
     }
 }
 crate::forward_calls! { pub unsafe fn (game: &mut Game);
-    sub_A6DF59 => contact_without_death(game);
+    sub_A6DF59 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
     sub_A6DF60 => Ridley_Func_125(game);
 }
 pub unsafe fn Ridley_Func_125(game: &mut Game) {
@@ -3826,7 +3863,13 @@ pub unsafe fn Ridley_Func_127(game: &mut Game) {
         };
         if Ridley_Func_124(rect, game) != 0 {
             let E = Get_Ridley(0, game);
-            Samus_DealDamage(reduce_suit_damage((*E).var_1C, game), game);
+            Samus_DealDamage(
+                ({
+                    let amount = (*E).var_1C;
+                    actors::combat::suit_damage(&mut Runtime::new(game), amount)
+                }),
+                game,
+            );
             word!(game.samus_invincibility_timer = 96);
             word!(game.samus_knockback_timer = 5);
             word!(
@@ -4087,9 +4130,21 @@ pub unsafe fn Zebetites_Func_3(game: &mut Game) {
             Zebetites_Func_6(game);
             (*E).var_D as i32 - 4i32 & 0x8000 == 0
         } {
-            enemy_death(word!(game.cur_enemy_index), 0, game);
+            ({
+                let (_ignored_key, animation) = (word!(game.cur_enemy_index), 0);
+                actors::combat::die(
+                    &mut Runtime::new(game),
+                    actors::api::DeathKind::Normal { animation },
+                )
+            });
         } else {
-            enemy_death(word!(game.cur_enemy_index), 0, game);
+            ({
+                let (_ignored_key, animation) = (word!(game.cur_enemy_index), 0);
+                actors::combat::die(
+                    &mut Runtime::new(game),
+                    actors::api::DeathKind::Normal { animation },
+                )
+            });
             Zebetites_Func_8(game);
         };
     }
@@ -4114,11 +4169,19 @@ pub unsafe fn Zebetites_Func_7(j: u16, a: u8, game: &mut Game) {
 }
 pub unsafe fn Zebetites_Func_8(game: &mut Game) {
     unsafe {
-        spawn_enemy(0xa6, addr_stru_A6FCE1 as u16, game);
+        ({
+            let (bank, population) = (0xa6, addr_stru_A6FCE1 as u16);
+            actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
+        });
     }
 }
 pub unsafe fn Zebetites_Func_9(game: &mut Game) -> u16 {
-    unsafe { spawn_enemy(0xa6, addr_stru_A6FCF9 as u16, game) }
+    unsafe {
+        ({
+            let (bank, population) = (0xa6, addr_stru_A6FCF9 as u16);
+            actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
+        })
+    }
 }
 pub unsafe fn Zebetites_Func_5(game: &mut Game) {
     unsafe {
@@ -4282,14 +4345,14 @@ crate::game::callback_dispatch! {
         let E = Get_FakeKraid(word!(game.cur_enemy_index) as i32, game);
         word!(game.special_death_item_drop_x_origin_pos = (*E).base.x_pos);
         word!(game.special_death_item_drop_y_origin_pos = (*E).base.y_pos);
-        contact_without_death(game);
+        actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
         FakeKraid_9C50(game);
     };
     [10918969] FakeKraid_Shot [] {
         let E = Get_FakeKraid(word!(game.cur_enemy_index) as i32, game);
         word!(game.special_death_item_drop_x_origin_pos = (*E).base.x_pos);
         word!(game.special_death_item_drop_y_origin_pos = (*E).base.y_pos);
-        shot_reaction(game);
+        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::ReactionOnly);
         FakeKraid_9C50(game);
     };
     [10920659] CeresRidley_Hurt [] {
@@ -4408,12 +4471,12 @@ crate::game::callback_dispatch! {
         MoveEnemyWithVelocity(game);
         (*E).var_F = (*E).var_F.wrapping_sub(1);
         if ((*E).var_F & 0x8000) != 0 {
-            enemy_death(word!(game.cur_enemy_index), 0, game);
+            ({ let (_ignored_key, animation) = (word!(game.cur_enemy_index), 0); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
         }
     };
     [10936202] Ridley_Shot [] {
         if word!(game.area_index) == 2 {
-            shot_reaction(game);
+            actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::ReactionOnly);
         } else {
             let mut v0: i16 = 13;
             let E = Get_Ridley(0, game);
@@ -4426,7 +4489,7 @@ crate::game::callback_dispatch! {
         };
     };
     [10936242] Ridley_Powerbomb [] {
-        power_bomb_without_death(game);
+        actors::combat::power_bomb_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
     };
     [10940337] CeresSteam_Init [] {
         let E = Get_CeresSteam(word!(game.cur_enemy_index) as i32, game);
@@ -4452,7 +4515,7 @@ crate::game::callback_dispatch! {
         (*Get_CeresSteam(word!(game.cur_enemy_index) as i32, game))
             .base
             .health = 0x7fff;
-        apply_contact(game);
+        actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
     };
     [10942149] CeresDoor_Init [] {
         let E = Get_CeresDoor(word!(game.cur_enemy_index) as i32, game);
@@ -4536,21 +4599,21 @@ crate::game::callback_dispatch! {
         );
     };
     [10943911] Zebetites_Touch [] {
-        contact_without_death(game);
+        actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
     };
     [10943916] Zebetites_Shot [] {
         QueueSfx3_Max6(9, game);
-        shot_reaction(game);
+        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::ReactionOnly);
         let E = Get_Zebetites(word!(game.cur_enemy_index) as i32, game);
         let G = Get_Zebetites((*E).parameter_2 as i32, game);
         (*G).base.health = (*E).base.health;
         (*G).base.flash_timer = (*E).base.flash_timer;
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [10911759] Enemy_GrappleReact_CancelBeam_A6 => select_frozen_ai(game);
-    [10911779] Enemy_NormalTouchAI_A6 => apply_contact(game);
-    [10911789] Enemy_NormalShotAI_A6 => apply_shot(game);
-    [10911809] Enemy_NormalFrozenAI_A6 => update_frozen_enemy(game);
+    [10911759] Enemy_GrappleReact_CancelBeam_A6 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
+    [10911779] Enemy_NormalTouchAI_A6 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
+    [10911789] Enemy_NormalShotAI_A6 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
+    [10911809] Enemy_NormalFrozenAI_A6 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
 }
 
 crate::game::callback_dispatch! {
@@ -4623,11 +4686,7 @@ crate::game::callback_dispatch! {
             (*E).var_D = ((word!(game.random_number) as i32 & 3) + 7) as u16;
             true
         } else {
-            !(Enemy_MoveRight_IgnoreSlopes(
-                word!(game.cur_enemy_index),
-                ((*E).var_B as i16 as i32) << 16,
-                game,
-            ) == 0)
+            !(({ let (actor, amount) = (word!(game.cur_enemy_index), ((*E).var_B as i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) == 0)
         };
         if reverse_direction {
             (*E).var_B = -((*E).var_B as i32) as u16;
@@ -4661,7 +4720,7 @@ crate::game::callback_dispatch! {
         }
     };
     [10918834] FakeKraid_Instr_3 [jp] {
-        if CheckIfEnemyIsOnScreen(game) == 0 {
+        if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) == 0 {
             QueueSfx2_Max6(0x16, game);
         }
     };
@@ -4719,11 +4778,7 @@ crate::game::callback_dispatch! {
     [10938445] Ridley_Instr_11 [jp] {
         let E = Get_Ridley(0, game);
         let mut r18: u16 = if (*E).var_10 != 0 {
-            let mut v4: u16 = -(CalculateAngleFromXY(
-                (word!(game.samus_x_pos) as i32 - ((*E).base.x_pos as i32 + 25)) as u16,
-                (word!(game.samus_y_pos) as i32 - ((*E).base.y_pos as i32 - 43i32)) as u16,
-                game,
-            ) as i32
+            let mut v4: u16 = -(actor_api::angle_from_delta((word!(game.samus_x_pos) as i32 - ((*E).base.x_pos as i32 + 25)) as u16, (word!(game.samus_y_pos) as i32 - ((*E).base.y_pos as i32 - 43i32)) as u16) as i32
                 + 0x80) as u8 as u16;
             if v4 < 0x15 || v4 >= 0xc0 {
                 v4 = 0x15;
@@ -4732,11 +4787,7 @@ crate::game::callback_dispatch! {
             }
             v4
         } else {
-            let mut v3: u16 = -(CalculateAngleFromXY(
-                (word!(game.samus_x_pos) as i32 - ((*E).base.x_pos as i32 - 25i32)) as u16,
-                (word!(game.samus_y_pos) as i32 - ((*E).base.y_pos as i32 - 43i32)) as u16,
-                game,
-            ) as i32
+            let mut v3: u16 = -(actor_api::angle_from_delta((word!(game.samus_x_pos) as i32 - ((*E).base.x_pos as i32 - 25i32)) as u16, (word!(game.samus_y_pos) as i32 - ((*E).base.y_pos as i32 - 43i32)) as u16) as i32
                 + 0x80) as u8 as u16;
             if v3 < 0x40 || v3 >= 0xeb {
                 v3 = 0xeb;

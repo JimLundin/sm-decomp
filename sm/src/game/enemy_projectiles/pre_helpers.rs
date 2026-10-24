@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 use super::access::{enemy, enemy_byte, read_member, write_member};
 use super::host::{EnemyMember as SlotField, Host, NativeRecord};
+use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 
 use super::*;
 
@@ -42,15 +43,21 @@ pub(super) fn move_phantoon_orbit(
 ) {
     enemy!(ctx, index, behavior_a = angle);
     let point = Eproj_PhantomFireballs_Func1(angle, enemy!(ctx, index, velocity_y));
-    let negative_x = ((point.x as i32 + ctx.enemy_x(0) as i32) as i16) < 0;
-    let x = (point.x as i32 + ctx.enemy_x(0) as i32) as i16;
-    let value = (point.x as i32 + ctx.enemy_x(0) as i32) as u16;
+    let negative_x =
+        ((point.x as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).x.whole as i32) as i16) < 0;
+    let x = (point.x as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).x.whole as i32) as i16;
+    let value = (point.x as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).x.whole as i32) as u16;
     enemy!(ctx, index, x = value);
     if negative_x
         || x as i32 - 256i32 & 0x8000 == 0
         || {
-            let negative_y = ((point.y as i32 + ctx.enemy_y(0) as i32 + 16) as i16) < 0;
-            *y_position = (point.y as i32 + ctx.enemy_y(0) as i32 + 16) as u16;
+            let negative_y = ((point.y as i32
+                + ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32
+                + 16) as i16)
+                < 0;
+            *y_position = (point.y as i32
+                + ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32
+                + 16) as u16;
             enemy!(ctx, index, y = *y_position);
             negative_y
         }

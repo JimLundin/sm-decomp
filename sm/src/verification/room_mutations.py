@@ -11,6 +11,7 @@ import sys
 import tempfile
 
 import room_entry_mutations
+import actor_dll_mutations
 
 
 INVENTORY = "sm/src/game/item_pickups.rs"
@@ -88,7 +89,7 @@ MUTATIONS = (
     ),
     (
         "retain_native_owner_on_callback_panic", 1441,
-        "native foreign panic retained callback: native word 0",
+        "native foreign panic relinquished owner",
         ((SESSION_RUNTIME,
           """        let state = self
             .state
@@ -102,14 +103,11 @@ MUTATIONS = (
     (
         "omit_native_core_panic_publication", 1442, "native core panic publication: native word 0",
         ((SESSION_RUNTIME,
-          """impl Drop for Runtime<'_> {
-    fn drop(&mut self) {
-        if let Some(state) = self.state.take() {
-            export_session(&state, self.game);""",
-          """impl Drop for Runtime<'_> {
-    fn drop(&mut self) {
-        if let Some(state) = self.state.take() {
-            encoding::encode(&state, &mut self.game.g_ram);"""),),
+          """            if matching && self.game.actor_identity_is_with_session() {
+                export_session(state, self.game);""",
+          """            if matching && self.game.actor_identity_is_with_session() {
+                encoding::encode(&state, &mut self.game.g_ram);
+                self.game.return_actor_identity(state.actor_identity);"""),),
     ),
     (
         "skip_health_equality_reserve", 1383, "health restore boundary 1",
@@ -309,6 +307,16 @@ def main():
         raise RuntimeError("mutation builds and execution are restricted to GitHub CI")
     if os.name != "nt":
         raise RuntimeError("room scheduler mutation DLL requires Windows")
+    if len(sys.argv) in (4, 5) and sys.argv[1] == "--actor-capture":
+        actor_dll_mutations.capture_child(Path(sys.argv[2]).resolve(), sys.argv[3],
+                                         sys.argv[4] if len(sys.argv) == 5 else None)
+        return
+    actor_rom = None
+    if len(sys.argv) == 3 and sys.argv[1] == "--actor-rom":
+        actor_rom = Path(sys.argv[2]).resolve()
+        if not actor_rom.is_file():
+            raise RuntimeError("--actor-rom must name an existing original ROM")
+        sys.argv = sys.argv[:1]
     if len(sys.argv) == 4 and sys.argv[1] == "--entry-capture":
         room_entry_mutations.capture_child(Path(sys.argv[2]).resolve(), sys.argv[3])
         return
@@ -334,9 +342,16 @@ def main():
     with tempfile.TemporaryDirectory(prefix="room-scheduler-mutations-") as directory:
         work = Path(directory)
         build_and_capture(root, work, paths, "baseline")
-        for mutation in MUTATIONS:
+        # Check the changed ownership witness first; retain every mutation.
+        for mutation in sorted(
+            MUTATIONS, key=lambda item: item[0] != "retain_native_owner_on_callback_panic"
+        ):
             build_and_capture(root, work, paths, mutation[0], mutation)
         room_entry_mutations.run_checks(root, work, paths, run, copy_tracked)
+        actor_dll_mutations.run_checks(root, work, paths, run, copy_tracked)
+        if actor_rom is not None:
+            actor_dll_mutations.run_checks(root, work, paths, run, copy_tracked,
+                                          rom=actor_rom, kraid_only=True)
     print("room/native/restore mutation checks: 9/9 killed; all nine frozen baselines passed", flush=True)
 
 

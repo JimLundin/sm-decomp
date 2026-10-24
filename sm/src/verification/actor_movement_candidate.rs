@@ -1,0 +1,159 @@
+//! Candidate dispatcher and observation adapters; no predecessor gameplay rules.
+#![forbid(unsafe_code)]
+use super::{
+    access::{AccessMode, ActorAccess, ActorKey},
+    api::{MovementResult, SlopePolicy, SolidContact, VerticalProbeEdge},
+    contacts,
+    effects::ActorHost,
+    movement, queries,
+};
+use crate::game::{
+    room_mechanisms::{
+        creation,
+        host::{Contact, Host as MechanismHost, SpawnSource},
+    },
+    session::{Point, Vector32},
+    session_runtime::Runtime,
+};
+use crate::{actor_movement_cases::Operation, game_state::Game};
+use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
+
+fn result(value: MovementResult) -> u64 {
+    match value {
+        MovementResult::Clear => 0,
+        MovementResult::Blocked => 1,
+    }
+}
+fn flag(value: bool) -> u64 {
+    if value { 0xffff } else { 0 }
+}
+pub(crate) fn run(op: Operation, game: &mut Game) -> Option<u64> {
+    let mut h = Runtime::new(game);
+    match op {
+        Operation::Vector { phase, value } => {
+            movement::apply_vector(
+                &mut h,
+                phase,
+                Vector32 {
+                    x: value.x,
+                    y: value.y,
+                },
+            );
+            None
+        }
+        Operation::ProbeX { k, amount } => Some(result(movement::probe_horizontal(
+            &mut h,
+            ActorKey::from_legacy(k),
+            amount,
+        ))),
+        Operation::ProbeY { k, amount } => Some(result(movement::probe_vertical(
+            &mut h,
+            ActorKey::from_legacy(k),
+            amount,
+        ))),
+        Operation::ProbeOffset { k, edge, amount } => {
+            Some(result(movement::probe_vertical_offset(
+                &mut h,
+                ActorKey::from_legacy(k),
+                if edge & 1 != 0 {
+                    VerticalProbeEdge::Positive
+                } else {
+                    VerticalProbeEdge::Negative
+                },
+                amount,
+            )))
+        }
+        Operation::Right { k, amount, policy } => Some(result(movement::move_horizontal(
+            &mut h,
+            ActorKey::from_legacy(k),
+            amount,
+            match policy {
+                0 => SlopePolicy::Ignore,
+                1 => SlopePolicy::Solid,
+                2 => SlopePolicy::Follow,
+                _ => unreachable!(),
+            },
+        ))),
+        Operation::Down { k, amount } => Some(result(movement::move_vertical(
+            &mut h,
+            ActorKey::from_legacy(k),
+            amount,
+        ))),
+        Operation::Solid(amount) => {
+            Some(match queries::probe_player_solid_contact(&mut h, amount) {
+                SolidContact::Clear { amount } => u64::from(amount as u32) << 16,
+                SolidContact::Blocked { amount } => 0xffff | (u64::from(amount as u32) << 16),
+            })
+        }
+        Operation::Touch(k) => Some(flag(queries::touches_player_from_above(
+            &h,
+            ActorKey::from_legacy(k),
+        ))),
+        Operation::Padding(k) => Some(flag(queries::overlaps_player_with_padding(
+            &h,
+            ActorKey::from_legacy(k),
+        ))),
+        Operation::Distance(a, b) => {
+            let r = queries::distance_and_direction(
+                &mut h,
+                Point { x: a.x, y: a.y },
+                Point { x: b.x, y: b.y },
+            );
+            Some(u64::from(r.distance) | (u64::from(r.direction) << 16))
+        }
+        Operation::Body => {
+            contacts::movement_verification_body(&mut h);
+            None
+        }
+        Operation::Contacts => {
+            contacts::process_contacts(&mut h);
+            None
+        }
+    }
+}
+pub(super) fn vector_store(h: &impl ActorAccess, key: ActorKey, y: bool) {
+    if crate::actor_movement_observer::active_case().is_none() {
+        return;
+    }
+    let actor = h.resolve_actor(key, AccessMode::LittleEndian);
+    let coordinate = if y { actor.y } else { actor.x };
+    let [a, b] = coordinate.whole.to_le_bytes();
+    let [c, d] = coordinate.fraction.to_le_bytes();
+    crate::actor_movement_observer::vector_store(&[a, b, c, d]);
+}
+pub(super) fn body_stage(h: &mut impl ActorAccess) {
+    if crate::actor_movement_observer::active_case().is_none() {
+        return;
+    }
+    let stage = h.session().room.enemy_processing_stage;
+    let map = h
+        .resolve_actor(ActorKey::from_legacy(0xe3ea), AccessMode::LittleEndian)
+        .spritemap;
+    if crate::actor_movement_observer::check_body_stage(stage, map) {
+        h.actor_movement_observe(6);
+    }
+}
+pub(super) fn spike<H: ActorHost + MechanismHost>(h: &mut H, header: u16) -> u8 {
+    let armed = crate::actor_movement_observer::start_spike(
+        header,
+        h.session().room.collision_cursor,
+        h.session().actors.controls.selected,
+    )
+    .is_some();
+    if !armed {
+        return creation::spawn(h, SpawnSource::Collision { header }, &mut Contact::Absent);
+    }
+    h.actor_movement_observe(2);
+    let returned = catch_unwind(AssertUnwindSafe(|| {
+        creation::spawn(h, SpawnSource::Collision { header }, &mut Contact::Absent)
+    }));
+    h.actor_movement_observe(if returned.is_ok() { 3 } else { 5 });
+    match returned {
+        Err(payload) => resume_unwind(payload),
+        Ok(value) => {
+            assert_eq!(value, 0, "actual B3D0 no-op PLM return");
+            h.actor_movement_observe(4);
+            value
+        }
+    }
+}

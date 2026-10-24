@@ -11,6 +11,7 @@ use super::setup_helpers::*;
 use super::shared::*;
 use super::shared_pre::*;
 use super::tables::*;
+use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 use crate::game::constants::bank_86::*;
 use crate::game::constants::bank_a0::*;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
@@ -148,13 +149,13 @@ pub(super) fn dispatch(ea: u32, j: u16, ctx: &mut impl Host) {
 pub(super) fn Eproj_Init_0x8aaf(j: u16, ctx: &mut impl Host) {
     ctx.next_random();
     let v1 = (ctx.inputs().current_enemy as i32 as u16);
-    let v2: u16 = (ctx.enemy_y(v1 as u16) as i32 + 12) as u16;
+    let v2: u16 = (ctx.resolve_actor(Key::from_legacy(v1 as u16), Le).y.whole as i32 + 12) as u16;
     let v3: i32 = j as i32 >> 1;
 
     enemy!(ctx, v2 => (v3) as isize, y);
     enemy!(ctx, (v2 as i32 + 72) as u16 => (v3) as isize, counter);
-    enemy!(ctx, ctx.enemy_ai_d(v1 as u16) => (v3) as isize, velocity_y);
-    enemy!(ctx, (ctx.enemy_x(v1 as u16) as i32 + (ctx.inputs().random as i32 & 0x1f) - 16i32) as u16 => (v3) as isize, x);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(v1 as u16), Le).variables[3] => (v3) as isize, velocity_y);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v1 as u16), Le).x.whole as i32 + (ctx.inputs().random as i32 & 0x1f) - 16i32) as u16 => (v3) as isize, x);
     {
         let value = {
             let record = ctx.loaded_record(0x86, 0x8a75);
@@ -188,9 +189,9 @@ pub(super) fn EprojInit_9642_RidleysFireball(j: u16, ctx: &mut impl Host) {
     } else {
         -25i32
     }) as i16;
-    let x = (ctx.enemy_x(0)).wrapping_add((v2) as u16);
+    let x = (ctx.resolve_actor(Key::from_legacy(0), Le).x.whole).wrapping_add((v2) as u16);
     enemy!(ctx, (slot) as isize, x = x);
-    let y = (ctx.enemy_y(0)).wrapping_sub(43);
+    let y = (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole).wrapping_sub(43);
     enemy!(ctx, (slot) as isize, y = y);
     enemy!(ctx, (slot) as isize, graphics = 2560);
     let x_velocity = ctx.ridley_fireball_x_velocity();
@@ -211,8 +212,8 @@ pub(super) fn EprojInit_PhantoonDestroyableFireballs(j: u16, ctx: &mut impl Host
             enemy!(ctx, 0 => (v2) as isize, velocity_x);
             enemy!(ctx, 0 => (v2) as isize, velocity_y);
 
-            enemy!(ctx, ctx.enemy_x(0) => (v2) as isize, x);
-            enemy!(ctx, (ctx.enemy_y(0) as i32 + 32) as u16 => (v2) as isize, y);
+            enemy!(ctx, ctx.resolve_actor(Key::from_legacy(0), Le).x.whole => (v2) as isize, x);
+            enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 32) as u16 => (v2) as isize, y);
             enemy!(ctx, addr_off_8697B4 as u16 => (v2) as isize, program);
             enemy!(ctx, (enemy!(ctx, (v2) as isize, properties) & 0xfff | 0x2000) => (v2) as isize, properties);
         }
@@ -231,8 +232,8 @@ pub(super) fn EprojInit_PhantoonDestroyableFireballs(j: u16, ctx: &mut impl Host
             }
             {
                 enemy!(ctx, byte_8698B4[v4 as usize] as u16 => (v3) as isize, behavior_a);
-                enemy!(ctx, ctx.enemy_x(0) => (v3) as isize, x);
-                enemy!(ctx, (ctx.enemy_y(0) as i32 + 32) as u16 => (v3) as isize, y);
+                enemy!(ctx, ctx.resolve_actor(Key::from_legacy(0), Le).x.whole => (v3) as isize, x);
+                enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 32) as u16 => (v3) as isize, y);
                 enemy!(ctx, (0x869a45 & 0xffff) as u16 => (v3) as isize, pre_action);
             }
         }
@@ -257,8 +258,8 @@ pub(super) fn EprojInit_PhantoonDestroyableFireballs(j: u16, ctx: &mut impl Host
 
             enemy!(ctx, 128 => (v7) as isize, velocity_x);
             enemy!(ctx, byte_869979[ctx.session().enemy_projectiles.spawn.primary as u8 as usize] as u16 => (v7) as isize, behavior_a);
-            enemy!(ctx, ctx.enemy_x(0) => (v7) as isize, x);
-            enemy!(ctx, (ctx.enemy_y(0) as i32 + 16) as u16 => (v7) as isize, y);
+            enemy!(ctx, ctx.resolve_actor(Key::from_legacy(0), Le).x.whole => (v7) as isize, x);
+            enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 16) as u16 => (v7) as isize, y);
             enemy!(ctx, (0x869ada & 0xffff) as u16 => (v7) as isize, pre_action);
         }
         _ => {
@@ -270,8 +271,8 @@ pub(super) fn EprojInit_PhantoonDestroyableFireballs(j: u16, ctx: &mut impl Host
 pub(super) fn EprojInit_RocksKraidSpits(j: u16, ctx: &mut impl Host) {
     let enemy_index = ctx.inputs().current_enemy;
     let v2: i32 = j as i32 >> 1;
-    enemy!(ctx, (ctx.enemy_x(enemy_index)).wrapping_add(16) => (v2) as isize, x);
-    enemy!(ctx, (ctx.enemy_y(enemy_index)).wrapping_sub(96) => (v2) as isize, y);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole).wrapping_add(16) => (v2) as isize, x);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(enemy_index), Le).y.whole).wrapping_sub(96) => (v2) as isize, y);
 
     enemy!(ctx, 0 => (v2) as isize, y_fraction);
     enemy!(ctx, 0 => (v2) as isize, x_fraction);
@@ -290,7 +291,7 @@ pub(super) fn EprojInit_RocksWhenKraidRises(j: u16, ctx: &mut impl Host) {
     {
         let value = ({
             let enemy_index = ctx.inputs().current_enemy;
-            ctx.enemy_x(enemy_index)
+            ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole
         })
         .wrapping_add((v1) as u16);
         enemy!(ctx, value => (v2) as isize, x);
@@ -311,12 +312,12 @@ pub(super) fn EprojInit_WalkingLavaSeahorseFireball(j: u16, ctx: &mut impl Host)
     static word_869EF9: [i16; 3] = [-0x100i16, 0, 0x100];
     let v1 = (ctx.inputs().current_enemy as i32 as u16);
     let v2: i32 = j as i32 >> 1;
-    enemy!(ctx, (ctx.enemy_y(v1 as u16) as i32 - 12i32) as u16 => (v2) as isize, y);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v1 as u16), Le).y.whole as i32 - 12i32) as u16 => (v2) as isize, y);
     enemy!(ctx, -1024i32 as u16 => (v2) as isize, velocity_x);
-    enemy!(ctx, (ctx.enemy_x(v1 as u16) as i32 - 16i32) as u16 => (v2) as isize, x);
-    if (ctx.enemy_ai_d(v1 as u16) & 0x8000) == 0 {
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v1 as u16), Le).x.whole as i32 - 16i32) as u16 => (v2) as isize, x);
+    if (ctx.resolve_actor(Key::from_legacy(v1 as u16), Le).variables[3] & 0x8000) == 0 {
         enemy!(ctx, 1024 => (v2) as isize, velocity_x);
-        enemy!(ctx, (ctx.enemy_x(v1 as u16) as i32 + 16) as u16 => (v2) as isize, x);
+        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v1 as u16), Le).x.whole as i32 + 16) as u16 => (v2) as isize, x);
     }
     enemy!(ctx, word_869EF9[(ctx.session().enemy_projectiles.spawn.primary >> 1) as usize] as u16 => (v2) as isize, velocity_y);
 
@@ -356,8 +357,10 @@ pub(super) fn EprojInit_BombTorizoLowHealthDrool(j: u16, ctx: &mut impl Host) {
     };
     ctx.next_random();
     let v2 = (ctx.inputs().current_enemy as i32 as u16);
-    enemy!(ctx, (ctx.enemy_y(v2 as u16)).wrapping_sub(5) => (v1) as isize, y);
-    let mut parameter_1: i16 = ctx.enemy_parameter_1(v2 as u16) as i16;
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v2 as u16), Le).y.whole).wrapping_sub(5) => (v1) as isize, y);
+    let mut parameter_1: i16 = ctx
+        .resolve_actor(Key::from_legacy(v2 as u16), Le)
+        .parameters[0] as i16;
     let mut v4: u16 = if (parameter_1 as u16 & 0x4000) != 0 {
         (ctx.inputs().random & 0x1fe)
     } else {
@@ -372,20 +375,25 @@ pub(super) fn EprojInit_BombTorizoLowHealthDrool(j: u16, ctx: &mut impl Host) {
     enemy!(ctx, kSinCosTable8bit_Sext[(v6 + 64) as usize] as u16 => (v1) as isize, velocity_x);
     enemy!(ctx, kSinCosTable8bit_Sext[v6 as usize] as u16 => (v1) as isize, velocity_y);
     let v7 = (ctx.inputs().current_enemy as i32 as u16);
-    let mut v8: u16 = if (ctx.enemy_parameter_1(v7 as u16) & 0x8000) != 0 {
-        (ctx.enemy_x(v7 as u16)).wrapping_add(8)
+    let mut v8: u16 = if (ctx
+        .resolve_actor(Key::from_legacy(v7 as u16), Le)
+        .parameters[0]
+        & 0x8000)
+        != 0
+    {
+        (ctx.resolve_actor(Key::from_legacy(v7 as u16), Le).x.whole).wrapping_add(8)
     } else {
-        (ctx.enemy_x(v7 as u16) as i32 - 8i32) as u16
+        (ctx.resolve_actor(Key::from_legacy(v7 as u16), Le).x.whole as i32 - 8i32) as u16
     };
     enemy!(ctx, v8 => (v1) as isize, x);
 }
 
 pub(super) fn EprojInit_BombTorizoExplosiveSwipe(j: u16, ctx: &mut impl Host) {
     let enemy = ctx.inputs().current_enemy;
-    let mirrored = ctx.enemy_parameter_1(enemy) & 0x8000 != 0;
+    let mirrored = ctx.resolve_actor(Key::from_legacy(enemy), Le).parameters[0] & 0x8000 != 0;
     let variant = (ctx.session().enemy_projectiles.spawn.primary >> 1) as usize;
     let slot = (j >> 1) as isize;
-    let x = ctx.enemy_x(enemy);
+    let x = ctx.resolve_actor(Key::from_legacy(enemy), Le).x.whole;
     let x_offset = kEprojInit_BombTorizoExplosiveSwipe_Tab0[variant] as u16;
     let x = if mirrored {
         x.wrapping_sub(x_offset)
@@ -393,7 +401,7 @@ pub(super) fn EprojInit_BombTorizoExplosiveSwipe(j: u16, ctx: &mut impl Host) {
         x.wrapping_add(x_offset)
     };
     enemy!(ctx, x => slot, x);
-    let y = ctx.enemy_y(enemy);
+    let y = ctx.resolve_actor(Key::from_legacy(enemy), Le).y.whole;
     let y_offset = kEprojInit_BombTorizoExplosiveSwipe_Tab1[variant] as u16;
     enemy!(ctx, y.wrapping_add(y_offset) => slot, y);
 }
@@ -455,17 +463,18 @@ pub(super) fn EprojInit_AB07(j: u16, ctx: &mut impl Host) {
 
 pub(super) fn EprojInit_GoldenTorizosChozoOrbs(j: u16, ctx: &mut impl Host) {
     let E = (ctx.inputs().current_enemy as i32 as u16);
-    let v2: u16 = (if (ctx.enemy_parameter_1(E as u16) & 0x8000) != 0 {
-        addr_kEprojInit_GoldenTorizosChozoOrbs_init0 as i32
-    } else {
-        addr_kEprojInit_GoldenTorizosChozoOrbs_init1 as i32
-    }) as u16;
+    let v2: u16 =
+        (if (ctx.resolve_actor(Key::from_legacy(E as u16), Le).parameters[0] & 0x8000) != 0 {
+            addr_kEprojInit_GoldenTorizosChozoOrbs_init0 as i32
+        } else {
+            addr_kEprojInit_GoldenTorizosChozoOrbs_init1 as i32
+        }) as u16;
     Eproj_InitXYVelRandom(
         j,
         v2,
         Point {
-            x: ctx.enemy_x(E as u16),
-            y: ctx.enemy_y(E as u16),
+            x: ctx.resolve_actor(Key::from_legacy(E as u16), Le).x.whole,
+            y: ctx.resolve_actor(Key::from_legacy(E as u16), Le).y.whole,
         },
         ctx,
     );
@@ -480,15 +489,20 @@ pub(super) fn EprojInit_TorizoSonicBoom(j: u16, ctx: &mut impl Host) {
     let v2 = (ctx.inputs().current_enemy as i32 as u16);
     let v3: i32 = j as i32 >> 1;
 
-    enemy!(ctx, (ctx.enemy_y(v2 as u16) as i32 + v1) as u16 => (v3) as isize, y);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v2 as u16), Le).y.whole as i32 + v1) as u16 => (v3) as isize, y);
     enemy!(ctx, 0 => (v3) as isize, velocity_y);
 
-    if (ctx.enemy_parameter_1(v2 as u16) & 0x8000) != 0 {
-        enemy!(ctx, (ctx.enemy_x(v2 as u16) as i32 + 32) as u16 => (v3) as isize, x);
+    if (ctx
+        .resolve_actor(Key::from_legacy(v2 as u16), Le)
+        .parameters[0]
+        & 0x8000)
+        != 0
+    {
+        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v2 as u16), Le).x.whole as i32 + 32) as u16 => (v3) as isize, x);
         enemy!(ctx, 624 => (v3) as isize, velocity_x);
         enemy!(ctx, addr_off_86ADD2 as u16 => (v3) as isize, program);
     } else {
-        enemy!(ctx, (ctx.enemy_x(v2 as u16) as i32 - 32i32) as u16 => (v3) as isize, x);
+        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v2 as u16), Le).x.whole as i32 - 32i32) as u16 => (v3) as isize, x);
         enemy!(ctx, -624i32 as u16 => (v3) as isize, velocity_x);
         enemy!(ctx, addr_off_86ADBF as u16 => (v3) as isize, program);
     };
@@ -499,10 +513,11 @@ pub(super) fn EprojInit_WreckedShipChozoSpikeFootsteps(j: u16, ctx: &mut impl Ho
     let v2: i32 = j as i32 >> 1;
     {
         let value = (ctx.session().enemy_projectiles.spawn.primary as i32
-            + ctx.enemy_x(v1 as u16) as i32) as u16;
+            + ctx.resolve_actor(Key::from_legacy(v1 as u16), Le).x.whole as i32)
+            as u16;
         enemy!(ctx, value => (v2) as isize, x);
     };
-    enemy!(ctx, (ctx.enemy_y(v1 as u16) as i32 + 28) as u16 => (v2) as isize, y);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v1 as u16), Le).y.whole as i32 + 28) as u16 => (v2) as isize, y);
 }
 
 pub(super) fn EprojInit_GoldenTorizoEgg(j: u16, ctx: &mut impl Host) {
@@ -510,9 +525,14 @@ pub(super) fn EprojInit_GoldenTorizoEgg(j: u16, ctx: &mut impl Host) {
     let v2: i32 = j as i32 >> 1;
 
     enemy!(ctx, ((0xe2 & 0x1f) + 64) as u16 => (v2) as isize, behavior_b);
-    enemy!(ctx, ctx.enemy_parameter_1(v1 as u16) => (v2) as isize, behavior_a);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(v1 as u16), Le).parameters[0] => (v2) as isize, behavior_a);
 
-    let v4: u16 = (if ctx.enemy_parameter_1(v1 as u16) & 0x8000 != 0 {
+    let v4: u16 = (if ctx
+        .resolve_actor(Key::from_legacy(v1 as u16), Le)
+        .parameters[0]
+        & 0x8000
+        != 0
+    {
         addr_kEprojInit_GoldenTorizoEgg0 as i32
     } else {
         addr_kEprojInit_GoldenTorizoEgg1 as i32
@@ -521,8 +541,8 @@ pub(super) fn EprojInit_GoldenTorizoEgg(j: u16, ctx: &mut impl Host) {
         j,
         v4,
         Point {
-            x: ctx.enemy_x(v1 as u16),
-            y: ctx.enemy_y(v1 as u16),
+            x: ctx.resolve_actor(Key::from_legacy(v1 as u16), Le).x.whole,
+            y: ctx.resolve_actor(Key::from_legacy(v1 as u16), Le).y.whole,
         },
         ctx,
     );
@@ -530,22 +550,23 @@ pub(super) fn EprojInit_GoldenTorizoEgg(j: u16, ctx: &mut impl Host) {
 
 pub(super) fn EprojInit_GoldenTorizoEyeBeam(j: u16, ctx: &mut impl Host) {
     let E = (ctx.inputs().current_enemy as i32 as u16);
-    let v2: u16 = (if (ctx.enemy_parameter_1(E as u16) & 0x8000) != 0 {
-        addr_stru_86B376 as i32
-    } else {
-        addr_stru_86B380 as i32
-    }) as u16;
+    let v2: u16 =
+        (if (ctx.resolve_actor(Key::from_legacy(E as u16), Le).parameters[0] & 0x8000) != 0 {
+            addr_stru_86B376 as i32
+        } else {
+            addr_stru_86B380 as i32
+        }) as u16;
     Eproj_InitXYVelRandom(
         j,
         v2,
         Point {
-            x: ctx.enemy_x(E as u16),
-            y: ctx.enemy_y(E as u16),
+            x: ctx.resolve_actor(Key::from_legacy(E as u16), Le).x.whole,
+            y: ctx.resolve_actor(Key::from_legacy(E as u16), Le).y.whole,
         },
         ctx,
     );
     let mut v3: u16 = ((ctx.next_random() as i32 & 0x1e) - 16i32 + 192) as u16;
-    if (ctx.enemy_parameter_1(E as u16) & 0x8000) == 0 {
+    if (ctx.resolve_actor(Key::from_legacy(E as u16), Le).parameters[0] & 0x8000) == 0 {
         v3 = (v3 as i32 + 128) as u16;
     }
     let v4: i32 = v3 as i32 >> 1;
@@ -557,14 +578,14 @@ pub(super) fn EprojInit_GoldenTorizoEyeBeam(j: u16, ctx: &mut impl Host) {
 pub(super) fn EprojInit_LavaSeahorseFireball(j: u16, ctx: &mut impl Host) {
     let v1 = (ctx.inputs().current_enemy as i32 as u16);
     let v2: i32 = j as i32 >> 1;
-    enemy!(ctx, (ctx.enemy_y(v1 as u16)).wrapping_sub(28) => (v2) as isize, y);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v1 as u16), Le).y.whole).wrapping_sub(28) => (v2) as isize, y);
     enemy!(ctx, -961i32 as u16 => (v2) as isize, velocity_y);
-    if (ctx.enemy_ai_a(v1 as u16) & 0x8000) == 0 {
-        enemy!(ctx, (ctx.enemy_x(v1 as u16) as i32 + 12) as u16 => (v2) as isize, x);
+    if (ctx.resolve_actor(Key::from_legacy(v1 as u16), Le).variables[0] & 0x8000) == 0 {
+        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v1 as u16), Le).x.whole as i32 + 12) as u16 => (v2) as isize, x);
         enemy!(ctx, 704 => (v2) as isize, velocity_x);
         enemy!(ctx, addr_word_86B4CB as u16 => (v2) as isize, program);
     } else {
-        enemy!(ctx, (ctx.enemy_x(v1 as u16)).wrapping_sub(12) => (v2) as isize, x);
+        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v1 as u16), Le).x.whole).wrapping_sub(12) => (v2) as isize, x);
         enemy!(ctx, -704i32 as u16 => (v2) as isize, velocity_x);
         enemy!(ctx, addr_word_86B4BF as u16 => (v2) as isize, program);
     };
@@ -663,8 +684,8 @@ pub(super) fn EprojInit_MotherBrainBomb(j: u16, ctx: &mut impl Host) {
 
     enemy!(ctx, 256 => (v1) as isize, velocity_y);
     enemy!(ctx, 224 => (v1) as isize, velocity_x);
-    enemy!(ctx, (ctx.enemy_x(64) as i32 + 12) as u16 => (v1) as isize, x);
-    enemy!(ctx, (ctx.enemy_y(64) as i32 + 16) as u16 => (v1) as isize, y);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).x.whole as i32 + 12) as u16 => (v1) as isize, x);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);
     enemy!(ctx, 1024 => (v1) as isize, graphics);
     enemy!(ctx, 112 => (v1) as isize, behavior_a);
     enemy!(ctx, 0 => (v1) as isize, behavior_b);
@@ -817,8 +838,8 @@ pub(super) fn EprojInit_BotwoonsSpit(j: u16, ctx: &mut impl Host) {
     let v1 = (ctx.inputs().current_enemy as i32 as u16);
     let v2: i32 = j as i32 >> 1;
 
-    enemy!(ctx, ctx.enemy_x(v1 as u16) => (v2) as isize, x);
-    enemy!(ctx, ctx.enemy_y(v1 as u16) => (v2) as isize, y);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(v1 as u16), Le).x.whole => (v2) as isize, x);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(v1 as u16), Le).y.whole => (v2) as isize, y);
     enemy!(ctx, addr_word_86EBAE as u16 => (v2) as isize, program);
     enemy!(ctx, ctx.session().enemy_projectiles.spawn.angle as u16 => (v2) as isize, angle);
 
@@ -940,8 +961,8 @@ pub(super) fn Eproj_MotherBrainsBlueRingLasers(j: u16, ctx: &mut impl Host) {
 
     enemy!(ctx, Math_MultBySin(0x450, r18) => (v1) as isize, velocity_x);
     enemy!(ctx, Math_MultByCos(0x450, r18) => (v1) as isize, velocity_y);
-    enemy!(ctx, (ctx.enemy_x(64) as i32 + 10) as u16 => (v1) as isize, x);
-    enemy!(ctx, (ctx.enemy_y(64) as i32 + 16) as u16 => (v1) as isize, y);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).x.whole as i32 + 10) as u16 => (v1) as isize, x);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);
 
     sub_86C320(j, ctx);
 }
@@ -959,10 +980,18 @@ pub(super) fn sub_86C605(j: u16, ctx: &mut impl Host) {
     ctx.set_mother_brain_beam_x_fraction(0);
     ctx.set_mother_brain_beam_y_fraction(0);
     enemy!(ctx, 1024 => (v1) as isize, graphics);
-    enemy!(ctx, v1 as isize, x = (ctx.enemy_x(0) as i32 + 64) as u16);
+    enemy!(
+        ctx,
+        v1 as isize,
+        x = (ctx.resolve_actor(Key::from_legacy(0), Le).x.whole as i32 + 64) as u16
+    );
     ctx.set_mother_brain_beam_x(enemy!(ctx, v1 as isize, x));
     let x: u16 = (ctx.session().player.x as i32 - ctx.mother_brain_beam_x() as i32) as u16;
-    enemy!(ctx, v1 as isize, y = (ctx.enemy_y(0) as i32 - 48i32) as u16);
+    enemy!(
+        ctx,
+        v1 as isize,
+        y = (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 - 48i32) as u16
+    );
     ctx.set_mother_brain_beam_y(enemy!(ctx, v1 as isize, y));
     let y: u16 = (ctx.session().player.y as i32 - ctx.mother_brain_beam_y() as i32) as u16;
     let r18: i32 = -(ctx.calculate_angle_from_xy(x, y) as i32 + 0x80i32) as u8 as i32;
@@ -1081,11 +1110,11 @@ pub(super) fn EprojInit_9634(j: u16, ctx: &mut impl Host) {
     enemy!(ctx, 0 => (v1) as isize, behavior_a);
     enemy!(ctx, 0 => (v1) as isize, behavior_b);
 
-    enemy!(ctx, (ctx.enemy_x(0) as i32 - 29i32) as u16 => (v1) as isize, x);
-    enemy!(ctx, (ctx.enemy_y(0) as i32 - 35i32) as u16 => (v1) as isize, y);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).x.whole as i32 - 29i32) as u16 => (v1) as isize, x);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 - 35i32) as u16 => (v1) as isize, y);
     enemy!(ctx, 2560 => (v1) as isize, graphics);
 
-    let v2: i32 = ctx.enemy_parameter_1(0) as i32;
+    let v2: i32 = ctx.resolve_actor(Key::from_legacy(0), Le).parameters[0] as i32;
     enemy!(ctx, kEprojInit_9634_Xvel[v2 as usize] as u16 => (v1) as isize, velocity_x);
     enemy!(ctx, kEprojInit_9634_Yvel[v2 as usize] as u16 => (v1) as isize, velocity_y);
 }
@@ -1102,8 +1131,8 @@ pub(super) fn EprojInit_PhantoonStartingFireballs(j: u16, ctx: &mut impl Host) {
     enemy!(ctx, v2 => (v1) as isize, behavior_a);
     let pt: Point = Eproj_PhantomFireballs_Func1(v2, 0x30);
 
-    enemy!(ctx, (pt.x as i32 + ctx.enemy_x(0) as i32) as u16 => (v1) as isize, x);
-    enemy!(ctx, (pt.y as i32 + ctx.enemy_y(0) as i32 + 16) as u16 => (v1) as isize, y);
+    enemy!(ctx, (pt.x as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).x.whole as i32) as u16 => (v1) as isize, x);
+    enemy!(ctx, (pt.y as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);
 }
 
 pub(super) fn EprojInit_RocksFallingKraidCeiling(j: u16, ctx: &mut impl Host) {
@@ -1152,7 +1181,8 @@ pub(super) fn EprojInit_BombTorizoLowHealthInitialDrool(j: u16, ctx: &mut impl H
     let v2 = (ctx.inputs().current_enemy as i32 as u16);
 
     {
-        let value = ((ctx.enemy_y(v2 as u16) as i32 + (ctx.inputs().random as i32 & 3)) as u16)
+        let value = ((ctx.resolve_actor(Key::from_legacy(v2 as u16), Le).y.whole as i32
+            + (ctx.inputs().random as i32 & 3)) as u16)
             .wrapping_sub(5);
         enemy!(ctx, value => (v1) as isize, y);
     };
@@ -1160,15 +1190,17 @@ pub(super) fn EprojInit_BombTorizoLowHealthInitialDrool(j: u16, ctx: &mut impl H
 
     ctx.next_random();
     let mut v3: i16 = ((ctx.inputs().random) as i16) & (3i16);
-    let mut parameter_1: i16 = ctx.enemy_parameter_1(v2 as u16) as i16;
+    let mut parameter_1: i16 = ctx
+        .resolve_actor(Key::from_legacy(v2 as u16), Le)
+        .parameters[0] as i16;
     if (parameter_1 as u16 & 0x4000) != 0 {
-        enemy!(ctx, (ctx.enemy_x(v2 as u16) as i32 + v3 as i32) as u16 => (v1) as isize, x);
+        enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v2 as u16), Le).x.whole as i32 + v3 as i32) as u16 => (v1) as isize, x);
         enemy!(ctx, 0 => (v1) as isize, velocity_x);
     } else {
         if parameter_1 < 0 {
-            enemy!(ctx, ((ctx.enemy_x(v2 as u16) as i32 + v3 as i32) as u16).wrapping_add(8) => (v1) as isize, x);
+            enemy!(ctx, ((ctx.resolve_actor(Key::from_legacy(v2 as u16), Le).x.whole as i32 + v3 as i32) as u16).wrapping_add(8) => (v1) as isize, x);
         } else {
-            enemy!(ctx, ((ctx.enemy_x(v2 as u16) as i32 + v3 as i32) as u16).wrapping_sub(8) => (v1) as isize, x);
+            enemy!(ctx, ((ctx.resolve_actor(Key::from_legacy(v2 as u16), Le).x.whole as i32 + v3 as i32) as u16).wrapping_sub(8) => (v1) as isize, x);
         }
         enemy!(ctx, 0 => (v1) as isize, velocity_x);
     };
@@ -1239,10 +1271,11 @@ pub(super) fn EprojInit_BDA2(j: u16, ctx: &mut impl Host) {
 
     let v2 = (ctx.inputs().current_enemy as i32 as u16);
 
-    enemy!(ctx, ctx.enemy_x(v2 as u16) => (v1) as isize, x);
-    enemy!(ctx, ctx.enemy_y(v2 as u16) => (v1) as isize, y);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(v2 as u16), Le).x.whole => (v1) as isize, x);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(v2 as u16), Le).y.whole => (v1) as isize, y);
 
-    let v3: u16 = (2 * (ctx.enemy_ai_d(v2 as u16) as u8) as i32) as u16;
+    let v3: u16 =
+        (2 * (ctx.resolve_actor(Key::from_legacy(v2 as u16), Le).variables[3] as u8) as i32) as u16;
     let v4: i32 = v3 as i32 >> 1;
     enemy!(ctx, kSinCosTable8bit_Sext[(v4 + 64) as usize] as u16 => (v1) as isize, velocity_x);
     enemy!(ctx, kSinCosTable8bit_Sext[v4 as usize] as u16 => (v1) as isize, velocity_y);
@@ -1434,8 +1467,8 @@ pub(super) fn EprojInit_MotherBrainPurpleBreathBig(j: u16, ctx: &mut impl Host) 
     let v1: i32 = j as i32 >> 1;
 
     enemy!(ctx, 0 => (v1) as isize, graphics);
-    enemy!(ctx, (ctx.enemy_x(64) as i32 + 6) as u16 => (v1) as isize, x);
-    enemy!(ctx, (ctx.enemy_y(64) as i32 + 16) as u16 => (v1) as isize, y);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).x.whole as i32 + 6) as u16 => (v1) as isize, x);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(64), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);
 }
 
 pub(super) fn EprojInit_MotherBrainPurpleBreathSmall(j: u16, ctx: &mut impl Host) {
@@ -1466,8 +1499,8 @@ pub(super) fn EprojInit_MaridiaFloatersSpikes(j: u16, ctx: &mut impl Host) {
 
     let v2 = (ctx.inputs().current_enemy as i32 as u16);
 
-    enemy!(ctx, ctx.enemy_x(v2 as u16) => (v1) as isize, x);
-    enemy!(ctx, ctx.enemy_y(v2 as u16) => (v1) as isize, y);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(v2 as u16), Le).x.whole => (v1) as isize, x);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(v2 as u16), Le).y.whole => (v1) as isize, y);
     enemy!(ctx, ctx.session().enemy_projectiles.spawn.primary => (v1) as isize, behavior_a);
 }
 
@@ -1475,12 +1508,12 @@ pub(super) fn EprojInit_SporeSpawnStalk(j: u16, ctx: &mut impl Host) {
     let v1: i32 = j as i32 >> 1;
 
     {
-        let value = (ctx.enemy_y(0) as i32
+        let value = (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32
             + word_86DCB9[ctx.session().enemy_projectiles.spawn.primary as usize] as i32)
             as u16;
         enemy!(ctx, value => (v1) as isize, y);
     };
-    enemy!(ctx, ctx.enemy_x(0) => (v1) as isize, x);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(0), Le).x.whole => (v1) as isize, x);
 }
 
 pub(super) fn EprojInit_SporeSpawners(j: u16, ctx: &mut impl Host) {
@@ -1533,11 +1566,15 @@ pub(super) fn EprojInit_EyeDoorSmoke(j: u16, ctx: &mut impl Host) {
 pub(super) fn EprojInit_BotwoonsBody(j: u16, ctx: &mut impl Host) {
     let v1: i32 = j as i32 >> 1;
 
-    enemy!(ctx, ctx.enemy_x(0) => (v1) as isize, x);
-    enemy!(ctx, ctx.enemy_y(0) => (v1) as isize, y);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(0), Le).x.whole => (v1) as isize, x);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(0), Le).y.whole => (v1) as isize, y);
     enemy!(ctx, 0 => (v1) as isize, velocity_y);
 
-    let v2: u16 = (if ctx.enemy_ai_a(0) != 0 { 16 } else { 48 }) as u16;
+    let v2: u16 = (if ctx.resolve_actor(Key::from_legacy(0), Le).variables[0] != 0 {
+        16
+    } else {
+        48
+    }) as u16;
     let v3: u16 = {
         let record = ctx.loaded_record(0x86, 0xe9f1);
         let index: isize = (v2 >> 1) as isize;
@@ -1549,7 +1586,7 @@ pub(super) fn EprojInit_BotwoonsBody(j: u16, ctx: &mut impl Host) {
     enemy!(ctx, v2 => (v1) as isize, behavior_a);
     enemy!(ctx, (0x86ea98 & 0xffff) as u16 => (v1) as isize, velocity_x);
 
-    let Ex = ctx.enemy_ai_a(0);
+    let Ex = ctx.resolve_actor(Key::from_legacy(0), Le).variables[0];
     ctx.set_enemy_linked_projectile(Ex, j);
     enemy!(ctx, 2 => (v1) as isize, drop_flags);
     ctx.set_botwoon_body_active(Ex, 1);
@@ -1562,8 +1599,8 @@ pub(super) fn EprojInit_CrocomireProjectile(j: u16, ctx: &mut impl Host) {
     enemy!(ctx, 1 => (v2) as isize, velocity_y);
 
     let v3 = (ctx.inputs().current_enemy as i32 as u16);
-    enemy!(ctx, (ctx.enemy_x(v3 as u16) as i32 - 32i32) as u16 => (v2) as isize, x);
-    enemy!(ctx, (ctx.enemy_y(v3 as u16) as i32 - 16i32) as u16 => (v2) as isize, y);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v3 as u16), Le).x.whole as i32 - 32i32) as u16 => (v2) as isize, x);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v3 as u16), Le).y.whole as i32 - 16i32) as u16 => (v2) as isize, y);
 
     enemy!(ctx, 0 => (v2) as isize, counter);
     enemy!(ctx, 0 => (v2) as isize, x_fraction);
@@ -1587,8 +1624,8 @@ pub(super) fn EprojInit_PirateMotherBrainLaser(j: u16, ctx: &mut impl Host) {
     enemy!(ctx, ctx.session().enemy_projectiles.spawn.point.x => (v2) as isize, x);
     enemy!(ctx, ctx.session().enemy_projectiles.spawn.point.y => (v2) as isize, y);
     let enemy_index = ctx.inputs().current_enemy;
-    enemy!(ctx, (ctx.native_record(0xa0, ctx.enemy_definition(enemy_index)).word_le(3) | 0x1000) => (v2) as isize, properties);
-    enemy!(ctx, ctx.enemy_parameter_1(enemy_index) => (v2) as isize, behavior_a);
+    enemy!(ctx, (ctx.native_record(0xa0, ctx.resolve_actor(Key::from_legacy(enemy_index), Le).definition).word_le(3) | 0x1000) => (v2) as isize, properties);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy_index), Le).parameters[0] => (v2) as isize, behavior_a);
     ctx.queue_sound(2, 6, 0x67);
 }
 
@@ -1597,13 +1634,18 @@ pub(super) fn EprojInit_GoldenTorizoSuperMissile(j: u16, ctx: &mut impl Host) {
 
     enemy!(ctx, ctx.inputs().current_enemy => (v2) as isize, behavior_a);
     let v3 = (ctx.inputs().current_enemy as i32 as u16);
-    let v4: i32 = if (ctx.enemy_parameter_1(v3 as u16) & 0x8000) != 0 {
+    let v4: i32 = if (ctx
+        .resolve_actor(Key::from_legacy(v3 as u16), Le)
+        .parameters[0]
+        & 0x8000)
+        != 0
+    {
         1
     } else {
         0
     };
-    enemy!(ctx, (ctx.enemy_x(v3 as u16) as i32 + word_86B205[v4 as usize] as i32) as u16 => (v2) as isize, x);
-    enemy!(ctx, (ctx.enemy_y(v3 as u16) as i32 - 52i32) as u16 => (v2) as isize, y);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v3 as u16), Le).x.whole as i32 + word_86B205[v4 as usize] as i32) as u16 => (v2) as isize, x);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v3 as u16), Le).y.whole as i32 - 52i32) as u16 => (v2) as isize, y);
     {
         let value = {
             let record = ctx.loaded_record(0x86, 0xb209);
@@ -1618,7 +1660,7 @@ pub(super) fn EprojInit_KiHunterAcidSpitLeft(j: u16, ctx: &mut impl Host) {
     let v2: i32 = j as i32 >> 1;
 
     enemy!(ctx, -768i32 as u16 => (v2) as isize, velocity_x);
-    enemy!(ctx, (ctx.enemy_x(ctx.inputs().current_enemy) as i32 - 22i32) as u16 => (v2) as isize, x);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(ctx.inputs().current_enemy), Le).x.whole as i32 - 22i32) as u16 => (v2) as isize, x);
     EprojInit_KiHunterAcidSpitCommon(ctx.inputs().current_enemy, j, ctx);
 }
 
@@ -1626,7 +1668,7 @@ pub(super) fn EprojInit_KiHunterAcidSpitRight(j: u16, ctx: &mut impl Host) {
     let v2: i32 = j as i32 >> 1;
 
     enemy!(ctx, 768 => (v2) as isize, velocity_x);
-    enemy!(ctx, (ctx.enemy_x(ctx.inputs().current_enemy) as i32 + 22) as u16 => (v2) as isize, x);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(ctx.inputs().current_enemy), Le).x.whole as i32 + 22) as u16 => (v2) as isize, x);
     EprojInit_KiHunterAcidSpitCommon(ctx.inputs().current_enemy, j, ctx);
 }
 
@@ -1635,8 +1677,8 @@ pub(super) fn EprojInit_KagosBugs(j: u16, ctx: &mut impl Host) {
 
     enemy!(ctx, ctx.inputs().current_enemy => (v2) as isize, behavior_b);
     let enemy_index = ctx.inputs().current_enemy;
-    enemy!(ctx, ctx.enemy_x(enemy_index) => (v2) as isize, x);
-    enemy!(ctx, ctx.enemy_y(enemy_index) => (v2) as isize, y);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole => (v2) as isize, x);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy_index), Le).y.whole => (v2) as isize, y);
     let v4: u16 = ((ctx.inputs().random as i32 & 7) + 1) as u16;
 
     enemy!(ctx, v4 => (v2) as isize, behavior_c);
@@ -1698,7 +1740,12 @@ pub(super) fn EprojInit_NamiFuneFireball(j: u16, ctx: &mut impl Host) {
 
     copy_enemy_position(v2 as isize, v3, 0, ctx);
 
-    if (ctx.enemy_parameter_1(v3 as u16) & 0xf) != 0 {
+    if (ctx
+        .resolve_actor(Key::from_legacy(v3 as u16), Le)
+        .parameters[0]
+        & 0xf)
+        != 0
+    {
         {
             let index = (v2) as isize;
             let old = enemy!(ctx, (index) as isize, y);
@@ -1706,7 +1753,11 @@ pub(super) fn EprojInit_NamiFuneFireball(j: u16, ctx: &mut impl Host) {
             enemy!(ctx, (index) as isize, y = value);
         };
     }
-    let v4: i32 = (4 * (ctx.enemy_parameter_2(v3 as u16) as u8) as i32) as u16 as i32 >> 1;
+    let v4: i32 = (4
+        * (ctx
+            .resolve_actor(Key::from_legacy(v3 as u16), Le)
+            .parameters[1] as u8) as i32) as u16 as i32
+        >> 1;
     {
         let value = {
             let record = ctx.loaded_record(0x86, 0xdeb6);
@@ -1748,10 +1799,11 @@ pub(super) fn EprojInit_MiniKraidSpit(j: u16, ctx: &mut impl Host) {
     let v3: i32 = j as i32 >> 1;
     {
         let value = (ctx.mini_kraid_spit_x_offset(extra_index) as i32
-            + ctx.enemy_x(enemy_index) as i32) as u16;
+            + ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole as i32)
+            as u16;
         enemy!(ctx, value => (v3) as isize, x);
     };
-    enemy!(ctx, (ctx.enemy_y(enemy_index) as i32 - 16i32) as u16 => (v3) as isize, y);
+    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(enemy_index), Le).y.whole as i32 - 16i32) as u16 => (v3) as isize, y);
 
     enemy!(ctx, 0 => (v3) as isize, y_fraction);
     enemy!(ctx, 0 => (v3) as isize, x_fraction);
@@ -1764,9 +1816,14 @@ pub(super) fn EprojInit_BombTorizoLowHealthExplode(j: u16, ctx: &mut impl Host) 
     let enemy_index = ctx.inputs().current_enemy;
 
     let v2: i32 = j as i32 >> 1;
-    enemy!(ctx, ctx.enemy_x(enemy_index) => (v2) as isize, x);
-    enemy!(ctx, ctx.enemy_y(enemy_index) => (v2) as isize, y);
-    if (ctx.enemy_parameter_1(enemy_index) & 0x8000) == 0 {
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole => (v2) as isize, x);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy_index), Le).y.whole => (v2) as isize, y);
+    if (ctx
+        .resolve_actor(Key::from_legacy(enemy_index), Le)
+        .parameters[0]
+        & 0x8000)
+        == 0
+    {
         {
             let old = ctx.session().enemy_projectiles.spawn.primary;
             let value = ((old as i32) + (2)) as u16;
@@ -1794,13 +1851,13 @@ pub(super) fn EprojInit_BombTorizoLowHealthExplode(j: u16, ctx: &mut impl Host) 
 pub(super) fn EprojInit_BombTorizoDeathExplosion(j: u16, ctx: &mut impl Host) {
     let enemy_index = ctx.inputs().current_enemy;
 
-    let x_pos: u16 = ctx.enemy_x(enemy_index);
+    let x_pos: u16 = ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole;
     let v3: i32 = j as i32 >> 1;
 
     enemy!(ctx, x_pos => (v3) as isize, x);
     enemy!(ctx, x_pos => (v3) as isize, behavior_a);
 
-    let y_pos: u16 = ctx.enemy_y(enemy_index);
+    let y_pos: u16 = ctx.resolve_actor(Key::from_legacy(enemy_index), Le).y.whole;
 
     enemy!(ctx, y_pos => (v3) as isize, y);
     enemy!(ctx, y_pos => (v3) as isize, behavior_b);
@@ -1809,7 +1866,12 @@ pub(super) fn EprojInit_BombTorizoDeathExplosion(j: u16, ctx: &mut impl Host) {
 pub(super) fn EprojInit_BombTorizosChozoOrbs(j: u16, ctx: &mut impl Host) {
     let enemy_index = ctx.inputs().current_enemy;
 
-    let v2: u16 = (if (ctx.enemy_parameter_1(enemy_index) & 0x8000) != 0 {
+    let v2: u16 = (if (ctx
+        .resolve_actor(Key::from_legacy(enemy_index), Le)
+        .parameters[0]
+        & 0x8000)
+        != 0
+    {
         addr_kEprojInit_BombTorizosChozoOrbs_init0 as i32
     } else {
         addr_kEprojInit_BombTorizosChozoOrbs_init1 as i32
@@ -1818,8 +1880,8 @@ pub(super) fn EprojInit_BombTorizosChozoOrbs(j: u16, ctx: &mut impl Host) {
         j,
         v2,
         Point {
-            x: ctx.enemy_x(enemy_index),
-            y: ctx.enemy_y(enemy_index),
+            x: ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole,
+            y: ctx.resolve_actor(Key::from_legacy(enemy_index), Le).y.whole,
         },
         ctx,
     );
@@ -1837,10 +1899,14 @@ pub(super) fn EprojInit_YappingMawsBody(j: u16, ctx: &mut impl Host) {
     let enemy_index = ctx.inputs().current_enemy;
 
     let v3: i32 = j as i32 >> 1;
-    enemy!(ctx, ctx.enemy_x(enemy_index) => (v3) as isize, x);
-    enemy!(ctx, ctx.enemy_y(enemy_index) => (v3) as isize, y);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole => (v3) as isize, x);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy_index), Le).y.whole => (v3) as isize, y);
     enemy!(ctx, addr_word_86EC5C as u16 => (v3) as isize, program);
-    if ctx.enemy_parameter_2(enemy_index) == 0 {
+    if ctx
+        .resolve_actor(Key::from_legacy(enemy_index), Le)
+        .parameters[1]
+        == 0
+    {
         enemy!(ctx, addr_word_86EC56 as u16 => (v3) as isize, program);
     }
     let base = ctx.inputs().current_enemy;
@@ -1852,13 +1918,18 @@ pub(super) fn EprojInit_EnemyDeathExplosion(j: u16, ctx: &mut impl Host) {
     let enemy_index = ctx.inputs().current_enemy;
 
     let v2: i32 = j as i32 >> 1;
-    enemy!(ctx, ctx.enemy_x(enemy_index) => (v2) as isize, x);
-    enemy!(ctx, ctx.enemy_y(enemy_index) => (v2) as isize, y);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy_index), Le).x.whole => (v2) as isize, x);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy_index), Le).y.whole => (v2) as isize, y);
     enemy!(ctx, ctx.inputs().current_enemy => (v2) as isize, killed_enemy);
-    if (ctx.enemy_properties(enemy_index) & 0x4000) != 0 {
+    if (ctx
+        .resolve_actor(Key::from_legacy(enemy_index), Le)
+        .properties
+        & 0x4000)
+        != 0
+    {
         enemy!(ctx, (ctx.inputs().current_enemy) | (0x8000u16) => (v2) as isize, killed_enemy);
     }
-    enemy!(ctx, ctx.enemy_definition(enemy_index) => (v2) as isize, drop_definition);
+    enemy!(ctx, ctx.resolve_actor(Key::from_legacy(enemy_index), Le).definition => (v2) as isize, drop_definition);
     enemy!(ctx, 0 => (v2) as isize, graphics);
     {
         let instruction: u16 = {

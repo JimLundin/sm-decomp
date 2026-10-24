@@ -1,22 +1,19 @@
+use crate::game::actors;
+use crate::game::actors::access::ActorKey as Key;
+use crate::game::actors::api as actor_api;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a0::*;
 pub use crate::game::constants::bank_b4::*;
-use crate::game::enemy_combat::{
-    apply_contact, apply_power_bomb, apply_shot, enemy_death, select_frozen_ai, shot_reaction,
-};
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
-use crate::game::enemy_scheduling::update_frozen_enemy;
 use crate::game::enemy_script::{EnemyScript, bank_base};
 pub use crate::game::prelude::*;
+use crate::game::session_runtime::Runtime;
 use crate::rtl::rom_record;
 use core::mem::offset_of;
 
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
-use crate::game::sm_a0::{
-    CosineMult8bit, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, EnemyFunc_BBBF,
-    IsSamusWithinEnemy_Y, SineMult8bit,
-};
+use crate::game::sm_a0::{CosineMult8bit, SineMult8bit};
 use crate::game::sprite_effect_runtime::create_sprite;
 
 pub use crate::types::Consts_B2;
@@ -203,14 +200,10 @@ macro_rules! finish_space_pirate_vertical_jump {
         $enemy_index:ident, $enemy:ident, $game:ident, $velocity:ident, $next_state:literal,
         $instruction:ident $(,)?
     ) => {
-        if Enemy_MoveDown(
-            $enemy_index,
-            (words!((
+        if ({ let (actor, amount) = ($enemy_index, (words!((
                 byte!((*$enemy).var_00; 1),
                 byte!((*$enemy).var_00; 0) as u16
-            ))) as i32,
-            $game,
-        ) != 0
+            ))) as i32); (actor_api::move_vertical(&mut Runtime::new($game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
             || {
                 $velocity = (((*$enemy).var_00) as i16).wrapping_sub(64);
                 (*$enemy).var_00 = $velocity as u16;
@@ -231,7 +224,7 @@ crate::game::callback_dispatch! {
     call (k, game); default { Unreachable(game); };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     [11726900] SpacePirates_Func_1 [] {
-        if IsSamusWithinEnemy_Y(word!(game.cur_enemy_index), 0x20, game) != 0 {
+        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x20); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
             let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
             enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_ED80 as u16, timer = 1}
         }
@@ -255,7 +248,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11727048] SpacePirates_Func_3 [] {
-        if IsSamusWithinEnemy_Y(word!(game.cur_enemy_index), 0x20, game) != 0 {
+        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x20); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
             let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
             enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_ECC0 as u16, timer = 1}
         }
@@ -495,7 +488,7 @@ crate::game::callback_dispatch! {
             .frozen_timer
             == 0
         {
-            apply_contact(game);
+            actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
         }
     };
     [11700089] WalkingSpacePirates_Shot [] {
@@ -506,7 +499,7 @@ crate::game::callback_dispatch! {
         {
             WalkingSpacePirates_8789(game);
         } else {
-            apply_shot(game);
+            actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
         };
     };
     [11726751] WallSpacePirates_Init [] {
@@ -560,16 +553,16 @@ crate::game::callback_dispatch! {
     WalkingSpacePirates_8789 [] {
         word!(game.special_death_item_drop_x_origin_pos = (*E).base.x_pos);
         word!(game.special_death_item_drop_y_origin_pos = (*E).base.y_pos);
-        shot_reaction(game);
+        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::ReactionOnly);
         if (*E).base.health == 0 {
             let v1: u16 = word!(game.cur_enemy_index);
             if (*E).base.enemy_ptr as i32 == addr_kEnemyDef_F593 as i32 {
                 (*E).var_B = 0;
-                enemy_death(v1, 4, game);
+                ({ let (_ignored_key, animation) = (v1, 4); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
                 scatter(DropSource::LowerNorfairPirate, v1, 0, game);
             } else {
                 (*E).var_B = 0;
-                enemy_death(v1, 4, game);
+                ({ let (_ignored_key, animation) = (v1, 4); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
             }
         }
     };
@@ -641,21 +634,21 @@ crate::game::callback_dispatch! {
         }
     };
     WalkingSpacePirates_FD44 [] {
-        if IsSamusWithinEnemy_Y(word!(game.cur_enemy_index), 0x10, game) != 0 {
+        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x10); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
             let mut v1: u16 = addr_kSpacePirates_Ilist_FB8C as u16;
             if ((word!(game.samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) >= 0 {
                 v1 = addr_kSpacePirates_Ilist_FC0E as u16;
             }
             enemy_instruction! {[(*E).base]; instruction = v1, timer = 1}
-        } else if Enemy_MoveDown(word!(game.cur_enemy_index), (1i16 as i32) << 16, game) != 0 {
+        } else if ({ let (actor, amount) = (word!(game.cur_enemy_index), (1i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             let x_pos: u16 = (*E).base.x_pos;
             (*E).var_00 = x_pos;
             (*E).base.x_pos = (x_pos).wrapping_sub(17);
-            let result: u8 = Enemy_MoveDown(word!(game.cur_enemy_index), (1i16 as i32) << 16, game);
+            let result: u8 = ({ let (actor, amount) = (word!(game.cur_enemy_index), (1i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
             (*E).base.x_pos = (*E).var_00;
             if result != 0 {
-                EnemyFunc_BBBF(word!(game.cur_enemy_index), (-9i16 as i32) << 16, game);
-                if Enemy_MoveRight_IgnoreSlopes(word!(game.cur_enemy_index), -14337i32, game) == 0
+                ({ let (actor, amount) = (word!(game.cur_enemy_index), (-9i16 as i32) << 16); (actor_api::probe_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
+                if ({ let (actor, amount) = (word!(game.cur_enemy_index), -14337i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) == 0
                     && (((*E).base.x_pos) as i16).wrapping_sub(((*E).var_E) as i16) >= 0
                 {
                     return;
@@ -665,20 +658,20 @@ crate::game::callback_dispatch! {
         }
     };
     WalkingSpacePirates_FDCE [] {
-        if IsSamusWithinEnemy_Y(word!(game.cur_enemy_index), 0x10, game) != 0 {
+        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x10); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
             let mut v1: u16 = addr_kSpacePirates_Ilist_FB8C as u16;
             if ((word!(game.samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) >= 0 {
                 v1 = addr_kSpacePirates_Ilist_FC0E as u16;
             }
             enemy_instruction! {[(*E).base]; instruction = v1, timer = 1}
-        } else if Enemy_MoveDown(word!(game.cur_enemy_index), (1i16 as i32) << 16, game) != 0 {
+        } else if ({ let (actor, amount) = (word!(game.cur_enemy_index), (1i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             let x_pos: u16 = (*E).base.x_pos;
             (*E).var_00 = x_pos;
             (*E).base.x_pos = (x_pos).wrapping_add(16);
-            let result: u8 = Enemy_MoveDown(word!(game.cur_enemy_index), (1i16 as i32) << 16, game);
+            let result: u8 = ({ let (actor, amount) = (word!(game.cur_enemy_index), (1i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
             (*E).base.x_pos = (*E).var_00;
             if result == 0
-                || Enemy_MoveRight_IgnoreSlopes(word!(game.cur_enemy_index), 14336, game) != 0
+                || ({ let (actor, amount) = (word!(game.cur_enemy_index), 14336); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
                 || (((*E).base.x_pos) as i16).wrapping_sub(((*E).var_F) as i16) >= 0
             {
                 enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_FC48 as u16, timer = 1}
@@ -686,9 +679,9 @@ crate::game::callback_dispatch! {
         }
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [11698191] Enemy_GrappleReact_CancelBeam_B2 => select_frozen_ai(game);
-    [11698241] Enemy_NormalFrozenAI_B2 => update_frozen_enemy(game);
-    [11700071] WalkingSpacePirates_Powerbomb => apply_power_bomb(game);
+    [11698191] Enemy_GrappleReact_CancelBeam_B2 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
+    [11698241] Enemy_NormalFrozenAI_B2 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
+    [11700071] WalkingSpacePirates_Powerbomb => actors::combat::power_bomb_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
 }
 
 crate::game::callback_dispatch! {
@@ -700,11 +693,7 @@ crate::game::callback_dispatch! {
     game: &mut Game,
 ) -> EnemyScript];
     @prefix {
-        if Enemy_MoveDown(
-            word!(game.cur_enemy_index),
-            (jp.word(0) as i16 as i32) << 16,
-            game,
-        ) == 0
+        if ({ let (actor, amount) = (word!(game.cur_enemy_index), (jp.word(0) as i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) == 0
         {
             return jp.offset(1);
         }
@@ -866,7 +855,7 @@ crate::game::callback_dispatch! {
         (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game)).var_A = jp.word(0);
     };
     [11730120] SpacePirates_Instr_13 [] {
-        if IsSamusWithinEnemy_Y(word!(game.cur_enemy_index), 0x10, game) != 0 {
+        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x10); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
             if ((word!(game.samus_x_pos)) as i16).wrapping_sub(
                 ((*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
                     .base

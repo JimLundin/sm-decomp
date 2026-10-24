@@ -73,6 +73,8 @@ macro_rules! flag_projection {
 }
 macro_rules! scalar_words {
     ($s:ident,$f:ident,($($borrow:tt)*))=>{
+        $f(0x0d08,$($borrow)* $s.player.grapple_endpoint.x);
+        $f(0x0d0c,$($borrow)* $s.player.grapple_endpoint.y);
         $f(0x0791,$($borrow)* $s.room.entry.direction);
         $f(0x0793,$($borrow)* $s.room.entry.elevator_properties);
         $f(0x0795,$($borrow)* $s.room.entry.elevator_interlock);
@@ -179,7 +181,9 @@ macro_rules! scalar_words {
         $f(ram::samus_auto_cancel_hud_item_index,$($borrow)* $s.projectiles.controls.automatic_weapon);
         $f(ram::hud_item_changed_this_frame,$($borrow)* $s.projectiles.controls.weapon_changed);
         $f(ram::samus_x_pos,$($borrow)* $s.player.x);
+        $f(ram::samus_x_subpos,$($borrow)* $s.player.x_fraction);
         $f(ram::samus_y_pos,$($borrow)* $s.player.y);
+        $f(ram::samus_y_subpos,$($borrow)* $s.player.y_fraction);
         $f(ram::samus_missiles,$($borrow)* $s.inventory.ammunition[0].current);
         $f(ram::samus_super_missiles,$($borrow)* $s.inventory.ammunition[1].current);
         $f(ram::samus_power_bombs,$($borrow)* $s.inventory.ammunition[2].current);
@@ -422,9 +426,11 @@ pub(crate) fn decode(bytes: &[u8], world: Arc<WorldBinding>) -> Session {
             *value = read(bytes, 0xa000 + index * 8 + corner * 2);
         }
     }
+    crate::game::actors::codec::import_common(&mut s, bytes);
     s
 }
 pub(crate) fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
+    crate::game::actors::codec::visit_common(s, &mut visit);
     macro_rules! emit_key {
         ($at:expr, $field:ident, $get:ident, $set:ident) => {
             visit($at, s.world.$get(&s.room.entry.$field));
@@ -484,6 +490,9 @@ pub(crate) fn encode(s: &Session, bytes: &mut [u8]) {
     }
 }
 pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
+    if let Some(value) = crate::game::actors::codec::projected_byte(s, at) {
+        return Some(value);
+    }
     macro_rules! key_byte {
         ($base:expr, $field:ident, $get:ident, $set:ident) => {
             if ($base..$base + 2).contains(&at) {
@@ -559,6 +568,9 @@ pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     result
 }
 pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
+    if crate::game::actors::codec::write_projected_byte(s, at, value) {
+        return true;
+    }
     macro_rules! write_key {
         ($base:expr, $field:ident, $get:ident, $set:ident) => {
             if ($base..$base + 2).contains(&at) {
@@ -688,8 +700,6 @@ pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
         fx_y: w(ram::fx_y_pos),
         drop_origin_x: w(ram::special_death_item_drop_x_origin_pos),
         drop_origin_y: w(ram::special_death_item_drop_y_origin_pos),
-        grapple_end_x: w(ram::grapple_beam_end_x_pos),
-        grapple_end_y: w(ram::grapple_beam_end_y_pos),
         nmi_counter_low: bytes[0x5b5],
 
         shoot_button: w(ram::button_config_shoot_x),
