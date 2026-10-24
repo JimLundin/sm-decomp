@@ -489,13 +489,13 @@ references; measure build/test time and resource growth before changing the loop
    Raw truncated native station records are excluded from predecessor equivalence;
    checked replacement safety is a separate obligation.
 
-   Atlas snapshotf88970aa is live:429files/2071edges and all24curated anchors
-   pass static checks. Hosted40039541123 passes browser/accessibility and Pages;
-   live HTTP200 bytes exactly match388df54f's committed standalone HTML.
-   The replacement atlas for adopted room source4c572a4a passes static checks:
-   461files,2248edges and26source anchors. Hosted browser/accessibility and Pages
-   publication are pending; the asset tension now distinguishes stable topology
-   from remaining ROM-compatible resources and the unfinished importer.
+   Atlas snapshot4c572a4a is live:461files/2248edges and26source anchors pass
+   static checks. Hosted40047757824 passes navigation/mobile/offline/accessibility
+   and Pages deployment. Live HTTP200 bytes exactly match8ceec6ab's committed
+   standalone HTML (SHA256353c63ffed9a8ea76e3cd6df1e6d576c5804d2b8167a4a3410909d43c6208275).
+   The asset tension distinguishes stable topology from remaining ROM-compatible
+   resources and the unfinished importer. No browser errors, network dependencies
+   or accessibility violations were reported in the four audited views.
 
    Room mechanisms are now adopted as one production responsibility: creation,
    setup, pre-actions, all 110 command identities, scheduler, drawing/clipping,
