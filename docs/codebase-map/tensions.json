@@ -20,7 +20,7 @@
       },
       {
         "path": "sm/src/game/session_encoding.rs",
-        "line": 492,
+        "line": 521,
         "expected": "pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {"
       },
       {
@@ -51,7 +51,7 @@
       },
       {
         "path": "sm/src/game/session_encoding.rs",
-        "line": 570,
+        "line": 599,
         "expected": "pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {"
       }
     ]
@@ -291,6 +291,49 @@
         "path": "sm/src/verify.rs",
         "line": 1,
         "expected": "//! Single-threaded replay through the same differential oracle as the UI."
+      }
+    ]
+  },
+  {
+    "title": "Player collision is owned; effects retain backend edges",
+    "description": "Movement, solid contact, terrain traversal and pose clearance share interval Session state. Runtime adapters still resolve compatibility content, invoke room mechanisms and read physical SNES slope bytes; this is not yet a backend-independent engine.",
+    "files": [
+      "sm/src/game/player_collision/mod.rs",
+      "sm/src/game/player_collision/operations.rs",
+      "sm/src/game/player_collision/geometry.rs",
+      "sm/src/game/player_collision_runtime.rs",
+      "sm/src/game/session.rs"
+    ],
+    "evidence": [
+      {
+        "path": "sm/src/game/player_collision/mod.rs",
+        "line": 2,
+        "expected": "#![forbid(unsafe_code)]"
+      },
+      {
+        "path": "sm/src/game/player_collision/geometry.rs",
+        "line": 1,
+        "expected": "//! Shared player solid contact, terrain traversal and slope alignment over owned state."
+      },
+      {
+        "path": "sm/src/game/session.rs",
+        "line": 177,
+        "expected": "pub(in crate::game) collision: crate::game::player_collision::state::CollisionState,"
+      },
+      {
+        "path": "sm/src/game/player_collision_runtime.rs",
+        "line": 23,
+        "expected": "visual_host::Content::table(self, Source::Loaded, 0x91eb74)"
+      },
+      {
+        "path": "sm/src/game/player_collision_runtime.rs",
+        "line": 82,
+        "expected": "fn apply_mechanism(&mut self, header: MechanismHeader, displacement: &mut i32) -> u8 {"
+      },
+      {
+        "path": "sm/src/game/player_collision_runtime.rs",
+        "line": 107,
+        "expected": "let low = crate::snes::snes::snes_read(game.g_snes, address, game);"
       }
     ]
   }
