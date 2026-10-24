@@ -21,7 +21,7 @@ preserve others' work. Do not delete another process's lock or force-push main.
 
 ## Review directives (user direction, 2026-10-24)
 
-Read [the external review](REVIEW-2026-10-24.md) after this plan. Its priority order
+Read [the external review](REVIEW.md) after this plan. Its priority order
 is hygiene, process reduction, checkpoint coverage, then consolidation under the
 size rule. Direct user instructions take precedence. Historical work is in
 [HISTORY.md](HISTORY.md); its old queues, gates and results are not current rules.
