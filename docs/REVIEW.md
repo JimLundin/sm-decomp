@@ -8,6 +8,12 @@ earlier versions; this file holds only current findings.
 
 ## Check-ins
 
+- **2026-10-24 19:55 (674d87a):** 4 agent source commits since f0f163d (3 code,
+  1 map), 0 docs-only; no overall stall, but **coverage stalled**: 23/44 for a
+  second check-in, no recipe commit since a56fdd1 (17:41). Production 117,869 →
+  117,686 (−183; first legacy-bank retirement, −59); verification 37,504 (+22);
+  unsafe 4,982 (−60); warnings 380 unique (PROGRESS method: 432). PLAN.md 235 lines
+  (rising). Map: Enter on "Kraid" now opens `sm_a7.rs`; remaining fixes below.
 - **2026-10-24 18:52 (f0f163d):** 6 agent source commits since 2f18ba6, 0
   docs-only; no stall. Corpus flat 23/44 (hour spent making 20 unit tests run,
   which also reset checkpoint compatibility). Production 117,913 → 117,869 (−44,
@@ -33,7 +39,17 @@ earlier versions; this file holds only current findings.
   Adoption correctly held. Watch: corpus `.inputs` files are gitignored with
   only checksums committed; a fresh agent must be able to rebuild them.
 
-## Corpus watch (2026-10-24 17:52)
+## Corpus watch (2026-10-24 19:55)
+
+- Coverage track stalled two check-ins: no new passing check since 17:41, while
+  the held snapshot-comparison draft waits on "another gameplay check". The
+  Power Bomb → Crocomire route needs a long hand-authored continuation. Land
+  the nearest pending row reachable from an existing end state first, and
+  record the Power Bomb blocker under work item 1 if it is not done in an hour.
+- PLAN.md item 1-2 text now logs each commit's results (235 lines). Those
+  belong in commit messages; PLAN keeps only the current state and next step.
+
+## Corpus watch (2026-10-24 17:52, earlier)
 
 - Throughput: the imported any% TAS desyncs from this runtime, so every
   remaining check needs a hand-authored continuation (`tools/movie_inputs.py`
@@ -63,15 +79,14 @@ earlier versions; this file holds only current findings.
 
 ## Codebase map (user request, 2026-10-24)
 
-**Status 18:52 (rendered f0f163d, 1440x900 and 390x844):** items 1-3, 5 and 6
-done. First screen shows ten game-responsibility tiles with Owned / Partly /
-Legacy, the 110k/100k gap, three contextual notes, and Kraid/Grapple/Doors
-buttons; support files hidden; phone layout works; no page errors. Remaining,
-in order: (a) "Kraid" finds only `sm_a7.rs` in the sidebar and does not open it;
-show plain labels for bank files ("Kraid, Phantoon (sm_a7.rs)") and open the
-match. (b) The desktop file tree still lists ~35 root files beside the tiles;
-collapse it by default. Watch: the template packs 48 KB into 77 lines (up 10 KB);
-measure growth in bytes, not lines.
+**Status 19:55 (rendered 674d87a, 1440x900 and 390x844, no page errors):**
+first screen now adds a five-box work summary; status tiles, targets and Kraid
+buttons still visible without scrolling on both widths; Enter on "Kraid" opens
+`sm_a7.rs`. Remaining, in order: (a) the match and file header still say only
+`sm_a7.rs`; label bank files in game terms ("Kraid, Phantoon · sm_a7.rs").
+(b) The desktop sidebar still lists ~35 root files; collapse it by default.
+Template flat at 48 KB. The brief is otherwise met; no further map work beyond
+(a) and (b) unless the user asks.
 
 The user finds the [codebase map](https://jimlundin.github.io/sm-decomp/) too
 overwhelming. Reviewed at snapshot a20e890d (already behind `main`).
