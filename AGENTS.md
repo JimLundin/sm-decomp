@@ -6,7 +6,10 @@ translation scopes and anything else from before 2026-10-17; that project
 is archived in the branch `archive/pre-transpile-2026-10-17`.
 
 Then read `docs/REVIEW.md`. Its directives (summarized at the top
-of `docs/PLAN.md`) take priority over the existing work order.
+of `docs/PLAN.md`) take priority over the existing work order. Its
+**Milestone plan** decides what you work on: pick your lane (A coverage or
+B bank retirement), take the next unclaimed row, and end every commit body
+with its `Score:` line.
 
 Before changing subsystem boundaries, state ownership, or backend architecture,
 read `docs/target-architecture/README.md` for the accepted destination and

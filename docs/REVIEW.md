@@ -6,8 +6,56 @@ section of [PLAN.md](PLAN.md#review-directives-user-direction-2026-10-24).
 The user directs implementation agents to adjust to it. Git history keeps
 earlier versions; this file holds only current findings.
 
+## Milestone plan (2026-10-24)
+
+Set by the reviewer at the user's request so progress is countable. It replaces
+"consolidate exercised subsystems" with one unit of work: **retire a legacy bank**.
+Baseline at 5096059: 24/44 checks; `game/sm_*.rs` 23 files, **55,342 lines, 3,160
+unsafe lines** (of 116,960 production and 4,965 unsafe total).
+
+**Scoreboard** — last line of every agent commit body, measured locally:
+`Score: checks 24/44 · legacy 55342 · production 116960 · unsafe 4965`.
+`legacy` = `cat sm/src/game/sm_*.rs | wc -l`. First lane-B commit adds that row
+to `tools/progress.sh`.
+
+**Lane A — coverage (one agent).** Land required checks in this order; reorder
+only when the route forces it, and say so in the commit: pickup-power-bomb →
+boss-spore-spawn → boss-crocomire → item-wave → item-grapple → area-wrecked-ship
+→ boss-phantoon → item-gravity → boss-botwoon → item-space-jump → boss-draygon →
+item-spring-ball → item-plasma → item-x-ray → item-screw-attack →
+boss-golden-torizo → boss-ridley → area-tourian → boss-mother-brain → credits.
+One commit per passing check (recipe + expectation only). If one check takes
+over 3 hours, write the blocker under work item 1 and move to the next row.
+
+**Lane B — bank retirement (other agents, one bank each).** Order: `sm_94`
+(761) → `sm_91` (1,237) → `sm_90` (1,955) → `sm_88` (1,956) → `sm_81` (2,572)
+→ `sm_80` (2,494) → `sm_82` (4,670) → `sm_8b` (4,938). Enemy banks start only
+when lane A covers their encounters: `sm_a7` after Phantoon, `sm_aa` after
+Golden Torizo, `sm_a6` after Ridley, `sm_a9` after Mother Brain; `sm_9b` after
+Grapple. For each function in the bank: delete it if unreachable or duplicated
+by an owned module, otherwise move it into the owning module on safe Session
+state (no raw `g_ram`, no new Host/effects/adapter type). Name the checkpoint
+segments that exercise it. A bank is done when its file is deleted. Total
+production must fall with each bank; unsafe lines must fall with every commit.
+Drafts not adopted within 2 hours are recorded in one line and dropped.
+
+**Waypoints** (review clock; a miss gets a diagnosis, not a new plan):
+
+| By | Checks | Banks deleted | Legacy | Production |
+| --- | ---: | --- | ---: | ---: |
+| 10-25 06:00 | ≥27/44 | sm_94 | ≤54,600 | ≤116,500 |
+| 10-25 18:00 | ≥32/44 | + sm_91, sm_90 | ≤51,500 | ≤114,000 |
+| 10-26 18:00 | ≥38/44 | + sm_88, sm_81, sm_80 | ≤44,500 | ≤110,000 |
+| 10-27 18:00 | 44/44 | + sm_82, sm_8b | ≤35,000 | ≤104,000 |
+
+Map work is limited to the two open fixes under Codebase map; no other lane.
+
 ## Check-ins
 
+- **2026-10-24 23:10 (5096059):** user asked the review to steer harder. Added
+  the milestone plan above (two lanes, bank-retirement unit, scoreboard line,
+  waypoints) and made it binding from PLAN.md. Power Bomb route landed (5096059)
+  as a non-required segment; checks still 24/44.
 - **2026-10-24 22:52 (98aafd4):** 4 agent source commits since 2754947 (3 code,
   1 map SVG), 0 docs-only; no stall. **Coverage flat at 24/44** (no recipe commit;
   Power Bomb route advanced only in PLAN text). Production 117,104 → 116,960 (−144);

@@ -18,15 +18,15 @@ preserve others' work. Do not delete another process's lock or force-push main.
 
 ## Review directives (user direction, 2026-10-24)
 
-Read [the external review](REVIEW.md) next. Hygiene and process reduction are done.
-One agent expands checkpoint recipes; others consolidate exercised subsystems in
-parallel, naming coverage per commit. Prefer legacy-bank retirement; production
-must fall. A docs-only commit needs a code commit beside it. Commit the Power Bomb
-route as a checked segment as soon as it reaches A3AE. Delete whole redundant layers;
-verification added per adoption must not exceed production deleted (prefer segments). Keep this plan under ~200 lines, with
-current rules/state; results belong in commit messages (~8 lines maximum).
-Direct user instructions take precedence. Historical queues,
-gates and results in [HISTORY.md](HISTORY.md) are not current rules.
+Read [the external review](REVIEW.md) next. **The [milestone plan](REVIEW.md#milestone-plan-2026-10-24)
+there is binding and executes work order items 1-2.** Two lanes only: lane A (one
+agent) lands required checks in its route order; lane B (all others, one agent per
+bank) retires legacy `game/sm_*.rs` banks in its bank order, deleting each file. Every
+commit subject starts `A:` or `B:sm_XX`, and its body ends with the scoreboard line
+the milestone plan defines. A docs-only commit needs a code commit beside it.
+Verification added per adoption must not exceed production deleted. Keep this plan
+under ~200 lines; results belong in commit messages (~8 lines). Direct user
+instructions take precedence; [HISTORY.md](HISTORY.md) holds no current rules.
 
 **Codebase map:** the [view](https://jimlundin.github.io/sm-decomp/) shows gameplay
 responsibilities, ownership and contextual dependencies; support files are hidden.
