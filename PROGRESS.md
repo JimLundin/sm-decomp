@@ -39,9 +39,11 @@ flowchart LR
     BUILD --> COMPARE["65 owned/reference comparisons<br/>PASS / retired candidate"]:::done --> ADOPT
     CHECKS["14 request / jump / composed / caller checks<br/>PASS / exact paired captures"]:::done --> ADOPT
     CHECKS --> MOVIE["Normal gameplay caller + 120-frame tail<br/>8,577 frames / zero failures"]:::done
-    MOVIE --> MUT["Owned mutation tests<br/>hosted pending"]:::active --> ADOPT
-    ADOPT --> NEXT["Longer shared ownership<br/>fewer RAM transfers"]:::pending
-    class BUILD,COMPARE,CHECKS,MOVIE,MUT changed
+    MOVIE --> MUT["Owned mutation tests<br/>hosted running"]:::active --> ADOPT
+    ADOPT --> NEXT["One interval: transitions / palette / damage<br/>owned draft / 64 production lines removed"]:::draft
+    NEXT --> STEST["87 components + 8,577 frames<br/>PASS / zero failures"]:::done
+    STEST --> SMUT["Two settlement mutations<br/>hosted pending"]:::active
+    class NEXT,STEST,SMUT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -49,15 +51,18 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-| Rust accounting | Current main | Owned transition draft change |
-| --- | ---: | ---: |
-| Production, including runtime adapters | 116,748 | +238 |
-| Verification and check support | 31,009 | +2,414 |
-| Combined maintained Rust | 147,757 | +2,652 |
+[Candidate source](https://github.com/JimLundin/sm-decomp/tree/5e546bdc85c8d6f5216c4bf69f247b0299ec1e20/sm/src/game/player_transitions) / [Hosted checks](https://github.com/JimLundin/sm-decomp/actions/runs/40078990293)
+
+| Rust accounting | Current main | Transitions draft ? | Follow-on draft ? |
+| --- | ---: | ---: | ---: |
+| Production, including runtime adapters | 116,748 | +238 | ?64 |
+| Verification and check support | 31,009 | +2,414 | +311 |
+| Combined maintained Rust | 147,757 | +2,652 | +247 |
 
 31,009 verification lines are excluded from the production target, **not deleted**.
 Draft bcdbd482 removes 2,235 old bank/animation/pose lines; complete replacement
-and integration still grow production by 238 lines. Not yet adopted.
+and integration still grow production by 238 lines. The follow-on removes a
+second state transfer and the damage RAM adapter. Both drafts await adoption.
 
 <details>
 <summary>Verification details and earlier migrations</summary>

@@ -157,20 +157,24 @@ The bounded any-input replay passes 8,577 frames with zero failures, including
 probes execute earlier in the demo phase; they are not claimed as later normal
 play coverage. The route covers one gameplay room, not the complete game.
 
-The final candidate is prepared on a verification branch for hosted mutations;
+The final candidate is committed as 5e546bdc on
+verify/player-transitions-owned-20261024. Hosted full run 40078990293 is active;
 no replacement is adopted on main yet. Three exact composed faults extend the
 existing runner, and the two earlier transition faults now target actual owned
 sites. The preceding full CI run 40074629985 passed all 93 distinct faults at
 4055d8db, independently audited from receipts/logs and classifier source; that
 run does not validate mutations of this owned candidate. The new full run selects
-96 faults. Crashes, timeouts and compile failures do not count as detections.
+96 faults. The redundant same-head ordinary run was cancelled after the full
+dispatch was confirmed active; cancellation is not a pass. Crashes, timeouts and
+compile failures do not count as detections.
 
 Complete draft accounting: production +238 lines, verification/support +2,414,
 combined +2,652 to 150,409 Rust lines. The old bank/animation/pose files shrink
 by 2,235 lines, offset by the owned core and integration. This is consolidation
 and ownership progress, not net code reduction. Production unsafe-function
 declarations fall by 129; verification adds nine, so the combined count falls
-by 120. Remaining unsafe operations still need removal.
+by 120. Maintained mutation/comparison support adds 761 Python and 208 JSON
+lines separately. Remaining unsafe operations still need removal.
 
 Existing references and in-flight checks remain valid work. The65-case batch now
 passes:59prior captures are byte-identical, including11CPU comparisons, and six
@@ -181,6 +185,31 @@ ownership, ordering or failure contract needed to validate the replacement.
 Reviews and targeted checks run alongside implementation; fidelity, full caller
 closure, backend-free core compilation and meaningful mutations still gate
 adoption. No unverified gameplay is adopted to meet a schedule.
+
+The isolated follow-on draft now extends one Session interval through
+transitions, palette and pending-damage consumption, based on 5e546bdc.
+All three beta callers share transitions and palette; only normal gameplay
+consumes pending damage. Two fractional-health bytes join Inventory ownership.
+The palette wrapper, periodic-damage RAM adapter, Context interface and unused
+grapple transport are retired. Native arithmetic, later LE sign checks and
+existing pickup/refill fraction behavior remain unchanged. Ownership is released
+before pause/low-health, demo restoration and invalid-damage crash paths.
+
+Follow-on source 85e16c54 passes full formatting, normal/verifier/detached
+compilation and release DLL build. All 87 component cases pass: the original 79
+and eight exact paired settlement captures, independently audited. The bounded
+any-input replay passes 8,577 frames with zero failures and 121 settlement-return
+hits plus 120 follow-up frames. The direct invalid/clamp cases validate owned
+composition and state prefixes, not execution of the fatal caller path.
+
+This follow-on removes 64 production Rust lines and adds 311 verification Rust
+lines: net +247 to 150,656. Separate support adds 155 Python and 50 JSON lines.
+One production unsafe wrapper is removed and two verification unsafe functions
+are added; the combined declaration count rises by one to 2,428. It removes one unnecessary Session export/import
+pair per beta invocation; no measured speedup is claimed. Two additional exact
+mutation checks are prepared in the existing hosted runner (early damage
+consumption and lost fractional-health publication); the next full run selects
+98 faults. Both drafts remain unadopted until their required hosted checks pass.
 
 The public report must foreground owned behavior, production caller migration,
 legacy deletion and adoption. Keep verification detail expandable below those

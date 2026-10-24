@@ -1,0 +1,50 @@
+[
+  {
+    "name": "transitions_settlement_early_consume",
+    "fault": "SETTLEMENT_EARLY_CONSUME",
+    "selected": "transition:3900",
+    "qualification": "exact_completed_trace",
+    "edits": [
+      {
+        "path": "sm/src/game/sm_90.rs",
+        "before": "            pt::finish_movement_and_palette(&mut runtime);\n            let frozen = runtime.inputs().frozen;\n            crate::game::samus_periodic_damage::apply(runtime.session_mut(), frozen)",
+        "after": "            let frozen = runtime.inputs().frozen;\n            let result = crate::game::samus_periodic_damage::apply(runtime.session_mut(), frozen);\n            pt::finish_movement_and_palette(&mut runtime);\n            result"
+      },
+      {
+        "path": "sm/src/verification/player_settlement.rs",
+        "before": "            if game.g_ram.as_slice() != expected.as_slice() {\n                let at = game\n                    .g_ram\n                    .iter()\n                    .zip(&expected)\n                    .position(|(a, b)| a != b)\n                    .unwrap();\n                return Err(format!(\n                    \"settlement {id} RAM mismatch at {at:05x}: {:02x} != {:02x}\",\n                    game.g_ram[at], expected[at]\n                ));\n            }\n",
+        "after": "            let completed_matches = game.g_ram.as_slice() == expected.as_slice();\n"
+      },
+      {
+        "path": "sm/src/verification/player_settlement.rs",
+        "before": "            observer::scalar(3903, 1);",
+        "after": "            observer::scalar(3903, u16::from(completed_matches));"
+      }
+    ],
+    "expected": "Normal return; consume seeded damage before actual acid producer, leaves generated damage pending."
+  },
+  {
+    "name": "transitions_settlement_lost_fraction",
+    "fault": "SETTLEMENT_LOST_FRACTION",
+    "selected": "transition:3900",
+    "qualification": "exact_completed_trace",
+    "edits": [
+      {
+        "path": "sm/src/game/samus_periodic_damage.rs",
+        "before": "    session.inventory.health_fraction = u16::from_le_bytes((health as u16).to_ne_bytes());",
+        "after": "    let _ = u16::from_le_bytes((health as u16).to_ne_bytes());"
+      },
+      {
+        "path": "sm/src/verification/player_settlement.rs",
+        "before": "            if game.g_ram.as_slice() != expected.as_slice() {\n                let at = game\n                    .g_ram\n                    .iter()\n                    .zip(&expected)\n                    .position(|(a, b)| a != b)\n                    .unwrap();\n                return Err(format!(\n                    \"settlement {id} RAM mismatch at {at:05x}: {:02x} != {:02x}\",\n                    game.g_ram[at], expected[at]\n                ));\n            }\n",
+        "after": "            let completed_matches = game.g_ram.as_slice() == expected.as_slice();\n"
+      },
+      {
+        "path": "sm/src/verification/player_settlement.rs",
+        "before": "            observer::scalar(3903, 1);",
+        "after": "            observer::scalar(3903, u16::from(completed_matches));"
+      }
+    ],
+    "expected": "Normal return; computed whole health97 with original fraction2000 instead of9fff."
+  }
+]

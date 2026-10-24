@@ -338,6 +338,7 @@ macro_rules! scalar_words {
         $f(0x9a6,$($borrow)* $s.inventory.beams.active);
         $f(0x9a8,$($borrow)* $s.inventory.beams.owned);
         $f(0x9c2,$($borrow)* $s.inventory.health.current);
+        $f(0xa4c,$($borrow)* $s.inventory.health_fraction);
         $f(0x9c4,$($borrow)* $s.inventory.health.maximum);
         $f(0x9c8,$($borrow)* $s.inventory.ammunition[0].maximum);
         $f(0x9cc,$($borrow)* $s.inventory.ammunition[1].maximum);

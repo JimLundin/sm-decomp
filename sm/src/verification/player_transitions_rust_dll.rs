@@ -56,6 +56,7 @@ pub unsafe extern "C" fn sm_verify_player_transitions_rust(
                 2759 | 2763 | 3004 | 3036 | 3062 | 3086 => sm::cpu_infra::player_transitions_selected::capture(id, &original[header..], &mut game),
                 3700..=3702 => sm::cpu_infra::player_transitions_composed::capture(id, &original[header..], &mut game),
                 3800..=3804 => sm::cpu_infra::player_transitions_callers::capture(id, &original[header..], &mut game),
+                3900..=3907 => sm::cpu_infra::player_settlement::capture(id, &original[header..], &mut game),
                 _ => Err("unknown player transition fixture".into()),
             }
         });

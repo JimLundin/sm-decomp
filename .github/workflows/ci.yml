@@ -261,4 +261,4 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Room, native ownership or restoration mutation checks failed' }
       - name: Report ROM-dependent mutation checks not selected
         if: github.event_name != 'workflow_dispatch' || !inputs.full_actor_checks
-        run: Write-Output '2 initialized Kraid, 12 player collision and 5 player transition DLL mutations not selected; no ROM requested. Ordinary runs select 77 faults; full dispatch selects 96. Skipped cases are not counted as passes or killed mutations.'
+        run: Write-Output '2 initialized Kraid, 12 player collision and 7 player transition DLL mutations not selected; no ROM requested. Ordinary runs select 77 faults; full dispatch selects 98. Skipped cases are not counted as passes or killed mutations.'

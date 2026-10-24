@@ -38,7 +38,7 @@ use crate::game::sm_80::{
 use crate::game::sm_88::EnableHdmaObjects;
 use crate::game::sm_91::{
     DemoObjectInputHandler, MakeSamusFaceForward, Samus_CancelSpeedBoost, Samus_Func20,
-    Samus_HandlePalette, Samus_InputHandler, Samus_LoadSuitPalette, SamusFunc_E633,
+    Samus_InputHandler, Samus_LoadSuitPalette, SamusFunc_E633,
 };
 use crate::game::sm_94::{
     HandleGrappleBeamGfx, PostGrappleCollisionDetect_X, PostGrappleCollisionDetect_Y,
@@ -1928,14 +1928,21 @@ crate::game::callback_dispatch! {
         RunSamusMovementHandler(game);
         crate::game::minimap::update(game);
         RunFrameHandlerGamma(game);
-        pt::finish_movement(&mut Runtime::new(game));
+        let damage_result = {
+            let mut runtime = Runtime::new(game);
+            pt::finish_movement_and_palette(&mut runtime);
+            let frozen = runtime.inputs().frozen;
+            crate::game::samus_periodic_damage::apply(runtime.session_mut(), frozen)
+        };
         #[cfg(sm_verify_dll)]
         {
-            assert!(!game.actor_identity_is_with_session(), "finish_movement must return RAM authority");
-            crate::verify_probe::hit("player.transitions.caller17.return");
+            assert!(
+                !game.actor_identity_is_with_session(),
+                "player settlement must return RAM authority"
+            );
+            crate::verify_probe::hit("player.settlement.caller17.return");
         }
-        Samus_HandlePalette(game);
-        if crate::game::samus_periodic_damage_ram::apply(game).is_err() {
+        if damage_result.is_err() {
             InvalidInterrupt_Crash(game);
         }
         Samus_PauseCheck(game);
@@ -1953,8 +1960,10 @@ crate::game::callback_dispatch! {
         word!(game.samus_contact_damage_index = 0);
         RunSamusMovementHandler(game);
         crate::game::minimap::update(game);
-        pt::finish_movement(&mut Runtime::new(game));
-        Samus_HandlePalette(game);
+        {
+            let mut runtime = Runtime::new(game);
+            pt::finish_movement_and_palette(&mut runtime);
+        }
         word! {game; joypad1_lastkeys = word!(game.controller1_input_for_demo);
             joypad1_newkeys = word!(game.controller1_new_input_for_demo);
             joypad1_input_samusfilter = word!(game.demo_backup_prev_controller_input);
@@ -1963,8 +1972,10 @@ crate::game::callback_dispatch! {
     [9496627] Samus_Func15 [] {
         word!(game.samus_contact_damage_index = 0);
         RunSamusMovementHandler(game);
-        pt::finish_movement(&mut Runtime::new(game));
-        Samus_HandlePalette(game);
+        {
+            let mut runtime = Runtime::new(game);
+            pt::finish_movement_and_palette(&mut runtime);
+        }
         word! {game; joypad1_lastkeys = word!(game.controller1_input_for_demo);
             joypad1_newkeys = word!(game.controller1_new_input_for_demo);
             joypad1_input_samusfilter = word!(game.demo_backup_prev_controller_input);

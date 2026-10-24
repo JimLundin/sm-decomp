@@ -363,7 +363,7 @@ def main():
             player_transitions_dll_mutations.run_checks(
                 root, work, paths, run, copy_tracked, rom=actor_rom)
         else:
-            print("transition DLL mutations: 5 not selected (2 metadata, 3 composed); original ROM not supplied; no kills credited", flush=True)
+            print("transition DLL mutations: 7 not selected (2 metadata, 3 composed, 2 settlement); original ROM not supplied; no kills credited", flush=True)
     print("room/native/restore mutation checks: 9/9 killed; all nine frozen baselines passed", flush=True)
 
 
