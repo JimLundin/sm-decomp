@@ -440,8 +440,11 @@ references; measure build/test time and resource growth before changing the loop
    staging/list/queue projection helpers are being finalized against accepted aliases;
    unaffected implementation proceeds. No new per-field facade or whole-RAM owner.
    Root alone integrates and builds. Separately,35population/animation and40movement/
-   contact reference cases pass source qualification; the combined predecessor build
-   is running, with no capture pass yet. Preserve56existing mutants and add the
+   contact reference cases pass source qualification. The combined predecessor passes
+   formatting, build and source/native checks; all75captures pass exact fixture
+   assertions and protocol checks (source7c2f9197). Independent output audit is
+   pending; these are predecessor references, not replacement comparisons.
+   Preserve56existing mutants and add the
    nine selected actor faults, including discarded-future handle rejection.
    Scope includes population/assets, spawn/respawn/death, separate select/update,
    common animation/contact/combat, the complete969-line movement/query scope,

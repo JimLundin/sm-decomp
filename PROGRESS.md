@@ -42,10 +42,14 @@ flowchart LR
     AT --> ATC["Metadata + external constructor<br/>compile PASS"]:::done
     ATC --> AB["Parallel actor implementation"]:::active
     AV --> APR["Exceptional buffers<br/>helper review"]:::active --> AB
-    AB --> AX["35 population + 40 movement cases<br/>reference build running"]:::active
-    AX --> AVERIFY["Actual routes + oracle + mutations"]:::pending
+    AB --> AX["Combined predecessor<br/>format + build + source checks PASS"]:::done
+    AX --> AXPOP["35 population / animation references<br/>capture PASS"]:::done
+    AX --> AXMOVE["40 movement / contact references<br/>capture PASS"]:::done
+    AXPOP --> AXAUDIT["Independent capture audit"]:::active
+    AXMOVE --> AXAUDIT
+    AXAUDIT --> AVERIFY["Actual routes + oracle + mutations"]:::pending
     AVERIFY --> AA["Caller retirement + adoption"]:::pending
-    class AD,AS,AV,AE,AM,AT,ATC,APR,AB,AX,AVERIFY changed
+    class AX,AXPOP,AXMOVE,AXAUDIT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
