@@ -14,6 +14,56 @@ earlier versions; this file holds only current findings.
   Adoption correctly held. Watch: corpus `.inputs` files are gitignored with
   only checksums committed; a fresh agent must be able to rebuild them.
 
+## Codebase map (user request, 2026-10-24)
+
+The user finds the [codebase map](https://jimlundin.github.io/sm-decomp/) too
+overwhelming. Reviewed at snapshot a20e890d (already behind `main`).
+
+What works: polished, offline, fast; breadcrumbs, search and the one-hop file
+graph are good. Keep those.
+
+Why it overwhelms:
+- It answers "which files reference which", but readers ask "what does this
+  part of the game do, is it migrated yet, and what is next". Nothing shows
+  owned versus legacy: owned folders (`player_movement/`) and legacy banks
+  (`sm_a9.rs`, 5.7k lines) look identical in one 259-tile alphabetical grid.
+- Every screen is three full columns of text. The right panel repeats all
+  nine curated tensions on every view, whatever is selected.
+- Verification, docs, build and tools (~290 of 591 files) get equal weight
+  with the game.
+- Wording is internal jargon ("interval-scoped", "projection", "foreign
+  calls", "compatibility aliases") plus long evidence disclaimers.
+- Enter in the search box does not open the single match.
+- The 656 KB `index.html` is regenerated and committed by hand, so it goes
+  stale and adds report commits.
+
+Brief (one agent, in parallel with corpus work; keep it small):
+1. **Status first.** Default overview: gameplay responsibilities as tiles
+   named in game terms (Samus movement, enemies, bosses, rooms and doors,
+   projectiles, HUD, audio...), each coloured Owned / Partly owned / Legacy
+   and sized by production lines. Derive status from existing markers
+   (`forbid(unsafe_code)`, `unsafe`, `g_ram`, bank file); no hand-maintained
+   status. Show remaining legacy lines against the 110k / 100k targets.
+2. **Hide what readers don't need.** Verification, docs, build and tools are
+   off by default behind one toggle.
+3. **Context only.** The side panel shows only tensions touching the current
+   selection; the overview shows at most the top three. Cut tensions to one
+   plain sentence each plus "what resolves it". Move the evidence-limits text
+   behind a single "About this map" link.
+4. **Plain language.** Rename regions and descriptions so someone who knows
+   the game but not the code can follow. Let search find game concepts
+   ("Kraid", "grapple", "doors") via a small alias table.
+5. **Fixes.** Enter opens the top search match.
+6. **Stop committing the build output.** Generate `index.html` from `HEAD`
+   in the Pages workflow and stop committing it. Agents no longer refresh
+   the map; it is always current. This follows the user's local-validation
+   policy: agents need not watch the workflow.
+
+Done when: a first-time visitor can answer "what is migrated, what is left,
+where is Kraid's code" from the first screen without scrolling, at desktop
+and phone width; the generator and template together do not grow by more
+than ~300 lines; no `index.html` commits remain in agent history afterwards.
+
 ## Initial review (2026-10-24, a408c8f)
 
 ## Baseline measured at a408c8f
