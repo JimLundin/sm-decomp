@@ -540,8 +540,14 @@ references; measure build/test time and resource growth before changing the loop
    independent audit confirms actual terrain/door/horizontal paths,7rooms and
    5definitions. No credits or unreported optional-branch coverage is claimed.
    Candidate9b37afb1 is published on verify/owned-player-collision-20261024 only.
-   Full CI40068610664 runs91selected faults (73preserved+18new); formatting passes,
-   builds/mutations remain active. Adjacent Runtime guards remain to be completed.
+   Full CI40068610664 runs91selected faults (73preserved+18new); formatting,
+   full game build, Cargo exports and three backend-free core checks pass;
+   mutation jobs remain active. Six adjacent Runtime guards pass with21expected
+   panics; nine actor cases match1,442,111bytes and11contact cases match3,670,343bytes.
+   Independent output/diagnostic audits pass. Per-child exit receipts were not
+   saved separately; successful execution is coordinator-observed, not independently
+   attested by those files. Ordinary pushes select77faults, excluding2initialized
+   Kraid and12collision DLL faults; only the explicit full dispatch selects91.
    Local compilation remains serialized.
    Added13verification Rust lines (complete actor increment5406), no gameplay.
    Ordinary builds now

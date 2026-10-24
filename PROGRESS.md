@@ -192,11 +192,15 @@ flowchart LR
     PCFMT --> PCCOMPARE["74 + 9 frozen comparisons<br/>20,448,594 bytes identical"]:::done
     PCCOMPARE --> PCINVAR["3 actual Runtime invariants PASS"]:::done
     PCCOMPARE --> PCOLD["13 old world / composed cases<br/>4,063,411 bytes identical"]:::done
-    PCFMT --> PCDET["Backend-free core checks"]:::pending
+    PCRELEASE --> PCGUARD["6 shared Runtime guards<br/>21 expected panics PASS"]:::done
+    PCRELEASE --> PCACTOR["9 adjacent actor cases<br/>1,442,111 bytes identical"]:::done
+    PCRELEASE --> PCCONTACT["11 adjacent contact cases<br/>3,670,343 bytes identical"]:::done
+    PCFMT --> PCDET["3 backend-free core checks<br/>hosted PASS"]:::done
+    PCFMT --> PCBUILD["Hosted game build + Cargo exports<br/>PASS"]:::done
     PCFMT --> PCORACLE["21,015 frames / 14 probes<br/>0 failures + 120-frame tail PASS"]:::done
     PCFAULT --> PCMUT["Hosted CI / 91 selected faults<br/>running"]:::active
     PCFMT --> PCMUT
-    class PCRELEASE,PCCOMPARE,PCINVAR,PCOLD,PCORACLE,PCMUT changed
+    class PCGUARD,PCACTOR,PCCONTACT,PCDET,PCBUILD changed
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
