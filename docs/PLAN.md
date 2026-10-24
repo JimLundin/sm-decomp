@@ -50,6 +50,35 @@ An agent holding a reservation must release its own reservation immediately,
 preserving source changes and verification work. Do not delete another
 process's lock; tell its owner to release it.
 
+## Review directives (user direction, 2026-10-24)
+
+The user commissioned an external review of a408c8f and directs agents to
+adjust to it. Evidence, baselines and targets: [REVIEW-2026-10-24.md](REVIEW-2026-10-24.md).
+These directives take priority over the work order below; where they conflict,
+these win. Do them in this order:
+
+1. **Hygiene commit:** one mechanical `cargo fix` / `clippy --fix` pass for
+   c2rust leftovers (2,426 warnings at a408c8f), verified by replay; allow the
+   offset-guarded FFI warnings explicitly. Then keep the warning count from rising.
+2. **Shrink the process:** rewrite this file to at most ~200 lines (goal, rules,
+   validation, current item, next three); move history to `docs/HISTORY.md`.
+   Generate PROGRESS.md as a short metrics table from `tools/progress.sh`,
+   updated once per adopted milestone. Stop per-commit refresh of the atlas,
+   architecture and target-architecture reports. Target: under 20% docs-only commits.
+3. **Checkpoint corpus before more adoption:** one command replays oracle
+   checkpoints covering every area, each boss, doors/elevators, save/load,
+   death and credits, reporting per-segment results. Commit only recipes,
+   never checkpoints. Each adoption names the segments that exercise it.
+4. **Then resume subsystem adoption under a size rule:** every adoption reports
+   production lines added and legacy lines deleted; net growth needs a reason;
+   no new Host/effects/adapter layer unless an existing one cannot serve. Get
+   production back under 110,000 (117,986 at a408c8f) before a new subsystem.
+   Consolidate probes and `cfg(sm_verify_dll)` behind host methods in the
+   subsystems being touched; try `cargo-mutants` before adding text-patch recipes.
+
+A red `main` in CI is a stop signal: no new adoption starts until it is green
+or the failing commit is reverted. CI still does not gate individual adoptions.
+
 ## Accepted target architecture (2026-10-22)
 
 The destination is the [owned Rust architecture](target-architecture/README.md),
