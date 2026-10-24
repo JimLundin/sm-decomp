@@ -464,6 +464,16 @@ references; measure build/test time and resource growth before changing the loop
    these are not execution passes. Preliminary new room module is3795production
    lines, above the earlier estimate; final complete accounting/repricing is
    required before adoption. No reduction or persistent-Session claim.
+   Candidate644a0b45 now passes all37background full-byte comparisons,56earlier
+   comparisons and3level-copy checks. Actual prepared-world execution passes
+   contact0/1, terminalIRQ6/7 and mapped stations9/10; initial2/3 and reset8 fail
+   on a missing fixture render buffer, while full-door4/5 reaches an unset
+   source-room graphics hook and fails native dispatch. Source investigations
+   identified missing normal initialization; fixes and reruns remain pending.
+   Complete independent accounting is production+3250lines/+26349tokens/
+   +118573LFbytes, verificationRust+2908lines, Python+42bytes, native unchanged.
+   This exceeds the prior upper estimate by700production lines; adapters remain
+   charged to production. Four new mutation patches are drafted, not executed.
    Reuse current owners;84additional disjoint bytes comprise82room-related bytes
    and two shared lossless continuation bytes (proposed union52,373). Retire the
    actual competing orchestration and stale door inputs in the same adoption.

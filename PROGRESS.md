@@ -44,7 +44,7 @@ flowchart LR
     RI --> RBG["background.rs"]:::draft
     RI --> RCOMPAT["compatibility.rs / actual callers"]:::draft
     RI --> RPLM["creation.rs / shared door inputs"]:::draft
-    RI --> RT["Supplied topology / actual callers<br/>verification pending"]:::pending
+    RI --> RT["Supplied topology / actual callers<br/>6 PASS / 5 FAIL"]:::failed
     ROWNERCHECK --> RT
     RSELECTCHECK --> RT
     RINSTALLCHECK --> RT
@@ -54,13 +54,20 @@ flowchart LR
     RI --> RBUILD["Combined candidate<br/>format + build PASS"]:::done
     RBUILD --> RCOMPARE["Room / contact / start<br/>56 comparisons match"]:::done
     RCODEC --> RGUARD["Runtime + world ownership<br/>execution PASS"]:::done
-    RBCAP --> RBVERIFY["Replacement background comparisons<br/>pending"]:::pending
+    RBCAP --> RBVERIFY["Replacement background comparisons<br/>37 / 37 byte-identical"]:::done
     RCOMPARE --> RT
     RGUARD --> RT
+    RT --> WCONTACT["Contact / cases 0-1<br/>PASS"]:::done
+    RT --> WSTART["Initial loading / cases 2-3<br/>render buffer missing / FAIL"]:::failed
+    RT --> WDOOR["Full door route / cases 4-5<br/>source-room setup missing / FAIL"]:::failed
+    RT --> WIRQ["Terminal IRQ / cases 6-7<br/>PASS"]:::done
+    RT --> WRESET["Reset frame / case 8<br/>render buffer missing / FAIL"]:::failed
+    RT --> WSTATION["Mapped load stations / cases 9-10<br/>PASS"]:::done
     RT --> RMUT["Room mutation execution<br/>pending"]:::pending
-    class RW,RCONTENT,RSTATE,RCODEC,RPROTO,RBG,RCOMPAT,RPLM,RBFIX,RBCAP,RBUILD,RCOMPARE,RGUARD,RBVERIFY changed
+    class RT,RBVERIFY,WCONTACT,WSTART,WDOOR,WIRQ,WRESET,WSTATION changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
