@@ -4,9 +4,107 @@
 use super::*;
 use crate::game::projectile_initialization::Initialization;
 
-pub(crate) const CASES: u32 = 92;
+pub(crate) const CASES: u32 = 102;
 
-pub(crate) fn capture(id: u32) -> Option<Vec<u8>> {
+fn reaction_fixture(id: u32, g: &mut Game, loaded: &RomImage) -> (Vec<u8>, u8) {
+    let (block, bts, header, outcome) = [
+        (0x4000, 1, 0x8800, 0),
+        (0x7000, 1, 0x8820, 0),
+        (0xc000, 1, 0x8800, 1),
+        (0xf000, 1, 0x8820, 1),
+        (0x4000, 0x81, 0, 0),
+        (0x7000, 0x81, 0, 0),
+        (0xf000, 0x81, 0, 1),
+        (0xc000, 0x81, 0x8840, 1),
+        (0, 1, 0, 0),
+        (0, 0x81, 0, 0),
+    ][(id - 92) as usize];
+    let bomb = id >= 100;
+    // Only Loaded contains the authored definitions; Native remains independently zeroed.
+    for (address, value) in [
+        (0x949ea8, 0x8800u16),
+        (0x94a014, 0x8820),
+        (0x949fc8, 0x9000),
+        (0x949002, 0x8840),
+        (0x848800, 0xb3cf),
+        (0x848802, 0x9100),
+        (0x848820, 0xb3cf),
+        (0x848822, 0x9120),
+        (0x848840, 0xb3cf),
+        (0x848842, 0x9140),
+    ] {
+        rom_word(loaded, address, value);
+    }
+    for (at, value) in [
+        (0x79f, 1),
+        (0x7a5, 8),
+        (0x7a7, 8),
+        (0x7a9, 2),
+        (0x7ab, 2),
+        (0x7b9, 128),
+        (0xdc4, 0x7777),
+        (0x1c27, 16),
+        (if bomb { 0xb64 } else { 0xd08 }, 32),
+        (if bomb { 0xb78 } else { 0xd0c }, if bomb { 32 } else { 16 }),
+        (0xc18, if bomb { 0x500 } else { 0 }),
+    ] {
+        put(g, at, value);
+    }
+    let single_cell = [(10, block)];
+    let cells: &[(usize, u16)] = if bomb {
+        &[(18, 0x4000), (10, 0x7000), (19, 0xc000), (17, 0xf000)]
+    } else {
+        &single_cell
+    };
+    for &(cell, level) in cells {
+        put(g, 0x10002 + 2 * cell, level);
+        g.g_ram[0x16402 + cell] = bts;
+    }
+    for raw in (if bomb { 72 } else { 78 }..=78).step_by(2) {
+        for base in [
+            0x1c87, 0x1cd7, 0x1d27, 0x1d77, 0x1dc7, 0x1e17, 0xde1c, 0xde6c, 0xdebc, 0xdf0c,
+        ] {
+            put(g, base + raw, 0xaaaa);
+        }
+    }
+    let mut expected = g.g_ram.to_vec();
+    expected[0xdc4..0xdc6].copy_from_slice(&(if bomb { 26u16 } else { 10 }).to_le_bytes());
+    if bomb {
+        expected[0xc18..0xc1a].copy_from_slice(&0x501u16.to_le_bytes());
+    }
+    let single_allocation = [(78, header, header + 0x900, 20)];
+    // Independent literal allocations: center/north/east/west, then no-op south.
+    let allocations: &[(usize, u16, u16, u16)] = match id {
+        100 => &[
+            (78, 0x8800, 0x9100, 36),
+            (76, 0x8820, 0x9120, 20),
+            (74, 0x8800, 0x9100, 38),
+            (72, 0x8820, 0x9120, 34),
+        ],
+        101 => &[(78, 0x8840, 0x9140, 38)],
+        _ if header != 0 => &single_allocation,
+        _ => &[],
+    };
+    for &(raw, header, program, block) in allocations {
+        expected[0x1c27..0x1c29].copy_from_slice(&(raw as u16).to_le_bytes());
+        for (base, value) in [
+            (0x1c37, header),
+            (0x1c87, block),
+            (0x1cd7, 0x853d),
+            (0x1d27, program),
+            (0x1d77, 0),
+            (0x1dc7, 0),
+            (0xde1c, 1),
+            (0xde6c, 0x8da0),
+            (0xdf0c, 0),
+        ] {
+            expected[base + raw..base + raw + 2].copy_from_slice(&value.to_le_bytes());
+        }
+    }
+    (expected, outcome)
+}
+
+pub(crate) fn capture(id: u32, grapple: impl FnOnce(&mut Game) -> u8) -> Option<Vec<u8>> {
     if id >= CASES {
         return None;
     }
@@ -21,16 +119,18 @@ pub(crate) fn capture(id: u32) -> Option<Vec<u8>> {
         28..=29 => 8,
         _ => 73,
     };
-    fixture(seed, &mut g, &loaded, &native);
+    let expected = if id >= 92 {
+        Some(reaction_fixture(id, &mut g, &loaded))
+    } else {
+        fixture(seed, &mut g, &loaded, &native);
+        None
+    };
     let rw = |address: u32, value: u16| {
-        for image in [&loaded, &native] {
-            for (offset, byte) in value.to_le_bytes().into_iter().enumerate() {
-                image.write(lorom(address) + offset, byte);
-            }
-        }
+        rom_word(&loaded, address, value);
+        rom_word(&native, address, value);
     };
     let mut limit = None;
-    if id >= 82 {
+    if (82..=91).contains(&id) {
         // Actual numeric collision callers; no initializer substitutes for a scan.
         g.g_ram[0xb64..0xcd4].fill(0);
         for (at, value) in [
@@ -420,7 +520,7 @@ pub(crate) fn capture(id: u32) -> Option<Vec<u8>> {
         43 => {
             put(&mut g, 0x9d2, 0xffff);
         }
-        44..=91 => {}
+        44..=101 => {}
         _ => unreachable!(),
     }
     g.loaded_rom = Some(if let Some(length) = limit {
@@ -434,7 +534,10 @@ pub(crate) fn capture(id: u32) -> Option<Vec<u8>> {
     });
     // Candidate installation changes only this binding to register_native_rom.
     g.register_native_rom(native.clone());
+    let outcome = expected.as_ref().map_or(0, |(_, outcome)| *outcome);
     let result = catch_unwind(AssertUnwindSafe(|| match id {
+        92..=99 => assert_eq!(grapple(&mut g), outcome, "grapple.bridge.result.{id}"),
+        100..=101 => call_motion(0x90b099, 0, &mut g),
         82..=91 => call_motion(
             match id {
                 82 | 84 => 0x90b06a,
@@ -486,6 +589,10 @@ pub(crate) fn capture(id: u32) -> Option<Vec<u8>> {
         }
         _ => unreachable!(),
     }));
+    if let Some((expected, _)) = expected {
+        assert!(result.is_ok() && !g.g_fail, "reaction.diagnostic.{id}");
+        assert_eq!(&g.g_ram[..], &expected, "reaction.full_ram.{id}");
+    }
     // Prefix records failure category; RAM preserves all defined partial writes.
     let mut bytes = vec![u8::from(result.is_err()), u8::from(g.g_fail)];
     bytes.extend_from_slice(&g.g_ram);

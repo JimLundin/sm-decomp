@@ -11,13 +11,15 @@ fn lorom(a: u32) -> usize {
 fn put(g: &mut Game, a: usize, v: u16) {
     g.g_ram[a..a + 2].copy_from_slice(&v.to_le_bytes());
 }
+fn rom_word(image: &RomImage, address: u32, value: u16) {
+    for (offset, byte) in value.to_le_bytes().into_iter().enumerate() {
+        image.write(lorom(address) + offset, byte);
+    }
+}
 fn fixture(id: u32, g: &mut Game, loaded: &RomImage, native: &RomImage) {
     let rw = |address: u32, value: u16| {
-        let a = lorom(address);
-        for (i, b) in value.to_le_bytes().into_iter().enumerate() {
-            loaded.write(a + i, b);
-            native.write(a + i, b);
-        }
+        rom_word(loaded, address, value);
+        rom_word(native, address, value);
     };
     match id {
         0..=2 => {

@@ -51,12 +51,10 @@ fn react(h: &mut impl Host, offset: u16) {
             }
             4 | 7 | 12 | 15 => {
                 let header = reactions::mechanism(
-                    (),
                     matches!(kind, 7 | 15),
                     matches!(kind, 12 | 15),
                     &mut Room(h),
                 )
-                .1
                 .map(|m| m.header);
                 if let Some(header) = header {
                     h.spawn_mechanism(header);

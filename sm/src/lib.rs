@@ -611,7 +611,9 @@ pub fn verify_enemy_projectile_qualified_case(id: u32) -> bool {
 
 #[doc(hidden)]
 pub fn verify_player_projectile_expanded_case(id: u32) -> Option<Vec<u8>> {
-    game::player_projectiles::checks::expanded::capture(id)
+    game::player_projectiles::checks::expanded::capture(id, |game| unsafe {
+        game::sm_94::BlockReactGrapple(game)
+    })
 }
 
 #[doc(hidden)]

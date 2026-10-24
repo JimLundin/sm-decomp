@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 use super::{Host, motion::Flight};
 use crate::game::projectile_block_reactions::{
-    self as reactions, Definitions, Material, Mechanism, Progress, SlopeInputs,
+    self as reactions, Definitions, Material, Progress, SlopeInputs,
 };
 use crate::game::projectile_room::{Axis, Scan};
 use crate::rom::RomRecord;
@@ -196,13 +196,13 @@ pub(super) fn scan(h: &mut impl Host, raw: u16, flight: Flight, axis: Axis) -> u
         }
     }
     if missile {
-        let (_, _, hit) = reactions::react((), axis, block, scan, &mut room);
+        let (_, hit) = reactions::react(axis, block, scan, &mut room);
         if hit == 0 {
             return 0;
         }
     } else {
         loop {
-            (_, scan, _) = reactions::react((), axis, block, scan, &mut room);
+            (scan, _) = reactions::react(axis, block, scan, &mut room);
             block = block.wrapping_add(if axis == Axis::X {
                 room.0.session().room.width.wrapping_mul(2)
             } else {
@@ -226,10 +226,10 @@ impl reactions::Table for RomRecord {
         self.image.table_word(self.base, index as isize)
     }
 }
-impl<H: Host> Definitions<()> for Room<'_, H> {
+impl<H: Host> Definitions for Room<'_, H> {
     type Table = RomRecord;
-    fn resolve(&mut self, _: (), address: u32) -> ((), RomRecord) {
-        ((), self.0.record((address >> 16) as u8, address as u16))
+    fn resolve(&mut self, address: u32) -> RomRecord {
+        self.0.record((address >> 16) as u8, address as u16)
     }
     fn bts(&self) -> u8 {
         super::access::room_bts(self.0, self.0.session().room.collision_cursor)
@@ -237,9 +237,11 @@ impl<H: Host> Definitions<()> for Room<'_, H> {
     fn area(&self) -> u16 {
         self.0.session().room.area
     }
+    fn spawn(&mut self, header: u16) {
+        self.0.spawn_mechanism(header);
+    }
 }
-impl<H: Host> reactions::Context<()> for Room<'_, H> {
-    type Header = u16;
+impl<H: Host> reactions::Context for Room<'_, H> {
     fn byte_limit(&self) -> u16 {
         self.0.session().room.size_bytes
     }
@@ -261,13 +263,7 @@ impl<H: Host> reactions::Context<()> for Room<'_, H> {
     fn width(&self) -> u16 {
         self.0.session().room.width
     }
-    fn slope(&self, _: &(), axis: Axis, scan: &mut impl Progress) -> bool {
+    fn slope(&self, axis: Axis, scan: &mut impl Progress) -> bool {
         reactions::slope(axis, scan, self)
-    }
-    fn mechanism(&mut self, _: (), bombable: bool, solid: bool) -> ((), Option<Mechanism<u16>>) {
-        reactions::mechanism((), bombable, solid, self)
-    }
-    fn spawn(&mut self, _: (), header: u16) {
-        self.0.spawn_mechanism(header);
     }
 }
