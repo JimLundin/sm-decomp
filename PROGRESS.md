@@ -200,10 +200,30 @@ flowchart LR
     PCFMT --> PCORACLE["21,015 frames / 14 probes<br/>0 failures + 120-frame tail PASS"]:::done
     PCFAULT --> PCMUT["Hosted CI / 91 selected faults<br/>running"]:::active
     PCFMT --> PCMUT
-    class PCGUARD,PCACTOR,PCCONTACT,PCDET,PCBUILD changed
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef changed stroke:#a21caf,stroke-width:5px
+```
+
+### Player animation + transitions / design
+
+```mermaid
+flowchart LR
+    TS["Complete interaction scope"]:::done --> TO["State + aliases + callers"]:::active
+    TS --> TC["Content + finite effects"]:::active
+    TO --> TI["Concrete interface review"]:::pending
+    TC --> TI
+    TC --> TU["Native word reads<br/>original-game observations"]:::pending
+    TI --> TA["Animation + liquid effects"]:::pending
+    TI --> TH["Hit / bomb + block requests"]:::pending
+    TA --> TR["Arbitration + pose + jump + history"]:::pending
+    TH --> TR
+    TU --> TV["Predecessor checks + mutation design"]:::pending
+    class TS,TO,TC,TI,TU,TA,TH,TR,TV changed
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px

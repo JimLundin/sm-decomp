@@ -549,6 +549,16 @@ references; measure build/test time and resource growth before changing the loop
    attested by those files. Ordinary pushes select77faults, excluding2initialized
    Kraid and12collision DLL faults; only the explicit full dispatch selects91.
    Local compilation remains serialized.
+   Next design scope accepted for preparation: the complete post-movement player
+   interaction (gameplay animation, hit/bomb and block requests, arbitration,
+   normalization/jump startup and history). Three repeated four-call chains can
+   consolidate; narrow scripted and death-clock callers remain distinct. Workers
+   are closing state/content/caller contracts before implementation approval.
+   Gross retirement potential2223lines is not savings; full production estimate
+   2300..3500 includes adapters. Original-game observations are required for
+   potentially unaligned native word reads in animation command12 and pose
+   normalization F433/F468; successful undefined-Rust captures cannot establish
+   their fidelity. Reuse the existing oracle capture seam, not a new framework.
    Added13verification Rust lines (complete actor increment5406), no gameplay.
    Ordinary builds now
    precede long mutations; measured prior35minute runtime warrants a60minute limit.
