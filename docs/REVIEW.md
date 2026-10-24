@@ -67,7 +67,11 @@ runs exactly one game frame per input word. Steps, one commit each:
   state 1 at movie index 271 vs native 150.** Next commit: the full capture's
   SHA-256 in the manifest plus one finding line: the first index where the lsnes
   latched joypad word differs from the imported word. That index, not a guess,
-  is what A0.3 removes. Play the same movie in the recording emulator (lsnes
+  is what A0.3 removes.
+  **Smaller first deliverable (stall 01:52):** Samus never leaves Ceres, so the
+  divergence is inside the Ceres segment: capture only through the first Ceres
+  frames past the native run's last Ceres room (≤~15,000 movie frames), commit
+  its hash and the first differing latch index. The full-run capture can follow. Play the same movie in the recording emulator (lsnes
   rr2-beta23, bsnes v085 core; Windows build exists) with a short Lua script that
   logs WRAM `$05B6` (`nmi_frame_counter_word`) and `$05B8` (`…_including_lag`)
   per movie frame. Frames where `$05B6` does not advance are lag frames. The log
@@ -98,7 +102,9 @@ state (no raw `g_ram`, no new Host/effects/adapter type). Name the checkpoint
 segments that exercise it. A bank is done when its file is deleted. Total
 production must fall with each bank; unsafe lines must fall with every commit.
 Drafts not adopted within 2 hours are recorded in one line and dropped.
-**Next `sm_94` commits (lane B silent since 23:49):** (1) move the already-safe
+**Lane B stalled (2 check-ins silent).** The one required next commit is (1)
+below; land it before any draft, map or docs work. Unadopted `sm_91`/`sm_90`
+drafts older than 2h: record in one line and drop. **Next `sm_94` commits:** (1) move the already-safe
 `PostGrappleColl_*`/`post_grapple_traverse` family into the owned player-collision
 module and delete it from the bank; (2) `BlockInside*` + `BlockInsideDetection`;
 (3) grapple reactions and `HandleGrappleBeamGfx`, then delete the file. Each is
@@ -117,6 +123,13 @@ Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
+- **2026-10-25 01:52 (9feb2f2, no new agent commits):** **STALL — 0 agent
+  commits of any kind** since 7867e91 (00:48); agents appear not to be running
+  (not fixable from the repo). Lane B: second silent check-in (no code since
+  c1fe795, 23:49) = lane stall; sm_91/sm_90 drafts not visible on main after 2h.
+  Score unchanged `checks 24/44 · legacy 55315 · production 116670 · unsafe 4962
+  · verification 38993`; warnings 377 (code unchanged). 06:00 waypoint: both lanes
+  behind. Changed: A0.2 split to a Ceres-only capture; lane B single required commit.
 - **2026-10-25 00:55 (7867e91):** 2 agent commits since c1fe795, both `A:`
   (a427ba4 is the user-requested map SVG, not lane progress); **lane B 0 commits**
   (first silent check-in). A0.1 done, A0.2 smoke done. No Rust changed: Score
@@ -162,13 +175,6 @@ Map brief is done (c1fe795); no further map work unless the user asks.
   117,686 (−183; first legacy-bank retirement, −59); verification 37,504 (+22);
   unsafe 4,982 (−60); warnings 380 unique (PROGRESS method: 432). PLAN.md 235 lines
   (rising). Map: Enter on "Kraid" now opens `sm_a7.rs`; remaining fixes below.
-- **2026-10-24 18:52 (f0f163d):** 6 agent source commits since 2f18ba6, 0
-  docs-only; no stall. Corpus flat 23/44 (hour spent making 20 unit tests run,
-  which also reset checkpoint compatibility). Production 117,913 → 117,869 (−44,
-  first decline; 0 legacy-bank lines retired); verification 37,482 (+53); unsafe
-  5,042 flat; warnings 431. PLAN.md 228 lines. Map: brief largely met (see below).
-  Changed: directive asks for legacy deletion, the unsafe-block quick win, shorter commits.
-
 ## Lane watch (2026-10-24 23:52)
 
 - d0d1961 is a sound bank-retirement step (−90 engine, adapter and `CollInfo`
