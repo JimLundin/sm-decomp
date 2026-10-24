@@ -21,9 +21,9 @@ preserve others' work. Do not delete another process's lock or force-push main.
 
 ## Review directives (user direction, 2026-10-24)
 
-Read [the external review](REVIEW.md) after this plan. Its priority order
-is hygiene, process reduction, checkpoint coverage, then consolidation under the
-size rule. Direct user instructions take precedence. Historical work is in
+Read [the external review](REVIEW.md) after this plan. Hygiene and process
+reduction are done. Now: checkpoint coverage (new checks as recipe data, not new
+Rust per check), then consolidation under the size rule. Direct user instructions take precedence. Historical work is in
 [HISTORY.md](HISTORY.md); its old queues, gates and results are not current rules.
 
 **Codebase map (user request, 2026-10-24):** one agent, in parallel with the
