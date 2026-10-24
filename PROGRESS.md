@@ -54,12 +54,15 @@ flowchart LR
     ADLL --> APCOMP["35 population / animation<br/>byte-identical"]:::done
     ADLL --> AMCOMP["40 movement / contact<br/>byte-identical"]:::done
     ADLL --> ATCOMP["4 table boundaries<br/>byte-identical"]:::done
-    APCOMP --> ACAUDIT["Final cleanup comparison audit<br/>first candidate audit PASS"]:::active
+    APCOMP --> ACAUDIT["79 comparisons + Runtime outputs<br/>independent audit PASS"]:::done
     AMCOMP --> ACAUDIT
     ATCOMP --> ACAUDIT
     ACAUDIT --> AVERIFY
     ADLL --> ARUN["5 ownership / prepared-media cases<br/>actual execution PASS"]:::done
     ADLL --> ASHARED["6 shared Runtime guards<br/>PASS"]:::done
+    ADLL --> KWRITE["Kraid live-definition write + consumer<br/>PASS"]:::done
+    KWRITE --> KRESTORE["Actual CPU snapshot restore<br/>definition retained / PASS"]:::done
+    KRESTORE --> KRESET["Actual reset + seeded consumer<br/>definition retained / PASS"]:::done
     AB --> ACONTRACT["18 detached contract tests<br/>compile PASS / execution pending"]:::draft
     AXTABLE --> AVERIFY
     AXAUDIT --> AVERIFY["Actual routes + oracle + mutations"]:::pending
@@ -70,7 +73,8 @@ flowchart LR
     BORROW --> BCOPY["Actor move out of view<br/>compiler rejects / PASS"]:::done
     BORROW --> BSCOPY["Spawn move out of view<br/>compiler rejects / PASS"]:::done
     AVERIFY --> AA["Caller retirement + adoption"]:::pending
-    AVERIFY --> MUTBASE["Mutation baselines"]:::pending
+    AVERIFY --> MUTRECIPES["9 fault recipes authored<br/>execution pending"]:::draft
+    MUTRECIPES --> MUTBASE["Mutation baselines"]:::pending
     MUTBASE --> MUTBUILD["Compile faulty variants"]:::pending
     MUTBUILD --> MF1["Multipart stop"]:::pending
     MUTBUILD --> MF2["Birth publication"]:::pending
@@ -81,7 +85,7 @@ flowchart LR
     MUTBUILD --> MF7["Alias publication"]:::pending
     MUTBUILD --> MF8["Skin / collision independence"]:::pending
     MUTBUILD --> MF9["Discarded-future handles"]:::pending
-    class ARETIRE,ACAUDIT,ARUN,ASHARED,ACONTRACT,MUTBASE,MUTBUILD,MF1,MF2,MF3,MF4,MF5,MF6,MF7,MF8,MF9 changed
+    class ACAUDIT,KWRITE,KRESTORE,KRESET,MUTRECIPES changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

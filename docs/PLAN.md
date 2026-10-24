@@ -455,8 +455,11 @@ references; measure build/test time and resource growth before changing the loop
    cleanup now retires seven files and remaining transfer/distance facades; its DLL
    passes source/native checks and all79comparisons again (source5031b517). All six
    shared Runtime guards and five new actual ownership/media/room cases pass. Eighteen
-   detached contract tests compile; their execution remains hosted. Final-output audit,
-   remaining composed semantic routes, oracle segments and mutation tests are pending.
+   detached contract tests compile; their execution remains hosted. Final-output audit
+   passes. Added Kraid actual writer/consumer and initialized CPU snapshot/reset checks
+   pass at sourceb67f3432: the live definition survives both actual transitions. The
+   post-reset consumer reseeds its RAM inputs; this is not a CPU replay claim. Remaining
+   composed semantic routes, oracle segments and nine authored mutation faults are pending.
    Preserve56existing mutants and add the
    nine selected actor faults, including discarded-future handle rejection.
    Scope includes population/assets, spawn/respawn/death, separate select/update,
