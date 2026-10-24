@@ -1,5 +1,6 @@
 //! Samus animation, sprite selection, echoes, atmospheric graphics and tile uploads.
 use crate::game::music::{PlayRoomMusicTrackAfterAFrames, QueueMusic_DelayedY};
+use crate::game::player_projectiles::content::captured;
 pub use crate::game::prelude::*;
 use crate::game::sm_8b::Samus_CalcPos_Mode7;
 use crate::game::sm_80::{
@@ -11,6 +12,8 @@ use crate::game::sm_90::{
     fnSamus_InputHandler_E91D, kLiquidPhysicsType_Water, liquid_at_height, true_0,
 };
 use crate::game::sm_91::Samus_CancelSpeedBoost;
+#[cfg(sm_verify_dll)]
+use crate::player_transitions_rust_observer as transition_observer;
 use crate::types::FuncXY_V;
 const RomPtr_90: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x90>;
 const RomPtr_91: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x91>;
@@ -328,14 +331,53 @@ unsafe fn Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump(game: &mut Game) ->
     game.set_samus_anim_frame(game.samus_anim_frame().wrapping_add(frame_advance));
     true
 }
-unsafe fn Samus_AnimDelayFunc_12_TransToPose(jp: *const u8, game: &mut Game) -> bool {
+unsafe fn Samus_AnimDelayFunc_12_TransToPose(
+    program: &crate::rom::RomRecord,
+    frame: usize,
+    game: &mut Game,
+) -> bool {
     unsafe {
-        if (*(jp.offset(1) as *mut u16) & word!(game.equipped_items)) != 0 {
-            word!(game.samus_new_pose_transitional = *jp.offset(4) as u16);
+        #[cfg(sm_verify_dll)]
+        transition_observer::observe(26, game);
+        let mask = program.word(frame + 1);
+        #[cfg(sm_verify_dll)]
+        transition_observer::scalar(3, mask);
+        #[cfg(sm_verify_dll)]
+        transition_observer::observe(30, game);
+        if (mask & word!(game.equipped_items)) != 0 {
+            #[cfg(sm_verify_dll)]
+            transition_observer::scalar(5, 1);
+            #[cfg(sm_verify_dll)]
+            transition_observer::scalar(
+                6,
+                u16::try_from(frame + 4).expect("observed operand offset"),
+            );
+            #[cfg(sm_verify_dll)]
+            let observed_before = transition_observer::before(game, 0xa2c);
+            word!(game.samus_new_pose_transitional = program.byte(frame + 4) as u16);
+            #[cfg(sm_verify_dll)]
+            transition_observer::published(9, 0xa2c, observed_before, game);
         } else {
-            word!(game.samus_new_pose_transitional = *jp.offset(3) as u16);
+            #[cfg(sm_verify_dll)]
+            transition_observer::scalar(5, 0);
+            #[cfg(sm_verify_dll)]
+            transition_observer::scalar(
+                6,
+                u16::try_from(frame + 3).expect("observed operand offset"),
+            );
+            #[cfg(sm_verify_dll)]
+            let observed_before = transition_observer::before(game, 0xa2c);
+            word!(game.samus_new_pose_transitional = program.byte(frame + 3) as u16);
+            #[cfg(sm_verify_dll)]
+            transition_observer::published(9, 0xa2c, observed_before, game);
         }
+        #[cfg(sm_verify_dll)]
+        let observed_before = transition_observer::before(game, 0xa32);
         word!(game.samus_hurt_switch_index = 3);
+        #[cfg(sm_verify_dll)]
+        transition_observer::published(10, 0xa32, observed_before, game);
+        #[cfg(sm_verify_dll)]
+        transition_observer::observe(31, game);
         false_0 != 0
     }
 }
@@ -349,6 +391,8 @@ fn Samus_AnimDelayFunc_15_GotoStart(game: &mut Game) -> bool {
 }
 unsafe fn Samus_HandleSpeedBoosterAnimDelay(jp: *const u8, game: &mut Game) -> u8 {
     unsafe {
+        #[cfg(sm_verify_dll)]
+        transition_observer::observe(25, game);
         let has_momentum = u16::from_le_bytes([game.g_ram[0xb3c], game.g_ram[0xb3d]]);
         let run_button = u16::from_le_bytes([game.g_ram[0x9b6], game.g_ram[0x9b7]]);
         if has_momentum == 0
@@ -398,13 +442,20 @@ unsafe fn Samus_HandleAnimDelay(game: &mut Game) {
     unsafe {
         let animation_list = game.read_rom_word(0x91b010, usize::from(game.samus_pose()) * 2);
         let mut delays = RomPtr_91(animation_list, game);
+        // Retain the exact native allocation selected after RomPtr diagnostics,
+        // before the speed helper can replace a binding or mutate live bytes.
+        let captured_delays = captured(
+            game.capture_native_rom(),
+            0x910000 | u32::from(animation_list),
+        );
         if *delays.add(usize::from(game.samus_anim_frame())) & 0x80 != 0 {
             let command = Samus_HandleSpeedBoosterAnimDelay(
                 delays.add(usize::from(game.samus_anim_frame())),
                 game,
             );
             // Keep the captured list and reread the frame after each callback.
-            let instruction = delays.add(usize::from(game.samus_anim_frame()));
+            let instruction_frame = usize::from(game.samus_anim_frame());
+            let instruction = delays.add(instruction_frame);
             let update_timer = match command & 0xf {
                 6 => Samus_AnimDelayFunc_6_GotoStartIfLittleHealth(game),
                 7 => Samus_AnimDelayFunc_7(instruction, game),
@@ -412,13 +463,17 @@ unsafe fn Samus_HandleAnimDelay(game: &mut Game) {
                 9 => Samus_AnimDelayFunc_9_TransToPose(instruction, game),
                 10 => UNUSED_Samus_AnimDelayFunc_10(instruction, game),
                 11 => Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump(game),
-                12 => Samus_AnimDelayFunc_12_TransToPose(instruction, game),
+                12 => Samus_AnimDelayFunc_12_TransToPose(&captured_delays, instruction_frame, game),
                 13 => Samus_AnimDelayFunc_13_TransToPose(*instruction.add(1), game),
                 14 => Samus_AnimDelayFunc_14_Goto(*instruction.add(1), game),
                 15 => Samus_AnimDelayFunc_15_GotoStart(game),
                 // Commands 0..=5 retain the timer selected by the speed helper.
                 _ => false,
             };
+            #[cfg(sm_verify_dll)]
+            transition_observer::scalar(4, u16::from(update_timer));
+            #[cfg(sm_verify_dll)]
+            transition_observer::observe(32, game);
             if !update_timer {
                 return;
             }
@@ -1038,5 +1093,12 @@ unsafe fn calculate_sprite_position(pose: u16, game: &mut Game) -> PairU16 {
             word!(game.samus_spritemap_x_pos),
             word!(game.samus_spritemap_y_pos),
         )
+    }
+}
+
+#[cfg(sm_verify_dll)]
+pub(crate) unsafe fn verify_handle_anim_delay(game: &mut Game) {
+    unsafe {
+        Samus_HandleAnimDelay(game);
     }
 }

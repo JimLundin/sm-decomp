@@ -12,6 +12,7 @@ import tempfile
 
 import room_entry_mutations
 import actor_dll_mutations
+import player_transitions_dll_mutations
 
 
 INVENTORY = "sm/src/game/item_pickups.rs"
@@ -307,6 +308,11 @@ def main():
         raise RuntimeError("mutation builds and execution are restricted to GitHub CI")
     if os.name != "nt":
         raise RuntimeError("room scheduler mutation DLL requires Windows")
+    if len(sys.argv) == 7 and sys.argv[1] == "--transition-capture":
+        player_transitions_dll_mutations.capture_child(
+            Path(sys.argv[2]).resolve(), sys.argv[3], int(sys.argv[4]),
+            Path(sys.argv[5]).resolve(), Path(sys.argv[6]).resolve())
+        return
     if len(sys.argv) in (4, 5) and sys.argv[1] == "--actor-capture":
         actor_dll_mutations.capture_child(Path(sys.argv[2]).resolve(), sys.argv[3],
                                          sys.argv[4] if len(sys.argv) == 5 else None)
@@ -354,6 +360,10 @@ def main():
                                           rom=actor_rom, kraid_only=True)
             actor_dll_mutations.run_checks(root, work, paths, run, copy_tracked,
                                           rom=actor_rom, collision_only=True)
+            player_transitions_dll_mutations.run_checks(
+                root, work, paths, run, copy_tracked, rom=actor_rom)
+        else:
+            print("transition DLL mutations: 2 not selected; original ROM not supplied; no kills credited", flush=True)
     print("room/native/restore mutation checks: 9/9 killed; all nine frozen baselines passed", flush=True)
 
 

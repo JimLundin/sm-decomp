@@ -813,3 +813,7 @@ pub(crate) mod player_collision_walked_cases;
 #[cfg(sm_verify_dll)]
 #[path = "verification/player_collision_owned_cases.rs"]
 pub(crate) mod player_collision_owned_cases;
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/player_transitions_rust_observer.rs"]
+pub(crate) mod player_transitions_rust_observer;

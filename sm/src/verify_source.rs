@@ -2,6 +2,18 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/verification/player_transitions_rust.rs",
+        include_bytes!("verification/player_transitions_rust.rs"),
+    ),
+    (
+        "sm/src/verification/player_transitions_rust_dll.rs",
+        include_bytes!("verification/player_transitions_rust_dll.rs"),
+    ),
+    (
+        "sm/src/verification/player_transitions_rust_observer.rs",
+        include_bytes!("verification/player_transitions_rust_observer.rs"),
+    ),
+    (
         "sm/src/verification/player_transitions_oracle.rs",
         include_bytes!("verification/player_transitions_oracle.rs"),
     ),

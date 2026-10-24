@@ -569,8 +569,12 @@ references; measure build/test time and resource growth before changing the loop
    extents and same allocation while constraining selected reads to original data.
    Attempt2 exposed shared snapshot/store-PC bookkeeping in the comparator;
    separate tracking fixes it without changing expected observations or masks.
-   Both failures remain preserved. Output/provenance audit is pending; two targeted
-   mutation recipes are reviewed but unexecuted. Next capture the remaining36
+   Both failures remain preserved. Independent output/provenance audits pass:
+   173events,90snapshots,56publications,23scalars and4palette events;22effect
+   observations are included. All11child exits and22empty diagnostic logs agree.
+   Two targeted mutation recipes are integrated in this CI candidate but unexecuted;
+   pure Python classifier controls reject79malformed/unrelated variants, with
+   11baseline and2synthetic intended-stream controls passing. These are not kills. Next capture the remaining36
    transition families with per-family defined-path audits, then implement the
    complete owned responsibility. No corrected gameplay is adopted yet.
    Successful undefined-Rust captures remain inadmissible.

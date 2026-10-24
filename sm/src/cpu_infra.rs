@@ -1334,3 +1334,7 @@ pub(crate) mod actor_mutable_cpu_checks;
 #[cfg(sm_verify_dll)]
 #[path = "verification/player_collision_ownership.rs"]
 pub(crate) mod player_collision_ownership;
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/player_transitions_rust.rs"]
+pub mod player_transitions_rust;

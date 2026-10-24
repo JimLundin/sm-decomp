@@ -14,6 +14,8 @@ use crate::game::session_runtime::Runtime;
 use crate::game::{
     player_collision::operations as player_collision, session_runtime::Runtime as CollisionRuntime,
 };
+#[cfg(sm_verify_dll)]
+use crate::player_transitions_rust_observer as transition_observer;
 
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_60::*;
@@ -1624,6 +1626,8 @@ pub unsafe fn Projectile_SinLookup(j: u16, a: u16) -> Point16U {
 }
 pub unsafe fn Projectile_Func7_Shinespark(game: &mut Game) {
     unsafe {
+        #[cfg(sm_verify_dll)]
+        transition_observer::observe(22, game);
         word! {game; samus_movement_handler = ((0x90d068i32) as u16); samus_y_dir = 1;
         speed_boost_counter = 1024; }
         word! { game, 0; samus_y_subspeed, samus_y_speed, knockback_dir }

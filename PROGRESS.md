@@ -231,11 +231,11 @@ flowchart LR
     TUG --> TUH["Separate snapshot / store tracking<br/>review PASS"]:::done
     TUH --> TN["7 normalization comparisons<br/>PASS"]:::done
     TUH --> TM["4 authored animation comparisons<br/>PASS"]:::done
-    TN --> TVAUD["Output + provenance audit"]:::active
+    TN --> TVAUD["Output + provenance audit PASS"]:::done
     TM --> TVAUD
     TVAUD --> TV["36 remaining fixture families"]:::active
-    TVAUD --> TMT1["Metadata reload mutation<br/>reviewed / unrun"]:::pending
-    TVAUD --> TMT2["Animation mask mutation<br/>reviewed / unrun"]:::pending
+    TVAUD --> TMT1["Metadata reload mutation<br/>CI candidate / unrun"]:::pending
+    TVAUD --> TMT2["Animation mask mutation<br/>CI candidate / unrun"]:::pending
     class TUD,TUF,TUX,TUG,TUH,TN,TM,TVAUD,TV,TMT1,TMT2 changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

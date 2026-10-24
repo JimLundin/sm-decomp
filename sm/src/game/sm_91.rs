@@ -1,9 +1,12 @@
 use crate::game::actors::api as actor_api;
+use crate::game::player_projectiles::content::captured;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
 use crate::game::{
     player_collision::operations as player_collision, session_runtime::Runtime as CollisionRuntime,
 };
+#[cfg(sm_verify_dll)]
+use crate::player_transitions_rust_observer as transition_observer;
 
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_8f::*;
@@ -2114,9 +2117,16 @@ pub unsafe fn SamusFunc_F404(game: &mut Game) -> u8 {
 }
 pub unsafe fn SamusFunc_F433(game: &mut Game) {
     unsafe {
-        *(ram_ptr!(game, u16; 0xa1e)) =
-            *((&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629))).pose_x_dir)
-                .offset((8 * word!(game.samus_pose) as i32) as isize) as *mut u16);
+        #[cfg(sm_verify_dll)]
+        transition_observer::observe(2, game);
+        #[cfg(sm_verify_dll)]
+        let observed_before = transition_observer::before(game, 0xa1e);
+        *(ram_ptr!(game, u16; 0xa1e)) = captured(game.capture_native_rom(), 0x91b629)
+            .word(8 * usize::from(word!(game.samus_pose)));
+        #[cfg(sm_verify_dll)]
+        transition_observer::published(1, 0xa1e, observed_before, game);
+        #[cfg(sm_verify_dll)]
+        transition_observer::observe(3, game);
         SamusFunc_F468(game);
         if (*ram_ptr!(game; 0xa23) as i32 == kMovementType_03_SpinJumping as i32
             || *ram_ptr!(game; 0xa23) as i32 == kMovementType_14_WallJumping as i32)
@@ -2139,24 +2149,49 @@ static off_91F4A2: [Func_U8; 28] = callback_table! { nonnull Func_U8;
 };
 pub unsafe fn SamusFunc_F468(game: &mut Game) {
     unsafe {
-        if off_91F4A2[*ram_ptr!(game; 0xa1f) as usize](game) & 1 != 0 {
-            *(ram_ptr!(game, u16; 0xa1e)) =
-                *((&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629))).pose_x_dir)
-                    .offset((8 * word!(game.samus_pose) as i32) as isize)
-                    as *mut u16);
+        let callback_result = off_91F4A2[*ram_ptr!(game; 0xa1f) as usize](game);
+        #[cfg(sm_verify_dll)]
+        transition_observer::scalar(1, u16::from(callback_result));
+        #[cfg(sm_verify_dll)]
+        transition_observer::observe(4, game);
+        if callback_result & 1 != 0 {
+            #[cfg(sm_verify_dll)]
+            transition_observer::observe(5, game);
+
+            #[cfg(sm_verify_dll)]
+            let observed_before = transition_observer::before(game, 0xa1e);
+            *(ram_ptr!(game, u16; 0xa1e)) = captured(game.capture_native_rom(), 0x91b629)
+                .word(8 * usize::from(word!(game.samus_pose)));
+            #[cfg(sm_verify_dll)]
+            transition_observer::published(2, 0xa1e, observed_before, game);
+            #[cfg(sm_verify_dll)]
+            transition_observer::observe(6, game);
             if (*(ram_ptr!(game, u16; 0xa1e)) & 0xff00) == 3584 {
+                #[cfg(sm_verify_dll)]
+                transition_observer::observe(7, game);
                 off_91F4A2[14i32 as usize](game);
-                *(ram_ptr!(game, u16; 0xa1e)) =
-                    *((&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629))).pose_x_dir)
-                        .offset((8 * word!(game.samus_pose) as i32) as isize)
-                        as *mut u16);
+                #[cfg(sm_verify_dll)]
+                transition_observer::observe(8, game);
+
+                #[cfg(sm_verify_dll)]
+                let observed_before = transition_observer::before(game, 0xa1e);
+                *(ram_ptr!(game, u16; 0xa1e)) = captured(game.capture_native_rom(), 0x91b629)
+                    .word(8 * usize::from(word!(game.samus_pose)));
+                #[cfg(sm_verify_dll)]
+                transition_observer::published(3, 0xa1e, observed_before, game);
+                #[cfg(sm_verify_dll)]
+                transition_observer::observe(9, game);
             }
         }
+        #[cfg(sm_verify_dll)]
+        transition_observer::observe(10, game);
     }
 }
 pub use self::nullsub_164 as SamusFunc_F468_Unused;
 pub unsafe fn SamusFunc_F468_Standing(game: &mut Game) -> u8 {
     unsafe {
+        #[cfg(sm_verify_dll)]
+        transition_observer::observe(20, game);
         if ((*(rom_ptr!(game, SamusPoseParams; 0x91b629)).offset(word!(game.samus_pose) as isize))
             .direction_shots_fired
             == 0
@@ -2203,6 +2238,8 @@ pub unsafe fn SamusFunc_F468_Running(game: &mut Game) -> u8 {
 }
 pub unsafe fn SamusFunc_F468_NormalJump(game: &mut Game) -> u8 {
     unsafe {
+        #[cfg(sm_verify_dll)]
+        transition_observer::observe(21, game);
         let shinespark_pose = match word!(game.samus_pose) as u32 {
             kPose_4D_FaceR_Jump_NoAim_NoMove_NoGun
             | kPose_15_FaceR_Jump_AimU
@@ -2214,10 +2251,23 @@ pub unsafe fn SamusFunc_F468_NormalJump(game: &mut Game) -> u8 {
         };
         if let Some(pose) = shinespark_pose {
             if word!(game.samus_shine_timer) != 0 {
+                #[cfg(sm_verify_dll)]
+                let observed_before = transition_observer::before(game, 0xa1c);
                 word!(game.samus_pose = pose as u16);
+                #[cfg(sm_verify_dll)]
+                transition_observer::published(4, 0xa1c, observed_before, game);
                 Projectile_Func7_Shinespark(game);
                 if *ram_ptr!(game; 0xa23) as i32 == kMovementType_02_NormalJumping as i32 {
-                    word!(game.samus_prev_y_pos = word!(game.samus_y_pos -= 1, reread));
+                    #[cfg(sm_verify_dll)]
+                    let observed_y = transition_observer::before(game, 0xafa);
+                    let updated_y = word!(game.samus_y_pos -= 1, reread);
+                    #[cfg(sm_verify_dll)]
+                    transition_observer::published(5, 0xafa, observed_y, game);
+                    #[cfg(sm_verify_dll)]
+                    let observed_previous_y = transition_observer::before(game, 0xb14);
+                    word!(game.samus_prev_y_pos = updated_y);
+                    #[cfg(sm_verify_dll)]
+                    transition_observer::published(6, 0xb14, observed_previous_y, game);
                 }
                 return 1;
             }
@@ -2419,13 +2469,23 @@ pub unsafe fn MaybeUnused_sub_91F840(game: &mut Game) -> u8 {
 }
 pub unsafe fn SamusFunc_F468_Moonwalking(game: &mut Game) -> u8 {
     unsafe {
+        #[cfg(sm_verify_dll)]
+        transition_observer::observe(23, game);
         if word!(game.moonwalk_flag) != 0 {
             return 0;
         }
         if *ram_ptr!(game; 0xa1e) == 4 {
+            #[cfg(sm_verify_dll)]
+            let observed_before = transition_observer::before(game, 0xa1c);
             word!(game.samus_pose = kPose_25_FaceR_Turn_Stand as u16);
+            #[cfg(sm_verify_dll)]
+            transition_observer::published(7, 0xa1c, observed_before, game);
         } else {
+            #[cfg(sm_verify_dll)]
+            let observed_before = transition_observer::before(game, 0xa1c);
             word!(game.samus_pose = kPose_26_FaceL_Turn_Stand as u16);
+            #[cfg(sm_verify_dll)]
+            transition_observer::published(7, 0xa1c, observed_before, game);
         }
         1
     }
@@ -2441,6 +2501,8 @@ pub unsafe fn SamusFunc_F468_DamageBoost_(game: &mut Game) -> u8 {
 }
 pub unsafe fn SamusFunc_F468_TurningAroundOnGround(game: &mut Game) -> u8 {
     unsafe {
+        #[cfg(sm_verify_dll)]
+        transition_observer::observe(24, game);
         if word!(game.samus_prev_pose) != 0
             && word!(game.samus_prev_pose) as i32 != kPose_9B_FaceF_VariaGravitySuit as i32
         {
@@ -2463,7 +2525,11 @@ pub unsafe fn SamusFunc_F468_TurningAroundOnGround(game: &mut Game) -> u8 {
             } else if *ram_ptr!(game; 0xa23) == 5 {
                 word!(game.samus_pose = *(rom_ptr!(game, u8; 0x91f9cc)).offset(v0 as isize) as u16);
             } else {
+                #[cfg(sm_verify_dll)]
+                let observed_before = transition_observer::before(game, 0xa1c);
                 word!(game.samus_pose = *(rom_ptr!(game, u8; 0x91f9c2)).offset(v0 as isize) as u16);
+                #[cfg(sm_verify_dll)]
+                transition_observer::published(8, 0xa1c, observed_before, game);
             }
         }
         words!(
