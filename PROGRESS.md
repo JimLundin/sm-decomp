@@ -63,7 +63,10 @@ flowchart LR
     RT --> WIRQ["Terminal IRQ / cases 6-7<br/>PASS"]:::done
     RT --> WRESET["Reset frame / case 8<br/>PASS"]:::done
     RT --> WSTATION["Mapped load stations / cases 9-10<br/>PASS"]:::done
-    RT --> RMUT["51 existing + 5 new faults<br/>hosted CI queued"]:::active
+    RT --> RHOST["Hosted full build + format<br/>PASS"]:::done
+    RHOST --> RCOMPOSE["Composed core execution<br/>PASS"]:::done
+    RCOMPOSE --> RDETACHED["42 existing detached mutations<br/>stage PASS"]:::done
+    RDETACHED --> RMUT["9 existing + 5 new DLL faults<br/>hosted stage running"]:::active
     RBCAP --> ROFFSET["VRAM offset / case 37<br/>comparison + audit PASS"]:::done
     RBUILD --> RORACLE["Vanilla / 21,065 frames<br/>13 probes / 0 failures / PASS"]:::done
     RMUT --> MMARK["Late contact marker"]:::pending
@@ -71,7 +74,7 @@ flowchart LR
     RMUT --> MAREA["Overwrite area high byte"]:::pending
     RMUT --> MBIND["Write before binding check"]:::pending
     RMUT --> MOFFSET["Wrong VRAM offset units"]:::pending
-    class RBVERIFY,RMUT,ROFFSET,RORACLE,MMARK,MLOCK,MAREA,MBIND,MOFFSET changed
+    class RHOST,RCOMPOSE,RDETACHED,RMUT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d

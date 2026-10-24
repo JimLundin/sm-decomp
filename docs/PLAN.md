@@ -490,7 +490,12 @@ references; measure build/test time and resource growth before changing the loop
    (62.47s), ending in gameplay across7rooms. This is not credits coverage.
    Hosted branch verify/room-entry-20261024 at7b5b41ac preserves checked Rust
    source69f4c56a and adds a fifth reviewed VRAM-offset mutation. CI40044596920
-   is queued for full build and56mutations; no hosted-pass or adoption claim yet.
+   passes full build, formatting, composed execution and the42detached-mutation
+   stage. The9existing+5newDLL mutation stage is running; its terminal logs and
+   exact assertion audit remain required before adoption. Final frozen accounting
+   is production+3242lines/+26275tokens/+118238LFbytes; verificationRust+3031lines,
+   Python+242lines, native unchanged. Production exceeds the prior upper estimate
+   by692lines; this is consolidation with growth, not a reduction claim.
    Reuse current owners;84additional disjoint bytes comprise82room-related bytes
    and two shared lossless continuation bytes (proposed union52,373). Retire the
    actual competing orchestration and stale door inputs in the same adoption.
