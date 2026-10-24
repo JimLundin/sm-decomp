@@ -18,6 +18,33 @@ The importer accepts clean-start LSMV/BK2 recordings and writes one
 hexadecimal SNES controller word per frame. LSMV imports also check the ROM's
 SHA-256 against the movie. The any% import should report 129,712 frames.
 
+To measure the original movie's timing, use the official Windows
+[lsnes rr2-beta23](https://files.tasvideos.org/emulatordownloads/lsnes/lsnes-rr2-beta23.7z)
+with its bsnes v085 Compatibility core and [`lsnes_lag_log.lua`](../tools/lsnes_lag_log.lua).
+From the repository root, with the extracted executable path substituted:
+
+```powershell
+New-Item -ItemType Directory -Force target | Out-Null
+$env:SM_LSNES_LOG = Join-Path (Get-Location).Path "target/any-bsnes085-lag.csv"
+Start-Process -FilePath "C:\path\to\lsnes-rr2-beta23\lsnes-bsnes.exe" -WindowStyle Hidden -WorkingDirectory (Get-Location).Path -ArgumentList @("--rom-a=rom/sm.smc", "movies/super-metroid-any-3653.lsmv", "--lua=tools/lsnes_lag_log.lua", "--unpause") -Wait
+```
+
+Use the positional movie and `--rom-a=` exactly: this release's advertised
+`--load=` option is ignored, and its `--rom=` movie-loading path rejects this ROM.
+The script observes playback without changing input or memory and quits at the
+movie's end. For a 300-frame smoke, set `$env:SM_LSNES_FRAMES = "300"`; remove that
+variable before a full capture. Use a new output name for each run.
+
+The CSV records raw NMI counters, emulator lag, room/state and the game's latched
+joypad word. Its `.polls.csv` companion preserves every input callback and the
+recorded first subframe; the fields labelled `live` describe physical input,
+not movie playback. Movie frames are one-based; `input_frame` is zero-based.
+An `.error.txt` companion means capture failed even if the emulator exits zero.
+Keep these files under ignored `target/`; commit only a completed capture's hash.
+Flat counters can also mean boot, reset or coroutine waits. These observations
+do not yet authorize dropping frames, and a zero-difference native replay does
+not establish that the published TAS reaches credits.
+
 With SDL2 installed, run the headless verifier:
 
 ```sh

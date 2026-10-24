@@ -39,18 +39,21 @@ before further adoption; the review's red-main rule does not authorize CI pollin
 
 ## Work order
 
-1. **Current - expand checkpoint coverage in parallel.** Recover reproducible
-   route recipes and extend the existing verifier with per-segment expectations.
+1. **Current - lane A published TAS alignment (A0).** Align the published any% and
+   100% movies, then map the existing verifier's per-segment expectations onto them.
    Cover Crateria, Brinstar, Norfair, Wrecked Ship, Maridia and Tourian; every boss;
    main pickups, doors/elevators, save/load, death and credits. Report results and rooms.
    Commit only recipes. Preserve input/NMI timing; no guessed lag/offset changes.
    Each adoption names segments exercising changed behavior and downstream effects.
    Current recipes: 24/44 required checks pass; 20 remain pending. Three additional
    checks (in-memory save, upward elevator, Ice return) pass; the corpus is unfinished.
-   Next: Power Bomb, then Spore Spawn, then Crocomire.
-   Power Bomb entry recipe reaches A3AE on frozen navigation source 992845a3;
-   pickup/message/tail now checked there; qualify current-main history next.
-   Crocomire needs Power Bombs or the far gate side.
+   A0.1: full original any% on main verified 129,712 frames / 0 failures, but only
+   six Ceres rooms, final DF8D and zero credits frames (source identity 1f25f453).
+   A0.2: original lsnes rr2-beta23/bsnes085 smoke logged 300 frames; all recorded
+   inputs matched the movie. State 1 begins at index 271 versus native 150: a boot
+   timing observation, not the first route divergence. Next: full reference capture.
+   Keep raw counters, resets, subframes and latched input; flat NMI counters also
+   occur during coroutine waits. No input removal or guessed offsets yet.
    `python tools/verify_dll.py --unit-tests --direct` runs 20 observer tests, not
    gameplay checks. Regenerate incompatible checkpoints from boot; preserve the
    old checked navigation build.
