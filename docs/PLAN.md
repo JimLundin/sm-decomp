@@ -48,13 +48,14 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Current recipes: 24/44 required checks pass; 20 remain pending. Three additional
    checks (in-memory save, upward elevator, Ice return) pass; the corpus is unfinished.
    Next: Power Bomb, then Crocomire.
-   Power Bomb route has climbed Red Tower and is crossing A2F7; continue to A3AE.
+   Power Bomb entry recipe reaches A3AE on frozen navigation source 992845a3;
+   qualify current-main history and collect the pickup next.
    Crocomire needs Power Bombs or the far gate side.
    `python tools/verify_dll.py --unit-tests --direct` runs 20 observer tests, not
    gameplay checks. Regenerate incompatible checkpoints from boot; preserve the
    old checked navigation build.
-2. **Current - consolidate covered owned subsystems.** Atmospheric consumers use owned state.
-   Next: remove projectile reaction transport; check actual grapple callers. Name coverage; hold gaps.
+2. **Current - consolidate covered owned subsystems.** Delete obsolete projectile reaction interfaces.
+   Combined draft: -202 engine / +111 verification lines; final local checks pending. Name coverage; hold gaps.
    Report added production and deleted legacy lines together; net growth needs a
    reason. Get production below 110,000 before starting another subsystem. Reuse
    existing Host/effects/adapters unless they demonstrably cannot serve. Route

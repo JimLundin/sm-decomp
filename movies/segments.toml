@@ -224,6 +224,17 @@ start_frame = 161656
 frames = 4426
 expect = ["door:A8B9", "door:A75D", "door:A815", "door:A7DE"]
 
+# Optional navigation route; Power Bomb acquisition remains pending.
+# Checked on frozen source 992845a379e904fcd08da855e541dde0c0713389f8d37791c1ab04da6af5ad2f.
+# Execute the full window; the frozen navigation build alone does not qualify current main.
+[[segment]]
+id = "power-bomb-room-entry"
+inputs = "corpus-power-bomb-room-entry.inputs"
+input_sha256 = "34ab4055b6904d0544e490632fbbb81b87f18d163e55c7c6208ee9e5bd2a7dfb"
+start_frame = 166082
+frames = 8910
+expect = ["door:A6A1", "door:A618", "door:A3AE"]
+
 [[segment]]
 id = "item-wave"
 pending = "No qualified acquisition-to-completion segment on the current route."

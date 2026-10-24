@@ -116,6 +116,7 @@ ROUTES = {
     'ice-beam-settled': (161733, 'd5700c8c8bfd3bcbc9fa5d4d05aa805dd594e98130a0c9d0ade163695201e093'),
     'speed-booster': (148406, 'bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6'),
     'speed-booster-settled': (148526, '9548c119742b6e2ffec65c5c0871403c96915671b83fe8b4c3930cc4bf60a00d'),
+    'power-bomb-room-entry': (174992, '34ab4055b6904d0544e490632fbbb81b87f18d163e55c7c6208ee9e5bd2a7dfb'),
     'norfair-reserve': (147887, '968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d'),
 }
 
@@ -1107,6 +1108,99 @@ def extend_reserve(a):
     return a
 
 
+def extend_power_bomb_entry(a):
+    """Continue the authored Ice-return route to the first Power Bomb room.
+
+    Room entry is navigation coverage; acquisition remains a separate check.
+    """
+    assert len(a) == 166082
+    a = list(a)
+    a.extend(_holds('A:20 Right+A:20 None:45'))  # business-ascent-platform1
+    a.extend(_holds('A:12 Left+A:35 None:45'))  # business-ascent-leftledge
+    a.extend(_holds('Right+A:35 None:50'))  # business-ascent-middle-direct
+    a.extend(_holds('Left+A:28 None:50'))  # business-ascent-upperleft-direct
+    a.extend(_holds('Left:10 None:4 A:24'))  # business-elevator-clearance-rise
+    a.extend(_holds('Right+A:38 None:50'))  # business-elevator-clearance-land
+    a.extend(_holds('Left:18 None:4'))  # business-elevator-center
+    a.extend(_holds('None:12 Up:1 None:40'))  # business-elevator-settled-trigger
+    a.extend(_holds('None:910'))  # business-elevator-arrived
+    a.extend(_holds('Left:12 Left+X:65 None:100'))  # pb-west-cf80
+    a.extend(_holds('Left+X:90 None:110'))  # pb-west-glass-tube
+    a.extend(_holds('Left+X:90 None:110'))  # pb-west-cf54
+    a.extend(_holds('Left+X:90 None:110'))  # pb-west-a408-entry
+    a.extend(_holds('B+Right:22 B+Left:20'))  # pb-a408-runup
+    a.extend(_holds('B+Left:5 B+Left+A:50'))  # pb-a408-running-hop
+    a.extend(_holds('Left+X:4 None:16'))  # pb-a408-center-landing
+    a.extend(_holds('B+Left+X:23'))  # pb-a408-center-runup
+    a.extend(_holds('B+Left+A:30'))  # pb-a408-west-early-jump
+    a.extend(_holds('Left+A:6 Down+A:1 A:1 A+X:1 None:20'))  # pb-a408-maw-ranged-down
+    a.extend(_holds('Left:3 Left+A:30 None:12'))  # pb-a408-west-ledge-final
+    a.extend(_holds('Left+X:30 None:110'))  # pb-west-a3dd-entry
+    a.extend(_holds('None:8 B+Left+X:24 B+Left+A:12 B+Left+A+X:1 B+Left+A:32'))  # pb-a3dd-center-hop
+    a.extend(_holds('None:1 Left+A:5 Left+A+X:1 Left+A:35'))  # pb-a3dd-stone-center
+    a.extend(_holds('Left+A:24 None:25 B+Left+X:18 B+Left+A:50'))  # pb-a3dd-west-hop
+    a.extend(_holds('Left+X:65 None:110'))  # pb-redtower-return
+    a.extend(_holds('Left+A+X:25 None:110'))  # pb-redtower-door-hop
+    a.extend(_holds('Left+X:100 None:110'))  # pb-energy-station-entry
+    a.extend(_holds('None:90 Left:72 None:350 A:1 None:40'))  # pb-energy-refilled
+    a.extend(_holds('Right:12 Right+A:50 Right+X:50 None:150'))  # pb-energy-exit
+    a.extend(_holds('Up:2 Up+X:1 None:10'))  # pb-tower-ripper1-freeze
+    a.extend(_holds('Left:13 None:4 A:20 Right+A:8'))  # pb-tower-ripper1-align-air
+    a.extend(_holds('Up+A:1 Right+A:6 Up+A:1 None:45'))  # pb-tower-ripper1-brake-land
+    a.extend(_holds('None:190 Up:2 Up+X:1 None:10'))  # pb-tower-ripper2-freeze
+    a.extend(_holds('Right:8 Right+A:8 Up+A:1 A:16'))  # pb-tower-ripper2-clear-rise
+    a.extend(_holds('Left+A:14 Up+A:1 None:45'))  # pb-tower-ripper2-land
+    a.extend(_holds('None:24 Up:2 Up+X:1 None:10'))  # pb-tower-ripper3-freeze
+    a.extend(_holds('Right:14 Right+A:6 Up+A:1 A:18'))  # pb-tower-ripper3-rise
+    a.extend(_holds('Left+A:14 Up+A:1 None:45'))  # pb-tower-ripper3-turn-land
+    a.extend(_holds('Right:1 None:95 R:2 X+R:1 None:25'))  # pb-tower-ripper4-gap-freeze
+    a.extend(_holds('Right+A:74 Up+A:1 None:18'))  # pb-tower-ripper4-gap-land
+    a.extend(_holds('A:36 Left+A:26 Up+A:1 None:25'))  # pb-tower-stone-gap
+    a.extend(_holds('Left:6 Left+A:10 Up+A:1 A:25 Right+A:18 Up+A:1 None:25'))  # pb-tower-second-stone-gap
+    a.extend(_holds('None:6 Right:18 None:8 Up:2 Up+X:1 None:20'))  # pb-tower-shot-shaft
+    a.extend(_holds('Up:2 Up+X:1 None:25 A:40 Right+A:10 Up+A:1 None:25'))  # pb-tower-shaft-upper-ledge
+    a.extend(_holds('Left:2 None:10 B+Left:1 B+Left+A:28 Up+A:1 None:15'))  # pb-tower-left-shaft-run-hop
+    a.extend(_holds('A:30 Left+A:24 Up+A:1 None:30'))  # pb-tower-mid-shaft-land
+    a.extend(_holds('Left:4 A:26 Right+A:40 Up+A:1 None:25'))  # pb-tower-right-middle-ledge
+    a.extend(_holds('Right:2 Right+X:20 None:20'))  # pb-tower-middle-recover
+    a.extend(_holds('A:26 Right+A:52 Up+A:1 None:20'))  # pb-tower-upper-right-ledge
+    a.extend(_holds('Right:10 None:4 A:27 Left+A:40 Up+A:1 None:31'))  # pb-tower-upper-left-clearance
+    a.extend(_holds('Left:12 None:8'))  # pb-tower-high-shelf-align
+    a.extend(_holds('None:4 A:40 Right+A:34 Up+A:1 None:20'))  # pb-tower-high-right-land
+    a.extend(_holds('A:40 Left+A:34 Up+A:1 None:20'))  # pb-tower-high-left-land
+    a.extend(_holds('Left:12 None:12 A:40 Right+A:34 Up+A:1 None:20'))  # pb-tower-high-right-second
+    a.extend(_holds('A:40 Left+A:34 Up+A:1 None:20'))  # pb-tower-top-left-shelf
+    a.extend(_holds('None:126 Up:2 Up+X:1 None:12'))  # pb-tower-upper-ripper1-freeze
+    a.extend(_holds('Right:12 Right+A:8 Up+A:1 A:20 Left+A:24 Up+A:1 None:50'))  # pb-tower-upper-ripper1-land
+    a.extend(_holds('Up:2 Up+X:1 None:12'))  # pb-tower-upper-ripper2-freeze
+    a.extend(_holds('Right:12 Right+A:8 Up+A:1 A:20 Left+A:24 Up+A:1 None:50'))  # pb-tower-upper-ripper2-land
+    a.extend(_holds('None:57 Up:2 Up+X:1 None:12'))  # pb-tower-upper-ripper3-freeze
+    a.extend(_holds('Right:12 Right+A:8 Up+A:1 A:20 Left+A:22 Up+A:1 None:52'))  # pb-tower-upper-ripper3-land
+    a.extend(_holds('Right:1 None:41 R:2 X+R:1 None:12'))  # pb-tower-upper-ripper4-diagonal-freeze
+    a.extend(_holds('A:16 A+R:2 A+X+R:1 A:1 None:85'))  # pb-tower-top-floor-air-shot
+    a.extend(_holds('Right:6 Right+A:24 Up+A:1 A:20 Right+A:24 Up+A:1 None:45'))  # pb-tower-top-opening-jump
+    a.extend(_holds('Right+X:50 None:110'))  # pb-east-a2f7-entry
+    a.extend(_holds('None:45 X:1 None:15 X:1 None:15 X:1 None:15'))  # pb-a2f7-entry-waver-clear
+    a.extend(_holds('Right:4 Right+A:7 Right:25 Up:1 None:8'))  # pb-a2f7-edge-short-hop
+    a.extend(_holds('Right:4 Right+A:7 Right:25 Up:1 None:8'))  # pb-a2f7-second-short-hop
+    a.extend(_holds('Right+X:8 None:12 Right:4 Right+A:7 Right:25 Up:1 None:8'))  # pb-a2f7-third-short-hop
+    a.extend(_holds('Right+X:8 None:12 Right:4 Right+A:7 Right:25 Up:1 None:8'))  # pb-a2f7-fourth-short-hop
+    a.extend(_holds('Right+X:12 None:12 Right:4 Right+A:7 Right:25 Up:1 None:8'))  # pb-a2f7-fifth-short-hop
+    a.extend(_holds('Right+X:13 None:12 Right:4 Right+A:7 Right:25 Up:1 None:8'))  # pb-a2f7-sixth-short-hop
+    a.extend(_holds('Right+X:8 None:12 Right:4 Right+A:7 Right:25 Up:1 None:8'))  # pb-a2f7-seventh-short-hop
+    a.extend(_holds('Right:4 Right+A:10 Right:24 Up:1 None:10'))  # pb-a2f7-raised-stone-hop
+    a.extend(_holds('Right:4 Right+A:8 Right:36 Up:1 None:10 Right+X:75 None:150'))  # pb-east-a322-entry
+    a.extend(_holds('Right:15 None:12 A:4 Down+A:2 Down+A+X:1 Down:12 Down+X:1 None:45'))  # pb-a322-upper-shot-floors
+    a.extend(_holds('A:4 Down+A:2 Down+A+X:1 None:60'))  # pb-a322-second-shot-floor
+    a.extend(_holds('Right:12 None:45'))  # pb-a322-lower-floor-drop
+    a.extend(_holds('Left:16 None:12 A:4 Down+A:2 Down+A+X:1 None:65'))  # pb-a322-final-shot-floor
+    a.extend(_holds('Right:16 None:100'))  # pb-a322-bottom-door-ledge
+    a.extend(_holds('Left:8 Select+Left:1 Left:1 Select+Left:1 Left:1 Left+X:1 Left:50 None:160'))  # pb-west-a3ae-green-door
+    a.extend(_holds('Left:20 None:170'))  # pb-a3ae-enter
+    assert len(a) == 174992
+    return a
+
+
 def route_frames(source, name):
     """Reproduce authored controller holds/splices; do not adjust emulator timing.
 
@@ -1127,6 +1221,8 @@ def route_frames(source, name):
         return a[:72761] + _holds('None:1800 A:1 None:300 A:1 None:300 A:1 None:900')
     if name == 'norfair-reserve':
         return extend_reserve(extend_redtower(a))
+    if name == 'power-bomb-room-entry':
+        return extend_power_bomb_entry(extend_ice_return(extend_ice(extend_redtower(a)) + _hold('', 120)))
     if name == 'ice-return-business':
         return extend_ice_return(extend_ice(extend_redtower(a)) + _hold('', 120))
     if name in ('ice-beam', 'ice-beam-settled'):
