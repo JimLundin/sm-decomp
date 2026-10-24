@@ -50,7 +50,14 @@ flowchart LR
     AX --> AXTABLE["4 table-boundary references<br/>capture + independent audit PASS"]:::done
     AB --> ACOMPILE["Combined actor library<br/>format + cargo check PASS"]:::done
     AB --> ARETIRE["6 old common-actor modules<br/>retired in private candidate"]:::draft
-    ACOMPILE --> AVERIFY
+    ACOMPILE --> ADLL["79-case DLL<br/>build + source checks PASS"]:::done
+    ADLL --> APCOMP["35 population / animation<br/>byte-identical"]:::done
+    ADLL --> AMCOMP["40 movement / contact<br/>byte-identical"]:::done
+    ADLL --> ATCOMP["4 table boundaries<br/>byte-identical"]:::done
+    APCOMP --> ACAUDIT["Independent comparison audit"]:::active
+    AMCOMP --> ACAUDIT
+    ATCOMP --> ACAUDIT
+    ACAUDIT --> AVERIFY
     AXTABLE --> AVERIFY
     AXAUDIT --> AVERIFY["Actual routes + oracle + mutations"]:::pending
     AV --> BORROW["Actual state/access compiler carrier<br/>positive control PASS"]:::done
@@ -60,7 +67,7 @@ flowchart LR
     BORROW --> BCOPY["Actor move out of view<br/>compiler rejects / PASS"]:::done
     BORROW --> BSCOPY["Spawn move out of view<br/>compiler rejects / PASS"]:::done
     AVERIFY --> AA["Caller retirement + adoption"]:::pending
-    class ACOMPILE,ARETIRE changed
+    class ADLL,APCOMP,AMCOMP,ATCOMP,ACAUDIT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
