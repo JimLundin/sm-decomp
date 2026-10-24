@@ -68,6 +68,7 @@ flowchart LR
     ACONTACT --> AHOOK
     AB --> AROUTEBUILD["Composed route / normal library + DLL<br/>format + compile PASS"]:::done
     AROUTEBUILD --> AROUTE["Two-room routes / cases 12 + 13<br/>execution + byte audit PASS"]:::done
+    AROUTE --> AOLDWORLD["11 existing supplied-world routes<br/>byte-identical"]:::done
     AVERIFY --> MUTWIRE["Hosted runner / 56 old + 17 new faults<br/>CI running / ed447a34"]:::active
     ADLL --> AORACLE["21,015 frames / 10 probes<br/>0 failures + 120-frame tail / PASS"]:::done
     ADLL --> KWRITE["Kraid live-definition write + consumer<br/>PASS"]:::done
@@ -95,7 +96,7 @@ flowchart LR
     MUTBUILD --> MF7["Alias publication"]:::pending
     MUTBUILD --> MF8["Skin / collision independence"]:::pending
     MUTBUILD --> MF9["Discarded-future handles"]:::pending
-    class AP,AROUTE,MUTWIRE,AORACLE changed
+    class AOLDWORLD changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

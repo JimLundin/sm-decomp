@@ -467,7 +467,8 @@ references; measure build/test time and resource growth before changing the loop
    with independent RAM/OAM/door-output audit. Corrected fixture AI bank A0/804C
    to valid A2/804C with matching media/script resources; earlier source review
    missed the AI/graphics dispatch distinction. All79comparisons, sixRuntime guards
-   and initialized Kraid case11 pass on this source. Ordinary library compilation
+   and initialized Kraid case11 pass on this source. All11existing supplied-world
+   routes also remain byte-identical to their adopted captures. Ordinary library compilation
    passes after verification cfg fixes. Candidate ed447a34 is published only on
    verify/owned-actors-20261024. Hosted CI40055904563 runs56existing plus17unique
    actor faults (F9 shares the epoch fault); no mutation kill claimed yet. Selected
@@ -477,8 +478,8 @@ references; measure build/test time and resource growth before changing the loop
    complete caller-retirement audit passes. This is ownership migration, not a net
    source reduction: actor rules3187lines, state/access/codec910, content/identity/
    media2162 and actor adapters/API1160 replace3351old module/bank lines, with930
-   additional integration lines. Repeated movement-result and distance conversions
-   remain a concrete next consolidation opportunity; do not remove safety checks
+   additional integration lines. Repeated movement-result/solid-contact conversions
+   and distance predicates remain consolidation opportunities; do not remove safety checks
    or disguise adapters to fit the original estimate.
    Preserve56existing mutants and add the
    nine selected actor faults, including discarded-future handle rejection.
