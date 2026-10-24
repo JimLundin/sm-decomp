@@ -26,19 +26,20 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-    DESIGN["Owned interface + state contract<br/>reviewed / compiled"]:::done --> ANIM["Animation + FX<br/>implementation"]:::active
-    DESIGN --> REQUEST["Hit / bomb / block + arbitration<br/>implementation"]:::active
-    DESIGN --> POSE["Pose + jump + history<br/>implementation"]:::active
-    ANIM --> OWNER["One Session owner<br/>integrated rules"]:::pending
+    DESIGN["Owned interface + state contract<br/>reviewed / compiled"]:::done --> ANIM["Animation + FX<br/>owned draft compiled"]:::draft
+    DESIGN --> REQUEST["Hit / bomb / block + arbitration<br/>owned draft compiled"]:::draft
+    DESIGN --> POSE["Pose + jump + history<br/>owned draft compiled"]:::draft
+    ANIM --> OWNER["One Session owner<br/>integrated draft compiled"]:::draft
     REQUEST --> OWNER
     POSE --> OWNER
-    OWNER --> CALLERS["Production callers migrated"]:::pending
-    CALLERS --> DELETE["3 repeated chains + legacy bodies<br/>retired"]:::pending
+    OWNER --> CALLERS["Production caller migration"]:::active
+    CALLERS --> DELETE["3 repeated chains + legacy bodies<br/>retirement"]:::active
     DELETE --> ADOPT["Complete subsystem adopted<br/>behavior + mutations pass"]:::pending
     CHECKS["Targeted verification<br/>parallel"]:::active --> ADOPT
     ADOPT --> NEXT["Longer shared ownership<br/>fewer RAM transfers"]:::pending
     class ANIM,REQUEST,POSE,OWNER,CALLERS,DELETE,ADOPT,CHECKS,NEXT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px

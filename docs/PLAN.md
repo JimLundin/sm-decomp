@@ -142,6 +142,15 @@ the same adopted candidate. The2,223-line retirement scope is gross, not promise
 net savings; count the complete replacement and retained adapters separately from
 verification. A declaration, reference capture or outer facade is not adoption.
 
+The isolated owned candidate now contains all nine gameplay implementation files
+plus shared state/content/Runtime integration. Concrete operations replace the
+declaration-only traits; finish_movement composes the four stages. Existing flare
+clearing has one owned Controls implementation. Full formatting, normal-library,
+verifier and backend-free detached-test metadata compilation pass on eed6c4d4.
+No replacement gameplay has executed yet. Caller migration, bank-body retirement
+and adapting the existing captures to actual owned operations proceed in parallel;
+do not count the compiled draft as production adoption or measured net reduction.
+
 Existing references and in-flight checks remain valid work. The65-case batch now
 passes:59prior captures are byte-identical, including11CPU comparisons, and six
 authored pose/history checks pass on1a0c8dfa. Preserve its source and audit outputs.
@@ -156,6 +165,10 @@ The public report must foreground owned behavior, production caller migration,
 legacy deletion and adoption. Keep verification detail expandable below those
 outcomes. Following this subsystem, prioritize extending shared Session ownership
 and removing repeated compatibility transfers across migrated systems.
+
+Progress-only pushes changing just PROGRESS.md and this plan do not repeat code
+CI. PR checks and manual/full mutation dispatch remain unchanged; any other path
+still triggers push CI. Keep static document checks and cite tested source revisions.
 
 **Coordinated iterations (2026-10-22): the user authorized ongoing worker
 supervision, lifecycle/commit coordination and resource oversight.** The
