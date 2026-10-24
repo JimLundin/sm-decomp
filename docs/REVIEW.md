@@ -73,7 +73,7 @@ Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
-- **2026-10-24 23:30 (user direction):** Lane A switched from hand-authored routes
+- **2026-10-24 23:58 (user direction):** Lane A switched from hand-authored routes
   to aligning the published any%/100% TASes (A0.1–A0.5 above); waypoints moved.
 - **2026-10-24 23:52 (c1fe795):** 2 agent source commits in the ~20 min since
   8499a33, both lane B (`B:sm_94`), 0 docs-only; no stall. Milestone plan picked up
