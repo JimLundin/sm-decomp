@@ -396,6 +396,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                     if id == 20 { 1 } else { 0 },
                     "special-air callback low bit ignored for local BTS",
                 );
+                crate::game::session_runtime::collision_mechanism_checks::run(g, id);
             }
             22 | 23 => {
                 put(g, w::samus_x_base_speed, 5);

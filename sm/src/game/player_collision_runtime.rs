@@ -2,9 +2,12 @@
 //! Registered beneath session_runtime so checked loaded reads reuse Game's codec.
 use crate::{
     game::{
-        mechanism_displacement::Displacement,
         player_collision::effects::{Content, Effects, ImportedCollisionReads, MechanismHeader},
         room_entry::{self, ArrivalRequest, ContactSite, EntryPoll},
+        room_mechanisms::{
+            creation,
+            host::{Contact, SpawnSource},
+        },
         session_runtime::Runtime,
         visual_host::{self, Source},
     },
@@ -80,13 +83,34 @@ impl ImportedCollisionReads for Runtime<'_> {
 
 impl Effects for Runtime<'_> {
     fn apply_mechanism(&mut self, header: MechanismHeader, displacement: &mut i32) -> u8 {
-        self.foreign(|game| unsafe {
-            crate::game::room_mechanisms::spawn_contact(
-                header.0,
-                &mut Displacement::Local(displacement),
-                game,
-            )
-        })
+        // The former foreign entry checked identity before even the full-slot exit.
+        super::preflight_export(self.session(), self.game);
+        struct ContactCall<'a, 'g> {
+            runtime: &'a mut Runtime<'g>,
+            completed: bool,
+        }
+        impl Drop for ContactCall<'_, '_> {
+            fn drop(&mut self) {
+                if !self.completed {
+                    self.runtime.relinquish();
+                }
+            }
+        }
+        let mut call = ContactCall {
+            runtime: self,
+            completed: false,
+        };
+        let result = creation::spawn(
+            &mut *call.runtime,
+            SpawnSource::Collision { header: header.0 },
+            &mut Contact::Local(displacement),
+        );
+        call.runtime.inputs.enemy_zero_health = call.runtime.native_word(0xF8C);
+        call.runtime.inputs.current_enemy = call.runtime.word(0xE54);
+        call.runtime.inputs.random_enemy_counter = call.runtime.word(0xE44);
+        call.runtime.inputs.debug_enemy_freeze = call.runtime.word(0x185E);
+        call.completed = true;
+        result
     }
 
     fn enter_door(&mut self) -> EntryPoll {

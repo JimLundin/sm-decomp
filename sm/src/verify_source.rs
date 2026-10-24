@@ -2,6 +2,10 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/verification/collision_mechanism_checks.rs",
+        include_bytes!("verification/collision_mechanism_checks.rs"),
+    ),
+    (
         "sm/src/verification/player_settlement.rs",
         include_bytes!("verification/player_settlement.rs"),
     ),

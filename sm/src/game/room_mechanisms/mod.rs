@@ -78,17 +78,6 @@ fn contact<'a>(value: &'a mut Displacement<'_>) -> Contact<'a> {
         Displacement::RamOffset(at) => Contact::Imported(ContactIdentity(*at)),
     }
 }
-pub(crate) unsafe fn spawn_contact(
-    header: u16,
-    displacement: &mut Displacement<'_>,
-    game: &mut Game,
-) -> u8 {
-    creation::spawn(
-        &mut Runtime::new(game),
-        SpawnSource::Collision { header },
-        &mut contact(displacement),
-    )
-}
 pub(crate) unsafe fn close_door(game: &mut Game) {
     creation::close_door(&mut Runtime::new(game));
 }

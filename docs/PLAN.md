@@ -246,17 +246,43 @@ feedback order, not coverage or total build work. Gameplay source is unchanged;
 no new replay is needed. Active run 40081065327 retains its original order and
 is not restarted. Runtime timing of the new order has not yet been measured.
 
-Next isolated implementation: keep collision-to-mechanism creation in the same
-Session and retire the sole spawn_contact wrapper. The three production files
-are player_collision_runtime.rs, room_mechanisms/mod.rs and session_runtime.rs.
-A local unwind guard reuses Runtime destruction cleanup; entry preflight remains
-outside it. Refresh four owned-state aliases in ExternalInputs after success.
-Keep real foreign effects and the definition-read failure behavior. Source review
-passes; formatting, compilation and execution remain pending. The complete draft
-adds 10 production lines before formatting, not the initial estimated reduction.
-Selected checks reuse collision36/37 and PC6, adding full allocation/no-ROM,
-stale binding, four alias observations and actual C6DC caught-panic prefixes.
-Implementation and independent verification preparation ran in parallel.
+Collision-to-mechanism composition is adopted from source e0f20e7b: the actual
+collision caller invokes creation on the same Session and the sole unsafe
+spawn_contact wrapper is retired. Entry preflight remains outside a local guard;
+unwind reuses the exact Runtime destruction cleanup. Four projected input aliases
+refresh on success. Real foreign effects and definition-read failure behavior
+remain unchanged. A first verifier compile rejected private actor-field access in
+the checker; using the existing owned-byte projection fixed it without widening
+production visibility. Full formatting, normal metadata and release DLL pass.
+Fresh collision36/37 captures match the prior source exactly (131,086 bytes each),
+including added full allocation/no-ROM, four aliases, stale-world preflight and
+actual C6DC partial-write/caught-live-ownership checks. Speed Booster replay
+passes 22,110 frames with zero failures: mechanisms.spawn.collision executes four
+times at21818..21991; player.collision.mechanism.returned three times at21989..21991;
+all required probes have120follow-up frames. No credits coverage is claimed.
+Four locally compiled DLL mutations pass exact assertion classification after
+fresh passing baseline recaptures: omitted unwind cleanup, omitted input refresh,
+omitted entry preflight and existing discarded displacement PC6. Crashes, compile
+failures and unrelated assertions do not count. No hosted runner is invoked.
+Complete cost is +16 production and +247 verification Rust lines; production
+116,938, verification33,981, total150,919. One unsafe function and one unsafe block
+are removed. This is ownership/transfer consolidation, not net line reduction.
+
+Next complete responsibility: normal player locomotion, with
+player_movement::advance_normal on the existing Session. Preserve the frozen gate,
+all28movement selectors, horizontal/vertical collision ordering, motion-specific
+pose/contact behavior and echo tail. Retire the normal dispatch table/bank bodies,
+crouch table, raw speed-pointer record/calculation, movement helpers, grounded-ball
+macro and old footstep/echo bodies in the same adoption. Migrate shared producer
+callers (bomb movement, grapple release, drained crouch, knockback, shinespark echo
+and preparation acceleration); those outer special state machines remain distinct.
+One owner closes state/content/observation contracts while independent production
+and selected-reference/check lanes work in isolated source. Begin implementation
+without waiting for every fixture. Reuse collision checks and cover actual normal
+selectors, speed/liquid/clamp/jump/ball/footstep/echo behavior and mechanism effects
+between axes. The approximately1,050old-line scope and750..1,000replacement estimate
+are provisional, not measured savings. Input-to-pose remains adjoining read-only
+design work, not an additional adoption. Local compilation remains serialized.
 
 The public report must foreground owned behavior, production caller migration,
 legacy deletion and adoption. Keep verification detail expandable below those

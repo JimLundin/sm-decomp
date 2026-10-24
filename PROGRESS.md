@@ -48,13 +48,22 @@ flowchart LR
     DEL --> LOCAL["87 cases + 8,577 frames ?"]:::done
     LOCAL --> EARLY["Early damage consumption / local kill ?"]:::done
     LOCAL --> FRACTION["Lost health fraction / local kill ?"]:::done
-    DEL --> CM["Collision ? mechanism / one Session"]:::draft
-    CM --> CALLER["player_collision_runtime.rs"]:::draft
-    CM --> WRAPPER["room_mechanisms/mod.rs<br/>spawn_contact retired"]:::draft
-    CM --> CLEANUP["session_runtime.rs<br/>shared unwind cleanup"]:::draft
-    CALLER --> CHECK["Full slots / aliases / stale world / panic<br/>source reviewed / execution pending"]:::draft
-    CHECK --> CMUT["Displacement + ownership mutations"]:::pending
-    class NEXT,DAMAGE,DEL,EARLY,FRACTION,CM,CALLER,WRAPPER,CLEANUP,CHECK changed
+    DEL --> CM["Collision ? mechanism / one Session"]:::done
+    CM --> CALLER["player_collision_runtime.rs"]:::done
+    CM --> WRAPPER["room_mechanisms/mod.rs<br/>spawn_contact retired"]:::done
+    CM --> CLEANUP["session_runtime.rs<br/>shared unwind cleanup"]:::done
+    CALLER --> CHECK["Full slots / aliases / stale world / panic ?<br/>collision36/37 exact comparisons ?"]:::done
+    CHECK --> CBUILD["Format + normal compilation + DLL ?"]:::done
+    CBUILD --> CMOVIE["22,110 frames / both probes + tail ?"]:::done
+    CMOVIE --> M1["Unwind cleanup / local kill ?"]:::done
+    CMOVIE --> M2["Input refresh / local kill ?"]:::done
+    CMOVIE --> M3["Entry preflight / local kill ?"]:::done
+    CMOVIE --> M4["Displacement / local kill ?"]:::done
+    CM --> MOVE["Next: normal locomotion / 28 selectors<br/>state + caller contract"]:::active
+    MOVE --> SPEED["Shared speed + vertical rules"]:::pending
+    MOVE --> MODES["Movement modes + footsteps + echoes"]:::pending
+    MOVE --> MCHECK["Selected references + local checks"]:::active
+    class CM,CALLER,WRAPPER,CLEANUP,CHECK,CBUILD,CMOVIE,M1,M2,M3,M4,MOVE,MCHECK changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -62,15 +71,15 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-[Adopted source](https://github.com/JimLundin/sm-decomp/tree/5e546bdc85c8d6f5216c4bf69f247b0299ec1e20/sm/src/game/player_transitions) ? [96 checks](https://github.com/JimLundin/sm-decomp/actions/runs/40078990293) ? [Follow-on checks](https://github.com/JimLundin/sm-decomp/actions/runs/40081065327)
+[Adopted source](https://github.com/JimLundin/sm-decomp/tree/5e546bdc85c8d6f5216c4bf69f247b0299ec1e20/sm/src/game/player_transitions) ? [96 checks](https://github.com/JimLundin/sm-decomp/actions/runs/40078990293) ? [Local validation](docs/PLAN.md#work-order)
 
 | Rust accounting | Main | Latest adoption |
 | --- | ---: | ---: |
-| Production, including adapters | 116,922 | ?64 |
-| Verification and check support | 33,734 | +311 |
-| Combined maintained Rust | 150,656 | +247 |
+| Production, including adapters | 116,938 | +16 |
+| Verification and check support | 33,981 | +247 |
+| Combined maintained Rust | 150,919 | +263 |
 
-**33,734 verification lines excluded, not deleted.** [Scope and local evidence](docs/PLAN.md#work-order).
+**33,981 verification lines excluded, not deleted.** [Scope and local evidence](docs/PLAN.md#work-order).
 
 <details>
 <summary>Verification details and earlier migrations</summary>

@@ -85,6 +85,19 @@ impl<'g> Runtime<'g> {
         self.inputs = encoding::inputs(&self.game.g_ram);
         result
     }
+    fn relinquish(&mut self) {
+        if let Some(state) = self.state.take() {
+            let matching = std::sync::Arc::ptr_eq(&state.world, self.game.world())
+                && state.world.revision() == self.game.world().revision();
+            if matching && self.game.actor_identity_is_with_session() {
+                export_session(state, self.game);
+            } else if self.game.actor_identity_is_with_session() {
+                // A rejected foreign call retains this Runtime's identity owner;
+                // discard invalid byte/native publication rather than panic again.
+                self.game.return_actor_identity(state.actor_identity);
+            }
+        }
+    }
     pub(crate) fn byte(&self, at: usize) -> u8 {
         encoding::projected_byte(self.session(), at).unwrap_or_else(|| self.game.g_ram[at])
     }
@@ -158,17 +171,7 @@ impl<'g> Runtime<'g> {
 }
 impl Drop for Runtime<'_> {
     fn drop(&mut self) {
-        if let Some(state) = self.state.take() {
-            let matching = std::sync::Arc::ptr_eq(&state.world, self.game.world())
-                && state.world.revision() == self.game.world().revision();
-            if matching && self.game.actor_identity_is_with_session() {
-                export_session(state, self.game);
-            } else if self.game.actor_identity_is_with_session() {
-                // A rejected foreign call retains this Runtime's identity owner;
-                // discard invalid byte/native publication rather than panic again.
-                self.game.return_actor_identity(state.actor_identity);
-            }
-        }
+        self.relinquish();
     }
 }
 fn shot_address(lane: ShotLane, raw: u16) -> usize {
@@ -644,3 +647,7 @@ impl Runtime<'_> {
 mod player_collision_runtime;
 #[path = "player_transitions_runtime.rs"]
 mod player_transitions_runtime;
+
+#[cfg(sm_verify_dll)]
+#[path = "../verification/collision_mechanism_checks.rs"]
+pub(crate) mod collision_mechanism_checks;
