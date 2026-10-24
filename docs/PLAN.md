@@ -542,7 +542,10 @@ references; measure build/test time and resource growth before changing the loop
    Both host/library bounds are97; existing IDs0..87 and all old parsers remain
    unchanged. Root reparsed all74old payloads identically; priorfc9source is preserved.
    Added201verification Rust lines brings this fixture batch to2254, gameplay0;
-   private parser+4lines separate. Independent additive execution audit is pending.
+   private parser+4lines separate. Independent additive execution audit passes all
+   nine captures/2359413bytes, including decoded pose/content/contact outcomes.
+   Preserve two source identities:74cases onfc9eaf71, nine on6f115848. These checks
+   establish predecessor observations, not candidate fidelity or mutation kills.
    Source correction: walked tableEB74
    captures loaded ROM before nativeB629/index evaluation; its early branch uses
    current pose, later blocked branch pending pose. Preserve this provenance/order
