@@ -407,6 +407,7 @@ pub mod game {
     #[cfg(any(test, sm_verify_dll))]
     #[path = "../verification/player_collision_owned_checks.rs"]
     pub(crate) mod player_collision_owned_checks;
+    pub(crate) mod player_transitions;
 
     pub mod progress_flags;
     pub(crate) mod room_backgrounds;
@@ -418,7 +419,6 @@ pub mod game {
     pub(crate) mod samus_palette;
     pub(crate) mod samus_periodic_damage;
     pub(crate) mod samus_periodic_damage_ram;
-    pub(crate) mod samus_pose;
     pub(crate) mod session;
     pub(crate) mod session_access;
     pub(crate) mod session_encoding;
@@ -813,3 +813,11 @@ pub(crate) mod player_collision_walked_cases;
 #[cfg(sm_verify_dll)]
 #[path = "verification/player_collision_owned_cases.rs"]
 pub(crate) mod player_collision_owned_cases;
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/player_transitions_rust_observer.rs"]
+pub(crate) mod player_transitions_rust_observer;
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/player_transitions_animation.rs"]
+pub mod player_transitions_animation;

@@ -43,13 +43,31 @@ fn copy_colors<const N: usize>(
         PaletteBuffer::Target => &mut h.session_mut().visual.targets,
     };
     for (i, pair) in bytes.chunks_exact(2).enumerate() {
+        #[cfg(sm_verify_dll)]
+        let observed_before = if crate::player_transitions_rust_observer::active() {
+            colors[first + i]
+        } else {
+            0
+        };
         colors[first + i] = u16::from_le_bytes([pair[0], pair[1]]);
+        #[cfg(sm_verify_dll)]
+        crate::player_transitions_rust_observer::publication(
+            11,
+            if buffer == PaletteBuffer::Current {
+                0xc000
+            } else {
+                0xc200
+            } + 2 * (first + i),
+            observed_before,
+            colors[first + i],
+        );
     }
 }
 pub(crate) fn copy_suit(h: &mut impl Host, buffer: PaletteBuffer, source: u16) {
     #[cfg(sm_verify_dll)]
     if buffer == PaletteBuffer::Current {
         crate::game::visual_runtime::samus_observer::event("copy", source);
+        h.probe("transitions.suit.copy");
     }
     copy_colors::<32>(h, buffer, 192, source);
 }
@@ -63,6 +81,7 @@ pub(crate) fn load_suit(h: &mut impl Host, buffer: PaletteBuffer) {
     #[cfg(sm_verify_dll)]
     if buffer == PaletteBuffer::Current {
         crate::game::visual_runtime::samus_observer::event("load", 0);
+        h.probe("transitions.suit.load");
     }
     let source = suit_source(h.session());
     copy_suit(h, buffer, source);

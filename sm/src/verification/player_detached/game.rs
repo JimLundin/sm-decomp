@@ -94,8 +94,12 @@ pub(crate) mod progress_flags;
 
 #[path = "../../game/player_collision/mod.rs"]
 pub(crate) mod player_collision;
+#[path = "../../game/player_transitions/mod.rs"]
+pub(crate) mod player_transitions;
 #[path = "player_collision_host.rs"]
 pub(crate) mod player_collision_host;
+#[path = "player_transitions_host.rs"]
+pub(crate) mod player_transitions_host;
 #[cfg(test)]
 #[path = "../player_collision_owned_checks.rs"]
 pub(crate) mod player_collision_owned_checks;

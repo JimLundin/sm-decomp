@@ -1,9 +1,75 @@
 //! Sole byte-compatible projection of the migrated aggregate and shared continuations.
 #![forbid(unsafe_code)]
+use crate::game::player_transitions::state as transition_state;
 use crate::game::room_entry::{effects::AssetSlot, world::WorldBinding};
 use crate::game::{external_inputs::ExternalInputs, session::Session};
 use crate::ram_map::{word_arrays as arrays, words as ram};
 use std::sync::Arc;
+// Finite typed words share one lossless projection; no raw-word mirrors.
+macro_rules! transition_words {
+    ($s:ident, $f:ident) => {
+        $f!(
+            0x0a28,
+            $s.player.transitions.ordinary,
+            transition_state::PoseRequestWord
+        );
+        $f!(
+            0x0a2a,
+            $s.player.transitions.interrupted,
+            transition_state::PoseRequestWord
+        );
+        $f!(
+            0x0a2c,
+            $s.player.transitions.transitional,
+            transition_state::PoseRequestWord
+        );
+        $f!(
+            0x0a2e,
+            $s.player.transitions.momentum,
+            transition_state::MomentumAction
+        );
+        $f!(
+            0x0a30,
+            $s.player.transitions.interruption,
+            transition_state::InterruptionAction
+        );
+        $f!(
+            0x0a32,
+            $s.player.transitions.hurt,
+            transition_state::HurtAction
+        );
+        $f!(
+            0x0a9a,
+            $s.player.transitions.animation_skip,
+            transition_state::AnimationSkip
+        );
+        $f!(
+            0x0a58,
+            $s.player.movement_handler,
+            transition_state::MovementMode
+        );
+        $f!(
+            0x0a42,
+            $s.player.transitions.frame_alpha,
+            transition_state::FrameAlphaMode
+        );
+        $f!(
+            0x0a56,
+            $s.player.transitions.bomb_jump,
+            transition_state::BombJump
+        );
+        $f!(
+            0x0a60,
+            $s.player.transitions.input_mode,
+            transition_state::InputMode
+        );
+        $f!(
+            0x0b20,
+            $s.player.transitions.bounce,
+            transition_state::LandingBounce
+        );
+    };
+}
 // Identities have only one mutable representation. Byte writes resolve each
 // intermediate key through the same binding; no key mirror is retained.
 macro_rules! room_keys {
@@ -163,6 +229,24 @@ macro_rules! scalar_words {
         $f(0x1ef1,$($borrow)* $s.visual.animated_tiles.flags);
         $f(0x1ef3,$($borrow)* $s.visual.animated_tiles.selected);
         $f(0x1f49,$($borrow)* $s.visual.animated_tiles.last_instruction);
+        $f(0x0a18,$($borrow)* $s.player.transitions.landing_compatibility);
+        $f(0x0a52,$($borrow)* $s.player.transitions.knockback);
+        $f(0x0a82,$($borrow)* $s.player.transitions.xray_angle);
+        $f(0x0a9c,$($borrow)* $s.player.transitions.animation_buffer);
+        $f(0x0a9e,$($borrow)* $s.player.transitions.grapple_walljump_timer);
+        $f(0x0aa0,$($borrow)* $s.player.transitions.elevator_fade_timer);
+        $f(0x0aa2,$($borrow)* $s.player.transitions.shinespark_start_stop_timer);
+        $f(0x0ad2,$($borrow)* $s.player.transitions.liquid_physics);
+        $f(0x0b1a,$($borrow)* $s.player.transitions.landing_motion_compatibility);
+        $f(0x0b22,$($borrow)* $s.player.transitions.falling);
+        $f(0x0b2a,$($borrow)* $s.player.transitions.vertical_motion_compatibility);
+        $f(0x0b38,$($borrow)* $s.player.transitions.vertical_auxiliary_compatibility);
+        for index in 0..4 {
+            $f(0x0ad4+index*2,$($borrow)* $s.atmospheric.slots[index].remaining);
+            $f(0x0adc+index*2,$($borrow)* $s.atmospheric.slots[index].x);
+            $f(0x0ae4+index*2,$($borrow)* $s.atmospheric.slots[index].y);
+            $f(0x0aec+index*2,$($borrow)* $s.atmospheric.slots[index].frame_and_kind);
+        }
         $f(ram::projectile_counter,$($borrow)* $s.projectiles.count);
         $f(ram::bomb_counter,$($borrow)* $s.projectiles.bomb_count);
         $f(ram::projectile_index,$($borrow)* $s.projectiles.selected);
@@ -188,22 +272,14 @@ macro_rules! scalar_words {
         $f(ram::samus_super_missiles,$($borrow)* $s.inventory.ammunition[1].current);
         $f(ram::samus_power_bombs,$($borrow)* $s.inventory.ammunition[2].current);
         $f(ram::grapple_beam_function,$($borrow)* $s.player.grapple);
-        $f(ram::samus_movement_handler,$($borrow)* $s.player.movement_handler);
         $f(ram::samus_shine_timer,$($borrow)* $s.player.shine_timer);
         $f(ram::timer_for_shine_timer,$($borrow)* $s.player.shine_tick);
         $f(ram::special_samus_palette_frame,$($borrow)* $s.player.palette_frame);
         $f(ram::samus_special_super_palette_flags,$($borrow)* $s.player.special_palette_flags);
-        $f(ram::samus_new_pose,$($borrow)* $s.projectiles.preparation.next_pose);
-        $f(ram::samus_new_pose_interrupted,$($borrow)* $s.projectiles.preparation.interrupted_pose);
-        $f(ram::samus_new_pose_transitional,$($borrow)* $s.projectiles.preparation.transitional_pose);
-        $f(ram::samus_momentum_routine_index,$($borrow)* $s.projectiles.preparation.momentum_routine);
-        $f(ram::samus_special_transgfx_index,$($borrow)* $s.projectiles.preparation.special_graphics);
-        $f(ram::samus_hurt_switch_index,$($borrow)* $s.projectiles.preparation.hurt_switch);
         $f(ram::controller1_input_for_demo,$($borrow)* $s.projectiles.preparation.demo_held);
         $f(ram::controller1_new_input_for_demo,$($borrow)* $s.projectiles.preparation.demo_pressed);
         $f(ram::demo_backup_prev_controller_input,$($borrow)* $s.projectiles.preparation.demo_filtered_held);
         $f(ram::demo_backup_prev_controller_input_new,$($borrow)* $s.projectiles.preparation.demo_filtered_pressed);
-        $f(ram::samus_anim_frame_skip,$($borrow)* $s.projectiles.preparation.animation_skip);
         $f(ram::UNUSED_word_7E0DFA,$($borrow)* $s.projectiles.preparation.aim_history);
         $f(0xa10,$($borrow)* $s.projectiles.preparation.previous_movement_and_facing);
         $f(ram::power_bomb_flag,$($borrow)* $s.projectiles.power_bomb.flag);
@@ -417,6 +493,12 @@ pub(crate) fn decode(bytes: &[u8], world: Arc<WorldBinding>) -> Session {
         };
     }
     room_keys!(load_key);
+    macro_rules! load_transition {
+        ($at:expr, $field:expr, $ty:path) => {
+            $field = <$ty>::from_raw(read(bytes, $at));
+        };
+    }
+    transition_words!(s, load_transition);
     macro_rules! load_asset {
         ($at:expr, $field:ident, $slot:expr) => {
             s.room.entry.$field = s
@@ -466,6 +548,12 @@ pub(crate) fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
         };
     }
     room_keys!(emit_key);
+    macro_rules! emit_transition {
+        ($at:expr, $field:expr, $ty:path) => {
+            visit($at, $field.to_raw());
+        };
+    }
+    transition_words!(s, emit_transition);
     for at in (0x7bd..0x7c9).step_by(2) {
         visit(
             at,
@@ -530,6 +618,14 @@ pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
         };
     }
     room_keys!(key_byte);
+    macro_rules! transition_byte {
+        ($base:expr, $field:expr, $ty:path) => {
+            if ($base..$base + 2).contains(&at) {
+                return Some($field.to_raw().to_le_bytes()[at - $base]);
+            }
+        };
+    }
+    transition_words!(s, transition_byte);
     macro_rules! asset_byte {
         ($base:expr, $field:ident, $slot:expr) => {
             if ($base..$base + 3).contains(&at) {
@@ -611,6 +707,17 @@ pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> boo
         };
     }
     room_keys!(write_key);
+    macro_rules! write_transition {
+        ($base:expr, $field:expr, $ty:path) => {
+            if ($base..$base + 2).contains(&at) {
+                let mut bytes = $field.to_raw().to_le_bytes();
+                bytes[at - $base] = value;
+                $field = <$ty>::from_raw(u16::from_le_bytes(bytes));
+                return true;
+            }
+        };
+    }
+    transition_words!(s, write_transition);
     macro_rules! write_asset {
         ($base:expr, $field:ident, $slot:expr) => {
             if ($base..$base + 3).contains(&at) {
@@ -715,6 +822,15 @@ pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> boo
 pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
     let w = |at| read(bytes, at);
     ExternalInputs {
+        transitions: crate::game::player_transitions::state::TransitionObservations {
+            frame_gamma: w(0xa5a),
+            debug_invincibility: w(0xde0),
+            moonwalk_enabled: w(0x9e4),
+            turn_request: w(0xdf8),
+            game_state: w(0x998),
+            game_time_frames: w(0x9da),
+            fx_kind: w(0x196e),
+        },
         debug_enemy_freeze: w(ram::debug_time_frozen_for_enemies),
         enemy_zero_health: u16::from_ne_bytes([bytes[0xf8c], bytes[0xf8d]]),
         frame_handler_beta: w(0xa44),

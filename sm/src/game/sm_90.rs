@@ -1,13 +1,14 @@
+use crate::game::player_transitions as pt;
+
 use crate::game::actors::api as actor_api;
-use crate::game::launch_motion::MovementDirection;
-use crate::game::launch_motion_ram;
+
 use crate::game::music::PlayRoomMusicTrackAfterAFrames;
 use crate::game::player_projectiles::clear_animation;
 use crate::game::player_projectiles::initialize;
 pub use crate::game::prelude::*;
 use crate::game::projectile_initialization::Initialization;
 use crate::game::samus_animation::{
-    HandleAtmosphericEffects, PlaySamusFanfare, Samus_Animate, Samus_Draw, Samus_DrawEchoes,
+    HandleAtmosphericEffects, PlaySamusFanfare, Samus_Draw, Samus_DrawEchoes,
     Samus_DrawShinesparkCrashEchoes, Samus_DrawWhenNotAnimatingOrDying,
 };
 use crate::game::session_runtime::Runtime;
@@ -25,30 +26,26 @@ use crate::game::explosion_window::spawn_crystal_flash;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::palette_effects;
 use crate::game::player_projectiles::draw_projectiles;
-use crate::game::sm_9b::{
-    GrappleBeamFunc_BF1B, GrappleBeamHandler, UpdateGrappleBeamTilesAndIncrFlameCtr,
-};
+use crate::game::sm_9b::{GrappleBeamFunc_BF1B, UpdateGrappleBeamTilesAndIncrFlameCtr};
 use crate::game::sm_80::{
     DrawTimer, HandleAutoscrolling_X, HandleAutoscrolling_Y,
     HandleScrollingWhenTriggeringScrollDown, HandleScrollingWhenTriggeringScrollLeft,
     HandleScrollingWhenTriggeringScrollRight, HandleScrollingWhenTriggeringScrollUp,
     InvalidInterrupt_Crash, ProcessTimer, QueueSfx1_Max6, QueueSfx1_Max9, QueueSfx1_Max15,
-    QueueSfx2_Max6, QueueSfx3_Max6, QueueSfx3_Max9, QueueSfx3_Max15,
+    QueueSfx3_Max6, QueueSfx3_Max9, QueueSfx3_Max15,
 };
-use crate::game::sm_81::DrawBeamGrappleSpritemap;
+
 use crate::game::sm_88::EnableHdmaObjects;
 use crate::game::sm_91::{
     DemoObjectInputHandler, MakeSamusFaceForward, Samus_CancelSpeedBoost, Samus_Func20,
-    Samus_HandlePalette, Samus_HandleTransFromBlockColl, Samus_HandleTransitions,
-    Samus_InputHandler, Samus_LoadSuitPalette, Samus_LoadSuitTargetPalette, SamusFunc_E633,
-    SamusFunc_F433, XrayRunHandler,
+    Samus_HandlePalette, Samus_InputHandler, Samus_LoadSuitPalette, SamusFunc_E633,
 };
 use crate::game::sm_94::{
-    BlockInsideDetection, HandleGrappleBeamGfx, PostGrappleCollisionDetect_X,
-    PostGrappleCollisionDetect_Y, scale_sine_word,
+    HandleGrappleBeamGfx, PostGrappleCollisionDetect_X, PostGrappleCollisionDetect_Y,
+    scale_sine_word,
 };
 
-pub use crate::types::{Func_V_A, HandlerFunc};
+pub use crate::types::HandlerFunc;
 
 pub use crate::types::LiquidPhysicsType;
 
@@ -159,67 +156,6 @@ pub unsafe fn Samus_HandleMovement_X(game: &mut Game) {
         };
     }
 }
-#[derive(Clone, Copy)]
-enum SamusJumpKind {
-    Normal,
-    Wall,
-    Knockback,
-    Bomb,
-}
-
-unsafe fn samus_jump_environment(game: &mut Game) -> usize {
-    unsafe {
-        if word!(game.equipped_items) & 0x20 != 0 {
-            return 0;
-        }
-        let bottom = Samus_GetBottom_R18(game);
-        match liquid_at_height(game, bottom) {
-            LiquidAtHeight::None => 0,
-            LiquidAtHeight::Water => 1,
-            LiquidAtHeight::LavaAcid => 2,
-        }
-    }
-}
-
-unsafe fn initialize_samus_jump(kind: SamusJumpKind, game: &mut Game) {
-    unsafe {
-        let environment = samus_jump_environment(game);
-        let speeds = match kind {
-            SamusJumpKind::Normal => {
-                if word!(game.equipped_items) & 0x100 != 0 {
-                    [(0, 6), (0x8000, 2), (0x8000, 3)]
-                } else {
-                    [(0xe000, 4), (0xc000, 1), (0xc000, 2)]
-                }
-            }
-            SamusJumpKind::Wall => {
-                if word!(game.equipped_items) & 0x100 != 0 {
-                    [(0x8000, 5), (0x8000, 0), (0x8000, 3)]
-                } else {
-                    [(0xa000, 4), (0x4000, 0), (0xa000, 2)]
-                }
-            }
-            SamusJumpKind::Knockback => [(0, 5), (0, 2), (0, 2)],
-            SamusJumpKind::Bomb => [(0xc000, 2), (0x1000, 0), (0x1000, 0)],
-        };
-        word! {game; samus_y_subspeed = speeds[environment].0; samus_y_speed = speeds[environment].1; }
-        if matches!(kind, SamusJumpKind::Normal | SamusJumpKind::Wall)
-            && word!(game.equipped_items) & 0x2000 != 0
-        {
-            if matches!(kind, SamusJumpKind::Wall) {
-                let _ = word!(game.samus_x_extra_run_speed) >> 1;
-            }
-            word!(game.samus_y_subspeed += word!(game.samus_x_extra_run_subspeed));
-            word!(
-                checked_i32,
-                game.samus_y_speed += (word!(game.samus_x_extra_run_speed) as i32 >> 1)
-            );
-        }
-        word! { game, 0; grapple_walljump_timer, reached_ceres_elevator_fade_timer }
-        word!(game.samus_y_dir = 1);
-    }
-}
-
 unsafe fn select_horizontal_air_transition<const MOVE_AT_REST: bool>(
     base: i32,
     game: &mut Game,
@@ -912,31 +848,6 @@ pub unsafe fn Samus_HandleExtraRunspeedX(game: &mut Game) {
         }
     }
 }
-pub unsafe fn Samus_InitJump(game: &mut Game) {
-    unsafe {
-        crate::verify_probe::hit("samus.jump.normal");
-        initialize_samus_jump(SamusJumpKind::Normal, game);
-    }
-}
-pub unsafe fn Samus_InitWallJump(game: &mut Game) {
-    unsafe {
-        crate::verify_probe::hit("samus.jump.wall");
-        initialize_samus_jump(SamusJumpKind::Wall, game);
-    }
-}
-
-pub unsafe fn Samus_SetSpeedForKnockback_Y(game: &mut Game) {
-    unsafe {
-        crate::verify_probe::hit("samus.jump.knockback");
-        initialize_samus_jump(SamusJumpKind::Knockback, game);
-    }
-}
-pub unsafe fn Samus_InitBombJump(game: &mut Game) {
-    unsafe {
-        crate::verify_probe::hit("samus.jump.bomb");
-        initialize_samus_jump(SamusJumpKind::Bomb, game);
-    }
-}
 unsafe fn IsGreaterThanQuirked(vhi: u16, vlo: u16, cmphi: u16, cmplo: u16) -> bool {
     if ((vhi) as i16).wrapping_sub((cmphi) as i16) >= 0
         && (vhi != cmphi || ((vlo) as i16).wrapping_sub((cmplo) as i16) >= 0 && vlo != cmplo)
@@ -1191,7 +1102,7 @@ pub unsafe fn Samus_Movement_03_SpinJumping(game: &mut Game) {
                 } else {
                     word!(game.UNUSED_word_7E0DFA = (word!(game.UNUSED_word_7E0DFA) & 0xff00 | 1));
                     if (word!(game.button_config_jump_a) & word!(game.joypad1_newkeys)) != 0 {
-                        Samus_InitJump(game);
+                        pt::initialize_jump(&mut Runtime::new(game), pt::state::JumpKind::Normal);
                     }
                 }
             }
@@ -1622,29 +1533,6 @@ pub unsafe fn Projectile_SinLookup(j: u16, a: u16) -> Point16U {
         Point16U { x: v2, y: v4 }
     }
 }
-pub unsafe fn Projectile_Func7_Shinespark(game: &mut Game) {
-    unsafe {
-        word! {game; samus_movement_handler = ((0x90d068i32) as u16); samus_y_dir = 1;
-        speed_boost_counter = 1024; }
-        word! { game, 0; samus_y_subspeed, samus_y_speed, knockback_dir }
-        word!(game.samus_x_extra_run_speed = 8);
-        word! { game, 0;
-            samus_x_extra_run_subspeed, samus_x_base_speed, samus_x_base_subspeed,
-        }
-        word!(game.substate = 7);
-        word! { game, 0; suit_pickup_light_beam_pos, cooldown_timer }
-        word! {game; timer_for_shinesparks_startstop = 30; samus_shine_timer = 60;
-        timer_for_shine_timer = 6; }
-        word! { game, 0; special_samus_palette_frame, bomb_jump_dir }
-        if word!(game.flare_counter) != 0 {
-            if word!(game.flare_counter) as i32 - 16i32 & 0x8000 == 0 {
-                QueueSfx1_Max9(2, game);
-            }
-            word!(game.flare_counter = 0);
-            clear_animation(game);
-        }
-    }
-}
 pub unsafe fn Samus_EndSuperJump(game: &mut Game) -> u8 {
     unsafe {
         if word!(game.samus_health) as i32 - 30i32 & 0x8000 == 0
@@ -1703,11 +1591,11 @@ pub unsafe fn Hdmaobj_CrystalFlash(game: &mut Game) -> u8 {
             kPose_D3_FaceR_CrystalFlash as i32
         }) as SamusPose;
         word!(game.samus_pose = v1 as u16);
-        crate::game::samus_pose::refresh_pose(game);
+        pt::refresh_pose(&mut Runtime::new(game));
         if *ram_ptr!(game; 0xa1f) != 27 {
             return 1;
         }
-        crate::game::samus_pose::record_pose_history(game);
+        pt::record_pose_history(Runtime::new(game).session_mut());
         word!(game.samus_movement_handler = ((0x90d678i32) as u16));
         if word!(game.samus_input_handler) as i32 != 0x90e91d & 0xffff {
             word!(game.samus_input_handler = ((0x90e90ei32) as u16));
@@ -1778,112 +1666,6 @@ pub unsafe fn SamusMoveHandler_CrystalFlashMain_2(game: &mut Game) {
         }
     }
 }
-static kSamusHitInterrupts: [Func_U8; 28] = callback_table! { nonnull Func_U8;
-    Samus_HitInterrupt_Stand, Samus_HitInterrupt_Stand, Samus_HitInterrupt_Stand,
-    Samus_HitInterrupt_Stand, Samus_HitInterrupt_Ball, Samus_HitInterrupt_Stand,
-    Samus_HitInterrupt_Falling, Samus_HitInterrupt_Unused, Samus_HitInterrupt_Ball,
-    Samus_HitInterrupt_Ball, Samus_HitInterrupt_KnockbackGrapple, Samus_HitInterrupt_Turning,
-    Samus_HitInterrupt_Turning, Samus_HitInterrupt_Stand, Samus_HitInterrupt_Turning,
-    Samus_HitInterrupt_Turning, Samus_HitInterrupt_Stand, Samus_HitInterrupt_Ball,
-    Samus_HitInterrupt_Ball, Samus_HitInterrupt_Ball, Samus_HitInterrupt_Stand,
-    Samus_HitInterrupt_Stand, Samus_HitInterrupt_KnockbackGrapple, Samus_HitInterrupt_Turning,
-    Samus_HitInterrupt_Turning, Samus_HitInterrupt_Turning, Samus_HitInterrupt_Turning,
-    Samus_HitInterrupt_Shinespark,
-};
-pub unsafe fn Samus_HitInterruption(game: &mut Game) {
-    unsafe {
-        if word!(game.samus_knockback_timer) != 0 {
-            if word!(game.debug_invincibility) as i32 - 7i32 & 0x8000 != 0 {
-                if word!(game.time_is_frozen_flag) == 0
-                    && word!(game.knockback_dir) == 0
-                    && kSamusHitInterrupts[*ram_ptr!(game; 0xa1f) as usize](game) & 1 != 0
-                {
-                    word!(game.samus_special_transgfx_index = 1);
-                }
-            } else {
-                word! { game, 0; samus_invincibility_timer, samus_knockback_timer }
-            }
-        } else if word!(game.knockback_dir) != 0 {
-            if *ram_ptr!(game; 0xa1f) as i32 == kPose_0A_MoveL_NoAim as i32 {
-                if word!(game.flare_counter) as i32 - 16i32 & 0x8000 == 0 {
-                    QueueSfx1_Max6(0x41, game);
-                }
-                if *ram_ptr!(game; 0xa1e) == 4 {
-                    word!(game.samus_new_pose_transitional = kPose_2A_FaceL_Fall as u16);
-                } else {
-                    word!(game.samus_new_pose_transitional = kPose_29_FaceR_Fall as u16);
-                }
-            } else {
-                if word!(game.samus_hurt_switch_index) == 3 {
-                    word!(game.samus_hurt_switch_index = 8);
-                    return;
-                }
-                word!(game.samus_new_pose_transitional = word!(game.samus_pose));
-            }
-            word!(game.samus_hurt_switch_index = 1);
-        } else if word!(game.bomb_jump_dir) != 0 {
-            SetupBombJump(game);
-        }
-    }
-}
-pub unsafe fn Samus_HitInterrupt_Shinespark(game: &mut Game) -> u8 {
-    unsafe {
-        if word!(game.samus_pose) as i32 == kPose_E8_FaceR_Drained_CrouchFalling as i32
-            || word!(game.samus_pose) as i32 == kPose_E9_FaceL_Drained_CrouchFalling as i32
-        {
-            word! {game; samus_anim_frame_timer = 17; samus_anim_frame = 26; }
-        }
-        word! { game, 0; samus_special_transgfx_index, knockback_dir }
-        0
-    }
-}
-pub unsafe fn Samus_HitInterrupt_KnockbackGrapple(game: &mut Game) -> u8 {
-    unsafe {
-        word!(game.samus_special_transgfx_index = 0);
-        0
-    }
-}
-pub unsafe fn Samus_HitInterrupt_Turning(game: &mut Game) -> u8 {
-    unsafe {
-        word! { game, 0; samus_special_transgfx_index, knockback_dir }
-        0
-    }
-}
-pub unsafe fn Samus_HitInterrupt_Falling(game: &mut Game) -> u8 {
-    unsafe {
-        if word!(game.frame_handler_gamma) as i32 != 0x90e41b & 0xffff {
-            return Samus_HitInterrupt_Stand(game);
-        }
-        word! { game, 0; samus_special_transgfx_index, knockback_dir }
-        0
-    }
-}
-pub unsafe fn Samus_HitInterrupt_Stand(game: &mut Game) -> u8 {
-    unsafe {
-        if *ram_ptr!(game; 0xa1e) == 4 {
-            word!(game.samus_new_pose_interrupted = 84);
-        } else {
-            word!(game.samus_new_pose_interrupted = 83);
-        }
-        1
-    }
-}
-pub unsafe fn Samus_HitInterrupt_Ball(game: &mut Game) -> u8 {
-    unsafe {
-        word!(game.samus_new_pose_interrupted = word!(game.samus_pose));
-        1
-    }
-}
-pub unsafe fn Samus_HitInterrupt_Unused(game: &mut Game) -> u8 {
-    unsafe {
-        if *ram_ptr!(game; 0xa1e) == 4 {
-            word!(game.samus_new_pose_interrupted = 52);
-        } else {
-            word!(game.samus_new_pose_interrupted = 51);
-        }
-        1
-    }
-}
 static kSamus_MoveHandler_Knockback: [Func_V; 6] = callback_table! { nonnull Func_V;
     Samus_MoveHandler_Knockback_0, Samus_MoveHandler_Knockback_Up,
     Samus_MoveHandler_Knockback_Up, Samus_MoveHandler_Knockback_3,
@@ -1897,57 +1679,8 @@ pub unsafe fn Samus_ClearMoveVars(game: &mut Game) {
                 UNUSED_word_7E0B1A, UNUSED_word_7E0B2A, samus_y_subspeed, samus_y_speed, samus_y_dir,
                 UNUSED_word_7E0B38, samus_x_base_speed, samus_x_base_subspeed,
             }
-            Samus_AlignBottomWithPrevPose(game);
+            pt::align_bottom_with_previous_pose(&mut Runtime::new(game));
         }
-    }
-}
-static kSetupBombJump: [Func_U8; 28] = callback_table! { nonnull Func_U8;
-    SetupBombJump_StandCrouch, SetupBombJump_1, SetupBombJump_2, SetupBombJump_2,
-    SetupBombJump_4, SetupBombJump_StandCrouch, SetupBombJump_1, SetupBombJump_4,
-    SetupBombJump_4, SetupBombJump_4, SetupBombJump_4, SetupBombJump_1, SetupBombJump_1,
-    SetupBombJump_1, SetupBombJump_2, SetupBombJump_2, SetupBombJump_1, SetupBombJump_4,
-    SetupBombJump_4, SetupBombJump_4, SetupBombJump_1, SetupBombJump_1, SetupBombJump_1,
-    SetupBombJump_2, SetupBombJump_2, SetupBombJump_2, SetupBombJump_1A, SetupBombJump_1A,
-};
-pub unsafe fn SetupBombJump(game: &mut Game) {
-    unsafe {
-        if byte!(@pointer ram_ptr!(game, u16; 0xa56); 1) == 0
-            && kSetupBombJump[*ram_ptr!(game; 0xa1f) as usize](game) & 1 != 0
-        {
-            word!(game.samus_special_transgfx_index = 3);
-        }
-    }
-}
-pub unsafe fn SetupBombJump_StandCrouch(game: &mut Game) -> u8 {
-    unsafe {
-        if word!(game.time_is_frozen_flag) == 0 {
-            return SetupBombJump_1(game);
-        }
-        word!(game.bomb_jump_dir = 0);
-        0
-    }
-}
-pub unsafe fn SetupBombJump_1(game: &mut Game) -> u8 {
-    unsafe {
-        if *ram_ptr!(game; 0xa1e) == 4 {
-            word!(game.samus_new_pose_interrupted = kPose_52_FaceL_Jump_NoAim_MoveF as u16);
-        } else {
-            word!(game.samus_new_pose_interrupted = kPose_51_FaceR_Jump_NoAim_MoveF as u16);
-        }
-        1
-    }
-}
-pub use self::Samus_HitInterrupt_Ball as SetupBombJump_4;
-pub unsafe fn SetupBombJump_2(game: &mut Game) -> u8 {
-    unsafe {
-        word!(game.samus_input_handler = ((0x90e913i32) as u16));
-        SetupBombJump_1A(game)
-    }
-}
-pub unsafe fn SetupBombJump_1A(game: &mut Game) -> u8 {
-    unsafe {
-        word!(game.bomb_jump_dir = 0);
-        0
     }
 }
 static kSamus_MoveHandler_BombJumpMain: [Func_V; 4] = callback_table! { nonnull Func_V;
@@ -2013,7 +1746,7 @@ crate::game::callback_dispatch! {
         } else {
             word!(game.samus_pose = kPose_53_FaceR_Knockback as u16);
         }
-        crate::game::samus_pose::finish_pose_change(game);
+        pt::finish_pose_change(&mut Runtime::new(game));
         word!(checked_i32, game.samus_y_pos -= (21 - word!(game.samus_y_radius) as i32));
         if word!(game.samus_x_pos) as i32 - word!(game.layer1_x_pos) as i32 - 128i32 & 0x8000 != 0 {
             word!(game.samus_var62 = 1);
@@ -2143,12 +1876,12 @@ pub unsafe fn Samus_SetGrabbedByDraygonPose(a: u16, game: &mut Game) {
         } else {
             word!(game.samus_pose = kPose_BA_FaceL_Draygon_NoMove_NoAim as u16);
         }
-        crate::game::samus_pose::refresh_pose(game);
+        pt::refresh_pose(&mut Runtime::new(game));
         word!(game.frame_handler_gamma = ((0x90e2a1i32) as u16));
         word!(game.samus_movement_handler = ((0x90e90ei32) as u16));
         word! { game, 0; substate, suit_pickup_light_beam_pos }
         *(ram_ptr!(game, u16; 0xdf0)) = 0;
-        crate::game::samus_pose::record_pose_history(game);
+        pt::record_pose_history(Runtime::new(game).session_mut());
         word! {game; samus_new_pose = -1i32 as u16; samus_new_pose_interrupted = -1i32 as u16;
         samus_new_pose_transitional = -1i32 as u16; }
         word! { game, 0;
@@ -2168,10 +1901,10 @@ pub unsafe fn Samus_ReleaseFromDraygon(game: &mut Game) {
         } else {
             word!(game.samus_pose = kPose_01_FaceR_Normal as u16);
         }
-        crate::game::samus_pose::refresh_pose(game);
+        pt::refresh_pose(&mut Runtime::new(game));
         word!(game.samus_movement_handler = ((0x90a337i32) as u16));
         word!(game.frame_handler_gamma = ((0x90e90ei32) as u16));
-        crate::game::samus_pose::record_pose_history(game);
+        pt::record_pose_history(Runtime::new(game).session_mut());
         word! { game, 0; samus_x_base_speed, samus_x_base_subspeed }
         word! {game; samus_new_pose = -1i32 as u16; samus_new_pose_interrupted = -1i32 as u16;
         samus_new_pose_transitional = -1i32 as u16; }
@@ -2195,10 +1928,12 @@ crate::game::callback_dispatch! {
         RunSamusMovementHandler(game);
         crate::game::minimap::update(game);
         RunFrameHandlerGamma(game);
-        Samus_Animate(game);
-        Samus_HitInterruption(game);
-        Samus_HandleTransFromBlockColl(game);
-        Samus_HandleTransitions(game);
+        pt::finish_movement(&mut Runtime::new(game));
+        #[cfg(sm_verify_dll)]
+        {
+            assert!(!game.actor_identity_is_with_session(), "finish_movement must return RAM authority");
+            crate::verify_probe::hit("player.transitions.caller17.return");
+        }
         Samus_HandlePalette(game);
         if crate::game::samus_periodic_damage_ram::apply(game).is_err() {
             InvalidInterrupt_Crash(game);
@@ -2218,10 +1953,7 @@ crate::game::callback_dispatch! {
         word!(game.samus_contact_damage_index = 0);
         RunSamusMovementHandler(game);
         crate::game::minimap::update(game);
-        Samus_Animate(game);
-        Samus_HitInterruption(game);
-        Samus_HandleTransFromBlockColl(game);
-        Samus_HandleTransitions(game);
+        pt::finish_movement(&mut Runtime::new(game));
         Samus_HandlePalette(game);
         word! {game; joypad1_lastkeys = word!(game.controller1_input_for_demo);
             joypad1_newkeys = word!(game.controller1_new_input_for_demo);
@@ -2231,10 +1963,7 @@ crate::game::callback_dispatch! {
     [9496627] Samus_Func15 [] {
         word!(game.samus_contact_damage_index = 0);
         RunSamusMovementHandler(game);
-        Samus_Animate(game);
-        Samus_HitInterruption(game);
-        Samus_HandleTransFromBlockColl(game);
-        Samus_HandleTransitions(game);
+        pt::finish_movement(&mut Runtime::new(game));
         Samus_HandlePalette(game);
         word! {game; joypad1_lastkeys = word!(game.controller1_input_for_demo);
             joypad1_newkeys = word!(game.controller1_new_input_for_demo);
@@ -2244,7 +1973,7 @@ crate::game::callback_dispatch! {
     [9496682] Samus_Func16 [] {
         Samus_SetRadius(game);
         crate::game::minimap::update(game);
-        Samus_Animate(game);
+        pt::advance_animation(&mut Runtime::new(game), pt::state::AnimationStep::Gameplay);
         word! {game; elevator_status = 0; samus_prev_y_pos = word!(game.samus_y_pos); }
         if PlaySamusFanfare(game) & 1 != 0 {
             if word!(game.debug_invincibility) as i32 - 7i32 & 0x8000 != 0
@@ -2272,7 +2001,7 @@ crate::game::callback_dispatch! {
         word!(game.samus_contact_damage_index = 0);
         RunSamusMovementHandler(game);
         crate::game::minimap::update(game);
-        Samus_Animate(game);
+        pt::advance_animation(&mut Runtime::new(game), pt::state::AnimationStep::Gameplay);
     };
     [9496834] Samus_LowHealthCheck [] {
         Samus_LowHealthCheck_(game);
@@ -2562,7 +2291,7 @@ crate::game::callback_dispatch! {
         Samus_ClearMoveVars(game);
     };
     [9494565] Samus_MoveHandler_BombJumpStart [] {
-        Samus_InitBombJump(game);
+        pt::initialize_jump(&mut Runtime::new(game), pt::state::JumpKind::Bomb);
         word! {game; samus_movement_handler = ((0x90e032i32) as u16); input_to_pose_calc = 0; }
     };
     [9494578] Samus_MoveHandler_BombJumpMain [] {
@@ -2810,14 +2539,6 @@ pub fn Samus_GetTop_R20(game: &Game) -> u16 {
     let radius = game.read_rom_byte(0x91b629, pose_offset + 6);
     y.wrapping_sub(u16::from(radius))
 }
-pub fn Samus_AlignBottomWithPrevPose(game: &mut Game) {
-    let current_radius = game.read_rom_byte(0x91b629, usize::from(game.samus_pose()) * 8 + 6);
-    let previous_pose = u16::from_le_bytes([game.g_ram[0xa20], game.g_ram[0xa21]]);
-    let previous_radius = game.read_rom_byte(0x91b629, usize::from(previous_pose) * 8 + 6);
-    let adjustment = u16::from(previous_radius).wrapping_sub(u16::from(current_radius));
-    game.set_samus_y_pos(game.samus_y_pos().wrapping_add(adjustment));
-    game.set_samus_prev_y_pos(game.samus_prev_y_pos().wrapping_add(adjustment));
-}
 pub unsafe fn Samus_UpdateSuitPaletteIndex(game: &mut Game) {
     let mut runtime = crate::game::session_runtime::Runtime::new(game);
     crate::game::samus_palette::update_suit_index(runtime.session_mut());
@@ -2993,7 +2714,7 @@ pub unsafe fn SamusCode_02_ReachCeresElevator(game: &mut Game) -> u8 {
             word!(game.samus_pose = kPose_01_FaceR_Normal as u16);
         }
         word!(game.samus_anim_frame_skip = 0);
-        crate::game::samus_pose::refresh_pose(game);
+        pt::refresh_pose(&mut Runtime::new(game));
         word!(game.reached_ceres_elevator_fade_timer = 60);
         SamusCode_00_LockSamus(game)
     }
@@ -3015,7 +2736,7 @@ pub unsafe fn SamusCode_03(game: &mut Game) -> u8 {
             word!(game.samus_pose = kPose_01_FaceR_Normal as u16);
         }
         word!(game.samus_anim_frame_skip = 0);
-        crate::game::samus_pose::finish_pose_change(game);
+        pt::finish_pose_change(&mut Runtime::new(game));
         1
     }
 }
@@ -3051,7 +2772,7 @@ pub unsafe fn SamusCode_08_SetupForCeresStart(game: &mut Game) -> u8 {
         word! {game; frame_handler_alfa = ((0x90e8cdi32) as u16);
         frame_handler_beta = ((0x90e8dci32) as u16);
         samus_pose = kPose_00_FaceF_Powersuit as u16; samus_anim_frame_skip = 0; }
-        crate::game::samus_pose::refresh_pose(game);
+        pt::refresh_pose(&mut Runtime::new(game));
         Samus_LoadSuitPalette(game);
         word!(game.samus_draw_handler = ((0x90eb52i32) as u16));
         word!(game.samus_prev_pose = word!(game.samus_pose));
@@ -3084,7 +2805,7 @@ pub unsafe fn SamusCode_08_SetupForZebesStart(game: &mut Game) -> u8 {
             word!(game.samus_pose = kPose_00_FaceF_Powersuit as u16);
         }
         Samus_LoadSuitPalette(game);
-        SamusFunc_F433(game);
+        pt::refresh_pose_rules(&mut Runtime::new(game));
         word! {game; samus_anim_frame_timer = 3; samus_anim_frame = 2; substate = 0; }
         1
     }
@@ -3160,7 +2881,7 @@ pub unsafe fn SamusCode_11_SetupForDeath(game: &mut Game) -> u8 {
 }
 pub unsafe fn SamusCode_15_CalledBySuitAcquision(game: &mut Game) -> u8 {
     unsafe {
-        crate::game::samus_pose::record_pose_history(game);
+        pt::record_pose_history(Runtime::new(game).session_mut());
         word!(game.flare_counter = 0);
         clear_animation(game);
         Samus_LoadSuitPalette(game);
@@ -3214,7 +2935,7 @@ pub unsafe fn SamusCode_05_SetupDrained(game: &mut Game) -> u8 {
 pub unsafe fn Samus_SetupForBeingDrained(game: &mut Game) -> u8 {
     unsafe {
         word! {game; samus_pose = kPose_54_FaceL_Knockback as u16; samus_anim_frame_skip = 0; }
-        crate::game::samus_pose::finish_pose_change(game);
+        pt::finish_pose_change(&mut Runtime::new(game));
         word!(game.flare_counter = 0);
         clear_animation(game);
         Samus_LoadSuitPalette(game);

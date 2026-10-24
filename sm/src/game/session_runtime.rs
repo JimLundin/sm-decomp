@@ -226,6 +226,7 @@ impl Host for Runtime<'_> {
                 (1, 9) => QueueSfx1_Max9(sound, g),
                 (1, 15) => QueueSfx1_Max15(sound, g),
                 (2, 6) => QueueSfx2_Max6(sound, g),
+                (3, 3) => QueueSfx3_Max3(sound, g),
                 (3, 6) => QueueSfx3_Max6(sound, g),
                 (3, 9) => QueueSfx3_Max9(sound, g),
                 (3, 15) => QueueSfx3_Max15(sound, g),
@@ -641,3 +642,5 @@ impl Runtime<'_> {
 
 #[path = "player_collision_runtime.rs"]
 mod player_collision_runtime;
+#[path = "player_transitions_runtime.rs"]
+mod player_transitions_runtime;

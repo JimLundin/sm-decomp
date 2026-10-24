@@ -83,7 +83,7 @@ impl Content for Composed {
             .events
             .push(CollisionEvent::WalkedTable);
         RomRecord {
-            image: self.image.clone(),
+            image: self.transition_image(crate::game::visual_host::Source::Loaded),
             base: 0x11 * 0x8000 + 0x6b74,
         }
     }
@@ -300,13 +300,14 @@ mod checks {
         h.world.player.player.pose = 2;
         h.world.player.player.movement_and_facing = 0x108;
         h.world.player.player.collision.solid_actor_flags = 1;
-        h.world.player.projectiles.preparation.next_pose = 3;
+        h.world.player.player.transitions.ordinary =
+        crate::game::player_transitions::state::PoseRequestWord::from_raw(3);
         h.byte(0x91, 0xb629 + 2 * 8 + 3, 5);
         h.byte(0x91, 0xb629 + 3 * 8 + 3, 7);
         h.word(0x91, 0xeb74 + 5 * 2, 0x1234);
         h.word(0x91, 0xeb74 + 7 * 2, 0x5678);
         operations::walked_obstacle(&mut h);
-        assert_eq!(h.world.player.projectiles.preparation.next_pose, 0x1234);
+        assert_eq!(h.world.player.player.transitions.ordinary.to_raw(), 0x1234);
         assert_eq!(h.world.player.player.collision.solid_actor_flags, 0);
         assert_eq!(
             h.collision_contract.events,

@@ -63,6 +63,8 @@ pub unsafe fn NextRandom(game: &mut Game) -> u16 {
         byte!(RegWord; 1) = carry as u8;
         let result: u16 = ((carry >> 8) + RegWord as i32 + 17) as u16;
         word!(game.random_number = result);
+        #[cfg(sm_verify_dll)]
+        crate::cpu_infra::player_transitions_composed::random_after(game);
         result
     }
 }

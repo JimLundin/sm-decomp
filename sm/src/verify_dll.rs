@@ -451,3 +451,6 @@ include!("verification/actor_movement_dll.rs");
 include!("verification/actor_movement_table_dll.rs");
 #[cfg(sm_verify_dll)]
 include!("verification/actor_population_animation_dll.rs");
+
+#[cfg(sm_verify_dll)]
+include!("verification/player_transitions_rust_dll.rs");

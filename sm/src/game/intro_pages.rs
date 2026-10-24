@@ -1,5 +1,7 @@
 //! Intro narrative pages, scene entry, crossfades and Japanese text continuations.
 //! Numeric callbacks select these operations; Game retains the cinematic state.
+use crate::game::player_transitions as pt;
+use crate::game::session_runtime::Runtime;
 
 use super::constants::bank_8d::addr_kPalfx_E1BC;
 use super::constants::bank_91::{addr_stru_91877E, addr_stru_918784};
@@ -115,7 +117,7 @@ pub(super) unsafe fn wait_for_scene(scene: Scene, game: &mut Game) {
                     word! {game; room_width_in_blocks = 32; room_height_in_blocks = 16; }
                 }
                 word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
-                crate::game::samus_pose::finish_pose_change(game);
+                pt::finish_pose_change(&mut Runtime::new(game));
                 let (x, y) = if mother_brain { (155, 115) } else { (376, 147) };
                 word! {game; samus_x_pos = x; samus_prev_x_pos = x; samus_y_pos = y;
                 samus_prev_y_pos = y; cinematic_var8 = 0; cinematic_var13 = 127; }

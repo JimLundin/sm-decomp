@@ -2,6 +2,7 @@ use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, A
 use crate::game::beam_windows::calculate_xray_window;
 use crate::game::liquid_effects;
 use crate::game::music::{HandleMusicQueue, QueueMusic_Delayed8};
+use crate::game::player_transitions as pt;
 pub use crate::game::prelude::*;
 use crate::game::scrolling_sky;
 use crate::game::session_runtime::Runtime;
@@ -1355,7 +1356,7 @@ pub unsafe fn VariaSuitPickup_3(game: &mut Game) -> u8 {
         word!(game.equipped_items |= (1u16));
         word!(game.collected_items |= (1u16));
         word!(game.samus_pose = kPose_9B_FaceF_VariaGravitySuit as u16);
-        crate::game::samus_pose::finish_pose_change(game);
+        pt::finish_pose_change(&mut Runtime::new(game));
         Samus_LoadSuitPalette(game);
         word!(game.substate += 1);
         1
@@ -1366,7 +1367,7 @@ pub unsafe fn GravitySuitPickup_3(game: &mut Game) -> u8 {
         word!(game.equipped_items |= (0x20u16));
         word!(game.collected_items |= (0x20u16));
         word!(game.samus_pose = kPose_9B_FaceF_VariaGravitySuit as u16);
-        crate::game::samus_pose::finish_pose_change(game);
+        pt::finish_pose_change(&mut Runtime::new(game));
         Samus_LoadSuitPalette(game);
         word!(game.substate += 1);
         1

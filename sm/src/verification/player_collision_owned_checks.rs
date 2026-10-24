@@ -311,8 +311,8 @@ pub(crate) fn foreign_sequence_then_move(game: &mut crate::game_state::Game) {
     );
 }
 
-// Additive actual retained-caller witness. Invocation must be wired directly to
-// sm_91::Samus_HandleTransitionsA_7, with its unsafe call outside this safe file.
+// Actual owned momentum-action witness. Invocation calls the production action
+// through Runtime so collision and transition state share one owner.
 // Initialized fixture supplies empty room terrain; native pose radius is authored.
 #[cfg(sm_verify_dll)]
 pub(crate) fn transition_a7_single_commit(
