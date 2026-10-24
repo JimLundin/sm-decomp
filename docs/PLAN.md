@@ -542,7 +542,10 @@ references; measure build/test time and resource growth before changing the loop
    Candidate9b37afb1 is published on verify/owned-player-collision-20261024 only.
    Full CI40068610664 runs91selected faults (73preserved+18new); formatting,
    full game build, Cargo exports and three backend-free core checks pass;
-   mutation jobs remain active. Six adjacent Runtime guards pass with21expected
+   detached job passes54exact unique faults (42general+6actor+6collision), with
+   independent log/source audit. Successful runner enforces all15collision tests;
+   raw passing test transcript is not printed. The37DLL faults remain active.
+   Six adjacent Runtime guards pass with21expected
    panics; nine actor cases match1,442,111bytes and11contact cases match3,670,343bytes.
    Independent output/diagnostic audits pass. Per-child exit receipts were not
    saved separately; successful execution is coordinator-observed, not independently

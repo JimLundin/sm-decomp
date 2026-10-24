@@ -187,7 +187,7 @@ flowchart LR
     PCRT --> PCMERGE
     PCDEL --> PCMERGE
     PCMERGE --> PCFMT["Format + normal / verifier metadata<br/>PASS"]:::done
-    PCFMT --> PCTESTMETA["Detached test metadata PASS<br/>15 new tests / execution pending"]:::done
+    PCFMT --> PCTESTMETA["15 collision tests<br/>hosted runner PASS"]:::done
     PCFMT --> PCRELEASE["Final overlays + release DLL<br/>source / native checks PASS"]:::done
     PCFMT --> PCCOMPARE["74 + 9 frozen comparisons<br/>20,448,594 bytes identical"]:::done
     PCCOMPARE --> PCINVAR["3 actual Runtime invariants PASS"]:::done
@@ -200,6 +200,9 @@ flowchart LR
     PCFMT --> PCORACLE["21,015 frames / 14 probes<br/>0 failures + 120-frame tail PASS"]:::done
     PCFAULT --> PCMUT["Hosted CI / 91 selected faults<br/>running"]:::active
     PCFMT --> PCMUT
+    PCMUT --> PCMD["54 detached faults caught<br/>independent audit PASS"]:::done
+    PCMUT --> PCML["37 DLL faults<br/>running"]:::active
+    class PCTESTMETA,PCMD,PCML changed
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
@@ -222,7 +225,6 @@ flowchart LR
     TA --> TR["Arbitration + pose + jump + history"]:::pending
     TH --> TR
     TU --> TV["Predecessor checks + mutation design"]:::pending
-    class TS,TO,TC,TI,TU,TA,TH,TR,TV changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
