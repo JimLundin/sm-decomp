@@ -90,12 +90,6 @@ pub(super) fn CallBotwoonEprojFunc(ea: u32, k: u16, ctx: &mut impl Host) {
     }
 }
 
-pub(super) fn CallEprojFunc(ea: u32, k: u32, ctx: &mut impl Host) {
-    match ea {
-        8833019 => SpawnMotherBrainDeathBeam(k as u16, ctx),
-        _ => ctx.unreachable(),
-    }
-}
 pub(super) fn EprojPreInstr_NorfairLavaquakeRocks_Inner2(k: u16, ctx: &mut impl Host) -> u16 {
     let v1: i32 = k as i32 >> 1;
     (((enemy!(ctx, (v1) as isize, x) as i32 - ctx.inputs().camera_x as i32) as i16) < 0

@@ -85,10 +85,10 @@ The complete input draft `e956dffa` is held, not adopted. Preserve its checked
 source/reference snapshots and audits under
 `%LOCALAPPDATA%/sm-decomp-experiments/20261024/player-input-*`; do not rerun or
 replace them without a source/coverage reason. Reprice/revalidate it against the
-then-current base before adoption. Latest checked source: `5a4def1e`, shared actor
-terrain movement (-18 production lines): 44 existing cases, all four movement
-branches in Bomb Torizo (1,664 frames, zero failures), three compiling faults caught.
-This is scoped adoption evidence; the full corpus remains unfinished.
+then-current base before adoption. Latest library checks: `022dd11d`, three unused
+projectile helpers retired (-26 production lines). Last behavior change: `5a4def1e`,
+shared actor movement (-18): 44 existing cases, all four movement branches in Bomb
+Torizo (1,664 frames, zero failures), three compiling faults caught. Corpus unfinished.
 
 ## Implementation rules
 

@@ -3,7 +3,7 @@
 ```mermaid
 flowchart TB
     NOW["NOW · Power Bomb route → Crocomire<br/>Gameplay: 23 / 44 · Verifier tests: 20 / 20"]:::active
-    DELETE["NOW · Enemy movement shared (−18 lines)<br/>Keep consolidating: 117,895 → below 110k"]:::active
+    DELETE["NOW · Consolidate enemies + projectiles<br/>Last two cleanups: −44 lines · target below 110k"]:::active
     OWN["NEXT · Finish safe game state<br/>Remove manual memory management"]:::pending
     PROVE["THEN · Own rendering + audio<br/>Play boot to credits without SNES runtime"]:::pending
     TARGET["TARGET · Modular engine · below 100k lines<br/>Map Rando: custom sprites, rooms/doors, opt-in QoL"]:::pending
@@ -17,9 +17,9 @@ flowchart TB
 
 | Measure | Count |
 | --- | ---: |
-| Production Rust lines* | 117895 |
+| Production Rust lines* | 117869 |
 | Verification Rust lines | 37482 |
-| Total Rust | 155377 |
+| Total Rust | 155351 |
 | Lines containing `unsafe` | 5042 |
 | Warnings (no-default library) | 482 |
 | Required checkpoint checks passing | 23/44 |

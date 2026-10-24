@@ -43,13 +43,6 @@ pub(super) fn SetAreaDependentEprojPropertiesEx(table: u16, j: u16, ctx: &mut im
     let value = source.word_le(index);
     enemy!(ctx, (j >> 1) as isize, properties = value);
 }
-pub(super) fn SetAreaDependentEprojProperties(j: u16, ctx: &mut impl Host) {
-    SetAreaDependentEprojPropertiesEx(
-        crate::game::constants::bank_86::addr_kRidleysFireball_Tab0 as u16,
-        j,
-        ctx,
-    );
-}
 pub(super) fn SetEprojSpawnPoint(k: u16, ctx: &mut impl Host) {
     let x = enemy!(ctx, (k >> 1) as isize, x);
     let y = enemy!(ctx, (k >> 1) as isize, y);
@@ -68,19 +61,6 @@ pub(super) fn sub_86A301(j: u16, ctx: &mut impl Host) {
     }
     let x = ctx.session().player.x;
     enemy!(ctx, index, x = x);
-}
-pub(super) fn sub_86B279(k: u16, angle: u16, ctx: &mut impl Host) {
-    let index = (k >> 1) as isize;
-    enemy!(
-        ctx,
-        index,
-        velocity_x = (4 * i32::from(kSinCosTable8bit_Sext[usize::from(angle) + 64])) as u16
-    );
-    enemy!(
-        ctx,
-        index,
-        velocity_y = (4 * i32::from(kSinCosTable8bit_Sext[usize::from(angle)])) as u16
-    );
 }
 pub(super) fn Eproj_InitXYVelRandom(j: u16, table: u16, point: Point16U, ctx: &mut impl Host) {
     let source = ctx.native_record(0x86, table);
