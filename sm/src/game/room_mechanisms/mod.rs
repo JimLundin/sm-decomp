@@ -41,7 +41,7 @@ use crate::game::{
     session_runtime::{self, Runtime},
 };
 use crate::{game_state::Game, types::SpawnHardcodedPlmArgs};
-use host::{Contact, ContactIdentity, Host, SpawnSource};
+use host::{Contact, ContactIdentity, SpawnSource};
 pub(crate) use rules::treadmill::Direction;
 
 pub(crate) unsafe fn spawn_hardcoded(args: SpawnHardcodedPlmArgs, game: &mut Game) {

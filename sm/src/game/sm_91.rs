@@ -1,12 +1,7 @@
 use crate::game::player_transitions as pt;
 
-use crate::game::actors::api as actor_api;
-
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
-use crate::game::{
-    player_collision::operations as player_collision, session_runtime::Runtime as CollisionRuntime,
-};
 
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_8f::*;
@@ -193,7 +188,7 @@ pub unsafe fn Samus_LookupTransitionTable(game: &mut Game) {
             if (*pe).new_input == 0xffff {
                 return;
             }
-            do_until! { ((*pe).new_input == 0xffff);
+            do_until! { (*pe).new_input == 0xffff ;
                 if (pair.r18 & (*pe).new_input) == 0 && (pair.r20 & (*pe).cur_input) == 0 {
                     if (*pe).new_pose != word!(game.samus_pose) {
                         word! {game; samus_new_pose = (*pe).new_pose; bomb_jump_dir = 0; }
@@ -283,7 +278,7 @@ static kSamus_Pose_Func2_Tab: [u8; 28] = [
 pub unsafe fn Samus_Pose_Func2(game: &mut Game) -> u8 {
     unsafe {
         let mut v0: u16 = kSamus_Pose_Func2_Tab[*ram_ptr!(game; 0xa1f) as usize] as u16;
-        if (v0 == 1) {
+        if v0 == 1 {
             if word!(game.samus_x_base_speed) == 0 && word!(game.samus_x_base_subspeed) == 0 {
                 v0 = 2;
             } else {
@@ -301,7 +296,7 @@ pub fn EnableDemoInput(game: &mut Game) {
 }
 pub unsafe fn DisableDemoInput(game: &mut Game) {
     unsafe {
-        word!(game.samus_input_handler = ((0x90e913i32) as u16));
+        word!(game.samus_input_handler = (0x90e913i32) as u16);
         word!(game.demo_enable &= !(0x8000));
     }
 }
@@ -408,22 +403,22 @@ crate::game::callback_dispatch! {
         word!(game.demo_timer_counter = *(RomPtr_91(j, game) as *mut u16));
     };
     [0x9185fc] DemoInstr_Func2 [j] {
-        word!(game.frame_handler_alfa = ((0x90e695i32) as u16));
-        word!(game.frame_handler_beta = ((0x90e725i32) as u16));
+        word!(game.frame_handler_alfa = (0x90e695i32) as u16);
+        word!(game.frame_handler_beta = (0x90e725i32) as u16);
         DisableDemoInput(game);
     };
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
     [0x918682] DemoInstr_Disable [j] {
-        word!(game.frame_handler_alfa = ((0x90e8cdi32) as u16));
-        word!(game.frame_handler_beta = ((0x90e8cdi32) as u16));
+        word!(game.frame_handler_alfa = (0x90e8cdi32) as u16);
+        word!(game.frame_handler_beta = (0x90e8cdi32) as u16);
         DisableDemoInput(game);
     };
     [0x918739] DemoInstr_Func3 [j] {
-        word!(game.frame_handler_alfa = ((0x90e713i32) as u16));
+        word!(game.frame_handler_alfa = (0x90e713i32) as u16);
         word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
         pt::finish_pose_change(&mut Runtime::new(game));
         DisableDemoInput(game);
-        word!(game.samus_input_handler = ((0x90e90ei32) as u16));
+        word!(game.samus_input_handler = (0x90e90ei32) as u16);
     };
 }
 pub unsafe fn ProcessDemoInputObject(game: &mut Game) {
@@ -602,7 +597,7 @@ pub unsafe fn DemoSetFunc_5(game: &mut Game) {
 }
 pub unsafe fn DemoSetFunc_6(game: &mut Game) {
     unsafe {
-        word!(game.samus_draw_handler = ((0x90eb52i32) as u16));
+        word!(game.samus_draw_handler = (0x90eb52i32) as u16);
         pt::start_shinespark(&mut Runtime::new(game));
         word!(game.samus_pose = kPose_CA_FaceL_Shinespark_Horiz as u16);
         pt::refresh_pose(&mut Runtime::new(game));
@@ -1013,7 +1008,7 @@ pub unsafe fn SomeMotherBrainScripts_1(game: &mut Game) -> u8 {
         } else {
             word!(game.samus_pose = kPose_EA_FaceR_Drained_Stand as u16);
         }
-        word!(game.frame_handler_gamma = ((0x90e90ei32) as u16));
+        word!(game.frame_handler_gamma = (0x90e90ei32) as u16);
         1
     }
 }
@@ -1151,7 +1146,7 @@ pub unsafe fn SamusFunc_E633_3(game: &mut Game) {
                         false
                     }))
         } else {
-            ((word!(game.equipped_items) & 8) == 0)
+            (word!(game.equipped_items) & 8) == 0
         };
         if start_spin_jump {
             if *ram_ptr!(game; 0xa1e) == 4 {

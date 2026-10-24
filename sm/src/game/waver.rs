@@ -4,7 +4,7 @@
 use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::api as actor_api;
 use crate::game::enemy_layouts::enemy_layout;
-use crate::game::enemy_script::{EnemyScript, bank_base};
+use crate::game::enemy_script::EnemyScript;
 use crate::game::session_runtime::Runtime;
 use crate::game::sm_a0::SineMult8bit;
 use crate::game_state::Game;

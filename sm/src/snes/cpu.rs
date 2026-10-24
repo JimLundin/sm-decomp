@@ -422,7 +422,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 set_fields! {[(*cpu)]; cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1), i = true,
                 d = false, k = 0_, pc = read_word(cpu, 0xffe4_, 0xffe5_, game), };
             }
-            0x1b => ((*cpu).sp = (*cpu).a),
+            0x1b => (*cpu).sp = (*cpu).a,
             0x22 => {
                 let address = fetch_long_address(cpu, game);
                 let target = address as u16;
@@ -534,9 +534,9 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 (*cpu).pc = pull_word(cpu, game).wrapping_add(1);
                 (*cpu).k = pull_byte(cpu, game);
             }
-            0x9a => ((*cpu).sp = (*cpu).x),
-            0xcb => ((*cpu).waiting = true),
-            0xdb => ((*cpu).stopped = true),
+            0x9a => (*cpu).sp = (*cpu).x,
+            0xcb => (*cpu).waiting = true,
+            0xdb => (*cpu).stopped = true,
             0xf4 => {
                 let w: u16 = fetch_word(cpu, game);
                 if w == 0xc2ae {

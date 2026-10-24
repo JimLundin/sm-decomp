@@ -31,10 +31,7 @@ mod shared;
 mod shared_pre;
 mod tables;
 use crate::game::constants::{bank_86::*, bank_a0::*};
-use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
-use crate::game::sm_a0::SignExtend8;
 use crate::game_state::Game;
-use crate::rtl::abs16;
 pub(crate) use attachments_spore_maw_facade::*;
 pub(crate) use attachments_waffle_botwoon_facade::{
     advance_botwoon_history, advance_waffle_orbit, follow_botwoon_history, orient_botwoon_body,
@@ -43,10 +40,8 @@ pub(crate) use attachments_waffle_botwoon_facade::{
 use collision::*;
 pub use drops::DropSource;
 use drops::collect as collect_drop;
-use pre_actions::*;
 pub use presentation::Priority as EprojPriority;
 use setup::*;
-use setup_helpers::*;
 use shared::*;
 use shared_pre::*;
 use tables::*;

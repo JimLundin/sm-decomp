@@ -73,7 +73,7 @@ pub unsafe fn snes_loadRom(
             headers[i as usize].score = -50i16;
         }
         if length >= 0x8000 {
-            readHeader(data, length, 0x7fc0, (&raw mut headers as *mut CartHeader));
+            readHeader(data, length, 0x7fc0, &raw mut headers as *mut CartHeader);
         }
         if length >= 0x8200 {
             readHeader(
@@ -119,7 +119,7 @@ pub unsafe fn snes_loadRom(
             return false_0 != 0;
         }
         let mut newLength: i32 = 0x8000;
-        while (length > newLength) {
+        while length > newLength {
             newLength *= 2;
         }
         let newData = malloc(newLength as size_t) as *mut u8;
@@ -167,10 +167,10 @@ unsafe fn readHeader(data: *const u8, length: i32, location: i32, header: *mut C
             }
         }
         (*header).name[21i32 as usize] = 0 as c_char;
-        (*header).speed = (*data.offset((location + 0x15) as isize) >> 4);
-        (*header).type_0 = (*data.offset((location + 0x15) as isize) & 0xf);
-        (*header).coprocessor = (*data.offset((location + 0x16) as isize) >> 4);
-        (*header).chips = (*data.offset((location + 0x16) as isize) & 0xf);
+        (*header).speed = *data.offset((location + 0x15) as isize) >> 4;
+        (*header).type_0 = *data.offset((location + 0x15) as isize) & 0xf;
+        (*header).coprocessor = *data.offset((location + 0x16) as isize) >> 4;
+        (*header).chips = *data.offset((location + 0x16) as isize) & 0xf;
         (*header).romSize = ((0x400i32) << *data.offset((location + 0x17) as isize) as i32) as u32;
         (*header).ramSize = ((0x400i32) << *data.offset((location + 0x18) as isize) as i32) as u32;
         (*header).region = *data.offset((location + 0x19) as isize);

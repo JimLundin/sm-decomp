@@ -3,7 +3,7 @@
 use super::access::{enemy, enemy_add, enemy_byte, enemy_decrement, read_member};
 use super::host::{EnemyMember as SlotField, Host, LoadedRecord};
 use super::pre_helpers::*;
-use super::shared::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
+use super::shared::SpawnEprojWithRoomGfx;
 use super::*;
 use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
@@ -849,7 +849,7 @@ pub(super) fn EprojPreInstr_MotherBrainBomb(k: u16, ctx: &mut impl Host) {
             ctx.queue_sound(3, 6, 0x13);
             return;
         }
-        (MoveMotherBrainBomb(k, v5, ctx) & 1 != 0)
+        MoveMotherBrainBomb(k, v5, ctx) & 1 != 0
     } else {
         let mut v2: i16 =
             (((enemy!(ctx, (v1) as isize, velocity_x)) as i16).unsigned_abs() as i32 - 2i32) as i16;
@@ -861,7 +861,7 @@ pub(super) fn EprojPreInstr_MotherBrainBomb(k: u16, ctx: &mut impl Host) {
             } else {
                 v2 as i32
             }) as u16 => (v1) as isize, velocity_x);
-        (MoveMotherBrainBomb(k, 7, ctx) & 1 != 0)
+        MoveMotherBrainBomb(k, 7, ctx) & 1 != 0
     };
     if advance_bomb_phase {
         let v3: i32 = k as i32 >> 1;
@@ -913,7 +913,7 @@ pub(super) fn EprojPreInstr_KagosBugs(k: u16, ctx: &mut impl Host) {
         let fresh71 = enemy_add!(ctx, (v1 as usize) as isize, behavior_c, u16::MAX);
     } else {
         start_instruction((v1 as usize) as isize, addr_word_86D052 as u16, ctx);
-        enemy!(ctx, ((0x86d0ebi32) as u16) => (v1) as isize, pre_action);
+        enemy!(ctx, (0x86d0ebi32) as u16 => (v1) as isize, pre_action);
     };
 }
 
@@ -938,7 +938,7 @@ pub(super) fn EprojPreInstr_D0EC(k: u16, ctx: &mut impl Host) {
     if reset_vertical_speed {
         enemy!(ctx, 256 => (k >> 1) as isize, velocity_y);
     }
-    enemy!(ctx, ((0x86d128i32) as u16) => (k >> 1) as isize, pre_action);
+    enemy!(ctx, (0x86d128i32) as u16 => (k >> 1) as isize, pre_action);
     start_instruction((usize::from(k >> 1)) as isize, addr_word_86D04A as u16, ctx);
 }
 
@@ -1045,7 +1045,7 @@ pub(super) fn EprojPreInstr_SporeSpawners(k: u16, ctx: &mut impl Host) {
             {
                 enemy!(ctx, addr_word_86DC06 as u16 => (v1) as isize, program);
                 enemy!(ctx, 1 => (v1) as isize, delay);
-                enemy!(ctx, (ctx.next_random() & 0x1ff) => (v1) as isize, behavior_b);
+                enemy!(ctx, ctx.next_random() & 0x1ff => (v1) as isize, behavior_b);
             }
         }
         enemy_decrement!(ctx, (v1) as isize, behavior_b);
@@ -1115,7 +1115,7 @@ pub(super) fn EprojPreInstr_D128(v0: u16, ctx: &mut impl Host) {
         enemy!(ctx, 0 => (v0 >> 1) as isize, velocity_x);
     } else if EprojBlockCollisition_Vertical(v0, ctx) & 1 != 0 {
         let v1: i32 = v0 as i32 >> 1;
-        enemy!(ctx, ((0x86d0ebi32) as u16) => (v1) as isize, pre_action);
+        enemy!(ctx, (0x86d0ebi32) as u16 => (v1) as isize, pre_action);
         start_instruction((v1 as usize) as isize, addr_word_86D03C as u16, ctx);
     } else {
         enemy_add!(ctx, (v0 >> 1) as isize, velocity_y, (word_86D082) as u16);
@@ -1238,8 +1238,8 @@ pub(super) fn EprojPreInstr_CrocomireSpikeWallPieces(k: u16, ctx: &mut impl Host
         SlotField::Y,
         SlotField::YFraction,
         v1 as isize,
-        ((((enemy!(ctx, (v1) as isize, velocity_y)) as u32) << 16)
-            | ((enemy!(ctx, (v1) as isize, behavior_b)) as u32)),
+        (((enemy!(ctx, (v1) as isize, velocity_y)) as u32) << 16)
+            | ((enemy!(ctx, (v1) as isize, behavior_b)) as u32),
         ctx,
     );
     if enemy!(ctx, (v1) as isize, y) >= 0xa8 {
@@ -1325,7 +1325,7 @@ pub(super) fn EprojPreInstr_PhantoonStartingFireballs3(k: u16, ctx: &mut impl Ho
         }
         true
     } else {
-        (EprojBlockCollisition_Horiz(k, ctx) & 1 != 0)
+        EprojBlockCollisition_Horiz(k, ctx) & 1 != 0
     };
     if switch_fireball_phase {
         {
@@ -1366,10 +1366,10 @@ pub(super) fn EprojPreInstr_PhantoonStartingFireballsB_2(k: u16, ctx: &mut impl 
     let v2: u16 = enemy!(ctx, (v1) as isize, velocity_x);
     if v2 != 0 {
         enemy!(ctx, (v2 as i32 - 1i32) as u16 => (v1) as isize, velocity_x);
-    } else if ((ctx.inputs().frame & 1) != 0) {
+    } else if (ctx.inputs().frame & 1) != 0 {
         let v3: u16 = (enemy!(ctx, (v1) as isize, velocity_y) as i32 - 1i32) as u16;
         enemy!(ctx, v3 => (v1) as isize, velocity_y);
-        if (v3 == 0) {
+        if v3 == 0 {
             {
                 enemy!(ctx, ctx.resolve_actor(Key::from_legacy(0), Le).x.whole => (v1) as isize, x);
                 enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);
@@ -1959,13 +1959,13 @@ pub(super) use self::EprojPreInstr_SpikeShootingPlantSpikes_MoveX1 as EprojPreIn
 pub(super) fn EprojPreInstr_Spores(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
     let v2: u16 = enemy_byte!(ctx, v1 as isize * 2, behavior_a) as u16;
-    let mut r18: u16 = ((spore_delta(enemy_byte!(ctx, v1 as isize * 2, behavior_a) as isize, ctx)
-        as u16) as u8 as i8 as i16 as u16);
+    let mut r18: u16 = (spore_delta(enemy_byte!(ctx, v1 as isize * 2, behavior_a) as isize, ctx)
+        as u16) as u8 as i8 as i16 as u16;
     if (enemy!(ctx, (v1) as isize, behavior_b) & 0x80) != 0 {
         r18 = r18.wrapping_neg();
     }
     enemy_add!(ctx, (v1) as isize, x, r18);
-    r18 = ((spore_delta((v2 as i32 + 1) as isize, ctx) as u16) as u8 as i8 as i16 as u16);
+    r18 = (spore_delta((v2 as i32 + 1) as isize, ctx) as u16) as u8 as i8 as i16 as u16;
     let v3: u16 = (r18 as i32 + enemy!(ctx, (v1) as isize, y) as i32 + r18 as i32) as u16;
     enemy!(ctx, v3 => (v1) as isize, y);
     if v3 as i32 - 768i32 & 0x8000 == 0 {
@@ -2098,16 +2098,16 @@ pub(super) fn EprojPreInstr_Sparks(k: u16, ctx: &mut impl Host) {
         SlotField::Y,
         SlotField::YFraction,
         v1 as isize,
-        ((((enemy!(ctx, (v1) as isize, velocity_y)) as u32) << 16)
-            | ((enemy!(ctx, (v1) as isize, velocity_x)) as u32)),
+        (((enemy!(ctx, (v1) as isize, velocity_y)) as u32) << 16)
+            | ((enemy!(ctx, (v1) as isize, velocity_x)) as u32),
         ctx,
     );
     add_split(
         SlotField::X,
         SlotField::XFraction,
         v1 as isize,
-        ((((enemy!(ctx, (v1) as isize, behavior_b)) as u32) << 16)
-            | ((enemy!(ctx, (v1) as isize, behavior_a)) as u32)),
+        (((enemy!(ctx, (v1) as isize, behavior_b)) as u32) << 16)
+            | ((enemy!(ctx, (v1) as isize, behavior_a)) as u32),
         ctx,
     );
     if (ctx.inputs().nmi_counter_low & 3) == 0 {
@@ -2182,8 +2182,8 @@ fn integrate_angle_axis(
 ) {
     // Y must reread Angle after the complete X integration.
     let negative = (enemy!(ctx, index, angle) as i32 + phase & 0x80) != 0;
-    let amount = ((((read_member(ctx, velocity, index)) as u32) << 16)
-        | ((read_member(ctx, fraction, index)) as u32));
+    let amount = (((read_member(ctx, velocity, index)) as u32) << 16)
+        | ((read_member(ctx, fraction, index)) as u32);
     // Preserve the original signed-min negation panic in checked builds.
     let amount = if negative {
         -(amount as i32) as u32

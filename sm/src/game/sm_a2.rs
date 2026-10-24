@@ -1,7 +1,7 @@
 use crate::game::actors;
 use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
 use crate::game::actors::api as actor_api;
-use crate::game::enemy_script::{EnemyScript, bank_base};
+use crate::game::enemy_script::EnemyScript;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
 
@@ -592,7 +592,7 @@ crate::game::callback_dispatch! {
                 (*E).var_02 = *((rom_ptr!(game, u16; 0xa28d58) as *mut u8)
                     .offset(v3 as i32 as isize) as *mut u16);
                 set_fields! {[(*E)], 0; var_E, var_03}
-                (*E).var_A = ((0xa28febi32) as u16);
+                (*E).var_A = (0xa28febi32) as u16;
             }
         }
     };
@@ -629,14 +629,14 @@ crate::game::callback_dispatch! {
         MaridiaBeybladeTurtle_Func4(game);
         let mut v2: u16 = if (((*E).base.y_pos) as i16).wrapping_sub((g_word_A28D60) as i16) < 0 {
             (*E).var_00 = g_word_A28D64;
-            ((0xa290cci32) as u16)
+            (0xa290cci32) as u16
         } else {
             if ({ let actor = k; 0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(&Runtime::new(game), Key::from_legacy(actor)))) }) != 0 {
                 (*E).base.y_pos = ((*E).base.y_pos).wrapping_sub(g_word_A28D62);
                 word!(game.extra_samus_y_displacement -= g_word_A28D62);
                 return;
             }
-            ((0xa290e1i32) as u16)
+            (0xa290e1i32) as u16
         };
         (*E).var_A = v2;
         set_fields! {[(*E)], 0; var_07, var_04}
@@ -647,7 +647,7 @@ crate::game::callback_dispatch! {
         let v2: u16 = ((*E).var_00).wrapping_sub(1);
         (*E).var_00 = v2;
         if v2 == 0 {
-            (*E).var_A = ((0xa290e1i32) as u16);
+            (*E).var_A = (0xa290e1i32) as u16;
         }
     };
     [0xa290e1] MaridiaBeybladeTurtle_Func11 [] {
@@ -670,7 +670,7 @@ crate::game::callback_dispatch! {
     [0xa29142] MiniMaridiaBeybladeTurtle_Func1 [] {
         if ({ let actor = k; 0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(&Runtime::new(game), Key::from_legacy(actor)))) }) != 0 {
             let E = Get_MiniMaridiaTurtle(k as i32, game);
-            (*E).var_A = ((0xa2916ei32) as u16);
+            (*E).var_A = (0xa2916ei32) as u16;
             (*E).var_05 = 4;
             let mut v2: u16 = addr_kMaridiaBeybladeTurtle_Ilist_8C30 as u16;
             if ((*E).var_E & 0x8000) == 0 {
@@ -687,7 +687,7 @@ crate::game::callback_dispatch! {
             let v2: u16 = ((*E).var_05).wrapping_sub(1);
             (*E).var_05 = v2;
             if v2 == 0 {
-                (*E).var_A = ((0xa29198i32) as u16);
+                (*E).var_A = (0xa29198i32) as u16;
                 (*E).var_00 = 60;
             }
         };
@@ -695,7 +695,7 @@ crate::game::callback_dispatch! {
     [0xa29198] MiniMaridiaBeybladeTurtle_Func3 [] {
         let E = Get_MiniMaridiaTurtle(k as i32, game);
         if ({ let actor = k; 0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(&Runtime::new(game), Key::from_legacy(actor)))) }) != 0 {
-            (*E).var_A = ((0xa291f8i32) as u16);
+            (*E).var_A = (0xa291f8i32) as u16;
             enemy_instruction! {[(*E).base]; instruction = addr_kMaridiaBeybladeTurtle_Ilist_8BD2 as u16, timer = 1}
             (*E).var_04 = 1;
             let mut v2: u16 = g_word_A28D68;
@@ -712,7 +712,7 @@ crate::game::callback_dispatch! {
                     v5 = addr_kMaridiaBeybladeTurtle_Ilist_8C72 as u16;
                 }
                 enemy_instruction! {[(*E).base]; instruction = v5, timer = 1}
-                (*E).var_A = ((0xa29142i32) as u16);
+                (*E).var_A = (0xa29142i32) as u16;
             }
         };
     };
@@ -732,7 +732,7 @@ crate::game::callback_dispatch! {
                 v1 = addr_kMaridiaBeybladeTurtle_Ilist_8C72 as u16;
             }
             enemy_instruction! {[(*E).base]; instruction = v1, timer = 1}
-            (*E).var_A = ((0xa29142i32) as u16);
+            (*E).var_A = (0xa29142i32) as u16;
         } else {
             MiniMaridiaBeybladeTurtle_Func4(k, game);
         };
@@ -754,7 +754,7 @@ pub unsafe fn MaridiaBeybladeTurtle_Func6(k: u16, game: &mut Game) {
         } != 0
         {
             let E = Get_MaridiaTurtle(k as i32, game);
-            (*E).var_A = ((0xa29083i32) as u16);
+            (*E).var_A = (0xa29083i32) as u16;
             words!(
                 game.extra_samus_x_displacement,
                 extra_samus_x_subdisplacement += -(words!(i32, (*E), var_E, var_03)) as u32
@@ -778,7 +778,7 @@ pub unsafe fn MiniMaridiaBeybladeTurtle_Func7(game: &mut Game) {
         } == 0
         {
             (*Get_MiniMaridiaTurtle(word!(game.cur_enemy_index) as i32, game)).var_A =
-                ((0xa29142i32) as u16);
+                (0xa29142i32) as u16;
         }
     }
 }
@@ -837,7 +837,7 @@ crate::game::callback_dispatch! {
         (*E).var_A = 0;
         sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99AD as u16, game);
         (*E).var_00 = 0;
-        (*E).var_D = ((0xa29b65i32) as u16);
+        (*E).var_D = (0xa29b65i32) as u16;
         (*E).var_C = (*E).parameter_1;
         (*E).var_04 = 0;
     };
@@ -845,7 +845,7 @@ crate::game::callback_dispatch! {
         CallThinHoppingBlobs((((*E).var_D) as u32) | (0xa20000u32), game);
     };
     TwinHoppingBlobs_Func2 [] {
-        (*E).var_00 = ({ let (actor, distance) = (word!(game.cur_enemy_index), (*E).parameter_2); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) });
+        (*E).var_00 = { let (actor, distance) = (word!(game.cur_enemy_index), (*E).parameter_2); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) };
     };
     ThinHoppingBlobs_Func3 [] {
         (*E).var_02 = 1;
@@ -876,7 +876,7 @@ crate::game::callback_dispatch! {
         let mut thbs_var_F: u16 = (*E).var_F;
         let mut r22: u16 = 0;
         let mut r24: u16 = 0;
-        do_until! { (v2 as i32 - r24 as i32 & 0x8000 != 0);
+        do_until! { v2 as i32 - r24 as i32 & 0x8000 != 0 ;
     r22 = (r22).wrapping_add(
         *((rom_ptr!(game, u16; 0xa29a09) as *mut u8).offset(thbs_var_F as i32 as isize)
             as *mut u16),
@@ -894,8 +894,8 @@ crate::game::callback_dispatch! {
 }
         (*E).var_B = r22;
         (*E).var_03 = 0;
-        let v3: u16 = (r22 >> 1);
-        (*E).var_07 = (r22 >> 1);
+        let v3: u16 = r22 >> 1;
+        (*E).var_07 = r22 >> 1;
         (*E).var_06 = ((*E).var_07 as i32 + (v3 as i32 >> 1)) as u16;
     };
     [10656641] ThinHoppingBlobs_Func7 [] {
@@ -913,12 +913,12 @@ crate::game::callback_dispatch! {
         if ({ let (actor, amount) = (word!(game.cur_enemy_index), *(rom_ptr!(game, u32; 0xa0cbc7)).offset((v6 >> 2) as isize) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
         {
             if (*E).var_03 != 0 {
-                (*E).var_D = ((0xa29b65i32) as u16);
+                (*E).var_D = (0xa29b65i32) as u16;
             } else {
                 (*E).var_04 = 1;
                 (*E).var_05 = ((*E).var_02) ^ (1u16);
                 (*E).var_00 = 4;
-                (*E).var_E = ((0xa29d98i32) as u16);
+                (*E).var_E = (0xa29d98i32) as u16;
             }
             (*E).var_01 = 0;
         } else {
@@ -950,7 +950,7 @@ crate::game::callback_dispatch! {
             if ({ let (actor, amount) = (word!(game.cur_enemy_index), (R20 as i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
             {
                 set_fields! {[(*E)]; var_04 = 1, var_05 = ((*E).var_02) ^ (1u16), var_01 = 0,
-                    var_00 = 4, var_E = ((0xa29d98i32) as u16), };
+                    var_00 = 4, var_E = (0xa29d98i32) as u16, };
             }
         };
     };
@@ -1011,7 +1011,7 @@ crate::game::callback_dispatch! {
         {
             let R28: u16 = ThinHoppingBlobs_Func4(game);
             (*E).var_00 = ((R28 as i32 & 1) + 5) as u16;
-            (*E).var_D = ((0xa29b65i32) as u16);
+            (*E).var_D = (0xa29b65i32) as u16;
         }
     };
     @external {
@@ -1045,7 +1045,7 @@ pub unsafe fn ThinHoppingBlobs_Func6(k: u16, game: &mut Game) {
         let E = Get_ThinHoppingBlobs(k as i32, game);
         (*E).var_C = (*E).var_C.wrapping_sub(1);
         if ((*E).var_C & 0x8000) != 0 {
-            (*E).var_D = ((0xa29b81i32) as u16);
+            (*E).var_D = (0xa29b81i32) as u16;
             (*E).var_C = (*E).parameter_1;
             (*E).var_01 = 1;
             ThinHoppingBlobs_Func1(k, game);
@@ -1088,7 +1088,7 @@ crate::game::callback_dispatch! {
                 return;
             }
             (*E).var_00 = 0;
-            (*E).var_D = ((0xa29b65i32) as u16);
+            (*E).var_D = (0xa29b65i32) as u16;
         }
         (*E).var_01 = 0;
         sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99D5 as u16, game);
@@ -1099,7 +1099,7 @@ crate::game::callback_dispatch! {
         if (*E).var_01 == 0 {
             (*E).var_01 = 0;
             (*E).var_00 = 3;
-            (*E).var_D = ((0xa29b65i32) as u16);
+            (*E).var_D = (0xa29b65i32) as u16;
             sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99D5 as u16, game);
         }
     };
@@ -1117,7 +1117,7 @@ pub unsafe fn SpikeShootingPlant_4(game: &mut Game) {
             & 0x8000
             != 0
         {
-            (*E).var_F = ((0xa2a01bi32) as u16);
+            (*E).var_F = (0xa2a01bi32) as u16;
             if byte!((*E).parameter_1; 1) != 0 {
                 SpikeShootingPlant_6(game);
             } else {
@@ -1226,7 +1226,7 @@ pub unsafe fn Flies_3(k: u16, game: &mut Game) {
         (*E).var_B = (2u16).wrapping_mul((kSinCosTable8bit_Sext[(v1 + 64) as usize]) as u16);
         (*E).var_C = (4u16).wrapping_mul((kSinCosTable8bit_Sext[v1 as usize]) as u16);
         (*E).var_D = word!(game.samus_y_pos);
-        (*E).var_F = ((0xa2b1aai32) as u16);
+        (*E).var_F = (0xa2b1aai32) as u16;
     }
 }
 crate::game::callback_dispatch! {
@@ -1238,7 +1238,7 @@ crate::game::callback_dispatch! {
             && ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x40); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
         {
             (*Get_LavaquakeRocks(word!(game.cur_enemy_index) as i32, game)).var_A =
-                ((0xa2b5b2i32) as u16);
+                (0xa2b5b2i32) as u16;
         }
     };
     [10663346] LavaquakeRocks_2 [] {
@@ -1257,7 +1257,7 @@ crate::game::callback_dispatch! {
             game,
         );
         let E = Get_LavaquakeRocks(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_A = ((0xa2b5eai32) as u16);
+        (*E).var_A = (0xa2b5eai32) as u16;
         (*E).var_B = crate::rtl::rom_table_word!(
             game,
             0xa2b520,
@@ -1268,7 +1268,7 @@ crate::game::callback_dispatch! {
         let E = Get_LavaquakeRocks(word!(game.cur_enemy_index) as i32, game);
         (*E).var_B = (*E).var_B.wrapping_sub(1);
         if ((*E).var_B & 0x8000) != 0 {
-            (*E).var_A = ((0xa2b596i32) as u16);
+            (*E).var_A = (0xa2b596i32) as u16;
         }
     };
 }
@@ -1388,11 +1388,11 @@ crate::game::callback_dispatch! {
     }
     when ((*E).var_F & 0x8000) != 0;
     [10663903] Rinka_3 {
-        (*E).var_A = ((0xa2b85bi32) as u16);
+        (*E).var_A = (0xa2b85bi32) as u16;
         let mut v3: u16 = if (*E).parameter_1 != 0 {
             ((*E).base.properties as i32 & !(kEnemyProps_Tangible as i32)) as u16
         } else {
-            ((*E).base.properties & 0xf3ff | 0x800)
+            (*E).base.properties & 0xf3ff | 0x800
         };
         (*E).base.properties = v3;
         let r18: u16 = -(actor_api::angle_from_delta((word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos), (word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos)) as i32
@@ -1494,7 +1494,7 @@ crate::prefixed_callbacks! {
         Rinka_Init3(k, game);
     };
     Rinka_Init3 [] {
-        (*E).var_A = ((0xa2b852i32) as u16);
+        (*E).var_A = (0xa2b852i32) as u16;
         (*E).var_F = 26;
         set_fields! {[(*E)], 0; var_B, var_C}
         if (*E).parameter_1 != 0 {
@@ -1541,7 +1541,7 @@ crate::prefixed_callbacks! {
                     y: (*E).base.y_pos,
                 };
                 SpawnEprojWithRoomGfx(0xe509, 3, game);
-                (*E).var_A = ((0xa2b844i32) as u16);
+                (*E).var_A = (0xa2b844i32) as u16;
                 (*E).var_F = 1;
             } else {
                 ({ let animation = 0; actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Rinka { animation }) });
@@ -1563,7 +1563,7 @@ crate::game::callback_dispatch! {
                 (*E).var_D = -((*E).var_D as i32) as u16;
             }
             Rio_6(addr_kRio_Ilist_BB7F as u16, game);
-            (*E).var_B = ((0xa2bc48i32) as u16);
+            (*E).var_B = (0xa2bc48i32) as u16;
             if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) == 0 {
                 QueueSfx2_Max6(0x65, game);
             }
@@ -1574,20 +1574,20 @@ crate::game::callback_dispatch! {
         if (*E).var_E != 0 {
             (*E).var_E = 0;
             Rio_6(addr_stru_A2BB53 as u16, game);
-            (*E).var_B = ((0xa2bbedi32) as u16);
+            (*E).var_B = (0xa2bbedi32) as u16;
         }
     };
     [10665032] Rio_3 [] {
         let E = Get_Rio(k as i32, game);
         if ({ let (actor, amount) = (k, ((*E).var_D as i16 as i32) << 8); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             (*E).var_D = -((*E).var_D as i32) as u16;
-        } else if (({ let (actor, amount) = (k, ((*E).var_C as i16 as i32) << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) == 0) {
+        } else if ({ let (actor, amount) = (k, ((*E).var_C as i16 as i32) << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) == 0 {
             let mut v4: i16 = (((*E).var_C) as i16).wrapping_sub(24);
             (*E).var_C = v4 as u16;
             if v4 < 0 {
                 (*E).var_A = (*E).var_D;
                 set_fields! {[(*E)], 0; var_D, var_C}
-                (*E).var_B = ((0xa2bcffi32) as u16);
+                (*E).var_B = (0xa2bcffi32) as u16;
             } else if (*E).var_E != 0 {
                 (*E).var_E = 0;
                 Rio_6(addr_kRio_Ilist_BB97 as u16, game);
@@ -1595,7 +1595,7 @@ crate::game::callback_dispatch! {
             return;
         }
         (*E).var_C = -((*E).var_C as i32) as u16;
-        (*E).var_B = ((0xa2bcb7i32) as u16);
+        (*E).var_B = (0xa2bcb7i32) as u16;
     };
     [10665143] Rio_4 [] {
         let E = Get_Rio(k as i32, game);
@@ -1604,7 +1604,7 @@ crate::game::callback_dispatch! {
         }
         if ({ let (actor, amount) = (k, ((*E).var_C as i16 as i32) << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             Rio_6(addr_kRio_Ilist_BBA3 as u16, game);
-            (*E).var_B = ((0xa2bc32i32) as u16);
+            (*E).var_B = (0xa2bc32i32) as u16;
         } else {
             (*E).var_C = ((*E).var_C).wrapping_sub(24);
         };
@@ -1617,7 +1617,7 @@ crate::game::callback_dispatch! {
         {
             (*E).var_D = (*E).var_A;
             (*E).var_C = -1i32 as u16;
-            (*E).var_B = ((0xa2bcb7i32) as u16);
+            (*E).var_B = (0xa2bcb7i32) as u16;
         } else {
             let v1: i32 = ({ let actor = k; actor_api::angle_to_player(&Runtime::new(game), Key::from_legacy(actor)) }) as i32;
             (*E).var_D = kSinCosTable8bit_Sext[(v1 + 64) as usize] as u16;
@@ -1668,8 +1668,8 @@ crate::game::callback_dispatch! {
         (*E).var_E = 3;
         (*E).var_C = 128;
         (*E).base.current_instruction = addr_kMaridiaLargeSnail_Ilist_CA4B as u16;
-        (*E).var_A = ((0xa2cde6i32) as u16);
-        (*E).var_F = ((0xa2cf66i32) as u16);
+        (*E).var_A = (0xa2cde6i32) as u16;
+        (*E).var_F = (0xa2cf66i32) as u16;
     };
     [10669542] MaridiaLargeSnail_Func_4 [] {
         if (*E).var_E != 0 {
@@ -1683,7 +1683,7 @@ crate::game::callback_dispatch! {
             if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x18); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0 {
                 (*E).var_00 = ((*E).var_00) | (2u16);
                 MaridiaLargeSnail_Func_10(word!(game.cur_enemy_index), game);
-                (*E).var_A = ((0xa2ce2bi32) as u16);
+                (*E).var_A = (0xa2ce2bi32) as u16;
             }
         };
     };
@@ -1692,7 +1692,7 @@ crate::game::callback_dispatch! {
             CallEnemyPreInstr((((*E).var_F) as u32) | (0xa20000u32), game);
         } else if ({ let (actor, amount) = (word!(game.cur_enemy_index), (1i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) == 0 {
             (*E).var_B = 0;
-            (*E).var_F = ((0xa2cf66i32) as u16);
+            (*E).var_F = (0xa2cf66i32) as u16;
             (*E).var_E = 3;
         }
         if (*E).var_0B == 0 {
@@ -1712,9 +1712,9 @@ crate::game::callback_dispatch! {
                     set_fields! {[(*E)], 1; var_00, var_D}
                 }
                 (*E).var_C = 128;
-                (*E).var_00 = ((*E).var_00 & 1 | 4);
+                (*E).var_00 = (*E).var_00 & 1 | 4;
                 MaridiaLargeSnail_Func_10(word!(game.cur_enemy_index), game);
-                (*E).var_A = ((0xa2cf40i32) as u16);
+                (*E).var_A = (0xa2cf40i32) as u16;
             } else {
                 let mut v5: u16 = 128;
                 if (*E).var_D != 0 {
@@ -1755,7 +1755,7 @@ crate::game::callback_dispatch! {
             (*E).var_02 = 0;
             (*E).var_00 = ((*E).var_00).wrapping_sub(2);
             MaridiaLargeSnail_Func_10(word!(game.cur_enemy_index), game);
-            (*E).var_A = ((0xa2ce2bi32) as u16);
+            (*E).var_A = (0xa2ce2bi32) as u16;
         }
     };
     MaridiaLargeSnail_Func_11 [] {
@@ -1794,7 +1794,7 @@ pub unsafe fn HirisingSlowfalling_Func_2(k: u16, r18: u16, game: &mut Game) {
     unsafe {
         let mut v: u32 = 0;
         let mut r24: u16 = 0;
-        do_until! { ((v >> 16i32).wrapping_sub(r18 as u32) & 0x8000 == 0);
+        do_until! { (v >> 16i32).wrapping_sub(r18 as u32) & 0x8000 == 0 ;
             r24 = (r24).wrapping_add(512);
             let v1: i32 = 4 * (r24 as i32 >> 8);
             v = v.wrapping_add(words!((
@@ -1820,7 +1820,7 @@ crate::game::callback_dispatch! {
         if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x50); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0 {
             let E = Get_HirisingSlowfalling(word!(game.cur_enemy_index) as i32, game);
             (*E).var_07 = (*E).parameter_2;
-            (*E).var_A = ((0xa2e04fi32) as u16);
+            (*E).var_A = (0xa2e04fi32) as u16;
         }
     };
     [10674255] HirisingSlowfalling_Func_5 [] {
@@ -1829,7 +1829,7 @@ crate::game::callback_dispatch! {
         (*E).var_07 = v1 as u16;
         if v1 < 0 {
             HirisingSlowfalling_Func_3(addr_kHirisingSlowfalling_Ilist_D834 as u16, game);
-            (*E).var_A = ((0xa2e06ai32) as u16);
+            (*E).var_A = (0xa2e06ai32) as u16;
         }
     };
     [10674282] HirisingSlowfalling_Func_6 [] {
@@ -1853,7 +1853,7 @@ crate::game::callback_dispatch! {
             (*E).var_C = 0;
             (*E).var_D = ((byte!((*E).parameter_1; 0)) as u16).wrapping_sub(1);
             HirisingSlowfalling_Func_3(addr_kHirisingSlowfalling_Ilist_D840 as u16, game);
-            (*E).var_A = ((0xa2e0cdi32) as u16);
+            (*E).var_A = (0xa2e0cdi32) as u16;
         }
     };
     [10674381] HirisingSlowfalling_Func_7 [] {
@@ -1871,7 +1871,7 @@ crate::game::callback_dispatch! {
                 set_fields! {[(*E).base]; x_pos = (*E).var_00, x_subpos = 0, y_pos = (*E).var_01,
                     y_subpos = 0, };
                 HirisingSlowfalling_Func_3(addr_kHirisingSlowfalling_Ilist_D82C as u16, game);
-                (*E).var_A = ((0xa2e035i32) as u16);
+                (*E).var_A = (0xa2e035i32) as u16;
             }
         } else {
             (*E).base.x_pos = (*(v1 as *mut u16)).wrapping_add((*E).var_04);
@@ -2166,7 +2166,7 @@ crate::game::callback_dispatch! {
         let E = Get_MiniMaridiaTurtle(word!(game.cur_enemy_index) as i32, game);
         if ((*E).base.properties & 0x8000) == 0 {
             Enemy_NormalTouchAI_A2(game);
-            (*E).var_A = ((0xa290e1i32) as u16);
+            (*E).var_A = (0xa290e1i32) as u16;
             (*E).var_04 = 2;
         }
     };
@@ -2197,7 +2197,7 @@ crate::game::callback_dispatch! {
                         >> 16) as u16
                 };
             (*E).base.x_pos = v3;
-            (*E).var_A = ((0xa29142i32) as u16);
+            (*E).var_A = (0xa29142i32) as u16;
             ({ let (actor, amount) = (word!(game.cur_enemy_index), (words!(((*E).var_E, 0u16))) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 });
             MaridiaBeybladeTurtle_Func21(game);
         }
@@ -2222,19 +2222,19 @@ crate::game::callback_dispatch! {
         if word!(game.game_state) != 40 || word!(game.demo_set) != 0 {
             if word!(game.loading_game_state) as i32 == kLoadingGameState_22_EscapingCeres as i32 {
                 (*E).base.y_pos = (word!(game.samus_y_pos)).wrapping_sub(17);
-                (*E).var_F = ((0xa2a80ci32) as u16);
+                (*E).var_F = (0xa2a80ci32) as u16;
             } else {
                 let v3: u16 = ((*E).base.y_pos).wrapping_sub(25);
                 (*E).base.y_pos = v3;
                 (*E).var_E = v3;
-                (*E).var_F = ((0xa2a9bdi32) as u16);
+                (*E).var_F = (0xa2a9bdi32) as u16;
             }
         } else {
             word!(game.samus_y_pos = 1138);
             let v5: u16 = ((*E).base.y_pos).wrapping_sub(25);
             (*E).base.y_pos = v5;
             (*E).var_E = v5;
-            (*E).var_F = ((0xa2ab60i32) as u16);
+            (*E).var_F = (0xa2ab60i32) as u16;
             (*Get_GunshipTop(0i32, game)).var_A = 144;
         }
         palette_effects::spawn(addr_stru_8DE1C0 as u16, game);
@@ -2269,7 +2269,7 @@ crate::game::callback_dispatch! {
             (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(15);
             (*E).var_D = 71;
         }
-        (*E).var_F = ((0xa2a7d7i32) as u16);
+        (*E).var_F = (0xa2a7d7i32) as u16;
     };
     [10659673] GunshipTop_Main [] {
         let E1 = Get_GunshipTop(word!(game.cur_enemy_index) as i32 + 64, game);
@@ -2289,7 +2289,7 @@ crate::game::callback_dispatch! {
     [10661995] Flies_Init [] {
         let E = Get_Flies(word!(game.cur_enemy_index) as i32, game);
         (*E).var_E = 0;
-        (*E).var_F = ((0xa2b14ei32) as u16);
+        (*E).var_F = (0xa2b14ei32) as u16;
         set_fields! {[(*E).base]; current_instruction = addr_kFlies_Ilist_B013 as u16,
         spritemap_pointer = addr_kSpritemap_Nothing_A2 as u16, instruction_timer = 1,
         spritemap_pointer = addr_kSpritemap_Nothing_A2 as u16, };
@@ -2339,7 +2339,7 @@ crate::game::callback_dispatch! {
         let E = Get_LavaquakeRocks(word!(game.cur_enemy_index) as i32, game);
         enemy_instruction! {[(*E).base]; instruction = addr_kNorfairErraticFireball_Ilist_B51A as u16, timer = 1}
         (*E).base.timer = 0;
-        (*E).var_A = ((0xa2b596i32) as u16);
+        (*E).var_A = (0xa2b596i32) as u16;
         word!(game.random_number = 17);
     };
     [10663311] LavaquakeRocks_Main [] {
@@ -2394,7 +2394,7 @@ crate::game::callback_dispatch! {
         let E = Get_Rio(word!(game.cur_enemy_index) as i32, game);
         set_fields! {[(*E)], 0; var_E, var_F}
         (*E).base.current_instruction = addr_kRio_Ilist_BB4B as u16;
-        (*E).var_B = ((0xa2bbedi32) as u16);
+        (*E).var_B = (0xa2bbedi32) as u16;
     };
     [10664931] Rio_Main [] {
         NextRandom(game);
@@ -2406,12 +2406,12 @@ crate::game::callback_dispatch! {
         set_fields! {[(*E)], 0; var_00, var_01}
         if ((*E).parameter_1 & 0x8000) != 0 {
             (*E).base.current_instruction = addr_kNorfairLavajumpingEnemy_Ilist_BE62 as u16;
-            (*E).var_F = ((0xa2bedci32) as u16);
+            (*E).var_F = (0xa2bedci32) as u16;
         } else {
             (*E).var_D = (*E).base.x_pos;
             (*E).var_E = (*E).base.y_pos;
             (*E).base.current_instruction = addr_kNorfairLavajumpingEnemy_Ilist_BE3C as u16;
-            (*E).var_F = ((0xa2bf1ai32) as u16);
+            (*E).var_F = (0xa2bf1ai32) as u16;
         };
     };
     [10665682] NorfairLavajumpingEnemy_Main [] {
@@ -2425,11 +2425,11 @@ crate::game::callback_dispatch! {
         if ((*E).parameter_1 & 0x8000) != 0 {
             (*E).var_00 = addr_kNorfairRio_Ilist_C18F as u16;
             (*E).base.current_instruction = addr_kNorfairRio_Ilist_C18F as u16;
-            (*E).var_F = ((0xa2c281i32) as u16);
+            (*E).var_F = (0xa2c281i32) as u16;
         } else {
             (*E).var_00 = addr_kNorfairRio_Ilist_C0F1 as u16;
             (*E).base.current_instruction = addr_kNorfairRio_Ilist_C0F1 as u16;
-            (*E).var_F = ((0xa2c2e7i32) as u16);
+            (*E).var_F = (0xa2c2e7i32) as u16;
         };
     };
     [10666615] NorfairRio_Main [] {
@@ -2441,11 +2441,11 @@ crate::game::callback_dispatch! {
         let E = Get_NorfairRio(word!(game.cur_enemy_index) as i32, game);
         (*E).var_01 = 0;
         if ((*E).parameter_1 & 0x8000) == 0 {
-            (*E).var_F = ((0xa2c771i32) as u16);
+            (*E).var_F = (0xa2c771i32) as u16;
             (*E).var_00 = addr_kLowerNorfairRio_Ilist_C61A as u16;
             (*E).base.current_instruction = addr_kLowerNorfairRio_Ilist_C61A as u16;
         } else {
-            (*E).var_F = ((0xa2c72ei32) as u16);
+            (*E).var_F = (0xa2c72ei32) as u16;
             (*E).var_00 = addr_kLowerNorfairRio_Ilist_C6B0 as u16;
             (*E).base.current_instruction = addr_kLowerNorfairRio_Ilist_C6B0 as u16;
         };
@@ -2484,7 +2484,7 @@ crate::game::callback_dispatch! {
     [10674038] HirisingSlowfalling_Init [] {
         HirisingSlowfalling_Func_3(addr_kHirisingSlowfalling_Ilist_D82C as u16, game);
         let E = Get_HirisingSlowfalling(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_A = ((0xa2e035i32) as u16);
+        (*E).var_A = (0xa2e035i32) as u16;
         (*E).var_00 = (*E).base.x_pos;
         (*E).var_01 = (*E).base.y_pos;
         let v2: i32 = byte!((*E).parameter_1; 1) as i32;
@@ -2608,11 +2608,11 @@ crate::game::callback_dispatch! {
             set_fields! {[(*E)], 2; var_00, var_01}
             (*E).base.current_instruction = addr_kLavaSeahorse_Ilist_E5A1 as u16;
             (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
-            (*E).var_F = ((0xa2e781i32) as u16);
+            (*E).var_F = (0xa2e781i32) as u16;
         } else {
             set_fields! {[(*E)], 0; var_00, var_01}
             (*E).base.current_instruction = addr_kLavaSeahorse_Ilist_E59B as u16;
-            (*E).var_F = ((0xa2e654i32) as u16);
+            (*E).var_F = (0xa2e654i32) as u16;
         };
     };
     [10675790] LavaSeahorse_Main [] {
@@ -2844,19 +2844,19 @@ crate::game::callback_dispatch! {
     };
     [10654791] MaridiaBeybladeTurtle_Instr_9447 [jp] {
         (*Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game)).var_A =
-            ((0xa28f3fi32) as u16);
+            (0xa28f3fi32) as u16;
     };
     [10654801]
     MaridiaBeybladeTurtle_Instr_9451 [EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8C02 as u16)] {
         let E = Get_MaridiaTurtle(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_A = ((0xa28f8di32) as u16);
+        (*E).var_A = (0xa28f8di32) as u16;
         (*E).var_E = -1i32 as u16;
         (*E).var_00 = 16;
     };
     [10654827]
     MaridiaBeybladeTurtle_Instr_946B [EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8C02 as u16)] {
         let E = Get_MaridiaTurtle(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_A = ((0xa28f8di32) as u16);
+        (*E).var_A = (0xa28f8di32) as u16;
         (*E).var_E = 1;
         (*E).var_00 = 16;
     };
@@ -2876,9 +2876,9 @@ crate::game::callback_dispatch! {
     MaridiaBeybladeTurtle_Instr_94A1 [EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8B80 as u16)] {
         let E = Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game);
         if ({ let actor = word!(game.cur_enemy_index); 0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(&Runtime::new(game), Key::from_legacy(actor)))) }) != 0 {
-            (*E).var_A = ((0xa2925ei32) as u16);
+            (*E).var_A = (0xa2925ei32) as u16;
         } else {
-            (*E).var_A = ((0xa29142i32) as u16);
+            (*E).var_A = (0xa29142i32) as u16;
         }
         if ((*E).var_E & 0x8000) == 0 {
             return EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8C72 as u16);
@@ -2886,7 +2886,7 @@ crate::game::callback_dispatch! {
     };
     [10654919] MaridiaBeybladeTurtle_Instr_94C7 [jp] {
         let E = Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_A = ((0xa29239i32) as u16);
+        (*E).var_A = (0xa29239i32) as u16;
     };
     [10654929] MaridiaBeybladeTurtle_Instr_94D1 [jp] { QueueSfx2_Max6(0x3a, game); };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
@@ -2894,9 +2894,9 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10657941] SpikeShootingPlant_Instr_A095 [jp] {
         let E = Get_SpikeShootingPlant(k as i32, game);
-        (*E).var_F = ((0xa29fbai32) as u16);
+        (*E).var_F = (0xa29fbai32) as u16;
         if (*E).var_E != 0 {
-            (*E).var_F = ((0xa29feci32) as u16);
+            (*E).var_F = (0xa29feci32) as u16;
         }
     };
     [10657959] SpikeShootingPlant_Instr_A0A7 [jp.offset(1)] {
@@ -2931,7 +2931,7 @@ crate::game::callback_dispatch! {
         (*E).base.properties = ((*E).base.properties as i32
             & !(kEnemyProps_Tangible as i32 | kEnemyProps_Invisible as i32))
             as u16;
-        (*E).var_A = ((0xa2b7dfi32) as u16);
+        (*E).var_A = (0xa2b7dfi32) as u16;
         let E0 = Get_Rinka(0, game);
         (*E0).var_1E = (*E0).var_1E.wrapping_add(1);
     };
@@ -3036,7 +3036,7 @@ crate::game::callback_dispatch! {
         let E = Get_SpikeShootingPlant(word!(game.cur_enemy_index) as i32, game);
         words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_C));
         if (((*E).base.x_pos) as i16).wrapping_sub(((*E).var_00) as i16) < 0 {
-            (*E).var_F = ((0xa29feci32) as u16);
+            (*E).var_F = (0xa29feci32) as u16;
             (*E).var_E = 1;
         }
         SpikeShootingPlant_4(game);
@@ -3045,7 +3045,7 @@ crate::game::callback_dispatch! {
         let E = Get_SpikeShootingPlant(word!(game.cur_enemy_index) as i32, game);
         words!((*E).base, x_pos, x_subpos += words!((*E), var_B, var_A));
         if (((*E).base.x_pos) as i16).wrapping_sub(((*E).var_01) as i16) >= 0 {
-            (*E).var_F = ((0xa29fbai32) as u16);
+            (*E).var_F = (0xa29fbai32) as u16;
             (*E).var_E = 0;
         }
         SpikeShootingPlant_4(game);
@@ -3070,7 +3070,7 @@ crate::game::callback_dispatch! {
                 (*E).base.y_pos = 1119;
                 (*v10).base.y_pos = 1159;
                 (*v8).base.y_pos = ((*E).base.y_pos).wrapping_sub(1);
-                (*E).var_F = ((0xa2a8d0i32) as u16);
+                (*E).var_F = (0xa2a8d0i32) as u16;
                 (*E).var_E = 0;
             }
         };
@@ -3096,7 +3096,7 @@ crate::game::callback_dispatch! {
         let mut v5: u16 = ((*GunshipTop).var_E).wrapping_add(1);
         (*GunshipTop).var_E = v5;
         if v5 as i32 - 17i32 & 0x8000 == 0 {
-            set_fields! {[(*GunshipTop)]; var_F = ((0xa2a942i32) as u16),
+            set_fields! {[(*GunshipTop)]; var_F = (0xa2a942i32) as u16,
             var_E = (*GunshipTop).base.y_pos, var_D = 1, };
             let v6 = Get_GunshipTop(0, game);
             (*v6).var_C = 0;
@@ -3112,7 +3112,7 @@ crate::game::callback_dispatch! {
         let E = Get_GunshipTop(k as i32, game);
         let r18: u16 = ((*E).var_E).wrapping_sub(30);
         if word!(game.samus_y_pos -= 1, reread) as i32 - r18 as i32 & 0x8000 != 0 {
-            (*E).var_F = ((0xa2a987i32) as u16);
+            (*E).var_F = (0xa2a987i32) as u16;
             let E2 = Get_GunshipTop(k as i32 + 128, game);
             enemy_instruction! {[(*E2).base]; timer = 1, instruction = addr_kGunshipTop_Ilist_A5EE as u16}
             (*Get_GunshipTop(0i32, game)).var_A = 144;
@@ -3130,7 +3130,7 @@ crate::game::callback_dispatch! {
                 && *ram_ptr!(game; 0xa1f) == 0
                 && (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) != 0
             {
-                (*E).var_F = ((0xa2aa4fi32) as u16);
+                (*E).var_F = (0xa2aa4fi32) as u16;
                 if word!(game.samus_x_pos) != 1152 {
                     word!(game.samus_x_pos = (*E).base.x_pos);
                     word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
@@ -3152,7 +3152,7 @@ crate::game::callback_dispatch! {
         let r18: u16 = ((*E).var_E).wrapping_add(18);
         word!(game.samus_y_pos += 2);
         if word!(game.samus_y_pos) as i32 - r18 as i32 & 0x8000 == 0 {
-            (*E).var_F = ((0xa2aa94i32) as u16);
+            (*E).var_F = (0xa2aa94i32) as u16;
             let E2 = Get_GunshipTop(k as i32 + 128, game);
             enemy_instruction! {[(*E2).base]; timer = 1, instruction = addr_kGunshipTop_Ilist_A5EE as u16}
             (*Get_GunshipTop(0i32, game)).var_A = 144;
@@ -3161,7 +3161,7 @@ crate::game::callback_dispatch! {
     };
     [10660514] GunshipTop_12 [] {
         if CheckEventHappened(0xe, game) != 0 {
-            (*Get_GunshipTop(k as i32, game)).var_F = ((0xa2abc7i32) as u16);
+            (*Get_GunshipTop(k as i32, game)).var_F = (0xa2abc7i32) as u16;
             let E = Get_GunshipTop(k as i32 + 64, game);
             set_fields! {[(*E)], 0; var_F, var_E}
             word! { game, 0; substate, suit_pickup_light_beam_pos }
@@ -3189,7 +3189,7 @@ crate::game::callback_dispatch! {
                     .wrapping_sub((word!(game.samus_max_power_bombs)) as i16)
                     >= 0
             {
-                (*Get_GunshipTop(k as i32, game)).var_F = ((0xa2ab1fi32) as u16);
+                (*Get_GunshipTop(k as i32, game)).var_F = (0xa2ab1fi32) as u16;
             }
         };
     };
@@ -3203,7 +3203,7 @@ crate::game::callback_dispatch! {
             word!(game.load_station_index = 0);
             SaveToSram(word!(game.selected_save_slot), game);
         }
-        (*Get_GunshipTop(k as i32, game)).var_F = ((0xa2ab60i32) as u16);
+        (*Get_GunshipTop(k as i32, game)).var_F = (0xa2ab60i32) as u16;
         let E = Get_GunshipTop(k as i32 + 128, game);
         enemy_instruction! {[(*E).base]; timer = 1, instruction = addr_kGunshipTop_Ilist_A5BE as u16}
         (*Get_GunshipTop(0i32, game)).var_A = 144;
@@ -3214,7 +3214,7 @@ crate::game::callback_dispatch! {
         let r18: u16 = ((*E).var_E).wrapping_sub(30);
         word!(game.samus_y_pos -= 2);
         if word!(game.samus_y_pos) as i32 - r18 as i32 & 0x8000 != 0 {
-            (*E).var_F = ((0xa2aba5i32) as u16);
+            (*E).var_F = (0xa2aba5i32) as u16;
             let E2 = Get_GunshipTop(k as i32 + 128, game);
             enemy_instruction! {[(*E2).base]; timer = 1, instruction = addr_kGunshipTop_Ilist_A5EE as u16}
             (*Get_GunshipTop(0i32, game)).var_A = 144;
@@ -3241,7 +3241,7 @@ crate::game::callback_dispatch! {
         word!(game.vram_write_queue_tail = (v2).wrapping_add(2));
         word!(game.substate += 2);
         if word!(game.substate) as i32 - 10i32 & 0x8000 == 0 {
-            (*Get_GunshipTop(k as i32, game)).var_F = ((0xa2ac1bi32) as u16);
+            (*Get_GunshipTop(k as i32, game)).var_F = (0xa2ac1bi32) as u16;
             word!(game.substate = 0);
         }
     };
@@ -3280,7 +3280,7 @@ crate::game::callback_dispatch! {
                 SpawnEprojWithRoomGfx(addr_stru_86A379 as u16, 0xa, game);
             }
         } else {
-            (*E0).var_F = ((0xa2acd7i32) as u16);
+            (*E0).var_F = (0xa2acd7i32) as u16;
             (*Get_GunshipTop(0i32, game)).var_A = 0;
         };
     };
@@ -3293,7 +3293,7 @@ crate::game::callback_dispatch! {
         let E1 = Get_GunshipTop(k as i32 + 64, game);
         (*E1).base.y_pos = (word!(game.samus_y_pos)).wrapping_add(23);
         if (*E0).base.y_pos as i32 - 896i32 & 0x8000 != 0 {
-            (*E0).var_F = ((0xa2ad0ei32) as u16);
+            (*E0).var_F = (0xa2ad0ei32) as u16;
             (*E1).var_F = 512;
         }
     };
@@ -3301,7 +3301,7 @@ crate::game::callback_dispatch! {
         GunshipTop_21(k, game);
         let E = Get_GunshipTop(k as i32, game);
         if (*E).base.y_pos as i32 - 256i32 & 0x8000 != 0 {
-            (*E).var_F = ((0xa2ad2di32) as u16);
+            (*E).var_F = (0xa2ad2di32) as u16;
             word!(game.game_state = 38);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
         }
@@ -3336,7 +3336,7 @@ crate::game::callback_dispatch! {
         let v3: bool = ((*E).var_E as i32 + 32 & 0x1ff) == 0;
         (*E).var_E = ((*E).var_E as i32 + 32 & 0x1ff) as u16;
         if v3 {
-            (*E).var_F = ((0xa2b17ci32) as u16);
+            (*E).var_F = (0xa2b17ci32) as u16;
         }
     };
     [10662268] Flies_5 [] {
@@ -3352,7 +3352,7 @@ crate::game::callback_dispatch! {
         let v3: bool = ((*E).var_E as i32 - 32i32 & 0x1ff) == 0;
         (*E).var_E = ((*E).var_E as i32 - 32i32 & 0x1ff) as u16;
         if v3 {
-            (*E).var_F = ((0xa2b14ei32) as u16);
+            (*E).var_F = (0xa2b14ei32) as u16;
         }
     };
     [10662314] Flies_6 [] {
@@ -3365,11 +3365,11 @@ crate::game::callback_dispatch! {
             }
             true
         } else {
-            (v1 < (*E).var_D)
+            v1 < (*E).var_D
         };
         if reverse_direction {
             (*E).var_C = -((*E).var_C as i32) as u16;
-            (*E).var_F = ((0xa2b1d2i32) as u16);
+            (*E).var_F = (0xa2b1d2i32) as u16;
         };
     };
     [10662354] Flies_7 [] {
@@ -3378,11 +3378,11 @@ crate::game::callback_dispatch! {
         (*E).var_A = (*E).var_A.wrapping_sub(1);
         if ((*E).var_A & 0x8000) != 0 {
             (*E).var_A = 24;
-            (*E).var_F = ((0xa2b14ei32) as u16);
+            (*E).var_F = (0xa2b14ei32) as u16;
         }
     };
     [10667014] NorfairRio_Func_6 [] {
-        (*Get_NorfairRio(k as i32, game)).var_F = ((0xa2c2e7i32) as u16);
+        (*Get_NorfairRio(k as i32, game)).var_F = (0xa2c2e7i32) as u16;
     };
     [10667822] LowerNorfairRio_Func_1 [] {
         let E = Get_LowerNorfairRio(k as i32, game);
@@ -3414,7 +3414,7 @@ crate::game::callback_dispatch! {
         } {
             (*E).var_C = -1i32 as u16;
             LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C662 as u16, game);
-            (*E).var_F = ((0xa2c82di32) as u16);
+            (*E).var_F = (0xa2c82di32) as u16;
             QueueSfx2_Max6(0x64, game);
         }
     };
@@ -3430,7 +3430,7 @@ crate::game::callback_dispatch! {
             if fresh20 == 1 {
                 (*E).var_00 = ((*E).var_00).wrapping_sub(4);
                 (*E).var_D = 96;
-                (*E).var_F = ((0xa2e734i32) as u16);
+                (*E).var_F = (0xa2e734i32) as u16;
             }
         }
     };
@@ -3439,7 +3439,7 @@ crate::game::callback_dispatch! {
         crate::update_place! { previous fresh21 = (*E).var_D => (*E).var_D.wrapping_sub(1); }
         if fresh21 == 1 {
             (*E).var_D = 48;
-            (*E).var_F = ((0xa2e749i32) as u16);
+            (*E).var_F = (0xa2e749i32) as u16;
             LavaSeahorse_Func_6(game);
         }
     };
@@ -3450,7 +3450,7 @@ crate::game::callback_dispatch! {
         (*E).var_A = (*E).var_A.wrapping_sub(1);
         let v3: bool = ((*E).var_A & 0x8000) != 0;
         if v2 as i32 != 0 || v3 as i32 != 0 {
-            (*Get_GunshipTop(k as i32, game)).var_F = ((0xa2a950i32) as u16);
+            (*Get_GunshipTop(k as i32, game)).var_F = (0xa2a950i32) as u16;
         }
     };
     [10660231] GunshipTop_7 [] {
@@ -3458,9 +3458,9 @@ crate::game::callback_dispatch! {
         (*E).var_A = (*E).var_A.wrapping_sub(1);
         let v3: bool = ((*E).var_A & 0x8000) != 0;
         if v2 as i32 != 0 || v3 as i32 != 0 {
-            (*Get_GunshipTop(k as i32, game)).var_F = ((0xa2a9bdi32) as u16);
-            word!(game.frame_handler_alfa = ((0x90e695i32) as u16));
-            word!(game.frame_handler_beta = ((0x90e725i32) as u16));
+            (*Get_GunshipTop(k as i32, game)).var_F = (0xa2a9bdi32) as u16;
+            word!(game.frame_handler_alfa = (0x90e695i32) as u16);
+            word!(game.frame_handler_beta = (0x90e725i32) as u16);
             word!(game.loading_game_state = kLoadingGameState_5_Main as u16);
             crate::update_place! { unaligned_word fresh11 = &raw mut (*(ram_ptr!(game, u16; 0xd8f8))) => (u16::from_le(fresh11.read_unaligned())) | (1u16); }
             word!(game.load_station_index = 0);
@@ -3472,7 +3472,7 @@ crate::game::callback_dispatch! {
         (*E).var_A = (*E).var_A.wrapping_sub(1);
         let v3: bool = ((*E).var_A & 0x8000) != 0;
         if v2 as i32 != 0 || v3 as i32 != 0 {
-            (*Get_GunshipTop(k as i32, game)).var_F = ((0xa2aa5di32) as u16);
+            (*Get_GunshipTop(k as i32, game)).var_F = (0xa2aa5di32) as u16;
         }
     };
     [10660500] GunshipTop_11 [] {
@@ -3480,7 +3480,7 @@ crate::game::callback_dispatch! {
         (*E).var_A = (*E).var_A.wrapping_sub(1);
         let v3: bool = ((*E).var_A & 0x8000) != 0;
         if v2 as i32 != 0 || v3 as i32 != 0 {
-            (*Get_GunshipTop(k as i32, game)).var_F = ((0xa2aaa2i32) as u16);
+            (*Get_GunshipTop(k as i32, game)).var_F = (0xa2aaa2i32) as u16;
         }
     };
     [10660704] GunshipTop_14 [] {
@@ -3488,7 +3488,7 @@ crate::game::callback_dispatch! {
         (*E).var_A = (*E).var_A.wrapping_sub(1);
         let v3: bool = ((*E).var_A & 0x8000) != 0;
         if v2 as i32 != 0 || v3 as i32 != 0 {
-            (*Get_GunshipTop(k as i32, game)).var_F = ((0xa2ab6ei32) as u16);
+            (*Get_GunshipTop(k as i32, game)).var_F = (0xa2ab6ei32) as u16;
         }
     };
     [10660773] GunshipTop_16 [] {
@@ -3496,10 +3496,10 @@ crate::game::callback_dispatch! {
         (*E).var_A = (*E).var_A.wrapping_sub(1);
         let v3: bool = ((*E).var_A & 0x8000) != 0;
         if v2 as i32 != 0 || v3 as i32 != 0 {
-            (*Get_GunshipTop(k as i32, game)).var_F = ((0xa2a9bdi32) as u16);
+            (*Get_GunshipTop(k as i32, game)).var_F = (0xa2a9bdi32) as u16;
             if word!(game.game_state) as i32 - kGameState_40_TransitionToDemo as i32 & 0x8000 != 0 {
-                word!(game.frame_handler_alfa = ((0x90e695i32) as u16));
-                word!(game.frame_handler_beta = ((0x90e725i32) as u16));
+                word!(game.frame_handler_alfa = (0x90e695i32) as u16);
+                word!(game.frame_handler_beta = (0x90e725i32) as u16);
             }
         }
     };
@@ -3527,7 +3527,7 @@ crate::game::callback_dispatch! {
             0xa2be86,
             ((((*ram_ptr!(game; 0x5e5, 1)) as u16) & (6u16)) >> 1) as isize,
         );
-        (*E).var_F = ((0xa2bf3ei32) as u16);
+        (*E).var_F = (0xa2bf3ei32) as u16;
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_ProcessedOffscreen) as u16);
         QueueSfx2_Max6(0xd, game);
     };
@@ -3540,7 +3540,7 @@ crate::game::callback_dispatch! {
         (*E).var_C = v3;
         if v3 >= 0xfc00 {
             NorfairLavajumpingEnemy_Func_6(addr_kNorfairLavajumpingEnemy_Ilist_BE42 as u16, game);
-            (*E).var_F = ((0xa2bf7ci32) as u16);
+            (*E).var_F = (0xa2bf7ci32) as u16;
         }
     };
     [10665852] NorfairLavajumpingEnemy_Func_4 [] {
@@ -3551,7 +3551,7 @@ crate::game::callback_dispatch! {
         (*E).var_C = ((*E).var_C).wrapping_add(56);
         if (*E).var_00 != 0 {
             (*E).var_00 = 0;
-            (*E).var_F = ((0xa2bfbci32) as u16);
+            (*E).var_F = (0xa2bfbci32) as u16;
         }
     };
     [10665916] NorfairLavajumpingEnemy_Func_5 [] {
@@ -3563,7 +3563,7 @@ crate::game::callback_dispatch! {
             (*E).base.x_pos = (*E).var_D;
             (*E).base.y_pos = (*E).var_E;
             NorfairLavajumpingEnemy_Func_6(addr_kNorfairLavajumpingEnemy_Ilist_BE3C as u16, game);
-            (*E).var_F = ((0xa2bf1ai32) as u16);
+            (*E).var_F = (0xa2bf1ai32) as u16;
             (*E).base.properties =
                 ((*E).base.properties as i32 & !(kEnemyProps_ProcessedOffscreen as i32)) as u16;
         } else {
@@ -3613,7 +3613,7 @@ crate::game::callback_dispatch! {
                 (*E).var_B = -((*E).var_B as i32) as u16;
             }
             NorfairRio_Func_7(addr_kNorfairRio_Ilist_C107 as u16, game);
-            (*E).var_F = ((0xa2c33fi32) as u16);
+            (*E).var_F = (0xa2c33fi32) as u16;
         } else if (*E).var_01 != 0 {
             (*E).var_01 = 0;
             NorfairRio_Func_7(addr_kNorfairRio_Ilist_C0F1 as u16, game);
@@ -3623,7 +3623,7 @@ crate::game::callback_dispatch! {
         if (*E).var_01 != 0 {
             (*E).var_01 = 0;
             NorfairRio_Func_7(addr_kNorfairRio_Ilist_C12F as u16, game);
-            (*E).var_F = ((0xa2c361i32) as u16);
+            (*E).var_F = (0xa2c361i32) as u16;
             QueueSfx2_Max6(0x65, game);
         }
     };
@@ -3638,7 +3638,7 @@ crate::game::callback_dispatch! {
         } {
             (*E).var_A = -1i32 as u16;
             NorfairRio_Func_7(addr_kNorfairRio_Ilist_C145 as u16, game);
-            (*E).var_F = ((0xa2c3b1i32) as u16);
+            (*E).var_F = (0xa2c3b1i32) as u16;
         }
     };
     [10666929] NorfairRio_Func_5 [] {
@@ -3646,7 +3646,7 @@ crate::game::callback_dispatch! {
             (*E).var_B = -((*E).var_B as i32) as u16;
         }
         if ({ let (actor, amount) = (k, ((*E).var_A as i16 as i32) << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            (*E).var_F = ((0xa2c406i32) as u16);
+            (*E).var_F = (0xa2c406i32) as u16;
         } else {
             (*E).var_A = ((*E).var_A).wrapping_sub(32);
             if (*E).var_01 != 0 {
@@ -3663,7 +3663,7 @@ crate::game::callback_dispatch! {
                 (*E).var_D = -((*E).var_D as i32) as u16;
             }
             LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C630 as u16, game);
-            (*E).var_F = ((0xa2c7bbi32) as u16);
+            (*E).var_F = (0xa2c7bbi32) as u16;
         } else {
             (*E).var_01 = 0;
             LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C61A as u16, game);
@@ -3673,7 +3673,7 @@ crate::game::callback_dispatch! {
         if (*E).var_01 != 0 {
             (*E).var_01 = 0;
             LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C65A as u16, game);
-            (*E).var_F = ((0xa2c7d6i32) as u16);
+            (*E).var_F = (0xa2c7d6i32) as u16;
         }
     };
     [10668077] LowerNorfairRio_Func_5 [] {
@@ -3682,7 +3682,7 @@ crate::game::callback_dispatch! {
         }
         if ({ let (actor, amount) = (k, ((*E).var_C as i16 as i32) << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C686 as u16, game);
-            (*E).var_F = ((0xa2c888i32) as u16);
+            (*E).var_F = (0xa2c888i32) as u16;
         } else {
             (*E).var_C = ((*E).var_C).wrapping_sub(32);
             if (*E).var_01 != 0 {
@@ -3695,7 +3695,7 @@ crate::game::callback_dispatch! {
         if (*E).var_01 != 0 {
             (*E).var_01 = 0;
             LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C686 as u16, game);
-            (*E).var_F = ((0xa2c771i32) as u16);
+            (*E).var_F = (0xa2c771i32) as u16;
         }
     };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
@@ -3758,7 +3758,7 @@ crate::game::callback_dispatch! {
                 (*E).var_E = 0;
             }
             (*E).var_B = v6 as u16;
-            (*E).var_F = ((0xa2cfa9i32) as u16);
+            (*E).var_F = (0xa2cfa9i32) as u16;
         }
     };
     [10669993] MaridiaLargeSnail_Func_8 [] {
@@ -3770,7 +3770,7 @@ crate::game::callback_dispatch! {
             ({ let (actor, amount) = (k, *(rom_ptr!(game, u32; 0xa0cbc7)).offset((v5 + 2 >> 1) as isize) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
         } else {
             (*E).var_B = 0;
-            (*E).var_F = ((0xa2cf66i32) as u16);
+            (*E).var_F = (0xa2cf66i32) as u16;
         };
     };
     MaridiaLargeSnail_Func_10 [] {
@@ -3789,13 +3789,13 @@ crate::game::callback_dispatch! {
     when ((*E).var_D & 0x8000) != 0;
     [10675796] LavaSeahorse_Func_1 {
         (*E).var_D = 48;
-        (*E).var_F = ((0xa2e6adi32) as u16);
-        let t: u16 = ({ let actor = k; actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) });
-        (*E).var_A = ((*E).var_A & 0x7fff | t & 0x8000);
+        (*E).var_F = (0xa2e6adi32) as u16;
+        let t: u16 = { let actor = k; actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) };
+        (*E).var_A = (*E).var_A & 0x7fff | t & 0x8000;
         if ((*E).var_A & 0x8000) != 0 {
-            crate::update_place! { reference fresh16 = *(&raw mut (*E).var_00 as *mut u8) => (*fresh16 & !(1)); }
+            crate::update_place! { reference fresh16 = *(&raw mut (*E).var_00 as *mut u8) => *fresh16 & !(1); }
             let E1 = Get_LavaSeahorse(k as i32 + 64, game);
-            crate::update_place! { reference fresh17 = *(&raw mut (*E1).var_00 as *mut u8) => (*fresh17 & !(1)); }
+            crate::update_place! { reference fresh17 = *(&raw mut (*E1).var_00 as *mut u8) => *fresh17 & !(1); }
         } else {
             crate::update_place! { reference fresh18 = *(&raw mut (*E).var_00 as *mut u8) => (*fresh18) | (1u8); }
             let E1_0 = Get_LavaSeahorse(k as i32 + 64, game);
@@ -3807,7 +3807,7 @@ crate::game::callback_dispatch! {
     [10675885] LavaSeahorse_Func_2 {
         (*E).var_00 = ((*E).var_00).wrapping_add(4);
         (*E).var_D = 3;
-        (*E).var_F = ((0xa2e6f1i32) as u16);
+        (*E).var_F = (0xa2e6f1i32) as u16;
     } after {
         (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
         let E1 = Get_LavaSeahorse(k as i32 + 64, game);
@@ -3815,7 +3815,7 @@ crate::game::callback_dispatch! {
     };
     [10676041] LavaSeahorse_Func_5 {
         (*E).var_D = 128;
-        (*E).var_F = ((0xa2e654i32) as u16);
+        (*E).var_F = (0xa2e654i32) as u16;
     } after {
         (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
         let E1 = Get_LavaSeahorse(k as i32 + 64, game);

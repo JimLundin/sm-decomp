@@ -127,7 +127,7 @@ pub unsafe fn build_overlay(game: &mut Game) {
             + (word!(game.layer1_x_pos) as i32 >> 4)) as u16;
         let mut r22: u16 = 0;
         let mut m = 16;
-        do_until! { (m == 0);
+        do_until! { m == 0 ;
             reveal_left_neighbor(r22, r34, game);
             let mut r36: u16 = r34;
             for n_0 in (1i32..=16).rev() {

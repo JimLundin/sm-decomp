@@ -4,8 +4,8 @@ use super::host::{BotwoonField, SpeciesActors, WaffleField};
 use crate::game::session_runtime::Runtime;
 use crate::{
     game::enemy_layouts::{EnemyLayout72, EnemyLayout104},
-    ram_map::{word_arrays as A, words as W},
-    types::{Enemy_MotherBrain, EnemyData, Ram7800_Kraid},
+    ram_map::words as W,
+    types::{Enemy_MotherBrain, Ram7800_Kraid},
 };
 use core::mem::offset_of;
 fn waffle_offset(field: WaffleField) -> usize {

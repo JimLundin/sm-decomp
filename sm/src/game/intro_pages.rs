@@ -153,8 +153,8 @@ pub(super) unsafe fn wait_for_scene(scene: Scene, game: &mut Game) {
                     word_transfers!(game, ascending, 384; le(level_data, 0) <- rom(0x8cc083, 0));
                     word!(game.hud_item_index = 0);
                 }
-                word!(game.frame_handler_alfa = ((0x90e6c9i32) as u16));
-                word!(game.frame_handler_beta = ((0x90e833i32) as u16));
+                word!(game.frame_handler_alfa = (0x90e6c9i32) as u16);
+                word!(game.frame_handler_beta = (0x90e833i32) as u16);
                 ResetDemoData(game);
                 EnableDemoInput(game);
                 let input = if mother_brain {
@@ -220,7 +220,7 @@ pub(super) unsafe fn fade_to_scene(palette: Palette, game: &mut Game) {
             *ram_ptr!(game; 0x6f) = 0;
             word_transfers!(game, ascending, 640; pause_map(128) <- value(47));
             ClearJapaneseTextTiles(game);
-            word!(game.cinematic_function = ((0x8ba391i32) as u16));
+            word!(game.cinematic_function = (0x8ba391i32) as u16);
             if matches!(palette, Palette::Gameplay) && (word!(game.cinematic_var15) & 0x8000) != 0 {
                 palette_effects::spawn(addr_kPalfx_E1BC as u16, game);
             }
@@ -265,7 +265,7 @@ pub(super) unsafe fn fade_to_page(palette: Palette, game: &mut Game) {
             if matches!(palette, Palette::Scientist) {
                 word_transfers!(game, ascending, 7; native(0xc1c0) <- rom(0x8ce3e9, 224));
             }
-            word!(game.cinematic_function = ((0x8ba391i32) as u16));
+            word!(game.cinematic_function = (0x8ba391i32) as u16);
         }
     }
 }
@@ -317,7 +317,7 @@ pub(super) unsafe fn show_final_page(game: &mut Game) {
         EnableCinematicBgTilemapUpdates(game);
         ClearEnglishTextTilemap(game);
         SpawnCinematicBgObject(addr_kCinematicBgObjectDef_8BCF5D as u16, 0x4c00, game);
-        word!(game.cinematic_function = ((0x8ba390i32) as u16));
+        word!(game.cinematic_function = (0x8ba390i32) as u16);
         SetSomeStuffForSpriteObject_16(game);
         QueueMusic_Delayed8(0, game);
     }
@@ -328,7 +328,7 @@ pub(super) unsafe fn wait_for_final_page(game: &mut Game) {
         if page_input_ready(game) {
             word!(game.cinematic_var13 = 127);
             if word!(game.japanese_text_flag) != 0 {
-                word!(game.cinematic_function = ((0x8bb207i32) as u16));
+                word!(game.cinematic_function = (0x8bb207i32) as u16);
                 DisableCinematicBgTilemapUpdates(game);
                 ClearJapaneseTextTiles(game);
                 TransferJapaneseTextTilesToVram(game);
@@ -374,7 +374,7 @@ pub(super) unsafe fn fade_out_to_ceres(game: &mut Game) {
                 reg_BG3VOFS, cinematic_var5,
             }
             word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
-            word!(game.cinematic_function = ((0x8bbca0i32) as u16));
+            word!(game.cinematic_function = (0x8bbca0i32) as u16);
             RevertButtonConfig(game);
             word! { game, 0; samus_max_missiles, samus_missiles }
         }
@@ -383,7 +383,7 @@ pub(super) unsafe fn fade_out_to_ceres(game: &mut Game) {
 
 pub(super) unsafe fn finish_pages(j: u16, game: &mut Game) -> u16 {
     unsafe {
-        word!(game.cinematic_function = ((0x8bb72fi32) as u16));
+        word!(game.cinematic_function = (0x8bb72fi32) as u16);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
         j
     }

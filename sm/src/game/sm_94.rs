@@ -4,11 +4,7 @@ pub use crate::game::constants::bank_90::*;
 pub use crate::game::prelude::*;
 use crate::game::projectile_room::Axis as ShotAxis;
 
-use crate::game::gameplay_flag_runtime::CheckBossBitForCurArea;
-
 use crate::game::room_mechanisms::spawn_collision;
-
-use crate::snes::snes::snes_read;
 
 pub use crate::types::Consts_94;
 
@@ -318,9 +314,7 @@ pub fn PostGrappleCollisionDetect_Y(game: &mut Game) {
     post_grapple_traverse(false, false, game);
 }
 
-pub(super) use crate::game::projectile_geometry::{
-    square_slope_occupied, square_slope_single_block,
-};
+pub(super) use crate::game::projectile_geometry::square_slope_occupied;
 
 pub(crate) fn BlockReact_HorizExt(_ci: *mut CollInfo, game: &mut Game) -> u8 {
     if let Some(cell) = crate::game::projectile_block_reactions::redirect(
@@ -587,10 +581,10 @@ pub unsafe fn BlockCollGrappleBeam(game: &mut Game) -> u8 {
             result = BlockReactGrapple(game);
             if (result & 0x40) != 0 && (result & 1) != 0 {
                 word!(
-                    game.grapple_beam_end_x_pos = (word!(game.grapple_beam_end_x_pos) & 0xfff0 | 8)
+                    game.grapple_beam_end_x_pos = word!(game.grapple_beam_end_x_pos) & 0xfff0 | 8
                 );
                 word!(
-                    game.grapple_beam_end_y_pos = (word!(game.grapple_beam_end_y_pos) & 0xfff0 | 8)
+                    game.grapple_beam_end_y_pos = word!(game.grapple_beam_end_y_pos) & 0xfff0 | 8
                 );
                 return result;
             }
@@ -696,7 +690,7 @@ pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
         }
         let mut n: i32 = (word!(game.grapple_beam_length) as i32 / 8 & 0xf) - 1i32;
         let mut q: i32 = 15;
-        do_until! { (n < 0);
+        do_until! { n < 0 ;
             crate::update_place! { unaligned_word fresh17 [fresh18] = &raw mut (*(ram_ptr!(game, u16; 0xd42)).offset(q as isize)) => (u16::from_le(fresh17.read_unaligned())).wrapping_sub(1); }
             if fresh18 == 1 {
                 let mut v9 = null::<u16>();

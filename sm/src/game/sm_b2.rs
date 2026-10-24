@@ -5,7 +5,7 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a0::*;
 pub use crate::game::constants::bank_b4::*;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
-use crate::game::enemy_script::{EnemyScript, bank_base};
+use crate::game::enemy_script::EnemyScript;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
 use crate::rtl::rom_record;
@@ -47,10 +47,10 @@ crate::ram_map::ram_pointer_functions! {
 }
 pub unsafe fn WalkingSpacePirates_87C8(game: &mut Game) {
     unsafe {
-        if ((*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
+        if (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
             .base
             .enemy_ptr as i32
-            == addr_kEnemyDef_F593 as i32)
+            == addr_kEnemyDef_F593 as i32
         {
             let r18: u16 = word!(game.projectile_type[word!(game.collision_detection_index)]);
             if (r18 as i32 & kProjectileType_TypeMask as i32) - kProjectileType_PowerBomb as i32
@@ -232,9 +232,9 @@ crate::game::callback_dispatch! {
     [11726928] SpacePirates_Func_2 [] {
         let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
         (*E).base.x_pos =
-            ((*E).var_D).wrapping_add(SineMult8bit((*E).var_F, ((*E).parameter_2 >> 1), game));
+            ((*E).var_D).wrapping_add(SineMult8bit((*E).var_F, (*E).parameter_2 >> 1, game));
         (*E).base.y_pos =
-            ((*E).var_E).wrapping_sub(CosineMult8bit((*E).var_F, ((*E).parameter_2 >> 2), game));
+            ((*E).var_E).wrapping_sub(CosineMult8bit((*E).var_F, (*E).parameter_2 >> 2, game));
         let v1: u16 = ((byte!((*E).var_F; 0)).wrapping_sub(byte!((*E).var_22; 0))) as u16;
         (*E).var_F = v1;
         if v1 == (*E).var_20 {
@@ -256,9 +256,9 @@ crate::game::callback_dispatch! {
     [11727076] SpacePirates_Func_4 [] {
         let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
         (*E).base.x_pos =
-            ((*E).var_D).wrapping_add(SineMult8bit((*E).var_F, ((*E).parameter_2 >> 1), game));
+            ((*E).var_D).wrapping_add(SineMult8bit((*E).var_F, (*E).parameter_2 >> 1, game));
         (*E).base.y_pos =
-            ((*E).var_E).wrapping_sub(CosineMult8bit((*E).var_F, ((*E).parameter_2 >> 2), game));
+            ((*E).var_E).wrapping_sub(CosineMult8bit((*E).var_F, (*E).parameter_2 >> 2, game));
         let v1: u16 = ((byte!((*E).var_22; 0)).wrapping_add(byte!((*E).var_F; 0))) as u16;
         (*E).var_F = v1;
         if v1 == (*E).var_21 {
@@ -352,7 +352,7 @@ crate::game::callback_dispatch! {
         (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
         (*E).var_00 = ((*E).var_00).wrapping_add(32);
         if (((*E).base.x_pos) as i16).wrapping_sub(((*E).var_D) as i16) < 0 {
-            (*E).var_A = ((0xb2f84ci32) as u16);
+            (*E).var_A = (0xb2f84ci32) as u16;
         }
     };
     [11728972] SpacePirates_Func_12 [] {
@@ -362,7 +362,7 @@ crate::game::callback_dispatch! {
         let v2: u16 = ((*E).var_00).wrapping_sub(32);
         (*E).var_00 = v2;
         if v2 == 0 {
-            (*E).var_A = ((0xb2804bi32) as u16);
+            (*E).var_A = (0xb2804bi32) as u16;
             enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_F2F8 as u16, timer = 1}
             (*E).base.x_pos = (*E).var_E;
             SpacePirates_FB11(k, game);
@@ -374,7 +374,7 @@ crate::game::callback_dispatch! {
         (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
         (*E).var_00 = ((*E).var_00).wrapping_add(32);
         if (((*E).base.x_pos) as i16).wrapping_sub(((*E).var_D) as i16) >= 0 {
-            (*E).var_A = ((0xb2f8c5i32) as u16);
+            (*E).var_A = (0xb2f8c5i32) as u16;
         }
     };
     [11729093] SpacePirates_Func_14 [] {
@@ -384,7 +384,7 @@ crate::game::callback_dispatch! {
         let v2: u16 = ((*E).var_00).wrapping_sub(32);
         (*E).var_00 = v2;
         if v2 == 0 {
-            (*E).var_A = ((0xb2804bi32) as u16);
+            (*E).var_A = (0xb2804bi32) as u16;
             enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_F4EA as u16, timer = 1}
             (*E).base.x_pos = (*E).var_F;
             SpacePirates_FB11(k, game);
@@ -395,7 +395,7 @@ crate::game::callback_dispatch! {
         let mut v2: i16 = (((*E).var_00) as i16).wrapping_sub(64);
         (*E).var_00 = v2 as u16;
         if v2 < 0 {
-            (*E).var_A = ((0xb2f9c1i32) as u16);
+            (*E).var_A = (0xb2f9c1i32) as u16;
             enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_F2A0 as u16, timer = 1}
             (*E).var_00 = 1536;
         }
@@ -406,7 +406,7 @@ crate::game::callback_dispatch! {
         if ((v2) as i16).wrapping_sub(((*E).var_E) as i16) < 0 {
             (*E).base.x_pos = (*E).var_E;
             enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_F2F8 as u16, timer = 1}
-            (*E).var_A = ((0xb2804bi32) as u16);
+            (*E).var_A = (0xb2804bi32) as u16;
         }
     };
     [11729497] SpacePirates_FA59 [] {
@@ -414,7 +414,7 @@ crate::game::callback_dispatch! {
         let mut v2: i16 = (((*E).var_00) as i16).wrapping_sub(64);
         (*E).var_00 = v2 as u16;
         if v2 < 0 {
-            (*E).var_A = ((0xb2fa95i32) as u16);
+            (*E).var_A = (0xb2fa95i32) as u16;
             enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_F492 as u16, timer = 1}
             (*E).var_00 = 1536;
         }
@@ -425,7 +425,7 @@ crate::game::callback_dispatch! {
         if ((v2) as i16).wrapping_sub(((*E).var_F) as i16) >= 0 {
             (*E).base.x_pos = (*E).var_F;
             enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_F4EA as u16, timer = 1}
-            (*E).var_A = ((0xb2804bi32) as u16);
+            (*E).var_A = (0xb2804bi32) as u16;
         }
     };
     SpacePirates_FB11 [] {
@@ -517,9 +517,9 @@ crate::game::callback_dispatch! {
             (*E).var_21 = ((*E).var_21).wrapping_sub(2);
             (*E).var_22 = ((*E).var_22).wrapping_add(2);
         }
-        let mut v2: u16 = ((0xb2f034i32) as u16);
+        let mut v2: u16 = (0xb2f034i32) as u16;
         if ((*E).parameter_1 & 1) != 0 {
-            v2 = ((0xb2f0c8i32) as u16);
+            v2 = (0xb2f0c8i32) as u16;
         }
         (*E).var_A = v2;
         let mut v3: u16 = if ((*E).base.x_pos as i32 & 0xf) - 11i32 & 0x8000 != 0 {
@@ -544,7 +544,7 @@ crate::game::callback_dispatch! {
             v0 = addr_kSpacePirates_Ilist_FBE6 as u16;
         }
         (*E).base.current_instruction = v0;
-        (*E).var_A = ((0xb2804bi32) as u16);
+        (*E).var_A = (0xb2804bi32) as u16;
         (*E).var_F = ((*E).parameter_2).wrapping_add((*E).base.x_pos);
         (*E).var_E = ((*E).base.x_pos).wrapping_sub((*E).parameter_2);
     };
@@ -581,12 +581,12 @@ crate::game::callback_dispatch! {
             (*E).var_F = x_pos;
             (*E).var_E = (x_pos).wrapping_sub((*E).parameter_2);
         }
-        let mut r20: u16 = ((((*E).var_F).wrapping_sub((*E).var_E)) >> 1);
+        let mut r20: u16 = (((*E).var_F).wrapping_sub((*E).var_E)) >> 1;
         (*E).var_D = ((*E).var_E).wrapping_add(r20);
         let mut r18: u16 = 0;
         let mut R22: u16 = 0;
         r20 = ((r20 as u8 as i32) << 8) as u16;
-        do_until! { (R22 as i32 - r20 as i32 & 0x8000 == 0);
+        do_until! { R22 as i32 - r20 as i32 & 0x8000 == 0 ;
     r18 = (r18).wrapping_add(32);
     R22 = (R22).wrapping_add(r18);
 }
@@ -599,7 +599,7 @@ crate::game::callback_dispatch! {
             sps_var_E = (*E).var_F;
         }
         (*E).base.x_pos = sps_var_E;
-        (*E).var_A = ((0xb2804bi32) as u16);
+        (*E).var_A = (0xb2804bi32) as u16;
         (*E).var_08 = (*E).base.y_pos;
         word_transfers!(game, ascending, 16; native(0xc3e0) <- rom(0xb28727, 0));
     };
@@ -613,7 +613,7 @@ crate::game::callback_dispatch! {
     SpacePirates_Func_16 [] {
         if ((abs16(((*E).var_D).wrapping_sub(word!(game.samus_x_pos)))) as i16).wrapping_sub(32) < 0 {
             let mut v2: u16 = 0;
-            do_until! { (v2 != 0);
+            do_until! { v2 != 0 ;
     v2 = (NextRandom(game)) & (3u16);
 }
             let mut v3: i16 = 0;
@@ -644,7 +644,7 @@ crate::game::callback_dispatch! {
             let x_pos: u16 = (*E).base.x_pos;
             (*E).var_00 = x_pos;
             (*E).base.x_pos = (x_pos).wrapping_sub(17);
-            let result: u8 = ({ let (actor, amount) = (word!(game.cur_enemy_index), (1i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
+            let result: u8 = { let (actor, amount) = (word!(game.cur_enemy_index), (1i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 };
             (*E).base.x_pos = (*E).var_00;
             if result != 0 {
                 ({ let (actor, amount) = (word!(game.cur_enemy_index), (-9i16 as i32) << 16); (actor_api::probe_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
@@ -668,7 +668,7 @@ crate::game::callback_dispatch! {
             let x_pos: u16 = (*E).base.x_pos;
             (*E).var_00 = x_pos;
             (*E).base.x_pos = (x_pos).wrapping_add(16);
-            let result: u8 = ({ let (actor, amount) = (word!(game.cur_enemy_index), (1i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
+            let result: u8 = { let (actor, amount) = (word!(game.cur_enemy_index), (1i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 };
             (*E).base.x_pos = (*E).var_00;
             if result == 0
                 || ({ let (actor, amount) = (word!(game.cur_enemy_index), 14336); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0

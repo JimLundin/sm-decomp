@@ -343,7 +343,7 @@ pub(super) fn dispatch(
                 h,
                 slot,
                 velocity_x =
-                    ((h.inputs().random >> 8) | (h.session().flag_compatibility.bitmask << 8))
+                    (h.inputs().random >> 8) | (h.session().flag_compatibility.bitmask << 8)
             );
             if ea == 8836577 {
                 enemy!(h, slot, velocity_y = 192);

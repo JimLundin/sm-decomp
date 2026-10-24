@@ -437,10 +437,15 @@ unsafe fn ppu_evaluateSprites(ppu: *mut Ppu, line: i32) -> bool {
     }
 }
 // Registers and legacy pixel selection use upstream; native rendering stays local.
+// Ppu offsets are asserted below and in backend.c. The Rust Snes pointer stays
+// opaque: register calls substitute a C view, and pixel lookup does not follow it.
 #[link(name = "lakesnes_backend", kind = "static", modifiers = "-bundle")]
 unsafe extern "C" {
+    #[allow(improper_ctypes)]
     fn sm_backend_ppu_read(ppu: *mut Ppu, adr: u8, h_pos: u16, v_pos: u16, bus: u8) -> u8;
+    #[allow(improper_ctypes)]
     fn sm_backend_ppu_write(ppu: *mut Ppu, adr: u8, value: u8);
+    #[allow(improper_ctypes)]
     fn sm_backend_ppu_pixel(
         ppu: *mut Ppu,
         x: i32,

@@ -503,7 +503,7 @@ crate::game::callback_dispatch! {
         let mut n: u16 = *v2.offset(3) as u16;
         let mut v3: u16 = (j).wrapping_add(4);
         let mut v4: u16 = word!(game.mode7_vram_write_queue_tail);
-        do_until! { (n == 0);
+        do_until! { n == 0 ;
     crate::game::mode7_transfers::write_word(v4, 0, 128, game);
     crate::game::mode7_transfers::write_word(v4, 1, v3, game);
     crate::game::mode7_transfers::write_word(v4, 3, 139, game);
@@ -524,7 +524,7 @@ crate::game::callback_dispatch! {
         let r20: u16 = *v2.offset(3) as u16;
         let mut v3: u16 = (j).wrapping_add(4);
         let mut v4: u16 = word!(game.mode7_vram_write_queue_tail);
-        do_until! { (n == 0);
+        do_until! { n == 0 ;
     crate::game::mode7_transfers::write_word(v4, 0, 128, game);
     crate::game::mode7_transfers::write_word(v4, 1, v3, game);
     crate::game::mode7_transfers::write_word(v4, 3, 139, game);
@@ -649,7 +649,7 @@ pub unsafe fn DecomposePaletteDataForFading(game: &mut Game) {
 }
 pub unsafe fn ClearYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
     unsafe {
-        do_until! { (j == 0);
+        do_until! { j == 0 ;
             let v2: i32 = k as i32 >> 1;
             word! { game, 0;
                 tilemap_stuff[(v2 + 256)], tilemap_stuff[(v2 + 512)],
@@ -662,7 +662,7 @@ pub unsafe fn ClearYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
 }
 pub unsafe fn FadeOutYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
     unsafe {
-        do_until! { (j == 0);
+        do_until! { j == 0 ;
             let v2: i32 = k as i32 >> 1;
             word!(game.tilemap_stuff[(v2 + 512)] -= word!(game.tilemap_stuff[(v2 + 1280)]));
             word!(game.tilemap_stuff[(v2 + 768)] -= word!(game.tilemap_stuff[(v2 + 1536)]));
@@ -674,7 +674,7 @@ pub unsafe fn FadeOutYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) 
 }
 pub unsafe fn FadeInYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
     unsafe {
-        do_until! { (j == 0);
+        do_until! { j == 0 ;
             let v2: i32 = k as i32 >> 1;
             word! { game;
                 tilemap_stuff[(v2 + 512)] = (word!(game.tilemap_stuff[(v2 + 1280)]) as i32
@@ -715,7 +715,7 @@ pub unsafe fn CinematicFunction_Intro_Func20(j: u16, game: &mut Game) {
         let mut r18: i32 = *tt.offset(1) as i32;
         let dst =
             &raw mut (*(ram_ptr!(game, Ram4000; 0x4000))).intro_japanese_text_tiles as *mut u16;
-        do_until! { (r18 == 0);
+        do_until! { r18 == 0 ;
             memcpy(
                 dst.offset((v2 >> 1) as isize) as *mut c_void,
                 ram_ptr!(game, u16; (*tt.offset(2) as i32 + 0x1a000) as isize) as *const c_void,
@@ -1356,14 +1356,14 @@ pub unsafe fn ProcessTextGlowObject(game: &mut Game) {
             let norg: i32 = n;
             let mut m: i32 = *v5.offset(3) as i32;
             loop {
-                do_until! { (n == 0);
+                do_until! { n == 0 ;
                     *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16
                         as *mut u8)
-                        .offset(v4 as i32 as isize) as *mut u16) = (R28
+                        .offset(v4 as i32 as isize) as *mut u16) = R28
                         | *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap
                             as *mut u16 as *mut u8)
                             .offset(v4 as i32 as isize) as *mut u16)
-                            & 0xe3ff);
+                            & 0xe3ff;
                     v3 = (v3).wrapping_add(2);
                     v4 = (v4).wrapping_add(2);
                     n -= 1;
@@ -1753,7 +1753,7 @@ crate::game::callback_dispatch! {
             let v1: i32 = k as i32 >> 1;
             word!(game.cinematicbg_instr_ptr[v1] = -10733i32 as u16);
             word!(game.cinematicbg_instr_timer[v1] = 1);
-            word!(game.cinematicbg_preinstr[v1] = ((0x8b93d9i32) as u16));
+            word!(game.cinematicbg_preinstr[v1] = (0x8b93d9i32) as u16);
         }
     };
     @external {
@@ -1990,7 +1990,7 @@ pub unsafe fn CinematicFunction_Intro_Func127(game: &mut Game) {
         let mut v0: u16 =
             ram_ptr!(game; 0xe0c).offset_from(&raw mut game.g_ram as *mut u8) as c_long as u16;
         let mut v1: i16 = 0;
-        do_until! { ((v4).wrapping_sub(39) >= 0);
+        do_until! { (v4).wrapping_sub(39) >= 0 ;
             let mut v4: i16 = v1;
             let v2 = RomPtr_RAM(v0, game);
             *(v2 as *mut u16) = v1 as u16;
@@ -2176,10 +2176,10 @@ crate::game::callback_dispatch! {
     [9149288] CinematicFunctionOpening [] {
         LoadTitleSequenceGraphics(game);
         QueueMusic_Delayed8(0xff03, game);
-        word!(game.cinematic_function = ((0x8b9a47i32) as u16));
+        word!(game.cinematic_function = (0x8b9a47i32) as u16);
         SpawnCinematicSpriteObject(
             addr_kCinematicSpriteObjectDef_8BA0EF as u16,
-            ((0x8b9a47i32) as u16),
+            (0x8b9a47i32) as u16,
             game,
         );
         QueueMusic_Delayed8(5, game);
@@ -2199,10 +2199,10 @@ crate::game::callback_dispatch! {
         );
         if word!(game.cinematic_var10) as i32 - 163i32 & 0x8000 == 0 {
             *ram_ptr!(game; 0x69) = 16;
-            word!(game.cinematic_function = ((0x8b9a47i32) as u16));
+            word!(game.cinematic_function = (0x8b9a47i32) as u16);
             SpawnCinematicSpriteObject(
                 addr_kCinematicSpriteObjectDef_8BA101 as u16,
-                ((0x8b9a47i32) as u16),
+                (0x8b9a47i32) as u16,
                 game,
             );
             SetPpuBackdropBlack(game);
@@ -2217,7 +2217,7 @@ crate::game::callback_dispatch! {
                 word! {game; cinematic_var6 = 256; cinematic_function = ((0x8b9f28i32) as u16); }
                 SpawnCinematicSpriteObject(
                     addr_kCinematicSpriteObjectDef_8BA107 as u16,
-                    ((0x8b9f28i32) as u16),
+                    (0x8b9f28i32) as u16,
                     game,
                 );
             }
@@ -2226,14 +2226,14 @@ crate::game::callback_dispatch! {
     [9150249] CinematicFunc_Func1 [] {
         let v0: bool = (word!(game.demo_timer -= 1, reread) & 0x8000) != 0;
         let begin_fade: bool = if word!(game.demo_timer) == 0 || v0 {
-            word!(game.cinematic_function = ((0x8b9faei32) as u16));
+            word!(game.cinematic_function = (0x8b9faei32) as u16);
             true
         } else {
             ((word!(game.joypad1_newkeys)
                 & (kButton_B as i32 | kButton_Start as i32 | kButton_A as i32) as u16)
                 != 0)
                 && ({
-                    word!(game.cinematic_function = ((0x8b9f52i32) as u16));
+                    word!(game.cinematic_function = (0x8b9f52i32) as u16);
                     true
                 })
         };
@@ -2291,7 +2291,7 @@ crate::game::callback_dispatch! {
     };
     [9151911] CinematicFunction_Intro_FadeIn [] {
         if HasQueuedMusic(game) & 1 == 0 {
-            word!(game.cinematic_function = ((0x8ba5bdi32) as u16));
+            word!(game.cinematic_function = (0x8ba5bdi32) as u16);
             word! { game, 2; screen_fade_delay, screen_fade_counter }
         }
     };
@@ -2322,7 +2322,7 @@ crate::game::callback_dispatch! {
     };
     [9152099] CinematicFunc_Intro_WaitForFadeOut [] {
         if AdvanceSlowScreenFadeOut(game) & 1 != 0 {
-            word!(game.cinematic_function = ((0x8ba66fi32) as u16));
+            word!(game.cinematic_function = (0x8ba66fi32) as u16);
         }
     };
     [9152111] CinematicFunc_Intro_SetupTextPage2 [] {
@@ -2349,18 +2349,18 @@ crate::game::callback_dispatch! {
         QueueMusic_Delayed8(0, game);
         QueueMusic_Delayed8(0xff36, game);
         QueueMusic_DelayedY(5, 0xe, game);
-        word!(game.cinematic_function = ((0x8ba82bi32) as u16));
+        word!(game.cinematic_function = (0x8ba82bi32) as u16);
     };
     [9152555] CinematicFunc_Intro_WaitFadeinShowText [] {
         if HasQueuedMusic(game) & 1 == 0 {
-            word!(game.cinematic_function = ((0x8ba84ai32) as u16));
+            word!(game.cinematic_function = (0x8ba84ai32) as u16);
             word! { game, 2; screen_fade_delay, screen_fade_counter }
             SpawnCinematicBgObject(addr_kCinematicBgObjectDef_8BCF3F as u16, 0x4c00, game);
         }
     };
     [9152586] CinematicFunc_Intro_WaitForFadeinSleep [] {
         if AdvanceSlowScreenFadeIn(game) & 1 != 0 {
-            word!(game.cinematic_function = ((0x8ba391i32) as u16));
+            word!(game.cinematic_function = (0x8ba391i32) as u16);
         }
     };
     [9157792] CinematicFunction_Intro_Func54 [] {
@@ -2389,14 +2389,14 @@ crate::game::callback_dispatch! {
         word!(game.cinematicbg_var3 = 23552);
         EnableNMI(game);
         SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BCF0F as u16, 0, game);
-        word!(game.cinematic_function = ((0x8bbde4i32) as u16));
+        word!(game.cinematic_function = (0x8bbde4i32) as u16);
         QueueMusic_Delayed8(0xff2d, game);
         QueueMusic_DelayedY(5, 0xe, game);
     };
     [9158116] CinematicFunction_Intro_Func55 [] {
         if HasQueuedMusic(game) & 1 == 0 {
             *ram_ptr!(game; 0x51) = 15;
-            word!(game.cinematic_function = ((0x8bbdf9i32) as u16));
+            word!(game.cinematic_function = (0x8bbdf9i32) as u16);
         }
     };
     [9158137] CinematicFunction_Intro_Func56 [] {
@@ -2427,7 +2427,7 @@ crate::game::callback_dispatch! {
             );
             SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BCE91 as u16, 1, game);
             SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BCF0F as u16, 1, game);
-            word!(game.cinematic_function = ((0x8bbfdai32) as u16));
+            word!(game.cinematic_function = (0x8bbfdai32) as u16);
             palette_effects::spawn(addr_kPalfx_E1A8 as u16, game);
             palette_effects::spawn(addr_kPalfx_E1AC as u16, game);
         } else {
@@ -2454,7 +2454,7 @@ crate::game::callback_dispatch! {
             EnableCinematicBgObjects(game);
             EnableCinematicBgTilemapUpdates(game);
             SpawnCinematicBgObject(addr_kCinematicBgObjectDef_8BCF69 as u16, 0x5c00, game);
-            word!(game.cinematic_function = ((0x8ba38fi32) as u16));
+            word!(game.cinematic_function = (0x8ba38fi32) as u16);
         };
     };
     [9158853] CinematicFunction_Intro_Func72 [] {
@@ -2466,7 +2466,7 @@ crate::game::callback_dispatch! {
                 reg_BG3VOFS, cinematic_var5,
             }
             word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
-            word!(game.cinematic_function = ((0x8bc100i32) as u16));
+            word!(game.cinematic_function = (0x8bc100i32) as u16);
         }
     };
     [9158912] CinematicFunction_Intro_Func73 [] {
@@ -2524,7 +2524,7 @@ crate::game::callback_dispatch! {
         palette_effects::spawn(addr_kPalfx_E1B8 as u16, game);
         EnableNMI(game);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
-        word!(game.cinematic_function = ((0x8bc2e4i32) as u16));
+        word!(game.cinematic_function = (0x8bc2e4i32) as u16);
         QueueMusic_Delayed8(0, game);
         QueueMusic_Delayed8(0xff2d, game);
         if word!(game.game_state) as i32 == kGameState_37_CeresGoesBoomWithSamus as i32 {
@@ -2535,7 +2535,7 @@ crate::game::callback_dispatch! {
     };
     [9159396] CinematicFunction_Intro_Func74 [] {
         if HasQueuedMusic(game) & 1 == 0 {
-            word!(game.cinematic_function = ((0x8bc2f1i32) as u16));
+            word!(game.cinematic_function = (0x8bc2f1i32) as u16);
         }
     };
     [9159409] CinematicFunction_Intro_Func75 [] {
@@ -2573,7 +2573,7 @@ crate::game::callback_dispatch! {
                 QueueMode7Transfers(0x8b, addr_kCinematicFunction_Intro_Func76_M7_0 as u16, game);
             }
             QueueMode7Transfers(0x8b, addr_kCinematicFunction_Intro_Func76_M7_1 as u16, game);
-            word!(game.cinematic_function = ((0x8bc5cai32) as u16));
+            word!(game.cinematic_function = (0x8bc5cai32) as u16);
         };
     };
     [9160138] CinematicFunction_Intro_Func77 [] {
@@ -2612,7 +2612,7 @@ crate::game::callback_dispatch! {
                 word_transfers!(game, descending, 128; le(cinematicbg_arr7, 135) <- value(0));
                 word!(game.game_state = kGameState_25_SamusNoHealth as u16);
             } else {
-                word!(game.cinematic_function = ((0x8bc699i32) as u16));
+                word!(game.cinematic_function = (0x8bc699i32) as u16);
             }
         }
     };
@@ -2633,7 +2633,7 @@ crate::game::callback_dispatch! {
         palette_effects::set_enabled(true, game);
         *ram_ptr!(game; 0x57) = -127i32 as u8;
         palette_effects::spawn(addr_kPalfx_E1A8 as u16, game);
-        word!(game.cinematic_function = ((0x8bc79ci32) as u16));
+        word!(game.cinematic_function = (0x8bc79ci32) as u16);
         EnableNMI(game);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
     };
@@ -2644,7 +2644,7 @@ crate::game::callback_dispatch! {
         HandleFadeIn(game);
         if *ram_ptr!(game; 0x51) == 15 {
             word! { game, 0; screen_fade_delay, screen_fade_counter }
-            word!(game.cinematic_function = ((0x8bc7cai32) as u16));
+            word!(game.cinematic_function = (0x8bc7cai32) as u16);
         }
     };
     [9160650] CinematicFunction_Intro_Func88 [] {
@@ -2688,7 +2688,7 @@ crate::game::callback_dispatch! {
                     0x0800, // Palette left in A by the preceding sprite initializer.
                     game,
                 );
-                word!(game.cinematic_function = ((0x8ba38fi32) as u16));
+                word!(game.cinematic_function = (0x8ba38fi32) as u16);
             }
         }
     };
@@ -2698,14 +2698,14 @@ crate::game::callback_dispatch! {
         if word!(game.cinematic_var6) as i32 - 1152i32 & 0x8000 != 0 {
             word!(game.cinematic_var6 += 4);
         } else {
-            word!(game.cinematic_function = ((0x8bca36i32) as u16));
+            word!(game.cinematic_function = (0x8bca36i32) as u16);
         };
     };
     [9161270] CinematicFunction_Intro_Func106 [] {
         words!(game.cinematic_var10, cinematic_var9 += 0x2000);
         words!(game.cinematic_var8, cinematic_var7 += -0x8000i32 as u32);
         if word!(game.cinematic_var8) as i32 + 128 & 0x8000 != 0 {
-            word!(game.cinematic_function = ((0x8bca85i32) as u16));
+            word!(game.cinematic_function = (0x8bca85i32) as u16);
         } else {
             word!(game.cinematic_var6 += 16);
             if word!(game.cinematic_var5) != 224 {
@@ -2782,13 +2782,13 @@ crate::game::callback_dispatch! {
         if HasQueuedMusic(game) & 1 == 0 {
             palette_effects::spawn(addr_kPalfx_E1D8 as u16, game);
             palette_effects::spawn(addr_kPalfx_E1DC as u16, game);
-            word!(game.cinematic_function = ((0x8bd6f2i32) as u16));
+            word!(game.cinematic_function = (0x8bd6f2i32) as u16);
         }
     };
     [9164530] CinematicFunction_Intro_Func110 [] {
         CinematicFunction_Intro_Func111(game);
         if AdvanceFastScreenFadeIn(game) & 1 != 0 {
-            word!(game.cinematic_function = ((0x8bd701i32) as u16));
+            word!(game.cinematic_function = (0x8bd701i32) as u16);
         }
     };
     [9164545] CinematicFunction_Intro_Func111 [] {
@@ -2801,7 +2801,7 @@ crate::game::callback_dispatch! {
         if word!(game.cinematic_var6) as i32 - 384i32 & 0x8000 == 0
             && AdvanceFastScreenFadeOut(game) & 1 != 0
         {
-            word!(game.cinematic_function = ((0x8bd731i32) as u16));
+            word!(game.cinematic_function = (0x8bd731i32) as u16);
         }
     };
     [9164593] CinematicFunction_Intro_Func112 [] {
@@ -2818,7 +2818,7 @@ crate::game::callback_dispatch! {
         SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEEE5 as u16, 0, game);
         word! {game; cinematic_var5 = 32; cinematic_var6 = 64; }
         word! { game, 0; cinematic_var8, cinematic_var10 }
-        word!(game.cinematic_function = ((0x8bd7f8i32) as u16));
+        word!(game.cinematic_function = (0x8bd7f8i32) as u16);
     };
     [9164807] CinematicFunction_Intro_Func114 [] {
         if (word!(game.cinematic_var12) & 1) == 0 {
@@ -2830,13 +2830,13 @@ crate::game::callback_dispatch! {
         if word!(game.cinematic_var6) as i32 - 384i32 & 0x8000 == 0
             && AdvanceFastScreenFadeOut(game) & 1 != 0
         {
-            word!(game.cinematic_function = ((0x8bd837i32) as u16));
+            word!(game.cinematic_function = (0x8bd837i32) as u16);
         }
     };
     [9164792] CinematicFunction_Intro_Func113 [] {
         CinematicFunction_Intro_Func114(game);
         if AdvanceFastScreenFadeIn(game) & 1 != 0 {
-            word!(game.cinematic_function = ((0x8bd807i32) as u16));
+            word!(game.cinematic_function = (0x8bd807i32) as u16);
         }
     };
     [9164855] CinematicFunction_Intro_Func115 [] {
@@ -2878,7 +2878,7 @@ crate::game::callback_dispatch! {
         CinematicFunction_Intro_Func117(game);
         if AdvanceFastScreenFadeIn(game) & 1 != 0 {
             word! { game, 2; screen_fade_delay, screen_fade_counter }
-            word!(game.cinematic_function = ((0x8bda1ai32) as u16));
+            word!(game.cinematic_function = (0x8bda1ai32) as u16);
         }
     };
     [9165338] CinematicFunction_Intro_Func117 [] {
@@ -3027,7 +3027,7 @@ crate::game::callback_dispatch! {
                 word!(game.cinematic_var6),
                 game,
             );
-            word!(game.cinematic_function = ((0x8bde63i32) as u16));
+            word!(game.cinematic_function = (0x8bde63i32) as u16);
             word_transfers!(game, descending, 16; le(palette_buffer, 95) <- table(g_word_8BDE43, 15));
         } else {
             word!(game.cinematic_var6 -= 4);
@@ -3038,7 +3038,7 @@ crate::game::callback_dispatch! {
         if AdvanceFastScreenFadeOut(game) & 1 != 0 {
             EnableNMI(game);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
-            word!(game.cinematic_function = ((0x8bde80i32) as u16));
+            word!(game.cinematic_function = (0x8bde80i32) as u16);
         }
     };
     [9166464] CinematicFunction_Intro_Func126 [] {
@@ -3082,7 +3082,7 @@ crate::game::callback_dispatch! {
         EnableTextGlowObjects_(game);
         word! { game, 3; screen_fade_delay, screen_fade_counter }
         CreditsObject_Init(addr_stru_8BF6F8 as u16, game);
-        word!(game.cinematic_function = ((0x8bdb9di32) as u16));
+        word!(game.cinematic_function = (0x8bdb9di32) as u16);
     };
     [9167120] CinematicFunction_Intro_Func130 [] {
         HandleFadeIn(game);
@@ -3146,7 +3146,7 @@ crate::game::callback_dispatch! {
                         0,
                         game,
                     );
-                    word!(game.cinematic_function = ((0x8be293i32) as u16));
+                    word!(game.cinematic_function = (0x8be293i32) as u16);
                     *ram_ptr!(game; 0x69) = 16;
                     *ram_ptr!(game; 0x6b) = 0;
                     *ram_ptr!(game; 0x6f) = 0;
@@ -3165,7 +3165,7 @@ crate::game::callback_dispatch! {
             *ram_ptr!(game; 0x6b) = 16;
             *ram_ptr!(game; 0x6f) = 2;
             *ram_ptr!(game; 0x72) = 34;
-            word!(game.cinematic_function = ((0x8be265i32) as u16));
+            word!(game.cinematic_function = (0x8be265i32) as u16);
         }
     };
     [9167461] CinematicFunction_Intro_Func136 [] {
@@ -3203,9 +3203,9 @@ crate::game::callback_dispatch! {
                 *ram_ptr!(game; 0x6b) = 16;
                 *ram_ptr!(game; 0x6f) = 2;
                 *ram_ptr!(game; 0x72) = 34;
-                word!(game.cinematic_function = ((0x8be314i32) as u16));
+                word!(game.cinematic_function = (0x8be314i32) as u16);
             } else {
-                word!(game.cinematic_function = ((0x8be342i32) as u16));
+                word!(game.cinematic_function = (0x8be342i32) as u16);
             }
         }
     };
@@ -3330,7 +3330,7 @@ crate::game::callback_dispatch! {
             v3 = (v3).wrapping_sub(2);
         }
         if word!(game.cinematic_var4 += 1, reread) as i32 - 16i32 & 0x8000 == 0 {
-            word!(game.cinematic_function = ((0x8be7bai32) as u16));
+            word!(game.cinematic_function = (0x8be7bai32) as u16);
             ClearCinematicSprites(game);
             SpawnCinematicBgObject(addr_kCinematicBgObjectDef_8BF74E as u16, 0x4c00, game);
         }
@@ -3339,7 +3339,7 @@ crate::game::callback_dispatch! {
         word!(game.cinematic_var10 -= 2);
         if word!(game.cinematic_var10) as i32 + 79 & 0x8000 != 0 {
             SpawnCinematicBgObject(addr_kCinematicBgObjectDef_8BF748 as u16, 0x4c00, game);
-            word!(game.cinematic_function = ((0x8be7bai32) as u16));
+            word!(game.cinematic_function = (0x8be7bai32) as u16);
             CopySuperMetroidString(game);
         }
     };
@@ -3356,24 +3356,24 @@ crate::game::callback_dispatch! {
         QueueMusic_Delayed8(0, game);
         QueueMusic_Delayed8(0xff42, game);
         QueueMusic_DelayedY(5, 0xe, game);
-        word!(game.cinematic_function = ((0x8ba639i32) as u16));
+        word!(game.cinematic_function = (0x8ba639i32) as u16);
     };
     [9152076] CinematicFunc_Intro_FadeOut {
-        word!(game.cinematic_function = ((0x8ba663i32) as u16));
+        word!(game.cinematic_function = (0x8ba663i32) as u16);
         word! { game, 2; screen_fade_delay, screen_fade_counter }
     };
     [9160208] CinematicFunction_Intro_Func84 {
         word! { game, 1; screen_fade_delay, screen_fade_counter }
-        word!(game.cinematic_function = ((0x8bc627i32) as u16));
+        word!(game.cinematic_function = (0x8bc627i32) as u16);
     };
     [9161424] CinematicFunction_Intro_Func108 {
-        word!(game.cinematic_function = ((0x8bcadei32) as u16));
+        word!(game.cinematic_function = (0x8bcadei32) as u16);
     };
     [9165726] CinematicFunction_Intro_Func119 {
         QueueMusic_Delayed8(0, game);
         QueueMusic_Delayed8(0xff3c, game);
         QueueMusic_DelayedY(5, 0xe, game);
-        word!(game.cinematic_function = ((0x8bdbc4i32) as u16));
+        word!(game.cinematic_function = (0x8bdbc4i32) as u16);
     };
     CinematicFunction_Intro_Func122 {
         fade_cinematic_fixed_color!(fresh97, game, fresh98, fresh99);
@@ -3426,7 +3426,7 @@ crate::game::callback_dispatch! {
         word!(game.cinematicspr_preinstr_func[(k >> 1)] = *(RomPtr_8B(j, game) as *mut u16));
     };
     [9147479] CinematicSprInstr_ClearPreInstr [j] {
-        word!(game.cinematicspr_preinstr_func[(k >> 1)] = ((0x8b945fi32) as u16));
+        word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8b945fi32) as u16);
     };
     [9147554] CinematicSprInstr_GotoRel [(j).wrapping_add((*RomPtr_8B(j, game) as i8) as u16)] { };
     [9147580] CinematicSprInstr_Goto [*(RomPtr_8B(j, game) as *mut u16)] { };
@@ -3514,14 +3514,14 @@ crate::game::callback_dispatch! {
     [9156805] CinematicSprInstr_Func43 [] {
         let v1: i32 = k as i32 >> 1;
         if word!(game.cinematicspr_goto_timer[v1]) != 0 {
-            word!(game.cinematicspr_preinstr_func[v1] = ((0x8bb93bi32) as u16));
+            word!(game.cinematicspr_preinstr_func[v1] = (0x8bb93bi32) as u16);
         } else {
-            word!(game.cinematicspr_preinstr_func[v1] = ((0x8bb8d8i32) as u16));
+            word!(game.cinematicspr_preinstr_func[v1] = (0x8bb8d8i32) as u16);
         }
         j
     };
     [9158818] CinematicCommonInstr_Func70 [] {
-        word!(game.cinematic_function = ((0x8bc0c5i32) as u16));
+        word!(game.cinematic_function = (0x8bc0c5i32) as u16);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
         j
     };
@@ -3669,7 +3669,7 @@ crate::game::callback_dispatch! {
     };
     [9172040] CinematicSprInstr_Func198 [j] {
         word! { game, 0; screen_fade_delay, screen_fade_counter }
-        word!(game.cinematic_function = ((0x8bde64i32) as u16));
+        word!(game.cinematic_function = (0x8bde64i32) as u16);
     };
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
     [9172375] CinematicSprInstr_Func213 [j] {
@@ -3692,7 +3692,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
     [9172484] CinematicSprInstr_Func217 [j] {
         word!(game.cinematicbg_arr9[(k >> 1)] = 3584);
-        word!(game.cinematic_function = ((0x8be3aei32) as u16));
+        word!(game.cinematic_function = (0x8be3aei32) as u16);
         *ram_ptr!(game; 0x69) = 17;
         *ram_ptr!(game; 0x6b) = 16;
         *ram_ptr!(game; 0x6f) = 2;
@@ -3718,14 +3718,14 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     [9149647] sub_8B9CCF [] {
         *ram_ptr!(game; 0x51) = 15;
-        word!(game.cinematicspr_preinstr_func[(k >> 1)] = ((0x8b93d9i32) as u16));
+        word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8b93d9i32) as u16);
     };
     [9152744] SetSomeStuffForSpriteObject_4_MetroidEgg [] {
         if word!(game.samus_x_pos) as i32 - 169i32 & 0x8000 != 0 {
             let v1: i32 = k as i32 >> 1;
             word!(game.cinematicspr_instr_timer[v1] = 1);
             word!(game.cinematicspr_instr_ptr[v1] = addr_word_8BCB3B as u16);
-            word!(game.cinematicspr_preinstr_func[v1] = ((0x8b93d9i32) as u16));
+            word!(game.cinematicspr_preinstr_func[v1] = (0x8b93d9i32) as u16);
         }
     };
     [9152771] CinematicSprPreInstr_A903 [] {
@@ -3790,7 +3790,7 @@ crate::game::callback_dispatch! {
             word!(game.cinematicspr_goto_timer[v2] = v3);
             if v3 == 4 {
                 word!(game.cinematicspr_goto_timer[v2] = 0);
-                word!(game.cinematicspr_preinstr_func[v2] = ((0x8bb80fi32) as u16));
+                word!(game.cinematicspr_preinstr_func[v2] = (0x8bb80fi32) as u16);
                 SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BCF1B as u16, 0, game);
                 SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BCF1B as u16, 1, game);
                 SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BCF1B as u16, 2, game);
@@ -3832,7 +3832,7 @@ crate::game::callback_dispatch! {
         let v1: bool = (word!(game.cinematic_var14 -= 1, reread) & 0x8000) != 0;
         if word!(game.cinematic_var14) == 0 || v1 {
             let v2: i32 = k as i32 >> 1;
-            word!(game.cinematicspr_preinstr_func[v2] = ((0x8bbb24i32) as u16));
+            word!(game.cinematicspr_preinstr_func[v2] = (0x8bbb24i32) as u16);
             word! { game, 0; cinematic_var14, cinematic_var17, cinematicspr_goto_timer[v2] }
         }
     };
@@ -3895,7 +3895,7 @@ crate::game::callback_dispatch! {
     };
     [9159817] CinematicSprPreInstr_C489 [] {
         if word!(game.cinematic_function) as i32 == 0x8bc5ca & 0xffff {
-            word!(game.cinematicspr_preinstr_func[(k >> 1)] = ((0x8b93d9i32) as u16));
+            word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8b93d9i32) as u16);
         } else {
             let v1: bool = (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0;
             if word!(game.cinematic_var4) == 0 || v1 {
@@ -3911,17 +3911,17 @@ crate::game::callback_dispatch! {
     };
     [9160782] CinematicFunction_Intro_Func90 [] {
         if word!(game.cinematic_function) as i32 == 0x8bcade & 0xffff {
-            word!(game.cinematicspr_preinstr_func[(k >> 1)] = ((0x8bc85di32) as u16));
+            word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8bc85di32) as u16);
         }
     };
     [9160874] CinematicFunction_Intro_Func93 [] {
         if word!(game.cinematic_function) as i32 == 0x8bcade & 0xffff {
-            word!(game.cinematicspr_preinstr_func[(k >> 1)] = ((0x8bc8b9i32) as u16));
+            word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8bc8b9i32) as u16);
         }
     };
     [9160953] CinematicFunction_Intro_Func96 [] {
         if word!(game.cinematic_function) as i32 == 0x8bcade & 0xffff {
-            word!(game.cinematicspr_preinstr_func[(k >> 1)] = ((0x8bc908i32) as u16));
+            word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8bc908i32) as u16);
         }
     };
     [9171802] CinematicSprPreInstr_F35A [] {
@@ -3947,22 +3947,22 @@ crate::game::callback_dispatch! {
     };
     [9172053] CinematicFunction_Intro_Func199 [] {
         if word!(game.cinematic_var6) as i32 - 176i32 & 0x8000 != 0 {
-            word!(game.cinematicspr_preinstr_func[(k >> 1)] = ((0x8bf464i32) as u16));
+            word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8bf464i32) as u16);
         }
     };
     [9172088] CinematicFunction_Intro_Func201 [] {
         if word!(game.cinematic_var6) as i32 - 176i32 & 0x8000 != 0 {
-            word!(game.cinematicspr_preinstr_func[(k >> 1)] = ((0x8bf487i32) as u16));
+            word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8bf487i32) as u16);
         }
     };
     [9172123] CinematicFunction_Intro_Func203 [] {
         if word!(game.cinematic_var6) as i32 - 96i32 & 0x8000 == 0 {
-            word!(game.cinematicspr_preinstr_func[(k >> 1)] = ((0x8bf4aai32) as u16));
+            word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8bf4aai32) as u16);
         }
     };
     [9172177] CinematicFunction_Intro_Func205 [] {
         if word!(game.cinematic_var6) as i32 - 96i32 & 0x8000 == 0 {
-            word!(game.cinematicspr_preinstr_func[(k >> 1)] = ((0x8bf4e0i32) as u16));
+            word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8bf4e0i32) as u16);
         }
     };
     [9172231] CinematicFunction_Intro_Func207 [] {
@@ -3979,7 +3979,7 @@ crate::game::callback_dispatch! {
             *ram_ptr!(game; 0x52) = 3;
             word!(game.cinematicspr_instr_timer[v1] = 1);
             word!(game.cinematicspr_instr_ptr[v1] = addr_word_8BED95 as u16);
-            word!(game.cinematicspr_preinstr_func[v1] = ((0x8bf5ddi32) as u16));
+            word!(game.cinematicspr_preinstr_func[v1] = (0x8bf5ddi32) as u16);
             word!(game.cinematicbg_arr9[v1] = 3072);
         }
     };
@@ -4095,7 +4095,7 @@ crate::game::callback_dispatch! {
         if word!(game.cinematicbg_arr8[v1]) as i32 - 168i32 & 0x8000 == 0 {
             word!(game.cinematicspr_instr_timer[v1] = 1);
             word!(game.cinematicspr_instr_ptr[v1] = addr_word_8BCD71 as u16);
-            word!(game.cinematicspr_preinstr_func[v1] = ((0x8b93d9i32) as u16));
+            word!(game.cinematicspr_preinstr_func[v1] = (0x8b93d9i32) as u16);
         } else {
             word!(game.cinematicspr_goto_timer[v1] += 256);
         };
@@ -4147,7 +4147,7 @@ crate::game::callback_dispatch! {
     };
     [9157214] CinematicFunction_Intro_Func50 [] {
         if word!(game.cinematicspr_instr_ptr[(v1 + 1)]) as i32 + 0x3487 & 0x8000 == 0 {
-            word!(game.cinematicspr_preinstr_func[v1] = ((0x8bba73i32) as u16));
+            word!(game.cinematicspr_preinstr_func[v1] = (0x8bba73i32) as u16);
             word! { game, 0; cinematic_var14, cinematic_var17 }
         }
     };
@@ -4162,7 +4162,7 @@ crate::game::callback_dispatch! {
         chase_samus_with_cinematic_sprite!(game, 32i32, v1);
         if (word!(game.cinematic_var17) & 0x8000) == 0 {
             word!(game.cinematic_var14 = 128);
-            word!(game.cinematicspr_preinstr_func[v1] = ((0x8bbb0di32) as u16));
+            word!(game.cinematicspr_preinstr_func[v1] = (0x8bbb0di32) as u16);
         }
     };
     [9158453] CinematicFunction_Intro_Func60 [] {
@@ -4230,7 +4230,7 @@ crate::game::callback_dispatch! {
         if word!(game.cinematicbg_arr8[v1]) as i32 + 128 & 0x8000 != 0 {
             word!(game.cinematicspr_instr_timer[v1] = 1);
             word!(game.cinematicspr_instr_ptr[v1] = addr_off_8BCE53 as u16);
-            word!(game.cinematic_function = ((0x8bcadfi32) as u16));
+            word!(game.cinematic_function = (0x8bcadfi32) as u16);
         }
     };
     [9160968] CinematicFunction_Intro_Func97 [] {
@@ -4421,7 +4421,7 @@ crate::game::callback_dispatch! {
     };
     [9168768] CinematicFunction_Intro_Func147 [] {
         word_transfers!(game, descending, 64; native(0x363e) <- value(127));
-        word!(game.cinematic_function = ((0x8be797i32) as u16));
+        word!(game.cinematic_function = (0x8be797i32) as u16);
         j
     };
     @external {
@@ -4505,7 +4505,7 @@ crate::game::callback_dispatch! {
         } else {
             let v1: i32 = j as i32 >> 1;
             word!(game.cinematicbg_arr7[v1] = 112);
-            word!(game.cinematicspr_preinstr_func[v1] = ((0x8bbfd9i32) as u16));
+            word!(game.cinematicspr_preinstr_func[v1] = (0x8bbfd9i32) as u16);
         }
         let v2: i32 = j as i32 >> 1;
         word! {game; cinematicbg_arr8[v2] = 87; cinematicbg_arr9[v2] = 2048; }
@@ -4655,7 +4655,7 @@ crate::game::callback_dispatch! {
     };
     [9158270] CinematicFunction_Intro_Func57 [] {
         if word!(game.cinematic_spawn_param) != 0 {
-            word!(game.cinematicspr_preinstr_func[v1] = ((0x8bbfc6i32) as u16));
+            word!(game.cinematicspr_preinstr_func[v1] = (0x8bbfc6i32) as u16);
             word!(game.cinematicbg_arr7[v1] = -32i32 as u16);
         } else {
             word!(game.cinematicspr_goto_timer[v1] = -1024i32 as u16);
@@ -4873,7 +4873,7 @@ crate::game::callback_dispatch! {
         word!(game.mode7_obj_preinstr_func[(k >> 1)] = *(RomPtr_8B(j, game) as *mut u16));
     };
     [9147773] Mode7Instr_ClearPreInstr [j] {
-        word!(game.mode7_obj_preinstr_func[(k >> 1)] = ((0x8b9585i32) as u16));
+        word!(game.mode7_obj_preinstr_func[(k >> 1)] = (0x8b9585i32) as u16);
     };
     [9147782] Mode7Instr_Goto [*(RomPtr_8B(j, game) as *mut u16)] { };
     [9147789] Mode7Instr_DecTimerAndGoto [] {

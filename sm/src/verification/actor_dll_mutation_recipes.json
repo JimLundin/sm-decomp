@@ -250,7 +250,7 @@
     "edits": [
       {
         "path": "sm/src/game/sm_a7.rs",
-        "before": "rom_record(0xa0, enemy_ptr, game).set_word(offset_of!(EnemyDef, shot_ai), ((0xa7804ci32) as u16));",
+        "before": "rom_record(0xa0, enemy_ptr, game).set_word(offset_of!(EnemyDef, shot_ai), (0xa7804ci32) as u16);",
         "after": "rom_record(0xa0, enemy_ptr, game).set_word(offset_of!(EnemyDef, shot_ai), 0x9000u16);"
       }
     ]

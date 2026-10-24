@@ -2,7 +2,6 @@
 use super::access::enemy;
 use super::coordinates::{block_index, calculate_coordinates};
 use super::host::*;
-use super::setup::*;
 use super::shared::*;
 use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 

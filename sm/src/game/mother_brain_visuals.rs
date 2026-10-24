@@ -117,7 +117,7 @@ pub unsafe fn seal_wall(game: &mut Game) {
         SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 9, game);
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x4, 0xb673 as VoidP), game);
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x9, 0xb673 as VoidP), game);
-        (*Get_MotherBrain(0i32, game)).var_A = ((0xa9881di32) as u16);
+        (*Get_MotherBrain(0i32, game)).var_A = (0xa9881di32) as u16;
     }
 }
 pub unsafe fn start_earthquake(a: u16, game: &mut Game) {
@@ -133,7 +133,7 @@ pub unsafe fn flicker_body(game: &mut Game) {
             crate::update_place! { unaligned_word fresh0 = &raw mut (*(ram_ptr!(game, u16; 0x69))) => (u16::from_le(fresh0.read_unaligned())) | (2u16); }
             (*v0).properties = ((*v0).properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
         } else {
-            crate::update_place! { unaligned_word fresh1 = &raw mut (*(ram_ptr!(game, u16; 0x69))) => (u16::from_le(fresh1.read_unaligned()) & !(2)); }
+            crate::update_place! { unaligned_word fresh1 = &raw mut (*(ram_ptr!(game, u16; 0x69))) => u16::from_le(fresh1.read_unaligned()) & !(2); }
             (*v0).properties = ((*v0).properties) | ((kEnemyProps_Invisible) as u16);
         };
     }

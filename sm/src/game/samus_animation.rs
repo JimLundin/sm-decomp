@@ -3,7 +3,6 @@ use crate::game::player_transitions as pt;
 use crate::game::session_runtime::Runtime;
 
 use crate::game::music::{PlayRoomMusicTrackAfterAFrames, QueueMusic_DelayedY};
-use crate::game::player_projectiles::content::captured;
 pub use crate::game::prelude::*;
 use crate::game::sm_8b::Samus_CalcPos_Mode7;
 
@@ -156,7 +155,7 @@ pub unsafe fn Samus_DrawEchoes(game: &mut Game) {
         }
         for i in (0i32..=2).rev().step_by(2) {
             let v1: i32 = i >> 1;
-            if (word!(game.speed_echo_xpos[v1]) != 0) {
+            if word!(game.speed_echo_xpos[v1]) != 0 {
                 let v2: u16 = word!(game.speed_echo_ypos[v1]);
                 let mut v3: u16 = 0;
                 if v2 != word!(game.samus_y_pos) {
@@ -315,7 +314,7 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
         for i in (0i32..=6).rev().step_by(2) {
             let v1: i32 = i >> 1;
             let mut v2: u16 = word!(game.atmospheric_gfx_frame_and_type[v1]);
-            if (v2 != 0) {
+            if v2 != 0 {
                 let r18: u16 = (2u16).wrapping_mul((v2 as u8) as u16);
                 let v3: u16 = (2u16).wrapping_mul((byte!(v2; 1)) as u16);
                 let mut v4: i16 =

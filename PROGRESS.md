@@ -2,8 +2,8 @@
 
 ```mermaid
 flowchart LR
-    NOW["NOW · Prepare cleanup<br/>Compiler warnings"]:::active
-    NEXT["NEXT · Shorter plan<br/>Then checks across the game"]:::pending
+    NOW["NOW · Shorten plan<br/>Compact metrics report"]:::active
+    NEXT["NEXT · Broader checks<br/>Areas · bosses · save/load · ending"]:::pending
     THEN["THEN · Consolidate player logic<br/>Retire legacy RAM code"]:::pending
     GAIN["ACHIEVES<br/>Less glue + duplication"]:::pending
     TARGET["TARGET · Safe Map Rando core<br/>Rooms · sprites · opt-in rules"]:::pending
@@ -21,7 +21,7 @@ Green: adopted scope / passed check | Blue: draft | Orange: active | Grey: remai
 **Purple outline: changed since previous report.** Folder branches show containment; check arrows show prerequisites.
 
 <details>
-<summary>Held input draft: comparisons pass; four mutants rejected; final audit pending</summary>
+<summary>Held input draft: comparisons pass; four mutation results audited</summary>
 
 ```mermaid
 flowchart LR
@@ -40,7 +40,7 @@ flowchart LR
     COMPARE --> MODES["20 autojump / frozen / demo comparisons / PASS"]:::done
     COMPARE --> EDGES["6 beta16 / grapple edge checks / PASS"]:::done
     COMPARE --> TRANSFERS["Actual preparation transfers / measured<br/>Normal 4 to 2 / Demo 4 to 3"]:::done
-    COMPARE --> MUT["4 compiling input mutants / rejected<br/>Independent audit pending"]:::draft
+    COMPARE --> MUT["4 compiling input mutants / rejected<br/>Independent audit / PASS"]:::done
     COMPARE --> REPLAY["First draft: 8,577 frames / 0 failures<br/>6 required probes + follow-up / PASS"]:::done
     RETIRE --> ADOPT["HELD / broader coverage + size rules first"]:::pending
     TRANSFERS --> ADOPT

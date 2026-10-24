@@ -19,7 +19,7 @@ use crate::game::gameplay_flag_runtime::{
 };
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_8b::ConfigureTitleSequenceGradientHDMA;
-use crate::game::sm_80::{QueueSfx1_Max6, QueueSfx2_Max6};
+use crate::game::sm_80::QueueSfx2_Max6;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::{InitializeSuitPickupHdma, Samus_LoadSuitPalette};
 use crate::game::sm_94::kSinCosTable8bit_Sext;
@@ -121,8 +121,8 @@ pub unsafe fn InitializeSpecialEffectsForNewRoom(game: &mut Game) {
             -30720i32 as VoidP;
         *((&raw mut (*(ram_ptr!(game, LongPtr; 0x604))).addr as *mut u8).offset(1) as *mut VoidP) =
             -30720i32 as VoidP;
-        (*(ram_ptr!(game, LongPtr; 0x601))).addr = ((0x8883e1i32) as u16);
-        (*(ram_ptr!(game, LongPtr; 0x604))).addr = ((0x8883e1i32) as u16);
+        (*(ram_ptr!(game, LongPtr; 0x601))).addr = (0x8883e1i32) as u16;
+        (*(ram_ptr!(game, LongPtr; 0x604))).addr = (0x8883e1i32) as u16;
         crate::rtl::register_writes! { game;
             byte(WMADDL as u16, 0xf0); byte(WMADDM as u16, 0xff);
             byte(WMADDH as u16, 1);
@@ -152,7 +152,7 @@ unsafe fn SpawnHdmaObjectInner(
 ) -> u16 {
     unsafe {
         let v2: i32 = k as i32 >> 1;
-        word!(game.hdma_object_pre_instructions[v2] = ((0x8884b8i32) as u16));
+        word!(game.hdma_object_pre_instructions[v2] = (0x8884b8i32) as u16);
         word!(game.hdma_object_pre_instruction_bank[v2] = 136);
         word!(game.hdma_object_instruction_list_pointers[v2] = *p.offset(1));
         word!(game.hdma_object_instruction_timers[v2] = 1);
@@ -225,7 +225,7 @@ pub unsafe fn HdmaObjectHandler(game: &mut Game) {
         if (word!(game.hdma_objects_enable_flag) & 0x8000) != 0 {
             *ram_ptr!(game; 0x85) = 0;
             let mut i: i32 = 0;
-            do_until! { (i == 12);
+            do_until! { i == 12 ;
                 word!(game.hdma_object_index = i as u16);
                 let mut v1: i8 = byte!(@pointer ram_ptr!(game, u16; 0x18b4); i as isize) as i8;
                 if v1 != 0 {
@@ -619,8 +619,7 @@ pub unsafe fn HdmaobjPreInstr_FirefleaBG3XScroll(k: u16, game: &mut Game) {
     unsafe {
         let mut v1: u16 = 0;
         word!(
-            game.fx_layer_blending_config_c =
-                (word!(game.fx_layer_blending_config_c) & 0xff00 | 0xc)
+            game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_c) & 0xff00 | 0xc
         );
         if word!(game.time_is_frozen_flag) == 0 {
             if word!(game.fireflea_flashing_timer -= 1, reread) == 0 {
@@ -827,7 +826,7 @@ pub unsafe fn FxTypeFunc_26_TourianEntranceStatue(game: &mut Game) {
             *(ram_ptr!(game, u16; 0xcd20)) = 514;
         }
         *ram_ptr!(game; 0x59) = 74;
-        word!(game.fx_rising_function_bank_88 = ((0x88c428i32) as u16));
+        word!(game.fx_rising_function_bank_88 = (0x88c428i32) as u16);
         word!(game.fx_y_pos = word!(game.fx_base_y_pos));
         SpawnHdmaObject(0x88, &raw const unk_88DBBA as *const c_void, game);
         SpawnHdmaObject(0x88, &raw const unk_88DBC2 as *const c_void, game);
@@ -966,7 +965,7 @@ pub unsafe fn sub_88DE18(k: u16, a: u16, game: &mut Game) {
         let v2: i32 = k as u8 as i32 >> 1;
         word! {game; hdma_object_B[v2] = a; hdma_object_A[v2] = 0; }
         if word!(game.door_transition_function) as i32 == 0x82e737 & 0xffff {
-            word!(game.hdma_object_pre_instructions[v2] = ((0x88de2di32) as u16));
+            word!(game.hdma_object_pre_instructions[v2] = (0x88de2di32) as u16);
             HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn(k, game);
         }
     }
@@ -978,7 +977,7 @@ pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn(k: u16, game: &mut
         *ram_ptr!(game; 0x74, 2) = 0x80;
         word!(game.fx_layer_blending_config_c = 44);
         if word!(game.hdma_object_A[(k as u8 >> 1)]) == 16 {
-            word!(game.hdma_object_pre_instructions[(k as u8 >> 1)] = ((0x88de74i32) as u16));
+            word!(game.hdma_object_pre_instructions[(k as u8 >> 1)] = (0x88de74i32) as u16);
         } else {
             let v3: u8 = k as u8;
             let r20: u8 = byte!(@pointer ram_ptr!(game, u16; 0x1920); k as u8 as i32 as isize);
@@ -1004,7 +1003,7 @@ pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadedIn(k: u16, game: &mut 
         *ram_ptr!(game; 0x74, 2) = 0x80;
         word!(game.fx_layer_blending_config_c = 44);
         if word!(game.door_transition_function) as i32 == 0x82e2db & 0xffff {
-            word!(game.hdma_object_pre_instructions[(k as u8 >> 1)] = ((0x88de96i32) as u16));
+            word!(game.hdma_object_pre_instructions[(k as u8 >> 1)] = (0x88de96i32) as u16);
         }
     }
 }
@@ -1123,14 +1122,14 @@ pub unsafe fn VariaSuitPickup_0_LightBeamAppears(game: &mut Game) -> u8 {
         word!(game.suit_pickup_light_beam_pos += 8);
         let mut v0: i16 = word!(game.suit_pickup_light_beam_pos) as i16;
         let mut v1: u16 = 0;
-        do_until! { (v0 <= 0);
+        do_until! { v0 <= 0 ;
             word!(game.hdma_table_1[(v1 >> 1)] = g_word_88E0D5);
             v1 = (v1).wrapping_add(2);
             v0 -= 1;
         }
         let mut v2: u16 = 510;
         let mut v3: i16 = word!(game.suit_pickup_light_beam_pos) as i16;
-        do_until! { (v3 <= 0);
+        do_until! { v3 <= 0 ;
             word!(game.hdma_table_1[(v2 >> 1)] = g_word_88E0D5);
             v2 = (v2).wrapping_sub(2);
             v3 -= 1;
@@ -1220,12 +1219,12 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> u8 {
         }
         let mut v2: i16 = 0;
         let mut v3: u16 = 0;
-        do_until! { (v2 >= 0x100);
+        do_until! { v2 >= 0x100 ;
             widen_suit_pickup_beam_row!(game, v3, v2);
             v3 = v3.wrapping_add(1);
         }
         let mut v7: u16 = (v3).wrapping_sub(1);
-        do_until! { (v2 >= 0x200);
+        do_until! { v2 >= 0x200 ;
             widen_suit_pickup_beam_row!(game, v7, v2);
             v7 = v7.wrapping_sub(1);
         }
@@ -1252,14 +1251,14 @@ pub unsafe fn VariaSuitPickup_4_LightBeamShrinks(game: &mut Game) -> u8 {
         );
         let mut v0: i16 = word!(game.suit_pickup_light_beam_pos) as i16;
         let mut v1: u16 = 0;
-        do_until! { (v0 <= 0);
+        do_until! { v0 <= 0 ;
             word!(game.hdma_table_1[(v1 >> 1)] = 255);
             v1 = (v1).wrapping_add(2);
             v0 -= 1;
         }
         let mut v2: u16 = 510;
         let mut v3: i16 = ((word!(game.suit_pickup_light_beam_pos)) as i16).wrapping_sub(1);
-        do_until! { (v3 <= 0);
+        do_until! { v3 <= 0 ;
             word!(game.hdma_table_1[(v2 >> 1)] = 255);
             v2 = (v2).wrapping_sub(2);
             v3 -= 1;
@@ -1487,7 +1486,7 @@ pub unsafe fn HdmaobjPreInstr_E567(v0: u16, game: &mut Game) {
             }
             let mut r20: u16 = word!(game.hdma_object_A[v2]);
             let mut v4: u16 = 0;
-            do_until! { (((v4) as i16).wrapping_sub((r30) as i16) >= 0);
+            do_until! { ((v4) as i16).wrapping_sub((r30) as i16) >= 0 ;
                 let v5: u16 = r20;
                 let v6: i32 = r20 as i32 >> 1;
                 let sample = kSinCosTable8bit_Sext[(v6 + 64) as usize];
@@ -1561,7 +1560,7 @@ pub unsafe fn sub_88E7ED(game: &mut Game) {
             word!(game.hdma_object_A[0] = 0);
             v0 = crate::rtl::rom_table_word!(game, 0x88e833, 0);
         }
-        *ram_ptr!(game; 0x74, 0) = (v0 as u8 & 0x1f | 0x20);
+        *ram_ptr!(game; 0x74, 0) = v0 as u8 & 0x1f | 0x20;
         *ram_ptr!(game; 0x74, 1) = (v0 as i32 >> 5 & 0x1f | 0x40) as u8;
         *ram_ptr!(game; 0x74, 2) = ((v0 >> 2) as i32 >> 8 & 0x1f | 0x80) as u8;
     }
@@ -1850,7 +1849,7 @@ pub unsafe fn HdmaobjPreInstr_ECB6(k: u16, game: &mut Game) {
             );
             let mut r20: u16 = word!(game.hdma_object_A[v3]);
             let mut v4: u16 = 0;
-            do_until! { (((v4 as i32 - n) as i16) >= 0);
+            do_until! { ((v4 as i32 - n) as i16) >= 0 ;
                 let v5: u16 = r20;
                 let v6: i32 = r20 as i32 >> 1;
                 let sample = kSinCosTable8bit_Sext[(v6 + 64) as usize];

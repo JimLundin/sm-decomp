@@ -226,8 +226,8 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
             } else if FixBugHook(0xa2d38c, game) {
                 (*game.g_cpu).x = word!(game.cur_enemy_index);
             } else if FixBugHook(0xa4970f, game) {
-                (*game.g_cpu).a = ((*game.g_cpu).a & 0xff);
-                (*game.g_cpu).y = ((*game.g_cpu).x & 0x7);
+                (*game.g_cpu).a = (*game.g_cpu).a & 0xff;
+                (*game.g_cpu).y = (*game.g_cpu).x & 0x7;
             } else if FixBugHook(0xa496e0, game) {
                 if (*game.g_cpu).x as i32 > 48 {
                     word!(game.croco_cur_vline_idx = (*game.g_cpu).x);

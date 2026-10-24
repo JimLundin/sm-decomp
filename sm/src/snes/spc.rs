@@ -16,6 +16,8 @@ const _: () = {
 // Keep the live Rust layout and legacy save span, including reset read order.
 #[link(name = "lakesnes_spc", kind = "static", modifiers = "-bundle")]
 unsafe extern "C-unwind" {
+    // Spc offsets are asserted above; C only passes its opaque Apu to Rust bus calls.
+    #[allow(improper_ctypes)]
     pub fn spc_runOpcode(spc: *mut Spc) -> i32;
 }
 

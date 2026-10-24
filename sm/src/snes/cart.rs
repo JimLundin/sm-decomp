@@ -125,7 +125,7 @@ unsafe fn cart_writeLorom(cart: *mut Cart, bank: u8, address: u16, value: u8) {
 }
 unsafe fn cart_readHirom(cart: *mut Cart, mut bank: u8, adr: u16) -> u8 {
     unsafe {
-        bank = (bank & 0x7f);
+        bank = bank & 0x7f;
         if (bank as i32) < 0x40
             && adr as i32 >= 0x6000
             && (adr as i32) < 0x8000
@@ -151,7 +151,7 @@ unsafe fn cart_readHirom(cart: *mut Cart, mut bank: u8, adr: u16) -> u8 {
 }
 unsafe fn cart_writeHirom(cart: *mut Cart, mut bank: u8, adr: u16, val: u8) {
     unsafe {
-        bank = (bank & 0x7f);
+        bank = bank & 0x7f;
         if (bank as i32) < 0x40
             && adr as i32 >= 0x6000
             && (adr as i32) < 0x8000

@@ -514,7 +514,7 @@ unsafe fn rasterize_rainbow_right_edges(mut r22: u16, mut r24: u16, game: &mut G
         *v2.offset(1) = 255;
         *v2.offset(2) = 255;
         let v8 = v2;
-        do_until! { (mbn_var_3F == 32);
+        do_until! { mbn_var_3F == 32 ;
             let mut v4: u16 = (r20).wrapping_add(r24);
             if u16::overflowing_add(r20, r24).1 {
                 break;
@@ -524,7 +524,7 @@ unsafe fn rasterize_rainbow_right_edges(mut r22: u16, mut r24: u16, game: &mut G
             *fresh11 = ((byte!(v4; 1)) as u16) | (0xff00u16);
             mbn_var_3F = mbn_var_3F.wrapping_sub(1);
         }
-        do_until! { (mbn_var_3F == 32);
+        do_until! { mbn_var_3F == 32 ;
             crate::update_place! { previous fresh12 = v2 => v2.offset(-1); }
             *fresh12 = 255;
             mbn_var_3F = mbn_var_3F.wrapping_sub(1);
@@ -544,7 +544,7 @@ unsafe fn rasterize_rainbow_right_edges(mut r22: u16, mut r24: u16, game: &mut G
                 return;
             }
         }
-        do_until! { (var_3F == 232);
+        do_until! { var_3F == 232 ;
             crate::update_place! { previous fresh14 = v5 => v5.offset(1); }
             *fresh14 = 255;
             var_3F = var_3F.wrapping_add(1);

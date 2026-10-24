@@ -95,8 +95,8 @@ macro_rules! rom_table_word {
 pub(crate) use rom_table_word;
 
 use crate::c_library::{
-    __assert_fail, fclose, fopen, fprintf, fread, fseek, fwrite, memcpy, memset, printf, rename,
-    sprintf, stderr,
+    __assert_fail, fclose, fopen, fprintf, fread, fseek, fwrite, memcpy, printf, rename, sprintf,
+    stderr,
 };
 use crate::cpu_infra::RtlUpdateSnesPatchForBugfix;
 use crate::game_state::Game;
@@ -117,7 +117,7 @@ use crate::spc_player::{
 pub use crate::types::Dsp;
 pub use crate::types::{FILE, LongPtr, PairU16, VoidP, size_t};
 pub use crate::types::{RunFrameFunc, SyncAllFunc};
-use ::core::ffi::{c_char, c_long, c_ulong, c_void};
+use ::core::ffi::{c_char, c_long, c_void};
 use ::core::mem::size_of;
 use ::core::ptr::null_mut;
 
@@ -525,7 +525,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(game: &mut Game) -> u16 {
                 } else if (game.state_recorder.replay_cmd as i32) < 0xd0 {
                     let mut nb: i32 = 1 + (game.state_recorder.replay_cmd as i32 >> 2 & 3);
                     if nb == 4 {
-                        do_until! { (t as i32 != 255);
+                        do_until! { t as i32 != 255 ;
                             crate::update_place! { previous fresh3 = replay_pos => replay_pos + 1; }
                             let mut t: u8 = game.state_recorder.log.byte(fresh3 as usize);
                             nb += t as i32;
@@ -537,7 +537,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(game: &mut Game) -> u16 {
                     addr |= ((game.state_recorder.log.byte(fresh4 as usize) as i32) << 8) as u32;
                     crate::update_place! { previous fresh5 = replay_pos => replay_pos + 1; }
                     addr |= game.state_recorder.log.byte(fresh5 as usize) as u32;
-                    do_until! { (nb == 0);
+                    do_until! { nb == 0 ;
                         crate::update_place! { previous fresh6 = replay_pos => replay_pos + 1; }
                         game.g_ram[(addr & 0x1ffff) as usize] = game.state_recorder.log.byte(fresh6 as usize);
                         if !game.g_rtl_memory_ptr.is_null() {
@@ -566,7 +566,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(game: &mut Game) -> u16 {
                 let mask: i32 = if (cmd as i32) < 0xc0 { 0xf } else { 0x1 };
                 let mut frames: i32 = cmd as i32 & mask;
                 if frames == mask {
-                    do_until! { (t_0 as i32 != 255);
+                    do_until! { t_0 as i32 != 255 ;
                         crate::update_place! { previous fresh8 = replay_pos => replay_pos + 1; }
                         let mut t_0: u8 = game.state_recorder.log.byte(fresh8 as usize);
                         frames += t_0 as i32;
@@ -750,7 +750,7 @@ pub unsafe fn MemCpy(dst: *mut c_void, src: *const c_void, size: i32) {
     }
 }
 pub unsafe fn MakePairU16(k: u16, j: u16) -> PairU16 {
-    let r: PairU16 = PairU16 { k: k, j: j };
+    let r: PairU16 = PairU16 { k, j };
     r
 }
 pub unsafe fn mov24(a: *mut LongPtr, d: u32) {
@@ -898,18 +898,18 @@ pub unsafe fn Mult8x8(a: u8, b: u8) -> u16 {
     (a as i32 * b as i32) as u16
 }
 pub unsafe fn SnesDivide(a: u16, b: u8) -> u16 {
-    ((if b as i32 == 0 {
+    (if b as i32 == 0 {
         0xffff
     } else {
         a as i32 / b as i32
-    }) as u16)
+    }) as u16
 }
 pub unsafe fn SnesModulus(a: u16, b: u8) -> u16 {
-    ((if b as i32 == 0 {
+    (if b as i32 == 0 {
         a as i32
     } else {
         a as i32 % b as i32
-    }) as u16)
+    }) as u16
 }
 pub unsafe fn ReadReg(reg: u16, game: &mut Game) -> u8 {
     unsafe { snes_read(game.g_snes, reg as u32, game) }

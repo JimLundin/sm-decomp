@@ -57,9 +57,11 @@ adjust to it. Evidence, baselines and targets: [REVIEW-2026-10-24.md](REVIEW-202
 These directives take priority over the work order below; where they conflict,
 these win. Do them in this order:
 
-1. **Hygiene commit:** one mechanical `cargo fix` / `clippy --fix` pass for
-   c2rust leftovers (2,426 warnings at a408c8f), verified by replay; allow the
-   offset-guarded FFI warnings explicitly. Then keep the warning count from rising.
+1. **Hygiene complete:** scoped compiler/Clippy fixes and eight guarded FFI
+   annotations reduce the same local library check from 2,073 to 482 warnings.
+   Full Speed Booster replay: 148,406 frames, zero failures, 55 rooms, no credits.
+   Keep macro-shared parameter renames out of automatic fixes; preserve verifier
+   exports. Keep warning counts from rising with the same toolchain/features.
 2. **Shrink the process:** rewrite this file to at most ~200 lines (goal, rules,
    validation, current item, next three); move history to `docs/HISTORY.md`.
    Generate PROGRESS.md as a short metrics table from `tools/progress.sh`,

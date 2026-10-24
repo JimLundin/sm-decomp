@@ -104,11 +104,11 @@ pub(super) fn angle_to_player(handle: u16, ctx: &mut impl Host) -> u16 {
         .session()
         .player
         .x
-        .wrapping_sub(enemy!(ctx, ((handle >> 1) as isize), x));
+        .wrapping_sub(enemy!(ctx, (handle >> 1) as isize, x));
     let y = ctx
         .session()
         .player
         .y
-        .wrapping_sub(enemy!(ctx, ((handle >> 1) as isize), y));
+        .wrapping_sub(enemy!(ctx, (handle >> 1) as isize, y));
     ctx.calculate_angle_from_xy(x, y)
 }

@@ -358,7 +358,7 @@ unsafe fn set_explosion_fixed_color(table: u32, pos: i32, game: &mut Game) {
 
 pub(crate) unsafe fn spawn_crystal_flash(game: &mut Game) {
     unsafe {
-        word!(game.power_bomb_explosion_status = ((0x888000i32) as u16));
+        word!(game.power_bomb_explosion_status = (0x888000i32) as u16);
         static unk_88A2B0: SpawnHdmaObject_Args =
             SpawnHdmaObject_Args::new(0x40, 0x28, 0xa2bd as VoidP);
         static unk_88A2B8: SpawnHdmaObject_Args =

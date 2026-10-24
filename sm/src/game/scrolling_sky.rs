@@ -88,7 +88,7 @@ pub unsafe fn update_horizontal_scroll(k: u16, game: &mut Game) {
             }
             let mut v1: u16 = word!(game.g_word_7E0596);
             let mut v2: u16 = 0;
-            do_until! { (((v1) as i16).wrapping_sub(32) >= 0);
+            do_until! { ((v1) as i16).wrapping_sub(32) >= 0 ;
                 word!(
                     game.g_word_7E9E80[(v2 >> 1)] =
                         crate::rtl::rom_table_word!(game, 0x88a938, (v1 >> 1) as isize)

@@ -55,10 +55,10 @@ pub unsafe fn player_projectiles_hit_samus(game: &mut Game) {
             mark(index, game);
             unsafe {
                 Samus_DealDamage(
-                    ({
+                    {
                         let amount = word!(game.projectile_damage[index]);
                         actors::combat::suit_damage(&mut Runtime::new(game), amount)
-                    }),
+                    },
                     game,
                 );
             }

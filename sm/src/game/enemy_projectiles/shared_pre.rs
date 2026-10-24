@@ -1,10 +1,10 @@
 //! Shared pre-action behavior and numeric dispatch. No legacy projectile callbacks.
 #![forbid(unsafe_code)]
-use super::access::{enemy, enemy_add, enemy_byte, enemy_decrement, read_member, shot_word};
+use super::access::{enemy, enemy_add, enemy_byte, shot_word};
 use super::host::{EnemyMember as SlotField, Host};
 use super::pre_actions::*;
 use super::pre_helpers::*;
-use super::shared::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
+use super::shared::SpawnEprojWithRoomGfx;
 use super::*;
 use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
@@ -19,8 +19,6 @@ pub(super) struct CollisionRect {
 }
 
 pub(super) use self::EprojPreInstr_NorfairLavaquakeRocks_Inner2 as EprojPreInstrHelper_DBF2_Func2;
-pub(super) use self::EprojPreInstr_NorfairLavaquakeRocks_Inner2 as sub_86E0B0;
-pub(super) use self::EprojPreInstr_NorfairLavaquakeRocks_Inner2 as sub_86EC18;
 pub(super) use super::pre_actions::Eproj_NorfairLavaquakeRocks_Func3 as EprojPreInstr_DBF2_MoveX2;
 pub(super) use super::pre_actions::Eproj_NorfairLavaquakeRocks_Func3 as Eproj_LavaThrownByLavaman_MoveX2;
 pub(super) use super::pre_actions::EprojPreInstr_DBF2_MoveX1 as Eproj_LavaThrownByLavaman_MoveX1;
@@ -241,11 +239,11 @@ pub(super) fn Eproj_CheckForCollisionWithSamus(v0: u16, ctx: &mut impl Host) -> 
 pub(super) fn Math_MultBySinCos(r38: u16, a: u16) -> u16 {
     let r46: u16 = kSinCosTable8bit_Sext[((a as i32 & 0xff) + 64) as usize] as u16;
     let prod: u16 = ((r38 as u32).wrapping_mul(((r46) as i16).unsigned_abs() as u32) >> 8) as u16;
-    ((if r46 & 0x8000 != 0 {
+    (if r46 & 0x8000 != 0 {
         -(prod as i32)
     } else {
         prod as i32
-    }) as u16)
+    }) as u16
 }
 
 pub(super) fn CheckForCollisionWithShitroid_DoubleRet(v0: u16, ctx: &mut impl Host) -> u8 {
@@ -368,8 +366,6 @@ pub(super) fn SpawnMotherBrainDeathBeam(x: u16, ctx: &mut impl Host) {
 }
 
 pub(super) use super::pre_actions::EprojPreInstr_NorfairLavaquakeRocks_Inner as EprojPreInstrHelper_SpikeShootingPlantSpikes_Func1;
-
-pub(super) use self::EprojPreInstr_NorfairLavaquakeRocks_Inner2 as EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2;
 
 pub(super) use super::pre_actions::EprojPreInstr_NorfairLavaquakeRocks_Inner as Eproj_NamiFuneFireball_After;
 

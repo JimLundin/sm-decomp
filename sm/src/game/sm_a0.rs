@@ -4,8 +4,6 @@ use crate::game::{
     actors::{api as actors, scheduling as actor_scheduling},
     session_runtime::Runtime,
 };
-use crate::rtl::rom_record;
-use core::mem::offset_of;
 
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_86::*;
@@ -13,15 +11,7 @@ pub use crate::game::constants::bank_a0::*;
 pub use crate::game::constants::bank_a4::*;
 pub use crate::game::constants::bank_b4::*;
 
-use crate::game::enemy_projectiles::SpawnEprojWithGfx;
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
-use crate::game::room_mechanisms::spawn_collision;
-use crate::game::sm_80::{
-    NextRandom, QueueSfx1_Max3, QueueSfx1_Max6, QueueSfx2_Max1, QueueSfx2_Max3, QueueSfx3_Max3,
-};
-use crate::game::sm_90::CallSomeSamusCode;
-use crate::game::sm_91::Samus_DealDamage;
-use crate::game::sm_94::square_slope_occupied;
 use crate::game::{sm_a2, sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b2, sm_b3};
 
 pub use crate::types::EnemyAiBits;

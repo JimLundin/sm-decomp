@@ -1,21 +1,14 @@
 use crate::game::decompression::{self, decompress_to_ram};
-use crate::game::music::{HandleMusicQueue, LoadRoomMusic, UpdateMusicTrackIndex};
+use crate::game::music::HandleMusicQueue;
 pub use crate::game::prelude::*;
 use crate::game::room_state::load_tiles_and_palette;
 
 pub use crate::game::constants::bank_60::*;
 
-use crate::c_library::memcmp;
 use crate::game::animated_tiles;
-use crate::game::enemy_projectiles::ClearEprojs;
-use crate::game::palette_effects;
-use crate::game::room_mechanisms::spawn_hardcoded;
-use crate::game::room_mechanisms::{clear, reload_graphics};
+use crate::game::room_mechanisms::reload_graphics;
 use crate::game::sm_8b::InitializeIoDisplayLogo_Async;
 use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
-use crate::game::sm_88::{InitializeSpecialEffectsForNewRoom, WaitUntilEndOfVblankAndClearHdma};
-use crate::game::sm_89::LoadFXHeader;
-use crate::game::sm_90::UpdateBeamTilesAndPalette;
 use crate::rtl::RtlApuUpload;
 
 crate::typed_struct! {
@@ -75,7 +68,7 @@ pub unsafe fn ReleaseButtonsFilter(v0: u16, game: &mut Game) {
             == word!(game.joypad_released_keys);
         word!(
             game.joypad_released_keys =
-                (!(word!(game.joypad1_newkeys)) & word!(game.joypad1_lastkeys))
+                !(word!(game.joypad1_newkeys)) & word!(game.joypad1_lastkeys)
         );
         if !v1 {
             word!(game.timed_held_input_timer = word!(game.timed_held_input_timer_reset));
@@ -92,8 +85,8 @@ pub unsafe fn ReleaseButtonsFilter(v0: u16, game: &mut Game) {
             }
         }
         word!(
-            game.newly_held_down_timed_held_input = (word!(game.timed_held_input)
-                & (word!(game.previous_timed_held_input) ^ word!(game.timed_held_input)))
+            game.newly_held_down_timed_held_input = word!(game.timed_held_input)
+                & (word!(game.previous_timed_held_input) ^ word!(game.timed_held_input))
         );
     }
 }
@@ -162,12 +155,12 @@ pub unsafe fn ScreenOff(game: &mut Game) {
 }
 pub unsafe fn ScreenOn(game: &mut Game) {
     unsafe {
-        crate::update_place! { reference fresh90 = *ram_ptr!(game; 0x51) => (*fresh90 & !(0x80)); }
+        crate::update_place! { reference fresh90 = *ram_ptr!(game; 0x51) => *fresh90 & !(0x80); }
     }
 }
 pub unsafe fn memset7E(mut k: *mut u16, a: u16, mut j: u16) {
     unsafe {
-        do_until! { (j == 0);
+        do_until! { j == 0 ;
             crate::update_place! { previous fresh99 = k => k.offset(1); }
             *fresh99 = a;
             j = (j).wrapping_sub(2);
@@ -796,8 +789,8 @@ pub unsafe fn ReadJoypadInputs(game: &mut Game) {
     unsafe {
         let RegWord: u16 = ReadRegWord(JOY1L as u16, game);
         word!(game.joypad1_lastkeys = RegWord);
-        word!(game.joypad1_newkeys = (RegWord & (word!(game.joypad1_prev) ^ RegWord)));
-        word!(game.joypad1_newkeys2_UNUSED = (RegWord & (word!(game.joypad1_prev) ^ RegWord)));
+        word!(game.joypad1_newkeys = RegWord & (word!(game.joypad1_prev) ^ RegWord));
+        word!(game.joypad1_newkeys2_UNUSED = RegWord & (word!(game.joypad1_prev) ^ RegWord));
         if RegWord != 0 && RegWord == word!(game.joypad1_prev) {
             if word!(game.joypad1_keyrepeat_ctr -= 1, reread) == 0 {
                 word!(game.joypad1_newkeys2_UNUSED = word!(game.joypad1_lastkeys));
@@ -810,8 +803,8 @@ pub unsafe fn ReadJoypadInputs(game: &mut Game) {
         if word!(game.enable_debug) != 0 {
             let v1: u16 = ReadRegWord(JOY2L as u16, game);
             word!(game.joypad2_last = v1);
-            word!(game.joypad2_new_keys = (v1 & (word!(game.joypad2_prev) ^ v1)));
-            word!(game.joypad2_newkeys2 = (v1 & (word!(game.joypad2_prev) ^ v1)));
+            word!(game.joypad2_new_keys = v1 & (word!(game.joypad2_prev) ^ v1));
+            word!(game.joypad2_newkeys2 = v1 & (word!(game.joypad2_prev) ^ v1));
             if v1 != 0 && v1 == word!(game.joypad2_prev) {
                 if word!(game.joypad2_keyrepeat_ctr -= 1, reread) == 0 {
                     word!(game.joypad2_newkeys2 = word!(game.joypad2_last));
@@ -974,7 +967,7 @@ pub unsafe fn IrqHandler_0_Nothing(game: &mut Game) {
 }
 pub unsafe fn IrqHandler_2_DisableIRQ(game: &mut Game) {
     unsafe {
-        crate::update_place! { unaligned_word fresh76 = &raw mut (*(ram_ptr!(game, u16; 0x84))) => (u16::from_le(fresh76.read_unaligned()) & !(0x30)); }
+        crate::update_place! { unaligned_word fresh76 = &raw mut (*(ram_ptr!(game, u16; 0x84))) => u16::from_le(fresh76.read_unaligned()) & !(0x30); }
         IrqHandler_SetResult(0, 0, 0, game);
     }
 }
@@ -1122,7 +1115,7 @@ pub unsafe fn EnableIrqInterruptsNow(game: &mut Game) {
 }
 pub unsafe fn DisableIrqInterrupts(game: &mut Game) {
     unsafe {
-        crate::update_place! { unaligned_word fresh41 = &raw mut (*(ram_ptr!(game, u16; 0x84))) => (u16::from_le(fresh41.read_unaligned()) & !(0x30)); }
+        crate::update_place! { unaligned_word fresh41 = &raw mut (*(ram_ptr!(game, u16; 0x84))) => u16::from_le(fresh41.read_unaligned()) & !(0x30); }
     }
 }
 static kIrqHandlers: [Func_V; 14] = [
@@ -1630,7 +1623,7 @@ pub unsafe fn DisplayViewablePartOfRoom(game: &mut Game) {
         word!(game.size_of_bg2 = (v1 & 0xf800) as u16);
         CalculateBgScrollAndLayerPositionBlocks(game);
         let mut v2: i32 = 0;
-        do_until! { (v3 == 16);
+        do_until! { v3 == 16 ;
             let mut v3: i32 = v2;
             word!(game.blocks_to_update_x_block = word!(game.layer1_x_block));
             word!(game.blocks_to_update_y_block = word!(game.layer1_y_block));
@@ -2465,14 +2458,14 @@ impl decompression::Output for DecompressionVram<'_> {
 }
 unsafe fn ReadPpuByte(addr: u16, game: &mut Game) -> u8 {
     unsafe {
-        WriteRegWord(VMADDL as u16, (addr >> 1), game);
+        WriteRegWord(VMADDL as u16, addr >> 1, game);
         ReadRegWord(RDVRAML as u16, game);
         let data: u16 = ReadRegWord(RDVRAML as u16, game);
-        ((if addr & 1 != 0 {
+        (if addr & 1 != 0 {
             (data as i32 & 0xff00) >> 8
         } else {
             data as i32
-        }) as u8)
+        }) as u8
     }
 }
 pub unsafe fn DecompressToVRAM(src: u32, dst_addr: u16, game: &mut Game) {
