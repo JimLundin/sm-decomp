@@ -501,7 +501,12 @@ references; measure build/test time and resource growth before changing the loop
    runs48detached and25DLL faults on separate hosted Windows machines, preserving
    all commands, setup dependencies, required outcomes and full_actor_checks.
    Independent workflow/dependency review passes; speedup is not yet measured.
-   Full run40064252512 is active. Local compilation remains serialized.
+   Run40064252512 detached job passes: independent log audit confirms all48unique
+   expected faults detected, with passing baseline and compilation checks. The
+   actor runner enforces at least18baseline tests; its successful test transcript
+   is not printed. The oldest four classifiers retain their broader equality
+   assertion matching. Full build, Cargo exports and initialized-ROM setup pass;
+   the25DLL faults are still running. Local compilation remains serialized.
    Added13verification Rust lines (complete actor increment5406), no gameplay.
    Ordinary builds now
    precede long mutations; measured prior35minute runtime warrants a60minute limit.

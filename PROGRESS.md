@@ -79,7 +79,7 @@ flowchart LR
     AHRUN --> ANATIVE["Pre-Drop ownership witness<br/>review + compile + 3 baselines PASS"]:::done
     ANATIVE --> ARETRY["CI efdd9cda / 62 killed<br/>actor baseline buffer FAIL"]:::failed
     ARETRY --> ABUFFER["4 MiB buffer / all 5 selections<br/>local baselines PASS"]:::done
-    ABUFFER --> APDET["Parallel CI bdbb7968<br/>48 detached faults active"]:::active
+    ABUFFER --> APDET["Parallel CI bdbb7968<br/>48 / 48 detached faults KILLED"]:::done
     ABUFFER --> APDLL["Parallel CI bdbb7968<br/>25 DLL faults active"]:::active
     ADLL --> AORACLE["21,015 frames / 10 probes<br/>0 failures + 120-frame tail / PASS"]:::done
     ADLL --> KWRITE["Kraid live-definition write + consumer<br/>PASS"]:::done
@@ -115,7 +115,7 @@ flowchart LR
     MUTBUILD --> MFRENDER["Flash / frozen palette bits"]:::pending
     MUTBUILD --> MFKWRITE["Kraid live shot-gate write"]:::pending
     MUTBUILD --> MFKREAD["Contact reads live shot gate"]:::pending
-    class MUTWIRE,ARETRY,ABUFFER,APDET,APDLL,MUTBASE changed
+    class APDET changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -161,7 +161,6 @@ flowchart LR
     PEXEC --> PWALK["Walked-obstacle source + admission<br/>review PASS"]:::done
     PWALK --> PWREF["9 additive cases 88–96<br/>format + DLL + captures PASS"]:::done
     PWREF --> PWAUDIT["Current / pending + native / loaded<br/>9-case execution audit PASS"]:::done
-    class PWAUDIT changed
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
@@ -815,7 +814,6 @@ flowchart TB
     AUDIO --> SHIP
     SHIP --> CREDITS["Boot to credits verified"]:::pending
     SHIP --> SAFE["Zero unsafe / manual memory"]:::pending
-    class ROOMS changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
