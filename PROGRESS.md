@@ -46,9 +46,9 @@ flowchart LR
     NEXT --> DAMAGE["Owned fractional health + damage"]:::draft
     DAMAGE --> DEL["RAM adapter retired / ?64 production lines"]:::draft
     DEL --> LOCAL["87 cases + 8,577 frames ?"]:::done
-    LOCAL --> CI["98 mutations / hosted running"]:::active
+    LOCAL --> CI["2 targeted mutations / local DLLs pending"]:::active
     CI --> ORDER["Future runs: transitions checked earlier<br/>schedule checks ? / timing unmeasured"]:::done
-    class ORDER changed
+    class CI changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

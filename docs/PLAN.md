@@ -131,6 +131,16 @@ adoption. The next milestone must address that structural gap explicitly.
 
 ## Work order
 
+**Local validation policy (user direction, 2026-10-24):** do not rely on CI or
+routinely observe it. Adoption follows consistent local formatting, builds,
+exercised comparisons and targeted mutation coverage. CI failures can be revised
+later and are not an adoption gate. Hosted observation is reserved for explicitly
+selected research or experiments that genuinely cannot execute on this Windows
+host. Keep the local restriction on standalone compiled test executables; use
+permitted Python-hosted DLL checks and mutations where possible. Do not spoof
+hosted environment variables or change Windows security settings. This policy
+supersedes earlier hosted-check gates below.
+
 **Priority correction (2026-10-24): deliver architectural adoption, not an
 expanding reference inventory.** The next milestone is the complete owned
 post-movement player interaction on the accepted compiled interfaces. Production
@@ -196,8 +206,8 @@ existing pickup/refill fraction behavior remain unchanged. Ownership is released
 before pause/low-health, demo restoration and invalid-damage crash paths.
 
 The follow-on is committed as 11f95a69 on verify/player-settlement-20261024.
-Full hosted run 40081065327 is active on that exact commit and formatting passes.
-The redundant ordinary run was cancelled after confirming the full dispatch.
+Full hosted run 40081065327 was dispatched on that exact commit; it is no longer
+monitored or required for adoption under the local-validation policy.
 Follow-on source 85e16c54 passes full formatting, normal/verifier/detached
 compilation and release DLL build. All 87 component cases pass: the original 79
 and eight exact paired settlement captures, independently audited. The bounded
@@ -212,7 +222,9 @@ are added; the combined declaration count rises by one to 2,428. It removes one 
 pair per beta invocation; no measured speedup is claimed. Two additional exact
 mutation checks are prepared in the existing hosted runner (early damage
 consumption and lost fractional-health publication); the next full run selects
-98 faults. This follow-on remains unadopted until its required hosted checks pass.
+98 faults in that historical dispatch. Complete the two targeted settlement
+mutations locally through Python-hosted DLL execution before adoption; the
+existing local comparisons and replay remain valid.
 The four transition representation tests are included in the existing unfiltered
 detached mutation baseline; no separate CI step or local executable is needed.
 
@@ -1318,8 +1330,9 @@ mutation results visible in the progress graph as each validation batch complete
 Investigate surviving mutants and improve coverage or explain equivalence.
 Keep mutation support with verification code and report its scope separately;
 a few detected mutants do not establish comprehensive mutation coverage.
-Run standalone mutation executables on hosted Windows CI under the existing
-local Defender restriction. Start with projectile leading-edge and retirement
+Local Python-hosted DLL mutations are the normal path. Standalone compiled
+mutation executables remain restricted locally; an explicit hosted experiment
+is allowed only for checks that genuinely cannot execute on this Windows host. Start with projectile leading-edge and retirement
 faults; extend the scope with each subsequent subsystem conversion.
 
 User direction: test movie segments that actually execute the changed code
