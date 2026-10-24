@@ -1,6 +1,6 @@
 # Engine migration
 
-![Now: Power Bomb checks and collision-bank retirement. Next: safe state, an independent engine and Map Rando.](docs/codebase-map/work-summary.svg)
+![Now: align recorded runs and retire collision code. Next: full-game checks and Samus banks. Outcome: safe owned state and less duplicate RAM code, then independent video/audio. Target: Map Rando.](docs/codebase-map/work-summary.svg)
 
 | Measure | Count |
 | --- | ---: |
