@@ -492,6 +492,10 @@ references; measure build/test time and resource growth before changing the loop
    Atlas snapshotf88970aa is live:429files/2071edges and all24curated anchors
    pass static checks. Hosted40039541123 passes browser/accessibility and Pages;
    live HTTP200 bytes exactly match388df54f's committed standalone HTML.
+   The replacement atlas for adopted room source4c572a4a passes static checks:
+   461files,2248edges and26source anchors. Hosted browser/accessibility and Pages
+   publication are pending; the asset tension now distinguishes stable topology
+   from remaining ROM-compatible resources and the unfinished importer.
 
    Room mechanisms are now adopted as one production responsibility: creation,
    setup, pre-actions, all 110 command identities, scheduler, drawing/clipping,

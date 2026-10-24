@@ -52,12 +52,13 @@
     ]
   },
   {
-    "title": "Content is still ROM-addressed",
-    "description": "Loaded and native image provenance still matters. Custom Map Rando content needs a validated import and identity boundary that this code does not yet provide.",
+    "title": "Assets retain ROM compatibility",
+    "description": "Room topology has validated stable IDs and configurable connections. Assets still use ROM compatibility bindings and loaded/native image provenance; a Map Rando importer remains unfinished.",
     "files": [
       "sm/src/game/visual_host.rs",
       "sm/src/game/visual_runtime.rs",
-      "sm/src/game_state.rs"
+      "sm/src/game_state.rs",
+      "sm/src/game/room_entry/world.rs"
     ],
     "evidence": [
       {
@@ -74,6 +75,16 @@
         "path": "sm/src/game_state.rs",
         "line": 503,
         "expected": "pub(crate) fn register_native_rom(&mut self, image: crate::rom::RomImage) {"
+      },
+      {
+        "path": "sm/src/game/room_entry/world.rs",
+        "line": 257,
+        "expected": "validate(&world)?;"
+      },
+      {
+        "path": "sm/src/game/room_entry/world.rs",
+        "line": 160,
+        "expected": "/// This milestone binds retained compatible resources; it adds no importer or setup interpreter."
       }
     ]
   },
