@@ -15,7 +15,7 @@ use std::{
 };
 
 #[cfg(sm_verify_dll)]
-pub(crate) const CASES: u32 = 14;
+pub(crate) const CASES: u32 = 100;
 #[cfg(not(sm_verify_dll))]
 pub(crate) const CASES: u32 = 11;
 fn put(g: &mut Game, at: usize, value: u16) {
@@ -31,6 +31,10 @@ fn record(out: &mut Vec<u8>, phase: u8, g: &Game) {
 }
 /// Uses the real constructor route; exported DLL initializes hardware via owner.with.
 pub(crate) fn owner(id: u32) -> Box<GameOwner> {
+    #[cfg(sm_verify_dll)]
+    if (14..16).contains(&id) {
+        return GameOwner::with_world(crate::game::actors::composed_fixture::binding(id == 15));
+    }
     #[cfg(sm_verify_dll)]
     if (12..14).contains(&id) {
         return GameOwner::with_world(crate::game::actors::composed_fixture::binding(id == 13));
@@ -51,6 +55,21 @@ unsafe fn nmi_and_draw(g: &mut Game) {
 }
 unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
     unsafe {
+        #[cfg(sm_verify_dll)]
+        if (97..100).contains(&id) {
+            return crate::player_collision_owned_cases::run(id - 97, g);
+        }
+        #[cfg(sm_verify_dll)]
+        if (14..97).contains(&id) {
+            return match id {
+                14 | 15 => crate::player_collision_composed_route::run(id, g),
+                16..=51 => crate::player_collision_movement_cases::run(id - 16, g),
+                52..=75 => crate::player_collision_pose_cases::run(id - 52, g),
+                76..=87 => crate::cpu_infra::player_collision_ownership::run(id - 76, g),
+                88..=96 => crate::player_collision_walked_cases::run(id - 88, g),
+                _ => unreachable!(),
+            };
+        }
         #[cfg(sm_verify_dll)]
         if (12..14).contains(&id) {
             return crate::actor_composed_route::run(id, g);
@@ -172,7 +191,14 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             put(g, 0x10002, 0x9000);
             g.g_ram[0x16402] = 0;
             record(&mut out, 0, g);
-            let moved = crate::game::samus_room_contact_ram::move_right(65536, g);
+            let moved = crate::game::player_collision::operations::displace(
+                &mut crate::game::session_runtime::Runtime::new(g),
+                crate::game::player_collision::operations::DisplacementRequest::TerrainOnly {
+                    axis: crate::game::player_collision::operations::Axis::X,
+                    amount: 65536,
+                },
+            )
+            .displacement;
             assert_eq!(moved, 65536, "room.world.contact-movement");
             assert_eq!(
                 word(g, 0x78d),

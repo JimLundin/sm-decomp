@@ -110,6 +110,7 @@ enum Event {
 }
 struct Composed {
     world: World,
+    collision_contract: game::player_collision_host::CollisionContract,
     image: RomImage,
     events: Vec<Event>,
     fail_upload: bool,
@@ -132,6 +133,7 @@ impl Composed {
     fn new() -> Self {
         Self {
             world: World::default(),
+            collision_contract: Default::default(),
             image: RomImage::zeroed(0x300000),
             events: Vec::new(),
             fail_upload: false,

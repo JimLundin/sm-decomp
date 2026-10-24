@@ -6,10 +6,8 @@ pub struct ExternalInputs {
     pub enemy_zero_health: u16,
     pub frame_handler_beta: u16,
     pub blending_config: u16,
-    pub player_animation_frame: u16,
     pub demo_input_pre_action: u16,
     pub lava_y: u16,
-    pub player_x_radius: u16,
     pub current_enemy: u16,
     pub random: u16,
     pub random_enemy_counter: u16,
@@ -19,6 +17,7 @@ pub struct ExternalInputs {
     pub drop_origin_y: u16,
 
     pub shoot_button: u16,
+    pub jump_button: u16,
     pub cancel_button: u16,
     pub switch_button: u16,
     pub run_button: u16,

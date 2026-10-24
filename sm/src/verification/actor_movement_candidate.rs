@@ -80,10 +80,19 @@ pub(crate) fn run(op: Operation, game: &mut Game) -> Option<u64> {
             amount,
         ))),
         Operation::Solid(amount) => {
-            Some(match queries::probe_player_solid_contact(&mut h, amount) {
-                SolidContact::Clear { amount } => u64::from(amount as u32) << 16,
-                SolidContact::Blocked { amount } => 0xffff | (u64::from(amount as u32) << 16),
-            })
+            let contact =
+                crate::game::player_collision::verification::solid_contact(&mut h, amount);
+            Some(
+                (u64::from(contact.displacement as u32) << 16)
+                    | if matches!(
+                        contact.obstruction,
+                        crate::game::player_collision::operations::Obstruction::SolidActor(_)
+                    ) {
+                        0xffff
+                    } else {
+                        0
+                    },
+            )
         }
         Operation::Touch(k) => Some(flag(queries::touches_player_from_above(
             &h,

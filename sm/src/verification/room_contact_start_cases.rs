@@ -32,8 +32,26 @@ pub(crate) enum Operation {
 pub(crate) fn run(operation: Operation, g: &mut Game) -> Option<i32> {
     unsafe {
         match operation {
-            Operation::Right(n) => Some(crate::game::samus_room_contact_ram::move_right(n, g)),
-            Operation::Down(n) => Some(crate::game::samus_room_contact_ram::move_down(n, g)),
+            Operation::Right(n) => Some(
+                crate::game::player_collision::operations::displace(
+                    &mut crate::game::session_runtime::Runtime::new(g),
+                    crate::game::player_collision::operations::DisplacementRequest::TerrainOnly {
+                        axis: crate::game::player_collision::operations::Axis::X,
+                        amount: n,
+                    },
+                )
+                .displacement,
+            ),
+            Operation::Down(n) => Some(
+                crate::game::player_collision::operations::displace(
+                    &mut crate::game::session_runtime::Runtime::new(g),
+                    crate::game::player_collision::operations::DisplacementRequest::TerrainOnly {
+                        axis: crate::game::player_collision::operations::Axis::Y,
+                        amount: n,
+                    },
+                )
+                .displacement,
+            ),
             Operation::Station => {
                 crate::game::sm_80::LoadFromLoadStation(g);
                 None

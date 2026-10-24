@@ -112,6 +112,8 @@ pub struct Session {
     pub feedback: Feedback,
     pub messages: MessageRequests,
     pub spawn_scratch: SpawnScratch,
+    pub(in crate::game) shared_sequence: crate::game::player_collision::state::SequenceWorkspace,
+    pub(in crate::game) multiply_scratch: crate::game::player_collision::state::MultiplyScratch,
 }
 impl Session {
     pub(crate) fn with_world(
@@ -140,6 +142,8 @@ impl Session {
             feedback: Default::default(),
             messages: Default::default(),
             spawn_scratch: Default::default(),
+            shared_sequence: Default::default(),
+            multiply_scratch: Default::default(),
         }
     }
 }
@@ -167,7 +171,11 @@ pub struct Player {
     pub x: u16,
     pub y: u16,
     pub pose: u16,
-    pub previous_pose: u16,
+    pub(in crate::game) history: crate::game::player_collision::state::PoseHistory,
+    pub(in crate::game) previous_position: crate::game::player_collision::state::PreviousPosition,
+    pub(in crate::game) animation_clock: crate::game::player_collision::state::AnimationClock,
+    pub(in crate::game) collision: crate::game::player_collision::state::CollisionState,
+    pub(in crate::game) clearance: crate::game::player_collision::state::PoseClearance,
     pub movement_and_facing: u16,
     pub grapple: u16,
     pub movement_handler: u16,
@@ -200,6 +208,9 @@ impl FixedMotion {
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct ContactPhysics {
     pub radius: u16,
+    pub(crate) x_radius: u16,
+    pub(in crate::game) acceleration_mode: u16,
+    pub(in crate::game) total_x: FixedMotion,
     pub deceleration: u16,
     pub momentum: u16,
     pub speed_boost: u16,

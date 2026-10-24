@@ -223,8 +223,8 @@ pub(super) fn Eproj_CheckForEnemyCollisionWithRect(
 pub(super) fn Eproj_CheckForCollisionWithSamus(v0: u16, ctx: &mut impl Host) -> u8 {
     let rect: CollisionRect = Eproj_GetCollDetectRect(v0, ctx);
     let v1: u16 = (((ctx.session().player.x as i32 - rect.x as i32) as u16) as i16).unsigned_abs();
-    let mut v2: bool = v1 < ctx.inputs().player_x_radius;
-    let v3: u16 = (v1 as i32 - ctx.inputs().player_x_radius as i32) as u16;
+    let mut v2: bool = v1 < ctx.session().player.contact.x_radius;
+    let v3: u16 = (v1 as i32 - ctx.session().player.contact.x_radius as i32) as u16;
     let result: u8 = 0;
     if v2 || v3 < rect.w {
         let v4: u16 =

@@ -269,7 +269,36 @@ macro_rules! scalar_words {
         $f(0x9d4,$($borrow)* $s.inventory.reserve_capacity);
         $f(0x9c0,$($borrow)* $s.inventory.reserve_mode);
         $f(0xa1c,$($borrow)* $s.player.pose);
-        $f(0xa24,$($borrow)* $s.player.previous_pose);
+        $f(0xa24,$($borrow)* $s.player.history.last_different.pose);
+        $f(0x5e9,$($borrow)* $s.multiply_scratch.left);
+        $f(0x5eb,$($borrow)* $s.multiply_scratch.right);
+        $f(0xa20,$($borrow)* $s.player.history.previous.pose);
+        $f(0xa22,$($borrow)* $s.player.history.previous.movement_and_facing);
+        $f(0xa26,$($borrow)* $s.player.history.last_different.movement_and_facing);
+        $f(0xa34,$($borrow)* $s.player.clearance.actor_flags);
+        $f(0xa36,$($borrow)* $s.player.clearance.terrain_flags);
+        $f(0xa38,$($borrow)* $s.player.clearance.terrain_up);
+        $f(0xa3a,$($borrow)* $s.player.clearance.radius_difference);
+        $f(0xa3c,$($borrow)* $s.player.clearance.terrain_down);
+        $f(0xa3e,$($borrow)* $s.player.clearance.actor_up);
+        $f(0xa40,$($borrow)* $s.player.clearance.actor_down);
+        $f(0xa46,$($borrow)* $s.player.collision.horizontal_slope_flags);
+        $f(0xa94,$($borrow)* $s.player.animation_clock.remaining);
+        $f(0xa96,$($borrow)* $s.player.animation_clock.frame);
+        $f(0xafe,$($borrow)* $s.player.contact.x_radius);
+        $f(0xb10,$($borrow)* $s.player.previous_position.x.whole);
+        $f(0xb12,$($borrow)* $s.player.previous_position.x.fraction);
+        $f(0xb14,$($borrow)* $s.player.previous_position.y.whole);
+        $f(0xb16,$($borrow)* $s.player.previous_position.y.fraction);
+        $f(0xb4a,$($borrow)* $s.player.contact.acceleration_mode);
+        $f(0xdba,$($borrow)* $s.player.collision.slope_adjusted);
+        $f(0xdbc,$($borrow)* $s.player.contact.total_x.whole);
+        $f(0xdbe,$($borrow)* $s.player.contact.total_x.fraction);
+        $f(0xdc6,$($borrow)* $s.player.collision.pose_input);
+        $f(0xdce,$($borrow)* $s.player.collision.solid_actor_flags);
+        $f(0xdd0,$($borrow)* $s.player.collision.flags);
+        $f(0xdec,$($borrow)* $s.shared_sequence.stage);
+        $f(0xdee,$($borrow)* $s.shared_sequence.value);
         $f(0xa1e,$($borrow)* $s.player.movement_and_facing);
         $f(0x18a8,$($borrow)* $s.player.invincibility);
         $f(0xa50,$($borrow)* $s.player.periodic_damage);
@@ -690,10 +719,8 @@ pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
         enemy_zero_health: u16::from_ne_bytes([bytes[0xf8c], bytes[0xf8d]]),
         frame_handler_beta: w(0xa44),
         blending_config: w(0x1982),
-        player_animation_frame: w(0xa96),
         demo_input_pre_action: w(0xa7a),
         lava_y: w(0x1962),
-        player_x_radius: w(ram::samus_x_radius),
         current_enemy: w(ram::cur_enemy_index),
         random: w(ram::random_number),
         random_enemy_counter: w(ram::random_enemy_counter),
@@ -703,6 +730,7 @@ pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
         nmi_counter_low: bytes[0x5b5],
 
         shoot_button: w(ram::button_config_shoot_x),
+        jump_button: w(ram::button_config_jump_a),
         cancel_button: w(ram::button_config_itemcancel_y),
         switch_button: w(ram::button_config_itemswitch),
         run_button: w(ram::button_config_run_b),

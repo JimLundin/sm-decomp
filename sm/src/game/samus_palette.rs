@@ -269,8 +269,8 @@ pub(crate) fn screw_speed(h: &mut impl Host) -> PaletteCarry {
     let screw = if movement == 3 {
         if h.session().inventory.equipment.active & 8 == 0 {
             false
-        } else if h.inputs().player_animation_frame != 0 {
-            if h.inputs().player_animation_frame.wrapping_sub(27) & 0x8000 == 0 {
+        } else if h.session().player.animation_clock.frame != 0 {
+            if h.session().player.animation_clock.frame.wrapping_sub(27) & 0x8000 == 0 {
                 return PaletteCarry::Clear;
             }
             true
@@ -282,7 +282,7 @@ pub(crate) fn screw_speed(h: &mut impl Host) -> PaletteCarry {
         if h.session().inventory.equipment.active & 8 == 0 {
             return PaletteCarry::Set;
         }
-        if h.inputs().player_animation_frame.wrapping_sub(3) & 0x8000 == 0 {
+        if h.session().player.animation_clock.frame.wrapping_sub(3) & 0x8000 == 0 {
             true
         } else {
             h.session_mut().player.palette_frame = 0;
@@ -457,6 +457,12 @@ pub(crate) fn xray(h: &mut impl Host) -> PaletteCarry {
     PaletteCarry::Set
 }
 pub(crate) fn cancel_speed_boost(h: &mut impl Host) {
+    #[cfg(sm_verify_dll)]
+    crate::player_collision_movement_cases::observe_owned_cancel([
+        h.session().player.contact.base_run.whole,
+        h.session().player.contact.extra_run.whole,
+        h.session().player.contact.acceleration_mode,
+    ]);
     if h.session().player.contact.momentum != 0 {
         h.session_mut().player.contact.momentum = 0;
         h.session_mut().player.contact.speed_boost = 0;

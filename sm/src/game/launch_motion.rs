@@ -67,6 +67,8 @@ pub(crate) struct LaunchVelocity {
 
 impl LaunchMotion {
     pub(crate) fn record_movement(&mut self, direction: MovementDirection, displacement: i32) {
+        #[cfg(any(test, sm_verify_dll))]
+        crate::game::player_collision_owned_checks::record_launch(direction, displacement);
         self.displacements[direction as usize] = displacement;
     }
 

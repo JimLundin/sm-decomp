@@ -117,7 +117,14 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         put(g, 0x10002, 0x9000);
         g.g_ram[0x16402] = 0;
         assert_eq!(
-            crate::game::samus_room_contact_ram::move_right(65536, g),
+            crate::game::player_collision::operations::displace(
+                &mut crate::game::session_runtime::Runtime::new(g),
+                crate::game::player_collision::operations::DisplacementRequest::TerrainOnly {
+                    axis: crate::game::player_collision::operations::Axis::X,
+                    amount: 65536
+                }
+            )
+            .displacement,
             65536
         );
         assert_eq!(

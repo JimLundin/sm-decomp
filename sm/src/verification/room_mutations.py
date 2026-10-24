@@ -352,6 +352,8 @@ def main():
         if actor_rom is not None:
             actor_dll_mutations.run_checks(root, work, paths, run, copy_tracked,
                                           rom=actor_rom, kraid_only=True)
+            actor_dll_mutations.run_checks(root, work, paths, run, copy_tracked,
+                                          rom=actor_rom, collision_only=True)
     print("room/native/restore mutation checks: 9/9 killed; all nine frozen baselines passed", flush=True)
 
 

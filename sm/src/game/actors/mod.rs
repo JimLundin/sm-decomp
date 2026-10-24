@@ -69,5 +69,11 @@ mod contact_checks;
 pub(crate) mod composed_fixture;
 
 #[cfg(sm_verify_dll)]
+#[path = "../../verification/player_collision_composed_actor.rs"]
+pub(crate) mod collision_composed_actor;
+#[cfg(sm_verify_dll)]
 #[path = "../../verification/actor_composed_checks.rs"]
 pub(crate) mod composed_checks;
+
+mod overlap;
+pub(in crate::game) use overlap::axis_overlaps;
