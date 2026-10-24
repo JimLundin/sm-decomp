@@ -2,6 +2,9 @@ name: CI
 
 on:
   push:
+    paths-ignore:
+      - PROGRESS.md
+      - docs/PLAN.md
   pull_request:
   workflow_dispatch:
     inputs:
