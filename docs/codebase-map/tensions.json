@@ -295,9 +295,12 @@
     ]
   },
   {
-    "title": "Player collision is owned; effects retain backend edges",
-    "description": "Movement, solid contact, terrain traversal and pose clearance share interval Session state. Runtime adapters still resolve compatibility content, invoke room mechanisms and read physical SNES slope bytes; this is not yet a backend-independent engine.",
+    "title": "Normal movement and collision are owned; backend edges remain",
+    "description": "Normal locomotion now runs with collision and pose clearance in Session. Special movement callbacks remain in sm_90; Runtime still resolves ROM content and reads physical SNES slope bytes.",
     "files": [
+      "sm/src/game/player_movement/mod.rs",
+      "sm/src/game/player_movement_runtime.rs",
+      "sm/src/game/sm_90.rs",
       "sm/src/game/player_collision/mod.rs",
       "sm/src/game/player_collision/operations.rs",
       "sm/src/game/player_collision/geometry.rs",
@@ -305,6 +308,21 @@
       "sm/src/game/session.rs"
     ],
     "evidence": [
+      {
+        "path": "sm/src/game/player_movement/mod.rs",
+        "line": 11,
+        "expected": "pub(crate) fn advance_normal(h: &mut impl effects::Host) {"
+      },
+      {
+        "path": "sm/src/game/player_movement_runtime.rs",
+        "line": 29,
+        "expected": "visual_host::Content::table(self, Source::Native, 0x900000 | u32::from(cursor))"
+      },
+      {
+        "path": "sm/src/game/sm_90.rs",
+        "line": 1280,
+        "expected": "[9494328] Samus_MoveHandler_Knockback [] {"
+      },
       {
         "path": "sm/src/game/player_collision/mod.rs",
         "line": 2,
