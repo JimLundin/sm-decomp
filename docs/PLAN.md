@@ -483,6 +483,14 @@ references; measure build/test time and resource growth before changing the loop
    are source-reviewed and integrated, execution pending. Separate case37 adds
    a real VRAM back-reference to distinguish byte/word offset units; source
    review passes, predecessor/candidate execution remains pending.
+   Case37 now passes actual predecessor/candidate execution and independent
+   full-byte audit; all94comparisons and3level-copy checks pass on69f4c56a.
+   Composed-core metadata compilation passes. Targeted Speed Booster prefix
+   verifies21065frames, all13required probes and120follow-upframes, zero failures
+   (62.47s), ending in gameplay across7rooms. This is not credits coverage.
+   Hosted branch verify/room-entry-20261024 at7b5b41ac preserves checked Rust
+   source69f4c56a and adds a fifth reviewed VRAM-offset mutation. CI40044596920
+   is queued for full build and56mutations; no hosted-pass or adoption claim yet.
    Reuse current owners;84additional disjoint bytes comprise82room-related bytes
    and two shared lossless continuation bytes (proposed union52,373). Retire the
    actual competing orchestration and stale door inputs in the same adoption.

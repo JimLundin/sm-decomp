@@ -54,7 +54,7 @@ flowchart LR
     RI --> RBUILD["Combined candidate<br/>format + build PASS"]:::done
     RBUILD --> RCOMPARE["Room / contact / start<br/>56 comparisons match"]:::done
     RCODEC --> RGUARD["Runtime + world ownership<br/>execution PASS"]:::done
-    RBCAP --> RBVERIFY["Replacement background comparisons<br/>37 / 37 byte-identical"]:::done
+    RBCAP --> RBVERIFY["Replacement background comparisons<br/>38 / 38 byte-identical"]:::done
     RCOMPARE --> RT
     RGUARD --> RT
     RT --> WCONTACT["Contact / cases 0-1<br/>PASS"]:::done
@@ -63,9 +63,15 @@ flowchart LR
     RT --> WIRQ["Terminal IRQ / cases 6-7<br/>PASS"]:::done
     RT --> WRESET["Reset frame / case 8<br/>PASS"]:::done
     RT --> WSTATION["Mapped load stations / cases 9-10<br/>PASS"]:::done
-    RT --> RMUT["4 new room faults<br/>reviewed / execution pending"]:::pending
-    RBCAP --> ROFFSET["VRAM offset / case 37<br/>source review PASS / execution pending"]:::draft
-    class RT,WSTART,WDOOR,WRESET,RMUT,ROFFSET changed
+    RT --> RMUT["51 existing + 5 new faults<br/>hosted CI queued"]:::active
+    RBCAP --> ROFFSET["VRAM offset / case 37<br/>comparison + audit PASS"]:::done
+    RBUILD --> RORACLE["Vanilla / 21,065 frames<br/>13 probes / 0 failures / PASS"]:::done
+    RMUT --> MMARK["Late contact marker"]:::pending
+    RMUT --> MLOCK["Late station lockout"]:::pending
+    RMUT --> MAREA["Overwrite area high byte"]:::pending
+    RMUT --> MBIND["Write before binding check"]:::pending
+    RMUT --> MOFFSET["Wrong VRAM offset units"]:::pending
+    class RBVERIFY,RMUT,ROFFSET,RORACLE,MMARK,MLOCK,MAREA,MBIND,MOFFSET changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
@@ -73,6 +79,8 @@ flowchart LR
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
+
+[Room validation CI](https://github.com/JimLundin/sm-decomp/actions/runs/40044596920)
 
 ### Progression flags / adopted
 
