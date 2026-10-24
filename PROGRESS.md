@@ -42,29 +42,35 @@ flowchart LR
     BUILD --> CASES["79 component comparisons ?"]:::done
     BUILD --> MOVIE["8,577 frames / 0 failures ?"]:::done
     BUILD --> MUT["96 mutation kills / hosted ?"]:::done
-    CALL --> NEXT["Shared transitions + palette interval"]:::draft
-    NEXT --> DAMAGE["Owned fractional health + damage"]:::draft
-    DAMAGE --> DEL["RAM adapter retired / ?64 production lines"]:::draft
+    CALL --> NEXT["Shared transitions + palette interval"]:::done
+    NEXT --> DAMAGE["Owned fractional health + damage"]:::done
+    DAMAGE --> DEL["RAM adapter retired / ?64 production lines"]:::done
     DEL --> LOCAL["87 cases + 8,577 frames ?"]:::done
-    LOCAL --> CI["2 targeted mutations / local DLLs pending"]:::active
-    CI --> ORDER["Future runs: transitions checked earlier<br/>schedule checks ? / timing unmeasured"]:::done
-    class CI changed
+    LOCAL --> EARLY["Early damage consumption / local kill ?"]:::done
+    LOCAL --> FRACTION["Lost health fraction / local kill ?"]:::done
+    DEL --> CM["Collision ? mechanism / one Session"]:::draft
+    CM --> CALLER["player_collision_runtime.rs"]:::draft
+    CM --> WRAPPER["room_mechanisms/mod.rs<br/>spawn_contact retired"]:::draft
+    CM --> CLEANUP["session_runtime.rs<br/>shared unwind cleanup"]:::draft
+    CALLER --> CHECK["Full slots / aliases / stale world / panic<br/>source reviewed / execution pending"]:::draft
+    CHECK --> CMUT["Displacement + ownership mutations"]:::pending
+    class NEXT,DAMAGE,DEL,EARLY,FRACTION,CM,CALLER,WRAPPER,CLEANUP,CHECK changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
 [Adopted source](https://github.com/JimLundin/sm-decomp/tree/5e546bdc85c8d6f5216c4bf69f247b0299ec1e20/sm/src/game/player_transitions) ? [96 checks](https://github.com/JimLundin/sm-decomp/actions/runs/40078990293) ? [Follow-on checks](https://github.com/JimLundin/sm-decomp/actions/runs/40081065327)
 
-| Rust accounting | Main | Adopted change | Follow-on draft |
-| --- | ---: | ---: | ---: |
-| Production, including adapters | 116,986 | +238 | ?64 |
-| Verification and check support | 33,423 | +2,414 | +311 |
-| Combined maintained Rust | 150,409 | +2,652 | +247 |
+| Rust accounting | Main | Latest adoption |
+| --- | ---: | ---: |
+| Production, including adapters | 116,922 | ?64 |
+| Verification and check support | 33,734 | +311 |
+| Combined maintained Rust | 150,656 | +247 |
 
-**33,423 verification lines excluded, not deleted.** Legacy retirement: 2,235 lines;
-complete production replacement: +238. [Scope and evidence](docs/PLAN.md#work-order).
+**33,734 verification lines excluded, not deleted.** [Scope and local evidence](docs/PLAN.md#work-order).
 
 <details>
 <summary>Verification details and earlier migrations</summary>

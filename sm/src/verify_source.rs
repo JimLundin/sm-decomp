@@ -2,6 +2,10 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/verification/player_settlement.rs",
+        include_bytes!("verification/player_settlement.rs"),
+    ),
+    (
         "sm/src/verification/player_transitions_callers.rs",
         include_bytes!("verification/player_transitions_callers.rs"),
     ),
@@ -873,10 +877,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/samus_periodic_damage.rs",
         include_bytes!("game/samus_periodic_damage.rs"),
-    ),
-    (
-        "sm/src/game/samus_periodic_damage_ram.rs",
-        include_bytes!("game/samus_periodic_damage_ram.rs"),
     ),
     (
         "sm/src/game/scrolling_sky.rs",

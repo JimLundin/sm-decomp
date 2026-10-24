@@ -721,9 +721,6 @@ pub unsafe fn InitializeSuitPickupHdma(game: &mut Game) {
 }
 // These legacy entries acquire the one aggregate; composed callers invoke the
 // palette core directly on their existing Runtime.
-pub unsafe fn Samus_HandlePalette(game: &mut Game) {
-    crate::game::samus_palette::advance(&mut crate::game::session_runtime::Runtime::new(game));
-}
 pub unsafe fn Samus_CancelSpeedBoost(game: &mut Game) {
     crate::game::samus_palette::cancel_speed_boost(
         &mut crate::game::session_runtime::Runtime::new(game),

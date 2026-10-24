@@ -38,6 +38,12 @@ pub(crate) fn finish_movement(host: &mut impl effects::Host) {
     resolver::resolve_transitions(host);
 }
 
+/// Continue the post-movement rules into palette work on the same owned Session.
+pub(crate) fn finish_movement_and_palette(host: &mut impl effects::Host) {
+    finish_movement(host);
+    crate::game::samus_palette::advance(host);
+}
+
 #[cfg(test)]
 mod representation_tests;
 

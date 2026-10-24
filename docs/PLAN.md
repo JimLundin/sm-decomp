@@ -196,7 +196,7 @@ Reviews and targeted checks run alongside implementation; fidelity, full caller
 closure, backend-free core compilation and meaningful mutations still gate
 adoption. No unverified gameplay is adopted to meet a schedule.
 
-The isolated follow-on draft now extends one Session interval through
+The adopted follow-on extends one Session interval through
 transitions, palette and pending-damage consumption, based on 5e546bdc.
 All three beta callers share transitions and palette; only normal gameplay
 consumes pending damage. Two fractional-health bytes join Inventory ownership.
@@ -205,7 +205,8 @@ grapple transport are retired. Native arithmetic, later LE sign checks and
 existing pickup/refill fraction behavior remain unchanged. Ownership is released
 before pause/low-health, demo restoration and invalid-damage crash paths.
 
-The follow-on is committed as 11f95a69 on verify/player-settlement-20261024.
+The follow-on is adopted from 11f95a69 on verify/player-settlement-20261024.
+Main retains the later verification-order improvement; gameplay source is identical.
 Full hosted run 40081065327 was dispatched on that exact commit; it is no longer
 monitored or required for adoption under the local-validation policy.
 Follow-on source 85e16c54 passes full formatting, normal/verifier/detached
@@ -219,12 +220,17 @@ This follow-on removes 64 production Rust lines and adds 311 verification Rust
 lines: net +247 to 150,656. Separate support adds 155 Python and 50 JSON lines.
 One production unsafe wrapper is removed and two verification unsafe functions
 are added; the combined declaration count rises by one to 2,428. It removes one unnecessary Session export/import
-pair per beta invocation; no measured speedup is claimed. Two additional exact
-mutation checks are prepared in the existing hosted runner (early damage
-consumption and lost fractional-health publication); the next full run selects
-98 faults in that historical dispatch. Complete the two targeted settlement
-mutations locally through Python-hosted DLL execution before adoption; the
-existing local comparisons and replay remain valid.
+pair per beta invocation; no measured speedup is claimed. Both targeted settlement mutations pass locally through Python-hosted DLLs:
+early consumption (source 877ed5a9, release build 46.34s) and lost fraction
+(source 0f3fe6e5, 43.01s). Each run recaptured and strictly checked the unchanged
+3900 baseline, required a quiet zero-exit normally completed mutant capture,
+then checked every record against its exact intended discrepancy and required
+strict completion rejection. Source/library/native identities were checked;
+no compile failure, panic, timeout or unrelated mismatch was credited. The
+actual shipped pure classifiers were reused without invoking hosted guards.
+No CI observation or result is required for this adoption. Production is now
+116,922 lines; verification 33,734; combined 150,656. Remaining safety and backend
+work is unfinished.
 The four transition representation tests are included in the existing unfiltered
 detached mutation baseline; no separate CI step or local executable is needed.
 
@@ -239,6 +245,18 @@ baseline failure, with identical call inventory and arguments. This changes
 feedback order, not coverage or total build work. Gameplay source is unchanged;
 no new replay is needed. Active run 40081065327 retains its original order and
 is not restarted. Runtime timing of the new order has not yet been measured.
+
+Next isolated implementation: keep collision-to-mechanism creation in the same
+Session and retire the sole spawn_contact wrapper. The three production files
+are player_collision_runtime.rs, room_mechanisms/mod.rs and session_runtime.rs.
+A local unwind guard reuses Runtime destruction cleanup; entry preflight remains
+outside it. Refresh four owned-state aliases in ExternalInputs after success.
+Keep real foreign effects and the definition-read failure behavior. Source review
+passes; formatting, compilation and execution remain pending. The complete draft
+adds 10 production lines before formatting, not the initial estimated reduction.
+Selected checks reuse collision36/37 and PC6, adding full allocation/no-ROM,
+stale binding, four alias observations and actual C6DC caught-panic prefixes.
+Implementation and independent verification preparation ran in parallel.
 
 The public report must foreground owned behavior, production caller migration,
 legacy deletion and adoption. Keep verification detail expandable below those

@@ -54,7 +54,7 @@ def capture_child(root, kind, case, rom, destination):
     """Exactly one actual initialized export invocation in this fresh process."""
     hosted_only()
     require((kind in ("cpu", "rust") and 0 <= case < 11)
-            or (kind == "rust" and case in (3700, 3702)), "unknown transition capture selection")
+            or (kind == "rust" and case in (3700, 3702, 3900)), "unknown transition capture selection")
     rom_sha1 = original_identity(rom)
     os.environ["RUST_BACKTRACE"] = "0"
     verifier = runpy.run_path(str(root / "tools/verify_dll.py"))
@@ -218,6 +218,7 @@ def run_checks(root, work, paths, run, copy_tracked, rom):
         print(f"{recipe['name']}: KILLED by {recipe['required_assertion']}", flush=True)
     print("transition DLL mutations: 2/2 unique faults killed; 11 unchanged baselines passed", flush=True)
     run_owned_checks(root, work, paths, run, copy_tracked, rom)
+    run_settlement_checks(root, work, paths, run, copy_tracked, rom)
 
 
 def adoption_comparator(root):
@@ -336,3 +337,102 @@ def run_owned_checks(root, work, paths, run, copy_tracked, rom):
                           "exact_completed_trace": True, "strict_completion_mismatch": mismatch}), flush=True)
         print(f"{recipe['name']}: KILLED by exact normally returned composed contract difference", flush=True)
     print("owned composed mutations: 3/3 unique faults killed; 2 unchanged baselines passed", flush=True)
+
+
+def settlement_comparator(root):
+    name = "player_settlement_completion"
+    path = root / "sm/src/verification/player_settlement_completion.py"
+    spec = importlib.util.spec_from_file_location(name, path)
+    require(spec is not None and spec.loader is not None, "missing settlement completion parser")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def settlement_expected(compare, baseline, fault):
+    """Transform only exact 3900 semantic discrepancies, preserving all records."""
+    require(fault in ("SETTLEMENT_EARLY_CONSUME", "SETTLEMENT_LOST_FRACTION"),
+            "unknown settlement fault")
+    records = compare.records(baseline, b"PTRS1")
+    altered = []
+    seen = set()
+    markers = 0
+    for record in records:
+        if record.tag == 2:
+            require(len(record.payload) == compare.RAM_SIZE + 3 and record.payload[-1] == 0,
+                    "invalid settlement baseline snapshot")
+            phase = struct.unpack_from("<H", record.payload)[0]
+            require(phase not in seen, "duplicate settlement phase")
+            seen.add(phase)
+            changes = []
+            if fault == "SETTLEMENT_EARLY_CONSUME":
+                if phase in (220, 28):
+                    changes = [(0xa4c, 0x2000, 0x1fff), (0xa4e, 0x8001, 0x8000)]
+                elif phase == 11:
+                    changes = [(0x9c2, 97, 99), (0xa4c, 0x9fff, 0x1fff),
+                               (0xa4e, 0, 0x8000), (0xa50, 0, 1)]
+            elif phase == 11:
+                changes = [(0xa4c, 0x9fff, 0x2000)]
+            payload = bytearray(record.payload)
+            for at, old, new in changes:
+                require(struct.unpack_from("<H", payload, 2 + at)[0] == old,
+                        "settlement baseline discrepancy word is stale")
+                struct.pack_into("<H", payload, 2 + at, new)
+            record = compare.Record(2, bytes(payload))
+        elif record == compare.Record(4, struct.pack("<HH", 3903, 1)):
+            markers += 1
+            record = compare.Record(4, struct.pack("<HH", 3903, 0))
+        altered.append(record)
+    require(seen == {1, 220, 28, 11} and markers == 1, "settlement exact boundaries missing")
+    return altered
+
+
+def qualify_settlement(compare, complete, baseline, actual, fault):
+    require(compare.records(actual, b"PTRS1") == settlement_expected(compare, baseline, fault),
+            "settlement mutant differs outside exact reviewed full trace")
+    require(actual != baseline, "settlement mutation survived exact baseline comparison")
+    try:
+        complete.check_capture(actual, 3900, compare)
+    except compare.Mismatch as error:
+        return str(error)
+    raise RuntimeError("settlement mutation survived strict completion parser")
+
+
+def run_settlement_checks(root, work, paths, run, copy_tracked, rom):
+    hosted_only()
+    recipe_path = root / "sm/src/verification/player_settlement_mutation_recipes.json"
+    recipes = json.loads(recipe_path.read_text(encoding="utf-8-sig"))
+    faults = {"SETTLEMENT_EARLY_CONSUME": "sm/src/game/sm_90.rs",
+              "SETTLEMENT_LOST_FRACTION": "sm/src/game/samus_periodic_damage.rs"}
+    require(len(recipes) == 2 and {r["fault"] for r in recipes} == set(faults),
+            "exactly two distinct settlement faults required")
+    required = {"sm/src/verification/player_settlement.rs",
+                "sm/src/verification/player_settlement_completion.py",
+                "sm/src/verification/player_settlement_mutation_recipes.json"}
+    required.update(edit["path"] for recipe in recipes for edit in recipe["edits"])
+    require(required.issubset(paths), "settlement sources/parser/recipes must be tracked")
+    compare, complete = comparator(root), settlement_comparator(root)
+    results = work / "settlement-transition-captures"
+    results.mkdir()
+    baseline, receipt = capture(work / "baseline", "rust", 3900, rom, results / "baseline-3900.bin", run)
+    detail = complete.check_capture(baseline, 3900, compare)
+    print(json.dumps({"settlement_baseline": 3900, "receipt": receipt, "completion": detail}), flush=True)
+    for recipe in recipes:
+        require(recipe["selected"] == "transition:3900" and recipe["qualification"] == "exact_completed_trace",
+                "settlement selection/classifier changed")
+        require(len(recipe["edits"]) == 3 and recipe["edits"][0]["path"] == faults[recipe["fault"]]
+                and all(edit["path"] == "sm/src/verification/player_settlement.rs" for edit in recipe["edits"][1:]),
+                "one settlement gameplay fault plus two bounded observation edits required")
+        again, _ = capture(work / "baseline", "rust", 3900, rom,
+                           results / f"recheck-{recipe['fault']}.bin", run)
+        require(again == baseline, "settlement unchanged baseline changed between runs")
+        complete.check_capture(again, 3900, compare)
+        copied = actor.build(root, work, paths, recipe["name"], run, copy_tracked, recipe["edits"])
+        actual, receipt = capture(copied, "rust", 3900, rom,
+                                  results / f"mutant-{recipe['fault']}.bin", run)
+        mismatch = qualify_settlement(compare, complete, baseline, actual, recipe["fault"])
+        print(json.dumps({"settlement_mutant": recipe["fault"], "receipt": receipt,
+                          "exact_completed_trace": True, "strict_completion_mismatch": mismatch}), flush=True)
+        print(f"{recipe['name']}: KILLED by exact normally returned settlement contract difference", flush=True)
+    print("player settlement mutations: 2/2 unique faults killed; unchanged 3900 baseline passed", flush=True)

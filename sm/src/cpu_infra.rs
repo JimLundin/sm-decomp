@@ -1354,3 +1354,7 @@ pub mod player_transitions_composed;
 #[cfg(sm_verify_dll)]
 #[path = "verification/player_transitions_callers.rs"]
 pub mod player_transitions_callers;
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/player_settlement.rs"]
+pub mod player_settlement;
