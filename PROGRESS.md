@@ -107,13 +107,31 @@ flowchart LR
     MUTBUILD --> MFRENDER["Flash / frozen palette bits"]:::pending
     MUTBUILD --> MFKWRITE["Kraid live shot-gate write"]:::pending
     MUTBUILD --> MFKREAD["Contact reads live shot gate"]:::pending
-    class AP,MUTWIRE,AHF,AHFIX,AHRUN,ACONTRACT,MUTRECIPES,MUTBASE,MUTBUILD,MF9,MFROW,MFRES,MFEDIT,MFDAFF,MFMEDIA,MFRENDER,MFKWRITE,MFKREAD changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
+```
+
+### Player collision / next design
+
+```mermaid
+flowchart LR
+    PC["Player collision + displacement"]:::draft --> PS["58 state bytes / all writers<br/>source closure PASS"]:::done
+    PC --> PR["33 bank routines + 2 modules<br/>retirement review PASS"]:::done
+    PC --> PV["Directed routes + 10 fault witnesses<br/>validation design reviewed"]:::draft
+    PS --> PD["Concrete owned interface<br/>declaration design active"]:::active
+    PR --> PD
+    PD --> PI["Implementation after actor adoption<br/>and declaration review"]:::pending
+    PV --> PI
+    class PC,PS,PR,PV,PD,PI changed
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
+    classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
+    classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
+    classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
 ### Room entry + configurable connections / adopted

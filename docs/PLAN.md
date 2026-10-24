@@ -487,6 +487,14 @@ references; measure build/test time and resource growth before changing the loop
    additional integration lines. Repeated movement-result/solid-contact conversions
    and distance predicates remain consolidation opportunities; do not remove safety checks
    or disguise adapters to fit the original estimate.
+   Next source-qualified responsibility: complete player collision/displacement,
+   including solid actors, terrain, wall/grapple, pose fitting, shinespark and speed
+   publication. Independent closure covers58new owned bytes,33bank bodies and all
+   shared/alias/reset/snapshot writers. Gross retirement1694lines; conservative full
+   replacement1800..2700 (+106..1006), not an established reduction. Root authorized
+   isolated concrete interface declarations against23780fd9 while actor CI runs.
+   Gameplay implementation waits for actor adoption and independent declaration
+   review; retain one Session owner and retire both contact modules with callers.
    Preserve56existing mutants and add the
    nine selected actor faults, including discarded-future handle rejection.
    Scope includes population/assets, spawn/respawn/death, separate select/update,
