@@ -25,9 +25,8 @@ jobs:
       - name: Progress
         run: sh tools/progress.sh
 
-  build:
-    # Native desktop/utilities currently require the Windows GNU ABI.
-    # Build every real dependency and the frontend; public CI needs no ROM.
+  detached:
+    # Independent hosted machine: detached checks run alongside the native build.
     runs-on: windows-2022
     timeout-minutes: 60
     env:
@@ -77,6 +76,45 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Detached palette compilation failed' }
           & $detached
           if ($LASTEXITCODE -ne 0) { throw 'Detached palette checks failed' }
+      - name: Reject projectile collision and retirement mutations
+        # Mutation execution remains hosted under the local Defender restriction.
+        # The preceding baseline must pass before deliberately broken variants run.
+        # Keep each fault isolated from the production checkout.
+        run: |
+          python sm/src/verification/player_detached/mutations.py
+          if ($LASTEXITCODE -ne 0) { throw 'Projectile mutation checks failed' }
+
+  build:
+    # Native desktop/utilities currently require the Windows GNU ABI.
+    # Build every real dependency and the frontend; public CI needs no ROM.
+    runs-on: windows-2022
+    timeout-minutes: 60
+    env:
+      RUSTUP_TOOLCHAIN: stable-x86_64-pc-windows-gnu
+      CARGO_BUILD_JOBS: 1
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: msys2/setup-msys2@v2
+        id: msys
+        with:
+          msystem: MINGW64
+          install: mingw-w64-x86_64-gcc
+      - name: Install the GNU Rust toolchain and linker
+        env:
+          MSYS_LOCATION: ${{ steps.msys.outputs.msys2-location }}
+        run: |
+          rustup toolchain install stable-x86_64-pc-windows-gnu --profile minimal
+          if ($LASTEXITCODE -ne 0) { throw 'Rust toolchain installation failed' }
+          $linker = Join-Path $env:MSYS_LOCATION 'mingw64/bin'
+          if (!(Test-Path -LiteralPath "$linker/gcc.exe")) { throw 'MinGW GCC is missing' }
+          $linker | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=$linker/gcc.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Install pinned Zig and SDL2 SDK
         run: |
           $native = Join-Path $env:RUNNER_TEMP 'sm-native'
@@ -149,13 +187,6 @@ jobs:
           print('Cargo verifier source and all three actor exports match')
           '@ | python -B -
           if ($LASTEXITCODE -ne 0) { throw 'Cargo verifier actor export check failed' }
-      - name: Reject projectile collision and retirement mutations
-        # Mutation execution remains hosted under the local Defender restriction.
-        # The preceding baseline must pass before deliberately broken variants run.
-        # Keep each fault isolated from the production checkout.
-        run: |
-          python sm/src/verification/player_detached/mutations.py
-          if ($LASTEXITCODE -ne 0) { throw 'Projectile mutation checks failed' }
       - name: Prepare ROM for requested initialized actor checks
         if: github.event_name == 'workflow_dispatch' && inputs.full_actor_checks
         env:
