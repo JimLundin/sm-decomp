@@ -481,8 +481,12 @@ references; measure build/test time and resource growth before changing the loop
    source520323af exposes all3captures with predecessor-identical sample outputs.
    Full CI40058485171 adds a Cargo-launcher source/export check and retains all73faults,
    including25remaining DLL faults (14existing+11actor). Its full build and Cargo
-   verifier/export check now pass; detached mutations and initialized-ROM setup
-   pass, DLL mutation execution continues. Ordinary builds now
+   verifier/export check pass; detached mutations and initialized-ROM setup pass.
+   Full run fails after53unique kills: retain_native_owner_on_callback_panic survives;
+   19faults remain unexecuted. Actor identity cleanup now neutralizes this fault's
+   post-Drop publication, so workers are adding a pre-Drop ownership witness while
+   retaining the same mutation and all strict failure/byte checks. No kill is
+   credited for the survivor. Ordinary builds now
    precede long mutations; measured prior35minute runtime warrants a60minute limit.
    Selected
    ten-probe oracle replay passes21015frames with zero failures and120frames after
@@ -516,10 +520,14 @@ references; measure build/test time and resource growth before changing the loop
    IDs14..87, preserving0..13. Four source reviews and the13-file integration
    audit pass; whole-RAM checkpoints retain intermediate effects before fixture
    edits. Root formatting and normal library compilation pass. Verifier compilation
-   rejects the unsafe composed helper nested under actors' forbid(unsafe_code).
-   Workers are separating verification choreography while preserving that lint;
-   captures wait for the corrected build. This adds1921verification/support Rust
-   lines before formatting, no gameplay code.
+   initially rejected the unsafe composed helper nested under actors' forbid.
+   Reviewed verification-root choreography plus a safe actor helper preserves
+   that lint. Exact known-good native input newlines restore source checks without
+   changing the shared SDK. Final DLL/source/native checks pass onfc9eaf71;
+   all74captures pass and13original world cases remain byte-identical (4063411bytes).
+   Independent execution audit continues. Corrected formatted accounting is2053
+   verification/support Rust lines, no gameplay changes; six ancillary native
+   source/tool inputs differ only in newline bytes.
    Preserve56existing mutants and add the
    nine selected actor faults, including discarded-future handle rejection.
    Scope includes population/assets, spawn/respawn/death, separate select/update,

@@ -69,13 +69,14 @@ flowchart LR
     AB --> AROUTEBUILD["Composed route / normal library + DLL<br/>format + compile PASS"]:::done
     AROUTEBUILD --> AROUTE["Two-room routes / cases 12 + 13<br/>execution + byte audit PASS"]:::done
     AROUTE --> AOLDWORLD["11 existing supplied-world routes<br/>byte-identical"]:::done
-    AVERIFY --> MUTWIRE["Hosted / 48 detections audited<br/>25 DLL faults pending / 50cec3e0"]:::active
+    AVERIFY --> MUTWIRE["Hosted / 53 detections audited<br/>1 survivor + 19 unrun / 50cec3e0"]:::failed
     MUTWIRE --> AHF["First CI / animation harness<br/>compile FAIL"]:::failed
     AHF --> AHFIX["Shared crate-root declarations<br/>all 3 harnesses hosted PASS"]:::done
     AHFIX --> ACFG["Second CI / ordinary verifier<br/>configuration compile FAIL"]:::failed
     ACFG --> ACFGLOCAL["Both modes compile + 3 captures<br/>configuration fix PASS"]:::done
     ACFGLOCAL --> AHOSTBUILD["Hosted full build + Cargo exports<br/>PASS"]:::done
-    AHOSTBUILD --> AHRUN["Full CI / 50cec3e0<br/>detached PASS / DLL faults active"]:::active
+    AHOSTBUILD --> AHRUN["Full CI / 50cec3e0 FAIL<br/>53 killed / 1 survived / 19 unrun"]:::failed
+    AHRUN --> ANATIVE["Unwind ownership witness<br/>observe before compensating cleanup"]:::active
     ADLL --> AORACLE["21,015 frames / 10 probes<br/>0 failures + 120-frame tail / PASS"]:::done
     ADLL --> KWRITE["Kraid live-definition write + consumer<br/>PASS"]:::done
     KWRITE --> KRESTORE["Actual CPU snapshot restore<br/>definition retained / PASS"]:::done
@@ -110,7 +111,7 @@ flowchart LR
     MUTBUILD --> MFRENDER["Flash / frozen palette bits"]:::pending
     MUTBUILD --> MFKWRITE["Kraid live shot-gate write"]:::pending
     MUTBUILD --> MFKREAD["Contact reads live shot gate"]:::pending
-    class AHRUN changed
+    class MUTWIRE,AHRUN,ANATIVE changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -148,9 +149,12 @@ flowchart LR
     POWN --> PBUILD
     PROUTE --> PBUILD
     PBUILD --> PDLL["Verifier compile FAIL<br/>unsafe helper in safe actor module"]:::failed
-    PDLL --> PFIX["Separate verification choreography<br/>preserve forbid unsafe"]:::active
-    PFIX --> PCAP["Predecessor captures"]:::pending
-    class PREF,PMOVE,PPOSE,POWN,PROUTE,PBUILD,PDLL,PFIX,PCAP changed
+    PDLL --> PFIX["Separate verification choreography<br/>preserve forbid unsafe / PASS"]:::done
+    PFIX --> PFINAL["Format + DLL + native/source checks<br/>PASS"]:::done
+    PFINAL --> PCAP["74 predecessor captures<br/>PASS"]:::done
+    PFINAL --> POLD["13 original world cases<br/>byte-identical"]:::done
+    PCAP --> PEXEC["Execution evidence<br/>independent audit"]:::active
+    class PFIX,PFINAL,PCAP,POLD,PEXEC changed
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
