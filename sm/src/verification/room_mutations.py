@@ -89,7 +89,7 @@ MUTATIONS = (
     ),
     (
         "retain_native_owner_on_callback_panic", 1441,
-        "native foreign panic retained callback: native word 0",
+        "native foreign panic relinquished owner",
         ((SESSION_RUNTIME,
           """        let state = self
             .state
@@ -342,7 +342,10 @@ def main():
     with tempfile.TemporaryDirectory(prefix="room-scheduler-mutations-") as directory:
         work = Path(directory)
         build_and_capture(root, work, paths, "baseline")
-        for mutation in MUTATIONS:
+        # Check the changed ownership witness first; retain every mutation.
+        for mutation in sorted(
+            MUTATIONS, key=lambda item: item[0] != "retain_native_owner_on_callback_panic"
+        ):
             build_and_capture(root, work, paths, mutation[0], mutation)
         room_entry_mutations.run_checks(root, work, paths, run, copy_tracked)
         actor_dll_mutations.run_checks(root, work, paths, run, copy_tracked)

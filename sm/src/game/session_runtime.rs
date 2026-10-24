@@ -98,6 +98,11 @@ impl<'g> Runtime<'g> {
             Store::SliceNative => self.write_slice_native(at, value),
         }
     }
+    // Verification observes relinquishment before Drop can mask a retained owner.
+    #[cfg(sm_verify_dll)]
+    pub(crate) fn has_session_for_verification(&self) -> bool {
+        self.state.is_some()
+    }
     pub(crate) fn session(&self) -> &Session {
         self.state
             .as_ref()

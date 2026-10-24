@@ -245,16 +245,24 @@ fn capture_checked(id: u32) -> Vec<u8> {
             Some(usize::from(returned))
         }
         1 => {
-            let unwind = catch_unwind(AssertUnwindSafe(|| {
+            {
                 let mut runtime = Runtime::new(&mut game);
                 assert_session(runtime.session(), INITIAL, "native acquisition");
                 set_session(runtime.session_mut(), OWNED);
-                runtime.foreign(|game| {
-                    callback(game, &published, &callback_ram, &mut trace);
-                    panic!("intentional native spawn callback unwind");
-                });
-            }));
-            intentional_unwind(unwind, "intentional native spawn callback unwind");
+                let unwind = catch_unwind(AssertUnwindSafe(|| {
+                    runtime.foreign(|game| {
+                        callback(game, &published, &callback_ram, &mut trace);
+                        panic!("intentional native spawn callback unwind");
+                    });
+                }));
+                intentional_unwind(unwind, "intentional native spawn callback unwind");
+                #[cfg(sm_verify_dll)]
+                assert_eq!(
+                    runtime.has_session_for_verification(),
+                    false,
+                    "native foreign panic relinquished owner"
+                );
+            }
             assert_native(
                 native_game(&game),
                 CALLBACK.native,
