@@ -63,7 +63,9 @@ these win. Do them in this order:
 2. **Shrink the process:** rewrite this file to at most ~200 lines (goal, rules,
    validation, current item, next three); move history to `docs/HISTORY.md`.
    Generate PROGRESS.md as a short metrics table from `tools/progress.sh`,
-   updated once per adopted milestone. Stop per-commit refresh of the atlas,
+   led by the user's requested compact current → next → benefit → target graph.
+   Update with adopted milestones or an explicit user request; distinguish held
+   drafts from adopted work. Stop per-commit refresh of the atlas,
    architecture and target-architecture reports. Target: under 20% docs-only commits.
 3. **Checkpoint corpus before more adoption:** one command replays oracle
    checkpoints covering every area, each boss, doors/elevators, save/load,
@@ -377,7 +379,7 @@ Production removes four unsafe declarations and two unsafe blocks; verification
 adds one declaration and three blocks. This is ownership consolidation, with
 net production growth. It does not complete persistent whole-engine ownership.
 
-Current complete responsibility under implementation: owned player input preparation,
+Current complete responsibility under validation: owned player input preparation,
 from radius and selected input through bindings, all28 movement-input rules and
 pose-request publication. Compose it with the existing projectile preparation
 Runtime; migrate Normal/Demo alpha producers, beta16 radius and the retained
@@ -405,6 +407,28 @@ and finite reference/check authoring now run in parallel on isolated files:
 all selectors, remapped commands,
 priority/sentinels, autojump/failure prefixes, frozen turns, live callback input,
 measured transfer removal and targeted ordering/input mutations.
+
+The complete private input draft now migrates real callers and retires the
+legacy input/radius implementations. Source4dfdd1bd passes formatting, normal
+and backend-free metadata compilation, release DLL and51 exact paired captures
+covering all28 selectors plus binding/lookup/fallback/elevator cases. The seven
+existing native baseline selections pass, including migrated radius checks.
+Its exercised replay passes8,577 frames with zero failures and all six required
+input/preparation/downstream probes plus120 follow-up frames. Five new-pose
+requests execute in the demo phase; the121 normal-input returns execute later
+in the one gameplay room. This is not all-branch or credits coverage.
+
+Initial complete accounting is +25 production lines after302 legacy lines retire;
+verification/support are separate. Final accounting remains pending. Reviewed
+supplements on sourcee956dffa now pass20 autojump/frozen/live-demo comparisons,
+six actual beta16/grapple edge contracts and two Normal/Demo preparation
+comparisons with real transfer observations. Normal preparation falls from four
+import/export pairs to two; selected Demo preparation falls from four to three,
+retaining its script and InsideBlock handoffs. Each uses one outer Runtime.
+The existing observation also checks live Suit/Input ordering and all four Demo
+backups. Both reference and candidate comparisons are quiet and byte-identical.
+All11 selected mutation baselines pass; four compiling input/order faults are
+now being checked before adoption. Main still contains shared-update source31ef4c71.
 
 The public report must foreground owned behavior, production caller migration,
 legacy deletion and adoption. Keep verification detail expandable below those

@@ -2,17 +2,17 @@
 
 ```mermaid
 flowchart LR
-    DONE["DONE: Shared player update<br/>movement + minimap + settlement"]:::done
-    NOW["NOW: Implement owned input preparation<br/>controls + movement rules + pose requests"]:::active
-    NEXT["NEXT: Migrate input callers<br/>remove 2 more RAM handoffs"]:::pending
-    THEN["GAIN: Shared player state<br/>less duplicate coordination"]:::pending
-    TARGET["TARGET: Safe modular engine<br/>Map Rando: rooms / sprites / rules"]:::pending
-    DONE --> NOW --> NEXT --> THEN --> TARGET
-    class NOW changed
-    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    NOW["NOW · Prepare cleanup<br/>Compiler warnings"]:::active
+    NEXT["NEXT · Shorter plan<br/>Then checks across the game"]:::pending
+    THEN["THEN · Consolidate player logic<br/>Retire legacy RAM code"]:::pending
+    GAIN["ACHIEVES<br/>Less glue + duplication"]:::pending
+    TARGET["TARGET · Safe Map Rando core<br/>Rooms · sprites · opt-in rules"]:::pending
+    HELD["HELD · Owned input draft<br/>Comparisons pass · not adopted"]:::draft
+    NOW --> NEXT --> THEN --> GAIN --> TARGET
+    HELD -.-> THEN
+    classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
-    classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
 [Navigate the current codebase →](https://jimlundin.github.io/sm-decomp/)
@@ -21,37 +21,40 @@ Green: adopted scope / passed check | Blue: draft | Orange: active | Grey: remai
 **Purple outline: changed since previous report.** Folder branches show containment; check arrows show prerequisites.
 
 <details>
-<summary>Current input work: implementation and verification in parallel</summary>
+<summary>Held input draft: comparisons pass; four mutants rejected; final audit pending</summary>
 
 ```mermaid
 flowchart LR
     OWNER["Ownership contract / reviewed<br/>0 new gameplay bytes"]:::done
-    OWNER --> INPUT["player_input/"]:::active
-    INPUT --> RULES["mod.rs / 28 rules + pose requests"]:::active
-    INPUT --> CONTENT["content.rs / lazy pose rules"]:::active
-    INPUT --> EFFECTS["effects.rs / demo + temporary input"]:::active
-    INPUT --> HOST["player_input_runtime.rs"]:::active
-    HOST --> CALLERS["preparation.rs / sm_90.rs / sm_9b.rs<br/>actual caller migration"]:::active
-    CALLERS --> RETIRE["sm_91.rs + sm_90.rs<br/>retire old input rules + adapters"]:::active
-    OWNER --> REFERENCES["28 selectors + bindings + lookup<br/>reference checks being authored"]:::active
-    RULES --> BUILD["Compile + backend-free core / pending"]:::pending
-    REFERENCES --> COMPARE["Exact comparisons / pending"]:::pending
+    OWNER --> INPUT["player_input/ / DRAFT"]:::draft
+    INPUT --> RULES["mod.rs / 28 rules + pose requests"]:::draft
+    INPUT --> CONTENT["content.rs / lazy pose rules"]:::draft
+    INPUT --> EFFECTS["effects.rs / demo + temporary input"]:::draft
+    INPUT --> HOST["player_input_runtime.rs"]:::draft
+    HOST --> CALLERS["preparation.rs / sm_90.rs / sm_9b.rs<br/>actual callers migrated in draft"]:::draft
+    CALLERS --> RETIRE["Old rules + adapters retired in draft<br/>302 legacy lines removed"]:::draft
+    OWNER --> REFERENCES["28 selectors + bindings + lookup<br/>51 reference captures / PASS"]:::done
+    RULES --> BUILD["Format + DLL + backend-free compile / PASS"]:::done
+    REFERENCES --> COMPARE["51 exact comparisons / PASS"]:::done
     BUILD --> COMPARE
-    COMPARE --> TRANSFERS["Measure removed RAM handoffs / pending"]:::pending
-    COMPARE --> MUT["Input + ordering mutations / pending"]:::pending
-    COMPARE --> REPLAY["Exercised gameplay replay / pending"]:::pending
-    RETIRE --> ADOPT["Adoption + complete accounting / pending"]:::pending
+    COMPARE --> MODES["20 autojump / frozen / demo comparisons / PASS"]:::done
+    COMPARE --> EDGES["6 beta16 / grapple edge checks / PASS"]:::done
+    COMPARE --> TRANSFERS["Actual preparation transfers / measured<br/>Normal 4 to 2 / Demo 4 to 3"]:::done
+    COMPARE --> MUT["4 compiling input mutants / rejected<br/>Independent audit pending"]:::draft
+    COMPARE --> REPLAY["First draft: 8,577 frames / 0 failures<br/>6 required probes + follow-up / PASS"]:::done
+    RETIRE --> ADOPT["HELD / broader coverage + size rules first"]:::pending
     TRANSFERS --> ADOPT
     MUT --> ADOPT
     REPLAY --> ADOPT
-    class OWNER,INPUT,RULES,CONTENT,EFFECTS,HOST,CALLERS,RETIRE,REFERENCES,BUILD,COMPARE,TRANSFERS,MUT,REPLAY,ADOPT changed
+    class INPUT,RULES,CONTENT,EFFECTS,HOST,CALLERS,RETIRE,REFERENCES,BUILD,COMPARE,MODES,EDGES,TRANSFERS,MUT,REPLAY changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
+    classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-[Scope and remaining checks](docs/PLAN.md#work-order). Draft work is not adopted gameplay.
+[Current priorities](docs/PLAN.md#review-directives-user-direction-2026-10-24) / checked drafts `4dfdd1bd` + `e956dffa` / not adopted.
 
 </details>
 
