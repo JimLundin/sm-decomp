@@ -69,7 +69,7 @@ flowchart LR
     AB --> AROUTEBUILD["Composed route / normal library + DLL<br/>format + compile PASS"]:::done
     AROUTEBUILD --> AROUTE["Two-room routes / cases 12 + 13<br/>execution + byte audit PASS"]:::done
     AROUTE --> AOLDWORLD["11 existing supplied-world routes<br/>byte-identical"]:::done
-    AVERIFY --> MUTWIRE["Hosted / 53 detections audited<br/>1 survivor + 19 unrun / 50cec3e0"]:::failed
+    AVERIFY --> MUTWIRE["Hosted / 62 detections audited<br/>11 actor DLL faults unrun / efdd9cda"]:::active
     MUTWIRE --> AHF["First CI / animation harness<br/>compile FAIL"]:::failed
     AHF --> AHFIX["Shared crate-root declarations<br/>all 3 harnesses hosted PASS"]:::done
     AHFIX --> ACFG["Second CI / ordinary verifier<br/>configuration compile FAIL"]:::failed
@@ -77,7 +77,10 @@ flowchart LR
     ACFGLOCAL --> AHOSTBUILD["Hosted full build + Cargo exports<br/>PASS"]:::done
     AHOSTBUILD --> AHRUN["Full CI / 50cec3e0 FAIL<br/>53 killed / 1 survived / 19 unrun"]:::failed
     AHRUN --> ANATIVE["Pre-Drop ownership witness<br/>review + compile + 3 baselines PASS"]:::done
-    ANATIVE --> ARETRY["Full CI / efdd9cda<br/>detached PASS / DLL faults active"]:::active
+    ANATIVE --> ARETRY["CI efdd9cda / 62 killed<br/>actor baseline buffer FAIL"]:::failed
+    ARETRY --> ABUFFER["4 MiB buffer / all 5 selections<br/>local baselines PASS"]:::done
+    ABUFFER --> APDET["Parallel CI bdbb7968<br/>48 detached faults active"]:::active
+    ABUFFER --> APDLL["Parallel CI bdbb7968<br/>25 DLL faults active"]:::active
     ADLL --> AORACLE["21,015 frames / 10 probes<br/>0 failures + 120-frame tail / PASS"]:::done
     ADLL --> KWRITE["Kraid live-definition write + consumer<br/>PASS"]:::done
     KWRITE --> KRESTORE["Actual CPU snapshot restore<br/>definition retained / PASS"]:::done
@@ -93,7 +96,7 @@ flowchart LR
     BORROW --> BSCOPY["Spawn move out of view<br/>compiler rejects / PASS"]:::done
     AVERIFY --> AA["Caller retirement + adoption"]:::pending
     AVERIFY --> MUTRECIPES["17 unique actor faults<br/>6 detected / 11 pending"]:::active
-    MUTRECIPES --> MUTBASE["Detached baselines PASS<br/>DLL baselines pending"]:::active
+    MUTRECIPES --> MUTBASE["Detached + selected DLL baselines<br/>PASS"]:::done
     MUTBASE --> MUTBUILD["Mutant compilation<br/>detached PASS / DLL pending"]:::active
     MUTBUILD --> MF1["Multipart stop"]:::pending
     MUTBUILD --> MF2["Birth publication"]:::pending
@@ -112,7 +115,7 @@ flowchart LR
     MUTBUILD --> MFRENDER["Flash / frozen palette bits"]:::pending
     MUTBUILD --> MFKWRITE["Kraid live shot-gate write"]:::pending
     MUTBUILD --> MFKREAD["Contact reads live shot gate"]:::pending
-    class ARETRY changed
+    class MUTWIRE,ARETRY,ABUFFER,APDET,APDLL,MUTBASE changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

@@ -491,8 +491,17 @@ references; measure build/test time and resource growth before changing the loop
    format and DLL/native/source checks pass;1440..1442 retain all frozen bytes and
    exact expected diagnostics. Full CI40061379593 reruns73faults with initialized
    checks selected; the corrected fault runs first after unchanged baselines.
-   Its ordinary build, Cargo verifier/export check, detached mutations and
-   initialized-ROM setup pass; DLL mutation checks are running.
+   Run40061379593 ends after62unique kills, including corrected1441, with an
+   unchanged actor baseline failure: population7 needs2097615bytes, exceeding the
+   runner's1MiB buffer (population16 also exceeds it). All11actor DLL faults remain
+   unexecuted. Fix17629ec5 raises the buffer to4MiB, preserving strict classifiers.
+   All5selected actor baselines pass locally with source/native checks; population
+   7/16/32 match frozen outputs, room guard and initialized Kraid pass.
+   The serial run took35m40s before this baseline failure. Workflow fixbdbb7968
+   runs48detached and25DLL faults on separate hosted Windows machines, preserving
+   all commands, setup dependencies, required outcomes and full_actor_checks.
+   Independent workflow/dependency review passes; speedup is not yet measured.
+   Full run40064252512 is active. Local compilation remains serialized.
    Added13verification Rust lines (complete actor increment5406), no gameplay.
    Ordinary builds now
    precede long mutations; measured prior35minute runtime warrants a60minute limit.
