@@ -28,10 +28,9 @@ Verification added per adoption must not exceed production deleted. Keep this pl
 under ~200 lines; results belong in commit messages (~8 lines). Direct user
 instructions take precedence; [HISTORY.md](HISTORY.md) holds no current rules.
 
-**Codebase map:** the [view](https://jimlundin.github.io/sm-decomp/) shows gameplay
-responsibilities, ownership and contextual dependencies; support files are hidden.
-Update its shared five-box SVG in PROGRESS with adopted milestones. Pages generates
-from HEAD; do not commit generated HTML/JSON. One map agent owns requested changes.
+**Codebase map:** brief done (c1fe795). Pages generates the
+[view](https://jimlundin.github.io/sm-decomp/) from HEAD; keep only the five-box
+SVG in PROGRESS current. No other map work unless the user asks.
 
 **Local validation:** do not rely on or observe CI except for explicitly selected
 research/experiments unavailable on Windows. Fix already-known failing changes

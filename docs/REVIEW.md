@@ -48,10 +48,16 @@ Drafts not adopted within 2 hours are recorded in one line and dropped.
 | 10-26 18:00 | ≥38/44 | + sm_88, sm_81, sm_80 | ≤44,500 | ≤110,000 |
 | 10-27 18:00 | 44/44 | + sm_82, sm_8b | ≤35,000 | ≤104,000 |
 
-Map work is limited to the two open fixes under Codebase map; no other lane.
+Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
+- **2026-10-24 23:52 (c1fe795):** 2 agent source commits in the ~20 min since
+  8499a33, both lane B (`B:sm_94`), 0 docs-only; no stall. Milestone plan picked up
+  at once: subjects prefixed, `Score:` line present, `progress.sh` reports legacy.
+  Production 116,960 → 116,670 (incl. fda4ebd); legacy 55,342 → 55,315; verification
+  38,993 (+109); unsafe 4,962 (−3); warnings 377 lines. No lane A commit yet (24/44;
+  06:00 waypoint needs 27). Map: fixes (a)/(b) landed and render on both widths; brief done.
 - **2026-10-24 23:10 (5096059):** user asked the review to steer harder. Added
   the milestone plan above (two lanes, bank-retirement unit, scoreboard line,
   waypoints) and made it binding from PLAN.md. Power Bomb route landed (5096059)
@@ -105,6 +111,16 @@ Map work is limited to the two open fixes under Codebase map; no other lane.
   Adoption correctly held. Watch: corpus `.inputs` files are gitignored with
   only checksums committed; a fresh agent must be able to rebuild them.
 
+## Lane watch (2026-10-24 23:52)
+
+- d0d1961 is a sound bank-retirement step (−90 engine, adapter and `CollInfo`
+  record deleted, `Definitions` implemented directly on `Game`), but it moved a
+  `printf` `unsafe` block into an impl that was `#[forbid(unsafe_code)]`. Route
+  ROM-pointer warnings through a safe logger when the bank's last family goes.
+- Commit bodies are compressed to the point of code ("no-default376, source1f25").
+  Keep ~8 lines but write words: which checks ran, which segments, result.
+- Lane A has not committed since the plan; the next review counts it.
+
 ## Corpus watch (2026-10-24 22:52)
 
 - Consolidation is clean (no unsafe added, verify cfg kept behind diagnostic
@@ -119,14 +135,13 @@ Map work is limited to the two open fixes under Codebase map; no other lane.
 
 ## Codebase map (user request, 2026-10-24)
 
-**Status 19:55 (rendered 674d87a, 1440x900 and 390x844, no page errors):**
-first screen now adds a five-box work summary; status tiles, targets and Kraid
-buttons still visible without scrolling on both widths; Enter on "Kraid" opens
-`sm_a7.rs`. Remaining, in order: (a) the match and file header still say only
-`sm_a7.rs`; label bank files in game terms ("Kraid, Phantoon · sm_a7.rs").
-(b) The desktop sidebar still lists ~35 root files; collapse it by default.
-Template flat at 48 KB. The brief is otherwise met; no further map work beyond
-(a) and (b) unless the user asks.
+**Status 23:52 (rendered c1fe795, 1440x900 and 390x844, no page errors): done.**
+First screen shows status, targets and Kraid/Grapple/Doors buttons without
+scrolling on both widths; search "Kraid" → one match "Kraid · sm_a7.rs", Enter
+opens it with the game label in title and side panel; root files collapsed;
+support files hidden. Left as is: graph nodes still show raw bank names
+(`sm_82.rs`), and `sm_a7` is labelled only "Kraid" (Phantoon etc. lack aliases).
+Neither justifies more map work; Pages generates from HEAD.
 
 The user finds the [codebase map](https://jimlundin.github.io/sm-decomp/) too
 overwhelming. Reviewed at snapshot a20e890d (already behind `main`).
