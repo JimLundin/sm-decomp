@@ -22,7 +22,7 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-### Common actors / private implementation
+### Common actors / verification branch
 
 ```mermaid
 flowchart LR
@@ -30,7 +30,7 @@ flowchart LR
     AU["4,668 new bytes / union 57,041<br/>shared player scope audit PASS"]:::done --> AD
     AI["Per-instance appearance + lifecycle<br/>independent review PASS"]:::done --> AD
     AR["Typed read lookup + guarded edits<br/>design review PASS"]:::done --> AD
-    AP["Production estimate +973..3,105 lines<br/>final formatted recount pending"]:::draft --> AD
+    AP["Production +4,998 / verification +5,379<br/>accounting + retirement audit PASS"]:::done --> AD
     AD --> AS["state.rs + codec.rs"]:::draft
     AD --> AV["access.rs / typed reads + edits"]:::draft
     AD --> AE["content.rs + effects.rs"]:::draft
@@ -67,8 +67,9 @@ flowchart LR
     AANGLE --> AHOOK
     ACONTACT --> AHOOK
     AB --> AROUTEBUILD["Composed route / normal library + DLL<br/>format + compile PASS"]:::done
-    AROUTEBUILD --> AROUTE["Two-room route / case 12<br/>fixture callback abort / fixing"]:::failed
-    AVERIFY --> MUTWIRE["Hosted runner / 56 old + 17 new faults<br/>integrated / source review PASS"]:::draft
+    AROUTEBUILD --> AROUTE["Two-room routes / cases 12 + 13<br/>execution + byte audit PASS"]:::done
+    AVERIFY --> MUTWIRE["Hosted runner / 56 old + 17 new faults<br/>CI running / ed447a34"]:::active
+    ADLL --> AORACLE["21,015 frames / 10 probes<br/>0 failures + 120-frame tail / PASS"]:::done
     ADLL --> KWRITE["Kraid live-definition write + consumer<br/>PASS"]:::done
     KWRITE --> KRESTORE["Actual CPU snapshot restore<br/>definition retained / PASS"]:::done
     KRESTORE --> KRESET["Actual reset + seeded consumer<br/>definition retained / PASS"]:::done
@@ -94,7 +95,7 @@ flowchart LR
     MUTBUILD --> MF7["Alias publication"]:::pending
     MUTBUILD --> MF8["Skin / collision independence"]:::pending
     MUTBUILD --> MF9["Discarded-future handles"]:::pending
-    class AROUTEBUILD,AROUTE,MUTWIRE changed
+    class AP,AROUTE,MUTWIRE,AORACLE changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

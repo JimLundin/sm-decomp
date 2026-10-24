@@ -463,12 +463,23 @@ references; measure build/test time and resource growth before changing the loop
    single-angle-owner and contact/appearance baselines pass at sourcefc41c0af;
    independent audit confirms the seven expected panics and successful return.
    All79comparisons remain byte-identical with these verification hooks installed.
-   Composed production staging/two-room route builds (source5d09a1b8), including
-   ordinary library compilation after verification cfg fixes. Actual case12 aborts:
-   fixture AI bank A0/804C is not a valid dispatch; correcting the fixture's bank
-   and dependent script/media addresses before rerunning. Earlier source review
-   missed this distinction. Hosted runner integration preserves56existing faults
-   and adds17unique actor faults (F9 shares the epoch fault); execution pending.
+   Composed production staging/two-room cases12/13 now pass at source99f6407f,
+   with independent RAM/OAM/door-output audit. Corrected fixture AI bank A0/804C
+   to valid A2/804C with matching media/script resources; earlier source review
+   missed the AI/graphics dispatch distinction. All79comparisons, sixRuntime guards
+   and initialized Kraid case11 pass on this source. Ordinary library compilation
+   passes after verification cfg fixes. Candidate ed447a34 is published only on
+   verify/owned-actors-20261024. Hosted CI40055904563 runs56existing plus17unique
+   actor faults (F9 shares the epoch fault); no mutation kill claimed yet. Selected
+   ten-probe oracle replay passes21015frames with zero failures and120frames after
+   actual Landing Site actor emission. Formatted production grows4998lines beyond
+   the earlier estimate; verificationRust grows5379separately. Independent cost and
+   complete caller-retirement audit passes. This is ownership migration, not a net
+   source reduction: actor rules3187lines, state/access/codec910, content/identity/
+   media2162 and actor adapters/API1160 replace3351old module/bank lines, with930
+   additional integration lines. Repeated movement-result and distance conversions
+   remain a concrete next consolidation opportunity; do not remove safety checks
+   or disguise adapters to fit the original estimate.
    Preserve56existing mutants and add the
    nine selected actor faults, including discarded-future handle rejection.
    Scope includes population/assets, spawn/respawn/death, separate select/update,
