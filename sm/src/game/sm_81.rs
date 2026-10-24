@@ -437,7 +437,9 @@ pub unsafe fn GameOverMenu_4_Main(game: &mut Game) {
                 } else {
                     word!(game.menu_index += 1);
                 }
-                LoadFromSram(word!(game.selected_save_slot), game);
+                let _load_result = LoadFromSram(word!(game.selected_save_slot), game);
+                #[cfg(sm_verify_dll)]
+                crate::flags_save_observer::selected_continue(_load_result);
             }
             return;
         }

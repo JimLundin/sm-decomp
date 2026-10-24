@@ -39,8 +39,9 @@ already-known failing change before further adoption. Local results gate adoptio
    main pickups, doors/elevators, save/load, death and credits. Report results and rooms.
    Commit only recipes. Preserve input/NMI timing; no guessed lag/offset changes.
    Each adoption names segments exercising changed behavior and downstream effects.
-   Current recipes: 15/44 required checks pass; 29 remain pending. The additional
-   in-memory save check passes too; the complete corpus is still unfinished.
+   Current recipes: 21/44 required checks pass; 23 remain pending. Two additional
+   checks (in-memory save and upward elevator) pass too; the corpus is unfinished.
+   Next coverage candidate: Ice Beam; current-source qualification is pending.
 2. **Next - consolidate existing owned subsystems.** Resume only after the corpus.
    Report added production and deleted legacy lines together; net growth needs a
    reason. Get production below 110,000 before starting another subsystem. Reuse
@@ -68,7 +69,7 @@ The complete input draft `e956dffa` is held, not adopted. Preserve its checked
 source/reference snapshots and audits under
 `%LOCALAPPDATA%/sm-decomp-experiments/20261024/player-input-*`; do not rerun or
 replace them without a source/coverage reason. Reprice/revalidate it against the
-then-current base before adoption. Latest checked source: `1ee6978a` (partial corpus).
+then-current base before adoption. Latest checked source: `992845a3` (partial corpus).
 
 ## Implementation rules
 

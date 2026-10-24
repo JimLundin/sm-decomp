@@ -98,6 +98,7 @@ ROUTES = {
     'early-supers-door': (68096, 'cc6c83bd7f3a3925a520bd4bbda2bb8c2cefc3287f1625d91d9d95d9faf35125'),
     'super-missiles': (69700, '26ceb1e7ee4bcd20821a09d80d518566755626bf5d4b344b9ea8e2dbb0ae846a'),
     'green-brinstar-save': (71800, 'e060c7f2408b95180cdd98c091821775e3c0c279c89131256962ddd68d0b4554'),
+    'save-death-continue': (76064, 'af79d24c791c1414cd4b1b83f040da0787a2a69bd0d2c4d6b73fc667b7d74467'),
     'charge-beam': (78380, '9e7a8563adf61d0b1a62f864664df066d64fc7abcfa3cd3c08be60926c36d983'),
     'red-tower': (85800, '45bebd810937cf03267f5a053c7e5dd9cf002ad3f46f34cab2eb5bc68a3d411e'),
     'redtower-shaft-open': (86483, 'bebda37ee6cf6d8236f36719cb9e04b5ab65abefe070e49088d9e1df175947cb'),
@@ -910,6 +911,10 @@ def route_frames(source, name):
         for milestone, a in extend(a):
             if milestone == name:
                 return a
+    if name == 'save-death-continue':
+        # Retain the saved-slot route through observed contact input 72760.
+        # Authored idle exposure, then fresh A presses for Continue and both maps.
+        return a[:72761] + _holds('None:1800 A:1 None:300 A:1 None:300 A:1 None:900')
     if name == 'speed-booster-settled':
         # Authored follow-up: release all buttons after the late pickup message.
         return extend_redtower(a) + _hold('', 120)

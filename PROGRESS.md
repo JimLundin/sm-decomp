@@ -2,7 +2,7 @@
 
 ```mermaid
 flowchart LR
-    NOW["NOW · Game checkpoints<br/>15 / 44 required checks pass"]:::active
+    NOW["NOW · Game checkpoints<br/>21 / 44 checks pass<br/>Next route: Ice Beam"]:::active
     NEXT["NEXT · Delete duplicate logic<br/>Production below 110k lines"]:::pending
     GAIN["THEN · Owned, independent engine<br/>Safe gameplay · own video/audio"]:::pending
     TARGET["TARGET · Map Rando<br/>Custom rooms · sprites · optional QoL"]:::pending
@@ -15,12 +15,12 @@ flowchart LR
 
 | Measure | Count |
 | --- | ---: |
-| Production Rust lines* | 117911 |
-| Verification Rust lines | 36308 |
-| Total Rust | 154219 |
+| Production Rust lines* | 117913 |
+| Verification Rust lines | 37429 |
+| Total Rust | 155342 |
 | Lines containing `unsafe` | 5042 |
 | Warnings (no-default library) | 482 |
-| Required checkpoint checks passing | 15/44 |
+| Required checkpoint checks passing | 21/44 |
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 

@@ -64,11 +64,21 @@ pending = "The current route does not reach this area; add an exercised route se
 
 [[segment]]
 id = "boss-ceres-ridley"
-pending = "Route exists, but Ceres encounter/escape completion needs a fresh encounter-to-escape observer; this is not Norfair Ridley defeat."
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 13700
+frames = 2300
+expect = ["encounter:ceres-ridley"]
+after_expectations = 120
 
 [[segment]]
 id = "boss-bomb-torizo"
-pending = "Route exists, but a fresh fight/death observation must accompany the boss-bit edge; room presence or a preloaded flag is insufficient."
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 50329
+frames = 2491
+expect = ["boss:bomb-torizo"]
+after_expectations = 120
 
 [[segment]]
 id = "boss-spore-spawn"
@@ -267,15 +277,41 @@ pending = "No qualified capacity-increase, message-completion and follow-up segm
 
 [[segment]]
 id = "door-transition"
-pending = "Need an observed admission-to-destination completion episode; door coroutine entry or destination room presence alone is insufficient."
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 13600
+frames = 290
+expect = ["door:E0B5"]
+after_expectations = 120
 
 [[segment]]
 id = "elevator-traversal"
-pending = "Need an observed elevator departure, room transition and landed/unlocked destination; arrival or a zero status alone is insufficient."
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 26290
+frames = 860
+expect = ["elevator:9E9F"]
+after_expectations = 120
+
+[[segment]]
+id = "elevator-up"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 34340
+frames = 840
+expect = ["elevator:97B5"]
+after_expectations = 120
 
 [[segment]]
 id = "save-death-reload"
-pending = "Route includes in-memory save, but no authored death/reload suffix or successful reload completion observation; in-memory SRAM is not disk persistence."
+inputs = "corpus-save-death-continue.inputs"
+input_sha256 = "af79d24c791c1414cd4b1b83f040da0787a2a69bd0d2c4d6b73fc667b7d74467"
+start_frame = 70000
+frames = 6064
+require_hit = ["save.sram.committed", "save.continue.restored"]
+after_hits = 120
+expect = ["save-death-continue"]
+after_expectations = 120
 
 # Additional diagnostic; does not satisfy the required save-death-reload scenario.
 [[segment]]
@@ -291,7 +327,12 @@ after_expectations = 120
 
 [[segment]]
 id = "death"
-pending = "No authored fresh death sequence through game-over and its follow-up menu frames."
+inputs = "corpus-save-death-continue.inputs"
+input_sha256 = "af79d24c791c1414cd4b1b83f040da0787a2a69bd0d2c4d6b73fc667b7d74467"
+start_frame = 72761
+frames = 1000
+expect = ["death"]
+after_expectations = 120
 
 [[segment]]
 id = "credits"

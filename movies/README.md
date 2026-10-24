@@ -170,6 +170,7 @@ Generate the shared authored route from the any% movie above, then run the corpu
 ```powershell
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-speed-booster.inputs --rom rom/sm.smc --route speed-booster
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-speed-booster-settled.inputs --rom rom/sm.smc --route speed-booster-settled
+python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-save-death-continue.inputs --rom rom/sm.smc --route save-death-continue
 python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --direct
 ```
 
@@ -198,7 +199,14 @@ Ordinary pickup rows require a newly observed award, actual message completion a
 120 follow-up frames. Varia waits for its award and restored player handlers instead.
 Kraid requires fresh defeat state plus actual death/background completion probes.
 Loaded inventory or boss flags cannot satisfy event expectations. Door/elevator
-completion, save-death-reload, missing bosses/items/areas and credits remain explicit
-gaps until their own routes and completion checks exist. The additional `save-memory`
-check covers in-memory SRAM/checksum completion, not disk persistence or reload.
+checks require fresh departure through arrival and, for elevators, unlocked landing.
+Ceres requires combat through the escape trigger; Bomb Torizo requires observed
+damage, death entry and the later completion flag. These do not cover every attack.
+`save-death-continue` requires both named save/restore probes and an ordered fresh
+save, death, Game Over, successful selected-slot restore and normal gameplay in the
+saved room. Its authored input has 76,064 frames and SHA256
+`af79d24c791c1414cd4b1b83f040da0787a2a69bd0d2c4d6b73fc667b7d74467`.
+This covers in-memory SRAM restoration; disk persistence remains unverified.
+The additional `save-memory` check covers the save/checksum write alone.
+Missing bosses/items/areas and credits remain explicit gaps.
 The `credits` expectation observes script progress; it does not prove the entire roll completed.

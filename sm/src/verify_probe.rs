@@ -70,6 +70,17 @@ pub fn all_hit_frame() -> Option<usize> {
     })
 }
 
+/// Latest hit of an explicitly requested probe; setup/checkpoint loads reset it.
+pub fn last_hit_frame(name: &str) -> Option<usize> {
+    PROBES.with(|slot| {
+        slot.borrow()
+            .required
+            .get(name)
+            .filter(|hits| hits.calls != 0)
+            .map(|hits| hits.last_frame)
+    })
+}
+
 pub fn report() -> Result<(), String> {
     PROBES.with(|slot| {
         let probes = slot.borrow();

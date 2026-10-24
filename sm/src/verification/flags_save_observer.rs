@@ -23,6 +23,13 @@ pub fn observe(stage: u8, game: &Game) {
         }
     });
 }
+/// Called only by the selected-slot Yes branch of the Game Over menu.
+/// Slot scans and failed checksums cannot qualify a successful Continue.
+pub fn selected_continue(load_result: u8) {
+    if load_result == 0 {
+        crate::verify_probe::hit("save.continue.restored");
+    }
+}
 pub fn take() -> Result<Vec<u8>, String> {
     CAPTURE.with(|capture| match capture.borrow_mut().take() {
         Some((output, 7)) => Ok(output),
