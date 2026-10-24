@@ -2,41 +2,8 @@
 #![forbid(unsafe_code)]
 use super::{
     Host, content,
-    host::{Drawing, PaletteEffect, PlayerStep},
+    host::{Drawing, PlayerStep},
 };
-use crate::game::beam_charge_palette::{self as shared, Field, Input, Output};
-
-struct Palette;
-impl<'a, H: Host> shared::Context<&'a mut H> for Palette {
-    fn field(&self, h: &&'a mut H, field: Field) -> u16 {
-        match field {
-            Field::Glow => h.session().projectiles.controls.glow,
-            Field::Phase => h.session().projectiles.controls.charge_palette,
-        }
-    }
-    fn set_field(&mut self, h: &mut &'a mut H, field: Field, value: u16) {
-        match field {
-            Field::Glow => h.session_mut().projectiles.controls.glow = value,
-            Field::Phase => h.session_mut().projectiles.controls.charge_palette = value,
-        }
-    }
-    fn input(&self, h: &&'a mut H, input: Input) -> u16 {
-        match input {
-            Input::Hyper => h.inputs().hyper,
-            Input::GrappleInactive => u16::from(h.session().player.grapple == 0xc4f0),
-            Input::Charge => h.session().projectiles.controls.charge,
-            Input::ContactAttack => u16::from(h.session().player.contact.contact_attack == 4),
-            Input::Suit => h.session().player.palette.suit_index,
-        }
-    }
-    fn output(&mut self, h: &'a mut H, output: Output) -> (&'a mut H, u8) {
-        let result = h.palette(PaletteEffect::Charge(output));
-        (h, result)
-    }
-}
-pub fn palette(h: &mut impl Host) -> u8 {
-    shared::advance(h, &mut Palette).1
-}
 pub fn movement_sound(h: &mut impl Host) {
     if h.session().projectiles.controls.resume_sound & 0x8000 != 0 {
         h.session_mut().projectiles.controls.resume_sound = 1;

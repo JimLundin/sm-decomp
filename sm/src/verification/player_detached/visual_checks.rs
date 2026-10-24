@@ -1,6 +1,6 @@
 //! Real visual producers and consumers operate on the same gameplay Session.
 use super::game::{
-    player_projectiles as player, samus_palette as samus,
+    samus_palette as samus,
     visual_state::{PaletteBuffer, Upload},
 };
 use super::{Composed, Event, World, animated, colors, room};
@@ -271,7 +271,7 @@ fn samus_shared_paths() {
     h.world.player.projectiles.controls.charge_palette = 2;
     words(&h, 0x91, &[(0xd7d9, 0x9000), (0x9002, 0x9900)]);
     fill_suit(&h, 0x9900, 0x200);
-    assert_eq!(player::charge_palette(&mut h), 0);
+    assert_eq!(samus::charge_feedback(&mut h), 0);
     assert_eq!(
         h.world.player.visual.colors[192], 0x200,
         "visual.composition.charge_actual_output"
@@ -282,7 +282,7 @@ fn samus_shared_paths() {
     h.world.player_inputs.blending_config = 40;
     h.world.player.player.palette.visor_timer = 1;
     h.word(0x9b, 0xa3c0, 0x3456);
-    player::charge_palette(&mut h);
+    samus::charge_feedback(&mut h);
     assert_eq!(
         (
             h.world.player.visual.colors[196],
@@ -361,6 +361,258 @@ fn samus_carry() {
         );
     }
 }
+fn charge_fixture() -> Composed {
+    let mut h = Composed::new();
+    h.world.player.player.grapple = 0xc4f0;
+    h.world.player.player.palette.suit_index = 5;
+    h.world.player.player.contact.contact_attack = 3;
+    h.world.player.projectiles.controls.charge = 60;
+    h.world.player.projectiles.controls.charge_palette = 2;
+    h.world.player.visual.colors.fill(0x7777);
+    h.world.player.visual.targets.fill(0x5555);
+    words(
+        &h,
+        0x91,
+        &[
+            (0xd7d9, 0x9000),
+            (0xd803, 0x9020),
+            (0x9002, 0x9800),
+            (0x9008, 0x9800),
+            (0x900a, 0x9800),
+            (0x9022, 0x9820),
+            (0xd82b, 0x9840),
+            (0xd847, 0x9860),
+            (0xd72b, 0x9880),
+            (0xd9a2, 0x98a0),
+        ],
+    );
+    // Tables and dynamic charge pointers are Loaded; suit bytes are Native.
+    h.transition_contract.loaded_image = Some(h.image.clone());
+    h.image = super::RomImage::zeroed(0x100000);
+    // Wrong Native indirection stays valid, so provenance faults reach assertions.
+    words(
+        &h,
+        0x91,
+        &[
+            (0x9002, 0x9820),
+            (0x9008, 0x9820),
+            (0x900a, 0x9820),
+            (0x9022, 0x9800),
+        ],
+    );
+    for (address, first) in [
+        (0x9800, 0x200),
+        (0x9820, 0x300),
+        (0x9840, 0x400),
+        (0x9860, 0x500),
+        (0x9880, 0x600),
+        (0x98a0, 0x700),
+    ] {
+        fill_suit(&h, address, first);
+    }
+    h
+}
+fn charge_glow() {
+    // Literal results distinguish odd hyper ticks, the 0x1e mask and restore.
+    for (hyper, glow, result, remaining, color) in [
+        (0, 1, 1, 0, 0),
+        (0, 2, 0, 1, 1023),
+        (0, 0xffff, 0, 0xfffe, 1023),
+        (1, 1, 0, 0, 0),
+        (1, 2, 0, 1, 0x400),
+        (1, 30, 0, 29, 0x500),
+        (1, 32, 1, 0, 0),
+        (1, 34, 0, 33, 0x400),
+        (1, 0xffff, 0, 0xfffe, 0),
+    ] {
+        let mut h = charge_fixture();
+        h.world.player_inputs.hyper = hyper;
+        h.world.player.projectiles.controls.glow = glow;
+        let mut expected = h.world.clone();
+        expected.player.projectiles.controls.glow = remaining;
+        if color == 1023 {
+            expected.player.visual.colors[193..208].fill(1023);
+        } else if color != 0 {
+            for i in 0..16 {
+                expected.player.visual.colors[192 + i] = color + i as u16;
+            }
+        }
+        assert_eq!(
+            samus::charge_feedback(&mut h),
+            result,
+            "charge.glow.return.{hyper}.{glow}"
+        );
+        assert_eq!(h.world, expected, "charge.glow.owner.{hyper}.{glow}");
+        assert_eq!(
+            h.visual_records.len(),
+            usize::from(hyper != 0 && color != 0),
+            "charge.glow.lazy_content.{hyper}.{glow}"
+        );
+    }
+}
+fn charge_held() {
+    use super::game::visual_host::Source;
+    for (charge, grapple, contact, phase, next, color) in [
+        (59, 0xc4f0, 3, 2, 0, 0),
+        (60, 0xc4f0, 3, 8, 10, 0x200),
+        (60, 0xc4f0, 3, 10, 0, 0x200),
+        (60, 0xc4f0, 4, 2, 4, 0x300),
+        (0x803b, 0xc4f0, 3, 2, 4, 0x200),
+        (0x803c, 0xc4f0, 3, 2, 0, 0),
+        (60, 0xc4f1, 3, 2, 0, 0),
+    ] {
+        let mut h = charge_fixture();
+        h.world.player.projectiles.controls.charge = charge;
+        h.world.player.projectiles.controls.charge_palette = phase;
+        h.world.player.player.grapple = grapple;
+        h.world.player.player.contact.contact_attack = contact;
+        let mut expected = h.world.clone();
+        expected.player.projectiles.controls.charge_palette = next;
+        if color == 0 {
+            expected.player.player.palette.visor_timer = 1537;
+        } else {
+            for i in 0..16 {
+                expected.player.visual.colors[192 + i] = color + i as u16;
+            }
+        }
+        assert_eq!(samus::charge_feedback(&mut h), 0);
+        assert_eq!(
+            h.world, expected,
+            "charge.held.owner.{charge}.{contact}.{phase}"
+        );
+        let records = if color == 0 {
+            vec![]
+        } else {
+            vec![
+                (
+                    Source::Loaded,
+                    0x91,
+                    if contact == 4 { 0x9022 } else { 0x9000 + phase },
+                ),
+                (
+                    Source::Native,
+                    0x9b,
+                    if contact == 4 { 0x9820 } else { 0x9800 },
+                ),
+            ]
+        };
+        assert_eq!(h.visual_records, records, "charge.held.provenance");
+    }
+}
+fn charge_live() {
+    use super::game::visual_host::Source;
+    let mut h = charge_fixture();
+    h.world.player_inputs.hyper = 1;
+    h.world.player.projectiles.controls.glow = 2;
+    h.on_visual_record = Some(|h, source, bank, address| {
+        assert_eq!((source, bank, address), (Source::Native, 0x9b, 0x9840));
+        assert_eq!(h.world.player.projectiles.controls.glow, 2);
+        h.world.player.projectiles.controls.glow = 0;
+    });
+    let mut expected = h.world.clone();
+    expected.player.projectiles.controls.glow = 0xffff;
+    for i in 0..16 {
+        expected.player.visual.colors[192 + i] = 0x400 + i as u16;
+    }
+    assert_eq!(samus::charge_feedback(&mut h), 0);
+    assert_eq!(h.world, expected, "charge.live.glow_after_copy");
+    let mut h = charge_fixture();
+    h.on_visual_record = Some(|h, source, bank, address| {
+        if source == Source::Loaded {
+            assert_eq!((bank, address), (0x91, 0x9002));
+            h.world.player.player.contact.contact_attack = 4;
+            h.world.player.player.palette.suit_index = 0;
+            h.world.player.projectiles.controls.charge_palette = 8;
+        } else {
+            assert_eq!((bank, address), (0x9b, 0x9800));
+            assert_eq!(h.world.player.projectiles.controls.charge_palette, 8);
+            h.world.player.projectiles.controls.charge_palette = 10;
+        }
+    });
+    let mut expected = h.world.clone();
+    expected.player.player.contact.contact_attack = 4;
+    expected.player.player.palette.suit_index = 0;
+    expected.player.projectiles.controls.charge_palette = 0;
+    for i in 0..16 {
+        expected.player.visual.colors[192 + i] = 0x200 + i as u16;
+    }
+    assert_eq!(samus::charge_feedback(&mut h), 0);
+    assert_eq!(h.world, expected, "charge.live.phase_after_copy");
+    assert_eq!(
+        h.visual_records,
+        [
+            (Source::Loaded, 0x91, 0x9002),
+            (Source::Native, 0x9b, 0x9800)
+        ],
+        "charge.live.captured_selectors"
+    );
+}
+fn charge_failure() {
+    use super::game::visual_host::Source;
+    for hyper in [0, 1] {
+        let mut h = charge_fixture();
+        h.world.player_inputs.hyper = hyper;
+        h.world.player.projectiles.controls.glow = if hyper == 0 { 0 } else { 2 };
+        let source = if hyper == 0 { 0x9800 } else { 0x9840 };
+        // 31 available bytes: the whole 32-byte source must precede any color write.
+        h.image = super::RomImage::zeroed(0x1b * 0x8000 + (source & 0x7fff) + 31);
+        let before = h.world.clone();
+        let error = catch_unwind(AssertUnwindSafe(|| samus::charge_feedback(&mut h)))
+            .expect_err("charge short suit source must fail");
+        let reason = error
+            .downcast_ref::<&str>()
+            .copied()
+            .or_else(|| error.downcast_ref::<String>().map(String::as_str));
+        assert_eq!(
+            reason,
+            Some("prepared visual record extent"),
+            "charge.failure.reason"
+        );
+        assert_eq!(h.world, before, "charge.failure.owner_prefix.{hyper}");
+        let mut records = vec![];
+        if hyper == 0 {
+            records.push((Source::Loaded, 0x91, 0x9002));
+        }
+        records.push((Source::Native, 0x9b, source as u16));
+        assert_eq!(
+            h.visual_records, records,
+            "charge.failure.content_prefix.{hyper}"
+        );
+    }
+}
+fn charge_caller() {
+    use super::game::visual_host::Source;
+    let mut h = charge_fixture();
+    h.world.player.projectiles.controls.glow = 1;
+    h.world.player.player.shine_tick = 3; // Deliberately invalid if dispatch runs.
+    h.world.player.player.palette.hurt_flash = 8;
+    let mut expected = h.world.clone();
+    expected.player.projectiles.controls.glow = 0;
+    expected.player.player.palette.hurt_flash = 9; // Unconditional final misc.
+    for i in 0..16 {
+        expected.player.visual.colors[192 + i] = 0x600 + i as u16;
+    }
+    samus::advance(&mut h);
+    assert_eq!(h.world, expected, "charge.caller.restore_skips_dispatch");
+    assert_eq!(h.visual_records, [(Source::Native, 0x9b, 0x9880)]);
+    let mut h = charge_fixture();
+    h.world.player.projectiles.controls.glow = 2;
+    h.world.player.player.special_palette_flags = 0x8000;
+    h.world.player.player.shine_tick = 3;
+    h.world.player.player.palette.timer = 3;
+    let mut expected = h.world.clone();
+    expected.player.player.palette.timer = 2;
+    for i in 0..16 {
+        expected.player.visual.colors[192 + i] = 0x700 + i as u16;
+    }
+    samus::advance(&mut h);
+    assert_eq!(
+        h.world, expected,
+        "charge.caller.flag_skips_charge_runs_misc"
+    );
+    assert_eq!(h.visual_records, [(Source::Native, 0x9b, 0x98a0)]);
+}
+
 pub(super) fn run_selected(case: &str) {
     match case {
         "eye" => eye_then_palette(),
@@ -370,6 +622,11 @@ pub(super) fn run_selected(case: &str) {
         "upload_failure" => upload_failure(),
         "samus" => samus_shared_paths(),
         "samus_carry" => samus_carry(),
+        "charge_glow" => charge_glow(),
+        "charge_held" => charge_held(),
+        "charge_live" => charge_live(),
+        "charge_failure" => charge_failure(),
+        "charge_caller" => charge_caller(),
         _ => panic!("unknown visual composition case"),
     }
 }
@@ -382,6 +639,11 @@ pub(super) fn run() {
         "upload_failure",
         "samus",
         "samus_carry",
+        "charge_glow",
+        "charge_held",
+        "charge_live",
+        "charge_failure",
+        "charge_caller",
     ] {
         run_selected(case);
     }

@@ -57,9 +57,6 @@ impl Host for Composed {
                 );
                 0
             }
-            PaletteEffect::Charge(output) => {
-                super::game::samus_palette::apply_charge_output(self, output)
-            }
         }
     }
     fn enable_hdma(&mut self) {

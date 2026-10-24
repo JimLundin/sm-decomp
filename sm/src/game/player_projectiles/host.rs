@@ -19,7 +19,6 @@ pub enum PlayerStep {
 pub enum PaletteEffect {
     Suit,
     SuitTarget,
-    Charge(crate::game::beam_charge_palette::Output),
     Spawn(u16),
 }
 #[derive(Clone, Copy)]

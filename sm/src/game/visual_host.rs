@@ -75,7 +75,6 @@ pub enum StatueProjectile {
 pub trait Composition {
     fn spawn_palette(&mut self, definition: u16);
     fn spawn_statue_projectile(&mut self, kind: StatueProjectile, parameter: u16);
-    fn advance_charge_palette(&mut self) -> u8;
 }
 pub trait Host:
     SessionAccess + Content + Aliases + Effects + Composition + crate::game::gameplay_flag_host::Host

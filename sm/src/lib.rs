@@ -345,8 +345,6 @@ pub mod game {
     }
     pub(crate) mod special_geometry;
 
-    pub(crate) mod beam_charge_palette;
-
     pub(crate) mod beam_definitions;
 
     pub(crate) mod beam_windows;

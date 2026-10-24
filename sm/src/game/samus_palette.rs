@@ -1,7 +1,6 @@
 //! Samus palette phases share the actual visual, player and inventory owner.
 #![forbid(unsafe_code)]
 use crate::game::{
-    beam_charge_palette::Output,
     liquid_surface::{self, LiquidAtHeight},
     session::Session,
     visual_host::{Host, Record, Source},
@@ -99,7 +98,7 @@ fn frame_palette(h: &mut impl Host, table: u32) {
 pub(crate) fn advance(h: &mut impl Host) {
     h.probe("samus.palette.entry");
     if h.session().player.special_palette_flags & 0x8000 == 0 {
-        let restore = if h.advance_charge_palette() & 1 != 0 {
+        let restore = if charge_feedback(h) & 1 != 0 {
             true
         } else {
             #[cfg(sm_verify_dll)]
@@ -513,34 +512,79 @@ pub(crate) fn write_beam_palette(h: &mut impl Host, table_index: u16) {
             u16::from_le_bytes(color.to_ne_bytes());
     }
 }
-pub(crate) fn apply_charge_output(h: &mut impl Host, output: Output) -> u8 {
-    let source = match output {
-        Output::Hyper(phase) => {
-            let record = h.table(Source::Loaded, 0x91d829);
-            record.native_word(usize::from(phase) * 2)
+/// Charge and glow colors share this owner with the later Samus palette phases.
+pub(crate) fn charge_feedback(h: &mut impl Host) -> u8 {
+    if h.session().projectiles.controls.glow != 0 {
+        h.probe("samus.palette.charge.glow");
+        if h.inputs().hyper != 0 {
+            if h.session().projectiles.controls.glow & 1 == 0 {
+                if h.session().projectiles.controls.glow & 0x1e == 0 {
+                    h.session_mut().projectiles.controls.glow = 0;
+                    return 1;
+                }
+                let phase = (h.session().projectiles.controls.glow & 0x1e) >> 1;
+                let source = {
+                    let record = h.table(Source::Loaded, 0x91d829);
+                    record.native_word(usize::from(phase) * 2)
+                };
+                copy_suit(h, PaletteBuffer::Current, source);
+            }
+            // Color lookup can change the owner; decrement its current glow.
+            let glow = h.session().projectiles.controls.glow.wrapping_sub(1);
+            h.session_mut().projectiles.controls.glow = glow;
+            return 0;
         }
-        Output::Charge {
-            contact_attack,
-            suit,
-            phase,
-        } => {
+        let glow = h.session().projectiles.controls.glow.wrapping_sub(1);
+        h.session_mut().projectiles.controls.glow = glow;
+        if h.session().projectiles.controls.glow == 0 {
+            return 1;
+        }
+        for index in (193..208).rev() {
+            h.session_mut().visual.colors[index] = 1023;
+        }
+        return 0;
+    }
+    if h.session().player.grapple == 0xc4f0
+        && h.session().projectiles.controls.charge != 0
+        && h.session().projectiles.controls.charge.wrapping_sub(60) & 0x8000 == 0
+    {
+        h.probe("samus.palette.charge.held");
+        // Capture the output selectors before either content lookup can reenter.
+        let contact_attack = h.session().player.contact.contact_attack == 4;
+        let suit = h.session().player.palette.suit_index;
+        let phase = h.session().projectiles.controls.charge_palette;
+        let source = {
             let record = h.table(
                 Source::Loaded,
                 if contact_attack { 0x91d7ff } else { 0x91d7d5 },
             );
             let base = record.native_word(usize::from(suit >> 1) * 2);
-            // This dynamic lookup is loaded, unlike frame_palette's native lookup.
+            // Charge's dynamic lookup is loaded; frame_palette uses native records.
             h.record(Source::Loaded, 0x91, base.wrapping_add(phase))
                 .native_word(0)
-        }
-        Output::Highlight => {
-            for index in (193..208).rev() {
-                h.session_mut().visual.colors[index] = 1023;
-            }
-            return 0;
-        }
-        Output::Visor => return visor(h),
-    };
-    copy_suit(h, PaletteBuffer::Current, source);
-    0
+        };
+        copy_suit(h, PaletteBuffer::Current, source);
+        let phase = if h
+            .session()
+            .projectiles
+            .controls
+            .charge_palette
+            .wrapping_sub(10)
+            & 0x8000
+            == 0
+        {
+            0
+        } else {
+            h.session()
+                .projectiles
+                .controls
+                .charge_palette
+                .wrapping_add(2)
+        };
+        h.session_mut().projectiles.controls.charge_palette = phase;
+        0
+    } else {
+        h.session_mut().projectiles.controls.charge_palette = 0;
+        visor(h)
+    }
 }

@@ -140,9 +140,6 @@ impl visual_host::Composition for Runtime<'_> {
         };
         enemy_projectiles::lifecycle::spawn_room(self, definition as u16, parameter);
     }
-    fn advance_charge_palette(&mut self) -> u8 {
-        player_projectiles::feedback::palette(self)
-    }
 }
 impl visual_host::Host for Runtime<'_> {}
 #[path = "../verification/animated_runtime_checks.rs"]

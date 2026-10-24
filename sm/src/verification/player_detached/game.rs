@@ -1,7 +1,5 @@
 #[path = "actors.rs"]
 pub(crate) mod actors;
-#[path = "../../game/beam_charge_palette.rs"]
-pub(crate) mod beam_charge_palette;
 #[path = "../../game/beam_definitions.rs"]
 pub(crate) mod beam_definitions;
 #[path = "../../game/launch_motion.rs"]

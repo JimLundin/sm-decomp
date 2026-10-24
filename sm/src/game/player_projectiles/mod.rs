@@ -90,9 +90,6 @@ pub(crate) fn movement_sound(game: &mut Game) {
 pub(crate) fn restore_sound(game: &mut Game) {
     feedback::restore_sound(&mut Runtime::new(game));
 }
-pub(crate) fn charge_palette(game: &mut Game) -> u8 {
-    feedback::palette(&mut Runtime::new(game))
-}
 pub(crate) fn deselect(game: &mut Game) -> u8 {
     preparation::deselect(&mut Runtime::new(game));
     0

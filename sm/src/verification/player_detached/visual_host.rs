@@ -14,8 +14,13 @@ impl Record for RomRecord {
         RomRecord::word(self, offset)
     }
     fn bytes<const N: usize>(&self, offset: usize) -> [u8; N] {
-        let start = self.base.checked_add(offset).expect("prepared visual record overflow");
-        let end = start.checked_add(N).expect("prepared visual record extent overflow");
+        let start = self
+            .base
+            .checked_add(offset)
+            .expect("prepared visual record overflow");
+        let end = start
+            .checked_add(N)
+            .expect("prepared visual record extent overflow");
         assert!(end <= self.image.len(), "prepared visual record extent");
         core::array::from_fn(|i| self.image.read(start + i))
     }
@@ -33,6 +38,9 @@ impl Content for Composed {
             assert!(address & 0x8000 != 0, "unprepared visual low-window record");
         }
         self.visual_records.push((source, bank, address));
+        if let Some(callback) = self.on_visual_record {
+            callback(self, source, bank, address);
+        }
         RomRecord {
             image: self.transition_image(source),
             base: usize::from(bank & 0x7f) * 0x8000 + usize::from(address & 0x7fff),
@@ -132,9 +140,6 @@ impl Composition for Composed {
             StatueProjectile::Soul => 0xba94,
         };
         super::game::enemy_projectiles::spawn_room(self, definition, parameter);
-    }
-    fn advance_charge_palette(&mut self) -> u8 {
-        super::game::player_projectiles::charge_palette(self)
     }
 }
 impl Host for Composed {}

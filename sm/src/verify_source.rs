@@ -420,10 +420,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/animated_tiles/native.rs"),
     ),
     (
-        "sm/src/game/beam_charge_palette.rs",
-        include_bytes!("game/beam_charge_palette.rs"),
-    ),
-    (
         "sm/src/game/beam_definitions.rs",
         include_bytes!("game/beam_definitions.rs"),
     ),

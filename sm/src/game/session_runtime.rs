@@ -310,7 +310,6 @@ impl Host for Runtime<'_> {
                 crate::game::palette_effects::execution::spawn(self, definition);
                 0
             }
-            PaletteEffect::Charge(output) => samus_palette::apply_charge_output(self, output),
         }
     }
     fn enable_hdma(&mut self) {
