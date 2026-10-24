@@ -8,6 +8,13 @@ earlier versions; this file holds only current findings.
 
 ## Check-ins
 
+- **2026-10-24 17:52 (2f18ba6):** 1 agent source commit since a1d8ee2
+  (a56fdd1: Maridia + Ice-return recipes, Python/TOML only), 1 docs-only
+  (PROGRESS graph rewrite) = 50%. No stall, but corpus slowed 7 → 1 check/hour
+  (23/44). Production 117,913 flat (third check-in without decline);
+  verification 37,429, unsafe 5,042 flat; warnings 430 unique. PLAN.md 212 lines.
+  Map: unchanged, brief not started (2nd check-in); rendered, Kraid search still
+  lists only verification files. Changed: consolidation now runs in parallel.
 - **2026-10-24 16:52 (a1d8ee2):** 2 agent source commits since 0ac7280, 0
   docs-only; no stall. Corpus 15 → 22/44 (+Bomb Torizo, Ceres, doors/elevator,
   save/death/continue, Ice Beam), zero failing frames. Production 117,986 →
@@ -20,7 +27,21 @@ earlier versions; this file holds only current findings.
   Adoption correctly held. Watch: corpus `.inputs` files are gitignored with
   only checksums committed; a fresh agent must be able to rebuild them.
 
-## Corpus watch (2026-10-24 16:52)
+## Corpus watch (2026-10-24 17:52)
+
+- Throughput: the imported any% TAS desyncs from this runtime, so every
+  remaining check needs a hand-authored continuation (`tools/movie_inputs.py`
+  `extend_*`). The last hour landed one check; 21 remain, including endgame
+  and credits. Serialising consolidation behind that is the main reason
+  production has not moved for three check-ins, so it now runs in parallel.
+- Option for the user: a measured input-timing alignment (lag-frame map from
+  the reference emulator, not a guessed offset) might let the imported TAS
+  reach credits and replace most hand-authoring. PLAN forbids guessed changes;
+  a measured one would need the user's go-ahead.
+- PROGRESS.md's graph was rewritten again in its own commit (2f18ba6). Update
+  it inside the code commit that changes the status, not separately.
+
+## Corpus watch (2026-10-24 16:52, earlier)
 
 - Good: one coverage route per commit, accounting in every message, no ROM
   files, the single new production hook is `cfg`-gated and counted.
