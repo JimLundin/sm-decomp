@@ -90,10 +90,14 @@ The complete input draft `e956dffa` is held, not adopted. Preserve its checked
 source/reference snapshots and audits under
 `%LOCALAPPDATA%/sm-decomp-experiments/20261024/player-input-*`; do not rerun or
 replace them without a source/coverage reason. Reprice/revalidate it against the
-then-current base before adoption. Latest library checks: `022dd11d`, three unused
-projectile helpers retired (-26 production lines). Last behavior change: `5a4def1e`,
-shared actor movement (-18): 44 existing cases, all four movement branches in Bomb
-Torizo (1,664 frames, zero failures), three compiling faults caught. Corpus unfinished.
+then-current base before adoption. Latest checks: `2de4d058`, 49 compiler-proven
+unnecessary unsafe blocks removed; normal/DLL builds and 20 verifier tests pass.
+Warnings 482 -> 433; 42 generic-macro unsafe warnings remain. Line-count shifts
+are formatting only. Last logic reductions remain projectile helpers -26 and
+actor movement -18. Shared projectile slot access is the next consolidation.
+Snapshot comparison separation is verified but held at `2a3c7792` on
+`draft/snapshot-comparison-2a3c7792` until another gameplay check lands; it moves
+390 verification lines, adds 15 wiring lines and deletes no logic.
 
 ## Implementation rules
 

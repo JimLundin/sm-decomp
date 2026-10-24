@@ -581,14 +581,14 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
     DemoSetFunc_1 => DemoSetFunc_Common(kPose_01_FaceR_Normal as u16, game);
 }
 pub unsafe fn DemoSetFunc_Common(pose: u16, game: &mut Game) {
-    unsafe {
+    {
         game.set_samus_pose(pose);
         pt::refresh_pose(&mut Runtime::new(game));
         game.set_samus_draw_handler(fnSamusDrawHandler_Default as u16);
     }
 }
 pub unsafe fn DemoSetFunc_5(game: &mut Game) {
-    unsafe {
+    {
         game.set_samus_draw_handler(fnSamusDrawHandler_Default as u16);
         pt::start_shinespark(&mut Runtime::new(game));
         game.set_samus_pose(kPose_CD_FaceR_Shinespark_Diag as u16);

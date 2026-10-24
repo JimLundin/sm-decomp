@@ -37,6 +37,8 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         bytes(image, definition + offset, &value.to_le_bytes());
     }
     bytes(image, definition + offset_of!(EnemyDef, layer), &[3]);
-    unsafe { respawn_from_drop(projectile, game) };
+    {
+        respawn_from_drop(projectile, game)
+    };
     None
 }

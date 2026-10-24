@@ -47,7 +47,9 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game) -> Option<usize> {
         field(game, 0, offset_of!(Layout, var_05), 0x7ff0);
         // Spore intentionally ignores the current-enemy selector.
         put(game, w::cur_enemy_index, 64);
-        unsafe { sm_a5::SporeSpawn_Func_5(game) };
+        {
+            sm_a5::SporeSpawn_Func_5(game)
+        };
     } else if id < 32 {
         let enemy = if variant & 1 == 0 { 0 } else { 64 };
         put(game, w::cur_enemy_index, enemy);
@@ -85,7 +87,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game) -> Option<usize> {
             field(game, enemy, offset, handle);
             slot(game, a::eproj_gfx_idx, handle, 0xf135);
         }
-        unsafe {
+        {
             // Actual caller order, including collisions between repeated handles.
             sm_a8::YappingMaw_Func_15(game);
             sm_a8::YappingMaw_Func_14(game);
@@ -133,7 +135,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game) -> Option<usize> {
                 ((n / 2 + variant as u16) % 3) as u16,
             );
         }
-        unsafe {
+        {
             sm_b3::Botwoon_Func_22(game);
             sm_b3::Botwoon_Func_23(game);
             sm_b3::Botwoon_Func_25(game);

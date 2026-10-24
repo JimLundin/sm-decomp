@@ -763,7 +763,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9494984] Samus_Func4 [] {
-        static off_90E1F7: [Option<Func_V>; 3] = callback_table! { unsafe Func_V;
+        static off_90E1F7: [Option<Func_V>; 3] = callback_table! { Func_V;
             None, Samus_Func5, Samus_Func6,
         };
         if word!(game.samus_new_pose) as i32 == kPose_4F_FaceL_Dmgboost as i32

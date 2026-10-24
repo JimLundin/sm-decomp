@@ -661,7 +661,7 @@ pub unsafe fn CeresRidley_Func_12(game: &mut Game) -> u8 {
     }
 }
 pub unsafe fn CeresRidley_Func_25(game: &mut Game) {
-    unsafe {
+    {
         ({
             let (bank, population) = (0xa6, addr_stru_A6AA2F as u16);
             actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
@@ -2722,7 +2722,7 @@ pub unsafe fn RidleysExplosion_Func_1(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn RidleysExplosion_Func_2(game: &mut Game) {
-    unsafe {
+    {
         ({
             let (bank, population) = (0xa6, addr_stru_A6C9E7 as u16);
             actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
@@ -4168,7 +4168,7 @@ pub unsafe fn Zebetites_Func_7(j: u16, a: u8, game: &mut Game) {
     };
 }
 pub unsafe fn Zebetites_Func_8(game: &mut Game) {
-    unsafe {
+    {
         ({
             let (bank, population) = (0xa6, addr_stru_A6FCE1 as u16);
             actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)
@@ -4176,7 +4176,7 @@ pub unsafe fn Zebetites_Func_8(game: &mut Game) {
     }
 }
 pub unsafe fn Zebetites_Func_9(game: &mut Game) -> u16 {
-    unsafe {
+    {
         {
             let (bank, population) = (0xa6, addr_stru_A6FCF9 as u16);
             actors::population::spawn_legacy(&mut Runtime::new(game), bank, population)

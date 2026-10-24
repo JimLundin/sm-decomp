@@ -92,7 +92,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         for kind in 0..7 {
             rom_word(image, 0x86ef04, kind * 2, 0x9100 + kind as u16 * 4);
         }
-        unsafe {
+        {
             return match id / 16 {
                 0 => Some(drops::select(index, game) as usize),
                 1 => {
@@ -119,7 +119,9 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
             put(game, w::grapple_beam_function, 0);
             put(game, w::grapple_beam_end_x_pos, 0xfff0);
         }
-        unsafe { drops::collect(index, game) };
+        {
+            drops::collect(index, game)
+        };
         return None;
     }
     if id < 76 {
@@ -149,7 +151,9 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         for handle in (0..36).step_by(2) {
             slot(game, a::eproj_id, handle, 0);
         }
-        unsafe { drops::scatter(source, 0, 0x4321, game) };
+        {
+            drops::scatter(source, 0, 0x4321, game)
+        };
         return None;
     }
     let n = (id - 76) as usize;
@@ -198,7 +202,9 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         if n == 9 {
             slot(game, a::eproj_radius, 34, 0);
         }
-        unsafe { projectile_contact::enemy_projectiles_hit_samus(game) };
+        {
+            projectile_contact::enemy_projectiles_hit_samus(game)
+        };
     } else {
         put(game, w::projectile_counter, if n == 23 { 0 } else { 5 });
         slot(game, a::eproj_properties, 34, 0x8005);
@@ -216,7 +222,9 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
             );
             put(game, a::projectile_y_pos + shot * 2, 128);
         }
-        unsafe { projectile_contact::shoot_enemy_projectiles(game) };
+        {
+            projectile_contact::shoot_enemy_projectiles(game)
+        };
     }
     None
 }

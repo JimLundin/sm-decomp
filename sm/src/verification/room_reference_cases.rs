@@ -445,7 +445,7 @@ pub(crate) fn capture_case(
 }
 pub(crate) fn run(op: Operation, g: &mut Game) -> Option<u16> {
     use crate::game::room_state as room;
-    unsafe {
+    {
         match op {
             Operation::Entry(a, c) => Some(room::select_entry(a, c, g)),
             Operation::Select(r) => {

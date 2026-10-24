@@ -1542,7 +1542,7 @@ pub unsafe fn HandleCinematicsTransitions_3(game: &mut Game) {
         }
     }
 }
-static off_8B9A7B: [Option<Func_V>; 4] = callback_table! { unsafe Func_V;
+static off_8B9A7B: [Option<Func_V>; 4] = callback_table! { Func_V;
     None, HandleCinematicsTransitions_1, HandleCinematicsTransitions_2,
     HandleCinematicsTransitions_3,
 };

@@ -270,7 +270,7 @@ crate::game::callback_dispatch! {
     }
 }
 pub unsafe fn Kraid_Touch_ArmFoot(game: &mut Game) {
-    unsafe {
+    {
         actors::combat::contact_reaction(
             &mut Runtime::new(game),
             actors::api::DeathHandling::Finalize,
@@ -2077,13 +2077,13 @@ pub unsafe fn Phantoon_Func_3(amt: i32, game: &mut Game) -> u8 {
     }
 }
 pub unsafe fn Phantoon_Func_4(k: u16, game: &mut Game) {
-    unsafe {
+    {
         SpawnEprojWithGfx(0, k, addr_kEproj_DestroyableFireballs as u16, game);
         QueueSfx3_Max6(0x1d, game);
     }
 }
 pub unsafe fn Phantoon_Func_5(k: u16, game: &mut Game) {
-    unsafe {
+    {
         for i in (0i32..=7).rev() {
             SpawnEprojWithGfx(
                 (i | 0x600) as u16,

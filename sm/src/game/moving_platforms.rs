@@ -501,18 +501,14 @@ fn activate(p: &Motion, game: &mut Game) {
 pub(crate) unsafe fn react(kind: Kind, event: Event, game: &mut Game) {
     if let Event::Shot = event {
         match kind {
-            Kind::VerticalShutter => unsafe {
-                actors::combat::shot_reaction(
-                    &mut Runtime::new(game),
-                    actors::api::ShotHandling::Finalize,
-                )
-            },
-            Kind::HorizontalShutter => unsafe {
-                actors::combat::shot_reaction(
-                    &mut Runtime::new(game),
-                    actors::api::ShotHandling::ReactionOnly,
-                )
-            },
+            Kind::VerticalShutter => actors::combat::shot_reaction(
+                &mut Runtime::new(game),
+                actors::api::ShotHandling::Finalize,
+            ),
+            Kind::HorizontalShutter => actors::combat::shot_reaction(
+                &mut Runtime::new(game),
+                actors::api::ShotHandling::ReactionOnly,
+            ),
             _ => {}
         }
     }

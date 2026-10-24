@@ -66,7 +66,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game) -> Option<usize> {
             if enemy == 0 { 100 } else { 180 },
         );
     }
-    unsafe {
+    {
         match id {
             0..=3 => {
                 put(game, w::samus_x_pos, 100);

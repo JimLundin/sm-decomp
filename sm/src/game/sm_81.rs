@@ -206,12 +206,12 @@ fn sprite_map(bank: u8, address: u16, game: &mut Game) -> SpriteMap {
     )
 }
 pub unsafe fn DrawSpritemap(db: u8, j: u16, x: u16, y: u16, palette: u16, game: &mut Game) {
-    unsafe {
+    {
         sprite_map(db, j, game).draw((x, y), |tile| palette | tile & 0xf1ff, Clip::Bounded, game);
     }
 }
 pub unsafe fn DrawSpritemapOffScreen(j: u16, x: u16, y: u16, palette: u16, game: &mut Game) {
-    unsafe {
+    {
         sprite_map(0x8c, j, game).draw(
             (x, y),
             |tile| palette | tile & 0xf1ff,
@@ -221,7 +221,7 @@ pub unsafe fn DrawSpritemapOffScreen(j: u16, x: u16, y: u16, palette: u16, game:
     }
 }
 pub unsafe fn DrawMenuSpritemap(a: u16, k: u16, j: u16, chr_r3: u16, game: &mut Game) {
-    unsafe {
+    {
         let pp = sprite_map(
             0x82,
             crate::rtl::rom_table_word!(game, 0x82c569, a as isize),
@@ -239,7 +239,7 @@ pub fn DrawSamusSpritemap(a: u16, x_pos: u16, y_pos: u16, game: &mut Game) {
     );
 }
 pub unsafe fn DrawBeamGrappleSpritemap(a: u16, x_r20: u16, y_r18: u16, game: &mut Game) {
-    unsafe {
+    {
         DrawGrappleOrProjectileSpritemap(
             sprite_map(
                 0x93,
@@ -265,7 +265,7 @@ pub unsafe fn DrawSpritemapWithBaseTile(
     r0: u16,
     game: &mut Game,
 ) {
-    unsafe {
+    {
         if j == 0 {
             return;
         }
@@ -287,7 +287,7 @@ pub unsafe fn DrawSpritemapWithBaseTile2(
     r0: u16,
     game: &mut Game,
 ) {
-    unsafe {
+    {
         let pp = sprite_map(db, j, game);
         pp.draw(
             (r20_x, r18_y),
@@ -306,7 +306,7 @@ pub unsafe fn DrawSpritemapWithBaseTileOffscreen(
     r0: u16,
     game: &mut Game,
 ) {
-    unsafe {
+    {
         let pp = sprite_map(db, j, game);
         pp.draw(
             (r20_x, r18_y),

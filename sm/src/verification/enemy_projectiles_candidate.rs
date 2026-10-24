@@ -150,7 +150,7 @@ fn seed(game: &mut Game, image: &RomImage) {
 }
 
 unsafe fn core_case(id: u32, game: &mut Game, image: &RomImage) -> Option<usize> {
-    unsafe {
+    {
         match id {
             0 => EnableEprojs(game),
             1 => DisableEprojs(game),

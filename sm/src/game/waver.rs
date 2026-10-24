@@ -143,7 +143,7 @@ pub fn Waver_Init(game: &mut Game) {
 }
 
 pub unsafe fn Waver_Main(game: &mut Game) {
-    unsafe {
+    {
         let index = game.cur_enemy_index();
         let horizontal_velocity = {
             let enemy = WaverRam::new(game, index);

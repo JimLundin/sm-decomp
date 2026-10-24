@@ -304,7 +304,7 @@ pub unsafe fn Samus_DrawWhenNotAnimatingOrDying(game: &mut Game) {
         SetSamusTilesDefsForCurAnim(game);
     }
 }
-static kAtmosphericTypeFuncs: [Option<FuncXY_V>; 8] = callback_table! { unsafe FuncXY_V;
+static kAtmosphericTypeFuncs: [Option<FuncXY_V>; 8] = callback_table! { FuncXY_V;
     None, AtmosphericTypeFunc_1_FootstepSplash, AtmosphericTypeFunc_1_FootstepSplash,
     AtmosphericTypeFunc_3_DivingSplash, AtmosphericTypeFunc_4_LavaSurfaceDmg,
     AtmosphericTypeFunc_5_Bubbles, AtmosphericTypeFunc_67_Dust, AtmosphericTypeFunc_67_Dust,

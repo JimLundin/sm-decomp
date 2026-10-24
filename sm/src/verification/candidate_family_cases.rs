@@ -49,7 +49,9 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
             w::eproj_unk1995,
             [0xffff, 0x8000, 1, 0][id as usize % 4],
         );
-        unsafe { CallEprojInit(setups[id as usize / 4], index, game) };
+        {
+            CallEprojInit(setups[id as usize / 4], index, game)
+        };
     } else if id < 60 {
         let variant = (id - 28) as usize;
         // Samples remain below 0x8000, avoiding signed-min negation while
@@ -67,7 +69,7 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         );
         slot(game, a::eproj_x_subpos, index, 0xffff);
         slot(game, a::eproj_y_subpos, index, 1);
-        unsafe {
+        {
             CallEprojInit(8842182, index, game);
             Eproj_FuncE73E_MoveXY(index, game);
             Eproj_FuncE73E_MoveXY(index, game);
@@ -94,7 +96,9 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
         ] {
             slot(game, field, index, value);
         }
-        unsafe { CallEprojPreInstr(pre, index, game) };
+        {
+            CallEprojPreInstr(pre, index, game)
+        };
     }
     None
 }

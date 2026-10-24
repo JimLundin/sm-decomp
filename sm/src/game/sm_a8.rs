@@ -1454,7 +1454,7 @@ crate::game::callback_dispatch! {
     Beetom_Func_29 => { crate::verify_probe::hit("hop.Beetom_Func_29"); move_beetom_hop(Beetom_Func_30, Beetom_Func_31, 196608, game) };
 }
 pub unsafe fn MaridiaFloater_Func_1(k: u16, game: &mut Game) {
-    unsafe {
+    {
         for i in (0i32..=7).rev() {
             SpawnEprojWithGfx(i as u16, k, addr_kEproj_MaridiaFloatersSpikes as u16, game);
         }

@@ -102,6 +102,8 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
             if n & 1 == 0 { 0 } else { 0xffff },
         );
     }
-    unsafe { CallNuclearWaffleFunc(10917506, game) };
+    {
+        CallNuclearWaffleFunc(10917506, game)
+    };
     None
 }

@@ -30,7 +30,7 @@ fn room(game: &mut Game, kind: u16, bts: u8) {
     }
 }
 unsafe fn move_one(horizontal: bool, handle: u16, game: &mut Game) -> Option<usize> {
-    Some(usize::from(unsafe {
+    Some(usize::from({
         super::super::with_execution(game, |ctx| {
             if horizontal {
                 EprojBlockCollisition_Horiz(handle, ctx)

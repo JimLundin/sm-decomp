@@ -151,6 +151,8 @@ pub(super) unsafe fn execute(id: u32, game: &mut Game, image: &RomImage) -> Opti
             &((row % 8) as u16).to_le_bytes(),
         );
     }
-    unsafe { CallEprojInit(setup, index, game) };
+    {
+        CallEprojInit(setup, index, game)
+    };
     None
 }

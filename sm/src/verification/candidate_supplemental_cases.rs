@@ -80,7 +80,7 @@ pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
         crate::rtl::lorom_offset(0xb49000) as usize,
         &7u16.to_le_bytes(),
     );
-    unsafe {
+    {
         if id < 16 {
             CallEprojPreInstr(8844272, handle, &mut game);
         } else {

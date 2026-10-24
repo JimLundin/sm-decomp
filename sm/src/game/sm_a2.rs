@@ -418,7 +418,7 @@ fn set_mini_crocomire_animation(index: u16, instruction: u16, game: &mut Game) {
     };
 }
 pub unsafe fn MiniCrocomire_Func7(amt: i32, game: &mut Game) {
-    unsafe {
+    {
         let index = game.cur_enemy_index();
         if {
             let (actor, amount) = (index, amt);

@@ -310,7 +310,7 @@ unsafe fn setup_case(id: u32, g: &mut Game) -> (u8, i32) {
         put(g, a, v);
     }
     let mut displacement = 0x12345i32;
-    let returned = unsafe {
+    let returned = {
         mechanisms::checks::setup_entry(
             SETUPS[index],
             0,
@@ -427,7 +427,9 @@ unsafe fn pre_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
             if variant & 1 != 0 { 0xff } else { 0 },
         );
     }
-    unsafe { mechanisms::checks::pre(ea, 0, g) };
+    {
+        mechanisms::checks::pre(ea, 0, g)
+    };
     (0, 0)
 }
 unsafe fn command_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
@@ -484,7 +486,7 @@ unsafe fn native_effect_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u1
     if n < 4 {
         definition(0x86e659, 8840661);
         definition(0x86e675, 8840666);
-        let value = unsafe {
+        let value = {
             mechanisms::checks::setup_entry(
                 if n < 2 { 8701630 } else { 8701643 },
                 0,
@@ -847,7 +849,7 @@ unsafe fn nonreturn_case(id: u32, g: &mut Game) -> (u8, u16) {
         _ => unreachable!(),
     };
     eprintln!("ROOM_MECHANISM_NONRETURN {id} setup={address:06x}");
-    let value = unsafe {
+    let value = {
         mechanisms::checks::setup_entry(
             address,
             0,
@@ -865,7 +867,7 @@ unsafe fn displacement_alias_case(id: u32, g: &mut Game) -> (u8, u16) {
     put(g, crate::ram_map::words::samus_collision_direction, 3);
     put(g, crate::ram_map::words::samus_y_dir, 0);
     put(g, 0xa6e, 0);
-    let value = unsafe {
+    let value = {
         mechanisms::checks::setup_entry(
             8697028,
             0,

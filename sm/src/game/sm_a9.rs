@@ -2225,7 +2225,7 @@ pub unsafe fn MotherBrain_GenerateExplosions(a: u16, r22: u16, r24: u16, game: &
     }
 }
 pub unsafe fn MotherBrain_ExplodeEscapeDoor(game: &mut Game) {
-    unsafe {
+    {
         for v0 in 0u16..8 {
             SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainExplodedEscapeDoor as u16, v0, game);
         }
