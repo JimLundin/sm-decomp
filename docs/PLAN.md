@@ -216,6 +216,18 @@ consumption and lost fractional-health publication); the next full run selects
 The four transition representation tests are included in the existing unfiltered
 detached mutation baseline; no separate CI step or local executable is needed.
 
+Verification feedback latency: in completed run 40074629985 the native step
+started at 07:39:57 UTC and the first transition kill arrived at 08:28:48,
+about 49 minutes later. The existing runner now schedules transition checks
+immediately after their shared baseline, before retained room/actor mutations.
+Source review confirms no dependency on those later results; mutation work
+folders are distinct and shared native archives remain read-only. Python
+syntax and instrumented scheduling checks pass for ROM supplied/absent and
+baseline failure, with identical call inventory and arguments. This changes
+feedback order, not coverage or total build work. Gameplay source is unchanged;
+no new replay is needed. Active run 40081065327 retains its original order and
+is not restarted. Runtime timing of the new order has not yet been measured.
+
 The public report must foreground owned behavior, production caller migration,
 legacy deletion and adoption. Keep verification detail expandable below those
 outcomes. Following this subsystem, prioritize extending shared Session ownership

@@ -47,7 +47,8 @@ flowchart LR
     DAMAGE --> DEL["RAM adapter retired / ?64 production lines"]:::draft
     DEL --> LOCAL["87 cases + 8,577 frames ?"]:::done
     LOCAL --> CI["98 mutations / hosted running"]:::active
-    class SESSION,CORE,A,B,C,D,E,F,G,H,I,CALL,RET,MUT changed
+    CI --> ORDER["Future runs: transitions checked earlier<br/>schedule checks ? / timing unmeasured"]:::done
+    class ORDER changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

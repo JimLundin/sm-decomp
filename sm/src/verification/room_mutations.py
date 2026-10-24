@@ -348,7 +348,11 @@ def main():
     with tempfile.TemporaryDirectory(prefix="room-scheduler-mutations-") as directory:
         work = Path(directory)
         build_and_capture(root, work, paths, "baseline")
-        # Check the changed ownership witness first; retain every mutation.
+        # Surface transition faults after their shared baseline is ready.
+        if actor_rom is not None:
+            player_transitions_dll_mutations.run_checks(
+                root, work, paths, run, copy_tracked, rom=actor_rom)
+        # Check the ownership witness first within the retained room cases.
         for mutation in sorted(
             MUTATIONS, key=lambda item: item[0] != "retain_native_owner_on_callback_panic"
         ):
@@ -360,8 +364,6 @@ def main():
                                           rom=actor_rom, kraid_only=True)
             actor_dll_mutations.run_checks(root, work, paths, run, copy_tracked,
                                           rom=actor_rom, collision_only=True)
-            player_transitions_dll_mutations.run_checks(
-                root, work, paths, run, copy_tracked, rom=actor_rom)
         else:
             print("transition DLL mutations: 5 not selected (2 metadata, 3 composed); original ROM not supplied; no kills credited", flush=True)
     print("room/native/restore mutation checks: 9/9 killed; all nine frozen baselines passed", flush=True)
