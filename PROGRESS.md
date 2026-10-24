@@ -231,12 +231,20 @@ flowchart LR
     TUG --> TUH["Separate snapshot / store tracking<br/>review PASS"]:::done
     TUH --> TN["7 normalization comparisons<br/>PASS"]:::done
     TUH --> TM["4 authored animation comparisons<br/>PASS"]:::done
-    TN --> TVAUD["Output + provenance audit"]:::active
+    TN --> TVAUD["11-case output + provenance<br/>independent audits PASS"]:::done
     TM --> TVAUD
     TVAUD --> TV["36 remaining fixture families"]:::active
+    TV --> T48B["Ordinary animation / isolated draft<br/>format + normal + DLL build PASS"]:::done
+    T48B --> T48["48 authored animation cases<br/>capture + completion checks PASS"]:::done
+    T48B --> T11["Original 11 cases<br/>CPU + exact saved bytes PASS"]:::done
+    T48 --> T48A["48-case independent capture audit"]:::active
+    TV --> TPOSE["Pose / history fixture batch"]:::active
+    TV --> TCONTENT["Speed + content fixture batch"]:::active
+    TV --> TREQUEST["Hit + block request fixture batch"]:::active
+    TV --> TFX["Jump + atmosphere fixture batch"]:::active
     TVAUD --> TMT1["Metadata reload mutation<br/>reviewed / unrun"]:::pending
     TVAUD --> TMT2["Animation mask mutation<br/>reviewed / unrun"]:::pending
-    class TUD,TUF,TUX,TUG,TUH,TN,TM,TVAUD,TV,TMT1,TMT2 changed
+    class TVAUD,T48B,T48,T11,T48A,TPOSE,TCONTENT,TREQUEST,TFX changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d

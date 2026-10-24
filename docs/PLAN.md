@@ -569,8 +569,18 @@ references; measure build/test time and resource growth before changing the loop
    extents and same allocation while constraining selected reads to original data.
    Attempt2 exposed shared snapshot/store-PC bookkeeping in the comparator;
    separate tracking fixes it without changing expected observations or masks.
-   Both failures remain preserved. Output/provenance audit is pending; two targeted
-   mutation recipes are reviewed but unexecuted. Next capture the remaining36
+   Both failures remain preserved. Independent output/provenance audits pass.
+   Candidate4055d8db is running the full93-fault hosted dispatch40074629985;
+   formatting passes, mutation results remain pending. Pure classifier controls
+   reject79malformed/unrelated traces; those are not executed mutation kills.
+   The next isolated fixture batch passes format, normal compilation and release
+   DLL build on27b15d79. All59fresh children pass:11CPU comparisons retain exact
+   saved Rust bytes;48authored ordinary animation cases pass finite completion
+   checks. Their independent capture audits remain pending. Death/sound cases
+   are separate, and no owned replacement comparison is claimed. New-checkout
+   line endings initially failed native/comparator stamps; normalized equality
+   was confirmed and original exact bytes restored before successful captures.
+   No SDK or identity check was weakened. Continue the remaining36
    transition families with per-family defined-path audits, then implement the
    complete owned responsibility. No corrected gameplay is adopted yet.
    Successful undefined-Rust captures remain inadmissible.
