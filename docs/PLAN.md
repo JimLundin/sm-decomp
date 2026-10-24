@@ -24,7 +24,8 @@ agent) aligns the published any%/100% TASes (A0) and maps checks onto them; lane
 bank) retires legacy `game/sm_*.rs` banks in its bank order, deleting each file. Every
 commit subject starts `A:` or `B:sm_XX`, and its body ends with the scoreboard line
 the milestone plan defines. A docs-only commit needs a code commit beside it.
-Verification added per adoption must not exceed production deleted. Keep this plan
+Verification is movie segments as data, not new Rust fixtures or production
+hooks; see the review's size goal and verification policy. Keep this plan
 under ~200 lines; results belong in commit messages (~8 lines). Direct user
 instructions take precedence; [HISTORY.md](HISTORY.md) holds no current rules.
 

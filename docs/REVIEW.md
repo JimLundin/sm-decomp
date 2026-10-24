@@ -15,8 +15,42 @@ unsafe lines** (of 116,960 production and 4,965 unsafe total).
 
 **Scoreboard** — last line of every agent commit body, measured locally:
 `Score: checks 24/44 · legacy 55342 · production 116960 · unsafe 4965`.
-`legacy` = `cat sm/src/game/sm_*.rs | wc -l`. First lane-B commit adds that row
-to `tools/progress.sh`.
+`legacy` = `cat sm/src/game/sm_*.rs | wc -l`. From 2026-10-25 append
+`· verification N` (verification Rust lines, as `progress.sh` reports).
+Priority of the numbers: checks and legacy first, then unsafe, then size.
+
+**Size goal (user aspiration, 2026-10-24).** Lines should fall substantially:
+owned code uses native types and data instead of re-expressing 65816 routines.
+Reference: snesrev's routine-by-routine C is ~76,500 game-logic lines. Budgets,
+total production: ≤110,000 by 10-26 (layering check), ≤100,000 when all banks
+are retired, **aspiration ~75,000** for the finished engine (game logic ~60,000,
+platform/renderer/audio ~15,000). Each retired bank's replacement code should be
+at most ~70% of the bank lines it removes; report the ratio per bank. Do not
+compress formatting, delete comments or move code into verification paths to
+meet a budget; behaviour and quirks still win over size.
+
+**Verification policy (user direction, 2026-10-24).** Verification means movie
+slices turned into focused tests, kept out of production code:
+
+- A test is data: a `movies/segments.toml` row (movie, frame window from a
+  checkpoint, per-frame oracle comparison, expectations) run by the one existing
+  generic runner. New evidence for a change is a new or named row, not new Rust.
+- Every frame-comparison failure becomes a regression row: the shortest window
+  from a checkpoint before the first differing frame through a few frames after,
+  committed with its fix.
+- No new hand-written fixture modules (the `verification/*_cases.rs`,
+  `*_checks.rs` style that pokes RAM/ROM words into a constructed world). Delete
+  an existing fixture once a segment exercises the same code; that deletion is
+  progress. A constructed test is allowed only for behaviour no movie reaches,
+  under ~100 lines, with the reason in its first line.
+- Production code gets no new probes, observers or `cfg(sm_verify_dll)` blocks
+  (589 production lines in 91 files mention verify/probe/observer today); remove
+  them as banks retire. After A0.5, lane A tries instrumentation coverage
+  (`cargo llvm-cov` on a segment run) to prove which code a segment executed,
+  replacing hand-placed probes.
+- Verification Rust (38,993 now, 33% of production) must fall from here; target
+  under ~15,000 once the movies drive coverage.
+
 
 **Lane A — coverage (one agent).** User direction 2026-10-24: drive coverage
 with the published any% and 100% TASes (`movies/manifest.toml`), not hand-authored
@@ -73,6 +107,9 @@ Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
+- **2026-10-25 00:20 (user direction):** size goal and verification policy added
+  to the milestone plan: ~75k aspiration, ≤70% replacement ratio per bank,
+  verification = movie segments as data, no new fixtures or production hooks.
 - **2026-10-24 23:58 (user direction):** Lane A switched from hand-authored routes
   to aligning the published any%/100% TASes (A0.1–A0.5 above); waypoints moved.
 - **2026-10-24 23:52 (c1fe795):** 2 agent source commits in the ~20 min since
