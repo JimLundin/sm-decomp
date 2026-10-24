@@ -14,8 +14,19 @@ def modules(root):
 def recipes():
     items=json.loads((HERE/'recipes.json').read_text())['recipes']
     result={m['fault']:m for m in items}
-    assert len(items)==len(result)==9
+    assert len(items)==len(result)==12
     return result
+
+def check_byte_vectors(stderr,expected):
+    # Keep both lines intact: stderr_matches still checks the complete diagnostic.
+    text=stderr.replace('\r\n','\n')
+    pairs=re.findall(r'(?m)^  left: (\[[0-9, ]*\])\n right: (\[[0-9, ]*\])$',text)
+    assert len(pairs)==1,'expected exactly one decimal byte-vector operand pair'
+    left,right=(bytes(json.loads(value)) for value in pairs[0])
+    assert len(left)==len(right)==expected['bytes'],'wrong byte-vector lengths'
+    assert hashlib.sha256(left).hexdigest()==expected['left_sha256'],'wrong complete left byte vector'
+    assert hashlib.sha256(right).hexdigest()==expected['right_sha256'],'wrong complete right byte vector'
+    assert [[i,a,b] for i,(a,b) in enumerate(zip(left,right)) if a!=b]==expected['differences'],'wrong byte-vector differences'
 
 def child(args):
     verifier,_,_=modules(args.root);case=args.case
@@ -88,6 +99,8 @@ def main():
             if args.fault=='CONTACT_REFRESH':
                 text=stderr.replace('\r\n','\n');operands=re.compile(r'(?m)^  left: 0\n right: 4660\n')
                 assert len(operands.findall(text))==1,'wrong refresh operands';stderr=operands.sub('',text,count=1)
+            elif recipe.get('expected_byte_vectors'):
+                check_byte_vectors(stderr,recipe['expected_byte_vectors'])
             elif recipe.get('expected_values'):
                 left,right=recipe['expected_values'];assert re.search(r'left: '+re.escape(left)+r'\s+right: '+re.escape(right),stderr),'wrong equality operands'
             footer='Room world: room world assertions failed' if case<4000 else 'defined player transition predecessor: locomotion invocation unexpectedly panicked'

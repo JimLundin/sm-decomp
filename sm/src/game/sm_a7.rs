@@ -16,7 +16,7 @@ pub use crate::game::constants::bank_86::*;
 
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
-use crate::game::minimap;
+use crate::game::player_update::minimap;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_80::{
     GraphicsAsset, NextRandom, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx2_Max15, QueueSfx3_Max6,
@@ -2809,7 +2809,7 @@ crate::game::callback_dispatch! {
             properties = ((*E_0).base.properties) | ((kEnemyProps_Tangible) as u16), };
             set_fields! {[(*E_0)]; kraid_var_A = ((0xa7c865i32) as u16), kraid_var_F = 300,
             kraid_next = ((0xa7c86bi32) as u16), kraid_var_C = 64, };
-            minimap::disable_for_boss(game);
+            minimap::disable_for_boss(&mut crate::game::session_runtime::Runtime::new(game));
             word_transfers!(game, descending, 32; native(0x2ffe) <- value(824));
             word!(game.earthquake_type = 5);
             word_transfers!(game, ascending, 16; native(0xc360) <- rom(0xa7aaa6, 0));
@@ -2976,7 +2976,7 @@ crate::game::callback_dispatch! {
         word_transfers!(game, descending, 1024; native(0x97fe) <- value(0));
         word_transfers!(game, descending, 16; native(0xc2fe) <- value(0));
         word!(game.enemy_bg2_tilemap_size = 864);
-        minimap::disable_for_boss(game);
+        minimap::disable_for_boss(&mut crate::game::session_runtime::Runtime::new(game));
         let E = Get_Phantoon(word!(game.cur_enemy_index) as i32, game);
         (*E).var_E = 120;
         set_fields! {[(*E)], 0; var_A, var_B}

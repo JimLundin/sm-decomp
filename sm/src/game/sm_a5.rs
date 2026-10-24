@@ -4,8 +4,8 @@ use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
-use crate::game::minimap;
 use crate::game::music::QueueMusic_Delayed8;
+use crate::game::player_update::minimap;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
 use crate::rtl::rom_record;
@@ -1109,7 +1109,7 @@ crate::game::callback_dispatch! {
         word!(game.room_loading_irq_handler = 12);
         SpawnBG3ScrollHdmaObject(game);
         (*Get_Draygon(0i32, game)).var_45 = 1;
-        minimap::disable_for_boss(game);
+        minimap::disable_for_boss(&mut crate::game::session_runtime::Runtime::new(game));
     };
     [10847996] Draygon_Main [] {
         let EK = Get_Draygon(word!(game.cur_enemy_index) as i32, game);

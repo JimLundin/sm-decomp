@@ -1670,6 +1670,13 @@ unsafe fn render_map_tilemap(screen: MapScreen, game: &mut Game) {
                     let explored = ram_ptr!(game; 0x7f7, byte);
                     let previous = *explored;
                     *explored = ((*explored as i32) << 1) as u8;
+                    #[cfg(sm_verify_dll)]
+                    crate::game::session_runtime::player_legacy_edges::map_write(
+                        game,
+                        byte as usize,
+                        tile as usize,
+                        0,
+                    );
                     if previous & 0x80 == 0 {
                         *r3.offset(tile) = match screen {
                             MapScreen::Pause => 31,
@@ -1677,8 +1684,22 @@ unsafe fn render_map_tilemap(screen: MapScreen, game: &mut Game) {
                         };
                     } else {
                         *explored = (*explored).wrapping_add(1);
+                        #[cfg(sm_verify_dll)]
+                        crate::game::session_runtime::player_legacy_edges::map_write(
+                            game,
+                            byte as usize,
+                            tile as usize,
+                            1,
+                        );
                         *r3.offset(tile) = *r0.offset(tile) & 0xfbff;
                     }
+                    #[cfg(sm_verify_dll)]
+                    crate::game::session_runtime::player_legacy_edges::map_write(
+                        game,
+                        byte as usize,
+                        tile as usize,
+                        2,
+                    );
                     tile += 1;
                 }
             }

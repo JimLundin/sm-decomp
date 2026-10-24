@@ -1,5 +1,5 @@
 {
-  "source_root": "C:\\Users\\Jim.Lundin\\AppData\\Local\\sm-decomp-experiments\\20261024\\locomotion-1",
+  "source_root": "C:\\Users\\Jim.Lundin\\AppData\\Local\\sm-decomp-experiments\\20261024\\player-update-1",
   "recipes": [
     {
       "fault": "MOVE_NATIVE",
@@ -149,7 +149,74 @@
       "fault": "CONTACT_PREFLIGHT",
       "forbidden_arbitrary_failure": true,
       "assertion_message": "selected actual call must reach its defined failure: ()"
+    },
+    {
+      "fault": "PU1_STALE_EXPLORATION",
+      "selected": "collision:37",
+      "edits": [
+        {
+          "path": "sm/src/game/player_update_runtime.rs",
+          "before": "        self.byte(exploration_address(offset))",
+          "after": "        self.game.g_ram[exploration_address(offset)]"
+        }
+      ],
+      "assertion_source": "player_update_aliases.rs",
+      "assertion_message": "assertion `left == right` failed: later exploration read observes the freshly changed owned alias",
+      "expected_values": [
+        "11295",
+        "10240"
+      ],
+      "prerequisite": "Integrated aliases2 with unmutated collision37 pass"
+    },
+    {
+      "fault": "PU2_SKIPPED_GAMMA",
+      "selected": "collision:37",
+      "edits": [
+        {
+          "path": "sm/src/game/player_update/mod.rs",
+          "before": "            h.run_gamma(selector);",
+          "after": "            let _ = selector;"
+        }
+      ],
+      "assertion_source": "player_update_aliases.rs",
+      "assertion_message": "assertion `left == right` failed: actual newly selected gamma executes and reimports its result",
+      "expected_values": [
+        "4",
+        "5"
+      ],
+      "prerequisite": "Integrated aliases2 with unmutated collision37 pass"
+    },
+    {
+      "fault": "PU3_DEFERRED_HUD",
+      "selected": "collision:37",
+      "edits": [
+        {
+          "path": "sm/src/game/player_update/minimap.rs",
+          "before": "            h.session_mut().minimap.tiles[row][column] = tile & 0xc3ff | 0x2c00;",
+          "after": "            if explored[row] & 0x8000 == 0 { h.session_mut().minimap.tiles[row][column] = tile & 0xc3ff | 0x2c00; }"
+        }
+      ],
+      "assertion_source": "player_minimap_edges.rs",
+      "assertion_message": "assertion `left == right` failed: lazy map tiles and mapped HUD failure prefix fail=true",
+      "expected_byte_vectors": {
+        "bytes": 131072,
+        "left_sha256": "5f75244a5a523970c3efa28b7b20e2e8e5b034e615dd26abae470590428a361d",
+        "right_sha256": "0ebde62336e3a9b92d3dceb27075fa2c6b6b9e15e71683956d58f1cecf6b1d39",
+        "differences": [
+          [
+            50816,
+            60,
+            31
+          ],
+          [
+            50817,
+            80,
+            44
+          ]
+        ]
+      },
+      "prerequisite": "Integrated map_edges4 with unmutated collision37 pass"
     }
   ],
-  "note": "Six finite movement faults plus three existing shared owned_call faults; no fixture edits. Each applies independently."
+  "note": "Six movement faults, three shared owned_call faults, and three player-update faults; each one production edit independently, no fixture edits. PU1/PU2 require aliases2; PU3 requires map_edges4; unmutated collision37 must pass first."
 }

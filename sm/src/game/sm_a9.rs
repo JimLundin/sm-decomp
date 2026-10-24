@@ -2,8 +2,8 @@ use crate::game::actors;
 use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::api as actor_api;
 use crate::game::enemy_script::{EnemyScript, bank_base};
-use crate::game::minimap;
 use crate::game::music::QueueMusic_Delayed8;
+use crate::game::player_update::minimap;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
 
@@ -1807,7 +1807,7 @@ pub unsafe fn MotherBrainsBody_FirstPhase_DoubleRet(game: &mut Game) {
             if word!(game.samus_x_pos) as i32 - 236i32 & 0x8000 != 0 && (*E1).base.health == 0 {
                 let E = Get_MotherBrain(0, game);
                 set_fields! {[(*E)], 1; var_1D, var_00}
-                minimap::disable_for_boss(game);
+                minimap::disable_for_boss(&mut crate::game::session_runtime::Runtime::new(game));
                 QueueMusic_Delayed8(6, game);
                 mother_brain_visuals::seal_wall(game);
             }

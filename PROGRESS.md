@@ -2,13 +2,13 @@
 
 ```mermaid
 flowchart LR
-    DONE["DONE: Owned movement<br/>52 legacy routines retired"]:::done
-    NOW["NOW: Verify shared player update<br/>movement + minimap + settlement"]:::active
-    NEXT["NEXT: Adopt checked draft<br/>retire old minimap + repeated calls"]:::pending
-    THEN["GAIN: One owner across the update<br/>fewer RAM transfers between systems"]:::pending
+    DONE["DONE: Shared player update<br/>movement + minimap + settlement"]:::done
+    NOW["NOW: Design owned input preparation<br/>controls + movement rules + pose requests"]:::active
+    NEXT["NEXT: Migrate input callers<br/>remove 2 more RAM handoffs"]:::pending
+    THEN["GAIN: Shared player state<br/>less duplicate coordination"]:::pending
     TARGET["TARGET: Safe modular engine<br/>Map Rando: rooms / sprites / rules"]:::pending
     DONE --> NOW --> NEXT --> THEN --> TARGET
-    class NOW,NEXT,THEN changed
+    class DONE,NOW,NEXT,THEN changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
@@ -21,33 +21,40 @@ Green: adopted scope / passed check | Blue: draft | Orange: active | Grey: remai
 **Purple outline: changed since previous report.** Folder branches show containment; check arrows show prerequisites.
 
 <details>
-<summary>Current work: shared player update / draft under local validation</summary>
+<summary>Shared player update: adopted / files and local checks</summary>
 
 ```mermaid
 flowchart LR
-    UPDATE["player_update/ / DRAFT"]:::draft
-    UPDATE --> API["mod.rs / one update operation"]:::draft
-    UPDATE --> MAP["minimap.rs / exploration + HUD + bosses"]:::draft
-    UPDATE --> STATE["state.rs / 288 owned bytes"]:::draft
-    UPDATE --> CONTENT["content.rs / map inputs"]:::draft
-    UPDATE --> EFFECTS["effects.rs / ordered effects"]:::draft
-    UPDATE --> HOST["player_update_runtime.rs / compatibility edge"]:::draft
-    STATE --> SESSION["session.rs + session_encoding.rs<br/>shared owner + byte compatibility"]:::draft
-    HOST --> CALLERS["sm_90.rs + 5 boss bank files<br/>actual callers migrated in draft"]:::draft
-    CALLERS --> RETIRE["Old minimap + 2 wrappers<br/>deleted in draft"]:::draft
+    UPDATE["player_update/ / ADOPTED"]:::done
+    UPDATE --> API["mod.rs / one update operation"]:::done
+    UPDATE --> MAP["minimap.rs / exploration + HUD + bosses"]:::done
+    UPDATE --> STATE["state.rs / 288 owned bytes"]:::done
+    UPDATE --> CONTENT["content.rs / map inputs"]:::done
+    UPDATE --> EFFECTS["effects.rs / ordered effects"]:::done
+    UPDATE --> HOST["player_update_runtime.rs / compatibility edge"]:::done
+    STATE --> SESSION["session.rs + session_encoding.rs<br/>shared owner + byte compatibility"]:::done
+    HOST --> CALLERS["sm_90.rs + 5 boss bank files<br/>actual callers migrated"]:::done
+    CALLERS --> RETIRE["Old minimap + 2 wrappers / retired"]:::done
     API --> BUILD["Formatting + compile + DLL / PASS"]:::done
     UPDATE --> PURE["Core compiles without backend / PASS"]:::done
     BUILD --> BETA["6 actual update comparisons / PASS"]:::done
     BUILD --> ENABLED["6 enabled-minimap checks / PASS"]:::done
     BUILD --> MOVIE["8,577 frames / 0 failures<br/>3 required probes + follow-up / PASS"]:::done
-    ENABLED --> EDGES["Aliases + boss marks + byte boundaries<br/>source reviewed / execution NEXT"]:::active
-    BETA --> TRANSFERS["Actual ownership transfer counts<br/>source reviewed / execution NEXT"]:::active
-    EDGES --> MUT["New map + update mutations / NEXT"]:::pending
+    ENABLED --> ALIASES["2 live alias checks / PASS"]:::done
+    ENABLED --> BOSS["6 boss-mark checks / PASS"]:::done
+    ENABLED --> EDGES["4 half-map + partial-write checks / PASS"]:::done
+    ENABLED --> CODEC["30 HUD byte writes + room aliases / PASS"]:::done
+    ENABLED --> LEGACY["Special movement + legacy map writer / PASS"]:::done
+    BETA --> TRANSFERS["Normal / inactive gamma<br/>2 transfer pairs become 1 / measured"]:::done
+    EDGES --> MUT["3 local mutation kills / audited"]:::done
     TRANSFERS --> MUT
-    RETIRE --> ADOPT["Adopt on main / pending"]:::pending
+    MUT --> M1["Stale exploration read / KILLED"]:::done
+    MUT --> M2["Skipped gamma effect / KILLED"]:::done
+    MUT --> M3["Deferred HUD write / KILLED"]:::done
+    RETIRE --> ADOPT["Adopted / +225 production lines"]:::done
     MOVIE --> ADOPT
     MUT --> ADOPT
-    class UPDATE,API,MAP,STATE,CONTENT,EFFECTS,HOST,SESSION,CALLERS,RETIRE,BUILD,PURE,BETA,ENABLED,MOVIE,EDGES,TRANSFERS,MUT,ADOPT changed
+    class UPDATE,API,MAP,STATE,CONTENT,EFFECTS,HOST,SESSION,CALLERS,RETIRE,ALIASES,BOSS,EDGES,CODEC,LEGACY,TRANSFERS,MUT,M1,M2,M3,ADOPT changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
@@ -55,7 +62,7 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-[Draft checks and limits](docs/PLAN.md#work-order) / source `1cf3d82c` / not yet adopted.
+[Adopted update](sm/src/game/player_update/mod.rs) / [Checks and limits](docs/PLAN.md#work-order) / source `31ef4c71`.
 
 </details>
 
@@ -176,11 +183,11 @@ flowchart LR
 
 | Rust accounting | Main | Latest adoption |
 | --- | ---: | ---: |
-| Production, including adapters | 116,776 | -162 |
-| Verification and check support | 35,026 | +1,045 |
-| Combined maintained Rust | 151,802 | +883 |
+| Production, including adapters | 117,001 | +225 |
+| Verification and check support | 36,638 | +1,612 |
+| Combined maintained Rust | 153,639 | +1,837 |
 
-**35,026 verification lines excluded, not deleted.** Separate support: +334 Python/JSON lines. [Scope and local evidence](docs/PLAN.md#work-order).
+**36,638 verification lines excluded, not deleted.** Separate support: +169 Python/JSON lines. [Scope and local evidence](docs/PLAN.md#work-order).
 
 <details>
 <summary>Verification details and earlier migrations</summary>

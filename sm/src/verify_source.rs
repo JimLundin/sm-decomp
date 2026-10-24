@@ -2,12 +2,36 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/verification/player_normal_transfers.rs",
+        include_bytes!("verification/player_normal_transfers.rs"),
+    ),
+    (
+        "sm/src/verification/player_update_aliases.rs",
+        include_bytes!("verification/player_update_aliases.rs"),
+    ),
+    (
+        "sm/src/verification/player_minimap_boss.rs",
+        include_bytes!("verification/player_minimap_boss.rs"),
+    ),
+    (
+        "sm/src/verification/player_minimap_edges.rs",
+        include_bytes!("verification/player_minimap_edges.rs"),
+    ),
+    (
+        "sm/src/verification/player_legacy_edges.rs",
+        include_bytes!("verification/player_legacy_edges.rs"),
+    ),
+    (
         "sm/src/verification/player_movement_edges.rs",
         include_bytes!("verification/player_movement_edges.rs"),
     ),
     (
         "sm/src/verification/player_spin_bounds.rs",
         include_bytes!("verification/player_spin_bounds.rs"),
+    ),
+    (
+        "sm/src/verification/player_update_cases.rs",
+        include_bytes!("verification/player_update_cases.rs"),
     ),
     (
         "sm/src/verification/player_locomotion.rs",
@@ -196,6 +220,30 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/player_movement/effects.rs",
         include_bytes!("game/player_movement/effects.rs"),
+    ),
+    (
+        "sm/src/game/player_update/mod.rs",
+        include_bytes!("game/player_update/mod.rs"),
+    ),
+    (
+        "sm/src/game/player_update/state.rs",
+        include_bytes!("game/player_update/state.rs"),
+    ),
+    (
+        "sm/src/game/player_update/content.rs",
+        include_bytes!("game/player_update/content.rs"),
+    ),
+    (
+        "sm/src/game/player_update/effects.rs",
+        include_bytes!("game/player_update/effects.rs"),
+    ),
+    (
+        "sm/src/game/player_update/minimap.rs",
+        include_bytes!("game/player_update/minimap.rs"),
+    ),
+    (
+        "sm/src/game/player_update_runtime.rs",
+        include_bytes!("game/player_update_runtime.rs"),
     ),
     (
         "sm/src/game/player_movement/mod.rs",
@@ -595,7 +643,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         "sm/src/game/message_boxes.rs",
         include_bytes!("game/message_boxes.rs"),
     ),
-    ("sm/src/game/minimap.rs", include_bytes!("game/minimap.rs")),
     (
         "sm/src/game/mode7_transfers.rs",
         include_bytes!("game/mode7_transfers.rs"),
@@ -1720,5 +1767,9 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/verification/actor_composed_route.rs",
         include_bytes!("verification/actor_composed_route.rs"),
+    ),
+    (
+        "sm/src/verification/player_minimap_bytes.rs",
+        include_bytes!("verification/player_minimap_bytes.rs"),
     ),
 ];

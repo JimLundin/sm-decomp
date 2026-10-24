@@ -1,5 +1,6 @@
 use crate::game::player_movement;
 use crate::game::player_transitions as pt;
+use crate::game::player_update::{self, BetaMode, MovementStep};
 
 use crate::game::actors::api as actor_api;
 
@@ -840,14 +841,7 @@ crate::game::callback_dispatch! {
         9496846 => [()];
     }
 }
-pub unsafe fn RunFrameHandlerGamma(game: &mut Game) {
-    unsafe {
-        CallFrameHandlerGamma(
-            ((word!(game.frame_handler_gamma)) as u32) | (0x900000u32),
-            game,
-        );
-    }
-}
+
 pub unsafe fn Samus_SetPushedOutOfCeresRidley(game: &mut Game) {
     unsafe {
         word!(game.samus_movement_handler = ((0x90e90ei32) as u16));
@@ -917,21 +911,30 @@ pub unsafe fn Samus_ReleaseFromDraygon(game: &mut Game) {
 pub(crate) use crate::game::player_projectiles::{
     prepare as HandleControllerInputForGamePhysics, prepare_entry as CallFrameHandlerAlfa,
 };
+// Special movement stays RAM-authoritative until its retained callback returns.
+unsafe fn advance_player_beta(
+    mode: BetaMode,
+    game: &mut Game,
+) -> Result<(), crate::game::samus_periodic_damage::InvalidDamage> {
+    unsafe {
+        word!(game.samus_contact_damage_index = 0);
+        let handler = word!(game.samus_movement_handler);
+        let movement = if handler == 0xa337 {
+            MovementStep::Normal
+        } else {
+            CallSamusMovementHandler(u32::from(handler) | 0x900000, game);
+            MovementStep::AlreadyAdvanced
+        };
+        player_update::advance(&mut Runtime::new(game), mode, movement)
+    }
+}
+
 crate::game::callback_dispatch! {
     pub unsafe fn CallFrameHandlerBeta(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
     [9496357] Samus_FrameHandlerBeta_Func17 [] {
-        word!(game.samus_contact_damage_index = 0);
-        RunSamusMovementHandler(game);
-        crate::game::minimap::update(game);
-        RunFrameHandlerGamma(game);
-        let damage_result = {
-            let mut runtime = Runtime::new(game);
-            pt::finish_movement_and_palette(&mut runtime);
-            let frozen = runtime.inputs().frozen;
-            crate::game::samus_periodic_damage::apply(runtime.session_mut(), frozen)
-        };
+        let damage_result = advance_player_beta(BetaMode::Gameplay, game);
         #[cfg(sm_verify_dll)]
         {
             assert!(
@@ -955,25 +958,14 @@ crate::game::callback_dispatch! {
         }
     };
     [9496565] Samus_FrameHandlerBeta_Func14 [] {
-        word!(game.samus_contact_damage_index = 0);
-        RunSamusMovementHandler(game);
-        crate::game::minimap::update(game);
-        {
-            let mut runtime = Runtime::new(game);
-            pt::finish_movement_and_palette(&mut runtime);
-        }
+        let _ = advance_player_beta(BetaMode::DemoMapped, game);
         word! {game; joypad1_lastkeys = word!(game.controller1_input_for_demo);
             joypad1_newkeys = word!(game.controller1_new_input_for_demo);
             joypad1_input_samusfilter = word!(game.demo_backup_prev_controller_input);
             joypad1_newinput_samusfilter = word!(game.demo_backup_prev_controller_input_new); }
     };
     [9496627] Samus_Func15 [] {
-        word!(game.samus_contact_damage_index = 0);
-        RunSamusMovementHandler(game);
-        {
-            let mut runtime = Runtime::new(game);
-            pt::finish_movement_and_palette(&mut runtime);
-        }
+        let _ = advance_player_beta(BetaMode::DemoUnmapped, game);
         word! {game; joypad1_lastkeys = word!(game.controller1_input_for_demo);
             joypad1_newkeys = word!(game.controller1_new_input_for_demo);
             joypad1_input_samusfilter = word!(game.demo_backup_prev_controller_input);
@@ -981,8 +973,11 @@ crate::game::callback_dispatch! {
     };
     [9496682] Samus_Func16 [] {
         Samus_SetRadius(game);
-        crate::game::minimap::update(game);
-        pt::advance_animation(&mut Runtime::new(game), pt::state::AnimationStep::Gameplay);
+        {
+            let mut runtime = Runtime::new(game);
+            player_update::minimap::update(&mut runtime);
+            pt::advance_animation(&mut runtime, pt::state::AnimationStep::Gameplay);
+        }
         word! {game; elevator_status = 0; samus_prev_y_pos = word!(game.samus_y_pos); }
         if PlaySamusFanfare(game) & 1 != 0 {
             if word!(game.debug_invincibility) as i32 - 7i32 & 0x8000 != 0
@@ -1004,13 +999,10 @@ crate::game::callback_dispatch! {
     };
     [9496796] SetContactDamageIndexAndUpdateMinimap [] {
         word!(game.samus_contact_damage_index = 0);
-        crate::game::minimap::update(game);
+        player_update::minimap::update(&mut Runtime::new(game));
     };
     [9496812] Samus_Func19 [] {
-        word!(game.samus_contact_damage_index = 0);
-        RunSamusMovementHandler(game);
-        crate::game::minimap::update(game);
-        pt::advance_animation(&mut Runtime::new(game), pt::state::AnimationStep::Gameplay);
+        let _ = advance_player_beta(BetaMode::AnimationOnly, game);
     };
     [9496834] Samus_LowHealthCheck [] {
         Samus_LowHealthCheck_(game);
@@ -1312,6 +1304,8 @@ crate::game::callback_dispatch! {
         };
     };
     [9494653] Samus_MoveHandler_BombJumpFunc1 [] {
+        #[cfg(sm_verify_dll)]
+        crate::game::session_runtime::player_legacy_edges::special_entry(game);
         word!(game.samus_movement_handler = ((0x90a337i32) as u16));
         if word!(game.samus_input_handler) as i32 != 0x90e91d & 0xffff {
             word!(game.samus_input_handler = ((0x90e913i32) as u16));
@@ -1364,14 +1358,7 @@ crate::game::callback_dispatch! {
         9496846 => [()];
     }
 }
-pub unsafe fn RunSamusMovementHandler(game: &mut Game) {
-    unsafe {
-        CallSamusMovementHandler(
-            ((word!(game.samus_movement_handler)) as u32) | (0x900000u32),
-            game,
-        );
-    }
-}
+
 pub unsafe fn Samus_PauseCheck(game: &mut Game) {
     unsafe {
         if word!(game.power_bomb_flag) == 0

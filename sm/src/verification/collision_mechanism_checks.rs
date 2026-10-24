@@ -228,6 +228,26 @@ pub(crate) fn run(g: &mut Game, local: u32) {
             acceleration_stale(g);
             acceleration_loaded_failure(g);
             acceleration_success(g);
+            assert_eq!(
+                super::player_update_aliases::run(g),
+                super::player_update_aliases::COUNT
+            );
+            assert_eq!(
+                super::player_minimap_boss::run(g),
+                super::player_minimap_boss::COUNT
+            );
+            assert_eq!(
+                super::player_minimap_edges::run(g),
+                super::player_minimap_edges::COUNT
+            );
+            assert_eq!(
+                super::player_legacy_edges::run(g),
+                super::player_legacy_edges::COUNT
+            );
+            assert_eq!(
+                super::player_minimap_bytes::run(g),
+                super::player_minimap_bytes::COUNT
+            );
             assert_eq!(super::player_movement_edges::run(g), 6);
             assert_eq!(
                 super::player_spin_bounds::run(g),

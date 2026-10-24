@@ -67,6 +67,10 @@ pub(crate) struct Runtime<'g> {
 }
 impl<'g> Runtime<'g> {
     pub fn new(game: &'g mut Game) -> Self {
+        #[cfg(sm_verify_dll)]
+        player_normal_transfers::record(game, 0);
+        #[cfg(sm_verify_dll)]
+        player_legacy_edges::transfer(game, 0);
         Self {
             state: Some(import_session(game)),
             inputs: encoding::inputs(&game.g_ram),
@@ -408,6 +412,10 @@ pub(crate) fn run_mechanisms(
 }
 
 pub(crate) fn import_session(game: &mut Game) -> Session {
+    #[cfg(sm_verify_dll)]
+    player_normal_transfers::record(game, 1);
+    #[cfg(sm_verify_dll)]
+    player_legacy_edges::transfer(game, 1);
     let mut state = encoding::decode(&game.g_ram, game.world().clone());
     import_native_spawn(&mut state, game);
     state.actor_identity = game.take_actor_identity();
@@ -442,6 +450,10 @@ pub(crate) fn export_session(state: Session, game: &mut Game) {
         state: Some(state),
         game,
     };
+    #[cfg(sm_verify_dll)]
+    player_legacy_edges::transfer(guard.game, 2);
+    #[cfg(sm_verify_dll)]
+    player_normal_transfers::record(guard.game, 2);
     let state = guard.state.as_ref().expect("export owns Session");
     encoding::encode(state, &mut guard.game.g_ram);
     export_native_spawn(state, guard.game);
@@ -682,6 +694,8 @@ mod player_collision_runtime;
 mod player_movement_runtime;
 #[path = "player_transitions_runtime.rs"]
 mod player_transitions_runtime;
+#[path = "player_update_runtime.rs"]
+mod player_update_runtime;
 
 #[cfg(sm_verify_dll)]
 #[path = "../verification/collision_mechanism_checks.rs"]
@@ -694,3 +708,27 @@ pub(crate) mod player_spin_bounds;
 #[cfg(sm_verify_dll)]
 #[path = "../verification/player_movement_edges.rs"]
 pub(crate) mod player_movement_edges;
+
+#[cfg(sm_verify_dll)]
+#[path = "../verification/player_minimap_bytes.rs"]
+pub(crate) mod player_minimap_bytes;
+
+#[cfg(sm_verify_dll)]
+#[path = "../verification/player_legacy_edges.rs"]
+pub(crate) mod player_legacy_edges;
+
+#[cfg(sm_verify_dll)]
+#[path = "../verification/player_update_aliases.rs"]
+pub(crate) mod player_update_aliases;
+
+#[cfg(sm_verify_dll)]
+#[path = "../verification/player_minimap_boss.rs"]
+pub(crate) mod player_minimap_boss;
+
+#[cfg(sm_verify_dll)]
+#[path = "../verification/player_minimap_edges.rs"]
+pub(crate) mod player_minimap_edges;
+
+#[cfg(sm_verify_dll)]
+#[path = "../verification/player_normal_transfers.rs"]
+pub(crate) mod player_normal_transfers;

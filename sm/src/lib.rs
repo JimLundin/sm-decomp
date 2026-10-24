@@ -365,7 +365,6 @@ pub mod game {
     pub(crate) mod layer_blending;
     pub(crate) mod liquid_effects;
     pub mod message_boxes;
-    pub(crate) mod minimap;
     pub(crate) mod mode7_transfers;
     pub(crate) mod moving_platforms;
     pub(crate) mod prelude;
@@ -409,6 +408,7 @@ pub mod game {
     pub(crate) mod player_collision_owned_checks;
     pub(crate) mod player_movement;
     pub(crate) mod player_transitions;
+    pub(crate) mod player_update;
 
     pub mod progress_flags;
     pub(crate) mod room_backgrounds;

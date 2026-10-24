@@ -13,7 +13,7 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a4::*;
 
 use crate::game::enemy_projectiles::{ClearEprojs, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
-use crate::game::minimap;
+use crate::game::player_update::minimap;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_80::{QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_88::SpawnHdmaObject;
@@ -1151,7 +1151,7 @@ crate::game::callback_dispatch! {
             (*v7).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) as u16;
             word!(game.vram_write_queue_tail = (v6).wrapping_add(7));
         } else {
-            minimap::disable_for_boss(game);
+            minimap::disable_for_boss(&mut crate::game::session_runtime::Runtime::new(game));
             word!(game.croco_word_7E069A = 0);
             let E_0 = Get_Crocomire(word!(game.cur_enemy_index) as i32, game);
             set_fields! {[(*E_0)], 0; var_A, var_E}

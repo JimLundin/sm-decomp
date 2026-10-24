@@ -419,6 +419,12 @@ macro_rules! scalar_words {
         $f(0xd91a,$($borrow)* $s.room.loaded_items);
         $f(0xcea,$($borrow)* $s.room.power_bomb_radius);
         $f(0x5f5,$($borrow)* $s.feedback.sound_disabled);
+        $f(0x5f7,$($borrow)* $s.minimap.disabled);
+        for row in 0..3 {
+            for column in 0..5 {
+                $f(0xc608+2*(26+column+32*row),$($borrow)* $s.minimap.tiles[row][column]);
+            }
+        }
         $f(0xdc8,$($borrow)* $s.messages.queued);
         $f(0x1e75,$($borrow)* $s.mechanisms.save_locked);
         $f(0x1c23,$($borrow)* $s.mechanisms.flags);
@@ -489,6 +495,7 @@ pub(crate) fn read(bytes: &[u8], at: usize) -> u16 {
 }
 pub(crate) fn decode(bytes: &[u8], world: Arc<WorldBinding>) -> Session {
     let mut s = Session::with_world(world);
+    s.minimap.explored.copy_from_slice(&bytes[0x7f7..0x8f7]);
     macro_rules! load_key {
         ($at:expr, $field:ident, $get:ident, $set:ident) => {
             s.room.entry.$field = s.world.$set(read(bytes, $at));
@@ -543,6 +550,9 @@ pub(crate) fn decode(bytes: &[u8], world: Arc<WorldBinding>) -> Session {
     s
 }
 pub(crate) fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
+    for (index, pair) in s.minimap.explored.chunks_exact(2).enumerate() {
+        visit(0x7f7 + 2 * index, u16::from_le_bytes([pair[0], pair[1]]));
+    }
     crate::game::actors::codec::visit_common(s, &mut visit);
     macro_rules! emit_key {
         ($at:expr, $field:ident, $get:ident, $set:ident) => {
@@ -609,6 +619,9 @@ pub(crate) fn encode(s: &Session, bytes: &mut [u8]) {
     }
 }
 pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
+    if (0x7f7..0x8f7).contains(&at) {
+        return Some(s.minimap.explored[at - 0x7f7]);
+    }
     if let Some(value) = crate::game::actors::codec::projected_byte(s, at) {
         return Some(value);
     }
@@ -695,6 +708,10 @@ pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     result
 }
 pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
+    if (0x7f7..0x8f7).contains(&at) {
+        s.minimap.explored[at - 0x7f7] = value;
+        return true;
+    }
     if crate::game::actors::codec::write_projected_byte(s, at, value) {
         return true;
     }

@@ -1362,3 +1362,7 @@ pub mod player_settlement;
 #[cfg(sm_verify_dll)]
 #[path = "verification/player_locomotion.rs"]
 pub mod player_locomotion;
+
+#[cfg(sm_verify_dll)]
+#[path = "verification/player_update_cases.rs"]
+pub mod player_update_cases;

@@ -5,8 +5,8 @@ use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
-use crate::game::minimap;
 use crate::game::music::QueueMusic_Delayed8;
+use crate::game::player_update::minimap;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
 
@@ -1264,7 +1264,7 @@ crate::game::callback_dispatch! {
                     | kEnemyProps_Invisible as i32)) as u16;
         } else {
             word_transfers!(game, descending, 2048; le(tilemap_stuff, 2047) <- value(0));
-            minimap::disable_for_boss(game);
+            minimap::disable_for_boss(&mut crate::game::session_runtime::Runtime::new(game));
             set_fields! {[(*E)], 0; parameter_1, parameter_2}
             Ridley_Func_99(addr_kRidley_Ilist_E538 as u16, game);
             (*E).base.palette_index = 3584;

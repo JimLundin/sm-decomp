@@ -106,3 +106,9 @@ pub(crate) mod player_collision_owned_checks;
 
 #[path = "../../game/player_movement/mod.rs"]
 pub(crate) mod player_movement;
+
+#[path = "../../game/player_update/mod.rs"]
+pub(crate) mod player_update;
+
+#[path = "../../game/samus_periodic_damage.rs"]
+pub(crate) mod samus_periodic_damage;
