@@ -446,6 +446,12 @@ references; measure build/test time and resource growth before changing the loop
    these are predecessor references, not replacement comparisons. Actual state/access/
    codec metadata carrier passes its positive compile control; five negative borrow,
    edit-escape and non-Copy probes fail for their intended compiler diagnostics.
+   Four additional actual table-read boundary references pass capture and independent
+   byte audit (source694c30a5), bringing the total to79. The first combined candidate
+   passes formatting after one visibility syntax fix; its library check reports15
+   integration errors in visibility, drawing fields, retained contact callers and
+   borrow scopes. Fixes and remaining caller retirement are in progress; candidate
+   behavior, palette residency and mutation checks remain unverified.
    Preserve56existing mutants and add the
    nine selected actor faults, including discarded-future handle rejection.
    Scope includes population/assets, spawn/respawn/death, separate select/update,
