@@ -432,3 +432,15 @@ include!("verification/flags_kraid_dll.rs");
 
 include!("verification/kraid_flags_dll.rs");
 include!("verification/kraid_flags_candidate_dll.rs");
+
+include!("verification/room_reference_dll.rs");
+
+include!("verification/room_contact_start_dll.rs");
+
+include!("verification/room_world_dll.rs");
+#[unsafe(no_mangle)]
+pub extern "C" fn sm_verify_room_runtime_guard() -> bool {
+    sm::verify_room_runtime_guard()
+}
+
+include!("verification/room_background_dll.rs");

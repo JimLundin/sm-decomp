@@ -8,12 +8,6 @@ use crate::game::music::{
     QueueMusic_DelayedY,
 };
 pub use crate::game::prelude::*;
-use crate::game::room_backgrounds::BackgroundLoad;
-use crate::game::room_state::{
-    initialize_door_objects, load_destination_cre, load_destination_map, load_door,
-    load_enemy_graphics, load_header as LoadRoomHeader, load_level, load_sprite_palettes,
-    load_state as LoadStateHeader, load_tiles_and_palette, save_departing_map,
-};
 use crate::game::scene_drawing::{draw_scene, queue_enemy_tiles};
 
 use crate::cpu_infra::DebugGameOverMenu;
@@ -3979,7 +3973,6 @@ pub unsafe fn WaitUntilEndOfVblankAndEnableIrq(game: &mut Game) {
         }
     }
 }
-pub fn PointlessFunctionStupidToo() {}
 pub unsafe fn EnsureSamusDrawnEachFrame(game: &mut Game) {
     unsafe {
         if word!(game.elevator_flags) == 0 {
@@ -3987,358 +3980,33 @@ pub unsafe fn EnsureSamusDrawnEachFrame(game: &mut Game) {
         }
     }
 }
-pub fn NullFunc() {}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallDoorTransitionFunction_Async(ea: u32, game: &mut Game) -> CoroutineRet => ea;
-    call (game); default Unreachable(game) as CoroutineRet;
-    @functions [pub unsafe fn (game: &mut Game) -> CoroutineRet];
-    [8577405] DoorTransitionFunction_HandleElevator [] {
-        if word!(game.elevator_flags) == 0 {
-            word!(game.game_state += 1);
-            return GameState_10_LoadingNextRoom_Async(game);
-        }
-        CallSomeSamusCode(0, game);
-        if (word!(game.elevator_direction) & 0x8000) != 0 {
-            word!(game.game_state += 1);
-            return GameState_10_LoadingNextRoom_Async(game);
-        }
-        word!(game.downwards_elevator_delay_timer = 48);
-        word!(game.door_transition_function = ((0x82e19fi32) as u16));
-        DoorTransitionFunction_Wait48frames(game)
-    };
-    [8577439] DoorTransitionFunction_Wait48frames [] {
-        if (word!(game.downwards_elevator_delay_timer -= 1, reread) & 0x8000) != 0 {
-            word!(game.game_state += 1);
-            return GameState_10_LoadingNextRoom_Async(game);
-        } else {
-            select_enemies(game);
-            run_enemies(game);
-            draw_scene(game);
-            EnsureSamusDrawnEachFrame(game);
-        }
-        kCoroutineNone as CoroutineRet
-    };
-    [8577694] DoorTransitionFunction_WaitForSoundsToFinish [] {
-        select_enemies(game);
-        run_enemies(game);
-        draw_scene(game);
-        EnsureSamusDrawnEachFrame(game);
-        if game.sfx_queue_is_empty(0) && game.sfx_queue_is_empty(1) && game.sfx_queue_is_empty(2) {
-            game.set_door_transition_function(0xe2db);
-        }
-        kCoroutineNone as CoroutineRet
-    };
-    [8577755] DoorTransitionFunction_FadeOutScreen [] {
-        if AdvancePaletteFadeForAllPalettes_0xc(game) != 0 {
-            game.set_door_transition_function(0xe2f7);
-        } else {
-            select_enemies(game);
-            run_enemies(game);
-            draw_scene(game);
-            EnsureSamusDrawnEachFrame(game);
-        }
-        kCoroutineNone as CoroutineRet
-    };
-    [8577783] DoorTransitionFunction_LoadDoorHeaderEtc [] {
-        load_door(game);
-        sub_8882AC(game);
-        game.set_hdma_objects_enable_flag(game.hdma_objects_enable_flag() & 0x7fff);
-        game.set_irqhandler_next_handler(8);
-        game.set_door_transition_function(0xe310);
-        kCoroutineNone as CoroutineRet
-    };
-    [8577808] DoorTransitionFunction_ScrollScreenToAlignment [] {
-        let align_x = game.door_direction() & 2 != 0;
-        let position = if align_x {
-            game.layer1_x_pos()
-        } else {
-            game.layer1_y_pos()
-        };
-        let aligned = position as u8 == 0;
-        if !aligned {
-            let position = if position & 0x80 != 0 {
-                position.wrapping_add(1)
-            } else {
-                position.wrapping_sub(1)
-            };
-            if align_x {
-                game.set_layer1_x_pos(position);
-            } else {
-                game.set_layer1_y_pos(position);
-            }
-        }
-        CalculateLayer2PosAndScrollsWhenScrolling(game);
-        if aligned {
-            game.set_door_transition_function(0xe353);
-        }
-        kCoroutineNone as CoroutineRet
-    };
-    [8577875] DoorTransitionFunction_FixDoorsMovingUp [] {
-        if game.door_direction() & 3 == 3 {
-            FixDoorsMovingUp(game);
-        }
-        game.set_door_transition_function(0xe36e);
-        kCoroutineNone as CoroutineRet
-    };
-    [8577902] DoorTransitionFunction_SetupNewRoom [] {
-        save_departing_map(game);
-        LoadRoomHeader(game);
-        LoadStateHeader(game);
-        load_destination_map(game);
-        InitializeSpecialEffectsForNewRoom(game);
-        load_level::<false>(game);
-        game.set_door_transition_function(0xe38e);
-        kCoroutineNone as CoroutineRet
-    };
-    [8577934] DoorTransitionFunction_SetupScrolling [] {
-        game.set_reg_bg2hofs(0);
-        game.set_reg_bg2vofs(0);
-        game.set_scrolling_finished_hook(0);
-        if game.door_direction() & 3 == 2 {
-            game.set_reg_bg1vofs(game.reg_bg1vofs().wrapping_add(1));
-        }
-        if game.door_direction() & 3 != 3 {
-            game.set_door_transition_frame_counter(0);
-        }
-        DoorTransitionScrollingSetup(game);
-        game.set_door_transition_function(0xe3c0);
-        kCoroutineNone as CoroutineRet
-    };
-    [8577984] DoorTransitionFunction_PlaceSamusLoadTiles [] {
-        game.set_samus_x_pos(
-            game.layer1_x_pos()
-                .wrapping_add(u16::from(game.samus_x_pos() as u8)),
-        );
-        game.set_samus_prev_x_pos(game.samus_x_pos());
-        game.set_samus_y_pos(
-            game.layer1_y_pos()
-                .wrapping_add(u16::from(game.samus_y_pos() as u8)),
-        );
-        game.set_samus_prev_y_pos(game.samus_y_pos());
-        game.set_door_transition_flag(0);
-        let irq_handler = if game.door_direction() & 3 == 2 {
-            16
-        } else {
-            22
-        };
-        game.set_irqhandler_next_handler(irq_handler);
-        WaitUntilEndOfVblankAndEnableIrq(game);
-        if game.cre_bitset() & 2 != 0 && game.door_def_ptr() != addr_kDoorDef_947a as u16 {
-            decompress_to_ram(0xb98000, 0x7000, game);
-        }
-        decompress_to_ram(game.tileset_tiles_pointer(), 0x2000, game);
-        decompress_to_ram(game.tileset_compr_palette_ptr(), 0xc200, game);
-        CopyToVramNow(0, 0x7e2000, 0x2000, game);
-        CopyToVramNow(0x1000, 0x7e4000, 0x2000, game);
-        CopyToVramNow(0x2000, 0x7e6000, 0x1000, game);
-        if game.cre_bitset() & 6 != 0 && game.door_def_ptr() != addr_kDoorDef_947a as u16 {
-            CopyToVramNow(0x2800, 0x7e7000, 0x1000, game);
-            CopyToVramNow(0x3000, 0x7e8000, 0x2000, game);
-            CopyToVramNow(0x4000, 0x9ab200, 0x1000, game);
-        }
-        if game.door_direction() & 3 == 3 {
-            game.set_irqhandler_next_handler(16);
-        }
-        game.set_door_transition_function(0xe4a9);
-        kCoroutineNone as CoroutineRet
-    };
-    [8578217] DoorTransitionFunction_LoadMoreThings_Async [] {
-        crate::verify_probe::hit("coroutine.door");
-        let resume = game.coroutine_state_1();
-        if resume == 0 {
-            load_enemy_graphics(game);
-            LoadRoomMusic(game);
-            ClearEprojs(game);
-            animated_tiles::clear(game);
-            palette_effects::clear(game);
-            clear(game);
-            initialize_door_objects(game);
-            LoadFXHeader(game);
-            close_door(game);
-            UpdateBeamTilesAndPalette(game);
-            load_sprite_palettes(game);
-            load_room_assets(game);
-            initialize_room(game);
-            crate::game::player_projectiles::reset(game);
-            Samus_LoadSuitTargetPalette(game);
-            BackgroundLoad::Door.load(game);
-        }
-        if resume <= 1 {
-            let mut waiting = resume == 1;
-            loop {
-                if waiting {
-                    let yielded: u8 = WaitForNMI_Async(game);
-                    if yielded != 0 {
-                        game.set_coroutine_state_1(1);
-                        return yielded;
-                    }
-                }
-                let door_transition_flag =
-                    u16::from_le_bytes([game.g_ram[0x931], game.g_ram[0x932]]);
-                if door_transition_flag & 0x8000 != 0 {
-                    break;
-                }
-                waiting = true;
-            }
-            game.g_ram[0xc188..0xc18a].copy_from_slice(&15328u16.to_le_bytes());
-            SpawnBG3ScrollHdmaObject(game);
-            game.set_hdma_objects_enable_flag(game.hdma_objects_enable_flag() | 0x8000);
-        }
-        if resume <= 2 {
-            let yielded: u8 = run(game);
-            if yielded != 0 {
-                game.set_coroutine_state_1(2);
-                return yielded;
-            }
-            if game.door_direction() & 2 == 0 {
-                if game.door_direction() & 3 != 0 {
-                    game.set_samus_x_pos(game.samus_x_pos() & 0xfff8);
-                } else {
-                    game.set_samus_x_pos(game.samus_x_pos() | 7);
-                }
-            }
-            game.set_door_transition_function(0xe659);
-        }
-        game.set_coroutine_state_1(0);
-        0 as CoroutineRet
-    };
-    [8578649] DoorTransition_C_HandleAnimTiles [] {
-        animated_tiles::advance(game);
-        game.set_door_transition_function(fnDoorTransition_WaitForMusicToClear as u16);
-        kCoroutineNone as CoroutineRet
-    };
-    [8578660] DoorTransition_WaitForMusicToClear [] {
-        if HasQueuedMusic(game) == 0 {
-            game.set_door_transition_function(fnDoorTransition_HandleTransition as u16);
-            LoadNewMusicTrackIfChanged(game);
-        }
-        kCoroutineNone as CoroutineRet
-    };
-    [8578722] DoorTransition_HandleTransition [] {
-        let x = game.samus_x_pos();
-        match x & 0x00f0 {
-            0x10 => game.set_samus_x_pos((x | 0x000f).wrapping_add(8)),
-            0xe0 => game.set_samus_x_pos((x & 0xfff0).wrapping_sub(8)),
-            _ => {}
-        }
-        let y = game.samus_y_pos();
-        if y & 0x00f0 == 0x10 {
-            game.set_samus_y_pos((y | 0x000f).wrapping_add(8));
-        }
-        word_transfers!(game, descending, 256;
-            little(0x9dfe) <- value(0), little(0x9ffe) <- value(0),
-        );
-        let room_irq = game.room_loading_irq_handler();
-        game.set_irqhandler_next_handler(if room_irq == 0 { 4 } else { room_irq });
-        PointlessFunctionStupidToo();
-        if game.elevator_flags() != 0 {
-            let samus_command = if game.elevator_direction() & 0x8000 == 0 {
-                7
-            } else {
-                0
-            };
-            CallSomeSamusCode(samus_command, game);
-        }
-        SetLiquidPhysicsType(game);
-        game.set_door_transition_function(fnDoorTransition_FadeInScreenAndFinish as u16);
-        let inidisp_obsel = u16::from_le_bytes([game.g_ram[0x51], game.g_ram[0x52]]);
-        game.g_ram[0x51..0x53].copy_from_slice(&(inidisp_obsel | 0x001f).to_le_bytes());
-        kCoroutineNone as CoroutineRet
-    };
-    [8578871] DoorTransition_FadeInScreenAndFinish [] {
-        animated_tiles::advance(game);
-        select_enemies(game);
-        run_enemies(game);
-        EprojRunAll(game);
-        draw_scene(game);
-        EnsureSamusDrawnEachFrame(game);
-        queue_enemy_tiles(game);
-        if AdvancePaletteFadeForAllPalettes_0xc(game) != 0 {
-            game.set_debug_disable_sounds(0);
-            PlaySpinJumpSoundIfSpinJumping(game);
-            game.set_door_transition_flag_elevator_zebetites(0);
-            game.set_door_transition_flag_enemies(0);
-            game.set_game_state(kGameState_8_MainGameplay as u16);
-        }
-        kCoroutineNone as CoroutineRet
-    };
+pub unsafe fn CallDoorTransitionFunction_Async(ea: u32, game: &mut Game) -> CoroutineRet {
+    let poll = crate::game::room_entry::protocol::dispatch(
+        &mut crate::game::session_runtime::Runtime::new(game),
+        ea,
+    );
+    poll.returned_byte()
 }
 pub unsafe fn GameState_9_HitDoorBlock(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        CallDoorTransitionFunction_Async(
-            u32::from(game.door_transition_function()) | 0x820000,
-            game,
-        )
-    }
+    let poll = crate::game::room_entry::protocol::resume(
+        &mut crate::game::session_runtime::Runtime::new(game),
+        crate::game::room_entry::EntrySignal::DoorState9,
+    );
+    poll.returned_byte()
 }
 pub unsafe fn GameState_10_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        word! { game, 1;
-            door_transition_flag_enemies, door_transition_flag_elevator_zebetites,
-        }
-        word! { game, 0; debug_disable_minimap, save_station_lockout_flag }
-        select_enemies(game);
-        run_enemies(game);
-        draw_scene(game);
-        EnsureSamusDrawnEachFrame(game);
-        load_destination_cre(game);
-        word_transfers!(game, descending, 128;
-            le(target_palettes, 127) <- value(0),
-            le(target_palettes, 255) <- value(0),
-        );
-        word!(game.target_palettes[9] = word!(game.palette_buffer[9]));
-        word!(game.target_palettes[10] = word!(game.palette_buffer[10]));
-        word!(game.target_palettes[13] = word!(game.palette_buffer[13]));
-        word!(game.target_palettes[14] = word!(game.palette_buffer[14]));
-        word!(game.target_palettes[17] = word!(game.palette_buffer[17]));
-        word!(game.target_palettes[18] = word!(game.palette_buffer[18]));
-        word!(game.target_palettes[19] = word!(game.palette_buffer[19]));
-        word!(game.target_palettes[29] = word!(game.palette_buffer[29]));
-        if ((word!(game.previous_cre_bitset) | word!(game.cre_bitset)) & 1) == 0 {
-            word!(game.target_palettes[20] = word!(game.palette_buffer[20]));
-            word!(game.target_palettes[21] = word!(game.palette_buffer[21]));
-            word!(game.target_palettes[22] = word!(game.palette_buffer[22]));
-            word!(game.target_palettes[23] = word!(game.palette_buffer[23]));
-            word!(game.target_palettes[28] = word!(game.palette_buffer[28]));
-            if word!(game.timer_status) != 0 {
-                word!(game.target_palettes[209] = word!(game.palette_buffer[209]));
-                word!(game.target_palettes[210] = word!(game.palette_buffer[210]));
-                word!(game.target_palettes[212] = word!(game.palette_buffer[212]));
-                word!(game.target_palettes[221] = word!(game.palette_buffer[221]));
-                DrawTimer(game);
-            }
-        }
-        ClearSoundsWhenGoingThroughDoor(game);
-        QueueSfx2_Max15(0x71, game);
-        word!(game.debug_disable_sounds = -1i32 as u16);
-        word!(game.door_transition_function = ((0x82e29ei32) as u16));
-        word!(game.game_state += 1);
-        kCoroutineNone as CoroutineRet
-    }
+    let poll = crate::game::room_entry::protocol::resume(
+        &mut crate::game::session_runtime::Runtime::new(game),
+        crate::game::room_entry::EntrySignal::DoorState10,
+    );
+    poll.returned_byte()
 }
 pub unsafe fn GameState_11_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        let dispatch_result = CallDoorTransitionFunction_Async(
-            u32::from(game.door_transition_function()) | 0x820000,
-            game,
-        );
-        if dispatch_result != 0 {
-            return dispatch_result;
-        }
-        if game.timer_status() != 0 {
-            DrawTimer(game);
-        }
-        kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn LoadDestinationRoomThings(game: &mut Game) {
-    unsafe {
-        load_destination_cre(game);
-        load_door(game);
-        LoadRoomHeader(game);
-        LoadStateHeader(game);
-        load_tiles_and_palette(game);
-    }
+    let poll = crate::game::room_entry::protocol::resume(
+        &mut crate::game::session_runtime::Runtime::new(game),
+        crate::game::room_entry::EntrySignal::DoorState11,
+    );
+    poll.returned_byte()
 }
 
 static kGameOptionsMenuFuncs: [Func_V; 13] = callback_table! { nonnull Func_V;

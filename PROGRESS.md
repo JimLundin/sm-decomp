@@ -10,40 +10,42 @@ flowchart LR
     CORE["Small owned game core"]:::active
     CORE --> VANILLA["Vanilla fidelity profile"]:::active
     CORE --> MEDIA["Custom sprites + palettes"]:::pending
-    CORE --> WORLD["Room + door graph"]:::pending
+    CORE --> WORLD["Validated room + door graph<br/>compatible resources"]:::done
     CORE --> RULES["Opt-in re-spin + QoL"]:::pending
     MEDIA --> MR["Map Rando integration"]:::pending
     WORLD --> MR
     RULES --> MR
     MR --> REPLAY["Seed + settings + replay compatibility"]:::pending
+    class WORLD changed
+    classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12
     classDef pending fill:#f1f5f9,stroke:#94a3b8,color:#475569,stroke-dasharray:5 5
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-### Room entry + configurable connections / implementation
+### Room entry + configurable connections / adopted
 
 ```mermaid
 flowchart LR
     RC["Complete caller + content contract<br/>source review PASS"]:::done --> RD["24 concrete declaration files<br/>source review PASS"]:::done
     RU["84 additional bytes<br/>disjoint union audit PASS"]:::done --> RD
-    RR["36 room + 20 contact/start references<br/>execution + independent audit PASS"]:::done --> RI["Production contact / start / IRQ<br/>parallel implementation"]:::active
+    RR["36 room + 20 contact/start references<br/>execution + independent audit PASS"]:::done --> RI["room_entry/ + actual callers<br/>adopted on main"]:::done
     RD --> RB["Declaration compile<br/>PASS"]:::done --> RS["Remove duplicate representations<br/>52 → 19 host methods"]:::done
     RS --> RV["25-file revised interface<br/>review + compile PASS"]:::done --> RI
-    RI --> RW["world.rs / immutable bindings"]:::draft
-    RI --> RCONTENT["content.rs / live captures"]:::draft
-    RI --> RSTATE["state.rs / 82 room + 2 shared bytes"]:::draft
-    RI --> RCODEC["session_encoding.rs / one projection"]:::draft
-    RI --> ROWNER["game_state.rs / supplied world"]:::draft
-    RI --> RSELECT["selection.rs"]:::draft
-    RI --> RINSTALL["installation.rs"]:::draft
+    RI --> RW["world.rs / immutable bindings"]:::done
+    RI --> RCONTENT["content.rs / live captures"]:::done
+    RI --> RSTATE["state.rs / 82 room bytes"]:::done
+    RI --> RCODEC["session_encoding.rs / one projection"]:::done
+    RI --> ROWNER["game_state.rs / Game + GameOwner<br/>supplied-world constructors"]:::done
+    RI --> RSELECT["selection.rs"]:::done
+    RI --> RINSTALL["installation.rs"]:::done
     ROWNER --> ROWNERCHECK["Constructor + lifecycle<br/>source review PASS"]:::done
     RSELECT --> RSELECTCHECK["Selection + partial writes<br/>source review PASS"]:::done
     RINSTALL --> RINSTALLCHECK["Installation + retained captures<br/>source review PASS"]:::done
-    RI --> RPROTO["protocol.rs / suspend + resume"]:::draft
-    RI --> RBG["background.rs"]:::draft
-    RI --> RCOMPAT["compatibility.rs / actual callers"]:::draft
-    RI --> RPLM["creation.rs / shared door inputs"]:::draft
+    RI --> RPROTO["protocol.rs / suspend + resume"]:::done
+    RI --> RBG["background.rs"]:::done
+    RI --> RCOMPAT["compatibility.rs / actual callers"]:::done
+    RI --> RPLM["room_mechanisms/creation.rs<br/>owned exit + direction"]:::done
     RI --> RT["Supplied topology / actual callers<br/>11 PASS / output audit PASS"]:::done
     ROWNERCHECK --> RT
     RSELECTCHECK --> RT
@@ -66,15 +68,43 @@ flowchart LR
     RT --> RHOST["Hosted full build + format<br/>PASS"]:::done
     RHOST --> RCOMPOSE["Composed core execution<br/>PASS"]:::done
     RCOMPOSE --> RDETACHED["42 existing detached mutations<br/>stage PASS"]:::done
-    RDETACHED --> RMUT["9 existing + 5 new DLL faults<br/>hosted stage running"]:::active
+    RDETACHED --> RMUT["9 existing + 5 new DLL faults<br/>14 killed / terminal audit PASS"]:::done
     RBCAP --> ROFFSET["VRAM offset / case 37<br/>comparison + audit PASS"]:::done
     RBUILD --> RORACLE["Vanilla / 21,065 frames<br/>13 probes / 0 failures / PASS"]:::done
-    RMUT --> MMARK["Late contact marker"]:::pending
-    RMUT --> MLOCK["Late station lockout"]:::pending
-    RMUT --> MAREA["Overwrite area high byte"]:::pending
-    RMUT --> MBIND["Write before binding check"]:::pending
-    RMUT --> MOFFSET["Wrong VRAM offset units"]:::pending
-    class RHOST,RCOMPOSE,RDETACHED,RMUT changed
+    RMUT --> MMARK["Late contact marker<br/>KILLED / assertion audit PASS"]:::done
+    RMUT --> MLOCK["Late station lockout<br/>KILLED / assertion audit PASS"]:::done
+    RMUT --> MAREA["Overwrite area high byte<br/>KILLED / assertion audit PASS"]:::done
+    RMUT --> MBIND["Write before binding check<br/>KILLED / assertion audit PASS"]:::done
+    RMUT --> MOFFSET["Wrong VRAM offset units<br/>KILLED / assertion audit PASS"]:::done
+    RI --> RAPI["api.rs / arrival + resume API"]:::done
+    RI --> RMODULE["mod.rs / owned entry module"]:::done
+    RCONTENT --> RCSTATE["content_state.rs / state records"]:::done
+    RCONTENT --> RCBG["content_background.rs / command records"]:::done
+    RCONTENT --> RCRUNTIME["content_runtime.rs / live acquisitions"]:::done
+    RCOMPAT --> REFFECTS["effects.rs / closed effect interface"]:::done
+    RCODEC --> RSESSION["session.rs / immutable binding<br/>2 shared continuation bytes"]:::done
+    RCODEC --> RRUNTIME["session_runtime.rs / interval transfer"]:::done
+    ROWNER --> RCPU["cpu_infra.rs / persistence guard"]:::done
+    ROWNER --> RRTL["rtl.rs / reset + persistence boundaries"]:::done
+    RI --> RSM80["sm_80.rs / start + initial callers<br/>obsolete station structure retired"]:::done
+    RI --> RSM82["sm_82.rs / door + IRQ callers"]:::done
+    RI --> RCONTACT["samus_room_contact.rs / arrival decision"]:::done
+    RCONTACT --> RCONTACTRAM["samus_room_contact_ram.rs / actual entry"]:::done
+    RPLM --> REXTERNAL["external_inputs.rs / duplicate door fields retired"]:::done
+    RINSTALL --> ROLDSTATE["room_state.rs / compatibility entries<br/>old rule bodies retired"]:::done
+    RBG --> ROLDBG["room_backgrounds.rs / old rule bodies retired"]:::done
+    RCOMPARE --> RALL["All 94 comparisons<br/>match frozen bytes"]:::done
+    RBVERIFY --> RALL
+    RGUARD --> RSHARED["6 shared Runtime guards + 106 player groups<br/>execution PASS"]:::done
+    RALL --> RAUDIT["Predecessor + candidate outputs<br/>independent byte audit PASS"]:::done
+    RT --> RAUDIT
+    RMUT --> RMUTAUDIT["56 total mutation kills<br/>exact terminal-log audit PASS"]:::done
+    RDETACHED --> RMUTAUDIT
+    RI --> RCOUNT["Full production accounting<br/>+3,242 lines / +26,275 tokens<br/>692 lines above estimate"]:::done
+    RI --> RLIFE["Persistent Session<br/>frame/lifecycle ownership remains"]:::pending
+    RW --> RIMPORT["Map Rando importer<br/>portable prepared save/replay remains"]:::pending
+    RCOMPAT --> RBACKEND["Independent assets + graphics/audio backend<br/>ROM compatibility + unsafe leaves remain"]:::pending
+    class RI,RW,RCONTENT,RSTATE,RCODEC,ROWNER,RSELECT,RINSTALL,RPROTO,RBG,RCOMPAT,RPLM,RAPI,RMODULE,RCSTATE,RCBG,RCRUNTIME,REFFECTS,RSESSION,RRUNTIME,RCPU,RRTL,RSM80,RSM82,RCONTACT,RCONTACTRAM,REXTERNAL,ROLDSTATE,ROLDBG,RMUT,MMARK,MLOCK,MAREA,MBIND,MOFFSET,RMUTAUDIT,RCOUNT,RLIFE,RIMPORT,RBACKEND,RALL,RAUDIT,RSHARED changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef draft fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef failed fill:#fecaca,stroke:#dc2626,color:#7f1d1d
@@ -83,7 +113,7 @@ flowchart LR
     classDef changed stroke:#a21caf,stroke-width:5px
 ```
 
-[Room validation CI](https://github.com/JimLundin/sm-decomp/actions/runs/40044596920)
+[Room validation CI / terminal audit PASS](https://github.com/JimLundin/sm-decomp/actions/runs/40044596920) | [Scope, accounting and remaining boundaries](docs/PLAN.md)
 
 ### Progression flags / adopted
 
@@ -617,7 +647,7 @@ flowchart TB
     EP --> EPT["Enemy projectile typed core"]:::pending
     GAME --> SAMUS["Samus"]:::pending
     GAME --> ENEMIES["Enemies / bosses"]:::pending
-    GAME --> ROOMS["Rooms / transitions"]:::pending
+    GAME --> ROOMS["room_entry/<br/>interval owner adopted"]:::done
     PAL --> COMPOSE["Composed animation + palette"]:::done
     AT --> COMPOSE
     PPT --> OWN["Persistent Session"]:::pending
@@ -639,6 +669,7 @@ flowchart TB
     AUDIO --> SHIP
     SHIP --> CREDITS["Boot to credits verified"]:::pending
     SHIP --> SAFE["Zero unsafe / manual memory"]:::pending
+    class ROOMS changed
     classDef done fill:#bbf7d0,stroke:#15803d,color:#14532d
     classDef checked fill:#bfdbfe,stroke:#2563eb,color:#1e3a8a
     classDef active fill:#fed7aa,stroke:#ea580c,color:#7c2d12

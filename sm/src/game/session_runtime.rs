@@ -322,7 +322,9 @@ impl Host for Runtime<'_> {
     }
 }
 
-/// Shared continuation belongs to the calling context, never to Session encoding.
+/// Capture the caller's pass before importing Session. Runtime publishes its
+/// shared continuation bytes on return; this caller then publishes its local
+/// result in the original order. Do not refresh the local pass after callbacks.
 pub(crate) fn run_mechanisms(
     game: &mut Game,
     context: crate::game::room_mechanisms::host::CallerContext,
@@ -351,12 +353,17 @@ pub(crate) fn run_mechanisms(
     }
 }
 
-fn import_session(game: &Game) -> Session {
-    let mut state = encoding::decode(&game.g_ram);
+pub(crate) fn import_session(game: &Game) -> Session {
+    let mut state = encoding::decode(&game.g_ram, game.world().clone());
     import_native_spawn(&mut state, game);
     state
 }
-fn export_session(state: &Session, game: &mut Game) {
+pub(crate) fn export_session(state: &Session, game: &mut Game) {
+    assert!(
+        std::sync::Arc::ptr_eq(&state.world, game.world())
+            && state.world.revision() == game.world().revision(),
+        "Session belongs to a different world binding"
+    );
     encoding::encode(state, &mut game.g_ram);
     export_native_spawn(state, game);
 }

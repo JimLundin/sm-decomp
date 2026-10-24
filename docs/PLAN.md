@@ -429,90 +429,66 @@ references; measure build/test time and resource growth before changing the loop
    Rust126642. All22new cfg-only observer lines count as verification. No net
    reduction, persistent whole-game ownership or Map Rando integration claim.
 
-   Next complete responsibility: room-entry protocol and configurable connections,
-   including actual contact/start/initial/door/IRQ paths, ordered content reads,
-   setup effects and suspension. Private next-room-session's24declaration files
-   pass independent source review and root metadata compilation (0.53s),
-   fingerprint04c37121. No new room implementation is adopted. Complete cost is
-   now estimated+1150..2550production lines, verification separate; no reduction
-   claim. V2 removes redundant token wrappers/type tags and host forwarding,
-   separates stored assets from transfer sources, and reduces content host methods
-   from52to19. All25files at591d2385 pass independent semantic/size review and
-   root metadata compilation (0.44s). Four private implementation lanes are now
-   authorized: world/content/owner/codec, selection/installation, protocol/background,
-   and compatibility/actual callers. Full scope and conservative cost accepted;
-   final adopted accounting and retirement proof still required. Keep reviewed
-   compatibility-bound prepared backgrounds in this staged backend; resource and
-   backend independence remain unfinished. Separate workers cover actual GameOwner
-   integration, runtime invariants, predecessor captures and mutation checks.
-   Selection/installation and constructor/lifecycle drafts now pass independent
-   source review; combined compilation and execution remain pending. Canonical
-   constructors retain RM_BOTH; prepared worlds start in RM_MINE. The reviewed
-   37-case background/scroll/DMA reference plan is in fixture implementation,
-   using actual devices and ordered register observations with isolated cases.
-   Preserve existing56references and level-copy cases; no new mutation kills
-   or production adoption are claimed from these source reviews.
-   Complete private candidate now compiles after an omitted background-pattern
-   field was fixed and the actual load-station caller was redirected. Root
-   formatting and direct verifier build pass (32.62s), source819390db; all56
-   room/contact/start comparisons match frozen bytes and the actual Runtime/world
-   ownership guard passes. Background predecessor sourcea1633c09 passes37cases,
-   56unchanged references and3level-copy checks; independent audit includes full
-   RAM/VRAM, ordered effects and66intermediate DMA snapshots. Replacement background
-   comparisons, full prepared routes and new mutations remain pending. Prepared
-   hardware fixtures required valid room geometry and music setup corrections;
-   these are not execution passes. Preliminary new room module is3795production
-   lines, above the earlier estimate; final complete accounting/repricing is
-   required before adoption. No reduction or persistent-Session claim.
-   Candidate644a0b45 now passes all37background full-byte comparisons,56earlier
-   comparisons and3level-copy checks. Actual prepared-world execution passes
-   contact0/1, terminalIRQ6/7 and mapped stations9/10; initial2/3 and reset8 fail
-   on a missing fixture render buffer, while full-door4/5 reaches an unset
-   source-room graphics hook and fails native dispatch. Source investigations
-   identified missing normal initialization; fixes and reruns remain pending.
-   Complete independent accounting is production+3250lines/+26349tokens/
-   +118573LFbytes, verificationRust+2908lines, Python+42bytes, native unchanged.
-   This exceeds the prior upper estimate by700production lines; adapters remain
-   charged to production. Four new mutation patches are drafted, not executed.
-   Fixture corrections now pass full world execution: actual renderer buffers
-   and source-room asset initialization restore normal prerequisites without
-   weakening route assertions. Source77e1681a builds (22.11s); all11prepared-world
-   cases pass and independent output/source/DLL audit confirms every RAM phase,
-   swapped destinations/level markers, complete transitions, reset and mapped
-   stations. Earlier failed captures remain preserved. Four new mutation checks
-   are source-reviewed and integrated, execution pending. Separate case37 adds
-   a real VRAM back-reference to distinguish byte/word offset units; source
-   review passes, predecessor/candidate execution remains pending.
-   Case37 now passes actual predecessor/candidate execution and independent
-   full-byte audit; all94comparisons and3level-copy checks pass on69f4c56a.
-   Composed-core metadata compilation passes. Targeted Speed Booster prefix
-   verifies21065frames, all13required probes and120follow-upframes, zero failures
-   (62.47s), ending in gameplay across7rooms. This is not credits coverage.
-   Hosted branch verify/room-entry-20261024 at7b5b41ac preserves checked Rust
-   source69f4c56a and adds a fifth reviewed VRAM-offset mutation. CI40044596920
-   passes full build, formatting, composed execution and the42detached-mutation
-   stage. The9existing+5newDLL mutation stage is running; its terminal logs and
-   exact assertion audit remain required before adoption. Final frozen accounting
-   is production+3242lines/+26275tokens/+118238LFbytes; verificationRust+3031lines,
-   Python+242lines, native unchanged. Production exceeds the prior upper estimate
-   by692lines; this is consolidation with growth, not a reduction claim.
-   Reuse current owners;84additional disjoint bytes comprise82room-related bytes
-   and two shared lossless continuation bytes (proposed union52,373). Retire the
-   actual competing orchestration and stale door inputs in the same adoption.
-   Public GameOwner::with_world must supply the actual production path; a detached
-   graph alone is insufficient. One immutable binding perGame preserves reset and
-   in-process rewind; prepared-world disk formats require identity protection and
-   remain unfinished. Vanilla persistence stays supported. Persistent Session
-   authority remains a separate complete frame/lifecycle migration requirement.
-   Contract and union source reviews pass. Source21995e54 passes36actual existing
-   room selection/header/state/door captures, including six exact checked failure
-   prefixes and two diagnostic allocation-replacement cases. Additional20actual
-   contact/start captures pass on0ef1d9a5 with fullRAM/outcome/diagnostic audit;
-   all36earlier room results remain byte-identical. Raw truncated native station
-   records are not valid predecessor cases; checked replacement safety needs
-   separate tests. These are synthetic references, not a new room
-   implementation or movie coverage. Main adoption and maintained fixture support
-   remain separate from the private source-checked reference snapshot.
+   **Room entry and configurable connections adopted.** Verified source
+   [7b5b41ac](https://github.com/JimLundin/sm-decomp/commit/7b5b41acb9e6a5cc275585735c93c6850888c509)
+   consolidates actual contact, load-station, initial, door and IRQ entry paths.
+   One rule implementation owns selection, ordered installation, backgrounds,
+   setup order and suspension; old orchestration bodies and competing door inputs
+   retire. Camera, graphics, decompression, device and other retained leaves remain
+   charged to production. Public WorldBinding::prepared and Game/GameOwner::with_world
+   supply validated stable room/state/exit identities to actual production callers.
+
+   RoomEntry owns 82 additional bytes; Session directly owns the two shared lossless
+   continuation bytes. The existing codec projects 52,373 unique bytes, an audited
+   disjoint increase of 84. Current area, geometry, inventory and flag owners remain
+   authoritative. Constructors and reset retain one immutable binding per Game.
+
+   Validation for this source passes:
+
+   - 94 exact predecessor/candidate comparisons: 36 selection/header/state/door,
+     20 contact/start and 38 background/scroll/installation cases, including checked
+     failure prefixes, live allocation changes and the VRAM back-reference offset.
+     Three existing level-copy checks are reused; full RAM/VRAM and ordered effects
+     received independent output audits.
+   - Eleven actual prepared-world GameOwner routes cover contact, initial loading,
+     full door transitions, terminal IRQ, reset and mapped load stations. Runtime
+     and world ownership checks, all six shared Runtime guards and 106 player groups
+     pass; fixture prerequisite corrections retain the full route assertions.
+   - A 21,065-frame Speed Booster prefix reaches all 13 required probes plus 120
+     follow-up frames with zero failures, ending in gameplay across seven rooms.
+     This is bounded gameplay coverage, not credits coverage.
+   - [CI 40044596920](https://github.com/JimLundin/sm-decomp/actions/runs/40044596920)
+     passes formatting, frontend/library/verifier build and composed-core execution.
+     Terminal logs and intended assertions independently confirm all 56 mutation
+     kills: 42 detached, nine existing DLL and five room-entry faults (late contact
+     marker, late station lockout, area high-byte overwrite, write before binding
+     validation and wrong VRAM offset units). Crashes/build failures do not count.
+
+   Complete frozen accounting against production-equivalent main 14af40a4:
+
+   | Category | Before lines | After lines | Line delta | Token delta | LF byte delta |
+   | --- | ---: | ---: | ---: | ---: | ---: |
+   | Production Rust, retained adapters included | 108,173 | 111,415 | +3,242 | +26,275 | +118,238 |
+   | Verification Rust | 18,469 | 21,500 | +3,031 | +26,646 | +108,364 |
+   | Combined Rust | 126,642 | 132,915 | +6,273 | +52,921 | +226,602 |
+   | Python verification/support | 2,471 | 2,713 | +242 | +2,701 | +11,342 |
+   | Native repository source | 562 | 562 | 0 | 0 | 0 |
+
+   Production exceeds the prior +2,550 upper estimate by 692 lines. Actual caller,
+   rule and obsolete station-structure deletions are included in that total; this
+   is consolidation with growth, not a reduction milestone. Accounting normalizes
+   LF, separates verification, and charges all retained compatibility adapters.
+
+   Remaining architecture work is explicit: Session authority still lasts only
+   across Runtime intervals; frame/lifecycle ownership is not complete. Prepared
+   topology retains compatible resource keys, ROM provenance and SNES staging/
+   device effects. A Map Rando importer, independent assets/graphics/audio backend,
+   removal of transitive unsafe dependencies and portable prepared-world save/replay
+   formats remain unfinished. Canonical persistence stays supported; incompatible
+   native CPU execution and untagged prepared persistence reject before mutation/I/O.
+   Raw truncated native station records are excluded from predecessor equivalence;
+   checked replacement safety is a separate obligation.
+
    Atlas snapshotf88970aa is live:429files/2071edges and all24curated anchors
    pass static checks. Hosted40039541123 passes browser/accessibility and Pages;
    live HTTP200 bytes exactly match388df54f's committed standalone HTML.

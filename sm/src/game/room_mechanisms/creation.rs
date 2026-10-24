@@ -152,13 +152,14 @@ pub(crate) fn spawn(c: &mut impl Host, source: SpawnSource, displacement: &mut C
         },
     )
 }
-pub(super) fn close_door(c: &mut impl Host) {
-    let door = c.loaded_record(ContentAddress {
-        bank: 0x83,
-        offset: c.inputs().door_definition,
-    });
-    let row = u16::from(door.byte(5)) * u16::from(c.session().room.width as u8);
-    let block = row.wrapping_add(u16::from(door.byte(4))).wrapping_mul(2);
+pub(crate) fn close_door(c: &mut (impl Host + crate::game::room_entry::content::EntryContent)) {
+    use crate::game::room_entry::content::Axis;
+    let exit = c.session().room.entry.exit.clone();
+    let door = c.capture_closing_door(&exit);
+    let row = u16::from(door.closing_position(Axis::Y)) * u16::from(c.session().room.width as u8);
+    let block = row
+        .wrapping_add(u16::from(door.closing_position(Axis::X)))
+        .wrapping_mul(2);
     if let Some(slot) = (0..40)
         .rev()
         .find(|&slot| c.session().mechanisms.slots[slot].block == block)
@@ -179,22 +180,14 @@ pub(super) fn close_door(c: &mut impl Host) {
             }
         }
     }
-    let address = c
-        .inputs()
-        .door_direction
-        .wrapping_mul(2)
-        .wrapping_add(0xe68a);
-    let header = c.loaded_record(ContentAddress {
-        bank: 0x8f,
-        offset: address,
-    });
-    if header.word(0) != 0 {
-        c.session_mut().spawn_scratch.header = u16::from_le_bytes(header.word(0).to_ne_bytes());
-        let door = c.loaded_record(ContentAddress {
-            bank: 0x83,
-            offset: c.inputs().door_definition,
-        });
-        c.session_mut().spawn_scratch.coordinates = u16::from_le_bytes(door.word(4).to_ne_bytes());
+    let direction = c.session().room.entry.direction;
+    let header = c.capture_closing_header(direction);
+    if header.word() != 0 {
+        c.session_mut().spawn_scratch.header = u16::from_le_bytes(header.word().to_ne_bytes());
+        let exit = c.session().room.entry.exit.clone();
+        let door = c.capture_closing_door(&exit);
+        c.session_mut().spawn_scratch.coordinates =
+            u16::from_le_bytes(door.closing_coordinates_native().to_ne_bytes());
         c.session_mut().spawn_scratch.argument = 0;
         spawn(
             c,

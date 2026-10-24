@@ -91,8 +91,10 @@ pub struct PowerBomb {
 }
 
 use crate::game::item_pickups::Inventory;
-#[derive(Clone, Default, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Session {
+    pub(crate) world: std::sync::Arc<crate::game::room_entry::world::WorldBinding>,
+    pub(crate) continuations: crate::game::room_entry::state::SharedContinuations,
     pub(crate) gameplay_flags: crate::game::gameplay_flag_state::GameplayFlags,
     pub(crate) flag_compatibility: crate::game::gameplay_flag_state::FlagCompatibility,
     pub sprite_effects: crate::game::sprite_effect_state::SpriteEffects,
@@ -107,6 +109,33 @@ pub struct Session {
     pub feedback: Feedback,
     pub messages: MessageRequests,
     pub spawn_scratch: SpawnScratch,
+}
+impl Session {
+    pub(crate) fn with_world(
+        world: std::sync::Arc<crate::game::room_entry::world::WorldBinding>,
+    ) -> Self {
+        Self {
+            room: Room::with_world(&world),
+            world,
+            continuations: crate::game::room_entry::state::SharedContinuations {
+                primary: 0,
+                secondary: 0,
+            },
+            gameplay_flags: Default::default(),
+            flag_compatibility: Default::default(),
+            sprite_effects: Default::default(),
+            sprite_compatibility: Default::default(),
+            visual: Default::default(),
+            projectiles: Default::default(),
+            enemy_projectiles: Default::default(),
+            player: Default::default(),
+            inventory: Default::default(),
+            mechanisms: Default::default(),
+            feedback: Default::default(),
+            messages: Default::default(),
+            spawn_scratch: Default::default(),
+        }
+    }
 }
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct Projectiles {
@@ -251,8 +280,9 @@ impl Terrain {
 }
 // Capacity is physical disjoint range, not width*height. Imported accesses
 // beyond it use the finite alias protocol; never clamp/reject by dimensions.
-#[derive(Clone, Default, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Room {
+    pub(crate) entry: crate::game::room_entry::state::RoomEntry,
     pub terrain: Terrain,
     pub area: u16,
     pub width: u16,
@@ -273,6 +303,75 @@ pub struct Room {
     pub enemy_processing_stage: u16,
     pub collision_detection_index: u16,
     pub slope_behavior: u16,
+}
+impl Room {
+    fn with_world(world: &crate::game::room_entry::world::WorldBinding) -> Self {
+        use crate::game::room_entry::{effects::AssetSlot, state::RoomEntry};
+        Self {
+            entry: RoomEntry {
+                exit: world.exit_identity(0),
+                direction: 0,
+                elevator_properties: 0,
+                elevator_interlock: 0,
+                enemy_interlock: 0,
+                elevator_direction: 0,
+                room: world.room_identity(0),
+                room_index: 0,
+                map_x: 0,
+                map_y: 0,
+                scroll_up: 0,
+                scroll_down: 0,
+                previous_cre: 0,
+                cre: 0,
+                doors: world.door_list(0),
+                state: world.state_identity(0),
+                level: world.asset(AssetSlot::Level, [0; 3]),
+                tile_table: world.asset(AssetSlot::TileTable, [0; 3]),
+                tiles: world.asset(AssetSlot::Tiles, [0; 3]),
+                palette: world.asset(AssetSlot::Palette, [0; 3]),
+                music_track: 0,
+                music_data: 0,
+                fx_key: 0,
+                enemy_population_key: 0,
+                enemy_tilesets_key: 0,
+                main_code_key: 0,
+                scrolling_hook: 0,
+                layer2_x: 0,
+                layer2_y: 0,
+                frame: 0,
+                arrival_x: 0,
+                arrival_y: 0,
+                speed_fraction: 0,
+                speed_whole: 0,
+                elevator_delay: 0,
+                completion: 0,
+                transition_selector: 0,
+                elevator_flags: 0,
+                elevator_status: 0,
+                irq_policy: 0,
+            },
+            terrain: Default::default(),
+            area: 0,
+            width: 0,
+            height: 0,
+            scroll_width: 0,
+            scroll_height: 0,
+            size_bytes: 0,
+            collision_cursor: 0,
+            liquid_options: 0,
+            liquid_height: 0,
+            liquid_target: 0,
+            liquid_velocity: 0,
+            liquid_delay: 0,
+            enemy_deaths: 0,
+            enemy_quota: 0,
+            loaded_items: 0,
+            power_bomb_radius: 0,
+            enemy_processing_stage: 0,
+            collision_detection_index: 0,
+            slope_behavior: 0,
+        }
+    }
 }
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct Feedback {

@@ -1,8 +1,7 @@
 use crate::game::decompression::{self, decompress_to_ram};
 use crate::game::music::{HandleMusicQueue, LoadRoomMusic, UpdateMusicTrackIndex};
 pub use crate::game::prelude::*;
-use crate::game::room_backgrounds::BackgroundLoad;
-use crate::game::room_state::{load_sprite_palettes, load_tiles_and_palette};
+use crate::game::room_state::load_tiles_and_palette;
 
 pub use crate::game::constants::bank_60::*;
 
@@ -15,7 +14,6 @@ use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::room_mechanisms::{clear, reload_graphics};
 use crate::game::sm_8b::InitializeIoDisplayLogo_Async;
 use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
-use crate::game::sm_82::{LoadDestinationRoomThings, NullFunc, ResetSoundQueues};
 use crate::game::sm_88::{InitializeSpecialEffectsForNewRoom, WaitUntilEndOfVblankAndClearHdma};
 use crate::game::sm_89::LoadFXHeader;
 use crate::game::sm_90::UpdateBeamTilesAndPalette;
@@ -26,11 +24,6 @@ crate::typed_struct! {
         #[derive(Copy, Clone)]
         #[repr(C, packed)]
     ];
-    pub struct LoadStationList {
-        pub room_ptr_, door_ptr: VoidP;
-        pub door_bts, screen_x_pos, screen_y_pos, samus_y_offset, samus_x_offset: u16;
-    }
-
     pub struct SamusTileAnimationTileDefs {
         pub src: LongPtr;
         pub part1_size, part2_size: u16;
@@ -49,10 +42,6 @@ const RomPtr_80: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_p
 const RomPtr_92: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x92>;
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
-}
-#[inline]
-unsafe fn get_RoomDefHeader(a: u16, game: &mut Game) -> *mut RoomDefHeader {
-    unsafe { RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefHeader }
 }
 crate::game::constants::typed_constants! { i32;
     fnDoorTransition_FadeInScreenAndFinish = 0x82e737,
@@ -1580,78 +1569,11 @@ pub unsafe fn DrawTimerSpritemap(a: u16, j: u16, game: &mut Game) {
     }
 }
 pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        crate::verify_probe::hit("coroutine.start");
-        let resume_state: *mut u8 = ram_ptr!(game; 0x613);
-        let resume = *resume_state;
-        if resume == 0 {
-            WriteRegWord(MDMAEN as u16, 0, game);
-            word! { game, 0;
-                scrolling_finished_hook, music_data_index, music_track_index, timer_status,
-            }
-            ResetSoundQueues(game);
-            word!(game.debug_disable_sounds = -1i32 as u16);
-            DisableNMI(game);
-            DisableIrqInterrupts(game);
-            LoadDestinationRoomThings(game);
-        }
-        if resume <= 1 {
-            let yielded: u8 = Play20FramesOfMusic_Async(game);
-            if yielded != 0 {
-                *resume_state = 1;
-                return yielded;
-            }
-            animated_tiles::clear(game);
-            WaitUntilEndOfVblankAndClearHdma(game);
-            InitializeSpecialEffectsForNewRoom(game);
-            clear(game);
-            ClearEprojs(game);
-            palette_effects::clear(game);
-            UpdateBeamTilesAndPalette(game);
-            load_sprite_palettes(game);
-            load_room_assets(game);
-            LoadRoomMusic(game);
-        }
-        if resume <= 2 {
-            let yielded: u8 = Play20FramesOfMusic_Async(game);
-            if yielded != 0 {
-                *resume_state = 2;
-                return yielded;
-            }
-            UpdateMusicTrackIndex(game);
-            NullFunc();
-            BackgroundLoad::Initial.clear_bg2(game);
-            crate::game::room_state::load_level::<true>(game);
-            LoadFXHeader(game);
-            BackgroundLoad::Initial.load(game);
-            CalculateLayer2Xpos(game);
-            CalculateLayer2Ypos(game);
-            word!(game.bg2_x_scroll = word!(game.layer2_x_pos));
-            word!(game.bg2_y_scroll = word!(game.layer2_y_pos));
-            CalculateBgScrolls(game);
-            DisplayViewablePartOfRoom(game);
-            EnableNMI(game);
-            word!(
-                game.irqhandler_next_handler = (if word!(game.room_loading_irq_handler) == 0 {
-                    4
-                } else {
-                    word!(game.room_loading_irq_handler) as i32
-                }) as u16
-            );
-            EnableIrqInterrupts(game);
-        }
-        if resume <= 3 {
-            let yielded: u8 = Play20FramesOfMusic_Async(game);
-            if yielded != 0 {
-                *resume_state = 3;
-                return yielded;
-            }
-            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x8, 0x8, 0xb7eb as VoidP), game);
-            word!(game.door_transition_function = ((0x82e737i32) as u16));
-        }
-        *resume_state = 0;
-        0 as CoroutineRet
-    }
+    let poll = crate::game::room_entry::protocol::resume(
+        &mut crate::game::session_runtime::Runtime::new(game),
+        crate::game::room_entry::EntrySignal::Initial,
+    );
+    poll.returned_byte()
 }
 pub unsafe fn Play20FramesOfMusic_Async(game: &mut Game) -> CoroutineRet {
     unsafe {
@@ -1691,7 +1613,10 @@ pub unsafe fn ResumeGameplay(game: &mut Game) {
         DisableNMI(game);
         DisableIrqInterrupts(game);
         load_tiles_and_palette(game);
-        BackgroundLoad::Initial.load(game);
+        crate::game::room_entry::background::load(
+            &mut crate::game::session_runtime::Runtime::new(game),
+            crate::game::room_entry::content::LoadMode::Initial,
+        );
         DisplayViewablePartOfRoom(game);
         reload_graphics(game);
         EnableNMI(game);
@@ -2388,17 +2313,11 @@ pub unsafe fn UpdateBgScrollOffsets(game: &mut Game) {
         word!(game.bg2_y_scroll = (word!(game.reg_BG2VOFS)).wrapping_sub(word!(game.layer1_y_pos)));
     }
 }
-static kDoorTransitionFuncs: [Func_U8; 4] = callback_table! { nonnull Func_U8;
-    DoorTransition_Right, DoorTransition_Left, DoorTransition_Down, DoorTransition_Up,
-};
 pub unsafe fn Irq_FollowDoorTransition(game: &mut Game) {
-    unsafe {
-        if kDoorTransitionFuncs[(word!(game.door_direction) as i32 & 3i32) as usize](game) != 0 {
-            word!(game.layer1_x_pos = word!(game.door_destination_x_pos));
-            word!(game.layer1_y_pos = word!(game.door_destination_y_pos));
-            word!(game.door_transition_flag |= (0x8000u16));
-        }
-    }
+    crate::game::room_entry::protocol::resume(
+        &mut crate::game::session_runtime::Runtime::new(game),
+        crate::game::room_entry::EntrySignal::ScrollIrq,
+    );
 }
 pub unsafe fn DoorTransition_Right(game: &mut Game) -> u8 {
     unsafe {
@@ -2560,29 +2479,12 @@ pub unsafe fn DecompressToVRAM(src: u32, dst_addr: u16, game: &mut Game) {
     decompression::decode(i32::from(dst_addr), &mut DecompressionVram(game));
 }
 pub unsafe fn LoadFromLoadStation(game: &mut Game) {
-    unsafe {
-        word!(game.save_station_lockout_flag = 1);
-        let L: *const LoadStationList = RomPtr_80(
-            (crate::rtl::rom_table_word!(game, 0x80c4b5, word!(game.area_index) as isize) as i32
-                + 14 * word!(game.load_station_index) as i32) as u16,
-            game,
-        ) as *mut LoadStationList;
-        word! {game; room_ptr = (*L).room_ptr_; door_def_ptr = (*L).door_ptr; }
-        crate::update_place! { unaligned_word fresh77 = &raw mut (*(ram_ptr!(game, u16; 0x911))) => (*L).screen_x_pos; }
-        word!(game.bg1_x_offset = u16::from_le(fresh77.read_unaligned()));
-        crate::update_place! { unaligned_word fresh78 = &raw mut (*(ram_ptr!(game, u16; 0x915))) => (*L).screen_y_pos; }
-        word! { game;
-            bg1_y_offset = u16::from_le(fresh78.read_unaligned());
-            samus_y_pos = (word!(game.layer1_y_pos)).wrapping_add((*L).samus_y_offset);
-            samus_prev_y_pos = word!(game.samus_y_pos);
-            samus_x_pos = (word!(game.layer1_x_pos) as i32 + 128 + (*L).samus_x_offset as i32) as u16;
-            samus_prev_x_pos = word!(game.samus_x_pos);
-        }
-        word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
-        *(ram_ptr!(game, u16; 0x79f) as *mut u8) =
-            (*get_RoomDefHeader(word!(game.room_ptr), game)).area_index_;
-        byte!(@pointer ram_ptr!(game, u16; 0x5f7); 0) = 0;
-    }
+    crate::game::room_entry::begin(
+        &mut crate::game::session_runtime::Runtime::new(game),
+        crate::game::room_entry::ArrivalRequest::Start(
+            crate::game::room_entry::StartSite::CurrentLoadStation,
+        ),
+    );
 }
 pub unsafe fn SetElevatorsAsUsed(game: &mut Game) {
     unsafe {

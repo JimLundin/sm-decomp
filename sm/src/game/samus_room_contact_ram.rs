@@ -24,8 +24,6 @@ fn offset(field: Field) -> usize {
         Damage => 0xa50,
         Knockback => 0xa54,
         Facing => 0xa1e,
-        Pose => 0xa1c,
-        DoorBlocked => 0xe16,
     }
 }
 fn word(game: &Game, at: usize) -> u16 {
@@ -41,7 +39,6 @@ fn axis_offset(axis: Axis) -> usize {
     }
 }
 impl Context for Fields<'_> {
-    type Door = u16;
     type Header = u16;
     fn read(&self, field: Field) -> u16 {
         if field == Field::Facing {
@@ -129,30 +126,18 @@ impl Context for Fields<'_> {
             )
         }
     }
-    fn mark_door_contact(&mut self) {
-        put(self.0, 0x99c, 0xe17d);
-    }
-    fn door(&mut self, bts: u8) -> u16 {
-        let list = word(self.0, 0x7b5);
-        let entry = list.wrapping_add(u16::from(bts & 0x7f) * 2);
-        if entry & 0x8000 == 0 {
-            unsafe {
-                crate::rtl::rom_bank_ptr::<0x8f>(entry, self.0);
-            }
-        }
-        self.0.read_rom_word(0x8f8000 | u32::from(entry), 0)
-    }
-    fn door_has_destination(&mut self, door: u16) -> bool {
-        if door & 0x8000 == 0 {
-            unsafe {
-                crate::rtl::RomPtr(0x830000 | u32::from(door), self.0);
-            }
-        }
-        self.0.read_rom_word(0x838000 | u32::from(door), 0) & 0x8000 != 0
-    }
-    fn enter_door(&mut self, door: u16) {
-        put(self.0, 0x78d, door);
-        put(self.0, 0x998, 9);
+    fn try_enter_door(&mut self) -> bool {
+        use crate::game::{
+            room_entry::{self, ArrivalRequest, ContactSite, EntryPoll},
+            session_runtime::Runtime,
+        };
+        !matches!(
+            room_entry::begin(
+                &mut Runtime::new(self.0),
+                ArrivalRequest::Contact(ContactSite::CurrentCollision)
+            ),
+            EntryPoll::Rejected
+        )
     }
 }
 /// # Safety

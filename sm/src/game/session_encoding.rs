@@ -1,7 +1,27 @@
-//! Sole byte-compatible projection of the migrated aggregate. No continuation.
+//! Sole byte-compatible projection of the migrated aggregate and shared continuations.
 #![forbid(unsafe_code)]
+use crate::game::room_entry::{effects::AssetSlot, world::WorldBinding};
 use crate::game::{external_inputs::ExternalInputs, session::Session};
 use crate::ram_map::{word_arrays as arrays, words as ram};
+use std::sync::Arc;
+// Identities have only one mutable representation. Byte writes resolve each
+// intermediate key through the same binding; no key mirror is retained.
+macro_rules! room_keys {
+    ($f:ident) => {
+        $f!(0x078d, exit, exit_key, exit_identity);
+        $f!(0x079b, room, room_key, room_identity);
+        $f!(0x07b5, doors, door_list_key, door_list);
+        $f!(0x07bb, state, state_key, state_identity);
+    };
+}
+macro_rules! room_assets {
+    ($f:ident) => {
+        $f!(0x07bd, level, AssetSlot::Level);
+        $f!(0x07c0, tile_table, AssetSlot::TileTable);
+        $f!(0x07c3, tiles, AssetSlot::Tiles);
+        $f!(0x07c6, palette, AssetSlot::Palette);
+    };
+}
 // Direct projection for the 1,024-byte pool. Normal gameplay uses typed members;
 // this is solely the active/tail compatibility mapping, shared by reads/writes.
 macro_rules! sprite_projection {
@@ -53,6 +73,36 @@ macro_rules! flag_projection {
 }
 macro_rules! scalar_words {
     ($s:ident,$f:ident,($($borrow:tt)*))=>{
+        $f(0x0791,$($borrow)* $s.room.entry.direction);
+        $f(0x0793,$($borrow)* $s.room.entry.elevator_properties);
+        $f(0x0795,$($borrow)* $s.room.entry.elevator_interlock);
+        $f(0x0797,$($borrow)* $s.room.entry.enemy_interlock);
+        $f(0x0799,$($borrow)* $s.room.entry.elevator_direction);
+        $f(0x079d,$($borrow)* $s.room.entry.room_index);
+        $f(0x07a1,$($borrow)* $s.room.entry.map_x);
+        $f(0x07a3,$($borrow)* $s.room.entry.map_y);
+        $f(0x07ad,$($borrow)* $s.room.entry.scroll_up);
+        $f(0x07af,$($borrow)* $s.room.entry.scroll_down);
+        $f(0x07b1,$($borrow)* $s.room.entry.previous_cre);
+        $f(0x07b3,$($borrow)* $s.room.entry.cre);
+        $f(0x07c9,$($borrow)* $s.room.entry.music_track);
+        $f(0x07cb,$($borrow)* $s.room.entry.music_data);
+        $f(0x07cd,$($borrow)* $s.room.entry.fx_key);
+        $f(0x07cf,$($borrow)* $s.room.entry.enemy_population_key);
+        $f(0x07d1,$($borrow)* $s.room.entry.enemy_tilesets_key);
+        $f(0x07df,$($borrow)* $s.room.entry.main_code_key);
+        $f(0x07e9,$($borrow)* $s.room.entry.scrolling_hook);
+        $f(0x0925,$($borrow)* $s.room.entry.frame);
+        $f(0x0927,$($borrow)* $s.room.entry.arrival_x);
+        $f(0x0929,$($borrow)* $s.room.entry.arrival_y);
+        $f(0x092b,$($borrow)* $s.room.entry.speed_fraction);
+        $f(0x092d,$($borrow)* $s.room.entry.speed_whole);
+        $f(0x092f,$($borrow)* $s.room.entry.elevator_delay);
+        $f(0x0931,$($borrow)* $s.room.entry.completion);
+        $f(0x099c,$($borrow)* $s.room.entry.transition_selector);
+        $f(0x0e16,$($borrow)* $s.room.entry.elevator_flags);
+        $f(0x0e18,$($borrow)* $s.room.entry.elevator_status);
+        $f(0x00a9,$($borrow)* $s.room.entry.irq_policy);
         $f(0x05e7,$($borrow)* $s.flag_compatibility.bitmask);
         $f(0x1844,$($borrow)* $s.sprite_effects.selected);
         for index in 0..32 {
@@ -326,8 +376,26 @@ macro_rules! scalar_words {
 pub(crate) fn read(bytes: &[u8], at: usize) -> u16 {
     u16::from_le_bytes([bytes[at], bytes[at + 1]])
 }
-pub(crate) fn decode(bytes: &[u8]) -> Session {
-    let mut s = Session::default();
+pub(crate) fn decode(bytes: &[u8], world: Arc<WorldBinding>) -> Session {
+    let mut s = Session::with_world(world);
+    macro_rules! load_key {
+        ($at:expr, $field:ident, $get:ident, $set:ident) => {
+            s.room.entry.$field = s.world.$set(read(bytes, $at));
+        };
+    }
+    room_keys!(load_key);
+    macro_rules! load_asset {
+        ($at:expr, $field:ident, $slot:expr) => {
+            s.room.entry.$field = s
+                .world
+                .asset($slot, bytes[$at..$at + 3].try_into().unwrap());
+        };
+    }
+    room_assets!(load_asset);
+    s.continuations.primary = bytes[0x612];
+    s.continuations.secondary = bytes[0x613];
+    s.room.entry.layer2_x = bytes[0x91b];
+    s.room.entry.layer2_y = bytes[0x91c];
     for (base, flags) in [
         (0xd820, s.gameplay_flags.events.as_mut_slice()),
         (0xd828, s.gameplay_flags.bosses_by_area.as_mut_slice()),
@@ -357,6 +425,29 @@ pub(crate) fn decode(bytes: &[u8]) -> Session {
     s
 }
 pub(crate) fn visit(s: &Session, mut visit: impl FnMut(usize, u16)) {
+    macro_rules! emit_key {
+        ($at:expr, $field:ident, $get:ident, $set:ident) => {
+            visit($at, s.world.$get(&s.room.entry.$field));
+        };
+    }
+    room_keys!(emit_key);
+    for at in (0x7bd..0x7c9).step_by(2) {
+        visit(
+            at,
+            u16::from_le_bytes([
+                projected_byte(s, at).unwrap(),
+                projected_byte(s, at + 1).unwrap(),
+            ]),
+        );
+    }
+    visit(
+        0x612,
+        u16::from_le_bytes([s.continuations.primary, s.continuations.secondary]),
+    );
+    visit(
+        0x91b,
+        u16::from_le_bytes([s.room.entry.layer2_x, s.room.entry.layer2_y]),
+    );
     for (base, flags) in [
         (0xd820, s.gameplay_flags.events.as_slice()),
         (0xd828, s.gameplay_flags.bosses_by_area.as_slice()),
@@ -393,6 +484,29 @@ pub(crate) fn encode(s: &Session, bytes: &mut [u8]) {
     }
 }
 pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
+    macro_rules! key_byte {
+        ($base:expr, $field:ident, $get:ident, $set:ident) => {
+            if ($base..$base + 2).contains(&at) {
+                return Some(s.world.$get(&s.room.entry.$field).to_le_bytes()[at - $base]);
+            }
+        };
+    }
+    room_keys!(key_byte);
+    macro_rules! asset_byte {
+        ($base:expr, $field:ident, $slot:expr) => {
+            if ($base..$base + 3).contains(&at) {
+                return Some(s.world.asset_bytes(&s.room.entry.$field)[at - $base]);
+            }
+        };
+    }
+    room_assets!(asset_byte);
+    match at {
+        0x612 => return Some(s.continuations.primary),
+        0x613 => return Some(s.continuations.secondary),
+        0x91b => return Some(s.room.entry.layer2_x),
+        0x91c => return Some(s.room.entry.layer2_y),
+        _ => {}
+    }
     if (0xd820..0xd8f0).contains(&at) {
         let offset = at - 0xd820;
         return Some(flag_projection!(s, offset, ()));
@@ -445,6 +559,39 @@ pub(crate) fn projected_byte(s: &Session, at: usize) -> Option<u8> {
     result
 }
 pub(crate) fn write_projected_byte(s: &mut Session, at: usize, value: u8) -> bool {
+    macro_rules! write_key {
+        ($base:expr, $field:ident, $get:ident, $set:ident) => {
+            if ($base..$base + 2).contains(&at) {
+                let mut bytes = s.world.$get(&s.room.entry.$field).to_le_bytes();
+                bytes[at - $base] = value;
+                s.room.entry.$field = s.world.$set(u16::from_le_bytes(bytes));
+                return true;
+            }
+        };
+    }
+    room_keys!(write_key);
+    macro_rules! write_asset {
+        ($base:expr, $field:ident, $slot:expr) => {
+            if ($base..$base + 3).contains(&at) {
+                let mut bytes = s.world.asset_bytes(&s.room.entry.$field);
+                bytes[at - $base] = value;
+                s.room.entry.$field = s.world.asset($slot, bytes);
+                return true;
+            }
+        };
+    }
+    room_assets!(write_asset);
+    let byte = match at {
+        0x612 => Some(&mut s.continuations.primary),
+        0x613 => Some(&mut s.continuations.secondary),
+        0x91b => Some(&mut s.room.entry.layer2_x),
+        0x91c => Some(&mut s.room.entry.layer2_y),
+        _ => None,
+    };
+    if let Some(byte) = byte {
+        *byte = value;
+        return true;
+    }
     if (0xd820..0xd8f0).contains(&at) {
         let offset = at - 0xd820;
         *flag_projection!(s,offset,(&mut)) = value;
@@ -557,8 +704,6 @@ pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
         frozen: w(ram::time_is_frozen_flag),
         cinematic: w(ram::cinematic_function),
         hud_auto_cancel: w(ram::hud_auto_cancel_flag),
-        door_definition: w(ram::door_def_ptr),
-        door_direction: w(ram::door_direction),
         background_page_x: w(0x91d),
         power_bomb_active: w(0x592),
         camera_x: w(ram::layer1_x_pos),
