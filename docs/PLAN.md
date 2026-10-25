@@ -63,29 +63,20 @@ auto-land on green (C3); a Linux verifier spike (L1). Details: REVIEW.md lane C.
    Golden sync/capture and live VRAM-buffer proof succeeded; CGRAM/Mode7 write histories
    still block seed conversion. No new hand routes.
 2. **Current - lane B bank retirement.** `sm_94`, `sm_91`, `sm_89` and `sm_90` are deleted.
-   B1 continues sm_81 menu drawing (1,668 lines); B2 continues sm_88 (274 lines); B3 continues
-   Crocomire sm_a4 (1,676 lines); attack and return scripts share checked actors. Player input, rendering, movement and dispatch share existing
-   owners; save/load now shares checked slot and map transfers.
-   Bank removal is not persistent whole-engine state ownership: camera
-   compatibility and the unchanged Ceres elevator callback still use raw RAM.
-   Room FX loading uses Room/Visuals. Weather and haze now share their update logic.
-   Retire production observer hooks with named segments; no new Host layers or fixtures.
-   Preserve full u16 identities, unknown values, failure timing and ROM provenance.
-   Natural Gravity, boss and grapple coverage remains incomplete. BG2 tile
-   consolidation waits for `scroll_tiles.row.bg2` coverage, absent in Ceres.
-   Report production and legacy deltas together; growth needs a reason. Reuse existing
-   interfaces and remove touched inline verification differences. The next size
-   target is below 110,000 production lines; try scoped cargo-mutants before text patches.
-   M1 checked caller-side byte access passes all 59 runnable rows locally, including
-   78,108 selected and 100,697 setup frames; 123 redundant unsafe blocks are cleared.
-   M2 Ripper/Jet Power Ripper now share existing Actor operations: two raw getters
-   and 28 dereferences removed; eleven rows pass. Next: remaining common-enemy families. Prototype 42c59cb is not safe to adopt: its whole-RAM
-   borrows can invalidate retained enemy pointers, and its signature stripping
-   exposes raw-pointer Load24 as safe. Passing replays do not resolve these defects.
-   We retain this checked M1 ahead of the revised REVIEW's proposed M1b deferral:
-   it creates no RAM reference or slice, directly addressing the alias concern.
-   HDMA backend calls retain unsafe contracts: safe Game construction leaves public
-   hardware pointers null. Typed arguments and checked RAM do not prove backend validity.
+   Cloud `ci/b-integrate` owns six completed commits: sm_88 deletion, cinematic setup,
+   frame-end/sm_a0 retirement, file menu and map-window loading. Its full run is active;
+   local agents retain their successors and rebase after it lands, without re-pushing these.
+   Next local B1: final sm_81 retirement, then sm_80 doors/camera/timer/HUD/IRQ/input.
+   B2: cinematic fading, Mode7 and object lifecycle. B3: sm_8f retirement, then pirates.
+   M2 now uses checked actors for lava jumpers, erratic fireballs, hopping blobs and
+   spike plants, sharing movement and animation reset with live callers. Local checks
+   pass; hosted rows pending. Four raw getters and 234 dereferences are retired.
+   Production +42 preserves checked full-u16 scratch edits and ordered ROM reads;
+   legacy -429, unsafe -2, verification +16 (source inventory only).
+   RAM remains authoritative; bank movement alone does not establish owned Session state.
+   Preserve full identities, failure/effect order, native/LE access and ROM provenance.
+   BG2 consolidation still needs `scroll_tiles.row.bg2`; reject whole-RAM borrow prototype
+   42c59cb and false-safe Load24. Retain unsafe backend contracts and existing alias checks.
 3. **Then - finish owned gameplay.** Migrate remaining complete producer/consumer
    interactions, actual callers and legacy retirement. Close persistent ownership,
    content/topology/options boundaries and unsafe removal across the whole engine;
@@ -228,8 +219,10 @@ matched work in 76.06s versus 114.12s serial (1.50x). Three compilers reached
 2.088GiB free; a further speedup is unproven. Use separate budgets for compilation,
 replays and source work, not a blanket heavy-job count. Count accepted launchers
 before rustc appears; release compiler admission immediately after compilation.
-Start above 3GiB free and leave 2GiB after reserving ~1.6GiB per new compiler plus
-admitted jobs' remaining growth. Stop the newest below 2GiB or on resource errors.
+Start above 3GiB free and leave 2GiB after reserving 1.7GiB per DLL build or 1.4GiB
+per library check plus admitted jobs' remaining growth. Stop the newest below 2GiB
+or on resource errors. Frozen, formatted source may compile while its final review runs;
+DLL/publication use the reviewed final pin. Do not leave ready checks waiting on prose.
 Refill useful ready work immediately; completed workers need explicit new tasks.
 Measure CPU, free memory, paging, disk and completed useful work/time during real
 jobs. Streaming TAS import reduced measured peak from 2.794GiB to 90.5MiB

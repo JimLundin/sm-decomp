@@ -150,6 +150,12 @@ pub(super) struct ActorDiagnostics {
 }
 
 impl Actor {
+    pub(in crate::game) fn restart_animation(&mut self, instruction: u16) {
+        self.instruction = instruction;
+        self.instruction_delay = 1;
+        self.timer = 0;
+    }
+
     pub(super) fn duplicate_for_storage(&self) -> Self {
         Self {
             definition: self.definition,

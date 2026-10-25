@@ -19,30 +19,36 @@ use crate::game::palette_effects;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::session_runtime::player_face_forward;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
-use crate::game::sm_a0::{CallEnemyPreInstr, ConvertAngleToXy};
+use crate::game::sm_a0::CallEnemyPreInstr;
 use crate::game::sm_a9::MoveEnemyWithVelocity;
 
 pub use crate::types::Consts_A2;
+
+unsafe fn update_randomized_pre_instruction(game: &mut Game) {
+    unsafe {
+        NextRandom(game);
+        let phase = {
+            let runtime = Runtime::new(game);
+            let key = Key::from_legacy(runtime.word(0xe54));
+            runtime
+                .resolve_actor(key, actors::access::AccessMode::Native)
+                .pre_instruction
+        };
+        CallEnemyPreInstr(0xa20000 | u32::from(phase), game);
+    }
+}
 
 crate::game::constants::typed_constants! { Consts_A2;
     addr_kLavaSeahorse_Ilist_E5A1 = 58785, addr_kLavaSeahorse_Ilist_E59B = 58779,
     addr_kGripper_Sprmap_E44B = 58443, addr_kGripper_Sprmap_E43F = 58431,
     addr_kHirisingSlowfalling_Ilist_D840 = 55360, addr_kHirisingSlowfalling_Ilist_D834 = 55348,
     addr_kHirisingSlowfalling_Ilist_D82C = 55340, addr_kMaridiaLargeSnail_Ilist_CA4B = 51787,
-    addr_kNorfairLavajumpingEnemy_Ilist_BE62 = 48738, addr_kNorfairLavajumpingEnemy_Ilist_BE42 = 48706,
-    addr_kNorfairLavajumpingEnemy_Ilist_BE3C = 48700,
     addr_kRinka_Ilist_BA0C = 47628, addr_kRinka_Ilist_B9E0 = 47584,
-    addr_kNorfairErraticFireball_Ilist_B51A = 46362, addr_kNorfairErraticFireball_Ilist_B2DC = 45788,
+    addr_kNorfairErraticFireball_Ilist_B51A = 46362,
      addr_kGunshipTop_Ilist_A61C = 42524,
     addr_kGunshipTop_Ilist_A616 = 42518, addr_kGunshipTop_Ilist_A60E = 42510,
     addr_kGunshipTop_Ilist_A5EE = 42478, addr_kGunshipTop_Ilist_A5BE = 42430,
     addr_kMaridiaSpikeyShell_Ilist_A3BD = 41917, addr_kMaridiaSpikeyShell_Ilist_A3AB = 41899,
-    addr_kSpikeShootingPlant_Ilist_9F00 = 40704, addr_kSpikeShootingPlant_Ilist_9EDA = 40666,
-    addr_kSpikeShootingPlant_Ilist_9EB0 = 40624, addr_kSpikeShootingPlant_Ilist_9E8A = 40586,
-    addr_kThinHoppingBlobs_Ilist_9A01 = 39425, addr_kThinHoppingBlobs_Ilist_99FB = 39419,
-    addr_kThinHoppingBlobs_Ilist_99F5 = 39413, addr_kThinHoppingBlobs_Ilist_99EF = 39407,
-    addr_kThinHoppingBlobs_Ilist_99E9 = 39401, addr_kThinHoppingBlobs_Ilist_99D5 = 39381,
-    addr_kThinHoppingBlobs_Ilist_99C1 = 39361, addr_kThinHoppingBlobs_Ilist_99AD = 39341,
     addr_locret_A28E09 = 36361, addr_kMaridiaBeybladeTurtle_Ilist_8D40 = 36160,
     addr_kMaridiaBeybladeTurtle_Ilist_8D28 = 36136, addr_kMaridiaBeybladeTurtle_Ilist_8D14 = 36116,
     addr_kMaridiaBeybladeTurtle_Ilist_8D00 = 36096, addr_kMaridiaBeybladeTurtle_Ilist_8C72 = 35954,
@@ -58,16 +64,16 @@ crate::game::constants::typed_constants! { Consts_A2;
 
 crate::type_aliases! {
     pub Enemy_BouncingGoofball, Enemy_LavaSeahorse, Enemy_MaridiaTurtle,
-        Enemy_MaridiaLargeSnail, Enemy_MaridiaSpikeyShell, Enemy_NorfairLavajumpingEnemy,
-        Enemy_Rinka, Enemy_SpikeShootingPlant, Enemy_GunshipTop, Enemy_HirisingSlowfalling,
-        Enemy_LavaquakeRocks, Enemy_MiniMaridiaTurtle, Enemy_ThinHoppingBlobs =
+        Enemy_MaridiaLargeSnail, Enemy_MaridiaSpikeyShell,
+        Enemy_Rinka, Enemy_GunshipTop, Enemy_HirisingSlowfalling,
+        Enemy_LavaquakeRocks, Enemy_MiniMaridiaTurtle =
         crate::game::enemy_layouts::EnemyLayout40;
 }
 
 crate::type_aliases! {
     pub Enemy_MaridiaBeybladeTurtle, Enemy_MiniCrocomire,
         Enemy_GunshipBottom,
-        Enemy_MiniMaridiaBeybladeTurtle, Enemy_NorfairErraticFireball =
+        Enemy_MiniMaridiaBeybladeTurtle =
         crate::game::enemy_layouts::EnemyLayout8;
 }
 
@@ -79,7 +85,6 @@ crate::game::constants::typed_constants! { i32;
     fnSamus_FrameHandlerAlfa_Func11 = 0x90e695, fnSamus_FrameHandlerBeta_Func17 = 0x90e725,
     fnMiniCrocomire_PreInstr5 = 0xa28a43, fnMiniCrocomire_PreInstr6 = 0xa28a5c,
     fnnullsub_175 = 0xa28a75,
-    fnSpikeShootingPlant_2 = 0xa29fba, fnSpikeShootingPlant_3 = 0xa29fec,
     fnnullsub_182 = 0xa2a01b, fnnullsub_187 = 0xa2a7d7,
     fnGunshipTop_3 = 0xa2a80c, fnGunshipTop_4 = 0xa2a8d0,
     fnGunshipTop_5 = 0xa2a942, fnGunshipTop_6 = 0xa2a950,
@@ -91,9 +96,6 @@ crate::game::constants::typed_constants! { i32;
     fnGunshipTop_17 = 0xa2abc7, fnGunshipTop_18 = 0xa2ac1b,
     fnGunshipTop_19 = 0xa2acd7, fnGunshipTop_20 = 0xa2ad0e,
     fnGunshipTop_21 = 0xa2ad2d,
-    fnNorfairLavajumpingEnemy_Func_1 = 0xa2bedc,
-    fnNorfairLavajumpingEnemy_Func_2 = 0xa2bf1a, fnNorfairLavajumpingEnemy_Func_3 = 0xa2bf3e,
-    fnNorfairLavajumpingEnemy_Func_4 = 0xa2bf7c, fnNorfairLavajumpingEnemy_Func_5 = 0xa2bfbc,
     fnMaridiaLargeSnail_Func_7 = 0xa2cf66,
     fnMaridiaLargeSnail_Func_8 = 0xa2cfa9,
     fnLavaSeahorse_Func_1 = 0xa2e654,
@@ -116,11 +118,7 @@ crate::ram_map::ram_pointer_functions! {
     Get_MaridiaTurtle(o: i32) -> Enemy_MaridiaTurtle = [0xf78, o as isize];
     Get_MiniMaridiaBeybladeTurtle(o: i32) -> Enemy_MiniMaridiaBeybladeTurtle = [0xf78, o as isize];
     Get_MiniMaridiaTurtle(o: i32) -> Enemy_MiniMaridiaTurtle = [0xf78, o as isize];
-    Get_NorfairErraticFireball(o: i32) -> Enemy_NorfairErraticFireball = [0xf78, o as isize];
-    Get_NorfairLavajumpingEnemy(o: i32) -> Enemy_NorfairLavajumpingEnemy = [0xf78, o as isize];
     Get_Rinka(o: i32) -> Enemy_Rinka = [0xf78, o as isize];
-    Get_SpikeShootingPlant(o: i32) -> Enemy_SpikeShootingPlant = [0xf78, o as isize];
-    Get_ThinHoppingBlobs(o: i32) -> Enemy_ThinHoppingBlobs = [0xf78, o as isize];
 }
 static g_word_A28D50: u16 = 0x30;
 static g_word_A28D52: u16 = 1;
@@ -283,22 +281,10 @@ pub fn BouncingGoofball_SamusCloseX(game: &mut Game) -> u16 {
         ))
     }
 }
-fn set_goofball_animation(index: u16, instruction: u16, game: &mut Game) {
-    {
-        let actor = Key::from_legacy(index);
-        let value = instruction;
-        Runtime::new(game).edit_actor(actor, Le, |actor| actor.instruction = value);
-    };
-    {
-        let actor = Key::from_legacy(index);
-        let value = 1;
-        Runtime::new(game).edit_actor(actor, Le, |actor| actor.instruction_delay = value);
-    };
-    {
-        let actor = Key::from_legacy(index);
-        let value = 0;
-        Runtime::new(game).edit_actor(actor, Le, |actor| actor.timer = value);
-    };
+fn restart_actor_animation(index: u16, instruction: u16, game: &mut Game) {
+    Runtime::new(game).edit_actor(Key::from_legacy(index), Le, |actor| {
+        actor.restart_animation(instruction)
+    });
 }
 pub fn BouncingGoofball_Instr_88C5(_k: u16, jp: EnemyScript) -> EnemyScript {
     jp
@@ -372,23 +358,6 @@ impl<'a> MiniCrocomireState<'a> {
     fn set_state(&mut self, value: u16) {
         self.write(core::mem::offset_of!(Enemy_MiniCrocomire, var_E), value);
     }
-}
-fn set_mini_crocomire_animation(index: u16, instruction: u16, game: &mut Game) {
-    {
-        let actor = Key::from_legacy(index);
-        let value = 1;
-        Runtime::new(game).edit_actor(actor, Le, |actor| actor.instruction_delay = value);
-    };
-    {
-        let actor = Key::from_legacy(index);
-        let value = 0;
-        Runtime::new(game).edit_actor(actor, Le, |actor| actor.timer = value);
-    };
-    {
-        let actor = Key::from_legacy(index);
-        let value = instruction;
-        Runtime::new(game).edit_actor(actor, Le, |actor| actor.instruction = value);
-    };
 }
 pub unsafe fn MiniCrocomire_Func7(amt: i32, game: &mut Game) {
     {
@@ -793,311 +762,111 @@ pub unsafe fn MaridiaBeybladeTurtle_Func4(game: &mut Game) {
         }
     }
 }
-pub unsafe fn sub_A29A6C(a: u16, game: &mut Game) {
+fn thin_blob_phase(variable: usize, game: &mut Game) -> u32 {
+    let runtime = Runtime::new(game);
+    let key = Key::from_legacy(runtime.word(0xe54));
+    0xa20000
+        | u32::from(
+            runtime
+                .resolve_actor(key, actors::access::AccessMode::Native)
+                .variables[variable],
+        )
+}
+unsafe fn thin_blob_random(game: &mut Game) -> u16 {
     unsafe {
-        let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-        enemy_instruction! {[(*v1)]; instruction = a, timer = 1}
-        (*v1).timer = 0;
+        NextRandom(game);
+    }
+    let runtime = Runtime::new(game);
+    let key = Key::from_legacy(runtime.word(0xe54));
+    runtime
+        .resolve_actor(key, actors::access::AccessMode::Native)
+        .frame
+        .wrapping_add(runtime.word(0x5e5))
+        & 7
+}
+unsafe fn prepare_thin_blob(k: u16, game: &mut Game) {
+    {
+        let mut runtime = Runtime::new(game);
+        if runtime.native_word(0x7800 + usize::from(k)).wrapping_sub(3) & 0x8000 != 0 {
+            let raw = runtime.word(0xe54);
+            let key = Key::from_legacy(raw);
+            let distance = runtime
+                .resolve_actor(key, actors::access::AccessMode::Native)
+                .parameters[1];
+            let close = actor_api::player_within(&mut runtime, key, actor_api::Axis::X, distance);
+            runtime.write_slice_native(0x7800 + usize::from(raw), u16::from(close));
+        }
+    }
+    let raw = game.cur_enemy_index();
+    crate::game::hopping_blobs::choose_direction(raw, game);
+    let random = unsafe { thin_blob_random(game) };
+    crate::game::hopping_blobs::choose_jump(raw, random, game);
+    crate::game::hopping_blobs::prepare_velocity(game);
+}
+pub unsafe fn ThinHoppingBlobs_Func6(k: u16, game: &mut Game) {
+    let ready = {
+        let mut runtime = Runtime::new(game);
+        let key = Key::from_legacy(k);
+        runtime.edit_actor(key, actors::access::AccessMode::Native, |actor| {
+            actor.variables[2] = actor.variables[2].wrapping_sub(1);
+        });
+        if runtime
+            .resolve_actor(key, actors::access::AccessMode::Native)
+            .variables[2]
+            & 0x8000
+            == 0
+        {
+            false
+        } else {
+            runtime.edit_actor(key, actors::access::AccessMode::Native, |actor| {
+                actor.variables[3] = 0x9b81;
+                actor.variables[2] = actor.parameters[0];
+            });
+            runtime.write_slice_native(0x7802 + usize::from(k), 1);
+            true
+        }
+    };
+    if ready {
+        unsafe {
+            prepare_thin_blob(k, game);
+        }
     }
 }
 crate::game::callback_dispatch! {
     pub unsafe fn CallThinHoppingBlobs(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
+    @functions [pub fn (game: &mut Game)];
+    ThinHoppingBlobs_Init [] { crate::game::hopping_blobs::initialize(game); };
     @functions [pub unsafe fn (game: &mut Game)];
-    @prefix { let E = Get_ThinHoppingBlobs(word!(game.cur_enemy_index) as i32, game); };
-    ThinHoppingBlobs_Init [] {
-        (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as u16;
-        (*E).var_A = 0;
-        sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99AD as u16, game);
-        (*E).var_00 = 0;
-        (*E).var_D = (0xa29b65i32) as u16;
-        (*E).var_C = (*E).parameter_1;
-        (*E).var_04 = 0;
-    };
-    ThinHoppingBlobs_Main [] {
-        CallThinHoppingBlobs((((*E).var_D) as u32) | (0xa20000u32), game);
-    };
-    TwinHoppingBlobs_Func2 [] {
-        (*E).var_00 = { let (actor, distance) = (word!(game.cur_enemy_index), (*E).parameter_2); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) };
-    };
-    ThinHoppingBlobs_Func3 [] {
-        (*E).var_02 = 1;
-        if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) == 0 {
-            (*E).var_02 = 0;
-        }
-        if (*E).var_04 != 0 {
-            (*E).var_02 = (*E).var_05;
-        }
-        (*E).var_04 = 0;
-        let mut R28: u16 = ThinHoppingBlobs_Func4(game);
-        let mut thbs_var_00: u16 = (*E).var_00;
-        if thbs_var_00 as i32 - 3i32 & 0x8000 != 0 {
-            if thbs_var_00 == 0 {
-                R28 = (R28) & (1u16);
-            }
-            thbs_var_00 = R28;
-            if R28 as i32 - 2i32 & 0x8000 == 0 {
-                thbs_var_00 = 2;
-            }
-        }
-        let v3: u16 = (8u16).wrapping_mul(thbs_var_00);
-        (*E).var_F = v3;
-        (*E).var_E =
-            *((rom_ptr!(game, u16; 0xa29a0d) as *mut u8).offset(v3 as i32 as isize) as *mut u16);
-    };
-    ThinHoppingBlobs_Func5 [] {
-        let mut thbs_var_F: u16 = (*E).var_F;
-        let mut r22: u16 = 0;
-        let mut r24: u16 = 0;
-        do_until! { v2 as i32 - r24 as i32 & 0x8000 != 0 ;
-    r22 = (r22).wrapping_add(
-        *((rom_ptr!(game, u16; 0xa29a09) as *mut u8).offset(thbs_var_F as i32 as isize)
-            as *mut u16),
-    );
-    r24 = (r24).wrapping_add(
-        *((rom_ptr!(game, u16; 0xa2838f) as *mut u8)
-            .offset((8i32 * ((r22 as i32 & 0xff00i32) >> 8i32)) as isize)
-            .offset(1) as *mut u16),
-    );
-    thbs_var_F = (*E).var_F;
-    let mut v2: u16 = u16::swap_bytes(
-        *((rom_ptr!(game, u16; 0xa29a07) as *mut u8).offset(thbs_var_F as i32 as isize)
-            as *mut u16),
-    );
-}
-        (*E).var_B = r22;
-        (*E).var_03 = 0;
-        let v3: u16 = r22 >> 1;
-        (*E).var_07 = r22 >> 1;
-        (*E).var_06 = ((*E).var_07 as i32 + (v3 as i32 >> 1)) as u16;
-    };
-    [10656641] ThinHoppingBlobs_Func7 [] {
-        CallThinHoppingBlobsVarE((((*E).var_E) as u32) | (0xa20000u32), game);
-    };
-    ThinHoppingBlobs_Func8 [] {
-        let mut thbs_var_B: u16 = (*E).var_B;
-        if thbs_var_B as i32 - 0x4000i32 & 0x8000 == 0 {
-            thbs_var_B = 0x4000;
-        }
-        let mut v6: u16 = (8 * (thbs_var_B as i32 >> 8)) as u16;
-        if (*E).var_03 == 0 {
-            v6 = (v6).wrapping_add(4);
-        }
-        if ({ let (actor, amount) = (word!(game.cur_enemy_index), *(rom_ptr!(game, u32; 0xa0cbc7)).offset((v6 >> 2) as isize) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
-        {
-            if (*E).var_03 != 0 {
-                (*E).var_D = (0xa29b65i32) as u16;
-            } else {
-                (*E).var_04 = 1;
-                (*E).var_05 = ((*E).var_02) ^ (1u16);
-                (*E).var_00 = 4;
-                (*E).var_E = (0xa29d98i32) as u16;
-            }
-            (*E).var_01 = 0;
-        } else {
-            let thbs_var_F: u16 = (*E).var_F;
-            if (*E).var_03 != 0 {
-                ThinHoppingBlobs_Func10(game);
-                (*E).var_B = ((*E).var_B).wrapping_add(
-                    *((rom_ptr!(game, u16; 0xa29a0b) as *mut u8).offset(thbs_var_F as i32 as isize)
-                        as *mut u16),
-                );
-            } else {
-                ThinHoppingBlobs_Func9(game);
-                (*E).var_B = ((*E).var_B).wrapping_sub(
-                    *((rom_ptr!(game, u16; 0xa29a0b) as *mut u8).offset(thbs_var_F as i32 as isize)
-                        as *mut u16),
-                );
-            }
-            if (*E).var_B & 0x8000 != 0 {
-                (*E).var_03 = 1;
-                (*E).var_B = 0;
-            }
-            let mut R20: u16 = ((*((rom_ptr!(game, u16; 0xa29a09) as *mut u8)
-                .offset((*E).var_F as i32 as isize) as *mut u16) as i32
-                & 0xff00)
-                >> 8) as u16;
-            if (*E).var_02 != 0 {
-                R20 = -(R20 as i32) as u16;
-            }
-            if ({ let (actor, amount) = (word!(game.cur_enemy_index), (R20 as i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
-            {
-                set_fields! {[(*E)]; var_04 = 1, var_05 = ((*E).var_02) ^ (1u16), var_01 = 0,
-                    var_00 = 4, var_E = (0xa29d98i32) as u16, };
-            }
-        };
-    };
-    ThinHoppingBlobs_Func9 [] {
-        let mut v2: u16 = if (*E).var_02 != 0 {
-            let thbs_var_B: u16 = (*E).var_B;
-            if ((thbs_var_B) as i16).wrapping_sub(((*E).var_06) as i16) >= 0 {
-                addr_kThinHoppingBlobs_Ilist_9A01 as u16
-            } else if ((thbs_var_B) as i16).wrapping_sub(((*E).var_07) as i16) >= 0 {
-                addr_kThinHoppingBlobs_Ilist_99FB as u16
-            } else {
-                addr_kThinHoppingBlobs_Ilist_99F5 as u16
-            }
-        } else {
-            let v1: u16 = (*E).var_B;
-            if ((v1) as i16).wrapping_sub(((*E).var_06) as i16) >= 0 {
-                addr_kThinHoppingBlobs_Ilist_99E9 as u16
-            } else if ((v1) as i16).wrapping_sub(((*E).var_07) as i16) >= 0 {
-                addr_kThinHoppingBlobs_Ilist_99EF as u16
-            } else {
-                addr_kThinHoppingBlobs_Ilist_99F5 as u16
-            }
-        };
-        sub_A29A6C(v2, game);
-    };
-    ThinHoppingBlobs_Func10 [] {
-        let mut v2: u16 = if (*E).var_02 != 0 {
-            let thbs_var_B: u16 = (*E).var_B;
-            if ((thbs_var_B) as i16).wrapping_sub(((*E).var_07) as i16) < 0 {
-                addr_kThinHoppingBlobs_Ilist_99F5 as u16
-            } else if ((thbs_var_B) as i16).wrapping_sub(((*E).var_06) as i16) < 0 {
-                addr_kThinHoppingBlobs_Ilist_99EF as u16
-            } else {
-                addr_kThinHoppingBlobs_Ilist_99E9 as u16
-            }
-        } else {
-            let v1: u16 = (*E).var_B;
-            if ((v1) as i16).wrapping_sub(((*E).var_07) as i16) < 0 {
-                addr_kThinHoppingBlobs_Ilist_99F5 as u16
-            } else if ((v1) as i16).wrapping_sub(((*E).var_06) as i16) < 0 {
-                addr_kThinHoppingBlobs_Ilist_99FB as u16
-            } else {
-                addr_kThinHoppingBlobs_Ilist_9A01 as u16
-            }
-        };
-        sub_A29A6C(v2, game);
-    };
+    ThinHoppingBlobs_Main [] { CallThinHoppingBlobs(thin_blob_phase(3, game), game); };
+    [10656641] ThinHoppingBlobs_Func7 [] { CallThinHoppingBlobsVarE(thin_blob_phase(4, game), game); };
     ThinHoppingBlobs_Func15 [] {
-        let thbs_var_F: u16 = (*E).var_F;
-        let R20: u16 = ((*((rom_ptr!(game, u16; 0xa29a0b) as *mut u8).offset(thbs_var_F as i32 as isize)
-            as *mut u16) as i32
-            & 0xff00)
-            >> 8) as u16;
-        let R18: u16 = ((byte!(@pointer rom_ptr!(game, u16; 0xa29a0b); thbs_var_F as i32 as isize)
-            as i32)
-            << 8) as u16;
-        if ({ let (actor, amount) = (word!(game.cur_enemy_index), (words!((R20, R18))) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
-        {
-            let R28: u16 = ThinHoppingBlobs_Func4(game);
-            (*E).var_00 = ((R28 as i32 & 1) + 5) as u16;
-            (*E).var_D = (0xa29b65i32) as u16;
+        let raw = word!(game.cur_enemy_index);
+        if crate::game::hopping_blobs::fall(game) {
+            let random = thin_blob_random(game);
+            let mut runtime = Runtime::new(game);
+            runtime.write_slice_native(0x7800 + usize::from(raw), (random & 1) + 5);
+            runtime.edit_actor(Key::from_legacy(raw), actors::access::AccessMode::Native, |actor| actor.variables[3] = 0x9b65);
         }
     };
-    @external {
-        10656613 => [{
-                    ThinHoppingBlobs_Func6(word!(game.cur_enemy_index), game);
-                }];
-    }
-}
-pub unsafe fn ThinHoppingBlobs_Func1(k: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_ThinHoppingBlobs(k as i32, game);
-        if (*E).var_00 as i32 - 3i32 & 0x8000 != 0 {
-            TwinHoppingBlobs_Func2(game);
-        }
-        ThinHoppingBlobs_Func3(game);
-        ThinHoppingBlobs_Func5(game);
-    }
-}
-pub unsafe fn ThinHoppingBlobs_Func4(game: &mut Game) -> u16 {
-    unsafe {
-        NextRandom(game);
-        ((*Get_ThinHoppingBlobs(word!(game.cur_enemy_index) as i32, game))
-            .base
-            .frame_counter as i32
-            + word!(game.random_number) as i32
-            & 7) as u16
-    }
-}
-pub unsafe fn ThinHoppingBlobs_Func6(k: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_ThinHoppingBlobs(k as i32, game);
-        (*E).var_C = (*E).var_C.wrapping_sub(1);
-        if ((*E).var_C & 0x8000) != 0 {
-            (*E).var_D = (0xa29b81i32) as u16;
-            (*E).var_C = (*E).parameter_1;
-            (*E).var_01 = 1;
-            ThinHoppingBlobs_Func1(k, game);
-        }
-    }
+    @external { 10656613 => [{ ThinHoppingBlobs_Func6(word!(game.cur_enemy_index), game); }]; }
 }
 crate::game::callback_dispatch! {
     pub unsafe fn CallThinHoppingBlobsVarE(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [10657035] ThinHoppingBlobs_Func11 [] {
-        ThinHoppingBlobs_Func8(game);
-        let E = Get_ThinHoppingBlobs(word!(game.cur_enemy_index) as i32, game);
-        if (*E).var_04 != 0 || (*E).var_01 == 0 {
-            (*E).var_01 = 0;
-            sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99D5 as u16, game);
-        }
-    };
-    [10657067] ThinHoppingBlobs_Func12 [] {
-        ThinHoppingBlobs_Func8(game);
-        let E = Get_ThinHoppingBlobs(word!(game.cur_enemy_index) as i32, game);
-        if (*E).var_04 != 0 || (*E).var_01 == 0 {
-            (*E).var_01 = 0;
-            sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99C1 as u16, game);
-        }
-    };
-    [10657099] ThinHoppingBlobs_Func13 [] {
-        ThinHoppingBlobs_Func8(game);
-        let E = Get_ThinHoppingBlobs(word!(game.cur_enemy_index) as i32, game);
-        if (*E).var_04 != 0 || (*E).var_01 == 0 {
-            (*E).var_01 = 0;
-            sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99AD as u16, game);
-        }
-    };
-    [10657131] ThinHoppingBlobs_Func14 [] {
-        ThinHoppingBlobs_Func8(game);
-        let E = Get_ThinHoppingBlobs(word!(game.cur_enemy_index) as i32, game);
-        if (*E).var_04 == 0 {
-            if (*E).var_01 != 0 {
-                return;
-            }
-            (*E).var_00 = 0;
-            (*E).var_D = (0xa29b65i32) as u16;
-        }
-        (*E).var_01 = 0;
-        sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99D5 as u16, game);
-    };
-    [10657229] ThinHoppingBlobs_Func16 [] {
-        ThinHoppingBlobs_Func8(game);
-        let E = Get_ThinHoppingBlobs(word!(game.cur_enemy_index) as i32, game);
-        if (*E).var_01 == 0 {
-            (*E).var_01 = 0;
-            (*E).var_00 = 3;
-            (*E).var_D = (0xa29b65i32) as u16;
-            sub_A29A6C(addr_kThinHoppingBlobs_Ilist_99D5 as u16, game);
-        }
-    };
-    @external {
-        10657176 => ThinHoppingBlobs_Func15;
-    }
+    @functions [pub fn (game: &mut Game)];
+    [10657035] ThinHoppingBlobs_Func11 [] { crate::game::hopping_blobs::land(crate::game::hopping_blobs::Landing::Animate(0x99d5), game); };
+    [10657067] ThinHoppingBlobs_Func12 [] { crate::game::hopping_blobs::land(crate::game::hopping_blobs::Landing::Animate(0x99c1), game); };
+    [10657099] ThinHoppingBlobs_Func13 [] { crate::game::hopping_blobs::land(crate::game::hopping_blobs::Landing::Animate(0x99ad), game); };
+    [10657131] ThinHoppingBlobs_Func14 [] { crate::game::hopping_blobs::land(crate::game::hopping_blobs::Landing::Restart, game); };
+    [10657229] ThinHoppingBlobs_Func16 [] { crate::game::hopping_blobs::land(crate::game::hopping_blobs::Landing::Repeat, game); };
+    @external { 10657176 => ThinHoppingBlobs_Func15; }
 }
 pub unsafe fn SpikeShootingPlant_4(game: &mut Game) {
     unsafe {
         NextRandom(game);
-        let E = Get_SpikeShootingPlant(word!(game.cur_enemy_index) as i32, game);
-        if ((byte!((*E).base.frame_counter; 0)).wrapping_add((word!(game.random_number)) as u8))
-            as i32
-            - 3i32
-            & 0x8000
-            != 0
-        {
-            (*E).var_F = (0xa2a01bi32) as u16;
-            if byte!((*E).parameter_1; 1) != 0 {
-                SpikeShootingPlant_6(game);
-            } else {
-                SpikeShootingPlant_8(game);
-            }
-        }
     }
+    crate::game::spike_plant::try_shoot(game);
 }
 static off_A2A3D3: [Func_V; 7] = callback_table! { nonnull Func_V;
     MaridiaSpikeyShell_1, MaridiaSpikeyShell_2, MaridiaSpikeyShell_3, MaridiaSpikeyShell_4,
@@ -1457,16 +1226,6 @@ crate::prefixed_callbacks! {
         }
     };
 }
-pub unsafe fn NorfairLavajumpingEnemy_Func_6(a: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_NorfairLavajumpingEnemy(word!(game.cur_enemy_index) as i32, game);
-        if a != (*E).var_01 {
-            (*E).var_01 = a;
-            enemy_instruction! {[(*E).base]; instruction = a, timer = 1}
-            (*E).base.timer = 0;
-        }
-    }
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallMaridiaLargeSnailFunc(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -1812,10 +1571,10 @@ crate::game::callback_dispatch! {
         }
     };
     BouncingGoofball_Func2 [] {
-        set_goofball_animation(index, addr_kBouncingGoofball_Ilist_86A7 as u16, game);
+        restart_actor_animation(index, addr_kBouncingGoofball_Ilist_86A7 as u16, game);
     };
     BouncingGoofball_Func3 [] {
-        set_goofball_animation(index, addr_kBouncingGoofball_Ilist_86BF as u16, game);
+        restart_actor_animation(index, addr_kBouncingGoofball_Ilist_86BF as u16, game);
     };
     [10652077] MiniCrocomire_Init [] {
         { let actor = Key::from_legacy(index); let value = addr_kSpritemap_Nothing_A2 as u16; Runtime::new(game).edit_actor(actor, Le, |actor| actor.spritemap = value); };
@@ -1839,16 +1598,16 @@ crate::game::callback_dispatch! {
         }
     };
     MiniCrocomire_Func1 [] {
-        set_mini_crocomire_animation(index, addr_kMiniCrocomire_Ilist_8932 as u16, game);
+        restart_actor_animation(index, addr_kMiniCrocomire_Ilist_8932 as u16, game);
     };
     MiniCrocomire_Func2 [] {
-        set_mini_crocomire_animation(index, addr_kMiniCrocomire_Ilist_8948 as u16, game);
+        restart_actor_animation(index, addr_kMiniCrocomire_Ilist_8948 as u16, game);
     };
     MiniCrocomire_Func3 [] {
-        set_mini_crocomire_animation(index, addr_kMiniCrocomire_Ilist_8958 as u16, game);
+        restart_actor_animation(index, addr_kMiniCrocomire_Ilist_8958 as u16, game);
     };
     MiniCrocomire_Func4 [] {
-        set_mini_crocomire_animation(index, addr_kMiniCrocomire_Ilist_896E as u16, game);
+        restart_actor_animation(index, addr_kMiniCrocomire_Ilist_896E as u16, game);
     };
     [10653036] MaridiaBeybladeTurtle_Init [] {
         let properties = Runtime::new(game).resolve_actor(Key::from_legacy(index), Le).properties;
@@ -2046,51 +1805,6 @@ crate::game::callback_dispatch! {
         }
         CallEnemyPreInstr((((*E0).var_F) as u32) | (0xa20000u32), game);
     };
-    [10662175] Flies_Main [] {
-        NextRandom(game);
-        let phase = {
-            let runtime = Runtime::new(game);
-            let key = Key::from_legacy(runtime.word(0xe54));
-            runtime.resolve_actor(key, actors::access::AccessMode::Native).pre_instruction
-        };
-        CallEnemyPreInstr(0xa20000 | u32::from(phase), game);
-    };
-    [10662880] NorfairErraticFireball_Init [] {
-        let E = Get_NorfairErraticFireball(word!(game.cur_enemy_index) as i32, game);
-        let pt: Point32 =
-            ConvertAngleToXy((*E).parameter_1, byte!((*E).parameter_2; 0) as u16, game);
-        (*E).var_C = (pt.x >> 16) as u16;
-        (*E).var_D = pt.x as u16;
-        (*E).var_E = (pt.y >> 16) as u16;
-        (*E).var_F = pt.y as u16;
-        (*E).base.current_instruction = addr_kNorfairErraticFireball_Ilist_B2DC as u16;
-    };
-    [10662927] NorfairErraticFireball_Main [] {
-        let E = Get_NorfairErraticFireball(word!(game.cur_enemy_index) as i32, game);
-        let pt: Point32 =
-            ConvertAngleToXy((*E).parameter_1, byte!((*E).parameter_2; 0) as u16, game);
-        (*E).var_C = (pt.x >> 16) as u16;
-        (*E).var_D = pt.x as u16;
-        (*E).var_E = (pt.y >> 16) as u16;
-        (*E).var_F = pt.y as u16;
-        if ((*E).parameter_1 as i32 + 64 & 0x80) == 0 {
-            (*E).var_C = !((*E).var_C as i32) as u16;
-            (*E).var_D = -((*E).var_D as i32) as u16;
-        }
-        if ({ let (actor, amount) = (word!(game.cur_enemy_index), (words!((*E), var_C, var_D)) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
-        {
-            (*E).parameter_1 = ((*E).parameter_1) ^ (0x40u16);
-        } else {
-            if ((*E).parameter_1 as i32 + 128 & 0x80) == 0 {
-                (*E).var_E = !((*E).var_E as i32) as u16;
-                (*E).var_F = -((*E).var_F as i32) as u16;
-            }
-            if ({ let (actor, amount) = (word!(game.cur_enemy_index), (words!((*E), var_E, var_F)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
-            {
-                (*E).parameter_1 = ((*E).parameter_1) ^ (0xc0u16);
-            }
-        };
-    };
     [10663280] LavaquakeRocks_Init [] {
         let E = Get_LavaquakeRocks(word!(game.cur_enemy_index) as i32, game);
         enemy_instruction! {[(*E).base]; instruction = addr_kNorfairErraticFireball_Ilist_B51A as u16, timer = 1}
@@ -2156,32 +1870,6 @@ crate::game::callback_dispatch! {
         if !crate::game::rio::advance(game) {
             Unreachable(game);
         }
-    };
-    [10665625] NorfairLavajumpingEnemy_Init [] {
-        let E = Get_NorfairLavajumpingEnemy(word!(game.cur_enemy_index) as i32, game);
-        set_fields! {[(*E)], 0; var_00, var_01}
-        if ((*E).parameter_1 & 0x8000) != 0 {
-            (*E).base.current_instruction = addr_kNorfairLavajumpingEnemy_Ilist_BE62 as u16;
-            (*E).var_F = (0xa2bedci32) as u16;
-        } else {
-            (*E).var_D = (*E).base.x_pos;
-            (*E).var_E = (*E).base.y_pos;
-            (*E).base.current_instruction = addr_kNorfairLavajumpingEnemy_Ilist_BE3C as u16;
-            (*E).var_F = (0xa2bf1ai32) as u16;
-        };
-    };
-    [10665682] NorfairLavajumpingEnemy_Main [] {
-        NextRandom(game);
-        let E = Get_NorfairLavajumpingEnemy(word!(game.cur_enemy_index) as i32, game);
-        CallEnemyPreInstr((((*E).var_F) as u32) | (0xa20000u32), game);
-    };
-    [10666615] NorfairRio_Main [] {
-        NextRandom(game);
-        CallEnemyPreInstr(crate::game::norfair_rio::current_phase(game), game);
-    };
-    [10667812] LowerNorfairRio_Main [] {
-        NextRandom(game);
-        CallEnemyPreInstr(crate::game::norfair_rio::current_phase(game), game);
     };
     [10669331] MaridiaLargeSnail_Main [] {
         MaridiaLargeSnail_Func_1(word!(game.cur_enemy_index), game);
@@ -2284,47 +1972,15 @@ crate::game::callback_dispatch! {
         Enemy_NormalPowerBombAI_A2(game);
         LavaSeahorse_E7DA(game);
     };
+    @functions [pub fn (game: &mut Game)];
+    [10657608] SpikeShootingPlant_Init [] { crate::game::spike_plant::initialize(game); };
     @functions [pub unsafe fn (game: &mut Game)];
-    @prefix { let E = Get_SpikeShootingPlant(word!(game.cur_enemy_index) as i32, game); };
-    [10657608] SpikeShootingPlant_Init [] {
-        (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as u16;
-        if byte!((*E).parameter_1; 1) != 0 {
-            SpikeShootingPlant_5(game);
-        } else {
-            SpikeShootingPlant_7(game);
-        }
-        let sspt_parameter_1_low: u16 = byte!((*E).parameter_1; 0) as u16;
-        (*E).var_E = sspt_parameter_1_low;
-        (*E).var_F = crate::rtl::rom_table_word!(game, 0xa29f42, sspt_parameter_1_low as isize);
-        let v2: i32 = byte!((*E).parameter_2; 0) as i32;
-        (*E).var_01 =
-            (crate::rtl::rom_table_word!(game, 0xa29f36, v2 as isize)).wrapping_add((*E).base.x_pos);
-        (*E).var_00 =
-            ((*E).base.x_pos).wrapping_sub(crate::rtl::rom_table_word!(game, 0xa29f36, v2 as isize));
-        let v3: i32 = 8 * byte!((*E).parameter_2; 1) as i32 >> 1;
-        (*E).var_B = crate::rtl::rom_table_word!(game, 0xa28187, v3 as isize);
-        (*E).var_A = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1) as isize);
-        (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 2) as isize);
-        (*E).var_C = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 3) as isize);
-    };
     [10657715] SpikeShootingPlant_Main [] {
-        CallEnemyPreInstr((((*E).var_F) as u32) | (0xa20000u32), game);
-    };
-    SpikeShootingPlant_5 [] {
-        enemy_instruction! {[(*E).base]; instruction = addr_kSpikeShootingPlant_Ilist_9E8A as u16, timer = 1}
-        (*E).base.timer = 0;
-    };
-    SpikeShootingPlant_6 [] {
-        enemy_instruction! {[(*E).base]; instruction = addr_kSpikeShootingPlant_Ilist_9EB0 as u16, timer = 1}
-        (*E).base.timer = 0;
-    };
-    SpikeShootingPlant_7 [] {
-        enemy_instruction! {[(*E).base]; instruction = addr_kSpikeShootingPlant_Ilist_9EDA as u16, timer = 1}
-        (*E).base.timer = 0;
-    };
-    SpikeShootingPlant_8 [] {
-        enemy_instruction! {[(*E).base]; instruction = addr_kSpikeShootingPlant_Ilist_9F00 as u16, timer = 1}
-        (*E).base.timer = 0;
+        let phase = {
+            let runtime = Runtime::new(game);
+            runtime.resolve_actor(Key::from_legacy(runtime.word(0xe54)), actors::access::AccessMode::Native).pre_instruction
+        };
+        CallEnemyPreInstr(0xa20000 | u32::from(phase), game);
     };
     @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E = Get_MaridiaSpikeyShell(word!(game.cur_enemy_index) as i32, game); };
@@ -2410,10 +2066,17 @@ crate::game::callback_dispatch! {
         }
     };
     @functions [pub fn (game: &mut Game)];
+    [10662880] NorfairErraticFireball_Init [] { crate::game::erratic_fireball::update(true, game); };
+    [10662927] NorfairErraticFireball_Main [] { crate::game::erratic_fireball::update(false, game); };
+    [10665625] NorfairLavajumpingEnemy_Init [] { crate::game::lava_jumper::initialize(game); };
     [10661995] Flies_Init [] { crate::game::flies::initialize(game); };
     [10666562] NorfairRio_Init [] { crate::game::norfair_rio::initialize(false, game); };
     [10667763] LowerNorfairRio_Init [] { crate::game::norfair_rio::initialize(true, game); };
     @forward [pub unsafe fn (game: &mut Game)];
+    [10662175] Flies_Main => update_randomized_pre_instruction(game);
+    [10665682] NorfairLavajumpingEnemy_Main => update_randomized_pre_instruction(game);
+    [10666615] NorfairRio_Main => update_randomized_pre_instruction(game);
+    [10667812] LowerNorfairRio_Main => update_randomized_pre_instruction(game);
     [10649615] Enemy_GrappleReact_CancelBeam_A2 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
     [10649610] Enemy_GrappleReact_KillEnemy_A2 => actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Grapple);
     [10649665] Enemy_NormalFrozenAI_A2 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
@@ -2546,16 +2209,10 @@ crate::game::callback_dispatch! {
         (*E).var_A = (0xa29239i32) as u16;
     };
     [10654929] MaridiaBeybladeTurtle_Instr_94D1 [jp] { QueueSfx2_Max6(0x3a, game); };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10657578] SpikeShootingPlant_Instr_9F2A [jp] { QueueSfx2_Max6(0x34, game); };
+    [10657941] SpikeShootingPlant_Instr_A095 [jp] { crate::game::spike_plant::resume(k, game); };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10657941] SpikeShootingPlant_Instr_A095 [jp] {
-        let E = Get_SpikeShootingPlant(k as i32, game);
-        (*E).var_F = (0xa29fbai32) as u16;
-        if (*E).var_E != 0 {
-            (*E).var_F = (0xa29feci32) as u16;
-        }
-    };
     [10657959] SpikeShootingPlant_Instr_A0A7 [jp.offset(1)] {
         SpawnEprojWithGfx(
             jp.word(0),
@@ -2596,16 +2253,8 @@ crate::game::callback_dispatch! {
     [10664899] EnemyInstr_Rio_Instr_1 [jp] {
         crate::game::rio::instruction_finished(game);
     };
-    @functions [pub unsafe fn (
-    k: u16,
-    jp: EnemyScript,
-    game: &mut Game,
-) -> EnemyScript];
-    [10665614] NorfairLavajumpingEnemy_Instr_BE8E [] {
-        (*Get_NorfairLavajumpingEnemy(word!(game.cur_enemy_index) as i32, game)).var_00 = 1;
-        jp
-    };
     @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    [10665614] NorfairLavajumpingEnemy_Instr_BE8E [jp] { crate::game::lava_jumper::instruction_finished(game); };
     [10666441] NorfairRio_Instr_C1C9 [jp] {
         crate::game::norfair_rio::script_value(1, 1, game);
     };
@@ -2690,24 +2339,8 @@ crate::game::callback_dispatch! {
         }
     };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [10657722] SpikeShootingPlant_2 [] {
-        let E = Get_SpikeShootingPlant(word!(game.cur_enemy_index) as i32, game);
-        words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_C));
-        if (((*E).base.x_pos) as i16).wrapping_sub(((*E).var_00) as i16) < 0 {
-            (*E).var_F = (0xa29feci32) as u16;
-            (*E).var_E = 1;
-        }
-        SpikeShootingPlant_4(game);
-    };
-    [10657772] SpikeShootingPlant_3 [] {
-        let E = Get_SpikeShootingPlant(word!(game.cur_enemy_index) as i32, game);
-        words!((*E).base, x_pos, x_subpos += words!((*E), var_B, var_A));
-        if (((*E).base.x_pos) as i16).wrapping_sub(((*E).var_01) as i16) >= 0 {
-            (*E).var_F = (0xa29fbai32) as u16;
-            (*E).var_E = 0;
-        }
-        SpikeShootingPlant_4(game);
-    };
+    [10657722] SpikeShootingPlant_2 [] { crate::game::spike_plant::patrol(false, game); SpikeShootingPlant_4(game); };
+    [10657772] SpikeShootingPlant_3 [] { crate::game::spike_plant::patrol(true, game); SpikeShootingPlant_4(game); };
     [10659852] GunshipTop_3 [] {
         let E = Get_GunshipTop(k as i32, game);
         if (*E).base.y_pos as i32 - 768i32 & 0x8000 != 0 {
@@ -3067,73 +2700,6 @@ crate::game::callback_dispatch! {
         }
     };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    @prefix { let E = Get_NorfairLavajumpingEnemy(k as i32, game); };
-    [10665692] NorfairLavajumpingEnemy_Func_1 [] {
-        let v1: i32 = k as i32 >> 1;
-        if word!(game.enemy_drawing_queue[(v1 + 100)]) != 0 {
-            let v3: u16 = word!(game.enemy_drawing_queue[(v1 + 109)]);
-            (*E).base.frozen_timer = v3;
-            if v3 != 0 || (word!(game.enemy_drawing_queue_sizes[(v1 + 2)]) & 0x8000) == 0 {
-                (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
-            } else {
-                (*E).base.properties =
-                    ((*E).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
-                (*E).base.y_pos = word!(game.enemy_drawing_queue[(v1 + 93)]);
-            }
-        } else {
-            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
-        };
-    };
-    [10665754] NorfairLavajumpingEnemy_Func_2 [] {
-        (*E).var_C = crate::rtl::rom_table_word!(
-            game,
-            0xa2be86,
-            ((((*ram_ptr!(game; 0x5e5, 1)) as u16) & (6u16)) >> 1) as isize,
-        );
-        (*E).var_F = (0xa2bf3ei32) as u16;
-        (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_ProcessedOffscreen) as u16);
-        QueueSfx2_Max6(0xd, game);
-    };
-    [10665790] NorfairLavajumpingEnemy_Func_3 [] {
-        let t: i32 = (*E).base.y_subpos as i32 + ((byte!((*E).var_C; 0) as i32) << 8);
-        (*E).base.y_subpos = t as u16;
-        (*E).base.y_pos =
-            ((*E).base.y_pos as i32 + (byte!((*E).var_C; 1) as i8 as i32 + (t >> 16))) as u16;
-        let v3: u16 = ((*E).var_C).wrapping_add(56);
-        (*E).var_C = v3;
-        if v3 >= 0xfc00 {
-            NorfairLavajumpingEnemy_Func_6(addr_kNorfairLavajumpingEnemy_Ilist_BE42 as u16, game);
-            (*E).var_F = (0xa2bf7ci32) as u16;
-        }
-    };
-    [10665852] NorfairLavajumpingEnemy_Func_4 [] {
-        let t: i32 = (*E).base.y_subpos as i32 + ((byte!((*E).var_C; 0) as i32) << 8);
-        (*E).base.y_subpos = t as u16;
-        (*E).base.y_pos =
-            ((*E).base.y_pos as i32 + (byte!((*E).var_C; 1) as i8 as i32 + (t >> 16))) as u16;
-        (*E).var_C = ((*E).var_C).wrapping_add(56);
-        if (*E).var_00 != 0 {
-            (*E).var_00 = 0;
-            (*E).var_F = (0xa2bfbci32) as u16;
-        }
-    };
-    [10665916] NorfairLavajumpingEnemy_Func_5 [] {
-        let t: i32 = (*E).base.y_subpos as i32 + ((byte!((*E).var_C; 0) as i32) << 8);
-        (*E).base.y_subpos = t as u16;
-        (*E).base.y_pos =
-            ((*E).base.y_pos as i32 + byte!((*E).var_C; 1) as i8 as i32 + (t >> 16)) as u16;
-        if ((*E).base.y_pos & 0xf0) == 240 {
-            (*E).base.x_pos = (*E).var_D;
-            (*E).base.y_pos = (*E).var_E;
-            NorfairLavajumpingEnemy_Func_6(addr_kNorfairLavajumpingEnemy_Ilist_BE3C as u16, game);
-            (*E).var_F = (0xa2bf1ai32) as u16;
-            (*E).base.properties =
-                ((*E).base.properties as i32 & !(kEnemyProps_ProcessedOffscreen as i32)) as u16;
-        } else {
-            (*E).var_C = ((*E).var_C).wrapping_add(56);
-        };
-    };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
     @prefix { let E = Get_MaridiaLargeSnail(k as i32, game); };
     MaridiaLargeSnail_Func_2 [] {
         (*E).var_0B = 0;
@@ -3217,6 +2783,11 @@ crate::game::callback_dispatch! {
         }
     };
     @functions [pub fn (k: u16, game: &mut Game)];
+    [10665692] NorfairLavajumpingEnemy_Func_1 [] { crate::game::lava_jumper::follow_parent(k, game); };
+    [10665754] NorfairLavajumpingEnemy_Func_2 [] { crate::game::lava_jumper::launch(k, game); };
+    [10665790] NorfairLavajumpingEnemy_Func_3 [] { crate::game::lava_jumper::advance(k, crate::game::lava_jumper::Flight::Rising, game); };
+    [10665852] NorfairLavajumpingEnemy_Func_4 [] { crate::game::lava_jumper::advance(k, crate::game::lava_jumper::Flight::Turning, game); };
+    [10665916] NorfairLavajumpingEnemy_Func_5 [] { crate::game::lava_jumper::advance(k, crate::game::lava_jumper::Flight::Falling, game); };
     [10662222] Flies_4 [] { crate::game::flies::circle(k, false, game); };
     [10662268] Flies_5 [] { crate::game::flies::circle(k, true, game); };
     [10662314] Flies_6 [] { crate::game::flies::dive(k, false, game); };

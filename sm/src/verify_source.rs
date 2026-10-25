@@ -1,8 +1,24 @@
 //! Source bytes captured by the game library compilation.
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
+    (
+        "sm/src/game/spike_plant.rs",
+        include_bytes!("game/spike_plant.rs"),
+    ),
+    (
+        "sm/src/game/hopping_blobs.rs",
+        include_bytes!("game/hopping_blobs.rs"),
+    ),
+    (
+        "sm/src/game/erratic_fireball.rs",
+        include_bytes!("game/erratic_fireball.rs"),
+    ),
     ("sm/src/game/rio.rs", include_bytes!("game/rio.rs")),
     ("sm/src/game/flies.rs", include_bytes!("game/flies.rs")),
+    (
+        "sm/src/game/lava_jumper.rs",
+        include_bytes!("game/lava_jumper.rs"),
+    ),
     (
         "sm/src/game/norfair_rio.rs",
         include_bytes!("game/norfair_rio.rs"),

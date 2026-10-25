@@ -87,9 +87,7 @@ pub(crate) fn advance(kind: Kind, game: &mut Game) {
     };
     set_velocity(&mut runtime, key, speed, forward);
     runtime.edit_actor(key, Native, |actor| {
-        actor.instruction = kind.instructions()[usize::from(forward)];
-        actor.instruction_delay = 1;
-        actor.timer = 0;
+        actor.restart_animation(kind.instructions()[usize::from(forward)]);
     });
 }
 

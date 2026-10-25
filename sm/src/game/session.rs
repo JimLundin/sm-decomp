@@ -483,6 +483,18 @@ pub struct Position {
     pub whole: u16,
     pub fraction: u16,
 }
+impl Position {
+    /// Add a signed 8.8 velocity to this 16.16 position, wrapping at 16 bits.
+    pub(in crate::game) fn advance_8_8(&mut self, velocity: i16) {
+        self.advance(i32::from(velocity) << 8);
+    }
+    pub(in crate::game) fn advance(&mut self, velocity: i32) {
+        let position = (u32::from(self.whole) << 16) | u32::from(self.fraction);
+        let next = position.wrapping_add(velocity as u32);
+        self.fraction = next as u16;
+        self.whole = (next >> 16) as u16;
+    }
+}
 
 #[derive(Clone, Copy, Default, Debug, PartialEq)]
 pub struct Point {

@@ -15,9 +15,7 @@ fn animate(runtime: &mut Runtime<'_>, instruction: u16) {
     runtime.edit_actor(key, Native, |actor| {
         if actor.pre_instruction != instruction {
             actor.pre_instruction = instruction;
-            actor.instruction = instruction;
-            actor.instruction_delay = 1;
-            actor.timer = 0;
+            actor.restart_animation(instruction);
         }
     });
 }

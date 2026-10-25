@@ -440,7 +440,10 @@ pub mod game {
     pub mod drop_rules;
     pub mod enemy_population;
     pub mod enemy_script;
+    pub(crate) mod erratic_fireball;
     pub(crate) mod flies;
+    pub(crate) mod hopping_blobs;
+    pub(crate) mod lava_jumper;
     pub(crate) mod mother_brain_visuals;
     pub(crate) mod norfair_rio;
     pub mod projectile_contact;
@@ -459,6 +462,7 @@ pub mod game {
     pub mod sm_aa;
     pub mod sm_b2;
     pub mod sm_b3;
+    pub(crate) mod spike_plant;
     pub mod sprite_objects;
     pub mod waver;
 }

@@ -12,12 +12,6 @@ pub(crate) fn script_value(variable: usize, value: u16, game: &mut Game) {
     runtime.write_slice_native(at, value);
 }
 
-pub(crate) fn current_phase(game: &mut Game) -> u32 {
-    let runtime = Runtime::new(game);
-    let key = Key::from_legacy(runtime.word(0xe54));
-    0xa20000 | u32::from(runtime.resolve_actor(key, Native).pre_instruction)
-}
-
 pub(crate) fn initialize(lower: bool, game: &mut Game) {
     let mut runtime = Runtime::new(game);
     let raw = runtime.word(0xe54);
@@ -76,7 +70,7 @@ pub(crate) fn follow_parent(k: u16, lower: bool, game: &mut Game) {
         } else {
             0xc18f
         };
-        animate_current(&mut runtime, instruction);
+        animate_cached(&mut runtime, instruction, 0);
     }
     runtime.edit_actor(key, Native, |actor| actor.properties &= !0x100);
     let x = runtime.word(drawing + 182);
@@ -111,13 +105,13 @@ pub(crate) fn wait_to_dive(k: u16, lower: bool, game: &mut Game) {
             [0xa2c1c1, 0xa2c1c5]
         };
         aim_velocity(&mut runtime, key, vertical, tables, index);
-        animate_current(&mut runtime, if lower { 0xc630 } else { 0xc107 });
+        animate_cached(&mut runtime, if lower { 0xc630 } else { 0xc107 }, 0);
         runtime.edit_actor(key, Native, |actor| {
             actor.pre_instruction = if lower { 0xc7bb } else { 0xc33f }
         });
     } else if lower || runtime.native_word(finished) != 0 {
         runtime.write_slice_native(finished, 0);
-        animate_current(&mut runtime, if lower { 0xc61a } else { 0xc0f1 });
+        animate_cached(&mut runtime, if lower { 0xc61a } else { 0xc0f1 }, 0);
     }
 }
 
@@ -138,7 +132,7 @@ pub(crate) fn finish_animation(k: u16, lower: bool, recovering: bool, game: &mut
         (true, false) => (0xc65a, 0xc7d6),
         (true, true) => (0xc686, 0xc771),
     };
-    animate_current(&mut runtime, instruction);
+    animate_cached(&mut runtime, instruction, 0);
     runtime.edit_actor(key, Native, |actor| actor.pre_instruction = phase);
     drop(runtime);
     if !lower {
@@ -146,15 +140,13 @@ pub(crate) fn finish_animation(k: u16, lower: bool, recovering: bool, game: &mut
     }
 }
 
-fn animate_current(runtime: &mut Runtime<'_>, instruction: u16) {
+pub(super) fn animate_cached(runtime: &mut Runtime<'_>, instruction: u16, cache_offset: usize) {
     let raw = runtime.word(0xe54);
-    let last_animation = 0x7800 + usize::from(raw);
+    let last_animation = 0x7800 + usize::from(raw) + cache_offset;
     if runtime.native_word(last_animation) != instruction {
         runtime.write_slice_native(last_animation, instruction);
         runtime.edit_actor(Key::from_legacy(raw), Native, |actor| {
-            actor.instruction = instruction;
-            actor.instruction_delay = 1;
-            actor.timer = 0;
+            actor.restart_animation(instruction);
         });
     }
 }
@@ -174,7 +166,7 @@ pub(crate) fn dive(k: u16, lower: bool, turning: bool, game: &mut Game) {
             })
         {
             runtime.edit_actor(key, Native, |actor| actor.variables[vertical] = u16::MAX);
-            animate_current(&mut runtime, if lower { 0xc662 } else { 0xc145 });
+            animate_cached(&mut runtime, if lower { 0xc662 } else { 0xc145 }, 0);
             runtime.edit_actor(key, Native, |actor| {
                 actor.pre_instruction = if lower { 0xc82d } else { 0xc3b1 };
             });
@@ -182,7 +174,7 @@ pub(crate) fn dive(k: u16, lower: bool, turning: bool, game: &mut Game) {
         }
     } else if blocked {
         if lower {
-            animate_current(&mut runtime, 0xc686);
+            animate_cached(&mut runtime, 0xc686, 0);
         }
         runtime.edit_actor(key, Native, |actor| {
             actor.pre_instruction = if lower { 0xc888 } else { 0xc406 };
@@ -194,7 +186,7 @@ pub(crate) fn dive(k: u16, lower: bool, turning: bool, game: &mut Game) {
         let finished = 0x7802 + usize::from(k);
         if runtime.native_word(finished) != 0 {
             runtime.write_slice_native(finished, 0);
-            animate_current(&mut runtime, if lower { 0xc674 } else { 0xc179 });
+            animate_cached(&mut runtime, if lower { 0xc674 } else { 0xc179 }, 0);
         }
     }
     drop(runtime);

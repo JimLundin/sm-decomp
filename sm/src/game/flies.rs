@@ -3,19 +3,8 @@
 use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::actors::api::{self, Axis};
 use crate::game::projectile_geometry::SINE_COSINE;
-use crate::game::session::Position;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
-
-fn step(position: &mut Position, velocity: u16) {
-    let [fraction, whole] = velocity.to_ne_bytes();
-    let (fraction, carry) = position.fraction.overflowing_add(u16::from(fraction) << 8);
-    position.fraction = fraction;
-    position.whole = position
-        .whole
-        .wrapping_add_signed(i16::from(whole as i8))
-        .wrapping_add(u16::from(carry));
-}
 
 fn move_fly(runtime: &mut Runtime<'_>, key: Key, circling: bool) -> u16 {
     let angle = if circling {
@@ -30,14 +19,12 @@ fn move_fly(runtime: &mut Runtime<'_>, key: Key, circling: bool) -> u16 {
             runtime.resolve_actor(key, Native).variables[axis + 1]
         };
         runtime.edit_actor(key, Native, |actor| {
-            step(
-                if axis == 0 {
-                    &mut actor.x
-                } else {
-                    &mut actor.y
-                },
-                velocity,
-            );
+            let position = if axis == 0 {
+                &mut actor.x
+            } else {
+                &mut actor.y
+            };
+            position.advance_8_8(i16::from_le_bytes(velocity.to_ne_bytes()));
         });
     }
     runtime.resolve_actor(key, Native).y.whole
