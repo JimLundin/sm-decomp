@@ -265,6 +265,7 @@ python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-sp
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-speed-booster-settled.inputs --rom rom/sm.smc --route speed-booster-settled
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-save-death-continue.inputs --rom rom/sm.smc --route save-death-continue
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-ice-beam-settled.inputs --rom rom/sm.smc --route ice-beam-settled
+python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-power-bomb.inputs --rom rom/sm.smc --route power-bomb
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-ice-return-business.inputs --rom rom/sm.smc --route ice-return-business
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-norfair-reserve.inputs --rom rom/sm.smc --route norfair-reserve
 python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --direct
@@ -281,6 +282,13 @@ The Ice route similarly preserves the original 161,613 inputs as `ice-beam`;
 `ice-return-business` retains that settled prefix, then traverses the upper shutter
 bypass and collects health drops in Business Center. Its optional segment runs
 all 4,426 selected frames; it does not qualify Crocomire or the Power Bomb pickup.
+
+The `power-bomb` route retains the existing 174,992-step room-entry prefix,
+then collects the first Power Bomb in A3AE. `pickup-power-bomb` requires a fresh
+capacity increase, message completion and 120 follow-up frames; it does not
+prove use of a Power Bomb. This authored route is a documented fallback while
+published-TAS alignment is blocked at step 9,266 by timed audio-upload NMIs.
+It adds gameplay coverage without claiming further published-TAS alignment.
 
 For focused work, add repeatable `--segment ID`, for example
 `--segment item-morph-ball`. Selection reports PARTIAL coverage and does not

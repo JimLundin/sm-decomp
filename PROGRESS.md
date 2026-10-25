@@ -1,6 +1,6 @@
 # Engine migration
 
-![Now: 9,266 recorded steps aligned; suit sequence owned. Next: audio upload timing and equipment. Outcome: safe owned state and less duplicate RAM code, then independent video/audio. Target: Map Rando.](docs/codebase-map/work-summary.svg)
+![Now: 25 of 44 gameplay checks pass; suit sequence owned. Next: remaining pickups and bosses, and equipment. Outcome: safe owned state and less duplicate RAM code, then independent video/audio. Target: Map Rando.](docs/codebase-map/work-summary.svg)
 
 | Measure | Count |
 | --- | ---: |
@@ -10,10 +10,10 @@
 | Total Rust | 155287 |
 | Lines containing `unsafe` | 4850 |
 | Warnings (no-default library) | 371 |
-| Required checkpoint checks passing | 24/44 |
+| Required checkpoint checks passing | 25/44 |
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-Change: **Varia/Gravity sequence shared**; engine **+306 / -407 = -101**, legacy **-396**, unsafe **-31**, verification **+5**. `sm_91`: **591 lines left**. Next: equipment.
+Change: **Power Bomb pickup qualified: 25/44 checks**; capacity increase, message completion and **120 follow-up frames**, **0 failures**. Code counts unchanged. Published-TAS alignment remains **9,266 steps**.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)

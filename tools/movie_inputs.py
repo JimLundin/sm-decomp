@@ -250,6 +250,7 @@ ROUTES = {
     'ice-beam-settled': (161733, 'd5700c8c8bfd3bcbc9fa5d4d05aa805dd594e98130a0c9d0ade163695201e093'),
     'speed-booster': (148406, 'bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6'),
     'speed-booster-settled': (148526, '9548c119742b6e2ffec65c5c0871403c96915671b83fe8b4c3930cc4bf60a00d'),
+    'power-bomb': (176055, 'b6c0c74ccfe38b10c1ae284472e60bc483060ca0b3fb6f359d57e894283decf7'),
     'power-bomb-room-entry': (174992, '34ab4055b6904d0544e490632fbbb81b87f18d163e55c7c6208ee9e5bd2a7dfb'),
     'norfair-reserve': (147887, '968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d'),
 }
@@ -1335,6 +1336,22 @@ def extend_power_bomb_entry(a):
     return a
 
 
+def extend_power_bomb_pickup(a):
+    """Collect the first Power Bomb after the preserved A3AE entry route."""
+    assert len(a) == 174992
+    a = list(a)
+    a.extend(_holds('Y:1 Left:8 None:12 Left:4 Left+A:44 Up+A:1 None:12'))  # pb-a3ae-first-stone
+    a.extend(_holds('X:1 None:8 A:10 Left+A:14 Up+A:1 None:25'))  # pb-a3ae-first-boyon-platform
+    a.extend(_holds('Left+A:10 Down+A:2 Down+A+X:1 Left+A:10 Up+A:1 None:28'))  # pb-a3ae-second-stone-braked
+    a.extend(_holds('Left:4 Left+A:7 Left:25 Up:1 None:8'))  # pb-a3ae-third-stone
+    a.extend(_holds('Left:4 Left+A:12 Left:20 Up:1 None:20'))  # pb-a3ae-fourth-stone
+    a.extend(_holds('Left:4 Left+A:7 Left:25 Up:1 None:8'))  # pb-a3ae-fifth-stone
+    a.extend(_holds('Left:4 Left+A:7 Left:25 Up:1 None:20 X:1 None:15'))  # pb-a3ae-orb-approach
+    a.extend(_holds('Left:4 Left+A:44 Up+A:1 None:420 A:1 None:180'))  # pb-a3ae-power-bomb-collected
+    assert len(a) == 176055
+    return a
+
+
 def route_frames(source, name):
     """Reproduce authored controller holds/splices; do not adjust emulator timing.
 
@@ -1355,8 +1372,9 @@ def route_frames(source, name):
         return a[:72761] + _holds('None:1800 A:1 None:300 A:1 None:300 A:1 None:900')
     if name == 'norfair-reserve':
         return extend_reserve(extend_redtower(a))
-    if name == 'power-bomb-room-entry':
-        return extend_power_bomb_entry(extend_ice_return(extend_ice(extend_redtower(a)) + _hold('', 120)))
+    if name in ('power-bomb-room-entry', 'power-bomb'):
+        entry = extend_power_bomb_entry(extend_ice_return(extend_ice(extend_redtower(a)) + _hold('', 120)))
+        return extend_power_bomb_pickup(entry) if name == 'power-bomb' else entry
     if name == 'ice-return-business':
         return extend_ice_return(extend_ice(extend_redtower(a)) + _hold('', 120))
     if name in ('ice-beam', 'ice-beam-settled'):

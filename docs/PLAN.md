@@ -45,7 +45,7 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    main pickups, doors/elevators, save/load, death and credits. Report results and rooms.
    Commit only recipes. Preserve input/NMI timing; no guessed lag/offset changes.
    Each adoption names segments exercising changed behavior and downstream effects.
-   Current recipes: 24/44 required checks pass; 20 remain pending. Three additional
+   Current recipes: 25/44 required checks pass; 19 remain pending. Three additional
    checks (in-memory save, upward elevator, Ice return) pass; the corpus is unfinished.
    A0.2: original lsnes captured 129,712 exact inputs across 127 gameplay rooms;
    24,619 emulator-lag frames, no credits. Flat NMI counts do not identify lag.
@@ -55,7 +55,10 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    five-frame door regression kills an acknowledged-NMI timing mutation. Next:
    native index 9,266 enters an audio upload with 41 measured acknowledged NMIs
    and input reads while gameplay waits. Bulk native upload has no video clock;
-   establish timed suspension before resuming E0B5 (no fixed delays/counter offsets).
+   timed suspension needs bus-level clock events before E0B5 can resume faithfully.
+   A0 remains open. Following the review's documented-finding fallback, qualify
+   the authored Power Bomb pickup now passes with message completion and follow-up.
+   Next: another pending pickup/boss from a checked prefix; no counter offsets.
    Observer unit tests (20) are not gameplay checks. Regenerate incompatible
    checkpoints from boot; preserve the old checked navigation build.
 2. **Current - lane B bank retirement.** `sm_94` is deleted; next is `sm_91`.

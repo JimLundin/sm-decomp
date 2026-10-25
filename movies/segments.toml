@@ -333,7 +333,14 @@ after_expectations = 120
 
 [[segment]]
 id = "pickup-power-bomb"
-pending = "No qualified capacity-increase, message-completion and follow-up segment on the current route."
+inputs = "corpus-power-bomb.inputs"
+input_sha256 = "b6c0c74ccfe38b10c1ae284472e60bc483060ca0b3fb6f359d57e894283decf7"
+start_frame = 175405
+frames = 650
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+expect = ["pickup:power-bomb", "room:A3AE"]
+after_expectations = 120
 
 [[segment]]
 id = "pickup-energy"
