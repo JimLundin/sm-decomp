@@ -106,6 +106,13 @@ runs exactly one game frame per input word. Steps, one commit each:
   code if all 26 checks still pass (regression row at the upload), then report the
   first step where the RNG word differs and the routine that advanced it. Then
   Crocomire; lane A owes one landed commit per hour.
+  **11:52 — stall, A0 parked.** Second hour without alignment/coverage code; the hour
+  went on verifier disk/cache tooling (80d0782) and the model stays local (one upload
+  sample; equal-size uploads take 27/28 NMIs, so it cannot be fit). Decision: A0 is
+  parked at 10,555 with that finding in PLAN item 1; do not reopen it before 18:00.
+  **Next commit (this hour):** the frozen Crocomire route's $1994 scratch write at
+  167,281: fix it with its regression row and qualify Crocomire (27/44). Then one
+  pending pickup/boss per hour to 18:00, each a landed `A:` commit with its row.
 - **A0.4 Replay.** Aligned any% from boot to credits, 0 failures; then 100%
   (222,788 frames) and low%.
 - **A0.5 Map.** Point pending `segments.toml` rows at frame windows of the
@@ -165,6 +172,16 @@ paths, verify/probe hooks: 611 lines/94 files) or says why not. `xray::widen` ke
 the X-ray width in `DemoInput` field names (`demo.held` = width): give aliased RAM a
 named view; `held.wrapping_sub(11) & 0x8000 == 0` is still a range test. 6c4a6f7's
 Score line has `?` separators.
+**11:52:** one `B:` commit this hour (e2fd645, sm_88 −89 legacy, −33 production,
+unsafe −17, explained); **production behind for a third hour**: 18:00 needs −1,959 in
+six hours (~330/h) and `sm_90` deleted (1,039 left, no commit this hour). Next: `sm_90`
+Crystal Flash, then finish the bank; `sm_88` pauses until `sm_90` is gone. Each
+remaining hour also needs one `B:` commit that deletes production verify/probe/observer
+code (611 lines/94 files, flat all day), e.g. the `#[path = "../verification/…"]`
+observer modules mounted in production files such as `visual_runtime.rs`, with the
+segments that still exercise them named. e2fd645 dropped `after_hits`/`after_expectations`
+from `item-morph-ball` while extending it: never weaken a row's expectations in a
+code commit; restore them or say why the post-hit window is wrong.
 
 **Waypoints** (Europe/Stockholm; review clock; a miss gets a diagnosis, not a new plan):
 
@@ -186,6 +203,13 @@ Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
+- **2026-10-25 11:52 CET (80d0782):** 2 agent commits (half last hour): A 1 (80d0782,
+  verifier cache tooling only), B 1 (e2fd645 `B:sm_88`), 0 unlabelled, 0 docs-only, both
+  with `Score:`. Score `checks 26/44 · legacy 51925 · production 115959 · unsafe 4662 ·
+  verification 38944` (last 26 · 52014 · 115992 · 4679 · 38944); warnings 367 (flat);
+  verify/probe/observer 611/94 (flat). 18:00: legacy on pace, **checks, production and
+  sm_90 (no commit, 1,039 left) behind**. **Lane-A stall (coverage):** second hour with no
+  alignment or coverage code; elapsed-NMI model still local. B −33 production, not ≥100.
 - **2026-10-25 10:52 CET (8588674):** 4 agent commits: **A 0**, B 4 (6b1b013,
   6c4a6f7, 8588674 `B:sm_90`; e091835 `B:sm_88`), 0 unlabelled, 0 docs-only, all with
   `Score:`. Score `checks 26/44 · legacy 52014 · production 115992 · unsafe 4679 ·
