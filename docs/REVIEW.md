@@ -101,6 +101,14 @@ codemod). Body: the script (or its path), unsafe before/after, the Segments run.
   pointer and whose body then compiles with no `unsafe {}` block; then `cargo fix` for
   unused blocks. Then M2 (removes retained enemy pointers), then safe `word!` (M1b).
   Owner: the B3 agent (sm_a4 quiet this hour) until a fourth agent starts.
+- **M1 done (17:55 check-in), sound form:** d0fffa6 made `word!` checked caller-side
+  byte access (no whole-RAM borrow, so no alias with live enemy pointers) and cleared 123
+  blocks; all 59 rows passed locally. Lane M then hand-audited ~10 fns per commit
+  (62e33d9, 4a515c9) and started M2 (92ac60e Ripper). **Next M commit: the scripted
+  fixpoint strip (M1a)** now that `word!` is checked: strip `unsafe` from every fn with
+  no raw pointer in its signature whose body compiles without an `unsafe {}` block,
+  iterate to a fixpoint, `cargo fix`; one commit, script path in the body. Target
+  unsafe <= 3,900 (10-26 12:00) from that commit alone; hand audits only after it.
 - **M2** enemy records by slot: replace `Get_X(k) -> *mut` and `(*E).field` with a
   safe slot accessor that re-borrows `game.g_ram` per access; codemod per bank,
   common enemies first (`sm_a2`, `sm_a3`, `sm_a8`, `sm_b3`), then bosses; fixpoint
@@ -161,6 +169,16 @@ can only lose route fidelity, never fake a pass.
   does no bank work until it lands. Then A1.3: flip one pending row per commit,
   starting with the cheapest, to reach ≥28/44 by 18:00.
 
+- **A1.3 status (17:55 check-in): 40/44.** Gravity, Grapple (100% seeds), Botwoon (low%
+  seed 122) flipped this hour; MB purple-breath regression added. Pending: Spore Spawn
+  (absent from any%/100%), Golden Torizo (skipped in 100%), Mother Brain (100% 10,000-frame
+  trial: 0 oracle differences, but misses the capture's defeat), credits. Next, in order:
+  (1) Mother Brain: 0 differences means the seed drifts from the capture, not a native
+  bug; capture extra seeds inside the MB room at each phase change and chain rows from
+  them; credits follows from the last MB seed. (2) Spore Spawn and Golden Torizo: index
+  one published movie that fights each (as low% did for Botwoon) and seed from it.
+  No hand routes.
+
 **Lane B — bank retirement (up to three agents, one bank each).** Unchanged method:
 for each function, delete it if unreachable or duplicated, otherwise move it onto safe
 Session state with native types (enums/fn values, named views, range tests), no new
@@ -180,6 +198,10 @@ hooks: 607 lines/94 files, duplicated owned paths). Queues:
   `sm_a6` Ridley, `sm_a7` Kraid/Phantoon, `sm_aa` Torizos, `sm_a9` Mother Brain,
   `sm_9b` Grapple.
 If only two lane-B agents run, B3 waits; never two agents on one bank.
+**17:55:** `sm_a4` ran 108% and 146% this hour (legacy +68): checked-Actor closures grow
+the bank. Next `sm_a4` commits must lower legacy (delete or move out whole families);
+a growing commit needs the one-line reason. `sm_88` is at 442 lines: finish and delete
+it before the 10-26 18:00 waypoint.
 Commit unit (from 16:00): a whole function family or small bank, several hundred lines
 is fine; run locally only the rows the change reaches, Segments on main runs the rest.
 After each M step lands, rebase onto it before continuing; do not re-add `unsafe`.
@@ -193,9 +215,9 @@ elapsed-NMI experiment reached 10,555 (parked 11:52). `sm_94` deleted (ca42bc5, 
 | By | Checks | Unsafe lines | Banks deleted (cumulative) | Legacy | Production | Result |
 | --- | ---: | ---: | --- | ---: | ---: | --- |
 | 10-25 06:00 | A0.4 any% to credits | | sm_94 | <=54,600 | <=116,500 | **MISS** |
-| 10-25 18:00 | >=28/44; A1.2 go/no-go recorded | CI green; M1 on a branch | + sm_91, sm_90, sm_89 | <=50,300 | <=115,300 | |
-| 10-26 12:00 | >=36/44; C2 decided | <=3,900 (M1 landed) | + sm_a0 | <=47,000 | <=114,000 | |
-| 10-26 18:00 | >=38/44 | <=3,300 (M2 common enemies) | + sm_88, sm_8f, sm_81 | <=44,000 | <=112,500 | |
+| 10-25 18:00 | >=28/44; A1.2 go/no-go recorded | CI green; M1 on a branch | + sm_91, sm_90, sm_89 | <=50,300 | <=115,300 | **HIT except CI**: 40/44, A1.2 go, M1 landed (d0fffa6), banks deleted, legacy 48,715, production 115,177; `ci.yml` still red |
+| 10-26 12:00 | >=42/44 (raised 17:55; 36 met early); C2 decided | <=3,900 (M1 landed) | + sm_a0 | <=47,000 | <=114,000 | |
+| 10-26 18:00 | 44/44 (raised 17:55) | <=3,300 (M2 common enemies) | + sm_88, sm_8f, sm_81 | <=44,000 | <=112,500 | |
 | 10-27 18:00 | 44/44 | <=2,300 (M2 bosses, M3) | + sm_80, sm_b2, first boss bank | <=36,000 | <=109,000 | |
 | 10-28 18:00 | 44/44 + 100% seeds | <=1,200 (M4) | + sm_82, sm_8b | <=28,000 | <=105,000 | |
 
@@ -206,6 +228,15 @@ The previous 18:00 and 10-26 production lines (≤114,000, ≤110,000) assumed a
 ratio and missed three hours running at ~80%; the reset lines assume 75% plus hook
 deletion. End-state budgets in the size goal stand (≤100,000 with all banks retired,
 ~75,000 aspiration).
+
+**18:00 CI miss (recorded 17:55 CET):** `ci.yml` is red only in its two mutation steps
+(`player_detached/mutations.py`, `room_mutations.py`; run 40211656694). C0b was not done:
+PLAN's "Local validation" note records a direct user instruction to the agents not to use
+or observe CI, and the agents' audit (PLAN item 2) keeps the drivers for local capture
+callers. Both are reasonable; the steps still block a green CI. Corrective step, needs the
+user: allow one agent commit that gates those two steps (and the ROM-prep/report steps)
+behind `workflow_dispatch` (`if: github.event_name == 'workflow_dispatch'`), scripts kept.
+It needs no CI observation.
 
 **06:00 miss (recorded 05:52 CET):** no agent committed 23:48-05:50; the plan was not
 the blocker. Corrective step done: agents restarted ~05:50; sm_94 deleted 06:51 CET.
@@ -218,6 +249,13 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
 
 ## Check-ins
 
+- **2026-10-25 17:55 CET (9fff566), no stall, best hour so far:** 19 agent commits since
+  3ea69a0: A 5 (Gravity, Grapple, Botwoon flipped; MB regression), M 5 (d0fffa6 checked
+  `word!`, -124 unsafe; Ripper M2), B1 `sm_81` 3, B2 `sm_88` 3, B3 `sm_a4` 3; all `Score:`,
+  0 docs-only. Score `checks 40/44 · legacy 48715 · production 115177 · unsafe 4327 ·
+  verification 39336` (last 37 · 49512 · 115340 · 4546 · 39240); warnings 302 (357).
+  18:00 hit except `ci.yml` (user decision asked). Changed: M1 done, M1a fixpoint next;
+  A1.3 next steps; checks waypoints raised; `sm_a4` growth flagged.
 - **2026-10-25 16:55 CET (3ea69a0), stall in lane M (2nd check-in, 0 commits):** 7 agent
   commits since 9b062a7: A 4 (Draygon, Space Jump, MB spawn regression, C0 compile),
   B1 `sm_81` 1, B2 `sm_88` 2 (unsafe -31 then +33: backend contracts restored, sound),
@@ -283,14 +321,6 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
   verification 38944` (last 26 · 52390 · 116068 · 4707 · 39047); warnings 367 (370);
   verify/probe/observer 611/94 (615/93). 18:00: legacy ahead, sm_90 on pace,
   **checks and production behind**. Verification −103 (fixture lines deleted). No stall.
-- **2026-10-25 09:52 CET (e6a39a5):** 4 agent commits: A 2 (bd003cd gate-spawn fix +
-  10-frame row, e6a39a5 Wave pickup), B 2 (52ba836 **sm_91 deleted**, 84838b5
-  `B:sm_90`), 0 unlabelled, 0 docs-only, all with `Score:`. Score `checks 26/44 ·
-  legacy 52390 · production 116068 · unsafe 4707 · verification 39047` (last 25 ·
-  52834 · 116131 · 4741 · 39040); warnings 370 (371); verify/probe/observer 615/93
-  (flat). 18:00: checks on pace (8 in 8h), sm_90 and legacy on pace, **production
-  behind** (−63/h vs −260/h). A0 upload experiment reported; next step named. No stall.
-
 ## Lane watch (2026-10-24 23:52)
 
 - d0d1961 is a sound bank-retirement step (−90 engine, adapter and `CollInfo`
