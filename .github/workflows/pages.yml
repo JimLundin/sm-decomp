@@ -1,0 +1,50 @@
+name: Progress image
+# Publishes tools/treemap.py's picture to GitHub Pages on every main push;
+# PROGRESS.md embeds https://jimlundin.github.io/sm-decomp/treemap.svg.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the 24-hour change needs history
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Draw the progress image
+        run: |
+          mkdir -p site
+          python tools/treemap.py site/treemap.svg HEAD
+          printf '%s\n' '<!doctype html><meta charset="utf-8"><title>Engine migration</title>' \
+            '<body style="margin:0;background:#f5f7f7"><img src="treemap.svg" alt="Engine migration progress" style="width:100%;max-width:1200px;display:block;margin:auto">' \
+            > site/index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  deploy:
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish
+        id: deployment
+        uses: actions/deploy-pages@v4

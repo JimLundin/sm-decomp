@@ -32,9 +32,9 @@ Direct user instructions win; HISTORY holds no current rules.
 reviewers (the hourly review check-in and the cloud Claude agents' REVIEW.md
 directives) are to be obeyed as given. Disagree in one line under the item, then do it.
 
-**Codebase map:** brief done (c1fe795). Pages generates the
-[view](https://jimlundin.github.io/sm-decomp/) and `treemap.svg` (embedded by PROGRESS.md)
-from HEAD on every main push; nobody edits PROGRESS.md (user, 2026-10-25). No map work.
+**Progress picture (user, 2026-10-25):** the interactive map is retired. The only
+progress view is `tools/treemap.py`'s image, published by Pages on every main push and
+embedded by PROGRESS.md. Nobody edits PROGRESS.md; no other dashboards.
 
 **Hosted validation (user decision 2026-10-25 18:05, given live to the reviewer;
 replaces the earlier "do not use or observe CI" note).** The user lifted the
