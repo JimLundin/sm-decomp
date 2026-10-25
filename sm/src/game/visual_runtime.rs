@@ -1637,7 +1637,11 @@ unsafe fn initialize_cinematic_object(
         match objects {
             Sprites => bank::CallCinematicSpriteObjectSetup(setup, object, game),
             Mode7 => bank::CallCinematicSpriteInit(setup, object >> 1, game),
-            Background => bank::CallCinematicBgObjectSetup(setup, object, game),
+            Background => {
+                if setup != 0x8b93d9 {
+                    Unreachable(game);
+                }
+            }
         }
     }
     0
@@ -1680,7 +1684,7 @@ unsafe fn advance_cinematic_object(objects: CinematicObjects, object: u16, game:
         match objects {
             Sprites => bank::CallCinematicSprPreInstr(pre, object, game),
             Mode7 => bank::CallMode7PreInstr(pre, object, game),
-            Background => bank::CallCinematicBgPreInstr(pre, object, game),
+            Background => advance_cinematic_background_pre(pre, object, game),
         }
         let selected = checked_word!(game, layout.current;);
         let offset = usize::from(selected & !1);
@@ -1758,7 +1762,9 @@ unsafe fn advance_cinematic_object(objects: CinematicObjects, object: u16, game:
                     match objects {
                         Sprites => bank::CallCinematicSprInstr(command, selected, operand, game),
                         Mode7 => bank::CallMode7Instr(command, selected, operand, game),
-                        Background => bank::CallCinematicBgInstr(command, selected, operand, game),
+                        Background => {
+                            cinematic_background_command(command, selected, operand, game)
+                        }
                     }
                 }
             };
@@ -1783,7 +1789,7 @@ unsafe fn advance_cinematic_object(objects: CinematicObjects, object: u16, game:
                     game.cinematicbg_arr1[(selected >> 1)] =
                         (payload.add(4) as *const u16).read_unaligned()
                 );
-                bank::ProcessCinematicBgObject(
+                draw_cinematic_background(
                     selected,
                     (payload.add(2) as *const u16).read_unaligned(),
                     game,
@@ -1793,6 +1799,200 @@ unsafe fn advance_cinematic_object(objects: CinematicObjects, object: u16, game:
         let size = if matches!(objects, Background) { 6 } else { 4 };
         checked_word!(game, layout.instructions + offset; = address.wrapping_add(size));
     }
+}
+
+fn cinematic_background_record(cursor: u16, game: &mut Game) -> RomRecord {
+    let address = 0x8c0000 | u32::from(cursor);
+    if address & 0x8000 == 0 {
+        crate::game::session_runtime::native_rom_diagnostic(address, game);
+    }
+    player_projectiles::content::captured(game.capture_native_rom(), address)
+}
+
+pub(crate) unsafe fn advance_cinematic_background_pre(command: u32, object: u16, game: &mut Game) {
+    match command {
+        0x8b93d9 => {}
+        0x8bb4bc => {
+            if word!(game.cinematic_function) == 0xb207 || word!(game.cinematic_function) == 0xa390
+            {
+                word!(game.cinematicbg_instr_ptr[(object >> 1)] = 0xd613);
+                word!(game.cinematicbg_instr_timer[(object >> 1)] = 1);
+                word!(game.cinematicbg_preinstr[(object >> 1)] = 0x93d9);
+            }
+        }
+        _ => unsafe {
+            Unreachable(game);
+        },
+    }
+}
+
+unsafe fn draw_cinematic_background(object: u16, position: u16, game: &mut Game) {
+    unsafe {
+        let definition = word!(game.cinematicbg_arr1[(object >> 1)]);
+        let command = cinematic_background_record(definition, game).word(0);
+        match command {
+            0x8849 => {}
+            0x884d | 0x88b7 | 0x88fd => {
+                if command == 0x884d {
+                    word!(game.cinematicbg_var1 = u16::from(word!(game.cinematicbg_var1) == 0));
+                    crate::game::intro_pages::spawn_text_glow(definition, position, game);
+                    let record = cinematic_background_record(
+                        word!(game.cinematicbg_instr_ptr[(object >> 1)]),
+                        game,
+                    );
+                    let bottom = if (record.word(6) as i16) < 0 {
+                        word!(game.cinematicbg_arr7[15] = 8);
+                        8 * (u16::from(record.byte(3)) + 2)
+                    } else {
+                        word!(game.cinematicbg_arr7[15] = 8 * u16::from(record.byte(8)));
+                        8 * u16::from(record.byte(9))
+                    };
+                    word!(game.cinematicbg_arr8[15] = bottom.wrapping_sub(8));
+                    if record.word(4) != 0xd67d && word!(game.cinematicbg_var1) != 0 {
+                        crate::game::sm_80::QueueSfx3_Max6(0xd, game);
+                    }
+                }
+                draw_cinematic_rectangle(command != 0x88fd, definition, position, game);
+            }
+            0x896b | 0x89cf => {
+                let mut destination =
+                    u16::from(position as u8) + 128 * u16::from(position.to_ne_bytes()[1]);
+                let record = cinematic_background_record(definition, game);
+                let width = u16::from(record.byte(2));
+                let height = u16::from(record.byte(3));
+                let columns = command == 0x89cf;
+                let (length, mut remaining) = if columns {
+                    (height, i32::from(width))
+                } else {
+                    (width, i32::from(height))
+                };
+                let mut source = definition.wrapping_add(4);
+                let mut tail = word!(game.mode7_vram_write_queue_tail);
+                loop {
+                    for (field, value) in [
+                        (0, 128),
+                        (1, source),
+                        (3, 139),
+                        (4, length),
+                        (6, destination),
+                        (8, if columns { 2 } else { 0 }),
+                    ] {
+                        crate::game::mode7_transfers::write_word(tail, field, value, game);
+                    }
+                    tail = tail.wrapping_add(9);
+                    source = source.wrapping_add(length);
+                    destination = destination.wrapping_add(if columns { 1 } else { 128 });
+                    // Row counts wrap at u16; column counts retain their signed decrement.
+                    remaining = if columns {
+                        remaining - 1
+                    } else {
+                        i32::from((remaining as u16).wrapping_sub(1))
+                    };
+                    if remaining == 0 {
+                        break;
+                    }
+                }
+                word!(game.mode7_vram_write_queue_tail = tail);
+            }
+            _ => {
+                Unreachable(game);
+            }
+        }
+    }
+}
+
+unsafe fn draw_cinematic_item_percentage(game: &mut Game) {
+    use crate::c_library::__assert_fail;
+    use core::ffi::c_char;
+    let mut count = 0u16;
+    for index in (0..=4).rev() {
+        let address = crate::rtl::rom_table_word!(game, 0x8be70d, index);
+        unsafe {
+            crate::native_assertion! {
+                '_c2rust_label: address < 0x2000;
+                b"addr < 0x2000\0", b"src/sm_rtl.h\0", 51, b"uint8 *RomPtr_RAM(uint16_t)\0"
+            };
+        }
+        count = count.wrapping_add(crate::rtl::SnesDivide(
+            u16::from_le(checked_word!(game, usize::from(address);)),
+            crate::rtl::rom_table_word!(game, 0x8be717, index) as u8,
+        ));
+    }
+    for index in (0..=10).rev() {
+        if crate::rtl::rom_table_word!(game, 0x8be721, index) & word!(game.collected_items) != 0 {
+            count = count.wrapping_add(1);
+        }
+    }
+    for index in (0..=4).rev() {
+        if crate::rtl::rom_table_word!(game, 0x8be737, index) & word!(game.collected_beams) != 0 {
+            count = count.wrapping_add(1);
+        }
+    }
+    for (column, digit, visible) in [
+        (462, count / 100, count >= 100),
+        (463, count / 10 % 10, count >= 10),
+        (464, count % 10, true),
+    ] {
+        if visible {
+            let index = (digit.wrapping_mul(4) >> 1) as isize;
+            for row in 0..2 {
+                word_transfers!(game, ascending, 1; pause_map(column + row * 32) <- value(
+                    crate::rtl::rom_table_word!(game, 0x8be741, index + row)
+                ));
+            }
+        }
+    }
+    word_transfers!(game, ascending, 1; pause_map(465) <- value(14442), pause_map(497) <- value(14458));
+}
+
+unsafe fn cinematic_background_command(
+    command: u32,
+    object: u16,
+    operand: u16,
+    game: &mut Game,
+) -> u16 {
+    use crate::game::{intro_pages, sm_8b as bank};
+    unsafe {
+        match command {
+            9154004 => intro_pages::reset_text_marker(game),
+            9168423 => draw_cinematic_item_percentage(game),
+            9168745 => {
+                if word!(game.japanese_text_flag) != 0 {
+                    word_transfers!(game, descending, 64; pause_map(799) <- rom(0x8cdf5b, 63));
+                }
+            }
+            9168768 => {
+                word_transfers!(game, descending, 64; native(0x363e) <- value(127));
+                word!(game.cinematic_function = 0xe797);
+            }
+            9154115 | 9154169 | 9154676 | 9154739 | 9154971 | 9155112 => {
+                let definition = match command {
+                    9154115 => bank::addr_kMode7ObjectDef_8BD401,
+                    9154169 => bank::addr_kMode7ObjectDef_8BD407,
+                    9154676 => bank::addr_kMode7ObjectDef_8BD413,
+                    9154739 => bank::addr_kMode7ObjectDef_8BD41F,
+                    9154971 => bank::addr_kMode7ObjectDef_8BD42B,
+                    _ => bank::addr_kMode7ObjectDef_8BD437,
+                };
+                return intro_pages::create_japanese_text(definition as u16, operand, game);
+            }
+            9154139 | 9154193 | 9154700 | 9154763 | 9154995 => {
+                let (next, continuation) = match command {
+                    9154139 => (0xaeb8, None),
+                    9154193 => (0xaf6c, Some(0xd40d)),
+                    9154700 => (0xb0f2, Some(0xd419)),
+                    9154763 => (0xb123, Some(0xd425)),
+                    _ => (0xb1da, Some(0xd431)),
+                };
+                return intro_pages::spawn_marker(next, continuation, operand, game);
+            }
+            9155136 => return intro_pages::finish_pages(operand, game),
+            9158806 => return bank::CinematicCommonInstr_Func69(object, operand, game),
+            9158818 => return bank::CinematicCommonInstr_Func70(object, operand, game),
+            _ => return Unreachable(game) as u16,
+        }
+    }
+    operand
 }
 
 pub(crate) fn queue_cinematic_tilemap(

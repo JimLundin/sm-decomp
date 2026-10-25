@@ -20,6 +20,12 @@ pub(crate) fn invalid_window(game: &mut Game, address: u32) {
     game.g_fail = true;
 }
 
+pub(crate) fn native_rom_diagnostic(address: u32, game: &mut Game) {
+    invalid_window(game, address);
+    #[cfg(sm_verify_dll)]
+    crate::room_contact_start_observer::diagnostic(address, game);
+}
+
 #[forbid(unsafe_code)]
 fn draw_trail(game: &mut Game, pair: usize, right: bool, frozen: bool) {
     let read = encoding::read;
@@ -515,9 +521,7 @@ impl Runtime<'_> {
         let address = (u32::from(bank) << 16) | u32::from(address);
         if address & 0x8000 == 0 {
             self.foreign(|game| {
-                crate::game::session_runtime::invalid_window(game, address);
-                #[cfg(sm_verify_dll)]
-                crate::room_contact_start_observer::diagnostic(address, game);
+                native_rom_diagnostic(address, game);
             });
         }
         content::captured(self.native_image(), address)

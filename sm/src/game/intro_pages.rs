@@ -11,8 +11,7 @@ use super::constants::bank_91::{addr_stru_91877E, addr_stru_918784};
 use super::constants::samus_poses::kPose_02_FaceL_Normal;
 use super::palette_effects;
 use super::sm_8b::{
-    CinematicBgInstr_SetSomeStuffForSpriteObject_14, RevertButtonConfig,
-    SetSomeStuffForSpriteObject_15, SetSomeStuffForSpriteObject_16,
+    RevertButtonConfig, SetSomeStuffForSpriteObject_15, SetSomeStuffForSpriteObject_16,
     addr_kCinematicBgObjectDef_8BCF5D, addr_kCinematicSpriteObjectDef_8BCE5B,
     addr_kCinematicSpriteObjectDef_8BCE55, addr_kCinematicSpriteObjectDef_8BCE61,
     addr_kCinematicSpriteObjectDef_8BCE67, addr_kCinematicSpriteObjectDef_8BCE73,
@@ -74,15 +73,19 @@ pub(super) unsafe fn create_japanese_text(object: u16, j: u16, game: &mut Game) 
     }
 }
 
+pub(super) fn reset_text_marker(game: &mut Game) {
+    word!(game.cinematicspr_instr_ptr[15] = 0xcc03);
+    word!(game.cinematicspr_instr_timer[15] = 1);
+}
+
 pub(super) unsafe fn spawn_marker(
     next: u16,
     continuation: Option<u16>,
-    k: u16,
     j: u16,
     game: &mut Game,
 ) -> u16 {
     unsafe {
-        let j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j, game);
+        reset_text_marker(game);
         if word!(game.japanese_text_flag) != 0 {
             let failed = CinematicSprites.spawn(
                 addr_kCinematicSpriteObjectDef_8BCE73 as u16,
