@@ -78,6 +78,17 @@ runs exactly one game frame per input word. Steps, one commit each:
   differing frame in the commit body (those routes are replaced at A0.5 anyway).
   Also check why the capture shows no credits: if the movie's input ends before the
   credits, A0.4 continues with neutral input after the last frame; record which.
+  **08:52:** door timing landed (9b8f29c, 61789c0: 9,266 steps). New blocker: at
+  native index 9,266 the original spends 41 acknowledged NMIs (with input reads) in
+  an audio upload the native engine does instantly. The agent took the documented
+  fallback (hand routes, c7cca91 +1 check); accepted, but A0 is not dropped.
+  **Next A0 commit (time-box one hour, then back to routes):** map the upload in the
+  importer, not the engine: collapse the recorded words read while gameplay waits in
+  that upload to one native step (keep the last read), as A0.3 already does for
+  measured lag; replay and report the new aligned step count, or the first differing
+  frame and which word differs (frame counter, NMI counter, music timer). That is
+  measured data, not a guessed offset. Hand routes: one pending pickup/boss per
+  commit, each with its segment row; ~1 check/hour is the 18:00 pace.
 - **A0.4 Replay.** Aligned any% from boot to credits, 0 failures; then 100%
   (222,788 frames) and low%.
 - **A0.5 Map.** Point pending `segments.toml` rows at frame windows of the
@@ -115,6 +126,11 @@ far ~80% (60% then 105%). The demo interpreter re-matches ROM opcode addresses
 plain owned logic, no new trait methods. Even at 70%, `sm_91`+`sm_90` cut production
 only ~840, so the 18:00 production line (≤114,000) also needs deleting unreachable
 functions and production verify/probe hooks as each family moves; say how many.
+**08:52:** `sm_91` 238 lines left (delete next commit); `sm_90` started (745daad,
+1,514 left, 82% ratio). Hour ratio ~80%; production −267/h is just on the 18:00
+pace. New owned modules still key handlers by ROM address (`0xe713`, `0xe8cd`,
+`0xec1d` via `from_raw`); make them enums/fn values as each family moves, which is
+where the remaining 10 points of ratio are.
 
 **Waypoints** (Europe/Stockholm; review clock; a miss gets a diagnosis, not a new plan):
 
@@ -136,6 +152,15 @@ Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
+- **2026-10-25 08:52 CET (6361b0e):** 8 agent commits: A 3 (9b8f29c, 61789c0,
+  c7cca91), B 5 (`B:sm_91` ×4, `B:sm_90` 745daad), 0 unlabelled, 0 docs-only, all
+  with `Score:`. Score `checks 25/44 · legacy 52834 · production 116131 · unsafe 4741
+  · verification 39040` (last 24 · 54148 · 116398 · 4892 · 39023); warnings 371 (371);
+  production verify/probe/observer flat at 615 lines/93 files (`git grep -ci`, path
+  filter as progress.sh). 18:00: lane B on pace (legacy, production, sm_91 238 left);
+  lane A behind (25/44, needs ~1 check/hour). Hour's ratio ~80% (−1,314 legacy,
+  −267 production). A0.3 parked at 9,266 steps; lane A back on hand routes under the
+  written-finding fallback. PLAN.md 221 lines (>200). No stall.
 - **2026-10-25 07:52 CET (563a45e):** 2 agent commits, both `B:sm_91` (4f8b05d,
   563a45e), Score lines present; **lane A 0 commits** (first silent hour; door work
   held locally, see A0.3), 0 unlabelled, 0 docs-only. Score `checks 24/44 · legacy
