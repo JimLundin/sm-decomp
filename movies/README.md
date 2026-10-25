@@ -45,6 +45,27 @@ Flat counters can also mean boot, reset or coroutine waits. These observations
 do not yet authorize dropping frames, and a zero-difference native replay does
 not establish that the published TAS reaches credits.
 
+For the measured options-menu regression, set `SM_LSNES_BOUNDARIES=1`,
+`SM_LSNES_FRAMES=12500` and a fresh `SM_LSNES_LOG` path before that invocation.
+The optional `.events.csv` records wait entry/exit and completed joypad reads.
+The ROM reads input during NMI for its next update; native code reads at the
+update's start. The importer therefore uses the input observed at wait entry,
+not the next input latched at wait exit:
+
+```powershell
+python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/any-wait-prefix.inputs --rom rom/sm.smc --lag-log target/any-boundaries.csv --frames 8250
+python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --segment options-menu-return-parameter
+```
+
+Substitute the actual capture path for `target/any-boundaries.csv`. The importer
+checks the captured input against the published movie and rejects missing waits,
+subframes or unaccounted NMI advances. Only the first 8,250 steps are qualified;
+the next door sequence contains additional NMI advances that remain unmapped.
+The regression checks steps 329..333: step 330 previously lost the highlighted
+tile value passed to the returning options-menu border. This is an additional
+regression, not another completed required coverage item. Keep all capture files
+local; the manifest binds the reference capture hashes.
+
 With SDL2 installed, run the headless verifier:
 
 ```sh

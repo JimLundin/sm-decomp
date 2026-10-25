@@ -47,16 +47,14 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Each adoption names segments exercising changed behavior and downstream effects.
    Current recipes: 24/44 required checks pass; 20 remain pending. Three additional
    checks (in-memory save, upward elevator, Ice return) pass; the corpus is unfinished.
-   A0.1: full original any% on main verified 129,712 frames / 0 failures, but only
-   six Ceres rooms, final DF8D and zero credits frames (source identity 1f25f453).
-   A0.2: original lsnes rr2-beta23/bsnes085 captured all 129,712 frames and inputs
-   matched exactly; 127 gameplay rooms, 24,619 emulator-lag frames, no credits yet.
-   Next: compare native NMI/input traces before aligning. Flat NMI counters disagree
-   with emulator lag on 643 frames and also occur during coroutine waits; preserve
-   resets, subframes and latched input. No guessed input removal or offsets.
-   `python tools/verify_dll.py --unit-tests --direct` runs 20 observer tests, not
-   gameplay checks. Regenerate incompatible checkpoints from boot; preserve the
-   old checked navigation build.
+   A0.2: original lsnes captured 129,712 exact inputs across 127 gameplay rooms;
+   24,619 emulator-lag frames, no credits. Flat NMI counts do not identify lag.
+   A0.3: measured wait-entry input aligns the first 8,250 native steps (0 failures).
+   It exposed the fixed options-menu return parameter at step 330; the optional
+   regression row passes. Next: map the door's 19 NMI advances outside selected
+   wait events; importer rejects that gap. No guessed input removal or offsets.
+   Observer unit tests (20) are not gameplay checks. Regenerate incompatible
+   checkpoints from boot; preserve the old checked navigation build.
 2. **Current - lane B bank retirement.** Finish `sm_94`: post-grapple clearance now
    owns its four ejection distances; inside-block sampling uses the existing
    Session and shared terrain effects. 308 bank lines remain: grapple reactions,
@@ -81,10 +79,9 @@ Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
 Do not auto-rename macro-shared parameters.
 Held scrolling consolidation needs `scroll_tiles.row.bg2` coverage, absent in Ceres.
-Keep input `e956dffa` / `%LOCALAPPDATA%/sm-decomp-experiments/20261024/player-input-*` held:
-repriced at +25 production / +1,235 verification lines; no final-source movie found.
-Snapshot separation `2a3c7792` is lower priority: 390 verification lines moved,
-15 wiring lines added, no logic deleted.
+Player-input draft `e956dffa` remains held (+25 production / +1,235 verification;
+no final-source movie). Snapshot separation `2a3c7792` remains lower priority:
+390 verification lines moved, 15 wiring lines added, no logic deleted.
 
 ## Implementation rules
 

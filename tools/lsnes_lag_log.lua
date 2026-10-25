@@ -4,7 +4,7 @@
 local path = assert(os.getenv("SM_LSNES_LOG"), "set SM_LSNES_LOG to a new output path")
 local limit = tonumber(os.getenv("SM_LSNES_FRAMES"))
 assert(limit == nil or (limit > 0 and limit == math.floor(limit)), "invalid frame limit")
-for _, suffix in ipairs({"", ".polls.csv", ".error.txt"}) do
+for _, suffix in ipairs({"", ".polls.csv", ".events.csv", ".error.txt"}) do
     local existing = io.open(path .. suffix, "rb")
     if existing then
         existing:close()
@@ -18,6 +18,7 @@ local polls = assert(io.open(path .. ".polls.csv", "wb"))
 polls:write("movie_frame,callback,subframe,nmi,including_lag,live_controller_word,joypad_latched,movie_subframe_index,movie_subframe\n")
 local rows = 0
 local last_frame = 0
+local events = nil
 function on_input(subframe)
     assert(movie.readonly(), "recording movie must remain read-only")
     local frame = movie.currentframe()
@@ -64,6 +65,7 @@ function on_frame_emulated()
 end
 function on_quit()
     if log ~= nil then log:flush(); log:close(); polls:flush(); polls:close(); log = nil end
+    if events ~= nil then events:close(); events = nil end
 end
 local function guarded(callback)
     return function(...)
@@ -78,5 +80,25 @@ local function guarded(callback)
 end
 on_input = guarded(on_input)
 on_frame_emulated = guarded(on_frame_emulated)
+if os.getenv("SM_LSNES_BOUNDARIES") == "1" then
+    events = assert(io.open(path .. ".events.csv", "wb"))
+    events:write("event,movie_frame,kind,nmi,including_lag,state,room,x,y,joypad\n")
+    local count = 0
+    -- CPU-bus exec addresses in lsnes are 0x1000000 + SNES PC.
+    -- ReadJoypadInputs runs inside ROM NMI, but at the next native update's start.
+    for _, hook in ipairs({{0x808338, "wait_enter"}, {0x80834A, "wait_exit"},
+            {0x858136, "no_update_enter"}, {0x858142, "no_update_exit"}, {0x80946A, "joypad_read"}}) do
+        local kind = hook[2]
+        memory.registerexec(0x1000000 + hook[1], guarded(function()
+            assert(movie.readonly(), "recording movie must remain read-only")
+            count = count + 1
+            events:write(string.format("%d,%d,%s,%d,%d,%d,%d,%d,%d,%d\n", count,
+                movie.currentframe(), kind, memory.readword(0x7E05B6), memory.readword(0x7E05B8),
+                memory.readword(0x7E0998), memory.readword(0x7E079B),
+                memory.readword(0x7E0AF6), memory.readword(0x7E0AFA), memory.readword(0x7E008B)))
+            if count % 100 == 0 then events:flush() end
+        end))
+    end
+end
 exec("set-speed turbo")
 exec("clear-pause-on-end")

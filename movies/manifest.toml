@@ -7,6 +7,12 @@ download = "https://tasvideos.org/3653M?handler=Download"
 emulator = "lsnes rr2-beta23 / bsnes v085 (Compatibility core)"
 file = "super-metroid-any-3653.lsmv"
 frames = 129712
+# Original full-capture producer is retained below; boundary capture uses the optional event mode.
+boundary_prefix_frames = 12500
+boundary_log_sha256 = "94901534826d2a87aebc3f6ce31a52570f2dc768c78f518669f7b96106450cb9"
+boundary_input_poll_log_sha256 = "538fb933d7f68f24d8c163191aeb55c497756650d90586a5e09c655f89e8a6df"
+boundary_events_sha256 = "7425146ee92482d9549bd822a36a16af987bf2d2fe7975a9b527eaa243cf206a"
+boundary_logger_sha256 = "98e4bf9177608eb38831095408ee57918ba5ff89396506aeb73f4e3ec5a5e78a"
 publication = "https://tasvideos.org/3653M"
 rom_sha256 = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72"
 sha256 = "e53b1ce15b3f01516eb64c68a6db2911f91bd97197eb05960779561be5c7cbe9"

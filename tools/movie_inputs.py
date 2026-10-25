@@ -4,6 +4,7 @@
 Adapted from crates/movie in archive/pre-transpile-2026-10-17.
 """
 import argparse
+import csv
 import hashlib
 from pathlib import Path
 import zipfile
@@ -12,6 +13,59 @@ BUTTON_BITS = dict(zip(
     ('B', 'Y', 'Select', 'Start', 'Up', 'Down', 'Left', 'Right', 'A', 'X', 'L', 'R'),
     (0x8000, 0x4000, 0x2000, 0x1000, 0x0800, 0x0400, 0x0200, 0x0100, 0x0080, 0x0040, 0x0020, 0x0010),
 ))
+
+
+def aligned_wait_prefix(source, path, count):
+    """Replay observed wait-entry input; reject gaps instead of guessing lag removal."""
+    def rows(suffix):
+        with Path(str(path) + suffix).open(newline='') as file:
+            return list(csv.DictReader(file))
+    if Path(str(path) + '.error.txt').exists() or count <= 0:
+        raise ValueError('failed capture or invalid prefix length')
+    video, polls = rows(''), rows('.polls.csv')
+    if not video or len(video) != len(polls) or len(video) > len(source):
+        raise ValueError('incomplete video/input capture')
+    for index, (frame, poll) in enumerate(zip(video, polls)):
+        if (int(frame['input_frame']) != index or int(frame['movie_frame']) != index + 1
+                or int(frame['input_callbacks']) != 1 or int(poll['movie_frame']) != index + 1
+                or int(poll['callback']) != 1 or int(poll['subframe']) != 0
+                or int(poll['movie_subframe_index']) != index
+                or parse_lsmv(poll['movie_subframe']) != [source[index]]):
+            raise ValueError(f'unsupported or mismatched movie input at {index}')
+    result, pending, previous = [], None, None
+    last_frame = 0
+    for number, event in enumerate(rows('.events.csv'), 1):
+        kind = event['kind']
+        event = {key: int(value) for key, value in event.items() if key != 'kind'}
+        frame = event['movie_frame']
+        if event['event'] != number or not last_frame <= frame <= len(video):
+            raise ValueError('nonsequential boundary capture')
+        last_frame = frame
+        if kind == 'joypad_read':
+            continue
+        if kind == 'wait_enter' and pending is None:
+            if previous is None:
+                continuous = event['nmi'] == 0 and event['state'] == 0
+            else:
+                continuous = event['nmi'] == previous['nmi']
+                # The observed boot reset clears the counters between logo and title.
+                reset = (previous['state'] == 0 and event['state'] == 1 and event['nmi'] == 0
+                         and any(int(row['nmi_after']) < int(row['nmi_before'])
+                                 for row in video[previous['movie_frame'] - 1:frame]))
+                continuous |= reset
+            if not continuous or not 0 <= event['joypad'] <= 0xffff:
+                raise ValueError(f'unobserved update before native step {len(result)}')
+            pending = event
+        elif kind == 'wait_exit' and pending is not None:
+            if event['nmi'] != (pending['nmi'] + 1) % 65536:
+                raise ValueError('wait did not contain exactly one acknowledged NMI')
+            result.append(pending['joypad'])
+            previous, pending = event, None
+            if len(result) == count:
+                return result
+        else:
+            raise ValueError(f'unsupported boundary {kind}; prefix remains unaligned')
+    raise ValueError('capture ends before the requested aligned prefix')
 
 
 def load(path, rom):
@@ -1241,10 +1295,17 @@ if __name__ == '__main__':
     parser.add_argument('output', type=Path)
     parser.add_argument('--rom', type=Path, required=True)
     parser.add_argument('--route', choices=tuple(ROUTES), help='apply an authored coverage route')
+    parser.add_argument('--lag-log', type=Path, help='lsnes CSV with input and boundary companions')
+    parser.add_argument('--frames', type=int, help='number of observed wait steps to import')
     args = parser.parse_args()
+    if ((args.lag_log and (args.route or args.frames is None))
+            or (args.frames is not None and not args.lag_log)):
+        parser.error('--lag-log requires --frames and cannot combine with --route')
     if args.route and hashlib.sha256(args.movie.read_bytes()).hexdigest() != ROUTE_SOURCE_SHA256:
         parser.error('--route requires the original any% movie from movies/manifest.toml')
     frames = load(args.movie, args.rom)
+    if args.lag_log:
+        frames = aligned_wait_prefix(frames, args.lag_log, args.frames)
     if args.route:
         frames = route_frames(frames, args.route)
         data = ''.join(f'{word:04X}\r\n' for word in frames).encode('ascii')

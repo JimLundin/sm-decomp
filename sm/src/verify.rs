@@ -6,6 +6,7 @@ mod checkpoint;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Expectation {
+    State(u16),
     Area(u16),
     Room(u16),
     Door(u16),
@@ -33,6 +34,12 @@ impl Expectation {
         }
         let (kind, name) = value.split_once(':').ok_or_else(bad)?;
         match kind {
+            "state" if !name.is_empty() && name.bytes().all(|byte| byte.is_ascii_digit()) => name
+                .parse::<u16>()
+                .ok()
+                .filter(|&state| state <= 44)
+                .map(Self::State)
+                .ok_or_else(bad),
             "area" => Ok(Self::Area(match name {
                 "crateria" => 0,
                 "brinstar" => 1,
@@ -112,6 +119,7 @@ impl Expectation {
     fn observed(&self, before: &CoverageState, after: &CoverageState, death: bool) -> bool {
         let live = before.same_gameplay_room(after);
         match *self {
+            Self::State(state) => after.state == state,
             Self::Area(area) => after.state == 8 && after.area == area,
             Self::Room(room) => after.state == 8 && after.room == room,
             // These require episode history, handled by observe_expectations.
@@ -1262,9 +1270,21 @@ mod coverage_checks {
             "elevator:zzzz",
             "encounter:ridley",
             "credits:1",
+            "state:",
+            "state:-1",
+            "state:+2",
+            "state:45",
+            "state:65536",
         ] {
             assert!(Expectation::parse(value).is_err(), "accepted {value}");
         }
+        let menu = CoverageState {
+            state: 2,
+            ..CoverageState::default()
+        };
+        let state = Expectation::parse("state:2").unwrap();
+        assert!(state.observed(&gameplay(), &menu, false));
+        assert!(!state.observed(&menu, &gameplay(), false));
         assert_eq!(
             Expectation::parse("room:91f8"),
             Expectation::parse("room:91F8")

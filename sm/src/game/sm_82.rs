@@ -4289,8 +4289,9 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
             } else {
                 word_transfers!(game, descending, 1024; pause_map(1023) <- le(custom_background, 6398));
                 OptionsMenuFunc4(game);
-                let v6: u16 = 0;
-                CreateOptionsMenuObject_(v6, addr_stru_82F4C4 as u16, game);
+                // The ROM passes the final language-highlight tile left in A (82:EFD7).
+                let tile = u16::from_le_bytes([game.g_ram[0x33b8], game.g_ram[0x33b9]]);
+                CreateOptionsMenuObject_(tile, addr_stru_82F4C4 as u16, game);
             }
         }
     }

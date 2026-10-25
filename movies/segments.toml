@@ -14,6 +14,16 @@ required = [
     "elevator-traversal", "save-death-reload", "death", "credits",
 ]
 
+# Measured published-any% wait-entry inputs; regeneration: movies/README.md.
+# Before the fix, step330 wrote 0000 instead of the final highlighted tile0458.
+[[segment]]
+id = "options-menu-return-parameter"
+inputs = "any-wait-prefix.inputs"
+input_sha256 = "2bf79cb51268465d36909fa4ae0e8988dc5463ea637c1b2dc58d8a8ac819aa58"
+start_frame = 329
+frames = 5
+expect = ["state:2"]
+
 [[segment]]
 id = "area-ceres"
 inputs = "corpus-speed-booster.inputs"
