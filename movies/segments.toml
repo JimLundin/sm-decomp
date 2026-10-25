@@ -322,7 +322,16 @@ pending = "No qualified acquisition-to-completion segment on the current route."
 
 [[segment]]
 id = "item-plasma"
-pending = "No qualified acquisition-to-completion segment on the current route."
+seed = "any-boundary:134"
+seed_sha256 = "7f91cbe7c1ae4a078b97e1d5a029ffbb7d12ea97502e78cecca339e69f471c0a"
+inputs = "seed-plasma.inputs"
+input_sha256 = "8cafeaae7e8fdd1500aabc42a89a13ee243709e22598110d9b56550b93d0a484"
+start_frame = 0
+frames = 1400
+expect = ["item:plasma", "room:D2AA"]
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+after_expectations = 120
 
 [[segment]]
 id = "item-screw-attack"

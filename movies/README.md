@@ -411,8 +411,8 @@ Seeded corpus rows use `seed = "any-boundary:50"` to select a room index under
 OAM, APU RAM and the register CSV in that order (the index's `observation_sha256`).
 Every file's contents are checked before and after replay. `start_frame` must be
 zero, and seeded rows never read or write verifier checkpoints. The boundary index
-`room-seeds-any-boundary.csv` initially records the 57 entries captured through
-movie frame 43,000; full any% and 100% boundary captures continue separately.
+`room-seeds-any-boundary.csv` records all 197 any% entries; the initial 57-entry
+prefix is unchanged. The full 100% boundary capture is also complete locally.
 
 Regenerate the X-ray inputs after the any% boundary capture reaches this room:
 
@@ -426,3 +426,10 @@ frames. Its 1,400-frame budget stops when these observations and tails complete.
 The separate 1,400-frame continuation had zero oracle differences but stayed in
 A2CE instead of reaching captured next room A293; that alignment issue remains
 open. This row does not claim the whole room route is reproduced.
+
+For other seeded rows, use the same import command with the row's `inputs` name,
+its capture directory and indexed WRAM filename, and its input frame count below.
+
+| Row | Capture and entry | Input frames |
+| --- | --- | ---: |
+| item-plasma | any-boundary:134 | 1400 |
