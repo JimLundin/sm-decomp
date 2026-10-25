@@ -41,14 +41,14 @@ The known example/detached compilation errors are fixed and checked locally.
 
 ## Work order
 
-1. **Current - lane A room-seeded coverage.** 39/44 required checks pass;
-   5 remain pending. Exact pre-read controller observations preserve the first
+1. **Current - lane A room-seeded coverage.** 40/44 required checks pass;
+   4 remain pending. Exact pre-read controller observations preserve the first
    input edge; Gravity and Grapple pass fresh awards, message completion and full tails.
    Any% 197 and 100% 331 room observations are captured; seeds/movies remain local.
    Hash indexes and regeneration recipes are committed. Existing seeded regressions
    remain passing. Mother Brain has a 4,560-frame spawn regression; its defeat is pending.
-   Spore Spawn/Botwoon are absent from both captures (no room frames or defeat flags).
-   Botwoon uses the published 13% route next; Golden Torizo is skipped in 100%.
+   Botwoon passes a fresh defeat and full tail (945 frames) from the published 13%
+   route. Spore Spawn is absent from any%/100%; Golden Torizo is skipped in 100%.
    Original any% full-route timing remains parked; no new hand routes.
 2. **Current - lane B bank retirement.** `sm_94`, `sm_91`, `sm_89` and `sm_90` are deleted.
    B1 continues sm_81 menu drawing (1,890 lines); B2 continues sm_88 (471 lines); B3 continues

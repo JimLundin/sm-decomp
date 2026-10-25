@@ -176,7 +176,14 @@ after_expectations = 120
 
 [[segment]]
 id = "boss-botwoon"
-pending = "No qualified encounter-to-completion route with fresh boss state and precise encounter/death observations."
+seed = "low-input-phase:122"
+seed_sha256 = "a6e0ff8857c26854745b8f4fb6f5ddf162156df80ac51aa22e866765c513dcbb"
+inputs = "seed-botwoon.inputs"
+input_sha256 = "40500799b92ee7c454dded5ceb50db10f321ca0ea834b38e4962b1575164cc3e"
+start_frame = 0
+frames = 1032
+expect = ["boss:botwoon", "room:D95E"]
+after_expectations = 120
 
 [[segment]]
 id = "boss-draygon"

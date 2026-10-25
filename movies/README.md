@@ -489,3 +489,20 @@ input frames). It requires a fresh award, completed message and both full
 ```powershell
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-grapple.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0148-AC2B-wram.bin --frames 1000
 ```
+
+`boss-botwoon` uses the published low% movie `super-metroid-low-3273.lsmv`
+and `low-input-phase:122`. Capture all 167,797 frames with the same controller-phase
+logger, `SM_LSNES_BOUNDARIES=1`, and fresh log/seed paths under
+`target/seeds/low-input-phase`. `room-seeds-low-input-phase.csv` indexes its
+186 observations. The full capture's 167,797 original movie polls, 950,641 boundary
+events, 1,116 region hashes and exact controller-read metadata were audited.
+
+The row requires a fresh Botwoon defeat and the full 120-frame tail. Defeat occurs
+at input frame 824 and the qualified window ends at 945. The input file contains
+1,032 observed frames; a longer import rejects a later door-epilogue boundary.
+This row does not qualify that continuation or relax the importer.
+
+```powershell
+python tools/movie_inputs.py movies/super-metroid-low-3273.lsmv movies/seed-botwoon.inputs --rom rom/sm.smc --lag-log target/seeds/low-input-phase/lag.csv --seed target/seeds/low-input-phase/0122-D95E-wram.bin --frames 1032
+python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --segment boss-botwoon
+```
