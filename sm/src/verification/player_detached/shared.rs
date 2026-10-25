@@ -28,6 +28,7 @@ pub(crate) mod types {
     // These scalar aliases match types.rs:641; constants are actual source.
     pub(crate) type Buttons = u32;
     pub(crate) type Consts_60 = u32;
+    pub(crate) type Consts_81 = u32;
     pub(crate) type Consts_82 = u32;
     pub(crate) type Consts_84 = u32;
     pub(crate) type Consts_86 = u32;
