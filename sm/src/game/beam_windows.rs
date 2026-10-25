@@ -15,59 +15,55 @@ fn advance_window_edges(edges: &mut [u32; 2], steps: [u32; 2], saturated: bool) 
     (left >> 8) | (right & 0xff00)
 }
 
-unsafe fn fill_closed_xray_rows(dest: *mut u16, mut position: u16, down: bool) {
-    unsafe {
-        loop {
-            *dest.add(usize::from(position >> 1)) = 255;
-            position = position.wrapping_add(if down { 2 } else { 65534 });
-            if if down {
-                position >= 460
-            } else {
-                position & 0x8000 != 0
-            } {
-                return;
-            }
+fn fill_closed_xray_rows(write: &mut impl FnMut(i32, u16), mut position: u16, down: bool) {
+    loop {
+        write(i32::from(position & !1), 255);
+        position = position.wrapping_add(if down { 2 } else { 65534 });
+        if if down {
+            position >= 460
+        } else {
+            position & 0x8000 != 0
+        } {
+            return;
         }
     }
 }
 
-unsafe fn rasterize_xray_edges(
-    dest: *mut u16,
+fn rasterize_xray_edges(
+    write: &mut impl FnMut(i32, u16),
     mut position: i32,
     row_step: i32,
     mut edges: [u32; 2],
     steps: [u32; 2],
     finish_adjustment: i32,
 ) {
-    unsafe {
-        let outside_rows = |position| {
-            if row_step < 0 {
-                position < 0
-            } else {
-                position >= 460
-            }
-        };
-        loop {
-            let packed = advance_window_edges(&mut edges, steps, false);
-            let hidden = (edges[1] as i32) < 0 || edges[0] as i32 >= 65536;
-            let finished = edges[0] & !65535 != 0
-                && edges[1] & !65535 != 0
-                && ((steps[0] ^ edges[0] | steps[1] ^ edges[1]) >> 31) == 0;
-            *dest.offset((position >> 1) as isize) = if hidden { 255 } else { packed };
-            if finished {
-                position += finish_adjustment;
-                loop {
-                    position += row_step;
-                    if outside_rows(position) {
-                        return;
-                    }
-                    *dest.offset((position >> 1) as isize) = 255;
+    let outside_rows = |position| {
+        if row_step < 0 {
+            position < 0
+        } else {
+            position >= 460
+        }
+    };
+    loop {
+        let packed = advance_window_edges(&mut edges, steps, false);
+        let hidden = (edges[1] as i32) < 0 || edges[0] as i32 >= 65536;
+        let finished = edges[0] & !65535 != 0
+            && edges[1] & !65535 != 0
+            && ((steps[0] ^ edges[0] | steps[1] ^ edges[1]) >> 31) == 0;
+        write((position >> 1) * 2, if hidden { 255 } else { packed });
+        if finished {
+            position += finish_adjustment;
+            loop {
+                position += row_step;
+                if outside_rows(position) {
+                    return;
                 }
+                write((position >> 1) * 2, 255);
             }
-            position += row_step;
-            if outside_rows(position) {
-                return;
-            }
+        }
+        position += row_step;
+        if outside_rows(position) {
+            return;
         }
     }
 }
@@ -292,153 +288,157 @@ fn fill_xray_onscreen_positive_table(
     }
 }
 
-pub unsafe fn calculate_xray_window(
+pub fn calculate_xray_window(
     relative_x: u16,
     relative_y: u16,
     angle: u16,
     width: u16,
     off_screen: bool,
-    dest_addr: *mut u16,
+    table: usize,
     game: &mut Game,
 ) {
-    unsafe {
-        fn gradient_index(angle: u16) -> usize {
-            let half_turn_offset = angle.wrapping_sub(128);
-            usize::from(if half_turn_offset & 0x8000 != 0 {
-                angle
-            } else {
-                half_turn_offset
-            })
-        }
+    fn gradient_index(angle: u16) -> usize {
+        let half_turn_offset = angle.wrapping_sub(128);
+        usize::from(if half_turn_offset & 0x8000 != 0 {
+            angle
+        } else {
+            half_turn_offset
+        })
+    }
 
-        // Preserve the SNES sign-bit tests; angle 256 stays distinct from zero.
-        let mut lower_angle = angle.wrapping_sub(width);
-        if lower_angle & 0x8000 != 0 {
-            lower_angle = lower_angle.wrapping_add(256);
-        }
-        let mut upper_angle = angle.wrapping_add(width);
-        if upper_angle.wrapping_sub(257) & 0x8000 == 0 {
-            upper_angle = upper_angle.wrapping_sub(256);
-        }
-        let lower_gradient = game.read_rom_word(0x91c9d4, gradient_index(lower_angle) * 2);
-        let upper_gradient = game.read_rom_word(0x91c9d4, gradient_index(upper_angle) * 2);
-        let direction = if width == 0 && (angle == 64 || angle == 192) {
-            XrayBeamDirection::Horizontal
-        } else if lower_angle.wrapping_sub(128) & 0x8000 != 0 {
-            if lower_angle.wrapping_sub(64) & 0x8000 == 0 {
-                XrayBeamDirection::Down
-            } else if upper_angle.wrapping_sub(64) & 0x8000 == 0 {
-                XrayBeamDirection::Right
-            } else {
-                XrayBeamDirection::Up
-            }
-        } else if lower_angle.wrapping_sub(192) & 0x8000 == 0 {
-            XrayBeamDirection::Up
-        } else if upper_angle.wrapping_sub(192) & 0x8000 == 0 {
-            XrayBeamDirection::Left
-        } else {
+    // Preserve the SNES sign-bit tests; angle 256 stays distinct from zero.
+    let mut lower_angle = angle.wrapping_sub(width);
+    if lower_angle & 0x8000 != 0 {
+        lower_angle = lower_angle.wrapping_add(256);
+    }
+    let mut upper_angle = angle.wrapping_add(width);
+    if upper_angle.wrapping_sub(257) & 0x8000 == 0 {
+        upper_angle = upper_angle.wrapping_sub(256);
+    }
+    let lower_gradient = game.read_rom_word(0x91c9d4, gradient_index(lower_angle) * 2);
+    let upper_gradient = game.read_rom_word(0x91c9d4, gradient_index(upper_angle) * 2);
+    let direction = if width == 0 && (angle == 64 || angle == 192) {
+        XrayBeamDirection::Horizontal
+    } else if lower_angle.wrapping_sub(128) & 0x8000 != 0 {
+        if lower_angle.wrapping_sub(64) & 0x8000 == 0 {
             XrayBeamDirection::Down
-        };
-        let origin = relative_x << 8;
-        let position = 2 * i32::from(relative_y);
-        let up_start = position - if off_screen { 2 } else { 4 };
-        use XrayBeamDirection::*;
-        if matches!(direction, Horizontal) {
-            let anchor = relative_y.wrapping_sub(1).wrapping_mul(2);
-            let edge = origin >> 8;
-            *dest_addr.add(usize::from(anchor >> 1)) = if off_screen {
-                0xff00
-            } else if angle == 64 {
-                edge | 0xff00
-            } else {
-                edge << 8
-            };
-            fill_closed_xray_rows(dest_addr, anchor.wrapping_sub(2), false);
-            fill_closed_xray_rows(dest_addr, anchor.wrapping_add(2), true);
-            return;
-        }
-        if matches!(direction, Down) && upper_angle.wrapping_sub(128) & 0x8000 != 0 {
-            let table = dest_addr.cast::<u8>().offset_from(game.g_ram.as_ptr()) as usize;
-            let start = relative_y.wrapping_mul(2);
-            if off_screen {
-                xray_offscreen_positive_stores(
-                    |address, value| game.g_ram[address as usize] = value,
-                    table as u32,
-                    start,
-                    origin,
-                    upper_gradient,
-                    lower_gradient,
-                );
-            } else {
-                fill_xray_onscreen_positive_table(
-                    &mut game.g_ram,
-                    table,
-                    start,
-                    origin,
-                    upper_gradient,
-                    lower_gradient,
-                );
-            }
-            return;
-        }
-        if !off_screen {
-            let edge = origin >> 8;
-            *dest_addr.offset(((position - 2) >> 1) as isize) = match direction {
-                Right => edge | 0xff00,
-                Left => edge << 8,
-                _ => edge * 0x101,
-            };
-        }
-        if matches!(direction, Right | Left) {
-            let rightward = matches!(direction, Right);
-            let gradients = if rightward {
-                [lower_gradient, upper_gradient]
-            } else {
-                [upper_gradient, lower_gradient]
-            };
-            for (start, step, gradient) in
-                [(up_start, -2, gradients[0]), (position, 2, gradients[1])]
-            {
-                let (edge, increment) = xray_edge(origin, gradient, rightward, off_screen);
-                let (edges, steps) = if rightward {
-                    ([edge, 65535], [increment, 1])
-                } else {
-                    ([0, edge], [u32::MAX, increment])
-                };
-                rasterize_xray_edges(dest_addr, start, step, edges, steps, -step);
-            }
+        } else if upper_angle.wrapping_sub(64) & 0x8000 == 0 {
+            XrayBeamDirection::Right
         } else {
-            let up = matches!(direction, Up);
-            let (positive_left, positive_right, gradients) = if up {
-                let left = lower_angle.wrapping_sub(192) & 0x8000 != 0;
-                (
-                    left,
-                    left || upper_angle.wrapping_sub(192) & 0x8000 != 0,
-                    [lower_gradient, upper_gradient],
-                )
-            } else {
-                (
-                    false,
-                    lower_angle.wrapping_sub(128) & 0x8000 != 0,
-                    [upper_gradient, lower_gradient],
-                )
-            };
-            let left = xray_edge(origin, gradients[0], positive_left, off_screen);
-            let right = xray_edge(origin, gradients[1], positive_right, off_screen);
-            rasterize_xray_edges(
-                dest_addr,
-                if up { up_start } else { position },
-                if up { -2 } else { 2 },
-                [left.0, right.0],
-                [left.1, right.1],
-                if up && !positive_right { 2 } else { 0 },
+            XrayBeamDirection::Up
+        }
+    } else if lower_angle.wrapping_sub(192) & 0x8000 == 0 {
+        XrayBeamDirection::Up
+    } else if upper_angle.wrapping_sub(192) & 0x8000 == 0 {
+        XrayBeamDirection::Left
+    } else {
+        XrayBeamDirection::Down
+    };
+    let origin = relative_x << 8;
+    let position = 2 * i32::from(relative_y);
+    let up_start = position - if off_screen { 2 } else { 4 };
+    use XrayBeamDirection::*;
+    // Generic rows retain signed offsets; positive-down helpers wrap their u16 offsets.
+    let mut write = |offset: i32, value: u16| {
+        let address = table
+            .checked_add_signed(offset as isize)
+            .expect("X-ray table offset");
+        game.g_ram[address..address + 2].copy_from_slice(&value.to_ne_bytes());
+    };
+    if matches!(direction, Horizontal) {
+        let anchor = relative_y.wrapping_sub(1).wrapping_mul(2);
+        let edge = origin >> 8;
+        let value = if off_screen {
+            0xff00
+        } else if angle == 64 {
+            edge | 0xff00
+        } else {
+            edge << 8
+        };
+        write(i32::from(anchor & !1), value);
+        fill_closed_xray_rows(&mut write, anchor.wrapping_sub(2), false);
+        fill_closed_xray_rows(&mut write, anchor.wrapping_add(2), true);
+        return;
+    }
+    if matches!(direction, Down) && upper_angle.wrapping_sub(128) & 0x8000 != 0 {
+        let start = relative_y.wrapping_mul(2);
+        if off_screen {
+            xray_offscreen_positive_stores(
+                |address, value| game.g_ram[address as usize] = value,
+                table as u32,
+                start,
+                origin,
+                upper_gradient,
+                lower_gradient,
             );
-            fill_closed_xray_rows(
-                dest_addr,
-                if up { position as u16 } else { up_start as u16 },
-                up,
+        } else {
+            fill_xray_onscreen_positive_table(
+                &mut game.g_ram,
+                table,
+                start,
+                origin,
+                upper_gradient,
+                lower_gradient,
             );
         }
+        return;
+    }
+    if !off_screen {
+        let edge = origin >> 8;
+        let value = match direction {
+            Right => edge | 0xff00,
+            Left => edge << 8,
+            _ => edge * 0x101,
+        };
+        write(((position - 2) >> 1) * 2, value);
+    }
+    if matches!(direction, Right | Left) {
+        let rightward = matches!(direction, Right);
+        let gradients = if rightward {
+            [lower_gradient, upper_gradient]
+        } else {
+            [upper_gradient, lower_gradient]
+        };
+        for (start, step, gradient) in [(up_start, -2, gradients[0]), (position, 2, gradients[1])] {
+            let (edge, increment) = xray_edge(origin, gradient, rightward, off_screen);
+            let (edges, steps) = if rightward {
+                ([edge, 65535], [increment, 1])
+            } else {
+                ([0, edge], [u32::MAX, increment])
+            };
+            rasterize_xray_edges(&mut write, start, step, edges, steps, -step);
+        }
+    } else {
+        let up = matches!(direction, Up);
+        let (positive_left, positive_right, gradients) = if up {
+            let left = lower_angle.wrapping_sub(192) & 0x8000 != 0;
+            (
+                left,
+                left || upper_angle.wrapping_sub(192) & 0x8000 != 0,
+                [lower_gradient, upper_gradient],
+            )
+        } else {
+            (
+                false,
+                lower_angle.wrapping_sub(128) & 0x8000 != 0,
+                [upper_gradient, lower_gradient],
+            )
+        };
+        let left = xray_edge(origin, gradients[0], positive_left, off_screen);
+        let right = xray_edge(origin, gradients[1], positive_right, off_screen);
+        rasterize_xray_edges(
+            &mut write,
+            if up { up_start } else { position },
+            if up { -2 } else { 2 },
+            [left.0, right.0],
+            [left.1, right.1],
+            if up && !positive_right { 2 } else { 0 },
+        );
+        fill_closed_xray_rows(
+            &mut write,
+            if up { position as u16 } else { up_start as u16 },
+            up,
+        );
     }
 }
 

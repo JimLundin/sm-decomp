@@ -49,14 +49,15 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    has no elapsed video clock. Read-collapse leaves $05B6 forty counts behind at
    step 9,266; the old 9,291 comparison mixed phases. Elapsed-NMI experiment reaches
    first visible-state mismatch at 10,555: Ridley countdown/setup is four updates late;
-   RNG differs earlier. Upload size alone is inexact; timing model stays experimental.
-   Power Bomb, gate regression and Wave pass; resume Crocomire from Bubble Mountain.
+   RNG differs by 10,440; first onset is unlocated. Model stays local: one active-IRQ
+   upload sample; equal-size uploads take 27/28 NMIs. Resume the Crocomire encounter.
    Regenerate incompatible checkpoints from boot; preserve the checked navigation build.
 2. **Current - lane B bank retirement.** `sm_94` and `sm_91` are deleted.
    Player input, demos, suits, equipment, commands, initialization, Mother Brain
    reactions, X-ray and direct damage use owned state. Natural X-ray, Gravity,
    boss and grapple movie coverage remains incomplete despite bounded checks.
-   X-ray steering is owned; sm_88 has 1,543 lines left. sm_90 has 1,039: Crystal Flash next.
+   X-ray controls/tables are consolidated; sm_88 has 1,454 lines left. sm_90 has 1,039.
+   Crystal Flash consumption is next; Draygon grab/release is under verification.
    Use named enum/function handlers as families move; raw identities stay at
    compatibility boundaries. Full u16 unknown values and failure timing survive.
    Report added production and deleted legacy together; growth needs a reason.
@@ -184,7 +185,7 @@ checked source or rebuild loaded DLLs. -j1 still permits parallel code generatio
 Use [the iteration guide](ITERATION.md#windows-shell-setup) for paths/commands.
 
 Keep artifacts in their checkout; seed dependencies, not full target trees, and reuse checked builds.
-Preserve caches; use `CARGO_INCREMENTAL=0` for disposable snapshots and stream bounded logs.
+Direct launcher fix next: honor `CARGO_INCREMENTAL=0` for disposable snapshots; preserve caches.
 Before deletion, resolve paths and verify artifacts are unneeded. Never delete another worker's artifacts.
 
 ## Definition of done for any change
@@ -194,7 +195,6 @@ Run `sh tools/progress.sh`; explain increases and full production/verification/s
 Recheck HEAD/index, reconcile and commit to main with commands, probes/frames, results and limits.
 Update this plan only for active-item, direction or blocker changes; results belong in commits.
 Publish PROGRESS with adopted code: shared graph and `sh tools/progress.sh --markdown WARNINGS [PASSED/TOTAL]`.
-Keep drafts/unknowns explicit; path counts include inline hooks. No unsolicited atlas refresh,
-invented percentages or unadopted savings.
+Keep drafts/unknowns explicit; path counts include inline hooks. No unsolicited atlas refresh, invented percentages or unadopted savings.
 
 Pre-transpile rules (`.scratch/`, gates, pointers, scopes) are inactive in `archive/pre-transpile-2026-10-17`.

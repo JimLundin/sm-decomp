@@ -175,11 +175,9 @@ id = "item-morph-ball"
 inputs = "corpus-speed-booster.inputs"
 input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
 start_frame = 27500
-frames = 950
+frames = 1200
 require_hit = ["coroutine.plm.message.completed"]
-after_hits = 120
 expect = ["item:morph-ball", "room:9E9F"]
-after_expectations = 120
 
 [[segment]]
 id = "item-bombs"

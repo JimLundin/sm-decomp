@@ -390,6 +390,36 @@ pub(crate) fn finish_xray(game: &mut crate::game_state::Game) {
 }
 
 impl Runtime<'_> {
+    pub(crate) fn draw_xray_window(&mut self) {
+        let player = &self.session().player;
+        let facing = player.movement_and_facing as u8;
+        let x = player
+            .x
+            .wrapping_sub(self.inputs().camera_x)
+            .wrapping_add(if facing == 4 { 65533 } else { 3 });
+        let y = player.y.wrapping_sub(self.inputs().camera_y).wrapping_sub(
+            if player.movement_and_facing >> 8 == 5 {
+                12
+            } else {
+                16
+            },
+        );
+        let offscreen = (x as i16) < 0 || x >= 256;
+        if (x as i16) < 0 && facing == 4 || (x as i16) >= 256 && facing == 8 {
+            for row in (0..256).rev() {
+                self.suit_window_word(row, 255);
+            }
+            return;
+        }
+        let angle = player.transitions.xray_angle;
+        let width = player.demo.held;
+        self.foreign(|game| {
+            crate::game::beam_windows::calculate_xray_window(
+                x, y, angle, width, offscreen, 0x9800, game,
+            )
+        });
+    }
+
     pub(crate) fn advance_xray_beam(&mut self, phase: BeamPhase) {
         use crate::ram_map::words as ram;
         if self.inputs().run_button & self.inputs().held == 0 {
@@ -410,7 +440,7 @@ impl Runtime<'_> {
                 xray::steer(&mut player.transitions.xray_angle, player.demo.held, up);
             }
         }
-        self.foreign(|game| unsafe { crate::game::sm_88::CalculateXrayHdmaTable(game) });
+        self.draw_xray_window();
         if phase == BeamPhase::Initial {
             let demo = &mut self.session_mut().player.demo;
             demo.pre_action = demo.pre_action.wrapping_add(1);

@@ -278,3 +278,29 @@ pub(crate) fn check_animation_guard(game: &mut Game) -> bool {
 }
 #[path = "../verification/samus_palette_observer.rs"]
 pub(crate) mod samus_observer;
+
+impl Runtime<'_> {
+    pub(crate) fn draw_eye_beam(&mut self, slot: u16) {
+        use crate::game::actors::access::{AccessMode::LittleEndian, ActorAccess, ActorKey};
+        let actor = self.resolve_actor(ActorKey::from_legacy(0x40), LittleEndian);
+        let angle = actor.variables[3];
+        let width = self.word(0x192c + usize::from(slot & !1));
+        let y = actor.y.whole.wrapping_sub(self.inputs().camera_y);
+        let x = actor.x.whole.wrapping_sub(self.inputs().camera_x);
+        self.foreign(|game| {
+            crate::game::beam_windows::calculate_xray_window(
+                x,
+                y,
+                angle,
+                width,
+                x >= 256,
+                0x9100,
+                game,
+            )
+        });
+        // Byte-indexed colors can alias the generated table or an imported owner.
+        for (target, source) in [(0x74, 0x1914), (0x75, 0x1915), (0x76, 0x1920)] {
+            self.set_byte(target, self.byte(source + usize::from(slot)));
+        }
+    }
+}
