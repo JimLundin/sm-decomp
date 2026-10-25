@@ -183,7 +183,8 @@ pub(crate) fn misc(h: &mut impl Host) -> PaletteCarry {
         }
         let restore = if h.session().player.palette.hurt_flash == 2
             && h.inputs().cinematic == 0
-            && (h.inputs().frame_handler_beta != 0xe8d9 || h.session().player.pose != 0x54)
+            && (h.session().player.transitions.frame_beta != 0xe8d9
+                || h.session().player.pose != 0x54)
         {
             h.sound(1, 6, 0x35);
             true
@@ -442,7 +443,7 @@ pub(crate) fn xray(h: &mut impl Host) -> PaletteCarry {
         return PaletteCarry::Clear;
     }
     if h.session().player.palette.xray_progress == 0 {
-        if h.inputs().demo_input_pre_action.wrapping_sub(2) & 0x8000 != 0 {
+        if h.session().player.demo.pre_action.wrapping_sub(2) & 0x8000 != 0 {
             h.session_mut().player.palette.timer = h.session().player.palette.timer.wrapping_sub(1);
             let negative = h.session().player.palette.timer & 0x8000 != 0;
             if h.session().player.palette.timer == 0 || negative {

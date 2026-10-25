@@ -172,6 +172,7 @@ pub struct Projectiles {
 // Implementation retains existing LaunchMotion rather than a second algorithm.
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct Player {
+    pub(crate) demo: crate::game::player_transitions::demo::DemoInput,
     pub transitions: crate::game::player_transitions::state::PlayerTransitions,
     pub x_fraction: u16,
     pub y_fraction: u16,

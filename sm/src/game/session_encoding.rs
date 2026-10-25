@@ -208,6 +208,15 @@ macro_rules! scalar_words {
             $f(0xf2b8+index*2,$($borrow)* $s.sprite_compatibility.y_fraction[index]);
             $f(0xf338+index*2,$($borrow)* $s.sprite_compatibility.disable_flags[index]);
         }
+        $f(0xa44,$($borrow)* $s.player.transitions.frame_beta);
+        $f(0xa7a,$($borrow)* $s.player.demo.pre_action);
+        $f(0xa7c,$($borrow)* $s.player.demo.delay);
+        $f(0xa7e,$($borrow)* $s.player.demo.program);
+        $f(0xa84,$($borrow)* $s.player.demo.held);
+        $f(0xa86,$($borrow)* $s.player.demo.pressed);
+        $f(0xa88,$($borrow)* $s.player.demo.enabled);
+        $f(0xa8c,$($borrow)* $s.player.demo.previous_held);
+        $f(0xa8e,$($borrow)* $s.player.demo.previous_pressed);
         $f(0xa48,$($borrow)* $s.player.palette.hurt_flash);
         $f(0xa72,$($borrow)* $s.player.palette.visor_timer);
         $f(0xa74,$($borrow)* $s.player.palette.suit_index);
@@ -872,9 +881,7 @@ pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
         },
         debug_enemy_freeze: w(ram::debug_time_frozen_for_enemies),
         enemy_zero_health: u16::from_ne_bytes([bytes[0xf8c], bytes[0xf8d]]),
-        frame_handler_beta: w(0xa44),
         blending_config: w(0x1982),
-        demo_input_pre_action: w(0xa7a),
         lava_y: w(0x1962),
         current_enemy: w(ram::cur_enemy_index),
         random: w(ram::random_number),

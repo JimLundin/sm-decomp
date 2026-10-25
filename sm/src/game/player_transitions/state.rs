@@ -82,6 +82,7 @@ pub struct PlayerTransitions {
     // 16 newly owned words = 32 encoded bytes.
     pub landing_compatibility: u16,
     pub frame_alpha: FrameAlphaMode,
+    pub frame_beta: u16,
     pub knockback: u16,
     pub bomb_jump: BombJump,
     pub input_mode: InputMode,

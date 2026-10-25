@@ -5,6 +5,7 @@ mod actions;
 mod animation;
 mod atmosphere;
 pub(crate) mod content;
+pub(crate) mod demo;
 pub(crate) mod effects;
 mod input;
 mod jump;

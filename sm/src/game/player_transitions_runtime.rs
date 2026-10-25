@@ -100,6 +100,9 @@ impl Content for Runtime<'_> {
     }
 }
 impl Effects for Runtime<'_> {
+    fn invalid_demo_instruction(&mut self) -> u16 {
+        self.foreign(crate::game::animated_tiles::native::unreachable)
+    }
     fn random_word(&mut self) -> u16 {
         self.foreign(|game| unsafe { crate::game::sm_80::NextRandom(game) })
     }
@@ -120,6 +123,25 @@ impl Effects for Runtime<'_> {
 impl Host for Runtime<'_> {}
 
 impl Runtime<'_> {
+    pub(crate) fn handle_demo_input(&mut self) {
+        use crate::{game::player_transitions::demo, ram_map::words as ram};
+        if demo::advance(self) {
+            self.write_slice_le(
+                ram::joypad1_input_samusfilter,
+                self.session().player.demo.previous_held,
+            );
+            self.write_slice_le(
+                ram::joypad1_newinput_samusfilter,
+                self.session().player.demo.previous_pressed,
+            );
+            self.write_slice_le(ram::joypad1_lastkeys, self.session().player.demo.held);
+            self.session_mut().player.demo.previous_held = self.session().player.demo.held;
+            self.write_slice_le(ram::joypad1_newkeys, self.session().player.demo.pressed);
+            self.session_mut().player.demo.previous_pressed = self.session().player.demo.pressed;
+        }
+        self.handle_input();
+    }
+
     /// X-ray turning retains its existing legacy implementation and foreign interval.
     pub(crate) fn handle_input(&mut self) {
         if matches!(self.session().player.movement_and_facing >> 8, 5 | 21)

@@ -34,6 +34,16 @@ require_hit = ["player_projectiles.prepare.weapons", "player_projectiles.history
 expect = ["area:ceres", "room:DF45"]
 after_expectations = 120
 
+# Both scripted intro scenes, followed through the return to ordinary gameplay.
+[[segment]]
+id = "samus-scripted-intro"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 0
+frames = 8780
+require_hit = ["player_projectiles.prepare.weapons", "transitions.phase.2", "transitions.phase.25", "samus.jump.normal"]
+expect = ["state:30", "area:ceres", "room:DF45"]
+
 # Full window reaches held-input pose changes, normal jumps and their animation tail.
 [[segment]]
 id = "samus-input-poses"

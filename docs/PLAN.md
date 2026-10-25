@@ -52,13 +52,14 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    A0.3: measured wait-entry input aligns 8,250 native steps (0 failures).
    The options-menu return bug at step 330 is fixed. Next: correct door scheduling;
    the observed placement step exposed an extra native NMI hidden by oracle patches.
-   The longer mapping stays unadopted until original timing and collateral checks pass.
+   Original timing now matches 23 doors in all directions; the longer mapping stays
+   unadopted while the 24 required recipes requalify after changed input-step timing.
    Observer unit tests (20) are not gameplay checks. Regenerate incompatible
    checkpoints from boot; preserve the old checked navigation build.
 2. **Current - lane B bank retirement.** `sm_94` is deleted; next is `sm_91`.
-   Normal input is consolidated; 1,017 bank lines remain. Next: scripted demo
-   playback, including setup, interpreter, input publication and actual callers.
-   Reuse shared owners; X-ray and equipment retain separate coverage obligations.
+   Normal and scripted input use shared owned state; 844 bank lines remain. Next:
+   attract-demo setup (LoadDemoData and scene callbacks), then suit/init/X-ray and
+   Mother Brain/equipment. Verify each actual context; intro does not cover attract setup.
    Old `sm_91`/`sm_90` drafts remain dropped; inspect current source afresh.
    Natural grapple movie coverage remains pending despite direct ROM checks.
    Report added production and deleted legacy lines together; growth needs a reason.

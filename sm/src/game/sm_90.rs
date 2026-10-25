@@ -39,8 +39,7 @@ use crate::game::grapple_swing::draw_rope as HandleGrappleBeamGfx;
 use crate::game::projectile_geometry::sine_offset;
 use crate::game::sm_88::EnableHdmaObjects;
 use crate::game::sm_91::{
-    DemoObjectInputHandler, MakeSamusFaceForward, Samus_Func20, Samus_LoadSuitPalette,
-    SamusFunc_E633,
+    MakeSamusFaceForward, Samus_Func20, Samus_LoadSuitPalette, SamusFunc_E633,
 };
 
 pub use crate::types::HandlerFunc;
@@ -981,8 +980,7 @@ crate::game::callback_dispatch! {
     call (game); default { Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
     [9496861] Samus_InputHandler_E91D [] {
-        DemoObjectInputHandler(game);
-        Runtime::new(game).handle_input();
+        Runtime::new(game).handle_demo_input();
     };
     [9496870] HandleAutoJumpHack [] {
         let v0: u16 = word!(game.joypad1_newkeys);

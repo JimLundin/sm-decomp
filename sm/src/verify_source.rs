@@ -114,6 +114,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/player_transitions/content.rs"),
     ),
     (
+        "sm/src/game/player_transitions/demo.rs",
+        include_bytes!("game/player_transitions/demo.rs"),
+    ),
+    (
         "sm/src/game/player_transitions/effects.rs",
         include_bytes!("game/player_transitions/effects.rs"),
     ),

@@ -22,7 +22,6 @@ use super::sm_8b::{
 };
 use super::sm_80::{EnableNMI, HandleFadeOut};
 use super::sm_88::SpawnIntroCutsceneCrossfadeHdma;
-use super::sm_91::{EnableDemoInput, LoadDemoInputObject, ResetDemoData};
 use crate::game::music::QueueMusic_Delayed8;
 use crate::game_state::Game;
 use crate::ram_map::{ram_ptr, word};
@@ -155,15 +154,14 @@ pub(super) unsafe fn wait_for_scene(scene: Scene, game: &mut Game) {
                 }
                 word!(game.frame_handler_alfa = (0x90e6c9i32) as u16);
                 word!(game.frame_handler_beta = (0x90e833i32) as u16);
-                ResetDemoData(game);
-                EnableDemoInput(game);
+                pt::demo::start(Runtime::new(game).session_mut());
                 let input = if mother_brain {
                     addr_stru_918784
                 } else {
                     addr_stru_91877E
                 };
                 // EnableDemoInput leaves $8000 in the ROM accumulator for the loader.
-                LoadDemoInputObject(0x8000, input as u16, game);
+                pt::demo::load(&mut Runtime::new(game), 0x8000, input as u16);
                 word!(game.cinematic_var15 = if mother_brain { u16::MAX } else { 1 });
                 Palette::Gameplay
             }

@@ -156,6 +156,9 @@ impl Content for Composed {
     }
 }
 impl Effects for Composed {
+    fn invalid_demo_instruction(&mut self) -> u16 {
+        panic!("unprepared demo instruction diagnostic")
+    }
     fn random_word(&mut self) -> u16 {
         self.transition_contract
             .events

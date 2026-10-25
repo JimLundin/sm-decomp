@@ -24,10 +24,6 @@ crate::typed_struct! {
         #[derive(Copy, Clone)]
         #[repr(C, packed)]
     ];
-    pub struct DemoInputObject {
-        pub ptr, pre_instr, instr_ptr: VoidP;
-    }
-
     pub struct DemoSetDef {
         pub items, missiles, super_missiles, power_bombs, health, beams, equipped_beams_: u16;
         pub demo_obj: VoidP;
@@ -66,174 +62,6 @@ unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
             b"addr < 0x2000\0", b"src/sm_rtl.h\0", 51, pointer __ASSERT_FUNCTION.as_ptr()
         };
         ram_ptr!(game; addr as i32 as isize)
-    }
-}
-const RomPtr_91: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x91>;
-pub fn EnableDemoInput(game: &mut Game) {
-    game.set_samus_input_handler(fnSamus_InputHandler_E91D as u16);
-    game.set_demo_enable(game.demo_enable() | 0x8000);
-}
-pub unsafe fn DisableDemoInput(game: &mut Game) {
-    unsafe {
-        word!(game.samus_input_handler = (0x90e913i32) as u16);
-        word!(game.demo_enable &= !(0x8000));
-    }
-}
-pub fn ResetDemoData(game: &mut Game) {
-    game.set_demo_input_pre_instr(0);
-    game.set_demo_input_instr_timer(0);
-    game.set_demo_input_instr_ptr(0);
-    game.set_demo_timer_counter(0);
-    game.set_xray_angle(0);
-    game.set_demo_input(0);
-    game.set_demo_input_new(0);
-    game.set_demo_input_prev(0);
-    game.set_demo_input_prev_new(0);
-    game.set_demo_enable(0);
-}
-pub unsafe fn LoadDemoInputObject(angle: u16, object_ptr: u16, game: &mut Game) {
-    unsafe {
-        game.set_xray_angle(angle);
-        if object_ptr & 0x8000 == 0 {
-            RomPtr_91(object_ptr, game);
-        }
-        let address = 0x918000 | u32::from(object_ptr);
-        game.set_demo_input_pre_instr(
-            game.read_rom_word(address, core::mem::offset_of!(DemoInputObject, pre_instr)),
-        );
-        game.set_demo_input_instr_ptr(
-            game.read_rom_word(address, core::mem::offset_of!(DemoInputObject, instr_ptr)),
-        );
-        game.set_demo_input_instr_timer(1);
-        game.set_demo_timer_counter(0);
-    }
-}
-pub unsafe fn DemoObjectInputHandler(game: &mut Game) {
-    unsafe {
-        if game.demo_enable() & 0x8000 != 0 && game.demo_input_instr_ptr() != 0 {
-            ProcessDemoInputObject(game);
-            game.set_joypad1_input_samusfilter(game.demo_input_prev());
-            game.set_joypad1_newinput_samusfilter(game.demo_input_prev_new());
-            game.set_joypad1_lastkeys(game.demo_input());
-            game.set_demo_input_prev(game.demo_input());
-            game.set_joypad1_newkeys(game.demo_input_new());
-            game.set_demo_input_prev_new(game.demo_input_new());
-        }
-    }
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallDemoPreInstr(address: u32, game: &mut Game) => address;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [0x91864f] DemoPreInstr_864F [] {
-        if word!(game.samus_x_pos) as i32 - 178i32 & 0x8000 != 0 {
-            word! {game; demo_input_pre_instr = ((0x91866ai32) as u16);
-                demo_input_instr_ptr = 0x8623; demo_input_instr_timer = 1; }
-        }
-    };
-    [0x91866a] DemoPreInstr_866A [] {
-        if word!(game.eproj_x_pos[0]) == 0 {
-            word! {game; demo_input_pre_instr = ((0x9183bfi32) as u16);
-                demo_input_instr_ptr = addr_off_91864B as u16; demo_input_instr_timer = 1; }
-        }
-    };
-    [0x918a9b] DemoPreInstr_CheckLeaveDemo [] {
-        if word!(game.game_state) as i32 == kGameState_44_TransitionFromDemo as i32 {
-            word!(game.demo_input_instr_ptr = addr_kDemoInstrs_LeaveDemo as u16);
-            word!(game.demo_input_instr_timer = 1);
-        }
-    };
-    @functions [pub fn (game: &mut Game)];
-    [0x918ab0] DemoPreInstr_8AB0 [] {
-        if game.samus_movement_type() != kMovementType_1A_GrabbedByDraygon as u8 {
-            game.set_demo_input_pre_instr(fnDemoPreInstr_CheckLeaveDemo as u16);
-            game.set_demo_input_instr_ptr(addr_stru_919346 as u16);
-            game.set_demo_input_instr_timer(1);
-        }
-    };
-    @external {
-        0x9183bf => [()];
-    }
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallDemoInstr(address: u32, k: u16, j: u16, game: &mut Game) -> u16 => address;
-    call (k, j, game); default Unreachable(game) as u16;
-    @functions [pub fn (_k: u16, _j: u16, game: &mut Game) -> u16];
-    [0x918427] DemoInstr_Finish [] {
-        game.set_demo_input_instr_ptr(0);
-        game.set_demo_input(0);
-        game.set_demo_input_new(0);
-        0
-    };
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
-    [0x918434] DemoInstr_SetPreInstr [(j).wrapping_add(2)] {
-        word!(game.demo_input_pre_instr = *(RomPtr_91(j, game) as *mut u16));
-    };
-    [0x91843f] DemoInstr_ClearPreInstr [j] { word!(game.demo_input_pre_instr = 0x8447); };
-    [0x918448] DemoInstr_Goto [*(RomPtr_91(j, game) as *mut u16)] { };
-    [0x91844f] DemoInstr_DecTimerAndGoto [] {
-        if word!(game.demo_timer_counter -= 1, reread) != 0 {
-            DemoInstr_Goto(k, j, game)
-        } else {
-            (j).wrapping_add(2)
-        }
-    };
-    [0x918459] DemoInstr_SetTimer [(j).wrapping_add(2)] {
-        word!(game.demo_timer_counter = *(RomPtr_91(j, game) as *mut u16));
-    };
-    [0x9185fc] DemoInstr_Func2 [j] {
-        word!(game.frame_handler_alfa = (0x90e695i32) as u16);
-        word!(game.frame_handler_beta = (0x90e725i32) as u16);
-        DisableDemoInput(game);
-    };
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
-    [0x918682] DemoInstr_Disable [j] {
-        word!(game.frame_handler_alfa = (0x90e8cdi32) as u16);
-        word!(game.frame_handler_beta = (0x90e8cdi32) as u16);
-        DisableDemoInput(game);
-    };
-    [0x918739] DemoInstr_Func3 [j] {
-        word!(game.frame_handler_alfa = (0x90e713i32) as u16);
-        word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
-        pt::finish_pose_change(&mut Runtime::new(game));
-        DisableDemoInput(game);
-        word!(game.samus_input_handler = (0x90e90ei32) as u16);
-    };
-}
-pub unsafe fn ProcessDemoInputObject(game: &mut Game) {
-    unsafe {
-        CallDemoPreInstr(0x910000 | u32::from(game.demo_input_pre_instr()), game);
-        let timer = game.demo_input_instr_timer().wrapping_sub(1);
-        game.set_demo_input_instr_timer(timer);
-        if timer == 0 {
-            let mut instruction_ptr = game.demo_input_instr_ptr();
-            let record_address = loop {
-                if instruction_ptr & 0x8000 == 0 {
-                    RomPtr_91(instruction_ptr, game);
-                }
-                let address = 0x918000 | u32::from(instruction_ptr);
-                let instruction = game.read_rom_word(address, 0);
-                if game.read_rom_word(address, 0) & 0x8000 == 0 {
-                    break address;
-                }
-                instruction_ptr = CallDemoInstr(
-                    0x910000 | u32::from(instruction),
-                    0,
-                    instruction_ptr.wrapping_add(2),
-                    game,
-                );
-                if instruction_ptr == 0 {
-                    return;
-                }
-            };
-            game.set_demo_input_instr_timer(game.read_rom_word(record_address, 0));
-            if instruction_ptr & 0x8000 == 0 {
-                RomPtr_91(instruction_ptr, game);
-            }
-            game.set_demo_input(game.read_rom_word(record_address, 2));
-            game.set_demo_input_new(game.read_rom_word(record_address, 4));
-            game.set_demo_input_instr_ptr(instruction_ptr.wrapping_add(6));
-        }
     }
 }
 static kDemoSetFuncPtrs_0: [Func_V; 6] = callback_table! { nonnull Func_V;
@@ -297,8 +125,7 @@ pub unsafe fn LoadDemoData(game: &mut Game) {
             core::mem::offset_of!(DemoSetDef, equipped_beams_),
         ));
         game.set_samus_reserve_health(0);
-        ResetDemoData(game);
-        EnableDemoInput(game);
+        pt::demo::start(Runtime::new(game).session_mut());
         if definition_offset & 0x8000 == 0 {
             RomPtr(0x910000 | u32::from(definition_offset), game);
         }
@@ -306,7 +133,7 @@ pub unsafe fn LoadDemoData(game: &mut Game) {
             definition_address,
             core::mem::offset_of!(DemoSetDef, demo_obj),
         );
-        LoadDemoInputObject(demo_obj, demo_obj, game);
+        pt::demo::load(&mut Runtime::new(game), demo_obj, demo_obj);
         let set = usize::from(game.demo_set());
         let scene = usize::from(game.demo_scene());
         let initialize_scene = kDemoSetFuncPtrs[set][scene];

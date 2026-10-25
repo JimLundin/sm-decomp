@@ -21,6 +21,8 @@ pub(crate) enum BounceFault {
 /// Allowed source pairs: (1,6), (1,9), (2,6), (3,3), (3,6), (3,9).
 /// Do not add callbacks for collision, palette, charge, jump or landing algorithms.
 pub(crate) trait Effects {
+    /// Original script-dispatch diagnostic; preserve its defined continuation value.
+    fn invalid_demo_instruction(&mut self) -> u16;
     /// Actual synchronous NextRandom; reacquire all subsequent live state.
     fn random_word(&mut self) -> u16;
     /// The two retained grapple operations, with true Runtime authority handoff.
