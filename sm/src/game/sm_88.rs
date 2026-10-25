@@ -1,10 +1,10 @@
-use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
 use crate::game::liquid_effects;
 use crate::game::music::{HandleMusicQueue, QueueMusic_Delayed8};
 use crate::game::player_transitions::xray::BeamPhase;
 pub use crate::game::prelude::*;
 use crate::game::scrolling_sky;
 use crate::game::session_runtime::Runtime;
+use crate::game::visual_state::EyeBeamPhase;
 
 pub use crate::game::constants::bank_8f::*;
 pub use crate::game::constants::bank_86::*;
@@ -1080,143 +1080,6 @@ pub unsafe fn SpawnMorphBallEyeBeamHdma(game: &mut Game) {
         SpawnHdmaObject(0x88, &raw const unk_88E8E4 as *const c_void, game);
     }
 }
-pub fn HdmaobjInstr_InitMorphBallEyeBeamHdma(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    let color_slot = usize::from(k);
-    game.g_ram[0x1914 + color_slot] = 0x30;
-    game.g_ram[0x74] = 0x30;
-    game.g_ram[0x1915 + color_slot] = 0x50;
-    game.g_ram[0x75] = 0x50;
-    game.g_ram[0x1920 + color_slot] = 0x80;
-    game.g_ram[0x76] = 0x80;
-    game.g_ram[0x1986..0x1988].copy_from_slice(&16u16.to_le_bytes());
-    // The original stores also clear the byte after the HDMA terminator.
-    game.g_ram[0x9000..0x900b].copy_from_slice(&[
-        0xe4, 0x00, 0x91, 0xe4, 0xc8, 0x91, 0x98, 0x90, 0x92, 0x00, 0x00,
-    ]);
-    Runtime::new(game).edit_actor(Key::from_legacy(0x40), Le, |actor| actor.variables[2] = 1);
-    let slot = usize::from(k & !1);
-    let width_offset = 0x192c + slot;
-    game.g_ram[width_offset..width_offset + 2].copy_from_slice(&0u16.to_le_bytes());
-    let width_fraction_offset = 0x1938 + slot;
-    game.g_ram[width_fraction_offset..width_fraction_offset + 2]
-        .copy_from_slice(&0u16.to_le_bytes());
-    game.g_ram[0x9080..0x9084].fill(0);
-    game.g_ram[0x9090..0x9092].fill(0);
-    hdp
-}
-pub fn HdmaobjPreInstr_MorphBallEyeBeamWidening(k: u16, game: &mut Game) {
-    fn add_fixed_point(ram: &mut [u8], whole: usize, fraction: usize, increment: u32) -> u32 {
-        let value =
-            u32::from_le_bytes([ram[fraction], ram[fraction + 1], ram[whole], ram[whole + 1]])
-                .wrapping_add(increment);
-        let bytes = value.to_le_bytes();
-        ram[fraction..fraction + 2].copy_from_slice(&bytes[..2]);
-        ram[whole..whole + 2].copy_from_slice(&bytes[2..]);
-        value
-    }
-
-    // Select the eye-beam layer blending configuration.
-    game.g_ram[0x1986..0x1988].copy_from_slice(&16u16.to_le_bytes());
-    let widening_speed = add_fixed_point(&mut game.g_ram, 0x9080, 0x9082, 0x4000);
-    let slot = usize::from(k & !1);
-    let width_offset = 0x192c + slot;
-    let fraction_offset = 0x1938 + slot;
-    let width = add_fixed_point(
-        &mut game.g_ram,
-        width_offset,
-        fraction_offset,
-        widening_speed,
-    );
-    let whole_width = (width >> 16) as u16;
-    if (whole_width.wrapping_sub(4) as i16) >= 0 {
-        // Keep the fractional width when the integer part reaches the limit.
-        game.g_ram[width_offset..width_offset + 2].copy_from_slice(&4u16.to_le_bytes());
-        let current_slot = u16::from_le_bytes([game.g_ram[0x18b2], game.g_ram[0x18b3]]);
-        let current_offset = usize::from(current_slot & !1);
-        let instruction_offset = 0x18cc + current_offset;
-        let next_instruction = u16::from_le_bytes([
-            game.g_ram[instruction_offset],
-            game.g_ram[instruction_offset + 1],
-        ])
-        .wrapping_add(2);
-        game.g_ram[instruction_offset..instruction_offset + 2]
-            .copy_from_slice(&next_instruction.to_le_bytes());
-        let timer_offset = 0x18e4 + current_offset;
-        game.g_ram[timer_offset..timer_offset + 2].copy_from_slice(&1u16.to_le_bytes());
-    }
-    Runtime::new(game).draw_eye_beam(k);
-}
-pub fn HdmaobjPreInstr_MorphBallEyeBeamFull(k: u16, game: &mut Game) {
-    game.g_ram[0x1986..0x1988].copy_from_slice(&16u16.to_le_bytes());
-    // Enemy slot 1 signals whether the eye is still active.
-    let active_offset = 0xf78 + 0x40 + core::mem::offset_of!(EnemyData, ai_var_C);
-    let active = u16::from_le_bytes([game.g_ram[active_offset], game.g_ram[active_offset + 1]]);
-    if active != 0 {
-        Runtime::new(game).draw_eye_beam(k);
-        let color_index = u16::from_le_bytes([game.g_ram[0x9090], game.g_ram[0x9091]]);
-        let color_offset = usize::from(color_index.wrapping_mul(4));
-        let slot = usize::from(k);
-        game.g_ram[0x1914 + slot] = game.read_rom_byte(0x88ea8b, color_offset);
-        game.g_ram[0x1915 + slot] = game.read_rom_byte(0x88ea8b, color_offset + 1);
-        game.g_ram[0x1920 + slot] = game.read_rom_byte(0x88ea8b, color_offset + 2);
-        // Color destinations can overlap the index, so advance its live value.
-        let next_color_index =
-            u16::from_le_bytes([game.g_ram[0x9090], game.g_ram[0x9091]]).wrapping_add(1) & 0xf;
-        game.g_ram[0x9090..0x9092].copy_from_slice(&next_color_index.to_le_bytes());
-    } else {
-        let current_slot = u16::from_le_bytes([game.g_ram[0x18b2], game.g_ram[0x18b3]]);
-        let current_offset = usize::from(current_slot & !1);
-        let instruction_offset = 0x18cc + current_offset;
-        let next_instruction = u16::from_le_bytes([
-            game.g_ram[instruction_offset],
-            game.g_ram[instruction_offset + 1],
-        ])
-        .wrapping_add(2);
-        game.g_ram[instruction_offset..instruction_offset + 2]
-            .copy_from_slice(&next_instruction.to_le_bytes());
-        let timer_offset = 0x18e4 + current_offset;
-        game.g_ram[timer_offset..timer_offset + 2].copy_from_slice(&1u16.to_le_bytes());
-    }
-}
-pub fn HdmaobjPreInstr_MorphBallEyeBeamFading(k: u16, game: &mut Game) {
-    game.g_ram[0x1986..0x1988].copy_from_slice(&16u16.to_le_bytes());
-    if game.g_ram[0x1915 + usize::from(k)] == 0x40 {
-        game.g_ram[0x74..0x77].copy_from_slice(&[0x20, 0x40, 0x80]);
-        let slot = usize::from(k & !1);
-        let width_fraction_offset = 0x1938 + slot;
-        game.g_ram[width_fraction_offset..width_fraction_offset + 2]
-            .copy_from_slice(&0u16.to_le_bytes());
-        let width_offset = 0x192c + slot;
-        game.g_ram[width_offset..width_offset + 2].copy_from_slice(&0u16.to_le_bytes());
-        for entry in game.g_ram[0x9100..0x9300].chunks_exact_mut(2).rev() {
-            entry.copy_from_slice(&0xffu16.to_le_bytes());
-        }
-        game.g_ram[0x9000..0x900a].fill(0);
-
-        let current_slot = u16::from_le_bytes([game.g_ram[0x18b2], game.g_ram[0x18b3]]);
-        let current_offset = usize::from(current_slot & !1);
-        let instruction_offset = 0x18cc + current_offset;
-        let next_instruction = u16::from_le_bytes([
-            game.g_ram[instruction_offset],
-            game.g_ram[instruction_offset + 1],
-        ])
-        .wrapping_add(2);
-        game.g_ram[instruction_offset..instruction_offset + 2]
-            .copy_from_slice(&next_instruction.to_le_bytes());
-        let timer_offset = 0x18e4 + current_offset;
-        game.g_ram[timer_offset..timer_offset + 2].copy_from_slice(&1u16.to_le_bytes());
-    } else {
-        Runtime::new(game).draw_eye_beam(k);
-        let current_slot = u16::from_le_bytes([game.g_ram[0x18b2], game.g_ram[0x18b3]]);
-        // Colors use byte slots, including odd current object indices.
-        for (color_offset, black) in [(0x1914, 0x20), (0x1915, 0x40), (0x1920, 0x80)] {
-            let offset = color_offset + usize::from(current_slot);
-            if game.g_ram[offset] != black {
-                game.g_ram[offset] = game.g_ram[offset].wrapping_sub(1);
-            }
-        }
-    }
-}
 pub unsafe fn SpawnTitleScreenGradientObjs(game: &mut Game) {
     unsafe {
         static unk_88EB6B: SpawnHdmaObject_Args =
@@ -1381,13 +1244,13 @@ crate::game::address_dispatch! {
         8970332 => [Runtime::new(game).advance_suit_pickup(true)]; 8971337 => HdmaobjPreInstr_E449;
         8971623 => HdmaobjPreInstr_E567; 8972220 => HdmaobjPreInstr_E7BC;
         fnHdmaobjPreInstr_MorphBallEyeBeamWidening => [{
-                    HdmaobjPreInstr_MorphBallEyeBeamWidening(k, game);
+                    Runtime::new(game).advance_eye_beam(k, EyeBeamPhase::Widening);
                 }];
         fnHdmaobjPreInstr_MorphBallEyeBeamFull => [{
-                    HdmaobjPreInstr_MorphBallEyeBeamFull(k, game);
+                    Runtime::new(game).advance_eye_beam(k, EyeBeamPhase::Full);
                 }];
         fnHdmaobjPreInstr_MorphBallEyeBeamFading => [{
-                    HdmaobjPreInstr_MorphBallEyeBeamFading(k, game);
+                    Runtime::new(game).advance_eye_beam(k, EyeBeamPhase::Fading);
                 }];
         8973232 => HdmaobjPreInstr_Backdrop_TitleSequenceGradient;
         8973266 => HdmaobjPreInstr_ColorMathControlB_TitleGradient;
@@ -1415,7 +1278,8 @@ crate::game::address_dispatch! {
         8968577 => HdmaobjInstr_1938_RandomNumber; 8969419 => HdmaobjInstr_GotoIfEventHappened;
         8971453 => HdmaobjInstr_E4BD;
         fnHdmaobjInstr_InitMorphBallEyeBeamHdma => [{
-                    HdmaobjInstr_InitMorphBallEyeBeamHdma(k, j, game)
+                    Runtime::new(game).initialize_eye_beam(k);
+                    j
                 }];
         8973471 => HdmaobjInstr_EC9F_ClearVars; 8958889 => liquid_effects::start_lava_sound;
         8973215 => HdmaobjInsr_ConfigTitleSequenceGradientHDMA;

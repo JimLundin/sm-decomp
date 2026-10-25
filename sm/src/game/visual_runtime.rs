@@ -1,10 +1,11 @@
 //! Visual adapters on the one aggregate Session, with explicit legacy effects.
+use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
 use crate::{
     game::{
         animated_tiles, enemy_projectiles, palette_effects, player_projectiles,
         session_runtime::Runtime,
         visual_host::{self, AnimationMember, PaletteMember, Source, StatueProjectile},
-        visual_state::{PaletteBuffer, Upload},
+        visual_state::{EyeBeamPhase, PaletteBuffer, Upload},
     },
     game_state::Game,
     rom::RomRecord,
@@ -280,9 +281,100 @@ pub(crate) fn check_animation_guard(game: &mut Game) -> bool {
 pub(crate) mod samus_observer;
 
 impl Runtime<'_> {
+    fn advance_eye_beam_program(&mut self) {
+        let current = usize::from(self.word(0x18b2) & !1);
+        let program = 0x18cc + current;
+        self.write_slice_le(program, self.word(program).wrapping_add(2));
+        self.write_slice_le(0x18e4 + current, 1);
+    }
+
+    fn add_eye_beam_fixed(&mut self, whole: usize, fraction: usize, increment: u32) -> u32 {
+        let value = (u32::from(self.word(fraction)) | u32::from(self.word(whole)) << 16)
+            .wrapping_add(increment);
+        self.write_slice_le(fraction, value as u16);
+        self.write_slice_le(whole, (value >> 16) as u16);
+        value
+    }
+
+    pub(crate) fn initialize_eye_beam(&mut self, slot: u16) {
+        for (color, fixed, value) in [
+            (0x1914, 0x74, 0x30),
+            (0x1915, 0x75, 0x50),
+            (0x1920, 0x76, 0x80),
+        ] {
+            self.set_byte(color + usize::from(slot), value);
+            self.set_byte(fixed, value);
+        }
+        self.write_slice_le(0x1986, 16);
+        // The original stores also clear the byte after the HDMA terminator.
+        self.write_slice(
+            0x9000,
+            &[0xe4, 0x00, 0x91, 0xe4, 0xc8, 0x91, 0x98, 0x90, 0x92, 0, 0],
+        );
+        self.edit_actor(Key::from_legacy(0x40), Le, |actor| actor.variables[2] = 1);
+        let even_slot = usize::from(slot & !1);
+        self.write_slice_le(0x192c + even_slot, 0);
+        self.write_slice_le(0x1938 + even_slot, 0);
+        self.write_slice(0x9080, &[0; 4]);
+        self.write_slice_le(0x9090, 0);
+    }
+
+    pub(crate) fn advance_eye_beam(&mut self, slot: u16, phase: EyeBeamPhase) {
+        use visual_host::Content;
+        self.write_slice_le(0x1986, 16);
+        let even_slot = usize::from(slot & !1);
+        match phase {
+            EyeBeamPhase::Widening => {
+                let speed = self.add_eye_beam_fixed(0x9080, 0x9082, 0x4000);
+                let width = self.add_eye_beam_fixed(0x192c + even_slot, 0x1938 + even_slot, speed);
+                if ((width >> 16) as u16).wrapping_sub(4) as i16 >= 0 {
+                    // Keep the fractional width when the integer part reaches the limit.
+                    self.write_slice_le(0x192c + even_slot, 4);
+                    self.advance_eye_beam_program();
+                }
+                self.draw_eye_beam(slot);
+            }
+            EyeBeamPhase::Full => {
+                if self.resolve_actor(Key::from_legacy(0x40), Le).variables[2] == 0 {
+                    self.advance_eye_beam_program();
+                } else {
+                    self.draw_eye_beam(slot);
+                    let index = usize::from(self.word(0x9090).wrapping_mul(4));
+                    let colors = self.table(Source::Loaded, 0x88ea8b);
+                    for (lane, target) in [0x1914, 0x1915, 0x1920].into_iter().enumerate() {
+                        self.set_byte(target + usize::from(slot), colors.byte(index + lane));
+                    }
+                    // Color destinations can overlap the index, so advance its live value.
+                    self.write_slice_le(0x9090, self.word(0x9090).wrapping_add(1) & 0xf);
+                }
+            }
+            EyeBeamPhase::Fading => {
+                if self.byte(0x1915 + usize::from(slot)) == 0x40 {
+                    self.write_slice(0x74, &[0x20, 0x40, 0x80]);
+                    self.write_slice_le(0x1938 + even_slot, 0);
+                    self.write_slice_le(0x192c + even_slot, 0);
+                    for entry in (0x9100..0x9300).step_by(2).rev() {
+                        self.write_slice_le(entry, 0xff);
+                    }
+                    self.write_slice(0x9000, &[0; 10]);
+                    self.advance_eye_beam_program();
+                } else {
+                    self.draw_eye_beam(slot);
+                    let current = usize::from(self.word(0x18b2));
+                    // Colors use byte slots, including odd current object indices.
+                    for (color, black) in [(0x1914, 0x20), (0x1915, 0x40), (0x1920, 0x80)] {
+                        let value = self.byte(color + current);
+                        if value != black {
+                            self.set_byte(color + current, value.wrapping_sub(1));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     pub(crate) fn draw_eye_beam(&mut self, slot: u16) {
-        use crate::game::actors::access::{AccessMode::LittleEndian, ActorAccess, ActorKey};
-        let actor = self.resolve_actor(ActorKey::from_legacy(0x40), LittleEndian);
+        let actor = self.resolve_actor(Key::from_legacy(0x40), Le);
         let angle = actor.variables[3];
         let width = self.word(0x192c + usize::from(slot & !1));
         let y = actor.y.whole.wrapping_sub(self.inputs().camera_y);

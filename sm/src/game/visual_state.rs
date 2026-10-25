@@ -92,3 +92,10 @@ pub(in crate::game) struct FirefleaLighting {
     pub(in crate::game) compatibility_limit: u16,
     pub(in crate::game) compatibility_shade: u16,
 }
+
+#[derive(Clone, Copy)]
+pub(crate) enum EyeBeamPhase {
+    Widening,
+    Full,
+    Fading,
+}
