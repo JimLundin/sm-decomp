@@ -1031,12 +1031,6 @@ pub unsafe fn SpawnCinematicSpriteObjectAtSlot(
         SpawnCimenaticSpriteObjectInner(j, slot, game)
     }
 }
-pub unsafe fn SpawnCinematicSpriteObjectToR18(j: u16, r18: u16, game: &mut Game) -> u8 {
-    unsafe {
-        word!(game.cinematic_spawn_param = 0);
-        SpawnCimenaticSpriteObjectInner(j, r18, game)
-    }
-}
 pub unsafe fn SpawnCimenaticSpriteObjectInner(k: u16, j: u16, game: &mut Game) -> u8 {
     unsafe {
         let v2 = RomPtr_8B(k, game);
@@ -2852,10 +2846,12 @@ crate::game::callback_dispatch! {
         palette_effects::clear(game);
         ClearCinematicSprites(game);
         word_transfers!(game, ascending, 128; le(palette_buffer, 128) <- rom(0x8cebe9, 128));
-        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEE9D as u16, 0, game);
-        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEEAF as u16, 0, game);
-        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEEA3 as u16, 0, game);
-        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEEA9 as u16, 0, game);
+        // The palette copy and each initializer leave A for the next spawn.
+        let palette_tail = word!(game.palette_buffer[255]);
+        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEE9D as u16, palette_tail, game);
+        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEEAF as u16, 0x0e00, game);
+        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEEA3 as u16, 0x0a00, game);
+        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEEA9 as u16, 0x0e00, game);
         word! {game; cinematic_var5 = 0; cinematic_var6 = 64; reg_M7A = 256; }
         word! { game, 0; reg_M7B, reg_M7C }
         word!(game.reg_M7D = 256);
@@ -3000,7 +2996,7 @@ crate::game::callback_dispatch! {
             word! {game; cinematic_function = ((0x8bddcdi32) as u16); cinematic_var14 = 0x8000;
                 cinematic_var13 = 0; }
             if CheckEventHappened(0xf, game) != 0 {
-                SpawnCinematicSpriteObjectToR18(0xef21, 4, game);
+                SpawnCinematicSpriteObjectAtSlot(0xef21, 4, 4, game);
             }
         }
     };
@@ -3539,21 +3535,20 @@ crate::game::callback_dispatch! {
         j
     };
     [9171888] CinematicSprInstr_Func190 [] {
-        let v0: u16 = 0;
-        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEECD as u16, v0, game);
+        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEECD as u16, 0xf3b0, game);
         j
     };
     [9172253] CinematicSprInstr_Func208 [] {
-        SpawnCinematicSpriteObjectToR18(addr_kCinematicSpriteObjectDef_8BEF3F as u16, 0, game);
+        SpawnCinematicSpriteObjectAtSlot(addr_kCinematicSpriteObjectDef_8BEF3F as u16, 0, 0, game);
         j
     };
     [9172308] CinematicSprInstr_Func211 [] {
         if word!(game.game_time_hours) as i32 - 10i32 & 0x8000 != 0 {
-            SpawnCinematicSpriteObjectToR18(addr_kCinematicSpriteObjectDef_8BEF7B as u16, 2, game);
+            SpawnCinematicSpriteObjectAtSlot(addr_kCinematicSpriteObjectDef_8BEF7B as u16, 2, 0, game);
         } else {
-            SpawnCinematicSpriteObjectToR18(addr_kCinematicSpriteObjectDef_8BEF75 as u16, 2, game);
+            SpawnCinematicSpriteObjectAtSlot(addr_kCinematicSpriteObjectDef_8BEF75 as u16, 2, 0, game);
         }
-        SpawnCinematicSpriteObjectToR18(addr_kCinematicSpriteObjectDef_8BEF6F as u16, 0, game);
+        SpawnCinematicSpriteObjectAtSlot(addr_kCinematicSpriteObjectDef_8BEF6F as u16, 0, 0, game);
         j
     };
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
@@ -3603,21 +3598,18 @@ crate::game::callback_dispatch! {
         word!(game.palette_buffer[254] = 1);
     };
     [9171605] CinematicSprInstr_Func183 [j] {
-        let v0: u16 = 0;
-        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEEB5 as u16, v0, game);
+        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEEB5 as u16, 0xf295, game);
         word!(game.palette_buffer[0] = 0x7fff);
     };
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
     [9171639] CinematicSprInstr_Func185 [j] {
-        let mut v0: u16 = 0;
         *ram_ptr!(game; 0x69) = 17;
         *ram_ptr!(game; 0x6b) = 2;
         *ram_ptr!(game; 0x6f) = 2;
         *ram_ptr!(game; 0x72) = 17;
-        *(&raw mut v0 as *mut u8) = 124;
         *ram_ptr!(game; 0x59) = 124;
-        SpawnCinematicSpriteObjectToR18(addr_kCinematicSpriteObjectDef_8BEEBB as u16, 0, game);
-        SpawnCinematicSpriteObjectToR18(addr_kCinematicSpriteObjectDef_8BEEF7 as u16, 2, game);
+        SpawnCinematicSpriteObjectAtSlot(addr_kCinematicSpriteObjectDef_8BEEBB as u16, 0, 0xf27c, game);
+        SpawnCinematicSpriteObjectAtSlot(addr_kCinematicSpriteObjectDef_8BEEF7 as u16, 2, 2, game);
         palette_effects::spawn(addr_kPalfx_E1C8 as u16, game);
         palette_effects::spawn(addr_kPalfx_E1D0 as u16, game);
         palette_effects::spawn(addr_kPalfx_E1E8 as u16, game);
@@ -3630,7 +3622,7 @@ crate::game::callback_dispatch! {
         *ram_ptr!(game; 0x58) = 116;
         *ram_ptr!(game; 0x59) = 120;
         palette_effects::spawn(addr_kPalfx_E1CC as u16, game);
-        SpawnCinematicSpriteObjectToR18(addr_kCinematicSpriteObjectDef_8BEEC1 as u16, 6, game);
+        SpawnCinematicSpriteObjectAtSlot(addr_kCinematicSpriteObjectDef_8BEEC1 as u16, 6, 6, game);
     };
     [9171755] CinematicSprInstr_Func187 [j] {
         *ram_ptr!(game; 0x69) = 0;
@@ -3641,7 +3633,7 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
     [9171918] CinematicSprInstr_Func192 [j] {
-        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEEFD as u16, 0, game);
+        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEEFD as u16, 0xf3ce, game);
         let hours1: i32 = word!(game.game_time_hours) as i32 / 10;
         let hours2: i32 = word!(game.game_time_hours) as i32 % 10;
         word! {game; substate = hours1 as u16; suit_pickup_light_beam_pos = hours2 as u16; }
@@ -3651,19 +3643,19 @@ crate::game::callback_dispatch! {
         *(ram_ptr!(game, u16; 0xdf2)) = min2 as u16;
     };
     [9171995] CinematicSprInstr_Func193 [j] {
-        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEF03 as u16, 0, game);
+        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEF03 as u16, 0xf41b, game);
     };
     [9172004] CinematicSprInstr_Func194 [j] {
-        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEF09 as u16, 0, game);
+        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEF09 as u16, 0xf424, game);
     };
     [9172013] CinematicSprInstr_Func195 [j] {
-        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEF0F as u16, 0, game);
+        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEF0F as u16, 0xf42d, game);
     };
     [9172022] CinematicSprInstr_Func196 [j] {
-        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEF15 as u16, 0, game);
+        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEF15 as u16, 0xf436, game);
     };
     [9172031] CinematicSprInstr_Func197 [j] {
-        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEF1B as u16, 0, game);
+        SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEF1B as u16, 0xf43f, game);
     };
     [9172040] CinematicSprInstr_Func198 [j] {
         word! { game, 0; screen_fade_delay, screen_fade_counter }

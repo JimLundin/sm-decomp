@@ -318,7 +318,7 @@ saved room. Its authored input has 76,064 frames and SHA256
 This covers in-memory SRAM restoration; disk persistence remains unverified.
 The additional `save-memory` check covers the save/checksum write alone.
 Missing bosses/items/areas and credits remain explicit gaps.
-The `credits` expectation observes script progress; it does not prove the entire roll completed.
+The `credits` expectation observes script progress; the separate `credits-complete` expectation requires the roll-ending transition.
 
 The `wave-gate` authored fallback reuses the checked Speed Booster/farm return,
 then crosses ADAD's moving platforms and opens its blue gate. Regenerate with
@@ -599,3 +599,41 @@ following frames. The original [spawn instruction](https://patrickjohnston.org/b
 passes the spawner's Y position in A; the translated callback must preserve that
 value in the shared spawn parameter. The boss row separately retains a fresh
 defeat and all 120 follow-up frames.
+
+### Complete credits from the original movie's EOF continuation
+
+The published 100% movie has 222,788 declared frames. Its original lsnes build
+continues in read-only mode after EOF: `movie.cpp::next_input` returns zero and
+records the resulting input polls. A read-only capture runs through video frame
+234,849, including the complete credits roll at 234,609 and 240 following frames.
+This is observed emulator behavior, not synthesized input padding. The first EOF
+hardware read still consumes `0x0440` from the final declared input; subsequent
+reads are zero. The importer preserves that boundary.
+
+`room-seeds-100-credits.csv` retains observation 336 from the qualified Mother
+Brain capture, including unchanged memory and register hashes. A matching
+189-frame overlap (1,075 events) joins its original full prefix to the narrow
+credits capture. The composed EOF metadata pins all seven capture companions,
+the original movie and emulator, and the raw capture metadata. Its SHA256 is
+`fd304868560fd08f823666b2ca16922597fb34b086a375c898b65166d1a757b8`.
+
+After restoring the encrypted seed bundle, regenerate the 11,900-word input file:
+
+```sh
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-credits.inputs --rom rom/sm.smc --lag-log target/seeds/100-credits/lag.csv --seed target/seeds/100-credits/0336-91F8-wram.bin --frames 11900 --eof-capture target/seeds/100-credits/lag.csv.eof.json --eof-capture-sha256 fd304868560fd08f823666b2ca16922597fb34b086a375c898b65166d1a757b8
+python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --segment credits
+```
+
+`credits` still requires fresh script advancement. `credits-complete` additionally
+requires the roll-ending transition: the active credits object becomes disabled,
+its cursor is deleted, and the cinematic function changes from `$DB9D` to `$E0F4`.
+The main row keeps 120 native frames after both expectations. Twelve focused
+regression rows retain the first differing frame and three following frames for
+the cinematic spawn accumulator and post-roll HDMA-table fixes.
+
+New captures opt in with `SM_LSNES_EOF_CONTINUATION=1` and a finite frame limit
+beyond EOF. `SM_LSNES_CAPTURE_FROM` can reduce logs for overlap captures, but
+cannot be combined with seed capture unless it starts at frame 1. Default movie
+capture behavior is unchanged. The original standalone capture logger hash is
+`3ae43931e94cf21c8ef6ef5291ef5c324af8ea4b8f74e44cfef413f623f8f8ea`;
+the reusable published logger has a different hash because it adds opt-in guards.

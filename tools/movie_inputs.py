@@ -6,6 +6,7 @@ Adapted from crates/movie in archive/pre-transpile-2026-10-17.
 import argparse
 import csv
 import hashlib
+import json
 from itertools import islice, zip_longest
 from pathlib import Path
 import zipfile
@@ -16,7 +17,40 @@ BUTTON_BITS = dict(zip(
 ))
 
 
-def seeded_wait_slice(source, path, seed, count):
+def recorded_eof(movie, source, path, metadata, expected_sha256):
+    """Authenticate an explicitly recorded lsnes read-only continuation."""
+    data = metadata.read_bytes()
+    if not expected_sha256 or hashlib.sha256(data).hexdigest() != expected_sha256:
+        raise ValueError('EOF capture metadata SHA-256 mismatch')
+    with zipfile.ZipFile(movie) as archive:
+        if 'input' not in archive.namelist():
+            raise ValueError('recorded lsnes EOF continuation requires an LSMV source')
+    info = json.loads(data)
+    if (info.get('version') != 1 or info.get('origin') != 'emu-readonly-continuation'
+            or info.get('status') != 'complete'
+            or info.get('movie_sha256') != hashlib.sha256(movie.read_bytes()).hexdigest()
+            or info.get('declared_frames') != len(source)
+            or info.get('first_movie_frame') != len(source) + 1
+            or not isinstance(info.get('last_movie_frame'), int)
+            or info['last_movie_frame'] <= len(source)):
+        raise ValueError('unsupported or incomplete EOF capture')
+    # This policy and flat controller layout belong to the audited rr2-beta23
+    # binary/source, not arbitrary movies or another emulator's EOF behavior.
+    if (info.get('emulator_sha256') != 'd2324a06e11881592227440790be95b01136a94a89c07fb28299bd8985173323'
+            or info.get('source_archive_sha256') != 'e9c0336218a47586e85b7c38341114995b3b7cdd727baf7c09c307d82072ef25'):
+        raise ValueError('unsupported EOF producer')
+    for suffix in ('', '.polls.csv', '.events.csv', '.eof-polls.csv', '.eof-hardware.csv',
+                   '.phases.csv', '.milestones.csv'):
+        file = Path(str(path) + suffix)
+        pin = info.get('files', {}).get(file.name, {})
+        with file.open('rb') as stream:
+            actual = hashlib.file_digest(stream, 'sha256').hexdigest()
+        if file.stat().st_size != pin.get('size') or actual != pin.get('sha256'):
+            raise ValueError('EOF capture file hash/size mismatch: ' + file.name)
+    return info
+
+
+def seeded_wait_slice(source, path, seed, count, continuation=None):
     """Locate the captured NMI's completed wait, then reuse strict input alignment."""
     if not seed.name.endswith('-wram.bin') or count <= 0:
         raise ValueError('seed requires a -wram.bin file and a positive frame count')
@@ -67,10 +101,10 @@ def seeded_wait_slice(source, path, seed, count):
             or int(event['nmi']) != boundary_nmi):
         raise ValueError('unsupported room seed phase; no matching next NMI boundary')
     print(f'Seed input starts at native step {first}, captured event {event["event"]}')
-    return aligned_wait_prefix(source, path, count, boundary + 1)
+    return aligned_wait_prefix(source, path, count, boundary + 1, continuation)
 
 
-def aligned_wait_prefix(source, path, count, after_event=0):
+def aligned_wait_prefix(source, path, count, after_event=0, continuation=None):
     """Replay observed wait-entry input; reject gaps instead of guessing lag removal."""
     def rows(suffix):
         with Path(str(path) + suffix).open(newline='') as file:
@@ -78,21 +112,55 @@ def aligned_wait_prefix(source, path, count, after_event=0):
     if Path(str(path) + '.error.txt').exists() or count <= 0:
         raise ValueError('failed capture or invalid prefix length')
     video = []
+    eof_polls = rows('.eof-polls.csv') if continuation else iter(())
     for index, (frame, poll) in enumerate(zip_longest(rows(''), rows('.polls.csv'))):
-        if frame is None or poll is None or index >= len(source):
+        if frame is None or poll is None or (index >= len(source) and not continuation):
             raise ValueError('incomplete video/input capture')
         if (int(frame['input_frame']) != index or int(frame['movie_frame']) != index + 1
                 or int(frame['input_callbacks']) != 1 or int(poll['movie_frame']) != index + 1
-                or int(poll['callback']) != 1 or int(poll['subframe']) != 0
-                or int(poll['movie_subframe_index']) != index
-                or parse_lsmv(poll['movie_subframe']) != [source[index]]):
+                or int(poll['callback']) != 1 or int(poll['subframe']) != 0):
             raise ValueError(f'unsupported or mismatched movie input at {index}')
+        if index < len(source):
+            if (int(poll['movie_subframe_index']) != index
+                    or parse_lsmv(poll['movie_subframe']) != [source[index]]):
+                raise ValueError(f'unsupported or mismatched movie input at {index}')
+        else:
+            observed = next(eof_polls, None)
+            # blank_frame(true): frame-sync axis 0 is set, reset/delay axes
+            # 1..3 and gamepad axes 4..15 are released. No input is appended.
+            axes = ';'.join(f'{axis}={int(axis == 0)}' for axis in range(16))
+            if (observed is None or poll['movie_subframe'] != ''
+                    or int(poll['movie_subframe_index']) != len(source)
+                    or int(observed['declared_frames']) != len(source)
+                    or observed['readonly'] != '1' or observed['selected_axes'] != axes
+                    or any(observed[key] != poll[key] for key in (
+                        'movie_frame', 'callback', 'subframe', 'movie_subframe_index',
+                        'nmi', 'joypad_latched'))):
+                raise ValueError(f'unsupported or unobserved EOF input at {index}')
         # Only counter resets are used by the alignment state machine. Keeping
         # full video/poll/event dictionaries made a 100% import exceed 2 GiB.
         video.append({'nmi_before': frame.get('nmi_before'), 'nmi_after': frame.get('nmi_after')})
     if not video:
         raise ValueError('incomplete video/input capture')
-    events = rows('.events.csv')
+    if continuation and (len(video) != continuation['last_movie_frame']
+                         or next(eof_polls, None) is not None):
+        raise ValueError('EOF capture window does not match its metadata')
+    def observed_events():
+        hardware = rows('.eof-hardware.csv') if continuation else iter(())
+        for event in rows('.events.csv'):
+            if (continuation and event['kind'] == 'joypad_read'
+                    and int(event['movie_frame']) > len(source)):
+                observed = next(hardware, None)
+                if (observed is None
+                        or any(observed[key] != event[key] for key in ('event', 'movie_frame', 'nmi'))
+                        or observed['joypad_latched'] != event['joypad']
+                        or int(observed['a']) != int(event['joypad'])
+                        or int(observed['pbpc']) != 0x80946b):
+                    raise ValueError('EOF hardware controller observation mismatch')
+            yield event
+        if next(hardware, None) is not None:
+            raise ValueError('extra EOF hardware controller observations')
+    events = observed_events()
     def complete(result):
         # The previous eager read parsed the unused suffix too. Preserve its
         # CSV error detection without retaining a second whole capture.
@@ -1612,7 +1680,11 @@ if __name__ == '__main__':
     parser.add_argument('--lag-log', type=Path, help='lsnes CSV with input and boundary companions')
     parser.add_argument('--frames', type=int, help='number of observed wait steps to import')
     parser.add_argument('--seed', type=Path, help='start after this captured room WRAM seed')
+    parser.add_argument('--eof-capture', type=Path, help='authenticated recorded read-only EOF continuation metadata')
+    parser.add_argument('--eof-capture-sha256', help='required pinned EOF metadata SHA-256')
     args = parser.parse_args()
+    if bool(args.eof_capture) != bool(args.eof_capture_sha256) or (args.eof_capture and not args.lag_log):
+        parser.error('--eof-capture requires --eof-capture-sha256 and --lag-log')
     if args.seed and not args.lag_log:
         parser.error('--seed requires --lag-log and --frames')
     if ((args.lag_log and (args.route or args.frames is None))
@@ -1621,9 +1693,11 @@ if __name__ == '__main__':
     if args.route and hashlib.sha256(args.movie.read_bytes()).hexdigest() != ROUTE_SOURCE_SHA256:
         parser.error('--route requires the original any% movie from movies/manifest.toml')
     frames = load(args.movie, args.rom)
+    continuation = (recorded_eof(args.movie, frames, args.lag_log, args.eof_capture, args.eof_capture_sha256)
+                    if args.eof_capture else None)
     if args.lag_log:
-        frames = (seeded_wait_slice(frames, args.lag_log, args.seed, args.frames)
-                  if args.seed else aligned_wait_prefix(frames, args.lag_log, args.frames))
+        frames = (seeded_wait_slice(frames, args.lag_log, args.seed, args.frames, continuation)
+                  if args.seed else aligned_wait_prefix(frames, args.lag_log, args.frames, continuation=continuation))
     if args.route:
         frames = route_frames(frames, args.route)
         data = ''.join(f'{word:04X}\r\n' for word in frames).encode('ascii')

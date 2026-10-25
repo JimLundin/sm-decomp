@@ -950,7 +950,7 @@ impl Runtime<'_> {
         use crate::game::actors::access::AccessMode::Native;
         use crate::game::player_projectiles::access::Store;
         use crate::game::projectile_geometry::SINE_COSINE;
-        use crate::ram_map::words as ram;
+        use crate::ram_map::{word_arrays as arrays, words as ram};
         let controller = Key::from_legacy(0x40);
         let motion = Key::from_legacy(0xc0);
         let phantoon = matches!(wave, HdmaWave::Phantoon);
@@ -988,10 +988,11 @@ impl Runtime<'_> {
             self.write_slice_le(0x1914 + object, phase);
         }
         let mut phase = self.word(0x1914 + object);
-        let (scroll, store) = if phantoon {
-            (ram::reg_BG2HOFS, Store::SliceNative)
+        // Cinematic BG3 data is separate from Phantoon's BG2 table.
+        let (scroll, store, table) = if phantoon {
+            (ram::reg_BG2HOFS, Store::SliceNative, ram::g_word_7E9100)
         } else {
-            (ram::reg_BG3HOFS, Store::SliceLe)
+            (ram::reg_BG3HOFS, Store::SliceLe, arrays::hdma_table_1)
         };
         for row in 0..256 / step {
             let sample = SINE_COSINE[usize::from(phase >> 1) + 64];
@@ -1004,7 +1005,7 @@ impl Runtime<'_> {
             let offset = hdma_wave_offset(sample, low, high);
             phase = phase.wrapping_add(step) & 0x1ff;
             let value = self.word(scroll).wrapping_add(offset);
-            self.store(0x9100 + 2 * usize::from(row), value, store);
+            self.store(table + 2 * usize::from(row), value, store);
         }
         // Phantoon samples its mode again after the first half is published.
         let narrow = phantoon && self.resolve_actor(controller, Native).parameters[0] & 1 == 0;
@@ -1012,12 +1013,12 @@ impl Runtime<'_> {
         for row in (0..rows).rev() {
             let origin = self.word(scroll).wrapping_add(self.word(scroll));
             let sample = if phantoon {
-                self.native_word(0x9100 + 2 * row)
+                self.native_word(table + 2 * row)
             } else {
-                self.word(0x9100 + 2 * row)
+                self.word(table + 2 * row)
             };
             let value = origin.wrapping_sub(sample);
-            self.store(0x9100 + 2 * (rows + row), value, store);
+            self.store(table + 2 * (rows + row), value, store);
         }
     }
 

@@ -19,6 +19,7 @@ enum Expectation {
     Pickup(usize),
     Death,
     Credits,
+    CreditsComplete,
 }
 
 impl Expectation {
@@ -29,6 +30,9 @@ impl Expectation {
         }
         if value == "credits" {
             return Ok(Self::Credits);
+        }
+        if value == "credits-complete" {
+            return Ok(Self::CreditsComplete);
         }
         if value == "save-death-continue" {
             return Ok(Self::SaveDeathContinue);
@@ -149,6 +153,18 @@ impl Expectation {
                     && (after.credits_cursor != before.credits_cursor
                         || after.credits_scroll != before.credits_scroll)
             }
+            // The roll's $8BF6FE instruction disables the credits object,
+            // deletes its cursor and starts the post-roll scene at $E0F4.
+            Self::CreditsComplete => {
+                before.state == 39
+                    && after.state == 39
+                    && before.credits_enabled & 0x8000 != 0
+                    && before.credits_cursor != 0
+                    && before.cinematic_function == 0xdb9d
+                    && after.credits_enabled & 0x8000 == 0
+                    && after.credits_cursor == 0
+                    && after.cinematic_function == 0xe0f4
+            }
         }
     }
 }
@@ -221,6 +237,7 @@ struct CoverageState {
     credits_enabled: u16,
     credits_cursor: u16,
     credits_scroll: u16,
+    cinematic_function: u16,
     suit_substate: u16,
     player_handlers: [u16; 3],
     door_exit: u16,
@@ -261,6 +278,7 @@ impl CoverageState {
             credits_enabled: word(0x19ff),
             credits_cursor: word(0x19f7),
             credits_scroll: word(0x1997),
+            cinematic_function: word(0x1f51),
             suit_substate: word(0xdec),
             player_handlers: [word(0xa42), word(0xa44), word(0xa5c)],
             door_exit: word(0x78d),
@@ -895,7 +913,7 @@ pub fn run_args(args: &[String], game: &mut Game) -> i32 {
 
 fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     if args.len() < 2 {
-        return Err("usage: sm verify <rom> <inputs> [--frames N] [--load-sram] [--seed PATH] [--checkpoint-in PATH] [--checkpoint-out PATH] [--require-hit NAME]... [--after-hits N] [--expect TYPE:VALUE|death|credits|save-death-continue]... [--after-expectations N]".into());
+        return Err("usage: sm verify <rom> <inputs> [--frames N] [--load-sram] [--seed PATH] [--checkpoint-in PATH] [--checkpoint-out PATH] [--require-hit NAME]... [--after-hits N] [--expect TYPE:VALUE|death|credits|credits-complete|save-death-continue]... [--after-expectations N]".into());
     }
     let mut frame_limit = None;
     let mut after_hits = None;
@@ -1405,6 +1423,20 @@ mod coverage_checks {
             },
             false
         ));
+        let finishing = CoverageState {
+            cinematic_function: 0xdb9d,
+            ..running
+        };
+        let finished = CoverageState {
+            cinematic_function: 0xe0f4,
+            ..ending
+        };
+        let completion = Expectation::parse("credits-complete").unwrap();
+        assert!(completion.observed(&finishing, &finished, false));
+        assert!(!completion.observed(&finished, &finished, false));
+        assert!(!completion.observed(&finishing, &finishing, false));
+        assert!(!completion.observed(&finishing, &ending, false));
+        assert!(!completion.observed(&running, &finished, false));
     }
 
     #[cfg_attr(test, test)]

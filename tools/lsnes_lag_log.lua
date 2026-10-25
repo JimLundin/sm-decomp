@@ -4,7 +4,14 @@
 local path = assert(os.getenv("SM_LSNES_LOG"), "set SM_LSNES_LOG to a new output path")
 local limit = tonumber(os.getenv("SM_LSNES_FRAMES"))
 assert(limit == nil or (limit > 0 and limit == math.floor(limit)), "invalid frame limit")
-for _, suffix in ipairs({"", ".polls.csv", ".events.csv", ".error.txt"}) do
+local eof_mode = os.getenv("SM_LSNES_EOF_CONTINUATION") == "1"
+local suffixes = {"", ".polls.csv", ".events.csv", ".error.txt"}
+if eof_mode then
+    for _, suffix in ipairs({".eof-polls.csv", ".eof-hardware.csv", ".phases.csv", ".milestones.csv"}) do
+        suffixes[#suffixes + 1] = suffix
+    end
+end
+for _, suffix in ipairs(suffixes) do
     local existing = io.open(path .. suffix, "rb")
     if existing then
         existing:close()
@@ -13,6 +20,31 @@ for _, suffix in ipairs({"", ".polls.csv", ".events.csv", ".error.txt"}) do
 end
 local log = assert(io.open(path, "wb"))
 log:write("input_frame,movie_frame,nmi_before,nmi_after,including_lag_before,including_lag_after,emulator_lag,game_state,room,x,y,input_callbacks,first_live_input,last_live_input,joypad_before,joypad_after\n")
+local capture_from = tonumber(os.getenv("SM_LSNES_CAPTURE_FROM")) or 1
+assert(capture_from > 0 and capture_from == math.floor(capture_from), "invalid capture start")
+assert(eof_mode or capture_from == 1, "narrow capture requires EOF continuation mode")
+assert(capture_from == 1 or not os.getenv("SM_LSNES_SEEDS"),
+    "narrow capture reuses an existing seed; SM_LSNES_SEEDS is unsupported")
+local declared_frames = movie.framecount()
+assert(not eof_mode or (limit and limit > declared_frames), "EOF continuation requires a finite later frame limit")
+local eof_polls, eof_hardware, phases, milestones
+if eof_mode then
+    eof_polls = assert(io.open(path .. ".eof-polls.csv", "wb"))
+    eof_polls:write("movie_frame,callback,subframe,movie_subframe_index,declared_frames,readonly,selected_axes,nmi,joypad_latched\n")
+    eof_hardware = assert(io.open(path .. ".eof-hardware.csv", "wb"))
+    eof_hardware:write("event,movie_frame,nmi,joypad_latched,a,pbpc\n")
+    phases = assert(io.open(path .. ".phases.csv", "wb"))
+    phases:write("movie_frame,nmi,state,room,cinematic_function,credits_enabled,credits_cursor,credits_scroll\n")
+    milestones = assert(io.open(path .. ".milestones.csv", "wb"))
+    milestones:write("event,movie_frame,nmi,state,credits_cursor\n")
+end
+local function record_milestone(event, frame)
+    if not milestones then return end
+    milestones:write(string.format("%s,%d,%d,%d,%d\n", event, frame,
+        memory.readword(0x7E05B6), memory.readword(0x7E0998), memory.readword(0x7E19F7)))
+    milestones:flush()
+end
+local roll_done = nil
 local before = nil
 local polls = assert(io.open(path .. ".polls.csv", "wb"))
 polls:write("movie_frame,callback,subframe,nmi,including_lag,live_controller_word,joypad_latched,movie_subframe_index,movie_subframe\n")
@@ -153,28 +185,58 @@ function on_input(subframe)
     before[4] = before[4] + 1
     before[6] = word
     local movie_index = movie.current_first_subframe()
-    local recorded = movie.get_frame(movie_index):serialize()
+    local recorded = ""
+    if frame <= declared_frames then
+        recorded = movie.get_frame(movie_index):serialize()
+    else
+        assert(eof_mode, "unexpected input after declared movie end")
+        assert(movie.framecount() == declared_frames and movie.readonly(), "movie changed during continuation")
+        local selected = movie.read_subframes(frame, 0)
+        local keys, encoded = {}, {}
+        for key, _ in pairs(selected) do keys[#keys + 1] = key end
+        table.sort(keys)
+        for _, key in ipairs(keys) do encoded[#encoded + 1] = tostring(key) .. "=" .. tostring(selected[key]) end
+        eof_polls:write(string.format("%d,%d,%d,%d,%d,1,%s,%d,%d\n", frame, before[4], subframe and 1 or 0,
+            movie_index, declared_frames, table.concat(encoded, ";"), memory.readword(0x7E05B6), memory.readword(0x7E008B)))
+    end
     assert(not string.find(recorded, "[,\r\n]"), "unexpected movie serialization")
-    polls:write(string.format("%d,%d,%d,%d,%d,%d,%d,%d,%s\n", frame, before[4],
+    if frame >= capture_from then polls:write(string.format("%d,%d,%d,%d,%d,%d,%d,%d,%s\n", frame, before[4],
         subframe and 1 or 0, memory.readword(0x7E05B6), memory.readword(0x7E05B8),
-        word, memory.readword(0x7E008B), movie_index, recorded))
+        word, memory.readword(0x7E008B), movie_index, recorded)) end
 end
 function on_frame_emulated()
     assert(before ~= nil, "frame output without corresponding input boundary")
     local frame = movie.currentframe()
     assert(frame == before[1], "movie frame changed during emulation")
     capture_room(frame)
-    log:write(string.format("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
+    if frame >= capture_from then log:write(string.format("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
         frame - 1, frame, before[2], memory.readword(0x7E05B6),
         before[3], memory.readword(0x7E05B8), memory.get_lag_flag() and 1 or 0,
         memory.readword(0x7E0998), memory.readword(0x7E079B),
         memory.readword(0x7E0AF6), memory.readword(0x7E0AFA),
         before[4], before[5], before[6], before[7], memory.readword(0x7E008B)))
+        if phases then
+            phases:write(string.format("%d,%d,%d,%d,%d,%d,%d,%d\n", frame,
+                memory.readword(0x7E05B6), memory.readword(0x7E0998), memory.readword(0x7E079B),
+                memory.readword(0x7E1F51), memory.readword(0x7E19FF), memory.readword(0x7E19F7),
+                memory.readword(0x7E1997)))
+        end
+    end
+    if milestones and frame % 12000 == 0 then
+        record_milestone("heartbeat", frame)
+    end
     rows = rows + 1
     last_frame = frame
     before = nil
-    if rows % 1000 == 0 then log:flush(); polls:flush() end
-    if frame == movie.framecount() or frame == limit then
+    if rows % 1000 == 0 then
+        log:flush(); polls:flush()
+        if eof_mode then phases:flush(); eof_polls:flush(); eof_hardware:flush() end
+    end
+    if milestones and frame == declared_frames then
+        record_milestone("declared_end", frame)
+    end
+    if (not eof_mode and frame == declared_frames) or (roll_done and frame >= roll_done + 240) or frame == limit then
+        record_milestone("capture_end", frame)
         log:flush()
         log:close()
         polls:close()
@@ -183,6 +245,9 @@ function on_frame_emulated()
     end
 end
 function on_quit()
+    if eof_mode then
+        for _, file in ipairs({eof_polls, eof_hardware, phases, milestones}) do file:flush(); file:close() end
+    end
     if seeds ~= nil then seeds:close(); seeds = nil end
     if log ~= nil then log:flush(); log:close(); polls:flush(); polls:close(); log = nil end
     if events ~= nil then events:close(); events = nil end
@@ -244,6 +309,11 @@ if os.getenv("SM_LSNES_BOUNDARIES") == "1" then
         memory.registerexec(0x1000000 + hook[1], guarded(function()
             assert(movie.readonly(), "recording movie must remain read-only")
             event_count = event_count + 1
+            if movie.currentframe() < capture_from then return end
+            if eof_mode and kind == "joypad_read" and movie.currentframe() > declared_frames then
+                local registers = memory.getregisters()
+                eof_hardware:write(string.format("%d,%d,%d,%d,%d,%d\n",event_count,movie.currentframe(),memory.readword(0x7E05B6),memory.readword(0x7E008B),registers.a,registers.pbpc))
+            end
             if seed_dir and kind == "joypad_begin"
                     and (seed_pending or memory.readword(0x7E079B) ~= seed_room
                         or (seed_mb_phases and memory.readword(0x7E079B) == 0xDD58)) then
@@ -272,6 +342,15 @@ if os.getenv("SM_LSNES_BOUNDARIES") == "1" then
             if event_count % 100 == 0 then events:flush() end
         end))
     end
+end
+if eof_mode then
+    -- Credits' final script command starts the post-roll ending sequence.
+    memory.registerexec(0x18BF6FE, guarded(function()
+        if movie.currentframe() < capture_from then return end
+        assert(movie.readonly() and memory.readword(0x7E0998) == 39, "unexpected credits endpoint")
+        roll_done = movie.currentframe()
+        record_milestone("credits_roll_endpoint", roll_done)
+    end))
 end
 exec("set-speed turbo")
 exec("clear-pause-on-end")

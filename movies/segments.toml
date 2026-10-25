@@ -564,7 +564,14 @@ after_expectations = 120
 
 [[segment]]
 id = "credits"
-pending = "No route to real credits processing and full-roll completion; state 39 presence or initial script advancement alone is not completion."
+seed = "100-credits:336"
+seed_sha256 = "30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+inputs = "seed-credits.inputs"
+input_sha256 = "344e9a8d6654c87f8b7470205e2313a8f3e8c3350f79e3ad3e7350f87f2c1442"
+start_frame = 0
+frames = 11900
+expect = ["credits", "credits-complete"]
+after_expectations = 120
 
 # The observed placement lag formerly incremented the native acknowledged-NMI counter.
 [[segment]]
@@ -717,3 +724,135 @@ input_sha256 = "cb887b9accdcc5a9d4e58ee8354329a6386691c2187c5a60b38d3cba40b54293
 start_frame = 0
 frames = 167
 expect = ["room:9DC7"]
+
+# First oracle difference at native frame 1108; retain three following frames.
+[[segment]]
+id = "credits-zebes-spawn"
+seed = "100-credits:336"
+seed_sha256 = "30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+inputs = "seed-credits.inputs"
+input_sha256 = "344e9a8d6654c87f8b7470205e2313a8f3e8c3350f79e3ad3e7350f87f2c1442"
+start_frame = 0
+frames = 1112
+expect = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 1496; retain three following frames.
+[[segment]]
+id = "credits-silhouette-spawn"
+seed = "100-credits:336"
+seed_sha256 = "30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+inputs = "seed-credits.inputs"
+input_sha256 = "344e9a8d6654c87f8b7470205e2313a8f3e8c3350f79e3ad3e7350f87f2c1442"
+start_frame = 0
+frames = 1500
+expect = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 1504; retain three following frames.
+[[segment]]
+id = "credits-explosion-slot"
+seed = "100-credits:336"
+seed_sha256 = "30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+inputs = "seed-credits.inputs"
+input_sha256 = "344e9a8d6654c87f8b7470205e2313a8f3e8c3350f79e3ad3e7350f87f2c1442"
+start_frame = 0
+frames = 1508
+expect = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 1648; retain three following frames.
+[[segment]]
+id = "credits-explosion-afterglow-slot"
+seed = "100-credits:336"
+seed_sha256 = "30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+inputs = "seed-credits.inputs"
+input_sha256 = "344e9a8d6654c87f8b7470205e2313a8f3e8c3350f79e3ad3e7350f87f2c1442"
+start_frame = 0
+frames = 1652
+expect = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 2898; retain three following frames.
+[[segment]]
+id = "credits-completed-spawn"
+seed = "100-credits:336"
+seed_sha256 = "30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+inputs = "seed-credits.inputs"
+input_sha256 = "344e9a8d6654c87f8b7470205e2313a8f3e8c3350f79e3ad3e7350f87f2c1442"
+start_frame = 0
+frames = 2902
+expect = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 3080; retain three following frames.
+[[segment]]
+id = "credits-time-spawn"
+seed = "100-credits:336"
+seed_sha256 = "30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+inputs = "seed-credits.inputs"
+input_sha256 = "344e9a8d6654c87f8b7470205e2313a8f3e8c3350f79e3ad3e7350f87f2c1442"
+start_frame = 0
+frames = 3084
+expect = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 3166; retain three following frames.
+[[segment]]
+id = "credits-time-hours-spawn"
+seed = "100-credits:336"
+seed_sha256 = "30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+inputs = "seed-credits.inputs"
+input_sha256 = "344e9a8d6654c87f8b7470205e2313a8f3e8c3350f79e3ad3e7350f87f2c1442"
+start_frame = 0
+frames = 3170
+expect = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 3174; retain three following frames.
+[[segment]]
+id = "credits-time-hours-units-spawn"
+seed = "100-credits:336"
+seed_sha256 = "30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+inputs = "seed-credits.inputs"
+input_sha256 = "344e9a8d6654c87f8b7470205e2313a8f3e8c3350f79e3ad3e7350f87f2c1442"
+start_frame = 0
+frames = 3178
+expect = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 3182; retain three following frames.
+[[segment]]
+id = "credits-time-separator-spawn"
+seed = "100-credits:336"
+seed_sha256 = "30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+inputs = "seed-credits.inputs"
+input_sha256 = "344e9a8d6654c87f8b7470205e2313a8f3e8c3350f79e3ad3e7350f87f2c1442"
+start_frame = 0
+frames = 3186
+expect = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 3190; retain three following frames.
+[[segment]]
+id = "credits-time-minutes-spawn"
+seed = "100-credits:336"
+seed_sha256 = "30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+inputs = "seed-credits.inputs"
+input_sha256 = "344e9a8d6654c87f8b7470205e2313a8f3e8c3350f79e3ad3e7350f87f2c1442"
+start_frame = 0
+frames = 3194
+expect = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 3198; retain three following frames.
+[[segment]]
+id = "credits-time-minutes-units-spawn"
+seed = "100-credits:336"
+seed_sha256 = "30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+inputs = "seed-credits.inputs"
+input_sha256 = "344e9a8d6654c87f8b7470205e2313a8f3e8c3350f79e3ad3e7350f87f2c1442"
+start_frame = 0
+frames = 3202
+expect = ["room:91F8", "state:39"]
+
+# First oracle difference at native frame 11786; retain three following frames.
+[[segment]]
+id = "credits-postroll-wave"
+seed = "100-credits:336"
+seed_sha256 = "30a15d0ea37f431e17b1fe820a2d4518ce1d83df280be4c518053115d9db12ac"
+inputs = "seed-credits.inputs"
+input_sha256 = "344e9a8d6654c87f8b7470205e2313a8f3e8c3350f79e3ad3e7350f87f2c1442"
+start_frame = 0
+frames = 11790
+expect = ["credits-complete"]

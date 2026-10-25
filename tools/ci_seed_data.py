@@ -35,7 +35,7 @@ def valid_name(name):
     if path.is_absolute() or ".." in path.parts or "\\" in name or ":" in name:
         return False
     return bool(re.fullmatch(r"movies/[A-Za-z0-9_-]+\.inputs", name) or re.fullmatch(
-        r"target/seeds/[A-Za-z0-9-]+/(?:rooms\.csv|lag\.csv(?:\.polls\.csv|\.events\.csv)?|"
+        r"target/seeds/[A-Za-z0-9-]+/(?:rooms\.csv|lag\.csv(?:\.(?:polls|events|eof-polls|eof-hardware|phases|milestones)\.csv|\.eof\.json)?|"
         r"[0-9]{4}-[0-9A-F]{4}-(?:wram|sram|vram|cgram|oam|apuram)\.bin|"
         r"[0-9]{4}-[0-9A-F]{4}-registers\.csv)", name))
 

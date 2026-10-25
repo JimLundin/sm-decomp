@@ -319,10 +319,17 @@ jobs:
           pathlib.Path('rom/sm.smc').write_bytes(rom)
           if os.environ['KIND'] != 'route':
               bundle = pathlib.Path(os.environ['RUNNER_TEMP']) / 'seeds-v1.tar.gz.enc'
-              url = 'https://github.com/JimLundin/sm-decomp/releases/download/ci-data/seeds-v1-spore-6b6b2c8fd70bc713.tar.gz.enc'
+              rows = tomllib.loads(pathlib.Path('movies/segments.toml').read_text())['segment']
+              selected = [row for row in rows if row['id'] in os.environ['SEGMENTS'].split()]
+              credits = all(row.get('seed') == '100-credits:336' for row in selected)
+              asset, digest = (
+                  ('seeds-v1-credits-42b93bf0bf83aba1.tar.gz.enc', '42b93bf0bf83aba1dd10fc24ca7d5f5b639c65e501e06ce2239c7c638c2a0ce8')
+                  if credits else
+                  ('seeds-v1-spore-6b6b2c8fd70bc713.tar.gz.enc', '6b6b2c8fd70bc7139410cd576f015dfcb361360ae74cf2196a62d7edfbda7835'))
+              url = 'https://github.com/JimLundin/sm-decomp/releases/download/ci-data/' + asset
               urllib.request.urlretrieve(url, bundle)
               command = [sys.executable, 'tools/ci_seed_data.py', 'restore', str(bundle),
-                         '--sha256', '6b6b2c8fd70bc7139410cd576f015dfcb361360ae74cf2196a62d7edfbda7835']
+                         '--sha256', digest]
               for row in os.environ['SEGMENTS'].split():
                   command += ['--segment', row]
               subprocess.run(command, check=True)

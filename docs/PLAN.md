@@ -46,8 +46,8 @@ auto-land on green (C3); a Linux verifier spike (L1). Details: REVIEW.md lane C.
 
 ## Work order
 
-1. **Current - lane A room-seeded coverage.** 42/44 required checks pass;
-   2 remain pending. Spore Spawn hosted validation passed. Exact pre-read observations preserve the first
+1. **Current - lane A room-seeded coverage.** 43/44 required checks pass locally;
+   Golden Torizo remains pending; credits hosted validation is next. Spore Spawn hosted validation passed. Exact pre-read observations preserve the first
    input edge; Gravity and Grapple pass fresh awards, message completion and full tails.
    Any% 197 and 100% 331 room observations are captured; seeds/movies remain local.
    Hash indexes and regeneration recipes are committed. Existing seeded regressions
@@ -56,8 +56,12 @@ auto-land on green (C3); a Linux verifier spike (L1). Details: REVIEW.md lane C.
    Botwoon passes a fresh defeat and full tail (945 frames) from the published 13%
    route. Spore Spawn passes 2,087 frames through fresh defeat and a full 120-frame tail;
    its spawn-parameter regression adds 167 frames, all zero differences. The fix
-   preserves the original spawner Y accumulator. Golden Torizo and credits remain.
-   Golden sync/capture succeeded; three missing PPU fields block seed conversion. No new hand routes.
+   preserves the original spawner Y accumulator. Full credits now passes 11,798 frames,
+   including fresh completion and the unchanged 120-frame tail. Twelve regression rows
+   cover corrected cinematic spawn accumulators and the separate BG3 HDMA buffer.
+   Authentic EOF capture preserves the original movie and final held input edge.
+   Golden sync/capture and live VRAM-buffer proof succeeded; CGRAM/Mode7 write histories
+   still block seed conversion. No new hand routes.
 2. **Current - lane B bank retirement.** `sm_94`, `sm_91`, `sm_89` and `sm_90` are deleted.
    B1 continues sm_81 menu drawing (1,668 lines); B2 continues sm_88 (274 lines); B3 continues
    Crocomire sm_a4 (1,676 lines); attack and return scripts share checked actors. Player input, rendering, movement and dispatch share existing
