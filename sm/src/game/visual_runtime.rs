@@ -358,6 +358,56 @@ fn hdma_wave_offset(sample: i16, amplitude_low: u8, amplitude_high: u8) -> u16 {
 }
 
 impl Runtime<'_> {
+    pub(crate) fn initialize_wave_pair(&mut self, base: usize, primary: u16) {
+        let source = (0xc00000 | u32::from(primary)).to_ne_bytes();
+        self.write_slice_le(base, 192);
+        self.write_slice_le(base + 6, 192);
+        for at in [base + 1, base + 7] {
+            // Keep high-half, low-word, alternate-pointer publication order.
+            self.write_slice(at + 2, &source[2..]);
+            self.write_slice_native(at, primary);
+            self.write_slice_le(at + 3, primary.wrapping_add(128));
+        }
+        self.write_slice_le(base + 12, 0);
+    }
+
+    pub(crate) fn reset_hdma_wave(&mut self, slot: u16) {
+        let object = usize::from(slot & !1);
+        for (field, value) in [(0x1914, 0xfffe), (0x1920, 1), (0x192c, 0), (0x1938, 0)] {
+            self.write_slice_le(field + object, value);
+        }
+    }
+
+    pub(crate) fn initialize_phantoon_wave(&mut self, slot: u16) {
+        use crate::game::actors::access::AccessMode::Native;
+        let motion = Key::from_legacy(0x80);
+        let controller = Key::from_legacy(0x40);
+        let mode = self.resolve_actor(motion, Native).parameters[0];
+        self.edit_actor(controller, Native, |actor| actor.parameters[0] = mode);
+        if self.resolve_actor(motion, Native).parameters[0] & 1 != 0 {
+            self.initialize_wave_pair(0x9000, 0x9100);
+        } else {
+            for at in [0x9000, 0x9006, 0x900c, 0x900f, 0x9012, 0x9015] {
+                self.write_slice_le(at, 160);
+            }
+            for at in [0x9001, 0x9007] {
+                self.write_slice(at + 2, &0xa09100u32.to_ne_bytes()[2..]);
+                self.write_slice_native(at, 0x9100);
+            }
+            for at in [0x900d, 0x9013] {
+                self.write_slice_native(at, 0x9100);
+            }
+            for at in [0x9004, 0x900a] {
+                self.write_slice_le(at, 0x9140);
+            }
+            for at in [0x9010, 0x9016] {
+                self.write_slice_native(at, 0x9140);
+            }
+            self.write_slice_le(0x9018, 0);
+        }
+        self.reset_hdma_wave(slot);
+    }
+
     pub(crate) fn select_draygon_layer(&mut self, slot: u16) {
         use crate::game::actors::access::AccessMode::Native;
         let actor = self.resolve_actor(Key::from_legacy(0), Native);

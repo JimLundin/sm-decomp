@@ -26,7 +26,6 @@ use crate::game::xray_background::{self, finish_restore, restore_left, restore_r
 pub use crate::types::Consts_88;
 
 crate::game::constants::typed_constants! { Consts_88;
-    addr_loc_889180 = 37248,
     addr_locret_88858A = 34186,
 }
 
@@ -723,44 +722,6 @@ pub unsafe fn sub_88E487(v0: u16, r22: u16, game: &mut Game) {
         SpawnHdmaObject(0x88, &raw const unk_88E4A0 as *const c_void, game);
     }
 }
-pub unsafe fn HdmaobjInstr_E4BD(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    unsafe {
-        (*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).parameter_1 =
-            (*(ram_ptr!(game, EnemyData; 0xf78)).offset(2)).parameter_1;
-        if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(2)).parameter_1 & 1) != 0 {
-            word! { game, 192; kraid_unk9000, g_word_7E9006 }
-            let mut v4: u32 = 12620032i32 as u32;
-            *(ram_ptr!(game, u16; 0x9002, 1)) = *(&raw mut v4 as *mut u16).offset(1);
-            *(ram_ptr!(game, u16; 0x9000, 1)) = v4 as u16;
-            word!(game.g_word_7E9004 = -28288i32 as u16);
-            let mut v5: u32 = 12620032i32 as u32;
-            *(ram_ptr!(game, u16; 0x9008, 1)) = *(&raw mut v5 as *mut u16).offset(1);
-            *(ram_ptr!(game, u16; 0x9006, 1)) = v5 as u16;
-            word! {game; g_word_7E900A = addr_loc_889180 as u16; g_word_7E900C = 0; }
-        } else {
-            word! { game, 160;
-                kraid_unk9000, g_word_7E9006, g_word_7E900C, g_word_7E900F, g_word_7E9012,
-                g_word_7E9015,
-            }
-            let mut v2: u32 = 10522880i32 as u32;
-            *(ram_ptr!(game, u16; 0x9002, 1)) = *(&raw mut v2 as *mut u16).offset(1);
-            *(ram_ptr!(game, u16; 0x9000, 1)) = v2 as u16;
-            let mut v3: u32 = 10522880i32 as u32;
-            *(ram_ptr!(game, u16; 0x9008, 1)) = *(&raw mut v3 as *mut u16).offset(1);
-            *(ram_ptr!(game, u16; 0x9006, 1)) = v3 as u16;
-            *(ram_ptr!(game, u16; 0x900c, 1)) = -28416i32 as u16;
-            *(ram_ptr!(game, u16; 0x9012, 1)) = -28416i32 as u16;
-            word! {game; g_word_7E9004 = -28352i32 as u16; g_word_7E900A = -28352i32 as u16; }
-            *(ram_ptr!(game, u16; 0x900f, 1)) = -28352i32 as u16;
-            *(ram_ptr!(game, u16; 0x9015, 1)) = -28352i32 as u16;
-            word!(game.g_word_7E9018 = 0);
-        }
-        let v6: i32 = k as i32 >> 1;
-        word! {game; hdma_object_A[v6] = -2i32 as u16; hdma_object_B[v6] = 1; }
-        word! { game, 0; hdma_object_C[v6], hdma_object_D[v6] }
-        hdp
-    }
-}
 static unk_88E722: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0, 0x2c, 0xe727 as VoidP);
 static unk_88E74C: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x41, 0x26, 0xe751 as VoidP);
 crate::forward_calls! { pub unsafe fn (game: &mut Game) -> u16;
@@ -833,27 +794,10 @@ pub unsafe fn CinematicFunction_Intro_Func133(game: &mut Game) {
         word!(game.g_word_7E0D9C = 1);
         *(ram_ptr!(game, u16; 0xd9e)) = 0x4000;
         word!(game.loop_counter_transfer_enemies_to_vram = 8);
-        word! { game, 192; button_config_shoot_x_saved, button_config_itemcancel_y_saved }
-        let mut v0: u32 = 12621824i32 as u32;
-        *(ram_ptr!(game, u16; 0xd84, 1)) = *(&raw mut v0 as *mut u16).offset(1);
-        *(ram_ptr!(game, u16; 0xd82, 1)) = v0 as u16;
-        word!(game.button_config_run_b_saved = -26496i32 as u16);
-        let mut v1: u32 = 12621824i32 as u32;
-        *(ram_ptr!(game, u16; 0xd8a, 1)) = *(&raw mut v1 as *mut u16).offset(1);
-        *(ram_ptr!(game, u16; 0xd88, 1)) = v1 as u16;
-        word!(game.button_config_aim_down_L_saved = -26496i32 as u16);
-        word!(game.button_config_aim_up_R_saved = 0);
+        Runtime::new(game).initialize_wave_pair(0xd82, 0x9800);
         static unk_88EC82: SpawnHdmaObject_Args =
             SpawnHdmaObject_Args::new(0x42, 0x11, 0xec8a as VoidP);
         SpawnHdmaObject(0x88, &raw const unk_88EC82 as *const c_void, game);
-    }
-}
-pub unsafe fn HdmaobjInstr_EC9F_ClearVars(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    unsafe {
-        let v2: i32 = k as i32 >> 1;
-        word! {game; hdma_object_A[v2] = -2i32 as u16; hdma_object_B[v2] = 1; }
-        word! { game, 0; hdma_object_C[v2], hdma_object_D[v2] }
-        hdp
     }
 }
 crate::game::address_dispatch! {
@@ -932,12 +876,12 @@ crate::game::address_dispatch! {
         8959182 => liquid_effects::start_wave; 8963175 => liquid_effects::start_wave;
         8963458 => liquid_effects::start_wave; 8968521 => HdmaobjInstr_SetVideoMode1;
         8968577 => HdmaobjInstr_1938_RandomNumber; 8969419 => HdmaobjInstr_GotoIfEventHappened;
-        8971453 => HdmaobjInstr_E4BD;
+        8971453 => [{ Runtime::new(game).initialize_phantoon_wave(k); j }];
         fnHdmaobjInstr_InitMorphBallEyeBeamHdma => [{
                     Runtime::new(game).initialize_eye_beam(k);
                     j
                 }];
-        8973471 => HdmaobjInstr_EC9F_ClearVars; 8958889 => liquid_effects::start_lava_sound;
+        8973471 => [{ Runtime::new(game).reset_hdma_wave(k); j }]; 8958889 => liquid_effects::start_lava_sound;
         8973215 => [{
                     game.g_ram[0x6f] = 0;
                     ConfigureTitleSequenceGradientHDMA(game);
