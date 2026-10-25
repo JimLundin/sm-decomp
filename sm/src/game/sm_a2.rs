@@ -30,13 +30,6 @@ crate::game::constants::typed_constants! { Consts_A2;
     addr_kGripper_Sprmap_E44B = 58443, addr_kGripper_Sprmap_E43F = 58431,
     addr_kHirisingSlowfalling_Ilist_D840 = 55360, addr_kHirisingSlowfalling_Ilist_D834 = 55348,
     addr_kHirisingSlowfalling_Ilist_D82C = 55340, addr_kMaridiaLargeSnail_Ilist_CA4B = 51787,
-    addr_kLowerNorfairRio_Ilist_C6B0 = 50864, addr_kLowerNorfairRio_Ilist_C686 = 50822,
-    addr_kLowerNorfairRio_Ilist_C674 = 50804, addr_kLowerNorfairRio_Ilist_C662 = 50786,
-    addr_kLowerNorfairRio_Ilist_C65A = 50778, addr_kLowerNorfairRio_Ilist_C630 = 50736,
-    addr_kLowerNorfairRio_Ilist_C61A = 50714, addr_kNorfairRio_Ilist_C1A3 = 49571,
-    addr_kNorfairRio_Ilist_C18F = 49551, addr_kNorfairRio_Ilist_C179 = 49529,
-    addr_kNorfairRio_Ilist_C145 = 49477, addr_kNorfairRio_Ilist_C12F = 49455,
-    addr_kNorfairRio_Ilist_C107 = 49415, addr_kNorfairRio_Ilist_C0F1 = 49393,
     addr_kNorfairLavajumpingEnemy_Ilist_BE62 = 48738, addr_kNorfairLavajumpingEnemy_Ilist_BE42 = 48706,
     addr_kNorfairLavajumpingEnemy_Ilist_BE3C = 48700,
     addr_kRinka_Ilist_BA0C = 47628, addr_kRinka_Ilist_B9E0 = 47584,
@@ -65,7 +58,7 @@ crate::game::constants::typed_constants! { Consts_A2;
 }
 
 crate::type_aliases! {
-    pub Enemy_BouncingGoofball, Enemy_LavaSeahorse, Enemy_NorfairRio, Enemy_MaridiaTurtle,
+    pub Enemy_BouncingGoofball, Enemy_LavaSeahorse, Enemy_MaridiaTurtle,
         Enemy_MaridiaLargeSnail, Enemy_MaridiaSpikeyShell, Enemy_NorfairLavajumpingEnemy,
         Enemy_Rinka, Enemy_SpikeShootingPlant, Enemy_GunshipTop, Enemy_HirisingSlowfalling,
         Enemy_LavaquakeRocks, Enemy_MiniMaridiaTurtle, Enemy_ThinHoppingBlobs =
@@ -74,7 +67,7 @@ crate::type_aliases! {
 
 crate::type_aliases! {
     pub Enemy_Flies, Enemy_MaridiaBeybladeTurtle, Enemy_MiniCrocomire,
-        Enemy_GunshipBottom, Enemy_LowerNorfairRio,
+        Enemy_GunshipBottom,
         Enemy_MiniMaridiaBeybladeTurtle, Enemy_NorfairErraticFireball =
         crate::game::enemy_layouts::EnemyLayout8;
 }
@@ -104,12 +97,6 @@ crate::game::constants::typed_constants! { i32;
     fnNorfairLavajumpingEnemy_Func_1 = 0xa2bedc,
     fnNorfairLavajumpingEnemy_Func_2 = 0xa2bf1a, fnNorfairLavajumpingEnemy_Func_3 = 0xa2bf3e,
     fnNorfairLavajumpingEnemy_Func_4 = 0xa2bf7c, fnNorfairLavajumpingEnemy_Func_5 = 0xa2bfbc,
-    fnNorfairRio_Func_1 = 0xa2c281, fnNorfairRio_Func_2 = 0xa2c2e7,
-    fnNorfairRio_Func_3 = 0xa2c33f, fnNorfairRio_Func_4 = 0xa2c361,
-    fnNorfairRio_Func_5 = 0xa2c3b1, fnNorfairRio_Func_6 = 0xa2c406,
-    fnLowerNorfairRio_Func_1 = 0xa2c72e, fnLowerNorfairRio_Func_2 = 0xa2c771,
-    fnLowerNorfairRio_Func_3 = 0xa2c7bb, fnLowerNorfairRio_Func_4 = 0xa2c7d6,
-    fnLowerNorfairRio_Func_5 = 0xa2c82d, fnLowerNorfairRio_Func_6 = 0xa2c888,
     fnMaridiaLargeSnail_Func_7 = 0xa2cf66,
     fnMaridiaLargeSnail_Func_8 = 0xa2cfa9,
     fnLavaSeahorse_Func_1 = 0xa2e654,
@@ -127,7 +114,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_HirisingSlowfalling(o: i32) -> Enemy_HirisingSlowfalling = [0xf78, o as isize];
     Get_LavaSeahorse(o: i32) -> Enemy_LavaSeahorse = [0xf78, o as isize];
     Get_LavaquakeRocks(o: i32) -> Enemy_LavaquakeRocks = [0xf78, o as isize];
-    Get_LowerNorfairRio(o: i32) -> Enemy_LowerNorfairRio = [0xf78, o as isize];
     Get_MaridiaBeybladeTurtle(o: i32) -> Enemy_MaridiaBeybladeTurtle = [0xf78, o as isize];
     Get_MaridiaLargeSnail(o: i32) -> Enemy_MaridiaLargeSnail = [0xf78, o as isize];
     Get_MaridiaSpikeyShell(o: i32) -> Enemy_MaridiaSpikeyShell = [0xf78, o as isize];
@@ -136,7 +122,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_MiniMaridiaTurtle(o: i32) -> Enemy_MiniMaridiaTurtle = [0xf78, o as isize];
     Get_NorfairErraticFireball(o: i32) -> Enemy_NorfairErraticFireball = [0xf78, o as isize];
     Get_NorfairLavajumpingEnemy(o: i32) -> Enemy_NorfairLavajumpingEnemy = [0xf78, o as isize];
-    Get_NorfairRio(o: i32) -> Enemy_NorfairRio = [0xf78, o as isize];
     Get_Rinka(o: i32) -> Enemy_Rinka = [0xf78, o as isize];
     Get_SpikeShootingPlant(o: i32) -> Enemy_SpikeShootingPlant = [0xf78, o as isize];
     Get_ThinHoppingBlobs(o: i32) -> Enemy_ThinHoppingBlobs = [0xf78, o as isize];
@@ -1551,8 +1536,6 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_6(a: u16, game: &mut Game) {
         }
     }
 }
-pub use self::NorfairRio_Func_7 as LowerNorfairRio_Func_7;
-pub use crate::game::norfair_rio::animate as NorfairRio_Func_7;
 crate::game::callback_dispatch! {
     pub unsafe fn CallMaridiaLargeSnailFunc(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -2265,41 +2248,13 @@ crate::game::callback_dispatch! {
         let E = Get_NorfairLavajumpingEnemy(word!(game.cur_enemy_index) as i32, game);
         CallEnemyPreInstr((((*E).var_F) as u32) | (0xa20000u32), game);
     };
-    [10666562] NorfairRio_Init [] {
-        let E = Get_NorfairRio(word!(game.cur_enemy_index) as i32, game);
-        set_fields! {[(*E)], 0; var_01, var_02}
-        if ((*E).parameter_1 & 0x8000) != 0 {
-            (*E).var_00 = addr_kNorfairRio_Ilist_C18F as u16;
-            (*E).base.current_instruction = addr_kNorfairRio_Ilist_C18F as u16;
-            (*E).var_F = (0xa2c281i32) as u16;
-        } else {
-            (*E).var_00 = addr_kNorfairRio_Ilist_C0F1 as u16;
-            (*E).base.current_instruction = addr_kNorfairRio_Ilist_C0F1 as u16;
-            (*E).var_F = (0xa2c2e7i32) as u16;
-        };
-    };
     [10666615] NorfairRio_Main [] {
         NextRandom(game);
-        let E = Get_NorfairRio(word!(game.cur_enemy_index) as i32, game);
-        CallEnemyPreInstr((((*E).var_F) as u32) | (0xa20000u32), game);
-    };
-    [10667763] LowerNorfairRio_Init [] {
-        let E = Get_NorfairRio(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_01 = 0;
-        if ((*E).parameter_1 & 0x8000) == 0 {
-            (*E).var_F = (0xa2c771i32) as u16;
-            (*E).var_00 = addr_kLowerNorfairRio_Ilist_C61A as u16;
-            (*E).base.current_instruction = addr_kLowerNorfairRio_Ilist_C61A as u16;
-        } else {
-            (*E).var_F = (0xa2c72ei32) as u16;
-            (*E).var_00 = addr_kLowerNorfairRio_Ilist_C6B0 as u16;
-            (*E).base.current_instruction = addr_kLowerNorfairRio_Ilist_C6B0 as u16;
-        };
+        CallEnemyPreInstr(crate::game::norfair_rio::current_phase(game), game);
     };
     [10667812] LowerNorfairRio_Main [] {
         NextRandom(game);
-        let E = Get_LowerNorfairRio(word!(game.cur_enemy_index) as i32, game);
-        CallEnemyPreInstr((((*E).var_F) as u32) | (0xa20000u32), game);
+        CallEnemyPreInstr(crate::game::norfair_rio::current_phase(game), game);
     };
     [10669331] MaridiaLargeSnail_Main [] {
         MaridiaLargeSnail_Func_1(word!(game.cur_enemy_index), game);
@@ -2527,6 +2482,9 @@ crate::game::callback_dispatch! {
             Enemy_NormalShotAI_A2(game);
         }
     };
+    @functions [pub fn (game: &mut Game)];
+    [10666562] NorfairRio_Init [] { crate::game::norfair_rio::initialize(false, game); };
+    [10667763] LowerNorfairRio_Init [] { crate::game::norfair_rio::initialize(true, game); };
     @forward [pub unsafe fn (game: &mut Game)];
     [10649615] Enemy_GrappleReact_CancelBeam_A2 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
     [10649610] Enemy_GrappleReact_KillEnemy_A2 => actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Grapple);
@@ -2719,49 +2677,49 @@ crate::game::callback_dispatch! {
         (*Get_NorfairLavajumpingEnemy(word!(game.cur_enemy_index) as i32, game)).var_00 = 1;
         jp
     };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10666441] NorfairRio_Instr_C1C9 [jp] {
-        (*Get_NorfairRio(word!(game.cur_enemy_index) as i32, game)).var_01 = 1;
+        crate::game::norfair_rio::script_value(1, 1, game);
     };
     [10666452] NorfairRio_Instr_C1D4 [jp] {
-        (*Get_NorfairRio(word!(game.cur_enemy_index) as i32, game)).var_02 = 8;
+        crate::game::norfair_rio::script_value(2, 8, game);
     };
     [10666463] NorfairRio_Instr_C1DF [jp] {
-        (*Get_NorfairRio(word!(game.cur_enemy_index) as i32, game)).var_02 = 8;
+        crate::game::norfair_rio::script_value(2, 8, game);
     };
     [10666474] NorfairRio_Instr_C1EA [jp] {
-        (*Get_NorfairRio(word!(game.cur_enemy_index) as i32, game)).var_02 = 12;
+        crate::game::norfair_rio::script_value(2, 12, game);
     };
     [10666485] NorfairRio_Instr_C1F5 [jp] {
-        (*Get_NorfairRio(word!(game.cur_enemy_index) as i32, game)).var_02 = -12i32 as u16;
+        crate::game::norfair_rio::script_value(2, -12i32 as u16, game);
     };
     [10666496] NorfairRio_Instr_C200 [jp] {
-        (*Get_NorfairRio(word!(game.cur_enemy_index) as i32, game)).var_02 = 4;
+        crate::game::norfair_rio::script_value(2, 4, game);
     };
     [10666507] NorfairRio_Instr_C20B [jp] {
-        (*Get_NorfairRio(word!(game.cur_enemy_index) as i32, game)).var_02 = 0;
+        crate::game::norfair_rio::script_value(2, 0, game);
     };
     [10666518] NorfairRio_Instr_C216 [jp] {
-        (*Get_NorfairRio(word!(game.cur_enemy_index) as i32, game)).var_02 = -4i32 as u16;
+        crate::game::norfair_rio::script_value(2, -4i32 as u16, game);
     };
     [10666529] NorfairRio_Instr_C221 [jp] {
-        (*Get_NorfairRio(word!(game.cur_enemy_index) as i32, game)).var_02 = -12i32 as u16;
+        crate::game::norfair_rio::script_value(2, -12i32 as u16, game);
     };
     [10666540] NorfairRio_Instr_C22C [jp] {
-        (*Get_NorfairRio(word!(game.cur_enemy_index) as i32, game)).var_02 = -16i32 as u16;
+        crate::game::norfair_rio::script_value(2, -16i32 as u16, game);
     };
     [10666551] NorfairRio_Instr_C237 [jp] {
-        (*Get_NorfairRio(word!(game.cur_enemy_index) as i32, game)).var_02 = 12;
+        crate::game::norfair_rio::script_value(2, 12, game);
     };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10667730] LowerNorfairRio_Instr_C6D2 [jp] {
-        (*Get_NorfairRio(word!(game.cur_enemy_index) as i32, game)).var_01 = 1;
+        crate::game::norfair_rio::script_value(1, 1, game);
     };
     [10667741] LowerNorfairRio_Instr_C6DD [jp] {
-        (*Get_NorfairRio(word!(game.cur_enemy_index) as i32, game)).var_02 = 0;
+        crate::game::norfair_rio::script_value(2, 0, game);
     };
     [10667752] LowerNorfairRio_Instr_C6E8 [jp] {
-        (*Get_NorfairRio(word!(game.cur_enemy_index) as i32, game)).var_02 = 1;
+        crate::game::norfair_rio::script_value(2, 1, game);
     };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10668907] MaridiaLargeSnail_Instr_CB6B [jp] { QueueSfx2_Max6(0xe, game); };
@@ -3153,27 +3111,6 @@ crate::game::callback_dispatch! {
             (*E).var_F = (0xa2b14ei32) as u16;
         }
     };
-    [10667014] NorfairRio_Func_6 [] {
-        (*Get_NorfairRio(k as i32, game)).var_F = (0xa2c2e7i32) as u16;
-    };
-    [10667822] LowerNorfairRio_Func_1 [] {
-        let E = Get_LowerNorfairRio(k as i32, game);
-        let v1: i32 = k as i32 >> 1;
-        if word!(game.enemy_drawing_queue[(v1 + 100)]) != 0 {
-            let v3: u16 = word!(game.enemy_drawing_queue[(v1 + 109)]);
-            (*E).base.frozen_timer = v3;
-            if v3 == 0 && (*gEnemySpawnData(k as i32, game).offset(31)).field_4 != 0 {
-                (*E).base.properties =
-                    ((*E).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
-                (*E).base.x_pos = word!(game.enemy_drawing_queue[(v1 + 91)]);
-                (*E).base.y_pos = (word!(game.enemy_drawing_queue[(v1 + 93)])).wrapping_add(12);
-            } else {
-                (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
-            }
-        } else {
-            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
-        };
-    };
     [10675953] LavaSeahorse_Func_3 [] {
         LavaSeahorse_Func_6(game);
         let E = Get_LavaSeahorse(k as i32, game);
@@ -3327,91 +3264,6 @@ crate::game::callback_dispatch! {
         };
     };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    @prefix { let E = Get_NorfairRio(k as i32, game); };
-    [10666625] NorfairRio_Func_1 [] {
-        let v1: i32 = k as i32 >> 1;
-        if word!(game.enemy_drawing_queue[(v1 + 100)]) != 0 {
-            let v3: u16 = word!(game.enemy_drawing_queue[(v1 + 109)]);
-            (*E).base.frozen_timer = v3;
-            if v3 != 0 || {
-                (*E).base.properties =
-                    ((*E).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
-                (*gEnemySpawnData(k as i32, game).offset(31)).some_flag as i32
-                    == addr_kNorfairRio_Ilist_C0F1 as i32
-            } {
-                (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
-            } else {
-                let mut r18: u16 = addr_kNorfairRio_Ilist_C18F as u16;
-                let mut v6 = gEnemySpawnData(k as i32, game);
-                if ((*v6.offset(31)).field_4 & 0x8000) != 0 {
-                    r18 = addr_kNorfairRio_Ilist_C1A3 as u16;
-                }
-                NorfairRio_Func_7(r18, game);
-                (*E).base.properties =
-                    ((*E).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
-                (*E).base.x_pos = word!(game.enemy_drawing_queue[(v1 + 91)]);
-                (*E).base.y_pos =
-                    ((*v6.offset(31)).field_4).wrapping_add(word!(game.enemy_drawing_queue[(v1 + 93)]));
-            }
-        } else {
-            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
-        };
-    };
-    [10666727] NorfairRio_Func_2 [] {
-        if (word!(game.random_number) & 0x101) != 0 && ({ let (actor, threshold) = (k, 0xc0); let delta = actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X); u8::from((delta as i16).wrapping_abs() as u16 >= threshold) }) & 1 == 0 {
-            (*E).var_A = crate::rtl::rom_table_word!(
-                game,
-                0xa2c1c1,
-                ((word!(game.random_number) as i32 >> 1 & 2) as u16 >> 1) as isize,
-            );
-            (*E).var_B = crate::rtl::rom_table_word!(game, 0xa2c1c5, 0);
-            if ((word!(game.samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) < 0 {
-                (*E).var_B = -((*E).var_B as i32) as u16;
-            }
-            NorfairRio_Func_7(addr_kNorfairRio_Ilist_C107 as u16, game);
-            (*E).var_F = (0xa2c33fi32) as u16;
-        } else if (*E).var_01 != 0 {
-            (*E).var_01 = 0;
-            NorfairRio_Func_7(addr_kNorfairRio_Ilist_C0F1 as u16, game);
-        }
-    };
-    [10666815] NorfairRio_Func_3 [] {
-        if (*E).var_01 != 0 {
-            (*E).var_01 = 0;
-            NorfairRio_Func_7(addr_kNorfairRio_Ilist_C12F as u16, game);
-            (*E).var_F = (0xa2c361i32) as u16;
-            QueueSfx2_Max6(0x65, game);
-        }
-    };
-    [10667889] LowerNorfairRio_Func_2 [] {
-        if (word!(game.random_number) & 0x101) != 0 && ({ let (actor, threshold) = (k, 0x70); let delta = actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X); u8::from((delta as i16).wrapping_abs() as u16 >= threshold) }) & 1 == 0 {
-            (*E).var_C = crate::rtl::rom_table_word!(game, 0xa2c6ca, 0);
-            (*E).var_D = crate::rtl::rom_table_word!(game, 0xa2c6ce, 0);
-            if ((word!(game.samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) < 0 {
-                (*E).var_D = -((*E).var_D as i32) as u16;
-            }
-            LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C630 as u16, game);
-            (*E).var_F = (0xa2c7bbi32) as u16;
-        } else {
-            (*E).var_01 = 0;
-            LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C61A as u16, game);
-        };
-    };
-    [10667963] LowerNorfairRio_Func_3 [] {
-        if (*E).var_01 != 0 {
-            (*E).var_01 = 0;
-            LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C65A as u16, game);
-            (*E).var_F = (0xa2c7d6i32) as u16;
-        }
-    };
-    [10668168] LowerNorfairRio_Func_6 [] {
-        if (*E).var_01 != 0 {
-            (*E).var_01 = 0;
-            LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C686 as u16, game);
-            (*E).var_F = (0xa2c771i32) as u16;
-        }
-    };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
     @prefix { let E = Get_MaridiaLargeSnail(k as i32, game); };
     MaridiaLargeSnail_Func_2 [] {
         (*E).var_0B = 0;
@@ -3495,6 +3347,14 @@ crate::game::callback_dispatch! {
         }
     };
     @functions [pub fn (k: u16, game: &mut Game)];
+    [10666625] NorfairRio_Func_1 [] { crate::game::norfair_rio::follow_parent(k, false, game); };
+    [10666727] NorfairRio_Func_2 [] { crate::game::norfair_rio::wait_to_dive(k, false, game); };
+    [10666815] NorfairRio_Func_3 [] { crate::game::norfair_rio::finish_animation(k, false, false, game); };
+    [10667014] NorfairRio_Func_6 [] { crate::game::norfair_rio::finish_animation(k, false, true, game); };
+    [10667822] LowerNorfairRio_Func_1 [] { crate::game::norfair_rio::follow_parent(k, true, game); };
+    [10667889] LowerNorfairRio_Func_2 [] { crate::game::norfair_rio::wait_to_dive(k, true, game); };
+    [10667963] LowerNorfairRio_Func_3 [] { crate::game::norfair_rio::finish_animation(k, true, false, game); };
+    [10668168] LowerNorfairRio_Func_6 [] { crate::game::norfair_rio::finish_animation(k, true, true, game); };
     [10666849] NorfairRio_Func_4 [] { crate::game::norfair_rio::dive(k, false, true, game); };
     [10666929] NorfairRio_Func_5 [] { crate::game::norfair_rio::dive(k, false, false, game); };
     [10667990] LowerNorfairRio_Func_4 [] { crate::game::norfair_rio::dive(k, true, true, game); };

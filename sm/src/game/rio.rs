@@ -22,6 +22,29 @@ fn animate(runtime: &mut Runtime<'_>, instruction: u16) {
     });
 }
 
+pub(super) fn aim_velocity(
+    runtime: &mut Runtime<'_>,
+    key: Key,
+    vertical: usize,
+    tables: [u32; 2],
+    index: isize,
+) {
+    for (variable, address, entry) in [(vertical, tables[0], index), (vertical + 1, tables[1], 0)] {
+        let value = runtime
+            .loaded_image()
+            .expect("ROM must be loaded")
+            .table_word(crate::rom::lorom_offset(address) as usize, entry);
+        runtime.edit_actor(key, Native, |actor| actor.variables[variable] = value);
+    }
+    let player_x = runtime.session().player.x;
+    let actor_x = runtime.resolve_actor(key, Native).x.whole;
+    if (player_x.wrapping_sub(actor_x) as i16) < 0 {
+        runtime.edit_actor(key, Native, |actor| {
+            actor.variables[vertical + 1] = actor.variables[vertical + 1].wrapping_neg();
+        });
+    }
+}
+
 pub(super) fn move_axis(runtime: &mut Runtime<'_>, key: Key, axis: Axis, variable: usize) -> bool {
     let amount = (runtime.resolve_actor(key, Native).variables[variable] as i16 as i32) << 8;
     (match axis {
@@ -67,20 +90,7 @@ pub(crate) fn advance(game: &mut Game) -> bool {
         0xbbed => {
             let delta = api::player_delta(&runtime, key, Axis::X) as i16;
             if (delta.wrapping_abs() as u16) < 0xa0 {
-                for (address, variable) in [(0xa2bbbb, 2), (0xa2bbbf, 3)] {
-                    let value = runtime
-                        .loaded_image()
-                        .expect("ROM must be loaded")
-                        .table_word(crate::rom::lorom_offset(address) as usize, 0);
-                    runtime.edit_actor(key, Native, |actor| actor.variables[variable] = value);
-                }
-                let player_x = runtime.session().player.x;
-                let actor_x = runtime.resolve_actor(key, Native).x.whole;
-                if (player_x.wrapping_sub(actor_x) as i16) < 0 {
-                    runtime.edit_actor(key, Native, |actor| {
-                        actor.variables[3] = actor.variables[3].wrapping_neg();
-                    });
-                }
+                aim_velocity(&mut runtime, key, 2, [0xa2bbbb, 0xa2bbbf], 0);
                 animate(&mut runtime, 0xbb7f);
                 runtime.edit_actor(key, Native, |actor| actor.variables[1] = 0xbc48);
                 sound = !api::current_outside_screen(&runtime);

@@ -2,12 +2,148 @@
 #![forbid(unsafe_code)]
 use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::actors::api::Axis;
-use crate::game::rio::{bounce_horizontal, move_axis};
+use crate::game::rio::{aim_velocity, bounce_horizontal, move_axis};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 
-pub fn animate(instruction: u16, game: &mut Game) {
-    animate_current(&mut Runtime::new(game), instruction);
+pub(crate) fn script_value(variable: usize, value: u16, game: &mut Game) {
+    let mut runtime = Runtime::new(game);
+    let at = 0x7800 + usize::from(runtime.word(0xe54)) + 2 * variable;
+    runtime.write_slice_native(at, value);
+}
+
+pub(crate) fn current_phase(game: &mut Game) -> u32 {
+    let runtime = Runtime::new(game);
+    let key = Key::from_legacy(runtime.word(0xe54));
+    0xa20000 | u32::from(runtime.resolve_actor(key, Native).pre_instruction)
+}
+
+pub(crate) fn initialize(lower: bool, game: &mut Game) {
+    let mut runtime = Runtime::new(game);
+    let raw = runtime.word(0xe54);
+    let key = Key::from_legacy(raw);
+    let scratch = 0x7800 + usize::from(raw);
+    runtime.write_slice_native(scratch + 2, 0);
+    if !lower {
+        runtime.write_slice_native(scratch + 4, 0);
+    }
+    let follower = runtime.resolve_actor(key, Native).parameters[0] & 0x8000 != 0;
+    let (instruction, phase) = match (lower, follower) {
+        (false, false) => (0xc0f1, 0xc2e7),
+        (false, true) => (0xc18f, 0xc281),
+        (true, false) => (0xc61a, 0xc771),
+        (true, true) => (0xc6b0, 0xc72e),
+    };
+    if lower {
+        runtime.edit_actor(key, Native, |actor| actor.pre_instruction = phase);
+    }
+    runtime.write_slice_native(scratch, instruction);
+    runtime.edit_actor(key, Native, |actor| {
+        actor.instruction = instruction;
+        if !lower {
+            actor.pre_instruction = phase;
+        }
+    });
+}
+
+pub(crate) fn follow_parent(k: u16, lower: bool, game: &mut Game) {
+    let mut runtime = Runtime::new(game);
+    let key = Key::from_legacy(k);
+    let drawing = 0xe84 + (usize::from(k) >> 1) * 2;
+    let spawn = 0x77c0 + usize::from(k);
+    if runtime.word(drawing + 200) == 0 {
+        runtime.edit_actor(key, Native, |actor| actor.properties |= 0x200);
+        return;
+    }
+    let frozen = runtime.word(drawing + 218);
+    runtime.edit_actor(key, Native, |actor| actor.frozen = frozen);
+    if !lower && frozen == 0 {
+        runtime.edit_actor(key, Native, |actor| actor.properties &= !0x100);
+    }
+    if frozen != 0
+        || if lower {
+            runtime.native_word(spawn + 4) == 0
+        } else {
+            runtime.native_word(spawn) == 0xc0f1
+        }
+    {
+        runtime.edit_actor(key, Native, |actor| actor.properties |= 0x100);
+        return;
+    }
+    if !lower {
+        let instruction = if runtime.native_word(spawn + 4) & 0x8000 != 0 {
+            0xc1a3
+        } else {
+            0xc18f
+        };
+        animate_current(&mut runtime, instruction);
+    }
+    runtime.edit_actor(key, Native, |actor| actor.properties &= !0x100);
+    let x = runtime.word(drawing + 182);
+    runtime.edit_actor(key, Native, |actor| actor.x.whole = x);
+    let offset = if lower {
+        12
+    } else {
+        runtime.native_word(spawn + 4)
+    };
+    let y = offset.wrapping_add(runtime.word(drawing + 186));
+    runtime.edit_actor(key, Native, |actor| actor.y.whole = y);
+}
+
+pub(crate) fn wait_to_dive(k: u16, lower: bool, game: &mut Game) {
+    let mut runtime = Runtime::new(game);
+    let key = Key::from_legacy(k);
+    let finished = 0x7802 + usize::from(k);
+    if runtime.word(0x5e5) & 0x101 != 0
+        && ((crate::game::actors::api::player_delta(&runtime, key, Axis::X) as i16).wrapping_abs()
+            as u16)
+            < if lower { 0x70 } else { 0xc0 }
+    {
+        let vertical = if lower { 2 } else { 0 };
+        let index = if lower {
+            0
+        } else {
+            ((runtime.word(0x5e5) >> 1 & 2) >> 1) as isize
+        };
+        let tables = if lower {
+            [0xa2c6ca, 0xa2c6ce]
+        } else {
+            [0xa2c1c1, 0xa2c1c5]
+        };
+        aim_velocity(&mut runtime, key, vertical, tables, index);
+        animate_current(&mut runtime, if lower { 0xc630 } else { 0xc107 });
+        runtime.edit_actor(key, Native, |actor| {
+            actor.pre_instruction = if lower { 0xc7bb } else { 0xc33f }
+        });
+    } else if lower || runtime.native_word(finished) != 0 {
+        runtime.write_slice_native(finished, 0);
+        animate_current(&mut runtime, if lower { 0xc61a } else { 0xc0f1 });
+    }
+}
+
+pub(crate) fn finish_animation(k: u16, lower: bool, recovering: bool, game: &mut Game) {
+    let mut runtime = Runtime::new(game);
+    let key = Key::from_legacy(k);
+    if !lower && recovering {
+        runtime.edit_actor(key, Native, |actor| actor.pre_instruction = 0xc2e7);
+        return;
+    }
+    let finished = 0x7802 + usize::from(k);
+    if runtime.native_word(finished) == 0 {
+        return;
+    }
+    runtime.write_slice_native(finished, 0);
+    let (instruction, phase) = match (lower, recovering) {
+        (false, _) => (0xc12f, 0xc361),
+        (true, false) => (0xc65a, 0xc7d6),
+        (true, true) => (0xc686, 0xc771),
+    };
+    animate_current(&mut runtime, instruction);
+    runtime.edit_actor(key, Native, |actor| actor.pre_instruction = phase);
+    drop(runtime);
+    if !lower {
+        crate::game::sm_80::QueueSfx2_Max6(0x65, game);
+    }
 }
 
 fn animate_current(runtime: &mut Runtime<'_>, instruction: u16) {
