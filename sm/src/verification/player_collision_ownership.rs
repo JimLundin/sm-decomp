@@ -4,7 +4,7 @@
 use crate::{
     game::{
         player_projectiles::access::Store, player_transitions as pt, session_access::SessionAccess,
-        session_runtime::Runtime, sm_80, sm_88, sm_90, sm_91, sm_a9,
+        session_runtime::Runtime, sm_80, sm_90, sm_91, sm_a9,
     },
     game_state::Game,
     rom::{RomImage, lorom_offset},
@@ -234,7 +234,8 @@ unsafe fn sequence(g: &mut Game, out: &mut Vec<u8>) {
     record(out, 0, 0, g);
     let result = {
         let mut rt = Runtime::new(g);
-        let result = rt.foreign(|g| unsafe { sm_88::VariaSuitPickup_1(g) });
+        crate::game::player_transitions::suit::expand(&mut rt, Runtime::suit_window_word);
+        let result = 1u8;
         assert_eq!(rt.word(0xdec), 4, "collision.owner.sequence.stage_reread");
         assert_eq!(
             rt.word(0xdee),

@@ -60,6 +60,8 @@ pub struct PlayerPalette {
     pub suit_index: u16,
     pub xray_progress: u16,
     pub timer: u16,
+    pub suit_beam_speed: u16,
+    pub suit_red_green: u16,
     // Physical word DF2 also has suit-pickup/transition legacy aliases.
     pub crystal_flash_delay: u16,
 }

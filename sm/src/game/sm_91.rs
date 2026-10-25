@@ -13,9 +13,7 @@ use crate::game::enemy_projectiles::{DisableEprojs, EnableEprojs};
 use crate::game::palette_effects;
 use crate::game::room_mechanisms::set_enabled;
 
-use crate::game::sm_80::{
-    InvalidInterrupt_Crash, QueueSfx1_Max6, QueueSfx1_Max9, QueueSfx2_Max6, QueueSfx3_Max6,
-};
+use crate::game::sm_80::{InvalidInterrupt_Crash, QueueSfx1_Max6, QueueSfx3_Max6};
 use crate::game::sm_88::SpawnHdmaObject;
 use crate::game::sm_90::{CallSomeSamusCode, LoadProjectilePalette, UpdateBeamTilesAndPalette};
 
@@ -67,98 +65,6 @@ pub unsafe fn XrayRunHandler(game: &mut Game) {
 pub unsafe fn GameState_28_Unused_(game: &mut Game) {
     unsafe {
         Unreachable(game);
-    }
-}
-pub unsafe fn VariaSuitPickup(game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0xdf0) = 48;
-        *ram_ptr!(game; 0xdf1) = 80;
-        *ram_ptr!(game; 0xdf2) = 0x80;
-        *ram_ptr!(game; 0xdf3) = 0;
-        Samus_CancelSpeedBoost(game);
-        words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed = 0);
-        word! { game, 0;
-            samus_x_base_speed, samus_x_base_subspeed, samus_y_subspeed, samus_y_speed, samus_y_dir,
-            used_for_ball_bounce_on_landing, samus_x_accel_mode, elevator_status, substate,
-            suit_pickup_light_beam_pos,
-        }
-        word!(game.suit_pickup_light_beam_widening_speed = 256);
-        word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(255));
-        if *ram_ptr!(game; 0xa1f) == 3 || *ram_ptr!(game; 0xa1f) == 20 {
-            QueueSfx1_Max9(0x32, game);
-        }
-        if (word!(game.equipped_items) & 0x20) != 0 {
-            word!(game.samus_pose = kPose_9B_FaceF_VariaGravitySuit as u16);
-        } else {
-            word!(game.samus_pose = kPose_00_FaceF_Powersuit as u16);
-        }
-        pt::refresh_pose(&mut Runtime::new(game));
-        CallSomeSamusCode(0x15, game);
-        word!(game.samus_x_pos = (word!(game.layer1_x_pos)).wrapping_add(120));
-        word!(game.samus_prev_x_pos = (word!(game.layer1_x_pos)).wrapping_add(120));
-        word!(game.samus_y_pos = (word!(game.layer1_y_pos)).wrapping_add(136));
-        word!(game.samus_prev_y_pos = (word!(game.layer1_y_pos)).wrapping_add(136));
-        QueueSfx2_Max6(0x56, game);
-        static unk_91D59B: SpawnHdmaObject_Args =
-            SpawnHdmaObject_Args::new(0x41, 0x26, 0xd5a2 as VoidP);
-        SpawnHdmaObject(0x91, &raw const unk_91D59B as *const c_void, game);
-    }
-}
-pub unsafe fn GravitySuitPickup(game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0xdf0) = 48;
-        *ram_ptr!(game; 0xdf1) = 73;
-        *ram_ptr!(game; 0xdf2) = -112i32 as u8;
-        *ram_ptr!(game; 0xdf3) = 1;
-        Samus_CancelSpeedBoost(game);
-        words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed = 0);
-        word! { game, 0;
-            samus_x_base_speed, samus_x_base_subspeed, samus_y_subspeed, samus_y_speed, samus_y_dir,
-            used_for_ball_bounce_on_landing, samus_x_accel_mode, elevator_status, substate,
-            suit_pickup_light_beam_pos,
-        }
-        word!(game.suit_pickup_light_beam_widening_speed = 256);
-        word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(255));
-        if *ram_ptr!(game; 0xa1f) as i32 == kMovementType_03_SpinJumping as i32
-            || *ram_ptr!(game; 0xa1f) as i32 == kMovementType_14_WallJumping as i32
-        {
-            QueueSfx1_Max9(0x32, game);
-        }
-        if (word!(game.equipped_items) & 1) != 0 {
-            word!(game.samus_pose = kPose_9B_FaceF_VariaGravitySuit as u16);
-        } else {
-            word!(game.samus_pose = kPose_00_FaceF_Powersuit as u16);
-        }
-        pt::refresh_pose(&mut Runtime::new(game));
-        CallSomeSamusCode(0x15, game);
-        word!(game.samus_x_pos = (word!(game.layer1_x_pos)).wrapping_add(120));
-        word!(game.samus_prev_x_pos = (word!(game.layer1_x_pos)).wrapping_add(120));
-        word!(game.samus_y_pos = (word!(game.layer1_y_pos)).wrapping_add(136));
-        word!(game.samus_prev_y_pos = (word!(game.layer1_y_pos)).wrapping_add(136));
-        QueueSfx2_Max6(0x56, game);
-        static unk_91D673: SpawnHdmaObject_Args =
-            SpawnHdmaObject_Args::new(0x41, 0x26, 0xd67a as VoidP);
-        SpawnHdmaObject(0x91, &raw const unk_91D673 as *const c_void, game);
-    }
-}
-pub unsafe fn InitializeSuitPickupHdma(game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0x69) = 19;
-        *ram_ptr!(game; 0x6c) = 19;
-        *ram_ptr!(game; 0x6b) = 4;
-        *ram_ptr!(game; 0x6d) = 4;
-        *ram_ptr!(game; 0x6e) = 16;
-        *ram_ptr!(game; 0x60) = 0;
-        *ram_ptr!(game; 0x61) = 2;
-        *ram_ptr!(game; 0x62) = 32;
-        *ram_ptr!(game; 0x71) = 51;
-        *ram_ptr!(game; 0x74, 0) = *ram_ptr!(game; 0xdf0);
-        *ram_ptr!(game; 0x74, 1) = *ram_ptr!(game; 0xdf1);
-        *ram_ptr!(game; 0x74, 2) = *ram_ptr!(game; 0xdf2);
-        mov24(ram_ptr!(game, LongPtr; 0xa88), 0x9800e4);
-        mov24(ram_ptr!(game, LongPtr; 0xa8b), 0x98c8e4);
-        mov24(ram_ptr!(game, LongPtr; 0xa8e), 0x999098);
-        word!(game.hdma_var_1 = 0);
     }
 }
 // These legacy entries acquire the one aggregate; composed callers invoke the

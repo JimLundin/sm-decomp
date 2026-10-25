@@ -193,13 +193,11 @@ impl Effects for Runtime<'_> {
         self.foreign(|game| unsafe { crate::game::sm_91::MakeSamusFaceForward(game) });
     }
     fn suit_pickup(&mut self, pickup: SuitPickup) {
-        self.foreign(|game| unsafe {
-            match pickup {
-                SuitPickup::Varia => crate::game::sm_91::VariaSuitPickup(game),
-                SuitPickup::Gravity => crate::game::sm_91::GravitySuitPickup(game),
-                SuitPickup::Unknown(_) => {
-                    crate::rtl::Unreachable(game);
-                }
+        self.owned_call(|runtime| match pickup {
+            SuitPickup::Varia => runtime.begin_suit_pickup(false),
+            SuitPickup::Gravity => runtime.begin_suit_pickup(true),
+            SuitPickup::Unknown(_) => {
+                runtime.foreign(|game| unsafe { crate::rtl::Unreachable(game) });
             }
         });
     }

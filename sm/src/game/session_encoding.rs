@@ -223,6 +223,8 @@ macro_rules! scalar_words {
         $f(0xa74,$($borrow)* $s.player.palette.suit_index);
         $f(0xa80,$($borrow)* $s.player.palette.xray_progress);
         $f(0xad0,$($borrow)* $s.player.palette.timer);
+        $f(0xddc,$($borrow)* $s.player.palette.suit_beam_speed);
+        $f(0xdf0,$($borrow)* $s.player.palette.suit_red_green);
         $f(0xdf2,$($borrow)* $s.player.palette.crystal_flash_delay);
         $f(0xa4e,$($borrow)* $s.player.periodic_damage_fraction);
         $f(0x1e6f,$($borrow)* $s.mechanisms.statue_animation);

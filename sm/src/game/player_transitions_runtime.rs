@@ -123,6 +123,87 @@ impl Effects for Runtime<'_> {
 impl Host for Runtime<'_> {}
 
 impl Runtime<'_> {
+    /// Ordered compatibility output; the core supplies semantic window-word indices.
+    pub(crate) fn suit_window_word(&mut self, index: u16, value: u16) {
+        self.write_slice_le(0x9800 + usize::from(index) * 2, value);
+    }
+
+    pub(crate) fn begin_suit_pickup(&mut self, gravity: bool) {
+        use crate::{game::player_transitions::suit, types::SpawnHdmaObject_Args};
+        suit::prepare(self, gravity, Self::suit_window_word);
+        self.foreign(|game| unsafe { crate::game::sm_90::CallSomeSamusCode(0x15, game) });
+        suit::center(self);
+        visual_host::Effects::sound(self, 2, 6, 0x56);
+        let program = if gravity { 0xd67a } else { 0xd5a2 };
+        let args = SpawnHdmaObject_Args::new(0x41, 0x26, program);
+        self.foreign(|game| unsafe {
+            crate::game::sm_88::SpawnHdmaObject(0x91, (&raw const args).cast(), game)
+        });
+    }
+
+    pub(crate) fn initialize_suit_pickup_hdma(&mut self) {
+        for (address, value) in [
+            (0x69, 19),
+            (0x6c, 19),
+            (0x6b, 4),
+            (0x6d, 4),
+            (0x6e, 16),
+            (0x60, 0),
+            (0x61, 2),
+            (0x62, 32),
+            (0x71, 51),
+        ] {
+            self.set_byte(address, value);
+        }
+        self.publish_suit_colors();
+        for (address, value) in [(0xa88, 0x9800e4u32), (0xa8b, 0x98c8e4), (0xa8e, 0x999098)] {
+            self.write_slice_native(address, value as u16);
+            self.set_byte(address + 2, (value >> 16) as u8);
+        }
+        self.write_slice_le(crate::ram_map::words::hdma_var_1, 0);
+    }
+
+    fn publish_suit_colors(&mut self) {
+        for lane in 0..3 {
+            self.set_byte(0x74 + lane, self.byte(0xdf0 + lane));
+        }
+    }
+
+    pub(crate) fn advance_suit_pickup(&mut self, gravity: bool) {
+        use crate::ram_map::{word_arrays as arrays, words as ram};
+        if crate::game::player_transitions::suit::advance(self, gravity, Self::suit_window_word) {
+            self.publish_suit_colors();
+            self.write_slice_le(ram::fx_layer_blending_config_c, 18);
+            return;
+        }
+        if !gravity {
+            visual_host::Effects::music_delayed8(self, 3);
+        }
+        for (address, value) in [(0x76, 0x80), (0x75, 64), (0x74, 32)] {
+            self.set_byte(address, value);
+        }
+        self.write_slice_native(0xa88, 1);
+        self.set_byte(0xa8a, 0x98);
+        self.write_slice_native(0xa8b, 0);
+        for address in [
+            ram::demo_input_prev,
+            ram::demo_input_prev_new,
+            ram::demo_backup_prev_controller_input,
+        ] {
+            self.write_slice_le(address, 0);
+        }
+        self.suit_window_word(0, 255);
+        self.session_mut().shared_sequence.stage = 0;
+        self.session_mut().shared_sequence.value = 0;
+        self.session_mut().player.palette.suit_red_green = 0;
+        self.session_mut().player.palette.crystal_flash_delay = 0;
+        let offset = usize::from(self.word(ram::hdma_object_index) >> 1) * 2;
+        let program = arrays::hdma_object_instruction_list_pointers + offset;
+        self.write_slice_le(program, self.word(program).wrapping_add(2));
+        self.write_slice_le(arrays::hdma_object_instruction_timers + offset, 1);
+        self.foreign(|game| unsafe { crate::game::sm_90::CallSomeSamusCode(0xb, game) });
+    }
+
     pub(crate) fn load_demo_data(&mut self) {
         use crate::{game::player_transitions::demo, ram_map::words as ram};
         let scene = self.word(ram::demo_scene);

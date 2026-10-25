@@ -2,7 +2,6 @@ use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, A
 use crate::game::beam_windows::calculate_xray_window;
 use crate::game::liquid_effects;
 use crate::game::music::{HandleMusicQueue, QueueMusic_Delayed8};
-use crate::game::player_transitions as pt;
 pub use crate::game::prelude::*;
 use crate::game::scrolling_sky;
 use crate::game::session_runtime::Runtime;
@@ -22,7 +21,6 @@ use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_8b::ConfigureTitleSequenceGradientHDMA;
 use crate::game::sm_80::QueueSfx2_Max6;
 use crate::game::sm_90::CallSomeSamusCode;
-use crate::game::sm_91::{InitializeSuitPickupHdma, Samus_LoadSuitPalette};
 use crate::game::sm_a9::MotherBrain_CalculateRainbowBeamHdma;
 use crate::game::xray_background::{self, finish_restore, restore_left, restore_right};
 
@@ -318,7 +316,7 @@ crate::game::callback_dispatch! {
         9554716 => xray_background::capture_bg1_right;
         9554775 => xray_background::capture_bg1_left; 9554830 => xray_background::build_overlay;
         9556179 => xray_background::capture_bg2_right; 9556339 => xray_background::upload_left; 9556384 => xray_background::upload_right;
-        9556668 => xray_background::set_backdrop; 9557650 => InitializeSuitPickupHdma;
+        9556668 => xray_background::set_backdrop; 9557650 => [Runtime::new(game).initialize_suit_pickup_hdma()];
     }
 }
 pub unsafe fn HdmaobjInstr_CallFarFunc(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
@@ -1081,306 +1079,6 @@ pub unsafe fn HdmaobjPreInstr_DF94(v0: u16, game: &mut Game) {
         };
     }
 }
-static off_88E04E: [Func_U8; 7] = callback_table! { nonnull Func_U8;
-    VariaSuitPickup_0_LightBeamAppears, VariaSuitPickup_1, VariaSuitPickup_2_LightBeamWidens,
-    VariaSuitPickup_3, VariaSuitPickup_4_LightBeamShrinks,
-    VariaSuitPickup_5_LightBeamDissipates, VariaSuitPickup_6,
-};
-pub unsafe fn HdmaobjPreInstr_VariaSuitPickup(k: u16, game: &mut Game) {
-    unsafe {
-        if off_88E04E[word!(game.substate) as usize](game) & 1 != 0 {
-            *ram_ptr!(game; 0x74, 0) = *ram_ptr!(game; 0xdf0);
-            *ram_ptr!(game; 0x74, 1) = *ram_ptr!(game; 0xdf1);
-            *ram_ptr!(game; 0x74, 2) = *ram_ptr!(game; 0xdf2);
-            word!(game.fx_layer_blending_config_c = 18);
-        }
-    }
-}
-static off_88E084: [Func_U8; 7] = callback_table! { nonnull Func_U8;
-    VariaSuitPickup_0_LightBeamAppears, VariaSuitPickup_1, VariaSuitPickup_2_LightBeamWidens,
-    GravitySuitPickup_3, VariaSuitPickup_4_LightBeamShrinks,
-    VariaSuitPickup_5_LightBeamDissipates, GravitySuitPickup_6,
-};
-pub unsafe fn HdmaobjPreInstr_GravitySuitPickup(k: u16, game: &mut Game) {
-    unsafe {
-        if off_88E084[word!(game.substate) as usize](game) & 1 != 0 {
-            *ram_ptr!(game; 0x74, 0) = *ram_ptr!(game; 0xdf0);
-            *ram_ptr!(game; 0x74, 1) = *ram_ptr!(game; 0xdf1);
-            *ram_ptr!(game; 0x74, 2) = *ram_ptr!(game; 0xdf2);
-            word!(game.fx_layer_blending_config_c = 18);
-        }
-    }
-}
-static g_word_88E0D5: u16 = 0x7878;
-pub unsafe fn VariaSuitPickup_0_LightBeamAppears(game: &mut Game) -> u8 {
-    unsafe {
-        word!(game.suit_pickup_light_beam_pos += 8);
-        let mut v0: i16 = word!(game.suit_pickup_light_beam_pos) as i16;
-        let mut v1: u16 = 0;
-        do_until! { v0 <= 0 ;
-            word!(game.hdma_table_1[(v1 >> 1)] = g_word_88E0D5);
-            v1 = (v1).wrapping_add(2);
-            v0 -= 1;
-        }
-        let mut v2: u16 = 510;
-        let mut v3: i16 = word!(game.suit_pickup_light_beam_pos) as i16;
-        do_until! { v3 <= 0 ;
-            word!(game.hdma_table_1[(v2 >> 1)] = g_word_88E0D5);
-            v2 = (v2).wrapping_sub(2);
-            v3 -= 1;
-        }
-        if word!(game.suit_pickup_light_beam_pos) as i32 - 128i32 & 0x8000 == 0 {
-            word!(game.substate += 1);
-            word!(game.suit_pickup_light_beam_pos = 30840);
-        }
-        1
-    }
-}
-pub unsafe fn VariaSuitPickup_1(game: &mut Game) -> u8 {
-    unsafe {
-        byte!(@pointer ram_ptr!(game, u16; 0xdee); 0) = ((word!(game.suit_pickup_light_beam_pos))
-            as u8)
-            .wrapping_sub(byte!(@pointer ram_ptr!(game, u16; 0xddc); 1));
-        crate::update_place! { reference fresh17 = *ram_ptr!(game; 0xdee, 1) => (*fresh17).wrapping_add(*ram_ptr!(game; 0xddc, 1)); }
-        for i in (0i32..=510).rev().step_by(2) {
-            word!(game.hdma_table_1[(i >> 1)] = word!(game.suit_pickup_light_beam_pos));
-        }
-        if word!(game.suit_pickup_light_beam_pos) as u8 as i32 - 97i32 & 0x8000 != 0 {
-            word!(game.substate += 1);
-            word!(game.suit_pickup_light_beam_pos = 0x846c);
-        }
-        1
-    }
-}
-
-macro_rules! widen_suit_pickup_beam_row {
-    ($game:ident, $width_index:ident, $output_offset:ident) => {
-        let mut v4: i8 = ((word!($game.suit_pickup_light_beam_pos)) as i8).wrapping_sub(
-            (byte!(
-                @pointer $crate::rtl::rom_ptr!($game; 0x88e3c9);
-                $width_index as isize
-            )) as i8,
-        );
-        if v4 < 0 {
-            v4 = 0;
-        }
-        byte!(@pointer ram_ptr!($game, u16; 0x9800); $output_offset as u16 as i32 as isize) =
-            v4 as u8;
-        let v5: u16 = (($output_offset) as u16).wrapping_add(1);
-        let mut v6: i8 = ((byte!(
-            @pointer $crate::rtl::rom_ptr!($game; 0x88e3c9);
-            $width_index as isize
-        )) as i8)
-            .wrapping_add((byte!(@pointer ram_ptr!($game, u16; 0xdee); 1)) as i8);
-        if u8::overflowing_add(
-            byte!(
-                @pointer $crate::rtl::rom_ptr!($game; 0x88e3c9);
-                $width_index as isize
-            ),
-            byte!(@pointer ram_ptr!($game, u16; 0xdee); 1isize),
-        )
-        .1
-        {
-            v6 = -1i8;
-        }
-        byte!(@pointer ram_ptr!($game, u16; 0x9800); v5 as i32 as isize) = v6 as u8;
-        $output_offset = ((v5) as i16).wrapping_add(1);
-    };
-}
-
-pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> u8 {
-    unsafe {
-        AdvanceSuitPickupColorMathSubscreenToWhite(game);
-        let v0: bool = ((word!(game.suit_pickup_light_beam_pos)) as i8)
-            .wrapping_sub((byte!(@pointer ram_ptr!(game, u16; 0xddc); 1)) as i8)
-            < 0;
-        byte!(@pointer ram_ptr!(game, u16; 0xdee); 0) = ((word!(game.suit_pickup_light_beam_pos))
-            as u8)
-            .wrapping_sub(byte!(@pointer ram_ptr!(game, u16; 0xddc); 1));
-        if word!(game.suit_pickup_light_beam_pos) as u8 == 0 || v0 {
-            word!(game.suit_pickup_light_beam_pos = -256i32 as u16);
-        } else {
-            let mut v1: i8 = ((byte!(@pointer ram_ptr!(game, u16; 0xddc); 1isize)) as i8)
-                .wrapping_add((byte!(@pointer ram_ptr!(game, u16; 0xdee); 1)) as i8);
-            if u8::overflowing_add(
-                byte!(@pointer ram_ptr!(game, u16; 0xddc); 1isize),
-                byte!(@pointer ram_ptr!(game, u16; 0xdee); 1isize),
-            )
-            .1
-            {
-                v1 = -1i8;
-            }
-            byte!(@pointer ram_ptr!(game, u16; 0xdee); 1) = v1 as u8;
-        }
-        let mut v2: i16 = 0;
-        let mut v3: u16 = 0;
-        do_until! { v2 >= 0x100 ;
-            widen_suit_pickup_beam_row!(game, v3, v2);
-            v3 = v3.wrapping_add(1);
-        }
-        let mut v7: u16 = (v3).wrapping_sub(1);
-        do_until! { v2 >= 0x200 ;
-            widen_suit_pickup_beam_row!(game, v7, v2);
-            v7 = v7.wrapping_sub(1);
-        }
-        word!(game.suit_pickup_light_beam_widening_speed += 96);
-        if word!(game.suit_pickup_light_beam_pos) == 0xff00 {
-            word!(game.substate += 1);
-            word!(game.suit_pickup_light_beam_widening_speed >>= 1);
-            word!(game.suit_pickup_light_beam_pos = 0);
-        }
-        1
-    }
-}
-pub unsafe fn VariaSuitPickup_4_LightBeamShrinks(game: &mut Game) -> u8 {
-    unsafe {
-        if *ram_ptr!(game; 0xdf3) != 0 {
-            AdvanceSuitPickupColorMathToBlue(game);
-        } else {
-            AdvanceSuitPickupColorMathToOrange(game);
-        }
-        word!(
-            checked_i32,
-            game.suit_pickup_light_beam_pos +=
-                ((word!(game.suit_pickup_light_beam_widening_speed) as i32 & 0xff00) >> 8)
-        );
-        let mut v0: i16 = word!(game.suit_pickup_light_beam_pos) as i16;
-        let mut v1: u16 = 0;
-        do_until! { v0 <= 0 ;
-            word!(game.hdma_table_1[(v1 >> 1)] = 255);
-            v1 = (v1).wrapping_add(2);
-            v0 -= 1;
-        }
-        let mut v2: u16 = 510;
-        let mut v3: i16 = ((word!(game.suit_pickup_light_beam_pos)) as i16).wrapping_sub(1);
-        do_until! { v3 <= 0 ;
-            word!(game.hdma_table_1[(v2 >> 1)] = 255);
-            v2 = (v2).wrapping_sub(2);
-            v3 -= 1;
-        }
-        word!(game.suit_pickup_light_beam_widening_speed -= 32);
-        if word!(game.suit_pickup_light_beam_widening_speed) as i32 - 256i32 & 0x8000 != 0 {
-            word!(game.suit_pickup_light_beam_widening_speed = 256);
-        }
-        if word!(game.suit_pickup_light_beam_pos) as i32 - 128i32 & 0x8000 == 0 {
-            word!(game.substate += 1);
-            word!(game.suit_pickup_light_beam_pos = -1793i32 as u16);
-        }
-        1
-    }
-}
-pub unsafe fn VariaSuitPickup_5_LightBeamDissipates(game: &mut Game) -> u8 {
-    unsafe {
-        byte!(@pointer ram_ptr!(game, u16; 0xdee); 0) =
-            ((word!(game.suit_pickup_light_beam_pos)) as u8).wrapping_add(8);
-        crate::update_place! { reference fresh28 = *ram_ptr!(game; 0xdee, 1) => (*fresh28).wrapping_sub(8); }
-        word!(game.hdma_table_1[128] = word!(game.suit_pickup_light_beam_pos));
-        if word!(game.suit_pickup_light_beam_pos) as u8 as i32 - 112i32 & 0x8000 == 0 {
-            word!(game.substate += 1);
-        }
-        1
-    }
-}
-pub unsafe fn VariaSuitPickup_6(game: &mut Game) -> u8 {
-    unsafe {
-        QueueMusic_Delayed8(3, game);
-        GravitySuitPickup_6(game)
-    }
-}
-pub unsafe fn GravitySuitPickup_6(game: &mut Game) -> u8 {
-    unsafe {
-        *ram_ptr!(game; 0x74, 2) = 0x80;
-        *ram_ptr!(game; 0x74, 1) = 64;
-        *ram_ptr!(game; 0x74, 0) = 32;
-        mov24(ram_ptr!(game, LongPtr; 0xa88), 0x980001);
-        *(ram_ptr!(game, u16; 0xa8a, 1)) = 0;
-        word! { game, 0;
-            demo_input_prev, demo_input_prev_new, demo_backup_prev_controller_input,
-        }
-        word!(game.hdma_table_1[0] = 255);
-        word! { game, 0; substate, suit_pickup_light_beam_pos }
-        *(ram_ptr!(game, u16; 0xdf0)) = 0;
-        *(ram_ptr!(game, u16; 0xdf2)) = 0;
-        let v0: i32 = word!(game.hdma_object_index) as i32 >> 1;
-        word!(game.hdma_object_instruction_list_pointers[v0] += 2);
-        word!(game.hdma_object_instruction_timers[v0] = 1);
-        CallSomeSamusCode(0xb, game);
-        0
-    }
-}
-pub unsafe fn AdvanceSuitPickupColorMathSubscreenToWhite(game: &mut Game) -> u8 {
-    unsafe {
-        if *ram_ptr!(game; 0xdf0) != 63 {
-            crate::update_place! { reference fresh0 = *ram_ptr!(game; 0xdf0) => (*fresh0).wrapping_add(2); }
-            if *ram_ptr!(game; 0xdf0) as i32 - 64i32 & 0x80 == 0 {
-                *ram_ptr!(game; 0xdf0) = 63;
-            }
-        }
-        if *ram_ptr!(game; 0xdf1) != 95 {
-            crate::update_place! { reference fresh1 = *ram_ptr!(game; 0xdf1) => (*fresh1).wrapping_add(2); }
-            if *ram_ptr!(game; 0xdf1) as i32 - 96i32 & 0x80 == 0 {
-                *ram_ptr!(game; 0xdf1) = 95;
-            }
-        }
-        if *ram_ptr!(game; 0xdf2) != 0x9f {
-            crate::update_place! { reference fresh2 = *ram_ptr!(game; 0xdf2) => (*fresh2).wrapping_add(2); }
-            if *ram_ptr!(game; 0xdf2) as i32 + 96 & 0x80 == 0 {
-                *ram_ptr!(game; 0xdf2) = -97i32 as u8;
-            }
-        }
-        1
-    }
-}
-pub unsafe fn AdvanceSuitPickupColorMathToOrange(game: &mut Game) -> u8 {
-    unsafe {
-        if *ram_ptr!(game; 0xdf0) != 63 {
-            crate::update_place! { reference fresh6 = *ram_ptr!(game; 0xdf0) => (*fresh6).wrapping_sub(1); }
-        }
-        if *ram_ptr!(game; 0xdf1) != 77 {
-            crate::update_place! { reference fresh7 = *ram_ptr!(game; 0xdf1) => (*fresh7).wrapping_sub(1); }
-        }
-        if *ram_ptr!(game; 0xdf2) != 0x83 {
-            crate::update_place! { reference fresh8 = *ram_ptr!(game; 0xdf2) => (*fresh8).wrapping_sub(1); }
-        }
-        1
-    }
-}
-pub unsafe fn VariaSuitPickup_3(game: &mut Game) -> u8 {
-    unsafe {
-        word!(game.equipped_items |= (1u16));
-        word!(game.collected_items |= (1u16));
-        word!(game.samus_pose = kPose_9B_FaceF_VariaGravitySuit as u16);
-        pt::finish_pose_change(&mut Runtime::new(game));
-        Samus_LoadSuitPalette(game);
-        word!(game.substate += 1);
-        1
-    }
-}
-pub unsafe fn GravitySuitPickup_3(game: &mut Game) -> u8 {
-    unsafe {
-        word!(game.equipped_items |= (0x20u16));
-        word!(game.collected_items |= (0x20u16));
-        word!(game.samus_pose = kPose_9B_FaceF_VariaGravitySuit as u16);
-        pt::finish_pose_change(&mut Runtime::new(game));
-        Samus_LoadSuitPalette(game);
-        word!(game.substate += 1);
-        1
-    }
-}
-pub unsafe fn AdvanceSuitPickupColorMathToBlue(game: &mut Game) -> u8 {
-    unsafe {
-        if *ram_ptr!(game; 0xdf0) != 48 {
-            crate::update_place! { reference fresh3 = *ram_ptr!(game; 0xdf0) => (*fresh3).wrapping_sub(1); }
-        }
-        if *ram_ptr!(game; 0xdf1) != 73 {
-            crate::update_place! { reference fresh4 = *ram_ptr!(game; 0xdf1) => (*fresh4).wrapping_sub(1); }
-        }
-        if *ram_ptr!(game; 0xdf2) != 0x90 {
-            crate::update_place! { reference fresh5 = *ram_ptr!(game; 0xdf2) => (*fresh5).wrapping_sub(1); }
-        }
-        1
-    }
-}
 pub unsafe fn HdmaobjPreInstr_E449(k: u16, game: &mut Game) {
     unsafe {
         if (word!(game.phantom_related_layer_flag) & 0x4000) != 0 {
@@ -1906,8 +1604,8 @@ crate::game::address_dispatch! {
         8969773 => HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn;
         8969844 => HdmaobjPreInstr_HazeColorMathSubscreen_FadedIn;
         8969878 => HdmaobjPreInstr_HazeColorMathSubscreen_FadingOut;
-        8970132 => HdmaobjPreInstr_DF94; 8970278 => HdmaobjPreInstr_VariaSuitPickup;
-        8970332 => HdmaobjPreInstr_GravitySuitPickup; 8971337 => HdmaobjPreInstr_E449;
+        8970132 => HdmaobjPreInstr_DF94; 8970278 => [Runtime::new(game).advance_suit_pickup(false)];
+        8970332 => [Runtime::new(game).advance_suit_pickup(true)]; 8971337 => HdmaobjPreInstr_E449;
         8971623 => HdmaobjPreInstr_E567; 8972220 => HdmaobjPreInstr_E7BC;
         fnHdmaobjPreInstr_MorphBallEyeBeamWidening => [{
                     HdmaobjPreInstr_MorphBallEyeBeamWidening(k, game);

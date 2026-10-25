@@ -53,14 +53,15 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Options return and door loading timing are corrected; original timing matches
    23 doors in all directions. All 24 runnable required recipes requalify; the
    five-frame door regression kills an acknowledged-NMI timing mutation. Next:
-   the read after door-scroll exit at native index 9,266 lacks a normal wait;
-   E0B5 resumed gameplay is unproven. Adjacent-video controller reads now align.
+   native index 9,266 enters an audio upload with 41 measured acknowledged NMIs
+   and input reads while gameplay waits. Bulk native upload has no video clock;
+   establish timed suspension before resuming E0B5 (no fixed delays/counter offsets).
    Observer unit tests (20) are not gameplay checks. Regenerate incompatible
    checkpoints from boot; preserve the old checked navigation build.
 2. **Current - lane B bank retirement.** `sm_94` is deleted; next is `sm_91`.
-   Normal input, scripted playback and attract setup share owned state; 685 bank
-   lines remain. Next: complete suit sequence, then equipment/init/X-ray and
-   Mother Brain. Verify each actual context; attract setup has its own movie row.
+   Normal input, demos and the complete suit sequence use owned state; 591 bank
+   lines remain. Varia/Gravity share palette and beam progression. Next: equipment,
+   then init/X-ray and Mother Brain. Gravity still lacks a natural movie window.
    Old `sm_91`/`sm_90` drafts remain dropped; inspect current source afresh.
    Natural grapple movie coverage remains pending despite direct ROM checks.
    Report added production and deleted legacy lines together; growth needs a reason.
