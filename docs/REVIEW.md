@@ -169,6 +169,13 @@ encrypted seeds in CI, cloud agents with auto-land, a Linux verifier spike. Orde
 deletions among them. PLAN's landing jam rule applies: one live rebased branch per agent,
 retirement branches run their rows (not the full corpus), main's full run follows each
 deletion. Land order: M1a, Spore Spawn, `sm_88` deletion, `sm_a0` deletion, then sm_81.
+**Integration (21:10, user request: no agent was driving lane B).** A reviewer-spawned
+integration agent rebased the six stranded B commits (sm_88 deletion, sm_8b setup, sm_a0
+frame-end + deletion, sm_81 file menu + map window) onto main as `ci/b-integrate`
+(d9e9269; legacy 46,334, production 115,013, unsafe 4,239; warnings 294) and pushed it;
+Segments run 40229103191 runs the full corpus and auto-lands on green. Windows B agents:
+do not re-push those commits; start new B work from main after it lands. A red run goes
+back to the integration agent.
 **M2 production:** b782ca4 moved Rio with production +69 (legacy -90). M2 commits convert
 in place or delete; a commit that grows production needs its one-line reason.
 
