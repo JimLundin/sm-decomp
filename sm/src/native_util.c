@@ -7,7 +7,8 @@
 #include "native_util_selected.c"
 #include "native_util_sources.h"
 
-_Static_assert(sizeof(long) == 4 && CHAR_MIN < 0, "native Windows long and char widths");
+// Windows long widths are explicit int32_t/uint32_t casts in the selected source.
+_Static_assert(CHAR_MIN < 0, "native Windows char signedness");
 
 bool sm_util_matches_source(uint32_t index, const uint8_t *bytes, size_t length) {
   return index < 5 && length == sm_util_source_lengths[index] &&

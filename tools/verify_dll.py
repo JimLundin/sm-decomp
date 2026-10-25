@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the Windows verifier DLL, then run a replay or corpus via ctypes."""
+"""Build the verifier DLL (Windows) or shared object (Linux), then run a replay or corpus via ctypes."""
 import argparse
 import ctypes
 import hashlib
@@ -11,6 +11,11 @@ import shutil
 import subprocess
 import sys
 import time
+
+# Windows remains the pinned verifier host; Linux builds the same cdylib as a .so.
+WINDOWS = os.name == "nt"
+HOST_LIBRARY = "sm_verify.dll" if WINDOWS else "libsm_verify.so"
+HOST_TRIPLE = "x86_64-pc-windows-gnu" if WINDOWS else "x86_64-unknown-linux-gnu"
 
 
 def source_hash(root):
@@ -47,7 +52,7 @@ def check_source(host, expected):
 def load_host(dll):
     # Keep SDK search directories alive for as long as this DLL is loaded.
     directories = []
-    for path in os.environ.get("LIBRARY_PATH", "").split(os.pathsep):
+    for path in os.environ.get("LIBRARY_PATH", "").split(os.pathsep) if WINDOWS else ():
         if path:
             for directory in (Path(path), Path(path).parent / "bin"):
                 if directory.is_dir():
@@ -149,7 +154,7 @@ def cargo_host(root, rustc, output, source, frontend=False, retry=True):
                         compiled.append(message["target"]["name"])
                     if message["target"]["name"] == "sm_verify":
                         dll = next((Path(name) for name in message["filenames"]
-                                    if name.endswith(".dll")), None)
+                                    if name.endswith(Path(HOST_LIBRARY).suffix)), None)
             result = process.wait()
         finally:
             process.stdout.close()
@@ -182,7 +187,7 @@ def cargo_host(root, rustc, output, source, frontend=False, retry=True):
         return cargo_host(root, rustc, output, source, frontend, retry=False)
     # Preserve --no-build's existing path. An unchanged DLL can still be loaded
     # by another replay; do not overwrite it merely to refresh its timestamp.
-    cached = output / "sm_verify.dll"
+    cached = output / HOST_LIBRARY
     if not cached.exists() or cached.read_bytes() != dll.read_bytes():
         shutil.copyfile(dll, cached)
     return cached
@@ -193,14 +198,14 @@ def build(root, rustc, use_cargo=None, frontend=False):
     output = root / "target" / "verify-dll"
     output.mkdir(parents=True, exist_ok=True)
     library = output / "libsm.rlib"
-    dll = output / "sm_verify.dll"
+    dll = output / HOST_LIBRARY
     sdk = [Path(path) for path in os.environ.get("LIBRARY_PATH", "").split(os.pathsep)
            if path]
     compiler = subprocess.check_output([rustc, "-vV"], cwd=root, text=True)
     host = next(line.removeprefix("host: ") for line in compiler.splitlines()
                 if line.startswith("host: "))
-    if host != "x86_64-pc-windows-gnu":
-        raise RuntimeError("DLL host requires the pinned x86_64-pc-windows-gnu toolchain")
+    if host != HOST_TRIPLE:
+        raise RuntimeError(f"verifier host requires the pinned {HOST_TRIPLE} toolchain")
     if use_cargo is None:
         use_cargo = any((path / "libSDL2.dll.a").is_file() for path in sdk)
     if frontend and not use_cargo:
@@ -221,6 +226,7 @@ def build(root, rustc, use_cargo=None, frontend=False):
     # The bundled GNU linker cannot read bigobj emitted for the large game;
     # Rust's bundled lld handles those object files without external tools.
     linker = sysroot / "lib" / "rustlib" / host / "bin" / "gcc-ld" / "ld.lld.exe"
+    link = ["-C", f"linker={linker}", "-C", "linker-flavor=ld"] if WINDOWS else []
     # Direct-rustc builds have no Cargo freshness check. Bind reuse to source,
     # compiler/options, native archives and output bytes; inspect in a child so
     # the DLL is unloaded before any rebuild.
@@ -260,7 +266,7 @@ def build(root, rustc, use_cargo=None, frontend=False):
         common + (["-C", f"incremental={output / 'incremental-host'}"] if incremental else [])
         + ["--crate-name", "sm_verify", "--crate-type", "cdylib",
                   "--cfg", "sm_verify_dll",
-                  "-C", f"linker={linker}", "-C", "linker-flavor=ld",
+                  *link,
                   "sm/src/verify_dll.rs",
                   "--extern", f"sm={library}", "-o", str(dll)],
         cwd=root, env=dict(os.environ, SM_VERIFY_SOURCE_HASH=source), check=True,
@@ -629,8 +635,6 @@ def main():
     if args.seed is not None and (args.unit_tests or args.build_only or args.corpus is not None
                                  or args.checkpoint_in is not None or args.checkpoint_out is not None):
         parser.error("--seed requires a direct replay without checkpoint input or output")
-    if os.name != "nt":
-        parser.error("use cargo run --release -- verify on Linux")
     if args.unit_tests and (args.build_only or args.frontend_check or args.rom is not None
                            or args.inputs is not None or args.corpus is not None or args.segment
                            or args.frames is not None or args.checkpoint_in is not None
@@ -688,7 +692,7 @@ def main():
                          ("--checkpoint-out", args.checkpoint_out), ("--seed", args.seed)):
         if path is not None:
             replay_args.extend([option, str(path.resolve())])
-    dll = root / "target" / "verify-dll" / "sm_verify.dll"
+    dll = root / "target" / "verify-dll" / HOST_LIBRARY
     if not args.no_build:
         dll = build(root, args.rustc, args.cargo, args.frontend_check)
     os.chdir(root)

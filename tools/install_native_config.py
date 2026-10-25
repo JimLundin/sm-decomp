@@ -49,8 +49,8 @@ def utility_source(source):
     source = "\n\n".join(selected) + "\n"
     for old, new in (
         ("fread(buffer, 1, size, f) != size",
-         "(size_t)(unsigned long)fread(buffer, 1, size, f) != size"),
-        ("memchr(p, '#', eol - p)", "memchr(p, '#', (size_t)(long)(eol - p))"),
+         "(size_t)(uint32_t)fread(buffer, 1, size, f) != size"),
+        ("memchr(p, '#', eol - p)", "memchr(p, '#', (size_t)(int32_t)(eol - p))"),
     ):
         if source.count(old) != 1:
             raise ValueError(f"Pinned utility patch no longer matches: {old}")

@@ -1,7 +1,6 @@
-//! Windows headless host, built by Cargo or rustc and loaded by Python.
+//! Headless verifier host (Windows DLL, Linux shared object), built by Cargo or rustc and loaded by Python.
 //! Each process runs one replay with explicitly owned Game state.
 #![deny(unsafe_op_in_unsafe_fn)]
-#![cfg(target_os = "windows")]
 #![allow(non_snake_case, non_upper_case_globals, dead_code)]
 
 use sm::game_state::Game;
@@ -169,10 +168,22 @@ pub extern "C" fn sm_verify_source_file(index: usize) -> SourceFile {
 
 // Transpiled code expects glibc's stderr global; MinGW exposes its FILE via
 // __acrt_iob_func instead. FILE remains opaque to this host and the game code.
+#[cfg(windows)]
 #[unsafe(no_mangle)]
 pub static mut stderr: *mut c_void = std::ptr::null_mut();
+#[cfg(windows)]
 unsafe extern "C" {
     fn __acrt_iob_func(index: u32) -> *mut c_void;
+}
+// On Linux glibc owns `stderr`; the host's assignment stores it back unchanged.
+#[cfg(not(windows))]
+unsafe extern "C" {
+    static mut stderr: *mut c_void;
+}
+#[cfg(not(windows))]
+unsafe fn __acrt_iob_func(index: u32) -> *mut c_void {
+    debug_assert_eq!(index, 2);
+    unsafe { stderr }
 }
 
 unsafe fn initialize_verify_audio(game: &mut Game) -> Result<(), String> {
