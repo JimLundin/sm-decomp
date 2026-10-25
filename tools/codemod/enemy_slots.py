@@ -118,6 +118,27 @@ def plan(s, getters):
                 parts += [f'{", " if i else ""}{f} = ', v]
             parts.append(')')
             return (a0, end, parts + ([] if T(body_close + 1) == ';' else [';']))
+        # words!([i32,] (*E), HI, LO [+= V | = V]) split-word pairs
+        w = open_paren - 1
+        signed = T(w) == ',' and T(w - 1) == 'i32'
+        if signed: w -= 2
+        if path in ([], ['base']) and T(w) == '(' and T(w - 1) == '!' and T(w - 2) == 'words':
+            pre = ''.join('.' + x for x in path)
+            mclose = close(w)
+            if T(after) != ',' or toks[after + 1][0] != 'id' or T(after + 2) != ',' or toks[after + 3][0] != 'id':
+                return None
+            hi, lo, e = T(after + 1), T(after + 3), after + 4
+            q = w - 2
+            while T(q - 1) == ':' and T(q - 2) == ':' and toks[q - 3][0] == 'id': q -= 3
+            a0, end = toks[q][1], toks[mclose][2]
+            if e == mclose:
+                kind = 'i32, ' if signed else ''
+                return (a0, end, [f'crate::rtl::words!({kind}(slot!(game, {base}{pre}.{hi}), slot!(game, {base}{pre}.{lo})))'])
+            if signed: return None
+            if T(e) == '+' and T(e + 1) == '=': op, v = '+=', e + 2
+            elif T(e) == '=' and T(e + 1) != '=': op, v = '=', e + 1
+            else: return None
+            return (a0, end, [f'slot!(game, {base}{pre}({hi}, {lo}) {op} ', span(v, mclose), ')'])
         if not path or path[-1] == 'base': return None
         target = f'{base}.' + '.'.join(path)
         # crate::update_place! { previous [mut] NAME [: TY] = (*E).path => VALUE; }

@@ -1003,6 +1003,29 @@ macro_rules! slot {
             .expect("enemy field outside RAM")],
         }
     };
+    // Split-word pairs, as `rtl::AddToHiLo`/`SetHiLo`: the value first, then low
+    // is read before high and written before high.
+    ($game:ident, $layout:ident[$slot:expr] $(.$prefix:ident)* ($hi:ident, $lo:ident) += $value:expr) => {
+        match $value {
+            value => {
+                let value: ::core::primitive::u32 = value;
+                let low = ::core::primitive::u32::from($crate::ram_map::slot!($game, $layout[$slot] $(.$prefix)* .$lo));
+                let high = ::core::primitive::u32::from($crate::ram_map::slot!($game, $layout[$slot] $(.$prefix)* .$hi));
+                let sum = (low | (high << 16)).wrapping_add(value);
+                $crate::ram_map::slot!($game, $layout[$slot] $(.$prefix)* .$lo = sum as ::core::primitive::u16);
+                $crate::ram_map::slot!($game, $layout[$slot] $(.$prefix)* .$hi = (sum >> 16) as ::core::primitive::u16);
+            }
+        }
+    };
+    ($game:ident, $layout:ident[$slot:expr] $(.$prefix:ident)* ($hi:ident, $lo:ident) = $value:expr) => {
+        match $value {
+            value => {
+                let value: ::core::primitive::u32 = value;
+                $crate::ram_map::slot!($game, $layout[$slot] $(.$prefix)* .$lo = value as ::core::primitive::u16);
+                $crate::ram_map::slot!($game, $layout[$slot] $(.$prefix)* .$hi = (value >> 16) as ::core::primitive::u16);
+            }
+        }
+    };
     // Ordered word stores to several fields; the slot is re-evaluated per store.
     ($game:ident, $layout:ident[$slot:expr] $(.$prefix:ident)*; $($stores:tt)+) => {
         $crate::ram_map::slot!(@stores $game, $layout[$slot] ($($prefix)*); $($stores)+)
