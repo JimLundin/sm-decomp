@@ -383,7 +383,7 @@ pub unsafe fn Crocomire_Func_28(game: &mut Game) {
         Crocomire_Func_27(word!(game.cur_enemy_index), game);
     }
 }
-pub unsafe fn Crocomire_Func_29(game: &mut Game) {
+pub fn Crocomire_Func_29(game: &mut Game) {
     {
         word! { game, 0; reg_BG2HOFS, reg_BG2VOFS }
     }

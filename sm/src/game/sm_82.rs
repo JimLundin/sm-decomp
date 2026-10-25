@@ -827,12 +827,12 @@ pub unsafe fn ResetSoundQueues(game: &mut Game) {
         *ram_ptr!(game; 0x649, 2) = 0;
     }
 }
-pub unsafe fn ShowSpareCpu(game: &mut Game) {
+pub fn ShowSpareCpu(game: &mut Game) {
     {
         word!(game.joypad1_input_samusfilter = word!(game.joypad1_lastkeys));
     }
 }
-pub unsafe fn GameState_0_Reset_Async(game: &mut Game) -> CoroutineRet {
+pub fn GameState_0_Reset_Async(game: &mut Game) -> CoroutineRet {
     {
         word! { game, 0; UNUSED_word_7E0DF8, UNUSED_word_7E0DFA, UNUSED_word_7E0DFC }
         word! {game; cinematic_function = ((0x8b9b68i32) as u16); demo_set = 0; }
@@ -846,7 +846,7 @@ pub unsafe fn GameState_0_Reset_Async(game: &mut Game) -> CoroutineRet {
 pub unsafe fn GameState_1_OpeningCinematic(game: &mut Game) -> CoroutineRet {
     unsafe { GameState_1_OpeningCinematic_(game) }
 }
-pub unsafe fn GameState_3_Null(game: &mut Game) -> CoroutineRet {
+pub fn GameState_3_Null(game: &mut Game) -> CoroutineRet {
     kCoroutineNone as CoroutineRet
 }
 crate::forward_calls! { pub unsafe fn (game: &mut Game) -> CoroutineRet;
@@ -1463,12 +1463,12 @@ pub unsafe fn MapScrolling(game: &mut Game) {
         kMapScrollingFuncs[word!(game.map_scrolling_direction) as usize](game);
     }
 }
-pub unsafe fn MapScrolling_0_None(game: &mut Game) {
+pub fn MapScrolling_0_None(game: &mut Game) {
     {
         word!(game.map_scrolling_gear_switch_timer = 4);
     }
 }
-pub unsafe fn MapScrolling_GetSpeedIndex(game: &mut Game) -> u16 {
+pub fn MapScrolling_GetSpeedIndex(game: &mut Game) -> u16 {
     {
         let result: u16 = word!(game.map_scrolling_speed_index);
         if word!(game.map_scrolling_gear_switch_timer) == 0 {
@@ -2081,7 +2081,7 @@ pub unsafe fn SetupPpuForGameplayResume(game: &mut Game) {
         }
     }
 }
-pub unsafe fn CalculateBgScrolls_Unpause(game: &mut Game) {
+pub fn CalculateBgScrolls_Unpause(game: &mut Game) {
     {
         word!(game.reg_BG1HOFS = (word!(game.bg1_x_offset)).wrapping_add(word!(game.layer1_x_pos)));
         word!(game.reg_BG1VOFS = (word!(game.bg1_y_offset)).wrapping_add(word!(game.layer1_y_pos)));
@@ -2089,7 +2089,7 @@ pub unsafe fn CalculateBgScrolls_Unpause(game: &mut Game) {
         word!(game.reg_BG2VOFS = (word!(game.bg2_y_scroll)).wrapping_add(word!(game.layer2_y_pos)));
     }
 }
-pub unsafe fn ClearPauseMenuData(game: &mut Game) {
+pub fn ClearPauseMenuData(game: &mut Game) {
     {
         word! { game, 0;
             menu_index, pausemenu_start_lr_pressed_highlight_timer, pausemenu_lr_animation_timer,
@@ -2593,7 +2593,7 @@ pub unsafe fn EquipmentScreenHudReserveAutoTilemap_On_BUGGY(game: &mut Game) {
         hud_tilemap[72] = *v1.offset(4); hud_tilemap[73] = *v1.offset(5); }
     }
 }
-pub unsafe fn EquipmentScreenHudReserveAutoTilemap_Off(game: &mut Game) {
+pub fn EquipmentScreenHudReserveAutoTilemap_Off(game: &mut Game) {
     {
         word! { game, 11279;
             hud_tilemap[8], hud_tilemap[9], hud_tilemap[40], hud_tilemap[41], hud_tilemap[72],
@@ -3404,7 +3404,7 @@ pub unsafe fn MapScreenDrawSamusPositionIndicator(game: &mut Game) {
 }
 static kMap_SamusPositionIndicator_Delays: [u16; 4] = [8, 4, 8, 4];
 static kMap_SamusPositionIndicator_SpritemapIds: [u16; 4] = [0x5f, 0x60, 0x61, 0x60];
-pub unsafe fn UpdateSamusPositionIndicatorAnimation(game: &mut Game) -> u16 {
+pub fn UpdateSamusPositionIndicatorAnimation(game: &mut Game) -> u16 {
     {
         let mut v0: u16 = word!(game.samus_position_indicator_animation_timer);
         if v0 == 0 {
@@ -3616,50 +3616,46 @@ pub unsafe fn AdvancePaletteFadeForAllPalettes_0xc(game: &mut Game) -> u8 {
         AdvancePaletteFadeForAllPalettes(game)
     }
 }
-pub unsafe fn AdvancePaletteFade_BgPalette6(game: &mut Game) -> u8 {
-    unsafe {
-        word!(game.palette_change_denom = 12);
-        if word!(game.palette_change_num) <= 0xd {
-            for i in (192i32..224).step_by(2) {
-                word!(
-                    game.palette_buffer[(i >> 1)] = CalculateNthTransitionColorFromXtoY(
-                        word!(game.palette_change_num),
-                        word!(game.palette_buffer[(i >> 1)]),
-                        word!(game.target_palettes[(i >> 1)]),
-                        game,
-                    )
-                );
-            }
-            word!(game.palette_change_num += 1);
-            0
-        } else {
-            word!(game.palette_change_num = 0);
-            1
+pub fn AdvancePaletteFade_BgPalette6(game: &mut Game) -> u8 {
+    word!(game.palette_change_denom = 12);
+    if word!(game.palette_change_num) <= 0xd {
+        for i in (192i32..224).step_by(2) {
+            word!(
+                game.palette_buffer[(i >> 1)] = CalculateNthTransitionColorFromXtoY(
+                    word!(game.palette_change_num),
+                    word!(game.palette_buffer[(i >> 1)]),
+                    word!(game.target_palettes[(i >> 1)]),
+                    game,
+                )
+            );
         }
+        word!(game.palette_change_num += 1);
+        0
+    } else {
+        word!(game.palette_change_num = 0);
+        1
     }
 }
-pub unsafe fn AdvanceGradualColorChangeOfPalette(mut k: u16, j: u16, game: &mut Game) -> u8 {
-    unsafe {
-        word!(game.palette_change_denom = 15);
-        if (15i16).wrapping_sub((word!(game.palette_change_num)) as i16) >= 0 {
-            let R34: u16 = j;
-            do_until! { k >= R34 ;
-                word!(
-                    game.palette_buffer[(k >> 1)] = CalculateNthTransitionColorFromXtoY(
-                        (word!(game.palette_change_num)).wrapping_add(1),
-                        word!(game.palette_buffer[(k >> 1)]),
-                        word!(game.target_palettes[(k >> 1)]),
-                        game,
-                    )
-                );
-                k = (k).wrapping_add(2);
-            }
-            word!(game.palette_change_num += 1);
-            0
-        } else {
-            word!(game.palette_change_num = 0);
-            1
+pub fn AdvanceGradualColorChangeOfPalette(mut k: u16, j: u16, game: &mut Game) -> u8 {
+    word!(game.palette_change_denom = 15);
+    if (15i16).wrapping_sub((word!(game.palette_change_num)) as i16) >= 0 {
+        let R34: u16 = j;
+        do_until! { k >= R34 ;
+            word!(
+                game.palette_buffer[(k >> 1)] = CalculateNthTransitionColorFromXtoY(
+                    (word!(game.palette_change_num)).wrapping_add(1),
+                    word!(game.palette_buffer[(k >> 1)]),
+                    word!(game.target_palettes[(k >> 1)]),
+                    game,
+                )
+            );
+            k = (k).wrapping_add(2);
         }
+        word!(game.palette_change_num += 1);
+        0
+    } else {
+        word!(game.palette_change_num = 0);
+        1
     }
 }
 pub unsafe fn AdvancePaletteFadeForAllPalettes(game: &mut Game) -> u8 {
@@ -3690,51 +3686,46 @@ pub unsafe fn AdvancePaletteFadeForAllPalettes(game: &mut Game) -> u8 {
         }
     }
 }
-pub unsafe fn CalculateNthTransitionColorFromXtoY(a: u16, k: u16, j: u16, game: &mut Game) -> u16 {
-    unsafe {
-        (CalculateNthTransitionColorComponentFromXtoY(a, (k) & (0x1fu16), (j) & (0x1fu16), game)
-            as i32
-            | (CalculateNthTransitionColorComponentFromXtoY(
-                a,
-                (k as i32 >> 5 & 0x1f) as u16,
-                (j as i32 >> 5 & 0x1f) as u16,
-                game,
-            ) as i32)
-                << 5
-            | (CalculateNthTransitionColorComponentFromXtoY(
-                a,
-                (k as i32 >> 10 & 0x1f) as u16,
-                (j as i32 >> 10 & 0x1f) as u16,
-                game,
-            ) as i32)
-                << 10) as u16
-    }
+pub fn CalculateNthTransitionColorFromXtoY(a: u16, k: u16, j: u16, game: &mut Game) -> u16 {
+    (CalculateNthTransitionColorComponentFromXtoY(a, (k) & (0x1fu16), (j) & (0x1fu16), game) as i32
+        | (CalculateNthTransitionColorComponentFromXtoY(
+            a,
+            (k as i32 >> 5 & 0x1f) as u16,
+            (j as i32 >> 5 & 0x1f) as u16,
+            game,
+        ) as i32)
+            << 5
+        | (CalculateNthTransitionColorComponentFromXtoY(
+            a,
+            (k as i32 >> 10 & 0x1f) as u16,
+            (j as i32 >> 10 & 0x1f) as u16,
+            game,
+        ) as i32)
+            << 10) as u16
 }
-pub unsafe fn CalculateNthTransitionColorComponentFromXtoY(
+pub fn CalculateNthTransitionColorComponentFromXtoY(
     a: u16,
     k: u16,
     j: u16,
     game: &mut Game,
 ) -> u16 {
-    unsafe {
-        if a == 0 {
-            return k;
-        }
-        let v4: u16 = (a).wrapping_sub(1);
-        if v4 == word!(game.palette_change_denom) {
-            return j;
-        }
-        let RegWord: u16 = SnesDivide(
-            ((abs16((j).wrapping_sub(k)) as i32) << 8) as u16,
-            (word!(game.palette_change_denom) as i32 - (v4 as i32 + 1) + 1) as u8,
-        );
-        let r18: u16 = (if j as i32 - k as i32 & 0x8000 != 0 {
-            -(RegWord as i32)
-        } else {
-            RegWord as i32
-        }) as u16;
-        (r18 as i32 + ((k as i32) << 8)) as u16 >> 8
+    if a == 0 {
+        return k;
     }
+    let v4: u16 = (a).wrapping_sub(1);
+    if v4 == word!(game.palette_change_denom) {
+        return j;
+    }
+    let RegWord: u16 = SnesDivide(
+        ((abs16((j).wrapping_sub(k)) as i32) << 8) as u16,
+        (word!(game.palette_change_denom) as i32 - (v4 as i32 + 1) + 1) as u8,
+    );
+    let r18: u16 = (if j as i32 - k as i32 & 0x8000 != 0 {
+        -(RegWord as i32)
+    } else {
+        RegWord as i32
+    }) as u16;
+    (r18 as i32 + ((k as i32) << 8)) as u16 >> 8
 }
 pub unsafe fn sub_82DAF7(a: u16, game: &mut Game) -> u8 {
     unsafe {
@@ -3782,7 +3773,7 @@ pub unsafe fn sub_82DB41(game: &mut Game) {
         }
     }
 }
-pub unsafe fn HandleSamusOutOfHealthAndGameTile(game: &mut Game) {
+pub fn HandleSamusOutOfHealthAndGameTile(game: &mut Game) {
     {
         if (word!(game.samus_health) as i16) <= 0 {
             if (word!(game.reserve_health_mode) & 1) != 0 && word!(game.samus_reserve_health) != 0 {
@@ -4149,7 +4140,7 @@ pub unsafe fn GameOptionsMenu_3_OptionsScreen(game: &mut Game) {
         }
     }
 }
-pub unsafe fn GameOptionsMenuItemFunc_0(game: &mut Game) {
+pub fn GameOptionsMenuItemFunc_0(game: &mut Game) {
     {
         if word!(game.enable_debug) != 0
             && (word!(game.joypad1_lastkeys) as i32 & kButton_L as i32) == 0
@@ -4482,7 +4473,7 @@ pub unsafe fn OptionsMenuControllerFunc_7(game: &mut Game) {
         }
     }
 }
-pub unsafe fn GameOptionsMenu_9_ScrollControllerSettingsDown(game: &mut Game) {
+pub fn GameOptionsMenu_9_ScrollControllerSettingsDown(game: &mut Game) {
     {
         word!(game.reg_BG1VOFS += 2);
         if word!(game.reg_BG1VOFS) == 32 {
@@ -4490,7 +4481,7 @@ pub unsafe fn GameOptionsMenu_9_ScrollControllerSettingsDown(game: &mut Game) {
         }
     }
 }
-pub unsafe fn GameOptionsMenu_A_ScrollControllerSettingsUp(game: &mut Game) {
+pub fn GameOptionsMenu_A_ScrollControllerSettingsUp(game: &mut Game) {
     {
         word!(game.reg_BG1VOFS -= 2);
         if word!(game.reg_BG1VOFS) == 0 {
@@ -4499,7 +4490,7 @@ pub unsafe fn GameOptionsMenu_A_ScrollControllerSettingsUp(game: &mut Game) {
     }
 }
 pub use self::sub_82F35B as sub_82F363;
-pub unsafe fn sub_82F369(j: u16, game: &mut Game) {
+pub fn sub_82F369(j: u16, game: &mut Game) {
     {
         let v1: i32 = j as i32 >> 1;
         word! {game; eproj_x_vel[(v1 + 3)] = 16; eproj_x_vel[(v1 + 11)] = 3584; }

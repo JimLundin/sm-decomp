@@ -278,7 +278,7 @@ pub unsafe fn Kraid_Touch_ArmFoot(game: &mut Game) {
         );
     }
 }
-pub unsafe fn Kraid_Func_1(game: &mut Game) {
+pub fn Kraid_Func_1(game: &mut Game) {
     {
         word! {game; extra_samus_x_displacement = 4; extra_samus_y_displacement = -8i32 as u16; }
     }
@@ -1152,7 +1152,7 @@ pub unsafe fn Kraid_SpawnRandomQuakeProjs(game: &mut Game) {
         );
     }
 }
-pub unsafe fn Kraid_RestrictSamusXtoFirstScreen_2(game: &mut Game) {
+pub fn Kraid_RestrictSamusXtoFirstScreen_2(game: &mut Game) {
     {
         if ((word!(game.samus_x_pos)) as i16).wrapping_sub(256) >= 0 {
             word! { game, 256; samus_x_pos, samus_prev_x_pos }

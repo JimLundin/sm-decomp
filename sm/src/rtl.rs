@@ -749,7 +749,7 @@ pub unsafe fn MemCpy(dst: *mut c_void, src: *const c_void, size: i32) {
         memcpy(dst, src, size as size_t);
     }
 }
-pub unsafe fn MakePairU16(k: u16, j: u16) -> PairU16 {
+pub fn MakePairU16(k: u16, j: u16) -> PairU16 {
     let r: PairU16 = PairU16 { k, j };
     r
 }
@@ -894,17 +894,17 @@ pub(crate) unsafe fn SetHiLo(hi: *mut u16, lo: *mut u16, value: u32) {
     }
 }
 
-pub unsafe fn Mult8x8(a: u8, b: u8) -> u16 {
+pub fn Mult8x8(a: u8, b: u8) -> u16 {
     (a as i32 * b as i32) as u16
 }
-pub unsafe fn SnesDivide(a: u16, b: u8) -> u16 {
+pub fn SnesDivide(a: u16, b: u8) -> u16 {
     (if b as i32 == 0 {
         0xffff
     } else {
         a as i32 / b as i32
     }) as u16
 }
-pub unsafe fn SnesModulus(a: u16, b: u8) -> u16 {
+pub fn SnesModulus(a: u16, b: u8) -> u16 {
     (if b as i32 == 0 {
         a as i32
     } else {

@@ -263,7 +263,7 @@ pub unsafe fn CancelGrappleBeamIfIncompatiblePose(game: &mut Game) {
         }
     }
 }
-pub unsafe fn CheckIfGrappleIsConnectedToBlock(game: &mut Game) -> u8 {
+pub fn CheckIfGrappleIsConnectedToBlock(game: &mut Game) -> u8 {
     {
         word! { game, 0;
             grapple_beam_extension_x_velocity, grapple_beam_extension_y_velocity,
@@ -587,7 +587,7 @@ macro_rules! initialize_grapple_endpoints {
     };
 }
 
-pub unsafe fn CheckBannedDraygonGrappleDirs(a: u16, game: &mut Game) -> u16 {
+pub fn CheckBannedDraygonGrappleDirs(a: u16, game: &mut Game) -> u16 {
     {
         if a as i32 == kPose_BE_FaceL_Draygon_Move as i32 {
             if (word!(game.joypad1_lastkeys) as i32 & kButton_Left as i32) != 0 {

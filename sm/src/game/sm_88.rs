@@ -89,7 +89,7 @@ pub unsafe fn SpawnBombTorizoHaze(game: &mut Game) {
         spawn_hdma(0x88, &unk_88DD3E, game);
     }
 }
-pub unsafe fn HdmaobjPreInstr_BombTorizoHazeColorMathBgColor(k: u16, game: &mut Game) {
+pub fn HdmaobjPreInstr_BombTorizoHazeColorMathBgColor(k: u16, game: &mut Game) {
     {
         word!(game.fx_layer_blending_config_c = 44);
     }

@@ -197,11 +197,11 @@ unsafe fn initialize_verify_audio(game: &mut Game) -> Result<(), String> {
     }
 }
 
-unsafe fn finish_verify_audio() {}
+fn finish_verify_audio() {}
 
 // No audio thread exists in this host; the shared replay loop is synchronous.
-unsafe fn host_apu_lock() {}
-unsafe fn host_apu_unlock() {}
+fn host_apu_lock() {}
+fn host_apu_unlock() {}
 
 unsafe fn host_die(error: *const c_char) {
     unsafe {

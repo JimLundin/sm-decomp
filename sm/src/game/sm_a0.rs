@@ -214,7 +214,7 @@ crate::game::address_dispatch! {
         0xb30000..=0xb3ffff => [sm_b3::DispatchEnemyPreInstr(ea, k, game)];
     }
 }
-pub unsafe fn DecrementSamusTimers(game: &mut Game) {
+pub fn DecrementSamusTimers(game: &mut Game) {
     {
         if word!(game.samus_invincibility_timer) != 0 {
             word!(game.samus_invincibility_timer -= 1);

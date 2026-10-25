@@ -98,10 +98,11 @@ Mutation-driver audit: deleting the old room driver breaks retained local captur
 callers. Existing bank campaigns do not replace its unusual alias, failed-upload and
 custom-content checks; keep those checks until their consumers and coverage migrate.
 
-Cloud M1a replacement `6d93dd10` restores the 23 rejected contracts; its bounded
-[source recheck](M1A-REVIEW.md) found no remaining concrete signature violation.
-Hosted verification is pending. The script still omits imported alias edges;
-future runs must resolve or conservatively reject them. Keep the predecessor rejected.
+M1a (`tools/codemod/strip_unsafe_fixpoint.py`) keeps all 22 unsafe production contracts
+and the verifier bridge from [the review](M1A-REVIEW.md); bounded review found no remaining
+concrete violation in its 86 conversions. All 64 hosted rows passed at 3484808d.
+The script still omits imported alias edges; affected paths were reviewed, and future
+runs must resolve or conservatively reject aliases. Keep the predecessor rejected.
 
 Checkpoint cache finding: whole Session/codec hashes invalidate lossless scalar
 migrations despite an unchanged RAM payload. A future format transition needs

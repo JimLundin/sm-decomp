@@ -1347,7 +1347,7 @@ pub unsafe fn Rinka_9(k: u16, game: &mut Game) -> u8 {
         result
     }
 }
-pub unsafe fn Rinka_10(r18: u16, r20: u16, game: &mut Game) -> bool {
+pub fn Rinka_10(r18: u16, r20: u16, game: &mut Game) -> bool {
     {
         (r20 & 0x8000) != 0
             || ((r20) as i16).wrapping_sub((word!(game.layer1_y_pos)) as i16) < 0

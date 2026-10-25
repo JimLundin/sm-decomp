@@ -24,11 +24,11 @@ pub const __ASSERT_FUNCTION: [c_char; 43] = unsafe {
     transmute::<[u8; 43], [c_char; 43]>(*b"void PpuDrawBackgrounds(Ppu *, int, _Bool)\0")
 };
 #[inline]
-unsafe fn IntMin(a: i32, b: i32) -> i32 {
+fn IntMin(a: i32, b: i32) -> i32 {
     if a < b { a } else { b }
 }
 #[inline]
-unsafe fn IntMax(a: i32, b: i32) -> i32 {
+fn IntMax(a: i32, b: i32) -> i32 {
     if a > b { a } else { b }
 }
 static spriteSizes: [[i32; 2]; 8] = [

@@ -388,7 +388,7 @@ pub unsafe fn upload_right(game: &mut Game) {
 pub fn setup_blending(_k: u16, game: &mut Game) {
     Runtime::new(game).apply_xray_blending(BlendPhase::Setup);
 }
-pub unsafe fn set_backdrop(game: &mut Game) {
+pub fn set_backdrop(game: &mut Game) {
     {
         word!(game.palette_buffer[0] = 3171);
     }

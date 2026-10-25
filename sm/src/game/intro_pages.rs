@@ -69,7 +69,7 @@ pub(super) unsafe fn spawn_marker(
     }
 }
 
-unsafe fn page_input_ready(game: &mut Game) -> bool {
+fn page_input_ready(game: &mut Game) -> bool {
     {
         if word!(game.cinematic_var16) != 0 {
             word!(game.cinematic_var16 -= 1);
@@ -302,12 +302,10 @@ pub(super) unsafe fn continue_japanese_text(next: u16, lines: &[u16], k: u16, ga
     }
 }
 
-pub(super) unsafe fn wait_after_japanese_text(next: u16, j: u16, game: &mut Game) -> u16 {
-    unsafe {
-        EnableCinematicBgTilemapUpdates(game);
-        word!(game.cinematic_function = next);
-        j
-    }
+pub(super) fn wait_after_japanese_text(next: u16, j: u16, game: &mut Game) -> u16 {
+    EnableCinematicBgTilemapUpdates(game);
+    word!(game.cinematic_function = next);
+    j
 }
 
 pub(super) unsafe fn show_final_page(game: &mut Game) {
@@ -355,11 +353,9 @@ unsafe fn setup_page_palettes(game: &mut Game) {
     }
 }
 
-pub(super) unsafe fn enable_text(j: u16, game: &mut Game) -> u16 {
-    unsafe {
-        EnableCinematicBgTilemapUpdates(game);
-        j
-    }
+pub(super) fn enable_text(j: u16, game: &mut Game) -> u16 {
+    EnableCinematicBgTilemapUpdates(game);
+    j
 }
 
 pub(super) unsafe fn fade_out_to_ceres(game: &mut Game) {
@@ -379,7 +375,7 @@ pub(super) unsafe fn fade_out_to_ceres(game: &mut Game) {
     }
 }
 
-pub(super) unsafe fn finish_pages(j: u16, game: &mut Game) -> u16 {
+pub(super) fn finish_pages(j: u16, game: &mut Game) -> u16 {
     {
         word!(game.cinematic_function = (0x8bb72fi32) as u16);
         word! { game, 1; screen_fade_delay, screen_fade_counter }

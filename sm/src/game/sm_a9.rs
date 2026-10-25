@@ -2163,7 +2163,7 @@ pub unsafe fn MotherBrain_FootstepEffect(game: &mut Game) {
         }
     }
 }
-pub unsafe fn MotherBrain_Instr_Goto2(k: u16) -> u16 {
+pub fn MotherBrain_Instr_Goto2(k: u16) -> u16 {
     addr_stru_A99CD1 as u16
 }
 pub unsafe fn MotherBrain_Instr_AimRings(x: u16, y: u16, game: &mut Game) {
@@ -3011,7 +3011,7 @@ pub unsafe fn Enemy_IncreaseYpos(k: u16, mut a: u16, game: &mut Game) {
         (*v2).y_pos = ((*v2).y_pos as i32 + ((a >> 8) as i8 as i32 + (carry >> 8))) as u16;
     }
 }
-pub unsafe fn Samus_DecrementAmmoDueToRainbowBeam(game: &mut Game) {
+pub fn Samus_DecrementAmmoDueToRainbowBeam(game: &mut Game) {
     {
         if (word!(game.random_enemy_counter) & 3) == 0 && word!(game.samus_missiles) != 0 {
             let mut v0: u16 = (word!(game.samus_missiles)).wrapping_sub(g_word_A9C544);
@@ -3057,7 +3057,7 @@ pub unsafe fn Samus_PlayGainingLosingHealthSfx(game: &mut Game) {
         }
     }
 }
-pub unsafe fn Samus_DamageDueToShitroid(game: &mut Game) {
+pub fn Samus_DamageDueToShitroid(game: &mut Game) {
     {
         let mut v0: i16 = -4i16;
         if word!(game.equipped_items) & 1 != 0 {

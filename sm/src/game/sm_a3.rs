@@ -1328,7 +1328,7 @@ pub unsafe fn MaridiaSnail_Func_4(k: u16, game: &mut Game) {
         }
     }
 }
-unsafe fn Shift8AddMagn(a: i16, s: i32) -> u32 {
+fn Shift8AddMagn(a: i16, s: i32) -> u32 {
     let mut r: i32 = (a as i32) << 8;
     r = r + if r < 0 { -(s << 16i32) } else { s << 16 };
     r as u32

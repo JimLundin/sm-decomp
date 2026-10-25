@@ -58,7 +58,7 @@ unsafe fn get_RoomDefHeader(a: u16, game: &mut Game) -> *mut RoomDefHeader {
     unsafe { RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefHeader }
 }
 static kFileSelectMap_AreaIndexes: [u16; 6] = [0, 3, 5, 1, 4, 2];
-pub unsafe fn SoftReset(game: &mut Game) {
+pub fn SoftReset(game: &mut Game) {
     {
         word!(game.game_state = 0xffff);
     }
@@ -323,7 +323,7 @@ pub unsafe fn FileSelectMenu_Func1(game: &mut Game) {
         word! { game, 0; eproj_id[16], eproj_id[17] }
     }
 }
-pub unsafe fn SetInitialFileCopyMenuSelection(game: &mut Game) {
+pub fn SetInitialFileCopyMenuSelection(game: &mut Game) {
     {
         let mut v0: i32 = word!(game.nonempty_save_slots) as i32;
         let mut v1: i32 = 0;
@@ -342,7 +342,7 @@ pub unsafe fn ClearMenuTilemap(game: &mut Game) {
 }
 static kBitShl: [u8; 3] = [1, 2, 4];
 // Search toward the pressed direction without wrapping through the exit row.
-unsafe fn next_occupied_file_slot(game: &mut Game) -> Option<u8> {
+fn next_occupied_file_slot(game: &mut Game) -> Option<u8> {
     {
         let up = if word!(game.joypad1_newkeys) as i32 & kButton_Up as i32 != 0 {
             true
@@ -615,7 +615,7 @@ pub unsafe fn FileSelectMenu_14_CopyCompleted(game: &mut Game) {
         }
     }
 }
-pub unsafe fn FileSelectMenu_18(game: &mut Game) {
+pub fn FileSelectMenu_18(game: &mut Game) {
     {
         word!(game.menu_index -= 14);
     }
@@ -1129,14 +1129,14 @@ pub unsafe fn FileSelectMap_6_AreaSelectMap(game: &mut Game) {
         DrawAreaSelectMapLabels(game);
     }
 }
-pub unsafe fn DecAndWraparoundTo5(a: u16) -> u16 {
+pub fn DecAndWraparoundTo5(a: u16) -> u16 {
     let result: u16 = (a).wrapping_sub(1);
     if (result & 0x8000) != 0 {
         return 5;
     }
     result
 }
-pub unsafe fn WraparoundFrom6to0(a: u16) -> u16 {
+pub fn WraparoundFrom6to0(a: u16) -> u16 {
     let result: u16 = (a).wrapping_add(1);
     if result as i32 - 6i32 & 0x8000 == 0 {
         return 0;

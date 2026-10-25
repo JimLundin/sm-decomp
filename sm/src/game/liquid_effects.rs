@@ -45,7 +45,7 @@ pub unsafe fn initialize_water(game: &mut Game) {
     }
 }
 
-unsafe fn move_toward_target(game: &mut Game) -> u8 {
+fn move_toward_target(game: &mut Game) -> u8 {
     {
         if word!(game.fx_target_y_pos) & 0x8000 != 0 {
             return 1;

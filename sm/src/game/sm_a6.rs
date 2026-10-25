@@ -696,7 +696,7 @@ pub unsafe fn HandleCeresRidleyGetawayCutscene(game: &mut Game) {
         }
     }
 }
-unsafe fn CeresMult(a: u16, b: u16) -> u16 {
+fn CeresMult(a: u16, b: u16) -> u16 {
     let r: u16 = (abs16(a) as i32 * b as i32 >> 8) as u16;
     (if a & 0x8000 != 0 {
         -(r as i32)
@@ -704,7 +704,7 @@ unsafe fn CeresMult(a: u16, b: u16) -> u16 {
         r as i32
     }) as u16
 }
-pub unsafe fn CeresRidley_AC30(a: u16, r20: i16) -> i16 {
+pub fn CeresRidley_AC30(a: u16, r20: i16) -> i16 {
     (kSinCosTable8bit_Sext[((a as i32 & 0xff) + 64) as usize] as i32 * r20 as i32 >> 8) as i16
 }
 pub unsafe fn CeresRidley_Func_33(game: &mut Game) {
@@ -3375,37 +3375,35 @@ pub(super) enum HomingReversal {
 
 // Distance, acceleration and the limit tests wrap at sixteen bits. In
 // particular, the limit is a signed-difference test, not an ordinary clamp.
-pub(super) unsafe fn homing_velocity(
+pub(super) fn homing_velocity(
     distance: i16,
     mut velocity: u16,
     divisor: u8,
     reversal: HomingReversal,
     limit: u16,
 ) -> u16 {
-    unsafe {
-        let step = SnesDivide(distance.unsigned_abs(), divisor).max(1);
-        let reversing = (velocity as i16 >= 0) == (distance > 0);
-        let extra = if reversing {
-            match reversal {
-                HomingReversal::ExtraForce(force) => step.wrapping_add(force),
-                HomingReversal::DoubleStep => step.wrapping_mul(2),
-            }
-        } else {
-            0
-        };
-        if distance > 0 {
-            velocity = velocity.wrapping_sub(extra).wrapping_sub(step);
-            if velocity.wrapping_add(limit) & 0x8000 != 0 {
-                velocity = 0u16.wrapping_sub(limit);
-            }
-        } else {
-            velocity = velocity.wrapping_add(extra).wrapping_add(step);
-            if velocity.wrapping_sub(limit) & 0x8000 == 0 {
-                velocity = limit;
-            }
+    let step = SnesDivide(distance.unsigned_abs(), divisor).max(1);
+    let reversing = (velocity as i16 >= 0) == (distance > 0);
+    let extra = if reversing {
+        match reversal {
+            HomingReversal::ExtraForce(force) => step.wrapping_add(force),
+            HomingReversal::DoubleStep => step.wrapping_mul(2),
         }
-        velocity
+    } else {
+        0
+    };
+    if distance > 0 {
+        velocity = velocity.wrapping_sub(extra).wrapping_sub(step);
+        if velocity.wrapping_add(limit) & 0x8000 != 0 {
+            velocity = 0u16.wrapping_sub(limit);
+        }
+    } else {
+        velocity = velocity.wrapping_add(extra).wrapping_add(step);
+        if velocity.wrapping_sub(limit) & 0x8000 == 0 {
+            velocity = limit;
+        }
     }
+    velocity
 }
 
 pub unsafe fn Ridley_Func_104(k: u16, j: u16, a: u16, r18: u16, r20: u16, game: &mut Game) {

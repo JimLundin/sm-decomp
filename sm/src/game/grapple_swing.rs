@@ -17,7 +17,7 @@ fn project_axis(origin: u16, sample: i16, length: u16) -> u16 {
         origin.wrapping_add(distance)
     }
 }
-unsafe fn place_sample(angle: u16, length: u16, game: &mut Game) {
+fn place_sample(angle: u16, length: u16, game: &mut Game) {
     {
         let index = (angle >> 1) as usize;
         if word!(game.grapple_beam_flags) & 0x8000 == 0 {

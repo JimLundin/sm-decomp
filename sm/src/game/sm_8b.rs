@@ -345,7 +345,7 @@ pub unsafe fn SetupPpu_7_Mode1(game: &mut Game) {
         }
     }
 }
-pub unsafe fn HandleMode7TransformationNoRotation(game: &mut Game) {
+pub fn HandleMode7TransformationNoRotation(game: &mut Game) {
     {
         word! {game; reg_M7A = word!(game.cinematic_var6); reg_M7D = word!(game.cinematic_var6); }
         word! { game, 0; reg_M7B, reg_M7C }
@@ -353,7 +353,7 @@ pub unsafe fn HandleMode7TransformationNoRotation(game: &mut Game) {
         word!(game.reg_BG1VOFS = word!(game.cinematic_var10));
     }
 }
-unsafe fn Smult16x16(r38: u16, r40: u16) -> u32 {
+fn Smult16x16(r38: u16, r40: u16) -> u32 {
     let t: u32 = ((r38 as i16) as u32).wrapping_mul((r40 as i16) as u32);
     t
 }
@@ -590,42 +590,38 @@ pub unsafe fn CinematicGetTilemapOffsetForTile(mut r18: u16) -> u16 {
 pub unsafe fn Mult0x80Add(mut r18: u16) -> u16 {
     unsafe { (r18 as u8 as i32 + 0x80 * byte!(r18; 1) as i32) as u16 }
 }
-pub unsafe fn Samus_CalcPos_Mode7(game: &mut Game) {
-    unsafe {
-        let r34: u16 = (word!(game.samus_x_pos)).wrapping_sub(word!(game.reg_M7X));
-        let r36: u16 = (word!(game.reg_M7Y)).wrapping_sub(word!(game.samus_y_pos));
-        let mut r26: u16 = (Smult16x16(
-            (word!(game.samus_x_pos)).wrapping_sub(word!(game.reg_M7X)),
-            word!(game.reg_M7A),
-        ) >> 8) as u16;
-        r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7B), r36) >> 8) as u16;
-        word!(game.samus_x_pos = (r26).wrapping_add(word!(game.reg_M7X)));
-        r26 = (Smult16x16(word!(game.reg_M7C), r34) >> 8) as u16;
-        r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7A), r36) >> 8) as u16;
-        word!(game.samus_y_pos = (word!(game.reg_M7Y)).wrapping_sub(r26));
-    }
+pub fn Samus_CalcPos_Mode7(game: &mut Game) {
+    let r34: u16 = (word!(game.samus_x_pos)).wrapping_sub(word!(game.reg_M7X));
+    let r36: u16 = (word!(game.reg_M7Y)).wrapping_sub(word!(game.samus_y_pos));
+    let mut r26: u16 = (Smult16x16(
+        (word!(game.samus_x_pos)).wrapping_sub(word!(game.reg_M7X)),
+        word!(game.reg_M7A),
+    ) >> 8) as u16;
+    r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7B), r36) >> 8) as u16;
+    word!(game.samus_x_pos = (r26).wrapping_add(word!(game.reg_M7X)));
+    r26 = (Smult16x16(word!(game.reg_M7C), r34) >> 8) as u16;
+    r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7A), r36) >> 8) as u16;
+    word!(game.samus_y_pos = (word!(game.reg_M7Y)).wrapping_sub(r26));
 }
 
-pub unsafe fn CalcCeresSteamPos_Mode7(mut pt: Point16U, game: &mut Game) -> Point16U {
-    unsafe {
-        let r34: u16 = (pt.x).wrapping_sub(word!(game.reg_M7X));
-        let r36: u16 = (word!(game.reg_M7Y)).wrapping_sub(pt.y);
-        let mut r26: u16 = (Smult16x16(
-            (pt.x).wrapping_sub(word!(game.reg_M7X)),
-            word!(game.reg_M7A),
-        ) >> 8) as u16;
-        r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7B), r36) >> 8) as u16;
-        pt.x = (r26).wrapping_add(word!(game.reg_M7X));
-        r26 = (Smult16x16(word!(game.reg_M7C), r34) >> 8) as u16;
-        r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7A), r36) >> 8) as u16;
-        pt.y = (word!(game.reg_M7Y)).wrapping_sub(r26);
-        pt
-    }
+pub fn CalcCeresSteamPos_Mode7(mut pt: Point16U, game: &mut Game) -> Point16U {
+    let r34: u16 = (pt.x).wrapping_sub(word!(game.reg_M7X));
+    let r36: u16 = (word!(game.reg_M7Y)).wrapping_sub(pt.y);
+    let mut r26: u16 = (Smult16x16(
+        (pt.x).wrapping_sub(word!(game.reg_M7X)),
+        word!(game.reg_M7A),
+    ) >> 8) as u16;
+    r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7B), r36) >> 8) as u16;
+    pt.x = (r26).wrapping_add(word!(game.reg_M7X));
+    r26 = (Smult16x16(word!(game.reg_M7C), r34) >> 8) as u16;
+    r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7A), r36) >> 8) as u16;
+    pt.y = (word!(game.reg_M7Y)).wrapping_sub(r26);
+    pt
 }
 pub unsafe fn CopyPalettesToFadingPalettes(game: &mut Game) {
     word_transfers!(game, ascending, 256; native(0x2200) <- le(palette_buffer, 0));
 }
-pub unsafe fn DecomposePaletteDataForFading(game: &mut Game) {
+pub fn DecomposePaletteDataForFading(game: &mut Game) {
     {
         let mut v0: u16 = 0;
         for _ in 0..256 {
@@ -644,7 +640,7 @@ pub unsafe fn DecomposePaletteDataForFading(game: &mut Game) {
         }
     }
 }
-pub unsafe fn ClearYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
+pub fn ClearYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
     {
         do_until! { j == 0 ;
             let v2: i32 = k as i32 >> 1;
@@ -657,7 +653,7 @@ pub unsafe fn ClearYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn FadeOutYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
+pub fn FadeOutYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
     {
         do_until! { j == 0 ;
             let v2: i32 = k as i32 >> 1;
@@ -669,7 +665,7 @@ pub unsafe fn FadeOutYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) 
         }
     }
 }
-pub unsafe fn FadeInYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
+pub fn FadeInYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
     {
         do_until! { j == 0 ;
             let v2: i32 = k as i32 >> 1;
@@ -1177,17 +1173,17 @@ pub unsafe fn ProcessMode7ObjectInstructions(k: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn EnableCinematicBgObjects(game: &mut Game) {
+pub fn EnableCinematicBgObjects(game: &mut Game) {
     {
         word!(game.cinematic_enable_objs |= (0x8000u16));
     }
 }
-pub unsafe fn EnableCinematicBgTilemapUpdates(game: &mut Game) {
+pub fn EnableCinematicBgTilemapUpdates(game: &mut Game) {
     {
         word!(game.cinematic_enable_bg_tilemap |= (0x8000u16));
     }
 }
-pub unsafe fn DisableCinematicBgTilemapUpdates(game: &mut Game) {
+pub fn DisableCinematicBgTilemapUpdates(game: &mut Game) {
     {
         word!(game.cinematic_enable_bg_tilemap &= !(0x8000));
     }
@@ -1388,12 +1384,12 @@ pub unsafe fn ProcessTextGlowObject(game: &mut Game) {
         }
     }
 }
-pub unsafe fn EnableTextGlowObjects_(game: &mut Game) {
+pub fn EnableTextGlowObjects_(game: &mut Game) {
     {
         word!(game.cinematic_var25 |= (0x8000u16));
     }
 }
-pub unsafe fn DisableTextGlowObjects_(game: &mut Game) {
+pub fn DisableTextGlowObjects_(game: &mut Game) {
     {
         word!(game.cinematic_var25 &= !(0x8000));
     }
@@ -1491,7 +1487,7 @@ pub unsafe fn GameState_1_OpeningCinematic_(game: &mut Game) -> CoroutineRet {
     }
 }
 pub fn CinematicFunctionNone() {}
-pub unsafe fn MaybeSkipCinematics(game: &mut Game) {
+pub fn MaybeSkipCinematics(game: &mut Game) {
     {
         if word!(game.cinematic_function) as i32 + 0x60d8 & 0x8000 != 0
             && (word!(game.joypad1_newkeys)
@@ -1733,12 +1729,12 @@ static kSetSomeStuffForSpriteObject_9_Tab1: [i16; 138] = [
     -0x6000, 4, -0x4000, 4, -0x2000, 5, 0, 5, 0x2000, 5, 0x4000, 5, 0x6000, 5, -0x8000, 5, -0x6000,
     5, -0x4000, 5, -0x2000,
 ];
-pub unsafe fn SetSomeStuffForSpriteObject_15(game: &mut Game) {
+pub fn SetSomeStuffForSpriteObject_15(game: &mut Game) {
     {
         word! {game; cinematicbg_arr7[15] = 8; cinematicbg_arr8[15] = 248; }
     }
 }
-pub unsafe fn SetSomeStuffForSpriteObject_16(game: &mut Game) {
+pub fn SetSomeStuffForSpriteObject_16(game: &mut Game) {
     {
         word! {game; cinematicbg_arr7[15] = 8; cinematicbg_arr8[15] = 24;
         cinematicspr_instr_ptr[15] = addr_word_8BCBFB as u16; cinematicspr_instr_timer[15] = 1; }
@@ -1778,7 +1774,7 @@ pub unsafe fn CinematicFunction_Intro_Func37(k: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn CinematicFunction_Intro_Func40(game: &mut Game) {
+pub fn CinematicFunction_Intro_Func40(game: &mut Game) {
     {
         if (word!(game.cinematic_var12) & 1) != 0 {
             word!(game.cinematic_var10 -= 4);
@@ -1819,7 +1815,7 @@ macro_rules! chase_samus_with_cinematic_sprite {
     };
 }
 
-pub unsafe fn ResetButtonAssignmentsToDefault(game: &mut Game) {
+pub fn ResetButtonAssignmentsToDefault(game: &mut Game) {
     {
         word! {game; button_config_shoot_x_saved = word!(game.button_config_shoot_x);
         button_config_jump_a_saved = word!(game.button_config_jump_a);
@@ -1836,7 +1832,7 @@ pub unsafe fn ResetButtonAssignmentsToDefault(game: &mut Game) {
         button_config_aim_down_L = kButton_L as u16; button_config_aim_up_R = kButton_R as u16; }
     }
 }
-pub unsafe fn RevertButtonConfig(game: &mut Game) {
+pub fn RevertButtonConfig(game: &mut Game) {
     {
         word!(game.button_config_shoot_x = word!(game.button_config_shoot_x_saved));
         word!(game.button_config_jump_a = word!(game.button_config_jump_a_saved));
@@ -2128,7 +2124,7 @@ pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {
         }
     }
 }
-pub unsafe fn CinematicFunction_Intro_Func160(j: u16, a: u16, game: &mut Game) {
+pub fn CinematicFunction_Intro_Func160(j: u16, a: u16, game: &mut Game) {
     {
         word!(
             checked_i32,
