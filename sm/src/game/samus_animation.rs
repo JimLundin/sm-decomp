@@ -1,12 +1,11 @@
 //! Samus animation, sprite selection, echoes, atmospheric graphics and tile uploads.
 use crate::game::player_transitions as pt;
+use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::session_runtime::Runtime;
 use crate::game::visual_host::{Content, Effects, Record, Source};
 
 pub use crate::game::prelude::*;
 use crate::game::sm_8b::Samus_CalcPos_Mode7;
-
-use crate::game::sm_81::DrawSamusSpritemap;
 
 const RomPtr_90: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x90>;
 const RomPtr_91: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x91>;
@@ -292,7 +291,12 @@ pub unsafe fn DrawSamusSuitExploding(game: &mut Game) {
         } else {
             word!(game.g_word_7E0DE4) as i32 + 2076
         }) as u16;
-        DrawSamusSpritemap(r18, word!(game.samus_x_pos), word!(game.samus_y_pos), game);
+        sprite_output::samus(
+            r18,
+            (word!(game.samus_x_pos), word!(game.samus_y_pos)),
+            game,
+            &mut sprite_output::Native,
+        );
     }
 }
 

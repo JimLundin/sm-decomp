@@ -1,4 +1,6 @@
 //! Legacy entry and backend boundary for the shared owned sprite-effect core.
+use crate::game::projectile_presentation_ram as sprite_output;
+use crate::game::sprite_drawing::Clip;
 use crate::game::{
     session::Point,
     session_runtime::Runtime,
@@ -52,7 +54,7 @@ impl sprite_effect_host::Aliases for Runtime<'_> {
 }
 impl sprite_effect_host::Effects for Runtime<'_> {
     fn submit_sprite(&mut self, request: SpriteDraw) {
-        self.foreign(|game| unsafe {
+        self.foreign(|game| {
             #[cfg(sm_verify_dll)]
             crate::sprite_effect_observer::draw(
                 request.map.0,
@@ -62,13 +64,13 @@ impl sprite_effect_host::Effects for Runtime<'_> {
                 request.base_tile,
                 game,
             );
-            crate::game::sm_81::DrawSpritemapWithBaseTile(
+            sprite_output::with_base_tile(
                 0xb4,
                 request.map.0,
-                request.position.x,
-                request.position.y,
+                (request.position.x, request.position.y),
                 request.palette,
                 request.base_tile,
+                Clip::None,
                 game,
             );
         });

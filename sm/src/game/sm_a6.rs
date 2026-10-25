@@ -8,7 +8,9 @@ use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 use crate::game::player_update::minimap;
 pub use crate::game::prelude::*;
+use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::session_runtime::Runtime;
+use crate::game::sprite_drawing::Clip;
 
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a6::*;
@@ -28,7 +30,6 @@ use crate::game::sm_80::{
     NextRandom, QueueMode7Transfers, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6,
     QueueSfx3_Max3, QueueSfx3_Max6,
 };
-use crate::game::sm_81::DrawSpritemap;
 use crate::game::sm_a0::{CosineMult8bit, SineMult8bit};
 use crate::game::sm_a9::{
     ComputeCosMult, ComputeSinMult, MoveEnemyWithVelocity, Shitroid_Func_2, WriteColorsToPalette,
@@ -620,14 +621,17 @@ pub unsafe fn Ridley_A2F2(game: &mut Game) {
         let E = Get_CeresRidley(0x40, game);
         if (*E).var_B != 0 {
             static g_word_A6A321: [i16; 4] = [0, -1024, -4, -1];
-            DrawSpritemap(
+            sprite_output::paletted(
                 0xa6,
                 addr_kCeresRidley_Sprmap_A329 as u16,
-                ((*E).base.x_pos).wrapping_add(
-                    (g_word_A6A321[(word!(game.earthquake_timer) as i32 & 3) as usize]) as u16,
+                (
+                    ((*E).base.x_pos).wrapping_add(
+                        (g_word_A6A321[(word!(game.earthquake_timer) as i32 & 3) as usize]) as u16,
+                    ),
+                    (*E).base.y_pos,
                 ),
-                (*E).base.y_pos,
                 1024,
+                Clip::Bounded,
                 game,
             );
         }

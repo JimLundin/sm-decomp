@@ -33,17 +33,21 @@ pub(super) fn draw_spritemap(
     graphics: u16,
     game: &mut Game,
 ) {
-    unsafe {
-        if offscreen {
-            crate::game::sm_81::DrawEprojSpritemapWithBaseTileOffscreen(
-                bank, map, x, y, tile, graphics, game,
-            );
-        } else {
-            crate::game::sm_81::DrawEprojSpritemapWithBaseTile(
-                bank, map, x, y, tile, graphics, game,
-            );
-        }
-    }
+    use crate::game::sprite_drawing::Clip;
+    let clip = if offscreen {
+        Clip::Outside
+    } else {
+        Clip::Inside
+    };
+    crate::game::projectile_presentation_ram::with_base_tile(
+        bank,
+        map,
+        (x, y),
+        graphics,
+        tile,
+        clip,
+        game,
+    );
 }
 
 pub(super) fn respawn_enemy(index: u16, game: &mut Game) {

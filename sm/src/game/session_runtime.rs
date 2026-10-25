@@ -348,9 +348,7 @@ impl Host for Runtime<'_> {
                     output::projectile(slot, (x, y), g, &mut output::Native);
                     crate::verify_probe::hit("player_projectiles.draw.completed");
                 }
-                Drawing::Beam { sprite, x, y } => unsafe {
-                    crate::game::sm_81::DrawBeamGrappleSpritemap(sprite, x, y, g)
-                },
+                Drawing::Beam { sprite, x, y } => output::beam(sprite, (x, y), g),
                 Drawing::CrashEchoes => output::crash_echoes(g, &mut output::Native),
                 Drawing::GrappleSegment { x, y, tile } => output::grapple(g, Some((x, y, tile))),
                 Drawing::GrappleEnd => output::grapple(g, None),
@@ -592,19 +590,24 @@ impl Runtime<'_> {
         base: bool,
         offscreen: bool,
     ) {
-        self.foreign(|game| unsafe {
-            use crate::game::sm_81::{
-                DrawSpritemapWithBaseTile, DrawSpritemapWithBaseTile2,
-                DrawSpritemapWithBaseTileOffscreen,
-            };
-            let draw = if base {
-                DrawSpritemapWithBaseTile
+        self.foreign(|game| {
+            use crate::game::sprite_drawing::Clip;
+            let clip = if base {
+                Clip::None
             } else if offscreen {
-                DrawSpritemapWithBaseTileOffscreen
+                Clip::Outside
             } else {
-                DrawSpritemapWithBaseTile2
+                Clip::Inside
             };
-            draw(bank, address, x, y, palette, tile, game);
+            crate::game::projectile_presentation_ram::with_base_tile(
+                bank,
+                address,
+                (x, y),
+                palette,
+                tile,
+                clip,
+                game,
+            );
         });
     }
     pub(crate) fn actor_copy_legacy_tilemap(&mut self, bank: u8, address: u16) {

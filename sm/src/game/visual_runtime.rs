@@ -1,5 +1,6 @@
 //! Visual adapters on the one aggregate Session, with explicit legacy effects.
 use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
+use crate::game::projectile_presentation_ram as sprite_output;
 use crate::{
     game::{
         animated_tiles, enemy_projectiles, palette_effects, player_projectiles,
@@ -113,7 +114,7 @@ impl visual_host::Aliases for Runtime<'_> {
 }
 impl visual_host::Effects for Runtime<'_> {
     fn draw_samus_sprite(&mut self, index: u16, x: u16, y: u16) {
-        self.foreign(|game| crate::game::sm_81::DrawSamusSpritemap(index, x, y, game));
+        self.foreign(|game| sprite_output::samus(index, (x, y), game, &mut sprite_output::Native));
     }
     fn draw_atmospheric_tile(&mut self, slot: usize, kind: u16) {
         use visual_host::{Content, Record};

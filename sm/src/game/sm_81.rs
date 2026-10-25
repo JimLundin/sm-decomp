@@ -1,6 +1,6 @@
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8};
 pub use crate::game::prelude::*;
-use crate::game::sprite_drawing::{Clip, SpriteMap};
+use crate::game::projectile_presentation_ram as sprite_output;
 
 pub use crate::game::constants::bank_82::*;
 
@@ -195,134 +195,6 @@ pub unsafe fn PackMapToSave(game: &mut Game) {
             }
         }
     }
-}
-// All map users share checked capture and the explicit native warning boundary.
-fn sprite_map(bank: u8, address: u16, game: &mut Game) -> SpriteMap {
-    crate::game::projectile_presentation_ram::sprite_map(
-        bank,
-        address,
-        game,
-        &mut crate::game::projectile_presentation_ram::Native,
-    )
-}
-pub unsafe fn DrawSpritemap(db: u8, j: u16, x: u16, y: u16, palette: u16, game: &mut Game) {
-    {
-        sprite_map(db, j, game).draw((x, y), |tile| palette | tile & 0xf1ff, Clip::Bounded, game);
-    }
-}
-pub unsafe fn DrawSpritemapOffScreen(j: u16, x: u16, y: u16, palette: u16, game: &mut Game) {
-    {
-        sprite_map(0x8c, j, game).draw(
-            (x, y),
-            |tile| palette | tile & 0xf1ff,
-            Clip::BoundedOutside,
-            game,
-        );
-    }
-}
-pub unsafe fn DrawMenuSpritemap(a: u16, k: u16, j: u16, chr_r3: u16, game: &mut Game) {
-    {
-        let pp = sprite_map(
-            0x82,
-            crate::rtl::rom_table_word!(game, 0x82c569, a as isize),
-            game,
-        );
-        pp.draw((k, j), |tile| chr_r3 | tile & 0xf1ff, Clip::None, game);
-    }
-}
-pub fn DrawSamusSpritemap(a: u16, x_pos: u16, y_pos: u16, game: &mut Game) {
-    crate::game::projectile_presentation_ram::samus(
-        a,
-        (x_pos, y_pos),
-        game,
-        &mut crate::game::projectile_presentation_ram::Native,
-    );
-}
-pub unsafe fn DrawBeamGrappleSpritemap(a: u16, x_r20: u16, y_r18: u16, game: &mut Game) {
-    {
-        DrawGrappleOrProjectileSpritemap(
-            sprite_map(
-                0x93,
-                crate::rtl::rom_table_word!(game, 0x93a1a1, a as isize),
-                game,
-            ),
-            x_r20,
-            y_r18,
-            game,
-        );
-    }
-}
-
-fn DrawGrappleOrProjectileSpritemap(pp: SpriteMap, x_r20: u16, y_r18: u16, game: &mut Game) {
-    pp.draw((x_r20, y_r18), |tile| tile, Clip::None, game);
-}
-pub unsafe fn DrawSpritemapWithBaseTile(
-    db: u8,
-    j: u16,
-    r20_x: u16,
-    r18_y: u16,
-    r3: u16,
-    r0: u16,
-    game: &mut Game,
-) {
-    {
-        if j == 0 {
-            return;
-        }
-        let pp = sprite_map(db, j, game);
-        pp.draw(
-            (r20_x, r18_y),
-            |tile| (r3 as i32 | r0 as i32 + tile as i32) as u16,
-            Clip::None,
-            game,
-        );
-    }
-}
-pub unsafe fn DrawSpritemapWithBaseTile2(
-    db: u8,
-    j: u16,
-    r20_x: u16,
-    r18_y: u16,
-    r3: u16,
-    r0: u16,
-    game: &mut Game,
-) {
-    {
-        let pp = sprite_map(db, j, game);
-        pp.draw(
-            (r20_x, r18_y),
-            |tile| (r3 as i32 | r0 as i32 + tile as i32) as u16,
-            Clip::Inside,
-            game,
-        );
-    }
-}
-pub unsafe fn DrawSpritemapWithBaseTileOffscreen(
-    db: u8,
-    j: u16,
-    r20_x: u16,
-    r18_y: u16,
-    r3: u16,
-    r0: u16,
-    game: &mut Game,
-) {
-    {
-        let pp = sprite_map(db, j, game);
-        pp.draw(
-            (r20_x, r18_y),
-            |tile| (r3 as i32 | r0 as i32 + tile as i32) as u16,
-            Clip::Outside,
-            game,
-        );
-    }
-}
-crate::forward_calls! { pub unsafe fn (
-    db: u8, j: u16, x: u16, y: u16, tile: u16, flags: u16, game: &mut Game
-);
-    DrawEprojSpritemapWithBaseTile =>
-        DrawSpritemapWithBaseTile2(db, j, x, y, flags, tile, game);
-    DrawEprojSpritemapWithBaseTileOffscreen =>
-        DrawSpritemapWithBaseTileOffscreen(db, j, x, y, flags, tile, game);
 }
 pub unsafe fn GameOverMenu_0_FadeOutConfigGfx(game: &mut Game) {
     unsafe {
@@ -1218,7 +1090,7 @@ pub unsafe fn DrawFileSelectSlotSamusHelmet(k: u16, game: &mut Game) {
         let v6: u16 = (2u16).wrapping_mul(word!(game.eproj_id[v5]));
         static kDrawFileSlotHelmet_Spritemaps: [u16; 9] =
             [0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x33];
-        DrawMenuSpritemap(
+        sprite_output::menu(
             kDrawFileSlotHelmet_Spritemaps[(v6 >> 1) as usize],
             word!(game.eproj_id[(v5 + 5)]),
             word!(game.eproj_id[(v5 + 10)]),
@@ -1958,7 +1830,7 @@ static kAreaSelectMapLabelPositions: [u16; 12] = [
 pub unsafe fn DrawAreaSelectMapLabels(game: &mut Game) {
     unsafe {
         let mut r3: u16 = 0;
-        DrawMenuSpritemap(
+        sprite_output::menu(
             crate::rtl::rom_table_word!(game, 0x82c749, 0),
             0x80,
             0x10,
@@ -1994,7 +1866,7 @@ pub unsafe fn DrawAreaSelectMapLabels(game: &mut Game) {
                     }
                 }
                 let j: i32 = 4 * kFileSelectMap_AreaIndexes[i as usize] as i32 >> 1;
-                DrawMenuSpritemap(
+                sprite_output::menu(
                     (crate::rtl::rom_table_word!(game, 0x82c749, 0) as i32
                         + kFileSelectMap_AreaIndexes[i as usize] as i32
                         + 1) as u16,

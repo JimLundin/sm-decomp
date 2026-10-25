@@ -113,3 +113,50 @@ pub(crate) fn grapple(game: &mut Game, segment: Option<(u16, u16, u16)>) {
     }
     word!(game.oam_next_ptr = idx.wrapping_add(4));
 }
+
+#[forbid(unsafe_code)]
+pub(crate) fn paletted(
+    bank: u8,
+    address: u16,
+    position: (u16, u16),
+    palette: u16,
+    clip: Clip,
+    game: &mut Game,
+) {
+    sprite_map(bank, address, game, &mut Native).draw(
+        position,
+        |tile| palette | tile & 0xf1ff,
+        clip,
+        game,
+    );
+}
+#[forbid(unsafe_code)]
+pub(crate) fn menu(index: u16, x: u16, y: u16, palette: u16, game: &mut Game) {
+    let address = crate::rtl::rom_table_word!(game, 0x82c569, index as isize);
+    paletted(0x82, address, (x, y), palette, Clip::None, game);
+}
+#[forbid(unsafe_code)]
+pub(crate) fn beam(index: u16, position: (u16, u16), game: &mut Game) {
+    let address = crate::rtl::rom_table_word!(game, 0x93a1a1, index as isize);
+    sprite_map(0x93, address, game, &mut Native).draw(position, |tile| tile, Clip::None, game);
+}
+#[forbid(unsafe_code)]
+pub(crate) fn with_base_tile(
+    bank: u8,
+    address: u16,
+    position: (u16, u16),
+    palette: u16,
+    base_tile: u16,
+    clip: Clip,
+    game: &mut Game,
+) {
+    if address == 0 && matches!(clip, Clip::None) {
+        return;
+    }
+    sprite_map(bank, address, game, &mut Native).draw(
+        position,
+        |tile| (i32::from(palette) | i32::from(base_tile) + i32::from(tile)) as u16,
+        clip,
+        game,
+    );
+}

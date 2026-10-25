@@ -1,6 +1,8 @@
 use super::intro_pages;
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
 pub use crate::game::prelude::*;
+use crate::game::projectile_presentation_ram as sprite_output;
+use crate::game::sprite_drawing::Clip;
 
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_60::*;
@@ -17,7 +19,7 @@ use crate::game::sm_80::{
     GraphicsAsset, HandleFadeIn, HandleFadeOut, QueueMode7Transfers, QueueSfx1_Max15,
     QueueSfx2_Max6, QueueSfx3_Max6, WaitForNMI_Async, memset7E,
 };
-use crate::game::sm_81::{DrawSpritemap, DrawSpritemapOffScreen, SaveToSram};
+use crate::game::sm_81::SaveToSram;
 use crate::game::sm_88::{
     CinematicFunction_Intro_Func133, DisableHdmaObjects, EnableHdmaObjects,
     SpawnTitleScreenGradientObjs, WaitUntilEndOfVblankAndClearHdma,
@@ -1003,10 +1005,15 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
         0 as CoroutineRet
     }
 }
-pub unsafe fn AddNintentoLogoToOam(game: &mut Game) {
-    unsafe {
-        DrawSpritemap(0x8c, addr_kSpriteMap_NintendoLogo as u16, 128, 112, 0, game);
-    }
+pub fn AddNintentoLogoToOam(game: &mut Game) {
+    sprite_output::paletted(
+        0x8c,
+        addr_kSpriteMap_NintendoLogo as u16,
+        (128, 112),
+        0,
+        Clip::Bounded,
+        game,
+    );
 }
 pub unsafe fn SpawnCinematicSpriteObject(j: u16, a: u16, game: &mut Game) -> u8 {
     unsafe {
@@ -1277,10 +1284,10 @@ macro_rules! draw_cinematic_sprites {
                     (word!($game.cinematicbg_arr8[v1])).wrapping_sub(word!($game.layer1_y_pos));
                 if (y & 0xff00) != 0 {
                     if (y).wrapping_add(128) < 0x1ff {
-                        DrawSpritemapOffScreen(v2, x, y, chr, $game);
+                        sprite_output::paletted(0x8c, v2, (x, y), chr, Clip::BoundedOutside, $game);
                     }
                 } else if (y).wrapping_add(128) < 0x1ff {
-                    DrawSpritemap(0x8c, v2, x, y, chr, $game);
+                    sprite_output::paletted(0x8c, v2, (x, y), chr, Clip::Bounded, $game);
                 }
             }
             $object_offset -= 2;

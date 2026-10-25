@@ -3,6 +3,8 @@ use crate::game::gameplay::advance as AdvanceGameplay;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
 pub use crate::game::prelude::*;
+use crate::game::projectile_presentation_ram as sprite_output;
+use crate::game::sprite_drawing::Clip;
 
 use crate::cpu_infra::DebugGameOverMenu;
 
@@ -37,9 +39,7 @@ use crate::game::sm_80::{
     ResumeGameplay, SetupDmaTransfer, StartGameplay_Async, Vector_NMI, Vector_RESET_Async,
     WaitForNMI_Async, memset7E,
 };
-use crate::game::sm_81::{
-    DrawMenuSpritemap, DrawSpritemap, FileSelectMap, FileSelectMenu, GameOverMenu, SaveToSram,
-};
+use crate::game::sm_81::{FileSelectMap, FileSelectMenu, GameOverMenu, SaveToSram};
 use crate::game::sm_88::{
     DisableHdmaObjects, EnableHdmaObjects, HdmaObjectHandler, WaitUntilEndOfVblankAndClearHdma,
 };
@@ -1083,12 +1083,15 @@ pub unsafe fn DrawOptionsMenuSpritemaps(game: &mut Game) {
             let v1: i32 = i >> 1;
             if word!(game.cinematicbg_arr8[v1]) != 0 {
                 let v2: u16 = word!(game.cinematicbg_arr8[v1]);
-                DrawSpritemap(
+                sprite_output::paletted(
                     0x82,
                     v2,
-                    word!(game.optionsmenu_arr8[v1]),
-                    word!(game.cinematicbg_arr9[v1]),
+                    (
+                        word!(game.optionsmenu_arr8[v1]),
+                        word!(game.cinematicbg_arr9[v1]),
+                    ),
                     word!(game.optionsmenu_arr10[v1]),
+                    Clip::Bounded,
                     game,
                 );
             }
@@ -2149,7 +2152,7 @@ pub unsafe fn HandlePauseMenuLRPressHighlight(game: &mut Game) {
             word!(game.pausemenu_start_lr_pressed_highlight_timer -= 1);
             if word!(game.pausemenu_shoulder_button_highlight) != 0 {
                 let v0: i32 = word!(game.pausemenu_shoulder_button_highlight) as i32 - 1i32;
-                DrawMenuSpritemap(
+                sprite_output::menu(
                     kPauseLrButtonPressedHighlight_Spritemap[v0 as usize],
                     kPauseLrButtonPressedHighlight_Y[v0 as usize],
                     (kPauseLrButtonPressedHighlight_X[v0 as usize]).wrapping_sub(1),
@@ -2185,7 +2188,7 @@ pub unsafe fn HighlightPauseScreenButton(game: &mut Game) {
     unsafe {
         if word!(game.pausemenu_start_lr_pressed_highlight_timer) != 0 {
             word!(game.pausemenu_start_lr_pressed_highlight_timer -= 1);
-            DrawMenuSpritemap(0x2b, 0x90, 0xd0, 0, game);
+            sprite_output::menu(0x2b, 0x90, 0xd0, 0, game);
         }
     }
 }
@@ -2271,7 +2274,7 @@ pub unsafe fn DrawPauseScreenSpriteAnim(a: u16, input_k: u16, input_j: u16, game
             (r26 + crate::rtl::rom_table_word!(game, 0x82c1e4, t as isize) as i32) as u16,
             game,
         );
-        DrawMenuSpritemap(
+        sprite_output::menu(
             (r24 + *(v11 as *mut u16) as i32) as u16,
             input_k,
             (input_j).wrapping_sub(1),
@@ -2888,13 +2891,7 @@ pub unsafe fn EquipmentScreenDisplayReserveTankAmount_(game: &mut Game) {
         if r42 != 0 {
             let mut v0: u16 = 0;
             do_until! { r46 == 0 ;
-                DrawMenuSpritemap(
-                    0x1b,
-                    kEquipmentScreenReserveTank_X[(v0 >> 1) as usize],
-                    (kEquipmentScreenReserveTank_Y).wrapping_sub(1),
-                    r3,
-                    game,
-                );
+                sprite_output::menu(0x1b, kEquipmentScreenReserveTank_X[(v0 >> 1) as usize], (kEquipmentScreenReserveTank_Y).wrapping_sub(1), r3, game);
                 v0 = (v0).wrapping_add(2);
                 r46 -= 1;
             }
@@ -2912,7 +2909,7 @@ pub unsafe fn EquipmentScreenDisplayReserveTankAmount_(game: &mut Game) {
             if word!(game.samus_reserve_health) as i32 - 100i32 & 0x8000 == 0 {
                 v2 = (v2).wrapping_add(16);
             }
-            DrawMenuSpritemap(
+            sprite_output::menu(
                 kPartialReserveTankSpritemapIds[(v2 >> 1) as usize],
                 kEquipmentScreenReserveTank_X[(r52 >> 1) as usize],
                 (kEquipmentScreenReserveTank_Y).wrapping_sub(1),
@@ -2923,7 +2920,7 @@ pub unsafe fn EquipmentScreenDisplayReserveTankAmount_(game: &mut Game) {
             r52 += 2;
         }
         while R48 as i32 - R44 as i32 & 0x8000 != 0 {
-            DrawMenuSpritemap(
+            sprite_output::menu(
                 0x20,
                 kEquipmentScreenReserveTank_X[(r52 >> 1) as usize],
                 (kEquipmentScreenReserveTank_Y).wrapping_sub(1),
@@ -2933,7 +2930,7 @@ pub unsafe fn EquipmentScreenDisplayReserveTankAmount_(game: &mut Game) {
             r52 += 2;
             R48 = R48.wrapping_add(1);
         }
-        DrawMenuSpritemap(
+        sprite_output::menu(
             0x1f,
             kEquipmentScreenReserveTank_X[(r52 >> 1) as usize],
             (kEquipmentScreenReserveTank_Y).wrapping_sub(1),
@@ -3158,7 +3155,7 @@ pub unsafe fn DrawMapIcons(game: &mut Game) {
             DrawSimpleMapIcons(8, 0xc82b, 1024, game);
         }
         if word!(game.area_index) == 0 {
-            DrawMenuSpritemap(
+            sprite_output::menu(
                 0x63,
                 (kMap_Criteria_SavePoints[0i32 as usize]).wrapping_sub(word!(game.reg_BG1HOFS)),
                 (kMap_Criteria_SavePoints[1i32 as usize]).wrapping_sub(word!(game.reg_BG1VOFS)),
@@ -3187,16 +3184,16 @@ pub unsafe fn DrawFileSelectMapIcons(game: &mut Game) {
         let v1: u16 = (*data).wrapping_sub(word!(game.reg_BG1HOFS));
         let v2: u16 = (*data.offset(1)).wrapping_sub(word!(game.reg_BG1VOFS));
         if (word!(game.samus_position_indicator_animation_loop_counter) & 1) == 0 {
-            DrawMenuSpritemap(0x12, v1, v2, 3584, game);
+            sprite_output::menu(0x12, v1, v2, 3584, game);
         }
-        DrawMenuSpritemap(a, v1, v2, 3584, game);
+        sprite_output::menu(a, v1, v2, 3584, game);
         if word!(game.enable_debug) != 0 {
             DrawDebugSaveMapIcons(0xc, 0xc80b, 1536, game);
             DrawDebugElevatorMapIcons(0x17, 0xc81b, 1536, game);
             DrawSimpleMapIcons(0xc, 0xc82b, 1536, game);
         }
         if word!(game.area_index) == 0 {
-            DrawMenuSpritemap(
+            sprite_output::menu(
                 0x63,
                 (kMap_Criteria_SavePoints[0i32 as usize]).wrapping_sub(word!(game.reg_BG1HOFS)),
                 (kMap_Criteria_SavePoints[1i32 as usize]).wrapping_sub(word!(game.reg_BG1VOFS)),
@@ -3267,7 +3264,7 @@ pub unsafe fn DrawMapIconsOfType(mut a: u16, r34: u16, mut r36: u16, r3: u16, ga
             if v3 != 0 {
                 let mut v4: i16 = CheckIfMapPositionIsExplored(*v2, *v2.offset(1), game) as i16;
                 if v4 != 0 {
-                    DrawMenuSpritemap(
+                    sprite_output::menu(
                         r34,
                         (*v2).wrapping_sub(word!(game.reg_BG1HOFS)),
                         (*v2.offset(1)).wrapping_sub(word!(game.reg_BG1VOFS)),
@@ -3309,14 +3306,14 @@ pub unsafe fn DrawBossMapIcons(a: u16, k: u16, game: &mut Game) {
                     let v5: i32 = bits & 1;
                     bits >>= 1;
                     if v5 != 0 {
-                        DrawMenuSpritemap(
+                        sprite_output::menu(
                             0x62,
                             (*v4).wrapping_sub(word!(game.reg_BG1HOFS)),
                             (*v4.offset(1)).wrapping_sub(word!(game.reg_BG1VOFS)),
                             3584,
                             game,
                         );
-                        DrawMenuSpritemap(
+                        sprite_output::menu(
                             a,
                             (*v4).wrapping_sub(word!(game.reg_BG1HOFS)),
                             (*v4.offset(1)).wrapping_sub(word!(game.reg_BG1VOFS)),
@@ -3327,7 +3324,7 @@ pub unsafe fn DrawBossMapIcons(a: u16, k: u16, game: &mut Game) {
                     } else {
                         !(word!(game.has_area_map) != 0)
                             || ({
-                                DrawMenuSpritemap(
+                                sprite_output::menu(
                                     a,
                                     (*v4).wrapping_sub(word!(game.reg_BG1HOFS)),
                                     (*v4.offset(1)).wrapping_sub(word!(game.reg_BG1VOFS)),
@@ -3392,7 +3389,7 @@ pub unsafe fn HandleMapScrollArrows(game: &mut Game) {
 pub unsafe fn MapScreenDrawSamusPositionIndicator(game: &mut Game) {
     unsafe {
         let a: u16 = UpdateSamusPositionIndicatorAnimation(game);
-        DrawMenuSpritemap(
+        sprite_output::menu(
             a,
             (8 * (word!(game.room_x_coordinate_on_map) as i32
                 + byte!(@pointer ram_ptr!(game, u16; 0xaf6); 1) as i32)
@@ -3427,10 +3424,10 @@ pub unsafe fn UpdateSamusPositionIndicatorAnimation(game: &mut Game) -> u16 {
             [(word!(game.samus_position_indicator_animation_frame) >> 1) as usize]
     }
 }
-crate::forward_calls! { pub unsafe fn (game: &mut Game);
-    DrawBorderAroundSamusData => DrawMenuSpritemap(0x48, 0x80, 0x10, 3584, game);
-    DrawBorderAroundDataCopyMode => DrawMenuSpritemap(0x49, 0x80, 0x10, 3584, game);
-    DrawBorderAroundDataClearMode => DrawMenuSpritemap(0x4a, 0x7c, 0x10, 3584, game);
+crate::forward_calls! { pub fn (game: &mut Game);
+    DrawBorderAroundSamusData => sprite_output::menu(0x48, 0x80, 0x10, 3584, game);
+    DrawBorderAroundDataCopyMode => sprite_output::menu(0x49, 0x80, 0x10, 3584, game);
+    DrawBorderAroundDataClearMode => sprite_output::menu(0x4a, 0x7c, 0x10, 3584, game);
 }
 static kDrawMenuSelectionMissile_Enable: [u16; 4] = [8, 8, 8, 8];
 static kDrawMenuSelectionMissile_SpriteMap: [u16; 4] = [0x37, 0x36, 0x35, 0x34];
@@ -3444,7 +3441,7 @@ pub unsafe fn DrawMenuSelectionMissile(game: &mut Game) {
                 }
             }
         }
-        DrawMenuSpritemap(
+        sprite_output::menu(
             kDrawMenuSelectionMissile_SpriteMap[word!(game.eproj_id[0]) as usize],
             word!(game.eproj_id[5]),
             word!(game.eproj_id[10]),
@@ -3478,7 +3475,7 @@ pub unsafe fn DrawFileCopyArrow(game: &mut Game) {
                 }
             }
         }
-        DrawMenuSpritemap(
+        sprite_output::menu(
             (*(rom_ptr!(game, FileCopyArrowStuff; 0x82bb0c)).offset(v0 as isize)).spritemap,
             (*(rom_ptr!(game, FileCopyArrowStuff; 0x82bb0c)).offset(v0 as isize)).xpos,
             (*(rom_ptr!(game, FileCopyArrowStuff; 0x82bb0c)).offset(v0 as isize)).ypos,
@@ -3497,7 +3494,7 @@ pub unsafe fn DisplayMapElevatorDestinations(game: &mut Game) {
                 if *(v1 as *mut u16) == 0xffff {
                     break;
                 }
-                DrawMenuSpritemap(
+                sprite_output::menu(
                     *(v1.offset(4) as *mut u16),
                     (*(v1 as *mut u16)).wrapping_sub(word!(game.reg_BG1HOFS)),
                     (*(v1.offset(2) as *mut u16)).wrapping_sub(word!(game.reg_BG1VOFS)),
@@ -3585,8 +3582,8 @@ pub unsafe fn DrawBabyMetroid(k: u16, game: &mut Game) {
             );
         }
         let v3 = RomPtr_82(k, game);
-        DrawMenuSpritemap(*(v3.offset(2) as *mut u16), 0x7c, 0x50, 2048, game);
-        DrawMenuSpritemap(0x64, 0x7c, 0x50, 2560, game);
+        sprite_output::menu(*(v3.offset(2) as *mut u16), 0x7c, 0x50, 2048, game);
+        sprite_output::menu(0x64, 0x7c, 0x50, 2560, game);
     }
 }
 pub unsafe fn FinishProcessingGameOverBabyMetroidAsm(game: &mut Game) {

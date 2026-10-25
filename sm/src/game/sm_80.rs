@@ -1,14 +1,16 @@
 use crate::game::decompression::{self, decompress_to_ram};
 use crate::game::music::HandleMusicQueue;
 pub use crate::game::prelude::*;
+use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::room_state::load_tiles_and_palette;
+use crate::game::sprite_drawing::Clip;
 
 pub use crate::game::constants::bank_60::*;
 
 use crate::game::animated_tiles;
 use crate::game::room_mechanisms::reload_graphics;
 use crate::game::sm_8b::InitializeIoDisplayLogo_Async;
-use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
+use crate::game::sm_81::{LoadFromSram, SoftReset};
 use crate::rtl::RtlApuUpload;
 
 crate::typed_struct! {
@@ -1552,12 +1554,15 @@ pub unsafe fn DrawTwoTimerDigits(a: u16, k: u16, game: &mut Game) {
 }
 pub unsafe fn DrawTimerSpritemap(a: u16, j: u16, game: &mut Game) {
     unsafe {
-        DrawSpritemap(
+        sprite_output::paletted(
             0x80,
             j,
-            (a).wrapping_add((byte!(@pointer ram_ptr!(game, u16; 0x948); 1)) as u16),
-            byte!(@pointer ram_ptr!(game, u16; 0x94a); 1) as u16,
+            (
+                (a).wrapping_add((byte!(@pointer ram_ptr!(game, u16; 0x948); 1)) as u16),
+                byte!(@pointer ram_ptr!(game, u16; 0x94a); 1) as u16,
+            ),
             2560,
+            Clip::Bounded,
             game,
         );
     }
