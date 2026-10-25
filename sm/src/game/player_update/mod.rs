@@ -7,8 +7,8 @@ pub(crate) mod minimap;
 pub(crate) mod state;
 
 use crate::game::{player_movement, player_transitions as transitions, samus_periodic_damage};
-use effects::{GammaAction, Host};
-use transitions::state::FrameBetaMode;
+use effects::Host;
+use transitions::state::{FrameBetaMode, FrameGammaMode};
 
 /// Chosen before entering Session ownership. Special movement has already run
 /// at its legacy boundary; do not redispatch a handler changed by that movement.
@@ -33,8 +33,9 @@ pub(crate) fn advance(
     }
     // Both movement and map projection can change the selected gamma action.
     if mode == FrameBetaMode::Gameplay {
-        if let GammaAction::Legacy(selector) = h.gamma_action() {
-            h.run_gamma(selector);
+        let gamma = h.session().player.transitions.frame_gamma;
+        if !matches!(gamma, FrameGammaMode::Empty | FrameGammaMode::Disabled) {
+            h.run_gamma(gamma);
         }
     }
     if mode == FrameBetaMode::AnimationOnly {

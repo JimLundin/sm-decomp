@@ -6,10 +6,7 @@ use crate::{
             state::{FrameBetaMode, FrameGammaMode},
         },
         player_update::{self, MovementStep},
-        player_update::{
-            content::Content,
-            effects::{Effects, GammaAction},
-        },
+        player_update::{content::Content, effects::Effects},
         session_runtime::Runtime,
         visual_host::{self, Source},
     },
@@ -73,15 +70,9 @@ impl Effects for Runtime<'_> {
     fn minimap_boss_id(&self) -> u16 {
         self.word(0x179c)
     }
-    fn gamma_action(&self) -> GammaAction {
-        match self.session().player.transitions.frame_gamma {
-            FrameGammaMode::Empty | FrameGammaMode::Disabled => GammaAction::Inactive,
-            mode => GammaAction::Legacy(mode.to_raw()),
-        }
-    }
-    fn run_gamma(&mut self, selector: u16) {
+    fn run_gamma(&mut self, mode: FrameGammaMode) {
         self.foreign(|game| unsafe {
-            crate::game::sm_90::CallFrameHandlerGamma(0x900000 | u32::from(selector), game);
+            advance_gamma(0x900000 | u32::from(mode.to_raw()), game);
         });
     }
 }
@@ -204,5 +195,59 @@ pub(crate) fn low_health(game: &mut Game) {
     } else if game.samus_health_warning() != 0 {
         game.set_samus_health_warning(0);
         crate::game::sm_80::QueueSfx3_Max6(1, game);
+    }
+}
+
+// Retained gamma effects; uncovered drain/timer bodies keep their original order.
+use crate::game::{
+    palette_effects,
+    player_movement::forced,
+    prelude::{kButton_Up, kGameState_35_TimeUp, kPose_E9_FaceL_Drained_CrouchFalling},
+    sm_80::{DrawTimer, ProcessTimer},
+};
+use crate::ram_map::word as legacy_word;
+crate::game::callback_dispatch! {
+    unsafe fn advance_gamma(ea: u32, game: &mut Game) => ea;
+    call (game); default { crate::rtl::Unreachable(game); };
+    @functions [pub unsafe fn (game: &mut Game)];
+    [9494683] Samus_Func1 [] {
+        if legacy_word!(game.samus_pose) as i32 == kPose_E9_FaceL_Drained_CrouchFalling as i32
+            && legacy_word!(game.samus_anim_frame) as i32 - 8i32 & 0x8000 == 0
+            && (legacy_word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0
+        {
+            legacy_word! {game; samus_anim_frame_timer = 1; samus_anim_frame = 13;
+                frame_handler_gamma = ((0x90e90ei32) as u16); }
+        }
+    };
+    [9494725] Samus_Func2 [] {
+        if legacy_word!(game.samus_anim_frame) as i32 - 8i32 & 0x8000 == 0
+            && legacy_word!(game.samus_anim_frame) as i32 - 12i32 & 0x8000 != 0
+            && (legacy_word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0
+        {
+            legacy_word! {game; samus_anim_frame_timer = 1; samus_anim_frame = 18; }
+        }
+    };
+    [9494758] Samus_Func3 [] {
+        if ProcessTimer(game) & 1 != 0 {
+            legacy_word!(game.game_state = kGameState_35_TimeUp as u16);
+            word_transfers!(game, descending, 256; le(target_palettes, 255) <- value(0x7fff));
+            legacy_word!(game.frame_handler_gamma = (0x90e114i32) as u16);
+            palette_effects::set_enabled(false, game);
+        }
+        if legacy_word!(game.timer_status) != 0 {
+            DrawTimer(game);
+        }
+    };
+    [9494804] DrawTimer_ [] {
+        DrawTimer(game);
+    };
+    @external {
+        9495201 => [forced::struggle_from_draygon(&mut Runtime::new(game))];
+        9494830 => [crate::game::session_runtime::ceres_movement(game, |h| forced::push_out_of_ceres(h))];
+        9494984 => [crate::game::session_runtime::ceres_movement(game, |h| forced::advance_ceres_push(h))];
+        9495459 => [forced::finish_forced_fall(&mut Runtime::new(game))];
+        9495579 => [forced::animate_fall(Runtime::new(game).session_mut())];
+        9495422 => [()];
+        9496846 => [()];
     }
 }

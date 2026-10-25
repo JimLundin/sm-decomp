@@ -15,13 +15,11 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_90::*;
 
 use crate::game::explosion_window::spawn_crystal_flash;
-use crate::game::palette_effects;
 use crate::game::sm_80::{
-    DrawTimer, HandleAutoscrolling_X, HandleAutoscrolling_Y,
-    HandleScrollingWhenTriggeringScrollDown, HandleScrollingWhenTriggeringScrollLeft,
-    HandleScrollingWhenTriggeringScrollRight, HandleScrollingWhenTriggeringScrollUp,
-    InvalidInterrupt_Crash, ProcessTimer, QueueSfx1_Max6, QueueSfx3_Max6, QueueSfx3_Max9,
-    QueueSfx3_Max15,
+    HandleAutoscrolling_X, HandleAutoscrolling_Y, HandleScrollingWhenTriggeringScrollDown,
+    HandleScrollingWhenTriggeringScrollLeft, HandleScrollingWhenTriggeringScrollRight,
+    HandleScrollingWhenTriggeringScrollUp, InvalidInterrupt_Crash, QueueSfx1_Max6, QueueSfx3_Max6,
+    QueueSfx3_Max9, QueueSfx3_Max15,
 };
 
 use crate::game::projectile_geometry::sine_offset;
@@ -210,52 +208,6 @@ static kSamus_MoveHandler_Knockback: [Func_V; 6] = callback_table! { nonnull Fun
     Samus_MoveHandler_Knockback_Up, Samus_MoveHandler_Knockback_3,
     Samus_MoveHandler_Knockback_Down, Samus_MoveHandler_Knockback_Down,
 };
-crate::game::callback_dispatch! {
-    pub unsafe fn CallFrameHandlerGamma(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [9494683] Samus_Func1 [] {
-        if word!(game.samus_pose) as i32 == kPose_E9_FaceL_Drained_CrouchFalling as i32
-            && word!(game.samus_anim_frame) as i32 - 8i32 & 0x8000 == 0
-            && (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0
-        {
-            word! {game; samus_anim_frame_timer = 1; samus_anim_frame = 13;
-                frame_handler_gamma = ((0x90e90ei32) as u16); }
-        }
-    };
-    [9494725] Samus_Func2 [] {
-        if word!(game.samus_anim_frame) as i32 - 8i32 & 0x8000 == 0
-            && word!(game.samus_anim_frame) as i32 - 12i32 & 0x8000 != 0
-            && (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0
-        {
-            word! {game; samus_anim_frame_timer = 1; samus_anim_frame = 18; }
-        }
-    };
-    [9494758] Samus_Func3 [] {
-        if ProcessTimer(game) & 1 != 0 {
-            word!(game.game_state = kGameState_35_TimeUp as u16);
-            word_transfers!(game, descending, 256; le(target_palettes, 255) <- value(0x7fff));
-            word!(game.frame_handler_gamma = (0x90e114i32) as u16);
-            palette_effects::set_enabled(false, game);
-        }
-        if word!(game.timer_status) != 0 {
-            DrawTimer(game);
-        }
-    };
-    [9494804] DrawTimer_ [] {
-        DrawTimer(game);
-    };
-    @external {
-        9495201 => [forced::struggle_from_draygon(&mut Runtime::new(game))];
-        9494830 => [crate::game::session_runtime::ceres_movement(game, |h| forced::push_out_of_ceres(h))];
-        9494984 => [crate::game::session_runtime::ceres_movement(game, |h| forced::advance_ceres_push(h))];
-        9495459 => [forced::finish_forced_fall(&mut Runtime::new(game))];
-        9495579 => [forced::animate_fall(Runtime::new(game).session_mut())];
-        9495422 => [()];
-        9496846 => [()];
-    }
-}
-
 pub(crate) use crate::game::player_projectiles::prepare as HandleControllerInputForGamePhysics;
 crate::game::callback_dispatch! {
     pub unsafe fn CallSamusMovementHandler(ea: u32, game: &mut Game) => ea;

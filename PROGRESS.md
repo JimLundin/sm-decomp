@@ -4,16 +4,16 @@
 
 | Measure | Count |
 | --- | ---: |
-| Production Rust lines* | 115638 |
-| Legacy bank Rust lines | 51022 |
+| Production Rust lines* | 115629 |
+| Legacy bank Rust lines | 50974 |
 | Verification Rust lines | 38936 |
-| Total Rust | 154574 |
+| Total Rust | 154565 |
 | Lines containing `unsafe` | 4603 |
 | Warnings (no-default library) | 362 |
 | Required checkpoint checks passing | 27/44 |
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-**Post-draw controls migrated:** production -5, legacy -57, unsafe -5. Seven selected rows pass, including death.
+**Gamma dispatch consolidated:** production -9, legacy -48. Five selected rows pass; sm90 has 522 lines left.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)
