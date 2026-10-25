@@ -44,6 +44,17 @@ frames = 8780
 require_hit = ["player_projectiles.prepare.weapons", "transitions.phase.2", "transitions.phase.25", "samus.jump.normal"]
 expect = ["state:30", "area:ceres", "room:DF45"]
 
+# TAS playback skips attract mode; local input file is b"0000\n" repeated 6000 times.
+# Includes initialization, the first demo tick, and 120 following demo frames.
+[[segment]]
+id = "demo-attract-setup"
+inputs = "attract-neutral.inputs"
+input_sha256 = "b6b897cc90e61d209a57277d3927c935b71dcfcbd8e4c9dadb9b45bd605db6f6"
+start_frame = 2619
+frames = 189
+require_hit = ["coroutine.init", "coroutine.demo", "transitions.phase.2"]
+expect = ["state:41", "state:42"]
+
 # Full window reaches held-input pose changes, normal jumps and their animation tail.
 [[segment]]
 id = "samus-input-poses"

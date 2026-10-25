@@ -57,9 +57,9 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Observer unit tests (20) are not gameplay checks. Regenerate incompatible
    checkpoints from boot; preserve the old checked navigation build.
 2. **Current - lane B bank retirement.** `sm_94` is deleted; next is `sm_91`.
-   Normal and scripted input use shared owned state; 844 bank lines remain. Next:
-   attract-demo setup (LoadDemoData and scene callbacks), then suit/init/X-ray and
-   Mother Brain/equipment. Verify each actual context; intro does not cover attract setup.
+   Normal input, scripted playback and attract setup share owned state; 685 bank
+   lines remain. Next: complete suit sequence, then equipment/init/X-ray and
+   Mother Brain. Verify each actual context; attract setup has its own movie row.
    Old `sm_91`/`sm_90` drafts remain dropped; inspect current source afresh.
    Natural grapple movie coverage remains pending despite direct ROM checks.
    Report added production and deleted legacy lines together; growth needs a reason.

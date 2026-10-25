@@ -123,6 +123,42 @@ impl Effects for Runtime<'_> {
 impl Host for Runtime<'_> {}
 
 impl Runtime<'_> {
+    pub(crate) fn load_demo_data(&mut self) {
+        use crate::{game::player_transitions::demo, ram_map::words as ram};
+        let scene = self.word(ram::demo_scene);
+        let set = self.word(ram::demo_set);
+        demo::load_data(self, set, scene);
+        let set = self.word(ram::demo_set);
+        let scene = self.word(ram::demo_scene);
+        if demo::initialize_scene(self, set, scene) {
+            self.foreign(|game| unsafe { crate::game::sm_91::MakeSamusFaceForward(game) });
+            self.session_mut().player.transitions.draw_handler = 0xeb52;
+        }
+        demo::finish_setup(self);
+        self.foreign(|game| unsafe { crate::game::sm_90::UpdateBeamTilesAndPalette(game) });
+        for (field, value) in [
+            (ram::button_config_up, 0x0800),
+            (ram::button_config_down, 0x0400),
+            (ram::button_config_left, 0x0200),
+            (ram::button_config_right, 0x0100),
+            (ram::button_config_shoot_x, 0x0040),
+            (ram::button_config_jump_a, 0x0080),
+            (ram::button_config_run_b, 0x8000),
+            (ram::button_config_itemcancel_y, 0x4000),
+            (ram::button_config_itemswitch, 0x2000),
+            (ram::button_config_aim_up_R, 0x0010),
+            (ram::button_config_aim_down_L, 0x0020),
+            (ram::UNUSED_word_7E09E8, 1),
+            (ram::debug_flag, 1),
+            (ram::moonwalk_flag, 0),
+            (ram::UNUSED_word_7E0DF8, 0),
+            (ram::UNUSED_word_7E0DFA, 0),
+            (ram::UNUSED_word_7E0DFC, 0),
+        ] {
+            self.write_slice_le(field, value);
+        }
+    }
+
     pub(crate) fn handle_demo_input(&mut self) {
         use crate::{game::player_transitions::demo, ram_map::words as ram};
         if demo::advance(self) {

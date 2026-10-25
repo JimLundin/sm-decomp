@@ -83,6 +83,7 @@ pub struct PlayerTransitions {
     pub landing_compatibility: u16,
     pub frame_alpha: FrameAlphaMode,
     pub frame_beta: u16,
+    pub draw_handler: u16,
     pub knockback: u16,
     pub bomb_jump: BombJump,
     pub input_mode: InputMode,

@@ -209,6 +209,7 @@ macro_rules! scalar_words {
             $f(0xf338+index*2,$($borrow)* $s.sprite_compatibility.disable_flags[index]);
         }
         $f(0xa44,$($borrow)* $s.player.transitions.frame_beta);
+        $f(0xa5c,$($borrow)* $s.player.transitions.draw_handler);
         $f(0xa7a,$($borrow)* $s.player.demo.pre_action);
         $f(0xa7c,$($borrow)* $s.player.demo.delay);
         $f(0xa7e,$($borrow)* $s.player.demo.program);

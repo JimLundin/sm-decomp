@@ -19,20 +19,6 @@ use crate::game::sm_80::{
 use crate::game::sm_88::SpawnHdmaObject;
 use crate::game::sm_90::{CallSomeSamusCode, LoadProjectilePalette, UpdateBeamTilesAndPalette};
 
-crate::typed_struct! {
-    [
-        #[derive(Copy, Clone)]
-        #[repr(C, packed)]
-    ];
-    pub struct DemoSetDef {
-        pub items, missiles, super_missiles, power_bombs, health, beams, equipped_beams_: u16;
-        pub demo_obj: VoidP;
-    }
-
-
-
-}
-
 pub const NULL: *mut c_void = null_mut::<c_void>();
 crate::game::constants::typed_constants! { i32;
     true_0 = 1, false_0 = 0,
@@ -62,151 +48,6 @@ unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
             b"addr < 0x2000\0", b"src/sm_rtl.h\0", 51, pointer __ASSERT_FUNCTION.as_ptr()
         };
         ram_ptr!(game; addr as i32 as isize)
-    }
-}
-static kDemoSetFuncPtrs_0: [Func_V; 6] = callback_table! { nonnull Func_V;
-    DemoSetFunc_0, DemoSetFunc_1, DemoSetFunc_1, DemoSetFunc_2, DemoSetFunc_1, DemoSetFunc_3,
-};
-static kDemoSetFuncPtrs_1: [Func_V; 6] = callback_table! { nonnull Func_V;
-    DemoSetFunc_2, DemoSetFunc_2, DemoSetFunc_1, DemoSetFunc_2, DemoSetFunc_1, DemoSetFunc_4,
-};
-static kDemoSetFuncPtrs_2: [Func_V; 6] = callback_table! { nonnull Func_V;
-    DemoSetFunc_2, DemoSetFunc_5, DemoSetFunc_1, DemoSetFunc_1, DemoSetFunc_1, DemoSetFunc_1,
-};
-static kDemoSetFuncPtrs_3: [Func_V; 5] = callback_table! { nonnull Func_V;
-    DemoSetFunc_6, DemoSetFunc_2, DemoSetFunc_2, DemoSetFunc_1, DemoSetFunc_7,
-};
-static kDemoSetFuncPtrs: [&'static [Func_V]; 4] = [
-    &kDemoSetFuncPtrs_0,
-    &kDemoSetFuncPtrs_1,
-    &kDemoSetFuncPtrs_2,
-    &kDemoSetFuncPtrs_3,
-];
-pub unsafe fn LoadDemoData(game: &mut Game) {
-    unsafe {
-        let scene_offset = game.demo_scene().wrapping_mul(16);
-        let set_offset = game.read_rom_word(0x918885, usize::from(game.demo_set()) * 2);
-        let definition_offset = scene_offset.wrapping_add(set_offset);
-        let definition_address = 0x910000 | u32::from(definition_offset);
-        if definition_offset & 0x8000 == 0 {
-            // Retain RomPtr's diagnostic/failed-frame flag for invalid windows.
-            RomPtr(definition_address, game);
-        }
-        let definition_address = definition_address | 0x8000;
-        game.set_collected_items(
-            game.read_rom_word(definition_address, core::mem::offset_of!(DemoSetDef, items)),
-        );
-        game.set_equipped_items(game.collected_items());
-        game.set_samus_max_missiles(game.read_rom_word(
-            definition_address,
-            core::mem::offset_of!(DemoSetDef, missiles),
-        ));
-        game.set_samus_missiles(game.samus_max_missiles());
-        game.set_samus_max_super_missiles(game.read_rom_word(
-            definition_address,
-            core::mem::offset_of!(DemoSetDef, super_missiles),
-        ));
-        game.set_samus_super_missiles(game.samus_max_super_missiles());
-        game.set_samus_max_power_bombs(game.read_rom_word(
-            definition_address,
-            core::mem::offset_of!(DemoSetDef, power_bombs),
-        ));
-        game.set_samus_power_bombs(game.samus_max_power_bombs());
-        game.set_samus_max_health(game.read_rom_word(
-            definition_address,
-            core::mem::offset_of!(DemoSetDef, health),
-        ));
-        game.set_samus_health(game.samus_max_health());
-        game.set_collected_beams(
-            game.read_rom_word(definition_address, core::mem::offset_of!(DemoSetDef, beams)),
-        );
-        game.set_equipped_beams(game.read_rom_word(
-            definition_address,
-            core::mem::offset_of!(DemoSetDef, equipped_beams_),
-        ));
-        game.set_samus_reserve_health(0);
-        pt::demo::start(Runtime::new(game).session_mut());
-        if definition_offset & 0x8000 == 0 {
-            RomPtr(0x910000 | u32::from(definition_offset), game);
-        }
-        let demo_obj = game.read_rom_word(
-            definition_address,
-            core::mem::offset_of!(DemoSetDef, demo_obj),
-        );
-        pt::demo::load(&mut Runtime::new(game), demo_obj, demo_obj);
-        let set = usize::from(game.demo_set());
-        let scene = usize::from(game.demo_scene());
-        let initialize_scene = kDemoSetFuncPtrs[set][scene];
-        initialize_scene(game);
-        game.set_frame_handler_alfa(fnSamus_FrameHandlerAlfa_Func12 as u16);
-        game.set_frame_handler_beta(fnSamus_FrameHandlerBeta_Func14 as u16);
-        game.set_samus_momentum_routine_index(0);
-        game.set_samus_special_transgfx_index(0);
-        game.set_samus_hurt_switch_index(0);
-        Samus_LoadSuitPalette(game);
-        UpdateBeamTilesAndPalette(game);
-        game.set_button_config_up(kButton_Up as u16);
-        game.set_button_config_down(kButton_Down as u16);
-        game.set_button_config_left(kButton_Left as u16);
-        game.set_button_config_right(kButton_Right as u16);
-        game.set_button_config_shoot_x(kButton_X as u16);
-        game.set_button_config_jump_a(kButton_A as u16);
-        game.set_button_config_run_b(kButton_B as u16);
-        game.set_button_config_itemcancel_y(kButton_Y as u16);
-        game.set_button_config_itemswitch(kButton_Select as u16);
-        game.set_button_config_aim_up_r(kButton_R as u16);
-        game.set_button_config_aim_down_l(kButton_L as u16);
-        game.set_unused_word_7e09e8(1);
-        game.set_debug_flag(1);
-        game.set_moonwalk_flag(0);
-        game.set_unused_word_7e0df8(0);
-        game.set_unused_word_7e0dfa(0);
-        game.set_unused_word_7e0dfc(0);
-    }
-}
-pub unsafe fn DemoSetFunc_0(game: &mut Game) {
-    unsafe {
-        MakeSamusFaceForward(game);
-        game.set_samus_draw_handler(fnSamusDrawHandler_Default as u16);
-    }
-}
-pub unsafe fn DemoSetFunc_3(game: &mut Game) {
-    unsafe {
-        DemoSetFunc_Common(kPose_1F_MoveL_Morphball_Ground as u16, game);
-    }
-}
-pub unsafe fn DemoSetFunc_7(game: &mut Game) {
-    unsafe {
-        word!(game.samus_health = 20);
-        DemoSetFunc_2(game);
-    }
-}
-crate::forward_calls! { pub unsafe fn (game: &mut Game);
-    DemoSetFunc_2 => DemoSetFunc_Common(kPose_02_FaceL_Normal as u16, game);
-    DemoSetFunc_4 => DemoSetFunc_Common(kPose_2A_FaceL_Fall as u16, game);
-    DemoSetFunc_1 => DemoSetFunc_Common(kPose_01_FaceR_Normal as u16, game);
-}
-pub unsafe fn DemoSetFunc_Common(pose: u16, game: &mut Game) {
-    {
-        game.set_samus_pose(pose);
-        pt::refresh_pose(&mut Runtime::new(game));
-        game.set_samus_draw_handler(fnSamusDrawHandler_Default as u16);
-    }
-}
-pub unsafe fn DemoSetFunc_5(game: &mut Game) {
-    {
-        game.set_samus_draw_handler(fnSamusDrawHandler_Default as u16);
-        pt::start_shinespark(&mut Runtime::new(game));
-        game.set_samus_pose(kPose_CD_FaceR_Shinespark_Diag as u16);
-        pt::refresh_pose(&mut Runtime::new(game));
-    }
-}
-pub unsafe fn DemoSetFunc_6(game: &mut Game) {
-    unsafe {
-        word!(game.samus_draw_handler = (0x90eb52i32) as u16);
-        pt::start_shinespark(&mut Runtime::new(game));
-        word!(game.samus_pose = kPose_CA_FaceL_Shinespark_Horiz as u16);
-        pt::refresh_pose(&mut Runtime::new(game));
     }
 }
 pub unsafe fn XrayRunHandler(game: &mut Game) {
@@ -428,7 +269,7 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
         game.set_samus_hurt_flash_counter(0);
         game.set_debug_invincibility(0);
         if game.game_state() == kGameState_40_TransitionToDemo as u16 {
-            LoadDemoData(game);
+            Runtime::new(game).load_demo_data();
         }
         game.set_samus_prev_health_for_flash(game.samus_health());
     }

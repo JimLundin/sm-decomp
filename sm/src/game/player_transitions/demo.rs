@@ -55,6 +55,73 @@ pub(crate) fn load(h: &mut impl Host, angle: u16, program: u16) {
     h.session_mut().player.demo.delay = 1;
     h.session_mut().player.palette.xray_progress = 0;
 }
+
+pub(crate) fn load_data(h: &mut impl Host, set: u16, scene: u16) {
+    let scene_offset = scene.wrapping_mul(16);
+    let definition = scene_offset.wrapping_add(loaded_word(h, 0x8885, usize::from(set) * 2));
+    check_window(h, definition);
+    h.session_mut().inventory.equipment.owned = loaded_word(h, definition, 0);
+    h.session_mut().inventory.equipment.active = h.session().inventory.equipment.owned;
+    for index in 0..4 {
+        let value = loaded_word(h, definition, 2 + index * 2);
+        let inventory = &mut h.session_mut().inventory;
+        let supply = if index < 3 {
+            &mut inventory.ammunition[index]
+        } else {
+            &mut inventory.health
+        };
+        supply.maximum = value;
+        supply.current = value;
+    }
+    h.session_mut().inventory.beams.owned = loaded_word(h, definition, 10);
+    h.session_mut().inventory.beams.active = loaded_word(h, definition, 12);
+    h.session_mut().inventory.reserve_health = 0;
+    start(h.session_mut());
+    check_window(h, definition);
+    let object = loaded_word(h, definition, 14);
+    load(h, object, object);
+}
+
+/// True requests the retained face-forward sequence before finishing setup.
+pub(crate) fn initialize_scene(h: &mut impl Host, set: u16, scene: u16) -> bool {
+    const POSES: [&[u16]; 4] = [
+        &[0, 1, 1, 2, 1, 0x1f],
+        &[2, 2, 1, 2, 1, 0x2a],
+        &[2, 0xcd, 1, 1, 1, 1],
+        &[0xca, 2, 2, 1, 2],
+    ];
+    let pose = POSES[usize::from(set)][usize::from(scene)];
+    if pose == 0 {
+        return true;
+    }
+    if (set, scene) == (3, 4) {
+        h.session_mut().inventory.health.current = 20;
+    }
+    let shinespark = matches!((set, scene), (2, 1) | (3, 0));
+    if shinespark {
+        h.session_mut().player.transitions.draw_handler = 0xeb52;
+        super::start_shinespark(h);
+    }
+    h.session_mut().player.pose = pose;
+    super::refresh_pose(h);
+    if !shinespark {
+        h.session_mut().player.transitions.draw_handler = 0xeb52;
+    }
+    false
+}
+
+pub(crate) fn finish_setup(h: &mut impl Host) {
+    use super::state::{HurtAction, InterruptionAction, MomentumAction};
+    use crate::game::{samus_palette, visual_state::PaletteBuffer};
+    let transitions = &mut h.session_mut().player.transitions;
+    transitions.frame_alpha = FrameAlphaMode::from_raw(0xe6c9);
+    transitions.frame_beta = 0xe7f5;
+    transitions.momentum = MomentumAction::from_raw(0);
+    transitions.interruption = InterruptionAction::from_raw(0);
+    transitions.hurt = HurtAction::from_raw(0);
+    samus_palette::load_suit(h, PaletteBuffer::Current);
+}
+
 fn pre_action(h: &mut impl Host) {
     let next = match h.session().player.demo.pre_action {
         0x864f if h.session().player.x.wrapping_sub(178) & 0x8000 != 0 => Some((0x866a, 0x8623)),
