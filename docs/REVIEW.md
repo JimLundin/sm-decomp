@@ -71,6 +71,11 @@ runs exactly one game frame per input word. Steps, one commit each:
   agent: the next door has 19 unmapped NMI advances (an extra native NMI hidden by
   oracle patches). **Next commit:** fix door scheduling so the aligned prefix passes
   the first Ceres door, with its regression row; extend frame count each commit.
+  **07:52:** PLAN says original timing now matches 23 doors but the work is held
+  locally while the 24 hand recipes requalify. Do not hold it: land the door-timing
+  code and its regression row this hour; re-derive recipe input offsets mechanically
+  in the same commit, and for any recipe that truly fails name it and its first
+  differing frame in the commit body (those routes are replaced at A0.5 anyway).
   Also check why the capture shows no credits: if the movie's input ends before the
   credits, A0.4 continues with neutral input after the last frame; record which.
 - **A0.4 Replay.** Aligned any% from boot to credits, 0 failures; then 100%
@@ -104,6 +109,12 @@ player-input/pose module; (2) demo input (`*DemoInput*`, `DemoSetFunc_*`,
 X-ray; (4) `SomeMotherBrainScripts*`, `SamusFunc_E633*`, then delete the file. Mother
 Brain paths are not movie-covered yet: move them unchanged and say so. Aim each
 commit at ≤70% replacement; the production waypoint depends on it.
+**07:52:** families 1-2 landed (4f8b05d, 563a45e); `sm_91` 844 lines left, ratio so
+far ~80% (60% then 105%). The demo interpreter re-matches ROM opcode addresses
+(`0x8427`…) and added an `Effects` method; express remaining families as data or
+plain owned logic, no new trait methods. Even at 70%, `sm_91`+`sm_90` cut production
+only ~840, so the 18:00 production line (≤114,000) also needs deleting unreachable
+functions and production verify/probe hooks as each family moves; say how many.
 
 **Waypoints** (Europe/Stockholm; review clock; a miss gets a diagnosis, not a new plan):
 
@@ -125,6 +136,13 @@ Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
+- **2026-10-25 07:52 CET (563a45e):** 2 agent commits, both `B:sm_91` (4f8b05d,
+  563a45e), Score lines present; **lane A 0 commits** (first silent hour; door work
+  held locally, see A0.3), 0 unlabelled, 0 docs-only. Score `checks 24/44 · legacy
+  54148 · production 116398 · unsafe 4892 · verification 39023` (last 24 · 54543 ·
+  116478 · 4928 · 39010); warnings 371 (375); production verify/probe/observer 587
+  lines/91 files. 18:00: lane B on pace for legacy, behind on production; lane A
+  behind (0/10 checks). Verification +13 in a fixture host file: must fall. No stall.
 - **2026-10-25 06:52 CET (ca42bc5):** agents back after a 6h stall. 5 agent
   commits: A 2 (cec060e, 1b726be), B 3 (`B:sm_94`), 0 unlabelled, 0 docs-only; all
   carry `Score:` (ca42bc5's has mojibake `Â·`). **sm_94 deleted** (ratio ~75%).
