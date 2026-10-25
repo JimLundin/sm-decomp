@@ -127,3 +127,13 @@ pub(crate) enum HdmaWave {
     Phantoon,
     Intro,
 }
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum CinematicDisplay {
+    Title,
+    Intro,
+    Station,
+    Landing,
+    Escape,
+    Credits,
+}

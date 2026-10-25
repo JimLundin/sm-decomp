@@ -1410,3 +1410,194 @@ pub(crate) fn draw_player_frame(game: &mut Game) {
     h.foreign(player_projectiles::draw_projectiles);
     h.owned_call(crate::game::session_runtime::finish_player_frame);
 }
+
+// Hardware setup remains unsafe: Game construction alone does not attach a PPU.
+pub(crate) unsafe fn configure_cinematic_display(
+    display: crate::game::visual_state::CinematicDisplay,
+    game: &mut Game,
+) {
+    use crate::game::visual_state::CinematicDisplay::*;
+    use crate::rtl::{
+        BG1SC, BG2SC, BG3SC, BG4SC, BG12NBA, BG34NBA, BGMODE, CGADSUB, CGWSEL, COLDATA, INIDISP,
+        M7SEL, OBSEL, SETINI, TM, TMW, TS, VMAIN,
+    };
+    let title = display == Title;
+    let intro = display == Intro;
+    let escape = display == Escape;
+    let tiled = matches!(display, Landing | Credits);
+    let sprites = match display {
+        Escape => 0xa3,
+        Credits => 0,
+        _ => 3,
+    };
+    let mode = match display {
+        Intro => 9,
+        Landing | Credits => 1,
+        _ => 7,
+    };
+    let selection = if matches!(display, Title | Station) {
+        0x80
+    } else {
+        0
+    };
+    unsafe {
+        crate::rtl::register_writes! { game;
+            mirror(INIDISP as u16, 0x80, 0x51, false); mirror(OBSEL as u16, sprites, 0x52, false);
+            mirror(BGMODE as u16, mode, 0x55, false); mirror(M7SEL as u16, selection, 0x5f, false);
+        }
+        match display {
+            Title | Station | Escape => {
+                game.g_ram[0x58] = 0;
+                crate::rtl::register_writes! { game;
+                    mirror(BG1SC as u16, 0, 0x59, false); mirror(BG2SC as u16, 0, 0x5a, false);
+                    mirror(BG3SC as u16, 0, 0x5c, false); mirror(BG4SC as u16, 0, 0x5d, false);
+                    mirror(BG12NBA as u16, 0, 0x5e, false); byte(BG34NBA as u16, 0);
+                }
+            }
+            Intro => {
+                crate::rtl::register_writes! { game;
+                    mirror(BG1SC as u16, 0x50, 0x58, true); mirror(BG2SC as u16, 0x48, 0x59, true);
+                    mirror(BG3SC as u16, 0x4c, 0x5a, true);
+                }
+                game.g_ram[0x5c] = 0;
+                crate::rtl::register_writes! { game;
+                    mirror(BG4SC as u16, 0, 0x5d, false); byte(BG12NBA as u16, 0);
+                    mirror(BG34NBA as u16, 4, 0x5e, true);
+                }
+            }
+            Landing => {
+                crate::rtl::write_register_and_mirror(BG1SC as u16, 0x5c, 0x58, true, game);
+                game.g_ram[0x59] = 0;
+                crate::rtl::register_writes! { game;
+                    mirror(BG2SC as u16, 0, 0x5a, false); mirror(BG3SC as u16, 0, 0x5c, false);
+                    byte(BG4SC as u16, 0); mirror(BG12NBA as u16, 6, 0x5d, true);
+                    mirror(BG34NBA as u16, 0, 0x5e, true);
+                }
+            }
+            Credits => {
+                crate::rtl::register_writes! { game;
+                    mirror(BG1SC as u16, 0x48, 0x58, true); mirror(BG2SC as u16, 0x4c, 0x59, true);
+                    mirror(BG3SC as u16, 0x24, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
+                    mirror(BG12NBA as u16, 0x54, 0x5d, true); mirror(BG34NBA as u16, 2, 0x5e, true);
+                }
+            }
+        }
+        let layers = match display {
+            Title => 0x10,
+            Intro => 4,
+            Credits => 1,
+            _ => 0x11,
+        };
+        crate::rtl::register_writes! { game;
+            mirror(TM as u16, layers, 0x69, false); mirror(TS as u16, 0, 0x6b, false);
+        }
+        if tiled {
+            for at in [0x60, 0x61, 0x62, 0x6c, 0x6d, 0x6f, 0x72] {
+                game.g_ram[at] = 0;
+            }
+            if display == Credits {
+                game.g_ram[0x74] = 32;
+                game.g_ram[0x75] = 64;
+                game.g_ram[0x76] = 0x80;
+                word!(game.oam_next_ptr = 0);
+                reset_cinematic_transform(128, 128, game);
+                word! { game; cinematic_var5 = 0; cinematic_var6 = 1; }
+                word! { game, 0;
+                    reg_BG1HOFS, reg_BG1VOFS, reg_BG2HOFS, reg_BG2VOFS,
+                    cinematic_var7, cinematic_var8, cinematic_var9, cinematic_var10,
+                }
+            } else {
+                word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
+            }
+            return;
+        }
+        crate::rtl::register_writes! { game;
+            mirror(TMW as u16, 0, 0x6c, false); byte(VMAIN as u16, 0);
+            mirror(CGWSEL as u16, 0, 0x6e, false); mirror(CGADSUB as u16, 0, 0x71, false);
+        }
+        if escape {
+            game.g_ram[0x6f] = 0;
+            game.g_ram[0x72] = 0;
+        }
+        crate::rtl::WriteReg(COLDATA as u16, 0xe0, game);
+        if display != Station {
+            crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
+        }
+    }
+    if !title {
+        if !escape {
+            game.g_ram[0x6f] = 0;
+            game.g_ram[0x72] = 0;
+        }
+        game.g_ram[0x74] = 32;
+        game.g_ram[0x75] = 64;
+        game.g_ram[0x76] = 0x80;
+        if !escape {
+            game.g_ram[0x57] = 0;
+        }
+    }
+    if title || intro {
+        let fill = if title { 0 } else { 0x2f };
+        word_transfers!(game, ascending, 0x3ff; native(0x3000) <- value(fill));
+    }
+    match display {
+        Title => {
+            word! { game, 0;
+                oam_next_ptr, menu_option_index, screen_fade_delay, screen_fade_counter,
+                pausemenu_start_lr_pressed_highlight_timer, pausemenu_lr_animation_timer,
+                pausemenu_item_selector_animation_timer, pausemenu_reserve_tank_animation_timer,
+                UNUSED_word_7E0731, UNUSED_word_7E073D, pausemenu_lr_animation_frame,
+                pausemenu_item_selector_animation_frame, pausemenu_reserve_tank_animation_frame,
+                UNUSED_word_7E0745, pausemenu_shoulder_button_highlight, pausemenu_button_label_mode,
+                pausemenu_equipment_category_item, pausemenu_reserve_tank_delay_ctr, UNUSED_word_7E0759,
+                samus_reserve_health, samus_reserve_missiles, cinematic_var5,
+            }
+        }
+        Intro => {
+            word! { game, 0; oam_next_ptr, cinematic_var5 }
+        }
+        Escape => {
+            word! { game, 0; oam_next_ptr, screen_fade_delay, screen_fade_counter, cinematic_var5 }
+        }
+        _ => {}
+    }
+    if display != Station {
+        word!(game.cinematic_var6 = 256);
+    }
+    word! { game, 0;
+        cinematic_var7, cinematic_var8, cinematic_var9, cinematic_var10, g_word_7E1999,
+        g_word_7E199B, g_word_7E199D, g_word_7E199F,
+    }
+    if matches!(display, Intro | Station) {
+        word!(game.fx_layer_blending_config_a = 0);
+    }
+    if intro {
+        word! { game, 0; reg_BG2HOFS, reg_BG2VOFS, reg_BG3HOFS, reg_BG3VOFS }
+    }
+}
+
+pub(crate) unsafe fn reset_cinematic_transform(x: u16, y: u16, game: &mut Game) {
+    use crate::rtl::{M7A, M7B, M7C, M7D, M7X, M7Y, WriteRegWord};
+    unsafe {
+        WriteRegWord(M7A as u16, 256, game);
+        word!(game.reg_M7A = 256);
+        WriteRegWord(M7B as u16, 0, game);
+        word!(game.reg_M7B = 0);
+        WriteRegWord(M7C as u16, 0, game);
+        word!(game.reg_M7C = 0);
+        WriteRegWord(M7D as u16, 256, game);
+        word!(game.reg_M7D = 256);
+        WriteRegWord(M7X as u16, x, game);
+        word!(game.reg_M7X = x);
+        WriteRegWord(M7Y as u16, y, game);
+        word!(game.reg_M7Y = y);
+    }
+}
+
+pub(crate) fn set_cinematic_backdrop(lit: bool, game: &mut Game) {
+    game.g_ram[0x6f] = 0;
+    game.g_ram[0x72] = if lit { 0x81 } else { 0 };
+    game.g_ram[0x74] = if lit { 56 } else { 32 };
+    game.g_ram[0x75] = if lit { 88 } else { 64 };
+    game.g_ram[0x76] = 0x80;
+}

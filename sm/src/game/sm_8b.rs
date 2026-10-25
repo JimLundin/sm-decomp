@@ -4,7 +4,11 @@ pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
-use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled};
+use crate::game::visual_runtime::{
+    clear_hdma, configure_cinematic_display, reset_cinematic_transform, set_cinematic_backdrop,
+    set_hdma_enabled,
+};
+use crate::game::visual_state::CinematicDisplay;
 
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_60::*;
@@ -19,7 +23,7 @@ use crate::game::session_runtime::initialize_player;
 use crate::game::sm_80::{
     ClearOamExt, ClearUnusedOam, CopySuperMetroidString, DisableIrqInterrupts, EnableNMI,
     GraphicsAsset, HandleFadeIn, HandleFadeOut, QueueMode7Transfers, QueueSfx1_Max15,
-    QueueSfx2_Max6, QueueSfx3_Max6, WaitForNMI_Async, memset7E,
+    QueueSfx2_Max6, QueueSfx3_Max6, WaitForNMI_Async,
 };
 use crate::game::visual_runtime::{initialize_intro_wave, initialize_title_gradient};
 
@@ -143,209 +147,7 @@ crate::game::constants::typed_constants! { u32;
     fnCinematicFunctionBlackoutFromCeres = 9158939,
     fnCinematicFunctionEscapeFromCebes = 9163904,
 }
-pub unsafe fn SetupPpuForTitleSequence(game: &mut Game) {
-    unsafe {
-        crate::rtl::register_writes! { game;
-            mirror(INIDISP as u16, 0x80, 0x51, false); mirror(OBSEL as u16, 3, 0x52, false);
-            mirror(BGMODE as u16, 7, 0x55, false); mirror(M7SEL as u16, 0x80, 0x5f, false);
-        }
-        *ram_ptr!(game; 0x58) = 0;
-        crate::rtl::register_writes! { game;
-            mirror(BG1SC as u16, 0, 0x59, false); mirror(BG2SC as u16, 0, 0x5a, false);
-            mirror(BG3SC as u16, 0, 0x5c, false); mirror(BG4SC as u16, 0, 0x5d, false);
-            mirror(BG12NBA as u16, 0, 0x5e, false); byte(BG34NBA as u16, 0);
-            mirror(TM as u16, 0x10, 0x69, false); mirror(TS as u16, 0, 0x6b, false);
-            mirror(TMW as u16, 0, 0x6c, false); byte(VMAIN as u16, 0);
-            mirror(CGWSEL as u16, 0, 0x6e, false); mirror(CGADSUB as u16, 0, 0x71, false);
-            byte(COLDATA as u16, 0xe0); mirror(SETINI as u16, 0, 0x77, false);
-        }
-        memset(ram_ptr!(game, c_void; 0x3000), 0, 0x7fe as size_t);
-        word! { game, 0;
-            oam_next_ptr, menu_option_index, screen_fade_delay, screen_fade_counter,
-            pausemenu_start_lr_pressed_highlight_timer, pausemenu_lr_animation_timer,
-            pausemenu_item_selector_animation_timer, pausemenu_reserve_tank_animation_timer,
-            UNUSED_word_7E0731, UNUSED_word_7E073D, pausemenu_lr_animation_frame,
-            pausemenu_item_selector_animation_frame, pausemenu_reserve_tank_animation_frame,
-            UNUSED_word_7E0745, pausemenu_shoulder_button_highlight, pausemenu_button_label_mode,
-            pausemenu_equipment_category_item, pausemenu_reserve_tank_delay_ctr, UNUSED_word_7E0759,
-            samus_reserve_health, samus_reserve_missiles, cinematic_var5,
-        }
-        word!(game.cinematic_var6 = 256);
-        word! { game, 0;
-            cinematic_var7, cinematic_var8, cinematic_var9, cinematic_var10, g_word_7E1999,
-            g_word_7E199B, g_word_7E199D, g_word_7E199F,
-        }
-    }
-}
-pub unsafe fn SetupPpu_Intro(game: &mut Game) {
-    unsafe {
-        crate::rtl::register_writes! { game;
-            mirror(INIDISP as u16, 0x80, 0x51, false); mirror(OBSEL as u16, 3, 0x52, false);
-            mirror(BGMODE as u16, 9, 0x55, false); mirror(M7SEL as u16, 0, 0x5f, false);
-            mirror(BG1SC as u16, 0x50, 0x58, true); mirror(BG2SC as u16, 0x48, 0x59, true);
-            mirror(BG3SC as u16, 0x4c, 0x5a, true);
-        }
-        *ram_ptr!(game; 0x5c) = 0;
-        crate::rtl::register_writes! { game;
-            mirror(BG4SC as u16, 0, 0x5d, false); byte(BG12NBA as u16, 0);
-            mirror(BG34NBA as u16, 4, 0x5e, true); mirror(TM as u16, 4, 0x69, false);
-            mirror(TS as u16, 0, 0x6b, false); mirror(TMW as u16, 0, 0x6c, false);
-            byte(VMAIN as u16, 0); mirror(CGWSEL as u16, 0, 0x6e, false);
-            mirror(CGADSUB as u16, 0, 0x71, false); byte(COLDATA as u16, 0xe0);
-            mirror(SETINI as u16, 0, 0x77, false);
-        }
-        *ram_ptr!(game; 0x6f) = 0;
-        *ram_ptr!(game; 0x72) = 0;
-        *ram_ptr!(game; 0x74, 0) = 32;
-        *ram_ptr!(game; 0x74, 1) = 64;
-        *ram_ptr!(game; 0x74, 2) = 0x80;
-        *ram_ptr!(game; 0x57) = 0;
-        memset7E(ram_ptr!(game, u16; 0x3000), 0x2f, 0x7fe);
-        word! { game, 0; oam_next_ptr, cinematic_var5 }
-        word!(game.cinematic_var6 = 256);
-        word! { game, 0;
-            cinematic_var7, cinematic_var8, cinematic_var9, cinematic_var10, g_word_7E1999,
-            g_word_7E199B, g_word_7E199D, g_word_7E199F, fx_layer_blending_config_a, reg_BG2HOFS,
-            reg_BG2VOFS, reg_BG3HOFS, reg_BG3VOFS,
-        }
-    }
-}
-pub unsafe fn SetupPpu_3_Mode7(game: &mut Game) {
-    unsafe {
-        crate::rtl::register_writes! { game;
-            mirror(INIDISP as u16, 0x80, 0x51, false); mirror(OBSEL as u16, 3, 0x52, false);
-            mirror(BGMODE as u16, 7, 0x55, false); mirror(M7SEL as u16, 0x80, 0x5f, false);
-        }
-        *ram_ptr!(game; 0x58) = 0;
-        crate::rtl::register_writes! { game;
-            mirror(BG1SC as u16, 0, 0x59, false); mirror(BG2SC as u16, 0, 0x5a, false);
-            mirror(BG3SC as u16, 0, 0x5c, false); mirror(BG4SC as u16, 0, 0x5d, false);
-            mirror(BG12NBA as u16, 0, 0x5e, false); byte(BG34NBA as u16, 0);
-            mirror(TM as u16, 0x11, 0x69, false); mirror(TS as u16, 0, 0x6b, false);
-            mirror(TMW as u16, 0, 0x6c, false); byte(VMAIN as u16, 0);
-            mirror(CGWSEL as u16, 0, 0x6e, false); mirror(CGADSUB as u16, 0, 0x71, false);
-            byte(COLDATA as u16, 0xe0);
-        }
-        *ram_ptr!(game; 0x6f) = 0;
-        *ram_ptr!(game; 0x72) = 0;
-        *ram_ptr!(game; 0x74, 0) = 32;
-        *ram_ptr!(game; 0x74, 1) = 64;
-        *ram_ptr!(game; 0x74, 2) = 0x80;
-        *ram_ptr!(game; 0x57) = 0;
-        word! { game, 0;
-            cinematic_var7, cinematic_var8, cinematic_var9, cinematic_var10, g_word_7E1999,
-            g_word_7E199B, g_word_7E199D, g_word_7E199F, fx_layer_blending_config_a,
-        }
-    }
-}
-pub unsafe fn SetupPpu_4_Mode1(game: &mut Game) {
-    unsafe {
-        crate::rtl::register_writes! { game;
-            mirror(INIDISP as u16, 0x80, 0x51, false); mirror(OBSEL as u16, 3, 0x52, false);
-            mirror(BGMODE as u16, 1, 0x55, false); mirror(M7SEL as u16, 0, 0x5f, false);
-            mirror(BG1SC as u16, 0x5c, 0x58, true);
-        }
-        *ram_ptr!(game; 0x59) = 0;
-        crate::rtl::register_writes! { game;
-            mirror(BG2SC as u16, 0, 0x5a, false); mirror(BG3SC as u16, 0, 0x5c, false);
-            byte(BG4SC as u16, 0); mirror(BG12NBA as u16, 6, 0x5d, true);
-            mirror(BG34NBA as u16, 0, 0x5e, true); mirror(TM as u16, 0x11, 0x69, false);
-            mirror(TS as u16, 0, 0x6b, false);
-        }
-        *ram_ptr!(game; 0x60) = 0;
-        *ram_ptr!(game; 0x61) = 0;
-        *ram_ptr!(game; 0x62) = 0;
-        *ram_ptr!(game; 0x6c) = 0;
-        *ram_ptr!(game; 0x6d) = 0;
-        *ram_ptr!(game; 0x6f) = 0;
-        *ram_ptr!(game; 0x72) = 0;
-        word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
-    }
-}
-pub unsafe fn SetupPpu_5_Mode7(game: &mut Game) {
-    unsafe {
-        crate::rtl::register_writes! { game;
-            mirror(INIDISP as u16, 0x80, 0x51, false); byte(OBSEL as u16, 0xa3);
-        }
-        *ram_ptr!(game; 0x52) = -93i32 as u8;
-        crate::rtl::register_writes! { game;
-            mirror(BGMODE as u16, 7, 0x55, false); mirror(M7SEL as u16, 0, 0x5f, false);
-        }
-        *ram_ptr!(game; 0x58) = 0;
-        crate::rtl::register_writes! { game;
-            mirror(BG1SC as u16, 0, 0x59, false); mirror(BG2SC as u16, 0, 0x5a, false);
-            mirror(BG3SC as u16, 0, 0x5c, false); mirror(BG4SC as u16, 0, 0x5d, false);
-            mirror(BG12NBA as u16, 0, 0x5e, false); byte(BG34NBA as u16, 0);
-            mirror(TM as u16, 0x11, 0x69, false); mirror(TS as u16, 0, 0x6b, false);
-            mirror(TMW as u16, 0, 0x6c, false); byte(VMAIN as u16, 0);
-            mirror(CGWSEL as u16, 0, 0x6e, false); mirror(CGADSUB as u16, 0, 0x71, false);
-        }
-        *ram_ptr!(game; 0x6f) = 0;
-        *ram_ptr!(game; 0x72) = 0;
-        crate::rtl::register_writes! { game;
-            byte(COLDATA as u16, 0xe0); mirror(SETINI as u16, 0, 0x77, false);
-        }
-        *ram_ptr!(game; 0x74, 0) = 32;
-        *ram_ptr!(game; 0x74, 1) = 64;
-        *ram_ptr!(game; 0x74, 2) = 0x80;
-        word! { game, 0;
-            oam_next_ptr, screen_fade_delay, screen_fade_counter, cinematic_var5,
-        }
-        word!(game.cinematic_var6 = 256);
-        word! { game, 0;
-            cinematic_var7, cinematic_var8, cinematic_var9, cinematic_var10, g_word_7E1999,
-            g_word_7E199B, g_word_7E199D, g_word_7E199F,
-        }
-    }
-}
-
-macro_rules! reset_centered_mode7_transform {
-    ($game:ident) => {
-        WriteRegWord(M7A as u16, 0x100, $game);
-        word!($game.reg_M7A = 256);
-        WriteRegWord(M7B as u16, 0, $game);
-        word!($game.reg_M7B = 0);
-        WriteRegWord(M7C as u16, 0, $game);
-        word!($game.reg_M7C = 0);
-        WriteRegWord(M7D as u16, 0x100, $game);
-        word!($game.reg_M7D = 256);
-        WriteRegWord(M7X as u16, 0x80, $game);
-        word!($game.reg_M7X = 128);
-        WriteRegWord(M7Y as u16, 0x80, $game);
-        word!($game.reg_M7Y = 128);
-    };
-}
-
-pub unsafe fn SetupPpu_7_Mode1(game: &mut Game) {
-    unsafe {
-        crate::rtl::register_writes! { game;
-            mirror(INIDISP as u16, 0x80, 0x51, false); mirror(OBSEL as u16, 0, 0x52, false);
-            mirror(BGMODE as u16, 1, 0x55, false); mirror(M7SEL as u16, 0, 0x5f, false);
-            mirror(BG1SC as u16, 0x48, 0x58, true); mirror(BG2SC as u16, 0x4c, 0x59, true);
-            mirror(BG3SC as u16, 0x24, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
-            mirror(BG12NBA as u16, 0x54, 0x5d, true); mirror(BG34NBA as u16, 2, 0x5e, true);
-            mirror(TM as u16, 1, 0x69, false); mirror(TS as u16, 0, 0x6b, false);
-        }
-        *ram_ptr!(game; 0x60) = 0;
-        *ram_ptr!(game; 0x61) = 0;
-        *ram_ptr!(game; 0x62) = 0;
-        *ram_ptr!(game; 0x6c) = 0;
-        *ram_ptr!(game; 0x6d) = 0;
-        *ram_ptr!(game; 0x6f) = 0;
-        *ram_ptr!(game; 0x72) = 0;
-        *ram_ptr!(game; 0x74, 0) = 32;
-        *ram_ptr!(game; 0x74, 1) = 64;
-        *ram_ptr!(game; 0x74, 2) = 0x80;
-        word!(game.oam_next_ptr = 0);
-        reset_centered_mode7_transform!(game);
-        word! {game; cinematic_var5 = 0; cinematic_var6 = 1; }
-        word! { game, 0;
-            reg_BG1HOFS, reg_BG1VOFS, reg_BG2HOFS, reg_BG2VOFS, cinematic_var7, cinematic_var8,
-            cinematic_var9, cinematic_var10,
-        }
-    }
-}
-pub fn HandleMode7TransformationNoRotation(game: &mut Game) {
+pub unsafe fn HandleMode7TransformationNoRotation(game: &mut Game) {
     {
         word! {game; reg_M7A = word!(game.cinematic_var6); reg_M7D = word!(game.cinematic_var6); }
         word! { game, 0; reg_M7B, reg_M7C }
@@ -353,7 +155,7 @@ pub fn HandleMode7TransformationNoRotation(game: &mut Game) {
         word!(game.reg_BG1VOFS = word!(game.cinematic_var10));
     }
 }
-fn Smult16x16(r38: u16, r40: u16) -> u32 {
+unsafe fn Smult16x16(r38: u16, r40: u16) -> u32 {
     let t: u32 = ((r38 as i16) as u32).wrapping_mul((r40 as i16) as u32);
     t
 }
@@ -372,24 +174,6 @@ pub unsafe fn HandleMode7TransformationMatrix(game: &mut Game) {
         ) >> 8) as u16;
         word! {game; reg_M7B = v1; reg_M7C = -(v1 as i32) as u16;
         reg_BG1HOFS = word!(game.cinematic_var8); reg_BG1VOFS = word!(game.cinematic_var10); }
-    }
-}
-pub unsafe fn SetPpuBackdropSomeColor(game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0x6f) = 0;
-        *ram_ptr!(game; 0x72) = -127i32 as u8;
-        *ram_ptr!(game; 0x74, 0) = 56;
-        *ram_ptr!(game; 0x74, 1) = 88;
-        *ram_ptr!(game; 0x74, 2) = 0x80;
-    }
-}
-pub unsafe fn SetPpuBackdropBlack(game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0x6f) = 0;
-        *ram_ptr!(game; 0x72) = 0;
-        *ram_ptr!(game; 0x74, 0) = 32;
-        *ram_ptr!(game; 0x74, 1) = 64;
-        *ram_ptr!(game; 0x74, 2) = 0x80;
     }
 }
 pub unsafe fn UpdateCinematicBgTilemap(game: &mut Game) {
@@ -590,38 +374,42 @@ pub unsafe fn CinematicGetTilemapOffsetForTile(mut r18: u16) -> u16 {
 pub unsafe fn Mult0x80Add(mut r18: u16) -> u16 {
     unsafe { (r18 as u8 as i32 + 0x80 * byte!(r18; 1) as i32) as u16 }
 }
-pub fn Samus_CalcPos_Mode7(game: &mut Game) {
-    let r34: u16 = (word!(game.samus_x_pos)).wrapping_sub(word!(game.reg_M7X));
-    let r36: u16 = (word!(game.reg_M7Y)).wrapping_sub(word!(game.samus_y_pos));
-    let mut r26: u16 = (Smult16x16(
-        (word!(game.samus_x_pos)).wrapping_sub(word!(game.reg_M7X)),
-        word!(game.reg_M7A),
-    ) >> 8) as u16;
-    r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7B), r36) >> 8) as u16;
-    word!(game.samus_x_pos = (r26).wrapping_add(word!(game.reg_M7X)));
-    r26 = (Smult16x16(word!(game.reg_M7C), r34) >> 8) as u16;
-    r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7A), r36) >> 8) as u16;
-    word!(game.samus_y_pos = (word!(game.reg_M7Y)).wrapping_sub(r26));
+pub unsafe fn Samus_CalcPos_Mode7(game: &mut Game) {
+    unsafe {
+        let r34: u16 = (word!(game.samus_x_pos)).wrapping_sub(word!(game.reg_M7X));
+        let r36: u16 = (word!(game.reg_M7Y)).wrapping_sub(word!(game.samus_y_pos));
+        let mut r26: u16 = (Smult16x16(
+            (word!(game.samus_x_pos)).wrapping_sub(word!(game.reg_M7X)),
+            word!(game.reg_M7A),
+        ) >> 8) as u16;
+        r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7B), r36) >> 8) as u16;
+        word!(game.samus_x_pos = (r26).wrapping_add(word!(game.reg_M7X)));
+        r26 = (Smult16x16(word!(game.reg_M7C), r34) >> 8) as u16;
+        r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7A), r36) >> 8) as u16;
+        word!(game.samus_y_pos = (word!(game.reg_M7Y)).wrapping_sub(r26));
+    }
 }
 
-pub fn CalcCeresSteamPos_Mode7(mut pt: Point16U, game: &mut Game) -> Point16U {
-    let r34: u16 = (pt.x).wrapping_sub(word!(game.reg_M7X));
-    let r36: u16 = (word!(game.reg_M7Y)).wrapping_sub(pt.y);
-    let mut r26: u16 = (Smult16x16(
-        (pt.x).wrapping_sub(word!(game.reg_M7X)),
-        word!(game.reg_M7A),
-    ) >> 8) as u16;
-    r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7B), r36) >> 8) as u16;
-    pt.x = (r26).wrapping_add(word!(game.reg_M7X));
-    r26 = (Smult16x16(word!(game.reg_M7C), r34) >> 8) as u16;
-    r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7A), r36) >> 8) as u16;
-    pt.y = (word!(game.reg_M7Y)).wrapping_sub(r26);
-    pt
+pub unsafe fn CalcCeresSteamPos_Mode7(mut pt: Point16U, game: &mut Game) -> Point16U {
+    unsafe {
+        let r34: u16 = (pt.x).wrapping_sub(word!(game.reg_M7X));
+        let r36: u16 = (word!(game.reg_M7Y)).wrapping_sub(pt.y);
+        let mut r26: u16 = (Smult16x16(
+            (pt.x).wrapping_sub(word!(game.reg_M7X)),
+            word!(game.reg_M7A),
+        ) >> 8) as u16;
+        r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7B), r36) >> 8) as u16;
+        pt.x = (r26).wrapping_add(word!(game.reg_M7X));
+        r26 = (Smult16x16(word!(game.reg_M7C), r34) >> 8) as u16;
+        r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7A), r36) >> 8) as u16;
+        pt.y = (word!(game.reg_M7Y)).wrapping_sub(r26);
+        pt
+    }
 }
 pub unsafe fn CopyPalettesToFadingPalettes(game: &mut Game) {
     word_transfers!(game, ascending, 256; native(0x2200) <- le(palette_buffer, 0));
 }
-pub fn DecomposePaletteDataForFading(game: &mut Game) {
+pub unsafe fn DecomposePaletteDataForFading(game: &mut Game) {
     {
         let mut v0: u16 = 0;
         for _ in 0..256 {
@@ -640,7 +428,7 @@ pub fn DecomposePaletteDataForFading(game: &mut Game) {
         }
     }
 }
-pub fn ClearYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
+pub unsafe fn ClearYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
     {
         do_until! { j == 0 ;
             let v2: i32 = k as i32 >> 1;
@@ -653,7 +441,7 @@ pub fn ClearYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
         }
     }
 }
-pub fn FadeOutYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
+pub unsafe fn FadeOutYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
     {
         do_until! { j == 0 ;
             let v2: i32 = k as i32 >> 1;
@@ -665,7 +453,7 @@ pub fn FadeOutYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
         }
     }
 }
-pub fn FadeInYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
+pub unsafe fn FadeInYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
     {
         do_until! { j == 0 ;
             let v2: i32 = k as i32 >> 1;
@@ -1167,17 +955,17 @@ pub unsafe fn ProcessMode7ObjectInstructions(k: u16, game: &mut Game) {
         }
     }
 }
-pub fn EnableCinematicBgObjects(game: &mut Game) {
+pub unsafe fn EnableCinematicBgObjects(game: &mut Game) {
     {
         word!(game.cinematic_enable_objs |= (0x8000u16));
     }
 }
-pub fn EnableCinematicBgTilemapUpdates(game: &mut Game) {
+pub unsafe fn EnableCinematicBgTilemapUpdates(game: &mut Game) {
     {
         word!(game.cinematic_enable_bg_tilemap |= (0x8000u16));
     }
 }
-pub fn DisableCinematicBgTilemapUpdates(game: &mut Game) {
+pub unsafe fn DisableCinematicBgTilemapUpdates(game: &mut Game) {
     {
         word!(game.cinematic_enable_bg_tilemap &= !(0x8000));
     }
@@ -1378,12 +1166,12 @@ pub unsafe fn ProcessTextGlowObject(game: &mut Game) {
         }
     }
 }
-pub fn EnableTextGlowObjects_(game: &mut Game) {
+pub unsafe fn EnableTextGlowObjects_(game: &mut Game) {
     {
         word!(game.cinematic_var25 |= (0x8000u16));
     }
 }
-pub fn DisableTextGlowObjects_(game: &mut Game) {
+pub unsafe fn DisableTextGlowObjects_(game: &mut Game) {
     {
         word!(game.cinematic_var25 &= !(0x8000));
     }
@@ -1481,7 +1269,7 @@ pub unsafe fn GameState_1_OpeningCinematic_(game: &mut Game) -> CoroutineRet {
     }
 }
 pub fn CinematicFunctionNone() {}
-pub fn MaybeSkipCinematics(game: &mut Game) {
+pub unsafe fn MaybeSkipCinematics(game: &mut Game) {
     {
         if word!(game.cinematic_function) as i32 + 0x60d8 & 0x8000 != 0
             && (word!(game.joypad1_newkeys)
@@ -1521,7 +1309,7 @@ pub unsafe fn HandleCinematicsTransitions_2(game: &mut Game) {
         palette_effects::clear(game);
         palette_effects::spawn(addr_kPalfx_E1A0 as u16, game);
         palette_effects::spawn(addr_kPalfx_E1A4 as u16, game);
-        SetPpuBackdropBlack(game);
+        set_cinematic_backdrop(false, game);
         *ram_ptr!(game; 0x69) = 17;
         initialize_title_gradient(game);
     }
@@ -1549,7 +1337,7 @@ pub unsafe fn HandleCinematicsTransitions(game: &mut Game) {
 }
 pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
     unsafe {
-        SetupPpuForTitleSequence(game);
+        configure_cinematic_display(CinematicDisplay::Title, game);
         word! { game, 0; cur_irq_handler, irqhandler_next_handler }
         word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce1e9, 0));
         GraphicsAsset::Decompress(0x94e000, 0x10000).load(game);
@@ -1566,7 +1354,7 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
         }
         GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x1000).load(game);
         GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
-        reset_centered_mode7_transform!(game);
+        reset_cinematic_transform(128, 128, game);
         EnableNMI(game);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
         set_hdma_enabled(true, game);
@@ -1595,7 +1383,7 @@ macro_rules! advance_cinematic_pan_to_blackout {
                 ((0x8b9a47i32) as u16),
                 $game,
             );
-            SetPpuBackdropBlack($game);
+            set_cinematic_backdrop(false, $game);
         }
     };
 }
@@ -1723,12 +1511,12 @@ static kSetSomeStuffForSpriteObject_9_Tab1: [i16; 138] = [
     -0x6000, 4, -0x4000, 4, -0x2000, 5, 0, 5, 0x2000, 5, 0x4000, 5, 0x6000, 5, -0x8000, 5, -0x6000,
     5, -0x4000, 5, -0x2000,
 ];
-pub fn SetSomeStuffForSpriteObject_15(game: &mut Game) {
+pub unsafe fn SetSomeStuffForSpriteObject_15(game: &mut Game) {
     {
         word! {game; cinematicbg_arr7[15] = 8; cinematicbg_arr8[15] = 248; }
     }
 }
-pub fn SetSomeStuffForSpriteObject_16(game: &mut Game) {
+pub unsafe fn SetSomeStuffForSpriteObject_16(game: &mut Game) {
     {
         word! {game; cinematicbg_arr7[15] = 8; cinematicbg_arr8[15] = 24;
         cinematicspr_instr_ptr[15] = addr_word_8BCBFB as u16; cinematicspr_instr_timer[15] = 1; }
@@ -1768,7 +1556,7 @@ pub unsafe fn CinematicFunction_Intro_Func37(k: u16, game: &mut Game) {
         }
     }
 }
-pub fn CinematicFunction_Intro_Func40(game: &mut Game) {
+pub unsafe fn CinematicFunction_Intro_Func40(game: &mut Game) {
     {
         if (word!(game.cinematic_var12) & 1) != 0 {
             word!(game.cinematic_var10 -= 4);
@@ -1809,7 +1597,7 @@ macro_rules! chase_samus_with_cinematic_sprite {
     };
 }
 
-pub fn ResetButtonAssignmentsToDefault(game: &mut Game) {
+pub unsafe fn ResetButtonAssignmentsToDefault(game: &mut Game) {
     {
         word! {game; button_config_shoot_x_saved = word!(game.button_config_shoot_x);
         button_config_jump_a_saved = word!(game.button_config_jump_a);
@@ -1826,7 +1614,7 @@ pub fn ResetButtonAssignmentsToDefault(game: &mut Game) {
         button_config_aim_down_L = kButton_L as u16; button_config_aim_up_R = kButton_R as u16; }
     }
 }
-pub fn RevertButtonConfig(game: &mut Game) {
+pub unsafe fn RevertButtonConfig(game: &mut Game) {
     {
         word!(game.button_config_shoot_x = word!(game.button_config_shoot_x_saved));
         word!(game.button_config_jump_a = word!(game.button_config_jump_a_saved));
@@ -1836,26 +1624,6 @@ pub fn RevertButtonConfig(game: &mut Game) {
         word!(game.button_config_aim_down_L = word!(game.button_config_aim_down_L_saved));
         word!(game.button_config_aim_up_R = word!(game.button_config_aim_up_R_saved));
     }
-}
-
-macro_rules! reset_cinematic_mode7_transform {
-    (
-        $game:ident, $x_register:literal, $x_mirror:literal, $y_register:literal,
-        $y_mirror:literal $(,)?
-    ) => {
-        WriteRegWord(M7A as u16, 0x100, $game);
-        word!($game.reg_M7A = 256);
-        WriteRegWord(M7B as u16, 0, $game);
-        word!($game.reg_M7B = 0);
-        WriteRegWord(M7C as u16, 0, $game);
-        word!($game.reg_M7C = 0);
-        WriteRegWord(M7D as u16, 0x100, $game);
-        word!($game.reg_M7D = 256);
-        WriteRegWord(M7X as u16, $x_register, $game);
-        word!($game.reg_M7X = $x_mirror);
-        WriteRegWord(M7Y as u16, $y_register, $game);
-        word!($game.reg_M7Y = $y_mirror);
-    };
 }
 
 macro_rules! fade_cinematic_fixed_color {
@@ -2118,7 +1886,7 @@ pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {
         }
     }
 }
-pub fn CinematicFunction_Intro_Func160(j: u16, a: u16, game: &mut Game) {
+pub unsafe fn CinematicFunction_Intro_Func160(j: u16, a: u16, game: &mut Game) {
     {
         word!(
             checked_i32,
@@ -2197,7 +1965,7 @@ crate::game::callback_dispatch! {
                 (0x8b9a47i32) as u16,
                 game,
             );
-            SetPpuBackdropBlack(game);
+            set_cinematic_backdrop(false, game);
         }
         MaybeSkipCinematics(game);
     };
@@ -2244,7 +2012,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9151381] CinematicFunction_Intro_Initial [] {
-        SetupPpu_Intro(game);
+        configure_cinematic_display(CinematicDisplay::Intro, game);
         word! { game, 0; cur_irq_handler, irqhandler_next_handler, area_index }
         word! { game, 16; room_width_in_blocks, room_height_in_blocks }
         initialize_player(game);
@@ -2356,7 +2124,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9157792] CinematicFunction_Intro_Func54 [] {
-        SetupPpu_3_Mode7(game);
+        configure_cinematic_display(CinematicDisplay::Station, game);
         ClearCinematicSprites(game);
         word! { game, 0; cur_irq_handler, irqhandler_next_handler }
         word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce5e9, 0));
@@ -2372,7 +2140,7 @@ crate::game::callback_dispatch! {
         }
         GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x300).load(game);
         GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
-        reset_cinematic_mode7_transform!(game, 0x38, 56, 0x18, 24);
+        reset_cinematic_transform(56, 24, game);
         word! {game; cinematic_var8 = -72i32 as u16; cinematic_var10 = -104i32 as u16;
             cinematic_var5 = 224; cinematic_var6 = 512; }
         palette_effects::clear(game);
@@ -2468,7 +2236,7 @@ crate::game::callback_dispatch! {
         save_slots::save(word!(game.selected_save_slot), game);
     };
     [9158939] CinematicFunctionBlackoutFromCeres [] {
-        SetupPpu_3_Mode7(game);
+        configure_cinematic_display(CinematicDisplay::Station, game);
         word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
         word! { game, 0; door_def_ptr, layer1_x_pos, layer1_y_pos }
         word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce5e9, 0));
@@ -2486,7 +2254,7 @@ crate::game::callback_dispatch! {
         GraphicsAsset::VramLowBytes(0x7f4600, 0x0000, 0x600).load(game);
         GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
         GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x1a00).load(game);
-        reset_cinematic_mode7_transform!(game, 0x34, 52, 0x30, 48);
+        reset_cinematic_transform(52, 48, game);
         word! {game; cinematic_var8 = -44i32 as u16; cinematic_var10 = -112i32 as u16;
             cinematic_var5 = 0; cinematic_var6 = 256; }
         set_hdma_enabled(false, game);
@@ -2609,14 +2377,14 @@ crate::game::callback_dispatch! {
         }
     };
     [9160345] CinematicFunction_Intro_Func86 [] {
-        SetupPpu_4_Mode1(game);
+        configure_cinematic_display(CinematicDisplay::Landing, game);
         word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
         GraphicsAsset::Decompress(0x978adb, 0x19000).load(game);
         GraphicsAsset::Decompress(0x96ec76, 0x15000).load(game);
         GraphicsAsset::VramLowBytes(0x7f4300, 0x0000, 0x300).load(game);
         GraphicsAsset::VramWords(0x7f9000, 0x5c00, 0x800).load(game);
         GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
-        reset_cinematic_mode7_transform!(game, 0x38, 56, 0x18, 24);
+        reset_cinematic_transform(56, 24, game);
         word! { game, 0; cinematic_var8, cinematic_var10, cinematic_var5 }
         word!(game.cinematic_var6 = 256);
         set_hdma_enabled(false, game);
@@ -2726,7 +2494,7 @@ crate::game::callback_dispatch! {
     };
     [9163904] CinematicFunctionEscapeFromCebes [] {
         word! { game, 0; cur_irq_handler, irqhandler_next_handler }
-        SetupPpu_5_Mode7(game);
+        configure_cinematic_display(CinematicDisplay::Escape, game);
         word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
         word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8cede9, 0));
         GraphicsAsset::Decompress(0x98bcd6, 0x10000).load(game);
@@ -2747,7 +2515,7 @@ crate::game::callback_dispatch! {
         GraphicsAsset::Decompress(0x97e7de, 0xa000).load(game);
         GraphicsAsset::Decompress(0x99d65b, 0x2000).load(game);
         GraphicsAsset::Decompress(0x99d932, 0x6000).load(game);
-        reset_centered_mode7_transform!(game);
+        reset_cinematic_transform(128, 128, game);
         word! {game; cinematic_var5 = 32; cinematic_var6 = 64; }
         word! { game, 0;
             cinematic_var8, cinematic_var10, door_def_ptr, layer1_x_pos, layer1_y_pos,
@@ -3036,7 +2804,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9166464] CinematicFunction_Intro_Func126 [] {
-        SetupPpu_7_Mode1(game);
+        configure_cinematic_display(CinematicDisplay::Credits, game);
         ClearCinematicSprites(game);
         palette_effects::clear(game);
         word_transfers!(game, ascending, 128; le(palette_buffer, 0) <- rom(0x8ce9e9, 0));
@@ -3061,7 +2829,7 @@ crate::game::callback_dispatch! {
         } else {
             GraphicsAsset::VramWords(0x7f0000, 0x0000, 0x4000).load(game);
         }
-        reset_cinematic_mode7_transform!(game, 0x68, 104, 0x70, 112);
+        reset_cinematic_transform(104, 112, game);
         word! {game; cinematic_var8 = -8i32 as u16; cinematic_var10 = -24i32 as u16;
             cinematic_var5 = 0; cinematic_var6 = 2304; }
         EnableNMI(game);
@@ -3451,7 +3219,7 @@ crate::game::callback_dispatch! {
         word! {game; cinematic_function = ((0x8b9d17i32) as u16); cinematic_var6 = 72;
             cinematic_var8 = 315; cinematic_var7 = 0; cinematic_var10 = 225; cinematic_var9 = 0;
             g_word_7E199B = -2i32 as u16; g_word_7E1999 = 0x8000; }
-        SetPpuBackdropSomeColor(game);
+        set_cinematic_backdrop(true, game);
         j
     };
     [9149789] CinematicSprInstr_9D5D [] {
@@ -3468,7 +3236,7 @@ crate::game::callback_dispatch! {
             cinematic_var10 = -160i32 as u16; }
         word! { game, 0; cinematic_var9, g_word_7E199B, g_word_7E1999 }
         word! {game; g_word_7E199F = 1; g_word_7E199D = 0x8000; }
-        SetPpuBackdropSomeColor(game);
+        set_cinematic_backdrop(true, game);
         j
     };
     [9150040] CinematicSprInstr_Func8 [] {
