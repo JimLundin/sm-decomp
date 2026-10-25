@@ -2139,30 +2139,6 @@ pub unsafe fn MotherBrain_CalculateRainbowBeamHdma(game: &mut Game) {
         calculate_rainbow_window(game);
     }
 }
-pub unsafe fn MotherBrain_MoveBodyDownScrollLeft(k: u16, a: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_MotherBrain(0, game);
-        (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(a);
-        word!(game.reg_BG2VOFS -= a);
-        word!(game.reg_BG2HOFS = (k as i32 + 34 - (*E).base.x_pos as i32) as u16);
-    }
-}
-pub unsafe fn MotherBrain_MoveBodyDown(a: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_MotherBrain(0, game);
-        (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(a);
-        word!(game.reg_BG2VOFS -= a);
-        word!(game.reg_BG2HOFS = (34u16).wrapping_sub((*E).base.x_pos));
-    }
-}
-pub unsafe fn MotherBrain_FootstepEffect(game: &mut Game) {
-    unsafe {
-        word! {game; earthquake_type = 1; earthquake_timer = 4; }
-        if (*Get_MotherBrain(0i32, game)).var_00 == 3 {
-            printf(c"Write to rom!\n".as_ptr());
-        }
-    }
-}
 pub fn MotherBrain_Instr_Goto2(k: u16) -> u16 {
     addr_stru_A99CD1 as u16
 }
@@ -5525,7 +5501,7 @@ crate::game::callback_dispatch! {
 
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
-    call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
+    call (k, j, game); default { match crate::game::mother_brain_body::dispatch_instruction(ea, j, game) { Some(script) => script, None => { crate::rtl::Unreachable(game); EnemyScript::Stop } } };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11136208] sub_A9ECD0 [] {
         let mut v2: u16 = (0xa9d910i32) as u16;
@@ -5543,132 +5519,7 @@ crate::game::callback_dispatch! {
         QueueSfx2_Max6(0x52, game);
         jp.offset(1)
     };
-    @functions [pub unsafe fn (
-    k: u16,
-    jp: EnemyScript,
-    game: &mut Game,
-) -> EnemyScript];
-    [11113910] MotherBrain_Instr_MoveBodyUp10Left4 [jp] {
-        MotherBrain_MoveBodyDownScrollLeft(4, 0xfff6, game);
-    };
-    [11113920] MotherBrain_Instr_MoveBodyUp16Left4 [jp] {
-        MotherBrain_MoveBodyDownScrollLeft(4, 0xfff0, game);
-    };
-    [11113930] MotherBrain_Instr_MoveBodyUp12Right2 [jp] {
-        MotherBrain_MoveBodyDownScrollLeft(0xfffe, 0xfff4, game);
-    };
-    [11113950] MotherBrain_Instr_MoveDown12Left4 [jp] {
-        MotherBrain_MoveBodyDownScrollLeft(4, 0xc, game);
-    };
-    [11113960] MotherBrain_Instr_MoveDown16Right2 [jp] {
-        MotherBrain_MoveBodyDownScrollLeft(0xfffe, 0x10, game);
-    };
-    [11113970] MotherBrain_Instr_MoveDown10Right2 [jp] {
-        MotherBrain_MoveBodyDownScrollLeft(0xfffe, 0xa, game);
-    };
-    [11113980] MotherBrain_Instr_MoveUp2Right1 [jp] {
-        let E = Get_MotherBrain(0, game);
-        (*E).base.x_pos = (*E).base.x_pos.wrapping_add(1);
-        MotherBrain_MoveBodyDown(0xfffe, game);
-    };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11113996] MotherBrain_Instr_MoveRight2 [jp] {
-        let E = Get_MotherBrain(0, game);
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(2);
-        MotherBrain_MoveBodyDown(0, game);
-    };
-    [11114012] MotherBrain_Instr_MoveUp1 [jp] { MotherBrain_MoveBodyDown(1, game); };
-    @functions [pub unsafe fn (
-    k: u16,
-    jp: EnemyScript,
-    game: &mut Game,
-) -> EnemyScript];
-    [11114018] MotherBrain_Instr_MoveUp1Right3_Sfx [jp] {
-        MotherBrain_FootstepEffect(game);
-        let E = Get_MotherBrain(0, game);
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(3);
-        MotherBrain_MoveBodyDown(1, game);
-    };
-    [11114040] MotherBrain_Instr_Down2Right15 [jp] {
-        let E = Get_MotherBrain(0, game);
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(15);
-        MotherBrain_MoveBodyDown(0xfffe, game);
-    };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11114056] MotherBrain_Instr_Down4Right6 [jp] {
-        let E = Get_MotherBrain(0, game);
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(6);
-        MotherBrain_MoveBodyDown(0xfffc, game);
-    };
-    [11114072] MotherBrain_Instr_Up4Left2 [jp] {
-        let E = Get_MotherBrain(0, game);
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(2);
-        MotherBrain_MoveBodyDown(4, game);
-    };
-    @functions [pub unsafe fn (
-    k: u16,
-    jp: EnemyScript,
-    game: &mut Game,
-) -> EnemyScript];
-    [11114088] MotherBrain_Instr_Up2Left1_Sfx [jp] {
-        MotherBrain_FootstepEffect(game);
-        let E = Get_MotherBrain(0, game);
-        (*E).base.x_pos = (*E).base.x_pos.wrapping_sub(1);
-        MotherBrain_MoveBodyDown(2, game);
-    };
-    [11114110] MotherBrain_Instr_Up2Left1_Sfx2 [jp] {
-        MotherBrain_FootstepEffect(game);
-        let E = Get_MotherBrain(0, game);
-        (*E).base.x_pos = (*E).base.x_pos.wrapping_sub(1);
-        MotherBrain_MoveBodyDown(2, game);
-    };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11114132] MotherBrain_Instr_MoveLeft2 [jp] {
-        let E = Get_MotherBrain(0, game);
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(2);
-        MotherBrain_MoveBodyDown(0, game);
-    };
-    [11114148] MotherBrain_Instr_MoveDown1 [jp] { MotherBrain_MoveBodyDown(0xffff, game); };
-    @functions [pub unsafe fn (
-    k: u16,
-    jp: EnemyScript,
-    game: &mut Game,
-) -> EnemyScript];
-    [11114154] MotherBrain_Instr_MoveDown1Left3 [jp] {
-        let E = Get_MotherBrain(0, game);
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(3);
-        MotherBrain_MoveBodyDown(0xffff, game);
-    };
-    [11114170] MotherBrain_Instr_MoveUp2Left15_Sfx [jp] {
-        MotherBrain_FootstepEffect(game);
-        let E = Get_MotherBrain(0, game);
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(15);
-        MotherBrain_MoveBodyDown(2, game);
-    };
-    [11114192] MotherBrain_Instr_MoveUp4Left6 [jp] {
-        let E = Get_MotherBrain(0, game);
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(6);
-        MotherBrain_MoveBodyDown(4, game);
-    };
-    [11114208] MotherBrain_Instr_MoveDown4Right2 [jp] {
-        let E = Get_MotherBrain(0, game);
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(2);
-        MotherBrain_MoveBodyDown(0xfffc, game);
-    };
-    [11114224] MotherBrain_Instr_MoveDown2Right1 [jp] {
-        let E = Get_MotherBrain(0, game);
-        (*E).base.x_pos = (*E).base.x_pos.wrapping_add(1);
-        MotherBrain_MoveBodyDown(0xfffe, game);
-    };
-    [11114240] MotherBrain_Instr_SetPose_Standing [jp] { (*Get_MotherBrain(0, game)).var_02 = 0; };
-    [11114248] MotherBrain_Instr_SetPose_Walking [jp] { (*Get_MotherBrain(0, game)).var_02 = 1; };
-    [11114256] MotherBrain_Instr_SetPose_Crouched [jp] { (*Get_MotherBrain(0, game)).var_02 = 3; };
-    [11114264]
-    MotherBrain_Instr_SetPose_CrouchedTrans [jp] { (*Get_MotherBrain(0, game)).var_02 = 2; };
-    [11114272]
-    MotherBrain_Instr_SetPose_DeathBeamMode [jp] { (*Get_MotherBrain(0, game)).var_02 = 4; };
-    [11114280]
-    MotherBrain_Instr_SetPose_LeaningDown [jp] { (*Get_MotherBrain(0, game)).var_02 = 6; };
     [11115208] MotherBrain_Instr_SpawnEprojToOffset [jp.offset(3)] {
         let E = Get_MotherBrain(0, game);
         game.eproj_spawn_pt = Point16U {
