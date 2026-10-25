@@ -1,3 +1,4 @@
+use crate::game::menu_tilemap::main_menu;
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8};
 pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
@@ -213,12 +214,12 @@ static kFileSelectMenuFuncs: [Func_V; 34] = callback_table! { nonnull Func_V;
     FileSelectMenu_7_FadeInFromMain, FileSelectMenu_8, FileSelectMenu_9_InitializeSelectDest,
     FileSelectMenu_10_FileCopySelectDest, FileSelectMenu_11_InitializeConfirm,
     FileSelectMenu_12_FileCopyConfirm, FileSelectMenu_13_FileCopyDoIt,
-    FileSelectMenu_14_CopyCompleted, FileSelectMenu_15_FadeOutToMain, FileSelectMenu_16,
+    FileSelectMenu_14_CopyCompleted, FileSelectMenu_15_FadeOutToMain, main_menu,
     FileSelectMenu_17_FadeInToMain, FileSelectMenu_18, FileSelectMenu_5_FadeOutFromMain,
     FileSelectMenu_20_FileClearInit, FileSelectMenu_7_FadeInFromMain,
     FileSelectMenu_22_FileClearSelectSlot, FileSelectMenu_23_FileClearInitConfirm,
     FileSelectMenu_24_FileClearConfirm, FileSelectMenu_25_FileClearDoClear,
-    FileSelectMenu_26_ClearCompleted, FileSelectMenu_15_FadeOutToMain, FileSelectMenu_16,
+    FileSelectMenu_26_ClearCompleted, FileSelectMenu_15_FadeOutToMain, main_menu,
     FileSelectMenu_17_FadeInToMain, FileSelectMenu_30, FileSelectMenu_31_TurnSamusHelmet,
     FileSelectMenu_32_FadeOutToOptions, FileSelectMenu_33_FadeOutToTitle,
 };
@@ -321,7 +322,7 @@ pub unsafe fn FileSelectMenu_Func1(game: &mut Game) {
         menu_tilemap::load(0x52, addr_kMenuTilemap_DataCopyMode as u16, game);
         menu_tilemap::load(0x150, addr_kMenuTilemap_CopyWhichData as u16, game);
         menu_tilemap::load(0x688, addr_kMenuTilemap_Exit as u16, game);
-        DrawFileCopySaveFileInfo(game);
+        menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Occupied, game);
         SetInitialFileCopyMenuSelection(game);
         SetFileCopyMenuSelectionMissilePosition(game);
         word! { game, 0; eproj_id[16], eproj_id[17] }
@@ -343,49 +344,6 @@ pub unsafe fn SetInitialFileCopyMenuSelection(game: &mut Game) {
 }
 pub unsafe fn ClearMenuTilemap(game: &mut Game) {
     word_transfers!(game, descending, 1024; native(0x3dfe) <- value(15));
-}
-#[derive(Clone, Copy)]
-enum FileRowEmphasis {
-    Occupied,
-    Destination,
-    Confirmation,
-}
-unsafe fn draw_file_copy_rows(emphasis: FileRowEmphasis, game: &mut Game) {
-    unsafe {
-        for slot in 0..3u16 {
-            save_slots::load(slot, game);
-            let dim = match emphasis {
-                FileRowEmphasis::Occupied => word!(game.nonempty_save_slots) & (1 << slot) == 0,
-                FileRowEmphasis::Destination => word!(game.eproj_id[16]) == slot,
-                FileRowEmphasis::Confirmation => {
-                    word!(game.eproj_id[16]) != slot && word!(game.eproj_id[17]) != slot
-                }
-            };
-            (*ram_ptr!(game, EnemyData; 0xf78)).palette_index = if dim { 1024 } else { 0 };
-            draw_file_copy_row(slot, game);
-        }
-        menu_tilemap::upload(2048, 0x7e3600, 0, true, game);
-    }
-}
-unsafe fn draw_file_copy_row(slot: u16, game: &mut Game) {
-    {
-        let mask = 1 << slot;
-        let base = (slot + 2) << 8;
-        menu_tilemap::health(!word!(game.nonempty_save_slots) & mask, base + 0x18, game);
-        menu_tilemap::time(!word!(game.nonempty_save_slots) & mask, base + 0x72, game);
-        menu_tilemap::load(base + 0x34, addr_kMenuTilemap_TIME as u16, game);
-        let label = [
-            addr_kMenuTilemap_SamusA,
-            addr_kMenuTilemap_SamusB,
-            addr_kMenuTilemap_SamusC,
-        ][slot as usize];
-        menu_tilemap::load(base + 8, label as u16, game);
-    }
-}
-pub unsafe fn DrawFileCopySaveFileInfo(game: &mut Game) {
-    unsafe {
-        draw_file_copy_rows(FileRowEmphasis::Occupied, game);
-    }
 }
 static kBitShl: [u8; 3] = [1, 2, 4];
 // Search toward the pressed direction without wrapping through the exit row.
@@ -480,7 +438,7 @@ pub unsafe fn DrawFileCopySelectDestinationSaveFileInfo(game: &mut Game) {
         (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[944i32 as usize] =
             (word!(game.eproj_id[16])).wrapping_add(8298);
         menu_tilemap::load(0x688, addr_kMenuTilemap_Exit as u16, game);
-        draw_file_copy_rows(FileRowEmphasis::Destination, game);
+        menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Destination, game);
     }
 }
 pub unsafe fn FileSelectMenu_10_FileCopySelectDest(game: &mut Game) {
@@ -557,12 +515,7 @@ pub unsafe fn DrawFileCopyClearConfirmation(game: &mut Game) {
         word_transfers!(game, ascending, 32; native(0x3c80) <- value(15));
         (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 0;
         menu_tilemap::load(0x65c, addr_kMenuTilemap_No as u16, game);
-        DrawFileCopyConfirmationSaveFileInfo(game);
-    }
-}
-pub unsafe fn DrawFileCopyConfirmationSaveFileInfo(game: &mut Game) {
-    unsafe {
-        draw_file_copy_rows(FileRowEmphasis::Confirmation, game);
+        menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
     }
 }
 pub unsafe fn FileSelectMenu_12_FileCopyConfirm(game: &mut Game) {
@@ -655,7 +608,7 @@ pub unsafe fn FileSelectMenu_13_FileCopyDoIt(game: &mut Game) {
         }
         (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 0;
         menu_tilemap::load(0x510, addr_kMenuTilemap_CopyCompleted as u16, game);
-        DrawFileCopyConfirmationSaveFileInfo(game);
+        menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
         RtlWriteSram(game);
     }
 }
@@ -695,7 +648,7 @@ pub unsafe fn InitFileSelectMenuFileClear(game: &mut Game) {
         menu_tilemap::load(0x50, addr_kMenuTilemap_DataClearMode as u16, game);
         menu_tilemap::load(0x140, addr_kMenuTilemap_ClearWhichData as u16, game);
         menu_tilemap::load(0x688, addr_kMenuTilemap_Exit as u16, game);
-        DrawFileCopySaveFileInfo(game);
+        menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Occupied, game);
         word!(game.eproj_id[16] = 0);
         SetInitialFileCopyMenuSelection(game);
         SetFileClearMenuMissilePos(game);
@@ -813,7 +766,7 @@ pub unsafe fn FileSelectMenu_25_FileClearDoClear(game: &mut Game) {
         word!(game.nonempty_save_slots &= (kBitShl_Not[word!(game.eproj_id[16]) as usize]));
         (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 0;
         menu_tilemap::load(0x500, addr_kMenuTilemap_DataCleared as u16, game);
-        DrawFileCopyConfirmationSaveFileInfo(game);
+        menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Confirmation, game);
         RtlWriteSram(game);
     }
 }
@@ -951,68 +904,7 @@ pub unsafe fn FileSelectMenu_2_InitMain(game: &mut Game) {
             v0 = 0;
         }
         word!(game.selected_save_slot = v0);
-        FileSelectMenu_16(game);
-    }
-}
-pub unsafe fn FileSelectMenu_16(game: &mut Game) {
-    unsafe {
-        word_transfers!(game, descending, 1024; native(0x3dfe) <- value(15));
-        word!(game.nonempty_save_slots = -1i32 as u16);
-        (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 0;
-        menu_tilemap::load(0x56, addr_kMenuTilemap_SamusData as u16, game);
-        menu_tilemap::load(0x146, addr_kMenuTilemap_SamusA as u16, game);
-        let mut c: u8 = save_slots::load(0, game);
-        word!(
-            game.nonempty_save_slots =
-                (word!(game.nonempty_save_slots) as i32 >> 1 | (c as i32) << 15) as u16
-        );
-        menu_tilemap::health((word!(game.nonempty_save_slots)) & (0x8000u16), 0x15c, game);
-        menu_tilemap::time((word!(game.nonempty_save_slots)) & (0x8000u16), 0x1b4, game);
-        menu_tilemap::load(0x176, addr_kMenuTilemap_TIME as u16, game);
-        (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 0;
-        menu_tilemap::load(0x286, addr_kMenuTilemap_SamusB as u16, game);
-        c = save_slots::load(1, game);
-        word!(
-            game.nonempty_save_slots =
-                (word!(game.nonempty_save_slots) as i32 >> 1 | (c as i32) << 15) as u16
-        );
-        menu_tilemap::health((word!(game.nonempty_save_slots)) & (0x8000u16), 0x29c, game);
-        menu_tilemap::time((word!(game.nonempty_save_slots)) & (0x8000u16), 0x2f4, game);
-        menu_tilemap::load(0x2b6, addr_kMenuTilemap_TIME as u16, game);
-        (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 0;
-        menu_tilemap::load(0x3c6, addr_kMenuTilemap_SamusC as u16, game);
-        c = save_slots::load(2, game);
-        word!(
-            game.nonempty_save_slots =
-                (word!(game.nonempty_save_slots) as i32 >> 1 | (c as i32) << 15) as u16
-        );
-        menu_tilemap::health((word!(game.nonempty_save_slots)) & (0x8000u16), 0x3dc, game);
-        menu_tilemap::time((word!(game.nonempty_save_slots)) & (0x8000u16), 0x434, game);
-        menu_tilemap::load(0x3f6, addr_kMenuTilemap_TIME as u16, game);
-        word!(
-            game.nonempty_save_slots =
-                u16::swap_bytes(!(word!(game.nonempty_save_slots) as i32) as u16) >> 5
-        );
-        if word!(game.nonempty_save_slots) != 0 {
-            (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 0;
-            menu_tilemap::load(0x508, addr_kMenuTilemap_DataCopy as u16, game);
-            (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 0;
-            menu_tilemap::load(0x5c8, addr_kMenuTilemap_DataClear as u16, game);
-        }
-        (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 0;
-        menu_tilemap::load(0x688, addr_kMenuTilemap_Exit as u16, game);
-        menu_tilemap::upload(2048, 0x7e3600, 0, true, game);
-        word!(game.cinematic_var5 = 1);
-        word! { game, 0;
-            cinematic_var6, cinematic_var7, cinematic_var8, cinematic_var9, eproj_id[0], eproj_id[1],
-            eproj_id[2], eproj_id[3], eproj_id[4], eproj_id[5], eproj_id[10], eproj_id[6], eproj_id[11],
-        }
-        word! { game, 100; eproj_id[7], eproj_id[8], eproj_id[9] }
-        word! {game; eproj_id[12] = 47; eproj_id[13] = 87; eproj_id[14] = 127; }
-        word! { game, 1; screen_fade_delay, screen_fade_counter }
-        ScreenOn(game);
-        word!(game.menu_index += 1);
-        word! { game, 0; eproj_id[15], eproj_id[16], eproj_id[17] }
+        menu_tilemap::main_menu(game);
     }
 }
 pub unsafe fn FileSelectMenu_3_FadeInToMain(game: &mut Game) {

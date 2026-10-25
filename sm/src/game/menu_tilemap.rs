@@ -1,6 +1,95 @@
 //! File-menu tilemaps: native word stores, live palette reads and ROM text controls.
+use crate::game::save_slots;
+use crate::game::sm_81::{
+    addr_kMenuTilemap_DataClear, addr_kMenuTilemap_DataCopy, addr_kMenuTilemap_Exit,
+    addr_kMenuTilemap_SamusA, addr_kMenuTilemap_SamusB, addr_kMenuTilemap_SamusC,
+    addr_kMenuTilemap_SamusData, addr_kMenuTilemap_TIME,
+};
 use crate::game_state::Game;
-use crate::ram_map::checked_word as word;
+use crate::ram_map::word;
+
+const MENU_PALETTE: usize = 0xf78 + core::mem::offset_of!(crate::types::EnemyData, palette_index);
+const FILE_LABELS: [u16; 3] = [
+    addr_kMenuTilemap_SamusA as u16,
+    addr_kMenuTilemap_SamusB as u16,
+    addr_kMenuTilemap_SamusC as u16,
+];
+
+fn set_palette(value: u16, game: &mut Game) {
+    game.g_ram[MENU_PALETTE..MENU_PALETTE + 2].copy_from_slice(&value.to_ne_bytes());
+}
+
+pub(crate) enum FileRowEmphasis {
+    Occupied,
+    Destination,
+    Confirmation,
+}
+
+pub(crate) fn file_rows(emphasis: FileRowEmphasis, game: &mut Game) {
+    for slot in 0..3u16 {
+        save_slots::load(slot, game);
+        let dim = match emphasis {
+            FileRowEmphasis::Occupied => word!(game.nonempty_save_slots) & (1 << slot) == 0,
+            FileRowEmphasis::Destination => word!(game.eproj_id[16]) == slot,
+            FileRowEmphasis::Confirmation => {
+                word!(game.eproj_id[16]) != slot && word!(game.eproj_id[17]) != slot
+            }
+        };
+        set_palette(if dim { 1024 } else { 0 }, game);
+        let mask = 1 << slot;
+        let base = (slot + 2) << 8;
+        health(!word!(game.nonempty_save_slots) & mask, base + 0x18, game);
+        time(!word!(game.nonempty_save_slots) & mask, base + 0x72, game);
+        load(base + 0x34, addr_kMenuTilemap_TIME as u16, game);
+        load(base + 8, FILE_LABELS[usize::from(slot)], game);
+    }
+    upload(2048, 0x7e3600, 0, true, game);
+}
+
+/// Requires a live, exclusively accessed SNES backend for ScreenOn.
+pub(crate) unsafe fn main_menu(game: &mut Game) {
+    word_transfers!(game, descending, 1024; native(0x3dfe) <- value(15));
+    word!(game.nonempty_save_slots = u16::MAX);
+    set_palette(0, game);
+    load(0x56, addr_kMenuTilemap_SamusData as u16, game);
+    for (slot, label) in FILE_LABELS.into_iter().enumerate() {
+        // The first label follows the heading without resetting its live palette.
+        if slot != 0 {
+            set_palette(0, game);
+        }
+        let top = 0x146 + 0x140 * slot as u16;
+        load(top, label, game);
+        let empty = save_slots::load(slot as u16, game);
+        word!(
+            game.nonempty_save_slots =
+                (word!(game.nonempty_save_slots) >> 1) | (u16::from(empty) << 15)
+        );
+        health(word!(game.nonempty_save_slots) & 0x8000, top + 0x16, game);
+        time(word!(game.nonempty_save_slots) & 0x8000, top + 0x6e, game);
+        load(top + 0x30, addr_kMenuTilemap_TIME as u16, game);
+    }
+    word!(game.nonempty_save_slots = (!word!(game.nonempty_save_slots)).swap_bytes() >> 5);
+    if word!(game.nonempty_save_slots) != 0 {
+        set_palette(0, game);
+        load(0x508, addr_kMenuTilemap_DataCopy as u16, game);
+        set_palette(0, game);
+        load(0x5c8, addr_kMenuTilemap_DataClear as u16, game);
+    }
+    set_palette(0, game);
+    load(0x688, addr_kMenuTilemap_Exit as u16, game);
+    upload(2048, 0x7e3600, 0, true, game);
+    word!(game.cinematic_var5 = 1);
+    word! { game, 0;
+        cinematic_var6, cinematic_var7, cinematic_var8, cinematic_var9, eproj_id[0], eproj_id[1],
+        eproj_id[2], eproj_id[3], eproj_id[4], eproj_id[5], eproj_id[10], eproj_id[6], eproj_id[11],
+    }
+    word! { game, 100; eproj_id[7], eproj_id[8], eproj_id[9] }
+    word! {game; eproj_id[12] = 47; eproj_id[13] = 87; eproj_id[14] = 127; }
+    word! { game, 1; screen_fade_delay, screen_fade_counter }
+    unsafe { crate::game::sm_80::ScreenOn(game) };
+    word!(game.menu_index += 1);
+    word! { game, 0; eproj_id[15], eproj_id[16], eproj_id[17] }
+}
 
 /// Requires a live, exclusively accessed SNES backend.
 pub(crate) unsafe fn prepare_graphics(game: &mut Game) {
@@ -52,8 +141,7 @@ pub(crate) fn upload(size: u16, source: u32, screen: usize, bank_word: bool, gam
 }
 
 fn paint(offset: usize, tile: u16, game: &mut Game) {
-    let at = 0xf78 + core::mem::offset_of!(crate::types::EnemyData, palette_index);
-    let palette = u16::from_ne_bytes([game.g_ram[at], game.g_ram[at + 1]]);
+    let palette = u16::from_ne_bytes([game.g_ram[MENU_PALETTE], game.g_ram[MENU_PALETTE + 1]]);
     let at = 0x3600 + offset;
     game.g_ram[at..at + 2].copy_from_slice(&(palette | tile).to_ne_bytes());
 }
