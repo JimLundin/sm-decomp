@@ -74,13 +74,11 @@ fn fade_to_options(game: &mut Game) {
     }
 }
 unsafe fn fade_to_title(game: &mut Game) {
-    unsafe {
-        DrawBorderAroundSamusData(game);
-        sprite_output::file_helmets(false, game);
-        HandleFadeOut(game);
-        if (game.g_ram[0x51] & 0xf) == 0 {
-            SoftReset(game);
-        }
+    DrawBorderAroundSamusData(game);
+    sprite_output::file_helmets(false, game);
+    HandleFadeOut(game);
+    if (game.g_ram[0x51] & 0xf) == 0 {
+        SoftReset(game);
     }
 }
 unsafe fn fade_from_main(game: &mut Game) {

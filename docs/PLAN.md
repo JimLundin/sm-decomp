@@ -89,8 +89,8 @@ custom-content checks; keep those checks until their consumers and coverage migr
 M1a (`tools/codemod/strip_unsafe_fixpoint.py`) keeps all 22 unsafe production contracts
 and the verifier bridge from [the review](M1A-REVIEW.md); bounded review found no remaining
 concrete violation in its 86 conversions. All 64 hosted rows passed at 3484808d.
-The script still omits imported alias edges; affected paths were reviewed, and future
-runs must resolve or conservatively reject aliases. Keep the predecessor rejected.
+The rerun conservatively rejects imported aliases, validates Windows dep-info roots
+and preserves source newlines. All required unsafe contracts survive. Keep the predecessor rejected.
 
 Checkpoint cache finding: whole Session/codec hashes invalidate lossless scalar
 migrations despite an unchanged RAM payload. A future format transition needs

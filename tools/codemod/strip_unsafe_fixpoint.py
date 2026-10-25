@@ -1,4 +1,6 @@
 # Usage (repo root): python3 tools/codemod/strip_unsafe_fixpoint.py
+# Windows cached-metadata alternative: --cached-gl PATH --cached-sdl2 PATH.
+# Both files must be real compatible dependency metadata; rustc validates them.
 #
 # Lane M1a: sound fixpoint strip of `unsafe fn` over sm/src.
 # A fn loses `unsafe` only when (a) its signature names no raw pointer,
@@ -13,8 +15,10 @@
 # the macro-expanded crate, an item holding an `unsafe {}` block. A safe wrapper
 # around unchecked hardware/ROM/RAM access must not gain new safe callers
 # (docs/M1A-REVIEW.md). Name collisions only exclude more.
+# Imported aliases are conservatively tainted regardless of scope or target;
+# mentions in signatures and module prefixes count, including alias chains.
 # Line counts never change before the final fmt, so (file, line) keys are stable.
-import glob, json, os, re, subprocess, sys, time
+import argparse, difflib, glob, json, os, re, subprocess, sys, time
 
 ROOT = os.getcwd()
 CHECKS = [
@@ -126,45 +130,105 @@ def fns(s):
     return out
 
 
-def files_compiled():
-    fs = set()
-    for d in glob.glob('target/debug/deps/sm-*.d') + glob.glob('target/vcheck/debug/deps/sm*.d') + glob.glob('target/vcheck/debug/examples/sm_verify*.d'):
-        for line in open(d):
-            if ':' not in line: continue
-            for tok in line.split(':', 1)[1].split():
-                tok = tok.rstrip('\\')
-                if tok.endswith('.rs'):
-                    p = os.path.relpath(os.path.abspath(tok), ROOT)
-                    if p.startswith('sm/src/'): fs.add(p)
-    return sorted(fs)
+def source_path(path):
+    return os.path.relpath(os.path.abspath(path), ROOT).replace(os.sep, '/')
+
+
+def write_source(path, text):
+    # Rust source in this checkout may use LF or CRLF. Preserve its style so
+    # a no-op compiler trial does not rewrite every compiled file's bytes.
+    with open(path, 'r', newline='') as original:
+        first = original.readline()
+    newline = '\r\n' if first.endswith('\r\n') else '\n'
+    with open(path, 'w', newline=newline) as output:
+        output.write(text)
 
 
 def dep_files(pattern):
     fs = set()
     for d in glob.glob(pattern):
         for line in open(d):
-            if ':' not in line: continue
-            for tok in line.split(':', 1)[1].split():
-                tok = tok.rstrip('\\')
+            # The rule separator has trailing whitespace (or ends the line);
+            # a Windows drive colon is part of the path, not the separator.
+            rule = re.split(r':(?:\s+|$)', line, maxsplit=1)
+            if len(rule) != 2: continue
+            for tok in re.findall(r'(?:\\ |[^\s])+', rule[1]):
+                tok = tok.replace('\\ ', ' ')
                 if tok.endswith('.rs'):
-                    fs.add(os.path.relpath(os.path.abspath(tok), ROOT))
+                    p = source_path(tok)
+                    if p.startswith('sm/src/'): fs.add(p)
     return fs
 
 
 DEPS = ['target/debug/deps/sm-*.d', 'target/vcheck/debug/*/sm*.d']
+CACHED_FRONTEND = None
+ORIGINALS = {}
+
+
+def files_compiled():
+    groups = [dep_files(pattern) for pattern in DEPS]
+    if not all(groups): sys.exit('missing compiled source coverage for a configuration')
+    return sorted(set().union(*groups))
+
+
+def direct_command(index, example=False, expand=False):
+    # Explicit opt-in for the documented Windows cached-metadata path. These
+    # are real rustc checks; never execute frontend dependency build scripts.
+    directory = f'target/codemod/{index}'
+    os.makedirs(directory, exist_ok=True)
+    name = 'sm_verify' if example else 'sm'
+    src = 'sm/src/verify_dll.rs' if example else 'sm/src/lib.rs'
+    cmd = ['rustc', '--crate-name', name, '--edition=2024', src,
+           '--crate-type', 'cdylib' if example else 'lib',
+           '--check-cfg', 'cfg(sm_verify_dll)',
+           '--check-cfg', 'cfg(feature, values("default", "frontend"))']
+    if index:
+        cmd += ['--cfg', 'feature="default"', '--cfg', 'feature="frontend"',
+                '--cfg', 'sm_verify_dll']
+        for crate, path in zip(('gl', 'sdl2_sys'), CACHED_FRONTEND):
+            cmd += ['--extern', f'{crate}={path}', '-L', f'dependency={os.path.dirname(path)}']
+    if example:
+        cmd += ['--extern', f'sm={directory}/libsm.rmeta']
+    if expand:
+        cmd += ['-Zunpretty=expanded']
+    else:
+        cmd += ['--emit', f'metadata={directory}/lib{name}.rmeta,dep-info={directory}/{name}.d',
+                '--error-format=json']
+    return cmd
+
+
+def run_check(index):
+    if CACHED_FRONTEND is None:
+        cmd, env = CHECKS[index]
+        return subprocess.run(cmd, capture_output=True, text=True, env=dict(os.environ, **env))
+    results = []
+    for example in ([False, True] if index else [False]):
+        cmd = direct_command(index, example)
+        r = subprocess.run(cmd, capture_output=True, text=True)
+        results.append(r)
+        if r.returncode: break
+    return subprocess.CompletedProcess(results[-1].args, results[-1].returncode,
+                                       ''.join(r.stdout for r in results),
+                                       ''.join(r.stderr for r in results))
+
+
+def diagnostics(result):
+    # Cargo wraps diagnostics on stdout; direct rustc emits them on stderr.
+    for line in (result.stdout + '\n' + result.stderr).splitlines():
+        try: msg = json.loads(line)
+        except ValueError: continue
+        if msg.get('reason') == 'compiler-message': yield msg['message']
+        elif msg.get('$message_type') == 'diagnostic': yield msg
 
 
 def check():
     # A block is unused only if every configuration compiling its file says so.
     errs, per = [], []
-    for (cmd, env), dep in zip(CHECKS, DEPS):
+    for index, dep in enumerate(DEPS):
         unused = []
-        r = subprocess.run(cmd, capture_output=True, text=True, env=dict(os.environ, **env))
-        for line in r.stdout.split('\n'):
-            try: m = json.loads(line)
-            except Exception: continue
-            if m.get('reason') != 'compiler-message': continue
-            msg = m['message']
+        r = run_check(index)
+        before = len(errs)
+        for msg in diagnostics(r):
             lvl = msg['level']
             prim = [sp for sp in msg['spans'] if sp['is_primary']]
             if lvl == 'error':
@@ -172,34 +236,40 @@ def check():
                     names = set(re.findall(r'\w+', sp.get('text', [{}])[0].get('text', '') if sp.get('text') else ''))
                     names |= set(re.findall(r'`([^`]*)`', msg['message']))
                     while sp.get('expansion'): sp = sp['expansion']['span']
-                    errs.append((os.path.relpath(os.path.abspath(sp['file_name']), ROOT), sp['line_start'], names, msg['message']))
+                    errs.append((source_path(sp['file_name']), sp['line_start'], names, msg['message']))
             elif lvl == 'warning':
                 code = (msg.get('code') or {}).get('code')
                 for sp in prim:
                     if code == 'unused_unsafe' and not sp.get('expansion'):
-                        unused.append((os.path.relpath(os.path.abspath(sp['file_name']), ROOT), sp['line_start'], sp['column_start']))
-        if r.returncode != 0 and not errs:
+                        unused.append((source_path(sp['file_name']), sp['line_start'], sp['column_start']))
+        if r.returncode != 0 and len(errs) == before:
             errs.append(('?', 0, set(), r.stderr[-2000:]))
-        per.append((set(unused), dep_files(dep)))
+        compiled = dep_files(dep)
+        expected = {'sm/src/lib.rs'} | ({'sm/src/verify_dll.rs'} if index else set())
+        if not r.returncode and not expected <= compiled:
+            sys.exit(f'configuration {index}: missing dep-info coverage: {expected - compiled}')
+        if not r.returncode and any(fl not in compiled for fl, _, _ in unused):
+            sys.exit(f'configuration {index}: warning file absent from dep-info')
+        per.append((set(unused), compiled))
     alls = set().union(*[u for u, _ in per])
     ok = [x for x in alls if all(x in u for u, fs in per if x[0] in fs)]
     return errs, sorted(ok)
 
 
 def warnings_count():
-    r = subprocess.run(CHECKS[0][0][:-2], capture_output=True, text=True)
-    m = re.search(r'generated (\d+) warnings? \((\d+) duplicates\)', r.stderr) or re.search(r'generated (\d+) warnings?', r.stderr)
-    return (int(m.group(1)) - (int(m.group(2)) if m.lastindex == 2 else 0)) if m else 0
+    r = run_check(0)
+    if r.returncode: sys.exit('warning-count compilation failed')
+    return sum(m['level'] == 'warning' and bool(m.get('spans')) for m in diagnostics(r))
 
 
 def changed_lines():
-    out, cur = set(), None
-    for line in subprocess.run(['git', 'diff', '-U0', '--', 'sm/src'], capture_output=True, text=True).stdout.split('\n'):
-        if line.startswith('+++ b/'): cur = line[6:]
-        m = re.match(r'@@ -\S+ \+(\d+)(?:,(\d+))? @@', line)
-        if m and cur:
-            a, n = int(m.group(1)), int(m.group(2) or 1)
-            out |= {(cur, k) for k in range(a, a + n)}
+    # Scope cleanup to this invocation, including isolated source snapshots.
+    out = set()
+    for path, original in ORIGINALS.items():
+        current = open(path).read().splitlines()
+        for tag, _, _, start, end in difflib.SequenceMatcher(
+                a=original.splitlines(), b=current, autojunk=False).get_opcodes():
+            if tag != 'equal': out.update((path, n + 1) for n in range(start, end))
     return out
 
 
@@ -238,7 +308,7 @@ def flatten(files):
             if (fl, a) in mine and L[a - 1].strip() == '{' and L[b - 1].strip() == '}':
                 drop |= {a - 1, b - 1}
         if drop:
-            open(fl, 'w').write('\n'.join(x for i, x in enumerate(L) if i not in drop)); n += len(drop) // 2
+            write_source(fl, '\n'.join(x for i, x in enumerate(L) if i not in drop)); n += len(drop) // 2
     errs, _ = check()
     assert not errs, errs[:3]
     print(f'flattened {n} fn bodies', flush=True)
@@ -248,17 +318,14 @@ def fix_braces():
     # `return unsafe { x }` unwrapped to `return { x }`: apply rustc's own
     # unused_braces suggestion, but only on lines this codemod changed.
     mine = changed_lines()
-    r = subprocess.run(CHECKS[0][0], capture_output=True, text=True)
+    r = run_check(0)
+    if r.returncode: sys.exit('brace-check compilation failed')
     edits = {}
-    for line in r.stdout.split('\n'):
-        try: m = json.loads(line)
-        except Exception: continue
-        if m.get('reason') != 'compiler-message': continue
-        msg = m['message']
+    for msg in diagnostics(r):
         if (msg.get('code') or {}).get('code') != 'unused_braces': continue
         prim = [sp for sp in msg['spans'] if sp['is_primary']]
         if not prim or prim[0].get('expansion'): continue
-        fl = os.path.relpath(os.path.abspath(prim[0]['file_name']), ROOT)
+        fl = source_path(prim[0]['file_name'])
         if (fl, prim[0]['line_start']) not in mine: continue
         for ch in msg['children']:
             for sp in ch['spans']:
@@ -277,6 +344,9 @@ EXPAND = [
       'target/expand', '--', '-Zunpretty=expanded'], {}),
     (['cargo', 'rustc', '-p', 'sm', '--lib', '--target-dir', 'target/expand-verify', '--',
       '-Zunpretty=expanded'], {'RUSTFLAGS': '--cfg sm_verify_dll'}),
+    (['cargo', 'rustc', '-p', 'sm', '--example', 'sm_verify', '--target-dir',
+      'target/expand-verify', '--', '-Zunpretty=expanded'],
+     {'RUSTFLAGS': '--cfg sm_verify_dll'}),
 ]
 
 
@@ -366,6 +436,19 @@ def idents(txt, a, b, sig=None):
     return out
 
 
+def imported_aliases(txt):
+    # Reject every alias spelling, irrespective of scope or target. This also
+    # covers grouped imports, `self as module`, re-exports and alias chains.
+    # Module aliases must count even in a path prefix normally skipped below.
+    aliases = set()
+    for k, token in enumerate(txt):
+        if token != 'use' and not (token == 'extern' and txt[k + 1:k + 2] == ['crate']): continue
+        end = k + 1
+        while end < len(txt) and txt[end] != ';': end += 1
+        aliases.update(txt[q + 1] for q in range(k + 1, end - 1) if txt[q] == 'as')
+    return aliases
+
+
 def tainted_names():
     # Transitive closure over macro-expanded source, by name (conservative):
     # a name is tainted if any item so named contains an `unsafe {}` block or
@@ -375,11 +458,17 @@ def tainted_names():
     # formatting, comparison, conversion); other methods are called by name.
     # Expansion needs RUSTC_BOOTSTRAP for -Zunpretty; it is analysis only.
     refs, seeds = {}, set()
-    for cmd, env in EXPAND:
+    expansions = EXPAND
+    if CACHED_FRONTEND is not None:
+        expansions = [(direct_command(i, example, expand=True), {})
+                      for i, example in ((0, False), (1, False), (1, True))]
+    for cmd, env in expansions:
         r = subprocess.run(cmd, capture_output=True, text=True,
                            env=dict(os.environ, RUSTC_BOOTSTRAP='1', **env))
         if r.returncode != 0: sys.exit('expansion failed: ' + r.stderr[-2000:])
         src = r.stdout; toks = lex(src); txt = [src[a:b] for _, a, b in toks]
+        aliases = imported_aliases(txt)
+        seeds.update(aliases)
         n = len(toks)
         def block_end(j):
             d = 0
@@ -401,6 +490,7 @@ def tainted_names():
                 if j >= n or txt[j] != '{': continue
                 e = block_end(j); body = txt[j:e + 1]; name = txt[k + 1]
                 refs.setdefault(name, set()).update(idents(txt, j, e + 1, (k + 2, j)))
+                refs[name].update(aliases.intersection(txt[k + 2:e + 1]))
                 if any(a == 'unsafe' and b == '{' for a, b in zip(body, body[1:])): seeds.add(name)
             elif t in ('static', 'const') and toks[k + 1][0] == 'id' and txt[k + 1] not in ('fn', 'unsafe', 'extern'):
                 j = k + 1
@@ -415,6 +505,7 @@ def tainted_names():
                     e += 1
                 body = txt[j + 1:e]
                 refs.setdefault(name, set()).update(idents(txt, j + 1, e))
+                refs[name].update(aliases.intersection(txt[j + 1:e]))
                 if any(a == 'unsafe' and b == '{' for a, b in zip(body, body[1:])): seeds.add(name)
             elif t == 'impl':
                 j = k + 1
@@ -422,7 +513,7 @@ def tainted_names():
                 if j >= n or txt[j] != '{': continue
                 head = [x for x in txt[k + 1:j] if x[:1].isalpha() or x[:1] == '_']
                 if 'for' not in head: continue  # inherent methods are called by name
-                if not IMPLICIT & set(head[:head.index('for')]): continue
+                if not (IMPLICIT | aliases) & set(head[:head.index('for')]): continue
                 head = head[head.index('for') + 1:]
                 head = [x for x in head if x not in ('where', 'dyn', 'mut', 'const')]
                 if not head: continue
@@ -442,9 +533,20 @@ def tainted_names():
 
 
 def main():
+    global CACHED_FRONTEND, DEPS
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--cached-gl', help='existing gl rmeta for direct metadata checks')
+    parser.add_argument('--cached-sdl2', help='matching sdl2_sys rmeta; no dependency rebuild')
+    args = parser.parse_args()
+    if bool(args.cached_gl) != bool(args.cached_sdl2): parser.error('both cached metadata paths are required')
+    if args.cached_gl:
+        CACHED_FRONTEND = tuple(os.path.abspath(p) for p in (args.cached_gl, args.cached_sdl2))
+        if not all(os.path.isfile(p) for p in CACHED_FRONTEND): parser.error('cached metadata file missing')
+        DEPS = ['target/codemod/0/*.d', 'target/codemod/1/*.d']
     errs, _ = check()
     if errs: sys.exit(f'baseline does not compile: {errs[:3]}')
     files = files_compiled()
+    ORIGINALS.update({p: open(p).read() for p in files})
     base_warn = warnings_count()
     print(f'{len(files)} compiled files; baseline warnings {base_warn}', flush=True)
     keep = set()  # (file, line) of rejected fns
@@ -470,7 +572,7 @@ def main():
                     for f in sorted(stripped.get(p, []), key=lambda f: -f['kw']):
                         assert s2.startswith('unsafe fn', f['kw'])
                         s2 = s2[:f['kw']] + s2[f['kw'] + 7:]
-                    open(p, 'w').write(s2)
+                    write_source(p, s2)
                 t = time.time(); errs, _ = check()
                 if not errs: break
                 rej = set()
@@ -509,7 +611,7 @@ def main():
                     rest = L[c + 6:]
                     lines[ln - 1] = L[:c] + rest.lstrip(' ') if rest.lstrip(' ').startswith('{') else L
                     fixed += lines[ln - 1] != L
-            open(fl, 'w').write('\n'.join(lines))
+            write_source(fl, '\n'.join(lines))
         errs, _ = check()
         if errs:  # revert unwraps in files with errors
             bad = {e[0] for e in errs}
@@ -522,7 +624,7 @@ def main():
                     s0 = texts[fl]
                     for f in sorted(stripped.get(fl, []), key=lambda f: -f['kw']):
                         s0 = s0[:f['kw']] + s0[f['kw'] + 7:]
-                    open(fl, 'w').write(s0)
+                    write_source(fl, s0)
                     fixed -= sum(1 for a, b in zip(cur, s0.split('\n')) if a != b)
             errs, _ = check()
         assert not errs, errs[:3]

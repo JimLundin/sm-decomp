@@ -155,7 +155,7 @@ pub unsafe fn HandleMode7TransformationNoRotation(game: &mut Game) {
         word!(game.reg_BG1VOFS = word!(game.cinematic_var10));
     }
 }
-unsafe fn Smult16x16(r38: u16, r40: u16) -> u32 {
+fn Smult16x16(r38: u16, r40: u16) -> u32 {
     let t: u32 = ((r38 as i16) as u32).wrapping_mul((r40 as i16) as u32);
     t
 }
@@ -375,36 +375,32 @@ pub unsafe fn Mult0x80Add(mut r18: u16) -> u16 {
     unsafe { (r18 as u8 as i32 + 0x80 * byte!(r18; 1) as i32) as u16 }
 }
 pub unsafe fn Samus_CalcPos_Mode7(game: &mut Game) {
-    unsafe {
-        let r34: u16 = (word!(game.samus_x_pos)).wrapping_sub(word!(game.reg_M7X));
-        let r36: u16 = (word!(game.reg_M7Y)).wrapping_sub(word!(game.samus_y_pos));
-        let mut r26: u16 = (Smult16x16(
-            (word!(game.samus_x_pos)).wrapping_sub(word!(game.reg_M7X)),
-            word!(game.reg_M7A),
-        ) >> 8) as u16;
-        r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7B), r36) >> 8) as u16;
-        word!(game.samus_x_pos = (r26).wrapping_add(word!(game.reg_M7X)));
-        r26 = (Smult16x16(word!(game.reg_M7C), r34) >> 8) as u16;
-        r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7A), r36) >> 8) as u16;
-        word!(game.samus_y_pos = (word!(game.reg_M7Y)).wrapping_sub(r26));
-    }
+    let r34: u16 = (word!(game.samus_x_pos)).wrapping_sub(word!(game.reg_M7X));
+    let r36: u16 = (word!(game.reg_M7Y)).wrapping_sub(word!(game.samus_y_pos));
+    let mut r26: u16 = (Smult16x16(
+        (word!(game.samus_x_pos)).wrapping_sub(word!(game.reg_M7X)),
+        word!(game.reg_M7A),
+    ) >> 8) as u16;
+    r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7B), r36) >> 8) as u16;
+    word!(game.samus_x_pos = (r26).wrapping_add(word!(game.reg_M7X)));
+    r26 = (Smult16x16(word!(game.reg_M7C), r34) >> 8) as u16;
+    r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7A), r36) >> 8) as u16;
+    word!(game.samus_y_pos = (word!(game.reg_M7Y)).wrapping_sub(r26));
 }
 
 pub unsafe fn CalcCeresSteamPos_Mode7(mut pt: Point16U, game: &mut Game) -> Point16U {
-    unsafe {
-        let r34: u16 = (pt.x).wrapping_sub(word!(game.reg_M7X));
-        let r36: u16 = (word!(game.reg_M7Y)).wrapping_sub(pt.y);
-        let mut r26: u16 = (Smult16x16(
-            (pt.x).wrapping_sub(word!(game.reg_M7X)),
-            word!(game.reg_M7A),
-        ) >> 8) as u16;
-        r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7B), r36) >> 8) as u16;
-        pt.x = (r26).wrapping_add(word!(game.reg_M7X));
-        r26 = (Smult16x16(word!(game.reg_M7C), r34) >> 8) as u16;
-        r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7A), r36) >> 8) as u16;
-        pt.y = (word!(game.reg_M7Y)).wrapping_sub(r26);
-        pt
-    }
+    let r34: u16 = (pt.x).wrapping_sub(word!(game.reg_M7X));
+    let r36: u16 = (word!(game.reg_M7Y)).wrapping_sub(pt.y);
+    let mut r26: u16 = (Smult16x16(
+        (pt.x).wrapping_sub(word!(game.reg_M7X)),
+        word!(game.reg_M7A),
+    ) >> 8) as u16;
+    r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7B), r36) >> 8) as u16;
+    pt.x = (r26).wrapping_add(word!(game.reg_M7X));
+    r26 = (Smult16x16(word!(game.reg_M7C), r34) >> 8) as u16;
+    r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7A), r36) >> 8) as u16;
+    pt.y = (word!(game.reg_M7Y)).wrapping_sub(r26);
+    pt
 }
 pub unsafe fn CopyPalettesToFadingPalettes(game: &mut Game) {
     word_transfers!(game, ascending, 256; native(0x2200) <- le(palette_buffer, 0));
@@ -960,7 +956,7 @@ pub unsafe fn EnableCinematicBgObjects(game: &mut Game) {
         word!(game.cinematic_enable_objs |= (0x8000u16));
     }
 }
-pub unsafe fn EnableCinematicBgTilemapUpdates(game: &mut Game) {
+pub fn EnableCinematicBgTilemapUpdates(game: &mut Game) {
     {
         word!(game.cinematic_enable_bg_tilemap |= (0x8000u16));
     }
