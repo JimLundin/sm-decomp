@@ -353,7 +353,7 @@ static off_A48C14: [Func_V; 45] = callback_table! { nonnull Func_V;
     Crocomire_Func_62, Crocomire_929E, Crocomire_Func_64, Crocomire_Func_65, Crocomire_Func_66,
     Crocomire_Func_51, Crocomire_8D47, Crocomire_929E, Crocomire_Func_51, Crocomire_8D47,
     Crocomire_929E, Crocomire_Func_51, Crocomire_Func_59, Crocomire_Func_60, Crocomire_Func_62,
-    Crocomire_Func_63, Crocomire_Func_56, Crocomire_9506, Crocomire_Func_65, Crocomire_Func_66,
+    Crocomire_Func_63, advance_skeleton_melt, Crocomire_9506, Crocomire_Func_65, Crocomire_Func_66,
     Crocomire_Func_49, Crocomire_Func_68, Crocomire_Func_70, Crocomire_Func_71,
     Crocomire_Func_72, Crocomire_Func_73, Crocomire_Func_88, Crocomire_9B65, Crocomire_Func_90,
     Crocomire_Func_89, Crocomire_9B86, nullsub_305, Crocomire_Func_91, Crocomire_Func_29,
@@ -486,7 +486,7 @@ pub unsafe fn Crocomire_Func_43(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Func_49(game: &mut Game) {
     unsafe {
-        Crocomire_Func_50(game);
+        select_melt_animation::<true>(Key::from_legacy(0), game);
         Crocomire_Func_53(game);
         Crocomire_Func_55(game);
         let E = Get_Crocomire(0, game);
@@ -503,22 +503,32 @@ pub unsafe fn Crocomire_Func_49(game: &mut Game) {
         }
     }
 }
-fn select_melt_animation(key: Key, game: &mut Game) {
+fn select_melt_animation<const SKELETON: bool>(key: Key, game: &mut Game) {
     Runtime::new(game).edit_actor(key, AccessMode::Native, |enemy| {
-        enemy.instruction = match enemy.y.whole as i16 {
+        let instruction = match enemy.y.whole as i16 {
             y if y.wrapping_sub(280) >= 0 => addr_kCrocomire_Ilist_BF64 as u16,
             y if y.wrapping_sub(264) >= 0 => addr_kCrocomire_Ilist_BF6C as u16,
             y if y.wrapping_sub(248) >= 0 => addr_kCrocomire_Ilist_BF72 as u16,
             _ => addr_kCrocomire_Ilist_BF78 as u16,
         };
+        // Each skeleton list starts 0x1a bytes after its corresponding flesh list.
+        enemy.instruction = instruction + if SKELETON { 0x1a } else { 0 };
         enemy.instruction_delay = 1;
     });
+}
+
+fn advance_skeleton_melt(game: &mut Game) {
+    select_melt_animation::<true>(Key::from_legacy(game.cur_enemy_index()), game);
+    unsafe {
+        Crocomire_Func_53(game);
+        Crocomire_92D8(game);
+    }
 }
 
 pub unsafe fn Crocomire_Func_51(game: &mut Game) {
     unsafe {
         Crocomire_Func_53(game);
-        select_melt_animation(Key::from_legacy(0), game);
+        select_melt_animation::<false>(Key::from_legacy(0), game);
         Crocomire_Func_55(game);
     }
 }
@@ -613,7 +623,7 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
 pub unsafe fn Crocomire_929E(game: &mut Game) {
     unsafe {
         Crocomire_Func_53(game);
-        select_melt_animation(Key::from_legacy(word!(game.cur_enemy_index)), game);
+        select_melt_animation::<false>(Key::from_legacy(word!(game.cur_enemy_index)), game);
         Crocomire_92D8(game);
     }
 }
@@ -1166,20 +1176,6 @@ crate::game::callback_dispatch! {
             (*E).var_E = 768;
         };
     };
-    Crocomire_Func_50 [] {
-        let y_pos: u16 = (*E).base.y_pos;
-        let mut v2: u16 = addr_kCrocomire_Ilist_BF7E as u16;
-        if y_pos as i32 - 280i32 & 0x8000 != 0 {
-            v2 = addr_kCrocomire_Ilist_BF86 as u16;
-            if y_pos as i32 - 264i32 & 0x8000 != 0 {
-                v2 = addr_kCrocomire_Ilist_BF8C as u16;
-                if y_pos as i32 - 248i32 & 0x8000 != 0 {
-                    v2 = addr_kCrocomire_Ilist_BF92 as u16;
-                }
-            }
-        }
-        enemy_instruction! {[(*E).base]; instruction = v2, timer = 1}
-    };
     Crocomire_Func_69 [] {
         let v1: u16 = ((*E).base.x_pos).wrapping_sub(2);
         (*E).base.x_pos = v1;
@@ -1390,22 +1386,6 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E = Get_Crocomire(word!(game.cur_enemy_index) as i32, game); };
-    Crocomire_Func_56 [] {
-        let y_pos: u16 = (*E).base.y_pos;
-        let mut v2: u16 = addr_kCrocomire_Ilist_BF7E as u16;
-        if y_pos as i32 - 280i32 & 0x8000 != 0 {
-            v2 = addr_kCrocomire_Ilist_BF86 as u16;
-            if y_pos as i32 - 264i32 & 0x8000 != 0 {
-                v2 = addr_kCrocomire_Ilist_BF8C as u16;
-                if y_pos as i32 - 248i32 & 0x8000 != 0 {
-                    v2 = addr_kCrocomire_Ilist_BF92 as u16;
-                }
-            }
-        }
-        enemy_instruction! {[(*E).base]; instruction = v2, timer = 1}
-        Crocomire_Func_53(game);
-        Crocomire_92D8(game);
-    };
     Crocomire_Func_60 [] {
         (*E).var_A = ((*E).var_A).wrapping_add(2);
         word! { game;
