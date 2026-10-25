@@ -421,7 +421,6 @@ pub mod game {
     pub mod sm_81;
     pub mod sm_82;
     pub mod sm_88;
-    pub mod sm_89;
     pub mod sm_8b;
     pub mod sm_8f;
     pub mod sm_90;

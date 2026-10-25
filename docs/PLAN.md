@@ -50,13 +50,13 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    The X-ray item trial passes; its longer next-room continuation still drifts.
    Original any% timing alignment remains parked; no further hand-route exploration.
    Room seeds and movies stay local; only the logger and index/recipes are committed.
-2. **Current - lane B bank retirement.** `sm_94` and `sm_91` are deleted.
+2. **Current - lane B bank retirement.** `sm_94`, `sm_91` and `sm_89` are deleted.
    Player input, demos, suits, equipment, commands, initialization, Mother Brain
    reactions, X-ray and direct damage use owned state. Natural X-ray, Gravity,
    boss and grapple movie coverage remains incomplete despite bounded checks.
    X-ray controls/tables are consolidated; sm_88 has 1,216 lines left. sm_90 has 522.
    B1 finishes sm_90; B2 continues sm_88. Room FX loading now uses Room/Visuals;
-   sm_89 retains only its 48-line Ceres family. B3 finishes it, then Crocomire sm_a4.
+   sm_89 is retired; its Ceres callback remains raw and uncovered. B3 starts Crocomire sm_a4.
    Retire production observer hooks with named segments.
    Crystal Flash consumption and Draygon grab/release are consolidated.
    Crystal Flash setup now uses owned player state; admission and pose publication
