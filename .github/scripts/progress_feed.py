@@ -13,7 +13,7 @@ import sys
 
 SRC = "sm/src/"
 REPO = "https://github.com/JimLundin/sm-decomp"
-SOURCE_PREFIXES = ("sm/", "tools/", "movies/", "docs/codebase-map/", ".github/")
+SOURCE_PREFIXES = ("sm/", "tools/", "movies/", ".github/")
 B_QUEUES = {"B1": ["sm_90", "sm_81", "sm_80", "sm_82"], "B2": ["sm_88", "sm_8b"],
             "B3": ["sm_89", "sm_a0", "sm_8f", "sm_b2"]}
 
