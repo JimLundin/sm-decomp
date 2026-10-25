@@ -221,3 +221,26 @@ pub(crate) fn time(empty: u16, offset: u16, game: &mut Game) {
     load(offset.wrapping_add(4), 0xb4a8, game);
     number(usize::from(offset) + 6, word!(game.game_time_minutes), game);
 }
+
+#[forbid(unsafe_code)]
+pub(crate) fn area_palette(area: u16, active: bool, game: &mut Game) {
+    const OFFSETS: [u16; 6] = [0, 0xa, 0x10, 0x16, 0x24, 0x2a];
+    let mut entry = OFFSETS[usize::from(area)] + if active { 0 } else { 0x30 };
+    loop {
+        let index = (entry >> 1) as isize;
+        if crate::rtl::rom_table_word!(game, 0x81a4e6, index) == 0xffff {
+            break;
+        }
+        let mut destination = crate::rtl::rom_table_word!(game, 0x81a4e6, index + 1);
+        let mut source = crate::rtl::rom_table_word!(game, 0x81a4e6, index);
+        for _ in 0..5 {
+            word!(
+                game.palette_buffer[destination >> 1] =
+                    crate::rtl::rom_table_word!(game, 0x81a40e, (source >> 1) as isize)
+            );
+            destination = destination.wrapping_add(2);
+            source = source.wrapping_add(2);
+        }
+        entry = entry.wrapping_add(4);
+    }
+}

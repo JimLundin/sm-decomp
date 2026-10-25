@@ -975,49 +975,12 @@ pub unsafe fn FileSelectMap_1(game: &mut Game) {
                 break;
             }
             word!(game.file_select_map_area_index = v0 >> 1);
-            let mut v1: i16 = 0;
-            do_until! { (v2).wrapping_sub(5) >= 0 ;
-                let mut v2: i16 = v1;
-                if v1 as i32 == word!(game.area_index) as i32 {
-                    LoadActiveAreaMapForegroundColors(v1 as u16, game);
-                } else {
-                    LoadInactiveAreaMapForegroundColors(v1 as u16, game);
-                }
-                v1 += 1;
+            for area in 0..6 {
+                menu_tilemap::area_palette(area, area == word!(game.area_index), game);
             }
             word!(game.menu_index += 1);
             word!(game.g_word_7E0787 = 0);
             *ram_ptr!(game; 0x69) = 2;
-        }
-    }
-}
-static kActiveAreaMapForegroundColors: [u16; 6] = [0, 0xa, 0x10, 0x16, 0x24, 0x2a];
-static kInactiveAreaMapForegroundColors: [u16; 6] = [0x30, 0x3a, 0x40, 0x46, 0x54, 0x5a];
-crate::forward_calls! { pub unsafe fn (v0: u16, game: &mut Game);
-    LoadActiveAreaMapForegroundColors =>
-        LoadAreaMapForegroundColors(kActiveAreaMapForegroundColors[v0 as usize], game);
-    LoadInactiveAreaMapForegroundColors =>
-        LoadAreaMapForegroundColors(kInactiveAreaMapForegroundColors[v0 as usize], game);
-}
-pub unsafe fn LoadAreaMapForegroundColors(mut j: u16, game: &mut Game) {
-    {
-        loop {
-            let v1: i32 = j as i32 >> 1;
-            if crate::rtl::rom_table_word!(game, 0x81a4e6, v1 as isize) == 0xffff {
-                break;
-            }
-            let v4: u16 = j;
-            let mut v2: u16 = crate::rtl::rom_table_word!(game, 0x81a4e6, (v1 + 1) as isize);
-            let mut v3: u16 = crate::rtl::rom_table_word!(game, 0x81a4e6, v1 as isize);
-            for _ in 0..5 {
-                word!(
-                    game.palette_buffer[(v2 >> 1)] =
-                        crate::rtl::rom_table_word!(game, 0x81a40e, (v3 >> 1) as isize)
-                );
-                v2 = (v2).wrapping_add(2);
-                v3 = (v3).wrapping_add(2);
-            }
-            j = (v4).wrapping_add(4);
         }
     }
 }
@@ -1253,19 +1216,18 @@ pub unsafe fn CheckIfFileSelectMapAreaCanBeSelected(a: u16, game: &mut Game) -> 
         (t != 0xffff) as u16
     }
 }
-pub unsafe fn SwitchActiveFileSelectMapArea(R28: u16, game: &mut Game) {
-    unsafe {
-        LoadInactiveAreaMapForegroundColors(
-            kFileSelectMap_AreaIndexes[word!(game.file_select_map_area_index) as usize],
-            game,
-        );
-        word!(game.file_select_map_area_index = R28);
-        LoadActiveAreaMapForegroundColors(kFileSelectMap_AreaIndexes[R28 as usize], game);
-        LoadAreaSelectBackgroundTilemap(
-            kFileSelectMap_AreaIndexes[word!(game.file_select_map_area_index) as usize],
-            game,
-        );
-    }
+pub fn SwitchActiveFileSelectMapArea(R28: u16, game: &mut Game) {
+    menu_tilemap::area_palette(
+        kFileSelectMap_AreaIndexes[word!(game.file_select_map_area_index) as usize],
+        false,
+        game,
+    );
+    word!(game.file_select_map_area_index = R28);
+    menu_tilemap::area_palette(kFileSelectMap_AreaIndexes[R28 as usize], true, game);
+    LoadAreaSelectBackgroundTilemap(
+        kFileSelectMap_AreaIndexes[word!(game.file_select_map_area_index) as usize],
+        game,
+    );
 }
 static kAreaSelectMapLabelPositions: [u16; 12] = [
     0x5b, 0x32, 0x2a, 0x7f, 0x5e, 0xb5, 0xce, 0x50, 0xce, 0x9f, 0x87, 0x8b,
@@ -1580,19 +1542,14 @@ pub unsafe fn FileSelectMap_15_ClearTileMap(game: &mut Game) {
         word!(game.menu_index += 1);
     }
 }
-pub unsafe fn FileSelectMap_16_LoadPalettes(game: &mut Game) {
-    unsafe {
-        menu_tilemap::load_palette(game);
-        let mut v0: i16 = 0;
-        do_until! { (v1).wrapping_sub(5) >= 0 ;
-            let mut v1: i16 = v0;
-            crate::update_place! { previous fresh19 = v0 => v0 + 1; }
-            LoadInactiveAreaMapForegroundColors(fresh19 as u16, game);
-        }
-        LoadActiveAreaMapForegroundColors(word!(game.area_index), game);
-        LoadAreaSelectBackgroundTilemap(word!(game.area_index), game);
-        word!(game.menu_index += 1);
+pub fn FileSelectMap_16_LoadPalettes(game: &mut Game) {
+    menu_tilemap::load_palette(game);
+    for area in 0..6 {
+        menu_tilemap::area_palette(area, false, game);
     }
+    menu_tilemap::area_palette(word!(game.area_index), true, game);
+    LoadAreaSelectBackgroundTilemap(word!(game.area_index), game);
+    word!(game.menu_index += 1);
 }
 pub unsafe fn FileSelectMap_20_SetupExpandingSquare(game: &mut Game) {
     unsafe {

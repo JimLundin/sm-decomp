@@ -54,7 +54,7 @@ auto-land on green (C3); a Linux verifier spike (L1). Details: REVIEW.md lane C.
    The 100% Mother Brain 10,000-frame trial has zero oracle differences but misses
    original defeat/exit; seed/route fidelity needs diagnosis. No new hand routes.
 2. **Current - lane B bank retirement.** `sm_94`, `sm_91`, `sm_89` and `sm_90` are deleted.
-   B1 continues sm_81 menu drawing (1,711 lines); B2 continues sm_88 (321 lines); B3 continues
+   B1 continues sm_81 menu drawing (1,668 lines); B2 continues sm_88 (321 lines); B3 continues
    Crocomire sm_a4 (1,676 lines); attack and return scripts share checked actors. Player input, rendering, movement and dispatch share existing
    owners; save/load now shares checked slot and map transfers.
    Bank removal is not persistent whole-engine state ownership: camera
