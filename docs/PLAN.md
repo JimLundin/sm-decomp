@@ -54,7 +54,7 @@ and priorities, but use the local Fast loop and local bank-retirement checks bel
    Original any% timing alignment remains parked; no further hand-route exploration.
    Room seeds and movies stay local; only the logger and index/recipes are committed.
 2. **Current - lane B bank retirement.** `sm_94`, `sm_91`, `sm_89` and `sm_90` are deleted.
-   B1 continues sm_81 menu drawing (2,312 lines); B2 continues sm_88 (895 lines); B3 starts
+   B1 continues sm_81 menu drawing (2,187 lines); B2 continues sm_88 (895 lines); B3 starts
    Crocomire sm_a4 (1,562 lines); attack reactions now share safe actor access. Player input, rendering, movement and dispatch share existing
    owners; save/load now shares checked slot and map transfers.
    Bank removal is not persistent whole-engine state ownership: camera

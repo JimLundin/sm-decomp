@@ -684,6 +684,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/message_boxes.rs"),
     ),
     (
+        "sm/src/game/menu_tilemap.rs",
+        include_bytes!("game/menu_tilemap.rs"),
+    ),
+    (
         "sm/src/game/mode7_transfers.rs",
         include_bytes!("game/mode7_transfers.rs"),
     ),

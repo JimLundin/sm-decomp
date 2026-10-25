@@ -363,6 +363,7 @@ pub mod game {
     pub(crate) mod launch_motion_ram;
     pub(crate) mod layer_blending;
     pub(crate) mod liquid_effects;
+    pub mod menu_tilemap;
     pub mod message_boxes;
     pub(crate) mod mode7_transfers;
     pub(crate) mod moving_platforms;
