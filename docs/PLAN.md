@@ -66,7 +66,8 @@ The known example/detached compilation errors are fixed and checked locally.
    target is below 110,000 production lines; try scoped cargo-mutants before text patches.
    M1 checked caller-side byte access passes all 59 runnable rows locally, including
    78,108 selected and 100,697 setup frames; 123 redundant unsafe blocks are cleared.
-   Next M2: shared Ripper/Jet Power Ripper behavior through existing Actor fields. Prototype 42c59cb is not safe to adopt: its whole-RAM
+   M2 Ripper/Jet Power Ripper now share existing Actor operations: two raw getters
+   and 28 dereferences removed; seven rows pass. Next: remaining common-enemy families. Prototype 42c59cb is not safe to adopt: its whole-RAM
    borrows can invalidate retained enemy pointers, and its signature stripping
    exposes raw-pointer Load24 as safe. Passing replays do not resolve these defects.
    We retain this checked M1 ahead of the revised REVIEW's proposed M1b deferral:

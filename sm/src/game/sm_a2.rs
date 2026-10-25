@@ -3,6 +3,7 @@ use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, A
 use crate::game::actors::api as actor_api;
 use crate::game::enemy_script::EnemyScript;
 pub use crate::game::prelude::*;
+use crate::game::rippers::{self, Kind};
 use crate::game::save_slots;
 use crate::game::session_runtime::Runtime;
 
@@ -26,9 +27,7 @@ pub use crate::types::Consts_A2;
 
 crate::game::constants::typed_constants! { Consts_A2;
     addr_kLavaSeahorse_Ilist_E5A1 = 58785, addr_kLavaSeahorse_Ilist_E59B = 58779,
-    addr_kRipper_Ilist_E48B = 58507, addr_kRipper_Ilist_E477 = 58487,
     addr_kGripper_Sprmap_E44B = 58443, addr_kGripper_Sprmap_E43F = 58431,
-    addr_kRipper_Ilist_E2F4 = 58100, addr_kRipper_Ilist_E2E0 = 58080,
     addr_kGripper_Ilist_E1AF = 57775, addr_kGripper_Ilist_E19B = 57755,
     addr_kHirisingSlowfalling_Ilist_D840 = 55360, addr_kHirisingSlowfalling_Ilist_D834 = 55348,
     addr_kHirisingSlowfalling_Ilist_D82C = 55340, addr_kMaridiaLargeSnail_Ilist_CA4B = 51787,
@@ -78,8 +77,8 @@ crate::type_aliases! {
 
 crate::type_aliases! {
     pub Enemy_Rio, Enemy_Flies, Enemy_MaridiaBeybladeTurtle, Enemy_MiniCrocomire, Enemy_Gripper,
-        Enemy_GunshipBottom, Enemy_JetPowerRipper, Enemy_LowerNorfairRio,
-        Enemy_MiniMaridiaBeybladeTurtle, Enemy_NorfairErraticFireball, Enemy_Ripper =
+        Enemy_GunshipBottom, Enemy_LowerNorfairRio,
+        Enemy_MiniMaridiaBeybladeTurtle, Enemy_NorfairErraticFireball =
         crate::game::enemy_layouts::EnemyLayout8;
 }
 
@@ -130,7 +129,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_GunshipBottom(o: i32) -> Enemy_GunshipBottom = [0xf78, o as isize];
     Get_GunshipTop(o: i32) -> Enemy_GunshipTop = [0xf78, o as isize];
     Get_HirisingSlowfalling(o: i32) -> Enemy_HirisingSlowfalling = [0xf78, o as isize];
-    Get_JetPowerRipper(o: i32) -> Enemy_JetPowerRipper = [0xf78, o as isize];
     Get_LavaSeahorse(o: i32) -> Enemy_LavaSeahorse = [0xf78, o as isize];
     Get_LavaquakeRocks(o: i32) -> Enemy_LavaquakeRocks = [0xf78, o as isize];
     Get_LowerNorfairRio(o: i32) -> Enemy_LowerNorfairRio = [0xf78, o as isize];
@@ -145,7 +143,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_NorfairRio(o: i32) -> Enemy_NorfairRio = [0xf78, o as isize];
     Get_Rinka(o: i32) -> Enemy_Rinka = [0xf78, o as isize];
     Get_Rio(o: i32) -> Enemy_Rio = [0xf78, o as isize];
-    Get_Ripper(o: i32) -> Enemy_Ripper = [0xf78, o as isize];
     Get_SpikeShootingPlant(o: i32) -> Enemy_SpikeShootingPlant = [0xf78, o as isize];
     Get_ThinHoppingBlobs(o: i32) -> Enemy_ThinHoppingBlobs = [0xf78, o as isize];
 }
@@ -1894,41 +1891,6 @@ pub unsafe fn Gripper_Func_2(k: u16, game: &mut Game) -> u8 {
             && (((*E).base.x_pos) as i16).wrapping_sub(((*E).var_B) as i16) >= 0) as u8
     }
 }
-macro_rules! move_ripper_and_reverse_on_collision {
-    (
-        $get_enemy:path, $game:ident, $instruction:ident, $positive_instruction:literal,
-        $negative_instruction:literal $(,)?
-    ) => {
-        let E = $get_enemy(word!($game.cur_enemy_index) as i32, $game);
-        if {
-            let (actor, amount) = (
-                word!($game.cur_enemy_index),
-                (words!((*E), var_D, var_C)) as i32,
-            );
-            (actor_api::move_horizontal(
-                &mut Runtime::new($game),
-                Key::from_legacy(actor),
-                amount,
-                actor_api::SlopePolicy::Ignore,
-            ) == actor_api::MovementResult::Blocked) as u8
-        } != 0
-        {
-            let v2: i32 = (*E).var_E as i32 >> 1;
-            if ((*E).var_D & 0x8000) == 0 {
-                (*E).var_D = crate::rtl::rom_table_word!($game, 0xa28187, (v2 + 2) as isize);
-                (*E).var_C = crate::rtl::rom_table_word!($game, 0xa28187, (v2 + 3) as isize);
-                $instruction = -$positive_instruction;
-            } else {
-                (*E).var_D = crate::rtl::rom_table_word!($game, 0xa28187, v2 as isize);
-                (*E).var_C = crate::rtl::rom_table_word!($game, 0xa28187, (v2 + 1) as isize);
-                $instruction = -$negative_instruction;
-            }
-            enemy_instruction! {[(*E).base]; instruction = $instruction as u16, timer = 1}
-            (*E).base.timer = 0;
-        }
-    };
-}
-
 pub unsafe fn LavaSeahorse_Func_6(game: &mut Game) {
     unsafe {
         let E = Get_LavaSeahorse(word!(game.cur_enemy_index) as i32, game);
@@ -2544,63 +2506,23 @@ crate::game::callback_dispatch! {
             (*E).base.timer = 0;
         }
     };
+    @functions [pub fn (game: &mut Game)];
     [10674968] JetPowerRipper_Init [] {
-        let mut v0: u16 = addr_kRipper_Ilist_E2E0 as u16;
-        let E = Get_JetPowerRipper(word!(game.cur_enemy_index) as i32, game);
-        if (*E).parameter_2 != 0 {
-            v0 = addr_kRipper_Ilist_E2F4 as u16;
-        }
-        (*E).base.current_instruction = v0;
-        let v2: u16 = (8u16).wrapping_mul((*E).parameter_1);
-        (*E).var_E = v2;
-        let v3: i32 = v2 as i32 >> 1;
-        let mut v4: u16 = if (*E).parameter_2 != 0 {
-            (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, v3 as isize);
-            crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1) as isize)
-        } else {
-            (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 2) as isize);
-            crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 3) as isize)
-        };
-        (*E).var_C = v4;
+        rippers::initialize(Kind::JetPowered, game);
     };
     [10675027] JetPowerRipper_Main [] {
-        let mut v3: i16 = 0;
-        move_ripper_and_reverse_on_collision!(Get_JetPowerRipper, game, v3, 7456i16, 7436i16);
+        rippers::advance(Kind::JetPowered, game);
     };
     [10675113] JetPowerRipper_Shot [] {
-        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
-        let E = Get_JetPowerRipper(word!(game.cur_enemy_index) as i32, game);
-        if (*E).base.frozen_timer != 0 {
-            let mut v1: i16 = -7105i16;
-            if ((*E).var_D & 0x8000) == 0 {
-                v1 = -7093i16;
-            }
-            (*E).base.spritemap_pointer = v1 as u16;
-        }
+        rippers::jet_shot(game);
     };
     [10675359] Ripper_Init [] {
-        let mut v0: u16 = addr_kRipper_Ilist_E477 as u16;
-        let E = Get_Ripper(word!(game.cur_enemy_index) as i32, game);
-        if (*E).parameter_2 == 0 {
-            v0 = addr_kRipper_Ilist_E48B as u16;
-        }
-        (*E).base.current_instruction = v0;
-        let v2: u16 = (8u16).wrapping_mul((*E).parameter_1);
-        (*E).var_E = v2;
-        let v3: i32 = v2 as i32 >> 1;
-        let mut v4: u16 = if (*E).parameter_2 != 0 {
-            (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, v3 as isize);
-            crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1) as isize)
-        } else {
-            (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 2) as isize);
-            crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 3) as isize)
-        };
-        (*E).var_C = v4;
+        rippers::initialize(Kind::Ripper, game);
     };
     [10675418] Ripper_Main [] {
-        let mut v3: i16 = 0;
-        move_ripper_and_reverse_on_collision!(Get_Ripper, game, v3, 7029i16, 7049i16);
+        rippers::advance(Kind::Ripper, game);
     };
+    @functions [pub unsafe fn (game: &mut Game)];
     [10675718] LavaSeahorse_Init [] {
         let E = Get_LavaSeahorse(word!(game.cur_enemy_index) as i32, game);
         (*E).var_02 = 0;

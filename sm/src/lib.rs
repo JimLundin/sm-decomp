@@ -442,6 +442,7 @@ pub mod game {
     pub mod enemy_script;
     pub(crate) mod mother_brain_visuals;
     pub mod projectile_contact;
+    pub(crate) mod rippers;
     pub mod sm_9b;
     pub mod sm_a0;
     pub mod sm_a2;
