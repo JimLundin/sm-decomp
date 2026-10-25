@@ -7,10 +7,12 @@ on:
   push:
     branches: [main, 'ci/**']
     paths: ['sm/**', 'tools/**', 'movies/segments.toml', '.github/workflows/segments.yml']
+  schedule:
+    - cron: '0 */3 * * *'
   workflow_dispatch:
     inputs:
       segments:
-        description: Space-separated row ids (empty = every runnable row)
+        description: Space-separated row ids (empty = full corpus / review waypoint)
         required: false
         default: ''
       linux:
@@ -21,52 +23,91 @@ on:
 permissions:
   contents: read
 
-# On main, let the running corpus finish and keep only the newest queued push;
+# On main, let the running corpus finish and keep only the newest queued run;
 # on ci/** branches, a new push replaces the running one.
 concurrency:
-  group: segments-${{ github.ref }}
+  # Main-push detection must not replace a queued full run.
+  group: segments-${{ github.ref }}-${{ github.ref == 'refs/heads/main' && github.event_name == 'push' && github.sha || 'verify' }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   plan:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: write
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
+      should_run: ${{ steps.plan.outputs.should_run }}
+      movie_file: ${{ steps.plan.outputs.movie_file }}
+      movie_sha256: ${{ steps.plan.outputs.movie_sha256 }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - id: plan
         env:
           SELECTED: ${{ github.event.inputs.segments }}
-          # ci/** pushes run the head commit's `Rows:` rows plus the smoke set
-          # (every runnable row when the message has no `Rows:` line).
           CI_BRANCH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/') }}
-          MESSAGE: ${{ github.event.head_commit.message }}
+          MAIN_PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          BEFORE: ${{ github.event.before }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
-          import json, os, re, tomllib
+          import json, os, re, subprocess, tomllib
           rows = tomllib.load(open('movies/segments.toml', 'rb'))['segment']
+          movie = next(m for m in tomllib.load(open('movies/manifest.toml', 'rb'))['movies'] if m['category'] == 'any%')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write(f"movie_file={movie['file']}\nmovie_sha256={movie['sha256']}\n")
+          if os.environ.get('MAIN_PUSH') == 'true':
+              before = os.environ['BEFORE']
+              # Main already exists: an unavailable base fails rather than skipping a deletion.
+              deleted = subprocess.check_output(['git', 'diff', '--no-renames', '--diff-filter=D',
+                                                 '--name-only', before, 'HEAD', '--', 'sm/src/game/sm_*.rs'], text=True)
+              if deleted.strip():
+                  # Dispatch shares the schedule/waypoint concurrency group.
+                  subprocess.run(['gh', 'workflow', 'run', 'segments.yml', '--repo', os.environ['GITHUB_REPOSITORY'], '--ref', 'main'], check=True)
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+                  out.write('should_run=false\nmatrix={"include":[]}\n')
+              with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
+                  out.write('Bank deletion: dispatched full corpus on main.\n' if deleted.strip() else
+                            'Routine main push: full corpus runs every 3h and at waypoints.\n')
+              raise SystemExit(0)
           known = {r['id'] for r in rows}
           wanted = os.environ.get('SELECTED', '').split()
           source = 'dispatch input' if wanted else 'every row'
           if os.environ.get('CI_BRANCH') == 'true':
-              lines = os.environ.get('MESSAGE', '').splitlines()
-              for n, line in enumerate(lines):
-                  if not line.startswith('Rows:'):
-                      continue
-                  text = line[5:]
-                  # A wrapped list continues after a trailing comma; results follow a colon.
-                  while text.rstrip().endswith(',') and n + 1 < len(lines):
+              messages = subprocess.check_output(['git', 'log', '--format=%B%x00', 'origin/main..HEAD'], text=True)
+              named, found = [], False
+              for message in messages.split('\0'):
+                  lines = message.splitlines()
+                  n = 0
+                  while n < len(lines):
+                      line = lines[n]
                       n += 1
-                      text += lines[n]
-                  named = [t for t in re.split(r'[\s,]+', text.split(':')[0]) if t]
+                      if not line.startswith('Rows:'):
+                          continue
+                      found = True
+                      text = line[5:]
+                      # A wrapped list continues after a trailing comma; results follow a colon.
+                      while text.rstrip().endswith(',') and n < len(lines):
+                          text += ' ' + lines[n]
+                          n += 1
+                      named.extend(t for t in re.split(r'[\s,]+', text.split(':')[0]) if t)
+              if found:
                   smoke = ['door-loading-lag-nmi', 'tas-ceres-four-doors', 'area-crateria', 'item-morph-ball']
                   wanted = list(dict.fromkeys(named + smoke))
-                  source = f"Rows: line ({len(named)} named) plus smoke set"
-                  break
+                  source = f"Rows: union across origin/main..HEAD ({len(set(named))} named) plus smoke set"
           if wanted:
               unknown = set(wanted) - known
               if unknown:
                   raise SystemExit(f'unknown rows: {sorted(unknown)}')
+          if os.environ.get('CI_BRANCH') == 'true':
+              deleted = subprocess.check_output(['git', 'diff', '--no-renames', '--diff-filter=D',
+                                                 '--name-only', 'origin/main', 'HEAD', '--', 'sm/src/game/sm_*.rs'], text=True)
+              if deleted.strip():
+                  wanted = []
+                  source = 'bank retirement: every row'
           groups, skipped = {}, []
           for r in rows:
               if wanted and r['id'] not in wanted:
@@ -94,10 +135,13 @@ jobs:
               out.write(f"{sum(len(s['segments'].split()) for s in shards)} rows in {len(shards)} shards\n\n")
               out.write('Skipped:\n\n' + ''.join(f'- {i}: {why}\n' for i, why in skipped))
           with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write('should_run=true\n')
               out.write('matrix=' + json.dumps({'include': shards}) + '\n')
           PY
 
   build:
+    needs: plan
+    if: needs.plan.outputs.should_run == 'true'
     runs-on: windows-2022
     timeout-minutes: 60
     env:
@@ -191,6 +235,7 @@ jobs:
     timeout-minutes: 120
     strategy:
       fail-fast: false
+      max-parallel: 6
       matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
     name: ${{ matrix.name }}
     defaults:
@@ -210,6 +255,12 @@ jobs:
           New-Item -ItemType Directory -Force -Path target/verify-dll | Out-Null
           Copy-Item verifier/sm_verify.dll target/verify-dll/
           "LIBRARY_PATH=$((Resolve-Path verifier/sdk/lib).Path)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Cache the pinned movie download
+        if: matrix.kind == 'route'
+        uses: actions/cache@v4
+        with:
+          path: movies/${{ needs.plan.outputs.movie_file }}
+          key: ${{ runner.os }}-movie-${{ needs.plan.outputs.movie_sha256 }}
       - name: Prepare ROM and selected corpus inputs
         env:
           KIND: ${{ matrix.kind }}
@@ -284,24 +335,28 @@ jobs:
               sys.exit(0)
           movies = tomllib.loads(pathlib.Path('movies/manifest.toml').read_text())['movies']
           movie = next(m for m in movies if m['category'] == 'any%')
-          request = urllib.request.Request(movie['download'], headers={'User-Agent': 'sm-decomp-ci'})
-          # Four total attempts; checksum validation below is never retried.
-          for attempt in range(4):
-              try:
-                  with urllib.request.urlopen(request, timeout=120) as response:
-                      data = response.read()
-                  break
-              except urllib.error.HTTPError as error:
-                  if error.code not in (429, 500, 502, 503, 504) or attempt == 3:
-                      raise
-                  print(f'Movie download HTTP {error.code}; attempt {attempt + 1}/4 failed, retrying', file=sys.stderr)
-                  time.sleep(2 ** attempt)
-          with zipfile.ZipFile(io.BytesIO(data)) as archive:
-              if 'input' not in archive.namelist():
-                  data = archive.read(next(n for n in archive.namelist() if n.lower().endswith('.lsmv')))
+          path = pathlib.Path('movies', movie['file'])
+          if path.exists():
+              data = path.read_bytes()
+          else:
+              request = urllib.request.Request(movie['download'], headers={'User-Agent': 'sm-decomp-ci'})
+              # Four total attempts; checksum validation below is never retried.
+              for attempt in range(4):
+                  try:
+                      with urllib.request.urlopen(request, timeout=120) as response:
+                          data = response.read()
+                      break
+                  except urllib.error.HTTPError as error:
+                      if error.code not in (429, 500, 502, 503, 504) or attempt == 3:
+                          raise
+                      print(f'Movie download HTTP {error.code}; attempt {attempt + 1}/4 failed, retrying', file=sys.stderr)
+                      time.sleep(2 ** attempt)
+              with zipfile.ZipFile(io.BytesIO(data)) as archive:
+                  if 'input' not in archive.namelist():
+                      data = archive.read(next(n for n in archive.namelist() if n.lower().endswith('.lsmv')))
+          # Cache hits and fresh downloads must pass the same manifest checksum.
           if hashlib.sha256(data).hexdigest() != movie['sha256']:
               raise SystemExit('wrong movie')
-          path = pathlib.Path('movies', movie['file'])
           path.write_bytes(data)
           subprocess.run([sys.executable, 'tools/movie_inputs.py', str(path), 'movies/' + os.environ['INPUTS'],
                           '--rom', 'rom/sm.smc', '--route', os.environ['ROUTE']], check=True)
@@ -363,6 +418,7 @@ jobs:
               echo "::error::$BRANCH changes .github/workflows; land it by hand"
               exit 1
             fi
+            bank_deleted=$(git diff --no-renames --diff-filter=D --name-only origin/main HEAD -- 'sm/src/game/sm_*.rs')
             git push --quiet origin "HEAD:refs/heads/main" || return 1
           }
           if ! land; then
@@ -373,9 +429,10 @@ jobs:
           echo "Landed $BRANCH ($TESTED) on main as $landed" >> "$GITHUB_STEP_SUMMARY"
           git push --quiet --force-with-lease="refs/heads/$BRANCH:$TESTED" origin ":refs/heads/$BRANCH" ||
             echo "::warning::left $BRANCH in place (it moved)"
-          echo "LANDED=$landed" >> "$GITHUB_ENV"
-      - name: Run the full corpus on main
-        # Pushes made with GITHUB_TOKEN start no workflows; a dispatch does.
+          if [ -n "$bank_deleted" ]; then echo 'BANK_RETIRED=true' >> "$GITHUB_ENV"; fi
+      - name: Run the full corpus after bank retirement
+        if: env.BANK_RETIRED == 'true'
+        # Bot pushes start no workflows; only bank deletion needs an immediate main run.
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run segments.yml --repo "$GITHUB_REPOSITORY" --ref main
@@ -384,6 +441,7 @@ jobs:
   # pushes) only until its results match the Windows shards; ROM-derived files
   # stay on the runner.
   linux:
+    needs: plan
     if: inputs.linux || startsWith(github.ref, 'refs/heads/ci/l1-')
     runs-on: ubuntu-24.04
     timeout-minutes: 90
@@ -441,6 +499,11 @@ jobs:
         run: python tools/verify_dll.py --build-only --direct
       - name: Unit tests through the shared object
         run: python tools/verify_dll.py --unit-tests --no-build
+      - name: Cache the pinned movie download
+        uses: actions/cache@v4
+        with:
+          path: movies/${{ needs.plan.outputs.movie_file }}
+          key: ${{ runner.os }}-movie-${{ needs.plan.outputs.movie_sha256 }}
       - name: Prepare ROM, movie and route inputs
         env:
           ROUTE: speed-booster
@@ -503,24 +566,28 @@ jobs:
           pathlib.Path('rom/sm.smc').write_bytes(rom)
           movies = tomllib.loads(pathlib.Path('movies/manifest.toml').read_text())['movies']
           movie = next(m for m in movies if m['category'] == 'any%')
-          request = urllib.request.Request(movie['download'], headers={'User-Agent': 'sm-decomp-ci'})
-          # Four total attempts; checksum validation below is never retried.
-          for attempt in range(4):
-              try:
-                  with urllib.request.urlopen(request, timeout=120) as response:
-                      data = response.read()
-                  break
-              except urllib.error.HTTPError as error:
-                  if error.code not in (429, 500, 502, 503, 504) or attempt == 3:
-                      raise
-                  print(f'Movie download HTTP {error.code}; attempt {attempt + 1}/4 failed, retrying', file=sys.stderr)
-                  time.sleep(2 ** attempt)
-          with zipfile.ZipFile(io.BytesIO(data)) as archive:
-              if 'input' not in archive.namelist():
-                  data = archive.read(next(n for n in archive.namelist() if n.lower().endswith('.lsmv')))
+          path = pathlib.Path('movies', movie['file'])
+          if path.exists():
+              data = path.read_bytes()
+          else:
+              request = urllib.request.Request(movie['download'], headers={'User-Agent': 'sm-decomp-ci'})
+              # Four total attempts; checksum validation below is never retried.
+              for attempt in range(4):
+                  try:
+                      with urllib.request.urlopen(request, timeout=120) as response:
+                          data = response.read()
+                      break
+                  except urllib.error.HTTPError as error:
+                      if error.code not in (429, 500, 502, 503, 504) or attempt == 3:
+                          raise
+                      print(f'Movie download HTTP {error.code}; attempt {attempt + 1}/4 failed, retrying', file=sys.stderr)
+                      time.sleep(2 ** attempt)
+              with zipfile.ZipFile(io.BytesIO(data)) as archive:
+                  if 'input' not in archive.namelist():
+                      data = archive.read(next(n for n in archive.namelist() if n.lower().endswith('.lsmv')))
+          # Cache hits and fresh downloads must pass the same manifest checksum.
           if hashlib.sha256(data).hexdigest() != movie['sha256']:
               raise SystemExit('wrong movie')
-          path = pathlib.Path('movies', movie['file'])
           path.write_bytes(data)
           subprocess.run([sys.executable, 'tools/movie_inputs.py', str(path), 'movies/' + os.environ['INPUTS'],
                           '--rom', 'rom/sm.smc', '--route', os.environ['ROUTE']], check=True)

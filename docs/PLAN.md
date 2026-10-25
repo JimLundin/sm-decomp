@@ -178,12 +178,15 @@ Every routine commit runs exactly this, then commits:
 
 **Hosted mode (user decision 18:05; live since C3 landed, 1f57df1, 19:07 CET; all lanes):**
 local work is step 1 plus at most one smoke row. Name the rows in a `Rows:` body
-line, push to `ci/<lane>-<topic>`, and start the next change at once on a new
-branch; do not wait on the run. `Segments` runs the `Rows:` rows plus the smoke set
-on the branch; green auto-lands on main (rebased; a conflict fails the land and
-the author rebases). A red run is that author's next task. Main runs the whole
-corpus as a backstop; its failures get a regression row as above. Agents without
-the ROM (cloud) use hosted mode only. Mechanics: `Rows:` ids are comma/space
+line and push only the tip of a stack to one live `ci/<lane>-<topic>` branch.
+`Segments` runs the union of `Rows:` over `origin/main..HEAD` plus the smoke set;
+green auto-lands on main (rebased; a conflict fails the land and the author rebases).
+A red run is that author's next task. Main's full corpus runs every 3h, on bank-file
+deletion and at waypoints (dispatch `Segments` on main with empty `segments`), with
+at most six shards at once. Wait until no other full run is queued before starting
+a bank-retirement full run. Routine lands start no full run. Failures get a regression
+row as above. Free runners only; no new agents until branch runs start within 10 min.
+Agents without the ROM (cloud) use hosted mode only. Mechanics: `Rows:` ids are comma/space
 separated, a trailing comma continues the list, text after a colon is ignored and an
 unknown id fails the plan. The branch must touch `sm/`, `tools/`, `segments.toml`
 or the workflow, or no run starts. Workflow edits never auto-land (GITHUB_TOKEN
