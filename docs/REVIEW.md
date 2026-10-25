@@ -84,8 +84,9 @@ can only lose route fidelity, never fake a pass.
   Maridia, Tourian, credits) at 100%/any% seeds, several per commit, each named. Then
   move existing authored rows onto seeds and delete their recipes from
   `tools/movie_inputs.py` (credit: support code falls).
-- Until A1.2 says go, at most one hand route per hour, starting with the frozen
-  Crocomire route ($1994 scratch write at 167,281, regression row). A0 stays parked at
+- Crocomire's hand route is done (75fa0b1, `boss-crocomire` passes). **No more hand
+  routes until A1.1 lands:** the next lane-A commit is the A1.1 Lua dump (due 14:52;
+  first deliverable may be any% only, room/index list in the body). A0 stays parked at
   10,555 with its finding in PLAN item 1; A1 does not need it.
 
 **Lane B — bank retirement (up to three agents, one bank each).** Unchanged method:
@@ -93,14 +94,16 @@ for each function, delete it if unreachable or duplicated, otherwise move it ont
 Session state with native types (enums/fn values, named views, range tests), no new
 Host/effects/adapter layer; a bank is done when its file is deleted, with the full
 corpus and scoped mutants run once before deletion. Report the replacement ratio per
-commit; aim ≤70%. Each commit also deletes what the move makes dead (verify/probe
+commit; aim ≤70% (bd76e2a ran 154%: production must fall with each move; a
+commit that grows production needs a one-line reason no smaller form exists). Each commit also deletes what the move makes dead (verify/probe
 hooks: 607 lines/94 files, duplicated owned paths). Queues:
 - **B1:** `sm_90` (finish) → `sm_81` → `sm_80` → `sm_82`.
 - **B2:** `sm_88` → `sm_8b`.
 - **B3 (new):** small banks `sm_89` (182) → `sm_a0` (458) → `sm_8f` (421) → `sm_b2`
   (880), then enemy families already met in a passing row (name the row and the enemy;
   e.g. Ceres/Crateria/Brinstar/Norfair common enemies in `sm_a2`, `sm_a3`, `sm_a8`,
-  `sm_b3`). Boss banks wait for their A1.3 row: `sm_a4` Crocomire, `sm_a5` Draygon,
+  `sm_b3`). `sm_a4` Crocomire (1,630) is unlocked by `boss-crocomire` and follows
+  `sm_89` in B3. Other boss banks wait for their A1.3 row: `sm_a5` Draygon,
   `sm_a6` Ridley, `sm_a7` Kraid/Phantoon, `sm_aa` Torizos, `sm_a9` Mother Brain,
   `sm_9b` Grapple.
 If only two lane-B agents run, B3 waits; never two agents on one bank.
@@ -131,6 +134,14 @@ Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
+- **2026-10-25 13:52 CET (bd76e2a), no stall:** 4 agent commits since 603425e: A 3
+  (5354e6c, 75fa0b1 code; a822933 docs-only resource policy), B1 `sm_90` 1 (bd76e2a,
+  ratio 154%), **B2/B3 0** (sm_89 unstarted), all labelled with `Score:`. Score `checks
+  27/44 · legacy 51744 · production 115957 · unsafe 4648 · verification 38936` (last 26 ·
+  51792 · 115931 · 4650 · 38936); warnings 367; verify/probe/observer 607/92. **Boss row
+  flipped: `boss-crocomire`** (+2 regression rows). 18:00: checks on pace; legacy,
+  production, banks and A1.2 **behind** (A1.1 not started; production rose). Changed:
+  hand routes closed until A1.1; `sm_a4` unlocked in B3; production must fall per move.
 - **2026-10-25 12:52 CET (603425e), stall (first, 28 min after reset):** 0 agent
   commits since ad9bef2 (12:22); no branches or held work visible. Score unchanged
   `checks 26/44 · legacy 51792 · production 115931 · unsafe 4650 · verification
