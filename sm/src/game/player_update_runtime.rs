@@ -147,7 +147,7 @@ pub(crate) fn advance_frame(game: &mut Game) {
             word!(game.time_is_frozen_flag = 0);
         }
         Fanfare => {
-            crate::game::sm_90::Samus_SetRadius(game);
+            crate::game::session_runtime::set_player_radius(game);
             {
                 let h = &mut Runtime::new(game);
                 player_update::minimap::update(h);

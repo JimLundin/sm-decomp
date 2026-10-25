@@ -1,4 +1,4 @@
-//! Door-entry scroll definitions and their shared executor.
+//! Room scroll definitions, camera following and their shared executors.
 //! Dispatch identities retain the full address; cell writes retain their order.
 use crate::game_state::Game;
 
@@ -93,4 +93,151 @@ pub(super) fn apply(address: u32, game: &mut Game) -> bool {
         game.g_ram[0xcd20 + usize::from(cell)] = color as u8;
     }
     true
+}
+
+// Camera effects keep their legacy publication order until layer state is owned.
+use crate::game::{
+    player_collision::operations::Axis,
+    player_movement::speed::record_camera_distance,
+    session_runtime::Runtime,
+    sm_80::{
+        HandleAutoscrolling_X, HandleAutoscrolling_Y, HandleScrollingWhenTriggeringScrollDown,
+        HandleScrollingWhenTriggeringScrollLeft, HandleScrollingWhenTriggeringScrollRight,
+        HandleScrollingWhenTriggeringScrollUp,
+    },
+};
+use crate::ram_map::{ram_ptr, word};
+use crate::rtl::{Unreachable, words};
+pub(crate) unsafe fn advance_camera(game: &mut Game) {
+    unsafe {
+        if word!(game.slow_grabble_scrolling_flag) != 0 {
+            if (word!(game.samus_x_pos) & 0x8000) == 0 {
+                let mut v0: u16 = (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos));
+                if word!(game.samus_x_pos) < word!(game.layer1_x_pos) || v0 < 0x60 {
+                    word!(game.layer1_x_pos -= 3);
+                } else if v0 >= 0xa0 {
+                    word!(game.layer1_x_pos += 3);
+                }
+                if (word!(game.samus_y_pos) & 0x8000) == 0 {
+                    let v1: u16 = (word!(game.samus_y_pos)).wrapping_sub(word!(game.layer1_y_pos));
+                    if word!(game.samus_y_pos) < word!(game.layer1_y_pos) || v1 < 0x70 {
+                        word!(game.layer1_y_pos -= 3);
+                    } else if v1 >= 0x90 {
+                        word!(game.layer1_y_pos += 3);
+                    }
+                }
+            }
+            HandleAutoscrolling_X(game);
+            HandleAutoscrolling_Y(game);
+        } else {
+            record_camera_distance(Runtime::new(game).session_mut(), Axis::X);
+            follow_x(game);
+            record_camera_distance(Runtime::new(game).session_mut(), Axis::Y);
+            follow_y(game);
+        }
+        match word!(game.scrolling_finished_hook) {
+            0 => {}
+            0x9589 => {
+                if word!(game.layer1_y_pos) <= 0x1d0 {
+                    word!(game.layer1_y_pos = 464);
+                }
+            }
+            _ => {
+                Unreachable(game);
+            }
+        }
+        word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
+        word!(game.samus_prev_x_subpos = word!(game.samus_x_subpos));
+        word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
+        word!(game.samus_prev_y_subpos = word!(game.samus_y_subpos));
+    }
+}
+macro_rules! chase_ideal_layer_position {
+    (
+        $game:ident, $ideal_position:ident, $position:ident, $subposition:ident,
+        $movement:ident, $movement_fraction:ident, $scroll_negative:path,
+        $scroll_positive:path $(,)?
+    ) => {
+        if word!($game.$ideal_position) != word!($game.$position) {
+            if ((word!($game.$ideal_position)) as i16).wrapping_sub((word!($game.$position)) as i16)
+                < 0
+            {
+                words!(
+                    $game.$position,
+                    $subposition += -(words!(i32, $game.$movement, $movement_fraction)) as u32
+                );
+                $scroll_negative($game);
+            } else {
+                words!(
+                    $game.$position,
+                    $subposition += words!($game.$movement, $movement_fraction)
+                );
+                $scroll_positive($game);
+            }
+        }
+    };
+}
+
+unsafe fn follow_x(game: &mut Game) {
+    unsafe {
+        static kSamus_HandleScroll_X_FaceLeft: [u16; 4] = [0xa0, 0x50, 0x20, 0xe0];
+        static kSamus_HandleScroll_X_FaceRight: [u16; 4] = [0x60, 0x40, 0x20, 0xe0];
+        if word!(game.samus_prev_x_pos) == word!(game.samus_x_pos) {
+            HandleAutoscrolling_X(game);
+            return;
+        }
+        let distances = if (word!(game.knockback_dir) != 0
+            || *ram_ptr!(game; 0xa1f) == 16
+            || word!(game.samus_x_accel_mode) == 1) as i32
+            ^ (*ram_ptr!(game; 0xa1e) != 4) as i32
+            != 0
+        {
+            &kSamus_HandleScroll_X_FaceRight
+        } else {
+            &kSamus_HandleScroll_X_FaceLeft
+        };
+        word!(
+            game.ideal_layer1_xpos = word!(game.samus_x_pos)
+                .wrapping_sub(distances[(word!(game.camera_distance_index) >> 1) as usize])
+        );
+        chase_ideal_layer_position!(
+            game,
+            ideal_layer1_xpos,
+            layer1_x_pos,
+            layer1_x_subpos,
+            absolute_moved_last_frame_x,
+            absolute_moved_last_frame_x_fract,
+            HandleScrollingWhenTriggeringScrollLeft,
+            HandleScrollingWhenTriggeringScrollRight
+        );
+    }
+}
+unsafe fn follow_y(game: &mut Game) {
+    unsafe {
+        if word!(game.samus_prev_y_pos) == word!(game.samus_y_pos) {
+            HandleAutoscrolling_Y(game);
+        } else {
+            if word!(game.samus_y_dir) == 1 {
+                word!(
+                    game.ideal_layer1_ypos =
+                        (word!(game.samus_y_pos)).wrapping_sub(word!(game.down_scroller))
+                );
+            } else {
+                word!(
+                    game.ideal_layer1_ypos =
+                        (word!(game.samus_y_pos)).wrapping_sub(word!(game.up_scroller))
+                );
+            }
+            chase_ideal_layer_position!(
+                game,
+                ideal_layer1_ypos,
+                layer1_y_pos,
+                layer1_y_subpos,
+                absolute_moved_last_frame_y,
+                absolute_moved_last_frame_y_fract,
+                HandleScrollingWhenTriggeringScrollUp,
+                HandleScrollingWhenTriggeringScrollDown
+            );
+        };
+    }
 }

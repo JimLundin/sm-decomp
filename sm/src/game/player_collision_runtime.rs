@@ -107,3 +107,24 @@ impl Effects for Runtime<'_> {
         });
     }
 }
+
+use crate::game_state::Game;
+
+pub(crate) fn set_player_radius(game: &mut Game) {
+    let pose_offset = usize::from(game.samus_pose()) * 8;
+    let radius = u16::from(game.read_rom_byte(0x91b629, pose_offset + 6));
+    game.g_ram[0xb00..0xb02].copy_from_slice(&radius.to_le_bytes());
+    game.g_ram[0xafe..0xb00].copy_from_slice(&5u16.to_le_bytes());
+}
+pub(crate) fn player_bottom(game: &Game) -> u16 {
+    let y = game.samus_y_pos();
+    // SamusPoseParams has eight bytes, with y_radius at byte 6.
+    let pose_offset = usize::from(game.samus_pose()) * 8;
+    let radius = game.read_rom_byte(0x91b629, pose_offset + 6);
+    y.wrapping_add(u16::from(radius)).wrapping_sub(1)
+}
+pub(crate) fn settle_grapple(game: &mut Game) {
+    crate::game::player_collision::operations::settle_after_grapple(
+        &mut crate::game::session_runtime::Runtime::new(game),
+    );
+}

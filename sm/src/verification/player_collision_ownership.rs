@@ -4,7 +4,7 @@
 use crate::{
     game::{
         player_projectiles::access::Store, player_transitions as pt, session_access::SessionAccess,
-        session_runtime::Runtime, sm_80, sm_90, sm_a9,
+        session_runtime::Runtime, sm_80, sm_a9,
     },
     game_state::Game,
     rom::{RomImage, lorom_offset},
@@ -80,7 +80,7 @@ fn radius(g: &mut Game, out: &mut Vec<u8>) {
     put(&mut g.g_ram, 0xb00, 0x89ab);
     let mut expected = g.g_ram.to_vec();
     record(out, 0, 0, g);
-    sm_90::Samus_SetRadius(g);
+    crate::game::session_runtime::set_player_radius(g);
     put(&mut expected, 0xafe, 5);
     put(&mut expected, 0xb00, 19);
     assert_ram(g, &expected, "collision.owner.radius.first_live_content");
@@ -91,7 +91,7 @@ fn radius(g: &mut Game, out: &mut Vec<u8>) {
     );
     {
         let mut rt = Runtime::new(g);
-        rt.foreign(sm_90::Samus_SetRadius);
+        rt.foreign(crate::game::session_runtime::set_player_radius);
         assert_eq!(rt.word(0xb00), 31, "collision.owner.radius.foreign_reload");
         assert_eq!(rt.word(0xafe), 5, "collision.owner.radius.x_reread");
     }

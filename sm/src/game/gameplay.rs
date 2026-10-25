@@ -8,15 +8,16 @@ use crate::game::animated_tiles;
 use crate::game::enemy_projectiles::EprojRunAll;
 use crate::game::message_boxes;
 use crate::game::palette_effects;
+use crate::game::player_projectiles::prepare;
 use crate::game::prelude::*;
 use crate::game::room_mechanisms::run;
+use crate::game::room_scrolls::advance_camera;
 use crate::game::session_runtime::Runtime;
 use crate::game::sm_8f::RunRoomMainCode;
 use crate::game::sm_80::{
     CalculateLayer2PosAndScrollsWhenScrolling, DebugScrollPosSaveLoad, HandleHudTilemap,
 };
 use crate::game::sm_82::HandleSamusOutOfHealthAndGameTile;
-use crate::game::sm_90::{HandleControllerInputForGamePhysics, MainScrollingRoutine};
 use crate::game::sm_a0::{DecrementSamusTimers, HandleRoomShaking};
 
 #[derive(Clone, Copy, PartialEq)]
@@ -51,7 +52,7 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
         if resume == ResumePoint::Start {
             actors::scheduling::select(&mut Runtime::new(game));
             palette_effects::advance(game);
-            HandleControllerInputForGamePhysics(game);
+            prepare(game);
             if word!(game.debug_disable_sprite_interact) == 0 {
                 crate::game::projectile_contact::player_projectiles_hit_samus(game);
             }
@@ -85,7 +86,7 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
                 crate::game::enemy_projectiles::shoot_enemy_projectiles(game);
                 actors::contacts::apply_power_bomb_to_enemies(&mut Runtime::new(game));
             }
-            MainScrollingRoutine(game);
+            advance_camera(game);
             let debug_scrolling_enabled: i32 = 0;
             if debug_scrolling_enabled != 0 {
                 DebugScrollPosSaveLoad(game);

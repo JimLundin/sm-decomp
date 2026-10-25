@@ -294,9 +294,9 @@ impl Host for Runtime<'_> {
             return;
         }
         self.foreign(|g| unsafe {
-            use crate::game::{sm_9b, sm_90};
+            use crate::game::sm_9b;
             match step {
-                PlayerStep::Radius => sm_90::Samus_SetRadius(g),
+                PlayerStep::Radius => set_player_radius(g),
                 PlayerStep::Input => unreachable!("input handled by shared owner"),
                 PlayerStep::SuitIndex => unreachable!("suit index handled by shared owner"),
                 PlayerStep::Acceleration => unreachable!("acceleration handled by shared owner"),
@@ -701,6 +701,7 @@ impl Runtime<'_> {
 
 #[path = "player_collision_runtime.rs"]
 mod player_collision_runtime;
+pub(crate) use player_collision_runtime::{player_bottom, set_player_radius, settle_grapple};
 #[path = "player_movement_runtime.rs"]
 mod player_movement_runtime;
 pub(crate) use player_movement_runtime::{advance_special_movement, ceres_movement};

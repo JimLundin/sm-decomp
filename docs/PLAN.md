@@ -51,27 +51,19 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Captures now use an instruction boundary; the longer next-room continuation still drifts.
    Original any% timing alignment remains parked; no further hand-route exploration.
    Room seeds and movies stay local; only the logger and index/recipes are committed.
-2. **Current - lane B bank retirement.** `sm_94`, `sm_91` and `sm_89` are deleted.
-   Player input, demos, suits, equipment, commands, initialization, Mother Brain
-   reactions, X-ray and direct damage use owned state. Natural X-ray, Gravity,
-   boss and grapple movie coverage remains incomplete despite bounded checks.
-   X-ray controls/tables are consolidated; sm_88 has 1,147 lines left. sm_90 has 181.
-   B1 finishes sm_90; B2 continues sm_88. Room FX loading now uses Room/Visuals;
-   sm_89 is retired; its Ceres callback remains raw and uncovered. B3 starts Crocomire sm_a4.
-   Retire production observer hooks with named segments.
-   Crystal Flash consumption and Draygon grab/release are consolidated.
-   Crystal Flash setup now uses owned player state; admission and pose publication
-   retain their original failure order. Normal/frozen/death rendering now shares
-   sprite ownership and typed draw modes. Frame-beta dispatch now runs through
-   owned player update state. Input dispatch now shares that owner.
-   Post-draw health/input bookkeeping now shares the player owner.
-   Duplicate gamma classification is removed. Movement dispatch now shares the player runtime. Next: retire the final camera/collision bank entries.
-   Use named enum/function handlers as families move; raw identities stay at
-   compatibility boundaries. Full u16 unknown values and failure timing survive.
-   Report added production and deleted legacy together; growth needs a reason.
-   Get production below 110,000 before starting another subsystem. Reuse existing
-   interfaces, remove touched inline verification differences, and try scoped
-   cargo-mutants before text-patch mutations.
+2. **Current - lane B bank retirement.** `sm_94`, `sm_91`, `sm_89` and `sm_90` are deleted.
+   B1 starts sm_81 sprite/save callers; B2 continues sm_88 (1,147 lines); B3 starts
+   Crocomire sm_a4. Player input, rendering, movement and dispatch share existing
+   owners. Bank removal is not persistent whole-engine state ownership: camera
+   compatibility and the unchanged Ceres elevator callback still use raw RAM.
+   Room FX loading uses Room/Visuals. Weather and haze now share their update logic.
+   Retire production observer hooks with named segments; no new Host layers or fixtures.
+   Preserve full u16 identities, unknown values, failure timing and ROM provenance.
+   Natural Gravity, boss and grapple coverage remains incomplete. BG2 tile
+   consolidation waits for `scroll_tiles.row.bg2` coverage, absent in Ceres.
+   Report production and legacy deltas together; growth needs a reason. Reuse existing
+   interfaces and remove touched inline verification differences. The next size
+   target is below 110,000 production lines; try scoped cargo-mutants before text patches.
 3. **Then - finish owned gameplay.** Migrate remaining complete producer/consumer
    interactions, actual callers and legacy retirement. Close persistent ownership,
    content/topology/options boundaries and unsafe removal across the whole engine;
@@ -174,7 +166,10 @@ Start above 3GiB free and leave 2GiB after reserving ~1.6GiB per new compiler pl
 admitted jobs' remaining growth. Stop the newest below 2GiB or on resource errors.
 Refill useful ready work immediately; completed workers need explicit new tasks.
 Measure CPU, free memory, paging, disk and completed useful work/time during real
-jobs. Increase concurrency only when resources fit; compare the next useful batch
+jobs. Whole-TAS CSV imports reached 2.77GiB: reserve 3GiB separately until a
+   lower peak is measured; these are not light DLL replays. On pressure, shed the
+   newest memory-producing job, not every lightweight reader at once.
+Increase concurrency only when resources fit; compare the next useful batch
 with the measured two-build result before retaining a higher setting. Three is an
 observed trial, not a proven optimum. Disk monitoring must include accumulated
 artifact storage and batch runway, not just whether one more job fits.

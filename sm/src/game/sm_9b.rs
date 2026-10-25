@@ -19,8 +19,8 @@ use crate::game::grapple_swing::{
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::samus_animation::DrawSamusSuitExploding;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
+use crate::game::session_runtime::{player_bottom, settle_grapple};
 use crate::game::sm_80::{Multiply16x16, QueueSfx1_Max1, QueueSfx1_Max6, QueueSfx1_Max15};
-use crate::game::sm_90::{Samus_GetBottom_R18, Samus_PostGrappleCollisionDetect};
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]
@@ -545,7 +545,7 @@ pub unsafe fn GrappleBeamHandler(game: &mut Game) {
             && (word!(game.samus_suit_palette_index) & 4) == 0
             && word!(game.fx_type) != 0
             && {
-                r18 = Samus_GetBottom_R18(game);
+                r18 = player_bottom(game);
                 (word!(game.fx_y_pos) & 0x8000) == 0
             }
             && word!(game.fx_y_pos) as i32 - r18 as i32 & 0x8000 != 0
@@ -628,7 +628,7 @@ macro_rules! clear_grapple_state_after_release {
         );
         word!($game.grapple_beam_function = ((0x9bc4f0i32) as u16));
         word!($game.samus_draw_handler = ((0x90eb52i32) as u16));
-        Samus_PostGrappleCollisionDetect($game);
+        settle_grapple($game);
         if word!($game.samus_auto_cancel_hud_item_index) != 0 {
             word! { $game, 0; hud_item_index, samus_auto_cancel_hud_item_index }
         }
@@ -1172,7 +1172,7 @@ crate::game::callback_dispatch! {
         );
         word!(game.grapple_beam_function = (0x9bc4f0i32) as u16);
         word!(game.samus_draw_handler = (0x90eb52i32) as u16);
-        Samus_PostGrappleCollisionDetect(game);
+        settle_grapple(game);
         if word!(game.samus_auto_cancel_hud_item_index) != 0 {
             word! { game, 0; hud_item_index, samus_auto_cancel_hud_item_index }
         }
@@ -1200,7 +1200,7 @@ crate::game::callback_dispatch! {
         );
         word!(game.grapple_beam_function = (0x9bc4f0i32) as u16);
         word!(game.samus_draw_handler = (0x90eb52i32) as u16);
-        Samus_PostGrappleCollisionDetect(game);
+        settle_grapple(game);
         if word!(game.samus_auto_cancel_hud_item_index) != 0 {
             word! { game, 0; hud_item_index, samus_auto_cancel_hud_item_index }
         }

@@ -423,7 +423,6 @@ pub mod game {
     pub mod sm_88;
     pub mod sm_8b;
     pub mod sm_8f;
-    pub mod sm_90;
     pub(crate) mod sprite_drawing;
     pub(crate) mod sprite_effect_controllers;
     pub(crate) mod sprite_effect_host;
