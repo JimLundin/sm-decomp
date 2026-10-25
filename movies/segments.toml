@@ -165,7 +165,14 @@ after_expectations = 120
 
 [[segment]]
 id = "boss-phantoon"
-pending = "No qualified encounter-to-completion route with fresh boss state and precise encounter/death observations."
+seed = "any-boundary:165"
+seed_sha256 = "14710aef93ab5d7de5be17122739391b7922bb5a5a9480e9e37755f28800bf3e"
+inputs = "seed-phantoon.inputs"
+input_sha256 = "b09a32ef22e839b5bd0d7ee7770ff0f9963ed633d60d2d9e773c64126c369680"
+start_frame = 0
+frames = 2062
+expect = ["boss:phantoon", "room:CD13"]
+after_expectations = 120
 
 [[segment]]
 id = "boss-botwoon"
@@ -586,3 +593,15 @@ start_frame = 171090
 frames = 4
 expect = ["room:A98D", "state:8"]
 require_hit = ["eproj.spawn.initialized"]
+
+# Preserve the room setup accumulator in the projectile spawn parameter.
+# Seeded rows cannot use checkpoints; replay through frame 1985 and three after it.
+[[segment]]
+id = "phantoon-exit-spawn-parameter"
+seed = "any-boundary:165"
+seed_sha256 = "14710aef93ab5d7de5be17122739391b7922bb5a5a9480e9e37755f28800bf3e"
+inputs = "seed-phantoon.inputs"
+input_sha256 = "b09a32ef22e839b5bd0d7ee7770ff0f9963ed633d60d2d9e773c64126c369680"
+start_frame = 0
+frames = 1989
+expect = ["boss:phantoon", "state:11"]

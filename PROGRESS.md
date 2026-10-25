@@ -1,6 +1,6 @@
 # Engine migration
 
-![Coverage at 34 of 44; legacy below 50000 lines.](docs/codebase-map/work-summary.svg)
+![Phantoon fixed and qualified; 35 of44 required checks pass.](docs/codebase-map/work-summary.svg)
 
 | Measure | Count |
 | --- | ---: |
@@ -10,10 +10,10 @@
 | Total Rust | 154633 |
 | Lines containing `unsafe` | 4557 |
 | Warnings (no-default library) | 357 |
-| Required checkpoint checks passing | 34/44 |
+| Required checkpoint checks passing | 35/44 |
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-**Save/load migrated:** 127 legacy lines retired, 10 production lines saved. Eight rows pass; portable Session saves remain future work.
+**Phantoon qualified:** room-setup spawn value fixed; regression, boss tail and smoke4 pass (6257 frames).
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)

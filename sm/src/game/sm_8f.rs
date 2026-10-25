@@ -188,7 +188,7 @@ crate::game::callback_dispatch! {
     [9408969] RoomSetup_ScrollingSkyLand => initialize_land(game);
     [9408974] RoomSetup_ScrollingSkyOcean => initialize_ocean(game);
     @forward [pub unsafe fn (game: &mut Game)];
-    [9423048] RoomCode_8FC8C8 => SpawnEprojWithRoomGfx(addr_kEproj_PrePhantomRoom as u16, 0, game);
+    [9423048] RoomCode_8FC8C8 => SpawnEprojWithRoomGfx(addr_kEproj_PrePhantomRoom as u16, 0xc8c8, game);
     [9423059]
     RoomCode_SetupShaktoolRoomPlm => spawn_hardcoded(SpawnHardcodedPlmArgs::new(0, 0, 0xb8eb as VoidP), game);
     @external {

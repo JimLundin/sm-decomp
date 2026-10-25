@@ -33,24 +33,22 @@ Direct user instructions win; HISTORY holds no current rules.
 [view](https://jimlundin.github.io/sm-decomp/) from HEAD; keep only the five-box
 SVG in PROGRESS current. No other map work unless the user asks.
 
-**Validation (user direction 2026-10-25 16:00, replaces "do not rely on CI").**
-Hosted CI is the verification pipeline: `segments.yml` runs every runnable
-`segments.toml` row on Windows runners on each push to main; `ci.yml` builds every
-target. Local runs stay small (Fast loop). A red `ci.yml` or Segments run on main is
-fixed by its author's next commit; nobody else waits on it. Lanes M and C are in
-REVIEW's Milestone plan.
+**Local validation for this session:** the direct user instruction remains to
+not use or observe CI. The fetched review proposes hosted validation; that does
+not override the instruction in this conversation. Keep its implementation lanes
+and priorities, but use the local Fast loop and local bank-retirement checks below.
 
 ## Work order
 
 1. **Current - lane A room-seeded TAS coverage.** Crocomire defeat now passes;
-   34/44 required checks pass, 10 remain pending. Both four-frame melt/wall
+   35/44 required checks pass, 9 remain pending. Both four-frame melt/wall
    regressions pass; the defeat row runs 4,258 frames through 120 frames after
    the fresh boss flag. The full 167,285-frame setup was checked from boot.
    A1.1 any% capture is complete: 197 room entries, six regions each; all 1,182
    files checked, full 129,712-frame capture matches the original log. The final-source
    A1.2 seed import passes 600 frames and reaches the captured next room; both
    complete captures have register supplements. Screw Attack and Spring Ball now pass seeded award/message/tail rows.
-   Ridley now passes fresh defeat plus its full tail. Next: remaining bosses and items; Space Jump and Phantoon have pre-existing seeded mismatches.
+   Ridley now passes fresh defeat plus its full tail. Next: remaining bosses and items; Phantoon is fixed and qualified; Space Jump remains pending.
    The seeded X-ray row passes its award, message and 120-frame tail (667 frames).
    Captures now use an instruction boundary; the longer next-room continuation still drifts.
    Original any% timing alignment remains parked; no further hand-route exploration.
@@ -127,25 +125,27 @@ at 28,314 (814 frames); retaining it would truncate the extended observation.
 - Make small commits with one coherent idea. If stuck on an item for over one
   hour of work, record the findings under it and stop.
 
-## Fast loop (reviewer, 2026-10-25 16:00; ASCII only, edit as UTF-8)
+## Fast loop (reviewer, 2026-10-25; replaces the 2026-10-21 validation strategy)
 
-Every routine commit runs exactly this locally, then commits and pushes:
+Every routine commit runs exactly this, then commits:
 1. `cargo fmt --check`; `cargo check --no-default-features --lib` (no new warnings);
    one DLL build (`python tools/verify_dll.py --build-only`).
-2. `verify_dll.py --corpus movies/segments.toml --segment <id>` for the rows that
-   exercise the change (named in the body), plus `door-loading-lag-nmi` and
-   `tas-ceres-four-doors` until CI can run lag-log rows (C2). Zero failures.
+2. `verify_dll.py --corpus movies/segments.toml` with `--segment` for every row that
+   exercises the change (named in the body) plus the smoke set `door-loading-lag-nmi`,
+   `tas-ceres-four-doors`, `area-crateria`, `item-morph-ball`. Zero failures.
    No row reaches the change: lane A adds one; lane B moves the code unchanged and
    writes "uncovered: <function>" in the body.
-3. Push. Segments on main runs every runnable row (about 30 min) and `ci.yml` builds
-   every target; check the result of your previous push before your next one. A
-   failure gets a fix plus a regression row in your next commit. Never weaken a
-   comparison or a row's expectations.
-4. Nothing else per commit: no mutation runs, independent controls, release rebuilds
-   or full local replays. Once per bank, before deleting its file: dispatch Segments
-   for all rows (it is the full corpus) plus scoped `cargo-mutants` (<= 30 min).
-   Lane M codemods go to a `ci/<topic>` branch first and land when Segments is green.
-5. Body <= 8 lines: what changed, rows run and result, deltas and ratio, `Score:`.
+3. Nothing else per commit: no mutation runs, independent controls, frontend metadata,
+   optimized/release rebuilds, clean-source reruns or full replays. Once per bank,
+   before its file is deleted: the full corpus plus scoped `cargo-mutants` (<=30 min).
+   Partition independent movie groups to use spare CPU; keep shared prefixes and
+   current source/codec checks. The full corpus also runs at each review waypoint.
+   A failure from a full run gets a
+   regression row with its fix. Never weaken a comparison or a row's expectations.
+   On Windows, generate scoped AST mutants with cargo-mutants and execute them
+   through the existing DLL rows; its Cargo/nextest runner cannot use this host.
+4. Body <=8 lines: what changed, rows run and result, legacy/production delta and
+   ratio, `Score:`. Re-run a flaky step once; a second failure is real.
 
 Commands and checkpoint rules: [movies/README.md](../movies/README.md).
 When touched, inspect `cpu_infra.rs` masks, `PatchBugs`, hardware/audio limits and

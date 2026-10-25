@@ -439,3 +439,9 @@ its capture directory and indexed WRAM filename, and its input frame count below
 | item-screw-attack | 100-boundary:131 | 684 |
 | item-spring-ball | 100-boundary:239 | 1400 |
 | boss-ridley | 100-boundary:118 | 2100 |
+| boss-phantoon / exit regression | any-boundary:165 | 2062 |
+
+The Phantoon exit regression replays through frame 1985 and three following
+frames. Seeded observations cannot use verifier checkpoints, so its prefix begins
+at the room seed. Room setup preserves the incoming accumulator `0xC8C8` when
+spawning its projectile, including the shared spawn parameter at `$1993`.
