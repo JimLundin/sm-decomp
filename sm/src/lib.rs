@@ -441,6 +441,7 @@ pub mod game {
     pub(crate) mod visual_runtime;
     pub(crate) mod visual_state;
 
+    pub(crate) mod ceres_doors;
     pub mod combat_rules;
     pub mod contact_rules;
     pub mod drop_rules;

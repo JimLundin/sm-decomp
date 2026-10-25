@@ -1,9 +1,9 @@
 use crate::game::actors;
 use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::api as actor_api;
+use crate::game::ceres_doors;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
-use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 use crate::game::player_update::minimap;
@@ -36,6 +36,8 @@ use crate::game::sm_a9::{
     WriteColorsToTargetPalette,
 };
 use crate::game::sprite_effect_runtime::create_sprite;
+
+const VANISH: u16 = ceres_doors::TANGIBLE | ceres_doors::INVISIBLE;
 
 pub type Enemy_Ridley = crate::game::enemy_layouts::EnemyLayout104;
 
@@ -3932,13 +3934,6 @@ crate::game::callback_dispatch! {
         10940404 => [()];
     }
 }
-pub fn CeresDoor_Func_6b(game: &mut Game) {
-    {
-        if word!(game.ceres_status) != 0 {
-            word!(game.ceres_status = 0x8000);
-        }
-    }
-}
 pub unsafe fn CeresDoor_Func_1(k: u16, game: &mut Game) {
     unsafe {
         if (*Get_CeresDoor(k as i32, game)).parameter_1 == 2 {
@@ -3959,12 +3954,12 @@ crate::game::callback_dispatch! {
     call (game); default { Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
     [10942373] CeresDoor_Func_4 [] {
-        CeresSteam_Instr_5(word!(game.cur_enemy_index), EnemyScript::Stop, game);
+        ceres_doors::change_properties(word!(game.cur_enemy_index), ceres_doors::INVISIBLE, 0, EnemyScript::Stop, game);
         if word!(game.ceres_status) & 1 != 0 {
             (*Get_CeresDoor(word!(game.cur_enemy_index) as i32, game))
                 .base
                 .palette_index = 3584;
-            CeresDoor_Instr_2(word!(game.cur_enemy_index), EnemyScript::Stop, game);
+            ceres_doors::change_properties(word!(game.cur_enemy_index), 0, ceres_doors::INVISIBLE, EnemyScript::Stop, game);
         }
     };
     [10942544] CeresDoor_Func_7 [] {
@@ -3980,21 +3975,10 @@ crate::game::callback_dispatch! {
         }
     };
     @forward [pub fn (game: &mut Game)];
-    [10942315] CeresDoor_Func_2 => CeresDoor_F773(0x14, game);
-    [10942320] CeresDoor_Func_3 => CeresDoor_F773(0x1d, game);
+    [10942315] CeresDoor_Func_2 => ceres_doors::escape_rumble(0x14, game);
+    [10942320] CeresDoor_Func_3 => ceres_doors::escape_rumble(0x1d, game);
     @external {
         10942397 => [CeresDoor_Func_5(k, game)]; 10942428 => [CeresDoor_Func_6(k, game)];
-    }
-}
-pub fn CeresDoor_F773(j: u16, game: &mut Game) {
-    {
-        if word!(game.ceres_status) >= 2 && word!(game.earthquake_timer) == 0 {
-            if (word!(game.random_number) & 0xfff) < 0x80 {
-                word! {game; earthquake_timer = 4; earthquake_type = (j).wrapping_add(6); }
-            } else {
-                word! {game; earthquake_timer = 2; earthquake_type = j; }
-            }
-        }
     }
 }
 pub unsafe fn CeresDoor_Func_5(k: u16, game: &mut Game) {
@@ -4036,7 +4020,7 @@ pub unsafe fn CeresDoor_Func_6(k: u16, game: &mut Game) {
         if v3 {
             (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
             (*E).var_A = (0xa6f850i32) as u16;
-            CeresDoor_Func_6b(game);
+            ceres_doors::finish_door_explosion(game);
         } else {
             let E0 = Get_CeresDoor(0, game);
             (*E0).var_E = (*E0).var_E.wrapping_sub(1);
@@ -4494,12 +4478,6 @@ crate::game::callback_dispatch! {
             game,
         );
     };
-    [10940479] CeresSteam_Touch [] {
-        (*Get_CeresSteam(word!(game.cur_enemy_index) as i32, game))
-            .base
-            .health = 0x7fff;
-        actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
-    };
     [10942149] CeresDoor_Init [] {
         let E = Get_CeresDoor(word!(game.cur_enemy_index) as i32, game);
         (*E).base.spritemap_pointer = addr_kCeresDoor_Sprmap_FAC7 as u16;
@@ -4789,71 +4767,29 @@ crate::game::callback_dispatch! {
     [10938742]
     Ridley_Instr_16 [jp] {  (*E).var_A = (0xa6b2f3i32) as u16; (*E).var_C = -352i32 as u16; };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10940701] CeresSteam_Instr_1 [jp] {
-        let E = Get_CeresSteam(k as i32, game);
-        (*E).base.properties = ((*E).base.properties as i32
-            | (kEnemyProps_Tangible as i32 | kEnemyProps_Invisible as i32))
-            as u16;
-    };
     [10940711]
-    CeresSteam_Instr_2 [CeresSteam_Instr_3(k, { let record = crate::rtl::rom_record(0xa6, jp.word(2), game); EnemyScript::at(record.image, record.base) }, game)] {
+    CeresSteam_Instr_2 [ceres_doors::change_properties(k, 0, VANISH, { let record = crate::rtl::rom_record(0xa6, jp.word(2), game); EnemyScript::at(record.image, record.base) }, game)] {
         let E = Get_CeresSteam(k as i32, game);
         crate::update_place! { previous fresh0 = (*E).var_D => (*E).var_D.wrapping_sub(1); }
         if fresh0 != 1 {
             return EnemyScript::jump(jp.word(0));
         }
     };
-    [10940725] CeresSteam_Instr_3 [jp] {
-        let E = Get_CeresSteam(k as i32, game);
-        (*E).base.properties = ((*E).base.properties) & (0xfaffu16);
-    };
-    [10942014] CeresDoor_Instr_6 [] {
-        let E = Get_CeresDoor(k as i32, game);
-        if abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos))) >= 0x30
-            || abs16(((*E).base.y_pos).wrapping_sub(word!(game.samus_y_pos))) >= 0x30
-        {
-            EnemyScript::jump(jp.word(0))
-        } else {
-            jp.offset(1)
-        }
-    };
-    [10942058] CeresDoor_Instr_4 [] {
-        if gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game) & 1 != 0 {
-            jp.offset(1)
-        } else {
-            EnemyScript::jump(jp.word(0))
-        }
-    };
-    [10942072] CeresDoor_Instr_8 [] {
-        if word!(game.ceres_status) != 0 {
-            jp.offset(1)
-        } else {
-            EnemyScript::jump(jp.word(0))
-        }
-    };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10942091] CeresSteam_Instr_4 [jp] {
-        let E = Get_CeresSteam(k as i32, game);
-        (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
-    };
-    [10942101] CeresDoor_Instr_1 [jp] {
-        let E = Get_CeresDoor(k as i32, game);
-        (*E).base.properties = ((*E).base.properties as i32 & !(kEnemyProps_Tangible as i32)) as u16;
-    };
-    [10942111] CeresDoor_Instr_3 [jp] { (*Get_CeresDoor(k as i32, game)).var_B = 1; };
-    [10942118] CeresSteam_Instr_5 [jp] {
-        let E = Get_CeresSteam(k as i32, game);
-        (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
-    };
-    [10942128] CeresDoor_Instr_5 [CeresDoor_Instr_2(k, jp, game)] {
-        (*Get_CeresDoor(k as i32, game)).var_B = 0;
-    };
-    [10942131] CeresDoor_Instr_2 [jp] {
-        let E = Get_CeresDoor(k as i32, game);
-        (*E).base.properties = ((*E).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
-    };
-    [10942141] CeresDoor_Instr_7 [jp] { QueueSfx3_Max6(0x2c, game); };
     @forward [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10938628] Ridley_Instr_12 => Ridley_E90C(k, jp, 0, game);
     [10938633] Ridley_Instr_13 => Ridley_E90C(k, jp, 0xe, game);
+    @external {
+        10940701 => [ceres_doors::change_properties(k, VANISH, 0, j, game)];
+        10940725 => [ceres_doors::change_properties(k, 0, VANISH, j, game)];
+        10942014 => ceres_doors::branch_unless_samus_near;
+        10942058 => [ceres_doors::branch_unless_boss_defeated(j, game)];
+        10942072 => [ceres_doors::branch_unless_escape(j, game)];
+        10942091 => [ceres_doors::change_properties(k, ceres_doors::TANGIBLE, 0, j, game)];
+        10942101 => [ceres_doors::change_properties(k, 0, ceres_doors::TANGIBLE, j, game)];
+        10942111 => [ceres_doors::mark_open(k, true, j, game)];
+        10942118 => [ceres_doors::change_properties(k, ceres_doors::INVISIBLE, 0, j, game)];
+        10942128 => [ceres_doors::mark_open(k, false, j, game)];
+        10942131 => [ceres_doors::change_properties(k, 0, ceres_doors::INVISIBLE, j, game)];
+        10942141 => [ceres_doors::play_open_sound(j, game)];
+    }
 }
