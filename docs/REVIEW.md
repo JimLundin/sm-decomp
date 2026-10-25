@@ -84,9 +84,11 @@ can only lose route fidelity, never fake a pass.
   Maridia, Tourian, credits) at 100%/any% seeds, several per commit, each named. Then
   move existing authored rows onto seeds and delete their recipes from
   `tools/movie_inputs.py` (credit: support code falls).
-- Crocomire's hand route is done (75fa0b1, `boss-crocomire` passes). **No more hand
-  routes until A1.1 lands:** the next lane-A commit is the A1.1 Lua dump (due 14:52;
-  first deliverable may be any% only, room/index list in the body). A0 stays parked at
+- **A1.1 done for any%** (9290c2d: 197 room seeds, hashes only in
+  `movies/room-seeds-any.csv`); the 100% capture rides along with A1.2. Crocomire's
+  hand route is done (75fa0b1). No more hand routes: lane A's next code is A1.2
+  `--seed` (first deliverable by 15:52: load one seed and report the first frame
+  that diverges, even if no-go). A0 stays parked at
   10,555 with its finding in PLAN item 1; A1 does not need it.
 
 **Lane B — bank retirement (up to three agents, one bank each).** Unchanged method:
@@ -141,7 +143,9 @@ Map brief is done (c1fe795); no further map work unless the user asks.
   51792 · 115931 · 4650 · 38936); warnings 367; verify/probe/observer 607/92. **Boss row
   flipped: `boss-crocomire`** (+2 regression rows). 18:00: checks on pace; legacy,
   production, banks and A1.2 **behind** (A1.1 not started; production rose). Changed:
-  hand routes closed until A1.1; `sm_a4` unlocked in B3; production must fall per move.
+  hand routes closed; `sm_a4` unlocked in B3; production must fall per move.
+  Post-push: 9290c2d landed A1.1 (any%), marked done; map tiles change (5569c08,
+  Jim's request) renders cleanly at 1440 and 390 px.
 - **2026-10-25 12:52 CET (603425e), stall (first, 28 min after reset):** 0 agent
   commits since ad9bef2 (12:22); no branches or held work visible. Score unchanged
   `checks 26/44 · legacy 51792 · production 115931 · unsafe 4650 · verification
