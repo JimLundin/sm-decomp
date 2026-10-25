@@ -128,8 +128,9 @@ encrypted seeds in CI, cloud agents with auto-land, a Linux verifier spike. Orde
   stay for local capture callers. `ci.yml` green.
 - **C1 (done):** `segments.yml` on main and `ci/**`; 3 green runs on main, ~45 min each.
 - **C2 (lane A, due 10-26 06:00):** seeds and lag logs in CI. Pack `target/seeds/` plus
-  lag logs, encrypt (`openssl enc -aes-256-cbc -pbkdf2` or `age`) with a new
-  `SEED_KEY` secret, upload as a release asset on a `ci-data` tag (ciphertext only),
+  lag logs, encrypt (`openssl enc -aes-256-cbc -pbkdf2`) with a key derived from the
+  ROM itself (`sha256("sm-decomp-seeds-v1" + ROM bytes)`): no new secret, since CI
+  already decrypts the ROM and only ROM holders can read the seeds. Upload as a release asset on a `ci-data` tag (ciphertext only),
   decrypt on the runner. `segments.yml` then runs seed rows, one shard per seed: no
   shard replays from boot. Target: the whole corpus under 15 min.
 - **C3 (first cloud agent, due 10-26 06:00):** (a) on `ci/**`, `segments.yml` runs only
