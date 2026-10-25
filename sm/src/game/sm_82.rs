@@ -33,13 +33,11 @@ use crate::game::sm_9b::{
     GameState_24_SamusNoHealth_Explosion_Helper, HandleSamusDeathSequence, StartSamusDeathAnimation,
 };
 use crate::game::sm_80::{
-    ClearOamExt, ClearTimerRam, ClearUnusedOam, DisableIrqInterrupts, DrawTimer,
-    EnableIrqInterruptsNow, EnableNMI, GraphicsAsset, HandleFadeIn, HandleFadeOut,
-    HandleHudTilemap, InitializeHud, LoadFromLoadStation, LoadMirrorOfExploredMapTiles, NextRandom,
-    QueueClearingOfFxTilemap, QueueSfx1_Max6, QueueSfx1_Max15, QueueSfx2_Max6, QueueSfx2_Max15,
-    QueueSfx3_Max3, QueueSfx3_Max6, QueueSfx3_Max15, ReadJoypadInputs, ReleaseButtonsFilter,
-    ResumeGameplay, SetupDmaTransfer, StartGameplay_Async, Vector_NMI, Vector_RESET_Async,
-    WaitForNMI_Async, memset7E,
+    ClearOamExt, ClearUnusedOam, EnableNMI, GraphicsAsset, HandleFadeIn, HandleFadeOut,
+    LoadFromLoadStation, LoadMirrorOfExploredMapTiles, NextRandom, QueueClearingOfFxTilemap,
+    QueueSfx1_Max6, QueueSfx1_Max15, QueueSfx2_Max6, QueueSfx2_Max15, QueueSfx3_Max3,
+    QueueSfx3_Max6, QueueSfx3_Max15, ResumeGameplay, SetupDmaTransfer, StartGameplay_Async,
+    Vector_NMI, Vector_RESET_Async, WaitForNMI_Async, memset7E,
 };
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
@@ -166,7 +164,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                         == kLoadingGameState_1F_StartingAtCeres as i32
                     {
                         word! {game; area_index = 6; load_station_index = 0; }
-                        ClearTimerRam(game);
+                        crate::game::escape_timer::clear(game);
                     } else if word!(game.loading_game_state) as i32
                         == kLoadingGameState_22_EscapingCeres as i32
                     {
@@ -187,7 +185,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                 *resume_state = 1;
                 return yielded;
             }
-            InitializeHud(game);
+            crate::game::hud::initialize(game);
             word_transfers!(game, ascending, 16; native(0xc380) <- native(0xc180));
             word! { game, 1; screen_fade_delay, screen_fade_counter }
             EnableNMI(game);
@@ -339,7 +337,7 @@ pub unsafe fn LoadStdBG3andSpriteTilesClearTilemaps(game: &mut Game) {
 pub unsafe fn GameState_32_MadeItToCeresElevator(game: &mut Game) -> CoroutineRet {
     unsafe {
         if word!(game.timer_status) != 0 {
-            DrawTimer(game);
+            crate::game::escape_timer::draw(game);
         }
         let mut _coret_: u8 = AdvanceGameplay(game);
         if _coret_ != 0 {
@@ -356,7 +354,7 @@ pub unsafe fn GameState_32_MadeItToCeresElevator(game: &mut Game) -> CoroutineRe
 pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
     unsafe {
         if word!(game.timer_status) != 0 {
-            DrawTimer(game);
+            crate::game::escape_timer::draw(game);
         }
         let mut _coret_: u8 = AdvanceGameplay(game);
         if _coret_ != 0 {
@@ -366,7 +364,7 @@ pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
         if *ram_ptr!(game; 0x51) == 0x80 {
             EnableNMI(game);
             clear_hdma(game);
-            DisableIrqInterrupts(game);
+            crate::game::scanline_irq::disable(game);
             word! { game, 0; fx_layer_blending_config_a, cur_irq_handler }
             *ram_ptr!(game; 0x6e) = 0;
             *ram_ptr!(game; 0x71) = 0;
@@ -409,7 +407,7 @@ pub unsafe fn GameState_36_WhitingOutFromTimeUp(game: &mut Game) -> CoroutineRet
         if *ram_ptr!(game; 0x51) == 0x80 {
             EnableNMI(game);
             clear_hdma(game);
-            DisableIrqInterrupts(game);
+            crate::game::scanline_irq::disable(game);
             word! { game, 0; fx_layer_blending_config_a, cur_irq_handler }
             *ram_ptr!(game; 0x6e) = 0;
             *ram_ptr!(game; 0x71) = 0;
@@ -446,7 +444,7 @@ pub unsafe fn GameState_38_SamusEscapesFromZebes(game: &mut Game) -> CoroutineRe
         if *ram_ptr!(game; 0x51) == 0x80 {
             EnableNMI(game);
             clear_hdma(game);
-            DisableIrqInterrupts(game);
+            crate::game::scanline_irq::disable(game);
             word!(game.fx_layer_blending_config_a = 0);
             *ram_ptr!(game; 0x6e) = 0;
             *ram_ptr!(game; 0x71) = 0;
@@ -534,7 +532,7 @@ pub unsafe fn GameState_43_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
         word!(game.game_state += 1);
         word! { game, 0; screen_fade_delay, screen_fade_counter }
         clear_hdma(game);
-        DisableIrqInterrupts(game);
+        crate::game::scanline_irq::disable(game);
         word! { game, 0;
             fx_layer_blending_config_a, cur_irq_handler, irqhandler_next_handler,
         }
@@ -682,7 +680,7 @@ pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
             crate::update_place! { reference fresh150 = *ram_ptr!(game; 0x614) => *fresh149; }
             crate::update_place! { reference fresh151 = *ram_ptr!(game; 0x613) => *fresh150; }
             *ram_ptr!(game; 0x612) = *fresh151;
-            ReadJoypadInputs(game);
+            crate::game::controller_input::sample(game);
             crate::game::visual_runtime::update_hdma(game);
             NextRandom(game);
             ClearOamExt(game);
@@ -1326,9 +1324,9 @@ pub unsafe fn GameState_14_Paused_Async(game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn GameState_15_Paused_Async(game: &mut Game) -> CoroutineRet {
     unsafe {
-        ReleaseButtonsFilter(3, game);
+        crate::game::controller_input::filter(3, game);
         MainPauseRoutine(game);
-        HandleHudTilemap(game);
+        crate::game::hud::advance(game);
         HandlePauseScreenPaletteAnimation(game);
         kCoroutineNone as CoroutineRet
     }
@@ -3807,7 +3805,7 @@ pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
         word!(game.palette_change_denom = 6);
         if AdvancePaletteFadeForAllPalettes(game) != 0 {
             clear_hdma(game);
-            DisableIrqInterrupts(game);
+            crate::game::scanline_irq::disable(game);
             word! { game, 0; fx_layer_blending_config_a, cur_irq_handler }
             *ram_ptr!(game; 0x6e) = 0;
             *ram_ptr!(game; 0x71) = 0;
@@ -3888,7 +3886,7 @@ pub unsafe fn GameState_25_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
 pub unsafe fn WaitUntilEndOfVblankAndEnableIrq(game: &mut Game) {
     unsafe {
         if (*ram_ptr!(game; 0x84) & 0x30) != 0x30 {
-            EnableIrqInterruptsNow(game);
+            crate::game::scanline_irq::enable(true, game);
         }
     }
 }

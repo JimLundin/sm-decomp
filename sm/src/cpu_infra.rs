@@ -1,4 +1,3 @@
-use crate::game::sm_80::Vector_IRQ;
 use crate::game::sm_82::RunOneFrameOfGame;
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
@@ -1025,7 +1024,7 @@ pub unsafe fn DrawFrameToPpu(game: &mut Game) {
             if (*game.g_snes).vIrqEnabled as i32 != 0
                 && (*game.g_snes).vPos as i32 - 1i32 == (*game.g_snes).vTimer as i32
             {
-                Vector_IRQ(game);
+                crate::game::scanline_irq::advance(game);
             }
         }
         (*(*game.g_snes).cpu).nmiWanted = false_0 != 0;

@@ -409,6 +409,9 @@ pub mod game {
     pub(crate) mod player_transitions;
     pub(crate) mod player_update;
 
+    pub(crate) mod controller_input;
+    pub(crate) mod escape_timer;
+    pub(crate) mod hud;
     pub mod progress_flags;
     pub(crate) mod room_backgrounds;
     pub mod room_entry;
@@ -419,6 +422,7 @@ pub mod game {
     pub(crate) mod samus_palette;
     pub(crate) mod samus_periodic_damage;
     pub mod save_slots;
+    pub(crate) mod scanline_irq;
     pub(crate) mod session;
     pub(crate) mod session_access;
     pub(crate) mod session_encoding;

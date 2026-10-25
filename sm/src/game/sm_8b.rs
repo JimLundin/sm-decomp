@@ -21,9 +21,9 @@ use crate::game::player_projectiles::prepare;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session_runtime::initialize_player;
 use crate::game::sm_80::{
-    ClearOamExt, ClearUnusedOam, CopySuperMetroidString, DisableIrqInterrupts, EnableNMI,
-    GraphicsAsset, HandleFadeIn, HandleFadeOut, QueueMode7Transfers, QueueSfx1_Max15,
-    QueueSfx2_Max6, QueueSfx3_Max6, WaitForNMI_Async,
+    ClearOamExt, ClearUnusedOam, CopySuperMetroidString, EnableNMI, GraphicsAsset, HandleFadeIn,
+    HandleFadeOut, QueueMode7Transfers, QueueSfx1_Max15, QueueSfx2_Max6, QueueSfx3_Max6,
+    WaitForNMI_Async,
 };
 use crate::game::visual_runtime::{initialize_intro_wave, initialize_title_gradient};
 
@@ -2355,7 +2355,7 @@ crate::game::callback_dispatch! {
                     samus_knockback_timer,
                 }
                 clear_hdma(game);
-                DisableIrqInterrupts(game);
+                crate::game::scanline_irq::disable(game);
                 word!(game.fx_layer_blending_config_a = 0);
                 *ram_ptr!(game; 0x6e) = 0;
                 *ram_ptr!(game; 0x71) = 0;

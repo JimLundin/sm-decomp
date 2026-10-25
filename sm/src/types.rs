@@ -635,7 +635,7 @@ crate::typed_struct! {
 }
 
 crate::type_aliases! {
-    pub Buttons, Consts_60, Consts_80, Consts_81, Consts_82, Consts_83, Consts_84, Consts_86,
+    pub Buttons, Consts_60, Consts_81, Consts_82, Consts_83, Consts_84, Consts_86,
         Consts_87, Consts_88, Consts_89, Consts_8B, Consts_8C, Consts_8D, Consts_8F, Consts_90,
         Consts_91, Consts_94, Consts_9B, Consts_A0, Consts_A2, Consts_A3, Consts_A4, Consts_A5,
         Consts_A6, Consts_A7, Consts_A8, Consts_A9, Consts_AA, Consts_AD, Consts_B2, Consts_B3,

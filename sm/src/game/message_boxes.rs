@@ -3,7 +3,7 @@ pub use crate::game::constants::bank_60::*;
 use crate::game::music::HandleMusicQueue;
 pub use crate::game::prelude::*;
 
-use crate::game::sm_80::{QueueSfx1_Max6, ReadJoypadInputs, WaitForNMI_NoUpdate_Async};
+use crate::game::sm_80::{QueueSfx1_Max6, WaitForNMI_NoUpdate_Async};
 use crate::game::sm_82::{CancelSoundEffects, HandleSoundEffects};
 
 use crate::rtl::ReadReg;
@@ -351,7 +351,7 @@ impl crate::game::dialogue::Context for LegacyDialogue<'_> {
     ) {
         use crate::game::dialogue_ram;
         dialogue_ram::publish(state, self.0);
-        unsafe { ReadJoypadInputs(self.0) };
+        unsafe { crate::game::controller_input::sample(self.0) };
         (dialogue_ram::import(self.0), dialogue_ram::input(self.0))
     }
 }

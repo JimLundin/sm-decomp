@@ -203,17 +203,17 @@ impl Effects for Runtime<'_> {
     }
     fn pickup_visual(&mut self, visual: VisualUpdate) {
         self.foreign(|game| unsafe {
-            use crate::game::sm_80::*;
+            use crate::game::hud::{self, Item};
             match visual {
                 VisualUpdate::None => {}
                 VisualUpdate::Beams => {
                     crate::game::visual_runtime::update_beam_tiles_and_palette(game)
                 }
-                VisualUpdate::Grapple => AddGrappleToHudTilemap(game),
-                VisualUpdate::Xray => AddXrayToHudTilemap(game),
-                VisualUpdate::Missiles => AddMissilesToHudTilemap(game),
-                VisualUpdate::SuperMissiles => AddSuperMissilesToHudTilemap(game),
-                VisualUpdate::PowerBombs => AddPowerBombsToHudTilemap(game),
+                VisualUpdate::Grapple => hud::install(Item::Grapple, game),
+                VisualUpdate::Xray => hud::install(Item::Xray, game),
+                VisualUpdate::Missiles => hud::install(Item::Missiles, game),
+                VisualUpdate::SuperMissiles => hud::install(Item::SuperMissiles, game),
+                VisualUpdate::PowerBombs => hud::install(Item::PowerBombs, game),
             }
         });
     }

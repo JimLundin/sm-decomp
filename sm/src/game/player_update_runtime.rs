@@ -203,16 +203,15 @@ pub(crate) fn low_health(game: &mut Game) {
 
 // Retained gamma effects; uncovered drain/timer bodies keep their original order.
 use crate::game::{
-    palette_effects,
+    escape_timer, palette_effects,
     player_movement::forced,
     prelude::{kButton_Up, kGameState_35_TimeUp, kPose_E9_FaceL_Drained_CrouchFalling},
-    sm_80::{DrawTimer, ProcessTimer},
 };
 use crate::ram_map::word as legacy_word;
 crate::game::callback_dispatch! {
     unsafe fn advance_gamma(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
+    @functions [pub fn (game: &mut Game)];
     [9494683] Samus_Func1 [] {
         if legacy_word!(game.samus_pose) as i32 == kPose_E9_FaceL_Drained_CrouchFalling as i32
             && legacy_word!(game.samus_anim_frame) as i32 - 8i32 & 0x8000 == 0
@@ -231,18 +230,18 @@ crate::game::callback_dispatch! {
         }
     };
     [9494758] Samus_Func3 [] {
-        if ProcessTimer(game) & 1 != 0 {
+        if escape_timer::advance(game) & 1 != 0 {
             legacy_word!(game.game_state = kGameState_35_TimeUp as u16);
             word_transfers!(game, descending, 256; le(target_palettes, 255) <- value(0x7fff));
             legacy_word!(game.frame_handler_gamma = (0x90e114i32) as u16);
             palette_effects::set_enabled(false, game);
         }
         if legacy_word!(game.timer_status) != 0 {
-            DrawTimer(game);
+            escape_timer::draw(game);
         }
     };
     [9494804] DrawTimer_ [] {
-        DrawTimer(game);
+        escape_timer::draw(game);
     };
     @external {
         9495201 => [forced::struggle_from_draygon(&mut Runtime::new(game))];

@@ -14,9 +14,7 @@ use crate::game::room_mechanisms::run;
 use crate::game::room_scrolls::advance_camera;
 use crate::game::session_runtime::Runtime;
 use crate::game::sm_8f::RunRoomMainCode;
-use crate::game::sm_80::{
-    CalculateLayer2PosAndScrollsWhenScrolling, DebugScrollPosSaveLoad, HandleHudTilemap,
-};
+use crate::game::sm_80::{CalculateLayer2PosAndScrollsWhenScrolling, DebugScrollPosSaveLoad};
 use crate::game::sm_82::HandleSamusOutOfHealthAndGameTile;
 use crate::ram_map::{checked_word, words as ram};
 
@@ -93,7 +91,7 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
             }
             actors::drawing::draw_scene(&mut Runtime::new(game));
             actors::staging::queue_actor_tiles(&mut Runtime::new(game));
-            HandleHudTilemap(game);
+            crate::game::hud::advance(game);
             CalculateLayer2PosAndScrollsWhenScrolling(game);
             RunRoomMainCode(game);
             HandleSamusOutOfHealthAndGameTile(game);

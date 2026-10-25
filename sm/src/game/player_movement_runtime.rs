@@ -81,10 +81,10 @@ impl Effects for Runtime<'_> {
 pub(crate) fn ceres_movement(game: &mut crate::game_state::Game, action: fn(&mut Runtime<'_>)) {
     let mut runtime = Runtime::new(game);
     action(&mut runtime);
-    runtime.foreign(|game| unsafe {
-        crate::game::sm_80::ProcessTimer(game);
+    runtime.foreign(|game| {
+        crate::game::escape_timer::advance(game);
         if crate::ram_map::word!(game.timer_status) != 0 {
-            crate::game::sm_80::DrawTimer(game);
+            crate::game::escape_timer::draw(game);
         }
     });
 }

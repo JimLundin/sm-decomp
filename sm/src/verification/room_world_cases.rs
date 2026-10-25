@@ -333,7 +333,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             put(g, 0x7a9, 6);
             put(g, 0x7ab, 6);
             record(&mut out, 0, g);
-            crate::game::sm_80::Irq_FollowDoorTransition(g);
+            crate::game::scanline_irq::follow_transition(g);
             assert_eq!(word(g, 0x925), 64, "room.world.actual-irq-frame");
             assert_eq!(word(g, 0x931), 0x8123, "room.world.actual-irq-completion");
             assert_eq!(

@@ -93,7 +93,7 @@ impl EntryEffects for Runtime<'_> {
                     actors::staging::queue_actor_tiles(&mut Runtime::new(game));
                 }
                 LeafEffect::DrawTimer => {
-                    game::sm_80::DrawTimer(game);
+                    game::escape_timer::draw(game);
                 }
                 LeafEffect::SpinJumpSound => {
                     game::session_runtime::player_command(0x1c, game);
@@ -159,10 +159,10 @@ impl EntryEffects for Runtime<'_> {
                     game::sm_80::DisableNMI(game);
                 }
                 LeafEffect::EnableIrq => {
-                    game::sm_80::EnableIrqInterrupts(game);
+                    game::scanline_irq::enable(false, game);
                 }
                 LeafEffect::DisableIrq => {
-                    game::sm_80::DisableIrqInterrupts(game);
+                    game::scanline_irq::disable(game);
                 }
                 LeafEffect::WaitVblankClearHdma => {
                     game::visual_runtime::clear_hdma(game);
