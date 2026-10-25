@@ -123,6 +123,12 @@ Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
+- **2026-10-25 03:51 CET (bed330e, no new agent commits):** **STALL, fourth in a
+  row: 0 agent commits** since 7867e91 (00:48 CEST = 23:48 CET), now ~4h; agents
+  are not running (escalated; only Jim can restart them). Score unchanged `checks
+  24/44 · legacy 55315 · production 116670 · unsafe 4962 · verification 38993`.
+  06:00 waypoint: both lanes behind, miss now effectively certain. Plan unchanged:
+  A0.2 Ceres capture and sm_94 step 1 remain the next commits.
 - **2026-10-25 02:52 CET (be111ac, no new agent commits):** **STALL, third in a
   row: 0 agent commits** since 7867e91 (00:48 CEST), now ~3h; agents are not
   running (escalated again; only Jim can restart them). Score unchanged `checks
@@ -170,12 +176,6 @@ Map brief is done (c1fe795); no further map work unless the user asks.
   verification 37,843 → 38,884 (**+1,041, 7× the deletion**); unsafe 4,978 → 4,965;
   warnings 339 unique (cargo; PROGRESS 378). PLAN.md 202 lines. Map: SVG text only,
   fits; brief items (a)/(b) untouched for a second check-in.
-- **2026-10-24 21:52 (2754947):** 2 agent source commits since 3222fe3, 0
-  docs-only; no stall. **Coverage moving again:** 23 → 24/44 (Norfair Reserve,
-  9787aa2). Production 117,662 → 117,104 (−558, four projectile modules retired
-  in one layer deletion, as asked); verification 37,843 (+339, tests moved out of
-  production); unsafe 4,978 (−4); warnings 380 unique. PLAN.md 202 lines.
-  Map: only the PROGRESS SVG text changed; rendered, fits.
 
 ## Lane watch (2026-10-24 23:52)
 
