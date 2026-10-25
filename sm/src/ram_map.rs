@@ -970,3 +970,81 @@ macro_rules! ram_ptr {
     };
 }
 pub(crate) use ram_ptr;
+
+// Checked enemy-record fields at RAM 0x0f78 + signed slot, replacing raw
+// `Get_X(slot) -> *mut` records (`slot!(game, Alias[slot].field)`). Like `word!`, each access indexes `g_ram` bytes
+// at the caller and forms no RAM reference; native byte order matches the old
+// dereference. Writes evaluate the value before the slot and keep its temporaries
+// through the store. Word forms check at compile time that the field is a u16.
+macro_rules! slot {
+    (@at $layout:ident, $slot:expr, $($field:ident).+) => {
+        ::core::primitive::usize::try_from(
+            { let slot: ::core::primitive::i32 = $slot; slot as ::core::primitive::isize }
+                + 0x0f78
+                + ::core::mem::offset_of!($layout, $($field).+) as ::core::primitive::isize,
+        )
+        .expect("enemy field outside RAM")
+    };
+    (byte $game:ident, $layout:ident[$slot:expr] $(.$field:ident)+ [$lane:expr] = $value:expr) => {
+        match ($value, $crate::ram_map::slot!(@at $layout, $slot, $($field).+)) {
+            (value, at) => {
+                let value: ::core::primitive::u8 = value;
+                let at = ::core::primitive::usize::try_from(at as ::core::primitive::isize + ($lane) as ::core::primitive::isize)
+                    .expect("enemy field outside RAM");
+                $game.g_ram[at] = value;
+            }
+        }
+    };
+    (byte $game:ident, $layout:ident[$slot:expr] $(.$field:ident)+ [$lane:expr]) => {
+        match $crate::ram_map::slot!(@at $layout, $slot, $($field).+) {
+            at => $game.g_ram[::core::primitive::usize::try_from(
+                at as ::core::primitive::isize + ($lane) as ::core::primitive::isize,
+            )
+            .expect("enemy field outside RAM")],
+        }
+    };
+    // Ordered word stores to several fields; the slot is re-evaluated per store.
+    ($game:ident, $layout:ident[$slot:expr] $(.$prefix:ident)*; $($stores:tt)+) => {
+        $crate::ram_map::slot!(@stores $game, $layout[$slot] ($($prefix)*); $($stores)+)
+    };
+    (@stores $game:ident, $layout:ident[$slot:expr] $prefix:tt; $($field:ident = $value:expr),+ $(,)?) => {
+        $($crate::ram_map::slot!(@store $game, $layout[$slot] $prefix $field = $value);)+
+    };
+    (@store $game:ident, $layout:ident[$slot:expr] ($($prefix:ident)*) $field:ident = $value:expr) => {
+        $crate::ram_map::slot!($game, $layout[$slot] $(.$prefix)* .$field = $value)
+    };
+    // Read-modify-write: the old word is read first, as the leading operand of
+    // the replaced `field = field OP ..` value was; the slot is evaluated once.
+    ($game:ident, $layout:ident[$slot:expr] $(.$field:ident)+, |$old:ident| $value:expr) => {
+        match $crate::ram_map::slot!(@at $layout, $slot, $($field).+) {
+            at => {
+                $crate::ram_map::word_field::<$layout>(|record| record $(.$field)+);
+                let $old = ::core::primitive::u16::from_ne_bytes([$game.g_ram[at], $game.g_ram[at + 1]]);
+                let bytes = ::core::primitive::u16::to_ne_bytes($value);
+                $game.g_ram[at] = bytes[0];
+                $game.g_ram[at + 1] = bytes[1];
+            }
+        }
+    };
+    ($game:ident, $layout:ident[$slot:expr] $(.$field:ident)+ = $value:expr) => {
+        match ($value, $crate::ram_map::slot!(@at $layout, $slot, $($field).+)) {
+            (value, at) => {
+                $crate::ram_map::word_field::<$layout>(|record| record $(.$field)+);
+                let bytes = ::core::primitive::u16::to_ne_bytes(value);
+                $game.g_ram[at] = bytes[0];
+                $game.g_ram[at + 1] = bytes[1];
+            }
+        }
+    };
+    ($game:ident, $layout:ident[$slot:expr] $(.$field:ident)+) => {
+        match $crate::ram_map::slot!(@at $layout, $slot, $($field).+) {
+            at => {
+                $crate::ram_map::word_field::<$layout>(|record| record $(.$field)+);
+                ::core::primitive::u16::from_ne_bytes([$game.g_ram[at], $game.g_ram[at + 1]])
+            }
+        }
+    };
+}
+pub(crate) use slot;
+/// Compile-time proof that an enemy-record field is one u16 word.
+pub(crate) fn word_field<L>(_: fn(L) -> u16) {}
