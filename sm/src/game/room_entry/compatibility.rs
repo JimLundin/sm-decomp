@@ -108,7 +108,7 @@ impl EntryEffects for Runtime<'_> {
                     game::sm_88::InitializeSpecialEffectsForNewRoom(game);
                 }
                 LeafEffect::LoadFxHeader => {
-                    game::sm_89::LoadFXHeader(game);
+                    game::room_state::load_fx_header(game);
                 }
                 LeafEffect::InitializeEnemies => {
                     actors::population::install_population(&mut Runtime::new(game));

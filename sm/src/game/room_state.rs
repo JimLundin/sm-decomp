@@ -8,7 +8,7 @@ use crate::game::session_access::SessionAccess;
 use crate::game::session_runtime::Runtime;
 use crate::game::sm_80::CopyToVramNow;
 use crate::game_state::Game;
-use crate::ram_map::checked_word;
+use crate::ram_map::{checked_word, words as ram};
 use crate::rtl::rom_bank_record;
 use crate::types::{EnemyDef, EnemyTileset};
 use core::mem::offset_of;
@@ -157,3 +157,117 @@ pub(crate) fn load_sprite_palettes(game: &mut Game) {
 #[path = "../verification/room_level_copy.rs"]
 mod level_copy_checks;
 pub(crate) use level_copy_checks::check_level_copy;
+
+use crate::game::visual_host::{Content, Source};
+use crate::game::visual_state::PaletteBuffer;
+use crate::rom::RomRecord;
+
+fn apply_fx(h: &mut Runtime<'_>, definition: &RomRecord, palette: PaletteBuffer) {
+    h.session_mut().room.liquid_height = definition.word(2);
+    h.session_mut().room.liquid_target = definition.word(4);
+    h.session_mut().room.liquid_velocity = definition.word(6);
+    h.session_mut().room.liquid_delay = u16::from(definition.byte(8));
+    h.write_word_le(
+        u16::from(definition.byte(10)),
+        ram::fx_layer_blending_config_a,
+    );
+    h.write_word_le(
+        u16::from(definition.byte(11)),
+        ram::fx_layer_blending_config_b,
+    );
+    h.session_mut().room.liquid_options = u16::from(definition.byte(12));
+    let blend = definition.byte(15);
+    for color in if blend == 0 { 27..28 } else { 25..28 } {
+        let value = if blend == 0 {
+            0
+        } else {
+            h.table(Source::Loaded, 0x89aa02)
+                .word(usize::from(blend & !1) + 2 * (color - 25))
+        };
+        let visuals = &mut h.session_mut().visual;
+        match palette {
+            PaletteBuffer::Current => visuals.colors[color] = value,
+            PaletteBuffer::Target => visuals.targets[color] = value,
+        }
+    }
+}
+
+fn fx_definition(address: u16, game: &mut Game) -> RomRecord {
+    let address = 0x830000 | u32::from(address);
+    unsafe { crate::rtl::RomPtr(address, game) };
+    crate::game::player_projectiles::content::captured(game.capture_native_rom(), address)
+}
+
+pub(crate) fn load_fx_entry(index: u16, game: &mut Game) {
+    let address = checked_word!(game.room_layer3_asm_ptr).wrapping_add(16 * (index & 7));
+    let definition = fx_definition(address, game);
+    let mut h = Runtime::new(game);
+    apply_fx(&mut h, &definition, PaletteBuffer::Current);
+}
+
+pub(crate) fn load_fx_header(game: &mut Game) {
+    use crate::game::{animated_tiles, liquid_effects, palette_effects, scrolling_sky, sm_88};
+    let mut address = checked_word!(game.room_layer3_asm_ptr);
+    if address == 0 {
+        return;
+    }
+    loop {
+        let door = fx_definition(address, game).word(0);
+        if door == 0xffff {
+            return;
+        }
+        if door == 0 || door == checked_word!(game.door_def_ptr) {
+            break;
+        }
+        address = address.wrapping_add(16);
+    }
+    let definition = fx_definition(address, game);
+    let mut h = Runtime::new(game);
+    apply_fx(&mut h, &definition, PaletteBuffer::Target);
+    let kind = definition.byte(9);
+    h.write_word_le(u16::from(kind), ram::fx_type);
+    if kind != 0 {
+        let tilemap = h
+            .table(Source::Loaded, 0x83abf0)
+            .word(usize::from(kind & !1));
+        h.write_word_le(tilemap, ram::fx_tilemap_ptr);
+        let initialize: Option<unsafe fn(&mut Game)> = match kind >> 1 {
+            0 | 7..=15 => None,
+            1 => Some(liquid_effects::initialize_lava),
+            2 => Some(liquid_effects::initialize_acid),
+            3 => Some(liquid_effects::initialize_water),
+            4 => Some(sm_88::FxTypeFunc_8_Spores),
+            5 => Some(sm_88::FxTypeFunc_A_Rain),
+            6 => Some(sm_88::FxTypeFunc_C),
+            16 => Some(scrolling_sky::initialize_land),
+            17 => Some(scrolling_sky::initialize_banded_sky),
+            18 => Some(sm_88::FxTypeFunc_24),
+            19 => Some(sm_88::FxTypeFunc_26_TourianEntranceStatue),
+            20 => Some(sm_88::FxTypeFunc_28_CeresRidley),
+            21 => Some(sm_88::FxTypeFunc_CeresElevator),
+            22 => Some(sm_88::FxTypeFunc_2C_Haze),
+            _ => panic!("room FX kind outside callback table"),
+        };
+        if let Some(initialize) = initialize {
+            h.foreign(|game| unsafe { initialize(game) });
+        }
+    }
+    for (field, table, spawn) in [
+        (13, 0x83ac46, palette_effects::spawn as fn(u16, &mut Game)),
+        (14, 0x83ac56, animated_tiles::spawn as fn(u16, &mut Game)),
+    ] {
+        let bits = definition.byte(field);
+        if bits == 0 {
+            continue;
+        }
+        let table = h.table(Source::Loaded, table);
+        let address = table.word(2 * usize::from(h.session().room.area));
+        let objects = h.legacy_native_record(0x83, address);
+        for index in 0..8 {
+            if bits & (1 << index) != 0 {
+                let object = objects.word(2 * index);
+                h.foreign(|game| spawn(object, game));
+            }
+        }
+    }
+}
