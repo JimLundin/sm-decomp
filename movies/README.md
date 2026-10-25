@@ -455,6 +455,21 @@ all five resulting controller words, and the first replay input. At the normaliz
 normal controller read to reproduce the original button edges. Old seeds without
 this supplement retain their existing behavior. No input words are guessed or shifted.
 
+Four more navigation/encounter rows use original `100-input-phase` observations,
+with their existing input budgets, required hits, expectations and follow-up windows:
+
+| Row | Observation | Input file | Budget |
+| --- | --- | --- | ---: |
+| `area-ceres` | `1`, `$DF45` | `seed-area-ceres.inputs` | 300 |
+| `area-maridia` | `170`, `$CEFB` | `seed-area-maridia.inputs` | 300 |
+| `boss-ceres-ridley` | `6`, `$E0B5` | `seed-boss-ceres-ridley.inputs` | 2300 |
+| `elevator-traversal` | `16`, `$97B5` | `seed-elevator-traversal.inputs` | 860 |
+
+Maridia starts within the area and observes the actual door into `$CF54`, followed
+by 120 frames; it no longer covers the former approach from Brinstar. The elevator
+starts before the episode, observes its completion in `$9E9F`, then follows 120 frames.
+Shared authored navigation remains required by other rows.
+
 Eleven pickup rows now use original `100-input-phase` observations. Each retains
 its existing input budget, acquisition expectations and follow-up window; rows
 with message-completion requirements keep them. Dedicated recipes are removed
@@ -492,6 +507,10 @@ python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-pick
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-pickup-super.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0037-9BC8-wram.bin --frames 1804
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-area-crateria.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0012-91F8-wram.bin --frames 300
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-item-morph-ball.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0017-9E9F-wram.bin --frames 1200
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-boss-ceres-ridley.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0006-E0B5-wram.bin --frames 2300
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-area-ceres.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0001-DF45-wram.bin --frames 300
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-area-maridia.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0170-CEFB-wram.bin --frames 300
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-elevator-traversal.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0016-97B5-wram.bin --frames 860
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-speed-booster.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0098-AD1B-wram.bin --frames 692
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-wave.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0104-ADDE-wram.bin --frames 612
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-ice.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0163-A890-wram.bin --frames 808

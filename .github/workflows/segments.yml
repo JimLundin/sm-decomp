@@ -106,12 +106,13 @@ jobs:
               # Match exact seed identities, not capture prefixes: pickups and the
               # general bundle contain different subsets of 100-input-phase.
               seed = row.get('seed')
-              if seed in ('100-input-phase:12', '100-input-phase:17',
+              if seed in ('100-input-phase:1', '100-input-phase:6',
+                          '100-input-phase:12', '100-input-phase:16', '100-input-phase:17',
                           '100-input-phase:19', '100-input-phase:37', '100-input-phase:74',
                           '100-input-phase:80', '100-input-phase:85', '100-input-phase:98',
-                          '100-input-phase:104', '100-input-phase:163', '100-input-phase:173',
+                          '100-input-phase:104', '100-input-phase:163', '100-input-phase:170', '100-input-phase:173',
                           '100-input-phase:179'):
-                  return ('seeds-v1-pickups-f8ebeba80b1118be.tar.gz.enc', 'f8ebeba80b1118be5f10c8e1273c34f161bc3b6181c958c778995e4138a99680')
+                  return ('seeds-v1-pickups-c8f8574089c66f6d.tar.gz.enc', 'c8f8574089c66f6d146601ba2863348f395a1095c803785f8ce275f617897108')
               if seed == 'golden-input-phase:1':
                   return ('seeds-v1-golden-3b895ada4be8fcb4.tar.gz.enc', '3b895ada4be8fcb4e1b77941f0f4c4530150c626588b53d2e8cf5c2dc2cbeb0e')
               if seed == '100-credits:336':

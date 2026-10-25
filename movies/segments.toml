@@ -26,9 +26,11 @@ expect = ["state:2"]
 
 [[segment]]
 id = "area-ceres"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 8340
+seed = "100-input-phase:1"
+seed_sha256 = "c555cbf4669a2d3ed5e444aeb8e3e97d03bacafba50d5c93ec4d5c9dd42ae889"
+inputs = "seed-area-ceres.inputs"
+input_sha256 = "5fbf2ad5cc5de49d15c0748cd380980786752ba7fa05bc68b8b42528e5eb647c"
+start_frame = 0
 frames = 300
 require_hit = ["player_projectiles.prepare.weapons", "player_projectiles.history.finished"]
 expect = ["area:ceres", "room:DF45"]
@@ -110,9 +112,11 @@ expect = ["area:wrecked-ship", "room:CBD5"]
 
 [[segment]]
 id = "area-maridia"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 91930
+seed = "100-input-phase:170"
+seed_sha256 = "a7af09ee92cbf3eef3a42445ca4e62ce798141e4af0fdc887f7b8d03de661215"
+inputs = "seed-area-maridia.inputs"
+input_sha256 = "639f192b2b91a4ae041eb6ca24109d984b4fc6e04b4736888af17ee5b5301b6c"
+start_frame = 0
 frames = 300
 expect = ["area:maridia", "room:CF54", "door:CF54"]
 after_expectations = 120
@@ -129,9 +133,11 @@ expect = ["area:tourian", "room:DAAE"]
 
 [[segment]]
 id = "boss-ceres-ridley"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 13700
+seed = "100-input-phase:6"
+seed_sha256 = "0a6d988b41a6ed6baf83f194d23219f8a98f47c38cea6c2bf81520d5461a2938"
+inputs = "seed-boss-ceres-ridley.inputs"
+input_sha256 = "63549693555e451bdf3c65147dc4fb3020049bc7acf765123bebc6c7a1d9f96d"
+start_frame = 0
 frames = 2300
 expect = ["encounter:ceres-ridley"]
 after_expectations = 120
@@ -569,12 +575,15 @@ after_expectations = 120
 
 [[segment]]
 id = "elevator-traversal"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 26290
+seed = "100-input-phase:16"
+seed_sha256 = "4330506a3ea58a2f5f466fbd7839fb0fb1ae1c772840e8a5d354b87d693d7ffe"
+inputs = "seed-elevator-traversal.inputs"
+input_sha256 = "8f4d054054558f1296662b23f123036bb16e51a02a2f12bd41db3ef0683be68e"
+start_frame = 0
 frames = 860
 expect = ["elevator:9E9F"]
 after_expectations = 120
+
 
 [[segment]]
 id = "elevator-up"
