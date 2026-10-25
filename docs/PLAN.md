@@ -167,14 +167,23 @@ Every routine commit runs exactly this, then commits:
 4. Body <=8 lines: what changed, rows run and result, legacy/production delta and
    ratio, `Score:`. Re-run a flaky step once; a second failure is real.
 
-**Hosted mode (user decision 18:05; switch per lane as soon as C3 lands):**
+**Hosted mode (user decision 18:05; live since C3 landed, 1f57df1, 19:07 CET; all lanes):**
 local work is step 1 plus at most one smoke row. Name the rows in a `Rows:` body
 line, push to `ci/<lane>-<topic>`, and start the next change at once on a new
 branch; do not wait on the run. `Segments` runs the `Rows:` rows plus the smoke set
 on the branch; green auto-lands on main (rebased; a conflict fails the land and
 the author rebases). A red run is that author's next task. Main runs the whole
 corpus as a backstop; its failures get a regression row as above. Agents without
-the ROM (cloud) use hosted mode only. Until C3 exists, the local loop above stands.
+the ROM (cloud) use hosted mode only. Mechanics: `Rows:` ids are comma/space
+separated, a trailing comma continues the list, text after a colon is ignored and an
+unknown id fails the plan. The branch must touch `sm/`, `tools/`, `segments.toml`
+or the workflow, or no run starts. Workflow edits never auto-land (GITHUB_TOKEN
+cannot push them): their green branch is fast-forwarded onto main by hand.
+**L1 (go, 19:15):** the Linux `.so` verifier passes area-crateria and item-morph-ball
+with every coverage line identical to the Windows shard (run 40218156987), but its
+replay is ~1.6x slower (crateria 8340..13600: 40.1s vs 24.5s), so shards stay on
+Windows until a Linux shard is shown faster end to end. Linux job: `ci/l1-*` pushes
+or dispatch with `linux`.
 
 Commands and checkpoint rules: [movies/README.md](../movies/README.md).
 When touched, inspect `cpu_infra.rs` masks, `PatchBugs`, hardware/audio limits and

@@ -13,6 +13,10 @@ on:
         description: Space-separated row ids (empty = every runnable row)
         required: false
         default: ''
+      linux:
+        description: Also run the smoke set on the Linux verifier (L1 spike)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -352,3 +356,148 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh workflow run segments.yml --repo "$GITHUB_REPOSITORY" --ref main
+
+  # L1 spike: the same verifier as a Linux shared object. Dispatch (or ci/l1-*
+  # pushes) only until its results match the Windows shards; ROM-derived files
+  # stay on the runner.
+  linux:
+    if: inputs.linux || startsWith(github.ref, 'refs/heads/ci/l1-')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      CARGO_INCREMENTAL: '0'
+      SEGMENTS: area-crateria item-morph-ball
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install Rust, pinned Zig and the SDL2 headers
+        run: |
+          rustup toolchain install stable --profile minimal
+          native="$RUNNER_TEMP/sm-native"
+          mkdir -p "$native/lib"
+          curl -sSfL -o "$native/zig.tar.xz" https://ziglang.org/download/0.15.2/zig-x86_64-linux-0.15.2.tar.xz
+          echo "02aa270f183da276e5b5920b1dac44a63f1a49e55050ebde3aecc9eb82f93239  $native/zig.tar.xz" | sha256sum -c -
+          tar -xf "$native/zig.tar.xz" -C "$native"
+          curl -sSfL -o "$native/sdl.zip" https://github.com/libsdl-org/SDL/releases/download/release-2.32.10/SDL2-devel-2.32.10-mingw.zip
+          echo "f15cff5fca62ec9381a016ef1d42a95c638cd72d2f226ba5781c76fe43dbd1ac  $native/sdl.zip" | sha256sum -c -
+          unzip -q "$native/sdl.zip" -d "$native"
+          # The installers pin the Windows target; retarget them to Linux with PIC.
+          cat > "$native/zig" <<SH
+          #!/bin/sh
+          if [ "\$1" = cc ]; then
+            shift
+            for a do shift; [ "\$a" = x86_64-windows-gnu ] && a=x86_64-linux-gnu; set -- "\$@" "\$a"; done
+            set -- cc "\$@" -fPIC -D_DEFAULT_SOURCE
+          fi
+          exec "$native/zig-x86_64-linux-0.15.2/zig" "\$@"
+          SH
+          chmod +x "$native/zig"
+          echo "SM_NATIVE=$native" >> "$GITHUB_ENV"
+          echo "SM_ZIG=$native/zig" >> "$GITHUB_ENV"
+          echo "SM_SDL_INCLUDE=$native/SDL2-2.32.10/x86_64-w64-mingw32/include/SDL2" >> "$GITHUB_ENV"
+          echo "LIBRARY_PATH=$native/lib" >> "$GITHUB_ENV"
+          echo "LOCALAPPDATA=$native" >> "$GITHUB_ENV"
+      - name: Build pinned native dependencies
+        run: |
+          for dependency in cpu backend spc; do
+            pwsh -NoProfile -File "tools/install_lakesnes_$dependency.ps1" -Zig "$SM_ZIG" -Prefix "$SM_NATIVE/lakesnes-$dependency" -LibraryDirectory "$LIBRARY_PATH"
+          done
+          python tools/install_native_config.py --zig "$SM_ZIG" --prefix "$SM_NATIVE/config" --library-directory "$LIBRARY_PATH" --sdl-include "$SM_SDL_INCLUDE"
+          python tools/install_native_music.py --zig "$SM_ZIG" --prefix "$SM_NATIVE/music" --library-directory "$LIBRARY_PATH"
+          codec="$SM_NATIVE/stb-image"
+          mkdir -p "$codec"
+          curl -sSfL -o "$codec/stb-sys-0.6.0.crate" https://crates.io/api/v1/crates/stb-sys/0.6.0/download
+          echo "fedcddefe320931b97fea7c9bc9168567eadaf71c87a74a3491d5b46b5c573de  $codec/stb-sys-0.6.0.crate" | sha256sum -c -
+          tar -xf "$codec/stb-sys-0.6.0.crate" -C "$codec" stb-sys-0.6.0/vendor/stb/stb_image.h
+          echo "8e5b0d717dfc8a834c97ef202d20e78d083d009586e1731c985817d0155d568c  $codec/stb-sys-0.6.0/vendor/stb/stb_image.h" | sha256sum -c -
+          "$SM_ZIG" cc -target x86_64-windows-gnu -O2 -std=c11 -ftrivial-auto-var-init=zero -I "$codec/stb-sys-0.6.0/vendor/stb" -c sm/native/stb_image.c -o "$codec/stb_image.o"
+          "$SM_ZIG" ar rcs "$LIBRARY_PATH/libsm_stb_image.a" "$codec/stb_image.o"
+      - name: Build the verifier shared object
+        run: python tools/verify_dll.py --build-only --direct
+      - name: Unit tests through the shared object
+        run: python tools/verify_dll.py --unit-tests --no-build
+      - name: Prepare ROM, movie and route inputs
+        env:
+          ROUTE: speed-booster
+          INPUTS: corpus-speed-booster.inputs
+          ROM_00: ${{ secrets.SM_ROM_00 }}
+          ROM_01: ${{ secrets.SM_ROM_01 }}
+          ROM_02: ${{ secrets.SM_ROM_02 }}
+          ROM_03: ${{ secrets.SM_ROM_03 }}
+          ROM_04: ${{ secrets.SM_ROM_04 }}
+          ROM_05: ${{ secrets.SM_ROM_05 }}
+          ROM_06: ${{ secrets.SM_ROM_06 }}
+          ROM_07: ${{ secrets.SM_ROM_07 }}
+          ROM_08: ${{ secrets.SM_ROM_08 }}
+          ROM_09: ${{ secrets.SM_ROM_09 }}
+          ROM_10: ${{ secrets.SM_ROM_10 }}
+          ROM_11: ${{ secrets.SM_ROM_11 }}
+          ROM_12: ${{ secrets.SM_ROM_12 }}
+          ROM_13: ${{ secrets.SM_ROM_13 }}
+          ROM_14: ${{ secrets.SM_ROM_14 }}
+          ROM_15: ${{ secrets.SM_ROM_15 }}
+          ROM_16: ${{ secrets.SM_ROM_16 }}
+          ROM_17: ${{ secrets.SM_ROM_17 }}
+          ROM_18: ${{ secrets.SM_ROM_18 }}
+          ROM_19: ${{ secrets.SM_ROM_19 }}
+          ROM_20: ${{ secrets.SM_ROM_20 }}
+          ROM_21: ${{ secrets.SM_ROM_21 }}
+          ROM_22: ${{ secrets.SM_ROM_22 }}
+          ROM_23: ${{ secrets.SM_ROM_23 }}
+          ROM_24: ${{ secrets.SM_ROM_24 }}
+          ROM_25: ${{ secrets.SM_ROM_25 }}
+          ROM_26: ${{ secrets.SM_ROM_26 }}
+          ROM_27: ${{ secrets.SM_ROM_27 }}
+          ROM_28: ${{ secrets.SM_ROM_28 }}
+          ROM_29: ${{ secrets.SM_ROM_29 }}
+          ROM_30: ${{ secrets.SM_ROM_30 }}
+          ROM_31: ${{ secrets.SM_ROM_31 }}
+          ROM_32: ${{ secrets.SM_ROM_32 }}
+          ROM_33: ${{ secrets.SM_ROM_33 }}
+          ROM_34: ${{ secrets.SM_ROM_34 }}
+          ROM_35: ${{ secrets.SM_ROM_35 }}
+          ROM_36: ${{ secrets.SM_ROM_36 }}
+          ROM_37: ${{ secrets.SM_ROM_37 }}
+          ROM_38: ${{ secrets.SM_ROM_38 }}
+          ROM_39: ${{ secrets.SM_ROM_39 }}
+          ROM_40: ${{ secrets.SM_ROM_40 }}
+          ROM_41: ${{ secrets.SM_ROM_41 }}
+          ROM_42: ${{ secrets.SM_ROM_42 }}
+          ROM_43: ${{ secrets.SM_ROM_43 }}
+          ROM_44: ${{ secrets.SM_ROM_44 }}
+        run: |
+          python -B - <<'PY'
+          import base64, gzip, hashlib, io, os, pathlib, subprocess, sys, tomllib, urllib.request, zipfile
+          encoded = "".join(os.environ[f"ROM_{i:02d}"] for i in range(45))
+          if not encoded:
+              raise SystemExit("ROM secrets are missing")
+          rom = gzip.decompress(base64.b64decode(encoded))
+          if hashlib.sha1(rom).hexdigest() != 'da957f0d63d14cb441d215462904c4fa8519c613':
+              raise SystemExit('wrong ROM')
+          pathlib.Path('rom').mkdir(exist_ok=True)
+          pathlib.Path('rom/sm.smc').write_bytes(rom)
+          movies = tomllib.loads(pathlib.Path('movies/manifest.toml').read_text())['movies']
+          movie = next(m for m in movies if m['category'] == 'any%')
+          request = urllib.request.Request(movie['download'], headers={'User-Agent': 'sm-decomp-ci'})
+          data = urllib.request.urlopen(request, timeout=120).read()
+          with zipfile.ZipFile(io.BytesIO(data)) as archive:
+              if 'input' not in archive.namelist():
+                  data = archive.read(next(n for n in archive.namelist() if n.lower().endswith('.lsmv')))
+          if hashlib.sha256(data).hexdigest() != movie['sha256']:
+              raise SystemExit('wrong movie')
+          path = pathlib.Path('movies', movie['file'])
+          path.write_bytes(data)
+          subprocess.run([sys.executable, 'tools/movie_inputs.py', str(path), 'movies/' + os.environ['INPUTS'],
+                          '--rom', 'rom/sm.smc', '--route', os.environ['ROUTE']], check=True)
+          PY
+      - name: Run the smoke rows
+        run: |
+          rows=""
+          for id in $SEGMENTS; do rows="$rows --segment $id"; done
+          set -o pipefail
+          code=0
+          python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --no-build --direct $rows 2>&1 | tee corpus.log || code=$?
+          { echo "### Linux: $SEGMENTS"; echo '```'; grep -E '^(PASS|FAIL|Corpus)' corpus.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          exit $code
