@@ -98,10 +98,10 @@ Mutation-driver audit: deleting the old room driver breaks retained local captur
 callers. Existing bank campaigns do not replace its unusual alias, failed-upload and
 custom-content checks; keep those checks until their consumers and coverage migrate.
 
-Cloud M1a `29d74efd` needs contract repair before landing: [source review](M1A-REVIEW.md)
-identifies 22 production roots and one verifier bridge reaching unchecked hardware,
-ROM or RAM operations. Run 40219723159 was cancelled before auto-land. Restore these
-unsafe contracts and screen indirect callers before rerunning the codemod.
+Cloud M1a replacement `6d93dd10` restores the 23 rejected contracts; its bounded
+[source recheck](M1A-REVIEW.md) found no remaining concrete signature violation.
+Hosted verification is pending. The script still omits imported alias edges;
+future runs must resolve or conservatively reject them. Keep the predecessor rejected.
 
 Checkpoint cache finding: whole Session/codec hashes invalidate lossless scalar
 migrations despite an unchanged RAM payload. A future format transition needs

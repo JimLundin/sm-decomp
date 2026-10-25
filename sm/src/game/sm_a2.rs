@@ -16,7 +16,6 @@ use crate::game::enemy_projectiles::{
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::message_boxes;
 use crate::game::palette_effects;
-use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::session_runtime::player_face_forward;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
@@ -34,7 +33,7 @@ crate::game::constants::typed_constants! { Consts_A2;
     addr_kNorfairLavajumpingEnemy_Ilist_BE3C = 48700,
     addr_kRinka_Ilist_BA0C = 47628, addr_kRinka_Ilist_B9E0 = 47584,
     addr_kNorfairErraticFireball_Ilist_B51A = 46362, addr_kNorfairErraticFireball_Ilist_B2DC = 45788,
-    addr_kFlies_Ilist_B013 = 45075, addr_kGunshipTop_Ilist_A61C = 42524,
+     addr_kGunshipTop_Ilist_A61C = 42524,
     addr_kGunshipTop_Ilist_A616 = 42518, addr_kGunshipTop_Ilist_A60E = 42510,
     addr_kGunshipTop_Ilist_A5EE = 42478, addr_kGunshipTop_Ilist_A5BE = 42430,
     addr_kMaridiaSpikeyShell_Ilist_A3BD = 41917, addr_kMaridiaSpikeyShell_Ilist_A3AB = 41899,
@@ -66,7 +65,7 @@ crate::type_aliases! {
 }
 
 crate::type_aliases! {
-    pub Enemy_Flies, Enemy_MaridiaBeybladeTurtle, Enemy_MiniCrocomire,
+    pub Enemy_MaridiaBeybladeTurtle, Enemy_MiniCrocomire,
         Enemy_GunshipBottom,
         Enemy_MiniMaridiaBeybladeTurtle, Enemy_NorfairErraticFireball =
         crate::game::enemy_layouts::EnemyLayout8;
@@ -91,9 +90,7 @@ crate::game::constants::typed_constants! { i32;
     fnGunshipTop_15 = 0xa2ab6e, fnGunshipTop_16 = 0xa2aba5,
     fnGunshipTop_17 = 0xa2abc7, fnGunshipTop_18 = 0xa2ac1b,
     fnGunshipTop_19 = 0xa2acd7, fnGunshipTop_20 = 0xa2ad0e,
-    fnGunshipTop_21 = 0xa2ad2d, fnFlies_4 = 0xa2b14e,
-    fnFlies_5 = 0xa2b17c, fnFlies_6 = 0xa2b1aa,
-    fnFlies_7 = 0xa2b1d2,
+    fnGunshipTop_21 = 0xa2ad2d,
     fnNorfairLavajumpingEnemy_Func_1 = 0xa2bedc,
     fnNorfairLavajumpingEnemy_Func_2 = 0xa2bf1a, fnNorfairLavajumpingEnemy_Func_3 = 0xa2bf3e,
     fnNorfairLavajumpingEnemy_Func_4 = 0xa2bf7c, fnNorfairLavajumpingEnemy_Func_5 = 0xa2bfbc,
@@ -108,7 +105,6 @@ crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
     gRam8000_Default(o: i32) -> Ram8000_Default = [0x8000, o as isize];
-    Get_Flies(o: i32) -> Enemy_Flies = [0xf78, o as isize];
     Get_GunshipBottom(o: i32) -> Enemy_GunshipBottom = [0xf78, o as isize];
     Get_GunshipTop(o: i32) -> Enemy_GunshipTop = [0xf78, o as isize];
     Get_HirisingSlowfalling(o: i32) -> Enemy_HirisingSlowfalling = [0xf78, o as isize];
@@ -1141,71 +1137,6 @@ pub unsafe fn GunshipTop_1(k: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn CarryAdd16(rv: *mut u16, v: u16) -> bool {
-    unsafe {
-        let i: i32 = *rv as i32 + v as i32;
-        *rv = i as u16;
-        i >> 16 != 0
-    }
-}
-pub unsafe fn Flies_1(k: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_Flies(k as i32, game);
-        let v2: i32 = (*E).var_E as i32 >> 1;
-        let mut carry: bool = CarryAdd16(
-            &raw mut (*E).base.x_subpos,
-            ((byte!(@pointer (&raw const kSinCosTable8bit_Sext as *const i16).offset((v2 + 64i32) as isize); 0)
-                as i32)
-                << 8) as u16,
-        );
-        (*E).base.x_pos = ((*E).base.x_pos as i32
-            + (byte!(@pointer (&raw const kSinCosTable8bit_Sext as *const i16).offset((v2 + 64i32) as isize); 1)
-                as i8 as i32
-                + carry as i32)) as u16;
-        carry = CarryAdd16(
-            &raw mut (*E).base.y_subpos,
-            ((byte!(@pointer (&raw const kSinCosTable8bit_Sext as *const i16).offset(v2 as isize); 0)
-                as i32)
-                << 8) as u16,
-        );
-        (*E).base.y_pos = ((*E).base.y_pos as i32
-            + (byte!(@pointer (&raw const kSinCosTable8bit_Sext as *const i16).offset(v2 as isize); 1)
-                as i8 as i32
-                + carry as i32)) as u16;
-    }
-}
-pub unsafe fn Flies_2(k: u16, game: &mut Game) -> u16 {
-    unsafe {
-        let E = Get_Flies(k as i32, game);
-        let mut carry: bool = CarryAdd16(
-            &raw mut (*E).base.x_subpos,
-            ((byte!((*E).var_B; 0) as i32) << 8) as u16,
-        );
-        (*E).base.x_pos =
-            ((*E).base.x_pos as i32 + (byte!((*E).var_B; 1) as i8 as i32 + carry as i32)) as u16;
-        carry = CarryAdd16(
-            &raw mut (*E).base.y_subpos,
-            ((byte!((*E).var_C; 0) as i32) << 8) as u16,
-        );
-        let result: u16 =
-            ((*E).base.y_pos as i32 + byte!((*E).var_C; 1) as i8 as i32 + carry as i32) as u16;
-        (*E).base.y_pos = result;
-        result
-    }
-}
-pub unsafe fn Flies_3(k: u16, game: &mut Game) {
-    unsafe {
-        let v1: i32 = {
-            let actor = k;
-            actor_api::angle_to_player(&Runtime::new(game), Key::from_legacy(actor))
-        } as i32;
-        let E = Get_Flies(k as i32, game);
-        (*E).var_B = (2u16).wrapping_mul((kSinCosTable8bit_Sext[(v1 + 64) as usize]) as u16);
-        (*E).var_C = (4u16).wrapping_mul((kSinCosTable8bit_Sext[v1 as usize]) as u16);
-        (*E).var_D = word!(game.samus_y_pos);
-        (*E).var_F = (0xa2b1aai32) as u16;
-    }
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallLavaQuakeRocksFunc(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -2115,18 +2046,14 @@ crate::game::callback_dispatch! {
         }
         CallEnemyPreInstr((((*E0).var_F) as u32) | (0xa20000u32), game);
     };
-    [10661995] Flies_Init [] {
-        let E = Get_Flies(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_E = 0;
-        (*E).var_F = (0xa2b14ei32) as u16;
-        set_fields! {[(*E).base]; current_instruction = addr_kFlies_Ilist_B013 as u16,
-        spritemap_pointer = addr_kSpritemap_Nothing_A2 as u16, instruction_timer = 1,
-        spritemap_pointer = addr_kSpritemap_Nothing_A2 as u16, };
-    };
     [10662175] Flies_Main [] {
         NextRandom(game);
-        let E = Get_Flies(word!(game.cur_enemy_index) as i32, game);
-        CallEnemyPreInstr((((*E).var_F) as u32) | (0xa20000u32), game);
+        let phase = {
+            let runtime = Runtime::new(game);
+            let key = Key::from_legacy(runtime.word(0xe54));
+            runtime.resolve_actor(key, actors::access::AccessMode::Native).pre_instruction
+        };
+        CallEnemyPreInstr(0xa20000 | u32::from(phase), game);
     };
     [10662880] NorfairErraticFireball_Init [] {
         let E = Get_NorfairErraticFireball(word!(game.cur_enemy_index) as i32, game);
@@ -2483,6 +2410,7 @@ crate::game::callback_dispatch! {
         }
     };
     @functions [pub fn (game: &mut Game)];
+    [10661995] Flies_Init [] { crate::game::flies::initialize(game); };
     [10666562] NorfairRio_Init [] { crate::game::norfair_rio::initialize(false, game); };
     [10667763] LowerNorfairRio_Init [] { crate::game::norfair_rio::initialize(true, game); };
     @forward [pub unsafe fn (game: &mut Game)];
@@ -3053,64 +2981,6 @@ crate::game::callback_dispatch! {
         (*Get_GunshipTop(k as i32 + 128i32, game)).base.y_pos = (v5).wrapping_sub(1);
         (*E).base.y_pos = (word!(game.samus_y_pos)).wrapping_add(23);
     };
-    [10662222] Flies_4 [] {
-        let E = Get_Flies(k as i32, game);
-        let flies_var_A: u16 = (*E).var_A;
-        if flies_var_A != 0 {
-            (*E).var_A = (flies_var_A).wrapping_sub(1);
-        } else if ({ let (actor, threshold) = (k, 0x70); let delta = actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X); u8::from((delta as i16).wrapping_abs() as u16 >= threshold) }) & 1 == 0 {
-            Flies_3(k, game);
-            return;
-        }
-        Flies_1(k, game);
-        let v3: bool = ((*E).var_E as i32 + 32 & 0x1ff) == 0;
-        (*E).var_E = ((*E).var_E as i32 + 32 & 0x1ff) as u16;
-        if v3 {
-            (*E).var_F = (0xa2b17ci32) as u16;
-        }
-    };
-    [10662268] Flies_5 [] {
-        let E = Get_Flies(k as i32, game);
-        let flies_var_A: u16 = (*E).var_A;
-        if flies_var_A != 0 {
-            (*E).var_A = (flies_var_A).wrapping_sub(1);
-        } else if ({ let (actor, threshold) = (k, 0x70); let delta = actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X); u8::from((delta as i16).wrapping_abs() as u16 >= threshold) }) & 1 == 0 {
-            Flies_3(k, game);
-            return;
-        }
-        Flies_1(k, game);
-        let v3: bool = ((*E).var_E as i32 - 32i32 & 0x1ff) == 0;
-        (*E).var_E = ((*E).var_E as i32 - 32i32 & 0x1ff) as u16;
-        if v3 {
-            (*E).var_F = (0xa2b14ei32) as u16;
-        }
-    };
-    [10662314] Flies_6 [] {
-        let v1: u16 = Flies_2(k, game);
-        let E = Get_Flies(k as i32, game);
-        (*E).var_A = (*E).var_A.wrapping_add(1);
-        let reverse_direction: bool = if ((*E).var_C & 0x8000) == 0 {
-            if v1 < (*E).var_D {
-                return;
-            }
-            true
-        } else {
-            v1 < (*E).var_D
-        };
-        if reverse_direction {
-            (*E).var_C = -((*E).var_C as i32) as u16;
-            (*E).var_F = (0xa2b1d2i32) as u16;
-        };
-    };
-    [10662354] Flies_7 [] {
-        Flies_2(k, game);
-        let E = Get_Flies(k as i32, game);
-        (*E).var_A = (*E).var_A.wrapping_sub(1);
-        if ((*E).var_A & 0x8000) != 0 {
-            (*E).var_A = 24;
-            (*E).var_F = (0xa2b14ei32) as u16;
-        }
-    };
     [10675953] LavaSeahorse_Func_3 [] {
         LavaSeahorse_Func_6(game);
         let E = Get_LavaSeahorse(k as i32, game);
@@ -3347,6 +3217,10 @@ crate::game::callback_dispatch! {
         }
     };
     @functions [pub fn (k: u16, game: &mut Game)];
+    [10662222] Flies_4 [] { crate::game::flies::circle(k, false, game); };
+    [10662268] Flies_5 [] { crate::game::flies::circle(k, true, game); };
+    [10662314] Flies_6 [] { crate::game::flies::dive(k, false, game); };
+    [10662354] Flies_7 [] { crate::game::flies::dive(k, true, game); };
     [10666625] NorfairRio_Func_1 [] { crate::game::norfair_rio::follow_parent(k, false, game); };
     [10666727] NorfairRio_Func_2 [] { crate::game::norfair_rio::wait_to_dive(k, false, game); };
     [10666815] NorfairRio_Func_3 [] { crate::game::norfair_rio::finish_animation(k, false, false, game); };

@@ -1,8 +1,15 @@
 # M1a safe-signature review
 
-Commit: `29d74efd482cef934bb3c3ede28ea03dd777efac` (`origin/ci/m1a-fixpoint`).
+**Repair update (2026-10-25):** replacement `6d93dd10` restores all 22 production
+contracts and the verifier bridge listed below. A bounded source recheck found no
+remaining concrete safe-signature violation in its 86 conversions; hosted verification
+is pending. The script still omits `use ... as ...` alias edges. The affected aliases
+in this patch were reviewed, but future codemod runs must resolve or conservatively
+reject aliases rather than claim complete dependency analysis.
 
-**Block landing: 22 newly safe production entrypoints and one verifier bridge expose unchecked operations.** Locations below refer to this commit. This is a source-only, nonexhaustive review; the remaining conversions are not certified sound.
+Rejected predecessor: `29d74efd482cef934bb3c3ede28ea03dd777efac`.
+
+**Block landing of this predecessor: 22 newly safe production entrypoints and one verifier bridge expose unchecked operations.** Locations below refer to the rejected commit. This is a source-only, nonexhaustive review; the remaining conversions are not certified sound.
 
 ## Exact restoration list
 
