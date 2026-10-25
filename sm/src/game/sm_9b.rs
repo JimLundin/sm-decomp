@@ -23,7 +23,7 @@ use crate::game::sm_80::{Multiply16x16, QueueSfx1_Max1, QueueSfx1_Max6, QueueSfx
 use crate::game::sm_90::{
     CallSomeSamusCode, LoadProjectilePalette, Samus_GetBottom_R18, Samus_PostGrappleCollisionDetect,
 };
-use crate::game::sm_91::{Samus_LoadSuitPalette, Samus_Pose_CancelGrapple};
+use crate::game::sm_91::Samus_LoadSuitPalette;
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]
@@ -1088,7 +1088,7 @@ crate::game::callback_dispatch! {
     [10209366] GrappleBeamFunc_Cancel [] {
         QueueSfx1_Max15(7, game);
         if *ram_ptr!(game; 0xa1f) as i32 == kMovementType_16_Grappling as i32 {
-            Samus_Pose_CancelGrapple(game);
+            pt::request_fallback_pose(&mut Runtime::new(game));
         } else {
             CallSomeSamusCode(0x1c, game);
         }

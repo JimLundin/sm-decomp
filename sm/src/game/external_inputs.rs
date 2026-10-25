@@ -22,6 +22,8 @@ pub struct ExternalInputs {
     pub cancel_button: u16,
     pub switch_button: u16,
     pub run_button: u16,
+    pub aim_up_button: u16,
+    pub aim_down_button: u16,
     pub held: u16,
     pub pressed: u16,
     pub filtered_held: u16,

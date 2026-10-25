@@ -6,6 +6,7 @@ mod animation;
 mod atmosphere;
 pub(crate) mod content;
 pub(crate) mod effects;
+mod input;
 mod jump;
 mod landing;
 mod normalization;
@@ -23,6 +24,7 @@ pub(crate) use atmosphere::draw_atmospheric;
 pub(crate) fn verify_interpret(host: &mut impl effects::Host) {
     animation::interpret(host);
 }
+pub(crate) use input::{handle_input, request_fallback_pose};
 pub(crate) use jump::{initialize_jump, start_shinespark};
 #[cfg(sm_verify_dll)]
 pub(crate) use normalization::normalize as verify_normalize;

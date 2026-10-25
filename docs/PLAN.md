@@ -56,9 +56,9 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Observer unit tests (20) are not gameplay checks. Regenerate incompatible
    checkpoints from boot; preserve the old checked navigation build.
 2. **Current - lane B bank retirement.** `sm_94` is deleted; next is `sm_91`.
-   Consolidate normal-input pose selection and its forwarding dispatch using
-   existing owners; keep actual callers and legacy deletion together. The larger
-   X-ray, demo and equipment families retain their separate coverage obligations.
+   Normal input is consolidated; 1,017 bank lines remain. Next: scripted demo
+   playback, including setup, interpreter, input publication and actual callers.
+   Reuse shared owners; X-ray and equipment retain separate coverage obligations.
    Old `sm_91`/`sm_90` drafts remain dropped; inspect current source afresh.
    Natural grapple movie coverage remains pending despite direct ROM checks.
    Report added production and deleted legacy lines together; growth needs a reason.
@@ -178,16 +178,18 @@ and denied compiler/build-script launches stay restricted. Use permitted DLL/cty
 denials never pass. khronos_api blocks frontend linking; cached frontend metadata and
 direct DLL builds work. Keep crate-root unsafe-op enforcement.
 
-Measured concurrency (2026-10-25): coordinate up to two independent large builds
-in isolated sources/outputs with `-j 1` per Cargo process. Matched check/build pairs
-passed in 114.12 s serial versus 76.06 s concurrent (1.50x throughput; minimum free
-RAM 2.663 GiB). Low-memory replays/captures can overlap: two mutant builds plus
-replays passed in an 81.34 s build batch, minimum free RAM 3.422 GiB; a build,
-replay and emulator capture also passed with 4.273 GiB free. Mixed runs establish
-headroom, not an optimal throughput setting. Start another job only above 3 GiB
-free; stop the newest below 2 GiB or on resource errors. Trial larger overlap only
-with independent waiting work and retain it if completed-work throughput improves.
-Never rebuild a loaded DLL or edit checked sources; release idle slots immediately.
+Measured concurrency (2026-10-25): two isolated large builds with Cargo `-j 1`
+passed matched work in 76.06 s versus 114.12 s serial (1.50x throughput). A useful
+three-build trial also passed: 58.91/65.98/78.70 s, ~99 s with staggered starts,
+56% average / 86% peak CPU, minimum free RAM 3.080 GiB. This establishes three-job
+feasibility, not a matched speedup. Permit a monitored third ready build; account
+for ~1.6 GiB per compiler and remaining growth. Start only above 3 GiB free; stop
+the newest below 2 GiB or on resource errors. Replays/captures may overlap.
+Refill available slots immediately; do not synchronize starts for an experiment
+or hold slots after compilation (the trial exposed ~32 s of idle handoff).
+Judge overlap by completed useful work/time, memory and paging, not CPU alone;
+retain larger overlap only when throughput improves. Never edit checked sources
+or rebuild loaded DLLs. `-j 1` still allows parallel Rust code generation.
 Use [the iteration guide](ITERATION.md#windows-shell-setup) for paths/commands;
 its historical queues or examples do not override this plan.
 

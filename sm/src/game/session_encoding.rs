@@ -889,6 +889,8 @@ pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
         cancel_button: w(ram::button_config_itemcancel_y),
         switch_button: w(ram::button_config_itemswitch),
         run_button: w(ram::button_config_run_b),
+        aim_up_button: w(ram::button_config_aim_up_R),
+        aim_down_button: w(ram::button_config_aim_down_L),
         held: w(ram::joypad1_lastkeys),
         pressed: w(ram::joypad1_newkeys),
         filtered_held: w(ram::joypad1_input_samusfilter),

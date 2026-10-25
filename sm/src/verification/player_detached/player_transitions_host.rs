@@ -81,7 +81,9 @@ impl Content for Composed {
             .expect("unprepared transition table")
             .1;
         let source = match table {
-            TransitionTable::BlockFallPoses | TransitionTable::BlockLandPoses => Source::Loaded,
+            TransitionTable::InputPrograms
+            | TransitionTable::BlockFallPoses
+            | TransitionTable::BlockLandPoses => Source::Loaded,
             _ => Source::Native,
         };
         RomRecord {

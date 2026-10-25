@@ -23,6 +23,7 @@ impl Content for Runtime<'_> {
     }
     fn transition_table(&mut self, table: TransitionTable) -> RomRecord {
         let (source, address) = match table {
+            TransitionTable::InputPrograms => (Source::Loaded, 0x919ee2),
             TransitionTable::BlockFallPoses => (Source::Loaded, 0x91e921),
             TransitionTable::BlockLandPoses => (Source::Loaded, 0x91e9f3),
             TransitionTable::StandingTurn => (Source::Native, 0x91f9c2),
@@ -117,3 +118,16 @@ impl Effects for Runtime<'_> {
     }
 }
 impl Host for Runtime<'_> {}
+
+impl Runtime<'_> {
+    /// X-ray turning retains its existing legacy implementation and foreign interval.
+    pub(crate) fn handle_input(&mut self) {
+        if matches!(self.session().player.movement_and_facing >> 8, 5 | 21)
+            && self.inputs().frozen != 0
+        {
+            self.foreign(|game| unsafe { crate::game::sm_91::Samus_Func20(game) });
+        } else {
+            crate::game::player_transitions::handle_input(self);
+        }
+    }
+}

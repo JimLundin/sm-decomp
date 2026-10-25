@@ -39,8 +39,8 @@ use crate::game::grapple_swing::draw_rope as HandleGrappleBeamGfx;
 use crate::game::projectile_geometry::sine_offset;
 use crate::game::sm_88::EnableHdmaObjects;
 use crate::game::sm_91::{
-    DemoObjectInputHandler, MakeSamusFaceForward, Samus_Func20, Samus_InputHandler,
-    Samus_LoadSuitPalette, SamusFunc_E633,
+    DemoObjectInputHandler, MakeSamusFaceForward, Samus_Func20, Samus_LoadSuitPalette,
+    SamusFunc_E633,
 };
 
 pub use crate::types::HandlerFunc;
@@ -982,7 +982,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (game: &mut Game)];
     [9496861] Samus_InputHandler_E91D [] {
         DemoObjectInputHandler(game);
-        Samus_InputHandler(game);
+        Runtime::new(game).handle_input();
     };
     [9496870] HandleAutoJumpHack [] {
         let v0: u16 = word!(game.joypad1_newkeys);
@@ -991,7 +991,7 @@ crate::game::callback_dispatch! {
             word!(game.joypad1_newkeys |= (word!(game.button_config_jump_a)));
             word!(game.autojump_timer = 0);
         }
-        Samus_InputHandler(game);
+        Runtime::new(game).handle_input();
         word! {game; joypad1_newkeys = v0; samus_input_handler = ((0x90e913i32) as u16); }
     };
     @forward [pub unsafe fn (game: &mut Game)];
@@ -999,7 +999,7 @@ crate::game::callback_dispatch! {
         ((word!(game.samus_input_handler)) as u32) | (0x900000u32),
         game,
     );
-    [9496851] Samus_InputHandler_E913 => Samus_InputHandler(game);
+    [9496851] Samus_InputHandler_E913 => Runtime::new(game).handle_input();
     [9496856] Samus_Func20_ => Samus_Func20(game);
     @external {
         9496846 => [()];

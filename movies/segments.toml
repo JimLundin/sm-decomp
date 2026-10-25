@@ -34,6 +34,16 @@ require_hit = ["player_projectiles.prepare.weapons", "player_projectiles.history
 expect = ["area:ceres", "room:DF45"]
 after_expectations = 120
 
+# Full window reaches held-input pose changes, normal jumps and their animation tail.
+[[segment]]
+id = "samus-input-poses"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 8340
+frames = 440
+require_hit = ["samus.jump.normal", "transitions.phase.2", "transitions.phase.25"]
+expect = ["area:ceres", "room:DF45"]
+
 [[segment]]
 id = "area-crateria"
 inputs = "corpus-speed-booster.inputs"

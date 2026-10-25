@@ -5,6 +5,7 @@ use crate::game::player_collision::effects::Content as CollisionContent;
 /// Fixed tables only; compatibility locations live exclusively in the adapter.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum TransitionTable {
+    InputPrograms,
     BlockFallPoses,
     BlockLandPoses,
     StandingTurn,
