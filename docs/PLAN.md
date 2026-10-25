@@ -201,9 +201,11 @@ Keep artifacts in their checkout; seed dependencies, not full target trees, and 
 Direct builds honor `CARGO_INCREMENTAL=0`; use it for disposable snapshots and preserve others' caches.
 Check free disk and accumulated workspace/experiment build storage at session start
 and before each batch; monitor free disk during artifact-producing jobs. Maintain
-at least 10GiB free after budgeting the batch; clean up before starting work that
-would cross it. Below 5GiB, pause artifact-producing work and restore headroom.
-The former 1GiB floor allowed cache accumulation to exhaust useful capacity.
+at least 50GiB free after budgeting the batch. Begin cleanup below 75GiB and
+restore 100GiB free; below 50GiB, hold new builds, copies and captures until the
+reserve is restored. Already-running bounded jobs may finish; source work and
+checks using existing artifacts continue. The user raised this reserve on
+2026-10-25: 10GiB was insufficient for a dedicated roughly 500GB workstation.
 Budget copies, peak compiler temporaries, retained outputs and replay captures:
 measured direct output is 76.8MiB plus no-default 22.6MiB; reserve 300MiB for a fresh
 workflow or 200MiB remaining for an already-copied direct-only build, in addition
