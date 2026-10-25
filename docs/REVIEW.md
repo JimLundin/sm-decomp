@@ -113,16 +113,27 @@ every boss bank (~20k lines), and those banks hardly touch each other. Changes:
   then legacy); the <=80% target applies again to `sm_80`, `sm_82`, `sm_8b`, the non-enemy
   banks, where shared owners already exist.
 
-**Landing stall (10-26 00:00, reviewer).** `ci/b1-retirements` (sm_81, sm_88, sm_a0 deleted;
-sm_80 -226) passed every hosted row in run 40237511884; only its `land` rebase failed (main
-moved). Its Windows owner has not acted for an hour. Order, nothing else first:
-1. **B1 owner, now:** rebase `ci/b1-retirements` onto `origin/main` (8 commits: A seed rows,
-   one sm_aa line), rerun only the rows the rebase touched, `git push origin HEAD:main`.
-2. **B3 owner:** after (1), rebase its two commits (`sm_8f`, `sm_b2`) onto main, run
-   `item-plasma` plus the smoke set, push to main. Delete `ci/b-integrate` (contained in both).
-3. If (1) is not on main by 01:00, the B3 owner lands B1's branch the same way, then its own.
-No new B family starts on Windows until both are on main. Lane A: 41 rows remain; seed
-four or more per commit to reach 82/82 by 06:00.
+**Landed (10-26 01:00, reviewer).** The 00:00 order worked: 27 B commits reached main in the
+hour and **five bank files are gone** (`sm_88`, `sm_a0`, `sm_81`, `sm_8f`, `sm_b2`); legacy
+47,590 -> 40,331. Main green (runs 100-101); full corpus run 95 in progress. Next, in order:
+1. **Unsafe now moves instead of falling.** Bank-file unsafe fell 2,372 -> 1,862, but total only
+   4,188 -> 3,905: +227 unsafe lines landed in owned modules (`map_menu.rs` alone has 39, its
+   `unsafe fn advance/prepare/fade_palette` copied from `sm_81`). From now, a retirement may not
+   add `unsafe` to a non-bank file: convert the moved code to checked access (`word!`,
+   `ActorAccess`, `slot`) in the same commit, or leave that fn in the bank. Only hardware/IO
+   register fns may move unsafe, into the existing platform owner, named in the body. New owned
+   modules start `#![forbid(unsafe_code)]` (B5/B6 already do).
+2. **Production is the lagging waypoint** (114,607 vs <=114,000 at 12:00). Moves ran 82-97%
+   (`sm_81` 97%, `sm_b2` 96%, `sm_8f` 93%); `sm_a2` Goofball (67%) and B5 (85%) show it can be
+   done. B6's 183% (bbefa6a, +54 production) is not acceptable: B6's next commit must lower
+   production. Every B commit body states its ratio; above 90% needs the one-line reason.
+3. **Lane A:** 55/82 seeded, but `tools/movie_inputs.py` is still 1,766 lines: seeding rows
+   without deleting their recipes is half of A2. The next A commit deletes every recipe no
+   unseeded row uses (name the line count), then seeds the remaining 27 rows, 6+ per commit.
+4. **Queues now:** B1 `sm_80` (714 left: delete it before more `sm_82`), B2 `sm_8b` (3,420),
+   B3 `sm_a2` -> `sm_a3`, B4 (Windows M agent) `sm_a8` families -> `sm_b3` (M2 sm_a8 landed in
+   090d163; no more `M:` codemods on banks), B5 `sm_a9`, B6 `sm_a6`. Cloud M: M3 (`ram_ptr!`)
+   outside banks on `ci/m3-ram-bytes`; delete the obsolete `ci/m2-sm-a8`.
 
 **Lane M — mechanical safety (one agent, new: start a fourth agent if the machine
 allows, else it takes the B3 slot; M's local work is `cargo check` only).**
@@ -360,6 +371,14 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
 
 ## Check-ins
 
+- **2026-10-26 01:00 CET (e3e5237), no stall; B landing cleared:** agent commits since c1be617:
+  A 4 (seeds 41 -> 55/82, shard grouping), M 3 (sm_a8 M2 landed, fixpoint rerun, harness fix),
+  B 27: B1 10 (`sm_88`, `sm_a0`, `sm_81` deleted; `sm_80` -1,791), B2 12 (`sm_8b` -1,508), B3 3
+  (`sm_8f`, `sm_b2` deleted; `sm_a2` Goofball), B5 1, B6 1 (both auto-landed, ~5 min runs). All
+  `Score:`, 0 docs-only. Score `44/44 · 40331 · 114607 · 3905 · 39514` (last 44 · 47590 · 115354 ·
+  4188 · 39463); warnings 255 unique (491 with duplicates); hooks 607/95. 10-26 12:00: legacy and
+  banks **ahead** (18:00 targets met), unsafe on (5 over), production **behind** (607 over),
+  recipes behind (1,766 unchanged). Verification +51, non-bank unsafe +227: see Landed (01:00).
 - **2026-10-26 00:00 CET (c1be617), B landing stall, 3rd of last 4 check-ins:** agent
   commits since 853aa47: A 4 (6c366e5 Golden Torizo quirk fix + 2 regression rows; 3 A2 seed
   rows), M 0 on main (`ci/m2-sm-a8` rebased 23:44, run queued), **B 0 written, 0 landed**
@@ -429,13 +448,6 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
   legacy 49698 · production 115375 · unsafe 4554 · verification 39232` (last 33 · 49901 ·
   115411 · 4567 · 39228); warnings 357 (362). 18:00: checks, legacy, banks met;
   production 75 over (on pace); unsafe/M1 branch and green `ci.yml` still open. No changes.
-- **2026-10-25 15:40 CET (f2d3a05), throughput reset 2 at the user's request:** checks
-  33/44 (18:00 target 28 already met), sm_90 and sm_89 deleted, legacy 49,901, unsafe
-  4,567. Added lane M (scripted unsafe-primitive codemods), lane C (hosted CI as the
-  verification pipeline; `segments.yml` landed), unsafe-first scoreboard and unsafe
-  waypoints. PLAN's Fast loop rewritten in ASCII: an agent's editor re-encoded it each
-  commit (15 KB -> 53 KB in three commits). `ci.yml` red since 10-24 11:53: C0.
-  16:10: safe-`word!` prototype passes 40/40 rows on hosted Segments; M1 ready to land.
 
 ## Lane watch (2026-10-24 23:52)
 
