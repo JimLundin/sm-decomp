@@ -450,3 +450,8 @@ spawning its projectile, including the shared spawn parameter at `$1993`.
 `seed-mother-brain.inputs` for 4,560 frames from the instruction-boundary seed.
 It covers the sound-return, charging-opcode and rainbow-explosion spawn values;
 this regression does not qualify Mother Brain defeat. Seeds and inputs stay local.
+
+`boss-draygon` uses `100-boundary:259` and `seed-draygon.inputs`; require a
+fresh defeat and 120 following frames. `draygon-bubble-word-counter` (18 frames)
+and `space-jump-bubble-word-counter` (440 frames, `100-boundary:260`) retain the
+first underwater bubble timing mismatches and three following frames.

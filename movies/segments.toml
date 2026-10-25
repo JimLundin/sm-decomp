@@ -180,7 +180,14 @@ pending = "No qualified encounter-to-completion route with fresh boss state and 
 
 [[segment]]
 id = "boss-draygon"
-pending = "No qualified encounter-to-completion route with fresh boss state and precise encounter/death observations."
+seed = "100-boundary:259"
+seed_sha256 = "d8a5b0b9a72ca9d31ab86d21c2ef931303f3a6b48459b057a8db309fe89723d7"
+inputs = "seed-draygon.inputs"
+input_sha256 = "d312028a706ed626db96c7ac6394e18b5dad9c0e4fa74f1472d0d526307c9901"
+start_frame = 0
+frames = 2500
+expect = ["boss:draygon", "room:DA60"]
+after_expectations = 120
 
 [[segment]]
 id = "boss-golden-torizo"
@@ -617,3 +624,25 @@ input_sha256 = "251f4aadb037398f3197c7b0c10b53eba85e50e3eed8039faca0c49a2d449799
 start_frame = 0
 frames = 4560
 expect = ["room:DD58", "state:8"]
+
+# Compare the original first bubble mismatch and three following frames.
+[[segment]]
+id = "draygon-bubble-word-counter"
+seed = "100-boundary:259"
+seed_sha256 = "d8a5b0b9a72ca9d31ab86d21c2ef931303f3a6b48459b057a8db309fe89723d7"
+inputs = "seed-draygon.inputs"
+input_sha256 = "d312028a706ed626db96c7ac6394e18b5dad9c0e4fa74f1472d0d526307c9901"
+start_frame = 0
+frames = 18
+expect = ["room:DA60"]
+
+# Compare the original first bubble mismatch and three following frames.
+[[segment]]
+id = "space-jump-bubble-word-counter"
+seed = "100-boundary:260"
+seed_sha256 = "8934feb66211432cba2165d62dc279470cccf550fc78d85e74208f09e8df024b"
+inputs = "seed-space-jump.inputs"
+input_sha256 = "a50f19a46b89b310a412155002fde5d4501df5b45164341c6e957f01d3fd7524"
+start_frame = 0
+frames = 440
+expect = ["room:D9AA"]

@@ -79,7 +79,7 @@ fn clear_buffer_if_suited(h: &mut impl Host) {
 fn bubbles(h: &mut impl Host) {
     let top = pose::loaded_top(h);
     if top.wrapping_sub(24).wrapping_sub(h.inputs().fx_y) & 0x8000 == 0
-        && h.inputs().nmi_counter_low & 0x7f == 0
+        && h.inputs().frame & 0x7f == 0
         && h.session().atmospheric.slots[2].frame_and_kind == 0
     {
         h.session_mut().atmospheric.slots[2].frame_and_kind = 0x500;
