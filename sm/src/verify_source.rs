@@ -2,6 +2,10 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/game/display_refresh.rs",
+        include_bytes!("game/display_refresh.rs"),
+    ),
+    (
         "sm/src/game/controller_input.rs",
         include_bytes!("game/controller_input.rs"),
     ),

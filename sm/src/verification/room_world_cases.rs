@@ -49,7 +49,7 @@ pub(crate) fn capture(id: u32, owner: &GameOwner) -> Option<Vec<u8>> {
 }
 unsafe fn nmi_and_draw(g: &mut Game) {
     unsafe {
-        crate::game::sm_80::Vector_NMI(g);
+        crate::game::display_refresh::run(g);
         crate::cpu_infra::DrawFrameToPpu(g);
     }
 }

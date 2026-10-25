@@ -1,4 +1,5 @@
 use crate::game::decompression::{self, decompress_to_ram};
+use crate::game::display_refresh::ScrollingDmaLayout;
 use crate::game::music::HandleMusicQueue;
 pub use crate::game::prelude::*;
 use crate::game::room_state::load_tiles_and_palette;
@@ -6,25 +7,11 @@ use crate::game::save_slots;
 
 pub use crate::game::constants::bank_60::*;
 
-use crate::game::animated_tiles;
 use crate::game::room_mechanisms::reload_graphics;
 use crate::game::sm_8b::InitializeIoDisplayLogo_Async;
 use crate::rtl::RtlApuUpload;
 
-crate::typed_struct! {
-    [
-        #[derive(Copy, Clone)]
-        #[repr(C, packed)]
-    ];
-    pub struct SamusTileAnimationTileDefs {
-        pub src: LongPtr;
-        pub part1_size, part2_size: u16;
-    }
-
-}
-
 const RomPtr_80: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x80>;
-const RomPtr_92: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x92>;
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
 }
@@ -79,41 +66,6 @@ pub fn Multiply16x16(a: u16, j: u16, game: &mut Game) -> u32 {
     game.g_ram[0x5eb..0x5ed].copy_from_slice(&j.to_le_bytes());
     let result: u32 = (a as u32).wrapping_mul(j as u32);
     result
-}
-pub unsafe fn WaitForNMI_Async(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        if *ram_ptr!(game; 0x782) != 0 {
-            *ram_ptr!(game; 0x782) = 0;
-            return 0 as CoroutineRet;
-        }
-        *ram_ptr!(game; 0x5b4) = 1;
-        *ram_ptr!(game; 0x782) = 1;
-        1 as CoroutineRet
-    }
-}
-pub unsafe fn WaitForNMI_NoUpdate_Async(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        if *ram_ptr!(game; 0x782) != 0 {
-            *ram_ptr!(game; 0x782) = 0;
-            return 0 as CoroutineRet;
-        }
-        *ram_ptr!(game; 0x782) = 1;
-        1 as CoroutineRet
-    }
-}
-pub unsafe fn EnableNMI(game: &mut Game) {
-    unsafe {
-        let v0: u8 = (*ram_ptr!(game; 0x84)) | (0x80u8);
-        WriteReg(NMITIMEN as u16, (*ram_ptr!(game; 0x84)) | (0x80u8), game);
-        *ram_ptr!(game; 0x84) = v0;
-    }
-}
-pub unsafe fn DisableNMI(game: &mut Game) {
-    unsafe {
-        let v0: u8 = (*ram_ptr!(game; 0x84)) & (0x7fu8);
-        WriteReg(NMITIMEN as u16, (*ram_ptr!(game; 0x84)) & (0x7fu8), game);
-        *ram_ptr!(game; 0x84) = v0;
-    }
 }
 pub unsafe fn ScreenOff(game: &mut Game) {
     unsafe {
@@ -197,7 +149,7 @@ pub unsafe fn Vector_RESET_Async(game: &mut Game) -> CoroutineRet {
             word! { game, 0;
                 nmi_copy_samus_halves, nmi_copy_samus_top_half_src, nmi_copy_samus_bottom_half_src,
             }
-            EnableNMI(game);
+            crate::game::display_refresh::enable(true, game);
             RtlApuWrite(APUI00, 0, game);
             RtlApuWrite(APUI01, 0, game);
             RtlApuWrite(APUI02, 0, game);
@@ -385,128 +337,6 @@ pub unsafe fn QueueMode7Transfers(db: u8, k: u16, game: &mut Game) {
         crate::game::mode7_transfers::enqueue_rom(address, game);
     }
 }
-pub unsafe fn NMI_ProcessVramWriteQueue(game: &mut Game) {
-    unsafe {
-        let tail = game.vram_write_queue_tail();
-        if tail != 0 {
-            // The sentinel uses the byte tail, which need not lie on an entry boundary.
-            game.write_vram_queue_word(tail, 0, 0);
-            WriteRegWord(DMAP1 as u16, 0x1801, game);
-            let read_word = |game: &Game, address: usize| {
-                u16::from_le_bytes([game.g_ram[address], game.g_ram[address + 1]])
-            };
-            // Entries are seven packed bytes; the consumer advances without bank wrap.
-            let mut entry = 0xd0;
-            loop {
-                let size = read_word(game, entry);
-                if size == 0 {
-                    break;
-                }
-                crate::rtl::register_writes! { game;
-                    word(DAS1L as u16, size); word(A1T1L as u16, read_word(game, entry + 2));
-                    byte(A1B1 as u16, game.g_ram[entry + 4]);
-                }
-                let increment = if read_word(game, entry + 5) & 0x8000 != 0 {
-                    0x81
-                } else {
-                    0x80
-                };
-                // This word write also clears VMADDL before the full destination write.
-                crate::rtl::register_writes! { game;
-                    word(VMAIN as u16, increment); word(VMADDL as u16, read_word(game, entry + 5));
-                    byte(MDMAEN as u16, 2);
-                }
-                entry += 7;
-            }
-        }
-        game.set_vram_write_queue_tail(0);
-        Nmi_ProcessHorizScrollingDma(game);
-        Nmi_ProcessVertScrollingDma(game);
-    }
-}
-#[derive(Clone, Copy)]
-enum ScrollingDmaLayout {
-    Column,
-    Row,
-}
-
-impl ScrollingDmaLayout {
-    fn second_half_destination(self, address: u16) -> u16 {
-        match self {
-            Self::Column => address.wrapping_add(1),
-            Self::Row => address | 0x20,
-        }
-    }
-}
-
-unsafe fn transfer_scrolling_tilemap(
-    parameters: usize,
-    initial_sources: [u16; 2],
-    layout: ScrollingDmaLayout,
-    game: &mut Game,
-) {
-    unsafe {
-        let enable = parameters + 12;
-        if game.g_ram[enable] == 0 {
-            return;
-        }
-        // Only the low enable byte is consumed, before reading transfer parameters.
-        game.g_ram[enable] = 0;
-        // Sizes, destinations and wrapped sources are three pairs of RAM words.
-        let read_parameter = |game: &Game, offset: usize| {
-            u16::from_le_bytes([
-                game.g_ram[parameters + offset],
-                game.g_ram[parameters + offset + 1],
-            ])
-        };
-
-        let destination = read_parameter(game, 4);
-        crate::rtl::register_writes! { game;
-            word(VMADDL as u16, destination); word(DMAP1 as u16, 0x1801);
-            word(A1T1L as u16, initial_sources[0]); byte(A1B1 as u16, 0x7e);
-        }
-        let size = read_parameter(game, 0);
-        // A zero unwrapped size still triggers a full 65,536-byte DMA.
-        crate::rtl::register_writes! { game;
-            word(DAS1L as u16, size); byte(MDMAEN as u16, 2);
-            word(VMADDL as u16,
-            layout.second_half_destination(destination),); word(DAS1L as u16, size);
-            word(A1T1L as u16, initial_sources[1]); byte(MDMAEN as u16, 2);
-        }
-
-        // Prepare the wrapped source even when there is no wrapped transfer.
-        WriteRegWord(A1T1L as u16, read_parameter(game, 8), game);
-        let wrapped_size = read_parameter(game, 2);
-        if wrapped_size != 0 {
-            WriteRegWord(DAS1L as u16, wrapped_size, game);
-            let wrapped_destination = read_parameter(game, 6);
-            crate::rtl::register_writes! { game;
-                word(VMADDL as u16, wrapped_destination); byte(MDMAEN as u16, 2);
-                word(VMADDL as u16,
-                layout.second_half_destination(wrapped_destination),); word(DAS1L as u16, wrapped_size);
-                word(A1T1L as u16, read_parameter(game, 10)); byte(MDMAEN as u16, 2);
-            }
-        }
-    }
-}
-
-pub unsafe fn Nmi_ProcessHorizScrollingDma(game: &mut Game) {
-    unsafe {
-        WriteReg(VMAIN as u16, 0x81, game);
-        let layout = ScrollingDmaLayout::Column;
-        transfer_scrolling_tilemap(0x956, [0xc8c8, 0xc908], layout, game);
-        transfer_scrolling_tilemap(0x972, [0xc9d0, 0xca10], layout, game);
-    }
-}
-
-pub unsafe fn Nmi_ProcessVertScrollingDma(game: &mut Game) {
-    unsafe {
-        WriteReg(VMAIN as u16, 0x80, game);
-        let layout = ScrollingDmaLayout::Row;
-        transfer_scrolling_tilemap(0x964, [0xc948, 0xc98c], layout, game);
-        transfer_scrolling_tilemap(0x980, [0xca50, 0xca94], layout, game);
-    }
-}
 // Byte-backed queue layout from ram_map: three channels, sixteen slots each.
 pub(crate) fn queue_sfx(channel: usize, sound: u8, max_queued: u8, game: &mut Game) -> u16 {
     #[cfg(sm_verify_dll)]
@@ -642,180 +472,6 @@ impl GraphicsAsset {
     }
 }
 
-pub unsafe fn NmiUpdateIoRegisters(game: &mut Game) {
-    unsafe {
-        crate::rtl::register_writes! { game;
-            byte(NMITIMEN as u16, game.g_ram[0x84]); byte(INIDISP as u16, game.g_ram[0x51]);
-            byte(OBSEL as u16, game.g_ram[0x52]); byte(BGMODE as u16, game.g_ram[0x55]);
-            byte(MOSAIC as u16, game.g_ram[0x57]); byte(BG1SC as u16, game.g_ram[0x58]);
-            byte(BG2SC as u16, game.g_ram[0x59]); byte(BG3SC as u16, game.g_ram[0x5a]);
-            byte(BG4SC as u16, game.g_ram[0x5c]); byte(BG12NBA as u16, game.g_ram[0x5d]);
-            byte(BG34NBA as u16, game.g_ram[0x5e]); byte(M7SEL as u16, game.g_ram[0x5f]);
-            byte(W12SEL as u16, game.g_ram[0x60]); byte(W34SEL as u16, game.g_ram[0x61]);
-            byte(WOBJSEL as u16, game.g_ram[0x62]); byte(WH0 as u16, game.g_ram[0x63]);
-            byte(WH1 as u16, game.g_ram[0x64]); byte(WH2 as u16, game.g_ram[0x65]);
-            byte(WH3 as u16, game.g_ram[0x66]); byte(WBGLOG as u16, game.g_ram[0x67]);
-            byte(WOBJLOG as u16, game.g_ram[0x68]);
-        }
-        game.g_ram[0x6a] = game.g_ram[0x69];
-        crate::rtl::register_writes! { game;
-            byte(TM as u16, game.g_ram[0x69]); byte(TMW as u16, game.g_ram[0x6c]);
-            byte(TS as u16, game.g_ram[0x6b]); byte(TSW as u16, game.g_ram[0x6d]);
-            byte(CGWSEL as u16, game.g_ram[0x6f]); byte(CGADSUB as u16, game.g_ram[0x72]);
-        }
-        game.g_ram[0x70] = game.g_ram[0x6e];
-        game.g_ram[0x73] = game.g_ram[0x71];
-        crate::rtl::register_writes! { game;
-            byte(COLDATA as u16, game.g_ram[0x74]); byte(COLDATA as u16, game.g_ram[0x75]);
-            byte(COLDATA as u16, game.g_ram[0x76]); byte(SETINI as u16, game.g_ram[0x77]);
-        }
-
-        // Scroll and Mode 7 words latch low then high bytes through the same address.
-        crate::rtl::register_writes! { game;
-            byte(BG1HOFS as u16, game.g_ram[0xb1]); byte(BG1HOFS as u16, game.g_ram[0xb2]);
-            byte(BG1VOFS as u16, game.g_ram[0xb3]); byte(BG1VOFS as u16, game.g_ram[0xb4]);
-            byte(BG2HOFS as u16, game.g_ram[0xb5]); byte(BG2HOFS as u16, game.g_ram[0xb6]);
-            byte(BG2VOFS as u16, game.g_ram[0xb7]); byte(BG2VOFS as u16, game.g_ram[0xb8]);
-            byte(BG3HOFS as u16, game.g_ram[0xb9]); byte(BG3HOFS as u16, game.g_ram[0xba]);
-            byte(BG3VOFS as u16, game.g_ram[0xbb]); byte(BG3VOFS as u16, game.g_ram[0xbc]);
-            byte(BG4HOFS as u16, game.g_ram[0xbd]); byte(BG4HOFS as u16, game.g_ram[0xbe]);
-            byte(BG4VOFS as u16, game.g_ram[0xbf]); byte(BG4VOFS as u16, game.g_ram[0xc0]);
-        }
-        game.g_ram[0x7ec] = game.g_ram[0x56];
-        if game.g_ram[0x55] & 7 == 7 || game.g_ram[0x56] & 7 == 7 {
-            crate::rtl::register_writes! { game;
-                byte(M7A as u16, game.g_ram[0x78]); byte(M7A as u16, game.g_ram[0x79]);
-                byte(M7B as u16, game.g_ram[0x7a]); byte(M7B as u16, game.g_ram[0x7b]);
-                byte(M7C as u16, game.g_ram[0x7c]); byte(M7C as u16, game.g_ram[0x7d]);
-                byte(M7D as u16, game.g_ram[0x7e]); byte(M7D as u16, game.g_ram[0x7f]);
-                byte(M7X as u16, game.g_ram[0x80]); byte(M7X as u16, game.g_ram[0x81]);
-                byte(M7Y as u16, game.g_ram[0x82]); byte(M7Y as u16, game.g_ram[0x83]);
-            }
-        }
-    }
-}
-pub unsafe fn NmiUpdatePalettesAndOam(game: &mut Game) {
-    unsafe {
-        // Channel 0 uploads the OAM entries and their high table from RAM.
-        crate::rtl::register_writes! { game;
-            word(DMAP0 as u16, 0x0400); word(A1T0L as u16, 0x0370);
-            byte(A1B0 as u16, 0); word(DAS0L as u16, 0x0220);
-            word(OAMADDL as u16, 0);
-        }
-
-        // Channel 1 uploads palette_buffer to CGRAM.
-        crate::rtl::register_writes! { game;
-            word(DMAP1 as u16, 0x2200); word(A1T1L as u16, 0xc000);
-            byte(A1B1 as u16, 0x7e); word(DAS1L as u16, 0x0200);
-            byte(CGADD as u16, 0); byte(MDMAEN as u16, 3);
-        }
-        crate::verify_probe::hit("palette.dma.uploaded");
-    }
-}
-unsafe fn transfer_samus_tile_half(descriptor_addr: u16, vram_addr: u16, game: &mut Game) {
-    unsafe {
-        // Keep the diagnostic and failure flag for low-address ROM mirrors.
-        let _ = RomPtr_92(descriptor_addr, game);
-        let descriptor = 0x928000 | u32::from(descriptor_addr & 0x7fff);
-        // Packed fields: source address at 0, bank at 2, and byte counts at 3 and 5.
-        crate::rtl::register_writes! { game;
-            word(VMADDL as u16, vram_addr); word(DMAP1 as u16, 0x1801);
-            word(A1T1L as u16, game.read_rom_word(descriptor, 0)); byte(A1B1 as u16, game.read_rom_byte(descriptor, 2));
-        }
-        // A zero first count still runs a 65,536-byte DMA.
-        crate::rtl::register_writes! { game;
-            word(DAS1L as u16, game.read_rom_word(descriptor, 3)); byte(MDMAEN as u16, 2);
-        }
-
-        // Prepare the second destination/source even when its count is zero.
-        WriteRegWord(VMADDL as u16, vram_addr.wrapping_add(0x100), game);
-        let second_source = game
-            .read_rom_word(descriptor, 0)
-            .wrapping_add(game.read_rom_word(descriptor, 3));
-        WriteRegWord(A1T1L as u16, second_source, game);
-        if game.read_rom_word(descriptor, 5) != 0 {
-            crate::rtl::register_writes! { game;
-                word(DAS1L as u16, game.read_rom_word(descriptor, 5)); byte(MDMAEN as u16, 2);
-            }
-        }
-    }
-}
-
-pub unsafe fn NmiTransferSamusToVram(game: &mut Game) {
-    unsafe {
-        WriteReg(VMAIN as u16, 0x80, game);
-        if game.g_ram[0x71d] != 0 {
-            let top_half_src = u16::from_le_bytes([game.g_ram[0x71f], game.g_ram[0x720]]);
-            transfer_samus_tile_half(top_half_src, 0x6000, game);
-        }
-        if game.g_ram[0x71e] != 0 {
-            let bottom_half_src = u16::from_le_bytes([game.g_ram[0x721], game.g_ram[0x722]]);
-            transfer_samus_tile_half(bottom_half_src, 0x6080, game);
-        }
-    }
-}
-pub unsafe fn Vector_NMI(game: &mut Game) {
-    unsafe {
-        const BG_MODE: usize = 0x55;
-        const BG_MODE_FAKE: usize = 0x56;
-        const HDMA_ENABLE: usize = 0x85;
-        const WAITING_FOR_NMI: usize = 0x5b4;
-        const FRAME_COUNTER_BYTE: usize = 0x5b5;
-        const FRAME_COUNTER_WORD: usize = 0x5b6;
-        const FRAME_COUNTER_INCLUDING_LAG: usize = 0x5b8;
-        const FRAMES_MISSED: usize = 0x5ba;
-        const FRAMES_MISSED_MAX: usize = 0x5bb;
-
-        if game.g_ram[WAITING_FOR_NMI] != 0 {
-            NmiUpdatePalettesAndOam(game);
-            NmiTransferSamusToVram(game);
-            animated_tiles::upload_pending(game);
-            NmiUpdateIoRegisters(game);
-            for slot in 0..6 {
-                let offset = slot * 2;
-                let channels =
-                    u16::from_le_bytes([game.g_ram[0x18b4 + offset], game.g_ram[0x18b5 + offset]]);
-                if channels != 0 {
-                    // The bank-slot word stores the DMA register offset in its low byte.
-                    let bank_slot = u16::from(game.g_ram[0x18c0 + offset]);
-                    let table_pointer = u16::from_le_bytes([
-                        game.g_ram[0x18d8 + offset],
-                        game.g_ram[0x18d9 + offset],
-                    ]);
-                    WriteRegWord(A1T0L as u16 + bank_slot, table_pointer, game);
-                }
-            }
-            if game.g_ram[BG_MODE] == 7 || game.g_ram[BG_MODE_FAKE] == 7 {
-                crate::game::mode7_transfers::process(game);
-            }
-            NMI_ProcessVramWriteQueue(game);
-            crate::game::vram_read_queue::process(game);
-            WriteReg(HDMAEN as u16, game.g_ram[HDMA_ENABLE], game);
-            game.g_ram[WAITING_FOR_NMI] = 0;
-            game.g_ram[FRAMES_MISSED] = 0;
-            game.g_ram[FRAME_COUNTER_BYTE] = game.g_ram[FRAME_COUNTER_BYTE].wrapping_add(1);
-            let frame_counter = u16::from_le_bytes([
-                game.g_ram[FRAME_COUNTER_WORD],
-                game.g_ram[FRAME_COUNTER_WORD + 1],
-            ])
-            .wrapping_add(1);
-            game.g_ram[FRAME_COUNTER_WORD..FRAME_COUNTER_WORD + 2]
-                .copy_from_slice(&frame_counter.to_le_bytes());
-        } else {
-            game.g_ram[FRAMES_MISSED] = game.g_ram[FRAMES_MISSED].wrapping_add(1);
-            if game.g_ram[FRAMES_MISSED] >= game.g_ram[FRAMES_MISSED_MAX] {
-                game.g_ram[FRAMES_MISSED_MAX] = game.g_ram[FRAMES_MISSED];
-            }
-        }
-        let frame_counter = u16::from_le_bytes([
-            game.g_ram[FRAME_COUNTER_INCLUDING_LAG],
-            game.g_ram[FRAME_COUNTER_INCLUDING_LAG + 1],
-        ])
-        .wrapping_add(1);
-        game.g_ram[FRAME_COUNTER_INCLUDING_LAG..FRAME_COUNTER_INCLUDING_LAG + 2]
-            .copy_from_slice(&frame_counter.to_le_bytes());
-    }
-}
 pub unsafe fn CopyToVramNow(vram_dst: u16, src: u32, size: u16, game: &mut Game) {
     unsafe {
         crate::rtl::register_writes! { game;
@@ -840,7 +496,7 @@ pub unsafe fn Play20FramesOfMusic_Async(game: &mut Game) -> CoroutineRet {
         let resume_state: *mut u8 = ram_ptr!(game; 0x614);
         let resume = *resume_state;
         if resume == 0 {
-            EnableNMI(game);
+            crate::game::display_refresh::enable(true, game);
             word!(game.my_counter = 0);
         }
         if resume <= 1 {
@@ -848,12 +504,12 @@ pub unsafe fn Play20FramesOfMusic_Async(game: &mut Game) -> CoroutineRet {
             loop {
                 if !waiting {
                     if word!(game.my_counter) == 20 {
-                        DisableNMI(game);
+                        crate::game::display_refresh::enable(false, game);
                         break;
                     }
                     HandleMusicQueue(game);
                 }
-                let yielded: u8 = WaitForNMI_Async(game);
+                let yielded: u8 = crate::game::display_refresh::wait(true, game);
                 if yielded != 0 {
                     *resume_state = 1;
                     return yielded;
@@ -869,7 +525,7 @@ pub unsafe fn Play20FramesOfMusic_Async(game: &mut Game) -> CoroutineRet {
 pub unsafe fn ResumeGameplay(game: &mut Game) {
     unsafe {
         WriteRegWord(MDMAEN as u16, 0, game);
-        DisableNMI(game);
+        crate::game::display_refresh::enable(false, game);
         crate::game::scanline_irq::disable(game);
         load_tiles_and_palette(game);
         crate::game::room_entry::background::load(
@@ -878,7 +534,7 @@ pub unsafe fn ResumeGameplay(game: &mut Game) {
         );
         DisplayViewablePartOfRoom(game);
         reload_graphics(game);
-        EnableNMI(game);
+        crate::game::display_refresh::enable(true, game);
         crate::game::scanline_irq::enable(false, game);
     }
 }
@@ -902,7 +558,7 @@ pub unsafe fn DisplayViewablePartOfRoom(game: &mut Game) {
                 word!(game.vram_blocks_to_update_y_block = word!(game.bg2_y_block));
                 UploadBackgroundDataColumn(game);
             }
-            NMI_ProcessVramWriteQueue(game);
+            crate::game::display_refresh::flush_tilemaps(game);
             word!(game.layer1_x_block += 1);
             word!(game.bg1_x_block += 1);
             word!(game.layer2_x_block += 1);

@@ -153,10 +153,10 @@ impl EntryEffects for Runtime<'_> {
                     game::sm_80::SetElevatorsAsUsed(game);
                 }
                 LeafEffect::EnableNmi => {
-                    game::sm_80::EnableNMI(game);
+                    crate::game::display_refresh::enable(true, game);
                 }
                 LeafEffect::DisableNmi => {
-                    game::sm_80::DisableNMI(game);
+                    crate::game::display_refresh::enable(false, game);
                 }
                 LeafEffect::EnableIrq => {
                     game::scanline_irq::enable(false, game);
@@ -215,8 +215,8 @@ impl EntryEffects for Runtime<'_> {
     fn wait(&mut self, cause: EntryWait) -> u8 {
         self.foreign(|game| unsafe {
             match cause {
-                EntryWait::Nmi => game::sm_80::WaitForNMI_Async(game),
-                EntryWait::NoUpdate => game::sm_80::WaitForNMI_NoUpdate_Async(game),
+                EntryWait::Nmi => crate::game::display_refresh::wait(true, game),
+                EntryWait::NoUpdate => crate::game::display_refresh::wait(false, game),
                 EntryWait::Music => game::sm_80::Play20FramesOfMusic_Async(game),
                 EntryWait::Mechanisms => room_mechanisms::run_door(game),
             }

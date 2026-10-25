@@ -68,7 +68,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                 done = true;
                 break;
             }
-            crate::game::sm_80::Vector_NMI(g);
+            crate::game::display_refresh::run(g);
             crate::cpu_infra::DrawFrameToPpu(g);
         }
         assert!(done, "composed.start.completed");
@@ -80,7 +80,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         let mut transferred = false;
         for step in 0..16 {
             transferred = checks::source_transfer(&mut Runtime::new(g));
-            crate::game::sm_80::Vector_NMI(g);
+            crate::game::display_refresh::run(g);
             crate::cpu_infra::DrawFrameToPpu(g);
             assert!(!g.g_fail, "composed.source.transfer-no-diagnostic-{step}");
             if transferred {

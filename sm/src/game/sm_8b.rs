@@ -21,9 +21,8 @@ use crate::game::player_projectiles::prepare;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session_runtime::initialize_player;
 use crate::game::sm_80::{
-    ClearOamExt, ClearUnusedOam, CopySuperMetroidString, EnableNMI, GraphicsAsset, HandleFadeIn,
+    ClearOamExt, ClearUnusedOam, CopySuperMetroidString, GraphicsAsset, HandleFadeIn,
     HandleFadeOut, QueueMode7Transfers, QueueSfx1_Max15, QueueSfx2_Max6, QueueSfx3_Max6,
-    WaitForNMI_Async,
 };
 use crate::game::visual_runtime::{initialize_intro_wave, initialize_title_gradient};
 
@@ -717,13 +716,13 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
             GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
             *ram_ptr!(game; 0x51) = 0x80;
             word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce1e9, 0));
-            EnableNMI(game);
+            crate::game::display_refresh::enable(true, game);
             word! { game, 1; screen_fade_delay, screen_fade_counter }
         }
         // Stages 1..=6 resume a pending NMI before drawing the next frame.
         while stage <= 6 {
             if stage != 0 {
-                let yielded: u8 = WaitForNMI_Async(game);
+                let yielded: u8 = crate::game::display_refresh::wait(true, game);
                 if yielded != 0 {
                     *resume_state = stage;
                     return yielded;
@@ -1351,7 +1350,7 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
         GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x1000).load(game);
         GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
         reset_cinematic_transform(128, 128, game);
-        EnableNMI(game);
+        crate::game::display_refresh::enable(true, game);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
         set_hdma_enabled(true, game);
         palette_effects::set_enabled(true, game);
@@ -1389,7 +1388,7 @@ pub use self::CinematicSpriteInit_0 as CinematicSpriteInit_2;
 pub use self::CinematicSpriteInit_0 as CinematicSpriteInit_3;
 macro_rules! finish_cinematic_and_clear_effects {
     ($game:ident, $next_state:literal, $index_field:ident) => {
-        EnableNMI($game);
+        crate::game::display_refresh::enable(true, $game);
         *ram_ptr!($game; 0x55) = 1;
         word! { $game, 0;
             screen_fade_delay, screen_fade_counter, reg_BG2HOFS, reg_BG3HOFS, reg_BG2VOFS,
@@ -2033,7 +2032,7 @@ crate::game::callback_dispatch! {
         GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x2000).load(game);
         GraphicsAsset::VramWords(0x7fb800, 0x6e00, 0x2400).load(game);
         GraphicsAsset::Decompress(0x95d713, 0x1a000).load(game);
-        EnableNMI(game);
+        crate::game::display_refresh::enable(true, game);
         word! { game, 3; screen_fade_delay, screen_fade_counter }
         set_hdma_enabled(true, game);
         palette_effects::clear(game);
@@ -2143,7 +2142,7 @@ crate::game::callback_dispatch! {
         palette_effects::set_enabled(true, game);
         ClearCinematicBgObjects(0, game);
         word!(game.cinematicbg_var3 = 23552);
-        EnableNMI(game);
+        crate::game::display_refresh::enable(true, game);
         SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BCF0F as u16, 0, game);
         word!(game.cinematic_function = (0x8bbde4i32) as u16);
         QueueMusic_Delayed8(0xff2d, game);
@@ -2216,7 +2215,7 @@ crate::game::callback_dispatch! {
     [9158853] CinematicFunction_Intro_Func72 [] {
         HandleFadeOut(game);
         if *ram_ptr!(game; 0x51) == 0x80 {
-            EnableNMI(game);
+            crate::game::display_refresh::enable(true, game);
             word! { game, 0;
                 screen_fade_delay, screen_fade_counter, reg_BG2HOFS, reg_BG3HOFS, reg_BG2VOFS,
                 reg_BG3VOFS, cinematic_var5,
@@ -2278,7 +2277,7 @@ crate::game::callback_dispatch! {
             game,
         );
         palette_effects::spawn(addr_kPalfx_E1B8 as u16, game);
-        EnableNMI(game);
+        crate::game::display_refresh::enable(true, game);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
         word!(game.cinematic_function = (0x8bc2e4i32) as u16);
         QueueMusic_Delayed8(0, game);
@@ -2346,7 +2345,7 @@ crate::game::callback_dispatch! {
     [9160231] CinematicFunction_Intro_Func85 [] {
         HandleFadeOut(game);
         if *ram_ptr!(game; 0x51) == 0x80 {
-            EnableNMI(game);
+            crate::game::display_refresh::enable(true, game);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             if word!(game.game_state) as i32 == kGameState_37_CeresGoesBoomWithSamus as i32 {
                 QueueMusic_Delayed8(0, game);
@@ -2390,7 +2389,7 @@ crate::game::callback_dispatch! {
         *ram_ptr!(game; 0x57) = -127i32 as u8;
         palette_effects::spawn(addr_kPalfx_E1A8 as u16, game);
         word!(game.cinematic_function = (0x8bc79ci32) as u16);
-        EnableNMI(game);
+        crate::game::display_refresh::enable(true, game);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
     };
     [9160604] CinematicFunction_Intro_Func87 [] {
@@ -2518,7 +2517,7 @@ crate::game::callback_dispatch! {
         }
         palette_effects::clear(game);
         palette_effects::set_enabled(true, game);
-        EnableNMI(game);
+        crate::game::display_refresh::enable(true, game);
         word!(game.eproj_pre_instr[1] = 0);
         *ram_ptr!(game; 0x69) = 17;
         *ram_ptr!(game; 0x6b) = 1;
@@ -2794,7 +2793,7 @@ crate::game::callback_dispatch! {
     [9166436] CinematicFunction_Intro_Func125 [] {
         word!(game.screen_fade_counter = 1);
         if AdvanceFastScreenFadeOut(game) & 1 != 0 {
-            EnableNMI(game);
+            crate::game::display_refresh::enable(true, game);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             word!(game.cinematic_function = (0x8bde80i32) as u16);
         }
@@ -2828,7 +2827,7 @@ crate::game::callback_dispatch! {
         reset_cinematic_transform(104, 112, game);
         word! {game; cinematic_var8 = -8i32 as u16; cinematic_var10 = -24i32 as u16;
             cinematic_var5 = 0; cinematic_var6 = 2304; }
-        EnableNMI(game);
+        crate::game::display_refresh::enable(true, game);
         *ram_ptr!(game; 0x51) = 15;
         word! { game, 0; layer1_x_pos, layer1_y_pos }
         set_hdma_enabled(true, game);

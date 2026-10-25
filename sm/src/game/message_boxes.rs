@@ -3,7 +3,7 @@ pub use crate::game::constants::bank_60::*;
 use crate::game::music::HandleMusicQueue;
 pub use crate::game::prelude::*;
 
-use crate::game::sm_80::{QueueSfx1_Max6, WaitForNMI_NoUpdate_Async};
+use crate::game::sm_80::QueueSfx1_Max6;
 use crate::game::sm_82::{CancelSoundEffects, HandleSoundEffects};
 
 use crate::rtl::ReadReg;
@@ -337,7 +337,7 @@ impl crate::game::dialogue::Context for LegacyDialogue<'_> {
     ) {
         use crate::game::{dialogue::Outcome, dialogue_ram};
         dialogue_ram::publish(state, self.0);
-        let result = unsafe { WaitForNMI_NoUpdate_Async(self.0) };
+        let result = crate::game::display_refresh::wait(false, self.0);
         let outcome =
             std::num::NonZeroU8::new(result).map_or(Outcome::Complete, Outcome::Suspended);
         (dialogue_ram::import(self.0), outcome)

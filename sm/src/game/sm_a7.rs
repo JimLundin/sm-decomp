@@ -20,7 +20,7 @@ use crate::game::player_update::minimap;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_80::{
     GraphicsAsset, NextRandom, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx2_Max15, QueueSfx3_Max6,
-    ScreenOff, ScreenOn, WaitForNMI_Async,
+    ScreenOff, ScreenOn,
 };
 use crate::game::sm_82::AdvancePaletteFade_BgPalette6;
 use crate::game::sprite_effect_runtime::create_sprite;
@@ -949,7 +949,7 @@ pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
                         as u16;
                     word!(game.vram_write_queue_tail = (word!(game.my_counter2)).wrapping_add(7));
                 }
-                let mut _coret_: u8 = WaitForNMI_Async(game);
+                let mut _coret_: u8 = crate::game::display_refresh::wait(true, game);
                 if _coret_ != 0 {
                     *_state_variable_ = 1;
                     return _coret_;

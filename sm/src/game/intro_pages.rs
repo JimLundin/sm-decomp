@@ -20,7 +20,7 @@ use super::sm_8b::{
     addr_kCinematicSpriteObjectDef_8BCE73, addr_kCinematicSpriteObjectDef_8BCE79,
     addr_kCinematicSpriteObjectDef_8BCF27,
 };
-use super::sm_80::{EnableNMI, HandleFadeOut};
+use super::sm_80::HandleFadeOut;
 use super::visual_runtime::initialize_intro_crossfade;
 use crate::game::music::QueueMusic_Delayed8;
 use crate::game_state::Game;
@@ -362,7 +362,7 @@ pub(super) unsafe fn fade_out_to_ceres(game: &mut Game) {
     unsafe {
         HandleFadeOut(game);
         if *ram_ptr!(game; 0x51) == 0x80 {
-            EnableNMI(game);
+            crate::game::display_refresh::enable(true, game);
             word! { game, 0;
                 screen_fade_delay, screen_fade_counter, reg_BG2HOFS, reg_BG3HOFS, reg_BG2VOFS,
                 reg_BG3VOFS, cinematic_var5,

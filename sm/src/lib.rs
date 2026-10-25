@@ -410,6 +410,7 @@ pub mod game {
     pub(crate) mod player_update;
 
     pub(crate) mod controller_input;
+    pub(crate) mod display_refresh;
     pub(crate) mod escape_timer;
     pub(crate) mod hud;
     pub mod progress_flags;
