@@ -39,32 +39,21 @@ before further adoption; the review's red-main rule does not authorize CI pollin
 
 ## Work order
 
-1. **Current - lane A Crocomire, then pending pickups/bosses.** A0 is parked until
-   18:00 CET per review; afterward align published any%/100% and map expectations.
-   Cover Crateria, Brinstar, Norfair, Wrecked Ship, Maridia and Tourian; every boss;
-   main pickups, doors/elevators, save/load, death and credits. Report results and rooms.
-   Commit only recipes. Preserve input/NMI timing; no guessed lag/offset changes.
-   Each adoption names segments exercising changed behavior and downstream effects.
-   Current recipes: 26/44 required checks pass; 18 remain pending. Three additional
-   checks (in-memory save, upward elevator, Ice return) pass; the corpus is unfinished.
-   Measured wait-entry inputs align 9,266 original TAS steps. Options/door timing
-   fixes requalified all 24 previously runnable required recipes. At step 9,266,
-   original audio upload reads input during 41 acknowledged NMIs; native upload
-   has no elapsed video clock. Read-collapse leaves $05B6 forty counts behind at
-   step 9,266; the old 9,291 comparison mixed phases. Elapsed-NMI experiment reaches
-   first visible-state mismatch at 10,555: Ridley countdown/setup is four updates late;
-   RNG differs by 10,440; first onset is unlocated. Model stays local: one active-IRQ
-   upload sample; equal-size uploads take 27/28 NMIs. Crocomire's shared $0E20 drop
-   regression is fixed: 167,281 fresh setup frames plus the four-frame row pass;
-   20 original-CPU cases and two mutations check the restored interaction. Continue
-   the fight from the checked frame-167,285 checkpoint. Melt graphics now pass their
-   four-frame regression; wall-spawn return and defeat qualification are next.
+1. **Current - lane A room-seeded TAS coverage.** Crocomire defeat now passes;
+   27/44 required checks pass, 17 remain pending. Both four-frame melt/wall
+   regressions pass; the defeat row runs 4,258 frames through 120 frames after
+   the fresh boss flag. The full 167,285-frame setup was checked from boot.
+   A1.1 captures six memory regions at each room entry; A1.2 must establish
+   at least 600 clean frames and the captured next room before adoption.
+   Original any% timing alignment remains parked; no further hand-route exploration.
+   Room seeds and movies stay local; only the logger and index/recipes are committed.
 2. **Current - lane B bank retirement.** `sm_94` and `sm_91` are deleted.
    Player input, demos, suits, equipment, commands, initialization, Mother Brain
    reactions, X-ray and direct damage use owned state. Natural X-ray, Gravity,
    boss and grapple movie coverage remains incomplete despite bounded checks.
    X-ray controls/tables are consolidated; sm_88 has 1,454 lines left. sm_90 has 907.
-   Pause sm_88 until sm_90 is deleted; retire production observer hooks with named segments.
+   B1 finishes sm_90; B2 resumes sm_88; B3 retires sm_89, then sm_a0 and sm_8f.
+   Retire production observer hooks with named segments.
    Crystal Flash consumption and Draygon grab/release are consolidated.
    Unused player completion hooks are removed; next: Crystal Flash setup, then
    the remaining complete sm_90 families.
@@ -144,10 +133,10 @@ Every routine commit runs exactly this, then commits:
    writes "uncovered: <function>" in the body.
 3. Nothing else per commit: no mutation runs, independent controls, frontend metadata,
    optimized/release rebuilds, clean-source reruns or full replays. Once per bank,
-   before its file is deleted: the full corpus plus scoped `cargo-mutants` (≤30 min).
+   before its file is deleted: the full corpus plus scoped `cargo-mutants` (â‰¤30 min).
    The full corpus also runs at each review waypoint. A failure from a full run gets a
    regression row with its fix. Never weaken a comparison or a row's expectations.
-4. Body ≤8 lines: what changed, rows run and result, legacy/production delta and
+4. Body â‰¤8 lines: what changed, rows run and result, legacy/production delta and
    ratio, `Score:`. Re-run a flaky step once; a second failure is real.
 
 Commands and checkpoint rules: [movies/README.md](../movies/README.md).

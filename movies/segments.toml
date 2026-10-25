@@ -144,7 +144,12 @@ after_expectations = 120
 
 [[segment]]
 id = "boss-crocomire"
-pending = "No qualified encounter-to-completion route with fresh boss state and precise encounter/death observations."
+inputs = "corpus-crocomire.inputs"
+input_sha256 = "90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe"
+start_frame = 167285
+frames = 4409
+expect = ["boss:crocomire", "room:A98D", "state:8"]
+after_expectations = 120
 
 [[segment]]
 id = "boss-phantoon"
@@ -517,3 +522,12 @@ input_sha256 = "90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe
 start_frame = 169057
 frames = 4
 expect = ["room:A98D", "state:8"]
+
+[[segment]]
+id = "crocomire-wall-spawn-return"
+inputs = "corpus-crocomire.inputs"
+input_sha256 = "90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe"
+start_frame = 171090
+frames = 4
+expect = ["room:A98D", "state:8"]
+require_hit = ["eproj.spawn.initialized"]

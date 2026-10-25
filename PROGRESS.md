@@ -1,6 +1,6 @@
 # Engine migration
 
-![Crocomire melt repair verified; next: wall break and Crystal Flash setup.](docs/codebase-map/work-summary.svg)
+![Crocomire defeat verified; next: room seeds and three parallel bank retirements.](docs/codebase-map/work-summary.svg)
 
 | Measure | Count |
 | --- | ---: |
@@ -10,12 +10,10 @@
 | Total Rust | 154867 |
 | Lines containing `unsafe` | 4650 |
 | Warnings (no-default library) | 367 |
-| Required checkpoint checks passing | 26/44 |
+| Required checkpoint checks passing | 27/44 |
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-Change: **Crocomire melting uses the full graphics buffer**; production, legacy, unsafe and verification counts unchanged.
-
-**4 regression frames pass; missing-plane mutation caught.** Boss completion remains pending final-source qualification.
+**Crocomire defeat verified:** 4,258 frames + two four-frame regressions, zero differences. Size unchanged.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)

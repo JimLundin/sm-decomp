@@ -1270,9 +1270,9 @@ crate::game::callback_dispatch! {
             (*E).base.palette_index = 0;
             word_transfers!(game, descending, 16; le(palette_buffer, 159) <- rom(0xa4b8fd, 15));
             ClearEprojs(game);
-            let v8: u16 = 8;
+            let mut v8: u16 = 8;
             for _ in 0..8 {
-                SpawnEprojWithGfx(
+                v8 = SpawnEprojWithGfx(
                     v8,
                     word!(game.cur_enemy_index),
                     addr_kEproj_CrocomireSpikeWallPieces as u16,

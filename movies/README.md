@@ -345,5 +345,7 @@ The `crocomire` authored route continues `crocomire-shot` from the qualified
 frame-167285 fight state through both melts, the wall break and skeleton collapse.
 Regenerate it with
 `python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-crocomire.inputs --rom rom/sm.smc --route crocomire`.
-`crocomire-melt-graphics-buffer` covers four frames from 169057.
-The wall-break regression and boss-completion rows remain pending final-source qualification.
+`crocomire-melt-graphics-buffer` covers four frames from 169057;
+`crocomire-wall-spawn-return` covers four frames from 171090 and all eight piece spawns.
+`boss-crocomire` starts with the defeat flag clear at 167285, observes the flag
+at 171422, and requires 120 subsequent frames. The recipe ends at 171694.
