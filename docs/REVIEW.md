@@ -102,7 +102,7 @@ state (no raw `g_ram`, no new Host/effects/adapter type). Name the checkpoint
 segments that exercise it. A bank is done when its file is deleted. Total
 production must fall with each bank; unsafe lines must fall with every commit.
 Drafts not adopted within 2 hours are recorded in one line and dropped.
-**Lane B stalled (2 check-ins silent).** The one required next commit is (1)
+**Lane B stalled (3 check-ins silent).** The one required next commit is (1)
 below; land it before any draft, map or docs work. Unadopted `sm_91`/`sm_90`
 drafts older than 2h: record in one line and drop. **Next `sm_94` commits:** (1) move the already-safe
 `PostGrappleColl_*`/`post_grapple_traverse` family into the owned player-collision
@@ -123,6 +123,13 @@ Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
+- **2026-10-25 02:52 (5d60c0e, no new agent commits):** **STALL, second in a
+  row: 0 agent commits of any kind** since 7867e91 (00:48), now ~2h; agents are
+  not running (escalated to Jim; not fixable from the repo). Lane B third silent
+  check-in. Score unchanged `checks 24/44 · legacy 55315 · production 116670 ·
+  unsafe 4962 · verification 38993`; warnings 377 (no Rust changed). 06:00
+  waypoint: both lanes will miss unless agents restart now. Plan unchanged: the
+  next commits named above (A0.2 Ceres capture, sm_94 step 1) still stand.
 - **2026-10-25 01:52 (9feb2f2, no new agent commits):** **STALL — 0 agent
   commits of any kind** since 7867e91 (00:48); agents appear not to be running
   (not fixable from the repo). Lane B: second silent check-in (no code since
@@ -169,12 +176,7 @@ Map brief is done (c1fe795); no further map work unless the user asks.
   (23/44, no recipe since 17:41) and throughput fell 4 → 1 commit. Production
   117,662 (−24); verification 37,504, unsafe 4,982 flat; warnings 381 unique.
   PLAN.md 202 lines (fixed). Map: SVG text only; re-rendered, fine on both widths.
-- **2026-10-24 19:55 (674d87a):** 4 agent source commits since f0f163d (3 code,
-  1 map), 0 docs-only; no overall stall, but **coverage stalled**: 23/44 for a
-  second check-in, no recipe commit since a56fdd1 (17:41). Production 117,869 →
-  117,686 (−183; first legacy-bank retirement, −59); verification 37,504 (+22);
-  unsafe 4,982 (−60); warnings 380 unique (PROGRESS method: 432). PLAN.md 235 lines
-  (rising). Map: Enter on "Kraid" now opens `sm_a7.rs`; remaining fixes below.
+
 ## Lane watch (2026-10-24 23:52)
 
 - d0d1961 is a sound bank-retirement step (−90 engine, adapter and `CollInfo`
