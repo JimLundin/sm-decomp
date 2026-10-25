@@ -370,10 +370,8 @@ impl EntryEffects for Runtime<'_> {
         let (kind, code) = action.compatibility_code(&self.session().world);
         self.foreign(|game| unsafe {
             match kind {
-                SetupKind::Room => game::sm_8f::CallRoomSetupCode(0x8f0000 | u32::from(code), game),
-                SetupKind::Door => {
-                    game::sm_8f::CallDoorDefSetupCode(0x8f0000 | u32::from(code), game)
-                }
+                SetupKind::Room => game::room_state::setup_script(0x8f0000 | u32::from(code), game),
+                SetupKind::Door => game::room_state::door_script(0x8f0000 | u32::from(code), game),
             }
         });
     }

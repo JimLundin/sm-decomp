@@ -19,6 +19,7 @@ use crate::game::enemy_projectiles::EnableEprojs;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::palette_effects;
 use crate::game::room_mechanisms::set_enabled;
+use crate::game::room_state::{pause_draygon, unpause_draygon};
 use crate::game::samus_animation::{
     Samus_DrawDuringDeathAnim, Samus_DrawStartingDeathAnim, Samus_DrawWhenNotAnimatingOrDying,
 };
@@ -28,7 +29,6 @@ use crate::game::sm_8b::{
     GameState_1_OpeningCinematic_, GameState_37_CeresGoesBoomWithSamus_,
     GameState_39_EndingAndCredits_, LoadTitleSequenceGraphics,
 };
-use crate::game::sm_8f::{PauseHook_DraygonRoom, UnpauseHook_DraygonRoom};
 use crate::game::sm_9b::{
     GameState_24_SamusNoHealth_Explosion_Helper, HandleSamusDeathSequence, StartSamusDeathAnimation,
 };
@@ -1109,7 +1109,7 @@ crate::game::address_dispatch! {
     pub unsafe fn CallPauseHook(ea: u32, game: &mut Game) => ea;
         call (game); default { Unreachable(game); };
     {
-        8946657 => [()]; 9423094 => PauseHook_DraygonRoom; 10994469 => PauseHook_Kraid;
+        8946657 => [()]; 9423094 => pause_draygon; 10994469 => PauseHook_Kraid;
     }
 }
 crate::game::address_dispatch! {
@@ -1119,7 +1119,7 @@ crate::game::address_dispatch! {
             kCoroutineNone as CoroutineRet
         };
     {
-        8946657 => [kCoroutineNone as CoroutineRet]; 9423100 => UnpauseHook_DraygonRoom;
+        8946657 => [kCoroutineNone as CoroutineRet]; 9423100 => unpause_draygon;
         10994171 => UnpauseHook_Kraid_IsDead; 10994254 => UnpauseHook_Kraid_IsAlive;
         10994336 => Kraid_UnpauseHook_IsSinking; 11110243 => MotherBrainsBody_UnpauseHook;
     }
