@@ -2791,7 +2791,6 @@ macro_rules! queue_ram_tilemap_write {
         word!($game.vram_write_queue_tail = (v0).wrapping_add(2));
     };
 }
-pub(crate) use queue_ram_tilemap_write;
 
 pub unsafe fn WriteSamusWireframeTilemapAndQueue(game: &mut Game) {
     unsafe {

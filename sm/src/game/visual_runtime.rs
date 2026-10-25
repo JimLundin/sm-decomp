@@ -1403,6 +1403,37 @@ pub(crate) fn draw_player_frame(game: &mut Game) {
     h.owned_call(crate::game::session_runtime::finish_player_frame);
 }
 
+pub(crate) fn queue_cinematic_tilemap(
+    tiles: crate::game::visual_state::CinematicTilemap,
+    game: &mut Game,
+) {
+    use crate::game::visual_state::CinematicTilemap::*;
+    if !matches!(tiles, Japanese) && game.g_ram[0x55] == 7 {
+        return;
+    }
+    let (size, source) = match tiles {
+        Text => (1920, 0x3000),
+        FullText => (2048, 0x3000),
+        Eyes => (128, 0x3b40),
+        Japanese => (1536, 0x4000),
+    };
+    let tail = word!(game.vram_write_queue_tail);
+    for (offset, value) in [(0u16, size), (2, source)] {
+        word_transfers!(game, ascending, 1;
+            native(0xd0 + usize::from(tail.wrapping_add(offset))) <- value(value));
+    }
+    game.g_ram[0xd0 + usize::from(tail.wrapping_add(4))] = 126;
+    // Earlier queue writes can overlap this destination field.
+    let destination = match tiles {
+        Eyes => 18848,
+        Japanese => 16768,
+        _ => word!(game.cinematicbg_var3),
+    };
+    word_transfers!(game, ascending, 1;
+        native(0xd0 + usize::from(tail.wrapping_add(5))) <- value(destination));
+    word!(game.vram_write_queue_tail = tail.wrapping_add(7));
+}
+
 fn scaled_cinematic_value(value: u16, scale: u16) -> u16 {
     ((i32::from(value as i16) * i32::from(scale as i16)) >> 8) as u16
 }

@@ -145,3 +145,11 @@ pub(crate) enum CinematicFade {
     SlowIn,
     SlowOut,
 }
+
+#[derive(Clone, Copy)]
+pub(crate) enum CinematicTilemap {
+    Text,
+    FullText,
+    Eyes,
+    Japanese,
+}

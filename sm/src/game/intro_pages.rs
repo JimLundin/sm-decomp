@@ -8,23 +8,57 @@ use super::constants::bank_91::{addr_stru_91877E, addr_stru_918784};
 use super::constants::samus_poses::kPose_02_FaceL_Normal;
 use super::palette_effects;
 use super::sm_8b::{
-    CinematicBgInstr_SetSomeStuffForSpriteObject_14, CinematicFunction_Intro_Func20,
-    ClearEnglishTextTilemap, ClearJapaneseTextTiles, DisableCinematicBgTilemapUpdates,
+    CinematicBgInstr_SetSomeStuffForSpriteObject_14, DisableCinematicBgTilemapUpdates,
     EnableCinematicBgTilemapUpdates, RevertButtonConfig, SetSomeStuffForSpriteObject_15,
     SetSomeStuffForSpriteObject_16, SpawnCinematicBgObject, SpawnCinematicSpriteObject,
-    SpawnCinematicSpriteObjectAtSlot, SpawnMode7Object, TransferJapaneseTextTilesToVram,
-    addr_kCinematicBgObjectDef_8BCF5D, addr_kCinematicSpriteObjectDef_8BCE5B,
-    addr_kCinematicSpriteObjectDef_8BCE55, addr_kCinematicSpriteObjectDef_8BCE61,
-    addr_kCinematicSpriteObjectDef_8BCE67, addr_kCinematicSpriteObjectDef_8BCE73,
-    addr_kCinematicSpriteObjectDef_8BCE79, addr_kCinematicSpriteObjectDef_8BCF27,
+    SpawnCinematicSpriteObjectAtSlot, SpawnMode7Object, addr_kCinematicBgObjectDef_8BCF5D,
+    addr_kCinematicSpriteObjectDef_8BCE5B, addr_kCinematicSpriteObjectDef_8BCE55,
+    addr_kCinematicSpriteObjectDef_8BCE61, addr_kCinematicSpriteObjectDef_8BCE67,
+    addr_kCinematicSpriteObjectDef_8BCE73, addr_kCinematicSpriteObjectDef_8BCE79,
+    addr_kCinematicSpriteObjectDef_8BCF27,
 };
 use super::visual_runtime::{
     clear_cinematic_colors, compose_cinematic_palette, fade_cinematic_colors,
-    initialize_intro_crossfade, prepare_cinematic_palette_fade,
+    initialize_intro_crossfade, prepare_cinematic_palette_fade, queue_cinematic_tilemap,
 };
+use super::visual_state::CinematicTilemap;
 use crate::game::music::QueueMusic_Delayed8;
 use crate::game_state::Game;
 use crate::ram_map::{ram_ptr, word};
+
+unsafe fn load_japanese_line(j: u16, game: &mut Game) {
+    unsafe {
+        let mut tt = crate::rtl::rom_bank_ptr::<0x8b>(j, game) as *mut u16;
+        let mut v2: u16 = *tt;
+        let mut r18: i32 = *tt.offset(1) as i32;
+        let dst = &raw mut (*(ram_ptr!(game, crate::types::Ram4000; 0x4000)))
+            .intro_japanese_text_tiles as *mut u16;
+        do_until! { r18 == 0 ;
+            crate::c_library::memcpy(
+                dst.offset((v2 >> 1) as isize) as *mut core::ffi::c_void,
+                ram_ptr!(game, u16; (*tt.offset(2) as i32 + 0x1a000) as isize) as *const core::ffi::c_void,
+                16 as usize,
+            );
+            crate::c_library::memcpy(
+                dst.offset((v2 as i32 + 768 >> 1) as isize) as *mut core::ffi::c_void,
+                ram_ptr!(game, u16; (*tt.offset(3) as i32 + 0x1a000) as isize) as *const core::ffi::c_void,
+                16 as usize,
+            );
+            v2 = (v2).wrapping_add(16);
+            tt = tt.offset(2);
+            r18 -= 1;
+        }
+    }
+}
+
+pub(super) fn clear_english_text(game: &mut Game) {
+    word_transfers!(game, ascending, 640; pause_map(128) <- value(47));
+}
+pub(super) fn clear_japanese_tiles(game: &mut Game) {
+    for start in (0..768).step_by(8) {
+        word_transfers!(game, ascending, 8; xray(start) <- native(0x18290));
+    }
+}
 
 // Narrative callbacks retain their ROM addresses; these functions own the shared
 // page/scene lifecycle, including the Japanese continuation and input delay.
@@ -217,7 +251,7 @@ pub(super) unsafe fn fade_to_scene(palette: Palette, game: &mut Game) {
             *ram_ptr!(game; 0x6b) = 0;
             *ram_ptr!(game; 0x6f) = 0;
             word_transfers!(game, ascending, 640; pause_map(128) <- value(47));
-            ClearJapaneseTextTiles(game);
+            clear_japanese_tiles(game);
             word!(game.cinematic_function = (0x8ba391i32) as u16);
             if matches!(palette, Palette::Gameplay) && (word!(game.cinematic_var15) & 0x8000) != 0 {
                 palette_effects::spawn(addr_kPalfx_E1BC as u16, game);
@@ -230,8 +264,8 @@ pub(super) unsafe fn start_page(next: u16, j: u16, game: &mut Game) -> u16 {
     unsafe {
         word!(game.cinematic_function = next);
         DisableCinematicBgTilemapUpdates(game);
-        ClearJapaneseTextTiles(game);
-        TransferJapaneseTextTilesToVram(game);
+        clear_japanese_tiles(game);
+        queue_cinematic_tilemap(CinematicTilemap::Japanese, game);
         j
     }
 }
@@ -281,11 +315,11 @@ pub(super) unsafe fn draw_japanese_text(
             word!(game.palette_buffer[18] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 18));
             word!(game.palette_buffer[19] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 19));
         }
-        ClearJapaneseTextTiles(game);
+        clear_japanese_tiles(game);
         for &line in lines {
-            CinematicFunction_Intro_Func20(line, game);
+            load_japanese_line(line, game);
         }
-        TransferJapaneseTextTilesToVram(game);
+        queue_cinematic_tilemap(CinematicTilemap::Japanese, game);
         j
     }
 }
@@ -311,7 +345,7 @@ pub(super) fn wait_after_japanese_text(next: u16, j: u16, game: &mut Game) -> u1
 pub(super) unsafe fn show_final_page(game: &mut Game) {
     unsafe {
         EnableCinematicBgTilemapUpdates(game);
-        ClearEnglishTextTilemap(game);
+        clear_english_text(game);
         SpawnCinematicBgObject(addr_kCinematicBgObjectDef_8BCF5D as u16, 0x4c00, game);
         word!(game.cinematic_function = (0x8ba390i32) as u16);
         SetSomeStuffForSpriteObject_16(game);
@@ -326,8 +360,8 @@ pub(super) unsafe fn wait_for_final_page(game: &mut Game) {
             if word!(game.japanese_text_flag) != 0 {
                 word!(game.cinematic_function = (0x8bb207i32) as u16);
                 DisableCinematicBgTilemapUpdates(game);
-                ClearJapaneseTextTiles(game);
-                TransferJapaneseTextTilesToVram(game);
+                clear_japanese_tiles(game);
+                queue_cinematic_tilemap(CinematicTilemap::Japanese, game);
             } else {
                 show_final_page(game);
             }

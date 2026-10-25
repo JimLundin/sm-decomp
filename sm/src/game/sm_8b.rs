@@ -7,10 +7,10 @@ use crate::game::sprite_drawing::Clip;
 use crate::game::visual_runtime::{
     advance_cinematic_fade, capture_cinematic_palette, clear_cinematic_colors, clear_hdma,
     compose_cinematic_palette, configure_cinematic_display, fade_cinematic_colors,
-    prepare_cinematic_palette_fade, reset_cinematic_transform, set_cinematic_backdrop,
-    set_hdma_enabled, update_cinematic_transform,
+    prepare_cinematic_palette_fade, queue_cinematic_tilemap, reset_cinematic_transform,
+    set_cinematic_backdrop, set_hdma_enabled, update_cinematic_transform,
 };
-use crate::game::visual_state::{CinematicDisplay, CinematicFade};
+use crate::game::visual_state::{CinematicDisplay, CinematicFade, CinematicTilemap};
 
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_60::*;
@@ -147,54 +147,6 @@ crate::game::constants::typed_constants! { u32;
     fnCinematicFunctionBlackoutFromCeres = 9158939,
     fnCinematicFunctionEscapeFromCebes = 9163904,
 }
-pub unsafe fn UpdateCinematicBgTilemap(game: &mut Game) {
-    unsafe {
-        if *ram_ptr!(game; 0x55) != 7 {
-            let mut v0: u16 = word!(game.vram_write_queue_tail);
-            (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size = 1920;
-            v0 = (v0).wrapping_add(2);
-            (*gVramWriteEntry(v0 as i32, game)).size = 12288;
-            v0 = (v0).wrapping_add(2);
-            crate::update_place! { previous fresh157 = v0 => v0.wrapping_add(1); }
-            *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-                fresh157 as i32,
-                game,
-            ))
-            .size as *mut u8) = 126;
-            (*gVramWriteEntry(v0 as i32, game)).size = word!(game.cinematicbg_var3);
-            word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
-        }
-    }
-}
-pub unsafe fn UpdateSamusEyesTilemap(game: &mut Game) {
-    unsafe {
-        if *ram_ptr!(game; 0x55) != 7 {
-            crate::game::sm_82::queue_ram_tilemap_write!(game, 128, 832, fresh156, 18848);
-        }
-    }
-}
-pub unsafe fn CinematicUpdateSomeBg(game: &mut Game) {
-    unsafe {
-        if *ram_ptr!(game; 0x55) != 7 {
-            let mut v0: u16 = word!(game.vram_write_queue_tail);
-            (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size = 2048;
-            v0 = (v0).wrapping_add(2);
-            (*gVramWriteEntry(v0 as i32, game)).size = (ram_ptr!(game, Ram3000; 0x3000) as *mut u8)
-                .offset_from(&raw mut game.g_ram as *mut u8)
-                as c_long as u16;
-            v0 = (v0).wrapping_add(2);
-            crate::update_place! { previous fresh4 = v0 => v0.wrapping_add(1); }
-            *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-                fresh4 as i32,
-                game,
-            ))
-            .size as *mut u8) = 126;
-            (*gVramWriteEntry(v0 as i32, game)).size = word!(game.cinematicbg_var3);
-            word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
-        }
-    }
-}
-
 pub unsafe fn ProcessCinematicBgObject(v0: u16, r18: u16, game: &mut Game) {
     unsafe {
         let j: u16 = word!(game.cinematicbg_arr1[(v0 >> 1)]);
@@ -344,47 +296,6 @@ pub unsafe fn CinematicGetTilemapOffsetForTile(mut r18: u16) -> u16 {
 }
 pub unsafe fn Mult0x80Add(mut r18: u16) -> u16 {
     unsafe { (r18 as u8 as i32 + 0x80 * byte!(r18; 1) as i32) as u16 }
-}
-pub unsafe fn CinematicFunction_Intro_Func20(j: u16, game: &mut Game) {
-    unsafe {
-        let mut tt = RomPtr_8B(j, game) as *mut u16;
-        let mut v2: u16 = *tt;
-        let mut r18: i32 = *tt.offset(1) as i32;
-        let dst =
-            &raw mut (*(ram_ptr!(game, Ram4000; 0x4000))).intro_japanese_text_tiles as *mut u16;
-        do_until! { r18 == 0 ;
-            memcpy(
-                dst.offset((v2 >> 1) as isize) as *mut c_void,
-                ram_ptr!(game, u16; (*tt.offset(2) as i32 + 0x1a000) as isize) as *const c_void,
-                16 as size_t,
-            );
-            memcpy(
-                dst.offset((v2 as i32 + 768 >> 1) as isize) as *mut c_void,
-                ram_ptr!(game, u16; (*tt.offset(3) as i32 + 0x1a000) as isize) as *const c_void,
-                16 as size_t,
-            );
-            v2 = (v2).wrapping_add(16);
-            tt = tt.offset(2);
-            r18 -= 1;
-        }
-    }
-}
-pub unsafe fn TransferJapaneseTextTilesToVram(game: &mut Game) {
-    unsafe {
-        let mut v0: u16 = word!(game.vram_write_queue_tail);
-        (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size = 1536;
-        v0 = (v0).wrapping_add(2);
-        (*gVramWriteEntry(v0 as i32, game)).size = 0x4000;
-        v0 = (v0).wrapping_add(2);
-        crate::update_place! { previous fresh21 = v0 => v0.wrapping_add(1); }
-        *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-            fresh21 as i32,
-            game,
-        ))
-        .size as *mut u8) = 126;
-        (*gVramWriteEntry(v0 as i32, game)).size = 16768;
-        word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
-    }
 }
 pub unsafe fn HandleSamusDuringIntro(game: &mut Game) {
     {
@@ -801,9 +712,9 @@ pub unsafe fn HandleCinematicBgObjects(game: &mut Game) {
                 i -= 2;
             }
             if (word!(game.cinematic_enable_bg_tilemap) & 0x8000) != 0 {
-                UpdateCinematicBgTilemap(game);
+                queue_cinematic_tilemap(CinematicTilemap::Text, game);
             }
-            UpdateSamusEyesTilemap(game);
+            queue_cinematic_tilemap(CinematicTilemap::Eyes, game);
         }
     }
 }
@@ -984,7 +895,7 @@ pub unsafe fn CreditsObject_Process(game: &mut Game) {
             if word!(game.cinematic_var21) != 0 {
                 CreditsObject_ProcessOne(game);
             }
-            CinematicUpdateSomeBg(game);
+            queue_cinematic_tilemap(CinematicTilemap::FullText, game);
         }
     }
 }
@@ -1244,14 +1155,6 @@ pub unsafe fn GameState_37_CeresGoesBoomWithSamus_(game: &mut Game) -> Coroutine
     }
 }
 pub fn CinematicFunc_Nothing() {}
-pub unsafe fn ClearEnglishTextTilemap(game: &mut Game) {
-    word_transfers!(game, ascending, 640; pause_map(128) <- value(47));
-}
-pub unsafe fn ClearJapaneseTextTiles(game: &mut Game) {
-    for start in (0..768).step_by(8) {
-        word_transfers!(game, ascending, 8; xray(start) <- native(0x18290));
-    }
-}
 static kSetSomeStuffForSpriteObject_6_Tab: [i16; 12] = [
     0x5c, 0x58, 0x63, 0x58, 0x59, 0x5d, 0x60, 0x5b, 0x66, 0x5e, 0x63, 0x60,
 ];
@@ -1862,7 +1765,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9152111] CinematicFunc_Intro_SetupTextPage2 [] {
-        ClearJapaneseTextTiles(game);
+        intro_pages::clear_japanese_tiles(game);
         GraphicsAsset::VramWords(0x7e4000, 0x4180, 0x600).load(game);
         crate::rtl::write_register_and_mirror(TM as u16, 0x16, 0x69, false, game);
         ClearCinematicBgObjects(0x2f, game);
@@ -1880,7 +1783,7 @@ crate::game::callback_dispatch! {
         word!(game.cinematic_var4 = 127);
         SpawnCinematicBgObject(addr_kCinematicBgObjectDef_8BCF63 as u16, 0x4c00, game);
         word! { game, 8; cinematic_var10, reg_BG2VOFS, reg_BG3VOFS }
-        ClearEnglishTextTilemap(game);
+        intro_pages::clear_english_text(game);
         SetSomeStuffForSpriteObject_16(game);
         QueueMusic_Delayed8(0, game);
         QueueMusic_Delayed8(0xff36, game);
@@ -2655,7 +2558,7 @@ crate::game::callback_dispatch! {
         let v0: bool = (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0;
         if word!(game.cinematic_var4) == 0 || v0 {
             word_transfers!(game, ascending, 288; pause_map(288) <- rom(0x8cdc9b, 0));
-            CinematicUpdateSomeBg(game);
+            queue_cinematic_tilemap(CinematicTilemap::FullText, game);
             *ram_ptr!(game; 0x69) = 1;
             *ram_ptr!(game; 0x6b) = 0;
             *ram_ptr!(game; 0x6f) = 0;
@@ -2723,7 +2626,7 @@ crate::game::callback_dispatch! {
         if word!(game.cinematic_var4 -= 1, reread) as i32 - 65i32 & 0x8000 != 0 {
             word_transfers!(game, descending, 288; native(0x347e) <- value(127));
             word_transfers!(game, ascending, 64; pause_map(384) <- rom(0x8cdedb, 0));
-            CinematicUpdateSomeBg(game);
+            queue_cinematic_tilemap(CinematicTilemap::FullText, game);
             *ram_ptr!(game; 0x69) = 1;
             *ram_ptr!(game; 0x6b) = 0;
             *ram_ptr!(game; 0x6f) = 0;
@@ -2835,7 +2738,7 @@ crate::game::callback_dispatch! {
             EnableCinematicBgTilemapUpdates(game);
             word!(game.cinematicbg_var3 = 19456);
             word_transfers!(game, descending, 64; native(0x337e) <- value(127));
-            CinematicUpdateSomeBg(game);
+            queue_cinematic_tilemap(CinematicTilemap::FullText, game);
         }
     };
     [9168132] CinematicFunction_Intro_Func143 [] {
@@ -2843,7 +2746,7 @@ crate::game::callback_dispatch! {
         let v0: bool = (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0;
         if word!(game.cinematic_var4) == 0 || v0 {
             word! {game; cinematic_function = ((0x8be7bai32) as u16); cinematicbg_var3 = 20480; }
-            CinematicUpdateSomeBg(game);
+            queue_cinematic_tilemap(CinematicTilemap::FullText, game);
             word! { game, 256; layer1_x_pos, layer1_y_pos }
             SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEF81 as u16, 0, game);
             SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEF87 as u16, 0, game);
