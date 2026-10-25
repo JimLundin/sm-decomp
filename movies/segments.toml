@@ -330,7 +330,16 @@ pending = "No qualified acquisition-to-completion segment on the current route."
 
 [[segment]]
 id = "item-spring-ball"
-pending = "No qualified acquisition-to-completion segment on the current route."
+seed = "100-boundary:239"
+seed_sha256 = "dbef5f5401a660cc107893ccbcc513e841e2975465745ec7786f39dc261e05fb"
+inputs = "seed-spring-ball.inputs"
+input_sha256 = "36c12519c80042f7e885ed7004e98c400f759716c952f97af957d613da9f4e26"
+start_frame = 0
+frames = 1400
+expect = ["item:spring-ball", "room:D6D0"]
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+after_expectations = 120
 
 [[segment]]
 id = "item-plasma"

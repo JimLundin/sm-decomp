@@ -437,3 +437,4 @@ its capture directory and indexed WRAM filename, and its input frame count below
 | area-tourian | any-boundary:179 | 300 |
 | area-wrecked-ship | any-boundary:160 | 300 |
 | item-screw-attack | 100-boundary:131 | 684 |
+| item-spring-ball | 100-boundary:239 | 1400 |
