@@ -102,12 +102,6 @@ jobs:
               unknown = set(wanted) - known
               if unknown:
                   raise SystemExit(f'unknown rows: {sorted(unknown)}')
-          if os.environ.get('CI_BRANCH') == 'true':
-              deleted = subprocess.check_output(['git', 'diff', '--no-renames', '--diff-filter=D',
-                                                 '--name-only', 'origin/main', 'HEAD', '--', 'sm/src/game/sm_*.rs'], text=True)
-              if deleted.strip():
-                  wanted = []
-                  source = 'bank retirement: every row'
           groups, skipped = {}, []
           for r in rows:
               if wanted and r['id'] not in wanted:
