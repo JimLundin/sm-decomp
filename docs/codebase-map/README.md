@@ -7,7 +7,8 @@ The five-box work summary shows the two current tracks, next step and engine tar
 changes the work. The generator embeds the SVG and its accessible description.
 
 Start with gameplay responsibilities. Tile area represents production Rust lines;
-colour and the bottom strip show Owned / Partly owned / Legacy. Open a tile for
+bands across each tile split it into Owned / Partly owned / Legacy by line count,
+and the label gives the legacy and owned percentages. Open a tile for
 its files, then a file for incoming users and outgoing references. Select an edge
 for source evidence. These responsibilities are navigation groups, not crates.
 
@@ -46,8 +47,7 @@ remain production. The 110k and 100k figures are total production size targets.
 - Owned: a whole-file `forbid(unsafe_code)` marker without observed unsafe, RAM,
   Game or foreign-call markers.
 - Legacy: a legacy bank file, or observed unsafe without that whole-file marker.
-- Partly owned: remaining production files. Mixed responsibility tiles also use
-  this colour; their bottom strip shows the actual line proportions.
+- Partly owned: remaining production files.
 
 These source observations do not prove fidelity or completed migration. Read
 About this map for extraction limits. Edges are lexical Rust module/reference
