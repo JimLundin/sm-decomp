@@ -5,7 +5,7 @@ use crate::game::enemy_script::EnemyScript;
 pub use crate::game::prelude::*;
 use crate::game::rippers::{self, Kind};
 use crate::game::save_slots;
-use crate::game::session_runtime::Runtime;
+use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
 
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_86::*;
@@ -19,7 +19,6 @@ use crate::game::palette_effects;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::session_runtime::player_face_forward;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
-use crate::game::sm_a0::CallEnemyPreInstr;
 use crate::game::sm_a9::MoveEnemyWithVelocity;
 
 pub use crate::types::Consts_A2;
@@ -34,7 +33,7 @@ unsafe fn update_randomized_pre_instruction(game: &mut Game) {
                 .resolve_actor(key, actors::access::AccessMode::Native)
                 .pre_instruction
         };
-        CallEnemyPreInstr(0xa20000 | u32::from(phase), game);
+        actor_species_pre_instruction(0xa20000 | u32::from(phase), game);
     }
 }
 
@@ -1241,7 +1240,7 @@ crate::game::callback_dispatch! {
     };
     [10669542] MaridiaLargeSnail_Func_4 [] {
         if (*E).var_E != 0 {
-            CallEnemyPreInstr((((*E).var_F) as u32) | (0xa20000u32), game);
+            actor_species_pre_instruction((((*E).var_F) as u32) | (0xa20000u32), game);
         } else {
             (*E).var_00 = 0;
             if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) != 0 {
@@ -1257,7 +1256,7 @@ crate::game::callback_dispatch! {
     };
     [10669611] MaridiaLargeSnail_Func_5 [] {
         if (*E).var_E != 0 {
-            CallEnemyPreInstr((((*E).var_F) as u32) | (0xa20000u32), game);
+            actor_species_pre_instruction((((*E).var_F) as u32) | (0xa20000u32), game);
         } else if ({ let (actor, amount) = (word!(game.cur_enemy_index), (1i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) == 0 {
             (*E).var_B = 0;
             (*E).var_F = (0xa2cf66i32) as u16;
@@ -1651,7 +1650,7 @@ crate::game::callback_dispatch! {
     [10652144] MiniCrocomire_Main [] {
         let index = game.cur_enemy_index();
         let preinstruction = MiniCrocomireState::new(game, index).preinstruction();
-        CallEnemyPreInstr(u32::from(preinstruction) | 0xa20000, game);
+        actor_species_pre_instruction(u32::from(preinstruction) | 0xa20000, game);
     };
     [10653138] MaridiaBeybladeTurtle_Main [] {
         let index = game.cur_enemy_index();
@@ -1803,7 +1802,7 @@ crate::game::callback_dispatch! {
         if (*E0).var_F as i32 + 0x56be & 0x8000 == 0 && (*E0).var_F as i32 + 0x53e5 & 0x8000 != 0 {
             GunshipTop_1(word!(game.cur_enemy_index), game);
         }
-        CallEnemyPreInstr((((*E0).var_F) as u32) | (0xa20000u32), game);
+        actor_species_pre_instruction((((*E0).var_F) as u32) | (0xa20000u32), game);
     };
     [10663280] LavaquakeRocks_Init [] {
         let E = Get_LavaquakeRocks(word!(game.cur_enemy_index) as i32, game);
@@ -1958,7 +1957,7 @@ crate::game::callback_dispatch! {
     };
     [10675790] LavaSeahorse_Main [] {
         let E = Get_LavaSeahorse(word!(game.cur_enemy_index) as i32, game);
-        CallEnemyPreInstr((((*E).var_F) as u32) | (0xa20000u32), game);
+        actor_species_pre_instruction((((*E).var_F) as u32) | (0xa20000u32), game);
     };
     [10676168] LavaSeahorse_Touch [] {
         Enemy_NormalTouchAI_A2(game);
@@ -1980,7 +1979,7 @@ crate::game::callback_dispatch! {
             let runtime = Runtime::new(game);
             runtime.resolve_actor(Key::from_legacy(runtime.word(0xe54)), actors::access::AccessMode::Native).pre_instruction
         };
-        CallEnemyPreInstr(0xa20000 | u32::from(phase), game);
+        actor_species_pre_instruction(0xa20000 | u32::from(phase), game);
     };
     @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E = Get_MaridiaSpikeyShell(word!(game.cur_enemy_index) as i32, game); };

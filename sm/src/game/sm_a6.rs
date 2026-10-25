@@ -10,6 +10,7 @@ use crate::game::player_update::minimap;
 pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::session_runtime::Runtime;
+use crate::game::session_runtime::{actor_cosine, actor_sine};
 use crate::game::sprite_drawing::Clip;
 
 pub use crate::game::constants::bank_86::*;
@@ -30,7 +31,6 @@ use crate::game::sm_80::{
     NextRandom, QueueMode7Transfers, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6,
     QueueSfx3_Max3, QueueSfx3_Max6,
 };
-use crate::game::sm_a0::{CosineMult8bit, SineMult8bit};
 use crate::game::sm_a9::{
     ComputeCosMult, ComputeSinMult, MoveEnemyWithVelocity, Shitroid_Func_2, WriteColorsToPalette,
     WriteColorsToTargetPalette,
@@ -4255,10 +4255,10 @@ crate::game::callback_dispatch! {
         (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa28187, (v5 + 1) as isize);
         (*E).var_26 = (*E).base.x_pos;
         (*E).var_27 = (*E).base.y_pos;
-        let v6: u16 = ((*E).var_26).wrapping_add(CosineMult8bit((*E).var_23, (*E).var_D, game));
+        let v6: u16 = ((*E).var_26).wrapping_add(actor_cosine((*E).var_23, (*E).var_D, game));
         (*E).var_28 = v6;
         (*E).base.x_pos = v6;
-        let v7: u16 = ((*E).var_27).wrapping_add(SineMult8bit((*E).var_23, (*E).var_D, game));
+        let v7: u16 = ((*E).var_27).wrapping_add(actor_sine((*E).var_23, (*E).var_D, game));
         (*E).var_29 = v7;
         (*E).base.y_pos = v7;
         let mut v8: u16 = 8;

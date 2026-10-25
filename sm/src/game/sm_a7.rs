@@ -8,7 +8,7 @@ use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
-use crate::game::session_runtime::Runtime;
+use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
 use crate::rtl::rom_record;
 use core::mem::offset_of;
 
@@ -23,7 +23,6 @@ use crate::game::sm_80::{
     ScreenOff, ScreenOn, WaitForNMI_Async,
 };
 use crate::game::sm_82::AdvancePaletteFade_BgPalette6;
-use crate::game::sm_a0::CallEnemyPreInstr;
 use crate::game::sprite_effect_runtime::create_sprite;
 use crate::game::visual_runtime::initialize_phantoon_motion;
 use crate::game::visual_runtime::spawn_hdma;
@@ -3008,7 +3007,7 @@ crate::game::callback_dispatch! {
     [10997414] Phantoon_Main [] {
         Phantoon_Func_2(word!(game.cur_enemy_index), game);
         let EK = Get_Phantoon(word!(game.cur_enemy_index) as i32, game);
-        CallEnemyPreInstr((((*EK).var_F) as u32) | (0xa70000u32), game);
+        actor_species_pre_instruction((((*EK).var_F) as u32) | (0xa70000u32), game);
         if word!(game.cur_enemy_index) == 0 {
             let E0 = Get_Phantoon(0, game);
             let E1 = Get_Phantoon(0x40, game);
@@ -3161,7 +3160,7 @@ crate::game::callback_dispatch! {
         if byte!((*E).parameter_2; 1) != 0 {
             (*E).parameter_2 = ((*E).parameter_2).wrapping_sub(256);
         } else {
-            CallEnemyPreInstr((((*E).var_F) as u32) | (0xa70000u32), game);
+            actor_species_pre_instruction((((*E).var_F) as u32) | (0xa70000u32), game);
         };
     };
     [11007197] Dachora_Init [] {
@@ -3189,7 +3188,7 @@ crate::game::callback_dispatch! {
     };
     [11007278] Dachora_Main [] {
         let E = Get_Dachora(word!(game.cur_enemy_index) as i32, game);
-        CallEnemyPreInstr((((*E).var_F) as u32) | (0xa70000u32), game);
+        actor_species_pre_instruction((((*E).var_F) as u32) | (0xa70000u32), game);
     };
     @forward [pub unsafe fn (game: &mut Game)];
     [10977295] Enemy_GrappleReact_CancelBeam_A7 => actors::combat::select_frozen_ai(&mut Runtime::new(game));

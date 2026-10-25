@@ -1,7 +1,8 @@
 //! Forty bounded actual-4c572a4a common-actor predecessor fixtures.
 //! No copied movement/contact rules. Synthetic records contain no ROM assets.
+use crate::game::session::Vector32;
 use crate::ram_map::{word_arrays as a, words as w};
-use crate::types::{EnemyData, EnemyDef, Point16U, Point32, Rect16U};
+use crate::types::{EnemyData, EnemyDef, Point16U, Rect16U};
 use crate::{game_state::Game, rom::RomImage};
 use core::mem::{offset_of, size_of};
 use std::{
@@ -123,7 +124,7 @@ fn seed(g: &mut Game, loaded: &RomImage, native: &RomImage) {
 }
 #[derive(Clone, Copy)]
 pub(crate) enum Operation {
-    Vector { phase: u16, value: Point32 },
+    Vector { phase: u16, value: Vector32 },
     ProbeX { k: u16, amount: i32 },
     ProbeY { k: u16, amount: i32 },
     ProbeOffset { k: u16, edge: u16, amount: i32 },
@@ -157,7 +158,7 @@ fn fixture(id: u32, g: &mut Game, loaded: &RomImage) -> Operation {
             put(g, w::cur_enemy_index, k);
             Operation::Vector {
                 phase,
-                value: Point32 { x: vx, y: vy },
+                value: Vector32 { x: vx, y: vy },
             }
         }
         3 => {

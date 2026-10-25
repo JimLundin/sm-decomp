@@ -29,12 +29,9 @@ impl Effects for Runtime<'_> {
         angle: u16,
         amplitude: u16,
     ) -> crate::game::session::Vector32 {
-        let point =
-            self.foreign(|game| crate::game::sm_a0::ConvertAngleToXy(angle, amplitude, game));
-        crate::game::session::Vector32 {
-            x: point.x,
-            y: point.y,
-        }
+        self.foreign(|game| {
+            crate::game::session_runtime::actor_direction_vector(angle, amplitude, game)
+        })
     }
     fn queue_sound(&mut self, channel: u8, max: u8, sound: u16) {
         self.foreign(|game| {

@@ -8,12 +8,12 @@ use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
+use crate::game::session_runtime::{actor_cosine, actor_sine};
 use crate::rtl::rom_record;
 use core::mem::offset_of;
 
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
-use crate::game::sm_a0::{CosineMult8bit, SineMult8bit};
 use crate::game::sprite_effect_runtime::create_sprite;
 
 pub use crate::types::Consts_B2;
@@ -232,9 +232,9 @@ crate::game::callback_dispatch! {
     [11726928] SpacePirates_Func_2 [] {
         let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
         (*E).base.x_pos =
-            ((*E).var_D).wrapping_add(SineMult8bit((*E).var_F, (*E).parameter_2 >> 1, game));
+            ((*E).var_D).wrapping_add(actor_sine((*E).var_F, (*E).parameter_2 >> 1, game));
         (*E).base.y_pos =
-            ((*E).var_E).wrapping_sub(CosineMult8bit((*E).var_F, (*E).parameter_2 >> 2, game));
+            ((*E).var_E).wrapping_sub(actor_cosine((*E).var_F, (*E).parameter_2 >> 2, game));
         let v1: u16 = ((byte!((*E).var_F; 0)).wrapping_sub(byte!((*E).var_22; 0))) as u16;
         (*E).var_F = v1;
         if v1 == (*E).var_20 {
@@ -256,9 +256,9 @@ crate::game::callback_dispatch! {
     [11727076] SpacePirates_Func_4 [] {
         let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
         (*E).base.x_pos =
-            ((*E).var_D).wrapping_add(SineMult8bit((*E).var_F, (*E).parameter_2 >> 1, game));
+            ((*E).var_D).wrapping_add(actor_sine((*E).var_F, (*E).parameter_2 >> 1, game));
         (*E).base.y_pos =
-            ((*E).var_E).wrapping_sub(CosineMult8bit((*E).var_F, (*E).parameter_2 >> 2, game));
+            ((*E).var_E).wrapping_sub(actor_cosine((*E).var_F, (*E).parameter_2 >> 2, game));
         let v1: u16 = ((byte!((*E).var_22; 0)).wrapping_add(byte!((*E).var_F; 0))) as u16;
         (*E).var_F = v1;
         if v1 == (*E).var_21 {

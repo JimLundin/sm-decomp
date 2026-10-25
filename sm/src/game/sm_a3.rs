@@ -4,7 +4,10 @@ use crate::game::actors::api as actor_api;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
 pub use crate::game::prelude::*;
-use crate::game::session_runtime::Runtime;
+use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
+use crate::game::session_runtime::{
+    actor_cosine, actor_cosine_full, actor_direction_vector, actor_sine, actor_sine_full,
+};
 use crate::game::visual_runtime::darken_fireflea_room;
 use crate::rtl::rom_record;
 use core::mem::offset_of;
@@ -19,10 +22,6 @@ use crate::game::session_runtime::damage_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_80::{
     Multiply16x16, NextRandom, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6,
-};
-use crate::game::sm_a0::{
-    Abs16, CallEnemyPreInstr, ConvertAngleToXy, CosineMult8bit, CosineMult8bitFull, SignExtend8,
-    SineMult8bit, SineMult8bitFull,
 };
 use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
 pub use crate::game::waver::{Waver_Init, Waver_Instr_1, Waver_Main};
@@ -254,8 +253,8 @@ crate::prefixed_callbacks! {
             as u16;
     };
     Fireflea_Func_5 [] {
-        (*E).base.x_pos = ((*E).var_E).wrapping_add(CosineMult8bit((*E).var_D, (*E).var_C, game));
-        (*E).base.y_pos = ((*E).var_F).wrapping_add(SineMult8bit((*E).var_D, (*E).var_C, game));
+        (*E).base.x_pos = ((*E).var_E).wrapping_add(actor_cosine((*E).var_D, (*E).var_C, game));
+        (*E).base.y_pos = ((*E).var_F).wrapping_add(actor_sine((*E).var_D, (*E).var_C, game));
     };
     Fireflea_Func_6 [] {
         (*E).var_00 = ((*E).base.y_pos).wrapping_sub((*E).var_C);
@@ -289,7 +288,7 @@ pub unsafe fn Fireflea_Common(game: &mut Game) {
 }
 macro_rules! advance_maridia_fish_sine_motion {
     ($enemy:ident, $game:ident, $collision_state:literal, $collision_instruction:ident) => {
-        let v2: u16 = SineMult8bit((*$enemy).var_F, (*$enemy).var_00, $game);
+        let v2: u16 = actor_sine((*$enemy).var_F, (*$enemy).var_00, $game);
         (*$enemy).var_04 = v2;
         if ({ let (actor, amount) = (word!($game.cur_enemy_index), ((((v2) as i16).wrapping_sub(((*$enemy).var_03) as i16)) as i32) << 16); (actor_api::move_vertical(&mut Runtime::new($game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
         {
@@ -325,7 +324,7 @@ crate::game::callback_dispatch! {
         (*E).var_00 = byte!((*E).parameter_2; 0) as u16;
         (*E).var_02 = byte!((*E).parameter_2; 1) as u16;
         set_fields! {[(*E)], 0; var_F, var_01}
-        (*E).var_03 = SineMult8bit((*E).var_F, (*E).var_00, game);
+        (*E).var_03 = actor_sine((*E).var_F, (*E).var_00, game);
     };
     [10719538] MaridiaFish_Func_1 [] {
         if ({ let (actor, amount) = (word!(game.cur_enemy_index), (words!((*E), var_E, var_D)) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
@@ -473,7 +472,7 @@ macro_rules! set_roach_trigonometric_velocity {
         words!(
             (*$enemy),
             $cosine_high,
-            $cosine_low = CosineMult8bitFull(
+            $cosine_low = actor_cosine_full(
                 ((byte!((*$enemy).parameter_1; 1isize)).$angle_adjust(32)) as u16,
                 byte!((*$enemy).parameter_1; 0) as u16,
                 $game,
@@ -482,7 +481,7 @@ macro_rules! set_roach_trigonometric_velocity {
         words!(
             (*$enemy),
             $sine_high,
-            $sine_low = SineMult8bitFull(
+            $sine_low = actor_sine_full(
                 ((byte!((*$enemy).parameter_1; 1isize)).$angle_adjust(32)) as u16,
                 byte!((*$enemy).parameter_1; 0) as u16,
                 $game,
@@ -617,9 +616,9 @@ crate::game::callback_dispatch! {
             (*E).var_F = (*E).var_F.wrapping_sub(1);
             v2 = ((*E).var_F & 0x8000) != 0;
             if !v2 {
-                let v3: u16 = Abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos)));
+                let v3: u16 = abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos)));
                 if v3 as i32 - 96i32 & 0x8000 == 0 {
-                    let v4: u16 = Abs16(((*E).base.y_pos).wrapping_sub(word!(game.samus_y_pos)));
+                    let v4: u16 = abs16(((*E).base.y_pos).wrapping_sub(word!(game.samus_y_pos)));
                     if v4 as i32 - 96i32 & 0x8000 == 0 {
                         Roach_Func_28(game);
                     }
@@ -665,7 +664,7 @@ crate::prefixed_callbacks! {
     pub unsafe fn (k: u16, game: &mut Game);
     @prefix { let E = Get_Roach(k as i32, game); };
     Roach_Func_2 [] {
-        let pt: Point32 = ConvertAngleToXy(
+        let pt: Vector32 = actor_direction_vector(
             byte!((*E).parameter_1; 1) as u16,
             byte!((*E).parameter_1; 0) as u16,
             game,
@@ -695,20 +694,20 @@ crate::prefixed_callbacks! {
         words!(
             (*E),
             var_0D,
-            var_0C = CosineMult8bitFull((*E).var_C, byte!((*E).parameter_1; 0) as u16, game)
+            var_0C = actor_cosine_full((*E).var_C, byte!((*E).parameter_1; 0) as u16, game)
         );
         words!(
             (*E),
             var_0F,
-            var_0E = SineMult8bitFull((*E).var_C, byte!((*E).parameter_1; 0) as u16, game)
+            var_0E = actor_sine_full((*E).var_C, byte!((*E).parameter_1; 0) as u16, game)
         );
     };
     Roach_Func_29 [] {
         let varE20: u16 = byte!((*E).parameter_1; 1) as u16;
-        ({ let (phase, point) = (varE20, Point32 {
+        ({ let (phase, point) = (varE20, Vector32 {
                 x: words!((*E), var_01, var_00),
                 y: words!((*E), var_03, var_02),
-            }); Runtime::new(game).session_mut().compatibility_enemy_scratch = phase; actor_api::apply_vector(&mut Runtime::new(game), phase, crate::game::session::Vector32 { x: point.x, y: point.y }) });
+            }); Runtime::new(game).session_mut().compatibility_enemy_scratch = phase; actor_api::apply_vector(&mut Runtime::new(game), phase, point) });
     };
     Roach_Func_30 [] {
         words!((*E).base, x_pos, x_subpos += words!((*E), var_05, var_04));
@@ -1182,8 +1181,8 @@ pub unsafe fn Bang_Func_9(game: &mut Game) {
             .wrapping_sub(64);
         let E = Get_Bang(word!(game.cur_enemy_index) as i32, game);
         (*E).var_02 = v1 as u16;
-        let v3: u16 = SignExtend8(((v1) as u16).wrapping_sub((*E).var_01));
-        let v4: u16 = Abs16(v3);
+        let v3: u16 = sign_extend8(((v1) as u16).wrapping_sub((*E).var_01));
+        let v4: u16 = abs16(v3);
         if v4 as i32 - 48i32 & 0x8000 == 0 {
             (*E).var_F = (0xa3bd2ci32) as u16;
         }
@@ -1798,12 +1797,12 @@ crate::game::callback_dispatch! {
     [10718702] Fireflea_Main [] {
         let E = Get_FireFlea(word!(game.cur_enemy_index) as i32, game);
         if ((*E).parameter_1 & 2) != 0 {
-            (*E).base.x_pos = ((*E).var_E).wrapping_add(CosineMult8bit(
+            (*E).base.x_pos = ((*E).var_E).wrapping_add(actor_cosine(
                 byte!((*E).var_D; 1) as u16,
                 (*E).var_C,
                 game,
             ));
-            (*E).base.y_pos = ((*E).var_F).wrapping_add(SineMult8bit(
+            (*E).base.y_pos = ((*E).var_F).wrapping_add(actor_sine(
                 byte!((*E).var_D; 1) as u16,
                 (*E).var_C,
                 game,
@@ -2041,7 +2040,7 @@ crate::game::callback_dispatch! {
         MaridiaSnail_Func_5(word!(game.cur_enemy_index), game);
         MaridiaSnail_Func_6(word!(game.cur_enemy_index), game);
         let E = Get_MaridiaSnail(word!(game.cur_enemy_index) as i32, game);
-        CallEnemyPreInstr((((*E).var_F) as u32) | (0xa30000u32), game);
+        actor_species_pre_instruction((((*E).var_F) as u32) | (0xa30000u32), game);
     };
     [10736560] MaridiaSnail_Touch [] {
         let E = Get_MaridiaSnail(word!(game.cur_enemy_index) as i32, game);
@@ -2144,7 +2143,7 @@ crate::game::callback_dispatch! {
     };
     [10739851] WreckedShipOrangeZoomer_Main [] {
         let E = Get_WreckedShipOrangeZoomer(word!(game.cur_enemy_index) as i32, game);
-        CallEnemyPreInstr((((*E).var_F) as u32) | (0xa30000u32), game);
+        actor_species_pre_instruction((((*E).var_F) as u32) | (0xa30000u32), game);
     };
     [10740436] BigEyeBugs_Init [] {
         let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
@@ -2175,7 +2174,7 @@ crate::game::callback_dispatch! {
     };
     [10741442] StoneZoomer_Main [] {
         let E = Get_StoneZoomer(word!(game.cur_enemy_index) as i32, game);
-        CallEnemyPreInstr((((*E).var_F) as u32) | (0xa30000u32), game);
+        actor_species_pre_instruction((((*E).var_F) as u32) | (0xa30000u32), game);
     };
     [10742351] Metroid_Init [] {
         let enemy = word!(game.cur_enemy_index);
@@ -2537,7 +2536,7 @@ crate::game::callback_dispatch! {
         if (r18 & 0x8000) != 0 {
             (*E).var_07 = 1;
         }
-        let mut t: u32 = ((Abs16(r18) as i32 >> 8) * (*E).var_0A as i32) as u32;
+        let mut t: u32 = ((abs16(r18) as i32 >> 8) * (*E).var_0A as i32) as u32;
         if (*E).var_07 != 0 {
             t = -(t as i32) as u32;
         }
@@ -2550,7 +2549,7 @@ crate::game::callback_dispatch! {
         if (r18 & 0x8000) != 0 {
             (*E).var_08 = 1;
         }
-        let mut t: u32 = ((Abs16(r18) as i32 >> 8) * (*E).var_0A as i32) as u32;
+        let mut t: u32 = ((abs16(r18) as i32 >> 8) * (*E).var_0A as i32) as u32;
         if (*E).var_08 != 0 {
             t = -(t as i32) as u32;
         }

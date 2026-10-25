@@ -7,13 +7,13 @@ use crate::game::enemy_script::EnemyScript;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
-use crate::game::session_runtime::Runtime;
+use crate::game::session_runtime::actor_direction_vector;
+use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
 
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::gameplay_flag_runtime::{CheckEventHappened, SetBossBitForCurArea};
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
-use crate::game::sm_a0::{CallEnemyPreInstr, ConvertAngleToXy, SignExtend8};
 use crate::game::sprite_effect_runtime::create_sprite;
 
 pub use crate::types::Consts_B3;
@@ -504,7 +504,7 @@ crate::game::callback_dispatch! {
             CallBotwoonFuncVarE((((*E).var_E) as u32) | (0xb30000u32), game);
             crate::game::enemy_projectiles::record_botwoon_head(game);
             crate::game::enemy_projectiles::follow_botwoon_history(game);
-            CallEnemyPreInstr((((*E).var_F) as u32) | (0xb30000u32), game);
+            actor_species_pre_instruction((((*E).var_F) as u32) | (0xb30000u32), game);
             crate::game::enemy_projectiles::orient_botwoon_body(game);
             crate::game::enemy_projectiles::advance_botwoon_history(game);
             Botwoon_Func_31(word!(game.cur_enemy_index), game);
@@ -533,7 +533,7 @@ crate::game::callback_dispatch! {
             CallBotwoonFuncVarE((((*E).var_E) as u32) | (0xb30000u32), game);
             crate::game::enemy_projectiles::record_botwoon_head(game);
             crate::game::enemy_projectiles::follow_botwoon_history(game);
-            CallEnemyPreInstr((((*E).var_F) as u32) | (0xb30000u32), game);
+            actor_species_pre_instruction((((*E).var_F) as u32) | (0xb30000u32), game);
             crate::game::enemy_projectiles::orient_botwoon_body(game);
             crate::game::enemy_projectiles::advance_botwoon_history(game);
         };
@@ -541,7 +541,7 @@ crate::game::callback_dispatch! {
     [11770340] Botwoon_Func_13 [] {
         if (*E).var_21 != 0 {
             (*E).var_2E = 0;
-            CallEnemyPreInstr((((*E).var_F) as u32) | (0xb30000u32), game);
+            actor_species_pre_instruction((((*E).var_F) as u32) | (0xb30000u32), game);
         } else {
             (*E).var_3C = 0;
             (*E).var_D = (0xb399a4i32) as u16;
@@ -599,9 +599,9 @@ crate::game::callback_dispatch! {
         }
     };
     Botwoon_Func_21 [] {
-        let pt: Point32 = ConvertAngleToXy((*E).var_3A, (*E).var_38, game);
+        let pt: Vector32 = actor_direction_vector((*E).var_3A, (*E).var_38, game);
         Runtime::new(game).session_mut().compatibility_enemy_scratch = (*E).var_3A;
-        ({ let (phase, point) = ((*E).var_3A, pt); actor_api::apply_vector(&mut Runtime::new(game), phase, crate::game::session::Vector32 { x: point.x, y: point.y }) });
+        ({ let (phase, point) = ((*E).var_3A, pt); actor_api::apply_vector(&mut Runtime::new(game), phase, point) });
     };
     Botwoon_Shot [] {
         (*E).var_4C = (*E).base.health;
@@ -657,11 +657,11 @@ crate::game::callback_dispatch! {
         };
         do_until! { n == 0 ;
     let v6 = RomPtr_B3((*E).var_42, game);
-    let v7: u16 = SignExtend8(*v6 as u16);
+    let v7: u16 = sign_extend8(*v6 as u16);
     let mut v8: u16 = 0;
     if v7 == 0xff80 || {
         x = (x).wrapping_add(v7);
-        v8 = SignExtend8(*v6.offset(1) as u16);
+        v8 = sign_extend8(*v6.offset(1) as u16);
         v8 == 0xff80
     } {
         (*E).var_41 = 0;
@@ -826,7 +826,7 @@ crate::game::callback_dispatch! {
     };
     [11789909] EscapeEtecoon_Main [] {
         let E = Get_EscapeEtecoon(word!(game.cur_enemy_index) as i32, game);
-        CallEnemyPreInstr((((*E).var_F) as u32) | (0xb30000u32), game);
+        actor_species_pre_instruction((((*E).var_F) as u32) | (0xb30000u32), game);
     };
     [11790027] EscapeEtecoon_Init [] {
         let E = Get_EscapeEtecoon(word!(game.cur_enemy_index) as i32, game);
@@ -873,7 +873,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11765882] BrinstarPipeBug_Main [] {
-        CallEnemyPreInstr((((*PipeBug).var_F) as u32) | (0xb30000u32), game);
+        actor_species_pre_instruction((((*PipeBug).var_F) as u32) | (0xb30000u32), game);
     };
     BrinstarPipeBug_Func_1 [] {
         let pbg_var_E: u16 = (*PipeBug).var_E;
@@ -1188,7 +1188,7 @@ crate::game::callback_dispatch! {
         if (*E).var_D != 0x99e4 {
             (*E).var_F = (0xb39f34i32) as u16;
         }
-        CallEnemyPreInstr((((*E).var_F) as u32) | (0xb30000u32), game);
+        actor_species_pre_instruction((((*E).var_F) as u32) | (0xb30000u32), game);
     };
     [11771616] Botwoon_Func_28 [] {
         if (*E).var_5A != 0 {

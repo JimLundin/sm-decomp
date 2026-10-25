@@ -523,8 +523,203 @@ impl Runtime<'_> {
     }
 }
 
+use crate::game::actors::api as actor_api;
+use crate::game::combat_rules::LatchMode;
 use crate::game::enemy_script::EnemyScript;
+use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
 use crate::game::{sm_a2, sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b2, sm_b3};
+crate::game::address_dispatch! {
+    unsafe fn actor_species_draw_hook(ea: u32, game: &mut Game) => ea;
+        call (game); default { crate::rtl::Unreachable(game); };
+    {
+        10518604 => [()]; 10738444 => sm_a3::Reflec_Func_1; 10851138 => sm_a5::Draygon_Func_36;
+        10920690 => sm_a6::Ridley_A2F2; 11042892 => [()]; 11055282 => sm_a8::NorfairLavaMan_Func_6;
+        11062375 => sm_a8::WreckedShipRobot_Func_1; 11069550 => sm_a8::BlueBrinstarFaceBlock_Func_1;
+        11110278 => [()]; 11110345 => sm_a9::MotherBrain_DrawBrainNeck_EnemyGfxDrawHook;
+        11110365 => sm_a9::MotherBrainsBrain_GfxDrawHook; 11129754 => sm_a9::DeadTorizo_MainGfxHook;
+    }
+}
+
+crate::game::callback_dispatch! {
+    unsafe fn actor_species_ai(ea: u32, game: &mut Game) => ea;
+    call (game); default { crate::rtl::Unreachable(game); };
+    @external {
+        10715136 | 10846208 | 10911744 | 10977280 | 11042816 | 11763712 => [actor_api::resume_ai(&mut Runtime::new(game))];
+        10649605 | 10780677 => [actor_api::latch(&mut Runtime::new(game), LatchMode::Passive)];
+        11042836 => [actor_api::latch(&mut Runtime::new(game), LatchMode::Active)];
+        10518583 | 10649655 | 10715191 | 10780727 | 10846263 | 10911799 | 10977335 | 11042871 | 11108407 | 11173943 | 11698231 | 11763767 => [actor_api::power_bomb_reaction(&mut Runtime::new(game), actor_api::DeathHandling::Finalize)];
+        10649676 => [{
+            #[cfg(sm_verify_dll)]
+            crate::game::actors::reference_population_animation::dispatch_noop(game);
+        }];
+        10656319 => sm_a2::ThinHoppingBlobs_Init;
+        10656381 => sm_a2::ThinHoppingBlobs_Main;
+        10664233 => [{
+                    sm_a2::Rinka_Frozen(crate::ram_map::word!(game.cur_enemy_index), game);
+                }];
+        10664275 => [{
+                    sm_a2::Rinka_Powerbomb(crate::ram_map::word!(game.cur_enemy_index), game);
+                }];
+        10669268 => sm_a2::MaridiaLargeSnail_Init;
+        10676698 => [mechanisms::initialize(Kind::TimedShutter, game)];
+        10676918 => [mechanisms::update(Kind::TimedShutter, game)];
+        10677765 => [mechanisms::initialize(Kind::Platform, game)];
+        10677778 => [mechanisms::initialize(Kind::VerticalShutter, game)];
+        10677969 => [mechanisms::update(Kind::Platform, game)];
+        10678429 => [mechanisms::react(Kind::Platform, Event::Touch, game)];
+        10678434 => [mechanisms::react(Kind::Platform, Event::Shot, game)];
+        10678442 => [mechanisms::react(Kind::VerticalShutter, Event::Shot, game)];
+        10678454 => [mechanisms::react(Kind::Platform, Event::PowerBomb, game)];
+        10678545 => [mechanisms::initialize(Kind::HorizontalShutter, game)];
+        10678750 => [mechanisms::update(Kind::HorizontalShutter, game)];
+        10679256 => [mechanisms::react(Kind::HorizontalShutter, Event::Touch, game)];
+        10679310 => [mechanisms::react(Kind::HorizontalShutter, Event::Shot, game)];
+        10679322 => [mechanisms::react(Kind::HorizontalShutter, Event::PowerBomb, game)];
+        10715212 => [()]; 10716909 => sm_a3::Waver_Init;
+        10717004 => sm_a3::Waver_Main; 10717536 => sm_a3::Metalee_Init;
+        10717561 => sm_a3::Metalee_Main; 10717967 => sm_a3::Metalee_Shot;
+        10718827 => [{
+                    sm_a3::Fireflea_Touch(crate::ram_map::word!(game.cur_enemy_index), game);
+                }];
+        10719413 => sm_a3::MaridiaFish_Init; 10719531 => sm_a3::MaridiaFish_Main;
+        10723079 => [()];
+        10723661 => sm_a3::Roach_Init;
+        10724048 => sm_a3::Roach_Main;
+        10726351 => sm_a3::Sidehopper_Main;
+        10733230 => sm_a3::Skree_Init; 10733255 => sm_a3::Skree_Main;
+        10738715 => [()];
+        10743874 => [{
+                    sm_a3::Metroid_Powerbomb(crate::ram_map::word!(game.cur_enemy_index), game);
+                }];
+        10780748 => [()];
+        10795344 => [()];
+        10811067 => [sm_a4::CrocomireTongue_Main()];
+        10846284 => [()];
+        10851824 => sm_a5::Draygon_Shot;
+        10864042 => [()];
+        10864068 => [()];
+        10874354 => [()];
+        10911820 => [()];
+        10913525 => sm_a6::Boulder_Init; 10913683 => sm_a6::Boulder_Main;
+        10914607 => sm_a6::SpikeyPlatform_Init;
+        10914733 => sm_a6::SpikeyPlatform_Main;
+        10920181 => sm_a6::CeresRidley_Init; 10920584 => sm_a6::CeresRidley_Main;
+        10924583 => sm_a6::Ridley_Main;
+        10924682 => sm_a6::Ridley_Func_2; 10924695 => sm_a6::Ridley_Hurt;
+        10942752 => [()];
+        10977356 => [()]; 10982543 => [()];
+        10982581 => [()];
+        11001242 => [()];
+        11001873 => [()];
+        11042892 => [()];
+        11048675 => sm_a8::Fune_Init;
+        11048752 => sm_a8::Fune_Main;
+        11051336 => sm_a8::YappingMaw_Init;
+        11051537 => sm_a8::YappingMaw_Main; 11052953 => sm_a8::YappingMaw_Touch;
+        11057014 => sm_a8::Beetom_Init;
+        11057165 => sm_a8::Beetom_Main; 11058734 => sm_a8::Beetom_Touch;
+        11062374 => [()];
+        11065545 => sm_a8::MaridiaPuffer_Init;
+        11065611 => sm_a8::MaridiaPuffer_Main; 11066132 => sm_a8::MaridiaPuffer_Shot;
+        11068296 => sm_a8::WreckedShipOrbs_Init;
+        11071880 => sm_a8::KiHunter_Init;
+        11072020 => sm_a8::KiHunterWings_Init; 11072092 => sm_a8::KiHunter_Main;
+        11072098 => sm_a8::KiHunterWings_Main;
+        11108428 => [()];
+        11111301 => [{
+                    sm_a9::MotherBrainsTubesFalling_Main(crate::ram_map::word!(game.cur_enemy_index), game);
+                }];
+        11121927 => sm_a9::MotherBrainsBrain_Shot;
+        11122117 => [()];
+        11173964 => [()];
+        11196359 => [()];
+        11200475 => [()];
+        11200476 => [()];
+        11698252 => [()];
+        11763788 => [()];
+        11765518 => [sm_b3::UnusedSpinningTurtleEye_Main()];
+        11767628 => sm_b3::BrinstarYellowPipeBug_Init;
+        11767726 => sm_b3::BrinstarYellowPipeBug_Main; 11769219 => sm_b3::Botwoon_Init;
+        11771926 => sm_b3::Botwoon_Shot;
+        11791130 => [()];
+        0xa20000..=0xa2ffff => [sm_a2::DispatchEnemyAi(ea, game)];
+        0xa30000..=0xa3ffff => [sm_a3::DispatchEnemyAi(ea, game)];
+        0xa40000..=0xa4ffff => [sm_a4::DispatchEnemyAi(ea, game)];
+        0xa50000..=0xa5ffff => [sm_a5::DispatchEnemyAi(ea, game)];
+        0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyAi(ea, game)];
+        0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyAi(ea, game)];
+        0xa80000..=0xa8ffff => [sm_a8::DispatchEnemyAi(ea, game)];
+        0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyAi(ea, game)];
+        0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyAi(ea, game)];
+        0xb20000..=0xb2ffff => [sm_b2::DispatchEnemyAi(ea, game)];
+        0xb30000..=0xb3ffff => [sm_b3::DispatchEnemyAi(ea, game)];
+    }
+}
+crate::game::address_dispatch! {
+    pub(crate) unsafe fn actor_species_pre_instruction(ea: u32, game: &mut Game) => ea;
+        setup { let k: u16 = crate::ram_map::word!(game.cur_enemy_index); }
+        call (k, game); default { crate::rtl::Unreachable(game); };
+    {
+        10518651 => [()]; 10649723 => [()];
+        10652277 => [()];
+        10657819 => [()]; 10659799 => [()];
+        10676097 => [()]; 10730689 => [sm_a3::Bang_Func_7(k)];
+        10735455 => [()];
+        10739850 => [()]; 10741441 => [()];
+        10998952 => [()];
+        11047388 => [()];
+        11055761 => [sm_a8::sub_A8B291(k)]; 11055765 => [sm_a8::NorfairLavaMan_Func_13(game)];
+        11060584 => [()];
+        11192670 => [()]; 11197610 => [()]; 11200422 => [()]; 11174011 => [()]; 11763835 => [()];
+        11192146 => sm_aa::Torizo_Func_5;
+        11192364 => sm_aa::Torizo_Func_7;
+        11195889 => sm_aa::Torizo_D5F1;
+        11200474 => [()];
+        11197611 => [()];
+        0xa20000..=0xa2ffff => [sm_a2::DispatchEnemyPreInstr(ea, k, game)];
+        0xa30000..=0xa3ffff => [sm_a3::DispatchEnemyPreInstr(ea, k, game)];
+        0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyPreInstr(ea, k, game)];
+        0xa80000..=0xa8ffff => [sm_a8::DispatchEnemyPreInstr(ea, k, game)];
+        0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyPreInstr(ea, k, game)];
+        0xb30000..=0xb3ffff => [sm_b3::DispatchEnemyPreInstr(ea, k, game)];
+    }
+}
+crate::game::address_dispatch! {
+    unsafe fn actor_species_touch(ea: u32, game: &mut Game) => ea;
+        call (game); default { crate::rtl::Unreachable(game); };
+    {
+        10518563 => [actor_api::contact_reaction(&mut Runtime::new(game), actor_api::DeathHandling::Finalize)]; 10670984 => sm_a2::MaridiaLargeSnail_Func_12;
+        10670988 => sm_a2::MaridiaLargeSnail_Touch; 10780707 => sm_a4::Enemy_NormalTouchAI_A4;
+        10795325 => sm_a4::Crocomire_Func_92; 10795344 => [()]; 10846284 => [()];
+        10851818 => sm_a5::Draygon_Touch; 10874348 => sm_a5::SporeSpawn_Touch;
+        10936153 => sm_a6::sub_A6DF59; 10940479 => sm_a6::CeresSteam_Touch; 10977356 => [()];
+        10982539 => sm_a7::Kraid_Touch_ArmFoot; 10982544 => sm_a7::KraidsArm_Touch;
+        11001237 => sm_a7::Phantoon_Touch; 11122117 => [()];
+        11122118 => sm_a9::MotherBrainsBrain_Touch; 11192695 => sm_aa::GoldTorizo_Touch;
+        11700076 => sm_b2::WalkingSpacePirates_Touch;
+    }
+}
+crate::game::callback_dispatch! {
+    unsafe fn actor_species_shot(ea: u32, j: u16, game: &mut Game) => ea;
+    call (game); default { crate::rtl::Unreachable(game); };
+    @external {
+        10518573 => [actor_api::shot_reaction(&mut Runtime::new(game), actor_api::ShotHandling::Finalize)];
+        10846278 => [actor_api::create_dud(&mut Runtime::new(game))];
+        10649676 => [()];
+        10671028 => sm_a2::MaridiaLargeSnail_Shot; 10780717 => sm_a4::Enemy_NormalShotAI_A4;
+        10795345 => sm_a4::Crocomire_Func_93; 10795368 => sm_a4::Crocomire_Func_94;
+        10795525 => sm_a4::Crocomire_Func_95; 10795700 => sm_a4::Crocomire_Func_1;
+        10846253 => sm_a5::Enemy_NormalShotAI_A5; 10846284 => [()];
+        10851824 => sm_a5::Draygon_Shot; 10874202 => sm_a5::SporeSpawn_Shot; 10911820 => [()];
+        10936202 => sm_a6::Ridley_Shot; 10977356 => [()]; 10982581 => [()];
+        10982582 => [sm_a7::Kraid_Arm_Shot(j, game)]; 11001243 => sm_a7::Phantoon_Shot;
+        11121923 => sm_a9::MotherBrainsBody_Shot; 11121927 => sm_a9::MotherBrainsBrain_Shot;
+        11192700 => sm_aa::Torizo_Shot; 11192769 => [()]; 11192770 => sm_aa::Torizo_Func_8;
+        11700089 => sm_b2::WalkingSpacePirates_Shot; 11700168 => sm_b2::WalkingSpacePirates_87C8;
+        11700286 => sm_b2::WalkingSpacePirates_883E;
+    }
+}
+
 crate::game::callback_dispatch! {
     unsafe fn actor_species_instruction(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
@@ -557,7 +752,7 @@ crate::game::callback_dispatch! {
 }
 impl Runtime<'_> {
     pub(crate) fn actor_ai_legacy(&mut self, routine: u32) {
-        self.foreign(|game| unsafe { crate::game::sm_a0::CallEnemyAi(routine, game) });
+        self.foreign(|game| unsafe { actor_species_ai(routine, game) });
     }
     pub(crate) fn actor_instruction_legacy(
         &mut self,
@@ -568,13 +763,13 @@ impl Runtime<'_> {
         self.foreign(|game| unsafe { actor_species_instruction(routine, actor, script, game) })
     }
     pub(crate) fn actor_touch_legacy(&mut self, routine: u32) {
-        self.foreign(|game| unsafe { crate::game::sm_a0::CallHitboxTouch(routine, game) });
+        self.foreign(|game| unsafe { actor_species_touch(routine, game) });
     }
     pub(crate) fn actor_shot_legacy(&mut self, routine: u32, argument: u16) {
-        self.foreign(|game| unsafe { crate::game::sm_a0::CallHitboxShot(routine, argument, game) });
+        self.foreign(|game| unsafe { actor_species_shot(routine, argument, game) });
     }
     pub(crate) fn actor_hook_legacy(&mut self, routine: u32) {
-        self.foreign(|game| unsafe { crate::game::sm_a0::CallEnemyGfxDrawHook(routine, game) });
+        self.foreign(|game| unsafe { actor_species_draw_hook(routine, game) });
     }
     pub(crate) fn actor_player_scene_legacy(&mut self) {
         self.foreign(crate::game::visual_runtime::draw_player_frame);
@@ -707,7 +902,9 @@ mod player_collision_runtime;
 pub(crate) use player_collision_runtime::{player_bottom, set_player_radius, settle_grapple};
 #[path = "player_movement_runtime.rs"]
 mod player_movement_runtime;
-pub(crate) use player_movement_runtime::{advance_special_movement, ceres_movement};
+pub(crate) use player_movement_runtime::{
+    advance_special_movement, ceres_movement, correct_previous_position,
+};
 #[path = "player_transitions_runtime.rs"]
 mod player_transitions_runtime;
 pub(crate) use player_transitions_runtime::{
@@ -753,3 +950,25 @@ pub(crate) mod player_minimap_edges;
 #[cfg(sm_verify_dll)]
 #[path = "../verification/player_normal_transfers.rs"]
 pub(crate) mod player_normal_transfers;
+
+pub(crate) fn actor_cosine(phase: u16, amplitude: u16, game: &mut Game) -> u16 {
+    (actor_cosine_full(phase, amplitude, game) >> 16) as u16
+}
+pub(crate) fn actor_sine(phase: u16, amplitude: u16, game: &mut Game) -> u16 {
+    (actor_sine_full(phase, amplitude, game) >> 16) as u16
+}
+crate::forward_calls! { pub(crate) fn (phase: u16, amplitude: u16, game: &mut Game) -> u32;
+    actor_cosine_full => crate::game::actors::queries::sine_product(&mut Runtime::new(game), amplitude, phase.wrapping_add(64) as u8 as u16);
+    actor_sine_full => crate::game::actors::queries::sine_product(&mut Runtime::new(game), amplitude, phase.wrapping_add(0x80) as u8 as u16);
+}
+pub(crate) fn actor_direction_vector(
+    phase: u16,
+    amplitude: u16,
+    game: &mut Game,
+) -> crate::game::session::Vector32 {
+    let [x, y] = [0x40u16, 0x80].map(|offset| {
+        let index = usize::from(phase.wrapping_add(offset) & 0x7f);
+        u32::from(game.read_rom_word(0xa0b7ee, index * 2)) * u32::from(amplitude)
+    });
+    crate::game::session::Vector32 { x, y }
+}

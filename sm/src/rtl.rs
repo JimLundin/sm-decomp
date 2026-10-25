@@ -865,6 +865,15 @@ pub(crate) fn abs16(value: u16) -> u16 {
     (value as i16).unsigned_abs()
 }
 
+/// Preserve the input high byte when bit 7 is clear.
+pub(crate) fn sign_extend8(value: u16) -> u16 {
+    if value & 0x80 != 0 {
+        value | 0xff00
+    } else {
+        value
+    }
+}
+
 /// Add to a split word pair, reading low then high and writing low then high.
 ///
 /// # Safety

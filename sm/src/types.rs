@@ -237,10 +237,6 @@ crate::typed_struct! {
         pub x, y: u16;
     }
 
-    pub struct Point32 {
-        pub x, y: u32;
-    }
-
     pub union Ram3000 {
         pub pause_menu_map_tilemap: [u16; 1024];
         pub cinematic_bg_tilemap: [u16; 1024];

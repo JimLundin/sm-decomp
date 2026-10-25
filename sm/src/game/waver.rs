@@ -5,8 +5,7 @@ use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::api as actor_api;
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::enemy_script::EnemyScript;
-use crate::game::session_runtime::Runtime;
-use crate::game::sm_a0::SineMult8bit;
+use crate::game::session_runtime::{Runtime, actor_sine};
 use crate::game_state::Game;
 use crate::types::EnemyBase;
 
@@ -130,7 +129,7 @@ pub fn Waver_Init(game: &mut Game) {
         enemy.set_velocity_fraction(0x8000);
         if enemy.initial_direction() & 1 == 0 {
             enemy.set_velocity_integer(0xfffe);
-            // SignExtend8(0x8000) in the original retains 0x8000, not zero.
+            // sign_extend8(0x8000) in the original retains 0x8000, not zero.
             enemy.set_velocity_fraction(0x8000);
         }
         enemy.set_animation(0);
@@ -176,7 +175,7 @@ pub unsafe fn Waver_Main(game: &mut Game) {
             // Read the current index again at the same point as the original.
             let vertical_index = game.cur_enemy_index();
             let phase = WaverRam::new(game, index).sine_phase() as u8 as u16;
-            let vertical_velocity = i32::from(SineMult8bit(phase, 4, game) as i16) << 16;
+            let vertical_velocity = i32::from(actor_sine(phase, 4, game) as i16) << 16;
             let collided = {
                 let (actor, amount) = (vertical_index, vertical_velocity);
                 (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)

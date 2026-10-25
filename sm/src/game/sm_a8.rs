@@ -5,17 +5,16 @@ use crate::game::enemy_script::EnemyScript;
 use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
 pub use crate::game::prelude::*;
-use crate::game::session_runtime::Runtime;
+use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
+use crate::game::session_runtime::{
+    actor_cosine, actor_cosine_full, actor_sine, actor_sine_full, correct_previous_position,
+};
 
 pub use crate::game::constants::bank_86::*;
 
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx2_Max9, QueueSfx3_Max6};
-use crate::game::sm_a0::{
-    Abs16, CallEnemyPreInstr, CosineMult8bit, CosineMult8bitFull, EnemyFunc_B7A1, SignExtend8,
-    SineMult8bit, SineMult8bitFull,
-};
 use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
 use crate::game::visual_runtime::initialize_morph_eye_beam;
 
@@ -313,8 +312,8 @@ pub unsafe fn MiniDraygon_Func_7(game: &mut Game) {
             }) as u8)
                 .wrapping_sub(64u8)) as i32) as u16;
             let E = Get_MiniDraygon(word!(game.cur_enemy_index) as i32, game);
-            words!((*E), var_07, var_08 = CosineMult8bitFull(r22, 4, game));
-            words!((*E), var_09, var_0A = SineMult8bitFull(r22, 4, game));
+            words!((*E), var_07, var_08 = actor_cosine_full(r22, 4, game));
+            words!((*E), var_09, var_0A = actor_sine_full(r22, 4, game));
             (*E).var_02 = addr_kMiniDraygon_Ilist_876F as u16;
             MiniDraygon_Func_12(game);
             (*E).var_0B = 1;
@@ -728,7 +727,7 @@ crate::game::callback_dispatch! {
                 x: word!(game.samus_x_pos),
                 y: word!(game.samus_y_pos),
             }); { let result = actor_api::distance_and_direction(&mut Runtime::new(game), crate::game::session::Point { x: origin.x, y: origin.y }, crate::game::session::Point { x: target.x, y: target.y }); crate::types::PairU16 { k: result.distance, j: result.direction } } };
-        let v2: u16 = Abs16(pair.k);
+        let v2: u16 = abs16(pair.k);
         (*E).var_08 = v2;
         if v2 as i32 - 32i32 & 0x8000 != 0 {
             (*E).var_35 = 48;
@@ -918,7 +917,7 @@ pub unsafe fn YappingMaw_Func_10(game: &mut Game) {
         let E = Get_YappingMaw(word!(game.cur_enemy_index) as i32, game);
         word!(game.samus_x_pos = ((*E).var_32).wrapping_add((*E).base.x_pos));
         word!(game.samus_y_pos = ((*E).var_33).wrapping_add((*E).base.y_pos));
-        EnemyFunc_B7A1(game);
+        correct_previous_position(game);
     }
 }
 pub unsafe fn YappingMaw_Func_16(a: u16, varE32: u16, game: &mut Game) -> u16 {
@@ -1758,7 +1757,7 @@ crate::game::callback_dispatch! {
         if (r18 & 0x8000) != 0 {
             R26 = R26.wrapping_add(1);
         }
-        let mut t: u32 = (((Abs16(r18) as i32 & 0xff00) >> 8) * (*E).var_D as i32) as u32;
+        let mut t: u32 = (((abs16(r18) as i32 & 0xff00) >> 8) * (*E).var_D as i32) as u32;
         if R26 != 0 {
             t = -(t as i32) as u32;
         }
@@ -1770,7 +1769,7 @@ crate::game::callback_dispatch! {
         if (r18 & 0x8000) != 0 {
             R26 = R26.wrapping_add(1);
         }
-        let mut t: u32 = (((Abs16(r18) as i32 & 0xff00) >> 8) * (*E).var_D as i32) as u32;
+        let mut t: u32 = (((abs16(r18) as i32 & 0xff00) >> 8) * (*E).var_D as i32) as u32;
         if R26 != 0 {
             t = -(t as i32) as u32;
         }
@@ -1802,8 +1801,8 @@ pub unsafe fn MaridiaPuffer_Func_5(game: &mut Game) {
             .wrapping_sub(64);
         let E = Get_MaridiaPuffer(word!(game.cur_enemy_index) as i32, game);
         (*E).var_01 = v1 as u16;
-        let v3: u16 = SignExtend8(((v1) as u16).wrapping_sub((*E).var_02));
-        let v4: u16 = Abs16(v3);
+        let v3: u16 = sign_extend8(((v1) as u16).wrapping_sub((*E).var_02));
+        let v4: u16 = abs16(v3);
         if v4 as i32 - 48i32 & 0x8000 == 0 {
             (*E).var_A = (0xa8d97ci32) as u16;
             (*E).var_C = 24;
@@ -2212,7 +2211,7 @@ crate::game::callback_dispatch! {
             (*E).var_A = (0xa8f268i32) as u16;
             return;
         }
-        let mut r20: u16 = ((*E).var_B as i32 + CosineMult8bit((*E).var_F, (*E).var_11, game) as i32
+        let mut r20: u16 = ((*E).var_B as i32 + actor_cosine((*E).var_F, (*E).var_11, game) as i32
             - (*E).base.x_pos as i32) as u16;
         let collided = if ({ let (actor, amount) = (k, (r20 as i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
             if ((*E).var_04 & 0x8000) == 0 {
@@ -2225,7 +2224,7 @@ crate::game::callback_dispatch! {
             true
         } else {
             ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
-            r20 = ((*E).var_C as i32 + SineMult8bit((*E).var_F, (*E).var_12, game) as i32
+            r20 = ((*E).var_C as i32 + actor_sine((*E).var_F, (*E).var_12, game) as i32
                 - (*E).base.y_pos as i32) as u16;
             ({ let (actor, amount) = (k, (r20 as i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
         };
@@ -2343,7 +2342,7 @@ crate::game::callback_dispatch! {
                 .offset(1) as *mut u16),
         );
         let r20: u16 = ((*E).var_06 as i32
-            + SineMult8bit(byte!((*E).var_F; 1) as u16, g_byte_A8F186 as u16, game) as i32
+            + actor_sine(byte!((*E).var_F; 1) as u16, g_byte_A8F186 as u16, game) as i32
             - (*E).var_02 as i32
             - (*E).base.y_pos as i32) as u16;
         if ({ let (actor, amount) = (word!(game.cur_enemy_index), (r20 as i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
@@ -2353,7 +2352,7 @@ crate::game::callback_dispatch! {
             (*E).base.y_pos = khr_var_07 as u16;
         } else {
             (*E).base.x_pos = ((*E).var_05 as i32
-                + CosineMult8bit(byte!((*E).var_F; 1) as u16, g_byte_A8F186 as u16, game) as i32
+                + actor_cosine(byte!((*E).var_F; 1) as u16, g_byte_A8F186 as u16, game) as i32
                 - (*E).var_01 as i32) as u16;
             if (*E).var_F as i32 + 0x4000 & 0x8000 == 0 {
                 KiHunter_Func_15(word!(game.cur_enemy_index), game);
@@ -2416,10 +2415,10 @@ crate::game::callback_dispatch! {
                 .offset(1) as *mut u16),
         );
         (*E).base.y_pos = ((*E).var_06 as i32
-            + SineMult8bit(byte!((*E).var_F; 1) as u16, g_byte_A8F186 as u16, game) as i32
+            + actor_sine(byte!((*E).var_F; 1) as u16, g_byte_A8F186 as u16, game) as i32
             - (*E).var_04 as i32) as u16;
         (*E).base.x_pos = ((*E).var_05 as i32
-            + CosineMult8bit(byte!((*E).var_F; 1) as u16, g_byte_A8F186 as u16, game) as i32
+            + actor_cosine(byte!((*E).var_F; 1) as u16, g_byte_A8F186 as u16, game) as i32
             - (*E).var_03 as i32) as u16;
         if (*E).var_F as i32 + 0x4000 & 0x8000 != 0 {
             KiHunter_Func_16(word!(game.cur_enemy_index), game);
@@ -2447,18 +2446,18 @@ crate::game::callback_dispatch! {
 }
 pub unsafe fn KiHunter_Func_12(game: &mut Game) {
     unsafe {
-        let v1: u16 = CosineMult8bit(0xe0, g_byte_A8F186 as u16, game);
+        let v1: u16 = actor_cosine(0xe0, g_byte_A8F186 as u16, game);
         let E = Get_KiHunter(word!(game.cur_enemy_index) as i32, game);
         (*E).var_03 = v1;
-        (*E).var_04 = SineMult8bit(0xe0, g_byte_A8F186 as u16, game);
+        (*E).var_04 = actor_sine(0xe0, g_byte_A8F186 as u16, game);
     }
 }
 pub unsafe fn KiHunter_Func_13(game: &mut Game) {
     unsafe {
-        let v1: u16 = CosineMult8bit(0xa0, g_byte_A8F186 as u16, game);
+        let v1: u16 = actor_cosine(0xa0, g_byte_A8F186 as u16, game);
         let E = Get_KiHunter(word!(game.cur_enemy_index) as i32, game);
         (*E).var_01 = v1;
-        (*E).var_02 = SineMult8bit(0xa0, g_byte_A8F186 as u16, game);
+        (*E).var_02 = actor_sine(0xa0, g_byte_A8F186 as u16, game);
     }
 }
 
@@ -2581,7 +2580,7 @@ crate::game::callback_dispatch! {
     [11047138] MorphBallEye_Main [] {
         if (word!(game.collected_items) & 4) != 0 {
             let E = Get_MorphBallEye(word!(game.cur_enemy_index) as i32, game);
-            CallEnemyPreInstr((((*E).var_F) as u32) | (0xa80000u32), game);
+            actor_species_pre_instruction((((*E).var_F) as u32) | (0xa80000u32), game);
         }
     };
     [11049710] WreckedShipGhost_Init [] {
@@ -2732,7 +2731,7 @@ crate::game::callback_dispatch! {
     };
     [11059740] MaridiaFloater_Main [] {
         let E = Get_MaridiaFloater(word!(game.cur_enemy_index) as i32, game);
-        CallEnemyPreInstr((((*E).var_F) as u32) | (0xa80000u32), game);
+        actor_species_pre_instruction((((*E).var_F) as u32) | (0xa80000u32), game);
     };
     [11060670] MaridiaFloater_Touch [] {
         let E = Get_MaridiaFloater(word!(game.cur_enemy_index) as i32, game);
@@ -2956,12 +2955,12 @@ crate::game::callback_dispatch! {
             if (*v1).ai_var_A == 0 {
                 let SamusEnemyDelta_Y: u16 =
                     { let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y) };
-                if ((Abs16(SamusEnemyDelta_Y)) as i16).wrapping_sub(((*v1).parameter_1) as i16) < 0
+                if ((abs16(SamusEnemyDelta_Y)) as i16).wrapping_sub(((*v1).parameter_1) as i16) < 0
                 {
                     let SamusEnemyDelta_X: u16 =
                         { let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) };
                     (*v1).ai_var_B = SamusEnemyDelta_X;
-                    if ((Abs16(SamusEnemyDelta_X)) as i16).wrapping_sub(((*v1).parameter_1) as i16)
+                    if ((abs16(SamusEnemyDelta_X)) as i16).wrapping_sub(((*v1).parameter_1) as i16)
                         < 0
                         && (*v1).ai_var_B & 0x8000 != (*v1).parameter_2
                     {
@@ -3067,7 +3066,7 @@ crate::game::callback_dispatch! {
     };
     [11055370] NorfairLavaMan_Main [] {
         (*E).var_04 = (*E).var_04.wrapping_sub(1);
-        CallEnemyPreInstr((((*E).var_F) as u32) | (0xa80000u32), game);
+        actor_species_pre_instruction((((*E).var_F) as u32) | (0xa80000u32), game);
     };
     NorfairLavaMan_Func_13 [] {
         let mut v2 = gEnemySpawnData(word!(game.cur_enemy_index) as i32, game);

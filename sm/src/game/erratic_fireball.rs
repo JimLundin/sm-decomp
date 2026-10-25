@@ -11,7 +11,7 @@ pub(crate) fn update(initialize: bool, game: &mut Game) {
         let key = Key::from_legacy(runtime.word(0xe54));
         (key, runtime.resolve_actor(key, Native).parameters)
     };
-    let velocity = crate::game::sm_a0::ConvertAngleToXy(
+    let velocity = crate::game::session_runtime::actor_direction_vector(
         parameters[0],
         u16::from(parameters[1].to_ne_bytes()[0]),
         game,

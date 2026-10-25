@@ -10,7 +10,7 @@ use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
-use crate::game::session_runtime::Runtime;
+use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
 
 use crate::game::gameplay_flag_runtime::{CheckBossBitForCurArea, SetBossBitForCurArea};
 use crate::game::room_mechanisms::{spawn_collision, spawn_hardcoded};
@@ -21,7 +21,6 @@ use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::palette_effects;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
-use crate::game::sm_a0::CallEnemyPreInstr;
 use crate::game::visual_runtime::initialize_bomb_torizo_haze;
 
 pub use crate::types::Consts_AA;
@@ -236,7 +235,7 @@ crate::game::callback_dispatch! {
         let E = Get_Torizo(k as i32, game);
         if ((*E).parameter_2 & 0x8000) != 0 || (*E).base.health >= 0x15e {
             if ((*E).parameter_2 & 0x4000) != 0 || (*E).base.health >= 0x64 {
-                CallEnemyPreInstr((((*E).var_F) as u32) | (0xaa0000u32), game);
+                actor_species_pre_instruction((((*E).var_F) as u32) | (0xaa0000u32), game);
             } else {
                 let mut v2: u16 = if ((*E).parameter_1 & 0x8000) != 0 {
                     addr_kTorizo_Ilist_BD0E as u16
@@ -261,7 +260,7 @@ crate::game::callback_dispatch! {
     [11195878] Torizo_D5E6 [] {
         Torizo_C620(k, game);
         let E = Get_Torizo(k as i32, game);
-        CallEnemyPreInstr((((*E).var_F) as u32) | (0xaa0000u32), game);
+        actor_species_pre_instruction((((*E).var_F) as u32) | (0xaa0000u32), game);
     };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     @prefix { let E = Get_Torizo(k as i32, game); };
@@ -644,7 +643,7 @@ crate::game::callback_dispatch! {
     };
     [11197603] Shaktool_Hurt [] {
         let E = Get_Shaktool(word!(game.cur_enemy_index) as i32, game);
-        CallEnemyPreInstr((((*E).var_F) as u32) | (0xaa0000u32), game);
+        actor_species_pre_instruction((((*E).var_F) as u32) | (0xaa0000u32), game);
     };
     [11198019] Shaktool_Init [] {
         let E = Get_Shaktool(word!(game.cur_enemy_index) as i32, game);
@@ -739,7 +738,7 @@ crate::game::callback_dispatch! {
     };
     [11200423] ChozoStatue_Main [] {
         let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-        CallEnemyPreInstr((((*v0).ai_preinstr) as u32) | (0xaa0000u32), game);
+        actor_species_pre_instruction((((*v0).ai_preinstr) as u32) | (0xaa0000u32), game);
     };
     @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E = Get_Torizo(word!(game.cur_enemy_index) as i32, game); };

@@ -413,3 +413,22 @@ unsafe fn advance_shinespark(axes: &[player_collision::Axis], game: &mut Game) {
         }
     }
 }
+
+pub(crate) fn correct_previous_position(game: &mut Game) {
+    use crate::ram_map::{checked_word, words as ram};
+    for (current, previous) in [
+        (ram::samus_y_pos, ram::samus_prev_y_pos),
+        (ram::samus_x_pos, ram::samus_prev_x_pos),
+    ] {
+        let position = checked_word!(game, current;);
+        let delta = position.wrapping_sub(checked_word!(game, previous;));
+        if abs16(delta).wrapping_sub(12) & 0x8000 == 0 {
+            let correction = if delta & 0x8000 == 0 {
+                12
+            } else {
+                (-12i16) as u16
+            };
+            checked_word!(game, previous; = position.wrapping_add(correction));
+        }
+    }
+}
