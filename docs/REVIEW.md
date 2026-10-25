@@ -202,6 +202,13 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
 
 ## Check-ins
 
+- **2026-10-25 15:55 CET (9b062a7), no stall, short hour (15 min after reset 2):**
+  5 agent commits since f2d3a05: A 2 (6f579a3 Ridley, f207b36 Phantoon: checks 33 -> 35),
+  B1 `sm_81` 1 (a2088b5), B2 `sm_88` 1 (89%), B3 `sm_a4` 1 (44%); M 0 (lane opened at
+  15:40); all labelled with `Score:`, bodies <=8 lines naming rows. Score `checks 35/44 ·
+  legacy 49698 · production 115375 · unsafe 4554 · verification 39232` (last 33 · 49901 ·
+  115411 · 4567 · 39228); warnings 357 (362). 18:00: checks, legacy, banks met;
+  production 75 over (on pace); unsafe/M1 branch and green `ci.yml` still open. No changes.
 - **2026-10-25 15:50 CET (f2d3a05), throughput reset 2 at the user's request:** checks
   33/44 (18:00 target 28 already met), sm_90 and sm_89 deleted, legacy 49,901, unsafe
   4,567. Added lane M (scripted unsafe-primitive codemods), lane C (hosted CI as the
@@ -268,24 +275,6 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
   lane A behind (25/44, needs ~1 check/hour). Hour's ratio ~80% (−1,314 legacy,
   −267 production). A0.3 parked at 9,266 steps; lane A back on hand routes under the
   written-finding fallback. PLAN.md 221 lines (>200). No stall.
-- **2026-10-25 07:52 CET (563a45e):** 2 agent commits, both `B:sm_91` (4f8b05d,
-  563a45e), Score lines present; **lane A 0 commits** (first silent hour; door work
-  held locally, see A0.3), 0 unlabelled, 0 docs-only. Score `checks 24/44 · legacy
-  54148 · production 116398 · unsafe 4892 · verification 39023` (last 24 · 54543 ·
-  116478 · 4928 · 39010); warnings 371 (375); production verify/probe/observer 587
-  lines/91 files. 18:00: lane B on pace for legacy, behind on production; lane A
-  behind (0/10 checks). Verification +13 in a fixture host file: must fall. No stall.
-- **2026-10-25 06:52 CET (ca42bc5):** agents back after a 6h stall. 5 agent
-  commits: A 2 (cec060e, 1b726be), B 3 (`B:sm_94`), 0 unlabelled, 0 docs-only; all
-  carry `Score:` (ca42bc5's has mojibake `Â·`). **sm_94 deleted** (ratio ~75%).
-  A0.2 done; A0.3 at 8,250 aligned steps, 0 failures. Score now `checks 24/44 ·
-  legacy 54543 · production 116478 · unsafe 4928 · verification 39010` (last 24 ·
-  55315 · 116670 · 4962 · 38993); warnings 375 (377). No stall. 18:00 waypoint:
-  lane B on pace for legacy, behind on production; lane A behind (needs +10 checks).
-  Verification +17 (generic `state:` expectation, 2 segment row sets): acceptable,
-  but it must fall; production verify/probe/observer lines flat (613, same grep).
-- **2026-10-25 01:52–05:52 CET (9feb2f2…a172326):** five consecutive full stalls,
-  0 agent commits since 7867e91 (23:48 CET); escalated to Jim; 06:00 waypoint missed.
 
 ## Lane watch (2026-10-24 23:52)
 
