@@ -69,8 +69,6 @@ impl<'g> Runtime<'g> {
     pub fn new(game: &'g mut Game) -> Self {
         #[cfg(sm_verify_dll)]
         player_normal_transfers::record(game, 0);
-        #[cfg(sm_verify_dll)]
-        player_legacy_edges::transfer(game, 0);
         Self {
             state: Some(import_session(game)),
             inputs: encoding::inputs(&game.g_ram),
@@ -427,8 +425,6 @@ pub(crate) fn run_mechanisms(
 pub(crate) fn import_session(game: &mut Game) -> Session {
     #[cfg(sm_verify_dll)]
     player_normal_transfers::record(game, 1);
-    #[cfg(sm_verify_dll)]
-    player_legacy_edges::transfer(game, 1);
     let mut state = encoding::decode(&game.g_ram, game.world().clone());
     import_native_spawn(&mut state, game);
     state.actor_identity = game.take_actor_identity();
@@ -463,8 +459,6 @@ pub(crate) fn export_session(state: Session, game: &mut Game) {
         state: Some(state),
         game,
     };
-    #[cfg(sm_verify_dll)]
-    player_legacy_edges::transfer(guard.game, 2);
     #[cfg(sm_verify_dll)]
     player_normal_transfers::record(guard.game, 2);
     let state = guard.state.as_ref().expect("export owns Session");

@@ -6,8 +6,8 @@ use crate::game::{
     player_transitions::{
         self as transitions,
         state::{
-            BombJump, FrameGammaMode, InterruptionAction, MomentumAction, MovementMode,
-            PoseRequestWord,
+            BombJump, FrameGammaMode, InputMode, InterruptionAction, JumpKind, MomentumAction,
+            MovementMode, PoseRequestWord,
         },
     },
     session::Session,
@@ -131,4 +131,57 @@ pub(crate) fn animate_fall(s: &mut Session) {
         s.player.animation_clock.remaining = 16;
         s.player.animation_clock.frame = 4;
     }
+}
+
+pub(crate) fn begin_bomb_jump(h: &mut impl Host) {
+    transitions::initialize_jump(h, JumpKind::Bomb);
+    let p = &mut h.session_mut().player;
+    p.movement_handler = MovementMode::BombJump;
+    p.collision.pose_input = 0;
+}
+
+pub(crate) fn finish_bomb_jump(s: &mut Session) {
+    s.player.movement_handler = MovementMode::Normal;
+    if s.player.transitions.input_mode != InputMode::Demo {
+        s.player.transitions.input_mode = InputMode::Normal;
+    }
+    s.player.transitions.bomb_jump = BombJump::from_raw(0);
+}
+
+pub(crate) fn advance_bomb_jump<H: Host>(h: &mut H, invalid: fn(&mut H)) {
+    let jump = h.session().player.transitions.bomb_jump.to_raw();
+    if jump == 0 {
+        finish_bomb_jump(h.session_mut());
+        return;
+    }
+    match [0, 1, 2, 1][usize::from(jump as u8)] {
+        0 => {
+            invalid(h);
+            return;
+        }
+        1 => {
+            h.probe("samus.bomb.horizontal");
+            speed::bomb_rising_x(h);
+        }
+        _ => {}
+    }
+    let p = &mut h.session_mut().player;
+    if p.contact.y_direction == 1 {
+        if p.contact.y_speed.whole & 0x8000 != 0 {
+            p.contact.y_speed = Default::default();
+            p.contact.y_direction = 2;
+            if p.transitions.bomb_jump.to_raw() as u8 != 2 {
+                p.contact.acceleration_mode = 2;
+            }
+        } else if p.contact.y_speed.whole == 0 && p.transitions.input_mode != InputMode::Demo {
+            p.transitions.input_mode = InputMode::Normal;
+        }
+    }
+    if h.session().player.contact.y_direction != 2 {
+        speed::move_y_with_speed(h);
+        if h.session().player.collision.flags == 0 {
+            return;
+        }
+    }
+    finish_bomb_jump(h.session_mut());
 }

@@ -3,13 +3,10 @@
 use super::Runtime;
 use crate::{game_state::Game, ram_map::words as w, rom::RomImage};
 use std::cell::RefCell;
-pub(crate) const COUNT: usize = 2;
+pub(crate) const COUNT: usize = 1;
 
 #[derive(Default)]
 struct Observation {
-    special: bool,
-    entered: bool,
-    transfers: Vec<u8>,
     map: bool,
     shifted: usize,
     incremented: usize,
@@ -29,41 +26,6 @@ fn author(r: &RomImage, address: u32, bytes: &[u8]) {
     for (i, value) in bytes.iter().copied().enumerate() {
         r.write(at + i, value);
     }
-}
-// 0 = constructor entry; 1 = import entry; 2 = export entry.
-pub(crate) fn transfer(g: &Game, stage: u8) {
-    OBS.with(|cell| {
-        let mut o = cell.borrow_mut();
-        if !o.special {
-            return;
-        }
-        assert!(
-            o.entered,
-            "retained movement must precede any Runtime/transfer"
-        );
-        assert_eq!(read(g, w::samus_movement_handler), 0xa337);
-        assert_eq!(read(g, w::bomb_jump_dir), 0);
-        assert_eq!(g.actor_identity_is_with_session(), stage == 2);
-        o.transfers.push(stage);
-    });
-}
-pub(crate) fn special_entry(g: &Game) {
-    OBS.with(|cell| {
-        let mut o = cell.borrow_mut();
-        if !o.special {
-            return;
-        }
-        assert!(!o.entered && o.transfers.is_empty());
-        assert!(!g.actor_identity_is_with_session());
-        assert_eq!(
-            read(g, w::samus_contact_damage_index),
-            0,
-            "preclear before special"
-        );
-        assert_eq!(read(g, w::samus_movement_handler), 0xe07d);
-        assert_eq!(read(g, w::bomb_jump_dir), 3);
-        o.entered = true;
-    });
 }
 fn explored(byte: usize) -> u8 {
     (byte as u8).wrapping_mul(73).wrapping_add(0x81)
@@ -128,74 +90,6 @@ pub(crate) fn map_write(g: &Game, byte: usize, index: usize, stage: u8) {
             _ => unreachable!(),
         }
     });
-}
-fn special(g: &mut Game) {
-    g.g_ram.fill(0);
-    g.g_fail = false;
-    let loaded = RomImage::zeroed(0x100000);
-    let native = RomImage::zeroed(0x100000);
-    let mut poses = vec![0; 256 * 8];
-    for pose in poses.chunks_exact_mut(8) {
-        pose[0] = 8;
-        pose[6] = 2;
-    }
-    author(&loaded, 0x91b629, &poses);
-    author(&native, 0x91b629, &poses);
-    g.register_rom(loaded);
-    g.register_native_rom(native);
-    for (at, value) in [
-        (w::samus_pose, 1),
-        (0xa1e, 0x0908),
-        (w::samus_prev_pose, 1),
-        (w::samus_movement_handler, 0xe07d),
-        (w::samus_input_handler, 0xe91d),
-        (w::bomb_jump_dir, 3),
-        (w::frame_handler_beta, 0xe8ec),
-        (w::debug_disable_minimap, 1),
-        (w::samus_contact_damage_index, 7),
-        (w::samus_anim_frame_timer, 2),
-        (w::samus_y_pos, 100),
-        (w::samus_y_radius, 2),
-        // An erroneous Normal redispatch would publish an echo and advance its index.
-        (w::speed_boost_counter, 0x400),
-        (w::samus_x_pos, 123),
-    ] {
-        put(&mut g.g_ram, at, value);
-    }
-    let mut expected = g.g_ram.to_vec();
-    for (at, value) in [
-        (w::samus_contact_damage_index, 0),
-        (w::samus_movement_handler, 0xa337),
-        (w::bomb_jump_dir, 0),
-        (w::samus_anim_frame_timer, 1),
-    ] {
-        put(&mut expected, at, value);
-    }
-    OBS.with(|o| {
-        *o.borrow_mut() = Observation {
-            special: true,
-            ..Default::default()
-        }
-    });
-    unsafe {
-        crate::game::sm_90::HandleSamusMovementAndPause(g);
-    }
-    OBS.with(|cell| {
-        let o = cell.borrow();
-        assert!(o.entered);
-        assert_eq!(
-            o.transfers,
-            [0, 1, 2],
-            "exactly one Runtime import/export after retained special"
-        );
-    });
-    assert_eq!(
-        g.g_ram.as_slice(),
-        expected.as_slice(),
-        "special changes handler without redispatch"
-    );
-    assert!(!g.g_fail && !g.actor_identity_is_with_session());
-    OBS.with(|o| *o.borrow_mut() = Observation::default());
 }
 fn map(g: &mut Game) {
     g.g_ram.fill(0);
@@ -274,7 +168,6 @@ pub(crate) fn run(g: &mut Game) -> usize {
     let loaded = g.loaded_rom.clone();
     let native = g.capture_native_rom_binding();
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        special(g);
         map(g);
         COUNT
     }));

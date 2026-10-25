@@ -177,6 +177,8 @@ mode_word!(MovementMode {
     DrainedCrouching = 0x94cb,
     Knockback = 0xdf38,
     BombJumpStart = 0xe025,
+    BombJump = 0xe032,
+    BombJumpFinish = 0xe07d,
     Xray = 0xe94f,
     ShinesparkWindup = 0xd068,
     ShinesparkHorizontal = 0xd106,

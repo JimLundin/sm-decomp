@@ -38,60 +38,6 @@ use crate::game::projectile_geometry::sine_offset;
 use crate::game::session_runtime::xray_input;
 use crate::game::sm_88::EnableHdmaObjects;
 
-pub use crate::types::HandlerFunc;
-
-crate::game::constants::typed_constants! { i32;
-    true_0 = 1, false_0 = 0,
-    fnSamus_MovementHandler_Normal = 0x90a337, fnProjPreInstr_Beam_NoWaveBeam = 0x90aef3,
-    fnProjPreInstr_WavePlasmaEtc = 0x90b0c3,
-    fnProjPreInstr_BeamOrIceWave = 0x90b0e4,
-    fnProjPreInstr_Empty = 0x90b169,
-    fnSamus_MoveHandlerVerticalShinespark = 0x90d0ab,
-    fnSamus_Func3 = 0x90e0e6,
-    fnSamus_Func9 = 0x90e41b, fnSamus_FrameHandlerAlfa_Func11 = 0x90e695,
-    fnSamus_FrameHandlerAlfa_Func13 = 0x90e713, fnSamus_FrameHandlerBeta_Func17 = 0x90e725,
-    fnEmptyFunction = 0x90e8cd,
-    fnj_HandleDemoRecorder_2_0 = 0x90e8d9,
-    fnSetContactDamageIndexAndUpdateMinimap = 0x90e8dc,
-    fnnullsub_152 = 0x90e90e,
-    fnSamus_InputHandler_E913 = 0x90e913,
-    fnSamus_InputHandler_E91D = 0x90e91d, fnHandleAutoJumpHack = 0x90e926,
-    fnSamusDrawHandler_Default = 0x90eb52,
-    fnGrappleBeamFunc_Inactive = 0x9bc4f0, fnGrappleBeamFunc_Firing = 0x9bc703,
-    fnGrappleBeamFunc_ConnectedLockedInPlace = 0x9bc77e,
-    fnGrappleBeamFunc_Cancel = 0x9bc856, fnGrappleBeam_Func2 = 0x9bc8c5,
-}
-crate::game::constants::typed_constants! { u32;
-    fnSamus_MoveHandler_ReleaseFromGrapple = 9475182,
-    fnSamus_ScrollFinishedHook_SporeSpawnFight = 9475465,
-    fnSamus_MoveHandler_Shinespark_Diag = 9490647, fnSamus_MoveHandler_Shinespark_Horiz = 9490694,
-    fnSamus_MoveHandler_Knockback = 9494328,
-    fnSamus_MoveHandler_BombJumpStart = 9494565,
-    fnSamus_FrameHandlerAlfa_Func12 = 9496265,
-    fnSamus_FrameHandlerBeta_Func14 = 9496565, fnSamus_Func15 = 9496627,
-    fnSamus_Func16 = 9496682,
-    fnSamus_Func20_ = 9496856,
-    fnSamusMovementType_Xray = 9496911,
-    fnsub_90EB86 = 9497478,
-}
-
-pub unsafe fn Samus_BombJumpRisingYMovement_(game: &mut Game) {
-    unsafe {
-        if word!(game.samus_y_dir) == 1 {
-            if (word!(game.samus_y_speed) & 0x8000) != 0 {
-                word! { game, 0; samus_y_subspeed, samus_y_speed }
-                word!(game.samus_y_dir = 2);
-                if (word!(game.bomb_jump_dir) as u8) != 2 {
-                    word!(game.samus_x_accel_mode = 2);
-                }
-            } else if word!(game.samus_y_speed) as i32 - 1i32 & 0x8000 != 0
-                && word!(game.samus_input_handler) as i32 != 0x90e91d & 0xffff
-            {
-                word!(game.samus_input_handler = (0x90e913i32) as u16);
-            }
-        }
-    }
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallScrollingFinishedHook(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -418,28 +364,6 @@ static kSamus_MoveHandler_Knockback: [Func_V; 6] = callback_table! { nonnull Fun
     Samus_MoveHandler_Knockback_Up, Samus_MoveHandler_Knockback_3,
     Samus_MoveHandler_Knockback_Down, Samus_MoveHandler_Knockback_Down,
 };
-static kSamus_MoveHandler_BombJumpMain: [Func_V; 4] = callback_table! { nonnull Func_V;
-    Samus_MoveHandler_Knockback_0, Samus_HorizontalBombJump, Samus_VerticalBombJump,
-    Samus_HorizontalBombJump,
-};
-pub unsafe fn Samus_HorizontalBombJump(game: &mut Game) {
-    unsafe {
-        crate::verify_probe::hit("samus.bomb.horizontal");
-        player_movement::speed::bomb_rising_x(&mut Runtime::new(game));
-        Samus_VerticalBombJump(game);
-    }
-}
-pub unsafe fn Samus_VerticalBombJump(game: &mut Game) {
-    unsafe {
-        Samus_BombJumpRisingYMovement_(game);
-        if word!(game.samus_y_dir) == 2 || {
-            player_movement::speed::move_y_with_speed(&mut Runtime::new(game));
-            word!(game.samus_collision_flag) != 0
-        } {
-            Samus_MoveHandler_BombJumpFunc1(game);
-        }
-    }
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallFrameHandlerGamma(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -939,27 +863,6 @@ crate::game::callback_dispatch! {
         player_movement::speed::no_speed_y(&mut Runtime::new(game));
         forced::clear_collided_motion(&mut Runtime::new(game));
     };
-    [9494565] Samus_MoveHandler_BombJumpStart [] {
-        pt::initialize_jump(&mut Runtime::new(game), pt::state::JumpKind::Bomb);
-        word! {game; samus_movement_handler = ((0x90e032i32) as u16); input_to_pose_calc = 0; }
-    };
-    [9494578] Samus_MoveHandler_BombJumpMain [] {
-        if word!(game.bomb_jump_dir) != 0 {
-            kSamus_MoveHandler_BombJumpMain[word!(game.bomb_jump_dir) as u8 as usize]
-                (game);
-        } else {
-            Samus_MoveHandler_BombJumpFunc1(game);
-        };
-    };
-    [9494653] Samus_MoveHandler_BombJumpFunc1 [] {
-        #[cfg(sm_verify_dll)]
-        crate::game::session_runtime::player_legacy_edges::special_entry(game);
-        word!(game.samus_movement_handler = (0x90a337i32) as u16);
-        if word!(game.samus_input_handler) as i32 != 0x90e91d & 0xffff {
-            word!(game.samus_input_handler = (0x90e913i32) as u16);
-        }
-        word!(game.bomb_jump_dir = 0);
-    };
     [9496911] SamusMovementType_Xray [] {
         let mut v0: u16 = 0;
         if *ram_ptr!(game; 0xa1f) as i32 != kMovementType_0E_TurningAroundOnGround as i32 {
@@ -1003,6 +906,9 @@ crate::game::callback_dispatch! {
         }
     };
     @external {
+        9494565 => [forced::begin_bomb_jump(&mut Runtime::new(game))];
+        9494578 => [forced::advance_bomb_jump(&mut Runtime::new(game), |h| h.foreign(|game| InvalidInterrupt_Crash(game)))];
+        9494653 => [forced::finish_bomb_jump(Runtime::new(game).session_mut())];
         9496846 => [()];
     }
 }
