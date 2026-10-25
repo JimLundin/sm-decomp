@@ -16,9 +16,7 @@ use crate::game::sm_80::{
     CalculateLayer2PosAndScrollsWhenScrolling, DebugScrollPosSaveLoad, HandleHudTilemap,
 };
 use crate::game::sm_82::HandleSamusOutOfHealthAndGameTile;
-use crate::game::sm_90::{
-    HandleControllerInputForGamePhysics, HandleSamusMovementAndPause, MainScrollingRoutine,
-};
+use crate::game::sm_90::{HandleControllerInputForGamePhysics, MainScrollingRoutine};
 use crate::game::sm_a0::{DecrementSamusTimers, HandleRoomShaking};
 
 #[derive(Clone, Copy, PartialEq)]
@@ -71,7 +69,7 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
             word!(game.queued_message_box_index = 0);
         }
         if matches!(resume, ResumePoint::Start | ResumePoint::EnemyMessage) {
-            HandleSamusMovementAndPause(game);
+            crate::game::session_runtime::player_update_runtime::advance_frame(game);
             EprojRunAll(game);
         }
         if resume != ResumePoint::Skip {

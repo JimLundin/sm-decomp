@@ -178,7 +178,7 @@ pub unsafe fn capture(id: u32, original: &[u8], g: &mut Game) -> Result<Vec<u8>,
             observer::observe(1, g);
             let normal_transfers =
                 crate::game::session_runtime::player_normal_transfers::begin(id, 1);
-            crate::game::sm_90::HandleSamusMovementAndPause(g);
+            crate::game::session_runtime::player_update_runtime::advance_frame(g);
             normal_transfers.finish();
             if g.g_ram.as_slice() != expected.as_slice() {
                 let at = g

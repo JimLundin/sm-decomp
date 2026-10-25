@@ -707,7 +707,7 @@ pub(crate) use player_transitions_runtime::{
     initialize as initialize_player, mother_brain as player_mother_brain, xray_input,
 };
 #[path = "player_update_runtime.rs"]
-mod player_update_runtime;
+pub(crate) mod player_update_runtime;
 
 #[cfg(sm_verify_dll)]
 #[path = "../verification/collision_mechanism_checks.rs"]

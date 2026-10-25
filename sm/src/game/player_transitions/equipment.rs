@@ -1,6 +1,7 @@
 //! Reconcile the current pose and feedback after equipment changes.
 #![forbid(unsafe_code)]
 use super::{content::AnimationTable, effects::Host, state::FrameAlphaMode};
+use crate::game::player_transitions::state::FrameBetaMode;
 use crate::game::{
     samus_palette,
     session::Session,
@@ -115,7 +116,7 @@ pub(crate) fn face_forward(h: &mut impl Host) {
         p.previous_position.y.whole = p.y;
     }
     p.transitions.frame_alpha = FrameAlphaMode::from_raw(0xe713);
-    p.transitions.frame_beta = 0xe8dc;
+    p.transitions.frame_beta = FrameBetaMode::Minimap;
     p.transitions.clear_pose_requests();
     super::cancel_grapple(h);
     let p = &mut h.session_mut().player;

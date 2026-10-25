@@ -238,7 +238,7 @@ fn word(game: &Game, at: usize) -> u16 {
 unsafe fn invoke(id: u32, game: &mut Game) {
     unsafe {
         match id {
-            3800 | 3801 => crate::game::sm_90::HandleSamusMovementAndPause(game),
+            3800 | 3801 => crate::game::session_runtime::player_update_runtime::advance_frame(game),
             _ => crate::game::sm_8b::HandleSamusDuringIntro(game),
         }
     }

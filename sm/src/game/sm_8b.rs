@@ -21,7 +21,7 @@ use crate::game::sm_88::{
     CinematicFunction_Intro_Func133, DisableHdmaObjects, EnableHdmaObjects,
     SpawnTitleScreenGradientObjs, WaitUntilEndOfVblankAndClearHdma,
 };
-use crate::game::sm_90::{HandleControllerInputForGamePhysics, HandleSamusMovementAndPause};
+use crate::game::sm_90::HandleControllerInputForGamePhysics;
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]
@@ -750,7 +750,7 @@ pub unsafe fn HandleSamusDuringIntro(game: &mut Game) {
     unsafe {
         if word!(game.cinematic_var15) != 0 {
             HandleControllerInputForGamePhysics(game);
-            HandleSamusMovementAndPause(game);
+            crate::game::session_runtime::player_update_runtime::advance_frame(game);
             if word!(game.samus_invincibility_timer) != 0 {
                 word!(game.samus_invincibility_timer -= 1);
             }

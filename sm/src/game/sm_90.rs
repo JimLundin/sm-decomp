@@ -1,12 +1,9 @@
 use crate::game::player_collision::operations::Axis;
 use crate::game::player_movement::{self, forced, speed::record_camera_distance};
-use crate::game::player_transitions as pt;
-use crate::game::player_update::{self, BetaMode, MovementStep};
 
 use crate::game::player_projectiles::initialize;
 pub use crate::game::prelude::*;
 use crate::game::projectile_initialization::Initialization;
-use crate::game::samus_animation::PlaySamusFanfare;
 use crate::game::session_runtime::Runtime;
 use crate::game::{
     player_collision::operations as player_collision, session_runtime::Runtime as CollisionRuntime,
@@ -17,7 +14,6 @@ pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_90::*;
 
-use crate::game::enemy_projectiles::EnableEprojs;
 use crate::game::explosion_window::spawn_crystal_flash;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::palette_effects;
@@ -263,106 +259,6 @@ crate::game::callback_dispatch! {
 }
 
 pub(crate) use crate::game::player_projectiles::prepare as HandleControllerInputForGamePhysics;
-// Special movement stays RAM-authoritative until its retained callback returns.
-unsafe fn advance_player_beta(
-    mode: BetaMode,
-    game: &mut Game,
-) -> Result<(), crate::game::samus_periodic_damage::InvalidDamage> {
-    unsafe {
-        word!(game.samus_contact_damage_index = 0);
-        let handler = word!(game.samus_movement_handler);
-        let movement = if handler == 0xa337 {
-            MovementStep::Normal
-        } else {
-            CallSamusMovementHandler(u32::from(handler) | 0x900000, game);
-            MovementStep::AlreadyAdvanced
-        };
-        player_update::advance(&mut Runtime::new(game), mode, movement)
-    }
-}
-
-crate::game::callback_dispatch! {
-    pub unsafe fn CallFrameHandlerBeta(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [9496357] Samus_FrameHandlerBeta_Func17 [] {
-        let damage_result = advance_player_beta(BetaMode::Gameplay, game);
-        if damage_result.is_err() {
-            InvalidInterrupt_Crash(game);
-        }
-        Samus_PauseCheck(game);
-        Samus_LowHealthCheck_(game);
-    };
-    [9496530] HandleDemoRecorder_3 [] {
-        if (word!(game.joypad2_new_keys) & 0x80) != 0 {
-            word!(game.frame_handler_alfa = (0x90e695i32) as u16);
-            word!(game.frame_handler_beta = (0x90e725i32) as u16);
-            EnableEprojs(game);
-            word!(game.time_is_frozen_flag = 0);
-        }
-    };
-    [9496565] Samus_FrameHandlerBeta_Func14 [] {
-        let _ = advance_player_beta(BetaMode::DemoMapped, game);
-        word! {game; joypad1_lastkeys = word!(game.controller1_input_for_demo);
-            joypad1_newkeys = word!(game.controller1_new_input_for_demo);
-            joypad1_input_samusfilter = word!(game.demo_backup_prev_controller_input);
-            joypad1_newinput_samusfilter = word!(game.demo_backup_prev_controller_input_new); }
-    };
-    [9496627] Samus_Func15 [] {
-        let _ = advance_player_beta(BetaMode::DemoUnmapped, game);
-        word! {game; joypad1_lastkeys = word!(game.controller1_input_for_demo);
-            joypad1_newkeys = word!(game.controller1_new_input_for_demo);
-            joypad1_input_samusfilter = word!(game.demo_backup_prev_controller_input);
-            joypad1_newinput_samusfilter = word!(game.demo_backup_prev_controller_input_new); }
-    };
-    [9496682] Samus_Func16 [] {
-        Samus_SetRadius(game);
-        {
-            let mut runtime = Runtime::new(game);
-            player_update::minimap::update(&mut runtime);
-            pt::advance_animation(&mut runtime, pt::state::AnimationStep::Gameplay);
-        }
-        word! {game; elevator_status = 0; samus_prev_y_pos = word!(game.samus_y_pos); }
-        if PlaySamusFanfare(game) & 1 != 0 {
-            if word!(game.debug_invincibility) as i32 - 7i32 & 0x8000 != 0
-                || (word!(game.joypad2_last) & 0x8000) == 0
-            {
-                word!(game.debug_invincibility = 0);
-            }
-            word!(game.frame_handler_alfa = (0x90e695i32) as u16);
-            word!(game.frame_handler_beta = (0x90e725i32) as u16);
-        }
-    };
-    [9496746] Samus_Func18 [] {
-        Samus_FrameHandlerBeta_Func17(game);
-        if word!(game.frame_handler_gamma) as i32 == 0x90e114 & 0xffff
-            && word!(game.game_state) as i32 != kGameState_35_TimeUp as i32
-        {
-            word!(game.game_state = kGameState_35_TimeUp as u16);
-        }
-    };
-    [9496796] SetContactDamageIndexAndUpdateMinimap [] {
-        word!(game.samus_contact_damage_index = 0);
-        player_update::minimap::update(&mut Runtime::new(game));
-    };
-    [9496812] Samus_Func19 [] {
-        let _ = advance_player_beta(BetaMode::AnimationOnly, game);
-    };
-    [9496834] Samus_LowHealthCheck [] {
-        Samus_LowHealthCheck_(game);
-    };
-    @external {
-        9496781 => [()]; 9496790 => [()]; 9496793 => [()];
-    }
-}
-pub unsafe fn HandleSamusMovementAndPause(game: &mut Game) {
-    unsafe {
-        CallFrameHandlerBeta(
-            ((word!(game.frame_handler_beta)) as u32) | (0x900000u32),
-            game,
-        );
-    }
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallSamusInputHandler(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -684,32 +580,6 @@ crate::game::callback_dispatch! {
     }
 }
 
-pub unsafe fn Samus_PauseCheck(game: &mut Game) {
-    unsafe {
-        if word!(game.power_bomb_flag) == 0
-            && word!(game.time_is_frozen_flag) == 0
-            && word!(game.door_transition_flag_enemies) == 0
-            && word!(game.area_index) != 6
-            && word!(game.game_state) as i32 == kGameState_8_MainGameplay as i32
-            && (word!(game.joypad1_newkeys) as i32 & kButton_Start as i32) != 0
-        {
-            word! { game, 1; screen_fade_delay, screen_fade_counter }
-            word!(game.game_state = kGameState_12_Pausing as u16);
-        }
-    }
-}
-pub unsafe fn Samus_LowHealthCheck_(game: &mut Game) {
-    if game.samus_health().wrapping_sub(31) & 0x8000 != 0 {
-        if game.samus_health_warning() == 0 {
-            QueueSfx3_Max6(2, game);
-            game.set_samus_health_warning(1);
-        }
-    } else if game.samus_health_warning() != 0 {
-        game.set_samus_health_warning(0);
-        QueueSfx3_Max6(1, game);
-    }
-}
-pub use self::Samus_LowHealthCheck as Samus_LowHealthCheck_0;
 pub unsafe fn Samus_JumpCheck(game: &mut Game) {
     unsafe {
         if (word!(game.button_config_jump_a) & word!(game.joypad1_lastkeys)) != 0

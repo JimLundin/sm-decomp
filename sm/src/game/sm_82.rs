@@ -43,7 +43,6 @@ use crate::game::sm_81::{
 use crate::game::sm_88::{
     DisableHdmaObjects, EnableHdmaObjects, HdmaObjectHandler, WaitUntilEndOfVblankAndClearHdma,
 };
-use crate::game::sm_90::Samus_LowHealthCheck_0;
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
     UnpauseHook_Kraid_IsDead,
@@ -3829,7 +3828,7 @@ pub unsafe fn GameState_27_ReserveTanksAuto(game: &mut Game) -> CoroutineRet {
         if _coret_ != 0 {
             return _coret_;
         }
-        Samus_LowHealthCheck_0(game);
+        crate::game::session_runtime::player_update_runtime::low_health(game);
         kCoroutineNone as CoroutineRet
     }
 }

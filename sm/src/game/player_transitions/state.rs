@@ -50,7 +50,7 @@ pub struct PlayerTransitions {
     pub animation_skip: AnimationSkip,
     pub landing_compatibility: u16,
     pub frame_alpha: FrameAlphaMode,
-    pub frame_beta: u16,
+    pub frame_beta: FrameBetaMode,
     pub frame_gamma: FrameGammaMode,
     pub draw_handler: DrawMode,
     pub knockback: u16,
@@ -198,6 +198,12 @@ mode_word!(InputMode {
     Xray = 0xe918, Disabled = 0xe90e,
 });
 mode_word!(FrameAlphaMode { Empty = 0xe8cd });
+mode_word!(FrameBetaMode {
+    Gameplay = 0xe725, ResumeRecorder = 0xe7d2,
+    DemoMapped = 0xe7f5, DemoUnmapped = 0xe833, Fanfare = 0xe86a,
+    Escape = 0xe8aa, Frozen = 0xe8cd, EquipmentFrozen = 0xe8d6, Drained = 0xe8d9,
+    Minimap = 0xe8dc, AnimationOnly = 0xe8ec, LowHealth = 0xe902,
+});
 mode_word!(FrameGammaMode {
     RecoverFromDrain = 0xe09b,
     StruggleDuringDrain = 0xe0c5,

@@ -3,7 +3,6 @@ use crate::game::player_transitions as pt;
 use crate::game::session_runtime::Runtime;
 use crate::game::visual_host::{Content, Effects, Record, Source};
 
-use crate::game::music::{PlayRoomMusicTrackAfterAFrames, QueueMusic_DelayedY};
 pub use crate::game::prelude::*;
 use crate::game::sm_8b::Samus_CalcPos_Mode7;
 
@@ -284,25 +283,6 @@ fn queue_body_tiles(h: &mut Runtime<'_>) {
         );
         h.write_word_le(bottom, 0x721);
         h.set_byte(0x71e, 1);
-    }
-}
-pub unsafe fn PlaySamusFanfare(game: &mut Game) -> u8 {
-    unsafe {
-        if word!(game.substate) != 0 {
-            if word!(game.substate) == 5 {
-                PlayRoomMusicTrackAfterAFrames(0x168, game);
-            }
-        } else {
-            QueueMusic_DelayedY(1, 0xe, game);
-        }
-        if word!(game.substate) as i32 - 359i32 & 0x8000 != 0 {
-            word!(game.substate += 1);
-            0
-        } else {
-            pt::record_pose_history(Runtime::new(game).session_mut());
-            word!(game.substate = 0);
-            1
-        }
     }
 }
 pub unsafe fn DrawSamusSuitExploding(game: &mut Game) {

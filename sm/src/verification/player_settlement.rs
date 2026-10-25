@@ -291,7 +291,7 @@ unsafe fn invoke(id: u32, game: &mut Game) -> bool {
         if matches!(id, 3904 | 3905) {
             return direct_settlement(game);
         }
-        crate::game::sm_90::HandleSamusMovementAndPause(game);
+        crate::game::session_runtime::player_update_runtime::advance_frame(game);
         false
     }
 }

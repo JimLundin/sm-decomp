@@ -1,5 +1,6 @@
 //! Samus palette phases share the actual visual, player and inventory owner.
 #![forbid(unsafe_code)]
+use crate::game::player_transitions::state::FrameBetaMode;
 use crate::game::{
     liquid_surface::{self, LiquidAtHeight},
     session::Session,
@@ -183,7 +184,7 @@ pub(crate) fn misc(h: &mut impl Host) -> PaletteCarry {
         }
         let restore = if h.session().player.palette.hurt_flash == 2
             && h.inputs().cinematic == 0
-            && (h.session().player.transitions.frame_beta != 0xe8d9
+            && (h.session().player.transitions.frame_beta != FrameBetaMode::Drained
                 || h.session().player.pose != 0x54)
         {
             h.sound(1, 6, 0x35);

@@ -9,7 +9,7 @@ use crate::game::{
     visual_state::PaletteBuffer,
 };
 
-fn handlers(s: &mut Session, alpha: u16, beta: u16) {
+fn handlers(s: &mut Session, alpha: u16, beta: FrameBetaMode) {
     s.player.transitions.frame_alpha = FrameAlphaMode::from_raw(alpha);
     s.player.transitions.frame_beta = beta;
 }
@@ -22,7 +22,7 @@ fn stand(s: &mut Session) {
     s.player.transitions.animation_skip = AnimationSkip::from_raw(0);
 }
 fn frozen(s: &mut Session) {
-    handlers(s, 0xe713, 0xe8cd);
+    handlers(s, 0xe713, FrameBetaMode::Frozen);
     s.player.transitions.draw_handler = DrawMode::Frozen;
 }
 fn spin_sound(pose: u16) -> u16 {
@@ -52,18 +52,18 @@ pub(crate) fn command<H: Host + player_projectiles::host::Host>(
 ) -> u16 {
     let code = match a & 31 {
         0 => {
-            handlers(h.session_mut(), 0xe713, 0xe8dc);
+            handlers(h.session_mut(), 0xe713, FrameBetaMode::Minimap);
             1
         }
         1 => {
-            handlers(h.session_mut(), 0xe695, 0xe725);
+            handlers(h.session_mut(), 0xe695, FrameBetaMode::Gameplay);
             1
         }
         2 => {
             stand(h.session_mut());
             refresh_pose(h);
             h.session_mut().player.transitions.elevator_fade_timer = 60;
-            handlers(h.session_mut(), 0xe713, 0xe8dc);
+            handlers(h.session_mut(), 0xe713, FrameBetaMode::Minimap);
             1
         }
         3 => {
@@ -82,7 +82,7 @@ pub(crate) fn command<H: Host + player_projectiles::host::Host>(
             if a & 31 == 4 {
                 h.session_mut().projectiles.controls.charge_palette = 0;
             } else {
-                handlers(h.session_mut(), 0xe713, 0xe8d6);
+                handlers(h.session_mut(), 0xe713, FrameBetaMode::EquipmentFrozen);
                 if h.session().projectiles.controls.charge.wrapping_sub(15) & 0x8000 == 0 {
                     VisualEffects::sound(h, 1, 15, 2);
                 }
@@ -100,13 +100,13 @@ pub(crate) fn command<H: Host + player_projectiles::host::Host>(
             h.session_mut().player.transitions.animation_skip = AnimationSkip::from_raw(0);
             finish_pose_change(h);
             player_projectiles::deselect_owned(h);
-            handlers(h.session_mut(), 0xe713, 0xe8d9);
+            handlers(h.session_mut(), 0xe713, FrameBetaMode::Drained);
             1
         }
         7 => {
             super::equipment::face_forward(h);
             let p = &mut h.session_mut().player;
-            p.transitions.frame_beta = 0xe8ec;
+            p.transitions.frame_beta = FrameBetaMode::AnimationOnly;
             p.movement_handler = MovementMode::Normal;
             p.transitions.draw_handler = DrawMode::Elevator;
             p.transitions.input_mode = InputMode::Normal;
@@ -114,7 +114,7 @@ pub(crate) fn command<H: Host + player_projectiles::host::Host>(
             1
         }
         8 => {
-            handlers(h.session_mut(), 0xe8cd, 0xe8dc);
+            handlers(h.session_mut(), 0xe8cd, FrameBetaMode::Minimap);
             h.session_mut().player.pose = 0;
             h.session_mut().player.transitions.animation_skip = AnimationSkip::from_raw(0);
             refresh_pose(h);
@@ -153,19 +153,19 @@ pub(crate) fn command<H: Host + player_projectiles::host::Host>(
         }
         0xb => {
             h.session_mut().player.transitions.draw_handler = DrawMode::Normal;
-            handlers(h.session_mut(), 0xe695, 0xe725);
+            handlers(h.session_mut(), 0xe695, FrameBetaMode::Gameplay);
             1
         }
         0xc => {
             super::equipment::refresh(h);
-            if h.session().player.transitions.frame_beta == 0xe8d6 {
-                handlers(h.session_mut(), 0xe695, 0xe725);
+            if h.session().player.transitions.frame_beta == FrameBetaMode::EquipmentFrozen {
+                handlers(h.session_mut(), 0xe695, FrameBetaMode::Gameplay);
             }
             1
         }
         0xd => u16::from(h.session().player.grapple != 0xc4f0) * 2,
         0xe => {
-            handlers(h.session_mut(), 0xe695, 0xe8aa);
+            handlers(h.session_mut(), 0xe695, FrameBetaMode::Escape);
             1
         }
         0xf => {
@@ -173,11 +173,11 @@ pub(crate) fn command<H: Host + player_projectiles::host::Host>(
             0
         }
         0x10 | 0x1b => {
-            if h.session().player.transitions.frame_beta != 0xe8d9 {
+            if h.session().player.transitions.frame_beta != FrameBetaMode::Drained {
                 let (alpha, beta) = if a & 31 == 0x10 {
-                    (0xe695, 0xe725)
+                    (0xe695, FrameBetaMode::Gameplay)
                 } else {
-                    (0xe713, 0xe8dc)
+                    (0xe713, FrameBetaMode::Minimap)
                 };
                 handlers(h.session_mut(), alpha, beta);
             }
@@ -235,7 +235,7 @@ pub(crate) fn command<H: Host + player_projectiles::host::Host>(
             1
         }
         0x1a => {
-            h.session_mut().player.transitions.frame_beta = 0xe902;
+            h.session_mut().player.transitions.frame_beta = FrameBetaMode::LowHealth;
             0
         }
         0x1c => {

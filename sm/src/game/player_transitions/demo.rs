@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 use super::{
     effects::Host,
-    state::{DrawMode, FrameAlphaMode, InputMode},
+    state::{DrawMode, FrameAlphaMode, FrameBetaMode, InputMode},
 };
 use crate::game::{
     session::Session,
@@ -115,7 +115,7 @@ pub(crate) fn finish_setup(h: &mut impl Host) {
     use crate::game::{samus_palette, visual_state::PaletteBuffer};
     let transitions = &mut h.session_mut().player.transitions;
     transitions.frame_alpha = FrameAlphaMode::from_raw(0xe6c9);
-    transitions.frame_beta = 0xe7f5;
+    transitions.frame_beta = FrameBetaMode::DemoMapped;
     transitions.momentum = MomentumAction::from_raw(0);
     transitions.interruption = InterruptionAction::from_raw(0);
     transitions.hurt = HurtAction::from_raw(0);
@@ -174,8 +174,11 @@ fn instruction(h: &mut impl Host, opcode: u16, cursor: u16) -> u16 {
         0x85fc | 0x8682 => {
             h.session_mut().player.transitions.frame_alpha =
                 FrameAlphaMode::from_raw(if opcode == 0x85fc { 0xe695 } else { 0xe8cd });
-            h.session_mut().player.transitions.frame_beta =
-                if opcode == 0x85fc { 0xe725 } else { 0xe8cd };
+            h.session_mut().player.transitions.frame_beta = if opcode == 0x85fc {
+                FrameBetaMode::Gameplay
+            } else {
+                FrameBetaMode::Frozen
+            };
             disable(h.session_mut());
         }
         0x8739 => {

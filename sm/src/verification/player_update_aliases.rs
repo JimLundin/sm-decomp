@@ -4,7 +4,7 @@
 use super::Runtime;
 use crate::{
     game::{
-        player_update::{self, BetaMode, MovementStep, minimap},
+        player_update::{self, MovementStep, minimap},
         session_encoding,
     },
     game_state::Game,
@@ -100,7 +100,7 @@ fn late_gamma(game: &mut Game) {
         assert_eq!(
             player_update::advance(
                 &mut runtime,
-                BetaMode::Gameplay,
+                crate::game::player_transitions::state::FrameBetaMode::Gameplay,
                 MovementStep::AlreadyAdvanced
             ),
             Ok(())

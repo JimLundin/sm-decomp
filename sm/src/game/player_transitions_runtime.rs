@@ -314,7 +314,11 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
         let ceres = rt.word(ram::loading_game_state) == 34;
         let t = &mut rt.session_mut().player.transitions;
         t.frame_alpha = FrameAlphaMode::Empty;
-        t.frame_beta = if ceres { 0xe8dc } else { 0xe86a };
+        t.frame_beta = if ceres {
+            FrameBetaMode::Minimap
+        } else {
+            FrameBetaMode::Fanfare
+        };
         t.draw_handler = DrawMode::Normal;
         t.momentum = MomentumAction::from_raw(if ceres { u16::MAX } else { 0 });
         t.interruption = InterruptionAction::from_raw(0);
