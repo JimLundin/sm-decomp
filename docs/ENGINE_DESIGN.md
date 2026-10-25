@@ -12,7 +12,7 @@ The compatibility implementation must preserve the current game's behavior,
 including quirks. This document coordinates that direction; it does not claim
 that the proposed owners already exist as complete Rust modules.
 
-The [architecture atlas](architecture.html) is the interactive overview. The
+The
 [RAM ownership research](RAM_OWNERSHIP.md) establishes concrete producer/consumer
 contracts. The [state migration audit](ENGINE_STATE_MIGRATION.md) identifies how
 the current runtime replaces state. [PLAN.md](PLAN.md) remains the work order and

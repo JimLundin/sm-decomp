@@ -17,10 +17,6 @@ interactive report and a staged migration plan. Windows workers can keep the
 current emulated backend and oracle for development comparisons while replacing
 responsibilities. Existing run and verification commands continue to apply.
 
-The earlier [interactive architecture atlas](docs/architecture.html) records
-current construction, migration experiments, and observed frame execution order.
-Both reports work offline without a build step.
-
 ## Run
 
 The maintained Rust code uses edition 2024. The requested latest-nightly switch
