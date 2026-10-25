@@ -108,3 +108,26 @@ pub(crate) fn request_fallback_pose(h: &mut impl Host) {
     };
     h.session_mut().player.transitions.ordinary = PoseRequestWord::from_raw(pose);
 }
+
+/// End-of-frame input history and hurt-flash health share the player owner.
+pub(crate) fn finish_input(s: &mut crate::game::session::Session, inputs: &ExternalInputs) {
+    let p = &mut s.player;
+    p.contact.auto_jump = if inputs.held & inputs.jump_button != 0
+        && inputs.filtered_held & inputs.jump_button != 0
+    {
+        p.contact.auto_jump.wrapping_add(1)
+    } else {
+        0
+    };
+    let previous = p.previous_health_for_flash;
+    if (s.inventory.health.current as i16).wrapping_sub(previous as i16) < 0 {
+        if p.palette.hurt_flash == 0 {
+            p.palette.hurt_flash = 1;
+        }
+        if (inputs.transitions.debug_invincibility.wrapping_sub(7) as i16) >= 0 {
+            s.inventory.health.current = previous;
+            return;
+        }
+    }
+    p.previous_health_for_flash = s.inventory.health.current;
+}

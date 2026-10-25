@@ -15,7 +15,6 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_90::*;
 
 use crate::game::explosion_window::spawn_crystal_flash;
-use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::palette_effects;
 use crate::game::sm_80::{
     DrawTimer, HandleAutoscrolling_X, HandleAutoscrolling_Y,
@@ -551,35 +550,6 @@ crate::game::callback_dispatch! {
     }
 }
 
-pub unsafe fn Samus_JumpCheck(game: &mut Game) {
-    unsafe {
-        if (word!(game.button_config_jump_a) & word!(game.joypad1_lastkeys)) != 0
-            && (word!(game.button_config_jump_a) & word!(game.joypad1_input_samusfilter)) != 0
-        {
-            word!(game.autojump_timer += 1);
-        } else {
-            word!(game.autojump_timer = 0);
-        }
-        word!(game.joypad1_input_samusfilter = word!(game.joypad1_lastkeys));
-        word!(game.joypad1_newinput_samusfilter = word!(game.joypad1_newkeys));
-        let update_health_reference: bool = (((word!(game.samus_health)) as i16)
-            .wrapping_sub((word!(game.samus_prev_health_for_flash)) as i16)
-            >= 0)
-            || ({
-                if word!(game.samus_hurt_flash_counter) == 0 {
-                    word!(game.samus_hurt_flash_counter = 1);
-                }
-                (word!(game.debug_invincibility) as i32 - 7i32 & 0x8000 != 0)
-                    || ({
-                        word!(game.samus_health = word!(game.samus_prev_health_for_flash));
-                        false
-                    })
-            });
-        if update_health_reference {
-            word!(game.samus_prev_health_for_flash = word!(game.samus_health));
-        };
-    }
-}
 pub fn Samus_SetRadius(game: &mut Game) {
     let pose_offset = usize::from(game.samus_pose()) * 8;
     let radius = u16::from(game.read_rom_byte(0x91b629, pose_offset + 6));
@@ -597,31 +567,4 @@ pub fn Samus_PostGrappleCollisionDetect(game: &mut Game) {
     crate::game::player_collision::operations::settle_after_grapple(
         &mut crate::game::session_runtime::Runtime::new(game),
     );
-}
-pub unsafe fn Samus_ShootCheck(game: &mut Game) {
-    unsafe {
-        crate::game::player_projectiles::movement_sound(game);
-        if word!(game.enable_debug) != 0 {
-            if word!(game.samus_pose) as i32 == kPose_00_FaceF_Powersuit as i32
-                || word!(game.samus_pose) as i32 == kPose_9B_FaceF_VariaGravitySuit as i32
-            {
-                if (word!(game.joypad2_last) & 0x30) == 48
-                    && (word!(game.joypad2_new_keys) & 0x80) != 0
-                {
-                    word!(game.debug_invincibility = 7);
-                }
-            } else {
-                if word!(game.debug_invincibility) as i32 - 7i32 & 0x8000 == 0 {
-                    return;
-                }
-                word!(game.debug_invincibility = 0);
-            }
-        }
-        if CheckEventHappened(0xe, game) & 1 != 0
-            && word!(game.frame_handler_gamma) as i32 == 0x90e114 & 0xffff
-            && word!(game.game_state) as i32 != kGameState_35_TimeUp as i32
-        {
-            word!(game.game_state = kGameState_35_TimeUp as u16);
-        }
-    }
 }

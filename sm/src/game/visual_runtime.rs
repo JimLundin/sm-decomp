@@ -443,8 +443,5 @@ pub(crate) fn draw_player_frame(game: &mut Game) {
         }
     }
     h.foreign(player_projectiles::draw_projectiles);
-    h.foreign(|game| unsafe {
-        crate::game::sm_90::Samus_JumpCheck(game);
-        crate::game::sm_90::Samus_ShootCheck(game);
-    });
+    h.owned_call(crate::game::session_runtime::finish_player_frame);
 }

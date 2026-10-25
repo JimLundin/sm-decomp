@@ -597,3 +597,35 @@ impl Runtime<'_> {
         }
     }
 }
+
+pub(crate) fn finish_player_frame(h: &mut Runtime<'_>) {
+    use crate::{
+        game::{player_transitions, progress_flags},
+        ram_map::words as ram,
+    };
+    let inputs = h.inputs().clone();
+    player_transitions::finish_input(h.session_mut(), &inputs);
+    h.write_slice_le(ram::joypad1_input_samusfilter, inputs.held);
+    h.write_slice_le(ram::joypad1_newinput_samusfilter, inputs.pressed);
+    h.owned_call(crate::game::player_projectiles::feedback::movement_sound);
+    if h.word(ram::enable_debug) != 0 {
+        if matches!(h.session().player.pose, 0 | 0x9b) {
+            if h.word(ram::joypad2_last) & 0x30 == 0x30 && h.word(ram::joypad2_new_keys) & 0x80 != 0
+            {
+                h.write_slice_le(ram::debug_invincibility, 7);
+            }
+        } else {
+            if (h.word(ram::debug_invincibility).wrapping_sub(7) as i16) >= 0 {
+                return;
+            }
+            h.write_slice_le(ram::debug_invincibility, 0);
+        }
+    }
+    if h.owned_call(|h| progress_flags::event_happened(h, 0xe))
+        && h.session().player.transitions.frame_gamma
+            == player_transitions::state::FrameGammaMode::DrawEscapeTimer
+        && h.word(ram::game_state) != 35
+    {
+        h.write_slice_le(ram::game_state, 35);
+    }
+}

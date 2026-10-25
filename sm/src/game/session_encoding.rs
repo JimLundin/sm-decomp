@@ -408,6 +408,7 @@ macro_rules! scalar_words {
         $f(0x9d4,$($borrow)* $s.inventory.reserve_capacity);
         $f(0x9c0,$($borrow)* $s.inventory.reserve_mode);
         $f(0xa1c,$($borrow)* $s.player.pose);
+        $f(0xa12,$($borrow)* $s.player.previous_health_for_flash);
         $f(0xa24,$($borrow)* $s.player.history.last_different.pose);
         $f(0x5e9,$($borrow)* $s.multiply_scratch.left);
         $f(0x5eb,$($borrow)* $s.multiply_scratch.right);

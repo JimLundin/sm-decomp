@@ -203,6 +203,7 @@ pub struct Player {
     pub x: u16,
     pub y: u16,
     pub pose: u16,
+    pub(crate) previous_health_for_flash: u16,
     pub(crate) top_sprite: u16,
     pub(crate) bottom_sprite: u16,
     pub(crate) scripted_movement_direction: u16,

@@ -31,7 +31,7 @@ pub(crate) use commands::{cancel_grapple, command};
 pub(crate) fn verify_interpret(host: &mut impl effects::Host) {
     animation::interpret(host);
 }
-pub(crate) use input::{handle_input, request_fallback_pose};
+pub(crate) use input::{finish_input, handle_input, request_fallback_pose};
 pub(crate) use jump::{initialize_jump, start_shinespark};
 #[cfg(sm_verify_dll)]
 pub(crate) use normalization::normalize as verify_normalize;

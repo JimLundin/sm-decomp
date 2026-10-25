@@ -85,9 +85,6 @@ pub(crate) fn grapple_flare(game: &mut Game) {
 pub(crate) fn draw_flare(slot: u16, game: &mut Game) {
     feedback::draw_flare(&mut Runtime::new(game), slot);
 }
-pub(crate) fn movement_sound(game: &mut Game) {
-    feedback::movement_sound(&mut Runtime::new(game));
-}
 pub(crate) fn restore_sound(game: &mut Game) {
     feedback::restore_sound(&mut Runtime::new(game));
 }

@@ -707,8 +707,9 @@ pub(crate) use player_movement_runtime::ceres_movement;
 #[path = "player_transitions_runtime.rs"]
 mod player_transitions_runtime;
 pub(crate) use player_transitions_runtime::{
-    command as player_command, damage_player, face_forward as player_face_forward, finish_xray,
-    initialize as initialize_player, mother_brain as player_mother_brain,
+    command as player_command, damage_player, face_forward as player_face_forward,
+    finish_player_frame, finish_xray, initialize as initialize_player,
+    mother_brain as player_mother_brain,
 };
 #[path = "player_update_runtime.rs"]
 pub(crate) mod player_update_runtime;
