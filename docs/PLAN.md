@@ -94,6 +94,11 @@ Mutation-driver audit: deleting the old room driver breaks retained local captur
 callers. Existing bank campaigns do not replace its unusual alias, failed-upload and
 custom-content checks; keep those checks until their consumers and coverage migrate.
 
+Cloud M1a `29d74efd` is not ready to land: newly safe `message_boxes::display`,
+`sm_80::DecompressToVRAM` and `room_mechanisms::{run,run_door}` can reach unchecked
+hardware pointers. Run 40219723159 was cancelled before auto-land; restore their
+unsafe contracts and screen indirect callers before rerunning the codemod.
+
 Checkpoint cache finding: whole Session/codec hashes invalidate lossless scalar
 migrations despite an unchanged RAM payload. A future format transition needs
 Session round-trip checks and defined actor-identity persistence; keep guards now.

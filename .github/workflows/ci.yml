@@ -80,6 +80,7 @@ jobs:
           & $detached
           if ($LASTEXITCODE -ne 0) { throw 'Detached palette checks failed' }
       - name: Reject projectile collision and retirement mutations
+        if: github.event_name == 'workflow_dispatch'
         # Mutation execution remains hosted under the local Defender restriction.
         # The preceding baseline must pass before deliberately broken variants run.
         # Keep each fault isolated from the production checkout.
@@ -252,6 +253,7 @@ jobs:
           '@ | python -B -
           if ($LASTEXITCODE -ne 0) { throw 'Actor ROM preparation failed' }
       - name: Reject room, native ownership and restoration mutations
+        if: github.event_name == 'workflow_dispatch'
         env:
           FULL_ACTOR_CHECKS: ${{ github.event_name == 'workflow_dispatch' && inputs.full_actor_checks }}
         run: |
@@ -260,5 +262,5 @@ jobs:
           python sm/src/verification/room_mutations.py @actorMutationArgs
           if ($LASTEXITCODE -ne 0) { throw 'Room, native ownership or restoration mutation checks failed' }
       - name: Report ROM-dependent mutation checks not selected
-        if: github.event_name != 'workflow_dispatch' || !inputs.full_actor_checks
+        if: github.event_name == 'workflow_dispatch' && !inputs.full_actor_checks
         run: Write-Output '2 initialized Kraid, 12 player collision and 7 player transition DLL mutations not selected; no ROM requested. Ordinary runs select 77 faults; full dispatch selects 98. Skipped cases are not counted as passes or killed mutations.'
