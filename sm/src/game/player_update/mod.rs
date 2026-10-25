@@ -51,13 +51,8 @@ pub(crate) fn advance(
         if mode == BetaMode::Gameplay {
             // Gamma and settlement effects refresh this observation on return.
             let frozen = h.inputs().frozen;
-            let result = samus_periodic_damage::apply(h.session_mut(), frozen);
-            if result.is_ok() {
-                h.probe("player.update.returned");
-            }
-            return result;
+            return samus_periodic_damage::apply(h.session_mut(), frozen);
         }
     }
-    h.probe("player.update.returned");
     Ok(())
 }

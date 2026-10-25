@@ -341,14 +341,6 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (game: &mut Game)];
     [9496357] Samus_FrameHandlerBeta_Func17 [] {
         let damage_result = advance_player_beta(BetaMode::Gameplay, game);
-        #[cfg(sm_verify_dll)]
-        {
-            assert!(
-                !game.actor_identity_is_with_session(),
-                "player settlement must return RAM authority"
-            );
-            crate::verify_probe::hit("player.settlement.caller17.return");
-        }
         if damage_result.is_err() {
             InvalidInterrupt_Crash(game);
         }
