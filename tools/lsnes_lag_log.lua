@@ -19,6 +19,50 @@ polls:write("movie_frame,callback,subframe,nmi,including_lag,live_controller_wor
 local rows = 0
 local last_frame = 0
 local events = nil
+-- Set to an existing, empty target/seeds/<movie> directory. Dumps stay local.
+local seed_dir = os.getenv("SM_LSNES_SEEDS")
+local seeds = nil
+local seed_room = nil
+local seed_pending = false
+local seed_count = 0
+local seed_regions = {{"wram", 0x7E0000, 0x20000}, {"sram", 0x10000000, 0x2000},
+    {"vram", 0x10000, 0x10000}, {"cgram", 0x21000, 0x200},
+    {"oam", 0x20000, 0x220}, {"apuram", 0, 0x10000}}
+if seed_dir then
+    local existing = io.open(seed_dir .. "/rooms.csv", "rb")
+    if existing then existing:close(); error("seed directory already has rooms.csv") end
+    seeds = assert(io.open(seed_dir .. "/rooms.csv", "wb"))
+    seeds:write("room_index,room,movie_frame,next_input_index,movie_subframe_index,region,size,sha256,file\n")
+end
+local function capture_room(frame)
+    if not seeds then return end
+    local room = memory.readword(0x7E079B)
+    if room ~= seed_room then seed_room = room; seed_pending = true end
+    if not seed_pending or memory.readword(0x7E0998) ~= 8 then return end
+    assert(movie.readonly(), "seed capture must remain read-only")
+    seed_count = seed_count + 1
+    -- This is after the first gameplay frame; frame is the next zero-based input.
+    for _, region in ipairs(seed_regions) do
+        local name, base, size = region[1], region[2], region[3]
+        local vma = assert(memory.find_vma(base), "missing seed memory region: " .. name)
+        assert(vma.baseaddr == base and vma.size == size, "unexpected seed region: " .. name)
+        local file = string.format("%04d-%04X-%s.bin", seed_count, room, name)
+        local existing = io.open(seed_dir .. "/" .. file, "rb")
+        if existing then existing:close(); error("refusing to overwrite seed: " .. file) end
+        local output = assert(io.open(seed_dir .. "/" .. file, "wb"))
+        local bytes = memory.readregion(base, size)
+        local encoded = {}
+        for index = 0, size - 1 do encoded[index + 1] = string.char(bytes[index]) end
+        assert(output:write(table.concat(encoded)))
+        assert(output:close())
+        seeds:write(string.format("%d,%04X,%d,%d,%d,%s,%d,%s,%s\n", seed_count,
+            room, frame, frame, movie.current_first_subframe(), name, size,
+            memory.hash_region(base, size), file))
+    end
+    seeds:flush()
+    print(string.format("Seed %d: room $%04X after movie frame %d", seed_count, room, frame))
+    seed_pending = false
+end
 function on_input(subframe)
     assert(movie.readonly(), "recording movie must remain read-only")
     local frame = movie.currentframe()
@@ -45,6 +89,7 @@ function on_frame_emulated()
     assert(before ~= nil, "frame output without corresponding input boundary")
     local frame = movie.currentframe()
     assert(frame == before[1], "movie frame changed during emulation")
+    capture_room(frame)
     log:write(string.format("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n",
         frame - 1, frame, before[2], memory.readword(0x7E05B6),
         before[3], memory.readword(0x7E05B8), memory.get_lag_flag() and 1 or 0,
@@ -64,6 +109,7 @@ function on_frame_emulated()
     end
 end
 function on_quit()
+    if seeds ~= nil then seeds:close(); seeds = nil end
     if log ~= nil then log:flush(); log:close(); polls:flush(); polls:close(); log = nil end
     if events ~= nil then events:close(); events = nil end
 end

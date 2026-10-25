@@ -349,3 +349,16 @@ Regenerate it with
 `crocomire-wall-spawn-return` covers four frames from 171090 and all eight piece spawns.
 `boss-crocomire` starts with the defeat flag clear at 167285, observes the flag
 at 171422, and requires 120 subsequent frames. The recipe ends at 171694.
+
+For room-entry memory capture, create an empty `target/seeds/<movie>` directory
+and set `SM_LSNES_SEEDS` to its absolute path before the existing lsnes command.
+Use a fresh `SM_LSNES_LOG` too. The optional mode captures WRAM, SRAM, VRAM,
+CGRAM, OAM and APU RAM after the first completed gameplay frame following each
+room change, including revisits. These ROM-derived files remain local.
+`rooms.csv` records each region's size and SHA-256. The committed
+`room-seeds-any.csv` lists the 197 observed entries; its `seed_sha256` hashes the
+concatenation of those six regions in the order above. `movie_frame` is one-based
+and completed; `next_input_index` is the following zero-based movie input.
+`movie_subframe_index` identifies the completed frame's recorded first subframe.
+The original capture is still a hardware observation, not a verifier checkpoint:
+the CPU may be inside NMI, and importing it needs the A1.2 state converter.

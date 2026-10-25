@@ -14,6 +14,6 @@
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-**Crystal Flash setup migrated:** 48 legacy lines removed; production +26 to preserve admission/failure order. Four smoke rows pass; natural Crystal Flash remains uncovered.
+**Room seeds captured:** 197 any% entries. Next: qualify import and replay; these captures are not yet passing coverage checks.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)

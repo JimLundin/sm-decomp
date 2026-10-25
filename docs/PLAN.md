@@ -43,7 +43,8 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    27/44 required checks pass, 17 remain pending. Both four-frame melt/wall
    regressions pass; the defeat row runs 4,258 frames through 120 frames after
    the fresh boss flag. The full 167,285-frame setup was checked from boot.
-   A1.1 captures six memory regions at each room entry; A1.2 must establish
+   A1.1 any% capture is complete: 197 room entries, six regions each; all 1,182
+   files checked, full 129,712-frame capture matches the original log. A1.2 must establish
    at least 600 clean frames and the captured next room before adoption.
    Original any% timing alignment remains parked; no further hand-route exploration.
    Room seeds and movies stay local; only the logger and index/recipes are committed.
@@ -133,10 +134,10 @@ Every routine commit runs exactly this, then commits:
    writes "uncovered: <function>" in the body.
 3. Nothing else per commit: no mutation runs, independent controls, frontend metadata,
    optimized/release rebuilds, clean-source reruns or full replays. Once per bank,
-   before its file is deleted: the full corpus plus scoped `cargo-mutants` (Ã¢â€°Â¤30 min).
+   before its file is deleted: the full corpus plus scoped `cargo-mutants` (ÃƒÂ¢Ã¢â‚¬Â°Ã‚Â¤30 min).
    The full corpus also runs at each review waypoint. A failure from a full run gets a
    regression row with its fix. Never weaken a comparison or a row's expectations.
-4. Body Ã¢â€°Â¤8 lines: what changed, rows run and result, legacy/production delta and
+4. Body ÃƒÂ¢Ã¢â‚¬Â°Ã‚Â¤8 lines: what changed, rows run and result, legacy/production delta and
    ratio, `Score:`. Re-run a flaky step once; a second failure is real.
 
 Commands and checkpoint rules: [movies/README.md](../movies/README.md).
