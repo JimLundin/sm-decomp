@@ -744,7 +744,7 @@ crate::game::callback_dispatch! {
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
     @external {
 
-        10651845 => [sm_a2::BouncingGoofball_Instr_88C5(k, j)];
+        10651845 => [j];
         10716899 => sm_a3::Waver_Instr_1;
         10991155 => [sm_a7::Kraid_Instr_1(k, j)];
         11056990 => [sm_a8::Beetom_Instr_1(k, j)];

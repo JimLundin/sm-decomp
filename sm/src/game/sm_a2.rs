@@ -57,12 +57,11 @@ crate::game::constants::typed_constants! { Consts_A2;
     addr_kMaridiaBeybladeTurtle_Ilist_8BD2 = 35794, addr_kMaridiaBeybladeTurtle_Ilist_8B80 = 35712,
     addr_kMiniCrocomire_Ilist_896E = 35182, addr_kMiniCrocomire_Ilist_8958 = 35160,
     addr_kMiniCrocomire_Ilist_8948 = 35144, addr_kMiniCrocomire_Ilist_8932 = 35122,
-    addr_kBouncingGoofball_Ilist_86BF = 34495, addr_kBouncingGoofball_Ilist_86A7 = 34471,
     addr_kSpritemap_Nothing_A2 = 32845,
 }
 
 crate::type_aliases! {
-    pub Enemy_BouncingGoofball, Enemy_LavaSeahorse, Enemy_MaridiaTurtle,
+    pub Enemy_LavaSeahorse, Enemy_MaridiaTurtle,
         Enemy_MaridiaLargeSnail, Enemy_MaridiaSpikeyShell,
         Enemy_Rinka, Enemy_GunshipTop, Enemy_HirisingSlowfalling,
         Enemy_LavaquakeRocks, Enemy_MiniMaridiaTurtle =
@@ -133,160 +132,10 @@ static g_word_A28E80: [i16; 48] = [
     -4, -4, 0, 0, -16, -16, -16, -15, -15, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4,
     -3, -3, -2, 0, 0, 0, 0,
 ];
-pub fn BouncingGoofball_Func1(k: u16, game: &mut Game) {
-    do_until! { (accumulated.wrapping_sub(GoofballState::new(game, k).distance()) as i16) >= 0;
-        let phase = GoofballState::new(game, k).phase();
-        let product = goofball_movement_product(k, phase, game);
-        GoofballState::new(game, k).set_product(product);
-        let accumulated = GoofballState::new(game, k)
-            .accumulated()
-            .wrapping_add(product);
-        GoofballState::new(game, k).set_accumulated(accumulated);
-        let phase = GoofballState::new(game, k).phase().wrapping_add(1);
-        GoofballState::new(game, k).set_phase(phase);
-    }
-    let phase = GoofballState::new(game, k).phase();
-    GoofballState::new(game, k).set_limit(phase);
-    GoofballState::new(game, k).set_active(1);
-    GoofballState::new(game, k).set_animation_ready(1);
-}
-struct GoofballState<'a> {
-    bytes: &'a mut [u8],
-}
-impl<'a> GoofballState<'a> {
-    fn accumulated(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, var_D))
-    }
-    fn distance(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, var_C))
-    }
-    fn set_limit(&mut self, value: u16) {
-        self.write(core::mem::offset_of!(Enemy_BouncingGoofball, var_00), value);
-    }
-    fn initialized(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, var_05))
-    }
-    fn set_initialized(&mut self, value: u16) {
-        self.write(core::mem::offset_of!(Enemy_BouncingGoofball, var_05), value);
-    }
-    fn saved_scale(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, var_03))
-    }
-    fn set_saved_scale(&mut self, value: u16) {
-        self.write(core::mem::offset_of!(Enemy_BouncingGoofball, var_03), value);
-    }
-    fn animation_ready(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, var_04))
-    }
-    fn set_animation_ready(&mut self, value: u16) {
-        self.write(core::mem::offset_of!(Enemy_BouncingGoofball, var_04), value);
-    }
-    fn active(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, var_02))
-    }
-    fn animation_trigger(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, var_F))
-    }
-    fn state(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, var_01))
-    }
-    fn parameter_low(&self) -> u8 {
-        self.bytes[core::mem::offset_of!(Enemy_BouncingGoofball, parameter_1)]
-    }
-    fn parameter_high(&self) -> u8 {
-        self.bytes[core::mem::offset_of!(Enemy_BouncingGoofball, parameter_1) + 1]
-    }
-    fn set_scale(&mut self, value: u16) {
-        self.write(core::mem::offset_of!(Enemy_BouncingGoofball, var_A), value);
-    }
-    fn set_distance(&mut self, value: u16) {
-        self.write(core::mem::offset_of!(Enemy_BouncingGoofball, var_C), value);
-    }
-    fn set_accumulated(&mut self, value: u16) {
-        self.write(core::mem::offset_of!(Enemy_BouncingGoofball, var_D), value);
-    }
-    fn new(game: &'a mut Game, index: u16) -> Self {
-        Self {
-            bytes: &mut game.g_ram[0xf78 + usize::from(index)..],
-        }
-    }
-    fn read(&self, offset: usize) -> u16 {
-        u16::from_le_bytes([self.bytes[offset], self.bytes[offset + 1]])
-    }
-    fn write(&mut self, offset: usize, value: u16) {
-        self.bytes[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
-    }
-    fn phase(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, var_E))
-    }
-    fn set_phase(&mut self, value: u16) {
-        self.write(core::mem::offset_of!(Enemy_BouncingGoofball, var_E), value);
-    }
-    fn scale(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, var_A))
-    }
-    fn set_product(&mut self, value: u16) {
-        self.write(core::mem::offset_of!(Enemy_BouncingGoofball, var_B), value);
-    }
-    fn limit(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, var_00))
-    }
-    fn set_state(&mut self, value: u16) {
-        self.write(core::mem::offset_of!(Enemy_BouncingGoofball, var_01), value);
-    }
-    fn set_active(&mut self, value: u16) {
-        self.write(core::mem::offset_of!(Enemy_BouncingGoofball, var_02), value);
-    }
-    fn set_animation_trigger(&mut self, value: u16) {
-        self.write(core::mem::offset_of!(Enemy_BouncingGoofball, var_F), value);
-    }
-    fn y_pos(&self) -> u16 {
-        self.read(
-            core::mem::offset_of!(Enemy_BouncingGoofball, base)
-                + core::mem::offset_of!(EnemyBase, y_pos),
-        )
-    }
-    fn set_y_pos(&mut self, value: u16) {
-        self.write(
-            core::mem::offset_of!(Enemy_BouncingGoofball, base)
-                + core::mem::offset_of!(EnemyBase, y_pos),
-            value,
-        );
-    }
-}
-fn goofball_movement_product(index: u16, phase: u16, game: &mut Game) -> u16 {
-    // The ROM byte is read even when the signed gate replaces it with FF.
-    let sample = game.read_rom_byte(0xa28701, usize::from(phase));
-    let sample = if (phase.wrapping_sub(23) as i16) >= 0 {
-        255
-    } else {
-        sample
-    };
-    u16::from(sample) * u16::from(GoofballState::new(game, index).scale() as u8)
-}
-pub fn BouncingGoofball_SamusCloseX(game: &mut Game) -> u16 {
-    let slot = game.cur_enemy_index();
-    let index = game.cur_enemy_index();
-    let offset =
-        0xf78 + usize::from(slot) + core::mem::offset_of!(Enemy_BouncingGoofball, parameter_2);
-    let radius = u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]]);
-    {
-        let (actor, distance) = (index, radius);
-        u16::from(actor_api::player_within(
-            &mut Runtime::new(game),
-            Key::from_legacy(actor),
-            actor_api::Axis::X,
-            distance,
-        ))
-    }
-}
 fn restart_actor_animation(index: u16, instruction: u16, game: &mut Game) {
     Runtime::new(game).edit_actor(Key::from_legacy(index), Le, |actor| {
         actor.restart_animation(instruction)
     });
-}
-pub fn BouncingGoofball_Instr_88C5(_k: u16, jp: EnemyScript) -> EnemyScript {
-    jp
 }
 fn set_mini_crocomire_preinstruction(index: u16, preinstruction: u16, state: u16, game: &mut Game) {
     let base = 0xf78 + usize::from(index);
@@ -1491,90 +1340,6 @@ crate::game::callback_dispatch! {
     call (game); default { crate::rtl::Unreachable(game); };
     @functions [pub fn (game: &mut Game)];
     @prefix { let index = game.cur_enemy_index(); };
-    [10651420] BouncingGoofball_Init [] {
-        { let actor = Key::from_legacy(index); let value = addr_kSpritemap_Nothing_A2 as u16; Runtime::new(game).edit_actor(actor, Le, |actor| actor.spritemap = value); };
-        BouncingGoofball_Func2(game);
-        GoofballState::new(game, index).set_state(1);
-        let parameter = GoofballState::new(game, index).parameter_low();
-        let scale = game.read_rom_word(0xa286df, usize::from(parameter) * 2);
-        GoofballState::new(game, index).set_scale(scale);
-        let parameter = GoofballState::new(game, index).parameter_high();
-        let distance = game.read_rom_word(0xa286ef, usize::from(parameter) * 2);
-        GoofballState::new(game, index).set_distance(distance);
-        GoofballState::new(game, index).set_accumulated(0);
-        GoofballState::new(game, index).set_phase(0);
-        GoofballState::new(game, index).set_animation_trigger(0);
-    };
-    [10651548] BouncingGoofball_Main [] {
-        if GoofballState::new(game, index).initialized() == 0 {
-            BouncingGoofball_Func1(game.cur_enemy_index(), game);
-            GoofballState::new(game, index).set_initialized(1);
-            return;
-        }
-        let scale = GoofballState::new(game, index).scale();
-        GoofballState::new(game, index).set_saved_scale(scale);
-        if BouncingGoofball_SamusCloseX(game) != 0 {
-            GoofballState::new(game, index).set_active(0);
-            GoofballState::new(game, index).set_animation_ready(0);
-            if GoofballState::new(game, index).animation_trigger() == 0 {
-                GoofballState::new(game, index).set_animation_trigger(1);
-                BouncingGoofball_Func3(game);
-            }
-        } else if GoofballState::new(game, index).active() != 0 {
-            if GoofballState::new(game, index).animation_ready() == 0 {
-                GoofballState::new(game, index).set_animation_ready(1);
-                BouncingGoofball_Func2(game);
-            }
-            return;
-        }
-        let scale = GoofballState::new(game, index).saved_scale();
-        GoofballState::new(game, index).set_scale(scale);
-        match GoofballState::new(game, index).state() {
-            0 => BouncingGoofball_State0(game),
-            1 => BouncingGoofball_State1(game),
-            _ => panic!("invalid Goofball state"),
-        }
-    };
-    BouncingGoofball_State0 [] {
-        let phase = GoofballState::new(game, index).phase().wrapping_add(1);
-        GoofballState::new(game, index).set_phase(phase);
-        let phase = GoofballState::new(game, index).phase();
-        let product = goofball_movement_product(index, phase, game);
-        GoofballState::new(game, index).set_product(product);
-        let y = GoofballState::new(game, index)
-            .y_pos()
-            .wrapping_add(product >> 8);
-        GoofballState::new(game, index).set_y_pos(y);
-        if (GoofballState::new(game, index)
-            .phase()
-            .wrapping_sub(GoofballState::new(game, index).limit()) as i16)
-            >= 0
-        {
-            GoofballState::new(game, index).set_state(1);
-            GoofballState::new(game, index).set_active(1);
-            GoofballState::new(game, index).set_animation_trigger(0);
-        }
-    };
-    BouncingGoofball_State1 [] {
-        let phase = GoofballState::new(game, index).phase();
-        let product = goofball_movement_product(index, phase, game);
-        GoofballState::new(game, index).set_product(product);
-        let y = GoofballState::new(game, index)
-            .y_pos()
-            .wrapping_sub(product >> 8);
-        GoofballState::new(game, index).set_y_pos(y);
-        let phase = GoofballState::new(game, index).phase().wrapping_sub(1);
-        GoofballState::new(game, index).set_phase(phase);
-        if GoofballState::new(game, index).phase() & 0x8000 != 0 {
-            GoofballState::new(game, index).set_state(0);
-        }
-    };
-    BouncingGoofball_Func2 [] {
-        restart_actor_animation(index, addr_kBouncingGoofball_Ilist_86A7 as u16, game);
-    };
-    BouncingGoofball_Func3 [] {
-        restart_actor_animation(index, addr_kBouncingGoofball_Ilist_86BF as u16, game);
-    };
     [10652077] MiniCrocomire_Init [] {
         { let actor = Key::from_legacy(index); let value = addr_kSpritemap_Nothing_A2 as u16; Runtime::new(game).edit_actor(actor, Le, |actor| actor.spritemap = value); };
         // Parameter indexing is wider than a SNES word; do not wrap this offset.
@@ -2082,18 +1847,16 @@ crate::game::callback_dispatch! {
     Enemy_NormalPowerBombAI_A2 => actors::combat::power_bomb_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
     [10649635] Enemy_NormalTouchAI_A2 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
     [10649645] Enemy_NormalShotAI_A2 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
+    @external {
+        10651420 => crate::game::goofball::initialize;
+        10651548 => crate::game::goofball::advance;
+    }
 }
 
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
     @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10651846] BouncingGoofball_Instr_88C6 [jp] {
-        let index = game.cur_enemy_index();
-        let offset = 0xf78 + usize::from(index) + core::mem::offset_of!(Enemy_BouncingGoofball, var_02);
-        game.g_ram[offset..offset + 2].copy_from_slice(&0u16.to_le_bytes());
-        QueueSfx2_Max6(0xe, game);
-    };
     [10652030] MiniCrocomire_Instr_897E [jp.offset(1)] {
         let parameter = jp.word(0);
         let index = game.cur_enemy_index();
@@ -2313,6 +2076,9 @@ crate::game::callback_dispatch! {
         (*Get_LavaSeahorse(word!(game.cur_enemy_index) as i32, game)).var_02 = 1;
         jp
     };
+    @external {
+        10651846 => [crate::game::goofball::landed(j, game)];
+    }
 }
 
 crate::game::callback_dispatch! {

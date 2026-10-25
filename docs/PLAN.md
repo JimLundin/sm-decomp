@@ -55,16 +55,15 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
    the combined full corpus are separate obligations, not inferred from this result.
    Next: move authored rows onto original room seeds, then delete their corresponding
    route recipes from tools/movie_inputs.py. Keep current provenance and input guards.
-2. **Current - lane B retirement; landing directive, 00:00.** B1 lands the integrated
-   sm_88/sm_a0/sm_81 deletions using its passing hosted rows and only rebase-touched
-   local rows, then B3 lands sm_8f/sm_b2 after its selected rows and smoke;
-   rebase the pending cloud M2 sm_a8 afterward. Full corpus follows deletion on main.
-   B1 continues sm_80 then sm_82; B2's eleven cinematic families are being composed.
-   These non-enemy banks aim at most 80% replacement size. B3 takes covered sm_a2
-   Bouncing Goofballs, then sm_a3. Windows M becomes B4 sm_a8 then sm_b3 after M2 lands.
+2. **Current - lane B retirement.** B1 sm_88/sm_a0/sm_81 and B3 sm_8f/sm_b2 are
+   retired. M2 sm_a8, eleven B2 cinematic families and B3 Goofball are integrated;
+   local rows pass. Full-corpus completion remains a separate obligation on main.
+   B1 finishes sm_80 then sm_82; B2 continues sm_8b with credits-roll; B3 continues
+   sm_a2 with Rinka then sm_a3. Non-enemy banks aim at most 80% replacement size.
+   Windows M is now B4: retire sm_a8 families, then sm_b3.
    No further in-place bank codemods; cloud M moves to unsafe outside bank files.
-   A2 seeds authored rows, then batches hosted shards; B5/B6 cloud boss queues start now.
-   No new Windows B family starts until B1 and B3 are on main.
+   A2 seeds remaining authored rows; bundle shard grouping is integrated.
+   B5/B6 cloud queues continue sm_a9/sm_a6, then sm_aa/sm_a7.
    RAM remains authoritative; bank moves alone do not establish owned Session state.
    Preserve full identities, ordered failures/effects, native/LE access and ROM provenance.
    BG2 consolidation still needs scroll_tiles.row.bg2. Reject prototype 42c59cb's
