@@ -10,10 +10,10 @@
 | Total Rust | 154814 |
 | Lines containing `unsafe` | 4593 |
 | Warnings (no-default library) | 362 |
-| Required checkpoint checks passing | 29/44 |
+| Required checkpoint checks passing | 30/44 |
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-**Plasma pickup qualified:** Fresh Plasma award, completed message and 120-frame tail.
+**Tourian qualified:** Tourian gameplay and room DAAE observed for all 300 frames.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)

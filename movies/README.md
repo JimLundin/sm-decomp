@@ -433,3 +433,4 @@ its capture directory and indexed WRAM filename, and its input frame count below
 | Row | Capture and entry | Input frames |
 | --- | --- | ---: |
 | item-plasma | any-boundary:134 | 1400 |
+| area-tourian | any-boundary:179 | 300 |

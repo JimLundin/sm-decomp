@@ -107,7 +107,13 @@ after_expectations = 120
 
 [[segment]]
 id = "area-tourian"
-pending = "The current route does not reach this area; add an exercised route segment."
+seed = "any-boundary:179"
+seed_sha256 = "4b8c7fa388691556522014895afe2a7f7a6202c28d5f5f47d24f05d5ae56aebf"
+inputs = "seed-tourian.inputs"
+input_sha256 = "3d0413b939faefc465e96ea037b4c7a9bdc019cdd975562348be445e6631043d"
+start_frame = 0
+frames = 300
+expect = ["area:tourian", "room:DAAE"]
 
 [[segment]]
 id = "boss-ceres-ridley"
