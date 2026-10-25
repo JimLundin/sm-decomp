@@ -532,15 +532,7 @@ impl visual_host::Content for Runtime<'_> {
         }
     }
     fn legacy_native_record(&mut self, bank: u8, address: u16) -> RomRecord {
-        let address = (u32::from(bank) << 16) | u32::from(address);
-        if address & 0x8000 == 0 {
-            self.foreign(|game| {
-                crate::game::session_runtime::invalid_window(game, address);
-                #[cfg(sm_verify_dll)]
-                crate::room_contact_start_observer::diagnostic(address, game);
-            });
-        }
-        player_projectiles::content::captured(self.native_image(), address)
+        Runtime::legacy_native_record(self, bank, address)
     }
     fn table(&self, source: Source, address: u32) -> RomRecord {
         let image = match source {

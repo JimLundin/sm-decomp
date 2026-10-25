@@ -1,6 +1,10 @@
 //! Source bytes captured by the game library compilation.
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
+    (
+        "sm/src/game/space_pirates.rs",
+        include_bytes!("game/space_pirates.rs"),
+    ),
     ("sm/src/game/boot.rs", include_bytes!("game/boot.rs")),
     (
         "sm/src/game/controller_input.rs",
@@ -1100,7 +1104,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/game/sm_a8.rs", include_bytes!("game/sm_a8.rs")),
     ("sm/src/game/sm_a9.rs", include_bytes!("game/sm_a9.rs")),
     ("sm/src/game/sm_aa.rs", include_bytes!("game/sm_aa.rs")),
-    ("sm/src/game/sm_b2.rs", include_bytes!("game/sm_b2.rs")),
     ("sm/src/game/sm_b3.rs", include_bytes!("game/sm_b3.rs")),
     (
         "sm/src/game/special_geometry.rs",

@@ -510,6 +510,19 @@ impl SessionAccess for Runtime<'_> {
 }
 
 impl Runtime<'_> {
+    /// Preserve native-pointer diagnostics before capturing the registered allocation.
+    pub(crate) fn legacy_native_record(&mut self, bank: u8, address: u16) -> RomRecord {
+        let address = (u32::from(bank) << 16) | u32::from(address);
+        if address & 0x8000 == 0 {
+            self.foreign(|game| {
+                crate::game::session_runtime::invalid_window(game, address);
+                #[cfg(sm_verify_dll)]
+                crate::room_contact_start_observer::diagnostic(address, game);
+            });
+        }
+        content::captured(self.native_image(), address)
+    }
+
     /// Preserve the actor content diagnostic observer and allocation capture order.
     pub(crate) fn actor_legacy_record(&mut self, bank: u8, address: u16) -> RomRecord {
         if address & 0x8000 == 0 {
@@ -527,7 +540,9 @@ use crate::game::actors::api as actor_api;
 use crate::game::combat_rules::LatchMode;
 use crate::game::enemy_script::EnemyScript;
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
-use crate::game::{sm_a2, sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b2, sm_b3};
+use crate::game::{
+    sm_a2, sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b3, space_pirates,
+};
 crate::game::address_dispatch! {
     unsafe fn actor_species_draw_hook(ea: u32, game: &mut Game) => ea;
         call (game); default { crate::rtl::Unreachable(game); };
@@ -651,7 +666,7 @@ crate::game::callback_dispatch! {
         0xa80000..=0xa8ffff => [sm_a8::DispatchEnemyAi(ea, game)];
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyAi(ea, game)];
         0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyAi(ea, game)];
-        0xb20000..=0xb2ffff => [sm_b2::DispatchEnemyAi(ea, game)];
+        0xb20000..=0xb2ffff => [space_pirates::dispatch_ai(ea, game)];
         0xb30000..=0xb3ffff => [sm_b3::DispatchEnemyAi(ea, game)];
     }
 }
@@ -696,7 +711,7 @@ crate::game::address_dispatch! {
         10982539 => sm_a7::Kraid_Touch_ArmFoot; 10982544 => sm_a7::KraidsArm_Touch;
         11001237 => sm_a7::Phantoon_Touch; 11122117 => [()];
         11122118 => sm_a9::MotherBrainsBrain_Touch; 11192695 => sm_aa::GoldTorizo_Touch;
-        11700076 => sm_b2::WalkingSpacePirates_Touch;
+        11700076 => space_pirates::touch;
     }
 }
 crate::game::callback_dispatch! {
@@ -715,8 +730,8 @@ crate::game::callback_dispatch! {
         10982582 => [sm_a7::Kraid_Arm_Shot(j, game)]; 11001243 => sm_a7::Phantoon_Shot;
         11121923 => sm_a9::MotherBrainsBody_Shot; 11121927 => sm_a9::MotherBrainsBrain_Shot;
         11192700 => sm_aa::Torizo_Shot; 11192769 => [()]; 11192770 => sm_aa::Torizo_Func_8;
-        11700089 => sm_b2::WalkingSpacePirates_Shot; 11700168 => sm_b2::WalkingSpacePirates_87C8;
-        11700286 => sm_b2::WalkingSpacePirates_883E;
+        11700089 => space_pirates::shot; 11700168 => space_pirates::check_shot;
+        11700286 => space_pirates::reflect;
     }
 }
 
@@ -746,7 +761,7 @@ crate::game::callback_dispatch! {
         0xa80000..=0xa8ffff => [sm_a8::DispatchEnemyInstr(ea, k, j, game)];
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyInstr(ea, k, j, game)];
         0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyInstr(ea, k, j, game)];
-        0xb20000..=0xb2ffff => [sm_b2::DispatchEnemyInstr(ea, k, j, game)];
+        0xb20000..=0xb2ffff => [space_pirates::dispatch_instruction(ea, k, j, game)];
         0xb30000..=0xb3ffff => [sm_b3::DispatchEnemyInstr(ea, k, j, game)];
     }
 }
