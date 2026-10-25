@@ -3,12 +3,11 @@ use crate::game::player_movement::forced;
 use crate::game::session_runtime::Runtime;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_80::{QueueSfx1_Max6, QueueSfx1_Max15};
-use crate::game::sm_88::SpawnHdmaObject;
+use crate::game::visual_runtime::spawn_hdma;
 use crate::game_state::Game;
 use crate::ram_map::{ram_ptr, word};
 use crate::rtl::{Mult8x8, rom_ptr};
 use crate::types::{Consts_88, Consts_89, SpawnHdmaObject_Args, VoidP};
-use core::ffi::c_void;
 crate::game::constants::typed_constants! { Consts_88;
     addr_byte_889F06 = 40710, addr_kPowerBombExplosionShapeDef0 = 37446,
 }
@@ -27,8 +26,8 @@ pub(crate) unsafe fn spawn_power_bomb(game: &mut Game) {
                 SpawnHdmaObject_Args::new(0x40, 0x28, 0x8ace as VoidP);
             static unk_888AC2: SpawnHdmaObject_Args =
                 SpawnHdmaObject_Args::new(0x40, 0x29, 0x8b80 as VoidP);
-            SpawnHdmaObject(0x88, &raw const unk_888ABA as *const c_void, game);
-            SpawnHdmaObject(0x88, &raw const unk_888AC2 as *const c_void, game);
+            spawn_hdma(0x88, &unk_888ABA, game);
+            spawn_hdma(0x88, &unk_888AC2, game);
         };
     }
 }
@@ -392,8 +391,8 @@ pub(crate) unsafe fn spawn_crystal_flash(game: &mut Game) {
             SpawnHdmaObject_Args::new(0x40, 0x28, 0xa2bd as VoidP);
         static unk_88A2B8: SpawnHdmaObject_Args =
             SpawnHdmaObject_Args::new(0x40, 0x29, 0xa32a as VoidP);
-        SpawnHdmaObject(0x88, &raw const unk_88A2B0 as *const c_void, game);
-        SpawnHdmaObject(0x88, &raw const unk_88A2B8 as *const c_void, game);
+        spawn_hdma(0x88, &unk_88A2B0, game);
+        spawn_hdma(0x88, &unk_88A2B8, game);
     }
 }
 pub(crate) unsafe fn begin_crystal_flash(game: &mut Game) {

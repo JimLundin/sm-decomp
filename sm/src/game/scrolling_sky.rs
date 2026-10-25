@@ -1,7 +1,7 @@
 //! Scrolling sky setup, parallax, HDMA bands and tile uploads.
 use crate::game::liquid_effects::WATER_WAVE;
 use crate::game::prelude::*;
-use crate::game::sm_88::SpawnHdmaObject;
+use crate::game::visual_runtime::spawn_hdma;
 crate::ram_map::ram_pointer_functions! { gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize]; }
 crate::typed_struct! {
     #[derive(Copy, Clone)]
@@ -21,9 +21,9 @@ pub unsafe fn initialize_banded_sky(game: &mut Game) {
             SpawnHdmaObject_Args::new(0x42, 0x11, 0xad4e as VoidP);
         static unk_88A63E: SpawnHdmaObject_Args =
             SpawnHdmaObject_Args::new(0x42, 0xd, 0xad39 as VoidP);
-        SpawnHdmaObject(0x88, &raw const unk_88A62E as *const c_void, game);
-        SpawnHdmaObject(0x88, &raw const unk_88A636 as *const c_void, game);
-        SpawnHdmaObject(0x88, &raw const unk_88A63E as *const c_void, game);
+        spawn_hdma(0x88, &unk_88A62E, game);
+        spawn_hdma(0x88, &unk_88A636, game);
+        spawn_hdma(0x88, &unk_88A63E, game);
         update_vertical_scroll(0, game);
     }
 }
@@ -180,14 +180,14 @@ pub unsafe fn initialize_land(game: &mut Game) {
     unsafe {
         crate::update_place! { reference fresh47 = *ram_ptr!(game; 0x91b) => (*fresh47) | (1u8); }
         crate::update_place! { reference fresh48 = *ram_ptr!(game; 0x91c) => (*fresh48) | (1u8); }
-        SpawnHdmaObject(0x88, &raw const LAND_SCROLL as *const c_void, game);
+        spawn_hdma(0x88, &LAND_SCROLL, game);
         word! {game; set_to_e0_by_scrolling_sky = 224; UNUSED_word_7E059C = 0; }
     }
 }
 pub unsafe fn initialize_ocean(game: &mut Game) {
     unsafe {
         *ram_ptr!(game; 0x59) = 74;
-        SpawnHdmaObject(0x88, &raw const OCEAN_SCROLL as *const c_void, game);
+        spawn_hdma(0x88, &OCEAN_SCROLL, game);
         word! {game; set_to_e0_by_scrolling_sky = 224; UNUSED_word_7E059C = 0; }
     }
 }

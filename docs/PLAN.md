@@ -56,7 +56,7 @@ The known example/detached compilation errors are fixed and checked locally.
    Original any% timing alignment remains parked; no further hand-route exploration.
    Room seeds and movies stay local; only the logger and index/recipes are committed.
 2. **Current - lane B bank retirement.** `sm_94`, `sm_91`, `sm_89` and `sm_90` are deleted.
-   B1 continues sm_81 menu drawing (2,187 lines); B2 continues sm_88 (895 lines); B3 starts
+   B1 continues sm_81 menu drawing (2,186 lines); B2 continues sm_88 (800 lines); B3 continues
    Crocomire sm_a4 (1,562 lines); attack reactions now share safe actor access. Player input, rendering, movement and dispatch share existing
    owners; save/load now shares checked slot and map transfers.
    Bank removal is not persistent whole-engine state ownership: camera
@@ -69,6 +69,10 @@ The known example/detached compilation errors are fixed and checked locally.
    Report production and legacy deltas together; growth needs a reason. Reuse existing
    interfaces and remove touched inline verification differences. The next size
    target is below 110,000 production lines; try scoped cargo-mutants before text patches.
+   M1 runs in parallel: checked caller-side byte places, then compiler-confirmed
+   redundant-block cleanup. Prototype 42c59cb is not safe to adopt: its whole-RAM
+   borrows can invalidate retained enemy pointers, and its signature stripping
+   exposes raw-pointer Load24 as safe. Passing replays do not resolve these defects.
 3. **Then - finish owned gameplay.** Migrate remaining complete producer/consumer
    interactions, actual callers and legacy retirement. Close persistent ownership,
    content/topology/options boundaries and unsafe removal across the whole engine;

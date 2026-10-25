@@ -156,9 +156,7 @@ impl Runtime<'_> {
         visual_host::Effects::sound(self, 2, 6, 0x56);
         let program = if gravity { 0xd67a } else { 0xd5a2 };
         let args = SpawnHdmaObject_Args::new(0x41, 0x26, program);
-        self.foreign(|game| unsafe {
-            crate::game::sm_88::SpawnHdmaObject(0x91, (&raw const args).cast(), game)
-        });
+        self.foreign(|game| crate::game::visual_runtime::spawn_hdma(0x91, &args, game));
     }
 
     pub(crate) fn initialize_suit_pickup_hdma(&mut self) {
@@ -539,10 +537,16 @@ impl Runtime<'_> {
         {
             return;
         }
-        self.foreign(|game| unsafe {
-            crate::game::sm_88::SpawnHdmaObject(
+        self.foreign(|game| {
+            let image = game.capture_native_rom_binding();
+            crate::game::visual_runtime::spawn_hdma_words(
                 0x91,
-                crate::rtl::rom_ptr!(game; 0x91caf2).cast(),
+                |index| {
+                    image
+                        .as_ref()
+                        .expect("native ROM must be registered")
+                        .table_word(crate::rom::lorom_offset(0x91caf2) as usize, index as isize)
+                },
                 game,
             )
         });

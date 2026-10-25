@@ -23,9 +23,10 @@ use crate::game::sm_80::{
     ScreenOff, ScreenOn, WaitForNMI_Async,
 };
 use crate::game::sm_82::AdvancePaletteFade_BgPalette6;
-use crate::game::sm_88::{SpawnHdmaObject, sub_88E487};
+use crate::game::sm_88::sub_88E487;
 use crate::game::sm_a0::CallEnemyPreInstr;
 use crate::game::sprite_effect_runtime::create_sprite;
+use crate::game::visual_runtime::spawn_hdma;
 
 crate::typed_struct! {
     [
@@ -2987,7 +2988,7 @@ crate::game::callback_dispatch! {
         (*E0).base.properties = ((*E0).base.properties) | ((kEnemyProps_Tangible) as u16);
         static unk_A7CE51: SpawnHdmaObject_Args =
             SpawnHdmaObject_Args::new(0x1, 0x14, 0xce96 as VoidP);
-        SpawnHdmaObject(0xa7, &raw const unk_A7CE51 as *const c_void, game);
+        spawn_hdma(0xa7, &unk_A7CE51, game);
         Phantoon2_Init(game);
     };
     [10997333] Phantoon2_Init [] {

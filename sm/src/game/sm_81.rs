@@ -3,6 +3,7 @@ use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8};
 pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
+use crate::game::visual_runtime::spawn_hdma;
 
 pub use crate::game::constants::bank_82::*;
 
@@ -17,9 +18,7 @@ use crate::game::sm_82::{
     DrawMenuSelectionMissile, DrawRoomSelectMap, DrawRoomSelectMapAreaLabel,
     HandleGameOverBabyMetroid, MapScrolling, SetupMapScrollingForFileSelectMap,
 };
-use crate::game::sm_88::{
-    DisableHdmaObjects, EnableHdmaObjects, SpawnHdmaObject, WaitUntilEndOfVblankAndClearHdma,
-};
+use crate::game::sm_88::{DisableHdmaObjects, EnableHdmaObjects, WaitUntilEndOfVblankAndClearHdma};
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]
@@ -228,8 +227,8 @@ pub unsafe fn GameOverMenu_1_Init(game: &mut Game) {
             SpawnHdmaObject_Args::new(0, 0x32, 0x927d as VoidP);
         static unk_81925C: SpawnHdmaObject_Args =
             SpawnHdmaObject_Args::new(0, 0x31, 0x928d as VoidP);
-        SpawnHdmaObject(0x81, &raw const unk_819254 as *const c_void, game);
-        SpawnHdmaObject(0x81, &raw const unk_81925C as *const c_void, game);
+        spawn_hdma(0x81, &unk_819254, game);
+        spawn_hdma(0x81, &unk_81925C, game);
         ScreenOn(game);
         word!(game.menu_index += 1);
         word! { game, 0;

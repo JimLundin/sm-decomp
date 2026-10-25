@@ -12,7 +12,56 @@ use crate::{
     },
     game_state::Game,
     rom::RomRecord,
+    types::SpawnHdmaObject_Args,
 };
+fn hdma_definition(args: &SpawnHdmaObject_Args) -> [u16; 2] {
+    [
+        u16::from_ne_bytes([args.dma_control, args.target_register]),
+        args.instruction_list,
+    ]
+}
+
+pub(crate) fn spawn_hdma(bank: u8, args: &SpawnHdmaObject_Args, game: &mut Game) -> u16 {
+    let words = hdma_definition(args);
+    spawn_hdma_words(bank, |index| words[index], game)
+}
+
+pub(crate) fn spawn_hdma_last(bank: u8, args: &SpawnHdmaObject_Args, game: &mut Game) {
+    let words = hdma_definition(args);
+    initialize_hdma(5, bank, |index| words[index], game);
+}
+
+pub(crate) fn spawn_hdma_words(bank: u8, read_word: impl Fn(usize) -> u16, game: &mut Game) -> u16 {
+    match (0..6).find(|&slot| checked_word!(game.hdma_object_channels_bitmask[slot]) == 0) {
+        Some(slot) => initialize_hdma(slot, bank, read_word, game),
+        None => u16::MAX,
+    }
+}
+
+fn initialize_hdma(
+    slot: usize,
+    bank: u8,
+    read_word: impl Fn(usize) -> u16,
+    game: &mut Game,
+) -> u16 {
+    checked_word!(game.hdma_object_pre_instructions[slot] = 0x84b8);
+    checked_word!(game.hdma_object_pre_instruction_bank[slot] = 0x88);
+    // A native definition reads its program here, and control only after publication.
+    checked_word!(game.hdma_object_instruction_list_pointers[slot] = read_word(1));
+    checked_word!(game.hdma_object_instruction_timers[slot] = 1);
+    for field in [0x1908, 0x1914, 0x1920, 0x192c, 0x1938] {
+        checked_word!(game, field + 2 * slot; = 0);
+    }
+    checked_word!(game.hdma_object_channels_bitmask[slot] = 4 << slot);
+    let channel = 0x20 + 0x10 * slot as u16;
+    checked_word!(game.hdma_object_bank_slot[slot] = (u16::from(bank) << 8) | channel);
+    let control = read_word(0);
+    unsafe {
+        crate::rtl::WriteRegWord(crate::rtl::DMAP0 as u16 + channel, control, game);
+    }
+    2 * slot as u16
+}
+
 impl visual_host::Record for RomRecord {
     fn byte(&self, displacement: usize) -> u8 {
         RomRecord::byte(self, displacement)

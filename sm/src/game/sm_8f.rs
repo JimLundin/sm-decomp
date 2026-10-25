@@ -167,9 +167,6 @@ crate::game::callback_dispatch! {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x26, 0xba48 as VoidP), game);
         FxTypeFunc_2C_Haze(game);
     };
-    [9423222] RoomCode_CeresColorMathHdma [] {
-        FxTypeFunc_2C_Haze(game);
-    };
     [9423227] RoomCode_CeresColorMathHdma_BgBase [] {
         *ram_ptr!(game; 0x5d) = 102;
         FxTypeFunc_2C_Haze(game);
@@ -192,6 +189,7 @@ crate::game::callback_dispatch! {
     [9423059]
     RoomCode_SetupShaktoolRoomPlm => spawn_hardcoded(SpawnHardcodedPlmArgs::new(0, 0, 0xb8eb as VoidP), game);
     @external {
+        9423222 => FxTypeFunc_2C_Haze;
         9408955 | 9408956 | 9408979 | 9408980 | 9408981 | 9408982 | 9409012 | 9409013 | 9409014
                 | 9409015 | 9423047 | 9423056 | 9423057 | 9423058 | 9423068 | 9423134 => [()];
     }

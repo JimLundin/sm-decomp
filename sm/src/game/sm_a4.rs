@@ -16,7 +16,7 @@ use crate::game::enemy_projectiles::{ClearEprojs, SpawnEprojWithGfx, SpawnEprojW
 use crate::game::player_update::minimap;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_80::{QueueSfx2_Max6, QueueSfx3_Max6};
-use crate::game::sm_88::SpawnHdmaObject;
+use crate::game::visual_runtime::spawn_hdma;
 
 use crate::game::sprite_effect_runtime::create_sprite;
 
@@ -801,7 +801,7 @@ pub unsafe fn Crocomire_950F(game: &mut Game) {
         *(ram_ptr!(game, u16; 0xcae0, 3)) = 225;
         *(ram_ptr!(game, u16; 0xcae0, 4)) = -13330i32 as u16;
         *(ram_ptr!(game, u16; 0xcae0, 6)) = 0;
-        (*v4).var_1F = SpawnHdmaObject(0xa4, &raw const unk_A49559 as *const c_void, game);
+        (*v4).var_1F = spawn_hdma(0xa4, &unk_A49559, game);
     }
 }
 pub unsafe fn Crocomire_Func_65(game: &mut Game) {
