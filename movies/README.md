@@ -434,3 +434,4 @@ its capture directory and indexed WRAM filename, and its input frame count below
 | --- | --- | ---: |
 | item-plasma | any-boundary:134 | 1400 |
 | area-tourian | any-boundary:179 | 300 |
+| area-wrecked-ship | any-boundary:160 | 300 |

@@ -40,7 +40,7 @@ before further adoption; the review's red-main rule does not authorize CI pollin
 ## Work order
 
 1. **Current - lane A room-seeded TAS coverage.** Crocomire defeat now passes;
-   30/44 required checks pass, 14 remain pending. Both four-frame melt/wall
+   31/44 required checks pass, 13 remain pending. Both four-frame melt/wall
    regressions pass; the defeat row runs 4,258 frames through 120 frames after
    the fresh boss flag. The full 167,285-frame setup was checked from boot.
    A1.1 any% capture is complete: 197 room entries, six regions each; all 1,182

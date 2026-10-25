@@ -94,7 +94,13 @@ after_expectations = 120
 
 [[segment]]
 id = "area-wrecked-ship"
-pending = "The current route does not reach this area; add an exercised route segment."
+seed = "any-boundary:160"
+seed_sha256 = "8532ace90d98b9b90ac9a99dd831562ef24080bbfabca0d000d8a73799b99546"
+inputs = "seed-wrecked-ship.inputs"
+input_sha256 = "3d55cc2d756391519425b7cfc66bec5462c99edd8eab04030ef42133fc2d41cf"
+start_frame = 0
+frames = 300
+expect = ["area:wrecked-ship", "room:CBD5"]
 
 [[segment]]
 id = "area-maridia"

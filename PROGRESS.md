@@ -10,10 +10,10 @@
 | Total Rust | 154814 |
 | Lines containing `unsafe` | 4593 |
 | Warnings (no-default library) | 362 |
-| Required checkpoint checks passing | 30/44 |
+| Required checkpoint checks passing | 31/44 |
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-**Tourian qualified:** Tourian gameplay and room DAAE observed for all 300 frames.
+**Wrecked Ship qualified:** Wrecked Ship area and entry room CBD5 observed; all 300 replay frames match.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)
