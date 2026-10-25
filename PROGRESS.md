@@ -4,16 +4,16 @@
 
 | Measure | Count |
 | --- | ---: |
-| Production Rust lines* | 115808 |
-| Legacy bank Rust lines | 51343 |
+| Production Rust lines* | 115680 |
+| Legacy bank Rust lines | 51215 |
 | Verification Rust lines | 38936 |
-| Total Rust | 154744 |
-| Lines containing `unsafe` | 4609 |
+| Total Rust | 154616 |
+| Lines containing `unsafe` | 4608 |
 | Warnings (no-default library) | 362 |
 | Required checkpoint checks passing | 27/44 |
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-**Room effects consolidated:** production -20, legacy -134, unsafe -4. sm89 retains its 48-line Ceres family.
+**Unused actor-bank declarations removed:** production -128, legacy -128, unsafe -1. Four smoke rows pass.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)

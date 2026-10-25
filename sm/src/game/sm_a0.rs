@@ -5,137 +5,9 @@ use crate::game::{
     session_runtime::Runtime,
 };
 
-pub use crate::game::constants::bank_60::*;
-pub use crate::game::constants::bank_86::*;
-pub use crate::game::constants::bank_a0::*;
-pub use crate::game::constants::bank_a4::*;
-pub use crate::game::constants::bank_b4::*;
-
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
 use crate::game::{sm_a2, sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b2, sm_b3};
 
-pub use crate::types::EnemyAiBits;
-crate::game::constants::typed_constants! { EnemyAiBits;
-    kEnemyAiBits_Frozen = 4, kEnemyAiBits_Hurt = 2,
-    kEnemyAiBits_Grapple = 1,
-}
-
-pub const NULL: *mut c_void = null_mut::<c_void>();
-
-crate::game::constants::typed_constants! { i32;
-    fnEprojPreInstr_nullsub_83 = 0x8684fb, fnGrappleBeam_Func2 = 0x9bc8c5,
-}
-crate::game::constants::typed_constants! { u32;
-    fnMiniCrocomire_PreInstr5 = 10652227, fnMiniCrocomire_PreInstr6 = 10652252,
-    fnnullsub_175 = 10652277,
-    fnSpikeShootingPlant_2 = 10657722, fnSpikeShootingPlant_3 = 10657772,
-    fnnullsub_182 = 10657819,
-    fnnullsub_187 = 10659799,
-    fnGunshipTop_3 = 10659852, fnGunshipTop_4 = 10660048,
-    fnGunshipTop_5 = 10660162, fnGunshipTop_6 = 10660176,
-    fnGunshipTop_7 = 10660231, fnGunshipTop_8 = 10660285,
-    fnGunshipTop_9 = 10660431, fnGunshipTop_10 = 10660445,
-    fnGunshipTop_11 = 10660500, fnGunshipTop_12 = 10660514,
-    fnGunshipTop_13 = 10660639, fnGunshipTop_14 = 10660704,
-    fnGunshipTop_15 = 10660718, fnGunshipTop_16 = 10660773,
-    fnGunshipTop_17 = 10660807, fnGunshipTop_18 = 10660891,
-    fnGunshipTop_19 = 10661079, fnGunshipTop_20 = 10661134,
-    fnGunshipTop_21 = 10661165,
-    fnFlies_4 = 10662222,
-    fnFlies_5 = 10662268, fnFlies_6 = 10662314,
-    fnFlies_7 = 10662354,
-    fnNorfairLavajumpingEnemy_Func_1 = 10665692, fnNorfairLavajumpingEnemy_Func_2 = 10665754,
-    fnNorfairLavajumpingEnemy_Func_3 = 10665790, fnNorfairLavajumpingEnemy_Func_4 = 10665852,
-    fnNorfairLavajumpingEnemy_Func_5 = 10665916,
-    fnNorfairRio_Func_1 = 10666625, fnNorfairRio_Func_2 = 10666727,
-    fnNorfairRio_Func_3 = 10666815, fnNorfairRio_Func_4 = 10666849,
-    fnNorfairRio_Func_5 = 10666929, fnNorfairRio_Func_6 = 10667014,
-    fnLowerNorfairRio_Func_1 = 10667822,
-    fnLowerNorfairRio_Func_2 = 10667889, fnLowerNorfairRio_Func_3 = 10667963,
-    fnLowerNorfairRio_Func_4 = 10667990, fnLowerNorfairRio_Func_5 = 10668077,
-    fnLowerNorfairRio_Func_6 = 10668168,
-    fnMaridiaLargeSnail_Func_7 = 10669926,
-    fnMaridiaLargeSnail_Func_8 = 10669993,
-    fnLavaSeahorse_Func_1 = 10675796, fnLavaSeahorse_Func_2 = 10675885,
-    fnLavaSeahorse_Func_3 = 10675953, fnLavaSeahorse_Func_4 = 10676020,
-    fnLavaSeahorse_Func_5 = 10676041, fnnullsub_196 = 10676097,
-    fnBang_Func_6 = 10730661,
-    fnBang_Func_7 = 10730689, fnBang_Func_8 = 10730693,
-    fnBang_Func_10 = 10730780, fnBang_Func_11 = 10730796,
-    fnnullsub_215 = 10735455,
-    fnMaridiaSnail_Func_15 = 10736051,
-    fnReflec_Func_1 = 10738444,
-    fnnullsub_304 = 10741441,
-    fnFireZoomer_Func_1 = 10741448, fnFireZoomer_Func_2 = 10741637,
-    fnDraygon_Func_36 = 10851138,
-    fnnullsub_170_A7 = 10977356,
-    fnnullsub_237 = 10998952, fnPhantoon_Spawn8FireballsInCircleAtStart = 10998953,
-    fnPhantoon_WaitBetweenSpawningAndSpinningFireballs = 10999022, fnPhantoon_SpawnFireballsBeforeFight = 10999048,
-    fnPhantoon_WavyFadeIn = 10999114, fnPhantoon_PickPatternForRound1 = 10999190,
-    fnPhantoon_MovePhantoonInFigure8ThenOpenEye = 10999271, fnPhantoon_EyeFollowsSamusUntilTimerRunsOut = 10999309,
-    fnPhantoon_BecomesSolidAndBodyVuln = 10999388, fnPhantoon_IsSwooping = 10999416,
-    fnPhantoon_FadeoutWithSwoop = 10999481, fnPhantoon_WaitAfterFadeOut = 10999508,
-    fnPhantoon_MoveLeftOrRightAndPickEyeOpenPatt = 10999522, fnPhantoon_FadeInBeforeFigure8 = 10999597,
-    fnPhantoon_BecomeSolidAfterRainingFireballs = 10999615, fnPhantoon_FadeInDuringFireballRain = 10999655,
-    fnPhantoon_FollowSamusWithEyeDuringFireballRain = 10999688, fnPhantoon_FadeOutDuringFireballRain = 10999765,
-    fnPhantoon_SpawnRainingFireballs = 10999799, fnPhantoon_FadeOutBeforeFirstFireballRain = 10999850,
-    fnPhantoon_FadeOutBeforeEnrage = 10999900, fnPhantoon_MoveEnragedPhantoonToTopCenter = 10999924,
-    fnPhantoon_FadeInEnragedPhantoon = 10999953, fnPhantoon_Enraged = 10999980,
-    fnPhantoon_FadeoutAfterEnrage = 11000086, fnPhantoon_CompleteSwoopAfterFatalShot = 11000110,
-    fnPhantoon_DyingPhantoonFadeInOut = 11000136, fnPhantoon_DyingPhantoonExplosions = 11000203,
-    fnPhantoon_WavyDyingPhantoonAndCry = 11000401, fnPhantoon_DyingFadeOut = 11000454,
-    fnPhantoon_AlmostDead = 11000535, fnPhantoon_Dead = 11000637,
-    fnEtecoon_Func_4 = 11004335,
-    fnEtecoon_Func_5 = 11004416, fnEtecoon_Func_6 = 11004471,
-    fnEtecoon_Func_7 = 11004597, fnEtecoon_Func_8 = 11004674,
-    fnEtecoon_Func_9 = 11004716, fnEtecoon_Func_10 = 11004752,
-    fnEtecoon_Func_11 = 11004877, fnEtecoon_Func_12 = 11004955,
-    fnEtecoon_Func_16 = 11005079, fnEtecoon_Func_17 = 11005115,
-    fnEtecoon_Func_18 = 11005151, fnEtecoon_Func_19 = 11005193,
-    fnEtecoon_Func_20 = 11005226, fnEtecoon_Func_21 = 11005268,
-    fnEtecoon_Func_22 = 11005301, fnEtecoon_Func_23 = 11005383,
-    fnEtecoon_Func_24 = 11005502, fnEtecoon_Func_25 = 11005594,
-    fnEtecoon_Func_26 = 11005624,
-    fnDachora_Func_2 = 11007344,
-    fnDachora_Func_3 = 11007420, fnDachora_Func_4 = 11007469,
-    fnDachora_Func_5 = 11007582, fnDachora_Func_7 = 11007887,
-    fnDachora_Func_8 = 11008006, fnDachora_Func_11 = 11008309,
-    fnDachora_Func_12 = 11008396,
-    fnnullsub_170_A8 = 11042892,
-    fnMorphBallEye_Func_1 = 11047153, fnMorphBallEye_Func_2 = 11047214,
-    fnMorphBallEye_Func_3 = 11047264, fnMorphBallEye_Func_4 = 11047374,
-    fnnullsub_244 = 11047388,
-    fnNorfairLavaMan_Func_6 = 11055282,
-    fnNorfairLavaMan_Func_7 = 11055386, fnNorfairLavaMan_Func_8 = 11055477,
-    fnsub_A8B193 = 11055507, fnNorfairLavaMan_Func_9 = 11055544,
-    fnNorfairLavaMan_Func_10 = 11055581, fnNorfairLavaMan_Func_11 = 11055620,
-    fnsub_A8B291 = 11055761, fnNorfairLavaMan_Func_13 = 11055765,
-    fnNorfairLavaMan_Func_15 = 11055885, fnNorfairLavaMan_Func_16 = 11055903,
-    fnNorfairLavaMan_Func_17 = 11055958, fnNorfairLavaMan_Func_18 = 11056039,
-    fnMaridiaFloater_Func_3 = 11059843, fnMaridiaFloater_Func_4 = 11059878,
-    fnMaridiaFloater_Func_5 = 11059919, fnMaridiaFloater_Func_6 = 11060075,
-    fnMaridiaFloater_Func_7 = 11060193, fnMaridiaFloater_Func_8 = 11060329,
-    fnMaridiaFloater_Func_9 = 11060444, fnMaridiaFloater_Func_10 = 11060480,
-    fnMaridiaFloater_Func_11 = 11060509, fnnullsub_256 = 11060584,
-    fnMaridiaFloater_Func_12 = 11060585, fnMaridiaFloater_Func_13 = 11060639,
-    fnWreckedShipRobot_Func_1 = 11062375,
-    fnBlueBrinstarFaceBlock_Func_1 = 11069550,
-    fnnullsub_171_AA = 11174011,
-    fnnullsub_274 = 11197610,
-    fnnullsub_276 = 11200422,
-    fnnullsub_171_B3 = 11763835,
-    fnBrinstarPipeBug_PreInstr_1 = 11765888, fnBrinstarPipeBug_PreInstr_2 = 11765904,
-    fnBrinstarPipeBug_PreInstr_3 = 11765987, fnBrinstarPipeBug_PreInstr_4 = 11766044,
-    fnBrinstarPipeBug_PreInstr_5 = 11766142,
-    fnNorfairPipeBug_Func_5 = 11767039,
-    fnBotwoon_Func_26 = 11771328, fnBotwoon_Func_27 = 11771517,
-    fnBotwoon_Func_28 = 11771616, fnBotwoon_Func_29 = 11771700,
-    fnBotwoon_Func_30 = 11771770,
-}
-crate::ram_map::ram_pointer_functions! {
-    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
-    gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
-}
 static kRoomShakes: [u16; 144] = [
     1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0,
     3, 3, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 2, 0, 2, 0, 0, 2, 0, 2, 2, 2, 2, 2, 3, 0, 3, 0,
@@ -428,7 +300,7 @@ pub fn ConvertAngleToXy(phase: u16, amplitude: u16, game: &mut Game) -> Point32 
     let y = u32::from(y_sample) * u32::from(amplitude);
     Point32 { x, y }
 }
-pub unsafe fn EnemyFunc_Divide(a: u32, b: u32) -> u32 {
+pub fn EnemyFunc_Divide(a: u32, b: u32) -> u32 {
     if a != 0 { b.wrapping_div(a) } else { 0 }
 }
 fn corrected_samus_previous_position(position: u16, previous: u16) -> Option<u16> {
