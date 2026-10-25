@@ -1,9 +1,9 @@
-use crate::game::menu_tilemap;
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8};
 pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
 use crate::game::visual_runtime::spawn_hdma;
+use crate::game::{menu_tilemap, menu_window};
 
 pub use crate::game::constants::bank_82::*;
 
@@ -1317,7 +1317,7 @@ pub unsafe fn FileSelectMap_4_SetupExpandingSquareTransition(game: &mut Game) {
         *ram_ptr!(game; 0x74, 2) = 0x80;
         *ram_ptr!(game; 0x74, 1) = 64;
         *ram_ptr!(game; 0x74, 0) = 32;
-        SetupInitialExpandingSquareHDMA(game);
+        menu_window::initialize(game);
         crate::rtl::write_register_and_mirror(HDMAEN as u16, 0xc, 0x85, true, game);
         ConfigureWindow1ForExpandingSquare(game);
         word!(game.hdma_objects_enable_flag = 0);
@@ -1335,64 +1335,10 @@ pub unsafe fn ConfigureWindow1ForExpandingSquare(game: &mut Game) {
         }
     }
 }
-pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
-    unsafe {
-        word!(game.expand_sq_topbottom_margin_right_pos = 0);
-        word!(game.expand_sq_topbottom_margin_left_pos = -1i32 as u16);
-        byte!(@pointer ram_ptr!(game, u16; 0x9e32); 0) = 127;
-        byte!(@pointer ram_ptr!(game, u16; 0x9e36); 0) = -127i32 as u8;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00))).field_0 = 111;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00))).field_1 = 34;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00))).field_2 = -98i32 as u8;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_0 = 1;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_1 = 50;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_2 = -98i32 as u8;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(2)).field_0 = 1;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(2)).field_1 = 50;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(2)).field_2 = -98i32 as u8;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(3)).field_0 = 111;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(3)).field_1 = 32;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(3)).field_2 = -98i32 as u8;
-        crate::rtl::register_writes! { game;
-            byte(DMAP2 as u16, 0x40); byte(BBAD2 as u16, 0x26);
-            byte(A1T2L as u16, 0); byte(A1T2H as u16, 0x9e);
-            byte(A1B2 as u16, 0x7e); byte(DAS20 as u16, 0x7e);
-            byte(DAS2L as u16, 0); byte(DAS2H as u16, 0);
-            byte(A2A2L as u16, 0); byte(A2A2H as u16, 0);
-            byte(NTRL2 as u16, 0);
-        }
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10))).field_0 = 111;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10))).field_1 = 32;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10))).field_2 = -98i32 as u8;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(1)).field_0 = 1;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(1)).field_1 = 54;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(1)).field_2 = -98i32 as u8;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(2)).field_0 = 1;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(2)).field_1 = 54;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(2)).field_2 = -98i32 as u8;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(3)).field_0 = 111;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(3)).field_1 = 32;
-        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(3)).field_2 = -98i32 as u8;
-        crate::rtl::register_writes! { game;
-            byte(DMAP3 as u16, 0x40); byte(BBAD3 as u16, 0x27);
-            byte(A1T3L as u16, 0x10); byte(A1T3H as u16, 0x9e);
-            byte(A1B3 as u16, 0x7e); byte(DAS30 as u16, 0x7e);
-            byte(DAS3L as u16, 0); byte(DAS3H as u16, 0);
-            byte(A2A3L as u16, 0); byte(A2A3H as u16, 0);
-            byte(NTRL3 as u16, 0);
-        }
-    }
-}
-static kExpandingSquareTransitionSpeed: u8 = 4;
 pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
     unsafe {
         DrawAreaSelectMapLabels(game);
-        let v0: u8 = ((*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00))).field_0)
-            .wrapping_sub(kExpandingSquareTransitionSpeed);
-        if (((*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00))).field_0) as i8)
-            .wrapping_sub((kExpandingSquareTransitionSpeed) as i8)
-            < 0
-        {
+        if menu_window::open_from_center(game) {
             byte!(@pointer ram_ptr!(game, u16; 0x727); 0) =
                 ((word!(game.menu_index)) as u8).wrapping_add(1);
             crate::update_place! { reference fresh36 = *ram_ptr!(game; 0x69) => *fresh36 & !(2); }
@@ -1420,24 +1366,7 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
             (*v5).src.bank = 126;
             (*v5).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) as u16;
             word!(game.vram_write_queue_tail = (v4).wrapping_add(7));
-        } else {
-            crate::update_place! { reference fresh39 = (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00))).field_0 => (*fresh39).wrapping_sub(kExpandingSquareTransitionSpeed); }
-            (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(3)).field_0 = v0;
-            (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10))).field_0 = v0;
-            (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(3)).field_0 = v0;
-            crate::update_place! { reference fresh40 = (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_0 => (*fresh40).wrapping_add(kExpandingSquareTransitionSpeed); }
-            (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(2)).field_0 =
-                (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_0;
-            (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(1)).field_0 =
-                (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_0;
-            (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(2)).field_0 =
-                (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_0;
-            byte!(@pointer ram_ptr!(game, u16; 0x9e32); 0) = ((word!(game.expand_sq_left_pos))
-                as u8)
-                .wrapping_sub(kExpandingSquareTransitionSpeed);
-            byte!(@pointer ram_ptr!(game, u16; 0x9e36); 0) = (kExpandingSquareTransitionSpeed)
-                .wrapping_add((word!(game.expand_sq_right_pos)) as u8);
-        };
+        }
     }
 }
 pub unsafe fn FileSelectMap_6_AreaSelectMap(game: &mut Game) {
@@ -1664,7 +1593,7 @@ static kRoomSelectMapExpandingSquareTimers: [u16; 6] = [0x33, 0x35, 0x2d, 0x33, 
 pub unsafe fn FileSelectMap_7_PrepExpandSquareTransToRoomMap(game: &mut Game) {
     unsafe {
         DrawAreaSelectMapLabels(game);
-        SetupInitialExpandingSquareHDMA(game);
+        menu_window::initialize(game);
         *ram_ptr!(game; 0x69) = 19;
         *ram_ptr!(game; 0x6c) = 19;
         crate::rtl::register_writes! { game;
@@ -1705,84 +1634,16 @@ pub unsafe fn FileSelectMap_7_PrepExpandSquareTransToRoomMap(game: &mut Game) {
         expand_sq_right_vel = (*vels).right_vel; expand_sq_top_subvel = (*vels).top_subvel;
         expand_sq_top_vel = (*vels).top_vel; expand_sq_bottom_subvel = (*vels).bottom_subvel;
         expand_sq_bottom_vel = (*vels).bottom_vel; }
-        SetupRoomSelectMapExpandingSquareTransHDMA(game);
+        menu_window::project(game);
         crate::rtl::write_register_and_mirror(HDMAEN as u16, 0xc, 0x85, true, game);
         word!(game.menu_index += 1);
         QueueSfx1_Max6(0x3b, game);
     }
 }
-pub unsafe fn SetupRoomSelectMapExpandingSquareTransHDMA(game: &mut Game) {
-    unsafe {
-        let mut k: u16 = 0;
-        let v0: u16 = word!(game.expand_sq_top_pos);
-        AddExpandingSqTransLeftIndirHDMA(v0, k, 0x9e22, game);
-        k = AddExpandingSqTransRightIndirHDMA(v0, k, 0x9e20, game);
-        let mut v2: u16 =
-            (word!(game.expand_sq_bottom_pos)).wrapping_sub(word!(game.expand_sq_top_pos));
-        if (word!(game.expand_sq_bottom_pos) as u8) == (word!(game.expand_sq_top_pos) as u8) {
-            v2 = 1;
-        }
-        AddExpandingSqTransLeftIndirHDMA(v2, k, 0x9e32, game);
-        k = AddExpandingSqTransRightIndirHDMA(v2, k, 0x9e36, game);
-        let mut v4: u16 = (-32i32 - word!(game.expand_sq_bottom_pos) as i32) as u16;
-        if (word!(game.expand_sq_bottom_pos) as u8) == 0xe0 {
-            v4 = 1;
-        }
-        AddExpandingSqTransLeftIndirHDMA(v4, k, 0x9e22, game);
-        k = AddExpandingSqTransRightIndirHDMA(v4, k, 0x9e20, game);
-        *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00))).field_0)
-            .offset(k as i32 as isize) = 0;
-        *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10))).field_0)
-            .offset(k as i32 as isize) = 0;
-    }
-}
-pub unsafe fn AddExpandingSqTransLeftIndirHDMA(a: u16, k: u16, j: u16, game: &mut Game) {
-    unsafe {
-        if (a & 0x80) != 0 {
-            *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00))).field_0)
-                .offset(k as i32 as isize) = ((a) as u8).wrapping_sub(127);
-            *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1))
-                .field_0)
-                .offset(k as i32 as isize) = 127;
-            *((&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00))).field_1)
-                .offset(k as i32 as isize) as *mut u16) = j;
-            *((&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1))
-                .field_1)
-                .offset(k as i32 as isize) as *mut u16) = j;
-        } else {
-            *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00))).field_0)
-                .offset(k as i32 as isize) = a as u8;
-            *((&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00))).field_1)
-                .offset(k as i32 as isize) as *mut u16) = j;
-        };
-    }
-}
-pub unsafe fn AddExpandingSqTransRightIndirHDMA(a: u16, k: u16, j: u16, game: &mut Game) -> u16 {
-    unsafe {
-        if (a & 0x80) != 0 {
-            *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10))).field_0)
-                .offset(k as i32 as isize) = ((a) as u8).wrapping_sub(127);
-            *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(1))
-                .field_0)
-                .offset(k as i32 as isize) = 127;
-            *((&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10))).field_1)
-                .offset(k as i32 as isize) as *mut u16) = j;
-            *((&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(1))
-                .field_1)
-                .offset(k as i32 as isize) as *mut u16) = j;
-            (k).wrapping_add(6)
-        } else {
-            *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10))).field_0)
-                .offset(k as i32 as isize) = a as u8;
-            *((&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10))).field_1)
-                .offset(k as i32 as isize) as *mut u16) = j;
-            (k).wrapping_add(3)
-        }
-    }
-}
 pub unsafe fn FileSelectMap_8_ExpandSquareTransToRoomSelectMap(game: &mut Game) {
     unsafe {
-        if (HandleRoomSelectMapExpandingSquareTrans(game) & 0x8000) != 0 {
+        menu_window::advance(menu_window::Motion::Expand, game);
+        if (word!(game.expand_sq_timer -= 1, reread) & 0x8000) != 0 {
             word!(game.menu_index += 1);
             *ram_ptr!(game; 0x69) = 2;
             *ram_ptr!(game; 0x6c) = 0;
@@ -1790,40 +1651,6 @@ pub unsafe fn FileSelectMap_8_ExpandSquareTransToRoomSelectMap(game: &mut Game) 
             *ram_ptr!(game; 0x6b) = 0;
         }
         DrawAreaSelectMapLabels(game);
-    }
-}
-pub unsafe fn HandleRoomSelectMapExpandingSquareTrans(game: &mut Game) -> u16 {
-    unsafe {
-        words!(
-            game.expand_sq_left_pos,
-            expand_sq_left_subpos += words!(game.expand_sq_left_vel, expand_sq_left_subvel)
-        );
-        if word!(game.expand_sq_left_pos) as i32 - 1i32 & 0x8000 != 0 {
-            word!(game.expand_sq_left_pos = 1);
-        }
-        words!(
-            game.expand_sq_right_pos,
-            expand_sq_right_subpos += words!(game.expand_sq_right_vel, expand_sq_right_subvel)
-        );
-        if word!(game.expand_sq_right_pos) as i32 - 256i32 & 0x8000 == 0 {
-            word!(game.expand_sq_right_pos = 255);
-        }
-        words!(
-            game.expand_sq_top_pos,
-            expand_sq_top_subpos += words!(game.expand_sq_top_vel, expand_sq_top_subvel)
-        );
-        if word!(game.expand_sq_top_pos) as i32 - 1i32 & 0x8000 != 0 {
-            word!(game.expand_sq_top_pos = 1);
-        }
-        words!(
-            game.expand_sq_bottom_pos,
-            expand_sq_bottom_subpos += words!(game.expand_sq_bottom_vel, expand_sq_bottom_subvel)
-        );
-        if word!(game.expand_sq_bottom_pos) as i32 - 224i32 & 0x8000 == 0 {
-            word!(game.expand_sq_bottom_pos = 224);
-        }
-        SetupRoomSelectMapExpandingSquareTransHDMA(game);
-        word!(game.expand_sq_timer -= 1, reread)
     }
 }
 pub unsafe fn FileSelectMap_9_InitRoomSelectMap(game: &mut Game) {
@@ -2097,7 +1924,7 @@ pub unsafe fn FileSelectMap_20_SetupExpandingSquare(game: &mut Game) {
             expand_sq_left_subpos, expand_sq_right_subpos, expand_sq_top_subpos,
             expand_sq_bottom_subpos,
         }
-        SetupRoomSelectMapExpandingSquareTransHDMA(game);
+        menu_window::project(game);
         word!(game.menu_index += 1);
         crate::rtl::register_writes! { game;
             mirror(HDMAEN as u16, 0xc, 0x85, true); mirror(W12SEL as u16, 0x32, 0x60, true);
@@ -2112,27 +1939,7 @@ pub unsafe fn FileSelectMap_20_SetupExpandingSquare(game: &mut Game) {
 }
 pub unsafe fn FileSelectMap_21_MoveExpandingSquare(game: &mut Game) {
     unsafe {
-        words!(
-            game.expand_sq_left_pos,
-            expand_sq_left_subpos +=
-                -(words!(i32, game.expand_sq_left_vel, expand_sq_left_subvel)) as u32
-        );
-        words!(
-            game.expand_sq_right_pos,
-            expand_sq_right_subpos +=
-                -(words!(i32, game.expand_sq_right_vel, expand_sq_right_subvel)) as u32
-        );
-        words!(
-            game.expand_sq_top_pos,
-            expand_sq_top_subpos +=
-                -(words!(i32, game.expand_sq_top_vel, expand_sq_top_subvel)) as u32
-        );
-        words!(
-            game.expand_sq_bottom_pos,
-            expand_sq_bottom_subpos +=
-                -(words!(i32, game.expand_sq_bottom_vel, expand_sq_bottom_subvel)) as u32
-        );
-        SetupRoomSelectMapExpandingSquareTransHDMA(game);
+        menu_window::advance(menu_window::Motion::Contract, game);
         DrawAreaSelectMapLabels(game);
         if (word!(game.expand_sq_timer -= 1, reread) & 0x8000) != 0 {
             word!(game.menu_index -= 15);
