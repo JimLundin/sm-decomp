@@ -36,7 +36,7 @@ use crate::game::sm_80::{
     ClearOamExt, ClearUnusedOam, GraphicsAsset, LoadFromLoadStation, LoadMirrorOfExploredMapTiles,
     NextRandom, QueueClearingOfFxTilemap, QueueSfx1_Max6, QueueSfx1_Max15, QueueSfx2_Max6,
     QueueSfx2_Max15, QueueSfx3_Max3, QueueSfx3_Max6, QueueSfx3_Max15, ResumeGameplay,
-    SetupDmaTransfer, StartGameplay_Async, memset7E,
+    SetupDmaTransfer, StartGameplay_Async,
 };
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
@@ -313,13 +313,9 @@ pub unsafe fn InitPpuForGameplay(game: &mut Game) {
             mirror(SETINI as u16, 0, 0x77, false);
         }
         word!(game.oam_next_ptr = 0);
-        memset7E(ram_ptr!(game, Ram3000; 0x3000) as *mut u16, 0, 0x7fe);
-        memset7E(ram_ptr!(game, Ram4000; 0x4000) as *mut u16, 0x6f, 0x7fe);
-        memset7E(
-            &raw mut (*(ram_ptr!(game, Ram4000; 0x4000))).bg2_tilemap as *mut u16,
-            0x2c0f,
-            0xfe,
-        );
+        word_transfers!(game, ascending, 1023; native(0x3000) <- value(0));
+        word_transfers!(game, ascending, 1023; native(0x4000) <- value(0x6f));
+        word_transfers!(game, ascending, 127; native(0x4000) <- value(0x2c0f));
     }
 }
 pub unsafe fn LoadInitialPalette(game: &mut Game) {

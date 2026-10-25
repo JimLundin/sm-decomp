@@ -45,15 +45,6 @@ pub fn Multiply16x16(a: u16, j: u16, game: &mut Game) -> u32 {
     let result: u32 = (a as u32).wrapping_mul(j as u32);
     result
 }
-pub unsafe fn memset7E(mut k: *mut u16, a: u16, mut j: u16) {
-    unsafe {
-        do_until! { j == 0 ;
-            crate::update_place! { previous fresh99 = k => k.offset(1); }
-            *fresh99 = a;
-            j = (j).wrapping_sub(2);
-        }
-    }
-}
 pub unsafe fn InvalidInterrupt_Crash(game: &mut Game) {
     unsafe {
         printf(c"InvalidInterrupt_Crash\n".as_ptr());
