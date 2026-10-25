@@ -102,9 +102,11 @@ when SHA-bound canonical input prefixes match. Source, ROM, full-input and loade
 guards remain intact. A donor-only smoke trial passed all four rows with zero
 setup frames; Morph retains its full 1,200-frame window.
 
-Morph row keeps every required hit/expectation. Its fixed 1,200-frame window ends
-at 28,700, 506 frames after the hit at 28,193. The old 120-frame early stop ended
-at 28,314 (814 frames); retaining it would truncate the extended observation.
+Morph keeps every required hit/expectation and its fixed 1,200-frame window.
+The original room seed observes acquisition at 590 and message completion at 977,
+leaving 222 following frames. The former authored window observed 506 frames after
+the message; this conversion retains the full window, not that longer relative tail.
+Do not add a 120-frame early stop to this row.
 
 ## Implementation rules
 

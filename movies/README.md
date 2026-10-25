@@ -455,13 +455,21 @@ all five resulting controller words, and the first replay input. At the normaliz
 normal controller read to reproduce the original button edges. Old seeds without
 this supplement retain their existing behavior. No input words are guessed or shifted.
 
-Ten pickup rows now use original `100-input-phase` observations. Each retains
+Eleven pickup rows now use original `100-input-phase` observations. Each retains
 its existing input budget, acquisition expectations and follow-up window; rows
 with message-completion requirements keep them. Dedicated recipes are removed
 only when no remaining row uses them; shared navigation stays.
 
+Area checks for Crateria and Brinstar also start from observations `12` and `17`;
+Norfair reuses observation `85` and its Hi-Jump inputs. Their original budgets
+and 120-frame follow-up windows remain. Morph Ball shares observation `17` and
+runs all 1,200 inputs: acquisition at 590, message completion at 977 and 222
+following frames. The previous authored window had 506 post-message frames; the
+fixed window is retained, while that relative observation period is shorter.
+
 | Row | Observation | Input file | Recorded inputs |
 | --- | --- | --- | ---: |
+| `item-morph-ball` | `17`, `$9E9F` | `seed-item-morph-ball.inputs` | 1200 |
 | `item-varia` | `74`, `$A6E2` | `seed-item-varia.inputs` | 1581 |
 | `pickup-energy` | `80`, `$A4B1` | `seed-pickup-energy.inputs` | 801 |
 | `item-hi-jump` | `85`, `$A9E5` | `seed-item-hi-jump.inputs` | 869 |
@@ -482,6 +490,8 @@ python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-item
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-item-spazer.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0173-A447-wram.bin --frames 740
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-pickup-missile.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0019-A107-wram.bin --frames 1050
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-pickup-super.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0037-9BC8-wram.bin --frames 1804
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-area-crateria.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0012-91F8-wram.bin --frames 300
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-item-morph-ball.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0017-9E9F-wram.bin --frames 1200
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-speed-booster.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0098-AD1B-wram.bin --frames 692
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-wave.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0104-ADDE-wram.bin --frames 612
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-ice.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0163-A890-wram.bin --frames 808
