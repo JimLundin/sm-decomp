@@ -113,6 +113,17 @@ every boss bank (~20k lines), and those banks hardly touch each other. Changes:
   then legacy); the <=80% target applies again to `sm_80`, `sm_82`, `sm_8b`, the non-enemy
   banks, where shared owners already exist.
 
+**Landing stall (10-26 00:00, reviewer).** `ci/b1-retirements` (sm_81, sm_88, sm_a0 deleted;
+sm_80 -226) passed every hosted row in run 40237511884; only its `land` rebase failed (main
+moved). Its Windows owner has not acted for an hour. Order, nothing else first:
+1. **B1 owner, now:** rebase `ci/b1-retirements` onto `origin/main` (8 commits: A seed rows,
+   one sm_aa line), rerun only the rows the rebase touched, `git push origin HEAD:main`.
+2. **B3 owner:** after (1), rebase its two commits (`sm_8f`, `sm_b2`) onto main, run
+   `item-plasma` plus the smoke set, push to main. Delete `ci/b-integrate` (contained in both).
+3. If (1) is not on main by 01:00, the B3 owner lands B1's branch the same way, then its own.
+No new B family starts on Windows until both are on main. Lane A: 41 rows remain; seed
+four or more per commit to reach 82/82 by 06:00.
+
 **Lane M — mechanical safety (one agent, new: start a fourth agent if the machine
 allows, else it takes the B3 slot; M's local work is `cargo check` only).**
 Unit of work: one primitive made safe across the whole crate by a script, then the
@@ -349,6 +360,14 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
 
 ## Check-ins
 
+- **2026-10-26 00:00 CET (c1be617), B landing stall, 3rd of last 4 check-ins:** agent
+  commits since 853aa47: A 4 (6c366e5 Golden Torizo quirk fix + 2 regression rows; 3 A2 seed
+  rows), M 0 on main (`ci/m2-sm-a8` rebased 23:44, run queued), **B 0 written, 0 landed**
+  (B1-B3 silent since 22:51; last B on main 19:27). 1 user chore (6c00ef1). All `Score:`, 0
+  docs-only. Score `44/44 · 47590 · 115354 · 4188 · 39463` (last 43 · 47589 · 115353 · 4188
+  · 39401); warnings 296; hooks 607/93. A2: 41/82 seeded (37), recipes 1,766 (1,796), seeded
+  branch run 6.5 min. 10-26 12:00: checks met; A2 on pace if batched; legacy, sm_a0, unsafe,
+  production **behind** until `ci/b1-retirements` lands (rows green, run 40237511884). Treemap OK.
 - **2026-10-25 22:52 CET (853aa47), no stall, B landing pending:** 4 non-review commits on
   main since d83432d: A 1 (01b3036 **credits flipped, 43/44**), M 2 (sm_a4 M2 +121 production;
   common enemies -429 legacy, 110%), 2 user-requested docs cleanups (Jim; not counted). On `ci/`:
@@ -417,15 +436,6 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
   waypoints. PLAN's Fast loop rewritten in ASCII: an agent's editor re-encoded it each
   commit (15 KB -> 53 KB in three commits). `ci.yml` red since 10-24 11:53: C0.
   16:10: safe-`word!` prototype passes 40/40 rows on hosted Segments; M1 ready to land.
-- **2026-10-25 14:52 CET (b06f9ca), lane-A held work:** 11 agent commits since bd76e2a:
-  **A 0**, B1 `sm_90` 6 (incl. b06f9ca fixing 21a3f50's missing file), B2 `sm_88` 2,
-  B3 `sm_89` 1 + `sm_a0` 1 (before sm_89 finished), 1 unlabelled user-requested feed
-  (2ccf738); 0 docs-only; all B with `Score:` (4943d38's `·` is mojibake). Score
-  `checks 27/44 · legacy 50974 · production 115629 · unsafe 4603 · verification 38936`
-  (last 27 · 51744 · 115957 · 4648 · 38936); warnings 362 (367); verify/probe/observer
-  607/92. Ratios 52-91%, production −328. 18:00: legacy, production, sm_90 (522 left),
-  sm_89 (48) on pace; **checks behind**: A1.2 go held locally, see Lane A. Verification
-  flat 3 hours: no fixture deleted. Changed: land A1.2 now; finish sm_89 before sm_a0.
 
 ## Lane watch (2026-10-24 23:52)
 
