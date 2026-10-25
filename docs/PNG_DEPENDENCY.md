@@ -78,7 +78,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Codec compilation failed.' }
 & $codecZig ar rcs $codecArchive $codecObject
 if ($LASTEXITCODE -ne 0) { throw 'Codec archive creation failed.' }
 Copy-Item -LiteralPath $codecArchive -Destination (Join-Path $codecNativeDirectory 'libsm_stb_image.a') -ErrorAction Stop
-Copy-Item -LiteralPath LICENSE-stb_image -Destination (Join-Path $codecNativeDirectory 'LICENSE-stb_image') -ErrorAction Stop
+Copy-Item -LiteralPath third_party/stb_image/LICENSE.txt -Destination (Join-Path $codecNativeDirectory 'LICENSE-stb_image') -ErrorAction Stop
 
 $env:PATH = (Join-Path $env:USERPROFILE '.rustup/toolchains/stable-x86_64-pc-windows-gnu/bin') + ';' + $env:PATH
 if (-not $env:LIBRARY_PATH) { $env:LIBRARY_PATH = $codecNativeDirectory }
@@ -115,7 +115,7 @@ printf '%s  %s\n' '8e5b0d717dfc8a834c97ef202d20e78d083d009586e1731c985817d0155d5
 clang -O2 -std=c11 -fPIC -ftrivial-auto-var-init=zero -I "$(dirname "$codec_header")" -c sm/native/stb_image.c -o "$codec_work/stb_image.o"
 ar rcs "$codec_work/libsm_stb_image.a" "$codec_work/stb_image.o"
 cp "$codec_work/libsm_stb_image.a" "$codec_lib/libsm_stb_image.a"
-cp LICENSE-stb_image "$codec_lib/LICENSE-stb_image"
+cp third_party/stb_image/LICENSE.txt "$codec_lib/LICENSE-stb_image"
 LIBRARY_PATH="$codec_lib${LIBRARY_PATH:+:$LIBRARY_PATH}" cargo build --release -p sm
 ```
 
@@ -136,7 +136,7 @@ The complete default-feature release library and frontend build passed.
 Allocation failures and every possible malformed stream were not tested.
 
 The project uses the upstream header's **MIT license alternative**. Ship
-[`LICENSE-stb_image`](../LICENSE-stb_image) with redistributed source, native
+[`third_party/stb_image/LICENSE.txt`](../third_party/stb_image/LICENSE.txt) with redistributed source, native
 archives and game binaries that contain this statically linked code. It preserves
 the complete upstream license block, including Sean Barrett's copyright notice.
 Keep the license comments in any distributed header. The Rust wrapper package's

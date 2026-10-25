@@ -106,6 +106,7 @@ jobs:
           encoded = "".join(os.environ[f"ROM_{i:02d}"] for i in range(45))
           if not encoded:
               raise SystemExit("ROM secrets are missing")
+          pathlib.Path('rom').mkdir(exist_ok=True)
           pathlib.Path("rom/sm.smc").write_bytes(gzip.decompress(base64.b64decode(encoded)))
           rom = pathlib.Path('rom/sm.smc').read_bytes()
           assert hashlib.sha1(rom).hexdigest() == 'da957f0d63d14cb441d215462904c4fa8519c613', 'wrong ROM'

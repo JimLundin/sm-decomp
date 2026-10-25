@@ -2,8 +2,7 @@
 # Python tooling caches.
 __pycache__/
 # Never commit the ROM or anything derived from it.
-/rom/*
-!/rom/README.md
+/rom/
 *.sfc
 *.smc
 # TAS movie downloads.
@@ -14,4 +13,3 @@ __pycache__/
 /saves/
 *.smvchk
 *.log
-# Generated codebase map; keep authored sources only.

@@ -9,7 +9,9 @@ with c2rust and is now being cleaned up into idiomatic Rust, one subsystem at
 a time, with that per-frame comparison as the test. See
 [docs/PLAN.md](docs/PLAN.md).
 
-[PROGRESS.md](PROGRESS.md) shows progress in one picture, redrawn on every push.
+![Engine migration progress: required checks, legacy, unsafe and production lines, and production Rust by area](https://jimlundin.github.io/sm-decomp/treemap.svg)
+
+Drawn by `tools/treemap.py` from `main` on every push.
 
 The accepted destination is our own purpose-built Rust game and engine. The
 [architecture handoff](docs/target-architecture/README.md) includes a standalone
@@ -31,8 +33,9 @@ Needs SDL2 (`apt install libsdl2-dev` on Debian/Ubuntu), rustup and the
 [desktop host](docs/DESKTOP_DEPENDENCY.md) and
 [stb_image PNG libraries](docs/PNG_DEPENDENCY.md). Build these static libraries
 first and include their directory in `LIBRARY_PATH` when building or running.
-Put your own ROM at `rom/sm.smc` (see [rom/README.md](rom/README.md)), then
-from the repository root:
+Put your own unheadered dump of Super Metroid (Japan, USA) (En,Ja) at
+`rom/sm.smc` (SHA-1 `da957f0d63d14cb441d215462904c4fa8519c613`; the `rom/`
+folder is gitignored, never commit it), then from the repository root:
 
 ```sh
 cargo run --release -- rom/sm.smc
@@ -53,13 +56,13 @@ checks the behavior it exercises, not the entire game.
 ## Credits and licence
 
 Game logic, runtime and SNES emulation come from snesrev/sm (MIT, see
-[LICENSE-snesrev](LICENSE-snesrev)), translated to Rust with c2rust.
+[its license](third_party/snesrev/LICENSE.txt)), translated to Rust with c2rust.
 The hardware adapters link unmodified LakeSnes code under its
 [CPU license](third_party/lakesnes/LICENSE.txt) and
 [PPU/DSP license](third_party/lakesnes/LICENSE-2022.txt) and
 [SPC license](third_party/lakesnes/LICENSE-SPC-2021.txt); include these with
 distributed binaries. PNG decoding uses stb_image under its
-[MIT license](LICENSE-stb_image), which must also accompany distributed binaries.
+[MIT license](third_party/stb_image/LICENSE.txt), which must also accompany distributed binaries.
 Native music, configuration, utilities, shaders and the desktop host use selected Zelda3 routines with maintained SM
 compatibility changes under the [Zelda3 MIT license](third_party/zelda3/LICENSE.txt);
 include that notice with distributed binaries too.

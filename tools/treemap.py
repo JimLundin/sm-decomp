@@ -2,7 +2,7 @@
 partly owned and legacy lines, with four headline numbers and their 24-hour change.
 
 Reads committed Git blobs only (no working tree, no network, standard library).
-CI publishes the result to GitHub Pages as treemap.svg; PROGRESS.md embeds it.
+CI publishes the result to GitHub Pages as treemap.svg; README.md embeds it.
 Usage: python tools/treemap.py OUT.svg [REVISION]
 """
 import datetime, io, re, subprocess, sys, tarfile

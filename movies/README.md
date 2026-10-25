@@ -5,7 +5,7 @@ as verification inputs: any%, low%, 100% and Spore Spawn, with download links,
 filenames, frame counts and SHA-256 hashes. Download a movie into this folder. If the
 download wraps the `.lsmv` or `.bk2` in another ZIP, extract the movie first.
 Check the movie's SHA-256 against the manifest and use your own
-[unheadered ROM](../rom/README.md). Movies and imported inputs are gitignored.
+[unheadered ROM](../README.md#run). Movies and imported inputs are gitignored.
 
 Run these commands from the repository root. Import the any% movie with
 Python 3 (`python` on Windows):

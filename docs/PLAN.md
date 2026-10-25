@@ -34,7 +34,7 @@ directives) are to be obeyed as given. Disagree in one line under the item, then
 
 **Progress picture (user, 2026-10-25):** the interactive map is retired. The only
 progress view is `tools/treemap.py`'s image, published by Pages on every main push and
-embedded by PROGRESS.md. Nobody edits PROGRESS.md; no other dashboards.
+embedded in README.md. Nobody edits that image; no other dashboards.
 
 **Hosted validation (user decision 2026-10-25 18:05, given live to the reviewer;
 replaces the earlier "do not use or observe CI" note).** The user lifted the
@@ -266,6 +266,6 @@ savings justify continuing below the storage budget or retry deletion through an
 The Fast loop passes; `sh tools/progress.sh` numbers are in the Score line, with any
 rise explained in one line. Recheck HEAD/index, reconcile, commit to `main`. Update
 this plan only for active-item, direction or blocker changes; results belong in commits.
-PROGRESS.md and the map update themselves from main; never edit them by hand.
+The progress image updates itself from main; never edit it by hand.
 
 Pre-transpile rules (`.scratch/`, gates, pointers, scopes) are inactive in `archive/pre-transpile-2026-10-17`.

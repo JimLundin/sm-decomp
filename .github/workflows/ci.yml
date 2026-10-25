@@ -3,7 +3,6 @@ name: CI
 on:
   push:
     paths-ignore:
-      - PROGRESS.md
       - docs/PLAN.md
   pull_request:
   workflow_dispatch:
@@ -164,7 +163,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'PNG compilation failed' }
           & $env:SM_ZIG ar rcs "$env:LIBRARY_PATH/libsm_stb_image.a" "$codec/stb_image.o"
           if ($LASTEXITCODE -ne 0) { throw 'PNG archive creation failed' }
-          Copy-Item -LiteralPath LICENSE-stb_image -Destination "$env:LIBRARY_PATH/LICENSE-stb_image"
+          Copy-Item -LiteralPath third_party/stb_image/LICENSE.txt -Destination "$env:LIBRARY_PATH/LICENSE-stb_image"
       - name: Build
         run: |
           foreach ($archive in @('sm_desktop', 'lakesnes_cpu', 'lakesnes_backend', 'lakesnes_spc', 'sm_config', 'sm_stb_image', 'sm_music')) {

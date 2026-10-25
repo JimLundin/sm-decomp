@@ -1,6 +1,6 @@
 name: Progress image
 # Publishes tools/treemap.py's picture to GitHub Pages on every main push;
-# PROGRESS.md embeds https://jimlundin.github.io/sm-decomp/treemap.svg.
+# README.md embeds https://jimlundin.github.io/sm-decomp/treemap.svg.
 on:
   push:
     branches: [main]
