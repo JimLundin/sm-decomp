@@ -41,9 +41,9 @@ The known example/detached compilation errors are fixed and checked locally.
 
 ## Work order
 
-1. **Current - lane A room-seeded coverage.** 38/44 required checks pass;
-   6 remain pending. Exact pre-read controller observations preserve the first
-   input edge; Gravity pass fresh awards, message completion and full tails.
+1. **Current - lane A room-seeded coverage.** 39/44 required checks pass;
+   5 remain pending. Exact pre-read controller observations preserve the first
+   input edge; Gravity and Grapple pass fresh awards, message completion and full tails.
    Any% 197 and 100% 331 room observations are captured; seeds/movies remain local.
    Hash indexes and regeneration recipes are committed. Existing seeded regressions
    remain passing. Mother Brain has a 4,560-frame spawn regression; its defeat is pending.

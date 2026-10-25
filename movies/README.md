@@ -481,3 +481,11 @@ input frames). It requires a fresh award, completed message and both full
 ```powershell
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-gravity.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0212-CE40-wram.bin --frames 737
 ```
+
+`item-grapple` uses `100-input-phase:148` and `seed-grapple.inputs` (1000
+input frames). It requires a fresh award, completed message and both full
+120-frame tails; the qualified window is 534 frames. Regenerate its inputs with:
+
+```powershell
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-grapple.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0148-AC2B-wram.bin --frames 1000
+```

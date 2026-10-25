@@ -326,7 +326,17 @@ after_expectations = 120
 
 [[segment]]
 id = "item-grapple"
-pending = "No qualified acquisition-to-completion segment on the current route."
+seed = "100-input-phase:148"
+seed_sha256 = "850cd8da4c66fc1c26f3cf157074b596437152c6a9621adbc30b7d34e8dd9785"
+inputs = "seed-grapple.inputs"
+input_sha256 = "0dff1cc309ddf23e3a7fba10ceb30b4b7de2e7d7f18e2501dab2e30d988d8b02"
+start_frame = 0
+frames = 1000
+expect = ["item:grapple", "room:AC2B"]
+after_expectations = 120
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+
 
 [[segment]]
 id = "item-x-ray"
