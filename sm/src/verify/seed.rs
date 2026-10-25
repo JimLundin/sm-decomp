@@ -179,6 +179,16 @@ pub(super) unsafe fn load(path: &Path, game: &mut Game) -> Result<(), String> {
         }
     }
     let r = Registers(registers);
+    let boundary_pc = r.0.get("seed_boundary_pc").copied();
+    if let Some(pc) = boundary_pc {
+        if pc != 0x808348
+            || r.get("pbpc")? != pc + 1
+            || r.get("e")? != 0
+            || r.get("seed_boundary_frame")? < r.get("seed_movie_frame")?
+        {
+            return Err("unsupported seed opcode-fetch boundary".into());
+        }
+    }
     if r.get("seed_room")? != u64::from(u16::from_le_bytes([ram[0x79b], ram[0x79c]]))
         || r.get("seed_nmi")? != u64::from(u16::from_le_bytes([ram[0x5b6], ram[0x5b7]]))
         || r.get("seed_movie_frame")? == 0
@@ -216,6 +226,13 @@ pub(super) unsafe fn load(path: &Path, game: &mut Game) -> Result<(), String> {
         cpu.db = r.get("db")? as u8;
         cpu.pc = r.get("pc")? as u16;
         cpu.k = r.get("pb")? as u8;
+        if let Some(pc) = boundary_pc {
+            // The read-only exec hook runs during opcode fetch, after bsnes
+            // increments PC but before PLB changes the saved DB/P stack.
+            // Restart at the observed hook address, not the half-fetched PC.
+            cpu.pc = pc as u16;
+            cpu.k = (pc >> 16) as u8;
+        }
         cpu.e = r.get("e")? != 0;
         let p = r.get("p")? as u8;
         cpu.c = p & 1 != 0;
@@ -257,5 +274,11 @@ pub(super) unsafe fn load(path: &Path, game: &mut Game) -> Result<(), String> {
             sm::snes::cpu::cpu_runOpcode(game.g_cpu, game);
         }
     }
-    Err("seed CPU did not reach the verifier frame boundary".into())
+    unsafe {
+        let cpu = &*game.g_cpu;
+        Err(format!(
+            "seed CPU did not reach the verifier frame boundary: PC=${:02X}{:04X} SP=${:04X} wait={} NMI={}",
+            cpu.k, cpu.pc, cpu.sp, cpu.waiting, cpu.nmiWanted
+        ))
+    }
 }

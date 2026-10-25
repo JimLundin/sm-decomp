@@ -385,7 +385,8 @@ The import completes the recorded CPU phase, reuses the existing load-stack
 normalization, and reconstructs Session state through the normal RAM entry path.
 Six memory regions and these registers are still not an exact emulator checkpoint:
 SPC/DSP execution phase and some PPU write latches are not fully represented.
-Qualify every room's route independently. Existing checkpoint guards are unchanged;
+Qualify each named episode independently; a room-route claim also needs its
+next-room expectation. Existing checkpoint guards are unchanged;
 seed input cannot combine with checkpoint input/output or SRAM loading. Seeded
 replays cannot publish checkpoints until the checkpoint format records seed provenance.
 
@@ -395,3 +396,33 @@ memory regions. Both completed supplemental indexes also record
 `registers_sha256` for the companion CSV and `observation_sha256` for the
 six regions followed by that CSV; `cpu_pc` and `nmi` identify the observed
 CPU phase. No seed binaries, input files or original movies are committed.
+
+The updated logger captures seeds at the next normal wait's `$808348` opcode
+fetch after the first completed gameplay video frame. Video callbacks can stop
+halfway through an instruction: the X-ray seed captured an unfinished INX, which
+made the imported HDMA loop miss its terminating index. The new capture records
+the exact hook address, observed PC, frame, NMI counter and boundary event. The
+importer validates that phase, completes PLB/PLP using the existing stack loader,
+and selects inputs from the observed completed wait. Message-box no-update waits
+retain their measured lag NMI and unchanged input.
+
+Seeded corpus rows use `seed = "any-boundary:50"` to select a room index under
+`target/seeds/any-boundary/`. Their `seed_sha256` hashes WRAM, SRAM, VRAM, CGRAM,
+OAM, APU RAM and the register CSV in that order (the index's `observation_sha256`).
+Every file's contents are checked before and after replay. `start_frame` must be
+zero, and seeded rows never read or write verifier checkpoints. The boundary index
+`room-seeds-any-boundary.csv` initially records the 57 entries captured through
+movie frame 43,000; full any% and 100% boundary captures continue separately.
+
+Regenerate the X-ray inputs after the any% boundary capture reaches this room:
+
+```powershell
+python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/seed-xray.inputs --rom rom/sm.smc --lag-log target/seeds/any-boundary/lag.csv --seed target/seeds/any-boundary/0050-A2CE-wram.bin --frames 1400
+python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --segment item-x-ray
+```
+
+The X-ray row qualifies the fresh award, completed item message and 120 subsequent
+frames. Its 1,400-frame budget stops when these observations and tails complete.
+The separate 1,400-frame continuation had zero oracle differences but stayed in
+A2CE instead of reaching captured next room A293; that alignment issue remains
+open. This row does not claim the whole room route is reproduced.

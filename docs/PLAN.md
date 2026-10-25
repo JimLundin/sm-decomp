@@ -40,14 +40,15 @@ before further adoption; the review's red-main rule does not authorize CI pollin
 ## Work order
 
 1. **Current - lane A room-seeded TAS coverage.** Crocomire defeat now passes;
-   27/44 required checks pass, 17 remain pending. Both four-frame melt/wall
+   28/44 required checks pass, 16 remain pending. Both four-frame melt/wall
    regressions pass; the defeat row runs 4,258 frames through 120 frames after
    the fresh boss flag. The full 167,285-frame setup was checked from boot.
    A1.1 any% capture is complete: 197 room entries, six regions each; all 1,182
    files checked, full 129,712-frame capture matches the original log. The final-source
    A1.2 seed import passes 600 frames and reaches the captured next room; both
    complete captures have register supplements. Next: seeded pickup/boss rows.
-   The X-ray item trial passes; its longer next-room continuation still drifts.
+   The seeded X-ray row passes its award, message and 120-frame tail (667 frames).
+   Captures now use an instruction boundary; the longer next-room continuation still drifts.
    Original any% timing alignment remains parked; no further hand-route exploration.
    Room seeds and movies stay local; only the logger and index/recipes are committed.
 2. **Current - lane B bank retirement.** `sm_94`, `sm_91` and `sm_89` are deleted.

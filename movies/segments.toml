@@ -297,7 +297,16 @@ pending = "No qualified acquisition-to-completion segment on the current route."
 
 [[segment]]
 id = "item-x-ray"
-pending = "No qualified acquisition-to-completion segment on the current route."
+seed = "any-boundary:50"
+seed_sha256 = "39c756f499e9095ad4be8367c4f6bce2e6239c3c2f94f92935919548252347bd"
+inputs = "seed-xray.inputs"
+input_sha256 = "b75d8c13210382cd93d1a136c71b9c78e466cc5e6ca41e385486bfb860ab3517"
+start_frame = 0
+frames = 1400
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+expect = ["item:x-ray", "room:A2CE"]
+after_expectations = 120
 
 [[segment]]
 id = "item-gravity"

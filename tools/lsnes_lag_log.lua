@@ -19,12 +19,15 @@ polls:write("movie_frame,callback,subframe,nmi,including_lag,live_controller_wor
 local rows = 0
 local last_frame = 0
 local events = nil
+local event_count = 0
 -- Set to an existing, empty target/seeds/<movie> directory. Dumps stay local.
 local seed_dir = os.getenv("SM_LSNES_SEEDS")
 local seeds = nil
 local seed_room = nil
 local seed_pending = false
 local seed_count = 0
+local seed_origin_frame = nil
+local seed_origin_subframe = nil
 local seed_io_writes = {}
 local seed_regions = {{"wram", 0x7E0000, 0x20000}, {"sram", 0x10000000, 0x2000},
     {"vram", 0x10000, 0x10000}, {"cgram", 0x21000, 0x200},
@@ -35,11 +38,22 @@ if seed_dir then
     seeds = assert(io.open(seed_dir .. "/rooms.csv", "wb"))
     seeds:write("room_index,room,movie_frame,next_input_index,movie_subframe_index,region,size,sha256,file\n")
 end
-local function capture_room(frame)
+local function capture_room(frame, boundary)
     if not seeds then return end
     local room = memory.readword(0x7E079B)
-    if room ~= seed_room then seed_room = room; seed_pending = true end
+    if room ~= seed_room then
+        seed_room = room; seed_pending = true; seed_origin_frame = nil
+    end
     if not seed_pending or memory.readword(0x7E0998) ~= 8 then return end
+    if not boundary then
+        if not seed_origin_frame then
+            seed_origin_frame = frame
+            seed_origin_subframe = movie.current_first_subframe()
+        end
+        return
+    end
+    if not seed_origin_frame then return end
+    frame = seed_origin_frame
     assert(movie.readonly(), "seed capture must remain read-only")
     seed_count = seed_count + 1
     local register_file = string.format("%04d-%04X-registers.csv", seed_count, room)
@@ -51,6 +65,9 @@ local function capture_room(frame)
     registers.seed_movie_frame = frame
     registers.seed_room = room
     registers.seed_nmi = memory.readword(0x7E05B6)
+    registers.seed_boundary_frame = movie.currentframe()
+    registers.seed_boundary_pc = 0x808348
+    registers.seed_boundary_event = event_count
     -- DMAP..NTRL are passive readable registers in the pinned bsnes core.
     for channel = 0, 7 do
         for offset = 0, 10 do
@@ -83,12 +100,13 @@ local function capture_room(frame)
         assert(output:write(table.concat(encoded)))
         assert(output:close())
         seeds:write(string.format("%d,%04X,%d,%d,%d,%s,%d,%s,%s\n", seed_count,
-            room, frame, frame, movie.current_first_subframe(), name, size,
+            room, frame, frame, seed_origin_subframe, name, size,
             memory.hash_region(base, size), file))
     end
     seeds:flush()
     print(string.format("Seed %d: room $%04X after movie frame %d", seed_count, room, frame))
     seed_pending = false
+    seed_origin_frame = nil
 end
 function on_input(subframe)
     assert(movie.readonly(), "recording movie must remain read-only")
@@ -154,6 +172,13 @@ end
 on_input = guarded(on_input)
 on_frame_emulated = guarded(on_frame_emulated)
 if seed_dir then
+    -- The video callback can suspend in the middle of a CPU opcode. Observe
+    -- the next normal wait's PLB fetch instead, before its stack effects.
+    -- bsnes has incremented PC for this fetch; retain both observed PC and
+    -- the explicit hook address so the importer need not guess a PC shift.
+    memory.registerexec(0x1808348, guarded(function()
+        capture_room(movie.currentframe(), true)
+    end))
     -- These write-only registers cannot be reconstructed by reading the bus.
     -- Observe every CPU-bank mirror, without changing the original write.
     for _, address in ipairs({0x4200, 0x4201, 0x4207, 0x4208, 0x4209, 0x420A, 0x420D}) do
@@ -172,7 +197,6 @@ end
 if os.getenv("SM_LSNES_BOUNDARIES") == "1" then
     events = assert(io.open(path .. ".events.csv", "wb"))
     events:write("event,movie_frame,kind,nmi,including_lag,state,room,x,y,joypad,scroll_frame,irq_handler,waiting_nmi,direction\n")
-    local count = 0
     -- CPU-bus exec addresses in lsnes are 0x1000000 + SNES PC.
     -- ReadJoypadInputs runs inside ROM NMI, but at the next native update's start.
     for _, hook in ipairs({{0x808338, "wait_enter"}, {0x80834A, "wait_exit"},
@@ -189,13 +213,13 @@ if os.getenv("SM_LSNES_BOUNDARIES") == "1" then
         local kind = hook[2]
         memory.registerexec(0x1000000 + hook[1], guarded(function()
             assert(movie.readonly(), "recording movie must remain read-only")
-            count = count + 1
-            events:write(string.format("%d,%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", count,
+            event_count = event_count + 1
+            events:write(string.format("%d,%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", event_count,
                 movie.currentframe(), kind, memory.readword(0x7E05B6), memory.readword(0x7E05B8),
                 memory.readword(0x7E0998), memory.readword(0x7E079B),
                 memory.readword(0x7E0AF6), memory.readword(0x7E0AFA), memory.readword(0x7E008B),
                 memory.readword(0x7E0925), memory.readword(0x7E00AB), memory.readbyte(0x7E05B4), memory.readword(0x7E0791)))
-            if count % 100 == 0 then events:flush() end
+            if event_count % 100 == 0 then events:flush() end
         end))
     end
 end

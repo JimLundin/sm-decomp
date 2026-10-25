@@ -307,6 +307,7 @@ def corpus_child(command, root):
 
 
 def run_corpus(root, args):
+    import csv
     import tomllib
     import uuid
 
@@ -334,7 +335,7 @@ def run_corpus(root, args):
     segments = {}
     for segment in recipe.get("segment", []):
         allowed = {"id", "inputs", "input_sha256", "start_frame", "frames", "require_hit",
-                   "after_hits", "expect", "after_expectations", "pending"}
+                   "after_hits", "expect", "after_expectations", "pending", "seed", "seed_sha256"}
         if not isinstance(segment, dict) or set(segment) - allowed:
             raise ValueError("corpus segment has unknown fields")
         name = segment.get("id")
@@ -352,6 +353,16 @@ def run_corpus(root, args):
                     or any(c not in "0123456789abcdef" for c in digest)):
                 raise ValueError(f"corpus {name}: lowercase input_sha256 required")
             segment["start_frame"] = integer(segment.get("start_frame", 0), name + " start_frame", 0)
+            if "seed" in segment or "seed_sha256" in segment:
+                seed = segment.get("seed", "")
+                digest = segment.get("seed_sha256", "")
+                if (not isinstance(seed, str) or seed.count(":") != 1
+                        or not seed.split(":")[0].replace("-", "").isalnum()
+                        or not seed.split(":")[1].isdigit() or int(seed.split(":")[1]) < 1
+                        or not isinstance(digest, str) or len(digest) != 64
+                        or any(c not in "0123456789abcdef" for c in digest)
+                        or segment["start_frame"] != 0):
+                    raise ValueError(f"corpus {name}: seed requires capture:index, payload SHA-256 and start_frame=0")
             integer(segment.get("frames"), name + " frames", 1)
             for key, tail in (("require_hit", "after_hits"), ("expect", "after_expectations")):
                 segment[key] = strings(segment.get(key, []), name + " " + key)
@@ -369,6 +380,29 @@ def run_corpus(root, args):
     print(f"Corpus {'PARTIAL selection' if partial else 'full required scope'}: "
           f"{len(selected)} selected, {len(required)} required; {recipe_path}", flush=True)
     def input_matches(segment):
+        if "seed" in segment:
+            capture, index = segment["seed"].split(":")
+            directory = recipe_path.parent.parent / "target/seeds" / capture
+            with (directory / "rooms.csv").open(newline="") as file:
+                entries = [row for row in csv.DictReader(file)
+                           if row["room_index"] == str(int(index)) and row["region"] == "wram"]
+            if len(entries) != 1:
+                raise ValueError("seed index requires exactly one captured WRAM entry")
+            filename = entries[0]["file"]
+            if Path(filename).name != filename or not filename.endswith("-wram.bin"):
+                raise ValueError("invalid indexed seed filename")
+            seed = directory / filename
+            digest = hashlib.sha256()
+            for region, size in (("wram", 131072), ("sram", 8192), ("vram", 65536),
+                                 ("cgram", 512), ("oam", 544), ("apuram", 65536)):
+                data = seed.with_name(filename.replace("-wram.bin", f"-{region}.bin")).read_bytes()
+                if len(data) != size:
+                    raise ValueError(f"seed {region} requires {size} bytes")
+                digest.update(data)
+            digest.update(seed.with_name(filename.replace("-wram.bin", "-registers.csv")).read_bytes())
+            if digest.hexdigest() != segment["seed_sha256"]:
+                raise ValueError("seed payload SHA-256 does not match the recipe")
+            segment["_seed_path"] = seed
         return hashlib.sha256(segment["inputs"].read_bytes()).hexdigest() == segment["input_sha256"]
 
     failures = set()
@@ -470,6 +504,18 @@ def run_corpus(root, args):
             for key in ("after_hits", "after_expectations"):
                 if key in segment:
                     replay += ["--" + key.replace("_", "-"), str(segment[key])]
+            if "seed" in segment:
+                print(f"SEGMENT {name}: seed {segment['seed']}, budget {segment['frames']} frames", flush=True)
+                code, _ = corpus_child(replay + ["--seed", str(segment["_seed_path"])], root)
+                if not input_matches(segment):
+                    raise RuntimeError("inputs changed during seeded corpus segment")
+                if code:
+                    failures.add(name)
+                    print(f"FAIL {name}: verifier exit {code}", flush=True)
+                else:
+                    passed.add(name)
+                    print(f"PASS {name}", flush=True)
+                continue
             for attempt in range(2):
                 directory = cache_directory(segment)
                 directory.mkdir(parents=True, exist_ok=True)

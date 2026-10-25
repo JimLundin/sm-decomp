@@ -37,23 +37,34 @@ def seeded_wait_slice(source, path, seed, count):
         raise ValueError('seed register metadata does not match WRAM and capture index')
     with path.open(newline='') as file:
         video = list(csv.DictReader(file))
+    instruction_boundary = metadata.get('seed_boundary_pc')
     if (not 0 < frame <= len(video) or int(row['room'], 16) != room
             or int(video[frame - 1]['room']) != room
-            or int(video[frame - 1]['nmi_after']) != nmi):
+            or (not instruction_boundary and int(video[frame - 1]['nmi_after']) != nmi)):
         raise ValueError('seed does not match the supplied video capture')
     with Path(str(path) + '.events.csv').open(newline='') as file:
         events = list(csv.DictReader(file))
     # The room observation occurs at the video boundary inside NMI. Complete
     # that NMI exactly as the verifier does, without guessing a video offset.
-    boundary = next((index for index, event in enumerate(events)
-                     if int(event['movie_frame']) > frame and event['kind'] == 'wait_exit'), None)
+    if instruction_boundary:
+        if instruction_boundary != 0x808348 or metadata.get('pbpc') != 0x808349 or metadata.get('e') != 0:
+            raise ValueError('unsupported seed opcode-fetch boundary')
+        boundary_frame = metadata['seed_boundary_frame']
+        boundary_nmi = nmi
+        after = metadata['seed_boundary_event']
+        boundary = next((index for index, event in enumerate(events)
+                         if int(event['event']) > after and event['kind'] == 'wait_exit'), None)
+    else:
+        boundary_frame, boundary_nmi = frame + 1, (nmi + 1) % 65536
+        boundary = next((index for index, event in enumerate(events)
+                         if int(event['movie_frame']) > frame and event['kind'] == 'wait_exit'), None)
     if boundary is None:
         raise ValueError('capture has no completed wait after this room seed')
     event = events[boundary]
-    if (int(event['movie_frame']) != frame + 1 or int(event['room']) != room
-            or int(event['nmi']) != (nmi + 1) % 65536):
+    if (int(event['movie_frame']) != boundary_frame or int(event['room']) != room
+            or int(event['nmi']) != boundary_nmi):
         raise ValueError('unsupported room seed phase; no matching next NMI boundary')
-    first = sum(event['kind'] in ('joypad_read', 'vblank_wait_exit')
+    first = sum(event['kind'] in ('joypad_read', 'vblank_wait_exit', 'no_update_exit')
                 for event in events[:boundary + 1])
     print(f'Seed input starts at native step {first}, captured event {event["event"]}')
     return aligned_wait_prefix(source, path, count, boundary + 1)
@@ -128,6 +139,8 @@ def aligned_work_prefix(video, events, count, after_event=0, previous=None):
     """Preserve observed normal updates and the loading lag suspension."""
     result, last_frame = [], 0
     read = wait = lag = vblank = irq = None
+    no_update = None
+    no_update_nmis = 0
     door = False
     for number, raw in enumerate(events, after_event + 1):
         kind = raw['kind']
@@ -138,7 +151,18 @@ def aligned_work_prefix(video, events, count, after_event=0, previous=None):
         last_frame = frame
         if not 0 <= event['joypad'] <= 0xffff:
             raise ValueError('invalid observed input')
-        if kind in ('irq_enter', 'lag_nmi', 'door_dma', 'cre_decode_enter', 'cre_decode_exit',
+        if kind == 'no_update_enter' and not door and wait is None and no_update is None:
+            no_update, no_update_nmis = event, 0
+        elif kind == 'lag_nmi' and no_update is not None:
+            no_update_nmis += 1
+        elif kind == 'no_update_exit' and no_update is not None:
+            if (no_update_nmis != 1
+                    or any(event[key] != no_update[key] for key in ('nmi', 'state', 'room', 'joypad'))
+                    or (event['including_lag'] - no_update['including_lag']) % 65536 != 1):
+                raise ValueError('no-update wait did not contain one unchanged-input lag NMI')
+            result.append(no_update['joypad'])
+            no_update = None
+        elif kind in ('irq_enter', 'lag_nmi', 'door_dma', 'cre_decode_enter', 'cre_decode_exit',
                     'tiles_decode_enter', 'tiles_decode_exit', 'palette_decode_enter', 'palette_decode_exit'):
             pass  # Read-only ordering evidence; these hooks do not define input consumption.
         elif kind == 'wait_enter' and wait is None:
@@ -196,7 +220,7 @@ def aligned_work_prefix(video, events, count, after_event=0, previous=None):
             door = False
         else:
             raise ValueError(f'unsupported work boundary {kind}')
-        if len(result) >= count and all(value is None for value in (read, wait, lag, vblank, irq)):
+        if len(result) >= count and all(value is None for value in (read, wait, lag, vblank, irq, no_update)):
             return result[:count]
     raise ValueError('capture ends before the requested complete work prefix')
 
