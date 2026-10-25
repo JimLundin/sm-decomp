@@ -7,7 +7,7 @@ pub(super) fn next_random(game: &mut Game) -> u16 {
 }
 
 pub(super) fn call_player_code(code: u16, game: &mut Game) -> u16 {
-    unsafe { crate::game::sm_90::CallSomeSamusCode(code, game) }
+    crate::game::session_runtime::player_command(code, game)
 }
 
 pub(super) fn calculate_angle_from_xy(x: u16, y: u16, _game: &mut Game) -> u16 {

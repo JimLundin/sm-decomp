@@ -18,8 +18,8 @@ pub(crate) enum BounceFault {
     LandingSpring,
 }
 /// Sound is inherited from visual_host::Effects::sound(channel, limit, cue).
-/// Allowed source pairs: (1,6), (1,9), (2,6), (3,3), (3,6), (3,9).
-/// Do not add callbacks for collision, palette, charge, jump or landing algorithms.
+/// Sound limits remain specific to the calling gameplay command.
+/// Already-owned collision, palette, charge, jump and landing algorithms compose directly.
 pub(crate) trait Effects {
     /// Original script-dispatch diagnostic; preserve its defined continuation value.
     fn invalid_demo_instruction(&mut self) -> u16;

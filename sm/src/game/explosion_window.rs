@@ -1,7 +1,8 @@
 //! Power Bomb and Crystal Flash window geometry, expansion and afterglow.
+use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_80::{QueueSfx1_Max6, QueueSfx1_Max15};
 use crate::game::sm_88::SpawnHdmaObject;
-use crate::game::sm_90::{CallSomeSamusCode, Hdmaobj_CrystalFlash};
+use crate::game::sm_90::Hdmaobj_CrystalFlash;
 use crate::game_state::Game;
 use crate::ram_map::{ram_ptr, word};
 use crate::rtl::{Mult8x8, rom_ptr};

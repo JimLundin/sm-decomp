@@ -15,11 +15,10 @@ pub use crate::game::constants::bank_86::*;
 
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::room_mechanisms::spawn_hardcoded;
+use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_88::{SpawnBG3ScrollHdmaObject, sub_88DF34};
-use crate::game::sm_90::{
-    CallSomeSamusCode, Samus_ReleaseFromDraygon_, Samus_SetGrabbedByDraygonPose,
-};
+use crate::game::sm_90::{Samus_ReleaseFromDraygon_, Samus_SetGrabbedByDraygonPose};
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_a0::{
     Abs16, ConvertAngleToXy, CosineMult8bit, EnemyFunc_B7A1, EnemyFunc_Divide, SineMult8bit,

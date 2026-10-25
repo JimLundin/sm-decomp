@@ -174,6 +174,8 @@ impl<'g> Runtime<'g> {
             self.game.g_ram[at] = value;
         }
         self.inputs = encoding::inputs(&self.game.g_ram);
+        // Preserve observation refresh timing while A5A is owned by Session.
+        self.inputs.transitions.frame_gamma = self.session().player.transitions.frame_gamma;
     }
     pub(crate) fn write_slice(&mut self, at: usize, bytes: &[u8]) {
         let end = at.checked_add(bytes.len()).expect("aggregate write extent");
@@ -296,7 +298,7 @@ impl Host for Runtime<'_> {
                 PlayerStep::Grapple => sm_9b::GrappleBeamHandler(g),
                 PlayerStep::Xray => sm_91::XrayRunHandler(g),
                 PlayerStep::RestoreControl => {
-                    sm_90::CallSomeSamusCode(0x14, g);
+                    crate::game::session_runtime::player_command(0x14, g);
                 }
             }
         });
@@ -701,6 +703,9 @@ mod player_collision_runtime;
 mod player_movement_runtime;
 #[path = "player_transitions_runtime.rs"]
 mod player_transitions_runtime;
+pub(crate) use player_transitions_runtime::{
+    command as player_command, face_forward as player_face_forward,
+};
 #[path = "player_update_runtime.rs"]
 mod player_update_runtime;
 

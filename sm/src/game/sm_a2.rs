@@ -15,10 +15,10 @@ use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::message_boxes;
 use crate::game::palette_effects;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
+use crate::game::session_runtime::player_command as CallSomeSamusCode;
+use crate::game::session_runtime::player_face_forward;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_81::SaveToSram;
-use crate::game::sm_90::CallSomeSamusCode;
-use crate::game::sm_91::MakeSamusFaceForward;
 use crate::game::sm_a0::{CallEnemyPreInstr, ConvertAngleToXy};
 use crate::game::sm_a9::MoveEnemyWithVelocity;
 
@@ -3135,7 +3135,7 @@ crate::game::callback_dispatch! {
                     word!(game.samus_x_pos = (*E).base.x_pos);
                     word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
                 }
-                MakeSamusFaceForward(game);
+                player_face_forward(game);
                 CallSomeSamusCode(0x1a, game);
                 word!(game.elevator_status = 0);
                 let v3: u16 = ((*E).base.y_pos).wrapping_sub(1);

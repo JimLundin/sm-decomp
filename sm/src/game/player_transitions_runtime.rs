@@ -99,6 +99,14 @@ impl Content for Runtime<'_> {
         }
     }
 }
+pub(crate) fn command(a: u16, game: &mut crate::game_state::Game) -> u16 {
+    crate::game::player_transitions::command(
+        &mut Runtime::new(game),
+        a,
+        Runtime::finish_ceres_arrival,
+    )
+}
+
 impl Effects for Runtime<'_> {
     fn invalid_demo_instruction(&mut self) -> u16 {
         self.foreign(crate::game::animated_tiles::native::unreachable)
@@ -123,6 +131,16 @@ impl Effects for Runtime<'_> {
 impl Host for Runtime<'_> {}
 
 impl Runtime<'_> {
+    fn finish_ceres_arrival(&mut self) {
+        self.owned_call(|runtime| {
+            use crate::game::{enemy_projectiles::lifecycle, room_mechanisms::host::Effects};
+            let parameter = lifecycle::spawn_from_enemy(runtime, 0, 0, 0xa387);
+            lifecycle::spawn_from_enemy(runtime, parameter, 0, 0xa395);
+            runtime.session_mut().minimap.disabled = 0;
+            Effects::delayed_room_music(runtime, 32);
+        });
+    }
+
     /// Ordered compatibility output; the core supplies semantic window-word indices.
     pub(crate) fn suit_window_word(&mut self, index: u16, value: u16) {
         self.write_slice_le(0x9800 + usize::from(index) * 2, value);
@@ -131,7 +149,7 @@ impl Runtime<'_> {
     pub(crate) fn begin_suit_pickup(&mut self, gravity: bool) {
         use crate::{game::player_transitions::suit, types::SpawnHdmaObject_Args};
         suit::prepare(self, gravity, Self::suit_window_word);
-        self.foreign(|game| unsafe { crate::game::sm_90::CallSomeSamusCode(0x15, game) });
+        self.foreign(|game| crate::game::session_runtime::player_command(0x15, game));
         suit::center(self);
         visual_host::Effects::sound(self, 2, 6, 0x56);
         let program = if gravity { 0xd67a } else { 0xd5a2 };
@@ -201,7 +219,7 @@ impl Runtime<'_> {
         let program = arrays::hdma_object_instruction_list_pointers + offset;
         self.write_slice_le(program, self.word(program).wrapping_add(2));
         self.write_slice_le(arrays::hdma_object_instruction_timers + offset, 1);
-        self.foreign(|game| unsafe { crate::game::sm_90::CallSomeSamusCode(0xb, game) });
+        self.foreign(|game| crate::game::session_runtime::player_command(0xb, game));
     }
 
     pub(crate) fn load_demo_data(&mut self) {
@@ -212,7 +230,7 @@ impl Runtime<'_> {
         let set = self.word(ram::demo_set);
         let scene = self.word(ram::demo_scene);
         if demo::initialize_scene(self, set, scene) {
-            self.foreign(|game| unsafe { crate::game::sm_91::MakeSamusFaceForward(game) });
+            self.owned_call(crate::game::player_transitions::equipment::face_forward);
             self.session_mut().player.transitions.draw_handler = 0xeb52;
         }
         demo::finish_setup(self);
@@ -269,4 +287,8 @@ impl Runtime<'_> {
             crate::game::player_transitions::handle_input(self);
         }
     }
+}
+
+pub(crate) fn face_forward(game: &mut crate::game_state::Game) {
+    crate::game::player_transitions::equipment::face_forward(&mut Runtime::new(game));
 }

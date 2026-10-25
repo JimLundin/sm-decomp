@@ -75,7 +75,7 @@ impl EntryEffects for Runtime<'_> {
                     game::sm_82::ResetSoundQueues(game);
                 }
                 LeafEffect::ClearTransitionSounds => {
-                    game::sm_82::ClearSoundsWhenGoingThroughDoor(game);
+                    game::session_runtime::player_command(0x1d, game);
                 }
                 LeafEffect::SelectEnemies => {
                     actors::scheduling::select(&mut Runtime::new(game));
@@ -96,7 +96,7 @@ impl EntryEffects for Runtime<'_> {
                     game::sm_80::DrawTimer(game);
                 }
                 LeafEffect::SpinJumpSound => {
-                    game::sm_82::PlaySpinJumpSoundIfSpinJumping(game);
+                    game::session_runtime::player_command(0x1c, game);
                 }
                 LeafEffect::SetLiquidPhysics => {
                     game::player_movement::speed::set_liquid_physics(&mut Runtime::new(game));
@@ -227,7 +227,7 @@ impl EntryEffects for Runtime<'_> {
         self.foreign(game::music::HasQueuedMusic)
     }
     fn samus_command(&mut self, command: u16) {
-        self.foreign(|game| unsafe { game::sm_90::CallSomeSamusCode(command, game) });
+        self.foreign(|game| game::session_runtime::player_command(command, game));
     }
     fn spawn_initial_hardcoded_object(&mut self) {
         room_mechanisms::creation::spawn(

@@ -10,9 +10,9 @@ use crate::game::session_runtime::Runtime;
 pub use crate::game::constants::bank_86::*;
 
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
+use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx2_Max9, QueueSfx3_Max6};
 use crate::game::sm_88::SpawnMorphBallEyeBeamHdma;
-use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_a0::{
     Abs16, CallEnemyPreInstr, CosineMult8bit, CosineMult8bitFull, EnemyFunc_B7A1, SignExtend8,
     SineMult8bit, SineMult8bitFull,

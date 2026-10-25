@@ -67,7 +67,7 @@ impl Effects for Runtime<'_> {
         self.word(0x179c)
     }
     fn gamma_action(&self) -> GammaAction {
-        match self.word(crate::ram_map::words::frame_handler_gamma) {
+        match self.session().player.transitions.frame_gamma {
             0xe37e | 0xe90e => GammaAction::Inactive,
             selector => GammaAction::Legacy(selector),
         }

@@ -4,11 +4,11 @@ pub use crate::game::prelude::*;
 use crate::game::animated_tiles;
 use crate::game::palette_effects;
 use crate::game::scrolling_sky::{initialize_banded_sky, initialize_land};
+use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_88::{
     FxTypeFunc_2C_Haze, FxTypeFunc_8_Spores, FxTypeFunc_24, FxTypeFunc_26_TourianEntranceStatue,
     FxTypeFunc_28_CeresRidley, FxTypeFunc_A_Rain, FxTypeFunc_C, FxTypeFunc_CeresElevator,
 };
-use crate::game::sm_90::CallSomeSamusCode;
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]

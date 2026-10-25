@@ -14,10 +14,10 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_b4::*;
 
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
+use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_80::{
     Multiply16x16, NextRandom, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6,
 };
-use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_a0::{
     Abs16, CallEnemyPreInstr, ConvertAngleToXy, CosineMult8bit, CosineMult8bitFull, SignExtend8,

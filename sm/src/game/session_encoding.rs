@@ -140,6 +140,12 @@ macro_rules! flag_projection {
 macro_rules! scalar_words {
     ($s:ident,$f:ident,($($borrow:tt)*))=>{
         $f(0x0cf4,$($borrow)* $s.player.grapple_flags);
+        $f(0x0cf6,$($borrow)* $s.player.grapple_delay);
+        $f(0x0cf8,$($borrow)* $s.player.grapple_slow_scrolling);
+        $f(0x0d1e,$($borrow)* $s.player.grapple_extension_compatibility.x);
+        $f(0x0d20,$($borrow)* $s.player.grapple_extension_compatibility.y);
+        $f(0x0d34,$($borrow)* $s.player.grapple_direction);
+        $f(0x0d36,$($borrow)* $s.player.grapple_direction_compatibility);
         $f(0x0cfa,$($borrow)* $s.player.grapple_angle);
         $f(0x0cfe,$($borrow)* $s.player.grapple_length);
         $f(0x0d02,$($borrow)* $s.player.grapple_origin_offset.x);
@@ -209,6 +215,7 @@ macro_rules! scalar_words {
             $f(0xf338+index*2,$($borrow)* $s.sprite_compatibility.disable_flags[index]);
         }
         $f(0xa44,$($borrow)* $s.player.transitions.frame_beta);
+        $f(0xa5a,$($borrow)* $s.player.transitions.frame_gamma);
         $f(0xa5c,$($borrow)* $s.player.transitions.draw_handler);
         $f(0xa7a,$($borrow)* $s.player.demo.pre_action);
         $f(0xa7c,$($borrow)* $s.player.demo.delay);

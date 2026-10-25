@@ -90,10 +90,7 @@ pub(crate) fn movement_sound(game: &mut Game) {
 pub(crate) fn restore_sound(game: &mut Game) {
     feedback::restore_sound(&mut Runtime::new(game));
 }
-pub(crate) fn deselect(game: &mut Game) -> u8 {
-    preparation::deselect(&mut Runtime::new(game));
-    0
-}
+pub(crate) use preparation::deselect as deselect_owned;
 pub(crate) fn initialize(
     slot: u16,
     kind: crate::game::projectile_initialization::Initialization,

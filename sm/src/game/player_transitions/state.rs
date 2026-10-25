@@ -1,4 +1,4 @@
-//! Representation-only payload. Not registered, compiled, or executed.
+//! Owned player transition state and lossless compatibility selectors.
 //! No secondary Session and no permanent mutable RAM mirror.
 #![forbid(unsafe_code)]
 
@@ -79,10 +79,10 @@ pub struct PlayerTransitions {
     pub interruption: InterruptionAction,
     pub hurt: HurtAction,
     pub animation_skip: AnimationSkip,
-    // 16 newly owned words = 32 encoded bytes.
     pub landing_compatibility: u16,
     pub frame_alpha: FrameAlphaMode,
     pub frame_beta: u16,
+    pub frame_gamma: u16,
     pub draw_handler: u16,
     pub knockback: u16,
     pub bomb_jump: BombJump,
@@ -98,6 +98,17 @@ pub struct PlayerTransitions {
     pub falling: u16,
     pub vertical_motion_compatibility: u16,
     pub vertical_auxiliary_compatibility: u16,
+}
+
+impl PlayerTransitions {
+    pub(crate) fn clear_pose_requests(&mut self) {
+        self.ordinary = PoseRequestWord::from_raw(0xffff);
+        self.interrupted = PoseRequestWord::from_raw(0xffff);
+        self.transitional = PoseRequestWord::from_raw(0xffff);
+        self.momentum = MomentumAction::from_raw(0);
+        self.interruption = InterruptionAction::from_raw(0);
+        self.hurt = HurtAction::from_raw(0);
+    }
 }
 
 // Session presentation/effects owns these, separate from 32-slot SpriteEffects.

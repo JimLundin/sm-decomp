@@ -185,12 +185,12 @@ impl Effects for Runtime<'_> {
         self.foreign(|game| crate::game::message_boxes::poll(request, game))
     }
     fn player_control(&mut self, operation: u16) {
-        self.foreign(|game| unsafe {
-            crate::game::sm_90::CallSomeSamusCode(operation, game);
+        self.foreign(|game| {
+            crate::game::session_runtime::player_command(operation, game);
         });
     }
     fn face_forward(&mut self) {
-        self.foreign(|game| unsafe { crate::game::sm_91::MakeSamusFaceForward(game) });
+        self.owned_call(crate::game::player_transitions::equipment::face_forward);
     }
     fn suit_pickup(&mut self, pickup: SuitPickup) {
         self.owned_call(|runtime| match pickup {

@@ -13,9 +13,10 @@ use crate::game::enemy_projectiles::{DisableEprojs, EnableEprojs};
 use crate::game::palette_effects;
 use crate::game::room_mechanisms::set_enabled;
 
-use crate::game::sm_80::{InvalidInterrupt_Crash, QueueSfx1_Max6, QueueSfx3_Max6};
+use crate::game::session_runtime::player_command as CallSomeSamusCode;
+use crate::game::sm_80::InvalidInterrupt_Crash;
 use crate::game::sm_88::SpawnHdmaObject;
-use crate::game::sm_90::{CallSomeSamusCode, LoadProjectilePalette, UpdateBeamTilesAndPalette};
+use crate::game::sm_90::UpdateBeamTilesAndPalette;
 
 pub const NULL: *mut c_void = null_mut::<c_void>();
 crate::game::constants::typed_constants! { i32;
@@ -272,35 +273,6 @@ pub unsafe fn ResponsibleForXrayStandupGlitch(game: &mut Game) {
         palette_effects::set_enabled(true, game);
     }
 }
-pub unsafe fn MakeSamusFaceForward(game: &mut Game) {
-    unsafe {
-        if (word!(game.equipped_items) & 0x20) != 0 || (word!(game.equipped_items) & 1) != 0 {
-            word!(game.samus_pose = kPose_9B_FaceF_VariaGravitySuit as u16);
-        } else {
-            word!(game.samus_pose = kPose_00_FaceF_Powersuit as u16);
-        }
-        pt::finish_pose_change(&mut Runtime::new(game));
-        if word!(game.samus_y_radius) != 24 {
-            word!(game.samus_y_pos -= 3);
-            word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
-        }
-        word! {game; frame_handler_alfa = ((0x90e713i32) as u16);
-        frame_handler_beta = ((0x90e8dci32) as u16); samus_new_pose = -1i32 as u16;
-        samus_new_pose_interrupted = -1i32 as u16; samus_new_pose_transitional = -1i32 as u16; }
-        word! { game, 0;
-            samus_momentum_routine_index, samus_special_transgfx_index, samus_hurt_switch_index,
-        }
-        CallSomeSamusCode(0x1f, game);
-        words!(game.samus_x_extra_run_speed, samus_x_extra_run_subspeed = 0);
-        word! { game, 0;
-            samus_x_base_speed, samus_x_base_subspeed, samus_y_subspeed, samus_y_speed, samus_y_dir,
-            used_for_ball_bounce_on_landing, samus_x_accel_mode, flare_counter, flare_animation_frame,
-            flare_slow_sparks_anim_frame, flare_fast_sparks_anim_frame, flare_animation_timer,
-            flare_slow_sparks_anim_timer, flare_fast_sparks_anim_timer,
-        }
-        Samus_LoadSuitPalette(game);
-    }
-}
 static kSomeMotherBrainScripts: [Func_U8; 5] = callback_table! { nonnull Func_U8;
     SomeMotherBrainScripts_0, SomeMotherBrainScripts_1, SomeMotherBrainScripts_2,
     SomeMotherBrainScripts_3_EnableHyperBeam, SomeMotherBrainScripts_4,
@@ -402,148 +374,6 @@ pub unsafe fn SomeMotherBrainScripts_4(game: &mut Game) -> u8 {
             word!(game.samus_pose = kPose_E8_FaceR_Drained_CrouchFalling as u16);
         }
         1
-    }
-}
-pub fn nullsub_17(game: &mut Game) {}
-static off_91E6E1: [Func_V; 28] = callback_table! { nonnull Func_V;
-    SamusFunc_E633_0, nullsub_17, nullsub_17, SamusFunc_E633_3, SamusFunc_E633_4, nullsub_17,
-    nullsub_17, nullsub_17, SamusFunc_E633_4, nullsub_17, nullsub_17, nullsub_17, nullsub_17,
-    nullsub_17, nullsub_17, nullsub_17, nullsub_17, SamusFunc_E633_17, SamusFunc_E633_17,
-    SamusFunc_E633_17, SamusFunc_E633_20, nullsub_17, nullsub_17, nullsub_17, nullsub_17,
-    nullsub_17, nullsub_17, nullsub_17,
-};
-pub unsafe fn SamusFunc_E633(game: &mut Game) {
-    unsafe {
-        off_91E6E1[*ram_ptr!(game; 0xa1f) as usize](game);
-        if (word!(game.equipped_items) & 0x2000) != 0 {
-            if word!(game.samus_has_momentum_flag) != 0 && word!(game.speed_boost_counter) == 0 {
-                word!(game.special_samus_palette_timer = word!(game.speed_boost_counter));
-                word!(game.special_samus_palette_frame = 0);
-                word!(game.speed_boost_counter = crate::rtl::rom_table_word!(game, 0x91b61f, 0));
-            }
-        } else {
-            word! { game, 0;
-                speed_echoes_index, speed_echo_xspeed[0], speed_echo_xspeed[1], samus_has_momentum_flag,
-                speed_boost_counter, special_samus_palette_frame, special_samus_palette_timer,
-                speed_echo_xpos[0], speed_echo_xpos[1], speed_echo_ypos[0], speed_echo_ypos[1],
-            }
-        }
-        if word!(game.grapple_beam_function) as i32 == 0x9bc4f0 & 0xffff {
-            if (word!(game.equipped_beams) & 0x1000) != 0 {
-                if word!(game.flare_counter) as i32 - 16i32 & 0x8000 == 0 {
-                    QueueSfx1_Max6(0x41, game);
-                }
-            } else {
-                word! { game, 0;
-                    flare_counter, flare_animation_frame, flare_slow_sparks_anim_frame,
-                    flare_fast_sparks_anim_frame, flare_animation_timer, flare_slow_sparks_anim_timer,
-                    flare_fast_sparks_anim_timer,
-                }
-            }
-        } else {
-            LoadProjectilePalette(2, game);
-            QueueSfx1_Max6(6, game);
-        }
-        Samus_LoadSuitPalette(game);
-        if word!(game.samus_health) as i32 - 31i32 & 0x8000 != 0 {
-            QueueSfx3_Max6(2, game);
-        }
-    }
-}
-pub unsafe fn SamusFunc_E633_0(game: &mut Game) {
-    unsafe {
-        let refresh_pose: bool = if word!(game.samus_pose) != 0 {
-            (word!(game.samus_pose) as i32 == kPose_9B_FaceF_VariaGravitySuit as i32
-                && (word!(game.equipped_items) & 1) == 0
-                && (word!(game.equipped_items) & 0x20) == 0)
-                && ({
-                    word!(game.samus_pose = kPose_00_FaceF_Powersuit as u16);
-                    true
-                })
-        } else {
-            ((word!(game.equipped_items) & 1) != 0 || (word!(game.equipped_items) & 0x20) != 0)
-                && ({
-                    word!(game.samus_pose = kPose_9B_FaceF_VariaGravitySuit as u16);
-                    true
-                })
-        };
-        if refresh_pose {
-            pt::finish_pose_change(&mut Runtime::new(game));
-        };
-    }
-}
-pub unsafe fn SamusFunc_E633_3(game: &mut Game) {
-    unsafe {
-        if *ram_ptr!(game; 0xa1e) == 4 {
-            *(ram_ptr!(game, u16; 0xa22)) = 260;
-        } else {
-            *(ram_ptr!(game, u16; 0xa22)) = 264;
-        }
-        let start_spin_jump: bool = if word!(game.samus_pose) as i32
-            != kPose_81_FaceR_Screwattack as i32
-            && word!(game.samus_pose) as i32 != kPose_82_FaceL_Screwattack as i32
-        {
-            !(word!(game.samus_pose) as i32 != kPose_1B_FaceR_SpaceJump as i32
-                && word!(game.samus_pose) as i32 != kPose_1C_FaceL_SpaceJump as i32)
-                && (!((word!(game.equipped_items) & 8) != 0)
-                    || ({
-                        if *ram_ptr!(game; 0xa1e) == 4 {
-                            word!(game.samus_pose = kPose_82_FaceL_Screwattack as u16);
-                        } else {
-                            word!(game.samus_pose = kPose_81_FaceR_Screwattack as u16);
-                        }
-                        false
-                    }))
-        } else {
-            (word!(game.equipped_items) & 8) == 0
-        };
-        if start_spin_jump {
-            if *ram_ptr!(game; 0xa1e) == 4 {
-                word!(game.samus_pose = kPose_1A_FaceL_SpinJump as u16);
-            } else {
-                word!(game.samus_pose = kPose_19_FaceR_SpinJump as u16);
-            }
-        }
-        pt::refresh_pose(&mut Runtime::new(game));
-        if *ram_ptr!(game; 0xa1e) == 4 {
-            *(ram_ptr!(game, u16; 0xa22)) = 772;
-        } else {
-            *(ram_ptr!(game, u16; 0xa22)) = 776;
-        }
-        pt::record_pose_history(Runtime::new(game).session_mut());
-    }
-}
-pub unsafe fn SamusFunc_E633_4(game: &mut Game) {
-    unsafe {
-        if (word!(game.equipped_items) & 2) != 0 {
-            if *ram_ptr!(game; 0xa1e) == 4 {
-                word!(game.samus_pose = kPose_7A_FaceL_Springball_Ground as u16);
-            } else {
-                word!(game.samus_pose = kPose_79_FaceR_Springball_Ground as u16);
-            }
-            pt::finish_pose_change(&mut Runtime::new(game));
-        }
-    }
-}
-pub unsafe fn SamusFunc_E633_17(game: &mut Game) {
-    unsafe {
-        if (word!(game.equipped_items) & 2) == 0 {
-            if *ram_ptr!(game; 0xa1e) == 4 {
-                word!(game.samus_pose = kPose_41_FaceL_Morphball_Ground as u16);
-            } else {
-                word!(game.samus_pose = kPose_1D_FaceR_Morphball_Ground as u16);
-            }
-            pt::finish_pose_change(&mut Runtime::new(game));
-        }
-    }
-}
-pub unsafe fn SamusFunc_E633_20(game: &mut Game) {
-    unsafe {
-        if (word!(game.equipped_items) & 8) != 0 {
-            word!(game.samus_anim_frame = 23);
-        } else {
-            word!(game.samus_anim_frame = 3);
-        };
     }
 }
 pub unsafe fn Samus_Func20(game: &mut Game) {

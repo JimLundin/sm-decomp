@@ -9,10 +9,10 @@ use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::scrolling_sky::{
     initialize_land, initialize_ocean, queue_land_rows, queue_ocean_rows,
 };
+use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
 use crate::game::sm_88::FxTypeFunc_2C_Haze;
 use crate::game::sm_89::RoomCode_CeresElevatorShaft;
-use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_a6::HandleCeresRidleyGetawayCutscene;
 use crate::game::sprite_effect_runtime::create_sprite;
 use crate::game::{

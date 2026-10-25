@@ -169,8 +169,8 @@ impl visual_host::Effects for Runtime<'_> {
     fn resume_movement_sound(&mut self) {
         #[cfg(sm_verify_dll)]
         samus_observer::event("command", 0x1c);
-        self.foreign(|game| unsafe {
-            crate::game::sm_90::CallSomeSamusCode(0x1c, game);
+        self.foreign(|game| {
+            crate::game::session_runtime::player_command(0x1c, game);
         });
     }
     fn upload(&mut self, request: Upload) {

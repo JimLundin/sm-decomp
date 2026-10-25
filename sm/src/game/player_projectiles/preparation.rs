@@ -132,7 +132,7 @@ fn select(h: &mut impl Host, choice: Choice) -> bool {
     }
     true
 }
-pub(super) fn deselect(h: &mut impl Host) {
+pub(crate) fn deselect(h: &mut impl Host) {
     select(h, Choice::Beam);
 }
 fn switch(h: &mut impl Host) {

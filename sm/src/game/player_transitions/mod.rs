@@ -4,9 +4,11 @@
 mod actions;
 mod animation;
 mod atmosphere;
+mod commands;
 pub(crate) mod content;
 pub(crate) mod demo;
 pub(crate) mod effects;
+pub(crate) mod equipment;
 mod input;
 mod jump;
 mod landing;
@@ -21,6 +23,7 @@ pub(crate) mod suit;
 pub(crate) use actions::momentum as verify_momentum_action;
 pub(crate) use animation::advance_animation;
 pub(crate) use atmosphere::draw_atmospheric;
+pub(crate) use commands::{cancel_grapple, command};
 // Existing finite verification cases exercise the actual private core entries.
 #[cfg(sm_verify_dll)]
 pub(crate) fn verify_interpret(host: &mut impl effects::Host) {

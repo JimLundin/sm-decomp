@@ -16,6 +16,7 @@ use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::palette_effects;
 use crate::game::room_mechanisms::set_enabled;
 use crate::game::samus_animation::{Samus_DrawDuringDeathAnim, Samus_DrawWhenNotAnimatingOrDying};
+use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_8b::{
     GameState_1_OpeningCinematic_, GameState_37_CeresGoesBoomWithSamus_,
     GameState_39_EndingAndCredits_, LoadTitleSequenceGraphics,
@@ -40,7 +41,7 @@ use crate::game::sm_81::{
 use crate::game::sm_88::{
     DisableHdmaObjects, EnableHdmaObjects, HdmaObjectHandler, WaitUntilEndOfVblankAndClearHdma,
 };
-use crate::game::sm_90::{CallSomeSamusCode, Samus_LowHealthCheck_0, UpdateBeamTilesAndPalette};
+use crate::game::sm_90::{Samus_LowHealthCheck_0, UpdateBeamTilesAndPalette};
 use crate::game::sm_91::{GameState_28_Unused_, Samus_Initialize};
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
@@ -4656,16 +4657,5 @@ pub unsafe fn OptionsMenuControllerFunc_0(game: &mut Game) {
         word!(game.eproj_F[(v4 + 13)] = r18);
         *(ram_ptr!(game, u16; 0x1b23)).offset(((v2 as i32 >> 1) + 13) as isize) = r20;
         OptionsMenuFunc6(game);
-    }
-}
-
-pub unsafe fn ClearSoundsWhenGoingThroughDoor(game: &mut Game) {
-    unsafe {
-        CallSomeSamusCode(0x1d, game);
-    }
-}
-pub unsafe fn PlaySpinJumpSoundIfSpinJumping(game: &mut Game) {
-    unsafe {
-        CallSomeSamusCode(0x1c, game);
     }
 }

@@ -21,13 +21,14 @@ use crate::game::gameplay_flag_runtime::{
     CheckEventHappened, ClearEventHappened, SetBossBitForCurArea, SetEventHappened,
 };
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
+use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_8b::CalcCeresSteamPos_Mode7;
 use crate::game::sm_80::{
     NextRandom, QueueMode7Transfers, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6,
     QueueSfx3_Max3, QueueSfx3_Max6,
 };
 use crate::game::sm_81::DrawSpritemap;
-use crate::game::sm_90::{CallSomeSamusCode, Samus_SetPushedOutOfCeresRidley};
+use crate::game::sm_90::Samus_SetPushedOutOfCeresRidley;
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_a0::{CosineMult8bit, SineMult8bit};
 use crate::game::sm_a9::{
