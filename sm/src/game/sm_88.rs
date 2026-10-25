@@ -26,8 +26,6 @@ use crate::game::xray_background::{self, finish_restore, restore_left, restore_r
 pub use crate::types::Consts_88;
 
 crate::game::constants::typed_constants! { Consts_88;
-    addr_word_88DF71 = 57201, addr_word_88DF6B = 57195,
-    addr_word_88DF65 = 57189, addr_word_88DF5F = 57183,
     addr_loc_889180 = 37248,
     addr_locret_88858A = 34186,
 }
@@ -700,53 +698,6 @@ static unk_88DF38: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0, 0x2c, 0xd
 crate::forward_calls! { pub unsafe fn (game: &mut Game);
     sub_88DF34 => SpawnHdmaObject(0x88, &raw const unk_88DF38 as *const c_void, game);
 }
-pub unsafe fn HdmaobjPreInstr_DF94(v0: u16, game: &mut Game) {
-    unsafe {
-        let mut v1: i16 = 0;
-        if ((*(ram_ptr!(game, EnemyData; 0xf78))).properties & 0x200) == 0
-            && (((*(ram_ptr!(game, EnemyData; 0xf78))).x_pos as i32
-                - word!(game.layer1_x_pos) as i32
-                + 64) as i16)
-                >= 0
-            && (*(ram_ptr!(game, EnemyData; 0xf78))).x_pos as i32
-                - word!(game.layer1_x_pos) as i32
-                - 320i32
-                & 0x8000
-                != 0
-            && (((*(ram_ptr!(game, EnemyData; 0xf78))).y_pos as i32
-                - word!(game.layer1_y_pos) as i32
-                + 16) as i16)
-                >= 0
-            && {
-                v1 = (((*(ram_ptr!(game, EnemyData; 0xf78))).y_pos) as i16)
-                    .wrapping_sub((word!(game.layer1_y_pos)) as i16);
-                (*(ram_ptr!(game, EnemyData; 0xf78))).y_pos as i32
-                    - word!(game.layer1_y_pos) as i32
-                    - 304i32
-                    & 0x8000
-                    != 0
-            }
-        {
-            if v1 as i32 - 40i32 & 0x8000 != 0 {
-                let v2: i32 = v0 as i32 >> 1;
-                word!(game.hdma_object_instruction_timers[v2] = 1);
-                word!(game.hdma_object_instruction_list_pointers[v2] = addr_word_88DF6B as u16);
-            } else {
-                let v4: i32 = v0 as i32 >> 1;
-                word!(game.hdma_object_instruction_timers[v4] = 1);
-                if v1 as i32 - 192i32 & 0x8000 != 0 {
-                    word!(game.hdma_object_instruction_list_pointers[v4] = addr_word_88DF5F as u16);
-                } else {
-                    word!(game.hdma_object_instruction_list_pointers[v4] = addr_word_88DF65 as u16);
-                }
-            }
-        } else {
-            let v3: i32 = v0 as i32 >> 1;
-            word!(game.hdma_object_instruction_timers[v3] = 1);
-            word!(game.hdma_object_instruction_list_pointers[v3] = addr_word_88DF71 as u16);
-        };
-    }
-}
 pub unsafe fn HdmaobjPreInstr_E449(k: u16, game: &mut Game) {
     unsafe {
         if (word!(game.phantom_related_layer_flag) & 0x4000) != 0 {
@@ -984,7 +935,7 @@ crate::game::address_dispatch! {
         8969773 => [Runtime::new(game).advance_haze(k, HazePhase::FadingIn)];
         8969844 => [Runtime::new(game).advance_haze(k, HazePhase::FadedIn)];
         8969878 => [Runtime::new(game).advance_haze(k, HazePhase::FadingOut)];
-        8970132 => HdmaobjPreInstr_DF94; 8970278 => [Runtime::new(game).advance_suit_pickup(false)];
+        8970132 => [Runtime::new(game).select_draygon_layer(k)]; 8970278 => [Runtime::new(game).advance_suit_pickup(false)];
         8970332 => [Runtime::new(game).advance_suit_pickup(true)]; 8971337 => HdmaobjPreInstr_E449;
         8971623 => [Runtime::new(game).advance_hdma_wave(k, HdmaWave::Phantoon)]; 8972220 => HdmaobjPreInstr_E7BC;
         fnHdmaobjPreInstr_MorphBallEyeBeamWidening => [{

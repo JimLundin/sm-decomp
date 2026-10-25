@@ -338,6 +338,30 @@ fn hdma_wave_offset(sample: i16, amplitude_low: u8, amplitude_high: u8) -> u16 {
 }
 
 impl Runtime<'_> {
+    pub(crate) fn select_draygon_layer(&mut self, slot: u16) {
+        use crate::game::actors::access::AccessMode::Native;
+        let actor = self.resolve_actor(Key::from_legacy(0), Native);
+        let x = i32::from(actor.x.whole) - i32::from(self.inputs().camera_x);
+        let y = i32::from(actor.y.whole) - i32::from(self.inputs().camera_y);
+        let visible = actor.properties & 0x200 == 0
+            && (x + 64) as i16 >= 0
+            && (x - 320) & 0x8000 != 0
+            && (y + 16) as i16 >= 0
+            && (y - 304) & 0x8000 != 0;
+        let program = if !visible {
+            0xdf71
+        } else if (i32::from(y as i16) - 40) & 0x8000 != 0 {
+            0xdf6b
+        } else if (i32::from(y as i16) - 192) & 0x8000 != 0 {
+            0xdf5f
+        } else {
+            0xdf65
+        };
+        let object = usize::from(slot & !1);
+        self.write_slice_le(0x18e4 + object, 1);
+        self.write_slice_le(0x18cc + object, program);
+    }
+
     pub(crate) fn advance_hdma_wave(&mut self, slot: u16, wave: HdmaWave) {
         use crate::game::actors::access::AccessMode::Native;
         use crate::game::player_projectiles::access::Store;
