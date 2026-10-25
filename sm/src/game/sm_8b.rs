@@ -178,7 +178,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (k: u16, j: u16, r18: u16, game: &mut Game)];
     [9144397] ProcessCinematicBgObject_DrawChar [] {
         word!(game.cinematicbg_var1 = (word!(game.cinematicbg_var1) == 0) as u16);
-        SpawnTextGlowObject(j, r18, game);
+        intro_pages::spawn_text_glow(j, r18, game);
         let v2 = RomPtr_8C(word!(game.cinematicbg_instr_ptr[(k >> 1)]), game);
         let mut v3: i16 = if *(v2 as *mut i16).offset(3) < 0 {
             word!(game.cinematicbg_arr7[15] = 8);
@@ -529,86 +529,6 @@ pub unsafe fn DrawCinematicSpriteObjects_Ending(game: &mut Game) {
         }
     }
 }
-pub unsafe fn SpawnTextGlowObject(j: u16, mut r18: u16, game: &mut Game) {
-    unsafe {
-        let mut v1: u16 = 14;
-        while *(ram_ptr!(game, u16; 0x19f7, v1 as i32 as isize)) != 0 {
-            v1 = (v1).wrapping_sub(2);
-            if (v1 & 0x8000) != 0 {
-                return;
-            }
-        }
-        *(ram_ptr!(game, u16; 0x19f7, v1 as i32 as isize)) = j;
-        let v2: i32 = v1 as i32 >> 1;
-        word! {game; eproj_pre_instr[(v2 + 2)] = 1; eproj_pre_instr[(v2 + 10)] = r18 as u8 as u16; }
-        *(ram_ptr!(game, u16; 0x1a27, v1 as i32 as isize)) = byte!(r18; 1) as u16;
-        *(ram_ptr!(game, u16; 0x1a37, v1 as i32 as isize)) = 0;
-    }
-}
-pub unsafe fn HandleTextGlowObjects(game: &mut Game) {
-    unsafe {
-        let mut i: i32 = 14;
-        while i >= 0 {
-            word!(game.cinematic_var19 = i as u16);
-            if *(ram_ptr!(game, u16; 0x19f7, i as u16 as i32 as isize)) != 0 {
-                ProcessTextGlowObject(game);
-                i = word!(game.cinematic_var19) as i32;
-            }
-            i -= 2;
-        }
-    }
-}
-pub unsafe fn ProcessTextGlowObject(game: &mut Game) {
-    unsafe {
-        let v0: u16 = word!(game.cinematic_var19);
-        let v1: i32 = word!(game.cinematic_var19) as i32 >> 1;
-        crate::update_place! { unaligned_word fresh153 [fresh154] = &raw mut (*(ram_ptr!(game, u16; 0x1a03)).offset((v1 + 2) as isize)) => (u16::from_le(fresh153.read_unaligned())).wrapping_sub(1); }
-        if fresh154 == 1 {
-            let R28: u16 = *(ram_ptr!(game, u16; 0x1a37, v0 as i32 as isize));
-            let mut v3: u16 = *(ram_ptr!(game, u16; 0x19f7, v0 as i32 as isize));
-            let mut r22: u16 = (2
-                * byte!(@pointer (ram_ptr!(game, u16; 0x1a03)).offset((v1 + 10i32) as isize); 0)
-                    as i32
-                + Mult8x8(
-                    byte!(@pointer ram_ptr!(game, u16; 0x1a27); v0 as i32 as isize),
-                    0x40,
-                ) as i32) as u16;
-            let mut v4: u16 = r22;
-            let v5 = RomPtr_8C(v3, game);
-            let mut n: i32 = *v5.offset(2) as i32;
-            let norg: i32 = n;
-            let mut m: i32 = *v5.offset(3) as i32;
-            loop {
-                do_until! { n == 0 ;
-                    *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16
-                        as *mut u8)
-                        .offset(v4 as i32 as isize) as *mut u16) = R28
-                        | *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap
-                            as *mut u16 as *mut u8)
-                            .offset(v4 as i32 as isize) as *mut u16)
-                            & 0xe3ff;
-                    v3 = (v3).wrapping_add(2);
-                    v4 = (v4).wrapping_add(2);
-                    n -= 1;
-                }
-                n = norg;
-                m -= 1;
-                if m == 0 {
-                    break;
-                }
-                r22 = (r22).wrapping_add(64);
-                v4 = r22;
-            }
-            let v6: u16 = word!(game.cinematic_var19);
-            if *(ram_ptr!(game, u16; 0x1a37, word!(game.cinematic_var19) as i32 as isize)) == 3072 {
-                *(ram_ptr!(game, u16; 0x19f7, word!(game.cinematic_var19) as i32 as isize)) = 0;
-            } else {
-                crate::update_place! { unaligned_word fresh155 = &raw mut (*(ram_ptr!(game, u16; 0x1a37, word!(game.cinematic_var19) as i32 as isize))) => (u16::from_le(fresh155.read_unaligned())).wrapping_add(1024); }
-                *(ram_ptr!(game, u16; 0x1a03)).offset(((v6 as i32 >> 1) + 2) as isize) = 5;
-            }
-        }
-    }
-}
 pub unsafe fn EnableTextGlowObjects_(game: &mut Game) {
     {
         word!(game.cinematic_var25 |= (0x8000u16));
@@ -896,7 +816,7 @@ pub unsafe fn GameState_37_CeresGoesBoomWithSamus_(game: &mut Game) -> Coroutine
         CinematicSprites.advance(game);
         CinematicMode7.advance(game);
         CinematicBackground.advance(game);
-        HandleTextGlowObjects(game);
+        intro_pages::advance_text_glow(game);
         palette_effects::advance(game);
         DrawIntroSprites(game);
         update_cinematic_transform(true, game);

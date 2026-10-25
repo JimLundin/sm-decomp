@@ -26,7 +26,7 @@ use super::visual_runtime::{
 use super::visual_state::CinematicTilemap;
 use crate::game::music::QueueMusic_Delayed8;
 use crate::game_state::Game;
-use crate::ram_map::{ram_ptr, word};
+use crate::ram_map::{checked_word, ram_ptr, word};
 
 unsafe fn load_japanese_line(j: u16, game: &mut Game) {
     unsafe {
@@ -414,5 +414,81 @@ pub(super) fn finish_pages(j: u16, game: &mut Game) -> u16 {
         word!(game.cinematic_function = (0x8bb72fi32) as u16);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
         j
+    }
+}
+
+pub(super) fn spawn_text_glow(definition: u16, position: u16, game: &mut Game) {
+    for slot in (0..8usize).rev() {
+        let offset = 2 * slot;
+        if checked_word!(game, 0x19f7 + offset;) == 0 {
+            word_transfers!(game, ascending, 1; native(0x19f7 + offset) <- value(definition));
+            word! {game; eproj_pre_instr[slot + 2] = 1;
+            eproj_pre_instr[slot + 10] = position as u8 as u16; }
+            word_transfers!(game, ascending, 1;
+                native(0x1a27 + offset) <- value(u16::from(position.to_ne_bytes()[1])),
+                native(0x1a37 + offset) <- value(0),
+            );
+            return;
+        }
+    }
+}
+
+pub(super) unsafe fn advance_text_glow(game: &mut Game) {
+    let mut object = 14i32;
+    while object >= 0 {
+        word!(game.cinematic_var19 = object as u16);
+        if checked_word!(game, 0x19f7 + object as usize;) != 0 {
+            unsafe {
+                advance_text_glow_object(game);
+            }
+            object = i32::from(word!(game.cinematic_var19));
+        }
+        object -= 2;
+    }
+}
+
+unsafe fn advance_text_glow_object(game: &mut Game) {
+    let object = usize::from(word!(game.cinematic_var19));
+    let timer_at = 0x1a07 + (object & !1);
+    let timer = checked_word!(game, timer_at;);
+    checked_word!(game, timer_at; = timer.wrapping_sub(1));
+    if timer != 1 {
+        return;
+    }
+    let palette = u16::from_ne_bytes([game.g_ram[0x1a37 + object], game.g_ram[0x1a38 + object]]);
+    let definition = u16::from_ne_bytes([game.g_ram[0x19f7 + object], game.g_ram[0x19f8 + object]]);
+    let mut row = 2 * u16::from(game.g_ram[0x1a17 + (object & !1)])
+        + 64 * u16::from(game.g_ram[0x1a27 + object]);
+    let (width, mut rows) = unsafe {
+        let definition = crate::rtl::rom_bank_ptr::<0x8c>(definition, game);
+        (i32::from(*definition.add(2)), i32::from(*definition.add(3)))
+    };
+    loop {
+        let mut column = row;
+        let mut remaining = width;
+        loop {
+            let at = 0x3000 + usize::from(column);
+            let tile = u16::from_ne_bytes([game.g_ram[at], game.g_ram[at + 1]]);
+            word_transfers!(game, ascending, 1; native(at) <- value(palette | (tile & 0xe3ff)));
+            column = column.wrapping_add(2);
+            remaining -= 1;
+            if remaining == 0 {
+                break;
+            }
+        }
+        rows -= 1;
+        if rows == 0 {
+            break;
+        }
+        row = row.wrapping_add(64);
+    }
+    // Retirement rereads the live selector after the ordered tile writes.
+    let selected = usize::from(word!(game.cinematic_var19));
+    let phase_at = 0x1a37 + selected;
+    if u16::from_ne_bytes([game.g_ram[phase_at], game.g_ram[phase_at + 1]]) == 3072 {
+        word_transfers!(game, ascending, 1; native(0x19f7 + selected) <- value(0));
+    } else {
+        checked_word!(game, phase_at; = checked_word!(game, phase_at;).wrapping_add(1024));
+        word_transfers!(game, ascending, 1; native(0x1a07 + (selected & !1)) <- value(5));
     }
 }
