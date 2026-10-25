@@ -2102,3 +2102,51 @@ pub(crate) fn fade_cinematic_fixed_color(game: &mut Game) {
         }
     }
 }
+
+pub(crate) unsafe fn draw_intro_sprites(game: &mut Game) {
+    let samus = word!(game.cinematic_var15);
+    if samus & 0x8000 != 0 {
+        draw_player_frame(game);
+        player_projectiles::draw_projectiles(game);
+    }
+    draw_cinematic_sprites(false, game);
+    if samus != 0 && samus & 0x8000 == 0 {
+        draw_player_frame(game);
+        player_projectiles::draw_projectiles(game);
+    }
+}
+
+pub(crate) fn draw_cinematic_sprites(ending: bool, game: &mut Game) {
+    use crate::game::sprite_drawing::Clip;
+    for slot in (0..16usize).rev() {
+        let sprite = word!(game.cinematicspr_whattodraw[slot]);
+        if sprite == 0 {
+            continue;
+        }
+        let palette = word!(game.cinematicbg_arr9[slot]);
+        let x = word!(game.cinematicbg_arr7[slot]).wrapping_sub(word!(game.layer1_x_pos));
+        let y = word!(game.cinematicbg_arr8[slot]).wrapping_sub(word!(game.layer1_y_pos));
+        if y.wrapping_add(128) < 0x1ff {
+            let clip = if y & 0xff00 != 0 {
+                Clip::BoundedOutside
+            } else {
+                Clip::Bounded
+            };
+            sprite_output::paletted(0x8c, sprite, (x, y), palette, clip, game);
+        }
+    }
+    if ending
+        && word!(game.cinematic_function).wrapping_sub(0xda02) & 0x8000 != 0
+        && word!(game.oam_next_ptr) < 0x200
+    {
+        let first = usize::from(word!(game.oam_next_ptr) >> 2);
+        let group = usize::from(word!(game.oam_next_ptr) >> 5);
+        word!(game.oam_ext[group] |= 0x5555u16 << (2 * (first & 7)));
+        for group in group + 1..16 {
+            word!(game.oam_ext[group] = 0x5555);
+        }
+        // The extension writes precede rereading the first unused OAM entry.
+        let first = usize::from(word!(game.oam_next_ptr) >> 2);
+        word_transfers!(game, 4, 128 - first; native(0x370 + 4 * first) <- value(0x80));
+    }
+}

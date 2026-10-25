@@ -4,7 +4,6 @@ pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
-use crate::game::visual_runtime::draw_cinematic_rectangle;
 use crate::game::visual_runtime::fade_cinematic_fixed_color;
 use crate::game::visual_runtime::{
     advance_cinematic_fade, capture_cinematic_palette, clear_cinematic_background,
@@ -13,6 +12,9 @@ use crate::game::visual_runtime::{
     prepare_cinematic_palette_fade, queue_cinematic_tilemap, reset_cinematic_transform,
     set_cinematic_backdrop, set_cinematic_tilemap_updates, set_hdma_enabled,
     spawn_cinematic_sprite_at, update_cinematic_transform,
+};
+use crate::game::visual_runtime::{
+    draw_cinematic_rectangle, draw_cinematic_sprites, draw_intro_sprites,
 };
 use crate::game::visual_state::CinematicObjects::{
     Background as CinematicBackground, Mode7 as CinematicMode7, Sprites as CinematicSprites,
@@ -25,7 +27,6 @@ pub use crate::game::constants::bank_60::*;
 use crate::game::explosion_window::spawn_power_bomb;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::palette_effects;
-use crate::game::player_projectiles::draw_projectiles;
 use crate::game::player_projectiles::prepare;
 use crate::game::session_runtime::initialize_player;
 use crate::game::sm_80::{
@@ -241,47 +242,6 @@ pub unsafe fn HandleSamusDuringIntro(game: &mut Game) {
         }
     }
 }
-pub unsafe fn DrawIntroSprites(game: &mut Game) {
-    unsafe {
-        if word!(game.cinematic_var15) != 0 {
-            if (word!(game.cinematic_var15) & 0x8000) != 0 {
-                crate::game::visual_runtime::draw_player_frame(game);
-                draw_projectiles(game);
-                DrawCinematicSpriteObjects_Intro(game);
-            } else {
-                DrawCinematicSpriteObjects_Intro(game);
-                crate::game::visual_runtime::draw_player_frame(game);
-                draw_projectiles(game);
-            }
-        } else {
-            DrawCinematicSpriteObjects_Intro(game);
-        };
-    }
-}
-static kMoveUnusedSpritesMasks: [u16; 8] = [
-    0x5555, 0x5554, 0x5550, 0x5540, 0x5500, 0x5400, 0x5000, 0x4000,
-];
-pub unsafe fn MoveUnusedSpritesOffScreen(game: &mut Game) {
-    unsafe {
-        if word!(game.oam_next_ptr) >= 0x200 {
-            return;
-        }
-        let j: i32 = word!(game.oam_next_ptr) as i32 >> 2;
-        let mut i: i32 = word!(game.oam_next_ptr) as i32 >> 5;
-        crate::update_place! { previous fresh11 = i => i + 1; }
-        word!(game.oam_ext[fresh11] |= (kMoveUnusedSpritesMasks[(j & 7) as usize]));
-        while i < 16 {
-            word!(game.oam_ext[i] = 0x5555);
-            i += 1;
-        }
-        let mut i_0: i32 = word!(game.oam_next_ptr) as i32 >> 2;
-        while i_0 < 0x80 {
-            *(&raw mut (*(ram_ptr!(game, OamEnt; 0x370)).offset(i_0 as isize)).xcoord
-                as *mut u16) = 0x80;
-            i_0 += 1;
-        }
-    }
-}
 pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
     unsafe {
         crate::verify_probe::hit("coroutine.logo");
@@ -427,45 +387,6 @@ crate::game::address_dispatch! {
         9147353 => [()];
     }
 }
-macro_rules! draw_cinematic_sprites {
-    ($object_offset:ident, $game:ident) => {
-        while $object_offset >= 0 {
-            let v1: i32 = $object_offset >> 1;
-            if word!($game.cinematicspr_whattodraw[v1]) != 0 {
-                let v2: u16 = word!($game.cinematicspr_whattodraw[v1]);
-                let chr: u16 = word!($game.cinematicbg_arr9[v1]);
-                let x: u16 =
-                    (word!($game.cinematicbg_arr7[v1])).wrapping_sub(word!($game.layer1_x_pos));
-                let y: u16 =
-                    (word!($game.cinematicbg_arr8[v1])).wrapping_sub(word!($game.layer1_y_pos));
-                if (y & 0xff00) != 0 {
-                    if (y).wrapping_add(128) < 0x1ff {
-                        sprite_output::paletted(0x8c, v2, (x, y), chr, Clip::BoundedOutside, $game);
-                    }
-                } else if (y).wrapping_add(128) < 0x1ff {
-                    sprite_output::paletted(0x8c, v2, (x, y), chr, Clip::Bounded, $game);
-                }
-            }
-            $object_offset -= 2;
-        }
-    };
-}
-
-pub unsafe fn DrawCinematicSpriteObjects_Intro(game: &mut Game) {
-    {
-        let mut i: i32 = 30;
-        draw_cinematic_sprites!(i, game);
-    }
-}
-pub unsafe fn DrawCinematicSpriteObjects_Ending(game: &mut Game) {
-    unsafe {
-        let mut i: i32 = 30;
-        draw_cinematic_sprites!(i, game);
-        if word!(game.cinematic_function) as i32 - (0x8bda02 & 0xffff) & 0x8000 != 0 {
-            MoveUnusedSpritesOffScreen(game);
-        }
-    }
-}
 pub unsafe fn EnableTextGlowObjects_(game: &mut Game) {
     {
         word!(game.cinematic_var25 |= (0x8000u16));
@@ -561,7 +482,7 @@ pub unsafe fn GameState_1_OpeningCinematic_(game: &mut Game) -> CoroutineRet {
         CinematicSprites.advance(game);
         CinematicMode7.advance(game);
         palette_effects::advance(game);
-        DrawCinematicSpriteObjects_Intro(game);
+        draw_cinematic_sprites(false, game);
         MaybeSkipCinematics(game);
         HandleCinematicsTransitions(game);
         update_cinematic_transform(false, game);
@@ -755,7 +676,7 @@ pub unsafe fn GameState_37_CeresGoesBoomWithSamus_(game: &mut Game) -> Coroutine
         CinematicBackground.advance(game);
         intro_pages::advance_text_glow(game);
         palette_effects::advance(game);
-        DrawIntroSprites(game);
+        draw_intro_sprites(game);
         update_cinematic_transform(true, game);
         kCoroutineNone as CoroutineRet
     }
@@ -936,7 +857,7 @@ pub unsafe fn GameState_39_EndingAndCredits_(game: &mut Game) -> CoroutineRet {
         MaybeHandleCinematicBgObjects(game);
         CreditsObject_Process(game);
         palette_effects::advance(game);
-        DrawCinematicSpriteObjects_Ending(game);
+        draw_cinematic_sprites(true, game);
         CinematicFunction_Intro_Func149(game);
         update_cinematic_transform(true, game);
         kCoroutineNone as CoroutineRet
