@@ -49,11 +49,11 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    checks (in-memory save, upward elevator, Ice return) pass; the corpus is unfinished.
    A0.1: full original any% on main verified 129,712 frames / 0 failures, but only
    six Ceres rooms, final DF8D and zero credits frames (source identity 1f25f453).
-   A0.2: original lsnes rr2-beta23/bsnes085 smoke logged 300 frames; all recorded
-   inputs matched the movie. State 1 begins at index 271 versus native 150: a boot
-   timing observation, not the first route divergence. Next: full reference capture.
-   Keep raw counters, resets, subframes and latched input; flat NMI counters also
-   occur during coroutine waits. No input removal or guessed offsets yet.
+   A0.2: original lsnes rr2-beta23/bsnes085 captured all 129,712 frames and inputs
+   matched exactly; 127 gameplay rooms, 24,619 emulator-lag frames, no credits yet.
+   Next: compare native NMI/input traces before aligning. Flat NMI counters disagree
+   with emulator lag on 643 frames and also occur during coroutine waits; preserve
+   resets, subframes and latched input. No guessed input removal or offsets.
    `python tools/verify_dll.py --unit-tests --direct` runs 20 observer tests, not
    gameplay checks. Regenerate incompatible checkpoints from boot; preserve the
    old checked navigation build.
@@ -179,9 +179,13 @@ and denied compiler/build-script launches stay restricted. Use permitted DLL/cty
 denials never pass. khronos_api blocks frontend linking; cached frontend metadata and
 direct DLL builds work. Keep crate-root unsafe-op enforcement.
 
-Only one heavy compiler/capture job at a time across the machine; root coordinates
-integration. `-j 1` does not coordinate separate Cargo processes. Never rebuild a
-loaded DLL. Workers can inspect callers, prepare isolated changes and review checks.
+Measured concurrency (2026-10-25): use up to two independent heavy jobs, coordinated
+by root in isolated sources/outputs with `-j 1` per Cargo process. Matched check/build
+pairs took 114.12 s serial versus 76.06 s concurrent (1.50x throughput); both passed,
+minimum sampled free RAM 2.663 GiB. Start another job only above 3 GiB free; stop the
+newest below 2 GiB or on resource errors. Two is measured, not a proven optimum:
+trial further or mixed overlap only with waiting independent work, retaining it if
+completed-work throughput improves. Never rebuild a loaded DLL or edit checked sources.
 Use [the iteration guide](ITERATION.md#windows-shell-setup) for paths/commands;
 its historical queues or examples do not override this plan.
 

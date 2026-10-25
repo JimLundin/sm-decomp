@@ -11,6 +11,10 @@ publication = "https://tasvideos.org/3653M"
 rom_sha256 = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72"
 sha256 = "e53b1ce15b3f01516eb64c68a6db2911f91bd97197eb05960779561be5c7cbe9"
 submission = "https://tasvideos.org/5833S"
+# Full original-emulator capture; raw logs remain local. See README.md.
+lag_log_sha256 = "ebf8c8f4de86cb1039403952e17ed0f2b846af6bd5868eaffcf6acbc34981a88"
+input_poll_log_sha256 = "a666af4e5a0cee35cc8d6dbe089e6370441ca29e5c26707841ae89e53c41e5ce"
+lag_logger_sha256 = "5c69b398e159c4efcbfa4ae5c7ad79f730fc593ec854da7581e0e33d7ef1fc68"
 
 [[movies]]
 author = "Sniq"
