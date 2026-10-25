@@ -263,7 +263,7 @@ jobs:
           ROM_44: ${{ secrets.SM_ROM_44 }}
         run: |
           @'
-          import base64, gzip, hashlib, io, os, pathlib, subprocess, sys, tomllib, urllib.request, zipfile
+          import base64, gzip, hashlib, io, os, pathlib, subprocess, sys, time, tomllib, urllib.error, urllib.request, zipfile
           encoded = "".join(os.environ[f"ROM_{i:02d}"] for i in range(45))
           if not encoded:
               raise SystemExit("ROM secrets are missing")
@@ -285,7 +285,17 @@ jobs:
           movies = tomllib.loads(pathlib.Path('movies/manifest.toml').read_text())['movies']
           movie = next(m for m in movies if m['category'] == 'any%')
           request = urllib.request.Request(movie['download'], headers={'User-Agent': 'sm-decomp-ci'})
-          data = urllib.request.urlopen(request, timeout=120).read()
+          # Four total attempts; checksum validation below is never retried.
+          for attempt in range(4):
+              try:
+                  with urllib.request.urlopen(request, timeout=120) as response:
+                      data = response.read()
+                  break
+              except urllib.error.HTTPError as error:
+                  if error.code not in (429, 500, 502, 503, 504) or attempt == 3:
+                      raise
+                  print(f'Movie download HTTP {error.code}; attempt {attempt + 1}/4 failed, retrying', file=sys.stderr)
+                  time.sleep(2 ** attempt)
           with zipfile.ZipFile(io.BytesIO(data)) as archive:
               if 'input' not in archive.namelist():
                   data = archive.read(next(n for n in archive.namelist() if n.lower().endswith('.lsmv')))
@@ -482,7 +492,7 @@ jobs:
           ROM_44: ${{ secrets.SM_ROM_44 }}
         run: |
           python -B - <<'PY'
-          import base64, gzip, hashlib, io, os, pathlib, subprocess, sys, tomllib, urllib.request, zipfile
+          import base64, gzip, hashlib, io, os, pathlib, subprocess, sys, time, tomllib, urllib.error, urllib.request, zipfile
           encoded = "".join(os.environ[f"ROM_{i:02d}"] for i in range(45))
           if not encoded:
               raise SystemExit("ROM secrets are missing")
@@ -494,7 +504,17 @@ jobs:
           movies = tomllib.loads(pathlib.Path('movies/manifest.toml').read_text())['movies']
           movie = next(m for m in movies if m['category'] == 'any%')
           request = urllib.request.Request(movie['download'], headers={'User-Agent': 'sm-decomp-ci'})
-          data = urllib.request.urlopen(request, timeout=120).read()
+          # Four total attempts; checksum validation below is never retried.
+          for attempt in range(4):
+              try:
+                  with urllib.request.urlopen(request, timeout=120) as response:
+                      data = response.read()
+                  break
+              except urllib.error.HTTPError as error:
+                  if error.code not in (429, 500, 502, 503, 504) or attempt == 3:
+                      raise
+                  print(f'Movie download HTTP {error.code}; attempt {attempt + 1}/4 failed, retrying', file=sys.stderr)
+                  time.sleep(2 ** attempt)
           with zipfile.ZipFile(io.BytesIO(data)) as archive:
               if 'input' not in archive.namelist():
                   data = archive.read(next(n for n in archive.namelist() if n.lower().endswith('.lsmv')))
