@@ -205,7 +205,34 @@ after_expectations = 120
 
 [[segment]]
 id = "boss-golden-torizo"
-pending = "No qualified encounter-to-completion route with fresh boss state and precise encounter/death observations."
+seed = "golden-input-phase:1"
+seed_sha256 = "3d65a01ecba9dc550449d70db11d6172211ab4fc728334ae9ccad93a6b5d226d"
+inputs = "seed-golden-torizo.inputs"
+input_sha256 = "fe331aac2f3650b33fbaa64dfc555ccbbd7c904e9fe574fbe1babb3c8dd04c34"
+start_frame = 0
+frames = 1207
+expect = ["boss:golden-torizo", "room:B283"]
+after_expectations = 120
+
+[[segment]]
+id = "golden-original-wait"
+seed = "golden-input-phase:1"
+seed_sha256 = "3d65a01ecba9dc550449d70db11d6172211ab4fc728334ae9ccad93a6b5d226d"
+inputs = "seed-golden-torizo.inputs"
+input_sha256 = "fe331aac2f3650b33fbaa64dfc555ccbbd7c904e9fe574fbe1babb3c8dd04c34"
+start_frame = 0
+frames = 1
+expect = ["room:B283"]
+
+[[segment]]
+id = "golden-orb-spawn-parameter"
+seed = "golden-input-phase:1"
+seed_sha256 = "3d65a01ecba9dc550449d70db11d6172211ab4fc728334ae9ccad93a6b5d226d"
+inputs = "seed-golden-torizo.inputs"
+input_sha256 = "fe331aac2f3650b33fbaa64dfc555ccbbd7c904e9fe574fbe1babb3c8dd04c34"
+start_frame = 0
+frames = 235
+expect = ["room:B283"]
 
 [[segment]]
 id = "boss-ridley"

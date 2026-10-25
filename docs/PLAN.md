@@ -46,37 +46,29 @@ auto-land on green (C3); a Linux verifier spike (L1). Details: REVIEW.md lane C.
 
 ## Work order
 
-1. **Current - lane A room-seeded coverage.** 43/44 required checks pass locally;
-   Golden Torizo remains pending; credits hosted validation is next. Spore Spawn hosted validation passed. Exact pre-read observations preserve the first
-   input edge; Gravity and Grapple pass fresh awards, message completion and full tails.
-   Any% 197 and 100% 331 room observations are captured; seeds/movies remain local.
-   Hash indexes and regeneration recipes are committed. Existing seeded regressions
-   remain passing. Mother Brain now passes fresh defeat and its full 120-frame tail
-   in a 1,380-frame phase-seeded row on the current L1 baseline, with zero differences.
-   Botwoon passes a fresh defeat and full tail (945 frames) from the published 13%
-   route. Spore Spawn passes 2,087 frames through fresh defeat and a full 120-frame tail;
-   its spawn-parameter regression adds 167 frames, all zero differences. The fix
-   preserves the original spawner Y accumulator. Full credits now passes 11,798 frames,
-   including fresh completion and the unchanged 120-frame tail. Twelve regression rows
-   cover corrected cinematic spawn accumulators and the separate BG3 HDMA buffer.
-   Authentic EOF capture preserves the original movie and final held input edge.
-   Golden sync/capture and live VRAM-buffer proof succeeded; CGRAM/Mode7 write histories
-   still block seed conversion. No new hand routes.
-2. **Current - lane B bank retirement.** `sm_94`, `sm_91`, `sm_89` and `sm_90` are deleted.
-   Cloud `ci/b-integrate` owns six completed commits: sm_88 deletion, cinematic setup,
-   frame-end/sm_a0 retirement, file menu and map-window loading. Its full run is active;
-   local agents retain their successors and rebase after it lands, without re-pushing these.
-   Next local B1: final sm_81 retirement, then sm_80 doors/camera/timer/HUD/IRQ/input.
-   B2: cinematic fading, Mode7 and object lifecycle. B3: sm_8f retirement, then pirates.
-   M2 now uses checked actors for lava jumpers, erratic fireballs, hopping blobs and
-   spike plants, sharing movement and animation reset with live callers. Local checks
-   pass; hosted rows pending. Four raw getters and 234 dereferences are retired.
-   Production +42 preserves checked full-u16 scratch edits and ordered ROM reads;
-   legacy -429, unsafe -2, verification +16 (source inventory only).
-   RAM remains authoritative; bank movement alone does not establish owned Session state.
-   Preserve full identities, failure/effect order, native/LE access and ROM provenance.
-   BG2 consolidation still needs `scroll_tiles.row.bg2`; reject whole-RAM borrow prototype
-   42c59cb and false-safe Load24. Retain unsafe backend contracts and existing alias checks.
+1. **Current - lane A coverage.** All 44 required scenarios have passing local evidence.
+   Golden Torizo passes 1,187 frames, fresh defeat at 1,066 and the full 120-frame tail;
+   its normalization and projectile-parameter regressions add 1 and 235 passing frames.
+   The original Snes9x seed preserves all five input ports and independently proved
+   VRAM read-buffer, CGRAM-low and Mode7 latch values. No invented register defaults.
+   Existing required rows and expectations remain intact; hosted verification and
+   the combined full corpus are separate obligations, not inferred from this result.
+   Next: move authored rows onto original room seeds, then delete their corresponding
+   route recipes from tools/movie_inputs.py. Keep current provenance and input guards.
+2. **Current - lane B retirement; reviewer landing order 22:52.** B1's selected run
+   covers the integrated sm_88/sm_a0 deletions and its own sm_81 retirement; land it first.
+   Then rebase B3's sm_8f/sm_b2 deletions, rerun selected rows and land; then rebase M2
+   sm_a8. The duplicate parent run is canceled. Full corpus follows deletion on main.
+   No additional push stacks on unlanded branches beyond those three.
+   B1 continues sm_80 then sm_82, aiming at most 80% replacement size. B2's nine
+   cinematic families are locally qualified; rebase after the parent lands.
+   B3 next takes covered sm_a3 elevators after M2 lands: elevator-traversal,
+   elevator-up and area-tourian; preserve shared room-entry state and callback order.
+   M2 next binds one typed slot view per function and reruns sm_a4/sm_a8 without growth.
+   RAM remains authoritative; bank moves alone do not establish owned Session state.
+   Preserve full identities, ordered failures/effects, native/LE access and ROM provenance.
+   BG2 consolidation still needs scroll_tiles.row.bg2. Reject prototype 42c59cb's
+   whole-RAM aliases and false-safe Load24; retain unsafe backend contracts.
 3. **Then - finish owned gameplay.** Migrate remaining complete producer/consumer
    interactions, actual callers and legacy retirement. Close persistent ownership,
    content/topology/options boundaries and unsafe removal across the whole engine;

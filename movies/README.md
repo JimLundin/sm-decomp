@@ -637,3 +637,51 @@ cannot be combined with seed capture unless it starts at frame 1. Default movie
 capture behavior is unchanged. The original standalone capture logger hash is
 `3ae43931e94cf21c8ef6ef5291ef5c324af8ea4b8f74e44cfef413f623f8f8ea`;
 the reusable published logger has a different hash because it adds opt-in guards.
+
+### Golden Torizo: original Snes9x observation
+
+The Golden seed comes from frame 186800 of JXQ's Super Metroid 100% TAS v2,
+original SMV SHA-256 `a92e393a6b65ffb7b0358f168579c8d7b4ed624cb3a3445a3d4be75469da5e04`.
+The v1 movie declares five controller ports and includes frame zero. The importer
+retains that layout and checks every captured game input read against port 1 at
+its actual movie frame. All 16 observed input bits are preserved, including the
+movie's nonzero reserved bits. Other ports are not described as empty.
+
+`room-seeds-golden-input-phase.csv` records each original seed region's size and
+SHA-256. The original `sm.006` snapshot has SHA-256
+`d034c893a276238becf16c40642c65d545726c0a0586735cbca2cf875ce8af05`;
+its actual CPU PC is `$8DC535`. Conversion does not replace that PC with an input
+boundary. The existing seed normalizer completes its pending work, and the input
+importer starts after the observed first wait exit at frame 186801.
+
+The pinned v17 live observation supplies VRAM read buffer `$2C0F`. An independently
+reviewed native instruction trace from frame 186798 through 186800 proves the
+CGRAM and Mode 7 byte latches are both zero, including CPU writes, DMA and HDMA.
+The converter requires those pinned proofs and checks its complete output hash.
+The converted seed uses the original snapshot, not a resumed emulator snapshot.
+
+The accompanying capture covers 1300 contiguous original frames, 186800 through
+188099. Its checkpoint at 187900 matches the original snapshot in every block.
+The importer validates all observed input reads, then uses only complete video
+frames to produce 1207 native work steps. Additional events at 188100 are checked
+but are not extended with an invented video observation.
+
+With the encrypted original capture restored under `target/seeds/golden-input-phase`,
+regenerate the seed and input sequence with:
+
+```sh
+python tools/convert_snapshot.py target/seeds/golden-input-phase/snes9x.state \
+  target/seeds/golden-reconverted \
+  --live target/seeds/golden-input-phase/snes9x.live.json \
+  --history target/seeds/golden-input-phase/snes9x.history.json --rom rom/sm.smc
+python tools/movie_inputs.py 'JXQ - Super Metroid 100% TAS v2.smv' \
+  movies/seed-golden-torizo.inputs --rom rom/sm.smc \
+  --snes9x-capture target/seeds/golden-input-phase/snes9x.json \
+  --snes9x-capture-sha256 77069a8768cd1519e321163253a7804bdecd691f48f2ea33ce4eaf0f466715bd \
+  --seed target/seeds/golden-reconverted/0001-B283-wram.bin --frames 1207
+```
+
+Expected complete seed SHA-256:
+`3d65a01ecba9dc550449d70db11d6172211ab4fc728334ae9ccad93a6b5d226d`.
+Expected input SHA-256:
+`fe331aac2f3650b33fbaa64dfc555ccbbd7c904e9fe574fbe1babb3c8dd04c34`.

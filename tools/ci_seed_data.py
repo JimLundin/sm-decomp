@@ -36,6 +36,7 @@ def valid_name(name):
         return False
     return bool(re.fullmatch(r"movies/[A-Za-z0-9_-]+\.inputs", name) or re.fullmatch(
         r"target/seeds/[A-Za-z0-9-]+/(?:rooms\.csv|lag\.csv(?:\.(?:polls|events|eof-polls|eof-hardware|phases|milestones)\.csv|\.eof\.json)?|"
+        r"snes9x\.(?:json|frames\.csv|events\.csv|state|live\.json|history\.json)|"
         r"[0-9]{4}-[0-9A-F]{4}-(?:wram|sram|vram|cgram|oam|apuram)\.bin|"
         r"[0-9]{4}-[0-9A-F]{4}-registers\.csv)", name))
 
@@ -61,8 +62,11 @@ def pack(args):
                 if not path.is_file() or path.is_symlink():
                     raise ValueError("seed capture contains nonregular file")
                 files[name] = path
-        for suffix in ("", ".polls.csv", ".events.csv"):
-            if f"target/seeds/{capture}/lag.csv{suffix}" not in files:
+        logs = (("snes9x.json", "snes9x.frames.csv", "snes9x.events.csv")
+                if f"target/seeds/{capture}/snes9x.json" in files
+                else ("lag.csv", "lag.csv.polls.csv", "lag.csv.events.csv"))
+        for name in logs:
+            if f"target/seeds/{capture}/{name}" not in files:
                 raise ValueError("capture is missing original logs")
     for row in rows:
         if row["inputs"].startswith("corpus-"):

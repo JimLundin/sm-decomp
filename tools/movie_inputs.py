@@ -7,6 +7,7 @@ import argparse
 import csv
 import hashlib
 import json
+import struct
 from itertools import islice, zip_longest
 from pathlib import Path
 import zipfile
@@ -214,7 +215,7 @@ def aligned_wait_prefix(source, path, count, after_event=0, continuation=None):
     raise ValueError('capture ends before the requested aligned prefix')
 
 
-def aligned_work_prefix(video, events, count, after_event=0, previous=None):
+def aligned_work_prefix(video, events, count, after_event=0, previous=None, frame_start=1):
     """Preserve observed normal updates and the loading lag suspension."""
     result, last_frame = [], 0
     read = wait = lag = vblank = irq = None
@@ -225,7 +226,8 @@ def aligned_work_prefix(video, events, count, after_event=0, previous=None):
         kind = raw['kind']
         event = {key: int(value) for key, value in raw.items() if key != 'kind'}
         frame = event['movie_frame']
-        if event['event'] != number or not last_frame <= frame <= len(video):
+        if (event['event'] != number or not last_frame <= frame <= frame_start + len(video) - 1
+                or frame < frame_start):
             raise ValueError('nonsequential work-boundary capture')
         last_frame = frame
         if not 0 <= event['joypad'] <= 0xffff:
@@ -268,7 +270,7 @@ def aligned_work_prefix(video, events, count, after_event=0, previous=None):
                 continuous |= (previous['state'] == 0 and event['state'] == 1
                                and event['nmi'] == 0
                                and any(int(row['nmi_after']) < int(row['nmi_before'])
-                                       for row in video[previous['movie_frame'] - 1:frame]))
+                                       for row in video[previous['movie_frame'] - frame_start:frame - frame_start + 1]))
             if (not continuous or lag is not None
                     or (wait is not None and event['joypad'] != wait['joypad'])):
                 raise ValueError('unobserved NMI or input change')
@@ -302,6 +304,77 @@ def aligned_work_prefix(video, events, count, after_event=0, previous=None):
         if len(result) >= count and all(value is None for value in (read, wait, lag, vblank, irq, no_update)):
             return result[:count]
     raise ValueError('capture ends before the requested complete work prefix')
+
+
+def snes9x_capture_inputs(movie, rom, capture, expected_sha256, seed, count):
+    """Reuse the work-boundary aligner for the reviewed five-port SMV capture."""
+    if count <= 0 or hashlib.sha256(capture.read_bytes()).hexdigest() != expected_sha256:
+        raise ValueError('invalid Snes9x capture length or metadata SHA-256')
+    info = json.loads(capture.read_text())
+    data = movie.read_bytes()
+    if (info.get('version') != 1 or info.get('status') != 'complete'
+            or info.get('origin') != 'snes9x-v17-exact-exec'
+            or info.get('emulator_sha256') != '5a51cbca6430516f6ca4611a453a4dc41c7c34992769cb50d9d0e340c153d882'
+            or info.get('movie_sha256') != 'a92e393a6b65ffb7b0358f168579c8d7b4ed624cb3a3445a3d4be75469da5e04'
+            or hashlib.sha256(data).hexdigest() != info['movie_sha256']
+            or hashlib.sha256(rom.read_bytes()).hexdigest() != '12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72'):
+        raise ValueError('unsupported original Snes9x capture')
+    magic, version, _, _, last_frame = struct.unpack_from('<4s4I', data)
+    state_at, inputs_at = struct.unpack_from('<II', data, 24)
+    if (magic != b'SMV\x1a' or version != 1 or data[20:22] != bytes([31, 1])
+            or not 32 <= state_at < inputs_at or inputs_at + (last_frame + 1) * 10 > len(data)):
+        raise ValueError('unsupported five-port SMV layout')
+    # Each declared record, including frame zero, retains all five ports.
+    # Only the observed non-debug hardware read selects port 1 below.
+    def ports(frame):
+        if not 0 <= frame <= last_frame:
+            raise ValueError('capture exceeds declared SMV frames')
+        return struct.unpack_from('<5H', data, inputs_at + frame * 10)
+    tables = {}
+    for name in ('snes9x.frames.csv', 'snes9x.events.csv'):
+        path = capture.with_name(name)
+        pin = info['files'][name]
+        if path.stat().st_size != pin['size'] or hashlib.sha256(path.read_bytes()).hexdigest() != pin['sha256']:
+            raise ValueError('Snes9x capture companion hash mismatch')
+        with path.open(newline='') as file:
+            tables[name] = list(csv.DictReader(file))
+    video, events = tables['snes9x.frames.csv'], tables['snes9x.events.csv']
+    first, last = info['first_frame'], info['last_frame']
+    if (first != 186800 or len(video) != last - first + 1
+            or any(int(row['movie_frame']) != first + i or int(row['debug']) != 0 for i, row in enumerate(video))):
+        raise ValueError('incomplete video capture or unsupported debug input')
+    for number, row in enumerate(events, 1):
+        frame = int(row['movie_frame'])
+        if (int(row['event']) != number or not first <= frame <= last + 1
+                or int(row['debug']) != 0):
+            raise ValueError('nonsequential event capture or unsupported debug input')
+        if row['kind'] == 'joypad_read' and int(row['joypad']) != ports(frame)[0]:
+            raise ValueError('observed controller read differs from the original five-port SMV')
+    ram = seed.read_bytes()
+    if len(ram) != 131072 or hashlib.sha256(ram).hexdigest() != info['seed_wram_sha256']:
+        raise ValueError('capture does not belong to this room seed')
+    with seed.with_name(seed.name.replace('-wram.bin', '-registers.csv')).open(newline='') as file:
+        regs = {row['name']: int(row['value']) for row in csv.DictReader(file)}
+    room = int.from_bytes(ram[0x79b:0x79d], 'little')
+    nmi = int.from_bytes(ram[0x5b6:0x5b8], 'little')
+    if (regs.get('pbpc') != 0x8dc535 or regs.get('seed_movie_frame') != first
+            or regs.get('seed_nmi') != nmi or regs.get('seed_room') != room
+            or int(video[0]['pc']) != regs['pbpc'] or int(video[0]['nmi']) != nmi
+            or int(video[0]['room']) != room):
+        raise ValueError('seed does not match the original frame observation')
+    boundary = next((row for row in events if row['kind'] == 'wait_exit'), None)
+    if (boundary is None or int(boundary['movie_frame']) != first + 1
+            or int(boundary['nmi']) != (nmi + 1) % 65536 or int(boundary['room']) != room):
+        raise ValueError('no matching completed NMI after the actual seed PC')
+    after = int(boundary['event'])
+    previous = {key: int(value) for key, value in boundary.items() if key != 'kind'}
+    previous['nmi'] = (previous['nmi'] - 1) % 65536
+    result = aligned_work_prefix(video, (row for row in events[after:] if int(row['movie_frame']) <= last),
+                                 count, after, previous, frame_start=first)
+    normalization_reads = [row for row in events[:after] if row['kind'] == 'joypad_read']
+    if len(normalization_reads) != 1 or int(normalization_reads[0]['joypad']) != result[0]:
+        raise ValueError('normalization input must equal the first imported controller word')
+    return result
 
 
 def load(path, rom):
@@ -1682,7 +1755,20 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=Path, help='start after this captured room WRAM seed')
     parser.add_argument('--eof-capture', type=Path, help='authenticated recorded read-only EOF continuation metadata')
     parser.add_argument('--eof-capture-sha256', help='required pinned EOF metadata SHA-256')
+    parser.add_argument('--snes9x-capture', type=Path, help='authenticated original five-port SMV work capture')
+    parser.add_argument('--snes9x-capture-sha256', help='required Snes9x metadata SHA-256')
     args = parser.parse_args()
+    if args.snes9x_capture or args.snes9x_capture_sha256:
+        if (not args.snes9x_capture or not args.snes9x_capture_sha256 or not args.seed
+                or args.frames is None or args.lag_log or args.route or args.eof_capture
+                or args.eof_capture_sha256):
+            parser.error('--snes9x-capture requires its SHA-256, --seed and --frames only')
+        frames = snes9x_capture_inputs(args.movie, args.rom, args.snes9x_capture,
+                                      args.snes9x_capture_sha256, args.seed, args.frames)
+        args.output.write_text(''.join(f'{word:04X}\n' for word in frames),
+                               encoding='ascii', newline='\r\n')
+        print(f'Imported {len(frames)} observed controller frames from the five-port SMV')
+        raise SystemExit(0)
     if bool(args.eof_capture) != bool(args.eof_capture_sha256) or (args.eof_capture and not args.lag_log):
         parser.error('--eof-capture requires --eof-capture-sha256 and --lag-log')
     if args.seed and not args.lag_log:

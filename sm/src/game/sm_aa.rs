@@ -1233,7 +1233,8 @@ crate::game::callback_dispatch! {
         Torizo_C20A(k, game);
     };
     [11195635] Torizo_Instr_43 [jp] {
-        SpawnEprojWithGfx(0, k, addr_kEproj_GoldenTorizosChozoOrbs as u16, game);
+        // The instruction dispatcher leaves this handler address in A.
+        SpawnEprojWithGfx(0xd4f3, k, addr_kEproj_GoldenTorizosChozoOrbs as u16, game);
     };
     [11195645] Torizo_Instr_51 [EnemyScript::jump(jp.word(0))] {
         let E = Get_Torizo(k as i32, game);

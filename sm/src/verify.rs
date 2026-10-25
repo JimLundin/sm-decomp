@@ -1033,9 +1033,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         }
         let pad =
             u16::from_str_radix(word, 16).map_err(|_| format!("bad input at line {}", line + 1))?;
-        if pad & 0xf != 0 {
-            return Err(format!("non-gamepad bits at line {}", line + 1));
-        }
+        // Preserve all 16 observed hardware bits, including SMV reserved bits.
         // Movie files use the SNES hardware layout; RtlRunFrame uses B at
         // bit 0, Y at bit 1, ... R at bit 11 (the input latch reverses it).
         inputs.push(pad.reverse_bits());
@@ -1046,7 +1044,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             inputs.len()
         ));
     }
-    let rom = if checkpoint_in.is_some() || checkpoint_out.is_some() {
+    let rom = if checkpoint_in.is_some() || checkpoint_out.is_some() || seed_in.is_some() {
         std::fs::read(&args[0]).map_err(|e| format!("{}: {e}", args[0]))?
     } else {
         Vec::new()
@@ -1094,7 +1092,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
                 .copied()
                 .ok_or("room seed requires an input frame")?
                 .reverse_bits();
-            seed::load(std::path::Path::new(path), game, first_input)?;
+            seed::load(std::path::Path::new(path), game, first_input, &rom)?;
         }
         let frames = frame_limit.unwrap_or(inputs.len() - first);
         let end = first

@@ -16,6 +16,46 @@ fn words(output: &mut [u16], input: &[u8]) {
     }
 }
 
+// Original mid-frame seeds precede the patched scheduler's return stack.
+// Restore its original wait JSL for one opcode; never leave the patch removed.
+struct OriginalWaitCall {
+    image: sm::rom::RomImage,
+    offset: usize,
+    patched: [u8; 4],
+}
+
+impl OriginalWaitCall {
+    fn new(image: sm::rom::RomImage, original: &[u8]) -> Result<Self, String> {
+        let offset = sm::rom::lorom_offset(0x82897a) as usize;
+        if original.get(offset..offset + 4) != Some(&[0x22, 0x38, 0x83, 0x80])
+            || image.len() < offset + 4
+        {
+            return Err("original seed wait-call ROM provenance mismatch".into());
+        }
+        let patched = core::array::from_fn(|i| image.read(offset + i));
+        if patched != [0x28, 0x60, 0x83, 0x80] {
+            return Err("seed wait-call scheduler patch mismatch".into());
+        }
+        let guard = Self {
+            image,
+            offset,
+            patched,
+        };
+        for (i, byte) in original[offset..offset + 4].iter().copied().enumerate() {
+            guard.image.write(offset + i, byte);
+        }
+        Ok(guard)
+    }
+}
+
+impl Drop for OriginalWaitCall {
+    fn drop(&mut self) {
+        for (i, byte) in self.patched.iter().copied().enumerate() {
+            self.image.write(self.offset + i, byte);
+        }
+    }
+}
+
 const INPUT_WORDS: [usize; 5] = [0x8b, 0x8f, 0x93, 0x97, 0xa3];
 
 struct ControllerRead {
@@ -219,7 +259,12 @@ fn ppu_registers(ppu: &mut Ppu, r: &Registers) -> Result<(), String> {
     Ok(())
 }
 
-pub(super) unsafe fn load(path: &Path, game: &mut Game, first_input: u16) -> Result<(), String> {
+pub(super) unsafe fn load(
+    path: &Path,
+    game: &mut Game,
+    first_input: u16,
+    original_rom: &[u8],
+) -> Result<(), String> {
     let filename = path
         .file_name()
         .and_then(|s| s.to_str())
@@ -336,8 +381,14 @@ pub(super) unsafe fn load(path: &Path, game: &mut Game, first_input: u16) -> Res
         // This imports a room observation, not an exact emulator checkpoint:
         // SPC/DSP execution phase and PPU write latches are not fully represented.
         // Route expectations must qualify each seed with normal comparisons on.
+        let mut original_wait_entered = false;
         for _ in 0..100_000 {
             let pc = u32::from((*game.g_cpu).k) << 16 | u32::from((*game.g_cpu).pc);
+            if original_wait_entered && pc == 0x808343 {
+                // Match RunOneFrameOfGame_Emulated's existing wait/NMI boundary.
+                (*game.g_cpu).nmiWanted = true;
+                original_wait_entered = false;
+            }
             if pc == 0x808348 {
                 sm::rtl::FinishLoadSnesState(game);
             }
@@ -357,7 +408,20 @@ pub(super) unsafe fn load(path: &Path, game: &mut Game, first_input: u16) -> Res
                 eprintln!("Imported room seed; completed recorded CPU phase at ${pc:06X}");
                 return Ok(());
             }
+            let original_wait = if pc == 0x82897a {
+                original_wait_entered = true;
+                // The capture importer proves this normalization read equals
+                // the first replay word; preserve all 16 hardware input bits.
+                (*(*game.g_snes).input1).currentState = first_input.reverse_bits();
+                Some(OriginalWaitCall::new(
+                    (*(*game.g_snes).cart).rom.clone(),
+                    original_rom,
+                )?)
+            } else {
+                None
+            };
             sm::snes::cpu::cpu_runOpcode(game.g_cpu, game);
+            drop(original_wait);
         }
     }
     unsafe {
