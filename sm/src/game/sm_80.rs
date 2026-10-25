@@ -547,7 +547,7 @@ pub unsafe fn Nmi_ProcessVertScrollingDma(game: &mut Game) {
     }
 }
 // Byte-backed queue layout from ram_map: three channels, sixteen slots each.
-pub(crate) fn queue_sfx(channel: usize, sound: u8, max_queued: u8, game: &mut Game) {
+pub(crate) fn queue_sfx(channel: usize, sound: u8, max_queued: u8, game: &mut Game) -> u16 {
     #[cfg(sm_verify_dll)]
     crate::game::visual_runtime::samus_observer::sound(channel, sound, max_queued);
     let read_pos = 0x643 + channel;
@@ -559,13 +559,13 @@ pub(crate) fn queue_sfx(channel: usize, sound: u8, max_queued: u8, game: &mut Ga
     game.g_ram[limit_pos] = max_queued;
     let queued = game.g_ram[write_pos].wrapping_sub(game.g_ram[read_pos]) & 15;
     if queued >= max_queued {
-        return;
+        return u16::from_be_bytes([sound, queued]);
     }
     if game.debug_disable_sounds() != 0
         || game.game_state() >= 40
         || game.power_bomb_explosion_status() & 0x8000 != 0
     {
-        return;
+        return u16::from_be_bytes([queued, sound]);
     }
 
     let write = game.g_ram[write_pos];
@@ -585,6 +585,8 @@ pub(crate) fn queue_sfx(channel: usize, sound: u8, max_queued: u8, game: &mut Ga
         game.g_ram[write_pos] = next;
         game.g_ram[buffer + usize::from(next)] = 0;
     }
+    // Callers that forward the original accumulator need both queue depth and sound.
+    u16::from_be_bytes([queued, sound])
 }
 
 crate::forward_calls! { pub fn (sound: u16, game: &mut Game);

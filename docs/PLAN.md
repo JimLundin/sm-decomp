@@ -49,6 +49,7 @@ and priorities, but use the local Fast loop and local bank-retirement checks bel
    A1.2 seed import passes 600 frames and reaches the captured next room; both
    complete captures have register supplements. Screw Attack and Spring Ball now pass seeded award/message/tail rows.
    Ridley now passes fresh defeat plus its full tail. Next: remaining bosses and items; Phantoon is fixed and qualified; Space Jump remains pending.
+   Mother Brain spawn parameters are fixed through a 4,560-frame regression; defeat remains pending.
    The seeded X-ray row passes its award, message and 120-frame tail (667 frames).
    Captures now use an instruction boundary; the longer next-room continuation still drifts.
    Original any% timing alignment remains parked; no further hand-route exploration.

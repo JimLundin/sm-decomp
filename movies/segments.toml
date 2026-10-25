@@ -605,3 +605,15 @@ input_sha256 = "b09a32ef22e839b5bd0d7ee7770ff0f9963ed633d60d2d9e773c64126c369680
 start_frame = 0
 frames = 1989
 expect = ["boss:phantoon", "state:11"]
+
+# Preserve the sound/opcode/coordinate accumulator passed to Mother Brain spawns.
+# Seeded replay cannot use checkpoints; first mismatch was 2719, last was 4555.
+[[segment]]
+id = "mother-brain-beam-spawn-parameters"
+seed = "any-boundary:190"
+seed_sha256 = "bdc211c67f48aa56b73509f66e292db299ad59573372e3761f11acb259ebba5b"
+inputs = "seed-mother-brain.inputs"
+input_sha256 = "251f4aadb037398f3197c7b0c10b53eba85e50e3eed8039faca0c49a2d449799"
+start_frame = 0
+frames = 4560
+expect = ["room:DD58", "state:8"]

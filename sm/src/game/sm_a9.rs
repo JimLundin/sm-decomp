@@ -1289,7 +1289,11 @@ crate::game::callback_dispatch! {
                 x: g_word_A9BCA6[v2 as usize] as u16,
                 y: g_word_A9BCB6[v2 as usize] as u16,
             };
-            SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainRainbowBeamExplosion as u16, 0, game);
+            SpawnEprojWithRoomGfx(
+                addr_kEproj_MotherBrainRainbowBeamExplosion as u16,
+                game.eproj_spawn_pt.y,
+                game,
+            );
             QueueSfx2_Max6(0x24, game);
         }
     };
@@ -2024,7 +2028,7 @@ crate::game::callback_dispatch! {
     [11116420] MotherBrain_Instr_SpawnRainbowEproj [k] {
         SpawnEprojWithRoomGfx(
             addr_kEproj_MotherBrainRainbowBeamCharging as u16,
-            0,
+            0x9f84,
             game,
         );
     };
@@ -5674,9 +5678,9 @@ crate::game::callback_dispatch! {
         SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, jp.word(4), game);
     };
     [11115247] MotherBrain_Instr_SpawnDeathBeamEproj [jp] {
-        QueueSfx2_Max6(0x63, game);
+        let spawn_parameter = crate::game::sm_80::queue_sfx(1, 0x63, 6, game);
         SpawnEprojWithGfx(
-            0,
+            spawn_parameter,
             0x40,
             addr_kEproj_MotherBrainDeathBeamCharging as u16,
             game,

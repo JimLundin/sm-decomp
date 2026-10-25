@@ -445,3 +445,8 @@ The Phantoon exit regression replays through frame 1985 and three following
 frames. Seeded observations cannot use verifier checkpoints, so its prefix begins
 at the room seed. Room setup preserves the incoming accumulator `0xC8C8` when
 spawning its projectile, including the shared spawn parameter at `$1993`.
+
+`mother-brain-beam-spawn-parameters` uses `any-boundary:190` and
+`seed-mother-brain.inputs` for 4,560 frames from the instruction-boundary seed.
+It covers the sound-return, charging-opcode and rainbow-explosion spawn values;
+this regression does not qualify Mother Brain defeat. Seeds and inputs stay local.
