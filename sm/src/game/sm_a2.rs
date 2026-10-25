@@ -28,7 +28,6 @@ pub use crate::types::Consts_A2;
 crate::game::constants::typed_constants! { Consts_A2;
     addr_kLavaSeahorse_Ilist_E5A1 = 58785, addr_kLavaSeahorse_Ilist_E59B = 58779,
     addr_kGripper_Sprmap_E44B = 58443, addr_kGripper_Sprmap_E43F = 58431,
-    addr_kGripper_Ilist_E1AF = 57775, addr_kGripper_Ilist_E19B = 57755,
     addr_kHirisingSlowfalling_Ilist_D840 = 55360, addr_kHirisingSlowfalling_Ilist_D834 = 55348,
     addr_kHirisingSlowfalling_Ilist_D82C = 55340, addr_kMaridiaLargeSnail_Ilist_CA4B = 51787,
     addr_kLowerNorfairRio_Ilist_C6B0 = 50864, addr_kLowerNorfairRio_Ilist_C686 = 50822,
@@ -76,7 +75,7 @@ crate::type_aliases! {
 }
 
 crate::type_aliases! {
-    pub Enemy_Rio, Enemy_Flies, Enemy_MaridiaBeybladeTurtle, Enemy_MiniCrocomire, Enemy_Gripper,
+    pub Enemy_Rio, Enemy_Flies, Enemy_MaridiaBeybladeTurtle, Enemy_MiniCrocomire,
         Enemy_GunshipBottom, Enemy_LowerNorfairRio,
         Enemy_MiniMaridiaBeybladeTurtle, Enemy_NorfairErraticFireball =
         crate::game::enemy_layouts::EnemyLayout8;
@@ -125,7 +124,6 @@ crate::ram_map::ram_pointer_functions! {
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
     gRam8000_Default(o: i32) -> Ram8000_Default = [0x8000, o as isize];
     Get_Flies(o: i32) -> Enemy_Flies = [0xf78, o as isize];
-    Get_Gripper(o: i32) -> Enemy_Gripper = [0xf78, o as isize];
     Get_GunshipBottom(o: i32) -> Enemy_GunshipBottom = [0xf78, o as isize];
     Get_GunshipTop(o: i32) -> Enemy_GunshipTop = [0xf78, o as isize];
     Get_HirisingSlowfalling(o: i32) -> Enemy_HirisingSlowfalling = [0xf78, o as isize];
@@ -1877,20 +1875,6 @@ crate::game::callback_dispatch! {
         };
     };
 }
-pub unsafe fn Gripper_Func_1(k: u16, game: &mut Game) -> u8 {
-    unsafe {
-        let E = Get_Gripper(k as i32, game);
-        (((*E).var_D & 0x8000) != 0
-            && (((*E).base.x_pos) as i16).wrapping_sub(((*E).var_A) as i16) < 0) as u8
-    }
-}
-pub unsafe fn Gripper_Func_2(k: u16, game: &mut Game) -> u8 {
-    unsafe {
-        let E = Get_Gripper(k as i32, game);
-        (((*E).var_D & 0x8000) == 0
-            && (((*E).base.x_pos) as i16).wrapping_sub(((*E).var_B) as i16) >= 0) as u8
-    }
-}
 pub unsafe fn LavaSeahorse_Func_6(game: &mut Game) {
     unsafe {
         let E = Get_LavaSeahorse(word!(game.cur_enemy_index) as i32, game);
@@ -2465,48 +2449,13 @@ crate::game::callback_dispatch! {
         let E = Get_HirisingSlowfalling(word!(game.cur_enemy_index) as i32, game);
         CallHirisingSlowfalling((((*E).var_A) as u32) | (0xa20000u32), game);
     };
+    @functions [pub fn (game: &mut Game)];
     [10674643] Gripper_Init [] {
-        let E = Get_Gripper(word!(game.cur_enemy_index) as i32, game);
-        let v1: u16 = (8u16).wrapping_mul((byte!((*E).base.current_instruction; 0)) as u16);
-        (*E).var_E = v1;
-        let v2: i32 = v1 as i32 >> 1;
-        let mut v3: u16 = if ((*E).base.current_instruction & 0xfeff) != 0 {
-            (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, v2 as isize);
-            crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 1) as isize)
-        } else {
-            (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 2) as isize);
-            crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 3) as isize)
-        };
-        (*E).var_C = v3;
-        let mut v4: u16 = addr_kGripper_Ilist_E19B as u16;
-        if ((*E).var_D & 0x8000) == 0 {
-            v4 = addr_kGripper_Ilist_E1AF as u16;
-        }
-        (*E).base.current_instruction = v4;
-        (*E).var_A = (*E).parameter_1;
-        (*E).var_B = (*E).parameter_2;
+        rippers::initialize(Kind::Gripper, game);
     };
     [10674721] Gripper_Main [] {
-        let E = Get_Gripper(word!(game.cur_enemy_index) as i32, game);
-        if ({ let (actor, amount) = (word!(game.cur_enemy_index), (words!((*E), var_D, var_C)) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
-            || Gripper_Func_1(word!(game.cur_enemy_index), game) & 1 != 0
-            || Gripper_Func_2(word!(game.cur_enemy_index), game) & 1 != 0
-        {
-            let v3: i32 = (*E).var_E as i32 >> 1;
-            let mut v4: u16 = if ((*E).var_D & 0x8000) == 0 {
-                (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 2) as isize);
-                (*E).var_C = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 3) as isize);
-                addr_kGripper_Ilist_E19B as u16
-            } else {
-                (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, v3 as isize);
-                (*E).var_C = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1) as isize);
-                addr_kGripper_Ilist_E1AF as u16
-            };
-            enemy_instruction! {[(*E).base]; instruction = v4, timer = 1}
-            (*E).base.timer = 0;
-        }
+        rippers::advance(Kind::Gripper, game);
     };
-    @functions [pub fn (game: &mut Game)];
     [10674968] JetPowerRipper_Init [] {
         rippers::initialize(Kind::JetPowered, game);
     };
