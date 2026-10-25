@@ -89,6 +89,17 @@ runs exactly one game frame per input word. Steps, one commit each:
   frame and which word differs (frame counter, NMI counter, music timer). That is
   measured data, not a guessed offset. Hand routes: one pending pickup/boss per
   commit, each with its segment row; ~1 check/hour is the 18:00 pace.
+  **09:52:** experiment done and reported (PLAN item 1): collapsing the 41 upload
+  reads leaves $05B6 (frame counter) 40 behind at step 9,266 and first gameplay
+  divergence at 9,291 (+25 steps). That is the expected result: the original's NMI
+  really ran 41 times during the upload. **Next A0 commit (one hour, then routes):**
+  give the native upload its elapsed time, not a counter offset: run the NMI-side
+  per-frame work (frame counter, lag counter, whatever the oracle's NMI handler
+  touches while the main loop waits) once per NMI the original took, deriving the NMI
+  count from the upload's size (fit on this upload and at least one other in the
+  capture, numbers in the commit body). Then report the new first divergence and the
+  word that differs. If 9,291 does not read $05B6 or a timer it drives, say what it
+  reads instead; that names the next cause.
 - **A0.4 Replay.** Aligned any% from boot to credits, 0 failures; then 100%
   (222,788 frames) and low%.
 - **A0.5 Map.** Point pending `segments.toml` rows at frame windows of the
@@ -131,6 +142,15 @@ functions and production verify/probe hooks as each family moves; say how many.
 pace. New owned modules still key handlers by ROM address (`0xe713`, `0xe8cd`,
 `0xec1d` via `from_raw`); make them enums/fn values as each family moves, which is
 where the remaining 10 points of ratio are.
+**`sm_91` deleted (52ba836, 09:36 CET); bank ratio 79% (−1,949 legacy / −408
+production over its shared families), again above 70%.** `sm_90` 1,306 lines left
+(84838b5 at 91%). Production fell only 63 this hour against ~260/h needed for 18:00.
+Each remaining `sm_90` commit: ≤70% replacement, plus deletion of dead or duplicated
+production code or verify/probe hooks (615 lines/93 files, flat all morning; count
+them in the body). Owned code still copies 65816 idioms: `x.wrapping_sub(0xa4) &
+0x8000 == 0` is a range test, write it as one; `foreign(|g| unsafe { rom_ptr!(..) })`
+and `write_slice_native(0xa8e, ..)` wrap the bank instead of owning its state.
+Score lines in `B:` commits still carry mojibake (`Â·`, 52ba836): write a plain `·`.
 
 **Waypoints** (Europe/Stockholm; review clock; a miss gets a diagnosis, not a new plan):
 
@@ -152,6 +172,13 @@ Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
+- **2026-10-25 09:52 CET (e6a39a5):** 4 agent commits: A 2 (bd003cd gate-spawn fix +
+  10-frame row, e6a39a5 Wave pickup), B 2 (52ba836 **sm_91 deleted**, 84838b5
+  `B:sm_90`), 0 unlabelled, 0 docs-only, all with `Score:`. Score `checks 26/44 ·
+  legacy 52390 · production 116068 · unsafe 4707 · verification 39047` (last 25 ·
+  52834 · 116131 · 4741 · 39040); warnings 370 (371); verify/probe/observer 615/93
+  (flat). 18:00: checks on pace (8 in 8h), sm_90 and legacy on pace, **production
+  behind** (−63/h vs −260/h). A0 upload experiment reported; next step named. No stall.
 - **2026-10-25 08:52 CET (6361b0e):** 8 agent commits: A 3 (9b8f29c, 61789c0,
   c7cca91), B 5 (`B:sm_91` ×4, `B:sm_90` 745daad), 0 unlabelled, 0 docs-only, all
   with `Score:`. Score `checks 25/44 · legacy 52834 · production 116131 · unsafe 4741
