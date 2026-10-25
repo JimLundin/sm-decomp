@@ -8,6 +8,7 @@ use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
+use crate::ram_map::words as ram;
 
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a4::*;
@@ -475,14 +476,13 @@ pub unsafe fn Crocomire_8EE5(game: &mut Game) {
         }
     }
 }
-pub unsafe fn Crocomire_Func_43(game: &mut Game) {
-    unsafe {
-        let mut v1: u16 = (word!(game.random_number)) & (0x1fu16);
-        if ((word!(game.random_number)) as i16).wrapping_sub(4096) >= 0 {
-            v1 = -(v1 as i32) as u16;
-        }
-        Crocomire_Func_87(EnemyScript::Stop, v1, game);
+fn spawn_random_dust(game: &mut Game) {
+    let random = game.random_number();
+    let mut offset = random & 0x1f;
+    if (random as i16).wrapping_sub(4096) >= 0 {
+        offset = offset.wrapping_neg();
     }
+    spawn_dust(EnemyScript::Stop, offset, game);
 }
 pub unsafe fn Crocomire_Func_49(game: &mut Game) {
     unsafe {
@@ -1012,16 +1012,27 @@ pub unsafe fn Crocomire_Func_70(game: &mut Game) {
         };
     }
 }
-pub unsafe fn Crocomire_Func_87(jp: EnemyScript, a: u16, game: &mut Game) -> EnemyScript {
-    unsafe {
-        let E = Get_Crocomire(0, game);
-        game.eproj_spawn_pt = Point16U {
-            x: (a as i32 + (*E).base.x_pos as i32 + (word!(game.random_number) as i32 & 7)) as u16,
-            y: ((*E).base.y_height as i32 + (*E).base.y_pos as i32 - 16i32) as u16,
-        };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
-        jp
-    }
+fn spawn_dust(jp: EnemyScript, offset: u16, game: &mut Game) -> EnemyScript {
+    game.eproj_spawn_pt = {
+        let runtime = Runtime::new(game);
+        let actor = runtime.resolve_actor(Key::from_legacy(0), AccessMode::Native);
+        let random = runtime.word(ram::random_number) & 7;
+        Point16U {
+            x: (actor.x.whole as u32 + offset as u32 + random as u32) as u16,
+            y: actor.radius.y.wrapping_add(actor.y.whole).wrapping_sub(16),
+        }
+    };
+    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
+    jp
+}
+
+fn walk(k: u16, pixels: i32, game: &mut Game) -> actor_api::MovementResult {
+    actor_api::move_horizontal(
+        &mut Runtime::new(game),
+        Key::from_legacy(k),
+        pixels << 16,
+        actor_api::SlopePolicy::Ignore,
+    )
 }
 pub unsafe fn Crocomire_9B65(game: &mut Game) {
     unsafe {
@@ -1044,8 +1055,8 @@ pub unsafe fn Crocomire_9B86(game: &mut Game) {
         let bits = gameplay_flag_runtime::boss_word_at(area, BossWordOrder::Little, game);
         gameplay_flag_runtime::set_boss_word_le(area, bits | 2, game);
         QueueMusic_Delayed8(6, game);
-        Crocomire_Func_87(EnemyScript::Stop, 0xfff0, game);
-        Crocomire_Func_87(EnemyScript::Stop, 0x10, game);
+        spawn_dust(EnemyScript::Stop, 0xfff0, game);
+        spawn_dust(EnemyScript::Stop, 0x10, game);
         Crocomire_9BB3(game);
     }
 }
@@ -1496,67 +1507,66 @@ crate::game::callback_dispatch! {
         }
         jp
     };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10783995] Crocomire_Instr_11 [jp] { QueueSfx2_Max6(0x74, game); };
     [10784007] Crocomire_Instr_7 [jp] { QueueSfx2_Max6(0x25, game); };
     [10784019] Crocomire_Instr_19 [jp] { QueueSfx2_Max6(0x75, game); };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10784711] Crocomire_Instr_2 [jp] {
-        word! {game; earthquake_type = 4; earthquake_timer = 5; }
+        {
+            let mut runtime = Runtime::new(game);
+            runtime.write_slice_le(ram::earthquake_type, 4);
+            runtime.write_slice_le(ram::earthquake_timer, 5);
+        }
         QueueSfx2_Max6(0x76, game);
     };
     [10784735] Crocomire_Instr_4 [jp] {
-        if ((*Get_Crocomire(0, game)).var_B & 0x800) == 0 {
-            ({ let (actor, amount) = (word!(game.cur_enemy_index), (-4i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 });
+        let hit = Runtime::new(game)
+            .resolve_actor(Key::from_legacy(0), AccessMode::Native).variables[1] & 0x800 != 0;
+        if !hit {
+            walk(game.cur_enemy_index(), -4, game);
         }
     };
-    [10784762] Crocomire_Instr_3 [Crocomire_Instr_4(k, jp, game)] { Crocomire_Func_43(game); };
-    [10784767] Crocomire_Instr_15 [Crocomire_Instr_4(k, jp, game)] { Crocomire_Func_43(game); };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    [10784762 | 10784767] Crocomire_Instr_3 [Crocomire_Instr_4(k, jp, game)] { spawn_random_dust(game); };
     [10784797] Crocomire_Instr_16 [] {
-        if ({ let (actor, amount) = (word!(game.cur_enemy_index), (-4i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
-        {
-            (*Get_Crocomire(0, game)).var_C = 14;
+        if walk(game.cur_enemy_index(), -4, game) == actor_api::MovementResult::Blocked {
+            Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |actor| {
+                actor.variables[2] = 14;
+            });
             EnemyScript::jump(addr_kCrocomire_Ilist_BF3C as u16)
         } else {
-            let mut v2: u16 = 32;
-            if word!(game.random_number) as i32 - 2048i32 & 0x8000 == 0 {
-                v2 = -32i32 as u16;
-            }
-            Crocomire_Func_87(
-                jp,
-                (v2 as i32 + (word!(game.random_number) as i32 & 0xf)) as u16,
-                game,
-            )
+            let random = game.random_number();
+            let side = if (random as i16).wrapping_sub(2048) >= 0 {
+                (-32i16) as u16
+            } else {
+                32
+            };
+            spawn_dust(jp, side.wrapping_add(random & 0xf), game)
         }
     };
     [10784859] Crocomire_Instr_13 [jp] {
-        let E = Get_Crocomire(0, game);
-        if (((*E).base.x_pos as i32
-            - (*E).base.x_width as i32
-            - 260i32
-            - word!(game.layer1_x_pos) as i32) as i16)
-            < 0
-        {
-            ({ let (actor, amount) = (word!(game.cur_enemy_index), (4i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 });
+        let can_walk = {
+            let runtime = Runtime::new(game);
+            let actor = runtime.resolve_actor(Key::from_legacy(0), AccessMode::Native);
+            ((actor.x.whole as i32 - actor.radius.x as i32 - 260
+                - runtime.word(ram::layer1_x_pos) as i32) as i16) < 0
+        };
+        if can_walk {
+            walk(game.cur_enemy_index(), 4, game);
         }
     };
-    [10784895]
-    Crocomire_Instr_18 [jp] { ({ let (actor, amount) = (k, (4i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }); };
-    [10784911] Crocomire_Instr_12 [Crocomire_Instr_13(k, jp, game)] { Crocomire_Func_43(game); };
-    [10784916] Crocomire_Instr_17 [Crocomire_Instr_18(k, jp, game)] { Crocomire_Func_43(game); };
-    @forward [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10787483] Crocomire_Instr_8 => Crocomire_Func_87(jp, 0xffe0, game);
-    [10787488] Crocomire_Instr_6 => Crocomire_Func_87(jp, 0, game);
-    [10787493] Crocomire_Instr_9 => Crocomire_Func_87(jp, 0xfff0, game);
-    [10787498] Crocomire_Instr_5 => Crocomire_Func_87(jp, 0x10, game);
-    [10787503] Crocomire_Instr_20 => Crocomire_Func_87(jp, 0, game);
-    [10787508] Crocomire_Instr_21 => Crocomire_Func_87(jp, 8, game);
-    [10787513] Crocomire_Instr_22 => Crocomire_Func_87(jp, 0x10, game);
-    [10787518] Crocomire_Instr_23 => Crocomire_Func_87(jp, 0x18, game);
-    [10787523] Crocomire_Instr_24 => Crocomire_Func_87(jp, 0x20, game);
-    [10787528] Crocomire_Instr_10 => Crocomire_Func_87(jp, 0x28, game);
-    [10787533] Crocomire_Instr_25 => Crocomire_Func_87(jp, 0x30, game);
-    [10787538] Crocomire_Instr_26 => Crocomire_Func_87(jp, 0x38, game);
-    [10787543] Crocomire_Instr_27 => Crocomire_Func_87(jp, 0x40, game);
+    [10784895] Crocomire_Instr_18 [jp] { walk(k, 4, game); };
+    [10784911] Crocomire_Instr_12 [Crocomire_Instr_13(k, jp, game)] { spawn_random_dust(game); };
+    [10784916] Crocomire_Instr_17 [Crocomire_Instr_18(k, jp, game)] { spawn_random_dust(game); };
+    @forward [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    [10787483] Crocomire_Instr_8 => spawn_dust(jp, 0xffe0, game);
+    [10787488 | 10787503] Crocomire_Instr_6 => spawn_dust(jp, 0, game);
+    [10787493] Crocomire_Instr_9 => spawn_dust(jp, 0xfff0, game);
+    [10787498 | 10787513] Crocomire_Instr_5 => spawn_dust(jp, 0x10, game);
+    [10787508] Crocomire_Instr_21 => spawn_dust(jp, 8, game);
+    [10787518] Crocomire_Instr_23 => spawn_dust(jp, 0x18, game);
+    [10787523] Crocomire_Instr_24 => spawn_dust(jp, 0x20, game);
+    [10787528] Crocomire_Instr_10 => spawn_dust(jp, 0x28, game);
+    [10787533] Crocomire_Instr_25 => spawn_dust(jp, 0x30, game);
+    [10787538] Crocomire_Instr_26 => spawn_dust(jp, 0x38, game);
+    [10787543] Crocomire_Instr_27 => spawn_dust(jp, 0x40, game);
 }
