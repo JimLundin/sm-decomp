@@ -1,4 +1,5 @@
 //! Legacy content and effect adapters for owned player transitions.
+use crate::game::player_transitions::xray::{self, BeamPhase};
 use crate::{
     game::{
         player_transitions::{
@@ -393,6 +394,33 @@ pub(crate) fn finish_xray(game: &mut crate::game_state::Game) {
 }
 
 impl Runtime<'_> {
+    pub(crate) fn advance_xray_beam(&mut self, phase: BeamPhase) {
+        use crate::ram_map::words as ram;
+        if self.inputs().run_button & self.inputs().held == 0 {
+            let demo = &mut self.session_mut().player.demo;
+            demo.pre_action = if phase == BeamPhase::Full {
+                demo.pre_action.wrapping_add(1)
+            } else {
+                3
+            };
+            return;
+        }
+        if phase == BeamPhase::Widening {
+            xray::widen(&mut self.session_mut().player.demo);
+        } else if phase == BeamPhase::Full {
+            let up = self.word(ram::button_config_up) & self.inputs().held != 0;
+            if up || self.word(ram::button_config_down) & self.inputs().held != 0 {
+                let player = &mut self.session_mut().player;
+                xray::steer(&mut player.transitions.xray_angle, player.demo.held, up);
+            }
+        }
+        self.foreign(|game| unsafe { crate::game::sm_88::CalculateXrayHdmaTable(game) });
+        if phase == BeamPhase::Initial {
+            let demo = &mut self.session_mut().player.demo;
+            demo.pre_action = demo.pre_action.wrapping_add(1);
+        }
+    }
+
     fn handle_xray_input(&mut self) {
         use crate::ram_map::words as ram;
         let binding = if self.session().player.movement_and_facing as u8 == 4 {

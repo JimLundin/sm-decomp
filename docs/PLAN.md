@@ -46,17 +46,17 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Measured wait-entry inputs align 9,266 original TAS steps. Options/door timing
    fixes requalified all 24 previously runnable required recipes. At step 9,266,
    original audio upload reads input during 41 acknowledged NMIs; native upload
-   has no elapsed video clock. The review's measured read-collapse experiment
-   leaves a 40-count difference at RAM $05B6 on step 9,266 and first gameplay
-   divergence at 9,291. A0 remains open; do not offset counters or mask differences.
+   has no elapsed video clock. Read-collapse leaves $05B6 forty counts behind at
+   step 9,266; the old 9,291 gameplay comparison mixed observation phases. Current:
+   one-hour elapsed-NMI experiment, with input mapping from measured wait boundaries.
    Under the accepted fallback, Power Bomb pickup and the closing-gate regression
-   pass. Wave pickup passes; current: Crocomire. Regenerate incompatible checkpoints from boot
-   and preserve the checked navigation build.
+   pass. Wave pickup passes; Crocomire navigation is frozen in Bubble Mountain.
+   Regenerate incompatible checkpoints from boot; preserve the checked navigation build.
 2. **Current - lane B bank retirement.** `sm_94` and `sm_91` are deleted.
    Player input, demos, suits, equipment, commands, initialization, Mother Brain
    reactions, X-ray and direct damage use owned state. Natural X-ray, Gravity,
    boss and grapple movie coverage remains incomplete despite bounded checks.
-   Cannon and scripted movement are owned; sm_90 has 1,176 lines left. Next: bomb jump.
+   X-ray steering is owned; sm_88 has 1,543 lines left. sm_90 has 1,176: bomb jump next.
    Use named enum/function handlers as families move; raw identities stay at
    compatibility boundaries. Full u16 unknown values and failure timing survive.
    Report added production and deleted legacy together; growth needs a reason.

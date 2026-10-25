@@ -98,3 +98,55 @@ pub(crate) fn turn(h: &mut impl Host, opposite_direction_held: bool) {
     }
     super::finish_pose_change(h);
 }
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum BeamPhase {
+    Initial,
+    Widening,
+    Full,
+}
+
+/// Keep the original wide equality tests and signed wrapping carry/borrow tests.
+pub(crate) fn steer(angle: &mut u16, width: u16, up: bool) {
+    if (angle.wrapping_sub(128) & 0x8000 != 0) == up {
+        let limit = if up { 0 } else { 128 };
+        let gap = i32::from(*angle) - i32::from(width);
+        if gap != limit
+            && (((gap - limit) as i16) < 0 || {
+                let borrow = i32::from(*angle == 0);
+                *angle = angle.wrapping_sub(1);
+                ((i32::from(*angle) - i32::from(width) - borrow - limit) as i16) < 0
+            })
+        {
+            *angle = width.wrapping_add(limit as u16);
+        }
+    } else {
+        let limit = if up { 256 } else { 128 };
+        let sum = i32::from(width) + i32::from(*angle);
+        if sum != limit
+            && ((sum - limit) as i16 >= 0 || {
+                let carried = width
+                    .wrapping_add(*angle)
+                    .wrapping_add(u16::from(*angle == u16::MAX));
+                *angle = angle.wrapping_add(1);
+                carried != limit as u16 && (carried as i16).wrapping_sub(limit as i16) >= 0
+            })
+        {
+            *angle = (limit as u16).wrapping_sub(width);
+        }
+    }
+}
+
+pub(crate) fn widen(demo: &mut super::demo::DemoInput) {
+    let speed = ((u32::from(demo.delay) << 16) | u32::from(demo.program)).wrapping_add(2048);
+    demo.program = speed as u16;
+    demo.delay = (speed >> 16) as u16;
+    let width = ((u32::from(demo.held) << 16) | u32::from(demo.pressed)).wrapping_add(speed);
+    demo.pressed = width as u16;
+    demo.held = (width >> 16) as u16;
+    if demo.held.wrapping_sub(11) & 0x8000 == 0 {
+        demo.pressed = 0;
+        demo.held = 10;
+        demo.pre_action = demo.pre_action.wrapping_add(1);
+    }
+}

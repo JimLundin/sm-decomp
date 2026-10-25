@@ -2,6 +2,7 @@ use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, A
 use crate::game::beam_windows::calculate_xray_window;
 use crate::game::liquid_effects;
 use crate::game::music::{HandleMusicQueue, QueueMusic_Delayed8};
+use crate::game::player_transitions::xray::BeamPhase;
 pub use crate::game::prelude::*;
 use crate::game::scrolling_sky;
 use crate::game::session_runtime::Runtime;
@@ -411,120 +412,6 @@ pub unsafe fn HdmaobjInstr_Sleep(k: u16, hdp: *const u8, game: &mut Game) -> *co
         null::<u8>()
     }
 }
-pub unsafe fn HdmaobjPreInstr_XrayFunc0_NoBeam(k: u16, game: &mut Game) {
-    unsafe {
-        if (word!(game.button_config_run_b) & word!(game.joypad1_lastkeys)) != 0 {
-            CalculateXrayHdmaTable(game);
-            word!(game.demo_input_pre_instr += 1);
-        } else {
-            word!(game.demo_input_pre_instr = 3);
-        };
-    }
-}
-pub unsafe fn HdmaobjPreInstr_XrayFunc1_BeamWidening(k: u16, game: &mut Game) {
-    unsafe {
-        if (word!(game.button_config_run_b) & word!(game.joypad1_lastkeys)) != 0 {
-            words!(game.demo_input_instr_timer, demo_input_instr_ptr += 2048);
-            words!(
-                game.demo_input,
-                demo_input_new += words!(game.demo_input_instr_timer, demo_input_instr_ptr)
-            );
-            if word!(game.demo_input) as i32 - 11i32 & 0x8000 == 0 {
-                word! {game; demo_input_new = 0; demo_input = 10; }
-                word!(game.demo_input_pre_instr += 1);
-            }
-            CalculateXrayHdmaTable(game);
-        } else {
-            word!(game.demo_input_pre_instr = 3);
-        };
-    }
-}
-pub unsafe fn HdmaobjPreInstr_XrayFunc2_FullBeam(k: u16, game: &mut Game) {
-    unsafe {
-        if (word!(game.button_config_run_b) & word!(game.joypad1_lastkeys)) != 0 {
-            HandleMovingXrayUpDown(game);
-            CalculateXrayHdmaTable(game);
-        } else {
-            word!(game.demo_input_pre_instr += 1);
-        };
-    }
-}
-pub unsafe fn HandleMovingXrayUpDown(game: &mut Game) {
-    unsafe {
-        if (word!(game.button_config_up) & word!(game.joypad1_lastkeys)) != 0 {
-            MoveXrayUp(game);
-        } else if (word!(game.button_config_down) & word!(game.joypad1_lastkeys)) != 0 {
-            MoveXrayDown(game);
-        }
-    }
-}
-pub unsafe fn MoveXrayUp(game: &mut Game) {
-    unsafe {
-        if word!(game.xray_angle) as i32 - 128i32 & 0x8000 != 0 {
-            if word!(game.xray_angle) != word!(game.demo_input)
-                && (((word!(game.xray_angle)) as i16).wrapping_sub((word!(game.demo_input)) as i16)
-                    < 0
-                    || {
-                        let mut v0: bool = word!(game.xray_angle) != 0;
-                        word!(game.xray_angle -= 1);
-                        ((word!(game.xray_angle) as i32
-                            - (!v0 as i32 + word!(game.demo_input) as i32))
-                            as i16)
-                            < 0
-                    })
-            {
-                word!(game.xray_angle = word!(game.demo_input));
-            }
-        } else if (word!(game.demo_input) as i32 + word!(game.xray_angle) as i32) != 256
-            && (((word!(game.demo_input) as i32 + word!(game.xray_angle) as i32 - 256i32) as i16)
-                >= 0
-                || {
-                    let mut v1: i16 = ((words!(game.demo_input, xray_angle))
-                        .wrapping_add(words!((word!(game.xray_angle), 1u16)))
-                        >> 16) as i16;
-                    word!(game.xray_angle += 1);
-                    v1 != 256 && (v1).wrapping_sub(256) >= 0
-                })
-        {
-            word!(game.xray_angle = (256u16).wrapping_sub(word!(game.demo_input)));
-        }
-    }
-}
-pub unsafe fn MoveXrayDown(game: &mut Game) {
-    unsafe {
-        if word!(game.xray_angle) as i32 - 128i32 & 0x8000 != 0 {
-            if (word!(game.demo_input) as i32 + word!(game.xray_angle) as i32) != 128
-                && (((word!(game.demo_input) as i32 + word!(game.xray_angle) as i32 - 128i32)
-                    as i16)
-                    >= 0
-                    || {
-                        let mut v0: i16 = ((words!(game.demo_input, xray_angle))
-                            .wrapping_add(words!((word!(game.xray_angle), 1u16)))
-                            >> 16) as i16;
-                        word!(game.xray_angle += 1);
-                        v0 != 128 && (v0).wrapping_sub(128) >= 0
-                    })
-            {
-                word!(game.xray_angle = (128u16).wrapping_sub(word!(game.demo_input)));
-            }
-        } else if (word!(game.xray_angle) as i32 - word!(game.demo_input) as i32) != 128
-            && (((word!(game.xray_angle) as i32 - word!(game.demo_input) as i32 - 128i32) as i16)
-                < 0
-                || {
-                    let mut v1: bool = word!(game.xray_angle) != 0;
-                    word!(game.xray_angle -= 1);
-                    word!(game.xray_angle) as i32 - (!v1 as i32 + word!(game.demo_input) as i32)
-                        != 128
-                        && ((word!(game.xray_angle) as i32
-                            - (!v1 as i32 + word!(game.demo_input) as i32)
-                            - 128i32) as i16)
-                            < 0
-                })
-        {
-            word!(game.xray_angle = (word!(game.demo_input)).wrapping_add(128));
-        }
-    }
-}
 pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
     unsafe {
         let mut v0: i16 = if *ram_ptr!(game; 0xa1e) == 4 {
@@ -571,11 +458,14 @@ pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
         word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(255));
     }
 }
-static kHdmaobjPreInstr_XrayFuncs: [Func_Y_V; 6] = callback_table! { nonnull Func_Y_V;
-    HdmaobjPreInstr_XrayFunc0_NoBeam, HdmaobjPreInstr_XrayFunc1_BeamWidening,
-    HdmaobjPreInstr_XrayFunc2_FullBeam, restore_left,
-    restore_right, finish_restore,
-};
+static kHdmaobjPreInstr_XrayFuncs: [Func_Y_V; 6] = [
+    |_, game| Runtime::new(game).advance_xray_beam(BeamPhase::Initial),
+    |_, game| Runtime::new(game).advance_xray_beam(BeamPhase::Widening),
+    |_, game| Runtime::new(game).advance_xray_beam(BeamPhase::Full),
+    restore_left,
+    restore_right,
+    finish_restore,
+];
 pub unsafe fn HdmaobjPreInstr_Xray(k: u16, game: &mut Game) {
     unsafe {
         let mut v1: i16 = 4096;
@@ -1570,9 +1460,9 @@ crate::game::address_dispatch! {
         call (k, game); default { Unreachable(game); };
     {
         8491739 => [()]; 8946872 => [()]; 10785852 => [()]; 9556607 => xray_background::setup_blending;
-        8947439 => HdmaobjPreInstr_Xray; 8947506 => HdmaobjPreInstr_XrayFunc0_NoBeam;
-        8947540 => HdmaobjPreInstr_XrayFunc1_BeamWidening;
-        8947627 => HdmaobjPreInstr_XrayFunc2_FullBeam;
+        8947439 => HdmaobjPreInstr_Xray; 8947506 => [Runtime::new(game).advance_xray_beam(BeamPhase::Initial)];
+        8947540 => [Runtime::new(game).advance_xray_beam(BeamPhase::Widening)];
+        8947627 => [Runtime::new(game).advance_xray_beam(BeamPhase::Full)];
         8948020 => restore_left;
         8948154 => restore_right;
         8948232 => finish_restore;
