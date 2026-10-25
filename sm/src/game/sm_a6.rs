@@ -596,7 +596,7 @@ pub unsafe fn FakeKraid_9C50(game: &mut Game) {
     }
 }
 
-pub unsafe fn CeresRidley_Func_1(game: &mut Game) {
+pub fn CeresRidley_Func_1(game: &mut Game) {
     {
         if word!(game.random_number) >= 0xff00 {
             word!(game.tilemap_stuff[15] = ((word!(game.random_number) as i32 & 0xf) + 8) as u16);
@@ -867,7 +867,7 @@ pub unsafe fn Ridley_Func_23(game: &mut Game) -> u8 {
         v0
     }
 }
-pub unsafe fn Ridley_Func_24(game: &mut Game) {
+pub fn Ridley_Func_24(game: &mut Game) {
     {
         word! { game, 1; tilemap_stuff[0], tilemap_stuff[10] }
     }
@@ -2388,7 +2388,7 @@ unsafe fn Ridley_Func_40_Carry(game: &mut Game) -> u8 {
 unsafe fn Ridley_Func_40_Sign(game: &mut Game) -> u8 {
     unsafe { ((byte_A6BD04[*ram_ptr!(game; 0xa1f) as usize] & 0x40) != 0) as u8 }
 }
-pub unsafe fn Ridley_Func_41(game: &mut Game) -> u8 {
+pub fn Ridley_Func_41(game: &mut Game) -> u8 {
     ((word!(game.samus_y_pos) as i32 - 352i32 & 0x8000) == 0) as u8
 }
 pub unsafe fn Ridley_Func_48(rect: Rect16U, game: &mut Game) -> u8 {
@@ -2885,7 +2885,7 @@ pub unsafe fn Ridley_Func_77(game: &mut Game) {
         word!(game.tilemap_stuff[12] = crate::rtl::rom_table_word!(game, 0xa6cc18, v0 as isize));
     }
 }
-pub unsafe fn Ridley_Func_78(game: &mut Game) -> u8 {
+pub fn Ridley_Func_78(game: &mut Game) -> u8 {
     {
         ((word!(game.tilemap_stuff[76])
             & (word!(game.tilemap_stuff[66])
@@ -3270,10 +3270,10 @@ pub unsafe fn Ridley_Func_93(j: u16, k: u16, game: &mut Game) {
         }
     }
 }
-crate::forward_calls! { pub unsafe fn (game: &mut Game);
+crate::forward_calls! { pub fn (game: &mut Game);
     Ridley_Func_95 => Ridley_Func_D3DC(0x8000, game);
 }
-pub unsafe fn Ridley_Func_D3DC(a: u16, game: &mut Game) {
+pub fn Ridley_Func_D3DC(a: u16, game: &mut Game) {
     {
         word! {game; tilemap_stuff[16] = a; tilemap_stuff[26] = a; tilemap_stuff[36] = a;
         tilemap_stuff[46] = a; tilemap_stuff[56] = a; tilemap_stuff[66] = a;
@@ -3819,7 +3819,7 @@ pub unsafe fn Ridley_Func_122(rect: Rect16U, game: &mut Game) -> u16 {
         result
     }
 }
-pub unsafe fn Ridley_Func_124(rect: Rect16U, game: &mut Game) -> u8 {
+pub fn Ridley_Func_124(rect: Rect16U, game: &mut Game) -> u8 {
     {
         let v0: u16 = abs16((word!(game.samus_x_pos)).wrapping_sub(rect.x));
         let mut v1: bool = v0 < word!(game.samus_x_radius);
@@ -3934,7 +3934,7 @@ crate::game::callback_dispatch! {
         10940404 => [()];
     }
 }
-pub unsafe fn CeresDoor_Func_6b(game: &mut Game) {
+pub fn CeresDoor_Func_6b(game: &mut Game) {
     {
         if word!(game.ceres_status) != 0 {
             word!(game.ceres_status = 0x8000);
@@ -3981,14 +3981,14 @@ crate::game::callback_dispatch! {
             );
         }
     };
-    @forward [pub unsafe fn (game: &mut Game)];
+    @forward [pub fn (game: &mut Game)];
     [10942315] CeresDoor_Func_2 => CeresDoor_F773(0x14, game);
     [10942320] CeresDoor_Func_3 => CeresDoor_F773(0x1d, game);
     @external {
         10942397 => [CeresDoor_Func_5(k, game)]; 10942428 => [CeresDoor_Func_6(k, game)];
     }
 }
-pub unsafe fn CeresDoor_F773(j: u16, game: &mut Game) {
+pub fn CeresDoor_F773(j: u16, game: &mut Game) {
     {
         if word!(game.ceres_status) >= 2 && word!(game.earthquake_timer) == 0 {
             if (word!(game.random_number) & 0xfff) < 0x80 {
