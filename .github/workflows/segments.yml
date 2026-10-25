@@ -102,6 +102,21 @@ jobs:
               unknown = set(wanted) - known
               if unknown:
                   raise SystemExit(f'unknown rows: {sorted(unknown)}')
+          def seed_bundle(row):
+              # Match exact seed identities, not capture prefixes: pickups and the
+              # general bundle contain different subsets of 100-input-phase.
+              seed = row.get('seed')
+              if seed in ('100-input-phase:19', '100-input-phase:37', '100-input-phase:74',
+                          '100-input-phase:80', '100-input-phase:85', '100-input-phase:98',
+                          '100-input-phase:104', '100-input-phase:163', '100-input-phase:173',
+                          '100-input-phase:179'):
+                  return ('seeds-v1-pickups-fe1c7f3a81e05489.tar.gz.enc', 'fe1c7f3a81e05489a5785970b7fd98b4647ae85e30009ee9f5e895759167a678')
+              if seed == 'golden-input-phase:1':
+                  return ('seeds-v1-golden-3b895ada4be8fcb4.tar.gz.enc', '3b895ada4be8fcb4e1b77941f0f4c4530150c626588b53d2e8cf5c2dc2cbeb0e')
+              if seed == '100-credits:336':
+                  return ('seeds-v1-credits-42b93bf0bf83aba1.tar.gz.enc', '42b93bf0bf83aba1dd10fc24ca7d5f5b639c65e501e06ce2239c7c638c2a0ce8')
+              return ('seeds-v1-spore-6b6b2c8fd70bc713.tar.gz.enc', '6b6b2c8fd70bc7139410cd576f015dfcb361360ae74cf2196a62d7edfbda7835')
+
           groups, skipped = {}, []
           for r in rows:
               if wanted and r['id'] not in wanted:
@@ -110,7 +125,8 @@ jobs:
                   skipped.append((r['id'], 'pending'))
               else:
                   kind = 'seed' if 'seed' in r else ('route' if r['inputs'].startswith('corpus-') else 'captured')
-                  groups.setdefault((kind, r.get('seed', r['inputs'])), []).append(r)
+                  identity = seed_bundle(r)[0] if kind == 'seed' else r['inputs']
+                  groups.setdefault((kind, identity), []).append(r)
           shards = []
           for (kind, identity), members in sorted(groups.items()):
               members.sort(key=lambda r: r.get('start_frame', 0))
@@ -118,8 +134,11 @@ jobs:
               for i in range(0, len(members), width):
                   chunk = members[i:i + width]
                   inputs = chunk[0]['inputs']
-                  shards.append({'name': f"{kind}-{identity.replace(':', '-').removesuffix('.inputs')}-{i // width}",
+                  asset, digest = seed_bundle(chunk[0]) if kind != 'route' else ('', '')
+                  name = identity.removeprefix('seeds-v1-').split('-')[0] if kind == 'seed' else identity.removesuffix('.inputs')
+                  shards.append({'name': f"{kind}-{name}-{i // width}",
                                  'kind': kind, 'inputs': inputs,
+                                 'seed_asset': asset, 'seed_sha256': digest,
                                  'route': inputs.removeprefix('corpus-').removesuffix('.inputs') if kind == 'route' else '',
                                  'segments': ' '.join(r['id'] for r in chunk)})
           if not shards:
@@ -258,6 +277,8 @@ jobs:
       - name: Prepare ROM and selected corpus inputs
         env:
           KIND: ${{ matrix.kind }}
+          SEED_ASSET: ${{ matrix.seed_asset }}
+          SEED_SHA256: ${{ matrix.seed_sha256 }}
           SEGMENTS: ${{ matrix.segments }}
           ROUTE: ${{ matrix.route }}
           INPUTS: ${{ matrix.inputs }}
@@ -319,24 +340,7 @@ jobs:
           pathlib.Path('rom/sm.smc').write_bytes(rom)
           if os.environ['KIND'] != 'route':
               bundle = pathlib.Path(os.environ['RUNNER_TEMP']) / 'seeds-v1.tar.gz.enc'
-              rows = tomllib.loads(pathlib.Path('movies/segments.toml').read_text())['segment']
-              selected = [row for row in rows if row['id'] in os.environ['SEGMENTS'].split()]
-              seeded_pickups = all(row.get('seed') in (
-                  '100-input-phase:19', '100-input-phase:37', '100-input-phase:74',
-                  '100-input-phase:80', '100-input-phase:85', '100-input-phase:98',
-                  '100-input-phase:104', '100-input-phase:163', '100-input-phase:173',
-                  '100-input-phase:179')
-                  for row in selected)
-              golden = all(row.get('seed') == 'golden-input-phase:1' for row in selected)
-              credits = all(row.get('seed') == '100-credits:336' for row in selected)
-              asset, digest = (
-                  ('seeds-v1-pickups-fe1c7f3a81e05489.tar.gz.enc', 'fe1c7f3a81e05489a5785970b7fd98b4647ae85e30009ee9f5e895759167a678')
-                  if seeded_pickups else
-                  ('seeds-v1-golden-3b895ada4be8fcb4.tar.gz.enc', '3b895ada4be8fcb4e1b77941f0f4c4530150c626588b53d2e8cf5c2dc2cbeb0e')
-                  if golden else
-                  ('seeds-v1-credits-42b93bf0bf83aba1.tar.gz.enc', '42b93bf0bf83aba1dd10fc24ca7d5f5b639c65e501e06ce2239c7c638c2a0ce8')
-                  if credits else
-                  ('seeds-v1-spore-6b6b2c8fd70bc713.tar.gz.enc', '6b6b2c8fd70bc7139410cd576f015dfcb361360ae74cf2196a62d7edfbda7835'))
+              asset, digest = os.environ['SEED_ASSET'], os.environ['SEED_SHA256']
               url = 'https://github.com/JimLundin/sm-decomp/releases/download/ci-data/' + asset
               urllib.request.urlretrieve(url, bundle)
               command = [sys.executable, 'tools/ci_seed_data.py', 'restore', str(bundle),
