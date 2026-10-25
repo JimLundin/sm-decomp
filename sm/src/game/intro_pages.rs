@@ -20,7 +20,6 @@ use super::sm_8b::{
     addr_kCinematicSpriteObjectDef_8BCE73, addr_kCinematicSpriteObjectDef_8BCE79,
     addr_kCinematicSpriteObjectDef_8BCF27,
 };
-use super::sm_80::HandleFadeOut;
 use super::visual_runtime::initialize_intro_crossfade;
 use crate::game::music::QueueMusic_Delayed8;
 use crate::game_state::Game;
@@ -360,7 +359,7 @@ pub(super) fn enable_text(j: u16, game: &mut Game) -> u16 {
 
 pub(super) unsafe fn fade_out_to_ceres(game: &mut Game) {
     unsafe {
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x51) == 0x80 {
             crate::game::display_refresh::enable(true, game);
             word! { game, 0;

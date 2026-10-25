@@ -2,9 +2,7 @@
 use crate::game::constants::{bank_81::*, bank_82::*};
 use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
-use crate::game::sm_80::{
-    HandleFadeOut, LoadFromLoadStation, LoadMirrorOfExploredMapTiles, QueueSfx1_Max6, ScreenOff,
-};
+use crate::game::sm_80::{LoadFromLoadStation, LoadMirrorOfExploredMapTiles, QueueSfx1_Max6};
 use crate::game::sm_82::{
     AdvanceGradualColorChangeOfPalette, DisplayMapElevatorDestinations, DrawFileSelectMapIcons,
     DrawMapScrollArrowAndCheckToScroll, DrawRoomSelectMap, MapScrolling,
@@ -35,7 +33,7 @@ pub(crate) unsafe fn advance(game: &mut Game) {
 unsafe fn fade_to_options(game: &mut Game) {
     unsafe {
         draw_area_labels(game);
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if (game.g_ram[0x51] & 0xf) == 0 {
             word! {game; game_state = kGameState_2_GameOptionsMenu as u16; menu_index = 0; }
         }
@@ -551,7 +549,7 @@ unsafe fn fade_room(game: &mut Game) {
     unsafe {
         DrawFileSelectMapIcons(game);
         DisplayMapElevatorDestinations(game);
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if (game.g_ram[0x51] & 0xf) == 0 {
             word!(game.menu_index += 1);
             set_native_word(0xf78 + core::mem::offset_of!(EnemyData, x_pos), 32, game);
@@ -559,14 +557,12 @@ unsafe fn fade_room(game: &mut Game) {
     }
 }
 unsafe fn start_game(game: &mut Game) {
-    unsafe {
-        let timer = 0xf78 + core::mem::offset_of!(EnemyData, x_pos);
-        set_native_word(timer, native_word(timer, game).wrapping_sub(1), game);
-        if native_word(timer, game) == 0 {
-            ScreenOff(game);
-            word!(game.game_state += 1);
-            word!(game.menu_index = 0);
-        }
+    let timer = 0xf78 + core::mem::offset_of!(EnemyData, x_pos);
+    set_native_word(timer, native_word(timer, game).wrapping_sub(1), game);
+    if native_word(timer, game) == 0 {
+        crate::game::display_refresh::set_blank(true, game);
+        word!(game.game_state += 1);
+        word!(game.menu_index = 0);
     }
 }
 fn clear_room(game: &mut Game) {

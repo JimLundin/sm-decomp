@@ -6,9 +6,7 @@ use crate::game::constants::bank_81::{
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8};
 use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
-use crate::game::sm_80::{
-    HandleFadeIn, HandleFadeOut, QueueSfx1_Max6, QueueSfx3_Max6, ScreenOff, ScreenOn,
-};
+use crate::game::sm_80::{QueueSfx1_Max6, QueueSfx3_Max6};
 use crate::game::sm_82::HandleGameOverBabyMetroid;
 use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled, spawn_hdma};
 use crate::game::{menu_tilemap, save_slots};
@@ -25,11 +23,11 @@ pub(crate) unsafe fn advance(game: &mut Game) {
 
 unsafe fn prepare(game: &mut Game) {
     unsafe {
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if game.g_ram[0x51] & 0xf != 0 {
             return;
         }
-        ScreenOff(game);
+        crate::game::display_refresh::set_blank(true, game);
         QueueSfx3_Max6(1, game);
         set_hdma_enabled(false, game);
         clear_hdma(game);
@@ -74,7 +72,7 @@ unsafe fn initialize(game: &mut Game) {
         for (register, script) in [(0x32, 0x927d), (0x31, 0x928d)] {
             spawn_hdma(0x81, &SpawnHdmaObject_Args::new(0, register, script), game);
         }
-        ScreenOn(game);
+        crate::game::display_refresh::set_blank(false, game);
         word!(game.menu_index += 1);
         word! { game, 0; screen_fade_delay, screen_fade_counter, file_select_map_area_index }
         word! {game; eproj_id[5] = 40; eproj_id[10] = 160; }
@@ -89,13 +87,13 @@ fn wait_for_music(game: &mut Game) {
 }
 
 crate::forward_calls! { unsafe fn (game: &mut Game);
-    fade_in => fade(HandleFadeIn, 15, game);
-    fade_to_map => fade(HandleFadeOut, 0, game);
+    fade_in => fade(true, 15, game);
+    fade_to_map => fade(false, 0, game);
 }
-unsafe fn fade(step: fn(&mut Game), brightness: u8, game: &mut Game) {
+unsafe fn fade(fade_in: bool, brightness: u8, game: &mut Game) {
     unsafe { HandleGameOverBabyMetroid(game) };
     sprite_output::menu_selection(game);
-    step(game);
+    crate::game::display_refresh::fade(fade_in, game);
     if game.g_ram[0x51] & 0xf == brightness {
         word!(game.menu_index += 1);
     }
@@ -140,7 +138,7 @@ unsafe fn load_map(game: &mut Game) {
 unsafe fn fade_to_title(game: &mut Game) {
     sprite_output::menu_selection(game);
     unsafe { HandleGameOverBabyMetroid(game) };
-    HandleFadeOut(game);
+    crate::game::display_refresh::fade(false, game);
     if game.g_ram[0x51] & 0xf == 0 {
         game.request_reset();
     }

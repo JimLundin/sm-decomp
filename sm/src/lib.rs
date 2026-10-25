@@ -409,6 +409,7 @@ pub mod game {
     pub(crate) mod player_transitions;
     pub(crate) mod player_update;
 
+    pub(crate) mod boot;
     pub(crate) mod controller_input;
     pub(crate) mod display_refresh;
     pub(crate) mod escape_timer;

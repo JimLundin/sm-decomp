@@ -20,7 +20,6 @@ use crate::game::player_update::minimap;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_80::{
     GraphicsAsset, NextRandom, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx2_Max15, QueueSfx3_Max6,
-    ScreenOff, ScreenOn,
 };
 use crate::game::sm_82::AdvancePaletteFade_BgPalette6;
 use crate::game::sprite_effect_runtime::create_sprite;
@@ -861,7 +860,7 @@ crate::forward_calls! { pub unsafe fn (game: &mut Game);
 }
 pub unsafe fn UnpauseHook_Kraid_IsDead(game: &mut Game) -> CoroutineRet {
     unsafe {
-        ScreenOff(game);
+        crate::game::display_refresh::set_blank(true, game);
         GraphicsAsset::VramWords(
             0xa7a716,
             ((16 * (*ram_ptr!(game; 0x5d) as i32 & 0xf) + 63) as u8 as u16) << 8,
@@ -875,7 +874,7 @@ pub unsafe fn UnpauseHook_Kraid_IsDead(game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn UnpauseHook_Kraid_IsAlive(game: &mut Game) -> CoroutineRet {
     unsafe {
-        ScreenOff(game);
+        crate::game::display_refresh::set_blank(true, game);
         GraphicsAsset::VramWords(
             0x7e5000,
             ((*ram_ptr!(game; 0x5d)).wrapping_add(62) as u16) << 8,
@@ -894,7 +893,7 @@ pub unsafe fn Kraid_TransferTopHalfToVram(game: &mut Game) {
             0x800,
         )
         .load(game);
-        ScreenOn(game);
+        crate::game::display_refresh::set_blank(false, game);
     }
 }
 pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
@@ -903,7 +902,7 @@ pub unsafe fn Kraid_UnpauseHook_IsSinking(game: &mut Game) -> CoroutineRet {
         's_100: {
             let mut queue_transfer = match *_state_variable_ as i32 {
                 0 => {
-                    ScreenOff(game);
+                    crate::game::display_refresh::set_blank(true, game);
                     GraphicsAsset::VramWords(
                         0x7e5000,
                         ((*ram_ptr!(game; 0x5d)).wrapping_add(62) as u16) << 8,

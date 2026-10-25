@@ -9,6 +9,40 @@ use crate::rtl::{
     WBGLOG, WH0, WH1, WH2, WH3, WOBJLOG, WOBJSEL, WriteReg, WriteRegWord,
 };
 
+/// Set the forced-blank mirror bit for the next display refresh.
+pub(crate) fn set_blank(blank: bool, game: &mut Game) {
+    game.g_ram[0x51] = game.g_ram[0x51] & 0x7f | if blank { 0x80 } else { 0 };
+}
+
+pub(crate) fn fade(fade_in: bool, game: &mut Game) {
+    let remaining = word!(game.screen_fade_counter).wrapping_sub(1);
+    let due = (remaining as i16) < 0;
+    word!(
+        game.screen_fade_counter = if due {
+            word!(game.screen_fade_delay)
+        } else {
+            remaining
+        }
+    );
+    if !due {
+        return;
+    }
+    let brightness = game.g_ram[0x51] & 0xf;
+    let next = if fade_in {
+        if brightness == 15 {
+            return;
+        }
+        brightness + 1
+    } else {
+        match brightness {
+            0 => return,
+            1 => 0x80,
+            value => value - 1,
+        }
+    };
+    game.g_ram[0x51] = next;
+}
+
 pub(crate) fn wait(update: bool, game: &mut Game) -> u8 {
     if game.g_ram[0x782] != 0 {
         game.g_ram[0x782] = 0;

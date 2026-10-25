@@ -46,7 +46,7 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 ## Work order
 
-1. **Current - lane A coverage.** All 44 required scenarios have passing local evidence.
+1. **Current - lane A coverage.** 44/44 required scenarios have passing local evidence.
    Golden Torizo passes 1,187 frames, fresh defeat at 1,066 and the full 120-frame tail;
    its normalization and projectile-parameter regressions add 1 and 235 passing frames.
    The original Snes9x seed preserves all five input ports and independently proved
@@ -55,16 +55,16 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
    the combined full corpus are separate obligations, not inferred from this result.
    Next: move authored rows onto original room seeds, then delete their corresponding
    route recipes from tools/movie_inputs.py. Keep current provenance and input guards.
-2. **Current - lane B retirement; reviewer landing order 22:52.** B1's selected run
-   covers the integrated sm_88/sm_a0 deletions and its own sm_81 retirement; land it first.
-   Then rebase B3's sm_8f/sm_b2 deletions, rerun selected rows and land; then rebase M2
-   sm_a8. The duplicate parent run is canceled. Full corpus follows deletion on main.
-   No additional push stacks on unlanded branches beyond those three.
-   B1 continues sm_80 then sm_82, aiming at most 80% replacement size. B2's nine
-   cinematic families are locally qualified; rebase after the parent lands.
-   B3 next takes covered sm_a3 elevators after M2 lands: elevator-traversal,
-   elevator-up and area-tourian; preserve shared room-entry state and callback order.
-   M2 next binds one typed slot view per function and reruns sm_a4/sm_a8 without growth.
+2. **Current - lane B retirement; landing directive, 00:00.** B1 lands the integrated
+   sm_88/sm_a0/sm_81 deletions using its passing hosted rows and only rebase-touched
+   local rows, then B3 lands sm_8f/sm_b2 after its selected rows and smoke;
+   rebase the pending cloud M2 sm_a8 afterward. Full corpus follows deletion on main.
+   B1 continues sm_80 then sm_82; B2's eleven cinematic families are being composed.
+   These non-enemy banks aim at most 80% replacement size. B3 takes covered sm_a2
+   Bouncing Goofballs, then sm_a3. Windows M becomes B4 sm_a8 then sm_b3 after M2 lands.
+   No further in-place bank codemods; cloud M moves to unsafe outside bank files.
+   A2 seeds authored rows, then batches hosted shards; B5/B6 cloud boss queues start now.
+   No new Windows B family starts until B1 and B3 are on main.
    RAM remains authoritative; bank moves alone do not establish owned Session state.
    Preserve full identities, ordered failures/effects, native/LE access and ROM provenance.
    BG2 consolidation still needs scroll_tiles.row.bg2. Reject prototype 42c59cb's

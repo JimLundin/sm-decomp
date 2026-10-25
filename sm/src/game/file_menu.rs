@@ -11,10 +11,7 @@ use crate::game::menu_tilemap::{self, main_menu as restore_main};
 use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
-use crate::game::sm_80::{
-    HandleFadeIn, HandleFadeOut, LoadMirrorOfExploredMapTiles, QueueSfx1_Max6, QueueSfx3_Max6,
-    ScreenOff,
-};
+use crate::game::sm_80::{LoadMirrorOfExploredMapTiles, QueueSfx1_Max6, QueueSfx3_Max6};
 use crate::game::sm_82::{
     DrawBorderAroundDataClearMode, DrawBorderAroundDataCopyMode, DrawBorderAroundSamusData,
 };
@@ -47,11 +44,11 @@ pub(crate) unsafe fn advance(game: &mut Game) {
 }
 unsafe fn prepare(game: &mut Game) {
     unsafe {
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if (game.g_ram[0x51] & 0xf) != 0 {
             return;
         }
-        ScreenOff(game);
+        crate::game::display_refresh::set_blank(true, game);
         QueueSfx3_Max6(1, game);
         set_hdma_enabled(false, game);
         clear_hdma(game);
@@ -67,7 +64,7 @@ fn fade_to_options(game: &mut Game) {
     sprite_output::menu_selection(game);
     DrawBorderAroundSamusData(game);
     sprite_output::file_helmets(false, game);
-    HandleFadeOut(game);
+    crate::game::display_refresh::fade(false, game);
     if (game.g_ram[0x51] & 0xf) == 0 {
         word! {game; game_state = kGameState_2_GameOptionsMenu as u16; menu_index = 0; }
         word_transfers!(game, ascending, 24; native(0x198d) <- value(0));
@@ -76,7 +73,7 @@ fn fade_to_options(game: &mut Game) {
 fn fade_to_title(game: &mut Game) {
     DrawBorderAroundSamusData(game);
     sprite_output::file_helmets(false, game);
-    HandleFadeOut(game);
+    crate::game::display_refresh::fade(false, game);
     if (game.g_ram[0x51] & 0xf) == 0 {
         game.request_reset();
     }
@@ -88,14 +85,12 @@ unsafe fn fade_from_main(game: &mut Game) {
     }
 }
 unsafe fn fade_to_main(game: &mut Game) {
-    unsafe {
-        HandleFadeOut(game);
-        game.g_ram[0x57] =
-            (game.g_ram[0x57] as i32 & 0xf | 16 * (game.g_ram[0x51] as i32 & 0xf) ^ 0xf0) as u8;
-        if (game.g_ram[0x51] & 0xf) == 0 {
-            ScreenOff(game);
-            word!(game.menu_index += 1);
-        }
+    crate::game::display_refresh::fade(false, game);
+    game.g_ram[0x57] =
+        (game.g_ram[0x57] as i32 & 0xf | 16 * (game.g_ram[0x51] as i32 & 0xf) ^ 0xf0) as u8;
+    if (game.g_ram[0x51] & 0xf) == 0 {
+        crate::game::display_refresh::set_blank(true, game);
+        word!(game.menu_index += 1);
     }
 }
 fn restore_cursor(game: &mut Game) {
@@ -104,7 +99,7 @@ fn restore_cursor(game: &mut Game) {
 }
 fn fade_in(game: &mut Game) {
     sprite_output::menu_selection(game);
-    HandleFadeIn(game);
+    crate::game::display_refresh::fade(true, game);
     game.g_ram[0x57] =
         (game.g_ram[0x57] as i32 & 0xf | 16 * (game.g_ram[0x51] as i32 & 0xf) ^ 0xf0) as u8;
     if (game.g_ram[0x51] & 0xf) == 15 {
@@ -564,7 +559,7 @@ fn fade_in_main(game: &mut Game) {
     sprite_output::file_menu_cursor(game);
     sprite_output::menu_selection(game);
     DrawBorderAroundSamusData(game);
-    HandleFadeIn(game);
+    crate::game::display_refresh::fade(true, game);
     if (game.g_ram[0x51] & 0xf) == 15 {
         word!(game.menu_index += 1);
     }

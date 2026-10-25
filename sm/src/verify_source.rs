@@ -1,22 +1,27 @@
 //! Source bytes captured by the game library compilation.
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
-    (
-        "sm/src/game/display_refresh.rs",
-        include_bytes!("game/display_refresh.rs"),
-    ),
+    ("sm/src/game/boot.rs", include_bytes!("game/boot.rs")),
     (
         "sm/src/game/controller_input.rs",
         include_bytes!("game/controller_input.rs"),
     ),
     (
+        "sm/src/game/display_refresh.rs",
+        include_bytes!("game/display_refresh.rs"),
+    ),
+    (
         "sm/src/game/escape_timer.rs",
         include_bytes!("game/escape_timer.rs"),
     ),
+    (
+        "sm/src/game/game_over.rs",
+        include_bytes!("game/game_over.rs"),
+    ),
     ("sm/src/game/hud.rs", include_bytes!("game/hud.rs")),
     (
-        "sm/src/game/scanline_irq.rs",
-        include_bytes!("game/scanline_irq.rs"),
+        "sm/src/game/map_menu.rs",
+        include_bytes!("game/map_menu.rs"),
     ),
     (
         "sm/src/game/room_scrolls/camera.rs",
@@ -27,12 +32,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/room_scrolls/door.rs"),
     ),
     (
-        "sm/src/game/game_over.rs",
-        include_bytes!("game/game_over.rs"),
-    ),
-    (
-        "sm/src/game/map_menu.rs",
-        include_bytes!("game/map_menu.rs"),
+        "sm/src/game/scanline_irq.rs",
+        include_bytes!("game/scanline_irq.rs"),
     ),
     (
         "sm/src/game/spike_plant.rs",

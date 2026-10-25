@@ -166,3 +166,21 @@ pub(crate) fn initialize(game: &mut Game) {
     );
     word_transfers!(game, ascending, 896; le(explored_map_tiles_saved, 0) <- value(0));
 }
+
+pub(crate) unsafe fn record_completion(game: &mut Game) {
+    unsafe {
+        game.g_sram.write_bytes(0x1fe0, b"supermetroid");
+        crate::rtl::RtlWriteSram(game);
+    }
+}
+pub(crate) unsafe fn verify_boot(game: &mut Game) {
+    unsafe {
+        game_word!(game.num_demo_sets = 3);
+        if (0..3).all(|slot| load(slot, game) != 0) {
+            game.g_sram.write_bytes(0x1fe0, b"madadameyohn");
+            crate::rtl::RtlWriteSram(game);
+        } else if game.g_sram.bytes(0x1fe0..0x1fec) == b"supermetroid" {
+            game_word!(game.num_demo_sets = 4);
+        }
+    }
+}

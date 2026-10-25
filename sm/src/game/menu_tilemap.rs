@@ -46,7 +46,7 @@ pub(crate) fn file_rows(emphasis: FileRowEmphasis, game: &mut Game) {
     upload(2048, 0x7e3600, 0, true, game);
 }
 
-/// Requires a live, exclusively accessed SNES backend for ScreenOn.
+/// Requires the native file-menu definitions for its text and tile reads.
 pub(crate) unsafe fn main_menu(game: &mut Game) {
     clear(game);
     word!(game.nonempty_save_slots = u16::MAX);
@@ -86,7 +86,7 @@ pub(crate) unsafe fn main_menu(game: &mut Game) {
     word! { game, 100; eproj_id[7], eproj_id[8], eproj_id[9] }
     word! {game; eproj_id[12] = 47; eproj_id[13] = 87; eproj_id[14] = 127; }
     word! { game, 1; screen_fade_delay, screen_fade_counter }
-    unsafe { crate::game::sm_80::ScreenOn(game) };
+    crate::game::display_refresh::set_blank(false, game);
     word!(game.menu_index += 1);
     word! { game, 0; eproj_id[15], eproj_id[16], eproj_id[17] }
 }

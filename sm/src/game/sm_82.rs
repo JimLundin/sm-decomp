@@ -33,11 +33,10 @@ use crate::game::sm_9b::{
     GameState_24_SamusNoHealth_Explosion_Helper, HandleSamusDeathSequence, StartSamusDeathAnimation,
 };
 use crate::game::sm_80::{
-    ClearOamExt, ClearUnusedOam, GraphicsAsset, HandleFadeIn, HandleFadeOut, LoadFromLoadStation,
-    LoadMirrorOfExploredMapTiles, NextRandom, QueueClearingOfFxTilemap, QueueSfx1_Max6,
-    QueueSfx1_Max15, QueueSfx2_Max6, QueueSfx2_Max15, QueueSfx3_Max3, QueueSfx3_Max6,
-    QueueSfx3_Max15, ResumeGameplay, SetupDmaTransfer, StartGameplay_Async, Vector_RESET_Async,
-    memset7E,
+    ClearOamExt, ClearUnusedOam, GraphicsAsset, LoadFromLoadStation, LoadMirrorOfExploredMapTiles,
+    NextRandom, QueueClearingOfFxTilemap, QueueSfx1_Max6, QueueSfx1_Max15, QueueSfx2_Max6,
+    QueueSfx2_Max15, QueueSfx3_Max3, QueueSfx3_Max6, QueueSfx3_Max15, ResumeGameplay,
+    SetupDmaTransfer, StartGameplay_Async, memset7E,
 };
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
@@ -360,7 +359,7 @@ pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
         if _coret_ != 0 {
             return _coret_;
         }
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x51) == 0x80 {
             crate::game::display_refresh::enable(true, game);
             clear_hdma(game);
@@ -403,7 +402,7 @@ pub unsafe fn GameState_35_TimeUp(game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn GameState_36_WhitingOutFromTimeUp(game: &mut Game) -> CoroutineRet {
     unsafe {
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x51) == 0x80 {
             crate::game::display_refresh::enable(true, game);
             clear_hdma(game);
@@ -440,7 +439,7 @@ pub unsafe fn GameState_38_SamusEscapesFromZebes(game: &mut Game) -> CoroutineRe
         if _coret_ != 0 {
             return _coret_;
         }
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x51) == 0x80 {
             crate::game::display_refresh::enable(true, game);
             clear_hdma(game);
@@ -661,7 +660,7 @@ pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
     unsafe {
         let mut st: i32 = *ram_ptr!(game; 0x611) as i32;
         let begin_frame: bool = if st >= 1 && st <= 3 {
-            let mut _coret_: u8 = Vector_RESET_Async(game);
+            let mut _coret_: u8 = crate::game::boot::resume(game);
             if _coret_ != 0 {
                 return _coret_;
             }
@@ -853,7 +852,7 @@ pub unsafe fn GameState_7_MainGameplayFadeIn(game: &mut Game) -> CoroutineRet {
         if _coret_ != 0 {
             return _coret_;
         }
-        HandleFadeIn(game);
+        crate::game::display_refresh::fade(true, game);
         if *ram_ptr!(game; 0x51) == 15 {
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             word!(game.game_state += 1);
@@ -1097,7 +1096,7 @@ pub unsafe fn GameState_12_Pausing_Darkening_Async(game: &mut Game) -> Coroutine
         if _coret_ != 0 {
             return _coret_;
         }
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if (*ram_ptr!(game; 0x51) & 0xf) == 0 {
             crate::game::display_refresh::enable(true, game);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
@@ -1314,7 +1313,7 @@ pub unsafe fn SetupMapScrollingForFileSelectMap(game: &mut Game) {
 pub unsafe fn GameState_14_Paused_Async(game: &mut Game) -> CoroutineRet {
     unsafe {
         DrawPauseMenuDuringFadeIn(game);
-        HandleFadeIn(game);
+        crate::game::display_refresh::fade(true, game);
         if *ram_ptr!(game; 0x51) == 15 {
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             word!(game.game_state += 1);
@@ -1369,7 +1368,7 @@ pub unsafe fn PauseMenu_2(game: &mut Game) {
         DrawMapIcons(game);
         HandlePauseMenuLRPressHighlight(game);
         word!(game.pause_screen_mode = 0);
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x51) == 0x80 {
             crate::game::display_refresh::enable(true, game);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
@@ -1382,7 +1381,7 @@ pub unsafe fn PauseMenu_5(game: &mut Game) {
         EquipmentScreenDrawItemSelector(game);
         EquipmentScreenDisplayReserveTankAmount(game);
         HandlePauseMenuLRPressHighlight(game);
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x51) == 0x80 {
             crate::game::display_refresh::enable(true, game);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
@@ -1421,7 +1420,7 @@ pub unsafe fn PauseMenu_7_EquipmentToMap_FadeIn(game: &mut Game) {
         DrawMapIcons(game);
         DisplayMapElevatorDestinations(game);
         word!(game.pause_screen_mode = 0);
-        HandleFadeIn(game);
+        crate::game::display_refresh::fade(true, game);
         if *ram_ptr!(game; 0x51) == 15 {
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             let mut v0: u16 = word!(game.pausemenu_button_label_mode);
@@ -1437,7 +1436,7 @@ pub unsafe fn PauseMenu_4_MapToEquipment_FadeIn(game: &mut Game) {
         EquipmentScreenDrawItemSelector(game);
         EquipmentScreenDisplayReserveTankAmount(game);
         word!(game.pause_screen_mode = 1);
-        HandleFadeIn(game);
+        crate::game::display_refresh::fade(true, game);
         if *ram_ptr!(game; 0x51) == 15 {
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             let mut v0: u16 = word!(game.pausemenu_button_label_mode);
@@ -1526,7 +1525,7 @@ pub unsafe fn GameState_16_Unpausing_Async(game: &mut Game) -> CoroutineRet {
     unsafe {
         HighlightPauseScreenButton(game);
         DrawPauseMenuDuringFadeout(game);
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x51) == 0x80 {
             crate::game::display_refresh::enable(true, game);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
@@ -1587,7 +1586,7 @@ pub unsafe fn GameState_18_Unpausing(game: &mut Game) -> CoroutineRet {
         if _coret_ != 0 {
             return _coret_;
         }
-        HandleFadeIn(game);
+        crate::game::display_refresh::fade(true, game);
         if *ram_ptr!(game; 0x51) == 15 {
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             word!(game.game_state = kGameState_8_MainGameplay as u16);
@@ -3873,7 +3872,7 @@ pub unsafe fn GameState_24_SamusNoHealth_Explosion(game: &mut Game) -> Coroutine
 }
 pub unsafe fn GameState_25_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineRet {
     unsafe {
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x51) == 0x80 {
             crate::game::display_refresh::enable(true, game);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
@@ -3948,7 +3947,7 @@ pub unsafe fn GameState_2_GameOptionsMenu(game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn GameOptionsMenuFunc_0(game: &mut Game) {
     unsafe {
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x51) == 0x80 {
             crate::game::display_refresh::enable(true, game);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
@@ -4001,7 +4000,7 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
 }
 pub unsafe fn GameOptionsMenu_2_FadeInOptionsScreen(game: &mut Game) {
     unsafe {
-        HandleFadeIn(game);
+        crate::game::display_refresh::fade(true, game);
         if *ram_ptr!(game; 0x51) == 15 {
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             word!(game.game_options_screen_index += 1);
@@ -4112,7 +4111,7 @@ pub unsafe fn GameOptionsMenuItemFunc_4(game: &mut Game) {
 }
 pub unsafe fn GameOptionsMenu_B_TransitionBackToFileSelect(game: &mut Game) {
     unsafe {
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x51) == 0x80 {
             crate::game::display_refresh::enable(true, game);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
@@ -4123,7 +4122,7 @@ pub unsafe fn GameOptionsMenu_B_TransitionBackToFileSelect(game: &mut Game) {
 }
 pub unsafe fn GameOptionsMenu_C_FadeOutOptionsScreenToStart(game: &mut Game) {
     unsafe {
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x51) == 0x80 {
             crate::game::display_refresh::enable(true, game);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
@@ -4156,7 +4155,7 @@ pub unsafe fn GameOptionsMenu_4_StartGame(game: &mut Game) {
 pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
     unsafe {
         let mut v1: u16 = 0;
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x57) != 0xf3 {
             crate::update_place! { reference fresh70 = *ram_ptr!(game; 0x57) => (*fresh70).wrapping_add(16); }
         }
@@ -4209,7 +4208,7 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
 }
 pub unsafe fn GameOptionsMenu_6_DissolveInScreen(game: &mut Game) {
     unsafe {
-        HandleFadeIn(game);
+        crate::game::display_refresh::fade(true, game);
         if *ram_ptr!(game; 0x57) != 3 {
             crate::update_place! { reference fresh72 = *ram_ptr!(game; 0x57) => (*fresh72).wrapping_sub(16); }
         }

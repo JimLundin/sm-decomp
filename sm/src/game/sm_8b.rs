@@ -21,8 +21,8 @@ use crate::game::player_projectiles::prepare;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session_runtime::initialize_player;
 use crate::game::sm_80::{
-    ClearOamExt, ClearUnusedOam, CopySuperMetroidString, GraphicsAsset, HandleFadeIn,
-    HandleFadeOut, QueueMode7Transfers, QueueSfx1_Max15, QueueSfx2_Max6, QueueSfx3_Max6,
+    ClearOamExt, ClearUnusedOam, GraphicsAsset, QueueMode7Transfers, QueueSfx1_Max15,
+    QueueSfx2_Max6, QueueSfx3_Max6,
 };
 use crate::game::visual_runtime::{initialize_intro_wave, initialize_title_gradient};
 
@@ -2213,7 +2213,7 @@ crate::game::callback_dispatch! {
         };
     };
     [9158853] CinematicFunction_Intro_Func72 [] {
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x51) == 0x80 {
             crate::game::display_refresh::enable(true, game);
             word! { game, 0;
@@ -2297,7 +2297,7 @@ crate::game::callback_dispatch! {
         words!(game.cinematic_var10, cinematic_var9 += 4096);
         words!(game.cinematic_var8, cinematic_var7 += -0x4000i32 as u32);
         word!(game.cinematic_var6 += 1);
-        HandleFadeIn(game);
+        crate::game::display_refresh::fade(true, game);
         if *ram_ptr!(game; 0x51) == 15 {
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             word! {game; cinematic_function = ((0x8bc345i32) as u16); cinematic_var4 = 1;
@@ -2343,7 +2343,7 @@ crate::game::callback_dispatch! {
         };
     };
     [9160231] CinematicFunction_Intro_Func85 [] {
-        HandleFadeOut(game);
+        crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x51) == 0x80 {
             crate::game::display_refresh::enable(true, game);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
@@ -2396,7 +2396,7 @@ crate::game::callback_dispatch! {
         if (word!(game.cinematic_var12) & 3) == 0 {
             crate::update_place! { reference fresh116 = *ram_ptr!(game; 0x57) => (*fresh116).wrapping_sub(16); }
         }
-        HandleFadeIn(game);
+        crate::game::display_refresh::fade(true, game);
         if *ram_ptr!(game; 0x51) == 15 {
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             word!(game.cinematic_function = (0x8bc7cai32) as u16);
@@ -2842,7 +2842,7 @@ crate::game::callback_dispatch! {
         word!(game.cinematic_function = (0x8bdb9di32) as u16);
     };
     [9167120] CinematicFunction_Intro_Func130 [] {
-        HandleFadeIn(game);
+        crate::game::display_refresh::fade(true, game);
         if *ram_ptr!(game; 0x51) == 15 {
             *ram_ptr!(game; 0x69) = 2;
             *ram_ptr!(game; 0x6b) = 16;
@@ -3097,7 +3097,7 @@ crate::game::callback_dispatch! {
         if word!(game.cinematic_var10) as i32 + 79 & 0x8000 != 0 {
             SpawnCinematicBgObject(addr_kCinematicBgObjectDef_8BF748 as u16, 0x4c00, game);
             word!(game.cinematic_function = (0x8be7bai32) as u16);
-            CopySuperMetroidString(game);
+            crate::game::save_slots::record_completion(game);
         }
     };
     @countdown [pub unsafe fn (game: &mut Game)];

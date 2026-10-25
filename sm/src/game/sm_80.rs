@@ -3,12 +3,10 @@ use crate::game::display_refresh::ScrollingDmaLayout;
 use crate::game::music::HandleMusicQueue;
 pub use crate::game::prelude::*;
 use crate::game::room_state::load_tiles_and_palette;
-use crate::game::save_slots;
 
 pub use crate::game::constants::bank_60::*;
 
 use crate::game::room_mechanisms::reload_graphics;
-use crate::game::sm_8b::InitializeIoDisplayLogo_Async;
 use crate::rtl::RtlApuUpload;
 
 const RomPtr_80: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x80>;
@@ -41,41 +39,11 @@ pub unsafe fn NextRandom(game: &mut Game) -> u16 {
         result
     }
 }
-pub unsafe fn CopySuperMetroidString(game: &mut Game) {
-    unsafe {
-        game.g_sram.write_bytes(0x1fe0, b"supermetroid");
-        RtlWriteSram(game);
-    }
-}
-pub unsafe fn VerifySRAM(game: &mut Game) {
-    unsafe {
-        word!(game.num_demo_sets = 3);
-        if save_slots::load(0, game) != 0
-            && save_slots::load(1, game) != 0
-            && save_slots::load(2, game) != 0
-        {
-            game.g_sram.write_bytes(0x1fe0, b"madadameyohn");
-            RtlWriteSram(game);
-        } else if game.g_sram.bytes(0x1fe0..0x1fec) == b"supermetroid" {
-            word!(game.num_demo_sets = 4);
-        }
-    }
-}
 pub fn Multiply16x16(a: u16, j: u16, game: &mut Game) -> u32 {
     game.g_ram[0x5e9..0x5eb].copy_from_slice(&a.to_le_bytes());
     game.g_ram[0x5eb..0x5ed].copy_from_slice(&j.to_le_bytes());
     let result: u32 = (a as u32).wrapping_mul(j as u32);
     result
-}
-pub unsafe fn ScreenOff(game: &mut Game) {
-    unsafe {
-        crate::update_place! { reference fresh89 = *ram_ptr!(game; 0x51) => (*fresh89) | (0x80u8); }
-    }
-}
-pub unsafe fn ScreenOn(game: &mut Game) {
-    unsafe {
-        crate::update_place! { reference fresh90 = *ram_ptr!(game; 0x51) => *fresh90 & !(0x80); }
-    }
 }
 pub unsafe fn memset7E(mut k: *mut u16, a: u16, mut j: u16) {
     unsafe {
@@ -84,84 +52,6 @@ pub unsafe fn memset7E(mut k: *mut u16, a: u16, mut j: u16) {
             *fresh99 = a;
             j = (j).wrapping_sub(2);
         }
-    }
-}
-pub unsafe fn Vector_RESET_Async(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        crate::verify_probe::hit("coroutine.reset");
-        let resume_state: *mut u8 = ram_ptr!(game; 0x611);
-        // Callbacks may change RAM; dispatch uses the captured resume byte.
-        let resume = *resume_state;
-        let mut bak: u16 = 0;
-        if resume == 1 {
-            crate::rtl::write_register_and_mirror(MEMSEL as u16, 1, 0x86, false, game);
-            bak = word!(game.bug_fix_counter);
-            memset(
-                &raw mut game.g_ram as *mut u8 as *mut c_void,
-                0,
-                8192 as size_t,
-            );
-            word!(game.bug_fix_counter = bak);
-        }
-        if matches!(resume, 1 | 2) {
-            let yielded: u8 = InitializeIoDisplayLogo_Async(game);
-            if yielded != 0 {
-                *resume_state = 2;
-                return yielded;
-            }
-        }
-        if matches!(resume, 1..=3) {
-            APU_UploadBank(0xcf8000, game);
-            WriteReg(INIDISP as u16, 0x8f, game);
-            bak = word!(game.bug_fix_counter);
-            memset(
-                &raw mut game.g_ram as *mut u8 as *mut c_void,
-                0,
-                0x10000i32 as size_t,
-            );
-            word!(game.bug_fix_counter = bak);
-            crate::rtl::write_register_and_mirror(NMITIMEN as u16, 0, 0x84, false, game);
-            *ram_ptr!(game; 0x51) = 0x8f;
-            InitializeCpuIoRegs(game);
-            InitializePpuIoRegs(game);
-            WriteLotsOf0x1c2f(game);
-            *ram_ptr!(game; 0x643, 0) = 0;
-            *ram_ptr!(game; 0x643, 1) = 0;
-            *ram_ptr!(game; 0x643, 2) = 0;
-            *ram_ptr!(game; 0x646, 0) = 0;
-            *ram_ptr!(game; 0x646, 1) = 0;
-            *ram_ptr!(game; 0x646, 2) = 0;
-            *ram_ptr!(game; 0x649, 0) = 0;
-            *ram_ptr!(game; 0x649, 1) = 0;
-            *ram_ptr!(game; 0x649, 2) = 0;
-            *ram_ptr!(game; 0x64d, 0) = 0;
-            *ram_ptr!(game; 0x64d, 1) = 0;
-            *ram_ptr!(game; 0x64d, 2) = 0;
-            *ram_ptr!(game; 0x650, 0) = 0;
-            *ram_ptr!(game; 0x650, 1) = 0;
-            *ram_ptr!(game; 0x650, 2) = 0;
-            *ram_ptr!(game; 0x656, 0) = 0;
-            *ram_ptr!(game; 0x666, 0) = 0;
-            *ram_ptr!(game; 0x676, 0) = 0;
-            word! { game, 0; oam_next_ptr, reg_OAMaddr_UNUSED }
-            ClearOamExt(game);
-            ClearUnusedOam(game);
-            word! { game, 0;
-                nmi_copy_samus_halves, nmi_copy_samus_top_half_src, nmi_copy_samus_bottom_half_src,
-            }
-            crate::game::display_refresh::enable(true, game);
-            RtlApuWrite(APUI00, 0, game);
-            RtlApuWrite(APUI01, 0, game);
-            RtlApuWrite(APUI02, 0, game);
-            RtlApuWrite(APUI03, 0, game);
-            word!(game.random_number = 97);
-            crate::game::music::reset_delays(game);
-            word!(game.enable_debug = 0);
-            VerifySRAM(game);
-            word! { game, 0; debug_disable_sounds, sound_handler_downtime }
-        }
-        *resume_state = 2;
-        0 as CoroutineRet
     }
 }
 pub unsafe fn InvalidInterrupt_Crash(game: &mut Game) {
@@ -195,120 +85,6 @@ pub unsafe fn SaveExploredMapTilesToSaved(game: &mut Game) {
         if word!(game.has_area_map) != 0 {
             crate::update_place! { unaligned_word fresh88 = &raw mut (*(ram_ptr!(game, u16; 0xd908, word!(game.area_index) as isize))) => (u16::from_le(fresh88.read_unaligned())) | (0xffu16); }
         }
-    }
-}
-pub unsafe fn InitializeCpuIoRegs(game: &mut Game) {
-    unsafe {
-        crate::rtl::register_writes! { game;
-            mirror(NMITIMEN as u16, 1, 0x84, false); byte(WRIO as u16, 0);
-            byte(WRMPYA as u16, 0); byte(WRMPYB as u16, 0);
-            byte(WRDIVL as u16, 0); byte(WRDIVH as u16, 0);
-            byte(WRDIVB as u16, 0); byte(HTIMEL as u16, 0);
-            byte(HTIMEH as u16, 0); byte(VTIMEL as u16, 0);
-            byte(VTIMEH as u16, 0); byte(MDMAEN as u16, 0);
-            mirror(HDMAEN as u16, 0, 0x85, false); mirror(MEMSEL as u16, 1, 0x86, false);
-        }
-    }
-}
-pub unsafe fn InitializePpuIoRegs(game: &mut Game) {
-    unsafe {
-        crate::rtl::register_writes! { game;
-            mirror(INIDISP as u16, 0x8f, 0x51, false); mirror(OBSEL as u16, 3, 0x52, false);
-            byte(OAMADDL as u16, 0);
-        }
-        *(ram_ptr!(game, u16; 0x53) as *mut u8) = 0;
-        WriteReg(OAMADDH as u16, 0x80, game);
-        byte!(@pointer ram_ptr!(game, u16; 0x53); 1) = 0x80;
-        crate::rtl::register_writes! { game;
-            byte(OAMDATA as u16, 0); byte(OAMDATA as u16, 0);
-            mirror(BGMODE as u16, 9, 0x55, false); mirror(MOSAIC as u16, 0, 0x57, false);
-            mirror(BG1SC as u16, 0x40, 0x58, false); mirror(BG2SC as u16, 0x44, 0x59, false);
-            mirror(BG3SC as u16, 0x48, 0x5a, false); mirror(BG4SC as u16, 0, 0x5c, false);
-            mirror(BG12NBA as u16, 0, 0x5d, false); mirror(BG34NBA as u16, 5, 0x5e, false);
-            byte(BG1HOFS as u16, 0); byte(BG1HOFS as u16, 0);
-            byte(BG1VOFS as u16, 0); byte(BG1VOFS as u16, 0);
-            byte(BG2HOFS as u16, 0); byte(BG2HOFS as u16, 0);
-            byte(BG2VOFS as u16, 0); byte(BG2VOFS as u16, 0);
-            byte(BG3HOFS as u16, 0); byte(BG3HOFS as u16, 0);
-            byte(BG3VOFS as u16, 0); byte(BG3VOFS as u16, 0);
-            byte(BG4HOFS as u16, 0); byte(BG4HOFS as u16, 0);
-            byte(BG4VOFS as u16, 0); byte(BG4VOFS as u16, 0);
-            byte(VMAIN as u16, 0); mirror(M7SEL as u16, 0, 0x5f, false);
-            byte(M7A as u16, 0); byte(M7B as u16, 0);
-            byte(M7C as u16, 0); byte(M7D as u16, 0);
-            byte(M7X as u16, 0); byte(M7Y as u16, 0);
-            mirror(W12SEL as u16, 0, 0x60, false); mirror(W34SEL as u16, 0, 0x61, false);
-            mirror(WOBJSEL as u16, 0, 0x62, false); mirror(WH0 as u16, 0, 0x63, false);
-            byte(WH1 as u16, 0xf8);
-        }
-        *ram_ptr!(game; 0x64) = -8i32 as u8;
-        crate::rtl::register_writes! { game;
-            mirror(WH2 as u16, 0, 0x65, false); mirror(WH3 as u16, 0, 0x66, false);
-            mirror(WBGLOG as u16, 0, 0x67, false); mirror(WOBJLOG as u16, 0, 0x68, false);
-            mirror(TM as u16, 0x11, 0x69, false); mirror(TMW as u16, 0x11, 0x6c, false);
-            mirror(TS as u16, 2, 0x6b, false); mirror(TSW as u16, 2, 0x6d, false);
-            mirror(CGWSEL as u16, 2, 0x6e, false); byte(CGADSUB as u16, 0xa1);
-        }
-        *ram_ptr!(game; 0x71) = -95i32 as u8;
-        crate::rtl::register_writes! { game;
-            byte(COLDATA as u16, 0xe0); byte(COLDATA as u16, 0xe0);
-            byte(COLDATA as u16, 0x80);
-        }
-        *ram_ptr!(game; 0x74, 0) = 0x80;
-        WriteReg(COLDATA as u16, 0x40, game);
-        *ram_ptr!(game; 0x74, 1) = 64;
-        WriteReg(COLDATA as u16, 0x20, game);
-        *ram_ptr!(game; 0x74, 2) = 32;
-        crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
-    }
-}
-pub unsafe fn WriteLotsOf0x1c2f(game: &mut Game) {
-    unsafe {
-        sub_8088EB(0x1c2f, game);
-        sub_8088FE(0x1c2f, game);
-        sub_808911(0x1c2f, game);
-    }
-}
-crate::forward_calls! { pub unsafe fn (a: u16, game: &mut Game);
-    sub_8088EB => memset7E(ram_ptr!(game, u16; 0x3000), a, 0x800);
-    sub_8088FE => memset7E(ram_ptr!(game, u16; 0x4000), a, 0x800);
-    sub_808911 => memset7E(ram_ptr!(game, u16; 0x6000), a, 0x800);
-}
-fn tick_screen_fade(game: &mut Game) -> bool {
-    let screen_fade_counter = u16::from_le_bytes([game.g_ram[0x725], game.g_ram[0x726]]);
-    // Test the sign after the word decrement, then reload before changing brightness.
-    let remaining = screen_fade_counter.wrapping_sub(1);
-    let step_due = (remaining as i16) < 0;
-    let next_counter = if step_due {
-        let screen_fade_delay = u16::from_le_bytes([game.g_ram[0x723], game.g_ram[0x724]]);
-        screen_fade_delay
-    } else {
-        remaining
-    };
-    game.g_ram[0x725..0x727].copy_from_slice(&next_counter.to_le_bytes());
-    step_due
-}
-
-pub fn HandleFadeOut(game: &mut Game) {
-    if !tick_screen_fade(game) {
-        return;
-    }
-    let reg_inidisp = &mut game.g_ram[0x51];
-    match *reg_inidisp & 0x0f {
-        0 => {}
-        1 => *reg_inidisp = 0x80,
-        brightness => *reg_inidisp = brightness - 1,
-    }
-}
-
-pub fn HandleFadeIn(game: &mut Game) {
-    if !tick_screen_fade(game) {
-        return;
-    }
-    let reg_inidisp = &mut game.g_ram[0x51];
-    let brightness = reg_inidisp.wrapping_add(1) & 0x0f;
-    if brightness != 0 {
-        *reg_inidisp = brightness;
     }
 }
 pub fn ClearUnusedOam(game: &mut Game) {
