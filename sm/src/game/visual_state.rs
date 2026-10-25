@@ -113,3 +113,9 @@ pub(crate) enum Weather {
     Spores,
     Fog,
 }
+
+#[derive(Clone, Copy)]
+pub(crate) enum HdmaWave {
+    Phantoon,
+    Intro,
+}

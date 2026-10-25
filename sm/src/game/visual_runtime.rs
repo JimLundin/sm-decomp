@@ -5,7 +5,7 @@ use crate::{
         animated_tiles, enemy_projectiles, palette_effects, player_projectiles,
         session_runtime::Runtime,
         visual_host::{self, AnimationMember, PaletteMember, Source, StatueProjectile},
-        visual_state::{EyeBeamPhase, HazePhase, PaletteBuffer, Upload, Weather},
+        visual_state::{EyeBeamPhase, HazePhase, HdmaWave, PaletteBuffer, Upload, Weather},
     },
     game_state::Game,
     rom::RomRecord,
@@ -325,7 +325,94 @@ pub(crate) fn scroll_weather(slot: u16, weather: Weather, game: &mut Game) {
     }
 }
 
+// Keep bits 16..23 of the magnitude product before restoring the sine sign.
+fn hdma_wave_offset(sample: i16, amplitude_low: u8, amplitude_high: u8) -> u16 {
+    let amplitude = u16::from_le_bytes([amplitude_low, amplitude_high]);
+    let product = u32::from(sample.unsigned_abs()) * u32::from(amplitude);
+    let offset = (product >> 16) as u8 as u16;
+    if sample < 0 {
+        offset.wrapping_neg()
+    } else {
+        offset
+    }
+}
+
 impl Runtime<'_> {
+    pub(crate) fn advance_hdma_wave(&mut self, slot: u16, wave: HdmaWave) {
+        use crate::game::actors::access::AccessMode::Native;
+        use crate::game::player_projectiles::access::Store;
+        use crate::game::projectile_geometry::SINE_COSINE;
+        use crate::ram_map::words as ram;
+        let controller = Key::from_legacy(0x40);
+        let motion = Key::from_legacy(0xc0);
+        let phantoon = matches!(wave, HdmaWave::Phantoon);
+        let mode = if phantoon {
+            self.resolve_actor(controller, Native).parameters[0]
+        } else {
+            self.word(0xd9c)
+        };
+        if mode == 0 {
+            self.advance_hdma_program();
+            return;
+        }
+        let step = if phantoon && mode & 1 == 0 { 8 } else { 4 };
+        let object = usize::from(slot & !1);
+        let advance = if phantoon {
+            let delay = self.word(0x1920 + object);
+            self.write_slice_le(0x1920 + object, delay.wrapping_sub(1));
+            if delay == 1 {
+                self.write_slice_le(0x1920 + object, 1);
+            }
+            delay == 1
+        } else {
+            true
+        };
+        if advance {
+            let speed = if phantoon {
+                self.resolve_actor(motion, Native).pre_instruction
+            } else {
+                self.word(ram::loop_counter_transfer_enemies_to_vram)
+            };
+            let phase = speed
+                .wrapping_mul(2)
+                .wrapping_add(self.word(0x1914 + object))
+                & 0x1ff;
+            self.write_slice_le(0x1914 + object, phase);
+        }
+        let mut phase = self.word(0x1914 + object);
+        let (scroll, store) = if phantoon {
+            (ram::reg_BG2HOFS, Store::SliceNative)
+        } else {
+            (ram::reg_BG3HOFS, Store::SliceLe)
+        };
+        for row in 0..256 / step {
+            let sample = SINE_COSINE[usize::from(phase >> 1) + 64];
+            let (low, high) = if phantoon {
+                let amplitude = self.resolve_actor(motion, Native).variables[3];
+                (amplitude as u8, amplitude.to_ne_bytes()[1])
+            } else {
+                (self.byte(0xd9e), self.byte(0xd9f))
+            };
+            let offset = hdma_wave_offset(sample, low, high);
+            phase = phase.wrapping_add(step) & 0x1ff;
+            let value = self.word(scroll).wrapping_add(offset);
+            self.store(0x9100 + 2 * usize::from(row), value, store);
+        }
+        // Phantoon samples its mode again after the first half is published.
+        let narrow = phantoon && self.resolve_actor(controller, Native).parameters[0] & 1 == 0;
+        let rows = if narrow { 32 } else { 64 };
+        for row in (0..rows).rev() {
+            let origin = self.word(scroll).wrapping_add(self.word(scroll));
+            let sample = if phantoon {
+                self.native_word(0x9100 + 2 * row)
+            } else {
+                self.word(0x9100 + 2 * row)
+            };
+            let value = origin.wrapping_sub(sample);
+            self.store(0x9100 + 2 * (rows + row), value, store);
+        }
+    }
+
     pub(crate) fn begin_haze(&mut self, slot: u16, color: u16) {
         let object = usize::from(slot as u8 & !1);
         self.write_slice_le(0x1920 + object, color);
@@ -374,7 +461,7 @@ impl Runtime<'_> {
         self.write_slice_le(level, self.word(level).wrapping_add(delta));
     }
 
-    fn advance_eye_beam_program(&mut self) {
+    fn advance_hdma_program(&mut self) {
         let current = usize::from(self.word(0x18b2) & !1);
         let program = 0x18cc + current;
         self.write_slice_le(program, self.word(program).wrapping_add(2));
@@ -423,13 +510,13 @@ impl Runtime<'_> {
                 if ((width >> 16) as u16).wrapping_sub(4) as i16 >= 0 {
                     // Keep the fractional width when the integer part reaches the limit.
                     self.write_slice_le(0x192c + even_slot, 4);
-                    self.advance_eye_beam_program();
+                    self.advance_hdma_program();
                 }
                 self.draw_eye_beam(slot);
             }
             EyeBeamPhase::Full => {
                 if self.resolve_actor(Key::from_legacy(0x40), Le).variables[2] == 0 {
-                    self.advance_eye_beam_program();
+                    self.advance_hdma_program();
                 } else {
                     self.draw_eye_beam(slot);
                     let index = usize::from(self.word(0x9090).wrapping_mul(4));
@@ -450,7 +537,7 @@ impl Runtime<'_> {
                         self.write_slice_le(entry, 0xff);
                     }
                     self.write_slice(0x9000, &[0; 10]);
-                    self.advance_eye_beam_program();
+                    self.advance_hdma_program();
                 } else {
                     self.draw_eye_beam(slot);
                     let current = usize::from(self.word(0x18b2));

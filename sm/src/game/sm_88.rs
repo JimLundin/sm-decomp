@@ -5,7 +5,7 @@ pub use crate::game::prelude::*;
 use crate::game::scrolling_sky;
 use crate::game::session_runtime::Runtime;
 use crate::game::visual_runtime;
-use crate::game::visual_state::{EyeBeamPhase, HazePhase, Weather};
+use crate::game::visual_state::{EyeBeamPhase, HazePhase, HdmaWave, Weather};
 
 pub use crate::game::constants::bank_8f::*;
 pub use crate::game::constants::bank_86::*;
@@ -17,7 +17,6 @@ use crate::game::explosion_window::{self, Phase};
 use crate::game::gameplay_flag_runtime::{
     CheckBossBitForCurArea, CheckEventHappened, SetEventHappened,
 };
-use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_8b::ConfigureTitleSequenceGradientHDMA;
 use crate::game::sm_80::QueueSfx2_Max6;
@@ -811,79 +810,6 @@ pub unsafe fn HdmaobjInstr_E4BD(k: u16, hdp: *const u8, game: &mut Game) -> *con
         hdp
     }
 }
-// Keep bits 16..23 of the magnitude product before restoring the sine sign.
-fn hdma_wave_offset(sample: i16, amplitude_low: u8, amplitude_high: u8) -> u16 {
-    let amplitude = u16::from_le_bytes([amplitude_low, amplitude_high]);
-    let product = u32::from(sample.unsigned_abs()) * u32::from(amplitude);
-    let offset = (product >> 16) as u8 as u16;
-    if sample < 0 {
-        offset.wrapping_neg()
-    } else {
-        offset
-    }
-}
-
-pub unsafe fn HdmaobjPreInstr_E567(v0: u16, game: &mut Game) {
-    unsafe {
-        let mut r28: u16 = 0;
-        let mut r30: u16 = 0;
-        if (*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).parameter_1 != 0 {
-            if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).parameter_1 & 1) != 0 {
-                r28 = 4;
-                r30 = 128;
-            } else {
-                r28 = 8;
-                r30 = 64;
-            }
-            let v2: i32 = v0 as i32 >> 1;
-            crate::update_place! { unaligned_word fresh79 [fresh80] = &raw mut (*(ram_ptr!(game, u16; 0x1920)).offset(v2 as isize)) => (u16::from_le(fresh79.read_unaligned())).wrapping_sub(1); }
-            if fresh80 == 1 {
-                word!(game.hdma_object_B[v2] = 1);
-                word!(
-                    game.hdma_object_A[v2] = (2
-                        * (*(ram_ptr!(game, EnemyData; 0xf78)).offset(3)).ai_preinstr as i32
-                        + word!(game.hdma_object_A[v2]) as i32
-                        & 0x1ff) as u16
-                );
-            }
-            let mut r20: u16 = word!(game.hdma_object_A[v2]);
-            let mut v4: u16 = 0;
-            do_until! { ((v4) as i16).wrapping_sub((r30) as i16) >= 0 ;
-                let v5: u16 = r20;
-                let v6: i32 = r20 as i32 >> 1;
-                let sample = kSinCosTable8bit_Sext[(v6 + 64) as usize];
-                let offset = hdma_wave_offset(
-                    sample,
-                    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(3)).ai_var_D as u8,
-                    byte!((*(ram_ptr!(game, EnemyData; 0xf78)).offset(3)).ai_var_D; 1),
-                );
-                r20 = (r28 as i32 + v5 as i32 & 0x1ff) as u16;
-                *(ram_ptr!(game, u16; 0x9100, v4 as i32 as isize)) =
-                    word!(game.reg_BG2HOFS).wrapping_add(offset);
-                v4 = v4.wrapping_add(2);
-            }
-            if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).parameter_1 & 1) != 0 {
-                for i in (0i32..=126).rev().step_by(2) {
-                    *(ram_ptr!(game, u16; 0x9180, i as isize)) = (word!(game.reg_BG2HOFS) as i32
-                        + word!(game.reg_BG2HOFS) as i32
-                        - *(ram_ptr!(game, u16; 0x9100, i as isize)) as i32)
-                        as u16;
-                }
-            } else {
-                for j in (0u16..=62).rev().step_by(2) {
-                    *(ram_ptr!(game, u16; 0x9140, j as i32 as isize)) =
-                        (word!(game.reg_BG2HOFS) as i32 + word!(game.reg_BG2HOFS) as i32
-                            - *(ram_ptr!(game, u16; 0x9100, j as i32 as isize)) as i32)
-                            as u16;
-                }
-            }
-        } else {
-            let v1: i32 = word!(game.hdma_object_index) as i32 >> 1;
-            word!(game.hdma_object_instruction_list_pointers[v1] += 2);
-            word!(game.hdma_object_instruction_timers[v1] = 1);
-        };
-    }
-}
 static unk_88E722: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0, 0x2c, 0xe727 as VoidP);
 static unk_88E74C: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x41, 0x26, 0xe751 as VoidP);
 crate::forward_calls! { pub unsafe fn (game: &mut Game) -> u16;
@@ -1018,44 +944,6 @@ pub unsafe fn HdmaobjInstr_EC9F_ClearVars(k: u16, hdp: *const u8, game: &mut Gam
         hdp
     }
 }
-pub unsafe fn HdmaobjPreInstr_ECB6(k: u16, game: &mut Game) {
-    unsafe {
-        if word!(game.g_word_7E0D9C) != 0 {
-            let r28: u16 = 4;
-            let n: i32 = 128;
-            let v3: i32 = k as i32 >> 1;
-            word!(
-                game.hdma_object_A[v3] = (2 * word!(game.loop_counter_transfer_enemies_to_vram)
-                    as i32
-                    + word!(game.hdma_object_A[v3]) as i32
-                    & 0x1ff) as u16
-            );
-            let mut r20: u16 = word!(game.hdma_object_A[v3]);
-            let mut v4: u16 = 0;
-            do_until! { ((v4 as i32 - n) as i16) >= 0 ;
-                let v5: u16 = r20;
-                let v6: i32 = r20 as i32 >> 1;
-                let sample = kSinCosTable8bit_Sext[(v6 + 64) as usize];
-                let offset = hdma_wave_offset(sample, *ram_ptr!(game; 0xd9e), *ram_ptr!(game; 0xd9f));
-                r20 = (r28 as i32 + v5 as i32 & 0x1ff) as u16;
-                word!(game.hdma_table_1[(v4 >> 1)] = word!(game.reg_BG3HOFS).wrapping_add(offset));
-                v4 = v4.wrapping_add(2);
-            }
-            for i in (0i32..=126).rev().step_by(2) {
-                word!(
-                    game.hdma_table_1[((i >> 1) + 64)] = (word!(game.reg_BG3HOFS) as i32
-                        + word!(game.reg_BG3HOFS) as i32
-                        - word!(game.hdma_table_1[(i >> 1)]) as i32)
-                        as u16
-                );
-            }
-        } else {
-            let v2: i32 = word!(game.hdma_object_index) as i32 >> 1;
-            word!(game.hdma_object_instruction_list_pointers[v2] += 2);
-            word!(game.hdma_object_instruction_timers[v2] = 1);
-        };
-    }
-}
 crate::game::address_dispatch! {
     pub unsafe fn CallHdmaobjPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
         call (k, game); default { Unreachable(game); };
@@ -1098,7 +986,7 @@ crate::game::address_dispatch! {
         8969878 => [Runtime::new(game).advance_haze(k, HazePhase::FadingOut)];
         8970132 => HdmaobjPreInstr_DF94; 8970278 => [Runtime::new(game).advance_suit_pickup(false)];
         8970332 => [Runtime::new(game).advance_suit_pickup(true)]; 8971337 => HdmaobjPreInstr_E449;
-        8971623 => HdmaobjPreInstr_E567; 8972220 => HdmaobjPreInstr_E7BC;
+        8971623 => [Runtime::new(game).advance_hdma_wave(k, HdmaWave::Phantoon)]; 8972220 => HdmaobjPreInstr_E7BC;
         fnHdmaobjPreInstr_MorphBallEyeBeamWidening => [{
                     Runtime::new(game).advance_eye_beam(k, EyeBeamPhase::Widening);
                 }];
@@ -1111,7 +999,7 @@ crate::game::address_dispatch! {
         8973232 => HdmaobjPreInstr_Backdrop_TitleSequenceGradient;
         8973266 => HdmaobjPreInstr_ColorMathControlB_TitleGradient;
         8973341 => HdmaobjPreInstr_IntroCutsceneCrossfade; 8972070 => [()];
-        8973494 => HdmaobjPreInstr_ECB6;
+        8973494 => [Runtime::new(game).advance_hdma_wave(k, HdmaWave::Intro)];
     }
 }
 crate::game::address_dispatch! {

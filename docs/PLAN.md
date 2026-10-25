@@ -52,7 +52,7 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Original any% timing alignment remains parked; no further hand-route exploration.
    Room seeds and movies stay local; only the logger and index/recipes are committed.
 2. **Current - lane B bank retirement.** `sm_94`, `sm_91`, `sm_89` and `sm_90` are deleted.
-   B1 starts sm_81 sprite/save callers; B2 continues sm_88 (1,147 lines); B3 starts
+   B1 starts sm_81 sprite/save callers; B2 continues sm_88 (1,035 lines); B3 starts
    Crocomire sm_a4. Player input, rendering, movement and dispatch share existing
    owners. Bank removal is not persistent whole-engine state ownership: camera
    compatibility and the unchanged Ceres elevator callback still use raw RAM.
