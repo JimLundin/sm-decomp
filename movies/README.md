@@ -455,3 +455,7 @@ this regression does not qualify Mother Brain defeat. Seeds and inputs stay loca
 fresh defeat and 120 following frames. `draygon-bubble-word-counter` (18 frames)
 and `space-jump-bubble-word-counter` (440 frames, `100-boundary:260`) retain the
 first underwater bubble timing mismatches and three following frames.
+
+`item-space-jump` uses `100-boundary:260` and `seed-space-jump.inputs`.
+Require a fresh item award, message completion and their full 120-frame tails;
+the qualified 527-frame window ends after the message at frame 406.

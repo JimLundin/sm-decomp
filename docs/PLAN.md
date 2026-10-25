@@ -42,14 +42,14 @@ The known example/detached compilation errors are fixed and checked locally.
 ## Work order
 
 1. **Current - lane A room-seeded TAS coverage.** Crocomire defeat now passes;
-   36/44 required checks pass, 8 remain pending. Both four-frame melt/wall
+   37/44 required checks pass, 7 remain pending. Both four-frame melt/wall
    regressions pass; the defeat row runs 4,258 frames through 120 frames after
    the fresh boss flag. The full 167,285-frame setup was checked from boot.
    A1.1 any% capture is complete: 197 room entries, six regions each; all 1,182
    files checked, full 129,712-frame capture matches the original log. The final-source
    A1.2 seed import passes 600 frames and reaches the captured next room; both
    complete captures have register supplements. Screw Attack and Spring Ball now pass seeded award/message/tail rows.
-   Ridley now passes fresh defeat plus its full tail. Next: remaining bosses and items; Phantoon and Draygon are fixed and qualified; Space Jump remains pending.
+   Ridley now passes fresh defeat plus its full tail. Phantoon, Draygon and Space Jump now pass. Next: Gravity and remaining bosses.
    Mother Brain spawn parameters are fixed through a 4,560-frame regression; defeat remains pending.
    The seeded X-ray row passes its award, message and 120-frame tail (667 frames).
    Captures now use an instruction boundary; the longer next-room continuation still drifts.
