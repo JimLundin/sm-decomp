@@ -446,3 +446,13 @@ input_sha256 = "37329288686fa19d3cd68ae35e588ea131f260e37f17da8d876a3977430ac523
 start_frame = 8239
 frames = 861
 expect = ["door:DF8D", "door:DFD7", "door:E021", "door:E06B", "state:8"]
+
+# The recorded controller read at native step9216 crosses adjacent video frames.
+[[segment]]
+id = "tas-ceres-cross-frame-read"
+inputs = "any-cross-frame-prefix.inputs"
+input_sha256 = "ccd67ec9329ba43256552e73f2fdfd3d6791ecae85a6c6834504b3fb7633c001"
+start_frame = 9100
+frames = 166
+require_hit = ["coroutine.door"]
+expect = ["state:8", "state:11"]

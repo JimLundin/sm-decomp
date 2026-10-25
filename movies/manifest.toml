@@ -8,6 +8,11 @@ emulator = "lsnes rr2-beta23 / bsnes v085 (Compatibility core)"
 file = "super-metroid-any-3653.lsmv"
 frames = 129712
 # Original full-capture producer is retained below; boundary capture uses the optional event mode.
+extended_capture_frames = 23000
+extended_log_sha256 = "0a32cb1199c203a71704c58e3ae26521243c436213c9a364af642afc3c96ecdd"
+extended_input_poll_log_sha256 = "2db263be14328645df600dee08b9f720ea6a60c1abf0fccf6d1e4f84e28428ab"
+extended_events_sha256 = "76594d24baf4c20e7d43b5e0ce38ca0af4f63d0843e6db76110705f6e6c84dbb"
+extended_logger_sha256 = "b82b2cf4cdba8f4282c1fb215959e50aa93f13d97a366a4d7cee55c9b92f09c7"
 door_capture_frames = 10000
 door_log_sha256 = "fe6315b169ee717151436326e2e0369c536e10e2c414182f56e75c35c004901c"
 door_input_poll_log_sha256 = "fb52338e6be77cf14f9bb0d1b90ee2f138809a3ddbaa82a27ae652fd0a9f0752"

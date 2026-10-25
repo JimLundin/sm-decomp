@@ -84,6 +84,23 @@ The five-step regression starts before the first suspension; the longer row cove
 four doors and subsequent gameplay. These are additional checks, not completion
 of the required corpus or full-game/credits alignment. Capture hashes are in the manifest.
 
+The next prefix uses the same capture procedure with `SM_LSNES_FRAMES=23000`.
+The logger also records door direction for the loading-order comparison. Import
+and check the measured cross-video controller read with:
+
+```powershell
+python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/any-cross-frame-prefix.inputs --rom rom/sm.smc --lag-log target/any-extended-boundaries.csv --frames 9266
+python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --segment tas-ceres-cross-frame-read
+```
+
+The read at native step 9216 starts in movie frame 10021 and ends in 10022.
+Its boundary events are consecutive and neither NMI counter changes. The importer
+accepts that uninterrupted read while rejecting missing boundaries, counter changes,
+and larger frame gaps. The first 9,100 imported words remain byte-identical.
+The new row reaches E0B5 during door transition; it does not prove gameplay resumes
+there. Step 9266 remains unmapped: a controller read follows the door's `more_exit`
+without an observed normal wait entry. Do not extend past it using offsets.
+
 With SDL2 installed, run the headless verifier:
 
 ```sh

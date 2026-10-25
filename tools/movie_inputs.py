@@ -118,7 +118,11 @@ def aligned_work_prefix(video, events, count):
                 raise ValueError('unobserved NMI or input change')
             read = event
         elif kind == 'joypad_read' and read is not None:
-            if event['nmi'] != read['nmi'] or frame != read['movie_frame']:
+            # A video boundary can split one uninterrupted controller read.
+            crossed = frame == read['movie_frame'] + 1
+            if (any(event[key] != read[key] for key in ('nmi', 'including_lag'))
+                    or frame not in (read['movie_frame'], read['movie_frame'] + 1)
+                    or (crossed and event['event'] != read['event'] + 1)):
                 raise ValueError('incomplete controller read')
             result.append(read['joypad'])
             previous, read = event, None

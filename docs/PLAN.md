@@ -49,11 +49,12 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    checks (in-memory save, upward elevator, Ice return) pass; the corpus is unfinished.
    A0.2: original lsnes captured 129,712 exact inputs across 127 gameplay rooms;
    24,619 emulator-lag frames, no credits. Flat NMI counts do not identify lag.
-   A0.3: measured wait-entry input aligns 9,100 native steps (0 failures).
+   A0.3: measured wait-entry input aligns 9,266 native steps (0 failures).
    Options return and door loading timing are corrected; original timing matches
    23 doors in all directions. All 24 runnable required recipes requalify; the
    five-frame door regression kills an acknowledged-NMI timing mutation. Next:
-   a controller read crossing adjacent video frames at step 9,216 stops import.
+   the read after door-scroll exit at native index 9,266 lacks a normal wait;
+   E0B5 resumed gameplay is unproven. Adjacent-video controller reads now align.
    Observer unit tests (20) are not gameplay checks. Regenerate incompatible
    checkpoints from boot; preserve the old checked navigation build.
 2. **Current - lane B bank retirement.** `sm_94` is deleted; next is `sm_91`.

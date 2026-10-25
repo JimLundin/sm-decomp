@@ -82,7 +82,7 @@ on_input = guarded(on_input)
 on_frame_emulated = guarded(on_frame_emulated)
 if os.getenv("SM_LSNES_BOUNDARIES") == "1" then
     events = assert(io.open(path .. ".events.csv", "wb"))
-    events:write("event,movie_frame,kind,nmi,including_lag,state,room,x,y,joypad,scroll_frame,irq_handler,waiting_nmi\n")
+    events:write("event,movie_frame,kind,nmi,including_lag,state,room,x,y,joypad,scroll_frame,irq_handler,waiting_nmi,direction\n")
     local count = 0
     -- CPU-bus exec addresses in lsnes are 0x1000000 + SNES PC.
     -- ReadJoypadInputs runs inside ROM NMI, but at the next native update's start.
@@ -101,11 +101,11 @@ if os.getenv("SM_LSNES_BOUNDARIES") == "1" then
         memory.registerexec(0x1000000 + hook[1], guarded(function()
             assert(movie.readonly(), "recording movie must remain read-only")
             count = count + 1
-            events:write(string.format("%d,%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", count,
+            events:write(string.format("%d,%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", count,
                 movie.currentframe(), kind, memory.readword(0x7E05B6), memory.readword(0x7E05B8),
                 memory.readword(0x7E0998), memory.readword(0x7E079B),
                 memory.readword(0x7E0AF6), memory.readword(0x7E0AFA), memory.readword(0x7E008B),
-                memory.readword(0x7E0925), memory.readword(0x7E00AB), memory.readbyte(0x7E05B4)))
+                memory.readword(0x7E0925), memory.readword(0x7E00AB), memory.readbyte(0x7E05B4), memory.readword(0x7E0791)))
             if count % 100 == 0 then events:flush() end
         end))
     end
