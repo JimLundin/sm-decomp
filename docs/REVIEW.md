@@ -149,7 +149,9 @@ encrypted seeds in CI, cloud agents with auto-land, a Linux verifier spike. Orde
 only, one lane item each, own `ci/<lane>-<topic>` branches. Start with two: **C3+L1**
 (above), then **lane M** (M1a fixpoint strip, then M2 per enemy bank; compile-checked
 codemods suit agents that cannot run rows locally). Add enemy-bank B agents once C2+C3
-run seeded rows in CI. Windows agents keep A, B1, B2, B3.
+run seeded rows in CI. Windows agents keep A, B1, B2, B3. **Launched 18:35 CET** as one-off cloud sessions: `C:` agent (C3 then L1) and
+`M:` cloud agent (M1a fixpoint, then M2 on banks the Windows M agent is not touching).
+The Windows lane-M agent keeps its M2 hand moves; it does not run M1a.
 
 **Lane A — coverage (one agent): room-seeded TAS segments (A1).** Stop aligning the
 whole movie. Restart alignment at every room instead: the TAS emulator gives the true
