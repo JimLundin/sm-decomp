@@ -117,20 +117,39 @@ codemod). Body: the script (or its path), unsafe before/after, the Segments run.
   `&'static` slices or typed table reads; hardware register fns safe.
 After M4, re-measure and set the next primitive from what still holds unsafe.
 
-**Lane C — CI as the verification pipeline (user direction 2026-10-25).**
-- **C0 (now, lane-A agent, before more rows):** make `ci.yml` green on main
-  (`--example sm_verify`, detached projectile build). Whoever breaks it fixes it next.
-  Compile half done (c563093). Still red at 83281dc: the hand-written mutation steps
-  (`player_detached/mutations.py`, `room_mutations.py`). **C0b, next lane-A commit:**
-  delete those two steps and their scripts (old proof ritual; per-bank scoped
-  cargo-mutants and Segments replace them); verification Rust falls with it.
-- **C1 (reviewer, done with this change):** `segments.yml` runs on every push to main
-  and on `ci/**` branches; dispatch with `segments=` for chosen rows.
-- **C2 (lane A, after C0):** seed and lag-log rows in CI. Seed rows need the seed
-  files; prefix rows need lsnes lag logs. Both are ROM-derived: store them as
-  base64 secrets like the ROM, or as an encrypted artifact keyed by a secret. Waits on
-  the user's yes (asked 2026-10-25 16:00). Then shard by seed so no shard replays
-  from boot (target: whole corpus under 15 min).
+**Lane C — CI as the verification pipeline (user decisions 2026-10-25 18:05, live).**
+Why: at ~760 legacy lines/hour, 48,715 lines is ~64 agent-hours, about a week. The one
+Windows machine is the limit, and it only matters because rows can run nowhere else:
+the code already compiles on Linux (reviewer ran `cargo check` in a cloud session: 302
+warnings, same as Windows). The user approved four changes: lift the local-only rule,
+encrypted seeds in CI, cloud agents with auto-land, a Linux verifier spike. Order:
+- **C0b (lane A, next commit; unblocked by the lifted CI rule):** gate the two mutation
+  steps in `ci.yml` (and the ROM-prep/report steps) behind `workflow_dispatch`; scripts
+  stay for local capture callers. `ci.yml` green.
+- **C1 (done):** `segments.yml` on main and `ci/**`; 3 green runs on main, ~45 min each.
+- **C2 (lane A, due 10-26 06:00):** seeds and lag logs in CI. Pack `target/seeds/` plus
+  lag logs, encrypt (`openssl enc -aes-256-cbc -pbkdf2` or `age`) with a new
+  `SEED_KEY` secret, upload as a release asset on a `ci-data` tag (ciphertext only),
+  decrypt on the runner. `segments.yml` then runs seed rows, one shard per seed: no
+  shard replays from boot. Target: the whole corpus under 15 min.
+- **C3 (first cloud agent, due 10-26 06:00):** (a) on `ci/**`, `segments.yml` runs only
+  the head commit's `Rows:` rows plus the smoke set (all rows if none named); (b) an
+  auto-land job: on green, rebase onto main and fast-forward main; conflict = fail and
+  leave the branch. Main keeps the full corpus, with only the newest push queued.
+  Then every lane switches to PLAN's hosted mode.
+- **L1 (same cloud agent after C3, ~3h spike):** build the verifier as a Linux shared
+  library (`verify_dll.py` loads it with `ctypes.CDLL`; the oracle core is portable C).
+  Go: the smoke set passes on `ubuntu-24.04` with byte-identical results to Windows.
+  Then shards move to Linux (faster, more runners). No-go: write down the blocker.
+- **Runner budget:** the free plan allows ~20 concurrent jobs; one full run uses 14. If
+  branch runs queue over 15 min after C3, the reviewer asks the user about a paid plan
+  or larger runners before adding agents.
+
+**Cloud agents (user approved 18:05).** Linux sessions without the ROM, hosted mode
+only, one lane item each, own `ci/<lane>-<topic>` branches. Start with two: **C3+L1**
+(above), then **lane M** (M1a fixpoint strip, then M2 per enemy bank; compile-checked
+codemods suit agents that cannot run rows locally). Add enemy-bank B agents once C2+C3
+run seeded rows in CI. Windows agents keep A, B1, B2, B3.
 
 **Lane A — coverage (one agent): room-seeded TAS segments (A1).** Stop aligning the
 whole movie. Restart alignment at every room instead: the TAS emulator gives the true
@@ -233,10 +252,8 @@ deletion. End-state budgets in the size goal stand (≤100,000 with all banks re
 (`player_detached/mutations.py`, `room_mutations.py`; run 40211656694). C0b was not done:
 PLAN's "Local validation" note records a direct user instruction to the agents not to use
 or observe CI, and the agents' audit (PLAN item 2) keeps the drivers for local capture
-callers. Both are reasonable; the steps still block a green CI. Corrective step, needs the
-user: allow one agent commit that gates those two steps (and the ROM-prep/report steps)
-behind `workflow_dispatch` (`if: github.event_name == 'workflow_dispatch'`), scripts kept.
-It needs no CI observation.
+callers. The user lifted the local-only rule at 18:05. Corrective step: C0b, the next lane-A
+commit, gates those steps behind `workflow_dispatch`, keeping the scripts.
 
 **06:00 miss (recorded 05:52 CET):** no agent committed 23:48-05:50; the plan was not
 the blocker. Corrective step done: agents restarted ~05:50; sm_94 deleted 06:51 CET.

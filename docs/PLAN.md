@@ -33,11 +33,13 @@ Direct user instructions win; HISTORY holds no current rules.
 [view](https://jimlundin.github.io/sm-decomp/) from HEAD; keep only the five-box
 SVG in PROGRESS current. No other map work unless the user asks.
 
-**Local validation for this session:** the direct user instruction remains to
-not use or observe CI. The fetched review proposes hosted validation; that does
-not override the instruction in this conversation. Keep its implementation lanes
-and priorities, but use the local Fast loop and local bank-retirement checks below.
-The known example/detached compilation errors are fixed and checked locally.
+**Hosted validation (user decision 2026-10-25 18:05, given live to the reviewer;
+replaces the earlier "do not use or observe CI" note).** The user lifted the
+local-only rule: hosted CI is the main verifier, the Windows machine is not.
+Agents push to `ci/<lane>-<topic>` branches, let `Segments` verify, and land on
+main when it is green (see Fast loop). The user also approved: ROM-derived seeds and
+lag logs in CI, encrypted with a repository secret (C2); cloud Linux agents with
+auto-land on green (C3); a Linux verifier spike (L1). Details: REVIEW.md lane C.
 
 ## Work order
 
@@ -163,6 +165,15 @@ Every routine commit runs exactly this, then commits:
    through the existing DLL rows; its Cargo/nextest runner cannot use this host.
 4. Body <=8 lines: what changed, rows run and result, legacy/production delta and
    ratio, `Score:`. Re-run a flaky step once; a second failure is real.
+
+**Hosted mode (user decision 18:05; switch per lane as soon as C3 lands):**
+local work is step 1 plus at most one smoke row. Name the rows in a `Rows:` body
+line, push to `ci/<lane>-<topic>`, and start the next change at once on a new
+branch; do not wait on the run. `Segments` runs the `Rows:` rows plus the smoke set
+on the branch; green auto-lands on main (rebased; a conflict fails the land and
+the author rebases). A red run is that author's next task. Main runs the whole
+corpus as a backstop; its failures get a regression row as above. Agents without
+the ROM (cloud) use hosted mode only. Until C3 exists, the local loop above stands.
 
 Commands and checkpoint rules: [movies/README.md](../movies/README.md).
 When touched, inspect `cpu_infra.rs` masks, `PatchBugs`, hardware/audio limits and
