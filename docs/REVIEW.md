@@ -63,23 +63,16 @@ runs exactly one game frame per input word. Steps, one commit each:
 - **A0.1 Locate — done (7867e91).** Any% on main: 129,712 frames, 0 oracle
   failures, but Samus never leaves Ceres (six rooms, no credits). Replay the full any% import on main with room logging; record
   under work item 1 the first frame and room where Samus leaves the TAS's route.
-- **A0.2 Measure lag — logger + 300-frame smoke done (7867e91); boot reaches
-  state 1 at movie index 271 vs native 150.** Next commit: the full capture's
-  SHA-256 in the manifest plus one finding line: the first index where the lsnes
-  latched joypad word differs from the imported word. That index, not a guess,
-  is what A0.3 removes.
-  **Smaller first deliverable (stall 01:52):** Samus never leaves Ceres, so the
-  divergence is inside the Ceres segment: capture only through the first Ceres
-  frames past the native run's last Ceres room (≤~15,000 movie frames), commit
-  its hash and the first differing latch index. The full-run capture can follow. Play the same movie in the recording emulator (lsnes
-  rr2-beta23, bsnes v085 core; Windows build exists) with a short Lua script that
-  logs WRAM `$05B6` (`nmi_frame_counter_word`) and `$05B8` (`…_including_lag`)
-  per movie frame. Frames where `$05B6` does not advance are lag frames. The log
-  stays local and gitignored like `.inputs`; commit only its SHA-256 in the
-  manifest and the Lua script in `tools/`.
-- **A0.3 Align.** Add `--lag-log` to `tools/movie_inputs.py`: drop exactly the
-  logged lag frames, keeping the word the game latched. Every removed frame comes
-  from the log; no guessed offsets (PLAN's timing rule still holds).
+- **A0.2 Measure lag — done (cec060e).** Original lsnes capture: 129,712 inputs,
+  127 gameplay rooms, 24,619 emulator-lag frames, hashes in the manifest. Finding:
+  flat NMI counts do not identify lag, so A0.3 aligns on measured wait-entry input.
+- **A0.3 Align — in progress (1b726be: 8,250 native steps, 0 failures; options
+  return-tile quirk fixed with a 5-frame regression row).** Blocker named by the
+  agent: the next door has 19 unmapped NMI advances (an extra native NMI hidden by
+  oracle patches). **Next commit:** fix door scheduling so the aligned prefix passes
+  the first Ceres door, with its regression row; extend frame count each commit.
+  Also check why the capture shows no credits: if the movie's input ends before the
+  credits, A0.4 continues with neutral input after the last frame; record which.
 - **A0.4 Replay.** Aligned any% from boot to credits, 0 failures; then 100%
   (222,788 frames) and low%.
 - **A0.5 Map.** Point pending `segments.toml` rows at frame windows of the
@@ -102,13 +95,15 @@ state (no raw `g_ram`, no new Host/effects/adapter type). Name the checkpoint
 segments that exercise it. A bank is done when its file is deleted. Total
 production must fall with each bank; unsafe lines must fall with every commit.
 Drafts not adopted within 2 hours are recorded in one line and dropped.
-**Lane B stalled (3 check-ins silent).** The one required next commit is (1)
-below; land it before any draft, map or docs work. Unadopted `sm_91`/`sm_90`
-drafts older than 2h: record in one line and drop. **Next `sm_94` commits:** (1) move the already-safe
-`PostGrappleColl_*`/`post_grapple_traverse` family into the owned player-collision
-module and delete it from the bank; (2) `BlockInside*` + `BlockInsideDetection`;
-(3) grapple reactions and `HandleGrappleBeamGfx`, then delete the file. Each is
-one commit landing within the hour; no B commit by the next check-in is a lane stall.
+**`sm_94` deleted (ca42bc5, 06:51 CET); replacement ratio ~75% over the three
+commits (owned +~580 / bank −772), slightly above the 70% guide.** Next bank
+`sm_91` (1,237 lines, 104 unsafe), one family per commit: (1) `Samus_InputHandler`,
+`Samus_Input_*`, `Samus_LookupTransitionTable`, pose helpers into the owned
+player-input/pose module; (2) demo input (`*DemoInput*`, `DemoSetFunc_*`,
+`LoadDemoData`); (3) suit pickups/palettes, `Samus_DealDamage`, `Samus_Initialize`,
+X-ray; (4) `SomeMotherBrainScripts*`, `SamusFunc_E633*`, then delete the file. Mother
+Brain paths are not movie-covered yet: move them unchanged and say so. Aim each
+commit at ≤70% replacement; the production waypoint depends on it.
 
 **Waypoints** (Europe/Stockholm; review clock; a miss gets a diagnosis, not a new plan):
 
@@ -124,49 +119,23 @@ sm_94 not deleted (legacy 55,315, production 116,670). Cause: no agent has
 committed since 7867e91 (23:48 CET), six hours idle; the plan was not the
 blocker. Corrective step: on restart, land A0.2's Ceres-only capture and sm_94
 step 1 first; the 18:00 waypoint stands unchanged and now carries sm_94 too.
+**Corrective step done:** agents restarted ~05:50; sm_94 deleted 06:51 CET.
 
 Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
-- **2026-10-25 05:52 CET (a172326, no new agent commits):** **STALL, sixth in a
-  row: 0 agent commits** since 7867e91 (23:48 CET), ~6h; agents are not running
-  (escalated; only Jim can restart them). Score unchanged `checks 24/44 · legacy
-  55315 · production 116670 · unsafe 4962 · verification 38993`. **06:00 waypoint
-  missed** (recorded in the table). Next commits unchanged: A0.2 Ceres capture,
-  sm_94 step 1.
-- **2026-10-25 04:52 CET (245502b, no new agent commits):** **STALL, fifth in a
-  row: 0 agent commits** since 7867e91 (23:48 CET), now ~5h; agents are not
-  running (escalated; only Jim can restart them). No source diff; Score unchanged
-  `checks 24/44 · legacy 55315 · production 116670 · unsafe 4962 · verification
-  38993`. 06:00 waypoint (A0.4 credits, sm_94 deleted) will miss; recorded next
-  check-in. Next commits unchanged: A0.2 Ceres capture, sm_94 step 1.
-- **2026-10-25 03:51 CET (bed330e, no new agent commits):** **STALL, fourth in a
-  row: 0 agent commits** since 7867e91 (00:48 CEST = 23:48 CET), now ~4h; agents
-  are not running (escalated; only Jim can restart them). Score unchanged `checks
-  24/44 · legacy 55315 · production 116670 · unsafe 4962 · verification 38993`.
-  06:00 waypoint: both lanes behind, miss now effectively certain. Plan unchanged:
-  A0.2 Ceres capture and sm_94 step 1 remain the next commits.
-- **2026-10-25 02:52 CET (be111ac, no new agent commits):** **STALL, third in a
-  row: 0 agent commits** since 7867e91 (00:48 CEST), now ~3h; agents are not
-  running (escalated again; only Jim can restart them). Score unchanged `checks
-  24/44 · legacy 55315 · production 116670 · unsafe 4962 · verification 38993`;
-  warnings 377. 06:00 waypoint: both lanes behind, miss near-certain. Plan
-  unchanged: A0.2 Ceres capture and sm_94 step 1 remain the next commits.
-- **2026-10-25 02:52 (5d60c0e, no new agent commits):** **STALL, second in a
-  row: 0 agent commits of any kind** since 7867e91 (00:48), now ~2h; agents are
-  not running (escalated to Jim; not fixable from the repo). Lane B third silent
-  check-in. Score unchanged `checks 24/44 · legacy 55315 · production 116670 ·
-  unsafe 4962 · verification 38993`; warnings 377 (no Rust changed). 06:00
-  waypoint: both lanes will miss unless agents restart now. Plan unchanged: the
-  next commits named above (A0.2 Ceres capture, sm_94 step 1) still stand.
-- **2026-10-25 01:52 (9feb2f2, no new agent commits):** **STALL — 0 agent
-  commits of any kind** since 7867e91 (00:48); agents appear not to be running
-  (not fixable from the repo). Lane B: second silent check-in (no code since
-  c1fe795, 23:49) = lane stall; sm_91/sm_90 drafts not visible on main after 2h.
-  Score unchanged `checks 24/44 · legacy 55315 · production 116670 · unsafe 4962
-  · verification 38993`; warnings 377 (code unchanged). 06:00 waypoint: both lanes
-  behind. Changed: A0.2 split to a Ceres-only capture; lane B single required commit.
+- **2026-10-25 06:52 CET (ca42bc5):** agents back after a 6h stall. 5 agent
+  commits: A 2 (cec060e, 1b726be), B 3 (`B:sm_94`), 0 unlabelled, 0 docs-only; all
+  carry `Score:` (ca42bc5's has mojibake `Â·`). **sm_94 deleted** (ratio ~75%).
+  A0.2 done; A0.3 at 8,250 aligned steps, 0 failures. Score now `checks 24/44 ·
+  legacy 54543 · production 116478 · unsafe 4928 · verification 39010` (last 24 ·
+  55315 · 116670 · 4962 · 38993); warnings 375 (377). No stall. 18:00 waypoint:
+  lane B on pace for legacy, behind on production; lane A behind (needs +10 checks).
+  Verification +17 (generic `state:` expectation, 2 segment row sets): acceptable,
+  but it must fall; production verify/probe/observer lines flat (613, same grep).
+- **2026-10-25 01:52–05:52 CET (9feb2f2…a172326):** five consecutive full stalls,
+  0 agent commits since 7867e91 (23:48 CET); escalated to Jim; 06:00 waypoint missed.
 - **2026-10-25 00:55 (7867e91):** 2 agent commits since c1fe795, both `A:`
   (a427ba4 is the user-requested map SVG, not lane progress); **lane B 0 commits**
   (first silent check-in). A0.1 done, A0.2 smoke done. No Rust changed: Score
@@ -178,12 +147,6 @@ Map brief is done (c1fe795); no further map work unless the user asks.
   verification = movie segments as data, no new fixtures or production hooks.
 - **2026-10-24 23:58 (user direction):** Lane A switched from hand-authored routes
   to aligning the published any%/100% TASes (A0.1–A0.5 above); waypoints moved.
-- **2026-10-24 23:52 (c1fe795):** 2 agent source commits in the ~20 min since
-  8499a33, both lane B (`B:sm_94`), 0 docs-only; no stall. Milestone plan picked up
-  at once: subjects prefixed, `Score:` line present, `progress.sh` reports legacy.
-  Production 116,960 → 116,670 (incl. fda4ebd); legacy 55,342 → 55,315; verification
-  38,993 (+109); unsafe 4,962 (−3); warnings 377 lines. No lane A commit yet (24/44;
-  06:00 waypoint needs 27). Map: fixes (a)/(b) landed and render on both widths; brief done.
 
 ## Lane watch (2026-10-24 23:52)
 
