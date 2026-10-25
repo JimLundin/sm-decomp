@@ -8,8 +8,8 @@ use crate::game::{menu_tilemap, menu_window};
 pub use crate::game::constants::bank_82::*;
 
 use crate::game::sm_80::{
-    GraphicsAsset, HandleFadeIn, HandleFadeOut, LoadFromLoadStation, LoadMirrorOfExploredMapTiles,
-    QueueSfx1_Max6, QueueSfx3_Max6, ScreenOff, ScreenOn,
+    HandleFadeIn, HandleFadeOut, LoadFromLoadStation, LoadMirrorOfExploredMapTiles, QueueSfx1_Max6,
+    QueueSfx3_Max6, ScreenOff, ScreenOn,
 };
 use crate::game::sm_82::{
     AdvanceGradualColorChangeOfPalette, DisplayMapElevatorDestinations,
@@ -53,9 +53,6 @@ crate::game::constants::typed_constants! { i32;
     true_0 = 1,
 }
 const RomPtr_82: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x82>;
-crate::ram_map::ram_pointer_functions! {
-    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
-}
 #[inline]
 unsafe fn get_RoomDefHeader(a: u16, game: &mut Game) -> *mut RoomDefHeader {
     unsafe { RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefHeader }
@@ -76,41 +73,14 @@ pub unsafe fn GameOverMenu_0_FadeOutConfigGfx(game: &mut Game) {
             WaitUntilEndOfVblankAndClearHdma(game);
             word_transfers!(game, ascending, 256; pause_map(384) <- le(palette_buffer, 0));
             word_transfers!(game, ascending, 27; pause_map(640) <- native(0x51));
-            MapVramForMenu(game);
-            LoadInitialMenuTiles(game);
+            menu_tilemap::prepare_graphics(game);
             word! { game, 0;
                 reg_BG1HOFS, reg_BG2HOFS, reg_BG3HOFS, reg_BG1VOFS, reg_BG2VOFS, reg_BG3VOFS,
             }
-            LoadMenuPalettes(game);
+            menu_tilemap::load_palette(game);
             word!(game.menu_index += 1);
         }
     }
-}
-pub unsafe fn MapVramForMenu(game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0x6b) = 0;
-        *ram_ptr!(game; 0x52) = 3;
-        *ram_ptr!(game; 0x58) = 81;
-        *ram_ptr!(game; 0x59) = 88;
-        *ram_ptr!(game; 0x5a) = 92;
-        *ram_ptr!(game; 0x5d) = 0;
-        *ram_ptr!(game; 0x5e) = 4;
-        *ram_ptr!(game; 0x69) = 19;
-    }
-}
-pub unsafe fn LoadInitialMenuTiles(game: &mut Game) {
-    unsafe {
-        GraphicsAsset::VramWords(0x8e8000, 0, 0x5600).load(game);
-        GraphicsAsset::VramWords(0xb68000, 0x3000, 0x2000).load(game);
-        GraphicsAsset::VramWords(0xb6c000, 0x6000, 0x2000).load(game);
-        GraphicsAsset::VramWords(0x8ed600, 0x4000, 0x600).load(game);
-    }
-}
-pub unsafe fn LoadMenuPalettes(game: &mut Game) {
-    word_transfers!(game, (4), 128;
-        le(palette_buffer, 0) <- rom(0x8ee400, 0),
-        le(palette_buffer, 1) <- rom(0x8ee400, 1),
-    );
 }
 static kGameOverMenuFuncs: [Func_V; 8] = callback_table! { nonnull Func_V;
     GameOverMenu_0_FadeOutConfigGfx, GameOverMenu_1_Init, GameOverMenu_2_PlayMusic,
@@ -202,15 +172,7 @@ pub unsafe fn GameOverMenu_1_Init(game: &mut Game) {
         QueueMusic_Delayed8(0xff03, game);
         word! {game; cinematic_var5 = 1; eproj_id[0] = 0; }
         word_transfers!(game, ascending, 1024; native(0x3600) <- value(15));
-        let v1: i32 = word!(game.vram_write_queue_tail) as i32;
-        let v2 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-        (*v2).size = 2048;
-        (*v2).src.addr =
-            (&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.menu_tilemap as *mut u8)
-                .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
-        *(&raw mut (*v2).src.bank as *mut u16) = 126;
-        (*v2).vram_dst = ((*ram_ptr!(game; 0x58) as i32 & 0xfc) << 8) as u16;
-        word!(game.vram_write_queue_tail = (v1 + 7) as u16);
+        menu_tilemap::upload(2048, 0x7e3600, 0, true, game);
         (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 0;
         menu_tilemap::load(0x156, addr_kMenuTilemap_GameOver as u16, game);
         menu_tilemap::load(0x38a, addr_kMenuTilemap_FindMetroidLarva as u16, game);
@@ -277,19 +239,12 @@ pub unsafe fn FileSelectMenu_0_FadeOutConfigGfx(game: &mut Game) {
         DisableHdmaObjects(game);
         WaitUntilEndOfVblankAndClearHdma(game);
         word!(game.menu_index += 1);
-        MapVramForMenu(game);
-        LoadInitialMenuTiles(game);
+        menu_tilemap::prepare_graphics(game);
         word! { game, 0;
             reg_BG1HOFS, reg_BG2HOFS, reg_BG3HOFS, reg_BG1VOFS, reg_BG2VOFS, reg_BG3VOFS,
         }
-        LoadFileSelectPalettes(game);
+        menu_tilemap::load_palette(game);
     }
-}
-pub unsafe fn LoadFileSelectPalettes(game: &mut Game) {
-    word_transfers!(game, (4), 128;
-        le(palette_buffer, 0) <- rom(0x8ee400, 0),
-        le(palette_buffer, 1) <- rom(0x8ee400, 1),
-    );
 }
 pub unsafe fn FileSelectMenu_32_FadeOutToOptions(game: &mut Game) {
     unsafe {
@@ -410,7 +365,7 @@ unsafe fn draw_file_copy_rows(emphasis: FileRowEmphasis, game: &mut Game) {
             (*ram_ptr!(game, EnemyData; 0xf78)).palette_index = if dim { 1024 } else { 0 };
             draw_file_copy_row(slot, game);
         }
-        QueueTransferOfMenuTilemapToVramBG1(game);
+        menu_tilemap::upload(2048, 0x7e3600, 0, true, game);
     }
 }
 unsafe fn draw_file_copy_row(slot: u16, game: &mut Game) {
@@ -431,19 +386,6 @@ unsafe fn draw_file_copy_row(slot: u16, game: &mut Game) {
 pub unsafe fn DrawFileCopySaveFileInfo(game: &mut Game) {
     unsafe {
         draw_file_copy_rows(FileRowEmphasis::Occupied, game);
-    }
-}
-pub unsafe fn QueueTransferOfMenuTilemapToVramBG1(game: &mut Game) {
-    unsafe {
-        let v0: u16 = word!(game.vram_write_queue_tail);
-        let v1 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-        (*v1).size = 2048;
-        (*v1).src.addr =
-            (&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.menu_tilemap as *mut u8)
-                .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
-        *(&raw mut (*v1).src.bank as *mut u16) = 126;
-        (*v1).vram_dst = ((*ram_ptr!(game; 0x58) as i32 & 0xfc) << 8) as u16;
-        word!(game.vram_write_queue_tail = (v0).wrapping_add(7));
     }
 }
 static kBitShl: [u8; 3] = [1, 2, 4];
@@ -990,23 +932,12 @@ pub unsafe fn FileSelectMap_22(game: &mut Game) {
         }
     }
 }
-pub unsafe fn FileSelectMenu_1_LoadFileSelectMenuBG2(game: &mut Game) {
-    unsafe {
-        // This menu spans $3600..$3dff, beyond the pause-map union field.
-        let menu_tilemap = (&raw mut game.g_ram as *mut u8).add(0x3600).cast::<u16>();
-        word_transfers!(game, descending, 1024; native(0x3dfe) <- rom(0x8edc00, 1023));
-        let v1: u16 = word!(game.vram_write_queue_tail);
-        let mut v2 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-        (*v2).size = 2048;
-        (*v2).src.addr =
-            (&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.menu_tilemap as *mut u8)
-                .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
-        *(&raw mut (*v2).src.bank as *mut u16) = 126;
-        (*v2).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) as u16;
-        word!(game.vram_write_queue_tail = (v1).wrapping_add(7));
-        word!(game.menu_index += 1);
-        word! {game; cinematic_var5 = 1; eproj_id[0] = 0; }
-    }
+pub fn FileSelectMenu_1_LoadFileSelectMenuBG2(game: &mut Game) {
+    // This menu spans $3600..$3dff, beyond the pause-map union field.
+    word_transfers!(game, descending, 1024; native(0x3dfe) <- rom(0x8edc00, 1023));
+    menu_tilemap::upload(2048, 0x7e3600, 1, true, game);
+    word!(game.menu_index += 1);
+    word! {game; cinematic_var5 = 1; eproj_id[0] = 0; }
 }
 pub unsafe fn FileSelectMenu_2_InitMain(game: &mut Game) {
     unsafe {
@@ -1071,7 +1002,7 @@ pub unsafe fn FileSelectMenu_16(game: &mut Game) {
         }
         (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 0;
         menu_tilemap::load(0x688, addr_kMenuTilemap_Exit as u16, game);
-        QueueTransferOfMenuTilemapToVramBG1(game);
+        menu_tilemap::upload(2048, 0x7e3600, 0, true, game);
         word!(game.cinematic_var5 = 1);
         word! { game, 0;
             cinematic_var6, cinematic_var7, cinematic_var8, cinematic_var9, eproj_id[0], eproj_id[1],
@@ -1201,16 +1132,9 @@ pub unsafe fn FileSelectMenu_4_Main(game: &mut Game) {
 pub unsafe fn FileSelectMap_0(game: &mut Game) {
     unsafe {
         ClearMenuTilemap(game);
-        let v0: u16 = word!(game.vram_write_queue_tail);
-        let mut v1 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-        (*v1).size = 2048;
-        (*v1).src.addr =
-            (&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.menu_tilemap as *mut u8)
-                .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
-        *(&raw mut (*v1).src.bank as *mut u16) = 126;
-        (*v1).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) as u16;
-        word! {game; vram_write_queue_tail = (v0).wrapping_add(7); palette_change_num = 0; }
-        LoadFileSelectPalettes(game);
+        menu_tilemap::upload(2048, 0x7e3600, 1, true, game);
+        word! {game; palette_change_num = 0; }
+        menu_tilemap::load_palette(game);
         word_transfers!(game, ascending, 32; le(target_palettes, 0) <- le(palette_buffer, 0));
         word! { game, 0; target_palettes[14], target_palettes[30] }
         word!(game.menu_index += 1);
@@ -1278,34 +1202,31 @@ pub unsafe fn LoadAreaMapForegroundColors(mut j: u16, game: &mut Game) {
 }
 pub unsafe fn FileSelectMap_2_LoadAreaSelectForegroundTilemap(game: &mut Game) {
     unsafe {
-        let v0: u16 = word!(game.vram_write_queue_tail);
-        let mut v1 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-        (*v1).size = 2048;
-        (*v1).src.addr = addr_kAreaSelectForegroundTilemap as i32 as VoidP;
-        *(&raw mut (*v1).src.bank as *mut u16) = 129;
-        (*v1).vram_dst = ((*ram_ptr!(game; 0x58) as i32 & 0xfc) << 8) as u16;
-        word!(game.vram_write_queue_tail = (v0).wrapping_add(7));
+        menu_tilemap::upload(
+            2048,
+            0x810000 | u32::from(addr_kAreaSelectForegroundTilemap),
+            0,
+            true,
+            game,
+        );
         *(ram_ptr!(game, u16; 0x51)) = ((*ram_ptr!(game; 0x52) as i32) << 8 | 0xf) as u16;
         word!(game.menu_index += 1);
     }
 }
-pub unsafe fn FileSelectMap_18(game: &mut Game) {
-    unsafe {
-        word!(game.menu_index += 1);
-        LoadAreaSelectBackgroundTilemap(word!(game.area_index), game);
-    }
+pub fn FileSelectMap_18(game: &mut Game) {
+    word!(game.menu_index += 1);
+    LoadAreaSelectBackgroundTilemap(word!(game.area_index), game);
 }
 pub use self::FileSelectMap_18 as FileSelectMap_3_LoadAreaSelectBackgroundTilemap;
-pub unsafe fn LoadAreaSelectBackgroundTilemap(j: u16, game: &mut Game) {
-    unsafe {
-        let v1: u16 = word!(game.vram_write_queue_tail);
-        let v2 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-        (*v2).size = 2048;
-        (*v2).src.addr = (8 * 256 * j as i32 + addr_kAreaSelectBackgroundTilemaps as i32) as VoidP;
-        (*v2).src.bank = 0x81;
-        (*v2).vram_dst = ((*ram_ptr!(game; 0x5a) as i32 & 0xfc) << 8) as u16;
-        word!(game.vram_write_queue_tail = (v1).wrapping_add(7));
-    }
+pub fn LoadAreaSelectBackgroundTilemap(j: u16, game: &mut Game) {
+    menu_tilemap::upload(
+        2048,
+        0x810000
+            | u32::from((2048 * i32::from(j) + addr_kAreaSelectBackgroundTilemaps as i32) as u16),
+        2,
+        false,
+        game,
+    );
 }
 pub unsafe fn FileSelectMap_4_SetupExpandingSquareTransition(game: &mut Game) {
     unsafe {
@@ -1357,15 +1278,7 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
                 game,
             );
             word_transfers!(game, descending, 160; xray(959) <- rom(0x81b14b, 160));
-            let v4: u16 = word!(game.vram_write_queue_tail);
-            let mut v5 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-            (*v5).size = 2048;
-            (*v5).src.addr = (ram_ptr!(game, Ram4000; 0x4000) as *mut u8)
-                .offset_from(&raw mut game.g_ram as *mut u8) as c_long
-                as VoidP;
-            (*v5).src.bank = 126;
-            (*v5).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) as u16;
-            word!(game.vram_write_queue_tail = (v4).wrapping_add(7));
+            menu_tilemap::upload(2048, 0x7e4000, 1, false, game);
         }
     }
 }
@@ -1608,16 +1521,8 @@ pub unsafe fn FileSelectMap_7_PrepExpandSquareTransToRoomMap(game: &mut Game) {
                 .offset(170),
             game,
         );
-        let v0: u16 = word!(game.vram_write_queue_tail);
-        let v1 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-        (*v1).size = 512;
-        (*v1).src.addr = (ram_ptr!(game, Ram4000; 0x4000) as *mut u8)
-            .offset_from(&raw mut game.g_ram as *mut u8) as c_long
-            as VoidP;
-        (*v1).src.bank = 126;
-        (*v1).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) as u16;
-        word! {game; vram_write_queue_tail = (v0).wrapping_add(7);
-        expand_sq_timer = kRoomSelectMapExpandingSquareTimers[word!(game.area_index) as usize]; }
+        menu_tilemap::upload(512, 0x7e4000, 1, false, game);
+        word! {game; expand_sq_timer = kRoomSelectMapExpandingSquareTimers[word!(game.area_index) as usize]; }
         let v2: i32 = ((4u16).wrapping_mul(word!(game.area_index))) as i32 >> 1;
         word!(game.expand_sq_left_pos = kAreaSelectMapLabelPositions[v2 as usize]);
         word!(game.expand_sq_right_pos = word!(game.expand_sq_left_pos));
@@ -1850,21 +1755,13 @@ pub unsafe fn FileSelectMap_15_ClearTileMap(game: &mut Game) {
     unsafe {
         *ram_ptr!(game; 0x69) = 18;
         word_transfers!(game, descending, 1024; native(0x37fe) <- value(15));
-        let v1: u16 = word!(game.vram_write_queue_tail);
-        let v2 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-        (*v2).size = 2048;
-        (*v2).src.addr =
-            (&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u8)
-                .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
-        *(&raw mut (*v2).src.bank as *mut u16) = 126;
-        (*v2).vram_dst = ((*ram_ptr!(game; 0x58) as i32 & 0xfc) << 8) as u16;
-        word!(game.vram_write_queue_tail = (v1).wrapping_add(7));
+        menu_tilemap::upload(2048, 0x7e3000, 0, true, game);
         word!(game.menu_index += 1);
     }
 }
 pub unsafe fn FileSelectMap_16_LoadPalettes(game: &mut Game) {
     unsafe {
-        LoadMenuPalettes(game);
+        menu_tilemap::load_palette(game);
         let mut v0: i16 = 0;
         do_until! { (v1).wrapping_sub(5) >= 0 ;
             let mut v1: i16 = v0;

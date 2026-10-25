@@ -51,7 +51,7 @@ The known example/detached compilation errors are fixed and checked locally.
    Botwoon uses the published 13% route next; Golden Torizo is skipped in 100%.
    Original any% full-route timing remains parked; no new hand routes.
 2. **Current - lane B bank retirement.** `sm_94`, `sm_91`, `sm_89` and `sm_90` are deleted.
-   B1 continues sm_81 menu drawing (1,993 lines); B2 continues sm_88 (557 lines); B3 continues
+   B1 continues sm_81 menu drawing (1,890 lines); B2 continues sm_88 (557 lines); B3 continues
    Crocomire sm_a4 (1,593 lines); attack reactions now share safe actor access. Player input, rendering, movement and dispatch share existing
    owners; save/load now shares checked slot and map transfers.
    Bank removal is not persistent whole-engine state ownership: camera
