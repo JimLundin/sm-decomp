@@ -542,3 +542,34 @@ selected input and seed against `movies/segments.toml` before replay.
 Seeded rows share a shard only when their `capture:index` matches. Captured prefix
 rows and generated routes retain their existing start frames and full windows;
 they still need prefix replay. Pending checks remain explicitly pending.
+
+
+### Mother Brain phase observations
+
+Set `SM_LSNES_MB_PHASE_SEEDS=1` alongside `SM_LSNES_SEEDS` and
+`SM_LSNES_BOUNDARIES=1` to capture additional observations when Mother Brain's
+form (`$7E7800`, [bank A9:B507](https://patrickjohnston.org/bank/A9#B507)) changes
+inside room `$DD58`. Use a new capture directory; the additional observations
+have their own indexes and never replace an existing capture.
+
+These observations use the same normal-wait CPU boundary and exact pre-read
+controller metadata as room-entry seeds. The register companion also records
+`seed_mother_brain_form` and `seed_mother_brain_body_function` for identifying the
+phase. They are original-emulator observations; a new seed still needs strict
+replay comparison, a fresh defeat and the complete tail before it qualifies a
+boss row. No input or emulated memory is changed by this capture mode.
+
+The original 100% movie produced 336 observations in `100-mb-phases`:
+all 331 previous room observations plus five additional phase observations.
+All original lag/poll/event logs remain byte-identical. The committed
+`room-seeds-100-mb-phases.csv` binds the observations by hash. Final fighting
+form 4 is seed 329, captured before the Mother Brain defeat bit is set.
+
+```powershell
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-mother-brain-phase4-complete.inputs --rom rom/sm.smc --lag-log target/seeds/100-mb-phases/lag.csv --seed target/seeds/100-mb-phases/0329-DD58-wram.bin --frames 1380
+python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --segment boss-mother-brain
+```
+
+The row retains the fresh-defeat expectation and all 120 following frames,
+including the beginning of the escape door transition. Credits remain pending;
+this movie does not record the complete credits roll.

@@ -213,7 +213,14 @@ after_expectations = 120
 
 [[segment]]
 id = "boss-mother-brain"
-pending = "No qualified encounter-to-completion route with fresh boss state and precise encounter/death observations."
+seed = "100-mb-phases:329"
+seed_sha256 = "e0990c38601961b4cd287d9b092fbfdda2909da6c7fc01ad76258e3fccb8ae58"
+inputs = "seed-mother-brain-phase4-complete.inputs"
+input_sha256 = "4adea50e0aed7687c39a383838cf4b749c9e1ddaa2e83a47f3e805723c9a2c1d"
+start_frame = 0
+frames = 1380
+expect = ["boss:mother-brain", "room:DD58"]
+after_expectations = 120
 
 [[segment]]
 id = "item-morph-ball"

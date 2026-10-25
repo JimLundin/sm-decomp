@@ -46,16 +46,17 @@ auto-land on green (C3); a Linux verifier spike (L1). Details: REVIEW.md lane C.
 
 ## Work order
 
-1. **Current - lane A room-seeded coverage.** 40/44 required checks pass;
-   4 remain pending. Exact pre-read controller observations preserve the first
+1. **Current - lane A room-seeded coverage.** 41/44 required checks pass;
+   3 remain pending. Exact pre-read controller observations preserve the first
    input edge; Gravity and Grapple pass fresh awards, message completion and full tails.
    Any% 197 and 100% 331 room observations are captured; seeds/movies remain local.
    Hash indexes and regeneration recipes are committed. Existing seeded regressions
-   remain passing. Mother Brain has 4,560-frame and 2,756-frame spawn regressions; defeat is pending.
+   remain passing. Mother Brain now passes fresh defeat and its full 120-frame tail
+   in a 1,380-frame phase-seeded row on the current L1 baseline, with zero differences.
    Botwoon passes a fresh defeat and full tail (945 frames) from the published 13%
    route. Spore Spawn is absent from any%/100%; Golden Torizo is skipped in 100%.
-   The 100% Mother Brain 10,000-frame trial has zero oracle differences but misses
-   original defeat/exit; seed/route fidelity needs diagnosis. No new hand routes.
+   Next: capture Spore Spawn from compatible PowerOn LSMV submission 4481S;
+   Golden Torizo resync and a recorded credits tail remain pending. No new hand routes.
 2. **Current - lane B bank retirement.** `sm_94`, `sm_91`, `sm_89` and `sm_90` are deleted.
    B1 continues sm_81 menu drawing (1,668 lines); B2 continues sm_88 (274 lines); B3 continues
    Crocomire sm_a4 (1,676 lines); attack and return scripts share checked actors. Player input, rendering, movement and dispatch share existing

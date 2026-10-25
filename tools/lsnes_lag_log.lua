@@ -24,6 +24,8 @@ local event_count = 0
 local seed_dir = os.getenv("SM_LSNES_SEEDS")
 local seeds = nil
 local seed_room = nil
+local seed_mb_phases = os.getenv("SM_LSNES_MB_PHASE_SEEDS") == "1"
+local seed_mb_form = nil
 local seed_pending = false
 local seed_count = 0
 local seed_origin_frame = nil
@@ -44,6 +46,14 @@ local function capture_room(frame, boundary)
     local room = memory.readword(0x7E079B)
     if room ~= seed_room then
         seed_room = room; seed_pending = true; seed_origin_frame = nil
+        seed_mb_form = nil
+    end
+    if seed_mb_phases and room == 0xDD58 then
+        -- $7E7800 is Mother Brain's form (bank A9:B507), not her attack cycle.
+        local form = memory.readword(0x7E7800)
+        if form ~= seed_mb_form then
+            seed_mb_form = form; seed_pending = true; seed_origin_frame = nil
+        end
     end
     if not seed_pending or memory.readword(0x7E0998) ~= 8 then return end
     if not boundary then
@@ -63,6 +73,10 @@ local function capture_room(frame, boundary)
     local registers = assert(memory.getregisters(), "core has no register observations")
     registers.seed_movie_frame = frame
     registers.seed_room = room
+    if seed_mb_phases and room == 0xDD58 then
+        registers.seed_mother_brain_form = memory.readword(0x7E7800)
+        registers.seed_mother_brain_body_function = memory.readword(0x7E0FA8)
+    end
     registers.seed_nmi = memory.readword(0x7E05B6)
     registers.seed_boundary_frame = movie.currentframe()
     registers.seed_boundary_pc = 0x808348
@@ -231,7 +245,8 @@ if os.getenv("SM_LSNES_BOUNDARIES") == "1" then
             assert(movie.readonly(), "recording movie must remain read-only")
             event_count = event_count + 1
             if seed_dir and kind == "joypad_begin"
-                    and (seed_pending or memory.readword(0x7E079B) ~= seed_room) then
+                    and (seed_pending or memory.readword(0x7E079B) ~= seed_room
+                        or (seed_mb_phases and memory.readword(0x7E079B) == 0xDD58)) then
                 -- This is the last observed read before the pending seed. Keep
                 -- its exact producer state, not an inferred previous pad word.
                 local registers = assert(memory.getregisters())
