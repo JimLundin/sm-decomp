@@ -412,7 +412,8 @@ OAM, APU RAM and the register CSV in that order (the index's `observation_sha256
 Every file's contents are checked before and after replay. `start_frame` must be
 zero, and seeded rows never read or write verifier checkpoints. The boundary index
 `room-seeds-any-boundary.csv` records all 197 any% entries; the initial 57-entry
-prefix is unchanged. The full 100% boundary capture is also complete locally.
+prefix is unchanged. `room-seeds-100-boundary.csv` records all 331 entries of the
+completed 100% instruction-boundary capture; seed binaries remain local.
 
 Regenerate the X-ray inputs after the any% boundary capture reaches this room:
 
@@ -435,3 +436,4 @@ its capture directory and indexed WRAM filename, and its input frame count below
 | item-plasma | any-boundary:134 | 1400 |
 | area-tourian | any-boundary:179 | 300 |
 | area-wrecked-ship | any-boundary:160 | 300 |
+| item-screw-attack | 100-boundary:131 | 684 |

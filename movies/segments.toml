@@ -347,7 +347,16 @@ after_expectations = 120
 
 [[segment]]
 id = "item-screw-attack"
-pending = "No qualified acquisition-to-completion segment on the current route."
+seed = "100-boundary:131"
+seed_sha256 = "b22f820734a6b8215486fe7b16c7875d01bca36b3bfe15de859080d88e115297"
+inputs = "seed-screw-attack.inputs"
+input_sha256 = "70d97c6219384a2c982a5e482095d49b42ae24e4f84fd273aacf8f523b52aa01"
+start_frame = 0
+frames = 684
+expect = ["item:screw-attack", "room:B6C1"]
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+after_expectations = 120
 
 [[segment]]
 id = "pickup-missile"
