@@ -82,6 +82,10 @@ macro_rules! ram_word_accessors {
 
 // Oracle snapshots own separate allocations, keeping construction stack usage bounded.
 impl Game {
+    pub(crate) fn request_reset(&mut self) {
+        crate::ram_map::word!(self.game_state = u16::MAX);
+    }
+
     pub(crate) fn world(&self) -> &Arc<WorldBinding> {
         &self.world
     }

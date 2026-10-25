@@ -356,6 +356,7 @@ pub mod game {
 
     pub(crate) mod explosion_window;
     pub(crate) mod file_menu;
+    pub(crate) mod game_over;
     pub(crate) mod gameplay;
     pub(crate) mod grapple_rope;
     pub(crate) mod grapple_swing;
@@ -364,6 +365,7 @@ pub mod game {
     pub(crate) mod launch_motion_ram;
     pub(crate) mod layer_blending;
     pub(crate) mod liquid_effects;
+    pub(crate) mod map_menu;
     pub mod menu_tilemap;
     pub mod menu_window;
     pub mod message_boxes;
@@ -422,7 +424,6 @@ pub mod game {
     pub(crate) mod session_encoding;
     pub(crate) mod session_runtime;
     pub mod sm_80;
-    pub mod sm_81;
     pub mod sm_82;
     pub mod sm_8b;
     pub mod sm_8f;

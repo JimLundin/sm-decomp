@@ -40,7 +40,7 @@ fn run(operation: Operation, image: &RomImage, g: &mut Game) -> Returned {
                 ));
             }
             Operation::PalettePre => crate::game::palette_effects::checks::pre(9301701, 0, g),
-            Operation::NewSave => crate::game::sm_81::NewSaveFile(g),
+            Operation::NewSave => crate::game::save_slots::initialize(g),
             Operation::Demo => crate::game::sm_82::LoadDemoRoomData(g),
             Operation::DemoBoss => crate::game::sm_82::DemoRoom_SetBrinstarBossBits(g),
             Operation::Load(slot) => {

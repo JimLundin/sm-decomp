@@ -81,7 +81,7 @@ fn next_random(g: &mut Game) -> u16 {
     unsafe { crate::game::sm_80::NextRandom(g) }
 }
 fn new_save_file(g: &mut Game) {
-    unsafe { crate::game::sm_81::NewSaveFile(g) }
+    crate::game::save_slots::initialize(g)
 }
 fn load_from_sram(slot: u16, g: &mut Game) -> u8 {
     crate::game::save_slots::load(slot, g)

@@ -55,6 +55,10 @@ impl RomRecord {
         )
     }
 
+    pub(crate) fn table_word(&self, index: isize) -> u16 {
+        self.image.table_word(self.base, index)
+    }
+
     pub(crate) fn word(&self, offset: usize) -> u16 {
         u16::from_ne_bytes([self.byte(offset), self.byte(offset + 1)])
     }

@@ -9,7 +9,7 @@ pub(crate) struct GameplayFlags {
     pub(crate) opened_doors: [u8; 64],
 }
 // Required by Session::default for import construction. This is NOT the behavior
-// of NewSaveFile or demo initialization; neither may be replaced with Default.
+// of save_slots::initialize or demo initialization; neither may be replaced with Default.
 impl Default for GameplayFlags {
     fn default() -> Self {
         Self {

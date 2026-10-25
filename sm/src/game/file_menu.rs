@@ -1,4 +1,12 @@
 //! File-menu states and transitions over the original save and scratch-RAM formats.
+use crate::game::constants::bank_81::{
+    addr_kMenuTilemap_ClearSamusA, addr_kMenuTilemap_ClearWhichData,
+    addr_kMenuTilemap_CopyCompleted, addr_kMenuTilemap_CopySamusToSamus,
+    addr_kMenuTilemap_CopySamusToWhere, addr_kMenuTilemap_CopyWhichData,
+    addr_kMenuTilemap_DataClearMode, addr_kMenuTilemap_DataCleared, addr_kMenuTilemap_DataCopyMode,
+    addr_kMenuTilemap_Exit, addr_kMenuTilemap_IsThisOk, addr_kMenuTilemap_No,
+    addr_kMenuTilemap_Yes,
+};
 use crate::game::menu_tilemap::{self, main_menu as restore_main};
 use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
@@ -6,14 +14,6 @@ use crate::game::save_slots;
 use crate::game::sm_80::{
     HandleFadeIn, HandleFadeOut, LoadMirrorOfExploredMapTiles, QueueSfx1_Max6, QueueSfx3_Max6,
     ScreenOff,
-};
-use crate::game::sm_81::{
-    NewSaveFile, SoftReset, addr_kMenuTilemap_ClearSamusA, addr_kMenuTilemap_ClearWhichData,
-    addr_kMenuTilemap_CopyCompleted, addr_kMenuTilemap_CopySamusToSamus,
-    addr_kMenuTilemap_CopySamusToWhere, addr_kMenuTilemap_CopyWhichData,
-    addr_kMenuTilemap_DataClearMode, addr_kMenuTilemap_DataCleared, addr_kMenuTilemap_DataCopyMode,
-    addr_kMenuTilemap_Exit, addr_kMenuTilemap_IsThisOk, addr_kMenuTilemap_No,
-    addr_kMenuTilemap_Yes,
 };
 use crate::game::sm_82::{
     DrawBorderAroundDataClearMode, DrawBorderAroundDataCopyMode, DrawBorderAroundSamusData,
@@ -73,12 +73,12 @@ fn fade_to_options(game: &mut Game) {
         word_transfers!(game, ascending, 24; native(0x198d) <- value(0));
     }
 }
-unsafe fn fade_to_title(game: &mut Game) {
+fn fade_to_title(game: &mut Game) {
     DrawBorderAroundSamusData(game);
     sprite_output::file_helmets(false, game);
     HandleFadeOut(game);
     if (game.g_ram[0x51] & 0xf) == 0 {
-        SoftReset(game);
+        game.request_reset();
     }
 }
 unsafe fn fade_from_main(game: &mut Game) {
@@ -504,7 +504,7 @@ unsafe fn clear_slot(game: &mut Game) {
         game.g_sram.set_word((2 * v2 + 0x1ff0) as usize, 0);
         game.g_sram.set_word((2 * v2 + 0x1ff8) as usize, 0);
         word!(game.menu_index += 1);
-        NewSaveFile(game);
+        save_slots::initialize(game);
         save_slots::load(word!(game.eproj_id[16]), game);
         word!(game.area_index = word!(game.eproj_id[16]));
         LoadMirrorOfExploredMapTiles(game);
@@ -634,7 +634,7 @@ unsafe fn choose_main(game: &mut Game) {
                     .set_word(0x1fee, !(word!(game.selected_save_slot) as i32) as u16);
                 RtlWriteSram(game);
                 if save_slots::load(word!(game.selected_save_slot), game) != 0 {
-                    NewSaveFile(game);
+                    save_slots::initialize(game);
                     word!(game.has_area_map = 0);
                 } else {
                     LoadMirrorOfExploredMapTiles(game);

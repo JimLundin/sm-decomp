@@ -22,6 +22,29 @@ pub mod bank_60 {
     }
 }
 
+pub mod bank_81 {
+    use crate::types::Consts_81;
+    crate::game::constants::typed_constants! { Consts_81;
+        addr_kAreaSelectBackgroundTilemaps = 48922, addr_kAreaSelectForegroundTilemap = 46874,
+        addr_kMenuTilemap_DataCleared = 46810, addr_kMenuTilemap_ClearSamusA = 46746,
+        addr_kMenuTilemap_ClearWhichData = 46682, addr_kMenuTilemap_CopyCompleted = 46650,
+        addr_kMenuTilemap_No = 46634, addr_kMenuTilemap_Yes = 46618,
+        addr_kMenuTilemap_IsThisOk = 46594, addr_kMenuTilemap_CopySamusToSamus = 46536,
+        addr_kMenuTilemap_CopySamusToWhere = 46486, addr_kMenuTilemap_CopyWhichData = 46452,
+        addr_kMenuTilemap_DataClearMode = 46388, addr_kMenuTilemap_DataCopyMode = 46328,
+        addr_kMenuTilemap_Exit = 46318, addr_kMenuTilemap_DataClear = 46296,
+        addr_kMenuTilemap_DataCopy = 46276,
+        addr_kMenuTilemap_TIME = 46240,
+        addr_kMenuTilemap_SamusC = 46198,
+        addr_kMenuTilemap_SamusB = 46166, addr_kMenuTilemap_SamusA = 46134,
+        addr_kMenuTilemap_SamusData = 46090, addr_kDownMapScrollArrowData = 44880,
+        addr_kUpMapScrollArrowData = 44870, addr_kRightMapScrollArrowData = 44860,
+        addr_kLeftMapScrollArrowData = 44850, addr_kMenuTilemap_NoGoToTitle = 37792,
+        addr_kMenuTilemap_YesReturnToGame = 37708, addr_kMenuTilemap_TryAgain = 37684,
+        addr_kMenuTilemap_FindMetroidLarva = 37636, addr_kMenuTilemap_GameOver = 37596,
+    }
+}
+
 pub mod bank_82 {
     use crate::types::Consts_82;
 

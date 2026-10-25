@@ -1,10 +1,10 @@
 //! File-menu tilemaps: native word stores, live palette reads and ROM text controls.
-use crate::game::save_slots;
-use crate::game::sm_81::{
+use crate::game::constants::bank_81::{
     addr_kMenuTilemap_DataClear, addr_kMenuTilemap_DataCopy, addr_kMenuTilemap_Exit,
     addr_kMenuTilemap_SamusA, addr_kMenuTilemap_SamusB, addr_kMenuTilemap_SamusC,
     addr_kMenuTilemap_SamusData, addr_kMenuTilemap_TIME,
 };
+use crate::game::save_slots;
 use crate::game_state::Game;
 use crate::ram_map::word;
 
@@ -146,12 +146,30 @@ fn paint(offset: usize, tile: u16, game: &mut Game) {
     game.g_ram[at..at + 2].copy_from_slice(&(palette | tile).to_ne_bytes());
 }
 
-fn text_word(address: u16, game: &mut Game) -> u16 {
-    let address = 0x810000 | u32::from(address);
-    // The warning can replace the native image; capture after it on every word.
+/// Requires native allocation covering address formation; preserves its diagnostic first.
+pub(crate) unsafe fn native_record(address: u32, game: &mut Game) -> crate::rom::RomRecord {
     unsafe { crate::rtl::RomPtr(address, game) };
-    game.capture_native_rom()
-        .table_word(crate::rtl::lorom_offset(address) as usize, 0)
+    crate::rom::RomRecord {
+        image: game.capture_native_rom(),
+        base: crate::rtl::lorom_offset(address) as usize,
+    }
+}
+
+fn text_word(address: u16, game: &mut Game) -> u16 {
+    // The warning can replace the native image; capture after it on every word.
+    unsafe { native_record(0x810000 | u32::from(address), game) }.word(0)
+}
+
+pub(crate) unsafe fn area_label(game: &mut Game) {
+    unsafe {
+        let address = crate::rtl::rom_table_word!(game, 0x82965f, word!(game.area_index) as isize);
+        let label = native_record(0x820000 | u32::from(address), game);
+        for index in 0..12 {
+            let tile = label.word(2 * index) & 0xefff;
+            let destination = 0x4154 + 2 * index;
+            game.g_ram[destination..destination + 2].copy_from_slice(&tile.to_ne_bytes());
+        }
+    }
 }
 
 pub(crate) fn load(mut destination: u16, mut source: u16, game: &mut Game) {

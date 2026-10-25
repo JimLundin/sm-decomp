@@ -11,7 +11,6 @@ pub use crate::game::constants::bank_60::*;
 use crate::game::animated_tiles;
 use crate::game::room_mechanisms::reload_graphics;
 use crate::game::sm_8b::InitializeIoDisplayLogo_Async;
-use crate::game::sm_81::SoftReset;
 use crate::rtl::RtlApuUpload;
 
 crate::typed_struct! {
@@ -880,7 +879,7 @@ pub unsafe fn ReadJoypadInputs(game: &mut Game) {
                 }
             } else {
                 word!(game.debug_disable_sounds = 0);
-                SoftReset(game);
+                game.request_reset();
             }
         }
     }

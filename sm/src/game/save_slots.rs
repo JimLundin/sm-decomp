@@ -1,6 +1,8 @@
 //! Save-slot serialization over the original SRAM format and ordered RAM projections.
+use crate::game::constants::buttons::*;
 use crate::game_state::Game;
 use crate::ram_map::checked_word as word;
+use crate::ram_map::word as game_word;
 use crate::rtl::rom_table_word;
 
 /// Accept the stored menu selection only when its range and inverse-bit check agree.
@@ -125,4 +127,42 @@ fn transfer_map(direction: Direction, game: &mut Game) {
             }
         }
     }
+}
+
+pub(crate) fn initialize(game: &mut Game) {
+    game_word! { game, 99; samus_max_health, samus_health }
+    game_word! { game, 0;
+        samus_max_missiles, samus_missiles, samus_max_super_missiles, samus_super_missiles,
+        samus_max_power_bombs, samus_power_bombs, hud_item_index, collected_beams, equipped_beams,
+        collected_items, equipped_items, reserve_health_mode, samus_max_reserve_health,
+        samus_reserve_health, samus_reserve_missiles,
+    }
+    game_word! {game; button_config_up = kButton_Up as u16; button_config_down = kButton_Down as u16;
+    button_config_left = kButton_Left as u16; button_config_right = kButton_Right as u16;
+    button_config_jump_a = kButton_A as u16; button_config_run_b = kButton_B as u16;
+    button_config_shoot_x = kButton_X as u16; button_config_itemcancel_y = kButton_Y as u16;
+    button_config_itemswitch = kButton_Select as u16;
+    button_config_aim_up_R = kButton_R as u16; button_config_aim_down_L = kButton_L as u16; }
+    game_word! { game, 0;
+        game_time_frames, game_time_seconds, game_time_minutes, game_time_hours, japanese_text_flag,
+        moonwalk_flag, hud_auto_cancel_flag,
+    }
+    game_word! { game, 1; debug_flag, UNUSED_word_7E09E8 }
+    word_transfers!(game, ascending, 4;
+        native(0xd830) <- value(0),
+        native(0xd870) <- value(0),
+        native(0xd870) <- value(0),
+        native(0xd8b0) <- value(0),
+        le(UNUSED_word_7ED8F0, 0) <- value(0),
+        native(0xd908) <- value(0),
+        native(0xd8f8) <- value(0),
+        native(0xd900) <- value(0),
+    );
+    word_transfers!(game, ascending, 28;
+        native(0xd838) <- value(0),
+        native(0xd878) <- value(0),
+        native(0xd878) <- value(0),
+        native(0xd8b8) <- value(0),
+    );
+    word_transfers!(game, ascending, 896; le(explored_map_tiles_saved, 0) <- value(0));
 }

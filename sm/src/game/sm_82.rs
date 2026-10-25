@@ -41,7 +41,6 @@ use crate::game::sm_80::{
     ResumeGameplay, SetupDmaTransfer, StartGameplay_Async, Vector_NMI, Vector_RESET_Async,
     WaitForNMI_Async, memset7E,
 };
-use crate::game::sm_81::{FileSelectMap, GameOverMenu};
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
     UnpauseHook_Kraid_IsDead,
@@ -737,7 +736,7 @@ pub unsafe fn GameState_29_DebugGameOverMenu(game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn GameState_26_GameOverMenu(game: &mut Game) -> CoroutineRet {
     unsafe {
-        GameOverMenu(game);
+        crate::game::game_over::advance(game);
         kCoroutineNone as CoroutineRet
     }
 }
@@ -749,7 +748,7 @@ pub unsafe fn GameState_4_FileSelectMenus(game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn GameState_5_FileSelectMap(game: &mut Game) -> CoroutineRet {
     unsafe {
-        FileSelectMap(game);
+        crate::game::map_menu::advance(game);
         kCoroutineNone as CoroutineRet
     }
 }
@@ -1815,17 +1814,6 @@ pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
         (*v17).src.bank = 126;
         (*v17).vram_dst = ((*ram_ptr!(game; 0x58) as i32 & 0xfc) << 8) as u16;
         word!(game.vram_write_queue_tail = (v16).wrapping_add(7));
-    }
-}
-pub unsafe fn DrawRoomSelectMapAreaLabel(dst: *mut u16, game: &mut Game) {
-    unsafe {
-        let v2 = RomPtr_82(
-            crate::rtl::rom_table_word!(game, 0x82965f, word!(game.area_index) as isize),
-            game,
-        ) as *const u16;
-        for i in 0i32..12 {
-            *dst.offset(i as isize) = (*v2.offset(i as isize)) & (0xefffu16);
-        }
     }
 }
 pub unsafe fn SetupMapScrollingForPauseMenu(a: u16, game: &mut Game) {
