@@ -26,7 +26,6 @@ use crate::game::gameplay_flag_runtime::{
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session_runtime::damage_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
-use crate::game::sm_8b::CalcCeresSteamPos_Mode7;
 use crate::game::sm_80::{
     NextRandom, QueueMode7Transfers, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6,
     QueueSfx3_Max3, QueueSfx3_Max6,
@@ -36,6 +35,7 @@ use crate::game::sm_a9::{
     WriteColorsToTargetPalette,
 };
 use crate::game::sprite_effect_runtime::create_sprite;
+use crate::game::visual_runtime::project_cinematic_point;
 
 const VANISH: u16 = ceres_doors::TANGIBLE | ceres_doors::INVISIBLE;
 
@@ -3919,7 +3919,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     [10940441] CeresSteam_Func_1 [] {
         let E = Get_CeresSteam(k as i32, game);
-        let pt: Point16U = CalcCeresSteamPos_Mode7(
+        let pt: Point16U = project_cinematic_point(
             Point16U {
                 x: (*E).base.x_pos,
                 y: (*E).base.y_pos,

@@ -5,7 +5,7 @@ use crate::game::session_runtime::Runtime;
 use crate::game::visual_host::{Content, Effects, Record, Source};
 
 pub use crate::game::prelude::*;
-use crate::game::sm_8b::Samus_CalcPos_Mode7;
+use crate::game::visual_runtime::project_cinematic_point;
 
 const RomPtr_90: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x90>;
 const RomPtr_91: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x91>;
@@ -254,7 +254,8 @@ pub unsafe fn Samus_CalcSpritemapPos(k: u16, game: &mut Game) -> PairU16 {
         } else {
             let old_x: u16 = word!(game.samus_x_pos);
             let old_y: u16 = word!(game.samus_y_pos);
-            Samus_CalcPos_Mode7(game);
+            let point = project_cinematic_point(Point16U { x: old_x, y: old_y }, game);
+            word! {game; samus_x_pos = point.x; samus_y_pos = point.y; }
             v1 = calculate_sprite_position(k, game);
             word! {game; samus_y_pos = old_y; samus_x_pos = old_x; }
         }

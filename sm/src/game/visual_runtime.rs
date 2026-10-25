@@ -1403,6 +1403,50 @@ pub(crate) fn draw_player_frame(game: &mut Game) {
     h.owned_call(crate::game::session_runtime::finish_player_frame);
 }
 
+fn scaled_cinematic_value(value: u16, scale: u16) -> u16 {
+    ((i32::from(value as i16) * i32::from(scale as i16)) >> 8) as u16
+}
+
+pub(crate) fn update_cinematic_transform(rotated: bool, game: &mut Game) {
+    use crate::game::projectile_geometry::SINE_COSINE;
+    if rotated {
+        let angle = (word!(game.cinematic_var5) as u8).wrapping_add(64);
+        let cosine = scaled_cinematic_value(
+            SINE_COSINE[usize::from(angle) + 64] as u16,
+            word!(game.cinematic_var6),
+        );
+        word!(game.reg_M7A = cosine);
+        word!(game.reg_M7D = word!(game.reg_M7A));
+        let angle = word!(game.cinematic_var5) as u8;
+        let sine = scaled_cinematic_value(
+            SINE_COSINE[usize::from(angle) + 64] as u16,
+            word!(game.cinematic_var6),
+        );
+        word! {game; reg_M7B = sine; reg_M7C = sine.wrapping_neg(); }
+    } else {
+        word! {game; reg_M7A = word!(game.cinematic_var6); reg_M7D = word!(game.cinematic_var6); }
+        word! { game, 0; reg_M7B, reg_M7C }
+    }
+    word!(game.reg_BG1HOFS = word!(game.cinematic_var8));
+    word!(game.reg_BG1VOFS = word!(game.cinematic_var10));
+}
+
+pub(crate) fn project_cinematic_point(
+    point: crate::types::Point16U,
+    game: &mut Game,
+) -> crate::types::Point16U {
+    let x = point.x.wrapping_sub(word!(game.reg_M7X));
+    let y = word!(game.reg_M7Y).wrapping_sub(point.y);
+    let projected_x = scaled_cinematic_value(x, word!(game.reg_M7A))
+        .wrapping_add(scaled_cinematic_value(word!(game.reg_M7B), y));
+    let projected_y = scaled_cinematic_value(word!(game.reg_M7C), x)
+        .wrapping_add(scaled_cinematic_value(word!(game.reg_M7A), y));
+    crate::types::Point16U {
+        x: projected_x.wrapping_add(word!(game.reg_M7X)),
+        y: word!(game.reg_M7Y).wrapping_sub(projected_y),
+    }
+}
+
 pub(crate) fn advance_cinematic_fade(
     fade: crate::game::visual_state::CinematicFade,
     game: &mut Game,

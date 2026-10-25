@@ -8,7 +8,7 @@ use crate::game::visual_runtime::{
     advance_cinematic_fade, capture_cinematic_palette, clear_cinematic_colors, clear_hdma,
     compose_cinematic_palette, configure_cinematic_display, fade_cinematic_colors,
     prepare_cinematic_palette_fade, reset_cinematic_transform, set_cinematic_backdrop,
-    set_hdma_enabled,
+    set_hdma_enabled, update_cinematic_transform,
 };
 use crate::game::visual_state::{CinematicDisplay, CinematicFade};
 
@@ -20,7 +20,6 @@ use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::palette_effects;
 use crate::game::player_projectiles::draw_projectiles;
 use crate::game::player_projectiles::prepare;
-use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session_runtime::initialize_player;
 use crate::game::sm_80::{
     ClearOamExt, ClearUnusedOam, GraphicsAsset, QueueMode7Transfers, QueueSfx1_Max15,
@@ -147,35 +146,6 @@ crate::game::constants::typed_constants! { u32;
     fnCinematicFunction_Intro_Initial = 9151381,
     fnCinematicFunctionBlackoutFromCeres = 9158939,
     fnCinematicFunctionEscapeFromCebes = 9163904,
-}
-pub unsafe fn HandleMode7TransformationNoRotation(game: &mut Game) {
-    {
-        word! {game; reg_M7A = word!(game.cinematic_var6); reg_M7D = word!(game.cinematic_var6); }
-        word! { game, 0; reg_M7B, reg_M7C }
-        word!(game.reg_BG1HOFS = word!(game.cinematic_var8));
-        word!(game.reg_BG1VOFS = word!(game.cinematic_var10));
-    }
-}
-fn Smult16x16(r38: u16, r40: u16) -> u32 {
-    let t: u32 = ((r38 as i16) as u32).wrapping_mul((r40 as i16) as u32);
-    t
-}
-pub unsafe fn HandleMode7TransformationMatrix(game: &mut Game) {
-    unsafe {
-        crate::update_place! { unaligned_word fresh152 = &raw mut (*(ram_ptr!(game, u16; 0x78))) => (Smult16x16(
-            kSinCosTable8bit_Sext[((((word!(game.cinematic_var5)) as u8).wrapping_add(64))
-                as i32
-                + 64) as usize] as u16,
-            word!(game.cinematic_var6),
-        ) >> 8) as u16; }
-        word!(game.reg_M7D = u16::from_le(fresh152.read_unaligned()));
-        let v1: u16 = (Smult16x16(
-            kSinCosTable8bit_Sext[(word!(game.cinematic_var5) as u8 as i32 + 64) as usize] as u16,
-            word!(game.cinematic_var6),
-        ) >> 8) as u16;
-        word! {game; reg_M7B = v1; reg_M7C = -(v1 as i32) as u16;
-        reg_BG1HOFS = word!(game.cinematic_var8); reg_BG1VOFS = word!(game.cinematic_var10); }
-    }
 }
 pub unsafe fn UpdateCinematicBgTilemap(game: &mut Game) {
     unsafe {
@@ -374,34 +344,6 @@ pub unsafe fn CinematicGetTilemapOffsetForTile(mut r18: u16) -> u16 {
 }
 pub unsafe fn Mult0x80Add(mut r18: u16) -> u16 {
     unsafe { (r18 as u8 as i32 + 0x80 * byte!(r18; 1) as i32) as u16 }
-}
-pub unsafe fn Samus_CalcPos_Mode7(game: &mut Game) {
-    let r34: u16 = (word!(game.samus_x_pos)).wrapping_sub(word!(game.reg_M7X));
-    let r36: u16 = (word!(game.reg_M7Y)).wrapping_sub(word!(game.samus_y_pos));
-    let mut r26: u16 = (Smult16x16(
-        (word!(game.samus_x_pos)).wrapping_sub(word!(game.reg_M7X)),
-        word!(game.reg_M7A),
-    ) >> 8) as u16;
-    r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7B), r36) >> 8) as u16;
-    word!(game.samus_x_pos = (r26).wrapping_add(word!(game.reg_M7X)));
-    r26 = (Smult16x16(word!(game.reg_M7C), r34) >> 8) as u16;
-    r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7A), r36) >> 8) as u16;
-    word!(game.samus_y_pos = (word!(game.reg_M7Y)).wrapping_sub(r26));
-}
-
-pub unsafe fn CalcCeresSteamPos_Mode7(mut pt: Point16U, game: &mut Game) -> Point16U {
-    let r34: u16 = (pt.x).wrapping_sub(word!(game.reg_M7X));
-    let r36: u16 = (word!(game.reg_M7Y)).wrapping_sub(pt.y);
-    let mut r26: u16 = (Smult16x16(
-        (pt.x).wrapping_sub(word!(game.reg_M7X)),
-        word!(game.reg_M7A),
-    ) >> 8) as u16;
-    r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7B), r36) >> 8) as u16;
-    pt.x = (r26).wrapping_add(word!(game.reg_M7X));
-    r26 = (Smult16x16(word!(game.reg_M7C), r34) >> 8) as u16;
-    r26 = (r26 as u32).wrapping_add(Smult16x16(word!(game.reg_M7A), r36) >> 8) as u16;
-    pt.y = (word!(game.reg_M7Y)).wrapping_sub(r26);
-    pt
 }
 pub unsafe fn CinematicFunction_Intro_Func20(j: u16, game: &mut Game) {
     unsafe {
@@ -1104,7 +1046,7 @@ pub unsafe fn GameState_1_OpeningCinematic_(game: &mut Game) -> CoroutineRet {
         DrawCinematicSpriteObjects_Intro(game);
         MaybeSkipCinematics(game);
         HandleCinematicsTransitions(game);
-        HandleMode7TransformationNoRotation(game);
+        update_cinematic_transform(false, game);
         kCoroutineNone as CoroutineRet
     }
 }
@@ -1297,7 +1239,7 @@ pub unsafe fn GameState_37_CeresGoesBoomWithSamus_(game: &mut Game) -> Coroutine
         HandleTextGlowObjects(game);
         palette_effects::advance(game);
         DrawIntroSprites(game);
-        HandleMode7TransformationMatrix(game);
+        update_cinematic_transform(true, game);
         kCoroutineNone as CoroutineRet
     }
 }
@@ -1513,7 +1455,7 @@ pub unsafe fn GameState_39_EndingAndCredits_(game: &mut Game) -> CoroutineRet {
         palette_effects::advance(game);
         DrawCinematicSpriteObjects_Ending(game);
         CinematicFunction_Intro_Func149(game);
-        HandleMode7TransformationMatrix(game);
+        update_cinematic_transform(true, game);
         kCoroutineNone as CoroutineRet
     }
 }
