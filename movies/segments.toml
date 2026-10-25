@@ -343,7 +343,17 @@ after_expectations = 120
 
 [[segment]]
 id = "item-gravity"
-pending = "No qualified acquisition-to-completion segment on the current route."
+seed = "100-input-phase:212"
+seed_sha256 = "f4feecaaed3f1d0144c93ce815f7f1ccf9ea8654df448a061ae130bf9019c39c"
+inputs = "seed-gravity.inputs"
+input_sha256 = "d6c5da06bfe3cf7bfa6e3753abeb27c8ef3006d051d040e9562cc507e0259e00"
+start_frame = 0
+frames = 737
+expect = ["item:gravity", "room:CE40"]
+after_expectations = 120
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+
 
 [[segment]]
 id = "item-space-jump"

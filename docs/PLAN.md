@@ -41,23 +41,18 @@ The known example/detached compilation errors are fixed and checked locally.
 
 ## Work order
 
-1. **Current - lane A room-seeded TAS coverage.** Crocomire defeat now passes;
-   37/44 required checks pass, 7 remain pending. Both four-frame melt/wall
-   regressions pass; the defeat row runs 4,258 frames through 120 frames after
-   the fresh boss flag. The full 167,285-frame setup was checked from boot.
-   A1.1 any% capture is complete: 197 room entries, six regions each; all 1,182
-   files checked, full 129,712-frame capture matches the original log. The final-source
-   A1.2 seed import passes 600 frames and reaches the captured next room; both
-   complete captures have register supplements. Screw Attack and Spring Ball now pass seeded award/message/tail rows.
-   Ridley now passes fresh defeat plus its full tail. Phantoon, Draygon and Space Jump now pass. Next: Gravity and remaining bosses.
-   Mother Brain spawn parameters are fixed through a 4,560-frame regression; defeat remains pending.
-   The seeded X-ray row passes its award, message and 120-frame tail (667 frames).
-   Captures now use an instruction boundary; the longer next-room continuation still drifts.
-   Original any% timing alignment remains parked; no further hand-route exploration.
-   Room seeds and movies stay local; only the logger and index/recipes are committed.
+1. **Current - lane A room-seeded coverage.** 38/44 required checks pass;
+   6 remain pending. Exact pre-read controller observations preserve the first
+   input edge; Gravity pass fresh awards, message completion and full tails.
+   Any% 197 and 100% 331 room observations are captured; seeds/movies remain local.
+   Hash indexes and regeneration recipes are committed. Existing seeded regressions
+   remain passing. Mother Brain has a 4,560-frame spawn regression; its defeat is pending.
+   Spore Spawn/Botwoon are absent from both captures (no room frames or defeat flags).
+   Botwoon uses the published 13% route next; Golden Torizo is skipped in 100%.
+   Original any% full-route timing remains parked; no new hand routes.
 2. **Current - lane B bank retirement.** `sm_94`, `sm_91`, `sm_89` and `sm_90` are deleted.
    B1 continues sm_81 menu drawing (1,993 lines); B2 continues sm_88 (557 lines); B3 continues
-   Crocomire sm_a4 (1,562 lines); attack reactions now share safe actor access. Player input, rendering, movement and dispatch share existing
+   Crocomire sm_a4 (1,593 lines); attack reactions now share safe actor access. Player input, rendering, movement and dispatch share existing
    owners; save/load now shares checked slot and map transfers.
    Bank removal is not persistent whole-engine state ownership: camera
    compatibility and the unchanged Ceres elevator callback still use raw RAM.

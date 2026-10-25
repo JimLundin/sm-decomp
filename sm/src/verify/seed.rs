@@ -16,6 +16,79 @@ fn words(output: &mut [u16], input: &[u8]) {
     }
 }
 
+const INPUT_WORDS: [usize; 5] = [0x8b, 0x8f, 0x93, 0x97, 0xa3];
+
+struct ControllerRead {
+    before: [u16; 5],
+    after: [u16; 5],
+}
+
+fn controller_read(
+    r: &Registers,
+    ram: &[u8],
+    first_input: u16,
+) -> Result<Option<ControllerRead>, String> {
+    let fields =
+        r.0.keys()
+            .filter(|name| name.starts_with("seed_input_"))
+            .count();
+    if fields == 0 {
+        return Ok(None);
+    }
+    let word = |at| u16::from_le_bytes([ram[at], ram[at + 1]]);
+    let prior = |at| -> Result<u16, String> {
+        u16::try_from(r.get(&format!("seed_input_{at:04X}"))?)
+            .map_err(|_| "invalid captured controller word".into())
+    };
+    if fields != 15
+        || r.get("seed_input_version")? != 1
+        || r.get("seed_input_pc")? != 0x809459
+        || r.get("seed_boundary_pc")? != 0x808348
+        || r.get("seed_input_dp")? != 0
+        || r.get("d")? != 0
+        || r.get("seed_input_debug")? != 0
+        || word(0x5d1) != 0
+        || r.get("seed_input_frame")? > r.get("seed_boundary_frame")?
+        || r.get("seed_input_event")? == 0
+        || r.get("seed_input_event")? > r.get("seed_boundary_event")?
+        || r.get("seed_input_room")? != r.get("seed_room")?
+        || r.get("seed_input_nmi")? > u64::from(u16::MAX)
+        || (r.get("seed_input_nmi")? as u16).wrapping_add(1) != word(0x5b6)
+        || prior(0x87)? != word(0x87)
+        || prior(0x89)? != word(0x89)
+    {
+        return Err("unsupported seed controller phase".into());
+    }
+    let mut before = [0; 5];
+    for (value, at) in before.iter_mut().zip(INPUT_WORDS) {
+        *value = prior(at)?;
+    }
+    let after = INPUT_WORDS.map(word);
+    let held = after[0];
+    if first_input != held {
+        return Err("first input does not match the captured controller latch".into());
+    }
+    // Replay the original non-debug producer symbolically before restoring its
+    // observed inputs. This validates new/repeat bits and both timer branches.
+    let pressed = held & !before[3];
+    let mut repeated = pressed;
+    let timer = if held != 0 && held == before[3] {
+        let next = before[4].wrapping_sub(1);
+        if next == 0 {
+            repeated = held;
+            prior(0x89)?
+        } else {
+            next
+        }
+    } else {
+        prior(0x87)?
+    };
+    if after != [held, pressed, repeated, held, timer] {
+        return Err("captured controller read does not reproduce the seed".into());
+    }
+    Ok(Some(ControllerRead { before, after }))
+}
+
 struct Registers(BTreeMap<String, u64>);
 impl Registers {
     fn get(&self, name: &str) -> Result<u64, String> {
@@ -146,7 +219,7 @@ fn ppu_registers(ppu: &mut Ppu, r: &Registers) -> Result<(), String> {
     Ok(())
 }
 
-pub(super) unsafe fn load(path: &Path, game: &mut Game) -> Result<(), String> {
+pub(super) unsafe fn load(path: &Path, game: &mut Game, first_input: u16) -> Result<(), String> {
     let filename = path
         .file_name()
         .and_then(|s| s.to_str())
@@ -179,6 +252,7 @@ pub(super) unsafe fn load(path: &Path, game: &mut Game) -> Result<(), String> {
         }
     }
     let r = Registers(registers);
+    let controller = controller_read(&r, ram.as_slice(), first_input)?;
     let boundary_pc = r.0.get("seed_boundary_pc").copied();
     if let Some(pc) = boundary_pc {
         if pc != 0x808348
@@ -268,6 +342,18 @@ pub(super) unsafe fn load(path: &Path, game: &mut Game) -> Result<(), String> {
                 sm::rtl::FinishLoadSnesState(game);
             }
             if pc == 0x80834a || pc == 0x858142 {
+                if let Some(input) = &controller {
+                    if pc != 0x80834a
+                        || INPUT_WORDS
+                            .map(|at| u16::from_le_bytes([game.g_ram[at], game.g_ram[at + 1]]))
+                            != input.after
+                    {
+                        return Err("controller state changed during seed normalization".into());
+                    }
+                    for (at, value) in INPUT_WORDS.into_iter().zip(input.before) {
+                        game.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
+                    }
+                }
                 eprintln!("Imported room seed; completed recorded CPU phase at ${pc:06X}");
                 return Ok(());
             }

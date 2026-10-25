@@ -1071,7 +1071,12 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             None => 0,
         };
         if let Some(path) = seed_in {
-            seed::load(std::path::Path::new(path), game)?;
+            let first_input = inputs
+                .first()
+                .copied()
+                .ok_or("room seed requires an input frame")?
+                .reverse_bits();
+            seed::load(std::path::Path::new(path), game, first_input)?;
         }
         let frames = frame_limit.unwrap_or(inputs.len() - first);
         let end = first

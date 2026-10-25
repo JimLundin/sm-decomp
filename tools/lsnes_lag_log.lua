@@ -29,6 +29,7 @@ local seed_count = 0
 local seed_origin_frame = nil
 local seed_origin_subframe = nil
 local seed_io_writes = {}
+local seed_input_state = nil
 local seed_regions = {{"wram", 0x7E0000, 0x20000}, {"sram", 0x10000000, 0x2000},
     {"vram", 0x10000, 0x10000}, {"cgram", 0x21000, 0x200},
     {"oam", 0x20000, 0x220}, {"apuram", 0, 0x10000}}
@@ -59,8 +60,6 @@ local function capture_room(frame, boundary)
     local register_file = string.format("%04d-%04X-registers.csv", seed_count, room)
     local existing = io.open(seed_dir .. "/" .. register_file, "rb")
     if existing then existing:close(); error("refusing to overwrite seed: " .. register_file) end
-    local output = assert(io.open(seed_dir .. "/" .. register_file, "wb"))
-    output:write("name,value\n")
     local registers = assert(memory.getregisters(), "core has no register observations")
     registers.seed_movie_frame = frame
     registers.seed_room = room
@@ -68,6 +67,20 @@ local function capture_room(frame, boundary)
     registers.seed_boundary_frame = movie.currentframe()
     registers.seed_boundary_pc = 0x808348
     registers.seed_boundary_event = event_count
+    assert(seed_input_state, "seed has no observed controller read")
+    assert(seed_input_state.seed_input_frame <= registers.seed_boundary_frame,
+        "seed controller observation is after the seed video frame")
+    assert((seed_input_state.seed_input_nmi + 1) % 65536 == registers.seed_nmi,
+        "seed controller observation is from another NMI")
+    assert(seed_input_state.seed_input_room == room, "seed controller observation is from another room")
+    assert(seed_input_state.seed_input_event <= event_count, "invalid controller event association")
+    assert(seed_input_state.seed_input_debug == 0 and memory.readword(0x7E05D1) == 0,
+        "debug controller normalization is unsupported")
+    for _, address in ipairs({0x87, 0x89}) do
+        assert(seed_input_state[string.format("seed_input_%04X", address)] == memory.readword(0x7E0000 + address),
+            "controller repeat configuration changed after the read")
+    end
+    for name, value in pairs(seed_input_state) do registers[name] = value end
     -- DMAP..NTRL are passive readable registers in the pinned bsnes core.
     for channel = 0, 7 do
         for offset = 0, 10 do
@@ -79,6 +92,8 @@ local function capture_room(frame, boundary)
     local names = {}
     for name, _ in pairs(registers) do names[#names + 1] = name end
     table.sort(names)
+    local output = assert(io.open(seed_dir .. "/" .. register_file, "wb"))
+    output:write("name,value\n")
     for _, name in ipairs(names) do
         local value = registers[name]
         if type(value) == "boolean" then value = value and 1 or 0 end
@@ -172,6 +187,7 @@ end
 on_input = guarded(on_input)
 on_frame_emulated = guarded(on_frame_emulated)
 if seed_dir then
+    assert(os.getenv("SM_LSNES_BOUNDARIES") == "1", "controller seed metadata requires boundary events")
     -- The video callback can suspend in the middle of a CPU opcode. Observe
     -- the next normal wait's PLB fetch instead, before its stack effects.
     -- bsnes has incremented PC for this fetch; retain both observed PC and
@@ -214,6 +230,25 @@ if os.getenv("SM_LSNES_BOUNDARIES") == "1" then
         memory.registerexec(0x1000000 + hook[1], guarded(function()
             assert(movie.readonly(), "recording movie must remain read-only")
             event_count = event_count + 1
+            if seed_dir and kind == "joypad_begin"
+                    and (seed_pending or memory.readword(0x7E079B) ~= seed_room) then
+                -- This is the last observed read before the pending seed. Keep
+                -- its exact producer state, not an inferred previous pad word.
+                local registers = assert(memory.getregisters())
+                assert(registers.d == 0, "nonzero controller direct page is unsupported")
+                seed_input_state = {
+                    seed_input_version = 1, seed_input_pc = 0x809459,
+                    seed_input_event = event_count, seed_input_dp = registers.d,
+                    seed_input_frame = movie.currentframe(),
+                    seed_input_nmi = memory.readword(0x7E05B6),
+                    seed_input_room = memory.readword(0x7E079B),
+                    seed_input_debug = memory.readword(0x7E05D1),
+                }
+                for _, address in ipairs({0x87, 0x89, 0x8B, 0x8F, 0x93, 0x97, 0xA3}) do
+                    seed_input_state[string.format("seed_input_%04X", address)] =
+                        memory.readword(0x7E0000 + address)
+                end
+            end
             events:write(string.format("%d,%d,%s,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", event_count,
                 movie.currentframe(), kind, memory.readword(0x7E05B6), memory.readword(0x7E05B8),
                 memory.readword(0x7E0998), memory.readword(0x7E079B),

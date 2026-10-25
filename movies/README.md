@@ -459,3 +459,25 @@ first underwater bubble timing mismatches and three following frames.
 `item-space-jump` uses `100-boundary:260` and `seed-space-jump.inputs`.
 Require a fresh item award, message completion and their full 120-frame tails;
 the qualified 527-frame window ends after the message at frame 406.
+
+The `100-input-phase` capture also records the exact controller state before the
+NMI input read at `$809459`. Set `SM_LSNES_BOUNDARIES=1`,
+`SM_LSNES_FRAMES=222788`, and fresh log/seed paths under
+`target/seeds/100-input-phase` when replaying `super-metroid-100-4010.lsmv`.
+`room-seeds-100-input-phase.csv` indexes its 331 observations. The memory regions,
+video/poll/boundary logs and pre-existing registers match `100-boundary`; only the
+versioned controller supplement changes the observation hashes.
+
+The importer checks the captured read's configuration, frame/NMI/room association,
+all five resulting controller words, and the first replay input. At the normalized
+`$80834A` boundary it restores only the recorded producer inputs, allowing the
+normal controller read to reproduce the original button edges. Old seeds without
+this supplement retain their existing behavior. No input words are guessed or shifted.
+
+`item-gravity` uses `100-input-phase:212` and `seed-gravity.inputs` (737
+input frames). It requires a fresh award, completed message and both full
+120-frame tails; the qualified window is 693 frames. Regenerate its inputs with:
+
+```powershell
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-gravity.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0212-CE40-wram.bin --frames 737
+```
