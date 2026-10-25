@@ -1,5 +1,4 @@
 use crate::game::liquid_effects;
-use crate::game::music::{HandleMusicQueue, QueueMusic_Delayed8};
 use crate::game::player_transitions::xray::BeamPhase;
 pub use crate::game::prelude::*;
 use crate::game::scrolling_sky;
@@ -18,16 +17,9 @@ use crate::game::gameplay_flag_runtime::{
     CheckBossBitForCurArea, CheckEventHappened, SetEventHappened,
 };
 use crate::game::room_mechanisms::spawn_hardcoded;
-use crate::game::sm_8b::ConfigureTitleSequenceGradientHDMA;
 use crate::game::sm_80::QueueSfx2_Max6;
 use crate::game::sm_a9::MotherBrain_CalculateRainbowBeamHdma;
 use crate::game::xray_background::{self, finish_restore, restore_left, restore_right};
-
-pub use crate::types::Consts_88;
-
-crate::game::constants::typed_constants! { Consts_88;
-    addr_locret_88858A = 34186,
-}
 
 pub const NULL: *mut c_void = null_mut::<c_void>();
 crate::game::constants::typed_constants! { i32;
@@ -36,14 +28,7 @@ crate::game::constants::typed_constants! { i32;
     fnPauseHook_Empty = 0x8883e1,
     fnCinematicFunctionOpening = 0x8b9b68,
 }
-#[inline]
-unsafe fn RomBankBase(bank: u8, game: &mut Game) -> *const u8 {
-    unsafe {
-        RomPtr((((bank as i32) << 16i32) + 0x8000i32) as u32, game).offset(-(0x8000i32 as isize))
-    }
-}
 crate::game::constants::typed_constants! { u32;
-    fnHdmaobjInstr_InitMorphBallEyeBeamHdma = 0x88e917,
     fnHdmaobjPreInstr_MorphBallEyeBeamWidening = 0x88e9e6, fnHdmaobjPreInstr_MorphBallEyeBeamFull = 0x88ea3c,
     fnHdmaobjPreInstr_MorphBallEyeBeamFading = 0x88eacb,
 }
@@ -135,92 +120,6 @@ pub unsafe fn InitializeSpecialEffectsForNewRoom(game: &mut Game) {
         *ram_ptr!(game; 0x5b) = 90;
     }
 }
-pub unsafe fn HdmaObjectHandler(game: &mut Game) {
-    unsafe {
-        HandleMusicQueue(game);
-        if word!(game.time_is_frozen_flag) == 0
-            && (word!(game.power_bomb_explosion_status) & 0x4000) != 0
-        {
-            word!(game.power_bomb_explosion_status = 0x8000);
-            static unk_8884D5: SpawnHdmaObject_Args =
-                SpawnHdmaObject_Args::new(0x40, 0x28, 0x8ace as VoidP);
-            static unk_8884DD: SpawnHdmaObject_Args =
-                SpawnHdmaObject_Args::new(0x40, 0x29, 0x8b80 as VoidP);
-            spawn_hdma(0x88, &unk_8884D5, game);
-            spawn_hdma(0x88, &unk_8884DD, game);
-        }
-        word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_a));
-        if (word!(game.hdma_objects_enable_flag) & 0x8000) != 0 {
-            *ram_ptr!(game; 0x85) = 0;
-            let mut i: i32 = 0;
-            do_until! { i == 12 ;
-                word!(game.hdma_object_index = i as u16);
-                let mut v1: i8 = byte!(@pointer ram_ptr!(game, u16; 0x18b4); i as isize) as i8;
-                if v1 != 0 {
-                    crate::update_place! { reference fresh58 = *ram_ptr!(game; 0x85) => (*fresh58) | ((v1) as u8); }
-                    HdmaobjInstructionHandler(i as u8, game);
-                    i = word!(game.hdma_object_index) as i32;
-                }
-                i += 2;
-            }
-            crate::game::layer_blending::update(game);
-        }
-    }
-}
-pub unsafe fn HdmaobjInstructionHandler(k: u8, game: &mut Game) {
-    unsafe {
-        let kh: i32 = k as i32 >> 1;
-        CallHdmaobjPreInstr(
-            (words!(
-                i32,
-                (
-                    word!(game.hdma_object_pre_instruction_bank[kh]),
-                    word!(game.hdma_object_pre_instructions[kh])
-                )
-            )) as u32,
-            k as u16,
-            game,
-        );
-        crate::update_place! { unaligned_word fresh59 [fresh60] = &raw mut (*(ram_ptr!(game, u16; 0x18e4)).offset(kh as isize)) => (u16::from_le(fresh59.read_unaligned())).wrapping_sub(1); }
-        if fresh60 == 1 {
-            let base = RomBankBase(*ram_ptr!(game; 0x18c0, k as i32 as isize, 1), game);
-            let mut p =
-                base.offset(word!(game.hdma_object_instruction_list_pointers[kh]) as i32 as isize);
-            while *(p as *mut u16) & 0x8000 != 0 {
-                p = CallHdmaobjInstr(
-                    ((*(p as *mut u16)) as u32) | (0x880000u32),
-                    k as u16,
-                    p.offset(2),
-                    game,
-                );
-                if (p as usize) < 0x10000i32 as usize {
-                    if p.is_null() {
-                        return;
-                    }
-                    p = base.offset(p as usize as isize);
-                }
-            }
-            word!(game.hdma_object_instruction_timers[kh] = *(p as *mut u16));
-            word!(game.hdma_object_table_pointers[kh] = *(p.offset(2) as *mut u16));
-            word!(
-                game.hdma_object_instruction_list_pointers[kh] =
-                    p.offset(4).offset_from(base) as c_long as u16
-            );
-        }
-    }
-}
-crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
-    HdmaobjInstr_Delete [null::<u8>()] {
-        word!(game.hdma_object_channels_bitmask[(k >> 1)] = 0);
-    };
-    HdmaobjInstr_SetPreInstr [hdp.offset(3)] {
-        word!(game.hdma_object_pre_instructions[(k >> 1)] = *(hdp as *mut u16));
-        *ram_ptr!(game; 0x18fc, k as i32 as isize) = *hdp.offset(2);
-    };
-    HdmaobjInstr_ClearPreInstr [hdp] {
-        word!(game.hdma_object_pre_instructions[(k >> 1)] = addr_locret_88858A as u16);
-    };
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallHdmaobjInstrFunc(ea: u32, k: u16, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -248,99 +147,6 @@ crate::game::callback_dispatch! {
         9554775 => xray_background::capture_bg1_left; 9554830 => xray_background::build_overlay;
         9556179 => xray_background::capture_bg2_right; 9556339 => xray_background::upload_left; 9556384 => xray_background::upload_right;
         9556668 => xray_background::set_backdrop; 9557650 => [Runtime::new(game).initialize_suit_pickup_hdma()];
-    }
-}
-pub unsafe fn HdmaobjInstr_CallFarFunc(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    unsafe {
-        CallHdmaobjInstrFunc(Load24(hdp as *mut LongPtr), k, game);
-        hdp.offset(3)
-    }
-}
-crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8) -> *const u8;
-    HdmaobjInstr_Goto [*(hdp as *mut u16) as usize as *const u8] { };
-    HdmaobjInstr_GotoRel [hdp.offset(*hdp as i8 as i32 as isize)] { };
-}
-pub unsafe fn HdmaobjInstr_DecrementAndGoto(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    unsafe {
-        let v2: i32 = k as i32 >> 1;
-        crate::update_place! { unaligned_word fresh63 [fresh64] = &raw mut (*(ram_ptr!(game, u16; 0x1908)).offset(v2 as isize)) => (u16::from_le(fresh63.read_unaligned())).wrapping_sub(1); }
-        if fresh64 == 1 {
-            hdp.offset(2)
-        } else {
-            *(hdp as *mut u16) as usize as *const u8
-        }
-    }
-}
-pub unsafe fn HdmaobjInstr_DecrementAndGotoRel(
-    k: u16,
-    hdp: *const u8,
-    game: &mut Game,
-) -> *const u8 {
-    unsafe {
-        let v2: i32 = k as i32 >> 1;
-        crate::update_place! { unaligned_word fresh61 [fresh62] = &raw mut (*(ram_ptr!(game, u16; 0x1908)).offset(v2 as isize)) => (u16::from_le(fresh61.read_unaligned())).wrapping_sub(1); }
-        if fresh62 == 1 {
-            hdp.offset(1)
-        } else {
-            hdp.offset(*hdp as i8 as i32 as isize)
-        }
-    }
-}
-crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
-    HdmaobjInstr_SetTimer [hdp.offset(1)] {
-        *ram_ptr!(game; 0x1908, k as i32 as isize) = *hdp;
-    };
-    HdmaobjInstr_SetHdmaControl [hdp.offset(1)] {
-        WriteReg(
-            (*((ram_ptr!(game, u16; 0x18c0)).offset((k >> 1) as isize) as *mut u8) as i32
-                + DMAP0 as i32) as SnesRegs as u16,
-            *hdp,
-            game,
-        );
-    };
-    HdmaobjInstr_SetHdmaTarget [hdp.offset(1)] {
-        WriteReg(
-            (*((ram_ptr!(game, u16; 0x18c0)).offset((k >> 1) as isize) as *mut u8) as i32
-                + BBAD0 as i32) as SnesRegs as u16,
-            *hdp,
-            game,
-        );
-    };
-    HdmaobjInstr_SetHdmaTablePtr [hdp.offset(2)] {
-        word!(game.hdma_object_table_pointers[(k >> 1)] = *(hdp as *mut u16));
-    };
-    HdmaobjInstr_SetHdmaTableBank [hdp.offset(1)] {
-        WriteReg(
-            (*((ram_ptr!(game, u16; 0x18c0)).offset((k >> 1) as isize) as *mut u8) as i32
-                + A1B0 as i32) as SnesRegs as u16,
-            *hdp,
-            game,
-        );
-    };
-}
-pub unsafe fn HdmaobjInstr_SetIndirectHdmaDataBank(
-    k: u16,
-    hdp: *const u8,
-    game: &mut Game,
-) -> *const u8 {
-    unsafe {
-        WriteReg(
-            (byte!(@pointer (ram_ptr!(game, u16; 0x18c0)).offset((k >> 1) as isize); 0) as i32
-                + DAS00 as i32) as SnesRegs as u16,
-            *hdp,
-            game,
-        );
-        hdp.offset(1)
-    }
-}
-pub unsafe fn HdmaobjInstr_Sleep(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    unsafe {
-        let base = RomBankBase(*ram_ptr!(game; 0x18c0, k as i32 as isize, 1), game);
-        word!(
-            game.hdma_object_instruction_list_pointers[(k >> 1)] =
-                (hdp.offset_from(base) as c_long - 2 as c_long) as u16
-        );
-        null::<u8>()
     }
 }
 static unk_88B08C: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x11, 0xb0ac as VoidP);
@@ -432,20 +238,12 @@ pub unsafe fn FxTypeFunc_28_CeresRidley(game: &mut Game) {
         spawn_hdma(0x88, &unk_88D8EA, game);
     }
 }
-pub unsafe fn sub_88D916(game: &mut Game) {
-    {
-        word!(game.hdma_data_table_in_ceres = 9);
-    }
-}
 pub unsafe fn FxTypeFunc_CeresElevator(game: &mut Game) {
     unsafe {
         static unk_88D92C: SpawnHdmaObject_Args =
             SpawnHdmaObject_Args::new(0x40, 0x5, 0xd939 as VoidP);
         spawn_hdma(0x88, &unk_88D92C, game);
     }
-}
-crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
-    HdmaobjInstr_SetVideoMode1 [hdp] { word!(game.hdma_data_table_in_ceres = 9); };
 }
 pub unsafe fn FxTypeFunc_A_Rain(game: &mut Game) {
     unsafe {
@@ -455,18 +253,6 @@ pub unsafe fn FxTypeFunc_A_Rain(game: &mut Game) {
         spawn_hdma(0x88, &unk_88D95C, game);
         SpawnBG3ScrollHdmaObject(game);
         animated_tiles::spawn(addr_kAnimtiles_Rain as u16, game);
-    }
-}
-pub unsafe fn HdmaobjInstr_1938_RandomNumber(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    {
-        word!(
-            game.hdma_object_D[(k >> 1)] = crate::rtl::rom_table_word!(
-                game,
-                0x88d992,
-                ((word!(game.random_number) as i32 >> 1 & 6) as u16 >> 1) as isize,
-            )
-        );
-        hdp
     }
 }
 pub unsafe fn FxTypeFunc_8_Spores(game: &mut Game) {
@@ -576,28 +362,6 @@ pub unsafe fn HdmaobjPreInstr_DCBA(v0: u16, game: &mut Game) {
         word!(game.tourian_entrance_statue_finished = 0x8000);
         *(ram_ptr!(game, u16; 0xcd20)) = 514;
         sub_88DBCB(v0, game);
-    }
-}
-pub unsafe fn HdmaobjInstr_GotoIfEventHappened(
-    k: u16,
-    hdp: *const u8,
-    game: &mut Game,
-) -> *const u8 {
-    unsafe {
-        let v2: i32 = k as i32 >> 1;
-        word! { game, 0; hdma_object_C[v2], hdma_object_A[v2] }
-        if CheckEventHappened(0xa, game) != 0 {
-            word!(game.hdma_object_B[v2] = -240i32 as u16);
-            *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00))).field_0
-                as *mut u16) = -240i32 as u16;
-            *(hdp as *mut u16) as usize as *const u8
-        } else {
-            word!(game.hdma_object_B[v2] = 0);
-            *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00))).field_0
-                as *mut u16) = 0;
-            *(ram_ptr!(game, u16; 0xcd20)) = 1;
-            hdp.offset(2)
-        }
     }
 }
 pub unsafe fn SpawnBombTorizoHaze(game: &mut Game) {
@@ -791,40 +555,5 @@ crate::game::address_dispatch! {
         8973266 => [visual_runtime::advance_title_gradient(false, game)];
         8973341 => [visual_runtime::advance_intro_crossfade(game)]; 8972070 => [()];
         8973494 => [Runtime::new(game).advance_hdma_wave(k, HdmaWave::Intro)];
-    }
-}
-crate::game::address_dispatch! {
-    pub unsafe fn CallHdmaobjInstr(ea: u32, k: u16, j: *const u8, game: &mut Game) -> *const u8 => ea;
-        call (k, j, game); default {
-            Unreachable(game);
-            null::<u8>()
-        };
-    {
-        8969006 => [j]; 8947049 => HdmaobjInstr_Delete; 8947056 => HdmaobjInstr_SetPreInstr;
-        8947076 => HdmaobjInstr_ClearPreInstr; 8947124 => HdmaobjInstr_CallFarFunc;
-        8947180 => [HdmaobjInstr_Goto(k, j)]; 8947185 => [HdmaobjInstr_GotoRel(k, j)];
-        8947207 => HdmaobjInstr_DecrementAndGoto; 8947215 => HdmaobjInstr_DecrementAndGotoRel;
-        8947222 => HdmaobjInstr_SetTimer; 8947234 => HdmaobjInstr_SetHdmaControl;
-        8947255 => HdmaobjInstr_SetHdmaTarget; 8947276 => HdmaobjInstr_SetHdmaTablePtr;
-        8947285 => HdmaobjInstr_SetHdmaTableBank; 8947306 => HdmaobjInstr_SetIndirectHdmaDataBank;
-        8947330 => HdmaobjInstr_Sleep; 8955500 => scrolling_sky::start_wave;
-        8959182 => liquid_effects::start_wave; 8963175 => liquid_effects::start_wave;
-        8963458 => liquid_effects::start_wave; 8968521 => HdmaobjInstr_SetVideoMode1;
-        8968577 => HdmaobjInstr_1938_RandomNumber; 8969419 => HdmaobjInstr_GotoIfEventHappened;
-        8971453 => [{ Runtime::new(game).initialize_phantoon_wave(k); j }];
-        fnHdmaobjInstr_InitMorphBallEyeBeamHdma => [{
-                    Runtime::new(game).initialize_eye_beam(k);
-                    j
-                }];
-        8973471 => [{ Runtime::new(game).reset_hdma_wave(k); j }]; 8958889 => liquid_effects::start_lava_sound;
-        8973215 => [{
-                    game.g_ram[0x6f] = 0;
-                    ConfigureTitleSequenceGradientHDMA(game);
-                    j
-                }];
-        8968470 => [{
-                    sub_88D916(game);
-                    j
-                }];
     }
 }

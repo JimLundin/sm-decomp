@@ -173,11 +173,6 @@ fn table_height(position: u16, camera: u16, water: bool) -> u16 {
     }
 }
 
-crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
-    start_lava_sound [hdp] { word!(game.hdma_object_C[(k >> 1)] = 112); };
-    start_wave [hdp] { word!(game.hdma_object_B[(k >> 1)] = 1); };
-}
-
 static kLavaSoundEffects: [u8; 8] = [0x12, 0x13, 0x14, 0x12, 0x13, 0x14, 0x12, 0x13];
 pub unsafe fn lava_surface(k: u16, game: &mut Game) {
     unsafe {

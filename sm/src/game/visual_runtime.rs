@@ -73,6 +73,203 @@ unsafe fn initialize_hdma(
     2 * slot as u16
 }
 
+pub(crate) unsafe fn update_hdma(game: &mut Game) {
+    unsafe {
+        crate::game::music::HandleMusicQueue(game);
+    }
+    if checked_word!(game.time_is_frozen_flag) == 0
+        && checked_word!(game.power_bomb_explosion_status) & 0x4000 != 0
+    {
+        checked_word!(game.power_bomb_explosion_status = 0x8000);
+        unsafe {
+            spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 0x28, 0x8ace), game);
+            spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 0x29, 0x8b80), game);
+        }
+    }
+    checked_word!(game.fx_layer_blending_config_c = checked_word!(game.fx_layer_blending_config_a));
+    if checked_word!(game.hdma_objects_enable_flag) & 0x8000 != 0 {
+        game.g_ram[0x85] = 0;
+        let mut slot = 0usize;
+        loop {
+            checked_word!(game.hdma_object_index = slot as u16);
+            let channels = game.g_ram[0x18b4 + slot];
+            if channels != 0 {
+                game.g_ram[0x85] |= channels;
+                unsafe {
+                    run_hdma_program(slot as u8, game);
+                }
+                slot = usize::from(checked_word!(game.hdma_object_index));
+            }
+            slot += 2;
+            if slot == 12 {
+                break;
+            }
+        }
+        unsafe {
+            crate::game::layer_blending::update(game);
+        }
+    }
+}
+
+unsafe fn run_hdma_program(slot: u8, game: &mut Game) {
+    use crate::game::enemy_script::{EnemyScript as Script, bank_base};
+    let index = usize::from(slot >> 1);
+    let pre_instruction = (u32::from(checked_word!(game.hdma_object_pre_instruction_bank[index]))
+        << 16)
+        | u32::from(checked_word!(game.hdma_object_pre_instructions[index]));
+    unsafe {
+        crate::game::sm_88::CallHdmaobjPreInstr(pre_instruction, u16::from(slot), game);
+    }
+    let timer = checked_word!(game.hdma_object_instruction_timers[index]);
+    checked_word!(game.hdma_object_instruction_timers[index] = timer.wrapping_sub(1));
+    if timer != 1 {
+        return;
+    }
+    let base = bank_base(game.g_ram[0x18c1 + usize::from(slot)]);
+    let image = game.capture_native_rom();
+    let program = checked_word!(game.hdma_object_instruction_list_pointers[index]);
+    let position = base + program as isize;
+    let mut script = Script::at(
+        image.clone(),
+        usize::try_from(position).expect("HDMA program outside ROM"),
+    );
+    while script.word(0) & 0x8000 != 0 {
+        let opcode = u32::from(script.word(0)) | 0x880000;
+        let next =
+            unsafe { execute_hdma_instruction(opcode, u16::from(slot), script.advance(2), game) };
+        let Some(next) = next.resolve(&image, base) else {
+            return;
+        };
+        script = next;
+    }
+    checked_word!(game.hdma_object_instruction_timers[index] = script.word(0));
+    checked_word!(game.hdma_object_table_pointers[index] = script.word(2));
+    checked_word!(
+        game.hdma_object_instruction_list_pointers[index] =
+            script.advance(4).offset_from(base) as u16
+    );
+}
+
+unsafe fn execute_hdma_instruction(
+    opcode: u32,
+    slot: u16,
+    script: crate::game::enemy_script::EnemyScript,
+    game: &mut Game,
+) -> crate::game::enemy_script::EnemyScript {
+    use crate::game::enemy_script::{EnemyScript as Script, bank_base};
+    let index = usize::from(slot >> 1);
+    match opcode {
+        8969006 => {}
+        8947049 => {
+            checked_word!(game.hdma_object_channels_bitmask[index] = 0);
+            return Script::Stop;
+        }
+        8947056 => {
+            checked_word!(game.hdma_object_pre_instructions[index] = script.word(0));
+            game.g_ram[0x18fc + usize::from(slot)] = script.byte(2);
+            return script.advance(3);
+        }
+        8947076 => checked_word!(game.hdma_object_pre_instructions[index] = 0x858a),
+        8947124 => {
+            unsafe {
+                crate::game::sm_88::CallHdmaobjInstrFunc(script.load24(0), slot, game);
+            }
+            return script.advance(3);
+        }
+        8947180 | 8947185 | 8947207 | 8947215 => {
+            let relative = matches!(opcode, 8947185 | 8947215);
+            if matches!(opcode, 8947207 | 8947215) {
+                let timer = checked_word!(game.hdma_object_timers[index]);
+                checked_word!(game.hdma_object_timers[index] = timer.wrapping_sub(1));
+                if timer == 1 {
+                    return script.advance(if relative { 1 } else { 2 });
+                }
+            }
+            return if relative {
+                script.advance(script.byte(0) as i8 as isize)
+            } else {
+                Script::jump(script.word(0))
+            };
+        }
+        8947222 => {
+            game.g_ram[0x1908 + usize::from(slot)] = script.byte(0);
+            return script.advance(1);
+        }
+        8947234 | 8947255 | 8947285 | 8947306 => {
+            let register = match opcode {
+                8947234 => crate::rtl::DMAP0,
+                8947255 => crate::rtl::BBAD0,
+                8947285 => crate::rtl::A1B0,
+                _ => crate::rtl::DAS00,
+            } as u16;
+            let channel = u16::from(game.g_ram[0x18c0 + 2 * index]);
+            unsafe {
+                crate::rtl::WriteReg(register + channel, script.byte(0), game);
+            }
+            return script.advance(1);
+        }
+        8947276 => {
+            checked_word!(game.hdma_object_table_pointers[index] = script.word(0));
+            return script.advance(2);
+        }
+        8947330 => {
+            let base = bank_base(game.g_ram[0x18c1 + usize::from(slot)]);
+            // Sleep refreshes the bank/source after callbacks, retaining linear position.
+            let _binding = game.capture_native_rom_binding();
+            checked_word!(
+                game.hdma_object_instruction_list_pointers[index] =
+                    (script.offset_from(base) - 2) as u16
+            );
+            return Script::Stop;
+        }
+        8955500 | 8959182 | 8963175 | 8963458 => checked_word!(game.hdma_object_B[index] = 1),
+        8958889 => checked_word!(game.hdma_object_C[index] = 112),
+        8968470 | 8968521 => checked_word!(game.hdma_data_table_in_ceres = 9),
+        8968577 => {
+            checked_word!(
+                game.hdma_object_D[index] = crate::rtl::rom_table_word!(
+                    game,
+                    0x88d992,
+                    ((checked_word!(game.random_number) >> 1 & 6) >> 1) as isize
+                )
+            );
+        }
+        8969419 => {
+            checked_word!(game.hdma_object_C[index] = 0);
+            checked_word!(game.hdma_object_A[index] = 0);
+            let opened = crate::game::gameplay_flag_runtime::CheckEventHappened(0xa, game) != 0;
+            let offset: u16 = if opened { 0xff10 } else { 0 };
+            checked_word!(game.hdma_object_B[index] = offset);
+            let [low, high] = offset.to_ne_bytes();
+            game.g_ram[0x9e00] = low;
+            game.g_ram[0x9e01] = high;
+            if opened {
+                return Script::jump(script.word(0));
+            }
+            let [low, high] = 1u16.to_ne_bytes();
+            game.g_ram[0xcd20] = low;
+            game.g_ram[0xcd21] = high;
+            return script.advance(2);
+        }
+        8971453 => Runtime::new(game).initialize_phantoon_wave(slot),
+        0x88e917 => Runtime::new(game).initialize_eye_beam(slot),
+        8973471 => Runtime::new(game).reset_hdma_wave(slot),
+        8973215 => {
+            game.g_ram[0x6f] = 0;
+            unsafe {
+                ConfigureTitleSequenceGradientHDMA(game);
+            }
+        }
+        _ => {
+            unsafe {
+                crate::rtl::Unreachable(game);
+            }
+            return Script::Stop;
+        }
+    }
+    script
+}
+
 impl visual_host::Record for RomRecord {
     fn byte(&self, displacement: usize) -> u8 {
         RomRecord::byte(self, displacement)

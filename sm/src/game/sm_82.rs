@@ -41,9 +41,7 @@ use crate::game::sm_80::{
     WaitForNMI_Async, memset7E,
 };
 use crate::game::sm_81::{FileSelectMap, FileSelectMenu, GameOverMenu};
-use crate::game::sm_88::{
-    DisableHdmaObjects, EnableHdmaObjects, HdmaObjectHandler, WaitUntilEndOfVblankAndClearHdma,
-};
+use crate::game::sm_88::{DisableHdmaObjects, EnableHdmaObjects, WaitUntilEndOfVblankAndClearHdma};
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
     UnpauseHook_Kraid_IsDead,
@@ -478,7 +476,7 @@ pub unsafe fn GameState_41_TransitionToDemo(game: &mut Game) -> CoroutineRet {
         if _coret_ != 0 {
             return _coret_;
         }
-        HdmaObjectHandler(game);
+        crate::game::visual_runtime::update_hdma(game);
         word!(game.game_state += 1);
         *ram_ptr!(game; 0x51) = 15;
         kCoroutineNone as CoroutineRet
@@ -689,7 +687,7 @@ pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
             crate::update_place! { reference fresh151 = *ram_ptr!(game; 0x613) => *fresh150; }
             *ram_ptr!(game; 0x612) = *fresh151;
             ReadJoypadInputs(game);
-            HdmaObjectHandler(game);
+            crate::game::visual_runtime::update_hdma(game);
             NextRandom(game);
             ClearOamExt(game);
             word! { game, 0;

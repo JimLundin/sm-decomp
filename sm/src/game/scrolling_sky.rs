@@ -77,9 +77,6 @@ pub unsafe fn update_vertical_scroll(mut k: u16, game: &mut Game) {
         *(ram_ptr!(game, u16; 0x9c00, k as isize)) = 0;
     }
 }
-crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
-    start_wave [hdp] { word!(game.hdma_object_B[(k >> 1)] = 1); };
-}
 pub unsafe fn update_horizontal_scroll(k: u16, game: &mut Game) {
     unsafe {
         if word!(game.layer1_y_pos) as i32 - 1024i32 & 0x8000 != 0 {
