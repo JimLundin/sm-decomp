@@ -53,7 +53,7 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Room seeds and movies stay local; only the logger and index/recipes are committed.
 2. **Current - lane B bank retirement.** `sm_94`, `sm_91`, `sm_89` and `sm_90` are deleted.
    B1 starts sm_81 sprite/save callers; B2 continues sm_88 (986 lines); B3 starts
-   Crocomire sm_a4 (1,608 lines); attack reactions now share safe actor access. Player input, rendering, movement and dispatch share existing
+   Crocomire sm_a4 (1,594 lines); attack reactions now share safe actor access. Player input, rendering, movement and dispatch share existing
    owners. Bank removal is not persistent whole-engine state ownership: camera
    compatibility and the unchanged Ceres elevator callback still use raw RAM.
    Room FX loading uses Room/Visuals. Weather and haze now share their update logic.

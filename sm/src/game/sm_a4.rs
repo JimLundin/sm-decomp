@@ -463,30 +463,16 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
 }
 pub unsafe fn Crocomire_8EE5(game: &mut Game) {
     unsafe {
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x61, 0xb, 0xb74f as VoidP), game);
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x62, 0xb, 0xb74f as VoidP), game);
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x63, 0xb, 0xb74f as VoidP), game);
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x64, 0xb, 0xb74f as VoidP), game);
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x65, 0xb, 0xb74f as VoidP), game);
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x66, 0xb, 0xb74f as VoidP), game);
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x67, 0xb, 0xb74f as VoidP), game);
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x68, 0xb, 0xb74f as VoidP), game);
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x69, 0xb, 0xb74f as VoidP), game);
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x6a, 0xb, 0xb74f as VoidP), game);
-        game.eproj_spawn_pt = Point16U { x: 1536, y: 176 };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
-        game.eproj_spawn_pt = Point16U { x: 1552, y: 192 };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
-        game.eproj_spawn_pt = Point16U { x: 1568, y: 176 };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
-        game.eproj_spawn_pt = Point16U { x: 1584, y: 192 };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
-        game.eproj_spawn_pt = Point16U { x: 1600, y: 192 };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
-        game.eproj_spawn_pt = Point16U { x: 1616, y: 192 };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
-        game.eproj_spawn_pt = Point16U { x: 1632, y: 192 };
-        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
+        for x in 0x61..=0x6a {
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(x, 0xb, 0xb74f as VoidP), game);
+        }
+        for (offset, y) in [176, 192, 176, 192, 192, 192, 192].into_iter().enumerate() {
+            game.eproj_spawn_pt = Point16U {
+                x: 1536 + 16 * offset as u16,
+                y,
+            };
+            SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
+        }
     }
 }
 pub unsafe fn Crocomire_Func_43(game: &mut Game) {
