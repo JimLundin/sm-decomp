@@ -355,6 +355,7 @@ pub mod game {
     pub(crate) mod enemy_layouts;
 
     pub(crate) mod explosion_window;
+    pub(crate) mod file_menu;
     pub(crate) mod gameplay;
     pub(crate) mod grapple_rope;
     pub(crate) mod grapple_swing;

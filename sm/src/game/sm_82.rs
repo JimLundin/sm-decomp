@@ -41,7 +41,7 @@ use crate::game::sm_80::{
     ResumeGameplay, SetupDmaTransfer, StartGameplay_Async, Vector_NMI, Vector_RESET_Async,
     WaitForNMI_Async, memset7E,
 };
-use crate::game::sm_81::{FileSelectMap, FileSelectMenu, GameOverMenu};
+use crate::game::sm_81::{FileSelectMap, GameOverMenu};
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
     UnpauseHook_Kraid_IsDead,
@@ -70,9 +70,6 @@ crate::typed_struct! {
             map_scroll_arrow_down, map_scroll_arrow_right, map_scroll_arrow_left: VoidP;
     }
 
-    pub struct FileCopyArrowStuff {
-        pub spritemap, xpos, ypos: u16;
-    }
 }
 
 #[derive(Copy, Clone)]
@@ -746,7 +743,7 @@ pub unsafe fn GameState_26_GameOverMenu(game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn GameState_4_FileSelectMenus(game: &mut Game) -> CoroutineRet {
     unsafe {
-        FileSelectMenu(game);
+        crate::game::file_menu::advance(game);
         kCoroutineNone as CoroutineRet
     }
 }
@@ -3427,61 +3424,6 @@ crate::forward_calls! { pub fn (game: &mut Game);
     DrawBorderAroundSamusData => sprite_output::menu(0x48, 0x80, 0x10, 3584, game);
     DrawBorderAroundDataCopyMode => sprite_output::menu(0x49, 0x80, 0x10, 3584, game);
     DrawBorderAroundDataClearMode => sprite_output::menu(0x4a, 0x7c, 0x10, 3584, game);
-}
-static kDrawMenuSelectionMissile_Enable: [u16; 4] = [8, 8, 8, 8];
-static kDrawMenuSelectionMissile_SpriteMap: [u16; 4] = [0x37, 0x36, 0x35, 0x34];
-pub unsafe fn DrawMenuSelectionMissile(game: &mut Game) {
-    unsafe {
-        if word!(game.cinematic_var5) != 0 {
-            if word!(game.cinematic_var5 -= 1, reread) == 0 {
-                word! { game;
-                    eproj_id[0] = (*((ram_ptr!(game, u16; 0x1997)) as *mut u8) as i32 + 1 & 3) as u16;
-                    cinematic_var5 = kDrawMenuSelectionMissile_Enable[word!(game.eproj_id[0]) as usize];
-                }
-            }
-        }
-        sprite_output::menu(
-            kDrawMenuSelectionMissile_SpriteMap[word!(game.eproj_id[0]) as usize],
-            word!(game.eproj_id[5]),
-            word!(game.eproj_id[10]),
-            3584,
-            game,
-        );
-    }
-}
-pub unsafe fn DrawFileCopyArrow(game: &mut Game) {
-    unsafe {
-        let mut v0: u16 = 0;
-        if ((word!(game.eproj_id[16])) as i16).wrapping_sub((word!(game.eproj_id[17])) as i16) >= 0
-        {
-            v0 = 3;
-            if word!(game.eproj_id[16]) as i32 - word!(game.eproj_id[17]) as i32 - 2i32 & 0x8000
-                != 0
-            {
-                v0 = 4;
-                if word!(game.eproj_id[16]) != 1 {
-                    v0 = 5;
-                }
-            }
-        } else {
-            v0 = 0;
-            if word!(game.eproj_id[17]) as i32 - word!(game.eproj_id[16]) as i32 - 2i32 & 0x8000
-                != 0
-            {
-                v0 = 1;
-                if word!(game.eproj_id[16]) != 0 {
-                    v0 = 2;
-                }
-            }
-        }
-        sprite_output::menu(
-            (*(rom_ptr!(game, FileCopyArrowStuff; 0x82bb0c)).offset(v0 as isize)).spritemap,
-            (*(rom_ptr!(game, FileCopyArrowStuff; 0x82bb0c)).offset(v0 as isize)).xpos,
-            (*(rom_ptr!(game, FileCopyArrowStuff; 0x82bb0c)).offset(v0 as isize)).ypos,
-            512,
-            game,
-        );
-    }
 }
 pub unsafe fn DisplayMapElevatorDestinations(game: &mut Game) {
     unsafe {

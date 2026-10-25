@@ -2,6 +2,7 @@
 use crate::game::sprite_drawing::{Clip, SpriteMap};
 use crate::game_state::Game;
 use crate::ram_map::checked_word as word;
+use crate::ram_map::word as game_word;
 use crate::rom::RomImage;
 
 /// Image capture follows warnings, so a returning warning may replace the ROM.
@@ -209,6 +210,55 @@ pub(crate) fn with_base_tile(
         position,
         |tile| (i32::from(palette) | i32::from(base_tile) + i32::from(tile)) as u16,
         clip,
+        game,
+    );
+}
+
+#[forbid(unsafe_code)]
+pub(crate) fn menu_selection(game: &mut Game) {
+    const SPRITES: [u16; 4] = [0x37, 0x36, 0x35, 0x34];
+    if word!(game.cinematic_var5) != 0 {
+        if game_word!(game.cinematic_var5 -= 1, reread) == 0 {
+            word!(game.eproj_id[0] = (u16::from(game.g_ram[0x1997]) + 1) & 3);
+            word!(game.cinematic_var5 = 8);
+        }
+    }
+    menu(
+        SPRITES[usize::from(word!(game.eproj_id[0]))],
+        word!(game.eproj_id[5]),
+        word!(game.eproj_id[10]),
+        3584,
+        game,
+    );
+}
+
+#[forbid(unsafe_code)]
+pub(crate) fn file_copy_arrow(game: &mut Game) {
+    let mut v0: u16 = 0;
+    if ((word!(game.eproj_id[16])) as i16).wrapping_sub((word!(game.eproj_id[17])) as i16) >= 0 {
+        v0 = 3;
+        if word!(game.eproj_id[16]) as i32 - word!(game.eproj_id[17]) as i32 - 2i32 & 0x8000 != 0 {
+            v0 = 4;
+            if word!(game.eproj_id[16]) != 1 {
+                v0 = 5;
+            }
+        }
+    } else {
+        v0 = 0;
+        if word!(game.eproj_id[17]) as i32 - word!(game.eproj_id[16]) as i32 - 2i32 & 0x8000 != 0 {
+            v0 = 1;
+            if word!(game.eproj_id[16]) != 0 {
+                v0 = 2;
+            }
+        }
+    }
+    let image = game.capture_native_rom();
+    let base = crate::rtl::lorom_offset(0x82bb0c) as usize;
+    menu(
+        image.table_word(base, 3 * v0 as isize),
+        image.table_word(base, 3 * v0 as isize + 1),
+        image.table_word(base, 3 * v0 as isize + 2),
+        512,
         game,
     );
 }

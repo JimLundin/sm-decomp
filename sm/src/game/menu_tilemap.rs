@@ -15,7 +15,7 @@ const FILE_LABELS: [u16; 3] = [
     addr_kMenuTilemap_SamusC as u16,
 ];
 
-fn set_palette(value: u16, game: &mut Game) {
+pub(crate) fn set_palette(value: u16, game: &mut Game) {
     game.g_ram[MENU_PALETTE..MENU_PALETTE + 2].copy_from_slice(&value.to_ne_bytes());
 }
 
@@ -48,7 +48,7 @@ pub(crate) fn file_rows(emphasis: FileRowEmphasis, game: &mut Game) {
 
 /// Requires a live, exclusively accessed SNES backend for ScreenOn.
 pub(crate) unsafe fn main_menu(game: &mut Game) {
-    word_transfers!(game, descending, 1024; native(0x3dfe) <- value(15));
+    clear(game);
     word!(game.nonempty_save_slots = u16::MAX);
     set_palette(0, game);
     load(0x56, addr_kMenuTilemap_SamusData as u16, game);
@@ -243,4 +243,8 @@ pub(crate) fn area_palette(area: u16, active: bool, game: &mut Game) {
         }
         entry = entry.wrapping_add(4);
     }
+}
+
+pub(crate) fn clear(game: &mut Game) {
+    word_transfers!(game, descending, 1024; native(0x3dfe) <- value(15));
 }

@@ -3,6 +3,16 @@ use crate::game_state::Game;
 use crate::ram_map::checked_word as word;
 use crate::rtl::rom_table_word;
 
+/// Accept the stored menu selection only when its range and inverse-bit check agree.
+pub(crate) fn last_selected(game: &Game) -> u16 {
+    let slot = game.g_sram.word(0x1fec);
+    if slot < 3 && slot & game.g_sram.word(0x1fee) == 0 {
+        slot
+    } else {
+        0
+    }
+}
+
 #[derive(Clone, Copy)]
 enum Direction {
     Save,
