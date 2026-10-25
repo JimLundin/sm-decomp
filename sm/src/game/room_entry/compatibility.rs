@@ -191,17 +191,21 @@ impl EntryEffects for Runtime<'_> {
                     0
                 }
                 CameraEffect::FixDoorMovingUp => {
-                    game::sm_80::FixDoorsMovingUp(game);
+                    game::room_scrolls::door::fix_up(game);
                     0
                 }
                 CameraEffect::SetupDoorScroll => {
-                    game::sm_80::DoorTransitionScrollingSetup(game);
+                    game::room_scrolls::door::begin(game);
                     0
                 }
-                CameraEffect::StepDoorScrollRight => game::sm_80::DoorTransition_Right(game),
-                CameraEffect::StepDoorScrollLeft => game::sm_80::DoorTransition_Left(game),
-                CameraEffect::StepDoorScrollDown => game::sm_80::DoorTransition_Down(game),
-                CameraEffect::StepDoorScrollUp => game::sm_80::DoorTransition_Up(game),
+                CameraEffect::StepDoorScrollRight => {
+                    game::room_scrolls::door::horizontal(false, game)
+                }
+                CameraEffect::StepDoorScrollLeft => {
+                    game::room_scrolls::door::horizontal(true, game)
+                }
+                CameraEffect::StepDoorScrollDown => game::room_scrolls::door::down(game),
+                CameraEffect::StepDoorScrollUp => game::room_scrolls::door::up(game),
             }
         })
     }

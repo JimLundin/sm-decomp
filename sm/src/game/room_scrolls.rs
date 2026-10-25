@@ -1,5 +1,8 @@
 //! Room scroll definitions, camera following and their shared executors.
 //! Dispatch identities retain the full address; cell writes retain their order.
+mod camera;
+pub(crate) mod door;
+
 use crate::game_state::Game;
 
 #[derive(Clone, Copy)]
@@ -97,17 +100,12 @@ pub(super) fn apply(address: u32, game: &mut Game) -> bool {
 
 // Camera effects keep their legacy publication order until layer state is owned.
 use crate::game::{
-    player_collision::operations::Axis,
-    player_movement::speed::record_camera_distance,
+    player_collision::operations::Axis, player_movement::speed::record_camera_distance,
     session_runtime::Runtime,
-    sm_80::{
-        HandleAutoscrolling_X, HandleAutoscrolling_Y, HandleScrollingWhenTriggeringScrollDown,
-        HandleScrollingWhenTriggeringScrollLeft, HandleScrollingWhenTriggeringScrollRight,
-        HandleScrollingWhenTriggeringScrollUp,
-    },
 };
 use crate::ram_map::{ram_ptr, word};
 use crate::rtl::{Unreachable, words};
+use camera::{auto_x, auto_y, trigger_down, trigger_left, trigger_right, trigger_up};
 pub(crate) unsafe fn advance_camera(game: &mut Game) {
     unsafe {
         if word!(game.slow_grabble_scrolling_flag) != 0 {
@@ -127,8 +125,8 @@ pub(crate) unsafe fn advance_camera(game: &mut Game) {
                     }
                 }
             }
-            HandleAutoscrolling_X(game);
-            HandleAutoscrolling_Y(game);
+            auto_x(game);
+            auto_y(game);
         } else {
             record_camera_distance(Runtime::new(game).session_mut(), Axis::X);
             follow_x(game);
@@ -183,7 +181,7 @@ unsafe fn follow_x(game: &mut Game) {
         static kSamus_HandleScroll_X_FaceLeft: [u16; 4] = [0xa0, 0x50, 0x20, 0xe0];
         static kSamus_HandleScroll_X_FaceRight: [u16; 4] = [0x60, 0x40, 0x20, 0xe0];
         if word!(game.samus_prev_x_pos) == word!(game.samus_x_pos) {
-            HandleAutoscrolling_X(game);
+            auto_x(game);
             return;
         }
         let distances = if (word!(game.knockback_dir) != 0
@@ -207,15 +205,15 @@ unsafe fn follow_x(game: &mut Game) {
             layer1_x_subpos,
             absolute_moved_last_frame_x,
             absolute_moved_last_frame_x_fract,
-            HandleScrollingWhenTriggeringScrollLeft,
-            HandleScrollingWhenTriggeringScrollRight
+            trigger_left,
+            trigger_right
         );
     }
 }
 unsafe fn follow_y(game: &mut Game) {
     unsafe {
         if word!(game.samus_prev_y_pos) == word!(game.samus_y_pos) {
-            HandleAutoscrolling_Y(game);
+            auto_y(game);
         } else {
             if word!(game.samus_y_dir) == 1 {
                 word!(
@@ -235,8 +233,8 @@ unsafe fn follow_y(game: &mut Game) {
                 layer1_y_subpos,
                 absolute_moved_last_frame_y,
                 absolute_moved_last_frame_y_fract,
-                HandleScrollingWhenTriggeringScrollUp,
-                HandleScrollingWhenTriggeringScrollDown
+                trigger_up,
+                trigger_down
             );
         };
     }
