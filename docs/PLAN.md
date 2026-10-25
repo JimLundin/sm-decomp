@@ -166,9 +166,10 @@ Start above 3GiB free and leave 2GiB after reserving ~1.6GiB per new compiler pl
 admitted jobs' remaining growth. Stop the newest below 2GiB or on resource errors.
 Refill useful ready work immediately; completed workers need explicit new tasks.
 Measure CPU, free memory, paging, disk and completed useful work/time during real
-jobs. Whole-TAS CSV imports reached 2.77GiB: reserve 3GiB separately until a
-   lower peak is measured; these are not light DLL replays. On pressure, shed the
-   newest memory-producing job, not every lightweight reader at once.
+jobs. Streaming TAS import reduced measured peak from 2.794GiB to 90.5MiB
+with identical inputs (9.347s to 5.752s). Reserve 200MiB for this qualified path;
+legacy whole-log imports still need 3GiB, separately from compiler reservations.
+On pressure, shed the newest memory-producing job, not every lightweight reader.
 Increase concurrency only when resources fit; compare the next useful batch
 with the measured two-build result before retaining a higher setting. Three is an
 observed trial, not a proven optimum. Disk monitoring must include accumulated

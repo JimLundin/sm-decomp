@@ -6,6 +6,7 @@ Adapted from crates/movie in archive/pre-transpile-2026-10-17.
 import argparse
 import csv
 import hashlib
+from itertools import islice, zip_longest
 from pathlib import Path
 import zipfile
 
@@ -36,14 +37,12 @@ def seeded_wait_slice(source, path, seed, count):
             or metadata.get('seed_nmi') != nmi):
         raise ValueError('seed register metadata does not match WRAM and capture index')
     with path.open(newline='') as file:
-        video = list(csv.DictReader(file))
+        video_frame = next(islice(csv.DictReader(file), max(0, frame - 1), max(0, frame)), None)
     instruction_boundary = metadata.get('seed_boundary_pc')
-    if (not 0 < frame <= len(video) or int(row['room'], 16) != room
-            or int(video[frame - 1]['room']) != room
-            or (not instruction_boundary and int(video[frame - 1]['nmi_after']) != nmi)):
+    if (video_frame is None or int(row['room'], 16) != room
+            or int(video_frame['room']) != room
+            or (not instruction_boundary and int(video_frame['nmi_after']) != nmi)):
         raise ValueError('seed does not match the supplied video capture')
-    with Path(str(path) + '.events.csv').open(newline='') as file:
-        events = list(csv.DictReader(file))
     # The room observation occurs at the video boundary inside NMI. Complete
     # that NMI exactly as the verifier does, without guessing a video offset.
     if instruction_boundary:
@@ -52,20 +51,21 @@ def seeded_wait_slice(source, path, seed, count):
         boundary_frame = metadata['seed_boundary_frame']
         boundary_nmi = nmi
         after = metadata['seed_boundary_event']
-        boundary = next((index for index, event in enumerate(events)
-                         if int(event['event']) > after and event['kind'] == 'wait_exit'), None)
     else:
         boundary_frame, boundary_nmi = frame + 1, (nmi + 1) % 65536
-        boundary = next((index for index, event in enumerate(events)
-                         if int(event['movie_frame']) > frame and event['kind'] == 'wait_exit'), None)
+    boundary, first = None, 0
+    with Path(str(path) + '.events.csv').open(newline='') as file:
+        for index, event in enumerate(csv.DictReader(file)):
+            first += event['kind'] in ('joypad_read', 'vblank_wait_exit', 'no_update_exit')
+            reached = int(event['event']) > after if instruction_boundary else int(event['movie_frame']) > frame
+            if reached and event['kind'] == 'wait_exit':
+                boundary = index
+                break
     if boundary is None:
         raise ValueError('capture has no completed wait after this room seed')
-    event = events[boundary]
     if (int(event['movie_frame']) != boundary_frame or int(event['room']) != room
             or int(event['nmi']) != boundary_nmi):
         raise ValueError('unsupported room seed phase; no matching next NMI boundary')
-    first = sum(event['kind'] in ('joypad_read', 'vblank_wait_exit', 'no_update_exit')
-                for event in events[:boundary + 1])
     print(f'Seed input starts at native step {first}, captured event {event["event"]}')
     return aligned_wait_prefix(source, path, count, boundary + 1)
 
@@ -74,31 +74,42 @@ def aligned_wait_prefix(source, path, count, after_event=0):
     """Replay observed wait-entry input; reject gaps instead of guessing lag removal."""
     def rows(suffix):
         with Path(str(path) + suffix).open(newline='') as file:
-            return list(csv.DictReader(file))
+            yield from csv.DictReader(file)
     if Path(str(path) + '.error.txt').exists() or count <= 0:
         raise ValueError('failed capture or invalid prefix length')
-    video, polls = rows(''), rows('.polls.csv')
-    if not video or len(video) != len(polls) or len(video) > len(source):
-        raise ValueError('incomplete video/input capture')
-    for index, (frame, poll) in enumerate(zip(video, polls)):
+    video = []
+    for index, (frame, poll) in enumerate(zip_longest(rows(''), rows('.polls.csv'))):
+        if frame is None or poll is None or index >= len(source):
+            raise ValueError('incomplete video/input capture')
         if (int(frame['input_frame']) != index or int(frame['movie_frame']) != index + 1
                 or int(frame['input_callbacks']) != 1 or int(poll['movie_frame']) != index + 1
                 or int(poll['callback']) != 1 or int(poll['subframe']) != 0
                 or int(poll['movie_subframe_index']) != index
                 or parse_lsmv(poll['movie_subframe']) != [source[index]]):
             raise ValueError(f'unsupported or mismatched movie input at {index}')
+        # Only counter resets are used by the alignment state machine. Keeping
+        # full video/poll/event dictionaries made a 100% import exceed 2 GiB.
+        video.append({'nmi_before': frame.get('nmi_before'), 'nmi_after': frame.get('nmi_after')})
+    if not video:
+        raise ValueError('incomplete video/input capture')
     events = rows('.events.csv')
+    def complete(result):
+        # The previous eager read parsed the unused suffix too. Preserve its
+        # CSV error detection without retaining a second whole capture.
+        for _ in events:
+            pass
+        return result
     if after_event:
         # The seed normalizer has finished this wait. Start a fresh room-local
         # continuity chain instead of requiring all earlier rooms to align.
-        boundary = events[after_event - 1]
-        if boundary['kind'] != 'wait_exit':
+        boundary = next(islice(events, after_event - 1, after_event), None)
+        if boundary is None or boundary['kind'] != 'wait_exit':
             raise ValueError('seed input must begin after a completed normal wait')
         previous = {key: int(value) for key, value in boundary.items() if key != 'kind'}
         previous['nmi'] = (previous['nmi'] - 1) % 65536
-        return aligned_work_prefix(video, events[after_event:], count, after_event, previous)
-    if any(event['kind'] == 'joypad_begin' for event in events):
-        return aligned_work_prefix(video, events, count)
+        return complete(aligned_work_prefix(video, events, count, after_event, previous))
+    if any(event['kind'] == 'joypad_begin' for event in rows('.events.csv')):
+        return complete(aligned_work_prefix(video, events, count))
     result, pending, previous = [], None, None
     last_frame = 0
     for number, event in enumerate(events, 1):
@@ -129,7 +140,7 @@ def aligned_wait_prefix(source, path, count, after_event=0):
             result.append(pending['joypad'])
             previous, pending = event, None
             if len(result) == count:
-                return result
+                return complete(result)
         else:
             raise ValueError(f'unsupported boundary {kind}; prefix remains unaligned')
     raise ValueError('capture ends before the requested aligned prefix')

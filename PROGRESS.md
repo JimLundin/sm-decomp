@@ -14,6 +14,6 @@
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-**Crocomire collapse consolidated:** 14 production lines saved by sharing ordered spawn calls; eight replay rows pass.
+**Input import memory:** 2.79 GiB ? 90.5 MiB; identical replay inputs, 9.35s ? 5.75s. Engine code unchanged.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)
