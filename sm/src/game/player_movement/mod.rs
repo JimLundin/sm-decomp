@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 pub(crate) mod content;
 pub(crate) mod effects;
+pub(crate) mod forced;
 mod presentation;
 mod selectors;
 pub(crate) mod speed;

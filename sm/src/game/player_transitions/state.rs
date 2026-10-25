@@ -32,37 +32,6 @@ pub struct HurtAction(u16);
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct AnimationSkip(u16);
 
-// Replace the SAME Player.movement_handler field, not a new transitions copy.
-// Only compatibility codec maps known modes to legacy selectors.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum MovementMode {
-    Normal,
-    DrainedCrouching,
-    Knockback,
-    BombJumpStart,
-    Xray,
-    ShinesparkWindup,
-    ShinesparkHorizontal,
-    ShinesparkVertical,
-    ShinesparkDiagonal,
-    ShinesparkProjectileResponse,
-    Unknown(u16),
-}
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum InputMode {
-    Normal,
-    Demo,
-    AutoJump,
-    Xray,
-    Disabled,
-    Unknown(u16),
-}
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum FrameAlphaMode {
-    Empty,
-    Unknown(u16),
-}
-
 // One word each; low and high byte operations are computed views.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct BombJump(u16);
@@ -82,7 +51,7 @@ pub struct PlayerTransitions {
     pub landing_compatibility: u16,
     pub frame_alpha: FrameAlphaMode,
     pub frame_beta: u16,
-    pub frame_gamma: u16,
+    pub frame_gamma: FrameGammaMode,
     pub draw_handler: u16,
     pub knockback: u16,
     pub bomb_jump: BombJump,
@@ -144,7 +113,7 @@ pub enum JumpKind {
 // Read-only refreshed input additions, never authoritative owned copies.
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct TransitionObservations {
-    pub frame_gamma: u16,
+    pub frame_gamma: FrameGammaMode,
     pub debug_invincibility: u16,
     pub moonwalk_enabled: u16,
     pub turn_request: u16,
@@ -184,8 +153,11 @@ impl PoseRequestWord {
         }
     }
 }
+// Each mode and its lossless compatibility codec share one declaration.
 macro_rules! mode_word {
     ($name:ident { $($variant:ident = $raw:literal),+ $(,)? }) => {
+        #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+        pub enum $name { $($variant,)+ Unknown(u16) }
         impl $name {
             pub const fn from_raw(raw: u16) -> Self {
                 match raw { $($raw => Self::$variant,)+ other => Self::Unknown(other) }
@@ -201,6 +173,7 @@ macro_rules! mode_word {
 }
 mode_word!(MovementMode {
     Normal = 0xa337,
+    Disabled = 0xe90e,
     DrainedCrouching = 0x94cb,
     Knockback = 0xdf38,
     BombJumpStart = 0xe025,
@@ -216,3 +189,16 @@ mode_word!(InputMode {
     Xray = 0xe918, Disabled = 0xe90e,
 });
 mode_word!(FrameAlphaMode { Empty = 0xe8cd });
+mode_word!(FrameGammaMode {
+    RecoverFromDrain = 0xe09b,
+    StruggleDuringDrain = 0xe0c5,
+    EscapeTimer = 0xe0e6,
+    DrawEscapeTimer = 0xe114,
+    BeginCeresPush = 0xe12e,
+    CeresPush = 0xe1c8,
+    DraygonGrabbed = 0xe2a1,
+    Empty = 0xe37e,
+    ForcedFall = 0xe3a3,
+    CappedFallAnimation = 0xe41b,
+    Disabled = 0xe90e,
+});

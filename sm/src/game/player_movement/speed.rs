@@ -9,10 +9,10 @@ use crate::game::{
     visual_host::Record,
 };
 
-fn value(motion: &FixedMotion) -> u32 {
+pub(super) fn value(motion: &FixedMotion) -> u32 {
     (u32::from(motion.whole) << 16) | u32::from(motion.fraction)
 }
-fn store(motion: &mut FixedMotion, value: u32) {
+pub(super) fn store(motion: &mut FixedMotion, value: u32) {
     motion.fraction = value as u16;
     motion.whole = (value >> 16) as u16;
 }

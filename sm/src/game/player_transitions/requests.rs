@@ -64,7 +64,9 @@ fn hit(h: &mut impl Host) -> bool {
             interrupted(h, pose);
             true
         }
-        Hit::Falling if h.inputs().transitions.frame_gamma != 0xe41b => {
+        Hit::Falling
+            if h.inputs().transitions.frame_gamma != FrameGammaMode::CappedFallAnimation =>
+        {
             let pose = facing_pose(h, 84, 83);
             interrupted(h, pose);
             true

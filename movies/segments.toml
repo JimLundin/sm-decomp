@@ -481,3 +481,13 @@ start_frame = 153606
 frames = 10
 require_hit = ["eproj.spawn.initialized"]
 expect = ["room:ADAD"]
+
+# Ceres Ridley's scripted push and 810 frames after its horizontal movement.
+[[segment]]
+id = "samus-forced-ceres"
+inputs = "corpus-speed-booster.inputs"
+input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
+start_frame = 15000
+frames = 1000
+require_hit = ["samus.bomb.falling-x"]
+expect = ["room:E0B5"]

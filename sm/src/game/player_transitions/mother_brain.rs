@@ -1,6 +1,9 @@
 //! Player reactions during Mother Brain's drain and Hyper Beam sequence.
 #![forbid(unsafe_code)]
-use super::{effects::Host, state::AnimationSkip};
+use super::{
+    effects::Host,
+    state::{AnimationSkip, FrameGammaMode},
+};
 use crate::game::{
     item_pickups::VisualUpdate, room_mechanisms::host::Effects as RoomEffects, samus_palette,
     visual_host::Record, visual_state::PaletteBuffer,
@@ -41,7 +44,7 @@ pub(crate) fn react(h: &mut (impl Host + RoomEffects), event: u16) {
             p.pose =
                 if event == 1 { 0xea } else { 0xe8 } + u16::from(p.movement_and_facing as u8 == 4);
             if event == 1 {
-                p.transitions.frame_gamma = 0xe90e;
+                p.transitions.frame_gamma = FrameGammaMode::Disabled;
             }
         }
         2 => {

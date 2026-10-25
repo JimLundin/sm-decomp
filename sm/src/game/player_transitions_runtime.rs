@@ -330,9 +330,9 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
         .transitions
         .invalidate_pose_requests();
     rt.session_mut().player.transitions.frame_gamma = if rt.session().room.area == 6 {
-        0xe0e6
+        FrameGammaMode::EscapeTimer
     } else {
-        0xe90e
+        FrameGammaMode::Disabled
     };
     rt.session_mut().player.movement_handler = MovementMode::Normal;
     rt.write_slice_le(ram::UNUSED_word_7E0A5E, (-2764i16) as u16);

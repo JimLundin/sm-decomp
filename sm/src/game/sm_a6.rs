@@ -29,7 +29,6 @@ use crate::game::sm_80::{
     QueueSfx3_Max3, QueueSfx3_Max6,
 };
 use crate::game::sm_81::DrawSpritemap;
-use crate::game::sm_90::Samus_SetPushedOutOfCeresRidley;
 use crate::game::sm_a0::{CosineMult8bit, SineMult8bit};
 use crate::game::sm_a9::{
     ComputeCosMult, ComputeSinMult, MoveEnemyWithVelocity, Shitroid_Func_2, WriteColorsToPalette,
@@ -1533,7 +1532,9 @@ crate::game::callback_dispatch! {
             QueueSfx2_Max6(0x4e, game);
         }
         if cry_var_33 == 208 {
-            Samus_SetPushedOutOfCeresRidley(game);
+            crate::game::player_movement::forced::begin_ceres_push(
+                crate::game::session_runtime::Runtime::new(game).session_mut(),
+            );
             word! {game; earthquake_type = 35; earthquake_timer = 64; }
         }
         let v2: i32 = cry_var_33 as i32 >> 1;

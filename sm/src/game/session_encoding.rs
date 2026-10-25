@@ -54,6 +54,11 @@ macro_rules! transition_words {
             transition_state::FrameAlphaMode
         );
         $f!(
+            0x0a5a,
+            $s.player.transitions.frame_gamma,
+            transition_state::FrameGammaMode
+        );
+        $f!(
             0x0a56,
             $s.player.transitions.bomb_jump,
             transition_state::BombJump
@@ -215,8 +220,8 @@ macro_rules! scalar_words {
             $f(0xf338+index*2,$($borrow)* $s.sprite_compatibility.disable_flags[index]);
         }
         $f(0xa44,$($borrow)* $s.player.transitions.frame_beta);
-        $f(0xa5a,$($borrow)* $s.player.transitions.frame_gamma);
         $f(0xa5c,$($borrow)* $s.player.transitions.draw_handler);
+        $f(0xa62,$($borrow)* $s.player.scripted_movement_direction);
         $f(0xa7a,$($borrow)* $s.player.demo.pre_action);
         $f(0xa7c,$($borrow)* $s.player.demo.delay);
         $f(0xa7e,$($borrow)* $s.player.demo.program);
@@ -885,7 +890,7 @@ pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
     let w = |at| read(bytes, at);
     ExternalInputs {
         transitions: crate::game::player_transitions::state::TransitionObservations {
-            frame_gamma: w(0xa5a),
+            frame_gamma: transition_state::FrameGammaMode::from_raw(w(0xa5a)),
             debug_invincibility: w(0xde0),
             moonwalk_enabled: w(0x9e4),
             turn_request: w(0xdf8),

@@ -91,8 +91,11 @@ pub(crate) fn command<H: Host + player_projectiles::host::Host>(
             0
         }
         5 | 0x18 => {
-            h.session_mut().player.transitions.frame_gamma =
-                if a & 31 == 5 { 0xe09b } else { 0xe0c5 };
+            h.session_mut().player.transitions.frame_gamma = if a & 31 == 5 {
+                FrameGammaMode::RecoverFromDrain
+            } else {
+                FrameGammaMode::StruggleDuringDrain
+            };
             h.session_mut().player.pose = 0x54;
             h.session_mut().player.transitions.animation_skip = AnimationSkip::from_raw(0);
             finish_pose_change(h);
@@ -166,7 +169,7 @@ pub(crate) fn command<H: Host + player_projectiles::host::Host>(
             1
         }
         0xf => {
-            h.session_mut().player.transitions.frame_gamma = 0xe0e6;
+            h.session_mut().player.transitions.frame_gamma = FrameGammaMode::EscapeTimer;
             0
         }
         0x10 | 0x1b => {

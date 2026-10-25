@@ -56,7 +56,7 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Player input, demos, suits, equipment, commands, initialization, Mother Brain
    reactions, X-ray and direct damage use owned state. Natural X-ray, Gravity,
    boss and grapple movie coverage remains incomplete despite bounded checks.
-   Cannon control is owned; sm_90 has 1,306 lines left. Next: typed forced movement.
+   Cannon and scripted movement are owned; sm_90 has 1,176 lines left. Next: bomb jump.
    Use named enum/function handlers as families move; raw identities stay at
    compatibility boundaries. Full u16 unknown values and failure timing survive.
    Report added production and deleted legacy together; growth needs a reason.

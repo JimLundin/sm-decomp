@@ -1,4 +1,4 @@
-use crate::game::player_movement;
+use crate::game::player_movement::{self, forced};
 use crate::game::player_transitions as pt;
 use crate::game::player_update::{self, BetaMode, MovementStep};
 
@@ -90,39 +90,6 @@ pub unsafe fn Samus_BombJumpRisingYMovement_(game: &mut Game) {
                 word!(game.samus_input_handler = (0x90e913i32) as u16);
             }
         }
-    }
-}
-pub fn Samus_BombJumpFallingXMovement_(game: &mut Game) {
-    crate::verify_probe::hit("samus.bomb.falling-x");
-    let mut runtime = Runtime::new(game);
-    let profile = player_movement::speed::normal_speed_profile(&mut runtime);
-    let amount = player_movement::speed::base_speed(&mut runtime, profile);
-    let request = player_collision::HorizontalRequest {
-        base: amount,
-        direction: if runtime.word(0xa62) == 1 {
-            player_collision::HorizontalDirection::Left
-        } else {
-            player_collision::HorizontalDirection::Right
-        },
-    };
-    player_collision::horizontal(&mut runtime, request);
-}
-
-pub unsafe fn Samus_BombJumpFallingYMovement_(game: &mut Game) {
-    unsafe {
-        if word!(game.samus_y_speed) as i32 - 5i32 & 0x8000 != 0 {
-            words!(
-                game.samus_y_speed,
-                samus_y_subspeed += words!(game.samus_y_accel, samus_y_subaccel)
-            );
-        }
-        {
-            let collision_request = player_collision::DisplacementRequest::Vertical {
-                direction: player_collision::VerticalDirection::Down,
-                amount: (words!(game.samus_y_speed, samus_y_subspeed)) as i32,
-            };
-            player_collision::displace(&mut CollisionRuntime::new(game), collision_request);
-        };
     }
 }
 crate::game::callback_dispatch! {
@@ -451,18 +418,6 @@ static kSamus_MoveHandler_Knockback: [Func_V; 6] = callback_table! { nonnull Fun
     Samus_MoveHandler_Knockback_Up, Samus_MoveHandler_Knockback_3,
     Samus_MoveHandler_Knockback_Down, Samus_MoveHandler_Knockback_Down,
 };
-pub unsafe fn Samus_ClearMoveVars(game: &mut Game) {
-    unsafe {
-        if word!(game.samus_collision_flag) != 0 {
-            word! { game, 0;
-                samus_x_accel_mode, samus_collides_with_solid_enemy, samus_is_falling_flag,
-                UNUSED_word_7E0B1A, UNUSED_word_7E0B2A, samus_y_subspeed, samus_y_speed, samus_y_dir,
-                UNUSED_word_7E0B38, samus_x_base_speed, samus_x_base_subspeed,
-            }
-            pt::align_bottom_with_previous_pose(&mut Runtime::new(game));
-        }
-    }
-}
 static kSamus_MoveHandler_BombJumpMain: [Func_V; 4] = callback_table! { nonnull Func_V;
     Samus_MoveHandler_Knockback_0, Samus_HorizontalBombJump, Samus_VerticalBombJump,
     Samus_HorizontalBombJump,
@@ -520,48 +475,6 @@ crate::game::callback_dispatch! {
     [9494804] DrawTimer_ [] {
         DrawTimer(game);
     };
-    [9494830] Samus_PushOutOfRidleysWay [] {
-        if *ram_ptr!(game; 0xa1e) == 4 {
-            word!(game.samus_pose = kPose_54_FaceL_Knockback as u16);
-        } else {
-            word!(game.samus_pose = kPose_53_FaceR_Knockback as u16);
-        }
-        pt::finish_pose_change(&mut Runtime::new(game));
-        word!(checked_i32, game.samus_y_pos -= (21 - word!(game.samus_y_radius) as i32));
-        if word!(game.samus_x_pos) as i32 - word!(game.layer1_x_pos) as i32 - 128i32 & 0x8000 != 0 {
-            word!(game.samus_var62 = 1);
-        } else {
-            word!(game.samus_var62 = 2);
-        }
-        word!(game.samus_y_speed = 5);
-        word! { game, 0; samus_y_subspeed, bomb_jump_dir }
-        word! {game; frame_handler_gamma = ((0x90e1c8i32) as u16); samus_new_pose = -1i32 as u16;
-            samus_new_pose_interrupted = -1i32 as u16;
-            samus_new_pose_transitional = -1i32 as u16; }
-        word! { game, 0;
-            samus_momentum_routine_index, samus_special_transgfx_index, samus_hurt_switch_index,
-        }
-        ProcessTimer(game);
-        if word!(game.timer_status) != 0 {
-            DrawTimer(game);
-        }
-    };
-    [9494984] Samus_Func4 [] {
-        static off_90E1F7: [Option<Func_V>; 3] = callback_table! { Func_V;
-            None, Samus_Func5, Samus_Func6,
-        };
-        if word!(game.samus_new_pose) as i32 == kPose_4F_FaceL_Dmgboost as i32
-            || word!(game.samus_new_pose) as i32 == kPose_50_FaceR_Dmgboost as i32
-        {
-            word! {game; samus_new_pose = -1i32 as u16; samus_momentum_routine_index = 0; }
-        }
-        off_90E1F7[word!(game.samus_var62) as usize].expect("non-null function pointer")(game);
-        word!(game.input_to_pose_calc = 0);
-        ProcessTimer(game);
-        if word!(game.timer_status) != 0 {
-            DrawTimer(game);
-        }
-    };
     [9495201] Samus_GrabbedByDraygonFrameHandler [] {
         if word!(game.grapple_beam_function) as i32 == 0x9bc77e & 0xffff {
             word! {game; samus_new_pose = -1i32 as u16; samus_momentum_routine_index = 0; }
@@ -589,59 +502,16 @@ crate::game::callback_dispatch! {
             }
         }
     };
-    [9495459] Samus_Func7 [] {
-        Samus_BombJumpFallingXMovement_(game);
-        if word!(game.samus_collision_flag) != 0 || {
-            Samus_BombJumpFallingYMovement_(game);
-            word!(game.samus_collision_flag) != 0
-        } {
-            word! {game; samus_movement_handler = ((0x90a337i32) as u16);
-                frame_handler_gamma = ((0x90e90ei32) as u16); samus_var62 = 0; }
-            Samus_ClearMoveVars(game);
-            word! {game; samus_new_pose_interrupted = 65; samus_special_transgfx_index = 0; }
-        }
-    };
-    [9495579] Samus_Func9 [] {
-        if word!(game.samus_y_speed) as i32 - 5i32 & 0x8000 != 0 {
-            words!(
-                game.samus_y_speed,
-                samus_y_subspeed += words!(game.samus_y_accel, samus_y_subaccel)
-            );
-        }
-        if (word!(game.samus_pose) as i32 == kPose_29_FaceR_Fall as i32
-            || word!(game.samus_pose) as i32 == kPose_2A_FaceL_Fall as i32
-            || word!(game.samus_pose) as i32 == kPose_67_FaceR_Fall_Gun as i32
-            || word!(game.samus_pose) as i32 == kPose_68_FaceL_Fall_Gun as i32)
-            && word!(game.samus_y_speed) as i32 - 5i32 & 0x8000 == 0
-        {
-            word! {game; samus_anim_frame_timer = 16; samus_anim_frame = 4; }
-        }
-    };
     @external {
+        9494830 => [crate::game::session_runtime::ceres_movement(game, |h| forced::push_out_of_ceres(h))];
+        9494984 => [crate::game::session_runtime::ceres_movement(game, |h| forced::advance_ceres_push(h))];
+        9495459 => [forced::finish_forced_fall(&mut Runtime::new(game))];
+        9495579 => [forced::animate_fall(Runtime::new(game).session_mut())];
         9495422 => [()];
         9496846 => [()];
     }
 }
 
-pub unsafe fn Samus_SetPushedOutOfCeresRidley(game: &mut Game) {
-    unsafe {
-        word!(game.samus_movement_handler = (0x90e90ei32) as u16);
-        word!(game.frame_handler_gamma = (0x90e12ei32) as u16);
-    }
-}
-pub unsafe fn Samus_Func5(game: &mut Game) {
-    unsafe {
-        Samus_BombJumpFallingXMovement_(game);
-        if word!(game.samus_collision_flag) != 0 {
-            word! {game; samus_movement_handler = ((0x90a337i32) as u16);
-            frame_handler_gamma = ((0x90e0e6i32) as u16); samus_var62 = 0; }
-            Samus_ClearMoveVars(game);
-        } else {
-            Samus_BombJumpFallingYMovement_(game);
-        };
-    }
-}
-pub use self::Samus_Func5 as Samus_Func6;
 pub unsafe fn Samus_SetGrabbedByDraygonPose(a: u16, game: &mut Game) {
     unsafe {
         if (a & 1) != 0 {
@@ -1058,16 +928,16 @@ crate::game::callback_dispatch! {
     [9494355] Samus_MoveHandler_Knockback_Up [] {
         player_movement::speed::bomb_rising_x(&mut Runtime::new(game));
         player_movement::speed::move_y_with_speed(&mut Runtime::new(game));
-        Samus_ClearMoveVars(game);
+        forced::clear_collided_motion(&mut Runtime::new(game));
     };
     [9494365] Samus_MoveHandler_Knockback_3 [] {
         player_movement::speed::move_y_with_speed(&mut Runtime::new(game));
-        Samus_ClearMoveVars(game);
+        forced::clear_collided_motion(&mut Runtime::new(game));
     };
     [9494372] Samus_MoveHandler_Knockback_Down [] {
         player_movement::speed::bomb_rising_x(&mut Runtime::new(game));
         player_movement::speed::no_speed_y(&mut Runtime::new(game));
-        Samus_ClearMoveVars(game);
+        forced::clear_collided_motion(&mut Runtime::new(game));
     };
     [9494565] Samus_MoveHandler_BombJumpStart [] {
         pt::initialize_jump(&mut Runtime::new(game), pt::state::JumpKind::Bomb);

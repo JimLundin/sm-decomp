@@ -1,6 +1,7 @@
 //! Compatibility sources and live aliases for the owned beta interaction.
 use crate::{
     game::{
+        player_transitions::state::FrameGammaMode,
         player_update::{
             content::Content,
             effects::{Effects, GammaAction},
@@ -68,8 +69,8 @@ impl Effects for Runtime<'_> {
     }
     fn gamma_action(&self) -> GammaAction {
         match self.session().player.transitions.frame_gamma {
-            0xe37e | 0xe90e => GammaAction::Inactive,
-            selector => GammaAction::Legacy(selector),
+            FrameGammaMode::Empty | FrameGammaMode::Disabled => GammaAction::Inactive,
+            mode => GammaAction::Legacy(mode.to_raw()),
         }
     }
     fn run_gamma(&mut self, selector: u16) {

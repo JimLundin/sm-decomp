@@ -25,7 +25,8 @@ fn every_encoded_word_roundtrips_without_normalization() {
         LandingBounce,
         MovementMode,
         InputMode,
-        FrameAlphaMode
+        FrameAlphaMode,
+        FrameGammaMode
     );
     for raw in 0..=u16::MAX {
         let view = PoseRequestWord::from_raw(raw).view();
@@ -48,6 +49,7 @@ fn construction_and_explicit_preparation_reset_are_distinct() {
     assert_eq!(state.transitional.to_raw(), 0);
     assert_eq!(state.input_mode, InputMode::Unknown(0));
     assert_eq!(state.frame_alpha, FrameAlphaMode::Unknown(0));
+    assert_eq!(state.frame_gamma, FrameGammaMode::Unknown(0));
     assert_eq!(MovementMode::default(), MovementMode::Unknown(0));
     state.ordinary = PoseRequestWord::from_raw(0xffff);
     state.interrupted = PoseRequestWord::from_raw(0xffff);
@@ -60,8 +62,8 @@ fn construction_and_explicit_preparation_reset_are_distinct() {
     assert_eq!(state.transitional.to_raw(), 0xffff);
 }
 
-const TYPED: [usize; 12] = [
-    0xa28, 0xa2a, 0xa2c, 0xa2e, 0xa30, 0xa32, 0xa9a, 0xa58, 0xa42, 0xa56, 0xa60, 0xb20,
+const TYPED: [usize; 13] = [
+    0xa28, 0xa2a, 0xa2c, 0xa2e, 0xa30, 0xa32, 0xa9a, 0xa58, 0xa42, 0xa56, 0xa60, 0xb20, 0xa5a,
 ];
 
 #[test]
@@ -74,14 +76,14 @@ fn typed_decode_visit_and_partial_writes_share_one_live_word() {
             bytes[at..at + 2].copy_from_slice(&raw.to_le_bytes());
         }
         let mut session = encoding::decode(&bytes, WorldBinding::canonical_legacy());
-        let mut visits = [0; 12];
+        let mut visits = [0; 13];
         encoding::visit(&session, |at, word| {
             if let Some(index) = TYPED.iter().position(|base| *base == at) {
                 visits[index] += 1;
                 assert_eq!(word, raw);
             }
         });
-        assert_eq!(visits, [1; 12]);
+        assert_eq!(visits, [1; 13]);
         for at in TYPED {
             // Change high byte, then low byte: second write must retain live high.
             assert!(encoding::write_projected_byte(&mut session, at + 1, 0x37));

@@ -282,6 +282,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/player_update_runtime.rs"),
     ),
     (
+        "sm/src/game/player_movement/forced.rs",
+        include_bytes!("game/player_movement/forced.rs"),
+    ),
+    (
         "sm/src/game/player_movement/mod.rs",
         include_bytes!("game/player_movement/mod.rs"),
     ),

@@ -237,7 +237,10 @@ fn knockback(h: &mut impl Host) {
     ];
     let target = TARGETS[usize::from(h.session().player.history.previous.movement_and_facing >> 8)];
     match target {
-        0 | 6 if target == 0 || h.inputs().transitions.frame_gamma != 0xe41b => {
+        0 | 6
+            if target == 0
+                || h.inputs().transitions.frame_gamma != FrameGammaMode::CappedFallAnimation =>
+        {
             let key = if h.session().player.movement_and_facing as u8 == 4 {
                 0x200
             } else {

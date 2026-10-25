@@ -77,3 +77,14 @@ impl Effects for Runtime<'_> {
         self.write_word_le(value, at);
     }
 }
+
+pub(crate) fn ceres_movement(game: &mut crate::game_state::Game, action: fn(&mut Runtime<'_>)) {
+    let mut runtime = Runtime::new(game);
+    action(&mut runtime);
+    runtime.foreign(|game| unsafe {
+        crate::game::sm_80::ProcessTimer(game);
+        if crate::ram_map::word!(game.timer_status) != 0 {
+            crate::game::sm_80::DrawTimer(game);
+        }
+    });
+}
