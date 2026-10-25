@@ -1,6 +1,6 @@
 # Engine migration
 
-![Unused completion hooks removed; now: Crystal Flash setup and Crocomire coverage.](docs/codebase-map/work-summary.svg)
+![Crocomire melt repair verified; next: wall break and Crystal Flash setup.](docs/codebase-map/work-summary.svg)
 
 | Measure | Count |
 | --- | ---: |
@@ -14,8 +14,8 @@
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-Change: **unused player completion hooks removed**; production **-13**, legacy **-8**, verification and unsafe unchanged.
+Change: **Crocomire melting uses the full graphics buffer**; production, legacy, unsafe and verification counts unchanged.
 
-**2 maintained segments pass: 10,959 setup + 629 measured frames; 8 exact settlement pairs.** Required coverage remains 26/44.
+**4 regression frames pass; missing-plane mutation caught.** Boss completion remains pending final-source qualification.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)

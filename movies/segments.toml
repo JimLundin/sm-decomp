@@ -509,3 +509,11 @@ start_frame = 167281
 frames = 4
 require_hit = ["eproj.pre.executed", "eproj.spawn.initialized"]
 expect = ["room:A98D", "state:8"]
+
+[[segment]]
+id = "crocomire-melt-graphics-buffer"
+inputs = "corpus-crocomire.inputs"
+input_sha256 = "90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe"
+start_frame = 169057
+frames = 4
+expect = ["room:A98D", "state:8"]

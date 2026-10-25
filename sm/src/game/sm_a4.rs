@@ -944,10 +944,10 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
         do_until! { n == 0 ;
             let q: i32 = *ram_ptr!(game; 0x69c, vline_idx as isize) as i32;
             let j: i32 = 2 * (q & 7) + ((q & !(7i32)) << 6) + 4 * (vline_idx & !(7i32));
-            crate::update_place! { reference fresh1 = (*(ram_ptr!(game, Ram4000; 0x4000))).backups.field_0[(j + 0) as usize] => (*fresh1) & (mask); }
-            crate::update_place! { reference fresh2 = (*(ram_ptr!(game, Ram4000; 0x4000))).backups.field_0[(j + 1) as usize] => (*fresh2) & (mask); }
-            crate::update_place! { reference fresh3 = (*(ram_ptr!(game, Ram4000; 0x4000))).backups.field_0[(j + 16) as usize] => (*fresh3) & (mask); }
-            crate::update_place! { reference fresh4 = (*(ram_ptr!(game, Ram4000; 0x4000))).backups.field_0[(j + 17) as usize] => (*fresh4) & (mask); }
+            // Melting tiles span the $4000 graphics buffer, beyond the menu backup prefix.
+            for plane_offset in [0, 1, 16, 17] {
+                game.g_ram[0x4000 + j as usize + plane_offset] &= mask;
+            }
             if *ram_ptr!(game; 0x69c, vline_idx as isize) == 48 {
                 break;
             }

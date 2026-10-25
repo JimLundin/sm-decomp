@@ -340,3 +340,10 @@ and Crocomire fight. Regenerate with
 pickup: the shared compatibility word must reach the pickup's spawn parameter.
 It covers the failing update and three subsequent frames; boss completion remains
 pending. Regenerate its setup from boot after the Session schema change.
+
+The `crocomire` authored route continues `crocomire-shot` from the qualified
+frame-167285 fight state through both melts, the wall break and skeleton collapse.
+Regenerate it with
+`python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-crocomire.inputs --rom rom/sm.smc --route crocomire`.
+`crocomire-melt-graphics-buffer` covers four frames from 169057.
+The wall-break regression and boss-completion rows remain pending final-source qualification.

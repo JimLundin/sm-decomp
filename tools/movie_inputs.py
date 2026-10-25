@@ -250,6 +250,7 @@ ROUTES = {
     'ice-beam-settled': (161733, 'd5700c8c8bfd3bcbc9fa5d4d05aa805dd594e98130a0c9d0ade163695201e093'),
     'speed-booster': (148406, 'bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6'),
     'speed-booster-settled': (148526, '9548c119742b6e2ffec65c5c0871403c96915671b83fe8b4c3930cc4bf60a00d'),
+    'crocomire': (171694, '90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe'),
     'crocomire-shot': (167295, 'e46b9a61eeded83064cc3a9fc29cf05d6a1cd18151c06cd6c9b78930af41766b'),
     'wave-beam': (155607, '2f07dc07523b7b542412604337d961292c3c07e3c4f0577d06dd131e1e879c4f'),
     'wave-gate': (153648, '1ce640c865d508ff2aab0f79c043c6da8aff9b74d6a1444d3a994e20d68db123'),
@@ -1456,6 +1457,23 @@ def extend_crocomire_shot_regression(a):
     return a
 
 
+def extend_crocomire_completion(a):
+    # Continue the qualified fight, then both melts and the wall/skeleton sequence.
+    a = a[:167285]
+    a.extend(_holds('X+R:1 R:10 X+R:1 R:10 X+R:1 R:35'))
+    a.extend(_holds('Y:1 Right+X:15 X+R:101 R:1 Select+R:1 R:29'))
+    a.extend(_holds('X+R:1 R:30 Y:1 Right+X:23 X+R:158 R:1'))
+    a.extend(_holds('X+R:85 Right+X:14 X+R:50 R:1 X+R:80 Right+X:22'))
+    a.extend(_holds('X+R:15 R:1 X+R:60 Right+X:14 X+R:33 R:1'))
+    a.extend(_holds('X+R:60 Right+X:20 X+R:28 R:1 X+R:60 Right+X:20'))
+    a.extend(_holds('X+R:19 R:1 X+R:80 R:1 X+R:80 Right+X:22'))
+    a.extend(_holds('X+R:3 R:1 X+R:60 Right+X:20 X+R:32 R:1'))
+    a.extend(_holds('X+R:60 Right+X:20 X+R:40 R:1 X+R:70 None:1480'))
+    a.extend(_holds('B+Left:120 None:30 Left:18 None:1265'))
+    assert len(a) == 171694
+    return a
+
+
 def route_frames(source, name):
     """Reproduce authored controller holds/splices; do not adjust emulator timing.
 
@@ -1474,8 +1492,9 @@ def route_frames(source, name):
         # Retain the saved-slot route through observed contact input 72760.
         # Authored idle exposure, then fresh A presses for Continue and both maps.
         return a[:72761] + _holds('None:1800 A:1 None:300 A:1 None:300 A:1 None:900')
-    if name == 'crocomire-shot':
-        return extend_crocomire_shot_regression(extend_wave_pickup(extend_wave_gate(extend_ice(extend_redtower(a)))))
+    if name in ('crocomire-shot', 'crocomire'):
+        route = extend_crocomire_shot_regression(extend_wave_pickup(extend_wave_gate(extend_ice(extend_redtower(a)))))
+        return extend_crocomire_completion(route) if name == 'crocomire' else route
     if name in ('wave-gate', 'wave-beam'):
         route = extend_wave_gate(extend_ice(extend_redtower(a)))
         return extend_wave_pickup(route) if name == 'wave-beam' else route
