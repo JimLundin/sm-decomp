@@ -441,6 +441,7 @@ pub mod game {
     pub mod enemy_population;
     pub mod enemy_script;
     pub(crate) mod mother_brain_visuals;
+    pub(crate) mod norfair_rio;
     pub mod projectile_contact;
     pub(crate) mod rio;
     pub(crate) mod rippers;

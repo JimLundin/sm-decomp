@@ -1551,17 +1551,8 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_6(a: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn NorfairRio_Func_7(a: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_NorfairRio(word!(game.cur_enemy_index) as i32, game);
-        if a != (*E).var_00 {
-            (*E).var_00 = a;
-            enemy_instruction! {[(*E).base]; instruction = a, timer = 1}
-            (*E).base.timer = 0;
-        }
-    }
-}
 pub use self::NorfairRio_Func_7 as LowerNorfairRio_Func_7;
+pub use crate::game::norfair_rio::animate as NorfairRio_Func_7;
 crate::game::callback_dispatch! {
     pub unsafe fn CallMaridiaLargeSnailFunc(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -3183,22 +3174,6 @@ crate::game::callback_dispatch! {
             (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
         };
     };
-    [10667990] LowerNorfairRio_Func_4 [] {
-        let E = Get_LowerNorfairRio(k as i32, game);
-        if ({ let (actor, amount) = (k, ((*E).var_D as i16 as i32) << 8); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            (*E).var_D = -((*E).var_D as i32) as u16;
-        }
-        if ({ let (actor, amount) = (k, ((*E).var_C as i16 as i32) << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 || {
-            let mut v4: i16 = (((*E).var_C) as i16).wrapping_sub(32);
-            (*E).var_C = v4 as u16;
-            v4 < 0
-        } {
-            (*E).var_C = -1i32 as u16;
-            LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C662 as u16, game);
-            (*E).var_F = (0xa2c82di32) as u16;
-            QueueSfx2_Max6(0x64, game);
-        }
-    };
     [10675953] LavaSeahorse_Func_3 [] {
         LavaSeahorse_Func_6(game);
         let E = Get_LavaSeahorse(k as i32, game);
@@ -3408,34 +3383,6 @@ crate::game::callback_dispatch! {
             QueueSfx2_Max6(0x65, game);
         }
     };
-    [10666849] NorfairRio_Func_4 [] {
-        if ({ let (actor, amount) = (k, ((*E).var_B as i16 as i32) << 8); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            (*E).var_B = -((*E).var_B as i32) as u16;
-        }
-        if ({ let (actor, amount) = (k, ((*E).var_A as i16 as i32) << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 || {
-            let mut v4: i16 = (((*E).var_A) as i16).wrapping_sub(32);
-            (*E).var_A = v4 as u16;
-            v4 < 0
-        } {
-            (*E).var_A = -1i32 as u16;
-            NorfairRio_Func_7(addr_kNorfairRio_Ilist_C145 as u16, game);
-            (*E).var_F = (0xa2c3b1i32) as u16;
-        }
-    };
-    [10666929] NorfairRio_Func_5 [] {
-        if ({ let (actor, amount) = (k, ((*E).var_B as i16 as i32) << 8); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            (*E).var_B = -((*E).var_B as i32) as u16;
-        }
-        if ({ let (actor, amount) = (k, ((*E).var_A as i16 as i32) << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            (*E).var_F = (0xa2c406i32) as u16;
-        } else {
-            (*E).var_A = ((*E).var_A).wrapping_sub(32);
-            if (*E).var_01 != 0 {
-                (*E).var_01 = 0;
-                NorfairRio_Func_7(addr_kNorfairRio_Ilist_C179 as u16, game);
-            }
-        };
-    };
     [10667889] LowerNorfairRio_Func_2 [] {
         if (word!(game.random_number) & 0x101) != 0 && ({ let (actor, threshold) = (k, 0x70); let delta = actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X); u8::from((delta as i16).wrapping_abs() as u16 >= threshold) }) & 1 == 0 {
             (*E).var_C = crate::rtl::rom_table_word!(game, 0xa2c6ca, 0);
@@ -3456,21 +3403,6 @@ crate::game::callback_dispatch! {
             LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C65A as u16, game);
             (*E).var_F = (0xa2c7d6i32) as u16;
         }
-    };
-    [10668077] LowerNorfairRio_Func_5 [] {
-        if ({ let (actor, amount) = (k, ((*E).var_D as i16 as i32) << 8); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            (*E).var_D = -((*E).var_D as i32) as u16;
-        }
-        if ({ let (actor, amount) = (k, ((*E).var_C as i16 as i32) << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C686 as u16, game);
-            (*E).var_F = (0xa2c888i32) as u16;
-        } else {
-            (*E).var_C = ((*E).var_C).wrapping_sub(32);
-            if (*E).var_01 != 0 {
-                (*E).var_01 = 0;
-                LowerNorfairRio_Func_7(addr_kLowerNorfairRio_Ilist_C674 as u16, game);
-            }
-        };
     };
     [10668168] LowerNorfairRio_Func_6 [] {
         if (*E).var_01 != 0 {
@@ -3562,6 +3494,11 @@ crate::game::callback_dispatch! {
             (*E).base.timer = 0;
         }
     };
+    @functions [pub fn (k: u16, game: &mut Game)];
+    [10666849] NorfairRio_Func_4 [] { crate::game::norfair_rio::dive(k, false, true, game); };
+    [10666929] NorfairRio_Func_5 [] { crate::game::norfair_rio::dive(k, false, false, game); };
+    [10667990] LowerNorfairRio_Func_4 [] { crate::game::norfair_rio::dive(k, true, true, game); };
+    [10668077] LowerNorfairRio_Func_5 [] { crate::game::norfair_rio::dive(k, true, false, game); };
     @countdown [pub unsafe fn (k: u16, game: &mut Game)];
     before {
         let E = Get_LavaSeahorse(k as i32, game);

@@ -22,8 +22,7 @@ fn animate(runtime: &mut Runtime<'_>, instruction: u16) {
     });
 }
 
-fn move_axis(runtime: &mut Runtime<'_>, key: Key, axis: Axis) -> bool {
-    let variable = if matches!(axis, Axis::X) { 3 } else { 2 };
+pub(super) fn move_axis(runtime: &mut Runtime<'_>, key: Key, axis: Axis, variable: usize) -> bool {
     let amount = (runtime.resolve_actor(key, Native).variables[variable] as i16 as i32) << 8;
     (match axis {
         Axis::X => api::move_horizontal(runtime, key, amount, SlopePolicy::Ignore),
@@ -31,11 +30,11 @@ fn move_axis(runtime: &mut Runtime<'_>, key: Key, axis: Axis) -> bool {
     }) == MovementResult::Blocked
 }
 
-fn bounce_horizontal(runtime: &mut Runtime<'_>, key: Key) -> bool {
-    let blocked = move_axis(runtime, key, Axis::X);
+pub(super) fn bounce_horizontal(runtime: &mut Runtime<'_>, key: Key, variable: usize) -> bool {
+    let blocked = move_axis(runtime, key, Axis::X, variable);
     if blocked {
         runtime.edit_actor(key, Native, |actor| {
-            actor.variables[3] = actor.variables[3].wrapping_neg();
+            actor.variables[variable] = actor.variables[variable].wrapping_neg();
         });
     }
     blocked
@@ -95,7 +94,8 @@ pub(crate) fn advance(game: &mut Game) -> bool {
             }
         }
         0xbc48 => {
-            if !bounce_horizontal(&mut runtime, key) && !move_axis(&mut runtime, key, Axis::Y) {
+            if !bounce_horizontal(&mut runtime, key, 3) && !move_axis(&mut runtime, key, Axis::Y, 2)
+            {
                 let falling = runtime.edit_actor(key, Native, |actor| {
                     actor.variables[2] = actor.variables[2].wrapping_sub(24);
                     if (actor.variables[2] as i16) < 0 {
@@ -120,8 +120,8 @@ pub(crate) fn advance(game: &mut Game) -> bool {
             }
         }
         0xbcb7 => {
-            bounce_horizontal(&mut runtime, key);
-            if move_axis(&mut runtime, key, Axis::Y) {
+            bounce_horizontal(&mut runtime, key, 3);
+            if move_axis(&mut runtime, key, Axis::Y, 2) {
                 animate(&mut runtime, 0xbba3);
                 runtime.edit_actor(key, Native, |actor| actor.variables[1] = 0xbc32);
             } else {
@@ -144,8 +144,8 @@ pub(crate) fn advance(game: &mut Game) -> bool {
                     actor.variables[3] = SINE_COSINE[angle + 64] as u16;
                     actor.variables[2] = SINE_COSINE[angle] as u16;
                 });
-                move_axis(&mut runtime, key, Axis::X);
-                move_axis(&mut runtime, key, Axis::Y);
+                move_axis(&mut runtime, key, Axis::X, 3);
+                move_axis(&mut runtime, key, Axis::Y, 2);
             }
         }
         _ => return false,
