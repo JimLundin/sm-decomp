@@ -5,10 +5,12 @@ use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
 use crate::game::visual_runtime::{
-    clear_hdma, configure_cinematic_display, reset_cinematic_transform, set_cinematic_backdrop,
+    advance_cinematic_fade, capture_cinematic_palette, clear_cinematic_colors, clear_hdma,
+    compose_cinematic_palette, configure_cinematic_display, fade_cinematic_colors,
+    prepare_cinematic_palette_fade, reset_cinematic_transform, set_cinematic_backdrop,
     set_hdma_enabled,
 };
-use crate::game::visual_state::CinematicDisplay;
+use crate::game::visual_state::{CinematicDisplay, CinematicFade};
 
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_60::*;
@@ -401,89 +403,6 @@ pub unsafe fn CalcCeresSteamPos_Mode7(mut pt: Point16U, game: &mut Game) -> Poin
     pt.y = (word!(game.reg_M7Y)).wrapping_sub(r26);
     pt
 }
-pub unsafe fn CopyPalettesToFadingPalettes(game: &mut Game) {
-    word_transfers!(game, ascending, 256; native(0x2200) <- le(palette_buffer, 0));
-}
-pub unsafe fn DecomposePaletteDataForFading(game: &mut Game) {
-    {
-        let mut v0: u16 = 0;
-        for _ in 0..256 {
-            let v2: i32 = v0 as i32 >> 1;
-            let r18: u16 = word!(game.tilemap_stuff[(v2 + 256)]);
-            let v3: i32 = r18 as i32 & 0x1f;
-            word!(game.tilemap_stuff[(v2 + 512)] = (v3 << 8) as u16);
-            word!(game.tilemap_stuff[(v2 + 1280)] = (v3 << 3) as u16);
-            let v4: i32 = (r18 as i32 & 0x3e0) >> 5;
-            word!(game.tilemap_stuff[(v2 + 768)] = (v4 << 8) as u16);
-            word!(game.tilemap_stuff[(v2 + 1536)] = (v4 << 3) as u16);
-            let v6: i32 = (r18 as i32 & 0x7c00) >> 10;
-            word!(game.tilemap_stuff[(v2 + 1024)] = (v6 << 8) as u16);
-            word!(game.tilemap_stuff[(v2 + 1792)] = (v6 << 3) as u16);
-            v0 = (v0).wrapping_add(2);
-        }
-    }
-}
-pub unsafe fn ClearYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
-    {
-        do_until! { j == 0 ;
-            let v2: i32 = k as i32 >> 1;
-            word! { game, 0;
-                tilemap_stuff[(v2 + 256)], tilemap_stuff[(v2 + 512)],
-                tilemap_stuff[(v2 + 768)], tilemap_stuff[(v2 + 1024)],
-            }
-            k = (k).wrapping_add(2);
-            j = j.wrapping_sub(1);
-        }
-    }
-}
-pub unsafe fn FadeOutYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
-    {
-        do_until! { j == 0 ;
-            let v2: i32 = k as i32 >> 1;
-            word!(game.tilemap_stuff[(v2 + 512)] -= word!(game.tilemap_stuff[(v2 + 1280)]));
-            word!(game.tilemap_stuff[(v2 + 768)] -= word!(game.tilemap_stuff[(v2 + 1536)]));
-            word!(game.tilemap_stuff[(v2 + 1024)] -= word!(game.tilemap_stuff[(v2 + 1792)]));
-            k = (k).wrapping_add(2);
-            j = j.wrapping_sub(1);
-        }
-    }
-}
-pub unsafe fn FadeInYColorsFromIndexX(mut k: u16, mut j: u16, game: &mut Game) {
-    {
-        do_until! { j == 0 ;
-            let v2: i32 = k as i32 >> 1;
-            word! { game;
-                tilemap_stuff[(v2 + 512)] = (word!(game.tilemap_stuff[(v2 + 1280)]) as i32
-                    + word!(game.tilemap_stuff[(v2 + 512)]) as i32
-                    & 0x1fff) as u16;
-                tilemap_stuff[(v2 + 768)] = (word!(game.tilemap_stuff[(v2 + 1536)]) as i32
-                    + word!(game.tilemap_stuff[(v2 + 768)]) as i32
-                    & 0x1fff) as u16;
-                tilemap_stuff[(v2 + 1024)] = (word!(game.tilemap_stuff[(v2 + 1792)]) as i32
-                    + word!(game.tilemap_stuff[(v2 + 1024)]) as i32
-                    & 0x1fff) as u16;
-            }
-            k = (k).wrapping_add(2);
-            j = j.wrapping_sub(1);
-        }
-    }
-}
-pub unsafe fn ComposeFadingPalettes(game: &mut Game) {
-    unsafe {
-        let mut v0: u16 = 0;
-        for _ in 0..256 {
-            let v2: i32 = v0 as i32 >> 1;
-            let mut r18: i32 = byte!(@pointer (ram_ptr!(game, u16; 0x2000)).offset((v2 + 512i32) as isize); 1)
-                as i32
-                & 0x1f;
-            r18 |= word!(game.tilemap_stuff[(v2 + 768)]) as i32 >> 3 & 0x3e0;
-            let v3: u16 =
-                (r18 | (word!(game.tilemap_stuff[(v2 + 1024)]) as i32) << 2 & 0x7c00) as u16;
-            word! {game; tilemap_stuff[v2] = v3; palette_buffer[v2] = v3; }
-            v0 = (v0).wrapping_add(2);
-        }
-    }
-}
 pub unsafe fn CinematicFunction_Intro_Func20(j: u16, game: &mut Game) {
     unsafe {
         let mut tt = RomPtr_8B(j, game) as *mut u16;
@@ -578,80 +497,6 @@ pub unsafe fn MoveUnusedSpritesOffScreen(game: &mut Game) {
                 as *mut u16) = 0x80;
             i_0 += 1;
         }
-    }
-}
-pub unsafe fn AdvanceFastScreenFadeOut(game: &mut Game) -> u8 {
-    unsafe {
-        if (*ram_ptr!(game; 0x51) & 0xf) != 0 {
-            if (((*ram_ptr!(game; 0x51) as i32 & 0xf) - word!(game.screen_fade_counter) as i32)
-                as i8)
-                > 0
-            {
-                *ram_ptr!(game; 0x51) = ((*ram_ptr!(game; 0x51) as i32 & 0xf)
-                    - word!(game.screen_fade_counter) as i32)
-                    as u8;
-                return 0;
-            }
-            *ram_ptr!(game; 0x51) = 0x80;
-        }
-        1
-    }
-}
-pub unsafe fn AdvanceSlowScreenFadeOut(game: &mut Game) -> u8 {
-    unsafe {
-        let v0: bool = ((word!(game.screen_fade_delay)) as i8).wrapping_sub(1) < 0;
-        byte!(@pointer ram_ptr!(game, u16; 0x723); 0) =
-            ((word!(game.screen_fade_delay)) as u8).wrapping_sub(1);
-        if (word!(game.screen_fade_delay) as u8) != 0 && !v0 {
-            return 0;
-        }
-        if (*ram_ptr!(game; 0x51) & 0xf) != 0 {
-            if (*ram_ptr!(game; 0x51) & 0xf) != 1 {
-                *ram_ptr!(game; 0x51) = ((*ram_ptr!(game; 0x51) as i32 & 0xf) - 1i32) as u8;
-                byte!(@pointer ram_ptr!(game, u16; 0x723); 0) =
-                    word!(game.screen_fade_counter) as u8;
-                return 0;
-            }
-            *ram_ptr!(game; 0x51) = 0x80;
-            byte!(@pointer ram_ptr!(game, u16; 0x723); 0) = 0;
-            byte!(@pointer ram_ptr!(game, u16; 0x725); 0) = 0;
-        }
-        1
-    }
-}
-pub unsafe fn AdvanceFastScreenFadeIn(game: &mut Game) -> u8 {
-    unsafe {
-        if (word!(game.screen_fade_counter) as i32 + *ram_ptr!(game; 0x51) as i32 & 0x1f) - 15i32
-            & 0x80
-            != 0
-        {
-            *ram_ptr!(game; 0x51) = (word!(game.screen_fade_counter) as i32
-                + *ram_ptr!(game; 0x51) as i32
-                & 0x1f) as u8;
-            0
-        } else {
-            *ram_ptr!(game; 0x51) = 15;
-            1
-        }
-    }
-}
-pub unsafe fn AdvanceSlowScreenFadeIn(game: &mut Game) -> u8 {
-    unsafe {
-        let v0: bool = ((word!(game.screen_fade_delay)) as i8).wrapping_sub(1) < 0;
-        byte!(@pointer ram_ptr!(game, u16; 0x723); 0) =
-            ((word!(game.screen_fade_delay)) as u8).wrapping_sub(1);
-        if (word!(game.screen_fade_delay) as u8) != 0 && !v0 {
-            return 0;
-        }
-        if (*ram_ptr!(game; 0x51) as i32 + 1 & 0x1f) - 15i32 & 0x80 != 0 {
-            *ram_ptr!(game; 0x51) = (*ram_ptr!(game; 0x51) as i32 + 1 & 0x1f) as u8;
-            byte!(@pointer ram_ptr!(game, u16; 0x723); 0) = word!(game.screen_fade_counter) as u8;
-            return 0;
-        }
-        *ram_ptr!(game; 0x51) = 15;
-        byte!(@pointer ram_ptr!(game, u16; 0x723); 0) = 0;
-        byte!(@pointer ram_ptr!(game, u16; 0x725); 0) = 0;
-        1
     }
 }
 pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
@@ -753,7 +598,7 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
             stage = match stage {
                 0 | 1 => {
                     crate::verify_probe::hit("coroutine.logo.in");
-                    if AdvanceFastScreenFadeIn(game) & 1 != 0 {
+                    if advance_cinematic_fade(CinematicFade::FastIn, game) {
                         2
                     } else {
                         1
@@ -769,7 +614,7 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                 }
                 _ => {
                     crate::verify_probe::hit("coroutine.logo.out");
-                    if AdvanceFastScreenFadeOut(game) & 1 != 0 {
+                    if advance_cinematic_fade(CinematicFade::FastOut, game) {
                         6
                     } else {
                         5
@@ -1276,12 +1121,10 @@ pub unsafe fn MaybeSkipCinematics(game: &mut Game) {
         }
     }
 }
-pub unsafe fn HandleCinematicsTransitions_1(game: &mut Game) {
-    unsafe {
-        if AdvanceFastScreenFadeOut(game) & 1 != 0 {
-            word! {game; cinematic_var18 = 2; cinematic_function = ((0x8b9f28i32) as u16); }
-            QueueMusic_Delayed8(6, game);
-        }
+pub fn HandleCinematicsTransitions_1(game: &mut Game) {
+    if advance_cinematic_fade(CinematicFade::FastOut, game) {
+        word! {game; cinematic_var18 = 2; cinematic_function = ((0x8b9f28i32) as u16); }
+        QueueMusic_Delayed8(6, game);
     }
 }
 pub unsafe fn HandleCinematicsTransitions_2(game: &mut Game) {
@@ -1309,12 +1152,10 @@ pub unsafe fn HandleCinematicsTransitions_2(game: &mut Game) {
         initialize_title_gradient(game);
     }
 }
-pub unsafe fn HandleCinematicsTransitions_3(game: &mut Game) {
-    unsafe {
-        if AdvanceFastScreenFadeIn(game) & 1 != 0 {
-            word! {game; cinematic_var18 = 0; demo_timer = 900;
-            cinematic_function = ((0x8b9f29i32) as u16); }
-        }
+pub fn HandleCinematicsTransitions_3(game: &mut Game) {
+    if advance_cinematic_fade(CinematicFade::FastIn, game) {
+        word! {game; cinematic_var18 = 0; demo_timer = 900;
+        cinematic_function = ((0x8b9f29i32) as u16); }
     }
 }
 static off_8B9A7B: [Option<Func_V>; 4] = callback_table! { Func_V;
@@ -1703,13 +1544,11 @@ static g_word_8BDE43: [u16; 16] = [
     0, 0x6f7b, 0x4a52, 0x1ce7, 0, 0x5ad6, 0x4a52, 0x35ad, 0x2529, 0x7fff, 0x56b5, 0x294a, 0x4210,
     0x2d6b, 0x18c6, 0x7fff,
 ];
-pub unsafe fn CinematicFunction_Intro_Func140(game: &mut Game) {
-    unsafe {
-        if word!(game.cinematic_var17) != 0 {
-            word!(game.cinematic_var17 -= 1);
-            FadeOutYColorsFromIndexX(0x1e0, 0x10, game);
-            ComposeFadingPalettes(game);
-        }
+pub fn CinematicFunction_Intro_Func140(game: &mut Game) {
+    if word!(game.cinematic_var17) != 0 {
+        word!(game.cinematic_var17 -= 1);
+        fade_cinematic_colors(0x1e0, 0x10, false, game);
+        compose_cinematic_palette(game);
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func142(game: &mut Game) {
@@ -1997,12 +1836,12 @@ crate::game::callback_dispatch! {
         };
     };
     [9150290] CinematicFunc_Func10 [] {
-        if AdvanceSlowScreenFadeOut(game) & 1 != 0 {
+        if advance_cinematic_fade(CinematicFade::SlowOut, game) {
             finish_cinematic_and_clear_effects!(game, 4, game_options_screen_index);
         }
     };
     [9150382] CinematicFunc_Func9 [] {
-        if AdvanceSlowScreenFadeOut(game) & 1 != 0 {
+        if advance_cinematic_fade(CinematicFade::SlowOut, game) {
             finish_cinematic_and_clear_effects!(game, 40, demo_scene);
         }
     };
@@ -2051,7 +1890,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9151933] CinematicFunction_Intro_DrawInitJpn [] {
-        if AdvanceSlowScreenFadeIn(game) & 1 != 0 {
+        if advance_cinematic_fade(CinematicFade::SlowIn, game) {
             word! {game; cinematic_function = ((0x8ba5f8i32) as u16); cinematic_var4 = 60; }
             if word!(game.japanese_text_flag) != 0 {
                 let mut v0: u16 = word!(game.vram_write_queue_tail);
@@ -2076,7 +1915,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9152099] CinematicFunc_Intro_WaitForFadeOut [] {
-        if AdvanceSlowScreenFadeOut(game) & 1 != 0 {
+        if advance_cinematic_fade(CinematicFade::SlowOut, game) {
             word!(game.cinematic_function = (0x8ba66fi32) as u16);
         }
     };
@@ -2114,7 +1953,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9152586] CinematicFunc_Intro_WaitForFadeinSleep [] {
-        if AdvanceSlowScreenFadeIn(game) & 1 != 0 {
+        if advance_cinematic_fade(CinematicFade::SlowIn, game) {
             word!(game.cinematic_function = (0x8ba391i32) as u16);
         }
     };
@@ -2542,7 +2381,7 @@ crate::game::callback_dispatch! {
     };
     [9164530] CinematicFunction_Intro_Func110 [] {
         CinematicFunction_Intro_Func111(game);
-        if AdvanceFastScreenFadeIn(game) & 1 != 0 {
+        if advance_cinematic_fade(CinematicFade::FastIn, game) {
             word!(game.cinematic_function = (0x8bd701i32) as u16);
         }
     };
@@ -2554,7 +2393,7 @@ crate::game::callback_dispatch! {
         }
         word!(game.cinematic_var6 += 2);
         if word!(game.cinematic_var6) as i32 - 384i32 & 0x8000 == 0
-            && AdvanceFastScreenFadeOut(game) & 1 != 0
+            && advance_cinematic_fade(CinematicFade::FastOut, game)
         {
             word!(game.cinematic_function = (0x8bd731i32) as u16);
         }
@@ -2583,14 +2422,14 @@ crate::game::callback_dispatch! {
         }
         word!(game.cinematic_var6 += 3);
         if word!(game.cinematic_var6) as i32 - 384i32 & 0x8000 == 0
-            && AdvanceFastScreenFadeOut(game) & 1 != 0
+            && advance_cinematic_fade(CinematicFade::FastOut, game)
         {
             word!(game.cinematic_function = (0x8bd837i32) as u16);
         }
     };
     [9164792] CinematicFunction_Intro_Func113 [] {
         CinematicFunction_Intro_Func114(game);
-        if AdvanceFastScreenFadeIn(game) & 1 != 0 {
+        if advance_cinematic_fade(CinematicFade::FastIn, game) {
             word!(game.cinematic_function = (0x8bd807i32) as u16);
         }
     };
@@ -2624,16 +2463,16 @@ crate::game::callback_dispatch! {
         *ram_ptr!(game; 0x6b) = 16;
         *ram_ptr!(game; 0x6f) = 2;
         *ram_ptr!(game; 0x72) = 33;
-        CopyPalettesToFadingPalettes(game);
-        DecomposePaletteDataForFading(game);
-        ClearYColorsFromIndexX(0x1a0, 0x10, game);
-        ClearYColorsFromIndexX(0x1e0, 0x10, game);
-        ComposeFadingPalettes(game);
+        capture_cinematic_palette(game);
+        prepare_cinematic_palette_fade(game);
+        clear_cinematic_colors(0x1a0, 0x10, game);
+        clear_cinematic_colors(0x1e0, 0x10, game);
+        compose_cinematic_palette(game);
         word! {game; cinematic_var4 = 63; cinematic_function = ((0x8bda02i32) as u16); }
     };
     [9165314] CinematicFunction_Intro_Func116 [] {
         CinematicFunction_Intro_Func117(game);
-        if AdvanceFastScreenFadeIn(game) & 1 != 0 {
+        if advance_cinematic_fade(CinematicFade::FastIn, game) {
             word! { game, 2; screen_fade_delay, screen_fade_counter }
             word!(game.cinematic_function = (0x8bda1ai32) as u16);
         }
@@ -2641,10 +2480,10 @@ crate::game::callback_dispatch! {
     [9165338] CinematicFunction_Intro_Func117 [] {
         word!(game.cinematic_var6 += 4);
         if (word!(game.cinematic_var4) & 1) == 0 {
-            FadeOutYColorsFromIndexX(0xe0, 0x10, game);
-            FadeInYColorsFromIndexX(0x1a0, 0x10, game);
-            FadeInYColorsFromIndexX(0x1e0, 0x10, game);
-            ComposeFadingPalettes(game);
+            fade_cinematic_colors(0xe0, 0x10, false, game);
+            fade_cinematic_colors(0x1a0, 0x10, true, game);
+            fade_cinematic_colors(0x1e0, 0x10, true, game);
+            compose_cinematic_palette(game);
         }
         if (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0 {
             word_transfers!(game, ascending, 128; le(palette_buffer, 0) <- rom(0x8cebe9, 0));
@@ -2792,7 +2631,7 @@ crate::game::callback_dispatch! {
     };
     [9166436] CinematicFunction_Intro_Func125 [] {
         word!(game.screen_fade_counter = 1);
-        if AdvanceFastScreenFadeOut(game) & 1 != 0 {
+        if advance_cinematic_fade(CinematicFade::FastOut, game) {
             crate::game::display_refresh::enable(true, game);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             word!(game.cinematic_function = (0x8bde80i32) as u16);
@@ -2849,16 +2688,16 @@ crate::game::callback_dispatch! {
             *ram_ptr!(game; 0x6f) = 2;
             *ram_ptr!(game; 0x72) = 34;
             word! { game, 0; screen_fade_delay, screen_fade_counter }
-            CopyPalettesToFadingPalettes(game);
-            DecomposePaletteDataForFading(game);
-            ClearYColorsFromIndexX(0x40, 0x10, game);
-            ComposeFadingPalettes(game);
+            capture_cinematic_palette(game);
+            prepare_cinematic_palette_fade(game);
+            clear_cinematic_colors(0x40, 0x10, game);
+            compose_cinematic_palette(game);
             word! {game; cinematic_var4 = 32; cinematic_function = ((0x8be158i32) as u16); }
         }
     };
     [9167192] CinematicFunction_Intro_Func131 [] {
-        FadeInYColorsFromIndexX(0x40, 0x10, game);
-        ComposeFadingPalettes(game);
+        fade_cinematic_colors(0x40, 0x10, true, game);
+        compose_cinematic_palette(game);
         let v0: bool = (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0;
         if word!(game.cinematic_var4) == 0 || v0 {
             *ram_ptr!(game; 0x69) = 18;
@@ -2887,8 +2726,8 @@ crate::game::callback_dispatch! {
         if word!(game.cinematic_var4 -= 1, reread) == 0 {
             word!(game.cinematic_var4 = 127);
             if word!(game.game_time_hours) as i32 - 3i32 & 0x8000 != 0 {
-                CopyPalettesToFadingPalettes(game);
-                DecomposePaletteDataForFading(game);
+                capture_cinematic_palette(game);
+                prepare_cinematic_palette_fade(game);
                 SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEF27 as u16, 0, game);
                 SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEF2D as u16, 0, game);
             } else {
@@ -2910,14 +2749,14 @@ crate::game::callback_dispatch! {
                     *ram_ptr!(game; 0x72) = 0;
                     return;
                 }
-                CopyPalettesToFadingPalettes(game);
-                DecomposePaletteDataForFading(game);
+                capture_cinematic_palette(game);
+                prepare_cinematic_palette_fade(game);
                 SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEF51 as u16, 0, game);
                 SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEF45 as u16, 0, game);
-                ClearYColorsFromIndexX(0x1c0, 0x10, game);
+                clear_cinematic_colors(0x1c0, 0x10, game);
             }
-            ClearYColorsFromIndexX(0x1a0, 0x10, game);
-            ComposeFadingPalettes(game);
+            clear_cinematic_colors(0x1a0, 0x10, game);
+            compose_cinematic_palette(game);
             *ram_ptr!(game; 0x69) = 2;
             *ram_ptr!(game; 0x6b) = 16;
             *ram_ptr!(game; 0x6f) = 2;
@@ -2929,12 +2768,12 @@ crate::game::callback_dispatch! {
         if (word!(game.cinematic_var4) & 3) != 0 {
             CinematicFunction_Intro_Func135(game);
         } else {
-            FadeOutYColorsFromIndexX(0x40, 0x10, game);
+            fade_cinematic_colors(0x40, 0x10, false, game);
             if word!(game.game_time_hours) as i32 - 3i32 & 0x8000 == 0 {
-                FadeInYColorsFromIndexX(0x1c0, 0x10, game);
+                fade_cinematic_colors(0x1c0, 0x10, true, game);
             }
-            FadeInYColorsFromIndexX(0x1a0, 0x10, game);
-            ComposeFadingPalettes(game);
+            fade_cinematic_colors(0x1a0, 0x10, true, game);
+            compose_cinematic_palette(game);
             CinematicFunction_Intro_Func135(game);
         };
     };
@@ -2970,12 +2809,12 @@ crate::game::callback_dispatch! {
         if (word!(game.cinematic_var4) & 3) != 0 {
             CinematicFunction_Intro_Func145(game);
         } else {
-            FadeOutYColorsFromIndexX(0x40, 0x10, game);
+            fade_cinematic_colors(0x40, 0x10, false, game);
             if word!(game.game_time_hours) as i32 - 3i32 & 0x8000 == 0 {
-                FadeInYColorsFromIndexX(0x1c0, 0x10, game);
+                fade_cinematic_colors(0x1c0, 0x10, true, game);
             }
-            FadeInYColorsFromIndexX(0x1a0, 0x10, game);
-            ComposeFadingPalettes(game);
+            fade_cinematic_colors(0x1a0, 0x10, true, game);
+            compose_cinematic_palette(game);
             CinematicFunction_Intro_Func145(game);
         };
     };
@@ -3015,9 +2854,9 @@ crate::game::callback_dispatch! {
     [9167790] CinematicFunction_Intro_Func139 [] {
         if word!(game.cinematic_var14) != 0 {
             word!(game.cinematic_var14 -= 1);
-            FadeOutYColorsFromIndexX(0x180, 0x10, game);
+            fade_cinematic_colors(0x180, 0x10, false, game);
             if word!(game.cinematic_var4) != 0 {
-                ComposeFadingPalettes(game);
+                compose_cinematic_palette(game);
             }
         }
         if word!(game.cinematic_var4) != 0 {
@@ -3453,8 +3292,8 @@ crate::game::callback_dispatch! {
         word! {game; cinematic_var8 = -4i32 as u16; cinematic_var10 = -8i32 as u16;
             cinematic_var4 = 16; }
         word! { game, 32; cinematic_var14, cinematic_var17 }
-        CopyPalettesToFadingPalettes(game);
-        DecomposePaletteDataForFading(game);
+        capture_cinematic_palette(game);
+        prepare_cinematic_palette_fade(game);
         QueueSfx1_Max15(0x22, game);
     };
     [9172561] CinematicSprInstr_Func218 [j] {

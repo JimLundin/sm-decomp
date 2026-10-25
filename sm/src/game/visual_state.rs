@@ -137,3 +137,11 @@ pub(crate) enum CinematicDisplay {
     Escape,
     Credits,
 }
+
+#[derive(Clone, Copy)]
+pub(crate) enum CinematicFade {
+    FastIn,
+    FastOut,
+    SlowIn,
+    SlowOut,
+}

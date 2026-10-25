@@ -9,18 +9,19 @@ use super::constants::samus_poses::kPose_02_FaceL_Normal;
 use super::palette_effects;
 use super::sm_8b::{
     CinematicBgInstr_SetSomeStuffForSpriteObject_14, CinematicFunction_Intro_Func20,
-    ClearEnglishTextTilemap, ClearJapaneseTextTiles, ClearYColorsFromIndexX, ComposeFadingPalettes,
-    DecomposePaletteDataForFading, DisableCinematicBgTilemapUpdates,
-    EnableCinematicBgTilemapUpdates, FadeInYColorsFromIndexX, FadeOutYColorsFromIndexX,
-    RevertButtonConfig, SetSomeStuffForSpriteObject_15, SetSomeStuffForSpriteObject_16,
-    SpawnCinematicBgObject, SpawnCinematicSpriteObject, SpawnCinematicSpriteObjectAtSlot,
-    SpawnMode7Object, TransferJapaneseTextTilesToVram, addr_kCinematicBgObjectDef_8BCF5D,
-    addr_kCinematicSpriteObjectDef_8BCE5B, addr_kCinematicSpriteObjectDef_8BCE55,
-    addr_kCinematicSpriteObjectDef_8BCE61, addr_kCinematicSpriteObjectDef_8BCE67,
-    addr_kCinematicSpriteObjectDef_8BCE73, addr_kCinematicSpriteObjectDef_8BCE79,
-    addr_kCinematicSpriteObjectDef_8BCF27,
+    ClearEnglishTextTilemap, ClearJapaneseTextTiles, DisableCinematicBgTilemapUpdates,
+    EnableCinematicBgTilemapUpdates, RevertButtonConfig, SetSomeStuffForSpriteObject_15,
+    SetSomeStuffForSpriteObject_16, SpawnCinematicBgObject, SpawnCinematicSpriteObject,
+    SpawnCinematicSpriteObjectAtSlot, SpawnMode7Object, TransferJapaneseTextTilesToVram,
+    addr_kCinematicBgObjectDef_8BCF5D, addr_kCinematicSpriteObjectDef_8BCE5B,
+    addr_kCinematicSpriteObjectDef_8BCE55, addr_kCinematicSpriteObjectDef_8BCE61,
+    addr_kCinematicSpriteObjectDef_8BCE67, addr_kCinematicSpriteObjectDef_8BCE73,
+    addr_kCinematicSpriteObjectDef_8BCE79, addr_kCinematicSpriteObjectDef_8BCF27,
 };
-use super::visual_runtime::initialize_intro_crossfade;
+use super::visual_runtime::{
+    clear_cinematic_colors, compose_cinematic_palette, fade_cinematic_colors,
+    initialize_intro_crossfade, prepare_cinematic_palette_fade,
+};
 use crate::game::music::QueueMusic_Delayed8;
 use crate::game_state::Game;
 use crate::ram_map::{ram_ptr, word};
@@ -192,24 +193,24 @@ pub(super) unsafe fn wait_for_scene(scene: Scene, game: &mut Game) {
             }
         );
         word_transfers!(game, ascending, 256; native(0x2200) <- rom(0x8ce3e9, 0));
-        DecomposePaletteDataForFading(game);
+        prepare_cinematic_palette_fade(game);
         for &(index, count) in palette.colors() {
-            ClearYColorsFromIndexX(index, count, game);
+            clear_cinematic_colors(index, count, game);
         }
-        ComposeFadingPalettes(game);
+        compose_cinematic_palette(game);
     }
 }
 
 pub(super) unsafe fn fade_to_scene(palette: Palette, game: &mut Game) {
     unsafe {
         if (word!(game.cinematic_var4) & 3) == 0 {
-            FadeOutYColorsFromIndexX(0, 0x14, game);
-            FadeOutYColorsFromIndexX(0x60, 0x10, game);
-            FadeOutYColorsFromIndexX(0x1d2, 6, game);
+            fade_cinematic_colors(0, 0x14, false, game);
+            fade_cinematic_colors(0x60, 0x10, false, game);
+            fade_cinematic_colors(0x1d2, 6, false, game);
             for &(index, count) in palette.colors() {
-                FadeInYColorsFromIndexX(index, count, game);
+                fade_cinematic_colors(index, count, true, game);
             }
-            ComposeFadingPalettes(game);
+            compose_cinematic_palette(game);
         }
         if (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0 {
             *ram_ptr!(game; 0x69) = 21;
@@ -246,13 +247,13 @@ pub(super) unsafe fn show_page(object: u16, next: u16, game: &mut Game) {
 pub(super) unsafe fn fade_to_page(palette: Palette, game: &mut Game) {
     unsafe {
         if (word!(game.cinematic_var13) & 3) == 0 {
-            FadeInYColorsFromIndexX(0, 0x10, game);
-            FadeInYColorsFromIndexX(0x60, 0x10, game);
-            FadeInYColorsFromIndexX(0x1d2, 6, game);
+            fade_cinematic_colors(0, 0x10, true, game);
+            fade_cinematic_colors(0x60, 0x10, true, game);
+            fade_cinematic_colors(0x1d2, 6, true, game);
             for &(index, count) in palette.colors() {
-                FadeOutYColorsFromIndexX(index, count, game);
+                fade_cinematic_colors(index, count, false, game);
             }
-            ComposeFadingPalettes(game);
+            compose_cinematic_palette(game);
         }
         if (word!(game.cinematic_var13 -= 1, reread) & 0x8000) != 0 {
             *ram_ptr!(game; 0x69) = 22;
@@ -341,11 +342,11 @@ unsafe fn setup_page_palettes(game: &mut Game) {
         *ram_ptr!(game; 0x6f) = 2;
         *ram_ptr!(game; 0x72) = 0;
         word_transfers!(game, ascending, 256; native(0x2200) <- rom(0x8ce3e9, 0));
-        DecomposePaletteDataForFading(game);
-        ClearYColorsFromIndexX(0, 0x10, game);
-        ClearYColorsFromIndexX(0x60, 0x10, game);
-        ClearYColorsFromIndexX(0x1d2, 6, game);
-        ComposeFadingPalettes(game);
+        prepare_cinematic_palette_fade(game);
+        clear_cinematic_colors(0, 0x10, game);
+        clear_cinematic_colors(0x60, 0x10, game);
+        clear_cinematic_colors(0x1d2, 6, game);
+        compose_cinematic_palette(game);
         word!(game.cinematic_var4 = 127);
         EnableCinematicBgTilemapUpdates(game);
         SetSomeStuffForSpriteObject_16(game);
