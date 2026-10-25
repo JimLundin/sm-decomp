@@ -33,13 +33,34 @@ jobs:
       - id: plan
         env:
           SELECTED: ${{ github.event.inputs.segments }}
+          # ci/** pushes run the head commit's `Rows:` rows plus the smoke set
+          # (every runnable row when the message has no `Rows:` line).
+          CI_BRANCH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/') }}
+          MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           python3 - <<'PY'
-          import json, os, tomllib
+          import json, os, re, tomllib
           rows = tomllib.load(open('movies/segments.toml', 'rb'))['segment']
+          known = {r['id'] for r in rows}
           wanted = os.environ.get('SELECTED', '').split()
+          source = 'dispatch input' if wanted else 'every row'
+          if os.environ.get('CI_BRANCH') == 'true':
+              lines = os.environ.get('MESSAGE', '').splitlines()
+              for n, line in enumerate(lines):
+                  if not line.startswith('Rows:'):
+                      continue
+                  text = line[5:]
+                  # A wrapped list continues after a trailing comma; results follow a colon.
+                  while text.rstrip().endswith(',') and n + 1 < len(lines):
+                      n += 1
+                      text += lines[n]
+                  named = [t for t in re.split(r'[\s,]+', text.split(':')[0]) if t]
+                  smoke = ['door-loading-lag-nmi', 'tas-ceres-four-doors', 'area-crateria', 'item-morph-ball']
+                  wanted = list(dict.fromkeys(named + smoke))
+                  source = f"Rows: line ({len(named)} named) plus smoke set"
+                  break
           if wanted:
-              unknown = set(wanted) - {r['id'] for r in rows}
+              unknown = set(wanted) - known
               if unknown:
                   raise SystemExit(f'unknown rows: {sorted(unknown)}')
           groups, skipped = {}, []
@@ -64,6 +85,7 @@ jobs:
           if not shards:
               raise SystemExit('no runnable rows selected')
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
+              out.write(f"Selection: {source}\n\n")
               out.write(f"{sum(len(s['segments'].split()) for s in shards)} rows in {len(shards)} shards\n\n")
               out.write('Skipped:\n\n' + ''.join(f'- {i}: {why}\n' for i, why in skipped))
           with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
@@ -271,3 +293,62 @@ jobs:
           Select-String -Path corpus.log -Pattern '^(PASS|FAIL|Corpus)' | ForEach-Object { $_.Line } | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
           if ($code -ne 0) { throw "Rows failed ($code)" }
+
+  # A green ci/** run lands the branch: rebase onto current main, fast-forward
+  # main, delete the branch. A conflict or a lost race retries once after a
+  # fresh fetch, then fails and leaves the branch for its author to rebase.
+  # Only pushes to this repository land (fork runs and dispatches never do).
+  land:
+    needs: [plan, build, segments]
+    if: >-
+      github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/') &&
+      github.repository == 'JimLundin/sm-decomp' && !github.event.repository.fork
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.sha }}
+      - name: Rebase onto main and fast-forward it
+        env:
+          BRANCH: ${{ github.ref_name }}
+          TESTED: ${{ github.sha }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          land() {
+            git fetch --quiet origin main "$BRANCH" || return 1
+            if [ "$(git rev-parse "origin/$BRANCH")" != "$TESTED" ]; then
+              echo "::error::$BRANCH moved past the tested commit $TESTED; its own run lands it"
+              exit 1
+            fi
+            git checkout --quiet --detach "$TESTED"
+            if ! git rebase --quiet origin/main; then
+              git rebase --abort
+              echo "::warning::rebase of $BRANCH onto main conflicts"
+              return 1
+            fi
+            # GITHUB_TOKEN cannot push workflow edits; those land by hand.
+            if [ -n "$(git diff --name-only origin/main HEAD -- .github/workflows)" ]; then
+              echo "::error::$BRANCH changes .github/workflows; land it by hand"
+              exit 1
+            fi
+            git push --quiet origin "HEAD:refs/heads/main" || return 1
+          }
+          if ! land; then
+            echo 'Retrying once after a fresh fetch'
+            land || { echo "::error::could not land $BRANCH; rebase it onto main and push again"; exit 1; }
+          fi
+          landed=$(git rev-parse HEAD)
+          echo "Landed $BRANCH ($TESTED) on main as $landed" >> "$GITHUB_STEP_SUMMARY"
+          git push --quiet --force-with-lease="refs/heads/$BRANCH:$TESTED" origin ":refs/heads/$BRANCH" ||
+            echo "::warning::left $BRANCH in place (it moved)"
+          echo "LANDED=$landed" >> "$GITHUB_ENV"
+      - name: Run the full corpus on main
+        # Pushes made with GITHUB_TOKEN start no workflows; a dispatch does.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run segments.yml --repo "$GITHUB_REPOSITORY" --ref main
