@@ -282,6 +282,7 @@ unsafe fn run(args: &[String]) -> c_int {
             eprintln!("verify: use a separate Python process for each replay");
             return 2;
         }
+        #[cfg(sm_verify_dll)]
         if args.len() == 1 && args[0] == "--unit-tests" {
             return std::panic::catch_unwind(verify::run_unit_tests).unwrap_or(2);
         }

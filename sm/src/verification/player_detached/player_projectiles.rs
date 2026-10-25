@@ -27,6 +27,7 @@ pub(crate) mod motion;
 pub(crate) mod placement;
 #[path = "../../game/player_projectiles/preparation.rs"]
 pub(crate) mod preparation;
+pub(crate) use preparation::deselect as deselect_owned;
 #[path = "../../game/player_projectiles/presentation.rs"]
 pub(crate) mod presentation;
 #[path = "../../game/player_projectiles/specials.rs"]

@@ -17,6 +17,7 @@ pub(crate) mod pre;
 pub(crate) mod presentation;
 #[path = "room_rules.rs"]
 pub(crate) mod rules;
+pub(crate) use rules::treadmill::{Direction, carry};
 #[path = "../../game/room_mechanisms/scheduler.rs"]
 pub(crate) mod scheduler;
 #[path = "../../game/room_mechanisms/setup.rs"]

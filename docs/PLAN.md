@@ -37,6 +37,7 @@ SVG in PROGRESS current. No other map work unless the user asks.
 not use or observe CI. The fetched review proposes hosted validation; that does
 not override the instruction in this conversation. Keep its implementation lanes
 and priorities, but use the local Fast loop and local bank-retirement checks below.
+The known example/detached compilation errors are fixed and checked locally.
 
 ## Work order
 

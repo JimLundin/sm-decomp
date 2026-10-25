@@ -6,6 +6,7 @@ pub(crate) mod beam_definitions;
 pub(crate) mod launch_motion;
 #[path = "player_projectiles.rs"]
 pub(crate) mod player_projectiles;
+pub(crate) use crate::palette as palette_effects;
 #[path = "../../game/projectile_block_reactions.rs"]
 pub(crate) mod projectile_block_reactions;
 #[path = "../../game/projectile_geometry.rs"]
