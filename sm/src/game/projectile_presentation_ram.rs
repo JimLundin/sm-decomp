@@ -135,6 +135,58 @@ pub(crate) fn menu(index: u16, x: u16, y: u16, palette: u16, game: &mut Game) {
     let address = crate::rtl::rom_table_word!(game, 0x82c569, index as isize);
     paletted(0x82, address, (x, y), palette, Clip::None, game);
 }
+/// Advance each file helmet immediately before drawing it; idle menus clear each timer first.
+#[forbid(unsafe_code)]
+pub(crate) fn file_helmets(animate: bool, game: &mut Game) {
+    const SPRITES: [u16; 9] = [0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x33];
+    for slot in 2..5 {
+        let timer = 0x198d + 2 * slot;
+        if !animate {
+            game.g_ram[timer..timer + 2].fill(0);
+        }
+        let remaining = u16::from_ne_bytes([game.g_ram[timer], game.g_ram[timer + 1]]);
+        if remaining != 0 {
+            let remaining = remaining.wrapping_sub(1);
+            game.g_ram[timer..timer + 2].copy_from_slice(&remaining.to_ne_bytes());
+            if remaining == 0 {
+                game.g_ram[timer..timer + 2].copy_from_slice(&8u16.to_ne_bytes());
+                let mut frame = word!(game.eproj_id[slot]).wrapping_add(1);
+                if i32::from(word!(game.eproj_id[slot])) - 7 & 0x8000 == 0 {
+                    game.g_ram[timer..timer + 2].fill(0);
+                    frame = 7;
+                }
+                word!(game.eproj_id[slot] = frame);
+            }
+        }
+        // The doubled frame wraps before the sprite-table index is recovered.
+        let sprite = word!(game.eproj_id[slot]).wrapping_mul(2) >> 1;
+        menu(
+            SPRITES[usize::from(sprite)],
+            word!(game.eproj_id[slot + 5]),
+            word!(game.eproj_id[slot + 10]),
+            3584,
+            game,
+        );
+    }
+}
+
+#[forbid(unsafe_code)]
+pub(crate) fn file_menu_cursor(game: &mut Game) {
+    const POSITIONS: [u16; 12] = [
+        0x30, 0xe, 0x58, 0xe, 0x80, 0xe, 0xa3, 0xe, 0xbb, 0xe, 0xd3, 0xe,
+    ];
+    let index = usize::from(word!(game.selected_save_slot).wrapping_mul(4) >> 1);
+    word!(game.eproj_id[10] = POSITIONS[index]);
+    word!(game.eproj_id[5] = POSITIONS[index + 1]);
+}
+
+#[forbid(unsafe_code)]
+pub(crate) fn file_slot_cursor(exit_y: u16, game: &mut Game) {
+    let positions = [72, 104, 136, exit_y];
+    word!(game.eproj_id[10] = positions[usize::from(word!(game.eproj_id[15]))]);
+    word!(game.eproj_id[5] = 22);
+}
+
 #[forbid(unsafe_code)]
 pub(crate) fn beam(index: u16, position: (u16, u16), game: &mut Game) {
     let address = crate::rtl::rom_table_word!(game, 0x93a1a1, index as isize);

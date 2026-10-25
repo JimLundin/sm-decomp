@@ -250,7 +250,7 @@ pub unsafe fn FileSelectMenu_32_FadeOutToOptions(game: &mut Game) {
     unsafe {
         DrawMenuSelectionMissile(game);
         DrawBorderAroundSamusData(game);
-        DrawFileSelectSamusHelmets(game);
+        sprite_output::file_helmets(false, game);
         HandleFadeOut(game);
         if (*ram_ptr!(game; 0x51) & 0xf) == 0 {
             word! {game; game_state = kGameState_2_GameOptionsMenu as u16; menu_index = 0; }
@@ -261,7 +261,7 @@ pub unsafe fn FileSelectMenu_32_FadeOutToOptions(game: &mut Game) {
 pub unsafe fn FileSelectMenu_33_FadeOutToTitle(game: &mut Game) {
     unsafe {
         DrawBorderAroundSamusData(game);
-        DrawFileSelectSamusHelmets(game);
+        sprite_output::file_helmets(false, game);
         HandleFadeOut(game);
         if (*ram_ptr!(game; 0x51) & 0xf) == 0 {
             SoftReset(game);
@@ -286,14 +286,9 @@ pub unsafe fn FileSelectMenu_15_FadeOutToMain(game: &mut Game) {
         }
     }
 }
-static kMenuSelectionMissileXY: [u16; 12] = [
-    0x30, 0xe, 0x58, 0xe, 0x80, 0xe, 0xa3, 0xe, 0xbb, 0xe, 0xd3, 0xe,
-];
 pub unsafe fn FileSelectMenu_17_FadeInToMain(game: &mut Game) {
     unsafe {
-        let v0: i32 = ((4u16).wrapping_mul(word!(game.selected_save_slot))) as i32 >> 1;
-        word!(game.eproj_id[10] = kMenuSelectionMissileXY[v0 as usize]);
-        word!(game.eproj_id[5] = kMenuSelectionMissileXY[(v0 + 1) as usize]);
+        sprite_output::file_menu_cursor(game);
         FileSelectMenu_7_FadeInFromMain(game);
     }
 }
@@ -324,7 +319,7 @@ pub unsafe fn FileSelectMenu_Func1(game: &mut Game) {
         menu_tilemap::load(0x688, addr_kMenuTilemap_Exit as u16, game);
         menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Occupied, game);
         SetInitialFileCopyMenuSelection(game);
-        SetFileCopyMenuSelectionMissilePosition(game);
+        sprite_output::file_slot_cursor(211, game);
         word! { game, 0; eproj_id[16], eproj_id[17] }
     }
 }
@@ -398,18 +393,11 @@ pub unsafe fn FileSelectMenu_8(game: &mut Game) {
             if let Some(v0) = selection {
                 byte!(@pointer (ram_ptr!(game, u16; 0x1997)).offset(15); 0) = v0;
                 QueueSfx1_Max6(0x37, game);
-                SetFileCopyMenuSelectionMissilePosition(game);
+                sprite_output::file_slot_cursor(211, game);
                 return;
             }
-            SetFileCopyMenuSelectionMissilePosition(game);
+            sprite_output::file_slot_cursor(211, game);
         };
-    }
-}
-pub unsafe fn SetFileCopyMenuSelectionMissilePosition(game: &mut Game) {
-    {
-        static kFileCopyMissileY: [u16; 4] = [72, 104, 136, 211];
-        word!(game.eproj_id[10] = kFileCopyMissileY[word!(game.eproj_id[15]) as usize]);
-        word!(game.eproj_id[5] = 22);
     }
 }
 pub unsafe fn FileSelectMenu_9_InitializeSelectDest(game: &mut Game) {
@@ -425,7 +413,7 @@ pub unsafe fn FileSelectMenu_9_InitializeSelectDest(game: &mut Game) {
             }
         }
         word!(game.eproj_id[15] = v0);
-        SetFileCopyMenuSelectionMissilePosition(game);
+        sprite_output::file_slot_cursor(211, game);
     }
 }
 pub unsafe fn DrawFileCopySelectDestinationSaveFileInfo(game: &mut Game) {
@@ -443,7 +431,6 @@ pub unsafe fn DrawFileCopySelectDestinationSaveFileInfo(game: &mut Game) {
 }
 pub unsafe fn FileSelectMenu_10_FileCopySelectDest(game: &mut Game) {
     unsafe {
-        static kFileCopySelectDest_MissileY: [u16; 4] = [72, 104, 136, 212];
         let mut v0: u16 = 0;
         DrawBorderAroundDataCopyMode(game);
         DrawMenuSelectionMissile(game);
@@ -488,8 +475,7 @@ pub unsafe fn FileSelectMenu_10_FileCopySelectDest(game: &mut Game) {
             FileSelectMenu_Func1(game);
             return;
         }
-        word!(game.eproj_id[10] = kFileCopySelectDest_MissileY[word!(game.eproj_id[15]) as usize]);
-        word!(game.eproj_id[5] = 22);
+        sprite_output::file_slot_cursor(212, game);
     }
 }
 pub unsafe fn FileSelectMenu_11_InitializeConfirm(game: &mut Game) {
@@ -651,7 +637,7 @@ pub unsafe fn InitFileSelectMenuFileClear(game: &mut Game) {
         menu_tilemap::file_rows(menu_tilemap::FileRowEmphasis::Occupied, game);
         word!(game.eproj_id[16] = 0);
         SetInitialFileCopyMenuSelection(game);
-        SetFileClearMenuMissilePos(game);
+        sprite_output::file_slot_cursor(211, game);
     }
 }
 pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
@@ -673,21 +659,14 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
                 byte!(@pointer (ram_ptr!(game, u16; 0x1997)).offset(15); 0) = v1;
                 byte!(v0; 0) = 55;
                 QueueSfx1_Max6(v0, game);
-                SetFileClearMenuMissilePos(game);
+                sprite_output::file_slot_cursor(211, game);
                 return;
             }
-            SetFileClearMenuMissilePos(game);
+            sprite_output::file_slot_cursor(211, game);
             return;
         }
         QueueSfx1_Max6(0x37, game);
         word!(game.menu_index += 5);
-    }
-}
-pub unsafe fn SetFileClearMenuMissilePos(game: &mut Game) {
-    {
-        static kFileClear_MissileY: [u16; 4] = [72, 104, 136, 211];
-        word!(game.eproj_id[10] = kFileClear_MissileY[word!(game.eproj_id[15]) as usize]);
-        word!(game.eproj_id[5] = 22);
     }
 }
 pub unsafe fn FileSelectMenu_23_FileClearInitConfirm(game: &mut Game) {
@@ -805,9 +784,7 @@ pub unsafe fn FileSelectMenu_31_TurnSamusHelmet(game: &mut Game) {
     unsafe {
         DrawMenuSelectionMissile(game);
         DrawBorderAroundSamusData(game);
-        DrawFileSelectSlotSamusHelmet(4, game);
-        DrawFileSelectSlotSamusHelmet(6, game);
-        DrawFileSelectSlotSamusHelmet(8, game);
+        sprite_output::file_helmets(true, game);
         if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0
             || word!(game.eproj_id[2]) == 7 && word!(game.cinematic_var7) == 0
             || word!(game.eproj_id[3]) == 7 && word!(game.cinematic_var8) == 0
@@ -815,47 +792,6 @@ pub unsafe fn FileSelectMenu_31_TurnSamusHelmet(game: &mut Game) {
         {
             word!(game.menu_index += 1);
         }
-    }
-}
-pub unsafe fn DrawFileSelectSamusHelmets(game: &mut Game) {
-    unsafe {
-        word!(game.cinematic_var7 = 0);
-        DrawFileSelectSlotSamusHelmet(4, game);
-        word!(game.cinematic_var8 = 0);
-        DrawFileSelectSlotSamusHelmet(6, game);
-        word!(game.cinematic_var9 = 0);
-        DrawFileSelectSlotSamusHelmet(8, game);
-    }
-}
-pub unsafe fn DrawFileSelectSlotSamusHelmet(k: u16, game: &mut Game) {
-    unsafe {
-        let v0: u16 = k;
-        let mut v1: i16 = *(ram_ptr!(game, u16; 0x198d, v0 as i32 as isize)) as i16;
-        if v1 != 0 {
-            let v2: u16 = ((v1) as u16).wrapping_sub(1);
-            *(ram_ptr!(game, u16; 0x198d, v0 as i32 as isize)) = v2;
-            if v2 == 0 {
-                *(ram_ptr!(game, u16; 0x198d, v0 as i32 as isize)) = 8;
-                let v3: i32 = v0 as i32 >> 1;
-                let mut v4: u16 = (word!(game.eproj_id[v3])).wrapping_add(1);
-                if word!(game.eproj_id[v3]) as i32 - 7i32 & 0x8000 == 0 {
-                    *(ram_ptr!(game, u16; 0x198d, v0 as i32 as isize)) = 0;
-                    v4 = 7;
-                }
-                word!(game.eproj_id[v3] = v4);
-            }
-        }
-        let v5: i32 = v0 as i32 >> 1;
-        let v6: u16 = (2u16).wrapping_mul(word!(game.eproj_id[v5]));
-        static kDrawFileSlotHelmet_Spritemaps: [u16; 9] =
-            [0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x33];
-        sprite_output::menu(
-            kDrawFileSlotHelmet_Spritemaps[(v6 >> 1) as usize],
-            word!(game.eproj_id[(v5 + 5)]),
-            word!(game.eproj_id[(v5 + 10)]),
-            3584,
-            game,
-        );
     }
 }
 static kFileSelectMapFuncs: [Func_V; 23] = callback_table! { nonnull Func_V;
@@ -909,10 +845,8 @@ pub unsafe fn FileSelectMenu_2_InitMain(game: &mut Game) {
 }
 pub unsafe fn FileSelectMenu_3_FadeInToMain(game: &mut Game) {
     unsafe {
-        DrawFileSelectSamusHelmets(game);
-        let v0: i32 = ((4u16).wrapping_mul(word!(game.selected_save_slot))) as i32 >> 1;
-        word!(game.eproj_id[10] = kMenuSelectionMissileXY[v0 as usize]);
-        word!(game.eproj_id[5] = kMenuSelectionMissileXY[(v0 + 1) as usize]);
+        sprite_output::file_helmets(false, game);
+        sprite_output::file_menu_cursor(game);
         DrawMenuSelectionMissile(game);
         DrawBorderAroundSamusData(game);
         HandleFadeIn(game);
@@ -927,9 +861,7 @@ pub unsafe fn FileSelectMenu_4_Main(game: &mut Game) {
         let mut v2: u16 = 0;
         DrawBorderAroundSamusData(game);
         DrawMenuSelectionMissile(game);
-        DrawFileSelectSlotSamusHelmet(4, game);
-        DrawFileSelectSlotSamusHelmet(6, game);
-        DrawFileSelectSlotSamusHelmet(8, game);
+        sprite_output::file_helmets(true, game);
         if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) == 0 {
             let selection_unchanged: bool =
                 if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
@@ -1015,9 +947,7 @@ pub unsafe fn FileSelectMenu_4_Main(game: &mut Game) {
                 return;
             }
         }
-        let mut v3: i32 = ((4u16).wrapping_mul(word!(game.selected_save_slot))) as i32 >> 1;
-        word!(game.eproj_id[10] = kMenuSelectionMissileXY[v3 as usize]);
-        word!(game.eproj_id[5] = kMenuSelectionMissileXY[(v3 + 1) as usize]);
+        sprite_output::file_menu_cursor(game);
     }
 }
 pub unsafe fn FileSelectMap_0(game: &mut Game) {
