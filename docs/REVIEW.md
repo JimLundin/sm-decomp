@@ -93,6 +93,14 @@ codemod). Body: the script (or its path), unsafe before/after, the Segments run.
   40203144686. Land it: rebase onto main, apply the `ram_map.rs` change, rerun
   `tools/codemod/strip_unsafe.py` (on that branch), `cargo fix`, push to `ci/m1`,
   land when green. Target unsafe <= 4,000.
+- **M1 revised (16:55 check-in; lane M stalled two check-ins, 0 commits, no `ci/m1`).**
+  B2's finding (PLAN item 2) is right: 42c59cb's whole-RAM `&mut` can alias live
+  enemy `*mut` pointers, and its strip made raw-pointer `Load24` safe. Do not land it.
+  Sound first deliverable, **M1a, due 18:00 as a `ci/m1a` push**: the fixpoint strip
+  alone, `word!` unchanged, stripping `unsafe` only from fns whose signature has no raw
+  pointer and whose body then compiles with no `unsafe {}` block; then `cargo fix` for
+  unused blocks. Then M2 (removes retained enemy pointers), then safe `word!` (M1b).
+  Owner: the B3 agent (sm_a4 quiet this hour) until a fourth agent starts.
 - **M2** enemy records by slot: replace `Get_X(k) -> *mut` and `(*E).field` with a
   safe slot accessor that re-borrows `game.g_ram` per access; codemod per bank,
   common enemies first (`sm_a2`, `sm_a3`, `sm_a8`, `sm_b3`), then bosses; fixpoint
@@ -104,6 +112,10 @@ After M4, re-measure and set the next primitive from what still holds unsafe.
 **Lane C — CI as the verification pipeline (user direction 2026-10-25).**
 - **C0 (now, lane-A agent, before more rows):** make `ci.yml` green on main
   (`--example sm_verify`, detached projectile build). Whoever breaks it fixes it next.
+  Compile half done (c563093). Still red at 83281dc: the hand-written mutation steps
+  (`player_detached/mutations.py`, `room_mutations.py`). **C0b, next lane-A commit:**
+  delete those two steps and their scripts (old proof ritual; per-bank scoped
+  cargo-mutants and Segments replace them); verification Rust falls with it.
 - **C1 (reviewer, done with this change):** `segments.yml` runs on every push to main
   and on `ci/**` branches; dispatch with `segments=` for chosen rows.
 - **C2 (lane A, after C0):** seed and lag-log rows in CI. Seed rows need the seed
@@ -206,6 +218,13 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
 
 ## Check-ins
 
+- **2026-10-25 16:55 CET (3ea69a0), stall in lane M (2nd check-in, 0 commits):** 7 agent
+  commits since 9b062a7: A 4 (Draygon, Space Jump, MB spawn regression, C0 compile),
+  B1 `sm_81` 1, B2 `sm_88` 2 (unsafe -31 then +33: backend contracts restored, sound),
+  B3 0, M 0; all `Score:`, 0 docs-only. Score `checks 37/44 · legacy 49512 · production
+  115340 · unsafe 4546 · verification 39240` (last 35 · 49698 · 115375 · 4554 · 39232);
+  warnings 357. 18:00: checks/legacy/banks met, production 40 over, `ci.yml` red,
+  M1 unsound. Changed: M1a (sound strip) to B3 agent; C0b drops mutation steps.
 - **2026-10-25 15:55 CET (9b062a7), no stall, short hour (15 min after reset 2):**
   5 agent commits since f2d3a05: A 2 (6f579a3 Ridley, f207b36 Phantoon: checks 33 -> 35),
   B1 `sm_81` 1 (a2088b5), B2 `sm_88` 1 (89%), B3 `sm_a4` 1 (44%); M 0 (lane opened at
@@ -271,15 +290,6 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
   52834 · 116131 · 4741 · 39040); warnings 370 (371); verify/probe/observer 615/93
   (flat). 18:00: checks on pace (8 in 8h), sm_90 and legacy on pace, **production
   behind** (−63/h vs −260/h). A0 upload experiment reported; next step named. No stall.
-- **2026-10-25 08:52 CET (6361b0e):** 8 agent commits: A 3 (9b8f29c, 61789c0,
-  c7cca91), B 5 (`B:sm_91` ×4, `B:sm_90` 745daad), 0 unlabelled, 0 docs-only, all
-  with `Score:`. Score `checks 25/44 · legacy 52834 · production 116131 · unsafe 4741
-  · verification 39040` (last 24 · 54148 · 116398 · 4892 · 39023); warnings 371 (371);
-  production verify/probe/observer flat at 615 lines/93 files (`git grep -ci`, path
-  filter as progress.sh). 18:00: lane B on pace (legacy, production, sm_91 238 left);
-  lane A behind (25/44, needs ~1 check/hour). Hour's ratio ~80% (−1,314 legacy,
-  −267 production). A0.3 parked at 9,266 steps; lane A back on hand routes under the
-  written-finding fallback. PLAN.md 221 lines (>200). No stall.
 
 ## Lane watch (2026-10-24 23:52)
 
