@@ -18,4 +18,6 @@ Change: **X-ray table pointers removed**; engine **+346 / -379 = -33**, legacy *
 
 **497 exact comparisons**, **7 mutation kills + 1 failure-prefix check**, **1,200 replay frames**. Natural X-ray coverage remains pending.
 
+Build fix: **no incremental caches for disposable builds**; checked reuse **0.58s**, zero compilations. Engine counts unchanged.
+
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)

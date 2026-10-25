@@ -50,8 +50,8 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    step 9,266; the old 9,291 comparison mixed phases. Elapsed-NMI experiment reaches
    first visible-state mismatch at 10,555: Ridley countdown/setup is four updates late;
    RNG differs by 10,440; first onset is unlocated. Model stays local: one active-IRQ
-   upload sample; equal-size uploads take 27/28 NMIs. Resume the Crocomire encounter.
-   Regenerate incompatible checkpoints from boot; preserve the checked navigation build.
+   upload sample; equal-size uploads take 27/28 NMIs. Frozen Crocomire route diverges
+   at 167,281 ($1994): trace/fix the scratch write; preserve its checked navigation build.
 2. **Current - lane B bank retirement.** `sm_94` and `sm_91` are deleted.
    Player input, demos, suits, equipment, commands, initialization, Mother Brain
    reactions, X-ray and direct damage use owned state. Natural X-ray, Gravity,
@@ -185,7 +185,7 @@ checked source or rebuild loaded DLLs. -j1 still permits parallel code generatio
 Use [the iteration guide](ITERATION.md#windows-shell-setup) for paths/commands.
 
 Keep artifacts in their checkout; seed dependencies, not full target trees, and reuse checked builds.
-Direct launcher fix next: honor `CARGO_INCREMENTAL=0` for disposable snapshots; preserve caches.
+Direct builds honor `CARGO_INCREMENTAL=0`; use it for disposable snapshots and preserve others' caches.
 Before deletion, resolve paths and verify artifacts are unneeded. Never delete another worker's artifacts.
 
 ## Definition of done for any change

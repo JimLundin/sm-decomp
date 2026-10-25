@@ -209,6 +209,7 @@ def build(root, rustc, use_cargo=None, frontend=False):
         if source_hash(root) != source:
             raise RuntimeError("source changed during build; rebuild before replay")
         return dll
+    incremental = os.environ.get("CARGO_INCREMENTAL") != "0"
     # Retain 16 codegen units; incremental compilation otherwise defaults to 256.
     common = [rustc, "--edition=2024", "-C", "opt-level=3",
               "-C", "codegen-units=16", "-A", "warnings"]
@@ -226,7 +227,7 @@ def build(root, rustc, use_cargo=None, frontend=False):
     native = sorted({path.resolve() for directory in sdk for path in directory.glob("*.a")})
     def build_identity():
         return hashlib.sha256(json.dumps([
-            source, common, compiler,
+            source, common, compiler, incremental,
             [(str(path), hashlib.sha256(path.read_bytes()).hexdigest()) for path in native],
             [(name, os.environ.get(name, "")) for name in
              ("PATH", "LIBRARY_PATH", "RUSTFLAGS", "CARGO_ENCODED_RUSTFLAGS")],
@@ -249,16 +250,17 @@ def build(root, rustc, use_cargo=None, frontend=False):
             pass
     stamp.unlink(missing_ok=True)
     subprocess.run(
-        common + ["--crate-name", "sm", "--crate-type", "rlib", "--cfg",
-                  "sm_verify_dll", "-C", f"incremental={output / 'incremental-sm'}",
+        common + (["-C", f"incremental={output / 'incremental-sm'}"] if incremental else [])
+        + ["--crate-name", "sm", "--crate-type", "rlib", "--cfg", "sm_verify_dll",
                   "sm/src/lib.rs", "-o", str(library)],
         cwd=root, check=True,
     )
     subprocess.run(
-        common + ["--crate-name", "sm_verify", "--crate-type", "cdylib",
+        common + (["-C", f"incremental={output / 'incremental-host'}"] if incremental else [])
+        + ["--crate-name", "sm_verify", "--crate-type", "cdylib",
                   "--cfg", "sm_verify_dll",
                   "-C", f"linker={linker}", "-C", "linker-flavor=ld",
-                  "-C", f"incremental={output / 'incremental-host'}", "sm/src/verify_dll.rs",
+                  "sm/src/verify_dll.rs",
                   "--extern", f"sm={library}", "-o", str(dll)],
         cwd=root, env=dict(os.environ, SM_VERIFY_SOURCE_HASH=source), check=True,
     )
