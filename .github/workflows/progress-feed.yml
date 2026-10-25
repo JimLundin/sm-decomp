@@ -1,0 +1,31 @@
+name: Progress feed
+# One comment per push to main on the open issue labelled progress-feed
+# (requested by Jim, 2026-10-25). Measures lines from Git only; no build.
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  issues: write
+concurrency:
+  group: progress-feed
+  cancel-in-progress: false
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 100
+      - name: Measure each pushed commit
+        run: |
+          python .github/scripts/progress_feed.py "${{ github.event.before }}" "${{ github.sha }}" > feed.md
+          cat feed.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Post to the progress feed issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          issue=$(gh issue list --label progress-feed --state open --json number --jq '.[0].number')
+          if [ -z "$issue" ]; then echo 'No open progress-feed issue; summary only.'; exit 0; fi
+          gh issue comment "$issue" --body-file feed.md

@@ -134,6 +134,10 @@ the blocker. Corrective step done: agents restarted ~05:50; sm_94 deleted 06:51 
 
 Map brief is done (c1fe795); no further map work unless the user asks.
 
+**Progress feed (user request, 2026-10-25).** Every push to main posts the measured
+line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads the
+`Score:` line for checks, so keep that line exact; agents do not maintain the feed.
+
 ## Check-ins
 
 - **2026-10-25 13:52 CET (bd76e2a), no stall:** 4 agent commits since 603425e: A 3
