@@ -637,6 +637,27 @@ pub(crate) fn advance_intro_crossfade(game: &mut Game) {
     }
 }
 
+pub(crate) unsafe fn initialize_weather(weather: Weather, game: &mut Game) {
+    use crate::game::constants::bank_87::{addr_kAnimtiles_Rain, addr_kAnimtiles_Spores};
+    let (control, program, tiles) = match weather {
+        Weather::Rain => (0x43, 0xd96c, Some(addr_kAnimtiles_Rain)),
+        Weather::Spores => (0x42, 0xda2d, Some(addr_kAnimtiles_Spores)),
+        Weather::Fog => (0x43, 0xdb19, None),
+    };
+    game.g_ram[0x5b] = 92;
+    unsafe {
+        spawn_hdma(
+            0x88,
+            &SpawnHdmaObject_Args::new(control, 0x11, program),
+            game,
+        );
+        if let Some(tiles) = tiles {
+            crate::game::sm_88::SpawnBG3ScrollHdmaObject(game);
+            animated_tiles::spawn(tiles as u16, game);
+        }
+    }
+}
+
 pub(crate) fn scroll_weather(slot: u16, weather: Weather, game: &mut Game) {
     use crate::ram_map::{checked_word, words as ram};
     game.g_ram[0x5b] = 92;

@@ -159,7 +159,7 @@ mod level_copy_checks;
 pub(crate) use level_copy_checks::check_level_copy;
 
 use crate::game::visual_host::{Content, Source};
-use crate::game::visual_state::PaletteBuffer;
+use crate::game::visual_state::{PaletteBuffer, Weather};
 use crate::rom::RomRecord;
 
 fn apply_fx(h: &mut Runtime<'_>, definition: &RomRecord, palette: PaletteBuffer) {
@@ -206,7 +206,9 @@ pub(crate) fn load_fx_entry(index: u16, game: &mut Game) {
 }
 
 pub(crate) fn load_fx_header(game: &mut Game) {
-    use crate::game::{animated_tiles, liquid_effects, palette_effects, scrolling_sky, sm_88};
+    use crate::game::{
+        animated_tiles, liquid_effects, palette_effects, scrolling_sky, sm_88, visual_runtime,
+    };
     let mut address = checked_word!(game.room_layer3_asm_ptr);
     if address == 0 {
         return;
@@ -236,9 +238,12 @@ pub(crate) fn load_fx_header(game: &mut Game) {
             1 => Some(liquid_effects::initialize_lava),
             2 => Some(liquid_effects::initialize_acid),
             3 => Some(liquid_effects::initialize_water),
-            4 => Some(sm_88::FxTypeFunc_8_Spores),
-            5 => Some(sm_88::FxTypeFunc_A_Rain),
-            6 => Some(sm_88::FxTypeFunc_C),
+            4..=6 => {
+                let weather =
+                    [Weather::Spores, Weather::Rain, Weather::Fog][usize::from((kind >> 1) - 4)];
+                h.foreign(|game| unsafe { visual_runtime::initialize_weather(weather, game) });
+                None
+            }
             16 => Some(scrolling_sky::initialize_land),
             17 => Some(scrolling_sky::initialize_banded_sky),
             18 => Some(sm_88::FxTypeFunc_24),

@@ -10,7 +10,6 @@ pub use crate::game::constants::bank_8f::*;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_87::*;
 
-use crate::game::animated_tiles;
 use crate::game::enemy_projectiles::SpawnEprojWithRoomGfx;
 use crate::game::explosion_window::{self, Phase};
 use crate::game::gameplay_flag_runtime::{
@@ -155,34 +154,6 @@ pub unsafe fn FxTypeFunc_CeresElevator(game: &mut Game) {
         static unk_88D92C: SpawnHdmaObject_Args =
             SpawnHdmaObject_Args::new(0x40, 0x5, 0xd939 as VoidP);
         spawn_hdma(0x88, &unk_88D92C, game);
-    }
-}
-pub unsafe fn FxTypeFunc_A_Rain(game: &mut Game) {
-    unsafe {
-        static unk_88D95C: SpawnHdmaObject_Args =
-            SpawnHdmaObject_Args::new(0x43, 0x11, 0xd96c as VoidP);
-        game.g_ram[0x5b] = 92;
-        spawn_hdma(0x88, &unk_88D95C, game);
-        SpawnBG3ScrollHdmaObject(game);
-        animated_tiles::spawn(addr_kAnimtiles_Rain as u16, game);
-    }
-}
-pub unsafe fn FxTypeFunc_8_Spores(game: &mut Game) {
-    unsafe {
-        game.g_ram[0x5b] = 92;
-        static unk_88DA1D: SpawnHdmaObject_Args =
-            SpawnHdmaObject_Args::new(0x42, 0x11, 0xda2d as VoidP);
-        spawn_hdma(0x88, &unk_88DA1D, game);
-        SpawnBG3ScrollHdmaObject(game);
-        animated_tiles::spawn(addr_kAnimtiles_Spores as u16, game);
-    }
-}
-pub unsafe fn FxTypeFunc_C(game: &mut Game) {
-    unsafe {
-        game.g_ram[0x5b] = 92;
-        static unk_88DB14: SpawnHdmaObject_Args =
-            SpawnHdmaObject_Args::new(0x43, 0x11, 0xdb19 as VoidP);
-        spawn_hdma(0x88, &unk_88DB14, game);
     }
 }
 pub unsafe fn FxTypeFunc_26_TourianEntranceStatue(game: &mut Game) {
