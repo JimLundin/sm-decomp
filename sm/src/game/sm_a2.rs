@@ -38,9 +38,7 @@ crate::game::constants::typed_constants! { Consts_A2;
     addr_kNorfairRio_Ilist_C145 = 49477, addr_kNorfairRio_Ilist_C12F = 49455,
     addr_kNorfairRio_Ilist_C107 = 49415, addr_kNorfairRio_Ilist_C0F1 = 49393,
     addr_kNorfairLavajumpingEnemy_Ilist_BE62 = 48738, addr_kNorfairLavajumpingEnemy_Ilist_BE42 = 48706,
-    addr_kNorfairLavajumpingEnemy_Ilist_BE3C = 48700, addr_kRio_Ilist_BBA3 = 48035,
-    addr_kRio_Ilist_BB97 = 48023, addr_kRio_Ilist_BB7F = 47999,
-    addr_stru_A2BB53 = 47955, addr_kRio_Ilist_BB4B = 47947,
+    addr_kNorfairLavajumpingEnemy_Ilist_BE3C = 48700,
     addr_kRinka_Ilist_BA0C = 47628, addr_kRinka_Ilist_B9E0 = 47584,
     addr_kNorfairErraticFireball_Ilist_B51A = 46362, addr_kNorfairErraticFireball_Ilist_B2DC = 45788,
     addr_kFlies_Ilist_B013 = 45075, addr_kGunshipTop_Ilist_A61C = 42524,
@@ -75,7 +73,7 @@ crate::type_aliases! {
 }
 
 crate::type_aliases! {
-    pub Enemy_Rio, Enemy_Flies, Enemy_MaridiaBeybladeTurtle, Enemy_MiniCrocomire,
+    pub Enemy_Flies, Enemy_MaridiaBeybladeTurtle, Enemy_MiniCrocomire,
         Enemy_GunshipBottom, Enemy_LowerNorfairRio,
         Enemy_MiniMaridiaBeybladeTurtle, Enemy_NorfairErraticFireball =
         crate::game::enemy_layouts::EnemyLayout8;
@@ -140,7 +138,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_NorfairLavajumpingEnemy(o: i32) -> Enemy_NorfairLavajumpingEnemy = [0xf78, o as isize];
     Get_NorfairRio(o: i32) -> Enemy_NorfairRio = [0xf78, o as isize];
     Get_Rinka(o: i32) -> Enemy_Rinka = [0xf78, o as isize];
-    Get_Rio(o: i32) -> Enemy_Rio = [0xf78, o as isize];
     Get_SpikeShootingPlant(o: i32) -> Enemy_SpikeShootingPlant = [0xf78, o as isize];
     Get_ThinHoppingBlobs(o: i32) -> Enemy_ThinHoppingBlobs = [0xf78, o as isize];
 }
@@ -1544,94 +1541,6 @@ crate::prefixed_callbacks! {
         }
     };
 }
-crate::game::callback_dispatch! {
-    pub unsafe fn CallRioFunc(ea: u32, game: &mut Game) => ea;
-    setup { let k: u16 = word!(game.cur_enemy_index); }
-    call (k, game); default { Unreachable(game); };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [10664941] Rio_1 [] {
-        if ({ let (actor, threshold) = (k, 0xa0); let delta = actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X); u8::from((delta as i16).wrapping_abs() as u16 >= threshold) }) & 1 == 0 {
-            let E = Get_Rio(k as i32, game);
-            (*E).var_C = crate::rtl::rom_table_word!(game, 0xa2bbbb, 0);
-            (*E).var_D = crate::rtl::rom_table_word!(game, 0xa2bbbf, 0);
-            if ((word!(game.samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) < 0 {
-                (*E).var_D = -((*E).var_D as i32) as u16;
-            }
-            Rio_6(addr_kRio_Ilist_BB7F as u16, game);
-            (*E).var_B = (0xa2bc48i32) as u16;
-            if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) == 0 {
-                QueueSfx2_Max6(0x65, game);
-            }
-        }
-    };
-    [10665010] Rio_2 [] {
-        let E = Get_Rio(k as i32, game);
-        if (*E).var_E != 0 {
-            (*E).var_E = 0;
-            Rio_6(addr_stru_A2BB53 as u16, game);
-            (*E).var_B = (0xa2bbedi32) as u16;
-        }
-    };
-    [10665032] Rio_3 [] {
-        let E = Get_Rio(k as i32, game);
-        if ({ let (actor, amount) = (k, ((*E).var_D as i16 as i32) << 8); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            (*E).var_D = -((*E).var_D as i32) as u16;
-        } else if ({ let (actor, amount) = (k, ((*E).var_C as i16 as i32) << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) == 0 {
-            let mut v4: i16 = (((*E).var_C) as i16).wrapping_sub(24);
-            (*E).var_C = v4 as u16;
-            if v4 < 0 {
-                (*E).var_A = (*E).var_D;
-                set_fields! {[(*E)], 0; var_D, var_C}
-                (*E).var_B = (0xa2bcffi32) as u16;
-            } else if (*E).var_E != 0 {
-                (*E).var_E = 0;
-                Rio_6(addr_kRio_Ilist_BB97 as u16, game);
-            }
-            return;
-        }
-        (*E).var_C = -((*E).var_C as i32) as u16;
-        (*E).var_B = (0xa2bcb7i32) as u16;
-    };
-    [10665143] Rio_4 [] {
-        let E = Get_Rio(k as i32, game);
-        if ({ let (actor, amount) = (k, ((*E).var_D as i16 as i32) << 8); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            (*E).var_D = -((*E).var_D as i32) as u16;
-        }
-        if ({ let (actor, amount) = (k, ((*E).var_C as i16 as i32) << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            Rio_6(addr_kRio_Ilist_BBA3 as u16, game);
-            (*E).var_B = (0xa2bc32i32) as u16;
-        } else {
-            (*E).var_C = ((*E).var_C).wrapping_sub(24);
-        };
-    };
-    [10665215] Rio_5 [] {
-        let E = Get_Rio(k as i32, game);
-        if (((*Get_Rio(k as i32, game)).base.y_pos) as i16)
-            .wrapping_sub((word!(game.samus_y_pos)) as i16)
-            >= 0
-        {
-            (*E).var_D = (*E).var_A;
-            (*E).var_C = -1i32 as u16;
-            (*E).var_B = (0xa2bcb7i32) as u16;
-        } else {
-            let v1: i32 = ({ let actor = k; actor_api::angle_to_player(&Runtime::new(game), Key::from_legacy(actor)) }) as i32;
-            (*E).var_D = kSinCosTable8bit_Sext[(v1 + 64) as usize] as u16;
-            (*E).var_C = kSinCosTable8bit_Sext[v1 as usize] as u16;
-            ({ let (actor, amount) = (k, ((*E).var_D as i16 as i32) << 8); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 });
-            ({ let (actor, amount) = (k, ((*E).var_C as i16 as i32) << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
-        };
-    };
-}
-pub unsafe fn Rio_6(a: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_Rio(word!(game.cur_enemy_index) as i32, game);
-        if a != (*E).var_F {
-            (*E).var_F = a;
-            enemy_instruction! {[(*E).base]; instruction = a, timer = 1}
-            (*E).base.timer = 0;
-        }
-    }
-}
 pub unsafe fn NorfairLavajumpingEnemy_Func_6(a: u16, game: &mut Game) {
     unsafe {
         let E = Get_NorfairLavajumpingEnemy(word!(game.cur_enemy_index) as i32, game);
@@ -2336,16 +2245,16 @@ crate::game::callback_dispatch! {
         actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::ReactionOnly);
         Rinka_B960(word!(game.cur_enemy_index), game);
     };
+    @functions [pub fn (game: &mut Game)];
     [10664909] Rio_Init [] {
-        let E = Get_Rio(word!(game.cur_enemy_index) as i32, game);
-        set_fields! {[(*E)], 0; var_E, var_F}
-        (*E).base.current_instruction = addr_kRio_Ilist_BB4B as u16;
-        (*E).var_B = (0xa2bbedi32) as u16;
+        crate::game::rio::initialize(game);
     };
+    @functions [pub unsafe fn (game: &mut Game)];
     [10664931] Rio_Main [] {
         NextRandom(game);
-        let E = Get_Rio(word!(game.cur_enemy_index) as i32, game);
-        CallRioFunc((((*E).var_B) as u32) | (0xa20000u32), game);
+        if !crate::game::rio::advance(game) {
+            Unreachable(game);
+        }
     };
     [10665625] NorfairLavajumpingEnemy_Init [] {
         let E = Get_NorfairLavajumpingEnemy(word!(game.cur_enemy_index) as i32, game);
@@ -2806,8 +2715,9 @@ crate::game::callback_dispatch! {
         let E0 = Get_Rinka(0, game);
         (*E0).var_1E = (*E0).var_1E.wrapping_add(1);
     };
+    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10664899] EnemyInstr_Rio_Instr_1 [jp] {
-        (*Get_Rio(word!(game.cur_enemy_index) as i32, game)).var_E = 1;
+        crate::game::rio::instruction_finished(game);
     };
     @functions [pub unsafe fn (
     k: u16,
