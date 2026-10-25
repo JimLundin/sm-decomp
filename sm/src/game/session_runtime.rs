@@ -279,14 +279,20 @@ impl Host for Runtime<'_> {
             });
             return;
         }
+        if matches!(step, PlayerStep::InsideBlock) {
+            self.owned_call(|runtime| {
+                crate::game::player_collision::operations::sample_inside(runtime);
+            });
+            return;
+        }
         self.foreign(|g| unsafe {
-            use crate::game::{sm_9b, sm_90, sm_91, sm_94};
+            use crate::game::{sm_9b, sm_90, sm_91};
             match step {
                 PlayerStep::Radius => sm_90::Samus_SetRadius(g),
                 PlayerStep::Input => sm_90::Samus_CallInputHandler(g),
                 PlayerStep::SuitIndex => unreachable!("suit index handled by shared owner"),
                 PlayerStep::Acceleration => unreachable!("acceleration handled by shared owner"),
-                PlayerStep::InsideBlock => sm_94::BlockInsideDetection(g),
+                PlayerStep::InsideBlock => unreachable!("inside block handled by shared owner"),
                 PlayerStep::Grapple => sm_9b::GrappleBeamHandler(g),
                 PlayerStep::Xray => sm_91::XrayRunHandler(g),
                 PlayerStep::RestoreControl => {

@@ -771,12 +771,12 @@ unsafe fn consumer_case(id: u32, g: &mut Game, image: &RomImage) -> (u8, u16) {
         g.g_ram[0xd828 + 3] = if v & 4 == 0 { 0 } else { 1 };
         put(g, 0xb2e, if v == 7 { 1 } else { 0 });
         mechanisms::carry(
+            &mut crate::game::session_runtime::Runtime::new(g),
             if v & 1 == 0 {
                 mechanisms::Direction::Right
             } else {
                 mechanisms::Direction::Left
             },
-            g,
         );
     } else {
         let v = n - 22;

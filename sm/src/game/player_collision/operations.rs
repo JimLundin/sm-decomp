@@ -147,3 +147,6 @@ pub(crate) use super::motion::shinespark;
 
 /// Resolve terrain penetration after a grapple release.
 pub(crate) use super::grapple::settle as settle_after_grapple;
+
+/// Apply terrain effects at the player's bottom, center and top.
+pub(crate) use super::inside::sample as sample_inside;

@@ -42,7 +42,7 @@ use crate::game::{
 };
 use crate::{game_state::Game, types::SpawnHardcodedPlmArgs};
 use host::{Contact, ContactIdentity, SpawnSource};
-pub(crate) use rules::treadmill::Direction;
+pub(crate) use rules::treadmill::{Direction, carry};
 
 pub(crate) unsafe fn spawn_hardcoded(args: SpawnHardcodedPlmArgs, game: &mut Game) {
     creation::spawn(
@@ -110,9 +110,6 @@ pub(crate) fn clear_session(session: &mut crate::game::session::Session) {
 }
 pub(crate) fn calculate_coordinates(k: u16, game: &mut Game) {
     creation::coordinates(&mut Runtime::new(game), usize::from(k >> 1));
-}
-pub(crate) fn carry(direction: Direction, game: &mut Game) {
-    rules::treadmill::carry(&mut Runtime::new(game), direction);
 }
 pub(crate) fn add_glass_hits(slot: usize, amount: u16, game: &mut Game) {
     rules::mother_brain_glass::add_hits(&mut Runtime::new(game), slot, amount);

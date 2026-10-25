@@ -343,7 +343,7 @@ fn slope(h: &mut impl Host, s: &mut Scan, axis: Axis) -> u8 {
     let block = h.session().room.collision_cursor;
     nonsquare(h, s, axis, block)
 }
-fn spike_damage(h: &mut impl Host, amount: u16) {
+pub(super) fn spike_damage(h: &mut impl crate::game::session_access::SessionAccess, amount: u16) {
     if h.session().player.invincibility != 0 {
         return;
     }
@@ -412,7 +412,7 @@ fn bombable(h: &mut impl Host, s: &mut Scan, axis: Axis, solid_block: bool) -> u
         0
     }
 }
-fn redirect(h: &mut impl Host, axis: Axis) -> bool {
+pub(super) fn redirect(h: &mut impl Host, axis: Axis) -> bool {
     let step = i16::from(behavior(h, h.session().room.collision_cursor) as i8);
     if step == 0 {
         return false;

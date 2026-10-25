@@ -58,9 +58,10 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    gameplay checks. Regenerate incompatible checkpoints from boot; preserve the
    old checked navigation build.
 2. **Current - lane B bank retirement.** Finish `sm_94`: post-grapple clearance now
-   owns its four ejection distances in player collision; 465 bank lines remain.
-   Next: `BlockInside*`/`BlockInsideDetection`, then grapple reactions/graphics and
-   delete the file. Older `sm_91`/`sm_90` drafts leave the active queue; local
+   owns its four ejection distances; inside-block sampling uses the existing
+   Session and shared terrain effects. 308 bank lines remain: grapple reactions,
+   graphics and remaining shared table callers, then delete the file.
+   Older `sm_91`/`sm_90` drafts leave the active queue; local
    experiments remain available. Natural grapple movie coverage is still pending.
    Report added production and deleted legacy lines together; net growth needs a
    reason. Get production below 110,000 before starting another subsystem. Reuse
