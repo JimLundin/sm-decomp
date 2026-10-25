@@ -821,50 +821,11 @@ pub unsafe fn SpawnTitleScreenGradientObjs(game: &mut Game) {
         SpawnHdmaObject(0x88, &raw const unk_88EB6B as *const c_void, game);
     }
 }
-pub unsafe fn HdmaobjInsr_ConfigTitleSequenceGradientHDMA(
-    k: u16,
-    hdp: *const u8,
-    game: &mut Game,
-) -> *const u8 {
-    unsafe {
-        *ram_ptr!(game; 0x6f) = 0;
-        ConfigureTitleSequenceGradientHDMA(game);
-        hdp
-    }
-}
-pub unsafe fn HdmaobjPreInstr_Backdrop_TitleSequenceGradient(k: u16, game: &mut Game) {
-    unsafe {
-        ConfigureTitleSequenceGradientHDMA(game);
-        if word!(game.cinematic_function) as i32 == 0x8b9b68 & 0xffff {
-            let v1: i32 = word!(game.hdma_object_index) as i32 >> 1;
-            word!(game.hdma_object_instruction_list_pointers[v1] += 2);
-            word!(game.hdma_object_instruction_timers[v1] = 1);
-        }
-    }
-}
-pub unsafe fn HdmaobjPreInstr_ColorMathControlB_TitleGradient(k: u16, game: &mut Game) {
-    unsafe {
-        if word!(game.cinematic_function) as i32 == 0x8b9b68 & 0xffff {
-            let v1: i32 = word!(game.hdma_object_index) as i32 >> 1;
-            word!(game.hdma_object_instruction_list_pointers[v1] += 2);
-            word!(game.hdma_object_instruction_timers[v1] = 1);
-        }
-    }
-}
 pub unsafe fn SpawnIntroCutsceneCrossfadeHdma(game: &mut Game) {
     unsafe {
         static unk_88EBFB: SpawnHdmaObject_Args =
             SpawnHdmaObject_Args::new(0, 0x31, 0xec03 as VoidP);
         SpawnHdmaObject(0x88, &raw const unk_88EBFB as *const c_void, game);
-    }
-}
-pub unsafe fn HdmaobjPreInstr_IntroCutsceneCrossfade(k: u16, game: &mut Game) {
-    unsafe {
-        if word!(game.eproj_x_pos[0]) == 1 {
-            let v1: i32 = word!(game.hdma_object_index) as i32 >> 1;
-            word!(game.hdma_object_instruction_list_pointers[v1] += 2);
-            word!(game.hdma_object_instruction_timers[v1] = 1);
-        }
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func133(game: &mut Game) {
@@ -947,9 +908,9 @@ crate::game::address_dispatch! {
         fnHdmaobjPreInstr_MorphBallEyeBeamFading => [{
                     Runtime::new(game).advance_eye_beam(k, EyeBeamPhase::Fading);
                 }];
-        8973232 => HdmaobjPreInstr_Backdrop_TitleSequenceGradient;
-        8973266 => HdmaobjPreInstr_ColorMathControlB_TitleGradient;
-        8973341 => HdmaobjPreInstr_IntroCutsceneCrossfade; 8972070 => [()];
+        8973232 => [visual_runtime::advance_title_gradient(true, game)];
+        8973266 => [visual_runtime::advance_title_gradient(false, game)];
+        8973341 => [visual_runtime::advance_intro_crossfade(game)]; 8972070 => [()];
         8973494 => [Runtime::new(game).advance_hdma_wave(k, HdmaWave::Intro)];
     }
 }
@@ -977,7 +938,11 @@ crate::game::address_dispatch! {
                     j
                 }];
         8973471 => HdmaobjInstr_EC9F_ClearVars; 8958889 => liquid_effects::start_lava_sound;
-        8973215 => HdmaobjInsr_ConfigTitleSequenceGradientHDMA;
+        8973215 => [{
+                    game.g_ram[0x6f] = 0;
+                    ConfigureTitleSequenceGradientHDMA(game);
+                    j
+                }];
         8968470 => [{
                     sub_88D916(game);
                     j

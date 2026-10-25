@@ -1,6 +1,8 @@
 //! Visual adapters on the one aggregate Session, with explicit legacy effects.
 use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
 use crate::game::projectile_presentation_ram as sprite_output;
+use crate::game::sm_8b::ConfigureTitleSequenceGradientHDMA;
+use crate::ram_map::checked_word;
 use crate::{
     game::{
         animated_tiles, enemy_projectiles, palette_effects, player_projectiles,
@@ -280,6 +282,23 @@ pub(crate) fn check_animation_guard(game: &mut Game) -> bool {
 }
 #[path = "../verification/samus_palette_observer.rs"]
 pub(crate) mod samus_observer;
+
+pub(crate) fn advance_title_gradient(backdrop: bool, game: &mut Game) {
+    if backdrop {
+        unsafe {
+            ConfigureTitleSequenceGradientHDMA(game);
+        }
+    }
+    if checked_word!(game.cinematic_function) == 0x9b68 {
+        Runtime::new(game).advance_hdma_program();
+    }
+}
+
+pub(crate) fn advance_intro_crossfade(game: &mut Game) {
+    if checked_word!(game.eproj_x_pos[0]) == 1 {
+        Runtime::new(game).advance_hdma_program();
+    }
+}
 
 pub(crate) fn scroll_weather(slot: u16, weather: Weather, game: &mut Game) {
     use crate::ram_map::{checked_word, words as ram};
