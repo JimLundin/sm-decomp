@@ -2,6 +2,7 @@ use super::intro_pages;
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
 pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
+use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
 
 pub use crate::game::constants::bank_8d::*;
@@ -19,7 +20,6 @@ use crate::game::sm_80::{
     GraphicsAsset, HandleFadeIn, HandleFadeOut, QueueMode7Transfers, QueueSfx1_Max15,
     QueueSfx2_Max6, QueueSfx3_Max6, WaitForNMI_Async, memset7E,
 };
-use crate::game::sm_81::SaveToSram;
 use crate::game::sm_88::{
     CinematicFunction_Intro_Func133, DisableHdmaObjects, EnableHdmaObjects,
     SpawnTitleScreenGradientObjs, WaitUntilEndOfVblankAndClearHdma,
@@ -2477,7 +2477,7 @@ crate::game::callback_dispatch! {
         word! {game; loading_game_state = kGameState_31_SetUpNewGame as u16;
             game_state = kGameState_31_SetUpNewGame as u16; area_index = 6;
             load_station_index = 0; }
-        SaveToSram(word!(game.selected_save_slot), game);
+        save_slots::save(word!(game.selected_save_slot), game);
     };
     [9158939] CinematicFunctionBlackoutFromCeres [] {
         SetupPpu_3_Mode7(game);

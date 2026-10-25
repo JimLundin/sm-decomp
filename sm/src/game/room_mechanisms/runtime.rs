@@ -218,9 +218,7 @@ impl Effects for Runtime<'_> {
         });
     }
     fn save(&mut self, slot: u16) {
-        self.foreign(|game| unsafe {
-            crate::game::sm_81::SaveToSram(slot, game);
-        });
+        self.foreign(|game| crate::game::save_slots::save(slot, game));
     }
     fn enemy_projectile(&mut self, definition: u16, parameter: u16) {
         crate::game::enemy_projectiles::lifecycle::spawn_room(self, definition, parameter);

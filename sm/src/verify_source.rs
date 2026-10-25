@@ -990,6 +990,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/samus_animation.rs"),
     ),
     (
+        "sm/src/game/save_slots.rs",
+        include_bytes!("game/save_slots.rs"),
+    ),
+    (
         "sm/src/game/samus_palette.rs",
         include_bytes!("game/samus_palette.rs"),
     ),

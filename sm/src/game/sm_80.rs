@@ -3,6 +3,7 @@ use crate::game::music::HandleMusicQueue;
 pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::room_state::load_tiles_and_palette;
+use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
 
 pub use crate::game::constants::bank_60::*;
@@ -10,7 +11,7 @@ pub use crate::game::constants::bank_60::*;
 use crate::game::animated_tiles;
 use crate::game::room_mechanisms::reload_graphics;
 use crate::game::sm_8b::InitializeIoDisplayLogo_Async;
-use crate::game::sm_81::{LoadFromSram, SoftReset};
+use crate::game::sm_81::SoftReset;
 use crate::rtl::RtlApuUpload;
 
 crate::typed_struct! {
@@ -101,7 +102,10 @@ pub unsafe fn CopySuperMetroidString(game: &mut Game) {
 pub unsafe fn VerifySRAM(game: &mut Game) {
     unsafe {
         word!(game.num_demo_sets = 3);
-        if LoadFromSram(0, game) != 0 && LoadFromSram(1, game) != 0 && LoadFromSram(2, game) != 0 {
+        if save_slots::load(0, game) != 0
+            && save_slots::load(1, game) != 0
+            && save_slots::load(2, game) != 0
+        {
             game.g_sram.write_bytes(0x1fe0, b"madadameyohn");
             RtlWriteSram(game);
         } else if game.g_sram.bytes(0x1fe0..0x1fec) == b"supermetroid" {

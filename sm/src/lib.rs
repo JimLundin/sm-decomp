@@ -413,6 +413,7 @@ pub mod game {
     pub mod samus_animation;
     pub(crate) mod samus_palette;
     pub(crate) mod samus_periodic_damage;
+    pub mod save_slots;
     pub(crate) mod session;
     pub(crate) mod session_access;
     pub(crate) mod session_encoding;

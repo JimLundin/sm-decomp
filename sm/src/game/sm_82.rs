@@ -4,6 +4,7 @@ use crate::game::gameplay_flag_runtime;
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
 pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
+use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
 
 use crate::cpu_infra::DebugGameOverMenu;
@@ -39,7 +40,7 @@ use crate::game::sm_80::{
     ResumeGameplay, SetupDmaTransfer, StartGameplay_Async, Vector_NMI, Vector_RESET_Async,
     WaitForNMI_Async, memset7E,
 };
-use crate::game::sm_81::{FileSelectMap, FileSelectMenu, GameOverMenu, SaveToSram};
+use crate::game::sm_81::{FileSelectMap, FileSelectMenu, GameOverMenu};
 use crate::game::sm_88::{
     DisableHdmaObjects, EnableHdmaObjects, HdmaObjectHandler, WaitUntilEndOfVblankAndClearHdma,
 };
@@ -383,7 +384,7 @@ pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             word!(game.loading_game_state = kLoadingGameState_22_EscapingCeres as u16);
             word!(game.game_state = 34);
-            SaveToSram(word!(game.selected_save_slot), game);
+            save_slots::save(word!(game.selected_save_slot), game);
             word!(game.cinematic_function = (0x8bc11bi32) as u16);
             word! { game, 0; ceres_status, timer_status }
             QueueMusic_Delayed8(0, game);
@@ -4220,7 +4221,7 @@ pub unsafe fn GameOptionsMenu_4_StartGame(game: &mut Game) {
             word!(game.game_state = kGameState_5_FileSelectMap as u16);
             if word!(game.loading_game_state) as i32 != kLoadingGameState_5_Main as i32 {
                 word!(game.loading_game_state = kGameState_5_FileSelectMap as u16);
-                SaveToSram(word!(game.selected_save_slot), game);
+                save_slots::save(word!(game.selected_save_slot), game);
             }
         } else if word!(game.loading_game_state) != 0 {
             word!(game.game_state = word!(game.loading_game_state));

@@ -44,7 +44,7 @@ fn run(operation: Operation, image: &RomImage, g: &mut Game) -> Returned {
             Operation::Demo => crate::game::sm_82::LoadDemoRoomData(g),
             Operation::DemoBoss => crate::game::sm_82::DemoRoom_SetBrinstarBossBits(g),
             Operation::Load(slot) => {
-                return Returned::word(u16::from(crate::game::sm_81::LoadFromSram(slot, g)));
+                return Returned::word(u16::from(crate::game::save_slots::load(slot, g)));
             }
             Operation::SporeDeath => crate::game::sm_a5::SporeSpawn_Func_6(g),
         }

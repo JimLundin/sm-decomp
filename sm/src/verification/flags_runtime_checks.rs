@@ -84,7 +84,7 @@ fn new_save_file(g: &mut Game) {
     unsafe { crate::game::sm_81::NewSaveFile(g) }
 }
 fn load_from_sram(slot: u16, g: &mut Game) -> u8 {
-    unsafe { crate::game::sm_81::LoadFromSram(slot, g) }
+    crate::game::save_slots::load(slot, g)
 }
 #[forbid(unsafe_code)]
 fn load_entry(case: u32) {

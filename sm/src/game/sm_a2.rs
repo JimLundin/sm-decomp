@@ -3,6 +3,7 @@ use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, A
 use crate::game::actors::api as actor_api;
 use crate::game::enemy_script::EnemyScript;
 pub use crate::game::prelude::*;
+use crate::game::save_slots;
 use crate::game::session_runtime::Runtime;
 
 pub use crate::game::constants::bank_8d::*;
@@ -18,7 +19,6 @@ use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::session_runtime::player_face_forward;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
-use crate::game::sm_81::SaveToSram;
 use crate::game::sm_a0::{CallEnemyPreInstr, ConvertAngleToXy};
 use crate::game::sm_a9::MoveEnemyWithVelocity;
 
@@ -3201,7 +3201,7 @@ crate::game::callback_dispatch! {
         if rv != 2 {
             crate::update_place! { unaligned_word fresh3 = &raw mut (*(ram_ptr!(game, u16; 0xd8f8))) => (u16::from_le(fresh3.read_unaligned())) | (1u16); }
             word!(game.load_station_index = 0);
-            SaveToSram(word!(game.selected_save_slot), game);
+            save_slots::save(word!(game.selected_save_slot), game);
         }
         (*Get_GunshipTop(k as i32, game)).var_F = (0xa2ab60i32) as u16;
         let E = Get_GunshipTop(k as i32 + 128, game);
@@ -3464,7 +3464,7 @@ crate::game::callback_dispatch! {
             word!(game.loading_game_state = kLoadingGameState_5_Main as u16);
             crate::update_place! { unaligned_word fresh11 = &raw mut (*(ram_ptr!(game, u16; 0xd8f8))) => (u16::from_le(fresh11.read_unaligned())) | (1u16); }
             word!(game.load_station_index = 0);
-            SaveToSram(word!(game.selected_save_slot), game);
+            save_slots::save(word!(game.selected_save_slot), game);
         }
     };
     [10660431] GunshipTop_9 [] {

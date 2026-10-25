@@ -1,6 +1,7 @@
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8};
 pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
+use crate::game::save_slots;
 
 pub use crate::game::constants::bank_82::*;
 
@@ -64,136 +65,6 @@ static kFileSelectMap_AreaIndexes: [u16; 6] = [0, 3, 5, 1, 4, 2];
 pub unsafe fn SoftReset(game: &mut Game) {
     unsafe {
         word!(game.game_state = 0xffff);
-    }
-}
-pub unsafe fn SaveToSram(a: u16, game: &mut Game) {
-    unsafe {
-        #[cfg(sm_verify_dll)]
-        crate::flags_save_observer::observe(0, game);
-        let mut r20: u16 = 0;
-        let r18: u16 = (2 * (a as i32 & 3)) as u16;
-        word_transfers!(game, descending, 48; le(player_data_saved, 47) <- native(0xa00));
-        #[cfg(sm_verify_dll)]
-        crate::flags_save_observer::observe(1, game);
-        let mut v3: u16 = (word!(game.area_index)).wrapping_mul(256);
-        let mut v4: u16 = 0;
-        do_until! { ((v4) as i16).wrapping_sub(256) >= 0 ;
-            word!(
-                game.explored_map_tiles_saved[(v3 >> 1)] = u16::from_ne_bytes(
-                    game.g_ram[0x7f7 + usize::from(v4)..0x7f9 + usize::from(v4)]
-                        .try_into().unwrap()
-                )
-            );
-            v4 = (v4).wrapping_add(2);
-            v3 = (v3).wrapping_add(2);
-        }
-        #[cfg(sm_verify_dll)]
-        crate::flags_save_observer::observe(2, game);
-        PackMapToSave(game);
-        #[cfg(sm_verify_dll)]
-        crate::flags_save_observer::observe(3, game);
-        word!(game.sram_save_station_index = word!(game.load_station_index));
-        word!(game.sram_area_index = word!(game.area_index));
-        #[cfg(sm_verify_dll)]
-        crate::flags_save_observer::observe(4, game);
-        let mut v5: u16 = crate::rtl::rom_table_word!(game, 0x81812b, (r18 >> 1) as isize);
-        for offset in (0xd7c0..0xde1c).step_by(2) {
-            let v7 = u16::from_ne_bytes(game.g_ram[offset..offset + 2].try_into().unwrap());
-            game.g_sram.set_word((2 * (v5 as i32 >> 1)) as usize, v7);
-            r20 = (r20).wrapping_add(v7);
-            v5 = (v5).wrapping_add(2);
-        }
-        #[cfg(sm_verify_dll)]
-        crate::flags_save_observer::observe(5, game);
-        let v8: u16 = r18;
-        let v9: u16 = r20;
-        let v10: i32 = r18 as i32 >> 1;
-        game.g_sram.set_word((2 * v10) as usize, r20);
-        game.g_sram.set_word((2 * v10 + 0x1ff0) as usize, v9);
-        let mut v11: u16 = !(v9 as i32) as u16;
-        game.g_sram.set_word((2 * v10 + 8) as usize, v11);
-        game.g_sram.set_word((2 * v10 + 0x1ff8) as usize, v11);
-        #[cfg(sm_verify_dll)]
-        crate::flags_save_observer::observe(6, game);
-        RtlWriteSram(game);
-    }
-}
-pub unsafe fn LoadFromSram(a: u16, game: &mut Game) -> u8 {
-    unsafe {
-        let mut r20: u16 = 0;
-        let r18: u16 = (2 * (a as i32 & 3)) as u16;
-        let mut v1: u16 = crate::rtl::rom_table_word!(game, 0x81812b, (a as i32 & 3) as isize);
-        for offset in (0xd7c0..0xde1c).step_by(2) {
-            let v3: u16 = game.g_sram.word((2 * (v1 >> 1)) as usize);
-            game.g_ram[offset..offset + 2].copy_from_slice(&v3.to_ne_bytes());
-            r20 = (r20).wrapping_add(v3);
-            v1 = (v1).wrapping_add(2);
-        }
-        let v4: i32 = r18 as i32 >> 1;
-        if r20 == game.g_sram.word((2 * v4) as usize)
-            && r20 ^ 0xffff == game.g_sram.word((0x8 + 2 * v4) as usize)
-            || r20 == game.g_sram.word((0x1ff0 + 2 * v4) as usize)
-                && r20 ^ 0xffff == game.g_sram.word((0x1ff8 + 2 * v4) as usize)
-        {
-            word_transfers!(game, descending, 48; native(0xa00) <- le(player_data_saved, 47));
-            UnpackMapFromSave(game);
-            word!(game.load_station_index = word!(game.sram_save_station_index));
-            word!(game.area_index = word!(game.sram_area_index));
-            0
-        } else {
-            r20 = 0;
-            let mut v7: u16 = crate::rtl::rom_table_word!(game, 0x81812b, (r18 >> 1) as isize);
-            let mut v9: u16 = 0;
-            for _ in (0xd7c0..0xde1c).step_by(2) {
-                game.g_sram.set_word((2 * (v7 >> 1)) as usize, v9);
-                v9 = (v9).wrapping_add(r20);
-                r20 = v9;
-                v7 = (v7).wrapping_add(2);
-            }
-            word! { game, 0; load_station_index, area_index }
-            1
-        }
-    }
-}
-pub unsafe fn UnpackMapFromSave(game: &mut Game) {
-    unsafe {
-        word_transfers!(game, descending, 897; le(explored_map_tiles_saved, 896) <- value(0));
-        for i_0 in 0i32..6 {
-            let mut n: i32 = byte!(@pointer rom_ptr!(game; 0x818131); i_0 as isize) as i32;
-            let mut r0 = RomPtr_81(
-                crate::rtl::rom_table_word!(game, 0x8182d6, i_0 as isize),
-                game,
-            );
-            let mut v3: i32 = crate::rtl::rom_table_word!(game, 0x818138, i_0 as isize) as i32;
-            let unpacked = ram_ptr!(game, u16; 0xcd52) as *mut u8;
-            do_until! { n == 0 ;
-                crate::update_place! { previous fresh2 = r0 => r0.offset(1); }
-                let v4: u16 = (i_0 * 256 + *fresh2 as i32) as u16;
-                crate::update_place! { previous fresh3 = v3 => v3 + 1; }
-                *unpacked.offset(v4 as isize) = *ram_ptr!(game; 0xd91c, fresh3 as isize);
-                n -= 1;
-            }
-        }
-    }
-}
-pub unsafe fn PackMapToSave(game: &mut Game) {
-    unsafe {
-        for i in 0i32..6 {
-            let mut n: i32 = byte!(@pointer rom_ptr!(game; 0x818131); i as isize) as i32;
-            let mut r0 = RomPtr_81(
-                crate::rtl::rom_table_word!(game, 0x8182d6, i as isize),
-                game,
-            );
-            let mut v1: i32 = crate::rtl::rom_table_word!(game, 0x818138, i as isize) as i32;
-            let unpacked = ram_ptr!(game, u16; 0xcd52) as *mut u8;
-            do_until! { n == 0 ;
-                crate::update_place! { previous fresh95 = r0 => r0.offset(1); }
-                let v3: i32 = i * 256 + *fresh95 as i32;
-                crate::update_place! { previous fresh96 = v1 => v1 + 1; }
-                *ram_ptr!(game; 0xd91c, fresh96 as isize) = *unpacked.offset(v3 as isize);
-                n -= 1;
-            }
-        }
     }
 }
 pub unsafe fn GameOverMenu_0_FadeOutConfigGfx(game: &mut Game) {
@@ -309,7 +180,7 @@ pub unsafe fn GameOverMenu_4_Main(game: &mut Game) {
                 } else {
                     word!(game.menu_index += 1);
                 }
-                let _load_result = LoadFromSram(word!(game.selected_save_slot), game);
+                let _load_result = save_slots::load(word!(game.selected_save_slot), game);
                 #[cfg(sm_verify_dll)]
                 crate::flags_save_observer::selected_continue(_load_result);
             }
@@ -534,7 +405,7 @@ enum FileRowEmphasis {
 unsafe fn draw_file_copy_rows(emphasis: FileRowEmphasis, game: &mut Game) {
     unsafe {
         for slot in 0..3u16 {
-            LoadFromSram_(slot, game);
+            save_slots::load(slot, game);
             let dim = match emphasis {
                 FileRowEmphasis::Occupied => word!(game.nonempty_save_slots) & (1 << slot) == 0,
                 FileRowEmphasis::Destination => word!(game.eproj_id[16]) == slot,
@@ -1000,7 +871,7 @@ pub unsafe fn FileSelectMenu_25_FileClearDoClear(game: &mut Game) {
         game.g_sram.set_word((2 * v2 + 0x1ff8) as usize, 0);
         word!(game.menu_index += 1);
         NewSaveFile(game);
-        LoadFromSram(word!(game.eproj_id[16]), game);
+        save_slots::load(word!(game.eproj_id[16]), game);
         word!(game.area_index = word!(game.eproj_id[16]));
         LoadMirrorOfExploredMapTiles(game);
         word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
@@ -1017,9 +888,9 @@ pub unsafe fn FileSelectMenu_26_ClearCompleted(game: &mut Game) {
         if word!(game.joypad1_newkeys) != 0 {
             QueueSfx1_Max6(0x37, game);
             word!(game.menu_index += 1);
-            if LoadFromSram(0, game) != 0 {
-                let use_first_slot: bool = if LoadFromSram(1, game) != 0 {
-                    (LoadFromSram(2, game) != 0)
+            if save_slots::load(0, game) != 0 {
+                let use_first_slot: bool = if save_slots::load(1, game) != 0 {
+                    (save_slots::load(2, game) != 0)
                         || ({
                             word!(game.selected_save_slot = 2);
                             false
@@ -1166,7 +1037,7 @@ pub unsafe fn FileSelectMenu_16(game: &mut Game) {
         (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 0;
         LoadMenuTilemap(0x56, addr_kMenuTilemap_SamusData as u16, game);
         LoadMenuTilemap(0x146, addr_kMenuTilemap_SamusA as u16, game);
-        let mut c: u8 = LoadFromSram_(0, game);
+        let mut c: u8 = save_slots::load(0, game);
         word!(
             game.nonempty_save_slots =
                 (word!(game.nonempty_save_slots) as i32 >> 1 | (c as i32) << 15) as u16
@@ -1176,7 +1047,7 @@ pub unsafe fn FileSelectMenu_16(game: &mut Game) {
         LoadMenuTilemap(0x176, addr_kMenuTilemap_TIME as u16, game);
         (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 0;
         LoadMenuTilemap(0x286, addr_kMenuTilemap_SamusB as u16, game);
-        c = LoadFromSram_(1, game);
+        c = save_slots::load(1, game);
         word!(
             game.nonempty_save_slots =
                 (word!(game.nonempty_save_slots) as i32 >> 1 | (c as i32) << 15) as u16
@@ -1186,7 +1057,7 @@ pub unsafe fn FileSelectMenu_16(game: &mut Game) {
         LoadMenuTilemap(0x2b6, addr_kMenuTilemap_TIME as u16, game);
         (*(ram_ptr!(game, EnemyData; 0xf78))).palette_index = 0;
         LoadMenuTilemap(0x3c6, addr_kMenuTilemap_SamusC as u16, game);
-        c = LoadFromSram_(2, game);
+        c = save_slots::load(2, game);
         word!(
             game.nonempty_save_slots =
                 (word!(game.nonempty_save_slots) as i32 >> 1 | (c as i32) << 15) as u16
@@ -1219,9 +1090,6 @@ pub unsafe fn FileSelectMenu_16(game: &mut Game) {
         word!(game.menu_index += 1);
         word! { game, 0; eproj_id[15], eproj_id[16], eproj_id[17] }
     }
-}
-pub unsafe fn LoadFromSram_(a: u16, game: &mut Game) -> u8 {
-    unsafe { LoadFromSram(a, game) }
 }
 pub unsafe fn FileSelectMenu_3_FadeInToMain(game: &mut Game) {
     unsafe {
@@ -1388,7 +1256,7 @@ pub unsafe fn FileSelectMenu_4_Main(game: &mut Game) {
                 game.g_sram
                     .set_word(0x1fee, !(word!(game.selected_save_slot) as i32) as u16);
                 RtlWriteSram(game);
-                if LoadFromSram(word!(game.selected_save_slot), game) != 0 {
+                if save_slots::load(word!(game.selected_save_slot), game) != 0 {
                     NewSaveFile(game);
                     word!(game.has_area_map = 0);
                 } else {
