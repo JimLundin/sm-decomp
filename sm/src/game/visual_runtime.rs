@@ -21,24 +21,35 @@ fn hdma_definition(args: &SpawnHdmaObject_Args) -> [u16; 2] {
     ]
 }
 
-pub(crate) fn spawn_hdma(bank: u8, args: &SpawnHdmaObject_Args, game: &mut Game) -> u16 {
-    let words = hdma_definition(args);
-    spawn_hdma_words(bank, |index| words[index], game)
-}
-
-pub(crate) fn spawn_hdma_last(bank: u8, args: &SpawnHdmaObject_Args, game: &mut Game) {
-    let words = hdma_definition(args);
-    initialize_hdma(5, bank, |index| words[index], game);
-}
-
-pub(crate) fn spawn_hdma_words(bank: u8, read_word: impl Fn(usize) -> u16, game: &mut Game) -> u16 {
-    match (0..6).find(|&slot| checked_word!(game.hdma_object_channels_bitmask[slot]) == 0) {
-        Some(slot) => initialize_hdma(slot, bank, read_word, game),
-        None => u16::MAX,
+// Hardware-facing entry points require a live, exclusively accessed SNES backend.
+pub(crate) unsafe fn spawn_hdma(bank: u8, args: &SpawnHdmaObject_Args, game: &mut Game) -> u16 {
+    unsafe {
+        let words = hdma_definition(args);
+        spawn_hdma_words(bank, |index| words[index], game)
     }
 }
 
-fn initialize_hdma(
+pub(crate) unsafe fn spawn_hdma_last(bank: u8, args: &SpawnHdmaObject_Args, game: &mut Game) {
+    unsafe {
+        let words = hdma_definition(args);
+        initialize_hdma(5, bank, |index| words[index], game);
+    }
+}
+
+pub(crate) unsafe fn spawn_hdma_words(
+    bank: u8,
+    read_word: impl Fn(usize) -> u16,
+    game: &mut Game,
+) -> u16 {
+    unsafe {
+        match (0..6).find(|&slot| checked_word!(game.hdma_object_channels_bitmask[slot]) == 0) {
+            Some(slot) => initialize_hdma(slot, bank, read_word, game),
+            None => u16::MAX,
+        }
+    }
+}
+
+unsafe fn initialize_hdma(
     slot: usize,
     bank: u8,
     read_word: impl Fn(usize) -> u16,

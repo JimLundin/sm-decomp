@@ -415,36 +415,47 @@ pub unsafe fn HandleEarthquakeSoundEffect(game: &mut Game) {
         }
     }
 }
-pub fn SpawnBG3ScrollHdmaObject(game: &mut Game) {
-    static unk_88D869: SpawnHdmaObject_Args =
-        SpawnHdmaObject_Args::new(0x43, 0x11, 0xd8d0 as VoidP);
-    spawn_hdma_last(0x88, &unk_88D869, game);
+pub unsafe fn SpawnBG3ScrollHdmaObject(game: &mut Game) {
+    unsafe {
+        static unk_88D869: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0x43, 0x11, 0xd8d0 as VoidP);
+        spawn_hdma_last(0x88, &unk_88D869, game);
+    }
 }
-pub fn FxTypeFunc_28_CeresRidley(game: &mut Game) {
-    static unk_88D8E2: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x40, 0x5, 0xd906 as VoidP);
-    static unk_88D8EA: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0, 0x2c, 0xd91d as VoidP);
-    spawn_hdma(0x88, &unk_88D8E2, game);
-    spawn_hdma(0x88, &unk_88D8EA, game);
+pub unsafe fn FxTypeFunc_28_CeresRidley(game: &mut Game) {
+    unsafe {
+        static unk_88D8E2: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0x40, 0x5, 0xd906 as VoidP);
+        static unk_88D8EA: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0, 0x2c, 0xd91d as VoidP);
+        spawn_hdma(0x88, &unk_88D8E2, game);
+        spawn_hdma(0x88, &unk_88D8EA, game);
+    }
 }
 pub unsafe fn sub_88D916(game: &mut Game) {
     unsafe {
         word!(game.hdma_data_table_in_ceres = 9);
     }
 }
-pub fn FxTypeFunc_CeresElevator(game: &mut Game) {
-    static unk_88D92C: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x40, 0x5, 0xd939 as VoidP);
-    spawn_hdma(0x88, &unk_88D92C, game);
+pub unsafe fn FxTypeFunc_CeresElevator(game: &mut Game) {
+    unsafe {
+        static unk_88D92C: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0x40, 0x5, 0xd939 as VoidP);
+        spawn_hdma(0x88, &unk_88D92C, game);
+    }
 }
 crate::instruction_callbacks! { pub unsafe fn (k: u16, hdp: *const u8, game: &mut Game) -> *const u8;
     HdmaobjInstr_SetVideoMode1 [hdp] { word!(game.hdma_data_table_in_ceres = 9); };
 }
-pub fn FxTypeFunc_A_Rain(game: &mut Game) {
-    static unk_88D95C: SpawnHdmaObject_Args =
-        SpawnHdmaObject_Args::new(0x43, 0x11, 0xd96c as VoidP);
-    game.g_ram[0x5b] = 92;
-    spawn_hdma(0x88, &unk_88D95C, game);
-    SpawnBG3ScrollHdmaObject(game);
-    animated_tiles::spawn(addr_kAnimtiles_Rain as u16, game);
+pub unsafe fn FxTypeFunc_A_Rain(game: &mut Game) {
+    unsafe {
+        static unk_88D95C: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0x43, 0x11, 0xd96c as VoidP);
+        game.g_ram[0x5b] = 92;
+        spawn_hdma(0x88, &unk_88D95C, game);
+        SpawnBG3ScrollHdmaObject(game);
+        animated_tiles::spawn(addr_kAnimtiles_Rain as u16, game);
+    }
 }
 pub unsafe fn HdmaobjInstr_1938_RandomNumber(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
     unsafe {
@@ -458,19 +469,23 @@ pub unsafe fn HdmaobjInstr_1938_RandomNumber(k: u16, hdp: *const u8, game: &mut 
         hdp
     }
 }
-pub fn FxTypeFunc_8_Spores(game: &mut Game) {
-    game.g_ram[0x5b] = 92;
-    static unk_88DA1D: SpawnHdmaObject_Args =
-        SpawnHdmaObject_Args::new(0x42, 0x11, 0xda2d as VoidP);
-    spawn_hdma(0x88, &unk_88DA1D, game);
-    SpawnBG3ScrollHdmaObject(game);
-    animated_tiles::spawn(addr_kAnimtiles_Spores as u16, game);
+pub unsafe fn FxTypeFunc_8_Spores(game: &mut Game) {
+    unsafe {
+        game.g_ram[0x5b] = 92;
+        static unk_88DA1D: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0x42, 0x11, 0xda2d as VoidP);
+        spawn_hdma(0x88, &unk_88DA1D, game);
+        SpawnBG3ScrollHdmaObject(game);
+        animated_tiles::spawn(addr_kAnimtiles_Spores as u16, game);
+    }
 }
-pub fn FxTypeFunc_C(game: &mut Game) {
-    game.g_ram[0x5b] = 92;
-    static unk_88DB14: SpawnHdmaObject_Args =
-        SpawnHdmaObject_Args::new(0x43, 0x11, 0xdb19 as VoidP);
-    spawn_hdma(0x88, &unk_88DB14, game);
+pub unsafe fn FxTypeFunc_C(game: &mut Game) {
+    unsafe {
+        game.g_ram[0x5b] = 92;
+        static unk_88DB14: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0x43, 0x11, 0xdb19 as VoidP);
+        spawn_hdma(0x88, &unk_88DB14, game);
+    }
 }
 pub unsafe fn FxTypeFunc_26_TourianEntranceStatue(game: &mut Game) {
     unsafe {
@@ -585,30 +600,36 @@ pub unsafe fn HdmaobjInstr_GotoIfEventHappened(
         }
     }
 }
-pub fn SpawnBombTorizoHaze(game: &mut Game) {
-    static unk_88DD36: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x2, 0x32, 0xdd4a as VoidP);
-    static unk_88DD3E: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0, 0x32, 0xdd62 as VoidP);
-    spawn_hdma(0x88, &unk_88DD36, game);
-    spawn_hdma(0x88, &unk_88DD3E, game);
+pub unsafe fn SpawnBombTorizoHaze(game: &mut Game) {
+    unsafe {
+        static unk_88DD36: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0x2, 0x32, 0xdd4a as VoidP);
+        static unk_88DD3E: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0, 0x32, 0xdd62 as VoidP);
+        spawn_hdma(0x88, &unk_88DD36, game);
+        spawn_hdma(0x88, &unk_88DD3E, game);
+    }
 }
 pub unsafe fn HdmaobjPreInstr_BombTorizoHazeColorMathBgColor(k: u16, game: &mut Game) {
     unsafe {
         word!(game.fx_layer_blending_config_c = 44);
     }
 }
-pub fn FxTypeFunc_2C_Haze(game: &mut Game) {
-    static unk_88DDD4: SpawnHdmaObject_Args =
-        SpawnHdmaObject_Args::new(0x40, 0x32, 0xded3 as VoidP);
-    static unk_88DDDD: SpawnHdmaObject_Args =
-        SpawnHdmaObject_Args::new(0x40, 0x32, 0xdeeb as VoidP);
-    if CheckBossBitForCurArea(1, game) & 1 != 0 {
-        spawn_hdma(0x88, &unk_88DDDD, game);
-    } else {
-        spawn_hdma(0x88, &unk_88DDD4, game);
-    };
+pub unsafe fn FxTypeFunc_2C_Haze(game: &mut Game) {
+    unsafe {
+        static unk_88DDD4: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0x40, 0x32, 0xded3 as VoidP);
+        static unk_88DDDD: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0x40, 0x32, 0xdeeb as VoidP);
+        if CheckBossBitForCurArea(1, game) & 1 != 0 {
+            spawn_hdma(0x88, &unk_88DDDD, game);
+        } else {
+            spawn_hdma(0x88, &unk_88DDD4, game);
+        };
+    }
 }
 static unk_88DF38: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0, 0x2c, 0xdf4f as VoidP);
-crate::forward_calls! { pub fn (game: &mut Game);
+crate::forward_calls! { pub unsafe fn (game: &mut Game);
     sub_88DF34 => spawn_hdma(0x88, &unk_88DF38, game);
 }
 pub unsafe fn HdmaobjPreInstr_E449(k: u16, game: &mut Game) {
@@ -638,7 +659,7 @@ pub unsafe fn sub_88E487(v0: u16, r22: u16, game: &mut Game) {
 }
 static unk_88E722: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0, 0x2c, 0xe727 as VoidP);
 static unk_88E74C: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x41, 0x26, 0xe751 as VoidP);
-crate::forward_calls! { pub fn (game: &mut Game) -> u16;
+crate::forward_calls! { pub unsafe fn (game: &mut Game) -> u16;
     MotherBrainRisingHdmaObject =>
         spawn_hdma(0x88, &unk_88E722, game);
     SpawnMotherBrainRainbowBeamHdma =>
@@ -679,20 +700,29 @@ pub unsafe fn sub_88E7ED(game: &mut Game) {
         *ram_ptr!(game; 0x74, 2) = ((v0 >> 2) as i32 >> 8 & 0x1f | 0x80) as u8;
     }
 }
-pub fn SpawnMorphBallEyeBeamHdma(game: &mut Game) {
-    static unk_88E8E4: SpawnHdmaObject_Args =
-        SpawnHdmaObject_Args::new(0x41, 0x26, 0xe8ec as VoidP);
-    spawn_hdma(0x88, &unk_88E8E4, game);
+pub unsafe fn SpawnMorphBallEyeBeamHdma(game: &mut Game) {
+    unsafe {
+        static unk_88E8E4: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0x41, 0x26, 0xe8ec as VoidP);
+        spawn_hdma(0x88, &unk_88E8E4, game);
+    }
 }
-pub fn SpawnTitleScreenGradientObjs(game: &mut Game) {
-    static unk_88EB6B: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0, 0x31, 0xeb85 as VoidP);
-    static unk_88EB63: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0, 0x32, 0xeb73 as VoidP);
-    spawn_hdma(0x88, &unk_88EB63, game);
-    spawn_hdma(0x88, &unk_88EB6B, game);
+pub unsafe fn SpawnTitleScreenGradientObjs(game: &mut Game) {
+    unsafe {
+        static unk_88EB6B: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0, 0x31, 0xeb85 as VoidP);
+        static unk_88EB63: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0, 0x32, 0xeb73 as VoidP);
+        spawn_hdma(0x88, &unk_88EB63, game);
+        spawn_hdma(0x88, &unk_88EB6B, game);
+    }
 }
-pub fn SpawnIntroCutsceneCrossfadeHdma(game: &mut Game) {
-    static unk_88EBFB: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0, 0x31, 0xec03 as VoidP);
-    spawn_hdma(0x88, &unk_88EBFB, game);
+pub unsafe fn SpawnIntroCutsceneCrossfadeHdma(game: &mut Game) {
+    unsafe {
+        static unk_88EBFB: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0, 0x31, 0xec03 as VoidP);
+        spawn_hdma(0x88, &unk_88EBFB, game);
+    }
 }
 pub unsafe fn CinematicFunction_Intro_Func133(game: &mut Game) {
     unsafe {
