@@ -151,13 +151,18 @@ encrypted seeds in CI, cloud agents with auto-land, a Linux verifier spike. Orde
 - **Runner budget:** the free plan allows ~20 concurrent jobs; one full run uses 14. If
   branch runs queue over 15 min after C3, the reviewer asks the user about a paid plan
   or larger runners before adding agents.
-- **Runner budget hit (19:52):** 9 Segments runs in flight, main's corpus (33 shards) queued
-  15 min before its build started. User asked (paid plan / larger runners). Until then, C
-  agent's next commit (workflow, hand-landed): (1) main's corpus matrix `max-parallel: 8`
-  so branch runs get runners; (2) the plan job runs the union of `Rows:` lines over
-  `origin/main..HEAD`, not the head commit only. Agents: push only the tip of a stack
-  (`ci/windows-map-window` already contains `file-menu`; both ran), one live branch per
-  agent; no new agents until branch runs start within 10 min.
+- **Runner budget (user decision 20:05: no paid plan, no larger runners; free tier only).**
+  Free public-repo runners cost nothing but cap at ~20 concurrent jobs. At 19:52 every
+  land dispatched the full corpus (33 shards) on main, so main alone held the pool and
+  branch runs queued; a TASVideos 503 also failed `ci/windows-file-menu` before any frame.
+  C agent's next commit (workflow, hand-landed), in order: (1) hand-land
+  `ci/movie-download-retry` (rows green, land refused only as a workflow edit); (2) the
+  land job stops dispatching the full corpus; main runs it on a schedule every 3h, on
+  bank-file deletion and at waypoints, matrix `max-parallel: 6`; (3) the plan job runs the
+  union of `Rows:` over `origin/main..HEAD`; (4) cache downloaded movies (`actions/cache`
+  keyed by hash). Agents: push only the tip of a stack, one live branch each; a bank
+  retirement's full run waits until no other full run is queued. No new agents until
+  branch runs start within 10 min.
 
 **Cloud agents (user approved 18:05).** Linux sessions without the ROM, hosted mode
 only, one lane item each, own `ci/<lane>-<topic>` branches. Start with two: **C3+L1**
@@ -295,7 +300,7 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
   sm_88 retirement, sm_81 -823, sm_a0, Rio, M1a -95 unsafe) waiting on runners: main's
   build queued 15 min, 33 shards queued. Score unchanged `40/44 · 48466 · 115145 · 4307 ·
   39347` (last 40 · 48466 · 115145 · 4304 · 39336); warnings 301; hooks 607/93. 10-26 12:00:
-  legacy on pace if the queue lands; production, unsafe, checks behind. Changed: CI budget.
+  legacy on pace if the queue lands; production, unsafe, checks behind. Changed: CI budget (20:05: user rules out paid runners; free-tier plan).
 - **2026-10-25 18:52 CET (3d80523), no stall, half hour:** 7 agent commits since 9fff566, all
   18:17-18:25: A 1 (67fb989 checkpoint tooling; no flip, **no C0b, 2nd miss**), M 2 (bc07cde
   Gripper M2; 0924e3b disk tooling), B1 `sm_81` 2, B2 `sm_88` 1, B3 `sm_a4` 1 (+36 legacy,
