@@ -45,164 +45,98 @@ slices turned into focused tests, kept out of production code:
   under ~100 lines, with the reason in its first line.
 - Production code gets no new probes, observers or `cfg(sm_verify_dll)` blocks
   (589 production lines in 91 files mention verify/probe/observer today); remove
-  them as banks retire. After A0.5, lane A tries instrumentation coverage
+  them as banks retire. After A1.3, lane A tries instrumentation coverage
   (`cargo llvm-cov` on a segment run) to prove which code a segment executed,
   replacing hand-placed probes.
 - Verification Rust (38,993 now, 33% of production) must fall from here; target
   under ~15,000 once the movies drive coverage.
 
 
-**Lane A — coverage (one agent).** User direction 2026-10-24: drive coverage
-with the published any% and 100% TASes (`movies/manifest.toml`), not hand-authored
-holds. The 33 current routes in `tools/movie_inputs.py` are hand-written button
-holds spliced onto an any% prefix; at ~1 check/hour they cannot reach 44/44.
-Working hypothesis: the TAS desyncs because it was recorded on bsnes v085, where
-some frames lag (the game misses an NMI and ignores input), while this engine
-runs exactly one game frame per input word. Steps, one commit each:
+**Reset (2026-10-25 12:30, user grant to change goals and process).** Diagnosis
+after 18 hours: the code moves, but slowly. (1) Each commit carried a heavy proof
+ritual (mutation kills, independent controls, optimized + frontend builds, clean
+reruns), so a 50-line bank family took 30-60 minutes on a machine limited to three
+compilers; PLAN's **Fast loop** now replaces it. (2) Lane A spent ~10 hours aligning
+one 129,712-frame movie end to end and is stuck on timing drift at the first Ceres
+audio upload; hand routes give ~1 check/hour and the 18 pending rows are late-game.
+(3) Lane B ran one or two agents on two banks while 30,000 of the 51,800 legacy lines
+are enemy AI gated behind coverage. The changes below remove those three limits.
 
-- **A0.1 Locate — done (7867e91).** Any% on main: 129,712 frames, 0 oracle
-  failures, but Samus never leaves Ceres (six rooms, no credits). Replay the full any% import on main with room logging; record
-  under work item 1 the first frame and room where Samus leaves the TAS's route.
-- **A0.2 Measure lag — done (cec060e).** Original lsnes capture: 129,712 inputs,
-  127 gameplay rooms, 24,619 emulator-lag frames, hashes in the manifest. Finding:
-  flat NMI counts do not identify lag, so A0.3 aligns on measured wait-entry input.
-- **A0.3 Align — in progress (1b726be: 8,250 native steps, 0 failures; options
-  return-tile quirk fixed with a 5-frame regression row).** Blocker named by the
-  agent: the next door has 19 unmapped NMI advances (an extra native NMI hidden by
-  oracle patches). **Next commit:** fix door scheduling so the aligned prefix passes
-  the first Ceres door, with its regression row; extend frame count each commit.
-  **07:52:** PLAN says original timing now matches 23 doors but the work is held
-  locally while the 24 hand recipes requalify. Do not hold it: land the door-timing
-  code and its regression row this hour; re-derive recipe input offsets mechanically
-  in the same commit, and for any recipe that truly fails name it and its first
-  differing frame in the commit body (those routes are replaced at A0.5 anyway).
-  Also check why the capture shows no credits: if the movie's input ends before the
-  credits, A0.4 continues with neutral input after the last frame; record which.
-  **08:52:** door timing landed (9b8f29c, 61789c0: 9,266 steps). New blocker: at
-  native index 9,266 the original spends 41 acknowledged NMIs (with input reads) in
-  an audio upload the native engine does instantly. The agent took the documented
-  fallback (hand routes, c7cca91 +1 check); accepted, but A0 is not dropped.
-  **Next A0 commit (time-box one hour, then back to routes):** map the upload in the
-  importer, not the engine: collapse the recorded words read while gameplay waits in
-  that upload to one native step (keep the last read), as A0.3 already does for
-  measured lag; replay and report the new aligned step count, or the first differing
-  frame and which word differs (frame counter, NMI counter, music timer). That is
-  measured data, not a guessed offset. Hand routes: one pending pickup/boss per
-  commit, each with its segment row; ~1 check/hour is the 18:00 pace.
-  **09:52:** experiment done and reported (PLAN item 1): collapsing the 41 upload
-  reads leaves $05B6 (frame counter) 40 behind at step 9,266 and first gameplay
-  divergence at 9,291 (+25 steps). That is the expected result: the original's NMI
-  really ran 41 times during the upload. **Next A0 commit (one hour, then routes):**
-  give the native upload its elapsed time, not a counter offset: run the NMI-side
-  per-frame work (frame counter, lag counter, whatever the oracle's NMI handler
-  touches while the main loop waits) once per NMI the original took, deriving the NMI
-  count from the upload's size (fit on this upload and at least one other in the
-  capture, numbers in the commit body). Then report the new first divergence and the
-  word that differs. If 9,291 does not read $05B6 or a timer it drives, say what it
-  reads instead; that names the next cause.
-  **10:52:** elapsed-NMI experiment moved first visible mismatch from 9,291 to 10,555
-  (Ridley setup four updates late) but stayed local; RNG differs earlier. Lane A landed
-  no commit this hour. **Next A0 commit (one hour):** land the elapsed-NMI model as
-  code if all 26 checks still pass (regression row at the upload), then report the
-  first step where the RNG word differs and the routine that advanced it. Then
-  Crocomire; lane A owes one landed commit per hour.
-  **11:52 — stall, A0 parked.** Second hour without alignment/coverage code; the hour
-  went on verifier disk/cache tooling (80d0782) and the model stays local (one upload
-  sample; equal-size uploads take 27/28 NMIs, so it cannot be fit). Decision: A0 is
-  parked at 10,555 with that finding in PLAN item 1; do not reopen it before 18:00.
-  **Next commit (this hour):** the frozen Crocomire route's $1994 scratch write at
-  167,281: fix it with its regression row and qualify Crocomire (27/44). Then one
-  pending pickup/boss per hour to 18:00, each a landed `A:` commit with its row.
-- **A0.4 Replay.** Aligned any% from boot to credits, 0 failures; then 100%
-  (222,788 frames) and low%.
-- **A0.5 Map.** Point pending `segments.toml` rows at frame windows of the
-  aligned any%/100% runs with their existing expectations; many rows may flip in
-  one commit, each named.
+**Lane A — coverage (one agent): room-seeded TAS segments (A1).** Stop aligning the
+whole movie. Restart alignment at every room instead: the TAS emulator gives the true
+state at each room entry, so drift never accumulates past one room. Both the oracle
+and the native branch start each frame from the same state, so an imperfect seed
+can only lose route fidelity, never fake a pass.
+- **A1.1 Dump (≤2h).** Extend `tools/lsnes_lag_log.lua`: at the first gameplay
+  frame after each room change ($079B changes, $0998 back to gameplay) write WRAM,
+  SRAM, VRAM, CGRAM, OAM and APU RAM (lsnes memory-region reads) plus the movie index to
+  `target/seeds/` (local, ROM-derived, never committed; hashes only). Run on any% and
+  100%. Commit the Lua and the room/index list it prints.
+- **A1.2 Seed (≤3h).** Add `--seed PATH` to the verifier (verification side, not
+  production): boot as now, load the seed's memories, rebuild owned state from RAM
+  through the existing codecs/checkpoint loader, then run that room's inputs from the
+  existing lag-aware importer. **Go:** one seed runs ≥600 frames with 0 oracle
+  failures and reaches the same next room as the capture. **No-go:** name the state
+  that could not be derived from RAM and fix that converter: RAM-to-Session loading
+  is on the long-term path (save states, Map Rando), not throwaway.
+- **A1.3 Flip rows.** `segments.toml` gains `seed = "<movie>:<room index>"` in place
+  of an authored prefix. Point the 18 pending rows (bosses, late items, Wrecked Ship,
+  Maridia, Tourian, credits) at 100%/any% seeds, several per commit, each named. Then
+  move existing authored rows onto seeds and delete their recipes from
+  `tools/movie_inputs.py` (credit: support code falls).
+- Until A1.2 says go, at most one hand route per hour, starting with the frozen
+  Crocomire route ($1994 scratch write at 167,281, regression row). A0 stays parked at
+  10,555 with its finding in PLAN item 1; A1 does not need it.
 
-If A0.2 shows no lag, or the aligned movie still desyncs, record the first
-divergence and its cause (boot alignment, input latch, RNG, APU handshake) under
-work item 1 and fix that cause; hand routes are the fallback only after a
-written finding. Time-box A0 to 8 hours of work before reporting.
+**Lane B — bank retirement (up to three agents, one bank each).** Unchanged method:
+for each function, delete it if unreachable or duplicated, otherwise move it onto safe
+Session state with native types (enums/fn values, named views, range tests), no new
+Host/effects/adapter layer; a bank is done when its file is deleted, with the full
+corpus and scoped mutants run once before deletion. Report the replacement ratio per
+commit; aim ≤70%. Each commit also deletes what the move makes dead (verify/probe
+hooks: 607 lines/94 files, duplicated owned paths). Queues:
+- **B1:** `sm_90` (finish) → `sm_81` → `sm_80` → `sm_82`.
+- **B2:** `sm_88` → `sm_8b`.
+- **B3 (new):** small banks `sm_89` (182) → `sm_a0` (458) → `sm_8f` (421) → `sm_b2`
+  (880), then enemy families already met in a passing row (name the row and the enemy;
+  e.g. Ceres/Crateria/Brinstar/Norfair common enemies in `sm_a2`, `sm_a3`, `sm_a8`,
+  `sm_b3`). Boss banks wait for their A1.3 row: `sm_a4` Crocomire, `sm_a5` Draygon,
+  `sm_a6` Ridley, `sm_a7` Kraid/Phantoon, `sm_aa` Torizos, `sm_a9` Mother Brain,
+  `sm_9b` Grapple.
+If only two lane-B agents run, B3 waits; never two agents on one bank.
 
-**Lane B — bank retirement (other agents, one bank each).** Order: `sm_94`
-(761) → `sm_91` (1,237) → `sm_90` (1,955) → `sm_88` (1,956) → `sm_81` (2,572)
-→ `sm_80` (2,494) → `sm_82` (4,670) → `sm_8b` (4,938). Enemy banks start only
-when lane A covers their encounters: `sm_a7` after Phantoon, `sm_aa` after
-Golden Torizo, `sm_a6` after Ridley, `sm_a9` after Mother Brain; `sm_9b` after
-Grapple. For each function in the bank: delete it if unreachable or duplicated
-by an owned module, otherwise move it into the owning module on safe Session
-state (no raw `g_ram`, no new Host/effects/adapter type). Name the checkpoint
-segments that exercise it. A bank is done when its file is deleted. Total
-production must fall with each bank; unsafe lines must fall with every commit.
-Drafts not adopted within 2 hours are recorded in one line and dropped.
-**`sm_94` deleted (ca42bc5, 06:51 CET); replacement ratio ~75% over the three
-commits (owned +~580 / bank −772), slightly above the 70% guide.** Next bank
-`sm_91` (1,237 lines, 104 unsafe), one family per commit: (1) `Samus_InputHandler`,
-`Samus_Input_*`, `Samus_LookupTransitionTable`, pose helpers into the owned
-player-input/pose module; (2) demo input (`*DemoInput*`, `DemoSetFunc_*`,
-`LoadDemoData`); (3) suit pickups/palettes, `Samus_DealDamage`, `Samus_Initialize`,
-X-ray; (4) `SomeMotherBrainScripts*`, `SamusFunc_E633*`, then delete the file. Mother
-Brain paths are not movie-covered yet: move them unchanged and say so. Aim each
-commit at ≤70% replacement; the production waypoint depends on it.
-**07:52:** families 1-2 landed (4f8b05d, 563a45e); `sm_91` 844 lines left, ratio so
-far ~80% (60% then 105%). The demo interpreter re-matches ROM opcode addresses
-(`0x8427`…) and added an `Effects` method; express remaining families as data or
-plain owned logic, no new trait methods. Even at 70%, `sm_91`+`sm_90` cut production
-only ~840, so the 18:00 production line (≤114,000) also needs deleting unreachable
-functions and production verify/probe hooks as each family moves; say how many.
-**08:52:** `sm_91` 238 lines left (delete next commit); `sm_90` started (745daad,
-1,514 left, 82% ratio). Hour ratio ~80%; production −267/h is just on the 18:00
-pace. New owned modules still key handlers by ROM address (`0xe713`, `0xe8cd`,
-`0xec1d` via `from_raw`); make them enums/fn values as each family moves, which is
-where the remaining 10 points of ratio are.
-**`sm_91` deleted (52ba836, 09:36 CET); bank ratio 79% (−1,949 legacy / −408
-production over its shared families), again above 70%.** `sm_90` 1,306 lines left
-(84838b5 at 91%). Production fell only 63 this hour against ~260/h needed for 18:00.
-Each remaining `sm_90` commit: ≤70% replacement, plus deletion of dead or duplicated
-production code or verify/probe hooks (615 lines/93 files, flat all morning; count
-them in the body). Owned code still copies 65816 idioms: `x.wrapping_sub(0xa4) &
-0x8000 == 0` is a range test, write it as one; `foreign(|g| unsafe { rom_ptr!(..) })`
-and `write_slice_native(0xa8e, ..)` wrap the bank instead of owning its state.
-Score lines in `B:` commits still carry mojibake (`Â·`, 52ba836): write a plain `·`.
-**10:52:** `sm_90` 1,039 left (on pace to delete by 18:00); `sm_88` started in
-parallel (e091835, 1,543 left), in order, accepted. Legacy −376/h is ahead, but
-**production −76/h is behind for a second hour** (needs ~285/h): hour ratio ~80%.
-Each `B:` commit now cuts production by ≥100 lines (dead code, duplicated owned
-paths, verify/probe hooks: 611 lines/94 files) or says why not. `xray::widen` keeps
-the X-ray width in `DemoInput` field names (`demo.held` = width): give aliased RAM a
-named view; `held.wrapping_sub(11) & 0x8000 == 0` is still a range test. 6c4a6f7's
-Score line has `?` separators.
-**11:52:** one `B:` commit this hour (e2fd645, sm_88 −89 legacy, −33 production,
-unsafe −17, explained); **production behind for a third hour**: 18:00 needs −1,959 in
-six hours (~330/h) and `sm_90` deleted (1,039 left, no commit this hour). Next: `sm_90`
-Crystal Flash, then finish the bank; `sm_88` pauses until `sm_90` is gone. Each
-remaining hour also needs one `B:` commit that deletes production verify/probe/observer
-code (611 lines/94 files, flat all day), e.g. the `#[path = "../verification/…"]`
-observer modules mounted in production files such as `visual_runtime.rs`, with the
-segments that still exercise them named. e2fd645 dropped `after_hits`/`after_expectations`
-from `item-morph-ball` while extending it: never weaken a row's expectations in a
-code commit; restore them or say why the post-hit window is wrong.
+History: A0.1-A0.2 done (7867e91, cec060e); A0.3 aligned 9,266 steps, then an
+elapsed-NMI experiment reached 10,555 (parked 11:52). `sm_94` deleted (ca42bc5, ratio
+~75%), `sm_91` deleted (52ba836, ~79%).
 
-**Waypoints** (Europe/Stockholm; review clock; a miss gets a diagnosis, not a new plan):
+**Waypoints** (Europe/Stockholm; reset 2026-10-25 12:30; a miss gets a diagnosis and one corrective step):
 
-| By | Checks | Banks deleted | Legacy | Production | Result |
+| By | Checks | Banks deleted (cumulative) | Legacy | Production | Result |
 | --- | ---: | --- | ---: | ---: | --- |
 | 10-25 06:00 | A0.4 any% to credits | sm_94 | ≤54,600 | ≤116,500 | **MISS** |
-| 10-25 18:00 | ≥34/44 | + sm_91, sm_90 | ≤51,500 | ≤114,000 | |
-| 10-26 18:00 | 44/44 | + sm_88, sm_81, sm_80 | ≤44,500 | ≤110,000 | |
-| 10-27 18:00 | 44/44 | + sm_82, sm_8b | ≤35,000 | ≤104,000 | |
+| 10-25 18:00 | ≥28/44; A1.2 go/no-go recorded | + sm_91, sm_90, sm_89 | ≤50,300 | ≤115,300 | |
+| 10-26 18:00 | ≥38/44 | + sm_88, sm_a0, sm_8f, sm_81 | ≤44,000 | ≤112,500 | |
+| 10-27 18:00 | 44/44 | + sm_80, sm_b2, first boss bank | ≤36,000 | ≤109,000 | |
+| 10-28 18:00 | 44/44 + 100% seeds | + sm_82, sm_8b | ≤28,000 | ≤105,000 | |
 
-**06:00 miss (recorded 05:52 CET):** reached A0.2 smoke only (checks 24/44),
-sm_94 not deleted (legacy 55,315, production 116,670). Cause: no agent has
-committed since 7867e91 (23:48 CET), six hours idle; the plan was not the
-blocker. Corrective step: on restart, land A0.2's Ceres-only capture and sm_94
-step 1 first; the 18:00 waypoint stands unchanged and now carries sm_94 too.
-**Corrective step done:** agents restarted ~05:50; sm_94 deleted 06:51 CET.
+The previous 18:00 and 10-26 production lines (≤114,000, ≤110,000) assumed a 70%
+ratio and missed three hours running at ~80%; the reset lines assume 75% plus hook
+deletion. End-state budgets in the size goal stand (≤100,000 with all banks retired,
+~75,000 aspiration).
+
+**06:00 miss (recorded 05:52 CET):** no agent committed 23:48-05:50; the plan was not
+the blocker. Corrective step done: agents restarted ~05:50; sm_94 deleted 06:51 CET.
 
 Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
+- **2026-10-25 12:30 CET (ad9bef2), reset at the user's request:** since 11:52, B1
+  `sm_90` ×2 (145cf8c Crystal Flash, 3a4dac1 Draygon grab; ratios 64%, 76%), A 1
+  (ad9bef2 probe removal, −13 production). Score `checks 26/44 · legacy 51792 ·
+  production 115931 · unsafe 4650 · verification 38936`. Changed: PLAN's Fast loop
+  replaces the validation ritual; lane A moves to room-seeded TAS segments (A1);
+  lane B gains a third queue (small banks, covered enemies); waypoints reset.
 - **2026-10-25 11:52 CET (80d0782):** 2 agent commits (half last hour): A 1 (80d0782,
   verifier cache tooling only), B 1 (e2fd645 `B:sm_88`), 0 unlabelled, 0 docs-only, both
   with `Score:`. Score `checks 26/44 · legacy 51925 · production 115959 · unsafe 4662 ·
@@ -259,8 +193,6 @@ Map brief is done (c1fe795); no further map work unless the user asks.
 - **2026-10-25 00:20 (user direction):** size goal and verification policy added
   to the milestone plan: ~75k aspiration, ≤70% replacement ratio per bank,
   verification = movie segments as data, no new fixtures or production hooks.
-- **2026-10-24 23:58 (user direction):** Lane A switched from hand-authored routes
-  to aligning the published any%/100% TASes (A0.1–A0.5 above); waypoints moved.
 
 ## Lane watch (2026-10-24 23:52)
 

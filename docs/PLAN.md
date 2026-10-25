@@ -16,14 +16,18 @@ locks only during actual writes; no locks during builds, checks, reasoning or wa
 Recheck HEAD, index and other work before every Git write; reconcile changes and
 preserve others' work. Do not delete another process's lock or force-push main.
 
-## Review directives (user direction, 2026-10-24)
+## Review directives (user direction, 2026-10-24; reset 2026-10-25 12:30)
 
-Read [REVIEW.md](REVIEW.md) next. Its milestone plan governs work order 1-2:
-lane A (one agent) aligns TASes and adds coverage; lane B (one agent per bank) retires banks.
+Read [REVIEW.md](REVIEW.md) next; its **Milestone plan** governs work order 1-2 and
+the user gave the reviewer authority to change goals and process (2026-10-25).
+Lanes: **A** (one agent) coverage, now via room-seeded TAS segments (A1); **B1/B2/B3**
+(one agent each, at most three compilers) retire banks in the order REVIEW names.
 Subjects start `A:` or `B:sm_XX`; bodies end with the review's `Score:` line.
-Docs-only commits need a code commit beside them. Verification is movie data,
-not new Rust fixtures or production hooks. Keep this plan near 200 lines and results
-in concise commit messages. Direct user instructions win; HISTORY holds no current rules.
+Speed rule: the **Fast loop** below replaces the old validation strategy. Land
+verified work at once; work held unlanded over one hour is a stall. No docs-only
+commits without a code commit beside them. Verification is `segments.toml` rows,
+not new Rust fixtures or production hooks. Keep this plan near 200 lines.
+Direct user instructions win; HISTORY holds no current rules.
 
 **Codebase map:** brief done (c1fe795). Pages generates the
 [view](https://jimlundin.github.io/sm-decomp/) from HEAD; keep only the five-box
@@ -127,46 +131,23 @@ at 28,314 (814 frames); retaining it would truncate the extended observation.
 - Make small commits with one coherent idea. If stuck on an item for over one
   hour of work, record the findings under it and stop.
 
-## Validation strategy (2026-10-21)
+## Fast loop (reviewer, 2026-10-25; replaces the 2026-10-21 validation strategy)
 
-1. **Select before running.** Name changed routines, branches, callers, shared state
-   and downstream effects. Use the shortest scenario that actually exercises them.
-   Docs/comments/format-only edits need static checks; removal of demonstrably
-   unused private code needs reference/compiler checks; frontend edits need UI
-   checks. The hygiene review explicitly requires a full replay for its combined pass.
-2. **Check final source.** Run root `cargo fmt` then `cargo fmt --check` with default
-   configuration before every Rust commit. Run appropriate normal/backend-free
-   compiler checks and a release build for behavior changes. New library source
-   belongs in `sm/src/verify_source.rs`; keep source and inputs fixed while checking.
-   The DLL launcher's embedded-source check must match the actual compiled bytes.
-3. **Exercise behavior.** Require changed-routine/branch probes with `--require-hit`
-   and downstream probes where available; missing hits fail even with zero frame
-   differences. Use `--frames` or `--after-hits N` to observe meaningful callbacks,
-   transitions, later frames and persistent writes. Keep normal RAM/oracle comparisons,
-   rendering and audio advancement enabled. No new failing frames.
-4. **Reuse only valid prefixes.** Checkpoint state must precede affected setup/calls
-   and shared-state history. Runtime compatibility alone is insufficient. Cache a
-   necessary prefix as setup, separate from changed-code coverage. Reuse builds and
-   baselines only when source bytes and relevant context match. Removing temporary
-   probes requires rebuilding and repeating the measured segment on clean source.
-5. **Close coverage gaps.** Choose another route or a focused component/oracle check
-   of the actual implementation. Constructed cases are not movie execution; identify
-   their limits. Undefined/unaligned predecessor Rust is not a fidelity reference;
-   use qualified ROM-oracle evidence instead. Source identity is not behavior proof.
-   Hold cleanup of an uncovered context; do not extend unrelated green replays
-   or claim full-game fidelity from one room. Earlier routes do not cover credits.
-6. **Justify full movies.** Except for the explicit hygiene requirement, show why
-   changed behavior needs the full route; name probes/frame ranges first. Size,
-   elapsed time, commit count or subsystem completion alone is not justification.
-7. **Mutate meaningful behavior.** Confirm the unchanged baseline passes, then check
-   isolated compiling faults in boundaries, updates, ordering or ownership. Use the
-   permitted Python-hosted DLL path; try scoped `cargo-mutants` before new recipes.
-   Never adopt mutants. Compile failures, timeouts, crashes, unrelated assertions
-   and unexecuted checks are not kills. Investigate survivors or show equivalence.
-   Keep mutation support separate and disclose scope; a few kills are not comprehensive.
-   Add ordinary `#[test]` coverage for pure owned logic; report blocked/unexecuted
-   tests accurately rather than bypassing Windows restrictions.
-   Repair stale `SETTLEMENT_EARLY_CONSUME` / ambiguous `room_export_before_binding_check` anchors before reuse.
+Every routine commit runs exactly this, then commits:
+1. `cargo fmt --check`; `cargo check --no-default-features --lib` (no new warnings);
+   one DLL build (`python tools/verify_dll.py --build-only`).
+2. `verify_dll.py --corpus movies/segments.toml` with `--segment` for every row that
+   exercises the change (named in the body) plus the smoke set `door-loading-lag-nmi`,
+   `tas-ceres-four-doors`, `area-crateria`, `item-morph-ball`. Zero failures.
+   No row reaches the change: lane A adds one; lane B moves the code unchanged and
+   writes "uncovered: <function>" in the body.
+3. Nothing else per commit: no mutation runs, independent controls, frontend metadata,
+   optimized/release rebuilds, clean-source reruns or full replays. Once per bank,
+   before its file is deleted: the full corpus plus scoped `cargo-mutants` (≤30 min).
+   The full corpus also runs at each review waypoint. A failure from a full run gets a
+   regression row with its fix. Never weaken a comparison or a row's expectations.
+4. Body ≤8 lines: what changed, rows run and result, legacy/production delta and
+   ratio, `Score:`. Re-run a flaky step once; a second failure is real.
 
 Commands and checkpoint rules: [movies/README.md](../movies/README.md).
 When touched, inspect `cpu_infra.rs` masks, `PatchBugs`, hardware/audio limits and
@@ -208,11 +189,9 @@ Before deletion, resolve paths and verify artifacts are unneeded. Never delete a
 
 ## Definition of done for any change
 
-Pass applicable final-source checks and execute changed behavior without new failing frames.
-Run `sh tools/progress.sh`; explain increases and full production/verification/support costs.
-Recheck HEAD/index, reconcile and commit to main with commands, probes/frames, results and limits.
-Update this plan only for active-item, direction or blocker changes; results belong in commits.
-Publish PROGRESS with adopted code: shared graph and `sh tools/progress.sh --markdown WARNINGS [PASSED/TOTAL]`.
-Keep drafts/unknowns explicit; path counts include inline hooks. No unsolicited atlas refresh, invented percentages or unadopted savings.
+The Fast loop passes; `sh tools/progress.sh` numbers are in the Score line, with any
+rise explained in one line. Recheck HEAD/index, reconcile, commit to `main`. Update
+this plan only for active-item, direction or blocker changes; results belong in commits.
+Refresh PROGRESS's five-box SVG only when an item or bank completes.
 
 Pre-transpile rules (`.scratch/`, gates, pointers, scopes) are inactive in `archive/pre-transpile-2026-10-17`.

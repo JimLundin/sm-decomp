@@ -7,9 +7,10 @@ is archived in the branch `archive/pre-transpile-2026-10-17`.
 
 Then read `docs/REVIEW.md`. Its directives (summarized at the top
 of `docs/PLAN.md`) take priority over the existing work order. Its
-**Milestone plan** decides what you work on: pick your lane (A coverage or
-B bank retirement), take the next unclaimed row, and end every commit body
-with its `Score:` line.
+**Milestone plan** decides what you work on: pick your lane (A coverage, or
+B1/B2/B3 bank retirement), take the next unclaimed item, and end every commit
+body with its `Score:` line. The reviewer may change goals and process (user
+grant, 2026-10-25); re-read REVIEW.md's Milestone plan at the start of each item.
 
 Before changing subsystem boundaries, state ownership, or backend architecture,
 read `docs/target-architecture/README.md` for the accepted destination and
@@ -19,7 +20,7 @@ Windows migration policy. Current work and checks still follow `docs/PLAN.md`.
 
 1. Take the earliest unfinished item in `docs/PLAN.md`.
 2. Make one focused change in `sm/`.
-3. Select and complete checks using `docs/PLAN.md`'s **Validation strategy**.
+3. Run `docs/PLAN.md`'s **Fast loop** (named segment rows + smoke set).
    No new failing frames.
 4. `sh tools/progress.sh`; numbers must not go up without a reason.
 5. Commit to `main` with a message that says what changed and the verify
