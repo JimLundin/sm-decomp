@@ -92,6 +92,11 @@ Checkpoint cache finding: whole Session/codec hashes invalidate lossless scalar
 migrations despite an unchanged RAM payload. A future format transition needs
 Session round-trip checks and defined actor-identity persistence; keep guards now.
 
+The local corpus now shares completed checkpoints across recipe namespaces only
+when SHA-bound canonical input prefixes match. Source, ROM, full-input and loader
+guards remain intact. A donor-only smoke trial passed all four rows with zero
+setup frames; Morph retains its full 1,200-frame window.
+
 Morph row keeps every required hit/expectation. Its fixed 1,200-frame window ends
 at 28,700, 506 frames after the hit at 28,193. The old 120-frame early stop ended
 at 28,314 (814 frames); retaining it would truncate the extended observation.

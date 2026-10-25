@@ -451,16 +451,47 @@ def run_corpus(root, args):
             header = file.read(56)
         return int.from_bytes(header[32:40], "little") if len(header) == 56 and header[:8] == b"SMVERIFY" else None
 
+    prefix_inputs = {}
+    donors = {item["input_sha256"]: item for item in segments.values()
+              if "pending" not in item and "seed" not in item}
+
+    def shares_prefix(segment, donor, frame):
+        # Compare recipe-bound canonical words; the DLL still validates the checkpoint.
+        for item in (segment, donor):
+            digest = item["input_sha256"]
+            if digest not in prefix_inputs:
+                try:
+                    data = item["inputs"].read_bytes()
+                except OSError:
+                    return False
+                if hashlib.sha256(data).hexdigest() != digest:
+                    return False
+                words = bytearray()
+                for line in data.split(b"\n"):
+                    word = line.strip()
+                    if not word or word.startswith(b"#"):
+                        continue
+                    if len(word) != 4 or any(c not in b"0123456789abcdefABCDEF" for c in word):
+                        return False
+                    words.extend(word.lower())
+                prefix_inputs[digest] = bytes(words)
+        left, right = (prefix_inputs[item["input_sha256"]] for item in (segment, donor))
+        end = frame * 4
+        return end <= min(len(left), len(right)) and left[:end] == right[:end]
+
     def prefix(segment, force_boot=False):
         start = segment["start_frame"]
         directory = cache_directory(segment)
         directory.mkdir(parents=True, exist_ok=True)
         candidates = []
         if not force_boot:
-            for path in directory.glob("*.smvchk"):
-                frame = checkpoint_frame(path)
-                if frame is not None and 0 < frame <= start:
-                    candidates.append((frame, path))
+            for donor in donors.values():
+                for path in cache_directory(donor).glob("*.smvchk"):
+                    frame = checkpoint_frame(path)
+                    if (frame is not None and 0 < frame <= start
+                            and (donor["input_sha256"] == segment["input_sha256"]
+                                 or shares_prefix(segment, donor, frame))):
+                        candidates.append((frame, path))
             candidates.sort(key=lambda pair: (pair[0], pair[1].stat().st_mtime_ns), reverse=True)
         previous, checkpoint = candidates[0] if candidates else (0, None)
         if previous == start:
@@ -483,9 +514,9 @@ def run_corpus(root, args):
             previous, checkpoint = 0, None
         return None
 
-    # Same-input segments run in start order so setup can advance existing checkpoints.
+    # Earlier windows can supply checked prefixes to later branches of the same inputs.
     passed = set()
-    for segment in sorted(runnable, key=lambda item: (str(item["inputs"]), item["start_frame"])):
+    for segment in sorted(runnable, key=lambda item: (item["start_frame"], str(item["inputs"]))):
         name = segment["id"]
         try:
             if source_hash(root) != source:

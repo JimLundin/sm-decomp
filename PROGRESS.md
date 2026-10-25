@@ -14,6 +14,6 @@
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-**Crocomire walking/dust:** three duplicate handlers removed; eight unsafe lines removed. Local rows: 8/8 pass.
+**Checkpoint reuse:** four local rows pass with zero setup frames; source, ROM and input guards retained.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)
