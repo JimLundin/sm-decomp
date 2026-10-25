@@ -14,7 +14,8 @@ use crate::game::visual_runtime::{
     spawn_cinematic_sprite_at, update_cinematic_transform,
 };
 use crate::game::visual_runtime::{
-    draw_cinematic_rectangle, draw_cinematic_sprites, draw_intro_sprites,
+    advance_shooting_stars, draw_cinematic_rectangle, draw_cinematic_sprites, draw_intro_sprites,
+    initialize_shooting_stars,
 };
 use crate::game::visual_state::CinematicObjects::{
     Background as CinematicBackground, Mode7 as CinematicMode7, Sprites as CinematicSprites,
@@ -858,7 +859,7 @@ pub unsafe fn GameState_39_EndingAndCredits_(game: &mut Game) -> CoroutineRet {
         CreditsObject_Process(game);
         palette_effects::advance(game);
         draw_cinematic_sprites(true, game);
-        CinematicFunction_Intro_Func149(game);
+        advance_shooting_stars(game);
         update_cinematic_transform(true, game);
         kCoroutineNone as CoroutineRet
     }
@@ -922,147 +923,6 @@ pub unsafe fn CinematicFunction_Intro_Func142(game: &mut Game) {
                 crate::rtl::rom_table_word!(game, 0x8be45a, (v2 + 3) as isize);
             word!(game.vram_write_queue_tail = (v1).wrapping_add(2));
             word!(game.cinematic_var14 += 1);
-        }
-    }
-}
-pub unsafe fn CinematicFunction_Intro_Func127(game: &mut Game) {
-    unsafe {
-        let mut v0: u16 =
-            ram_ptr!(game; 0xe0c).offset_from(&raw mut game.g_ram as *mut u8) as c_long as u16;
-        let mut v1: i16 = 0;
-        do_until! { (v4).wrapping_sub(39) >= 0 ;
-            let mut v4: i16 = v1;
-            let v2 = RomPtr_RAM(v0, game);
-            *(v2 as *mut u16) = v1 as u16;
-            *(v2 as *mut u16).offset(6) = 0;
-            *(v2 as *mut u16).offset(7) = 0;
-            let v3: u16 =
-                crate::rtl::rom_table_word!(game, 0x8be9cf, ((8 * v1 as i32 >> 1) + 3) as isize);
-            if v3 != 0 {
-                *(v2 as *mut u16).offset(5) = v3;
-                crate::update_place! { unaligned_word fresh93 = &raw mut (*(v2 as *mut u16)) => (u16::from_le(fresh93.read_unaligned())) | (0x8000u16); }
-            } else {
-                *(v2 as *mut u16).offset(5) = 32;
-            }
-            *(v2 as *mut u16).offset(1) = 128;
-            *(v2 as *mut u16).offset(3) = 128;
-            *(v2 as *mut u16).offset(2) = 0;
-            *(v2 as *mut u16).offset(4) = 0;
-            v0 = (v0).wrapping_add(16);
-            v1 += 1;
-        }
-    }
-}
-pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {
-    unsafe {
-        let mut v5: i16 = 0;
-        let mut v18 = null_mut::<OamEnt>();
-        let mut v19: i16 = 0;
-        if word!(game.eproj_pre_instr[1]) != 0 {
-            let mut v0: u16 = 0xe0c;
-            for _ in 0..40 {
-                let v3 = RomPtr_RAM(v0, game);
-                if *(v3 as *mut i16) < 0 {
-                    let v1 = v3;
-                    let mut v2: i16 = ((*(v1.offset(10) as *mut u16)) as i16).wrapping_sub(1);
-                    *(v1 as *mut u16).offset(5) = v2 as u16;
-                    if v2 < 0 {
-                        *(v1 as *mut u16).offset(5) = 32;
-                        *(v1 as *mut u16) = *v1 as u16;
-                    }
-                } else {
-                    let v4: i32 = 8 * *(v3 as *mut u16) as u8 as i32 >> 1;
-                    if (*(v3 as *mut u16) as i32 & 0xff00) - 1024i32 & 0x8000 != 0 {
-                        crate::update_place! { unaligned_word fresh164 = &raw mut (*(v3 as *mut u16).offset(6)) => (u16::from_le(fresh164.read_unaligned())).wrapping_add(crate::rtl::rom_table_word!(
-                            game,
-                            0x8be9cf,
-                            v4 as isize
-                        )); }
-                        v5 = *(v3.offset(14) as *mut u16) as i16;
-                    } else {
-                        crate::update_place! { unaligned_word fresh165 = &raw mut (*(v3 as *mut u16).offset(6)) => (u16::from_le(fresh165.read_unaligned()) as i32
-                        + (crate::rtl::rom_table_word!(game, 0x8be9cf, v4 as isize) as i32
-                            + crate::rtl::rom_table_word!(game, 0x8be9cf, v4 as isize) as i32))
-                        as u16; }
-                        v5 = ((crate::rtl::rom_table_word!(game, 0x8be9cf, (v4 + 1) as isize))
-                            as i16)
-                            .wrapping_add((*(v3 as *mut u16).offset(7)) as i16);
-                    }
-                    *(v3 as *mut u16).offset(7) =
-                        (crate::rtl::rom_table_word!(game, 0x8be9cf, (v4 + 1) as isize))
-                            .wrapping_add((v5) as u16);
-                    let mut v23: u16 = *(v3.offset(12) as *mut u16);
-                    let mut r18: u16 = byte!(v23; 1) as i8 as u16;
-                    let mut r20: u16 = ((v23 as i32) << 8 & 0xff00) as u16;
-                    let mut v8: i16 = *(v3.offset(4) as *mut u16) as i16;
-                    let mut v9: bool = u16::overflowing_add(r20, v8 as u16).1;
-                    *(v3 as *mut u16).offset(2) = (r20).wrapping_add((v8) as u16);
-                    crate::update_place! { unaligned_word fresh166 = &raw mut (*(v3 as *mut u16).offset(1)) => (u16::from_le(fresh166.read_unaligned()) as i32 + (r18 as i32 + v9 as i32)) as u16; }
-                    let mut v24: u16 = *(v3.offset(14) as *mut u16);
-                    r18 = byte!(v24; 1) as i8 as u16;
-                    r20 = ((v24 as i32) << 8 & 0xff00) as u16;
-                    let mut v12: i16 = *(v3.offset(8) as *mut u16) as i16;
-                    v9 = u16::overflowing_add(r20, v12 as u16).1;
-                    *(v3 as *mut u16).offset(4) = (r20).wrapping_add((v12) as u16);
-                    crate::update_place! { unaligned_word fresh167 = &raw mut (*(v3 as *mut u16).offset(3)) => (u16::from_le(fresh167.read_unaligned()) as i32 + (r18 as i32 + v9 as i32)) as u16; }
-                }
-                v0 = (v0).wrapping_add(16);
-            }
-            let mut v13: u16 = word!(game.oam_next_ptr);
-            let mut v14: u16 = 3596;
-            for _ in 0..40 {
-                let v15 = RomPtr_RAM(v14, game);
-                let v16 = v15;
-                if *(v15 as *mut i16) >= 0 {
-                    let mut v17: i16 = *(v15.offset(2) as *mut u16) as i16;
-                    if *v15.offset(3) != 0
-                        || (v17 as i32 - 4i32 & 0xff00) != 0
-                        || {
-                            v18 = gOamEnt(v13 as i32, game);
-                            *(&raw mut (*v18).xcoord as *mut u16) = ((v17) as u16).wrapping_sub(4);
-                            v19 = *(v16.offset(6) as *mut u16) as i16;
-                            *v16.offset(7) != 0
-                        }
-                        || (v19 as i32 - 4i32 & 0xff00) != 0
-                    {
-                        let v21 = v15;
-                        *(v21 as *mut u16).offset(5) = 32;
-                        *(v21 as *mut u16).offset(1) = 128;
-                        *(v21 as *mut u16).offset(3) = 128;
-                        *(v21 as *mut u16).offset(2) = 0;
-                        *(v21 as *mut u16).offset(4) = 0;
-                        *(v21 as *mut u16).offset(6) = 0;
-                        *(v21 as *mut u16).offset(7) = 0;
-                        *(v21 as *mut u16) = *v21 as u16;
-                    } else {
-                        *(&raw mut (*v18).ycoord as *mut u16) = ((v19) as u16).wrapping_sub(4);
-                        let mut v20: i16 = ((*(v16.offset(10) as *mut u16)) as i16).wrapping_sub(1);
-                        *(v16 as *mut u16).offset(5) = v20 as u16;
-                        if v20 <= 0 {
-                            let mut v22: i16 = *(v16 as *mut u16) as i16;
-                            *(v16 as *mut u16).offset(5) = crate::rtl::rom_table_word!(
-                                game,
-                                0x8be9cf,
-                                ((8 * *(v16 as *mut u16) as u8 as i32 >> 1) + 2) as isize,
-                            );
-                            *(v16 as *mut u16) = ((v22) as u16).wrapping_add(512);
-                        }
-                        if *v16.offset(1) != 0 {
-                            *(&raw mut (*(gOamEnt as unsafe fn(i32, &mut Game) -> *mut OamEnt)(
-                                v13 as i32, game,
-                            ))
-                            .charnum as *mut u16) = crate::rtl::rom_table_word!(
-                                game,
-                                0x8be9a7,
-                                (((*(v16 as *mut u16) as i32 & 0xff00) >> 8) as u16 >> 1) as isize,
-                            );
-                            v13 = (v13).wrapping_add(4);
-                        }
-                    }
-                }
-                v14 = (v14).wrapping_add(16);
-            }
-            word!(game.oam_next_ptr = v13);
         }
     }
 }
@@ -2003,7 +1863,7 @@ crate::game::callback_dispatch! {
         word! { game, 0; layer1_x_pos, layer1_y_pos }
         set_hdma_enabled(true, game);
         word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(0));
-        CinematicFunction_Intro_Func127(game);
+        initialize_shooting_stars(game);
         GraphicsAsset::Decompress(0x97eeff, 0x10000).load(game);
         clear_cinematic_background(0x7f, game);
         CinematicFunction_Intro_Func128(0x7f, game);

@@ -831,6 +831,124 @@ pub(crate) fn advance_fireflea_lighting(game: &mut Game) {
     game.g_ram[0x74] = shade | 0x20;
 }
 
+// Shooting-star scratch records stay in RAM. Native scalar loads use from_le
+// on checked LE reads; only the original compound updates use LE arithmetic.
+pub(crate) fn initialize_shooting_stars(game: &mut Game) {
+    for index in 0..40 {
+        let at = 0xe0c + 16 * index;
+        word_transfers!(game, ascending, 1;
+            native(at) <- value(index as u16),
+            native(at + 12) <- value(0),
+            native(at + 14) <- value(0),
+        );
+        let delay = crate::rtl::rom_table_word!(game, 0x8be9cf, (4 * index + 3) as isize);
+        word_transfers!(game, ascending, 1; native(at + 10) <- value(if delay == 0 { 32 } else { delay }));
+        if delay != 0 {
+            checked_word!(game, at; = checked_word!(game, at;) | 0x8000);
+        }
+        for (offset, value) in [(2, 128), (6, 128), (4, 0), (8, 0)] {
+            word_transfers!(game, ascending, 1; native(at + offset) <- value(value));
+        }
+    }
+}
+
+pub(crate) fn advance_shooting_stars(game: &mut Game) {
+    if word!(game.eproj_pre_instr[1]) == 0 {
+        return;
+    }
+    for at in (0xe0c..0x108c).step_by(16) {
+        let identity = u16::from_le(checked_word!(game, at;));
+        if (identity as i16) < 0 {
+            let timer = u16::from_le(checked_word!(game, at + 10;)).wrapping_sub(1);
+            word_transfers!(game, ascending, 1; native(at + 10) <- value(timer));
+            if (timer as i16) < 0 {
+                word_transfers!(game, ascending, 1; native(at + 10) <- value(32));
+                word_transfers!(game, ascending, 1; native(at) <- value(u16::from(game.g_ram[at])));
+            }
+            continue;
+        }
+        let table = 4 * isize::from(identity as u8);
+        let fast = ((i32::from(identity & 0xff00) - 1024) & 0x8000) == 0;
+        checked_word!(game, at + 12; += {
+            let acceleration = crate::rtl::rom_table_word!(game, 0x8be9cf, table);
+            if fast {
+                acceleration.wrapping_add(crate::rtl::rom_table_word!(game, 0x8be9cf, table))
+            } else {
+                acceleration
+            }
+        });
+        let y_speed = if fast {
+            crate::rtl::rom_table_word!(game, 0x8be9cf, table + 1)
+                .wrapping_add(u16::from_le(checked_word!(game, at + 14;)))
+        } else {
+            u16::from_le(checked_word!(game, at + 14;))
+        };
+        word_transfers!(game, ascending, 1; native(at + 14) <- value(
+            crate::rtl::rom_table_word!(game, 0x8be9cf, table + 1).wrapping_add(y_speed)
+        ));
+        for (position, fraction, velocity) in [(2, 4, 12), (6, 8, 14)] {
+            let speed = u16::from_le(checked_word!(game, at + velocity;));
+            let whole = speed.to_ne_bytes()[1] as i8 as u16;
+            let (fractional, carry) =
+                (speed << 8).overflowing_add(u16::from_le(checked_word!(game, at + fraction;)));
+            word_transfers!(game, ascending, 1; native(at + fraction) <- value(fractional));
+            checked_word!(game, at + position; += whole.wrapping_add(u16::from(carry)));
+        }
+    }
+    let mut output = word!(game.oam_next_ptr);
+    for at in (0xe0c..0x108c).step_by(16) {
+        if (u16::from_le(checked_word!(game, at;)) as i16) < 0 {
+            continue;
+        }
+        let x = u16::from_le(checked_word!(game, at + 2;)) as i16;
+        let oam = 0x370 + usize::from(output);
+        let mut y = 0i16;
+        if game.g_ram[at + 3] != 0
+            || (i32::from(x) - 4) & 0xff00 != 0
+            || {
+                // This overlapping word write precedes even the Y rejection.
+                word_transfers!(game, ascending, 1; native(oam) <- value((x as u16).wrapping_sub(4)));
+                y = u16::from_le(checked_word!(game, at + 6;)) as i16;
+                game.g_ram[at + 7] != 0
+            }
+            || (i32::from(y) - 4) & 0xff00 != 0
+        {
+            for (offset, value) in [
+                (10, 32),
+                (2, 128),
+                (6, 128),
+                (4, 0),
+                (8, 0),
+                (12, 0),
+                (14, 0),
+            ] {
+                word_transfers!(game, ascending, 1; native(at + offset) <- value(value));
+            }
+            word_transfers!(game, ascending, 1; native(at) <- value(u16::from(game.g_ram[at])));
+            continue;
+        }
+        word_transfers!(game, ascending, 1; native(oam + 1) <- value((y as u16).wrapping_sub(4)));
+        let timer = u16::from_le(checked_word!(game, at + 10;)).wrapping_sub(1);
+        word_transfers!(game, ascending, 1; native(at + 10) <- value(timer));
+        if timer as i16 <= 0 {
+            let identity = u16::from_le(checked_word!(game, at;));
+            word_transfers!(game, ascending, 1; native(at + 10) <- value(
+                crate::rtl::rom_table_word!(game, 0x8be9cf,
+                    4 * isize::from(u16::from_le(checked_word!(game, at;)) as u8) + 2)
+            ));
+            word_transfers!(game, ascending, 1; native(at) <- value(identity.wrapping_add(512)));
+        }
+        if game.g_ram[at + 1] != 0 {
+            word_transfers!(game, ascending, 1; native(oam + 2) <- value(
+                crate::rtl::rom_table_word!(game, 0x8be9a7,
+                    ((u16::from_le(checked_word!(game, at;)) & 0xff00) >> 9) as isize)
+            ));
+            output = output.wrapping_add(4);
+        }
+    }
+    word!(game.oam_next_ptr = output);
+}
+
 pub(crate) fn shake_room_with_sound(kind: u16, game: &mut Game) {
     static SOUNDS: [u16; 17] = [
         0x46, 1, 0x46, 3, 0x46, 2, 0x46, 1, 0x46, 1, 0x46, 2, 0x46, 2, 0x46, 1, 0x8000,
