@@ -180,6 +180,7 @@ mode_word!(MovementMode {
     BombJumpStart = 0xe025,
     BombJump = 0xe032,
     BombJumpFinish = 0xe07d,
+    CrystalFlashStart = 0xd678,
     CrystalFlashFinish = 0xd75b,
     Xray = 0xe94f,
     ShinesparkWindup = 0xd068,

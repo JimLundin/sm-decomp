@@ -51,12 +51,12 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Player input, demos, suits, equipment, commands, initialization, Mother Brain
    reactions, X-ray and direct damage use owned state. Natural X-ray, Gravity,
    boss and grapple movie coverage remains incomplete despite bounded checks.
-   X-ray controls/tables are consolidated; sm_88 has 1,454 lines left. sm_90 has 907.
+   X-ray controls/tables are consolidated; sm_88 has 1,454 lines left. sm_90 has 859.
    B1 finishes sm_90; B2 resumes sm_88; B3 retires sm_89, then sm_a0 and sm_8f.
    Retire production observer hooks with named segments.
    Crystal Flash consumption and Draygon grab/release are consolidated.
-   Unused player completion hooks are removed; next: Crystal Flash setup, then
-   the remaining complete sm_90 families.
+   Crystal Flash setup now uses owned player state; admission and pose publication
+   retain their original failure order. Next: shared rendering and frame dispatch.
    Use named enum/function handlers as families move; raw identities stay at
    compatibility boundaries. Full u16 unknown values and failure timing survive.
    Report added production and deleted legacy together; growth needs a reason.
@@ -133,10 +133,10 @@ Every routine commit runs exactly this, then commits:
    writes "uncovered: <function>" in the body.
 3. Nothing else per commit: no mutation runs, independent controls, frontend metadata,
    optimized/release rebuilds, clean-source reruns or full replays. Once per bank,
-   before its file is deleted: the full corpus plus scoped `cargo-mutants` (â‰¤30 min).
+   before its file is deleted: the full corpus plus scoped `cargo-mutants` (Ã¢â€°Â¤30 min).
    The full corpus also runs at each review waypoint. A failure from a full run gets a
    regression row with its fix. Never weaken a comparison or a row's expectations.
-4. Body â‰¤8 lines: what changed, rows run and result, legacy/production delta and
+4. Body Ã¢â€°Â¤8 lines: what changed, rows run and result, legacy/production delta and
    ratio, `Score:`. Re-run a flaky step once; a second failure is real.
 
 Commands and checkpoint rules: [movies/README.md](../movies/README.md).

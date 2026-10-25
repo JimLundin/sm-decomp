@@ -256,3 +256,48 @@ pub(crate) fn struggle_from_draygon(h: &mut impl Host) {
         }
     }
 }
+
+pub(crate) fn crystal_flash_allowed(
+    game_state: u16,
+    held: u16,
+    shoot: u16,
+    stationary: bool,
+    health: u16,
+    reserve: u16,
+    ammunition: [u16; 3],
+) -> bool {
+    ((game_state.wrapping_sub(40) as i16) >= 0 || held == shoot | 0x430)
+        && stationary
+        && (health.wrapping_sub(51) as i16) < 0
+        && reserve == 0
+        && ammunition
+            .iter()
+            .all(|ammo| (ammo.wrapping_sub(10) as i16) >= 0)
+}
+
+pub(crate) fn initialize_crystal_flash(h: &mut impl Host) -> bool {
+    transitions::refresh_pose(h);
+    if h.session().player.movement_and_facing >> 8 != 27 {
+        return false;
+    }
+    let s = h.session_mut();
+    transitions::record_pose_history(s);
+    let p = &mut s.player;
+    p.movement_handler = MovementMode::CrystalFlashStart;
+    if p.transitions.input_mode != InputMode::Demo {
+        p.transitions.input_mode = InputMode::Disabled;
+    }
+    p.transitions.shinespark_start_stop_timer = 9;
+    p.transitions.crystal_flash_ammo = 0;
+    s.shared_sequence.stage = 10;
+    s.shared_sequence.value = 0;
+    p.palette.suit_red_green = 0;
+    p.shine_tick = 7;
+    p.palette_frame = 0;
+    p.shine_timer = 1;
+    p.palette.crystal_flash_delay = 1;
+    p.invincibility = 0;
+    p.knockback_timer = 0;
+    p.transitions.knockback = 0;
+    true
+}

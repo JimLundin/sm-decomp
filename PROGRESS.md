@@ -4,16 +4,16 @@
 
 | Measure | Count |
 | --- | ---: |
-| Production Rust lines* | 115931 |
-| Legacy bank Rust lines | 51792 |
+| Production Rust lines* | 115957 |
+| Legacy bank Rust lines | 51744 |
 | Verification Rust lines | 38936 |
-| Total Rust | 154867 |
-| Lines containing `unsafe` | 4650 |
+| Total Rust | 154893 |
+| Lines containing `unsafe` | 4648 |
 | Warnings (no-default library) | 367 |
 | Required checkpoint checks passing | 27/44 |
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-**Crocomire defeat verified:** 4,258 frames + two four-frame regressions, zero differences. Size unchanged.
+**Crystal Flash setup migrated:** 48 legacy lines removed; production +26 to preserve admission/failure order. Four smoke rows pass; natural Crystal Flash remains uncovered.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)

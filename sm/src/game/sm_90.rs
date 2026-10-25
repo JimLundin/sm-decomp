@@ -217,54 +217,6 @@ static kSamus_MoveHandler_ShinesparkCrash: [Func_V; 3] = callback_table! { nonnu
     Samus_MoveHandler_ShinesparkCrash_0, Samus_MoveHandler_ShinesparkCrash_1,
     Samus_MoveHandler_ShinesparkCrash_2,
 };
-pub unsafe fn Hdmaobj_CrystalFlash(game: &mut Game) -> u8 {
-    unsafe {
-        let mut v1: SamusPose = kPose_00_FaceF_Powersuit;
-        if word!(game.game_state) as i32 - 40i32 & 0x8000 != 0
-            && word!(game.joypad1_lastkeys) != word!(game.button_config_shoot_x) | 0x430
-        {
-            return 1;
-        }
-        if word!(game.samus_y_speed) != 0
-            || word!(game.samus_y_subspeed) != 0
-            || word!(game.samus_health) as i32 - 51i32 & 0x8000 == 0
-            || word!(game.samus_reserve_health) != 0
-            || word!(game.samus_missiles) as i32 - 10i32 & 0x8000 != 0
-            || word!(game.samus_super_missiles) as i32 - 10i32 & 0x8000 != 0
-            || word!(game.samus_power_bombs) as i32 - 10i32 & 0x8000 != 0
-        {
-            return 1;
-        }
-        v1 = (if *ram_ptr!(game; 0xa1e) == 4 {
-            kPose_D4_FaceL_CrystalFlash as i32
-        } else {
-            kPose_D3_FaceR_CrystalFlash as i32
-        }) as SamusPose;
-        word!(game.samus_pose = v1 as u16);
-        pt::refresh_pose(&mut Runtime::new(game));
-        if *ram_ptr!(game; 0xa1f) != 27 {
-            return 1;
-        }
-        pt::record_pose_history(Runtime::new(game).session_mut());
-        word!(game.samus_movement_handler = (0x90d678i32) as u16);
-        if word!(game.samus_input_handler) as i32 != 0x90e91d & 0xffff {
-            word!(game.samus_input_handler = (0x90e90ei32) as u16);
-        }
-        word!(game.timer_for_shinesparks_startstop = 9);
-        Runtime::new(game)
-            .session_mut()
-            .player
-            .transitions
-            .crystal_flash_ammo = 0;
-        word! {game; substate = 10; suit_pickup_light_beam_pos = 0; }
-        *(ram_ptr!(game, u16; 0xdf0)) = 0;
-        word! {game; timer_for_shine_timer = 7; special_samus_palette_frame = 0;
-        samus_shine_timer = 1; }
-        *(ram_ptr!(game, u16; 0xdf2)) = 1;
-        word! { game, 0; samus_invincibility_timer, samus_knockback_timer, knockback_dir }
-        0
-    }
-}
 static kSamus_MoveHandler_Knockback: [Func_V; 6] = callback_table! { nonnull Func_V;
     Samus_MoveHandler_Knockback_0, Samus_MoveHandler_Knockback_Up,
     Samus_MoveHandler_Knockback_Up, Samus_MoveHandler_Knockback_3,

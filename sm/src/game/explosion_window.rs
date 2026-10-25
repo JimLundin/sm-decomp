@@ -1,8 +1,9 @@
 //! Power Bomb and Crystal Flash window geometry, expansion and afterglow.
+use crate::game::player_movement::forced;
+use crate::game::session_runtime::Runtime;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_80::{QueueSfx1_Max6, QueueSfx1_Max15};
 use crate::game::sm_88::SpawnHdmaObject;
-use crate::game::sm_90::Hdmaobj_CrystalFlash;
 use crate::game_state::Game;
 use crate::ram_map::{ram_ptr, word};
 use crate::rtl::{Mult8x8, rom_ptr};
@@ -63,11 +64,38 @@ pub(crate) unsafe fn begin_prescaled_explosion(game: &mut Game) {
         );
     }
 }
+// Rejection and pose publication precede Session admission, including import failures.
+pub(crate) fn try_crystal_flash(game: &mut Game) -> bool {
+    use crate::ram_map::checked_word as word;
+    if !forced::crystal_flash_allowed(
+        word!(game.game_state),
+        word!(game.joypad1_lastkeys),
+        word!(game.button_config_shoot_x),
+        word!(game.samus_y_speed) == 0 && word!(game.samus_y_subspeed) == 0,
+        word!(game.samus_health),
+        word!(game.samus_reserve_health),
+        [
+            word!(game.samus_missiles),
+            word!(game.samus_super_missiles),
+            word!(game.samus_power_bombs),
+        ],
+    ) {
+        return false;
+    }
+    word!(
+        game.samus_pose = if word!(game, 0xa1e;) as u8 == 4 {
+            0xd4
+        } else {
+            0xd3
+        }
+    );
+    forced::initialize_crystal_flash(&mut Runtime::new(game))
+}
 pub(crate) unsafe fn finish_power_bomb(v0: u16, game: &mut Game) {
     unsafe {
         if word!(game.samus_x_pos) != word!(game.power_bomb_explosion_x_pos)
             || word!(game.samus_y_pos) != word!(game.power_bomb_explosion_y_pos)
-            || Hdmaobj_CrystalFlash(game) & 1 != 0
+            || !try_crystal_flash(game)
         {
             word!(game.power_bomb_flag = 0);
         }
