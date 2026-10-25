@@ -17,14 +17,6 @@ use crate::game::sm_82::{
     HandleGameOverBabyMetroid, MapScrolling, SetupMapScrollingForFileSelectMap,
 };
 
-crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
-    pub struct ExpandingSquareVels {
-        pub left_subvel, left_vel, right_subvel, right_vel, top_subvel, top_vel, bottom_subvel,
-            bottom_vel: u16;
-    }
-}
 pub use crate::types::Consts_81;
 crate::game::constants::typed_constants! { Consts_81;
     addr_kAreaSelectBackgroundTilemaps = 48922, addr_kAreaSelectForegroundTilemap = 46874,
@@ -593,13 +585,7 @@ pub unsafe fn FileSelectMap_7_PrepExpandSquareTransToRoomMap(game: &mut Game) {
             expand_sq_left_subpos, expand_sq_right_subpos, expand_sq_top_subpos,
             expand_sq_bottom_subpos,
         }
-        let vels: *const ExpandingSquareVels =
-            (rom_ptr!(game, ExpandingSquareVels; 0x81aa34)).offset(word!(game.area_index) as isize);
-        word! {game; expand_sq_left_subvel = (*vels).left_subvel;
-        expand_sq_left_vel = (*vels).left_vel; expand_sq_right_subvel = (*vels).right_subvel;
-        expand_sq_right_vel = (*vels).right_vel; expand_sq_top_subvel = (*vels).top_subvel;
-        expand_sq_top_vel = (*vels).top_vel; expand_sq_bottom_subvel = (*vels).bottom_subvel;
-        expand_sq_bottom_vel = (*vels).bottom_vel; }
+        menu_window::load_velocities(word!(game.area_index), game);
         menu_window::project(game);
         crate::rtl::write_register_and_mirror(HDMAEN as u16, 0xc, 0x85, true, game);
         word!(game.menu_index += 1);
@@ -836,38 +822,9 @@ pub unsafe fn FileSelectMap_20_SetupExpandingSquare(game: &mut Game) {
         word! { game;
             expand_sq_timer =
                 (kRoomSelectMapExpandingSquareTimers[word!(game.area_index) as usize]).wrapping_sub(12);
-            expand_sq_left_subvel = *((&raw mut (*(rom_ptr!(game, ExpandingSquareVels; 0x81aa34)))
-                .left_subvel as *mut u8)
-                .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize)
-                as *mut u16);
-            expand_sq_left_vel = *((&raw mut (*(rom_ptr!(game, ExpandingSquareVels; 0x81aa34))).left_vel
-                as *mut u8)
-                .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize)
-                as *mut u16);
-            expand_sq_right_subvel = *((&raw mut (*(rom_ptr!(game, ExpandingSquareVels; 0x81aa34)))
-                .right_subvel as *mut u8)
-                .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize)
-                as *mut u16);
-            expand_sq_right_vel = *((&raw mut (*(rom_ptr!(game, ExpandingSquareVels; 0x81aa34)))
-                .right_vel as *mut u8)
-                .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize)
-                as *mut u16);
-            expand_sq_top_subvel = *((&raw mut (*(rom_ptr!(game, ExpandingSquareVels; 0x81aa34)))
-                .top_subvel as *mut u8)
-                .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize)
-                as *mut u16);
-            expand_sq_top_vel = *((&raw mut (*(rom_ptr!(game, ExpandingSquareVels; 0x81aa34))).top_vel
-                as *mut u8)
-                .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize)
-                as *mut u16);
-            expand_sq_bottom_subvel = *((&raw mut (*(rom_ptr!(game, ExpandingSquareVels; 0x81aa34)))
-                .bottom_subvel as *mut u8)
-                .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize)
-                as *mut u16);
-            expand_sq_bottom_vel = *((&raw mut (*(rom_ptr!(game, ExpandingSquareVels; 0x81aa34)))
-                .bottom_vel as *mut u8)
-                .offset(((16u16).wrapping_mul(word!(game.area_index))) as i32 as isize)
-                as *mut u16);
+        }
+        menu_window::load_velocities(word!(game.area_index), game);
+        word! { game;
             expand_sq_left_pos = 8;
             expand_sq_right_pos = 248;
             expand_sq_top_pos = 8;

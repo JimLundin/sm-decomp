@@ -84,6 +84,15 @@ pub(crate) fn project(game: &mut Game) {
     game.g_ram[0x9e10 + usize::from(cursor)] = 0;
 }
 
+/// Load native ROM words into the eight little-endian window velocity fields.
+pub(crate) fn load_velocities(area: u16, game: &mut Game) {
+    let image = game.capture_native_rom();
+    let base = crate::rtl::lorom_offset(0x81aa34) as usize + 16 * usize::from(area);
+    for component in 0..8 {
+        word!(game, 0x9e40 + 2 * component; = image.table_word(base, component as isize));
+    }
+}
+
 pub(crate) enum Motion {
     Expand,
     Contract,
