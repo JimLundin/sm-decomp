@@ -59,7 +59,8 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Crystal Flash setup now uses owned player state; admission and pose publication
    retain their original failure order. Normal/frozen/death rendering now shares
    sprite ownership and typed draw modes. Frame-beta dispatch now runs through
-   owned player update state. Next: input and post-draw control.
+   owned player update state. Input dispatch now shares that owner.
+   Next: post-draw control and the remaining movement families.
    Use named enum/function handlers as families move; raw identities stay at
    compatibility boundaries. Full u16 unknown values and failure timing survive.
    Report added production and deleted legacy together; growth needs a reason.
@@ -136,10 +137,10 @@ Every routine commit runs exactly this, then commits:
    writes "uncovered: <function>" in the body.
 3. Nothing else per commit: no mutation runs, independent controls, frontend metadata,
    optimized/release rebuilds, clean-source reruns or full replays. Once per bank,
-   before its file is deleted: the full corpus plus scoped `cargo-mutants` (ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¤30 min).
+   before its file is deleted: the full corpus plus scoped `cargo-mutants` (ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¤30 min).
    The full corpus also runs at each review waypoint. A failure from a full run gets a
    regression row with its fix. Never weaken a comparison or a row's expectations.
-4. Body ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â°ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¤8 lines: what changed, rows run and result, legacy/production delta and
+4. Body ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¤8 lines: what changed, rows run and result, legacy/production delta and
    ratio, `Score:`. Re-run a flaky step once; a second failure is real.
 
 Commands and checkpoint rules: [movies/README.md](../movies/README.md).

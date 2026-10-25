@@ -386,8 +386,29 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
     );
 }
 
-pub(crate) fn xray_input(game: &mut crate::game_state::Game) {
-    Runtime::new(game).handle_xray_input();
+pub(super) fn dispatch_input(h: &mut Runtime<'_>) {
+    use crate::game::player_transitions::state::InputMode;
+    use crate::ram_map::words as ram;
+    match h.session().player.transitions.input_mode {
+        InputMode::Normal => h.handle_input(),
+        InputMode::Demo => h.handle_demo_input(),
+        InputMode::Xray => h.handle_xray_input(),
+        InputMode::AutoJump => {
+            let pressed = h.inputs().pressed;
+            let timer = h.session().player.contact.auto_jump;
+            if timer != 0 && (timer.wrapping_sub(9) as i16) < 0 {
+                h.write_slice_le(ram::joypad1_newkeys, pressed | h.inputs().jump_button);
+                h.session_mut().player.contact.auto_jump = 0;
+            }
+            h.handle_input();
+            h.write_slice_le(ram::joypad1_newkeys, pressed);
+            h.session_mut().player.transitions.input_mode = InputMode::Normal;
+        }
+        InputMode::Disabled => {}
+        InputMode::Unknown(_) => {
+            crate::game::player_projectiles::host::Host::unknown(h);
+        }
+    }
 }
 
 pub(crate) fn finish_xray(game: &mut crate::game_state::Game) {

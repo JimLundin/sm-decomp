@@ -4,16 +4,16 @@
 
 | Measure | Count |
 | --- | ---: |
-| Production Rust lines* | 115862 |
-| Legacy bank Rust lines | 51533 |
+| Production Rust lines* | 115858 |
+| Legacy bank Rust lines | 51504 |
 | Verification Rust lines | 38936 |
-| Total Rust | 154798 |
-| Lines containing `unsafe` | 4619 |
-| Warnings (no-default library) | 367 |
+| Total Rust | 154794 |
+| Lines containing `unsafe` | 4616 |
+| Warnings (no-default library) | 365 |
 | Required checkpoint checks passing | 27/44 |
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-**Frame dispatch migrated:** production -14, legacy -131, unsafe -8. Seven selected rows pass, including death.
+**Input dispatch consolidated:** production -4, legacy -29, unsafe -3; warnings -2. Six selected rows pass.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)

@@ -26,7 +26,6 @@ use crate::game::sm_80::{
 };
 
 use crate::game::projectile_geometry::sine_offset;
-use crate::game::session_runtime::xray_input;
 use crate::game::sm_88::EnableHdmaObjects;
 
 crate::game::callback_dispatch! {
@@ -259,34 +258,6 @@ crate::game::callback_dispatch! {
 }
 
 pub(crate) use crate::game::player_projectiles::prepare as HandleControllerInputForGamePhysics;
-crate::game::callback_dispatch! {
-    pub unsafe fn CallSamusInputHandler(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [9496861] Samus_InputHandler_E91D [] {
-        Runtime::new(game).handle_demo_input();
-    };
-    [9496870] HandleAutoJumpHack [] {
-        let v0: u16 = word!(game.joypad1_newkeys);
-        if word!(game.autojump_timer) != 0 && word!(game.autojump_timer) as i32 - 9i32 & 0x8000 != 0
-        {
-            word!(game.joypad1_newkeys |= (word!(game.button_config_jump_a)));
-            word!(game.autojump_timer = 0);
-        }
-        Runtime::new(game).handle_input();
-        word! {game; joypad1_newkeys = v0; samus_input_handler = ((0x90e913i32) as u16); }
-    };
-    @forward [pub unsafe fn (game: &mut Game)];
-    Samus_CallInputHandler => CallSamusInputHandler(
-        ((word!(game.samus_input_handler)) as u32) | (0x900000u32),
-        game,
-    );
-    [9496851] Samus_InputHandler_E913 => Runtime::new(game).handle_input();
-    [9496856] Samus_Func20_ => xray_input(game);
-    @external {
-        9496846 => [()];
-    }
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallSamusMovementHandler(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
