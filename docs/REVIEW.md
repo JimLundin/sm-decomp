@@ -112,17 +112,29 @@ one commit landing within the hour; no B commit by the next check-in is a lane s
 
 **Waypoints** (Europe/Stockholm; review clock; a miss gets a diagnosis, not a new plan):
 
-| By | Checks | Banks deleted | Legacy | Production |
-| --- | ---: | --- | ---: | ---: |
-| 10-25 06:00 | A0.4 any% to credits | sm_94 | ≤54,600 | ≤116,500 |
-| 10-25 18:00 | ≥34/44 | + sm_91, sm_90 | ≤51,500 | ≤114,000 |
-| 10-26 18:00 | 44/44 | + sm_88, sm_81, sm_80 | ≤44,500 | ≤110,000 |
-| 10-27 18:00 | 44/44 | + sm_82, sm_8b | ≤35,000 | ≤104,000 |
+| By | Checks | Banks deleted | Legacy | Production | Result |
+| --- | ---: | --- | ---: | ---: | --- |
+| 10-25 06:00 | A0.4 any% to credits | sm_94 | ≤54,600 | ≤116,500 | **MISS** |
+| 10-25 18:00 | ≥34/44 | + sm_91, sm_90 | ≤51,500 | ≤114,000 | |
+| 10-26 18:00 | 44/44 | + sm_88, sm_81, sm_80 | ≤44,500 | ≤110,000 | |
+| 10-27 18:00 | 44/44 | + sm_82, sm_8b | ≤35,000 | ≤104,000 | |
+
+**06:00 miss (recorded 05:52 CET):** reached A0.2 smoke only (checks 24/44),
+sm_94 not deleted (legacy 55,315, production 116,670). Cause: no agent has
+committed since 7867e91 (23:48 CET), six hours idle; the plan was not the
+blocker. Corrective step: on restart, land A0.2's Ceres-only capture and sm_94
+step 1 first; the 18:00 waypoint stands unchanged and now carries sm_94 too.
 
 Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
+- **2026-10-25 05:52 CET (a172326, no new agent commits):** **STALL, sixth in a
+  row: 0 agent commits** since 7867e91 (23:48 CET), ~6h; agents are not running
+  (escalated; only Jim can restart them). Score unchanged `checks 24/44 · legacy
+  55315 · production 116670 · unsafe 4962 · verification 38993`. **06:00 waypoint
+  missed** (recorded in the table). Next commits unchanged: A0.2 Ceres capture,
+  sm_94 step 1.
 - **2026-10-25 04:52 CET (245502b, no new agent commits):** **STALL, fifth in a
   row: 0 agent commits** since 7867e91 (23:48 CET), now ~5h; agents are not
   running (escalated; only Jim can restart them). No source diff; Score unchanged
@@ -172,10 +184,6 @@ Map brief is done (c1fe795); no further map work unless the user asks.
   Production 116,960 → 116,670 (incl. fda4ebd); legacy 55,342 → 55,315; verification
   38,993 (+109); unsafe 4,962 (−3); warnings 377 lines. No lane A commit yet (24/44;
   06:00 waypoint needs 27). Map: fixes (a)/(b) landed and render on both widths; brief done.
-- **2026-10-24 23:10 (5096059):** user asked the review to steer harder. Added
-  the milestone plan above (two lanes, bank-retirement unit, scoreboard line,
-  waypoints) and made it binding from PLAN.md. Power Bomb route landed (5096059)
-  as a non-required segment; checks still 24/44.
 
 ## Lane watch (2026-10-24 23:52)
 
