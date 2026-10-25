@@ -40,14 +40,14 @@ before further adoption; the review's red-main rule does not authorize CI pollin
 ## Work order
 
 1. **Current - lane A room-seeded TAS coverage.** Crocomire defeat now passes;
-   33/44 required checks pass, 11 remain pending. Both four-frame melt/wall
+   34/44 required checks pass, 10 remain pending. Both four-frame melt/wall
    regressions pass; the defeat row runs 4,258 frames through 120 frames after
    the fresh boss flag. The full 167,285-frame setup was checked from boot.
    A1.1 any% capture is complete: 197 room entries, six regions each; all 1,182
    files checked, full 129,712-frame capture matches the original log. The final-source
    A1.2 seed import passes 600 frames and reaches the captured next room; both
    complete captures have register supplements. Screw Attack and Spring Ball now pass seeded award/message/tail rows.
-   Next: remaining bosses and items; Space Jump and Phantoon have pre-existing seeded mismatches.
+   Ridley now passes fresh defeat plus its full tail. Next: remaining bosses and items; Space Jump and Phantoon have pre-existing seeded mismatches.
    The seeded X-ray row passes its award, message and 120-frame tail (667 frames).
    Captures now use an instruction boundary; the longer next-room continuation still drifts.
    Original any% timing alignment remains parked; no further hand-route exploration.

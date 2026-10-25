@@ -181,7 +181,14 @@ pending = "No qualified encounter-to-completion route with fresh boss state and 
 
 [[segment]]
 id = "boss-ridley"
-pending = "No qualified encounter-to-completion route with fresh boss state and precise encounter/death observations."
+seed = "100-boundary:118"
+seed_sha256 = "1baf6b7e86e47846063e5e173f058676ad90b084f1d9ab53e4b8d1e0a4cd9dbd"
+inputs = "seed-ridley.inputs"
+input_sha256 = "9821e4b194ac99752968d9c79fe88117a36966c954d34f83975c1e131f3d7da8"
+start_frame = 0
+frames = 2100
+expect = ["boss:ridley", "room:B32E"]
+after_expectations = 120
 
 [[segment]]
 id = "boss-mother-brain"
