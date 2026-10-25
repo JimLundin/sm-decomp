@@ -164,6 +164,14 @@ encrypted seeds in CI, cloud agents with auto-land, a Linux verifier spike. Orde
   retirement's full run waits until no other full run is queued. No new agents until
   branch runs start within 10 min.
 
+**Landing jam (20:52).** Branch work is no longer verified faster than it is written: at
+20:52, 7 `ci/windows-*` branches plus M1a and Spore Spawn were unlanded, both bank
+deletions among them. PLAN's landing jam rule applies: one live rebased branch per agent,
+retirement branches run their rows (not the full corpus), main's full run follows each
+deletion. Land order: M1a, Spore Spawn, `sm_88` deletion, `sm_a0` deletion, then sm_81.
+**M2 production:** b782ca4 moved Rio with production +69 (legacy -90). M2 commits convert
+in place or delete; a commit that grows production needs its one-line reason.
+
 **Cloud agents (user approved 18:05).** Linux sessions without the ROM, hosted mode
 only, one lane item each, own `ci/<lane>-<topic>` branches. Start with two: **C3+L1**
 (above), then **lane M** (M1a fixpoint strip, then M2 per enemy bank; compile-checked
@@ -218,6 +226,9 @@ can only lose route fidelity, never fake a pass.
   them; credits follows from the last MB seed. (2) Spore Spawn and Golden Torizo: index
   one published movie that fights each (as low% did for Botwoon) and seed from it.
   No hand routes.
+- **A1.3 status (20:52): 41/44** (f2a7264 Mother Brain fresh defeat from a phase seed);
+  Spore Spawn 42/44 on `ci/windows-spore-spawn`. Left: Golden Torizo, credits (chain from
+  the MB phase seeds), then move authored rows onto seeds and delete their recipes.
 
 **Lane B — bank retirement (up to three agents, one bank each).** Unchanged method:
 for each function, delete it if unreachable or duplicated, otherwise move it onto safe
@@ -293,6 +304,15 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
 
 ## Check-ins
 
+- **2026-10-25 20:52 CET (648afab), landing stall in B1/B3 (first):** 8 agent commits
+  landed since 6bd23aa: A 3 (f2a7264 **Mother Brain defeat, 41/44**; download retry; runner
+  budget), M 4 (Rio, Norfair Rio, Flies: -392 legacy), B2 `sm_88` 1; **B1 `sm_81` and B3
+  `sm_a0` 0 on main two check-ins running** while `sm_88`/`sm_a0` deletions, sm_81 stacks,
+  M1a (-95 unsafe) and Spore Spawn (42/44) wait on `ci/` (runs cancelled, branches 10
+  behind). All `Score:`, 0 docs-only. Score `41/44 · 47998 · 115215 · 4292 · 39353` (last
+  40 · 48466 · 115145 · 4307 · 39347); warnings 297; hooks 607/93. 10-26 12:00: checks and
+  legacy on pace if held work lands; unsafe, sm_a0, production **behind** (production +70:
+  b782ca4 grew it 69). Changed: PLAN landing jam rule; M2 must not grow production.
 - **2026-10-25 19:52 CET (6bd23aa), no stall, CI queue is the bottleneck:** 6 agent
   commits on main since 3d80523: A 2 (0fd90cf **C0b done, `ci.yml` green**; 8e2e9a0 **C2
   landed early**, 63 runnable rows), C 3 (C3 live, L1 go), M 1 docs-only (M1A-REVIEW, 17%).
@@ -355,18 +375,6 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
   hand routes closed; `sm_a4` unlocked in B3; production must fall per move.
   Post-push: 9290c2d landed A1.1 (any%), marked done; map tiles change (5569c08,
   Jim's request) renders cleanly at 1440 and 390 px.
-- **2026-10-25 12:52 CET (603425e), stall (first, 28 min after reset):** 0 agent
-  commits since ad9bef2 (12:22); no branches or held work visible. Score unchanged
-  `checks 26/44 · legacy 51792 · production 115931 · unsafe 4650 · verification
-  38936`. Likely cause: agents re-reading the reset plan. Next code expected by 13:52:
-  A1.1 Lua room dump, B1 Crystal Flash setup, B3 `sm_89` start (B2 `sm_88` may resume:
-  the three-queue plan supersedes item 2's sm_88 pause). 18:00 all lanes behind pace.
-- **2026-10-25 12:30 CET (ad9bef2), reset at the user's request:** since 11:52, B1
-  `sm_90` ×2 (145cf8c Crystal Flash, 3a4dac1 Draygon grab; ratios 64%, 76%), A 1
-  (ad9bef2 probe removal, −13 production). Score `checks 26/44 · legacy 51792 ·
-  production 115931 · unsafe 4650 · verification 38936`. Changed: PLAN's Fast loop
-  replaces the validation ritual; lane A moves to room-seeded TAS segments (A1);
-  lane B gains a third queue (small banks, covered enemies); waypoints reset.
 
 ## Lane watch (2026-10-24 23:52)
 

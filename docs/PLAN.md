@@ -166,7 +166,8 @@ Every routine commit runs exactly this, then commits:
    writes "uncovered: <function>" in the body.
 3. Nothing else per commit: no mutation runs, independent controls, frontend metadata,
    optimized/release rebuilds, clean-source reruns or full replays. Once per bank,
-   before its file is deleted: the full corpus plus scoped `cargo-mutants` (<=30 min).
+   before its file is deleted: scoped `cargo-mutants` (<=30 min); the full corpus runs
+   on main after the deletion lands (20:52 rule below), not on the branch.
    Partition independent movie groups to use spare CPU; keep shared prefixes and
    current source/codec checks. The full corpus also runs at each review waypoint.
    A failure from a full run gets a
@@ -183,8 +184,14 @@ line and push only the tip of a stack to one live `ci/<lane>-<topic>` branch.
 green auto-lands on main (rebased; a conflict fails the land and the author rebases).
 A red run is that author's next task. Main's full corpus runs every 3h, on bank-file
 deletion and at waypoints (dispatch `Segments` on main with empty `segments`), with
-at most six shards at once. Wait until no other full run is queued before starting
-a bank-retirement full run. Routine lands start no full run. Failures get a regression
+at most six shards at once. Routine lands start no full run.
+**Landing jam rule (reviewer, 20:52).** Two bank deletions (`sm_88`, `sm_a0`) and four
+B stacks sat unlanded over an hour: their runs were cancelled, and every `ci/windows-*`
+branch still carries pre-rewrite copies of b782ca4/ec11239. So: (1) each agent rebases
+onto main now and keeps exactly one live branch (delete the others); (2) a retirement
+branch runs its `Rows:` union plus smoke like any stack, never the full corpus; its land
+dispatches main's full run, and a red main full run is fixed before anyone else lands;
+(3) the next workflow commit drops the planner's "retirement forces full" rule. Failures get a regression
 row as above. Free runners only; no new agents until branch runs start within 10 min.
 Agents without the ROM (cloud) use hosted mode only. Mechanics: `Rows:` ids are comma/space
 separated, a trailing comma continues the list, text after a colon is ignored and an
