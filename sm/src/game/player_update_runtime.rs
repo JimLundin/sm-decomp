@@ -89,7 +89,10 @@ fn advance_beta(
         MovementStep::Normal
     } else {
         unsafe {
-            crate::game::sm_90::CallSamusMovementHandler(0x900000 | u32::from(handler), game);
+            crate::game::session_runtime::advance_special_movement(
+                0x900000 | u32::from(handler),
+                game,
+            );
         }
         MovementStep::AlreadyAdvanced
     };

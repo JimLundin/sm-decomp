@@ -301,3 +301,12 @@ pub(crate) fn initialize_crystal_flash(h: &mut impl Host) -> bool {
     p.transitions.knockback = 0;
     true
 }
+
+/// Knockback shares its horizontal step and collision settlement across directions.
+pub(crate) fn knockback_motion<H: Host>(h: &mut H, horizontal: bool, vertical: fn(&mut H)) {
+    if horizontal {
+        speed::bomb_rising_x(h);
+    }
+    vertical(h);
+    clear_collided_motion(h);
+}

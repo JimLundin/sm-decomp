@@ -1,7 +1,6 @@
 //! Directed actual-50cec3e0 player movement fixtures. Synthetic content only.
 //! Requires the coordinator's fully initialized SnesInit/audio/PPU host.
 use crate::{
-    game::sm_90 as bank,
     game_state::Game,
     ram_map::{word_arrays as a, words as w},
     rom::RomImage,
@@ -622,7 +621,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
                             &mut crate::game::session_runtime::Runtime::new(g),
                         );
                     }
-                    _ => bank::Samus_MoveHandler_ReleaseFromGrapple(g),
+                    _ => crate::game::session_runtime::advance_special_movement(0x90946e, g),
                 }
                 expect(
                     g,

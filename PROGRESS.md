@@ -4,16 +4,16 @@
 
 | Measure | Count |
 | --- | ---: |
-| Production Rust lines* | 115606 |
-| Legacy bank Rust lines | 50851 |
-| Verification Rust lines | 39207 |
-| Total Rust | 154813 |
-| Lines containing `unsafe` | 4596 |
+| Production Rust lines* | 115602 |
+| Legacy bank Rust lines | 50510 |
+| Verification Rust lines | 39206 |
+| Total Rust | 154808 |
+| Lines containing `unsafe` | 4598 |
 | Warnings (no-default library) | 362 |
 | Required checkpoint checks passing | 27/44 |
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-**Room-effects bank retired:** all 45 runnable rows pass; two selected mutations caught. The final relocation saves 3 production lines; Ceres remains raw and uncovered.
+**Movement dispatch migrated:** 341 legacy lines retired, 4 production lines saved. Seven rows pass; unchanged cold movement families remain uncovered.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)

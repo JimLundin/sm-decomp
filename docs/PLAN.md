@@ -54,7 +54,7 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Player input, demos, suits, equipment, commands, initialization, Mother Brain
    reactions, X-ray and direct damage use owned state. Natural X-ray, Gravity,
    boss and grapple movie coverage remains incomplete despite bounded checks.
-   X-ray controls/tables are consolidated; sm_88 has 1,216 lines left. sm_90 has 522.
+   X-ray controls/tables are consolidated; sm_88 has 1,216 lines left. sm_90 has 181.
    B1 finishes sm_90; B2 continues sm_88. Room FX loading now uses Room/Visuals;
    sm_89 is retired; its Ceres callback remains raw and uncovered. B3 starts Crocomire sm_a4.
    Retire production observer hooks with named segments.
@@ -64,7 +64,7 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    sprite ownership and typed draw modes. Frame-beta dispatch now runs through
    owned player update state. Input dispatch now shares that owner.
    Post-draw health/input bookkeeping now shares the player owner.
-   Duplicate gamma classification is removed. Next: movement dispatch, then scrolling.
+   Duplicate gamma classification is removed. Movement dispatch now shares the player runtime. Next: retire the final camera/collision bank entries.
    Use named enum/function handlers as families move; raw identities stay at
    compatibility boundaries. Full u16 unknown values and failure timing survive.
    Report added production and deleted legacy together; growth needs a reason.
