@@ -169,30 +169,28 @@ encrypted seeds in CI, cloud agents with auto-land, a Linux verifier spike. Orde
 deletions among them. PLAN's landing jam rule applies: one live rebased branch per agent,
 retirement branches run their rows (not the full corpus), main's full run follows each
 deletion. Land order: M1a, Spore Spawn, `sm_88` deletion, `sm_a0` deletion, then sm_81.
-**Integration (21:10, user request: no agent was driving lane B).** A reviewer-spawned
-integration agent rebased the six stranded B commits (sm_88 deletion, sm_8b setup, sm_a0
-frame-end + deletion, sm_81 file menu + map window) onto main as `ci/b-integrate`
-(d9e9269; legacy 46,334, production 115,013, unsafe 4,239; warnings 294) and pushed it;
-Segments run 40229103191 runs the full corpus and auto-lands on green. Windows B agents:
-do not re-push those commits; start new B work at once (see the 21:52 note below). A red run goes
-back to the integration agent.
-**B landing stall, 2nd check-in (21:52).** No B commit on main since 3d80523 (18:25) and no
-new B code anywhere since 20:03: the 21:10 "start new B work from main after it lands" note
-parked the B agents, and `ci/b-integrate` **cannot auto-land**: rebasing onto main conflicts
-in `sm_88.rs` (delete vs M1a strip; take the delete) and `sm_8b.rs` (e4222b7 vs M1a, real
-content). Its full-corpus run (40229103191, 23/37 green) will end in a refused land. Now:
-(1) the B2 agent rebases `ci/b-integrate` onto main: keep the B side in `sm_8b.rs`, rerun
-`tools/codemod/strip_unsafe_fixpoint.py`, push; rows only (876fbfb), not the full corpus.
-(2) B1 and B3 do not wait: branch from the `ci/b-integrate` tip (or main for untouched
-files) and push `ci/b1-*`/`ci/b3-*` now; rebase after it lands (git drops landed patches).
-Next: B1 `sm_81` next menu family; B2 `sm_8b` after the rebase; B3 `sm_8f`.
-**Lane A (21:52):** credits (43/44, 13 rows, 51,276 frames) is on `ci/windows-credits`, run
-40232721139. Golden Torizo: PLAN item 1 names three PPU fields missing from seed conversion;
-the next A code adds them to the RAM-to-Session converter (long-term path), then the row.
+**B unstuck, landing pending (22:52).** `ci/b-integrate` was rebased (b2d8f27, fixpoint rerun)
+and B1/B3 stacked on it as told: `ci/b1-retirements` (a239013: + `sm_81` deleted, 4 `sm_80`
+families) and `ci/b3-retirements` (5f52da7: + `sm_8f`, `sm_b2` deleted). Five bank files
+(`sm_88`, `sm_a0`, `sm_81`, `sm_8f`, `sm_b2`) wait on Segments. Land order: (1) b1's run
+(40237511884) already covers b-integrate's rows (Rows union over `origin/main..HEAD`); on green
+it lands both. Cancel the redundant b-integrate run (40237013250) to free runners. (2) Then b3
+rebases onto main (b-integrate patches drop), reruns rows, lands; main's full run follows.
+(3) `ci/m2-sm-a8` (queued since 22:05, 3 behind) rebases after (2). No new `ci/` push stacks
+on an unlanded branch beyond these three. Next: B1 `sm_80`, B2 `sm_8b`, B3 common enemies
+`sm_a2`/`sm_a3` (name the row and enemy; after `ci/m2-sm-a8` lands, never two agents on a bank).
+**Ratios:** `sm_8f` (94%) and `sm_b2` (96%) moved nearly line for line into owned modules: the
+new code is safe and well named, so accept them, but `sm_80`/`sm_82` must aim <=80%.
+**Lane A (22:52): credits flipped, 43/44** (01b3036, 13 rows, 51,276 frames). Left: Golden
+Torizo: add the three PPU fields (PLAN item 1) to the RAM-to-Session converter, then the row.
+After it, A moves authored rows onto seeds and deletes recipes from `tools/movie_inputs.py`.
 **M2 `sm_a4` (`ci/m2-sm-a4`):** -215 raw dereferences, but production +121, legacy +43, unsafe
 -5. `slot!` is a one-time cost; later M2 banks must not grow production.
-**M2 production:** b782ca4 moved Rio with production +69 (legacy -90). M2 commits convert
-in place or delete; a commit that grows production needs its one-line reason.
+**M2 production (22:52, not followed):** `ci/m2-sm-a8` (pushed 22:05, after the 21:52 rule)
+is legacy +126, production +149 for unsafe -27; one `slot!` per access spells every field
+access out. Land it (unsafe first), but the next M2 commit changes `enemy_slots.py` to bind
+one typed slot view per fn (`let e = slot_view!(k)`) so a bank's lines do not grow; rerun on
+`sm_a4`/`sm_a8` in the same commit. M2 commits that grow production need their reason.
 
 **Cloud agents (user approved 18:05).** Linux sessions without the ROM, hosted mode
 only, one lane item each, own `ci/<lane>-<topic>` branches. Start with two: **C3+L1**
@@ -326,6 +324,14 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
 
 ## Check-ins
 
+- **2026-10-25 22:52 CET (853aa47), no stall, B landing pending:** 4 non-review commits on
+  main since d83432d: A 1 (01b3036 **credits flipped, 43/44**), M 2 (sm_a4 M2 +121 production;
+  common enemies -429 legacy, 110%), 2 user-requested docs cleanups (Jim; not counted). On `ci/`:
+  B 9 new code commits (B1 `sm_81` deleted + 4 `sm_80`; B3 `sm_8f`, `sm_b2` deleted; b-integrate
+  rebased with `sm_88`, `sm_a0` deletions), M `sm_a8` (+149 production). All `Score:`. Score
+  `43/44 · 47589 · 115353 · 4188 · 39401` (last 42 · 47983 · 115197 · 4197 · 39353); warnings
+  296; hooks 607/93. 10-26 12:00: checks met; legacy, sm_a0 ahead once b1 lands (b1 tip 43,213);
+  unsafe (b1 tip 4,046 vs 3,900) and production (114,812 vs 114,000) behind. Treemap OK.
 - **2026-10-25 21:52 CET (6ea29c9), B landing stall, second in a row:** 3 agent commits on
   main since 648afab: A 2 (0086292 **Spore Spawn, 42/44**, regression row; 876fbfb branch rows
   only), M 1 (1225f54 M1a fixpoint landed, -95 unsafe), B 0 (third check-in). Unlanded:
@@ -395,16 +401,6 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
   607/92. Ratios 52-91%, production −328. 18:00: legacy, production, sm_90 (522 left),
   sm_89 (48) on pace; **checks behind**: A1.2 go held locally, see Lane A. Verification
   flat 3 hours: no fixture deleted. Changed: land A1.2 now; finish sm_89 before sm_a0.
-- **2026-10-25 13:52 CET (bd76e2a), no stall:** 4 agent commits since 603425e: A 3
-  (5354e6c, 75fa0b1 code; a822933 docs-only resource policy), B1 `sm_90` 1 (bd76e2a,
-  ratio 154%), **B2/B3 0** (sm_89 unstarted), all labelled with `Score:`. Score `checks
-  27/44 · legacy 51744 · production 115957 · unsafe 4648 · verification 38936` (last 26 ·
-  51792 · 115931 · 4650 · 38936); warnings 367; verify/probe/observer 607/92. **Boss row
-  flipped: `boss-crocomire`** (+2 regression rows). 18:00: checks on pace; legacy,
-  production, banks and A1.2 **behind** (A1.1 not started; production rose). Changed:
-  hand routes closed; `sm_a4` unlocked in B3; production must fall per move.
-  Post-push: 9290c2d landed A1.1 (any%), marked done; map tiles change (5569c08,
-  Jim's request) renders cleanly at 1440 and 390 px.
 
 ## Lane watch (2026-10-24 23:52)
 
@@ -435,7 +431,8 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
 The interactive codebase map is retired at the user's request. The one progress view
 is `tools/treemap.py`: production Rust by area, banded owned / partly owned / legacy,
 with four headline numbers (required checks, legacy, unsafe, production lines) and
-their 24-hour change. Pages redraws it on every main push; PROGRESS.md embeds it.
+their 24-hour change. Pages redraws it on every main push; README embeds it (PROGRESS.md
+was removed at the user's request, f2f6178).
 
 ## Initial review (2026-10-24, a408c8f)
 
