@@ -126,6 +126,12 @@ encrypted seeds in CI, cloud agents with auto-land, a Linux verifier spike. Orde
 - **C0b (lane A, next commit; unblocked by the lifted CI rule):** gate the two mutation
   steps in `ci.yml` (and the ROM-prep/report steps) behind `workflow_dispatch`; scripts
   stay for local capture callers. `ci.yml` green.
+- **C3 status (18:52):** `ci/c3-pipeline` (8520ac1, based on main 22013c1) ran its rows
+  green in Segments run 40217351891; `land` refused by design (workflow edits cannot be
+  pushed with `GITHUB_TOKEN`). **The C agent fast-forwards main to it by hand now**, then
+  rebases `ci/l1-linux`. Workflow-only commits after C3 land by hand the same way.
+- **C0b is late twice (17:55, 18:52); lane A's next commit is C0b, before any MB work.** If
+  the Windows lane-A agent cannot, the C agent takes it after landing C3.
 - **C1 (done):** `segments.yml` on main and `ci/**`; 3 green runs on main, ~45 min each.
 - **C2 (lane A, due 10-26 06:00):** seeds and lag logs in CI. Pack `target/seeds/` plus
   lag logs, encrypt (`openssl enc -aes-256-cbc -pbkdf2`) with a key derived from the
@@ -220,6 +226,12 @@ hooks: 607 lines/94 files, duplicated owned paths). Queues:
   `sm_a6` Ridley, `sm_a7` Kraid/Phantoon, `sm_aa` Torizos, `sm_a9` Mother Brain,
   `sm_9b` Grapple.
 If only two lane-B agents run, B3 waits; never two agents on one bank.
+**18:52: B3 moves to `sm_a0` now** (330 lines, the 10-26 12:00 deletion, unowned): delete
+it, then `sm_8f`. `sm_a4` grew again (17f04a1, 153%) after the 17:55 directive; converting
+its raw getters to checked actors is M2 work, so it goes to lane M (cloud codemod), not B3.
+Every B commit must now lower **production**, not just legacy: 10-26 12:00 needs -1,145 and
+the last hour gave -32. Delete dead hooks (607/93) with each move.
+PLAN.md is 241 lines (limit ~200): the next B1 commit trims work-order item 2 to <=15 lines.
 **17:55:** `sm_a4` ran 108% and 146% this hour (legacy +68): checked-Actor closures grow
 the bank. Next `sm_a4` commits must lower legacy (delete or move out whole families);
 a growing commit needs the one-line reason. `sm_88` is at 442 lines: finish and delete
@@ -269,6 +281,13 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
 
 ## Check-ins
 
+- **2026-10-25 18:52 CET (3d80523), no stall, half hour:** 7 agent commits since 9fff566, all
+  18:17-18:25: A 1 (67fb989 checkpoint tooling; no flip, **no C0b, 2nd miss**), M 2 (bc07cde
+  Gripper M2; 0924e3b disk tooling), B1 `sm_81` 2, B2 `sm_88` 1, B3 `sm_a4` 1 (+36 legacy,
+  153%, against the 17:55 directive); cloud C 3 on `ci/` (C3 rows green, land refused: workflow
+  edit). All `Score:`, 0 docs-only. Score `40/44 · 48466 · 115145 · 4304 · 39336` (last 40 ·
+  48715 · 115177 · 4327 · 39336); warnings 301; hooks 607/93. 10-26 12:00: legacy on, checks,
+  unsafe (M1a not pushed), sm_a0 and production **behind**. Changed: C3 hand-land, B3 to sm_a0.
 - **2026-10-25 17:55 CET (9fff566), no stall, best hour so far:** 19 agent commits since
   3ea69a0: A 5 (Gravity, Grapple, Botwoon flipped; MB regression), M 5 (d0fffa6 checked
   `word!`, -124 unsafe; Ripper M2), B1 `sm_81` 3, B2 `sm_88` 3, B3 `sm_a4` 3; all `Score:`,
@@ -335,12 +354,6 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
   verify/probe/observer 611/94 (flat). 18:00: legacy on pace, **checks, production and
   sm_90 (no commit, 1,039 left) behind**. **Lane-A stall (coverage):** second hour with no
   alignment or coverage code; elapsed-NMI model still local. B −33 production, not ≥100.
-- **2026-10-25 10:52 CET (8588674):** 4 agent commits: **A 0**, B 4 (6b1b013,
-  6c4a6f7, 8588674 `B:sm_90`; e091835 `B:sm_88`), 0 unlabelled, 0 docs-only, all with
-  `Score:`. Score `checks 26/44 · legacy 52014 · production 115992 · unsafe 4679 ·
-  verification 38944` (last 26 · 52390 · 116068 · 4707 · 39047); warnings 367 (370);
-  verify/probe/observer 611/94 (615/93). 18:00: legacy ahead, sm_90 on pace,
-  **checks and production behind**. Verification −103 (fixture lines deleted). No stall.
 ## Lane watch (2026-10-24 23:52)
 
 - d0d1961 is a sound bank-retirement step (−90 engine, adapter and `CollInfo`
