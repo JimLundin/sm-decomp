@@ -130,8 +130,8 @@ encrypted seeds in CI, cloud agents with auto-land, a Linux verifier spike. Orde
   green in Segments run 40217351891; `land` refused by design (workflow edits cannot be
   pushed with `GITHUB_TOKEN`). **The C agent fast-forwards main to it by hand now**, then
   rebases `ci/l1-linux`. Workflow-only commits after C3 land by hand the same way.
-- **C0b is late twice (17:55, 18:52); lane A's next commit is C0b, before any MB work.** If
-  the Windows lane-A agent cannot, the C agent takes it after landing C3.
+- **C0b done (0fd90cf); `ci.yml` green on main since; the 18:00 CI miss is corrected. C2
+  landed early (8e2e9a0).** Lane A's next code: Mother Brain phase seeds (A1.3 (1)).
 - **C1 (done):** `segments.yml` on main and `ci/**`; 3 green runs on main, ~45 min each.
 - **C2 (lane A, due 10-26 06:00):** seeds and lag logs in CI. Pack `target/seeds/` plus
   lag logs, encrypt (`openssl enc -aes-256-cbc -pbkdf2`) with a key derived from the
@@ -151,6 +151,13 @@ encrypted seeds in CI, cloud agents with auto-land, a Linux verifier spike. Orde
 - **Runner budget:** the free plan allows ~20 concurrent jobs; one full run uses 14. If
   branch runs queue over 15 min after C3, the reviewer asks the user about a paid plan
   or larger runners before adding agents.
+- **Runner budget hit (19:52):** 9 Segments runs in flight, main's corpus (33 shards) queued
+  15 min before its build started. User asked (paid plan / larger runners). Until then, C
+  agent's next commit (workflow, hand-landed): (1) main's corpus matrix `max-parallel: 8`
+  so branch runs get runners; (2) the plan job runs the union of `Rows:` lines over
+  `origin/main..HEAD`, not the head commit only. Agents: push only the tip of a stack
+  (`ci/windows-map-window` already contains `file-menu`; both ran), one live branch per
+  agent; no new agents until branch runs start within 10 min.
 
 **Cloud agents (user approved 18:05).** Linux sessions without the ROM, hosted mode
 only, one lane item each, own `ci/<lane>-<topic>` branches. Start with two: **C3+L1**
@@ -249,7 +256,7 @@ elapsed-NMI experiment reached 10,555 (parked 11:52). `sm_94` deleted (ca42bc5, 
 | By | Checks | Unsafe lines | Banks deleted (cumulative) | Legacy | Production | Result |
 | --- | ---: | ---: | --- | ---: | ---: | --- |
 | 10-25 06:00 | A0.4 any% to credits | | sm_94 | <=54,600 | <=116,500 | **MISS** |
-| 10-25 18:00 | >=28/44; A1.2 go/no-go recorded | CI green; M1 on a branch | + sm_91, sm_90, sm_89 | <=50,300 | <=115,300 | **HIT except CI**: 40/44, A1.2 go, M1 landed (d0fffa6), banks deleted, legacy 48,715, production 115,177; `ci.yml` still red |
+| 10-25 18:00 | >=28/44; A1.2 go/no-go recorded | CI green; M1 on a branch | + sm_91, sm_90, sm_89 | <=50,300 | <=115,300 | **HIT except CI**: 40/44, A1.2 go, M1 landed (d0fffa6), banks deleted, legacy 48,715, production 115,177; `ci.yml` red until 0fd90cf (19:18) |
 | 10-26 12:00 | >=42/44 (raised 17:55; 36 met early); C2 decided | <=3,900 (M1 landed) | + sm_a0 | <=47,000 | <=114,000 | |
 | 10-26 18:00 | 44/44 (raised 17:55) | <=3,300 (M2 common enemies) | + sm_88, sm_8f, sm_81 | <=44,000 | <=112,500 | |
 | 10-27 18:00 | 44/44 | <=2,300 (M2 bosses, M3) | + sm_80, sm_b2, first boss bank | <=36,000 | <=109,000 | |
@@ -281,6 +288,14 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
 
 ## Check-ins
 
+- **2026-10-25 19:52 CET (6bd23aa), no stall, CI queue is the bottleneck:** 6 agent
+  commits on main since 3d80523: A 2 (0fd90cf **C0b done, `ci.yml` green**; 8e2e9a0 **C2
+  landed early**, 63 runnable rows), C 3 (C3 live, L1 go), M 1 docs-only (M1A-REVIEW, 17%).
+  B landed 0, but 10 commits sit on `ci/windows-*`, `ci/m1a-fixpoint` (all <30 min old;
+  sm_88 retirement, sm_81 -823, sm_a0, Rio, M1a -95 unsafe) waiting on runners: main's
+  build queued 15 min, 33 shards queued. Score unchanged `40/44 · 48466 · 115145 · 4307 ·
+  39347` (last 40 · 48466 · 115145 · 4304 · 39336); warnings 301; hooks 607/93. 10-26 12:00:
+  legacy on pace if the queue lands; production, unsafe, checks behind. Changed: CI budget.
 - **2026-10-25 18:52 CET (3d80523), no stall, half hour:** 7 agent commits since 9fff566, all
   18:17-18:25: A 1 (67fb989 checkpoint tooling; no flip, **no C0b, 2nd miss**), M 2 (bc07cde
   Gripper M2; 0924e3b disk tooling), B1 `sm_81` 2, B2 `sm_88` 1, B3 `sm_a4` 1 (+36 legacy,
@@ -347,13 +362,7 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
   production 115931 · unsafe 4650 · verification 38936`. Changed: PLAN's Fast loop
   replaces the validation ritual; lane A moves to room-seeded TAS segments (A1);
   lane B gains a third queue (small banks, covered enemies); waypoints reset.
-- **2026-10-25 11:52 CET (80d0782):** 2 agent commits (half last hour): A 1 (80d0782,
-  verifier cache tooling only), B 1 (e2fd645 `B:sm_88`), 0 unlabelled, 0 docs-only, both
-  with `Score:`. Score `checks 26/44 · legacy 51925 · production 115959 · unsafe 4662 ·
-  verification 38944` (last 26 · 52014 · 115992 · 4679 · 38944); warnings 367 (flat);
-  verify/probe/observer 611/94 (flat). 18:00: legacy on pace, **checks, production and
-  sm_90 (no commit, 1,039 left) behind**. **Lane-A stall (coverage):** second hour with no
-  alignment or coverage code; elapsed-NMI model still local. B −33 production, not ≥100.
+
 ## Lane watch (2026-10-24 23:52)
 
 - d0d1961 is a sound bank-retirement step (−90 engine, adapter and `CollInfo`
