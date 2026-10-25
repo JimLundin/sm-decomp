@@ -131,6 +131,12 @@ Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
+- **2026-10-25 12:52 CET (603425e), stall (first, 28 min after reset):** 0 agent
+  commits since ad9bef2 (12:22); no branches or held work visible. Score unchanged
+  `checks 26/44 · legacy 51792 · production 115931 · unsafe 4650 · verification
+  38936`. Likely cause: agents re-reading the reset plan. Next code expected by 13:52:
+  A1.1 Lua room dump, B1 Crystal Flash setup, B3 `sm_89` start (B2 `sm_88` may resume:
+  the three-queue plan supersedes item 2's sm_88 pause). 18:00 all lanes behind pace.
 - **2026-10-25 12:30 CET (ad9bef2), reset at the user's request:** since 11:52, B1
   `sm_90` ×2 (145cf8c Crystal Flash, 3a4dac1 Draygon grab; ratios 64%, 76%), A 1
   (ad9bef2 probe removal, −13 production). Score `checks 26/44 · legacy 51792 ·
@@ -184,15 +190,6 @@ Map brief is done (c1fe795); no further map work unless the user asks.
   but it must fall; production verify/probe/observer lines flat (613, same grep).
 - **2026-10-25 01:52–05:52 CET (9feb2f2…a172326):** five consecutive full stalls,
   0 agent commits since 7867e91 (23:48 CET); escalated to Jim; 06:00 waypoint missed.
-- **2026-10-25 00:55 (7867e91):** 2 agent commits since c1fe795, both `A:`
-  (a427ba4 is the user-requested map SVG, not lane progress); **lane B 0 commits**
-  (first silent check-in). A0.1 done, A0.2 smoke done. No Rust changed: Score
-  `checks 24/44 · legacy 55315 · production 116670 · unsafe 4962 · verification
-  38993` (= last); warnings 377. 06:00 waypoint: lane A on pace if the full
-  capture lands by ~02:00; lane B behind (sm_94 734 lines left). No overall stall.
-- **2026-10-25 00:20 (user direction):** size goal and verification policy added
-  to the milestone plan: ~75k aspiration, ≤70% replacement ratio per bank,
-  verification = movie segments as data, no new fixtures or production hooks.
 
 ## Lane watch (2026-10-24 23:52)
 
