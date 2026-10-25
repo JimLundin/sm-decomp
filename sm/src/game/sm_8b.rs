@@ -4,6 +4,7 @@ pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
+use crate::game::visual_runtime::draw_cinematic_rectangle;
 use crate::game::visual_runtime::{
     advance_cinematic_fade, capture_cinematic_palette, clear_cinematic_background,
     clear_cinematic_colors, clear_cinematic_sprites, clear_hdma, compose_cinematic_palette,
@@ -152,26 +153,6 @@ pub unsafe fn ProcessCinematicBgObject(v0: u16, r18: u16, game: &mut Game) {
         );
     }
 }
-macro_rules! copy_cinematic_tilemap_row {
-    (
-        $game:ident, $overlay:ident, $ram_offset:literal, $tilemap_field:ident,
-        $destination:ident, $source:ident, $count:ident $(,)?
-    ) => {
-        loop {
-            *((&raw mut (*(ram_ptr!($game, $overlay; $ram_offset))).$tilemap_field
-                as *mut u16 as *mut u8)
-                .offset($destination as i32 as isize) as *mut u16) =
-                *(RomPtr_8C($source, $game) as *mut u16).offset(2);
-            $source = ($source).wrapping_add(2);
-            $destination = ($destination).wrapping_add(2);
-            $count = $count.wrapping_sub(1);
-            if ($count == 0) {
-                break;
-            }
-        }
-    };
-}
-
 crate::game::callback_dispatch! {
     pub unsafe fn CallProcessCinematicBgObject(ea: u32, k: u16, j: u16, r18: u16, game: &mut Game) => ea;
     call (k, j, r18, game); default { Unreachable(game); };
@@ -191,7 +172,7 @@ crate::game::callback_dispatch! {
         if *(v2.offset(4) as *mut u16) != 0xd67d && word!(game.cinematicbg_var1) != 0 {
             QueueSfx3_Max6(0xd, game);
         }
-        ProcessCinematicBgObject_DrawToTextTilemap(0x1e, j, r18, game);
+        draw_cinematic_rectangle(true, j, r18, game);
     };
     [9144683] ProcessCinematicBgObject_Unk1 [] {
         let mut r22: u16 = Mult0x80Add(r18);
@@ -235,58 +216,13 @@ crate::game::callback_dispatch! {
 }
         word!(game.mode7_vram_write_queue_tail = v4);
     };
-    @functions [pub unsafe fn (
-    k: u16,
-    mut j: u16,
-    r18: u16,
-    game: &mut Game,
-)];
-    [9144503] ProcessCinematicBgObject_DrawToTextTilemap [] {
-        let jorg: u16 = j;
-        let mut offs: u16 = CinematicGetTilemapOffsetForTile(r18);
-        let mut r22: u16 = offs;
-        let v3 = RomPtr_8C(j, game);
-        let mut m: u16 = *v3.offset(2) as u16;
-        let morg: u16 = m;
-        let mut n: u16 = *v3.offset(3) as u16;
-        loop {
-            copy_cinematic_tilemap_row!(game, Ram3000, 0x3000, pause_menu_map_tilemap, offs, j, m);
-            m = morg;
-            n = n.wrapping_sub(1);
-            if n == 0 {
-                break;
-            }
-            r22 = (r22).wrapping_add(64);
-            offs = r22;
-        }
-    };
-    [9144573] ProcessCinematicBgObject_DrawToBgTilemap [] {
-        let jorg: u16 = j;
-        let mut offs: u16 = CinematicGetTilemapOffsetForTile(r18);
-        let mut r22: u16 = offs;
-        let v3 = RomPtr_8C(j, game);
-        let mut m: u16 = *v3.offset(2) as u16;
-        let morg: u16 = m;
-        let mut n: i32 = *v3.offset(3) as i32;
-        loop {
-            copy_cinematic_tilemap_row!(game, Ram3800, 0x3800, cinematic_bg_tilemap, offs, j, m);
-            m = morg;
-            n -= 1;
-            if n == 0 {
-                break;
-            }
-            r22 = (r22).wrapping_add(64);
-            offs = r22;
-        }
-    };
     @external {
+        9144503 => [draw_cinematic_rectangle(true, j, r18, game)];
+        9144573 => [draw_cinematic_rectangle(false, j, r18, game)];
         9144393 => [ProcessCinematicBgObject_Nothing(k, j, r18)];
     }
 }
 pub fn ProcessCinematicBgObject_Nothing(k: u16, j: u16, r18: u16) {}
-pub unsafe fn CinematicGetTilemapOffsetForTile(mut r18: u16) -> u16 {
-    unsafe { (2 * r18 as u8 as i32 + byte!(r18; 1) as i32 * 0x40) as u16 }
-}
 pub unsafe fn Mult0x80Add(mut r18: u16) -> u16 {
     unsafe { (r18 as u8 as i32 + 0x80 * byte!(r18; 1) as i32) as u16 }
 }

@@ -2049,3 +2049,45 @@ pub(crate) fn set_cinematic_backdrop(lit: bool, game: &mut Game) {
     game.g_ram[0x75] = if lit { 88 } else { 64 };
     game.g_ram[0x76] = 0x80;
 }
+
+pub(crate) unsafe fn draw_cinematic_rectangle(
+    text: bool,
+    mut definition: u16,
+    position: u16,
+    game: &mut Game,
+) {
+    let mut row = 2 * u16::from(position as u8) + 64 * u16::from(position.to_ne_bytes()[1]);
+    let (width, mut rows) = unsafe {
+        let header = crate::rtl::rom_bank_ptr::<0x8c>(definition, game);
+        (u16::from(*header.add(2)), i32::from(*header.add(3)))
+    };
+    loop {
+        let mut destination = row;
+        let mut remaining = width;
+        loop {
+            // The cursor wraps before the next lookup; the word at +4 does not.
+            let tile = unsafe {
+                (crate::rtl::rom_bank_ptr::<0x8c>(definition, game).add(4) as *const u16)
+                    .read_unaligned()
+            };
+            let at = if text { 0x3000 } else { 0x3800 } + usize::from(destination);
+            word_transfers!(game, ascending, 1; native(at) <- value(tile));
+            definition = definition.wrapping_add(2);
+            destination = destination.wrapping_add(2);
+            remaining = remaining.wrapping_sub(1);
+            if remaining == 0 {
+                break;
+            }
+        }
+        // Text used a wrapping u16 row counter; background used signed i32.
+        rows = if text {
+            i32::from((rows as u16).wrapping_sub(1))
+        } else {
+            rows - 1
+        };
+        if rows == 0 {
+            break;
+        }
+        row = row.wrapping_add(64);
+    }
+}
