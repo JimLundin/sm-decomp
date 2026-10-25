@@ -305,34 +305,8 @@ crate::game::callback_dispatch! {
     [9494804] DrawTimer_ [] {
         DrawTimer(game);
     };
-    [9495201] Samus_GrabbedByDraygonFrameHandler [] {
-        if word!(game.grapple_beam_function) as i32 == 0x9bc77e & 0xffff {
-            word! {game; samus_new_pose = -1i32 as u16; samus_momentum_routine_index = 0; }
-        }
-        if word!(game.joypad1_newkeys) as i32
-            & (kButton_Up as i32 | kButton_Down as i32 | kButton_Left as i32 | kButton_Right as i32)
-            != 0
-            && word!(game.joypad1_newkeys) as i32
-                & (kButton_Up as i32
-                    | kButton_Down as i32
-                    | kButton_Left as i32
-                    | kButton_Right as i32)
-                != word!(game.suit_pickup_light_beam_pos) as i32
-        {
-            word!(
-                game.suit_pickup_light_beam_pos = (word!(game.joypad1_newkeys) as i32
-                    & (kButton_Up as i32
-                        | kButton_Down as i32
-                        | kButton_Left as i32
-                        | kButton_Right as i32))
-                    as u16
-            );
-            if ((word!(game.substate += 1, reread)) as i16).wrapping_sub(60) >= 0 {
-                Samus_ReleaseFromDraygon(game);
-            }
-        }
-    };
     @external {
+        9495201 => [forced::struggle_from_draygon(&mut Runtime::new(game))];
         9494830 => [crate::game::session_runtime::ceres_movement(game, |h| forced::push_out_of_ceres(h))];
         9494984 => [crate::game::session_runtime::ceres_movement(game, |h| forced::advance_ceres_push(h))];
         9495459 => [forced::finish_forced_fall(&mut Runtime::new(game))];
@@ -342,53 +316,6 @@ crate::game::callback_dispatch! {
     }
 }
 
-pub unsafe fn Samus_SetGrabbedByDraygonPose(a: u16, game: &mut Game) {
-    unsafe {
-        if (a & 1) != 0 {
-            word!(game.samus_pose = kPose_EC_FaceR_Draygon_NoMove_NoAim as u16);
-        } else {
-            word!(game.samus_pose = kPose_BA_FaceL_Draygon_NoMove_NoAim as u16);
-        }
-        pt::refresh_pose(&mut Runtime::new(game));
-        word!(game.frame_handler_gamma = (0x90e2a1i32) as u16);
-        word!(game.samus_movement_handler = (0x90e90ei32) as u16);
-        word! { game, 0; substate, suit_pickup_light_beam_pos }
-        *(ram_ptr!(game, u16; 0xdf0)) = 0;
-        pt::record_pose_history(Runtime::new(game).session_mut());
-        word! {game; samus_new_pose = -1i32 as u16; samus_new_pose_interrupted = -1i32 as u16;
-        samus_new_pose_transitional = -1i32 as u16; }
-        word! { game, 0;
-            samus_momentum_routine_index, samus_special_transgfx_index, samus_hurt_switch_index,
-        }
-    }
-}
-pub unsafe fn Samus_ReleaseFromDraygon_(game: &mut Game) {
-    unsafe {
-        Samus_ReleaseFromDraygon(game);
-    }
-}
-pub unsafe fn Samus_ReleaseFromDraygon(game: &mut Game) {
-    unsafe {
-        if *ram_ptr!(game; 0xa1e) == 4 {
-            word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
-        } else {
-            word!(game.samus_pose = kPose_01_FaceR_Normal as u16);
-        }
-        pt::refresh_pose(&mut Runtime::new(game));
-        word!(game.samus_movement_handler = (0x90a337i32) as u16);
-        word!(game.frame_handler_gamma = (0x90e90ei32) as u16);
-        pt::record_pose_history(Runtime::new(game).session_mut());
-        word! { game, 0; samus_x_base_speed, samus_x_base_subspeed }
-        word! {game; samus_new_pose = -1i32 as u16; samus_new_pose_interrupted = -1i32 as u16;
-        samus_new_pose_transitional = -1i32 as u16; }
-        word! { game, 0;
-            samus_momentum_routine_index, samus_special_transgfx_index, samus_hurt_switch_index,
-            samus_y_speed, samus_y_subspeed, samus_y_dir, used_for_ball_bounce_on_landing,
-            samus_x_accel_mode,
-        }
-        word!(game.samus_grapple_flags = word!(game.samus_grapple_flags) & 0xfffd | 2);
-    }
-}
 pub(crate) use crate::game::player_projectiles::prepare as HandleControllerInputForGamePhysics;
 // Special movement stays RAM-authoritative until its retained callback returns.
 unsafe fn advance_player_beta(

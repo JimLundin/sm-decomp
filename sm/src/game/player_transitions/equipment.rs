@@ -8,7 +8,7 @@ use crate::game::{
     visual_state::PaletteBuffer,
 };
 
-fn facing(s: &Session, right: u16, left: u16) -> u16 {
+pub(crate) fn facing(s: &Session, right: u16, left: u16) -> u16 {
     if s.player.movement_and_facing as u8 == 4 {
         left
     } else {

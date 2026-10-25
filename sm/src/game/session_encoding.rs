@@ -148,6 +148,7 @@ macro_rules! scalar_words {
         $f(0x0da4,$($borrow)* $s.player.camera_distance[0].fraction);
         $f(0x0da6,$($borrow)* $s.player.camera_distance[1].whole);
         $f(0x0da8,$($borrow)* $s.player.camera_distance[1].fraction);
+        $f(0x0a64,$($borrow)* $s.player.grapple_interaction_flags);
         $f(0x0cf4,$($borrow)* $s.player.grapple_flags);
         $f(0x0cf6,$($borrow)* $s.player.grapple_delay);
         $f(0x0cf8,$($borrow)* $s.player.grapple_slow_scrolling);

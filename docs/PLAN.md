@@ -58,9 +58,10 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Player input, demos, suits, equipment, commands, initialization, Mother Brain
    reactions, X-ray and direct damage use owned state. Natural X-ray, Gravity,
    boss and grapple movie coverage remains incomplete despite bounded checks.
-   X-ray controls/tables are consolidated; sm_88 has 1,454 lines left. sm_90 has 988.
+   X-ray controls/tables are consolidated; sm_88 has 1,454 lines left. sm_90 has 915.
    Pause sm_88 until sm_90 is deleted; retire production observer hooks with named segments.
-   Crystal Flash consumption is consolidated; adopt checked Draygon grab/release next.
+   Crystal Flash consumption and Draygon grab/release are consolidated.
+   Next: remaining sm_90 families and unused player completion-hook removal.
    Use named enum/function handlers as families move; raw identities stay at
    compatibility boundaries. Full u16 unknown values and failure timing survive.
    Report added production and deleted legacy together; growth needs a reason.
@@ -181,14 +182,18 @@ direct DLL builds work. Keep crate-root unsafe-op enforcement.
 
 Measured concurrency (2026-10-25): two isolated builds with Cargo -j1 completed
 matched work in 76.06s versus 114.12s serial (1.50x). Three compilers reached
-2.088GiB free; a further speedup is unproven. Assign ready slots explicitly, counting
-accepted launchers before rustc appears. Restart completed workers with a new task.
-Allow up to three compiler workflows; start above 3GiB free and leave 2GiB after
-reserving ~1.6GiB per new compiler plus admitted jobs' remaining growth. Stop the
-newest below 2GiB or on resource errors; never treat a launcher as a free slot.
-Refill slots immediately and release after compilation. Replays may overlap.
-Judge completed useful work/time, memory and paging, not CPU alone. Never edit
-checked source or rebuild loaded DLLs. -j1 still permits parallel code generation.
+2.088GiB free; a further speedup is unproven. Use separate budgets for compilation,
+replays and source work, not a blanket heavy-job count. Count accepted launchers
+before rustc appears; release compiler admission immediately after compilation.
+Start above 3GiB free and leave 2GiB after reserving ~1.6GiB per new compiler plus
+admitted jobs' remaining growth. Stop the newest below 2GiB or on resource errors.
+Refill useful ready work immediately; completed workers need explicit new tasks.
+Measure CPU, free memory, paging, disk and completed useful work/time during real
+jobs. Increase concurrency only when resources fit; compare the next useful batch
+with the measured two-build result before retaining a higher setting. Three is an
+observed trial, not a proven optimum. At 12:19 CET, disk was binding: one admitted
+workflow, 5.92GiB RAM free and 1.30GiB disk free. Replays/source work overlap.
+Never edit checked source or rebuild loaded DLLs. -j1 permits parallel code generation.
 Use [the iteration guide](ITERATION.md#windows-shell-setup) for paths/commands.
 
 Keep artifacts in their checkout; seed dependencies, not full target trees, and reuse checked builds.

@@ -6,8 +6,8 @@ use crate::game::{
     player_transitions::{
         self as transitions,
         state::{
-            BombJump, FrameGammaMode, InputMode, InterruptionAction, JumpKind, MomentumAction,
-            MovementMode, PoseRequestWord,
+            BombJump, FrameGammaMode, InputMode, InterruptionAction, JumpKind, LandingBounce,
+            MomentumAction, MovementMode, PoseRequestWord,
         },
     },
     session::Session,
@@ -209,4 +209,50 @@ pub(crate) fn consume_crystal_flash(s: &mut Session, frame: u16) {
     }
     s.player.invincibility = 0;
     s.player.knockback_timer = 0;
+}
+
+pub(crate) fn grab_by_draygon(direction: u16, h: &mut impl Host) {
+    h.session_mut().player.pose = if direction & 1 != 0 { 0xec } else { 0xba };
+    transitions::refresh_pose(h);
+    let s = h.session_mut();
+    s.player.transitions.frame_gamma = FrameGammaMode::DraygonGrabbed;
+    s.player.movement_handler = MovementMode::Disabled;
+    s.shared_sequence = Default::default();
+    s.player.palette.suit_red_green = 0;
+    transitions::record_pose_history(s);
+    s.player.transitions.clear_pose_requests();
+}
+
+pub(crate) fn release_from_draygon(h: &mut impl Host) {
+    h.session_mut().player.pose = transitions::equipment::facing(h.session(), 1, 2);
+    transitions::refresh_pose(h);
+    let s = h.session_mut();
+    s.player.movement_handler = MovementMode::Normal;
+    s.player.transitions.frame_gamma = FrameGammaMode::Disabled;
+    transitions::record_pose_history(s);
+    let p = &mut s.player;
+    p.contact.base_run = Default::default();
+    p.transitions.clear_pose_requests();
+    p.contact.y_speed = Default::default();
+    p.contact.y_direction = 0;
+    p.transitions.bounce = LandingBounce::from_raw(0);
+    p.contact.acceleration_mode = 0;
+    p.grapple_interaction_flags |= 2;
+}
+
+pub(crate) fn struggle_from_draygon(h: &mut impl Host) {
+    let p = &mut h.session_mut().player;
+    if p.grapple == 0xc77e {
+        p.transitions.ordinary = PoseRequestWord::from_raw(0xffff);
+        p.transitions.momentum = MomentumAction::from_raw(0);
+    }
+    let direction = h.inputs().pressed & 0xf00;
+    let sequence = &mut h.session_mut().shared_sequence;
+    if direction != 0 && direction != sequence.value {
+        sequence.value = direction;
+        sequence.stage = sequence.stage.wrapping_add(1);
+        if (sequence.stage.wrapping_sub(60) as i16) >= 0 {
+            release_from_draygon(h);
+        }
+    }
 }

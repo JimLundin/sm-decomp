@@ -184,6 +184,7 @@ pub struct Player {
     pub y_fraction: u16,
     pub grapple_endpoint: Point,
     pub(crate) grapple_flags: u16,
+    pub(crate) grapple_interaction_flags: u16,
     pub(crate) grapple_extension_compatibility: Point,
     pub(crate) grapple_direction: u16,
     pub(crate) grapple_direction_compatibility: u16,
