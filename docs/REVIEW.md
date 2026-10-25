@@ -123,6 +123,12 @@ Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
+- **2026-10-25 04:52 CET (245502b, no new agent commits):** **STALL, fifth in a
+  row: 0 agent commits** since 7867e91 (23:48 CET), now ~5h; agents are not
+  running (escalated; only Jim can restart them). No source diff; Score unchanged
+  `checks 24/44 · legacy 55315 · production 116670 · unsafe 4962 · verification
+  38993`. 06:00 waypoint (A0.4 credits, sm_94 deleted) will miss; recorded next
+  check-in. Next commits unchanged: A0.2 Ceres capture, sm_94 step 1.
 - **2026-10-25 03:51 CET (bed330e, no new agent commits):** **STALL, fourth in a
   row: 0 agent commits** since 7867e91 (00:48 CEST = 23:48 CET), now ~4h; agents
   are not running (escalated; only Jim can restart them). Score unchanged `checks
@@ -170,12 +176,6 @@ Map brief is done (c1fe795); no further map work unless the user asks.
   the milestone plan above (two lanes, bank-retirement unit, scoreboard line,
   waypoints) and made it binding from PLAN.md. Power Bomb route landed (5096059)
   as a non-required segment; checks still 24/44.
-- **2026-10-24 22:52 (98aafd4):** 4 agent source commits since 2754947 (3 code,
-  1 map SVG), 0 docs-only; no stall. **Coverage flat at 24/44** (no recipe commit;
-  Power Bomb route advanced only in PLAN text). Production 117,104 → 116,960 (−144);
-  verification 37,843 → 38,884 (**+1,041, 7× the deletion**); unsafe 4,978 → 4,965;
-  warnings 339 unique (cargo; PROGRESS 378). PLAN.md 202 lines. Map: SVG text only,
-  fits; brief items (a)/(b) untouched for a second check-in.
 
 ## Lane watch (2026-10-24 23:52)
 
