@@ -326,3 +326,9 @@ then crosses ADAD's moving platforms and opens its blue gate. Regenerate with
 The additional `shot-gate-spawn-parameter` regression checks steps 153606..153615:
 the re-closing gate must preserve the projectile definition as its spawn parameter.
 This route does not yet qualify Wave acquisition or advance the required tally.
+
+The `wave-beam` authored route extends `wave-gate` through ADAD's eastern pit
+and overhang into ADDE. Regenerate with
+`python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-wave-beam.inputs --rom rom/sm.smc --route wave-beam`.
+`item-wave` starts before the fresh award, requires its completed message, and
+checks 120 subsequent frames. It does not advance published-TAS timing alignment.

@@ -250,6 +250,7 @@ ROUTES = {
     'ice-beam-settled': (161733, 'd5700c8c8bfd3bcbc9fa5d4d05aa805dd594e98130a0c9d0ade163695201e093'),
     'speed-booster': (148406, 'bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6'),
     'speed-booster-settled': (148526, '9548c119742b6e2ffec65c5c0871403c96915671b83fe8b4c3930cc4bf60a00d'),
+    'wave-beam': (155607, '2f07dc07523b7b542412604337d961292c3c07e3c4f0577d06dd131e1e879c4f'),
     'wave-gate': (153648, '1ce640c865d508ff2aab0f79c043c6da8aff9b74d6a1444d3a994e20d68db123'),
     'power-bomb': (176055, 'b6c0c74ccfe38b10c1ae284472e60bc483060ca0b3fb6f359d57e894283decf7'),
     'power-bomb-room-entry': (174992, '34ab4055b6904d0544e490632fbbb81b87f18d163e55c7c6208ee9e5bd2a7dfb'),
@@ -1372,6 +1373,23 @@ def extend_wave_gate(a):
     return a
 
 
+def extend_wave_pickup(a):
+    """Observed ADAD gate exit -> fresh Wave award and completed message."""
+    assert len(a) == 153648
+    a = list(a)
+    a.extend(_holds('Right+X:45 None:20 None:420 A:1 None:180'))  # Missile ledge.
+    a.extend(_holds('B+Right:31 B+Right+A:70 None:10'))  # Upper runway edge.
+    a.extend(_holds('Right+A:16 Left:2 Left+A:1 Right+A:20'))  # Spike ledge.
+    a.extend(_holds('Left:25 B+Right:6 B+Right+A:28 Left:3 Left+A:1 Right+A:25'))
+    a.extend(_holds('Right+A:17 Left:2 Left+A:14 Right+A:35 None:10'))  # Clear overhang.
+    a.extend(_holds('Right:10 Select:1 None:1 Select:1 Right+X:1 Right:25 Y:1 Right+X:150 None:20'))
+    a.extend(_holds('Right+A+X:55 None:100'))  # ADDE orb approach; ends154995.
+    a.extend(_holds('Right+A:1 Right+A+X:30 None:100'))  # Fresh Wave award.
+    a.extend(_holds('None:300 A:1 None:180'))  # Message dismissal and follow-up.
+    assert len(a) == 155607
+    return a
+
+
 def route_frames(source, name):
     """Reproduce authored controller holds/splices; do not adjust emulator timing.
 
@@ -1390,8 +1408,9 @@ def route_frames(source, name):
         # Retain the saved-slot route through observed contact input 72760.
         # Authored idle exposure, then fresh A presses for Continue and both maps.
         return a[:72761] + _holds('None:1800 A:1 None:300 A:1 None:300 A:1 None:900')
-    if name == 'wave-gate':
-        return extend_wave_gate(extend_ice(extend_redtower(a)))
+    if name in ('wave-gate', 'wave-beam'):
+        route = extend_wave_gate(extend_ice(extend_redtower(a)))
+        return extend_wave_pickup(route) if name == 'wave-beam' else route
     if name == 'norfair-reserve':
         return extend_reserve(extend_redtower(a))
     if name in ('power-bomb-room-entry', 'power-bomb'):

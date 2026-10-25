@@ -41,7 +41,7 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    main pickups, doors/elevators, save/load, death and credits. Report results and rooms.
    Commit only recipes. Preserve input/NMI timing; no guessed lag/offset changes.
    Each adoption names segments exercising changed behavior and downstream effects.
-   Current recipes: 25/44 required checks pass; 19 remain pending. Three additional
+   Current recipes: 26/44 required checks pass; 18 remain pending. Three additional
    checks (in-memory save, upward elevator, Ice return) pass; the corpus is unfinished.
    Measured wait-entry inputs align 9,266 original TAS steps. Options/door timing
    fixes requalified all 24 previously runnable required recipes. At step 9,266,
@@ -50,7 +50,7 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    leaves a 40-count difference at RAM $05B6 on step 9,266 and first gameplay
    divergence at 9,291. A0 remains open; do not offset counters or mask differences.
    Under the accepted fallback, Power Bomb pickup and the closing-gate regression
-   pass. Current: Wave Beam pickup. Regenerate incompatible checkpoints from boot
+   pass. Wave pickup passes; current: Crocomire. Regenerate incompatible checkpoints from boot
    and preserve the checked navigation build.
 2. **Current - lane B bank retirement.** `sm_94` and `sm_91` are deleted.
    Player input, demos, suits, equipment, commands, initialization, Mother Brain

@@ -279,7 +279,14 @@ expect = ["door:A6A1", "door:A618", "door:A3AE"]
 
 [[segment]]
 id = "item-wave"
-pending = "No qualified acquisition-to-completion segment on the current route."
+inputs = "corpus-wave-beam.inputs"
+input_sha256 = "2f07dc07523b7b542412604337d961292c3c07e3c4f0577d06dd131e1e879c4f"
+start_frame = 154995
+frames = 612
+require_hit = ["coroutine.plm.message.completed"]
+after_hits = 120
+expect = ["item:wave", "room:ADDE"]
+after_expectations = 120
 
 [[segment]]
 id = "item-grapple"
