@@ -1585,12 +1585,64 @@ unsafe fn advance_cinematic_object(objects: CinematicObjects, object: u16, game:
             if instruction & 0x8000 == 0 {
                 break instruction;
             }
-            let command = u32::from(instruction) | 0x8b0000;
             let operand = address.wrapping_add(2);
-            address = match objects {
-                Sprites => bank::CallCinematicSprInstr(command, selected, operand, game),
-                Mode7 => bank::CallMode7Instr(command, selected, operand, game),
-                Background => bank::CallCinematicBgInstr(command, selected, operand, game),
+            address = match (objects, instruction) {
+                (Sprites, 0x9438) | (Mode7, 0x956b) | (Background, 0x9698) => {
+                    if !matches!(objects, Mode7) {
+                        checked_word!(game, layout.cleared[0] + offset; = 0);
+                    }
+                    checked_word!(game, layout.instructions + offset; = 0);
+                    0
+                }
+                (Sprites, 0x9442) => {
+                    checked_word!(game, layout.instructions + offset; = operand.wrapping_sub(2));
+                    0
+                }
+                (Sprites, 0x944c | 0x94d6) | (Mode7, 0x9572 | 0x9597) => {
+                    let plane = if matches!(instruction, 0x94d6 | 0x9597) {
+                        3
+                    } else {
+                        1
+                    };
+                    checked_word!(game, layout.instructions + plane * stride + offset;
+                        = (crate::rtl::rom_bank_ptr::<0x8b>(operand, game) as *const u16).read_unaligned());
+                    operand.wrapping_add(2)
+                }
+                (Sprites, 0x9457) | (Mode7, 0x957d) => {
+                    checked_word!(game, layout.instructions + stride + offset;
+                        = if matches!(objects, Sprites) { 0x945f } else { 0x9585 });
+                    operand
+                }
+                (Sprites, 0x94a2 | 0x94bc | 0x94c3 | 0x94cd)
+                | (Mode7, 0x9586 | 0x958d)
+                | (Background, 0x971e) => {
+                    let relative = matches!(instruction, 0x94a2 | 0x94cd);
+                    let skip = matches!(instruction, 0x94c3 | 0x94cd | 0x958d) && {
+                        let counter_at = layout.instructions + 3 * stride + offset;
+                        let counter = checked_word!(game, counter_at;);
+                        checked_word!(game, counter_at; = counter.wrapping_sub(1));
+                        counter == 1
+                    };
+                    if skip {
+                        // Skipping a jump must not read its ROM operand.
+                        operand.wrapping_add(if relative { 1 } else { 2 })
+                    } else {
+                        let target = crate::rtl::rom_ptr_with_bank(rom_bank, operand, game);
+                        if relative {
+                            operand.wrapping_add((*target as i8) as u16)
+                        } else {
+                            (target as *const u16).read_unaligned()
+                        }
+                    }
+                }
+                _ => {
+                    let command = u32::from(instruction) | 0x8b0000;
+                    match objects {
+                        Sprites => bank::CallCinematicSprInstr(command, selected, operand, game),
+                        Mode7 => bank::CallMode7Instr(command, selected, operand, game),
+                        Background => bank::CallCinematicBgInstr(command, selected, operand, game),
+                    }
+                }
             };
             if address == 0 {
                 return;

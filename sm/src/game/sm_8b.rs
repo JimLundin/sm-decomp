@@ -2587,43 +2587,6 @@ crate::game::callback_dispatch! {
     pub unsafe fn CallCinematicSprInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> u16 => ea;
     call (k, j, game); default Unreachable(game) as u16;
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
-    [9147448] CinematicSprInstr_Delete [0] {
-        let v2: i32 = k as i32 >> 1;
-        word! { game, 0; cinematicspr_whattodraw[v2], cinematicspr_instr_ptr[v2] }
-    };
-    [9147458] CinematicSprInstr_Sleep [0] {
-        word!(game.cinematicspr_instr_ptr[(k >> 1)] = (j).wrapping_sub(2));
-    };
-    [9147468] CinematicSprInstr_SetPreInstr [(j).wrapping_add(2)] {
-        word!(game.cinematicspr_preinstr_func[(k >> 1)] = *(RomPtr_8B(j, game) as *mut u16));
-    };
-    [9147479] CinematicSprInstr_ClearPreInstr [j] {
-        word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8b945fi32) as u16);
-    };
-    [9147554] CinematicSprInstr_GotoRel [(j).wrapping_add((*RomPtr_8B(j, game) as i8) as u16)] { };
-    [9147580] CinematicSprInstr_Goto [*(RomPtr_8B(j, game) as *mut u16)] { };
-    [9147587] CinematicSprInstr_DecTimerGoto [] {
-        let v2: i32 = k as i32 >> 1;
-        crate::update_place! { unaligned_word fresh26 [fresh27] = &raw mut (*(ram_ptr!(game, u16; 0x1b7d)).offset(v2 as isize)) => (u16::from_le(fresh26.read_unaligned())).wrapping_sub(1); }
-        if fresh27 == 1 {
-            (j).wrapping_add(2)
-        } else {
-            CinematicSprInstr_Goto(k, j, game)
-        }
-    };
-    [9147597] CinematicSprInstr_DecTimerGotoRel [] {
-        let v2: i32 = k as i32 >> 1;
-        crate::update_place! { unaligned_word fresh24 [fresh25] = &raw mut (*(ram_ptr!(game, u16; 0x1b7d)).offset(v2 as isize)) => (u16::from_le(fresh24.read_unaligned())).wrapping_sub(1); }
-        if fresh25 == 1 {
-            (j).wrapping_add(1)
-        } else {
-            CinematicSprInstr_GotoRel(k, j, game)
-        }
-    };
-    [9147606] CinematicSprInstr_SetTimer [(j).wrapping_add(2)] {
-        word!(game.cinematicspr_goto_timer[(k >> 1)] = *(RomPtr_8B(j, game) as *mut u16));
-    };
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
     [9149665] CinematicSprInstr_9CE1 [] {
         *ram_ptr!(game; 0x69) = 17;
         word! {game; cinematic_function = ((0x8b9d17i32) as u16); cinematic_var6 = 72;
@@ -3499,12 +3462,6 @@ crate::game::address_dispatch! {
 crate::game::callback_dispatch! {
     pub unsafe fn CallCinematicBgInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> u16 => ea;
     call (k, j, game); default Unreachable(game) as u16;
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
-    [9148056] CinematicBgInstr_Delete [0] {
-        let v2: i32 = k as i32 >> 1;
-        word! { game, 0; cinematicbg_arr1[v2], cinematicbg_instr_ptr[v2] }
-    };
-    [9148190] CinematicBgInstr_Goto [*(RomPtr_8C(j, game) as *mut u16)] { };
     @functions [pub unsafe fn (
     k: u16,
     j: u16,
@@ -4033,27 +3990,6 @@ crate::game::address_dispatch! {
 crate::game::callback_dispatch! {
     pub unsafe fn CallMode7Instr(ea: u32, k: u16, j: u16, game: &mut Game) -> u16 => ea;
     call (k, j, game); default Unreachable(game) as u16;
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
-    [9147755] Mode7Instr_Delete [0] { word!(game.mode7_obj_instr_ptr[(k >> 1)] = 0); };
-    [9147762] Mode7Instr_SetPreInstr [(j).wrapping_add(2)] {
-        word!(game.mode7_obj_preinstr_func[(k >> 1)] = *(RomPtr_8B(j, game) as *mut u16));
-    };
-    [9147773] Mode7Instr_ClearPreInstr [j] {
-        word!(game.mode7_obj_preinstr_func[(k >> 1)] = (0x8b9585i32) as u16);
-    };
-    [9147782] Mode7Instr_Goto [*(RomPtr_8B(j, game) as *mut u16)] { };
-    [9147789] Mode7Instr_DecTimerAndGoto [] {
-        let v2: i32 = k as i32 >> 1;
-        crate::update_place! { unaligned_word fresh0 [fresh1] = &raw mut (*(ram_ptr!(game, u16; 0x19ad)).offset(v2 as isize)) => (u16::from_le(fresh0.read_unaligned())).wrapping_sub(1); }
-        if fresh1 == 1 {
-            (j).wrapping_add(2)
-        } else {
-            Mode7Instr_Goto(k, j, game)
-        }
-    };
-    [9147799] Mode7Instr_SetTimer [(j).wrapping_add(2)] {
-        word!(game.mode7_obj_goto_timer[(k >> 1)] = *(RomPtr_8B(j, game) as *mut u16));
-    };
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
     [9151067] PlayBabyMetroidCry1 [] {
         QueueSfx3_Max6(0x23, game);
