@@ -520,3 +520,25 @@ python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-moth
 This regression does not qualify Mother Brain defeat. The longer 10,000-frame
 100% continuation has no oracle differences but does not observe defeat; the
 older any% continuation's later invalid LoROM read also remains unresolved.
+
+
+### Private corpus data in hosted checks
+
+`Segments` restores original-emulator room seeds, their lag/poll/event logs and
+captured inputs from the encrypted `ci-data` release asset. The workflow pins the
+ciphertext SHA-256 before decryption. The password is the hexadecimal SHA-256 of
+`b"sm-decomp-seeds-v1" + ROM bytes`; OpenSSL uses AES-256-CBC with PBKDF2,
+SHA-256 and 200,000 iterations. Existing ROM secrets supply the ROM; no seed key
+secret is needed. Neither the password nor plaintext data is uploaded.
+
+To replace the bundle, run `python tools/ci_seed_data.py pack <new-file>.enc` from
+a checkout containing the current captured data and `rom/sm.smc`. It packs only
+captures referenced by the corpus and checks every captured input's recipe hash.
+Round-trip into an isolated checkout with `restore <file>.enc --sha256 <digest>`;
+then upload only the ciphertext and update the workflow's asset name and digest.
+Existing capture files are never overwritten. The verifier still checks each
+selected input and seed against `movies/segments.toml` before replay.
+
+Seeded rows share a shard only when their `capture:index` matches. Captured prefix
+rows and generated routes retain their existing start frames and full windows;
+they still need prefix replay. Pending checks remain explicitly pending.

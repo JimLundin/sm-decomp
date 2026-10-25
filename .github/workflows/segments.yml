@@ -2,7 +2,7 @@ name: Segments
 
 # Runs movies/segments.toml rows against the oracle on hosted Windows runners.
 # The ROM comes from repository secrets; ROM-derived files (inputs, checkpoints)
-# stay on the runner and are never uploaded.
+# stay private; the seed release asset is encrypted with a ROM-derived key.
 on:
   push:
     branches: [main, 'ci/**']
@@ -73,18 +73,19 @@ jobs:
                   continue
               if 'pending' in r:
                   skipped.append((r['id'], 'pending'))
-              elif not r['inputs'].startswith('corpus-'):
-                  skipped.append((r['id'], f"{r['inputs']} is not route-generated (lsnes lag log or manual capture)"))
               else:
-                  groups.setdefault(r['inputs'], []).append(r)
+                  kind = 'seed' if 'seed' in r else ('route' if r['inputs'].startswith('corpus-') else 'captured')
+                  groups.setdefault((kind, r.get('seed', r['inputs'])), []).append(r)
           shards = []
-          for inputs, members in sorted(groups.items()):
+          for (kind, identity), members in sorted(groups.items()):
               members.sort(key=lambda r: r.get('start_frame', 0))
-              for i in range(0, len(members), 9):
-                  chunk = members[i:i + 9]
-                  shards.append({'name': f"{inputs.removesuffix('.inputs')}-{i // 9}",
-                                 'inputs': inputs,
-                                 'route': inputs.removeprefix('corpus-').removesuffix('.inputs'),
+              width = len(members) if kind == 'seed' else 9
+              for i in range(0, len(members), width):
+                  chunk = members[i:i + width]
+                  inputs = chunk[0]['inputs']
+                  shards.append({'name': f"{kind}-{identity.replace(':', '-').removesuffix('.inputs')}-{i // width}",
+                                 'kind': kind, 'inputs': inputs,
+                                 'route': inputs.removeprefix('corpus-').removesuffix('.inputs') if kind == 'route' else '',
                                  'segments': ' '.join(r['id'] for r in chunk)})
           if not shards:
               raise SystemExit('no runnable rows selected')
@@ -209,8 +210,10 @@ jobs:
           New-Item -ItemType Directory -Force -Path target/verify-dll | Out-Null
           Copy-Item verifier/sm_verify.dll target/verify-dll/
           "LIBRARY_PATH=$((Resolve-Path verifier/sdk/lib).Path)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
-      - name: Prepare ROM, movie and route inputs
+      - name: Prepare ROM and selected corpus inputs
         env:
+          KIND: ${{ matrix.kind }}
+          SEGMENTS: ${{ matrix.segments }}
           ROUTE: ${{ matrix.route }}
           INPUTS: ${{ matrix.inputs }}
           ROM_00: ${{ secrets.SM_ROM_00 }}
@@ -269,6 +272,16 @@ jobs:
               raise SystemExit('wrong ROM')
           pathlib.Path('rom').mkdir(exist_ok=True)
           pathlib.Path('rom/sm.smc').write_bytes(rom)
+          if os.environ['KIND'] != 'route':
+              bundle = pathlib.Path(os.environ['RUNNER_TEMP']) / 'seeds-v1.tar.gz.enc'
+              url = 'https://github.com/JimLundin/sm-decomp/releases/download/ci-data/seeds-v1-eb0d8c215b2a6900.tar.gz.enc'
+              urllib.request.urlretrieve(url, bundle)
+              command = [sys.executable, 'tools/ci_seed_data.py', 'restore', str(bundle),
+                         '--sha256', 'eb0d8c215b2a69003c52c408a83eba555af8520696f3dcaaccaf2e8977e51640']
+              for row in os.environ['SEGMENTS'].split():
+                  command += ['--segment', row]
+              subprocess.run(command, check=True)
+              sys.exit(0)
           movies = tomllib.loads(pathlib.Path('movies/manifest.toml').read_text())['movies']
           movie = next(m for m in movies if m['category'] == 'any%')
           request = urllib.request.Request(movie['download'], headers={'User-Agent': 'sm-decomp-ci'})
