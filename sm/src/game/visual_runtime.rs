@@ -258,7 +258,7 @@ pub(crate) fn draw_player_with_cannon(game: &mut Game) {
     if mode != 0 && mode != 2 {
         player_projectiles::cannon::draw(&mut runtime, cannon_tile, queue_cannon_tiles);
     }
-    runtime.foreign(|game| unsafe { crate::game::samus_animation::Samus_Draw(game) });
+    runtime.foreign(crate::game::samus_animation::Samus_Draw);
     if mode == 2 {
         player_projectiles::cannon::draw(&mut runtime, cannon_tile, queue_cannon_tiles);
     }
@@ -303,4 +303,56 @@ impl Runtime<'_> {
             self.set_byte(target, self.byte(source + usize::from(slot)));
         }
     }
+}
+
+pub(crate) fn draw_player_frame(game: &mut Game) {
+    use crate::game::{player_transitions::state::DrawMode, samus_animation as body};
+    update_arm_cannon(game);
+    let h = &mut Runtime::new(game);
+    match h.session().player.transitions.draw_handler {
+        DrawMode::Normal | DrawMode::Grapple => {
+            let mode = h.session().player.transitions.draw_handler;
+            if mode == DrawMode::Normal {
+                h.foreign(player_projectiles::flare);
+            }
+            let grapple = h.session().player.grapple;
+            if mode == DrawMode::Normal || (grapple.wrapping_add(0x37aa) as i16) >= 0 {
+                h.foreign(draw_player_with_cannon);
+                h.foreign(body::Samus_DrawEchoes);
+            } else {
+                if matches!(grapple, 0xc703 | 0xc759) {
+                    h.foreign(|game| unsafe { crate::game::sm_9b::GrappleBeamFunc_BF1B(game) });
+                }
+                h.foreign(player_projectiles::grapple_flare);
+                h.foreign(draw_player_with_cannon);
+                h.foreign(|game| unsafe {
+                    crate::game::sm_9b::UpdateGrappleBeamTilesAndIncrFlameCtr(game)
+                });
+                if h.session().player.grapple_length != 0 {
+                    h.foreign(crate::game::grapple_swing::draw_rope);
+                }
+            }
+        }
+        DrawMode::ShinesparkEnd => {
+            h.foreign(body::Samus_Draw);
+            for index in [2, 0] {
+                h.foreign(|game| body::Samus_DrawShinesparkCrashEchoes(index, game));
+            }
+        }
+        DrawMode::Frozen => {
+            h.foreign(body::Samus_DrawWhenNotAnimatingOrDying);
+        }
+        DrawMode::Elevator if h.inputs().frame & 1 == 0 => {
+            h.foreign(body::Samus_DrawWhenNotAnimatingOrDying);
+        }
+        DrawMode::Disabled | DrawMode::Empty | DrawMode::Elevator => {}
+        DrawMode::Unknown(_) => {
+            h.foreign(|game| unsafe { crate::rtl::Unreachable(game) });
+        }
+    }
+    h.foreign(player_projectiles::draw_projectiles);
+    h.foreign(|game| unsafe {
+        crate::game::sm_90::Samus_JumpCheck(game);
+        crate::game::sm_90::Samus_ShootCheck(game);
+    });
 }

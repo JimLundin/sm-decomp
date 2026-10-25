@@ -575,7 +575,7 @@ impl Runtime<'_> {
         self.foreign(|game| unsafe { crate::game::sm_a0::CallEnemyGfxDrawHook(routine, game) });
     }
     pub(crate) fn actor_player_scene_legacy(&mut self) {
-        self.foreign(|game| unsafe { crate::game::sm_90::DrawSamusAndProjectiles(game) });
+        self.foreign(crate::game::visual_runtime::draw_player_frame);
     }
     pub(crate) fn actor_draw_compatible(
         &mut self,

@@ -6,8 +6,8 @@ use crate::game::{
     player_transitions::{
         self as transitions,
         state::{
-            BombJump, FrameGammaMode, InputMode, InterruptionAction, JumpKind, LandingBounce,
-            MomentumAction, MovementMode, PoseRequestWord,
+            BombJump, DrawMode, FrameGammaMode, InputMode, InterruptionAction, JumpKind,
+            LandingBounce, MomentumAction, MovementMode, PoseRequestWord,
         },
     },
     session::Session,
@@ -201,7 +201,7 @@ pub(crate) fn consume_crystal_flash(s: &mut Session, frame: u16) {
                 s.player.transitions.crystal_flash_ammo += 1;
             } else {
                 s.player.movement_handler = MovementMode::CrystalFlashFinish;
-                s.player.transitions.draw_handler = 0xeb52;
+                s.player.transitions.draw_handler = DrawMode::Normal;
                 s.player.animation_clock.remaining = 3;
                 s.player.animation_clock.frame = 12;
             }

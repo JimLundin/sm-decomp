@@ -49,6 +49,11 @@ macro_rules! transition_words {
             transition_state::MovementMode
         );
         $f!(
+            0x0a5c,
+            $s.player.transitions.draw_handler,
+            transition_state::DrawMode
+        );
+        $f!(
             0x0a42,
             $s.player.transitions.frame_alpha,
             transition_state::FrameAlphaMode
@@ -225,7 +230,8 @@ macro_rules! scalar_words {
             $f(0xf338+index*2,$($borrow)* $s.sprite_compatibility.disable_flags[index]);
         }
         $f(0xa44,$($borrow)* $s.player.transitions.frame_beta);
-        $f(0xa5c,$($borrow)* $s.player.transitions.draw_handler);
+        $f(0xac8,$($borrow)* $s.player.top_sprite);
+        $f(0xaca,$($borrow)* $s.player.bottom_sprite);
         $f(0xa62,$($borrow)* $s.player.scripted_movement_direction);
         $f(0xa7a,$($borrow)* $s.player.demo.pre_action);
         $f(0xa7c,$($borrow)* $s.player.demo.delay);

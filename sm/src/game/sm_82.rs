@@ -15,7 +15,9 @@ use crate::game::enemy_projectiles::EnableEprojs;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::palette_effects;
 use crate::game::room_mechanisms::set_enabled;
-use crate::game::samus_animation::{Samus_DrawDuringDeathAnim, Samus_DrawWhenNotAnimatingOrDying};
+use crate::game::samus_animation::{
+    Samus_DrawDuringDeathAnim, Samus_DrawStartingDeathAnim, Samus_DrawWhenNotAnimatingOrDying,
+};
 use crate::game::session_runtime::initialize_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_8b::{
@@ -24,8 +26,7 @@ use crate::game::sm_8b::{
 };
 use crate::game::sm_8f::{PauseHook_DraygonRoom, UnpauseHook_DraygonRoom};
 use crate::game::sm_9b::{
-    DrawSamusStartingDeathAnim_, GameState_24_SamusNoHealth_Explosion_Helper,
-    HandleSamusDeathSequence, StartSamusDeathAnimation,
+    GameState_24_SamusNoHealth_Explosion_Helper, HandleSamusDeathSequence, StartSamusDeathAnimation,
 };
 use crate::game::sm_80::{
     ClearOamExt, ClearTimerRam, ClearUnusedOam, DisableIrqInterrupts, DrawTimer,
@@ -3929,7 +3930,7 @@ pub unsafe fn GameState_21_SamusNoHealth(game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn GameState_22_SamusNoHealth_Dying(game: &mut Game) -> CoroutineRet {
     unsafe {
-        DrawSamusStartingDeathAnim_(game);
+        Samus_DrawStartingDeathAnim(game);
         let v0: bool = (word!(game.g_word_7E0DE8 -= 1, reread) & 0x8000) != 0;
         if word!(game.g_word_7E0DE8) == 0 || v0 {
             word!(game.game_state += 1);

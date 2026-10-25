@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 use super::{
     effects::Host,
-    state::{FrameAlphaMode, InputMode},
+    state::{DrawMode, FrameAlphaMode, InputMode},
 };
 use crate::game::{
     session::Session,
@@ -99,13 +99,13 @@ pub(crate) fn initialize_scene(h: &mut impl Host, set: u16, scene: u16) -> bool 
     }
     let shinespark = matches!((set, scene), (2, 1) | (3, 0));
     if shinespark {
-        h.session_mut().player.transitions.draw_handler = 0xeb52;
+        h.session_mut().player.transitions.draw_handler = DrawMode::Normal;
         super::start_shinespark(h);
     }
     h.session_mut().player.pose = pose;
     super::refresh_pose(h);
     if !shinespark {
-        h.session_mut().player.transitions.draw_handler = 0xeb52;
+        h.session_mut().player.transitions.draw_handler = DrawMode::Normal;
     }
     false
 }

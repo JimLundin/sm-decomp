@@ -1,4 +1,5 @@
 //! Legacy content and effect adapters for owned player transitions.
+use crate::game::player_transitions::state::DrawMode;
 use crate::game::player_transitions::xray::{self, BeamPhase};
 use crate::{
     game::{
@@ -232,7 +233,7 @@ impl Runtime<'_> {
         let scene = self.word(ram::demo_scene);
         if demo::initialize_scene(self, set, scene) {
             self.owned_call(crate::game::player_transitions::equipment::face_forward);
-            self.session_mut().player.transitions.draw_handler = 0xeb52;
+            self.session_mut().player.transitions.draw_handler = DrawMode::Normal;
         }
         demo::finish_setup(self);
         self.foreign(crate::game::visual_runtime::update_beam_tiles_and_palette);
@@ -314,7 +315,7 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
         let t = &mut rt.session_mut().player.transitions;
         t.frame_alpha = FrameAlphaMode::Empty;
         t.frame_beta = if ceres { 0xe8dc } else { 0xe86a };
-        t.draw_handler = 0xeb52;
+        t.draw_handler = DrawMode::Normal;
         t.momentum = MomentumAction::from_raw(if ceres { u16::MAX } else { 0 });
         t.interruption = InterruptionAction::from_raw(0);
         t.hurt = HurtAction::from_raw(0);

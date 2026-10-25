@@ -4,16 +4,16 @@
 
 | Measure | Count |
 | --- | ---: |
-| Production Rust lines* | 115957 |
-| Legacy bank Rust lines | 51744 |
+| Production Rust lines* | 115876 |
+| Legacy bank Rust lines | 51664 |
 | Verification Rust lines | 38936 |
-| Total Rust | 154893 |
-| Lines containing `unsafe` | 4648 |
+| Total Rust | 154812 |
+| Lines containing `unsafe` | 4627 |
 | Warnings (no-default library) | 367 |
 | Required checkpoint checks passing | 27/44 |
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-**Room seeds captured:** 197 any% entries. Next: qualify import and replay; these captures are not yet passing coverage checks.
+**Samus drawing consolidated:** production -81, legacy -80, unsafe -21. Four changed rows + four smoke rows pass.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)

@@ -23,7 +23,7 @@ fn stand(s: &mut Session) {
 }
 fn frozen(s: &mut Session) {
     handlers(s, 0xe713, 0xe8cd);
-    s.player.transitions.draw_handler = 0xec1d;
+    s.player.transitions.draw_handler = DrawMode::Frozen;
 }
 fn spin_sound(pose: u16) -> u16 {
     match pose {
@@ -108,7 +108,7 @@ pub(crate) fn command<H: Host + player_projectiles::host::Host>(
             let p = &mut h.session_mut().player;
             p.transitions.frame_beta = 0xe8ec;
             p.movement_handler = MovementMode::Normal;
-            p.transitions.draw_handler = 0xec14;
+            p.transitions.draw_handler = DrawMode::Elevator;
             p.transitions.input_mode = InputMode::Normal;
             p.transitions.bomb_jump = BombJump::from_raw(0);
             1
@@ -120,7 +120,7 @@ pub(crate) fn command<H: Host + player_projectiles::host::Host>(
             refresh_pose(h);
             samus_palette::load_suit(h, PaletteBuffer::Current);
             let p = &mut h.session_mut().player;
-            p.transitions.draw_handler = 0xeb52;
+            p.transitions.draw_handler = DrawMode::Normal;
             p.history.previous.pose = p.pose;
             p.history.last_different.pose = p.pose;
             p.history.previous.movement_and_facing = p.movement_and_facing;
@@ -148,11 +148,11 @@ pub(crate) fn command<H: Host + player_projectiles::host::Host>(
             1
         }
         0xa => {
-            h.session_mut().player.transitions.draw_handler = 0xe90e;
+            h.session_mut().player.transitions.draw_handler = DrawMode::Disabled;
             0
         }
         0xb => {
-            h.session_mut().player.transitions.draw_handler = 0xeb52;
+            h.session_mut().player.transitions.draw_handler = DrawMode::Normal;
             handlers(h.session_mut(), 0xe695, 0xe725);
             1
         }
@@ -292,5 +292,5 @@ pub(crate) fn cancel_grapple(h: &mut impl Host) {
     let beams = h.session().inventory.beams.active;
     samus_palette::write_beam_palette(h, beams & 0xfff);
     h.session_mut().player.grapple = 0xc4f0;
-    h.session_mut().player.transitions.draw_handler = 0xeb52;
+    h.session_mut().player.transitions.draw_handler = DrawMode::Normal;
 }

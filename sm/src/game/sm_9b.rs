@@ -18,7 +18,6 @@ use crate::game::grapple_swing::{
 };
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::samus_animation::DrawSamusSuitExploding;
-use crate::game::samus_animation::Samus_DrawStartingDeathAnim;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_80::{Multiply16x16, QueueSfx1_Max1, QueueSfx1_Max6, QueueSfx1_Max15};
 use crate::game::sm_90::{Samus_GetBottom_R18, Samus_PostGrappleCollisionDetect};
@@ -78,11 +77,6 @@ pub unsafe fn StartSamusDeathAnimation(game: &mut Game) {
         word! {game; samus_anim_frame_skip = 0; samus_anim_frame = v1; }
         word!(game.samus_x_pos -= word!(game.layer1_x_pos));
         word!(game.samus_y_pos -= word!(game.layer1_y_pos));
-    }
-}
-pub unsafe fn DrawSamusStartingDeathAnim_(game: &mut Game) {
-    unsafe {
-        Samus_DrawStartingDeathAnim(game);
     }
 }
 pub unsafe fn HandleSamusDeathSequence(game: &mut Game) -> u16 {

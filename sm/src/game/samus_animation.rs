@@ -1,6 +1,7 @@
 //! Samus animation, sprite selection, echoes, atmospheric graphics and tile uploads.
 use crate::game::player_transitions as pt;
 use crate::game::session_runtime::Runtime;
+use crate::game::visual_host::{Content, Effects, Record, Source};
 
 use crate::game::music::{PlayRoomMusicTrackAfterAFrames, QueueMusic_DelayedY};
 pub use crate::game::prelude::*;
@@ -98,211 +99,155 @@ unsafe fn bottom_is_visible(game: &mut Game) -> u8 {
     }
 }
 
-pub unsafe fn Samus_Draw(game: &mut Game) {
-    unsafe {
-        let knockback_timer = u16::from_le_bytes([game.g_ram[0x18aa], game.g_ram[0x18ab]]);
-        let invincibility_timer = u16::from_le_bytes([game.g_ram[0x18a8], game.g_ram[0x18a9]]);
-        let shine_timer = u16::from_le_bytes([game.g_ram[0xa68], game.g_ram[0xa69]]);
-        let nmi_frame = u16::from_le_bytes([game.g_ram[0x5b6], game.g_ram[0x5b7]]);
-        if knockback_timer != 0
-            || invincibility_timer == 0
-            || shine_timer != 0
-            || nmi_frame & 1 == 0
-        {
-            let doubled_pose = game.samus_pose().wrapping_mul(2);
-            let frame = game.samus_anim_frame();
-            let top_base = game.read_rom_word(0x929263, usize::from(game.samus_pose()) * 2);
-            let top_spritemap = frame.wrapping_add(top_base);
-            game.g_ram[0xac8..0xaca].copy_from_slice(&top_spritemap.to_le_bytes());
-            let position = Samus_CalcSpritemapPos(game.samus_pose().wrapping_mul(2), game);
-            DrawSamusSpritemap(top_spritemap, position.k, position.j, game);
-            if bottom_is_visible(game) & 1 != 0 {
-                // The lower table keeps the captured, word-wrapped pose; frame and position stay live.
-                let frame = game.samus_anim_frame();
-                let bottom_base = game.read_rom_word(0x92945d, usize::from(doubled_pose >> 1) * 2);
-                let bottom_spritemap = frame.wrapping_add(bottom_base);
-                game.g_ram[0xaca..0xacc].copy_from_slice(&bottom_spritemap.to_le_bytes());
-                let x_pos = u16::from_le_bytes([game.g_ram[0xb04], game.g_ram[0xb05]]);
-                let y_pos = u16::from_le_bytes([game.g_ram[0xb06], game.g_ram[0xb07]]);
-                DrawSamusSpritemap(bottom_spritemap, x_pos, y_pos, game);
-            }
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Body {
+    Normal,
+    Frozen,
+    Death,
+}
+
+fn draw_body(game: &mut Game, mode: Body) {
+    let h = &mut Runtime::new(game);
+    let p = &h.session().player;
+    if mode != Body::Normal
+        || p.knockback_timer != 0
+        || p.invincibility == 0
+        || p.shine_timer != 0
+        || h.inputs().frame & 1 == 0
+    {
+        let doubled_pose = p.pose.wrapping_mul(2);
+        let top = sprite_index(h, 0x929263, p.pose, mode == Body::Normal);
+        if mode == Body::Normal {
+            h.session_mut().player.top_sprite = top;
         }
-        SetSamusTilesDefsForCurAnim(game);
+        let position = h.foreign(|game| unsafe { Samus_CalcSpritemapPos(doubled_pose, game) });
+        let (x, y) = if mode == Body::Death {
+            body_position(h, mode)
+        } else {
+            (position.k, position.j)
+        };
+        h.draw_samus_sprite(top, x, y);
+        if h.foreign(|game| unsafe { bottom_is_visible(game) }) & 1 != 0 {
+            // The wrapped pose is captured before top drawing; frame and position stay live.
+            let bottom = sprite_index(h, 0x92945d, doubled_pose >> 1, mode == Body::Normal);
+            if mode == Body::Normal {
+                h.session_mut().player.bottom_sprite = bottom;
+            }
+            let (x, y) = body_position(h, mode);
+            h.draw_samus_sprite(bottom, x, y);
+        }
+    }
+    queue_body_tiles(h);
+}
+
+fn sprite_index(h: &Runtime<'_>, table: u32, pose: u16, little_endian: bool) -> u16 {
+    let frame = h.session().player.animation_clock.frame;
+    let record = h.table(Source::Loaded, table);
+    let offset = usize::from(pose) * 2;
+    let base = if little_endian {
+        u16::from_le_bytes(record.bytes(offset))
+    } else {
+        record.native_word(offset)
+    };
+    frame.wrapping_add(base)
+}
+
+fn body_position(h: &Runtime<'_>, mode: Body) -> (u16, u16) {
+    // Published coordinates can be changed by drawing before the bottom-half read.
+    let (x, y) = (h.word(0xb04), h.word(0xb06));
+    if mode == Body::Death {
+        (
+            x.wrapping_add(h.inputs().camera_x),
+            y.wrapping_add(h.inputs().camera_y),
+        )
+    } else {
+        (x, y)
     }
 }
 
-pub unsafe fn Samus_DrawEchoes(game: &mut Game) {
-    unsafe {
-        if (word!(game.speed_echoes_index) & 0x8000) == 0 {
-            if (word!(game.speed_boost_counter) & 0xff00) == 1024 {
-                if word!(game.speed_echo_xpos[1]) != 0 {
-                    crate::game::projectile_presentation_ram::echo(
-                        2,
-                        game,
-                        &mut crate::game::projectile_presentation_ram::Native,
-                    );
-                }
-                if word!(game.speed_echo_xpos[0]) != 0 {
-                    crate::game::projectile_presentation_ram::echo(
-                        0,
-                        game,
-                        &mut crate::game::projectile_presentation_ram::Native,
-                    );
-                }
-            }
-            return;
+pub fn Samus_Draw(game: &mut Game) {
+    draw_body(game, Body::Normal);
+}
+pub fn Samus_DrawDuringDeathAnim(game: &mut Game) {
+    draw_body(game, Body::Death);
+}
+pub fn Samus_DrawWhenNotAnimatingOrDying(game: &mut Game) {
+    draw_body(game, Body::Frozen);
+}
+pub fn Samus_DrawStartingDeathAnim(game: &mut Game) {
+    pt::advance_animation(&mut Runtime::new(game), pt::state::AnimationStep::Death);
+    Samus_DrawDuringDeathAnim(game);
+}
+
+pub fn Samus_DrawEchoes(game: &mut Game) {
+    let h = &mut Runtime::new(game);
+    let converging = h.session().projectiles.echoes.index & 0x8000 != 0;
+    if !converging && h.session().player.contact.speed_boost & 0xff00 != 0x400 {
+        return;
+    }
+    for index in [1, 0] {
+        if h.session().projectiles.echoes.x[index] == 0 {
+            continue;
         }
-        for i in (0i32..=2).rev().step_by(2) {
-            let v1: i32 = i >> 1;
-            if word!(game.speed_echo_xpos[v1]) != 0 {
-                let v2: u16 = word!(game.speed_echo_ypos[v1]);
-                let mut v3: u16 = 0;
-                if v2 != word!(game.samus_y_pos) {
-                    if ((v2) as i16).wrapping_sub((word!(game.samus_y_pos)) as i16) < 0 {
-                        v3 = (v2).wrapping_add(2);
-                    } else {
-                        v3 = (v2).wrapping_sub(2);
-                    }
-                    word!(game.speed_echo_ypos[v1] = v3);
-                }
-                let mut skip_echo: bool = if (word!(game.speed_echo_xspeed[v1]) & 0x8000) != 0 {
-                    let v5: u16 = (word!(game.speed_echo_xspeed[v1]))
-                        .wrapping_add(word!(game.speed_echo_xpos[v1]));
-                    word!(game.speed_echo_xpos[v1] = v5);
-                    (((v5) as i16).wrapping_sub((word!(game.samus_x_pos)) as i16) < 0)
-                        && ({
-                            word!(game.speed_echo_xpos[v1] = 0);
-                            true
-                        })
+        if converging {
+            let s = h.session_mut();
+            let e = &mut s.projectiles.echoes;
+            if e.y[index] != s.player.y {
+                e.y[index] = if (e.y[index].wrapping_sub(s.player.y) as i16) < 0 {
+                    e.y[index].wrapping_add(2)
                 } else {
-                    let v4: u16 = (word!(game.speed_echo_xspeed[v1]))
-                        .wrapping_add(word!(game.speed_echo_xpos[v1]));
-                    word!(game.speed_echo_xpos[v1] = v4);
-                    (((v4) as i16).wrapping_sub((word!(game.samus_x_pos)) as i16) >= 0)
-                        && ({
-                            word!(game.speed_echo_xpos[v1] = 0);
-                            true
-                        })
+                    e.y[index].wrapping_sub(2)
                 };
-                if !(skip_echo) {
-                    crate::game::projectile_presentation_ram::echo(
-                        i as u16,
-                        game,
-                        &mut crate::game::projectile_presentation_ram::Native,
-                    );
-                }
+            }
+            e.x[index] = e.x[index].wrapping_add(e.x_speed[index]);
+            let left = (e.x[index].wrapping_sub(s.player.x) as i16) < 0;
+            if left == (e.x_speed[index] & 0x8000 != 0) {
+                e.x[index] = 0;
+                continue;
             }
         }
-        if word!(game.speed_echo_xpos[1]) == 0 && word!(game.speed_echo_xpos[0]) == 0 {
-            word!(game.speed_echoes_index = 0);
-        }
+        h.foreign(|game| {
+            crate::game::projectile_presentation_ram::echo(
+                (index * 2) as u16,
+                game,
+                &mut crate::game::projectile_presentation_ram::Native,
+            )
+        });
+    }
+    if converging && h.session().projectiles.echoes.x[..2] == [0, 0] {
+        h.session_mut().projectiles.echoes.index = 0;
     }
 }
 
-pub unsafe fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
-    unsafe {
-        if (word!(game.nmi_frame_counter_word) & 1) != 0 {
-            let a: u16 = (word!(game.samus_anim_frame)).wrapping_add(crate::rtl::rom_table_word!(
-                game,
-                0x929263,
-                word!(game.samus_pose) as isize
-            ));
-            let v2: i16 = (word!(game.speed_echo_ypos[(k >> 1)]) as i32
-                - (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
-                    .offset(word!(game.samus_pose) as isize))
-                .y_offset_to_gfx as i32
-                - word!(game.layer1_y_pos) as i32) as i16;
-            if v2 >= 0 && v2 as i32 - 248i32 & 0x8000 != 0 {
-                DrawSamusSpritemap(
-                    a,
-                    (word!(game.speed_echo_xpos[(k >> 1)])).wrapping_sub(word!(game.layer1_x_pos)),
-                    v2 as u16,
-                    game,
-                );
-                if bottom_is_visible(game) & 1 != 0 {
-                    let v5: u16 =
-                        (word!(game.samus_anim_frame)).wrapping_add(crate::rtl::rom_table_word!(
-                            game,
-                            0x92945d,
-                            word!(game.samus_pose) as isize
-                        ));
-                    DrawSamusSpritemap(
-                        v5,
-                        (word!(game.speed_echo_xpos[(k >> 1)]))
-                            .wrapping_sub(word!(game.layer1_x_pos)),
-                        v2 as u16,
-                        game,
-                    );
-                }
-            }
-        }
+pub fn Samus_DrawShinesparkCrashEchoes(k: u16, game: &mut Game) {
+    let h = &mut Runtime::new(game);
+    if h.inputs().frame & 1 == 0 {
+        return;
+    }
+    let top = sprite_index(h, 0x929263, h.session().player.pose, false);
+    let height = h
+        .table(Source::Native, 0x91b629)
+        .byte(usize::from(h.session().player.pose) * 8 + 4);
+    let y = h
+        .word(0xab8 + usize::from(k & !1))
+        .wrapping_sub(u16::from(height))
+        .wrapping_sub(h.inputs().camera_y);
+    if !(0..248).contains(&y) {
+        return;
+    }
+    let x = h
+        .word(0xab0 + usize::from(k & !1))
+        .wrapping_sub(h.inputs().camera_x);
+    h.draw_samus_sprite(top, x, y);
+    if h.foreign(|game| unsafe { bottom_is_visible(game) }) & 1 != 0 {
+        let bottom = sprite_index(h, 0x92945d, h.session().player.pose, false);
+        let x = h
+            .word(0xab0 + usize::from(k & !1))
+            .wrapping_sub(h.inputs().camera_x);
+        h.draw_samus_sprite(bottom, x, y);
     }
 }
 
-pub unsafe fn Samus_DrawStartingDeathAnim(game: &mut Game) {
-    unsafe {
-        pt::advance_animation(&mut Runtime::new(game), pt::state::AnimationStep::Death);
-        Samus_DrawDuringDeathAnim(game);
-    }
-}
-pub unsafe fn Samus_DrawDuringDeathAnim(game: &mut Game) {
-    unsafe {
-        let v1: u16 = (2u16).wrapping_mul(word!(game.samus_pose));
-        let a: u16 = (word!(game.samus_anim_frame)).wrapping_add(crate::rtl::rom_table_word!(
-            game,
-            0x929263,
-            word!(game.samus_pose) as isize
-        ));
-        Samus_CalcSpritemapPos((2u16).wrapping_mul(word!(game.samus_pose)), game);
-        DrawSamusSpritemap(
-            a,
-            (word!(game.layer1_x_pos)).wrapping_add(word!(game.samus_spritemap_x_pos)),
-            (word!(game.layer1_y_pos)).wrapping_add(word!(game.samus_spritemap_y_pos)),
-            game,
-        );
-        let R36: u16 = v1;
-        if bottom_is_visible(game) & 1 != 0 {
-            DrawSamusSpritemap(
-                (word!(game.samus_anim_frame)).wrapping_add(crate::rtl::rom_table_word!(
-                    game,
-                    0x92945d,
-                    (R36 >> 1) as isize
-                )),
-                (word!(game.layer1_x_pos)).wrapping_add(word!(game.samus_spritemap_x_pos)),
-                (word!(game.layer1_y_pos)).wrapping_add(word!(game.samus_spritemap_y_pos)),
-                game,
-            );
-        }
-        SetSamusTilesDefsForCurAnim(game);
-    }
-}
-pub unsafe fn Samus_DrawWhenNotAnimatingOrDying(game: &mut Game) {
-    unsafe {
-        let mut v0: PairU16 = PairU16 { k: 0, j: 0 };
-        let v2: u16 = (2u16).wrapping_mul(word!(game.samus_pose));
-        let a: u16 = (word!(game.samus_anim_frame)).wrapping_add(crate::rtl::rom_table_word!(
-            game,
-            0x929263,
-            word!(game.samus_pose) as isize
-        ));
-        v0 = Samus_CalcSpritemapPos((2u16).wrapping_mul(word!(game.samus_pose)), game);
-        DrawSamusSpritemap(a, v0.k, v0.j, game);
-        let R36: u16 = v2;
-        if bottom_is_visible(game) & 1 != 0 {
-            DrawSamusSpritemap(
-                (word!(game.samus_anim_frame)).wrapping_add(crate::rtl::rom_table_word!(
-                    game,
-                    0x92945d,
-                    (R36 >> 1) as isize
-                )),
-                word!(game.samus_spritemap_x_pos),
-                word!(game.samus_spritemap_y_pos),
-                game,
-            );
-        }
-        SetSamusTilesDefsForCurAnim(game);
-    }
-}
 pub unsafe fn Samus_CalcSpritemapPos(k: u16, game: &mut Game) -> PairU16 {
     unsafe {
         let mut v1: PairU16 = PairU16 { k: 0, j: 0 };
@@ -319,37 +264,26 @@ pub unsafe fn Samus_CalcSpritemapPos(k: u16, game: &mut Game) -> PairU16 {
     }
 }
 
-crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
-    pub struct SamusTileAnimationDefs {
-        pub top_half_idx, top_half_pos, bottom_half_idx, bottom_half_pos: u8;
-    }
-}
-#[inline]
-unsafe fn get_SamusTileAnimationDefs(a: u16, game: &mut Game) -> *mut SamusTileAnimationDefs {
-    unsafe { RomPtr((0x920000u32) | ((a) as u32), game) as *mut SamusTileAnimationDefs }
-}
-pub unsafe fn SetSamusTilesDefsForCurAnim(game: &mut Game) {
-    unsafe {
-        let v0: u16 = (4 * word!(game.samus_anim_frame) as i32
-            + crate::rtl::rom_table_word!(game, 0x92d94e, word!(game.samus_pose) as isize) as i32)
-            as u16;
-        let AD = get_SamusTileAnimationDefs(v0, game);
-        word!(
-            game.nmi_copy_samus_top_half_src = (7 * (*AD).top_half_pos as i32
-                + crate::rtl::rom_table_word!(game, 0x92d91e, (*AD).top_half_idx as isize) as i32)
-                as u16
+fn queue_body_tiles(h: &mut Runtime<'_>) {
+    let p = &h.session().player;
+    let cursor = h
+        .table(Source::Loaded, 0x92d94e)
+        .native_word(usize::from(p.pose) * 2)
+        .wrapping_add(p.animation_clock.frame.wrapping_mul(4));
+    let definition = h.legacy_native_record(0x92, cursor);
+    let top = (u16::from(definition.byte(1)) * 7).wrapping_add(
+        h.table(Source::Loaded, 0x92d91e)
+            .native_word(usize::from(definition.byte(0)) * 2),
+    );
+    h.write_word_le(top, 0x71f);
+    h.set_byte(0x71d, 1);
+    if definition.byte(2) != 255 {
+        let bottom = (u16::from(definition.byte(3)) * 7).wrapping_add(
+            h.table(Source::Loaded, 0x92d938)
+                .native_word(usize::from(definition.byte(2)) * 2),
         );
-        byte!(@pointer ram_ptr!(game, u16; 0x71d); 0) = 1;
-        if (*AD).bottom_half_idx != 255 {
-            word!(
-                game.nmi_copy_samus_bottom_half_src = (7 * (*AD).bottom_half_pos as i32
-                    + crate::rtl::rom_table_word!(game, 0x92d938, (*AD).bottom_half_idx as isize)
-                        as i32) as u16
-            );
-            byte!(@pointer ram_ptr!(game, u16; 0x71d); 1) = 1;
-        }
+        h.write_word_le(bottom, 0x721);
+        h.set_byte(0x71e, 1);
     }
 }
 pub unsafe fn PlaySamusFanfare(game: &mut Game) -> u8 {

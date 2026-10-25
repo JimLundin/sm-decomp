@@ -52,7 +52,7 @@ pub struct PlayerTransitions {
     pub frame_alpha: FrameAlphaMode,
     pub frame_beta: u16,
     pub frame_gamma: FrameGammaMode,
-    pub draw_handler: u16,
+    pub draw_handler: DrawMode,
     pub knockback: u16,
     pub bomb_jump: BombJump,
     pub input_mode: InputMode,
@@ -188,6 +188,10 @@ mode_word!(MovementMode {
     ShinesparkVertical = 0xd0ab,
     ShinesparkDiagonal = 0xd0d7,
     ShinesparkProjectileResponse = 0xf04b,
+});
+mode_word!(DrawMode {
+    Normal = 0xeb52, Grapple = 0xeb86, ShinesparkEnd = 0xebf3,
+    Elevator = 0xec14, Frozen = 0xec1d, Disabled = 0xe90e, Empty = 0xebf2,
 });
 mode_word!(InputMode {
     Normal = 0xe913, Demo = 0xe91d, AutoJump = 0xe926,

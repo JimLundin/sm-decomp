@@ -21,9 +21,7 @@ use crate::game::sm_88::{
     CinematicFunction_Intro_Func133, DisableHdmaObjects, EnableHdmaObjects,
     SpawnTitleScreenGradientObjs, WaitUntilEndOfVblankAndClearHdma,
 };
-use crate::game::sm_90::{
-    DrawSamusAndProjectiles, HandleControllerInputForGamePhysics, HandleSamusMovementAndPause,
-};
+use crate::game::sm_90::{HandleControllerInputForGamePhysics, HandleSamusMovementAndPause};
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]
@@ -766,12 +764,12 @@ pub unsafe fn DrawIntroSprites(game: &mut Game) {
     unsafe {
         if word!(game.cinematic_var15) != 0 {
             if (word!(game.cinematic_var15) & 0x8000) != 0 {
-                DrawSamusAndProjectiles(game);
+                crate::game::visual_runtime::draw_player_frame(game);
                 draw_projectiles(game);
                 DrawCinematicSpriteObjects_Intro(game);
             } else {
                 DrawCinematicSpriteObjects_Intro(game);
-                DrawSamusAndProjectiles(game);
+                crate::game::visual_runtime::draw_player_frame(game);
                 draw_projectiles(game);
             }
         } else {

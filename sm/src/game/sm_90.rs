@@ -6,10 +6,7 @@ use crate::game::player_update::{self, BetaMode, MovementStep};
 use crate::game::player_projectiles::initialize;
 pub use crate::game::prelude::*;
 use crate::game::projectile_initialization::Initialization;
-use crate::game::samus_animation::{
-    PlaySamusFanfare, Samus_Draw, Samus_DrawEchoes, Samus_DrawShinesparkCrashEchoes,
-    Samus_DrawWhenNotAnimatingOrDying,
-};
+use crate::game::samus_animation::PlaySamusFanfare;
 use crate::game::session_runtime::Runtime;
 use crate::game::{
     player_collision::operations as player_collision, session_runtime::Runtime as CollisionRuntime,
@@ -24,8 +21,6 @@ use crate::game::enemy_projectiles::EnableEprojs;
 use crate::game::explosion_window::spawn_crystal_flash;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::palette_effects;
-use crate::game::player_projectiles::draw_projectiles;
-use crate::game::sm_9b::{GrappleBeamFunc_BF1B, UpdateGrappleBeamTilesAndIncrFlameCtr};
 use crate::game::sm_80::{
     DrawTimer, HandleAutoscrolling_X, HandleAutoscrolling_Y,
     HandleScrollingWhenTriggeringScrollDown, HandleScrollingWhenTriggeringScrollLeft,
@@ -34,7 +29,6 @@ use crate::game::sm_80::{
     QueueSfx3_Max15,
 };
 
-use crate::game::grapple_swing::draw_rope as HandleGrappleBeamGfx;
 use crate::game::projectile_geometry::sine_offset;
 use crate::game::session_runtime::xray_input;
 use crate::game::sm_88::EnableHdmaObjects;
@@ -743,73 +737,6 @@ pub unsafe fn Samus_JumpCheck(game: &mut Game) {
         if update_health_reference {
             word!(game.samus_prev_health_for_flash = word!(game.samus_health));
         };
-    }
-}
-pub unsafe fn DrawSamusAndProjectiles(game: &mut Game) {
-    unsafe {
-        SamusDrawSprites(game);
-        draw_projectiles(game);
-        Samus_JumpCheck(game);
-        Samus_ShootCheck(game);
-    }
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallSamusDrawHandler(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [9497426] SamusDrawHandler_Default [] {
-        crate::game::player_projectiles::flare(game);
-        sub_90EB55(game);
-    };
-    [9497478] sub_90EB86 [] {
-        if word!(game.grapple_beam_function) as i32 + 0x37aa & 0x8000 == 0 {
-            sub_90EB55(game);
-            return;
-        }
-        if word!(game.grapple_beam_function) as i32 == 0x9bc703 & 0xffff
-            || word!(game.grapple_beam_function) as i32 == 0x9bc759 & 0xffff
-        {
-            GrappleBeamFunc_BF1B(game);
-        }
-        crate::game::player_projectiles::grapple_flare(game);
-        crate::game::visual_runtime::draw_player_with_cannon(game);
-        UpdateGrappleBeamTilesAndIncrFlameCtr(game);
-        if word!(game.grapple_beam_length) == 0 {
-            return;
-        }
-        HandleGrappleBeamGfx(game);
-    };
-    [9497587] Samus_DrawHandler_EndOfShinespark [] {
-        Samus_Draw(game);
-        for i in (0i32..=2).rev().step_by(2) {
-            Samus_DrawShinesparkCrashEchoes(i as u16, game);
-        }
-    };
-    [9497620] SamusDisplayHandler_UsingElevator [] {
-        if (word!(game.nmi_frame_counter_word) & 1) == 0 {
-            SamusDisplayHandler_SamusReceivedFatal(game);
-        }
-    };
-    [9497629] SamusDisplayHandler_SamusReceivedFatal [] {
-        Samus_DrawWhenNotAnimatingOrDying(game);
-    };
-    @external {
-        9496846 | 9497586 => [()];
-    }
-}
-pub unsafe fn SamusDrawSprites(game: &mut Game) {
-    unsafe {
-        crate::game::visual_runtime::update_arm_cannon(game);
-        CallSamusDrawHandler(
-            ((word!(game.samus_draw_handler)) as u32) | (0x900000u32),
-            game,
-        );
-    }
-}
-pub unsafe fn sub_90EB55(game: &mut Game) {
-    crate::game::visual_runtime::draw_player_with_cannon(game);
-    unsafe {
-        Samus_DrawEchoes(game);
     }
 }
 pub fn Samus_SetRadius(game: &mut Game) {
