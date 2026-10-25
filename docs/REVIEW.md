@@ -174,8 +174,23 @@ integration agent rebased the six stranded B commits (sm_88 deletion, sm_8b setu
 frame-end + deletion, sm_81 file menu + map window) onto main as `ci/b-integrate`
 (d9e9269; legacy 46,334, production 115,013, unsafe 4,239; warnings 294) and pushed it;
 Segments run 40229103191 runs the full corpus and auto-lands on green. Windows B agents:
-do not re-push those commits; start new B work from main after it lands. A red run goes
+do not re-push those commits; start new B work at once (see the 21:52 note below). A red run goes
 back to the integration agent.
+**B landing stall, 2nd check-in (21:52).** No B commit on main since 3d80523 (18:25) and no
+new B code anywhere since 20:03: the 21:10 "start new B work from main after it lands" note
+parked the B agents, and `ci/b-integrate` **cannot auto-land**: rebasing onto main conflicts
+in `sm_88.rs` (delete vs M1a strip; take the delete) and `sm_8b.rs` (e4222b7 vs M1a, real
+content). Its full-corpus run (40229103191, 23/37 green) will end in a refused land. Now:
+(1) the B2 agent rebases `ci/b-integrate` onto main: keep the B side in `sm_8b.rs`, rerun
+`tools/codemod/strip_unsafe_fixpoint.py`, push; rows only (876fbfb), not the full corpus.
+(2) B1 and B3 do not wait: branch from the `ci/b-integrate` tip (or main for untouched
+files) and push `ci/b1-*`/`ci/b3-*` now; rebase after it lands (git drops landed patches).
+Next: B1 `sm_81` next menu family; B2 `sm_8b` after the rebase; B3 `sm_8f`.
+**Lane A (21:52):** credits (43/44, 13 rows, 51,276 frames) is on `ci/windows-credits`, run
+40232721139. Golden Torizo: PLAN item 1 names three PPU fields missing from seed conversion;
+the next A code adds them to the RAM-to-Session converter (long-term path), then the row.
+**M2 `sm_a4` (`ci/m2-sm-a4`):** -215 raw dereferences, but production +121, legacy +43, unsafe
+-5. `slot!` is a one-time cost; later M2 banks must not grow production.
 **M2 production:** b782ca4 moved Rio with production +69 (legacy -90). M2 commits convert
 in place or delete; a commit that grows production needs its one-line reason.
 
@@ -311,6 +326,14 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
 
 ## Check-ins
 
+- **2026-10-25 21:52 CET (6ea29c9), B landing stall, second in a row:** 3 agent commits on
+  main since 648afab: A 2 (0086292 **Spore Spawn, 42/44**, regression row; 876fbfb branch rows
+  only), M 1 (1225f54 M1a fixpoint landed, -95 unsafe), B 0 (third check-in). Unlanded:
+  `ci/b-integrate` (6 B, conflicts with M1a, see Milestone plan), credits (43/44), M2 sm_a4,
+  common enemies (-429 legacy, 110%). All `Score:`, 0 docs-only. Score `42/44 · 47983 · 115197
+  · 4197 · 39353` (last 41 · 47998 · 115215 · 4292 · 39353); warnings 297; hooks 607/93.
+  10-26 12:00: checks met; legacy and sm_a0 on if b-integrate lands; unsafe, production behind.
+  Treemap OK (200, 6ea29c9); its "Legacy 62.2k" counts unsafe files too, not Score's legacy.
 - **2026-10-25 20:52 CET (648afab), landing stall in B1/B3 (first):** 8 agent commits
   landed since 6bd23aa: A 3 (f2a7264 **Mother Brain defeat, 41/44**; download retry; runner
   budget), M 4 (Rio, Norfair Rio, Flies: -392 legacy), B2 `sm_88` 1; **B1 `sm_81` and B3
