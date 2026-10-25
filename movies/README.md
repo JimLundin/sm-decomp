@@ -319,3 +319,10 @@ This covers in-memory SRAM restoration; disk persistence remains unverified.
 The additional `save-memory` check covers the save/checksum write alone.
 Missing bosses/items/areas and credits remain explicit gaps.
 The `credits` expectation observes script progress; it does not prove the entire roll completed.
+
+The `wave-gate` authored fallback reuses the checked Speed Booster/farm return,
+then crosses ADAD's moving platforms and opens its blue gate. Regenerate with
+`python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-wave-gate.inputs --rom rom/sm.smc --route wave-gate`.
+The additional `shot-gate-spawn-parameter` regression checks steps 153606..153615:
+the re-closing gate must preserve the projectile definition as its spawn parameter.
+This route does not yet qualify Wave acquisition or advance the required tally.

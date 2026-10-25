@@ -56,9 +56,9 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    native index 9,266 enters an audio upload with 41 measured acknowledged NMIs
    and input reads while gameplay waits. Bulk native upload has no video clock;
    timed suspension needs bus-level clock events before E0B5 can resume faithfully.
-   A0 remains open. Following the review's documented-finding fallback, qualify
-   the authored Power Bomb pickup now passes with message completion and follow-up.
-   Next: another pending pickup/boss from a checked prefix; no counter offsets.
+   A0 remains open. Under the review's documented fallback, Power Bomb pickup
+   passes with message completion and follow-up. The Wave route exposed a closing-gate
+   spawn-parameter fault; its 10-frame regression now passes. Next: Wave Beam pickup.
    Observer unit tests (20) are not gameplay checks. Regenerate incompatible
    checkpoints from boot; preserve the old checked navigation build.
 2. **Current - lane B bank retirement.** `sm_94` is deleted; next is `sm_91`.
@@ -192,6 +192,8 @@ three-build trial also passed: 58.91/65.98/78.70 s, ~99 s with staggered starts,
 feasibility, not a matched speedup. Permit a monitored third ready build; account
 for ~1.6 GiB per compiler and remaining growth. Start only above 3 GiB free; stop
 the newest below 2 GiB or on resource errors. Replays/captures may overlap.
+The integrator assigns ready compiler slots explicitly; count accepted launchers
+before rustc appears. Restart completed workers with a new task, not a queued message.
 Refill available slots immediately; do not synchronize starts for an experiment
 or hold slots after compilation (the trial exposed ~32 s of idle handoff).
 Judge overlap by completed useful work/time, memory and paging, not CPU alone;

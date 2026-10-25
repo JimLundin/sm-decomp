@@ -463,3 +463,14 @@ start_frame = 9100
 frames = 166
 require_hit = ["coroutine.door"]
 expect = ["state:8", "state:11"]
+
+# Natural ADAD gate re-close: $84:BBE1 must pass its loaded definition as A/Y.
+# The predecessor writes 0000 instead of E64B to spawn.primary at step 153607.
+[[segment]]
+id = "shot-gate-spawn-parameter"
+inputs = "corpus-wave-gate.inputs"
+input_sha256 = "1ce640c865d508ff2aab0f79c043c6da8aff9b74d6a1444d3a994e20d68db123"
+start_frame = 153606
+frames = 10
+require_hit = ["eproj.spawn.initialized"]
+expect = ["room:ADAD"]

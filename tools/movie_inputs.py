@@ -250,6 +250,7 @@ ROUTES = {
     'ice-beam-settled': (161733, 'd5700c8c8bfd3bcbc9fa5d4d05aa805dd594e98130a0c9d0ade163695201e093'),
     'speed-booster': (148406, 'bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6'),
     'speed-booster-settled': (148526, '9548c119742b6e2ffec65c5c0871403c96915671b83fe8b4c3930cc4bf60a00d'),
+    'wave-gate': (153648, '1ce640c865d508ff2aab0f79c043c6da8aff9b74d6a1444d3a994e20d68db123'),
     'power-bomb': (176055, 'b6c0c74ccfe38b10c1ae284472e60bc483060ca0b3fb6f359d57e894283decf7'),
     'power-bomb-room-entry': (174992, '34ab4055b6904d0544e490632fbbb81b87f18d163e55c7c6208ee9e5bd2a7dfb'),
     'norfair-reserve': (147887, '968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d'),
@@ -1352,6 +1353,25 @@ def extend_power_bomb_pickup(a):
     return a
 
 
+def extend_wave_gate(a):
+    """Observed Bubble return -> ADAD gate re-close, without timing offsets."""
+    a = list(a[:152344])
+    assert len(a) == 152344
+    a.extend(_holds('Right+X:130 None:20'))  # Middle-east Bubble door.
+    a.extend(_holds('Right+A+X:20 Right+X:150 None:20'))
+    a.extend(_holds('Right+X:80 None:40'))  # AD5E shaft.
+    a.extend(_holds('Left+X:72 None:30'))
+    a.extend(_holds('None:25 Right+X:40 Right+A+X:35 Select:1 None:1 Select:1 Right+X:1 Right:25 Y:1 Right+X:150 None:20'))
+    a.extend(_holds('B+Right:4 B+Right+A+X:80 None:5'))  # ADAD moving platforms.
+    a.extend(_holds('None:10 Right+A+X:56 A+X:35 None:10'))
+    a.extend(_holds('B+Right:8 B+Right+A+X:28'))
+    a.extend(_holds('Right+A:22 Left:4 Right:4 Left:4 Right:4'))
+    a.extend(_holds('Up+X:1 Up:15 Up+X:1 Up:15 Up+X:1 Up:60'))  # Open the blue gate.
+    a.extend(_holds('Right+A+X:55 None:20'))  # Crossing triggers re-close.
+    assert len(a) == 153648
+    return a
+
+
 def route_frames(source, name):
     """Reproduce authored controller holds/splices; do not adjust emulator timing.
 
@@ -1370,6 +1390,8 @@ def route_frames(source, name):
         # Retain the saved-slot route through observed contact input 72760.
         # Authored idle exposure, then fresh A presses for Continue and both maps.
         return a[:72761] + _holds('None:1800 A:1 None:300 A:1 None:300 A:1 None:900')
+    if name == 'wave-gate':
+        return extend_wave_gate(extend_ice(extend_redtower(a)))
     if name == 'norfair-reserve':
         return extend_reserve(extend_redtower(a))
     if name in ('power-bomb-room-entry', 'power-bomb'):

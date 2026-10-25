@@ -378,7 +378,8 @@ pub(super) fn run<H: Host>(
             Some(p)
         }
         8698849 => {
-            h.enemy_projectile(p.word(0), 0);
+            let definition = p.word(0);
+            h.enemy_projectile(definition, definition);
             Some(p.advance(2))
         }
         8698864 => {
