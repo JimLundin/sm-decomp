@@ -21,7 +21,8 @@ use crate::{
         session_runtime::Runtime,
         visual_host::{self, AnimationMember, PaletteMember, Source, StatueProjectile},
         visual_state::{
-            EyeBeamPhase, HazePhase, HdmaWave, PaletteBuffer, TourianStatuePhase, Upload, Weather,
+            CinematicObjects, EyeBeamPhase, HazePhase, HdmaWave, PaletteBuffer, TourianStatuePhase,
+            Upload, Weather,
         },
     },
     game_state::Game,
@@ -1401,6 +1402,227 @@ pub(crate) fn draw_player_frame(game: &mut Game) {
     }
     h.foreign(player_projectiles::draw_projectiles);
     h.owned_call(crate::game::session_runtime::finish_player_frame);
+}
+
+struct CinematicObjectLayout {
+    slots: u16,
+    current: usize,
+    instructions: usize,
+    parameter: usize,
+    cleared: &'static [usize],
+}
+
+impl CinematicObjects {
+    fn layout(self) -> CinematicObjectLayout {
+        use crate::ram_map::{word_arrays as a, words as w};
+        match self {
+            Self::Sprites => CinematicObjectLayout {
+                slots: 16,
+                current: w::cinematic_obj_index,
+                instructions: a::cinematicspr_instr_ptr,
+                parameter: w::cinematic_spawn_param,
+                cleared: &[
+                    a::cinematicspr_whattodraw,
+                    a::cinematicspr_goto_timer,
+                    a::cinematicspr_arr6,
+                    a::cinematicspr_arr7,
+                ],
+            },
+            Self::Mode7 => CinematicObjectLayout {
+                slots: 2,
+                current: w::mode7_cur_index,
+                instructions: a::mode7_obj_instr_ptr,
+                parameter: w::mode7_spawn_param,
+                cleared: &[a::mode7_obj_goto_timer],
+            },
+            Self::Background => CinematicObjectLayout {
+                slots: 4,
+                current: w::cinematicbg_var2,
+                instructions: a::cinematicbg_instr_ptr,
+                parameter: w::cinematicbg_var3,
+                cleared: &[a::cinematicbg_arr1, a::cinematicbg_arr6],
+            },
+        }
+    }
+
+    pub(crate) unsafe fn spawn(self, definition: u16, parameter: u16, game: &mut Game) -> u8 {
+        let layout = self.layout();
+        checked_word!(game, layout.parameter; = parameter);
+        for slot in (0..layout.slots).rev() {
+            if checked_word!(game, layout.instructions + 2 * usize::from(slot);) == 0 {
+                return unsafe { initialize_cinematic_object(self, definition, slot * 2, game) };
+            }
+        }
+        1
+    }
+
+    pub(crate) unsafe fn advance(self, game: &mut Game) {
+        use crate::game::visual_state::{CinematicObjects::Background, CinematicTilemap};
+        if matches!(self, Background) && word!(game.cinematic_enable_objs) & 0x8000 == 0 {
+            return;
+        }
+        let layout = self.layout();
+        let mut object = i32::from(2 * (layout.slots - 1));
+        while object >= 0 {
+            checked_word!(game, layout.current; = object as u16);
+            if checked_word!(game, layout.instructions + 2 * (object as usize >> 1);) != 0 {
+                unsafe {
+                    advance_cinematic_object(self, object as u16, game);
+                }
+                // A callback may redirect the scan outside its original slot range.
+                object = i32::from(checked_word!(game, layout.current;));
+            }
+            object -= 2;
+        }
+        if matches!(self, Background) {
+            if word!(game.cinematic_enable_bg_tilemap) & 0x8000 != 0 {
+                queue_cinematic_tilemap(CinematicTilemap::Text, game);
+            }
+            queue_cinematic_tilemap(CinematicTilemap::Eyes, game);
+        }
+    }
+}
+
+pub(crate) unsafe fn spawn_cinematic_sprite_at(
+    definition: u16,
+    slot: u16,
+    parameter: u16,
+    game: &mut Game,
+) -> u8 {
+    word!(game.cinematic_spawn_param = parameter);
+    unsafe { initialize_cinematic_object(CinematicObjects::Sprites, definition, slot, game) }
+}
+
+unsafe fn initialize_cinematic_object(
+    objects: CinematicObjects,
+    definition: u16,
+    object: u16,
+    game: &mut Game,
+) -> u8 {
+    use crate::game::sm_8b as bank;
+    use CinematicObjects::*;
+    let layout = objects.layout();
+    let offset = usize::from(object & !1);
+    let stride = 2 * usize::from(layout.slots);
+    unsafe {
+        let definition = crate::rtl::rom_bank_ptr::<0x8b>(definition, game);
+        checked_word!(game, layout.instructions + stride + offset;
+            = (definition.add(2) as *const u16).read_unaligned());
+        checked_word!(game, layout.instructions + offset;
+            = (definition.add(4) as *const u16).read_unaligned());
+        checked_word!(game, layout.instructions + 2 * stride + offset; = 1);
+        for field in layout.cleared {
+            checked_word!(game, field + offset; = 0);
+        }
+        // Setup is read after publication, and Mode7 alone receives a word index.
+        let setup = u32::from((definition as *const u16).read_unaligned()) | 0x8b0000;
+        match objects {
+            Sprites => bank::CallCinematicSpriteObjectSetup(setup, object, game),
+            Mode7 => bank::CallCinematicSpriteInit(setup, object >> 1, game),
+            Background => bank::CallCinematicBgObjectSetup(setup, object, game),
+        }
+    }
+    0
+}
+
+pub(crate) fn clear_cinematic_sprites(game: &mut Game) {
+    word_transfers!(game, descending, 16;
+        le(cinematicspr_instr_ptr, 15) <- value(0),
+        le(cinematicspr_whattodraw, 15) <- value(0),
+    );
+}
+
+pub(crate) fn clear_cinematic_background(fill: u16, game: &mut Game) {
+    word_transfers!(game, descending, 1024; native(0x37fe) <- value(fill));
+    word_transfers!(game, descending, 4;
+        le(cinematicbg_arr1, 3) <- value(0),
+        le(cinematicbg_instr_ptr, 3) <- value(0),
+    );
+    word!(game.cinematicbg_var1 = 0);
+}
+
+pub(crate) fn enable_cinematic_background(game: &mut Game) {
+    word!(game.cinematic_enable_objs |= 0x8000);
+}
+
+pub(crate) fn set_cinematic_tilemap_updates(enabled: bool, game: &mut Game) {
+    word!(game.cinematic_enable_bg_tilemap, |old| (old & 0x7fff)
+        | (u16::from(enabled) << 15));
+}
+
+unsafe fn advance_cinematic_object(objects: CinematicObjects, object: u16, game: &mut Game) {
+    use crate::game::sm_8b as bank;
+    use CinematicObjects::*;
+    let layout = objects.layout();
+    let stride = 2 * usize::from(layout.slots);
+    unsafe {
+        let pre = u32::from(checked_word!(game,
+            layout.instructions + stride + usize::from(object & !1);))
+            | 0x8b0000;
+        match objects {
+            Sprites => bank::CallCinematicSprPreInstr(pre, object, game),
+            Mode7 => bank::CallMode7PreInstr(pre, object, game),
+            Background => bank::CallCinematicBgPreInstr(pre, object, game),
+        }
+        let selected = checked_word!(game, layout.current;);
+        let offset = usize::from(selected & !1);
+        let timer_at = layout.instructions + 2 * stride + offset;
+        let timer = checked_word!(game, timer_at;);
+        checked_word!(game, timer_at; = timer.wrapping_sub(1));
+        if timer != 1 {
+            return;
+        }
+        let rom_bank = if matches!(objects, Background) {
+            0x8c
+        } else {
+            0x8b
+        };
+        let mut address = checked_word!(game, layout.instructions + offset;);
+        let duration = loop {
+            let instruction = (crate::rtl::rom_ptr_with_bank(rom_bank, address, game)
+                as *const u16)
+                .read_unaligned();
+            if instruction & 0x8000 == 0 {
+                break instruction;
+            }
+            let command = u32::from(instruction) | 0x8b0000;
+            let operand = address.wrapping_add(2);
+            address = match objects {
+                Sprites => bank::CallCinematicSprInstr(command, selected, operand, game),
+                Mode7 => bank::CallMode7Instr(command, selected, operand, game),
+                Background => bank::CallCinematicBgInstr(command, selected, operand, game),
+            };
+            if address == 0 {
+                return;
+            }
+        };
+        checked_word!(game, timer_at; = duration);
+        let payload = crate::rtl::rom_ptr_with_bank(rom_bank, address, game);
+        match objects {
+            Sprites => word!(
+                game.cinematicspr_whattodraw[(selected >> 1)] =
+                    (payload.add(2) as *const u16).read_unaligned()
+            ),
+            Mode7 => crate::game::sm_80::QueueMode7Transfers(
+                0x8b,
+                (payload.add(2) as *const u16).read_unaligned(),
+                game,
+            ),
+            Background => {
+                word!(
+                    game.cinematicbg_arr1[(selected >> 1)] =
+                        (payload.add(4) as *const u16).read_unaligned()
+                );
+                bank::ProcessCinematicBgObject(
+                    selected,
+                    (payload.add(2) as *const u16).read_unaligned(),
+                    game,
+                );
+            }
+        }
+        let size = if matches!(objects, Background) { 6 } else { 4 };
+        checked_word!(game, layout.instructions + offset; = address.wrapping_add(size));
+    }
 }
 
 pub(crate) fn queue_cinematic_tilemap(

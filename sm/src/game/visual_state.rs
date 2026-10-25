@@ -153,3 +153,10 @@ pub(crate) enum CinematicTilemap {
     Eyes,
     Japanese,
 }
+
+#[derive(Clone, Copy)]
+pub(crate) enum CinematicObjects {
+    Sprites,
+    Mode7,
+    Background,
+}

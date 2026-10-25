@@ -2,24 +2,26 @@
 //! Numeric callbacks select these operations; Game retains the cinematic state.
 use crate::game::player_transitions as pt;
 use crate::game::session_runtime::Runtime;
+use crate::game::visual_state::CinematicObjects::{
+    Background as CinematicBackground, Mode7 as CinematicMode7, Sprites as CinematicSprites,
+};
 
 use super::constants::bank_8d::addr_kPalfx_E1BC;
 use super::constants::bank_91::{addr_stru_91877E, addr_stru_918784};
 use super::constants::samus_poses::kPose_02_FaceL_Normal;
 use super::palette_effects;
 use super::sm_8b::{
-    CinematicBgInstr_SetSomeStuffForSpriteObject_14, DisableCinematicBgTilemapUpdates,
-    EnableCinematicBgTilemapUpdates, RevertButtonConfig, SetSomeStuffForSpriteObject_15,
-    SetSomeStuffForSpriteObject_16, SpawnCinematicBgObject, SpawnCinematicSpriteObject,
-    SpawnCinematicSpriteObjectAtSlot, SpawnMode7Object, addr_kCinematicBgObjectDef_8BCF5D,
-    addr_kCinematicSpriteObjectDef_8BCE5B, addr_kCinematicSpriteObjectDef_8BCE55,
-    addr_kCinematicSpriteObjectDef_8BCE61, addr_kCinematicSpriteObjectDef_8BCE67,
-    addr_kCinematicSpriteObjectDef_8BCE73, addr_kCinematicSpriteObjectDef_8BCE79,
-    addr_kCinematicSpriteObjectDef_8BCF27,
+    CinematicBgInstr_SetSomeStuffForSpriteObject_14, RevertButtonConfig,
+    SetSomeStuffForSpriteObject_15, SetSomeStuffForSpriteObject_16,
+    addr_kCinematicBgObjectDef_8BCF5D, addr_kCinematicSpriteObjectDef_8BCE5B,
+    addr_kCinematicSpriteObjectDef_8BCE55, addr_kCinematicSpriteObjectDef_8BCE61,
+    addr_kCinematicSpriteObjectDef_8BCE67, addr_kCinematicSpriteObjectDef_8BCE73,
+    addr_kCinematicSpriteObjectDef_8BCE79, addr_kCinematicSpriteObjectDef_8BCF27,
 };
 use super::visual_runtime::{
     clear_cinematic_colors, compose_cinematic_palette, fade_cinematic_colors,
     initialize_intro_crossfade, prepare_cinematic_palette_fade, queue_cinematic_tilemap,
+    set_cinematic_tilemap_updates, spawn_cinematic_sprite_at,
 };
 use super::visual_state::CinematicTilemap;
 use crate::game::music::QueueMusic_Delayed8;
@@ -66,7 +68,7 @@ pub(super) unsafe fn create_japanese_text(object: u16, j: u16, game: &mut Game) 
     unsafe {
         word!(game.cinematicbg_var1 = 0);
         if word!(game.japanese_text_flag) != 0 {
-            SpawnMode7Object(object, word!(game.japanese_text_flag), game);
+            CinematicMode7.spawn(object, word!(game.japanese_text_flag), game);
         }
         j
     }
@@ -82,7 +84,7 @@ pub(super) unsafe fn spawn_marker(
     unsafe {
         let j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j, game);
         if word!(game.japanese_text_flag) != 0 {
-            let failed = SpawnCinematicSpriteObject(
+            let failed = CinematicSprites.spawn(
                 addr_kCinematicSpriteObjectDef_8BCE73 as u16,
                 word!(game.japanese_text_flag),
                 game,
@@ -94,7 +96,7 @@ pub(super) unsafe fn spawn_marker(
                 } else {
                     0x0c00
                 };
-                SpawnMode7Object(object, parameter, game);
+                CinematicMode7.spawn(object, parameter, game);
                 return j;
             }
         }
@@ -156,14 +158,14 @@ pub(super) unsafe fn wait_for_scene(scene: Scene, game: &mut Game) {
                 samus_prev_y_pos = y; cinematic_var8 = 0; cinematic_var13 = 127; }
                 if mother_brain {
                     // The preceding $1A4B store leaves $007F in the ROM accumulator.
-                    SpawnCinematicSpriteObjectAtSlot(
+                    spawn_cinematic_sprite_at(
                         addr_kCinematicSpriteObjectDef_8BCE55 as u16,
                         0,
                         0x7f,
                         game,
                     );
                     // Palette left in A by the first sprite initializer.
-                    SpawnCinematicSpriteObject(
+                    CinematicSprites.spawn(
                         addr_kCinematicSpriteObjectDef_8BCF27 as u16,
                         0x0e00,
                         game,
@@ -172,12 +174,12 @@ pub(super) unsafe fn wait_for_scene(scene: Scene, game: &mut Game) {
                     word_transfers!(game, ascending, 256; native(0x16402) <- value(0));
                     word!(game.hud_item_index = 1);
                 } else {
-                    SpawnCinematicSpriteObject(
+                    CinematicSprites.spawn(
                         addr_kCinematicSpriteObjectDef_8BCE5B as u16,
                         0x7f,
                         game,
                     );
-                    SpawnCinematicSpriteObject(
+                    CinematicSprites.spawn(
                         addr_kCinematicSpriteObjectDef_8BCE79 as u16,
                         0x0e00,
                         game,
@@ -210,7 +212,7 @@ pub(super) unsafe fn wait_for_scene(scene: Scene, game: &mut Game) {
                 } else {
                     addr_kCinematicSpriteObjectDef_8BCE67
                 };
-                SpawnCinematicSpriteObject(object as u16, 0x7f, game);
+                CinematicSprites.spawn(object as u16, 0x7f, game);
                 Palette::Scientist
             }
         };
@@ -260,19 +262,17 @@ pub(super) unsafe fn fade_to_scene(palette: Palette, game: &mut Game) {
     }
 }
 
-pub(super) unsafe fn start_page(next: u16, j: u16, game: &mut Game) -> u16 {
-    unsafe {
-        word!(game.cinematic_function = next);
-        DisableCinematicBgTilemapUpdates(game);
-        clear_japanese_tiles(game);
-        queue_cinematic_tilemap(CinematicTilemap::Japanese, game);
-        j
-    }
+pub(super) fn start_page(next: u16, j: u16, game: &mut Game) -> u16 {
+    word!(game.cinematic_function = next);
+    set_cinematic_tilemap_updates(false, game);
+    clear_japanese_tiles(game);
+    queue_cinematic_tilemap(CinematicTilemap::Japanese, game);
+    j
 }
 
 pub(super) unsafe fn show_page(object: u16, next: u16, game: &mut Game) {
     unsafe {
-        SpawnCinematicBgObject(object, 0x4c00, game);
+        CinematicBackground.spawn(object, 0x4c00, game);
         word!(game.cinematic_function = next);
         setup_page_palettes(game);
     }
@@ -309,7 +309,7 @@ pub(super) unsafe fn draw_japanese_text(
     game: &mut Game,
 ) -> u16 {
     unsafe {
-        DisableCinematicBgTilemapUpdates(game);
+        set_cinematic_tilemap_updates(false, game);
         if restore_palette {
             word!(game.palette_buffer[17] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 17));
             word!(game.palette_buffer[18] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 18));
@@ -337,16 +337,16 @@ pub(super) unsafe fn continue_japanese_text(next: u16, lines: &[u16], k: u16, ga
 }
 
 pub(super) fn wait_after_japanese_text(next: u16, j: u16, game: &mut Game) -> u16 {
-    EnableCinematicBgTilemapUpdates(game);
+    set_cinematic_tilemap_updates(true, game);
     word!(game.cinematic_function = next);
     j
 }
 
 pub(super) unsafe fn show_final_page(game: &mut Game) {
     unsafe {
-        EnableCinematicBgTilemapUpdates(game);
+        set_cinematic_tilemap_updates(true, game);
         clear_english_text(game);
-        SpawnCinematicBgObject(addr_kCinematicBgObjectDef_8BCF5D as u16, 0x4c00, game);
+        CinematicBackground.spawn(addr_kCinematicBgObjectDef_8BCF5D as u16, 0x4c00, game);
         word!(game.cinematic_function = (0x8ba390i32) as u16);
         SetSomeStuffForSpriteObject_16(game);
         QueueMusic_Delayed8(0, game);
@@ -359,7 +359,7 @@ pub(super) unsafe fn wait_for_final_page(game: &mut Game) {
             word!(game.cinematic_var13 = 127);
             if word!(game.japanese_text_flag) != 0 {
                 word!(game.cinematic_function = (0x8bb207i32) as u16);
-                DisableCinematicBgTilemapUpdates(game);
+                set_cinematic_tilemap_updates(false, game);
                 clear_japanese_tiles(game);
                 queue_cinematic_tilemap(CinematicTilemap::Japanese, game);
             } else {
@@ -382,13 +382,13 @@ unsafe fn setup_page_palettes(game: &mut Game) {
         clear_cinematic_colors(0x1d2, 6, game);
         compose_cinematic_palette(game);
         word!(game.cinematic_var4 = 127);
-        EnableCinematicBgTilemapUpdates(game);
+        set_cinematic_tilemap_updates(true, game);
         SetSomeStuffForSpriteObject_16(game);
     }
 }
 
 pub(super) fn enable_text(j: u16, game: &mut Game) -> u16 {
-    EnableCinematicBgTilemapUpdates(game);
+    set_cinematic_tilemap_updates(true, game);
     j
 }
 
