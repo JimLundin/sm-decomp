@@ -98,7 +98,8 @@ Checkpoint cache finding: whole Session/codec hashes invalidate lossless scalar
 migrations despite an unchanged RAM payload. A future format transition needs
 Session round-trip checks and defined actor-identity persistence; keep guards now.
 
-The local corpus now shares completed checkpoints across recipe namespaces only
+The local corpus saves matching manifest starts during setup and shares checkpoints
+across recipe namespaces only
 when SHA-bound canonical input prefixes match. Source, ROM, full-input and loader
 guards remain intact. A donor-only smoke trial passed all four rows with zero
 setup frames; Morph retains its full 1,200-frame window.

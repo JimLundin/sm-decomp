@@ -496,23 +496,32 @@ def run_corpus(root, args):
         previous, checkpoint = candidates[0] if candidates else (0, None)
         if previous == start:
             return checkpoint
-        for attempt in range(2):
-            output = directory / f"{start}-{uuid.uuid4().hex}.smvchk"
+        # Retain useful branch starts while verifying this prefix, bounded by the recipe.
+        stops = sorted({item["start_frame"] for item in segments.values()
+                        if "pending" not in item and "seed" not in item
+                        and 0 < item["start_frame"] < start
+                        and shares_prefix(segment, item, item["start_frame"])})
+        regenerated = False
+        while previous < start:
+            end = next((frame for frame in stops if frame > previous), start)
+            output = directory / f"{end}-{uuid.uuid4().hex}.smvchk"
             setup = command + [str(rom), str(segment["inputs"]), "--no-build",
-                               "--frames", str(start - previous), "--checkpoint-out", str(output)]
+                               "--frames", str(end - previous), "--checkpoint-out", str(output)]
             if checkpoint:
                 setup += ["--checkpoint-in", str(checkpoint)]
-            print(f"SETUP {segment['id']}: input frames {previous}..{start}", flush=True)
+            print(f"SETUP {segment['id']}: input frames {previous}..{end}", flush=True)
             code, rejected = corpus_child(setup, root)
             if code == 0:
-                if checkpoint_frame(output) != start:
+                if checkpoint_frame(output) != end:
                     raise RuntimeError("generated checkpoint has an unexpected input frame")
-                return output
-            if not checkpoint or not rejected or attempt:
+                previous, checkpoint = end, output
+                continue
+            if not checkpoint or not rejected or regenerated:
                 return None
             print(f"Checkpoint rejected for {segment['id']}; regenerate prefix from boot", flush=True)
             previous, checkpoint = 0, None
-        return None
+            regenerated = True
+        return checkpoint
 
     # Earlier windows can supply checked prefixes to later branches of the same inputs.
     passed = set()

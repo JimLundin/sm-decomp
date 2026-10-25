@@ -14,6 +14,6 @@
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-Crocomire return script uses checked actors: 24 raw dereferences removed. Safety adds 36 production lines; eight local rows pass.
+Verifier saves useful intermediate checkpoints; another route reused one without replaying setup. Five local rows pass.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)
