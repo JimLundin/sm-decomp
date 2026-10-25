@@ -99,6 +99,7 @@ fn death<H: ActorHost + EprojHost>(h: &mut H, animation: u16, limit: u16, actor:
     } else {
         animation
     };
+    h.session_mut().compatibility_enemy_scratch = animation;
     let selected = h.session().actors.controls.selected;
     lifecycle::spawn_from_enemy(
         h,

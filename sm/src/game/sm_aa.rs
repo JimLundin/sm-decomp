@@ -889,9 +889,9 @@ crate::game::callback_dispatch! {
         SetBossBitForCurArea(4, game);
         QueueMusic_Delayed8(g_word_AAB09A, game);
         if word!(game.area_index) != 0 {
-            scatter(DropSource::GoldenTorizo, k, 0, game);
+            scatter(DropSource::GoldenTorizo, k, game);
         } else {
-            scatter(DropSource::BombTorizo, k, 0, game);
+            scatter(DropSource::BombTorizo, k, game);
         }
     };
     [11186801] Torizo_Instr_6 [jp] { sub_82DAF7(0x600, game); };

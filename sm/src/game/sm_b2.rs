@@ -224,7 +224,7 @@ crate::game::callback_dispatch! {
     call (k, game); default { Unreachable(game); };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     [11726900] SpacePirates_Func_1 [] {
-        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x20); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
+        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x20); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
             let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
             enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_ED80 as u16, timer = 1}
         }
@@ -248,7 +248,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11727048] SpacePirates_Func_3 [] {
-        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x20); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
+        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x20); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
             let E = Get_SpacePirates(word!(game.cur_enemy_index) as i32, game);
             enemy_instruction! {[(*E).base]; instruction = addr_kSpacePirates_Ilist_ECC0 as u16, timer = 1}
         }
@@ -559,7 +559,7 @@ crate::game::callback_dispatch! {
             if (*E).base.enemy_ptr as i32 == addr_kEnemyDef_F593 as i32 {
                 (*E).var_B = 0;
                 ({ let (_ignored_key, animation) = (v1, 4); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
-                scatter(DropSource::LowerNorfairPirate, v1, 0, game);
+                scatter(DropSource::LowerNorfairPirate, v1, game);
             } else {
                 (*E).var_B = 0;
                 ({ let (_ignored_key, animation) = (v1, 4); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
@@ -634,7 +634,7 @@ crate::game::callback_dispatch! {
         }
     };
     WalkingSpacePirates_FD44 [] {
-        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x10); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
+        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x10); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
             let mut v1: u16 = addr_kSpacePirates_Ilist_FB8C as u16;
             if ((word!(game.samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) >= 0 {
                 v1 = addr_kSpacePirates_Ilist_FC0E as u16;
@@ -658,7 +658,7 @@ crate::game::callback_dispatch! {
         }
     };
     WalkingSpacePirates_FDCE [] {
-        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x10); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
+        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x10); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
             let mut v1: u16 = addr_kSpacePirates_Ilist_FB8C as u16;
             if ((word!(game.samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) >= 0 {
                 v1 = addr_kSpacePirates_Ilist_FC0E as u16;
@@ -855,7 +855,7 @@ crate::game::callback_dispatch! {
         (*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game)).var_A = jp.word(0);
     };
     [11730120] SpacePirates_Instr_13 [] {
-        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x10); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
+        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x10); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
             if ((word!(game.samus_x_pos)) as i16).wrapping_sub(
                 ((*Get_SpacePirates(word!(game.cur_enemy_index) as i32, game))
                     .base

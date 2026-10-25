@@ -91,6 +91,7 @@ fn draw_actor<H: ActorHost + EprojHost>(h: &mut H) {
     let y = spawn_y
         .wrapping_add(h.resolve_actor(key, AccessMode::Native).y.whole)
         .wrapping_sub(h.inputs().camera_y);
+    h.session_mut().compatibility_enemy_scratch = y;
     let shake = h.resolve_actor(key, AccessMode::Native).shake;
     if shake != 0 {
         x = x.wrapping_add(if h.resolve_actor(key, AccessMode::Native).frame & 2 == 0 {

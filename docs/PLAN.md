@@ -35,8 +35,8 @@ before further adoption; the review's red-main rule does not authorize CI pollin
 
 ## Work order
 
-1. **Current - lane A published TAS alignment (A0).** Align the published any% and
-   100% movies, then map the existing verifier's per-segment expectations onto them.
+1. **Current - lane A Crocomire, then pending pickups/bosses.** A0 is parked until
+   18:00 CET per review; afterward align published any%/100% and map expectations.
    Cover Crateria, Brinstar, Norfair, Wrecked Ship, Maridia and Tourian; every boss;
    main pickups, doors/elevators, save/load, death and credits. Report results and rooms.
    Commit only recipes. Preserve input/NMI timing; no guessed lag/offset changes.
@@ -50,14 +50,18 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    step 9,266; the old 9,291 comparison mixed phases. Elapsed-NMI experiment reaches
    first visible-state mismatch at 10,555: Ridley countdown/setup is four updates late;
    RNG differs by 10,440; first onset is unlocated. Model stays local: one active-IRQ
-   upload sample; equal-size uploads take 27/28 NMIs. Frozen Crocomire route diverges
-   at 167,281 ($1994): trace/fix the scratch write; preserve its checked navigation build.
+   upload sample; equal-size uploads take 27/28 NMIs. Crocomire's shared $0E20 drop
+   regression is fixed: 167,281 fresh setup frames plus the four-frame row pass;
+   20 original-CPU cases and two mutations check the restored interaction. Continue
+   the fight from the checked frame-167,285 checkpoint; defeat remains pending.
 2. **Current - lane B bank retirement.** `sm_94` and `sm_91` are deleted.
    Player input, demos, suits, equipment, commands, initialization, Mother Brain
    reactions, X-ray and direct damage use owned state. Natural X-ray, Gravity,
    boss and grapple movie coverage remains incomplete despite bounded checks.
    X-ray controls/tables are consolidated; sm_88 has 1,454 lines left. sm_90 has 1,039.
-   Crystal Flash consumption is next; Draygon grab/release is under verification.
+   Pause sm_88 until sm_90 is deleted; retire production observer hooks with named segments.
+   Crystal Flash consumption and Draygon grab/release passed independent local checks;
+   adopt Crystal Flash next, then Draygon.
    Use named enum/function handlers as families move; raw identities stay at
    compatibility boundaries. Full u16 unknown values and failure timing survive.
    Report added production and deleted legacy together; growth needs a reason.
@@ -80,6 +84,10 @@ Do not auto-rename macro-shared parameters. Held scrolling consolidation needs
 Checkpoint cache finding: whole Session/codec hashes invalidate lossless scalar
 migrations despite an unchanged RAM payload. A future format transition needs
 Session round-trip checks and defined actor-identity persistence; keep guards now.
+
+Morph row keeps every required hit/expectation. Its fixed 1,200-frame window ends
+at 28,700, 506 frames after the hit at 28,193. The old 120-frame early stop ended
+at 28,314 (814 frames); retaining it would truncate the extended observation.
 
 ## Implementation rules
 
@@ -186,6 +194,11 @@ Use [the iteration guide](ITERATION.md#windows-shell-setup) for paths/commands.
 
 Keep artifacts in their checkout; seed dependencies, not full target trees, and reuse checked builds.
 Direct builds honor `CARGO_INCREMENTAL=0`; use it for disposable snapshots and preserve others' caches.
+Budget disk against the job: measured direct output 76.8MiB plus no-default 22.6MiB.
+A single bounded workflow reserves 300MiB additional space and leaves 1GiB for Windows;
+monitor growth and budget copies/replays too. A fixed 2GiB free-disk floor is unnecessary.
+NTFS compression halves measured inactive rlib storage; verify unchanged hashes and
+keep loaded DLLs untouched.
 Before deletion, resolve paths and verify artifacts are unneeded. Never delete another worker's artifacts.
 
 ## Definition of done for any change

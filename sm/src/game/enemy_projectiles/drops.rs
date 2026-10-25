@@ -5,14 +5,19 @@ use super::host::{DefinitionField, Host, LoadedRecord};
 pub use crate::game::drop_rules::DropSource;
 use crate::game::drop_rules::{PICKUPS, Spread, Weights};
 
-pub(super) fn spawn(definition: u16, index: u16, parameter: u16, h: &mut impl Host) {
+pub(super) fn spawn(definition: u16, index: u16, h: &mut impl Host) {
     h.session_mut().enemy_projectiles.spawn.drop_definition = definition;
     {
-        super::lifecycle::spawn_from_enemy(h, parameter, index, 0xf337);
+        super::lifecycle::spawn_from_enemy(
+            h,
+            h.session().compatibility_enemy_scratch,
+            index,
+            0xf337,
+        );
     }
 }
 
-pub(super) fn scatter(source: DropSource, index: u16, parameter: u16, h: &mut impl Host) {
+pub(super) fn scatter(source: DropSource, index: u16, h: &mut impl Host) {
     let (definition, spread) = source.pattern();
     let count = match spread {
         Spread::Nearby(count) => count,
@@ -40,7 +45,7 @@ pub(super) fn scatter(source: DropSource, index: u16, parameter: u16, h: &mut im
             }
         }
         {
-            spawn(definition, index, parameter, h);
+            spawn(definition, index, h);
         }
     }
 }
@@ -136,6 +141,7 @@ pub(super) fn collect(index: u16, h: &mut impl Host) {
                 < 16;
         if !grapple {
             let x_radius = u16::from(enemy_byte!(h, slot as isize * 2, radius));
+            h.session_mut().compatibility_enemy_scratch = x_radius;
             let y_radius = u16::from(enemy_byte!(h, slot as isize * 2 + 1, radius));
             if !axis(
                 h.session().player.x,

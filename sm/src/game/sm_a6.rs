@@ -590,12 +590,7 @@ pub unsafe fn FakeKraid_9C50(game: &mut Game) {
                     actors::api::DeathKind::Normal { animation },
                 )
             });
-            scatter(
-                DropSource::MiniKraid,
-                word!(game.cur_enemy_index),
-                death_animation,
-                game,
-            );
+            scatter(DropSource::MiniKraid, word!(game.cur_enemy_index), game);
         }
     }
 }
@@ -2343,7 +2338,7 @@ crate::game::callback_dispatch! {
         let k: u16 = 0;
         printf(b"Warning: X undefined\n\0" as *const u8 as *const c_char);
         SetBossBitForCurArea(1, game);
-        scatter(DropSource::Ridley, k, 0, game);
+        scatter(DropSource::Ridley, k, game);
         QueueMusic_Delayed8(3, game);
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
         (*E).var_A = addr_locret_A6C600 as u16;

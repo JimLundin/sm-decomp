@@ -582,8 +582,8 @@ crate::game::callback_dispatch! {
         CallRoachFunc((((*E).var_B) as u32) | (0xa30000u32), game);
     };
     [10724055] Roach_Func_9 [] {
-        if ({ let (actor, distance) = (word!(game.cur_enemy_index), byte!((*E).parameter_2; 0) as u16); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
-            && ({ let (actor, distance) = (word!(game.cur_enemy_index), byte!((*E).parameter_2; 0) as u16); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
+        if ({ let (actor, distance) = (word!(game.cur_enemy_index), byte!((*E).parameter_2; 0) as u16); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
+            && ({ let (actor, distance) = (word!(game.cur_enemy_index), byte!((*E).parameter_2; 0) as u16); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
         {
             (*E).var_B = crate::rtl::rom_table_word!(
                 game,
@@ -710,7 +710,7 @@ crate::prefixed_callbacks! {
         ({ let (phase, point) = (varE20, Point32 {
                 x: words!((*E), var_01, var_00),
                 y: words!((*E), var_03, var_02),
-            }); actor_api::apply_vector(&mut Runtime::new(game), phase, crate::game::session::Vector32 { x: point.x, y: point.y }) });
+            }); Runtime::new(game).session_mut().compatibility_enemy_scratch = phase; actor_api::apply_vector(&mut Runtime::new(game), phase, crate::game::session::Vector32 { x: point.x, y: point.y }) });
     };
     Roach_Func_30 [] {
         words!((*E).base, x_pos, x_subpos += words!((*E), var_05, var_04));
@@ -1136,7 +1136,7 @@ pub unsafe fn MaridiaRefillCandy_Func_1(game: &mut Game) {
         if {
             let (actor, distance) = (word!(game.cur_enemy_index), 0x80);
             u16::from(actor_api::player_within(
-                &Runtime::new(game),
+                &mut Runtime::new(game),
                 Key::from_legacy(actor),
                 actor_api::Axis::X,
                 distance,
@@ -2300,7 +2300,7 @@ crate::game::callback_dispatch! {
                     sprite_effects::retire_native(first, game);
                     let metroid_var_01 = (*Get_Metroid(enemy as i32, game)).var_01;
                     sprite_effects::retire_native(metroid_var_01, game);
-                    scatter(DropSource::Metroid, metroid_var_01, 0, game);
+                    scatter(DropSource::Metroid, metroid_var_01, game);
                 }
             }
         } else if (*E).var_F == 2 {

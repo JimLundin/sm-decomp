@@ -101,15 +101,16 @@ pub(in crate::game) fn player_delta<H: ActorAccess>(h: &H, key: ActorKey, axis: 
     }
 }
 pub(in crate::game) fn player_within<H: ActorAccess>(
-    h: &H,
+    h: &mut H,
     key: ActorKey,
     axis: Axis,
     distance: u16,
 ) -> bool {
+    h.session_mut().compatibility_enemy_scratch = distance;
     let delta = player_delta(h, key, axis);
     (((delta as i16).wrapping_abs() as u16).wrapping_sub(distance) as i16) < 0
 }
-pub(in crate::game) fn direction_to_player<H: ActorAccess>(h: &H) -> PlayerDirection {
+pub(in crate::game) fn direction_to_player<H: ActorAccess>(h: &mut H) -> PlayerDirection {
     if player_within(h, current(h), Axis::Y, 32) {
         return if player_delta(h, current(h), Axis::X) & 0x8000 != 0 {
             PlayerDirection::Left
@@ -202,6 +203,7 @@ pub(in crate::game) fn distance_and_direction<H: ActorHost>(
             direction: 0,
         };
     }
+    h.session_mut().compatibility_enemy_scratch = x;
     let dy = target.y.wrapping_sub(origin.y);
     let y = (dy as i16).wrapping_abs() as u16;
     if y.wrapping_sub(255) & 0x8000 == 0 {

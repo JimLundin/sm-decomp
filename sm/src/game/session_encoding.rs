@@ -383,6 +383,7 @@ macro_rules! scalar_words {
         $f(0x12,$($borrow)* $s.spawn_scratch.header);
         $f(0x14,$($borrow)* $s.spawn_scratch.coordinates);
         $f(0x16,$($borrow)* $s.spawn_scratch.argument);
+        $f(0xe20,$($borrow)* $s.compatibility_enemy_scratch);
         $f(0x9a2,$($borrow)* $s.inventory.equipment.active);
         $f(0x9a4,$($borrow)* $s.inventory.equipment.owned);
         $f(0x9a6,$($borrow)* $s.inventory.beams.active);

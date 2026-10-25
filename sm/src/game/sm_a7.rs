@@ -1524,7 +1524,7 @@ crate::game::callback_dispatch! {
             (*Get_Kraid(0x140i32, game)).base.properties = v4;
             (*Get_Kraid(0i32, game)).kraid_var_A = (0xa7c715i32) as u16;
             word!(game.camera_distance_index = 0);
-            scatter(DropSource::Kraid, enemy_ptr, 0, game);
+            scatter(DropSource::Kraid, enemy_ptr, game);
             Kraid_DrawRoomBg(game);
         }
     };
@@ -2351,7 +2351,7 @@ pub unsafe fn Phantoon_BeginSwoopingPattern(k: u16, game: &mut Game) {
 pub unsafe fn Phantoon_ChangeEyeSpriteBasedOnSamusDist(game: &mut Game) {
     unsafe {
         let v0: u16 = (2u16).wrapping_mul({
-            match actor_api::direction_to_player(&Runtime::new(game)) {
+            match actor_api::direction_to_player(&mut Runtime::new(game)) {
                 actor_api::PlayerDirection::Up => 0u16,
                 actor_api::PlayerDirection::UpRight => 1u16,
                 actor_api::PlayerDirection::Right => 2u16,
@@ -3596,7 +3596,7 @@ crate::game::callback_dispatch! {
             (*E1).var_D = 12;
             if Phantoon_Func_9(game) & 1 != 0 {
                 crate::update_place! { reference fresh22 = *ram_ptr!(game; 0x69) => (*fresh22) | (2u8); }
-                scatter(DropSource::Phantoon, k, 0, game);
+                scatter(DropSource::Phantoon, k, game);
                 let E0 = Get_Phantoon(0, game);
                 let v4: u16 = ((*E0).base.properties) | ((kEnemyProps_Deleted) as u16);
                 (*E0).base.properties = v4;
@@ -3623,7 +3623,7 @@ crate::game::callback_dispatch! {
                     (*E).var_F = (0xa7ea00i32) as u16;
                     (*E).var_E = 11;
                 }
-            } else if ({ let (actor, distance) = (k, 0x80); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
+            } else if ({ let (actor, distance) = (k, 0x80); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
                 if ((*E).parameter_2 & 3) == 0 {
                     QueueSfx2_Max15(0x35, game);
                 }
@@ -3636,10 +3636,10 @@ crate::game::callback_dispatch! {
         if Etecoon_Func_3(k, game) & 1 != 0 {
             let E = Get_Etecoon(k as i32, game);
             if ((*E).var_A & 0x8000) == 0 {
-                if ({ let (actor, distance) = (k, 0x40); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
-                    && ({ let (actor, distance) = (k, g_word_A7E910); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
+                if ({ let (actor, distance) = (k, 0x40); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
+                    && ({ let (actor, distance) = (k, g_word_A7E910); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
                 {
-                    let v2: u16 = { match actor_api::direction_to_player(&Runtime::new(game)) { actor_api::PlayerDirection::Up=>0u16,actor_api::PlayerDirection::UpRight=>1u16,actor_api::PlayerDirection::Right=>2u16,actor_api::PlayerDirection::DownRight=>3u16,actor_api::PlayerDirection::Down=>4u16,actor_api::PlayerDirection::DownLeft=>6u16,actor_api::PlayerDirection::Left=>7u16,actor_api::PlayerDirection::UpLeft=>8u16 } };
+                    let v2: u16 = { match actor_api::direction_to_player(&mut Runtime::new(game)) { actor_api::PlayerDirection::Up=>0u16,actor_api::PlayerDirection::UpRight=>1u16,actor_api::PlayerDirection::Right=>2u16,actor_api::PlayerDirection::DownRight=>3u16,actor_api::PlayerDirection::Down=>4u16,actor_api::PlayerDirection::DownLeft=>6u16,actor_api::PlayerDirection::Left=>7u16,actor_api::PlayerDirection::UpLeft=>8u16 } };
                     if v2 as i32 - 5i32 & 0x8000 != 0 {
                         (*E).base.current_instruction = addr_kEtecoon_Ilist_E81E as u16;
                         (*E).parameter_1 = 0;
@@ -3841,7 +3841,7 @@ crate::game::callback_dispatch! {
         (*E).var_E = (*E).var_E.wrapping_sub(1);
         let v3: bool = ((*E).var_E & 0x8000) != 0;
         if v2 || v3 {
-            if ({ let (actor, distance) = (k, 0x40); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 && ({ let (actor, distance) = (k, 0x30); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
+            if ({ let (actor, distance) = (k, 0x40); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 && ({ let (actor, distance) = (k, 0x30); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
             {
                 (*E).base.current_instruction = addr_stru_A7E880 as u16;
                 (*E).var_F = (0xa7ecdfi32) as u16;
@@ -3876,8 +3876,8 @@ crate::game::callback_dispatch! {
     };
     [11007344] Dachora_Func_2 [] {
         ({ let (actor, amount) = (k, ((1u32) << 16 | 0u16 as u32) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
-        if ({ let (actor, distance) = (k, 0x40); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
-            && ({ let (actor, distance) = (k, g_word_A7F4C9); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
+        if ({ let (actor, distance) = (k, 0x40); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
+            && ({ let (actor, distance) = (k, g_word_A7F4C9); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
         {
             let E = Get_Dachora(k as i32, game);
             if (*E).parameter_1 != 0 {

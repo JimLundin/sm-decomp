@@ -359,7 +359,7 @@ crate::game::callback_dispatch! {
             let area = word!(game.area_index);
             let bits = gameplay_flag_runtime::boss_word_at(area, BossWordOrder::Little, game);
             gameplay_flag_runtime::set_boss_word_le(area, bits | 1, game);
-            scatter(DropSource::Draygon, v2, 0, game);
+            scatter(DropSource::Draygon, v2, game);
             Draygon_Func_44(game);
         }
     };
@@ -395,7 +395,7 @@ crate::game::callback_dispatch! {
         ({ let (phase, point) = (varE20, Point32 {
                 x: words!((*E), var_28, var_29),
                 y: words!((*E), var_2A, var_2B),
-            }); actor_api::apply_vector(&mut Runtime::new(game), phase, crate::game::session::Vector32 { x: point.x, y: point.y }) });
+            }); Runtime::new(game).session_mut().compatibility_enemy_scratch = phase; actor_api::apply_vector(&mut Runtime::new(game), phase, crate::game::session::Vector32 { x: point.x, y: point.y }) });
         let v2: u16 = Abs16(((*E0).base.x_pos).wrapping_sub(128));
         if v2 as i32 - 8i32 & 0x8000 != 0 {
             let v3: u16 = Abs16(((*E0).base.y_pos).wrapping_sub(624));
@@ -544,6 +544,7 @@ crate::game::callback_dispatch! {
                 let varE20: u16 = ((64u8).wrapping_sub(
                     (actor_api::angle_from_delta((word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos), (word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos))) as u8,
                 )) as u16;
+                Runtime::new(game).session_mut().compatibility_enemy_scratch = varE20;
                 let pt: Point32 = ConvertAngleToXy(varE20, 2, game);
                 ({ let (phase, point) = (varE20, pt); actor_api::apply_vector(&mut Runtime::new(game), phase, crate::game::session::Vector32 { x: point.x, y: point.y }) });
             }
@@ -570,6 +571,7 @@ crate::game::callback_dispatch! {
             (actor_api::angle_from_delta((64 - ((*E).base.x_pos as i32 >> 2)) as u16, (120 - ((*E).base.y_pos as i32 >> 2)) as u16)) as u8,
         )) as u16;
         let pt: Point32 = ConvertAngleToXy(byte!((*E).var_43; 0) as u16, 1, game);
+        Runtime::new(game).session_mut().compatibility_enemy_scratch = byte!((*E).var_43; 0) as u16;
         ({ let (phase, point) = (byte!((*E).var_43; 0) as u16, pt); actor_api::apply_vector(&mut Runtime::new(game), phase, crate::game::session::Vector32 { x: point.x, y: point.y }) });
         let v3: u16 = Abs16(((*E).base.x_pos).wrapping_sub(256));
         if v3 as i32 - 4i32 & 0x8000 != 0 {
@@ -707,6 +709,7 @@ pub unsafe fn Draygon_Func_24(k: u16, game: &mut Game) {
                         (384u16).wrapping_sub((*E).base.y_pos),
                     )) as u8,
                 )) as u16;
+                Runtime::new(game).session_mut().compatibility_enemy_scratch = varE20;
                 let pt: Point32 = ConvertAngleToXy(varE20, 2, game);
                 {
                     let (phase, point) = (varE20, pt);
@@ -1408,7 +1411,7 @@ crate::game::callback_dispatch! {
             properties = (*E).base.properties & 0x5bff | 0xa000, };
     };
     [10872981] Draygon_Instr_23 [jp.offset(1)] { QueueSfx2_Max6(jp.word(0), game); };
-    [10873009] Draygon_Instr_30 [jp] { scatter(DropSource::SporeSpawn, k, 0, game); };
+    [10873009] Draygon_Instr_30 [jp] { scatter(DropSource::SporeSpawn, k, game); };
     [10873018] Draygon_Instr_20 [jp.offset(1)] {
         (*Get_Draygon(word!(game.cur_enemy_index) as i32, game)).var_A = jp.word(0);
     };

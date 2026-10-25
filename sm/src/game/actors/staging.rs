@@ -185,6 +185,8 @@ fn stage_tilesets<H: ActorHost + Host>(h: &mut H) {
         let raw = h.tileset_definition(&tileset, entry);
         let definition =
             h.capture_actor_definition(super::content::ActorDefinitionKey::from_legacy(raw));
+        h.session_mut().compatibility_enemy_scratch =
+            h.definition_word(&definition, super::content::DefinitionWord::NativeBank);
         // Native destination byte is observed before palette acquisition/diagnostic.
         let palette_row = h.tileset_destination_byte(&tileset, entry);
         let palette = h.definition_palette(&definition);

@@ -52,7 +52,8 @@ pub(crate) fn collect(h: &mut impl Host, raw: u16) {
     drops::collect(raw, h);
 }
 pub(crate) fn spawn_drop(h: &mut impl Host, definition: u16, enemy: u16, parameter: u16) {
-    drops::spawn(definition, enemy, parameter, h);
+    h.session_mut().compatibility_enemy_scratch = parameter;
+    drops::spawn(definition, enemy, h);
 }
 
 #[path = "../../game/enemy_projectiles/coordinates.rs"]

@@ -499,3 +499,13 @@ start_frame = 55650
 frames = 800
 require_hit = ["samus.jump.bomb"]
 expect = ["area:crateria"]
+
+# Onscreen dust writes its last bound before the following Crocomire spit drop.
+[[segment]]
+id = "crocomire-spit-drop-scratch"
+inputs = "corpus-crocomire-shot.inputs"
+input_sha256 = "e46b9a61eeded83064cc3a9fc29cf05d6a1cd18151c06cd6c9b78930af41766b"
+start_frame = 167281
+frames = 4
+require_hit = ["eproj.pre.executed", "eproj.spawn.initialized"]
+expect = ["room:A98D", "state:8"]

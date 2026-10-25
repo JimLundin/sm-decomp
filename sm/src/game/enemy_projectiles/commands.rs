@@ -21,7 +21,7 @@ fn drop_at_projectile(h: &mut impl Host, k: u16, definition: u16) {
         x: enemy!(h, slot, x),
         y: enemy!(h, slot, y),
     };
-    super::drops::spawn(definition, k, 0, h);
+    super::drops::spawn(definition, k, h);
 }
 fn random_sprite(h: &mut impl Host, k: u16, script: &impl ScriptRecord, mask: u16, half: u16) {
     let slot = (k >> 1) as isize;
@@ -164,7 +164,7 @@ pub(super) fn dispatch(
                 y: enemy!(h, slot, y),
             };
             let definition = script.native_word(if h.session().room.area != 0 { 2 } else { 0 });
-            super::drops::spawn(definition, k, 0, h);
+            super::drops::spawn(definition, k, h);
             script.offset(4)
         }
         8827198 => script.jump(if enemy!(h, slot, behavior_a) & 0x8000 != 0 {

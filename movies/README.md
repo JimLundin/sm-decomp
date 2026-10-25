@@ -332,3 +332,11 @@ and overhang into ADDE. Regenerate with
 `python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-wave-beam.inputs --rom rom/sm.smc --route wave-beam`.
 `item-wave` starts before the fresh award, requires its completed message, and
 checks 120 subsequent frames. It does not advance published-TAS timing alignment.
+
+The `crocomire-shot` authored route extends `wave-beam` through the Norfair refill
+and Crocomire fight. Regenerate with
+`python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-crocomire-shot.inputs --rom rom/sm.smc --route crocomire-shot`.
+`crocomire-spit-drop-scratch` observes an onscreen dust bound followed by a spit
+pickup: the shared compatibility word must reach the pickup's spawn parameter.
+It covers the failing update and three subsequent frames; boss completion remains
+pending. Regenerate its setup from boot after the Session schema change.

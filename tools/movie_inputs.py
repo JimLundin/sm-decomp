@@ -250,6 +250,7 @@ ROUTES = {
     'ice-beam-settled': (161733, 'd5700c8c8bfd3bcbc9fa5d4d05aa805dd594e98130a0c9d0ade163695201e093'),
     'speed-booster': (148406, 'bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6'),
     'speed-booster-settled': (148526, '9548c119742b6e2ffec65c5c0871403c96915671b83fe8b4c3930cc4bf60a00d'),
+    'crocomire-shot': (167295, 'e46b9a61eeded83064cc3a9fc29cf05d6a1cd18151c06cd6c9b78930af41766b'),
     'wave-beam': (155607, '2f07dc07523b7b542412604337d961292c3c07e3c4f0577d06dd131e1e879c4f'),
     'wave-gate': (153648, '1ce640c865d508ff2aab0f79c043c6da8aff9b74d6a1444d3a994e20d68db123'),
     'power-bomb': (176055, 'b6c0c74ccfe38b10c1ae284472e60bc483060ca0b3fb6f359d57e894283decf7'),
@@ -1390,6 +1391,71 @@ def extend_wave_pickup(a):
     return a
 
 
+def extend_crocomire_shot_regression(a):
+    """Observed Wave departure, refill, Crocomire fight and diagonal shot."""
+    assert len(a) == 155607
+    a = list(a)
+    a.extend(_holds('Left+X:180 None:15 Left+A+X:35 Left+X:160 None:15 B+Left+X:200'))
+    a.extend(_holds('None:25 Down:1 None:10 Down:1 None:10 Left:120'))
+    a.extend(_holds('None:10 Up:1 None:10 Up:1 None:10 Left+A+X:70'))
+    a.extend(_holds('Left+X:150 None:15 Right:20 Up+A:5 Left+A:3 Left+A+X:1'))
+    a.extend(_holds('A:10 Left+X:150 None:15 B+Left:4 B+Left+A:45 Left+X:50'))
+    a.extend(_holds('None:10 Up+A:25 Right+A:35 None:20 Right+X:38 None:5'))
+    a.extend(_holds('Right:23 None:10 Left:16 Up+A:25 Left+A:30 None:20'))
+    a.extend(_holds('Left:35 None:10 Up+A:25 Right+A:35 None:20 Left:45'))
+    a.extend(_holds('None:10 Up+A+X:25 Right+A+X:35 None:20 Right+X:38 None:10'))
+    a.extend(_holds('Right:22 None:10 Up+A:25 Left+A+X:35 None:20 Left:3'))
+    a.extend(_holds('Left+X:100 None:30 Left+X:140 None:100 Left+A:65 Left:55'))
+    a.extend(_holds('None:60 Left+A:70 Left:60 None:80 Left+A:45 None:110'))
+    a.extend(_holds('Up+A:8 Down+A:5 Down+A+X:1 None:100 Up+A:8 Down+A:5'))
+    a.extend(_holds('Down+A+X:1 None:100 Right:5 None:10 Down:5 None:5'))
+    a.extend(_holds('Down:5 None:110 Right:8 None:90 X:1 None:130'))
+    a.extend(_holds('X:1 Right:100 None:30 Left:10 X:1 Left:110'))
+    a.extend(_holds('None:40 Left:15 Left+X:1 Left:125 None:30 X:1'))
+    a.extend(_holds('Left:130 None:20 Up:10 None:15 Left:38 None:15'))
+    a.extend(_holds('Up:10 None:15 Up:5 None:10 Up+A:15 Left+A:45'))
+    a.extend(_holds('Left+X:100 None:30 Right:27 None:14 Left:3 Left+X:40'))
+    a.extend(_holds('None:15 Left+X:130 None:70 Left+X:75 None:40 Left:13'))
+    a.extend(_holds('None:10 Up+A:8 Down+A:5 Down+A+X:1 None:85 Left:65'))
+    a.extend(_holds('None:10 Up+A:5 Left+A:3 Left+A+X:1 Left+X:70 None:20'))
+    a.extend(_holds('Right:35 None:10 Left:3 None:5 Up+A:7 Left+A:2'))
+    a.extend(_holds('Left+A+X:1 Left:85 None:20 Left+X:140 None:60 Left:21'))
+    a.extend(_holds('None:100 Right:5 None:110 Left:13 None:10 Up+A:8'))
+    a.extend(_holds('Down+A:5 Down+A+X:1 None:165 Left:11 None:8 Up+A:8'))
+    a.extend(_holds('Down+A:5 None:15 Down:4 Down+X:1 None:180 Right:3'))
+    a.extend(_holds('Right+X:100 None:70 Right:35 None:240 Right:22 None:220'))
+    a.extend(_holds('Left:3 Left+A:15 Left+A+X:1 Left:125 None:60 Left+A:8'))
+    a.extend(_holds('Left+A+X:1 Left:130 None:65 B+Left+X:180 None:70 B+Left+A:65'))
+    a.extend(_holds('B+Left+X:50 B+Left+A:65 B+Left+X:50 B+Left+A:65 B+Left+X:100 None:75'))
+    a.extend(_holds('Left:30 None:45 Select:1 None:2 Select:1 None:5'))
+    a.extend(_holds('Left:14 None:8 Up+A:5 Down+A:3 Down+A+X:1 None:165'))
+    a.extend(_holds('Y:1 Right:25 X:80 None:15 Right:25 X:70'))
+    a.extend(_holds('None:20 X:70 None:20 X:70 A+X:10 A:1'))
+    a.extend(_holds('None:70 Right:15 X:65 A+X:10 A:1 None:65'))
+    a.extend(_holds('X:65 A+X:10 A:1 None:65 Right:10 X:65'))
+    a.extend(_holds('A+X:10 A:1 None:65 Right:20 X:65 A+X:10'))
+    a.extend(_holds('A:1 None:65 Left+X:30 Right+X:3 X:130 A+X:10'))
+    a.extend(_holds('A:1 None:35 X:65 A+X:10 A:1 None:30'))
+    a.extend(_holds('Right+X:12 X:53 A+X:10 A:1 None:35 Right+X:25'))
+    a.extend(_holds('X:60 Right+X:12 X:40 A+X:10 A:1 X:115'))
+    a.extend(_holds('A+X:10 A:1 None:35 Select:1 None:1 Select:1'))
+    a.extend(_holds('A:10 A+X:1 None:12 X:1 None:25 A:15'))
+    a.extend(_holds('A+X:1 None:25 X:1 None:35 A:13 A+X:1'))
+    a.extend(_holds('None:30 Y:1 X:65 A+X:14 A:1 None:30'))
+    a.extend(_holds('Right+X:25 X:40 A+X:14 A:1 None:30 X:70'))
+    a.extend(_holds('A+X:14 A:1 None:30 Right+X:12 X:98 A+X:14'))
+    a.extend(_holds('A:1 None:30 X:65 A+X:14 A:1 None:30'))
+    a.extend(_holds('Right:20 Select:1 None:200 A:14 A+X:1 None:10'))
+    a.extend(_holds('X:1 None:30 X:1 None:25 A:14 A+X:1'))
+    a.extend(_holds('None:10 X:1 None:30 Y:1 Right+X:20 X:45'))
+    a.extend(_holds('A+X:14 A:1 Select:1 None:9 X:1 None:30'))
+    a.extend(_holds('Y:1 Right+X:15 X:110 Left+X:15 Right+X:3 X:30'))
+    a.extend(_holds('Left+X:20 Right+X:3 X:25 X+R:44 R:1 Select+R:1'))
+    a.extend(_holds('R:10 X+R:1 R:10 X+R:1 R:20'))
+    assert len(a) == 167295
+    return a
+
+
 def route_frames(source, name):
     """Reproduce authored controller holds/splices; do not adjust emulator timing.
 
@@ -1408,6 +1474,8 @@ def route_frames(source, name):
         # Retain the saved-slot route through observed contact input 72760.
         # Authored idle exposure, then fresh A presses for Continue and both maps.
         return a[:72761] + _holds('None:1800 A:1 None:300 A:1 None:300 A:1 None:900')
+    if name == 'crocomire-shot':
+        return extend_crocomire_shot_regression(extend_wave_pickup(extend_wave_gate(extend_ice(extend_redtower(a)))))
     if name in ('wave-gate', 'wave-beam'):
         route = extend_wave_gate(extend_ice(extend_redtower(a)))
         return extend_wave_pickup(route) if name == 'wave-beam' else route

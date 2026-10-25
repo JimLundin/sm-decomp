@@ -15,23 +15,28 @@ pub(super) fn enemy_projectiles_hit_samus(h: &mut impl Host) {
         return;
     }
     for index in (0..18).rev() {
-        if enemy!(h, index, definition) == 0
-            || enemy!(h, index, properties) & 0x2000 != 0
-            || enemy!(h, index, radius) == 0
-        {
+        if enemy!(h, index, definition) == 0 || enemy!(h, index, properties) & 0x2000 != 0 {
             continue;
         }
-        let radii = enemy!(h, index, radius);
+        let x_radius = u16::from(enemy_byte!(h, index * 2, radius));
+        if x_radius == 0 {
+            continue;
+        }
+        h.session_mut().compatibility_enemy_scratch = x_radius;
+        let y_radius = u16::from(enemy_byte!(h, index * 2 + 1, radius));
+        if y_radius == 0 {
+            continue;
+        }
         if axis(
             h.session().player.x,
             enemy!(h, index, x),
             h.session().player.contact.x_radius,
-            radii & 0xff,
+            x_radius,
         ) && axis(
             h.session().player.y,
             enemy!(h, index, y),
             h.session().player.contact.radius,
-            radii >> 8,
+            y_radius,
         ) {
             h.session_mut().room.collision_detection_index = (index * 2) as u16;
             hit_samus((index * 2) as u16, h);

@@ -152,7 +152,7 @@ crate::game::callback_dispatch! {
     [11766783] NorfairPipeBug_Func_2 [] {
         let k: i32 = word!(game.cur_enemy_index) as i32;
         let PipeBug = Get_PipeBug(word!(game.cur_enemy_index) as i32, game);
-        if ({ let (actor, distance) = (word!(game.cur_enemy_index), byte!((*PipeBug).parameter_2; 0) as u16); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
+        if ({ let (actor, distance) = (word!(game.cur_enemy_index), byte!((*PipeBug).parameter_2; 0) as u16); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
             && (((*PipeBug).base.y_pos) as i16).wrapping_sub((word!(game.samus_y_pos)) as i16) >= 0
         {
             (*PipeBug).var_C = (*PipeBug).var_C.wrapping_add(1);
@@ -289,7 +289,7 @@ crate::game::callback_dispatch! {
             let mut v2: i16 = ({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) as i16;
             v2 >= 0 && v2 as i32 - 192i32 & 0x8000 != 0
         };
-        if samus_in_x_range && ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x30); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
+        if samus_in_x_range && ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x30); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0 {
             (*E).base.properties =
                 ((*E).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
             (*E).var_20 = 24;
@@ -600,6 +600,7 @@ crate::game::callback_dispatch! {
     };
     Botwoon_Func_21 [] {
         let pt: Point32 = ConvertAngleToXy((*E).var_3A, (*E).var_38, game);
+        Runtime::new(game).session_mut().compatibility_enemy_scratch = (*E).var_3A;
         ({ let (phase, point) = ((*E).var_3A, pt); actor_api::apply_vector(&mut Runtime::new(game), phase, crate::game::session::Vector32 { x: point.x, y: point.y }) });
     };
     Botwoon_Shot [] {
@@ -719,7 +720,7 @@ pub unsafe fn Botwoon_Func_11(k: u16, game: &mut Game) {
 pub unsafe fn Botwoon_Func_17(k: u16, game: &mut Game) {
     unsafe {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x4, 0xb79b as VoidP), game);
-        scatter(DropSource::Botwoon, k, 0, game);
+        scatter(DropSource::Botwoon, k, game);
         let E = Get_Botwoon(k as i32, game);
         set_fields! {[(*E)], 0; var_23, var_24, var_25}
     }

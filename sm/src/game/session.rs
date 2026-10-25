@@ -122,6 +122,8 @@ pub struct Session {
     pub feedback: Feedback,
     pub messages: MessageRequests,
     pub spawn_scratch: SpawnScratch,
+    // Shared last-written actor/projectile compatibility word ($0E20).
+    pub(crate) compatibility_enemy_scratch: u16,
     pub(in crate::game) shared_sequence: crate::game::player_collision::state::SequenceWorkspace,
     pub(in crate::game) multiply_scratch: crate::game::player_collision::state::MultiplyScratch,
 }
@@ -154,6 +156,7 @@ impl Session {
             feedback: Default::default(),
             messages: Default::default(),
             spawn_scratch: Default::default(),
+            compatibility_enemy_scratch: 0,
             shared_sequence: Default::default(),
             multiply_scratch: Default::default(),
         }

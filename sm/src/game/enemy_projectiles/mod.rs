@@ -90,11 +90,11 @@ pub fn enemy_projectiles_hit_samus(game: &mut Game) {
 pub fn shoot_enemy_projectiles(game: &mut Game) {
     with_execution(game, |ctx| contact::shoot_enemy_projectiles(ctx));
 }
-pub fn spawn_drop(definition: u16, index: u16, parameter: u16, game: &mut Game) {
-    with_execution(game, |ctx| drops::spawn(definition, index, parameter, ctx));
+pub fn spawn_drop(definition: u16, index: u16, game: &mut Game) {
+    with_execution(game, |ctx| drops::spawn(definition, index, ctx));
 }
-pub fn scatter_drop(source: DropSource, index: u16, parameter: u16, game: &mut Game) {
-    with_execution(game, |ctx| drops::scatter(source, index, parameter, ctx));
+pub fn scatter_drop(source: DropSource, index: u16, game: &mut Game) {
+    with_execution(game, |ctx| drops::scatter(source, index, ctx));
 }
 pub fn reset_room_metadata(game: &mut Game) {
     with_execution(game, |ctx| drops::reset_room_metadata(ctx));

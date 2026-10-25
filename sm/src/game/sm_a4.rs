@@ -1330,7 +1330,7 @@ crate::game::callback_dispatch! {
             set_fields! {[(*E).base]; y_pos = ((*E).base.y_pos).wrapping_add(21), y_height = 28,
                 x_width = 40, };
             spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb753 as VoidP), game);
-            scatter(DropSource::Crocomire, 0, 0, game);
+            scatter(DropSource::Crocomire, 0, game);
             Crocomire_9BB3(game);
         };
     };

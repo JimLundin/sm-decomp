@@ -274,7 +274,7 @@ pub(crate) unsafe fn update(kind: Kind, game: &mut Game) {
                         let (actor, distance) =
                             (word!(game.cur_enemy_index), field!(game, e, var_06));
                         u16::from(actor_api::player_within(
-                            &Runtime::new(game),
+                            &mut Runtime::new(game),
                             Key::from_legacy(actor),
                             actor_api::Axis::X,
                             distance,
@@ -539,7 +539,7 @@ unsafe fn update_timed(game: &mut Game) {
                     let (actor, distance) =
                         (word!(game.cur_enemy_index), field!(game, e, parameter_1));
                     u16::from(actor_api::player_within(
-                        &Runtime::new(game),
+                        &mut Runtime::new(game),
                         Key::from_legacy(actor),
                         actor_api::Axis::X,
                         distance,

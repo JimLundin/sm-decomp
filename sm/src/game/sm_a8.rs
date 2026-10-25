@@ -300,7 +300,7 @@ pub unsafe fn MiniDraygon_Func_7(game: &mut Game) {
         if {
             let (actor, distance) = ((word!(game.cur_enemy_index)).wrapping_sub(128), 0x80);
             u16::from(actor_api::player_within(
-                &Runtime::new(game),
+                &mut Runtime::new(game),
                 Key::from_legacy(actor),
                 actor_api::Axis::X,
                 distance,
@@ -403,7 +403,7 @@ pub unsafe fn Fune_Func_3(game: &mut Game) -> u16 {
         {
             let (actor, distance) = (word!(game.cur_enemy_index), (*E).var_C);
             u16::from(actor_api::player_within(
-                &Runtime::new(game),
+                &mut Runtime::new(game),
                 Key::from_legacy(actor),
                 actor_api::Axis::Y,
                 distance,
@@ -1252,7 +1252,7 @@ crate::game::callback_dispatch! {
     call (game); default { Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
     [11057172] Beetom_Func_3 [] {
-        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x60); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0 {
+        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x60); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0 {
             (*Get_Beetom(word!(game.cur_enemy_index) as i32, game)).var_C = (0xa8b90fi32) as u16;
         } else {
             (*Get_Beetom(word!(game.cur_enemy_index) as i32, game)).var_C = (0xa8b82fi32) as u16;
@@ -3543,8 +3543,8 @@ crate::game::callback_dispatch! {
     call (k, game); default { crate::rtl::Unreachable(game); };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     [11047153] MorphBallEye_Func_1 [] {
-        if ({ let (actor, distance) = (k, g_word_A89054); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
-            && ({ let (actor, distance) = (k, g_word_A89050); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
+        if ({ let (actor, distance) = (k, g_word_A89054); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
+            && ({ let (actor, distance) = (k, g_word_A89050); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
         {
             let E = Get_MorphBallEye(k as i32, game);
             (*E).var_E = 32;
@@ -3559,8 +3559,8 @@ crate::game::callback_dispatch! {
     };
     [11047264] MorphBallEye_Func_3 [] {
         let E = Get_MorphBallEye(k as i32, game);
-        if ({ let (actor, distance) = (k, g_word_A89056); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
-            && ({ let (actor, distance) = (k, g_word_A89052); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
+        if ({ let (actor, distance) = (k, g_word_A89056); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
+            && ({ let (actor, distance) = (k, g_word_A89052); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
         {
             let v3: u16 = actor_api::angle_from_delta((word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos), (word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos));
             (*E).var_D = v3;
@@ -3664,7 +3664,7 @@ crate::game::callback_dispatch! {
         let E2 = Get_NorfairLavaMan(word!(game.cur_enemy_index) as i32 + 128, game);
         if ((*E2).var_04 & 0x8000) != 0 {
             (*E2).var_04 = 0;
-            if ({ let (actor, distance) = (word!(game.cur_enemy_index), byte!((*E).parameter_2; 0) as u16); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
+            if ({ let (actor, distance) = (word!(game.cur_enemy_index), byte!((*E).parameter_2; 0) as u16); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
             {
                 (*E).var_D = addr_kNorfairLavaMan_Ilist_ACDE as u16;
                 if (*E).var_00 != 0 {

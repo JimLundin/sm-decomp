@@ -1,23 +1,21 @@
 # Engine migration
 
-![Now: 26 of 44 gameplay checks pass; X-ray table pointers are removed and sm_88 has 1,454 lines left. Next: Crocomire coverage and Crystal Flash. Outcome: safe owned state and less duplicate RAM code, then independent video/audio. Target: Map Rando.](docs/codebase-map/work-summary.svg)
+![Crocomire drop repair verified; next: finish the fight and adopt Crystal Flash and Draygon reductions.](docs/codebase-map/work-summary.svg)
 
 | Measure | Count |
 | --- | ---: |
-| Production Rust lines* | 115959 |
-| Legacy bank Rust lines | 51925 |
-| Verification Rust lines | 38944 |
-| Total Rust | 154903 |
+| Production Rust lines* | 115992 |
+| Legacy bank Rust lines | 51924 |
+| Verification Rust lines | 38946 |
+| Total Rust | 154938 |
 | Lines containing `unsafe` | 4662 |
 | Warnings (no-default library) | 367 |
 | Required checkpoint checks passing | 26/44 |
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-Change: **X-ray table pointers removed**; engine **+346 / -379 = -33**, legacy **-89**, unsafe **-17**, verification unchanged. `sm_88`: **1,454 lines left**.
+Change: **shared enemy scratch restored**; engine **+120 / -87 = +33**, legacy **-1**, unsafe unchanged, verification **+2**. Correctness repair; no bank retired.
 
-**497 exact comparisons**, **7 mutation kills + 1 failure-prefix check**, **1,200 replay frames**. Natural X-ray coverage remains pending.
-
-Build fix: **no incremental caches for disposable builds**; checked reuse **0.58s**, zero compilations. Engine counts unchanged.
+**167,281 setup + 4 regression frames**, **20 original-CPU comparisons**, **2 mutation kills**. Crocomire defeat remains pending; the 26 required recipes were not all rerun.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)

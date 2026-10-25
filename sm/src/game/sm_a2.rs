@@ -303,7 +303,7 @@ pub fn BouncingGoofball_SamusCloseX(game: &mut Game) -> u16 {
     {
         let (actor, distance) = (index, radius);
         u16::from(actor_api::player_within(
-            &Runtime::new(game),
+            &mut Runtime::new(game),
             Key::from_legacy(actor),
             actor_api::Axis::X,
             distance,
@@ -845,7 +845,7 @@ crate::game::callback_dispatch! {
         CallThinHoppingBlobs((((*E).var_D) as u32) | (0xa20000u32), game);
     };
     TwinHoppingBlobs_Func2 [] {
-        (*E).var_00 = { let (actor, distance) = (word!(game.cur_enemy_index), (*E).parameter_2); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) };
+        (*E).var_00 = { let (actor, distance) = (word!(game.cur_enemy_index), (*E).parameter_2); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) };
     };
     ThinHoppingBlobs_Func3 [] {
         (*E).var_02 = 1;
@@ -1234,8 +1234,8 @@ crate::game::callback_dispatch! {
     call (game); default { Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
     [10663318] LavaquakeRocks_1 [] {
-        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x40); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
-            && ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x40); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
+        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x40); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
+            && ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x40); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
         {
             (*Get_LavaquakeRocks(word!(game.cur_enemy_index) as i32, game)).var_A =
                 (0xa2b5b2i32) as u16;
@@ -1680,7 +1680,7 @@ crate::game::callback_dispatch! {
                 set_fields! {[(*E)], 1; var_D, var_00}
             }
             MaridiaLargeSnail_Func_10(word!(game.cur_enemy_index), game);
-            if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x18); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0 {
+            if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x18); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0 {
                 (*E).var_00 = ((*E).var_00) | (2u16);
                 MaridiaLargeSnail_Func_10(word!(game.cur_enemy_index), game);
                 (*E).var_A = (0xa2ce2bi32) as u16;
@@ -1702,7 +1702,7 @@ crate::game::callback_dispatch! {
             if v4
                 && {
                     (*E).var_C = 0;
-                    ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x20); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
+                    ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x20); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
                 }
                 && (*E).var_03 != 0
                 && (*E).var_E == 0
@@ -1760,8 +1760,8 @@ crate::game::callback_dispatch! {
     };
     MaridiaLargeSnail_Func_11 [] {
         set_fields! {[(*E)], 0; var_04, var_05}
-        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x20); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
-            && ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x18); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
+        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x20); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
+            && ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x18); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
         {
             (*E).var_04 = 1;
             if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) != 0 {
@@ -1817,7 +1817,7 @@ crate::game::callback_dispatch! {
     call (game); default { Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
     [10674229] HirisingSlowfalling_Func_4 [] {
-        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x50); u16::from(actor_api::player_within(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0 {
+        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x50); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0 {
             let E = Get_HirisingSlowfalling(word!(game.cur_enemy_index) as i32, game);
             (*E).var_07 = (*E).parameter_2;
             (*E).var_A = (0xa2e04fi32) as u16;

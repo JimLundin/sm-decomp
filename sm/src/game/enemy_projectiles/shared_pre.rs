@@ -327,7 +327,7 @@ pub(super) fn MotherBrainBomb_Bomb_CollDetect_DoubleRet(k: u16, ctx: &mut impl H
         x: enemy!(ctx, (v1) as isize, x),
         y: enemy!(ctx, (v1) as isize, y),
     };
-    super::drops::spawn(addr_kEnemyDef_EC3F as u16, k, 0, ctx);
+    super::drops::spawn(addr_kEnemyDef_EC3F as u16, k, ctx);
     1
 }
 
@@ -366,18 +366,23 @@ pub(super) use super::pre_actions::EprojPreInstr_NorfairLavaquakeRocks_Inner as 
 pub(super) use super::pre_actions::EprojPreInstr_NorfairLavaquakeRocks_Inner as sub_86E0A4;
 
 pub(super) fn CheckIfEprojIsOffScreen(k: u16, ctx: &mut impl Host) -> u16 {
-    if (enemy!(ctx, (k >> 1) as isize, x).wrapping_sub(ctx.inputs().camera_x) as i16) >= 0
-        && ((enemy!(ctx, (k >> 1) as isize, x) as i32 - (ctx.inputs().camera_x as i32 + 256))
-            as i16)
-            < 0
-        && (enemy!(ctx, (k >> 1) as isize, y).wrapping_sub(ctx.inputs().camera_y) as i16) >= 0
-        && ((enemy!(ctx, (k >> 1) as isize, y) as i32 - (ctx.inputs().camera_y as i32 + 256))
-            as i16)
-            < 0
-    {
-        return 0;
+    if (enemy!(ctx, (k >> 1) as isize, x).wrapping_sub(ctx.inputs().camera_x) as i16) < 0 {
+        return 1;
     }
-    1
+    ctx.session_mut().compatibility_enemy_scratch = ctx.inputs().camera_x.wrapping_add(256);
+    if (enemy!(ctx, (k >> 1) as isize, x).wrapping_sub(ctx.session().compatibility_enemy_scratch)
+        as i16)
+        >= 0
+        || (enemy!(ctx, (k >> 1) as isize, y).wrapping_sub(ctx.inputs().camera_y) as i16) < 0
+    {
+        return 1;
+    }
+    ctx.session_mut().compatibility_enemy_scratch = ctx.inputs().camera_y.wrapping_add(256);
+    u16::from(
+        (enemy!(ctx, (k >> 1) as isize, y).wrapping_sub(ctx.session().compatibility_enemy_scratch)
+            as i16)
+            >= 0,
+    )
 }
 
 pub(super) fn Eproj_FuncE722(k: u16, ctx: &mut impl Host) -> u16 {

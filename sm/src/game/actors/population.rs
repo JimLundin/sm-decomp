@@ -422,7 +422,14 @@ fn spawn_from_cursor<H: ActorHost + crate::game::enemy_projectiles::host::Host>(
             break;
         }
         index = sequence.slot;
-        cursor = next_cursor(cursor);
+        cursor = match cursor {
+            super::content::PopulationCursor::Legacy { bank, .. } => {
+                let address = h.session().compatibility_enemy_scratch.wrapping_add(16);
+                h.session_mut().compatibility_enemy_scratch = address;
+                super::content::PopulationCursor::Legacy { bank, address }
+            }
+            other => next_cursor(other),
+        };
     }
     h.session_mut().actors.controls.selected = saved;
     Ok(Some((index, last_handle)))
@@ -453,6 +460,7 @@ pub(in crate::game) fn spawn_legacy<H: ActorHost + crate::game::enemy_projectile
     bank: u8,
     address: u16,
 ) -> u16 {
+    h.session_mut().compatibility_enemy_scratch = address;
     spawn_from_cursor(
         h,
         super::content::PopulationCursor::Legacy { bank, address },
