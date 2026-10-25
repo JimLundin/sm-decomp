@@ -90,6 +90,14 @@ can only lose route fidelity, never fake a pass.
   `--seed` (first deliverable by 15:52: load one seed and report the first frame
   that diverges, even if no-go). A0 stays parked at
   10,555 with its finding in PLAN item 1; A1 does not need it.
+- **A1.2 go reported, not landed (14:52 check-in).** PLAN item 1 (written in 4943d38)
+  says a seeded trial passed 600 frames and reached the captured next room, with
+  "integration after the queued bank changes", and the 100% capture (331 seeds) is
+  done; none of it is committed. That is held work, a stall. Land it now as its own
+  `A:` commit: `--seed`, the 100% index CSV and one `seed =` row naming the room and
+  frames. It is verification-side, so it waits for no bank queue. The lane-A agent
+  does no bank work until it lands. Then A1.3: flip one pending row per commit,
+  starting with the cheapest, to reach ≥28/44 by 18:00.
 
 **Lane B — bank retirement (up to three agents, one bank each).** Unchanged method:
 for each function, delete it if unreachable or duplicated, otherwise move it onto safe
@@ -101,7 +109,8 @@ commit that grows production needs a one-line reason no smaller form exists). Ea
 hooks: 607 lines/94 files, duplicated owned paths). Queues:
 - **B1:** `sm_90` (finish) → `sm_81` → `sm_80` → `sm_82`.
 - **B2:** `sm_88` → `sm_8b`.
-- **B3 (new):** small banks `sm_89` (182) → `sm_a0` (458) → `sm_8f` (421) → `sm_b2`
+- **B3 (new):** finish `sm_89` (48 lines left, the 18:00 deletion) before more `sm_a0`;
+  small banks `sm_89` (182) → `sm_a0` (458) → `sm_8f` (421) → `sm_b2`
   (880), then enemy families already met in a passing row (name the row and the enemy;
   e.g. Ceres/Crateria/Brinstar/Norfair common enemies in `sm_a2`, `sm_a3`, `sm_a8`,
   `sm_b3`). `sm_a4` Crocomire (1,630) is unlocked by `boss-crocomire` and follows
@@ -140,6 +149,15 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
 
 ## Check-ins
 
+- **2026-10-25 14:52 CET (b06f9ca), lane-A held work:** 11 agent commits since bd76e2a:
+  **A 0**, B1 `sm_90` 6 (incl. b06f9ca fixing 21a3f50's missing file), B2 `sm_88` 2,
+  B3 `sm_89` 1 + `sm_a0` 1 (before sm_89 finished), 1 unlabelled user-requested feed
+  (2ccf738); 0 docs-only; all B with `Score:` (4943d38's `·` is mojibake). Score
+  `checks 27/44 · legacy 50974 · production 115629 · unsafe 4603 · verification 38936`
+  (last 27 · 51744 · 115957 · 4648 · 38936); warnings 362 (367); verify/probe/observer
+  607/92. Ratios 52-91%, production −328. 18:00: legacy, production, sm_90 (522 left),
+  sm_89 (48) on pace; **checks behind**: A1.2 go held locally, see Lane A. Verification
+  flat 3 hours: no fixture deleted. Changed: land A1.2 now; finish sm_89 before sm_a0.
 - **2026-10-25 13:52 CET (bd76e2a), no stall:** 4 agent commits since 603425e: A 3
   (5354e6c, 75fa0b1 code; a822933 docs-only resource policy), B1 `sm_90` 1 (bd76e2a,
   ratio 154%), **B2/B3 0** (sm_89 unstarted), all labelled with `Score:`. Score `checks
