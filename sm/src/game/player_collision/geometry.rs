@@ -58,14 +58,14 @@ fn set_player_fraction(player: &mut Player, axis: Axis, value: u16) {
         Axis::Y => player.y_fraction = value,
     }
 }
-fn level(h: &impl Host, block: u16) -> u16 {
+pub(super) fn level(h: &impl Host, block: u16) -> u16 {
     if let Some(cell) = h.session().room.terrain.cells().get(usize::from(block)) {
         cell.level
     } else {
         h.imported_level_word(usize::from(block) * 2)
     }
 }
-fn behavior(h: &impl Host, block: u16) -> u8 {
+pub(super) fn behavior(h: &impl Host, block: u16) -> u8 {
     if let Some(cell) = h.session().room.terrain.cells().get(usize::from(block)) {
         cell.behavior
     } else {

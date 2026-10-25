@@ -40,10 +40,7 @@ use crate::game::sm_91::{
     DemoObjectInputHandler, MakeSamusFaceForward, Samus_Func20, Samus_InputHandler,
     Samus_LoadSuitPalette, SamusFunc_E633,
 };
-use crate::game::sm_94::{
-    HandleGrappleBeamGfx, PostGrappleCollisionDetect_X, PostGrappleCollisionDetect_Y,
-    scale_sine_word,
-};
+use crate::game::sm_94::{HandleGrappleBeamGfx, scale_sine_word};
 
 pub use crate::types::HandlerFunc;
 
@@ -1513,24 +1510,9 @@ pub fn Samus_GetBottom_R18(game: &Game) -> u16 {
     y.wrapping_add(u16::from(radius)).wrapping_sub(1)
 }
 pub fn Samus_PostGrappleCollisionDetect(game: &mut Game) {
-    PostGrappleCollisionDetect_X(game);
-    PostGrappleCollisionDetect_Y(game);
-    if (game.distance_to_eject_samus_down() == 0 || game.distance_to_eject_samus_up() == 0)
-        && game.distance_to_eject_samus_up() != 0
-    {
-        game.set_samus_y_pos(
-            game.samus_y_pos()
-                .wrapping_sub(game.distance_to_eject_samus_up()),
-        );
-        // Keep the sixteen-bit sign test, including extreme radius values.
-        if game.samus_y_radius().wrapping_sub(16) & 0x8000 == 0 {
-            PostGrappleCollisionDetect_Y(game);
-            game.set_samus_y_pos(
-                game.samus_y_pos()
-                    .wrapping_sub(game.distance_to_eject_samus_up()),
-            );
-        }
-    }
+    crate::game::player_collision::operations::settle_after_grapple(
+        &mut crate::game::session_runtime::Runtime::new(game),
+    );
 }
 static kSamusCodeHandlers: [Func_U8; 32] = callback_table! { nonnull Func_U8;
     SamusCode_00_LockSamus, SamusCode_01_UnlockSamus, SamusCode_02_ReachCeresElevator,

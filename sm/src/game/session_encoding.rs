@@ -375,6 +375,9 @@ macro_rules! scalar_words {
         $f(0xdc6,$($borrow)* $s.player.collision.pose_input);
         $f(0xdce,$($borrow)* $s.player.collision.solid_actor_flags);
         $f(0xdd0,$($borrow)* $s.player.collision.flags);
+        for index in 0..4 {
+            $f(0xe04+index*2,$($borrow)* $s.player.collision.grapple_ejection[index]);
+        }
         $f(0xdec,$($borrow)* $s.shared_sequence.stage);
         $f(0xdee,$($borrow)* $s.shared_sequence.value);
         $f(0xa1e,$($borrow)* $s.player.movement_and_facing);

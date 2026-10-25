@@ -144,3 +144,6 @@ pub(crate) use super::pose::fit_pose;
 /// words, speed clamps and previous-position correction. Diagonal callers invoke
 /// X then Y; each call publishes its state before the next one begins.
 pub(crate) use super::motion::shinespark;
+
+/// Resolve terrain penetration after a grapple release.
+pub(crate) use super::grapple::settle as settle_after_grapple;

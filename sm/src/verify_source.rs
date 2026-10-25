@@ -198,6 +198,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/player_collision/geometry.rs"),
     ),
     (
+        "sm/src/game/player_collision/grapple.rs",
+        include_bytes!("game/player_collision/grapple.rs"),
+    ),
+    (
         "sm/src/game/player_collision/motion.rs",
         include_bytes!("game/player_collision/motion.rs"),
     ),

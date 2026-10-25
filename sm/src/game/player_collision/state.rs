@@ -4,6 +4,7 @@ use crate::game::session::Position;
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub(in crate::game) struct CollisionState {
+    pub(in crate::game) grapple_ejection: [u16; 4],
     pub(in crate::game) flags: u16,
     pub(in crate::game) slope_adjusted: u16,
     pub(in crate::game) solid_actor_flags: u16,

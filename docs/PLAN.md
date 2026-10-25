@@ -57,8 +57,11 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    `python tools/verify_dll.py --unit-tests --direct` runs 20 observer tests, not
    gameplay checks. Regenerate incompatible checkpoints from boot; preserve the
    old checked navigation build.
-2. **Current - lane B bank retirement.** Retire `sm_94`; parallel drafts own `sm_91` and `sm_90`.
-   The obsolete collision record/bridge is retired; finish the remaining `sm_94` families and delete its file.
+2. **Current - lane B bank retirement.** Finish `sm_94`: post-grapple clearance now
+   owns its four ejection distances in player collision; 465 bank lines remain.
+   Next: `BlockInside*`/`BlockInsideDetection`, then grapple reactions/graphics and
+   delete the file. Older `sm_91`/`sm_90` drafts leave the active queue; local
+   experiments remain available. Natural grapple movie coverage is still pending.
    Report added production and deleted legacy lines together; net growth needs a
    reason. Get production below 110,000 before starting another subsystem. Reuse
    existing Host/effects/adapters unless they demonstrably cannot serve. Route
