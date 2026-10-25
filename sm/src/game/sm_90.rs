@@ -35,8 +35,8 @@ use crate::game::sm_80::{
 
 use crate::game::grapple_swing::draw_rope as HandleGrappleBeamGfx;
 use crate::game::projectile_geometry::sine_offset;
+use crate::game::session_runtime::xray_input;
 use crate::game::sm_88::EnableHdmaObjects;
-use crate::game::sm_91::Samus_Func20;
 
 pub use crate::types::HandlerFunc;
 
@@ -994,7 +994,7 @@ crate::game::callback_dispatch! {
         game,
     );
     [9496851] Samus_InputHandler_E913 => Runtime::new(game).handle_input();
-    [9496856] Samus_Func20_ => Samus_Func20(game);
+    [9496856] Samus_Func20_ => xray_input(game);
     @external {
         9496846 => [()];
     }

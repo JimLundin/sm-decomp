@@ -3,7 +3,7 @@
 use crate::game::actors;
 use crate::game::contact_rules::axis;
 use crate::game::session_runtime::Runtime;
-use crate::game::sm_91::Samus_DealDamage;
+use crate::game::session_runtime::damage_player;
 use crate::game_state::Game;
 use crate::ram_map::{checked_word as word, word_arrays as arrays};
 
@@ -53,15 +53,9 @@ pub unsafe fn player_projectiles_hit_samus(game: &mut Game) {
         }
         if kind & 0xff00 != 0x300 && kind & 0xff00 != 0x500 {
             mark(index, game);
-            unsafe {
-                Samus_DealDamage(
-                    {
-                        let amount = word!(game.projectile_damage[index]);
-                        actors::combat::suit_damage(&mut Runtime::new(game), amount)
-                    },
-                    game,
-                );
-            }
+            let amount = word!(game.projectile_damage[index]);
+            let damage = actors::combat::suit_damage(&mut Runtime::new(game), amount);
+            damage_player(damage, game);
             word!(game.samus_invincibility_timer = 96);
             word!(game.samus_knockback_timer = 5);
             unsafe {

@@ -21,6 +21,7 @@ use crate::game::gameplay_flag_runtime::{
     CheckEventHappened, ClearEventHappened, SetBossBitForCurArea, SetEventHappened,
 };
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
+use crate::game::session_runtime::damage_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_8b::CalcCeresSteamPos_Mode7;
 use crate::game::sm_80::{
@@ -29,7 +30,6 @@ use crate::game::sm_80::{
 };
 use crate::game::sm_81::DrawSpritemap;
 use crate::game::sm_90::Samus_SetPushedOutOfCeresRidley;
-use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_a0::{CosineMult8bit, SineMult8bit};
 use crate::game::sm_a9::{
     ComputeCosMult, ComputeSinMult, MoveEnemyWithVelocity, Shitroid_Func_2, WriteColorsToPalette,
@@ -3301,7 +3301,7 @@ pub unsafe fn Ridley_Func_98(game: &mut Game) {
             .base
             .enemy_ptr;
         let v1 = RomPtr_A0(enemy_ptr, game);
-        Samus_DealDamage(
+        damage_player(
             {
                 let amount = *(v1.offset(6) as *mut u16);
                 actors::combat::suit_damage(&mut Runtime::new(game), amount)
@@ -3848,7 +3848,7 @@ pub unsafe fn Ridley_Func_127(game: &mut Game) {
         };
         if Ridley_Func_124(rect, game) != 0 {
             let E = Get_Ridley(0, game);
-            Samus_DealDamage(
+            damage_player(
                 {
                     let amount = (*E).var_1C;
                     actors::combat::suit_damage(&mut Runtime::new(game), amount)

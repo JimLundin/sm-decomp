@@ -4,7 +4,7 @@ use crate::game::prelude::*;
 
 use crate::game::sm_80::QueueSfx1_Max6;
 
-use crate::game::sm_91::{__ASSERT_FUNCTION, ResponsibleForXrayStandupGlitch};
+use crate::game::session_runtime::finish_xray;
 
 const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
 const RomPtr_91: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x91>;
@@ -118,7 +118,7 @@ pub unsafe fn build_overlay(game: &mut Game) {
         crate::native_assertion! {
             '_c2rust_label: ((word!(game.layer1_y_pos) as i32 >> 12) as u16) == 0;
             b"(uint16)(layer1_y_pos >> 12) == 0\0", b"src/sm_91.c\0", 921,
-            pointer __ASSERT_FUNCTION.as_ptr()
+            pointer c"uint8 *RomPtr_RAM(uint16_t)".as_ptr()
         };
         let mut r34: u16 = (Mult8x8(
             (word!(game.layer1_y_pos) >> 4) as u8,
@@ -493,7 +493,7 @@ pub unsafe fn finish_restore(k: u16, game: &mut Game) {
             word! { game, 0;
                 demo_input_prev, demo_input_prev_new, demo_backup_prev_controller_input,
             }
-            ResponsibleForXrayStandupGlitch(game);
+            finish_xray(game);
             *(ram_ptr!(game, u16; 0x18b4)).offset((word!(game.hdma_object_index) >> 1) as isize) =
                 0;
             QueueSfx1_Max6(0xa, game);

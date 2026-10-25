@@ -135,7 +135,10 @@ impl EntryEffects for Runtime<'_> {
                     actors::staging::prepare_room_assets(&mut Runtime::new(game));
                 }
                 LeafEffect::LoadSuitTargetPalette => {
-                    game::sm_91::Samus_LoadSuitTargetPalette(game);
+                    game::samus_palette::load_suit(
+                        &mut Runtime::new(game),
+                        game::visual_state::PaletteBuffer::Target,
+                    );
                 }
                 LeafEffect::SpawnBg3ScrollHdma => {
                     game::sm_88::SpawnBG3ScrollHdmaObject(game);

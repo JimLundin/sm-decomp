@@ -287,8 +287,12 @@ impl Host for Runtime<'_> {
             });
             return;
         }
+        if matches!(step, PlayerStep::Xray) {
+            self.owned_call(Self::request_xray);
+            return;
+        }
         self.foreign(|g| unsafe {
-            use crate::game::{sm_9b, sm_90, sm_91};
+            use crate::game::{sm_9b, sm_90};
             match step {
                 PlayerStep::Radius => sm_90::Samus_SetRadius(g),
                 PlayerStep::Input => sm_90::Samus_CallInputHandler(g),
@@ -296,7 +300,7 @@ impl Host for Runtime<'_> {
                 PlayerStep::Acceleration => unreachable!("acceleration handled by shared owner"),
                 PlayerStep::InsideBlock => unreachable!("inside block handled by shared owner"),
                 PlayerStep::Grapple => sm_9b::GrappleBeamHandler(g),
-                PlayerStep::Xray => sm_91::XrayRunHandler(g),
+                PlayerStep::Xray => unreachable!("X-ray handled by shared owner"),
                 PlayerStep::RestoreControl => {
                     crate::game::session_runtime::player_command(0x14, g);
                 }
@@ -704,8 +708,8 @@ mod player_movement_runtime;
 #[path = "player_transitions_runtime.rs"]
 mod player_transitions_runtime;
 pub(crate) use player_transitions_runtime::{
-    command as player_command, face_forward as player_face_forward,
-    initialize as initialize_player, mother_brain as player_mother_brain,
+    command as player_command, damage_player, face_forward as player_face_forward, finish_xray,
+    initialize as initialize_player, mother_brain as player_mother_brain, xray_input,
 };
 #[path = "player_update_runtime.rs"]
 mod player_update_runtime;

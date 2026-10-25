@@ -24,7 +24,6 @@ use crate::game::sm_80::{Multiply16x16, QueueSfx1_Max1, QueueSfx1_Max6, QueueSfx
 use crate::game::sm_90::{
     LoadProjectilePalette, Samus_GetBottom_R18, Samus_PostGrappleCollisionDetect,
 };
-use crate::game::sm_91::Samus_LoadSuitPalette;
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]
@@ -918,7 +917,7 @@ crate::game::callback_dispatch! {
                 flare_fast_sparks_anim_frame, flare_animation_timer, flare_slow_sparks_anim_timer,
                 flare_fast_sparks_anim_timer,
             }
-            Samus_LoadSuitPalette(game);
+            crate::game::samus_palette::load_suit(&mut Runtime::new(game), crate::game::visual_state::PaletteBuffer::Current);
         }
     };
     [10208542] GrappleBeamFunc_FireGoToCancel [] {

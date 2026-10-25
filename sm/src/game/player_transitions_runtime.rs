@@ -277,12 +277,12 @@ impl Runtime<'_> {
         self.handle_input();
     }
 
-    /// X-ray turning retains its existing legacy implementation and foreign interval.
+    /// Frozen crouch and turn input uses the same owned X-ray transition.
     pub(crate) fn handle_input(&mut self) {
         if matches!(self.session().player.movement_and_facing >> 8, 5 | 21)
             && self.inputs().frozen != 0
         {
-            self.foreign(|game| unsafe { crate::game::sm_91::Samus_Func20(game) });
+            self.owned_call(Self::handle_xray_input);
         } else {
             crate::game::player_transitions::handle_input(self);
         }
@@ -382,4 +382,90 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
         ram::samus_prev_health_for_flash,
         rt.session().inventory.health.current,
     );
+}
+
+pub(crate) fn xray_input(game: &mut crate::game_state::Game) {
+    Runtime::new(game).handle_xray_input();
+}
+
+pub(crate) fn finish_xray(game: &mut crate::game_state::Game) {
+    crate::game::player_transitions::xray::finish(&mut Runtime::new(game));
+}
+
+impl Runtime<'_> {
+    fn handle_xray_input(&mut self) {
+        use crate::ram_map::words as ram;
+        let binding = if self.session().player.movement_and_facing as u8 == 4 {
+            ram::button_config_right
+        } else {
+            ram::button_config_left
+        };
+        let turn = self.word(binding) & self.inputs().held != 0;
+        crate::game::player_transitions::xray::turn(self, turn);
+    }
+
+    pub(crate) fn request_xray(&mut self) {
+        if self.inputs().frozen != 0
+            || self.inputs().run_button & self.inputs().held == 0
+            || !self.initialize_xray()
+        {
+            return;
+        }
+        self.foreign(|game| unsafe {
+            crate::game::sm_88::SpawnHdmaObject(
+                0x91,
+                crate::rtl::rom_ptr!(game; 0x91caf2).cast(),
+                game,
+            )
+        });
+    }
+
+    pub(crate) fn initialize_xray(&mut self) -> bool {
+        use crate::{
+            game::player_transitions::{state::InterruptionAction, xray},
+            ram_map::words as ram,
+        };
+        if !xray::request(self) {
+            return false;
+        }
+        self.write_slice_le(ram::time_is_frozen_flag, 1);
+        self.session_mut().player.transitions.interruption = InterruptionAction::from_raw(5);
+        for index in (0..256).rev() {
+            self.suit_window_word(index, 255);
+        }
+        xray::set_world_running(self.session_mut(), false);
+        self.write_slice_native(0xa88, 1);
+        self.set_byte(0xa8a, 0x98);
+        self.write_slice_native(0xa8b, 0);
+        self.session_mut().player.demo.previous_held = 0x98c8;
+        self.write_slice_native(0xa8e, 0x9098);
+        self.set_byte(0xa90, 0x99);
+        self.write_slice_le(ram::hdma_var_1, 0);
+        let demo = &mut self.session_mut().player.demo;
+        demo.pre_action = 0;
+        demo.delay = 0;
+        demo.program = 0;
+        demo.held = 0;
+        demo.pressed = 0;
+        self.session_mut().player.transitions.xray_angle =
+            if self.session().player.movement_and_facing as u8 == 4 {
+                192
+            } else {
+                64
+            };
+        true
+    }
+}
+
+pub(crate) fn damage_player(amount: u16, game: &mut crate::game_state::Game) {
+    Runtime::new(game).apply_contact_damage(amount);
+}
+
+impl Runtime<'_> {
+    pub(crate) fn apply_contact_damage(&mut self, amount: u16) {
+        let frozen = self.inputs().frozen;
+        if crate::game::samus_periodic_damage::direct(self.session_mut(), frozen, amount).is_err() {
+            crate::game::player_projectiles::host::Host::invalid_damage(self);
+        }
+    }
 }

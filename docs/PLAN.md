@@ -18,16 +18,12 @@ preserve others' work. Do not delete another process's lock or force-push main.
 
 ## Review directives (user direction, 2026-10-24)
 
-Read [the external review](REVIEW.md) next. **The [milestone plan](REVIEW.md#milestone-plan-2026-10-24)
-there is binding and executes work order items 1-2.** Two lanes only: lane A (one
-agent) aligns the published any%/100% TASes (A0) and maps checks onto them; lane B (all others, one agent per
-bank) retires legacy `game/sm_*.rs` banks in its bank order, deleting each file. Every
-commit subject starts `A:` or `B:sm_XX`, and its body ends with the scoreboard line
-the milestone plan defines. A docs-only commit needs a code commit beside it.
-Verification is movie segments as data, not new Rust fixtures or production
-hooks; see the review's size goal and verification policy. Keep this plan
-under ~200 lines; results belong in commit messages (~8 lines). Direct user
-instructions take precedence; [HISTORY.md](HISTORY.md) holds no current rules.
+Read [REVIEW.md](REVIEW.md) next. Its milestone plan governs work order 1-2:
+lane A (one agent) aligns TASes and adds coverage; lane B (one agent per bank) retires banks.
+Subjects start `A:` or `B:sm_XX`; bodies end with the review's `Score:` line.
+Docs-only commits need a code commit beside them. Verification is movie data,
+not new Rust fixtures or production hooks. Keep this plan near 200 lines and results
+in concise commit messages. Direct user instructions win; HISTORY holds no current rules.
 
 **Codebase map:** brief done (c1fe795). Pages generates the
 [view](https://jimlundin.github.io/sm-decomp/) from HEAD; keep only the five-box
@@ -47,31 +43,26 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Each adoption names segments exercising changed behavior and downstream effects.
    Current recipes: 25/44 required checks pass; 19 remain pending. Three additional
    checks (in-memory save, upward elevator, Ice return) pass; the corpus is unfinished.
-   A0.2: original lsnes captured 129,712 exact inputs across 127 gameplay rooms;
-   24,619 emulator-lag frames, no credits. Flat NMI counts do not identify lag.
-   A0.3: measured wait-entry input aligns 9,266 native steps (0 failures).
-   Options return and door loading timing are corrected; original timing matches
-   23 doors in all directions. All 24 runnable required recipes requalify; the
-   five-frame door regression kills an acknowledged-NMI timing mutation. Next:
-   native index 9,266 enters an audio upload with 41 measured acknowledged NMIs
-   and input reads while gameplay waits. Bulk native upload has no video clock;
-   timed suspension needs bus-level clock events before E0B5 can resume faithfully.
-   A0 remains open. Under the review's documented fallback, Power Bomb pickup
-   passes with message completion and follow-up. The Wave route exposed a closing-gate
-   spawn-parameter fault; its 10-frame regression now passes. Next: Wave Beam pickup.
-   Observer unit tests (20) are not gameplay checks. Regenerate incompatible
-   checkpoints from boot; preserve the old checked navigation build.
-2. **Current - lane B bank retirement.** `sm_94` is deleted; next is `sm_91`.
-   Normal input, demos, suits, equipment and player commands use owned state;
-   238 lines remain in sm_91 and 1,514 in sm_90. Mother Brain player scripts and
-   Hyper Beam use the same owner; natural encounter coverage remains pending.
-   Initialization is owned; next: X-ray, then delete sm_91. Gravity coverage is pending.
-   Old `sm_91`/`sm_90` drafts remain dropped; inspect current source afresh.
-   Natural grapple movie coverage remains pending despite direct ROM checks.
-   Report added production and deleted legacy lines together; growth needs a reason.
+   Measured wait-entry inputs align 9,266 original TAS steps. Options/door timing
+   fixes requalified all 24 previously runnable required recipes. At step 9,266,
+   original audio upload reads input during 41 acknowledged NMIs; native upload
+   has no elapsed video clock. The review's measured read-collapse experiment
+   leaves a 40-count difference at RAM $05B6 on step 9,266 and first gameplay
+   divergence at 9,291. A0 remains open; do not offset counters or mask differences.
+   Under the accepted fallback, Power Bomb pickup and the closing-gate regression
+   pass. Current: Wave Beam pickup. Regenerate incompatible checkpoints from boot
+   and preserve the checked navigation build.
+2. **Current - lane B bank retirement.** `sm_94` and `sm_91` are deleted.
+   Player input, demos, suits, equipment, commands, initialization, Mother Brain
+   reactions, X-ray and direct damage use owned state. Natural X-ray, Gravity,
+   boss and grapple movie coverage remains incomplete despite bounded checks.
+   Next: finish sm_90 (1,514 lines), starting with cannon and forced movement.
+   Use named enum/function handlers as families move; raw identities stay at
+   compatibility boundaries. Full u16 unknown values and failure timing survive.
+   Report added production and deleted legacy together; growth needs a reason.
    Get production below 110,000 before starting another subsystem. Reuse existing
-   Host/effects/adapters, remove touched inline verification differences, and try
-   scoped `cargo-mutants` before text-patch mutation recipes.
+   interfaces, remove touched inline verification differences, and try scoped
+   cargo-mutants before text-patch mutations.
 3. **Then - finish owned gameplay.** Migrate remaining complete producer/consumer
    interactions, actual callers and legacy retirement. Close persistent ownership,
    content/topology/options boundaries and unsafe removal across the whole engine;
@@ -82,17 +73,17 @@ before further adoption; the review's red-main rule does not authorize CI pollin
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Do not auto-rename macro-shared parameters.
-Held scrolling consolidation needs `scroll_tiles.row.bg2` coverage, absent in Ceres.
-Player-input draft `e956dffa` remains held (+25 production / +1,235 verification;
-no final-source movie). Snapshot separation `2a3c7792` remains lower priority:
-390 verification lines moved, 15 wiring lines added, no logic deleted.
+Do not auto-rename macro-shared parameters. Held scrolling consolidation needs
+`scroll_tiles.row.bg2` coverage, absent in Ceres.
+
+Checkpoint cache finding: whole Session/codec hashes invalidate lossless scalar
+migrations despite an unchanged RAM payload. A future format transition needs
+Session round-trip checks and defined actor-identity persistence; keep guards now.
 
 ## Implementation rules
 
-- `sm/src` is the source of truth; no original C exists to consult or regenerate.
-  Use the oracle, `ram_map.rs` and [bank logs](https://patrickjohnston.org/bank/)
-  when meaning is unclear. Preserve defined behavior exactly, quirks included.
+- `sm/src` is authoritative; there is no C to consult or regenerate. Preserve quirks.
+  Resolve meaning with the oracle, `ram_map.rs` and [bank logs](https://patrickjohnston.org/bank/).
 - Before changing boundaries, ownership or backend interfaces, read the accepted
   [architecture](target-architecture/README.md) and [migration](target-architecture/MIGRATION.md).
   Consult [engine design](ENGINE_DESIGN.md) and [RAM ownership](RAM_OWNERSHIP.md)
@@ -107,24 +98,19 @@ no final-source movie). Snapshot separation `2a3c7792` remains lower priority:
   raw pointers or backend modules. Safe wrappers and package moves are transitional.
   Do not turn `word!` into a whole-RAM borrow while retained raw pointers remain;
   migrate offsets/handles and use checked, scoped access with overlapping reads intact.
-- Plan a complete responsibility: public API, owner, setup/update/exceptional paths,
-  callers and retirement. Adopt actual caller migration and legacy deletion together.
-  Small preparation needs named consumers and an explicit deletion step; isolated
-  shared consumers or forwarding facades are not subsystem completion.
-- Reuse checks/fixtures; add verification only for named uncovered behavior, ownership,
-  order or failure contracts. No harness per subsystem. Parallel implementation and
-  independent review use fixed interfaces, isolated files and one integration/build lane.
-- Count all production helpers, tables, adapters, registration, callers and maintained
-  native code. Separate verification, support/installers, external dependencies and
-  combined totals. Runtime adapters are production; identify mixed-file exclusions
-  reproducibly. Compare like-for-like classifications; historical path totals differ.
-- File moves, code packing, formatting compression and moving code outside `sm/src`
-  are not reductions. Count overlaps once and check tokens/text against packing.
-  Do not add independent draft savings or claim gross retirement as net savings.
-  Necessary safety work may grow source; disclose its complete cost and reason.
-- Retain backend/shader/audio/oracle behavior, masks, patches, state and snapshots
-  until their real consumers and equivalent checks migrate. Do not claim backend
-  retirement while gameplay or verification still depends on it.
+- Scope each responsibility: API, owner, setup/update/failure paths, callers and retirement.
+  Adopt caller migration with deletion; preparation needs named consumers and a deletion step.
+  Shared consumers or forwarding facades alone are not completion.
+- Reuse checks; add only named missing behavior/ownership/order/failure coverage, no subsystem harness.
+  Parallel work uses fixed interfaces, isolated snapshots and one integrator.
+- Count all production helpers, tables, runtime adapters, registration, callers and native code.
+  Separate verification, support/installers, dependencies and combined totals. Document mixed-file
+  exclusions reproducibly; compare like-for-like classifications, not historical path totals.
+- Moves, code packing, format compression and relocating code outside `sm/src` are not savings.
+  Count overlap once; check tokens/text against packing. Never add independent draft savings
+  or claim gross retirement as net savings. Disclose necessary safety growth and its full cost.
+- Retain backend/shader/audio/oracle behavior, masks, patches, state and snapshots until
+  consumers and equivalent checks migrate. Dependencies mean the backend is not retired.
 - Never commit ROMs, movies, checkpoints, save states or ROM-derived content.
   Do not build process frameworks, evidence stores, registries or dashboards.
   Improve the existing verifier when the loop is too slow/weak; record the issue here.
@@ -185,28 +171,21 @@ and denied compiler/build-script launches stay restricted. Use permitted DLL/cty
 denials never pass. khronos_api blocks frontend linking; cached frontend metadata and
 direct DLL builds work. Keep crate-root unsafe-op enforcement.
 
-Measured concurrency (2026-10-25): two isolated large builds with Cargo `-j 1`
-passed matched work in 76.06 s versus 114.12 s serial (1.50x throughput). A useful
-three-build trial also passed: 58.91/65.98/78.70 s, ~99 s with staggered starts,
-56% average / 86% peak CPU, minimum free RAM 3.080 GiB. This establishes three-job
-feasibility, not a matched speedup. Permit a monitored third ready build; account
-for ~1.6 GiB per compiler and remaining growth. Start only above 3 GiB free; stop
-the newest below 2 GiB or on resource errors. Replays/captures may overlap.
-The integrator assigns ready compiler slots explicitly; count accepted launchers
-before rustc appears. Restart completed workers with a new task, not a queued message.
-Refill available slots immediately; do not synchronize starts for an experiment
-or hold slots after compilation (the trial exposed ~32 s of idle handoff).
-Judge overlap by completed useful work/time, memory and paging, not CPU alone;
-retain larger overlap only when throughput improves. Never edit checked sources
-or rebuild loaded DLLs. `-j 1` still allows parallel Rust code generation.
-Use [the iteration guide](ITERATION.md#windows-shell-setup) for paths/commands;
-its historical queues or examples do not override this plan.
+Measured concurrency (2026-10-25): two isolated builds with Cargo -j1 completed
+matched work in 76.06s versus 114.12s serial (1.50x). Three are feasible; a speedup
+beyond two is unproven. The integrator assigns ready slots explicitly, counting
+accepted launchers before rustc appears. Restart completed workers with a new task.
+Allow up to three compiler workflows; start above 3GiB free, account for ~1.6GiB
+per compiler plus growth, and stop the newest below 2GiB or on resource errors.
+Refill slots immediately and release after compilation. Replays may overlap.
+Judge completed useful work/time, memory and paging, not CPU alone. Never edit
+checked source or rebuild loaded DLLs. -j1 still permits parallel code generation.
+Use [the iteration guide](ITERATION.md#windows-shell-setup) for paths/commands.
 
-Keep artifacts local to their checkout. Seed dependencies, not entire target trees;
-preserve active caches and unrelated work. Use `CARGO_INCREMENTAL=0` for disposable
-snapshots, bound disposable output and stream build logs to files. Reuse matching
-source-checked builds. Before deleting disposable output, verify it is unneeded
-and safely resolve the intended path. Never delete another worker's artifacts.
+Keep artifacts in their checkout; seed dependencies, not full target trees, and reuse checked builds.
+Preserve active caches and others' work. Set `CARGO_INCREMENTAL=0` for disposable snapshots;
+bound output and stream logs. Before deletion, resolve paths and verify artifacts are unneeded.
+Never delete another worker's artifacts.
 
 ## Definition of done for any change
 
@@ -214,10 +193,8 @@ Pass applicable final-source checks and execute changed behavior without new fai
 Run `sh tools/progress.sh`; explain increases and full production/verification/support costs.
 Recheck HEAD/index, reconcile and commit to main with commands, probes/frames, results and limits.
 Update this plan only for active-item, direction or blocker changes; results belong in commits.
-Publish PROGRESS at adopted milestones or user request: shared graph and measured metrics,
-held drafts distinct. Generate its table with `sh tools/progress.sh --markdown WARNINGS [PASSED/TOTAL]`;
-leave unknowns explicit (path counts include inline hooks). No atlas/architecture refresh
-unless requested, invented percentages from nodes/files, or claims of unadopted savings.
+Publish PROGRESS with adopted code: shared graph and `sh tools/progress.sh --markdown WARNINGS [PASSED/TOTAL]`.
+Keep drafts/unknowns explicit; path counts include inline hooks. No unsolicited atlas refresh,
+invented percentages or unadopted savings.
 
-Pre-transpile work is archived in `archive/pre-transpile-2026-10-17`; its
-`.scratch/`, readiness gates, acceptance pointers and translation scopes are inactive.
+Pre-transpile rules (`.scratch/`, gates, pointers, scopes) are inactive in `archive/pre-transpile-2026-10-17`.

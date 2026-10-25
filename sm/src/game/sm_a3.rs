@@ -14,11 +14,11 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_b4::*;
 
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
+use crate::game::session_runtime::damage_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_80::{
     Multiply16x16, NextRandom, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6,
 };
-use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_a0::{
     Abs16, CallEnemyPreInstr, ConvertAngleToXy, CosineMult8bit, CosineMult8bitFull, SignExtend8,
     SineMult8bit, SineMult8bitFull,
@@ -1758,7 +1758,7 @@ pub unsafe fn Metroid_Func_5(k: u16, game: &mut Game) {
         let v4: bool = metroid_var_02 < r18;
         (*E).var_02 = (metroid_var_02).wrapping_sub(r18);
         if v4 {
-            Samus_DealDamage(1, game);
+            damage_player(1, game);
         }
     }
 }

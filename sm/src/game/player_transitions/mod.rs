@@ -19,6 +19,7 @@ mod requests;
 mod resolver;
 pub(crate) mod state;
 pub(crate) mod suit;
+pub(crate) mod xray;
 
 #[cfg(sm_verify_dll)]
 pub(crate) use actions::momentum as verify_momentum_action;

@@ -1,9 +1,21 @@
-//! Periodic health loss settles directly into the sole inventory owner.
+//! Direct and periodic health loss settle into the sole inventory owner.
 #![forbid(unsafe_code)]
-use crate::game::session::Session;
+use crate::game::{combat_rules::contact_health, session::Session};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct InvalidDamage;
+
+/// Immediate hits preserve the sentinel amount and signed-health wraparound.
+pub(crate) fn direct(session: &mut Session, frozen: u16, amount: u16) -> Result<(), InvalidDamage> {
+    if amount & 0x8000 != 0 {
+        return Err(InvalidDamage);
+    }
+    if amount != 300 && frozen == 0 {
+        let health = &mut session.inventory.health.current;
+        *health = contact_health(*health, amount);
+    }
+    Ok(())
+}
 
 pub fn apply(session: &mut Session, frozen: u16) -> Result<(), InvalidDamage> {
     if frozen != 0 {

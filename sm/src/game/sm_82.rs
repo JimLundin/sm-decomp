@@ -43,7 +43,6 @@ use crate::game::sm_88::{
     DisableHdmaObjects, EnableHdmaObjects, HdmaObjectHandler, WaitUntilEndOfVblankAndClearHdma,
 };
 use crate::game::sm_90::{Samus_LowHealthCheck_0, UpdateBeamTilesAndPalette};
-use crate::game::sm_91::GameState_28_Unused_;
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
     UnpauseHook_Kraid_IsDead,
@@ -871,7 +870,7 @@ pub unsafe fn GameState_7_MainGameplayFadeIn(game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn GameState_28_Unused(game: &mut Game) -> CoroutineRet {
     unsafe {
-        GameState_28_Unused_(game);
+        crate::rtl::Unreachable(game);
         kCoroutineNone as CoroutineRet
     }
 }
