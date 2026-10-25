@@ -5,6 +5,7 @@ use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
 use crate::game::visual_runtime::draw_cinematic_rectangle;
+use crate::game::visual_runtime::fade_cinematic_fixed_color;
 use crate::game::visual_runtime::{
     advance_cinematic_fade, capture_cinematic_palette, clear_cinematic_background,
     clear_cinematic_colors, clear_cinematic_sprites, clear_hdma, compose_cinematic_palette,
@@ -912,32 +913,6 @@ pub unsafe fn RevertButtonConfig(game: &mut Game) {
     }
 }
 
-macro_rules! fade_cinematic_fixed_color {
-    ($red_reference:ident, $game:ident, $green_reference:ident, $blue_reference:ident) => {
-        crate::update_place! {
-            reference $red_reference = *ram_ptr!($game; 0x74, 0)
-                => (*$red_reference).wrapping_sub(1);
-        }
-        if *$red_reference as i32 - 32i32 & 0x80 != 0 {
-            *ram_ptr!($game; 0x74, 0) = 32;
-        }
-        crate::update_place! {
-            reference $green_reference = *ram_ptr!($game; 0x74, 1)
-                => (*$green_reference).wrapping_sub(1);
-        }
-        if *$green_reference as i32 - 64i32 & 0x80 != 0 {
-            *ram_ptr!($game; 0x74, 1) = 64;
-        }
-        crate::update_place! {
-            reference $blue_reference = *ram_ptr!($game; 0x74, 2)
-                => (*$blue_reference).wrapping_sub(1);
-        }
-        if *$blue_reference as i32 + 0x80 & 0x80 != 0 {
-            *ram_ptr!($game; 0x74, 2) = 0x80;
-        }
-    };
-}
-
 static kCinematicFunction_Intro_Func78_Tab0: [u16; 5] = [1, 16, 32, 48, 64];
 static kCinematicFunction_Intro_Func78_Tab1: [i16; 5] = [16, -16, 16, -16, 0];
 static kCinematicFunction_Intro_Func78_Tab2: [i16; 5] = [-16, 16, 16, -16, 0];
@@ -1473,7 +1448,7 @@ crate::game::callback_dispatch! {
         };
     };
     [9158618] CinematicFunction_Intro_Func67 [] {
-        fade_cinematic_fixed_color!(fresh123, game, fresh124, fresh125);
+        fade_cinematic_fixed_color(game);
         words!(game.cinematic_var8, cinematic_var7 += -0x2000i32 as u32);
         if word!(game.cinematic_var6) as i32 - 3072i32 & 0x8000 != 0 {
             word!(game.cinematic_var6 += 16);
@@ -2329,7 +2304,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9168132] CinematicFunction_Intro_Func143 [] {
-        fade_cinematic_fixed_color!(fresh69, game, fresh70, fresh71);
+        fade_cinematic_fixed_color(game);
         let v0: bool = (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0;
         if word!(game.cinematic_var4) == 0 || v0 {
             word! {game; cinematic_function = ((0x8be7bai32) as u16); cinematicbg_var3 = 20480; }
@@ -2404,7 +2379,7 @@ crate::game::callback_dispatch! {
         word!(game.cinematic_function = (0x8bdbc4i32) as u16);
     };
     CinematicFunction_Intro_Func122 {
-        fade_cinematic_fixed_color!(fresh97, game, fresh98, fresh99);
+        fade_cinematic_fixed_color(game);
         if *ram_ptr!(game; 0x74, 0) == 32
             && *ram_ptr!(game; 0x74, 1) == 64
             && *ram_ptr!(game; 0x74, 2) == 0x80

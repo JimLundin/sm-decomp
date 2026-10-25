@@ -2091,3 +2091,14 @@ pub(crate) unsafe fn draw_cinematic_rectangle(
         row = row.wrapping_add(64);
     }
 }
+
+pub(crate) fn fade_cinematic_fixed_color(game: &mut Game) {
+    for (lane, black) in [0x20u8, 0x40, 0x80].into_iter().enumerate() {
+        let at = 0x74 + lane;
+        // Keep decrement and clamp as separate stores in channel order.
+        game.g_ram[at] = game.g_ram[at].wrapping_sub(1);
+        if game.g_ram[at].wrapping_sub(black) & 0x80 != 0 {
+            game.g_ram[at] = black;
+        }
+    }
+}
