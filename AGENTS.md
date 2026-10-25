@@ -7,8 +7,8 @@ is archived in the branch `archive/pre-transpile-2026-10-17`.
 
 Then read `docs/REVIEW.md`. Its directives (summarized at the top
 of `docs/PLAN.md`) take priority over the existing work order. Its
-**Milestone plan** decides what you work on: pick your lane (A coverage and CI rows,
-M mechanical safety, or B1/B2/B3 bank retirement), take the next unclaimed item, and end every commit
+**Milestone plan** decides what you work on: pick your lane (A CI speed,
+M mechanical safety, or B1-B6 bank retirement), take the next unclaimed item, and end every commit
 body with its `Score:` line. The reviewer may change goals and process (user
 grant, 2026-10-25); re-read REVIEW.md's Milestone plan at the start of each item.
 

@@ -20,8 +20,8 @@ preserve others' work. Do not delete another process's lock or force-push main.
 
 Read [REVIEW.md](REVIEW.md) next; its **Milestone plan** governs work order 1-2 and
 the user gave the reviewer authority to change goals and process (2026-10-25).
-Lanes: **A** coverage via room-seeded segments (A1) and CI rows (C0, C2); **M**
-mechanical safety codemods; **B1/B2/B3** retire banks in the order REVIEW names.
+Lanes (reset 3, 23:25): **A** CI speed (A2: boot-replay rows onto seeds; A1 done, 44/44);
+**M** unsafe outside bank files; **B1-B6** retire banks in the order REVIEW names.
 Subjects start `A:`, `M:` or `B:sm_XX`; bodies end with the review's `Score:` line.
 Speed rule: the **Fast loop** below replaces the old validation strategy. Land
 verified work at once; work held unlanded over one hour is a stall. No docs-only
@@ -36,13 +36,13 @@ directives) are to be obeyed as given. Disagree in one line under the item, then
 progress view is `tools/treemap.py`'s image, published by Pages on every main push and
 embedded in README.md. Nobody edits that image; no other dashboards.
 
-**Hosted validation (user decision 2026-10-25 18:05, given live to the reviewer;
-replaces the earlier "do not use or observe CI" note).** The user lifted the
-local-only rule: hosted CI is the main verifier, the Windows machine is not.
-Agents push to `ci/<lane>-<topic>` branches, let `Segments` verify, and land on
-main when it is green (see Fast loop). The user also approved: ROM-derived seeds and
-lag logs in CI, encrypted with a repository secret (C2); cloud Linux agents with
-auto-land on green (C3); a Linux verifier spike (L1). Details: REVIEW.md lane C.
+**Landing (user decision 2026-10-25 23:25, given live to the reviewer; amends 18:05).**
+A Windows agent that ran its `Rows:` locally on a tip rebased onto current `origin/main`
+pushes straight to main (`git push origin HEAD:main`; rejected push = fetch, rebase,
+rerun only rows the rebase touched, push). Hosted `Segments` on main is the backstop: a
+red main is fixed or reverted by its author before anyone else lands. Cloud agents (no
+ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs in CI
+(C2), cloud agents (C3) and the Linux verifier (L1) stand. Details: REVIEW.md reset 3.
 
 ## Work order
 
@@ -166,22 +166,17 @@ Every routine commit runs exactly this, then commits:
 4. Body <=8 lines: what changed, rows run and result, legacy/production delta and
    ratio, `Score:`. Re-run a flaky step once; a second failure is real.
 
-**Hosted mode (user decision 18:05; live since C3 landed, 1f57df1, 19:07 CET; all lanes):**
-local work is step 1 plus at most one smoke row. Name the rows in a `Rows:` body
+**Hosted mode (user decision 18:05; live since 1f57df1, 19:07 CET):**
+cloud agents only (Windows agents: Landing above). Name the rows in a `Rows:` body
 line and push only the tip of a stack to one live `ci/<lane>-<topic>` branch.
 `Segments` runs the union of `Rows:` over `origin/main..HEAD` plus the smoke set;
 green auto-lands on main (rebased; a conflict fails the land and the author rebases).
 A red run is that author's next task. Main's full corpus runs every 3h, on bank-file
 deletion and at waypoints (dispatch `Segments` on main with empty `segments`), with
 at most six shards at once. Routine lands start no full run.
-**Landing jam rule (reviewer, 20:52).** Two bank deletions (`sm_88`, `sm_a0`) and four
-B stacks sat unlanded over an hour: their runs were cancelled, and every `ci/windows-*`
-branch still carries pre-rewrite copies of b782ca4/ec11239. So: (1) each agent rebases
-onto main now and keeps exactly one live branch (delete the others); (2) a retirement
-branch runs its `Rows:` union plus smoke like any stack, never the full corpus; its land
-dispatches main's full run, and a red main full run is fixed before anyone else lands;
-(3) the next workflow commit drops the planner's "retirement forces full" rule. Failures get a regression
-row as above. Free runners only; no new agents until branch runs start within 10 min.
+**Landing (23:25):** Windows agents land on local green (above); no stacks, no
+`ci/windows-*` branches. Existing `ci/b*` stacks: the owner rebases once, runs its rows
+locally, pushes to main. Free runners only. Failures get a regression row as above.
 Agents without the ROM (cloud) use hosted mode only. Mechanics: `Rows:` ids are comma/space
 separated, a trailing comma continues the list, text after a colon is ignored and an
 unknown id fails the plan. The branch must touch `sm/`, `tools/`, `segments.toml`

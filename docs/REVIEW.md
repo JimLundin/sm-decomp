@@ -82,6 +82,36 @@ hosted CI).** Measured by the reviewer before this change:
 - `ci.yml` had been red on every push since 10-24 11:53 (`--example sm_verify` and
   the detached build), unseen because the Fast loop builds neither.
 
+**Throughput reset 3 (2026-10-25 23:25, user request; supersedes conflicting notes below).**
+Measured: from 17:37 to 23:07 main moved legacy -1,215 (~220/h), unsafe -151 (~27/h),
+production +200. The last hour *wrote* ~4,400 legacy lines of B work (five bank files), but
+no B commit has landed since 18:26. **Writing is no longer the bottleneck; landing is.**
+Causes: (1) 45 of 82 rows still replay from boot: route shards take 12-30 min, seeded
+shards under 1 min, so a branch run takes 30-45 min at six shards; (2) stacked branches
+re-ran the same rows and were cancelled; (3) shared files (`lib.rs`, `verify_source.rs`,
+`sm_82.rs`) make auto-land rebases fail. Coverage is done (44/44, 6c366e5), which unlocks
+every boss bank (~20k lines), and those banks hardly touch each other. Changes:
+- **Landing (user, 23:25):** Windows agents land on local green (PLAN "Landing"). Hosted
+  main is the backstop; a red main is fixed or reverted before anyone else lands.
+- **Lane A -> CI speed (A2), then bank work.** A2.1: move all 45 boot-replay rows onto
+  seeds (several per commit) and delete their recipes from `tools/movie_inputs.py`
+  (1,796 lines). A2.2: pack seed rows into a few shards (~40 s setup each now, for 3 s of
+  rows). Target: a branch run in <=10 min by 10-26 06:00. Then A takes the B4 queue.
+- **Lane M: no more in-place M2 codemods on bank files.** Converting a bank in place and
+  then moving it again is double work, and a retirement removes more raw dereferences
+  (sm_b2: -291) than a codemod does (sm_a8: -27 unsafe for +149 lines). The cloud M agent
+  lands `ci/m2-sm-a8` and then works on unsafe outside the banks: M3 `ram_ptr!`, M4 ROM
+  pointers, `main.rs`/`rtl.rs`/platform (~400 lines). The Windows M agent becomes B4.
+- **Lane B: six queues, one bank file each.** Boss and enemy banks are open now (rows pass).
+  B1 `sm_80` -> `sm_82`; B2 `sm_8b`; B3 `sm_a2` -> `sm_a3`; B4 (Windows M agent) `sm_a8`
+  after `ci/m2-sm-a8` lands -> `sm_b3`; B5/B6 (new cloud agents, hosted mode, after A2 lands)
+  `sm_a9` -> `sm_aa` and `sm_a6` -> `sm_a7`; whoever frees up first takes `sm_a5`, `sm_9b`,
+  then `sm_a4`. Retire into owned safe modules (sm_b2 style). Shared registry edits
+  (`lib.rs`, `verify_source.rs`) stay one line each so rebases merge cleanly.
+- **Size:** moves run ~95%. Moving code into safe modules comes first for now (unsafe,
+  then legacy); the <=80% target applies again to `sm_80`, `sm_82`, `sm_8b`, the non-enemy
+  banks, where shared owners already exist.
+
 **Lane M — mechanical safety (one agent, new: start a fourth agent if the machine
 allows, else it takes the B3 slot; M's local work is `cargo check` only).**
 Unit of work: one primitive made safe across the whole crate by a script, then the
@@ -169,16 +199,10 @@ encrypted seeds in CI, cloud agents with auto-land, a Linux verifier spike. Orde
 deletions among them. PLAN's landing jam rule applies: one live rebased branch per agent,
 retirement branches run their rows (not the full corpus), main's full run follows each
 deletion. Land order: M1a, Spore Spawn, `sm_88` deletion, `sm_a0` deletion, then sm_81.
-**B unstuck, landing pending (22:52).** `ci/b-integrate` was rebased (b2d8f27, fixpoint rerun)
-and B1/B3 stacked on it as told: `ci/b1-retirements` (a239013: + `sm_81` deleted, 4 `sm_80`
-families) and `ci/b3-retirements` (5f52da7: + `sm_8f`, `sm_b2` deleted). Five bank files
-(`sm_88`, `sm_a0`, `sm_81`, `sm_8f`, `sm_b2`) wait on Segments. Land order: (1) b1's run
-(40237511884) already covers b-integrate's rows (Rows union over `origin/main..HEAD`); on green
-it lands both. Cancel the redundant b-integrate run (40237013250) to free runners. (2) Then b3
-rebases onto main (b-integrate patches drop), reruns rows, lands; main's full run follows.
-(3) `ci/m2-sm-a8` (queued since 22:05, 3 behind) rebases after (2). No new `ci/` push stacks
-on an unlanded branch beyond these three. Next: B1 `sm_80`, B2 `sm_8b`, B3 common enemies
-`sm_a2`/`sm_a3` (name the row and enemy; after `ci/m2-sm-a8` lands, never two agents on a bank).
+**B landing (22:52, updated 23:25):** five bank files (`sm_88`, `sm_a0`, `sm_81`, `sm_8f`,
+`sm_b2`) sit on `ci/b-integrate`, `ci/b1-retirements` and `ci/b3-retirements`. Under reset 3, B1
+lands b-integrate + b1 on local green now (rebase, run the union of their `Rows:`, push to
+main); B3 then rebases b3 and does the same. Delete the `ci/b*` branches after landing.
 **Ratios:** `sm_8f` (94%) and `sm_b2` (96%) moved nearly line for line into owned modules: the
 new code is safe and well named, so accept them, but `sm_80`/`sm_82` must aim <=80%.
 **Lane A (22:52): credits flipped, 43/44** (01b3036, 13 rows, 51,276 frames). Left: Golden
@@ -293,7 +317,7 @@ elapsed-NMI experiment reached 10,555 (parked 11:52). `sm_94` deleted (ca42bc5, 
 | --- | ---: | ---: | --- | ---: | ---: | --- |
 | 10-25 06:00 | A0.4 any% to credits | | sm_94 | <=54,600 | <=116,500 | **MISS** |
 | 10-25 18:00 | >=28/44; A1.2 go/no-go recorded | CI green; M1 on a branch | + sm_91, sm_90, sm_89 | <=50,300 | <=115,300 | **HIT except CI**: 40/44, A1.2 go, M1 landed (d0fffa6), banks deleted, legacy 48,715, production 115,177; `ci.yml` red until 0fd90cf (19:18) |
-| 10-26 12:00 | >=42/44 (raised 17:55; 36 met early); C2 decided | <=3,900 (M1 landed) | + sm_a0 | <=47,000 | <=114,000 | |
+| 10-26 12:00 | >=42/44 (**44/44 met 23:07**, 6c366e5); branch run <=10 min (A2) | <=3,900 (M1 landed) | + sm_a0 | <=47,000 | <=114,000 | |
 | 10-26 18:00 | 44/44 (raised 17:55) | <=3,300 (M2 common enemies) | + sm_88, sm_8f, sm_81 | <=44,000 | <=112,500 | |
 | 10-27 18:00 | 44/44 | <=2,300 (M2 bosses, M3) | + sm_80, sm_b2, first boss bank | <=36,000 | <=109,000 | |
 | 10-28 18:00 | 44/44 + 100% seeds | <=1,200 (M4) | + sm_82, sm_8b | <=28,000 | <=105,000 | |
