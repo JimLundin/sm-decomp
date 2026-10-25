@@ -262,7 +262,6 @@ Generate the shared authored route from the any% movie above, then run the corpu
 
 ```powershell
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-speed-booster.inputs --rom rom/sm.smc --route speed-booster
-python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-speed-booster-settled.inputs --rom rom/sm.smc --route speed-booster-settled
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-save-death-continue.inputs --rom rom/sm.smc --route save-death-continue
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-ice-beam-settled.inputs --rom rom/sm.smc --route ice-beam-settled
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-power-bomb.inputs --rom rom/sm.smc --route power-bomb
@@ -473,6 +472,16 @@ all five resulting controller words, and the first replay input. At the normaliz
 `$80834A` boundary it restores only the recorded producer inputs, allowing the
 normal controller read to reproduce the original button edges. Old seeds without
 this supplement retain their existing behavior. No input words are guessed or shifted.
+
+`item-speed-booster` uses `100-input-phase:98` and `seed-speed-booster.inputs`
+(692 authentic input frames). The original seed has not acquired Speed Booster;
+the row retains the fresh award, message-completion hit and both 120-frame tails.
+It replaces the dedicated authored `speed-booster-settled` extension. The shared
+`speed-booster` prefix remains in use by other rows. Regenerate with:
+
+```powershell
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-speed-booster.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0098-AD1B-wram.bin --frames 692
+```
 
 `item-gravity` uses `100-input-phase:212` and `seed-gravity.inputs` (737
 input frames). It requires a fresh award, completed message and both full

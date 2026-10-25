@@ -320,9 +320,11 @@ after_expectations = 120
 
 [[segment]]
 id = "item-speed-booster"
-inputs = "corpus-speed-booster-settled.inputs"
-input_sha256 = "9548c119742b6e2ffec65c5c0871403c96915671b83fe8b4c3930cc4bf60a00d"
-start_frame = 147834
+seed = "100-input-phase:98"
+seed_sha256 = "314ee167378d7be1db136d58d8ce47ce3eedd76e3d5b79f859ea792df4055efc"
+inputs = "seed-speed-booster.inputs"
+input_sha256 = "751495bae8625afb0f22194999fe4a4325182f619b43737a9772b56828761640"
+start_frame = 0
 frames = 692
 require_hit = ["coroutine.plm.message.completed"]
 after_hits = 120

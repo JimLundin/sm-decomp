@@ -478,7 +478,6 @@ ROUTES = {
     'ice-return-business': (166082, '4b4090a970f52658d27d4f69fe0e6d30da43739519cf781ef722dacbecdb5721'),
     'ice-beam-settled': (161733, 'd5700c8c8bfd3bcbc9fa5d4d05aa805dd594e98130a0c9d0ade163695201e093'),
     'speed-booster': (148406, 'bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6'),
-    'speed-booster-settled': (148526, '9548c119742b6e2ffec65c5c0871403c96915671b83fe8b4c3930cc4bf60a00d'),
     'crocomire': (171694, '90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe'),
     'crocomire-shot': (167295, 'e46b9a61eeded83064cc3a9fc29cf05d6a1cd18151c06cd6c9b78930af41766b'),
     'wave-beam': (155607, '2f07dc07523b7b542412604337d961292c3c07e3c4f0577d06dd131e1e879c4f'),
@@ -1738,9 +1737,6 @@ def route_frames(source, name):
         frames = extend_ice(extend_redtower(a))
         # Authored neutral tail for 120 follow-up frames after Ice's message.
         return frames + _hold('', 120) if name == 'ice-beam-settled' else frames
-    if name == 'speed-booster-settled':
-        # Authored follow-up: release all buttons after the late pickup message.
-        return extend_redtower(a) + _hold('', 120)
     return extend_redtower(a)[:ROUTES[name][0]]
 
 
