@@ -197,7 +197,7 @@ pub(crate) unsafe fn snapshot_region(io: &mut SnapshotIo<'_>, data: *mut u8, siz
     }
 }
 
-unsafe fn FinishLoadSnesState(game: &mut Game) {
+pub unsafe fn FinishLoadSnesState(game: &mut Game) {
     unsafe {
         crate::snes::ppu::PpuRestoreRenderRouting(&mut *(*game.g_snes).ppu);
         (*(*game.g_snes).cpu).e = false_0 != 0;

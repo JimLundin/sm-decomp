@@ -3,6 +3,7 @@ use sm::game_state::Game;
 use std::{collections::BTreeSet, ffi::CString, time::Instant};
 
 mod checkpoint;
+mod seed;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Expectation {
@@ -894,7 +895,7 @@ pub fn run_args(args: &[String], game: &mut Game) -> i32 {
 
 fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     if args.len() < 2 {
-        return Err("usage: sm verify <rom> <inputs> [--frames N] [--load-sram] [--checkpoint-in PATH] [--checkpoint-out PATH] [--require-hit NAME]... [--after-hits N] [--expect TYPE:VALUE|death|credits|save-death-continue]... [--after-expectations N]".into());
+        return Err("usage: sm verify <rom> <inputs> [--frames N] [--load-sram] [--seed PATH] [--checkpoint-in PATH] [--checkpoint-out PATH] [--require-hit NAME]... [--after-hits N] [--expect TYPE:VALUE|death|credits|save-death-continue]... [--after-expectations N]".into());
     }
     let mut frame_limit = None;
     let mut after_hits = None;
@@ -902,6 +903,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     let mut expected: Vec<RequiredExpectation> = Vec::new();
     let mut load_sram = false;
     let mut checkpoint_in = None;
+    let mut seed_in = None;
     let mut checkpoint_out = None;
     let mut required_probes = Vec::new();
     let mut options = args[2..].iter();
@@ -951,6 +953,9 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             "--checkpoint-in" if checkpoint_in.is_none() => {
                 checkpoint_in = Some(options.next().ok_or("missing checkpoint input path")?);
             }
+            "--seed" if seed_in.is_none() => {
+                seed_in = Some(options.next().ok_or("missing seed input path")?);
+            }
             "--checkpoint-out" if checkpoint_out.is_none() => {
                 checkpoint_out = Some(options.next().ok_or("missing checkpoint output path")?);
             }
@@ -982,6 +987,9 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     }
     if load_sram && (checkpoint_in.is_some() || checkpoint_out.is_some()) {
         return Err("checkpoints require the deterministic clean-SRAM boot".into());
+    }
+    if seed_in.is_some() && (checkpoint_in.is_some() || checkpoint_out.is_some() || load_sram) {
+        return Err("--seed cannot be combined with checkpoints or SRAM loading".into());
     }
     if checkpoint_out.is_some_and(|path| std::path::Path::new(path).exists()) {
         return Err("checkpoint output already exists; choose a new path".into());
@@ -1062,6 +1070,9 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             Some(path) => checkpoint::load(std::path::Path::new(path), game, &rom, &inputs)?,
             None => 0,
         };
+        if let Some(path) = seed_in {
+            seed::load(std::path::Path::new(path), game)?;
+        }
         let frames = frame_limit.unwrap_or(inputs.len() - first);
         let end = first
             .checked_add(frames)

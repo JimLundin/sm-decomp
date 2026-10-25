@@ -72,7 +72,8 @@ def check_library(host, root):
                 for path in (root / "sm" / "src").rglob("*")
                 if path.suffix in (".rs", ".c", ".h")}
     expected.difference_update(("sm/src/main.rs", "sm/src/verify.rs",
-                                "sm/src/verify_dll.rs", "sm/src/verify/checkpoint.rs"))
+                                "sm/src/verify_dll.rs", "sm/src/verify/checkpoint.rs",
+                                "sm/src/verify/seed.rs"))
     for index in range(len(expected) + 1):
         source = host.sm_verify_source_file(index)
         if source.path_len == 0:
@@ -512,6 +513,7 @@ def main():
     parser.add_argument("--frontend-check", action="store_true",
                         help="include release library/frontend checks in the same Cargo build")
     parser.add_argument("--frames", type=int)
+    parser.add_argument("--seed", type=Path, help="import an original-emulator room seed")
     parser.add_argument("--checkpoint-in", type=Path,
                         help="resume a local verifier checkpoint; --frames counts from that point")
     parser.add_argument("--checkpoint-out", type=Path,
@@ -538,6 +540,9 @@ def main():
     parser.add_argument("--rustc", default=shutil.which("rustc") or str(
         Path.home() / ".cargo" / "bin" / "rustc.exe"))
     args = parser.parse_args()
+    if args.seed is not None and (args.unit_tests or args.build_only or args.corpus is not None
+                                 or args.checkpoint_in is not None or args.checkpoint_out is not None):
+        parser.error("--seed requires a direct replay without checkpoint input or output")
     if os.name != "nt":
         parser.error("use cargo run --release -- verify on Linux")
     if args.unit_tests and (args.build_only or args.frontend_check or args.rom is not None
@@ -594,7 +599,7 @@ def main():
     if args.after_expectations is not None:
         replay_args.extend(["--after-expectations", str(args.after_expectations)])
     for option, path in (("--checkpoint-in", args.checkpoint_in),
-                         ("--checkpoint-out", args.checkpoint_out)):
+                         ("--checkpoint-out", args.checkpoint_out), ("--seed", args.seed)):
         if path is not None:
             replay_args.extend([option, str(path.resolve())])
     dll = root / "target" / "verify-dll" / "sm_verify.dll"
@@ -610,7 +615,7 @@ def main():
           file=sys.stderr, flush=True)
     if args.build_only:
         return 0
-    if (args.unit_tests or args.checkpoint_in is not None or args.checkpoint_out is not None
+    if (args.unit_tests or args.seed is not None or args.checkpoint_in is not None or args.checkpoint_out is not None
             or args.require_hit or args.expect):
         if not hasattr(host, "sm_verify_args"):
             raise RuntimeError("cached DLL predates segment options; run without --no-build")

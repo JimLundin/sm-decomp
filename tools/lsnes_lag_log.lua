@@ -25,6 +25,7 @@ local seeds = nil
 local seed_room = nil
 local seed_pending = false
 local seed_count = 0
+local seed_io_writes = {}
 local seed_regions = {{"wram", 0x7E0000, 0x20000}, {"sram", 0x10000000, 0x2000},
     {"vram", 0x10000, 0x10000}, {"cgram", 0x21000, 0x200},
     {"oam", 0x20000, 0x220}, {"apuram", 0, 0x10000}}
@@ -41,6 +42,32 @@ local function capture_room(frame)
     if not seed_pending or memory.readword(0x7E0998) ~= 8 then return end
     assert(movie.readonly(), "seed capture must remain read-only")
     seed_count = seed_count + 1
+    local register_file = string.format("%04d-%04X-registers.csv", seed_count, room)
+    local existing = io.open(seed_dir .. "/" .. register_file, "rb")
+    if existing then existing:close(); error("refusing to overwrite seed: " .. register_file) end
+    local output = assert(io.open(seed_dir .. "/" .. register_file, "wb"))
+    output:write("name,value\n")
+    local registers = assert(memory.getregisters(), "core has no register observations")
+    registers.seed_movie_frame = frame
+    registers.seed_room = room
+    registers.seed_nmi = memory.readword(0x7E05B6)
+    -- DMAP..NTRL are passive readable registers in the pinned bsnes core.
+    for channel = 0, 7 do
+        for offset = 0, 10 do
+            registers[string.format("dma_%d_%d", channel, offset)] =
+                memory.readbyte(0x1004300 + channel * 16 + offset)
+        end
+    end
+    for name, value in pairs(seed_io_writes) do registers[name] = value end
+    local names = {}
+    for name, _ in pairs(registers) do names[#names + 1] = name end
+    table.sort(names)
+    for _, name in ipairs(names) do
+        local value = registers[name]
+        if type(value) == "boolean" then value = value and 1 or 0 end
+        output:write(string.format("%s,%d\n", name, value))
+    end
+    assert(output:close())
     -- This is after the first gameplay frame; frame is the next zero-based input.
     for _, region in ipairs(seed_regions) do
         local name, base, size = region[1], region[2], region[3]
@@ -126,6 +153,22 @@ local function guarded(callback)
 end
 on_input = guarded(on_input)
 on_frame_emulated = guarded(on_frame_emulated)
+if seed_dir then
+    -- These write-only registers cannot be reconstructed by reading the bus.
+    -- Observe every CPU-bank mirror, without changing the original write.
+    for _, address in ipairs({0x4200, 0x4201, 0x4207, 0x4208, 0x4209, 0x420A, 0x420D}) do
+        local name = string.format("io_%04X", address)
+        for bank = 0, 0xBF do
+            if bank < 0x40 or bank >= 0x80 then
+                memory.registerwrite(0x1000000 + bank * 0x10000 + address,
+                    guarded(function(_, value)
+                        assert(movie.readonly(), "register observation must remain read-only")
+                        seed_io_writes[name] = value
+                    end))
+            end
+        end
+    end
+end
 if os.getenv("SM_LSNES_BOUNDARIES") == "1" then
     events = assert(io.open(path .. ".events.csv", "wb"))
     events:write("event,movie_frame,kind,nmi,including_lag,state,room,x,y,joypad,scroll_frame,irq_handler,waiting_nmi,direction\n")

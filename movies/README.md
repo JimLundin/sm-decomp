@@ -361,4 +361,37 @@ concatenation of those six regions in the order above. `movie_frame` is one-base
 and completed; `next_input_index` is the following zero-based movie input.
 `movie_subframe_index` identifies the completed frame's recorded first subframe.
 The original capture is still a hardware observation, not a verifier checkpoint:
-the CPU may be inside NMI, and importing it needs the A1.2 state converter.
+the CPU may be inside NMI, and each seed must pass the replay qualification below.
+
+Room-seeded replay (`--seed`) also requires the companion `-registers.csv` from
+the updated logger. It records CPU/PPU observations, passive DMA register reads
+and observed writes to IRQ/NMI controls. Enable `SM_LSNES_BOUNDARIES=1` for the
+input recipe. The importer finds the captured NMI's next completed wait from
+the seed's indexed frame, room and NMI counter; it validates the original movie
+and polls and applies the existing lag-aware rules starting at that boundary.
+It never guesses an input shift or requires earlier rooms to replay successfully.
+
+```powershell
+python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/seed-ceres.inputs --rom rom/sm.smc --lag-log target/seeds/any-hardware-final/lag.csv --seed target/seeds/any-hardware-final/0001-DF45-wram.bin --frames 600
+python tools/verify_dll.py rom/sm.smc movies/seed-ceres.inputs --seed target/seeds/any-hardware-final/0001-DF45-wram.bin --frames 600 --expect room:DF8D
+```
+
+The first seed's 600-word input SHA-256 is
+`31f0eb3e632cbe77bdc9b34ed2ec8a28cda0d00bfb4798090eda5614b78b6c20`.
+The original-emulator capture enters DF8D next. Qualification requires both
+zero oracle differences and that route expectation; merely surviving 600 frames
+does not qualify a seed. Keep ordinary RAM, rendering and audio checks enabled.
+The import completes the recorded CPU phase, reuses the existing load-stack
+normalization, and reconstructs Session state through the normal RAM entry path.
+Six memory regions and these registers are still not an exact emulator checkpoint:
+SPC/DSP execution phase and some PPU write latches are not fully represented.
+Qualify every room's route independently. Existing checkpoint guards are unchanged;
+seed input cannot combine with checkpoint input/output or SRAM loading. Seeded
+replays cannot publish checkpoints until the checkpoint format records seed provenance.
+
+The full captures contain 197 any% and 331 100% room entries in
+`room-seeds-any.csv` and `room-seeds-100.csv`. `seed_sha256` binds the six
+memory regions. Both completed supplemental indexes also record
+`registers_sha256` for the companion CSV and `observation_sha256` for the
+six regions followed by that CSV; `cpu_pc` and `nmi` identify the observed
+CPU phase. No seed binaries, input files or original movies are committed.

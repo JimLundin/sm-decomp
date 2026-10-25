@@ -15,7 +15,51 @@ BUTTON_BITS = dict(zip(
 ))
 
 
-def aligned_wait_prefix(source, path, count):
+def seeded_wait_slice(source, path, seed, count):
+    """Locate the captured NMI's completed wait, then reuse strict input alignment."""
+    if not seed.name.endswith('-wram.bin') or count <= 0:
+        raise ValueError('seed requires a -wram.bin file and a positive frame count')
+    ram = seed.read_bytes()
+    if len(ram) != 131072 or int.from_bytes(ram[0x998:0x99a], 'little') != 8:
+        raise ValueError('seed must contain gameplay WRAM')
+    with seed.with_name('rooms.csv').open(newline='') as file:
+        matches = [row for row in csv.DictReader(file) if row['file'] == seed.name]
+    if len(matches) != 1 or hashlib.sha256(ram).hexdigest() != matches[0]['sha256']:
+        raise ValueError('seed is absent from its capture index or its hash differs')
+    row = matches[0]
+    frame = int(row['movie_frame'])
+    room = int.from_bytes(ram[0x79b:0x79d], 'little')
+    nmi = int.from_bytes(ram[0x5b6:0x5b8], 'little')
+    with seed.with_name(seed.name.replace('-wram.bin', '-registers.csv')).open(newline='') as file:
+        metadata = {row['name']: int(row['value']) for row in csv.DictReader(file)}
+    if (metadata.get('seed_movie_frame') != frame or metadata.get('seed_room') != room
+            or metadata.get('seed_nmi') != nmi):
+        raise ValueError('seed register metadata does not match WRAM and capture index')
+    with path.open(newline='') as file:
+        video = list(csv.DictReader(file))
+    if (not 0 < frame <= len(video) or int(row['room'], 16) != room
+            or int(video[frame - 1]['room']) != room
+            or int(video[frame - 1]['nmi_after']) != nmi):
+        raise ValueError('seed does not match the supplied video capture')
+    with Path(str(path) + '.events.csv').open(newline='') as file:
+        events = list(csv.DictReader(file))
+    # The room observation occurs at the video boundary inside NMI. Complete
+    # that NMI exactly as the verifier does, without guessing a video offset.
+    boundary = next((index for index, event in enumerate(events)
+                     if int(event['movie_frame']) > frame and event['kind'] == 'wait_exit'), None)
+    if boundary is None:
+        raise ValueError('capture has no completed wait after this room seed')
+    event = events[boundary]
+    if (int(event['movie_frame']) != frame + 1 or int(event['room']) != room
+            or int(event['nmi']) != (nmi + 1) % 65536):
+        raise ValueError('unsupported room seed phase; no matching next NMI boundary')
+    first = sum(event['kind'] in ('joypad_read', 'vblank_wait_exit')
+                for event in events[:boundary + 1])
+    print(f'Seed input starts at native step {first}, captured event {event["event"]}')
+    return aligned_wait_prefix(source, path, count, boundary + 1)
+
+
+def aligned_wait_prefix(source, path, count, after_event=0):
     """Replay observed wait-entry input; reject gaps instead of guessing lag removal."""
     def rows(suffix):
         with Path(str(path) + suffix).open(newline='') as file:
@@ -33,6 +77,15 @@ def aligned_wait_prefix(source, path, count):
                 or parse_lsmv(poll['movie_subframe']) != [source[index]]):
             raise ValueError(f'unsupported or mismatched movie input at {index}')
     events = rows('.events.csv')
+    if after_event:
+        # The seed normalizer has finished this wait. Start a fresh room-local
+        # continuity chain instead of requiring all earlier rooms to align.
+        boundary = events[after_event - 1]
+        if boundary['kind'] != 'wait_exit':
+            raise ValueError('seed input must begin after a completed normal wait')
+        previous = {key: int(value) for key, value in boundary.items() if key != 'kind'}
+        previous['nmi'] = (previous['nmi'] - 1) % 65536
+        return aligned_work_prefix(video, events[after_event:], count, after_event, previous)
     if any(event['kind'] == 'joypad_begin' for event in events):
         return aligned_work_prefix(video, events, count)
     result, pending, previous = [], None, None
@@ -71,12 +124,12 @@ def aligned_wait_prefix(source, path, count):
     raise ValueError('capture ends before the requested aligned prefix')
 
 
-def aligned_work_prefix(video, events, count):
+def aligned_work_prefix(video, events, count, after_event=0, previous=None):
     """Preserve observed normal updates and the loading lag suspension."""
     result, last_frame = [], 0
-    read = wait = lag = vblank = irq = previous = None
+    read = wait = lag = vblank = irq = None
     door = False
-    for number, raw in enumerate(events, 1):
+    for number, raw in enumerate(events, after_event + 1):
         kind = raw['kind']
         event = {key: int(value) for key, value in raw.items() if key != 'kind'}
         frame = event['movie_frame']
@@ -1523,7 +1576,10 @@ if __name__ == '__main__':
     parser.add_argument('--route', choices=tuple(ROUTES), help='apply an authored coverage route')
     parser.add_argument('--lag-log', type=Path, help='lsnes CSV with input and boundary companions')
     parser.add_argument('--frames', type=int, help='number of observed wait steps to import')
+    parser.add_argument('--seed', type=Path, help='start after this captured room WRAM seed')
     args = parser.parse_args()
+    if args.seed and not args.lag_log:
+        parser.error('--seed requires --lag-log and --frames')
     if ((args.lag_log and (args.route or args.frames is None))
             or (args.frames is not None and not args.lag_log)):
         parser.error('--lag-log requires --frames and cannot combine with --route')
@@ -1531,7 +1587,8 @@ if __name__ == '__main__':
         parser.error('--route requires the original any% movie from movies/manifest.toml')
     frames = load(args.movie, args.rom)
     if args.lag_log:
-        frames = aligned_wait_prefix(frames, args.lag_log, args.frames)
+        frames = (seeded_wait_slice(frames, args.lag_log, args.seed, args.frames)
+                  if args.seed else aligned_wait_prefix(frames, args.lag_log, args.frames))
     if args.route:
         frames = route_frames(frames, args.route)
         data = ''.join(f'{word:04X}\r\n' for word in frames).encode('ascii')
