@@ -18,7 +18,7 @@ use crate::game::sm_80::{
     CalculateLayer2PosAndScrollsWhenScrolling, DebugScrollPosSaveLoad, HandleHudTilemap,
 };
 use crate::game::sm_82::HandleSamusOutOfHealthAndGameTile;
-use crate::game::sm_a0::{DecrementSamusTimers, HandleRoomShaking};
+use crate::ram_map::{checked_word, words as ram};
 
 #[derive(Clone, Copy, PartialEq)]
 #[repr(u8)]
@@ -97,10 +97,59 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
             CalculateLayer2PosAndScrollsWhenScrolling(game);
             RunRoomMainCode(game);
             HandleSamusOutOfHealthAndGameTile(game);
-            HandleRoomShaking(game);
-            DecrementSamusTimers(game);
+            finish_frame(game);
         }
         game.set_coroutine_state_1(ResumePoint::Start as u8);
         0 as CoroutineRet
     }
+}
+
+static kRoomShakes: [u16; 144] = [
+    1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0,
+    3, 3, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 2, 0, 2, 0, 0, 2, 0, 2, 2, 2, 2, 2, 3, 0, 3, 0,
+    0, 3, 0, 3, 3, 3, 3, 3, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 2, 0, 2, 0, 0, 2, 0, 2, 2, 2, 2, 2,
+    3, 0, 3, 0, 0, 3, 0, 3, 3, 3, 3, 3, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0, 2,
+    0, 0, 2, 2, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0, 3, 3,
+];
+
+fn finish_frame(game: &mut Game) {
+    if word!(game.earthquake_timer) != 0
+        && word!(game.time_is_frozen_flag) == 0
+        && (word!(game.earthquake_type) as i16).wrapping_sub(36) < 0
+    {
+        let index = usize::from(word!(game.earthquake_type)) * 4;
+        let direction = if word!(game.earthquake_timer) & 2 != 0 {
+            u16::MAX
+        } else {
+            1
+        };
+        for (offset, register) in [
+            ram::reg_BG1HOFS,
+            ram::reg_BG1VOFS,
+            ram::reg_BG2HOFS,
+            ram::reg_BG2VOFS,
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            checked_word!(game, register; += kRoomShakes[index + offset].wrapping_mul(direction));
+        }
+        word!(game.earthquake_timer -= 1);
+        if (word!(game.earthquake_type) as i16).wrapping_sub(18) >= 0 {
+            actors::scheduling::shake_active_enemies(&mut Runtime::new(game));
+        }
+    }
+    word!(game.frame_counter_every_frame += 1);
+    for timer in [
+        ram::samus_invincibility_timer,
+        ram::samus_knockback_timer,
+        ram::projectile_invincibility_timer,
+    ] {
+        let remaining = checked_word!(game, timer;);
+        if remaining != 0 {
+            checked_word!(game, timer; = remaining - 1);
+        }
+    }
+    word!(game.interactive_enemy_indexes[0] = u16::MAX);
+    word!(game.active_enemy_indexes[0] = u16::MAX);
 }

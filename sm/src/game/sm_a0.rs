@@ -8,55 +8,6 @@ use crate::game::{
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
 use crate::game::{sm_a2, sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b2, sm_b3};
 
-static kRoomShakes: [u16; 144] = [
-    1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0, 2, 2, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0,
-    3, 3, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 2, 0, 2, 0, 0, 2, 0, 2, 2, 2, 2, 2, 3, 0, 3, 0,
-    0, 3, 0, 3, 3, 3, 3, 3, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 2, 0, 2, 0, 0, 2, 0, 2, 2, 2, 2, 2,
-    3, 0, 3, 0, 0, 3, 0, 3, 3, 3, 3, 3, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 0, 0, 0, 0, 2,
-    0, 0, 2, 2, 0, 0, 3, 0, 0, 0, 0, 3, 0, 0, 3, 3,
-];
-
-macro_rules! adjust_room_shake_scroll {
-    ($game:ident, $adjust:ident, $shake_index:ident) => {
-        word!(
-            $game.reg_BG1HOFS,
-            $adjust(kRoomShakes[$shake_index as usize])
-        );
-        word!(
-            $game.reg_BG1VOFS,
-            $adjust(kRoomShakes[($shake_index + 1) as usize])
-        );
-        word!(
-            $game.reg_BG2HOFS,
-            $adjust(kRoomShakes[($shake_index + 2) as usize])
-        );
-        word!(
-            $game.reg_BG2VOFS,
-            $adjust(kRoomShakes[($shake_index + 3) as usize])
-        );
-    };
-}
-
-pub unsafe fn HandleRoomShaking(game: &mut Game) {
-    {
-        if word!(game.earthquake_timer) != 0
-            && word!(game.time_is_frozen_flag) == 0
-            && word!(game.earthquake_type) as i32 - 36i32 & 0x8000 != 0
-        {
-            let v0: i32 = 8 * word!(game.earthquake_type) as i32 >> 1;
-            if (word!(game.earthquake_timer) & 2) != 0 {
-                adjust_room_shake_scroll!(game, wrapping_sub, v0);
-            } else {
-                adjust_room_shake_scroll!(game, wrapping_add, v0);
-            }
-            word!(game.earthquake_timer -= 1);
-            if word!(game.earthquake_type) as i32 - 18i32 & 0x8000 == 0 {
-                actor_scheduling::shake_active_enemies(&mut Runtime::new(game));
-            }
-        }
-        word!(game.frame_counter_every_frame += 1);
-    }
-}
 crate::game::address_dispatch! {
     pub unsafe fn CallEnemyGfxDrawHook(ea: u32, game: &mut Game) => ea;
         call (game); default { Unreachable(game); };
@@ -214,22 +165,6 @@ crate::game::address_dispatch! {
         0xb30000..=0xb3ffff => [sm_b3::DispatchEnemyPreInstr(ea, k, game)];
     }
 }
-pub fn DecrementSamusTimers(game: &mut Game) {
-    {
-        if word!(game.samus_invincibility_timer) != 0 {
-            word!(game.samus_invincibility_timer -= 1);
-        }
-        if word!(game.samus_knockback_timer) != 0 {
-            word!(game.samus_knockback_timer -= 1);
-        }
-        if word!(game.projectile_invincibility_timer) != 0 {
-            word!(game.projectile_invincibility_timer -= 1);
-        }
-        word!(game.interactive_enemy_indexes[0] = -1i32 as u16);
-        word!(game.active_enemy_indexes[0] = -1i32 as u16);
-    }
-}
-
 crate::game::address_dispatch! {
     pub unsafe fn CallHitboxTouch(ea: u32, game: &mut Game) => ea;
         call (game); default { Unreachable(game); };
