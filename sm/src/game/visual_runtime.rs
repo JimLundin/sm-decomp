@@ -5,7 +5,7 @@ use crate::{
         animated_tiles, enemy_projectiles, palette_effects, player_projectiles,
         session_runtime::Runtime,
         visual_host::{self, AnimationMember, PaletteMember, Source, StatueProjectile},
-        visual_state::{EyeBeamPhase, PaletteBuffer, Upload},
+        visual_state::{EyeBeamPhase, HazePhase, PaletteBuffer, Upload},
     },
     game_state::Game,
     rom::RomRecord,
@@ -281,6 +281,54 @@ pub(crate) fn check_animation_guard(game: &mut Game) -> bool {
 pub(crate) mod samus_observer;
 
 impl Runtime<'_> {
+    pub(crate) fn begin_haze(&mut self, slot: u16, color: u16) {
+        let object = usize::from(slot as u8 & !1);
+        self.write_slice_le(0x1920 + object, color);
+        self.write_slice_le(0x1914 + object, 0);
+        if self.session().room.entry.transition_selector == 0xe737 {
+            self.write_slice_le(0x18f0 + object, 0xde2d);
+            self.advance_haze(slot, HazePhase::FadingIn);
+        }
+    }
+
+    pub(crate) fn advance_haze(&mut self, slot: u16, phase: HazePhase) {
+        self.write_slice(0x74, &[0x20, 0x40, 0x80]);
+        self.write_slice_le(0x1986, 44);
+        let byte_slot = usize::from(slot as u8);
+        let object = byte_slot & !1;
+        let level = 0x1914 + object;
+        match phase {
+            HazePhase::FadedIn => {
+                if self.session().room.entry.transition_selector == 0xe2db {
+                    self.write_slice_le(0x18f0 + object, 0xde96);
+                }
+                return;
+            }
+            HazePhase::FadingIn if self.word(level) == 16 => {
+                self.write_slice_le(0x18f0 + object, 0xde74);
+                return;
+            }
+            HazePhase::FadingOut if self.word(level) == 0 => return,
+            _ => {}
+        }
+        // Color samples use the byte slot even when its word slot is rounded down.
+        let color = self.byte(0x1920 + byte_slot);
+        let mut shade = self.byte(0x1914 + byte_slot) as i8;
+        for row in (0..16).rev() {
+            self.set_byte(0x9d00 + row, color | shade as u8);
+            shade = shade.wrapping_sub(1);
+            if shade < 0 {
+                shade = 0;
+            }
+        }
+        let delta = if matches!(phase, HazePhase::FadingIn) {
+            1
+        } else {
+            u16::MAX
+        };
+        self.write_slice_le(level, self.word(level).wrapping_add(delta));
+    }
+
     fn advance_eye_beam_program(&mut self) {
         let current = usize::from(self.word(0x18b2) & !1);
         let program = 0x18cc + current;

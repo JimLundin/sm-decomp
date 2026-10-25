@@ -54,7 +54,7 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Player input, demos, suits, equipment, commands, initialization, Mother Brain
    reactions, X-ray and direct damage use owned state. Natural X-ray, Gravity,
    boss and grapple movie coverage remains incomplete despite bounded checks.
-   X-ray controls/tables are consolidated; sm_88 has 1,291 lines left. sm_90 has 522.
+   X-ray controls/tables are consolidated; sm_88 has 1,216 lines left. sm_90 has 522.
    B1 finishes sm_90; B2 continues sm_88. Room FX loading now uses Room/Visuals;
    sm_89 retains only its 48-line Ceres family. B3 finishes it, then Crocomire sm_a4.
    Retire production observer hooks with named segments.

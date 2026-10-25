@@ -4,11 +4,11 @@
 
 | Measure | Count |
 | --- | ---: |
-| Production Rust lines* | 115629 |
-| Legacy bank Rust lines | 50974 |
+| Production Rust lines* | 115609 |
+| Legacy bank Rust lines | 50899 |
 | Verification Rust lines | 39208 |
-| Total Rust | 154837 |
-| Lines containing `unsafe` | 4605 |
+| Total Rust | 154817 |
+| Lines containing `unsafe` | 4596 |
 | Warnings (no-default library) | 362 |
 | Required checkpoint checks passing | 27/44 |
 

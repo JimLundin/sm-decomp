@@ -4,7 +4,7 @@ use crate::game::player_transitions::xray::BeamPhase;
 pub use crate::game::prelude::*;
 use crate::game::scrolling_sky;
 use crate::game::session_runtime::Runtime;
-use crate::game::visual_state::EyeBeamPhase;
+use crate::game::visual_state::{EyeBeamPhase, HazePhase};
 
 pub use crate::game::constants::bank_8f::*;
 pub use crate::game::constants::bank_86::*;
@@ -768,81 +768,6 @@ pub unsafe fn FxTypeFunc_2C_Haze(game: &mut Game) {
         };
     }
 }
-crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game);
-    HdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyAlive => sub_88DE18(k, 0x80, game);
-    HdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyDead => sub_88DE18(k, 0x20, game);
-}
-pub unsafe fn sub_88DE18(k: u16, a: u16, game: &mut Game) {
-    unsafe {
-        let v2: i32 = k as u8 as i32 >> 1;
-        word! {game; hdma_object_B[v2] = a; hdma_object_A[v2] = 0; }
-        if word!(game.door_transition_function) as i32 == 0x82e737 & 0xffff {
-            word!(game.hdma_object_pre_instructions[v2] = (0x88de2di32) as u16);
-            HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn(k, game);
-        }
-    }
-}
-pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn(k: u16, game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0x74, 0) = 32;
-        *ram_ptr!(game; 0x74, 1) = 64;
-        *ram_ptr!(game; 0x74, 2) = 0x80;
-        word!(game.fx_layer_blending_config_c = 44);
-        if word!(game.hdma_object_A[(k as u8 >> 1)]) == 16 {
-            word!(game.hdma_object_pre_instructions[(k as u8 >> 1)] = (0x88de74i32) as u16);
-        } else {
-            let v3: u8 = k as u8;
-            let r20: u8 = byte!(@pointer ram_ptr!(game, u16; 0x1920); k as u8 as i32 as isize);
-            let mut v1: i8 =
-                byte!(@pointer ram_ptr!(game, u16; 0x1914); k as u8 as i32 as isize) as i8;
-            for i in (0i32..=15).rev() {
-                let r18: u8 = v1 as u8;
-                byte!(@pointer ram_ptr!(game, u16; 0x9d00); i as u8 as i32 as isize) =
-                    (r20) | ((v1) as u8);
-                v1 = ((r18) as i8).wrapping_sub(1);
-                if ((r18) as i8).wrapping_sub(1) < 0 {
-                    v1 = 0;
-                }
-            }
-            word!(game.hdma_object_A[(v3 >> 1)] += 1);
-        };
-    }
-}
-pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadedIn(k: u16, game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0x74, 0) = 32;
-        *ram_ptr!(game; 0x74, 1) = 64;
-        *ram_ptr!(game; 0x74, 2) = 0x80;
-        word!(game.fx_layer_blending_config_c = 44);
-        if word!(game.door_transition_function) as i32 == 0x82e2db & 0xffff {
-            word!(game.hdma_object_pre_instructions[(k as u8 >> 1)] = (0x88de96i32) as u16);
-        }
-    }
-}
-pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingOut(k: u16, game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0x74, 0) = 32;
-        *ram_ptr!(game; 0x74, 1) = 64;
-        *ram_ptr!(game; 0x74, 2) = 0x80;
-        word!(game.fx_layer_blending_config_c = 44);
-        if word!(game.hdma_object_A[(k as u8 >> 1)]) != 0 {
-            let v3: u8 = k as u8;
-            let r20: u8 = byte!(@pointer ram_ptr!(game, u16; 0x1920); k as u8 as i32 as isize);
-            let mut v1: i8 =
-                byte!(@pointer ram_ptr!(game, u16; 0x1914); k as u8 as i32 as isize) as i8;
-            for i in (0i32..=15).rev() {
-                let r18: u8 = v1 as u8;
-                byte!(@pointer ram_ptr!(game, u16; 0x9d00); i as u8 as i32 as isize) =
-                    (r20) | ((v1) as u8);
-                v1 = ((r18) as i8).wrapping_sub(1);
-                if ((r18) as i8).wrapping_sub(1) < 0 {
-                    v1 = 0;
-                }
-            }
-            word!(game.hdma_object_A[(v3 >> 1)] -= 1);
-        }
-    }
-}
 static unk_88DF38: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0, 0x2c, 0xdf4f as VoidP);
 crate::forward_calls! { pub unsafe fn (game: &mut Game);
     sub_88DF34 => SpawnHdmaObject(0x88, &raw const unk_88DF38 as *const c_void, game);
@@ -1235,11 +1160,11 @@ crate::game::address_dispatch! {
         8969175 => HdmaobjPreInstr_CheckLotsOfEventsHappened; 8969251 => HdmaobjPreInstr_DC23;
         8969321 => HdmaobjPreInstr_DC69; 8969402 => HdmaobjPreInstr_DCBA;
         8969539 => HdmaobjPreInstr_BombTorizoHazeColorMathBgColor;
-        8969744 => HdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyAlive;
-        8969749 => HdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyDead;
-        8969773 => HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn;
-        8969844 => HdmaobjPreInstr_HazeColorMathSubscreen_FadedIn;
-        8969878 => HdmaobjPreInstr_HazeColorMathSubscreen_FadingOut;
+        8969744 => [Runtime::new(game).begin_haze(k, 0x80)];
+        8969749 => [Runtime::new(game).begin_haze(k, 0x20)];
+        8969773 => [Runtime::new(game).advance_haze(k, HazePhase::FadingIn)];
+        8969844 => [Runtime::new(game).advance_haze(k, HazePhase::FadedIn)];
+        8969878 => [Runtime::new(game).advance_haze(k, HazePhase::FadingOut)];
         8970132 => HdmaobjPreInstr_DF94; 8970278 => [Runtime::new(game).advance_suit_pickup(false)];
         8970332 => [Runtime::new(game).advance_suit_pickup(true)]; 8971337 => HdmaobjPreInstr_E449;
         8971623 => HdmaobjPreInstr_E567; 8972220 => HdmaobjPreInstr_E7BC;

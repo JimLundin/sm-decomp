@@ -99,3 +99,10 @@ pub(crate) enum EyeBeamPhase {
     Full,
     Fading,
 }
+
+#[derive(Clone, Copy)]
+pub(crate) enum HazePhase {
+    FadingIn,
+    FadedIn,
+    FadingOut,
+}
