@@ -104,7 +104,8 @@ every boss bank (~20k lines), and those banks hardly touch each other. Changes:
   pointers, `main.rs`/`rtl.rs`/platform (~400 lines). The Windows M agent becomes B4.
 - **Lane B: six queues, one bank file each.** Boss and enemy banks are open now (rows pass).
   B1 `sm_80` -> `sm_82`; B2 `sm_8b`; B3 `sm_a2` -> `sm_a3`; B4 (Windows M agent) `sm_a8`
-  after `ci/m2-sm-a8` lands -> `sm_b3`; B5/B6 (new cloud agents, hosted mode, after A2 lands)
+  after `ci/m2-sm-a8` lands -> `sm_b3`; B5/B6 (cloud workers, hosted mode; scheduled tasks "sm-decomp cloud worker B5/B6",
+  hourly at :05 and :20 from 00:05 on 10-26; boss rows are seeded, so they need not wait for A2)
   `sm_a9` -> `sm_aa` and `sm_a6` -> `sm_a7`; whoever frees up first takes `sm_a5`, `sm_9b`,
   then `sm_a4`. Retire into owned safe modules (sm_b2 style). Shared registry edits
   (`lib.rs`, `verify_source.rs`) stay one line each so rebases merge cleanly.
