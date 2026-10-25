@@ -5,7 +5,7 @@ use crate::{
         animated_tiles, enemy_projectiles, palette_effects, player_projectiles,
         session_runtime::Runtime,
         visual_host::{self, AnimationMember, PaletteMember, Source, StatueProjectile},
-        visual_state::{EyeBeamPhase, HazePhase, PaletteBuffer, Upload},
+        visual_state::{EyeBeamPhase, HazePhase, PaletteBuffer, Upload, Weather},
     },
     game_state::Game,
     rom::RomRecord,
@@ -279,6 +279,51 @@ pub(crate) fn check_animation_guard(game: &mut Game) -> bool {
 }
 #[path = "../verification/samus_palette_observer.rs"]
 pub(crate) mod samus_observer;
+
+pub(crate) fn scroll_weather(slot: u16, weather: Weather, game: &mut Game) {
+    use crate::ram_map::{checked_word, words as ram};
+    game.g_ram[0x5b] = 92;
+    checked_word!(game.fx_layer_blending_config_c = checked_word!(game.fx_layer_blending_config_b));
+    if checked_word!(game.time_is_frozen_flag) != 0 {
+        return;
+    }
+    let runtime = &mut Runtime::new(game);
+    let object = usize::from(slot as u8 & !1);
+    let phase_base = if matches!(weather, Weather::Spores) {
+        0x192c
+    } else {
+        0x1914
+    };
+    let rain = matches!(weather, Weather::Rain);
+    // Finish each axis, including rain's camera history, before reading the next.
+    for (axis, camera, output) in [
+        (0, ram::layer1_y_pos, ram::bg3_ypos),
+        (12, ram::layer1_x_pos, ram::bg3_xpos),
+    ] {
+        let phase = phase_base + object + axis;
+        let history = 0x1944 + object + axis;
+        let origin = if rain {
+            runtime.word(history).wrapping_sub(runtime.word(camera))
+        } else {
+            runtime.word(camera)
+        };
+        let scroll = origin.wrapping_add(runtime.byte(phase + 1) as i8 as u16);
+        runtime.write_slice_le(output, scroll);
+        let previous_phase = runtime.word(phase);
+        let delta = match (weather, axis) {
+            (Weather::Rain, 0) => 0u16.wrapping_sub(1536),
+            (_, 0) => 0u16.wrapping_sub(64),
+            (Weather::Rain, _) => runtime.word(0x1938 + object),
+            (Weather::Fog, _) => 80,
+            // Spores retain the original idempotent horizontal-phase store.
+            (Weather::Spores, _) => 0,
+        };
+        runtime.write_slice_le(phase, previous_phase.wrapping_add(delta));
+        if rain {
+            runtime.write_slice_le(history, runtime.word(camera));
+        }
+    }
+}
 
 impl Runtime<'_> {
     pub(crate) fn begin_haze(&mut self, slot: u16, color: u16) {

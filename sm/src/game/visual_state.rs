@@ -106,3 +106,10 @@ pub(crate) enum HazePhase {
     FadedIn,
     FadingOut,
 }
+
+#[derive(Clone, Copy)]
+pub(crate) enum Weather {
+    Rain,
+    Spores,
+    Fog,
+}

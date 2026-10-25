@@ -4,7 +4,8 @@ use crate::game::player_transitions::xray::BeamPhase;
 pub use crate::game::prelude::*;
 use crate::game::scrolling_sky;
 use crate::game::session_runtime::Runtime;
-use crate::game::visual_state::{EyeBeamPhase, HazePhase};
+use crate::game::visual_runtime;
+use crate::game::visual_state::{EyeBeamPhase, HazePhase, Weather};
 
 pub use crate::game::constants::bank_8f::*;
 pub use crate::game::constants::bank_86::*;
@@ -537,31 +538,6 @@ pub unsafe fn HdmaobjInstr_1938_RandomNumber(k: u16, hdp: *const u8, game: &mut 
         hdp
     }
 }
-pub unsafe fn HdmaobjPreInstr_RainBg3Scroll(k: u16, game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0x5b) = 92;
-        word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_b));
-        if word!(game.time_is_frozen_flag) == 0 {
-            let v1: i32 = k as u8 as i32 >> 1;
-            word!(
-                game.bg3_ypos = (word!(game.hdma_object_E[v1]) as i32
-                    - word!(game.layer1_y_pos) as i32
-                    + *((ram_ptr!(game, u16; 0x1914)).offset(v1 as isize) as *mut u8).offset(1,)
-                        as i8 as i32) as u16
-            );
-            word!(game.hdma_object_A[v1] -= 1536);
-            word!(game.hdma_object_E[v1] = word!(game.layer1_y_pos));
-            word!(
-                game.bg3_xpos = (word!(game.hdma_object_F[v1]) as i32
-                    - word!(game.layer1_x_pos) as i32
-                    + *((ram_ptr!(game, u16; 0x1920)).offset(v1 as isize) as *mut u8).offset(1,)
-                        as i8 as i32) as u16
-            );
-            word!(game.hdma_object_B[v1] += word!(game.hdma_object_D[v1]));
-            word!(game.hdma_object_F[v1] = word!(game.layer1_x_pos));
-        }
-    }
-}
 pub unsafe fn FxTypeFunc_8_Spores(game: &mut Game) {
     unsafe {
         *ram_ptr!(game; 0x5b) = 92;
@@ -572,59 +548,12 @@ pub unsafe fn FxTypeFunc_8_Spores(game: &mut Game) {
         animated_tiles::spawn(addr_kAnimtiles_Spores as u16, game);
     }
 }
-pub unsafe fn HdmaobjPreInstr_SporesBG3Xscroll(k: u16, game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0x5b) = 92;
-        word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_b));
-        if word!(game.time_is_frozen_flag) == 0 {
-            let v1: i32 = k as u8 as i32 >> 1;
-            word!(
-                game.bg3_ypos = (word!(game.layer1_y_pos)).wrapping_add(
-                    (*((ram_ptr!(game, u16; 0x192c)).offset(v1 as isize) as *mut u8).offset(1,)
-                        as i8) as u16,
-                )
-            );
-            let v3: u16 = (word!(game.hdma_object_C[v1])).wrapping_sub(64);
-            word!(game.hdma_object_C[v1] = v3);
-            word!(
-                game.bg3_xpos = (word!(game.layer1_x_pos)).wrapping_add(
-                    (*((ram_ptr!(game, u16; 0x1938)).offset(v1 as isize) as *mut u8).offset(1,)
-                        as i8) as u16,
-                )
-            );
-            word!(game.hdma_object_D[v1] = word!(game.hdma_object_D[v1]));
-        }
-    }
-}
 pub unsafe fn FxTypeFunc_C(game: &mut Game) {
     unsafe {
         *ram_ptr!(game; 0x5b) = 92;
         static unk_88DB14: SpawnHdmaObject_Args =
             SpawnHdmaObject_Args::new(0x43, 0x11, 0xdb19 as VoidP);
         SpawnHdmaObject(0x88, &raw const unk_88DB14 as *const c_void, game);
-    }
-}
-pub unsafe fn HdmaobjPreInstr_FogBG3Scroll(k: u16, game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0x5b) = 92;
-        word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_b));
-        if word!(game.time_is_frozen_flag) == 0 {
-            let v1: i32 = k as u8 as i32 >> 1;
-            word!(
-                game.bg3_ypos = (word!(game.layer1_y_pos)).wrapping_add(
-                    (*((ram_ptr!(game, u16; 0x1914)).offset(v1 as isize) as *mut u8).offset(1,)
-                        as i8) as u16,
-                )
-            );
-            word!(game.hdma_object_A[v1] -= 64);
-            word!(
-                game.bg3_xpos = (word!(game.layer1_x_pos)).wrapping_add(
-                    (*((ram_ptr!(game, u16; 0x1920)).offset(v1 as isize) as *mut u8).offset(1,)
-                        as i8) as u16,
-                )
-            );
-            word!(game.hdma_object_B[v1] += 80);
-        }
     }
 }
 pub unsafe fn FxTypeFunc_26_TourianEntranceStatue(game: &mut Game) {
@@ -1155,8 +1084,10 @@ crate::game::address_dispatch! {
         8959189 => liquid_effects::lava_background; 8963214 => liquid_effects::water_surface;
         8963465 => liquid_effects::water_background;
         8963556 => liquid_effects::water_wave;
-        8963638 => liquid_effects::water_flat; 8968609 => HdmaobjPreInstr_RainBg3Scroll;
-        8968775 => HdmaobjPreInstr_SporesBG3Xscroll; 8969014 => HdmaobjPreInstr_FogBG3Scroll;
+        8963638 => liquid_effects::water_flat;
+        8968609 => [visual_runtime::scroll_weather(k, Weather::Rain, game)];
+        8968775 => [visual_runtime::scroll_weather(k, Weather::Spores, game)];
+        8969014 => [visual_runtime::scroll_weather(k, Weather::Fog, game)];
         8969175 => HdmaobjPreInstr_CheckLotsOfEventsHappened; 8969251 => HdmaobjPreInstr_DC23;
         8969321 => HdmaobjPreInstr_DC69; 8969402 => HdmaobjPreInstr_DCBA;
         8969539 => HdmaobjPreInstr_BombTorizoHazeColorMathBgColor;
