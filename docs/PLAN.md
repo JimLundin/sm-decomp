@@ -51,8 +51,8 @@ The known example/detached compilation errors are fixed and checked locally.
    route. Spore Spawn is absent from any%/100%; Golden Torizo is skipped in 100%.
    Original any% full-route timing remains parked; no new hand routes.
 2. **Current - lane B bank retirement.** `sm_94`, `sm_91`, `sm_89` and `sm_90` are deleted.
-   B1 continues sm_81 menu drawing (1,890 lines); B2 continues sm_88 (471 lines); B3 continues
-   Crocomire sm_a4 (1,593 lines); attack reactions now share safe actor access. Player input, rendering, movement and dispatch share existing
+   B1 continues sm_81 menu drawing (1,889 lines); B2 continues sm_88 (471 lines); B3 continues
+   Crocomire sm_a4 (1,640 lines); attack reactions now share safe actor access. Player input, rendering, movement and dispatch share existing
    owners; save/load now shares checked slot and map transfers.
    Bank removal is not persistent whole-engine state ownership: camera
    compatibility and the unchanged Ceres elevator callback still use raw RAM.
@@ -67,7 +67,7 @@ The known example/detached compilation errors are fixed and checked locally.
    M1 checked caller-side byte access passes all 59 runnable rows locally, including
    78,108 selected and 100,697 setup frames; 123 redundant unsafe blocks are cleared.
    M2 Ripper/Jet Power Ripper now share existing Actor operations: two raw getters
-   and 28 dereferences removed; seven rows pass. Next: remaining common-enemy families. Prototype 42c59cb is not safe to adopt: its whole-RAM
+   and 28 dereferences removed; eleven rows pass. Next: remaining common-enemy families. Prototype 42c59cb is not safe to adopt: its whole-RAM
    borrows can invalidate retained enemy pointers, and its signature stripping
    exposes raw-pointer Load24 as safe. Passing replays do not resolve these defects.
    We retain this checked M1 ahead of the revised REVIEW's proposed M1b deferral:

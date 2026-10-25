@@ -4,16 +4,16 @@
 
 | Measure | Count |
 | --- | ---: |
-| Production Rust lines* | 115153 |
-| Legacy bank Rust lines | 48805 |
+| Production Rust lines* | 115200 |
+| Legacy bank Rust lines | 48852 |
 | Verification Rust lines | 39336 |
-| Total Rust | 154489 |
-| Lines containing `unsafe` | 4339 |
+| Total Rust | 154536 |
+| Lines containing `unsafe` | 4337 |
 | Warnings (no-default library) | 301 |
 | Required checkpoint checks passing | 40/44 |
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-Ripper patrols share actor operations: 28 raw dereferences removed; production +7 for checked access. Unsafe text +2 is declarations. Seven local rows pass.
+Crocomire return motion shares acceleration and phase updates: 36 raw dereferences removed; production +47 for checked actor access. Eight local rows pass.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)
