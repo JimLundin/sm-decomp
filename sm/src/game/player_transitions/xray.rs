@@ -99,6 +99,13 @@ pub(crate) fn turn(h: &mut impl Host, opposite_direction_held: bool) {
     super::finish_pose_change(h);
 }
 
+#[derive(Clone, Copy)]
+pub(crate) enum BlendPhase {
+    Setup,
+    Beam,
+    Restore,
+}
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub(crate) enum BeamPhase {
     Initial,

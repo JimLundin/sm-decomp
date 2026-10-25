@@ -411,33 +411,6 @@ pub unsafe fn HdmaobjInstr_Sleep(k: u16, hdp: *const u8, game: &mut Game) -> *co
         null::<u8>()
     }
 }
-static kHdmaobjPreInstr_XrayFuncs: [Func_Y_V; 6] = [
-    |_, game| Runtime::new(game).advance_xray_beam(BeamPhase::Initial),
-    |_, game| Runtime::new(game).advance_xray_beam(BeamPhase::Widening),
-    |_, game| Runtime::new(game).advance_xray_beam(BeamPhase::Full),
-    restore_left,
-    restore_right,
-    finish_restore,
-];
-pub unsafe fn HdmaobjPreInstr_Xray(k: u16, game: &mut Game) {
-    unsafe {
-        let mut v1: i16 = 4096;
-        if word!(game.fx_type) != 36 {
-            v1 = 0x2000;
-            if xray_background::can_reveal_blocks(game) {
-                v1 = 0x4000;
-                *(ram_ptr!(game, u16; 0x74, 0)) = 0x27;
-                *(ram_ptr!(game, u16; 0x74, 1)) = 0x47;
-                *(ram_ptr!(game, u16; 0x74, 2)) = 0x87;
-            }
-        }
-        word!(game.fx_layer_blending_config_c |= ((v1) as u16));
-        kHdmaobjPreInstr_XrayFuncs[word!(game.demo_input_pre_instr) as usize](
-            (2u16).wrapping_mul(word!(game.demo_input_pre_instr)),
-            game,
-        );
-    }
-}
 static unk_88B08C: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x11, 0xb0ac as VoidP);
 static kFirefleaFlashingShades: [u16; 12] = [
     0, 0x100, 0x200, 0x300, 0x400, 0x500, 0x600, 0x500, 0x400, 0x300, 0x200, 0x100,
@@ -1371,7 +1344,7 @@ crate::game::address_dispatch! {
         call (k, game); default { Unreachable(game); };
     {
         8491739 => [()]; 8946872 => [()]; 10785852 => [()]; 9556607 => xray_background::setup_blending;
-        8947439 => HdmaobjPreInstr_Xray; 8947506 => [Runtime::new(game).advance_xray_beam(BeamPhase::Initial)];
+        8947439 => [Runtime::new(game).advance_xray_background()]; 8947506 => [Runtime::new(game).advance_xray_beam(BeamPhase::Initial)];
         8947540 => [Runtime::new(game).advance_xray_beam(BeamPhase::Widening)];
         8947627 => [Runtime::new(game).advance_xray_beam(BeamPhase::Full)];
         8948020 => restore_left;

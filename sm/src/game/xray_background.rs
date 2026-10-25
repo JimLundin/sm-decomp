@@ -1,6 +1,7 @@
 //! X-ray background capture, hidden-block overlay and restoration.
-use crate::game::constants::bank_8f::*;
+use crate::game::player_transitions::xray::BlendPhase;
 use crate::game::prelude::*;
+use crate::game::session_runtime::Runtime;
 
 use crate::game::sm_80::QueueSfx1_Max6;
 
@@ -8,8 +9,6 @@ use crate::game::session_runtime::finish_xray;
 
 const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
 const RomPtr_91: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x91>;
-const true_0: i32 = 1;
-const false_0: i32 = 0;
 crate::typed_struct! {
     [
         #[derive(Copy, Clone)]
@@ -357,26 +356,8 @@ pub unsafe fn capture_bg2_right(game: &mut Game) {
         crate::game::vram_read_queue::enqueue(0x59, 1024, 0x5800, 2048, true, game);
     }
 }
-pub unsafe fn can_reveal_blocks(game: &mut Game) -> bool {
-    unsafe {
-        if word!(game.room_ptr) as i32 == addr_kRoom_a66a as i32
-            || word!(game.room_ptr) as i32 == addr_kRoom_cefb as i32
-        {
-            return false_0 != 0;
-        }
-        if word!(game.fx_type) == 0x24 {
-            return false_0 != 0;
-        }
-        if word!(game.boss_id) == 3
-            || word!(game.boss_id) == 6
-            || word!(game.boss_id) == 7
-            || word!(game.boss_id) == 8
-            || word!(game.boss_id) == 10
-        {
-            return false_0 != 0;
-        }
-        true_0 != 0
-    }
+pub fn can_reveal_blocks(game: &mut Game) -> bool {
+    Runtime::new(game).xray_blend_mask() == 0x4000
 }
 pub unsafe fn upload_left(game: &mut Game) {
     unsafe {
@@ -404,26 +385,8 @@ pub unsafe fn upload_right(game: &mut Game) {
         };
     }
 }
-pub unsafe fn setup_blending(k: u16, game: &mut Game) {
-    unsafe {
-        let mut v1: u16 = 4096;
-        let update_window_masks: bool = if word!(game.fx_type) == 36 {
-            !((*ram_ptr!(game; 0x74, 0) as i32 & 0x1f) - 7i32 & 0x8000 == 0)
-        } else {
-            v1 = 0x2000;
-            (can_reveal_blocks(game))
-                && ({
-                    v1 = 0x4000;
-                    true
-                })
-        };
-        if update_window_masks {
-            *(ram_ptr!(game, u16; 0x74, 0)) = 0x27;
-            *(ram_ptr!(game, u16; 0x74, 1)) = 0x47;
-            *(ram_ptr!(game, u16; 0x74, 2)) = 0x87;
-        }
-        word!(game.fx_layer_blending_config_c |= (v1));
-    }
+pub fn setup_blending(_k: u16, game: &mut Game) {
+    Runtime::new(game).apply_xray_blending(BlendPhase::Setup);
 }
 pub unsafe fn set_backdrop(game: &mut Game) {
     unsafe {
@@ -438,14 +401,7 @@ pub unsafe fn restore_left(k: u16, game: &mut Game) {
             demo_input_prev, demo_input_prev_new, demo_backup_prev_controller_input,
         }
         word!(game.hdma_table_1[0] = 255);
-        let mut v1: i16 = 4096;
-        if word!(game.fx_type) != 36 {
-            v1 = 0x2000;
-            if can_reveal_blocks(game) {
-                v1 = 0x4000;
-            }
-        }
-        word!(game.fx_layer_blending_config_c |= ((v1) as u16));
+        Runtime::new(game).apply_xray_blending(BlendPhase::Restore);
         word!(game.palette_buffer[0] = 0);
         let v2: i32 = word!(game.hdma_object_index) as i32 >> 1;
         word!(game.reg_BG2HOFS = word!(game.hdma_object_A[v2]));
@@ -459,14 +415,7 @@ pub unsafe fn restore_left(k: u16, game: &mut Game) {
 }
 pub unsafe fn restore_right(k: u16, game: &mut Game) {
     unsafe {
-        let mut v1: i16 = 4096;
-        if word!(game.fx_type) != 36 {
-            v1 = 0x2000;
-            if can_reveal_blocks(game) {
-                v1 = 0x4000;
-            }
-        }
-        word!(game.fx_layer_blending_config_c |= ((v1) as u16));
+        Runtime::new(game).apply_xray_blending(BlendPhase::Restore);
         if (word!(game.vram_write_queue_tail) as i16).wrapping_sub(240) < 0 {
             upload_screen(0x5800, 1, game);
             word!(game.demo_input_pre_instr += 1);
@@ -475,14 +424,7 @@ pub unsafe fn restore_right(k: u16, game: &mut Game) {
 }
 pub unsafe fn finish_restore(k: u16, game: &mut Game) {
     unsafe {
-        let mut v1: i16 = 4096;
-        if word!(game.fx_type) != 36 {
-            v1 = 0x2000;
-            if can_reveal_blocks(game) {
-                v1 = 0x4000;
-            }
-        }
-        word!(game.fx_layer_blending_config_c |= ((v1) as u16));
+        Runtime::new(game).apply_xray_blending(BlendPhase::Restore);
         if word!(game.time_is_frozen_flag) != 0 {
             word! { game, 0;
                 time_is_frozen_flag, demo_input_pre_instr, demo_input_instr_timer, demo_input_instr_ptr,

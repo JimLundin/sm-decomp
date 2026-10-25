@@ -1,6 +1,6 @@
 //! Legacy content and effect adapters for owned player transitions.
 use crate::game::player_transitions::state::DrawMode;
-use crate::game::player_transitions::xray::{self, BeamPhase};
+use crate::game::player_transitions::xray::{self, BeamPhase, BlendPhase};
 use crate::{
     game::{
         player_transitions::{
@@ -444,6 +444,54 @@ impl Runtime<'_> {
                 x, y, angle, width, offscreen, 0x9800, game,
             )
         });
+    }
+
+    pub(crate) fn xray_blend_mask(&self) -> u16 {
+        use crate::ram_map::words as ram;
+        if self.word(ram::fx_type) == 0x24 {
+            0x1000
+        } else if matches!(self.word(ram::room_ptr), 0xa66a | 0xcefb)
+            || matches!(self.word(ram::boss_id), 3 | 6 | 7 | 8 | 10)
+        {
+            0x2000
+        } else {
+            0x4000
+        }
+    }
+
+    pub(crate) fn apply_xray_blending(&mut self, phase: BlendPhase) {
+        use crate::ram_map::words as ram;
+        let mask = self.xray_blend_mask();
+        let update_colors = match phase {
+            BlendPhase::Restore => false,
+            BlendPhase::Beam => mask == 0x4000,
+            BlendPhase::Setup => mask == 0x4000 || mask == 0x1000 && self.byte(0x74) & 0x1f < 7,
+        };
+        if update_colors {
+            // Preserve the overlapping native words, including the final zero byte.
+            for (offset, value) in [(0x74, 0x27), (0x75, 0x47), (0x76, 0x87)] {
+                self.write_slice_native(offset, value);
+            }
+        }
+        self.write_slice_le(
+            ram::fx_layer_blending_config_c,
+            self.word(ram::fx_layer_blending_config_c) | mask,
+        );
+    }
+
+    pub(crate) fn advance_xray_background(&mut self) {
+        use crate::game::xray_background::{finish_restore, restore_left, restore_right};
+        self.apply_xray_blending(BlendPhase::Beam);
+        let stages: [fn(&mut Self); 6] = [
+            |r| r.advance_xray_beam(BeamPhase::Initial),
+            |r| r.advance_xray_beam(BeamPhase::Widening),
+            |r| r.advance_xray_beam(BeamPhase::Full),
+            |r| r.foreign(|game| unsafe { restore_left(6, game) }),
+            |r| r.foreign(|game| unsafe { restore_right(8, game) }),
+            |r| r.foreign(|game| unsafe { finish_restore(10, game) }),
+        ];
+        // Retain the six-entry bounds check after the blending writes.
+        stages[usize::from(self.session().player.demo.pre_action)](self);
     }
 
     pub(crate) fn advance_xray_beam(&mut self, phase: BeamPhase) {
