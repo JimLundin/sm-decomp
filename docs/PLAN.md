@@ -63,9 +63,9 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    checkpoints from boot; preserve the old checked navigation build.
 2. **Current - lane B bank retirement.** `sm_94` is deleted; next is `sm_91`.
    Normal input, demos, suits, equipment and player commands use owned state;
-   318 lines remain in sm_91 and 1,514 in sm_90. Mother Brain player scripts and
+   238 lines remain in sm_91 and 1,514 in sm_90. Mother Brain player scripts and
    Hyper Beam use the same owner; natural encounter coverage remains pending.
-   Next: initialization and X-ray, then delete sm_91. Gravity coverage is pending.
+   Initialization is owned; next: X-ray, then delete sm_91. Gravity coverage is pending.
    Old `sm_91`/`sm_90` drafts remain dropped; inspect current source afresh.
    Natural grapple movie coverage remains pending despite direct ROM checks.
    Report added production and deleted legacy lines together; growth needs a reason.

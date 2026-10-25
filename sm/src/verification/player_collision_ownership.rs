@@ -4,7 +4,7 @@
 use crate::{
     game::{
         player_projectiles::access::Store, player_transitions as pt, session_access::SessionAccess,
-        session_runtime::Runtime, sm_80, sm_90, sm_91, sm_a9,
+        session_runtime::Runtime, sm_80, sm_90, sm_a9,
     },
     game_state::Game,
     rom::{RomImage, lorom_offset},
@@ -277,7 +277,7 @@ unsafe fn reset(g: &mut Game, out: &mut Vec<u8>) {
     put(&mut g.g_ram, 0x9c2, 99);
     let multiply = [word(g, 0x5e9), word(g, 0x5eb)];
     record(out, 0, 0, g);
-    unsafe { sm_91::Samus_Initialize(g) };
+    crate::game::session_runtime::initialize_player(g);
     for &at in &LANES {
         let expected = match at {
             0x5e9 => multiply[0],

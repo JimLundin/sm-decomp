@@ -111,7 +111,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         room_world_resources::install(g);
         assert!(!g.g_fail, "room.world.resources-no-diagnostic");
         // Actual player initialization supplies retained draw/movement prerequisites.
-        crate::game::sm_91::Samus_Initialize(g);
+        crate::game::session_runtime::initialize_player(g);
         assert!(!g.g_fail, "room.world.player-initialize-no-diagnostic");
         put(g, 0x9c2, 99);
         put(g, 0x9c4, 99);

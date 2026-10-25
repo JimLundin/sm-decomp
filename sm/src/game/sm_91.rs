@@ -16,7 +16,6 @@ use crate::game::room_mechanisms::set_enabled;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_80::InvalidInterrupt_Crash;
 use crate::game::sm_88::SpawnHdmaObject;
-use crate::game::sm_90::UpdateBeamTilesAndPalette;
 
 pub const NULL: *mut c_void = null_mut::<c_void>();
 crate::game::constants::typed_constants! { i32;
@@ -100,85 +99,6 @@ pub unsafe fn Samus_DealDamage(amount: u16, game: &mut Game) {
         } else {
             InvalidInterrupt_Crash(game);
         }
-    }
-}
-pub unsafe fn Samus_Initialize(game: &mut Game) {
-    unsafe {
-        let debug_invincibility = game.debug_invincibility();
-        // Clear the original Samus workspace from its last byte to its first.
-        for address in (0xa02..=0xe0b).rev() {
-            game.g_ram[address] = 0;
-        }
-        if game.game_state() != kGameState_40_TransitionToDemo as u16 {
-            game.set_frame_handler_alfa(fnEmptyFunction as u16);
-            if game.loading_game_state() == kGameState_34_CeresGoesBoom as u16 {
-                game.set_frame_handler_beta(fnSetContactDamageIndexAndUpdateMinimap as u16);
-                game.set_samus_draw_handler(fnSamusDrawHandler_Default as u16);
-                game.set_samus_momentum_routine_index(u16::MAX);
-                game.set_samus_special_transgfx_index(0);
-                game.set_samus_hurt_switch_index(0);
-                Samus_LoadSuitPalette(game);
-                game.set_samus_input_handler(fnSamus_InputHandler_E913 as u16);
-            } else {
-                game.set_frame_handler_beta(fnSamus_Func16 as u16);
-                game.set_samus_draw_handler(fnSamusDrawHandler_Default as u16);
-                game.set_samus_momentum_routine_index(0);
-                game.set_samus_special_transgfx_index(0);
-                game.set_samus_hurt_switch_index(0);
-                game.set_samus_input_handler(fnSamus_InputHandler_E913 as u16);
-                game.set_debug_invincibility(debug_invincibility);
-            }
-        }
-        game.set_samus_new_pose(u16::MAX);
-        game.set_samus_new_pose_interrupted(u16::MAX);
-        game.set_samus_new_pose_transitional(u16::MAX);
-        if game.area_index() == 6 {
-            game.set_frame_handler_gamma(fnSamus_Func3 as u16);
-        } else {
-            game.set_frame_handler_gamma(fnnullsub_152 as u16);
-        }
-        game.set_samus_movement_handler(fnSamus_MovementHandler_Normal as u16);
-        game.set_unused_word_7e0a5e(0u16.wrapping_sub(2764));
-        game.set_samus_prev_health_for_flash(50);
-        game.set_samus_visor_palette_timer_index(1537);
-        for slot in 0..10 {
-            game.set_projectile_bomb_pre_instruction(slot, fnProjPreInstr_Empty as u16);
-        }
-        game.set_grapple_beam_function(fnGrappleBeamFunc_Inactive as u16);
-        game.set_enable_horiz_slope_coll(3);
-        game.set_samus_hurt_flash_counter(0);
-        game.set_samus_special_super_palette_flags(0);
-        game.set_absolute_moved_last_frame_x_fract(0);
-        game.set_absolute_moved_last_frame_x(1);
-        game.set_absolute_moved_last_frame_y_fract(0);
-        game.set_absolute_moved_last_frame_y(1);
-        // Initialize the hdma_table_1 from its last word to its first.
-        for word in game.g_ram[0x9800..0x9a00].chunks_exact_mut(2).rev() {
-            word.copy_from_slice(&255u16.to_le_bytes());
-        }
-        game.set_samus_y_subaccel(0x1c00);
-        game.set_samus_y_accel(0);
-        game.set_fx_y_pos(u16::MAX);
-        game.set_lava_acid_y_pos(u16::MAX);
-        UpdateBeamTilesAndPalette(game);
-        game.set_cinematic_function(0);
-        game.set_samus_pose(kPose_00_FaceF_Powersuit as u16);
-        game.set_samus_pose_direction_and_movement_type(0, 0);
-        game.set_samus_prev_pose(0);
-        game.set_samus_prev_pose_direction_and_movement_type(0, 0);
-        game.set_samus_last_different_pose(0);
-        game.set_samus_last_different_pose_direction_and_movement_type(0, 0);
-        game.set_enemy_index_to_shake(u16::MAX);
-        game.set_hud_item_index(0);
-        game.set_samus_auto_cancel_hud_item_index(0);
-        game.set_samus_invincibility_timer(0);
-        game.set_samus_knockback_timer(0);
-        game.set_samus_hurt_flash_counter(0);
-        game.set_debug_invincibility(0);
-        if game.game_state() == kGameState_40_TransitionToDemo as u16 {
-            Runtime::new(game).load_demo_data();
-        }
-        game.set_samus_prev_health_for_flash(game.samus_health());
     }
 }
 pub unsafe fn Xray_Initialize(game: &mut Game) -> u8 {

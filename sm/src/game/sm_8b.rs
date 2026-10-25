@@ -10,6 +10,7 @@ use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::palette_effects;
 use crate::game::player_projectiles::draw_projectiles;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
+use crate::game::session_runtime::initialize_player;
 use crate::game::sm_80::{
     ClearOamExt, ClearUnusedOam, CopySuperMetroidString, DisableIrqInterrupts, EnableNMI,
     GraphicsAsset, HandleFadeIn, HandleFadeOut, QueueMode7Transfers, QueueSfx1_Max15,
@@ -24,7 +25,6 @@ use crate::game::sm_90::{
     DrawSamusAndProjectiles, HandleControllerInputForGamePhysics, HandleSamusMovementAndPause,
     UpdateBeamTilesAndPalette,
 };
-use crate::game::sm_91::Samus_Initialize;
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]
@@ -2255,7 +2255,7 @@ crate::game::callback_dispatch! {
         SetupPpu_Intro(game);
         word! { game, 0; cur_irq_handler, irqhandler_next_handler, area_index }
         word! { game, 16; room_width_in_blocks, room_height_in_blocks }
-        Samus_Initialize(game);
+        initialize_player(game);
         UpdateBeamTilesAndPalette(game);
         word! { game, 900; samus_max_missiles, samus_missiles }
         word! {game; cinematic_var15 = 0; samus_draw_handler = ((0x90eb52i32) as u16); }

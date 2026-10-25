@@ -34,7 +34,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         crate::game::sm_80::APU_UploadBank(0xcf8000, g);
         fixture::install(g);
         steps::install_surface_content(g);
-        crate::game::sm_91::Samus_Initialize(g);
+        crate::game::session_runtime::initialize_player(g);
         for (at, value) in [(0x9c2, 99), (0x9c4, 99), (0x998, 8), (0x5f5, 0)] {
             put(g, at, value);
         }

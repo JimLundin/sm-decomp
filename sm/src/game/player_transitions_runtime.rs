@@ -296,3 +296,90 @@ pub(crate) fn face_forward(game: &mut crate::game_state::Game) {
 pub(crate) fn mother_brain(event: u16, game: &mut crate::game_state::Game) {
     crate::game::player_transitions::mother_brain::react(&mut Runtime::new(game), event);
 }
+
+pub(crate) fn initialize(game: &mut crate::game_state::Game) {
+    use crate::{
+        game::{player_transitions::state::*, samus_palette, visual_state::PaletteBuffer},
+        ram_map::words as ram,
+    };
+    let mut rt = Runtime::new(game);
+    let debug_invincibility = rt.word(ram::debug_invincibility);
+    // This compatibility workspace is only part of Session, including byte aliases.
+    for address in (0xa02..=0xe0b).rev() {
+        rt.set_byte(address, 0);
+    }
+    if rt.word(ram::game_state) != 40 {
+        let ceres = rt.word(ram::loading_game_state) == 34;
+        let t = &mut rt.session_mut().player.transitions;
+        t.frame_alpha = FrameAlphaMode::Empty;
+        t.frame_beta = if ceres { 0xe8dc } else { 0xe86a };
+        t.draw_handler = 0xeb52;
+        t.momentum = MomentumAction::from_raw(if ceres { u16::MAX } else { 0 });
+        t.interruption = InterruptionAction::from_raw(0);
+        t.hurt = HurtAction::from_raw(0);
+        if ceres {
+            samus_palette::load_suit(&mut rt, PaletteBuffer::Current);
+        }
+        rt.session_mut().player.transitions.input_mode = InputMode::Normal;
+        if !ceres {
+            rt.write_slice_le(ram::debug_invincibility, debug_invincibility);
+        }
+    }
+    rt.session_mut()
+        .player
+        .transitions
+        .invalidate_pose_requests();
+    rt.session_mut().player.transitions.frame_gamma = if rt.session().room.area == 6 {
+        0xe0e6
+    } else {
+        0xe90e
+    };
+    rt.session_mut().player.movement_handler = MovementMode::Normal;
+    rt.write_slice_le(ram::UNUSED_word_7E0A5E, (-2764i16) as u16);
+    rt.write_slice_le(ram::samus_prev_health_for_flash, 50);
+    rt.session_mut().player.palette.visor_timer = 1537;
+    for shot in &mut rt.session_mut().projectiles.shots {
+        shot.motion = 0xb169;
+    }
+    let p = &mut rt.session_mut().player;
+    p.grapple = 0xc4f0;
+    p.collision.horizontal_slope_flags = 3;
+    p.palette.hurt_flash = 0;
+    p.special_palette_flags = 0;
+    for (address, value) in [
+        (ram::absolute_moved_last_frame_x_fract, 0),
+        (ram::absolute_moved_last_frame_x, 1),
+        (ram::absolute_moved_last_frame_y_fract, 0),
+        (ram::absolute_moved_last_frame_y, 1),
+    ] {
+        rt.write_slice_le(address, value);
+    }
+    for index in (0..256).rev() {
+        rt.suit_window_word(index, 255);
+    }
+    rt.session_mut().player.contact.y_acceleration.fraction = 0x1c00;
+    rt.session_mut().player.contact.y_acceleration.whole = 0;
+    rt.write_slice_le(ram::fx_y_pos, u16::MAX);
+    rt.write_slice_le(ram::lava_acid_y_pos, u16::MAX);
+    rt.foreign(|game| unsafe { crate::game::sm_90::UpdateBeamTilesAndPalette(game) });
+    rt.write_slice_le(ram::cinematic_function, 0);
+    let p = &mut rt.session_mut().player;
+    p.pose = 0;
+    p.movement_and_facing = 0;
+    p.history = Default::default();
+    rt.write_slice_le(ram::enemy_index_to_shake, u16::MAX);
+    rt.session_mut().projectiles.controls.selected_weapon = 0;
+    rt.session_mut().projectiles.controls.automatic_weapon = 0;
+    let p = &mut rt.session_mut().player;
+    p.invincibility = 0;
+    p.knockback_timer = 0;
+    p.palette.hurt_flash = 0;
+    rt.write_slice_le(ram::debug_invincibility, 0);
+    if rt.word(ram::game_state) == 40 {
+        rt.load_demo_data();
+    }
+    rt.write_slice_le(
+        ram::samus_prev_health_for_flash,
+        rt.session().inventory.health.current,
+    );
+}

@@ -52,18 +52,7 @@ pub(super) fn prepare(h: &mut impl Host, entry: PrepareEntry) {
         PrepareEntry::Inactive => return,
         PrepareEntry::ProjectilesOnly => super::motion::advance_all(h),
         PrepareEntry::Normal | PrepareEntry::Demo => {
-            h.session_mut().player.transitions.ordinary =
-                crate::game::player_transitions::state::PoseRequestWord::from_raw(0xffff);
-            h.session_mut().player.transitions.interrupted =
-                crate::game::player_transitions::state::PoseRequestWord::from_raw(0xffff);
-            h.session_mut().player.transitions.transitional =
-                crate::game::player_transitions::state::PoseRequestWord::from_raw(0xffff);
-            h.session_mut().player.transitions.momentum =
-                crate::game::player_transitions::state::MomentumAction::from_raw(0);
-            h.session_mut().player.transitions.interruption =
-                crate::game::player_transitions::state::InterruptionAction::from_raw(0);
-            h.session_mut().player.transitions.hurt =
-                crate::game::player_transitions::state::HurtAction::from_raw(0);
+            h.session_mut().player.transitions.clear_pose_requests();
             if entry == PrepareEntry::Demo {
                 h.session_mut().projectiles.preparation.demo_held = h.inputs().held;
                 h.session_mut().projectiles.preparation.demo_pressed = h.inputs().pressed;

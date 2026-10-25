@@ -16,6 +16,7 @@ use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::palette_effects;
 use crate::game::room_mechanisms::set_enabled;
 use crate::game::samus_animation::{Samus_DrawDuringDeathAnim, Samus_DrawWhenNotAnimatingOrDying};
+use crate::game::session_runtime::initialize_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_8b::{
     GameState_1_OpeningCinematic_, GameState_37_CeresGoesBoomWithSamus_,
@@ -42,7 +43,7 @@ use crate::game::sm_88::{
     DisableHdmaObjects, EnableHdmaObjects, HdmaObjectHandler, WaitUntilEndOfVblankAndClearHdma,
 };
 use crate::game::sm_90::{Samus_LowHealthCheck_0, UpdateBeamTilesAndPalette};
-use crate::game::sm_91::{GameState_28_Unused_, Samus_Initialize};
+use crate::game::sm_91::GameState_28_Unused_;
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
     UnpauseHook_Kraid_IsDead,
@@ -163,7 +164,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                 InitIoForGameplay(game);
                 LoadStdBG3andSpriteTilesClearTilemaps(game);
                 LoadInitialPalette(game);
-                Samus_Initialize(game);
+                initialize_player(game);
                 LoadDemoRoomData(game);
             } else {
                 if word!(game.loading_game_state) as i32 != kLoadingGameState_5_Main as i32 {
@@ -182,7 +183,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                 InitIoForGameplay(game);
                 LoadStdBG3andSpriteTilesClearTilemaps(game);
                 LoadInitialPalette(game);
-                Samus_Initialize(game);
+                initialize_player(game);
                 LoadFromLoadStation(game);
             }
         }

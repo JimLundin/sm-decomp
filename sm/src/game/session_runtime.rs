@@ -705,7 +705,7 @@ mod player_movement_runtime;
 mod player_transitions_runtime;
 pub(crate) use player_transitions_runtime::{
     command as player_command, face_forward as player_face_forward,
-    mother_brain as player_mother_brain,
+    initialize as initialize_player, mother_brain as player_mother_brain,
 };
 #[path = "player_update_runtime.rs"]
 mod player_update_runtime;

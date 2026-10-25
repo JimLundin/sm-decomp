@@ -101,10 +101,13 @@ pub struct PlayerTransitions {
 }
 
 impl PlayerTransitions {
-    pub(crate) fn clear_pose_requests(&mut self) {
+    pub(crate) fn invalidate_pose_requests(&mut self) {
         self.ordinary = PoseRequestWord::from_raw(0xffff);
         self.interrupted = PoseRequestWord::from_raw(0xffff);
         self.transitional = PoseRequestWord::from_raw(0xffff);
+    }
+    pub(crate) fn clear_pose_requests(&mut self) {
+        self.invalidate_pose_requests();
         self.momentum = MomentumAction::from_raw(0);
         self.interruption = InterruptionAction::from_raw(0);
         self.hurt = HurtAction::from_raw(0);
