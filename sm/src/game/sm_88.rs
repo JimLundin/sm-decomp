@@ -4,19 +4,14 @@ pub use crate::game::prelude::*;
 use crate::game::scrolling_sky;
 use crate::game::session_runtime::Runtime;
 use crate::game::visual_runtime::{self, spawn_hdma, spawn_hdma_last};
-use crate::game::visual_state::{EyeBeamPhase, HazePhase, HdmaWave, Weather};
+use crate::game::visual_state::{EyeBeamPhase, HazePhase, HdmaWave, TourianStatuePhase, Weather};
 
 pub use crate::game::constants::bank_8f::*;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_87::*;
 
-use crate::game::enemy_projectiles::SpawnEprojWithRoomGfx;
 use crate::game::explosion_window::{self, Phase};
-use crate::game::gameplay_flag_runtime::{
-    CheckBossBitForCurArea, CheckEventHappened, SetEventHappened,
-};
-use crate::game::room_mechanisms::spawn_hardcoded;
-use crate::game::sm_80::QueueSfx2_Max6;
+use crate::game::gameplay_flag_runtime::CheckBossBitForCurArea;
 use crate::game::sm_a9::MotherBrain_CalculateRainbowBeamHdma;
 use crate::game::xray_background::{self, finish_restore, restore_left, restore_right};
 
@@ -107,31 +102,6 @@ pub unsafe fn HdmaobjPreInstr_FirefleaBG3XScroll(k: u16, game: &mut Game) {
         }
     }
 }
-static g_word_88B256: [u16; 17] = [
-    0x46, 1, 0x46, 3, 0x46, 2, 0x46, 1, 0x46, 1, 0x46, 2, 0x46, 2, 0x46, 1, 0x8000,
-];
-pub unsafe fn HandleEarthquakeSoundEffect(game: &mut Game) {
-    {
-        if (word!(game.earthquake_sfx_timer) & 0x8000) == 0 && {
-            (word!(game.earthquake_sfx_timer -= 1, reread) & 0x8000) != 0
-        } {
-            let mut v0: u16 = word!(game.earthquake_sfx_index);
-            let mut v1: i16 =
-                g_word_88B256[(word!(game.earthquake_sfx_index) >> 1) as usize] as i16;
-            if v1 < 0 {
-                v0 = 0;
-                v1 = g_word_88B256[0i32 as usize] as i16;
-            }
-            QueueSfx2_Max6(v1 as u16, game);
-            word! { game;
-                earthquake_sfx_timer = (g_word_88B256[((v0 as i32 >> 1) + 1) as usize] as i32
-                    + (v0 as i32 & 1)
-                    + (word!(game.random_number) as i32 & 3)) as u16;
-                earthquake_sfx_index = (v0).wrapping_add(4);
-            }
-        }
-    }
-}
 pub unsafe fn SpawnBG3ScrollHdmaObject(game: &mut Game) {
     unsafe {
         static unk_88D869: SpawnHdmaObject_Args =
@@ -154,97 +124,6 @@ pub unsafe fn FxTypeFunc_CeresElevator(game: &mut Game) {
         static unk_88D92C: SpawnHdmaObject_Args =
             SpawnHdmaObject_Args::new(0x40, 0x5, 0xd939 as VoidP);
         spawn_hdma(0x88, &unk_88D92C, game);
-    }
-}
-pub unsafe fn FxTypeFunc_26_TourianEntranceStatue(game: &mut Game) {
-    unsafe {
-        static unk_88DBBA: SpawnHdmaObject_Args =
-            SpawnHdmaObject_Args::new(0x42, 0x11, 0xd856 as VoidP);
-        static unk_88DBC2: SpawnHdmaObject_Args =
-            SpawnHdmaObject_Args::new(0x42, 0x10, 0xdcfa as VoidP);
-        if CheckEventHappened(0xa, game) & 1 != 0 {
-            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x6, 0xc, 0xb777 as VoidP), game);
-            *(ram_ptr!(game, u16; 0xcd20)) = 514;
-        }
-        *ram_ptr!(game; 0x59) = 74;
-        word!(game.fx_rising_function_bank_88 = (0x88c428i32) as u16);
-        word!(game.fx_y_pos = word!(game.fx_base_y_pos));
-        spawn_hdma(0x88, &unk_88DBBA, game);
-        spawn_hdma(0x88, &unk_88DBC2, game);
-        SpawnBG3ScrollHdmaObject(game);
-    }
-}
-pub unsafe fn sub_88DBCB(k: u16, game: &mut Game) {
-    unsafe {
-        *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00))).field_0
-            as *mut u16) =
-            (word!(game.layer1_y_pos)).wrapping_add(word!(game.hdma_object_B[(k >> 1)]));
-    }
-}
-pub unsafe fn HdmaobjPreInstr_CheckLotsOfEventsHappened(mut v0: u16, game: &mut Game) {
-    unsafe {
-        if CheckEventHappened(6, game) & 1 != 0
-            && CheckEventHappened(7, game) & 1 != 0
-            && CheckEventHappened(8, game) & 1 != 0
-            && CheckEventHappened(9, game) & 1 != 0
-        {
-            word!(game.tourian_entrance_statue_animstate |= (0x10u16));
-            if (word!(game.tourian_entrance_statue_animstate) & 0x8000) == 0 {
-                word!(game.hdma_object_C[(v0 >> 1)] = 300);
-                v0 = word!(game.hdma_object_index);
-                let v1: i32 = word!(game.hdma_object_index) as i32 >> 1;
-                word!(game.hdma_object_instruction_timers[v1] = 1);
-                word!(game.hdma_object_instruction_list_pointers[v1] += 2);
-            }
-        }
-        sub_88DBCB(v0, game);
-    }
-}
-pub unsafe fn HdmaobjPreInstr_DC23(k: u16, game: &mut Game) {
-    unsafe {
-        let v0: u16 = k;
-        HandleEarthquakeSoundEffect(game);
-        word!(game.earthquake_type = 13);
-        word!(game.earthquake_timer |= (0x20u16));
-        let v1: i32 = v0 as u8 as i32 >> 1;
-        if (word!(game.hdma_object_C[v1] -= 1, reread) & 0x8000) != 0 {
-            SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueDustClouds as u16, 0, game);
-            SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueDustClouds as u16, 0, game);
-            SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueDustClouds as u16, 0, game);
-            SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueDustClouds as u16, 0, game);
-            word!(game.hdma_object_instruction_timers[v1] = 1);
-            word!(game.hdma_object_instruction_list_pointers[v1] += 2);
-        }
-        sub_88DBCB(v0, game);
-    }
-}
-pub unsafe fn HdmaobjPreInstr_DC69(k: u16, game: &mut Game) {
-    unsafe {
-        HandleEarthquakeSoundEffect(game);
-        word!(game.earthquake_type = 13);
-        word!(game.earthquake_timer |= (0x20u16));
-        if word!(game.time_is_frozen_flag) == 0 {
-            let v1: i32 = k as i32 >> 1;
-            AddToHiLo(
-                (ram_ptr!(game, u16; 0x1920)).offset(v1 as isize),
-                (ram_ptr!(game, u16; 0x1914)).offset(v1 as isize),
-                -0x4000i32 as u32,
-            );
-            if word!(game.hdma_object_B[v1]) == 0xff10 {
-                spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x6, 0xc, 0xb773 as VoidP), game);
-                SetEventHappened(0xa, game);
-                word!(game.hdma_object_instruction_timers[v1] = 1);
-                word!(game.hdma_object_instruction_list_pointers[v1] += 2);
-            }
-            sub_88DBCB(k, game);
-        }
-    }
-}
-pub unsafe fn HdmaobjPreInstr_DCBA(v0: u16, game: &mut Game) {
-    unsafe {
-        word!(game.tourian_entrance_statue_finished = 0x8000);
-        *(ram_ptr!(game, u16; 0xcd20)) = 514;
-        sub_88DBCB(v0, game);
     }
 }
 pub unsafe fn SpawnBombTorizoHaze(game: &mut Game) {
@@ -414,8 +293,8 @@ crate::game::address_dispatch! {
         8968609 => [visual_runtime::scroll_weather(k, Weather::Rain, game)];
         8968775 => [visual_runtime::scroll_weather(k, Weather::Spores, game)];
         8969014 => [visual_runtime::scroll_weather(k, Weather::Fog, game)];
-        8969175 => HdmaobjPreInstr_CheckLotsOfEventsHappened; 8969251 => HdmaobjPreInstr_DC23;
-        8969321 => HdmaobjPreInstr_DC69; 8969402 => HdmaobjPreInstr_DCBA;
+        8969175 => [visual_runtime::advance_tourian_statue(k, TourianStatuePhase::Waiting, game)]; 8969251 => [visual_runtime::advance_tourian_statue(k, TourianStatuePhase::Shaking, game)];
+        8969321 => [visual_runtime::advance_tourian_statue(k, TourianStatuePhase::Sinking, game)]; 8969402 => [visual_runtime::advance_tourian_statue(k, TourianStatuePhase::Finished, game)];
         8969539 => HdmaobjPreInstr_BombTorizoHazeColorMathBgColor;
         8969744 => [Runtime::new(game).begin_haze(k, 0x80)];
         8969749 => [Runtime::new(game).begin_haze(k, 0x20)];

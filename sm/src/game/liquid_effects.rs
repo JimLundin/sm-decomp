@@ -4,8 +4,8 @@ use crate::game::constants::bank_87::{addr_kAnimtiles_Acid, addr_kAnimtiles_Lava
 use crate::game::prelude::*;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::sm_80::QueueSfx2_Max6;
-use crate::game::sm_88::{HandleEarthquakeSoundEffect, SpawnBG3ScrollHdmaObject};
-use crate::game::visual_runtime::spawn_hdma;
+use crate::game::sm_88::SpawnBG3ScrollHdmaObject;
+use crate::game::visual_runtime::{shake_room_with_sound, spawn_hdma};
 
 pub const WATER_WAVE: [i16; 16] = [0, 1, 1, 0, 0, -1, -1, 0, 0, 1, 1, 0, 0, -1, -1, 0];
 
@@ -74,9 +74,7 @@ unsafe fn advance_motion(game: &mut Game) {
     unsafe {
         let state = word!(game.fx_rising_function_bank_88);
         if matches!(state, 0xb367 | 0xb382) {
-            HandleEarthquakeSoundEffect(game);
-            word!(game.earthquake_type = 21);
-            word!(game.earthquake_timer |= 0x20);
+            shake_room_with_sound(21, game);
         }
         match state {
             0xb343 | 0xc428 => {

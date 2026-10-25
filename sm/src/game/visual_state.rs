@@ -115,6 +115,14 @@ pub(crate) enum Weather {
 }
 
 #[derive(Clone, Copy)]
+pub(crate) enum TourianStatuePhase {
+    Waiting,
+    Shaking,
+    Sinking,
+    Finished,
+}
+
+#[derive(Clone, Copy)]
 pub(crate) enum HdmaWave {
     Phantoon,
     Intro,

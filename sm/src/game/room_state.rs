@@ -247,7 +247,7 @@ pub(crate) fn load_fx_header(game: &mut Game) {
             16 => Some(scrolling_sky::initialize_land),
             17 => Some(scrolling_sky::initialize_banded_sky),
             18 => Some(sm_88::FxTypeFunc_24),
-            19 => Some(sm_88::FxTypeFunc_26_TourianEntranceStatue),
+            19 => Some(visual_runtime::initialize_tourian_statue),
             20 => Some(sm_88::FxTypeFunc_28_CeresRidley),
             21 => Some(sm_88::FxTypeFunc_CeresElevator),
             22 => Some(sm_88::FxTypeFunc_2C_Haze),

@@ -2,17 +2,24 @@
 use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::sm_8b::ConfigureTitleSequenceGradientHDMA;
-use crate::ram_map::checked_word;
+use crate::ram_map::{checked_word, word};
 use crate::{
     game::{
-        animated_tiles, enemy_projectiles, palette_effects, player_projectiles,
+        animated_tiles,
+        constants::bank_86::addr_kEproj_TourianStatueDustClouds,
+        enemy_projectiles::{self, SpawnEprojWithRoomGfx},
+        gameplay_flag_runtime::{CheckEventHappened, SetEventHappened},
+        palette_effects, player_projectiles,
+        room_mechanisms::spawn_hardcoded,
         session_runtime::Runtime,
         visual_host::{self, AnimationMember, PaletteMember, Source, StatueProjectile},
-        visual_state::{EyeBeamPhase, HazePhase, HdmaWave, PaletteBuffer, Upload, Weather},
+        visual_state::{
+            EyeBeamPhase, HazePhase, HdmaWave, PaletteBuffer, TourianStatuePhase, Upload, Weather,
+        },
     },
     game_state::Game,
     rom::RomRecord,
-    types::SpawnHdmaObject_Args,
+    types::{SpawnHardcodedPlmArgs, SpawnHdmaObject_Args},
 };
 fn hdma_definition(args: &SpawnHdmaObject_Args) -> [u16; 2] {
     [
@@ -635,6 +642,110 @@ pub(crate) fn advance_intro_crossfade(game: &mut Game) {
     if checked_word!(game.eproj_x_pos[0]) == 1 {
         Runtime::new(game).advance_hdma_program();
     }
+}
+
+pub(crate) fn shake_room_with_sound(kind: u16, game: &mut Game) {
+    static SOUNDS: [u16; 17] = [
+        0x46, 1, 0x46, 3, 0x46, 2, 0x46, 1, 0x46, 1, 0x46, 2, 0x46, 2, 0x46, 1, 0x8000,
+    ];
+    if word!(game.earthquake_sfx_timer) & 0x8000 == 0
+        && word!(game.earthquake_sfx_timer -= 1, reread) & 0x8000 != 0
+    {
+        let mut index = word!(game.earthquake_sfx_index);
+        let mut sound = SOUNDS[usize::from(index >> 1)];
+        if sound & 0x8000 != 0 {
+            index = 0;
+            sound = SOUNDS[0];
+        }
+        crate::game::sm_80::QueueSfx2_Max6(sound, game);
+        word!(
+            game.earthquake_sfx_timer = SOUNDS[usize::from(index >> 1) + 1]
+                .wrapping_add(index & 1)
+                .wrapping_add(word!(game.random_number) & 3)
+        );
+        word!(game.earthquake_sfx_index = index.wrapping_add(4));
+    }
+    word!(game.earthquake_type = kind);
+    word!(game.earthquake_timer |= 0x20);
+}
+
+pub(crate) unsafe fn initialize_tourian_statue(game: &mut Game) {
+    unsafe {
+        if CheckEventHappened(0xa, game) & 1 != 0 {
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(6, 12, 0xb777), game);
+            word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
+        }
+        game.g_ram[0x59] = 74;
+        word!(game.fx_rising_function_bank_88 = 0xc428);
+        word!(game.fx_y_pos = word!(game.fx_base_y_pos));
+        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x11, 0xd856), game);
+        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x10, 0xdcfa), game);
+        crate::game::sm_88::SpawnBG3ScrollHdmaObject(game);
+    }
+}
+
+pub(crate) unsafe fn advance_tourian_statue(
+    mut slot: u16,
+    phase: TourianStatuePhase,
+    game: &mut Game,
+) {
+    use TourianStatuePhase::*;
+    if matches!(phase, Shaking | Sinking) {
+        shake_room_with_sound(13, game);
+    }
+    match phase {
+        Waiting => {
+            if (6..=9).all(|event| CheckEventHappened(event, game) & 1 != 0) {
+                word!(game.tourian_entrance_statue_animstate |= 0x10);
+                if word!(game.tourian_entrance_statue_animstate) & 0x8000 == 0 {
+                    word!(game.hdma_object_C[(slot >> 1)] = 300);
+                    slot = word!(game.hdma_object_index);
+                    advance_statue_program(word!(game.hdma_object_index), game);
+                }
+            }
+        }
+        Shaking => {
+            let counter_slot = slot as u8;
+            if word!(game.hdma_object_C[(counter_slot >> 1)] -= 1, reread) & 0x8000 != 0 {
+                for _ in 0..4 {
+                    SpawnEprojWithRoomGfx(addr_kEproj_TourianStatueDustClouds as u16, 0, game);
+                }
+                advance_statue_program(u16::from(counter_slot), game);
+            }
+        }
+        Sinking => {
+            if word!(game.time_is_frozen_flag) != 0 {
+                return;
+            }
+            let low = 0x1914 + usize::from(slot & !1);
+            let high = 0x1920 + usize::from(slot & !1);
+            let fraction = u16::from_ne_bytes([game.g_ram[low], game.g_ram[low + 1]]);
+            let whole = u16::from_ne_bytes([game.g_ram[high], game.g_ram[high + 1]]);
+            let position = (u32::from(fraction) | u32::from(whole) << 16).wrapping_sub(0x4000);
+            word_transfers!(game, ascending, 1;
+                native(low) <- value(position as u16),
+                native(high) <- value((position >> 16) as u16),
+            );
+            if word!(game.hdma_object_B[(slot >> 1)]) == 0xff10 {
+                unsafe {
+                    spawn_hardcoded(SpawnHardcodedPlmArgs::new(6, 12, 0xb773), game);
+                }
+                SetEventHappened(0xa, game);
+                advance_statue_program(slot, game);
+            }
+        }
+        Finished => {
+            word!(game.tourian_entrance_statue_finished = 0x8000);
+            word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
+        }
+    }
+    let scroll = word!(game.layer1_y_pos).wrapping_add(word!(game.hdma_object_B[(slot >> 1)]));
+    word_transfers!(game, ascending, 1; native(0x9e00) <- value(scroll));
+}
+
+fn advance_statue_program(slot: u16, game: &mut Game) {
+    word!(game.hdma_object_instruction_timers[(slot >> 1)] = 1);
+    word!(game.hdma_object_instruction_list_pointers[(slot >> 1)] += 2);
 }
 
 pub(crate) unsafe fn initialize_weather(weather: Weather, game: &mut Game) {
