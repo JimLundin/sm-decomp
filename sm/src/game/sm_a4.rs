@@ -503,22 +503,22 @@ pub unsafe fn Crocomire_Func_49(game: &mut Game) {
         }
     }
 }
+fn select_melt_animation(key: Key, game: &mut Game) {
+    Runtime::new(game).edit_actor(key, AccessMode::Native, |enemy| {
+        enemy.instruction = match enemy.y.whole as i16 {
+            y if y.wrapping_sub(280) >= 0 => addr_kCrocomire_Ilist_BF64 as u16,
+            y if y.wrapping_sub(264) >= 0 => addr_kCrocomire_Ilist_BF6C as u16,
+            y if y.wrapping_sub(248) >= 0 => addr_kCrocomire_Ilist_BF72 as u16,
+            _ => addr_kCrocomire_Ilist_BF78 as u16,
+        };
+        enemy.instruction_delay = 1;
+    });
+}
+
 pub unsafe fn Crocomire_Func_51(game: &mut Game) {
     unsafe {
         Crocomire_Func_53(game);
-        let E = Get_Crocomire(0, game);
-        let y_pos: u16 = (*E).base.y_pos;
-        let mut v2: u16 = addr_kCrocomire_Ilist_BF64 as u16;
-        if y_pos as i32 - 280i32 & 0x8000 != 0 {
-            v2 = addr_kCrocomire_Ilist_BF6C as u16;
-            if y_pos as i32 - 264i32 & 0x8000 != 0 {
-                v2 = addr_kCrocomire_Ilist_BF72 as u16;
-                if y_pos as i32 - 248i32 & 0x8000 != 0 {
-                    v2 = addr_kCrocomire_Ilist_BF78 as u16;
-                }
-            }
-        }
-        enemy_instruction! {[(*E).base]; instruction = v2, timer = 1}
+        select_melt_animation(Key::from_legacy(0), game);
         Crocomire_Func_55(game);
     }
 }
@@ -613,19 +613,7 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
 pub unsafe fn Crocomire_929E(game: &mut Game) {
     unsafe {
         Crocomire_Func_53(game);
-        let E = Get_Crocomire(word!(game.cur_enemy_index) as i32, game);
-        let y_pos: u16 = (*E).base.y_pos;
-        let mut v2: u16 = addr_kCrocomire_Ilist_BF64 as u16;
-        if y_pos as i32 - 280i32 & 0x8000 != 0 {
-            v2 = addr_kCrocomire_Ilist_BF6C as u16;
-            if y_pos as i32 - 264i32 & 0x8000 != 0 {
-                v2 = addr_kCrocomire_Ilist_BF72 as u16;
-                if y_pos as i32 - 248i32 & 0x8000 != 0 {
-                    v2 = addr_kCrocomire_Ilist_BF78 as u16;
-                }
-            }
-        }
-        enemy_instruction! {[(*E).base]; instruction = v2, timer = 1}
+        select_melt_animation(Key::from_legacy(word!(game.cur_enemy_index)), game);
         Crocomire_92D8(game);
     }
 }
