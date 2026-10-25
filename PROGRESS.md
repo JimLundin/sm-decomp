@@ -4,16 +4,16 @@
 
 | Measure | Count |
 | --- | ---: |
-| Production Rust lines* | 115129 |
-| Legacy bank Rust lines | 48473 |
+| Production Rust lines* | 115165 |
+| Legacy bank Rust lines | 48509 |
 | Verification Rust lines | 39336 |
-| Total Rust | 154465 |
-| Lines containing `unsafe` | 4311 |
+| Total Rust | 154501 |
+| Lines containing `unsafe` | 4309 |
 | Warnings (no-default library) | 301 |
 | Required checkpoint checks passing | 40/44 |
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-Statue and liquid effects share earthquake updates; statue phases consolidated. Nine fewer unsafe lines; seven local rows pass.
+Crocomire return script uses checked actors: 24 raw dereferences removed. Safety adds 36 production lines; eight local rows pass.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)

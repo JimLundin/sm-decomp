@@ -956,75 +956,111 @@ pub unsafe fn Crocomire_Func_67(game: &mut Game) -> u16 {
     }
 }
 pub unsafe fn Crocomire_Func_68(game: &mut Game) {
+    if (game.samus_x_pos() as i16).wrapping_sub(640) >= 0 {
+        return;
+    }
+    QueueMusic_Delayed8(5, game);
+    Runtime::new(game).write_slice_native(0xcd23, 256);
     unsafe {
-        if word!(game.samus_x_pos) as i32 - 640i32 & 0x8000 != 0 {
-            QueueMusic_Delayed8(5, game);
-            *(ram_ptr!(game, u16; 0xcd20, 3)) = 256;
-            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb757 as VoidP), game);
-            word!(game.camera_distance_index = 6);
-            let E0 = Get_Crocomire(0, game);
-            (*E0).base.properties =
-                ((*E0).base.properties as i32 & 0x7bff | kEnemyProps_Tangible as i32) as u16;
-            let E1 = Get_Crocomire(0x40, game);
-            (*E1).base.properties = ((*E1).base.properties) | (0x500u16);
-            (*E0).var_D = 4;
-            (*E1).var_D = 0;
-            (*Get_Crocomire(0x80i32, game)).var_D = 10;
-            (*Get_Crocomire(0xc0i32, game)).var_D = 1;
-            (*E0).var_B = 0;
-            (*E0).base.y_height = 56;
-            advance_phase(game);
-        }
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb757 as VoidP), game);
+    }
+    word!(game.camera_distance_index = 6);
+    let mut runtime = Runtime::new(game);
+    // Fixed, disjoint records; no callback or fallible operation between these writes.
+    runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+        enemy.properties = enemy.properties & 0x7bff | kEnemyProps_Tangible as u16;
+        enemy.variables[3] = 4;
+        enemy.variables[1] = 0;
+        enemy.radius.y = 56;
+        enemy.variables[0] = enemy.variables[0].wrapping_add(2);
+    });
+    runtime.edit_actor(Key::from_legacy(0x40), AccessMode::Native, |enemy| {
+        enemy.properties |= 0x500;
+        enemy.variables[3] = 0;
+    });
+    for (key, countdown) in [(0x80, 10), (0xc0, 1)] {
+        runtime.edit_actor(Key::from_legacy(key), AccessMode::Native, |enemy| {
+            enemy.variables[3] = countdown
+        });
     }
 }
-pub unsafe fn Crocomire_Func_70(game: &mut Game) {
-    unsafe {
-        let E0 = Get_Crocomire(0, game);
-        let E1 = Get_Crocomire(0x40, game);
-        let E2 = Get_Crocomire(0x80, game);
-        let E3 = Get_Crocomire(0xc0, game);
-        if crate::rtl::rom_table_word!(game, 0xa498ca, ((*E0).var_D >> 1) as isize) == 0x8080 {
-            (*E1).var_D = -32640i32 as u16;
-            (*E0).var_D = 128;
-            word_transfers!(game, descending, 16; le(palette_buffer, 191) <- rom(0xa4b91d, 15));
-            advance_phase(game);
+
+pub fn Crocomire_Func_70(game: &mut Game) {
+    let mut runtime = Runtime::new(game);
+    let mut cursor = runtime
+        .resolve_actor(Key::from_legacy(0), AccessMode::Native)
+        .variables[3];
+    let image = runtime.loaded_image().expect("ROM must be loaded");
+    let target = image.table_word(
+        crate::rom::lorom_offset(0xa498ca) as usize,
+        (cursor >> 1) as isize,
+    );
+    if target == 0x8080 {
+        runtime.edit_actor(Key::from_legacy(0x40), AccessMode::Native, |enemy| {
+            enemy.variables[3] = 0x8080
+        });
+        runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+            enemy.variables[3] = 128
+        });
+        drop(runtime);
+        word_transfers!(game, descending, 16; le(palette_buffer, 191) <- rom(0xa4b91d, 15));
+        advance_phase(game);
+        return;
+    }
+    let current = runtime
+        .resolve_actor(Key::from_legacy(0x40), AccessMode::Native)
+        .variables[3];
+    if current != target {
+        let step = runtime
+            .resolve_actor(Key::from_legacy(0xc0), AccessMode::Native)
+            .variables[3];
+        let next = if (current as i16).wrapping_sub(target as i16) >= 0 {
+            current.wrapping_sub(step)
         } else {
-            let mut crocom_var_D: u16 = (*E0).var_D;
-            let v3: u16 = (*E1).var_D;
-            let v4: i32 = crocom_var_D as i32 >> 1;
-            if v3 == crate::rtl::rom_table_word!(game, 0xa498ca, v4 as isize) {
-                if (crate::rtl::rom_table_word!(game, 0xa498ca, (crocom_var_D >> 1) as isize)
-                    & 0x8000)
-                    != 0
-                {
-                    let v7: u16 = (*E2).var_D;
-                    if v7 != 0 {
-                        (*E2).var_D = (v7).wrapping_sub(1);
-                        (*E0).var_D = (crocom_var_D).wrapping_sub(2);
-                        QueueSfx2_Max6(0x2b, game);
-                        return;
-                    }
-                    let v8: u16 = (crocom_var_D).wrapping_add(2);
-                    (*E2).var_D = crate::rtl::rom_table_word!(game, 0xa498ca, (v8 >> 1) as isize);
-                    crocom_var_D = (v8).wrapping_add(2);
-                    (*E3).var_D =
-                        crate::rtl::rom_table_word!(game, 0xa498ca, (crocom_var_D >> 1) as isize);
-                }
-                (*E0).var_D = (crocom_var_D).wrapping_add(2);
-            } else {
-                let mut v5: u16 = if ((v3) as i16)
-                    .wrapping_sub((crate::rtl::rom_table_word!(game, 0xa498ca, v4 as isize)) as i16)
-                    >= 0
-                {
-                    (v3).wrapping_sub((*E3).var_D)
-                } else {
-                    ((*E3).var_D).wrapping_add(v3)
-                };
-                (*E1).var_D = v5;
-            }
+            current.wrapping_add(step)
         };
+        runtime.edit_actor(Key::from_legacy(0x40), AccessMode::Native, |enemy| {
+            enemy.variables[3] = next
+        });
+        return;
     }
+    if target & 0x8000 != 0 {
+        let countdown = runtime
+            .resolve_actor(Key::from_legacy(0x80), AccessMode::Native)
+            .variables[3];
+        if countdown != 0 {
+            runtime.edit_actor(Key::from_legacy(0x80), AccessMode::Native, |enemy| {
+                enemy.variables[3] = countdown.wrapping_sub(1)
+            });
+            runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+                enemy.variables[3] = cursor.wrapping_sub(2)
+            });
+            drop(runtime);
+            QueueSfx2_Max6(0x2b, game);
+            return;
+        }
+        cursor = cursor.wrapping_add(2);
+        let countdown = image.table_word(
+            crate::rom::lorom_offset(0xa498ca) as usize,
+            (cursor >> 1) as isize,
+        );
+        runtime.edit_actor(Key::from_legacy(0x80), AccessMode::Native, |enemy| {
+            enemy.variables[3] = countdown
+        });
+        cursor = cursor.wrapping_add(2);
+        let step = image.table_word(
+            crate::rom::lorom_offset(0xa498ca) as usize,
+            (cursor >> 1) as isize,
+        );
+        runtime.edit_actor(Key::from_legacy(0xc0), AccessMode::Native, |enemy| {
+            enemy.variables[3] = step
+        });
+    }
+    runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+        enemy.variables[3] = cursor.wrapping_add(2)
+    });
 }
+
 fn spawn_dust(jp: EnemyScript, offset: u16, game: &mut Game) -> EnemyScript {
     game.eproj_spawn_pt = {
         let runtime = Runtime::new(game);
