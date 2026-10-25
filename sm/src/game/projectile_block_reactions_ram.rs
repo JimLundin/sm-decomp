@@ -1,38 +1,31 @@
-//! Checked room sampling; mechanism setup remains a synchronous legacy boundary.
-use crate::game::projectile_block_reactions::Definitions;
-use crate::game_state::Game;
-use crate::ram_map::checked_word as word;
+//! Definition lookup over the existing aggregate, with Loaded provenance.
+#![forbid(unsafe_code)]
+use crate::game::{
+    player_projectiles::{access::room_bts, host::Host},
+    projectile_block_reactions::Definitions,
+    room_mechanisms::host::{Content, ContentAddress},
+    session_access::SessionAccess,
+    session_runtime::Runtime,
+};
 use crate::rom::RomRecord;
-
-impl Definitions for Game {
+impl Definitions for Runtime<'_> {
     type Table = RomRecord;
     fn resolve(&mut self, address: u32) -> RomRecord {
-        if address & 0x8000 == 0 {
-            unsafe {
-                crate::c_library::printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), address);
-            }
-            self.g_fail = true;
-        }
-        RomRecord {
-            image: self
-                .loaded_rom
-                .as_ref()
-                .expect("ROM must be loaded")
-                .clone(),
-            base: crate::rtl::lorom_offset(address) as usize,
-        }
+        Content::loaded_record(
+            self,
+            ContentAddress {
+                bank: (address >> 16) as u8,
+                offset: address as u16,
+            },
+        )
     }
     fn bts(&self) -> u8 {
-        let game = self;
-        game.g_ram[0x16402 + usize::from(word!(game.cur_block_index))]
+        room_bts(self, self.session().room.collision_cursor)
     }
     fn area(&self) -> u16 {
-        let game = self;
-        word!(game.area_index)
+        self.session().room.area
     }
     fn spawn(&mut self, header: u16) {
-        unsafe {
-            crate::game::room_mechanisms::spawn_collision(header, self);
-        }
+        self.spawn_mechanism(header);
     }
 }

@@ -356,6 +356,7 @@ pub mod game {
 
     pub(crate) mod explosion_window;
     pub(crate) mod gameplay;
+    pub(crate) mod grapple_rope;
     pub(crate) mod grapple_swing;
     pub(crate) mod intro_pages;
     pub(crate) mod launch_motion;
@@ -441,7 +442,6 @@ pub mod game {
     pub mod enemy_script;
     pub(crate) mod mother_brain_visuals;
     pub mod projectile_contact;
-    pub mod sm_94;
     pub mod sm_9b;
     pub mod sm_a0;
     pub mod sm_a2;
@@ -611,9 +611,7 @@ pub fn verify_enemy_projectile_qualified_case(id: u32) -> bool {
 
 #[doc(hidden)]
 pub fn verify_player_projectile_expanded_case(id: u32) -> Option<Vec<u8>> {
-    game::player_projectiles::checks::expanded::capture(id, |game| unsafe {
-        game::sm_94::BlockReactGrapple(game)
-    })
+    game::player_projectiles::checks::expanded::capture(id, game::grapple_swing::react_beam)
 }
 
 #[doc(hidden)]

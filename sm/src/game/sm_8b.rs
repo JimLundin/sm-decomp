@@ -9,6 +9,7 @@ use crate::game::explosion_window::spawn_power_bomb;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::palette_effects;
 use crate::game::player_projectiles::draw_projectiles;
+use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::sm_80::{
     ClearOamExt, ClearUnusedOam, CopySuperMetroidString, DisableIrqInterrupts, EnableNMI,
     GraphicsAsset, HandleFadeIn, HandleFadeOut, QueueMode7Transfers, QueueSfx1_Max15,
@@ -24,7 +25,6 @@ use crate::game::sm_90::{
     UpdateBeamTilesAndPalette,
 };
 use crate::game::sm_91::Samus_Initialize;
-use crate::game::sm_94::kSinCosTable8bit_Sext;
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]

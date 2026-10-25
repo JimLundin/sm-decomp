@@ -20,9 +20,9 @@ pub trait Content {
     type Record: Record;
     /// Logical pointer: low-window diagnostic before fresh source capture.
     fn record(&mut self, source: Source, bank: u8, address: u16) -> Self::Record;
-    /// Atmospheric bank90 pointers retain their legacy diagnostic before capture.
-    fn atmospheric_record(&mut self, address: u16) -> Self::Record {
-        self.record(Source::Native, 0x90, address)
+    /// Legacy native pointers retain their diagnostic before fresh image capture.
+    fn legacy_native_record(&mut self, bank: u8, address: u16) -> Self::Record {
+        self.record(Source::Native, bank, address)
     }
     /// Fixed table: no low-window diagnostic; index arithmetic happens AFTER capture.
     /// The returned record's byte offsets are linear, never bank-wrapped.

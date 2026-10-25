@@ -49,24 +49,22 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    checks (in-memory save, upward elevator, Ice return) pass; the corpus is unfinished.
    A0.2: original lsnes captured 129,712 exact inputs across 127 gameplay rooms;
    24,619 emulator-lag frames, no credits. Flat NMI counts do not identify lag.
-   A0.3: measured wait-entry input aligns the first 8,250 native steps (0 failures).
-   It exposed the fixed options-menu return parameter at step 330; the optional
-   regression row passes. Next: map the door's 19 NMI advances outside selected
-   wait events; importer rejects that gap. No guessed input removal or offsets.
+   A0.3: measured wait-entry input aligns 8,250 native steps (0 failures).
+   The options-menu return bug at step 330 is fixed. Next: correct door scheduling;
+   the observed placement step exposed an extra native NMI hidden by oracle patches.
+   The longer mapping stays unadopted until original timing and collateral checks pass.
    Observer unit tests (20) are not gameplay checks. Regenerate incompatible
    checkpoints from boot; preserve the old checked navigation build.
-2. **Current - lane B bank retirement.** Finish `sm_94`: post-grapple clearance now
-   owns its four ejection distances; inside-block sampling uses the existing
-   Session and shared terrain effects. 308 bank lines remain: grapple reactions,
-   graphics and remaining shared table callers, then delete the file.
-   Older `sm_91`/`sm_90` drafts leave the active queue; local
-   experiments remain available. Natural grapple movie coverage is still pending.
-   Report added production and deleted legacy lines together; net growth needs a
-   reason. Get production below 110,000 before starting another subsystem. Reuse
-   existing Host/effects/adapters unless they demonstrably cannot serve. Route
-   probes through a no-op production host method; move inline verification cfg
-   differences behind that method in touched subsystems. Try `cargo-mutants`
-   before adding text-patch mutation recipes; retain recipes only where needed.
+2. **Current - lane B bank retirement.** `sm_94` is deleted; next is `sm_91`.
+   Consolidate normal-input pose selection and its forwarding dispatch using
+   existing owners; keep actual callers and legacy deletion together. The larger
+   X-ray, demo and equipment families retain their separate coverage obligations.
+   Old `sm_91`/`sm_90` drafts remain dropped; inspect current source afresh.
+   Natural grapple movie coverage remains pending despite direct ROM checks.
+   Report added production and deleted legacy lines together; growth needs a reason.
+   Get production below 110,000 before starting another subsystem. Reuse existing
+   Host/effects/adapters, remove touched inline verification differences, and try
+   scoped `cargo-mutants` before text-patch mutation recipes.
 3. **Then - finish owned gameplay.** Migrate remaining complete producer/consumer
    interactions, actual callers and legacy retirement. Close persistent ownership,
    content/topology/options boundaries and unsafe removal across the whole engine;
@@ -180,13 +178,16 @@ and denied compiler/build-script launches stay restricted. Use permitted DLL/cty
 denials never pass. khronos_api blocks frontend linking; cached frontend metadata and
 direct DLL builds work. Keep crate-root unsafe-op enforcement.
 
-Measured concurrency (2026-10-25): use up to two independent heavy jobs, coordinated
-by root in isolated sources/outputs with `-j 1` per Cargo process. Matched check/build
-pairs took 114.12 s serial versus 76.06 s concurrent (1.50x throughput); both passed,
-minimum sampled free RAM 2.663 GiB. Start another job only above 3 GiB free; stop the
-newest below 2 GiB or on resource errors. Two is measured, not a proven optimum:
-trial further or mixed overlap only with waiting independent work, retaining it if
-completed-work throughput improves. Never rebuild a loaded DLL or edit checked sources.
+Measured concurrency (2026-10-25): coordinate up to two independent large builds
+in isolated sources/outputs with `-j 1` per Cargo process. Matched check/build pairs
+passed in 114.12 s serial versus 76.06 s concurrent (1.50x throughput; minimum free
+RAM 2.663 GiB). Low-memory replays/captures can overlap: two mutant builds plus
+replays passed in an 81.34 s build batch, minimum free RAM 3.422 GiB; a build,
+replay and emulator capture also passed with 4.273 GiB free. Mixed runs establish
+headroom, not an optimal throughput setting. Start another job only above 3 GiB
+free; stop the newest below 2 GiB or on resource errors. Trial larger overlap only
+with independent waiting work and retain it if completed-work throughput improves.
+Never rebuild a loaded DLL or edit checked sources; release idle slots immediately.
 Use [the iteration guide](ITERATION.md#windows-shell-setup) for paths/commands;
 its historical queues or examples do not override this plan.
 

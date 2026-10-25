@@ -14,11 +14,11 @@ use crate::game::enemy_projectiles::{
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::message_boxes;
 use crate::game::palette_effects;
+use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sm_81::SaveToSram;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::MakeSamusFaceForward;
-use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::{CallEnemyPreInstr, ConvertAngleToXy};
 use crate::game::sm_a9::MoveEnemyWithVelocity;
 

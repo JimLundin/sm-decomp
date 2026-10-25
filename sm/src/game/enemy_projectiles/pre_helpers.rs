@@ -42,7 +42,7 @@ pub(super) fn move_phantoon_orbit(
     ctx: &mut impl Host,
 ) {
     enemy!(ctx, index, behavior_a = angle);
-    let point = Eproj_PhantomFireballs_Func1(angle, enemy!(ctx, index, velocity_y));
+    let point = sine_offset::<false>(angle, enemy!(ctx, index, velocity_y));
     let negative_x =
         ((point.x as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).x.whole as i32) as i16) < 0;
     let x = (point.x as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).x.whole as i32) as i16;

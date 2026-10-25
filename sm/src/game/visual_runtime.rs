@@ -34,8 +34,8 @@ impl visual_host::Content for Runtime<'_> {
             Source::Native => player_projectiles::host::Host::native_record(self, bank, address),
         }
     }
-    fn atmospheric_record(&mut self, address: u16) -> RomRecord {
-        let address = 0x900000 | u32::from(address);
+    fn legacy_native_record(&mut self, bank: u8, address: u16) -> RomRecord {
+        let address = (u32::from(bank) << 16) | u32::from(address);
         if address & 0x8000 == 0 {
             self.foreign(|game| {
                 crate::game::session_runtime::invalid_window(game, address);
@@ -151,7 +151,7 @@ impl visual_host::Effects for Runtime<'_> {
                     .table(Source::Loaded, 0x908bff)
                     .native_word(2 * usize::from(kind));
                 let tile = self
-                    .atmospheric_record(pointer.wrapping_add(frame_offset))
+                    .legacy_native_record(0x90, pointer.wrapping_add(frame_offset))
                     .native_word(0);
                 self.write_slice_native(entry + 2, tile);
                 self.write_word_le(saved.wrapping_add(4), 0x590);

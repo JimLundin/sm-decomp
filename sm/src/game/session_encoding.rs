@@ -139,7 +139,24 @@ macro_rules! flag_projection {
 }
 macro_rules! scalar_words {
     ($s:ident,$f:ident,($($borrow:tt)*))=>{
+        $f(0x0cf4,$($borrow)* $s.player.grapple_flags);
+        $f(0x0cfa,$($borrow)* $s.player.grapple_angle);
+        $f(0x0cfe,$($borrow)* $s.player.grapple_length);
+        $f(0x0d02,$($borrow)* $s.player.grapple_origin_offset.x);
+        $f(0x0d04,$($borrow)* $s.player.grapple_origin_offset.y);
+        $f(0x0d06,$($borrow)* $s.player.grapple_endpoint_fraction.x);
         $f(0x0d08,$($borrow)* $s.player.grapple_endpoint.x);
+        $f(0x0d0a,$($borrow)* $s.player.grapple_endpoint_fraction.y);
+        $f(0x0d0e,$($borrow)* $s.player.grapple_offset[0].fraction);
+        $f(0x0d10,$($borrow)* $s.player.grapple_offset[0].whole);
+        $f(0x0d12,$($borrow)* $s.player.grapple_offset[1].fraction);
+        $f(0x0d14,$($borrow)* $s.player.grapple_offset[1].whole);
+        $f(0x0d22,$($borrow)* $s.player.grapple_velocity.x);
+        $f(0x0d24,$($borrow)* $s.player.grapple_velocity.y);
+        for i in 0..16 {
+            $f(0x0d42 + 2*i,$($borrow)* $s.player.grapple_animation_delay[i]);
+            $f(0x0d62 + 2*i,$($borrow)* $s.player.grapple_animation_program[i]);
+        }
         $f(0x0d0c,$($borrow)* $s.player.grapple_endpoint.y);
         $f(0x0791,$($borrow)* $s.room.entry.direction);
         $f(0x0793,$($borrow)* $s.room.entry.elevator_properties);

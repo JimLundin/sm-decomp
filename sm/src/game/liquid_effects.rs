@@ -2,9 +2,9 @@
 use crate::game::animated_tiles;
 use crate::game::constants::bank_87::{addr_kAnimtiles_Acid, addr_kAnimtiles_Lava};
 use crate::game::prelude::*;
+use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::sm_80::QueueSfx2_Max6;
 use crate::game::sm_88::{HandleEarthquakeSoundEffect, SpawnBG3ScrollHdmaObject, SpawnHdmaObject};
-use crate::game::sm_94::kSinCosTable8bit_Sext;
 
 pub const WATER_WAVE: [i16; 16] = [0, 1, 1, 0, 0, -1, -1, 0, 0, 1, 1, 0, 0, -1, -1, 0];
 

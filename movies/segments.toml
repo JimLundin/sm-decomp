@@ -315,6 +315,16 @@ after_hits = 120
 expect = ["pickup:energy", "room:A4B1"]
 after_expectations = 120
 
+# Optional terrain regression on the existing authored reserve route.
+# Contact geometry is checked at frame 145737; this is not a new required check.
+[[segment]]
+id = "samus-square-slope-reserve"
+inputs = "corpus-norfair-reserve.inputs"
+input_sha256 = "968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d"
+start_frame = 145574
+frames = 398
+expect = ["room:AC83"]
+
 [[segment]]
 id = "pickup-reserve"
 inputs = "corpus-norfair-reserve.inputs"

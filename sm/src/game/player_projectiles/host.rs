@@ -26,6 +26,8 @@ pub enum Drawing {
     Projectile { slot: u16, x: u16, y: u16 },
     Beam { sprite: u16, x: u16, y: u16 },
     CrashEchoes,
+    GrappleSegment { x: u16, y: u16, tile: u16 },
+    GrappleEnd,
 }
 pub trait Host: SessionAccess {
     fn loaded_image(&self) -> Option<RomImage>;

@@ -76,7 +76,7 @@ impl Host for Composed {
         match drawing {
             Drawing::Projectile { slot, x, y } => self.events.push(Event::Shot(slot, x, y)),
             Drawing::Beam { sprite, x, y } => self.events.push(Event::Beam(sprite, x, y)),
-            Drawing::CrashEchoes => panic!("crash echo rendering outside prepared scope"),
+            _ => panic!("drawing outside prepared scope"),
         }
     }
     fn draw_trail(&mut self, pair: usize, right: bool, frozen: bool) {

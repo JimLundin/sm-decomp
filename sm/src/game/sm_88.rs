@@ -17,12 +17,12 @@ use crate::game::explosion_window::{self, Phase};
 use crate::game::gameplay_flag_runtime::{
     CheckBossBitForCurArea, CheckEventHappened, SetEventHappened,
 };
+use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_8b::ConfigureTitleSequenceGradientHDMA;
 use crate::game::sm_80::QueueSfx2_Max6;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::{InitializeSuitPickupHdma, Samus_LoadSuitPalette};
-use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a9::MotherBrain_CalculateRainbowBeamHdma;
 use crate::game::xray_background::{self, finish_restore, restore_left, restore_right};
 

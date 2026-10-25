@@ -1364,7 +1364,7 @@ pub(super) fn EprojPreInstr_PhantoonStartingFireballsB_2(k: u16, ctx: &mut impl 
     }
     let v4: u8 = (enemy!(ctx, (v1) as isize, behavior_a) as i32 + 1) as u8;
     enemy!(ctx, v4 as u16 => (v1) as isize, behavior_a);
-    let pt = Eproj_PhantomFireballs_Func1(v4 as u16, enemy!(ctx, (v1) as isize, velocity_y));
+    let pt = sine_offset::<false>(v4 as u16, enemy!(ctx, (v1) as isize, velocity_y));
     {
         enemy!(ctx, (pt.x as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).x.whole as i32) as u16 => (v1) as isize, x);
         enemy!(ctx, (pt.y as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);

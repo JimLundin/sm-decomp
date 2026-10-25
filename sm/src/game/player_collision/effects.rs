@@ -22,9 +22,6 @@ pub(crate) trait Content {
     /// The early solid path indexes CURRENT pose; the later blocked path indexes
     /// PENDING pose. Read a native-endian word at twice that byte in this capture.
     fn walked_pose_table(&mut self) -> Self::Record;
-    fn square_slope_occupied(&self, index: usize) -> bool;
-    fn slope_factor(&self, slope: u8) -> u16;
-    fn slope_height(&self, index: usize) -> u8;
     /// Resolve the original local/area-specific94 tables. The adapter preserves
     /// low-window diagnostic/capture ordering before returning a header.
     fn special_header(&mut self, behavior: u8, solid: bool) -> MechanismHeader;

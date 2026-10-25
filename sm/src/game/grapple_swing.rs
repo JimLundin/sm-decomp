@@ -1,7 +1,9 @@
 //! Grapple swing placement, rope-length changes and swept block contact.
 use crate::game::prelude::*;
+use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
+use crate::game::projectile_room::Axis;
+use crate::game::session_runtime::Runtime;
 use crate::game::sm_80::Multiply16x16;
-use crate::game::sm_94::{BlockReact_HorizExt, BlockReact_VertExt, kSinCosTable8bit_Sext};
 
 fn project_axis(origin: u16, sample: i16, length: u16) -> u16 {
     let distance = if sample == -256 || sample == 256 {
@@ -64,9 +66,15 @@ unsafe fn contact(game: &mut Game) -> u8 {
             0 | 3 | 4 | 6 | 7 => 0,
             1 | 8 | 9 | 11 | 12 | 14 | 15 => 1,
             2 => spike_contact(false, game),
-            5 => BlockReact_HorizExt(game),
+            5 => crate::game::player_collision::grapple::redirect_block(
+                &mut Runtime::new(game),
+                Axis::X,
+            ),
             10 => spike_contact(true, game),
-            13 => BlockReact_VertExt(game),
+            13 => crate::game::player_collision::grapple::redirect_block(
+                &mut Runtime::new(game),
+                Axis::Y,
+            ),
             _ => unreachable!(),
         })
     }
@@ -224,4 +232,17 @@ pub unsafe fn advance_swing(game: &mut Game) -> u8 {
         word!(game.grapple_beam_unkD2E = decayed as u16);
         0
     }
+}
+
+pub(crate) fn react_beam(game: &mut Game) -> u8 {
+    crate::game::player_collision::grapple::react_beam(&mut Runtime::new(game))
+}
+pub(crate) fn extend_beam(game: &mut Game) -> u8 {
+    crate::game::player_collision::grapple::extend_beam(&mut Runtime::new(game))
+}
+pub(crate) fn start_rope_animation(game: &mut Game) {
+    crate::game::grapple_rope::start(&mut Runtime::new(game));
+}
+pub(crate) fn draw_rope(game: &mut Game) {
+    crate::game::grapple_rope::draw(&mut Runtime::new(game));
 }

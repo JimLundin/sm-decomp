@@ -22,6 +22,7 @@ use crate::game::gameplay_flag_runtime::{
 };
 use crate::game::mother_brain_visuals::{self, Fade};
 use crate::game::palette_effects;
+use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_80::{
     NextRandom, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6,
@@ -30,7 +31,6 @@ use crate::game::sm_88::{MotherBrainRisingHdmaObject, SpawnMotherBrainRainbowBea
 use crate::game::sm_89::LoadFxEntry;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_91::SomeMotherBrainScripts;
-use crate::game::sm_94::kSinCosTable8bit_Sext;
 
 use crate::game::sm_a6::{
     HandleTypewriterText_Ext, HomingReversal, Ridley_Func_98, SetupZebesEscapeTypewriter,

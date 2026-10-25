@@ -87,3 +87,29 @@ pub fn crash_echoes(game: &mut Game, content: &mut impl Content) {
         }
     }
 }
+
+/// Ordered native OAM stores; end coordinates and extension bits remain live aliases.
+#[forbid(unsafe_code)]
+pub(crate) fn grapple(game: &mut Game, segment: Option<(u16, u16, u16)>) {
+    let idx = word!(game.oam_next_ptr);
+    let at = 0x370 + usize::from(idx);
+    if let Some((x, y, tile)) = segment {
+        game.g_ram[at] = x as u8;
+        game.g_ram[at + 1] = y as u8;
+        game.g_ram[at + 2..at + 4].copy_from_slice(&tile.to_ne_bytes());
+    } else {
+        let x = word!(game.grapple_beam_end_x_pos)
+            .wrapping_sub(word!(game.layer1_x_pos))
+            .wrapping_sub(4);
+        game.g_ram[at] = x as u8;
+        let y = word!(game.grapple_beam_end_y_pos)
+            .wrapping_sub(word!(game.layer1_y_pos))
+            .wrapping_sub(4);
+        game.g_ram[at + 1] = y as u8;
+        game.g_ram[at + 2..at + 4].copy_from_slice(&14880u16.to_ne_bytes());
+        let extension = word!(game.oam_ext[(idx >> 5)]);
+        let bit = (((i32::from(x) & 0x100) >> 8) << (2 * (i32::from(idx) >> 2 & 7))) as u16;
+        word!(game.oam_ext[(idx >> 5)] = extension | bit);
+    }
+    word!(game.oam_next_ptr = idx.wrapping_add(4));
+}

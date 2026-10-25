@@ -3,7 +3,7 @@
 mod control;
 pub(in crate::game) mod effects;
 mod geometry;
-mod grapple;
+pub(crate) mod grapple;
 mod inside;
 mod jump;
 mod motion;

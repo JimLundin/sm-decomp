@@ -6,6 +6,7 @@ use super::{
     operations::{Axis, MotionResult, Obstruction},
 };
 use crate::game::contact_rules::collision_span as span;
+use crate::game::projectile_geometry::{SLOPE_FACTORS, SLOPE_HEIGHTS, square_slope_occupied};
 use crate::game::{
     actors::{
         access::{AccessMode::LittleEndian, ActorKey},
@@ -247,14 +248,7 @@ fn square(h: &mut impl Host, s: &mut Scan, axis: Axis, slope: u16, block: u16) -
         .wrapping_add(orientation ^ ((s.edge & 8) >> shift));
     let position = player_position(&h.session().player, other_axis(axis));
     let radius = player_radius(&h.session().player, other_axis(axis));
-    let occupied = if s.remaining == 0 && radius.wrapping_add(position).wrapping_sub(1) & 8 == 0 {
-        h.square_slope_occupied(usize::from(index))
-    } else if s.remaining != 0 && s.remaining == s.span && position.wrapping_sub(radius) & 8 != 0 {
-        h.square_slope_occupied(usize::from(index ^ other))
-    } else {
-        h.square_slope_occupied(usize::from(index))
-            || h.square_slope_occupied(usize::from(index ^ other))
-    };
+    let occupied = square_slope_occupied(index, s.remaining, s.span, position, radius, other);
     if !occupied {
         return 0;
     }
@@ -278,7 +272,7 @@ fn nonsquare(h: &mut impl Host, s: &mut Scan, axis: Axis, block: u16) -> u8 {
         }
         let displacement = s.displacement;
         let shifted = (displacement >> 8) as u16;
-        let factor = u32::from(h.slope_factor((bts & 0x1f) as u8));
+        let factor = u32::from(SLOPE_FACTORS[usize::from(bts & 0x1f)]);
         let multiplicand = if displacement < 0 {
             shifted.wrapping_neg()
         } else {
@@ -310,7 +304,7 @@ fn nonsquare(h: &mut impl Host, s: &mut Scan, axis: Axis, block: u16) -> u8 {
         return 0;
     }
     let offset = if bts & 0x40 != 0 { x ^ 15 } else { x };
-    let height = h.slope_height(usize::from(bts & 0x1f) * 16 + usize::from(offset & 15)) & 0x1f;
+    let height = SLOPE_HEIGHTS[usize::from(bts & 0x1f) * 16 + usize::from(offset & 15)] & 0x1f;
     let radius = player_radius(&h.session().player, Axis::Y);
     let offset = if upward {
         radius.wrapping_add(s.target).wrapping_sub(1) & 15
@@ -654,7 +648,7 @@ pub(super) fn align_slopes<H: Host>(h: &mut H) {
             let x = h.session().player.x;
             let x = if bts & 0x40 != 0 { x ^ 15 } else { x };
             let index = usize::from(bts & 0x1f) * 16 + usize::from(x & 15);
-            let adjustment = i16::from(h.slope_height(index) & 0x1f) - offset as i16 - 1;
+            let adjustment = i16::from(SLOPE_HEIGHTS[index] & 0x1f) - offset as i16 - 1;
             if adjustment < 0 {
                 h.session_mut().player.y = y.wrapping_add(adjustment as u16);
                 h.session_mut().player.collision.slope_adjusted = 1;
@@ -677,7 +671,7 @@ pub(super) fn align_slopes<H: Host>(h: &mut H) {
             let x = h.session().player.x;
             let x = if bts & 0x40 != 0 { x ^ 15 } else { x };
             let index = usize::from(bts & 0x1f) * 16 + usize::from(x & 15);
-            let adjustment = i16::from(h.slope_height(index) & 0x1f) - offset as i16 - 1;
+            let adjustment = i16::from(SLOPE_HEIGHTS[index] & 0x1f) - offset as i16 - 1;
             // Player top alignment includes equality; actor alignment does not.
             if adjustment <= 0 {
                 h.session_mut().player.y = y.wrapping_sub(adjustment as u16);

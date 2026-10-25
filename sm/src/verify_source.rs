@@ -198,20 +198,20 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/player_collision/geometry.rs"),
     ),
     (
-        "sm/src/game/player_collision/grapple.rs",
-        include_bytes!("game/player_collision/grapple.rs"),
-    ),
-    (
-        "sm/src/game/player_collision/inside.rs",
-        include_bytes!("game/player_collision/inside.rs"),
-    ),
-    (
         "sm/src/game/player_collision/motion.rs",
         include_bytes!("game/player_collision/motion.rs"),
     ),
     (
         "sm/src/game/player_collision/control.rs",
         include_bytes!("game/player_collision/control.rs"),
+    ),
+    (
+        "sm/src/game/player_collision/grapple.rs",
+        include_bytes!("game/player_collision/grapple.rs"),
+    ),
+    (
+        "sm/src/game/player_collision/inside.rs",
+        include_bytes!("game/player_collision/inside.rs"),
     ),
     (
         "sm/src/game/player_collision/jump.rs",
@@ -608,6 +608,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/grapple_swing.rs"),
     ),
     (
+        "sm/src/game/grapple_rope.rs",
+        include_bytes!("game/grapple_rope.rs"),
+    ),
+    (
         "sm/src/game/intro_pages.rs",
         include_bytes!("game/intro_pages.rs"),
     ),
@@ -983,7 +987,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/game/sm_8f.rs", include_bytes!("game/sm_8f.rs")),
     ("sm/src/game/sm_90.rs", include_bytes!("game/sm_90.rs")),
     ("sm/src/game/sm_91.rs", include_bytes!("game/sm_91.rs")),
-    ("sm/src/game/sm_94.rs", include_bytes!("game/sm_94.rs")),
     ("sm/src/game/sm_9b.rs", include_bytes!("game/sm_9b.rs")),
     ("sm/src/game/sm_a0.rs", include_bytes!("game/sm_a0.rs")),
     ("sm/src/game/sm_a2.rs", include_bytes!("game/sm_a2.rs")),

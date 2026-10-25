@@ -35,12 +35,13 @@ use crate::game::sm_80::{
     QueueSfx3_Max6, QueueSfx3_Max9, QueueSfx3_Max15,
 };
 
+use crate::game::grapple_swing::draw_rope as HandleGrappleBeamGfx;
+use crate::game::projectile_geometry::sine_offset;
 use crate::game::sm_88::EnableHdmaObjects;
 use crate::game::sm_91::{
     DemoObjectInputHandler, MakeSamusFaceForward, Samus_Func20, Samus_InputHandler,
     Samus_LoadSuitPalette, SamusFunc_E633,
 };
-use crate::game::sm_94::{HandleGrappleBeamGfx, scale_sine_word};
 
 pub use crate::types::HandlerFunc;
 
@@ -488,30 +489,6 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
             (*gVramWriteEntry(v14 as i32, game)).size = addr_unk_6061F0 as u16;
             word!(game.vram_write_queue_tail = (v14).wrapping_add(2));
         }
-    }
-}
-pub unsafe fn Projectile_SinLookup(j: u16, a: u16) -> Point16U {
-    unsafe {
-        let r24: u16 = a;
-        let r26: u16 = j;
-        let mut v2: u16 = if j as i32 - 128i32 & 0x8000 != 0 {
-            scale_sine_word((2u16).wrapping_mul(j), r24)
-        } else {
-            -(scale_sine_word(
-                (2u16).wrapping_mul((((j) as u8).wrapping_add(0x80u8)) as u16),
-                r24,
-            ) as i32) as u16
-        };
-        let v3: i16 = (((r26) as u8).wrapping_sub(64)) as i16;
-        let mut v4: u16 = if v3 as i32 - 128i32 & 0x8000 != 0 {
-            scale_sine_word((2u16).wrapping_mul((v3) as u16), r24)
-        } else {
-            -(scale_sine_word(
-                (2u16).wrapping_mul((((v3) as u8).wrapping_add(0x80u8)) as u16),
-                r24,
-            ) as i32) as u16
-        };
-        Point16U { x: v2, y: v4 }
     }
 }
 pub unsafe fn Samus_EndSuperJump(game: &mut Game) -> u8 {
@@ -1120,7 +1097,7 @@ crate::game::callback_dispatch! {
             (game);
         for i in (0i32..=2).rev().step_by(2) {
             let v1: i32 = i >> 1;
-            let pt: Point16U = Projectile_SinLookup(
+            let pt = sine_offset::<true>(
                 word!(game.speed_echo_xspeed[v1]),
                 word!(game.speed_echoes_index) as u8 as u16,
             );

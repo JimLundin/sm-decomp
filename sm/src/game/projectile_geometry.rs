@@ -80,3 +80,38 @@ pub(crate) fn square_slope_single_block(
         || (radius.wrapping_add(position).wrapping_sub(1) & 8 != 0
             && SLOPE_QUADRANTS[usize::from(index ^ other)] != 0)
 }
+
+pub(crate) const SLOPE_FACTORS: [u16; 32] = [
+    0x100, 0x100, 0x100, 0x100, 0x100, 0x100, 0x100, 0x100, 0x100, 0x100, 0x100, 0x100, 0x100,
+    0x100, 0xb0, 0xb0, 0x100, 0x100, 0xc0, 0x100, 0xc0, 0xc0, 0xd8, 0xd8, 0xf0, 0xf0, 0xf0, 0x80,
+    0x80, 0x50, 0x50, 0x50,
+];
+
+/// Signed polar offset; legacy player samples use the native table's byte order.
+pub(crate) fn sine_offset<const NATIVE_BACKING: bool>(
+    angle: u16,
+    amplitude: u16,
+) -> crate::game::session::Point {
+    let scale = |angle: u16| {
+        // Both old callers supplied even byte offsets with wrapping word multiplication.
+        let sample = SINE_COSINE[64 + usize::from(angle & 0x7fff)];
+        let sample = if NATIVE_BACKING {
+            u16::from_le_bytes(sample.to_ne_bytes())
+        } else {
+            sample as u16
+        };
+        ((u32::from(sample) * u32::from(amplitude as u8)) >> 8) as u16
+    };
+    let x = if (i32::from(angle) - 128) & 0x8000 != 0 {
+        scale(angle)
+    } else {
+        scale(u16::from((angle as u8).wrapping_add(128))).wrapping_neg()
+    };
+    let angle = angle.wrapping_sub(64) as u8;
+    let y = if angle < 128 {
+        scale(u16::from(angle))
+    } else {
+        scale(u16::from(angle.wrapping_add(128))).wrapping_neg()
+    };
+    crate::game::session::Point { x, y }
+}

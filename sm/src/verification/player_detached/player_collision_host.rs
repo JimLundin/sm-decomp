@@ -37,7 +37,6 @@ pub(crate) struct CollisionContract {
     pub(crate) events: Vec<CollisionEvent>,
     pub(crate) special_headers: BTreeMap<(u8, bool), MechanismHeader>,
     pub(crate) bomb_headers: BTreeMap<u8, MechanismHeader>,
-    pub(crate) slope_factors: BTreeMap<u8, u16>,
     // Only non-owned bytes may be authored here. Owner projection always wins.
     external: BTreeMap<usize, u8>,
 }
@@ -86,19 +85,6 @@ impl Content for Composed {
             image: self.transition_image(crate::game::visual_host::Source::Loaded),
             base: 0x11 * 0x8000 + 0x6b74,
         }
-    }
-    fn square_slope_occupied(&self, index: usize) -> bool {
-        crate::game::projectile_geometry::SLOPE_QUADRANTS[index] & 0x80 != 0
-    }
-    fn slope_factor(&self, slope: u8) -> u16 {
-        *self
-            .collision_contract
-            .slope_factors
-            .get(&slope)
-            .expect("unprepared collision slope factor")
-    }
-    fn slope_height(&self, index: usize) -> u8 {
-        crate::game::projectile_geometry::SLOPE_HEIGHTS[index]
     }
     fn special_header(&mut self, behavior: u8, solid: bool) -> MechanismHeader {
         self.collision_contract

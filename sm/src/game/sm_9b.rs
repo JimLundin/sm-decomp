@@ -12,6 +12,11 @@ use crate::game::{
 
 pub use crate::game::constants::bank_9b::*;
 
+use crate::game::grapple_swing::{
+    extend_beam as BlockCollGrappleBeam, react_beam as BlockReactGrapple,
+    start_rope_animation as GrappleFunc_AF87,
+};
+use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::samus_animation::DrawSamusSuitExploding;
 use crate::game::samus_animation::Samus_DrawStartingDeathAnim;
 use crate::game::sm_80::{Multiply16x16, QueueSfx1_Max1, QueueSfx1_Max6, QueueSfx1_Max15};
@@ -19,9 +24,6 @@ use crate::game::sm_90::{
     CallSomeSamusCode, LoadProjectilePalette, Samus_GetBottom_R18, Samus_PostGrappleCollisionDetect,
 };
 use crate::game::sm_91::{Samus_LoadSuitPalette, Samus_Pose_CancelGrapple};
-use crate::game::sm_94::{
-    BlockCollGrappleBeam, BlockReactGrapple, GrappleFunc_AF87, kSinCosTable8bit_Sext,
-};
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]

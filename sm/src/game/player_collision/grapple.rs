@@ -156,3 +156,136 @@ pub(crate) fn settle(h: &mut impl Host) {
         }
     }
 }
+
+/// Follow extension cells while preserving the live cursor and width.
+pub(crate) fn redirect_block(
+    h: &mut impl crate::game::player_projectiles::host::Host,
+    axis: crate::game::projectile_room::Axis,
+) -> u8 {
+    use crate::game::player_projectiles::access::room_bts;
+    let bts = room_bts(h, h.session().room.collision_cursor);
+    if let Some(cell) = crate::game::projectile_block_reactions::redirect(
+        axis,
+        i16::from(bts as i8),
+        || h.session().room.width,
+        || h.session().room.collision_cursor,
+    ) {
+        h.session_mut().room.collision_cursor = cell;
+        0xff
+    } else {
+        0
+    }
+}
+/// The grapple beam uses collision setup's return flags, unlike ordinary shots.
+pub(crate) fn react_beam(
+    h: &mut (
+             impl crate::game::player_projectiles::host::Host
+             + crate::game::room_mechanisms::host::Host
+             + crate::game::projectile_block_reactions::Definitions
+         ),
+) -> u8 {
+    use crate::game::{
+        player_projectiles::access::{room_bts, room_level},
+        projectile_block_reactions as reactions,
+        projectile_room::Axis,
+        room_mechanisms::{
+            creation::spawn,
+            host::{Contact, SpawnSource},
+        },
+    };
+    let endpoint = h.session().player.grapple_endpoint;
+    let row = u16::from((endpoint.y >> 4) as u8) * u16::from(h.session().room.width as u8);
+    h.session_mut().room.collision_cursor = row.wrapping_add(endpoint.x >> 4);
+    loop {
+        let kind = room_level(h, h.session().room.collision_cursor) >> 12;
+        let result = match kind {
+            0 | 2 | 3 | 6 => 0,
+            1 | 8 | 9 | 11 => 1,
+            kind @ (4 | 7 | 12 | 15) => {
+                let solid = matches!(kind, 12 | 15);
+                if let Some(mechanism) = reactions::mechanism(matches!(kind, 7 | 15), solid, h) {
+                    reactions::Definitions::spawn(h, mechanism.header);
+                }
+                u8::from(solid)
+            }
+            5 => redirect_block(h, Axis::X),
+            13 => redirect_block(h, Axis::Y),
+            10 | 14 => {
+                if kind == 14 {
+                    h.session_mut().player.grapple_flags &= !0x8000;
+                }
+                let bts = room_bts(h, h.session().room.collision_cursor);
+                if bts & 0x80 != 0 {
+                    0
+                } else {
+                    let header = if kind == 14 {
+                        [0xd0d8, 0xd0dc, 0xd0e0, 0xd0d8][usize::from(bts)]
+                    } else {
+                        const SPIKES: [u16; 16] = {
+                            let mut headers = [0xd0e4; 16];
+                            headers[3] = 0xd0e8;
+                            headers
+                        };
+                        SPIKES[usize::from(bts)]
+                    };
+                    spawn(h, SpawnSource::Collision { header }, &mut Contact::Absent)
+                }
+            }
+            _ => unreachable!(),
+        };
+        if result & 0x80 == 0 {
+            return result;
+        }
+    }
+}
+/// Four signed fixed-point substeps; each setup callback can change the next one.
+pub(crate) fn extend_beam(
+    h: &mut (
+             impl crate::game::player_projectiles::host::Host
+             + crate::game::room_mechanisms::host::Host
+             + crate::game::projectile_block_reactions::Definitions
+         ),
+) -> u8 {
+    let velocity = h.session().player.grapple_velocity;
+    let velocity = [
+        i32::from(velocity.x as i16) << 6,
+        i32::from(velocity.y as i16) << 6,
+    ];
+    let mut result = 0;
+    for _ in 0..4 {
+        for axis in 0..2 {
+            let offset = &mut h.session_mut().player.grapple_offset[axis];
+            let sum = ((u32::from(offset.whole) << 16) | u32::from(offset.fraction))
+                .wrapping_add(velocity[axis] as u32);
+            offset.fraction = sum as u16;
+            offset.whole = (sum >> 16) as u16;
+        }
+        for axis in 0..2 {
+            let player = &mut h.session_mut().player;
+            let offset = &player.grapple_offset[axis];
+            let (whole, fraction, origin) = if axis == 0 {
+                (player.x, player.x_fraction, player.grapple_origin_offset.x)
+            } else {
+                (player.y, player.y_fraction, player.grapple_origin_offset.y)
+            };
+            let sum = ((u32::from(offset.whole) << 16) | u32::from(offset.fraction))
+                .wrapping_add((u32::from(whole) << 16) | u32::from(fraction))
+                .wrapping_add(u32::from(origin) << 16);
+            if axis == 0 {
+                player.grapple_endpoint_fraction.x = sum as u16;
+                player.grapple_endpoint.x = (sum >> 16) as u16;
+            } else {
+                player.grapple_endpoint_fraction.y = sum as u16;
+                player.grapple_endpoint.y = (sum >> 16) as u16;
+            }
+        }
+        result = react_beam(h);
+        if result & 0x41 == 0x41 {
+            let endpoint = &mut h.session_mut().player.grapple_endpoint;
+            endpoint.x = (endpoint.x & 0xfff0) | 8;
+            endpoint.y = (endpoint.y & 0xfff0) | 8;
+            return result;
+        }
+    }
+    result
+}

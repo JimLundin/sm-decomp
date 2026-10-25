@@ -1129,7 +1129,7 @@ pub(super) fn EprojInit_PhantoonStartingFireballs(j: u16, ctx: &mut impl Host) {
 
     let v2: u16 = byte_869979[ctx.session().enemy_projectiles.spawn.primary as usize] as u16;
     enemy!(ctx, v2 => (v1) as isize, behavior_a);
-    let pt: Point = Eproj_PhantomFireballs_Func1(v2, 0x30);
+    let pt: Point = sine_offset::<false>(v2, 0x30);
 
     enemy!(ctx, (pt.x as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).x.whole as i32) as u16 => (v1) as isize, x);
     enemy!(ctx, (pt.y as i32 + ctx.resolve_actor(Key::from_legacy(0), Le).y.whole as i32 + 16) as u16 => (v1) as isize, y);

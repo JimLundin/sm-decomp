@@ -26,18 +26,6 @@ impl Content for Runtime<'_> {
         visual_host::Content::table(self, Source::Loaded, 0x91eb74)
     }
 
-    fn square_slope_occupied(&self, index: usize) -> bool {
-        crate::game::sm_94::kTab948E54[index] != 0
-    }
-
-    fn slope_factor(&self, slope: u8) -> u16 {
-        crate::game::sm_94::kBlockColl_Horiz_Slope_NonSquare_Tab[usize::from(slope) * 2 + 1]
-    }
-
-    fn slope_height(&self, index: usize) -> u8 {
-        crate::game::sm_94::kAlignYPos_Tab0[index]
-    }
-
     fn special_header(&mut self, behavior: u8, solid: bool) -> MechanismHeader {
         let header = if behavior & 0x80 != 0 {
             let area = self.session().room.area;

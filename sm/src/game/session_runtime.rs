@@ -344,6 +344,8 @@ impl Host for Runtime<'_> {
                     crate::game::sm_81::DrawBeamGrappleSpritemap(sprite, x, y, g)
                 },
                 Drawing::CrashEchoes => output::crash_echoes(g, &mut output::Native),
+                Drawing::GrappleSegment { x, y, tile } => output::grapple(g, Some((x, y, tile))),
+                Drawing::GrappleEnd => output::grapple(g, None),
             }
         });
     }

@@ -198,7 +198,7 @@ pub(crate) fn draw_atmospheric(h: &mut impl crate::game::visual_host::Host) {
                 .table(Source::Loaded, 0x908b93)
                 .native_word(2 * usize::from(kind));
             let duration = h
-                .atmospheric_record(pointer.wrapping_add(frame_offset))
+                .legacy_native_record(0x90, pointer.wrapping_add(frame_offset))
                 .native_word(0);
             h.session_mut().atmospheric.slots[slot].remaining = duration;
             if remaining == 0 {

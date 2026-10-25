@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 use super::access::{enemy, read_member, read_member_byte, write_member, write_member_byte};
 use super::host::{EnemyMember as F, Host, NativeRecord};
-use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
+pub(super) use crate::game::projectile_geometry::sine_offset;
 use crate::game::session::{Point as Point16U, Vector32 as Point32};
 
 fn move_axis(handle: u16, fraction: F, whole: F, velocity: F, ctx: &mut impl Host) -> u16 {
@@ -97,26 +97,6 @@ pub(super) fn Eproj_SetXvelRandom(k: u16, ctx: &mut impl Host) {
 }
 pub(super) fn Eproj_SetYvelRandom(k: u16, ctx: &mut impl Host) {
     set_random_velocity(k, F::VelocityY, 128, ctx);
-}
-fn scale_sine_word(byte_offset: u16, amplitude: u16) -> u16 {
-    let at = 128 + usize::from(byte_offset);
-    let byte = |at: usize| kSinCosTable8bit_Sext[at / 2].to_le_bytes()[at % 2];
-    let sample = u16::from_le_bytes([byte(at), byte(at + 1)]);
-    ((u32::from(sample) * u32::from(amplitude as u8)) >> 8) as u16
-}
-pub(super) fn Eproj_PhantomFireballs_Func1(j: u16, amplitude: u16) -> Point16U {
-    let x = if (i32::from(j) - 128) & 0x8000 != 0 {
-        scale_sine_word((2 * i32::from(j)) as u16, amplitude)
-    } else {
-        scale_sine_word((2 * (i32::from(j) + 128) as u8 as i32) as u16, amplitude).wrapping_neg()
-    };
-    let angle = j.wrapping_sub(64) as u8;
-    let y = if angle < 128 {
-        scale_sine_word(2 * u16::from(angle), amplitude)
-    } else {
-        scale_sine_word(2 * u16::from(angle.wrapping_add(128)), amplitude).wrapping_neg()
-    };
-    Point16U { x, y }
 }
 pub(super) fn ConvertAngleToXy(angle: u16, amplitude: u16, ctx: &mut impl Host) -> Point32 {
     ctx.convert_angle_to_xy(angle, amplitude)

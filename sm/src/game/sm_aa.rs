@@ -19,9 +19,9 @@ use crate::game::sm_82::sub_82DAF7;
 
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::palette_effects;
+use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::sm_88::SpawnBombTorizoHaze;
 use crate::game::sm_90::CallSomeSamusCode;
-use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game::sm_a0::CallEnemyPreInstr;
 
 pub use crate::types::Consts_AA;
