@@ -1949,7 +1949,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11115373] MotherBrain_Instr_SpawnPurpleBreath [k] {
-        SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainPurpleBreathBig as u16, 0, game);
+        SpawnEprojWithRoomGfx(addr_kEproj_MotherBrainPurpleBreathBig as u16, 0x9b6d, game);
     };
     [11115383]
     MotherBrain_Instr_SetMainShakeTimer50 [k] { (*Get_MotherBrain(0x40, game)).var_00 = 50; };

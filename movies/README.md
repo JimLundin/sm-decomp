@@ -506,3 +506,17 @@ This row does not qualify that continuation or relax the importer.
 python tools/movie_inputs.py movies/super-metroid-low-3273.lsmv movies/seed-botwoon.inputs --rom rom/sm.smc --lag-log target/seeds/low-input-phase/lag.csv --seed target/seeds/low-input-phase/0122-D95E-wram.bin --frames 1032
 python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --segment boss-botwoon
 ```
+
+`mother-brain-purple-breath-parameter` uses `100-input-phase:324` and
+`seed-mother-brain-100.inputs`. The 2,756-frame regression covers the first
+mismatch at frame 2,752 and three following frames. The original purple-breath
+instruction at `$A9:9B6D` preserves its incoming opcode accumulator when spawning
+the projectile; native code must pass `0x9B6D` as the shared spawn parameter.
+
+```powershell
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-mother-brain-100.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0324-DD58-wram.bin --frames 10000
+```
+
+This regression does not qualify Mother Brain defeat. The longer 10,000-frame
+100% continuation has no oracle differences but does not observe defeat; the
+older any% continuation's later invalid LoROM read also remains unresolved.

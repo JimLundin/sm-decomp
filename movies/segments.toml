@@ -682,3 +682,13 @@ input_sha256 = "a50f19a46b89b310a412155002fde5d4501df5b45164341c6e957f01d3fd7524
 start_frame = 0
 frames = 440
 expect = ["room:D9AA"]
+
+[[segment]]
+id = "mother-brain-purple-breath-parameter"
+seed = "100-input-phase:324"
+seed_sha256 = "048f8ab51a243e3734a7bc0fabcbfb6745f32abaf57474e0455150b5d250f590"
+inputs = "seed-mother-brain-100.inputs"
+input_sha256 = "6411cf07fe9b5de3172487d2ae374d9dd0983e9f567a571ec450e15564708910"
+start_frame = 0
+frames = 2756
+expect = ["room:DD58", "state:8"]

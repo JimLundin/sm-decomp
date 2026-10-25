@@ -14,6 +14,6 @@
 
 *Physical lines by path; inline verification hooks remain in production. Verification: `verification/`, `verify/`, or filenames starting `verify`.
 
-Weather initialization shares its existing update module: production -3, legacy -29. Smoke4 passes; activation branches remain uncovered.
+Mother Brain purple-breath spawn parameter corrected. Six local rows pass; full defeat remains pending. No code growth.
 
 [Current plan](docs/PLAN.md#work-order) | [Checkpoint recipes](movies/segments.toml) | [Codebase map](https://jimlundin.github.io/sm-decomp/#work-summary)
