@@ -185,3 +185,28 @@ pub(crate) fn advance_bomb_jump<H: Host>(h: &mut H, invalid: fn(&mut H)) {
     }
     finish_bomb_jump(h.session_mut());
 }
+
+pub(crate) fn consume_crystal_flash(s: &mut Session, frame: u16) {
+    let index = usize::from(s.player.transitions.crystal_flash_ammo);
+    // Check the selector even on frames that do not consume ammunition.
+    let ammo = &mut s.inventory.ammunition[index];
+    if frame & 7 == 0 {
+        ammo.current = ammo.current.wrapping_sub(1);
+        s.inventory
+            .restore(crate::game::item_pickups::Resource::Health, 50);
+        s.shared_sequence.stage = s.shared_sequence.stage.wrapping_sub(1);
+        if (s.shared_sequence.stage as i16) <= 0 {
+            if index < 2 {
+                s.shared_sequence.stage = 10;
+                s.player.transitions.crystal_flash_ammo += 1;
+            } else {
+                s.player.movement_handler = MovementMode::CrystalFlashFinish;
+                s.player.transitions.draw_handler = 0xeb52;
+                s.player.animation_clock.remaining = 3;
+                s.player.animation_clock.frame = 12;
+            }
+        }
+    }
+    s.player.invincibility = 0;
+    s.player.knockback_timer = 0;
+}

@@ -58,10 +58,9 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Player input, demos, suits, equipment, commands, initialization, Mother Brain
    reactions, X-ray and direct damage use owned state. Natural X-ray, Gravity,
    boss and grapple movie coverage remains incomplete despite bounded checks.
-   X-ray controls/tables are consolidated; sm_88 has 1,454 lines left. sm_90 has 1,039.
+   X-ray controls/tables are consolidated; sm_88 has 1,454 lines left. sm_90 has 988.
    Pause sm_88 until sm_90 is deleted; retire production observer hooks with named segments.
-   Crystal Flash consumption and Draygon grab/release passed independent local checks;
-   adopt Crystal Flash next, then Draygon.
+   Crystal Flash consumption is consolidated; adopt checked Draygon grab/release next.
    Use named enum/function handlers as families move; raw identities stay at
    compatibility boundaries. Full u16 unknown values and failure timing survive.
    Report added production and deleted legacy together; growth needs a reason.

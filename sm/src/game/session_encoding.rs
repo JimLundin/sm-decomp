@@ -428,6 +428,7 @@ macro_rules! scalar_words {
         for index in 0..4 {
             $f(0xe04+index*2,$($borrow)* $s.player.collision.grapple_ejection[index]);
         }
+        $f(0xdea,$($borrow)* $s.player.transitions.crystal_flash_ammo);
         $f(0xdec,$($borrow)* $s.shared_sequence.stage);
         $f(0xdee,$($borrow)* $s.shared_sequence.value);
         $f(0xa1e,$($borrow)* $s.player.movement_and_facing);

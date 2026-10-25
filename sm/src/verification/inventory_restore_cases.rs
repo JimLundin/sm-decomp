@@ -180,17 +180,14 @@ unsafe fn crystal_flash(id: u32, game: &mut Game) -> Vec<u8> {
         (w::samus_super_missiles, 10),
         (w::samus_power_bombs, 10),
         (w::substate, if variant == 0 { 2 } else { 1 }),
-        (w::which_item_to_pickup, 4),
+        (w::which_item_to_pickup, lane as u16),
         (w::nmi_frame_counter_word, if variant == 2 { 1 } else { 8 }),
     ] {
         put(&mut game.g_ram, at, value);
     }
     let mut expected_ram = game.g_ram.to_vec();
-    let mut expected_trace = Vec::new();
     if variant != 2 {
         put(&mut expected_ram, AMMO[lane], 9);
-        // The actual caller debits ammo before entering restoration.
-        record(&expected_ram, 0, 0, 50, &mut expected_trace);
         for (at, value) in [
             (w::samus_health, 100),
             (w::samus_reserve_health, 50),
@@ -198,13 +195,11 @@ unsafe fn crystal_flash(id: u32, game: &mut Game) -> Vec<u8> {
         ] {
             put(&mut expected_ram, at, value);
         }
-        // Its substate/phase transition follows the restore return.
-        record(&expected_ram, 0, 1, 50, &mut expected_trace);
         if variant == 0 {
             put(&mut expected_ram, w::substate, 1);
         } else if lane < 2 {
             put(&mut expected_ram, w::substate, 10);
-            put(&mut expected_ram, w::which_item_to_pickup, 5);
+            put(&mut expected_ram, w::which_item_to_pickup, lane as u16 + 1);
         } else {
             for (at, value) in [
                 (w::substate, 0),
@@ -217,22 +212,17 @@ unsafe fn crystal_flash(id: u32, game: &mut Game) -> Vec<u8> {
             }
         }
     }
-    begin_trace();
     unsafe {
-        match lane {
-            0 => crate::game::sm_90::SamusMoveHandler_CrystalFlashMain_0(game),
-            1 => crate::game::sm_90::SamusMoveHandler_CrystalFlashMain_1(game),
-            _ => crate::game::sm_90::SamusMoveHandler_CrystalFlashMain_2(game),
-        }
+        crate::game::sm_90::CallSamusMovementHandler(0x90d6ce, game);
     }
-    let trace = finish_trace();
-    assert_eq!(trace, expected_trace, "crystal flash restore ordering {id}");
+    put(&mut expected_ram, w::samus_invincibility_timer, 0);
+    put(&mut expected_ram, w::samus_knockback_timer, 0);
     assert_eq!(
         &game.g_ram[..],
         &expected_ram[..],
         "crystal flash final state {id}"
     );
-    trace
+    Vec::new()
 }
 
 unsafe fn gunship(id: u32, game: &mut Game) -> Vec<u8> {

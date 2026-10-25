@@ -250,70 +250,19 @@ pub unsafe fn Hdmaobj_CrystalFlash(game: &mut Game) -> u8 {
         if word!(game.samus_input_handler) as i32 != 0x90e91d & 0xffff {
             word!(game.samus_input_handler = (0x90e90ei32) as u16);
         }
-        word! {game; timer_for_shinesparks_startstop = 9; which_item_to_pickup = 0; substate = 10;
-        suit_pickup_light_beam_pos = 0; }
+        word!(game.timer_for_shinesparks_startstop = 9);
+        Runtime::new(game)
+            .session_mut()
+            .player
+            .transitions
+            .crystal_flash_ammo = 0;
+        word! {game; substate = 10; suit_pickup_light_beam_pos = 0; }
         *(ram_ptr!(game, u16; 0xdf0)) = 0;
         word! {game; timer_for_shine_timer = 7; special_samus_palette_frame = 0;
         samus_shine_timer = 1; }
         *(ram_ptr!(game, u16; 0xdf2)) = 1;
         word! { game, 0; samus_invincibility_timer, samus_knockback_timer, knockback_dir }
         0
-    }
-}
-static kSamusMoveHandler_CrystalFlashMainFuncs: [Func_V; 3] = callback_table! { nonnull Func_V;
-    SamusMoveHandler_CrystalFlashMain_0, SamusMoveHandler_CrystalFlashMain_1,
-    SamusMoveHandler_CrystalFlashMain_2,
-};
-pub unsafe fn SamusMoveHandler_CrystalFlashMain_0(game: &mut Game) {
-    unsafe {
-        if (word!(game.nmi_frame_counter_word) & 7) == 0 {
-            word!(game.samus_missiles -= 1);
-            crate::game::item_pickups_runtime::restore(
-                crate::game::item_pickups::Resource::Health,
-                0x32,
-                game,
-            );
-            let v0: bool = ((word!(game.substate)) as i16).wrapping_sub(1) < 0;
-            if word!(game.substate -= 1, reread) == 0 || v0 {
-                word!(game.substate = 10);
-                word!(game.which_item_to_pickup += 1);
-            }
-        }
-    }
-}
-pub unsafe fn SamusMoveHandler_CrystalFlashMain_1(game: &mut Game) {
-    unsafe {
-        if (word!(game.nmi_frame_counter_word) & 7) == 0 {
-            word!(game.samus_super_missiles -= 1);
-            crate::game::item_pickups_runtime::restore(
-                crate::game::item_pickups::Resource::Health,
-                0x32,
-                game,
-            );
-            let v0: bool = ((word!(game.substate)) as i16).wrapping_sub(1) < 0;
-            if word!(game.substate -= 1, reread) == 0 || v0 {
-                word!(game.substate = 10);
-                word!(game.which_item_to_pickup += 1);
-            }
-        }
-    }
-}
-pub unsafe fn SamusMoveHandler_CrystalFlashMain_2(game: &mut Game) {
-    unsafe {
-        if (word!(game.nmi_frame_counter_word) & 7) == 0 {
-            word!(game.samus_power_bombs -= 1);
-            crate::game::item_pickups_runtime::restore(
-                crate::game::item_pickups::Resource::Health,
-                0x32,
-                game,
-            );
-            let v0: bool = ((word!(game.substate)) as i16).wrapping_sub(1) < 0;
-            if word!(game.substate -= 1, reread) == 0 || v0 {
-                word! {game; samus_movement_handler = ((0x90d75bi32) as u16);
-                samus_draw_handler = ((0x90eb52i32) as u16); samus_anim_frame_timer = 3;
-                samus_anim_frame = 12; }
-            }
-        }
     }
 }
 static kSamus_MoveHandler_Knockback: [Func_V; 6] = callback_table! { nonnull Func_V;
@@ -780,11 +729,6 @@ crate::game::callback_dispatch! {
             spawn_crystal_flash(game);
         }
     };
-    [9492174] SamusMoveHandler_CrystalFlashMain [] {
-        kSamusMoveHandler_CrystalFlashMainFuncs[word!(game.which_item_to_pickup) as usize]
-            (game);
-        word! { game, 0; samus_invincibility_timer, samus_knockback_timer }
-    };
     [9492315] kSamusMoveHandler_CrystalFlashFinish [] {
         if word!(game.samus_y_pos) != *(ram_ptr!(game, u16; 0xdf0)) {
             word!(game.samus_y_pos += 1);
@@ -863,6 +807,11 @@ crate::game::callback_dispatch! {
         }
     };
     @external {
+        9492174 => [{
+            let mut runtime = Runtime::new(game);
+            let frame = runtime.inputs().frame;
+            forced::consume_crystal_flash(runtime.session_mut(), frame);
+        }];
         9494565 => [forced::begin_bomb_jump(&mut Runtime::new(game))];
         9494578 => [forced::advance_bomb_jump(&mut Runtime::new(game), |h| h.foreign(|game| InvalidInterrupt_Crash(game)))];
         9494653 => [forced::finish_bomb_jump(Runtime::new(game).session_mut())];
