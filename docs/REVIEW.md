@@ -123,6 +123,12 @@ Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
+- **2026-10-25 02:52 CET (be111ac, no new agent commits):** **STALL, third in a
+  row: 0 agent commits** since 7867e91 (00:48 CEST), now ~3h; agents are not
+  running (escalated again; only Jim can restart them). Score unchanged `checks
+  24/44 · legacy 55315 · production 116670 · unsafe 4962 · verification 38993`;
+  warnings 377. 06:00 waypoint: both lanes behind, miss near-certain. Plan
+  unchanged: A0.2 Ceres capture and sm_94 step 1 remain the next commits.
 - **2026-10-25 02:52 (5d60c0e, no new agent commits):** **STALL, second in a
   row: 0 agent commits of any kind** since 7867e91 (00:48), now ~2h; agents are
   not running (escalated to Jim; not fixable from the repo). Lane B third silent
@@ -170,12 +176,6 @@ Map brief is done (c1fe795); no further map work unless the user asks.
   in one layer deletion, as asked); verification 37,843 (+339, tests moved out of
   production); unsafe 4,978 (−4); warnings 380 unique. PLAN.md 202 lines.
   Map: only the PROGRESS SVG text changed; rendered, fits.
-- **2026-10-24 20:52 (3222fe3):** 1 agent source commit since 674d87a (code,
-  −24 production, behaviour-equivalent helper reuse), 0 docs-only; no commits in
-  the last 50 min. Not a full stall, but **coverage stalled a third check-in**
-  (23/44, no recipe since 17:41) and throughput fell 4 → 1 commit. Production
-  117,662 (−24); verification 37,504, unsafe 4,982 flat; warnings 381 unique.
-  PLAN.md 202 lines (fixed). Map: SVG text only; re-rendered, fine on both widths.
 
 ## Lane watch (2026-10-24 23:52)
 
