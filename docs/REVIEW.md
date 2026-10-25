@@ -100,6 +100,12 @@ runs exactly one game frame per input word. Steps, one commit each:
   capture, numbers in the commit body). Then report the new first divergence and the
   word that differs. If 9,291 does not read $05B6 or a timer it drives, say what it
   reads instead; that names the next cause.
+  **10:52:** elapsed-NMI experiment moved first visible mismatch from 9,291 to 10,555
+  (Ridley setup four updates late) but stayed local; RNG differs earlier. Lane A landed
+  no commit this hour. **Next A0 commit (one hour):** land the elapsed-NMI model as
+  code if all 26 checks still pass (regression row at the upload), then report the
+  first step where the RNG word differs and the routine that advanced it. Then
+  Crocomire; lane A owes one landed commit per hour.
 - **A0.4 Replay.** Aligned any% from boot to credits, 0 failures; then 100%
   (222,788 frames) and low%.
 - **A0.5 Map.** Point pending `segments.toml` rows at frame windows of the
@@ -151,6 +157,14 @@ them in the body). Owned code still copies 65816 idioms: `x.wrapping_sub(0xa4) &
 0x8000 == 0` is a range test, write it as one; `foreign(|g| unsafe { rom_ptr!(..) })`
 and `write_slice_native(0xa8e, ..)` wrap the bank instead of owning its state.
 Score lines in `B:` commits still carry mojibake (`Â·`, 52ba836): write a plain `·`.
+**10:52:** `sm_90` 1,039 left (on pace to delete by 18:00); `sm_88` started in
+parallel (e091835, 1,543 left), in order, accepted. Legacy −376/h is ahead, but
+**production −76/h is behind for a second hour** (needs ~285/h): hour ratio ~80%.
+Each `B:` commit now cuts production by ≥100 lines (dead code, duplicated owned
+paths, verify/probe hooks: 611 lines/94 files) or says why not. `xray::widen` keeps
+the X-ray width in `DemoInput` field names (`demo.held` = width): give aliased RAM a
+named view; `held.wrapping_sub(11) & 0x8000 == 0` is still a range test. 6c4a6f7's
+Score line has `?` separators.
 
 **Waypoints** (Europe/Stockholm; review clock; a miss gets a diagnosis, not a new plan):
 
@@ -172,6 +186,12 @@ Map brief is done (c1fe795); no further map work unless the user asks.
 
 ## Check-ins
 
+- **2026-10-25 10:52 CET (8588674):** 4 agent commits: **A 0**, B 4 (6b1b013,
+  6c4a6f7, 8588674 `B:sm_90`; e091835 `B:sm_88`), 0 unlabelled, 0 docs-only, all with
+  `Score:`. Score `checks 26/44 · legacy 52014 · production 115992 · unsafe 4679 ·
+  verification 38944` (last 26 · 52390 · 116068 · 4707 · 39047); warnings 367 (370);
+  verify/probe/observer 611/94 (615/93). 18:00: legacy ahead, sm_90 on pace,
+  **checks and production behind**. Verification −103 (fixture lines deleted). No stall.
 - **2026-10-25 09:52 CET (e6a39a5):** 4 agent commits: A 2 (bd003cd gate-spawn fix +
   10-frame row, e6a39a5 Wave pickup), B 2 (52ba836 **sm_91 deleted**, 84838b5
   `B:sm_90`), 0 unlabelled, 0 docs-only, all with `Score:`. Score `checks 26/44 ·
