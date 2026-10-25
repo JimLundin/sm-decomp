@@ -325,10 +325,10 @@ jobs:
           pathlib.Path('rom/sm.smc').write_bytes(rom)
           if os.environ['KIND'] != 'route':
               bundle = pathlib.Path(os.environ['RUNNER_TEMP']) / 'seeds-v1.tar.gz.enc'
-              url = 'https://github.com/JimLundin/sm-decomp/releases/download/ci-data/seeds-v1-mb-b9948f2157b029d7.tar.gz.enc'
+              url = 'https://github.com/JimLundin/sm-decomp/releases/download/ci-data/seeds-v1-spore-6b6b2c8fd70bc713.tar.gz.enc'
               urllib.request.urlretrieve(url, bundle)
               command = [sys.executable, 'tools/ci_seed_data.py', 'restore', str(bundle),
-                         '--sha256', 'b9948f2157b029d7e875dcce1abf65d501f8bdc3d1e3a6aadfdf19a7ad6566f2']
+                         '--sha256', '6b6b2c8fd70bc7139410cd576f015dfcb361360ae74cf2196a62d7edfbda7835']
               for row in os.environ['SEGMENTS'].split():
                   command += ['--segment', row]
               subprocess.run(command, check=True)

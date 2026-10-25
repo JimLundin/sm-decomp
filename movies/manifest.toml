@@ -55,3 +55,15 @@ publication = "https://tasvideos.org/4010M"
 rom_sha256 = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72"
 sha256 = "1bd065d89b70c16efb6f9276e82b1c07fd57ec40095f030cc6efe6663458929c"
 submission = "https://tasvideos.org/6381S"
+
+[[movies]]
+author = "nymx & Sniq"
+category = "Spore Spawn RTA"
+download = "https://tasvideos.org/4481S?handler=Download"
+emulator = "lsnes rr2-beta23 / bsnes v085 (Compatibility core)"
+file = "super-metroid-spore-4481.lsmv"
+frames = 33342
+rom_sha256 = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72"
+sha256 = "0ef5fdacdbaf254ecf7e23f49d0048cce632043bc1cdb68745192b2fc586a05e"
+submission = "https://tasvideos.org/4481S"
+# Current replacement is a PowerOn LSMV; historical prose describes an older BizHawk movie.

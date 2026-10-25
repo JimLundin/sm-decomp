@@ -488,7 +488,8 @@ pub(super) fn dispatch(
                 x: enemy!(h, slot, x),
                 y: enemy!(h, slot, y),
             };
-            super::lifecycle::spawn_room(h, addr_kEproj_Spores as u16, 0);
+            let parameter = h.session().enemy_projectiles.spawn.point.y;
+            super::lifecycle::spawn_room(h, addr_kEproj_Spores as u16, parameter);
             script.offset(0)
         }
         8842467 | 8842519 => {

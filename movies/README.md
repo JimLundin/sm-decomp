@@ -1,8 +1,8 @@
 # TAS movies
 
 [`manifest.toml`](manifest.toml) lists the published Super Metroid TASes used
-as verification inputs: any%, low% and 100%, with download links, filenames,
-frame counts and SHA-256 hashes. Download a movie into this folder. If the
+as verification inputs: any%, low%, 100% and Spore Spawn, with download links,
+filenames, frame counts and SHA-256 hashes. Download a movie into this folder. If the
 download wraps the `.lsmv` or `.bk2` in another ZIP, extract the movie first.
 Check the movie's SHA-256 against the manifest and use your own
 [unheadered ROM](../rom/README.md). Movies and imported inputs are gitignored.
@@ -573,3 +573,29 @@ python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --segment bo
 The row retains the fresh-defeat expectation and all 120 following frames,
 including the beginning of the escape door transition. Credits remain pending;
 this movie does not record the complete credits roll.
+
+
+### Spore Spawn category movie
+
+[Submission 4481](https://tasvideos.org/4481S) supplies the current 33,342-frame
+PowerOn LSMV by nymx and Sniq. The downloaded replacement uses lsnes rr2-beta23,
+bsnes v085 Compatibility and the manifest's ROM hash. Historical submission
+prose describes an older BizHawk movie; use the current archive hash and frame
+count in `manifest.toml`. Its stated goal is the Spore Spawn fight, ending at the
+Super Missile pickup.
+
+The unchanged read-only logger captured 39 observations in `spore-input-phase`.
+`room-seeds-spore-input-phase.csv` binds all six regions and register metadata;
+all 33,342 original input/poll rows and 171,074 boundary events were audited.
+Seed 38 enters `$9DC7` before the Spore Spawn defeat bit is set.
+
+```powershell
+python tools/movie_inputs.py movies/super-metroid-spore-4481.lsmv movies/seed-spore-spawn.inputs --rom rom/sm.smc --lag-log target/seeds/spore-input-phase/lag.csv --seed target/seeds/spore-input-phase/0038-9DC7-wram.bin --frames 2294
+python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --segment boss-spore-spawn --segment spore-spawn-parameter
+```
+
+The 167-frame regression includes the first differing frame, 163, and three
+following frames. The original [spawn instruction](https://patrickjohnston.org/bank/86#DC77)
+passes the spawner's Y position in A; the translated callback must preserve that
+value in the shared spawn parameter. The boss row separately retains a fresh
+defeat and all 120 follow-up frames.
