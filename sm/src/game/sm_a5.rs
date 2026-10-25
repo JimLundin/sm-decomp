@@ -1075,7 +1075,7 @@ pub unsafe fn SporeSpawn_Func_6(game: &mut Game) {
     }
 }
 pub unsafe fn SporeSpawn_Func_7(a: u16, game: &mut Game) {
-    unsafe {
+    {
         let mut v1: u16 = a;
         for i in (0i32..32).step_by(2) {
             word!(

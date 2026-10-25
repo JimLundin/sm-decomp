@@ -48,12 +48,12 @@ crate::game::constants::typed_constants! { u32;
     fnHdmaobjPreInstr_MorphBallEyeBeamFading = 0x88eacb,
 }
 pub unsafe fn EnableHdmaObjects(game: &mut Game) {
-    unsafe {
+    {
         word!(game.hdma_objects_enable_flag |= (0x8000u16));
     }
 }
 pub unsafe fn DisableHdmaObjects(game: &mut Game) {
-    unsafe {
+    {
         word!(game.hdma_objects_enable_flag &= !(0x8000));
     }
 }
@@ -394,7 +394,7 @@ static g_word_88B256: [u16; 17] = [
     0x46, 1, 0x46, 3, 0x46, 2, 0x46, 1, 0x46, 1, 0x46, 2, 0x46, 2, 0x46, 1, 0x8000,
 ];
 pub unsafe fn HandleEarthquakeSoundEffect(game: &mut Game) {
-    unsafe {
+    {
         if (word!(game.earthquake_sfx_timer) & 0x8000) == 0 && {
             (word!(game.earthquake_sfx_timer -= 1, reread) & 0x8000) != 0
         } {
@@ -433,7 +433,7 @@ pub unsafe fn FxTypeFunc_28_CeresRidley(game: &mut Game) {
     }
 }
 pub unsafe fn sub_88D916(game: &mut Game) {
-    unsafe {
+    {
         word!(game.hdma_data_table_in_ceres = 9);
     }
 }
@@ -458,7 +458,7 @@ pub unsafe fn FxTypeFunc_A_Rain(game: &mut Game) {
     }
 }
 pub unsafe fn HdmaobjInstr_1938_RandomNumber(k: u16, hdp: *const u8, game: &mut Game) -> *const u8 {
-    unsafe {
+    {
         word!(
             game.hdma_object_D[(k >> 1)] = crate::rtl::rom_table_word!(
                 game,
@@ -611,7 +611,7 @@ pub unsafe fn SpawnBombTorizoHaze(game: &mut Game) {
     }
 }
 pub unsafe fn HdmaobjPreInstr_BombTorizoHazeColorMathBgColor(k: u16, game: &mut Game) {
-    unsafe {
+    {
         word!(game.fx_layer_blending_config_c = 44);
     }
 }

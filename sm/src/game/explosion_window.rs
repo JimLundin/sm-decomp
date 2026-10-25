@@ -45,18 +45,18 @@ pub(crate) unsafe fn begin_pre_flash(game: &mut Game) {
     }
 }
 pub(crate) unsafe fn begin_prescaled_pre_flash(game: &mut Game) {
-    unsafe {
+    {
         word!(game.pre_scaled_power_bomb_explosion_shape_def_ptr = addr_byte_889F06 as u16);
     }
 }
 pub(crate) unsafe fn begin_explosion(game: &mut Game) {
-    unsafe {
+    {
         word!(game.power_bomb_explosion_radius = 1024);
         word!(game.power_bomb_pre_explosion_radius_speed = kPowerBombExplosionRadiusSpeed);
     }
 }
 pub(crate) unsafe fn begin_prescaled_explosion(game: &mut Game) {
-    unsafe {
+    {
         word!(
             game.pre_scaled_power_bomb_explosion_shape_def_ptr =
                 addr_kPowerBombExplosionShapeDef0 as u16
@@ -91,7 +91,7 @@ pub(crate) fn try_crystal_flash(game: &mut Game) -> bool {
     forced::initialize_crystal_flash(&mut Runtime::new(game))
 }
 pub(crate) unsafe fn finish_power_bomb(v0: u16, game: &mut Game) {
-    unsafe {
+    {
         if word!(game.samus_x_pos) != word!(game.power_bomb_explosion_x_pos)
             || word!(game.samus_y_pos) != word!(game.power_bomb_explosion_y_pos)
             || !try_crystal_flash(game)
@@ -108,7 +108,7 @@ pub(crate) unsafe fn finish_power_bomb(v0: u16, game: &mut Game) {
     }
 }
 pub(crate) unsafe fn set_power_bomb_blending(k: u16, game: &mut Game) {
-    unsafe {
+    {
         word!(game.fx_layer_blending_config_c |= (0x8000u16));
     }
 }
@@ -329,7 +329,7 @@ unsafe fn calculate_explosion_hdma_scaled(
 }
 
 unsafe fn calculate_explosion_hdma_table_pointers(k: u16, pre_explosion: bool, game: &mut Game) {
-    unsafe {
+    {
         if pre_explosion && (word!(game.power_bomb_explosion_status) & 0x8000) == 0 {
             return;
         }
@@ -405,7 +405,7 @@ pub(crate) unsafe fn begin_crystal_flash(game: &mut Game) {
     }
 }
 pub(crate) unsafe fn finish_crystal_flash(k: u16, game: &mut Game) {
-    unsafe {
+    {
         let v0: u16 = k;
         word! { game, 0; power_bomb_flag, power_bomb_explosion_status }
         let v1: i32 = v0 as i32 >> 1;
@@ -457,7 +457,7 @@ pub(crate) enum Phase {
 }
 impl Phase {
     unsafe fn radius(self, game: &mut Game) -> u16 {
-        unsafe {
+        {
             if self == Self::PreFlash {
                 word!(game.power_bomb_pre_explosion_flash_radius)
             } else {
@@ -466,7 +466,7 @@ impl Phase {
         }
     }
     unsafe fn expand(self, game: &mut Game) {
-        unsafe {
+        {
             if self == Self::PreFlash {
                 word!(
                     game.power_bomb_pre_explosion_flash_radius +=
@@ -492,7 +492,7 @@ impl Phase {
         }
     }
     unsafe fn accelerate(self, game: &mut Game) {
-        unsafe {
+        {
             if self == Self::PreFlash {
                 word!(
                     game.power_bomb_pre_explosion_radius_speed -= kPowerBombPreExplosionRadiusAccel
@@ -505,7 +505,7 @@ impl Phase {
 }
 
 unsafe fn advance_instruction(k: u16, game: &mut Game) {
-    unsafe {
+    {
         word!(game.hdma_object_instruction_timers[(k >> 1)] = 1);
         word!(game.hdma_object_instruction_list_pointers[(k >> 1)] += 2);
         word!(game.hdma_object_timers[(k >> 1)] = 0);

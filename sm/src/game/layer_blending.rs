@@ -54,7 +54,7 @@ const ROOM_SETTINGS: [&[(usize, u8)]; 27] = [
 ];
 
 pub unsafe fn update(game: &mut Game) {
-    unsafe {
+    {
         let configuration = word!(game.fx_layer_blending_config_c);
         let mut bomb_mode = 0;
         if configuration as u8 != 0 {

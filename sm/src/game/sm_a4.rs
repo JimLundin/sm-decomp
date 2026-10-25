@@ -371,7 +371,7 @@ pub unsafe fn Crocomire_Func_28(game: &mut Game) {
     }
 }
 pub unsafe fn Crocomire_Func_29(game: &mut Game) {
-    unsafe {
+    {
         word! { game, 0; reg_BG2HOFS, reg_BG2VOFS }
     }
 }
@@ -720,7 +720,7 @@ pub unsafe fn Crocomire_93BE(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Crocomire_Func_58(game: &mut Game) {
-    unsafe {
+    {
         let v0: u16 = word!(game.reg_BG2VOFS);
         word_transfers!(game, descending, 256; le(crocomire_bg2_scroll_hdma_data, 255) <- value(v0));
     }
@@ -1073,7 +1073,7 @@ pub unsafe fn Crocomire_Func_92(game: &mut Game) {
     }
 }
 pub unsafe fn Crocomire_Func_94(game: &mut Game) {
-    unsafe {
+    {
         let v0: i32 = word!(game.collision_detection_index) as i32;
         game.eproj_spawn_pt = Point16U {
             x: word!(game.projectile_x_pos[v0]),

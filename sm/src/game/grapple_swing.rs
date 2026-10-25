@@ -18,7 +18,7 @@ fn project_axis(origin: u16, sample: i16, length: u16) -> u16 {
     }
 }
 unsafe fn place_sample(angle: u16, length: u16, game: &mut Game) {
-    unsafe {
+    {
         let index = (angle >> 1) as usize;
         if word!(game.grapple_beam_flags) & 0x8000 == 0 {
             let offset = if kSinCosTable8bit_Sext[index + 64] < 0 {

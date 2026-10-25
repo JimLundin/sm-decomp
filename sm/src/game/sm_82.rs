@@ -830,12 +830,12 @@ pub unsafe fn ResetSoundQueues(game: &mut Game) {
     }
 }
 pub unsafe fn ShowSpareCpu(game: &mut Game) {
-    unsafe {
+    {
         word!(game.joypad1_input_samusfilter = word!(game.joypad1_lastkeys));
     }
 }
 pub unsafe fn GameState_0_Reset_Async(game: &mut Game) -> CoroutineRet {
-    unsafe {
+    {
         word! { game, 0; UNUSED_word_7E0DF8, UNUSED_word_7E0DFA, UNUSED_word_7E0DFC }
         word! {game; cinematic_function = ((0x8b9b68i32) as u16); demo_set = 0; }
         if word!(game.num_demo_sets) == 4 {
@@ -1079,7 +1079,7 @@ pub unsafe fn OptionsMenuFunc2(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn DrawOptionsMenuSpritemaps(game: &mut Game) {
-    unsafe {
+    {
         for i in (0i32..=14).rev().step_by(2) {
             let v1: i32 = i >> 1;
             if word!(game.cinematicbg_arr8[v1]) != 0 {
@@ -1466,12 +1466,12 @@ pub unsafe fn MapScrolling(game: &mut Game) {
     }
 }
 pub unsafe fn MapScrolling_0_None(game: &mut Game) {
-    unsafe {
+    {
         word!(game.map_scrolling_gear_switch_timer = 4);
     }
 }
 pub unsafe fn MapScrolling_GetSpeedIndex(game: &mut Game) -> u16 {
-    unsafe {
+    {
         let result: u16 = word!(game.map_scrolling_speed_index);
         if word!(game.map_scrolling_gear_switch_timer) == 0 {
             return (word!(game.map_scrolling_speed_index)).wrapping_add(32);
@@ -1492,7 +1492,7 @@ pub unsafe fn MapScrolling_1_Left(game: &mut Game) {
     }
 }
 pub unsafe fn MapScrolling_Common(game: &mut Game) {
-    unsafe {
+    {
         word!(game.map_scrolling_speed_index += 1);
         if (word!(game.map_scrolling_speed_index += 1, reread) & 0xf) == 0 {
             QueueSfx1_Max6(0x36, game);
@@ -2084,7 +2084,7 @@ pub unsafe fn SetupPpuForGameplayResume(game: &mut Game) {
     }
 }
 pub unsafe fn CalculateBgScrolls_Unpause(game: &mut Game) {
-    unsafe {
+    {
         word!(game.reg_BG1HOFS = (word!(game.bg1_x_offset)).wrapping_add(word!(game.layer1_x_pos)));
         word!(game.reg_BG1VOFS = (word!(game.bg1_y_offset)).wrapping_add(word!(game.layer1_y_pos)));
         word!(game.reg_BG2HOFS = (word!(game.bg2_x_scroll)).wrapping_add(word!(game.layer2_x_pos)));
@@ -2092,7 +2092,7 @@ pub unsafe fn CalculateBgScrolls_Unpause(game: &mut Game) {
     }
 }
 pub unsafe fn ClearPauseMenuData(game: &mut Game) {
-    unsafe {
+    {
         word! { game, 0;
             menu_index, pausemenu_start_lr_pressed_highlight_timer, pausemenu_lr_animation_timer,
             pausemenu_item_selector_animation_timer, pausemenu_reserve_tank_animation_timer,
@@ -2115,7 +2115,7 @@ pub unsafe fn HandlePauseScreenLR(game: &mut Game) {
     }
 }
 pub unsafe fn HandlePauseScreenLrInput(game: &mut Game) {
-    unsafe {
+    {
         let play_switch_sound: bool = if (word!(game.newly_held_down_timed_held_input) as i32
             & kButton_L as i32)
             != 0
@@ -2148,7 +2148,7 @@ static kPauseLrButtonPressedHighlight_Spritemap: [u16; 2] = [0x28, 0x29];
 static kPauseLrButtonPressedHighlight_Y: [u16; 2] = [0x18, 0xe8];
 static kPauseLrButtonPressedHighlight_X: [u16; 2] = [0xd0, 0xd0];
 pub unsafe fn HandlePauseMenuLRPressHighlight(game: &mut Game) {
-    unsafe {
+    {
         if word!(game.pausemenu_start_lr_pressed_highlight_timer) != 0 {
             word!(game.pausemenu_start_lr_pressed_highlight_timer -= 1);
             if word!(game.pausemenu_shoulder_button_highlight) != 0 {
@@ -2186,7 +2186,7 @@ pub unsafe fn HandlePauseScreenStart(game: &mut Game) {
     }
 }
 pub unsafe fn HighlightPauseScreenButton(game: &mut Game) {
-    unsafe {
+    {
         if word!(game.pausemenu_start_lr_pressed_highlight_timer) != 0 {
             word!(game.pausemenu_start_lr_pressed_highlight_timer -= 1);
             sprite_output::menu(0x2b, 0x90, 0xd0, 0, game);
@@ -2596,7 +2596,7 @@ pub unsafe fn EquipmentScreenHudReserveAutoTilemap_On_BUGGY(game: &mut Game) {
     }
 }
 pub unsafe fn EquipmentScreenHudReserveAutoTilemap_Off(game: &mut Game) {
-    unsafe {
+    {
         word! { game, 11279;
             hud_tilemap[8], hud_tilemap[9], hud_tilemap[40], hud_tilemap[41], hud_tilemap[72],
             hud_tilemap[73],
@@ -2970,7 +2970,7 @@ pub unsafe fn EquipmentScreenDisplayReserves_PaletteSetup(game: &mut Game) -> u1
     }
 }
 pub unsafe fn EquipmentScreenMoveToReserveTanks(game: &mut Game) -> u16 {
-    unsafe {
+    {
         let result: u16 = word!(game.samus_max_reserve_health);
         if word!(game.samus_max_reserve_health) != 0 {
             word!(game.pausemenu_equipment_category_item = 0);
@@ -2989,7 +2989,7 @@ unsafe fn move_equipment_selection(
     fallback: Option<u16>,
     game: &mut Game,
 ) -> u16 {
-    unsafe {
+    {
         let (table, limit) = match category {
             1 => (0xc04c, 10),
             2 => (0xc056, 10),
@@ -3407,7 +3407,7 @@ pub unsafe fn MapScreenDrawSamusPositionIndicator(game: &mut Game) {
 static kMap_SamusPositionIndicator_Delays: [u16; 4] = [8, 4, 8, 4];
 static kMap_SamusPositionIndicator_SpritemapIds: [u16; 4] = [0x5f, 0x60, 0x61, 0x60];
 pub unsafe fn UpdateSamusPositionIndicatorAnimation(game: &mut Game) -> u16 {
-    unsafe {
+    {
         let mut v0: u16 = word!(game.samus_position_indicator_animation_timer);
         if v0 == 0 {
             let mut v1: u16 =
@@ -3785,7 +3785,7 @@ pub unsafe fn sub_82DB41(game: &mut Game) {
     }
 }
 pub unsafe fn HandleSamusOutOfHealthAndGameTile(game: &mut Game) {
-    unsafe {
+    {
         if (word!(game.samus_health) as i16) <= 0 {
             if (word!(game.reserve_health_mode) & 1) != 0 && word!(game.samus_reserve_health) != 0 {
                 word!(game.time_is_frozen_flag = 0x8000);
@@ -3831,7 +3831,7 @@ pub unsafe fn GameState_27_ReserveTanksAuto(game: &mut Game) -> CoroutineRet {
     }
 }
 pub unsafe fn RefillHealthFromReserveTanks(game: &mut Game) -> u8 {
-    unsafe {
+    {
         if word!(game.samus_reserve_health) != 0 {
             if (word!(game.nmi_frame_counter_word) & 7) == 0 {
                 QueueSfx3_Max3(0x2d, game);
@@ -3926,7 +3926,7 @@ pub unsafe fn GameState_21_SamusNoHealth(game: &mut Game) -> CoroutineRet {
     }
 }
 pub unsafe fn GameState_22_SamusNoHealth_Dying(game: &mut Game) -> CoroutineRet {
-    unsafe {
+    {
         Samus_DrawStartingDeathAnim(game);
         let v0: bool = (word!(game.g_word_7E0DE8 -= 1, reread) & 0x8000) != 0;
         if word!(game.g_word_7E0DE8) == 0 || v0 {
@@ -3974,7 +3974,7 @@ pub unsafe fn WaitUntilEndOfVblankAndEnableIrq(game: &mut Game) {
     }
 }
 pub unsafe fn EnsureSamusDrawnEachFrame(game: &mut Game) {
-    unsafe {
+    {
         if word!(game.elevator_flags) == 0 {
             Samus_DrawWhenNotAnimatingOrDying(game);
         }
@@ -4152,7 +4152,7 @@ pub unsafe fn GameOptionsMenu_3_OptionsScreen(game: &mut Game) {
     }
 }
 pub unsafe fn GameOptionsMenuItemFunc_0(game: &mut Game) {
-    unsafe {
+    {
         if word!(game.enable_debug) != 0
             && (word!(game.joypad1_lastkeys) as i32 & kButton_L as i32) == 0
             || word!(game.loading_game_state) as i32 == kGameState_5_FileSelectMap as i32
@@ -4215,7 +4215,7 @@ pub unsafe fn GameOptionsMenu_C_FadeOutOptionsScreenToStart(game: &mut Game) {
     }
 }
 pub unsafe fn GameOptionsMenu_4_StartGame(game: &mut Game) {
-    unsafe {
+    {
         word!(game.game_options_screen_index = 0);
         if word!(game.enable_debug) != 0 && (word!(game.joypad1_lastkeys) & 0x20) == 0 {
             word!(game.game_state = kGameState_5_FileSelectMap as u16);
@@ -4485,7 +4485,7 @@ pub unsafe fn OptionsMenuControllerFunc_7(game: &mut Game) {
     }
 }
 pub unsafe fn GameOptionsMenu_9_ScrollControllerSettingsDown(game: &mut Game) {
-    unsafe {
+    {
         word!(game.reg_BG1VOFS += 2);
         if word!(game.reg_BG1VOFS) == 32 {
             word!(game.game_options_screen_index = 7);
@@ -4493,7 +4493,7 @@ pub unsafe fn GameOptionsMenu_9_ScrollControllerSettingsDown(game: &mut Game) {
     }
 }
 pub unsafe fn GameOptionsMenu_A_ScrollControllerSettingsUp(game: &mut Game) {
-    unsafe {
+    {
         word!(game.reg_BG1VOFS -= 2);
         if word!(game.reg_BG1VOFS) == 0 {
             word!(game.game_options_screen_index = 7);
@@ -4502,7 +4502,7 @@ pub unsafe fn GameOptionsMenu_A_ScrollControllerSettingsUp(game: &mut Game) {
 }
 pub use self::sub_82F35B as sub_82F363;
 pub unsafe fn sub_82F369(j: u16, game: &mut Game) {
-    unsafe {
+    {
         let v1: i32 = j as i32 >> 1;
         word! {game; eproj_x_vel[(v1 + 3)] = 16; eproj_x_vel[(v1 + 11)] = 3584; }
     }

@@ -46,7 +46,7 @@ pub unsafe fn initialize_water(game: &mut Game) {
 }
 
 unsafe fn move_toward_target(game: &mut Game) -> u8 {
-    unsafe {
+    {
         if word!(game.fx_target_y_pos) & 0x8000 != 0 {
             return 1;
         }
@@ -375,7 +375,7 @@ pub unsafe fn water_wave(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn water_flat(_k: u16, game: &mut Game) {
-    unsafe {
+    {
         let value = word!(game.reg_BG2HOFS);
         word_transfers!(game, descending, 16; native(0x9c66) <- value(value));
     }

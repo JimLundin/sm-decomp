@@ -1440,7 +1440,7 @@ pub unsafe fn Rinka_9(k: u16, game: &mut Game) -> u8 {
     }
 }
 pub unsafe fn Rinka_10(r18: u16, r20: u16, game: &mut Game) -> bool {
-    unsafe {
+    {
         (r20 & 0x8000) != 0
             || ((r20) as i16).wrapping_sub((word!(game.layer1_y_pos)) as i16) < 0
             || r20 as i32 - word!(game.layer1_y_pos) as i32 - 224i32 & 0x8000 == 0

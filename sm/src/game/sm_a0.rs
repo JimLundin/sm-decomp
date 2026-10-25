@@ -38,7 +38,7 @@ macro_rules! adjust_room_shake_scroll {
 }
 
 pub unsafe fn HandleRoomShaking(game: &mut Game) {
-    unsafe {
+    {
         if word!(game.earthquake_timer) != 0
             && word!(game.time_is_frozen_flag) == 0
             && word!(game.earthquake_type) as i32 - 36i32 & 0x8000 != 0
@@ -215,7 +215,7 @@ crate::game::address_dispatch! {
     }
 }
 pub unsafe fn DecrementSamusTimers(game: &mut Game) {
-    unsafe {
+    {
         if word!(game.samus_invincibility_timer) != 0 {
             word!(game.samus_invincibility_timer -= 1);
         }

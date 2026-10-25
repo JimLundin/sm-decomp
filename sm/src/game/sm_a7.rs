@@ -279,7 +279,7 @@ pub unsafe fn Kraid_Touch_ArmFoot(game: &mut Game) {
     }
 }
 pub unsafe fn Kraid_Func_1(game: &mut Game) {
-    unsafe {
+    {
         word! {game; extra_samus_x_displacement = 4; extra_samus_y_displacement = -8i32 as u16; }
     }
 }
@@ -290,7 +290,7 @@ pub unsafe fn Kraid_Arm_Shot(j: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Kraid_CheckIfDead(game: &mut Game) -> u16 {
-    unsafe {
+    {
         ((gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game)
             & 1)
             != 0) as u16
@@ -532,7 +532,7 @@ pub unsafe fn Kraid_Shot_Mouth(game: &mut Game) {
     }
 }
 pub unsafe fn Kraid_SpawnExplosionEproj(k: u16, game: &mut Game) {
-    unsafe {
+    {
         let v1: i32 = k as i32 >> 1;
         game.eproj_spawn_pt = Point16U {
             x: word!(game.projectile_x_pos[v1]),
@@ -968,7 +968,7 @@ pub fn PauseHook_Kraid(game: &mut Game) {
     crate::game::vram_read_queue::enqueue(0x5d, 15872, 0x5000, 1024, false, game);
 }
 pub unsafe fn Kraid_PlaySoundEveryHalfSecond(game: &mut Game) {
-    unsafe {
+    {
         if word!(game.kraid_unk9000 -= 1, reread) == 0 {
             QueueSfx3_Max6(0x1e, game);
             word!(game.kraid_unk9000 = 30);
@@ -1153,7 +1153,7 @@ pub unsafe fn Kraid_SpawnRandomQuakeProjs(game: &mut Game) {
     }
 }
 pub unsafe fn Kraid_RestrictSamusXtoFirstScreen_2(game: &mut Game) {
-    unsafe {
+    {
         if ((word!(game.samus_x_pos)) as i16).wrapping_sub(256) >= 0 {
             word! { game, 256; samus_x_pos, samus_prev_x_pos }
         }

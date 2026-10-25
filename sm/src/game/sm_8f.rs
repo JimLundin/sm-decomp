@@ -61,12 +61,12 @@ pub unsafe fn RoomCode_GenRandomExplodes(x_r18: u16, y_r20: u16, game: &mut Game
     }
 }
 pub unsafe fn PauseHook_DraygonRoom(game: &mut Game) {
-    unsafe {
+    {
         word!(game.irqhandler_next_handler = 4);
     }
 }
 pub unsafe fn UnpauseHook_DraygonRoom(game: &mut Game) -> CoroutineRet {
-    unsafe {
+    {
         if word!(game.hdma_object_channels_bitmask[1]) == 8 {
             word!(game.irqhandler_next_handler = 12);
         }

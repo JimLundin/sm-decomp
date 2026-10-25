@@ -121,7 +121,7 @@ pub unsafe fn seal_wall(game: &mut Game) {
     }
 }
 pub unsafe fn start_earthquake(a: u16, game: &mut Game) {
-    unsafe {
+    {
         word! {game; earthquake_type = a; earthquake_timer = 20; }
         QueueSfx2_Max6(0x25, game);
     }

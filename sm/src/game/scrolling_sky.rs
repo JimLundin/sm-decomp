@@ -192,7 +192,7 @@ pub unsafe fn initialize_ocean(game: &mut Game) {
     }
 }
 unsafe fn damage_above_screen(game: &mut Game) {
-    unsafe {
+    {
         if ((word!(game.samus_y_pos)) as i16).wrapping_sub((word!(game.samus_y_radius)) as i16) < 0
             || word!(game.samus_y_pos) as i32 - word!(game.samus_y_radius) as i32 - 17i32 & 0x8000
                 != 0

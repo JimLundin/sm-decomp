@@ -70,7 +70,7 @@ pub(super) unsafe fn spawn_marker(
 }
 
 unsafe fn page_input_ready(game: &mut Game) -> bool {
-    unsafe {
+    {
         if word!(game.cinematic_var16) != 0 {
             word!(game.cinematic_var16 -= 1);
             false
@@ -380,7 +380,7 @@ pub(super) unsafe fn fade_out_to_ceres(game: &mut Game) {
 }
 
 pub(super) unsafe fn finish_pages(j: u16, game: &mut Game) -> u16 {
-    unsafe {
+    {
         word!(game.cinematic_function = (0x8bb72fi32) as u16);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
         j

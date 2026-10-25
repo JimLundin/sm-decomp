@@ -88,10 +88,10 @@ macro_rules! instruction_callbacks {
         $crate::instruction_callbacks!($visibility fn $parameters -> $result; @prefix {}; $($entries)*);
     };
     (@function [$visibility:vis unsafe fn $($header:tt)*] {$($prefix:tt)*} [$tail:expr] {$($body:tt)*}) => {
-        $visibility unsafe fn $($header)* { unsafe { $($prefix)* $($body)* $tail } }
+        $visibility unsafe fn $($header)* { #[allow(unused_unsafe)] unsafe { $($prefix)* $($body)* $tail } }
     };
     (@function [$visibility:vis unsafe fn $($header:tt)*] {$($prefix:tt)*} [] {$($body:tt)*}) => {
-        $visibility unsafe fn $($header)* { unsafe { $($prefix)* $($body)* } }
+        $visibility unsafe fn $($header)* { #[allow(unused_unsafe)] unsafe { $($prefix)* $($body)* } }
     };
     (@function [$($header:tt)*] {$($prefix:tt)*} [$tail:expr] {$($body:tt)*}) => {
         $($header)* { $($prefix)* $($body)* $tail }
@@ -111,7 +111,7 @@ macro_rules! forward_calls {
         $($visibility unsafe fn $name $parameters -> $result { unsafe { $call }})+
     };
     ($visibility:vis unsafe fn $parameters:tt; $($name:ident => $call:expr;)+) => {
-        $($visibility unsafe fn $name $parameters { unsafe { $call; }})+
+        $($visibility unsafe fn $name $parameters { #[allow(unused_unsafe)] unsafe { $call; }})+
     };
     ($visibility:vis fn $parameters:tt -> $result:ty; $($name:ident => $call:expr;)+) => {
         $($visibility fn $name $parameters -> $result { $call })+
@@ -245,7 +245,7 @@ pub mod game {
             { $($before:tt)* } [$condition:expr] $effects:block
             $(else $otherwise:block)? $(after { $($after:tt)* })?
         ) => {
-            $($header)* { unsafe {
+            $($header)* { #[allow(unused_unsafe)] unsafe {
                 $($before)*
                 if $condition $effects $(else $otherwise)?
                 $($($after)*)?

@@ -69,10 +69,13 @@ The known example/detached compilation errors are fixed and checked locally.
    Report production and legacy deltas together; growth needs a reason. Reuse existing
    interfaces and remove touched inline verification differences. The next size
    target is below 110,000 production lines; try scoped cargo-mutants before text patches.
-   M1 runs in parallel: checked caller-side byte places, then compiler-confirmed
-   redundant-block cleanup. Prototype 42c59cb is not safe to adopt: its whole-RAM
+   M1 checked caller-side byte access passes all 59 runnable rows locally, including
+   78,108 selected and 100,697 setup frames; 123 redundant unsafe blocks are cleared.
+   Next M2: shared Ripper/Jet Power Ripper behavior through existing Actor fields. Prototype 42c59cb is not safe to adopt: its whole-RAM
    borrows can invalidate retained enemy pointers, and its signature stripping
    exposes raw-pointer Load24 as safe. Passing replays do not resolve these defects.
+   We retain this checked M1 ahead of the revised REVIEW's proposed M1b deferral:
+   it creates no RAM reference or slice, directly addressing the alias concern.
    HDMA backend calls retain unsafe contracts: safe Game construction leaves public
    hardware pointers null. Typed arguments and checked RAM do not prove backend validity.
 3. **Then - finish owned gameplay.** Migrate remaining complete producer/consumer
@@ -87,6 +90,10 @@ Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
 Do not auto-rename macro-shared parameters. Held scrolling consolidation needs
 `scroll_tiles.row.bg2` coverage, absent in Ceres.
+
+Mutation-driver audit: deleting the old room driver breaks retained local capture
+callers. Existing bank campaigns do not replace its unusual alias, failed-upload and
+custom-content checks; keep those checks until their consumers and coverage migrate.
 
 Checkpoint cache finding: whole Session/codec hashes invalidate lossless scalar
 migrations despite an unchanged RAM payload. A future format transition needs

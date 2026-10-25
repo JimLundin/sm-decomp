@@ -62,7 +62,7 @@ unsafe fn get_RoomDefHeader(a: u16, game: &mut Game) -> *mut RoomDefHeader {
 }
 static kFileSelectMap_AreaIndexes: [u16; 6] = [0, 3, 5, 1, 4, 2];
 pub unsafe fn SoftReset(game: &mut Game) {
-    unsafe {
+    {
         word!(game.game_state = 0xffff);
     }
 }
@@ -238,7 +238,7 @@ pub unsafe fn GameOverMenu_1_Init(game: &mut Game) {
     }
 }
 pub unsafe fn GameOverMenu_2_PlayMusic(game: &mut Game) {
-    unsafe {
+    {
         if HasQueuedMusic(game) == 0 {
             word!(game.menu_index += 1);
             QueueMusic_Delayed8(4, game);
@@ -374,7 +374,7 @@ pub unsafe fn FileSelectMenu_Func1(game: &mut Game) {
     }
 }
 pub unsafe fn SetInitialFileCopyMenuSelection(game: &mut Game) {
-    unsafe {
+    {
         let mut v0: i32 = word!(game.nonempty_save_slots) as i32;
         let mut v1: i32 = 0;
         while v0 & 1 == 0 {
@@ -414,7 +414,7 @@ unsafe fn draw_file_copy_rows(emphasis: FileRowEmphasis, game: &mut Game) {
     }
 }
 unsafe fn draw_file_copy_row(slot: u16, game: &mut Game) {
-    unsafe {
+    {
         let mask = 1 << slot;
         let base = (slot + 2) << 8;
         menu_tilemap::health(!word!(game.nonempty_save_slots) & mask, base + 0x18, game);
@@ -449,7 +449,7 @@ pub unsafe fn QueueTransferOfMenuTilemapToVramBG1(game: &mut Game) {
 static kBitShl: [u8; 3] = [1, 2, 4];
 // Search toward the pressed direction without wrapping through the exit row.
 unsafe fn next_occupied_file_slot(game: &mut Game) -> Option<u8> {
-    unsafe {
+    {
         let up = if word!(game.joypad1_newkeys) as i32 & kButton_Up as i32 != 0 {
             true
         } else if word!(game.joypad1_newkeys) as i32 & kButton_Down as i32 != 0 {
@@ -507,7 +507,7 @@ pub unsafe fn FileSelectMenu_8(game: &mut Game) {
     }
 }
 pub unsafe fn SetFileCopyMenuSelectionMissilePosition(game: &mut Game) {
-    unsafe {
+    {
         static kFileCopyMissileY: [u16; 4] = [72, 104, 136, 211];
         word!(game.eproj_id[10] = kFileCopyMissileY[word!(game.eproj_id[15]) as usize]);
         word!(game.eproj_id[5] = 22);
@@ -659,7 +659,7 @@ pub unsafe fn FileSelectMenu_12_FileCopyConfirm(game: &mut Game) {
     }
 }
 pub unsafe fn HandleFileCopyArrowPalette(game: &mut Game) {
-    unsafe {
+    {
         if word!(game.cinematic_var6) != 0 {
             if word!(game.cinematic_var6 -= 1, reread) == 0 {
                 word!(game.cinematic_var6 = 4);
@@ -719,7 +719,7 @@ pub unsafe fn FileSelectMenu_13_FileCopyDoIt(game: &mut Game) {
     }
 }
 pub unsafe fn FileSelectMenu_14_CopyCompleted(game: &mut Game) {
-    unsafe {
+    {
         DrawBorderAroundDataCopyMode(game);
         if word!(game.joypad1_newkeys) != 0 {
             QueueSfx1_Max6(0x37, game);
@@ -736,7 +736,7 @@ pub unsafe fn FileSelectMenu_14_CopyCompleted(game: &mut Game) {
     }
 }
 pub unsafe fn FileSelectMenu_18(game: &mut Game) {
-    unsafe {
+    {
         word!(game.menu_index -= 14);
     }
 }
@@ -790,7 +790,7 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
     }
 }
 pub unsafe fn SetFileClearMenuMissilePos(game: &mut Game) {
-    unsafe {
+    {
         static kFileClear_MissileY: [u16; 4] = [72, 104, 136, 211];
         word!(game.eproj_id[10] = kFileClear_MissileY[word!(game.eproj_id[15]) as usize]);
         word!(game.eproj_id[5] = 22);
@@ -877,7 +877,7 @@ pub unsafe fn FileSelectMenu_25_FileClearDoClear(game: &mut Game) {
     }
 }
 pub unsafe fn FileSelectMenu_26_ClearCompleted(game: &mut Game) {
-    unsafe {
+    {
         DrawBorderAroundDataClearMode(game);
         if word!(game.joypad1_newkeys) != 0 {
             QueueSfx1_Max6(0x37, game);
@@ -902,7 +902,7 @@ pub unsafe fn FileSelectMenu_26_ClearCompleted(game: &mut Game) {
     }
 }
 pub unsafe fn FileSelectMenu_30(game: &mut Game) {
-    unsafe {
+    {
         DrawBorderAroundSamusData(game);
         word!(game.menu_index -= 26);
     }
@@ -1255,7 +1255,7 @@ crate::forward_calls! { pub unsafe fn (v0: u16, game: &mut Game);
         LoadAreaMapForegroundColors(kInactiveAreaMapForegroundColors[v0 as usize], game);
 }
 pub unsafe fn LoadAreaMapForegroundColors(mut j: u16, game: &mut Game) {
-    unsafe {
+    {
         loop {
             let v1: i32 = j as i32 >> 1;
             if crate::rtl::rom_table_word!(game, 0x81a4e6, v1 as isize) == 0xffff {
@@ -2143,7 +2143,7 @@ pub unsafe fn FileSelectMap_21_MoveExpandingSquare(game: &mut Game) {
     }
 }
 pub unsafe fn NewSaveFile(game: &mut Game) {
-    unsafe {
+    {
         word! { game, 99; samus_max_health, samus_health }
         word! { game, 0;
             samus_max_missiles, samus_missiles, samus_max_super_missiles, samus_super_missiles,

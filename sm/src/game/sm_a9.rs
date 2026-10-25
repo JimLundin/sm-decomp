@@ -3012,7 +3012,7 @@ pub unsafe fn Enemy_IncreaseYpos(k: u16, mut a: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Samus_DecrementAmmoDueToRainbowBeam(game: &mut Game) {
-    unsafe {
+    {
         if (word!(game.random_enemy_counter) & 3) == 0 && word!(game.samus_missiles) != 0 {
             let mut v0: u16 = (word!(game.samus_missiles)).wrapping_sub(g_word_A9C544);
             if word!(game.samus_missiles) as i32 - g_word_A9C544 as i32 - 1i32 & 0x8000 != 0 {
@@ -3049,7 +3049,7 @@ pub unsafe fn Samus_DecrementAmmoDueToRainbowBeam(game: &mut Game) {
     }
 }
 pub unsafe fn Samus_PlayGainingLosingHealthSfx(game: &mut Game) {
-    unsafe {
+    {
         if word!(game.samus_health) as i32 - 81i32 & 0x8000 == 0
             && (word!(game.random_enemy_counter) & 7) == 0
         {
@@ -3058,7 +3058,7 @@ pub unsafe fn Samus_PlayGainingLosingHealthSfx(game: &mut Game) {
     }
 }
 pub unsafe fn Samus_DamageDueToShitroid(game: &mut Game) {
-    unsafe {
+    {
         let mut v0: i16 = -4i16;
         if word!(game.equipped_items) & 1 != 0 {
             v0 = -3i16;

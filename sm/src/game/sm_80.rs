@@ -65,7 +65,7 @@ pub unsafe fn NextRandom(game: &mut Game) -> u16 {
     }
 }
 pub unsafe fn ReleaseButtonsFilter(v0: u16, game: &mut Game) {
-    unsafe {
+    {
         word!(game.timed_held_input_timer_reset = v0);
         let v1: bool = !(word!(game.joypad1_newkeys) as i32) as u16 & word!(game.joypad1_lastkeys)
             == word!(game.joypad_released_keys);
@@ -1162,7 +1162,7 @@ static kHudTilemaps_Missiles: [u16; 22] = [
     0x3437, 0x7437, 0x3438, 0x7438, 0x3439, 0x7439, 0x343a, 0x743a, 0x343b, 0x743b,
 ];
 pub unsafe fn AddMissilesToHudTilemap(game: &mut Game) {
-    unsafe {
+    {
         if (word!(game.hud_tilemap[10]) & 0x3ff) == 15 {
             word!(game.hud_tilemap[10] = kHudTilemaps_Missiles[0i32 as usize]);
             word!(game.hud_tilemap[11] = kHudTilemaps_Missiles[1i32 as usize]);
@@ -1369,7 +1369,7 @@ pub unsafe fn HandleHudTilemap(game: &mut Game) {
 }
 static kHudItemTilemapOffsets: [u16; 5] = [0x14, 0x1c, 0x22, 0x28, 0x2e];
 pub unsafe fn ToggleHudItemHighlight(a: u16, k: u16, game: &mut Game) {
-    unsafe {
+    {
         word!(game.hud_item_tilemap_palette_bits = k);
         let v2 = (a as i16).wrapping_sub(1);
         if v2 >= 0 {
@@ -1706,7 +1706,7 @@ pub unsafe fn CalculateLayer2Ypos(game: &mut Game) -> u8 {
     }
 }
 pub unsafe fn CalculateBgScrolls(game: &mut Game) {
-    unsafe {
+    {
         word!(game.reg_BG1HOFS = (word!(game.bg1_x_offset)).wrapping_add(word!(game.layer1_x_pos)));
         word!(game.reg_BG1VOFS = (word!(game.bg1_y_offset)).wrapping_add(word!(game.layer1_y_pos)));
         word!(game.reg_BG2HOFS = (word!(game.bg2_x_scroll)).wrapping_add(word!(game.layer2_x_pos)));
@@ -1830,7 +1830,7 @@ pub unsafe fn UpdateBgGraphicsWhenScrolling(game: &mut Game) {
     }
 }
 pub unsafe fn CalculateBgScrollAndLayerPositionBlocks(game: &mut Game) {
-    unsafe {
+    {
         crate::verify_probe::hit("camera.blocks");
         word! {game; bg1_x_block = word!(game.reg_BG1HOFS) >> 4;
         bg2_x_block = word!(game.reg_BG2HOFS) >> 4;
@@ -2092,7 +2092,7 @@ pub unsafe fn HandleScrollingWhenTriggeringScrollUp(game: &mut Game) {
     }
 }
 pub unsafe fn DebugScrollPosSaveLoad(game: &mut Game) {
-    unsafe {
+    {
         if (word!(game.joypad2_new_keys) & 0x40) != 0 {
             word!(game.debug_saveload_scrollpos_toggle += 1);
         }
@@ -2303,7 +2303,7 @@ pub unsafe fn DoorTransitionScrollingSetup_Up(game: &mut Game) {
     }
 }
 pub unsafe fn UpdatePreviousLayerBlocks(game: &mut Game) {
-    unsafe {
+    {
         word!(game.previous_layer1_x_block = word!(game.layer1_x_block));
         word!(game.previous_layer2_x_block = word!(game.layer2_x_block));
         word!(game.previous_layer1_y_block = word!(game.layer1_y_block));
@@ -2311,7 +2311,7 @@ pub unsafe fn UpdatePreviousLayerBlocks(game: &mut Game) {
     }
 }
 pub unsafe fn UpdateBgScrollOffsets(game: &mut Game) {
-    unsafe {
+    {
         word!(game.bg1_x_offset = (word!(game.reg_BG1HOFS)).wrapping_sub(word!(game.layer1_x_pos)));
         word!(game.bg1_y_offset = (word!(game.reg_BG1VOFS)).wrapping_sub(word!(game.layer1_y_pos)));
         word!(game.bg2_x_scroll = (word!(game.reg_BG2HOFS)).wrapping_sub(word!(game.layer1_x_pos)));

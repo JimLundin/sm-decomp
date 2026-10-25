@@ -975,7 +975,7 @@ pub unsafe fn NorfairLavaMan_Func_5(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn NorfairLavaMan_Func_6(game: &mut Game) {
-    unsafe {
+    {
         if word!(game.door_transition_flag_enemies) == 0 && {
             word!(game.variables_for_enemy_graphics_drawn_hook[2] -= 1, reread) == 0
         } {
@@ -1956,7 +1956,7 @@ pub unsafe fn sub_A8DDDE(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn WalkingLavaSeahorse_DF20(a: u16, game: &mut Game) {
-    unsafe {
+    {
         SpawnEprojWithGfx(a, word!(game.cur_enemy_index), addr_loc_A89E90 as u16, game);
         QueueSfx2_Max6(0x3f, game);
     }

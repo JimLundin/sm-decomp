@@ -88,17 +88,17 @@ macro_rules! ram_vars {
 // of one literal use `(game, value; field, other[index])`; different values use
 // `(game; field = value; other[index] = next;)`.
 //
-// These operations require an unsafe context. Keep raw loads/stores at the
-// caller: a whole-Game/RAM borrow can invalidate retained raw enemy pointers.
+// Checked byte places stay at the caller: borrowing the whole Game/RAM here
+// could invalidate retained raw enemy pointers. No reference escapes an access.
 // Odd addresses and signed array offsets outside a named table remain valid.
-// Reads form the base before the index; assignments evaluate RHS before the
+// Reads evaluate the index once; assignments evaluate RHS before the
 // destination, retaining RHS temporaries through the store. Updates capture
 // the destination and read its old value before evaluating the RHS. `reread`
 // loads that destination after RHS temporaries are dropped. No value or index
 // is hoisted across ordered stores; update expressions create no closure.
 macro_rules! word {
     // Compound arithmetic wraps at 16 bits; bits/shifts keep ordinary u16 operations.
-    // Delegate pointer capture, old load, RHS evaluation and store to the update arm.
+    // Delegate destination capture, old load, RHS evaluation and store to the update arm.
     ($game:ident.$field:ident$([$index:expr])? &= $value:expr $(, $result:ident)? $(,)?) => {
         $crate::ram_map::word!($game.$field$([$index])?, |old| old & $value $(, $result)?)
     };
@@ -139,42 +139,18 @@ macro_rules! word {
     };
 
     ($game:ident.$field:ident[$index:expr]) => {
-        u16::from_le(
-            (&raw const $game.g_ram)
-                .cast::<u8>()
-                .add($crate::ram_map::word_arrays::$field)
-                .cast::<u16>()
-                .offset(($index) as isize)
-                .read_unaligned(),
-        )
+        $crate::ram_map::word!(@read $game,
+            $crate::ram_map::word!(@offset $field[$index]))
     };
     ($game:ident.$field:ident) => {
-        u16::from_le(
-            (&raw const $game.g_ram)
-                .cast::<u8>()
-                .add($crate::ram_map::words::$field)
-                .cast::<u16>()
-                .read_unaligned(),
-        )
+        $crate::ram_map::word!(@read $game, $crate::ram_map::words::$field)
     };
     ($game:ident.$field:ident[$index:expr] = $value:expr $(,)?) => {
-        $crate::rtl::write_word(
-            $value,
-            (&raw mut $game.g_ram)
-                .cast::<u8>()
-                .add($crate::ram_map::word_arrays::$field)
-                .cast::<u16>()
-                .offset(($index) as isize),
-        )
+        $crate::ram_map::word!(@write $game,
+            $crate::ram_map::word!(@offset $field[$index]), $value)
     };
     ($game:ident.$field:ident = $value:expr $(,)?) => {
-        $crate::rtl::write_word(
-            $value,
-            (&raw mut $game.g_ram)
-                .cast::<u8>()
-                .add($crate::ram_map::words::$field)
-                .cast::<u16>(),
-        )
+        $crate::ram_map::word!(@write $game, $crate::ram_map::words::$field, $value)
     };
     ($game:ident; $($field:ident$([$index:expr])? = $value:expr;)+) => {
         $($crate::ram_map::word!($game.$field$([$index])? = $value);)+
@@ -189,27 +165,46 @@ macro_rules! word {
         $crate::ram_map::word!($game.$field$([$index])?, |$old| $value $(, $result)?)
     };
     ($game:ident.$field:ident[$index:expr], |$old:ident| $value:expr $(, $result:ident)? $(,)?) => {{
-        let destination = (&raw mut $game.g_ram)
-            .cast::<u8>()
-            .add($crate::ram_map::word_arrays::$field)
-            .cast::<u16>()
-            .offset(($index) as isize);
-        let $old = u16::from_le(destination.read_unaligned());
-        $crate::rtl::write_word($value, destination);
-        $crate::ram_map::word!(@result destination $(, $result)?)
+        let destination = $crate::ram_map::word!(@offset $field[$index]);
+        let $old = $crate::ram_map::word!(@read $game, destination);
+        $crate::ram_map::word!(@write $game, destination, $value);
+        $crate::ram_map::word!(@result $game, destination $(, $result)?)
     }};
     ($game:ident.$field:ident, |$old:ident| $value:expr $(, $result:ident)? $(,)?) => {{
-        let destination = (&raw mut $game.g_ram)
-            .cast::<u8>()
-            .add($crate::ram_map::words::$field)
-            .cast::<u16>();
-        let $old = u16::from_le(destination.read_unaligned());
-        $crate::rtl::write_word($value, destination);
-        $crate::ram_map::word!(@result destination $(, $result)?)
+        let destination = $crate::ram_map::words::$field;
+        let $old = $crate::ram_map::word!(@read $game, destination);
+        $crate::ram_map::word!(@write $game, destination, $value);
+        $crate::ram_map::word!(@result $game, destination $(, $result)?)
     }};
-    (@result $destination:ident) => { () };
-    (@result $destination:ident, reread) => {
-        u16::from_le($destination.read_unaligned())
+    (@offset $field:ident[$index:expr]) => {
+        $crate::ram_map::word_arrays::$field
+            .checked_add_signed(($index as isize).checked_mul(2).expect("word index overflow"))
+            .expect("word address outside RAM")
+    };
+    (@read $game:ident, $offset:expr) => {
+        match $offset {
+            offset => {
+                // Check both bytes without borrowing any part of the RAM array.
+                assert!(offset < 131071, "word address outside RAM");
+                u16::from_le_bytes([$game.g_ram[offset], $game.g_ram[offset + 1]])
+            }
+        }
+    };
+    (@write $game:ident, $offset:expr, $value:expr) => {
+        // Match keeps RHS/index temporaries alive through both stores, unlike
+        // a let-value statement. The caller's semicolon drops them before reread.
+        match ($value, $offset) {
+            (value, offset) => {
+                assert!(offset < 131071, "word address outside RAM");
+                let bytes = u16::to_le_bytes(value);
+                $game.g_ram[offset] = bytes[0];
+                $game.g_ram[offset + 1] = bytes[1];
+            }
+        }
+    };
+    (@result $game:ident, $destination:ident) => { () };
+    (@result $game:ident, $destination:ident, reread) => {
+        $crate::ram_map::word!(@read $game, $destination)
     };
 }
 pub(crate) use word;
@@ -217,7 +212,7 @@ pub(crate) use word;
 // Checked word access for migrated callers that retain offsets, not pointers.
 // Byte places avoid borrowing the whole RAM array. Assignments evaluate the
 // value before the address; updates capture the address and old value first.
-// Keep this separate from `word!` until each caller's pointer lifetimes migrate.
+// This smaller interface retains its existing low-byte-first failure prefix.
 macro_rules! checked_word {
     ($game:ident.$field:ident[$index:expr] $($tail:tt)*) => {
         $crate::ram_map::checked_word!($game,
