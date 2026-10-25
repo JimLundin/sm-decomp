@@ -12,12 +12,12 @@ pub use crate::game::constants::bank_86::*;
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx2_Max9, QueueSfx3_Max6};
-use crate::game::sm_88::SpawnMorphBallEyeBeamHdma;
 use crate::game::sm_a0::{
     Abs16, CallEnemyPreInstr, CosineMult8bit, CosineMult8bitFull, EnemyFunc_B7A1, SignExtend8,
     SineMult8bit, SineMult8bitFull,
 };
 use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
+use crate::game::visual_runtime::initialize_morph_eye_beam;
 
 pub use crate::types::Consts_A8;
 
@@ -3888,7 +3888,7 @@ crate::game::callback_dispatch! {
     when v2 || v3;
     [11047214] MorphBallEye_Func_2 {
         QueueSfx2_Max6(0x17, game);
-        SpawnMorphBallEyeBeamHdma(game);
+        initialize_morph_eye_beam(game);
         (*E).var_F = (0xa89160i32) as u16;
         (*E).var_D = actor_api::angle_from_delta((word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos), (word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos));
     };

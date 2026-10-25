@@ -21,8 +21,8 @@ use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::palette_effects;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
-use crate::game::sm_88::SpawnBombTorizoHaze;
 use crate::game::sm_a0::CallEnemyPreInstr;
+use crate::game::visual_runtime::initialize_bomb_torizo_haze;
 
 pub use crate::types::Consts_AA;
 
@@ -789,7 +789,7 @@ crate::game::callback_dispatch! {
                 }
             } else {
                 Torizo_C250(game);
-                SpawnBombTorizoHaze(game);
+                initialize_bomb_torizo_haze(game);
             }
         };
     };

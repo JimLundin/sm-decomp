@@ -207,7 +207,7 @@ pub(crate) fn load_fx_entry(index: u16, game: &mut Game) {
 
 pub(crate) fn load_fx_header(game: &mut Game) {
     use crate::game::{
-        animated_tiles, liquid_effects, palette_effects, scrolling_sky, sm_88, visual_runtime,
+        animated_tiles, liquid_effects, palette_effects, scrolling_sky, visual_runtime,
     };
     let mut address = checked_word!(game.room_layer3_asm_ptr);
     if address == 0 {
@@ -248,9 +248,9 @@ pub(crate) fn load_fx_header(game: &mut Game) {
             17 => Some(scrolling_sky::initialize_banded_sky),
             18 => Some(visual_runtime::initialize_fireflea_lighting),
             19 => Some(visual_runtime::initialize_tourian_statue),
-            20 => Some(sm_88::FxTypeFunc_28_CeresRidley),
-            21 => Some(sm_88::FxTypeFunc_CeresElevator),
-            22 => Some(sm_88::FxTypeFunc_2C_Haze),
+            20 => Some(visual_runtime::initialize_ceres_ridley),
+            21 => Some(visual_runtime::initialize_ceres_elevator),
+            22 => Some(visual_runtime::initialize_room_haze),
             _ => panic!("room FX kind outside callback table"),
         };
         if let Some(initialize) = initialize {

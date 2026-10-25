@@ -12,9 +12,9 @@ use crate::game::scrolling_sky::{
 };
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
-use crate::game::sm_88::FxTypeFunc_2C_Haze;
 use crate::game::sm_a6::HandleCeresRidleyGetawayCutscene;
 use crate::game::sprite_effect_runtime::create_sprite;
+use crate::game::visual_runtime::initialize_room_haze;
 use crate::game::{
     player_collision::operations as player_collision, session_runtime::Runtime as CollisionRuntime,
 };
@@ -165,11 +165,11 @@ crate::game::callback_dispatch! {
     };
     [9423214] RoomCode_SetCeresDoorSolid [] {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x26, 0xba48 as VoidP), game);
-        FxTypeFunc_2C_Haze(game);
+        initialize_room_haze(game);
     };
     [9423227] RoomCode_CeresColorMathHdma_BgBase [] {
         *ram_ptr!(game; 0x5d) = 102;
-        FxTypeFunc_2C_Haze(game);
+        initialize_room_haze(game);
         word!(game.hdma_data_table_in_ceres = 9);
     };
     @forward [pub unsafe fn (game: &mut Game)];
@@ -189,7 +189,7 @@ crate::game::callback_dispatch! {
     [9423059]
     RoomCode_SetupShaktoolRoomPlm => spawn_hardcoded(SpawnHardcodedPlmArgs::new(0, 0, 0xb8eb as VoidP), game);
     @external {
-        9423222 => FxTypeFunc_2C_Haze;
+        9423222 => initialize_room_haze;
         9408955 | 9408956 | 9408979 | 9408980 | 9408981 | 9408982 | 9409012 | 9409013 | 9409014
                 | 9409015 | 9423047 | 9423056 | 9423057 | 9423058 | 9423068 | 9423134 => [()];
     }

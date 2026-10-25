@@ -23,9 +23,9 @@ use crate::game::sm_80::{
     ScreenOff, ScreenOn, WaitForNMI_Async,
 };
 use crate::game::sm_82::AdvancePaletteFade_BgPalette6;
-use crate::game::sm_88::sub_88E487;
 use crate::game::sm_a0::CallEnemyPreInstr;
 use crate::game::sprite_effect_runtime::create_sprite;
+use crate::game::visual_runtime::initialize_phantoon_motion;
 use crate::game::visual_runtime::spawn_hdma;
 
 crate::typed_struct! {
@@ -3525,7 +3525,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11000401] Phantoon_WavyDyingPhantoonAndCry [] {
-        sub_88E487(1, g_word_A7CDA3, game);
+        initialize_phantoon_motion(1, g_word_A7CDA3, game);
         (*Get_Phantoon(0xc0i32, game)).var_D = 0;
         (*Get_Phantoon(k as i32, game)).var_F = (0xa7da86i32) as u16;
         let mut Phantoon = Get_Phantoon(0x40, game);
@@ -4117,7 +4117,7 @@ crate::game::callback_dispatch! {
         let E3 = Get_Phantoon(0xc0, game);
         (*E3).parameter_1 = -32767i32 as u16;
         (*EK).var_E = 120;
-        sub_88E487(2, g_word_A7CDA3, game);
+        initialize_phantoon_motion(2, g_word_A7CDA3, game);
         (*E3).var_D = g_word_A7CD9D;
         (*Get_Phantoon(0x40i32, game)).var_F = 0;
         QueueMusic_Delayed8(5, game);

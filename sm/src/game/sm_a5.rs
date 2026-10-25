@@ -19,11 +19,11 @@ use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::session_runtime::damage_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
-use crate::game::sm_88::{SpawnBG3ScrollHdmaObject, sub_88DF34};
 use crate::game::sm_a0::{
     Abs16, ConvertAngleToXy, CosineMult8bit, EnemyFunc_B7A1, EnemyFunc_Divide, SineMult8bit,
 };
 use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
+use crate::game::visual_runtime::{initialize_draygon_layer, spawn_bg3_scroll};
 
 pub use crate::types::Consts_A5;
 
@@ -1106,9 +1106,9 @@ crate::game::callback_dispatch! {
         (*Get_Draygon(0xc0i32, game)).base.current_instruction = addr_kDraygon_Ilist_9813 as u16;
         word!(game.enemy_bg2_tilemap_size = 1024);
         (*Get_Draygon(word!(game.cur_enemy_index) as i32, game)).var_A = (0xa5871bi32) as u16;
-        sub_88DF34(game);
+        initialize_draygon_layer(game);
         word!(game.room_loading_irq_handler = 12);
-        SpawnBG3ScrollHdmaObject(game);
+        spawn_bg3_scroll(game);
         (*Get_Draygon(0i32, game)).var_45 = 1;
         minimap::disable_for_boss(&mut crate::game::session_runtime::Runtime::new(game));
     };

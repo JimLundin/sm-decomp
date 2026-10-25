@@ -138,3 +138,53 @@ pub unsafe fn flicker_body(game: &mut Game) {
         };
     }
 }
+
+crate::forward_calls! { pub(crate) unsafe fn (game: &mut Game) -> u16;
+    spawn_rising_hdma => crate::game::visual_runtime::spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x2c, 0xe727), game);
+    spawn_rainbow_hdma => crate::game::visual_runtime::spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x41, 0x26, 0xe751), game);
+}
+
+pub(crate) unsafe fn initialize_rainbow_beam(game: &mut Game) {
+    game.g_ram[0x74] = 32;
+    game.g_ram[0x75] = 71;
+    game.g_ram[0x76] = 0x8f;
+    word!(game.fx_layer_blending_config_c = 36);
+    game.g_ram[0x9c00] = 100;
+    word_transfers!(game, ascending, 1; native(0x9c01) <- value(0x9d00), native(0x9c03) <- value(0));
+    word! {game; hdma_table_2[0] = 0; hdma_table_2[1] = 0x8020; hdma_table_2[2] = 0; }
+    unsafe {
+        crate::game::sm_a9::MotherBrain_CalculateRainbowBeamHdma(game);
+    }
+}
+
+pub(crate) unsafe fn advance_rainbow_beam(game: &mut Game) {
+    if word!(game.game_state) == 19 {
+        word_transfers!(game, ascending, 1;
+            native(0x18b4 + 2 * usize::from(word!(game.hdma_object_index) >> 1)) <- value(0));
+    } else {
+        word!(game.fx_layer_blending_config_c = 36);
+        if word!(game.game_state) != 27 {
+            unsafe {
+                crate::game::sm_a9::MotherBrain_CalculateRainbowBeamHdma(game);
+            }
+            advance_rainbow_palette(game);
+        }
+    }
+}
+
+fn advance_rainbow_palette(game: &mut Game) {
+    let mut color =
+        crate::rtl::rom_table_word!(game, 0x88e833, (word!(game.hdma_object_A[0]) >> 1) as isize);
+    if color & 0x8000 == 0 {
+        word!(game.hdma_object_A[0] += 1);
+        word!(game.hdma_object_A[0] += 1);
+        word!(game.hdma_object_A[0] += 1);
+        word!(game.hdma_object_A[0] += 1);
+    } else {
+        word!(game.hdma_object_A[0] = 0);
+        color = crate::rtl::rom_table_word!(game, 0x88e833, 0);
+    }
+    game.g_ram[0x74] = color as u8 & 0x1f | 0x20;
+    game.g_ram[0x75] = (color >> 5) as u8 & 0x1f | 0x40;
+    game.g_ram[0x76] = (color >> 10) as u8 & 0x1f | 0x80;
+}

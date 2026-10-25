@@ -21,7 +21,7 @@ use super::sm_8b::{
     addr_kCinematicSpriteObjectDef_8BCF27,
 };
 use super::sm_80::{EnableNMI, HandleFadeOut};
-use super::sm_88::SpawnIntroCutsceneCrossfadeHdma;
+use super::visual_runtime::initialize_intro_crossfade;
 use crate::game::music::QueueMusic_Delayed8;
 use crate::game_state::Game;
 use crate::ram_map::{ram_ptr, word};
@@ -184,7 +184,7 @@ pub(super) unsafe fn wait_for_scene(scene: Scene, game: &mut Game) {
         *ram_ptr!(game; 0x6b) = 17;
         *ram_ptr!(game; 0x6f) = 2;
         *ram_ptr!(game; 0x72) = 0;
-        SpawnIntroCutsceneCrossfadeHdma(game);
+        initialize_intro_crossfade(game);
         SetSomeStuffForSpriteObject_15(game);
         word!(
             game.cinematic_function = match palette {

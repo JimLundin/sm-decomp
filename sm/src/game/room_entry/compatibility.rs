@@ -141,7 +141,7 @@ impl EntryEffects for Runtime<'_> {
                     );
                 }
                 LeafEffect::SpawnBg3ScrollHdma => {
-                    game::sm_88::SpawnBG3ScrollHdmaObject(game);
+                    game::visual_runtime::spawn_bg3_scroll(game);
                 }
                 LeafEffect::SaveExploredMap => {
                     game::sm_80::SaveExploredMapTilesToSaved(game);

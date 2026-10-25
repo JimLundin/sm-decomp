@@ -4,7 +4,7 @@ use crate::game::constants::bank_87::{addr_kAnimtiles_Acid, addr_kAnimtiles_Lava
 use crate::game::prelude::*;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::sm_80::QueueSfx2_Max6;
-use crate::game::sm_88::SpawnBG3ScrollHdmaObject;
+use crate::game::visual_runtime::spawn_bg3_scroll;
 use crate::game::visual_runtime::{shake_room_with_sound, spawn_hdma};
 
 pub const WATER_WAVE: [i16; 16] = [0, 1, 1, 0, 0, -1, -1, 0, 0, 1, 1, 0, 0, -1, -1, 0];
@@ -27,7 +27,7 @@ unsafe fn initialize_hot(tiles: u16, game: &mut Game) {
         static BACKGROUND: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x10, 0xc3f0);
         spawn_hdma(0x88, &SURFACE, game);
         spawn_hdma(0x88, &BACKGROUND, game);
-        SpawnBG3ScrollHdmaObject(game);
+        spawn_bg3_scroll(game);
         animated_tiles::spawn(tiles, game);
     }
 }
@@ -41,7 +41,7 @@ pub unsafe fn initialize_water(game: &mut Game) {
         if word!(game.fx_liquid_options) & 2 != 0 {
             spawn_hdma(0x88, &BACKGROUND, game);
         }
-        SpawnBG3ScrollHdmaObject(game);
+        spawn_bg3_scroll(game);
     }
 }
 

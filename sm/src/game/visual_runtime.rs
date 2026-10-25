@@ -1,8 +1,15 @@
 //! Visual adapters on the one aggregate Session, with explicit legacy effects.
 use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
+use crate::game::player_transitions::xray::BeamPhase;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::sm_8b::ConfigureTitleSequenceGradientHDMA;
+use crate::game::xray_background::{self, finish_restore, restore_left, restore_right};
+use crate::game::{
+    explosion_window::{self, Phase},
+    liquid_effects, mother_brain_visuals, scrolling_sky,
+};
 use crate::ram_map::{checked_word, word};
+use crate::rtl::Unreachable;
 use crate::{
     game::{
         animated_tiles,
@@ -21,6 +28,78 @@ use crate::{
     rom::RomRecord,
     types::{SpawnHardcodedPlmArgs, SpawnHdmaObject_Args},
 };
+
+pub(crate) unsafe fn spawn_bg3_scroll(game: &mut Game) {
+    unsafe { spawn_hdma_last(0x88, &SpawnHdmaObject_Args::new(0x43, 0x11, 0xd8d0), game) }
+}
+
+crate::forward_calls! { pub(crate) unsafe fn (game: &mut Game);
+    initialize_ceres_elevator => spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 5, 0xd939), game);
+    initialize_draygon_layer => spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x2c, 0xdf4f), game);
+    initialize_morph_eye_beam => spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x41, 0x26, 0xe8ec), game);
+    initialize_intro_crossfade => spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x31, 0xec03), game);
+}
+
+pub(crate) unsafe fn initialize_ceres_ridley(game: &mut Game) {
+    unsafe {
+        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 5, 0xd906), game);
+        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x2c, 0xd91d), game);
+    }
+}
+
+pub(crate) unsafe fn initialize_bomb_torizo_haze(game: &mut Game) {
+    unsafe {
+        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(2, 0x32, 0xdd4a), game);
+        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x32, 0xdd62), game);
+    }
+}
+
+pub(crate) unsafe fn initialize_room_haze(game: &mut Game) {
+    let program = if crate::game::gameplay_flag_runtime::CheckBossBitForCurArea(1, game) & 1 != 0 {
+        0xdeeb
+    } else {
+        0xded3
+    };
+    unsafe {
+        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 0x32, program), game);
+    }
+}
+
+pub(crate) unsafe fn initialize_phantoon_motion(direction: u16, speed: u16, game: &mut Game) {
+    use crate::game::actors::access::AccessMode::Native;
+    {
+        let mut runtime = Runtime::new(game);
+        runtime.edit_actor(Key::from_legacy(0x80), Native, |actor| {
+            actor.parameters[0] = direction
+        });
+        runtime.edit_actor(Key::from_legacy(0xc0), Native, |actor| {
+            actor.variables[3] = 0;
+            actor.variables[4] = 0;
+            actor.pre_instruction = speed;
+        });
+    }
+    unsafe {
+        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0xf, 0xe4a8), game);
+    }
+}
+
+pub(crate) unsafe fn initialize_title_gradient(game: &mut Game) {
+    unsafe {
+        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x32, 0xeb73), game);
+        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x31, 0xeb85), game);
+    }
+}
+
+pub(crate) unsafe fn initialize_intro_wave(game: &mut Game) {
+    word!(game.g_word_7E0D9C = 1);
+    word_transfers!(game, ascending, 1; native(0xd9e) <- value(0x4000));
+    word!(game.loop_counter_transfer_enemies_to_vram = 8);
+    Runtime::new(game).initialize_wave_pair(0xd82, 0x9800);
+    unsafe {
+        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x11, 0xec8a), game);
+    }
+}
+
 fn hdma_definition(args: &SpawnHdmaObject_Args) -> [u16; 2] {
     [
         u16::from_ne_bytes([args.dma_control, args.target_register]),
@@ -198,6 +277,76 @@ pub(crate) unsafe fn update_hdma(game: &mut Game) {
     }
 }
 
+crate::game::address_dispatch! {
+    unsafe fn run_hdma_call(ea: u32, k: u16, game: &mut Game) => ea;
+    call (game); default { Unreachable(game); };
+    {
+        8972135 => mother_brain_visuals::initialize_rainbow_beam;
+        8948500 => explosion_window::begin_pre_flash; 8948530 => explosion_window::begin_prescaled_pre_flash;
+        8948537 => explosion_window::begin_explosion; 8948551 => explosion_window::begin_prescaled_explosion;
+        8948558 => [explosion_window::finish_power_bomb(k, game)]; 8954596 => explosion_window::begin_crystal_flash;
+        8954633 => explosion_window::begin_explosion; 8954647 => [explosion_window::finish_crystal_flash(k, game)];
+        8970129 => [()]; 8970130 => [()]; 8972070 => [()];
+        9554681 => [xray_background::freeze_and_backup(k, game)];
+        9554716 => xray_background::capture_bg1_right;
+        9554775 => xray_background::capture_bg1_left; 9554830 => xray_background::build_overlay;
+        9556179 => xray_background::capture_bg2_right; 9556339 => xray_background::upload_left; 9556384 => xray_background::upload_right;
+        9556668 => xray_background::set_backdrop; 9557650 => [Runtime::new(game).initialize_suit_pickup_hdma()];
+    }
+}
+crate::game::address_dispatch! {
+    unsafe fn run_hdma_pre_action(ea: u32, k: u16, game: &mut Game) => ea;
+        call (k, game); default { Unreachable(game); };
+    {
+        8491739 => [()]; 8946872 => [()]; 10785852 => [()]; 9556607 => xray_background::setup_blending;
+        8947439 => [Runtime::new(game).advance_xray_background()]; 8947506 => [Runtime::new(game).advance_xray_beam(BeamPhase::Initial)];
+        8947540 => [Runtime::new(game).advance_xray_beam(BeamPhase::Widening)];
+        8947627 => [Runtime::new(game).advance_xray_beam(BeamPhase::Full)];
+        8948020 => restore_left;
+        8948154 => restore_right;
+        8948232 => finish_restore;
+        8948623 => explosion_window::set_power_bomb_blending;
+        8948632 => explosion_window::power_bomb_afterglow;
+        8949225 => [explosion_window::update_scaled(k, Phase::PowerBomb, game)];
+        8949426 => [explosion_window::update_prescaled(k, Phase::PowerBomb, game)];
+        8949983 => [explosion_window::update_scaled(k, Phase::PreFlash, game)];
+        8950184 => [explosion_window::update_prescaled(k, Phase::PreFlash, game)];
+        8954681 => explosion_window::set_crystal_flash_blending;
+        8954717 => explosion_window::crystal_flash_afterglow;
+        8955218 => [explosion_window::update_scaled(k, Phase::CrystalFlash, game)];
+        8955459 => scrolling_sky::update_vertical_scroll; 8955507 => scrolling_sky::update_horizontal_scroll;
+        8957362 => scrolling_sky::update_parallax; 8957370 => scrolling_sky::update_parallax;
+        8957378 => scrolling_sky::advance_parallax;
+        8958140 => [advance_fireflea_lighting(game)];
+        8958896 => liquid_effects::lava_surface;
+        8959189 => liquid_effects::lava_background; 8963214 => liquid_effects::water_surface;
+        8963465 => liquid_effects::water_background;
+        8963556 => liquid_effects::water_wave;
+        8963638 => liquid_effects::water_flat;
+        8968609 => [scroll_weather(k, Weather::Rain, game)];
+        8968775 => [scroll_weather(k, Weather::Spores, game)];
+        8969014 => [scroll_weather(k, Weather::Fog, game)];
+        8969175 => [advance_tourian_statue(k, TourianStatuePhase::Waiting, game)]; 8969251 => [advance_tourian_statue(k, TourianStatuePhase::Shaking, game)];
+        8969321 => [advance_tourian_statue(k, TourianStatuePhase::Sinking, game)]; 8969402 => [advance_tourian_statue(k, TourianStatuePhase::Finished, game)];
+        8969539 => [word!(game.fx_layer_blending_config_c = 44)];
+        8969744 => [Runtime::new(game).begin_haze(k, 0x80)];
+        8969749 => [Runtime::new(game).begin_haze(k, 0x20)];
+        8969773 => [Runtime::new(game).advance_haze(k, HazePhase::FadingIn)];
+        8969844 => [Runtime::new(game).advance_haze(k, HazePhase::FadedIn)];
+        8969878 => [Runtime::new(game).advance_haze(k, HazePhase::FadingOut)];
+        8970132 => [Runtime::new(game).select_draygon_layer(k)]; 8970278 => [Runtime::new(game).advance_suit_pickup(false)];
+        8970332 => [Runtime::new(game).advance_suit_pickup(true)]; 8971337 => [Runtime::new(game).select_phantoon_layer()];
+        8971623 => [Runtime::new(game).advance_hdma_wave(k, HdmaWave::Phantoon)]; 8972220 => [mother_brain_visuals::advance_rainbow_beam(game)];
+        0x88e9e6 => [Runtime::new(game).advance_eye_beam(k, EyeBeamPhase::Widening)];
+        0x88ea3c => [Runtime::new(game).advance_eye_beam(k, EyeBeamPhase::Full)];
+        0x88eacb => [Runtime::new(game).advance_eye_beam(k, EyeBeamPhase::Fading)];
+        8973232 => [advance_title_gradient(true, game)];
+        8973266 => [advance_title_gradient(false, game)];
+        8973341 => [advance_intro_crossfade(game)]; 8972070 => [()];
+        8973494 => [Runtime::new(game).advance_hdma_wave(k, HdmaWave::Intro)];
+    }
+}
+
 unsafe fn run_hdma_program(slot: u8, game: &mut Game) {
     use crate::game::enemy_script::{EnemyScript as Script, bank_base};
     let index = usize::from(slot >> 1);
@@ -205,7 +354,7 @@ unsafe fn run_hdma_program(slot: u8, game: &mut Game) {
         << 16)
         | u32::from(checked_word!(game.hdma_object_pre_instructions[index]));
     unsafe {
-        crate::game::sm_88::CallHdmaobjPreInstr(pre_instruction, u16::from(slot), game);
+        run_hdma_pre_action(pre_instruction, u16::from(slot), game);
     }
     let timer = checked_word!(game.hdma_object_instruction_timers[index]);
     checked_word!(game.hdma_object_instruction_timers[index] = timer.wrapping_sub(1));
@@ -259,7 +408,7 @@ unsafe fn execute_hdma_instruction(
         8947076 => checked_word!(game.hdma_object_pre_instructions[index] = 0x858a),
         8947124 => {
             unsafe {
-                crate::game::sm_88::CallHdmaobjInstrFunc(script.load24(0), slot, game);
+                run_hdma_call(script.load24(0), slot, game);
             }
             return script.advance(3);
         }
@@ -725,7 +874,7 @@ pub(crate) unsafe fn initialize_tourian_statue(game: &mut Game) {
         word!(game.fx_y_pos = word!(game.fx_base_y_pos));
         spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x11, 0xd856), game);
         spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x10, 0xdcfa), game);
-        crate::game::sm_88::SpawnBG3ScrollHdmaObject(game);
+        spawn_bg3_scroll(game);
     }
 }
 
@@ -808,7 +957,7 @@ pub(crate) unsafe fn initialize_weather(weather: Weather, game: &mut Game) {
             game,
         );
         if let Some(tiles) = tiles {
-            crate::game::sm_88::SpawnBG3ScrollHdmaObject(game);
+            spawn_bg3_scroll(game);
             animated_tiles::spawn(tiles as u16, game);
         }
     }
@@ -920,6 +1069,33 @@ impl Runtime<'_> {
             self.write_slice_le(0x9018, 0);
         }
         self.reset_hdma_wave(slot);
+    }
+
+    pub(crate) fn select_phantoon_layer(&mut self) {
+        use crate::game::actors::access::AccessMode::Native;
+        use crate::ram_map::words as ram;
+        if self.word(ram::phantom_related_layer_flag) & 0x4000 != 0 {
+            self.write_slice_le(ram::fx_layer_blending_config_c, 26);
+        } else {
+            // The native first byte belongs to EnemyData record 3, parameter 1.
+            let alpha = self
+                .resolve_actor(Key::from_legacy(0xc0), Native)
+                .parameters[0]
+                .to_ne_bytes()[0];
+            match alpha {
+                0 => self.write_slice_le(ram::fx_layer_blending_config_c, 4),
+                0xff => {
+                    self.write_slice_le(ram::fx_layer_blending_config_c, 4);
+                    let object = usize::from(self.word(ram::hdma_object_index) & !1);
+                    self.write_slice_le(
+                        0x18cc + object,
+                        self.word(0x18cc + object).wrapping_add(2),
+                    );
+                    self.write_slice_le(0x18e4 + object, 1);
+                }
+                _ => {}
+            }
+        }
     }
 
     pub(crate) fn select_draygon_layer(&mut self, slot: u16) {

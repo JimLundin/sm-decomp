@@ -21,7 +21,7 @@ use crate::game::sm_80::{
     GraphicsAsset, HandleFadeIn, HandleFadeOut, QueueMode7Transfers, QueueSfx1_Max15,
     QueueSfx2_Max6, QueueSfx3_Max6, WaitForNMI_Async, memset7E,
 };
-use crate::game::sm_88::{CinematicFunction_Intro_Func133, SpawnTitleScreenGradientObjs};
+use crate::game::visual_runtime::{initialize_intro_wave, initialize_title_gradient};
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]
@@ -1523,7 +1523,7 @@ pub unsafe fn HandleCinematicsTransitions_2(game: &mut Game) {
         palette_effects::spawn(addr_kPalfx_E1A4 as u16, game);
         SetPpuBackdropBlack(game);
         *ram_ptr!(game; 0x69) = 17;
-        SpawnTitleScreenGradientObjs(game);
+        initialize_title_gradient(game);
     }
 }
 pub unsafe fn HandleCinematicsTransitions_3(game: &mut Game) {
@@ -3103,7 +3103,7 @@ crate::game::callback_dispatch! {
             *ram_ptr!(game; 0x6f) = 2;
             *ram_ptr!(game; 0x72) = 2;
             word! {game; cinematic_var4 = 180; cinematic_function = ((0x8be190i32) as u16); }
-            CinematicFunction_Intro_Func133(game);
+            initialize_intro_wave(game);
         }
     };
     [9167248] CinematicFunction_Intro_Func132 [] {
@@ -3478,7 +3478,7 @@ crate::game::callback_dispatch! {
             cinematic_var8, cinematic_var7, cinematic_var10, cinematic_var9, g_word_7E199B,
             g_word_7E1999, g_word_7E199F, g_word_7E199D,
         }
-        SpawnTitleScreenGradientObjs(game);
+        initialize_title_gradient(game);
         j
     };
     [9150157] CinematicSprInstr_Func9 [] {

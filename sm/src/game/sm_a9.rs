@@ -21,6 +21,7 @@ use crate::game::gameplay_flag_runtime::{
     CheckEventHappened, SetBossBitForCurArea, SetEventHappened,
 };
 use crate::game::mother_brain_visuals::{self, Fade};
+use crate::game::mother_brain_visuals::{spawn_rainbow_hdma, spawn_rising_hdma};
 use crate::game::palette_effects;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::room_mechanisms::spawn_hardcoded;
@@ -30,7 +31,6 @@ use crate::game::session_runtime::player_mother_brain;
 use crate::game::sm_80::{
     NextRandom, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6,
 };
-use crate::game::sm_88::{MotherBrainRisingHdmaObject, SpawnMotherBrainRainbowBeamHdma};
 
 use crate::game::sm_a6::{
     HandleTypewriterText_Ext, HomingReversal, Ridley_Func_98, SetupZebesEscapeTypewriter,
@@ -739,7 +739,7 @@ crate::game::callback_dispatch! {
                 MotherBrain_BodyRainbowBeamPalAnimIndex0(game);
                 MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C77 as u16, game);
                 (*E).var_33 = 512;
-                (*E).var_09 = SpawnMotherBrainRainbowBeamHdma(game);
+                (*E).var_09 = spawn_rainbow_hdma(game);
                 let E1 = Get_MotherBrain(0x40, game);
                 set_fields! {[(*E1)]; var_34 = 64, var_31 = 1, var_32 = 2, var_33 = 4, };
                 set_fields! {[(*E)], 0; parameter_1, parameter_2}
@@ -1624,7 +1624,7 @@ crate::game::callback_dispatch! {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xe, 0x2, 0xb6b3 as VoidP), game);
     };
     [11111819] MotherBrainBody_FakeDeath_Ascent_9_PrepareRise {
-        (*E).var_09 = MotherBrainRisingHdmaObject(game);
+        (*E).var_09 = spawn_rising_hdma(game);
         let E1 = Get_MotherBrain(0x40, game);
         (*E1).base.properties = ((*E1).base.properties) | (0x100u16);
         MotherBrain_SetBrainInstrs(addr_stru_A99C21 as u16, game);
