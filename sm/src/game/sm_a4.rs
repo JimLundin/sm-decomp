@@ -1,5 +1,5 @@
 use crate::game::actors;
-use crate::game::actors::access::ActorKey as Key;
+use crate::game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use crate::game::actors::api as actor_api;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::{EnemyScript, bank_base};
@@ -39,6 +39,26 @@ static g_word_A4869E: u16 = 3;
 static g_word_A486A0: u16 = 8;
 static g_word_A486A2: u16 = 0x300;
 static g_word_A486A4: u16 = 0x640;
+const Crocomire_Func_13: CrocomireFunc = react_to_attack_hit::<20>;
+const Crocomire_Func_14: CrocomireFunc = react_to_attack_hit::<12>;
+const Crocomire_Func_15: CrocomireFunc = react_to_attack_hit::<12>;
+
+fn react_to_attack_hit<const NEXT: u16>(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript {
+    Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+        if enemy.variables[1] & 0x800 != 0 {
+            enemy.variables[1] &= !0x800;
+            enemy.variables[2] = NEXT;
+            return EnemyScript::jump(addr_kCrocomire_Ilist_BC30 as u16);
+        } else if ((jp.offset_from(bank_base(enemy.bank)) as c_long
+            - addr_kCrocomire_Ilist_BDA2 as i32 as c_long) as i16)
+            >= 0
+        {
+            return EnemyScript::jump(addr_kCrocomire_Ilist_BD2A as u16);
+        }
+        jp
+    })
+}
+
 static off_A486B3: [CrocomireFunc; 21] = callback_table! { nonnull CrocomireFunc;
     Crocomire_Func_2, Crocomire_Func_3, Crocomire_Func_4, Crocomire_Func_5, Crocomire_Func_7,
     Crocomire_Func_8, Crocomire_Func_9, Crocomire_Func_10, Crocomire_Func_11, Crocomire_Func_13,
@@ -131,48 +151,6 @@ crate::instruction_callbacks! { pub unsafe fn (k: u16, jp: EnemyScript, game: &m
     Crocomire_Func_12 [EnemyScript::jump(addr_kCrocomire_Ilist_BCD8 as u16)] {
         let E = Get_Crocomire(0, game);
         (*E).var_B = (*E).var_B & !(0x400);
-    };
-    Crocomire_Func_13 [jp] {
-        let E = Get_Crocomire(0, game);
-        if ((*E).var_B & 0x800) != 0 {
-            (*E).var_B = (*E).var_B & !(0x800);
-            (*E).var_C = 20;
-            return EnemyScript::jump(addr_kCrocomire_Ilist_BC30 as u16);
-        } else if ((jp.offset_from(bank_base((*gEnemyData(0, game)).bank))
-            as c_long
-            - addr_kCrocomire_Ilist_BDA2 as i32 as c_long) as i16)
-            >= 0
-        {
-            return EnemyScript::jump(addr_kCrocomire_Ilist_BD2A as u16);
-        }
-    };
-    Crocomire_Func_14 [jp] {
-        let E = Get_Crocomire(0, game);
-        if ((*E).var_B & 0x800) != 0 {
-            (*E).var_B = (*E).var_B & !(0x800);
-            (*E).var_C = 12;
-            return EnemyScript::jump(addr_kCrocomire_Ilist_BC30 as u16);
-        } else if ((jp.offset_from(bank_base((*gEnemyData(0, game)).bank))
-            as c_long
-            - addr_kCrocomire_Ilist_BDA2 as i32 as c_long) as i16)
-            >= 0
-        {
-            return EnemyScript::jump(addr_kCrocomire_Ilist_BD2A as u16);
-        }
-    };
-    Crocomire_Func_15 [jp] {
-        let E = Get_Crocomire(0, game);
-        if ((*E).var_B & 0x800) != 0 {
-            (*E).var_B = (*E).var_B & !(0x800);
-            (*E).var_C = 12;
-            return EnemyScript::jump(addr_kCrocomire_Ilist_BC30 as u16);
-        } else if ((jp.offset_from(bank_base((*gEnemyData(0, game)).bank))
-            as c_long
-            - addr_kCrocomire_Ilist_BDA2 as i32 as c_long) as i16)
-            >= 0
-        {
-            return EnemyScript::jump(addr_kCrocomire_Ilist_BD2A as u16);
-        }
     };
     Crocomire_Func_16 [jp] {
         let E = Get_Crocomire(0, game);
