@@ -71,7 +71,8 @@ hosted CI).** Measured by the reviewer before this change:
 - Primitive experiment (compile-only, scripted, ~10 min): make `word!` bounds-checked
   `g_ram` indexing, then strip `unsafe` from every fn the compiler accepts (fixpoint):
   269 fns become safe, unsafe lines 4,603 -> 4,170, plus 224 now-unneeded `unsafe`
-  blocks for `cargo fix`. Branch `ci/safe-word`; oracle result in the check-in below.
+  blocks for `cargo fix`. On the oracle: 40 of 40 runnable rows pass (Segments run
+  40203144686, branch `ci/safe-word`).
 - What keeps the remaining ~1,100 bank fns unsafe (by fn): enemy raw pointers
   (`Get_X(k)` / `(*E).field`) ~450, `ram_ptr!` ~360, only calls to unsafe fns ~280
   (fall once callees are safe), ROM pointers ~110, hardware/IO ~50.
@@ -87,8 +88,11 @@ Unit of work: one primitive made safe across the whole crate by a script, then t
 fixpoint strip, in one commit. Push it to a `ci/<topic>` branch first; land on main
 when Segments is green there (rebase and rerun the script, never hand-merge a
 codemod). Body: the script (or its path), unsafe before/after, the Segments run.
-- **M1** safe `word!` + fixpoint + `cargo fix` for unused `unsafe` (prototype on
-  `ci/safe-word`). Target unsafe <= 4,000.
+- **M1** safe `word!` + fixpoint + `cargo fix` for unused `unsafe`. Prototype green:
+  `ci/safe-word` (42c59cb on b06f9ca) passed all 40 runnable rows on Segments run
+  40203144686. Land it: rebase onto main, apply the `ram_map.rs` change, rerun
+  `tools/codemod/strip_unsafe.py` (on that branch), `cargo fix`, push to `ci/m1`,
+  land when green. Target unsafe <= 4,000.
 - **M2** enemy records by slot: replace `Get_X(k) -> *mut` and `(*E).field` with a
   safe slot accessor that re-borrows `game.g_ram` per access; codemod per bank,
   common enemies first (`sm_a2`, `sm_a3`, `sm_a8`, `sm_b3`), then bosses; fixpoint
@@ -209,12 +213,13 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
   legacy 49698 · production 115375 · unsafe 4554 · verification 39232` (last 33 · 49901 ·
   115411 · 4567 · 39228); warnings 357 (362). 18:00: checks, legacy, banks met;
   production 75 over (on pace); unsafe/M1 branch and green `ci.yml` still open. No changes.
-- **2026-10-25 15:50 CET (f2d3a05), throughput reset 2 at the user's request:** checks
+- **2026-10-25 15:40 CET (f2d3a05), throughput reset 2 at the user's request:** checks
   33/44 (18:00 target 28 already met), sm_90 and sm_89 deleted, legacy 49,901, unsafe
   4,567. Added lane M (scripted unsafe-primitive codemods), lane C (hosted CI as the
   verification pipeline; `segments.yml` landed), unsafe-first scoreboard and unsafe
   waypoints. PLAN's Fast loop rewritten in ASCII: an agent's editor re-encoded it each
   commit (15 KB -> 53 KB in three commits). `ci.yml` red since 10-24 11:53: C0.
+  16:10: safe-`word!` prototype passes 40/40 rows on hosted Segments; M1 ready to land.
 - **2026-10-25 14:52 CET (b06f9ca), lane-A held work:** 11 agent commits since bd76e2a:
   **A 0**, B1 `sm_90` 6 (incl. b06f9ca fixing 21a3f50's missing file), B2 `sm_88` 2,
   B3 `sm_89` 1 + `sm_a0` 1 (before sm_89 finished), 1 unlabelled user-requested feed
