@@ -289,9 +289,11 @@ after_expectations = 120
 
 [[segment]]
 id = "item-spazer"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 90166
+seed = "100-input-phase:173"
+seed_sha256 = "1f735beec4f33196046bb34c26277acbba6a2821cec5834e64d32f6d1646891f"
+inputs = "seed-item-spazer.inputs"
+input_sha256 = "f6c558df6347866008cf390d8e825e7b555f4a427062e15db8182863cff8f705"
+start_frame = 0
 frames = 740
 require_hit = ["coroutine.plm.message.completed"]
 after_hits = 120
@@ -300,9 +302,11 @@ after_expectations = 120
 
 [[segment]]
 id = "item-hi-jump"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 98522
+seed = "100-input-phase:85"
+seed_sha256 = "8ae395fe6e30a00558414eef4b260ba5c56dbf0e05219454e1cdfb6a95fa4b51"
+inputs = "seed-item-hi-jump.inputs"
+input_sha256 = "841f0f1116fbaedf95c1be8f37de917fe625deee4cdb130df1f0eba86ecd26bb"
+start_frame = 0
 frames = 869
 require_hit = ["coroutine.plm.message.completed"]
 after_hits = 120
@@ -311,9 +315,11 @@ after_expectations = 120
 
 [[segment]]
 id = "item-varia"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 121351
+seed = "100-input-phase:74"
+seed_sha256 = "0243d2584e6e8951389a89206822e57c4e02b9529637f60e72c1acdbb554095d"
+inputs = "seed-item-varia.inputs"
+input_sha256 = "8482ac742c8dabd6f9967facbc159090ed370a59cffa91692c317789956bf2a2"
+start_frame = 0
 frames = 1581
 expect = ["item:varia", "room:A6E2"]
 after_expectations = 120
@@ -473,9 +479,11 @@ after_expectations = 120
 
 [[segment]]
 id = "pickup-missile"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 31780
+seed = "100-input-phase:19"
+seed_sha256 = "c412a0f23b3e66af4734b67f5cfa63ea66d195da8d6ddcc01a293c2ecdf44b33"
+inputs = "seed-pickup-missile.inputs"
+input_sha256 = "1b82198fe10472e2618b050dc55d3c133935b52e6a6e6454549f2f0d4e5fd0ff"
+start_frame = 0
 frames = 1050
 require_hit = ["coroutine.plm.message.completed"]
 after_hits = 120
@@ -484,9 +492,11 @@ after_expectations = 120
 
 [[segment]]
 id = "pickup-super"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 68096
+seed = "100-input-phase:37"
+seed_sha256 = "0daca7aff63368fdffb03a05e22ed3959ca792a977c795b66d3562b1e8211929"
+inputs = "seed-pickup-super.inputs"
+input_sha256 = "ee2bcd126f000e42b4b6eafa228c5c430d89ab93cf0bfeb9b5f000dd3bf10a28"
+start_frame = 0
 frames = 1804
 require_hit = ["coroutine.plm.message.completed"]
 after_hits = 120
@@ -508,9 +518,11 @@ after_expectations = 120
 
 [[segment]]
 id = "pickup-energy"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 129201
+seed = "100-input-phase:80"
+seed_sha256 = "35c79a1c885e1b784c47ce16f42e0c5cc15cf66cb2f720bd99919cb113f04666"
+inputs = "seed-pickup-energy.inputs"
+input_sha256 = "45758abb667091cee3fb9078c83a32c7db0dfba99685e3365cde75b175497d50"
+start_frame = 0
 frames = 801
 require_hit = ["coroutine.plm.message.completed"]
 after_hits = 120

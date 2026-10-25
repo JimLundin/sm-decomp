@@ -455,13 +455,19 @@ all five resulting controller words, and the first replay input. At the normaliz
 normal controller read to reproduce the original button edges. Old seeds without
 this supplement retain their existing behavior. No input words are guessed or shifted.
 
-Four pickup rows now use original `100-input-phase` observations. Each retains
-its input budget, fresh award or capacity increase, message-completion hit and
-both 120-frame tails. Their dedicated authored pickup recipes are retired;
-other rows still use the shared navigation helpers.
+Ten pickup rows now use original `100-input-phase` observations. Each retains
+its existing input budget, acquisition expectations and follow-up window; rows
+with message-completion requirements keep them. Dedicated recipes are removed
+only when no remaining row uses them; shared navigation stays.
 
 | Row | Observation | Input file | Recorded inputs |
 | --- | --- | --- | ---: |
+| `item-varia` | `74`, `$A6E2` | `seed-item-varia.inputs` | 1581 |
+| `pickup-energy` | `80`, `$A4B1` | `seed-pickup-energy.inputs` | 801 |
+| `item-hi-jump` | `85`, `$A9E5` | `seed-item-hi-jump.inputs` | 869 |
+| `item-spazer` | `173`, `$A447` | `seed-item-spazer.inputs` | 740 |
+| `pickup-missile` | `19`, `$A107` | `seed-pickup-missile.inputs` | 1050 |
+| `pickup-super` | `37`, `$9BC8` | `seed-pickup-super.inputs` | 1804 |
 | `item-speed-booster` | `98`, `$AD1B` | `seed-speed-booster.inputs` | 692 |
 | `item-wave` | `104`, `$ADDE` | `seed-wave.inputs` | 612 |
 | `item-ice` | `163`, `$A890` | `seed-ice.inputs` | 808 |
@@ -470,6 +476,12 @@ other rows still use the shared navigation helpers.
 Regenerate these input files with:
 
 ```powershell
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-item-varia.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0074-A6E2-wram.bin --frames 1581
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-pickup-energy.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0080-A4B1-wram.bin --frames 801
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-item-hi-jump.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0085-A9E5-wram.bin --frames 869
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-item-spazer.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0173-A447-wram.bin --frames 740
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-pickup-missile.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0019-A107-wram.bin --frames 1050
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-pickup-super.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0037-9BC8-wram.bin --frames 1804
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-speed-booster.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0098-AD1B-wram.bin --frames 692
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-wave.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0104-ADDE-wram.bin --frames 612
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-ice.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0163-A890-wram.bin --frames 808
