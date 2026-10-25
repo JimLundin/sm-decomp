@@ -1,0 +1,273 @@
+name: Segments
+
+# Runs movies/segments.toml rows against the oracle on hosted Windows runners.
+# The ROM comes from repository secrets; ROM-derived files (inputs, checkpoints)
+# stay on the runner and are never uploaded.
+on:
+  push:
+    branches: [main, 'ci/**']
+    paths: ['sm/**', 'tools/**', 'movies/segments.toml', '.github/workflows/segments.yml']
+  workflow_dispatch:
+    inputs:
+      segments:
+        description: Space-separated row ids (empty = every runnable row)
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+# On main, let the running corpus finish and keep only the newest queued push;
+# on ci/** branches, a new push replaces the running one.
+concurrency:
+  group: segments-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: plan
+        env:
+          SELECTED: ${{ github.event.inputs.segments }}
+        run: |
+          python3 - <<'PY'
+          import json, os, tomllib
+          rows = tomllib.load(open('movies/segments.toml', 'rb'))['segment']
+          wanted = os.environ.get('SELECTED', '').split()
+          if wanted:
+              unknown = set(wanted) - {r['id'] for r in rows}
+              if unknown:
+                  raise SystemExit(f'unknown rows: {sorted(unknown)}')
+          groups, skipped = {}, []
+          for r in rows:
+              if wanted and r['id'] not in wanted:
+                  continue
+              if 'pending' in r:
+                  skipped.append((r['id'], 'pending'))
+              elif not r['inputs'].startswith('corpus-'):
+                  skipped.append((r['id'], f"{r['inputs']} is not route-generated (lsnes lag log or manual capture)"))
+              else:
+                  groups.setdefault(r['inputs'], []).append(r)
+          shards = []
+          for inputs, members in sorted(groups.items()):
+              members.sort(key=lambda r: r.get('start_frame', 0))
+              for i in range(0, len(members), 9):
+                  chunk = members[i:i + 9]
+                  shards.append({'name': f"{inputs.removesuffix('.inputs')}-{i // 9}",
+                                 'inputs': inputs,
+                                 'route': inputs.removeprefix('corpus-').removesuffix('.inputs'),
+                                 'segments': ' '.join(r['id'] for r in chunk)})
+          if not shards:
+              raise SystemExit('no runnable rows selected')
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
+              out.write(f"{sum(len(s['segments'].split()) for s in shards)} rows in {len(shards)} shards\n\n")
+              out.write('Skipped:\n\n' + ''.join(f'- {i}: {why}\n' for i, why in skipped))
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write('matrix=' + json.dumps({'include': shards}) + '\n')
+          PY
+
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 60
+    env:
+      RUSTUP_TOOLCHAIN: stable-x86_64-pc-windows-gnu
+      CARGO_INCREMENTAL: '0'
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: msys2/setup-msys2@v2
+        id: msys
+        with:
+          msystem: MINGW64
+          install: mingw-w64-x86_64-gcc
+      - name: Install the GNU Rust toolchain and linker
+        env:
+          MSYS_LOCATION: ${{ steps.msys.outputs.msys2-location }}
+        run: |
+          rustup toolchain install stable-x86_64-pc-windows-gnu --profile minimal
+          if ($LASTEXITCODE -ne 0) { throw 'Rust toolchain installation failed' }
+          $linker = Join-Path $env:MSYS_LOCATION 'mingw64/bin'
+          if (!(Test-Path -LiteralPath "$linker/gcc.exe")) { throw 'MinGW GCC is missing' }
+          $linker | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+          "CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=$linker/gcc.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Install pinned Zig and SDL2 SDK
+        run: |
+          $native = Join-Path $env:RUNNER_TEMP 'sm-native'
+          New-Item -ItemType Directory -Force -Path $native | Out-Null
+          $zigArchive = Join-Path $native 'zig.zip'
+          Invoke-WebRequest 'https://ziglang.org/download/0.15.2/zig-x86_64-windows-0.15.2.zip' -OutFile $zigArchive
+          if ((Get-FileHash -LiteralPath $zigArchive -Algorithm SHA256).Hash.ToLowerInvariant() -ne '3a0ed1e8799a2f8ce2a6e6290a9ff22e6906f8227865911fb7ddedc3cc14cb0c') { throw 'Zig checksum mismatch' }
+          Expand-Archive -LiteralPath $zigArchive -DestinationPath $native
+          $sdlArchive = Join-Path $native 'sdl.zip'
+          Invoke-WebRequest 'https://github.com/libsdl-org/SDL/releases/download/release-2.32.10/SDL2-devel-2.32.10-mingw.zip' -OutFile $sdlArchive
+          if ((Get-FileHash -LiteralPath $sdlArchive -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'f15cff5fca62ec9381a016ef1d42a95c638cd72d2f226ba5781c76fe43dbd1ac') { throw 'SDL2 checksum mismatch' }
+          Expand-Archive -LiteralPath $sdlArchive -DestinationPath $native
+          $sdl = Join-Path $native 'SDL2-2.32.10/x86_64-w64-mingw32'
+          "SM_NATIVE=$native" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "SM_ZIG=$native/zig-x86_64-windows-0.15.2/zig.exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "SM_SDL_INCLUDE=$sdl/include/SDL2" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "LIBRARY_PATH=$sdl/lib" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Build pinned native dependencies
+        # Rebuild stamped archives from this checkout; never cache these objects.
+        run: |
+          foreach ($dependency in @('cpu', 'backend', 'spc')) {
+            & "./tools/install_lakesnes_$dependency.ps1" -Zig $env:SM_ZIG -Prefix "$env:SM_NATIVE/lakesnes-$dependency" -LibraryDirectory $env:LIBRARY_PATH
+            if ($LASTEXITCODE -ne 0) { throw "LakeSnes $dependency installation failed" }
+          }
+          foreach ($dependency in @('config', 'desktop', 'music')) {
+            $arguments = @("tools/install_native_$dependency.py", '--zig', $env:SM_ZIG, '--prefix', "$env:SM_NATIVE/$dependency", '--library-directory', $env:LIBRARY_PATH)
+            if ($dependency -ne 'music') { $arguments += @('--sdl-include', $env:SM_SDL_INCLUDE) }
+            python @arguments
+            if ($LASTEXITCODE -ne 0) { throw "Native $dependency installation failed" }
+          }
+      - name: Build pinned PNG decoder
+        run: |
+          $codec = Join-Path $env:SM_NATIVE 'stb-image'
+          New-Item -ItemType Directory -Force -Path $codec | Out-Null
+          $package = Join-Path $codec 'stb-sys-0.6.0.crate'
+          Invoke-WebRequest 'https://crates.io/api/v1/crates/stb-sys/0.6.0/download' -OutFile $package
+          if ((Get-FileHash -LiteralPath $package -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'fedcddefe320931b97fea7c9bc9168567eadaf71c87a74a3491d5b46b5c573de') { throw 'PNG package checksum mismatch' }
+          tar -xf $package -C $codec 'stb-sys-0.6.0/vendor/stb/stb_image.h'
+          if ($LASTEXITCODE -ne 0) { throw 'PNG header extraction failed' }
+          $header = Join-Path $codec 'stb-sys-0.6.0/vendor/stb/stb_image.h'
+          if ((Get-FileHash -LiteralPath $header -Algorithm SHA256).Hash.ToLowerInvariant() -ne '8e5b0d717dfc8a834c97ef202d20e78d083d009586e1731c985817d0155d568c') { throw 'PNG header checksum mismatch' }
+          & $env:SM_ZIG cc -target x86_64-windows-gnu -O2 -std=c11 -ftrivial-auto-var-init=zero -I (Split-Path -Parent $header) -c sm/native/stb_image.c -o "$codec/stb_image.o"
+          if ($LASTEXITCODE -ne 0) { throw 'PNG compilation failed' }
+          & $env:SM_ZIG ar rcs "$env:LIBRARY_PATH/libsm_stb_image.a" "$codec/stb_image.o"
+          if ($LASTEXITCODE -ne 0) { throw 'PNG archive creation failed' }
+          Copy-Item -LiteralPath LICENSE-stb_image -Destination "$env:LIBRARY_PATH/LICENSE-stb_image"
+      - name: Build the verifier DLL (direct, as the local Fast loop does)
+        run: |
+          python tools/verify_dll.py --build-only --direct
+          if ($LASTEXITCODE -ne 0) { throw 'Verifier DLL build failed' }
+          New-Item -ItemType Directory -Force -Path verifier | Out-Null
+          Copy-Item target/verify-dll/sm_verify.dll verifier/
+          Copy-Item -Recurse (Split-Path -Parent $env:LIBRARY_PATH) verifier/sdk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verifier
+          path: verifier
+          retention-days: 1
+
+  segments:
+    needs: [plan, build]
+    runs-on: windows-2022
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    name: ${{ matrix.name }}
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v4
+        with:
+          name: verifier
+          path: verifier
+      - name: Place the verifier
+        run: |
+          New-Item -ItemType Directory -Force -Path target/verify-dll | Out-Null
+          Copy-Item verifier/sm_verify.dll target/verify-dll/
+          "LIBRARY_PATH=$((Resolve-Path verifier/sdk/lib).Path)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Prepare ROM, movie and route inputs
+        env:
+          ROUTE: ${{ matrix.route }}
+          INPUTS: ${{ matrix.inputs }}
+          ROM_00: ${{ secrets.SM_ROM_00 }}
+          ROM_01: ${{ secrets.SM_ROM_01 }}
+          ROM_02: ${{ secrets.SM_ROM_02 }}
+          ROM_03: ${{ secrets.SM_ROM_03 }}
+          ROM_04: ${{ secrets.SM_ROM_04 }}
+          ROM_05: ${{ secrets.SM_ROM_05 }}
+          ROM_06: ${{ secrets.SM_ROM_06 }}
+          ROM_07: ${{ secrets.SM_ROM_07 }}
+          ROM_08: ${{ secrets.SM_ROM_08 }}
+          ROM_09: ${{ secrets.SM_ROM_09 }}
+          ROM_10: ${{ secrets.SM_ROM_10 }}
+          ROM_11: ${{ secrets.SM_ROM_11 }}
+          ROM_12: ${{ secrets.SM_ROM_12 }}
+          ROM_13: ${{ secrets.SM_ROM_13 }}
+          ROM_14: ${{ secrets.SM_ROM_14 }}
+          ROM_15: ${{ secrets.SM_ROM_15 }}
+          ROM_16: ${{ secrets.SM_ROM_16 }}
+          ROM_17: ${{ secrets.SM_ROM_17 }}
+          ROM_18: ${{ secrets.SM_ROM_18 }}
+          ROM_19: ${{ secrets.SM_ROM_19 }}
+          ROM_20: ${{ secrets.SM_ROM_20 }}
+          ROM_21: ${{ secrets.SM_ROM_21 }}
+          ROM_22: ${{ secrets.SM_ROM_22 }}
+          ROM_23: ${{ secrets.SM_ROM_23 }}
+          ROM_24: ${{ secrets.SM_ROM_24 }}
+          ROM_25: ${{ secrets.SM_ROM_25 }}
+          ROM_26: ${{ secrets.SM_ROM_26 }}
+          ROM_27: ${{ secrets.SM_ROM_27 }}
+          ROM_28: ${{ secrets.SM_ROM_28 }}
+          ROM_29: ${{ secrets.SM_ROM_29 }}
+          ROM_30: ${{ secrets.SM_ROM_30 }}
+          ROM_31: ${{ secrets.SM_ROM_31 }}
+          ROM_32: ${{ secrets.SM_ROM_32 }}
+          ROM_33: ${{ secrets.SM_ROM_33 }}
+          ROM_34: ${{ secrets.SM_ROM_34 }}
+          ROM_35: ${{ secrets.SM_ROM_35 }}
+          ROM_36: ${{ secrets.SM_ROM_36 }}
+          ROM_37: ${{ secrets.SM_ROM_37 }}
+          ROM_38: ${{ secrets.SM_ROM_38 }}
+          ROM_39: ${{ secrets.SM_ROM_39 }}
+          ROM_40: ${{ secrets.SM_ROM_40 }}
+          ROM_41: ${{ secrets.SM_ROM_41 }}
+          ROM_42: ${{ secrets.SM_ROM_42 }}
+          ROM_43: ${{ secrets.SM_ROM_43 }}
+          ROM_44: ${{ secrets.SM_ROM_44 }}
+        run: |
+          @'
+          import base64, gzip, hashlib, io, os, pathlib, subprocess, sys, tomllib, urllib.request, zipfile
+          encoded = "".join(os.environ[f"ROM_{i:02d}"] for i in range(45))
+          if not encoded:
+              raise SystemExit("ROM secrets are missing")
+          rom = gzip.decompress(base64.b64decode(encoded))
+          if hashlib.sha1(rom).hexdigest() != 'da957f0d63d14cb441d215462904c4fa8519c613':
+              raise SystemExit('wrong ROM')
+          pathlib.Path('rom').mkdir(exist_ok=True)
+          pathlib.Path('rom/sm.smc').write_bytes(rom)
+          movies = tomllib.loads(pathlib.Path('movies/manifest.toml').read_text())['movies']
+          movie = next(m for m in movies if m['category'] == 'any%')
+          request = urllib.request.Request(movie['download'], headers={'User-Agent': 'sm-decomp-ci'})
+          data = urllib.request.urlopen(request, timeout=120).read()
+          with zipfile.ZipFile(io.BytesIO(data)) as archive:
+              if 'input' not in archive.namelist():
+                  data = archive.read(next(n for n in archive.namelist() if n.lower().endswith('.lsmv')))
+          if hashlib.sha256(data).hexdigest() != movie['sha256']:
+              raise SystemExit('wrong movie')
+          path = pathlib.Path('movies', movie['file'])
+          path.write_bytes(data)
+          subprocess.run([sys.executable, 'tools/movie_inputs.py', str(path), 'movies/' + os.environ['INPUTS'],
+                          '--rom', 'rom/sm.smc', '--route', os.environ['ROUTE']], check=True)
+          '@ | python -B -
+          if ($LASTEXITCODE -ne 0) { throw 'Input preparation failed' }
+      - name: Run rows
+        env:
+          SEGMENTS: ${{ matrix.segments }}
+        run: |
+          $rows = @()
+          foreach ($id in $env:SEGMENTS.Split(' ')) { $rows += @('--segment', $id) }
+          python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --no-build --direct @rows 2>&1 | Tee-Object -FilePath corpus.log
+          $code = $LASTEXITCODE
+          "### $env:SEGMENTS" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          Select-String -Path corpus.log -Pattern '^(PASS|FAIL|Corpus)' | ForEach-Object { $_.Line } | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          '```' | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append -Encoding utf8
+          if ($code -ne 0) { throw "Rows failed ($code)" }

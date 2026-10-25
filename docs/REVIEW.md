@@ -17,7 +17,8 @@ unsafe lines** (of 116,960 production and 4,965 unsafe total).
 `Score: checks 24/44 · legacy 55342 · production 116960 · unsafe 4965`.
 `legacy` = `cat sm/src/game/sm_*.rs | wc -l`. From 2026-10-25 append
 `· verification N` (verification Rust lines, as `progress.sh` reports).
-Priority of the numbers: checks and legacy first, then unsafe, then size.
+Priority of the numbers (from 2026-10-25 16:00): **unsafe** and checks first, then
+legacy, then size. Legacy alone can fall by moving code; unsafe cannot.
 
 **Size goal (user aspiration, 2026-10-24).** Lines should fall substantially:
 owned code uses native types and data instead of re-expressing 65816 routines.
@@ -61,6 +62,51 @@ one 129,712-frame movie end to end and is stuck on timing drift at the first Cer
 audio upload; hand routes give ~1 check/hour and the 18 pending rows are late-game.
 (3) Lane B ran one or two agents on two banks while 30,000 of the 51,800 legacy lines
 are enemy AI gated behind coverage. The changes below remove those three limits.
+
+**Throughput reset 2 (2026-10-25 16:00, user direction: finish within days, use
+hosted CI).** Measured by the reviewer before this change:
+- Pace: 36 lane commits in the 24h to 14:00, ~150 legacy lines and ~10 unsafe lines
+  each. At that rate 4,600 unsafe lines take weeks. Hand-moving one function per
+  commit cannot meet the goal; most unsafe comes from a few access primitives.
+- Primitive experiment (compile-only, scripted, ~10 min): make `word!` bounds-checked
+  `g_ram` indexing, then strip `unsafe` from every fn the compiler accepts (fixpoint):
+  269 fns become safe, unsafe lines 4,603 -> 4,170, plus 224 now-unneeded `unsafe`
+  blocks for `cargo fix`. Branch `ci/safe-word`; oracle result in the check-in below.
+- What keeps the remaining ~1,100 bank fns unsafe (by fn): enemy raw pointers
+  (`Get_X(k)` / `(*E).field`) ~450, `ram_ptr!` ~360, only calls to unsafe fns ~280
+  (fall once callees are safe), ROM pointers ~110, hardware/IO ~50.
+- Hosted oracle: `.github/workflows/segments.yml` runs every route-generated row
+  (40 rows, 14 Windows shards) in 32 min with the ROM from secrets; 0 failures on
+  b06f9ca (run 40199817511). Standard runners are free on this public repo.
+- `ci.yml` had been red on every push since 10-24 11:53 (`--example sm_verify` and
+  the detached build), unseen because the Fast loop builds neither.
+
+**Lane M — mechanical safety (one agent, new: start a fourth agent if the machine
+allows, else it takes the B3 slot; M's local work is `cargo check` only).**
+Unit of work: one primitive made safe across the whole crate by a script, then the
+fixpoint strip, in one commit. Push it to a `ci/<topic>` branch first; land on main
+when Segments is green there (rebase and rerun the script, never hand-merge a
+codemod). Body: the script (or its path), unsafe before/after, the Segments run.
+- **M1** safe `word!` + fixpoint + `cargo fix` for unused `unsafe` (prototype on
+  `ci/safe-word`). Target unsafe <= 4,000.
+- **M2** enemy records by slot: replace `Get_X(k) -> *mut` and `(*E).field` with a
+  safe slot accessor that re-borrows `game.g_ram` per access; codemod per bank,
+  common enemies first (`sm_a2`, `sm_a3`, `sm_a8`, `sm_b3`), then bosses; fixpoint
+  after each. Report unsafe per bank.
+- **M3** `ram_ptr!` -> checked byte/word/slice views. **M4** ROM pointers ->
+  `&'static` slices or typed table reads; hardware register fns safe.
+After M4, re-measure and set the next primitive from what still holds unsafe.
+
+**Lane C — CI as the verification pipeline (user direction 2026-10-25).**
+- **C0 (now, lane-A agent, before more rows):** make `ci.yml` green on main
+  (`--example sm_verify`, detached projectile build). Whoever breaks it fixes it next.
+- **C1 (reviewer, done with this change):** `segments.yml` runs on every push to main
+  and on `ci/**` branches; dispatch with `segments=` for chosen rows.
+- **C2 (lane A, after C0):** seed and lag-log rows in CI. Seed rows need the seed
+  files; prefix rows need lsnes lag logs. Both are ROM-derived: store them as
+  base64 secrets like the ROM, or as an encrypted artifact keyed by a secret. Waits on
+  the user's yes (asked 2026-10-25 16:00). Then shard by seed so no shard replays
+  from boot (target: whole corpus under 15 min).
 
 **Lane A — coverage (one agent): room-seeded TAS segments (A1).** Stop aligning the
 whole movie. Restart alignment at every room instead: the TAS emulator gives the true
@@ -118,6 +164,9 @@ hooks: 607 lines/94 files, duplicated owned paths). Queues:
   `sm_a6` Ridley, `sm_a7` Kraid/Phantoon, `sm_aa` Torizos, `sm_a9` Mother Brain,
   `sm_9b` Grapple.
 If only two lane-B agents run, B3 waits; never two agents on one bank.
+Commit unit (from 16:00): a whole function family or small bank, several hundred lines
+is fine; run locally only the rows the change reaches, Segments on main runs the rest.
+After each M step lands, rebase onto it before continuing; do not re-add `unsafe`.
 
 History: A0.1-A0.2 done (7867e91, cec060e); A0.3 aligned 9,266 steps, then an
 elapsed-NMI experiment reached 10,555 (parked 11:52). `sm_94` deleted (ca42bc5, ratio
@@ -125,13 +174,17 @@ elapsed-NMI experiment reached 10,555 (parked 11:52). `sm_94` deleted (ca42bc5, 
 
 **Waypoints** (Europe/Stockholm; reset 2026-10-25 12:30; a miss gets a diagnosis and one corrective step):
 
-| By | Checks | Banks deleted (cumulative) | Legacy | Production | Result |
-| --- | ---: | --- | ---: | ---: | --- |
-| 10-25 06:00 | A0.4 any% to credits | sm_94 | ≤54,600 | ≤116,500 | **MISS** |
-| 10-25 18:00 | ≥28/44; A1.2 go/no-go recorded | + sm_91, sm_90, sm_89 | ≤50,300 | ≤115,300 | |
-| 10-26 18:00 | ≥38/44 | + sm_88, sm_a0, sm_8f, sm_81 | ≤44,000 | ≤112,500 | |
-| 10-27 18:00 | 44/44 | + sm_80, sm_b2, first boss bank | ≤36,000 | ≤109,000 | |
-| 10-28 18:00 | 44/44 + 100% seeds | + sm_82, sm_8b | ≤28,000 | ≤105,000 | |
+| By | Checks | Unsafe lines | Banks deleted (cumulative) | Legacy | Production | Result |
+| --- | ---: | ---: | --- | ---: | ---: | --- |
+| 10-25 06:00 | A0.4 any% to credits | | sm_94 | <=54,600 | <=116,500 | **MISS** |
+| 10-25 18:00 | >=28/44; A1.2 go/no-go recorded | CI green; M1 on a branch | + sm_91, sm_90, sm_89 | <=50,300 | <=115,300 | |
+| 10-26 12:00 | >=36/44; C2 decided | <=3,900 (M1 landed) | + sm_a0 | <=47,000 | <=114,000 | |
+| 10-26 18:00 | >=38/44 | <=3,300 (M2 common enemies) | + sm_88, sm_8f, sm_81 | <=44,000 | <=112,500 | |
+| 10-27 18:00 | 44/44 | <=2,300 (M2 bosses, M3) | + sm_80, sm_b2, first boss bank | <=36,000 | <=109,000 | |
+| 10-28 18:00 | 44/44 + 100% seeds | <=1,200 (M4) | + sm_82, sm_8b | <=28,000 | <=105,000 | |
+
+Unsafe targets after M1 are estimates from the fn counts above; the reviewer
+re-baselines them after M2's first bank.
 
 The previous 18:00 and 10-26 production lines (≤114,000, ≤110,000) assumed a 70%
 ratio and missed three hours running at ~80%; the reset lines assume 75% plus hook
@@ -149,6 +202,12 @@ line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads t
 
 ## Check-ins
 
+- **2026-10-25 15:50 CET (f2d3a05), throughput reset 2 at the user's request:** checks
+  33/44 (18:00 target 28 already met), sm_90 and sm_89 deleted, legacy 49,901, unsafe
+  4,567. Added lane M (scripted unsafe-primitive codemods), lane C (hosted CI as the
+  verification pipeline; `segments.yml` landed), unsafe-first scoreboard and unsafe
+  waypoints. PLAN's Fast loop rewritten in ASCII: an agent's editor re-encoded it each
+  commit (15 KB -> 53 KB in three commits). `ci.yml` red since 10-24 11:53: C0.
 - **2026-10-25 14:52 CET (b06f9ca), lane-A held work:** 11 agent commits since bd76e2a:
   **A 0**, B1 `sm_90` 6 (incl. b06f9ca fixing 21a3f50's missing file), B2 `sm_88` 2,
   B3 `sm_89` 1 + `sm_a0` 1 (before sm_89 finished), 1 unlabelled user-requested feed

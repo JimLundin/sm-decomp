@@ -20,9 +20,9 @@ preserve others' work. Do not delete another process's lock or force-push main.
 
 Read [REVIEW.md](REVIEW.md) next; its **Milestone plan** governs work order 1-2 and
 the user gave the reviewer authority to change goals and process (2026-10-25).
-Lanes: **A** (one agent) coverage, now via room-seeded TAS segments (A1); **B1/B2/B3**
-(one agent each, at most three compilers) retire banks in the order REVIEW names.
-Subjects start `A:` or `B:sm_XX`; bodies end with the review's `Score:` line.
+Lanes: **A** coverage via room-seeded segments (A1) and CI rows (C0, C2); **M**
+mechanical safety codemods; **B1/B2/B3** retire banks in the order REVIEW names.
+Subjects start `A:`, `M:` or `B:sm_XX`; bodies end with the review's `Score:` line.
 Speed rule: the **Fast loop** below replaces the old validation strategy. Land
 verified work at once; work held unlanded over one hour is a stall. No docs-only
 commits without a code commit beside them. Verification is `segments.toml` rows,
@@ -33,9 +33,12 @@ Direct user instructions win; HISTORY holds no current rules.
 [view](https://jimlundin.github.io/sm-decomp/) from HEAD; keep only the five-box
 SVG in PROGRESS current. No other map work unless the user asks.
 
-**Local validation:** do not rely on or observe CI except for explicitly selected
-research/experiments unavailable on Windows. Fix already-known failing changes
-before further adoption; the review's red-main rule does not authorize CI polling.
+**Validation (user direction 2026-10-25 16:00, replaces "do not rely on CI").**
+Hosted CI is the verification pipeline: `segments.yml` runs every runnable
+`segments.toml` row on Windows runners on each push to main; `ci.yml` builds every
+target. Local runs stay small (Fast loop). A red `ci.yml` or Segments run on main is
+fixed by its author's next commit; nobody else waits on it. Lanes M and C are in
+REVIEW's Milestone plan.
 
 ## Work order
 
@@ -124,27 +127,25 @@ at 28,314 (814 frames); retaining it would truncate the extended observation.
 - Make small commits with one coherent idea. If stuck on an item for over one
   hour of work, record the findings under it and stop.
 
-## Fast loop (reviewer, 2026-10-25; replaces the 2026-10-21 validation strategy)
+## Fast loop (reviewer, 2026-10-25 16:00; ASCII only, edit as UTF-8)
 
-Every routine commit runs exactly this, then commits:
+Every routine commit runs exactly this locally, then commits and pushes:
 1. `cargo fmt --check`; `cargo check --no-default-features --lib` (no new warnings);
    one DLL build (`python tools/verify_dll.py --build-only`).
-2. `verify_dll.py --corpus movies/segments.toml` with `--segment` for every row that
-   exercises the change (named in the body) plus the smoke set `door-loading-lag-nmi`,
-   `tas-ceres-four-doors`, `area-crateria`, `item-morph-ball`. Zero failures.
+2. `verify_dll.py --corpus movies/segments.toml --segment <id>` for the rows that
+   exercise the change (named in the body), plus `door-loading-lag-nmi` and
+   `tas-ceres-four-doors` until CI can run lag-log rows (C2). Zero failures.
    No row reaches the change: lane A adds one; lane B moves the code unchanged and
    writes "uncovered: <function>" in the body.
-3. Nothing else per commit: no mutation runs, independent controls, frontend metadata,
-   optimized/release rebuilds, clean-source reruns or full replays. Once per bank,
-   before its file is deleted: the full corpus plus scoped `cargo-mutants` (<=30 min).
-   Partition independent movie groups to use spare CPU; keep shared prefixes and
-   current source/codec checks. The full corpus also runs at each review waypoint.
-   A failure from a full run gets a
-   regression row with its fix. Never weaken a comparison or a row's expectations.
-   On Windows, generate scoped AST mutants with cargo-mutants and execute them
-   through the existing DLL rows; its Cargo/nextest runner cannot use this host.
-4. Body <=8 lines: what changed, rows run and result, legacy/production delta and
-   ratio, `Score:`. Re-run a flaky step once; a second failure is real.
+3. Push. Segments on main runs every runnable row (about 30 min) and `ci.yml` builds
+   every target; check the result of your previous push before your next one. A
+   failure gets a fix plus a regression row in your next commit. Never weaken a
+   comparison or a row's expectations.
+4. Nothing else per commit: no mutation runs, independent controls, release rebuilds
+   or full local replays. Once per bank, before deleting its file: dispatch Segments
+   for all rows (it is the full corpus) plus scoped `cargo-mutants` (<= 30 min).
+   Lane M codemods go to a `ci/<topic>` branch first and land when Segments is green.
+5. Body <= 8 lines: what changed, rows run and result, deltas and ratio, `Score:`.
 
 Commands and checkpoint rules: [movies/README.md](../movies/README.md).
 When touched, inspect `cpu_infra.rs` masks, `PatchBugs`, hardware/audio limits and
