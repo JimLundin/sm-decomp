@@ -347,14 +347,10 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
     p.collision.horizontal_slope_flags = 3;
     p.palette.hurt_flash = 0;
     p.special_palette_flags = 0;
-    for (address, value) in [
-        (ram::absolute_moved_last_frame_x_fract, 0),
-        (ram::absolute_moved_last_frame_x, 1),
-        (ram::absolute_moved_last_frame_y_fract, 0),
-        (ram::absolute_moved_last_frame_y, 1),
-    ] {
-        rt.write_slice_le(address, value);
-    }
+    p.camera_distance.fill(crate::game::session::FixedMotion {
+        fraction: 0,
+        whole: 1,
+    });
     for index in (0..256).rev() {
         rt.suit_window_word(index, 255);
     }

@@ -152,18 +152,18 @@ pub(super) fn initialize_speed(h: &mut impl Host, raw: u16, speed: u16) {
         h.unknown();
         return;
     };
-    let velocity =
-        h.session()
-            .projectiles
-            .launch
-            .launch(aim, speed, h.inputs().absolute_y_fraction);
+    let velocity = h.session().projectiles.launch.launch(
+        aim,
+        speed,
+        h.session().player.camera_distance[1].fraction,
+    );
     shot!(h,raw,y_speed = velocity.y as u16; SliceLe);
     // A broad Y-speed write can change the launch history observed by X.
-    let velocity =
-        h.session()
-            .projectiles
-            .launch
-            .launch(aim, speed, h.inputs().absolute_y_fraction);
+    let velocity = h.session().projectiles.launch.launch(
+        aim,
+        speed,
+        h.session().player.camera_distance[1].fraction,
+    );
     shot!(h,raw,x_speed = velocity.x as u16; SliceLe);
 }
 pub(super) fn initialize_beam_speed(h: &mut impl Host, raw: u16) {

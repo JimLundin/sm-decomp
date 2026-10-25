@@ -5,7 +5,7 @@ use crate::game::{
     liquid_surface::LiquidAtHeight,
     player_collision::operations as collision,
     player_transitions::{self as transitions, content::AnimationTable},
-    session::FixedMotion,
+    session::{FixedMotion, Session},
     visual_host::Record,
 };
 
@@ -15,6 +15,25 @@ pub(super) fn value(motion: &FixedMotion) -> u32 {
 pub(super) fn store(motion: &mut FixedMotion, value: u32) {
     motion.fraction = value as u16;
     motion.whole = (value >> 16) as u16;
+}
+pub(crate) fn record_camera_distance(s: &mut Session, axis: collision::Axis) {
+    let p = &mut s.player;
+    let (whole, fraction, before) = match axis {
+        collision::Axis::X => (p.x, p.x_fraction, p.previous_position.x),
+        collision::Axis::Y => (p.y, p.y_fraction, p.previous_position.y),
+    };
+    let current = (u32::from(whole) << 16) | u32::from(fraction);
+    let previous = (u32::from(before.whole) << 16) | u32::from(before.fraction);
+    // Direction uses the whole-word difference, even when fractions borrow.
+    let distance = if (whole.wrapping_sub(before.whole) as i16) >= 0 {
+        current.wrapping_sub(previous)
+    } else {
+        previous.wrapping_sub(current)
+    };
+    store(
+        &mut p.camera_distance[axis as usize],
+        distance.wrapping_add(1 << 16),
+    );
 }
 fn environment(h: &mut impl Host) -> LiquidAtHeight {
     if h.session().inventory.equipment.active & 0x20 != 0 {

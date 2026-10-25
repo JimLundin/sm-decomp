@@ -1,4 +1,5 @@
-use crate::game::player_movement::{self, forced};
+use crate::game::player_collision::operations::Axis;
+use crate::game::player_movement::{self, forced, speed::record_camera_distance};
 use crate::game::player_transitions as pt;
 use crate::game::player_update::{self, BetaMode, MovementStep};
 
@@ -70,9 +71,9 @@ pub unsafe fn MainScrollingRoutine(game: &mut Game) {
             HandleAutoscrolling_X(game);
             HandleAutoscrolling_Y(game);
         } else {
-            Samus_CalcDistanceMoved_X(game);
+            record_camera_distance(Runtime::new(game).session_mut(), Axis::X);
             Samus_HandleScroll_X(game);
-            Samus_CalcDistanceMoved_Y(game);
+            record_camera_distance(Runtime::new(game).session_mut(), Axis::Y);
             Samus_HandleScroll_Y(game);
         }
         if word!(game.scrolling_finished_hook) != 0 {
@@ -178,50 +179,6 @@ pub unsafe fn Samus_HandleScroll_Y(game: &mut Game) {
                 absolute_moved_last_frame_y_fract,
                 HandleScrollingWhenTriggeringScrollUp,
                 HandleScrollingWhenTriggeringScrollDown
-            );
-        };
-    }
-}
-pub unsafe fn Samus_CalcDistanceMoved_X(game: &mut Game) {
-    unsafe {
-        if ((word!(game.samus_x_pos)) as i16).wrapping_sub((word!(game.samus_prev_x_pos)) as i16)
-            >= 0
-        {
-            words!(
-                game.absolute_moved_last_frame_x,
-                absolute_moved_last_frame_x_fract = (words!(game.samus_x_pos, samus_x_subpos))
-                    .wrapping_sub(words!(game.samus_prev_x_pos, samus_prev_x_subpos),)
-                    .wrapping_add(((1i32) << 16) as u32)
-            );
-        } else {
-            words!(
-                game.absolute_moved_last_frame_x,
-                absolute_moved_last_frame_x_fract =
-                    (words!(game.samus_prev_x_pos, samus_prev_x_subpos))
-                        .wrapping_sub(words!(game.samus_x_pos, samus_x_subpos),)
-                        .wrapping_add(((1i32) << 16) as u32)
-            );
-        };
-    }
-}
-pub unsafe fn Samus_CalcDistanceMoved_Y(game: &mut Game) {
-    unsafe {
-        if ((word!(game.samus_y_pos)) as i16).wrapping_sub((word!(game.samus_prev_y_pos)) as i16)
-            >= 0
-        {
-            words!(
-                game.absolute_moved_last_frame_y,
-                absolute_moved_last_frame_y_fract = (words!(game.samus_y_pos, samus_y_subpos))
-                    .wrapping_sub(words!(game.samus_prev_y_pos, samus_prev_y_subpos),)
-                    .wrapping_add(((1i32) << 16) as u32)
-            );
-        } else {
-            words!(
-                game.absolute_moved_last_frame_y,
-                absolute_moved_last_frame_y_fract =
-                    (words!(game.samus_prev_y_pos, samus_prev_y_subpos))
-                        .wrapping_sub(words!(game.samus_y_pos, samus_y_subpos),)
-                        .wrapping_add(((1i32) << 16) as u32)
             );
         };
     }

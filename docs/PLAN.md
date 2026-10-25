@@ -56,7 +56,7 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    Player input, demos, suits, equipment, commands, initialization, Mother Brain
    reactions, X-ray and direct damage use owned state. Natural X-ray, Gravity,
    boss and grapple movie coverage remains incomplete despite bounded checks.
-   X-ray steering is owned; sm_88 has 1,543 lines left. sm_90 has 1,082: camera next.
+   X-ray steering is owned; sm_88 has 1,543 lines left. sm_90 has 1,039: Crystal Flash next.
    Use named enum/function handlers as families move; raw identities stay at
    compatibility boundaries. Full u16 unknown values and failure timing survive.
    Report added production and deleted legacy together; growth needs a reason.
@@ -172,20 +172,20 @@ denials never pass. khronos_api blocks frontend linking; cached frontend metadat
 direct DLL builds work. Keep crate-root unsafe-op enforcement.
 
 Measured concurrency (2026-10-25): two isolated builds with Cargo -j1 completed
-matched work in 76.06s versus 114.12s serial (1.50x). Three are feasible; a speedup
-beyond two is unproven. The integrator assigns ready slots explicitly, counting
+matched work in 76.06s versus 114.12s serial (1.50x). Three compilers reached
+2.088GiB free; a further speedup is unproven. Assign ready slots explicitly, counting
 accepted launchers before rustc appears. Restart completed workers with a new task.
-Allow up to three compiler workflows; start above 3GiB free, account for ~1.6GiB
-per compiler plus growth, and stop the newest below 2GiB or on resource errors.
+Allow up to three compiler workflows; start above 3GiB free and leave 2GiB after
+reserving ~1.6GiB per new compiler plus admitted jobs' remaining growth. Stop the
+newest below 2GiB or on resource errors; never treat a launcher as a free slot.
 Refill slots immediately and release after compilation. Replays may overlap.
 Judge completed useful work/time, memory and paging, not CPU alone. Never edit
 checked source or rebuild loaded DLLs. -j1 still permits parallel code generation.
 Use [the iteration guide](ITERATION.md#windows-shell-setup) for paths/commands.
 
 Keep artifacts in their checkout; seed dependencies, not full target trees, and reuse checked builds.
-Preserve active caches and others' work. Set `CARGO_INCREMENTAL=0` for disposable snapshots;
-bound output and stream logs. Before deletion, resolve paths and verify artifacts are unneeded.
-Never delete another worker's artifacts.
+Preserve caches; use `CARGO_INCREMENTAL=0` for disposable snapshots and stream bounded logs.
+Before deletion, resolve paths and verify artifacts are unneeded. Never delete another worker's artifacts.
 
 ## Definition of done for any change
 

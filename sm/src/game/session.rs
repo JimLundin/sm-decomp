@@ -204,6 +204,7 @@ pub struct Player {
     pub(crate) crouch_transition_work: u16,
     pub(in crate::game) history: crate::game::player_collision::state::PoseHistory,
     pub(in crate::game) previous_position: crate::game::player_collision::state::PreviousPosition,
+    pub(crate) camera_distance: [FixedMotion; 2],
     pub(in crate::game) animation_clock: crate::game::player_collision::state::AnimationClock,
     pub(in crate::game) collision: crate::game::player_collision::state::CollisionState,
     pub(in crate::game) clearance: crate::game::player_collision::state::PoseClearance,

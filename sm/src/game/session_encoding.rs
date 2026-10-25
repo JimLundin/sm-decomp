@@ -144,6 +144,10 @@ macro_rules! flag_projection {
 }
 macro_rules! scalar_words {
     ($s:ident,$f:ident,($($borrow:tt)*))=>{
+        $f(0x0da2,$($borrow)* $s.player.camera_distance[0].whole);
+        $f(0x0da4,$($borrow)* $s.player.camera_distance[0].fraction);
+        $f(0x0da6,$($borrow)* $s.player.camera_distance[1].whole);
+        $f(0x0da8,$($borrow)* $s.player.camera_distance[1].fraction);
         $f(0x0cf4,$($borrow)* $s.player.grapple_flags);
         $f(0x0cf6,$($borrow)* $s.player.grapple_delay);
         $f(0x0cf8,$($borrow)* $s.player.grapple_slow_scrolling);
@@ -937,6 +941,5 @@ pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
         m7_c: w(ram::reg_M7C),
         grapple_x: w(ram::x_pos_of_start_of_grapple_beam_prevframe),
         grapple_y: w(ram::y_pos_of_start_of_grapple_beam_prevframe),
-        absolute_y_fraction: w(0xda8),
     }
 }

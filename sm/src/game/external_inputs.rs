@@ -42,5 +42,4 @@ pub struct ExternalInputs {
     pub m7_c: u16,
     pub grapple_x: u16,
     pub grapple_y: u16,
-    pub absolute_y_fraction: u16,
 }
