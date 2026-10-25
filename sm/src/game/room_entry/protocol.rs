@@ -144,21 +144,30 @@ fn wait48(h: &mut impl EntryHost) -> EntryPoll {
         EntryPoll::Returned(0)
     }
 }
-fn place_and_load(h: &mut impl EntryHost) {
-    let camera = h.read_camera(F::Layer1X);
-    h.session_mut().player.x = camera.wrapping_add(h.session().player.x & 0xff);
-    h.write_external(E::PreviousPlayerX, h.session().player.x);
-    let camera = h.read_camera(F::Layer1Y);
-    h.session_mut().player.y = camera.wrapping_add(h.session().player.y & 0xff);
-    h.write_external(E::PreviousPlayerY, h.session().player.y);
-    h.session_mut().room.entry.completion = 0;
-    let irq = if h.session().room.entry.direction & 3 == 2 {
-        16
-    } else {
-        22
-    };
-    h.write_external(E::NextIrqHandler, irq);
-    h.call(L::WaitVblankEnableIrq);
+fn place_and_load(h: &mut impl EntryHost) -> EntryPoll {
+    if h.session().continuations.primary != 3 {
+        let camera = h.read_camera(F::Layer1X);
+        h.session_mut().player.x = camera.wrapping_add(h.session().player.x & 0xff);
+        h.write_external(E::PreviousPlayerX, h.session().player.x);
+        let camera = h.read_camera(F::Layer1Y);
+        h.session_mut().player.y = camera.wrapping_add(h.session().player.y & 0xff);
+        h.write_external(E::PreviousPlayerY, h.session().player.y);
+        h.session_mut().room.entry.completion = 0;
+        let irq = if h.session().room.entry.direction & 3 == 2 {
+            16
+        } else {
+            22
+        };
+        h.write_external(E::NextIrqHandler, irq);
+        h.call(L::WaitVblankEnableIrq);
+    }
+    // Loading crosses one lag NMI before the first scrolling IRQ.
+    // No-update NMI counters and tile staging writes are independent.
+    if let Some(poll) = waiting(EntryWait::NoUpdate, h.wait(EntryWait::NoUpdate)) {
+        h.session_mut().continuations.primary = 3;
+        return poll;
+    }
+    h.session_mut().continuations.primary = 0;
     if h.session().room.entry.cre & 2 != 0
         && !h
             .session()
@@ -215,6 +224,7 @@ fn place_and_load(h: &mut impl EntryHost) {
         h.write_external(E::NextIrqHandler, 16);
     }
     h.session_mut().room.entry.transition_selector = 0xe4a9;
+    EntryPoll::Returned(0)
 }
 fn more(h: &mut impl EntryHost) -> EntryPoll {
     crate::verify_probe::hit("coroutine.door");
@@ -391,7 +401,7 @@ pub(crate) fn dispatch(h: &mut impl EntryHost, address: u32) -> EntryPoll {
             h.camera_call(C::SetupDoorScroll);
             h.session_mut().room.entry.transition_selector = 0xe3c0;
         }
-        0x82e3c0 => place_and_load(h),
+        0x82e3c0 => return place_and_load(h),
         0x82e4a9 => return more(h),
         0x82e659 => {
             animated_tiles::execution::advance(h);

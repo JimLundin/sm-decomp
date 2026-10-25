@@ -21,6 +21,7 @@ pub enum ArrivalRequest {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum EntryWait {
     Nmi,
+    NoUpdate,
     Music,
     Mechanisms,
 }

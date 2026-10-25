@@ -418,3 +418,20 @@ after_expectations = 120
 [[segment]]
 id = "credits"
 pending = "No route to real credits processing and full-roll completion; state 39 presence or initial script advancement alone is not completion."
+
+# The observed placement lag formerly incremented the native acknowledged-NMI counter.
+[[segment]]
+id = "door-loading-lag-nmi"
+inputs = "any-door-prefix.inputs"
+input_sha256 = "37329288686fa19d3cd68ae35e588ea131f260e37f17da8d876a3977430ac523"
+start_frame = 8262
+frames = 5
+expect = ["state:11"]
+
+[[segment]]
+id = "tas-ceres-four-doors"
+inputs = "any-door-prefix.inputs"
+input_sha256 = "37329288686fa19d3cd68ae35e588ea131f260e37f17da8d876a3977430ac523"
+start_frame = 8239
+frames = 861
+expect = ["door:DF8D", "door:DFD7", "door:E021", "door:E06B", "state:8"]

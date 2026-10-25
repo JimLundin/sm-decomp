@@ -32,9 +32,12 @@ def aligned_wait_prefix(source, path, count):
                 or int(poll['movie_subframe_index']) != index
                 or parse_lsmv(poll['movie_subframe']) != [source[index]]):
             raise ValueError(f'unsupported or mismatched movie input at {index}')
+    events = rows('.events.csv')
+    if any(event['kind'] == 'joypad_begin' for event in events):
+        return aligned_work_prefix(video, events, count)
     result, pending, previous = [], None, None
     last_frame = 0
-    for number, event in enumerate(rows('.events.csv'), 1):
+    for number, event in enumerate(events, 1):
         kind = event['kind']
         event = {key: int(value) for key, value in event.items() if key != 'kind'}
         frame = event['movie_frame']
@@ -66,6 +69,79 @@ def aligned_wait_prefix(source, path, count):
         else:
             raise ValueError(f'unsupported boundary {kind}; prefix remains unaligned')
     raise ValueError('capture ends before the requested aligned prefix')
+
+
+def aligned_work_prefix(video, events, count):
+    """Preserve observed normal updates and the loading lag suspension."""
+    result, last_frame = [], 0
+    read = wait = lag = vblank = irq = previous = None
+    door = False
+    for number, raw in enumerate(events, 1):
+        kind = raw['kind']
+        event = {key: int(value) for key, value in raw.items() if key != 'kind'}
+        frame = event['movie_frame']
+        if event['event'] != number or not last_frame <= frame <= len(video):
+            raise ValueError('nonsequential work-boundary capture')
+        last_frame = frame
+        if not 0 <= event['joypad'] <= 0xffff:
+            raise ValueError('invalid observed input')
+        if kind in ('irq_enter', 'lag_nmi', 'door_dma', 'cre_decode_enter', 'cre_decode_exit',
+                    'tiles_decode_enter', 'tiles_decode_exit', 'palette_decode_enter', 'palette_decode_exit'):
+            pass  # Read-only ordering evidence; these hooks do not define input consumption.
+        elif kind == 'wait_enter' and wait is None:
+            wait = event
+        elif kind == 'wait_exit' and wait is not None:
+            if event['nmi'] != (wait['nmi'] + 1) % 65536 or read is not None:
+                raise ValueError('normal wait did not contain one complete NMI')
+            wait = None
+        elif kind == 'place_enter' and not door and wait is None:
+            if event['state'] != 11:
+                raise ValueError('placement outside door transition')
+            door = True
+        elif kind == 'vblank_wait_enter' and door and vblank is None and wait is None:
+            vblank = event
+        elif kind == 'vblank_wait_exit' and vblank is not None:
+            if any(event[key] != vblank[key] for key in ('nmi', 'including_lag', 'joypad')):
+                raise ValueError('unsupported vblank wait timing')
+            lag, vblank = event, None
+            result.append(event['joypad'])
+        elif kind == 'joypad_begin' and read is None and (wait is not None or door):
+            continuous = previous is None and event['nmi'] == 0 and event['state'] == 0
+            if previous is not None:
+                continuous = event['nmi'] == (previous['nmi'] + 1) % 65536
+                continuous |= (previous['state'] == 0 and event['state'] == 1
+                               and event['nmi'] == 0
+                               and any(int(row['nmi_after']) < int(row['nmi_before'])
+                                       for row in video[previous['movie_frame'] - 1:frame]))
+            if (not continuous or lag is not None
+                    or (wait is not None and event['joypad'] != wait['joypad'])):
+                raise ValueError('unobserved NMI or input change')
+            read = event
+        elif kind == 'joypad_read' and read is not None:
+            if event['nmi'] != read['nmi'] or frame != read['movie_frame']:
+                raise ValueError('incomplete controller read')
+            result.append(read['joypad'])
+            previous, read = event, None
+        elif kind == 'scroll_irq_enter' and door and irq is None:
+            if lag is not None:
+                if (any(event[key] != lag[key] for key in ('nmi', 'x', 'y', 'joypad'))
+                        or (event['including_lag'] - lag['including_lag']) % 65536 != 1):
+                    raise ValueError('loading did not contain exactly one lag NMI')
+                lag = None
+            irq = event
+        elif kind == 'scroll_irq_exit' and irq is not None:
+            if event['scroll_frame'] != (irq['scroll_frame'] + 1) % 65536:
+                raise ValueError('unsupported door scrolling update')
+            irq = None
+        elif kind in ('place_exit', 'more_enter', 'scroll_wait_enter', 'scroll_wait_exit') and door:
+            pass
+        elif kind == 'more_exit' and door and lag is None and irq is None:
+            door = False
+        else:
+            raise ValueError(f'unsupported work boundary {kind}')
+        if len(result) >= count and all(value is None for value in (read, wait, lag, vblank, irq)):
+            return result[:count]
+    raise ValueError('capture ends before the requested complete work prefix')
 
 
 def load(path, rom):

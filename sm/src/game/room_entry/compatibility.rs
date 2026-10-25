@@ -209,6 +209,7 @@ impl EntryEffects for Runtime<'_> {
         self.foreign(|game| unsafe {
             match cause {
                 EntryWait::Nmi => game::sm_80::WaitForNMI_Async(game),
+                EntryWait::NoUpdate => game::sm_80::WaitForNMI_NoUpdate_Async(game),
                 EntryWait::Music => game::sm_80::Play20FramesOfMusic_Async(game),
                 EntryWait::Mechanisms => room_mechanisms::run_door(game),
             }
