@@ -131,7 +131,7 @@ fn reset_palette_composition() {
     let mut h = prepared();
     h.world.player.projectiles.shots[0].x_fraction = 0xabcd;
     h.world.player.projectiles.shots[0].auxiliary = 0x1234;
-    h.world.player_inputs.hyper = 1;
+    h.world.player.inventory.hyper_beam = 1;
     for (cursor, value) in [
         (0xe1f0, 9291397u32 as u16),
         (0xe1f2, 0x9000),

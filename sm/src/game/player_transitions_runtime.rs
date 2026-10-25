@@ -292,3 +292,7 @@ impl Runtime<'_> {
 pub(crate) fn face_forward(game: &mut crate::game_state::Game) {
     crate::game::player_transitions::equipment::face_forward(&mut Runtime::new(game));
 }
+
+pub(crate) fn mother_brain(event: u16, game: &mut crate::game_state::Game) {
+    crate::game::player_transitions::mother_brain::react(&mut Runtime::new(game), event);
+}

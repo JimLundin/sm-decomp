@@ -228,6 +228,7 @@ macro_rules! scalar_words {
         $f(0xa48,$($borrow)* $s.player.palette.hurt_flash);
         $f(0xa72,$($borrow)* $s.player.palette.visor_timer);
         $f(0xa74,$($borrow)* $s.player.palette.suit_index);
+        $f(0xa76,$($borrow)* $s.inventory.hyper_beam);
         $f(0xa80,$($borrow)* $s.player.palette.xray_progress);
         $f(0xad0,$($borrow)* $s.player.palette.timer);
         $f(0xddc,$($borrow)* $s.player.palette.suit_beam_speed);
@@ -912,7 +913,6 @@ pub(crate) fn inputs(bytes: &[u8]) -> ExternalInputs {
         pressed: w(ram::joypad1_newkeys),
         filtered_held: w(ram::joypad1_input_samusfilter),
         filtered_pressed: w(ram::joypad1_newinput_samusfilter),
-        hyper: w(ram::hyper_beam_flag),
         frozen: w(ram::time_is_frozen_flag),
         cinematic: w(ram::cinematic_function),
         hud_auto_cancel: w(ram::hud_auto_cancel_flag),

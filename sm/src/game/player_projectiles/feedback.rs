@@ -56,7 +56,7 @@ fn stored_native(value: u16) -> u16 {
     u16::from_le_bytes(value.to_ne_bytes())
 }
 pub fn flare(h: &mut impl Host) {
-    if h.inputs().hyper != 0 {
+    if h.session().inventory.hyper_beam != 0 {
         if h.session().projectiles.controls.charge == 0 {
             return;
         }

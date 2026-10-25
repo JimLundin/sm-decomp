@@ -26,7 +26,6 @@ pub struct ExternalInputs {
     pub pressed: u16,
     pub filtered_held: u16,
     pub filtered_pressed: u16,
-    pub hyper: u16,
     pub frozen: u16,
     pub cinematic: u16,
     pub hud_auto_cancel: u16,

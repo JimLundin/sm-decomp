@@ -30,6 +30,7 @@ pub(crate) struct Supply {
 pub(crate) struct Inventory {
     pub equipment: Loadout,
     pub beams: Loadout,
+    pub hyper_beam: u16,
     pub health: Supply,
     pub health_fraction: u16,
     pub reserve_capacity: u16,

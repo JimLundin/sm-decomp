@@ -517,7 +517,7 @@ pub(crate) fn write_beam_palette(h: &mut impl Host, table_index: u16) {
 pub(crate) fn charge_feedback(h: &mut impl Host) -> u8 {
     if h.session().projectiles.controls.glow != 0 {
         h.probe("samus.palette.charge.glow");
-        if h.inputs().hyper != 0 {
+        if h.session().inventory.hyper_beam != 0 {
             if h.session().projectiles.controls.glow & 1 == 0 {
                 if h.session().projectiles.controls.glow & 0x1e == 0 {
                     h.session_mut().projectiles.controls.glow = 0;

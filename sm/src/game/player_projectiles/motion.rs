@@ -463,7 +463,7 @@ pub(crate) fn reset(h: &mut impl Host) {
         h.session_mut().player.special_palette_flags = 0;
         h.palette(super::host::PaletteEffect::SuitTarget);
     }
-    if h.inputs().hyper != 0 {
+    if h.session().inventory.hyper_beam != 0 {
         h.palette(super::host::PaletteEffect::Spawn(0xe1f0));
     }
     h.probe("player_projectiles.reset.completed");

@@ -25,12 +25,12 @@ use crate::game::palette_effects;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
+use crate::game::session_runtime::player_mother_brain;
 use crate::game::sm_80::{
     NextRandom, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6,
 };
 use crate::game::sm_88::{MotherBrainRisingHdmaObject, SpawnMotherBrainRainbowBeamHdma};
 use crate::game::sm_89::LoadFxEntry;
-use crate::game::sm_91::SomeMotherBrainScripts;
 
 use crate::game::sm_a6::{
     HandleTypewriterText_Ext, HomingReversal, Ridley_Func_98, SetupZebesEscapeTypewriter,
@@ -824,7 +824,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11123396] MotherBomb_FiringRainbowBeam_11_LetSamusFall [] {
-        SomeMotherBrainScripts(0, game);
+        player_mother_brain(0, game);
         (*Get_MotherBomb(0i32, game)).var_A = (0xa9bad1i32) as u16;
         MotherBomb_FiringRainbowBeam_12_WaitForSamusHitGround(game);
     };
@@ -3231,7 +3231,7 @@ crate::game::callback_dispatch! {
             v3 as i32 != 0
         } {
             (*Get_ShitroidInCutscene(k as i32, game)).var_A = (0xa9c851i32) as u16;
-            SomeMotherBrainScripts(1, game);
+            player_mother_brain(1, game);
         }
     };
     [11126865] ShitroidInCutscene_LatchOntoBrain [] {
@@ -3300,7 +3300,7 @@ crate::game::callback_dispatch! {
         };
         Shitroid_Func_GraduallyAccelerateTowards0x400(k, 0, rect.x, rect.y, game);
         if Shitroid_Func_2(k, rect, game) == 0 {
-            SomeMotherBrainScripts(4, game);
+            player_mother_brain(4, game);
             let E = Get_ShitdroidInCutscene(k as i32, game);
             (*E).var_A = (0xa9c9c3i32) as u16;
             (*E).var_0E = addr_stru_A9CA24 as u16;
@@ -3472,7 +3472,7 @@ crate::game::callback_dispatch! {
         if mother_brain_visuals::fade(Fade::LightsOn, (v2).wrapping_sub(1), game) & 1 != 0 {
             (*E).var_A = (0xa9c1cfi32) as u16;
             CallSomeSamusCode(0x17, game);
-            SomeMotherBrainScripts(3, game);
+            player_mother_brain(3, game);
             let fresh12 = &raw mut (*Get_ShitdroidInCutscene(k as i32, game)).base.properties;
             fresh12.write_unaligned((fresh12.read_unaligned()) | ((kEnemyProps_Deleted) as u16));
             (*Get_ShitdroidInCutscene(0x40i32, game)).var_0A = 0;
@@ -4765,7 +4765,7 @@ crate::game::callback_dispatch! {
             Enemy_SetInstrList(k, addr_kShitroid_Ilist_F906 as u16, game);
             (*E).var_E = 10;
             CallSomeSamusCode(0x13, game);
-            SomeMotherBrainScripts(0, game);
+            player_mother_brain(0, game);
             (*E).var_04 = 0;
             QueueMusic_Delayed8(7, game);
         } else {
@@ -4789,7 +4789,7 @@ crate::game::callback_dispatch! {
     [11137955] Shitroid_Func_24 [] {
         (*E).var_F = (*E).var_F.wrapping_sub(1);
         if ((*E).var_F & 0x8000) != 0 {
-            SomeMotherBrainScripts(2, game);
+            player_mother_brain(2, game);
             (*E).parameter_2 = 1;
             (*E).var_A = (0xa9f3bei32) as u16;
             Shitroid_Func_25(k, game);

@@ -426,7 +426,7 @@ fn charge_glow() {
         (1, 0xffff, 0, 0xfffe, 0),
     ] {
         let mut h = charge_fixture();
-        h.world.player_inputs.hyper = hyper;
+        h.world.player.inventory.hyper_beam = hyper;
         h.world.player.projectiles.controls.glow = glow;
         let mut expected = h.world.clone();
         expected.player.projectiles.controls.glow = remaining;
@@ -502,7 +502,7 @@ fn charge_held() {
 fn charge_live() {
     use super::game::visual_host::Source;
     let mut h = charge_fixture();
-    h.world.player_inputs.hyper = 1;
+    h.world.player.inventory.hyper_beam = 1;
     h.world.player.projectiles.controls.glow = 2;
     h.on_visual_record = Some(|h, source, bank, address| {
         assert_eq!((source, bank, address), (Source::Native, 0x9b, 0x9840));
@@ -551,7 +551,7 @@ fn charge_failure() {
     use super::game::visual_host::Source;
     for hyper in [0, 1] {
         let mut h = charge_fixture();
-        h.world.player_inputs.hyper = hyper;
+        h.world.player.inventory.hyper_beam = hyper;
         h.world.player.projectiles.controls.glow = if hyper == 0 { 0 } else { 2 };
         let source = if hyper == 0 { 0x9800 } else { 0x9840 };
         // 31 available bytes: the whole 32-byte source must precede any color write.

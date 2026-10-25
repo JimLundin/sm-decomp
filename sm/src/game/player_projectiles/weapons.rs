@@ -17,7 +17,7 @@ pub(super) fn clear_animation(h: &mut impl Host) {
 }
 pub(super) fn update_input(h: &mut impl Host) {
     h.session_mut().projectiles.controls.previous_charge = h.session().projectiles.controls.charge;
-    if h.inputs().hyper != 0 || h.session().inventory.beams.active & 0x1000 == 0 {
+    if h.session().inventory.hyper_beam != 0 || h.session().inventory.beams.active & 0x1000 == 0 {
         if h.inputs().shoot_button & h.inputs().held != 0 {
             fire(h, false);
         }
@@ -51,7 +51,7 @@ pub(super) fn update_input(h: &mut impl Host) {
 fn fire(h: &mut impl Host, charged: bool) {
     let mode = if charged {
         Mode::Charged
-    } else if h.inputs().hyper != 0 {
+    } else if h.session().inventory.hyper_beam != 0 {
         Mode::Hyper
     } else {
         Mode::Ordinary

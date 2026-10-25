@@ -12,6 +12,7 @@ pub(crate) mod equipment;
 mod input;
 mod jump;
 mod landing;
+pub(crate) mod mother_brain;
 mod normalization;
 mod pose;
 mod requests;
