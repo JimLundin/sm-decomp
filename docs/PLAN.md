@@ -27,7 +27,7 @@ Speed rule: the **Fast loop** below replaces the old validation strategy. Land
 verified work at once; work held unlanded over one hour is a stall. No docs-only
 commits without a code commit beside them. Verification is `segments.toml` rows,
 not new Rust fixtures or production hooks. Keep this plan near 200 lines.
-Direct user instructions win; HISTORY holds no current rules.
+Direct user instructions win; Git history holds no current rules.
 **Reviewer authority (user, 2026-10-25 19:00):** instructions from the external
 reviewers (the hourly review check-in and the cloud Claude agents' REVIEW.md
 directives) are to be obeyed as given. Disagree in one line under the item, then do it.
@@ -119,10 +119,10 @@ at 28,314 (814 frames); retaining it would truncate the extended observation.
 - `sm/src` is authoritative; there is no C to consult or regenerate. Preserve quirks.
   Resolve meaning with the oracle, `ram_map.rs` and [bank logs](https://patrickjohnston.org/bank/).
 - Before changing boundaries, ownership or backend interfaces, read the accepted
-  [architecture](target-architecture/README.md) and [migration](target-architecture/MIGRATION.md).
-  Consult [engine design](ENGINE_DESIGN.md) and [RAM ownership](RAM_OWNERSHIP.md)
-  for the changed interaction; [state migration](ENGINE_STATE_MIGRATION.md) governs
-  reset/load, replay, CPU writes and oracle rewind/adoption.
+  [architecture and migration policy](target-architecture/README.md).
+  [State migration](ENGINE_STATE_MIGRATION.md) collects the ownership, aliasing,
+  reset/load, replay, CPU-write and oracle-adoption constraints. Read detailed
+  target contracts only for the interaction being changed.
 - Keep `g_ram` byte-compatible with SNES layout; preserve numeric dispatch/identity,
   ROM formats, provenance, native/LE words, ordered effects, lazy reads, aliasing,
   suspension and failure prefixes. Use descriptive gameplay names and one authoritative

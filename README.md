@@ -14,8 +14,8 @@ a time, with that per-frame comparison as the test. See
 Drawn by `tools/treemap.py` from `main` on every push.
 
 The accepted destination is our own purpose-built Rust game and engine. The
-[architecture handoff](docs/target-architecture/README.md) includes a standalone
-interactive report and a staged migration plan. Windows workers can keep the
+[architecture](docs/target-architecture/README.md) describes its contracts and
+staged migration policy. Windows workers can keep the
 current emulated backend and oracle for development comparisons while replacing
 responsibilities. Existing run and verification commands continue to apply.
 
