@@ -263,8 +263,6 @@ Generate the shared authored route from the any% movie above, then run the corpu
 ```powershell
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-speed-booster.inputs --rom rom/sm.smc --route speed-booster
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-save-death-continue.inputs --rom rom/sm.smc --route save-death-continue
-python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-ice-beam-settled.inputs --rom rom/sm.smc --route ice-beam-settled
-python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-power-bomb.inputs --rom rom/sm.smc --route power-bomb
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-ice-return-business.inputs --rom rom/sm.smc --route ice-return-business
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-norfair-reserve.inputs --rom rom/sm.smc --route norfair-reserve
 python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --direct
@@ -274,20 +272,10 @@ The canonical route has 148,406 frames and SHA256
 `bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6`.
 Its controller words match the historical route; canonical casing/newlines change
 its byte hash. Use the new filename to preserve existing local inputs.
-The settled route appends 120 released-button frames (148,526 total), allowing
-the Speed Booster check its full follow-up after message completion at input 148298.
-The Ice route similarly preserves the original 161,613 inputs as `ice-beam`;
-`ice-beam-settled` appends 120 releases for the message's follow-up at input 161535.
-`ice-return-business` retains that settled prefix, then traverses the upper shutter
-bypass and collects health drops in Business Center. Its optional segment runs
-all 4,426 selected frames; it does not qualify Crocomire or the Power Bomb pickup.
-
-The `power-bomb` route retains the existing 174,992-step room-entry prefix,
-then collects the first Power Bomb in A3AE. `pickup-power-bomb` requires a fresh
-capacity increase, message completion and 120 follow-up frames; it does not
-prove use of a Power Bomb. This authored route is a documented fallback while
-published-TAS alignment is blocked at step 9,266 by timed audio-upload NMIs.
-It adds gameplay coverage without claiming further published-TAS alignment.
+The retained Ice navigation helper and its 120-frame neutral follow-up still feed
+`ice-return-business`, which traverses the upper shutter bypass and collects
+health drops in Business Center. Its optional segment runs all 4,426 selected
+frames. The separate `power-bomb-room-entry` navigation route remains in use.
 
 For focused work, add repeatable `--segment ID`, for example
 `--segment item-morph-ball`. Selection reports PARTIAL coverage and does not
@@ -473,14 +461,23 @@ all five resulting controller words, and the first replay input. At the normaliz
 normal controller read to reproduce the original button edges. Old seeds without
 this supplement retain their existing behavior. No input words are guessed or shifted.
 
-`item-speed-booster` uses `100-input-phase:98` and `seed-speed-booster.inputs`
-(692 authentic input frames). The original seed has not acquired Speed Booster;
-the row retains the fresh award, message-completion hit and both 120-frame tails.
-It replaces the dedicated authored `speed-booster-settled` extension. The shared
-`speed-booster` prefix remains in use by other rows. Regenerate with:
+Three pickup rows now use original `100-input-phase` observations. Each retains
+its input budget, fresh award or capacity increase, message-completion hit and
+both 120-frame tails. Their dedicated authored pickup recipes are retired;
+other rows still use the shared navigation helpers.
+
+| Row | Observation | Input file | Recorded inputs |
+| --- | --- | --- | ---: |
+| `item-speed-booster` | `98`, `$AD1B` | `seed-speed-booster.inputs` | 692 |
+| `item-ice` | `163`, `$A890` | `seed-ice.inputs` | 808 |
+| `pickup-power-bomb` | `179`, `$A3AE` | `seed-power-bomb.inputs` | 650 |
+
+Regenerate these input files with:
 
 ```powershell
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-speed-booster.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0098-AD1B-wram.bin --frames 692
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-ice.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0163-A890-wram.bin --frames 808
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-power-bomb.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0179-A3AE-wram.bin --frames 650
 ```
 
 `item-gravity` uses `100-input-phase:212` and `seed-gravity.inputs` (737

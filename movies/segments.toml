@@ -333,9 +333,11 @@ after_expectations = 120
 
 [[segment]]
 id = "item-ice"
-inputs = "corpus-ice-beam-settled.inputs"
-input_sha256 = "d5700c8c8bfd3bcbc9fa5d4d05aa805dd594e98130a0c9d0ade163695201e093"
-start_frame = 160925
+seed = "100-input-phase:163"
+seed_sha256 = "68385c119baf78a520fdb6284702846d6567adffb7b19886411d78719e41d228"
+inputs = "seed-ice.inputs"
+input_sha256 = "60c52571107060f4a303f471395c9e57b174ff4928a9a7c81d9e2c914ade42be"
+start_frame = 0
 frames = 808
 require_hit = ["coroutine.plm.message.completed"]
 after_hits = 120
@@ -491,9 +493,11 @@ after_expectations = 120
 
 [[segment]]
 id = "pickup-power-bomb"
-inputs = "corpus-power-bomb.inputs"
-input_sha256 = "b6c0c74ccfe38b10c1ae284472e60bc483060ca0b3fb6f359d57e894283decf7"
-start_frame = 175405
+seed = "100-input-phase:179"
+seed_sha256 = "84e3c2d25258c4ba6f5fe2b75669dc55ba2c097c4e5d0da0687434fc79d9a5cc"
+inputs = "seed-power-bomb.inputs"
+input_sha256 = "706235b1c64f4f0f34dfa5971745ea56f645374995489e2fc3d6eea67c18a0dc"
+start_frame = 0
 frames = 650
 require_hit = ["coroutine.plm.message.completed"]
 after_hits = 120

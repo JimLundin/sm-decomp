@@ -321,12 +321,14 @@ jobs:
               bundle = pathlib.Path(os.environ['RUNNER_TEMP']) / 'seeds-v1.tar.gz.enc'
               rows = tomllib.loads(pathlib.Path('movies/segments.toml').read_text())['segment']
               selected = [row for row in rows if row['id'] in os.environ['SEGMENTS'].split()]
-              speed_booster = all(row.get('seed') == '100-input-phase:98' for row in selected)
+              seeded_pickups = all(row.get('seed') in (
+                  '100-input-phase:98', '100-input-phase:163', '100-input-phase:179')
+                  for row in selected)
               golden = all(row.get('seed') == 'golden-input-phase:1' for row in selected)
               credits = all(row.get('seed') == '100-credits:336' for row in selected)
               asset, digest = (
-                  ('seeds-v1-speed-3e4f7e4525611c80.tar.gz.enc', '3e4f7e4525611c8028d4231d85709333bd8e3c2b27131bf44cdfe5af1928ebd8')
-                  if speed_booster else
+                  ('seeds-v1-pickups-54590d09c850b57e.tar.gz.enc', '54590d09c850b57e7c40c47c3a2fa07bb35e6b50835835fc5151a17971b1831d')
+                  if seeded_pickups else
                   ('seeds-v1-golden-3b895ada4be8fcb4.tar.gz.enc', '3b895ada4be8fcb4e1b77941f0f4c4530150c626588b53d2e8cf5c2dc2cbeb0e')
                   if golden else
                   ('seeds-v1-credits-42b93bf0bf83aba1.tar.gz.enc', '42b93bf0bf83aba1dd10fc24ca7d5f5b639c65e501e06ce2239c7c638c2a0ce8')

@@ -474,15 +474,12 @@ ROUTES = {
     'warehouse-return': (128547, '2fba8c0b64d929b6206ccb12d349d965d2f8bec60ebd504dfb5db36ded390d8a'),
     'warehouse-energy': (129802, '18f230ec4d4891261df5552bb84af789d3a2345d4e135f93c086d996c19dee5d'),
     'bubble-mountain': (138749, '06344dfe6f82874f0bca8b4fac2e7e712abb6f21540b2997edfd0599f85558da'),
-    'ice-beam': (161613, 'd730b6de3ceef1bcff05d07af3775b679bd70c8c731ae128ed5b573e21be8d21'),
     'ice-return-business': (166082, '4b4090a970f52658d27d4f69fe0e6d30da43739519cf781ef722dacbecdb5721'),
-    'ice-beam-settled': (161733, 'd5700c8c8bfd3bcbc9fa5d4d05aa805dd594e98130a0c9d0ade163695201e093'),
     'speed-booster': (148406, 'bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6'),
     'crocomire': (171694, '90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe'),
     'crocomire-shot': (167295, 'e46b9a61eeded83064cc3a9fc29cf05d6a1cd18151c06cd6c9b78930af41766b'),
     'wave-beam': (155607, '2f07dc07523b7b542412604337d961292c3c07e3c4f0577d06dd131e1e879c4f'),
     'wave-gate': (153648, '1ce640c865d508ff2aab0f79c043c6da8aff9b74d6a1444d3a994e20d68db123'),
-    'power-bomb': (176055, 'b6c0c74ccfe38b10c1ae284472e60bc483060ca0b3fb6f359d57e894283decf7'),
     'power-bomb-room-entry': (174992, '34ab4055b6904d0544e490632fbbb81b87f18d163e55c7c6208ee9e5bd2a7dfb'),
     'norfair-reserve': (147887, '968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d'),
 }
@@ -1568,22 +1565,6 @@ def extend_power_bomb_entry(a):
     return a
 
 
-def extend_power_bomb_pickup(a):
-    """Collect the first Power Bomb after the preserved A3AE entry route."""
-    assert len(a) == 174992
-    a = list(a)
-    a.extend(_holds('Y:1 Left:8 None:12 Left:4 Left+A:44 Up+A:1 None:12'))  # pb-a3ae-first-stone
-    a.extend(_holds('X:1 None:8 A:10 Left+A:14 Up+A:1 None:25'))  # pb-a3ae-first-boyon-platform
-    a.extend(_holds('Left+A:10 Down+A:2 Down+A+X:1 Left+A:10 Up+A:1 None:28'))  # pb-a3ae-second-stone-braked
-    a.extend(_holds('Left:4 Left+A:7 Left:25 Up:1 None:8'))  # pb-a3ae-third-stone
-    a.extend(_holds('Left:4 Left+A:12 Left:20 Up:1 None:20'))  # pb-a3ae-fourth-stone
-    a.extend(_holds('Left:4 Left+A:7 Left:25 Up:1 None:8'))  # pb-a3ae-fifth-stone
-    a.extend(_holds('Left:4 Left+A:7 Left:25 Up:1 None:20 X:1 None:15'))  # pb-a3ae-orb-approach
-    a.extend(_holds('Left:4 Left+A:44 Up+A:1 None:420 A:1 None:180'))  # pb-a3ae-power-bomb-collected
-    assert len(a) == 176055
-    return a
-
-
 def extend_wave_gate(a):
     """Observed Bubble return -> ADAD gate re-close, without timing offsets."""
     a = list(a[:152344])
@@ -1728,15 +1709,10 @@ def route_frames(source, name):
         return extend_wave_pickup(route) if name == 'wave-beam' else route
     if name == 'norfair-reserve':
         return extend_reserve(extend_redtower(a))
-    if name in ('power-bomb-room-entry', 'power-bomb'):
-        entry = extend_power_bomb_entry(extend_ice_return(extend_ice(extend_redtower(a)) + _hold('', 120)))
-        return extend_power_bomb_pickup(entry) if name == 'power-bomb' else entry
+    if name == 'power-bomb-room-entry':
+        return extend_power_bomb_entry(extend_ice_return(extend_ice(extend_redtower(a)) + _hold('', 120)))
     if name == 'ice-return-business':
         return extend_ice_return(extend_ice(extend_redtower(a)) + _hold('', 120))
-    if name in ('ice-beam', 'ice-beam-settled'):
-        frames = extend_ice(extend_redtower(a))
-        # Authored neutral tail for 120 follow-up frames after Ice's message.
-        return frames + _hold('', 120) if name == 'ice-beam-settled' else frames
     return extend_redtower(a)[:ROUTES[name][0]]
 
 
