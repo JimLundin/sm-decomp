@@ -478,7 +478,6 @@ ROUTES = {
     'speed-booster': (148406, 'bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6'),
     'crocomire': (171694, '90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe'),
     'crocomire-shot': (167295, 'e46b9a61eeded83064cc3a9fc29cf05d6a1cd18151c06cd6c9b78930af41766b'),
-    'wave-beam': (155607, '2f07dc07523b7b542412604337d961292c3c07e3c4f0577d06dd131e1e879c4f'),
     'wave-gate': (153648, '1ce640c865d508ff2aab0f79c043c6da8aff9b74d6a1444d3a994e20d68db123'),
     'power-bomb-room-entry': (174992, '34ab4055b6904d0544e490632fbbb81b87f18d163e55c7c6208ee9e5bd2a7dfb'),
     'norfair-reserve': (147887, '968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d'),
@@ -1704,9 +1703,8 @@ def route_frames(source, name):
     if name in ('crocomire-shot', 'crocomire'):
         route = extend_crocomire_shot_regression(extend_wave_pickup(extend_wave_gate(extend_ice(extend_redtower(a)))))
         return extend_crocomire_completion(route) if name == 'crocomire' else route
-    if name in ('wave-gate', 'wave-beam'):
-        route = extend_wave_gate(extend_ice(extend_redtower(a)))
-        return extend_wave_pickup(route) if name == 'wave-beam' else route
+    if name == 'wave-gate':
+        return extend_wave_gate(extend_ice(extend_redtower(a)))
     if name == 'norfair-reserve':
         return extend_reserve(extend_redtower(a))
     if name == 'power-bomb-room-entry':

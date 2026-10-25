@@ -367,9 +367,11 @@ expect = ["door:A6A1", "door:A618", "door:A3AE"]
 
 [[segment]]
 id = "item-wave"
-inputs = "corpus-wave-beam.inputs"
-input_sha256 = "2f07dc07523b7b542412604337d961292c3c07e3c4f0577d06dd131e1e879c4f"
-start_frame = 154995
+seed = "100-input-phase:104"
+seed_sha256 = "cf9249a38227658aae6216cfa495663e8f3de653b2a0cd06bd981e56cff22bf6"
+inputs = "seed-wave.inputs"
+input_sha256 = "f1725b4ccd8d99694ef9bc995df5ea104a7f2302c5039b2e698d22f795dcd425"
+start_frame = 0
 frames = 612
 require_hit = ["coroutine.plm.message.completed"]
 after_hits = 120

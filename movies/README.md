@@ -307,20 +307,14 @@ The additional `save-memory` check covers the save/checksum write alone.
 Missing bosses/items/areas and credits remain explicit gaps.
 The `credits` expectation observes script progress; the separate `credits-complete` expectation requires the roll-ending transition.
 
-The `wave-gate` authored fallback reuses the checked Speed Booster/farm return,
+The `wave-gate` authored route reuses the checked Speed Booster/farm return,
 then crosses ADAD's moving platforms and opens its blue gate. Regenerate with
 `python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-wave-gate.inputs --rom rom/sm.smc --route wave-gate`.
 The additional `shot-gate-spawn-parameter` regression checks steps 153606..153615:
 the re-closing gate must preserve the projectile definition as its spawn parameter.
 This route does not yet qualify Wave acquisition or advance the required tally.
 
-The `wave-beam` authored route extends `wave-gate` through ADAD's eastern pit
-and overhang into ADDE. Regenerate with
-`python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-wave-beam.inputs --rom rom/sm.smc --route wave-beam`.
-`item-wave` starts before the fresh award, requires its completed message, and
-checks 120 subsequent frames. It does not advance published-TAS timing alignment.
-
-The `crocomire-shot` authored route extends `wave-beam` through the Norfair refill
+The `crocomire-shot` authored route uses the retained Wave pickup helper before the Norfair refill
 and Crocomire fight. Regenerate with
 `python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-crocomire-shot.inputs --rom rom/sm.smc --route crocomire-shot`.
 `crocomire-spit-drop-scratch` observes an onscreen dust bound followed by a spit
@@ -461,7 +455,7 @@ all five resulting controller words, and the first replay input. At the normaliz
 normal controller read to reproduce the original button edges. Old seeds without
 this supplement retain their existing behavior. No input words are guessed or shifted.
 
-Three pickup rows now use original `100-input-phase` observations. Each retains
+Four pickup rows now use original `100-input-phase` observations. Each retains
 its input budget, fresh award or capacity increase, message-completion hit and
 both 120-frame tails. Their dedicated authored pickup recipes are retired;
 other rows still use the shared navigation helpers.
@@ -469,6 +463,7 @@ other rows still use the shared navigation helpers.
 | Row | Observation | Input file | Recorded inputs |
 | --- | --- | --- | ---: |
 | `item-speed-booster` | `98`, `$AD1B` | `seed-speed-booster.inputs` | 692 |
+| `item-wave` | `104`, `$ADDE` | `seed-wave.inputs` | 612 |
 | `item-ice` | `163`, `$A890` | `seed-ice.inputs` | 808 |
 | `pickup-power-bomb` | `179`, `$A3AE` | `seed-power-bomb.inputs` | 650 |
 
@@ -476,6 +471,7 @@ Regenerate these input files with:
 
 ```powershell
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-speed-booster.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0098-AD1B-wram.bin --frames 692
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-wave.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0104-ADDE-wram.bin --frames 612
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-ice.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0163-A890-wram.bin --frames 808
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-power-bomb.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0179-A3AE-wram.bin --frames 650
 ```
