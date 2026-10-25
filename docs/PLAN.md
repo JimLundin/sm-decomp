@@ -57,7 +57,8 @@ before further adoption; the review's red-main rule does not authorize CI pollin
    upload sample; equal-size uploads take 27/28 NMIs. Crocomire's shared $0E20 drop
    regression is fixed: 167,281 fresh setup frames plus the four-frame row pass;
    20 original-CPU cases and two mutations check the restored interaction. Continue
-   the fight from the checked frame-167,285 checkpoint; defeat remains pending.
+   the fight from the checked frame-167,285 checkpoint. Melt graphics now pass their
+   four-frame regression; wall-spawn return and defeat qualification are next.
 2. **Current - lane B bank retirement.** `sm_94` and `sm_91` are deleted.
    Player input, demos, suits, equipment, commands, initialization, Mother Brain
    reactions, X-ray and direct damage use owned state. Natural X-ray, Gravity,
@@ -173,19 +174,30 @@ Refill useful ready work immediately; completed workers need explicit new tasks.
 Measure CPU, free memory, paging, disk and completed useful work/time during real
 jobs. Increase concurrency only when resources fit; compare the next useful batch
 with the measured two-build result before retaining a higher setting. Three is an
-observed trial, not a proven optimum. At 12:19 CET, disk was binding: one admitted
-workflow, 5.92GiB RAM free and 1.30GiB disk free. Replays/source work overlap.
+observed trial, not a proven optimum. Disk monitoring must include accumulated
+artifact storage and batch runway, not just whether one more job fits.
 Never edit checked source or rebuild loaded DLLs. -j1 permits parallel code generation.
 Use [the iteration guide](ITERATION.md#windows-shell-setup) for paths/commands.
 
 Keep artifacts in their checkout; seed dependencies, not full target trees, and reuse checked builds.
 Direct builds honor `CARGO_INCREMENTAL=0`; use it for disposable snapshots and preserve others' caches.
-Budget disk against the job: measured direct output 76.8MiB plus no-default 22.6MiB.
-A single bounded workflow reserves 300MiB additional space and leaves 1GiB for Windows;
-monitor growth and budget copies/replays too. A fixed 2GiB free-disk floor is unnecessary.
+Check free disk and accumulated workspace/experiment build storage at session start
+and before each batch; monitor free disk during artifact-producing jobs. Maintain
+at least 10GiB free after budgeting the batch; clean up before starting work that
+would cross it. Below 5GiB, pause artifact-producing work and restore headroom.
+The former 1GiB floor allowed cache accumulation to exhaust useful capacity.
+Budget copies, peak compiler temporaries, retained outputs and replay captures:
+measured direct output is 76.8MiB plus no-default 22.6MiB; reserve 300MiB for a fresh
+workflow or 200MiB remaining for an already-copied direct-only build, in addition
+to the headroom above. Review obsolete generated caches when their work is adopted;
+preserve source, results and reusable checkpoints. Assign cleanup ownership explicitly.
 NTFS compression halves measured inactive rlib storage; verify unchanged hashes and
 keep loaded DLLs untouched.
 Before deletion, resolve paths and verify artifacts are unneeded. Never delete another worker's artifacts.
+Prefer inspected, explicit compiler-file allowlists and nonrecursive deletion without
+force; retain directories, locks, source, results, DLLs and checkpoints.
+If agent policy rejects cleanup, report it promptly; do not let small compression
+savings justify continuing below the storage budget or retry deletion through another tool.
 
 ## Definition of done for any change
 

@@ -101,12 +101,13 @@ flowchart LR
     E --> F[Count and commit]
 ```
 
-One heavy compiler runs at a time across the machine. `-j 1` or
-`CARGO_BUILD_JOBS=1` limits a Cargo invocation; it does not coordinate separate
-processes or checkouts. Arrange compiler use with active owners through the
-existing conversation. While it runs, other workers can inspect source, prepare
-cases and review. Schedule resource-heavy test/replay runs with the same care;
-parallel compilation is not the initial throughput strategy.
+Use PLAN's measured resource budgets, not a fixed heavy-job count. Two isolated
+builds achieved 1.50x throughput; three remains unproven. `CARGO_BUILD_JOBS=1`
+limits one Cargo invocation and still permits parallel code generation. Coordinate
+accepted launches through the existing conversation, including jobs before rustc
+appears. Release compiler admission when compilation ends; overlap replays and
+source work within their own resource needs. Compare completed useful work/time,
+memory, paging and disk pressure before retaining higher concurrency.
 
 Use existing isolated checkouts/snapshots for concurrent edits. Keep source
 fixed during builds and checks, game/host artifacts local to that checkout,
@@ -155,7 +156,7 @@ harness, production and prospective composition, including changed-source
 rebuilds), versus 3.57s for its final selected comparison run. These are reported
 stage timings, not total cycle time; required rebuilds are not automatically
 redundant. Measure which compiled inputs changed before consolidating builds.
-More simultaneous compiler jobs are not the next experiment on this machine.
+That historical finding is superseded by PLAN's measured concurrency policy.
 
 ## Windows shell setup
 
@@ -175,7 +176,7 @@ Get-Command cargo,rustc,python,sh
 ```
 
 The current stable compiler is intentional while the requested nightly remains
-blocked as recorded in PLAN. Coordinate the machine-wide compiler slot before
+blocked as recorded in PLAN. Check the shared resource budget before
 building. The launcher now selects Cargo automatically with this SDL2 environment.
 Use this single final-build command, then the selected replay:
 
