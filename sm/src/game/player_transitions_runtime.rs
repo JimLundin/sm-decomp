@@ -234,7 +234,7 @@ impl Runtime<'_> {
             self.session_mut().player.transitions.draw_handler = 0xeb52;
         }
         demo::finish_setup(self);
-        self.foreign(|game| unsafe { crate::game::sm_90::UpdateBeamTilesAndPalette(game) });
+        self.foreign(crate::game::visual_runtime::update_beam_tiles_and_palette);
         for (field, value) in [
             (ram::button_config_up, 0x0800),
             (ram::button_config_down, 0x0400),
@@ -361,7 +361,7 @@ pub(crate) fn initialize(game: &mut crate::game_state::Game) {
     rt.session_mut().player.contact.y_acceleration.whole = 0;
     rt.write_slice_le(ram::fx_y_pos, u16::MAX);
     rt.write_slice_le(ram::lava_acid_y_pos, u16::MAX);
-    rt.foreign(|game| unsafe { crate::game::sm_90::UpdateBeamTilesAndPalette(game) });
+    rt.foreign(crate::game::visual_runtime::update_beam_tiles_and_palette);
     rt.write_slice_le(ram::cinematic_function, 0);
     let p = &mut rt.session_mut().player;
     p.pose = 0;

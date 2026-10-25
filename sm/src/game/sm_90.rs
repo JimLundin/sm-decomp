@@ -61,11 +61,6 @@ crate::game::constants::typed_constants! { i32;
     fnGrappleBeamFunc_ConnectedLockedInPlace = 0x9bc77e,
     fnGrappleBeamFunc_Cancel = 0x9bc856, fnGrappleBeam_Func2 = 0x9bc8c5,
 }
-const RomPtr_90: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x90>;
-crate::ram_map::ram_pointer_functions! {
-    gOamEnt(v: i32) -> OamEnt = [(0x370 + v) as isize];
-    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
-}
 crate::game::constants::typed_constants! { u32;
     fnSamus_MoveHandler_ReleaseFromGrapple = 9475182,
     fnSamus_ScrollFinishedHook_SporeSpawnFight = 9475465,
@@ -316,174 +311,6 @@ pub unsafe fn Samus_CalcDistanceMoved_Y(game: &mut Game) {
                         .wrapping_add(((1i32) << 16) as u32)
             );
         };
-    }
-}
-pub unsafe fn UpdateBeamTilesAndPalette(game: &mut Game) {
-    unsafe {
-        let v0: u16 = (2 * (word!(game.equipped_beams) as i32 & 0xfff)) as u16;
-        let mut v1: u16 = word!(game.vram_write_queue_tail);
-        (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size = 256;
-        v1 = (v1).wrapping_add(2);
-        (*gVramWriteEntry(v1 as i32, game)).size =
-            crate::rtl::rom_table_word!(game, 0x90c3b1, (v0 >> 1) as isize);
-        v1 = (v1).wrapping_add(2);
-        crate::update_place! { previous fresh155 = v1 => v1.wrapping_add(1); }
-        *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-            fresh155 as i32,
-            game,
-        ))
-        .size as *mut u8) = -102i32 as u8;
-        (*gVramWriteEntry(v1 as i32, game)).size = addr_unk_606300 as u16;
-        word!(game.vram_write_queue_tail = (v1).wrapping_add(2));
-        WriteBeamPalette_Y(v0, game);
-    }
-}
-pub unsafe fn WriteBeamPalette_Y(j: u16, game: &mut Game) {
-    crate::game::samus_palette::write_beam_palette(
-        &mut crate::game::session_runtime::Runtime::new(game),
-        j >> 1,
-    );
-}
-pub unsafe fn LoadProjectilePalette(a: u16, game: &mut Game) {
-    crate::game::samus_palette::write_beam_palette(
-        &mut crate::game::session_runtime::Runtime::new(game),
-        a & 0xfff,
-    );
-}
-pub unsafe fn HandleArmCannonOpenState(game: &mut Game) {
-    unsafe {
-        if *ram_ptr!(game; 0xaa7) != 0 || UpdateArmCannonIsOpenFlag(game) & 1 != 0 {
-            AdvanceArmCannonFrame(game);
-        }
-        word!(
-            game.arm_cannon_drawing_mode = *RomPtr_90(
-                crate::rtl::rom_table_word!(game, 0x90c7df, word!(game.samus_pose) as isize),
-                game,
-            )
-            .offset(1) as u16
-        );
-    }
-}
-pub unsafe fn UpdateArmCannonIsOpenFlag(game: &mut Game) -> u8 {
-    unsafe {
-        static kFlagShouldArmCannonBeOpen: [i8; 6] = [0, 1, 1, 0, 1, 0];
-        if word!(game.hud_item_changed_this_frame) as i32 - 2i32 & 0x8000 != 0 {
-            return 0;
-        }
-        let r18: u16 = kFlagShouldArmCannonBeOpen[word!(game.hud_item_index) as usize] as u16;
-        if ((*ram_ptr!(game; 0xaa6)) as u16) == r18 {
-            return 0;
-        }
-        if r18 != 0 {
-            word!(game.arm_cannon_frame = 0);
-        } else {
-            word!(game.arm_cannon_frame = 4);
-        }
-        *(ram_ptr!(game, u16; 0xaa6)) = (r18) | (0x100u16);
-        1
-    }
-}
-pub unsafe fn AdvanceArmCannonFrame(game: &mut Game) {
-    unsafe {
-        if *ram_ptr!(game; 0xaa6) != 0 {
-            if word!(game.arm_cannon_frame) as i32 - 2i32 & 0x8000 != 0 {
-                word!(game.arm_cannon_frame += 1);
-                return;
-            }
-            word!(game.arm_cannon_frame = 3);
-        } else {
-            if word!(game.arm_cannon_frame) != 1
-                && ((word!(game.arm_cannon_frame)) as i16).wrapping_sub(1) >= 0
-            {
-                word!(game.arm_cannon_frame -= 1);
-                return;
-            }
-            word!(game.arm_cannon_frame = 0);
-        }
-        *(ram_ptr!(game, u16; 0xaa6)) = *ram_ptr!(game; 0xaa6) as u16;
-    }
-}
-pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
-    unsafe {
-        static kDrawArmCannon_Char: [u16; 10] = [
-            0x281f, 0x281f, 0x281f, 0x681f, 0xa81f, 0xe81f, 0x281f, 0x681f, 0x681f, 0x681f,
-        ];
-        let mut v3: u16 = 0;
-        let mut r22: u16 = 0;
-        if word!(game.arm_cannon_frame) != 0
-            && (word!(game.samus_invincibility_timer) == 0
-                || (word!(game.nmi_frame_counter_word) & 1) == 0)
-        {
-            let v0: u16 =
-                crate::rtl::rom_table_word!(game, 0x90c7df, word!(game.samus_pose) as isize);
-            let v1 = RomPtr_90(v0, game);
-            let v2: i16 = *v1 as i16;
-            if (v2 as u16 & 0x80) != 0 {
-                if word!(game.samus_anim_frame) != 0 {
-                    v3 = (2 * (*v1.offset(2) as i32 & 0x7f)) as u16;
-                } else {
-                    v3 = (2 * (*v1 as i32 & 0x7f)) as u16;
-                }
-                r22 = (v0).wrapping_add(4);
-            } else {
-                v3 = (2u16).wrapping_mul((v2) as u16);
-                r22 = (v0).wrapping_add(2);
-            }
-            let r24: u16 = kDrawArmCannon_Char[(v3 >> 1) as usize];
-            let v4 = RomPtr_90(
-                (r22 as i32 + 2 * word!(game.samus_anim_frame) as i32) as u16,
-                game,
-            );
-            let r18: u16 = *v4 as i8 as u16;
-            let r20: u16 = *v4.offset(1) as i8 as u16;
-            r22 = (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
-                .offset(word!(game.samus_pose) as isize))
-            .y_offset_to_gfx as u16;
-            let v7: u16 = word!(game.oam_next_ptr);
-            let v8: i16 = (r18 as i32 + word!(game.samus_x_pos) as i32
-                - word!(game.layer1_x_pos) as i32) as i16;
-            if v8 >= 0 && v8 as i32 - 256i32 & 0x8000 != 0 {
-                let v9 = gOamEnt(word!(game.oam_next_ptr) as i32, game);
-                (*v9).xcoord = v8 as u8;
-                let v10: i16 = (r20 as i32 + word!(game.samus_y_pos) as i32
-                    - r22 as i32
-                    - word!(game.layer1_y_pos) as i32) as i16;
-                if v10 >= 0 && v10 as i32 - 256i32 & 0x8000 != 0 {
-                    (*v9).ycoord = v10 as u8;
-                    *(&raw mut (*v9).charnum as *mut u16) = r24;
-                    word!(game.oam_next_ptr = (v7).wrapping_add(4));
-                }
-            }
-            let v11 = RomPtr_90(
-                crate::rtl::rom_table_word!(game, 0x90c7df, word!(game.samus_pose) as isize),
-                game,
-            );
-            let mut v12: u8 = *v11;
-            if (v12 & 0x80) != 0 {
-                v12 = (if word!(game.samus_anim_frame) != 0 {
-                    *v11.offset(2) as i32
-                } else {
-                    *v11 as i32
-                }) as u8;
-            }
-            let v13: u16 =
-                (crate::rtl::rom_table_word!(game, 0x90c7a5, (v12 as i32 & 0x7f) as isize) as i32
-                    + 2 * word!(game.arm_cannon_frame) as i32) as u16;
-            let mut v14: u16 = word!(game.vram_write_queue_tail);
-            (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size = 32;
-            v14 = (v14).wrapping_add(2);
-            let v15: u16 = *(RomPtr_90(v13, game) as *mut u16);
-            (*gVramWriteEntry(v14 as i32, game)).size = v15;
-            v14 = (v14).wrapping_add(2);
-            crate::update_place! { previous fresh15 = v14 => v14.wrapping_add(1); }
-            *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-                fresh15 as i32,
-                game,
-            ))
-            .size as *mut u8) = -102i32 as u8;
-            (*gVramWriteEntry(v14 as i32, game)).size = addr_unk_6061F0 as u16;
-            word!(game.vram_write_queue_tail = (v14).wrapping_add(2));
-        }
     }
 }
 pub unsafe fn Samus_EndSuperJump(game: &mut Game) -> u8 {
@@ -1392,31 +1219,10 @@ crate::game::callback_dispatch! {
             GrappleBeamFunc_BF1B(game);
         }
         crate::game::player_projectiles::grapple_flare(game);
-        if (word!(game.arm_cannon_drawing_mode) & 0xf) != 0 {
-            if (word!(game.arm_cannon_drawing_mode) & 0xf) == 2 {
-                pt::draw_atmospheric(&mut Runtime::new(game));
-                Samus_Draw(game);
-                Samus_ArmCannon_Draw(game);
-                UpdateGrappleBeamTilesAndIncrFlameCtr(game);
-                if word!(game.grapple_beam_length) == 0 {
-                    return;
-                }
-            } else {
-                pt::draw_atmospheric(&mut Runtime::new(game));
-                Samus_ArmCannon_Draw(game);
-                Samus_Draw(game);
-                UpdateGrappleBeamTilesAndIncrFlameCtr(game);
-                if word!(game.grapple_beam_length) == 0 {
-                    return;
-                }
-            }
-        } else {
-            pt::draw_atmospheric(&mut Runtime::new(game));
-            Samus_Draw(game);
-            UpdateGrappleBeamTilesAndIncrFlameCtr(game);
-            if word!(game.grapple_beam_length) == 0 {
-                return;
-            }
+        crate::game::visual_runtime::draw_player_with_cannon(game);
+        UpdateGrappleBeamTilesAndIncrFlameCtr(game);
+        if word!(game.grapple_beam_length) == 0 {
+            return;
         }
         HandleGrappleBeamGfx(game);
     };
@@ -1440,7 +1246,7 @@ crate::game::callback_dispatch! {
 }
 pub unsafe fn SamusDrawSprites(game: &mut Game) {
     unsafe {
-        HandleArmCannonOpenState(game);
+        crate::game::visual_runtime::update_arm_cannon(game);
         CallSamusDrawHandler(
             ((word!(game.samus_draw_handler)) as u32) | (0x900000u32),
             game,
@@ -1448,23 +1254,9 @@ pub unsafe fn SamusDrawSprites(game: &mut Game) {
     }
 }
 pub unsafe fn sub_90EB55(game: &mut Game) {
+    crate::game::visual_runtime::draw_player_with_cannon(game);
     unsafe {
-        if (word!(game.arm_cannon_drawing_mode) & 0xf) != 0 {
-            if (word!(game.arm_cannon_drawing_mode) & 0xf) == 2 {
-                pt::draw_atmospheric(&mut Runtime::new(game));
-                Samus_Draw(game);
-                Samus_ArmCannon_Draw(game);
-            } else {
-                pt::draw_atmospheric(&mut Runtime::new(game));
-                Samus_ArmCannon_Draw(game);
-                Samus_Draw(game);
-            }
-            Samus_DrawEchoes(game);
-        } else {
-            pt::draw_atmospheric(&mut Runtime::new(game));
-            Samus_Draw(game);
-            Samus_DrawEchoes(game);
-        };
+        Samus_DrawEchoes(game);
     }
 }
 pub fn Samus_SetRadius(game: &mut Game) {

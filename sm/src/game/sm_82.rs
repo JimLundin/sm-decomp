@@ -42,7 +42,7 @@ use crate::game::sm_81::{
 use crate::game::sm_88::{
     DisableHdmaObjects, EnableHdmaObjects, HdmaObjectHandler, WaitUntilEndOfVblankAndClearHdma,
 };
-use crate::game::sm_90::{Samus_LowHealthCheck_0, UpdateBeamTilesAndPalette};
+use crate::game::sm_90::Samus_LowHealthCheck_0;
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
     UnpauseHook_Kraid_IsDead,
@@ -2064,7 +2064,7 @@ pub unsafe fn ContinueInitGameplayResume(game: &mut Game) {
         word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- pause_map(384));
         SetupPpuForGameplayResume(game);
         CalculateBgScrolls_Unpause(game);
-        UpdateBeamTilesAndPalette_Unpause(game);
+        crate::game::visual_runtime::update_beam_tiles_and_palette(game);
         ClearPauseMenuData(game);
         CallSomeSamusCode(0xc, game);
     }
@@ -2085,11 +2085,6 @@ pub unsafe fn CalculateBgScrolls_Unpause(game: &mut Game) {
         word!(game.reg_BG1VOFS = (word!(game.bg1_y_offset)).wrapping_add(word!(game.layer1_y_pos)));
         word!(game.reg_BG2HOFS = (word!(game.bg2_x_scroll)).wrapping_add(word!(game.layer2_x_pos)));
         word!(game.reg_BG2VOFS = (word!(game.bg2_y_scroll)).wrapping_add(word!(game.layer2_y_pos)));
-    }
-}
-pub unsafe fn UpdateBeamTilesAndPalette_Unpause(game: &mut Game) {
-    unsafe {
-        UpdateBeamTilesAndPalette(game);
     }
 }
 pub unsafe fn ClearPauseMenuData(game: &mut Game) {

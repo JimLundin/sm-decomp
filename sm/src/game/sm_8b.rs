@@ -23,7 +23,6 @@ use crate::game::sm_88::{
 };
 use crate::game::sm_90::{
     DrawSamusAndProjectiles, HandleControllerInputForGamePhysics, HandleSamusMovementAndPause,
-    UpdateBeamTilesAndPalette,
 };
 
 crate::typed_struct! {
@@ -2256,7 +2255,7 @@ crate::game::callback_dispatch! {
         word! { game, 0; cur_irq_handler, irqhandler_next_handler, area_index }
         word! { game, 16; room_width_in_blocks, room_height_in_blocks }
         initialize_player(game);
-        UpdateBeamTilesAndPalette(game);
+        crate::game::visual_runtime::update_beam_tiles_and_palette(game);
         word! { game, 900; samus_max_missiles, samus_missiles }
         word! {game; cinematic_var15 = 0; samus_draw_handler = ((0x90eb52i32) as u16); }
         ResetButtonAssignmentsToDefault(game);

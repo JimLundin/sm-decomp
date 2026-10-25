@@ -206,7 +206,9 @@ impl Effects for Runtime<'_> {
             use crate::game::sm_80::*;
             match visual {
                 VisualUpdate::None => {}
-                VisualUpdate::Beams => crate::game::sm_90::UpdateBeamTilesAndPalette(game),
+                VisualUpdate::Beams => {
+                    crate::game::visual_runtime::update_beam_tiles_and_palette(game)
+                }
                 VisualUpdate::Grapple => AddGrappleToHudTilemap(game),
                 VisualUpdate::Xray => AddXrayToHudTilemap(game),
                 VisualUpdate::Missiles => AddMissilesToHudTilemap(game),

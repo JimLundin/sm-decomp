@@ -57,6 +57,9 @@ pub struct Controls {
     pub selected_weapon: u16,
     pub automatic_weapon: u16,
     pub weapon_changed: u16,
+    pub cannon_flags: u16,
+    pub cannon_frame: u16,
+    pub cannon_drawing_mode: u16,
     pub flare_frames: [u16; 3],
     pub flare_timers: [u16; 3],
 }

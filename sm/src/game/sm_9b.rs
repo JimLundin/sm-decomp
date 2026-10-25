@@ -21,9 +21,7 @@ use crate::game::samus_animation::DrawSamusSuitExploding;
 use crate::game::samus_animation::Samus_DrawStartingDeathAnim;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_80::{Multiply16x16, QueueSfx1_Max1, QueueSfx1_Max6, QueueSfx1_Max15};
-use crate::game::sm_90::{
-    LoadProjectilePalette, Samus_GetBottom_R18, Samus_PostGrappleCollisionDetect,
-};
+use crate::game::sm_90::{Samus_GetBottom_R18, Samus_PostGrappleCollisionDetect};
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]
@@ -629,7 +627,11 @@ macro_rules! clear_grapple_state_after_release {
             flare_fast_sparks_anim_frame, flare_animation_timer, flare_slow_sparks_anim_timer,
             flare_fast_sparks_anim_timer,
         }
-        LoadProjectilePalette(word!($game.equipped_beams), $game);
+        let beams = word!($game.equipped_beams) & 0xfff;
+        crate::game::samus_palette::write_beam_palette(
+            &mut crate::game::session_runtime::Runtime::new($game),
+            beams,
+        );
         word!($game.grapple_beam_function = ((0x9bc4f0i32) as u16));
         word!($game.samus_draw_handler = ((0x90eb52i32) as u16));
         Samus_PostGrappleCollisionDetect($game);
@@ -979,7 +981,9 @@ crate::game::callback_dispatch! {
         }
         GrappleFunc_AF87(game);
         word! {game; samus_draw_handler = ((0x90eb86i32) as u16); grapple_walljump_timer = 0; }
-        LoadProjectilePalette(2, game);
+        crate::game::samus_palette::write_beam_palette(
+            &mut crate::game::session_runtime::Runtime::new(game), 2,
+        );
         word! {game; palette_buffer[223] = 32657; grapple_beam_function = ((0x9bc703i32) as u16); }
         QueueSfx1_Max1(5, game);
         word! {game; flare_counter = 1; play_resume_charging_beam_sfx = 0; }
@@ -1168,7 +1172,10 @@ crate::game::callback_dispatch! {
             flare_fast_sparks_anim_frame, flare_animation_timer, flare_slow_sparks_anim_timer,
             flare_fast_sparks_anim_timer,
         }
-        LoadProjectilePalette(word!(game.equipped_beams), game);
+        let beams = word!(game.equipped_beams) & 0xfff;
+        crate::game::samus_palette::write_beam_palette(
+            &mut crate::game::session_runtime::Runtime::new(game), beams,
+        );
         word!(game.grapple_beam_function = (0x9bc4f0i32) as u16);
         word!(game.samus_draw_handler = (0x90eb52i32) as u16);
         Samus_PostGrappleCollisionDetect(game);
@@ -1193,7 +1200,10 @@ crate::game::callback_dispatch! {
             flare_animation_frame, flare_slow_sparks_anim_frame, flare_fast_sparks_anim_frame,
             flare_animation_timer, flare_slow_sparks_anim_timer, flare_fast_sparks_anim_timer,
         }
-        LoadProjectilePalette(word!(game.equipped_beams), game);
+        let beams = word!(game.equipped_beams) & 0xfff;
+        crate::game::samus_palette::write_beam_palette(
+            &mut crate::game::session_runtime::Runtime::new(game), beams,
+        );
         word!(game.grapple_beam_function = (0x9bc4f0i32) as u16);
         word!(game.samus_draw_handler = (0x90eb52i32) as u16);
         Samus_PostGrappleCollisionDetect(game);

@@ -5,6 +5,7 @@ mod animation;
 mod bomb_creation;
 mod bomb_terrain;
 mod bombs;
+pub(crate) mod cannon;
 mod collision;
 pub(crate) mod content;
 use crate::game::session_encoding as encoding;

@@ -126,7 +126,7 @@ impl EntryEffects for Runtime<'_> {
                     game::music::LoadNewMusicTrackIfChanged(game);
                 }
                 LeafEffect::UpdateBeamTilesAndPalette => {
-                    game::sm_90::UpdateBeamTilesAndPalette(game);
+                    game::visual_runtime::update_beam_tiles_and_palette(game);
                 }
                 LeafEffect::LoadSpritePalettes => {
                     game::room_state::load_sprite_palettes(game);

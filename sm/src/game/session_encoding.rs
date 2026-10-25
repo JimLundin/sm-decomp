@@ -302,6 +302,9 @@ macro_rules! scalar_words {
         $f(ram::hud_item_index,$($borrow)* $s.projectiles.controls.selected_weapon);
         $f(ram::samus_auto_cancel_hud_item_index,$($borrow)* $s.projectiles.controls.automatic_weapon);
         $f(ram::hud_item_changed_this_frame,$($borrow)* $s.projectiles.controls.weapon_changed);
+        $f(0xaa6,$($borrow)* $s.projectiles.controls.cannon_flags);
+        $f(ram::arm_cannon_frame,$($borrow)* $s.projectiles.controls.cannon_frame);
+        $f(ram::arm_cannon_drawing_mode,$($borrow)* $s.projectiles.controls.cannon_drawing_mode);
         $f(ram::samus_x_pos,$($borrow)* $s.player.x);
         $f(ram::samus_x_subpos,$($borrow)* $s.player.x_fraction);
         $f(ram::samus_y_pos,$($borrow)* $s.player.y);

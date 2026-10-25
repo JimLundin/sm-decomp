@@ -202,6 +202,70 @@ impl visual_host::Composition for Runtime<'_> {
     }
 }
 impl visual_host::Host for Runtime<'_> {}
+
+#[forbid(unsafe_code)]
+fn queue_cannon_tiles(runtime: &mut Runtime<'_>, tiles: player_projectiles::cannon::Tiles) {
+    use player_projectiles::cannon::Tiles;
+    use visual_host::Content;
+    let (size, destination) = match tiles {
+        Tiles::Beam(_) => (256, 0x6300),
+        Tiles::Cannon(_) => (32, 0x61f0),
+    };
+    let saved = runtime.word(0x330);
+    runtime.write_slice_native(0xd0 + usize::from(saved), size);
+    // Size publication precedes source acquisition and every source read.
+    let source = match tiles {
+        Tiles::Beam(index) => runtime
+            .table(Source::Loaded, 0x90c3b1)
+            .word(usize::from(index) * 2),
+        Tiles::Cannon(pointer) => runtime.legacy_native_record(0x90, pointer).word(0),
+    };
+    runtime.write_slice_native(0xd0 + usize::from(saved.wrapping_add(2)), source);
+    runtime.set_byte(0xd0 + usize::from(saved.wrapping_add(4)), 0x9a);
+    runtime.write_slice_native(0xd0 + usize::from(saved.wrapping_add(5)), destination);
+    runtime.write_word_le(saved.wrapping_add(7), 0x330);
+}
+
+#[forbid(unsafe_code)]
+fn cannon_tile(runtime: &mut Runtime<'_>, x: u16, y: u16, body_y: u16, character: u16) {
+    let saved = runtime.word(0x590);
+    let x = x
+        .wrapping_add(runtime.session().player.x)
+        .wrapping_sub(runtime.word(0x911));
+    if x < 256 {
+        let entry = 0x370 + usize::from(runtime.word(0x590));
+        runtime.set_byte(entry, x as u8);
+        let y = y
+            .wrapping_add(runtime.session().player.y)
+            .wrapping_sub(body_y)
+            .wrapping_sub(runtime.word(0x915));
+        if y < 256 {
+            runtime.set_byte(entry + 1, y as u8);
+            runtime.write_slice_native(entry + 2, character);
+            runtime.write_word_le(saved.wrapping_add(4), 0x590);
+        }
+    }
+}
+
+pub(crate) fn update_arm_cannon(game: &mut Game) {
+    player_projectiles::cannon::update(&mut Runtime::new(game));
+}
+pub(crate) fn draw_player_with_cannon(game: &mut Game) {
+    let mut runtime = Runtime::new(game);
+    // Layer order is captured before atmospheric output can alias the mode word.
+    let mode = runtime.session().projectiles.controls.cannon_drawing_mode & 0xf;
+    crate::game::player_transitions::draw_atmospheric(&mut runtime);
+    if mode != 0 && mode != 2 {
+        player_projectiles::cannon::draw(&mut runtime, cannon_tile, queue_cannon_tiles);
+    }
+    runtime.foreign(|game| unsafe { crate::game::samus_animation::Samus_Draw(game) });
+    if mode == 2 {
+        player_projectiles::cannon::draw(&mut runtime, cannon_tile, queue_cannon_tiles);
+    }
+}
+pub(crate) fn update_beam_tiles_and_palette(game: &mut Game) {
+    player_projectiles::cannon::update_beam(&mut Runtime::new(game), queue_cannon_tiles);
+}
 #[path = "../verification/animated_runtime_checks.rs"]
 mod animation_guard_checks;
 #[path = "../verification/palette_runtime_checks.rs"]
