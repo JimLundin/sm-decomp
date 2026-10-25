@@ -4,9 +4,8 @@
 References are conservative lexical Rust module/path references, not a call graph.
 All tracked files are inventory nodes; file contents/assets are never embedded.
 """
-import argparse, base64, collections, datetime, hashlib, io, json, re, subprocess, tarfile
+import argparse, collections, datetime, hashlib, io, json, re, subprocess, tarfile
 from pathlib import Path
-from xml.etree import ElementTree
 
 GROUPS = [
  ('game','Gameplay','Owned domains and remaining bank routines','teal'),
@@ -215,9 +214,6 @@ def generate(root, template, output, revision):
     # Automatic HEAD builds must never publish an outdated architecture claim.
     data['stale_tensions'].append(tension['title'])
 
- summary=(template.parent/'work-summary.svg').read_bytes()
- data['work_summary']='data:image/svg+xml;base64,'+base64.b64encode(summary).decode('ascii')
- data['work_summary_alt']=ElementTree.fromstring(summary).find('{http://www.w3.org/2000/svg}desc').text
  payload=json.dumps(data,ensure_ascii=False,separators=(',',':')).replace('</','<\\/')
  output.parent.mkdir(parents=True,exist_ok=True)
  output.write_text(template.read_text(encoding='utf-8').replace('/*__ATLAS_DATA__*/',payload),encoding='utf-8')

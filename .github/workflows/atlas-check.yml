@@ -26,6 +26,7 @@ jobs:
         run: |
           mkdir -p atlas-site
           cp docs/codebase-map/index.html atlas-site/index.html
+          python docs/codebase-map/treemap_svg.py docs/codebase-map/atlas-data.json atlas-site/treemap.svg
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main'
         with:

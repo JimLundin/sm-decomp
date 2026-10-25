@@ -2,9 +2,9 @@
 
 [Open the interactive map](https://jimlundin.github.io/sm-decomp/).
 
-The five-box work summary shows the two current tracks, next step and engine target.
-`work-summary.svg` is shared with `PROGRESS.md`; update it with the milestone that
-changes the work. The generator embeds the SVG and its accessible description.
+The Pages workflow also publishes the overview tiles as a static
+[`treemap.svg`](https://jimlundin.github.io/sm-decomp/treemap.svg) (`treemap_svg.py`),
+which `PROGRESS.md` embeds. Both update on every main push; nothing is edited by hand.
 
 Start with gameplay responsibilities. Tile area represents production Rust lines;
 bands across each tile split it into Owned / Partly owned / Legacy by line count,

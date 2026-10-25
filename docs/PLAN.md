@@ -33,8 +33,8 @@ reviewers (the hourly review check-in and the cloud Claude agents' REVIEW.md
 directives) are to be obeyed as given. Disagree in one line under the item, then do it.
 
 **Codebase map:** brief done (c1fe795). Pages generates the
-[view](https://jimlundin.github.io/sm-decomp/) from HEAD; keep only the five-box
-SVG in PROGRESS current. No other map work unless the user asks.
+[view](https://jimlundin.github.io/sm-decomp/) and `treemap.svg` (embedded by PROGRESS.md)
+from HEAD on every main push; nobody edits PROGRESS.md (user, 2026-10-25). No map work.
 
 **Hosted validation (user decision 2026-10-25 18:05, given live to the reviewer;
 replaces the earlier "do not use or observe CI" note).** The user lifted the
@@ -265,6 +265,6 @@ savings justify continuing below the storage budget or retry deletion through an
 The Fast loop passes; `sh tools/progress.sh` numbers are in the Score line, with any
 rise explained in one line. Recheck HEAD/index, reconcile, commit to `main`. Update
 this plan only for active-item, direction or blocker changes; results belong in commits.
-Refresh PROGRESS's five-box SVG only when an item or bank completes.
+PROGRESS.md and the map update themselves from main; never edit them by hand.
 
 Pre-transpile rules (`.scratch/`, gates, pointers, scopes) are inactive in `archive/pre-transpile-2026-10-17`.
