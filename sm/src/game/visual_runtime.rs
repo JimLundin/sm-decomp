@@ -644,6 +644,51 @@ pub(crate) fn advance_intro_crossfade(game: &mut Game) {
     }
 }
 
+const FIREFLEA_FLASH: [u16; 12] = [
+    0, 0x100, 0x200, 0x300, 0x400, 0x500, 0x600, 0x500, 0x400, 0x300, 0x200, 0x100,
+];
+const FIREFLEA_DARKNESS: [u16; 6] = [0, 0x600, 0xc00, 0x1200, 0x1800, 0x1900];
+
+pub(crate) fn darken_fireflea_room(game: &mut Game) {
+    if word!(game.fireflea_darkness_level).wrapping_sub(12) & 0x8000 != 0 {
+        word!(game.fireflea_darkness_level += 2);
+    }
+}
+
+pub(crate) unsafe fn initialize_fireflea_lighting(game: &mut Game) {
+    word! {game; fireflea_flashing_timer = 6; fireflea_flashing_index = 0; }
+    unsafe {
+        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x11, 0xb0ac), game);
+    }
+    word_transfers!(game, ascending, 1; native(0x9e00) <- value(0));
+    word! { game, 0; UNUSED_word_7E177C, fireflea_darkness_level }
+    word!(game.UNUSED_word_7E1780 = 24);
+    word!(game.UNUSED_word_7E1782 = FIREFLEA_FLASH[0]);
+}
+
+pub(crate) fn advance_fireflea_lighting(game: &mut Game) {
+    word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_c) & 0xff00 | 0xc);
+    if word!(game.time_is_frozen_flag) != 0 {
+        return;
+    }
+    if word!(game.fireflea_flashing_timer -= 1, reread) == 0 {
+        word!(game.fireflea_flashing_timer = 6);
+        let next = if word!(game.fireflea_darkness_level).wrapping_sub(10) & 0x8000 != 0 {
+            let next = word!(game.fireflea_flashing_index).wrapping_add(1);
+            if next >= 12 { 0 } else { next }
+        } else {
+            6
+        };
+        word!(game.fireflea_flashing_index = next);
+    }
+    let shade = (FIREFLEA_DARKNESS[usize::from(word!(game.fireflea_darkness_level) >> 1)]
+        .wrapping_add(FIREFLEA_FLASH[usize::from(word!(game.fireflea_flashing_index))])
+        >> 8) as u8;
+    game.g_ram[0x75] = shade | 0x80;
+    game.g_ram[0x76] = shade | 0x40;
+    game.g_ram[0x74] = shade | 0x20;
+}
+
 pub(crate) fn shake_room_with_sound(kind: u16, game: &mut Game) {
     static SOUNDS: [u16; 17] = [
         0x46, 1, 0x46, 3, 0x46, 2, 0x46, 1, 0x46, 1, 0x46, 2, 0x46, 2, 0x46, 1, 0x8000,

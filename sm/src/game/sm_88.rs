@@ -55,53 +55,6 @@ crate::game::callback_dispatch! {
         9556668 => xray_background::set_backdrop; 9557650 => [Runtime::new(game).initialize_suit_pickup_hdma()];
     }
 }
-static unk_88B08C: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x11, 0xb0ac as VoidP);
-static kFirefleaFlashingShades: [u16; 12] = [
-    0, 0x100, 0x200, 0x300, 0x400, 0x500, 0x600, 0x500, 0x400, 0x300, 0x200, 0x100,
-];
-static kFirefleaDarknessShades: [u16; 6] = [0, 0x600, 0xc00, 0x1200, 0x1800, 0x1900];
-pub unsafe fn FxTypeFunc_24(game: &mut Game) {
-    unsafe {
-        word! {game; fireflea_flashing_timer = 6; fireflea_flashing_index = 0; }
-        spawn_hdma(0x88, &unk_88B08C, game);
-        *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00))).field_0
-            as *mut u16) = 0;
-        word! { game, 0; UNUSED_word_7E177C, fireflea_darkness_level }
-        word!(game.UNUSED_word_7E1780 = 24);
-        word!(game.UNUSED_word_7E1782 = kFirefleaFlashingShades[0i32 as usize]);
-    }
-}
-pub unsafe fn HdmaobjPreInstr_FirefleaBG3XScroll(k: u16, game: &mut Game) {
-    unsafe {
-        let mut v1: u16 = 0;
-        word!(
-            game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_c) & 0xff00 | 0xc
-        );
-        if word!(game.time_is_frozen_flag) == 0 {
-            if word!(game.fireflea_flashing_timer -= 1, reread) == 0 {
-                word!(game.fireflea_flashing_timer = 6);
-                if word!(game.fireflea_darkness_level) as i32 - 10i32 & 0x8000 != 0 {
-                    v1 = (word!(game.fireflea_flashing_index)).wrapping_add(1);
-                    if (word!(game.fireflea_flashing_index)).wrapping_add(1) >= 0xc {
-                        v1 = 0;
-                    }
-                } else {
-                    v1 = 6;
-                }
-                word!(game.fireflea_flashing_index = v1);
-            }
-            let mut v2: i8 = (((kFirefleaDarknessShades
-                [(word!(game.fireflea_darkness_level) >> 1) as usize])
-                .wrapping_add(
-                    kFirefleaFlashingShades[word!(game.fireflea_flashing_index) as usize],
-                ))
-                >> 8) as i8;
-            *ram_ptr!(game; 0x74, 1) = ((v2) as u8) | (0x80u8);
-            *ram_ptr!(game; 0x74, 2) = ((v2) as u8) | (0x40u8);
-            *ram_ptr!(game; 0x74, 0) = ((v2) as u8) | (0x20u8);
-        }
-    }
-}
 pub unsafe fn SpawnBG3ScrollHdmaObject(game: &mut Game) {
     unsafe {
         static unk_88D869: SpawnHdmaObject_Args =
@@ -284,7 +237,7 @@ crate::game::address_dispatch! {
         8955459 => scrolling_sky::update_vertical_scroll; 8955507 => scrolling_sky::update_horizontal_scroll;
         8957362 => scrolling_sky::update_parallax; 8957370 => scrolling_sky::update_parallax;
         8957378 => scrolling_sky::advance_parallax;
-        8958140 => HdmaobjPreInstr_FirefleaBG3XScroll;
+        8958140 => [visual_runtime::advance_fireflea_lighting(game)];
         8958896 => liquid_effects::lava_surface;
         8959189 => liquid_effects::lava_background; 8963214 => liquid_effects::water_surface;
         8963465 => liquid_effects::water_background;

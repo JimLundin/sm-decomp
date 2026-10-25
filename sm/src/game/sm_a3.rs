@@ -5,6 +5,7 @@ use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
+use crate::game::visual_runtime::darken_fireflea_room;
 use crate::rtl::rom_record;
 use core::mem::offset_of;
 
@@ -272,9 +273,7 @@ pub unsafe fn Fireflea_Touch(k: u16, game: &mut Game) {
                 actors::api::DeathKind::Normal { animation },
             )
         });
-        if word!(game.fireflea_darkness_level) as i32 - 12i32 & 0x8000 != 0 {
-            word!(game.fireflea_darkness_level += 2);
-        }
+        darken_fireflea_room(game);
     }
 }
 pub unsafe fn Fireflea_Common(game: &mut Game) {
@@ -283,9 +282,8 @@ pub unsafe fn Fireflea_Common(game: &mut Game) {
             .base
             .health
             == 0
-            && word!(game.fireflea_darkness_level) as i32 - 12i32 & 0x8000 != 0
         {
-            word!(game.fireflea_darkness_level += 2);
+            darken_fireflea_room(game);
         }
     }
 }
