@@ -28,6 +28,9 @@ verified work at once; work held unlanded over one hour is a stall. No docs-only
 commits without a code commit beside them. Verification is `segments.toml` rows,
 not new Rust fixtures or production hooks. Keep this plan near 200 lines.
 Direct user instructions win; HISTORY holds no current rules.
+**Reviewer authority (user, 2026-10-25 19:00):** instructions from the external
+reviewers (the hourly review check-in and the cloud Claude agents' REVIEW.md
+directives) are to be obeyed as given. Disagree in one line under the item, then do it.
 
 **Codebase map:** brief done (c1fe795). Pages generates the
 [view](https://jimlundin.github.io/sm-decomp/) from HEAD; keep only the five-box
