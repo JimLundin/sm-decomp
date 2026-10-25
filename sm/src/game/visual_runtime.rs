@@ -73,6 +73,86 @@ unsafe fn initialize_hdma(
     2 * slot as u16
 }
 
+pub(crate) fn set_hdma_enabled(enabled: bool, game: &mut Game) {
+    let flags = checked_word!(game.hdma_objects_enable_flag);
+    checked_word!(game.hdma_objects_enable_flag = (flags & 0x7fff) | (u16::from(enabled) << 15));
+}
+
+pub(crate) fn clear_hdma_channels(game: &mut Game) {
+    game.g_ram[0x85] = 0;
+    word_transfers!(game, descending, 6; le(hdma_object_channels_bitmask, 5) <- value(0));
+}
+
+pub(crate) unsafe fn clear_hdma(game: &mut Game) {
+    unsafe {
+        crate::rtl::register_writes! { game;
+            byte(crate::rtl::MDMAEN as u16, 0); byte(crate::rtl::HDMAEN as u16, 0);
+        }
+    }
+    clear_hdma_channels(game);
+}
+
+pub(crate) unsafe fn initialize_room_effects(game: &mut Game) {
+    use crate::ram_map::word;
+    use crate::rtl::{WMADDH, WMADDL, WMADDM};
+    word! { game, 0; earthquake_sfx_index, earthquake_sfx_timer }
+    if matches!(
+        word!(game.room_ptr),
+        0x9804 | 0x96ba | 0xb32e | 0xb457 | 0xdd58 | 0xdede
+    ) {
+        word!(game.earthquake_sfx_timer = 0xffff);
+    }
+    word!(game.debug_disable_minimap = 0);
+    for channel in (0x20..0x80u16).step_by(0x10) {
+        for register in [0, 1, 2, 3, 4, 5, 6, 8, 9] {
+            let value = if register == 1 { 0x13 } else { 0 };
+            unsafe {
+                crate::rtl::WriteReg(0x4300 + channel + register, value, game);
+            }
+        }
+    }
+    word! {game; fx_y_subpos = 0; fx_y_pos = -1i32 as u16; lava_acid_y_subpos = 0;
+    lava_acid_y_pos = -1i32 as u16; }
+    word! { game, 0;
+        hud_bg3_xpos, hud_bg3_ypos, bg3_xpos, bg3_ypos, irq_enable_mode7, camera_distance_index,
+        tourian_entrance_statue_animstate, tourian_entrance_statue_finished, earthquake_timer,
+        phantom_related_layer_flag, power_bomb_explosion_status, power_bomb_flag,
+        power_bomb_explosion_radius, fx_tilemap_ptr, fx_type,
+    }
+    word!(game.fx_base_y_subpos = 0x8000);
+    word! { game, 0;
+        fx_base_y_pos, fx_target_y_pos, fx_y_vel, fx_liquid_options, fx_timer, tide_phase,
+        fx_y_suboffset, fx_y_offset,
+    }
+    word!(game.fx_layer_blending_config_a = 2);
+    word! { game, 0;
+        reg_BG3HOFS, reg_BG3VOFS, layer2_x_pos, layer2_y_pos, room_loading_irq_handler,
+    }
+    word_transfers! { game, ascending, 1;
+        native(0x602) <- value(0x8800), native(0x605) <- value(0x8800),
+        native(0x601) <- value(0x83e1), native(0x604) <- value(0x83e1),
+    }
+    unsafe {
+        crate::rtl::register_writes! { game;
+            byte(WMADDL as u16, 0xf0); byte(WMADDM as u16, 0xff);
+            byte(WMADDH as u16, 1);
+        }
+    }
+    game.g_ram[0x85] = 0;
+    game.g_ram[0x74] = 32;
+    game.g_ram[0x75] = 64;
+    game.g_ram[0x76] = 0x80;
+    game.g_ram[0x57] = 0;
+    game.g_ram[0x69] = 19;
+    game.g_ram[0x6f] = 0;
+    game.g_ram[0x72] = 0;
+    game.g_ram[0x5d] = 0;
+    game.g_ram[0x5e] = 4;
+    game.g_ram[0x59] = 73;
+    game.g_ram[0x5a] = 90;
+    game.g_ram[0x5b] = 90;
+}
+
 pub(crate) unsafe fn update_hdma(game: &mut Game) {
     unsafe {
         crate::game::music::HandleMusicQueue(game);

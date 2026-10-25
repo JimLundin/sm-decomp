@@ -103,7 +103,7 @@ use crate::game::{
     sm_80::{
         InvalidInterrupt_Crash, QueueSfx1_Max6, QueueSfx3_Max6, QueueSfx3_Max9, QueueSfx3_Max15,
     },
-    sm_88::EnableHdmaObjects,
+    visual_runtime::set_hdma_enabled,
 };
 pub unsafe fn Samus_EndSuperJump(game: &mut Game) -> u8 {
     unsafe {
@@ -312,7 +312,7 @@ crate::game::callback_dispatch! {
             word!(game.power_bomb_flag = 0);
             word!(game.power_bomb_explosion_x_pos = word!(game.samus_x_pos));
             word!(game.power_bomb_explosion_y_pos = word!(game.samus_y_pos));
-            EnableHdmaObjects(game);
+            set_hdma_enabled(true, game);
             spawn_crystal_flash(game);
         }
     };

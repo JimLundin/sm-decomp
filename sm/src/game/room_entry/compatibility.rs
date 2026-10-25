@@ -102,10 +102,10 @@ impl EntryEffects for Runtime<'_> {
                     game::player_movement::speed::set_liquid_physics(&mut Runtime::new(game));
                 }
                 LeafEffect::StopHdmaEffects => {
-                    game::sm_88::sub_8882AC(game);
+                    game::visual_runtime::clear_hdma_channels(game);
                 }
                 LeafEffect::InitializeRoomSpecialEffects => {
-                    game::sm_88::InitializeSpecialEffectsForNewRoom(game);
+                    game::visual_runtime::initialize_room_effects(game);
                 }
                 LeafEffect::LoadFxHeader => {
                     game::room_state::load_fx_header(game);
@@ -165,7 +165,7 @@ impl EntryEffects for Runtime<'_> {
                     game::sm_80::DisableIrqInterrupts(game);
                 }
                 LeafEffect::WaitVblankClearHdma => {
-                    game::sm_88::WaitUntilEndOfVblankAndClearHdma(game);
+                    game::visual_runtime::clear_hdma(game);
                 }
                 LeafEffect::WaitVblankEnableIrq => {
                     game::sm_82::WaitUntilEndOfVblankAndEnableIrq(game);

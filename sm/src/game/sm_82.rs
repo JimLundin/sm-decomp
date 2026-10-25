@@ -6,6 +6,7 @@ pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
+use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled};
 
 use crate::cpu_infra::DebugGameOverMenu;
 
@@ -41,7 +42,6 @@ use crate::game::sm_80::{
     WaitForNMI_Async, memset7E,
 };
 use crate::game::sm_81::{FileSelectMap, FileSelectMenu, GameOverMenu};
-use crate::game::sm_88::{DisableHdmaObjects, EnableHdmaObjects, WaitUntilEndOfVblankAndClearHdma};
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
     UnpauseHook_Kraid_IsDead,
@@ -198,7 +198,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
             EnableEprojs(game);
             set_enabled(true, game);
             palette_effects::set_enabled(true, game);
-            EnableHdmaObjects(game);
+            set_hdma_enabled(true, game);
             animated_tiles::set_enabled(true, game);
             crate::game::player_movement::speed::set_liquid_physics(
                 &mut crate::game::session_runtime::Runtime::new(game),
@@ -369,7 +369,7 @@ pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
         HandleFadeOut(game);
         if *ram_ptr!(game; 0x51) == 0x80 {
             EnableNMI(game);
-            WaitUntilEndOfVblankAndClearHdma(game);
+            clear_hdma(game);
             DisableIrqInterrupts(game);
             word! { game, 0; fx_layer_blending_config_a, cur_irq_handler }
             *ram_ptr!(game; 0x6e) = 0;
@@ -412,7 +412,7 @@ pub unsafe fn GameState_36_WhitingOutFromTimeUp(game: &mut Game) -> CoroutineRet
         HandleFadeOut(game);
         if *ram_ptr!(game; 0x51) == 0x80 {
             EnableNMI(game);
-            WaitUntilEndOfVblankAndClearHdma(game);
+            clear_hdma(game);
             DisableIrqInterrupts(game);
             word! { game, 0; fx_layer_blending_config_a, cur_irq_handler }
             *ram_ptr!(game; 0x6e) = 0;
@@ -449,7 +449,7 @@ pub unsafe fn GameState_38_SamusEscapesFromZebes(game: &mut Game) -> CoroutineRe
         HandleFadeOut(game);
         if *ram_ptr!(game; 0x51) == 0x80 {
             EnableNMI(game);
-            WaitUntilEndOfVblankAndClearHdma(game);
+            clear_hdma(game);
             DisableIrqInterrupts(game);
             word!(game.fx_layer_blending_config_a = 0);
             *ram_ptr!(game; 0x6e) = 0;
@@ -537,7 +537,7 @@ pub unsafe fn GameState_43_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
         EnableNMI(game);
         word!(game.game_state += 1);
         word! { game, 0; screen_fade_delay, screen_fade_counter }
-        WaitUntilEndOfVblankAndClearHdma(game);
+        clear_hdma(game);
         DisableIrqInterrupts(game);
         word! { game, 0;
             fx_layer_blending_config_a, cur_irq_handler, irqhandler_next_handler,
@@ -1133,7 +1133,7 @@ crate::game::address_dispatch! {
 }
 pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
     unsafe {
-        DisableHdmaObjects(game);
+        set_hdma_enabled(false, game);
         crate::rtl::write_register_and_mirror(HDMAEN as u16, 0, 0x85, true, game);
         animated_tiles::set_enabled(false, game);
         BackupBG2TilemapForPauseMenu(game);
@@ -1578,7 +1578,7 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
                 *_state_variable_ = 1;
                 return _coret_;
             }
-            EnableHdmaObjects(game);
+            set_hdma_enabled(true, game);
             animated_tiles::set_enabled(true, game);
             crate::game::player_projectiles::restore_sound(game);
             word!(game.game_state += 1);
@@ -3885,7 +3885,7 @@ pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
         }
         word!(game.palette_change_denom = 6);
         if AdvancePaletteFadeForAllPalettes(game) != 0 {
-            WaitUntilEndOfVblankAndClearHdma(game);
+            clear_hdma(game);
             DisableIrqInterrupts(game);
             word! { game, 0; fx_layer_blending_config_a, cur_irq_handler }
             *ram_ptr!(game; 0x6e) = 0;

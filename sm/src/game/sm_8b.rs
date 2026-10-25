@@ -4,6 +4,7 @@ pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
+use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled};
 
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_60::*;
@@ -20,10 +21,7 @@ use crate::game::sm_80::{
     GraphicsAsset, HandleFadeIn, HandleFadeOut, QueueMode7Transfers, QueueSfx1_Max15,
     QueueSfx2_Max6, QueueSfx3_Max6, WaitForNMI_Async, memset7E,
 };
-use crate::game::sm_88::{
-    CinematicFunction_Intro_Func133, DisableHdmaObjects, EnableHdmaObjects,
-    SpawnTitleScreenGradientObjs, WaitUntilEndOfVblankAndClearHdma,
-};
+use crate::game::sm_88::{CinematicFunction_Intro_Func133, SpawnTitleScreenGradientObjs};
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]
@@ -1581,7 +1579,7 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
         reset_centered_mode7_transform!(game);
         EnableNMI(game);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
-        EnableHdmaObjects(game);
+        set_hdma_enabled(true, game);
         palette_effects::set_enabled(true, game);
         word!(game.fx_layer_blending_config_a = 0);
         palette_effects::spawn(addr_kPalfx_E1A0 as u16, game);
@@ -2283,7 +2281,7 @@ crate::game::callback_dispatch! {
         GraphicsAsset::Decompress(0x95d713, 0x1a000).load(game);
         EnableNMI(game);
         word! { game, 3; screen_fade_delay, screen_fade_counter }
-        EnableHdmaObjects(game);
+        set_hdma_enabled(true, game);
         palette_effects::clear(game);
         palette_effects::set_enabled(true, game);
         word! { game, 0; door_def_ptr, layer1_x_pos, layer1_y_pos, cinematic_var16 }
@@ -2501,8 +2499,8 @@ crate::game::callback_dispatch! {
         reset_cinematic_mode7_transform!(game, 0x34, 52, 0x30, 48);
         word! {game; cinematic_var8 = -44i32 as u16; cinematic_var10 = -112i32 as u16;
             cinematic_var5 = 0; cinematic_var6 = 256; }
-        DisableHdmaObjects(game);
-        WaitUntilEndOfVblankAndClearHdma(game);
+        set_hdma_enabled(false, game);
+        clear_hdma(game);
         palette_effects::clear(game);
         palette_effects::set_enabled(true, game);
         ClearCinematicBgObjects(0x2f, game);
@@ -2565,7 +2563,7 @@ crate::game::callback_dispatch! {
                 power_bomb_explosion_y_pos =
                     (word!(game.reg_M7Y)).wrapping_sub(word!(game.cinematic_var10));
             }
-            EnableHdmaObjects(game);
+            set_hdma_enabled(true, game);
             spawn_power_bomb(game);
             *ram_ptr!(game; 0x6f) = 16;
             *ram_ptr!(game; 0x72) = 55;
@@ -2602,7 +2600,7 @@ crate::game::callback_dispatch! {
                     hud_item_index, samus_auto_cancel_hud_item_index, samus_invincibility_timer,
                     samus_knockback_timer,
                 }
-                WaitUntilEndOfVblankAndClearHdma(game);
+                clear_hdma(game);
                 DisableIrqInterrupts(game);
                 word!(game.fx_layer_blending_config_a = 0);
                 *ram_ptr!(game; 0x6e) = 0;
@@ -2631,8 +2629,8 @@ crate::game::callback_dispatch! {
         reset_cinematic_mode7_transform!(game, 0x38, 56, 0x18, 24);
         word! { game, 0; cinematic_var8, cinematic_var10, cinematic_var5 }
         word!(game.cinematic_var6 = 256);
-        DisableHdmaObjects(game);
-        WaitUntilEndOfVblankAndClearHdma(game);
+        set_hdma_enabled(false, game);
+        clear_hdma(game);
         palette_effects::clear(game);
         palette_effects::set_enabled(true, game);
         *ram_ptr!(game; 0x57) = -127i32 as u8;
@@ -3077,7 +3075,7 @@ crate::game::callback_dispatch! {
         EnableNMI(game);
         *ram_ptr!(game; 0x51) = 15;
         word! { game, 0; layer1_x_pos, layer1_y_pos }
-        EnableHdmaObjects(game);
+        set_hdma_enabled(true, game);
         word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(0));
         CinematicFunction_Intro_Func127(game);
         GraphicsAsset::Decompress(0x97eeff, 0x10000).load(game);

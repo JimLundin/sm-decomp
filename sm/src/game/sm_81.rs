@@ -2,7 +2,7 @@ use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8};
 pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
-use crate::game::visual_runtime::spawn_hdma;
+use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled, spawn_hdma};
 use crate::game::{menu_tilemap, menu_window};
 
 pub use crate::game::constants::bank_82::*;
@@ -18,7 +18,6 @@ use crate::game::sm_82::{
     DrawMenuSelectionMissile, DrawRoomSelectMap, DrawRoomSelectMapAreaLabel,
     HandleGameOverBabyMetroid, MapScrolling, SetupMapScrollingForFileSelectMap,
 };
-use crate::game::sm_88::{DisableHdmaObjects, EnableHdmaObjects, WaitUntilEndOfVblankAndClearHdma};
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]
@@ -69,8 +68,8 @@ pub unsafe fn GameOverMenu_0_FadeOutConfigGfx(game: &mut Game) {
         if (*ram_ptr!(game; 0x51) & 0xf) == 0 {
             ScreenOff(game);
             QueueSfx3_Max6(1, game);
-            DisableHdmaObjects(game);
-            WaitUntilEndOfVblankAndClearHdma(game);
+            set_hdma_enabled(false, game);
+            clear_hdma(game);
             word_transfers!(game, ascending, 256; pause_map(384) <- le(palette_buffer, 0));
             word_transfers!(game, ascending, 27; pause_map(640) <- native(0x51));
             menu_tilemap::prepare_graphics(game);
@@ -124,8 +123,8 @@ pub unsafe fn GameOverMenu_7_FadeOutToSoftReset(game: &mut Game) {
 }
 pub unsafe fn GameOverMenu_6_LoadGameMapView(game: &mut Game) {
     unsafe {
-        DisableHdmaObjects(game);
-        WaitUntilEndOfVblankAndClearHdma(game);
+        set_hdma_enabled(false, game);
+        clear_hdma(game);
         word! {game; game_state = kGameState_5_FileSelectMap as u16; menu_index = 0; }
     }
 }
@@ -182,9 +181,9 @@ pub unsafe fn GameOverMenu_1_Init(game: &mut Game) {
         enemy_instruction! {[(*(ram_ptr!(game, EnemyData; 0xf78)))]; instruction = 0, timer = 0}
         HandleGameOverBabyMetroid(game);
         *(ram_ptr!(game, u16; 0x6f)) = ((*ram_ptr!(game; 0x70) as i32) << 8) as u16;
-        DisableHdmaObjects(game);
-        WaitUntilEndOfVblankAndClearHdma(game);
-        EnableHdmaObjects(game);
+        set_hdma_enabled(false, game);
+        clear_hdma(game);
+        set_hdma_enabled(true, game);
         static unk_819254: SpawnHdmaObject_Args =
             SpawnHdmaObject_Args::new(0, 0x32, 0x927d as VoidP);
         static unk_81925C: SpawnHdmaObject_Args =
@@ -236,8 +235,8 @@ pub unsafe fn FileSelectMenu_0_FadeOutConfigGfx(game: &mut Game) {
         }
         ScreenOff(game);
         QueueSfx3_Max6(1, game);
-        DisableHdmaObjects(game);
-        WaitUntilEndOfVblankAndClearHdma(game);
+        set_hdma_enabled(false, game);
+        clear_hdma(game);
         word!(game.menu_index += 1);
         menu_tilemap::prepare_graphics(game);
         word! { game, 0;
@@ -1563,8 +1562,8 @@ pub unsafe fn FileSelectMap_9_InitRoomSelectMap(game: &mut Game) {
         LoadMirrorOfExploredMapTiles(game);
         DrawRoomSelectMap(game);
         LoadFromLoadStation(game);
-        DisableHdmaObjects(game);
-        WaitUntilEndOfVblankAndClearHdma(game);
+        set_hdma_enabled(false, game);
+        clear_hdma(game);
         let RoomDefHeader = get_RoomDefHeader(word!(game.room_ptr), game);
         byte!(@pointer ram_ptr!(game, u16; 0x79f); 0) = (*RoomDefHeader).area_index_;
         byte!(@pointer ram_ptr!(game, u16; 0x7a1); 0) = (*RoomDefHeader).x_coordinate_on_map;
