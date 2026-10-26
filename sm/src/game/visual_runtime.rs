@@ -2032,6 +2032,13 @@ pub(crate) fn initialize_ending_time_glyph(object: u16, glyph: u8, game: &mut Ga
     place_cinematic_sprite(object, (156 + 8 * u16::from(glyph), 160), 0, game);
 }
 
+pub(crate) fn initialize_title_sprite(object: u16, variant: usize, game: &mut Game) {
+    let (y, palette, effect) =
+        [(48, 1024, 0xe194), (81, 512, 0xe198), (196, 2048, 0xe19c)][variant];
+    place_cinematic_sprite(object, (128, y), palette, game);
+    palette_effects::spawn(effect, game);
+}
+
 pub(crate) fn place_cinematic_sprite(
     object: u16,
     position: (u16, u16),

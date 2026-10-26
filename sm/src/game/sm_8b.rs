@@ -12,7 +12,7 @@ use crate::game::visual_runtime::{
     drift_cinematic_sprite, fade_postcredits_samus_suit, flash_intro_mother_brain,
     initialize_ceres_explosion, initialize_ending_cloud_band, initialize_ending_cloud_side,
     initialize_ending_time_glyph, initialize_intro_brain_particle, initialize_intro_rinka,
-    initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud,
+    initialize_shooting_stars, initialize_title_sprite, launch_cinematic_sprite, move_ending_cloud,
     move_jumping_ending_samus, place_cinematic_sprite, prepare_credit_roll, prepare_ending_time,
     shake_intro_mother_brain, start_intro_rinka, title_metroid_cry, title_metroid_palette,
     wait_cinematic_scene, wait_ending_cloud,
@@ -2257,21 +2257,6 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (j: u16, game: &mut Game)];
     @prefix { let v1: i32 = j as i32 >> 1; };
-    [9150131] CinematicSpriteInit_4 [] {
-        word! {game; cinematicbg_arr7[v1] = 128; cinematicbg_arr8[v1] = 48;
-            cinematicbg_arr9[v1] = 1024; }
-        palette_effects::spawn(addr_kPalfx_E194 as u16, game);
-    };
-    [9150166] CinematicSpriteInit_5 [] {
-        word! {game; cinematicbg_arr7[v1] = 128; cinematicbg_arr8[v1] = 81;
-            cinematicbg_arr9[v1] = 512; }
-        palette_effects::spawn(addr_kPalfx_E198 as u16, game);
-    };
-    [9150207] CinematicSpriteInit_6 [] {
-        word! {game; cinematicbg_arr7[v1] = 128; cinematicbg_arr8[v1] = 196;
-            cinematicbg_arr9[v1] = 2048; }
-        palette_effects::spawn(addr_kPalfx_E19C as u16, game);
-    };
     [9153178] SetSomeStuffForSpriteObject_8 [] {
         word! {game; cinematicspr_goto_timer[v1] = word!(game.cinematic_spawn_param);
             cinematicbg_arr7[v1] = word!(game.cinematicbg_arr7[13]);
@@ -2300,6 +2285,9 @@ crate::game::callback_dispatch! {
             cinematicbg_arr9[v1] = 3584; cinematicspr_goto_timer[v1] = 8; }
     };
     @external {
+        9150131 => [initialize_title_sprite(j, 0, game)];
+        9150166 => [initialize_title_sprite(j, 1, game)];
+        9150207 => [initialize_title_sprite(j, 2, game)];
         9157005 => [initialize_intro_brain_particle(j, true, game)];
         9157076 => [initialize_intro_brain_particle(j, false, game)];
         9159732 => [initialize_ceres_explosion(j, CeresExplosion::First, game)];
@@ -2371,8 +2359,8 @@ crate::game::address_dispatch! {
         9149770 => [place_cinematic_sprite(j, (129, 112), 512, game)];
         9149891 => [place_cinematic_sprite(j, (129, 112), 512, game)];
         9150021 => [place_cinematic_sprite(j, (129, 112), 512, game)];
-        9150131 => CinematicSpriteInit_4;
-        9150166 => CinematicSpriteInit_5; 9150207 => CinematicSpriteInit_6; 9147353 => [()];
+        9150131 => [initialize_title_sprite(j, 0, game)];
+        9150166 => [initialize_title_sprite(j, 1, game)]; 9150207 => [initialize_title_sprite(j, 2, game)]; 9147353 => [()];
     }
 }
 crate::game::address_dispatch! {
