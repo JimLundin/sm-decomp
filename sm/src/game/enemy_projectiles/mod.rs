@@ -5,6 +5,7 @@ mod effects_runtime;
 mod graphics_runtime;
 pub(crate) mod host;
 mod runtime;
+use crate::game::enemy_script::EnemyScript;
 use crate::game::session_runtime::Runtime;
 use host::Effects;
 // Enemy-projectile ownership and complete behavior behind one compatibility boundary.
@@ -66,6 +67,12 @@ pub fn SpawnEprojWithGfx(parameter: u16, enemy: u16, definition: u16, game: &mut
     with_execution(game, |ctx| {
         lifecycle::spawn_from_enemy(ctx, parameter, enemy, definition)
     })
+}
+pub(crate) fn spawn_scripted(definition: u16, script: EnemyScript, game: &mut Game) -> EnemyScript {
+    let parameter = script.word(0);
+    let index = game.cur_enemy_index();
+    SpawnEprojWithGfx(parameter, index, definition, game);
+    script.offset(1)
 }
 pub fn SpawnEprojWithRoomGfx(definition: u16, parameter: u16, game: &mut Game) -> u16 {
     with_execution(game, |ctx| {

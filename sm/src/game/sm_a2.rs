@@ -459,12 +459,6 @@ pub unsafe fn ThinHoppingBlobs_Main(game: &mut Game) {
         }
     }
 }
-pub unsafe fn SpikeShootingPlant_4(game: &mut Game) {
-    {
-        game.next_random();
-    }
-    crate::game::spike_plant::try_shoot(game);
-}
 static off_A2A3D3: [Func_V; 7] = callback_table! { nonnull Func_V;
     MaridiaSpikeyShell_1, MaridiaSpikeyShell_2, MaridiaSpikeyShell_3, MaridiaSpikeyShell_4,
     MaridiaSpikeyShell_5, MaridiaSpikeyShell_6, MaridiaSpikeyShell_7,
@@ -1056,8 +1050,6 @@ crate::game::callback_dispatch! {
         Enemy_NormalPowerBombAI_A2(game);
         LavaSeahorse_E7DA(game);
     };
-    @functions [pub fn (game: &mut Game)];
-    [10657608] SpikeShootingPlant_Init [] { crate::game::spike_plant::initialize(game); };
     @functions [pub unsafe fn (game: &mut Game)];
     [10657715] SpikeShootingPlant_Main [] {
         let phase = {
@@ -1168,6 +1160,7 @@ crate::game::callback_dispatch! {
     [10649635] Enemy_NormalTouchAI_A2 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
     [10649645] Enemy_NormalShotAI_A2 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
     @external {
+        10657608 => crate::game::spike_plant::initialize;
         10652077 => crate::game::mini_crocomire::initialize;
         10651420 => crate::game::goofball::initialize;
         10651548 => crate::game::goofball::advance;
@@ -1280,18 +1273,6 @@ crate::game::callback_dispatch! {
         (*E).var_A = (0xa29239i32) as u16;
     };
     [10654929] MaridiaBeybladeTurtle_Instr_94D1 [jp] { QueueSfx2_Max6(0x3a, game); };
-    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10657578] SpikeShootingPlant_Instr_9F2A [jp] { QueueSfx2_Max6(0x34, game); };
-    [10657941] SpikeShootingPlant_Instr_A095 [jp] { crate::game::spike_plant::resume(k, game); };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10657959] SpikeShootingPlant_Instr_A0A7 [jp.offset(1)] {
-        SpawnEprojWithGfx(
-            jp.word(0),
-            word!(game.cur_enemy_index),
-            addr_kEproj_SpikeShootingPlantSpikes as u16,
-            game,
-        );
-    };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10659181]
     MaridiaSpikeyShell_Instr_A56D [jp] { (*Get_MaridiaSpikeyShell(k as i32, game)).var_E = 0; };
@@ -1367,7 +1348,10 @@ crate::game::callback_dispatch! {
         jp
     };
     @external {
-        10652030 => [crate::game::mini_crocomire::spit(j, game)];
+        10657578 => [{ QueueSfx2_Max6(0x34, game); j }];
+        10657941 => [{ crate::game::spike_plant::resume(k, game); j }];
+        10657959 => [crate::game::enemy_projectiles::spawn_scripted(0xdafe, j, game)];
+        10652030 => [crate::game::enemy_projectiles::spawn_scripted(0xdbf2, j, game)];
         10652048 => [crate::game::mini_crocomire::resume(false, j, game)];
         10652061 => [crate::game::mini_crocomire::resume(true, j, game)];
         10651846 => [crate::game::goofball::landed(j, game)];
@@ -1378,8 +1362,6 @@ crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
     call (k, game); default { crate::rtl::Unreachable(game); };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [10657722] SpikeShootingPlant_2 [] { crate::game::spike_plant::patrol(false, game); SpikeShootingPlant_4(game); };
-    [10657772] SpikeShootingPlant_3 [] { crate::game::spike_plant::patrol(true, game); SpikeShootingPlant_4(game); };
     [10675953] LavaSeahorse_Func_3 [] {
         LavaSeahorse_Func_6(game);
         let E = Get_LavaSeahorse(k as i32, game);
@@ -1551,6 +1533,8 @@ crate::game::callback_dispatch! {
         (*E1).base.y_pos = (*E1).base.y_pos.wrapping_add(1);
     };
     @external {
+        10657722 => [crate::game::spike_plant::patrol(false, game)];
+        10657772 => [crate::game::spike_plant::patrol(true, game)];
         10652227 => [crate::game::mini_crocomire::patrol(false, game)];
         10652252 => [crate::game::mini_crocomire::patrol(true, game)];
         10659852 => [crate::game::gunship::phase(k, 0xa80c, game)];

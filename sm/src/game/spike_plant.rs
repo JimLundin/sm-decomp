@@ -1,6 +1,7 @@
 //! Spike plants share their patrol and the idle/firing animation variants.
 #![forbid(unsafe_code)]
 use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
+use crate::game::enemy_projectiles::host::Effects;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 
@@ -64,9 +65,7 @@ pub(crate) fn patrol(right: bool, game: &mut Game) {
             actor.variables[4] = u16::from(!right);
         });
     }
-}
-pub(crate) fn try_shoot(game: &mut Game) {
-    let mut runtime = Runtime::new(game);
+    runtime.next_random();
     let key = selected(&runtime);
     let chance = runtime.resolve_actor(key, Native).frame.to_ne_bytes()[0]
         .wrapping_add(runtime.word(0x5e5) as u8);

@@ -2,7 +2,7 @@
 #![forbid(unsafe_code)]
 use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
 use crate::game::actors::api::{self, MovementResult, SlopePolicy};
-use crate::game::enemy_projectiles::{SpawnEprojWithGfx, host::Effects};
+use crate::game::enemy_projectiles::host::Effects;
 use crate::game::enemy_script::EnemyScript;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
@@ -76,11 +76,4 @@ pub(crate) fn resume(right: bool, script: EnemyScript, game: &mut Game) -> Enemy
     });
     runtime.edit_actor(key, Le, |actor| actor.variables[4] = u16::from(right));
     script
-}
-
-pub(crate) fn spit(script: EnemyScript, game: &mut Game) -> EnemyScript {
-    let parameter = script.word(0);
-    let index = game.cur_enemy_index();
-    SpawnEprojWithGfx(parameter, index, 0xdbf2, game);
-    script.offset(1)
 }
