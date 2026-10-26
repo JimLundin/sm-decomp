@@ -2953,26 +2953,22 @@ pub(crate) fn set_cinematic_backdrop(lit: bool, game: &mut Game) {
     set_fixed_color(color, game);
 }
 
-pub(crate) unsafe fn draw_cinematic_rectangle(
+pub(crate) fn draw_cinematic_rectangle(
     text: bool,
     mut definition: u16,
     position: u16,
     game: &mut Game,
 ) {
     let mut row = 2 * u16::from(position as u8) + 64 * u16::from(position.to_ne_bytes()[1]);
-    let (width, mut rows) = unsafe {
-        let header = crate::rtl::rom_bank_ptr::<0x8c>(definition, game);
-        (u16::from(*header.add(2)), i32::from(*header.add(3)))
-    };
+    let header = cinematic_native_record::<0x8c>(definition, game);
+    let width = u16::from(header.byte(2));
+    let mut rows = i32::from(header.byte(3));
     loop {
         let mut destination = row;
         let mut remaining = width;
         loop {
             // The cursor wraps before the next lookup; the word at +4 does not.
-            let tile = unsafe {
-                (crate::rtl::rom_bank_ptr::<0x8c>(definition, game).add(4) as *const u16)
-                    .read_unaligned()
-            };
+            let tile = cinematic_native_record::<0x8c>(definition, game).word(4);
             let at = if text { 0x3000 } else { 0x3800 } + usize::from(destination);
             word_transfers!(game, ascending, 1; native(at) <- value(tile));
             definition = definition.wrapping_add(2);
