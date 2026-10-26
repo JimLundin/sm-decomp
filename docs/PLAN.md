@@ -53,9 +53,13 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
    VRAM read-buffer, CGRAM-low and Mode7 latch values. No invented register defaults.
    Existing required rows and expectations remain intact; hosted verification and
    the combined full corpus are separate obligations, not inferred from this result.
-   68/82 rows are seeded; eight live recipes still share the early-route controller
-   sequence. Seed the remaining 14 rows in
-   batches of six or more, deleting newly unused recipes; preserve input guards.
+   68/82 rows use original seeds. Remaining authored continuations from TAS seeds
+   miss required events despite matching frames. A2 next distributes hash-bound
+   native/oracle checkpoints through the existing runner and encrypted bundles;
+   keep full inputs, original windows, guards and required setup encounters.
+   These are verified route starts, not original TAS seeds; intro already has zero
+   setup. Batch six or more where practical; delete recipes only when no consumer
+   needs them and exact inputs remain distributable. Eight recipes remain live.
 2. **Current - lane B retirement.** B1 sm_88/sm_a0/sm_81 and B3 sm_8f/sm_b2 are
    retired. M2 sm_a8, eleven B2 cinematic families and B3 Goofball are integrated;
    all 82 corpus rows passed on 6c675730 after bank-80 deletion; later work uses scoped rows.

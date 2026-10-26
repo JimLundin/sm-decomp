@@ -1,4 +1,4 @@
-//! Controller sampling, repeat edges and the menu's held-button filter.
+//! Controller sampling, repeat edges, menu filtering and action bindings.
 use crate::game::constants::buttons::{
     kButton_A, kButton_B, kButton_Down, kButton_L, kButton_Left, kButton_R, kButton_Right,
     kButton_Select, kButton_Start, kButton_Up, kButton_X, kButton_Y,
@@ -131,4 +131,76 @@ pub(crate) fn use_cinematic_bindings(game: &mut Game) {
 pub(crate) fn restore_cinematic_bindings(game: &mut Game) {
     word_transfers!(game, ascending, 7;
         little(fields::button_config_shoot_x) <- little(fields::button_config_shoot_x_saved));
+}
+
+// The editor assigns the first seven buttons; saved choices also accept Left and Right.
+const BINDING_BUTTONS: [u16; 9] = [
+    kButton_X as u16,
+    kButton_A as u16,
+    kButton_B as u16,
+    kButton_Select as u16,
+    kButton_Y as u16,
+    kButton_L as u16,
+    kButton_R as u16,
+    kButton_Left as u16,
+    kButton_Right as u16,
+];
+
+pub(crate) fn load_binding_choices(game: &mut Game) {
+    for index in 0..7 {
+        let address = crate::rtl::rom_table_word!(game, 0x82f54a, index) as usize;
+        let binding = u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]]);
+        let choice = BINDING_BUTTONS[..7]
+            .iter()
+            .position(|button| binding & button != 0)
+            .unwrap_or(0);
+        word!(game.eproj_F[index + 13] = choice as u16);
+    }
+}
+
+pub(crate) fn reset_binding_choices(game: &mut Game) {
+    word! {game; button_config_shoot_x = kButton_X as u16;
+    button_config_jump_a = kButton_A as u16; button_config_run_b = kButton_B as u16;
+    button_config_itemcancel_y = kButton_Y as u16; button_config_itemswitch = kButton_Select as u16;
+    button_config_aim_up_R = kButton_R as u16; button_config_aim_down_L = kButton_L as u16; }
+    load_binding_choices(game);
+}
+
+pub(crate) fn store_binding_choices(game: &mut Game) -> u8 {
+    for index in 0..7 {
+        let binding = BINDING_BUTTONS[word!(game.eproj_F[index + 13]) as usize];
+        let address = crate::rtl::rom_table_word!(game, 0x82f54a, index);
+        word_transfers!(game, ascending, 1; native(address) <- value(binding));
+    }
+    0
+}
+
+pub(crate) fn remap_binding(game: &mut Game) {
+    let Some(choice) = BINDING_BUTTONS[..7]
+        .iter()
+        .rposition(|button| button & word!(game.joypad1_newkeys) != 0)
+    else {
+        return;
+    };
+    let mut next = (2 * word!(game.menu_option_index) as i32 + 2) as u16;
+    if (2 * word!(game.menu_option_index) as i32 - 12) & 0x8000 == 0 {
+        next = 0;
+    }
+    // Malformed choice lists retain the cursor after the sixth unsuccessful advance.
+    for _ in 0..6 {
+        let address = 0x1b23 + 2 * ((next as usize >> 1) + 13);
+        if u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]]) == choice as u16 {
+            break;
+        }
+        next = next.wrapping_add(2);
+        if (next as i16).wrapping_sub(14) >= 0 {
+            next = 0;
+        }
+    }
+    let selected = word!(game.menu_option_index) as i32;
+    let previous = word!(game.eproj_F[selected + 13]);
+    word!(game.eproj_F[selected + 13] = choice as u16);
+    word_transfers!(game, ascending, 1;
+        native(0x1b23 + 2 * ((next as isize >> 1) + 13)) <- value(previous));
+    crate::game::menu_tilemap::controller_bindings(game);
 }

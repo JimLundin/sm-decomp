@@ -1,3 +1,4 @@
+use crate::game::controller_input::remap_binding;
 use crate::game::decompression::decompress_to_ram;
 use crate::game::gameplay::advance as AdvanceGameplay;
 use crate::game::gameplay_flag_runtime;
@@ -3794,8 +3795,8 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
                         }
                     }
                     CreateOptionsMenuObject_(v1, addr_stru_82F4CA as u16, game);
-                    LoadControllerOptionsFromControllerBindings(game);
-                    OptionsMenuFunc6(game);
+                    crate::game::controller_input::load_binding_choices(game);
+                    crate::game::menu_tilemap::controller_bindings(game);
                 }
             } else {
                 word_transfers!(game, descending, 1024; pause_map(1023) <- le(custom_background, 6398));
@@ -3960,9 +3961,9 @@ pub unsafe fn GameOptionsMenu_7_ControllerSettings(game: &mut Game) {
         } else if word!(game.joypad1_newkeys) != 0 {
             QueueSfx1_Max6(0x38, game);
             static kOptionsMenuControllerFuncs: [Func_V; 9] = callback_table! { nonnull Func_V;
-                OptionsMenuControllerFunc_0, OptionsMenuControllerFunc_0, OptionsMenuControllerFunc_0,
-                OptionsMenuControllerFunc_0, OptionsMenuControllerFunc_0, OptionsMenuControllerFunc_0,
-                OptionsMenuControllerFunc_0, OptionsMenuControllerFunc_7, OptionsMenuControllerFunc_8,
+                remap_binding, remap_binding, remap_binding,
+                remap_binding, remap_binding, remap_binding,
+                remap_binding, OptionsMenuControllerFunc_7, OptionsMenuControllerFunc_8,
             };
             kOptionsMenuControllerFuncs[word!(game.menu_option_index) as usize](game);
         } else if word!(game.joypad2_new_keys) != 0
@@ -3979,22 +3980,16 @@ pub unsafe fn GameOptionsMenu_7_ControllerSettings(game: &mut Game) {
         }
     }
 }
-pub unsafe fn OptionsMenuControllerFunc_8(game: &mut Game) {
-    unsafe {
-        if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
-            word! {game; button_config_shoot_x = 64; button_config_jump_a = 128;
-            button_config_run_b = 0x8000; button_config_itemcancel_y = 0x4000;
-            button_config_itemswitch = 0x2000; button_config_aim_up_R = 16;
-            button_config_aim_down_L = 32; }
-            LoadControllerOptionsFromControllerBindings(game);
-            OptionsMenuFunc6(game);
-        }
+pub fn OptionsMenuControllerFunc_8(game: &mut Game) {
+    if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
+        crate::game::controller_input::reset_binding_choices(game);
+        crate::game::menu_tilemap::controller_bindings(game);
     }
 }
 pub unsafe fn OptionsMenuControllerFunc_7(game: &mut Game) {
     unsafe {
         if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0
-            && OptionsMenuFunc8(game) == 0
+            && crate::game::controller_input::store_binding_choices(game) == 0
         {
             word!(game.menu_option_index = 0);
             GameOptionsMenuItemFunc_4(game);
@@ -4022,150 +4017,5 @@ pub fn sub_82F369(j: u16, game: &mut Game) {
     {
         let v1: i32 = j as i32 >> 1;
         word! {game; eproj_x_vel[(v1 + 3)] = 16; eproj_x_vel[(v1 + 11)] = 3584; }
-    }
-}
-pub unsafe fn LoadControllerOptionsFromControllerBindings(game: &mut Game) {
-    unsafe {
-        for v0 in (0u16..14).step_by(2) {
-            let v1: i32 = v0 as i32 >> 1;
-            let mut v2: i16 = *(ram_ptr!(game, u16; crate::rtl::rom_table_word!(
-            game,
-            0x82f54a,
-            v1 as isize
-        ) as isize)) as i16;
-            let clear_button_mapping: bool = ((v2 as i32 & kButton_X as i32) != 0)
-                || (if (v2 as i32 & kButton_A as i32) != 0 {
-                    word!(game.eproj_F[(v1 + 13)] = 1);
-                    false
-                } else if v2 < 0 {
-                    word!(game.eproj_F[(v1 + 13)] = 2);
-                    false
-                } else if (v2 as i32 & kButton_Select as i32) != 0 {
-                    word!(game.eproj_F[(v1 + 13)] = 3);
-                    false
-                } else if (v2 as i32 & kButton_Y as i32) != 0 {
-                    word!(game.eproj_F[(v1 + 13)] = 4);
-                    false
-                } else if (v2 as i32 & kButton_L as i32) != 0 {
-                    word!(game.eproj_F[(v1 + 13)] = 5);
-                    false
-                } else {
-                    ((v2 as i32 & kButton_R as i32) == 0)
-                        || ({
-                            word!(game.eproj_F[(v1 + 13)] = 6);
-                            false
-                        })
-                });
-            if clear_button_mapping {
-                word!(game.eproj_F[(v1 + 13)] = 0);
-            }
-        }
-    }
-}
-static word_82F575: [Buttons; 9] = [
-    kButton_X,
-    kButton_A,
-    kButton_B,
-    kButton_Select,
-    kButton_Y,
-    kButton_L,
-    kButton_R,
-    kButton_Left,
-    kButton_Right,
-];
-pub unsafe fn OptionsMenuFunc8(game: &mut Game) -> u8 {
-    unsafe {
-        let mut v0: i32 = 0;
-        do_until! { v2 >= 12 ;
-            let mut v2: i32 = v0;
-            *(ram_ptr!(game, u16; crate::rtl::rom_table_word!(
-                game,
-                0x82f54a,
-                (v0 >> 1) as isize
-            ) as isize)) = word_82F575[word!(game.eproj_F[((v0 >> 1) + 13)]) as usize] as u16;
-            v0 += 2;
-        }
-        0
-    }
-}
-static g_word_82F6AD: [u16; 6] = [0, 0xe, 0xe, 0x10, 0x1f, 0x1f];
-pub unsafe fn OptionsMenuFunc6(game: &mut Game) {
-    unsafe {
-        for v0 in (0u16..14).step_by(2) {
-            let v1: i32 = v0 as i32 >> 1;
-            let v2: u16 = crate::rtl::rom_table_word!(game, 0x82f639, v1 as isize);
-            let address = 0x820000
-                | u32::from(crate::rtl::rom_table_word!(
-                    game,
-                    0x82f647,
-                    word!(game.eproj_F[(v1 + 13)]) as isize
-                ));
-            if address & 0x8000 == 0 {
-                // Keep this diagnostic on the existing C stream and its buffer.
-                printf(c"RomPtr - Invalid access 0x%x!\n".as_ptr(), address);
-                game.g_fail = true;
-            }
-            let source = crate::word_transfers::rom_source(address, game);
-            word_transfers!(game, ascending, 3;
-                native(0x3000 + v2 as isize) <- captured(source, 0),
-            );
-            word_transfers!(game, ascending, 3;
-                native(0x3040 + v2 as isize) <- captured(source, 3),
-            );
-        }
-        if word!(game.eproj_instr_list_ptr[0]) != 5 && word!(game.eproj_instr_list_ptr[0]) != 6 {
-            *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000)))
-                .menu
-                .backup_of_io_registers_in_gameover as *mut u8)
-                .offset(46) as *mut u32) = *(&raw const g_word_82F6AD as *const u16 as *mut u32);
-            (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[665i32 as usize] =
-                g_word_82F6AD[2i32 as usize];
-            *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.field_536 as *mut u8).offset(56)
-                as *mut u32) = *((&raw const g_word_82F6AD as *const u16).offset(3) as *mut u32);
-            (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[697i32 as usize] =
-                g_word_82F6AD[5i32 as usize];
-        }
-        if word!(game.eproj_instr_list_ptr[1]) != 5 && word!(game.eproj_instr_list_ptr[1]) != 6 {
-            *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.field_536 as *mut u8).offset(184)
-                as *mut u32) = *(&raw const g_word_82F6AD as *const u16 as *mut u32);
-            (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[761i32 as usize] =
-                g_word_82F6AD[2i32 as usize];
-            *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.menu_tilemap as *mut u8)
-                .offset(46) as *mut u32) =
-                *((&raw const g_word_82F6AD as *const u16).offset(3) as *mut u32);
-            (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[793i32 as usize] =
-                g_word_82F6AD[5i32 as usize];
-        }
-    }
-}
-pub unsafe fn OptionsMenuControllerFunc_0(game: &mut Game) {
-    unsafe {
-        let mut v0: u16 = 12;
-        while (word_82F575[(v0 >> 1) as usize] & word!(game.joypad1_newkeys) as u32) == 0 {
-            v0 = (v0).wrapping_sub(2);
-            if (v0 & 0x8000) != 0 {
-                return;
-            }
-        }
-        let r18: u16 = v0 >> 1;
-        let mut v1: u16 = (2 * word!(game.menu_option_index) as i32 + 2) as u16;
-        if 2 * word!(game.menu_option_index) as i32 - 12i32 & 0x8000 == 0 {
-            v1 = 0;
-        }
-        let mut v2: u16 = v1;
-        for _ in 0..=5 {
-            if *(ram_ptr!(game, u16; 0x1b23)).offset(((v2 as i32 >> 1) + 13) as isize) == r18 {
-                break;
-            }
-            v2 = (v2).wrapping_add(2);
-            if ((v2) as i16).wrapping_sub(14) >= 0 {
-                v2 = 0;
-            }
-        }
-        let v4: i32 = word!(game.menu_option_index) as i32;
-        let r20: u16 = word!(game.eproj_F[(v4 + 13)]);
-        word!(game.eproj_F[(v4 + 13)] = r18);
-        *(ram_ptr!(game, u16; 0x1b23)).offset(((v2 as i32 >> 1) + 13) as isize) = r20;
-        OptionsMenuFunc6(game);
     }
 }

@@ -1,4 +1,4 @@
-//! File-menu tilemaps: native word stores, live palette reads and ROM text controls.
+//! Menu tilemaps: native word stores, live palette reads and ROM text controls.
 use crate::game::constants::bank_81::{
     addr_kMenuTilemap_DataClear, addr_kMenuTilemap_DataCopy, addr_kMenuTilemap_Exit,
     addr_kMenuTilemap_SamusA, addr_kMenuTilemap_SamusB, addr_kMenuTilemap_SamusC,
@@ -266,4 +266,35 @@ pub(crate) fn area_palette(area: u16, active: bool, game: &mut Game) {
 
 pub(crate) fn clear(game: &mut Game) {
     word_transfers!(game, descending, 1024; native(0x3dfe) <- value(15));
+}
+
+pub(crate) fn controller_bindings(game: &mut Game) {
+    for index in 0..7 {
+        let destination = crate::rtl::rom_table_word!(game, 0x82f639, index);
+        let address = 0x820000
+            | u32::from(crate::rtl::rom_table_word!(
+                game,
+                0x82f647,
+                word!(game.eproj_F[index + 13]) as isize
+            ));
+        if address & 0x8000 == 0 {
+            crate::game::session_runtime::invalid_window(game, address);
+        }
+        let source = crate::word_transfers::rom_source(address, game);
+        word_transfers!(game, ascending, 3;
+            native(0x3000 + destination as isize) <- captured(source, 0));
+        word_transfers!(game, ascending, 3;
+            native(0x3040 + destination as isize) <- captured(source, 3));
+    }
+    let cleared_hint = [0, 0xe, 0xe, 0x10, 0x1f, 0x1f];
+    for (index, destination) in [0x352e, 0x35ee].into_iter().enumerate() {
+        if word!(game.eproj_instr_list_ptr[index]) != 5
+            && word!(game.eproj_instr_list_ptr[index]) != 6
+        {
+            word_transfers!(game, ascending, 3;
+                native(destination) <- table(cleared_hint, 0));
+            word_transfers!(game, ascending, 3;
+                native(destination + 0x40) <- table(cleared_hint, 3));
+        }
+    }
 }
