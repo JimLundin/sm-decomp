@@ -1923,18 +1923,6 @@ crate::game::callback_dispatch! {
             word!(game.cinematicspr_preinstr_func[v1] = (0x8bbb0di32) as u16);
         }
     };
-    [9170866] CinematicFunction_Intro_Func151 [] {
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
-            128,
-        );
-        word!(game.cinematicspr_arr6[v1] = word!(game.cinematicspr_arr6[v1]));
-        if word!(game.cinematicbg_arr7[v1] += 1, reread) as i32 - 272i32 & 0x8000 == 0 {
-            word!(game.cinematicspr_instr_timer[v1] = 1);
-            word!(game.cinematicspr_instr_ptr[v1] = addr_off_8BEE9B as u16);
-        }
-    };
     [9171431] CinematicFunction_Intro_Func179 [] {
         word!(game.cinematicbg_arr8[v1] += word!(game.cinematicspr_goto_timer[v1]));
         let v2: u16 =
@@ -1964,6 +1952,7 @@ crate::game::callback_dispatch! {
         9172264 => [crate::game::visual_runtime::advance_ending_samus_jump(j, 0, game)];
         9172351 => [crate::game::visual_runtime::advance_ending_samus_jump(j, 1, game)];
         9172445 => [crate::game::visual_runtime::advance_ending_samus_jump(j, 2, game)];
+        9170866 => [crate::game::visual_runtime::update_ending_critters(j, false, game)];
         9152771 => [intro_pages::wait_for_scene_end(j, true, game)];
         9157135 => [intro_pages::wait_for_scene_end(j, false, game)];
         9153896 => [intro_pages::advance_laboratory_baby(j, false, game)];
@@ -2045,10 +2034,6 @@ crate::game::callback_dispatch! {
         }
         word! {game; cinematicbg_arr8[v1] = 87; cinematicbg_arr9[v1] = 2048; }
     };
-    [9170841] CinematicFunction_Intro_Func150 [] {
-        word! { game, 128; cinematicbg_arr8[v1], cinematicbg_arr7[v1] }
-        word! {game; cinematicbg_arr9[v1] = 3584; cinematicspr_goto_timer[v1] = 260; }
-    };
     [9171343] CinematicFunction_Intro_Func175 [] {
         word! {game; cinematicbg_arr7[v1] = 530; cinematicbg_arr8[v1] = 231;
             cinematicbg_arr9[v1] = 3584; cinematicspr_goto_timer[v1] = 8; }
@@ -2058,6 +2043,7 @@ crate::game::callback_dispatch! {
             cinematicbg_arr9[v1] = 3584; cinematicspr_goto_timer[v1] = 8; }
     };
     @external {
+        9170841 => [crate::game::visual_runtime::update_ending_critters(j, true, game)];
         9150131 => [initialize_title_sprite(j, 0, game)];
         9150166 => [initialize_title_sprite(j, 1, game)];
         9150207 => [initialize_title_sprite(j, 2, game)];

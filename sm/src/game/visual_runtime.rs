@@ -1879,6 +1879,20 @@ pub(crate) fn drift_cinematic_sprite(
     }
 }
 
+pub(crate) fn update_ending_critters(object: u16, initialize: bool, game: &mut Game) {
+    let slot = usize::from(object >> 1);
+    if initialize {
+        word! { game, 128; cinematicbg_arr8[slot], cinematicbg_arr7[slot] }
+        word! {game; cinematicbg_arr9[slot] = 3584; cinematicspr_goto_timer[slot] = 260; }
+        return;
+    }
+    advance_cinematic_coordinate(object, true, 128, game);
+    word!(game.cinematicspr_arr6[slot] = word!(game.cinematicspr_arr6[slot]));
+    if word!(game.cinematicbg_arr7[slot] += 1, reread) as i32 - 272 & 0x8000 == 0 {
+        word! {game; cinematicspr_instr_timer[slot] = 1; cinematicspr_instr_ptr[slot] = 0xee9b; }
+    }
+}
+
 pub(crate) fn fade_ending_gunship_backdrop(game: &mut Game) {
     let expired = word!(game.cinematic_var4 -= 1, reread) & 0x8000 != 0;
     if word!(game.cinematic_var4) == 0 || expired {
