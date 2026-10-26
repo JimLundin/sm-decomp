@@ -1926,13 +1926,6 @@ crate::game::callback_dispatch! {
             word!(game.cinematicspr_preinstr_func[v1] = (0x8b93d9i32) as u16);
         }
     };
-    [9152771] CinematicSprPreInstr_A903 [] {
-        if word!(game.cinematic_var13) == 0 {
-            let v1: i32 = k as i32 >> 1;
-            word! {game; cinematicspr_instr_timer[v1] = 1;
-                cinematicspr_instr_ptr[v1] = addr_off_8BCE53 as u16; cinematic_var15 = 0; }
-        }
-    };
     [9154074] SetSomeStuffForSpriteObject_18 [] {
         if word!(game.cinematic_var16) == 59 {
             let v1: i32 = k as i32 >> 1;
@@ -1987,18 +1980,7 @@ crate::game::callback_dispatch! {
     };
     [9156654] CinematicSprPreInstr_B82E [] {
         shake_intro_mother_brain(game);
-        if word!(game.cinematic_var13) == 0 {
-            let v1: i32 = k as i32 >> 1;
-            word! {game; cinematicspr_instr_timer[v1] = 1;
-                cinematicspr_instr_ptr[v1] = addr_off_8BCE53 as u16; cinematic_var15 = 0; }
-        }
-    };
-    [9157135] CinematicFunction_Intro_Func48 [] {
-        if word!(game.cinematic_var13) == 0 {
-            let v1: i32 = k as i32 >> 1;
-            word!(game.cinematicspr_instr_timer[v1] = 1);
-            word!(game.cinematicspr_instr_ptr[v1] = addr_off_8BCE53 as u16);
-        }
+        intro_pages::wait_for_scene_end(k, true, game);
     };
     [9157389] CinematicFunction_Intro_Func52 [] {
         let v1: bool = (word!(game.cinematic_var14 -= 1, reread) & 0x8000) != 0;
@@ -2209,6 +2191,8 @@ crate::game::callback_dispatch! {
         };
     };
     @external {
+        9152771 => [intro_pages::wait_for_scene_end(j, true, game)];
+        9157135 => [intro_pages::wait_for_scene_end(j, false, game)];
         9153896 => [intro_pages::advance_laboratory_baby(j, false, game)];
         9153958 => [intro_pages::advance_laboratory_baby(j, true, game)];
         9157412 => [advance_intro_baby_pursuit(j, game)];

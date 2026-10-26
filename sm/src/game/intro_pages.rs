@@ -51,6 +51,17 @@ unsafe fn load_japanese_line(j: u16, game: &mut Game) {
     }
 }
 
+pub(super) fn wait_for_scene_end(object: u16, stop_samus: bool, game: &mut Game) {
+    if word!(game.cinematic_var13) == 0 {
+        let slot = usize::from(object >> 1);
+        word!(game.cinematicspr_instr_timer[slot] = 1);
+        word!(game.cinematicspr_instr_ptr[slot] = 0xce53);
+        if stop_samus {
+            word!(game.cinematic_var15 = 0);
+        }
+    }
+}
+
 pub(super) fn advance_laboratory_baby(object: u16, examined: bool, game: &mut Game) {
     let slot = usize::from(object >> 1);
     if word!(game.cinematic_var13) == 0 {
