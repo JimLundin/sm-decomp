@@ -2,7 +2,7 @@ use crate::game::actors;
 use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
 use crate::game::actors::api as actor_api;
 use crate::game::enemy_script::EnemyScript;
-use crate::game::ground_patrol::{self, Kind as PatrolKind};
+use crate::game::ground_patrol;
 pub use crate::game::prelude::*;
 use crate::game::rippers::{self, Kind};
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
@@ -31,12 +31,10 @@ unsafe fn update_randomized_pre_instruction(game: &mut Game) {
 crate::game::constants::typed_constants! { Consts_A2;
     addr_kGripper_Sprmap_E44B = 58443, addr_kGripper_Sprmap_E43F = 58431,
     addr_kMaridiaLargeSnail_Ilist_CA4B = 51787,
-    addr_kMaridiaSpikeyShell_Ilist_A3BD = 41917, addr_kMaridiaSpikeyShell_Ilist_A3AB = 41899,
-    addr_kSpritemap_Nothing_A2 = 32845,
 }
 
 crate::type_aliases! {
-    pub Enemy_MaridiaLargeSnail, Enemy_MaridiaSpikeyShell =
+    pub Enemy_MaridiaLargeSnail =
         crate::game::enemy_layouts::EnemyLayout40;
 }
 
@@ -50,7 +48,6 @@ crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
     Get_MaridiaLargeSnail(o: i32) -> Enemy_MaridiaLargeSnail = [0xf78, o as isize];
-    Get_MaridiaSpikeyShell(o: i32) -> Enemy_MaridiaSpikeyShell = [0xf78, o as isize];
 }
 pub unsafe fn ThinHoppingBlobs_Main(game: &mut Game) {
     if !crate::game::hopping_blobs::advance(game) {
@@ -59,10 +56,6 @@ pub unsafe fn ThinHoppingBlobs_Main(game: &mut Game) {
         }
     }
 }
-static off_A2A3D3: [Func_V; 7] = callback_table! { nonnull Func_V;
-    MaridiaSpikeyShell_1, MaridiaSpikeyShell_2, MaridiaSpikeyShell_3, MaridiaSpikeyShell_4,
-    MaridiaSpikeyShell_5, MaridiaSpikeyShell_6, MaridiaSpikeyShell_7,
-};
 crate::game::callback_dispatch! {
     pub unsafe fn CallMaridiaLargeSnailFunc(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -205,10 +198,6 @@ crate::game::callback_dispatch! {
     };
     [10653138] MaridiaBeybladeTurtle_Main [] { if !crate::game::maridia_turtles::advance(false, game) { Unreachable(game); } };
     [10653998] MiniMaridiaBeybladeTurtle_Main [] { if !crate::game::maridia_turtles::advance(true, game) { Unreachable(game); } };
-    [10658942] MaridiaSpikeyShell_Main [] {
-        let e = Get_MaridiaSpikeyShell(word!(game.cur_enemy_index) as i32, game);
-        off_A2A3D3[((*e).var_E as i16 as i32 + 2i32) as usize](game);
-    };
     @functions [pub fn (game: &mut Game)];
     [10659396] GunshipTop_Init [] { crate::game::gunship::initialize_top(game); };
     [10659538] GunshipBottom_Init [] { crate::game::gunship::initialize_bottom(game); };
@@ -295,75 +284,6 @@ crate::game::callback_dispatch! {
         };
         actor_species_pre_instruction(0xa20000 | u32::from(phase), game);
     };
-    @functions [pub unsafe fn (game: &mut Game)];
-    @prefix { let E = Get_MaridiaSpikeyShell(word!(game.cur_enemy_index) as i32, game); };
-    [10658809] MaridiaSpikeyShell_Init [] {
-        (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as u16;
-        let mssl_parameter_1_low: u16 = byte!((*E).parameter_1; 0) as u16;
-        (*E).var_E = mssl_parameter_1_low;
-        off_A2A3D3[(mssl_parameter_1_low as i32 & 1i32) as usize](
-            game,
-        );
-        let v3: i32 = 4 * byte!((*E).parameter_2; 0) as i32;
-        (*E).var_B = crate::rtl::rom_table_word!(game, 0xa28187, v3 as isize);
-        (*E).var_A = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1) as isize);
-        (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 2) as isize);
-        (*E).var_C = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 3) as isize);
-        let v4: i32 = byte!((*E).parameter_2; 1) as i32;
-        (*E).var_02 =
-            (crate::rtl::rom_table_word!(game, 0xa2a3dd, v4 as isize)).wrapping_add((*E).base.x_pos);
-        (*E).var_01 =
-            ((*E).base.x_pos).wrapping_sub(crate::rtl::rom_table_word!(game, 0xa2a3dd, v4 as isize));
-        (*E).var_00 = crate::rtl::rom_table_word!(
-            game,
-            0xa2a3ed,
-            *(&raw mut (*E).parameter_1 as *mut u8).offset(1) as isize
-        );
-        (*E).var_F = 0;
-        if (*E).var_E == 2 {
-            (*E).var_F = 16;
-            (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(16);
-        }
-    };
-    MaridiaSpikeyShell_1 [] {
-        enemy_instruction! {[(*E).base]; instruction = addr_kMaridiaSpikeyShell_Ilist_A3AB as u16, timer = 1}
-        (*E).base.timer = 0;
-    };
-    MaridiaSpikeyShell_2 [] {
-        enemy_instruction! {[(*E).base]; instruction = addr_kMaridiaSpikeyShell_Ilist_A3BD as u16, timer = 1}
-        (*E).base.timer = 0;
-    };
-    MaridiaSpikeyShell_5 [] {
-        let v1: u16 = ((*E).var_00).wrapping_sub(1);
-        (*E).var_00 = v1;
-        if v1 == 0 {
-            (*E).var_E = 4;
-        }
-    };
-    MaridiaSpikeyShell_6 [] {
-        (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
-        (*E).var_F = (*E).var_F.wrapping_add(1);
-        if (*E).var_F as i32 - 16i32 & 0x8000 == 0 {
-            (*E).var_E = 2;
-            (*E).var_00 = crate::rtl::rom_table_word!(
-                game,
-                0xa2a3ed,
-                *(&raw mut (*E).parameter_1 as *mut u8).offset(1) as isize
-            );
-        }
-    };
-    MaridiaSpikeyShell_7 [] {
-        (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
-        crate::update_place! { previous fresh29 = (*E).var_F => (*E).var_F.wrapping_sub(1); }
-        if fresh29 == 1 {
-            (*E).var_E = ((byte!(@pointer ram_ptr!(game, u16; 0x5e5); 1)) as u16) & (1u16);
-        }
-    };
-    [10659193] MaridiaSpikeyShell_Shot [] {
-        if (*E).var_E as i32 - 1i32 & 0x8000 != 0 {
-            Enemy_NormalShotAI_A2(game);
-        }
-    };
     @functions [pub fn (game: &mut Game)];
     [10662880] NorfairErraticFireball_Init [] { crate::game::erratic_fireball::update(true, game); };
     [10662927] NorfairErraticFireball_Main [] { crate::game::erratic_fireball::update(false, game); };
@@ -371,9 +291,6 @@ crate::game::callback_dispatch! {
     [10661995] Flies_Init [] { crate::game::flies::initialize(game); };
     [10666562] NorfairRio_Init [] { crate::game::norfair_rio::initialize(false, game); };
     [10667763] LowerNorfairRio_Init [] { crate::game::norfair_rio::initialize(true, game); };
-    @forward [pub fn (game: &mut Game)];
-    MaridiaSpikeyShell_3 => ground_patrol::advance(PatrolKind::Shell, false, game);
-    MaridiaSpikeyShell_4 => ground_patrol::advance(PatrolKind::Shell, true, game);
     @forward [pub unsafe fn (game: &mut Game)];
     [10662175] Flies_Main => update_randomized_pre_instruction(game);
     [10665682] NorfairLavajumpingEnemy_Main => update_randomized_pre_instruction(game);
@@ -386,6 +303,9 @@ crate::game::callback_dispatch! {
     [10649635] Enemy_NormalTouchAI_A2 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
     [10649645] Enemy_NormalShotAI_A2 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
     @external {
+        10658809 => ground_patrol::initialize_shell;
+        10658942 => ground_patrol::advance_shell;
+        10659193 => ground_patrol::shot_shell;
         10674038 => [crate::game::rising_falling::update(true, game)];
         10674222 => [crate::game::rising_falling::update(false, game)];
         10675718 => crate::game::lava_seahorse_pair::initialize;
@@ -410,11 +330,6 @@ crate::game::callback_dispatch! {
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10659181]
-    MaridiaSpikeyShell_Instr_A56D [jp] { (*Get_MaridiaSpikeyShell(k as i32, game)).var_E = 0; };
-    [10659185]
-    MaridiaSpikeyShell_Instr_A571 [jp] { (*Get_MaridiaSpikeyShell(k as i32, game)).var_E = 1; };
     @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10664371] Rinka_Instr_B9B3 [jp] { crate::game::rinka::hide(k, false, game); };
     [10664381] Rinka_Instr_B9BD [jp] { crate::game::rinka::hide(k, true, game); };
@@ -451,6 +366,8 @@ crate::game::callback_dispatch! {
         10654919 => [crate::game::maridia_turtles::instruction(0x94c7, j, game)];
         10654929 => [{ QueueSfx2_Max6(0x3a, game); j }];
         10657578 => [{ QueueSfx2_Max6(0x34, game); j }];
+        10659181 => [{ ground_patrol::direct_shell(k, 0, game); j }];
+        10659185 => [{ ground_patrol::direct_shell(k, 1, game); j }];
         10657941 => [{ ground_patrol::resume_plant(k, game); j }];
         10657959 => [crate::game::enemy_projectiles::spawn_scripted(0xdafe, j, game)];
         10652030 => [crate::game::enemy_projectiles::spawn_scripted(0xdbf2, j, game)];
@@ -563,8 +480,8 @@ crate::game::callback_dispatch! {
     @external {
         10675796 | 10675885 | 10675953 | 10676020 | 10676041
             => [crate::game::lava_seahorse_pair::phase(k, ea as u16, game)];
-        10657722 => [ground_patrol::advance(PatrolKind::Plant, false, game)];
-        10657772 => [ground_patrol::advance(PatrolKind::Plant, true, game)];
+        10657722 => [ground_patrol::advance_plant(false, game)];
+        10657772 => [ground_patrol::advance_plant(true, game)];
         10652227 => [crate::game::mini_crocomire::patrol(false, game)];
         10652252 => [crate::game::mini_crocomire::patrol(true, game)];
         10659852 => [crate::game::gunship::phase(k, 0xa80c, game)];
