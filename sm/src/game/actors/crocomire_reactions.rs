@@ -12,6 +12,7 @@ use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::music::{QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::session_runtime::Runtime;
+use crate::game::sprite_effect_runtime::create_sprite;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::rtl::abs16;
@@ -600,4 +601,63 @@ pub(crate) fn hit(game: &mut Game) {
     slot!(game, Crocomire[0].base.flash_timer, |old| old
         .wrapping_add(14));
     slot!(game, Crocomire[0].base.ai_handler_bits, |old| old | 2);
+}
+
+pub(crate) fn select_melt_animation<const SKELETON: bool>(key: Key, game: &mut Game) {
+    Runtime::new(game).edit_actor(key, AccessMode::Native, |enemy| {
+        let instruction = match enemy.y.whole as i16 {
+            y if y.wrapping_sub(280) >= 0 => addr_kCrocomire_Ilist_BF64 as u16,
+            y if y.wrapping_sub(264) >= 0 => addr_kCrocomire_Ilist_BF6C as u16,
+            y if y.wrapping_sub(248) >= 0 => addr_kCrocomire_Ilist_BF72 as u16,
+            _ => addr_kCrocomire_Ilist_BF78 as u16,
+        };
+        // Each skeleton list starts 0x1a bytes after its corresponding flesh list.
+        enemy.instruction = instruction + if SKELETON { 0x1a } else { 0 };
+        enemy.instruction_delay = 1;
+    });
+}
+
+pub(crate) fn melt_skeleton_up(game: &mut Game) {
+    select_melt_animation::<true>(Key::from_legacy(game.cur_enemy_index()), game);
+    emit_lava_plume(game);
+    melt_up(game);
+}
+
+pub(crate) fn melt_flesh_down(game: &mut Game) {
+    emit_lava_plume(game);
+    select_melt_animation::<false>(Key::from_legacy(0), game);
+    melt_down(game);
+}
+
+pub(crate) fn emit_lava_plume(game: &mut Game) {
+    if word!(game.g_word_7E9018 -= 1, reread) == 0 {
+        word!(game.g_word_7E9018 = 6);
+        let mut v0: u16 = (word!(game.random_number)) & (0x3fu16);
+        if (word!(game.random_number) & 2) == 0 {
+            v0 = !(v0 as i32) as u16;
+        }
+        let x: u16 = (slot!(game, Crocomire[0i32].base.x_pos)).wrapping_add(v0);
+        let y: u16 = (word!(game.lava_acid_y_pos) as i32 + 16
+            - (((word!(game.random_number)) & (0x1f00u16)) as i32 >> 8))
+            as u16;
+        create_sprite(x, y, 21, 0, game);
+    }
+}
+
+pub(crate) fn melt_rumble_down(game: &mut Game) {
+    rumble(game);
+    emit_lava_plume(game);
+    melt_down(game);
+}
+
+pub(crate) fn melt_flesh_up(game: &mut Game) {
+    emit_lava_plume(game);
+    select_melt_animation::<false>(Key::from_legacy(word!(game.cur_enemy_index)), game);
+    melt_up(game);
+}
+
+pub(crate) fn melt_rumble_up(game: &mut Game) {
+    rumble(game);
+    emit_lava_plume(game);
+    melt_up(game);
 }

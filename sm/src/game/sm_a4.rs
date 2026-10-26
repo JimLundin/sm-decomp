@@ -1,7 +1,10 @@
 use crate::game::actors;
 use crate::game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use crate::game::actors::api as actor_api;
-use crate::game::actors::crocomire_reactions::wall_step;
+use crate::game::actors::crocomire_reactions::{
+    emit_lava_plume, melt_flesh_down, melt_flesh_up, melt_rumble_down, melt_rumble_up,
+    melt_skeleton_up, select_melt_animation, wall_step,
+};
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
 use crate::game::gameplay_flag_host::BossWordOrder;
@@ -21,8 +24,6 @@ use crate::game::player_update::minimap;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::visual_runtime::{align_crocomire_background, spawn_hdma};
 
-use crate::game::sprite_effect_runtime::create_sprite;
-
 pub type Enemy_Crocomire = crate::game::enemy_layouts::EnemyLayout72;
 
 const RomPtr_A4: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa4>;
@@ -35,12 +36,12 @@ static g_word_A4869E: u16 = 3;
 static g_word_A486A4: u16 = 0x640;
 pub fn nullsub_305(game: &mut Game) {}
 static off_A48C14: [Func_V; 45] = callback_table! { nonnull Func_V;
-    Crocomire_Func_28, Crocomire_Func_52, Crocomire_Func_36, Crocomire_92CE, Crocomire_Func_54,
-    Crocomire_Func_36, Crocomire_92CE, Crocomire_Func_54, Crocomire_Func_57, Crocomire_Func_60,
-    Crocomire_Func_62, Crocomire_929E, Crocomire_Func_64, Crocomire_Func_65, Crocomire_Func_66,
-    Crocomire_Func_51, Crocomire_8D47, Crocomire_929E, Crocomire_Func_51, Crocomire_8D47,
-    Crocomire_929E, Crocomire_Func_51, Crocomire_Func_59, Crocomire_Func_60, Crocomire_Func_62,
-    Crocomire_Func_63, advance_skeleton_melt, Crocomire_9506, Crocomire_Func_65, Crocomire_Func_66,
+    Crocomire_Func_28, Crocomire_Func_52, Crocomire_Func_36, melt_rumble_up, melt_rumble_down,
+    Crocomire_Func_36, melt_rumble_up, melt_rumble_down, Crocomire_Func_57, Crocomire_Func_60,
+    Crocomire_Func_62, melt_flesh_up, Crocomire_Func_64, Crocomire_Func_65, Crocomire_Func_66,
+    melt_flesh_down, Crocomire_8D47, melt_flesh_up, melt_flesh_down, Crocomire_8D47,
+    melt_flesh_up, melt_flesh_down, Crocomire_Func_59, Crocomire_Func_60, Crocomire_Func_62,
+    Crocomire_Func_63, melt_skeleton_up, Crocomire_9506, Crocomire_Func_65, Crocomire_Func_66,
     Crocomire_Func_49, Crocomire_Func_68, wall_step, Crocomire_Func_71,
     Crocomire_Func_72, Crocomire_Func_73, Crocomire_Func_88, Crocomire_9B65, Crocomire_Func_90,
     advance_phase, Crocomire_9B86, nullsub_305, advance_phase, Crocomire_Func_29,
@@ -165,7 +166,7 @@ fn spawn_random_dust(game: &mut Game) {
 pub unsafe fn Crocomire_Func_49(game: &mut Game) {
     unsafe {
         select_melt_animation::<true>(Key::from_legacy(0), game);
-        Crocomire_Func_53(game);
+        emit_lava_plume(game);
         actors::crocomire_reactions::melt_down(game);
         let E: i32 = 0;
         if slot!(game, Crocomire[E].var_A) == 62 {
@@ -188,35 +189,7 @@ pub unsafe fn Crocomire_Func_49(game: &mut Game) {
         }
     }
 }
-fn select_melt_animation<const SKELETON: bool>(key: Key, game: &mut Game) {
-    Runtime::new(game).edit_actor(key, AccessMode::Native, |enemy| {
-        let instruction = match enemy.y.whole as i16 {
-            y if y.wrapping_sub(280) >= 0 => addr_kCrocomire_Ilist_BF64 as u16,
-            y if y.wrapping_sub(264) >= 0 => addr_kCrocomire_Ilist_BF6C as u16,
-            y if y.wrapping_sub(248) >= 0 => addr_kCrocomire_Ilist_BF72 as u16,
-            _ => addr_kCrocomire_Ilist_BF78 as u16,
-        };
-        // Each skeleton list starts 0x1a bytes after its corresponding flesh list.
-        enemy.instruction = instruction + if SKELETON { 0x1a } else { 0 };
-        enemy.instruction_delay = 1;
-    });
-}
 
-fn advance_skeleton_melt(game: &mut Game) {
-    select_melt_animation::<true>(Key::from_legacy(game.cur_enemy_index()), game);
-    unsafe {
-        Crocomire_Func_53(game);
-        actors::crocomire_reactions::melt_up(game);
-    }
-}
-
-pub unsafe fn Crocomire_Func_51(game: &mut Game) {
-    unsafe {
-        Crocomire_Func_53(game);
-        select_melt_animation::<false>(Key::from_legacy(0), game);
-        actors::crocomire_reactions::melt_down(game);
-    }
-}
 pub unsafe fn Crocomire_Func_52(game: &mut Game) {
     unsafe {
         let v0: u16 = *(ram_ptr!(game, u16; 0x9015, 1));
@@ -230,42 +203,7 @@ pub unsafe fn Crocomire_Func_52(game: &mut Game) {
                 game,
             );
         }
-        Crocomire_Func_54(game);
-    }
-}
-pub unsafe fn Crocomire_Func_53(game: &mut Game) {
-    if word!(game.g_word_7E9018 -= 1, reread) == 0 {
-        word!(game.g_word_7E9018 = 6);
-        let mut v0: u16 = (word!(game.random_number)) & (0x3fu16);
-        if (word!(game.random_number) & 2) == 0 {
-            v0 = !(v0 as i32) as u16;
-        }
-        let x: u16 = (slot!(game, Crocomire[0i32].base.x_pos)).wrapping_add(v0);
-        let y: u16 = (word!(game.lava_acid_y_pos) as i32 + 16
-            - (((word!(game.random_number)) & (0x1f00u16)) as i32 >> 8))
-            as u16;
-        create_sprite(x, y, 21, 0, game);
-    }
-}
-pub unsafe fn Crocomire_Func_54(game: &mut Game) {
-    unsafe {
-        actors::crocomire_reactions::rumble(game);
-        Crocomire_Func_53(game);
-        actors::crocomire_reactions::melt_down(game);
-    }
-}
-pub unsafe fn Crocomire_929E(game: &mut Game) {
-    unsafe {
-        Crocomire_Func_53(game);
-        select_melt_animation::<false>(Key::from_legacy(word!(game.cur_enemy_index)), game);
-        actors::crocomire_reactions::melt_up(game);
-    }
-}
-pub unsafe fn Crocomire_92CE(game: &mut Game) {
-    unsafe {
-        actors::crocomire_reactions::rumble(game);
-        Crocomire_Func_53(game);
-        actors::crocomire_reactions::melt_up(game);
+        melt_rumble_down(game);
     }
 }
 macro_rules! load_crocomire_tilemap_until_sentinel {
@@ -415,7 +353,7 @@ pub unsafe fn Crocomire_950F(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Func_65(game: &mut Game) {
     unsafe {
-        Crocomire_Func_53(game);
+        emit_lava_plume(game);
         let E0: i32 = 0;
         let E1: i32 = 0x40;
         let E2: i32 = 0x80;
