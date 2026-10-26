@@ -1,9 +1,9 @@
-use crate::game::controller_input::remap_binding;
 use crate::game::decompression::decompress_to_ram;
 use crate::game::gameplay::advance as AdvanceGameplay;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::{CancelSoundEffects, advance_sound_effects};
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
+use crate::game::options_settings;
 pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
@@ -19,7 +19,7 @@ use crate::game::animated_tiles;
 use crate::game::display_refresh::{GraphicsAsset, setup_transfer};
 use crate::game::enemy_projectiles::EnableEprojs;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
-use crate::game::music::{QueueSfx1_Max6, QueueSfx1_Max15, QueueSfx2_Max15, QueueSfx3_Max15};
+use crate::game::music::{QueueSfx1_Max15, QueueSfx2_Max15, QueueSfx3_Max15};
 use crate::game::palette_effects::{self, fading};
 use crate::game::room_entry::{self, ArrivalRequest, EntrySignal, StartSite};
 use crate::game::room_mechanisms::set_enabled;
@@ -69,8 +69,6 @@ crate::game::constants::typed_constants! { Consts_83;
     addr_kDoorDef_947a = 38010,
 }
 
-pub const __ASSERT_FUNCTION: [c_char; 28] =
-    unsafe { transmute::<[u8; 28], [c_char; 28]>(*b"uint8 *RomPtr_RAM(uint16_t)\0") };
 crate::game::constants::typed_constants! { i32;
     kCoroutineNone = 0,
     fnDoorTransitionFunction_FadeOutScreen = 0x82e2db,
@@ -80,21 +78,8 @@ crate::game::constants::typed_constants! { i32;
     fnCinematicFunction_Intro_Initial = 0x8ba395, fnCinematicFunctionBlackoutFromCeres = 0x8bc11b,
     fnCinematicFunctionEscapeFromCebes = 0x8bd480,
 }
-#[inline]
-unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
-    unsafe {
-        crate::native_assertion! {
-            '_c2rust_label: addr < 0x2000;
-            b"addr < 0x2000\0", b"src/sm_rtl.h\0", 51, pointer __ASSERT_FUNCTION.as_ptr()
-        };
-        ram_ptr!(game; addr as i32 as isize)
-    }
-}
 const RomPtr_82: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x82>;
 const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
-crate::ram_map::ram_pointer_functions! {
-    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
-}
 #[inline]
 unsafe fn get_RoomDefHeader(a: u16, game: &mut Game) -> *mut RoomDefHeader {
     unsafe { RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefHeader }
@@ -1460,21 +1445,27 @@ pub unsafe fn GameState_11_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRe
     poll.returned_byte()
 }
 
-static kGameOptionsMenuFuncs: [Func_V; 13] = callback_table! { nonnull Func_V;
-    GameOptionsMenuFunc_0, GameOptionsMenu_1_LoadingOptionsScreen,
-    GameOptionsMenu_2_FadeInOptionsScreen, GameOptionsMenu_3_OptionsScreen,
-    GameOptionsMenu_4_StartGame, GameOptionsMenu_5_DissolveOutScreen,
-    GameOptionsMenu_6_DissolveInScreen, GameOptionsMenu_7_ControllerSettings,
-    GameOptionsMenu_8_SpecialSettings, GameOptionsMenu_9_ScrollControllerSettingsDown,
-    GameOptionsMenu_A_ScrollControllerSettingsUp, GameOptionsMenu_B_TransitionBackToFileSelect,
+static kGameOptionsMenuFuncs: [Func_V; 13] = [
+    GameOptionsMenuFunc_0,
+    GameOptionsMenu_1_LoadingOptionsScreen,
+    GameOptionsMenu_2_FadeInOptionsScreen,
+    options_settings::main_menu,
+    GameOptionsMenu_4_StartGame,
+    GameOptionsMenu_5_DissolveOutScreen,
+    GameOptionsMenu_6_DissolveInScreen,
+    options_settings::controller,
+    options_settings::special,
+    options_settings::scroll::<true>,
+    options_settings::scroll::<false>,
+    GameOptionsMenu_B_TransitionBackToFileSelect,
     GameOptionsMenu_C_FadeOutOptionsScreenToStart,
-};
+];
 pub unsafe fn GameState_2_GameOptionsMenu(game: &mut Game) -> CoroutineRet {
     unsafe {
         kGameOptionsMenuFuncs[word!(game.game_options_screen_index) as usize](game);
         crate::game::options_objects::advance_and_draw(game);
         if word!(game.game_options_screen_index) as i32 - 2i32 & 0x8000 == 0 {
-            OptionsMenu_AddToVramQueue(game);
+            crate::game::menu_tilemap::queue_options(game);
         }
         kCoroutineNone as CoroutineRet
     }
@@ -1528,7 +1519,7 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
         // The first initializer leaves its palette $0E00 in A for this call.
         crate::game::options_objects::spawn(0x0e00, addr_stru_82F4C4 as u16, game);
         word!(game.game_options_screen_index += 1);
-        OptionsMenuFunc4(game);
+        options_settings::highlight_language(game);
     }
 }
 pub unsafe fn GameOptionsMenu_2_FadeInOptionsScreen(game: &mut Game) {
@@ -1538,108 +1529,6 @@ pub unsafe fn GameOptionsMenu_2_FadeInOptionsScreen(game: &mut Game) {
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             word!(game.game_options_screen_index += 1);
         }
-    }
-}
-pub unsafe fn OptionsMenu_AddToVramQueue(game: &mut Game) {
-    unsafe {
-        let mut v0: u16 = word!(game.vram_write_queue_tail);
-        (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size = 2048;
-        v0 = (v0).wrapping_add(2);
-        (*gVramWriteEntry(v0 as i32, game)).size = 12288;
-        v0 = (v0).wrapping_add(2);
-        crate::update_place! { previous fresh118 = v0 => v0.wrapping_add(1); }
-        *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-            fresh118 as i32,
-            game,
-        ))
-        .size as *mut u8) = 126;
-        (*gVramWriteEntry(v0 as i32, game)).size = 20480;
-        word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
-    }
-}
-pub unsafe fn OptionsMenuFunc5(a: u16, mut k: u16, mut j: u16, game: &mut Game) {
-    unsafe {
-        do_until! { j == 0 ;
-            *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16
-                as *mut u8)
-                .offset(k as i32 as isize) as *mut u16) = a
-                | *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16
-                    as *mut u8)
-                    .offset(k as i32 as isize) as *mut u16)
-                    & 0xe3ff;
-            k = (k).wrapping_add(2);
-            j = (j).wrapping_sub(2);
-        }
-    }
-}
-static kGameOptionsMenuItemFuncs: [Func_V; 5] = callback_table! { nonnull Func_V;
-    GameOptionsMenuItemFunc_0, GameOptionsMenuItemFunc_2_ToggleJapanese,
-    GameOptionsMenuItemFunc_2_ToggleJapanese, GameOptionsMenuItemFunc_4,
-    GameOptionsMenuItemFunc_4,
-};
-pub unsafe fn GameOptionsMenu_3_OptionsScreen(game: &mut Game) {
-    unsafe {
-        if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
-            QueueSfx1_Max6(0x37, game);
-            if (word!(game.menu_option_index -= 1, reread) & 0x8000) != 0 {
-                word!(game.menu_option_index = 4);
-            }
-        } else if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) != 0 {
-            QueueSfx1_Max6(0x37, game);
-            if word!(game.menu_option_index += 1, reread) == 5 {
-                word!(game.menu_option_index = 0);
-            }
-        }
-        if (word!(game.joypad1_newkeys) & 0x8000) != 0 {
-            word!(game.game_options_screen_index = 11);
-        } else if (word!(game.joypad1_newkeys) as i32 & kButton_A as i32) != 0
-            || (word!(game.joypad1_newkeys) as i32 & kButton_Start as i32) != 0
-        {
-            QueueSfx1_Max6(0x38, game);
-            kGameOptionsMenuItemFuncs[word!(game.menu_option_index) as usize](game);
-        }
-    }
-}
-pub fn GameOptionsMenuItemFunc_0(game: &mut Game) {
-    {
-        if word!(game.enable_debug) != 0
-            && (word!(game.joypad1_lastkeys) as i32 & kButton_L as i32) == 0
-            || word!(game.loading_game_state) as i32 == kGameState_5_FileSelectMap as i32
-        {
-            word!(game.game_options_screen_index = 4);
-        } else {
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-            word!(game.game_options_screen_index = 12);
-        };
-    }
-}
-pub unsafe fn GameOptionsMenuItemFunc_2_ToggleJapanese(game: &mut Game) {
-    unsafe {
-        word!(game.menu_option_index = 0);
-        word!(game.japanese_text_flag = (word!(game.japanese_text_flag) == 0) as u16);
-        OptionsMenuFunc4(game);
-    }
-}
-pub unsafe fn OptionsMenuFunc4(game: &mut Game) {
-    unsafe {
-        if word!(game.japanese_text_flag) != 0 {
-            OptionsMenuFunc5(0x400, 0x288, 0x18, game);
-            OptionsMenuFunc5(0x400, 0x2c8, 0x18, game);
-            OptionsMenuFunc5(0, 0x348, 0x32, game);
-            OptionsMenuFunc5(0, 0x388, 0x32, game);
-        } else {
-            OptionsMenuFunc5(0, 0x288, 0x18, game);
-            OptionsMenuFunc5(0, 0x2c8, 0x18, game);
-            OptionsMenuFunc5(0x400, 0x348, 0x32, game);
-            OptionsMenuFunc5(0x400, 0x388, 0x32, game);
-        };
-    }
-}
-pub unsafe fn GameOptionsMenuItemFunc_4(game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0x57) = 3;
-        word! { game, 0; screen_fade_delay, screen_fade_counter }
-        word!(game.game_options_screen_index = 5);
     }
 }
 pub unsafe fn GameOptionsMenu_B_TransitionBackToFileSelect(game: &mut Game) {
@@ -1706,9 +1595,9 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
                         word_transfers!(game, descending, 1024; pause_map(1023) <- native(0x1dffe));
                     }
                     word!(game.menu_option_index = 0);
-                    OptionsMenuFunc7(game);
+                    options_settings::highlight_special(game);
                     word!(game.menu_option_index = 1);
-                    OptionsMenuFunc7(game);
+                    options_settings::highlight_special(game);
                     word!(game.menu_option_index = 4);
                     crate::game::options_objects::spawn(4, addr_stru_82F4D0 as u16, game);
                 } else {
@@ -1731,7 +1620,7 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
                 }
             } else {
                 word_transfers!(game, descending, 1024; pause_map(1023) <- le(custom_background, 6398));
-                OptionsMenuFunc4(game);
+                options_settings::highlight_language(game);
                 // The ROM passes the final language-highlight tile left in A (82:EFD7).
                 let tile = u16::from_le_bytes([game.g_ram[0x33b8], game.g_ram[0x33b9]]);
                 crate::game::options_objects::spawn(tile, addr_stru_82F4C4 as u16, game);
@@ -1758,188 +1647,6 @@ pub unsafe fn GameOptionsMenu_6_DissolveInScreen(game: &mut Game) {
             } else {
                 word!(game.game_options_screen_index = 3);
             }
-        }
-    }
-}
-static kGameOptionsMenuSpecialSettings: [Func_V; 3] = callback_table! { nonnull Func_V;
-    GameOptionsMenuSpecialSettings_0, GameOptionsMenuSpecialSettings_0,
-    GameOptionsMenuSpecialSettings_2,
-};
-pub unsafe fn GameOptionsMenu_8_SpecialSettings(game: &mut Game) {
-    unsafe {
-        if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
-            QueueSfx1_Max6(0x37, game);
-            if (word!(game.menu_option_index -= 1, reread) & 0x8000) != 0 {
-                word!(game.menu_option_index = 2);
-            }
-        } else if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) != 0 {
-            QueueSfx1_Max6(0x37, game);
-            if word!(game.menu_option_index += 1, reread) == 3 {
-                word!(game.menu_option_index = 0);
-            }
-        }
-        if (word!(game.joypad1_newkeys) & 0x8000) == 0 {
-            if word!(game.joypad1_newkeys) as i32
-                & (kButton_Start as i32
-                    | kButton_Left as i32
-                    | kButton_Right as i32
-                    | kButton_A as i32)
-                != 0
-            {
-                QueueSfx1_Max6(0x38, game);
-                kGameOptionsMenuSpecialSettings[word!(game.menu_option_index) as usize](game);
-            }
-        } else {
-            QueueSfx1_Max6(0x38, game);
-            word!(game.menu_option_index = 0);
-            GameOptionsMenuItemFunc_4(game);
-        };
-    }
-}
-pub unsafe fn GameOptionsMenuSpecialSettings_0(game: &mut Game) {
-    unsafe {
-        let v0 = RomPtr_RAM(
-            crate::rtl::rom_table_word!(game, 0x82f0ae, word!(game.menu_option_index) as isize),
-            game,
-        );
-        if *(v0 as *mut u16) != 0 {
-            *(v0 as *mut u16) = 0;
-        } else {
-            *(v0 as *mut u16) = 1;
-        }
-        OptionsMenuFunc7(game);
-    }
-}
-pub unsafe fn GameOptionsMenuSpecialSettings_2(game: &mut Game) {
-    unsafe {
-        word!(game.menu_option_index = 0);
-        GameOptionsMenuItemFunc_4(game);
-    }
-}
-static g_word_82F149: [u16; 4] = [0x1e0, 0x220, 0x360, 0x3a0];
-static g_word_82F151: [u16; 4] = [0x1ee, 0x22e, 0x36e, 0x3ae];
-pub unsafe fn OptionsMenuFunc7(game: &mut Game) {
-    unsafe {
-        let v0: u16 = (4u16).wrapping_mul(word!(game.menu_option_index));
-        if *(RomPtr_RAM(
-            crate::rtl::rom_table_word!(game, 0x82f0ae, word!(game.menu_option_index) as isize),
-            game,
-        ) as *mut u16)
-            != 0
-        {
-            OptionsMenuFunc5(
-                0,
-                g_word_82F149[(((4u16).wrapping_mul(word!(game.menu_option_index))) >> 1) as usize],
-                0xc,
-                game,
-            );
-            OptionsMenuFunc5(0, g_word_82F149[((v0 as i32 >> 1) + 1) as usize], 0xc, game);
-            OptionsMenuFunc5(0x400, g_word_82F151[(v0 >> 1) as usize], 0xc, game);
-            OptionsMenuFunc5(
-                0x400,
-                g_word_82F151[((v0 as i32 >> 1) + 1) as usize],
-                0xc,
-                game,
-            );
-        } else {
-            OptionsMenuFunc5(
-                0x400,
-                g_word_82F149[(((4u16).wrapping_mul(word!(game.menu_option_index))) >> 1) as usize],
-                0xc,
-                game,
-            );
-            OptionsMenuFunc5(
-                0x400,
-                g_word_82F149[((v0 as i32 >> 1) + 1) as usize],
-                0xc,
-                game,
-            );
-            OptionsMenuFunc5(0, g_word_82F151[(v0 >> 1) as usize], 0xc, game);
-            OptionsMenuFunc5(0, g_word_82F151[((v0 as i32 >> 1) + 1) as usize], 0xc, game);
-        };
-    }
-}
-static word_82F204: [u16; 16] = [
-    0x20, 0x20, 0x20, 0x20, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x4000, 0x40, 0x40, 0x80, 0x80,
-    0x80,
-];
-pub unsafe fn GameOptionsMenu_7_ControllerSettings(game: &mut Game) {
-    unsafe {
-        if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
-            QueueSfx1_Max6(0x37, game);
-            let v0: u16 = word!(game.menu_option_index -= 1, reread);
-            if (word!(game.menu_option_index) & 0x8000) == 0 {
-                if v0 != 6 {
-                    return;
-                }
-                word!(game.game_options_screen_index = 10);
-                return;
-            }
-            word! {game; menu_option_index = 8; game_options_screen_index = 9; }
-            return;
-        }
-        if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) != 0 {
-            QueueSfx1_Max6(0x37, game);
-            let v1: u16 = (word!(game.menu_option_index)).wrapping_add(1);
-            word!(game.menu_option_index = v1);
-            if v1 == 7 {
-                word!(game.game_options_screen_index = 9);
-                return;
-            }
-            if v1 == 9 {
-                word! {game; menu_option_index = 0; game_options_screen_index = 10; }
-            }
-        } else if word!(game.joypad1_newkeys) != 0 {
-            QueueSfx1_Max6(0x38, game);
-            static kOptionsMenuControllerFuncs: [Func_V; 9] = callback_table! { nonnull Func_V;
-                remap_binding, remap_binding, remap_binding,
-                remap_binding, remap_binding, remap_binding,
-                remap_binding, OptionsMenuControllerFunc_7, OptionsMenuControllerFunc_8,
-            };
-            kOptionsMenuControllerFuncs[word!(game.menu_option_index) as usize](game);
-        } else if word!(game.joypad2_new_keys) != 0
-            && word!(game.menu_option_index) == 8
-            && word!(game.debug_invincibility) as i32 - 16i32 & 0x8000 != 0
-        {
-            if word_82F204[word!(game.debug_invincibility) as usize] & word!(game.joypad2_new_keys)
-                == word_82F204[word!(game.debug_invincibility) as usize]
-            {
-                word!(game.debug_invincibility += 1);
-            } else {
-                word!(game.debug_invincibility = 0);
-            }
-        }
-    }
-}
-pub fn OptionsMenuControllerFunc_8(game: &mut Game) {
-    if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
-        crate::game::controller_input::reset_binding_choices(game);
-        crate::game::menu_tilemap::controller_bindings(game);
-    }
-}
-pub unsafe fn OptionsMenuControllerFunc_7(game: &mut Game) {
-    unsafe {
-        if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0
-            && crate::game::controller_input::store_binding_choices(game) == 0
-        {
-            word!(game.menu_option_index = 0);
-            GameOptionsMenuItemFunc_4(game);
-        }
-    }
-}
-pub fn GameOptionsMenu_9_ScrollControllerSettingsDown(game: &mut Game) {
-    {
-        word!(game.reg_BG1VOFS += 2);
-        if word!(game.reg_BG1VOFS) == 32 {
-            word!(game.game_options_screen_index = 7);
-        }
-    }
-}
-pub fn GameOptionsMenu_A_ScrollControllerSettingsUp(game: &mut Game) {
-    {
-        word!(game.reg_BG1VOFS -= 2);
-        if word!(game.reg_BG1VOFS) == 0 {
-            word!(game.game_options_screen_index = 7);
         }
     }
 }

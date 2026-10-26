@@ -501,6 +501,10 @@ pub(crate) fn queue_pause_labels(game: &mut Game) {
     );
 }
 
+pub(crate) fn queue_options(game: &mut Game) {
+    queue_ram_tilemap(2048, 0x3000, |_| 0x5000, game);
+}
+
 fn queue_ram_tilemap(
     size: u16,
     source: u16,
