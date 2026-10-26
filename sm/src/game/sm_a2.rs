@@ -42,8 +42,6 @@ crate::game::constants::typed_constants! { Consts_A2;
     addr_kMaridiaBeybladeTurtle_Ilist_8C44 = 35908, addr_kMaridiaBeybladeTurtle_Ilist_8C30 = 35888,
     addr_kMaridiaBeybladeTurtle_Ilist_8C1C = 35868, addr_kMaridiaBeybladeTurtle_Ilist_8C02 = 35842,
     addr_kMaridiaBeybladeTurtle_Ilist_8BD2 = 35794, addr_kMaridiaBeybladeTurtle_Ilist_8B80 = 35712,
-    addr_kMiniCrocomire_Ilist_896E = 35182, addr_kMiniCrocomire_Ilist_8958 = 35160,
-    addr_kMiniCrocomire_Ilist_8948 = 35144, addr_kMiniCrocomire_Ilist_8932 = 35122,
     addr_kSpritemap_Nothing_A2 = 32845,
 }
 
@@ -56,7 +54,7 @@ crate::type_aliases! {
 }
 
 crate::type_aliases! {
-    pub Enemy_MaridiaBeybladeTurtle, Enemy_MiniCrocomire,
+    pub Enemy_MaridiaBeybladeTurtle,
         Enemy_MiniMaridiaBeybladeTurtle =
         crate::game::enemy_layouts::EnemyLayout8;
 }
@@ -64,8 +62,6 @@ crate::type_aliases! {
 const RomPtr_A2: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa2>;
 crate::game::constants::typed_constants! { i32;
     fnSamus_FrameHandlerAlfa_Func11 = 0x90e695, fnSamus_FrameHandlerBeta_Func17 = 0x90e725,
-    fnMiniCrocomire_PreInstr5 = 0xa28a43, fnMiniCrocomire_PreInstr6 = 0xa28a5c,
-    fnnullsub_175 = 0xa28a75,
     fnnullsub_182 = 0xa2a01b, fnnullsub_187 = 0xa2a7d7,
     fnMaridiaLargeSnail_Func_7 = 0xa2cf66,
     fnMaridiaLargeSnail_Func_8 = 0xa2cfa9,
@@ -101,129 +97,6 @@ static g_word_A28E80: [i16; 48] = [
     -4, -4, 0, 0, -16, -16, -16, -15, -15, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4,
     -3, -3, -2, 0, 0, 0, 0,
 ];
-fn restart_actor_animation(index: u16, instruction: u16, game: &mut Game) {
-    Runtime::new(game).edit_actor(Key::from_legacy(index), Le, |actor| {
-        actor.restart_animation(instruction)
-    });
-}
-fn set_mini_crocomire_preinstruction(index: u16, preinstruction: u16, state: u16, game: &mut Game) {
-    let base = 0xf78 + usize::from(index);
-    let field = base + core::mem::offset_of!(Enemy_MiniCrocomire, var_F);
-    game.g_ram[field..field + 2].copy_from_slice(&preinstruction.to_le_bytes());
-    let field = base + core::mem::offset_of!(Enemy_MiniCrocomire, var_E);
-    game.g_ram[field..field + 2].copy_from_slice(&state.to_le_bytes());
-}
-
-struct MiniCrocomireState<'a> {
-    bytes: &'a mut [u8],
-}
-impl<'a> MiniCrocomireState<'a> {
-    fn new(game: &'a mut Game, index: u16) -> Self {
-        Self {
-            bytes: &mut game.g_ram[0xf78 + usize::from(index)..],
-        }
-    }
-    fn read(&self, offset: usize) -> u16 {
-        u16::from_le_bytes([self.bytes[offset], self.bytes[offset + 1]])
-    }
-    fn write(&mut self, offset: usize, value: u16) {
-        self.bytes[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
-    }
-    fn parameter_1(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_MiniCrocomire, parameter_1))
-    }
-    fn parameter_2(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_MiniCrocomire, parameter_2))
-    }
-    fn var_a(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_MiniCrocomire, var_A))
-    }
-    fn var_b(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_MiniCrocomire, var_B))
-    }
-    fn var_c(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_MiniCrocomire, var_C))
-    }
-    fn var_d(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_MiniCrocomire, var_D))
-    }
-    fn state(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_MiniCrocomire, var_E))
-    }
-    fn frame_counter_low(&self) -> u8 {
-        self.bytes[core::mem::offset_of!(Enemy_MiniCrocomire, base)
-            + core::mem::offset_of!(EnemyBase, frame_counter)]
-    }
-    fn set_var_b(&mut self, value: u16) {
-        self.write(core::mem::offset_of!(Enemy_MiniCrocomire, var_B), value);
-    }
-    fn set_var_a(&mut self, value: u16) {
-        self.write(core::mem::offset_of!(Enemy_MiniCrocomire, var_A), value);
-    }
-    fn set_var_d(&mut self, value: u16) {
-        self.write(core::mem::offset_of!(Enemy_MiniCrocomire, var_D), value);
-    }
-    fn set_var_c(&mut self, value: u16) {
-        self.write(core::mem::offset_of!(Enemy_MiniCrocomire, var_C), value);
-    }
-    fn preinstruction(&self) -> u16 {
-        self.read(core::mem::offset_of!(Enemy_MiniCrocomire, var_F))
-    }
-    fn set_preinstruction(&mut self, value: u16) {
-        self.write(core::mem::offset_of!(Enemy_MiniCrocomire, var_F), value);
-    }
-    fn set_state(&mut self, value: u16) {
-        self.write(core::mem::offset_of!(Enemy_MiniCrocomire, var_E), value);
-    }
-}
-pub unsafe fn MiniCrocomire_Func7(amt: i32, game: &mut Game) {
-    {
-        let index = game.cur_enemy_index();
-        if {
-            let (actor, amount) = (index, amt);
-            (actor_api::move_horizontal(
-                &mut Runtime::new(game),
-                Key::from_legacy(actor),
-                amount,
-                actor_api::SlopePolicy::Ignore,
-            ) == actor_api::MovementResult::Blocked) as u8
-        } == 0
-        {
-            let index = game.cur_enemy_index();
-            if {
-                let (actor, amount) = (index, 2 << 16);
-                (actor_api::probe_vertical(
-                    &mut Runtime::new(game),
-                    Key::from_legacy(actor),
-                    amount,
-                ) == actor_api::MovementResult::Blocked) as u8
-            } != 0
-            {
-                return;
-            }
-        }
-        MiniCrocomire_Func8(game);
-    }
-}
-pub fn MiniCrocomire_Func8(game: &mut Game) {
-    MiniCrocomire_Func1(game);
-    let index = game.cur_enemy_index();
-    if MiniCrocomireState::new(game, index).state() != 1 {
-        MiniCrocomire_Func3(game);
-    }
-}
-pub unsafe fn MiniCrocomire_Func9(game: &mut Game) -> u8 {
-    {
-        game.next_random();
-        let index = game.cur_enemy_index();
-        let frame = MiniCrocomireState::new(game, index).frame_counter_low();
-        if frame.wrapping_add(game.random_number() as u8) < 2 {
-            MiniCrocomireState::new(game, index).set_preinstruction(0x8a75);
-            return 1;
-        }
-        0
-    }
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallMaridiaBeybladeTurtleFunc(ea: u32, k: u16, game: &mut Game) => ea;
     call (k, game); default { Unreachable(game); };
@@ -1012,39 +885,6 @@ crate::game::callback_dispatch! {
     call (game); default { crate::rtl::Unreachable(game); };
     @functions [pub fn (game: &mut Game)];
     @prefix { let index = game.cur_enemy_index(); };
-    [10652077] MiniCrocomire_Init [] {
-        { let actor = Key::from_legacy(index); let value = addr_kSpritemap_Nothing_A2 as u16; Runtime::new(game).edit_actor(actor, Le, |actor| actor.spritemap = value); };
-        // Parameter indexing is wider than a SNES word; do not wrap this offset.
-        let table_offset = usize::from(MiniCrocomireState::new(game, index).parameter_2()) * 8;
-        let value = game.read_rom_word(0xa28187, table_offset);
-        MiniCrocomireState::new(game, index).set_var_b(value);
-        let value = game.read_rom_word(0xa28187, table_offset + 2);
-        MiniCrocomireState::new(game, index).set_var_a(value);
-        let value = game.read_rom_word(0xa28187, table_offset + 4);
-        MiniCrocomireState::new(game, index).set_var_d(value);
-        let value = game.read_rom_word(0xa28187, table_offset + 6);
-        MiniCrocomireState::new(game, index).set_var_c(value);
-        MiniCrocomire_Func1(game);
-        MiniCrocomireState::new(game, index).set_preinstruction(0x8a43);
-        let parameter = MiniCrocomireState::new(game, index).parameter_1();
-        MiniCrocomireState::new(game, index).set_state(parameter);
-        if parameter != 0 {
-            MiniCrocomire_Func3(game);
-            MiniCrocomireState::new(game, index).set_preinstruction(0x8a5c);
-        }
-    };
-    MiniCrocomire_Func1 [] {
-        restart_actor_animation(index, addr_kMiniCrocomire_Ilist_8932 as u16, game);
-    };
-    MiniCrocomire_Func2 [] {
-        restart_actor_animation(index, addr_kMiniCrocomire_Ilist_8948 as u16, game);
-    };
-    MiniCrocomire_Func3 [] {
-        restart_actor_animation(index, addr_kMiniCrocomire_Ilist_8958 as u16, game);
-    };
-    MiniCrocomire_Func4 [] {
-        restart_actor_animation(index, addr_kMiniCrocomire_Ilist_896E as u16, game);
-    };
     [10653036] MaridiaBeybladeTurtle_Init [] {
         let properties = Runtime::new(game).resolve_actor(Key::from_legacy(index), Le).properties;
         { let actor = Key::from_legacy(index); let value = properties | kEnemyProps_DisableSamusColl as u16; Runtime::new(game).edit_actor(actor, Le, |actor| actor.properties = value); };
@@ -1086,7 +926,9 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (game: &mut Game)];
     [10652144] MiniCrocomire_Main [] {
         let index = game.cur_enemy_index();
-        let preinstruction = MiniCrocomireState::new(game, index).preinstruction();
+        let preinstruction = Runtime::new(game)
+            .resolve_actor(Key::from_legacy(index), Le)
+            .pre_instruction;
         actor_species_pre_instruction(u32::from(preinstruction) | 0xa20000, game);
     };
     [10653138] MaridiaBeybladeTurtle_Main [] {
@@ -1419,6 +1261,7 @@ crate::game::callback_dispatch! {
     [10649635] Enemy_NormalTouchAI_A2 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
     [10649645] Enemy_NormalShotAI_A2 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
     @external {
+        10652077 => crate::game::mini_crocomire::initialize;
         10651420 => crate::game::goofball::initialize;
         10651548 => crate::game::goofball::advance;
     }
@@ -1427,18 +1270,6 @@ crate::game::callback_dispatch! {
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
-    @functions [pub unsafe fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10652030] MiniCrocomire_Instr_897E [jp.offset(1)] {
-        let parameter = jp.word(0);
-        let index = game.cur_enemy_index();
-        SpawnEprojWithGfx(parameter, index, addr_Eproj_DBF2 as u16, game);
-    };
-    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    @prefix { let index = game.cur_enemy_index(); };
-    [10652048]
-    MiniCrocomire_Instr_8990 [jp] {  set_mini_crocomire_preinstruction(index, 0x8a43, 0, game); };
-    [10652061]
-    MiniCrocomire_Instr_899D [jp] {  set_mini_crocomire_preinstruction(index, 0x8a5c, 1, game); };
     @functions [pub unsafe fn (
     k: u16,
     jp: EnemyScript,
@@ -1629,6 +1460,9 @@ crate::game::callback_dispatch! {
         jp
     };
     @external {
+        10652030 => [crate::game::mini_crocomire::spit(j, game)];
+        10652048 => [crate::game::mini_crocomire::resume(false, j, game)];
+        10652061 => [crate::game::mini_crocomire::resume(true, j, game)];
         10651846 => [crate::game::goofball::landed(j, game)];
     }
 }
@@ -1636,25 +1470,6 @@ crate::game::callback_dispatch! {
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
     call (k, game); default { crate::rtl::Unreachable(game); };
-    @functions [pub unsafe fn (_k: u16, game: &mut Game)];
-    [10652227] MiniCrocomire_PreInstr5 [] {
-        let index = game.cur_enemy_index();
-        let high = MiniCrocomireState::new(game, index).var_d();
-        let low = MiniCrocomireState::new(game, index).var_c();
-        MiniCrocomire_Func7((u32::from(high) << 16 | u32::from(low)) as i32, game);
-        if MiniCrocomire_Func9(game) != 0 {
-            MiniCrocomire_Func2(game);
-        }
-    };
-    [10652252] MiniCrocomire_PreInstr6 [] {
-        let index = game.cur_enemy_index();
-        let high = MiniCrocomireState::new(game, index).var_b();
-        let low = MiniCrocomireState::new(game, index).var_a();
-        MiniCrocomire_Func7((u32::from(high) << 16 | u32::from(low)) as i32, game);
-        if MiniCrocomire_Func9(game) != 0 {
-            MiniCrocomire_Func4(game);
-        }
-    };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     [10657722] SpikeShootingPlant_2 [] { crate::game::spike_plant::patrol(false, game); SpikeShootingPlant_4(game); };
     [10657772] SpikeShootingPlant_3 [] { crate::game::spike_plant::patrol(true, game); SpikeShootingPlant_4(game); };
@@ -1829,6 +1644,8 @@ crate::game::callback_dispatch! {
         (*E1).base.y_pos = (*E1).base.y_pos.wrapping_add(1);
     };
     @external {
+        10652227 => [crate::game::mini_crocomire::patrol(false, game)];
+        10652252 => [crate::game::mini_crocomire::patrol(true, game)];
         10659852 => [crate::game::gunship::phase(k, 0xa80c, game)];
         10660048 => [crate::game::gunship::phase(k, 0xa8d0, game)];
         10660162 => [crate::game::gunship::phase(k, 0xa942, game)];
