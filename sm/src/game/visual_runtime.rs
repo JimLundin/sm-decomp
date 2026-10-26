@@ -1661,6 +1661,47 @@ pub(crate) fn launch_cinematic_sprite(
     }
 }
 
+// Cloud setup reads its parameter after the first position store, even for aliased slots.
+pub(crate) fn initialize_ending_cloud_band(object: u16, y: u16, game: &mut Game) {
+    let slot = usize::from(object >> 1);
+    word!(game.cinematicbg_arr8[slot] = y);
+    let alternate = word!(game.cinematic_spawn_param) != 0;
+    word!(game.cinematicbg_arr7[slot] = if alternate { 384 } else { 128 });
+    word!(game.cinematicbg_arr9[slot] = 2560);
+    if alternate {
+        word!(game.cinematicspr_instr_ptr[slot] += 4);
+    }
+}
+
+pub(crate) fn initialize_ending_cloud_side(object: u16, right: bool, game: &mut Game) {
+    let slot = usize::from(object >> 1);
+    word!(game.cinematicbg_arr7[slot] = if right { 320 } else { -64i32 as u16 });
+    let alternate = word!(game.cinematic_spawn_param) != 0;
+    let y: u16 = if right { 192 } else { 64 };
+    let displacement = if right { 256 } else { -256i32 as u16 };
+    word!(game.cinematicbg_arr8[slot] = y.wrapping_add(if alternate { displacement } else { 0 }));
+    word!(game.cinematicbg_arr9[slot] = 2560);
+}
+
+pub(crate) fn wait_ending_cloud(object: u16, band: bool, next: u16, game: &mut Game) {
+    let threshold = if band { 176 } else { 96 };
+    let below = word!(game.cinematic_var6).wrapping_sub(threshold) & 0x8000 != 0;
+    if below == band {
+        word!(game.cinematicspr_preinstr_func[(object >> 1)] = next);
+    }
+}
+
+pub(crate) fn move_ending_cloud(object: u16, velocity: (i16, i16), game: &mut Game) {
+    let slot = usize::from(object >> 1);
+    // Retain fractional self-stores before advancing each whole coordinate.
+    word!(game.cinematicspr_arr7[slot] = word!(game.cinematicspr_arr7[slot]));
+    word!(game.cinematicbg_arr8[slot] += velocity.1 as u16);
+    if velocity.0 != 0 {
+        word!(game.cinematicspr_arr6[slot] = word!(game.cinematicspr_arr6[slot]));
+        word!(game.cinematicbg_arr7[slot] += velocity.0 as u16);
+    }
+}
+
 pub(crate) fn place_cinematic_sprite(
     object: u16,
     position: (u16, u16),

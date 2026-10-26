@@ -59,7 +59,8 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
    full inputs, original windows, guards and both required Kago setup encounters.
    These are verified route starts, not original TAS seeds; intro has zero setup.
    A2 removed three unused recipes and 76 net support lines; five recipes remain.
-   Configured setup falls from 484286 to 28700 frames; ordinary CLI 12/12 passes.
+   For those seven rows, configured setup falls from 484286 to 28700 frames;
+   ordinary CLI 12/12 passes. Six remaining nonzero boot starts total 975592 frames.
    Next migrate remaining boot starts where worthwhile, preserving their authored
    events; delete a recipe only when no consumer needs it and inputs stay available.
 2. **Current - lane B retirement.** B1 sm_88/sm_a0/sm_81 and B3 sm_8f/sm_b2 are
