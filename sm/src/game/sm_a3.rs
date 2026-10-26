@@ -46,7 +46,6 @@ crate::game::constants::typed_constants! { Consts_A3;
     addr_stru_A3CCF2 = 52466, addr_stru_A3CCEA = 52458,
     addr_stru_A3CCE2 = 52450,
     addr_kBang_Ilist_B75E = 46942, addr_kMaridiaRefillCandy_Ilist_B3C1 = 46017,
-    addr_kMochtroid_Ilist_A759 = 42841, addr_kMochtroid_Ilist_A745 = 42821,
     addr_kMaridiaFish_Ilist_9072 = 36978,
     addr_kMaridiaFish_Ilist_9060 = 36960, addr_kMaridiaFish_Ilist_903C = 36924,
     addr_kMaridiaFish_Ilist_902A = 36906, addr_kFireflea_Ilist_8C2F = 35887,
@@ -55,7 +54,7 @@ crate::game::constants::typed_constants! { Consts_A3;
 }
 
 crate::type_aliases! {
-    pub Enemy_Bang, Enemy_MaridiaSnail, Enemy_Mochtroid, Enemy_Roach =
+    pub Enemy_Bang, Enemy_MaridiaSnail, Enemy_Roach =
         crate::game::enemy_layouts::EnemyLayout72;
 }
 
@@ -88,15 +87,12 @@ crate::ram_map::ram_pointer_functions! {
     Get_MaridiaRefillCandy(o: i32) -> Enemy_MaridiaRefillCandy = [0xf78, o as isize];
     Get_MaridiaSnail(o: i32) -> Enemy_MaridiaSnail = [0xf78, o as isize];
     Get_Metroid(o: i32) -> Enemy_Metroid = [0xf78, o as isize];
-    Get_Mochtroid(o: i32) -> Enemy_Mochtroid = [0xf78, o as isize];
     Get_Reflec(o: i32) -> Enemy_Reflec = [0xf78, o as isize];
     Get_Roach(o: i32) -> Enemy_Roach = [0xf78, o as isize];
     Get_Sidehopper(o: i32) -> Enemy_Sidehopper = [0xf78, o as isize];
     Get_StoneZoomer(o: i32) -> Enemy_StoneZoomer = [0xf78, o as isize];
     Get_WreckedShipOrangeZoomer(o: i32) -> Enemy_WreckedShipOrangeZoomer = [0xf78, o as isize];
 }
-static g_word_A3A76D: [i16; 4] = [2, 0, -2, 0];
-static g_word_A3A775: [i16; 4] = [0, -2, 0, 2];
 crate::prefixed_callbacks! {
     pub unsafe fn (k: u16, game: &mut Game);
     @prefix { let E = Get_FireFlea(k as i32, game); };
@@ -504,156 +500,6 @@ crate::prefixed_callbacks! {
             (*E).var_B = (0xa3a2d7i32) as u16;
         }
     };
-}
-static off_A3A7A4: [Func_V; 3] = callback_table! { nonnull Func_V;
-    Mochtroid_Func_1, Mochtroid_Func_3, Mochtroid_Func_2,
-};
-macro_rules! accelerate_and_clamp_mochtroid_axis {
-    (
-        $enemy:ident, $speed_high:ident, $speed_low:ident, $acceleration:ident,
-        $high_field:ident, $clamped_speed:ident, $low_field:ident $(,)?
-    ) => {
-        words!((*$enemy), $speed_high, $speed_low += -$acceleration as u32);
-
-        let update_vertical_speed: bool = if ((*$enemy).$high_field as i16) < 0 {
-            ((*$enemy).$high_field < 0xfffd)
-                && ({
-                    $clamped_speed = -3i16;
-                    true
-                })
-        } else {
-            ((*$enemy).$high_field >= 3)
-                && ({
-                    $clamped_speed = 3;
-                    true
-                })
-        };
-        if update_vertical_speed {
-            (*$enemy).$high_field = $clamped_speed as u16;
-            (*$enemy).$low_field = 0;
-        }
-    };
-}
-
-pub unsafe fn Mochtroid_Func_1(game: &mut Game) {
-    unsafe {
-        let mut v5: i16 = 0;
-        let mut v10: i16 = 0;
-        let E = Get_Mochtroid(word!(game.cur_enemy_index) as i32, game);
-        let mut t: i32 = ((((((*E).base.y_pos) as i16)
-            .wrapping_sub((word!(game.samus_y_pos)) as i16))
-            >> 2) as i32)
-            << 8;
-        accelerate_and_clamp_mochtroid_axis!(E, var_D, var_C, t, var_D, v5, var_C);
-        if {
-            let (actor, amount) = (
-                word!(game.cur_enemy_index),
-                (words!((*E), var_D, var_C)) as i32,
-            );
-            (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
-                == actor_api::MovementResult::Blocked) as u8
-        } != 0
-        {
-            set_fields! {[(*E)], 0; var_C, var_D}
-        }
-        t = ((((((*E).base.x_pos) as i16).wrapping_sub((word!(game.samus_x_pos)) as i16)) >> 2)
-            as i32)
-            << 8;
-        accelerate_and_clamp_mochtroid_axis!(E, var_B, var_A, t, var_B, v10, var_A);
-        if {
-            let (actor, amount) = (
-                word!(game.cur_enemy_index),
-                (words!((*E), var_B, var_A)) as i32,
-            );
-            (actor_api::move_horizontal(
-                &mut Runtime::new(game),
-                Key::from_legacy(actor),
-                amount,
-                actor_api::SlopePolicy::Ignore,
-            ) == actor_api::MovementResult::Blocked) as u8
-        } != 0
-        {
-            set_fields! {[(*E)], 0; var_A, var_B}
-        }
-        Mochtroid_Func_4(
-            word!(game.cur_enemy_index),
-            addr_kMochtroid_Ilist_A745 as u16,
-            game,
-        );
-    }
-}
-pub unsafe fn Mochtroid_Func_2(game: &mut Game) {
-    unsafe {
-        let E = Get_Mochtroid(word!(game.cur_enemy_index) as i32, game);
-        let v2: i32 = ((*E).var_E as i32 & 6) >> 1;
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add((g_word_A3A76D[v2 as usize]) as u16);
-        (*E).base.y_pos = ((*E).base.y_pos).wrapping_add((g_word_A3A775[v2 as usize]) as u16);
-        set_fields! {[(*E)], 0; var_A, var_B, var_C, var_D}
-        crate::update_place! { previous fresh12 = (*E).var_E => (*E).var_E.wrapping_sub(1); }
-        if fresh12 == 1 {
-            (*E).var_F = 0;
-        }
-        Mochtroid_Func_4(
-            word!(game.cur_enemy_index),
-            addr_kMochtroid_Ilist_A745 as u16,
-            game,
-        );
-    }
-}
-pub unsafe fn Mochtroid_Func_3(game: &mut Game) {
-    unsafe {
-        let E = Get_Mochtroid(word!(game.cur_enemy_index) as i32, game);
-        let x_pos: u16 = (*E).base.x_pos;
-        if x_pos == word!(game.samus_x_pos) {
-            set_fields! {[(*E)], 0; var_A, var_B}
-        } else if ((x_pos) as i16).wrapping_sub((word!(game.samus_x_pos)) as i16) >= 0 {
-            (*E).var_A = 0;
-            (*E).var_B = -1i32 as u16;
-        } else {
-            (*E).var_A = 0;
-            (*E).var_B = 1;
-        }
-        {
-            let (actor, amount) = (
-                word!(game.cur_enemy_index),
-                (words!((*E), var_B, var_A)) as i32,
-            );
-            (actor_api::move_horizontal(
-                &mut Runtime::new(game),
-                Key::from_legacy(actor),
-                amount,
-                actor_api::SlopePolicy::Ignore,
-            ) == actor_api::MovementResult::Blocked) as u8
-        };
-        let y_pos: u16 = (*E).base.y_pos;
-        if y_pos == word!(game.samus_y_pos) {
-            set_fields! {[(*E)], 0; var_C, var_D}
-        } else if ((y_pos) as i16).wrapping_sub((word!(game.samus_y_pos)) as i16) >= 0 {
-            (*E).var_C = 0;
-            (*E).var_D = -1i32 as u16;
-        } else {
-            (*E).var_C = 0;
-            (*E).var_D = 1;
-        }
-        {
-            let (actor, amount) = (
-                word!(game.cur_enemy_index),
-                (words!((*E), var_D, var_C)) as i32,
-            );
-            (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
-                == actor_api::MovementResult::Blocked) as u8
-        };
-    }
-}
-pub unsafe fn Mochtroid_Func_4(k: u16, a: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_Mochtroid(k as i32, game);
-        if a != (*E).var_01 {
-            (*E).var_01 = a;
-            enemy_instruction! {[(*E).base]; instruction = a, timer = 1}
-            (*E).base.timer = 0;
-        }
-    }
 }
 pub unsafe fn Sidehopper_Func_4(k: u16, game: &mut Game) {
     unsafe {
@@ -1525,52 +1371,6 @@ crate::game::callback_dispatch! {
             ((*v1).current_instruction as i32 & 3) as isize
         );
         StoneZoomer_E67A(word!(game.cur_enemy_index), game);
-    };
-    [10725245] Mochtroid_Init [] {
-        let E = Get_Mochtroid(word!(game.cur_enemy_index) as i32, game);
-        (*E).base.layer = 2;
-        Mochtroid_Func_4(
-            word!(game.cur_enemy_index),
-            addr_kMochtroid_Ilist_A745 as u16,
-            game,
-        );
-        (*E).var_F = 0;
-    };
-    [10725264] Mochtroid_Main [] {
-        let v0: u16 =
-            (2u16).wrapping_mul((*Get_Mochtroid(word!(game.cur_enemy_index) as i32, game)).var_F);
-        (*Get_Mochtroid(word!(game.cur_enemy_index) as i32, game)).var_F = 0;
-        off_A3A7A4[(v0 >> 1) as usize](game);
-    };
-    [10725715] Mochtroid_Touch [] {
-        let E = Get_Mochtroid(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_F = 1;
-        Mochtroid_Func_4(
-            word!(game.cur_enemy_index),
-            addr_kMochtroid_Ilist_A759 as u16,
-            game,
-        );
-        (*E).var_20 = (*E).var_20.wrapping_add(1);
-        let apply_touch_damage: bool = (word!(game.samus_contact_damage_index) != 0)
-            || ({
-                if (word!(game.random_enemy_counter) & 7) == 7
-                    && word!(game.samus_health) as i32 - 30i32 & 0x8000 == 0
-                {
-                    QueueSfx3_Max6(0x2d, game);
-                }
-                ((*E).var_20 as i32 - 80i32 & 0x8000 == 0)
-                    && ({
-                        (*E).var_20 = 0;
-                        true
-                    })
-            });
-        if apply_touch_damage {
-            Enemy_NormalTouchAI_A3(game);
-            word! { game, 0; samus_invincibility_timer, samus_knockback_timer }
-        };
-    };
-    [10725800] Mochtroid_Shot [] {
-        Enemy_NormalShotAI_A3(game);
     };
     [10726153] Sidehopper_Init [] {
         word!(game.random_number = 37);

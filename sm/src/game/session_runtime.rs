@@ -1,6 +1,6 @@
 //! One aggregate authority for player, projectiles, mechanisms and their room.
 use crate::game::actors::diving_enemies::{self, Kind as DivingKind};
-use crate::game::actors::{elevator, falling_platforms};
+use crate::game::actors::{elevator, falling_platforms, mochtroid};
 use crate::game::player_projectiles::{
     access::{ShotLane, Store},
     content,
@@ -609,6 +609,8 @@ crate::game::callback_dispatch! {
         10720486 => elevator::initialize; 10720554 => elevator::advance;
         10722463 => [falling_platforms::initialize(true, game)]; 10722490 => [falling_platforms::initialize(false, game)];
         10722582 => falling_platforms::advance; 10723080 => falling_platforms::shot;
+        10725245 => mochtroid::initialize; 10725264 => mochtroid::advance; 10725715 => mochtroid::touch;
+        10725800 => [actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize)];
         10723079 => [()];
         10723661 => sm_a3::Roach_Init;
         10724048 => sm_a3::Roach_Main;

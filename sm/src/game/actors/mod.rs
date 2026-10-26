@@ -11,6 +11,7 @@ pub(in crate::game) mod falling_platforms;
 pub(crate) mod identity;
 pub(in crate::game) mod kago;
 pub(in crate::game) mod media;
+pub(in crate::game) mod mochtroid;
 #[cfg(sm_verify_dll)]
 #[path = "../../verification/actor_movement_candidate.rs"]
 pub(crate) mod movement_verification;
