@@ -73,25 +73,9 @@ crate::ram_map::ram_pointer_functions! {
     Get_Draygon(o: i32) -> Enemy_Draygon = [0xf78, o as isize];
     Get_SporeSpawn(o: i32) -> Enemy_SporeSpawn = [0xf78, o as isize];
 }
-pub unsafe fn Draygon_Func_3(game: &mut Game) {
-    unsafe {
-        if (word!(game.nmi_frame_counter_word) & 0x3f) == 0 {
-            let mut Random: i8 = game.next_random() as i8;
-            let result: u16 = (2 * ((Random as i32 & 3) + 2)) as u16;
-            if (*Get_Draygon(result as i32, game)).var_40 == 0 {
-                let v2: i32 = (4 * ((Random as i32 & 3) + 2)) as u16 as i32 >> 1;
-                game.eproj_spawn_pt = Point16U {
-                    x: crate::rtl::rom_table_word!(game, 0xa587dc, v2 as isize),
-                    y: crate::rtl::rom_table_word!(game, 0xa587dc, (v2 + 1) as isize),
-                };
-                SpawnEprojWithGfx(3, result, addr_stru_868E5E as u16, game);
-            }
-        }
-    }
-}
 macro_rules! advance_draygon_scripted_y {
     ($game:ident, $enemy:ident, $instruction:ident) => {
-        Draygon_Func_3($game);
+        actors::draygon_flight::turret($game);
         sprite_effects::draygon_body_bubble($game);
         let $enemy = Get_Draygon(0, $game);
         let draygon_var_B: u16 = (*$enemy).var_B;
@@ -110,7 +94,7 @@ crate::game::callback_dispatch! {
     call (game); default { Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
     [10848027] Draygon_Func_1 [] {
-        Draygon_Func_3(game);
+        actors::draygon_flight::turret(game);
         let E = Get_Draygon(0, game);
         if (*E).var_B as i32 - 256i32 & 0x8000 != 0 {
             if (*E).var_B == 0 {
@@ -137,7 +121,7 @@ crate::game::callback_dispatch! {
         };
     };
     [10848139] Draygon_Func_2 [] {
-        Draygon_Func_3(game);
+        actors::draygon_flight::turret(game);
         let E = Get_Draygon(0, game);
         if (*E).var_B as i32 - 1232i32 & 0x8000 != 0 {
             sprite_effects::draygon_trajectory(game);
@@ -148,7 +132,7 @@ crate::game::callback_dispatch! {
         };
     };
     [10848244] Draygon_Func_4 [] {
-        Draygon_Func_3(game);
+        actors::draygon_flight::turret(game);
         Draygon_Func_5(game);
         let E = Get_Draygon(0, game);
         (*E).var_A = (0xa588b1i32) as u16;
@@ -165,7 +149,7 @@ crate::game::callback_dispatch! {
         };
     };
     [10848546] Draygon_Func_8 [] {
-        Draygon_Func_3(game);
+        actors::draygon_flight::turret(game);
         let E = Get_Draygon(0, game);
         let t: u32 = draygon_divide(
             ((*E).var_C >> 2) as u32,
@@ -175,7 +159,7 @@ crate::game::callback_dispatch! {
         (*E).var_A = (0xa58951i32) as u16;
     };
     [10848593] Draygon_Func_9 [] {
-        Draygon_Func_3(game);
+        actors::draygon_flight::turret(game);
         let E = Get_Draygon(0, game);
         let draygon_var_B: u16 = (*E).var_B;
         if draygon_var_B == 104 {
@@ -198,7 +182,7 @@ crate::game::callback_dispatch! {
         };
     };
     [10848691] Draygon_Func_10 [] {
-        Draygon_Func_3(game);
+        actors::draygon_flight::turret(game);
         let E = Get_Draygon(0, game);
         printf(b"Wtf is varE26?\n\0" as *const u8 as *const c_char);
         let varE26: u16 = 0;
@@ -226,7 +210,7 @@ crate::game::callback_dispatch! {
         };
     };
     [10848848] Draygon_Func_12 [] {
-        Draygon_Func_3(game);
+        actors::draygon_flight::turret(game);
         let E = Get_Draygon(0, game);
         let t: u32 = draygon_divide(
             ((*E).var_C >> 2) as u32,
@@ -257,52 +241,6 @@ crate::game::callback_dispatch! {
             );
         };
     };
-    [10849034] Draygon_Func_14 [] {
-        Draygon_Func_3(game);
-        let E = Get_Draygon(0, game);
-        (*E).base.x_pos = -80i32 as u16;
-        (*E).base.y_pos = 384;
-        (*E).var_E = 0;
-        (*E).var_D = 1;
-        (*E).var_0D = 0;
-        let E3 = Get_Draygon(0xc0, game);
-        enemy_instruction! {[(*E3).base]; instruction = addr_kDraygon_Ilist_9C06 as u16, timer = 1}
-        (*E).var_A = (0xa58b52i32) as u16;
-        enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_97D1 as u16, timer = 1}
-        (*E).var_20 = 1;
-    };
-    [10849106] Draygon_Func_15 [] {
-        Draygon_Func_3(game);
-        sprite_effects::draygon_body_bubble(game);
-        let E = Get_Draygon(0, game);
-        let v2: u16 = abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos)));
-        if v2 as i32 - 208i32 & 0x8000 != 0 {
-            (*E).var_A = (0xa58baei32) as u16;
-            (*E).var_03 = 16;
-        } else {
-            (*E).base.y_pos = (actor_cosine((*E).var_0D, 32u16, game)).wrapping_add(384);
-            (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
-            words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_E));
-        };
-    };
-    [10849492] Draygon_Func_19 [] {
-        Draygon_Func_3(game);
-        sprite_effects::draygon_body_bubble(game);
-        let E = Get_Draygon(0, game);
-        let v2: u16 = abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos)));
-        if v2 as i32 - 208i32 & 0x8000 != 0 {
-            (*E).var_A = (0xa58d30i32) as u16;
-            (*E).var_03 = 16;
-        } else {
-            (*E).base.y_pos = (actor_cosine((*E).var_0D, 32u16, game)).wrapping_add(384);
-            (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
-            words!(
-                (*E).base,
-                x_pos,
-                x_subpos += -(words!(i32, (*E), var_D, var_E)) as u32
-            );
-        };
-    };
     [10850064] Draygon_Func_23 [] {
         word!(game.grapple_beam_function = (0x9bc8c5i32) as u16);
         (*Get_Draygon(0i32, game)).var_A = (0xa59128i32) as u16;
@@ -322,7 +260,7 @@ crate::game::callback_dispatch! {
         enemy_instruction! {[(*E2).base]; instruction = v1, timer = 1}
     };
     [10850644] Draygon_Func_30 [] {
-        Draygon_Func_3(game);
+        actors::draygon_flight::turret(game);
         let E = Get_Draygon(0, game);
         let mut v1: i16 = (((*E).base.y_pos) as i16).wrapping_sub(4);
         (*E).base.y_pos = v1 as u16;
@@ -438,79 +376,8 @@ crate::game::callback_dispatch! {
         (*E).var_B = v6;
         (*E).var_C = v6;
     };
-    [10849198] Draygon_Func_16 [] {
-        Draygon_Func_3(game);
-        if word!(game.samus_x_speed_divisor) == 0 {
-            'advance: {
-                if (word!(game.random_number) & 0xf) == 0 {
-                    let v1: u16 = ((*E).var_03).wrapping_sub(1);
-                    (*E).var_03 = v1;
-                    if v1 == 0 {
-                        break 'advance;
-                    }
-                    enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_9C90 as u16, timer = 1}
-                }
-                (*E).base.y_pos = (actor_cosine((*E).var_0D, 32u16, game)).wrapping_add(384);
-                (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
-                words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_E));
-                if !(((*E).base.x_pos as i16) >= 0 && (*E).base.x_pos as i32 - 672i32 & 0x8000 == 0) {
-                    return;
-                }
-            }
-            if word!(game.samus_x_speed_divisor) == 0 {
-                let E3 = Get_Draygon(0xc0, game);
-                enemy_instruction! {[(*E3).base]; instruction = addr_kDraygon_Ilist_9BDA as u16, timer = 1}
-                (*E).var_A = (0xa58c33i32) as u16;
-                return;
-            }
-        }
-        (*E).var_A = (0xa58e19i32) as u16;
-    };
-    [10849422] Draygon_Func_18 [] {
-        (*E).base.x_pos = (*E).var_02;
-        (*E).base.y_pos = 384;
-        (*E).var_E = 0;
-        (*E).var_D = 1;
-        (*E).var_0D = 0;
-        let E3 = Get_Draygon(0xc0, game);
-        enemy_instruction! {[(*E3).base]; instruction = addr_kDraygon_Ilist_9C06 as u16, timer = 1}
-        (*E).var_A = (0xa58cd4i32) as u16;
-        enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_97BB as u16, timer = 1}
-        (*E).var_20 = 0;
-    };
-    [10849584] Draygon_Func_20 [] {
-        if word!(game.samus_x_speed_divisor) == 0 {
-            'advance: {
-                if (word!(game.random_number) & 0xf) == 0 {
-                    let v1: u16 = ((*E).var_03).wrapping_sub(1);
-                    (*E).var_03 = v1;
-                    if v1 == 0 {
-                        break 'advance;
-                    }
-                    enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_98FE as u16, timer = 1}
-                }
-                (*E).base.y_pos = (actor_cosine((*E).var_0D, 32u16, game)).wrapping_add(384);
-                (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
-                words!(
-                    (*E).base,
-                    x_pos,
-                    x_subpos += -(words!(i32, (*E), var_D, var_E)) as u32
-                );
-                if !((*E).base.x_pos < 0 && (*E).base.x_pos as i32 + 80 & 0x8000 != 0) {
-                    return;
-                }
-            }
-            if word!(game.samus_x_speed_divisor) == 0 {
-                let E3 = Get_Draygon(0xc0, game);
-                enemy_instruction! {[(*E3).base]; instruction = addr_kDraygon_Ilist_97E7 as u16, timer = 1}
-                (*Get_Draygon(0i32, game)).var_A = (0xa58db2i32) as u16;
-                return;
-            }
-        }
-        (*Get_Draygon(0i32, game)).var_A = (0xa58e19i32) as u16;
-    };
     [10849817] Draygon_Func_22 [] {
-        Draygon_Func_3(game);
+        actors::draygon_flight::turret(game);
         if word!(game.samus_x_speed_divisor) != 0 {
             (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
             let mut v2: i16 = 8;
@@ -631,53 +498,21 @@ crate::game::callback_dispatch! {
         }
     };
     @external {
+        10849034 => [actors::draygon_flight::begin(true, game)];
+        10849422 => [actors::draygon_flight::begin(false, game)];
+        10849106 => [actors::draygon_flight::approach(true, game)];
+        10849492 => [actors::draygon_flight::approach(false, game)];
+        10849198 => [actors::draygon_flight::fire(true, game)];
+        10849584 => [actors::draygon_flight::fire(false, game)];
         10846283 => [()];
-        10849331 => [Draygon_Func_17(k, game)];
-        10849714 => [Draygon_Func_21(k, game)];
+        10849331 => [actors::draygon_flight::exit(true, game)];
+        10849714 => [actors::draygon_flight::exit(false, game)];
         10850078 => [Draygon_Func_24(k, game)];
         10850262 => [Draygon_Func_25(k, game)]; 10850516 => [Draygon_Func_26(k, game)];
         10850565 => [Draygon_Func_27(k, game)]; 10850596 => [Draygon_Func_28(k, game)];
         10863757 => [actors::draygon_eye::advance(k, false, game)];
         10863891 => [actors::draygon_eye::advance(k, true, game)];
         10873626 => [()]; 10873682 => [SporeSpawn_Func_2(k, game)];
-    }
-}
-pub unsafe fn Draygon_Func_17(k: u16, game: &mut Game) {
-    unsafe {
-        sprite_effects::draygon_body_bubble(game);
-        let E = Get_Draygon(0, game);
-        (*E).base.y_pos = (actor_cosine((*E).var_0D, 32u16, game)).wrapping_add(384);
-        (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
-        words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_E));
-        if ((*E).base.x_pos as i16) >= 0 && (*E).base.x_pos as i32 - 672i32 & 0x8000 == 0 {
-            (*E).var_A = (0xa589b3i32) as u16;
-            (*E).base.x_pos = 592;
-            (*E).base.y_pos = -80i32 as u16;
-            (*E).var_B = (*E).var_C;
-        }
-    }
-}
-pub unsafe fn Draygon_Func_21(k: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_Draygon(0, game);
-        sprite_effects::draygon_body_bubble(game);
-        if word!(game.samus_x_speed_divisor) != 0 {
-            (*E).var_A = (0xa58e19i32) as u16;
-        } else {
-            (*E).base.y_pos = (actor_cosine((*E).var_0D, 32u16, game)).wrapping_add(384);
-            (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
-            words!(
-                (*E).base,
-                x_pos,
-                x_subpos += -(words!(i32, (*E), var_D, var_E)) as u32
-            );
-            if ((*E).base.x_pos as i16) < 0 && (*E).base.x_pos as i32 + 80 & 0x8000 != 0 {
-                (*E).var_A = (0xa587f4i32) as u16;
-                (*E).base.x_pos = -80i32 as u16;
-                (*E).base.y_pos = -80i32 as u16;
-                (*E).var_B = (*E).var_C;
-            }
-        };
     }
 }
 pub unsafe fn Draygon_Func_24(k: u16, game: &mut Game) {
