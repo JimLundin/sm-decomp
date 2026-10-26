@@ -7,9 +7,8 @@ use crate::game::room_entry::{self, ArrivalRequest, StartSite};
 use crate::game::save_slots::load_area_map;
 use crate::game::session_runtime::Runtime;
 use crate::game::sm_82::{
-    AdvanceGradualColorChangeOfPalette, DisplayMapElevatorDestinations, DrawFileSelectMapIcons,
-    DrawMapScrollArrowAndCheckToScroll, DrawRoomSelectMap, MapScrolling,
-    SetupMapScrollingForFileSelectMap,
+    DisplayMapElevatorDestinations, DrawFileSelectMapIcons, DrawMapScrollArrowAndCheckToScroll,
+    DrawRoomSelectMap, MapScrolling, SetupMapScrollingForFileSelectMap,
 };
 use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled};
 use crate::game::{menu_tilemap, menu_window};
@@ -52,7 +51,7 @@ unsafe fn prepare(game: &mut Game) {
     word!(game.menu_index += 1);
 }
 unsafe fn fade_palette(game: &mut Game) {
-    if AdvanceGradualColorChangeOfPalette(0, 0x40, game) != 0 {
+    if crate::game::palette_effects::fading::file_select(game) != 0 {
         word! { game, 0; reg_BG1VOFS, reg_BG1HOFS, reg_BG2VOFS, reg_BG2HOFS }
         word!(game.file_select_map_area_index = area_selection(game).unwrap_or(0) as u16);
         for area in 0..6 {

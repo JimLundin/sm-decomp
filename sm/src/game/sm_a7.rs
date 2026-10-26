@@ -18,9 +18,9 @@ use crate::game::display_refresh::GraphicsAsset;
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::music::{QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx2_Max15, QueueSfx3_Max6};
+use crate::game::palette_effects::fading::background6;
 use crate::game::player_update::minimap;
 use crate::game::room_mechanisms::spawn_hardcoded;
-use crate::game::sm_82::AdvancePaletteFade_BgPalette6;
 use crate::game::sprite_effect_runtime::create_sprite;
 use crate::game::visual_runtime::initialize_phantoon_motion;
 use crate::game::visual_runtime::spawn_hdma;
@@ -1244,7 +1244,7 @@ crate::game::callback_dispatch! {
         Kraid_UpdateBG2TilemapBottomHalf(game);
     };
     [10989091] Kraid_GetsBig_FadeInRoomBg [] {
-        if AdvancePaletteFade_BgPalette6(game) & 1 != 0 {
+        if background6(game) & 1 != 0 {
             Kraid_GetsBig_Thinking_Setup(game);
             Kraid_Lints_Enable(0x80, g_word_A7A916, game);
             Kraid_Lints_Enable(0xc0, g_word_A7A918, game);
@@ -1449,7 +1449,7 @@ crate::game::callback_dispatch! {
     };
     [10994681] Kraid_Death_Fadeout [] {
         Kraid_ProcessKraidInstr(game);
-        if AdvancePaletteFade_BgPalette6(game) & 1 != 0 {
+        if background6(game) & 1 != 0 {
             let E = Get_Kraid(0, game);
             (*E).kraid_var_A = (0xa7c4a4i32) as u16;
             set_fields! {[(*E)], 1; kraid_hurt_frame_timer, kraid_hurt_frame}
@@ -1592,7 +1592,7 @@ crate::game::callback_dispatch! {
     [10995733] Kraid_FadeInBg_FadeInBp6 [] {
         #[cfg(sm_verify_dll)]
         crate::kraid_flags_observer::observe(0, game);
-        if AdvancePaletteFade_BgPalette6(game) & 1 != 0 {
+        if background6(game) & 1 != 0 {
             #[cfg(sm_verify_dll)]
             crate::kraid_flags_observer::observe(1, game);
             QueueMusic_Delayed8(3, game);

@@ -23,7 +23,7 @@ use crate::game::music::{
     QueueSfx1_Max6, QueueSfx1_Max15, QueueSfx2_Max15, QueueSfx3_Max3, QueueSfx3_Max6,
     QueueSfx3_Max15,
 };
-use crate::game::palette_effects;
+use crate::game::palette_effects::{self, fading};
 use crate::game::room_entry::{self, ArrivalRequest, EntrySignal, StartSite};
 use crate::game::room_mechanisms::set_enabled;
 use crate::game::room_state::{pause_draygon, unpause_draygon};
@@ -396,8 +396,7 @@ pub unsafe fn GameState_35_TimeUp(game: &mut Game) -> CoroutineRet {
         if _coret_ != 0 {
             return _coret_;
         }
-        word!(game.palette_change_denom = 8);
-        if AdvancePaletteFadeForAllPalettes(game) != 0 {
+        if fading::all(8, game) != 0 {
             word!(game.game_state = kGameState_36_WhitingOutFromTimeUp as u16);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
         }
@@ -3478,169 +3477,6 @@ pub unsafe fn FinishProcessingGameOverBabyMetroidAsm(game: &mut Game) {
         };
     }
 }
-pub unsafe fn AdvancePaletteFadeForAllPalettes_0xc(game: &mut Game) -> u8 {
-    unsafe {
-        word!(game.palette_change_denom = 12);
-        AdvancePaletteFadeForAllPalettes(game)
-    }
-}
-pub fn AdvancePaletteFade_BgPalette6(game: &mut Game) -> u8 {
-    word!(game.palette_change_denom = 12);
-    if word!(game.palette_change_num) <= 0xd {
-        for i in (192i32..224).step_by(2) {
-            word!(
-                game.palette_buffer[(i >> 1)] = CalculateNthTransitionColorFromXtoY(
-                    word!(game.palette_change_num),
-                    word!(game.palette_buffer[(i >> 1)]),
-                    word!(game.target_palettes[(i >> 1)]),
-                    game,
-                )
-            );
-        }
-        word!(game.palette_change_num += 1);
-        0
-    } else {
-        word!(game.palette_change_num = 0);
-        1
-    }
-}
-pub fn AdvanceGradualColorChangeOfPalette(mut k: u16, j: u16, game: &mut Game) -> u8 {
-    word!(game.palette_change_denom = 15);
-    if (15i16).wrapping_sub((word!(game.palette_change_num)) as i16) >= 0 {
-        let R34: u16 = j;
-        do_until! { k >= R34 ;
-            word!(
-                game.palette_buffer[(k >> 1)] = CalculateNthTransitionColorFromXtoY(
-                    (word!(game.palette_change_num)).wrapping_add(1),
-                    word!(game.palette_buffer[(k >> 1)]),
-                    word!(game.target_palettes[(k >> 1)]),
-                    game,
-                )
-            );
-            k = (k).wrapping_add(2);
-        }
-        word!(game.palette_change_num += 1);
-        0
-    } else {
-        word!(game.palette_change_num = 0);
-        1
-    }
-}
-pub unsafe fn AdvancePaletteFadeForAllPalettes(game: &mut Game) -> u8 {
-    unsafe {
-        if (word!(game.palette_change_denom)).wrapping_add(1) >= word!(game.palette_change_num) {
-            let mut i: i32 = 0;
-            while i < 0x200 {
-                word!(game.g_word_7EC404 = i as u16);
-                let v2: i32 = i >> 1;
-                if word!(game.target_palettes[v2]) != word!(game.palette_buffer[v2]) {
-                    let v3: u16 = CalculateNthTransitionColorFromXtoY(
-                        word!(game.palette_change_num),
-                        word!(game.palette_buffer[v2]),
-                        word!(game.target_palettes[v2]),
-                        game,
-                    );
-                    i = word!(game.g_word_7EC404) as i32;
-                    *(ram_ptr!(game, u16; 0xc000))
-                        .offset((word!(game.g_word_7EC404) >> 1) as isize) = v3;
-                }
-                i += 2;
-            }
-            word!(game.palette_change_num += 1);
-            0
-        } else {
-            word!(game.palette_change_num = 0);
-            1
-        }
-    }
-}
-pub fn CalculateNthTransitionColorFromXtoY(a: u16, k: u16, j: u16, game: &mut Game) -> u16 {
-    (CalculateNthTransitionColorComponentFromXtoY(a, (k) & (0x1fu16), (j) & (0x1fu16), game) as i32
-        | (CalculateNthTransitionColorComponentFromXtoY(
-            a,
-            (k as i32 >> 5 & 0x1f) as u16,
-            (j as i32 >> 5 & 0x1f) as u16,
-            game,
-        ) as i32)
-            << 5
-        | (CalculateNthTransitionColorComponentFromXtoY(
-            a,
-            (k as i32 >> 10 & 0x1f) as u16,
-            (j as i32 >> 10 & 0x1f) as u16,
-            game,
-        ) as i32)
-            << 10) as u16
-}
-pub fn CalculateNthTransitionColorComponentFromXtoY(
-    a: u16,
-    k: u16,
-    j: u16,
-    game: &mut Game,
-) -> u16 {
-    if a == 0 {
-        return k;
-    }
-    let v4: u16 = (a).wrapping_sub(1);
-    if v4 == word!(game.palette_change_denom) {
-        return j;
-    }
-    let RegWord: u16 = SnesDivide(
-        ((abs16((j).wrapping_sub(k)) as i32) << 8) as u16,
-        (word!(game.palette_change_denom) as i32 - (v4 as i32 + 1) + 1) as u8,
-    );
-    let r18: u16 = (if j as i32 - k as i32 & 0x8000 != 0 {
-        -(RegWord as i32)
-    } else {
-        RegWord as i32
-    }) as u16;
-    (r18 as i32 + ((k as i32) << 8)) as u16 >> 8
-}
-pub unsafe fn sub_82DAF7(a: u16, game: &mut Game) -> u8 {
-    unsafe {
-        word!(game.palette_change_denom = 12);
-        sub_82DB0C(a, game)
-    }
-}
-pub unsafe fn sub_82DB0C(mut a: u16, game: &mut Game) -> u8 {
-    unsafe {
-        if (word!(game.palette_change_denom)).wrapping_add(1) >= word!(game.palette_change_num) {
-            word!(game.g_word_7EC404 = 0);
-            while a != 0 {
-                if a & 1 == 0 {
-                    word!(game.g_word_7EC404 += 32);
-                } else {
-                    sub_82DB41(game);
-                }
-                a = a >> 1;
-            }
-            word!(game.palette_change_num += 1);
-            0
-        } else {
-            word!(game.palette_change_num = 0);
-            1
-        }
-    }
-}
-pub unsafe fn sub_82DB41(game: &mut Game) {
-    unsafe {
-        let mut v0: u16 = word!(game.g_word_7EC404);
-        do_until! { (v0 & 0x1f) == 0 ;
-            let v1: i32 = v0 as i32 >> 1;
-            if word!(game.target_palettes[v1]) != word!(game.palette_buffer[v1]) {
-                let v2: u16 = CalculateNthTransitionColorFromXtoY(
-                    word!(game.palette_change_num),
-                    word!(game.palette_buffer[v1]),
-                    word!(game.target_palettes[v1]),
-                    game,
-                );
-                v0 = word!(game.g_word_7EC404);
-                *(ram_ptr!(game, u16; 0xc000)).offset((word!(game.g_word_7EC404) >> 1) as isize) = v2;
-            }
-            v0 = (v0).wrapping_add(2);
-            word!(game.g_word_7EC404 = v0);
-        }
-    }
-}
 pub fn HandleSamusOutOfHealthAndGameTile(game: &mut Game) {
     {
         if (word!(game.samus_health) as i16) <= 0 {
@@ -3742,8 +3578,7 @@ pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
         if _coret_ != 0 {
             return _coret_;
         }
-        word!(game.palette_change_denom = 6);
-        if AdvancePaletteFadeForAllPalettes(game) != 0 {
+        if fading::all(6, game) != 0 {
             clear_hdma(game);
             crate::game::scanline_irq::disable(game);
             word! { game, 0; fx_layer_blending_config_a, cur_irq_handler }

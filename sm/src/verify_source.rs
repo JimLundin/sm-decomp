@@ -2,6 +2,10 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/game/palette_effects/fading.rs",
+        include_bytes!("game/palette_effects/fading.rs"),
+    ),
+    (
         "sm/src/game/goofball.rs",
         include_bytes!("game/goofball.rs"),
     ),

@@ -14,8 +14,8 @@ use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
 
 use crate::game::gameplay_flag_runtime::{CheckBossBitForCurArea, SetBossBitForCurArea};
 use crate::game::music::QueueSfx2_Max6;
+use crate::game::palette_effects::fading::selected;
 use crate::game::room_mechanisms::{spawn_collision, spawn_hardcoded};
-use crate::game::sm_82::sub_82DAF7;
 
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::palette_effects;
@@ -893,7 +893,7 @@ crate::game::callback_dispatch! {
             scatter(DropSource::BombTorizo, k, game);
         }
     };
-    [11186801] Torizo_Instr_6 [jp] { sub_82DAF7(0x600, game); };
+    [11186801] Torizo_Instr_6 [jp] { selected(0x600, game); };
     [11188557] Torizo_Instr_5 [jp] { Torizo_C268(game); };
     [11188561] Torizo_Instr_9 [jp] {
         QueueMusic_Delayed8(g_word_AAB098, game);
