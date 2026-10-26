@@ -2032,6 +2032,22 @@ pub(crate) fn initialize_ending_time_glyph(object: u16, glyph: u8, game: &mut Ga
     place_cinematic_sprite(object, (156 + 8 * u16::from(glyph), 160), 0, game);
 }
 
+pub(crate) fn advance_ending_logo_palette(game: &mut Game) -> bool {
+    let pair = (word!(game.cinematic_var4).wrapping_mul(4) >> 1) as isize;
+    let second = crate::rtl::rom_table_word!(game, 0x8be5e7, pair + 1);
+    let first = crate::rtl::rom_table_word!(game, 0x8be5e7, pair);
+    for (mut source, offset) in [(first, 16usize), (second, 240)] {
+        for index in (0..16).rev() {
+            let color = cinematic_native_record::<0x8c>(source, game).word(0);
+            // The second band originally wrote native RAM words.
+            let color = if offset == 16 { color } else { color.to_le() };
+            word!(game.palette_buffer[offset + index] = color);
+            source = source.wrapping_sub(2);
+        }
+    }
+    word!(game.cinematic_var4 += 1, reread) as i32 - 16 & 0x8000 == 0
+}
+
 pub(crate) fn start_title_pan(stage: usize, cursor: u16, game: &mut Game) -> u16 {
     let (next, zoom, x, y) = [
         (0x9d17, 72, 315, 225),

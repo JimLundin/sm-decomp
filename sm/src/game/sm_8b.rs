@@ -134,7 +134,6 @@ crate::game::constants::typed_constants! { i32;
     fnSamus_FrameHandlerAlfa_Func12 = 0x90e6c9, fnSamus_Func15 = 0x90e833,
     fnSamusDrawHandler_Default = 0x90eb52,
 }
-const RomPtr_8C: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8c>;
 crate::game::constants::typed_constants! { u32;
     fnCinematicFunction_Intro_Initial = 9151381,
     fnCinematicFunctionBlackoutFromCeres = 9158939,
@@ -1558,20 +1557,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9168266] CinematicFunction_Intro_Func144 [] {
-        let v0: i32 = ((4u16).wrapping_mul(word!(game.cinematic_var4))) as i32 >> 1;
-        let v5: u16 = crate::rtl::rom_table_word!(game, 0x8be5e7, (v0 + 1) as isize);
-        let mut v1: u16 = crate::rtl::rom_table_word!(game, 0x8be5e7, v0 as isize);
-        for i in (0i32..=30).rev().step_by(2) {
-            word!(game.palette_buffer[((i >> 1) + 16)] = *(RomPtr_8C(v1, game) as *mut u16));
-            v1 = (v1).wrapping_sub(2);
-        }
-        let mut v3: u16 = v5;
-        for j in (0u16..=30).rev().step_by(2) {
-            *(ram_ptr!(game, u16; 0xc000)).offset(((j as i32 >> 1) + 240) as isize) =
-                *(RomPtr_8C(v3, game) as *mut u16);
-            v3 = (v3).wrapping_sub(2);
-        }
-        if word!(game.cinematic_var4 += 1, reread) as i32 - 16i32 & 0x8000 == 0 {
+        if crate::game::visual_runtime::advance_ending_logo_palette(game) {
             word!(game.cinematic_function = (0x8be7bai32) as u16);
             clear_cinematic_sprites(game);
             CinematicBackground.spawn(addr_kCinematicBgObjectDef_8BF74E as u16, 0x4c00, game);
