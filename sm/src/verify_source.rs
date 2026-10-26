@@ -128,6 +128,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/lava_jumper.rs"),
     ),
     (
+        "sm/src/game/lavaquake.rs",
+        include_bytes!("game/lavaquake.rs"),
+    ),
+    (
         "sm/src/game/norfair_rio.rs",
         include_bytes!("game/norfair_rio.rs"),
     ),

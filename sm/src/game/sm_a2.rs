@@ -33,7 +33,6 @@ crate::game::constants::typed_constants! { Consts_A2;
     addr_kGripper_Sprmap_E44B = 58443, addr_kGripper_Sprmap_E43F = 58431,
     addr_kHirisingSlowfalling_Ilist_D840 = 55360, addr_kHirisingSlowfalling_Ilist_D834 = 55348,
     addr_kHirisingSlowfalling_Ilist_D82C = 55340, addr_kMaridiaLargeSnail_Ilist_CA4B = 51787,
-    addr_kNorfairErraticFireball_Ilist_B51A = 46362,
     addr_kMaridiaSpikeyShell_Ilist_A3BD = 41917, addr_kMaridiaSpikeyShell_Ilist_A3AB = 41899,
     addr_kSpritemap_Nothing_A2 = 32845,
 }
@@ -41,8 +40,7 @@ crate::game::constants::typed_constants! { Consts_A2;
 crate::type_aliases! {
     pub Enemy_LavaSeahorse,
         Enemy_MaridiaLargeSnail, Enemy_MaridiaSpikeyShell,
-        Enemy_HirisingSlowfalling,
-        Enemy_LavaquakeRocks =
+        Enemy_HirisingSlowfalling =
         crate::game::enemy_layouts::EnemyLayout40;
 }
 
@@ -62,7 +60,6 @@ crate::ram_map::ram_pointer_functions! {
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
     Get_HirisingSlowfalling(o: i32) -> Enemy_HirisingSlowfalling = [0xf78, o as isize];
     Get_LavaSeahorse(o: i32) -> Enemy_LavaSeahorse = [0xf78, o as isize];
-    Get_LavaquakeRocks(o: i32) -> Enemy_LavaquakeRocks = [0xf78, o as isize];
     Get_MaridiaLargeSnail(o: i32) -> Enemy_MaridiaLargeSnail = [0xf78, o as isize];
     Get_MaridiaSpikeyShell(o: i32) -> Enemy_MaridiaSpikeyShell = [0xf78, o as isize];
 }
@@ -90,49 +87,6 @@ pub unsafe fn MaridiaSpikeyShell_8(k: u16, game: &mut Game) {
             (*E).var_E = 3;
         }
     }
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallLavaQuakeRocksFunc(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [10663318] LavaquakeRocks_1 [] {
-        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x40); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
-            && ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x40); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
-        {
-            (*Get_LavaquakeRocks(word!(game.cur_enemy_index) as i32, game)).var_A =
-                (0xa2b5b2i32) as u16;
-        }
-    };
-    [10663346] LavaquakeRocks_2 [] {
-        word!(
-            game.cinematic_var9 = crate::rtl::rom_table_word!(
-                game,
-                0xa2b550,
-                ((game.next_random() as i32 & 0x1e) >> 1) as isize,
-            )
-        );
-        let v1: i32 = (game.next_random() as i32 & 0x1e) >> 1;
-        SpawnEprojWithGfx(
-            crate::rtl::rom_table_word!(game, 0xa2b530, v1 as isize),
-            word!(game.cur_enemy_index),
-            addr_stru_86BD5A as u16,
-            game,
-        );
-        let E = Get_LavaquakeRocks(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_A = (0xa2b5eai32) as u16;
-        (*E).var_B = crate::rtl::rom_table_word!(
-            game,
-            0xa2b520,
-            (((game.next_random()) & (0xeu16)) >> 1) as isize
-        );
-    };
-    [10663402] LavaquakeRocks_3 [] {
-        let E = Get_LavaquakeRocks(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_B = (*E).var_B.wrapping_sub(1);
-        if ((*E).var_B & 0x8000) != 0 {
-            (*E).var_A = (0xa2b596i32) as u16;
-        }
-    };
 }
 crate::game::callback_dispatch! {
     pub unsafe fn CallMaridiaLargeSnailFunc(ea: u32, game: &mut Game) => ea;
@@ -405,17 +359,6 @@ crate::game::callback_dispatch! {
         let phase = crate::game::gunship::advance(game);
         actor_species_pre_instruction(phase, game);
     };
-    [10663280] LavaquakeRocks_Init [] {
-        let E = Get_LavaquakeRocks(word!(game.cur_enemy_index) as i32, game);
-        enemy_instruction! {[(*E).base]; instruction = addr_kNorfairErraticFireball_Ilist_B51A as u16, timer = 1}
-        (*E).base.timer = 0;
-        (*E).var_A = (0xa2b596i32) as u16;
-        word!(game.random_number = 17);
-    };
-    [10663311] LavaquakeRocks_Main [] {
-        let E = Get_LavaquakeRocks(word!(game.cur_enemy_index) as i32, game);
-        CallLavaQuakeRocksFunc((((*E).var_A) as u32) | (0xa20000u32), game);
-    };
     @functions [pub fn (game: &mut Game)];
     [10663426] Rinka_Init [] { crate::game::rinka::initialize(game); };
     @functions [pub unsafe fn (game: &mut Game)];
@@ -649,6 +592,8 @@ crate::game::callback_dispatch! {
     [10649635] Enemy_NormalTouchAI_A2 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
     [10649645] Enemy_NormalShotAI_A2 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
     @external {
+        10663280 => [crate::game::lavaquake::update(true, game)];
+        10663311 => [crate::game::lavaquake::update(false, game)];
         10653036 => [crate::game::maridia_turtles::initialize(false, game)];
         10653085 => [crate::game::maridia_turtles::initialize(true, game)];
         10654337 => [crate::game::maridia_turtles::touch(false, game)];
