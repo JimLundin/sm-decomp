@@ -20,7 +20,7 @@ const POP_A: PopulationId = PopulationId(0x13000053);
 const POP_B: PopulationId = PopulationId(0x03000083);
 const DEST_POP: ResourceId = ResourceId(0x72000017);
 const DEST_TILES: ResourceId = ResourceId(0x72000018);
-const PALETTES: [ResourceId; 3] = [
+pub(crate) const PALETTES: [ResourceId; 3] = [
     ResourceId(0x71000031),
     ResourceId(0x71000032),
     ResourceId(0x71000033),

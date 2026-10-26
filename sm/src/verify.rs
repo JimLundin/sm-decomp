@@ -2,7 +2,7 @@
 use sm::game_state::Game;
 use std::{collections::BTreeSet, ffi::CString, time::Instant};
 
-mod checkpoint;
+use sm::verification_checkpoint as checkpoint;
 mod seed;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -827,7 +827,8 @@ impl ReplayCoverage {
         let state_room = (state, room);
         if trace
             && (self.last_state_room != Some(state_room)
-                || (u32::from(state) == sm::game::sm_82::kGameState_8_MainGameplay
+                || (u32::from(state)
+                    == sm::game::constants::game_states::kGameState_8_MainGameplay
                     && frame % 100 == 0))
         {
             eprintln!(
@@ -849,7 +850,7 @@ impl ReplayCoverage {
             self.unchanged_frames = 1;
         }
         self.longest_unchanged = self.longest_unchanged.max(self.unchanged_frames);
-        if u32::from(state) == sm::game::sm_82::kGameState_8_MainGameplay {
+        if u32::from(state) == sm::game::constants::game_states::kGameState_8_MainGameplay {
             self.gameplay_frames += 1;
             self.rooms.insert(room);
             self.areas.insert(current.area);
@@ -880,7 +881,7 @@ impl ReplayCoverage {
 
     fn credits_frames(&self) -> usize {
         self.states
-            .get(&(sm::game::sm_82::kGameState_39_EndingAndCredits as u16))
+            .get(&(sm::game::constants::game_states::kGameState_39_EndingAndCredits as u16))
             .copied()
             .unwrap_or(0)
     }
@@ -911,6 +912,47 @@ pub fn run_args(args: &[String], game: &mut Game) -> i32 {
     }
 }
 
+unsafe fn initialize_checkpoint_machine(
+    game: &mut Game,
+    filename: &CString,
+) -> Result<*mut sm::types::Snes, String> {
+    unsafe {
+        game.VERIFY_ACTIVE = true;
+        game.VERIFY_FAILURES = 0;
+        game.g_runmode = if game.supports_legacy_persistence() {
+            sm::cpu_infra::RM_BOTH
+        } else {
+            sm::cpu_infra::RM_MINE
+        } as u8;
+        if std::env::var_os("SM_VERIFY_PHYSICAL_AUDIO").is_some() {
+            game.g_use_my_apu_code = false;
+        }
+        let snes = sm::cpu_infra::SnesInit(filename.as_ptr(), game);
+        if snes.is_null() {
+            return Err("unable to load ROM".into());
+        }
+        Ok(snes)
+    }
+}
+
+unsafe fn begin_verifier_drawing(game: &mut Game) {
+    unsafe {
+        let snes = game.g_snes;
+        sm::snes::ppu::PpuBeginDrawing(
+            (*snes).snes_ppu.cast(),
+            (&raw mut super::g_pixels).cast(),
+            1024,
+            0,
+        );
+        sm::snes::ppu::PpuBeginDrawing(
+            (*snes).my_ppu.cast(),
+            (&raw mut super::g_my_pixels).cast(),
+            1024,
+            0,
+        );
+    }
+}
+
 fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     if args.len() < 2 {
         return Err("usage: sm verify <rom> <inputs> [--frames N] [--load-sram] [--seed PATH] [--checkpoint-in PATH] [--checkpoint-out PATH] [--require-hit NAME]... [--after-hits N] [--expect TYPE:VALUE|death|credits|credits-complete|save-death-continue]... [--after-expectations N]".into());
@@ -923,10 +965,20 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     let mut checkpoint_in = None;
     let mut seed_in = None;
     let mut checkpoint_out = None;
+    #[cfg(sm_verify_dll)]
+    let mut prepared_checkpoint_check = None;
     let mut required_probes = Vec::new();
     let mut options = args[2..].iter();
     while let Some(option) = options.next() {
         match option.as_str() {
+            #[cfg(sm_verify_dll)]
+            "--prepared-checkpoint-check" if prepared_checkpoint_check.is_none() => {
+                prepared_checkpoint_check = Some(
+                    options
+                        .next()
+                        .ok_or("missing prepared checkpoint check path")?,
+                );
+            }
             "--frames" if frame_limit.is_none() => {
                 frame_limit = Some(
                     options
@@ -1053,19 +1105,21 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         Vec::new()
     };
     let filename = CString::new(args[0].as_bytes()).map_err(|_| "invalid ROM path")?;
+    #[cfg(sm_verify_dll)]
+    if let Some(path) = prepared_checkpoint_check {
+        unsafe {
+            sm::verify_prepared_actor_checkpoint(std::path::Path::new(path), |game| {
+                initialize_checkpoint_machine(game, &filename)?;
+                super::initialize_verify_audio(game)?;
+                begin_verifier_drawing(game);
+                Ok(())
+            })?;
+        }
+        return Ok(0);
+    }
     let start = Instant::now();
     unsafe {
-        game.VERIFY_ACTIVE = true;
-        game.VERIFY_FAILURES = 0;
-        game.g_runmode = sm::cpu_infra::RM_BOTH as u8;
-        // Backend-specific ROM patches are installed during initialization.
-        if std::env::var_os("SM_VERIFY_PHYSICAL_AUDIO").is_some() {
-            game.g_use_my_apu_code = false;
-        }
-        let snes = sm::cpu_infra::SnesInit(filename.as_ptr(), game);
-        if snes.is_null() {
-            return Err("unable to load ROM".into());
-        }
+        let snes = initialize_checkpoint_machine(game, &filename)?;
         if let Some(saved_sram) = saved_sram {
             sm::rtl::RtlReadSram(game);
             if game.g_sram.bytes(0..8192) != saved_sram {
@@ -1073,18 +1127,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             }
         }
         super::initialize_verify_audio(game)?;
-        sm::snes::ppu::PpuBeginDrawing(
-            (*snes).snes_ppu.cast(),
-            (&raw mut super::g_pixels).cast(),
-            1024,
-            0,
-        );
-        sm::snes::ppu::PpuBeginDrawing(
-            (*snes).my_ppu.cast(),
-            (&raw mut super::g_my_pixels).cast(),
-            1024,
-            0,
-        );
+        begin_verifier_drawing(game);
         let origin = checkpoint::origin(&rom, seed_in.map(std::path::Path::new))?;
         let first = match checkpoint_in {
             Some(path) => checkpoint::load(std::path::Path::new(path), game, origin, &inputs)?,

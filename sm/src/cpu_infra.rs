@@ -1,4 +1,4 @@
-use crate::game::sm_82::RunOneFrameOfGame;
+use crate::game::gameplay::{self, Entry};
 use crate::game_state::Game;
 use crate::ram_map::ram_ptr;
 use crate::ram_map::word;
@@ -1165,7 +1165,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             RestoreSnapshot(&game.g_snapshot_before, &mut *game.g_snes, &mut *game.g_cpu);
             actor_restore.commit(game.actor_identity_mut());
             (*game.g_snes).runningWhichVersion = 2;
-            RunOneFrameOfGame(game);
+            gameplay::advance(Entry::Frame, game);
             DrawFrameToPpu(game);
             let queue_mine = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
             MakeSnapshot(
@@ -1323,7 +1323,7 @@ pub unsafe fn RtlRunFrameCompare(input: u16, run_what: i32, game: &mut Game) {
             DrawFrameToPpu(game);
         } else if game.g_runmode as i32 == RM_MINE as i32 {
             (*game.g_snes).runningWhichVersion = 0xff;
-            RunOneFrameOfGame(game);
+            gameplay::advance(Entry::Frame, game);
             DrawFrameToPpu(game);
             (*game.g_snes).runningWhichVersion = 0;
         } else {

@@ -48,31 +48,27 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Qualified Core71: production111816, legacy18131, unsafe2828, verification40051; warnings175.
-Core50 owns the actual native player/DSP allocations and shared APU RAM: +25 engine
-lines, no unsafe-line savings. GameOwner no longer promises Rust thread sharing;
-raw SDL userdata/gate/quiescence and native/audio shutdown contracts remain explicit.
-Its current4d25 bundle has14 genuine captures (189,475 frames) and22 byte-identical
-restored encrypted members. Full86 passed136,526 selected+38,827 setup, zero failures;
-both Kago setups independently ran14,350. Old33e6 checkpoints remain incompatible.
-Core51 full86 and Core52-55 scoped rows pass; results and measured costs live in commits.
+Current core fe4: production112302, legacy17970, unsafe2822, verification40422; warnings173.
+It retires161 sm82 lines and persists actor/media allocation identities and saved ROM patches.
+Net +511 engine (persistence +564, frame -53), -161 legacy, -1 unsafe, +371 verification;
+frame full replacement167/220=75.91%. RAM/native frame dependencies remain explicit.
+Codec f158c44fac33eac7 has39 contributors/652740 normalized source bytes.
+Prepared110 and initialized329+5 pass;14 genuine captures189475 frames and full22
+byte-identical encrypted restore pass. b387 full86 passes136526 selected+38827 setup;
+latestfe4 MessageBox28+options passes25071 selected+29672 setup, zero failures.
+Required sm82 AST8.06min:3 options kills; unsafe gameplay omission unavailable.
+Mandatory full86 after its own pushed deletion is next; never restamp old codecs.
 
-Next: qualify the reviewed joint frame-lifecycle/checkpoint continuation and sm82 retirement; shared IO/OAM reset follows. ROM logger substitution is held for CRT buffering equivalence.
-Core71 retires the complete210-line Crocomire bank: union12 passes8642 selected+7034 setup/0 failures on current Linux+Windows source. Required AST campaign11.54min:3 kills,1 unobserved survivor,1 unviable; post-push full86 is next.
-Core67 finalb54ecded8c3f70b4 passes full86:136526 selected+38827 setup+189475 genuine captures, zero failures. Its encrypted full22 bundle restores byte-for-byte; actual Config/CPU ownership grows116 engine and78 verification lines, with9 counted unsafe lines.
-Core56 final476b8dc6638846c9 (35 contributions/575452 normalized source bytes) passes full86:
-136,526 selected+38,827 setup+189,475 genuine captures, zero failures; Core57-59 scoped rows pass.
-Core56 source71e806 owns the original input Vec/FILE and actual mirrored Cart image;
-+15 engine/+4 verification/+1 unsafe cleanup. Its fresh476b full22 encrypted bundle restores byte-for-byte; initialized419,225-byte payload and5 continuation frames pass.
-Old09e4,9e89 andf5 predecessors stay immutable and receive no intermediate qualification.
-Supported CRT read/close/reset order is preserved; invalid SIZE_MAX/malloc0 callback
-behavior is explicitly outside universal equivalence. Do not invent success/defaults.
-
-Whole-engine Session ownership, persistent actor identity, complete native callback
-safety and backend independence remain open. Bank moves/checked access are transitional.
-After bank retirement, close complete producer/consumer state, content/topology/options
-and unsafe removal; then prove our renderer/audio and boot-to-credits without emulation,
-including custom sprites, reordered rooms/doors and opt-in mechanics.
+Next: separate Grapple four-leaf cut (+12 engine/-112 legacy), then shared IO/OAM
+(-16 engine/-13 legacy/+2 counted hardware unsafe). Keep their source pins separate.
+ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
+A4 post-push full86 passed on0a; its scoped3kills/1unobserved/1unviable gaps remain.
+Native player/DSP/APU and input Vec/FILE/Cart are owned; GameOwner does not promise Rust thread sharing.
+Keep SDL/native/audio quiescence and CRT order; invalid SIZE_MAX/malloc0 callbacks
+remain outside universal equivalence. Whole Session and independent media remain unfinished.
+Generic register safety needs the existing bus owner to own stable WRAM/private links,
+recursive DMA/APU/native callback exclusivity, reset/load and diagnostics.
+Null checks and forwarding wrappers do not close that responsibility.
 
 Coverage is86 manifest rows/44 required scenarios, not universal behavior proof.
 Keep full inputs/guards/assets: intro8780, Morph1200, bomb-jump800, crawler8, Gunship300,

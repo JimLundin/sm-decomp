@@ -2,15 +2,19 @@
 //! Unlike frontend save states, these preserve both PPUs and live audio state.
 //! Pointers and padding are never serialized; initialized allocations stay owned
 //! by the new host. These files are disposable, ROM-derived, and must stay local.
-use sm::recording::RecordingBytes;
-use sm::{apu_queue::ApuQueue, game_state::Game, rtl::StateRecorder, types::*};
+//! Unsafe entries require the caller's initialized, idle Game to retain valid
+//! backend/player/cart allocations and exclusive access through adoption. The
+//! codec itself owns complete machine and actor preflight/adoption; no caller
+//! callback can report an incomplete machine restore as successful.
+use crate::recording::RecordingBytes;
+use crate::{apu_queue::ApuQueue, game_state::Game, rtl::StateRecorder, types::*};
 use std::path::Path;
 
 const MAGIC: &[u8; 8] = b"SMVERIFY";
 
 // A cache fingerprint, not an authentication mechanism. The full payload is
 // checked before any state is loaded, including lengths and metadata.
-fn fingerprint(bytes: &[u8]) -> u64 {
+pub(crate) fn fingerprint(bytes: &[u8]) -> u64 {
     bytes.iter().fold(0xcbf29ce484222325, |hash, byte| {
         (hash ^ u64::from(*byte)).wrapping_mul(0x100000001b3)
     })
@@ -18,7 +22,7 @@ fn fingerprint(bytes: &[u8]) -> u64 {
 
 // Bind seed-backed checkpoints to their actual original observation, not its path.
 // Like the other checkpoint fingerprints this detects stale caches, not hostile input.
-pub(super) fn origin(rom: &[u8], seed: Option<&Path>) -> Result<u64, String> {
+pub fn origin(rom: &[u8], seed: Option<&Path>) -> Result<u64, String> {
     let Some(path) = seed else {
         return Ok(fingerprint(rom));
     };
@@ -58,10 +62,14 @@ fn compatibility() -> u64 {
         include_str!("../game/session.rs"),
         include_str!("../game/session_encoding.rs"),
         include_str!("../game/enemy_layouts.rs"),
+        include_str!("../game/actors/identity.rs"),
+        include_str!("../game/actors/snapshot.rs"),
+        include_str!("../game/actors/media.rs"),
         include_str!("../verify.rs"),
         include_str!("../verify_dll.rs"),
         include_str!("../main.rs"),
         include_str!("../native_audio.rs"),
+        include_str!("../rom_patches.rs"),
         include_str!("../cpu_infra.rs"),
         include_str!("../rtl.rs"),
         include_str!("../recording.rs"),
@@ -95,13 +103,45 @@ fn compatibility() -> u64 {
 enum Archive<'a> {
     Save(Vec<u8>),
     Load(&'a [u8]),
+    Validate(&'a [u8], u8, u8),
 }
 
 impl Archive<'_> {
+    fn check_field(&self, field: &str) -> Result<(), String> {
+        let Self::Validate(input, mode, audio) = self else {
+            return Ok(());
+        };
+        let expected = match field {
+            "g_runmode" => Some(*mode),
+            "g_use_my_apu_code" => Some(*audio),
+            "VERIFY_ACTIVE" => Some(1),
+            "g_calling_asm_from_c"
+            | "g_fail"
+            | "g_other_image"
+            | "replay_mode"
+            | "disableRender" => Some(0),
+            _ => None,
+        };
+        if let Some(expected) = expected {
+            if input.first() != Some(&expected) {
+                return Err(format!("checkpoint is not committed: {field}"));
+            }
+        }
+        if field == "VERIFY_FAILURES" && input.get(..8) != Some(&[0; 8]) {
+            return Err("checkpoint contains verifier failures".into());
+        }
+        if field == "snes_frame_counter" && u32::from(*mode) == crate::cpu_infra::RM_MINE {
+            let bytes = input.get(..4).ok_or("truncated checkpoint frame counter")?;
+            if i32::from_le_bytes(bytes.try_into().unwrap()) <= 0 {
+                return Err("prepared checkpoint has no completed frame".into());
+            }
+        }
+        Ok(())
+    }
     fn bytes(&mut self, value: &mut [u8]) -> Result<(), String> {
         match self {
             Self::Save(output) => output.extend_from_slice(value),
-            Self::Load(input) => {
+            Self::Load(input) | Self::Validate(input, _, _) => {
                 let (head, tail) = input
                     .split_at_checked(value.len())
                     .ok_or("truncated checkpoint")?;
@@ -135,12 +175,14 @@ scalar!(u8, i8, u16, i16, u32, i32, u64, f64);
 
 impl State for bool {
     fn state(&mut self, archive: &mut Archive<'_>) -> Result<(), String> {
-        let mut byte = u8::from(*self);
-        byte.state(archive)?;
-        if byte > 1 {
+        let mut byte = [u8::from(*self)];
+        archive.bytes(&mut byte)?;
+        if byte[0] > 1 {
             return Err("invalid checkpoint boolean".into());
         }
-        *self = byte != 0;
+        if matches!(archive, Archive::Load(_)) {
+            *self = byte[0] != 0;
+        }
         Ok(())
     }
 }
@@ -161,7 +203,7 @@ macro_rules! fields {
         impl State for $ty {
             fn state(&mut self, archive: &mut Archive<'_>) -> Result<(), String> {
                 let Self { $($field,)* $($skip: _,)* } = self;
-                $($field.state(archive)?;)*
+                $(archive.check_field(stringify!($field))?; $field.state(archive)?;)*
                 Ok(())
             }
         }
@@ -172,12 +214,14 @@ fields!(Apu { ram, registers } skip { spc, dsp });
 fields!(ApuRegisters {
     romReadable, dspAdr, cycles, inPorts, outPorts, timer, cpuCyclesLeft, history
 } skip { pad, snapshot_padding0 });
-impl State for sm::apu_ram::ApuRam {
+impl State for crate::apu_ram::ApuRam {
     fn state(&mut self, archive: &mut Archive<'_>) -> Result<(), String> {
         for offset in 0..65536 {
             let mut byte = self.read(offset as u16);
             byte.state(archive)?;
-            self.write(offset as u16, byte);
+            if matches!(archive, Archive::Load(_)) {
+                self.write(offset as u16, byte);
+            }
         }
         Ok(())
     }
@@ -334,17 +378,28 @@ fields!(StateRecorder {
 
 impl State for RecordingBytes {
     fn state(&mut self, archive: &mut Archive<'_>) -> Result<(), String> {
-        let mut length = self.size as u64;
-        length.state(archive)?;
-        if let Archive::Load(input) = archive {
-            let length = usize::try_from(length).map_err(|_| "checkpoint log length overflow")?;
-            if length > input.len() {
-                return Err("truncated checkpoint log".into());
+        let mut length = (self.size as u64).to_le_bytes();
+        archive.bytes(&mut length)?;
+        let length = usize::try_from(u64::from_le_bytes(length))
+            .map_err(|_| "checkpoint log length overflow")?;
+        match archive {
+            Archive::Validate(input, _, _) => {
+                let (_, tail) = input
+                    .split_at_checked(length)
+                    .ok_or("truncated checkpoint log")?;
+                *input = tail;
+                return Ok(());
             }
-            unsafe {
-                sm::rtl::recording_allocation(self.resize(length));
+            Archive::Load(input) => {
+                if length > input.len() {
+                    return Err("truncated checkpoint log".into());
+                }
+                unsafe {
+                    crate::rtl::recording_allocation(self.resize(length));
+                }
+                self.as_mut_slice().fill(0);
             }
-            self.as_mut_slice().fill(0);
+            Archive::Save(_) => {}
         }
         if self.size != 0 {
             archive.bytes(self.as_mut_slice())?;
@@ -366,10 +421,14 @@ unsafe fn machine(game: &mut Game, archive: &mut Archive<'_>) -> Result<(), Stri
         game.message_box_das0l_value.state(archive)?;
         game.k_out.state(archive)?;
         game.apu_queue.state(archive)?;
+        archive.check_field("g_runmode")?;
         game.g_runmode.state(archive)?;
+        archive.check_field("g_calling_asm_from_c")?;
         game.g_calling_asm_from_c.state(archive)?;
         game.g_calling_asm_from_c_ret.state(archive)?;
+        archive.check_field("g_fail")?;
         game.g_fail.state(archive)?;
+        archive.check_field("g_use_my_apu_code")?;
         game.g_use_my_apu_code.state(archive)?;
         game.hookmode.state(archive)?;
         game.hookcnt.state(archive)?;
@@ -377,12 +436,16 @@ unsafe fn machine(game: &mut Game, archive: &mut Archive<'_>) -> Result<(), Stri
         game.hook_orgbyte.state(archive)?;
         game.hook_fixbug_orgbyte.state(archive)?;
         game.kPatchedCarrysOrg.state(archive)?;
+        archive.check_field("VERIFY_ACTIVE")?;
         game.VERIFY_ACTIVE.state(archive)?;
+        archive.check_field("VERIFY_FAILURES")?;
         game.VERIFY_FAILURES.state(archive)?;
         game.g_got_mismatch_count.state(archive)?;
+        archive.check_field("g_other_image")?;
         game.g_other_image.state(archive)?;
         game.g_debug_flag.state(archive)?;
         game.g_new_ppu.state(archive)?;
+        archive.check_field("snes_frame_counter")?;
         game.snes_frame_counter.state(archive)?;
         game.pc_hist.state(archive)?;
         game.pc_hist_ctr.state(archive)?;
@@ -405,7 +468,9 @@ unsafe fn machine(game: &mut Game, archive: &mut Archive<'_>) -> Result<(), Stri
         (*(*game.g_spc_player).state.dsp).state.state(archive)?;
         let mut save_bytes = game.g_sram.bytes(0..8192);
         archive.bytes(&mut save_bytes)?;
-        game.g_sram.write_bytes(0, &save_bytes);
+        if !matches!(archive, Archive::Validate(..)) {
+            game.g_sram.write_bytes(0, &save_bytes);
+        }
         Ok(())
     }
 }
@@ -421,42 +486,96 @@ fn input_fingerprint(inputs: &[u16]) -> u64 {
 
 /// Capture/read exact continuation bytes for local round-trip checks as well
 /// as disk checkpoints. The caller owns an initialized, idle verifier Game.
-pub(super) unsafe fn capture(game: &mut Game) -> Result<Vec<u8>, String> {
+pub unsafe fn capture(game: &mut Game) -> Result<Vec<u8>, String> {
+    unsafe { capture_with_sources(game, &[]) }
+}
+
+pub(crate) unsafe fn capture_with_sources(
+    game: &mut Game,
+    sources: &[(
+        crate::game::room_entry::world::ResourceId,
+        crate::rom::RomImage,
+    )],
+) -> Result<Vec<u8>, String> {
     unsafe {
+        let required_mode = if game.supports_legacy_persistence() {
+            crate::cpu_infra::RM_BOTH
+        } else {
+            crate::cpu_infra::RM_MINE
+        };
+        if game.actor_identity_is_with_session() {
+            return Err("checkpoint requires a Game-owned committed interval".into());
+        }
+        if game.g_snes.is_null() || game.g_spc_player.is_null() {
+            return Err("full checkpoint requires the initialized native verifier backend".into());
+        }
         if !game.VERIFY_ACTIVE
-            || game.g_runmode != sm::cpu_infra::RM_BOTH as u8
+            || u32::from(game.g_runmode) != required_mode
             || (*game.g_snes).disableRender
             || game.g_other_image
             || game.VERIFY_FAILURES != 0
             || game.g_fail
             || game.g_calling_asm_from_c
+            || (!game.supports_legacy_persistence() && game.snes_frame_counter <= 0)
             || game.state_recorder.replay_mode
             || !(*game.g_spc_player).state.reg_write_history.is_null()
             || (*(*game.g_snes).cart).ramSize != 8192
         {
-            return Err("checkpoint requires a successful, idle verifier frame".into());
+            return Err("checkpoint requires a successful, idle committed verifier frame".into());
         }
+
         let mut archive = Archive::Save(Vec::new());
         machine(game, &mut archive)?;
-        let Archive::Save(bytes) = archive else {
+        let Archive::Save(machine) = archive else {
             unreachable!()
         };
+        let actors = crate::game::actors::snapshot::ActorCheckpointPayload::capture(
+            game.actor_identity(),
+            game.world(),
+        )?
+        .encode(
+            game.loaded_rom.as_ref(),
+            game.capture_native_rom_binding().as_ref(),
+            sources,
+            &game.g_ram,
+        )?;
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(&(machine.len() as u64).to_le_bytes());
+        bytes.extend_from_slice(&machine);
+        bytes.extend_from_slice(&actors);
         Ok(bytes)
     }
 }
 
-pub(super) unsafe fn save(
+pub unsafe fn save(
     path: &Path,
     game: &mut Game,
     origin: u64,
     inputs: &[u16],
     completed: usize,
 ) -> Result<(), String> {
+    unsafe { save_with_sources(path, game, origin, inputs, completed, &[]) }
+}
+
+pub unsafe fn save_with_sources(
+    path: &Path,
+    game: &mut Game,
+    origin: u64,
+    inputs: &[u16],
+    completed: usize,
+    sources: &[(
+        crate::game::room_entry::world::ResourceId,
+        crate::rom::RomImage,
+    )],
+) -> Result<(), String> {
     unsafe {
-        if !game.supports_legacy_persistence() {
-            return Err("legacy checkpoints are unavailable for a prepared world".into());
+        if completed > inputs.len() {
+            return Err("checkpoint input frame is unavailable".into());
         }
-        let payload = capture(game)?;
+        if completed == 0 && !game.supports_legacy_persistence() {
+            return Err("prepared checkpoint requires completed input progress".into());
+        }
+        let payload = capture_with_sources(game, sources)?;
         let mut bytes = Vec::from(MAGIC.as_slice());
         for word in [
             compatibility(),
@@ -482,15 +601,31 @@ pub(super) unsafe fn save(
     }
 }
 
-pub(super) unsafe fn load(
+pub unsafe fn load(
     path: &Path,
     game: &mut Game,
     origin: u64,
     inputs: &[u16],
 ) -> Result<usize, String> {
+    unsafe { load_with_sources(path, game, origin, inputs, &[]) }
+}
+
+pub unsafe fn load_with_sources(
+    path: &Path,
+    game: &mut Game,
+    origin: u64,
+    inputs: &[u16],
+    sources: &[(
+        crate::game::room_entry::world::ResourceId,
+        crate::rom::RomImage,
+    )],
+) -> Result<usize, String> {
     unsafe {
-        if !game.supports_legacy_persistence() {
-            return Err("legacy checkpoints are unavailable for a prepared world".into());
+        if game.actor_identity_is_with_session() {
+            return Err("checkpoint requires a Game-owned committed interval".into());
+        }
+        if game.g_snes.is_null() || game.g_spc_player.is_null() {
+            return Err("full checkpoint requires the initialized native verifier backend".into());
         }
         let bytes = std::fs::read(path).map_err(|e| format!("{}: {e}", path.display()))?;
         if bytes.len() < 56 || &bytes[..8] != MAGIC {
@@ -498,6 +633,9 @@ pub(super) unsafe fn load(
         }
         let word = |at| u64::from_le_bytes(bytes[at..at + 8].try_into().unwrap());
         let completed = usize::try_from(word(32)).map_err(|_| "checkpoint frame overflow")?;
+        if completed == 0 && !game.supports_legacy_persistence() {
+            return Err("prepared checkpoint requires completed input progress".into());
+        }
         if word(8) != compatibility() {
             return Err("checkpoint runtime changed; regenerate from boot".into());
         }
@@ -513,16 +651,88 @@ pub(super) unsafe fn load(
         if word(48) != fingerprint(&bytes[56..]) {
             return Err("checkpoint payload is corrupt".into());
         }
-        let mut archive = Archive::Load(&bytes[56..]);
-        machine(game, &mut archive)?;
-        if !matches!(archive, Archive::Load([])) {
-            return Err("checkpoint has extra state bytes".into());
+        let payload = &bytes[56..];
+        let size = payload
+            .get(..8)
+            .ok_or("truncated checkpoint machine length")?;
+        let size = usize::try_from(u64::from_le_bytes(size.try_into().unwrap()))
+            .map_err(|_| "checkpoint machine length overflow")?;
+        let (machine_bytes, actor_bytes) = payload[8..]
+            .split_at_checked(size)
+            .ok_or("truncated checkpoint machine")?;
+        let mode = if game.supports_legacy_persistence() {
+            crate::cpu_infra::RM_BOTH
+        } else {
+            crate::cpu_infra::RM_MINE
+        };
+        let mut validate =
+            Archive::Validate(machine_bytes, mode as u8, u8::from(game.g_use_my_apu_code));
+        machine(game, &mut validate)?;
+        if !matches!(validate, Archive::Validate([], _, _)) {
+            return Err("checkpoint has extra machine bytes".into());
         }
-        sm::cpu_infra::RtlUpdateSnesPatchForBugfix(game);
-        // Verify that every serialized field survives reconstruction. Pointers
-        // remain those established by this process's normal initialization.
-        if capture(game)? != bytes[56..] {
-            return Err("checkpoint state did not round-trip".into());
+        let ram: &[u8; 131072] = machine_bytes
+            .get(..131072)
+            .ok_or("truncated checkpoint RAM")?
+            .try_into()
+            .unwrap();
+        // Compare the bytes the existing post-load patch will publish, without
+        // changing live allocations before the complete machine/actor preflight.
+        let loaded_after_patch = game.loaded_rom.as_ref().and_then(|loaded| {
+            // Short images retain the original post-machine patch failure prefix.
+            // $85:9650's14 bytes are the updater's highest addressed range.
+            if loaded.len() < crate::rom::lorom_offset(0x859650) as usize + 14 {
+                return None;
+            }
+            let projected = crate::rom::RomImage::zeroed(loaded.len());
+            for at in 0..loaded.len() {
+                projected.write(at, loaded.read(at));
+            }
+            crate::rom_patches::RomPatches::new(projected.clone())
+                .update_bugfix(u16::from_le_bytes([ram[0xc2], ram[0xc3]]));
+            Some(projected)
+        });
+        let restore = crate::game::actors::snapshot::ActorCheckpointPayload::prepare(
+            actor_bytes,
+            game.actor_identity(),
+            game.world(),
+            game.loaded_rom.as_ref(),
+            game.capture_native_rom_binding().as_ref(),
+            sources,
+            ram,
+            loaded_after_patch.as_ref(),
+        )?;
+        let failure = game
+            .actor_identity()
+            .prepare_canonical_transition()
+            .map_err(|error| format!("{error:?}"))?;
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let mut archive = Archive::Load(machine_bytes);
+            machine(game, &mut archive)?;
+            crate::cpu_infra::RtlUpdateSnesPatchForBugfix(game);
+            let mut roundtrip = Archive::Save(Vec::new());
+            machine(game, &mut roundtrip)?;
+            if !matches!(roundtrip, Archive::Save(ref bytes) if bytes == machine_bytes) {
+                return Err::<(), String>("checkpoint state did not round-trip".into());
+            }
+            Ok(())
+        }));
+        game.actor_snapshots = Default::default();
+        match result {
+            Ok(Ok(())) => restore.commit(game.actor_identity_mut()),
+            failed => {
+                if game.supports_legacy_persistence() {
+                    game.commit_actor_canonical(failure);
+                } else {
+                    game.actor_identity_mut().poison(failure);
+                    game.g_fail = true;
+                }
+                match failed {
+                    Ok(Err(error)) => return Err(error),
+                    Err(panic) => std::panic::resume_unwind(panic),
+                    Ok(Ok(())) => unreachable!(),
+                }
+            }
         }
         Ok(completed)
     }

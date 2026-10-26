@@ -615,7 +615,11 @@ unsafe fn message_case(id: u32, g: &mut Game, image: &RomImage, trace: &mut Vec<
             0
         };
         let returned = if door {
-            unsafe { crate::game::sm_82::CallDoorTransitionFunction_Async(8578217, g) }
+            let poll = crate::game::room_entry::protocol::dispatch(
+                &mut crate::game::session_runtime::Runtime::new(g),
+                8578217,
+            );
+            poll.returned_byte()
         } else {
             unsafe { mechanisms::run(g) }
         };

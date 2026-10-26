@@ -21,6 +21,7 @@ pub(crate) struct PreparedCanonicalTransition {
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct ActorIdentityState {
     live_epoch: u64,
+    poisoned: bool,
     timeline: ActorTimeline,
     palette_residency: super::media::ActorPaletteResidency,
 }
@@ -61,6 +62,7 @@ pub(super) enum ActorBirthOrigin {
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) enum ActorIdentityError {
+    Poisoned,
     StaleEpoch,
     StaleGeneration,
     Vacant,
@@ -93,6 +95,7 @@ impl ActorIdentityState {
     pub(crate) fn empty() -> Self {
         Self {
             live_epoch: 0,
+            poisoned: false,
             palette_residency: super::media::ActorPaletteResidency::default(),
             timeline: ActorTimeline {
                 next_birth_order: 0,
@@ -106,6 +109,9 @@ impl ActorIdentityState {
         handle: InstanceHandle,
         actors: &Actors,
     ) -> Result<ActorKey, ActorIdentityError> {
+        if self.poisoned {
+            return Err(ActorIdentityError::Poisoned);
+        }
         if handle.epoch != self.live_epoch {
             return Err(ActorIdentityError::StaleEpoch);
         }
@@ -145,6 +151,9 @@ impl ActorIdentityState {
         provenance: ActorProvenance,
         appearance: Option<AppearanceId>,
     ) -> Result<PendingActorBirth, ActorIdentityError> {
+        if self.poisoned {
+            return Err(ActorIdentityError::Poisoned);
+        }
         let old = self
             .timeline
             .slots
@@ -249,6 +258,7 @@ impl ActorIdentityState {
     ) {
         debug_assert_eq!(self.live_epoch.checked_add(1), Some(epoch));
         self.live_epoch = epoch;
+        self.poisoned = false;
         self.timeline = timeline;
         self.palette_residency = residency;
     }
@@ -348,6 +358,23 @@ fn canonical_timeline(ram: &[u8; 131072]) -> ActorTimeline {
 }
 
 impl ActorIdentityState {
+    pub(crate) fn is_poisoned(&self) -> bool {
+        self.poisoned
+    }
+
+    pub(crate) fn poison(&mut self, transition: PreparedCanonicalTransition) {
+        self.live_epoch = transition.next_live_epoch;
+        self.retire_all();
+        self.palette_residency.clear();
+        self.poisoned = true;
+    }
+
+    pub(crate) fn retain_poison(&mut self) {
+        self.poisoned = true;
+        self.retire_all();
+        self.palette_residency.clear();
+    }
+
     pub(super) fn palette_residency(&self) -> &super::media::ActorPaletteResidency {
         &self.palette_residency
     }
@@ -382,5 +409,166 @@ impl ActorIdentityState {
             .occupant
             .as_ref()
             .map(|occupant| occupant.provenance.origin.clone())
+    }
+}
+
+impl ActorTimeline {
+    pub(super) fn encode(&self, bytes: &mut Vec<u8>, ram: &[u8; 131072]) {
+        bytes.extend_from_slice(&self.next_birth_order.to_le_bytes());
+        for (index, slot) in self.slots.iter().enumerate() {
+            bytes.extend_from_slice(&slot.generation.to_le_bytes());
+            let at = 0xf78 + index * 64;
+            let raw_live = ram[at..at + 2] != [0, 0];
+            // Unknown compatibility-live slots are possible through odd/raw aliases.
+            bytes.push(if slot.occupant.is_some() {
+                1
+            } else if raw_live {
+                2
+            } else {
+                0
+            });
+            let Some(occupant) = &slot.occupant else {
+                continue;
+            };
+            bytes.extend_from_slice(&occupant.birth_order.to_le_bytes());
+            super::snapshot::optional_id(
+                bytes,
+                occupant.provenance.authored_species.map(|id| id.0),
+            );
+            match occupant.provenance.origin {
+                ActorBirthOrigin::CanonicalImport => bytes.push(0),
+                ActorBirthOrigin::Population {
+                    population,
+                    entry,
+                    respawn,
+                } => {
+                    bytes.push(1);
+                    bytes.extend_from_slice(&population.0.to_le_bytes());
+                    bytes.extend_from_slice(&entry.0.to_le_bytes());
+                    bytes.push(u8::from(respawn));
+                }
+                ActorBirthOrigin::Dynamic { template, part } => {
+                    bytes.push(2);
+                    bytes.extend_from_slice(&template.0.to_le_bytes());
+                    bytes.extend_from_slice(&part.to_le_bytes());
+                }
+            }
+            super::snapshot::optional_id(bytes, occupant.appearance.map(|id| id.0));
+        }
+    }
+
+    pub(super) fn decode(
+        read: &mut super::snapshot::CheckpointReader<'_>,
+        world: &crate::game::room_entry::world::WorldBinding,
+        ram: &[u8; 131072],
+    ) -> Result<Self, String> {
+        let next_birth_order = read.counter()?;
+        let mut slots: [SlotIdentity; 32] = core::array::from_fn(|_| SlotIdentity::default());
+        let mut births = std::collections::BTreeSet::new();
+        for (index, slot) in slots.iter_mut().enumerate() {
+            slot.generation = read.counter()?;
+            let at = 0xf78 + index * 64;
+            let raw_live = ram[at..at + 2] != [0, 0];
+            match read.byte()? {
+                0 if !raw_live => continue,
+                2 if raw_live => continue,
+                // A retained occurrence may have a raw-zero definition or DAFF conversion.
+                1 => {}
+                _ => return Err("invalid actor checkpoint occupant tag".into()),
+            }
+            let birth_order = read.counter()?;
+            if slot.generation == 0
+                || birth_order >= next_birth_order
+                || !births.insert(birth_order)
+            {
+                return Err("invalid actor checkpoint generation or birth order".into());
+            }
+            let authored_species = read.optional_id()?.map(SpeciesId);
+            let origin = match read.byte()? {
+                0 => ActorBirthOrigin::CanonicalImport,
+                1 => {
+                    let population = PopulationId(read.id()?);
+                    let entry = PopulationEntryId(read.id()?);
+                    let respawn = match read.byte()? {
+                        0 => false,
+                        1 => true,
+                        _ => return Err("invalid actor checkpoint respawn tag".into()),
+                    };
+                    ActorBirthOrigin::Population {
+                        population,
+                        entry,
+                        respawn,
+                    }
+                }
+                2 => ActorBirthOrigin::Dynamic {
+                    template: ActorTemplateId(read.id()?),
+                    part: read.word()?,
+                },
+                _ => return Err("invalid actor checkpoint origin".into()),
+            };
+            let appearance = read.optional_id()?.map(AppearanceId);
+            if let Some(definitions) = world.actors().definitions() {
+                if authored_species.is_some_and(|id| !definitions.species.contains_key(&id)) {
+                    return Err("actor checkpoint species is unavailable".into());
+                }
+                match origin {
+                    ActorBirthOrigin::Population {
+                        population, entry, ..
+                    } => {
+                        if !definitions
+                            .populations
+                            .get(&population)
+                            .is_some_and(|value| {
+                                value.entries.iter().any(|value| {
+                                    value.id == entry && authored_species == Some(value.species)
+                                })
+                            })
+                        {
+                            return Err("actor checkpoint population lineage is unavailable".into());
+                        }
+                    }
+                    ActorBirthOrigin::Dynamic { template, part } => {
+                        if !definitions.templates.get(&template).is_some_and(|entry| {
+                            authored_species == Some(entry.species)
+                                && definitions
+                                    .species
+                                    .get(&entry.species)
+                                    .is_some_and(|species| part < species.multipart_count)
+                        }) {
+                            return Err("actor checkpoint template lineage is unavailable".into());
+                        }
+                    }
+                    ActorBirthOrigin::CanonicalImport if authored_species.is_some() => {
+                        return Err(
+                            "canonical actor checkpoint cannot have authored species".into()
+                        );
+                    }
+                    ActorBirthOrigin::CanonicalImport => {}
+                }
+            } else if authored_species.is_some()
+                || !matches!(origin, ActorBirthOrigin::CanonicalImport)
+            {
+                return Err("actor checkpoint has authored lineage without a catalog".into());
+            }
+            if let Some(definitions) = world.actor_media().definitions() {
+                if appearance.is_some_and(|id| !definitions.appearances.contains_key(&id)) {
+                    return Err("actor checkpoint appearance is unavailable".into());
+                }
+            } else if appearance.is_some() {
+                return Err("actor checkpoint has an appearance without a catalog".into());
+            }
+            slot.occupant = Some(ActorOccupant {
+                birth_order,
+                provenance: ActorProvenance {
+                    authored_species,
+                    origin,
+                },
+                appearance,
+            });
+        }
+        Ok(Self {
+            next_birth_order,
+            slots,
+        })
     }
 }

@@ -11,6 +11,95 @@ use crate::{
 fn put(g: &mut Game, at: usize, value: u16) {
     g.g_ram[at..at + 2].copy_from_slice(&value.to_le_bytes());
 }
+
+// Movies cannot create prepared catalogs or equal-byte custom allocation receipts.
+#[cfg(sm_verify_dll)]
+pub unsafe fn checkpoint(
+    path: &std::path::Path,
+    mut initialize: impl FnMut(&mut Game) -> Result<(), String>,
+) -> Result<(), String> {
+    unsafe {
+        use crate::game::actors::{api::ActorSpawnRequest, population};
+        use crate::verification_checkpoint as disk;
+        let mut producer = Game::with_world(fixture::binding(false));
+        initialize(&mut producer)?;
+        run(12, &mut producer);
+        let loaded = producer.loaded_rom.clone().unwrap();
+        let detached = crate::rom::RomImage::zeroed(loaded.len());
+        let custom = crate::rom::RomImage::zeroed(loaded.len());
+        for at in 0..loaded.len() {
+            detached.write(at, loaded.read(at));
+            custom.write(at, loaded.read(at));
+        }
+        for (image, tilesets) in [(detached, 0x9000), (loaded.clone(), 0x9200)] {
+            producer.register_rom(image);
+            checks::checkpoint_stage_tilesets(&mut Runtime::new(&mut producer), tilesets);
+        }
+        let request = ActorSpawnRequest {
+            template: fixture::TEMPLATE,
+            appearance: Some(fixture::APPEARANCES[2]),
+        };
+        for remove in [true, false, true] {
+            checks::checkpoint_spawn(&mut Runtime::new(&mut producer), request.clone(), remove);
+        }
+        crate::rtl::RtlRunFrame(0, &mut producer);
+        crate::rtl::RtlRenderAudio(&mut [[0; 2]; 534], &mut producer);
+        let resource = fixture::PALETTES[1];
+        let sources = [(resource, custom)];
+        let expected = disk::capture_with_sources(&mut producer, &sources)?;
+        disk::save_with_sources(path, &mut producer, 0, &[0], 1, &sources)?;
+        let mut consumer = Game::with_world(fixture::binding(false));
+        initialize(&mut consumer)?;
+        run(12, &mut consumer);
+        let current = consumer.loaded_rom.clone().unwrap();
+        let before = disk::capture_with_sources(&mut consumer, &sources)?;
+        assert!(
+            disk::load_with_sources(path, &mut consumer, 0, &[0], &[(resource, current.clone())])
+                .is_err()
+        );
+        assert_eq!(disk::capture_with_sources(&mut consumer, &sources)?, before);
+        disk::load_with_sources(path, &mut consumer, 0, &[0], &sources)?;
+        let committed = disk::capture_with_sources(&mut consumer, &sources)?;
+        assert_eq!(committed, expected);
+        let original = std::fs::read(path).map_err(|error| error.to_string())?;
+        for length in [original.len() - 1, 56] {
+            let invalid = path.with_extension(format!("invalid-{length}"));
+            let mut bytes = original[..length].to_vec();
+            let hash = disk::fingerprint(&bytes[56..]);
+            bytes[48..56].copy_from_slice(&hash.to_le_bytes());
+            use std::io::Write;
+            std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&invalid)
+                .map_err(|error| error.to_string())?
+                .write_all(&bytes)
+                .map_err(|error| error.to_string())?;
+            assert!(disk::load_with_sources(&invalid, &mut consumer, 0, &[0], &sources).is_err());
+            std::fs::remove_file(invalid).map_err(|error| error.to_string())?;
+        }
+        assert_eq!(
+            disk::capture_with_sources(&mut consumer, &sources)?,
+            committed
+        );
+        let mut audio = [[[0; 2]; 534]; 2];
+        for (game, samples) in std::iter::zip([&mut producer, &mut consumer], &mut audio) {
+            let mut runtime = Runtime::new(game);
+            population::spawn(&mut runtime, request.clone())
+                .unwrap()
+                .unwrap();
+            drop(runtime);
+            crate::rtl::RtlRunFrame(0, game);
+            crate::rtl::RtlRenderAudio(samples, game);
+        }
+        assert_eq!(audio[0], audio[1]);
+        assert_eq!(
+            disk::capture_with_sources(&mut producer, &sources)?,
+            disk::capture_with_sources(&mut consumer, &sources)?
+        );
+        Ok(())
+    }
+}
 fn word(g: &Game, at: usize) -> u16 {
     u16::from_le_bytes(g.g_ram[at..at + 2].try_into().unwrap())
 }

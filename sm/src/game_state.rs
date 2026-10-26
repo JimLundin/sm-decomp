@@ -876,6 +876,12 @@ impl Game {
     pub(crate) fn take_actor_identity(
         &mut self,
     ) -> crate::game::actors::identity::ActorIdentityState {
+        if let Some(identity) = &self.actor_identity {
+            assert!(
+                !identity.is_poisoned(),
+                "prepared checkpoint failed; restore a complete checkpoint before resuming"
+            );
+        }
         self.actor_identity
             .take()
             .expect("actor identity already owned by Session")
@@ -919,10 +925,15 @@ impl Game {
         &mut self,
         transition: crate::game::actors::identity::PreparedCanonicalTransition,
     ) {
+        let retain_poison =
+            !self.supports_legacy_persistence() && self.actor_identity().is_poisoned();
         self.actor_identity
             .as_mut()
             .expect("Game owns actors during canonical adoption")
             .commit_canonical_transition(transition, &self.g_ram);
+        if retain_poison {
+            self.actor_identity_mut().retain_poison();
+        }
     }
     pub(crate) fn capture_actor_snapshot(
         &self,

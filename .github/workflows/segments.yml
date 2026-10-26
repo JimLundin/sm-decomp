@@ -110,7 +110,7 @@ jobs:
               if row['id'] == 'xray-activate-release':
                   return ('seeds-v1-xray-activation-9c5ad92da3d5d2dc.tar.gz.enc', '9c5ad92da3d5d2dc13cfae2e2a0906ca915b2329767f121183190d2ab96c25bc')
               if 'checkpoint' in row:
-                  return ('Core67-b54e-full22.tar.gz.enc', '9124be2e202d908aee762871f29927629e6e7e41b98c08e86f54e660d03a2b23')
+                  return ('f158-full22.tar.gz.enc', '0aef0db34feb04b386db4926baf3268958981338293356a3915c292998dc1027')
               # Match exact seed identities, not capture prefixes: pickups and the
               # general bundle contain different subsets of 100-input-phase.
               seed = row.get('seed')

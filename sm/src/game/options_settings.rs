@@ -342,3 +342,26 @@ pub(crate) fn copy_screen(last_word: usize, native: bool, game: &mut Game) {
     let source = crate::word_transfers::WordEndpoint::Ram(last_word as isize, native);
     word_transfers!(game, descending, 1024; pause_map(1023) <- captured(source, 0));
 }
+
+pub(crate) fn advance(game: &mut Game, upload: fn(&mut Game), enable: fn(&mut Game)) -> u8 {
+    // Keep the original thirteen-entry bounds failure ahead of all menu effects.
+    let screen = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+        [usize::from(word!(game.game_options_screen_index))];
+    match screen {
+        1 => initialize(game, upload),
+        2 => fade_in::<false>(game),
+        3 => main_menu(game),
+        4 => finish_start(game),
+        6 => fade_in::<true>(game),
+        7 => controller(game),
+        8 => special(game),
+        9 => scroll::<true>(game),
+        10 => scroll::<false>(game),
+        _ => fade_out(game, screen, enable),
+    }
+    crate::game::options_objects::advance_and_draw(game);
+    if word!(game.game_options_screen_index) as i32 - 2i32 & 0x8000 == 0 {
+        crate::game::menu_tilemap::queue_options(game);
+    }
+    0
+}

@@ -10,6 +10,28 @@ use super::{
 };
 use crate::game::{room_entry::world::Identity, session_runtime::Runtime};
 use std::cell::RefCell;
+// Keep checkpoint operations beside the private actor lifecycle they exercise.
+pub(crate) fn checkpoint_stage_tilesets(h: &mut Runtime<'_>, tilesets: u16) {
+    h.session_mut().room.entry.enemy_tilesets_key = tilesets;
+    super::staging::stage_tilesets(h);
+}
+pub(crate) fn checkpoint_spawn(
+    h: &mut Runtime<'_>,
+    request: super::api::ActorSpawnRequest,
+    remove: bool,
+) {
+    let handle = super::population::spawn(h, request).unwrap().unwrap();
+    let key = h
+        .session()
+        .actor_identity
+        .resolve(handle, &h.session().actors)
+        .unwrap();
+    if remove {
+        h.session_mut().actors.controls.selected = key.byte_index();
+        super::population::delete_connected(h);
+    }
+}
+
 #[derive(Default)]
 struct Observations {
     active: bool,

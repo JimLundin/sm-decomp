@@ -8,9 +8,14 @@ use crate::game::animated_tiles;
 use crate::game::demo_rooms;
 use crate::game::display_refresh::{self, GraphicsAsset};
 use crate::game::enemy_projectiles::EprojRunAll;
+use crate::game::file_menu::advance as advance_file_menu;
+use crate::game::game_over::advance as advance_game_over;
+use crate::game::map_menu::advance as advance_map_menu;
 use crate::game::message_boxes;
+use crate::game::options_settings;
 use crate::game::palette_effects;
 use crate::game::pause_controls;
+use crate::game::pause_controls::fade_in as pause_fade_in;
 use crate::game::player_projectiles::prepare;
 use crate::game::prelude::*;
 use crate::game::room_entry::{self, ArrivalRequest, EntrySignal, StartSite};
@@ -19,15 +24,53 @@ use crate::game::room_scrolls::advance_camera;
 use crate::game::room_scrolls::{debug_position, update_scrolls};
 use crate::game::room_state::advance_room;
 use crate::game::room_state::{pause_draygon, unpause_draygon};
+use crate::game::samus_animation::{advance_death_pose, begin_death, explode_suit, flash_death};
 use crate::game::session_runtime::{Runtime, player_command};
+use crate::game::sm_8b::{
+    GameState_1_OpeningCinematic_, GameState_37_CeresGoesBoomWithSamus_,
+    GameState_39_EndingAndCredits_,
+};
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
     UnpauseHook_Kraid_IsDead,
 };
 use crate::game::sm_a9::MotherBrainsBody_UnpauseHook;
 use crate::ram_map::{checked_word, words as ram};
-use crate::types::Func_Y_Y;
+use crate::types::Func_V_Coroutine;
 
+#[derive(Clone, Copy)]
+enum FrameEntry {
+    Advance(Entry),
+    Callback(Func_V_Coroutine),
+    Door(EntrySignal),
+    Demo,
+    Options,
+    Null,
+    Unused,
+    Debug,
+}
+use FrameEntry::{Advance, Callback, Debug, Demo, Door, Null, Options, Unused};
+
+static GAME_STATE_ENTRIES: [FrameEntry; 45] = callback_table! { FrameEntry;
+    {Callback(demo_rooms::reset)}, {Callback(GameState_1_OpeningCinematic_)}, {Options},
+    {Null}, {Callback(advance_file_menu)}, {Callback(advance_map_menu)},
+    {Advance(Entry::Initialize)}, {Advance(Entry::FadeIn)}, {Advance(Entry::Gameplay)},
+    {Door(EntrySignal::DoorState9)}, {Door(EntrySignal::DoorState10)},
+    {Door(EntrySignal::DoorState11)}, {Advance(Entry::PauseFadeOut)},
+    {Advance(Entry::PauseSetup)}, {Callback(pause_fade_in)}, {Advance(Entry::Paused)},
+    {Advance(Entry::UnpauseFadeOut)}, {Advance(Entry::UnpauseSetup)}, {Advance(Entry::Unpause)},
+    {Advance(Entry::PrepareDeath)}, {Advance(Entry::DeathBlackout)}, {Callback(begin_death)},
+    {Callback(advance_death_pose)}, {Callback(flash_death)},
+    {Callback(explode_suit)}, {Advance(Entry::GameOverFadeOut)},
+    {Callback(advance_game_over)}, {Advance(Entry::ReserveTanks)}, {Unused},
+    {Debug}, {Callback(GameState_37_CeresGoesBoomWithSamus_)},
+    {Advance(Entry::Initialize)}, {Advance(Entry::CeresElevator)},
+    {Advance(Entry::CeresBlackout)}, {Callback(GameState_37_CeresGoesBoomWithSamus_)}, {Advance(Entry::TimeUp)},
+    {Advance(Entry::TimeUpExit)}, {Callback(GameState_37_CeresGoesBoomWithSamus_)},
+    {Advance(Entry::ZebesEscape)}, {Callback(GameState_39_EndingAndCredits_)},
+    {Advance(Entry::Initialize)}, {Advance(Entry::DemoStart)}, {Demo},
+    {Advance(Entry::DemoStop)}, {Advance(Entry::DemoNext)},
+};
 #[derive(Clone, Copy, PartialEq)]
 #[repr(u8)]
 enum ResumePoint {
@@ -51,7 +94,7 @@ impl ResumePoint {
 
 #[derive(Clone, Copy)]
 pub(crate) enum Entry {
-    Frame(Func_Y_Y),
+    Frame,
     Initialize,
     Gameplay,
     FadeIn,
@@ -190,59 +233,102 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
             game.g_ram[0x612] = 0;
             return 0 as CoroutineRet;
         }
-        if let Entry::Frame(dispatch) = entry {
-            let mut st: i32 = game.g_ram[0x611] as i32;
-            let begin_frame: bool = if st >= 1 && st <= 3 {
-                let mut _coret_: u8 = crate::game::boot::resume(game);
-                if _coret_ != 0 {
-                    return _coret_;
+        if matches!(entry, Entry::Frame) {
+            let returned = 'frame: {
+                let mut st: i32 = game.g_ram[0x611] as i32;
+                let begin_frame: bool = if st >= 1 && st <= 3 {
+                    let mut _coret_: u8 = crate::game::boot::resume(game);
+                    if _coret_ != 0 {
+                        break 'frame _coret_;
+                    }
+                    true
+                } else {
+                    !(st >= 10)
+                        && ({
+                            if st != 0 {
+                                crate::host::Die(c"Incorrect coroutine_state_0".as_ptr());
+                            }
+                            true
+                        })
+                };
+                if begin_frame {
+                    for offset in (0x612..0x616).rev() {
+                        game.g_ram[offset] = 0;
+                    }
+                    crate::game::controller_input::sample(game);
+                    crate::game::visual_runtime::update_hdma(game);
+                    game.next_random();
+                    crate::game::sprite_drawing::clear_high_table(game);
+                    word! { game, 0;
+                        oam_next_ptr, nmi_copy_samus_halves, nmi_copy_samus_top_half_src,
+                        nmi_copy_samus_bottom_half_src,
+                    }
+                    st = word!(game.game_state) as i32 + 10;
+                    game.g_ram[0x611] = st as u8;
                 }
-                true
-            } else {
-                !(st >= 10)
-                    && ({
-                        if st != 0 {
-                            crate::host::Die(c"Incorrect coroutine_state_0".as_ptr());
-                        }
-                        true
-                    })
+                let mut _coret__0: u8 = match GAME_STATE_ENTRIES[usize::from((st - 10i32) as u16)] {
+                    Advance(entry) => advance(entry, game),
+                    Callback(callback) => callback(game),
+                    Door(signal) => {
+                        let poll = room_entry::protocol::resume(&mut Runtime::new(game), signal);
+                        poll.returned_byte()
+                    }
+                    Demo => demo_rooms::play(game, |game| advance(Entry::Gameplay, game)),
+                    Null => 0,
+                    Unused => {
+                        crate::rtl::Unreachable(game);
+                        0
+                    }
+                    Debug => {
+                        crate::cpu_infra::DebugGameOverMenu();
+                        0
+                    }
+                    Options => options_settings::advance(
+                        game,
+                        |game| {
+                            crate::rtl::register_writes! { game;
+                                mirror(VMADDL as u16, 0, 0x72, true); byte(VMADDH as u16, 0x58);
+                                byte(VMAIN as u16, 0x80);
+                            }
+                            display_refresh::setup_transfer(
+                                u16::from_ne_bytes([1, 0x18]),
+                                0x8edc00,
+                                0x800,
+                                game,
+                            );
+                            WriteReg(MDMAEN as u16, 2, game);
+                        },
+                        |game| display_refresh::enable(true, game),
+                    ),
+                };
+                if _coret__0 != 0 {
+                    break 'frame _coret__0;
+                }
+                crate::game::music::advance_sound_effects(game, |channel, value, game| {
+                    crate::native_audio::write_sound_port(channel, value, game)
+                });
+                crate::game::sprite_drawing::finish_frame(game);
+                word!(game.joypad1_input_samusfilter = word!(game.joypad1_lastkeys));
+                if game.g_ram[0x612] | game.g_ram[0x613] | game.g_ram[0x614] | game.g_ram[0x615]
+                    != 0
+                {
+                    printf(
+                        c"Coroutine state: %d, %d, %d, %d\n".as_ptr(),
+                        game.g_ram[0x612] as i32,
+                        game.g_ram[0x613] as i32,
+                        game.g_ram[0x614] as i32,
+                        game.g_ram[0x615] as i32,
+                    );
+                    crate::host::Warning(c"Coroutine State is broken!".as_ptr());
+                }
+                game.g_ram[0x611] = 0;
+                0
             };
-            if begin_frame {
-                for offset in (0x612..0x616).rev() {
-                    game.g_ram[offset] = 0;
-                }
-                crate::game::controller_input::sample(game);
-                crate::game::visual_runtime::update_hdma(game);
-                game.next_random();
-                crate::game::sprite_drawing::clear_high_table(game);
-                word! { game, 0;
-                    oam_next_ptr, nmi_copy_samus_halves, nmi_copy_samus_top_half_src,
-                    nmi_copy_samus_bottom_half_src,
-                }
-                st = word!(game.game_state) as i32 + 10;
-                game.g_ram[0x611] = st as u8;
+            if returned == 0 {
+                game.g_ram[0x5b4] = 1;
             }
-            let mut _coret__0: u8 = dispatch((st - 10i32) as u16, game) as u8;
-            if _coret__0 != 0 {
-                return _coret__0;
-            }
-            crate::game::music::advance_sound_effects(game, |channel, value, game| {
-                crate::native_audio::write_sound_port(channel, value, game)
-            });
-            crate::game::sprite_drawing::finish_frame(game);
-            word!(game.joypad1_input_samusfilter = word!(game.joypad1_lastkeys));
-            if game.g_ram[0x612] | game.g_ram[0x613] | game.g_ram[0x614] | game.g_ram[0x615] != 0 {
-                printf(
-                    c"Coroutine state: %d, %d, %d, %d\n".as_ptr(),
-                    game.g_ram[0x612] as i32,
-                    game.g_ram[0x613] as i32,
-                    game.g_ram[0x614] as i32,
-                    game.g_ram[0x615] as i32,
-                );
-                crate::host::Warning(c"Coroutine State is broken!".as_ptr());
-            }
-            game.g_ram[0x611] = 0;
-            return 0 as CoroutineRet;
+            display_refresh::run(game);
+            return returned;
         }
         if matches!(entry, Entry::DemoStop) {
             if word!(game.substate) != 1 {
@@ -566,7 +652,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                 word!(game.game_state += 1);
                 game.g_ram[0x51] = 15;
             }
-            Entry::Frame(_)
+            Entry::Frame
             | Entry::DemoStop
             | Entry::DemoNext
             | Entry::PauseSetup

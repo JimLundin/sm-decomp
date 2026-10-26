@@ -565,3 +565,45 @@ impl ActorMediaCatalog {
         Ok(())
     }
 }
+
+impl ActorPaletteResidency {
+    pub(super) fn checkpoint_rows(
+        &self,
+    ) -> impl Iterator<
+        Item = (
+            usize,
+            crate::game::room_entry::world::ResourceId,
+            &crate::rom::RomImage,
+        ),
+    > {
+        self.rows.iter().enumerate().filter_map(|(row, value)| {
+            value
+                .as_ref()
+                .map(|receipt| (row, receipt.resource, &receipt.image))
+        })
+    }
+
+    pub(super) fn checkpoint_restore(
+        rows: &[(usize, crate::game::room_entry::world::ResourceId, usize)],
+        images: &[crate::rom::RomImage],
+        world: &crate::game::room_entry::world::WorldBinding,
+    ) -> Result<Self, String> {
+        let mut result = Self::default();
+        for &(row, resource, image) in rows {
+            if row >= 16 || result.rows[row].is_some() || image >= images.len() {
+                return Err("invalid actor checkpoint palette receipt".into());
+            }
+            if !world.definition().is_some_and(|definition| {
+                definition.resources.get(&resource)
+                    == Some(&crate::game::room_entry::world::ResourceKind::Palette)
+            }) {
+                return Err("actor checkpoint palette resource is unavailable".into());
+            }
+            result.rows[row] = Some(ResidentPalette {
+                resource,
+                image: images[image].clone(),
+            });
+        }
+        Ok(result)
+    }
+}

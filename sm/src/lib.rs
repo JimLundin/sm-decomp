@@ -15,6 +15,12 @@
 #![allow(unused_assignments)]
 #![allow(unused_mut)]
 
+#[cfg(any(feature = "frontend", sm_verify_dll))]
+#[path = "verify/checkpoint.rs"]
+pub mod verification_checkpoint;
+#[cfg(sm_verify_dll)]
+pub use actor_composed_route::checkpoint as verify_prepared_actor_checkpoint;
+
 // Run the body before testing the guard; body locals remain in scope.
 #[macro_export]
 macro_rules! do_until {
@@ -218,6 +224,9 @@ pub fn verify_actor_population_animation_case(id: u32) -> Option<Vec<u8>> {
 }
 
 pub mod game {
+    #[cfg(sm_verify_dll)]
+    #[path = "../verification/actor_composed_route.rs"]
+    pub(crate) mod actor_composed_route;
     pub(crate) mod actors;
     // Share the exact countdown prefix and expiry test across named callbacks.
     macro_rules! countdown_callbacks {
@@ -444,7 +453,6 @@ pub mod game {
     pub(crate) mod session_access;
     pub(crate) mod session_encoding;
     pub(crate) mod session_runtime;
-    pub mod sm_82;
     pub mod sm_8b;
     pub(crate) mod sprite_drawing;
     pub(crate) mod sprite_effect_controllers;
@@ -814,8 +822,7 @@ pub fn verify_actor_movement_table_case(id: u32) -> Option<Vec<u8>> {
 pub(crate) mod actor_kraid_writer_entry;
 
 #[cfg(sm_verify_dll)]
-#[path = "verification/actor_composed_route.rs"]
-pub(crate) mod actor_composed_route;
+pub(crate) use game::actor_composed_route;
 #[cfg(sm_verify_dll)]
 #[path = "verification/player_collision_composed_route.rs"]
 pub(crate) mod player_collision_composed_route;

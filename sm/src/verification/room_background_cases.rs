@@ -39,7 +39,11 @@ pub(crate) fn run(op: Operation, g: &mut Game) -> Option<u8> {
             None
         }
         Operation::Place => {
-            Some(unsafe { crate::game::sm_82::CallDoorTransitionFunction_Async(0x82e3c0, g) })
+            let poll = crate::game::room_entry::protocol::dispatch(
+                &mut crate::game::session_runtime::Runtime::new(g),
+                0x82e3c0,
+            );
+            Some(poll.returned_byte())
         }
     }
 }

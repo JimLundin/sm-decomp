@@ -172,7 +172,7 @@ fn load_tile_data<H: ActorHost + Host>(h: &mut H) {
     h.session_mut().actors.staging.descriptor_write_position = 0;
 }
 
-fn stage_tilesets<H: ActorHost + Host>(h: &mut H) {
+pub(super) fn stage_tilesets<H: ActorHost + Host>(h: &mut H) {
     h.session_mut().actors.staging.descriptor_write_position = 0;
     h.session_mut().actors.graphics.definitions.fill(0);
     h.session_mut().actors.graphics.tile_offsets.fill(0);
