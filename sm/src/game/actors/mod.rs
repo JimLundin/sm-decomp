@@ -13,6 +13,7 @@ pub(in crate::game) mod falling_platforms;
 pub(in crate::game) mod fireflea;
 pub(crate) mod identity;
 pub(in crate::game) mod kago;
+pub(in crate::game) mod maridia_fish;
 pub(in crate::game) mod maridia_snail;
 pub(in crate::game) mod media;
 pub(crate) mod metroid;
