@@ -1879,6 +1879,52 @@ pub(crate) fn drift_cinematic_sprite(
     }
 }
 
+pub(crate) fn fade_ending_gunship_backdrop(game: &mut Game) {
+    let expired = word!(game.cinematic_var4 -= 1, reread) & 0x8000 != 0;
+    if word!(game.cinematic_var4) == 0 || expired {
+        fade_cinematic_fixed_color(game);
+        if game.g_ram[0x74] == 32 && game.g_ram[0x75] == 64 && game.g_ram[0x76] == 0x80 {
+            game.g_ram[0x6f] = 0;
+            game.g_ram[0x72] = 0;
+        }
+        word!(game.cinematic_var4 = 8);
+    }
+}
+
+pub(crate) fn advance_ending_gunship_spin(slow: bool, game: &mut Game) -> bool {
+    if slow || word!(game.cinematic_var13) == 0 {
+        fade_ending_gunship_backdrop(game);
+    } else {
+        word!(game.cinematic_var13 -= 1);
+    }
+    let (rotation, mask) = if slow { (1, 7) } else { (4, 15) };
+    if !slow || word!(game.cinematic_var5) != 224 {
+        word!(
+            game.cinematic_var5 =
+                u16::from((word!(game.cinematic_var5) as u8).wrapping_sub(rotation))
+        );
+    }
+    let index = usize::from(word!(game.cinematic_var14));
+    let velocity = if slow {
+        [1i32, 1, 1, -1, -1, 1, 1, -1][index] * 0x10000
+    } else {
+        [1i32, 1, 1, 1, -1, -1, 1, 1, 1, 1, -1, -1, 1, 1, -1, -1][index] * 0x8000
+    };
+    let fraction = ram_words::cinematic_var7;
+    add_native_pair(fraction + 2, fraction, velocity as u32, game);
+    word!(game.cinematic_var14 = word!(game.cinematic_var14).wrapping_add(1) & mask);
+    word!(game.cinematic_var6 -= if slow { 2 } else { 8 });
+    if word!(game.cinematic_var6) as i32 - (if slow { 1184 } else { 1456 }) & 0x8000 == 0 {
+        return false;
+    }
+    if slow {
+        word! {game; cinematic_function = 0xddcd; cinematic_var14 = 0x8000; cinematic_var13 = 0; }
+    } else {
+        word! {game; cinematic_var13 = 1; cinematic_var14 = 0; cinematic_function = 0xdd42; }
+    }
+    true
+}
+
 pub(crate) fn advance_ending_samus_jump(object: u16, phase: u8, game: &mut Game) {
     if phase == 2 {
         advance_ending_graphics(EndingGraphics::Samus, game);
