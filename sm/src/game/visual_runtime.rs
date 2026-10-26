@@ -1617,7 +1617,10 @@ impl CinematicObjects {
             checked_word!(game, layout.current; = object as u16);
             if checked_word!(game, layout.instructions + 2 * (object as usize >> 1);) != 0 {
                 unsafe {
-                    advance_cinematic_object(self, object as u16, game);
+                    match self {
+                        Background => advance_cinematic_object::<0x8c>(self, object as u16, game),
+                        _ => advance_cinematic_object::<0x8b>(self, object as u16, game),
+                    }
                 }
                 // A callback may redirect the scan outside its original slot range.
                 object = i32::from(checked_word!(game, layout.current;));
@@ -2570,7 +2573,11 @@ pub(crate) fn set_cinematic_tilemap_updates(enabled: bool, game: &mut Game) {
         | (u16::from(enabled) << 15));
 }
 
-unsafe fn advance_cinematic_object(objects: CinematicObjects, object: u16, game: &mut Game) {
+unsafe fn advance_cinematic_object<const BANK: u8>(
+    objects: CinematicObjects,
+    object: u16,
+    game: &mut Game,
+) {
     use crate::game::sm_8b as bank;
     use CinematicObjects::*;
     let layout = objects.layout();
@@ -2592,16 +2599,9 @@ unsafe fn advance_cinematic_object(objects: CinematicObjects, object: u16, game:
         if timer != 1 {
             return;
         }
-        let rom_bank = if matches!(objects, Background) {
-            0x8c
-        } else {
-            0x8b
-        };
         let mut address = checked_word!(game, layout.instructions + offset;);
         let duration = loop {
-            let instruction = (crate::rtl::rom_ptr_with_bank(rom_bank, address, game)
-                as *const u16)
-                .read_unaligned();
+            let instruction = cinematic_native_record::<BANK>(address, game).word(0);
             if instruction & 0x8000 == 0 {
                 break instruction;
             }
@@ -2625,7 +2625,7 @@ unsafe fn advance_cinematic_object(objects: CinematicObjects, object: u16, game:
                         1
                     };
                     checked_word!(game, layout.instructions + plane * stride + offset;
-                        = (crate::rtl::rom_bank_ptr::<0x8b>(operand, game) as *const u16).read_unaligned());
+                        = cinematic_native_record::<0x8b>(operand, game).word(0));
                     operand.wrapping_add(2)
                 }
                 (Sprites, 0x9457) | (Mode7, 0x957d) => {
@@ -2647,11 +2647,11 @@ unsafe fn advance_cinematic_object(objects: CinematicObjects, object: u16, game:
                         // Skipping a jump must not read its ROM operand.
                         operand.wrapping_add(if relative { 1 } else { 2 })
                     } else {
-                        let target = crate::rtl::rom_ptr_with_bank(rom_bank, operand, game);
+                        let target = cinematic_native_record::<BANK>(operand, game);
                         if relative {
-                            operand.wrapping_add((*target as i8) as u16)
+                            operand.wrapping_add((target.byte(0) as i8) as u16)
                         } else {
-                            (target as *const u16).read_unaligned()
+                            target.word(0)
                         }
                     }
                 }
@@ -2671,28 +2671,16 @@ unsafe fn advance_cinematic_object(objects: CinematicObjects, object: u16, game:
             }
         };
         checked_word!(game, timer_at; = duration);
-        let payload = crate::rtl::rom_ptr_with_bank(rom_bank, address, game);
+        let payload = cinematic_native_record::<BANK>(address, game);
+        if matches!(objects, Background) {
+            word!(game.cinematicbg_arr1[(selected >> 1)] = payload.word(4));
+        }
+        let value = payload.word(2);
+        drop(payload);
         match objects {
-            Sprites => word!(
-                game.cinematicspr_whattodraw[(selected >> 1)] =
-                    (payload.add(2) as *const u16).read_unaligned()
-            ),
-            Mode7 => crate::game::mode7_transfers::enqueue_rom(
-                0x8b,
-                (payload.add(2) as *const u16).read_unaligned(),
-                game,
-            ),
-            Background => {
-                word!(
-                    game.cinematicbg_arr1[(selected >> 1)] =
-                        (payload.add(4) as *const u16).read_unaligned()
-                );
-                draw_cinematic_background(
-                    selected,
-                    (payload.add(2) as *const u16).read_unaligned(),
-                    game,
-                );
-            }
+            Sprites => word!(game.cinematicspr_whattodraw[(selected >> 1)] = value),
+            Mode7 => crate::game::mode7_transfers::enqueue_rom(0x8b, value, game),
+            Background => draw_cinematic_background(selected, value, game),
         }
         let size = if matches!(objects, Background) { 6 } else { 4 };
         checked_word!(game, layout.instructions + offset; = address.wrapping_add(size));
