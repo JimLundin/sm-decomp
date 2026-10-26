@@ -1,36 +1,22 @@
 use crate::game::actors;
-use crate::game::actors::access::ActorKey as Key;
-use crate::game::actors::api as actor_api;
 use crate::game::actors::botwoon;
 pub use crate::game::constants::bank_86::*;
 use crate::game::enemy_layouts::EnemyLayout104 as Boss;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
-use crate::game::enemy_script::EnemyScript;
 use crate::game::gameplay_flag_runtime;
 pub use crate::game::prelude::*;
-use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
+use crate::game::session_runtime::actor_species_pre_instruction;
 use crate::ram_map::slot;
 
-use crate::game::gameplay_flag_runtime::CheckEventHappened;
-use crate::game::music::QueueSfx2_Max6;
 use crate::game::room_mechanisms::spawn_hardcoded;
 
 pub use crate::types::Consts_B3;
 
 crate::game::constants::typed_constants! { Consts_B3;
-    addr_kEscapeDachora_Ilist_E964 = 59748, addr_kEscapeEtecoon_Ilist_E5DA = 58842,
-    addr_kEscapeEtecoon_Ilist_E5AE = 58798, addr_kEscapeEtecoon_Ilist_E582 = 58754,
-    addr_kEscapeEtecoon_Ilist_E556 = 58710,
-    addr_kUnusedSpinningTurtleEye_Ilist_86A7 = 34471, addr_kSpritemap_Nothing_B3 = 32845,
+    addr_kUnusedSpinningTurtleEye_Ilist_86A7 = 34471,
 }
-crate::type_aliases! {
-    pub Enemy_EscapeDachora, Enemy_EscapeEtecoon = crate::game::enemy_layouts::EnemyLayout8;
-}
-
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
-    Get_EscapeDachora(o: i32) -> Enemy_EscapeDachora = [0xf78, o as isize];
-    Get_EscapeEtecoon(o: i32) -> Enemy_EscapeEtecoon = [0xf78, o as isize];
 }
 pub fn UnusedSpinningTurtleEye_Main() {}
 crate::game::callback_dispatch! {
@@ -150,118 +136,12 @@ crate::game::callback_dispatch! {
     };
     [11771903] Botwoon_Touch [] { botwoon::contact(false, game); };
     [11771969] Botwoon_Powerbomb [] { botwoon::contact(true, game); };
-    [11789909] EscapeEtecoon_Main [] {
-        let E = Get_EscapeEtecoon(word!(game.cur_enemy_index) as i32, game);
-        actor_species_pre_instruction((((*E).var_F) as u32) | (0xb30000u32), game);
-    };
-    [11790027] EscapeEtecoon_Init [] {
-        let E = Get_EscapeEtecoon(word!(game.cur_enemy_index) as i32, game);
-        if CheckEventHappened(0xf, game) != 0 {
-            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
-        } else {
-            (*E).base.properties = ((*E).base.properties as i32
-                | (kEnemyProps_DisableSamusColl as i32 | kEnemyProps_Tangible as i32 | 0x8000))
-                as u16;
-            (*E).base.instruction_timer = 1;
-            set_fields! {[(*E).base], 0; timer, palette_index}
-            let v3: i32 = (*E).parameter_1 as i32 >> 1;
-            (*E).base.x_pos = crate::rtl::rom_table_word!(game, 0xb3e718, v3 as isize);
-            (*E).base.y_pos = crate::rtl::rom_table_word!(game, 0xb3e71e, v3 as isize);
-            (*E).var_F = crate::rtl::rom_table_word!(game, 0xb3e724, v3 as isize);
-            (*E).base.current_instruction =
-                crate::rtl::rom_table_word!(game, 0xb3e72a, v3 as isize);
-            (*E).var_A = crate::rtl::rom_table_word!(game, 0xb3e730, v3 as isize);
-        };
-    };
-    [11791077] EscapeDachora_Init [] {
-        let E = Get_EscapeDachora(word!(game.cur_enemy_index) as i32, game);
-        if CheckEventHappened(0xf, game) != 0 {
-            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
-        } else {
-            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_DisableSamusColl) as u16);
-            (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_B3 as u16;
-            (*E).base.instruction_timer = 1;
-            (*E).base.timer = 0;
-            (*E).base.current_instruction = addr_kEscapeDachora_Ilist_E964 as u16;
-        };
-    };
-}
 
-crate::game::callback_dispatch! {
-    pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
-    call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11789637] EscapeEtecoon_Instr_1 [] {
-        if word!(game.lava_acid_y_pos) >= 0xce {
-            jp.offset(1)
-        } else {
-            EnemyScript::jump(jp.word(0))
-        }
-    };
-    [11789840] EscapeEtecoon_Instr_2 [jp.offset(1)] {
-        let E = Get_EscapeEtecoon(k as i32, game);
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(jp.word(0));
-    };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11791016] EscapeDachora_Instr_2 [] {
-        if word!(game.lava_acid_y_pos) >= 0xce {
-            jp.offset(1)
-        } else {
-            EnemyScript::jump(jp.word(0))
-        }
-    };
-    [11791032] EscapeDachora_Instr_3 [] {
-        if CheckEventHappened(0xf, game) != 0 {
-            EnemyScript::jump(jp.word(0))
-        } else {
-            jp.offset(1)
-        }
-    };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    @prefix { let E = Get_EscapeDachora(word!(game.cur_enemy_index) as i32, game); };
-    [11791049] EscapeDachora_Instr_1 [jp] {  (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(6); };
-    [11791063] EscapeDachora_Instr_4 [jp] {  (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(6); };
-    @external {
-        11769031 | 11769095 | 11769111 | 11769175 => [{ botwoon::set_hitbox(8, 16, game); j }];
-        11769047 | 11769079 | 11769127 | 11769159 => [{ botwoon::set_hitbox(12, 12, game); j }];
-        11769063 | 11769143 => [{ botwoon::set_hitbox(16, 8, game); j }];
-        11769191 => [{ botwoon::set_spitting(game); j }];
-        11769202 => [{ QueueSfx2_Max6(0x7c, game); j }];
-    }
 }
 
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
     call (k, game); default { crate::rtl::Unreachable(game); };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [11789916] EscapeEtecoon_E65C [] {
-        let E = Get_EscapeEtecoon(k as i32, game);
-        words!((*E).base, x_pos, x_subpos += 0x38000);
-    };
-    [11789936] EscapeEtecoon_E670 [] {
-        if CheckEventHappened(0xf, game) != 0 {
-            (*Get_EscapeEtecoon(k as i32, game))
-                .base
-                .current_instruction = addr_kEscapeEtecoon_Ilist_E5DA as u16;
-        }
-    };
-    [11789952] EscapeEtecoon_E680 [] {
-        let E = Get_EscapeEtecoon(k as i32, game);
-        if ({ let (actor, amount) = (k, ((*E).var_A as i16 as i32) << 8); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            (*E).base.instruction_timer = 1;
-            let v3: bool = (-((*E).var_A as i32) & 0x8000) != 0;
-            (*E).var_A = -((*E).var_A as i32) as u16;
-            (*E).base.current_instruction = (if v3 {
-                addr_kEscapeEtecoon_Ilist_E556 as i32
-            } else {
-                addr_kEscapeEtecoon_Ilist_E582 as i32
-            }) as u16;
-            if CheckEventHappened(0xf, game) != 0 {
-                (*E).base.current_instruction = addr_kEscapeEtecoon_Ilist_E5AE as u16;
-            }
-        }
-        ({ let (actor, amount) = (k, (1i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
-    };
     @external {
         11771328 => [botwoon::animate_motion(game)];
         11771517 => [{ let address = botwoon::aim_spit(game); actor_species_pre_instruction(address, game); }];

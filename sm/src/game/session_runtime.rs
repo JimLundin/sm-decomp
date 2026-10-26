@@ -761,6 +761,9 @@ crate::game::callback_dispatch! {
         }];
         11769219 => sm_b3::Botwoon_Init;
         11771926 => crate::game::actors::botwoon::shot;
+        11789909 => [actor_species_pre_instruction(actors::escape_animals::state_address(game), game)];
+        11790027 => [actors::escape_animals::initialize(false, game)];
+        11791077 => [actors::escape_animals::initialize(true, game)];
         11791130 => [()];
         10652144 => [{
             let index = game.cur_enemy_index();
@@ -990,6 +993,9 @@ crate::game::address_dispatch! {
         11766044 => crate::game::actors::brinstar_pipe_bug::fly;
         11766142 => crate::game::actors::brinstar_pipe_bug::cooldown;
         11767039 => [crate::game::actors::norfair_pipe_bug::settle(game)];
+        11789916 => [actors::escape_animals::run_right(k, game)];
+        11789936 => [actors::escape_animals::await_rescue(k, game)];
+        11789952 => [actors::escape_animals::walk(k, game)];
         0xb30000..=0xb3ffff => [sm_b3::DispatchEnemyPreInstr(ea, k, game)];
     }
 }
@@ -1128,7 +1134,17 @@ crate::game::callback_dispatch! {
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyInstr(ea, k, j, game)];
         0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyInstr(ea, k, j, game)];
         0xb20000..=0xb2ffff => [space_pirates::dispatch_instruction(ea, k, j, game)];
-        0xb30000..=0xb3ffff => [sm_b3::DispatchEnemyInstr(ea, k, j, game)];
+        11789637 | 11791016 => [actors::escape_animals::branch(false, j, game)];
+        11791032 => [actors::escape_animals::branch(true, j, game)];
+        11789840 => [actors::escape_animals::move_scripted(k, j, game)];
+        11791049 => [actors::escape_animals::step_dachora(0xfffa, j, game)];
+        11791063 => [actors::escape_animals::step_dachora(6, j, game)];
+        11769031 | 11769095 | 11769111 | 11769175 => [{ actors::botwoon::set_hitbox(8, 16, game); j }];
+        11769047 | 11769079 | 11769127 | 11769159 => [{ actors::botwoon::set_hitbox(12, 12, game); j }];
+        11769063 | 11769143 => [{ actors::botwoon::set_hitbox(16, 8, game); j }];
+        11769191 => [{ actors::botwoon::set_spitting(game); j }];
+        11769202 => [{ crate::game::music::QueueSfx2_Max6(0x7c, game); j }];
+        0xb30000..=0xb3ffff => [{ crate::rtl::Unreachable(game); EnemyScript::Stop }];
     }
 }
 impl Runtime<'_> {

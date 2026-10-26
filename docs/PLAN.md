@@ -81,10 +81,11 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Qualified Core42: production 111748, legacy 19619, unsafe 2907, verification 39967.
-Its eight Crocomire/control rows pass (6,457 selected); custom native/count/endian/failure variants remain source-reviewed.
+Qualified Core43: production 111745, legacy 19499, unsafe 2903, verification 39971.
+Its four smoke controls pass (2,187 selected); all escape-animal variants remain unobserved and arbitrary preinstruction stays unsafe.
+Escape animals share lava/rescue paths and migrate callers: -3 engine, -120 legacy, -4 unsafe; +4 verification, combined +1.
 Melt graphics preparation/upload share their ordered queue encoder: -7 engine, -79 legacy, -2 unsafe, no verification growth.
-Fish shares swim/turn logic: -4 engine lines, -123 legacy, -3 unsafe; +4 verification registry, combined zero.
+Fish shares swim/turn logic: -4 engine lines, -123 legacy, -3 unsafe; +4 verification registry, combined zero. All Fish variants remain unobserved.
 Reflec remains in sm_a3: its native printf has no safe output owner preserving the contract; mutation precedes bank deletion.
 Fireflea retires 128 legacy lines and seven unsafe lines; four source-cache guard lines are separate verification.
 Core39 passed eight Crocomire/control rows (6,457 selected); tilemap and native upload queues are checked.
