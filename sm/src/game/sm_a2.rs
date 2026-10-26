@@ -35,28 +35,15 @@ crate::game::constants::typed_constants! { Consts_A2;
     addr_kHirisingSlowfalling_Ilist_D82C = 55340, addr_kMaridiaLargeSnail_Ilist_CA4B = 51787,
     addr_kNorfairErraticFireball_Ilist_B51A = 46362,
     addr_kMaridiaSpikeyShell_Ilist_A3BD = 41917, addr_kMaridiaSpikeyShell_Ilist_A3AB = 41899,
-    addr_locret_A28E09 = 36361, addr_kMaridiaBeybladeTurtle_Ilist_8D40 = 36160,
-    addr_kMaridiaBeybladeTurtle_Ilist_8D28 = 36136, addr_kMaridiaBeybladeTurtle_Ilist_8D14 = 36116,
-    addr_kMaridiaBeybladeTurtle_Ilist_8D00 = 36096, addr_kMaridiaBeybladeTurtle_Ilist_8C72 = 35954,
-    addr_kMaridiaBeybladeTurtle_Ilist_8C62 = 35938, addr_kMaridiaBeybladeTurtle_Ilist_8C4A = 35914,
-    addr_kMaridiaBeybladeTurtle_Ilist_8C44 = 35908, addr_kMaridiaBeybladeTurtle_Ilist_8C30 = 35888,
-    addr_kMaridiaBeybladeTurtle_Ilist_8C1C = 35868, addr_kMaridiaBeybladeTurtle_Ilist_8C02 = 35842,
-    addr_kMaridiaBeybladeTurtle_Ilist_8BD2 = 35794, addr_kMaridiaBeybladeTurtle_Ilist_8B80 = 35712,
     addr_kSpritemap_Nothing_A2 = 32845,
 }
 
 crate::type_aliases! {
-    pub Enemy_LavaSeahorse, Enemy_MaridiaTurtle,
+    pub Enemy_LavaSeahorse,
         Enemy_MaridiaLargeSnail, Enemy_MaridiaSpikeyShell,
         Enemy_HirisingSlowfalling,
-        Enemy_LavaquakeRocks, Enemy_MiniMaridiaTurtle =
+        Enemy_LavaquakeRocks =
         crate::game::enemy_layouts::EnemyLayout40;
-}
-
-crate::type_aliases! {
-    pub Enemy_MaridiaBeybladeTurtle,
-        Enemy_MiniMaridiaBeybladeTurtle =
-        crate::game::enemy_layouts::EnemyLayout8;
 }
 
 const RomPtr_A2: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa2>;
@@ -76,381 +63,8 @@ crate::ram_map::ram_pointer_functions! {
     Get_HirisingSlowfalling(o: i32) -> Enemy_HirisingSlowfalling = [0xf78, o as isize];
     Get_LavaSeahorse(o: i32) -> Enemy_LavaSeahorse = [0xf78, o as isize];
     Get_LavaquakeRocks(o: i32) -> Enemy_LavaquakeRocks = [0xf78, o as isize];
-    Get_MaridiaBeybladeTurtle(o: i32) -> Enemy_MaridiaBeybladeTurtle = [0xf78, o as isize];
     Get_MaridiaLargeSnail(o: i32) -> Enemy_MaridiaLargeSnail = [0xf78, o as isize];
     Get_MaridiaSpikeyShell(o: i32) -> Enemy_MaridiaSpikeyShell = [0xf78, o as isize];
-    Get_MaridiaTurtle(o: i32) -> Enemy_MaridiaTurtle = [0xf78, o as isize];
-    Get_MiniMaridiaBeybladeTurtle(o: i32) -> Enemy_MiniMaridiaBeybladeTurtle = [0xf78, o as isize];
-    Get_MiniMaridiaTurtle(o: i32) -> Enemy_MiniMaridiaTurtle = [0xf78, o as isize];
-}
-static g_word_A28D50: u16 = 0x30;
-static g_word_A28D52: u16 = 1;
-static g_word_A28D5E: u16 = 3;
-static g_word_A28D60: u16 = 0x1e8;
-static g_word_A28D62: u16 = 7;
-static g_word_A28D64: u16 = 0x1e;
-static g_word_A28D66: u16 = 4;
-static g_word_A28D68: u16 = 0xfffd;
-static g_word_A28D6A: u16 = 3;
-static g_word_A28E80: [i16; 48] = [
-    -16, -16, -16, -16, -15, -15, -15, -15, -15, -14, -13, -13, -12, -11, -10, -9, -8, -7, -6, -5,
-    -4, -4, 0, 0, -16, -16, -16, -15, -15, -15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4,
-    -3, -3, -2, 0, 0, 0, 0,
-];
-crate::game::callback_dispatch! {
-    pub unsafe fn CallMaridiaBeybladeTurtleFunc(ea: u32, k: u16, game: &mut Game) => ea;
-    call (k, game); default { Unreachable(game); };
-    @functions [pub fn (k: u16, game: &mut Game)];
-    [0xa28dd8] MaridiaBeybladeTurtle_Func1 [] {
-        let base = 0xf78 + usize::from(k);
-        let palette_field = core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, base)
-            + core::mem::offset_of!(EnemyBase, palette_index);
-        let field = base + palette_field;
-        let palette = [game.g_ram[field], game.g_ram[field + 1]];
-        // Child offsets remain wide even when k is near the end of a word.
-        for child in [64, 128, 192, 256] {
-            let field = base + child + palette_field;
-            game.g_ram[field..field + 2].copy_from_slice(&palette);
-        }
-        let tiles_field = core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, base)
-            + core::mem::offset_of!(EnemyBase, vram_tiles_index);
-        let field = base + tiles_field;
-        let tiles = [game.g_ram[field], game.g_ram[field + 1]];
-        for child in [64, 128, 192, 256] {
-            let field = base + child + tiles_field;
-            game.g_ram[field..field + 2].copy_from_slice(&tiles);
-        }
-        for child in [64, 128, 192, 256] {
-            let field = base + child + core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, var_B);
-            game.g_ram[field..field + 2].copy_from_slice(&k.to_le_bytes());
-        }
-        let field = base + core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, var_A);
-        game.g_ram[field..field + 2].copy_from_slice(&0x8e0au16.to_le_bytes());
-    };
-    [0xa28e0a] MaridiaBeybladeTurtle_Func2 [] {
-        let base = 0xf78 + usize::from(k);
-        let field = base + core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, var_F);
-        let active = u16::from_le_bytes([game.g_ram[field], game.g_ram[field + 1]]);
-        if active != 0 {
-            { let actor = Key::from_legacy(k); let value = 0; Runtime::new(game).edit_actor(actor, Le, |actor| actor.radius.y = value); };
-            let actor_x = Runtime::new(game).resolve_actor(Key::from_legacy(k), Le).x.whole;
-            let delta = actor_x.wrapping_sub(game.samus_x_pos());
-            let magnitude = if delta & 0x8000 != 0 {
-                delta.wrapping_neg()
-            } else {
-                delta
-            };
-            if magnitude < 24 {
-                let table_index = if delta & 0x8000 != 0 {
-                    magnitude + 24
-                } else {
-                    magnitude
-                };
-                let index = game.cur_enemy_index();
-                let radius = g_word_A28E80[usize::from(table_index)].wrapping_neg() as u16;
-                { let actor = Key::from_legacy(k); let value = radius; Runtime::new(game).edit_actor(actor, Le, |actor| actor.radius.y = value); };
-                let properties = Runtime::new(game).resolve_actor(Key::from_legacy(k), Le).properties;
-                { let actor = Key::from_legacy(k); let value = properties | 0x8000; Runtime::new(game).edit_actor(actor, Le, |actor| actor.properties = value); };
-                if ({ let actor = index; 0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(&Runtime::new(game), Key::from_legacy(actor)))) }) != 0 {
-                    let actor_y = Runtime::new(game).resolve_actor(Key::from_legacy(k), Le).y.whole;
-                    let actor_radius = Runtime::new(game).resolve_actor(Key::from_legacy(k), Le).radius.y;
-                    let top = actor_y.wrapping_sub(actor_radius);
-                    let samus_radius = game.samus_y_radius();
-                    let samus_y = game.samus_y_pos();
-                    if (samus_radius.wrapping_add(samus_y).wrapping_sub(top) as i16) >= 0 {
-                        let displacement = game.extra_samus_y_displacement();
-                        let samus_radius = game.samus_y_radius();
-                        let samus_y = game.samus_y_pos();
-                        game.set_extra_samus_y_displacement(
-                            displacement
-                                .wrapping_add(top.wrapping_sub(samus_radius.wrapping_add(samus_y))),
-                        );
-                    }
-                }
-            }
-        } else {
-            let field = base + core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, var_A);
-            game.g_ram[field..field + 2].copy_from_slice(&0x8ee0u16.to_le_bytes());
-            let properties = Runtime::new(game).resolve_actor(Key::from_legacy(k), Le).properties;
-            { let actor = Key::from_legacy(k); let value = properties & !(kEnemyProps_Tangible as u16); Runtime::new(game).edit_actor(actor, Le, |actor| actor.properties = value); };
-        }
-    };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [0xa28ee0] MaridiaBeybladeTurtle_Func3 [] {
-        MaridiaBeybladeTurtle_Func4(game);
-        if (*ram_ptr!(game; 0x5b5) & 1) == 0 {
-            if ({ let actor = k; 0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(&Runtime::new(game), Key::from_legacy(actor)))) }) != 0 {
-                word!(game.extra_samus_x_displacement -= 1);
-            }
-            let E = Get_MaridiaBeybladeTurtle(k as i32, game);
-            (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
-            (*E).base.y_height = 16;
-            if ((*E).base.y_pos & 1) != 0 {
-                (*E).base.x_pos = (*E).base.x_pos.wrapping_sub(1);
-            } else {
-                (*E).base.x_pos = (*E).base.x_pos.wrapping_add(1);
-            }
-            if ({ let (actor, amount) = (k, (1i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) == 0 {
-                enemy_instruction! {[(*E).base]; instruction = addr_kMaridiaBeybladeTurtle_Ilist_8C4A as u16, timer = 1}
-                (*E).var_A = addr_locret_A28E09 as u16;
-            }
-        }
-    };
-    [0xa28f3f] MaridiaBeybladeTurtle_Func5 [] {
-        let mut v1: u16 = addr_kMaridiaBeybladeTurtle_Ilist_8C1C as u16;
-        let E = Get_MaridiaBeybladeTurtle(k as i32, game);
-        if (((*E).base.x_pos) as i16).wrapping_sub((word!(game.samus_x_pos)) as i16) < 0 {
-            v1 = addr_kMaridiaBeybladeTurtle_Ilist_8D00 as u16;
-        }
-        enemy_instruction! {[(*E).base]; instruction = v1, timer = 1}
-        (*E).var_A = addr_locret_A28E09 as u16;
-    };
-    [0xa28f8d] MaridiaBeybladeTurtle_Func7 [] {
-        MaridiaBeybladeTurtle_Func4(game);
-        if ({ let (actor, amount) = (k, (-1i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) == 0 {
-            if ({ let actor = k; 0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(&Runtime::new(game), Key::from_legacy(actor)))) }) != 0 {
-                word!(game.extra_samus_y_displacement -= 1);
-            }
-            let E = Get_MaridiaTurtle(k as i32, game);
-            let v2: u16 = ((*E).var_00).wrapping_sub(1);
-            (*E).var_00 = v2;
-            if v2 == 0 {
-                let mut v3: u16 = 0;
-                if (((*E).base.x_pos) as i16).wrapping_sub((word!(game.samus_x_pos)) as i16) < 0 {
-                    v3 = 4;
-                }
-                (*E).var_01 = *((rom_ptr!(game, u16; 0xa28d56) as *mut u8)
-                    .offset(v3 as i32 as isize) as *mut u16);
-                (*E).var_02 = *((rom_ptr!(game, u16; 0xa28d58) as *mut u8)
-                    .offset(v3 as i32 as isize) as *mut u16);
-                set_fields! {[(*E)], 0; var_E, var_03}
-                (*E).var_A = (0xa28febi32) as u16;
-            }
-        }
-    };
-    [0xa28feb] MaridiaBeybladeTurtle_Func8 [] {
-        MaridiaBeybladeTurtle_Func4(game);
-        let E = Get_MaridiaTurtle(k as i32, game);
-        if ({ let (actor, amount) = (k, (words!((*E), var_E, var_03)) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            words!(
-                (*E),
-                var_E,
-                var_03 = -(words!(i32, (*E), var_E, var_03)) as u32
-            );
-            words!(
-                (*E),
-                var_02,
-                var_01 = -(words!(i32, (*E), var_02, var_01)) as u32
-            );
-            word! {game; earthquake_type = 0; earthquake_timer = 16; }
-            QueueSfx2_Max6(0x1b, game);
-        } else {
-            MaridiaBeybladeTurtle_Func6(k, game);
-            words!((*E), var_E, var_03 += words!((*E), var_02, var_01));
-            if ((abs16((*E).var_E)) as i16).wrapping_sub((g_word_A28D5E) as i16) >= 0 {
-                (*E).var_E = (if ((*E).var_E & 0x8000) != 0 {
-                    -(g_word_A28D5E as i32)
-                } else {
-                    g_word_A28D5E as i32
-                }) as u16;
-            }
-        };
-    };
-    [0xa29083] MaridiaBeybladeTurtle_Func9 [] {
-        let E = Get_MaridiaTurtle(k as i32, game);
-        MaridiaBeybladeTurtle_Func4(game);
-        let mut v2: u16 = if (((*E).base.y_pos) as i16).wrapping_sub((g_word_A28D60) as i16) < 0 {
-            (*E).var_00 = g_word_A28D64;
-            (0xa290cci32) as u16
-        } else {
-            if ({ let actor = k; 0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(&Runtime::new(game), Key::from_legacy(actor)))) }) != 0 {
-                (*E).base.y_pos = ((*E).base.y_pos).wrapping_sub(g_word_A28D62);
-                word!(game.extra_samus_y_displacement -= g_word_A28D62);
-                return;
-            }
-            (0xa290e1i32) as u16
-        };
-        (*E).var_A = v2;
-        set_fields! {[(*E)], 0; var_07, var_04}
-    };
-    [0xa290cc] MaridiaBeybladeTurtle_Func10 [] {
-        MaridiaBeybladeTurtle_Func4(game);
-        let E = Get_MaridiaTurtle(k as i32, game);
-        let v2: u16 = ((*E).var_00).wrapping_sub(1);
-        (*E).var_00 = v2;
-        if v2 == 0 {
-            (*E).var_A = (0xa290e1i32) as u16;
-        }
-    };
-    [0xa290e1] MaridiaBeybladeTurtle_Func11 [] {
-        MaridiaBeybladeTurtle_Func4(game);
-        let E = Get_MaridiaTurtle(k as i32, game);
-        if (((*Get_MaridiaTurtle(0i32, game)).var_04) as i16).wrapping_sub((g_word_A28D66) as i16)
-            < 0
-        {
-            words!((*E), var_04, var_07 += 0x2000);
-        }
-        if ({ let (actor, amount) = (k, ((*E).var_04 as i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            enemy_instruction! {[(*E).base]; instruction = (if ((*E).var_E & 0x8000) == 0 {
-                addr_kMaridiaBeybladeTurtle_Ilist_8D28 as i32
-            } else {
-                addr_kMaridiaBeybladeTurtle_Ilist_8C4A as i32
-            }) as u16, timer = 1}
-            (*E).var_A = addr_locret_A28E09 as u16;
-        }
-    };
-    [0xa29142] MiniMaridiaBeybladeTurtle_Func1 [] {
-        if ({ let actor = k; 0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(&Runtime::new(game), Key::from_legacy(actor)))) }) != 0 {
-            let E = Get_MiniMaridiaTurtle(k as i32, game);
-            (*E).var_A = (0xa2916ei32) as u16;
-            (*E).var_05 = 4;
-            let mut v2: u16 = addr_kMaridiaBeybladeTurtle_Ilist_8C30 as u16;
-            if ((*E).var_E & 0x8000) == 0 {
-                v2 = addr_kMaridiaBeybladeTurtle_Ilist_8D14 as u16;
-            }
-            enemy_instruction! {[(*E).base]; instruction = v2, timer = 1}
-        }
-    };
-    [0xa2916e] MiniMaridiaBeybladeTurtle_Func2 [] {
-        let E = Get_MiniMaridiaTurtle(k as i32, game);
-        if ({ let actor = k; 0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(&Runtime::new(game), Key::from_legacy(actor)))) }) != 0 {
-            (*E).var_05 = 4;
-        } else {
-            let v2: u16 = ((*E).var_05).wrapping_sub(1);
-            (*E).var_05 = v2;
-            if v2 == 0 {
-                (*E).var_A = (0xa29198i32) as u16;
-                (*E).var_00 = 60;
-            }
-        };
-    };
-    [0xa29198] MiniMaridiaBeybladeTurtle_Func3 [] {
-        let E = Get_MiniMaridiaTurtle(k as i32, game);
-        if ({ let actor = k; 0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(&Runtime::new(game), Key::from_legacy(actor)))) }) != 0 {
-            (*E).var_A = (0xa291f8i32) as u16;
-            enemy_instruction! {[(*E).base]; instruction = addr_kMaridiaBeybladeTurtle_Ilist_8BD2 as u16, timer = 1}
-            (*E).var_04 = 1;
-            let mut v2: u16 = g_word_A28D68;
-            if (*ram_ptr!(game; 0xa1e) & 0xf) == 8 {
-                v2 = g_word_A28D6A;
-            }
-            (*E).var_E = v2;
-        } else {
-            let v4: u16 = ((*E).var_00).wrapping_sub(1);
-            (*E).var_00 = v4;
-            if v4 == 0 {
-                let mut v5: u16 = addr_kMaridiaBeybladeTurtle_Ilist_8B80 as u16;
-                if ((*E).var_E & 0x8000) == 0 {
-                    v5 = addr_kMaridiaBeybladeTurtle_Ilist_8C72 as u16;
-                }
-                enemy_instruction! {[(*E).base]; instruction = v5, timer = 1}
-                (*E).var_A = (0xa29142i32) as u16;
-            }
-        };
-    };
-    [0xa291f8] MiniMaridiaBeybladeTurtle_Func4 [] {
-        let E = Get_MiniMaridiaTurtle(k as i32, game);
-        if ({ let (actor, amount) = (k, (words!(((*E).var_E, 0u16))) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            (*E).var_E = -((*E).var_E as i32) as u16;
-        } else {
-            ({ let (actor, amount) = (k, ((*E).var_04 as i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
-        };
-    };
-    [0xa29239] MiniMaridiaBeybladeTurtle_Func6 [] {
-        if ({ let actor = k; 0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(&Runtime::new(game), Key::from_legacy(actor)))) }) != 0 {
-            let mut v1: u16 = addr_kMaridiaBeybladeTurtle_Ilist_8B80 as u16;
-            let E = Get_MiniMaridiaBeybladeTurtle(k as i32, game);
-            if ((*E).var_E & 0x8000) == 0 {
-                v1 = addr_kMaridiaBeybladeTurtle_Ilist_8C72 as u16;
-            }
-            enemy_instruction! {[(*E).base]; instruction = v1, timer = 1}
-            (*E).var_A = (0xa29142i32) as u16;
-        } else {
-            MiniMaridiaBeybladeTurtle_Func4(k, game);
-        };
-    };
-    @external {
-        0xa28e09 => [{}];
-        0xa2925e => [MiniMaridiaBeybladeTurtle_Func7(game)];
-    }
-}
-
-pub unsafe fn MaridiaBeybladeTurtle_Func6(k: u16, game: &mut Game) {
-    unsafe {
-        if {
-            let actor = k;
-            0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(
-                &Runtime::new(game),
-                Key::from_legacy(actor),
-            )))
-        } != 0
-        {
-            let E = Get_MaridiaTurtle(k as i32, game);
-            (*E).var_A = (0xa29083i32) as u16;
-            words!(
-                game.extra_samus_x_displacement,
-                extra_samus_x_subdisplacement += -(words!(i32, (*E), var_E, var_03)) as u32
-            );
-            if word!(game.extra_samus_x_displacement) as i32 + 16 & 0x8000 != 0 {
-                word!(game.extra_samus_x_displacement = -16i32 as u16);
-            }
-        }
-    }
-}
-pub unsafe fn MiniMaridiaBeybladeTurtle_Func7(game: &mut Game) {
-    unsafe {
-        let E = Get_MiniMaridiaTurtle(word!(game.cur_enemy_index) as i32, game);
-        (*Get_MiniMaridiaTurtle((*E).var_B as i32, game)).var_06 = (*E).base.y_height;
-        if {
-            let actor = word!(game.cur_enemy_index);
-            0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(
-                &Runtime::new(game),
-                Key::from_legacy(actor),
-            )))
-        } == 0
-        {
-            (*Get_MiniMaridiaTurtle(word!(game.cur_enemy_index) as i32, game)).var_A =
-                (0xa29142i32) as u16;
-        }
-    }
-}
-pub unsafe fn MaridiaBeybladeTurtle_Func21(game: &mut Game) {
-    unsafe {
-        let mbte_var_B: u16 =
-            (*Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game)).var_B;
-        let E = Get_MaridiaBeybladeTurtle(mbte_var_B as i32, game);
-        if (*E).var_F != 0 {
-            (*E).var_F = (*E).var_F.wrapping_sub(1);
-        }
-    }
-}
-pub unsafe fn MaridiaBeybladeTurtle_Func4(game: &mut Game) {
-    unsafe {
-        let E = Get_MaridiaBeybladeTurtle(0, game);
-        let r18: u16 = ((*E).base.x_pos as i32 - (*E).base.x_width as i32 - 8i32) as u16;
-        let r20: u16 = ((*E).base.x_width as i32 + (*E).base.x_pos as i32 + 8) as u16;
-        let r22: u16 = ((*E).base.y_pos as i32 - (*E).base.y_height as i32 + 4) as u16;
-        let r24: u16 = ((*E).base.y_height as i32 + (*E).base.y_pos as i32 - 4i32) as u16;
-        if word!(game.samus_x_pos) as i32 - word!(game.samus_x_radius) as i32 - 1i32 - r20 as i32
-            & 0x8000
-            != 0
-            && word!(game.samus_x_radius) as i32 + word!(game.samus_x_pos) as i32 - r18 as i32
-                & 0x8000
-                == 0
-            && word!(game.samus_y_pos) as i32 - word!(game.samus_y_radius) as i32 + 1 - r24 as i32
-                & 0x8000
-                != 0
-            && word!(game.samus_y_radius) as i32 + word!(game.samus_y_pos) as i32 - r22 as i32
-                & 0x8000
-                == 0
-            && word!(game.samus_invincibility_timer) == 0
-        {
-            actors::combat::contact_reaction(
-                &mut Runtime::new(game),
-                actors::api::DeathHandling::Finalize,
-            );
-        }
-    }
 }
 pub unsafe fn ThinHoppingBlobs_Main(game: &mut Game) {
     if !crate::game::hopping_blobs::advance(game) {
@@ -784,46 +398,6 @@ pub unsafe fn LavaSeahorse_E7DA(game: &mut Game) {
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
-    @functions [pub fn (game: &mut Game)];
-    @prefix { let index = game.cur_enemy_index(); };
-    [10653036] MaridiaBeybladeTurtle_Init [] {
-        let properties = Runtime::new(game).resolve_actor(Key::from_legacy(index), Le).properties;
-        { let actor = Key::from_legacy(index); let value = properties | kEnemyProps_DisableSamusColl as u16; Runtime::new(game).edit_actor(actor, Le, |actor| actor.properties = value); };
-        { let actor = Key::from_legacy(index); let value = addr_kSpritemap_Nothing_A2 as u16; Runtime::new(game).edit_actor(actor, Le, |actor| actor.spritemap = value); };
-        { let actor = Key::from_legacy(index); let value = 1; Runtime::new(game).edit_actor(actor, Le, |actor| actor.instruction_delay = value); };
-        { let actor = Key::from_legacy(index); let value = 0; Runtime::new(game).edit_actor(actor, Le, |actor| actor.timer = value); };
-        { let actor = Key::from_legacy(index); let value = 0; Runtime::new(game).edit_actor(actor, Le, |actor| actor.radius.y = value); };
-        { let actor = Key::from_legacy(index); let value = addr_kMaridiaBeybladeTurtle_Ilist_8C44 as u16; Runtime::new(game).edit_actor(actor, Le, |actor| actor.instruction = value); };
-        let base = 0xf78 + usize::from(index);
-        let field = base + core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, var_A);
-        game.g_ram[field..field + 2].copy_from_slice(&0x8dd8u16.to_le_bytes());
-        let field = base + core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, var_F);
-        game.g_ram[field..field + 2].copy_from_slice(&g_word_A28D52.to_le_bytes());
-    };
-    [10653085] MiniMaridiaBeybladeTurtle_Init [] {
-        let base = 0xf78 + usize::from(index);
-        let x = Runtime::new(game).resolve_actor(Key::from_legacy(index), Le).x.whole;
-        let field = base + core::mem::offset_of!(Enemy_MiniMaridiaBeybladeTurtle, var_C);
-        game.g_ram[field..field + 2].copy_from_slice(&x.to_le_bytes());
-        let y = Runtime::new(game).resolve_actor(Key::from_legacy(index), Le).y.whole;
-        let radius = Runtime::new(game).resolve_actor(Key::from_legacy(index), Le).radius.y;
-        let field = base + core::mem::offset_of!(Enemy_MiniMaridiaBeybladeTurtle, var_D);
-        game.g_ram[field..field + 2].copy_from_slice(&y.wrapping_sub(radius).to_le_bytes());
-        let field = base + core::mem::offset_of!(Enemy_MiniMaridiaBeybladeTurtle, var_A);
-        game.g_ram[field..field + 2].copy_from_slice(&0x9142u16.to_le_bytes());
-        { let actor = Key::from_legacy(index); let value = 1; Runtime::new(game).edit_actor(actor, Le, |actor| actor.instruction_delay = value); };
-        { let actor = Key::from_legacy(index); let value = 0; Runtime::new(game).edit_actor(actor, Le, |actor| actor.timer = value); };
-        let field = base + core::mem::offset_of!(Enemy_MiniMaridiaBeybladeTurtle, parameter_1);
-        let parameter = u16::from_le_bytes([game.g_ram[field], game.g_ram[field + 1]]);
-        let field = base + core::mem::offset_of!(Enemy_MiniMaridiaBeybladeTurtle, var_E);
-        game.g_ram[field..field + 2].copy_from_slice(&parameter.to_le_bytes());
-        let instruction = if (parameter as i16) >= 0 {
-            addr_kMaridiaBeybladeTurtle_Ilist_8C72 as u16
-        } else {
-            addr_kMaridiaBeybladeTurtle_Ilist_8B80 as u16
-        };
-        { let actor = Key::from_legacy(index); let value = instruction; Runtime::new(game).edit_actor(actor, Le, |actor| actor.instruction = value); };
-    };
     @functions [pub unsafe fn (game: &mut Game)];
     [10652144] MiniCrocomire_Main [] {
         let index = game.cur_enemy_index();
@@ -832,78 +406,8 @@ crate::game::callback_dispatch! {
             .pre_instruction;
         actor_species_pre_instruction(u32::from(preinstruction) | 0xa20000, game);
     };
-    [10653138] MaridiaBeybladeTurtle_Main [] {
-        let index = game.cur_enemy_index();
-        let preinstruction_offset =
-            0xf78 + usize::from(index) + core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, var_A);
-        let preinstruction = u16::from_le_bytes([
-            game.g_ram[preinstruction_offset],
-            game.g_ram[preinstruction_offset + 1],
-        ]);
-        let live_index = game.cur_enemy_index();
-        CallMaridiaBeybladeTurtleFunc(0xa20000 | u32::from(preinstruction), live_index, game);
-    };
-    [10653998] MiniMaridiaBeybladeTurtle_Main [] {
-        let index = game.cur_enemy_index();
-        let base = 0xf78 + usize::from(index);
-        let parent_offset = base + core::mem::offset_of!(Enemy_MiniMaridiaTurtle, var_B);
-        let parent = u16::from_le_bytes([game.g_ram[parent_offset], game.g_ram[parent_offset + 1]]);
-        let parent_trigger_offset =
-            0xf78 + usize::from(parent) + core::mem::offset_of!(Enemy_MiniMaridiaTurtle, var_06);
-        game.g_ram[parent_trigger_offset..parent_trigger_offset + 2]
-            .copy_from_slice(&0u16.to_le_bytes());
-        let preinstruction_offset = base + core::mem::offset_of!(Enemy_MiniMaridiaTurtle, var_A);
-        let preinstruction = u16::from_le_bytes([
-            game.g_ram[preinstruction_offset],
-            game.g_ram[preinstruction_offset + 1],
-        ]);
-        let live_index = game.cur_enemy_index();
-        CallMaridiaBeybladeTurtleFunc(0xa20000 | u32::from(preinstruction), live_index, game);
-    };
-    [10654337] MaridiaBeybladeTurtle_Touch [] {
-        let E = Get_MiniMaridiaTurtle(word!(game.cur_enemy_index) as i32, game);
-        if ((*E).base.properties & 0x8000) == 0 {
-            Enemy_NormalTouchAI_A2(game);
-            (*E).var_A = (0xa290e1i32) as u16;
-            (*E).var_04 = 2;
-        }
-    };
-    [10654367] MiniMaridiaBeybladeTurtle_Touch [] {
-        let mut v2: i16 = 0;
-        let E = Get_MiniMaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game);
-        if (*E).var_A != 0x925e {
-            if ((*E).var_E & 0x8000) != 0 {
-                (*E).base.current_instruction = addr_kMaridiaBeybladeTurtle_Ilist_8C72 as u16;
-                v2 = 1;
-            } else {
-                (*E).base.current_instruction = addr_kMaridiaBeybladeTurtle_Ilist_8B80 as u16;
-                v2 = -1i16;
-            }
-            (*E).var_E = v2 as u16;
-            (*E).base.instruction_timer = 1;
-            let mut v3: u16 =
-                if (((*E).base.x_pos) as i16).wrapping_sub((word!(game.samus_x_pos)) as i16) >= 0 {
-                    ((*E).base.x_width as i32
-                        + word!(game.samus_x_radius) as i32
-                        + word!(game.samus_x_pos) as i32) as u16
-                } else {
-                    (((((word!(game.samus_x_pos)) as u32)
-                        .wrapping_sub((word!(game.samus_x_radius)) as u32))
-                        << 16i32
-                        | word!(game.samus_x_pos) as u32)
-                        .wrapping_sub(words!(((*E).base.x_width, word!(game.samus_x_radius))))
-                        >> 16) as u16
-                };
-            (*E).base.x_pos = v3;
-            (*E).var_A = (0xa29142i32) as u16;
-            ({ let (actor, amount) = (word!(game.cur_enemy_index), (words!(((*E).var_E, 0u16))) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 });
-            MaridiaBeybladeTurtle_Func21(game);
-        }
-    };
-    [10654479] MiniMaridiaBeybladeTurtle_Shot [] {
-        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
-        MaridiaBeybladeTurtle_Func21(game);
-    };
+    [10653138] MaridiaBeybladeTurtle_Main [] { if !crate::game::maridia_turtles::advance(false, game) { Unreachable(game); } };
+    [10653998] MiniMaridiaBeybladeTurtle_Main [] { if !crate::game::maridia_turtles::advance(true, game) { Unreachable(game); } };
     [10658942] MaridiaSpikeyShell_Main [] {
         let e = Get_MaridiaSpikeyShell(word!(game.cur_enemy_index) as i32, game);
         off_A2A3D3[((*e).var_E as i16 as i32 + 2i32) as usize](game);
@@ -1160,6 +664,11 @@ crate::game::callback_dispatch! {
     [10649635] Enemy_NormalTouchAI_A2 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
     [10649645] Enemy_NormalShotAI_A2 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
     @external {
+        10653036 => [crate::game::maridia_turtles::initialize(false, game)];
+        10653085 => [crate::game::maridia_turtles::initialize(true, game)];
+        10654337 => [crate::game::maridia_turtles::touch(false, game)];
+        10654367 => [crate::game::maridia_turtles::touch(true, game)];
+        10654479 => crate::game::maridia_turtles::shot;
         10657608 => crate::game::spike_plant::initialize;
         10652077 => crate::game::mini_crocomire::initialize;
         10651420 => crate::game::goofball::initialize;
@@ -1170,109 +679,6 @@ crate::game::callback_dispatch! {
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
-    @functions [pub unsafe fn (
-    k: u16,
-    jp: EnemyScript,
-    game: &mut Game,
-) -> EnemyScript];
-    [10654593] MaridiaBeybladeTurtle_Instr_9381 [jp] {
-        let mut R48: u16 = 0;
-        if ({ let actor = word!(game.cur_enemy_index); 0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(&Runtime::new(game), Key::from_legacy(actor)))) }) != 0 {
-            word!(game.extra_samus_x_displacement += (*Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game)).var_E);
-            R48 = 1;
-        }
-        let E = Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game);
-        crate::update_place! { previous R50: u16 = (*E).base.y_pos => (*E).var_D; }
-        ({ let (actor, amount) = (word!(game.cur_enemy_index), ((*E).var_E as i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 });
-        if (*Get_MaridiaBeybladeTurtle((*E).var_B as i32, game)).var_A == 0x8e0a {
-            let x_pos: u16 = (*Get_MaridiaBeybladeTurtle((*E).var_B as i32, game))
-                .base
-                .x_pos;
-            let xd: u16 = (x_pos).wrapping_sub((*E).base.x_pos);
-            let mut v7: u16 = abs16(xd);
-            let mut v8: u16 = if v7 as i32 - 24i32 & 0x8000 != 0 {
-                if xd & 0x8000 != 0 {
-                    v7 = (v7).wrapping_add(24);
-                }
-                g_word_A28E80[v7 as usize] as u16
-            } else {
-                1
-            };
-            ({ let (actor, amount) = (word!(game.cur_enemy_index), (v8 as i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
-            if R48 != 0 {
-                word!(checked_i32, game.extra_samus_y_displacement += ((*Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game))
-                        .base
-                        .y_pos as i32
-                        - R50 as i32));
-            }
-        }
-    };
-    [10654738]
-    MaridiaBeybladeTurtle_Instr_9412 [EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8C72 as u16)] {
-        let mut v4: i16 = 0;
-        let E = Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game);
-        let xd: u16 = ((*E).var_C).wrapping_sub((*E).base.x_pos);
-        if ((abs16(xd)) as i16).wrapping_sub((g_word_A28D50) as i16) >= 0 {
-            if xd & 0x8000 == 0 {
-                v4 = 1;
-            } else {
-                v4 = -1i16;
-            }
-            (*E).var_E = v4 as u16;
-        }
-        if ((*Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game)).var_E & 0x8000)
-            != 0
-        {
-            return EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8B80 as u16);
-        }
-    };
-    [10654791] MaridiaBeybladeTurtle_Instr_9447 [jp] {
-        (*Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game)).var_A =
-            (0xa28f3fi32) as u16;
-    };
-    [10654801]
-    MaridiaBeybladeTurtle_Instr_9451 [EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8C02 as u16)] {
-        let E = Get_MaridiaTurtle(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_A = (0xa28f8di32) as u16;
-        (*E).var_E = -1i32 as u16;
-        (*E).var_00 = 16;
-    };
-    [10654827]
-    MaridiaBeybladeTurtle_Instr_946B [EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8C02 as u16)] {
-        let E = Get_MaridiaTurtle(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_A = (0xa28f8di32) as u16;
-        (*E).var_E = 1;
-        (*E).var_00 = 16;
-    };
-    [10654853] MaridiaBeybladeTurtle_Instr_9485 [jp] {
-        if ({ let actor = word!(game.cur_enemy_index); 0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(&Runtime::new(game), Key::from_legacy(actor)))) }) != 0 {
-            if ((*Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game)).var_E
-                & 0x8000)
-                == 0
-            {
-                return EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8D40 as u16);
-            } else {
-                return EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8C62 as u16);
-            }
-        }
-    };
-    [10654881]
-    MaridiaBeybladeTurtle_Instr_94A1 [EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8B80 as u16)] {
-        let E = Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game);
-        if ({ let actor = word!(game.cur_enemy_index); 0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(&Runtime::new(game), Key::from_legacy(actor)))) }) != 0 {
-            (*E).var_A = (0xa2925ei32) as u16;
-        } else {
-            (*E).var_A = (0xa29142i32) as u16;
-        }
-        if ((*E).var_E & 0x8000) == 0 {
-            return EnemyScript::jump(addr_kMaridiaBeybladeTurtle_Ilist_8C72 as u16);
-        }
-    };
-    [10654919] MaridiaBeybladeTurtle_Instr_94C7 [jp] {
-        let E = Get_MaridiaBeybladeTurtle(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_A = (0xa29239i32) as u16;
-    };
-    [10654929] MaridiaBeybladeTurtle_Instr_94D1 [jp] { QueueSfx2_Max6(0x3a, game); };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10659181]
     MaridiaSpikeyShell_Instr_A56D [jp] { (*Get_MaridiaSpikeyShell(k as i32, game)).var_E = 0; };
@@ -1348,6 +754,15 @@ crate::game::callback_dispatch! {
         jp
     };
     @external {
+        10654593 => [crate::game::maridia_turtles::instruction(0x9381, j, game)];
+        10654738 => [crate::game::maridia_turtles::instruction(0x9412, j, game)];
+        10654791 => [crate::game::maridia_turtles::instruction(0x9447, j, game)];
+        10654801 => [crate::game::maridia_turtles::instruction(0x9451, j, game)];
+        10654827 => [crate::game::maridia_turtles::instruction(0x946b, j, game)];
+        10654853 => [crate::game::maridia_turtles::instruction(0x9485, j, game)];
+        10654881 => [crate::game::maridia_turtles::instruction(0x94a1, j, game)];
+        10654919 => [crate::game::maridia_turtles::instruction(0x94c7, j, game)];
+        10654929 => [{ QueueSfx2_Max6(0x3a, game); j }];
         10657578 => [{ QueueSfx2_Max6(0x34, game); j }];
         10657941 => [{ crate::game::spike_plant::resume(k, game); j }];
         10657959 => [crate::game::enemy_projectiles::spawn_scripted(0xdafe, j, game)];

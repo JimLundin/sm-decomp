@@ -10,6 +10,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/wrecked_ship_ghost.rs"),
     ),
     (
+        "sm/src/game/maridia_turtles.rs",
+        include_bytes!("game/maridia_turtles.rs"),
+    ),
+    (
         "sm/src/game/actors/wrecked_ship_robots.rs",
         include_bytes!("game/actors/wrecked_ship_robots.rs"),
     ),
