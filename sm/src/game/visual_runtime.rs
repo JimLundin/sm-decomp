@@ -20,8 +20,8 @@ use crate::{
         session_runtime::Runtime,
         visual_host::{self, AnimationMember, PaletteMember, Source, StatueProjectile},
         visual_state::{
-            CeresExplosion, CinematicFade, CinematicObjects, EndingGraphics, EyeBeamPhase,
-            HazePhase, HdmaWave, PaletteBuffer, TourianStatuePhase, Upload, Weather,
+            CeresExplosion, CinematicFade, CinematicObjects, CinematicTilemap, EndingGraphics,
+            EyeBeamPhase, HazePhase, HdmaWave, PaletteBuffer, TourianStatuePhase, Upload, Weather,
         },
     },
     game_state::Game,
@@ -1834,6 +1834,30 @@ pub(crate) fn move_jumping_ending_samus(object: u16, game: &mut Game) {
     add_native_pair(low + 2, low, 0x3800, game);
     let velocity = words!(game.samus_y_speed, samus_y_subspeed);
     advance_cinematic_coordinate(object, true, velocity, game);
+}
+
+pub(crate) fn fade_postcredits_samus_suit(game: &mut Game) {
+    if word!(game.cinematic_var4) & 3 == 0 {
+        fade_cinematic_colors(0x40, 0x10, false, game);
+        if word!(game.game_time_hours) as i32 - 3 & 0x8000 == 0 {
+            fade_cinematic_colors(0x1c0, 0x10, true, game);
+        }
+        fade_cinematic_colors(0x1a0, 0x10, true, game);
+        compose_cinematic_palette(game);
+    }
+}
+
+pub(crate) fn advance_postcredits_samus_message(fade_suit: bool, game: &mut Game) {
+    if fade_suit {
+        fade_postcredits_samus_suit(game);
+    }
+    if word!(game.cinematic_var4 -= 1, reread) as i32 - 65 & 0x8000 != 0 {
+        word_transfers!(game, descending, 288; native(0x347e) <- value(127));
+        word_transfers!(game, ascending, 64; pause_map(384) <- rom(0x8cdedb, 0));
+        queue_cinematic_tilemap(CinematicTilemap::FullText, game);
+        set_cinematic_blend(1, 0, 0, 0, game);
+        word! {game; cinematic_var13 = 180; cinematic_function = 0xe2dd; }
+    }
 }
 
 pub(crate) fn flash_intro_mother_brain(object: u16, game: &mut Game) {

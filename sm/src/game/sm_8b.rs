@@ -6,15 +6,15 @@ use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
 use crate::game::visual_runtime::{
     METROID_PAL_1, METROID_PAL_2, METROID_PAL_3, METROID_PAL_4, advance_ceres_station,
-    advance_credit_roll, advance_intro_rinka, advance_shooting_stars,
-    advance_zebes_destruction_zoom, advance_zebes_stars, draw_cinematic_sprites,
-    draw_intro_sprites, drift_cinematic_sprite, flash_intro_mother_brain,
-    initialize_ceres_explosion, initialize_ending_cloud_band, initialize_ending_cloud_side,
-    initialize_ending_time_glyph, initialize_intro_brain_particle, initialize_intro_rinka,
-    initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud,
-    move_jumping_ending_samus, place_cinematic_sprite, prepare_credit_roll, prepare_ending_time,
-    shake_intro_mother_brain, start_intro_rinka, title_metroid_cry, title_metroid_palette,
-    wait_cinematic_scene, wait_ending_cloud,
+    advance_credit_roll, advance_intro_rinka, advance_postcredits_samus_message,
+    advance_shooting_stars, advance_zebes_destruction_zoom, advance_zebes_stars,
+    draw_cinematic_sprites, draw_intro_sprites, drift_cinematic_sprite,
+    fade_postcredits_samus_suit, flash_intro_mother_brain, initialize_ceres_explosion,
+    initialize_ending_cloud_band, initialize_ending_cloud_side, initialize_ending_time_glyph,
+    initialize_intro_brain_particle, initialize_intro_rinka, initialize_shooting_stars,
+    launch_cinematic_sprite, move_ending_cloud, move_jumping_ending_samus, place_cinematic_sprite,
+    prepare_credit_roll, prepare_ending_time, shake_intro_mother_brain, start_intro_rinka,
+    title_metroid_cry, title_metroid_palette, wait_cinematic_scene, wait_ending_cloud,
 };
 use crate::game::visual_runtime::{advance_cinematic_background_pre, fade_cinematic_fixed_color};
 use crate::game::visual_runtime::{
@@ -1495,28 +1495,6 @@ crate::game::callback_dispatch! {
             word!(game.cinematic_function = (0x8be265i32) as u16);
         }
     };
-    [9167461] CinematicFunction_Intro_Func136 [] {
-        if (word!(game.cinematic_var4) & 3) != 0 {
-            CinematicFunction_Intro_Func135(game);
-        } else {
-            fade_cinematic_colors(0x40, 0x10, false, game);
-            if word!(game.game_time_hours) as i32 - 3i32 & 0x8000 == 0 {
-                fade_cinematic_colors(0x1c0, 0x10, true, game);
-            }
-            fade_cinematic_colors(0x1a0, 0x10, true, game);
-            compose_cinematic_palette(game);
-            CinematicFunction_Intro_Func135(game);
-        };
-    };
-    [9167507] CinematicFunction_Intro_Func135 [] {
-        if word!(game.cinematic_var4 -= 1, reread) as i32 - 65i32 & 0x8000 != 0 {
-            word_transfers!(game, descending, 288; native(0x347e) <- value(127));
-            word_transfers!(game, ascending, 64; pause_map(384) <- rom(0x8cdedb, 0));
-            queue_cinematic_tilemap(CinematicTilemap::FullText, game);
-            set_cinematic_blend(1, 0, 0, 0, game);
-            word! {game; cinematic_var13 = 180; cinematic_function = ((0x8be2ddi32) as u16); }
-        }
-    };
     [9167581] CinematicFunction_Intro_Func137 [] {
         let v0: bool = (word!(game.cinematic_var13 -= 1, reread) & 0x8000) != 0;
         if word!(game.cinematic_var13) == 0 || v0 {
@@ -1531,17 +1509,8 @@ crate::game::callback_dispatch! {
         }
     };
     [9167636] CinematicFunction_Intro_Func138 [] {
-        if (word!(game.cinematic_var4) & 3) != 0 {
-            CinematicFunction_Intro_Func145(game);
-        } else {
-            fade_cinematic_colors(0x40, 0x10, false, game);
-            if word!(game.game_time_hours) as i32 - 3i32 & 0x8000 == 0 {
-                fade_cinematic_colors(0x1c0, 0x10, true, game);
-            }
-            fade_cinematic_colors(0x1a0, 0x10, true, game);
-            compose_cinematic_palette(game);
-            CinematicFunction_Intro_Func145(game);
-        };
+        fade_postcredits_samus_suit(game);
+        CinematicFunction_Intro_Func145(game);
     };
     [9167682] CinematicFunction_Intro_Func145 [] {
         if (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0 {
@@ -1702,6 +1671,8 @@ crate::game::callback_dispatch! {
         *ram_ptr!(game; 0x69) = 16;
     };
     @external {
+        9167461 => [advance_postcredits_samus_message(true, game)];
+        9167507 => [advance_postcredits_samus_message(false, game)];
         9164530 => [advance_zebes_destruction_zoom(2, 0xd731, Some(0xd701), game)];
         9164545 => [advance_zebes_destruction_zoom(2, 0xd731, None, game)];
         9164792 => [advance_zebes_destruction_zoom(3, 0xd837, Some(0xd807), game)];
