@@ -72,6 +72,7 @@ pub(crate) enum Entry {
     TimeUpExit,
     ReserveTanks,
     PrepareDeath,
+    DeathBlackout,
 }
 
 /// Advances through completion or a suspension, returning the callee's exact
@@ -391,6 +392,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
         if matches!(entry, Entry::TimeUpExit) {
             crate::game::display_refresh::fade(false, game);
             if game.g_ram[0x51] == 0x80 {
+                crate::game::display_refresh::enable(true, game);
                 crate::game::display_refresh::finish_gameplay(true, game);
                 word! { game, 0;
                     screen_fade_delay, screen_fade_counter, ceres_status, timer_status,
@@ -492,10 +494,27 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                     word! { game, 0; screen_fade_delay, screen_fade_counter }
                 }
             }
-            Entry::TimeUp => {
-                if palette_effects::fading::all(8, game) != 0 {
-                    word!(game.game_state = kGameState_36_WhitingOutFromTimeUp as u16);
-                    word! { game, 0; screen_fade_delay, screen_fade_counter }
+            Entry::TimeUp | Entry::DeathBlackout => {
+                let death = matches!(entry, Entry::DeathBlackout);
+                if palette_effects::fading::all(if death { 6 } else { 8 }, game) != 0 {
+                    if death {
+                        crate::game::display_refresh::finish_gameplay(true, game);
+                        word! { game, 0;
+                            game_options_screen_index, screen_fade_delay, screen_fade_counter,
+                        }
+                        word_transfers!(game, descending, 128; le(eproj_y_subpos, 142) <- value(0));
+                        word! {game; g_word_7E0DE8 = 16; game_options_screen_index = 3; }
+                        word! { game, 0; g_word_7E0DE4, g_word_7E0DE6 }
+                        word!(game.game_state += 1);
+                        word!(game.power_bomb_explosion_status = 0);
+                        crate::game::music::cancel_effects(15, game);
+                        crate::game::music::QueueMusic_Delayed8(0, game);
+                        crate::game::music::QueueMusic_Delayed8(0xff39, game);
+                        crate::game::music::QueueMusic_DelayedY(5, 0xe, game);
+                    } else {
+                        word!(game.game_state = kGameState_36_WhitingOutFromTimeUp as u16);
+                        word! { game, 0; screen_fade_delay, screen_fade_counter }
+                    }
                 }
             }
             Entry::ReserveTanks => {
@@ -517,6 +536,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                 crate::game::display_refresh::fade(false, game);
                 if game.g_ram[0x51] == 0x80 {
                     let ceres = matches!(entry, Entry::CeresBlackout);
+                    crate::game::display_refresh::enable(true, game);
                     crate::game::display_refresh::finish_gameplay(ceres, game);
                     word! { game, 0; screen_fade_delay, screen_fade_counter }
                     if ceres {

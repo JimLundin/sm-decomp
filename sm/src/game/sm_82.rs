@@ -3,13 +3,11 @@ use crate::game::file_menu::advance as advance_file_menu;
 use crate::game::game_over::advance as advance_game_over;
 use crate::game::gameplay::{Entry, advance as AdvanceGameplay};
 use crate::game::map_menu::advance as advance_map_menu;
-use crate::game::music::cancel_effects;
-use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
+use crate::game::music::HasQueuedMusic;
 use crate::game::options_settings;
 use crate::game::pause_controls::fade_in as pause_fade_in;
 pub use crate::game::prelude::*;
 use crate::game::save_slots;
-use crate::game::visual_runtime::clear_hdma;
 
 use crate::cpu_infra::DebugGameOverMenu;
 
@@ -18,7 +16,6 @@ pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_82::*;
 
 use crate::game::display_refresh::setup_transfer;
-use crate::game::palette_effects::fading;
 use crate::game::samus_animation::{
     Samus_DrawDuringDeathAnim, Samus_DrawStartingDeathAnim, Samus_DrawWhenNotAnimatingOrDying,
 };
@@ -86,6 +83,9 @@ const RESERVE_TANKS: Func_V_Coroutine =
 const PREPARE_DEATH: Func_V_Coroutine =
     |game| unsafe { AdvanceGameplay(Entry::PrepareDeath, game) };
 
+const DEATH_BLACKOUT: Func_V_Coroutine =
+    |game| unsafe { AdvanceGameplay(Entry::DeathBlackout, game) };
+
 const DEMO: Func_V_Coroutine = |game| demo_rooms::play(game, |game| unsafe { GAMEPLAY(game) });
 
 static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_V_Coroutine;
@@ -96,7 +96,7 @@ static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_
     GameState_11_LoadingNextRoom_Async, PAUSE_FADE_OUT,
     PAUSE_SETUP, pause_fade_in, PAUSED,
     UNPAUSE_FADE_OUT, UNPAUSE_SETUP, UNPAUSE,
-    PREPARE_DEATH, GameState_20_SamusNoHealth_BlackOut, GameState_21_SamusNoHealth,
+    PREPARE_DEATH, DEATH_BLACKOUT, GameState_21_SamusNoHealth,
     GameState_22_SamusNoHealth_Dying, GameState_23_SamusNoHealth_Flashing,
     GameState_24_SamusNoHealth_Explosion, GAME_OVER_FADE_OUT,
     advance_game_over, RESERVE_TANKS, GameState_28_Unused,
@@ -129,32 +129,6 @@ pub fn GameState_3_Null(game: &mut Game) -> CoroutineRet {
 pub unsafe fn GameState_28_Unused(game: &mut Game) -> CoroutineRet {
     crate::rtl::Unreachable(game);
     kCoroutineNone as CoroutineRet
-}
-pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        let mut _coret_: u8 = GAMEPLAY(game);
-        if _coret_ != 0 {
-            return _coret_;
-        }
-        if fading::all(6, game) != 0 {
-            clear_hdma(game);
-            crate::game::scanline_irq::disable(game);
-            crate::game::display_refresh::reset_gameplay_layers(true, game);
-            word! { game, 0;
-                game_options_screen_index, screen_fade_delay, screen_fade_counter,
-            }
-            word_transfers!(game, descending, 128; le(eproj_y_subpos, 142) <- value(0));
-            word! {game; g_word_7E0DE8 = 16; game_options_screen_index = 3; }
-            word! { game, 0; g_word_7E0DE4, g_word_7E0DE6 }
-            word!(game.game_state += 1);
-            word!(game.power_bomb_explosion_status = 0);
-            cancel_effects(15, game);
-            QueueMusic_Delayed8(0, game);
-            QueueMusic_Delayed8(0xff39, game);
-            QueueMusic_DelayedY(5, 0xe, game);
-        }
-        kCoroutineNone as CoroutineRet
-    }
 }
 pub unsafe fn GameState_21_SamusNoHealth(game: &mut Game) -> CoroutineRet {
     unsafe {
