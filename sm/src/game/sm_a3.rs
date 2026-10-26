@@ -9,8 +9,6 @@ use crate::game::session_runtime::{
     actor_cosine, actor_cosine_full, actor_direction_vector, actor_sine, actor_sine_full,
 };
 use crate::game::visual_runtime::darken_fireflea_room;
-use crate::rtl::rom_record;
-use core::mem::offset_of;
 
 use crate::cpu_infra::Call;
 
@@ -60,7 +58,7 @@ crate::type_aliases! {
 
 crate::type_aliases! {
     pub Enemy_MaridiaFish, Enemy_MaridiaRefillCandy,
-        Enemy_Sidehopper, Enemy_WreckedShipOrangeZoomer, Enemy_FireZoomer,
+        Enemy_WreckedShipOrangeZoomer, Enemy_FireZoomer,
         Enemy_FireFlea, Enemy_Metroid = crate::game::enemy_layouts::EnemyLayout40;
 }
 
@@ -89,7 +87,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_Metroid(o: i32) -> Enemy_Metroid = [0xf78, o as isize];
     Get_Reflec(o: i32) -> Enemy_Reflec = [0xf78, o as isize];
     Get_Roach(o: i32) -> Enemy_Roach = [0xf78, o as isize];
-    Get_Sidehopper(o: i32) -> Enemy_Sidehopper = [0xf78, o as isize];
     Get_StoneZoomer(o: i32) -> Enemy_StoneZoomer = [0xf78, o as isize];
     Get_WreckedShipOrangeZoomer(o: i32) -> Enemy_WreckedShipOrangeZoomer = [0xf78, o as isize];
 }
@@ -501,195 +498,6 @@ crate::prefixed_callbacks! {
         }
     };
 }
-pub unsafe fn Sidehopper_Func_4(k: u16, game: &mut Game) {
-    unsafe {
-        let v1: u16 =
-            crate::rtl::rom_table_word!(game, 0xa3aae2, (game.next_random() as i32 & 1) as isize);
-        (*Get_Sidehopper(k as i32, game)).var_B = v1;
-    }
-}
-pub use self::Sidehopper_Func_14 as Sidehopper_Func_15;
-pub use self::Sidehopper_Func_16 as Sidehopper_Func_17;
-crate::game::callback_dispatch! {
-    unsafe fn CallSidehopperFunc(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [10726670] Sidehopper_Func_14 [] {
-        if (*Get_Sidehopper(word!(game.cur_enemy_index) as i32, game)).var_03 != 0 {
-            Sidehopper_Func_20(game);
-        } else {
-            Sidehopper_Func_19(game);
-        };
-    };
-    [10726706] Sidehopper_Func_16 [] {
-        if (*Get_Sidehopper(word!(game.cur_enemy_index) as i32, game)).var_03 != 0 {
-            Sidehopper_Func_22(game);
-        } else {
-            Sidehopper_Func_21(game);
-        };
-    };
-    @functions [pub unsafe fn (game: &mut Game)];
-    @prefix { let E = Get_Sidehopper(word!(game.cur_enemy_index) as i32, game); };
-    Sidehopper_Func_3 [] {
-        enemy_instruction! {[(*E).base]; instruction = (*E).var_00, timer = 1}
-        (*E).base.timer = 0;
-    };
-    Sidehopper_Main [] {
-        CallSidehopperFunc((((*E).var_B) as u32) | (0xa30000u32), game);
-    };
-    [10726374] Sidehopper_Func_5 [] {
-        let v1: i32 = (*E).var_05 as i32 >> 1;
-        (*E).var_E = crate::rtl::rom_table_word!(game, 0xa3aae6, v1 as isize);
-        (*E).var_D = crate::rtl::rom_table_word!(game, 0xa3aaea, v1 as isize);
-        (*E).var_C = (*E).var_01;
-        (*E).var_B = (0xa3ac40i32) as u16;
-        if (*E).parameter_1 != 0 {
-            (*E).var_B = (0xa3ac56i32) as u16;
-        }
-    };
-    [10726419] Sidehopper_Func_6 [] {
-        let v1: i32 = (*E).var_05 as i32 >> 1;
-        (*E).var_E = crate::rtl::rom_table_word!(game, 0xa3aaf2, v1 as isize);
-        (*E).var_D = crate::rtl::rom_table_word!(game, 0xa3aaf6, v1 as isize);
-        (*E).var_C = (*E).var_02;
-        (*E).var_B = (0xa3ac40i32) as u16;
-        if (*E).parameter_1 != 0 {
-            (*E).var_B = (0xa3ac56i32) as u16;
-        }
-    };
-    [10726464] Sidehopper_Func_7 [] {
-        (*E).var_B = (0xa3ac6ci32) as u16;
-        if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) == 0 {
-            (*E).var_B = (0xa3ac8fi32) as u16;
-        }
-    };
-    [10726486] Sidehopper_Func_8 [] {
-        (*E).var_B = (0xa3aca8i32) as u16;
-        if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) == 0 {
-            (*E).var_B = (0xa3accbi32) as u16;
-        }
-    };
-    [10726508] Sidehopper_Func_9 [] {
-        (*E).var_D = -((*E).var_D as i32) as u16;
-        (*E).var_00 = crate::rtl::rom_table_word!(game, 0xa3aad2, ((*E).var_06 >> 1) as isize);
-        Sidehopper_Func_3(game);
-        (*E).var_B = (0xa3ad0ei32) as u16;
-    };
-    [10726543] Sidehopper_Func_10 [] {
-        (*E).var_00 = crate::rtl::rom_table_word!(game, 0xa3aad2, ((*E).var_06 >> 1) as isize);
-        Sidehopper_Func_3(game);
-        (*E).var_B = (0xa3ad20i32) as u16;
-    };
-    [10726568] Sidehopper_Func_11 [] {
-        (*E).var_D = -((*E).var_D as i32) as u16;
-        (*E).var_00 = crate::rtl::rom_table_word!(game, 0xa3aada, ((*E).var_06 >> 1) as isize);
-        Sidehopper_Func_3(game);
-        (*E).var_B = (0xa3ad32i32) as u16;
-    };
-    [10726603] Sidehopper_Func_12 [] {
-        (*E).var_00 = crate::rtl::rom_table_word!(game, 0xa3aada, ((*E).var_06 >> 1) as isize);
-        Sidehopper_Func_3(game);
-        (*E).var_B = (0xa3ad44i32) as u16;
-    };
-    [10726628] Sidehopper_Func_13 [] {
-        (*E).var_00 = crate::rtl::rom_table_word!(game, 0xa3aac2, ((*E).var_06 >> 1) as isize);
-        if (*E).parameter_1 != 0 {
-            (*E).var_00 = crate::rtl::rom_table_word!(game, 0xa3aaca, ((*E).var_06 >> 1) as isize);
-        }
-        Sidehopper_Func_3(game);
-        (*E).var_B = (0xa3ad56i32) as u16;
-    };
-    [10726742] Sidehopper_Func_18 [] {
-        if (*E).var_04 != 0 {
-            (*E).var_04 = 0;
-            (*E).var_B = (0xa3abd6i32) as u16;
-        }
-    };
-    @external {
-        10726358 => [{
-                    Sidehopper_Func_4(word!(game.cur_enemy_index), game);
-                }];
-        10726688 => Sidehopper_Func_15;
-        10726724 => Sidehopper_Func_17;
-    }
-}
-// Sidehoppers keep separate SNES state entry points for floor and ceiling hops.
-unsafe fn step_sidehopper_jump<const FALLING: bool, const CEILING: bool>(game: &mut Game) {
-    unsafe {
-        let E = Get_Sidehopper(word!(game.cur_enemy_index) as i32, game);
-        let index: i32 = (8 * (*E).var_C as i32 >> 1) + if FALLING == CEILING { 2 } else { 0 };
-        if {
-            let (actor, amount) = (
-                word!(game.cur_enemy_index),
-                words!((
-                    crate::rtl::rom_table_word!(game, 0xa2838f, (index + 1) as isize),
-                    crate::rtl::rom_table_word!(game, 0xa2838f, index as isize)
-                )) as i32,
-            );
-            (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
-                == actor_api::MovementResult::Blocked) as u8
-        } != 0
-        {
-            if FALLING {
-                (*E).var_03 = 0;
-                (*E).var_B = (0xa3ace4i32) as u16;
-            } else {
-                (*E).var_D = -((*E).var_D as i32) as u16;
-                (*E).var_03 = 1;
-            }
-        } else if FALLING {
-            if {
-                let (actor, amount) = (
-                    word!(game.cur_enemy_index),
-                    ((*E).var_D as i16 as i32) << 16,
-                );
-                (actor_api::move_horizontal(
-                    &mut Runtime::new(game),
-                    Key::from_legacy(actor),
-                    amount,
-                    actor_api::SlopePolicy::Ignore,
-                ) == actor_api::MovementResult::Blocked) as u8
-            } != 0
-            {
-                (*E).var_D = -((*E).var_D as i32) as u16;
-            }
-            let mut next: i16 = ((*E).var_E as i16).wrapping_add((*E).var_C as i16);
-            if next as i32 - 64i32 & 0x8000 == 0 {
-                next = 64;
-            }
-            (*E).var_C = next as u16;
-        } else if {
-            let (actor, amount) = (
-                word!(game.cur_enemy_index),
-                ((*E).var_D as i16 as i32) << 16,
-            );
-            (actor_api::move_horizontal(
-                &mut Runtime::new(game),
-                Key::from_legacy(actor),
-                amount,
-                actor_api::SlopePolicy::Ignore,
-            ) == actor_api::MovementResult::Blocked) as u8
-        } != 0
-        {
-            (*E).var_D = -((*E).var_D as i32) as u16;
-            (*E).var_03 = 1;
-        } else {
-            let next = ((*E).var_C as i16).wrapping_sub((*E).var_E as i16);
-            (*E).var_C = next as u16;
-            if next < 0 {
-                (*E).var_03 = 1;
-                (*E).var_C = 0;
-            }
-        }
-    }
-}
-crate::forward_calls! { pub unsafe fn (game: &mut Game);
-    Sidehopper_Func_19 => { crate::verify_probe::hit("hop.Sidehopper_Func_19"); step_sidehopper_jump::<false, false>(game) };
-    Sidehopper_Func_20 => { crate::verify_probe::hit("hop.Sidehopper_Func_20"); step_sidehopper_jump::<true, false>(game) };
-    Sidehopper_Func_21 => { crate::verify_probe::hit("hop.Sidehopper_Func_21"); step_sidehopper_jump::<false, true>(game) };
-    Sidehopper_Func_22 => { crate::verify_probe::hit("hop.Sidehopper_Func_22"); step_sidehopper_jump::<true, true>(game) };
-}
-
 crate::game::callback_dispatch! {
     pub unsafe fn CallMaridiaRefillCandyFunc(ea: u32, k: u16, game: &mut Game) => ea;
     call (k, game); default { Unreachable(game); };
@@ -1372,37 +1180,6 @@ crate::game::callback_dispatch! {
         );
         StoneZoomer_E67A(word!(game.cur_enemy_index), game);
     };
-    [10726153] Sidehopper_Init [] {
-        word!(game.random_number = 37);
-        game.next_random();
-        let E = Get_Sidehopper(word!(game.cur_enemy_index) as i32, game);
-        set_fields! {[(*E)], 0; var_03, var_04, var_05}
-        let v2: u16 = (2u16).wrapping_mul(rom_record(0xa0, (*E).base.enemy_ptr, game).word(offset_of!(EnemyDef, field_2A)));
-        (*E).var_06 = v2;
-        let mut v4: u16 = if (*E).parameter_1 != 0 {
-            crate::rtl::rom_table_word!(game, 0xa3aaca, ((*E).var_06 >> 1) as isize)
-        } else {
-            crate::rtl::rom_table_word!(game, 0xa3aac2, ((*E).var_06 >> 1) as isize)
-        };
-        (*E).var_00 = v4;
-        Sidehopper_Func_3(game);
-        if rom_record(0xa0, (*E).base.enemy_ptr, game).word(offset_of!(EnemyDef, field_2A)) != 0 {
-            (*E).var_05 = 2;
-        }
-        let v6: i32 = (*E).var_05 as i32 >> 1;
-        (*E).var_01 = crate::game::hopping_blobs::initial_hop_phase(
-            crate::rtl::rom_table_word!(game, 0xa3aaee, v6 as isize),
-            crate::rtl::rom_table_word!(game, 0xa3aae6, v6 as isize),
-            game.capture_native_rom(),
-        );
-        let v8: i32 = (*E).var_05 as i32 >> 1;
-        (*E).var_02 = crate::game::hopping_blobs::initial_hop_phase(
-            crate::rtl::rom_table_word!(game, 0xa3aafa, v8 as isize),
-            crate::rtl::rom_table_word!(game, 0xa3aaf2, v8 as isize),
-            game.capture_native_rom(),
-        );
-        (*E).var_B = (0xa3abd6i32) as u16;
-    };
     [10728522] MaridiaRefillCandy_Init [] {
         let E = Get_MaridiaRefillCandy(word!(game.cur_enemy_index) as i32, game);
         (*E).parameter_1 = (0xa3b482i32) as u16;
@@ -1878,11 +1655,6 @@ crate::game::callback_dispatch! {
     };
     [10719402] MaridiaFish_Instr_2 [jp] {
         (*Get_MaridiaFish(word!(game.cur_enemy_index) as i32, game)).var_01 = 1;
-    };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10725992] Sidehopper_Func_1 [jp.offset(1)] { QueueSfx2_Max3(jp.word(0), game); };
-    [10726142] Sidehopper_Instr_1 [jp] {
-        (*Get_Sidehopper(word!(game.cur_enemy_index) as i32, game)).var_04 = 1;
     };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10728489] MaridiaRefillCandy_Instr_1 [jp] {
