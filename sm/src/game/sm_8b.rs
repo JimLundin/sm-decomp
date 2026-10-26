@@ -6,15 +6,16 @@ use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
 use crate::game::visual_runtime::{
     METROID_PAL_1, METROID_PAL_2, METROID_PAL_3, METROID_PAL_4, advance_ceres_station,
-    advance_credit_roll, advance_intro_rinka, advance_postcredits_samus_message,
-    advance_shooting_stars, advance_zebes_destruction_zoom, advance_zebes_stars,
-    draw_cinematic_sprites, draw_intro_sprites, drift_cinematic_sprite,
-    fade_postcredits_samus_suit, flash_intro_mother_brain, initialize_ceres_explosion,
-    initialize_ending_cloud_band, initialize_ending_cloud_side, initialize_ending_time_glyph,
-    initialize_intro_brain_particle, initialize_intro_rinka, initialize_shooting_stars,
-    launch_cinematic_sprite, move_ending_cloud, move_jumping_ending_samus, place_cinematic_sprite,
-    prepare_credit_roll, prepare_ending_time, shake_intro_mother_brain, start_intro_rinka,
-    title_metroid_cry, title_metroid_palette, wait_cinematic_scene, wait_ending_cloud,
+    advance_credit_roll, advance_intro_baby_pursuit, advance_intro_rinka,
+    advance_postcredits_samus_message, advance_shooting_stars, advance_zebes_destruction_zoom,
+    advance_zebes_stars, chase_intro_baby_y, draw_cinematic_sprites, draw_intro_sprites,
+    drift_cinematic_sprite, fade_postcredits_samus_suit, flash_intro_mother_brain,
+    initialize_ceres_explosion, initialize_ending_cloud_band, initialize_ending_cloud_side,
+    initialize_ending_time_glyph, initialize_intro_brain_particle, initialize_intro_rinka,
+    initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud,
+    move_jumping_ending_samus, place_cinematic_sprite, prepare_credit_roll, prepare_ending_time,
+    shake_intro_mother_brain, start_intro_rinka, title_metroid_cry, title_metroid_palette,
+    wait_cinematic_scene, wait_ending_cloud,
 };
 use crate::game::visual_runtime::{advance_cinematic_background_pre, fade_cinematic_fixed_color};
 use crate::game::visual_runtime::{
@@ -516,27 +517,6 @@ static kSetSomeStuffForSpriteObject_9_Tab1: [i16; 138] = [
     -0x6000, 4, -0x4000, 4, -0x2000, 5, 0, 5, 0x2000, 5, 0x4000, 5, 0x6000, 5, -0x8000, 5, -0x6000,
     5, -0x4000, 5, -0x2000,
 ];
-
-macro_rules! chase_samus_with_cinematic_sprite {
-    ($game:ident, $y_offset:literal, $object_slot:ident) => {
-        if ((word!($game.samus_y_pos) as i32
-            - $y_offset
-            - word!($game.cinematicbg_arr8[$object_slot]) as i32) as i16)
-            < 0
-        {
-            if word!($game.cinematic_var17) as i32 + 543 & 0x8000 == 0 {
-                word!($game.cinematic_var17, wrapping_sub(32));
-            }
-        } else if word!($game.cinematic_var17) as i32 - 544i32 & 0x8000 != 0 {
-            word!($game.cinematic_var17, wrapping_add(32));
-        }
-        AddToHiLo(
-            (ram_ptr!($game, u16; 0x1a9d)).offset($object_slot as isize),
-            (ram_ptr!($game, u16; 0x1afd)).offset($object_slot as isize),
-            ((word!($game.cinematic_var17) as i16 as i32) << 8) as u32,
-        );
-    };
-}
 
 pub unsafe fn GameState_39_EndingAndCredits_(game: &mut Game) -> CoroutineRet {
     unsafe {
@@ -2054,44 +2034,6 @@ crate::game::callback_dispatch! {
             word! { game, 0; cinematic_var14, cinematic_var17, cinematicspr_goto_timer[v2] }
         }
     };
-    [9157412] CinematicFunction_Intro_Func53 [] {
-        let kh: i32 = k as i32 >> 1;
-        if word!(game.cinematic_var13) != 0 {
-            if word!(game.cinematicspr_goto_timer[kh]) as i32 - 128i32 & 0x8000 != 0 {
-                let v3: u16 = (word!(game.cinematicspr_goto_timer[kh])).wrapping_add(1);
-                word!(game.cinematicspr_goto_timer[kh] = v3);
-                if (v3 & 0x3f) == 0 {
-                    QueueSfx3_Max6(0x23, game);
-                }
-            }
-            if ((word!(game.samus_x_pos)) as i16)
-                .wrapping_sub((word!(game.cinematicbg_arr7[kh])) as i16)
-                < 0
-            {
-                if word!(game.cinematic_var14) as i32 + 639 & 0x8000 == 0 {
-                    word!(game.cinematic_var14 -= 32);
-                }
-            } else if word!(game.cinematic_var14) as i32 - 640i32 & 0x8000 != 0 {
-                word!(game.cinematic_var14 += 32);
-            }
-            word!(
-                game.cinematic_var15 = (if word!(game.cinematic_var14) & 0x8000 != 0 {
-                    1
-                } else {
-                    -1i32
-                }) as u16
-            );
-            AddToHiLo(
-                (ram_ptr!(game, u16; 0x1a7d)).offset(kh as isize),
-                (ram_ptr!(game, u16; 0x1add)).offset(kh as isize),
-                ((word!(game.cinematic_var14) as i16 as i32) << 8) as u32,
-            );
-            chase_samus_with_cinematic_sprite!(game, 8i32, kh);
-        } else {
-            word! {game; cinematicspr_instr_timer[kh] = 1;
-                cinematicspr_instr_ptr[kh] = addr_off_8BCE53 as u16; cinematic_var15 = 0; }
-        };
-    };
     [9159817] CinematicSprPreInstr_C489 [] {
         if word!(game.cinematic_function) as i32 == 0x8bc5ca & 0xffff {
             word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8b93d9i32) as u16);
@@ -2249,7 +2191,7 @@ crate::game::callback_dispatch! {
             CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCEF1 as u16, 3, game);
             QueueSfx3_Max6(0x23, game);
         }
-        chase_samus_with_cinematic_sprite!(game, 32i32, v1);
+        chase_intro_baby_y(k, 32, game);
         if (word!(game.cinematic_var17) & 0x8000) == 0 {
             word!(game.cinematic_var14 = 128);
             word!(game.cinematicspr_preinstr_func[v1] = (0x8bbb0di32) as u16);
@@ -2293,6 +2235,7 @@ crate::game::callback_dispatch! {
         };
     };
     @external {
+        9157412 => [advance_intro_baby_pursuit(j, game)];
         9171802 => [advance_zebes_stars(j, false, game)];
         9171829 => [advance_zebes_stars(j, true, game)];
         9158325 => [advance_ceres_station(j, game)];

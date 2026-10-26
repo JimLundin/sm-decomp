@@ -1655,6 +1655,56 @@ pub(crate) fn start_intro_rinka(object: u16, cursor: u16, game: &mut Game) -> u1
     cursor
 }
 
+pub(crate) fn chase_intro_baby_y(object: u16, y_offset: i32, game: &mut Game) {
+    let slot = usize::from(object >> 1);
+    if ((word!(game.samus_y_pos) as i32 - y_offset - word!(game.cinematicbg_arr8[slot]) as i32)
+        as i16)
+        < 0
+    {
+        if word!(game.cinematic_var17) as i32 + 543 & 0x8000 == 0 {
+            word!(game.cinematic_var17, wrapping_sub(32));
+        }
+    } else if word!(game.cinematic_var17) as i32 - 544 & 0x8000 != 0 {
+        word!(game.cinematic_var17, wrapping_add(32));
+    }
+    let velocity = ((word!(game.cinematic_var17) as i16 as i32) << 8) as u32;
+    advance_cinematic_coordinate(object, true, velocity, game);
+}
+
+pub(crate) fn advance_intro_baby_pursuit(object: u16, game: &mut Game) {
+    let slot = usize::from(object >> 1);
+    if word!(game.cinematic_var13) == 0 {
+        word! {game; cinematicspr_instr_timer[slot] = 1;
+        cinematicspr_instr_ptr[slot] = 0xce53; cinematic_var15 = 0; }
+        return;
+    }
+    if word!(game.cinematicspr_goto_timer[slot]) as i32 - 128 & 0x8000 != 0 {
+        let timer = word!(game.cinematicspr_goto_timer[slot]).wrapping_add(1);
+        word!(game.cinematicspr_goto_timer[slot] = timer);
+        if timer & 0x3f == 0 {
+            crate::game::music::QueueSfx3_Max6(0x23, game);
+        }
+    }
+    if (word!(game.samus_x_pos) as i16).wrapping_sub(word!(game.cinematicbg_arr7[slot]) as i16) < 0
+    {
+        if word!(game.cinematic_var14) as i32 + 639 & 0x8000 == 0 {
+            word!(game.cinematic_var14 -= 32);
+        }
+    } else if word!(game.cinematic_var14) as i32 - 640 & 0x8000 != 0 {
+        word!(game.cinematic_var14 += 32);
+    }
+    word!(
+        game.cinematic_var15 = if word!(game.cinematic_var14) & 0x8000 != 0 {
+            1
+        } else {
+            u16::MAX
+        }
+    );
+    let velocity = ((word!(game.cinematic_var14) as i16 as i32) << 8) as u32;
+    advance_cinematic_coordinate(object, false, velocity, game);
+    chase_intro_baby_y(object, 8, game);
+}
+
 pub(crate) fn advance_intro_rinka(object: u16, misses_samus: bool, game: &mut Game) {
     let slot = usize::from(object >> 1);
     let horizontal = if misses_samus {
