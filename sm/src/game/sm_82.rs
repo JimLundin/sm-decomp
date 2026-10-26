@@ -7,7 +7,6 @@ use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_Delayed
 pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
-use crate::game::sprite_drawing::Clip;
 use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled};
 
 use crate::cpu_infra::DebugGameOverMenu;
@@ -785,230 +784,6 @@ pub unsafe fn GameState_28_Unused(game: &mut Game) -> CoroutineRet {
         kCoroutineNone as CoroutineRet
     }
 }
-pub unsafe fn DeleteAllOptionsMenuObjects_(game: &mut Game) {
-    word_transfers!(game, descending, 8;
-        le(eproj_y_pos, 12) <- value(0),
-        le(eproj_y_vel, 24) <- value(0),
-    );
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallOptionsEntryFunc(ea: u32, j: u16, game: &mut Game) => ea;
-    call (j, game); default { Unreachable(game); };
-    @functions [pub unsafe fn (j: u16, game: &mut Game)];
-    [8581782] sub_82F296 [] {
-        let v1: i32 = j as i32 >> 1;
-        word! {game; eproj_y_pos[(v1 + 13)] = 24; eproj_x_vel[(v1 + 3)] = 56;
-            eproj_x_vel[(v1 + 11)] = 3584; }
-    };
-    [8581963] sub_82F34B [] {
-        *(ram_ptr!(game, u16; 0x1a93)).offset(((j as i32 >> 1) + 13) as isize) = 124;
-        sub_82F369(j, game);
-    };
-    [8581971] sub_82F353 [] {
-        *(ram_ptr!(game, u16; 0x1a93)).offset(((j as i32 >> 1) + 13) as isize) = 132;
-        sub_82F369(j, game);
-    };
-    [8581979] sub_82F35B [] {
-        *(ram_ptr!(game, u16; 0x1a93)).offset(((j as i32 >> 1) + 13) as isize) = 128;
-        sub_82F369(j, game);
-    };
-    [8582169] sub_82F419 [] {
-        let v1: i32 = j as i32 >> 1;
-        word! {game; eproj_y_pos[(v1 + 13)] = 216; eproj_x_vel[(v1 + 3)] = 16;
-            eproj_x_vel[(v1 + 11)] = 3584; }
-    };
-    @external {
-        8581987 => sub_82F363;
-    }
-}
-pub unsafe fn CreateOptionsMenuObject_(a: u16, j: u16, game: &mut Game) -> u8 {
-    unsafe {
-        word!(game.options_menu_init_param = a);
-        let mut v3: u16 = 14;
-        while word!(game.cinematicspr_arr7[(v3 >> 1)]) != 0 {
-            v3 = (v3).wrapping_sub(2);
-            if (v3 & 0x8000) != 0 {
-                return 1;
-            }
-        }
-        let v5 = RomPtr_82(j, game);
-        let v6: i32 = v3 as i32 >> 1;
-        word! {game; optionsmenu_arr1[v6] = *(v5.offset(2) as *mut u16);
-        cinematicspr_arr7[v6] = *(v5.offset(4) as *mut u16); cinematicspr_instr_ptr[v6] = 1; }
-        word! { game, 0;
-            cinematicbg_arr8[v6], optionsmenu_arr5[v6], cinematicspr_arr6[v6], optionsmenu_arr7[v6],
-        }
-        CallOptionsEntryFunc(((*(v5 as *mut u16)) as u32) | (0x820000u32), v3, game);
-        0
-    }
-}
-pub fn OptionsPreInstr_nullsub_57(k: u16) {}
-pub unsafe fn OptionsMenuFunc1(game: &mut Game) {
-    unsafe {
-        let mut i: i32 = 14;
-        while i >= 0 {
-            word!(game.optionsmenu_index = i as u16);
-            if word!(game.cinematicspr_arr7[(i >> 1)]) != 0 {
-                OptionsMenuFunc2(i as u16, game);
-                i = word!(game.optionsmenu_index) as i32;
-            }
-            i -= 2;
-        }
-    }
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallOptionsPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
-    call (k, game); default { Unreachable(game); };
-    @functions [pub unsafe fn (v0: u16, game: &mut Game)];
-    [8581801] OptionsPreInstr_F2A9 [] {
-        if word!(game.game_state) as i32 == kGameState_2_GameOptionsMenu as i32 {
-            let v2: i32 = word!(game.game_options_screen_index) as i32;
-            let v3: u16 = crate::rtl::rom_table_word!(game, 0x82f2ed, v2 as isize);
-            if v3 != 0 {
-                let v4 = RomPtr_82(
-                    (v3 as i32 + 4 * word!(game.menu_option_index) as i32) as u16,
-                    game,
-                ) as *const u16;
-                let v5: i32 = v0 as i32 >> 1;
-                word! {game; eproj_y_pos[(v5 + 13)] = *v4; eproj_x_vel[(v5 + 3)] = *v4.offset(1); }
-            } else {
-                let v6: i32 = v0 as i32 >> 1;
-                word! {game; eproj_y_pos[(v6 + 13)] = 384; eproj_x_vel[(v6 + 3)] = 16; }
-            }
-        } else {
-            let v1: i32 = v0 as i32 >> 1;
-            word! {game; eproj_E[(v1 + 15)] = 1; eproj_y_vel[(v1 + 17)] = addr_off_82F4B6 as u16; }
-        };
-    };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [8582006] OptionsPreInstr_F376 [] {
-        if word!(game.game_state) as i32 != kGameState_2_GameOptionsMenu as i32
-            || word!(game.game_options_screen_index) == 6 && *ram_ptr!(game; 0x51) == 0x80
-        {
-            let v1: i32 = k as i32 >> 1;
-            word! {game; eproj_E[(v1 + 15)] = 1; eproj_y_vel[(v1 + 17)] = addr_off_82F4B6 as u16; }
-        }
-    };
-    [8582048] OptionsPreInstr_F3A0 [] {
-        match word!(game.game_options_screen_index) as i32 {
-            6 => {
-                if *ram_ptr!(game; 0x51) == 0x80 {
-                    let v1: i32 = k as i32 >> 1;
-                    word!(game.eproj_E[(v1 + 15)] = 1);
-                    word!(game.eproj_y_vel[(v1 + 17)] = -2890i32 as u16);
-                }
-            }
-            9 => {
-                word!(game.eproj_x_vel[((k as i32 >> 1) + 3)] -= 2);
-            }
-            10 => {
-                word!(game.eproj_x_vel[((k as i32 >> 1) + 3)] += 2);
-            }
-            _ => {}
-        };
-    };
-    [8582114] OptionsPreInstr_F3E2 [] {
-        if word!(game.game_options_screen_index) == 6 && *ram_ptr!(game; 0x51) == 0x80 {
-            let v1: i32 = k as i32 >> 1;
-            word! {game; eproj_E[(v1 + 15)] = 1; eproj_y_vel[(v1 + 17)] = -2890i32 as u16; }
-        }
-    };
-    [8582188] OptionsPreInstr_F42C [] {
-        if word!(game.game_state) != 2 {
-            let v1: i32 = k as i32 >> 1;
-            word! {game; eproj_E[(v1 + 15)] = 1; eproj_y_vel[(v1 + 17)] = addr_off_82F4B6 as u16; }
-        }
-    };
-    @external {
-        8555536 => [OptionsPreInstr_nullsub_57(k)];
-    }
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallOptionsInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> u16 => ea;
-    call (k, j, game); default Unreachable(game) as u16;
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
-    [8555610] OptionsInstr_Destroy [0] {
-        let v2: i32 = k as i32 >> 1;
-        word! { game, 0; cinematicbg_arr8[v2], cinematicspr_arr7[v2] }
-    };
-    [8555620] OptionsInstr_8C64 [0] {
-        word!(game.cinematicspr_arr7[(k >> 1)] = (j).wrapping_sub(2));
-    };
-    [8555630] OptionsInstr_SetPreInstr [(j).wrapping_add(2)] {
-        word!(game.optionsmenu_arr1[(k >> 1)] = *(RomPtr_82(j, game) as *mut u16));
-    };
-    [8555641] OptionsInstr_8C79 [j] {
-        word!(game.optionsmenu_arr1[(k >> 1)] = (0x828c81i32) as u16);
-    };
-    [8555650] OptionsInstr_Goto [*(RomPtr_82(j, game) as *mut u16)] { };
-    [8555657] OptionsInstr_8C89 [] {
-        let v2: i32 = k as i32 >> 1;
-        crate::update_place! { unaligned_word fresh0 [fresh1] = &raw mut (*(ram_ptr!(game, u16; 0x1b2d)).offset(v2 as isize)) => (u16::from_le(fresh0.read_unaligned())).wrapping_sub(1); }
-        if fresh1 == 1 {
-            (j).wrapping_add(2)
-        } else {
-            OptionsInstr_Goto(k, j, game)
-        }
-    };
-    [8555667] OptionsInstr_8C93 [(j).wrapping_add(2)] {
-        word!(game.optionsmenu_arr5[(k >> 1)] = *(RomPtr_82(j, game) as *mut u16));
-    };
-}
-pub unsafe fn OptionsMenuFunc2(k: u16, game: &mut Game) {
-    unsafe {
-        CallOptionsPreInstr(
-            ((word!(game.optionsmenu_arr1[(k >> 1)])) as u32) | (0x820000u32),
-            k,
-            game,
-        );
-        let v1: u16 = word!(game.optionsmenu_index);
-        let v2: i32 = word!(game.optionsmenu_index) as i32 >> 1;
-        crate::update_place! { unaligned_word fresh119 [fresh120] = &raw mut (*(ram_ptr!(game, u16; 0x1b1d)).offset(v2 as isize)) => (u16::from_le(fresh119.read_unaligned())).wrapping_sub(1); }
-        if fresh120 == 1 {
-            let mut v4: u16 = word!(game.cinematicspr_arr7[v2]);
-            let mut v5 = null_mut::<u16>();
-            loop {
-                v5 = RomPtr_82(v4, game) as *mut u16;
-                if (*v5 & 0x8000) == 0 {
-                    break;
-                }
-                v4 = CallOptionsInstr(
-                    ((*v5) as u32) | (0x820000u32),
-                    v1,
-                    (v4).wrapping_add(2),
-                    game,
-                );
-                if v4 == 0 {
-                    return;
-                }
-            }
-            let v7: i32 = v1 as i32 >> 1;
-            word! {game; cinematicspr_instr_ptr[v7] = *v5; cinematicbg_arr8[v7] = *v5.offset(1);
-            cinematicspr_arr7[v7] = (v4).wrapping_add(4); }
-        }
-    }
-}
-pub unsafe fn DrawOptionsMenuSpritemaps(game: &mut Game) {
-    {
-        for i in (0i32..=14).rev().step_by(2) {
-            let v1: i32 = i >> 1;
-            if word!(game.cinematicbg_arr8[v1]) != 0 {
-                let v2: u16 = word!(game.cinematicbg_arr8[v1]);
-                sprite_output::paletted(
-                    0x82,
-                    v2,
-                    (
-                        word!(game.optionsmenu_arr8[v1]),
-                        word!(game.cinematicbg_arr9[v1]),
-                    ),
-                    word!(game.optionsmenu_arr10[v1]),
-                    Clip::Bounded,
-                    game,
-                );
-            }
-        }
-    }
-}
 pub unsafe fn GameState_12_Pausing_Darkening_Async(game: &mut Game) -> CoroutineRet {
     unsafe {
         let mut _coret_: u8 = AdvanceGameplay(game);
@@ -1697,8 +1472,7 @@ static kGameOptionsMenuFuncs: [Func_V; 13] = callback_table! { nonnull Func_V;
 pub unsafe fn GameState_2_GameOptionsMenu(game: &mut Game) -> CoroutineRet {
     unsafe {
         kGameOptionsMenuFuncs[word!(game.game_options_screen_index) as usize](game);
-        OptionsMenuFunc1(game);
-        DrawOptionsMenuSpritemaps(game);
+        crate::game::options_objects::advance_and_draw(game);
         if word!(game.game_options_screen_index) as i32 - 2i32 & 0x8000 == 0 {
             OptionsMenu_AddToVramQueue(game);
         }
@@ -1715,7 +1489,7 @@ pub unsafe fn GameOptionsMenuFunc_0(game: &mut Game) {
         } else if *ram_ptr!(game; 0x51) == 14 {
             let v0: u16 = *ram_ptr!(game; 0x6b) as u16;
             if (*ram_ptr!(game; 0x6b) & 4) == 0 {
-                CreateOptionsMenuObject_(v0, addr_stru_82F4D6 as u16, game);
+                crate::game::options_objects::spawn(v0, addr_stru_82F4D6 as u16, game);
             }
         }
     }
@@ -1749,10 +1523,10 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
         // The ROM keeps the final copied tile in A through the object clear.
         let initial_tile = u16::from_le_bytes([game.g_ram[0x3000], game.g_ram[0x3001]]);
         word!(game.menu_option_index = 0);
-        DeleteAllOptionsMenuObjects_(game);
-        CreateOptionsMenuObject_(initial_tile, addr_stru_82F4B8 as u16, game);
+        crate::game::options_objects::clear(game);
+        crate::game::options_objects::spawn(initial_tile, addr_stru_82F4B8 as u16, game);
         // The first initializer leaves its palette $0E00 in A for this call.
-        CreateOptionsMenuObject_(0x0e00, addr_stru_82F4C4 as u16, game);
+        crate::game::options_objects::spawn(0x0e00, addr_stru_82F4C4 as u16, game);
         word!(game.game_options_screen_index += 1);
         OptionsMenuFunc4(game);
     }
@@ -1936,7 +1710,7 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
                     word!(game.menu_option_index = 1);
                     OptionsMenuFunc7(game);
                     word!(game.menu_option_index = 4);
-                    CreateOptionsMenuObject_(4, addr_stru_82F4D0 as u16, game);
+                    crate::game::options_objects::spawn(4, addr_stru_82F4D0 as u16, game);
                 } else {
                     if word!(game.japanese_text_flag) != 0 {
                         for k in (0u16..=1023).rev() {
@@ -1951,7 +1725,7 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
                                 [m as usize] = v1;
                         }
                     }
-                    CreateOptionsMenuObject_(v1, addr_stru_82F4CA as u16, game);
+                    crate::game::options_objects::spawn(v1, addr_stru_82F4CA as u16, game);
                     crate::game::controller_input::load_binding_choices(game);
                     crate::game::menu_tilemap::controller_bindings(game);
                 }
@@ -1960,7 +1734,7 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
                 OptionsMenuFunc4(game);
                 // The ROM passes the final language-highlight tile left in A (82:EFD7).
                 let tile = u16::from_le_bytes([game.g_ram[0x33b8], game.g_ram[0x33b9]]);
-                CreateOptionsMenuObject_(tile, addr_stru_82F4C4 as u16, game);
+                crate::game::options_objects::spawn(tile, addr_stru_82F4C4 as u16, game);
             }
         }
     }
@@ -2167,12 +1941,5 @@ pub fn GameOptionsMenu_A_ScrollControllerSettingsUp(game: &mut Game) {
         if word!(game.reg_BG1VOFS) == 0 {
             word!(game.game_options_screen_index = 7);
         }
-    }
-}
-pub use self::sub_82F35B as sub_82F363;
-pub fn sub_82F369(j: u16, game: &mut Game) {
-    {
-        let v1: i32 = j as i32 >> 1;
-        word! {game; eproj_x_vel[(v1 + 3)] = 16; eproj_x_vel[(v1 + 11)] = 3584; }
     }
 }

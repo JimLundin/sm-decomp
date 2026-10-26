@@ -2,6 +2,10 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/game/options_objects.rs",
+        include_bytes!("game/options_objects.rs"),
+    ),
+    (
         "sm/src/game/pause_controls.rs",
         include_bytes!("game/pause_controls.rs"),
     ),

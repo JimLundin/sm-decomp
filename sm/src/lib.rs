@@ -419,6 +419,7 @@ pub mod game {
     pub(crate) mod hud;
     pub(crate) mod maridia_turtles;
     pub(crate) mod mini_crocomire;
+    pub(crate) mod options_objects;
     pub(crate) mod pause_controls;
     pub mod progress_flags;
     pub(crate) mod reserve_tanks;
