@@ -5,9 +5,7 @@ use crate::game::enemy_script::EnemyScript;
 use crate::game::gameplay_flag_runtime;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
-use crate::game::session_runtime::{
-    actor_cosine, actor_cosine_full, actor_sine, actor_sine_full, correct_previous_position,
-};
+use crate::game::session_runtime::{actor_cosine, actor_sine, correct_previous_position};
 use crate::ram_map::slot;
 
 pub use crate::game::constants::bank_86::*;
@@ -54,13 +52,10 @@ crate::game::constants::typed_constants! { Consts_A8;
     addr_kMorphBallEye_Ilist_9026 = 36902, addr_kMorphBallEye_Ilist_9014 = 36884,
     addr_stru_A8900E = 36878, addr_kMorphBallEye_Ilist_9002 = 36866,
     addr_stru_A88FFC = 36860, addr_kMorphBallEye_Ilist_8FF0 = 36848,
-    addr_kMiniDraygon_Ilist_8775 = 34677, addr_kMiniDraygon_Ilist_876F = 34671,
-    addr_kMiniDraygon_Ilist_8727 = 34599, addr_kMiniDraygon_Ilist_870B = 34571,
-    addr_kMiniDraygon_Ilist_86C3 = 34499, addr_kMiniDraygon_Ilist_86A7 = 34471,
     addr_kSpritemap_Nothing_A8 = 32845,
 }
 crate::type_aliases! {
-    pub Enemy_KiHunter, Enemy_MiniDraygon, Enemy_NorfairLavaMan,
+    pub Enemy_KiHunter, Enemy_NorfairLavaMan,
         Enemy_WalkingLavaSeahorse,
         Enemy_WreckedShipOrbs = crate::game::enemy_layouts::EnemyLayout40;
 }
@@ -105,7 +100,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_KiHunter(o: i32) -> Enemy_KiHunter = [0xf78, o as isize];
     Get_MaridiaFloater(o: i32) -> Enemy_MaridiaFloater = [0xf78, o as isize];
     Get_MaridiaPuffer(o: i32) -> Enemy_MaridiaPuffer = [0xf78, o as isize];
-    Get_MiniDraygon(o: i32) -> Enemy_MiniDraygon = [0xf78, o as isize];
     Get_YappingMaw(o: i32) -> Enemy_YappingMaw = [0xf78, o as isize];
 }
 type YappingMaw = Enemy_YappingMaw;
@@ -114,7 +108,6 @@ type WreckedShipOrbs = Enemy_WreckedShipOrbs;
 type WalkingLavaSeahorse = Enemy_WalkingLavaSeahorse;
 type NorfairLavaMan = Enemy_NorfairLavaMan;
 type MorphBallEye = Enemy_MorphBallEye;
-type MiniDraygon = Enemy_MiniDraygon;
 type MaridiaPuffer = Enemy_MaridiaPuffer;
 type MaridiaFloater = Enemy_MaridiaFloater;
 type KiHunter = Enemy_KiHunter;
@@ -147,232 +140,6 @@ static g_word_A8F180: u16 = 0x60;
 static g_word_A8F182: u16 = 0xe000;
 static g_word_A8F184: u16 = 0;
 static g_byte_A8F186: u8 = 0x30;
-pub unsafe fn MiniDraygon_Func_1(game: &mut Game) {
-    unsafe {
-        slot!(
-            game,
-            MiniDraygon[word!(game.cur_enemy_index) as i32].var_B = (({
-                let actor = word!(game.cur_enemy_index);
-                actor_api::player_delta(
-                    &Runtime::new(game),
-                    Key::from_legacy(actor),
-                    actor_api::Axis::X,
-                )
-            } & 0x8000)
-                == 0) as u16
-        );
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(
-            game,
-            MiniDraygon[E].var_02 = addr_kMiniDraygon_Ilist_86A7 as u16
-        );
-        if slot!(game, MiniDraygon[E].var_B) != 0 {
-            slot!(
-                game,
-                MiniDraygon[E].var_02 = addr_kMiniDraygon_Ilist_870B as u16
-            );
-        }
-        MiniDraygon_Func_12(game);
-    }
-}
-pub unsafe fn MiniDraygon_Func_2(game: &mut Game) {
-    unsafe {
-        let v0: i32 = word!(game.cur_enemy_index) as i32 >> 1;
-        let v1: u16 = word!(game.enemy_drawing_queue_sizes[(v0 + 1)]);
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, MiniDraygon[E].var_B = v1);
-        if v1 != 0 {
-            slot!(
-                game,
-                MiniDraygon[E].base.x_pos =
-                    (word!(game.enemy_drawing_queue[(v0 + 91)])).wrapping_add(4)
-            );
-            slot!(
-                game,
-                MiniDraygon[E].base.y_pos =
-                    (word!(game.enemy_drawing_queue[(v0 + 93)])).wrapping_add(10)
-            );
-            slot!(
-                game,
-                MiniDraygon[E].var_02 = addr_kMiniDraygon_Ilist_8727 as u16
-            );
-        } else {
-            slot!(
-                game,
-                MiniDraygon[E].base.x_pos =
-                    (word!(game.enemy_drawing_queue[(v0 + 91)])).wrapping_sub(4)
-            );
-            slot!(
-                game,
-                MiniDraygon[E].base.y_pos =
-                    (word!(game.enemy_drawing_queue[(v0 + 93)])).wrapping_add(10)
-            );
-            slot!(
-                game,
-                MiniDraygon[E].var_02 = addr_kMiniDraygon_Ilist_86C3 as u16
-            );
-        }
-        MiniDraygon_Func_12(game);
-    }
-}
-pub unsafe fn MiniDraygon_Func_3(game: &mut Game) {
-    let v0: i32 = word!(game.cur_enemy_index) as i32 >> 1;
-    let v1: u16 = word!(game.enemy_drawing_queue[(v0 + 83)]);
-    let E: i32 = word!(game.cur_enemy_index) as i32;
-    slot!(game, MiniDraygon[E].var_B = v1);
-    if v1 != 0 {
-        slot!(
-            game,
-            MiniDraygon[E].base.x_pos =
-                (word!(game.enemy_drawing_queue[(v0 + 59)])).wrapping_add(4)
-        );
-    } else {
-        slot!(
-            game,
-            MiniDraygon[E].base.x_pos =
-                (word!(game.enemy_drawing_queue[(v0 + 59)])).wrapping_sub(4)
-        );
-    }
-    slot!(
-        game,
-        MiniDraygon[E].base.y_pos = (word!(game.enemy_drawing_queue[(v0 + 61)])).wrapping_add(18)
-    );
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallMiniDraygonFunc(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [11045154] MiniDraygon_Func_4 [] {
-        if slot!(game, MiniDraygon[word!(game.cur_enemy_index) as i32].parameter_1) != 0 {
-            MiniDraygon_Func_6(game);
-        } else {
-            MiniDraygon_Func_5(game);
-        };
-    };
-    [11045428] MiniDraygon_Func_8 [] {
-        MiniDraygon_Func_3(game);
-    };
-    [11045435] MiniDraygon_Func_9 [] {
-        MiniDraygon_Func_11(game);
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, MiniDraygon[E].base(x_pos, x_subpos) += crate::rtl::words!((slot!(game, MiniDraygon[E].var_07), slot!(game, MiniDraygon[E].var_08))));
-        slot!(game, MiniDraygon[E].base(y_pos, y_subpos) += crate::rtl::words!((slot!(game, MiniDraygon[E].var_09), slot!(game, MiniDraygon[E].var_0A))));
-    };
-    [11045496] MiniDraygon_Func_10 [] {
-        if *(ram_ptr!(game, u16; 0xe84))
-            .offset(((word!(game.cur_enemy_index) as i32 >> 1) + 77) as isize)
-            == 0
-        {
-            let E: i32 = word!(game.cur_enemy_index) as i32;
-            if slot!(game, MiniDraygon[E].var_0C) != 0 {
-                MiniDraygon_Func_3(game);
-                slot!(game, MiniDraygon[E].base.x_pos, |old| (old).wrapping_add(slot!(game, MiniDraygon[E].var_F)));
-            } else {
-                slot!(game, MiniDraygon[E].var_02 = addr_kMiniDraygon_Ilist_876F as u16);
-                MiniDraygon_Func_12(game);
-                slot!(game, MiniDraygon[E]; var_0C = 0, var_0B = 0);
-                slot!(game, MiniDraygon[E].var_C = (0xa88a34i32) as u16);
-            }
-        }
-    };
-}
-pub unsafe fn MiniDraygon_Func_5(game: &mut Game) {
-    unsafe {
-        if slot!(
-            game,
-            MiniDraygon[word!(game.cur_enemy_index) as i32 + 128i32].var_0C
-        ) == 0
-        {
-            MiniDraygon_Func_1(game);
-        }
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        if slot!(game, MiniDraygon[E].var_00) != 0 {
-            slot!(
-                game,
-                MiniDraygon[E].base(y_pos, y_subpos) += crate::rtl::words!((
-                    slot!(game, MiniDraygon[E].var_04),
-                    slot!(game, MiniDraygon[E].var_03)
-                ))
-            );
-        } else {
-            slot!(
-                game,
-                MiniDraygon[E].base(y_pos, y_subpos) += crate::rtl::words!((
-                    slot!(game, MiniDraygon[E].var_06),
-                    slot!(game, MiniDraygon[E].var_05)
-                ))
-            );
-        }
-        slot!(game, MiniDraygon[E].var_E, |old| old.wrapping_sub(1));
-        if (slot!(game, MiniDraygon[E].var_E) & 0x8000) != 0 {
-            slot!(
-                game,
-                MiniDraygon[E].var_E = slot!(byte game, MiniDraygon[E].parameter_2[1]) as u16
-            );
-            slot!(game, MiniDraygon[E].var_00, |old| (old) ^ (1u16));
-        }
-    }
-}
-pub unsafe fn MiniDraygon_Func_6(game: &mut Game) {
-    unsafe {
-        MiniDraygon_Func_2(game);
-    }
-}
-pub unsafe fn MiniDraygon_Func_7(game: &mut Game) {
-    unsafe {
-        if {
-            let (actor, distance) = ((word!(game.cur_enemy_index)).wrapping_sub(128), 0x80);
-            u16::from(actor_api::player_within(
-                &mut Runtime::new(game),
-                Key::from_legacy(actor),
-                actor_api::Axis::X,
-                distance,
-            ))
-        } != 0
-        {
-            let r22: u16 = -(((({
-                let actor = word!(game.cur_enemy_index);
-                actor_api::angle_to_player(&Runtime::new(game), Key::from_legacy(actor))
-            }) as u8)
-                .wrapping_sub(64u8)) as i32) as u16;
-            let E: i32 = word!(game.cur_enemy_index) as i32;
-            slot!(
-                game,
-                MiniDraygon[E](var_07, var_08) = actor_cosine_full(r22, 4, game)
-            );
-            slot!(
-                game,
-                MiniDraygon[E](var_09, var_0A) = actor_sine_full(r22, 4, game)
-            );
-            slot!(
-                game,
-                MiniDraygon[E].var_02 = addr_kMiniDraygon_Ilist_876F as u16
-            );
-            MiniDraygon_Func_12(game);
-            slot!(game, MiniDraygon[E].var_0B = 1);
-            slot!(game, MiniDraygon[E].var_C = (0xa88a3bi32) as u16);
-        }
-    }
-}
-pub unsafe fn MiniDraygon_Func_11(game: &mut Game) {
-    unsafe {
-        if {
-            let padding = 0x100;
-            u16::from(actor_api::current_outside_padded_screen(
-                &Runtime::new(game),
-                padding,
-            ))
-        } != 0
-            && *(ram_ptr!(game, u16; 0xe84))
-                .offset(((word!(game.cur_enemy_index) as i32 >> 1) + 77) as isize)
-                == 0
-        {
-            let E: i32 = word!(game.cur_enemy_index) as i32;
-            slot!(game, MiniDraygon[E]; var_0B = 0, var_0C = 1, var_C = (0xa88a78i32) as u16, var_0C = 1, var_02 = addr_kMiniDraygon_Ilist_8775 as u16);
-            MiniDraygon_Func_12(game);
-        }
-    }
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallYappingMawFunc(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -1623,95 +1390,6 @@ crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
-    @prefix { let E: i32 = word!(game.cur_enemy_index) as i32; };
-    [11044832] MiniDraygon_Init [] {
-        if slot!(game, MiniDraygon[E].parameter_1) != 0 {
-            MiniDraygon_Func_2(game);
-            slot!(game, MiniDraygon[E].base.layer = 4);
-        } else {
-            MiniDraygon_Func_1(game);
-            let v2: u16 = (8u16).wrapping_mul((slot!(byte game, MiniDraygon[E].parameter_2[0])) as u16);
-            let v3: i32 = v2 as i32 >> 1;
-            slot!(game, MiniDraygon[E].var_04 = crate::rtl::rom_table_word!(game, 0xa28187, v3 as isize));
-            slot!(game, MiniDraygon[E].var_03 = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1) as isize));
-            slot!(game, MiniDraygon[E].var_06 = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 2) as isize));
-            slot!(game, MiniDraygon[E].var_05 = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 3) as isize));
-            slot!(game, MiniDraygon[E].var_E = (byte!((*(Get_MiniDraygon
-                as unsafe fn(i32, &mut Game) -> *mut Enemy_MiniDraygon)(
-                v2 as i32, game
-            ))
-            .parameter_2; 1)
-                >> 1) as u16);
-        }
-        slot!(game, MiniDraygon[E]; var_00 = 0, var_01 = 0);
-        slot!(game, MiniDraygon[E].var_C = (0xa88922i32) as u16);
-    };
-    [11045040] EvirProjectile_Init [] {
-        slot!(game, MiniDraygon[E].var_02 = addr_kMiniDraygon_Ilist_876F as u16);
-        MiniDraygon_Func_12(game);
-        let v2: i32 = word!(game.cur_enemy_index) as i32 >> 1;
-        slot!(game, MiniDraygon[E].base.palette_index = word!(game.enemy_drawing_queue[(v2 + 73)]));
-        slot!(game, MiniDraygon[E].base.vram_tiles_index = word!(game.enemy_drawing_queue[(v2 + 74)]));
-        MiniDraygon_Func_3(game);
-        slot!(game, MiniDraygon[E]; var_01 = 0, var_0C = 0, var_0B = 0, var_F = 0);
-        slot!(game, MiniDraygon[E].var_C = (0xa88a34i32) as u16);
-    };
-    [11045147] MiniDraygon_Main [] {
-        CallMiniDraygonFunc(((slot!(game, MiniDraygon[E].var_C)) as u32) | (0xa80000u32), game);
-    };
-    [11045278] EvirProjectile_Main [] {
-        if slot!(game, MiniDraygon[E].base.frozen_timer) == 0 {
-            if slot!(game, MiniDraygon[E].var_0B) != 0 {
-                slot!(game, MiniDraygon[E].var_02 = addr_kMiniDraygon_Ilist_876F as u16);
-                MiniDraygon_Func_12(game);
-            } else if slot!(game, MiniDraygon[E].var_0C) != 0 {
-                slot!(game, MiniDraygon[E].var_02 = addr_kMiniDraygon_Ilist_8775 as u16);
-                MiniDraygon_Func_12(game);
-            } else {
-                MiniDraygon_Func_7(game);
-            }
-        }
-        CallMiniDraygonFunc(((slot!(game, MiniDraygon[E].var_C)) as u32) | (0xa80000u32), game);
-    };
-    MiniDraygon_Func_12 [] {
-        let mdn_var_02: u16 = slot!(game, MiniDraygon[E].var_02);
-        if mdn_var_02 != slot!(game, MiniDraygon[E].var_01) {
-            slot!(game, MiniDraygon[E].base.current_instruction = mdn_var_02);
-            slot!(game, MiniDraygon[E].var_01 = mdn_var_02);
-            slot!(game, MiniDraygon[E].base.instruction_timer = 1);
-            slot!(game, MiniDraygon[E].base.timer = 0);
-        }
-    };
-    MiniDraygon_Func_13 [] {
-        let E1: i32 = word!(game.cur_enemy_index) as i32 + 64;
-        let E2: i32 = word!(game.cur_enemy_index) as i32 + 128;
-        if slot!(game, MiniDraygon[E].base.health) == 0 {
-            slot!(game, MiniDraygon[E1].base.properties, |old| (old) | (0x200u16));
-            slot!(game, MiniDraygon[E2].base.properties, |old| (old) | (0x200u16));
-        }
-        let frozen_timer: u16 = slot!(game, MiniDraygon[E].base.frozen_timer);
-        if frozen_timer != 0 {
-            slot!(game, MiniDraygon[E1].base.frozen_timer = frozen_timer);
-            slot!(game, MiniDraygon[E1].base.ai_handler_bits, |old| (old) | (4u16));
-            if slot!(game, MiniDraygon[E2].var_C) as i32 != 0xa88a3b & 0xffff {
-                slot!(game, MiniDraygon[E2].base.ai_handler_bits, |old| (old) | (4u16));
-                slot!(game, MiniDraygon[E2].base.frozen_timer = slot!(game, MiniDraygon[E].base.frozen_timer));
-            }
-        }
-    };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [11045638] MiniDraygon_Touch [] {
-        Enemy_NormalTouchAI_A8(game);
-        MiniDraygon_Func_13(game);
-    };
-    [11045644] MiniDraygon_Powerbomb [] {
-        Enemy_NormalPowerBombAI_A8(game);
-        MiniDraygon_Func_13(game);
-    };
-    [11045650] MiniDraygon_Shot [] {
-        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
-        MiniDraygon_Func_13(game);
-    };
     [11047000] MorphBallEye_Init [] {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         slot!(game, MorphBallEye[E].base.properties, |old| (old) | ((kEnemyProps_DisableSamusColl) as u16));
@@ -2113,34 +1791,6 @@ crate::game::callback_dispatch! {
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11044751] MiniDraygon_Instr_2 [jp] { QueueSfx2_Max6(0x5e, game); };
-    [11044763] MiniDraygon_Instr_1 [jp] {
-        if (*gEnemySpawnData(word!(game.cur_enemy_index) as i32, game).offset(30)).cause_of_death
-            as i32
-            == addr_kMiniDraygon_Ilist_870B as i32
-        {
-            slot!(game, MiniDraygon[word!(game.cur_enemy_index) as i32].var_F = -8i32 as u16);
-        } else {
-            slot!(game, MiniDraygon[word!(game.cur_enemy_index) as i32].var_F = 8);
-        }
-    };
-    [11044790] MiniDraygon_Instr_3 [jp] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        if (*gEnemySpawnData(word!(game.cur_enemy_index) as i32, game).offset(30)).cause_of_death
-            as i32
-            == addr_kMiniDraygon_Ilist_870B as i32
-        {
-            slot!(game, MiniDraygon[E].var_F, |old| old.wrapping_add(1));
-        } else {
-            slot!(game, MiniDraygon[E].var_F, |old| old.wrapping_sub(1));
-        }
-    };
-    [11044811] MiniDraygon_Instr_4 [jp] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, MiniDraygon[E]; var_0C = 0, var_0B = 0);
-        slot!(game, MiniDraygon[E].var_C = (0xa88a34i32) as u16);
-    };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11051207] YappingMaw_Instr_2 [jp] {
         let E: i32 = word!(game.cur_enemy_index) as i32;

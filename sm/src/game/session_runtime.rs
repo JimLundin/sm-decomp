@@ -625,6 +625,11 @@ crate::game::callback_dispatch! {
         11001242 => [()];
         11001873 => [()];
         11042892 => [()];
+        11044832 => crate::game::actors::evir::initialize;
+        11045040 => crate::game::actors::evir::initialize_projectile;
+        11045147 => crate::game::actors::evir::advance;
+        11045278 => crate::game::actors::evir::advance_projectile;
+        11045638 | 11045644 | 11045650 => [crate::game::actors::evir::damage(ea, game)];
         11048675 => crate::game::actors::fune::initialize;
         11048752 => crate::game::actors::fune::advance;
         11049710 => crate::game::actors::wrecked_ship_ghost::initialize;
@@ -750,6 +755,7 @@ crate::game::callback_dispatch! {
     @external {
 
         10651845 => [j];
+        11044751 | 11044763 | 11044790 | 11044811 => [crate::game::actors::evir::instruction(ea, j, game)];
         10716899 => sm_a3::Waver_Instr_1;
         10991155 => [sm_a7::Kraid_Instr_1(k, j)];
         11048485 | 11048497 | 11048522 | 11048547 | 11048572 | 11048597 | 11048628 => [crate::game::actors::fune::instruction(ea, j, game)];
