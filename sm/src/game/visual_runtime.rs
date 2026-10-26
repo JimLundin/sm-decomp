@@ -20,8 +20,8 @@ use crate::{
         session_runtime::Runtime,
         visual_host::{self, AnimationMember, PaletteMember, Source, StatueProjectile},
         visual_state::{
-            CeresExplosion, CinematicObjects, EndingGraphics, EyeBeamPhase, HazePhase, HdmaWave,
-            PaletteBuffer, TourianStatuePhase, Upload, Weather,
+            CeresExplosion, CinematicFade, CinematicObjects, EndingGraphics, EyeBeamPhase,
+            HazePhase, HdmaWave, PaletteBuffer, TourianStatuePhase, Upload, Weather,
         },
     },
     game_state::Game,
@@ -1770,6 +1770,29 @@ pub(crate) fn advance_ceres_station(object: u16, game: &mut Game) {
         advance_cinematic_coordinate(object, false, velocity, game);
         for low in [ram_words::cinematic_var7, ram_words::cinematic_var9] {
             add_native_pair(low + 2, low, velocity, game);
+        }
+    }
+}
+
+pub(crate) fn advance_zebes_destruction_zoom(
+    speed: u16,
+    next_scene: u16,
+    fade_in: Option<u16>,
+    game: &mut Game,
+) {
+    if word!(game.cinematic_var12) & 1 == 0 {
+        word!(game.cinematic_var5 = (word!(game.cinematic_var5) as u8).wrapping_sub(1) as u16);
+    }
+    word!(game.cinematic_var6 += speed);
+    if word!(game.cinematic_var6) as i32 - 384 & 0x8000 == 0
+        && advance_cinematic_fade(CinematicFade::FastOut, game)
+    {
+        word!(game.cinematic_function = next_scene);
+    }
+    if let Some(next) = fade_in {
+        // Both fades may run this frame; the later transition wins.
+        if advance_cinematic_fade(CinematicFade::FastIn, game) {
+            word!(game.cinematic_function = next);
         }
     }
 }

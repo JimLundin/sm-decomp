@@ -6,8 +6,9 @@ use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
 use crate::game::visual_runtime::{
     METROID_PAL_1, METROID_PAL_2, METROID_PAL_3, METROID_PAL_4, advance_ceres_station,
-    advance_credit_roll, advance_intro_rinka, advance_shooting_stars, advance_zebes_stars,
-    draw_cinematic_sprites, draw_intro_sprites, drift_cinematic_sprite, flash_intro_mother_brain,
+    advance_credit_roll, advance_intro_rinka, advance_shooting_stars,
+    advance_zebes_destruction_zoom, advance_zebes_stars, draw_cinematic_sprites,
+    draw_intro_sprites, drift_cinematic_sprite, flash_intro_mother_brain,
     initialize_ceres_explosion, initialize_ending_cloud_band, initialize_ending_cloud_side,
     initialize_ending_time_glyph, initialize_intro_brain_particle, initialize_intro_rinka,
     initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud,
@@ -1177,25 +1178,6 @@ crate::game::callback_dispatch! {
             word!(game.cinematic_function = (0x8bd6f2i32) as u16);
         }
     };
-    [9164530] CinematicFunction_Intro_Func110 [] {
-        CinematicFunction_Intro_Func111(game);
-        if advance_cinematic_fade(CinematicFade::FastIn, game) {
-            word!(game.cinematic_function = (0x8bd701i32) as u16);
-        }
-    };
-    [9164545] CinematicFunction_Intro_Func111 [] {
-        if (word!(game.cinematic_var12) & 1) == 0 {
-            word!(
-                game.cinematic_var5 = (((word!(game.cinematic_var5)) as u8).wrapping_sub(1)) as u16
-            );
-        }
-        word!(game.cinematic_var6 += 2);
-        if word!(game.cinematic_var6) as i32 - 384i32 & 0x8000 == 0
-            && advance_cinematic_fade(CinematicFade::FastOut, game)
-        {
-            word!(game.cinematic_function = (0x8bd731i32) as u16);
-        }
-    };
     [9164593] CinematicFunction_Intro_Func112 [] {
         GraphicsAsset::VramWords(0x7e2000, 0x0000, 0x4000).load(game);
         GraphicsAsset::VramWords(0x7e2000, 0x2000, 0x4000).load(game);
@@ -1211,25 +1193,6 @@ crate::game::callback_dispatch! {
         word! {game; cinematic_var5 = 32; cinematic_var6 = 64; }
         word! { game, 0; cinematic_var8, cinematic_var10 }
         word!(game.cinematic_function = (0x8bd7f8i32) as u16);
-    };
-    [9164807] CinematicFunction_Intro_Func114 [] {
-        if (word!(game.cinematic_var12) & 1) == 0 {
-            word!(
-                game.cinematic_var5 = (((word!(game.cinematic_var5)) as u8).wrapping_sub(1)) as u16
-            );
-        }
-        word!(game.cinematic_var6 += 3);
-        if word!(game.cinematic_var6) as i32 - 384i32 & 0x8000 == 0
-            && advance_cinematic_fade(CinematicFade::FastOut, game)
-        {
-            word!(game.cinematic_function = (0x8bd837i32) as u16);
-        }
-    };
-    [9164792] CinematicFunction_Intro_Func113 [] {
-        CinematicFunction_Intro_Func114(game);
-        if advance_cinematic_fade(CinematicFade::FastIn, game) {
-            word!(game.cinematic_function = (0x8bd807i32) as u16);
-        }
     };
     [9164855] CinematicFunction_Intro_Func115 [] {
         GraphicsAsset::VramWords(0x7e6000, 0x0000, 0x4000).load(game);
@@ -1739,6 +1702,10 @@ crate::game::callback_dispatch! {
         *ram_ptr!(game; 0x69) = 16;
     };
     @external {
+        9164530 => [advance_zebes_destruction_zoom(2, 0xd731, Some(0xd701), game)];
+        9164545 => [advance_zebes_destruction_zoom(2, 0xd731, None, game)];
+        9164792 => [advance_zebes_destruction_zoom(3, 0xd837, Some(0xd807), game)];
+        9164807 => [advance_zebes_destruction_zoom(3, 0xd837, None, game)];
         9148999 => [CinematicFunctionNone()];
         9150248 => [()];
         9151375 => [()]; 9151376 => [()];
