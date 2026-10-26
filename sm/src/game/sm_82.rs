@@ -6,6 +6,7 @@ use crate::game::music::{CancelSoundEffects, advance_sound_effects};
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
 pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
+use crate::game::reserve_tanks::{toggle_mode, transfer_manual};
 use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
 use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled};
@@ -20,10 +21,7 @@ use crate::game::animated_tiles;
 use crate::game::display_refresh::{GraphicsAsset, setup_transfer};
 use crate::game::enemy_projectiles::EnableEprojs;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
-use crate::game::music::{
-    QueueSfx1_Max6, QueueSfx1_Max15, QueueSfx2_Max15, QueueSfx3_Max3, QueueSfx3_Max6,
-    QueueSfx3_Max15,
-};
+use crate::game::music::{QueueSfx1_Max6, QueueSfx1_Max15, QueueSfx2_Max15, QueueSfx3_Max15};
 use crate::game::palette_effects::{self, fading};
 use crate::game::room_entry::{self, ArrivalRequest, EntrySignal, StartSite};
 use crate::game::room_mechanisms::set_enabled;
@@ -1241,7 +1239,7 @@ pub unsafe fn PauseMenu_2(game: &mut Game) {
 pub unsafe fn PauseMenu_5(game: &mut Game) {
     unsafe {
         EquipmentScreenDrawItemSelector(game);
-        EquipmentScreenDisplayReserveTankAmount(game);
+        crate::game::menu_tilemap::reserve_tanks(game);
         HandlePauseMenuLRPressHighlight(game);
         crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x51) == 0x80 {
@@ -1254,7 +1252,7 @@ pub unsafe fn PauseMenu_5(game: &mut Game) {
 pub unsafe fn PauseMenu_3_MapToEquipment_Load(game: &mut Game) {
     unsafe {
         crate::game::map_menu::display_elevator_destinations(game);
-        EquipmentScreenSetupReserveMode(game);
+        crate::game::reserve_tanks::prepare_menu(game);
         EquipmentScreenTransferBG1Tilemap(game);
         word!(game.pause_screen_mode = 1);
         SetPauseScreenButtonLabelPalettes(game);
@@ -1296,7 +1294,7 @@ pub unsafe fn PauseMenu_7_EquipmentToMap_FadeIn(game: &mut Game) {
 pub unsafe fn PauseMenu_4_MapToEquipment_FadeIn(game: &mut Game) {
     unsafe {
         EquipmentScreenDrawItemSelector(game);
-        EquipmentScreenDisplayReserveTankAmount(game);
+        crate::game::menu_tilemap::reserve_tanks(game);
         word!(game.pause_screen_mode = 1);
         crate::game::display_refresh::fade(true, game);
         if *ram_ptr!(game; 0x51) == 15 {
@@ -1326,7 +1324,7 @@ pub unsafe fn DrawPauseMenuDuringFadeout(game: &mut Game) {
     unsafe {
         if word!(game.pause_screen_mode) == 1 {
             EquipmentScreenDrawItemSelector(game);
-            EquipmentScreenDisplayReserveTankAmount(game);
+            crate::game::menu_tilemap::reserve_tanks(game);
             HandlePauseMenuLRPressHighlight(game);
         } else {
             crate::game::map_menu::display_elevator_destinations(game);
@@ -1782,97 +1780,6 @@ pub unsafe fn DrawPauseScreenSpriteAnim(a: u16, input_k: u16, input_j: u16, game
         );
     }
 }
-pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
-    unsafe {
-        let mut current_block: u64;
-        let mut v5: i16 = 0;
-        let mut v7: i16 = 0;
-        word! {game; reg_BG4HOFS = word!(game.reg_BG1HOFS); reg_BG4VOFS = word!(game.reg_BG1VOFS); }
-        word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
-        if word!(game.samus_max_reserve_health) != 0 && word!(game.reserve_health_mode) != 0 {
-            let mut v0: VoidP = addr_kEquipmentScreenTilemap_AUTO as i32 as VoidP;
-            if word!(game.reserve_health_mode) != 1 {
-                v0 = addr_kEquipmentScreenTilemap_MANUAL as i32 as VoidP;
-            }
-            let table = RomPtr_82(v0, game) as *mut u16;
-            for i in 0i32..4 {
-                (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap[(i + 327) as usize] =
-                    (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap[(i + 327) as usize]
-                        & 0xfc00
-                        | *table.offset(i as isize);
-            }
-        }
-        word!(game.pausemenu_item_selector_animation_frame = 0);
-        word!(
-            game.pausemenu_item_selector_animation_timer = *(rom_ptr!(game, u8; 0x82c10c)) as u16
-        );
-        word!(game.pausemenu_reserve_tank_animation_frame = 0);
-        word!(game.pausemenu_reserve_tank_animation_timer = *(rom_ptr!(game, u8; 0x82c165)) as u16);
-        if word!(game.samus_max_reserve_health) != 0 {
-            word!(game.pausemenu_equipment_category_item = 0);
-        } else {
-            if word!(game.hyper_beam_flag) != 0 {
-                current_block = 15976848397966268834;
-            } else {
-                let mut v4: u16 = 0;
-                loop {
-                    if (crate::rtl::rom_table_word!(game, 0x82c04c, (v4 >> 1) as isize)
-                        & word!(game.collected_beams))
-                        != 0
-                    {
-                        current_block = 4761528863920922185;
-                        break;
-                    }
-                    v4 = (v4).wrapping_add(2);
-                    if ((v4) as i16).wrapping_sub(10) >= 0 {
-                        current_block = 15976848397966268834;
-                        break;
-                    }
-                }
-                if current_block == 15976848397966268834 {
-                } else {
-                    byte!(v5; 0) = ((v4 >> 1) >> 8) as u8;
-                    byte!(v5; 1) = (v4 >> 1) as u8;
-                    word!(game.pausemenu_equipment_category_item = ((v5) as u16) | (1u16));
-                    current_block = 9932683223035187777;
-                }
-            }
-            if current_block == 9932683223035187777 {
-            } else {
-                let mut v6: u16 = 0;
-                let item_found = loop {
-                    if (crate::rtl::rom_table_word!(game, 0x82c056, (v6 >> 1) as isize)
-                        & word!(game.collected_items))
-                        != 0
-                    {
-                        byte!(v7; 0) = ((v6 >> 1) >> 8) as u8;
-                        byte!(v7; 1) = (v6 >> 1) as u8;
-                        word!(game.pausemenu_equipment_category_item = ((v7) as u16) | (2u16));
-                        break true;
-                    } else {
-                        v6 = (v6).wrapping_add(2);
-                        if ((v6) as i16).wrapping_sub(12) >= 0 {
-                            break false;
-                        }
-                    }
-                };
-                if !item_found {
-                    let mut v8: i16 = 0;
-                    do_until! { (v8).wrapping_sub(6) >= 0 ;
-                        v8 = (v8).wrapping_add(2);
-                    }
-                }
-            }
-        }
-        if word!(game.samus_reserve_health) != 0 {
-            crate::game::menu_tilemap::reserve_arrow(
-                crate::game::menu_tilemap::ReserveArrow::On,
-                game,
-            );
-            WriteSamusWireframeTilemapAndQueue(game);
-        }
-    }
-}
 pub unsafe fn EquipmentScreenTransferBG1Tilemap(game: &mut Game) {
     unsafe {
         GraphicsAsset::VramWords(0x7e3800, 0x3000, 0x800).load(game);
@@ -1889,12 +1796,12 @@ pub unsafe fn EquipmentScreenMain(game: &mut Game) {
             game,
         );
         EquipmentScreenDrawItemSelector(game);
-        EquipmentScreenDisplayReserveTankAmount(game);
-        WriteSamusWireframeTilemapAndQueue(game);
+        crate::game::menu_tilemap::reserve_tanks(game);
+        crate::game::menu_tilemap::queue_equipment_wireframe(game);
     }
 }
 static kEquipmentScreenCategory_TanksFuncs: [Func_V; 2] = callback_table! { nonnull Func_V;
-    EquipmentScreenCategory_Tanks_0, EquipmentScreenCategory_Tanks_1,
+    toggle_mode, transfer_manual,
 };
 pub unsafe fn EquipmentScreenCategory_Tanks(game: &mut Game) {
     unsafe {
@@ -1932,90 +1839,6 @@ pub unsafe fn EquipmentScreenHandleDpad(game: &mut Game) {
             }
         }
     }
-}
-static kEquipmentScreenTilemap_MANUAL: [u16; 4] = [0x3d46, 0x3d47, 0x3d48, 0x3d49];
-static kEquipmentScreenTilemap_AUTO: [u16; 4] = [0x3d56, 0x3d57, 0x3d58, 0x3d59];
-pub unsafe fn EquipmentScreenCategory_Tanks_0(game: &mut Game) {
-    unsafe {
-        if (word!(game.joypad1_newkeys) as i32 & kButton_A as i32) != 0
-            && word!(game.samus_max_reserve_health) != 0
-        {
-            QueueSfx1_Max6(0x37, game);
-            if word!(game.reserve_health_mode) == 1 {
-                word!(game.reserve_health_mode = 2);
-                EquipmentScreenHudReserveAutoTilemap_Off(game);
-                let mut v1: u16 = 0;
-                for _ in (0i16..8i16).step_by(2) {
-                    (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap
-                        [(v1 as i32 + 327) as usize] = kEquipmentScreenTilemap_MANUAL[v1 as usize]
-                        | (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap
-                            [(v1 as i32 + 327) as usize]
-                            & 0xfc00;
-                    v1 = v1.wrapping_add(1);
-                }
-            } else {
-                word!(game.reserve_health_mode = 1);
-                EquipmentScreenHudReserveAutoTilemap_On_BUGGY(game);
-                let mut v3: u16 = 0;
-                for _ in (0i16..8i16).step_by(2) {
-                    (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap
-                        [(v3 as i32 + 327) as usize] = kEquipmentScreenTilemap_AUTO[v3 as usize]
-                        | (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap
-                            [(v3 as i32 + 327) as usize]
-                            & 0xfc00;
-                    v3 = v3.wrapping_add(1);
-                }
-            }
-        }
-    }
-}
-pub unsafe fn EquipmentScreenHudReserveAutoTilemap_On_BUGGY(game: &mut Game) {
-    unsafe {
-        let mut v0: u16 = -26229i32 as u16;
-        if word!(game.samus_reserve_health) == 0 {
-            v0 = -26217i32 as u16;
-        }
-        let v1 = RomPtr_82(v0, game) as *const u16;
-        word! {game; hud_tilemap[8] = *v1; hud_tilemap[9] = *v1.offset(1);
-        hud_tilemap[40] = *v1.offset(2); hud_tilemap[41] = *v1.offset(3);
-        hud_tilemap[72] = *v1.offset(4); hud_tilemap[73] = *v1.offset(5); }
-    }
-}
-pub fn EquipmentScreenHudReserveAutoTilemap_Off(game: &mut Game) {
-    {
-        word! { game, 11279;
-            hud_tilemap[8], hud_tilemap[9], hud_tilemap[40], hud_tilemap[41], hud_tilemap[72],
-            hud_tilemap[73],
-        }
-    }
-}
-static kReserveTankEnergyTransferPerFrame: u16 = 1;
-pub unsafe fn EquipmentScreenCategory_Tanks_1(game: &mut Game) {
-    if word!(game.pausemenu_reserve_tank_delay_ctr) == 0 {
-        if (word!(game.joypad1_newkeys) as i32 & kButton_A as i32) == 0 {
-            return;
-        }
-        word!(
-            game.pausemenu_reserve_tank_delay_ctr =
-                (word!(game.samus_reserve_health) as i32 + 7 & 0xfff8) as u16
-        );
-    }
-    if (word!(game.pausemenu_reserve_tank_delay_ctr -= 1, reread) & 7) == 7 {
-        QueueSfx3_Max6(0x2d, game);
-    }
-    word!(game.samus_health += kReserveTankEnergyTransferPerFrame);
-    if ((word!(game.samus_health)) as i16).wrapping_sub((word!(game.samus_max_health)) as i16) < 0 {
-        word!(game.samus_reserve_health -= kReserveTankEnergyTransferPerFrame);
-        if (word!(game.samus_reserve_health) as i16) > 0 {
-            return;
-        }
-        word!(game.samus_health += word!(game.samus_reserve_health));
-    } else {
-        word!(game.samus_health = word!(game.samus_max_health));
-    }
-    word! { game, 0; samus_reserve_health, pausemenu_reserve_tank_delay_ctr }
-    crate::game::menu_tilemap::reserve_arrow_tiles(false, game);
-    word!(game.pausemenu_equipment_category_item = 0);
 }
 pub unsafe fn EquipmentScreenCategory_Weapons(game: &mut Game) {
     unsafe {
@@ -2167,39 +1990,6 @@ pub unsafe fn EquipmentScreenCategory_Boots_MoveResponse(game: &mut Game) {
     }
 }
 
-macro_rules! queue_ram_tilemap_write {
-    (
-        $game:ident, $byte_count:literal, $source_offset:literal, $bank_write_offset:ident,
-        $destination:literal $(,)?
-    ) => {
-        let mut v0: u16 = word!($game.vram_write_queue_tail);
-        (*gVramWriteEntry(word!($game.vram_write_queue_tail) as i32, $game)).size =
-            $byte_count;
-        v0 = (v0).wrapping_add(2);
-        (*gVramWriteEntry(v0 as i32, $game)).size =
-            ((ram_ptr!($game, Ram3800; 0x3800) as *mut u8)
-                .offset_from(&raw mut $game.g_ram as *mut u8) as c_long
-                + $source_offset as c_long) as u16;
-        v0 = (v0).wrapping_add(2);
-        crate::update_place! { previous $bank_write_offset = v0 => v0.wrapping_add(1); }
-        *(&raw mut (*(gVramWriteEntry
-            as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-            $bank_write_offset as i32,
-            $game,
-        ))
-        .size as *mut u8)
-             = 126;
-        (*gVramWriteEntry(v0 as i32, $game)).size = $destination;
-        word!($game.vram_write_queue_tail = (v0).wrapping_add(2));
-    };
-}
-
-pub unsafe fn WriteSamusWireframeTilemapAndQueue(game: &mut Game) {
-    unsafe {
-        crate::game::menu_tilemap::equipment_wireframe(game);
-        queue_ram_tilemap_write!(game, 1280, 256, fresh63, 0x3080);
-    }
-}
 pub unsafe fn EquipmentScreenDrawItemSelector(game: &mut Game) {
     unsafe {
         if word!(game.samus_max_reserve_health)
@@ -2217,109 +2007,6 @@ pub unsafe fn EquipmentScreenDrawItemSelector(game: &mut Game) {
                 game,
             ) as *mut u16;
             DrawPauseScreenSpriteAnim(3, (*t).wrapping_sub(1), *t.offset(1), game);
-        }
-    }
-}
-pub unsafe fn EquipmentScreenDisplayReserveTankAmount(game: &mut Game) {
-    unsafe {
-        EquipmentScreenDisplayReserveTankAmount_(game);
-    }
-}
-static kEquipmentScreenReserveTank_X: [u16; 6] = [0x18, 0x20, 0x28, 0x30, 0x38, 0x40];
-static kEquipmentScreenReserveTank_Y: u16 = 0x60;
-static kPartialReserveTankSpritemapIds: [u16; 16] = [
-    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
-];
-pub unsafe fn EquipmentScreenDisplayReserveTankAmount_(game: &mut Game) {
-    unsafe {
-        let r3: u16 = EquipmentScreenDisplayReserves_PaletteSetup(game);
-        let mut r52: i32 = 0;
-        if word!(game.samus_max_reserve_health) == 0 {
-            return;
-        }
-        let R44: u16 = (word!(game.samus_max_reserve_health) as i32 / 100) as u16;
-        let mod_value: i32 = word!(game.samus_reserve_health) as i32 % 100;
-        let R50: u16 = mod_value as u16;
-        let r42: i32 = word!(game.samus_reserve_health) as i32 / 100;
-        let mut R48: u16 = r42 as u16;
-        let mut r46: i32 = r42;
-        if r42 != 0 {
-            let mut v0: u16 = 0;
-            do_until! { r46 == 0 ;
-                sprite_output::menu(0x1b, kEquipmentScreenReserveTank_X[(v0 >> 1) as usize], (kEquipmentScreenReserveTank_Y).wrapping_sub(1), r3, game);
-                v0 = (v0).wrapping_add(2);
-                r46 -= 1;
-            }
-            r52 = v0 as i32;
-        }
-        let RegWord: u16 = mod_value as u16;
-        if RegWord != 0 {
-            let mut v2: u16 = (2 * (RegWord as i32 / 14)) as u16;
-            if v2 as i32 - 7i32 & 0x8000 != 0
-                && RegWord as i32 % 14 != 0
-                && (*ram_ptr!(game; 0x5b5) & 4) == 0
-            {
-                v2 = (v2).wrapping_add(2);
-            }
-            if word!(game.samus_reserve_health) as i32 - 100i32 & 0x8000 == 0 {
-                v2 = (v2).wrapping_add(16);
-            }
-            sprite_output::menu(
-                kPartialReserveTankSpritemapIds[(v2 >> 1) as usize],
-                kEquipmentScreenReserveTank_X[(r52 >> 1) as usize],
-                (kEquipmentScreenReserveTank_Y).wrapping_sub(1),
-                r3,
-                game,
-            );
-            R48 = R48.wrapping_add(1);
-            r52 += 2;
-        }
-        while R48 as i32 - R44 as i32 & 0x8000 != 0 {
-            sprite_output::menu(
-                0x20,
-                kEquipmentScreenReserveTank_X[(r52 >> 1) as usize],
-                (kEquipmentScreenReserveTank_Y).wrapping_sub(1),
-                r3,
-                game,
-            );
-            r52 += 2;
-            R48 = R48.wrapping_add(1);
-        }
-        sprite_output::menu(
-            0x1f,
-            kEquipmentScreenReserveTank_X[(r52 >> 1) as usize],
-            (kEquipmentScreenReserveTank_Y).wrapping_sub(1),
-            r3,
-            game,
-        );
-        let div_val: i32 = R50 as i32 / 10;
-        let mod_val: i32 = R50 as i32 % 10;
-        (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap[394i32 as usize] =
-            (mod_val + 2052) as u16;
-        (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap[393i32 as usize] =
-            (div_val + 2052) as u16;
-        (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap[392i32 as usize] =
-            (r42 + 2052) as u16;
-    }
-}
-pub unsafe fn EquipmentScreenDisplayReserves_PaletteSetup(game: &mut Game) -> u16 {
-    unsafe {
-        if word!(game.samus_reserve_health) != 0 {
-            let v0: bool =
-                (word!(game.pausemenu_reserve_tank_animation_timer -= 1, reread) & 0x8000) != 0;
-            if word!(game.pausemenu_reserve_tank_animation_timer) == 0 || v0 {
-                word!(game.pausemenu_reserve_tank_animation_frame += 1);
-                let mut v1: u16 = byte!(@pointer rom_ptr!(game; 0x82c165); (2 * word!(game.pausemenu_reserve_tank_animation_frame) as i32) as isize)
-                    as u16;
-                if v1 == 255 {
-                    word!(game.pausemenu_reserve_tank_animation_frame = 0);
-                    v1 = byte!(@pointer rom_ptr!(game; 0x82c165); 0) as u16;
-                }
-                word!(game.pausemenu_reserve_tank_animation_timer = v1);
-            }
-            crate::rtl::rom_table_word!(game, 0x82c0fa, 3)
-        } else {
-            1536
         }
     }
 }
@@ -2473,7 +2160,7 @@ pub unsafe fn DrawPauseMenuDuringFadeIn(game: &mut Game) {
     unsafe {
         if word!(game.menu_index) != 0 {
             EquipmentScreenDrawItemSelector(game);
-            EquipmentScreenDisplayReserveTankAmount(game);
+            crate::game::menu_tilemap::reserve_tanks(game);
         } else {
             crate::game::map_menu::draw_player_marker(game);
             crate::game::map_menu::draw_icons(crate::game::map_menu::IconMode::Pause, game);
@@ -2564,7 +2251,7 @@ pub fn HandleSamusOutOfHealthAndGameTile(game: &mut Game) {
 }
 pub unsafe fn GameState_27_ReserveTanksAuto(game: &mut Game) -> CoroutineRet {
     unsafe {
-        if *ram_ptr!(game; 0x612) == 0 && RefillHealthFromReserveTanks(game) != 0 {
+        if *ram_ptr!(game; 0x612) == 0 && crate::game::reserve_tanks::refill_auto(game) != 0 {
             word! {game; time_is_frozen_flag = 0; game_state = kGameState_8_MainGameplay as u16; }
             CallSomeSamusCode(0x10, game);
         }
@@ -2574,36 +2261,6 @@ pub unsafe fn GameState_27_ReserveTanksAuto(game: &mut Game) -> CoroutineRet {
         }
         crate::game::session_runtime::player_update_runtime::low_health(game);
         kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn RefillHealthFromReserveTanks(game: &mut Game) -> u8 {
-    {
-        if word!(game.samus_reserve_health) != 0 {
-            if (word!(game.nmi_frame_counter_word) & 7) == 0 {
-                QueueSfx3_Max3(0x2d, game);
-            }
-            let refill_in_progress: bool = if ((word!(game.samus_health += 1, reread)) as i16)
-                .wrapping_sub((word!(game.samus_max_health)) as i16)
-                >= 0
-            {
-                word!(game.samus_health = word!(game.samus_max_health));
-                false
-            } else {
-                let v0: bool = (word!(game.samus_reserve_health -= 1, reread) & 0x8000) != 0;
-                !(word!(game.samus_reserve_health) == 0)
-                    && (!(v0)
-                        || ({
-                            word!(game.samus_health += word!(game.samus_reserve_health));
-                            false
-                        }))
-            };
-            if refill_in_progress {
-            } else {
-                word!(game.samus_reserve_health = 0);
-                return (word!(game.samus_reserve_health) == 0) as u8;
-            }
-        }
-        (word!(game.samus_reserve_health) == 0) as u8
     }
 }
 pub unsafe fn GameState_19_SamusNoHealth(game: &mut Game) -> CoroutineRet {

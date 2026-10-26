@@ -4,6 +4,7 @@ use crate::game::constants::bank_81::{
     addr_kMenuTilemap_SamusA, addr_kMenuTilemap_SamusB, addr_kMenuTilemap_SamusC,
     addr_kMenuTilemap_SamusData, addr_kMenuTilemap_TIME,
 };
+use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
 use crate::game_state::Game;
 use crate::ram_map::{checked_word as at, word, words as fields};
@@ -440,14 +441,7 @@ pub(crate) fn prepare_equipment_frame(game: &mut Game) {
     if word!(game.samus_max_reserve_health) != 0 {
         let hundreds = word!(game.samus_reserve_health) / 100;
         let remainder = word!(game.samus_reserve_health) % 100;
-        for (index, digit) in [
-            (394, remainder % 10),
-            (393, remainder / 10),
-            (392, hundreds),
-        ] {
-            word_transfers!(game, ascending, 1;
-                native(0x3800 + 2 * index) <- value(digit + 2052));
-        }
+        reserve_digits(hundreds, remainder, game);
     }
 }
 
@@ -471,4 +465,103 @@ pub(crate) fn equipment_wireframe(game: &mut Game) {
         },
         game,
     );
+}
+
+pub(crate) fn reserve_label(tile: impl Fn(usize) -> u16, game: &mut Game) {
+    for index in 0..4 {
+        let address = 0x3800 + 2 * (327 + index);
+        let previous = u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]]);
+        word_transfers!(game, ascending, 1;
+            native(address) <- value((previous & 0xfc00) | tile(index)));
+    }
+}
+
+fn reserve_digits(hundreds: u16, remainder: u16, game: &mut Game) {
+    for (index, digit) in [
+        (394, remainder % 10),
+        (393, remainder / 10),
+        (392, hundreds),
+    ] {
+        word_transfers!(game, ascending, 1;
+                native(0x3800 + 2 * index) <- value(digit + 2052));
+    }
+}
+
+pub(crate) fn queue_equipment_wireframe(game: &mut Game) {
+    equipment_wireframe(game);
+    let mut cursor = word!(game.vram_write_queue_tail);
+    for value in [1280, 0x3900] {
+        word_transfers!(game, ascending, 1;
+            native(0xd0 + usize::from(cursor)) <- value(value));
+        cursor = cursor.wrapping_add(2);
+    }
+    game.g_ram[0xd0 + usize::from(cursor)] = 126;
+    cursor = cursor.wrapping_add(1);
+    word_transfers!(game, ascending, 1;
+        native(0xd0 + usize::from(cursor)) <- value(0x3080));
+    word!(game.vram_write_queue_tail = cursor.wrapping_add(2));
+}
+
+fn reserve_palette(game: &mut Game) -> u16 {
+    if word!(game.samus_reserve_health) == 0 {
+        return 1536;
+    }
+    let expired = word!(game.pausemenu_reserve_tank_animation_timer -= 1, reread) & 0x8000 != 0;
+    if word!(game.pausemenu_reserve_tank_animation_timer) == 0 || expired {
+        word!(game.pausemenu_reserve_tank_animation_frame += 1);
+        let mut timer = u16::from(
+            native_record(0x82c165, game)
+                .byte(2 * usize::from(word!(game.pausemenu_reserve_tank_animation_frame))),
+        );
+        if timer == 255 {
+            word!(game.pausemenu_reserve_tank_animation_frame = 0);
+            timer = u16::from(native_record(0x82c165, game).byte(0));
+        }
+        word!(game.pausemenu_reserve_tank_animation_timer = timer);
+    }
+    crate::rtl::rom_table_word!(game, 0x82c0fa, 3)
+}
+
+fn reserve_sprite(sprite: u16, index: usize, palette: u16, game: &mut Game) {
+    const X: [u16; 6] = [0x18, 0x20, 0x28, 0x30, 0x38, 0x40];
+    sprite_output::menu(sprite, X[index], 0x5f, palette, game);
+}
+
+pub(crate) fn reserve_tanks(game: &mut Game) {
+    let palette = reserve_palette(game);
+    if word!(game.samus_max_reserve_health) == 0 {
+        return;
+    }
+    let maximum = word!(game.samus_max_reserve_health) / 100;
+    let remainder = word!(game.samus_reserve_health) % 100;
+    let full = word!(game.samus_reserve_health) / 100;
+    for index in 0..usize::from(full) {
+        reserve_sprite(0x1b, index, palette, game);
+    }
+    let mut occupied = full;
+    let mut index = usize::from(full);
+    if remainder != 0 {
+        let mut frame = 2 * (remainder / 14);
+        if (i32::from(frame) - 7) & 0x8000 != 0 && remainder % 14 != 0 && game.g_ram[0x5b5] & 4 == 0
+        {
+            frame = frame.wrapping_add(2);
+        }
+        if (i32::from(word!(game.samus_reserve_health)) - 100) & 0x8000 == 0 {
+            frame = frame.wrapping_add(16);
+        }
+        const PARTIAL: [u16; 16] = [
+            0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25,
+            0x26, 0x27,
+        ];
+        reserve_sprite(PARTIAL[usize::from(frame >> 1)], index, palette, game);
+        occupied = occupied.wrapping_add(1);
+        index += 1;
+    }
+    while (i32::from(occupied) - i32::from(maximum)) & 0x8000 != 0 {
+        reserve_sprite(0x20, index, palette, game);
+        index += 1;
+        occupied = occupied.wrapping_add(1);
+    }
+    reserve_sprite(0x1f, index, palette, game);
+    reserve_digits(full, remainder, game);
 }

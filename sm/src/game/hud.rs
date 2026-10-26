@@ -226,3 +226,18 @@ unsafe fn number(address: u32, mut value: u16, mut cursor: u16, three: bool, gam
         );
     }
 }
+
+pub(crate) fn menu_reserve_mode(automatic: bool, game: &mut Game) {
+    if automatic {
+        // The equipment menu intentionally uses bank82, unlike the ordinary HUD.
+        let cursor = if word!(game.samus_reserve_health) == 0 {
+            0x9997
+        } else {
+            0x998b
+        };
+        let source = native_record(0x820000 | cursor, game);
+        stamp(8, 2, 6, |index| source.word(2 * index), game);
+    } else {
+        stamp(8, 2, 6, |_| 11279, game);
+    }
+}
