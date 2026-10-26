@@ -7,9 +7,9 @@ use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8};
 use crate::game::music::{QueueSfx1_Max6, QueueSfx3_Max6};
 use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
-use crate::game::sm_82::HandleGameOverBabyMetroid;
 use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled, spawn_hdma};
 use crate::game::{menu_tilemap, save_slots};
+use crate::ram_map::slot;
 
 static STATES: [Func_V; 8] = callback_table! { nonnull Func_V;
     prepare, initialize, wait_for_music, fade_in, choose, fade_to_map, load_map, fade_to_title,
@@ -62,8 +62,10 @@ unsafe fn initialize(game: &mut Game) {
         ] {
             menu_tilemap::load(destination, text as u16, game);
         }
-        word_transfers!(game, ascending, 2; native(0xf92) <- value(0));
-        HandleGameOverBabyMetroid(game);
+        start_baby(0, 0, game);
+        animate_baby(game, |game| {
+            Unreachable(game);
+        });
         let color = u16::from(game.g_ram[0x70]) << 8;
         game.g_ram[0x6f..0x71].copy_from_slice(&color.to_ne_bytes());
         set_hdma_enabled(false, game);
@@ -91,7 +93,11 @@ crate::forward_calls! { unsafe fn (game: &mut Game);
     fade_to_map => fade(false, 0, game);
 }
 unsafe fn fade(fade_in: bool, brightness: u8, game: &mut Game) {
-    unsafe { HandleGameOverBabyMetroid(game) };
+    unsafe {
+        animate_baby(game, |game| {
+            Unreachable(game);
+        })
+    };
     sprite_output::menu_selection(game);
     crate::game::display_refresh::fade(fade_in, game);
     if game.g_ram[0x51] & 0xf == brightness {
@@ -100,13 +106,17 @@ unsafe fn fade(fade_in: bool, brightness: u8, game: &mut Game) {
 }
 
 unsafe fn choose(game: &mut Game) {
-    unsafe { HandleGameOverBabyMetroid(game) };
+    unsafe {
+        animate_baby(game, |game| {
+            Unreachable(game);
+        })
+    };
     sprite_output::menu_selection(game);
     if word!(game.joypad1_newkeys) & (kButton_Select | kButton_Up | kButton_Down) as u16 != 0 {
         QueueSfx1_Max6(0x37, game);
         word!(game.file_select_map_area_index ^= 1);
     } else if word!(game.joypad1_newkeys) & kButton_A as u16 != 0 {
-        game.g_ram[0xf94..0xf96].copy_from_slice(&180u16.to_ne_bytes());
+        slot!(game, EnemyData[0].instruction_timer = 180);
         if word!(game.file_select_map_area_index) != 0 {
             word!(game.menu_index = 7);
         } else {
@@ -137,9 +147,91 @@ unsafe fn load_map(game: &mut Game) {
 
 unsafe fn fade_to_title(game: &mut Game) {
     sprite_output::menu_selection(game);
-    unsafe { HandleGameOverBabyMetroid(game) };
+    unsafe {
+        animate_baby(game, |game| {
+            Unreachable(game);
+        })
+    };
     crate::game::display_refresh::fade(false, game);
     if game.g_ram[0x51] & 0xf == 0 {
         game.request_reset();
     }
+}
+
+/// The menu reuses the first enemy record; it remains the only animation state.
+#[forbid(unsafe_code)]
+fn animate_baby(game: &mut Game, invalid: impl FnOnce(&mut Game)) {
+    let mut timer = slot!(game, EnemyData[0].instruction_timer);
+    if timer == 0 {
+        timer = start_baby(0xbc27, 10, game);
+    }
+    loop {
+        let cursor = slot!(game, EnemyData[0].current_instruction);
+        slot!(game, EnemyData[0].instruction_timer = timer.wrapping_sub(1));
+        if timer != 1 {
+            draw_baby(cursor, game);
+            return;
+        }
+        let next = baby_record(cursor, game).word(6);
+        if next != 0xffff {
+            let ordinary = (next as i16).wrapping_add(1) >= 0;
+            let (duration, bytes) = if ordinary {
+                (next, 6)
+            } else {
+                let sound = match next {
+                    0xbc0c => 0x23,
+                    0xbc15 => 0x26,
+                    0xbc1e => 0x27,
+                    _ => {
+                        invalid(game);
+                        return;
+                    }
+                };
+                QueueSfx3_Max6(sound, game);
+                let at = slot!(game, EnemyData[0].current_instruction);
+                (baby_record(at, game).word(8), 8)
+            };
+            slot!(game, EnemyData[0].instruction_timer = duration);
+            slot!(game, EnemyData[0].current_instruction, |at| at
+                .wrapping_add(bytes));
+            if duration != 0xffff {
+                let at = if ordinary {
+                    cursor.wrapping_add(6)
+                } else {
+                    slot!(game, EnemyData[0].current_instruction)
+                };
+                draw_baby(at, game);
+                return;
+            }
+        }
+        timer = start_baby(0xbc27, 10, game);
+    }
+}
+
+fn start_baby(cursor: u16, timer: u16, game: &mut Game) -> u16 {
+    slot!(game, EnemyData[0].current_instruction = cursor);
+    slot!(game, EnemyData[0].instruction_timer = timer);
+    timer
+}
+
+fn baby_record(cursor: u16, game: &mut Game) -> crate::rom::RomRecord {
+    let address = 0x820000 | u32::from(cursor);
+    if cursor & 0x8000 == 0 {
+        crate::game::session_runtime::native_rom_diagnostic(address, game);
+    }
+    crate::rom::RomRecord {
+        image: game.capture_native_rom(),
+        base: crate::rom::lorom_offset(address) as usize,
+    }
+}
+
+fn draw_baby(cursor: u16, game: &mut Game) {
+    let palette = baby_record(cursor, game).word(4);
+    for index in 0..16 {
+        let color = baby_record(palette.wrapping_add(2 * index), game).word(0);
+        word!(game.palette_buffer[192 + usize::from(index)] = color);
+    }
+    let sprite = baby_record(cursor, game).word(2);
+    sprite_output::menu(sprite, 0x7c, 0x50, 2048, game);
+    sprite_output::menu(0x64, 0x7c, 0x50, 2560, game);
 }
