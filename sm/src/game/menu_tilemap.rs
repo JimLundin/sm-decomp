@@ -489,16 +489,35 @@ fn reserve_digits(hundreds: u16, remainder: u16, game: &mut Game) {
 
 pub(crate) fn queue_equipment_wireframe(game: &mut Game) {
     equipment_wireframe(game);
+    queue_ram_tilemap(1280, 0x3900, |_| 0x3080, game);
+}
+
+pub(crate) fn queue_pause_labels(game: &mut Game) {
+    queue_ram_tilemap(
+        128,
+        0x3640,
+        |game| (u16::from(game.g_ram[0x59] & 0xfc) << 8) + 800,
+        game,
+    );
+}
+
+fn queue_ram_tilemap(
+    size: u16,
+    source: u16,
+    destination: impl FnOnce(&Game) -> u16,
+    game: &mut Game,
+) {
     let mut cursor = word!(game.vram_write_queue_tail);
-    for value in [1280, 0x3900] {
+    for value in [size, source] {
         word_transfers!(game, ascending, 1;
             native(0xd0 + usize::from(cursor)) <- value(value));
         cursor = cursor.wrapping_add(2);
     }
     game.g_ram[0xd0 + usize::from(cursor)] = 126;
     cursor = cursor.wrapping_add(1);
+    let destination = destination(game);
     word_transfers!(game, ascending, 1;
-        native(0xd0 + usize::from(cursor)) <- value(0x3080));
+        native(0xd0 + usize::from(cursor)) <- value(destination));
     word!(game.vram_write_queue_tail = cursor.wrapping_add(2));
 }
 
@@ -564,4 +583,29 @@ pub(crate) fn reserve_tanks(game: &mut Game) {
     }
     reserve_sprite(0x1f, index, palette, game);
     reserve_digits(full, remainder, game);
+}
+
+pub(crate) fn pause_labels(mode: u16, game: &mut Game) {
+    // First tile and width of each two-row label in the pause tilemap.
+    const LEFT: (usize, usize) = (805, 5);
+    const START: (usize, usize) = (812, 4);
+    const RIGHT: (usize, usize) = (822, 5);
+    const TILEMAP: usize = 0x3000;
+
+    // Modes retain the original label order, including the unpause mode (1).
+    let labels = [
+        [(RIGHT, 0x0800), (START, 0x0800), (LEFT, 0x1400)],
+        [(START, 0x0800), (LEFT, 0x1400), (RIGHT, 0x1400)],
+        [(LEFT, 0x0800), (START, 0x0800), (RIGHT, 0x1400)],
+    ][usize::from(mode)];
+    for ((first_tile, width), palette) in labels {
+        for row in [first_tile, first_tile + 32] {
+            for tile in row..row + width {
+                let address = TILEMAP + 2 * tile;
+                let word = u16::from_le_bytes([game.g_ram[address], game.g_ram[address + 1]]);
+                let word = (word & !0x1c00) | palette;
+                game.g_ram[address..address + 2].copy_from_slice(&word.to_le_bytes());
+            }
+        }
+    }
 }

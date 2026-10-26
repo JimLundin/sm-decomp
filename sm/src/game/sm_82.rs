@@ -1150,8 +1150,8 @@ pub unsafe fn ContinueInitPauseMenu(game: &mut Game) {
         SetupPpuForPauseMenu(game);
         crate::game::map_menu::reset_animations(game);
         crate::game::menu_tilemap::equipment_icons(game);
-        set_pause_label_palettes(0, game);
-        UpdatePauseMenuLRStartVramTilemap(game);
+        crate::game::menu_tilemap::pause_labels(0, game);
+        crate::game::menu_tilemap::queue_pause_labels(game);
         crate::game::map_menu::scroll_limits(game);
         crate::game::map_menu::center_map(0x80, game);
     }
@@ -1186,10 +1186,9 @@ pub unsafe fn MainPauseRoutine(game: &mut Game) {
         kPauseMenuFuncs[word!(game.menu_index) as usize](game);
     }
 }
-pub unsafe fn PauseMenu_0_MapScreen(game: &mut Game) {
-    unsafe {
-        HandlePauseScreenLR(game);
-        HandlePauseScreenStart(game);
+pub fn PauseMenu_0_MapScreen(game: &mut Game) {
+    {
+        crate::game::pause_controls::advance(game);
         crate::game::map_menu::scroll_arrows(crate::game::map_menu::MapScreen::Pause, game);
         crate::game::map_menu::scroll(game);
         crate::game::map_menu::draw_player_marker(game);
@@ -1198,12 +1197,11 @@ pub unsafe fn PauseMenu_0_MapScreen(game: &mut Game) {
         word!(game.pause_screen_mode = 0);
     }
 }
-pub unsafe fn PauseMenu_1_EquipmentScreen(game: &mut Game) {
-    unsafe {
+pub fn PauseMenu_1_EquipmentScreen(game: &mut Game) {
+    {
         word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
         crate::game::equipment_menu::update(game);
-        HandlePauseScreenLR(game);
-        HandlePauseScreenStart(game);
+        crate::game::pause_controls::advance(game);
         word!(game.pause_screen_mode = 1);
     }
 }
@@ -1212,7 +1210,7 @@ pub unsafe fn PauseMenu_2(game: &mut Game) {
         crate::game::map_menu::display_elevator_destinations(game);
         crate::game::map_menu::draw_player_marker(game);
         crate::game::map_menu::draw_icons(crate::game::map_menu::IconMode::Pause, game);
-        HandlePauseMenuLRPressHighlight(game);
+        crate::game::pause_controls::draw_shoulder(game);
         word!(game.pause_screen_mode = 0);
         crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x51) == 0x80 {
@@ -1226,7 +1224,7 @@ pub unsafe fn PauseMenu_5(game: &mut Game) {
     unsafe {
         crate::game::map_menu::draw_equipment_selector(game);
         crate::game::menu_tilemap::reserve_tanks(game);
-        HandlePauseMenuLRPressHighlight(game);
+        crate::game::pause_controls::draw_shoulder(game);
         crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x51) == 0x80 {
             crate::game::display_refresh::enable(true, game);
@@ -1241,7 +1239,7 @@ pub unsafe fn PauseMenu_3_MapToEquipment_Load(game: &mut Game) {
         crate::game::reserve_tanks::prepare_menu(game);
         EquipmentScreenTransferBG1Tilemap(game);
         word!(game.pause_screen_mode = 1);
-        SetPauseScreenButtonLabelPalettes(game);
+        crate::game::menu_tilemap::pause_labels(word!(game.pausemenu_button_label_mode), game);
         word!(game.pausemenu_lr_animation_frame = 0);
         word!(game.pausemenu_lr_animation_timer = *(rom_ptr!(game, u8; 0x82c10c) as *mut u16));
         word! { game, 1; screen_fade_delay, screen_fade_counter }
@@ -1252,7 +1250,7 @@ pub unsafe fn PauseMenu_6_EquipmentToMap_Load(game: &mut Game) {
     unsafe {
         crate::game::map_menu::display_elevator_destinations(game);
         LoadPauseMenuMapTilemapAndAreaLabel(game);
-        SetPauseScreenButtonLabelPalettes(game);
+        crate::game::menu_tilemap::pause_labels(word!(game.pausemenu_button_label_mode), game);
         word!(game.pausemenu_lr_animation_frame = 0);
         word!(game.pausemenu_lr_animation_timer = *(rom_ptr!(game, u8; 0x82c10c) as *mut u16));
         word! { game, 1; screen_fade_delay, screen_fade_counter }
@@ -1295,7 +1293,7 @@ pub unsafe fn PauseMenu_4_MapToEquipment_FadeIn(game: &mut Game) {
 }
 pub unsafe fn GameState_16_Unpausing_Async(game: &mut Game) -> CoroutineRet {
     unsafe {
-        HighlightPauseScreenButton(game);
+        crate::game::pause_controls::draw_start(game);
         DrawPauseMenuDuringFadeout(game);
         crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x51) == 0x80 {
@@ -1306,12 +1304,12 @@ pub unsafe fn GameState_16_Unpausing_Async(game: &mut Game) -> CoroutineRet {
         kCoroutineNone as CoroutineRet
     }
 }
-pub unsafe fn DrawPauseMenuDuringFadeout(game: &mut Game) {
-    unsafe {
+pub fn DrawPauseMenuDuringFadeout(game: &mut Game) {
+    {
         if word!(game.pause_screen_mode) == 1 {
             crate::game::map_menu::draw_equipment_selector(game);
             crate::game::menu_tilemap::reserve_tanks(game);
-            HandlePauseMenuLRPressHighlight(game);
+            crate::game::pause_controls::draw_shoulder(game);
         } else {
             crate::game::map_menu::display_elevator_destinations(game);
             crate::game::map_menu::draw_icons(crate::game::map_menu::IconMode::Pause, game);
@@ -1468,133 +1466,6 @@ pub fn ClearPauseMenuData(game: &mut Game) {
             pausemenu_equipment_category_item, pausemenu_reserve_tank_delay_ctr, UNUSED_word_7E0759,
             UNUSED_word_7E075B, UNUSED_word_7E075D, UNUSED_word_7E075F, UNUSED_word_7E0761,
         }
-    }
-}
-pub unsafe fn HandlePauseScreenLR(game: &mut Game) {
-    unsafe {
-        HandlePauseScreenLrInput(game);
-        crate::game::map_menu::animate_pause_sprite(2, 0x18, 0xd0, game);
-        crate::game::map_menu::animate_pause_sprite(2, 0xe8, 0xd0, game);
-    }
-}
-pub unsafe fn HandlePauseScreenLrInput(game: &mut Game) {
-    {
-        let play_switch_sound: bool = if (word!(game.newly_held_down_timed_held_input) as i32
-            & kButton_L as i32)
-            != 0
-        {
-            if word!(game.pausemenu_button_label_mode) == 0 {
-                return;
-            }
-            word! { game, 5; pausemenu_start_lr_pressed_highlight_timer, menu_index }
-            word! {game; pausemenu_shoulder_button_highlight = 1; pausemenu_button_label_mode = 0; }
-            SetPauseScreenButtonLabelPalettes(game);
-            true
-        } else {
-            ((word!(game.newly_held_down_timed_held_input) as i32 & kButton_R as i32) != 0
-                && word!(game.pausemenu_button_label_mode) != 2)
-                && ({
-                    word!(game.pausemenu_start_lr_pressed_highlight_timer = 5);
-                    word! { game, 2;
-                        menu_index, pausemenu_shoulder_button_highlight, pausemenu_button_label_mode,
-                    }
-                    SetPauseScreenButtonLabelPalettes(game);
-                    true
-                })
-        };
-        if play_switch_sound {
-            QueueSfx1_Max6(0x38, game);
-        };
-    }
-}
-static kPauseLrButtonPressedHighlight_Spritemap: [u16; 2] = [0x28, 0x29];
-static kPauseLrButtonPressedHighlight_Y: [u16; 2] = [0x18, 0xe8];
-static kPauseLrButtonPressedHighlight_X: [u16; 2] = [0xd0, 0xd0];
-pub unsafe fn HandlePauseMenuLRPressHighlight(game: &mut Game) {
-    {
-        if word!(game.pausemenu_start_lr_pressed_highlight_timer) != 0 {
-            word!(game.pausemenu_start_lr_pressed_highlight_timer -= 1);
-            if word!(game.pausemenu_shoulder_button_highlight) != 0 {
-                let v0: i32 = word!(game.pausemenu_shoulder_button_highlight) as i32 - 1i32;
-                sprite_output::menu(
-                    kPauseLrButtonPressedHighlight_Spritemap[v0 as usize],
-                    kPauseLrButtonPressedHighlight_Y[v0 as usize],
-                    (kPauseLrButtonPressedHighlight_X[v0 as usize]).wrapping_sub(1),
-                    0,
-                    game,
-                );
-            }
-        }
-    }
-}
-pub unsafe fn HandlePauseScreenStart(game: &mut Game) {
-    unsafe {
-        if (word!(game.newly_held_down_timed_held_input) as i32 & kButton_Start as i32) != 0 {
-            QueueSfx1_Max6(0x38, game);
-            word! { game, 1; screen_fade_delay, screen_fade_counter }
-            let v0: u16 = word!(game.pausemenu_button_label_mode);
-            word!(game.pausemenu_button_label_mode = 1);
-            SetPauseScreenButtonLabelPalettes(game);
-            word!(game.pausemenu_button_label_mode = v0);
-            word!(game.pausemenu_start_lr_pressed_highlight_timer = 11);
-            word!(game.game_state += 1);
-        }
-        UpdatePauseMenuLRStartVramTilemap(game);
-    }
-}
-pub unsafe fn HighlightPauseScreenButton(game: &mut Game) {
-    {
-        if word!(game.pausemenu_start_lr_pressed_highlight_timer) != 0 {
-            word!(game.pausemenu_start_lr_pressed_highlight_timer -= 1);
-            sprite_output::menu(0x2b, 0x90, 0xd0, 0, game);
-        }
-    }
-}
-pub fn SetPauseScreenButtonLabelPalettes(game: &mut Game) {
-    set_pause_label_palettes(game.pausemenu_button_label_mode(), game);
-}
-
-fn set_pause_label_palettes(mode: u16, game: &mut Game) {
-    // First tile and width of each two-row label in the pause tilemap.
-    const LEFT: (usize, usize) = (805, 5);
-    const START: (usize, usize) = (812, 4);
-    const RIGHT: (usize, usize) = (822, 5);
-    const TILEMAP: usize = 0x3000;
-
-    // Modes retain the original label order, including the unpause mode (1).
-    let labels = [
-        [(RIGHT, 0x0800), (START, 0x0800), (LEFT, 0x1400)],
-        [(START, 0x0800), (LEFT, 0x1400), (RIGHT, 0x1400)],
-        [(LEFT, 0x0800), (START, 0x0800), (RIGHT, 0x1400)],
-    ][usize::from(mode)];
-    for ((first_tile, width), palette) in labels {
-        for row in [first_tile, first_tile + 32] {
-            for tile in row..row + width {
-                let address = TILEMAP + 2 * tile;
-                let word = u16::from_le_bytes([game.g_ram[address], game.g_ram[address + 1]]);
-                let word = (word & !0x1c00) | palette;
-                game.g_ram[address..address + 2].copy_from_slice(&word.to_le_bytes());
-            }
-        }
-    }
-}
-
-pub unsafe fn UpdatePauseMenuLRStartVramTilemap(game: &mut Game) {
-    unsafe {
-        let mut v0: u16 = word!(game.vram_write_queue_tail);
-        (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size = 128;
-        v0 = (v0).wrapping_add(2);
-        (*gVramWriteEntry(v0 as i32, game)).size = 0x3640;
-        v0 = (v0).wrapping_add(2);
-        crate::update_place! { previous fresh23 = v0 => v0.wrapping_add(1); }
-        *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-            fresh23 as i32,
-            game,
-        ))
-        .size as *mut u8) = 126;
-        (*gVramWriteEntry(v0 as i32, game)).size =
-            (((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) + 800) as u16;
-        word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
     }
 }
 pub unsafe fn EquipmentScreenTransferBG1Tilemap(game: &mut Game) {
