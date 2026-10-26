@@ -747,38 +747,6 @@ pub unsafe fn GameState_18_Unpausing(game: &mut Game) -> CoroutineRet {
         kCoroutineNone as CoroutineRet
     }
 }
-pub fn HandleSamusOutOfHealthAndGameTile(game: &mut Game) {
-    {
-        if (word!(game.samus_health) as i16) <= 0 {
-            if (word!(game.reserve_health_mode) & 1) != 0 && word!(game.samus_reserve_health) != 0 {
-                word!(game.time_is_frozen_flag = 0x8000);
-                word!(game.game_state = kGameState_27_ReserveTanksAuto as u16);
-                CallSomeSamusCode(0x1b, game);
-            } else {
-                if word!(game.game_state) as i32 != kGameState_8_MainGameplay as i32 {
-                    return;
-                }
-                word!(game.time_is_frozen_flag = 0x8000);
-                CallSomeSamusCode(0x11, game);
-                word!(game.game_state = kGameState_19_SamusNoHealth as u16);
-            }
-        }
-        if word!(game.game_time_frames += 1, reread) as i32 - 60i32 & 0x8000 == 0 {
-            word!(game.game_time_frames = 0);
-            if word!(game.game_time_seconds += 1, reread) as i32 - 60i32 & 0x8000 == 0 {
-                word!(game.game_time_seconds = 0);
-                if word!(game.game_time_minutes += 1, reread) as i32 - 60i32 & 0x8000 == 0 {
-                    word!(game.game_time_minutes = 0);
-                    word!(game.game_time_hours += 1);
-                }
-            }
-        }
-        if word!(game.game_time_hours) as i32 - 100i32 & 0x8000 == 0 {
-            word! { game, 59; game_time_frames, game_time_seconds, game_time_minutes }
-            word!(game.game_time_hours = 99);
-        }
-    }
-}
 pub unsafe fn GameState_27_ReserveTanksAuto(game: &mut Game) -> CoroutineRet {
     unsafe {
         if *ram_ptr!(game; 0x612) == 0 && crate::game::reserve_tanks::refill_auto(game) != 0 {

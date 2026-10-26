@@ -14,8 +14,7 @@ use crate::game::room_mechanisms::run;
 use crate::game::room_scrolls::advance_camera;
 use crate::game::room_scrolls::{debug_position, update_scrolls};
 use crate::game::room_state::advance_room;
-use crate::game::session_runtime::Runtime;
-use crate::game::sm_82::HandleSamusOutOfHealthAndGameTile;
+use crate::game::session_runtime::{Runtime, player_command};
 use crate::ram_map::{checked_word, words as ram};
 
 #[derive(Clone, Copy, PartialEq)]
@@ -94,11 +93,42 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
             crate::game::hud::advance(game);
             update_scrolls(game);
             advance_room(game);
-            HandleSamusOutOfHealthAndGameTile(game);
+            finish_health_and_time(game);
             finish_frame(game);
         }
         game.set_coroutine_state_1(ResumePoint::Start as u8);
         0 as CoroutineRet
+    }
+}
+
+fn finish_health_and_time(game: &mut Game) {
+    if (word!(game.samus_health) as i16) <= 0 {
+        if (word!(game.reserve_health_mode) & 1) != 0 && word!(game.samus_reserve_health) != 0 {
+            word!(game.time_is_frozen_flag = 0x8000);
+            word!(game.game_state = kGameState_27_ReserveTanksAuto as u16);
+            player_command(0x1b, game);
+        } else if word!(game.game_state) as i32 != kGameState_8_MainGameplay as i32 {
+            return;
+        } else {
+            word!(game.time_is_frozen_flag = 0x8000);
+            player_command(0x11, game);
+            word!(game.game_state = kGameState_19_SamusNoHealth as u16);
+        }
+    }
+    // Clock words are frames, seconds, minutes, then hours in ascending RAM order.
+    'carry: {
+        for timer in (ram::game_time_frames..ram::game_time_hours).step_by(2) {
+            checked_word!(game, timer; += 1);
+            if checked_word!(game, timer;) as i32 - 60i32 & 0x8000 != 0 {
+                break 'carry;
+            }
+            checked_word!(game, timer; = 0);
+        }
+        word!(game.game_time_hours += 1);
+    }
+    if word!(game.game_time_hours) as i32 - 100i32 & 0x8000 == 0 {
+        word! { game, 59; game_time_frames, game_time_seconds, game_time_minutes }
+        word!(game.game_time_hours = 99);
     }
 }
 
