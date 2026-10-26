@@ -7,7 +7,7 @@ src=sm/src
 count() { grep -rE "$1" "$src" --include='*.rs' | wc -l | tr -d ' '; }
 legacy=$(find "$src/game" -maxdepth 1 -type f -name 'sm_*.rs' -exec cat {} + | wc -l | tr -d ' ')
 
-# Markdown is stdout only; keep the hand-maintained compact graph above it.
+# Markdown is stdout only; the published treemap is generated separately.
 # Supply current local measurements explicitly, never cached/CI values:
 # sh tools/progress.sh --markdown [WARNINGS [PASSED/TOTAL]]
 case "${1-}" in

@@ -47,11 +47,11 @@ Rust code disagreed with the original ROM on that frame; please report them.
 
 ## Verify
 
-Import a TAS movie and run the headless per-frame comparison using the
-[movie instructions](movies/README.md). The verifier reports mismatches and
-gameplay coverage, then exits nonzero on failure. The imported any% movie
-currently visits only six rooms and does not reach credits; a passing replay
-checks the behavior it exercises, not the entire game.
+Run the checkpoint corpus with the headless per-frame verifier using the
+[movie instructions](movies/README.md). Its rows cover areas, bosses, item
+pickups, transitions and credits. The verifier reports mismatches and required
+observations, then exits nonzero on failure. A passing row checks the behavior
+it exercises; it does not establish fidelity for every branch of the game.
 
 ## Credits and licence
 

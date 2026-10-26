@@ -1,9 +1,7 @@
 # Shared visual detached composition
 
-Overlay these Rust files onto sm/src/verification/player_detached in the complete
-next-visual-session candidate. This extends the maintained harness from main
-c30c16ba; existing player/room/enemy checks and labels remain. Mutation scripts are
-owned separately by torizo_review and must be overlaid from that worker's output.
+The maintained harness composes player, room, enemy and visual checks.
+Current work and validation follow [PLAN](../../../../docs/PLAN.md).
 
 World.player is the only Session. Current/target colors, palette effects, animation
 slots, Samus palette fields and statue animation now live in that Session. Removed
@@ -22,7 +20,7 @@ coverage belongs to the separate native/defined carriers. Unprepared actor/backe
 operations panic explicitly. Upload records a request and applies the prepared
 synchronous callback; it does not emulate DMA registers or claim native DMA coverage.
 
-New selected cases and labels:
+Selected cases and labels:
 
 - eye: actual animation command creates actual EyeGlow enemy, whose four colors
   immediately reach shared palette; animation then spawns actual palette effect
@@ -54,21 +52,9 @@ and prints `visual composition case passed: <case>`. Assertions carry exact
 caught panic `intentional upload failure` from visual_host.rs before success; other
 selected cases must not panic. The full run retains its existing success text.
 
-Worker validation: Rust syntax formatted with skip_children; frozen visual Host
-method set matched; no retired state paths remain. No compilation, gameplay run or
-mutation execution performed. Root owns all builds and verdicts. Independent source
-review requested from session_review; runtime guards/Samus oracle remain D's scope.
-
-
 Legacy entry preservation: palette_independent_checks.rs (A) and
 animation_independent_checks.rs (B) preserve the additional old standalone
 assertions. The old CI/Cargo entry files become thin wrappers around this host via
 run_legacy_palette/run_legacy_animation. Full main and each legacy wrapper run their
 shared assertions once. Optional animation_invalid_result preserves the old
 explicit unknown-dispatch return fixture and defaults to the prior panic behavior.
-
-Source review: session_review approved the initial shared cases and host. Subsequent
-additions include direct misc unsigned charge/grapple carry cases and A/B's legacy
-assertion ports; coordinator arranges final integrated source review. All Rust
-files are frozen/formatted for overlay. Compilation and execution remain unrun by
-this worker.

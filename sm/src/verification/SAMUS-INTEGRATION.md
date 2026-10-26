@@ -1,48 +1,28 @@
-# Verification carrier installation
+# Samus palette verification contracts
 
-All files are staged only. No compile or execution was performed by lane D.
-Coordinator owns final lib.rs/verify_dll.rs/source registration.
+Current registration lives in `lib.rs` and `verify_dll.rs`; the observer is
+registered in `game/visual_runtime.rs`. These contracts describe the retained
+carriers, not additional installation steps. Current work follows [PLAN](../../../docs/PLAN.md).
 
-## Defined predecessor and candidate:224 new local IDs
+## Defined predecessor and candidate: 224 local IDs
 
-Install `samus_palette_defined_cases.rs` as sibling module `samus_defined_cases`
-and either adapter as `samus_defined_adapter` in lib.rs:
-
-```rust
-#[path="verification/samus_palette_defined_cases.rs"]
-mod samus_defined_cases;
-#[path="verification/samus_palette_defined_legacy.rs"] // candidate swaps this path only
-mod samus_defined_adapter;
-pub fn verify_samus_palette_defined_case(id:u32)->Option<Vec<u8>> {
-    samus_defined_adapter::capture_case(id)
-}
-```
-
-Use `samus_palette_defined_dll.rs` as an include in verify_dll.rs, or integrate its
-single export. Ordinary existing copy_case handles bounded output. Capture IDs
+`samus_palette_defined_cases.rs` supplies the cases and
+`samus_palette_defined_dll.rs` exports bounded results through `copy_case`. Capture IDs
 0..223 against the predecessor before replacing algorithms. Each result has
 131072 RAM bytes then a LE u16 defined return. Shared fixtures assert no panic or
 diagnostic. Candidate swaps only the adapter path. IDs83/91/99 exercise shine170
 and real channel3/max9. Existing palette512/animation438 IDs are unchanged.
 
-## Original65816 selector2:29 preserved local IDs
+## Original 65816 selector 2: 29 preserved local IDs
 
-Include `samus_palette_observer.rs` in visual_runtime.rs as
-`pub(crate) mod samus_observer` with its verification path.
-Existing Runtime probe invokes its observe function with actual Session/Game;
+The Runtime probe invokes `samus_palette_observer.rs` with actual Session/Game;
 projection copies RAM and never changes authority. Samus core hooks use event;
 shared queue_sfx hook uses sound so nested movement-command sound31 is retained.
 
-```rust
-pub fn verify_samus_palette_candidate(id:u32,game:&mut Game)->Result<Vec<u8>,String> {
-    game::visual_runtime::samus_observer::capture(id,game)
-}
-```
-
-Include `samus_palette_candidate_dll.rs` without a cfg guard. The existing oracle
+`samus_palette_candidate_dll.rs` is included without a cfg guard. The existing oracle
 export, underlying cpuinfra oracle module, observer module and public library
-bridges must also compile unconditionally. The direct tool sets sm_verify_dll on
-the library only, not on the DLL host. Only the inert production observation and
+bridges compile unconditionally. The direct tool sets sm_verify_dll on both
+the library and DLL host. The production observation and
 injection calls are cfg(sm_verify_dll); preserve the existing build pipeline.
 Candidate export uses the same initialization as the original CPU oracle and
 must run once in a fresh Python process per case. Outputs contain ROM-derived
@@ -58,8 +38,9 @@ bytes there. Oracle values are retained in the report. No other ignored bytes.
 The semantic sound mapping and all reference phase assumptions require the
 independent oracle reviewer approval before acceptance.
 
-Approved extension: IDs29..32 add the explicit post-charge callback transitions
-in `ORACLE-INJECTED-CASES.md`. The actual core calls the verification-only
+IDs29..32 add explicit post-charge callback transitions, defined in
+`samus_palette_oracle.rs`: charge palette index/timer pairs `(0, 2)`, `(9, 2)`,
+`(0, 1)` and `(9, 1)`. The actual core calls the verification-only
 `samus_observer::inject("samus.palette.dispatch", host.session_mut())` immediately
 before its dispatch probe. Runtime's probe remains read-only. The injector acts
 only for these four active cases, once, and emits the same22-byte tag9 payload as
