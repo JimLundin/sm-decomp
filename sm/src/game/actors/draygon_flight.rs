@@ -20,6 +20,18 @@ pub(crate) fn facing_animation(
     let instruction = instructions[usize::from(slot!(game, Draygon[facing_key].var_20) != 0)];
     slot!(game, Draygon[part_key].base; current_instruction = instruction, instruction_timer = 1);
 }
+pub(crate) fn shed_particle(k: u16, frame_mask: u16, game: &mut Game) {
+    if slot!(game, Draygon[k as i32].base.frame_counter) & frame_mask == 0 {
+        let dx = if slot!(game, Draygon[0].var_20) != 0 {
+            32
+        } else {
+            0u16.wrapping_sub(32)
+        };
+        let x = slot!(game, Draygon[0].base.x_pos).wrapping_add(dx);
+        let y = slot!(game, Draygon[0].base.y_pos).wrapping_sub(16);
+        sprites::create_sprite(x, y, 61, 0, game);
+    }
+}
 pub(crate) fn turret(game: &mut Game) {
     if word!(game.nmi_frame_counter_word) & 0x3f == 0 {
         let index = 2 * ((game.next_random() & 3) + 2);

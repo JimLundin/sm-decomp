@@ -9,7 +9,7 @@ use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 use crate::game::player_movement::forced;
 use crate::game::session_runtime::{Runtime, actor_direction_vector};
-use crate::game::sprite_effect_runtime::{self as sprites, create_sprite};
+use crate::game::sprite_effect_runtime as sprites;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::rtl::abs16;
@@ -119,16 +119,7 @@ pub(crate) fn after_damage(game: &mut Game) {
 }
 pub(crate) fn approach(game: &mut Game) {
     let k = word!(game.cur_enemy_index) as i32;
-    if slot!(game, Draygon[k].base.frame_counter) & 0xf == 0 {
-        let dx = if slot!(game, Draygon[0].var_20) != 0 {
-            32
-        } else {
-            0u16.wrapping_sub(32)
-        };
-        let x = slot!(game, Draygon[0].base.x_pos).wrapping_add(dx);
-        let y = slot!(game, Draygon[0].base.y_pos).wrapping_sub(16);
-        create_sprite(x, y, 61, 0, game);
-    }
+    super::draygon_flight::shed_particle(k as u16, 0xf, game);
     let dx = (64 - (i32::from(slot!(game, Draygon[0].base.x_pos)) >> 2)) as u16;
     let dy = (120 - (i32::from(slot!(game, Draygon[0].base.y_pos)) >> 2)) as u16;
     slot!(

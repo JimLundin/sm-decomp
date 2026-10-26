@@ -123,16 +123,7 @@ pub(crate) fn orbit(k: u16, game: &mut Game) {
             game
         ))
     );
-    if slot!(game, Draygon[k as i32].base.frame_counter) & 7 == 0 {
-        let dx = if slot!(game, Draygon[0].var_20) != 0 {
-            32
-        } else {
-            0u16.wrapping_sub(32)
-        };
-        let x = slot!(game, Draygon[0].base.x_pos).wrapping_add(dx);
-        let y = slot!(game, Draygon[0].base.y_pos).wrapping_sub(16);
-        create_sprite(x, y, 61, 0, game);
-    }
+    super::draygon_flight::shed_particle(k, 7, game);
     slot!(game, Draygon[0](var_05, var_09) += 0x2000);
     let mut finished = slot!(game, Draygon[0].var_05).wrapping_sub(160) & 0x8000 == 0;
     if !finished {
