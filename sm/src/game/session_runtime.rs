@@ -1,7 +1,8 @@
 //! One aggregate authority for player, projectiles, mechanisms and their room.
 use crate::game::actors::diving_enemies::{self, Kind as DivingKind};
 use crate::game::actors::{
-    elevator, falling_platforms, mochtroid, refill_candy, roach, sidehopper, wall_crawlers,
+    elevator, falling_platforms, metroid, mochtroid, refill_candy, roach, sidehopper,
+    wall_crawlers,
 };
 use crate::game::player_projectiles::{
     access::{ShotLane, Store},
@@ -625,6 +626,9 @@ crate::game::callback_dispatch! {
         10739779 => [wall_crawlers::initialize(wall_crawlers::Kind::Orange, game)];
         10740436 | 10741148 | 10741353 => [wall_crawlers::initialize(wall_crawlers::Kind::Common, game)];
         10739851 | 10741442 => [{ let phase = wall_crawlers::state_address(game); actor_species_pre_instruction(phase, game); }];
+        10742351 => metroid::initialize; 10742502 => metroid::frozen;
+        10742579 => metroid::hurt; 10742680 => metroid::advance;
+        10743275 => metroid::touch; 10743559 => metroid::shot;
         10723661 => roach::initialize;
         10724048 => roach::advance;
         10726153 => sidehopper::initialize; 10726351 => sidehopper::advance;
@@ -632,9 +636,7 @@ crate::game::callback_dispatch! {
         10733230 => [diving_enemies::initialize(DivingKind::Skree, game)]; 10733255 => [diving_enemies::advance(DivingKind::Skree, game)];
         10733557 => [diving_enemies::shot(DivingKind::Skree, game)];
         10738715 => [()];
-        10743874 => [{
-                    sm_a3::Metroid_Powerbomb(crate::ram_map::word!(game.cur_enemy_index), game);
-                }];
+        10743874 => metroid::power_bomb;
         10780748 => [()];
         10795344 => [()];
         10811067 => [sm_a4::CrocomireTongue_Main()];
@@ -1023,6 +1025,7 @@ crate::game::callback_dispatch! {
         10725992 => [sidehopper::instruction(true, j, game)]; 10726142 => [sidehopper::instruction(false, j, game)];
         10728489 => [refill_candy::instruction(4, j, game)]; 10728500 => [refill_candy::instruction(8, j, game)];
         10728511 => [refill_candy::instruction(12, j, game)];
+        10742437 => [metroid::sound(false, j, game)]; 10742449 => [metroid::sound(true, j, game)];
         10741344 | 10739650 => [wall_crawlers::set_state(k, j, game)];
         10991155 => [sm_a7::Kraid_Instr_1(k, j)];
         11048485 | 11048497 | 11048522 | 11048547 | 11048572 | 11048597 | 11048628 => [crate::game::actors::fune::instruction(ea, j, game)];

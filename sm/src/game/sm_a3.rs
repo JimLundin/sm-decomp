@@ -1,7 +1,6 @@
 use crate::game::actors;
 use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::api as actor_api;
-use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
@@ -13,11 +12,8 @@ use crate::cpu_infra::Call;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_b4::*;
 
-use crate::game::music::{QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6};
-use crate::game::session_runtime::damage_player;
-use crate::game::session_runtime::player_command as CallSomeSamusCode;
+use crate::game::music::{QueueSfx2_Max3, QueueSfx2_Max6};
 
-use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
 pub use crate::game::waver::{Waver_Init, Waver_Instr_1, Waver_Main};
 
 #[derive(Copy, Clone)]
@@ -31,7 +27,6 @@ pub struct MaridiaSnailData2 {
 pub use crate::types::Consts_A3;
 
 crate::game::constants::typed_constants! { Consts_A3;
-    addr_kMetroid_Ilist_EA25 = 59941, addr_kMetroid_Ilist_E9CF = 59855,
     addr_stru_A3CD3A = 52538,
     addr_stru_A3CD32 = 52530, addr_stru_A3CD2A = 52522,
     addr_stru_A3CD22 = 52514, addr_stru_A3CD1A = 52506,
@@ -54,7 +49,7 @@ crate::type_aliases! {
 
 crate::type_aliases! {
     pub Enemy_MaridiaFish,
-        Enemy_FireFlea, Enemy_Metroid = crate::game::enemy_layouts::EnemyLayout40;
+        Enemy_FireFlea = crate::game::enemy_layouts::EnemyLayout40;
 }
 
 crate::type_aliases! {
@@ -75,7 +70,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_FireFlea(o: i32) -> Enemy_FireFlea = [0xf78, o as isize];
     Get_MaridiaFish(o: i32) -> Enemy_MaridiaFish = [0xf78, o as isize];
     Get_MaridiaSnail(o: i32) -> Enemy_MaridiaSnail = [0xf78, o as isize];
-    Get_Metroid(o: i32) -> Enemy_Metroid = [0xf78, o as isize];
     Get_Reflec(o: i32) -> Enemy_Reflec = [0xf78, o as isize];
 }
 crate::prefixed_callbacks! {
@@ -498,189 +492,6 @@ pub unsafe fn Reflec_Func_1(game: &mut Game) {
         }
     }
 }
-static off_A3EC09: [Func_Y_V; 4] = callback_table! { nonnull Func_Y_V;
-    Metroid_Func_1, Metroid_Func_2, Metroid_Func_3, Metroid_Func_4,
-};
-pub unsafe fn Metroid_Func_1(varE32: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_Metroid(word!(game.cur_enemy_index) as i32, game);
-        let mut t: i32 =
-            ((((((*E).base.y_pos) as i16).wrapping_sub((varE32) as i16)) >> 2) as i32) << 8;
-        let mut r18: u16 = t as u16;
-        let mut r20: u16 = (t >> 16) as u16;
-        let metroid_var_C: u16 = (*E).var_C;
-        let mut v2: bool = metroid_var_C < r18;
-        (*E).var_C = (metroid_var_C).wrapping_sub(r18);
-        let mut v3: i16 = ((*E).var_D as i32 - (v2 as i32 + r20 as i32)) as i16;
-        (*E).var_D = v3 as u16;
-        // The positive boundary also clears the fractional velocity.
-        if v3 < -3 || v3 >= 3 {
-            (*E).var_D = v3.clamp(-3, 3) as u16;
-            (*E).var_C = 0;
-        }
-        if {
-            let (actor, amount) = (
-                word!(game.cur_enemy_index),
-                (words!((*E), var_D, var_C)) as i32,
-            );
-            (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
-                == actor_api::MovementResult::Blocked) as u8
-        } != 0
-        {
-            set_fields! {[(*E)], 0; var_C, var_D}
-        }
-        t = ((((((*E).base.x_pos) as i16).wrapping_sub((word!(game.samus_x_pos)) as i16)) >> 2)
-            as i32)
-            << 8;
-        r18 = t as u16;
-        r20 = (t >> 16) as u16;
-        let metroid_var_A: u16 = (*E).var_A;
-        v2 = metroid_var_A < r18;
-        (*E).var_A = (metroid_var_A).wrapping_sub(r18);
-        let mut v8: i16 = ((*E).var_B as i32 - (v2 as i32 + r20 as i32)) as i16;
-        (*E).var_B = v8 as u16;
-        // The positive boundary also clears the fractional velocity.
-        if v8 < -3 || v8 >= 3 {
-            (*E).var_B = v8.clamp(-3, 3) as u16;
-            (*E).var_A = 0;
-        }
-        if {
-            let (actor, amount) = (
-                word!(game.cur_enemy_index),
-                (words!((*E), var_B, var_A)) as i32,
-            );
-            (actor_api::move_horizontal(
-                &mut Runtime::new(game),
-                Key::from_legacy(actor),
-                amount,
-                actor_api::SlopePolicy::Ignore,
-            ) == actor_api::MovementResult::Blocked) as u8
-        } != 0
-        {
-            set_fields! {[(*E)], 0; var_A, var_B}
-        }
-    }
-}
-pub unsafe fn Metroid_Func_2(varE32: u16, game: &mut Game) {
-    unsafe {
-        let mut v1: i16 = 0;
-        let mut v5: i16 = 0;
-        let mut r18: u16 = 0;
-        let E = Get_Metroid(word!(game.cur_enemy_index) as i32, game);
-        byte!(v1; 0) = (((varE32).wrapping_sub((*E).base.y_pos)) >> 8) as u8;
-        byte!(v1; 1) = ((varE32) as u8).wrapping_sub(byte!((*E).base.y_pos; 0));
-        let mut r20: u16 = (((v1) as u16) & (0xff00u16)) >> 3;
-        if (r20 & 0x1000) != 0 {
-            r20 = (r20) | (0xe000u16);
-        }
-        if (r20 as i16) < -3 || (r20 as i16) >= 3 {
-            r20 = (r20 as i16).clamp(-3, 3) as u16;
-            r18 = 0;
-        }
-        (*E).var_C = r18;
-        (*E).var_D = r20;
-        if {
-            let (actor, amount) = (word!(game.cur_enemy_index), (words!((r20, r18))) as i32);
-            (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
-                == actor_api::MovementResult::Blocked) as u8
-        } != 0
-        {
-            set_fields! {[(*E)], 0; var_C, var_D}
-        }
-        r18 = 0;
-        r20 = 0;
-        byte!(v5; 0) = (((word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos)) >> 8) as u8;
-        byte!(v5; 1) = ((word!(game.samus_x_pos)) as u8).wrapping_sub(byte!((*E).base.x_pos; 0));
-        r20 = (((v5) as u16) & (0xff00u16)) >> 3;
-        if (r20 & 0x1000) != 0 {
-            r20 = (r20) | (0xe000u16);
-        }
-        if (r20 as i16) < -3 || (r20 as i16) >= 3 {
-            r20 = (r20 as i16).clamp(-3, 3) as u16;
-            r18 = 0;
-        }
-        (*E).var_A = r18;
-        (*E).var_B = r20;
-        if {
-            let (actor, amount) = (word!(game.cur_enemy_index), (words!((r20, r18))) as i32);
-            (actor_api::move_horizontal(
-                &mut Runtime::new(game),
-                Key::from_legacy(actor),
-                amount,
-                actor_api::SlopePolicy::Ignore,
-            ) == actor_api::MovementResult::Blocked) as u8
-        } != 0
-        {
-            set_fields! {[(*E)], 0; var_A, var_B}
-        }
-    }
-}
-pub unsafe fn Metroid_Func_3(varE32: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_Metroid(word!(game.cur_enemy_index) as i32, game);
-        (*E).base.x_pos = word!(game.samus_x_pos);
-        (*E).base.y_pos = varE32;
-        set_fields! {[(*E)], 0; var_A, var_B, var_C, var_D}
-    }
-}
-pub unsafe fn Metroid_Func_4(varE32: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_Metroid(word!(game.cur_enemy_index) as i32, game);
-        let v1: i32 = (*E).var_E as i32 & 3;
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(crate::rtl::rom_table_word!(
-            game,
-            0xa3ea3f,
-            v1 as isize
-        ));
-        (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(crate::rtl::rom_table_word!(
-            game,
-            0xa3ea3f,
-            (v1 + 4) as isize
-        ));
-        set_fields! {[(*E)], 0; var_A, var_B, var_C, var_D}
-        crate::update_place! { previous fresh9 = (*E).var_E => (*E).var_E.wrapping_sub(1); }
-        if fresh9 == 1 {
-            (*E).var_F = 0;
-            enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_E9CF as u16, timer = 1}
-        }
-    }
-}
-pub unsafe fn Metroid_Func_5(k: u16, game: &mut Game) {
-    unsafe {
-        let varE32: u16 = (word!(game.samus_y_pos)).wrapping_sub(8);
-        let mut v1: u16 = if (word!(game.equipped_items) & 0x20) != 0 {
-            12288
-        } else if word!(game.equipped_items) & 1 != 0 {
-            24576
-        } else {
-            -16384i32 as u16
-        };
-        let r18: u16 = v1;
-        let E = Get_Metroid(k as i32, game);
-        let metroid_var_02: u16 = (*E).var_02;
-        let v4: bool = metroid_var_02 < r18;
-        (*E).var_02 = (metroid_var_02).wrapping_sub(r18);
-        if v4 {
-            damage_player(1, game);
-        }
-    }
-}
-pub unsafe fn Metroid_Powerbomb(k: u16, game: &mut Game) {
-    unsafe {
-        actors::combat::power_bomb_reaction(
-            &mut Runtime::new(game),
-            actors::api::DeathHandling::Finalize,
-        );
-        if (*Get_Metroid(k as i32, game)).base.health == 0 {
-            CallSomeSamusCode(0x13, game);
-            let first = (*Get_Metroid(word!(game.cur_enemy_index) as i32, game)).var_00;
-            sprite_effects::retire_native(first, game);
-            let second = (*Get_Metroid(word!(game.cur_enemy_index) as i32, game)).var_01;
-            sprite_effects::retire_native(second, game);
-        }
-    }
-}
-
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
@@ -853,171 +664,6 @@ crate::game::callback_dispatch! {
             QueueSfx2_Max6(0x57, game);
         };
     };
-    [10742351] Metroid_Init [] {
-        let enemy = word!(game.cur_enemy_index);
-        (*Get_Metroid(enemy as i32, game)).base.current_instruction = addr_kMetroid_Ilist_E9CF as u16;
-        let (x, y, appearance) = {
-            let e = Get_Metroid(enemy as i32, game);
-            ((*e).base.x_pos, (*e).base.y_pos, (*e).base.vram_tiles_index | (*e).base.palette_index)
-        };
-        let first = create_sprite(x, y, 50, appearance, game);
-        (*Get_Metroid(enemy as i32, game)).var_00 = first;
-        let (x, y, appearance) = {
-            let e = Get_Metroid(enemy as i32, game);
-            ((*e).base.x_pos, (*e).base.y_pos, (*e).base.vram_tiles_index | (*e).base.palette_index)
-        };
-        let second = create_sprite(x, y, 52, appearance, game);
-        (*Get_Metroid(enemy as i32, game)).var_01 = second;
-        (*Get_Metroid(enemy as i32, game)).var_02 = 0;
-        crate::verify_probe::hit("sprite.metroid.init");
-    };
-    [10742502] Metroid_Frozen [] {
-        Enemy_NormalFrozenAI_A3(game);
-        let enemy = word!(game.cur_enemy_index);
-        {
-            let e = Get_Metroid(enemy as i32, game);
-            if (*e).var_E != 0 {
-                (*e).var_E = (*e).var_E.wrapping_sub(1);
-                (*e).base.flash_timer = 2;
-            }
-        }
-        let first = (*Get_Metroid(enemy as i32, game)).var_00;
-        sprite_effects::freeze_attachment(first, 3072, addr_kSpriteObject_Ilist_C3BA as u16, game);
-        let second = (*Get_Metroid(enemy as i32, game)).var_01;
-        sprite_effects::freeze_attachment(second, 3072, addr_kSpriteObject_Ilist_C4B6 as u16, game);
-        crate::verify_probe::hit("sprite.metroid.frozen");
-    };
-    [10742579] Metroid_Hurt [] {
-        let enemy = word!(game.cur_enemy_index);
-        let appearance = {
-            let e = Get_Metroid(enemy as i32, game);
-            if (*e).base.flash_timer & 2 != 0 { (*e).base.palette_index } else { 0 }
-        };
-        let first = (*Get_Metroid(enemy as i32, game)).var_00;
-        sprite_effects::flash_attachment(first, appearance, game);
-        let second = (*Get_Metroid(enemy as i32, game)).var_01;
-        sprite_effects::flash_attachment(second, appearance, game);
-        crate::verify_probe::hit("sprite.metroid.hurt");
-    };
-    [10742680] Metroid_Main [] {
-        let enemy = word!(game.cur_enemy_index);
-        let action = (*Get_Metroid(enemy as i32, game)).var_F;
-        off_A3EC09[action as usize]((word!(game.samus_y_pos)).wrapping_sub(8), game);
-        let appearance = {
-            let e = Get_Metroid(enemy as i32, game);
-            (*e).base.vram_tiles_index | (*e).base.palette_index
-        };
-        let first = (*Get_Metroid(enemy as i32, game)).var_00;
-        sprite_effects::attach_actor(first, enemy, appearance, game);
-        let second = (*Get_Metroid(enemy as i32, game)).var_01;
-        sprite_effects::attach_actor(second, enemy, appearance, game);
-        crate::verify_probe::hit("sprite.metroid.main");
-    };
-    [10743275] Metroid_Touch [] {
-        let E = Get_Metroid(word!(game.cur_enemy_index) as i32, game);
-        let varE32: u16 = (word!(game.samus_y_pos)).wrapping_sub(8);
-        if word!(game.samus_contact_damage_index) != 0 {
-            if (*E).var_F != 2 {
-                set_fields! {[(*E)], 0; var_A, var_C}
-                let v2: i16 =
-                    (((*E).base.x_pos) as i16).wrapping_sub((word!(game.samus_x_pos)) as i16);
-                (*E).var_B = (if v2 < 0 { -256i32 } else { 0 }) as u16;
-                *((&raw mut (*E).var_A as *mut u8).offset(1) as *mut u16) =
-                    ((v2 as i32) << 6) as u16;
-                let v4: i16 = (((*E).base.y_pos) as i16).wrapping_sub((varE32) as i16);
-                (*E).var_D = (if v4 < 0 { -256i32 } else { 0 }) as u16;
-                *((&raw mut (*E).var_C as *mut u8).offset(1) as *mut u16) =
-                    ((v4 as i32) << 6) as u16;
-                (*E).var_F = 0;
-                enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_E9CF as u16, timer = 1}
-            }
-        } else {
-            let v5: u16 = word!(game.cur_enemy_index);
-            if (*E).var_F != 3 {
-                if (word!(game.random_enemy_counter) & 7) == 7
-                    && word!(game.samus_health) as i32 - 30i32 & 0x8000 == 0
-                {
-                    QueueSfx3_Max6(0x2d, game);
-                }
-                Metroid_Func_5(v5, game);
-            }
-            if (*E).var_F < 2 {
-                let mut v7: u16 = 1;
-                if abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos))) < 8
-                    && abs16(((*E).base.y_pos).wrapping_sub(varE32)) < 8
-                {
-                    v7 = 2;
-                    CallSomeSamusCode(0x12, game);
-                }
-                (*E).var_F = v7;
-                if v7 == 2 {
-                    enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_EA25 as u16, timer = 1}
-                }
-            }
-        };
-    };
-    [10743559] Metroid_Shot [] {
-        let v0: u16 = (2u16).wrapping_mul(word!(game.collision_detection_index));
-        let enemy = word!(game.cur_enemy_index);
-        let E = Get_Metroid(enemy as i32, game);
-        if (*E).base.frozen_timer != 0 {
-            let v3: u16 = (word!(game.projectile_type[(v0 >> 1)])) & (0xf00u16);
-            if v3 == 256 || v3 == 512 {
-                word!(game.special_death_item_drop_x_origin_pos = (*E).base.x_pos);
-                word!(game.special_death_item_drop_y_origin_pos = (*E).base.y_pos);
-                Enemy_NormalShotAI_SkipSomeParts_A3(game);
-                if (*E).base.health == 0 {
-                    (*E).var_B = 0;
-                    ({ let (_ignored_key, animation) = (word!(game.cur_enemy_index), 4); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
-                    CallSomeSamusCode(0x13, game);
-                    let first = (*Get_Metroid(enemy as i32, game)).var_00;
-                    sprite_effects::retire_native(first, game);
-                    let metroid_var_01 = (*Get_Metroid(enemy as i32, game)).var_01;
-                    sprite_effects::retire_native(metroid_var_01, game);
-                    scatter(DropSource::Metroid, metroid_var_01, game);
-                }
-            }
-        } else if (*E).var_F == 2 {
-            if (word!(game.projectile_type[(v0 >> 1)]) & 0xf00) == 1280 {
-                (*E).var_E = 4;
-                (*E).var_F = 3;
-                enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_E9CF as u16, timer = 1}
-                CallSomeSamusCode(0x13, game);
-            }
-        } else {
-            set_fields! {[(*E)], 0; var_A, var_C}
-            let v7: i16 =
-                (((*E).base.x_pos) as i16).wrapping_sub((word!(game.projectile_x_pos[0])) as i16);
-            (*E).var_B = (if v7 < 0 { -256i32 } else { 0 }) as u16;
-            *((&raw mut (*E).var_A as *mut u8).offset(1) as *mut u16) =
-                (32u16).wrapping_mul((v7) as u16);
-            let v9: i16 =
-                (((*E).base.y_pos) as i16).wrapping_sub((word!(game.projectile_y_pos[0])) as i16);
-            (*E).var_D = (if v9 < 0 { -256i32 } else { 0 }) as u16;
-            *((&raw mut (*E).var_C as *mut u8).offset(1) as *mut u16) =
-                (32u16).wrapping_mul((v9) as u16);
-            (*E).var_F = 0;
-            enemy_instruction! {[(*E).base]; instruction = addr_kMetroid_Ilist_E9CF as u16, timer = 1}
-            let v10: i32 = word!(game.collision_detection_index) as i32;
-            if (word!(game.projectile_type[v10]) & 2) != 0 {
-                QueueSfx3_Max6(0xa, game);
-                let r18: u16 = word!(game.projectile_damage[v10]);
-                (*E).base.flash_timer = 4;
-                let metroid_parameter_2: u16 = (*E).parameter_2;
-                let mut v13: bool = metroid_parameter_2 < r18;
-                let v12: u16 = (metroid_parameter_2).wrapping_sub(r18);
-                v13 = !v13;
-                if v12 == 0 || !v13 {
-                    (*E).parameter_2 = 0;
-                    (*E).base.frozen_timer = 400;
-                    (*E).base.ai_handler_bits = ((*E).base.ai_handler_bits) | (4u16);
-                    return;
-                }
-                (*E).parameter_2 = v12;
-            }
-            QueueSfx2_Max6(0x5a, game);
-        };
-    };
     @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E = Get_Bang(word!(game.cur_enemy_index) as i32, game); };
     [10730163] Bang_Init [] {
@@ -1164,15 +810,6 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10738632] Reflec_Instr_1 [jp.offset(1)] { (*Get_Reflec(k as i32, game)).parameter_2 = jp.word(0); };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10742437] Metroid_Instr_2 [jp] { QueueSfx2_Max6(0x50, game); };
-    [10742449] Metroid_Instr_1 [jp] {
-        let v2: i32 = game.next_random() as i32 & 7;
-        QueueSfx2_Max6(
-            crate::rtl::rom_table_word!(game, 0xa3ead6, v2 as isize),
-            game,
-        );
-    };
 }
 
 crate::game::callback_dispatch! {
