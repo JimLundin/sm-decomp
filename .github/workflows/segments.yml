@@ -207,16 +207,8 @@ jobs:
       - name: Build pinned native dependencies
         # Rebuild stamped archives from this checkout; never cache these objects.
         run: |
-          foreach ($dependency in @('cpu', 'backend', 'spc')) {
-            python tools/install_lakesnes.py $dependency --zig $env:SM_ZIG --target x86_64-windows-gnu --prefix "$env:SM_NATIVE/lakesnes-$dependency" --library-directory $env:LIBRARY_PATH
-            if ($LASTEXITCODE -ne 0) { throw "LakeSnes $dependency installation failed" }
-          }
-          foreach ($dependency in @('config', 'desktop', 'music')) {
-            $arguments = @("tools/install_native_$dependency.py", '--zig', $env:SM_ZIG, '--target', 'x86_64-windows-gnu', '--prefix', "$env:SM_NATIVE/$dependency", '--library-directory', $env:LIBRARY_PATH)
-            if ($dependency -ne 'music') { $arguments += @('--sdl-include', $env:SM_SDL_INCLUDE) }
-            python @arguments
-            if ($LASTEXITCODE -ne 0) { throw "Native $dependency installation failed" }
-          }
+          python tools/install_native_dependencies.py --zig $env:SM_ZIG --target x86_64-windows-gnu --prefix $env:SM_NATIVE --library-directory $env:LIBRARY_PATH --sdl-include $env:SM_SDL_INCLUDE
+          if ($LASTEXITCODE -ne 0) { throw 'Native dependency installation failed' }
       - name: Build pinned PNG decoder
         run: |
           $codec = Join-Path $env:SM_NATIVE 'stb-image'
@@ -490,11 +482,7 @@ jobs:
           echo "LIBRARY_PATH=$native/lib" >> "$GITHUB_ENV"
       - name: Build pinned native dependencies
         run: |
-          for dependency in cpu backend spc; do
-            python tools/install_lakesnes.py "$dependency" --zig "$SM_ZIG" --target x86_64-linux-gnu --prefix "$SM_NATIVE/lakesnes-$dependency" --library-directory "$LIBRARY_PATH"
-          done
-          python tools/install_native_config.py --zig "$SM_ZIG" --target x86_64-linux-gnu --prefix "$SM_NATIVE/config" --library-directory "$LIBRARY_PATH" --sdl-include "$SM_SDL_INCLUDE"
-          python tools/install_native_music.py --zig "$SM_ZIG" --target x86_64-linux-gnu --prefix "$SM_NATIVE/music" --library-directory "$LIBRARY_PATH"
+          python tools/install_native_dependencies.py --zig "$SM_ZIG" --target x86_64-linux-gnu --prefix "$SM_NATIVE" --library-directory "$LIBRARY_PATH" --sdl-include "$SM_SDL_INCLUDE"
           codec="$SM_NATIVE/stb-image"
           mkdir -p "$codec"
           curl -sSfL -o "$codec/stb-sys-0.6.0.crate" https://crates.io/api/v1/crates/stb-sys/0.6.0/download

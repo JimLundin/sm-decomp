@@ -138,16 +138,8 @@ jobs:
       - name: Build pinned native dependencies
         # Rebuild stamped archives from this checkout; never cache these objects.
         run: |
-          foreach ($dependency in @('cpu', 'backend', 'spc')) {
-            python tools/install_lakesnes.py $dependency --zig $env:SM_ZIG --target x86_64-windows-gnu --prefix "$env:SM_NATIVE/lakesnes-$dependency" --library-directory $env:LIBRARY_PATH
-            if ($LASTEXITCODE -ne 0) { throw "LakeSnes $dependency installation failed" }
-          }
-          foreach ($dependency in @('config', 'desktop', 'music')) {
-            $arguments = @("tools/install_native_$dependency.py", '--zig', $env:SM_ZIG, '--target', 'x86_64-windows-gnu', '--prefix', "$env:SM_NATIVE/$dependency", '--library-directory', $env:LIBRARY_PATH)
-            if ($dependency -ne 'music') { $arguments += @('--sdl-include', $env:SM_SDL_INCLUDE) }
-            python @arguments
-            if ($LASTEXITCODE -ne 0) { throw "Native $dependency installation failed" }
-          }
+          python tools/install_native_dependencies.py --zig $env:SM_ZIG --target x86_64-windows-gnu --prefix $env:SM_NATIVE --library-directory $env:LIBRARY_PATH --sdl-include $env:SM_SDL_INCLUDE
+          if ($LASTEXITCODE -ne 0) { throw 'Native dependency installation failed' }
       - name: Build pinned PNG decoder
         run: |
           $codec = Join-Path $env:SM_NATIVE 'stb-image'
