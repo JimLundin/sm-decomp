@@ -38,24 +38,22 @@ fn stamp(base: usize, columns: usize, count: usize, tile: impl Fn(usize) -> u16,
 
 /// Native icon reads retain their address-formation contract, even if already installed.
 pub(crate) unsafe fn install(item: Item, game: &mut Game) {
-    unsafe {
-        let index = item as usize;
-        let base = usize::from(ITEM_OFFSETS[index] >> 1);
-        let native = (index != 0).then(|| native_record(0x8099a3 + 4 + 8 * index as u32, game));
-        if word!(game.hud_tilemap[base]) & 0x3ff == 15 {
-            let columns = if index == 0 { 3 } else { 2 };
-            const MISSILES: [u16; 6] = [0x344b, 0x3449, 0x744b, 0x344c, 0x344a, 0x744c];
-            stamp(
-                base,
-                columns,
-                2 * columns,
-                |i| match &native {
-                    Some(record) => record.word(2 * i),
-                    None => MISSILES[i],
-                },
-                game,
-            );
-        }
+    let index = item as usize;
+    let base = usize::from(ITEM_OFFSETS[index] >> 1);
+    let native = (index != 0).then(|| native_record(0x8099a3 + 4 + 8 * index as u32, game));
+    if word!(game.hud_tilemap[base]) & 0x3ff == 15 {
+        let columns = if index == 0 { 3 } else { 2 };
+        const MISSILES: [u16; 6] = [0x344b, 0x3449, 0x744b, 0x344c, 0x344a, 0x744c];
+        stamp(
+            base,
+            columns,
+            2 * columns,
+            |i| match &native {
+                Some(record) => record.word(2 * i),
+                None => MISSILES[i],
+            },
+            game,
+        );
     }
 }
 
@@ -211,22 +209,20 @@ fn highlight(selection: u16, palette: u16, game: &mut Game) {
 }
 
 unsafe fn number(address: u32, mut value: u16, mut cursor: u16, three: bool, game: &mut Game) {
-    unsafe {
-        if three {
-            word!(
-                game.hud_tilemap[cursor >> 1] =
-                    native_record(address.wrapping_add(2 * u32::from(value / 100)), game).word(0)
-            );
-            value %= 100;
-            cursor = cursor.wrapping_add(2);
-        }
-        let base = usize::from(cursor >> 1);
-        // Units follow the widened pair index; they do not wrap the u16 byte cursor.
-        for (index, digit) in [(base, value / 10), (base + 1, value % 10)] {
-            word!(
-                game.hud_tilemap[index] =
-                    native_record(address.wrapping_add(2 * u32::from(digit)), game).word(0)
-            );
-        }
+    if three {
+        word!(
+            game.hud_tilemap[cursor >> 1] =
+                native_record(address.wrapping_add(2 * u32::from(value / 100)), game).word(0)
+        );
+        value %= 100;
+        cursor = cursor.wrapping_add(2);
+    }
+    let base = usize::from(cursor >> 1);
+    // Units follow the widened pair index; they do not wrap the u16 byte cursor.
+    for (index, digit) in [(base, value / 10), (base + 1, value % 10)] {
+        word!(
+            game.hud_tilemap[index] =
+                native_record(address.wrapping_add(2 * u32::from(digit)), game).word(0)
+        );
     }
 }

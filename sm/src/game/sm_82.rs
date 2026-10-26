@@ -1154,35 +1154,7 @@ pub unsafe fn LoadPauseScreenBaseTilemaps(game: &mut Game) {
         GraphicsAsset::VramWords(0xb6e000, 0x3800, 0x800).load(game);
         GraphicsAsset::WramBytes(0xb6e400, 0x7e3400, 0x400).load(game);
         GraphicsAsset::WramBytes(0xb6e800, 0x7e3800, 0x800).load(game);
-        let mut v0: u16 = addr_kDummySamusWireframeTilemap as u16;
-        let mut v1: u16 = 236;
-        for _ in 0..17 {
-            for _ in 0..8 {
-                crate::update_place! { previous fresh92 = v1 => v1.wrapping_add(1); }
-                (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[fresh92 as usize] =
-                    *(RomPtr_82(v0, game) as *mut u16);
-                v0 = (v0).wrapping_add(2);
-            }
-            v1 = (v1).wrapping_add(8);
-        }
-        WriteSamusWireframeTilemap(game);
-        LoadEqupmentScreenReserveHealthTilemap(game);
-    }
-}
-pub unsafe fn LoadEqupmentScreenReserveHealthTilemap(game: &mut Game) {
-    unsafe {
-        if word!(game.samus_max_reserve_health) != 0 {
-            let r42: i32 = word!(game.samus_reserve_health) as i32 / 100;
-            let rest: i32 = word!(game.samus_reserve_health) as i32 % 100;
-            let div10: i32 = rest / 10;
-            let mod10: i32 = rest % 10;
-            (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap[394i32 as usize] =
-                (mod10 + 2052) as u16;
-            (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap[393i32 as usize] =
-                (div10 + 2052) as u16;
-            (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap[392i32 as usize] =
-                (r42 + 2052) as u16;
-        }
+        crate::game::menu_tilemap::prepare_equipment_frame(game);
     }
 }
 pub unsafe fn BackupGameplayPalettesAndLoadForPause(game: &mut Game) {
@@ -1193,7 +1165,7 @@ pub unsafe fn ContinueInitPauseMenu(game: &mut Game) {
     unsafe {
         SetupPpuForPauseMenu(game);
         ResetPauseMenuAnimations(game);
-        LoadEquipmentScreenEquipmentTilemaps(game);
+        crate::game::menu_tilemap::equipment_icons(game);
         set_pause_label_palettes(0, game);
         UpdatePauseMenuLRStartVramTilemap(game);
         DetermineMapScrollLimits(game);
@@ -1789,128 +1761,6 @@ pub unsafe fn ResetPauseMenuAnimations(game: &mut Game) {
         pausemenu_palette_animation_timer = 1; pausemenu_palette_animation_frame = 0; }
     }
 }
-unsafe fn ChangePaletteValues(target: *mut u16, new_color: u16, n: size_t) {
-    unsafe {
-        let mut i: size_t = 0 as size_t;
-        while i != n {
-            *target.offset(i as isize) = *target.offset(i as isize) & !(0x1c00) | new_color;
-            i = i.wrapping_add(1);
-        }
-    }
-}
-
-macro_rules! draw_equipment_icons {
-    (
-        $icon_count:literal, $game:ident, $destinations:ident, $collected_field:ident,
-        $mask_table:literal, $tilemap_table:literal, $byte_count:literal,
-        $equipped_field:ident, $word_count:literal $(,)?
-    ) => {
-        let mut i_0: i32 = 0;
-        while i_0 < $icon_count {
-            let target: *mut u16 = ram_ptr!(
-                $game, u16; *$destinations.offset(i_0 as isize) as i32 as isize
-            );
-            if (word!($game.$collected_field)
-                & crate::rtl::rom_table_word!($game, $mask_table, i_0 as isize))
-                != 0
-            {
-                memcpy(
-                    target as *mut c_void,
-                    RomPtr_82(
-                        crate::rtl::rom_table_word!(
-                            $game,
-                            $tilemap_table,
-                            i_0 as isize
-                        ),
-                        $game,
-                    ) as *const c_void,
-                    $byte_count as size_t,
-                );
-                if (word!($game.$equipped_field)
-                    & crate::rtl::rom_table_word!($game, $mask_table, i_0 as isize))
-                    == 0
-                {
-                    ChangePaletteValues(target, 3072, $word_count as size_t);
-                }
-            } else {
-                memcpy(
-                    target as *mut c_void,
-                    RomPtr_82(addr_kEquipmentScreenTilemap_Blank as u16, $game)
-                        as *const c_void,
-                    $byte_count as size_t,
-                );
-            }
-            i_0 += 1;
-        }
-    };
-}
-
-pub unsafe fn LoadEquipmentScreenEquipmentTilemaps(game: &mut Game) {
-    unsafe {
-        if word!(game.samus_max_reserve_health) != 0 {
-            memcpy(
-                ram_ptr!(game, c_void; crate::rtl::rom_table_word!(game, 0x82c068, 0) as i32 as isize),
-                RomPtr_82(crate::rtl::rom_table_word!(game, 0x82c088, 0), game) as *const c_void,
-                14 as size_t,
-            );
-            memcpy(
-                ram_ptr!(game, c_void; crate::rtl::rom_table_word!(game, 0x82c068, 1) as i32 as isize),
-                RomPtr_82(crate::rtl::rom_table_word!(game, 0x82c088, 1), game) as *const c_void,
-                14 as size_t,
-            );
-        }
-        let mut p: *const u16 =
-            RomPtr_82(addr_kEquipmentTilemapOffs_Weapons as u16, game) as *mut u16;
-        if word!(game.hyper_beam_flag) != 0 {
-            for i in 0i32..5 {
-                memcpy(
-                    ram_ptr!(game, c_void; *p.offset(i as isize) as i32 as isize),
-                    RomPtr_82(
-                        crate::rtl::rom_table_word!(game, 0x82c0a8, i as isize),
-                        game,
-                    ) as *const c_void,
-                    10 as size_t,
-                );
-            }
-        } else {
-            draw_equipment_icons!(
-                6,
-                game,
-                p,
-                collected_beams,
-                0x82c04c,
-                0x82c08c,
-                10,
-                equipped_beams,
-                5
-            );
-        }
-        p = RomPtr_82(addr_kEquipmentTilemapOffs_Suits as u16, game) as *mut u16;
-        draw_equipment_icons!(
-            6,
-            game,
-            p,
-            collected_items,
-            0x82c056,
-            0x82c096,
-            18,
-            equipped_items,
-            9
-        );
-        p = RomPtr_82(addr_kEquipmentTilemapOffs_Boots as u16, game) as *mut u16;
-        draw_equipment_icons!(
-            3,
-            game,
-            p,
-            collected_items,
-            0x82c062,
-            0x82c0a2,
-            18,
-            equipped_items,
-            9
-        );
-    }
-}
 pub unsafe fn ClearSamusBeamTiles(game: &mut Game) {
     unsafe {
         GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x1000).load(game);
@@ -2418,26 +2268,26 @@ pub unsafe fn EquipmentScreenCategory_Weapons_MoveButtons(game: &mut Game) {
         }
     }
 }
-pub unsafe fn EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(R36: u16, game: &mut Game) {
-    unsafe {
-        let t: i32 = word!(game.equipped_beams) as i32 & !(R36 as i32);
-        if (t & 4) != 0 {
-            if (R36 & 4) == 0 && (word!(game.equipped_beams) & 8) != 0 {
-                word!(game.equipped_beams &= !(8));
-                ChangePaletteValues(
-                    ram_ptr!(game, u16; crate::rtl::rom_table_word!(game, 0x82c06c, 4) as i32 as isize),
-                    3072,
-                    5 as size_t,
-                );
-            }
-        } else if (t & 8) != 0 && (R36 & 8) == 0 && (word!(game.equipped_beams) & 4) != 0 {
-            word!(game.equipped_beams &= !(4));
-            ChangePaletteValues(
-                ram_ptr!(game, u16; crate::rtl::rom_table_word!(game, 0x82c06c, 3) as i32 as isize),
+pub fn EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(R36: u16, game: &mut Game) {
+    let t: i32 = word!(game.equipped_beams) as i32 & !(R36 as i32);
+    if (t & 4) != 0 {
+        if (R36 & 4) == 0 && (word!(game.equipped_beams) & 8) != 0 {
+            word!(game.equipped_beams &= !(8));
+            crate::game::menu_tilemap::recolor_native(
+                crate::rtl::rom_table_word!(game, 0x82c06c, 4) as usize,
                 3072,
-                5 as size_t,
+                5,
+                game,
             );
         }
+    } else if (t & 8) != 0 && (R36 & 8) == 0 && (word!(game.equipped_beams) & 4) != 0 {
+        word!(game.equipped_beams &= !(4));
+        crate::game::menu_tilemap::recolor_native(
+            crate::rtl::rom_table_word!(game, 0x82c06c, 3) as usize,
+            3072,
+            5,
+            game,
+        );
     }
 }
 pub unsafe fn EquipmentScreenCategory_Suit(game: &mut Game) {
@@ -2551,35 +2401,8 @@ macro_rules! queue_ram_tilemap_write {
 
 pub unsafe fn WriteSamusWireframeTilemapAndQueue(game: &mut Game) {
     unsafe {
-        WriteSamusWireframeTilemap(game);
+        crate::game::menu_tilemap::equipment_wireframe(game);
         queue_ram_tilemap_write!(game, 1280, 256, fresh63, 0x3080);
-    }
-}
-pub unsafe fn WriteSamusWireframeTilemap(game: &mut Game) {
-    unsafe {
-        let mut i: u16 = 0;
-        while word!(game.equipped_items) & 0x101
-            != crate::rtl::rom_table_word!(game, 0x82b257, (i >> 1) as isize)
-        {
-            i = (i).wrapping_add(2);
-        }
-        let mut src = RomPtr_82(
-            crate::rtl::rom_table_word!(game, 0x82b25f, (i >> 1) as isize),
-            game,
-        ) as *const u16;
-        let v1: u16 = 0;
-        let mut v2: u16 = 472;
-        for _ in 0..17 {
-            let v3: u16 = v2;
-            for _ in 0..8 {
-                crate::update_place! { previous fresh64 = src => src.offset(1); }
-                *((&raw mut (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap as *mut u16
-                    as *mut u8)
-                    .offset(v2 as i32 as isize) as *mut u16) = *fresh64;
-                v2 = (v2).wrapping_add(2);
-            }
-            v2 = (v3).wrapping_add(64);
-        }
     }
 }
 pub unsafe fn EquipmentScreenDrawItemSelector(game: &mut Game) {
@@ -2817,11 +2640,11 @@ pub unsafe fn EquipmentScreenCategory_ButtonResponse(r24: u16, game: &mut Game) 
             QueueSfx1_Max6(0x38, game);
             let item: i32 = byte!(@pointer ram_ptr!(game, u16; 0x755); 1) as i32;
             let category: i32 = word!(game.pausemenu_equipment_category_item) as u8 as i32;
-            let target: *mut u8 = ram_ptr!(game; *(RomPtr_82(
-                (crate::rtl::rom_table_word!(game, 0x82c02c, category as isize) as i32
-                    + item * 2) as u16,
+            let target = *(RomPtr_82(
+                (crate::rtl::rom_table_word!(game, 0x82c02c, category as isize) as i32 + item * 2)
+                    as u16,
                 game,
-            ) as *mut u16) as i32 as isize,);
+            ) as *mut u16) as usize;
             let var = RomPtr_RAM(
                 crate::rtl::rom_table_word!(game, 0x82c03c, category as isize),
                 game,
@@ -2833,7 +2656,12 @@ pub unsafe fn EquipmentScreenCategory_ButtonResponse(r24: u16, game: &mut Game) 
             ) as *mut u16);
             if (*var & mask) != 0 {
                 *var = *var & !(mask);
-                ChangePaletteValues(target as *mut u16, 0xc00, (r24 as i32 >> 1) as size_t);
+                crate::game::menu_tilemap::recolor_native(
+                    target,
+                    0xc00,
+                    usize::from(r24 >> 1),
+                    game,
+                );
             } else {
                 *var = (*var) | (mask);
                 let src: u16 = *(RomPtr_82(
@@ -2841,11 +2669,7 @@ pub unsafe fn EquipmentScreenCategory_ButtonResponse(r24: u16, game: &mut Game) 
                         + item * 2) as u16,
                     game,
                 ) as *mut u16);
-                memcpy(
-                    target as *mut c_void,
-                    RomPtr_82(src, game) as *const c_void,
-                    r24 as size_t,
-                );
+                crate::game::menu_tilemap::copy_native_tiles(target, src, usize::from(r24), game);
             }
         }
     }

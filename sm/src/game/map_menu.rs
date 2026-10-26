@@ -282,50 +282,48 @@ static LABEL_POSITIONS: [u16; 12] = [
     0x5b, 0x32, 0x2a, 0x7f, 0x5e, 0xb5, 0xce, 0x50, 0xce, 0x9f, 0x87, 0x8b,
 ];
 unsafe fn draw_area_labels(game: &mut Game) {
-    unsafe {
-        let mut r3: u16 = 0;
-        sprite_output::menu(
-            crate::rtl::rom_table_word!(game, 0x82c749, 0),
-            0x80,
-            0x10,
-            r3,
-            game,
-        );
-        for i in 0i32..6 {
-            r3 = (if i == word!(game.file_select_map_area_index) as i32 {
-                0
-            } else {
-                512
-            }) as u16;
-            let v1: u16 = (2u16).wrapping_mul(AREAS[i as usize]);
-            let mut r36: u16 = native_word(0xd8f8 + v1 as usize, game);
-            let mut v2 = station_coordinates(AREAS[i as usize], game);
-            let mut R30: i32 = 16;
-            while v2.word(0) != 0xffff {
-                let v4: i32 = r36 as i32 & 1;
-                r36 = r36 >> 1;
-                if !(v4 != 0 && v2.word(0) != 0xfffe) {
-                    v2.base += 4;
-                    R30 -= 1;
-                    if R30 != 0 {
-                        continue;
-                    }
-                    if !(word!(game.enable_debug) != 0 && v2.word(0) != 0xffff) {
-                        break;
-                    }
+    let mut r3: u16 = 0;
+    sprite_output::menu(
+        crate::rtl::rom_table_word!(game, 0x82c749, 0),
+        0x80,
+        0x10,
+        r3,
+        game,
+    );
+    for i in 0i32..6 {
+        r3 = (if i == word!(game.file_select_map_area_index) as i32 {
+            0
+        } else {
+            512
+        }) as u16;
+        let v1: u16 = (2u16).wrapping_mul(AREAS[i as usize]);
+        let mut r36: u16 = native_word(0xd8f8 + v1 as usize, game);
+        let mut v2 = station_coordinates(AREAS[i as usize], game);
+        let mut R30: i32 = 16;
+        while v2.word(0) != 0xffff {
+            let v4: i32 = r36 as i32 & 1;
+            r36 = r36 >> 1;
+            if !(v4 != 0 && v2.word(0) != 0xfffe) {
+                v2.base += 4;
+                R30 -= 1;
+                if R30 != 0 {
+                    continue;
                 }
-                let j: i32 = 4 * AREAS[i as usize] as i32 >> 1;
-                sprite_output::menu(
-                    (crate::rtl::rom_table_word!(game, 0x82c749, 0) as i32
-                        + AREAS[i as usize] as i32
-                        + 1) as u16,
-                    LABEL_POSITIONS[j as usize],
-                    LABEL_POSITIONS[(j + 1) as usize],
-                    r3,
-                    game,
-                );
-                break;
+                if !(word!(game.enable_debug) != 0 && v2.word(0) != 0xffff) {
+                    break;
+                }
             }
+            let j: i32 = 4 * AREAS[i as usize] as i32 >> 1;
+            sprite_output::menu(
+                (crate::rtl::rom_table_word!(game, 0x82c749, 0) as i32
+                    + AREAS[i as usize] as i32
+                    + 1) as u16,
+                LABEL_POSITIONS[j as usize],
+                LABEL_POSITIONS[(j + 1) as usize],
+                r3,
+                game,
+            );
+            break;
         }
     }
 }
@@ -625,16 +623,13 @@ unsafe fn close_room_window(game: &mut Game) {
     }
 }
 
-unsafe fn station_coordinates(area: u16, game: &mut Game) -> crate::rom::RomRecord {
-    unsafe {
-        let pointer = menu_tilemap::native_record(
-            0x820000
-                | u32::from((addr_kMapIconDataPointers as i32 + 64 + 2 * i32::from(area)) as u16),
-            game,
-        )
-        .word(0);
-        menu_tilemap::native_record(0x820000 | u32::from(pointer), game)
-    }
+fn station_coordinates(area: u16, game: &mut Game) -> crate::rom::RomRecord {
+    let pointer = menu_tilemap::native_record(
+        0x820000 | u32::from((addr_kMapIconDataPointers as i32 + 64 + 2 * i32::from(area)) as u16),
+        game,
+    )
+    .word(0);
+    menu_tilemap::native_record(0x820000 | u32::from(pointer), game)
 }
 
 fn native_word(offset: usize, game: &Game) -> u16 {
@@ -686,14 +681,7 @@ pub(crate) fn scroll(game: &mut Game) {
 }
 
 fn map_record(cursor: u16, game: &mut Game) -> crate::rom::RomRecord {
-    let address = 0x820000 | u32::from(cursor);
-    if cursor & 0x8000 == 0 {
-        crate::game::session_runtime::native_rom_diagnostic(address, game);
-    }
-    crate::rom::RomRecord {
-        image: game.capture_native_rom(),
-        base: crate::rtl::lorom_offset(address) as usize,
-    }
+    menu_tilemap::native_record(0x820000 | u32::from(cursor), game)
 }
 
 fn draw_record(sprite: u16, record: &crate::rom::RomRecord, palette: u16, game: &mut Game) {

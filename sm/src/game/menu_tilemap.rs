@@ -6,7 +6,7 @@ use crate::game::constants::bank_81::{
 };
 use crate::game::save_slots;
 use crate::game_state::Game;
-use crate::ram_map::word;
+use crate::ram_map::{checked_word as at, word, words as fields};
 
 const MENU_PALETTE: usize = 0xf78 + core::mem::offset_of!(crate::types::EnemyData, palette_index);
 const FILE_LABELS: [u16; 3] = [
@@ -147,9 +147,11 @@ fn paint(offset: usize, tile: u16, game: &mut Game) {
     game.g_ram[at..at + 2].copy_from_slice(&(palette | tile).to_ne_bytes());
 }
 
-/// Requires native allocation covering address formation; preserves its diagnostic first.
-pub(crate) unsafe fn native_record(address: u32, game: &mut Game) -> crate::rom::RomRecord {
-    unsafe { crate::rtl::RomPtr(address, game) };
+/// Capture checked native reads after the original low-window diagnostic.
+pub(crate) fn native_record(address: u32, game: &mut Game) -> crate::rom::RomRecord {
+    if address & 0x8000 == 0 {
+        crate::game::session_runtime::native_rom_diagnostic(address, game);
+    }
     crate::rom::RomRecord {
         image: game.capture_native_rom(),
         base: crate::rtl::lorom_offset(address) as usize,
@@ -158,18 +160,16 @@ pub(crate) unsafe fn native_record(address: u32, game: &mut Game) -> crate::rom:
 
 fn text_word(address: u16, game: &mut Game) -> u16 {
     // The warning can replace the native image; capture after it on every word.
-    unsafe { native_record(0x810000 | u32::from(address), game) }.word(0)
+    native_record(0x810000 | u32::from(address), game).word(0)
 }
 
-pub(crate) unsafe fn area_label(game: &mut Game) {
-    unsafe {
-        let address = crate::rtl::rom_table_word!(game, 0x82965f, word!(game.area_index) as isize);
-        let label = native_record(0x820000 | u32::from(address), game);
-        for index in 0..12 {
-            let tile = label.word(2 * index) & 0xefff;
-            let destination = 0x4154 + 2 * index;
-            game.g_ram[destination..destination + 2].copy_from_slice(&tile.to_ne_bytes());
-        }
+pub(crate) fn area_label(game: &mut Game) {
+    let address = crate::rtl::rom_table_word!(game, 0x82965f, word!(game.area_index) as isize);
+    let label = native_record(0x820000 | u32::from(address), game);
+    for index in 0..12 {
+        let tile = label.word(2 * index) & 0xefff;
+        let destination = 0x4154 + 2 * index;
+        game.g_ram[destination..destination + 2].copy_from_slice(&tile.to_ne_bytes());
     }
 }
 
@@ -345,9 +345,130 @@ pub(crate) fn reserve_arrow(mode: ReserveArrow, game: &mut Game) {
 pub(crate) fn reserve_arrow_tiles(lit: bool, game: &mut Game) {
     let palette = if lit { 0x1800 } else { 0x1c00 };
     for index in (0..8).map(|row| 129 + row * 32).chain(385..387) {
-        let address = 0x3800 + 2 * index;
+        recolor_native(0x3800 + 2 * index, palette, 1, game);
+    }
+}
+
+pub(crate) fn copy_native_tiles(destination: usize, cursor: u16, bytes: usize, game: &mut Game) {
+    let source = native_record(0x820000 | u32::from(cursor), game);
+    for index in 0..bytes {
+        game.g_ram[destination + index] = source.byte(index);
+    }
+}
+
+pub(crate) fn recolor_native(destination: usize, palette: u16, words: usize, game: &mut Game) {
+    for index in 0..words {
+        let address = destination + 2 * index;
         let tile = u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]]);
         word_transfers!(game, ascending, 1;
             native(address) <- value((tile & !0x1c00) | palette));
     }
+}
+
+pub(crate) fn equipment_icons(game: &mut Game) {
+    if word!(game.samus_max_reserve_health) != 0 {
+        for index in 0..2 {
+            let destination = crate::rtl::rom_table_word!(game, 0x82c068, index) as usize;
+            let source = crate::rtl::rom_table_word!(game, 0x82c088, index);
+            copy_native_tiles(destination, source, 14, game);
+        }
+    }
+    for (offsets, count, masks, tiles) in [
+        (0xc06c, 6, 0x82c04c, 0x82c08c),
+        (0xc076, 6, 0x82c056, 0x82c096),
+        (0xc082, 3, 0x82c062, 0x82c0a2),
+    ] {
+        let destinations = native_record(0x820000 | offsets, game);
+        let weapons = offsets == 0xc06c;
+        let hyper = weapons && word!(game.hyper_beam_flag) != 0;
+        let (collected, equipped, bytes) = if weapons {
+            (fields::collected_beams, fields::equipped_beams, 10)
+        } else {
+            (fields::collected_items, fields::equipped_items, 18)
+        };
+        for index in 0..if hyper { 5 } else { count } {
+            let destination = destinations.word(2 * index) as usize;
+            if hyper {
+                let source = crate::rtl::rom_table_word!(game, 0x82c0a8, index as isize);
+                copy_native_tiles(destination, source, 10, game);
+            } else if at!(game, collected;)
+                & crate::rtl::rom_table_word!(game, masks, index as isize)
+                != 0
+            {
+                let source = crate::rtl::rom_table_word!(game, tiles, index as isize);
+                copy_native_tiles(destination, source, bytes, game);
+                if at!(game, equipped;) & crate::rtl::rom_table_word!(game, masks, index as isize)
+                    == 0
+                {
+                    recolor_native(destination, 3072, bytes / 2, game);
+                }
+            } else {
+                copy_native_tiles(destination, 0xc01a, bytes, game);
+            }
+        }
+    }
+}
+
+fn wireframe_rows(
+    destination: usize,
+    row_stride: usize,
+    mut source: impl FnMut(&mut Game) -> u16,
+    game: &mut Game,
+) {
+    for row in 0..17 {
+        for column in 0..8 {
+            let tile = source(game);
+            word_transfers!(game, ascending, 1;
+                native(destination + row_stride * row + 2 * column) <- value(tile));
+        }
+    }
+}
+
+pub(crate) fn prepare_equipment_frame(game: &mut Game) {
+    let mut cursor = 0xc639u16;
+    wireframe_rows(
+        0x31d8,
+        32,
+        |game| {
+            let tile = native_record(0x820000 | u32::from(cursor), game).word(0);
+            cursor = cursor.wrapping_add(2);
+            tile
+        },
+        game,
+    );
+    equipment_wireframe(game);
+    if word!(game.samus_max_reserve_health) != 0 {
+        let hundreds = word!(game.samus_reserve_health) / 100;
+        let remainder = word!(game.samus_reserve_health) % 100;
+        for (index, digit) in [
+            (394, remainder % 10),
+            (393, remainder / 10),
+            (392, hundreds),
+        ] {
+            word_transfers!(game, ascending, 1;
+                native(0x3800 + 2 * index) <- value(digit + 2052));
+        }
+    }
+}
+
+pub(crate) fn equipment_wireframe(game: &mut Game) {
+    let mut cursor = 0u16;
+    while word!(game.equipped_items) & 0x101
+        != crate::rtl::rom_table_word!(game, 0x82b257, (cursor >> 1) as isize)
+    {
+        cursor = cursor.wrapping_add(2);
+    }
+    let address = crate::rtl::rom_table_word!(game, 0x82b25f, (cursor >> 1) as isize);
+    let record = native_record(0x820000 | u32::from(address), game);
+    let mut offset = 0;
+    wireframe_rows(
+        0x39d8,
+        64,
+        |_| {
+            let tile = record.word(offset);
+            offset += 2;
+            tile
+        },
+        game,
+    );
 }

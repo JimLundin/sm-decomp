@@ -68,8 +68,8 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
    all 82 corpus rows passed on 6c675730 after bank-80 deletion; later work uses scoped rows.
    B1 sm_80 is retired with checked gameplay and retained backend contracts;
    its affected rows pass, and B1 continues sm_82. B2 continues sm_8b after
-   consolidating the checked credits interpreter. B3 continues sm_a2 after
-   Cloud-motion rows are `credits`, `credits-postroll-wave` and the four smoke rows.
+   consolidating the checked credits interpreter; cloud-motion rows are `credits`,
+   `credits-postroll-wave` and the four smoke rows. B3 continues sm_a2 after
    Rinka/Gunship, then sm_a3. Non-enemy banks aim at most 80% replacement size.
    Windows M is now B4: retire sm_a8 families, then sm_b3.
    No further in-place bank codemods; cloud M moves to unsafe outside bank files.
