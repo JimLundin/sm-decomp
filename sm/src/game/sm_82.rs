@@ -128,6 +128,12 @@ const CERES_ELEVATOR: Func_V_Coroutine =
 const CERES_BLACKOUT: Func_V_Coroutine =
     |game| unsafe { AdvanceGameplay(Entry::CeresBlackout, game) };
 const ZEBES_ESCAPE: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::ZebesEscape, game) };
+const PAUSE_FADE_OUT: Func_V_Coroutine =
+    |game| unsafe { AdvanceGameplay(Entry::PauseFadeOut, game) };
+const UNPAUSE_FADE_OUT: Func_V_Coroutine =
+    |game| unsafe { AdvanceGameplay(Entry::UnpauseFadeOut, game) };
+const GAME_OVER_FADE_OUT: Func_V_Coroutine =
+    |game| unsafe { AdvanceGameplay(Entry::GameOverFadeOut, game) };
 const TIME_UP_EXIT: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::TimeUpExit, game) };
 const TIME_UP: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::TimeUp, game) };
 
@@ -143,12 +149,12 @@ static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_
     GameState_3_Null, advance_file_menu, advance_map_menu,
     INITIALIZE, FADE_IN, GAMEPLAY,
     GameState_9_HitDoorBlock, GameState_10_LoadingNextRoom_Async,
-    GameState_11_LoadingNextRoom_Async, GameState_12_Pausing_Darkening_Async,
+    GameState_11_LoadingNextRoom_Async, PAUSE_FADE_OUT,
     GameState_13_Pausing_Async, pause_fade_in, GameState_15_Paused_Async,
-    GameState_16_Unpausing_Async, GameState_17_Unpausing_Async, UNPAUSE,
+    UNPAUSE_FADE_OUT, GameState_17_Unpausing_Async, UNPAUSE,
     PREPARE_DEATH, GameState_20_SamusNoHealth_BlackOut, GameState_21_SamusNoHealth,
     GameState_22_SamusNoHealth_Dying, GameState_23_SamusNoHealth_Flashing,
-    GameState_24_SamusNoHealth_Explosion, GameState_25_SamusNoHealth_BlackOut,
+    GameState_24_SamusNoHealth_Explosion, GAME_OVER_FADE_OUT,
     advance_game_over, RESERVE_TANKS, GameState_28_Unused,
     GameState_29_DebugGameOverMenu, GameState_37_CeresGoesBoomWithSamus_,
     INITIALIZE, CERES_ELEVATOR,
@@ -249,21 +255,6 @@ pub unsafe fn GameState_28_Unused(game: &mut Game) -> CoroutineRet {
         kCoroutineNone as CoroutineRet
     }
 }
-pub unsafe fn GameState_12_Pausing_Darkening_Async(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        let mut _coret_: u8 = GAMEPLAY(game);
-        if _coret_ != 0 {
-            return _coret_;
-        }
-        crate::game::display_refresh::fade(false, game);
-        if (*ram_ptr!(game; 0x51) & 0xf) == 0 {
-            crate::game::display_refresh::enable(true, game);
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-            word!(game.game_state += 1);
-        }
-        kCoroutineNone as CoroutineRet
-    }
-}
 crate::game::address_dispatch! {
     pub unsafe fn CallPauseHook(ea: u32, game: &mut Game) => ea;
         call (game); default { Unreachable(game); };
@@ -324,18 +315,6 @@ pub unsafe fn GameState_15_Paused_Async(game: &mut Game) -> CoroutineRet {
         }
         crate::game::hud::advance(game);
         crate::game::map_menu::animate_palette(game);
-        kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn GameState_16_Unpausing_Async(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        crate::game::pause_controls::draw_unpause(game);
-        crate::game::display_refresh::fade(false, game);
-        if *ram_ptr!(game; 0x51) == 0x80 {
-            crate::game::display_refresh::enable(true, game);
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-            word!(game.game_state += 1);
-        }
         kCoroutineNone as CoroutineRet
     }
 }
@@ -449,18 +428,6 @@ pub unsafe fn GameState_24_SamusNoHealth_Explosion(game: &mut Game) -> Coroutine
         if GameState_24_SamusNoHealth_Explosion_Helper(game) != 0 {
             word! { game, 1; screen_fade_delay, screen_fade_counter }
             word!(game.game_state += 1);
-        }
-        kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn GameState_25_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        crate::game::display_refresh::fade(false, game);
-        if *ram_ptr!(game; 0x51) == 0x80 {
-            crate::game::display_refresh::enable(true, game);
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-            word!(game.game_state += 1);
-            word! { game, 0; menu_index, debug_disable_sounds }
         }
         kCoroutineNone as CoroutineRet
     }

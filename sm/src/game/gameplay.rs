@@ -46,6 +46,9 @@ pub(crate) enum Entry {
     Gameplay,
     FadeIn,
     Unpause,
+    PauseFadeOut,
+    UnpauseFadeOut,
+    GameOverFadeOut,
     CeresElevator,
     CeresBlackout,
     ZebesEscape,
@@ -168,6 +171,21 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                 }
             }
             game.g_ram[0x612] = 0;
+            return 0 as CoroutineRet;
+        }
+        if matches!(entry, Entry::UnpauseFadeOut | Entry::GameOverFadeOut) {
+            if matches!(entry, Entry::UnpauseFadeOut) {
+                crate::game::pause_controls::draw_unpause(game);
+            }
+            crate::game::display_refresh::fade(false, game);
+            if game.g_ram[0x51] == 0x80 {
+                crate::game::display_refresh::enable(true, game);
+                word! { game, 0; screen_fade_delay, screen_fade_counter }
+                word!(game.game_state += 1);
+                if matches!(entry, Entry::GameOverFadeOut) {
+                    word! { game, 0; menu_index, debug_disable_sounds }
+                }
+            }
             return 0 as CoroutineRet;
         }
         if matches!(entry, Entry::TimeUpExit) {
@@ -315,7 +333,19 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                     crate::game::music::cancel_effects(15, game);
                 }
             }
-            Entry::TimeUpExit | Entry::Initialize | Entry::Gameplay => {}
+            Entry::PauseFadeOut => {
+                crate::game::display_refresh::fade(false, game);
+                if game.g_ram[0x51] & 0xf == 0 {
+                    crate::game::display_refresh::enable(true, game);
+                    word! { game, 0; screen_fade_delay, screen_fade_counter }
+                    word!(game.game_state += 1);
+                }
+            }
+            Entry::TimeUpExit
+            | Entry::UnpauseFadeOut
+            | Entry::GameOverFadeOut
+            | Entry::Initialize
+            | Entry::Gameplay => {}
         }
         0 as CoroutineRet
     }
