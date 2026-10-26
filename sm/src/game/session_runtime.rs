@@ -554,7 +554,7 @@ use crate::game::enemy_script::EnemyScript;
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
 use crate::game::rippers::{self, Kind as RipperKind};
 use crate::game::{ground_patrol, large_snail};
-use crate::game::{sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, space_pirates};
+use crate::game::{sm_a3, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, space_pirates};
 use crate::types::EnemyData;
 crate::game::address_dispatch! {
     unsafe fn actor_species_draw_hook(ea: u32, game: &mut Game) => ea;
@@ -654,7 +654,7 @@ crate::game::callback_dispatch! {
         10743874 => metroid::power_bomb;
         10780748 => [()];
         10795344 => [()];
-        10811067 => [sm_a4::CrocomireTongue_Main()];
+        10811067 => [()];
         10846284 => [()];
         10851824 => actors::draygon_death::shot;
         10864042 => [()];
@@ -886,7 +886,14 @@ crate::game::callback_dispatch! {
             actor_species_pre_instruction(0xa20000 | u32::from(phase), game);
         }];
         0xa30000..=0xa3ffff => [{ crate::rtl::Unreachable(game); }];
-        0xa40000..=0xa4ffff => [sm_a4::DispatchEnemyAi(ea, game)];
+        10782343 => actors::crocomire_reactions::hurt;
+        10783748 => crate::game::visual_runtime::advance_crocomire;
+        10811002 => actors::crocomire_reactions::initialize_tongue;
+        10780707 => [actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize)];
+        10780717 => [actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize)];
+        10780737 => [actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
+        10783322 => actors::crocomire_reactions::initialize;
+        10795410 => actors::crocomire_reactions::power_bomb;
         0xa50000..=0xa5ffff => [sm_a5::DispatchEnemyAi(ea, game)];
         0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyAi(ea, game)];
         0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyAi(ea, game)];
@@ -1055,7 +1062,7 @@ crate::game::address_dispatch! {
         call (game); default { crate::rtl::Unreachable(game); };
     {
         10518563 => [actor_api::contact_reaction(&mut Runtime::new(game), actor_api::DeathHandling::Finalize)]; 10670984 => [crate::game::large_snail::touch(true, game)];
-        10670988 => [crate::game::large_snail::touch(false, game)]; 10780707 => sm_a4::Enemy_NormalTouchAI_A4;
+        10670988 => [crate::game::large_snail::touch(false, game)]; 10780707 => [actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize)];
         10795325 => actors::crocomire_reactions::touch; 10795344 => [()]; 10846284 => [()];
         10851818 => actors::draygon_death::touch; 10874348 => actors::spore_spawn::touch;
         10936153 => sm_a6::sub_A6DF59; 10940479 => crate::game::ceres_doors::steam_touch; 10977356 => [()];
@@ -1072,7 +1079,7 @@ crate::game::callback_dispatch! {
         10518573 => [actor_api::shot_reaction(&mut Runtime::new(game), actor_api::ShotHandling::Finalize)];
         10846278 => [actor_api::create_dud(&mut Runtime::new(game))];
         10649676 => [()];
-        10671028 => crate::game::large_snail::shot; 10780717 => sm_a4::Enemy_NormalShotAI_A4;
+        10671028 => crate::game::large_snail::shot; 10780717 => [actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize)];
         10795345 => actors::crocomire_reactions::count_hit; 10795368 => actors::crocomire_reactions::impact;
         10795525 => actors::crocomire_reactions::hit; 10795700 => actors::crocomire_reactions::impact;
         10846253 => [actors::combat::shot_reaction(&mut Runtime::new(game), actor_api::ShotHandling::Finalize)]; 10846284 => [()];
@@ -1176,7 +1183,7 @@ crate::game::callback_dispatch! {
         10651846 => [crate::game::goofball::landed(j, game)];
         10719382 | 10719392 | 10719402 => [actors::maridia_fish::instruction(ea, j, game)];
         0xa30000..=0xa3ffff => [{ crate::rtl::Unreachable(game); EnemyScript::Stop }];
-        0xa40000..=0xa4ffff => [sm_a4::DispatchEnemyInstr(ea, k, j, game)];
+        0xa40000..=0xa4ffff => [actors::crocomire_reactions::instruction(ea, k, j, game)];
         0xa50000..=0xa5ffff => [sm_a5::DispatchEnemyInstr(ea, k, j, game)];
         0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyInstr(ea, k, j, game)];
         0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyInstr(ea, k, j, game)];

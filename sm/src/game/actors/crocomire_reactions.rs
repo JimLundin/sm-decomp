@@ -1,7 +1,8 @@
-//! Crocomire attack-script reactions retain native actor words and captured script images.
-//! Graphics and the death driver remain in the bank; RAM remains authoritative.
+//! Crocomire phases and attack scripts retain native actor words and captured script images.
+//! Hardware effects remain in the visual owner; RAM remains authoritative.
 #![forbid(unsafe_code)]
 use super::access::{AccessMode, ActorAccess, ActorKey as Key};
+use super::api as actor_api;
 use crate::game::callback_tables::callback_table;
 use crate::game::constants::{
     bank_86::{
@@ -25,7 +26,7 @@ use crate::game::session_runtime::Runtime;
 use crate::game::sprite_effect_runtime::create_sprite;
 use crate::game::visual_runtime::align_crocomire_background;
 use crate::game_state::Game;
-use crate::ram_map::{checked_word, slot, word};
+use crate::ram_map::{checked_word, slot, word, words as ram};
 use crate::rtl::abs16;
 use crate::types::{Point16U, SpawnHardcodedPlmArgs, VoidP};
 use core::ffi::c_long;
@@ -1383,4 +1384,196 @@ pub(crate) fn prepare_scroll_hdma(game: &mut Game) {
     word_transfers!(game, ascending, 1; native(0xcae3) <- value(225));
     word_transfers!(game, ascending, 1; native(0xcae4) <- value(-13330i32 as u16));
     word_transfers!(game, ascending, 1; native(0xcae6) <- value(0));
+}
+
+// Returned only for the two synchronous hardware phases of the fixed actor-0 driver.
+pub(crate) enum ScrollRequest {
+    Flesh = 0x77,
+    Skeleton = 0x2d,
+}
+type Phase = fn(&mut Game);
+static PHASES: [Option<Phase>; 45] = callback_table! { Phase;
+    approach_wall, emit_melt_debris, rumble_and_wait, melt_rumble_up, melt_rumble_down,
+    rumble_and_wait, melt_rumble_up, melt_rumble_down, prepare_flesh_tilemap, prepare_melt_graphics,
+    advance_melt_upload, melt_flesh_up, None, advance_melt_scroll, reset_melt_tilemap,
+    melt_flesh_down, wait_for_melt, melt_flesh_up, melt_flesh_down, wait_for_melt,
+    melt_flesh_up, melt_flesh_down, prepare_skeleton_tilemap, prepare_melt_graphics, advance_melt_upload,
+    advance_selected_phase, melt_skeleton_up, None, advance_melt_scroll, reset_melt_tilemap,
+    complete_skeleton_melt, release_skeleton_room, wall_step, prepare_spike_wall,
+    launch_skeleton, land_skeleton, finish_skeleton_escape, open_skeleton_exit, await_skeleton_script,
+    advance_phase, finish_death, idle_phase, advance_phase, reset_scroll,
+    reposition_skeleton,
+};
+pub(crate) fn execute_phase(game: &mut Game) -> Option<ScrollRequest> {
+    let phase = (slot!(game, Crocomire[0i32].var_A) as i32 >> 1) as usize;
+    match PHASES[phase] {
+        Some(execute) => {
+            execute(game);
+            None
+        }
+        None => Some(if phase == 12 {
+            ScrollRequest::Flesh
+        } else {
+            ScrollRequest::Skeleton
+        }),
+    }
+}
+fn idle_phase(_game: &mut Game) {}
+fn advance_selected_phase(game: &mut Game) {
+    let E: i32 = word!(game.cur_enemy_index) as i32;
+    slot!(game, Crocomire[E].var_A, |old| (old).wrapping_add(2));
+}
+fn reset_melt_tilemap(game: &mut Game) {
+    let E: i32 = word!(game.cur_enemy_index) as i32;
+    slot!(game, Crocomire[E]; var_E = 0, var_F = 0);
+    slot!(game, Crocomire[E].var_D = 2048);
+    word_transfers!(game, descending, 2048; le(tilemap_stuff, 2047) <- value(824));
+    queue_tilemap_upload(2048, 0xfe, game);
+    advance_phase(game);
+}
+fn reset_scroll(game: &mut Game) {
+    {
+        word! { game, 0; reg_BG2HOFS, reg_BG2VOFS }
+    }
+}
+fn spawn_random_dust(game: &mut Game) {
+    let random = game.random_number();
+    let mut offset = random & 0x1f;
+    if (random as i16).wrapping_sub(4096) >= 0 {
+        offset = offset.wrapping_neg();
+    }
+    spawn_dust(EnemyScript::Stop, offset, game);
+}
+fn spawn_dust(jp: EnemyScript, offset: u16, game: &mut Game) -> EnemyScript {
+    game.eproj_spawn_pt = {
+        let runtime = Runtime::new(game);
+        let actor = runtime.resolve_actor(Key::from_legacy(0), AccessMode::Native);
+        let random = runtime.word(ram::random_number) & 7;
+        Point16U {
+            x: (actor.x.whole as u32 + offset as u32 + random as u32) as u16,
+            y: actor.radius.y.wrapping_add(actor.y.whole).wrapping_sub(16),
+        }
+    };
+    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
+    jp
+}
+
+fn walk(k: u16, pixels: i32, game: &mut Game) -> actor_api::MovementResult {
+    actor_api::move_horizontal(
+        &mut Runtime::new(game),
+        Key::from_legacy(k),
+        pixels << 16,
+        actor_api::SlopePolicy::Ignore,
+    )
+}
+fn finish_death(game: &mut Game) {
+    QueueMusic_Delayed8(6, game);
+    word!(game.camera_distance_index = 0);
+    let area = word!(game.area_index);
+    let bits = gameplay_flag_runtime::boss_word_at(area, BossWordOrder::Little, game);
+    gameplay_flag_runtime::set_boss_word_le(area, bits | 2, game);
+    QueueMusic_Delayed8(6, game);
+    spawn_dust(EnemyScript::Stop, 0xfff0, game);
+    spawn_dust(EnemyScript::Stop, 0x10, game);
+    advance_phase(game);
+}
+
+pub(crate) fn hurt(game: &mut Game) {
+    update_background(word!(game.cur_enemy_index), game);
+    update_palette(game);
+}
+pub(crate) fn initialize_tongue(game: &mut Game) {
+    let E: i32 = word!(game.cur_enemy_index) as i32;
+    if (gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game)
+        & 2)
+        != 0
+    {
+        slot!(game, Crocomire[E].base.properties, |old| old & 0xdcff
+            | 0x300);
+    } else {
+        slot!(
+            game,
+            Crocomire[E].base.current_instruction = addr_kCrocomire_Ilist_BE56 as u16
+        );
+        slot!(game, Crocomire[E].base.extra_properties, |old| (old)
+            | (0x404u16));
+        slot!(game, Crocomire[E].base.instruction_timer = 1);
+        slot!(game, Crocomire[E].var_A = 23);
+        slot!(game, Crocomire[E].base.palette_index = 3584);
+    };
+}
+const DUST_OFFSETS: [u16; 13] = [
+    0xffe0, 0, 0xfff0, 0x10, 0, 8, 0x10, 0x18, 0x20, 0x28, 0x30, 0x38, 0x40,
+];
+pub(crate) fn instruction(ea: u32, k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript {
+    if matches!(ea, 10784762 | 10784767 | 10784911 | 10784916) {
+        spawn_random_dust(game);
+    }
+    match ea {
+        10783995 => QueueSfx2_Max6(0x74, game),
+        10784007 => QueueSfx2_Max6(0x25, game),
+        10784019 => QueueSfx2_Max6(0x75, game),
+        10784711 => {
+            {
+                let mut runtime = Runtime::new(game);
+                runtime.write_slice_le(ram::earthquake_type, 4);
+                runtime.write_slice_le(ram::earthquake_timer, 5);
+            }
+            QueueSfx2_Max6(0x76, game);
+        }
+        10784735 | 10784762 | 10784767 => {
+            let hit = Runtime::new(game)
+                .resolve_actor(Key::from_legacy(0), AccessMode::Native)
+                .variables[1]
+                & 0x800
+                != 0;
+            if !hit {
+                walk(game.cur_enemy_index(), -4, game);
+            }
+        }
+        10784797 => {
+            return if walk(game.cur_enemy_index(), -4, game) == actor_api::MovementResult::Blocked {
+                Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |actor| {
+                    actor.variables[2] = 14;
+                });
+                EnemyScript::jump(addr_kCrocomire_Ilist_BF3C as u16)
+            } else {
+                let random = game.random_number();
+                let side = if (random as i16).wrapping_sub(2048) >= 0 {
+                    (-32i16) as u16
+                } else {
+                    32
+                };
+                spawn_dust(jp, side.wrapping_add(random & 0xf), game)
+            };
+        }
+        10784859 | 10784911 => {
+            let can_walk = {
+                let runtime = Runtime::new(game);
+                let actor = runtime.resolve_actor(Key::from_legacy(0), AccessMode::Native);
+                ((actor.x.whole as i32
+                    - actor.radius.x as i32
+                    - 260
+                    - runtime.word(ram::layer1_x_pos) as i32) as i16)
+                    < 0
+            };
+            if can_walk {
+                walk(game.cur_enemy_index(), 4, game);
+            }
+        }
+
+        10784895 | 10784916 => {
+            walk(k, 4, game);
+        }
+        10787483..=10787543 if (ea - 10787483) % 5 == 0 => {
+            return spawn_dust(jp, DUST_OFFSETS[((ea - 10787483) / 5) as usize], game);
+        }
+        10782374 => return dispatch(k, jp, game),
+        10782546 => return choose_spit(k, jp, game),
+        _ => {
+            crate::rtl::Unreachable(game);
+            return EnemyScript::Stop;
+        }
+    }
+    jp
 }
