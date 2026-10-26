@@ -81,8 +81,9 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Qualified Core38: production 111774, legacy 20034, unsafe 2925, verification 39959.
-Its 22 affected/control rows pass (66,513 selected); checked plume/melt and shared burst callers retire.
+Qualified Core39: production 111763, legacy 19949, unsafe 2919, verification 39959.
+Its eight Crocomire/control rows pass (6,457 selected); checked tilemap preparation and native upload queues retire.
+Core38 passed 22 rows (66,513 selected); plume/melt and shared burst callers are checked.
 Core37 passed all 86 rows (136,526 selected + 38,827 setup), 189,475 fresh captures and separate C43 105.
 Eleven backend allocations now have stable owners; the snapshot observer blocker is closed.
 Ownership adds 104 runtime lines (89 Rust + 24 native - 9 generated), removes 14 unsafe and 8 verification.

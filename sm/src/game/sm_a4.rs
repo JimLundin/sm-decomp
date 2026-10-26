@@ -3,7 +3,8 @@ use crate::game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use crate::game::actors::api as actor_api;
 use crate::game::actors::crocomire_reactions::{
     emit_lava_plume, melt_flesh_down, melt_flesh_up, melt_rumble_down, melt_rumble_up,
-    melt_skeleton_up, select_melt_animation, wall_step,
+    melt_skeleton_up, prepare_flesh_tilemap, prepare_skeleton_tilemap, queue_tilemap_upload,
+    select_melt_animation, wall_step,
 };
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
@@ -37,10 +38,10 @@ static g_word_A486A4: u16 = 0x640;
 pub fn nullsub_305(game: &mut Game) {}
 static off_A48C14: [Func_V; 45] = callback_table! { nonnull Func_V;
     Crocomire_Func_28, Crocomire_Func_52, Crocomire_Func_36, melt_rumble_up, melt_rumble_down,
-    Crocomire_Func_36, melt_rumble_up, melt_rumble_down, Crocomire_Func_57, Crocomire_Func_60,
+    Crocomire_Func_36, melt_rumble_up, melt_rumble_down, prepare_flesh_tilemap, Crocomire_Func_60,
     Crocomire_Func_62, melt_flesh_up, Crocomire_Func_64, Crocomire_Func_65, Crocomire_Func_66,
     melt_flesh_down, Crocomire_8D47, melt_flesh_up, melt_flesh_down, Crocomire_8D47,
-    melt_flesh_up, melt_flesh_down, Crocomire_Func_59, Crocomire_Func_60, Crocomire_Func_62,
+    melt_flesh_up, melt_flesh_down, prepare_skeleton_tilemap, Crocomire_Func_60, Crocomire_Func_62,
     Crocomire_Func_63, melt_skeleton_up, Crocomire_9506, Crocomire_Func_65, Crocomire_Func_66,
     Crocomire_Func_49, Crocomire_Func_68, wall_step, Crocomire_Func_71,
     Crocomire_Func_72, Crocomire_Func_73, Crocomire_Func_88, Crocomire_9B65, Crocomire_Func_90,
@@ -206,80 +207,7 @@ pub unsafe fn Crocomire_Func_52(game: &mut Game) {
         melt_rumble_down(game);
     }
 }
-macro_rules! load_crocomire_tilemap_until_sentinel {
-    ($game:ident, $tilemap_table:literal) => {
-        let mut i: i32 = 0;
-        loop {
-            let v6: i32 = i >> 1;
-            if crate::rtl::rom_table_word!($game, $tilemap_table, v6 as isize) == 0xffff {
-                break;
-            }
-            word!(
-                $game.tilemap_stuff[(v6 + 32)] =
-                    crate::rtl::rom_table_word!($game, $tilemap_table, v6 as isize)
-            );
-            i += 2;
-        }
-        Crocomire_93BE((i + 1024) as u16, $game);
-    };
-}
 
-pub unsafe fn Crocomire_Func_57(game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0x68c) = 48;
-        word!(game.croco_target_0688 = 48);
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
-        slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
-        slot!(game, Crocomire[E].base; current_instruction = addr_kCrocomire_Ilist_BF64 as u16, instruction_timer = 1);
-        word!(game.nmi_flag_bg2_enemy_vram_transfer = 1);
-        let E1: i32 = word!(game.cur_enemy_index) as i32 + 64;
-        slot!(game, Crocomire[E1].base; current_instruction = addr_kCrocomire_Ilist_BF98 as u16, instruction_timer = 1);
-        slot!(game, Crocomire[E1].base.properties, |old| old & 0xd2ff
-            | 0x2c00);
-        slot!(
-            game,
-            Crocomire[E1].base.x_pos = slot!(game, Crocomire[E].base.x_pos)
-        );
-        slot!(
-            game,
-            Crocomire[E1].base.y_pos = (slot!(game, Crocomire[E].base.y_pos)).wrapping_add(16)
-        );
-        word_transfers!(game, (4), 256;
-            le(tilemap_stuff, 0) <- value(824),
-            le(tilemap_stuff, 1) <- value(824),
-        );
-        load_crocomire_tilemap_until_sentinel!(game, 0xa49c79);
-    }
-}
-pub unsafe fn Crocomire_93BE(k: u16, game: &mut Game) {
-    unsafe {
-        let v2: u16 = word!(game.vram_write_queue_tail);
-        let mut v3 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-        (*v3).size = k;
-        (*v3).src.addr = 0x2000 as VoidP;
-        *(&raw mut (*v3).src.bank as *mut u16) = 126;
-        (*v3).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) as u16;
-        word!(game.vram_write_queue_tail = (v2).wrapping_add(7));
-    }
-}
-pub unsafe fn Crocomire_Func_59(game: &mut Game) {
-    unsafe {
-        actors::crocomire_reactions::fill_scroll(game);
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
-        slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
-        slot!(game, Crocomire[E].base.instruction_timer = 1);
-        *ram_ptr!(game; 0x68c) = 48;
-        word!(game.croco_target_0688 = 48);
-        slot!(
-            game,
-            Crocomire[E].base.current_instruction = addr_kCrocomire_Ilist_BF7E as u16
-        );
-        word_transfers!(game, ascending, 1024; le(tilemap_stuff, 0) <- value(824));
-        load_crocomire_tilemap_until_sentinel!(game, 0xa49e7b);
-    }
-}
 pub unsafe fn Crocomire_Func_62(game: &mut Game) {
     unsafe {
         let v0: u16 = word!(game.g_word_7E068A);
@@ -706,14 +634,7 @@ crate::game::callback_dispatch! {
             slot!(game, Crocomire[E].base; current_instruction = addr_kCrocomire_Ilist_E1CC as u16, instruction_timer = 1);
             slot!(game, Crocomire[E].base.x_pos = 576);
             slot!(game, Crocomire[E].base; y_pos = 144, y_height = 28, x_width = 40);
-            let v6: u16 = word!(game.vram_write_queue_tail);
-            let mut v7: *mut VramWriteEntry =
-                gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-            (*v7).size = 2048;
-            (*v7).src.addr = 0x2000 as VoidP;
-            *(&raw mut (*v7).src.bank as *mut u16) = 126;
-            (*v7).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8) as u16;
-            word!(game.vram_write_queue_tail = (v6).wrapping_add(7));
+            queue_tilemap_upload(2048, 0xfc, game);
         } else {
             minimap::disable_for_boss(&mut crate::game::session_runtime::Runtime::new(game));
             word!(game.croco_word_7E069A = 0);
@@ -878,13 +799,7 @@ crate::game::callback_dispatch! {
         slot!(game, Crocomire[E]; var_E = 0, var_F = 0);
         slot!(game, Crocomire[E].var_D = 2048);
         word_transfers!(game, descending, 2048; le(tilemap_stuff, 2047) <- value(824));
-        let v2: u16 = word!(game.vram_write_queue_tail);
-        let mut v3 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-        (*v3).size = 2048;
-        (*v3).src.addr = 0x2000 as VoidP;
-        *(&raw mut (*v3).src.bank as *mut u16) = 126;
-        (*v3).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfe) << 8) as u16;
-        word!(game.vram_write_queue_tail = (v2).wrapping_add(7));
+        queue_tilemap_upload(2048, 0xfe, game);
         advance_phase(game);
     };
     [10811002] CrocomireTongue_Init [] {

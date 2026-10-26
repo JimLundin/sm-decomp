@@ -661,3 +661,77 @@ pub(crate) fn melt_rumble_up(game: &mut Game) {
     emit_lava_plume(game);
     melt_up(game);
 }
+
+pub(crate) fn queue_tilemap_upload(size: u16, bg_mask: u8, game: &mut Game) {
+    let tail = word!(game.vram_write_queue_tail);
+    let entry = 0xd0 + usize::from(word!(game.vram_write_queue_tail));
+    // The native bank word overlaps the first destination byte, including on BE.
+    word_transfers!(game, ascending, 1;
+        native(entry) <- value(size),
+        native(entry + 2) <- value(0x2000),
+        native(entry + 4) <- value(126),
+    );
+    word_transfers!(game, ascending, 1;
+        native(entry + 5) <- value(u16::from(game.g_ram[0x59] & bg_mask) << 8),
+    );
+    word!(game.vram_write_queue_tail = tail.wrapping_add(7));
+}
+
+fn load_melt_tilemap(table: u32, game: &mut Game) {
+    let mut i: i32 = 0;
+    loop {
+        let index: i32 = i >> 1;
+        if crate::rtl::rom_table_word!(game, table, index as isize) == 0xffff {
+            break;
+        }
+        word!(
+            game.tilemap_stuff[(index + 32)] =
+                crate::rtl::rom_table_word!(game, table, index as isize)
+        );
+        i += 2;
+    }
+    queue_tilemap_upload((i + 1024) as u16, 0xfc, game);
+}
+
+pub(crate) fn prepare_flesh_tilemap(game: &mut Game) {
+    game.g_ram[0x68c] = 48;
+    word!(game.croco_target_0688 = 48);
+    let E: i32 = word!(game.cur_enemy_index) as i32;
+    slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
+    slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
+    slot!(game, Crocomire[E].base; current_instruction = addr_kCrocomire_Ilist_BF64 as u16, instruction_timer = 1);
+    word!(game.nmi_flag_bg2_enemy_vram_transfer = 1);
+    let E1: i32 = word!(game.cur_enemy_index) as i32 + 64;
+    slot!(game, Crocomire[E1].base; current_instruction = addr_kCrocomire_Ilist_BF98 as u16, instruction_timer = 1);
+    slot!(game, Crocomire[E1].base.properties, |old| old & 0xd2ff
+        | 0x2c00);
+    slot!(
+        game,
+        Crocomire[E1].base.x_pos = slot!(game, Crocomire[E].base.x_pos)
+    );
+    slot!(
+        game,
+        Crocomire[E1].base.y_pos = (slot!(game, Crocomire[E].base.y_pos)).wrapping_add(16)
+    );
+    word_transfers!(game, (4), 256;
+        le(tilemap_stuff, 0) <- value(824),
+        le(tilemap_stuff, 1) <- value(824),
+    );
+    load_melt_tilemap(0xa49c79, game);
+}
+
+pub(crate) fn prepare_skeleton_tilemap(game: &mut Game) {
+    fill_scroll(game);
+    let E: i32 = word!(game.cur_enemy_index) as i32;
+    slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
+    slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
+    slot!(game, Crocomire[E].base.instruction_timer = 1);
+    game.g_ram[0x68c] = 48;
+    word!(game.croco_target_0688 = 48);
+    slot!(
+        game,
+        Crocomire[E].base.current_instruction = addr_kCrocomire_Ilist_BF7E as u16
+    );
+    word_transfers!(game, ascending, 1024; le(tilemap_stuff, 0) <- value(824));
+    load_melt_tilemap(0xa49e7b, game);
+}
