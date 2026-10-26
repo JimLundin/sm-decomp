@@ -532,26 +532,14 @@ crate::game::callback_dispatch! {
         };
     };
     @forward [pub unsafe fn (game: &mut Game)];
-    [11763722] Enemy_GrappleReact_KillEnemy_B3 => actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Grapple);
-    [11763727] Enemy_GrappleReact_CancelBeam_B3 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
-    [11763747] Enemy_NormalTouchAI_B3 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
     Enemy_NormalTouchAI_SkipDeathAnim_B3 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
-    [11763757] Enemy_NormalShotAI_B3 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
     Enemy_NormalShotAI_SkipSomeParts_B3 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::ReactionOnly);
     Enemy_NormalPowerBombAI_SkipDeathAnim_B3 => actors::combat::power_bomb_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
-    [11763777] Enemy_NormalFrozenAI_B3 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
 }
 
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11763819] Enemy_SetAiPreInstr_B3 [jp.offset(1)] {
-        (*gEnemyData(k as i32, game)).ai_preinstr = jp.word(0);
-    };
-    [11763828] Enemy_ClearAiPreInstr_B3 [jp] {
-        (*gEnemyData(k as i32, game)).ai_preinstr = (0xb3807bi32) as u16;
-    };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     @prefix { let E = Get_Botwoon(word!(game.cur_enemy_index) as i32, game); };
     [11769031] Botwoon_Instr_1 [jp] {  (*E).base.x_width = 8; (*E).base.y_height = 16; };

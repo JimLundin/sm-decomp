@@ -573,6 +573,11 @@ crate::game::callback_dispatch! {
         10715136 | 10846208 | 10911744 | 10977280 | 11042816 | 11763712 => [actor_api::resume_ai(&mut Runtime::new(game))];
         10649605 | 10780677 => [actor_api::latch(&mut Runtime::new(game), LatchMode::Passive)];
         11042836 => [actor_api::latch(&mut Runtime::new(game), LatchMode::Active)];
+        11763722 => [crate::game::actors::combat::die(&mut Runtime::new(game), actor_api::DeathKind::Grapple)];
+        11763727 => [crate::game::actors::combat::select_frozen_ai(&mut Runtime::new(game))];
+        11763747 => [actor_api::contact_reaction(&mut Runtime::new(game), actor_api::DeathHandling::Finalize)];
+        11763757 => [actor_api::shot_reaction(&mut Runtime::new(game), actor_api::ShotHandling::Finalize)];
+        11763777 => [crate::game::actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
         10518583 | 10649655 | 10715191 | 10780727 | 10846263 | 10911799 | 10977335 | 11042871 | 11108407 | 11173943 | 11698231 | 11763767 => [actor_api::power_bomb_reaction(&mut Runtime::new(game), actor_api::DeathHandling::Finalize)];
         10649676 => [{
             #[cfg(sm_verify_dll)]
@@ -991,6 +996,12 @@ crate::game::callback_dispatch! {
     unsafe fn actor_species_instruction(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
     @external {
+        11763819 | 11763828 => [{
+            use crate::types::EnemyData;
+            let value = if ea == 11763819 { j.word(0) } else { 0x807b };
+            crate::ram_map::slot!(game, EnemyData[i32::from(k)].ai_preinstr = value);
+            if ea == 11763819 { j.offset(1) } else { j }
+        }];
 
         10651845 => [j];
         11044751 | 11044763 | 11044790 | 11044811 => [crate::game::actors::evir::instruction(ea, j, game)];
