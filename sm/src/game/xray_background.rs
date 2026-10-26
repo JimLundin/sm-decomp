@@ -47,37 +47,34 @@ fn write_block(destination: u16, tile: u16, offsets: [usize; 4], game: &mut Game
     }
 }
 
-unsafe fn copy_background(game: &mut Game) {
-    unsafe {
-        let mut origin = (4
-            * ((word!(game.layer1_y_pos) as u32 + word!(game.bg1_y_offset) as u32) & 0xf0)
-            + (((word!(game.layer1_x_pos) as u32 + word!(game.bg1_x_offset) as u32) & 0xf0) >> 3)
-            + 4 * ((word!(game.layer1_x_pos) as u32 + word!(game.bg1_x_offset) as u32) & 0x100))
-            as u16;
-        let corners = [0usize, 1, 32, 33];
-        for row in 0..16 {
-            let mut screen_row = origin & 0x7e0;
-            let mut column = origin & 0x1f;
-            for block in 0..17 {
-                if column >= 32 {
-                    screen_row = (screen_row + 1024) & 0x7e0;
-                    column = 0;
-                }
-                let source = usize::from(screen_row + column) + 4096;
-                let mut tiles = [0u16; 4];
-                for corner in 0..4 {
-                    tiles[corner] = (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps
-                        [source + corners[corner]];
-                }
-                let destination = row * 64 + if block < 16 { block * 2 } else { 1024 };
-                for corner in (0..4).rev() {
-                    ram_ptr!(game, u16; 0x4000, (2 * (destination + corners[corner])) as isize)
-                        .write_unaligned(tiles[corner]);
-                }
-                column += 2;
+#[forbid(unsafe_code)]
+fn copy_background(game: &mut Game) {
+    let mut origin = (4
+        * ((word!(game.layer1_y_pos) as u32 + word!(game.bg1_y_offset) as u32) & 0xf0)
+        + (((word!(game.layer1_x_pos) as u32 + word!(game.bg1_x_offset) as u32) & 0xf0) >> 3)
+        + 4 * ((word!(game.layer1_x_pos) as u32 + word!(game.bg1_x_offset) as u32) & 0x100))
+        as u16;
+    let corners = [0usize, 1, 32, 33];
+    for row in 0..16 {
+        let mut screen_row = origin & 0x7e0;
+        let mut column = origin & 0x1f;
+        for block in 0..17 {
+            if column >= 32 {
+                screen_row = (screen_row + 1024) & 0x7e0;
+                column = 0;
             }
-            origin = (origin & 0x400) + (origin.wrapping_add(64) & 0x3ff);
+            let source = usize::from(screen_row + column) + 4096;
+            let tiles = corners.map(|corner| {
+                u16::from_ne_bytes(game.g_ram[0x4000..0x7000].as_chunks::<2>().0[source + corner])
+            });
+            let destination = row * 64 + if block < 16 { block * 2 } else { 1024 };
+            for corner in (0..4).rev() {
+                let at = 0x4000 + 2 * (destination + corners[corner]);
+                game.g_ram[at..at + 2].copy_from_slice(&tiles[corner].to_ne_bytes());
+            }
+            column += 2;
         }
+        origin = (origin & 0x400) + (origin.wrapping_add(64) & 0x3ff);
     }
 }
 
