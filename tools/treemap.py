@@ -9,7 +9,7 @@ import datetime, io, re, subprocess, sys, tarfile
 from html import escape
 from pathlib import PurePosixPath
 
-W, PAD, TOP, ROW_H, GAP = 360, 16, 338, 92, 10
+W, PAD, TOP, ROW_H, GAP = 360, 16, 338, 108, 10
 COLORS = {'owned': '#164739', 'partial': '#594319', 'legacy': '#273b54'}
 ACCENTS = {'owned': '#67e8b3', 'partial': '#ffd080', 'legacy': '#a5bcd8'}
 NAMES = {'owned': 'Owned', 'partial': 'Partly owned', 'legacy': 'Legacy'}
@@ -19,6 +19,86 @@ AREAS = [('movement', 'Samus movement'), ('samus', 'Samus actions'), ('enemies',
          ('engine', 'Engine & devices')]
 VERIFY = re.compile(r'/(verification|verify)/|/verify[^/]*[.]rs$')
 COMMENTS = re.compile(r'//[^\n]*|/\*[\s\S]*?\*/|"(?:\\.|[^"\\])*"')
+RAW_STRING = re.compile(r'(?:br|cr|r)(#*)"')
+
+
+def rust_tokens(text):
+    """Source tokens, excluding nested comments and Rust string/character literals."""
+    i, end = 0, len(text)
+    while i < end:
+        c = text[i]
+        if c.isspace():
+            i += 1
+        elif text.startswith('//', i):
+            newline = text.find('\n', i + 2)
+            i = end if newline < 0 else newline + 1
+        elif text.startswith('/*', i):
+            i, depth = i + 2, 1
+            while i < end and depth:
+                if text.startswith('/*', i):
+                    depth, i = depth + 1, i + 2
+                elif text.startswith('*/', i):
+                    depth, i = depth - 1, i + 2
+                else:
+                    i += 1
+        elif (raw := RAW_STRING.match(text, i)):
+            close = '"' + raw[1]
+            stop = text.find(close, raw.end())
+            i = end if stop < 0 else stop + len(close)
+        elif c == '"' or text.startswith(('b"', 'c"'), i):
+            i += 1 if c == '"' else 2
+            while i < end:
+                if text[i] == '\\':
+                    i += 2
+                elif text[i] == '"':
+                    i += 1
+                    break
+                else:
+                    i += 1
+        elif c == "'" and i + 2 < end and text[i + 2] == "'":
+            i += 3
+        elif text.startswith("'\\", i):
+            i += 1
+            while i < end:
+                if text[i] == '\\':
+                    i += 2
+                elif text[i] == "'":
+                    i += 1
+                    break
+                else:
+                    i += 1
+        elif c == '_' or c.isidentifier():
+            start = i
+            # r#unsafe is an identifier, not the unsafe keyword.
+            if text.startswith('r#', i) and i + 2 < end and text[i + 2].isidentifier():
+                i += 2
+            i += 1
+            while i < end and (text[i].isalnum() or text[i] == '_'
+                               or (not text[i].isascii() and ('a' + text[i]).isidentifier())):
+                i += 1
+            yield text[start:i]
+        else:
+            yield c
+            i += 1
+
+
+def unsafe_counts(text):
+    """Explicit blocks and named unsafe fn declarations; not fn pointer types."""
+    tokens = list(rust_tokens(text))
+    counts = dict(functions=0, blocks=0)
+    for i, token in enumerate(tokens):
+        if token != 'unsafe' or i + 1 == len(tokens):
+            continue
+        if tokens[i + 1] == '{':
+            counts['blocks'] += 1
+        j = i + 1
+        if tokens[j] == 'extern':
+            j += 1
+        if j + 1 < len(tokens) and tokens[j] == 'fn':
+            name = tokens[j + 1]
+            if name[0] == '_' or name[0].isidentifier():
+                counts['functions'] += 1
+    return counts
 
 
 def area(path):
@@ -55,9 +135,11 @@ def git(*args):
 
 
 def measure(rev):
-    """Counts at REV; rules match tools/progress.sh."""
+    """Counts at REV; line accounting matches progress.sh, syntax is production-only."""
     tar = tarfile.open(fileobj=io.BytesIO(git('archive', rev, 'sm/src')))
-    m = dict(rows={k: dict.fromkeys(COLORS, 0) for k, _ in AREAS}, unsafe=0, production=0, legacy_bank=0)
+    m = dict(rows={k: dict.fromkeys(COLORS, 0) for k, _ in AREAS},
+             unsafe_by_area={k: dict(functions=0, blocks=0) for k, _ in AREAS},
+             unsafe=0, production=0, legacy_bank=0)
     for member in tar:
         path = member.name
         if not member.isfile() or not path.endswith('.rs'):
@@ -70,8 +152,13 @@ def measure(rev):
         m['production'] += lines
         if re.fullmatch(r'sm/src/game/sm_[0-9a-f]{2}\.rs', path):
             m['legacy_bank'] += lines
-        m['rows'][area(path)][status(path, text)] += lines
+        responsibility = area(path)
+        m['rows'][responsibility][status(path, text)] += lines
+        for kind, count in unsafe_counts(text).items():
+            m['unsafe_by_area'][responsibility][kind] += count
     m['totals'] = {k: sum(r[k] for r in m['rows'].values()) for k in COLORS}
+    m['unsafe_functions'] = sum(r['functions'] for r in m['unsafe_by_area'].values())
+    m['unsafe_blocks'] = sum(r['blocks'] for r in m['unsafe_by_area'].values())
     return m
 
 
@@ -103,21 +190,21 @@ def main(out_path, rev='HEAD'):
     day_before = (datetime.datetime.fromisoformat(when) - datetime.timedelta(days=1)).isoformat()
     base = git('rev-list', '-1', f'--before={day_before}', commit).decode().strip() or None
     now, then = measure(commit), (measure(base) if base else None)
-    t = now['totals']
     old = (lambda k: then[k]) if then else (lambda k: None)
     cards = [
         ('Production lines', f'{now["production"]:,}', change(now['production'], old('production'), True)),
-        ('Owned code', f'{t["owned"]:,}', change(t['owned'], then['totals']['owned'] if then else None, False)),
         ('Legacy bank lines', f'{now["legacy_bank"]:,}', change(now['legacy_bank'], old('legacy_bank'), True)),
-        ('Unsafe lines', f'{now["unsafe"]:,}', change(now['unsafe'], old('unsafe'), True, lambda n: f'{n:,}')),
+        ('Unsafe functions', f'{now["unsafe_functions"]:,}', change(now['unsafe_functions'], old('unsafe_functions'), True)),
+        ('Unsafe blocks', f'{now["unsafe_blocks"]:,}', change(now['unsafe_blocks'], old('unsafe_blocks'), True)),
     ]
     rows = sorted(({**dict(id=k, title=n), 'counts': now['rows'][k], 'lines': sum(now['rows'][k].values())}
                    for k, n in AREAS if sum(now['rows'][k].values())), key=lambda r: -r['lines'])
     stamp = datetime.datetime.fromisoformat(when)
-    height = TOP + len(rows) * (ROW_H + GAP) + 92
+    height = TOP + len(rows) * (ROW_H + GAP) - GAP + PAD
     p = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{height}" viewBox="0 0 {W} {height}" role="img">',
          f'<title>Super Metroid codebase at {commit[:7]}: {now["production"]:,} production, '
-         f'{t["owned"]:,} owned code, {now["legacy_bank"]:,} legacy bank and {now["unsafe"]:,} unsafe lines</title>',
+         f'{now["legacy_bank"]:,} legacy bank lines, {now["unsafe_functions"]:,} unsafe functions '
+         f'and {now["unsafe_blocks"]:,} unsafe blocks</title>',
          '<desc>Each row is one responsibility; its number is the production Rust line count. '
          'The stacked bar shows the fraction of those lines classified as owned (green), partly owned (amber) '
          'or legacy (blue). The three numbers below the bar are their line counts in that order. '
@@ -126,7 +213,11 @@ def main(out_path, rev='HEAD'):
          'forbid(unsafe_code), no unsafe operations, g_ram, Game or direct foreign calls. Bank files and '
          'unsafe files without that marker are legacy; other files are partly owned. '
          'The legacy bank headline is only a subset of the blue legacy total. '
-         'Unsafe counts all Rust, including verification; other totals exclude verification. '
+         'Every area also gives explicit unsafe function and block counts, using production Rust only. '
+         'Function counts include named unsafe fn declarations, excluding function-pointer types. '
+         'Block counts include explicit unsafe brace expressions. Comments, ordinary/raw/byte/C strings '
+         'and character literals are ignored; counts describe source syntax, not macro expansions. '
+         'Per-area unsafe counts sum exactly to the headlines; verification is excluded. '
          'Headline changes compare the source with the latest ancestor at least 24 hours earlier.</desc>',
          '<style>text{font-family:system-ui,Segoe UI,sans-serif;fill:#edf4fc}.h{font-size:22px;font-weight:650}'
          '.l{font-size:14px;fill:#b0c2d8}.v{font-size:26px;font-weight:650}.d{font-size:14px;font-weight:600}'
@@ -144,30 +235,29 @@ def main(out_path, rev='HEAD'):
         p.append(f'<text x="{PAD + 12 + i * 104}" y="327" class="k {k}">{name}</text>')
     for i, r in enumerate(rows):
         y, c = TOP + i * (ROW_H + GAP), r['counts']
+        u = now['unsafe_by_area'][r['id']]
         detail = ', '.join(f'{NAMES[k]} {c[k]:,}' for k in COLORS)
-        p.append(f'<g><title>{escape(r["title"])}: {r["lines"]:,} production lines; {detail}</title>'
+        p.append(f'<g><title>{escape(r["title"])}: {r["lines"]:,} production lines; {detail}; '
+                 f'{u["functions"]:,} unsafe functions, {u["blocks"]:,} unsafe blocks</title>'
                  f'<rect x="{PAD}" y="{y}" width="{W - 2 * PAD}" height="{ROW_H}" rx="10" '
                  'fill="#101b28" stroke="#293a50"/>'
                  f'<text x="{PAD + 12}" y="{y + 26}" class="t">{escape(r["title"])}</text>'
                  f'<text x="{W - PAD - 12}" y="{y + 26}" class="s" text-anchor="end">{r["lines"]:,}</text>'
-                 f'<clipPath id="c{r["id"]}"><rect x="{PAD + 12}" y="{y + 42}" '
+                 f'<text x="{PAD + 12}" y="{y + 47}" class="l">Unsafe: {u["functions"]:,} fn '
+                 f'&#183; {u["blocks"]:,} blocks</text>'
+                 f'<clipPath id="c{r["id"]}"><rect x="{PAD + 12}" y="{y + 62}" '
                  f'width="{W - 2 * PAD - 24}" height="14" rx="5"/></clipPath>'
                  f'<g clip-path="url(#c{r["id"]})">')
         bx = PAD + 12
         for k in COLORS:
             bw = (W - 2 * PAD - 24) * c[k] / r['lines']
             if bw:
-                p.append(f'<rect x="{bx:.4f}" y="{y + 42}" width="{bw:.4f}" height="14" fill="{ACCENTS[k]}"/>')
+                p.append(f'<rect x="{bx:.4f}" y="{y + 62}" width="{bw:.4f}" height="14" fill="{ACCENTS[k]}"/>')
                 bx += bw
         p.append('</g>')
         for j, k in enumerate(COLORS):
-            p.append(f'<text x="{PAD + 12 + j * 104}" y="{y + 80}" class="s {k}">{c[k]:,}</text>')
+            p.append(f'<text x="{PAD + 12 + j * 104}" y="{y + 98}" class="s {k}">{c[k]:,}</text>')
         p.append('</g>')
-    footer = TOP + len(rows) * (ROW_H + GAP)
-    for i, line in enumerate(('Bars show the mix within each area.',
-                              'Legacy bank lines are part of blue legacy.',
-                              'Unsafe also counts verification Rust.')):
-        p.append(f'<text x="{PAD}" y="{footer + 20 + 23 * i}" class="l">{line}</text>')
     p.append('</svg>')
     open(out_path, 'w', encoding='utf-8').write('\n'.join(p) + '\n')
 
