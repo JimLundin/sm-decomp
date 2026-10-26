@@ -6,6 +6,8 @@ use crate::game::map_menu::advance as advance_map_menu;
 use crate::game::options_settings;
 use crate::game::pause_controls::fade_in as pause_fade_in;
 pub use crate::game::prelude::*;
+use crate::game::room_entry::{EntrySignal, protocol};
+use crate::game::session_runtime::Runtime;
 
 use crate::cpu_infra::DebugGameOverMenu;
 
@@ -50,8 +52,9 @@ crate::game::constants::typed_constants! { u32;
 enum FrameEntry {
     Advance(Entry),
     Callback(Func_V_Coroutine),
+    Door(EntrySignal),
 }
-use FrameEntry::{Advance, Callback};
+use FrameEntry::{Advance, Callback, Door};
 
 const DEMO: Func_V_Coroutine = |game| {
     demo_rooms::play(game, |game| unsafe {
@@ -63,8 +66,8 @@ static GAME_STATE_ENTRIES: [FrameEntry; 45] = callback_table! { FrameEntry;
     {Callback(reset_attract)}, {Callback(GameState_1_OpeningCinematic_)}, {Callback(GameState_2_GameOptionsMenu)},
     {Callback(GameState_3_Null)}, {Callback(advance_file_menu)}, {Callback(advance_map_menu)},
     {Advance(Entry::Initialize)}, {Advance(Entry::FadeIn)}, {Advance(Entry::Gameplay)},
-    {Callback(GameState_9_HitDoorBlock)}, {Callback(GameState_10_LoadingNextRoom_Async)},
-    {Callback(GameState_11_LoadingNextRoom_Async)}, {Advance(Entry::PauseFadeOut)},
+    {Door(EntrySignal::DoorState9)}, {Door(EntrySignal::DoorState10)},
+    {Door(EntrySignal::DoorState11)}, {Advance(Entry::PauseFadeOut)},
     {Advance(Entry::PauseSetup)}, {Callback(pause_fade_in)}, {Advance(Entry::Paused)},
     {Advance(Entry::UnpauseFadeOut)}, {Advance(Entry::UnpauseSetup)}, {Advance(Entry::Unpause)},
     {Advance(Entry::PrepareDeath)}, {Advance(Entry::DeathBlackout)}, {Callback(begin_death)},
@@ -84,6 +87,10 @@ unsafe fn dispatch_game_state(index: u16, game: &mut Game) -> u16 {
         let returned: CoroutineRet = match GAME_STATE_ENTRIES[usize::from(index)] {
             Advance(entry) => AdvanceGameplay(entry, game),
             Callback(callback) => callback(game),
+            Door(signal) => {
+                let poll = protocol::resume(&mut Runtime::new(game), signal);
+                poll.returned_byte()
+            }
         };
         u16::from(returned)
     }
@@ -115,27 +122,6 @@ pub unsafe fn CallDoorTransitionFunction_Async(ea: u32, game: &mut Game) -> Coro
     let poll = crate::game::room_entry::protocol::dispatch(
         &mut crate::game::session_runtime::Runtime::new(game),
         ea,
-    );
-    poll.returned_byte()
-}
-pub unsafe fn GameState_9_HitDoorBlock(game: &mut Game) -> CoroutineRet {
-    let poll = crate::game::room_entry::protocol::resume(
-        &mut crate::game::session_runtime::Runtime::new(game),
-        crate::game::room_entry::EntrySignal::DoorState9,
-    );
-    poll.returned_byte()
-}
-pub unsafe fn GameState_10_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRet {
-    let poll = crate::game::room_entry::protocol::resume(
-        &mut crate::game::session_runtime::Runtime::new(game),
-        crate::game::room_entry::EntrySignal::DoorState10,
-    );
-    poll.returned_byte()
-}
-pub unsafe fn GameState_11_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRet {
-    let poll = crate::game::room_entry::protocol::resume(
-        &mut crate::game::session_runtime::Runtime::new(game),
-        crate::game::room_entry::EntrySignal::DoorState11,
     );
     poll.returned_byte()
 }
