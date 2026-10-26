@@ -298,3 +298,56 @@ pub(crate) fn controller_bindings(game: &mut Game) {
         }
     }
 }
+
+const RESERVE_ARROW_COLORS: [u16; 32] = [
+    0x39e, 0x77d, 0xb5c, 0xf5b, 0x133a, 0x171a, 0x1f19, 0x22f8, 0x26d7, 0x2ad6, 0x2eb6, 0x3695,
+    0x3a94, 0x3e73, 0x4253, 0x4a52, 0x4a52, 0x4253, 0x3e73, 0x3a94, 0x3695, 0x2eb6, 0x2ad6, 0x26d7,
+    0x22f8, 0x1f19, 0x171a, 0x133a, 0xf5b, 0xb5c, 0x77d, 0x39e,
+];
+const RESERVE_ARROW_SHADOWS: [u16; 32] = [
+    0x156, 0x155, 0x554, 0x954, 0xd53, 0xd52, 0x1152, 0x1551, 0x1970, 0x1d70, 0x1d6f, 0x216e,
+    0x256e, 0x296d, 0x296c, 0x318c, 0x318c, 0x296c, 0x296d, 0x256e, 0x216e, 0x1d6f, 0x1d70, 0x1970,
+    0x1551, 0x1152, 0xd52, 0xd53, 0x954, 0x554, 0x155, 0x156,
+];
+
+#[derive(Clone, Copy)]
+pub(crate) enum ReserveArrow {
+    Animated,
+    On,
+    Off,
+}
+
+pub(crate) fn update_reserve_arrow(game: &mut Game) {
+    let mode = if word!(game.pausemenu_equipment_category_item) as u8 != 0 {
+        ReserveArrow::Off
+    } else {
+        [ReserveArrow::Animated, ReserveArrow::On][usize::from(game.g_ram[0x756])]
+    };
+    reserve_arrow(mode, game);
+}
+
+pub(crate) fn reserve_arrow(mode: ReserveArrow, game: &mut Game) {
+    let lit = match mode {
+        ReserveArrow::Animated => word!(game.reserve_health_mode) == 1,
+        ReserveArrow::On => true,
+        ReserveArrow::Off => false,
+    };
+    if matches!(mode, ReserveArrow::Animated) && lit {
+        let index = usize::from(game.g_ram[0x5b5] & 0x1f);
+        word!(game.palette_buffer[102] = RESERVE_ARROW_COLORS[index]);
+        word!(game.palette_buffer[107] = RESERVE_ARROW_SHADOWS[index]);
+    } else {
+        word! {game; palette_buffer[107] = 926; palette_buffer[102] = 342; }
+    }
+    reserve_arrow_tiles(lit, game);
+}
+
+pub(crate) fn reserve_arrow_tiles(lit: bool, game: &mut Game) {
+    let palette = if lit { 0x1800 } else { 0x1c00 };
+    for index in (0..8).map(|row| 129 + row * 32).chain(385..387) {
+        let address = 0x3800 + 2 * index;
+        let tile = u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]]);
+        word_transfers!(game, ascending, 1;
+            native(address) <- value((tile & !0x1c00) | palette));
+    }
+}

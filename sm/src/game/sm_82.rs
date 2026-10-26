@@ -2251,7 +2251,10 @@ pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
             }
         }
         if word!(game.samus_reserve_health) != 0 {
-            EquipmentScreenGlowingArrowSolidOn(game);
+            crate::game::menu_tilemap::reserve_arrow(
+                crate::game::menu_tilemap::ReserveArrow::On,
+                game,
+            );
             WriteSamusWireframeTilemapAndQueue(game);
         }
     }
@@ -2284,7 +2287,7 @@ pub unsafe fn EquipmentScreenCategory_Tanks(game: &mut Game) {
         kEquipmentScreenCategory_TanksFuncs
             [byte!(@pointer ram_ptr!(game, u16; 0x755); 1isize) as usize](game);
         EquipmentScreenHandleDpad(game);
-        EquipmentScreenGlowingArrow(game);
+        crate::game::menu_tilemap::update_reserve_arrow(game);
     }
 }
 pub unsafe fn EquipmentScreenHandleDpad(game: &mut Game) {
@@ -2313,90 +2316,6 @@ pub unsafe fn EquipmentScreenHandleDpad(game: &mut Game) {
             } else {
                 QueueSfx1_Max6(0x37, game);
             }
-        }
-    }
-}
-static kEquipmentScreenGlowingArrowFuncs: [Func_V; 2] = callback_table! { nonnull Func_V;
-    EquipmentScreenGlowingArrowAnimated, EquipmentScreenGlowingArrowSolidOn,
-};
-pub unsafe fn EquipmentScreenGlowingArrow(game: &mut Game) {
-    unsafe {
-        if word!(game.pausemenu_equipment_category_item) as u8 != 0 {
-            EquipmentScreenGlowingArrowSolidOff(game);
-        } else {
-            kEquipmentScreenGlowingArrowFuncs
-                [byte!(@pointer ram_ptr!(game, u16; 0x755); 1isize) as usize](game);
-        };
-    }
-}
-static kEquipmentScreenGlowingArrowPalettes0: [u16; 32] = [
-    0x39e, 0x77d, 0xb5c, 0xf5b, 0x133a, 0x171a, 0x1f19, 0x22f8, 0x26d7, 0x2ad6, 0x2eb6, 0x3695,
-    0x3a94, 0x3e73, 0x4253, 0x4a52, 0x4a52, 0x4253, 0x3e73, 0x3a94, 0x3695, 0x2eb6, 0x2ad6, 0x26d7,
-    0x22f8, 0x1f19, 0x171a, 0x133a, 0xf5b, 0xb5c, 0x77d, 0x39e,
-];
-static kEquipmentScreenGlowingArrowPalettes1: [u16; 32] = [
-    0x156, 0x155, 0x554, 0x954, 0xd53, 0xd52, 0x1152, 0x1551, 0x1970, 0x1d70, 0x1d6f, 0x216e,
-    0x256e, 0x296d, 0x296c, 0x318c, 0x318c, 0x296c, 0x296d, 0x256e, 0x216e, 0x1d6f, 0x1d70, 0x1970,
-    0x1551, 0x1152, 0xd52, 0xd53, 0x954, 0x554, 0x155, 0x156,
-];
-pub unsafe fn EquipmentScreenGlowingArrowAnimated(game: &mut Game) {
-    unsafe {
-        if word!(game.reserve_health_mode) == 1 {
-            let v0: i32 = *ram_ptr!(game; 0x5b5) as i32 & 0x1f;
-            word!(game.palette_buffer[102] = kEquipmentScreenGlowingArrowPalettes0[v0 as usize]);
-            word!(game.palette_buffer[107] = kEquipmentScreenGlowingArrowPalettes1[v0 as usize]);
-            EquipmentScreenEnergyArrowGlow_On(game);
-        } else {
-            word! {game; palette_buffer[107] = 926; palette_buffer[102] = 342; }
-            EquipmentScreenEnergyArrowGlow_Off(game);
-        };
-    }
-}
-pub unsafe fn EquipmentScreenGlowingArrowSolidOn(game: &mut Game) {
-    unsafe {
-        word! {game; palette_buffer[107] = 926; palette_buffer[102] = 342; }
-        EquipmentScreenEnergyArrowGlow_On(game);
-    }
-}
-pub unsafe fn EquipmentScreenGlowingArrowSolidOff(game: &mut Game) {
-    unsafe {
-        word! {game; palette_buffer[107] = 926; palette_buffer[102] = 342; }
-        EquipmentScreenEnergyArrowGlow_Off(game);
-    }
-}
-pub unsafe fn EquipmentScreenEnergyArrowGlow_On(game: &mut Game) {
-    unsafe {
-        for i in 0i32..8 {
-            (*(ram_ptr!(game, Ram3800; 0x3800))).equipment_screen_bg1_tilemap
-                [(129 + i * 32) as usize] = (*(ram_ptr!(game, Ram3800; 0x3800)))
-                .equipment_screen_bg1_tilemap[(129 + i * 32) as usize]
-                & !(0x1c00)
-                | 0x1800;
-        }
-        for i_0 in 0i32..2 {
-            (*(ram_ptr!(game, Ram3800; 0x3800))).equipment_screen_bg1_tilemap
-                [(385 + i_0) as usize] = (*(ram_ptr!(game, Ram3800; 0x3800)))
-                .equipment_screen_bg1_tilemap[(385 + i_0) as usize]
-                & !(0x1c00)
-                | 0x1800;
-        }
-    }
-}
-pub unsafe fn EquipmentScreenEnergyArrowGlow_Off(game: &mut Game) {
-    unsafe {
-        for i in 0i32..8 {
-            (*(ram_ptr!(game, Ram3800; 0x3800))).equipment_screen_bg1_tilemap
-                [(129 + i * 32) as usize] = (*(ram_ptr!(game, Ram3800; 0x3800)))
-                .equipment_screen_bg1_tilemap[(129 + i * 32) as usize]
-                & !(0x1c00)
-                | 0x1c00;
-        }
-        for i_0 in 0i32..2 {
-            (*(ram_ptr!(game, Ram3800; 0x3800))).equipment_screen_bg1_tilemap
-                [(385 + i_0) as usize] = (*(ram_ptr!(game, Ram3800; 0x3800)))
-                .equipment_screen_bg1_tilemap[(385 + i_0) as usize]
-                & !(0x1c00)
-                | 0x1c00;
         }
     }
 }
@@ -2458,35 +2377,31 @@ pub fn EquipmentScreenHudReserveAutoTilemap_Off(game: &mut Game) {
 }
 static kReserveTankEnergyTransferPerFrame: u16 = 1;
 pub unsafe fn EquipmentScreenCategory_Tanks_1(game: &mut Game) {
-    unsafe {
-        if word!(game.pausemenu_reserve_tank_delay_ctr) == 0 {
-            if (word!(game.joypad1_newkeys) as i32 & kButton_A as i32) == 0 {
-                return;
-            }
-            word!(
-                game.pausemenu_reserve_tank_delay_ctr =
-                    (word!(game.samus_reserve_health) as i32 + 7 & 0xfff8) as u16
-            );
+    if word!(game.pausemenu_reserve_tank_delay_ctr) == 0 {
+        if (word!(game.joypad1_newkeys) as i32 & kButton_A as i32) == 0 {
+            return;
         }
-        if (word!(game.pausemenu_reserve_tank_delay_ctr -= 1, reread) & 7) == 7 {
-            QueueSfx3_Max6(0x2d, game);
-        }
-        word!(game.samus_health += kReserveTankEnergyTransferPerFrame);
-        if ((word!(game.samus_health)) as i16).wrapping_sub((word!(game.samus_max_health)) as i16)
-            < 0
-        {
-            word!(game.samus_reserve_health -= kReserveTankEnergyTransferPerFrame);
-            if (word!(game.samus_reserve_health) as i16) > 0 {
-                return;
-            }
-            word!(game.samus_health += word!(game.samus_reserve_health));
-        } else {
-            word!(game.samus_health = word!(game.samus_max_health));
-        }
-        word! { game, 0; samus_reserve_health, pausemenu_reserve_tank_delay_ctr }
-        EquipmentScreenEnergyArrowGlow_Off(game);
-        word!(game.pausemenu_equipment_category_item = 0);
+        word!(
+            game.pausemenu_reserve_tank_delay_ctr =
+                (word!(game.samus_reserve_health) as i32 + 7 & 0xfff8) as u16
+        );
     }
+    if (word!(game.pausemenu_reserve_tank_delay_ctr -= 1, reread) & 7) == 7 {
+        QueueSfx3_Max6(0x2d, game);
+    }
+    word!(game.samus_health += kReserveTankEnergyTransferPerFrame);
+    if ((word!(game.samus_health)) as i16).wrapping_sub((word!(game.samus_max_health)) as i16) < 0 {
+        word!(game.samus_reserve_health -= kReserveTankEnergyTransferPerFrame);
+        if (word!(game.samus_reserve_health) as i16) > 0 {
+            return;
+        }
+        word!(game.samus_health += word!(game.samus_reserve_health));
+    } else {
+        word!(game.samus_health = word!(game.samus_max_health));
+    }
+    word! { game, 0; samus_reserve_health, pausemenu_reserve_tank_delay_ctr }
+    crate::game::menu_tilemap::reserve_arrow_tiles(false, game);
+    word!(game.pausemenu_equipment_category_item = 0);
 }
 pub unsafe fn EquipmentScreenCategory_Weapons(game: &mut Game) {
     unsafe {
