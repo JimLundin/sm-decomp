@@ -9,10 +9,9 @@ use crate::game::visual_runtime::{
     advance_credit_roll, advance_intro_baby_pursuit, advance_intro_rinka,
     advance_postcredits_samus_message, advance_shooting_stars, advance_zebes_destruction_zoom,
     advance_zebes_stars, chase_intro_baby_y, draw_cinematic_sprites, draw_intro_sprites,
-    drift_cinematic_sprite, fade_postcredits_samus_suit, initialize_shooting_stars,
-    launch_cinematic_sprite, move_ending_cloud, prepare_credit_roll, prepare_ending_time,
-    request_title_skip, start_intro_rinka, title_metroid_cry, title_metroid_palette,
-    wait_cinematic_scene, wait_ending_cloud,
+    drift_cinematic_sprite, initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud,
+    prepare_credit_roll, prepare_ending_time, request_title_skip, start_intro_rinka,
+    title_metroid_cry, title_metroid_palette, wait_cinematic_scene, wait_ending_cloud,
 };
 use crate::game::visual_runtime::{advance_cinematic_background_pre, fade_cinematic_fixed_color};
 use crate::game::visual_runtime::{
@@ -1197,40 +1196,6 @@ crate::game::callback_dispatch! {
                 g_word_7E0D9C = 0; }
         }
     };
-    [9167314] CinematicFunction_Intro_Func134 [] {
-        if word!(game.cinematic_var4 -= 1, reread) == 0 {
-            word!(game.cinematic_var4 = 127);
-            if word!(game.game_time_hours) as i32 - 3i32 & 0x8000 != 0 {
-                capture_cinematic_palette(game);
-                prepare_cinematic_palette_fade(game);
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF27 as u16, 0, game);
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF2D as u16, 0, game);
-            } else {
-                if word!(game.game_time_hours) as i32 - 10i32 & 0x8000 == 0 {
-                    CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF4B as u16,
-                        0,
-                        game,
-                    );
-                    CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF45 as u16,
-                        0,
-                        game,
-                    );
-                    word!(game.cinematic_function = (0x8be293i32) as u16);
-                    set_cinematic_blend(16, 0, 0, 0, game);
-                    return;
-                }
-                capture_cinematic_palette(game);
-                prepare_cinematic_palette_fade(game);
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF51 as u16, 0, game);
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF45 as u16, 0, game);
-                clear_cinematic_colors(0x1c0, 0x10, game);
-            }
-            clear_cinematic_colors(0x1a0, 0x10, game);
-            compose_cinematic_palette(game);
-            set_cinematic_blend(2, 16, 2, 34, game);
-            word!(game.cinematic_function = (0x8be265i32) as u16);
-        }
-    };
     [9167581] CinematicFunction_Intro_Func137 [] {
         let v0: bool = (word!(game.cinematic_var13 -= 1, reread) & 0x8000) != 0;
         if word!(game.cinematic_var13) == 0 || v0 {
@@ -1241,38 +1206,6 @@ crate::game::callback_dispatch! {
                 word!(game.cinematic_function = (0x8be314i32) as u16);
             } else {
                 word!(game.cinematic_function = (0x8be342i32) as u16);
-            }
-        }
-    };
-    [9167636] CinematicFunction_Intro_Func138 [] {
-        fade_postcredits_samus_suit(game);
-        CinematicFunction_Intro_Func145(game);
-    };
-    [9167682] CinematicFunction_Intro_Func145 [] {
-        if (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0 {
-            set_cinematic_blend(16, 0, 0, 0, game);
-            *ram_ptr!(game; 0x55) = 7;
-            *ram_ptr!(game; 0x5f) = 0x80;
-            *ram_ptr!(game; 0x58) = 0;
-            *ram_ptr!(game; 0x5d) = 0;
-            word! {game; cinematic_function = ((0x8bdb9di32) as u16); cinematic_var14 = 0; }
-            if word!(game.game_time_hours) as i32 - 3i32 & 0x8000 != 0 {
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF33 as u16, 0, game);
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF39 as u16, 0, game);
-            } else {
-                if word!(game.game_time_hours) as i32 - 10i32 & 0x8000 != 0 {
-                    CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF69 as u16,
-                        0,
-                        game,
-                    );
-                } else {
-                    CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF63 as u16,
-                        0,
-                        game,
-                    );
-                }
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF5D as u16, 0, game);
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF57 as u16, 0, game);
             }
         }
     };
@@ -1343,6 +1276,9 @@ crate::game::callback_dispatch! {
         *ram_ptr!(game; 0x69) = 16;
     };
     @external {
+        9167314 => [crate::game::visual_runtime::advance_postcredits_samus_reveal(0, game)];
+        9167636 => [crate::game::visual_runtime::advance_postcredits_samus_reveal(1, game)];
+        9167682 => [crate::game::visual_runtime::advance_postcredits_samus_reveal(2, game)];
         9160604 => [crate::game::visual_runtime::advance_intro_landing_mosaic(true, game)];
         9160650 => [crate::game::visual_runtime::advance_intro_landing_mosaic(false, game)];
         9149719 => [crate::game::visual_runtime::advance_title_pan(0, game)];

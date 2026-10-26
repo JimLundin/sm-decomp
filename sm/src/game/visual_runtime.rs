@@ -2087,6 +2087,58 @@ pub(crate) fn fade_postcredits_samus_suit(game: &mut Game) {
     }
 }
 
+pub(crate) fn advance_postcredits_samus_reveal(stage: u8, game: &mut Game) {
+    if stage == 1 {
+        fade_postcredits_samus_suit(game);
+    }
+    let initial = stage == 0;
+    let timer = word!(game.cinematic_var4 -= 1, reread);
+    if (initial && timer != 0) || (!initial && timer & 0x8000 == 0) {
+        return;
+    }
+    if initial {
+        word!(game.cinematic_var4 = 127);
+    } else {
+        set_cinematic_blend(16, 0, 0, 0, game);
+        game.g_ram[0x55] = 7;
+        game.g_ram[0x5f] = 0x80;
+        game.g_ram[0x58] = 0;
+        game.g_ram[0x5d] = 0;
+        word! {game; cinematic_function = 0xdb9d; cinematic_var14 = 0; }
+    }
+    let under_three = word!(game.game_time_hours) as i32 - 3 & 0x8000 != 0;
+    let under_ten = under_three || word!(game.game_time_hours) as i32 - 10 & 0x8000 != 0;
+    if initial && under_ten {
+        capture_cinematic_palette(game);
+        prepare_cinematic_palette_fade(game);
+    }
+    let sprites: &[u16] = match (initial, under_three, under_ten) {
+        (true, true, _) => &[0xef27, 0xef2d],
+        (true, false, true) => &[0xef51, 0xef45],
+        (true, false, false) => &[0xef4b, 0xef45],
+        (false, true, _) => &[0xef33, 0xef39],
+        (false, false, true) => &[0xef69, 0xef5d, 0xef57],
+        (false, false, false) => &[0xef63, 0xef5d, 0xef57],
+    };
+    for &definition in sprites {
+        CinematicObjects::Sprites.spawn(definition, 0, game);
+    }
+    if initial {
+        if !under_ten {
+            word!(game.cinematic_function = 0xe293);
+            set_cinematic_blend(16, 0, 0, 0, game);
+        } else {
+            if !under_three {
+                clear_cinematic_colors(0x1c0, 0x10, game);
+            }
+            clear_cinematic_colors(0x1a0, 0x10, game);
+            compose_cinematic_palette(game);
+            set_cinematic_blend(2, 16, 2, 34, game);
+            word!(game.cinematic_function = 0xe265);
+        }
+    }
+}
+
 pub(crate) fn advance_postcredits_samus_message(fade_suit: bool, game: &mut Game) {
     if fade_suit {
         fade_postcredits_samus_suit(game);

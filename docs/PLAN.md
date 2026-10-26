@@ -81,8 +81,9 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Qualified Core35: production 111715, legacy 20267, unsafe 2954, verification 39967.
-Its 18 cinematic/control rows pass (62,243 selected); interpreter contracts remain unsafe.
+Qualified Core36: production 111694, legacy 20103, unsafe 2949, verification 39967.
+Its ten Crocomire/cinematic/control rows pass (30,045 selected); postcredits 134/138/145 remain unobserved.
+Core35 passed 18 rows (62,243 selected); interpreter contracts remain unsafe.
 Core34 passed eight rows (18,223 selected + 28,700 setup); both full Kago gaps remain.
 Core33 passed eight rows (6,457 frames); checked native access costs five lines.
 Core32 passed 13 rows (40,510 frames); four release and two mosaic callbacks remain unobserved.
