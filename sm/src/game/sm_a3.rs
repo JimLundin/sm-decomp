@@ -47,11 +47,6 @@ crate::game::constants::typed_constants! { Consts_A3;
     addr_stru_A3CCE2 = 52450,
     addr_kBang_Ilist_B75E = 46942, addr_kMaridiaRefillCandy_Ilist_B3C1 = 46017,
     addr_kMochtroid_Ilist_A759 = 42841, addr_kMochtroid_Ilist_A745 = 42821,
-    addr_kPlatformThatFallsWithSamus_Sprmap_A015 = 40981, addr_kPlatformThatFallsWithSamus_Sprmap_A009 = 40969,
-    addr_kPlatformThatFallsWithSamus_Ilist_9C55 = 40021, addr_kPlatformThatFallsWithSamus_Ilist_9C3F = 39999,
-    addr_kPlatformThatFallsWithSamus_Ilist_9C29 = 39977, addr_kPlatformThatFallsWithSamus_Ilist_9C13 = 39955,
-    addr_kPlatformThatFallsWithSamus_Ilist_9BFD = 39933, addr_kPlatformThatFallsWithSamus_Ilist_9BE7 = 39911,
-    addr_kPlatformThatFallsWithSamus_Ilist_9BD1 = 39889, addr_kPlatformThatFallsWithSamus_Ilist_9BBB = 39867,
     addr_kMaridiaFish_Ilist_9072 = 36978,
     addr_kMaridiaFish_Ilist_9060 = 36960, addr_kMaridiaFish_Ilist_903C = 36924,
     addr_kMaridiaFish_Ilist_902A = 36906, addr_kFireflea_Ilist_8C2F = 35887,
@@ -65,7 +60,7 @@ crate::type_aliases! {
 }
 
 crate::type_aliases! {
-    pub Enemy_MaridiaFish, Enemy_MaridiaRefillCandy, Enemy_PlatformThatFallsWithSamus,
+    pub Enemy_MaridiaFish, Enemy_MaridiaRefillCandy,
         Enemy_Sidehopper, Enemy_WreckedShipOrangeZoomer, Enemy_FireZoomer,
         Enemy_FireFlea, Enemy_Metroid = crate::game::enemy_layouts::EnemyLayout40;
 }
@@ -94,7 +89,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_MaridiaSnail(o: i32) -> Enemy_MaridiaSnail = [0xf78, o as isize];
     Get_Metroid(o: i32) -> Enemy_Metroid = [0xf78, o as isize];
     Get_Mochtroid(o: i32) -> Enemy_Mochtroid = [0xf78, o as isize];
-    Get_PlatformThatFallsWithSamus(o: i32) -> Enemy_PlatformThatFallsWithSamus = [0xf78, o as isize];
     Get_Reflec(o: i32) -> Enemy_Reflec = [0xf78, o as isize];
     Get_Roach(o: i32) -> Enemy_Roach = [0xf78, o as isize];
     Get_Sidehopper(o: i32) -> Enemy_Sidehopper = [0xf78, o as isize];
@@ -246,27 +240,6 @@ crate::game::callback_dispatch! {
         CallMaridiaFishFunc((((*E).var_A) as u32) | (0xa30000u32), game);
     };
 }
-pub unsafe fn PlatformThatFalls_Init(k: u16, j: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_PlatformThatFallsWithSamus(k as i32, game);
-        (*E).base.current_instruction = j;
-        let v3: i32 = 8 * byte!((*E).parameter_2; 0) as i32 >> 1;
-        (*E).var_C = crate::rtl::rom_table_word!(game, 0xa28187, v3 as isize);
-        (*E).var_B = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 1) as isize);
-        (*E).var_E = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 2) as isize);
-        (*E).var_D = crate::rtl::rom_table_word!(game, 0xa28187, (v3 + 3) as isize);
-        set_fields! {[(*E)], 0; var_00, var_03, var_04}
-        (*E).var_A = ((*E).base.y_pos).wrapping_add(1);
-        (*E).var_F = 0;
-        (*E).var_05 = byte!((*E).parameter_2; 1) as u16;
-    }
-}
-static off_A39C97: [Func_V; 2] = callback_table! { nonnull Func_V;
-    PlatformThatFallsWithSamus_Func_1, PlatformThatFallsWithSamus_Func_2,
-};
-static off_A39C9B: [Func_V; 2] = callback_table! { nonnull Func_V;
-    PlatformThatFallsWithSamus_Func_3, PlatformThatFallsWithSamus_Func_4,
-};
 macro_rules! set_roach_trigonometric_velocity {
     (
         $enemy:ident, $cosine_high:ident, $cosine_low:ident, $angle_adjust:ident, $game:ident,
@@ -1553,17 +1526,6 @@ crate::game::callback_dispatch! {
         );
         StoneZoomer_E67A(word!(game.cur_enemy_index), game);
     };
-    [10723080] FastMovingSlowSinkingPlatform_Shot [] {
-        Enemy_NormalShotAI_A3(game);
-        let E = Get_PlatformThatFallsWithSamus(word!(game.cur_enemy_index) as i32, game);
-        if (*E).base.frozen_timer != 0 {
-            if (*E).var_02 != 0 {
-                (*E).base.spritemap_pointer = addr_kPlatformThatFallsWithSamus_Sprmap_A015 as u16;
-            } else {
-                (*E).base.spritemap_pointer = addr_kPlatformThatFallsWithSamus_Sprmap_A009 as u16;
-            }
-        }
-    };
     [10725245] Mochtroid_Init [] {
         let E = Get_Mochtroid(word!(game.cur_enemy_index) as i32, game);
         (*E).base.layer = 2;
@@ -1998,166 +1960,6 @@ crate::game::callback_dispatch! {
         };
     };
     @functions [pub unsafe fn (game: &mut Game)];
-    @prefix { let E = Get_PlatformThatFallsWithSamus(word!(game.cur_enemy_index) as i32, game); };
-    [10722463] PlatformThatFallsWithSamus_Init [] {
-        (*E).var_1F = -1i32 as u16;
-        let ptfwss_parameter_1: u16 = (*E).parameter_1;
-        (*E).var_02 = ptfwss_parameter_1;
-        if ptfwss_parameter_1 != 0 {
-            PlatformThatFalls_Init(
-                word!(game.cur_enemy_index),
-                addr_kPlatformThatFallsWithSamus_Ilist_9BFD as u16,
-                game,
-            );
-        } else {
-            PlatformThatFalls_Init(
-                word!(game.cur_enemy_index),
-                addr_kPlatformThatFallsWithSamus_Ilist_9BE7 as u16,
-                game,
-            );
-        };
-    };
-    [10722490] FastMovingSlowSinkingPlatform_Init [] {
-        let ptfwss_parameter_1: u16 = (*E).parameter_1;
-        (*E).var_02 = ptfwss_parameter_1;
-        if ptfwss_parameter_1 != 0 {
-            PlatformThatFalls_Init(
-                word!(game.cur_enemy_index),
-                addr_kPlatformThatFallsWithSamus_Ilist_9C55 as u16,
-                game,
-            );
-        } else {
-            PlatformThatFalls_Init(
-                word!(game.cur_enemy_index),
-                addr_kPlatformThatFallsWithSamus_Ilist_9C3F as u16,
-                game,
-            );
-        };
-    };
-    [10722582] PlatformThatFallsWithSamus_Main [] {
-        (*E).var_00 = 0;
-        if ({ let actor = word!(game.cur_enemy_index); 0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(&Runtime::new(game), Key::from_legacy(actor)))) }) != 0 {
-            (*E).var_00 = 1;
-        }
-        off_A39C97[(*E).var_02 as usize](game);
-        let v3: i32 =
-            (*Get_PlatformThatFallsWithSamus(word!(game.cur_enemy_index) as i32, game)).var_00 as i32;
-        off_A39C9B[v3 as usize](game);
-        if (*E).var_00 != (*E).var_06 {
-            (*E).var_F = 0;
-        }
-        (*E).var_06 = (*E).var_00;
-    };
-    PlatformThatFallsWithSamus_Func_1 [] {
-        (*E).var_01 = (*E).base.x_pos;
-        if ({ let (actor, amount) = (word!(game.cur_enemy_index), (words!((*E), var_E, var_D)) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
-        {
-            (*E).var_02 = 1;
-            PlatformThatFallsWithSamus_Func_8(game);
-        }
-    };
-    PlatformThatFallsWithSamus_Func_2 [] {
-        (*E).var_01 = (*E).base.x_pos;
-        if ({ let (actor, amount) = (word!(game.cur_enemy_index), (words!((*E), var_C, var_B)) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
-        {
-            (*E).var_02 = 0;
-            PlatformThatFallsWithSamus_Func_7(game);
-        }
-    };
-    PlatformThatFallsWithSamus_Func_3 [] {
-        let stop_platform: bool = ((((*E).base.y_pos) as i16).wrapping_sub(((*E).var_A) as i16) < 0)
-            || ({
-                PlatformThatFallsWithSamus_Func_9(game);
-                (*E).var_F = (*E).var_F.wrapping_add(1);
-                let mut ptfwss_var_05: u16 = (*E).var_F;
-                if ((ptfwss_var_05) as i16).wrapping_sub(((*E).var_05) as i16) >= 0 {
-                    ptfwss_var_05 = (*E).var_05;
-                    (*E).var_F = ptfwss_var_05;
-                }
-                let mut v3: i32 = 8 * ptfwss_var_05 as i32 >> 1;
-                ({ let (actor, amount) = (word!(game.cur_enemy_index), (words!((
-                        crate::rtl::rom_table_word!(game, 0xa2838f, (v3 + 3) as isize),
-                        crate::rtl::rom_table_word!(game, 0xa2838f, (v3 + 2) as isize)
-                    ))) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
-            });
-        if stop_platform {
-            (*E).var_F = 0;
-            PlatformThatFallsWithSamus_Func_10(game);
-        };
-    };
-    PlatformThatFallsWithSamus_Func_4 [] {
-        (*E).var_F = (*E).var_F.wrapping_add(1);
-        if (((*E).var_F) as i16).wrapping_sub(((*E).var_05) as i16) >= 0 {
-            (*E).var_F = (*E).var_05;
-        }
-        word!(checked_i32, game.extra_samus_x_displacement += ((*E).base.x_pos as i32 - (*E).var_01 as i32));
-        (*E).var_01 = (*E).base.y_pos;
-        let v2: i32 = 8 * (*E).var_F as i32 >> 1;
-        if ({ let (actor, amount) = (word!(game.cur_enemy_index), (words!((
-                crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 1) as isize),
-                crate::rtl::rom_table_word!(game, 0xa2838f, v2 as isize)
-            ))) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
-        {
-            (*E).var_F = 0;
-            PlatformThatFallsWithSamus_Func_10(game);
-        }
-        word!(checked_i32, game.extra_samus_y_displacement += ((*E).base.y_pos as i32 - (*E).var_01 as i32));
-    };
-    PlatformThatFallsWithSamus_Func_5 [] {
-        let mut v0: u16 = addr_kPlatformThatFallsWithSamus_Ilist_9C13 as u16;
-        if ((*E).var_1F & 0x8000) != 0 {
-            v0 = addr_kPlatformThatFallsWithSamus_Ilist_9BBB as u16;
-        }
-        enemy_instruction! {[(*E).base]; instruction = v0, timer = 1}
-        (*E).base.timer = 0;
-    };
-    PlatformThatFallsWithSamus_Func_6 [] {
-        let mut v0: u16 = addr_kPlatformThatFallsWithSamus_Ilist_9C29 as u16;
-        if ((*E).var_1F & 0x8000) != 0 {
-            v0 = addr_kPlatformThatFallsWithSamus_Ilist_9BD1 as u16;
-        }
-        enemy_instruction! {[(*E).base]; instruction = v0, timer = 1}
-        (*E).base.timer = 0;
-    };
-    PlatformThatFallsWithSamus_Func_7 [] {
-        let mut v0: u16 = addr_kPlatformThatFallsWithSamus_Ilist_9C3F as u16;
-        if ((*E).var_1F & 0x8000) != 0 {
-            v0 = addr_kPlatformThatFallsWithSamus_Ilist_9BE7 as u16;
-        }
-        enemy_instruction! {[(*E).base]; instruction = v0, timer = 1}
-        (*E).base.timer = 0;
-    };
-    PlatformThatFallsWithSamus_Func_8 [] {
-        let mut v0: u16 = addr_kPlatformThatFallsWithSamus_Ilist_9C55 as u16;
-        if ((*E).var_1F & 0x8000) != 0 {
-            v0 = addr_kPlatformThatFallsWithSamus_Ilist_9BFD as u16;
-        }
-        enemy_instruction! {[(*E).base]; instruction = v0, timer = 1}
-        (*E).base.timer = 0;
-    };
-    PlatformThatFallsWithSamus_Func_9 [] {
-        if (*E).var_03 == 0 {
-            (*E).var_03 = 1;
-            if (*E).var_02 != 0 {
-                PlatformThatFallsWithSamus_Func_6(game);
-            } else {
-                PlatformThatFallsWithSamus_Func_5(game);
-            }
-        }
-        (*E).var_04 = 0;
-    };
-    PlatformThatFallsWithSamus_Func_10 [] {
-        if (*E).var_04 == 0 {
-            (*E).var_04 = 1;
-            if (*E).var_02 != 0 {
-                PlatformThatFallsWithSamus_Func_8(game);
-            } else {
-                PlatformThatFallsWithSamus_Func_7(game);
-            }
-        }
-        (*E).var_03 = 0;
-    };
-    @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E = Get_Bang(word!(game.cur_enemy_index) as i32, game); };
     [10730163] Bang_Init [] {
         (*E).var_B = (*E).base.palette_index;
@@ -2276,23 +2078,6 @@ crate::game::callback_dispatch! {
     };
     [10719402] MaridiaFish_Instr_2 [jp] {
         (*Get_MaridiaFish(word!(game.cur_enemy_index) as i32, game)).var_01 = 1;
-    };
-    @functions [pub unsafe fn (
-    k: u16,
-    jp: EnemyScript,
-    game: &mut Game,
-) -> EnemyScript];
-    [10722411] PlatformThatFallsWithSamus_Instr_3 [jp] {
-        (*Get_PlatformThatFallsWithSamus(word!(game.cur_enemy_index) as i32, game)).var_02 = 0;
-    };
-    [10722422] PlatformThatFallsWithSamus_Instr_4 [jp] {
-        (*Get_PlatformThatFallsWithSamus(word!(game.cur_enemy_index) as i32, game)).var_02 = 1;
-    };
-    [10722433] PlatformThatFallsWithSamus_Instr_1 [jp] {
-        (*Get_PlatformThatFallsWithSamus(word!(game.cur_enemy_index) as i32, game)).var_02 = 0;
-    };
-    [10722444] PlatformThatFallsWithSamus_Instr_2 [jp] {
-        (*Get_PlatformThatFallsWithSamus(word!(game.cur_enemy_index) as i32, game)).var_02 = 1;
     };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10725992] Sidehopper_Func_1 [jp.offset(1)] { QueueSfx2_Max3(jp.word(0), game); };

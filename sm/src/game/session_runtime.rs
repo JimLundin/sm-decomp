@@ -1,6 +1,6 @@
 //! One aggregate authority for player, projectiles, mechanisms and their room.
 use crate::game::actors::diving_enemies::{self, Kind as DivingKind};
-use crate::game::actors::elevator;
+use crate::game::actors::{elevator, falling_platforms};
 use crate::game::player_projectiles::{
     access::{ShotLane, Store},
     content,
@@ -607,6 +607,8 @@ crate::game::callback_dispatch! {
                 }];
         10719413 => sm_a3::MaridiaFish_Init; 10719531 => sm_a3::MaridiaFish_Main;
         10720486 => elevator::initialize; 10720554 => elevator::advance;
+        10722463 => [falling_platforms::initialize(true, game)]; 10722490 => [falling_platforms::initialize(false, game)];
+        10722582 => falling_platforms::advance; 10723080 => falling_platforms::shot;
         10723079 => [()];
         10723661 => sm_a3::Roach_Init;
         10724048 => sm_a3::Roach_Main;
@@ -971,6 +973,8 @@ crate::game::callback_dispatch! {
         11044751 | 11044763 | 11044790 | 11044811 => [crate::game::actors::evir::instruction(ea, j, game)];
         10716899 => sm_a3::Waver_Instr_1;
         10717526 | 10733220 => [diving_enemies::ready(j, game)];
+        10722411 | 10722433 => [falling_platforms::direction(false, j, game)];
+        10722422 | 10722444 => [falling_platforms::direction(true, j, game)];
         10991155 => [sm_a7::Kraid_Instr_1(k, j)];
         11048485 | 11048497 | 11048522 | 11048547 | 11048572 | 11048597 | 11048628 => [crate::game::actors::fune::instruction(ea, j, game)];
         11056990 => [j];
