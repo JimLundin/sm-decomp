@@ -769,6 +769,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/mother_brain_body.rs"),
     ),
     (
+        "sm/src/game/mother_brain_samus_vitals.rs",
+        include_bytes!("game/mother_brain_samus_vitals.rs"),
+    ),
+    (
         "sm/src/game/mother_brain_visuals.rs",
         include_bytes!("game/mother_brain_visuals.rs"),
     ),

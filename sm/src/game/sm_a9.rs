@@ -20,6 +20,7 @@ use crate::game::enemy_projectiles::{
 use crate::game::gameplay_flag_runtime::{
     CheckEventHappened, SetBossBitForCurArea, SetEventHappened,
 };
+use crate::game::mother_brain_samus_vitals as vitals;
 use crate::game::mother_brain_visuals::{self, Fade};
 use crate::game::mother_brain_visuals::{spawn_rainbow_hdma, spawn_rising_hdma};
 use crate::game::palette_effects;
@@ -122,7 +123,6 @@ static g_word_A9BCB6: [i16; 8] = [-7, 2, 5, -4, 6, -2, -6, 7];
 static g_byte_A9BEEE: [u8; 16] = [2, 0, 2, 0, 6, 0, 6, 0, 8, 0, 8, 0, 10, 0, 10, 0];
 static g_word_A9BEFE: [u16; 8] = [0x500, 0x500, 0x200, 0x200, 0xc0, 0xc0, 0x40, 0x40];
 static g_word_A9C049: [i16; 8] = [0x10, 0x10, 0x20, 0x20, 0x30, 0x30, 0x40, 0x40];
-static g_word_A9C544: u16 = 1;
 static g_byte_A9F56A: [i8; 16] = [
     0x10, 0xf, 0xe, 0xd, 0xc, 0xb, 0xa, 9, 8, 7, 6, 5, 4, 3, 2, 1,
 ];
@@ -789,8 +789,8 @@ crate::game::callback_dispatch! {
         MotherBrain_HandleRainbowBeamPalette(game);
         MotherBrain_AimBeamAndIncrWidth(game);
         MotherBrain_HandleRainbowBeamExplosions(game);
-        Samus_DamageDueToRainbowBeam(game);
-        Samus_DecrementAmmoDueToRainbowBeam(game);
+        vitals::drain_health_by_rainbow_beam(game);
+        vitals::drain_ammo_by_rainbow_beam(game);
         MotherBrain_MoveSamusTowardsMiddleOfWall(game);
         let E = Get_MotherBomb(0, game);
         (*E).var_F = (*E).var_F.wrapping_sub(1);
@@ -2987,93 +2987,6 @@ pub unsafe fn Enemy_IncreaseYpos(k: u16, mut a: u16, game: &mut Game) {
         (*v2).y_pos = ((*v2).y_pos as i32 + ((a >> 8) as i8 as i32 + (carry >> 8))) as u16;
     }
 }
-pub fn Samus_DecrementAmmoDueToRainbowBeam(game: &mut Game) {
-    {
-        if (word!(game.random_enemy_counter) & 3) == 0 && word!(game.samus_missiles) != 0 {
-            let mut v0: u16 = (word!(game.samus_missiles)).wrapping_sub(g_word_A9C544);
-            if word!(game.samus_missiles) as i32 - g_word_A9C544 as i32 - 1i32 & 0x8000 != 0 {
-                if word!(game.hud_item_index) == 1 {
-                    word!(game.hud_item_index = 0);
-                }
-                v0 = 0;
-                word!(game.samus_auto_cancel_hud_item_index = 0);
-            }
-            word!(game.samus_missiles = v0);
-        }
-        if (word!(game.random_enemy_counter) & 3) == 0 && word!(game.samus_super_missiles) != 0 {
-            let mut v1: u16 = (word!(game.samus_super_missiles)).wrapping_sub(g_word_A9C544);
-            if word!(game.samus_super_missiles) as i32 - g_word_A9C544 as i32 - 1i32 & 0x8000 != 0 {
-                if word!(game.hud_item_index) == 2 {
-                    word!(game.hud_item_index = 0);
-                }
-                v1 = 0;
-                word!(game.samus_auto_cancel_hud_item_index = 0);
-            }
-            word!(game.samus_super_missiles = v1);
-        }
-        if word!(game.samus_power_bombs) != 0 {
-            let mut v2: u16 = (word!(game.samus_power_bombs)).wrapping_sub(g_word_A9C544);
-            if word!(game.samus_power_bombs) as i32 - g_word_A9C544 as i32 - 1i32 & 0x8000 != 0 {
-                if word!(game.hud_item_index) == 3 {
-                    word!(game.hud_item_index = 0);
-                }
-                v2 = 0;
-                word!(game.samus_auto_cancel_hud_item_index = 0);
-            }
-            word!(game.samus_power_bombs = v2);
-        }
-    }
-}
-pub unsafe fn Samus_PlayGainingLosingHealthSfx(game: &mut Game) {
-    {
-        if word!(game.samus_health) as i32 - 81i32 & 0x8000 == 0
-            && (word!(game.random_enemy_counter) & 7) == 0
-        {
-            QueueSfx3_Max3(0x2d, game);
-        }
-    }
-}
-pub fn Samus_DamageDueToShitroid(game: &mut Game) {
-    {
-        let mut v0: i16 = -4i16;
-        if word!(game.equipped_items) & 1 != 0 {
-            v0 = -3i16;
-        }
-        let mut v1: u16 = (word!(game.samus_health) as i32
-            + (word!(game.equipped_items) as i32 & 1)
-            + v0 as i32) as u16;
-        if v1 as i32 - 2i32 & 0x8000 != 0 {
-            v1 = 1;
-        }
-        word!(game.samus_health = v1);
-    }
-}
-pub unsafe fn Samus_DamageDueToRainbowBeam(game: &mut Game) {
-    unsafe {
-        let mut v0: u16 = (word!(game.samus_health) as i32
-            + (word!(game.equipped_items) as i32 & 1)
-            - 2i32) as u16;
-        if v0 as i32 - 1i32 & 0x8000 != 0 {
-            v0 = 0;
-        }
-        word!(game.samus_health = v0);
-        Samus_PlayGainingLosingHealthSfx(game);
-    }
-}
-pub unsafe fn Samus_HealDueToShitroid(game: &mut Game) -> u8 {
-    unsafe {
-        if ((word!(game.samus_health) as i32 + 1 - word!(game.samus_max_health) as i32) as i16) < 0
-        {
-            word!(game.samus_health += 1);
-            Samus_PlayGainingLosingHealthSfx(game);
-            1
-        } else {
-            word!(game.samus_health = word!(game.samus_max_health));
-            Samus_PlayGainingLosingHealthSfx(game);
-            0
-        }
-    }
-}
 pub unsafe fn ProcessSpriteTilesTransfers(db: u8, k: u16, game: &mut Game) -> u8 {
     unsafe {
         let E = Get_MotherBrain(0, game);
@@ -3516,7 +3429,7 @@ crate::game::callback_dispatch! {
         (*E).base.x_pos = (word!(game.samus_x_pos)).wrapping_add((g_word_A993BB[v2 as usize]) as u16);
         (*E).base.y_pos =
             (word!(game.samus_y_pos) as i32 + g_word_A993C3[v2 as usize] as i32 - 20i32) as u16;
-        if Samus_HealDueToShitroid(game) & 1 == 0 {
+        if !vitals::heal_by_baby_metroid(game) {
             word!(game.samus_reserve_health = word!(game.samus_max_reserve_health));
             (*E).var_A = (0xa9cabdi32) as u16;
             (*E).var_0F = (0xa9cabci32) as u16;
@@ -4758,7 +4671,7 @@ crate::game::callback_dispatch! {
                 (word!(game.samus_x_pos)).wrapping_add((g_word_A993BB[v2 as usize]) as u16);
             (*E).base.y_pos =
                 (word!(game.samus_y_pos) as i32 + g_word_A993C3[v2 as usize] as i32 - 20i32) as u16;
-            Samus_DamageDueToShitroid(game);
+            vitals::drain_health_by_baby_metroid(game);
         };
     };
     [11137698] Shitroid_Func_17 [] {
