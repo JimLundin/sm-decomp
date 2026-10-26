@@ -2,7 +2,7 @@
 
 These are implementation contracts for the agreed design. Rust sketches describe the intended interface; they are not an implemented SDK. Capacities and scheduling defaults below are starting policies to exercise in the vertical slice, not measured performance guarantees.
 
-These contracts describe the target packages. Current Windows work may retain the emulated backend under [Migration](MIGRATION.md). A temporary adapter is a migration step with disclosed dependencies; it is not yet evidence that the target contract is complete.
+These contracts describe the target packages. Current Windows work may retain the emulated backend under [Migration](README.md#responsibility-migration). A temporary adapter is a migration step with disclosed dependencies; it is not yet evidence that the target contract is complete.
 
 ## Public gameplay interface
 

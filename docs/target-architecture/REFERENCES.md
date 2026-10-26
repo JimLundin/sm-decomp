@@ -17,7 +17,7 @@ The current `wgpu` acquisition documentation differs from older examples using `
 
 The current project was inspected at [`JimLundin/sm-decomp` commit 498c8a4d](https://github.com/JimLundin/sm-decomp/tree/498c8a4dd9cd6268de1e30b8cc08f175a43b765e). Its [README](https://github.com/JimLundin/sm-decomp/blob/498c8a4dd9cd6268de1e30b8cc08f175a43b765e/README.md) describes maintained Rust gameplay and emulated hardware after a one-time c2rust translation. The earlier mixed C/Rust restart is archived. Its [plan](https://github.com/JimLundin/sm-decomp/blob/498c8a4dd9cd6268de1e30b8cc08f175a43b765e/docs/PLAN.md) records the active reduction objective, Windows resource/security constraints, and observed comparisons with their coverage limits.
 
-[Migration](MIGRATION.md) maps those responsibilities to the accepted destination. This source inspection did not rerun engine builds or comparisons.
+[Migration](README.md#responsibility-migration) maps those responsibilities to the accepted destination. This source inspection did not rerun engine builds or comparisons.
 
 ## Historical source-size observations
 

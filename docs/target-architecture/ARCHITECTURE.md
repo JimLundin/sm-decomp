@@ -4,7 +4,7 @@ Design a modern implementation specifically for Super Metroid. Preserve its game
 
 Modernization means explicit ownership, deterministic rules, useful authoring, controlled resource lifetimes, and recoverable device and storage failures. It does not require a general engine, an ECS, parallel gameplay, or a particular line count.
 
-This document specifies the destination. The [accepted migration policy](MIGRATION.md) lets Windows workers continue using the current Rust game, emulated hardware, and comparison oracle while replacing complete responsibilities. Existing work and its validation remain useful. The independence requirements below apply when claiming a completed new-engine slice or final runtime, not before continuing current tasks.
+This document specifies the destination. The [accepted migration policy](README.md#responsibility-migration) lets Windows workers continue using the current Rust game, emulated hardware, and comparison oracle while replacing complete responsibilities. Existing work and its validation remain useful. The independence requirements below apply when claiming a completed new-engine slice or final runtime, not before continuing current tasks.
 
 ## Scope and acceptance target
 
@@ -43,11 +43,10 @@ For the completed target, reference capture may run the comparison implementatio
 
 This choice adds responsibility for every observable rendering and sound effect. Existing playthroughs and fixtures guide implementation; they do not establish fidelity for newly written code. See [the ownership decision](docs/adr/0004-owned-rust-implementation.md).
 
-## Three designs considered
+## Session and coordination
 
-### A. An owned Session with a small interface
-
-The caller opens a Session, supplies one Tick input at a time, and captures a Checkpoint when necessary. The implementation owns game modes, the player, actors, rooms, progression, RNG, gameplay animation, and sequencing. It returns immutable Scenes and Runtime effects; it never opens a device or file.
+`Session` owns gameplay and exposes `open`, `step`, and `checkpoint`, returning
+owned Scenes and Runtime effects without device or filesystem access.
 
 ```rust
 let OpenedSession { mut session, initial } = Session::open(data, start)?;
@@ -58,47 +57,12 @@ show(output.scene);
 let checkpoint = session.checkpoint()?;
 ```
 
-These are illustrative interfaces, with owned outputs. The deep behavior is restoration, ordering, and a complete game step behind one seam. Most changes remain local to a private domain module. Actor storage and development inspection must be designed, rather than obtained from an ECS.
-
-### B. A private scheduled ECS, considered earlier
-
-`GameWorld` owns a private ECS and a fixed schedule. Callers open a world, enqueue typed edits, and advance it to receive observations. They cannot obtain `&mut World`, insert arbitrary systems, or bypass command commit points.
-
-```rust
-let mut game = GameWorld::open(data, scenario)?;
-game.queue_edit(validated_edit); // Development only; admitted between Ticks.
-let observation = game.advance(input)?;
-```
-
-A compiler emits complete spawn plans. Cohesive boss state lives on a root Actor with ordered part references; it is not scattered across dozens of independent systems. An explicit ordering rule is still required because archetype moves, removals, and allocation can change query iteration. Coarse serial phases preserve control over first-Tick projectile behavior and simultaneous contacts.
-
-This interface can help when repeated Actor queries and inspection dominate development. Its costs are scheduler knowledge, borrow choreography, deferred-mutation semantics, and explicit ordering work. The user has since selected our own implementation with platform dependencies only; an external ECS such as `hecs` is outside the accepted design. This comparison records the earlier alternative.
-
-### C. An authoring-centered ProjectSession
-
-The common caller is a developer testing a room or encounter. A ProjectSession prepares a content revision, launches a named Scenario, and coordinates runtime devices, development controls, reloads, and diagnostics.
-
-```rust
-let prepared = project.prepare(candidate)?;
-project.launch(scenario)?;
-project.offer_revision(prepared); // Coordinator chooses a safe cutover.
-```
-
-The important seam is the content transaction: editable source becomes validated gameplay and prepared media before it can replace anything live. This makes everyday iteration simple, but makes a poor sole interface for headless behavior tests if it also requires windows, GPU resources, or filesystem access.
-
-### Recommendation
-
-Use A for gameplay and C around it for authoring and lifecycle coordination. The outer application is named `RunCoordinator`; its development-only Workbench implements the ProjectSession workflow. Keep the deterministic Session independently callable by the replay/scenario tool.
-
-| Criterion | Owned Session | Private ECS | ProjectSession |
-| --- | --- | --- | --- |
-| Depth | A complete game step and restoration behind a small interface | Shared queries and scheduling; ordering remains explicit work | Compile, prepare, launch, and cutover behind a developer workflow |
-| Locality | Rules in private domain modules; sequencing in Session | Shared behaviors in systems; cohesive boss state still needed | Content and lifecycle changes concentrated in coordinator/tools |
-| Main seam | Tick input → committed state, Scene, effects | Fixed schedule → ECS state and observations | Candidate revision → prepared transaction |
-| Main cost | Focused storage and inspection implementation | Deterministic order and schedule complexity | More lifecycle state; unsuitable as the headless game interface |
-| Place in recommendation | Gameplay foundation | Historical alternative | Outer development workflow |
-
-Use one shared enemy family plus a multipart boss to refine our Actor store, ordering, restoration, and inspection together. Adjust our private data structures and helpers when the encounter exposes unnecessary complexity; preserve the owned Session and first-party implementation policy.
+`RunCoordinator` delivers outputs and manages devices and content cutovers.
+Its optional Workbench prepares revisions and launches Scenarios through the same
+Session interface. Actor storage, serial ordering, restoration and inspection
+remain private Session responsibilities, refined through a representative encounter.
+The accepted [Session](docs/adr/0001-owned-session.md) and
+[revision-cutover](docs/adr/0002-revision-cutovers.md) decisions retain the rationale.
 
 ## Packages and dependency direction
 
