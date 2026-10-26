@@ -7,7 +7,7 @@ use crate::{
 };
 use core::mem::offset_of;
 use std::panic::{AssertUnwindSafe, catch_unwind};
-pub(crate) const CASES: u32 = 35;
+pub(crate) const CASES: u32 = 36;
 pub(crate) fn offset(address: u32) -> usize {
     crate::rtl::lorom_offset(address) as usize
 }
@@ -325,6 +325,9 @@ pub(crate) fn capture_case(
     if id >= CASES {
         return None;
     }
+    if id == 35 {
+        return catch_unwind(AssertUnwindSafe(fire_geyser_widened)).ok();
+    }
     let result = catch_unwind(AssertUnwindSafe(|| {
         let native = RomImage::zeroed(0x200000);
         let loaded = RomImage::zeroed(0x200000);
@@ -452,4 +455,87 @@ pub(crate) fn capture_case(
             None
         }
     }
+}
+
+// No movie uses full-width child indices; assert every changed byte through live entrypoints.
+fn fire_geyser_widened() -> Vec<u8> {
+    use crate::game::{enemy_script::EnemyScript, fire_geysers};
+    let mut out = b"B6FG1".to_vec();
+    for index in [0u16, 0x7c0, 0xffc0, 0xfffe] {
+        let mut g = Game::new();
+        g.g_ram.fill(0);
+        g.g_ram[0xe54..0xe56].copy_from_slice(&index.to_le_bytes());
+        let parent = 0xf78 + usize::from(index);
+        let child = parent + 64;
+        for (at, value) in [
+            (parent + 0x30, 0x902f),
+            (parent + 0x36, 0x4321),
+            (parent + 0x0e, 0x100),
+            (child + 0x0a, 17),
+            (child + 0x0c, 18),
+            (child + 0x0e, 0x542),
+        ] {
+            put(&mut g, at, value);
+        }
+        let mut expected = g.g_ram.to_vec();
+        for (at, value) in [
+            (parent + 0x30, 0x9062u16),
+            (parent + 0x32, 0xffff),
+            (parent + 0x1c, 1),
+            (parent + 0x1a, 0x8d1b),
+            (parent + 0x0e, 0),
+            (child + 0x0e, 0x142),
+        ] {
+            expected[at..at + 2].copy_from_slice(&value.to_ne_bytes());
+        }
+        fire_geysers::run(&mut g);
+        assert_eq!(
+            g.g_ram.as_slice(),
+            expected.as_slice(),
+            "geyser wait {index:x}"
+        );
+        for step in 0..22usize {
+            let ea = if step == 0 {
+                0xa68e13
+            } else {
+                0xa68e2d + (step as u32 - 1) * 20
+            };
+            let y = 0x4321u16 - 5 * (step as u16 + 1);
+            let height = if step < 18 {
+                24u16
+            } else {
+                20 - 4 * (step as u16 - 18)
+            };
+            expected[child + 6..child + 8].copy_from_slice(&y.to_ne_bytes());
+            expected[child + 12..child + 14].copy_from_slice(&height.to_ne_bytes());
+            expected[child + 10..child + 12].copy_from_slice(&8u16.to_ne_bytes());
+            let result = fire_geysers::instruction(ea, EnemyScript::Jump(0x1234), &mut g);
+            assert!(matches!(result, EnemyScript::Jump(0x1234)));
+            assert_eq!(
+                g.g_ram.as_slice(),
+                expected.as_slice(),
+                "geyser shape {index:x}/{step}"
+            );
+        }
+        for (at, value) in [
+            (parent + 0x34, 1u16),
+            (parent + 6, 0x4321),
+            (parent + 14, 0x100),
+            (child + 10, 0),
+            (child + 12, 0),
+            (child + 14, 0x542),
+        ] {
+            expected[at..at + 2].copy_from_slice(&value.to_ne_bytes());
+        }
+        let result = fire_geysers::instruction(0xa68fd1, EnemyScript::Jump(0x1234), &mut g);
+        assert!(matches!(result, EnemyScript::Jump(0x1234)));
+        assert_eq!(
+            g.g_ram.as_slice(),
+            expected.as_slice(),
+            "geyser finish {index:x}"
+        );
+        assert!(!g.g_fail);
+        snapshot(&mut out, &g);
+    }
+    out
 }

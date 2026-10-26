@@ -21,12 +21,10 @@ const HEIGHTS: [u16; 22] = [
 ];
 
 /// The geyser being run and its hitbox in the following slot.
-fn parent_and_column(runtime: &Runtime<'_>) -> (Key, Key) {
+fn parent_and_column(runtime: &Runtime<'_>) -> (Key, usize) {
     let index = runtime.word(0xe54);
-    (
-        Key::from_legacy(index),
-        Key::from_legacy(index.wrapping_add(64)),
-    )
+    // The legacy child offset adds 64 after widening the selected u16 index.
+    (Key::from_legacy(index), 0xf78 + usize::from(index) + 64)
 }
 
 pub(crate) fn initialize(game: &mut Game) {
@@ -69,7 +67,8 @@ pub(crate) fn run(game: &mut Game) {
                 erupt
             });
             if erupt {
-                runtime.edit_actor(column, Native, |actor| actor.properties &= !INTANGIBLE);
+                let properties = runtime.native_word(column + 0x0e) & !INTANGIBLE;
+                runtime.write_slice_native(column + 0x0e, properties);
             }
         }
         ERUPT => runtime.edit_actor(parent, Native, |actor| {
@@ -105,13 +104,11 @@ pub(crate) fn instruction(ea: u32, script: EnemyScript, game: &mut Game) -> Enem
     let (parent, column) = parent_and_column(&runtime);
     let base = runtime.resolve_actor(parent, Native).variables[3];
     let y = base.wrapping_sub(5 * (step as u16 + 1));
-    runtime.edit_actor(column, Native, |actor| {
-        actor.y.whole = y;
-        actor.radius.y = HEIGHTS[step];
-        if step == 0 {
-            actor.radius.x = 8;
-        }
-    });
+    runtime.write_slice_native(column + 0x06, y);
+    runtime.write_slice_native(column + 0x0c, HEIGHTS[step]);
+    if step == 0 {
+        runtime.write_slice_native(column + 0x0a, 8);
+    }
     script
 }
 
@@ -119,13 +116,13 @@ pub(crate) fn instruction(ea: u32, script: EnemyScript, game: &mut Game) -> Enem
 fn finish(game: &mut Game) {
     let mut runtime = Runtime::new(game);
     let (parent, column) = parent_and_column(&runtime);
+    runtime.edit_actor(parent, Native, |actor| actor.variables[2] = 1);
+    runtime.write_slice_native(column + 0x0a, 0);
+    runtime.write_slice_native(column + 0x0c, 0);
     runtime.edit_actor(parent, Native, |actor| {
-        actor.variables[2] = 1;
         actor.y.whole = actor.variables[3];
         actor.properties |= INVISIBLE;
     });
-    runtime.edit_actor(column, Native, |actor| {
-        actor.radius = Default::default();
-        actor.properties |= INTANGIBLE;
-    });
+    let properties = runtime.native_word(column + 0x0e) | INTANGIBLE;
+    runtime.write_slice_native(column + 0x0e, properties);
 }
