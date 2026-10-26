@@ -714,6 +714,14 @@ crate::game::callback_dispatch! {
         11698252 => [()];
         11763788 => [()];
         11765518 => [sm_b3::UnusedSpinningTurtleEye_Main()];
+        11765819 => crate::game::actors::brinstar_pipe_bug::initialize;
+        11765882 => [{ let address = crate::game::actors::brinstar_pipe_bug::state_address(game); actor_species_pre_instruction(address, game); }];
+        11766625 => crate::game::actors::norfair_pipe_bug::initialize;
+        11766686 => [{
+            let address = crate::game::actors::norfair_pipe_bug::state_address(game);
+            sm_b3::CallBugInstr(address, crate::ram_map::word!(game.cur_enemy_index), game);
+            crate::game::actors::norfair_pipe_bug::reset_offscreen(game);
+        }];
         11767628 => sm_b3::BrinstarYellowPipeBug_Init;
         11767726 => sm_b3::BrinstarYellowPipeBug_Main; 11769219 => sm_b3::Botwoon_Init;
         11771926 => sm_b3::Botwoon_Shot;
@@ -925,6 +933,12 @@ crate::game::address_dispatch! {
         0xa30000..=0xa3ffff => [sm_a3::DispatchEnemyPreInstr(ea, k, game)];
         0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyPreInstr(ea, k, game)];
         0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyPreInstr(ea, k, game)];
+        11765888 => crate::game::actors::brinstar_pipe_bug::await_view;
+        11765904 => crate::game::actors::brinstar_pipe_bug::await_player;
+        11765987 => crate::game::actors::brinstar_pipe_bug::rise;
+        11766044 => crate::game::actors::brinstar_pipe_bug::fly;
+        11766142 => crate::game::actors::brinstar_pipe_bug::cooldown;
+        11767039 => [crate::game::actors::norfair_pipe_bug::settle(game)];
         0xb30000..=0xb3ffff => [sm_b3::DispatchEnemyPreInstr(ea, k, game)];
     }
 }

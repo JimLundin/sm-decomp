@@ -2,6 +2,10 @@
 //! The launcher checks this complete list before trusting cached output.
 pub static FILES: &[(&str, &[u8])] = &[
     (
+        "sm/src/game/actors/norfair_pipe_bug.rs",
+        include_bytes!("game/actors/norfair_pipe_bug.rs"),
+    ),
+    (
         "sm/src/game/actors/falling_platforms.rs",
         include_bytes!("game/actors/falling_platforms.rs"),
     ),
@@ -36,6 +40,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     (
         "sm/src/game/actors/morph_ball_eye.rs",
         include_bytes!("game/actors/morph_ball_eye.rs"),
+    ),
+    (
+        "sm/src/game/actors/brinstar_pipe_bug.rs",
+        include_bytes!("game/actors/brinstar_pipe_bug.rs"),
     ),
     (
         "sm/src/game/actors/blue_face_block.rs",
