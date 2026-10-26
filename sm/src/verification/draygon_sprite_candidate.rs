@@ -91,9 +91,7 @@ pub fn capture(
     record(&mut out, 0, &payload);
     ACTIVE.with(|a| *a.borrow_mut() = Some(out));
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        unsafe {
-            crate::game::sm_a5::Draygon_Func_46(game);
-        }
+        crate::game::sprite_effect_runtime::draygon_trajectory(game);
         event(7, 0, 0, &game.g_ram);
         if game.g_fail {
             return Err("candidate raised g_fail".to_owned());

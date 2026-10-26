@@ -92,7 +92,7 @@ pub unsafe fn Draygon_Func_3(game: &mut Game) {
 macro_rules! advance_draygon_scripted_y {
     ($game:ident, $enemy:ident, $instruction:ident) => {
         Draygon_Func_3($game);
-        Draygon_Func_35($game);
+        sprite_effects::draygon_body_bubble($game);
         let $enemy = Get_Draygon(0, $game);
         let draygon_var_B: u16 = (*$enemy).var_B;
         if draygon_var_B == 104 {
@@ -121,7 +121,7 @@ crate::game::callback_dispatch! {
                 *(&raw mut (*v2).src.bank as *mut u16) = 177;
                 (*v2).vram_dst = 27904;
                 word!(game.vram_write_queue_tail += 7);
-                Draygon_Func_45(game);
+                sprite_effects::draygon_spawn_trails(game);
             }
             (*E).var_B = (*E).var_B.wrapping_add(1);
         } else {
@@ -140,7 +140,7 @@ crate::game::callback_dispatch! {
         Draygon_Func_3(game);
         let E = Get_Draygon(0, game);
         if (*E).var_B as i32 - 1232i32 & 0x8000 != 0 {
-            Draygon_Func_46(game);
+            sprite_effects::draygon_trajectory(game);
             (*E).var_B = (*E).var_B.wrapping_add(1);
         } else {
             (*E).var_A = (0xa587f4i32) as u16;
@@ -273,7 +273,7 @@ crate::game::callback_dispatch! {
     };
     [10849106] Draygon_Func_15 [] {
         Draygon_Func_3(game);
-        Draygon_Func_35(game);
+        sprite_effects::draygon_body_bubble(game);
         let E = Get_Draygon(0, game);
         let v2: u16 = abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos)));
         if v2 as i32 - 208i32 & 0x8000 != 0 {
@@ -287,7 +287,7 @@ crate::game::callback_dispatch! {
     };
     [10849492] Draygon_Func_19 [] {
         Draygon_Func_3(game);
-        Draygon_Func_35(game);
+        sprite_effects::draygon_body_bubble(game);
         let E = Get_Draygon(0, game);
         let v2: u16 = abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos)));
         if v2 as i32 - 208i32 & 0x8000 != 0 {
@@ -336,18 +336,18 @@ crate::game::callback_dispatch! {
         }
     };
     [10850964] Draygon_Func_32 [] {
-        Draygon_Func_34(game);
+        sprite_effects::draygon_death_bubble(game);
         let E = Get_Draygon(0, game);
         (*E).var_B = (*E).var_B.wrapping_sub(1);
         if (*E).var_B != 0 {
-            Draygon_Func_42(0, game);
+            sprite_effects::draygon_motion(0, game);
         } else {
             (*E).var_A = (0xa592abi32) as u16;
         };
     };
     [10850987] Draygon_Func_33 [] {
-        Draygon_Func_34(game);
-        Draygon_Func_42(0, game);
+        sprite_effects::draygon_death_bubble(game);
+        sprite_effects::draygon_motion(0, game);
         let E = Get_Draygon(0, game);
         (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
         if (*E).base.y_pos as i32 - 576i32 & 0x8000 == 0 {
@@ -360,7 +360,7 @@ crate::game::callback_dispatch! {
             let bits = gameplay_flag_runtime::boss_word_at(area, BossWordOrder::Little, game);
             gameplay_flag_runtime::set_boss_word_le(area, bits | 1, game);
             scatter(DropSource::Draygon, v2, game);
-            Draygon_Func_44(game);
+            sprite_effects::retire_all(game);
         }
     };
     [10873627] SporeSpawn_Func_1 [] {
@@ -577,7 +577,7 @@ crate::game::callback_dispatch! {
         if v3 as i32 - 4i32 & 0x8000 != 0 {
             let v4: u16 = abs16(((*E).base.y_pos).wrapping_sub(480));
             if v4 as i32 - 4i32 & 0x8000 != 0 {
-                Draygon_Func_43(game);
+                sprite_effects::draygon_spawn_ring(game);
                 (*E).var_A = (0xa59294i32) as u16;
                 QueueMusic_Delayed8(3, game);
                 (*E).var_B = 416;
@@ -644,7 +644,7 @@ crate::game::callback_dispatch! {
 }
 pub unsafe fn Draygon_Func_17(k: u16, game: &mut Game) {
     unsafe {
-        Draygon_Func_35(game);
+        sprite_effects::draygon_body_bubble(game);
         let E = Get_Draygon(0, game);
         (*E).base.y_pos = (actor_cosine((*E).var_0D, 32u16, game)).wrapping_add(384);
         (*E).var_0D = ((((*E).var_0D) as u8).wrapping_add(1)) as u16;
@@ -660,7 +660,7 @@ pub unsafe fn Draygon_Func_17(k: u16, game: &mut Game) {
 pub unsafe fn Draygon_Func_21(k: u16, game: &mut Game) {
     unsafe {
         let E = Get_Draygon(0, game);
-        Draygon_Func_35(game);
+        sprite_effects::draygon_body_bubble(game);
         if word!(game.samus_x_speed_divisor) != 0 {
             (*E).var_A = (0xa58e19i32) as u16;
         } else {
@@ -812,30 +812,6 @@ pub unsafe fn Draygon_Func_28(k: u16, game: &mut Game) {
         Draygon_Func_40(k, game);
     }
 }
-pub unsafe fn Draygon_Func_34(game: &mut Game) {
-    {
-        if (word!(game.nmi_frame_counter_word) & 7) == 0 {
-            let x: u16 = ((game.next_random() as i32 & 0x7f) + 192) as u16;
-            let y: u16 = ((((word!(game.random_number)) & (0x3f00u16)) as i32 >> 8) + 400) as u16;
-            create_sprite(x, y, 21, 0, game);
-        }
-    }
-}
-pub unsafe fn Draygon_Func_35(game: &mut Game) {
-    unsafe {
-        let mut Draygon = Get_Draygon(word!(game.cur_enemy_index) as i32, game);
-        if ((*Draygon).base.frame_counter & 0x7f) == 0 {
-            Draygon = Get_Draygon(0, game);
-            create_sprite(
-                ((*Draygon).base.x_pos).wrapping_sub(16),
-                ((*Draygon).base.y_pos).wrapping_sub(16),
-                24,
-                0,
-                game,
-            );
-        }
-    }
-}
 pub unsafe fn Draygon_Func_40(k: u16, game: &mut Game) {
     unsafe {
         let mut v1: i16 = 8;
@@ -908,41 +884,6 @@ pub unsafe fn sub_A5960D(game: &mut Game) {
             (*E).var_2A = (pt.y >> 16) as u16;
             (*E).var_2B = pt.y as u16;
         };
-    }
-}
-unsafe fn Draygon_Func_47(game: &mut Game) -> Point16U {
-    unsafe {
-        game.next_random();
-        let E = Get_Draygon(0, game);
-        let r18: u16 = ((word!(game.random_number) as i32 & 0x7f) - 64i32) as u16;
-        let r20: u16 = (((word!(game.random_number) as i32 & 0x7f00) >> 8) - 64i32) as u16;
-        Point16U {
-            x: ((r18).wrapping_add((*E).base.x_pos)),
-            y: ((r20).wrapping_add((*E).base.y_pos)),
-        }
-    }
-}
-pub unsafe fn Draygon_Func_42(varE24: u16, game: &mut Game) {
-    sprite_effects::draygon_motion(varE24, game);
-    crate::verify_probe::hit("sprite.draygon.42");
-}
-pub unsafe fn Draygon_Func_43(game: &mut Game) {
-    sprite_effects::draygon_spawn_ring(game);
-    crate::verify_probe::hit("sprite.draygon.43");
-}
-pub unsafe fn Draygon_Func_44(game: &mut Game) {
-    sprite_effects::retire_all(game);
-    crate::verify_probe::hit("sprite.draygon.44");
-}
-pub unsafe fn Draygon_Func_45(game: &mut Game) {
-    sprite_effects::draygon_spawn_trails(game);
-    crate::verify_probe::hit("sprite.draygon.45");
-}
-pub unsafe fn Draygon_Func_46(game: &mut Game) {
-    unsafe {
-        let cursor = (*Get_Draygon(0, game)).var_46;
-        let next = sprite_effects::draygon_trajectory(cursor, game);
-        (*Get_Draygon(0, game)).var_46 = next;
     }
 }
 pub unsafe fn sub_A5E9F5(game: &mut Game) {
@@ -1246,12 +1187,6 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10852150] Draygon_Instr_13 [jp.offset(1)] { (*Get_Draygon(k as i32, game)).var_A = jp.word(0); };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    @prefix { let pt: Point16U = Draygon_Func_47(game); };
-    [10852159] Draygon_Instr_8 [jp] {  create_sprite(pt.x, pt.y, 21, 0, game); };
-    [10852178] Draygon_Instr_7 [jp] {  create_sprite(pt.x, pt.y, 3, 0, game); };
-    [10852197] Draygon_Instr_6 [jp] {  create_sprite(pt.x, pt.y, 29, 0, game); };
-    [10852216] Draygon_Instr_9 [jp] {  create_sprite(pt.x, pt.y, 24, 0, game); };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10852501] Draygon_Instr_2 [jp] { word!(game.room_loading_irq_handler = 12); };
     [10852563] Draygon_Instr_11 [jp] {
         let E2 = Get_Draygon(0x80, game);
@@ -1286,35 +1221,6 @@ crate::game::callback_dispatch! {
     [10854231] Draygon_Instr_16 [jp.offset(1)] { (*Get_Draygon(0, game)).var_A = jp.word(0); };
     [10854240] Draygon_Instr_10 [jp.offset(1)] { QueueSfx2_Max6(jp.word(0), game); };
     [10854254] Draygon_Instr_4 [jp.offset(1)] { QueueSfx3_Max6(jp.word(0), game); };
-    [10854268] Draygon_Instr_12 [jp] {
-        let E = Get_Draygon(0, game);
-        game.eproj_spawn_pt = Point16U {
-            x: (((*E).base.x_pos).wrapping_sub(28)),
-            y: (((*E).base.y_pos).wrapping_sub(16)),
-        };
-        word!(game.cinematic_var9 = ((game.next_random() as i32 & 0x3f) + 128) as u16);
-        SpawnEprojWithGfx(
-            2,
-            word!(game.cur_enemy_index),
-            addr_stru_868E50 as u16,
-            game,
-        );
-    };
-    [10854318] Draygon_Instr_18 [jp] {
-        let E = Get_Draygon(0, game);
-        game.eproj_spawn_pt = Point16U {
-            x: (((*E).base.x_pos).wrapping_add(24)),
-            y: (((*E).base.y_pos).wrapping_sub(16)),
-        };
-        word!(game.cinematic_var9 = ((game.next_random() as i32 & 0x3f) + 192) as u16);
-        SpawnEprojWithGfx(
-            2,
-            word!(game.cur_enemy_index),
-            addr_stru_868E50 as u16,
-            game,
-        );
-    };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10872671] Draygon_Instr_25 [jp] {
         let E = Get_Draygon(0, game);
@@ -1386,7 +1292,15 @@ crate::game::callback_dispatch! {
         create_sprite(x, y, 3, 0, game);
         QueueSfx2_Max6(0x25, game);
     };
-    @external { 10863739 => [actors::draygon_eye::set_mode(j, game)]; }
+    @external {
+        10863739 => [actors::draygon_eye::set_mode(j, game)];
+        10852159 => [{ sprite_effects::draygon_random_sprite(21, game); j }];
+        10852178 => [{ sprite_effects::draygon_random_sprite(3, game); j }];
+        10852197 => [{ sprite_effects::draygon_random_sprite(29, game); j }];
+        10852216 => [{ sprite_effects::draygon_random_sprite(24, game); j }];
+        10854268 => [{ sprite_effects::draygon_spit(false, game); j }];
+        10854318 => [{ sprite_effects::draygon_spit(true, game); j }];
+    }
 }
 
 fn draygon_divide(divisor: u32, value: u32) -> u32 {

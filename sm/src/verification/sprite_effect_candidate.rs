@@ -1,7 +1,7 @@
 //! Actual candidate bridges and maintained bank-controller callers; shared frozen fixtures.
 use super::sprite_effect_cases::{self, Operation};
 use crate::{
-    game::{actors::yapping_maw, sm_a3, sm_a5, sprite_effect_runtime as pool},
+    game::{actors::yapping_maw, sm_a3, sprite_effect_runtime as pool},
     game_state::Game,
 };
 pub(crate) fn capture_case(id: u32) -> Option<Vec<u8>> {
@@ -14,7 +14,7 @@ fn run(operation: Operation, game: &mut Game) -> u16 {
     unsafe {
         match operation {
             Operation::PopulationClear => pool::clear_sprites(game),
-            Operation::RetireAll => sm_a5::Draygon_Func_44(game),
+            Operation::RetireAll => pool::retire_all(game),
             Operation::Spawn => return pool::create_sprite(0x1234, 0xabcd, 0, 0xbeef, game),
             Operation::SpawnTwice => {
                 pool::create_sprite(0x1234, 0xabcd, 0, 0xbeef, game);
@@ -31,9 +31,9 @@ fn run(operation: Operation, game: &mut Game) -> u16 {
             Operation::MetroidMain => sm_a3::Metroid_Main(game),
             Operation::MetroidFrozen => sm_a3::Metroid_Frozen(game),
             Operation::MawAppearance => yapping_maw::appearance(game),
-            Operation::DraygonMotion(parameter) => sm_a5::Draygon_Func_42(parameter, game),
-            Operation::DraygonStart => sm_a5::Draygon_Func_43(game),
-            Operation::DraygonFour => sm_a5::Draygon_Func_45(game),
+            Operation::DraygonMotion(parameter) => pool::draygon_motion(parameter, game),
+            Operation::DraygonStart => pool::draygon_spawn_ring(game),
+            Operation::DraygonFour => pool::draygon_spawn_trails(game),
         }
     }
     0
