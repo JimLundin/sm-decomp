@@ -20,29 +20,15 @@ it never accesses the foreign header's different `Apu` layout. `C-unwind`
 preserves Rust failure behavior through those callbacks.
 
 On Windows, install using
-`tools/install_lakesnes_spc.ps1 -Zig <zig.exe> -LibraryDirectory <SDL-lib>`.
+`python tools/install_lakesnes.py spc --target x86_64-windows-gnu --zig <zig.exe> --library-directory <SDL-lib>`.
 The installer verifies every downloaded source and license with SHA256,
 then creates the uniquely named `liblakesnes_spc.a`. Keep its directory in
 `LIBRARY_PATH` together with the existing CPU, codec and SDL dependencies.
-No existing library is replaced. The installer adds 44 maintained lines.
+The `spc` component requires an explicit `--library-directory`.
 
-PowerShell script execution is disabled on the current machine. The installer
-was syntax-checked but not executed; the archive was compiled and installed
-with ordinary Zig commands using the same checksum-verified sources:
-
-```powershell
-$spcSource = 'C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261021/complete-backend/spc/upstream'
-$spcOutput = 'C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261021/complete-backend/spc'
-$spcZig = 'C:/Users/Jim.Lundin/AppData/Local/sm-decomp-tools/zig-x86_64-windows-0.15.2/zig.exe'
-& $spcZig cc -target x86_64-windows-gnu -O2 -std=c11 -c "$spcSource/spc.c" -o "$spcOutput/spc.o"
-& $spcZig ar rcs "$spcOutput/liblakesnes_spc.a" "$spcOutput/spc.o"
-```
-
-After checking both commands succeeded, copy that archive into the existing
-SDL native-library directory. The installed archive must match the tested one.
-On Unix, compile the same pinned source with `cc -O2 -std=c11 -fPIC`, archive
-it with `ar`, and put the result on the native library search path. Unix builds
-have not been tested.
+For Linux x86-64, select `--target x86_64-linux-gnu` and its own native-library
+directory. The installer adds PIC flags. Use `--prefix` to select the source
+cache; build and replay for that target before treating it as validated.
 
 Validation compares actual old/new instructions, the entire initialized
 APU/DSP memory and register state, cycles and ordered bus events. All opcode
@@ -79,7 +65,7 @@ music behavior remains fixed independently of uploaded SPC instruction bytes.
 On Windows, install the required `libsm_music.a` with Python and Zig:
 
 ```powershell
-python tools/install_native_music.py --zig <zig.exe> --library-directory <SDL-lib>
+python tools/install_native_music.py --target x86_64-windows-gnu --zig <zig.exe> --library-directory <SDL-lib>
 ```
 
 Keep the output directory in `LIBRARY_PATH` for both Cargo and the verifier.
@@ -135,7 +121,7 @@ Current source stamps pass; altered installer, C and header inputs are rejected.
 The tested and final installed archives have identical code, data, relocations
 and non-debug symbols; only discardable CodeView records differ.
 
-Unix installation has not been tested. Emit the same selected source with
-`--emit-only`, then compile `sm/src/native_music.c` with the emitted stamp and
-include directories, `-fPIC -fexceptions -fwrapv -fno-strict-aliasing`, and archive
-it as `libsm_music.a`. The installer currently targets Windows GNU explicitly.
+For Linux x86-64, use the same music installer with `--target x86_64-linux-gnu`.
+It preserves the source selection and compatibility changes and supplies PIC
+flags. `--emit-only` is available for inspecting the generated sources and stamps.
+The Windows comparisons above do not establish Linux runtime behavior.

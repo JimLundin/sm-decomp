@@ -139,11 +139,11 @@ jobs:
         # Rebuild stamped archives from this checkout; never cache these objects.
         run: |
           foreach ($dependency in @('cpu', 'backend', 'spc')) {
-            & "./tools/install_lakesnes_$dependency.ps1" -Zig $env:SM_ZIG -Prefix "$env:SM_NATIVE/lakesnes-$dependency" -LibraryDirectory $env:LIBRARY_PATH
+            python tools/install_lakesnes.py $dependency --zig $env:SM_ZIG --target x86_64-windows-gnu --prefix "$env:SM_NATIVE/lakesnes-$dependency" --library-directory $env:LIBRARY_PATH
             if ($LASTEXITCODE -ne 0) { throw "LakeSnes $dependency installation failed" }
           }
           foreach ($dependency in @('config', 'desktop', 'music')) {
-            $arguments = @("tools/install_native_$dependency.py", '--zig', $env:SM_ZIG, '--prefix', "$env:SM_NATIVE/$dependency", '--library-directory', $env:LIBRARY_PATH)
+            $arguments = @("tools/install_native_$dependency.py", '--zig', $env:SM_ZIG, '--target', 'x86_64-windows-gnu', '--prefix', "$env:SM_NATIVE/$dependency", '--library-directory', $env:LIBRARY_PATH)
             if ($dependency -ne 'music') { $arguments += @('--sdl-include', $env:SM_SDL_INCLUDE) }
             python @arguments
             if ($LASTEXITCODE -ne 0) { throw "Native $dependency installation failed" }

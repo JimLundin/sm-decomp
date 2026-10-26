@@ -10,7 +10,13 @@ Build the pinned native libraries using the relevant guides:
 [CPU, PPU and DSP](CPU_DEPENDENCY.md), [SPC and music](SPC_DEPENDENCY.md),
 [configuration and utilities](CONFIG_DEPENDENCY.md), [shaders](SHADER_DEPENDENCY.md),
 [desktop host](DESKTOP_DEPENDENCY.md), and [PNG decoding](PNG_DEPENDENCY.md).
-Keep their archive directory and SDL2 on `LIBRARY_PATH`. Upstream versions and
+The Python installers require an explicit `--target`: `x86_64-windows-gnu`, or
+`x86_64-linux-gnu` for LakeSnes, configuration and music. The desktop installer
+currently accepts only the Windows target. Use matching SDL2 headers and libraries.
+Their source
+caches default under `%LOCALAPPDATA%` on Windows or `$XDG_CACHE_HOME`/`~/.cache`
+on Linux; `--prefix` overrides the cache. Keep archives for different targets in
+separate directories on `LIBRARY_PATH`. Upstream versions and
 licenses are indexed in [third_party](../third_party/README.md).
 
 Supply an unheadered Super Metroid (Japan, USA) (En,Ja) ROM at `rom/sm.smc`

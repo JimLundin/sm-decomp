@@ -208,11 +208,11 @@ jobs:
         # Rebuild stamped archives from this checkout; never cache these objects.
         run: |
           foreach ($dependency in @('cpu', 'backend', 'spc')) {
-            & "./tools/install_lakesnes_$dependency.ps1" -Zig $env:SM_ZIG -Prefix "$env:SM_NATIVE/lakesnes-$dependency" -LibraryDirectory $env:LIBRARY_PATH
+            python tools/install_lakesnes.py $dependency --zig $env:SM_ZIG --target x86_64-windows-gnu --prefix "$env:SM_NATIVE/lakesnes-$dependency" --library-directory $env:LIBRARY_PATH
             if ($LASTEXITCODE -ne 0) { throw "LakeSnes $dependency installation failed" }
           }
           foreach ($dependency in @('config', 'desktop', 'music')) {
-            $arguments = @("tools/install_native_$dependency.py", '--zig', $env:SM_ZIG, '--prefix', "$env:SM_NATIVE/$dependency", '--library-directory', $env:LIBRARY_PATH)
+            $arguments = @("tools/install_native_$dependency.py", '--zig', $env:SM_ZIG, '--target', 'x86_64-windows-gnu', '--prefix', "$env:SM_NATIVE/$dependency", '--library-directory', $env:LIBRARY_PATH)
             if ($dependency -ne 'music') { $arguments += @('--sdl-include', $env:SM_SDL_INCLUDE) }
             python @arguments
             if ($LASTEXITCODE -ne 0) { throw "Native $dependency installation failed" }
@@ -484,36 +484,24 @@ jobs:
           curl -sSfL -o "$native/sdl.zip" https://github.com/libsdl-org/SDL/releases/download/release-2.32.10/SDL2-devel-2.32.10-mingw.zip
           echo "f15cff5fca62ec9381a016ef1d42a95c638cd72d2f226ba5781c76fe43dbd1ac  $native/sdl.zip" | sha256sum -c -
           unzip -q "$native/sdl.zip" -d "$native"
-          # The installers pin the Windows target; retarget them to Linux with PIC.
-          cat > "$native/zig" <<SH
-          #!/bin/sh
-          if [ "\$1" = cc ]; then
-            shift
-            for a do shift; [ "\$a" = x86_64-windows-gnu ] && a=x86_64-linux-gnu; set -- "\$@" "\$a"; done
-            set -- cc "\$@" -fPIC -D_DEFAULT_SOURCE
-          fi
-          exec "$native/zig-x86_64-linux-0.15.2/zig" "\$@"
-          SH
-          chmod +x "$native/zig"
           echo "SM_NATIVE=$native" >> "$GITHUB_ENV"
-          echo "SM_ZIG=$native/zig" >> "$GITHUB_ENV"
+          echo "SM_ZIG=$native/zig-x86_64-linux-0.15.2/zig" >> "$GITHUB_ENV"
           echo "SM_SDL_INCLUDE=$native/SDL2-2.32.10/x86_64-w64-mingw32/include/SDL2" >> "$GITHUB_ENV"
           echo "LIBRARY_PATH=$native/lib" >> "$GITHUB_ENV"
-          echo "LOCALAPPDATA=$native" >> "$GITHUB_ENV"
       - name: Build pinned native dependencies
         run: |
           for dependency in cpu backend spc; do
-            pwsh -NoProfile -File "tools/install_lakesnes_$dependency.ps1" -Zig "$SM_ZIG" -Prefix "$SM_NATIVE/lakesnes-$dependency" -LibraryDirectory "$LIBRARY_PATH"
+            python tools/install_lakesnes.py "$dependency" --zig "$SM_ZIG" --target x86_64-linux-gnu --prefix "$SM_NATIVE/lakesnes-$dependency" --library-directory "$LIBRARY_PATH"
           done
-          python tools/install_native_config.py --zig "$SM_ZIG" --prefix "$SM_NATIVE/config" --library-directory "$LIBRARY_PATH" --sdl-include "$SM_SDL_INCLUDE"
-          python tools/install_native_music.py --zig "$SM_ZIG" --prefix "$SM_NATIVE/music" --library-directory "$LIBRARY_PATH"
+          python tools/install_native_config.py --zig "$SM_ZIG" --target x86_64-linux-gnu --prefix "$SM_NATIVE/config" --library-directory "$LIBRARY_PATH" --sdl-include "$SM_SDL_INCLUDE"
+          python tools/install_native_music.py --zig "$SM_ZIG" --target x86_64-linux-gnu --prefix "$SM_NATIVE/music" --library-directory "$LIBRARY_PATH"
           codec="$SM_NATIVE/stb-image"
           mkdir -p "$codec"
           curl -sSfL -o "$codec/stb-sys-0.6.0.crate" https://crates.io/api/v1/crates/stb-sys/0.6.0/download
           echo "fedcddefe320931b97fea7c9bc9168567eadaf71c87a74a3491d5b46b5c573de  $codec/stb-sys-0.6.0.crate" | sha256sum -c -
           tar -xf "$codec/stb-sys-0.6.0.crate" -C "$codec" stb-sys-0.6.0/vendor/stb/stb_image.h
           echo "8e5b0d717dfc8a834c97ef202d20e78d083d009586e1731c985817d0155d568c  $codec/stb-sys-0.6.0/vendor/stb/stb_image.h" | sha256sum -c -
-          "$SM_ZIG" cc -target x86_64-windows-gnu -O2 -std=c11 -ftrivial-auto-var-init=zero -I "$codec/stb-sys-0.6.0/vendor/stb" -c sm/native/stb_image.c -o "$codec/stb_image.o"
+          "$SM_ZIG" cc -target x86_64-linux-gnu -O2 -std=c11 -fPIC -D_DEFAULT_SOURCE -ftrivial-auto-var-init=zero -I "$codec/stb-sys-0.6.0/vendor/stb" -c sm/native/stb_image.c -o "$codec/stb_image.o"
           "$SM_ZIG" ar rcs "$LIBRARY_PATH/libsm_stb_image.a" "$codec/stb_image.o"
       - name: Build the verifier shared object
         run: python tools/verify_dll.py --build-only --direct

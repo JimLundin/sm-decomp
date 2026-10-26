@@ -197,11 +197,16 @@ def desktop_source(source):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--zig", required=True, type=Path)
+    parser.add_argument("--target", required=True, choices=("x86_64-windows-gnu",),
+                        help="desktop compatibility requires the Windows ABI (32-bit long)")
     parser.add_argument("--sdl-include", required=True, type=Path)
-    parser.add_argument("--prefix", type=Path, default=Path(os.environ["LOCALAPPDATA"]) / "sm-decomp-tools/native-desktop-45a149d8")
+    parser.add_argument("--prefix", type=Path)
     parser.add_argument("--library-directory", type=Path)
     parser.add_argument("--emit-only", action="store_true")
     args = parser.parse_args()
+    if args.prefix is None:
+        cache = Path(os.environ["LOCALAPPDATA"]) if os.name == "nt" else Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache"))
+        args.prefix = cache / "sm-decomp-tools/native-desktop-45a149d8"
     root = Path(__file__).resolve().parents[1]
     source = args.prefix / "source"
     library = args.library_directory or args.prefix / "lib"
@@ -228,7 +233,7 @@ def main():
     if args.emit_only:
         return
     obj = library / "native_desktop.o"
-    subprocess.run([str(args.zig), "cc", "-target", "x86_64-windows-gnu", "-O2", "-std=c11",
+    subprocess.run([str(args.zig), "cc", "-target", args.target, "-O2", "-std=c11",
                     "-fexceptions", "-fwrapv", "-fno-strict-aliasing", "-ffp-contract=off", "-ffunction-sections", "-fdata-sections",
                     "-I", str(library), "-I", str(source / "src"), "-I", str(root / "sm/src"),
                     "-I", str(args.sdl_include), "-c", str(root / "sm/src/native_desktop.c"), "-o", str(obj)], check=True)

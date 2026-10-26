@@ -37,6 +37,12 @@ directives) are to be obeyed as given. Disagree in one line under the item, then
 progress view is `tools/treemap.py`'s image, published by Pages on every main push and
 embedded in README.md. Nobody edits that image; no other dashboards.
 
+**Tooling cleanup (user, 2026-10-26):** mobile portrait map, essential replay docs,
+upstream references, runtime-only restores and shared Python installers. Measured
+selected restore: 114178386 to 523438 bytes with identical runtime assets. Keep
+CSV/TOML provenance and checks; support savings are separate from engine savings.
+Spark `ab94761f` replacement ratio is 83.51%; its body incorrectly says 84.54%.
+
 **Landing (user decision 2026-10-25 23:25, given live to the reviewer; amends 18:05).**
 A Windows agent that ran its `Rows:` locally on a tip rebased onto current `origin/main`
 pushes straight to main (`git push origin HEAD:main`; rejected push = fetch, rebase,

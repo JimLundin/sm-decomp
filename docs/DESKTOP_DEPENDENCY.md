@@ -9,15 +9,16 @@ Distribute the [Zelda3 MIT notice](../third_party/zelda3/LICENSE.txt) with binar
 Install alongside SDL and the other native libraries:
 
 ```text
-python tools/install_native_desktop.py --zig <zig.exe> --sdl-include <SDL-include/SDL2> --library-directory <SDL-lib>
-python tools/install_native_config.py --zig <zig.exe> --sdl-include <SDL-include/SDL2> --library-directory <SDL-lib>
+python tools/install_native_desktop.py --target x86_64-windows-gnu --zig <zig.exe> --sdl-include <SDL-include/SDL2> --library-directory <SDL-lib>
+python tools/install_native_config.py --target x86_64-windows-gnu --zig <zig.exe> --sdl-include <SDL-include/SDL2> --library-directory <SDL-lib>
 ```
 
 Keep that directory in `LIBRARY_PATH`. Reinstall configuration/utilities when
 updating from the preceding version: their embedded source checks include the
 changed renderer callback types. The desktop installer verifies pinned source
-and license hashes and builds `libsm_desktop.a`. Its compiler and layout checks
-target Windows GNU x64; other targets require a matching build and validation.
+and license hashes and builds `libsm_desktop.a`. The desktop installer accepts
+only `--target x86_64-windows-gnu`: its current native bridge requires a 32-bit
+`long`, so Linux LP64 is not supported. Match the Windows SDL2 headers and libraries.
 The headless verifier does not link the desktop implementation.
 
 Rust retains `GameOwner`, all game and SNES layouts, both pixel buffers, the

@@ -13,17 +13,13 @@ scheduling, buses, snapshots and CPU hooks stay in Rust. This dependency replace
 shared native/oracle consumers; it does not replace the entire hardware backend.
 
 Install with
-`tools/install_lakesnes_backend.ps1 -Zig <path-to-zig.exe> -LibraryDirectory <SDL-lib>`.
+`python tools/install_lakesnes.py backend --target x86_64-windows-gnu --zig <path-to-zig.exe> --library-directory <SDL-lib>`.
 The installer checks every downloaded file against its pinned SHA256 and builds
 `liblakesnes_backend.a`. Add its directory to `LIBRARY_PATH` alongside the CPU,
 SPC, PNG and SDL libraries. Rebuild this archive after editing `sm/src/snes/backend.c`;
 the verifier rejects an archive whose compiled bridge hash is stale. Include
 [the pinned revision's MIT license](../third_party/lakesnes/LICENSE-2022.txt)
 with distributed binaries.
-
-The installer was syntax-checked. This machine's PowerShell script policy
-requires running its checksum-verified Zig compilation and archive commands
-directly; that is how the tested archive was built.
 
 PPU register calls use a temporary beam-position/open-bus view and restore the original
 SNES pointer. The Rust adapter preserves line-zero mosaic setup and the native
@@ -74,11 +70,9 @@ segments establish integration, not gameplay/music coverage; active synthesis
 and unusual states have component coverage. Normal release library, frontend
 and verifier builds pass.
 
-On another 64-bit host, verify the installer’s source hashes and compile
-`sm/src/snes/backend.c` with that source directory on the include path, C11,
-exception unwind support and `SM_BACKEND_SOURCE_HASH` defined as the quoted
-SHA256 of the bridge. Archive the object as `liblakesnes_backend.a`. The Windows
-GNU build is validated here; this host-native recipe has not been tested on Linux.
+For Linux x86-64, use the same installer with `--target x86_64-linux-gnu`.
+The installer supplies PIC flags and the bridge's source stamp. Choose a separate
+native-library directory for each target; installation alone does not verify runtime behavior.
 
 The separate SPC interpreter dependency is documented in
 [SPC_DEPENDENCY.md](SPC_DEPENDENCY.md).
@@ -92,7 +86,7 @@ April 2025; its CPU last changed in November 2023. It is independently published
 external code, not the project's CPU moved outside the maintained source count.
 
 Install a normal Zig C toolchain and run
-`tools/install_lakesnes_cpu.ps1 -Zig <path-to-zig.exe> -LibraryDirectory <SDL-lib>`.
+`python tools/install_lakesnes.py cpu --target x86_64-windows-gnu --zig <path-to-zig.exe> --library-directory <SDL-lib>`.
 The script fetches four unmodified pinned files, verifies SHA256 and creates
 `liblakesnes_cpu.a`. No C
 behavioral glue or modified external source is used. The external closure has
@@ -107,61 +101,15 @@ linker resolves it through that library path. For a separate prefix, include its
 `lib` directory in `LIBRARY_PATH`. No Cargo build script or new Rust dependency
 is required. A missing library must fail the ordinary link.
 
-On the current Windows machine, invoking the `.ps1` installer failed because
-PowerShell script execution is disabled. That result remains a failed installer
-attempt. The separately authorized direct Zig compiler/archive commands below
-succeeded; they do not run or rehost the script or change any execution policy.
-
-The four files already downloaded under `cpuSourceDirectory` below are unmodified
-files from the pinned revision above. Their verified SHA256 values are:
-
-| File | SHA256 |
-|---|---|
-| cpu.c | `45200e56488392a25f2664caedb4edb7782ac78197a28972ccf5612b0088a470` |
-| cpu.h | `4dcce50ce511cf44e115c9384bcb5cf0e057d2158581b69f490c12a613941b19` |
-| statehandler.c | `2bf94ba80e0c7ca8363ab2a1f7d3e7ecb076278c9339990a73141641b772f1c0` |
-| statehandler.h | `6e1b3affd60dd242bfa2dd5b25c67edfb8663d28f6c2b89e8db1a15b7b7d7249` |
-
-Run these ordinary commands from an interactive PowerShell session. The source,
-build and SDK directories shown already exist on this machine. On another machine,
-use the corresponding directories and the same pinned, checksum-verified files.
-
-```powershell
-$cpuZig = 'C:/Users/Jim.Lundin/AppData/Local/sm-decomp-tools/zig-x86_64-windows-0.15.2/zig.exe'
-$cpuSourceDirectory = 'C:/Users/Jim.Lundin/AppData/Local/sm-decomp-experiments/20261021/lakesnes-cpu-dependency/upstream/snes'
-$cpuBuildDirectory = 'C:/Users/Jim.Lundin/AppData/Local/sm-decomp-tools/lakesnes-cpu-048a0d7/lib'
-$cpuSdlLibraries = 'C:/Users/Jim.Lundin/AppData/Local/sm-decomp-tools/SDL2-2.32.10/SDL2-2.32.10/x86_64-w64-mingw32/lib'
-& $cpuZig cc -target x86_64-windows-gnu -O2 -std=c11 -c "$cpuSourceDirectory/cpu.c" -o "$cpuBuildDirectory/cpu.o"
-& $cpuZig cc -target x86_64-windows-gnu -O2 -std=c11 -c "$cpuSourceDirectory/statehandler.c" -o "$cpuBuildDirectory/statehandler.o"
-& $cpuZig ar rcs "$cpuBuildDirectory/liblakesnes_cpu.a" "$cpuBuildDirectory/cpu.o" "$cpuBuildDirectory/statehandler.o"
-Copy-Item -LiteralPath "$cpuBuildDirectory/liblakesnes_cpu.a" -Destination "$cpuSdlLibraries/liblakesnes_cpu.a"
-$env:LIBRARY_PATH = $cpuSdlLibraries
-cargo build --release
-```
-
-Check that each compiler/archive command exits successfully before continuing.
-The archive has its own name; no SDL library is replaced. Keep the bundled MIT
-license with distributed binaries, including those built by this direct recipe.
-
-For Debian/Ubuntu, build the same pinned files with the host C toolchain. Obtain
-`cpu.c`, `cpu.h`, `statehandler.c` and `statehandler.h` from
-`https://raw.githubusercontent.com/dinkc64/LakeSnes/048a0d72568668f74e0cdf371dcd9e8efd614965/snes/`
-and verify the table above. Run from this repository's root, with `cpu_source`
-pointing to that verified directory. Keep the existing SDL development dependency.
-This host-native recipe is provided for Unix installation; Linux compilation and
-runtime were not tested in this experiment.
+For Linux x86-64, use the same checked sources through the Python installer:
 
 ```sh
-cpu_source=/path/to/checksum-verified/LakeSnes/snes
-cpu_prefix="$HOME/.local"
-cpu_objects="$cpu_prefix/lib/lakesnes-cpu-048a0d7"
-mkdir -p "$cpu_objects"
-cc -O2 -std=c11 -fPIC -c "$cpu_source/cpu.c" -o "$cpu_objects/cpu.o"
-cc -O2 -std=c11 -fPIC -c "$cpu_source/statehandler.c" -o "$cpu_objects/statehandler.o"
-ar rcs "$cpu_prefix/lib/liblakesnes_cpu.a" "$cpu_objects/cpu.o" "$cpu_objects/statehandler.o"
-install -Dm644 third_party/lakesnes/LICENSE.txt "$cpu_prefix/share/licenses/lakesnes-cpu/LICENSE.txt"
-LIBRARY_PATH="$cpu_prefix/lib${LIBRARY_PATH:+:$LIBRARY_PATH}" cargo build --release
+python tools/install_lakesnes.py cpu --target x86_64-linux-gnu --zig /path/to/zig --library-directory /path/to/native/lib
 ```
+
+The installer's `SOURCES` table records every upstream file checksum. Use
+`--prefix` to choose a source cache; retain the license notice with the archive.
+Build and replay for the selected target before treating it as validated.
 
 The existing Rust CPU layout, legacy saves, hardware bus, oracle hooks and
 outer interrupt sequencing remain. Foreign raw registers are copied per

@@ -120,10 +120,15 @@ def music_source(source):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--zig", required=True, type=Path)
-    parser.add_argument("--prefix", type=Path, default=Path(os.environ["LOCALAPPDATA"]) / "sm-decomp-tools/native-music-45a149d8")
+    parser.add_argument("--target", required=True, choices=("x86_64-windows-gnu", "x86_64-linux-gnu"))
+    parser.add_argument("--prefix", type=Path)
     parser.add_argument("--library-directory", type=Path)
     parser.add_argument("--emit-only", action="store_true")
     args = parser.parse_args()
+    if args.prefix is None:
+        cache = Path(os.environ["LOCALAPPDATA"]) if os.name == "nt" else Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache"))
+        args.prefix = cache / "sm-decomp-tools/native-music-45a149d8"
+    target_flags = ["-fPIC", "-D_DEFAULT_SOURCE"] if args.target == "x86_64-linux-gnu" else []
     root = Path(__file__).resolve().parents[1]
     source = args.prefix / "source"
     library = args.library_directory or args.prefix / "lib"
@@ -142,7 +147,7 @@ def main():
     if args.emit_only:
         return
     obj = library / "native_music.o"
-    subprocess.run([str(args.zig), "cc", "-target", "x86_64-windows-gnu", "-O2", "-std=c11",
+    subprocess.run([str(args.zig), "cc", "-target", args.target, "-O2", "-std=c11", *target_flags,
                     "-fexceptions", "-fwrapv", "-fno-strict-aliasing", "-ffunction-sections", "-fdata-sections",
                     "-include", str(stamp), "-I", str(source), "-I", str(library),
                     "-c", str(root / "sm/src/native_music.c"), "-o", str(obj)], check=True)

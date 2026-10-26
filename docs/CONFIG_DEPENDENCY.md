@@ -9,14 +9,15 @@ Include the [MIT notice](../third_party/zelda3/LICENSE.txt) with distributed bin
 Install alongside the existing SDL/native libraries:
 
 ```text
-python tools/install_native_config.py --zig <zig.exe> --sdl-include <SDL-include/SDL2> --library-directory <SDL-lib>
+python tools/install_native_config.py --target x86_64-windows-gnu --zig <zig.exe> --sdl-include <SDL-include/SDL2> --library-directory <SDL-lib>
 ```
 
 Keep that directory in `LIBRARY_PATH`. The installer verifies source/license
 hashes and builds `libsm_config.a` with separate configuration and utility
 objects. Headless code pulls only the utility object; it needs no SDL input
-implementation. The supplied installer and layout checks target Windows GNU
-x64. Other targets require a matching native build and layout validation.
+implementation. The installer requires an explicit Windows GNU or Linux GNU
+x86-64 target. Use `--target x86_64-linux-gnu` for Linux with its matching SDL2
+headers and native libraries; target-specific build and runtime checks still apply.
 
 The frontend checks both objects' embedded source bytes before parsing or
 looking up input. The verifier checks the utility object before execution.

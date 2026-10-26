@@ -12,4 +12,8 @@ checks in the native archives; rebuild when the named adapter inputs change.
 | Configuration, utilities and shaders | [install_native_config.py](../../tools/install_native_config.py) | [Configuration](../../docs/CONFIG_DEPENDENCY.md), [shaders](../../docs/SHADER_DEPENDENCY.md) |
 | Desktop host | [install_native_desktop.py](../../tools/install_native_desktop.py) | [Desktop](../../docs/DESKTOP_DEPENDENCY.md) |
 
+All three installers require an explicit `--target`. Configuration and music
+accept `x86_64-windows-gnu` or `x86_64-linux-gnu`; the desktop adapter currently
+supports only `x86_64-windows-gnu`. Use matching native headers and libraries.
+
 Retain the [MIT notice](LICENSE.txt) with distributed binaries.

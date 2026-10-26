@@ -97,7 +97,7 @@ def check_library(host, root):
     host.sm_verify_backend_source_hash.restype = ctypes.c_char_p
     bridge = root / "sm/src/snes/backend.c"
     if host.sm_verify_backend_source_hash() != hashlib.sha256(bridge.read_bytes()).hexdigest().encode():
-        raise RuntimeError("stale native backend; rerun tools/install_lakesnes_backend.ps1 and rebuild")
+        raise RuntimeError("stale native backend; rerun tools/install_lakesnes.py backend with --zig and --target, then rebuild")
 
     native_hash = runpy.run_path(str(root / "tools/install_native_music.py"))["native_hash"]
     if not hasattr(host, "sm_verify_music_source_hash"):

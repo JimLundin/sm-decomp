@@ -11,12 +11,14 @@ The existing configuration installer builds the shader as a separate member of
 shared installer and OpenGL caller.
 
 ```text
-python tools/install_native_config.py --zig <zig.exe> --sdl-include <SDL-include/SDL2> --library-directory <SDL-lib>
-python tools/install_native_desktop.py --zig <zig.exe> --sdl-include <SDL-include/SDL2> --library-directory <SDL-lib>
+python tools/install_native_config.py --target x86_64-windows-gnu --zig <zig.exe> --sdl-include <SDL-include/SDL2> --library-directory <SDL-lib>
+python tools/install_native_desktop.py --target x86_64-windows-gnu --zig <zig.exe> --sdl-include <SDL-include/SDL2> --library-directory <SDL-lib>
 ```
 
-Keep that directory in `LIBRARY_PATH`. The adapter targets Windows GNU x64;
-other targets require corresponding ABI and runtime validation. The headless
+Keep that directory in `LIBRARY_PATH`. The configuration installer also accepts
+`--target x86_64-linux-gnu`, but the desktop installer currently supports only
+Windows GNU x64. A Linux shader build does not establish a working Linux frontend.
+The headless
 verifier does not link the shader implementation.
 
 The existing GL loader supplies the shader's 42 function pointers without extra
