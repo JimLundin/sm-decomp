@@ -19,7 +19,7 @@ required = [
 [[segment]]
 id = "options-menu-return-parameter"
 checkpoint = "options-menu-return-parameter-329.smvchk"
-checkpoint_sha256 = "4e080ebec66340336108170d4197253f08192e8538494cdd3402525962291779"
+checkpoint_sha256 = "8ab2104c675065a228d7c2d11f03d560fa9e884b2842a85a35421fcdb221a893"
 inputs = "any-wait-prefix.inputs"
 input_sha256 = "2bf79cb51268465d36909fa4ae0e8988dc5463ea637c1b2dc58d8a8ac819aa58"
 start_frame = 329
@@ -53,7 +53,7 @@ expect = ["state:30", "area:ceres", "room:DF45"]
 [[segment]]
 id = "demo-attract-setup"
 checkpoint = "demo-attract-setup-2619.smvchk"
-checkpoint_sha256 = "9126bb46abcb93c7ef48a2f13a046e8503f787fc352c777eb3996cdec3bb2bec"
+checkpoint_sha256 = "0df479cd06e4f64fbdbe2a46601b0edbc329bd687cad8b785e5950420bebe78d"
 inputs = "attract-neutral.inputs"
 input_sha256 = "b6b897cc90e61d209a57277d3927c935b71dcfcbd8e4c9dadb9b45bd605db6f6"
 start_frame = 2619
@@ -186,7 +186,7 @@ after_expectations = 120
 [[segment]]
 id = "boss-crocomire"
 checkpoint = "crocomire-boss-167285.smvchk"
-checkpoint_sha256 = "f831dc5ebcf40e8956b40b1d2d89be6d3726ea6d9ad5117843133c285f8b9b5c"
+checkpoint_sha256 = "5aeb799d84f55d7c737fd6f722b92bf41a1226efd17474f5b32f1b202d908fe8"
 inputs = "corpus-crocomire.inputs"
 input_sha256 = "90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe"
 start_frame = 167285
@@ -385,7 +385,7 @@ after_expectations = 120
 [[segment]]
 id = "ice-return-business"
 checkpoint = "ice-return-business-161656-478c39.smvchk"
-checkpoint_sha256 = "6f6e71acb527e52f25de600d664c7a7991d97d456c470eaa2eb73a7a5c6e76a7"
+checkpoint_sha256 = "0f94cdae0b267a792867800a11ff54a7a64d450389b9ae8876fb1bff4ccebd62"
 inputs = "corpus-ice-return-business.inputs"
 input_sha256 = "4b4090a970f52658d27d4f69fe0e6d30da43739519cf781ef722dacbecdb5721"
 start_frame = 161656
@@ -398,7 +398,7 @@ expect = ["door:A8B9", "door:A75D", "door:A815", "door:A7DE"]
 [[segment]]
 id = "power-bomb-room-entry"
 checkpoint = "power-bomb-room-entry-166082-478c39.smvchk"
-checkpoint_sha256 = "9e4f896011c118aa1472dbc2f5fead01f8681e2490da236c3bad572aed0ad48c"
+checkpoint_sha256 = "b86c59246b4bfdb3f7ea8cb80028a14c2dee074b3e94de7e0b63954e58b2aa8b"
 inputs = "corpus-power-bomb-room-entry.inputs"
 input_sha256 = "34ab4055b6904d0544e490632fbbb81b87f18d163e55c7c6208ee9e5bd2a7dfb"
 start_frame = 166082
@@ -578,7 +578,7 @@ expect = ["room:AC83"]
 [[segment]]
 id = "pickup-reserve"
 checkpoint = "reserve-147273.smvchk"
-checkpoint_sha256 = "ef007c450dda0cb0089cd86128eef155698887b44083380fa30d76c02dd30f20"
+checkpoint_sha256 = "ee1c1406936a5e6d352a4f91f990cf15c10c463444038c7bf640b3dfb911badf"
 inputs = "corpus-norfair-reserve.inputs"
 input_sha256 = "968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d"
 start_frame = 147273
@@ -591,7 +591,7 @@ after_expectations = 120
 [[segment]]
 id = "door-transition"
 checkpoint = "door-transition-13600-478c39.smvchk"
-checkpoint_sha256 = "4d0c2c5731806f534b17e4e6dca4407f98761ebcf18c54ab8d2631aabb08f8f5"
+checkpoint_sha256 = "e7500cc91fd282344d9d8976412a8f54f13d6b979c612cf63ed4ef3d6493e3d9"
 inputs = "corpus-speed-booster.inputs"
 input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
 start_frame = 13600
@@ -625,7 +625,7 @@ after_expectations = 120
 [[segment]]
 id = "save-death-reload"
 checkpoint = "save-before-kago.smvchk"
-checkpoint_sha256 = "97fd9e1719d2cc627fb222f4f1a52688f66749b8937df3d4a4d55c01abaf9384"
+checkpoint_sha256 = "00e90599de285cbb69b5079d32bbab33281be7afdcdaf751aebd79e8b6703428"
 inputs = "corpus-save-death-continue.inputs"
 input_sha256 = "af79d24c791c1414cd4b1b83f040da0787a2a69bd0d2c4d6b73fc667b7d74467"
 start_frame = 70000
@@ -639,7 +639,7 @@ after_expectations = 120
 [[segment]]
 id = "save-memory"
 checkpoint = "save-before-kago.smvchk"
-checkpoint_sha256 = "97fd9e1719d2cc627fb222f4f1a52688f66749b8937df3d4a4d55c01abaf9384"
+checkpoint_sha256 = "00e90599de285cbb69b5079d32bbab33281be7afdcdaf751aebd79e8b6703428"
 inputs = "corpus-speed-booster.inputs"
 input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
 start_frame = 70000
@@ -709,7 +709,7 @@ expect = ["state:8", "state:11"]
 [[segment]]
 id = "shot-gate-spawn-parameter"
 checkpoint = "gate-153606.smvchk"
-checkpoint_sha256 = "ee41e6b7c14e08eba98d4409d1b43b04611e14b582af018e96c1196909e8ea1a"
+checkpoint_sha256 = "71b3b1d7942b3cd5e4cbb500263ed5d7963552fea326be195a2c4302d2fcd7ee"
 inputs = "corpus-wave-gate.inputs"
 input_sha256 = "1ce640c865d508ff2aab0f79c043c6da8aff9b74d6a1444d3a994e20d68db123"
 start_frame = 153606
@@ -745,7 +745,7 @@ expect = ["area:crateria"]
 [[segment]]
 id = "crocomire-spit-drop-scratch"
 checkpoint = "crocomire-spit-167281.smvchk"
-checkpoint_sha256 = "2644d9ed7f3c84517d170e6e3ad5ea4f6c45c06a47b162a34cf9549287d3a5fe"
+checkpoint_sha256 = "1ada101d0cffebad8b87d85364788ca116bb1d6f8dde9ab231f3ac4bac649e1e"
 inputs = "corpus-crocomire-shot.inputs"
 input_sha256 = "e46b9a61eeded83064cc3a9fc29cf05d6a1cd18151c06cd6c9b78930af41766b"
 start_frame = 167281
@@ -756,7 +756,7 @@ expect = ["room:A98D", "state:8"]
 [[segment]]
 id = "crocomire-melt-graphics-buffer"
 checkpoint = "crocomire-melt-169057.smvchk"
-checkpoint_sha256 = "2adc74221ae22d57705ce719ac30193c73ebbfedd20e66fd008f230b8578be4f"
+checkpoint_sha256 = "0a3db6f390d4436b4d3a921fb7f832d5d7a3c5994c7e8f0a4cb5c67ef67116e8"
 inputs = "corpus-crocomire.inputs"
 input_sha256 = "90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe"
 start_frame = 169057
@@ -766,7 +766,7 @@ expect = ["room:A98D", "state:8"]
 [[segment]]
 id = "crocomire-wall-spawn-return"
 checkpoint = "crocomire-wall-171090.smvchk"
-checkpoint_sha256 = "1b27d696a28067d31cb8c68224fc0aa0c593ade587d247fdedeb4293001ab22e"
+checkpoint_sha256 = "3c299f5ca5ea48a8c989d7db52ecf82a910b56ce3dbe56f735862c556575d483"
 inputs = "corpus-crocomire.inputs"
 input_sha256 = "90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe"
 start_frame = 171090

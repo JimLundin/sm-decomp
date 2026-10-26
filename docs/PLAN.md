@@ -1,296 +1,200 @@
 # Plan
 
 Goal: a compact Super Metroid engine playing boot to credits with owned, safe Rust
-gameplay and clear modules. Remove unsafe/raw-memory operations from gameplay,
-retained native interfaces and verification; hiding them in wrappers is incomplete.
+and clear modules. Remove unsafe/raw-memory operations from gameplay, retained
+native interfaces and verification; hiding them in wrappers is incomplete.
 Target below 100,000 production lines; 90,000 is a stretch, not promised deletions.
+REVIEW owns the detailed size and waypoint targets.
 
-Map Rando requires custom sprites/palettes, reordered rooms/doors and opt-in re-spin/QoL.
-Separate content, topology and options from platform code and ROM/RAM compatibility;
-vanilla is the first fidelity profile. The [target](target-architecture/README.md)
-is an owned deterministic Session, our renderer/audio and small platform libraries,
-independent of SNES emulation. Windows migration may retain the emulated backend/oracle.
+The [accepted destination](target-architecture/README.md) is one deterministic owned
+Session, our renderer/audio and small platform libraries, independent of SNES emulation.
+Map Rando needs custom sprites/palettes, configurable rooms/doors and opt-in re-spin/QoL.
+Keep content, topology and options separate from platform and ROM/RAM compatibility;
+vanilla is the first fidelity profile. Windows migration may retain the backend/oracle.
 
-Git concurrency: never reserve or hold index/ref locks. Use Git's own short-lived
-locks only during actual writes; no locks during builds, checks, reasoning or waits.
-Recheck HEAD, index and other work before every Git write; reconcile changes and
-preserve others' work. Do not delete another process's lock or force-push main.
-Push every commit to remote immediately after committing (user, 2026-10-26).
+## Authority, lanes and Git
+Read [REVIEW.md](REVIEW.md) next and its Milestone plan at each item's start; it
+supersedes this work order. The reviewer may change goals/process (user, 2026-10-25).
+Follow external reviewers' instructions, including cloud REVIEW directives: record
+one line of disagreement under the item, then do it. Direct user instructions win.
+Git history holds no current rules; pre-2026-10-17 workflows are archived.
 
-## Review directives (user direction, 2026-10-24; reset 2026-10-25 12:30)
+Lanes: A finishes seed/recipe speed work, then takes the next unclaimed bank;
+M removes unsafe outside banks; B1-B6 retire banks in REVIEW's order. No more
+in-place M bank codemods. Current bank queues are B1 sm_82, B2 sm_8b, B3 sm_a3,
+B4 sm_a8/sm_b3, B5 sm_a9/sm_aa and B6 sm_a6/sm_a7; sm_b3 is already retired.
+Freed workers take sm_a5, sm_9b, then sm_a4. Keep cloud claims intact.
+Non-enemy replacements aim <=80%; every B body gives the full ratio and a reason
+above 90%. Necessary safety growth must be counted and explained, not relabeled.
 
-Read [REVIEW.md](REVIEW.md) next; its **Milestone plan** governs work order 1-2 and
-the user gave the reviewer authority to change goals and process (2026-10-25).
-Lanes (reset 3, 23:25): **A** CI speed (A2: boot-replay rows onto seeds; A1 done, 44/44);
-**M** unsafe outside bank files; **B1-B6** retire banks in the order REVIEW names.
-Subjects start `A:`, `M:` or `B:sm_XX`; bodies end with the review's `Score:` line.
-Speed rule: the **Fast loop** below replaces the old validation strategy. Land
-verified work at once; work held unlanded over one hour is a stall. No docs-only
-commits without a code commit beside them. Verification is `segments.toml` rows,
-not new Rust fixtures or production hooks. Keep this plan near 200 lines.
-Direct user instructions win; Git history holds no current rules.
-**Reviewer authority (user, 2026-10-25 19:00):** instructions from the external
-reviewers (the hourly review check-in and the cloud Claude agents' REVIEW.md
-directives) are to be obeyed as given. Disagree in one line under the item, then do it.
+Never reserve or hold Git index/ref locks; Git's own short locks cover actual writes
+only. Before every Git write, fetch/reconcile current origin/main, recheck HEAD/index
+and preserve others' work. Never delete another process's lock or force-push main.
+Windows agents run named local rows on a tip rebased onto current origin/main,
+commit to main and immediately `git push origin HEAD:main`. A rejected push means
+fetch/rebase, rerun only affected rows, then push. No Windows stacks or ci/windows branches.
+Land verified work promptly; holding it over an hour is a stall. No docs-only commits
+without a code commit beside them. Update PLAN only for active direction or blockers.
 
-**Progress picture (user, 2026-10-25):** the interactive map is retired. The only
-progress view is `tools/treemap.py`'s image, published by Pages on every main push and
-embedded in README.md. Nobody edits that image; no other dashboards.
+Subjects start A:, M: or B:sm_XX. Body <=8 lines: change, exact Rows/results, full
+production/legacy/verification deltas, B ratio/reason and final Score. Use four actual
+UTF-8 middle dots, not question marks; measure the values locally with progress.sh:
+`Score: checks 44/44 · legacy N · production N · unsafe N · verification N`.
 
-**Tooling cleanup (user, 2026-10-26):** mobile portrait map, essential replay docs,
-upstream references, runtime-only restores and shared Python installers. Measured
-selected restore: 114178386 to 523438 bytes with identical runtime assets. Keep
-CSV/TOML provenance and checks; support savings are separate from engine savings.
-Spark `ab94761f` replacement ratio is 83.51%; its body incorrectly says 84.54%.
+The sole progress view is tools/treemap.py's mobile portrait image, published by
+Pages on each main push and embedded in README. Never edit it or add dashboards.
+Keep replay docs essential, upstream references and CSV/TOML provenance/checks;
+shared Python installers/runtime-only restores are support work, counted separately.
 
-**Landing (user decision 2026-10-25 23:25, given live to the reviewer; amends 18:05).**
-A Windows agent that ran its `Rows:` locally on a tip rebased onto current `origin/main`
-pushes straight to main (`git push origin HEAD:main`; rejected push = fetch, rebase,
-rerun only rows the rebase touched, push). Hosted `Segments` on main is the backstop: a
-red main is fixed or reverted by its author before anyone else lands. Cloud agents (no
-ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs in CI
-(C2), cloud agents (C3) and the Linux verifier (L1) stand. Details: REVIEW.md reset 3.
+## Current work and limits
 
-## Work order
+Qualified Core56: production111682, legacy19022, unsafe2853, verification39974; warnings179.
+Core50 owns the actual native player/DSP allocations and shared APU RAM: +25 engine
+lines, no unsafe-line savings. GameOwner no longer promises Rust thread sharing;
+raw SDL userdata/gate/quiescence and native/audio shutdown contracts remain explicit.
+Its current4d25 bundle has14 genuine captures (189,475 frames) and22 byte-identical
+restored encrypted members. Full86 passed136,526 selected+38,827 setup, zero failures;
+both Kago setups independently ran14,350. Old33e6 checkpoints remain incompatible.
+Core51 full86 and Core52-55 scoped rows pass; results and measured costs live in commits.
 
-1. **Lane A coverage complete:** 44/44 required scenarios have passing local evidence;
-   hosted verification and full-corpus runs remain separate obligations. A2 uses
-   69 original seeds and thirteen hash-bound native/oracle checkpoints; the full
-   8780-frame intro still boots. Authored route starts are not original TAS seeds.
-   Keep full inputs/windows/guards, both Kago setups and all distributed assets.
-   Golden Torizo preserves all five Snes9x input ports and independently observed
-   VRAM read-buffer, CGRAM-low and Mode7 latch values; no invented defaults.
-   A continues the next unclaimed bank in REVIEW; coverage does not finish Session.
-2. **Lane B retirement:** B1 continues sm_82, B2 sm_8b, B3 sm_a3, Windows M/B4
-   sm_a8 then sm_b3. B5/B6 continue sm_a9/sm_a6 then sm_aa/sm_a7. Cloud M removes
-   unsafe outside bank files; no further in-place bank codemods. Non-enemy
-   replacements aim <=80%. RAM remains authoritative; bank moves are transitional.
-   Cloud-motion rows: `credits`, `credits-postroll-wave` and the four smoke rows.
-   Keep the 300-frame Gunship row, 8-frame crawler regression, full 800-frame
-   bomb-jump window and both 14350-frame Kago setups. Goofball macro sensitivity
-   remains open. Preserve full identities, ordered failures/effects, native/LE
-   access and ROM provenance. Reject prototype 42c59cb's whole-RAM aliases and
-   false-safe Load24; retain unsafe backend contracts.
-3. **Then - finish owned gameplay.** Migrate remaining complete producer/consumer
-   interactions, actual callers and legacy retirement. Close persistent ownership,
-   content/topology/options boundaries and unsafe removal across the whole engine;
-   preserve vanilla behavior and the Map Rando contracts throughout the migration.
-4. **Then - prove the independent engine.** Complete our renderer/audio with small
-   platform libraries, remove the game runtime's SNES-backend dependency, and verify
-   boot-to-credits plus custom sprites, reordered rooms/doors and opt-in mechanics.
+Next: publish qualified Core57-59 firing/pose and A4 families, then checked X-ray and Draygon work.
+Core56 final476b8dc6638846c9 (35 contributions/575452 normalized source bytes) passes full86:
+136,526 selected+38,827 setup+189,475 genuine captures, zero failures; Core57-59 scoped rows pass.
+Core56 source71e806 owns the original input Vec/FILE and actual mirrored Cart image;
++15 engine/+4 verification/+1 unsafe cleanup. Its fresh476b full22 encrypted bundle restores byte-for-byte; initialized419,225-byte payload and5 continuation frames pass.
+Old09e4,9e89 andf5 predecessors stay immutable and receive no intermediate qualification.
+Supported CRT read/close/reset order is preserved; invalid SIZE_MAX/malloc0 callback
+behavior is explicitly outside universal equivalence. Do not invent success/defaults.
 
-Persistent whole-engine ownership and backend independence remain open. Larger
-reductions need live caller migration; the unused-bank scan found no removable family.
-Qualified Core55: production111667, legacy19022, unsafe2852, verification39970; warnings179.
-Native player/DSP allocations have actual owners: +25 engine lines, no unsafe-line savings; raw callback contracts remain.
-Fresh4d25 checkpoints and actual rebuilt desktop archive pass source/native guards; old33e6 checkpoints remain incompatible.
-Full86 passes136,526 selected+38,827 setup/0 failures;189,475 genuine capture frames, both Kago setups independent14,350.
-All22 encrypted release members restore byte-for-byte; initialized machine payload/continuation passes, prepared Session identity remains open.
-Retired sm_b3 separately passed post-deletion full86:136,526 selected+38,555 setup/0 failures.
-Frame dispatch shares21 wrappers via45 bank-private descriptors: -12 engine/-19 unsafe lines; readonly table +360 bytes.
-Independent full86:136,526 selected+38,827 setup/0 failures; captures retain Core50 provenance.
-Grapple connection: -14 substantive engine/-101 legacy/-2 unsafe lines; five rows3338+272 setup pass, seven native angles remain unobserved.
-Door-state dispatch: -14 engine/-14 legacy/-3 unsafe lines; seven rows4096+297 setup pass, Runtime Drop ordering unchanged.
-Grapple release impulse: -23 substantive engine/-53 legacy/-1 unsafe line; five rows3338+272 setup pass, launch variants remain source-reviewed.
-Laboratory sprite motion: -9 engine/-14 legacy, five raw updates and five selectors retired; full8780 intro+smoke10967+272 setup pass.
-Next: publish qualified grapple/door/cinematic families; complete ROM-load ownership/new476b verification runs in parallel.
+Whole-engine Session ownership, persistent actor identity, complete native callback
+safety and backend independence remain open. Bank moves/checked access are transitional.
+After bank retirement, close complete producer/consumer state, content/topology/options
+and unsafe removal; then prove our renderer/audio and boot-to-credits without emulation,
+including custom sprites, reordered rooms/doors and opt-in mechanics.
 
-Scoped mutation11.40min: 3AST kills, 2unobserved pipe-flight survivors, 1separate dispatch kill; all945-frame windows preserved.
-Final retirement removes17 engine/48 legacy/4 unsafe/1 verification lines; full31/48=64.58%, LF conversion is not savings.
-Complete Botwoon/all15 B3 preinstruction routing adds2 engine lines, retires104 legacy/15 unsafe; full106/104=101.92%.
-GameOwner no longer promises Rust thread sharing; raw SDL userdata/gate/lifetime obligations remain explicit.
-Powerbomb retires -34 legacy/-2 engine/-1 unsafe with no verification growth; full caller-inclusive replacement35/37=94.59%.
-Escape animals share lava/rescue paths and migrate callers: -3 engine, -120 legacy, -4 unsafe; +4 verification, combined +1. All variants remain unobserved.
-Melt graphics preparation/upload share their ordered queue encoder: -7 engine, -79 legacy, -2 unsafe, no verification growth.
-Fish shares swim/turn logic: -4 engine lines, -123 legacy, -3 unsafe; +4 verification registry, combined zero. All Fish variants remain unobserved.
-Reflec remains in sm_a3: its native printf has no safe output owner preserving the contract; mutation precedes bank deletion.
-Fireflea retires 128 legacy lines and seven unsafe lines; four source-cache guard lines are separate verification.
-Core39 passed eight Crocomire/control rows (6,457 selected); tilemap and native upload queues are checked.
-Core38 passed 22 rows (66,513 selected); plume/melt and shared burst callers are checked.
-Core37 passed all 86 rows (136,526 selected + 38,827 setup), 189,475 fresh captures and separate C43 105.
-Eleven backend allocations now have stable owners; the snapshot observer blocker is closed.
-Ownership adds 104 runtime lines (89 Rust + 24 native - 9 generated), removes 14 unsafe and 8 verification.
-The fresh 33e6 checkpoint bundle is uploaded; all 22 restored members match byte-for-byte.
-Four release, two mosaic and postcredits 134/138/143/145 remain unobserved; native/failure variants are source-reviewed.
-Six read-only state projections preserve 57,621 bytes; exact native leaf variants remain source-reviewed.
-The manifest remains 86 rows; hardware/Frame, external SpcPlayer ownership and backend independence remain open.
-Retain the fixed 2131-frame X-ray activation/release row and original pickup.
-The existing comparison normalizes 611..616; initializer continuation also relies
-on source review. An unsafe deny attribute counts as a line, not an operation.
-Do not auto-rename macro-shared parameters. Held scrolling consolidation needs
-`scroll_tiles.row.bg2` coverage, absent in Ceres.
+Coverage is86 manifest rows/44 required scenarios, not universal behavior proof.
+Keep full inputs/guards/assets: intro8780, Morph1200, bomb-jump800, crawler8, Gunship300,
+X-ray2131 with original pickup, and BOTH independent Kago14350 setup windows.
+No Morph120-frame early stop. Authored starts are not original TAS seeds. Golden Torizo
+keeps all5 input ports and observed VRAM read-buffer/CGRAM-low/Mode7 latch values.
+Only historical Core37 C43 entry0 is observed; seven native angles, launch/clamp leaves,
+release/mosaic/postcredits134/138/143/145 and other native/failure variants remain scoped.
+Goofball macro sensitivity remains open; held scrolling needs scroll_tiles.row.bg2,
+absent in Ceres. Never auto-rename macro-shared parameters or invent emulator defaults.
 
-Mutation-driver audit: deleting the old room driver breaks retained local capture
-callers. Existing bank campaigns do not replace its unusual alias, failed-upload and
-custom-content checks; keep those checks until their consumers and coverage migrate.
+sm_b3 passed scoped mutation before deletion (11.40min:3 AST kills,2 unobserved
+pipe-flight survivors,1 separate dispatch kill;945-frame windows) and post-push full86
+(136,526 selected+38,555 setup/0 failures). Do not claim surviving paths were reached.
+Reflec's native printf remains in sm_a3 pending a contract-preserving output owner.
+Keep existing room mutation drivers until alias/failed-upload/custom-content consumers
+and equivalent coverage migrate; bank campaigns alone do not replace those checks.
+M1a's [audit](M1A-REVIEW.md) retains19 historical contracts and the verifier bridge's
+separate closures; keep imported alias exclusions, source newlines and Windows dep-info guards.
 
-M1a originally restored 22 production contracts and the verifier bridge from
-[the audit](M1A-REVIEW.md); Core30 requalifies two and Core34 options start. The other 19
-historical requirements and bridge retain their own safety closures. Keep imported
-alias exclusions, Windows dep-info root checks and source newlines; the predecessor
-remains rejected.
+## Implementation contracts
 
-Checkpoint cache finding: whole Session/codec hashes invalidate lossless scalar
-migrations despite an unchanged RAM payload. A future format transition needs
-Session round-trip checks and defined actor-identity persistence; keep guards now.
-
-Checkpoint reuse across recipe namespaces requires SHA-bound matching canonical
-input prefixes; keep source, ROM, full-input and loader guards. Save matching
-manifest starts during setup. Morph retains every hit/expectation and its fixed
-1,200-frame window, with no 120-frame early stop. Its original seed leaves 222
-frames after message completion, versus the former authored window's 506-frame tail.
-
-## Implementation rules
-
-- `sm/src` is authoritative; there is no C to consult or regenerate. Preserve quirks.
-  Resolve meaning with the oracle, `ram_map.rs` and [bank logs](https://patrickjohnston.org/bank/).
-- Before changing boundaries, ownership or backend interfaces, read the accepted
-  [architecture and migration policy](target-architecture/README.md).
-  [State migration](ENGINE_STATE_MIGRATION.md) collects the ownership, aliasing,
-  reset/load, replay, CPU-write and oracle-adoption constraints. Read detailed
-  target contracts only for the interaction being changed.
-- Keep `g_ram` byte-compatible with SNES layout; preserve numeric dispatch/identity,
-  ROM formats, provenance, native/LE words, ordered effects, lazy reads, aliasing,
-  suspension and failure prefixes. Use descriptive gameplay names and one authoritative
-  state per legacy interval, never a mutable owned copy beside writable authoritative RAM.
-- Move complete producer/consumer interactions into owned state before retiring
-  their RAM communication. Completed cores forbid unsafe and need no Game, RAM,
-  raw pointers or backend modules. Safe wrappers and package moves are transitional.
-  Do not turn `word!` into a whole-RAM borrow while retained raw pointers remain;
-  migrate offsets/handles and use checked, scoped access with overlapping reads intact.
-- Retirements add no unsafe to non-bank files. Only hardware/IO register functions
-  may retain unsafe in the existing platform owner, named in the commit body.
-  Otherwise convert to checked access or retain the function in its bank. New owned
-  modules forbid unsafe; every B body gives its ratio, with a reason above 90%.
-- Scope each responsibility: API, owner, setup/update/failure paths, callers and retirement.
-  Adopt caller migration with deletion; preparation needs named consumers and a deletion step.
-  Shared consumers or forwarding facades alone are not completion.
-- Reuse checks; add only named missing behavior/ownership/order/failure coverage, no subsystem harness.
-  Parallel work uses fixed interfaces, isolated snapshots and one integrator.
-- Count all production helpers, tables, runtime adapters, registration, callers and native code.
-  Separate verification, support/installers, dependencies and combined totals. Document mixed-file
-  exclusions reproducibly; compare like-for-like classifications, not historical path totals.
-- Moves, code packing, format compression and relocating code outside `sm/src` are not savings.
-  Count overlap once; check tokens/text against packing. Never add independent draft savings
-  or claim gross retirement as net savings. Disclose necessary safety growth and its full cost.
-- Retain backend/shader/audio/oracle behavior, masks, patches, state and snapshots until
+- sm/src is authoritative; no C to consult/regenerate. Preserve quirks; use the oracle,
+  ram_map.rs and [bank logs](https://patrickjohnston.org/bank/) when meaning is unclear.
+- Before boundaries, state ownership or backend changes, read the accepted destination
+  and [state migration](ENGINE_STATE_MIGRATION.md), plus linked contracts for that interaction.
+- Keep g_ram byte-compatible with SNES layout and one authority per execution interval.
+  Preserve full/odd identities, unknown values, wrapping arithmetic, native versus LE
+  access, ROM/native allocation provenance, off-table aliases, suspension and failure prefixes.
+- Keep captured identities distinct from fresh selectors; preserve every lazy query,
+  ordered effect and Runtime/Drop epoch. Do not predecode, batch or sort effects for savings.
+- Migrate complete API/owner/create/setup/update/callback/failure/reset/load/delete/reuse
+  and actual consumers before retiring RAM communication. Export before legacy/CPU/native
+  writers; import the actual selected normalized image afterwards, including partial failures.
+- Completed cores forbid unsafe and need no Game/RAM/raw pointer/backend modules.
+  No always-live owned mirror beside writable authoritative RAM, whole-RAM borrow while
+  raw aliases remain, forwarding facade or package move presented as completed ownership.
+- Retirements add no unsafe outside banks. Only hardware/IO register functions may retain
+  unsafe in their existing platform owner, named in the body; otherwise check or keep in-bank.
+  New owned modules forbid unsafe. Retain unsafe entry contracts for unchecked callees.
+- Keep backend/shader/audio/oracle behavior, masks/PatchBugs and snapshots until actual
   consumers and equivalent checks migrate. Dependencies mean the backend is not retired.
-- Never commit ROMs, movies, checkpoints, save states or ROM-derived content.
-  Do not build process frameworks, evidence stores, registries or dashboards.
-  Improve the existing verifier when the loop is too slow/weak; record the issue here.
-- Make small commits with one coherent idea. If stuck on an item for over one
-  hour of work, record the findings under it and stop.
+  The611..616 normalization means continuation also needs source proof, not byte comparison alone.
+- Reuse the existing runner; no new production probes/observers/verify cfg blocks,
+  fixture modules/process frameworks/evidence stores/registries. Improve the verifier itself.
+  REVIEW permits a constructed check only for behavior no movie reaches: under100 lines,
+  with the reason in its first line. Otherwise add named missing behavior/order/failure rows.
+- Count all helpers/tables/adapters/registration/callers/native runtime code. Separate
+  verification, support/installers, dependencies and combined totals; document mixed-file
+  exclusions reproducibly. Inline verification stays production; compare like classifications.
+- Moves, formatting/packing/comment deletion and production-to-verification relocation
+  are not savings. Count overlaps once, check tokens/text, never sum independent drafts
+  or claim gross retirement as net. Unsafe deny attributes count as lines, not operations.
+- Never commit ROMs, movies/checkpoints/saves or derived game data. Only encrypted
+  release assets use the existing ci-data route; verify complete restore/member identities.
+- Small commits, one coherent idea. If stuck over an hour, record findings here and stop.
 
-## Fast loop (reviewer, 2026-10-25; replaces the 2026-10-21 validation strategy)
+## Fast loop
 
-Every routine commit runs exactly this, then commits:
-1. `cargo fmt --check`; `cargo check --no-default-features --lib` (no new warnings);
-   one DLL build (`python tools/verify_dll.py --build-only`).
-2. `verify_dll.py --corpus movies/segments.toml` with `--segment` for every row that
-   exercises the change (named in the body) plus the smoke set `door-loading-lag-nmi`,
-   `tas-ceres-four-doors`, `area-crateria`, `item-morph-ball`. Zero failures.
-   No row reaches the change: lane A adds one; lane B moves the code unchanged and
-   writes "uncovered: <function>" in the body.
-3. Nothing else per commit: no mutation runs, independent controls, frontend metadata,
-   optimized/release rebuilds, clean-source reruns or full replays. Once per bank,
-   before its file is deleted: scoped `cargo-mutants` (<=30 min); the full corpus runs
-   on main after the deletion lands (20:52 rule below), not on the branch.
-   Partition independent movie groups to use spare CPU; keep shared prefixes and
-   current source/codec checks. The full corpus also runs at each review waypoint.
-   A failure from a full run gets a
-   regression row with its fix. Never weaken a comparison or a row's expectations.
-   On Windows, generate scoped AST mutants with cargo-mutants and execute them
-   through the existing DLL rows; its Cargo/nextest runner cannot use this host.
-   Stable GNU instrument-coverage lacks profiler_builtins (private probe E0463);
-   installing LLVM tools alone does not enable local coverage on this toolchain.
-4. Body <=8 lines: what changed, rows run and result, legacy/production delta and
-   ratio, `Score:`. Re-run a flaky step once; a second failure is real.
+1. cargo fmt --check; cargo check --no-default-features --lib with no added warnings;
+   one DLL build: python tools/verify_dll.py --build-only. Denied work never passes.
+2. verify_dll.py --corpus movies/segments.toml --segment for every affected named row,
+   plus door-loading-lag-nmi,tas-ceres-four-doors,area-crateria,item-morph-ball; zero failures.
+   No reached row: A adds one; B moves unchanged and writes uncovered: <function> in the body.
+3. Nothing extra routinely: no mutation/independent controls/frontend metadata, optimized
+   rebuilds, clean-source reruns or full replays. Once before deleting a bank, scoped
+   cargo-mutants <=30min; full corpus runs on main AFTER deletion, also at review waypoints.
+   Windows uses AST mutants through existing DLL rows; Cargo/nextest cannot run here.
+   Stable GNU coverage lacks profiler_builtins (E0463); LLVM tools alone do not fix it.
+4. Every comparison failure gets a checkpoint regression row with its fix; never weaken
+   comparisons/expectations. Retry a flaky step once; a second failure is real.
 
-**Hosted mode (user decision 18:05; live since 1f57df1, 19:07 CET):**
-cloud agents only (Windows agents: Landing above). Name the rows in a `Rows:` body
-line and push each commit immediately to one live `ci/<lane>-<topic>` branch.
-`Segments` runs the union of `Rows:` over `origin/main..HEAD` plus the smoke set;
-green auto-lands on main (rebased; a conflict fails the land and the author rebases).
-A red run is that author's next task. Main's full corpus runs every 3h, on bank-file
-deletion and at waypoints (dispatch `Segments` on main with empty `segments`), with
-at most six shards at once. Routine lands start no full run.
-**Landing (23:25):** Windows agents land on local green (above); no stacks, no
-`ci/windows-*` branches. Existing `ci/b*` stacks: the owner rebases once, runs its rows
-locally, pushes to main. Free runners only. Failures get a regression row as above.
-Agents without the ROM (cloud) use hosted mode only. Mechanics: `Rows:` ids are comma/space
-separated, a trailing comma continues the list, text after a colon is ignored and an
-unknown id fails the plan. The branch must touch `sm/`, `tools/`, `segments.toml`
-or the workflow, or no run starts. Workflow edits never auto-land (GITHUB_TOKEN
-cannot push them): their green branch is fast-forwarded onto main by hand.
-**L1 (go, 19:15):** the Linux `.so` verifier passes area-crateria and item-morph-ball
-with every coverage line identical to the Windows shard (run 40218156987), but its
-replay is ~1.6x slower (crateria 8340..13600: 40.1s vs 24.5s), so shards stay on
-Windows until a Linux shard is shown faster end to end. Linux job: `ci/l1-*` pushes
-or dispatch with `linux`.
+Partition independent groups/use spare CPU; preserve shared prefixes and all identity
+guards. Run ready original-seed subsets during serial capture dependencies, then complete
+checkpoint rows without repeating accepted work absent a source change/new concern.
+Codec changes require genuine initialized machine/payload/continuation checks and fresh
+captures, never restamps or wrong-codec loads. Normalized source length is not payload size.
+Cross-recipe reuse requires SHA-bound identical canonical input prefixes; keep source,
+ROM/native/full-input/loader guards and save matching manifest starts during setup.
+Use [movies/README](../movies/README.md) for commands; inspect masks/hardware/audio/persistence when touched.
 
-Commands and checkpoint rules: [movies/README.md](../movies/README.md).
-When touched, inspect `cpu_infra.rs` masks, `PatchBugs`, hardware/audio limits and
-persistence behavior. Do not weaken comparisons to make a replacement pass.
+No routine CI observation/reliance on Windows (direct user); hosted automatic backstop
+and cloud mode remain separate. Fix/revert known red changes from your push before landing.
+Cloud no-ROM agents use one ci/<lane>-<topic> branch, push each commit, auto-land on green
+with rebase; conflicts/red are the author's next task. Free runners only; main full corpus
+runs every3h/deletion/waypoint, at most6 shards, not each routine push. Rows are comma/space
+IDs; trailing comma continues, colon text is ignored, unknown IDs fail. A branch must touch
+sm/,tools/,segments.toml or workflow. Workflow edits require manual landing, not GITHUB_TOKEN.
+L1 stays Windows until Linux is measurably faster end-to-end; CI seeds/lag guards remain.
 
-## Toolchain and Windows constraints
+## Toolchain, resources and completion
+Edition2024, stable1.99.1 (58cf8f9c3 2026-10-13), x86_64-pc-windows-gnu.
+Nightly2026-10-22 is ASR1121-blocked; do not alter security/spoof hosted variables.
+Standalone tests/denied compiler and build scripts remain restricted; use permitted
+DLL/ctypes. khronos_api blocks ordinary frontend linking; direct DLL builds work.
+Current cached-rlib frontend/Config DLL research is bounded and permitted, not routine validation.
+Keep crate-root unsafe-op enforcement; paths in [ITERATION](ITERATION.md#windows-shell-setup).
 
-Use edition 2024, stable `1.99.1 (58cf8f9c3 2026-10-13)`, target `x86_64-pc-windows-gnu`.
-Nightly `2026-10-22` remains blocked by Defender ASR event 1121; migration is unfinished.
-Do not change security settings or spoof hosted environment variables. Standalone tests
-and denied compiler/build-script launches stay restricted. Use permitted DLL/ctypes;
-denials never pass. khronos_api blocks frontend linking; cached frontend metadata and
-direct DLL builds work. Keep crate-root unsafe-op enforcement.
+Use isolated snapshots/fixed interfaces/one integrator. Frozen formatted source may
+compile during final review; DLL/publication bind the reviewed final pin. Never edit
+checked source/rebuild loaded DLLs. Explicit followup_task wakes completed workers;
+send_message alone does not. Refill ready work without waiting on review prose.
+Budget compilers/replays/source separately, including accepted launchers before rustc
+and admitted jobs' remaining growth; release admission as soon as compilation ends.
+Start compilers above3GiB free; reserve1.4GiB/library or1.8GiB/DLL and leave >=2GiB.
+Below2GiB/resource errors stop newest producer, not every lightweight reader.
+Measure CPU/RAM/paging/disk/useful throughput: two -j1 builds76.06s versus114.12s serial;
+three is unproven. Raise concurrency only when budgets
+fit and the next useful batch improves measured throughput; -j1 permits parallel codegen.
+Streaming TAS imports reserve200MiB (measured90.5MiB), old whole-log imports3GiB.
 
-Measured concurrency (2026-10-25): two isolated builds with Cargo -j1 completed
-matched work in 76.06s versus 114.12s serial (1.50x). Three compilers reached
-2.088GiB free; a further speedup is unproven. Use separate budgets for compilation,
-replays and source work, not a blanket heavy-job count. Count accepted launchers
-before rustc appears; release compiler admission immediately after compilation.
-Start above 3GiB free and leave 2GiB after reserving 1.8GiB per DLL build or 1.4GiB
-per library check plus admitted jobs' remaining growth. Stop the newest below 2GiB
-or on resource errors. Frozen, formatted source may compile while its final review runs;
-Core10's DLL process reached 1764MiB; the 1.8GiB budget replaces the older 1.7GiB estimate.
-DLL/publication use the reviewed final pin. Do not leave ready checks waiting on prose.
-Refill useful ready work immediately; completed workers need explicit new tasks.
-Measure CPU, free memory, paging, disk and completed useful work/time during real
-jobs. Streaming TAS import reduced measured peak from 2.794GiB to 90.5MiB
-with identical inputs (9.347s to 5.752s). Reserve 200MiB for this qualified path;
-legacy whole-log imports still need 3GiB, separately from compiler reservations.
-On pressure, shed the newest memory-producing job, not every lightweight reader.
-Increase concurrency only when resources fit; compare the next useful batch
-with the measured two-build result before retaining a higher setting. Three is an
-observed trial, not a proven optimum. Disk monitoring must include accumulated
-artifact storage and batch runway, not just whether one more job fits.
-Never edit checked source or rebuild loaded DLLs. -j1 permits parallel code generation.
-Use [the iteration guide](ITERATION.md#windows-shell-setup) for paths/commands.
+Check disk/storage runway at session start, before batches and during artifact jobs.
+Keep >=50GiB after budgets; cleanup below75GiB to restore100GiB. Below50GiB hold new
+builds/copies/captures; bounded running jobs may finish and existing-artifact/source work continues.
+Budget copies/temporaries/retained outputs/captures:300MiB fresh workflow or200MiB
+remaining for copied direct-only work, ABOVE reserve. Seed dependencies, not full targets;
+reuse checked builds, CARGO_INCREMENTAL=0 for disposable snapshots; preserve others' caches.
+Assign cleanup ownership; preserve source/results/reusable checkpoints/loaded DLLs.
+Resolve paths/verify unneeded artifacts first; explicit compiler-file allowlists, nonrecursive
+non-force deletion preferred. Never delete another worker's artifacts/locks/directories.
+NTFS compression needs unchanged hashes. Report policy rejection immediately; never retry
+through another tool or use tiny compression gains to continue below the reserve.
 
-Keep artifacts in their checkout; seed dependencies, not full target trees, and reuse checked builds.
-Direct builds honor `CARGO_INCREMENTAL=0`; use it for disposable snapshots and preserve others' caches.
-Check free disk and accumulated workspace/experiment build storage at session start
-and before each batch; monitor free disk during artifact-producing jobs. Maintain
-at least 50GiB free after budgeting the batch. Begin cleanup below 75GiB and
-restore 100GiB free; below 50GiB, hold new builds, copies and captures until the
-reserve is restored. Already-running bounded jobs may finish; source work and
-checks using existing artifacts continue. The user raised this reserve on
-2026-10-25: 10GiB was insufficient for a dedicated roughly 500GB workstation.
-Budget copies, peak compiler temporaries, retained outputs and replay captures:
-measured direct output is 76.8MiB plus no-default 22.6MiB; reserve 300MiB for a fresh
-workflow or 200MiB remaining for an already-copied direct-only build, in addition
-to the headroom above. Review obsolete generated caches when their work is adopted;
-preserve source, results and reusable checkpoints. Assign cleanup ownership explicitly.
-NTFS compression halves measured inactive rlib storage; verify unchanged hashes and
-keep loaded DLLs untouched.
-Before deletion, resolve paths and verify artifacts are unneeded. Never delete another worker's artifacts.
-Prefer inspected, explicit compiler-file allowlists and nonrecursive deletion without
-force; retain directories, locks, source, results, DLLs and checkpoints.
-If agent policy rejects cleanup, report it promptly; do not let small compression
-savings justify continuing below the storage budget or retry deletion through another tool.
-
-## Definition of done for any change
-
-The Fast loop passes; `sh tools/progress.sh` numbers are in the Score line, with any
-rise explained in one line. Recheck HEAD/index, reconcile, commit to `main`. Update
-this plan only for active-item, direction or blocker changes; results belong in commits.
-The progress image updates itself from main; never edit it by hand.
-
-Pre-transpile rules (`.scratch/`, gates, pointers, scopes) are inactive in `archive/pre-transpile-2026-10-17`.
+Done: Fast loop passes; run sh tools/progress.sh, explain increases, put measured Score
+last, fetch/reconcile/recheck HEAD/index, commit to main and immediately push each commit.
+Update active PLAN beside code; no hand-maintained progress image or extra readiness gates.
+Pre-transpile .scratch/gates/pointers/scopes are inactive in archive/pre-transpile-2026-10-17.

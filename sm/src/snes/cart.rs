@@ -1,4 +1,4 @@
-use crate::c_library::{__assert_fail, memcpy, printf};
+use crate::c_library::{__assert_fail, printf};
 use crate::game_state::Game;
 use crate::host::Die;
 use crate::rom::RomImage;
@@ -17,20 +17,16 @@ pub unsafe fn cart_saveload(cart: *mut Cart, io: &mut crate::snapshot_io::Snapsh
         ram.write_bytes(0, &bytes);
     }
 }
-pub unsafe fn cart_load(cart: *mut Cart, type_0: i32, rom: *mut u8, romSize: i32, ramSize: i32) {
+// Adopt the actual prepared allocation; cartridge and native views share its lifetime.
+pub unsafe fn cart_load(cart: *mut Cart, type_0: i32, rom: RomImage, ramSize: i32) {
     unsafe {
         (*cart).type_0 = type_0 as u8;
         (*cart).rom = RomImage::default();
         (*cart).ram = crate::save_ram::SaveRam::default();
-        (*cart).rom = RomImage::zeroed(romSize as usize);
-        (*cart).romSize = romSize as u32;
+        (*cart).rom = rom;
+        (*cart).romSize = (*cart).rom.len() as u32;
         (*cart).ram = crate::save_ram::SaveRam::zeroed(ramSize.max(0) as usize);
         (*cart).ramSize = ramSize as u32;
-        memcpy(
-            (*cart).rom.as_mut_ptr().cast(),
-            rom as *const c_void,
-            romSize as size_t,
-        );
     }
 }
 pub unsafe fn cart_read(cart: *mut Cart, bank: u8, adr: u16, game: &mut Game) -> u8 {

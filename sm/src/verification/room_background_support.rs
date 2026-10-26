@@ -34,7 +34,11 @@ pub(crate) unsafe fn initialized() -> Box<Game> {
         for i in 0..0x1000 {
             image.write(offset(0x9ab200) + i, (i.wrapping_mul(7) ^ 0xd3) as u8);
         }
-        crate::snes::cart::cart_load((*g.g_snes).cart, 1, image.as_mut_ptr(), 0x400000, 8192);
+        let cart_image = RomImage::zeroed(image.len());
+        for i in 0..image.len() {
+            cart_image.write(i, image.read(i));
+        }
+        crate::snes::cart::cart_load((*g.g_snes).cart, 1, cart_image, 8192);
         g.register_native_rom((*(*g.g_snes).cart).rom.clone());
         g.g_sram = (*(*g.g_snes).cart).ram.clone();
         crate::snes::snes::snes_reset(g.g_snes, true, &mut g);

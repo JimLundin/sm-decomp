@@ -1,4 +1,4 @@
-use crate::c_library::{free, malloc, memcpy, memset, printf};
+use crate::c_library::{memcpy, memset, printf};
 use crate::game_state::Game;
 use crate::snes::cart::cart_load;
 use crate::snes::snes::snes_reset;
@@ -122,7 +122,8 @@ pub unsafe fn snes_loadRom(
         while length > newLength {
             newLength *= 2;
         }
-        let newData = malloc(newLength as size_t) as *mut u8;
+        let image = crate::rom::RomImage::zeroed(newLength as usize);
+        let newData = image.as_mut_ptr();
         memcpy(
             newData as *mut c_void,
             data as *const c_void,
@@ -143,8 +144,7 @@ pub unsafe fn snes_loadRom(
         cart_load(
             (*snes).cart,
             headers[used as usize].cartType as i32,
-            newData,
-            newLength,
+            image,
             (if headers[used as usize].chips as i32 > 0 {
                 headers[used as usize].ramSize
             } else {
@@ -152,7 +152,6 @@ pub unsafe fn snes_loadRom(
             }) as i32,
         );
         snes_reset(snes, true_0 != 0, game);
-        free(newData as *mut c_void);
         true_0 != 0
     }
 }

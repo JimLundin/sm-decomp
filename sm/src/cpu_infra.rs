@@ -7,11 +7,12 @@ use crate::rtl::words;
 pub use crate::snes::registers::*;
 use crate::types::SpcPlayer;
 use ::core::ffi::{c_char, c_void};
-use ::core::mem::size_of;
+use ::core::mem::{MaybeUninit, size_of};
 use ::core::ptr::null_mut;
 
 use crate::c_library::{
-    __assert_fail, fprintf, free, memcmp, memcpy, memset, printf, puts, snprintf, stderr, time,
+    __assert_fail, fclose, fopen, fprintf, fread, fseek, ftell, memcmp, memcpy, memset, printf,
+    puts, rewind, snprintf, stderr, time,
 };
 use crate::rtl::{RomPtr, RtlSaveSnapshot, RtlSetupEmuCallbacks, WriteReg};
 use crate::snes::apu::apu_cycle;
@@ -22,7 +23,6 @@ use crate::snes::snes_other::snes_loadRom;
 use crate::tracing::getProcessorStateCpu;
 pub use crate::types::ProjectileInstr;
 pub use crate::types::{Cpu, Dma, Enemy_Botwoon, Ppu, Snes, size_t, time_t};
-use crate::util::ReadWholeFile;
 // Explicit state previously included by the oversized OAM memory copy.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct SpriteSnapshot {
@@ -881,17 +881,37 @@ pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut
         game.g_calling_asm_from_c_ret
     }
 }
+struct RomInputFile(*mut crate::types::FILE);
+impl Drop for RomInputFile {
+    fn drop(&mut self) {
+        unsafe {
+            fclose(self.0);
+        }
+    }
+}
 unsafe fn loadRom(name: *const c_char, snes: *mut Snes, game: &mut Game) -> bool {
     unsafe {
-        let mut length: size_t = 0 as size_t;
-        let mut file: *mut u8 = ReadWholeFile(name, &raw mut length);
+        let file = fopen(name, c"rb".as_ptr());
         if file.is_null() {
             puts(c"Failed to read file".as_ptr());
             return false_0 != 0;
         }
-        let result: bool = snes_loadRom(snes, file, length as i32, game);
-        free(file as *mut c_void);
-        result
+        let file = RomInputFile(file);
+        fseek(file.0, 0, crate::util::SEEK_END);
+        let length: size_t = ftell(file.0) as size_t;
+        rewind(file.0);
+        // A returning Die may leave unread bytes; only spare capacity is promised.
+        let mut bytes = Vec::<MaybeUninit<u8>>::new();
+        if bytes.try_reserve_exact(length.wrapping_add(1)).is_err() {
+            crate::host::Die(c"malloc failed".as_ptr());
+        }
+        bytes.spare_capacity_mut()[length].write(MaybeUninit::new(0));
+        let data = bytes.as_mut_ptr().cast::<u8>();
+        if fread(data.cast(), 1, length, file.0) as u32 as size_t != length {
+            crate::host::Die(c"fread failed".as_ptr());
+        }
+        drop(file);
+        snes_loadRom(snes, data, length as i32, game)
     }
 }
 pub unsafe fn PatchBytes(addr: u32, bytes: &[u8], game: &mut Game) {
