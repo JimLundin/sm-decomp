@@ -48,7 +48,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current tipfe8: production112295, legacy17845, unsafe2818, verification40422; warnings172.
+Current tipf1c1: production112284, legacy17834, unsafe2818, verification40422; warnings172.
 It retires161 sm82 lines and persists actor/media allocation identities and saved ROM patches.
 Net +511 engine (persistence +564, frame -53), -161 legacy, -1 unsafe, +371 verification;
 frame full replacement167/220=75.91%. RAM/native frame dependencies remain explicit.
@@ -62,7 +62,8 @@ all14 originals/guards and bothKago14350 retained. Never restamp old codecs.
 
 Grapple four-leaf cut passes3872 selected+272 setup: +12 engine/-112 legacy/unsafe0.
 Shared IO/OAM plus current beam union passes31655 selected+272 setup: -16 engine/-13 legacy/+2 hardware unsafe.
-Next: complete cinematic black-fade dedup (-11 engine/-11 legacy), then the next sm8b family.
+Shared black-fade passes10967 selected+272 setup/0: -11 engine/-11 legacy; full18/29=62.07%.
+Next: the next complete sm8b family; Linux scrolling-sky and cloud boss lanes stay disjoint.
 ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
 A4 post-push full86 passed on0a; its scoped3kills/1unobserved/1unviable gaps remain.
 Native player/DSP/APU and input Vec/FILE/Cart are owned; GameOwner does not promise Rust thread sharing.

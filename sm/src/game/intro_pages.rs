@@ -404,17 +404,17 @@ pub(super) fn enable_text(j: u16, game: &mut Game) -> u16 {
     j
 }
 
-pub(super) unsafe fn fade_out_to_ceres(game: &mut Game) {
-    unsafe {
-        crate::game::display_refresh::fade(false, game);
-        if *ram_ptr!(game; 0x51) == 0x80 {
-            crate::game::display_refresh::enable(true, game);
-            word! { game, 0;
-                screen_fade_delay, screen_fade_counter, reg_BG2HOFS, reg_BG3HOFS, reg_BG2VOFS,
-                reg_BG3VOFS, cinematic_var5,
-            }
-            word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
-            word!(game.cinematic_function = (0x8bbca0i32) as u16);
+pub(super) unsafe fn fade_out_to_ceres(restore_samus: bool, game: &mut Game) {
+    crate::game::display_refresh::fade(false, game);
+    if game.g_ram[0x51] == 0x80 {
+        unsafe { crate::game::display_refresh::enable(true, game) };
+        word! { game, 0;
+            screen_fade_delay, screen_fade_counter, reg_BG2HOFS, reg_BG3HOFS, reg_BG2VOFS,
+            reg_BG3VOFS, cinematic_var5,
+        }
+        word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
+        word!(game.cinematic_function = if restore_samus { 0xbca0 } else { 0xc100 });
+        if restore_samus {
             crate::game::controller_input::restore_cinematic_bindings(game);
             word! { game, 0; samus_max_missiles, samus_missiles }
         }

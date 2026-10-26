@@ -723,18 +723,6 @@ crate::game::callback_dispatch! {
             word!(game.cinematic_function = (0x8ba38fi32) as u16);
         };
     };
-    [9158853] CinematicFunction_Intro_Func72 [] {
-        crate::game::display_refresh::fade(false, game);
-        if *ram_ptr!(game; 0x51) == 0x80 {
-            crate::game::display_refresh::enable(true, game);
-            word! { game, 0;
-                screen_fade_delay, screen_fade_counter, reg_BG2HOFS, reg_BG3HOFS, reg_BG2VOFS,
-                reg_BG3VOFS, cinematic_var5,
-            }
-            word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
-            word!(game.cinematic_function = (0x8bc100i32) as u16);
-        }
-    };
     [9158912] CinematicFunction_Intro_Func73 [] {
         word! {game; loading_game_state = kGameState_31_SetUpNewGame as u16;
             game_state = kGameState_31_SetUpNewGame as u16; area_index = 6;
@@ -1292,7 +1280,8 @@ crate::game::callback_dispatch! {
         9155423 => [intro_pages::show_page(addr_kCinematicBgObjectDef_8BCF45 as u16, 0xb3f4, game)]; 9155440 => [intro_pages::show_page(addr_kCinematicBgObjectDef_8BCF4B as u16, 0xb3f4, game)];
         9155457 => [intro_pages::show_page(addr_kCinematicBgObjectDef_8BCF51 as u16, 0xb458, game)]; 9155474 => [intro_pages::show_page(addr_kCinematicBgObjectDef_8BCF57 as u16, 0xb458, game)];
         9155572 => [intro_pages::fade_to_page(intro_pages::Palette::Gameplay, game)]; 9155672 => [intro_pages::fade_to_page(intro_pages::Palette::Scientist, game)];
-        9156399 => [intro_pages::fade_out_to_ceres(game)];
+        9156399 => [intro_pages::fade_out_to_ceres(true, game)];
+        9158853 => [intro_pages::fade_out_to_ceres(false, game)];
         9161438 => [()];
         9165725 => [()];
         9166435 => [()];
