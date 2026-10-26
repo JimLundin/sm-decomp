@@ -2,14 +2,29 @@
 #![forbid(unsafe_code)]
 use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::actors::api::Axis;
+use crate::game::enemy_script::EnemyScript;
 use crate::game::rio::{aim_velocity, bounce_horizontal, move_axis};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 
-pub(crate) fn script_value(variable: usize, value: u16, game: &mut Game) {
+/// Both Rio variants share resume and follower-offset commands; the cursor is retained.
+pub(crate) fn instruction(address: u32, cursor: EnemyScript, game: &mut Game) -> EnemyScript {
+    let (variable, value) = match address {
+        0xa2c1c9 | 0xa2c6d2 => (1, 1),
+        0xa2c1d4 | 0xa2c1df => (2, 8),
+        0xa2c1ea | 0xa2c237 => (2, 12),
+        0xa2c1f5 | 0xa2c221 => (2, (-12i16) as u16),
+        0xa2c200 => (2, 4),
+        0xa2c20b | 0xa2c6dd => (2, 0),
+        0xa2c216 => (2, (-4i16) as u16),
+        0xa2c22c => (2, (-16i16) as u16),
+        0xa2c6e8 => (2, 1),
+        _ => unreachable!("unknown Rio animation command"),
+    };
     let mut runtime = Runtime::new(game);
     let at = 0x7800 + usize::from(runtime.word(0xe54)) + 2 * variable;
     runtime.write_slice_native(at, value);
+    cursor
 }
 
 pub(crate) fn initialize(lower: bool, game: &mut Game) {

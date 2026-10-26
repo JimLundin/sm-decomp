@@ -679,49 +679,6 @@ crate::game::callback_dispatch! {
     };
     @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10665614] NorfairLavajumpingEnemy_Instr_BE8E [jp] { crate::game::lava_jumper::instruction_finished(game); };
-    [10666441] NorfairRio_Instr_C1C9 [jp] {
-        crate::game::norfair_rio::script_value(1, 1, game);
-    };
-    [10666452] NorfairRio_Instr_C1D4 [jp] {
-        crate::game::norfair_rio::script_value(2, 8, game);
-    };
-    [10666463] NorfairRio_Instr_C1DF [jp] {
-        crate::game::norfair_rio::script_value(2, 8, game);
-    };
-    [10666474] NorfairRio_Instr_C1EA [jp] {
-        crate::game::norfair_rio::script_value(2, 12, game);
-    };
-    [10666485] NorfairRio_Instr_C1F5 [jp] {
-        crate::game::norfair_rio::script_value(2, -12i32 as u16, game);
-    };
-    [10666496] NorfairRio_Instr_C200 [jp] {
-        crate::game::norfair_rio::script_value(2, 4, game);
-    };
-    [10666507] NorfairRio_Instr_C20B [jp] {
-        crate::game::norfair_rio::script_value(2, 0, game);
-    };
-    [10666518] NorfairRio_Instr_C216 [jp] {
-        crate::game::norfair_rio::script_value(2, -4i32 as u16, game);
-    };
-    [10666529] NorfairRio_Instr_C221 [jp] {
-        crate::game::norfair_rio::script_value(2, -12i32 as u16, game);
-    };
-    [10666540] NorfairRio_Instr_C22C [jp] {
-        crate::game::norfair_rio::script_value(2, -16i32 as u16, game);
-    };
-    [10666551] NorfairRio_Instr_C237 [jp] {
-        crate::game::norfair_rio::script_value(2, 12, game);
-    };
-    @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10667730] LowerNorfairRio_Instr_C6D2 [jp] {
-        crate::game::norfair_rio::script_value(1, 1, game);
-    };
-    [10667741] LowerNorfairRio_Instr_C6DD [jp] {
-        crate::game::norfair_rio::script_value(2, 0, game);
-    };
-    [10667752] LowerNorfairRio_Instr_C6E8 [jp] {
-        crate::game::norfair_rio::script_value(2, 1, game);
-    };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10668907] MaridiaLargeSnail_Instr_CB6B [jp] { QueueSfx2_Max6(0xe, game); };
     [10669235] MaridiaLargeSnail_Instr_CCB3 [jp] {
@@ -739,6 +696,9 @@ crate::game::callback_dispatch! {
         jp
     };
     @external {
+        10666441 | 10666452 | 10666463 | 10666474 | 10666485 | 10666496 | 10666507
+        | 10666518 | 10666529 | 10666540 | 10666551 | 10667730 | 10667741 | 10667752
+            => [crate::game::norfair_rio::instruction(ea, j, game)];
         10654593 => [crate::game::maridia_turtles::instruction(0x9381, j, game)];
         10654738 => [crate::game::maridia_turtles::instruction(0x9412, j, game)];
         10654791 => [crate::game::maridia_turtles::instruction(0x9447, j, game)];
