@@ -1638,7 +1638,7 @@ impl CinematicObjects {
 
 pub(crate) fn spawn_cinematic_burst(
     mut definition: u16,
-    parameters: core::ops::Range<u16>,
+    parameters: impl IntoIterator<Item = u16>,
     stride: u16,
     game: &mut Game,
 ) {

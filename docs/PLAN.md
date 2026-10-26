@@ -81,12 +81,13 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Qualified Core37: production 111783, legacy 20103, unsafe 2935, verification 39959.
-All 86 rows pass (136,526 selected + 38,827 setup), plus 189,475 fresh capture frames and separate C43 105.
+Qualified Core38: production 111774, legacy 20034, unsafe 2925, verification 39959.
+Its 22 affected/control rows pass (66,513 selected); checked plume/melt and shared burst callers retire.
+Core37 passed all 86 rows (136,526 selected + 38,827 setup), 189,475 fresh captures and separate C43 105.
 Eleven backend allocations now have stable owners; the snapshot observer blocker is closed.
 Ownership adds 104 runtime lines (89 Rust + 24 native - 9 generated), removes 14 unsafe and 8 verification.
 The fresh 33e6 checkpoint bundle is uploaded; all 22 restored members match byte-for-byte.
-Four release, two mosaic and three postcredits callbacks remain unobserved; native/failure variants are source-reviewed.
+Four release, two mosaic and postcredits 134/138/143/145 remain unobserved; native/failure variants are source-reviewed.
 Six read-only state projections preserve 57,621 bytes; exact native leaf variants remain source-reviewed.
 The manifest remains 86 rows; hardware/Frame, external SpcPlayer ownership and backend independence remain open.
 Retain the fixed 2131-frame X-ray activation/release row and original pickup.

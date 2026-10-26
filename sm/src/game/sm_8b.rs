@@ -953,10 +953,9 @@ crate::game::callback_dispatch! {
         crate::game::display_refresh::enable(true, game);
         word!(game.eproj_pre_instr[1] = 0);
         set_cinematic_blend(17, 1, 2, 17, game);
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEEEB as u16, 0, game);
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEEF1 as u16, 0, game);
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEEEB as u16, 1, game);
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEEF1 as u16, 1, game);
+        for parameter in 0..2 {
+            spawn_cinematic_burst(0xeeeb, [parameter; 2], 6, game);
+        }
         word! {game; screen_fade_delay = 0; screen_fade_counter = 2;
             cinematic_function = ((0x8bd6d7i32) as u16); }
         QueueMusic_Delayed8(0, game);
@@ -978,10 +977,7 @@ crate::game::callback_dispatch! {
         palette_effects::clear(game);
         clear_cinematic_sprites(game);
         palette_effects::spawn(addr_kPalfx_E1E0 as u16, game);
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEED3 as u16, 0, game);
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEED9 as u16, 0, game);
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEEDF as u16, 0, game);
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEEE5 as u16, 0, game);
+        spawn_cinematic_burst(0xeed3, [0; 4], 6, game);
         word! {game; cinematic_var5 = 32; cinematic_var6 = 64; }
         word! { game, 0; cinematic_var8, cinematic_var10 }
         word!(game.cinematic_function = (0x8bd7f8i32) as u16);
@@ -1216,10 +1212,7 @@ crate::game::callback_dispatch! {
             word! {game; cinematic_function = ((0x8be7bai32) as u16); cinematicbg_var3 = 20480; }
             queue_cinematic_tilemap(CinematicTilemap::FullText, game);
             word! { game, 256; layer1_x_pos, layer1_y_pos }
-            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF81 as u16, 0, game);
-            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF87 as u16, 0, game);
-            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF8D as u16, 0, game);
-            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF93 as u16, 0, game);
+            spawn_cinematic_burst(0xef81, [0; 4], 6, game);
             word_transfers!(game, descending, 16; le(palette_buffer, 31) <- value(0));
             word_transfers!(game, descending, 16; native(0xc1fe) <- rom(0x8cefe9, 15));
         }
