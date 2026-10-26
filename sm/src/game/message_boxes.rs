@@ -8,15 +8,7 @@ use crate::game::music::{advance_sound_effects, cancel_effects};
 
 use crate::rtl::ReadReg;
 
-crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
-    pub struct MsgBoxConfig {
-        pub modify_box_func, draw_initial_tilemap, message_tilemap: VoidP;
-    }
-}
-
-const RomPtr_85: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x85>;
+const MESSAGE_CONFIG_BASE: usize = crate::rtl::lorom_offset(0x85869b) as usize;
 
 static kMsgBoxSpecialButtonTilemapOffs: [u16; 27] = [
     0, 0x12a, 0x12a, 0x12c, 0x12c, 0x12c, 0, 0, 0, 0, 0, 0, 0x120, 0, 0, 0, 0, 0, 0x12a, 0, 0, 0,
@@ -84,40 +76,46 @@ static kSmallMsgBoxTopBottomBorderTilemap: [u16; 32] = [
     0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0xe,
     0xe, 0xe, 0xe, 0xe, 0xe, 0xe,
 ];
-unsafe fn WriteMessageTilemap(game: &mut Game) -> u16 {
-    unsafe {
-        game.g_ram[0x5a6..0x5a8].copy_from_slice(&112u16.to_le_bytes());
-        game.g_ram[0x5a4..0x5a6].copy_from_slice(&124u16.to_le_bytes());
-        game.g_ram[0x5a2..0x5a4].fill(0);
-        game.g_ram[0x3000..0x30e0].fill(0);
-        let message = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) as isize;
-        let configs = game
-            .legacy_native_rom_ptr()
-            .add(crate::rtl::lorom_offset(0x85869b) as usize)
-            .cast::<MsgBoxConfig>();
-        let start = (*configs.offset(message - 1)).message_tilemap;
-        let length = (*configs.offset(message))
-            .message_tilemap
-            .wrapping_sub(start);
-        game.message_box_das0l_value = length.wrapping_add(128);
-        let mut remaining = i32::from(length >> 1);
-        let mut word = 32u16;
-        let mut source_offset = 0u16;
-        do_until! { remaining == 0;
-            // Map every word, including the mapper's invalid-address diagnostics.
-            let tile = RomPtr_85(start, game)
-                .add(usize::from(source_offset))
-                .cast::<u16>()
-                .read_unaligned();
-            let byte_offset = 2 * (usize::from(word) + 256);
-            game.g_ram[0x3000..0x3800][byte_offset..byte_offset + 2]
-                .copy_from_slice(&tile.to_le_bytes());
-            word = word.wrapping_add(1);
-            source_offset = source_offset.wrapping_add(2);
-            remaining -= 1;
-        }
-        word
+#[forbid(unsafe_code)]
+fn message_tile(start: u16, byte_offset: u16, game: &mut Game) -> u16 {
+    let address = 0x850000 | u32::from(start);
+    if start & 0x8000 == 0 {
+        crate::game::session_runtime::native_rom_diagnostic(address, game);
     }
+    crate::rom::RomRecord {
+        image: game.capture_native_rom(),
+        base: crate::rtl::lorom_offset(address) as usize,
+    }
+    .word(usize::from(byte_offset))
+}
+
+#[forbid(unsafe_code)]
+fn WriteMessageTilemap(game: &mut Game) -> u16 {
+    game.g_ram[0x5a6..0x5a8].copy_from_slice(&112u16.to_le_bytes());
+    game.g_ram[0x5a4..0x5a6].copy_from_slice(&124u16.to_le_bytes());
+    game.g_ram[0x5a2..0x5a4].fill(0);
+    game.g_ram[0x3000..0x30e0].fill(0);
+    let message = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) as isize;
+    let configs = game.capture_native_rom();
+    let start = configs.table_word(MESSAGE_CONFIG_BASE, 3 * (message - 1) + 2);
+    let length = configs
+        .table_word(MESSAGE_CONFIG_BASE, 3 * message + 2)
+        .wrapping_sub(start);
+    game.message_box_das0l_value = length.wrapping_add(128);
+    let mut remaining = i32::from(length >> 1);
+    let mut word = 32u16;
+    let mut source_offset = 0u16;
+    do_until! { remaining == 0;
+        // Map every word, including the mapper's invalid-address diagnostics.
+        let tile = message_tile(start, source_offset, game);
+        let byte_offset = 2 * (usize::from(word) + 256);
+        game.g_ram[0x3000..0x3800][byte_offset..byte_offset + 2]
+            .copy_from_slice(&tile.to_le_bytes());
+        word = word.wrapping_add(1);
+        source_offset = source_offset.wrapping_add(2);
+        remaining -= 1;
+    }
+    word
 }
 fn WriteMessageBoxTilemapRow(mut word: u16, tiles: &[u16], game: &mut Game) {
     // Preserve the legacy table bounds and any writes before a bounds failure.
@@ -131,7 +129,8 @@ fn WriteMessageBoxTilemapRow(mut word: u16, tiles: &[u16], game: &mut Game) {
 crate::game::callback_dispatch! {
     unsafe fn CallMsgBoxDraw(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
-    @functions [unsafe fn (game: &mut Game)];
+    @body checked;
+    @functions [fn (game: &mut Game)];
     [8749658] WriteLargeMessageBoxTilemap [] {
         WriteMessageBoxTilemapRow(0, &kLargeMsgBoxTopBottomBorderTilemap, game);
         let end = WriteMessageTilemap(game);
@@ -231,19 +230,13 @@ crate::game::callback_dispatch! {
 unsafe fn InitializeMessageBox(game: &mut Game) {
     unsafe {
         let index = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) as isize - 1;
-        let draw = (*game
-            .legacy_native_rom_ptr()
-            .add(crate::rtl::lorom_offset(0x85869b) as usize)
-            .cast::<MsgBoxConfig>()
-            .offset(index))
-        .draw_initial_tilemap;
+        let draw = game
+            .capture_native_rom()
+            .table_word(MESSAGE_CONFIG_BASE, 3 * index + 1);
         CallMsgBoxDraw(0x850000 | u32::from(draw), game);
-        let modify = (*game
-            .legacy_native_rom_ptr()
-            .add(crate::rtl::lorom_offset(0x85869b) as usize)
-            .cast::<MsgBoxConfig>()
-            .offset(index))
-        .modify_box_func;
+        let modify = game
+            .capture_native_rom()
+            .table_word(MESSAGE_CONFIG_BASE, 3 * index);
         CallMsgBoxModify(0x850000 | u32::from(modify), game);
     }
 }
