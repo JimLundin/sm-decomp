@@ -1,4 +1,5 @@
 //! Grapple swing placement, rope-length changes and swept block contact.
+use crate::game::actors::api as actor_api;
 use crate::game::prelude::*;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::projectile_room::Axis;
@@ -116,6 +117,22 @@ fn check_clearance(angle: u16, game: &mut Game) -> u8 {
         }
     }
 }
+pub(crate) fn begin_connection(pose: u16, transition_graphics: u16, game: &mut Game) {
+    word!(game.samus_new_pose_interrupted = pose);
+    word!(game.samus_special_transgfx_index = transition_graphics);
+    let angle = u16::swap_bytes(actor_api::angle_from_delta(
+        (word!(game.samus_x_pos)).wrapping_sub(word!(game.grapple_beam_end_x_pos)),
+        (word!(game.samus_y_pos)).wrapping_sub(word!(game.grapple_beam_end_y_pos)),
+    ));
+    word!(game.grapple_beam_end_angle16 = angle);
+    word!(game.grapple_beam_end_angles_mirror = angle);
+    word!(game.grapple_beam_length_delta = 0);
+    if word!(game.grapple_beam_length) as i32 - 64i32 & 0x8000 == 0 {
+        word!(game.grapple_beam_length, wrapping_sub(24));
+    }
+    place_rope_origin(game);
+}
+
 pub fn place_rope_origin(game: &mut Game) {
     let angle = 2 * game.g_ram[0xcfb] as u16;
     let length = word!(game.grapple_beam_length);

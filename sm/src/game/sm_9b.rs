@@ -1,5 +1,4 @@
 use crate::game::actors;
-use crate::game::actors::api as actor_api;
 use crate::game::combat_rules::GrappleOutcome;
 use crate::game::display_refresh::queue_native_transfer;
 use crate::game::grapple_swing::{self, advance_swing, change_length, place_rope_origin};
@@ -84,50 +83,24 @@ pub fn CheckIfGrappleIsConnectedToBlock(game: &mut Game) -> u8 {
         1
     }
 }
-crate::game::callback_dispatch! {
-    pub unsafe fn CallGrappleNextFunc(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [10205657] GrappleNext_SwingClockwise [] {
-        word!(game.samus_new_pose_interrupted = kPose_B2_FaceR_Grapple_Air as u16);
-        HandleConnectingGrapple_Swinging(game);
+pub unsafe fn CallGrappleNextFunc(ea: u32, game: &mut Game) {
+    let (pose, transition_graphics) = match ea {
+        10205657 => (kPose_B2_FaceR_Grapple_Air as u16, 9),
+        10205666 => (kPose_B3_FaceL_Grapple_Air as u16, 9),
+        10205674 => (kPose_A8_FaceR_Grappling as u16, 10),
+        10205683 => (kPose_AA_FaceR_Grappling_AimDR as u16, 10),
+        10205692 => (kPose_AB_FaceL_Grappling_AimDL as u16, 10),
+        10205701 => (kPose_A9_FaceL_Grappling as u16, 10),
+        10205710 => (kPose_B4_FaceR_Grappling_Crouch as u16, 10),
+        10205719 => (kPose_B6_FaceR_Grappling_Crouch_AimDR as u16, 10),
+        10205728 => (kPose_B7_FaceL_Grappling_Crouch_AimDL as u16, 10),
+        10205737 => (kPose_B5_FaceL_Grappling_Crouch as u16, 10),
+        _ => {
+            Unreachable(game);
+            return;
+        }
     };
-    [10205666] GrappleNext_SwingAntiClockwise [] {
-        word!(game.samus_new_pose_interrupted = kPose_B3_FaceL_Grapple_Air as u16);
-        HandleConnectingGrapple_Swinging(game);
-    };
-    [10205674] GrappleNext_StandAimRight [] {
-        word!(game.samus_new_pose_interrupted = kPose_A8_FaceR_Grappling as u16);
-        HandleConnectingGrapple_StuckInPlace(game);
-    };
-    [10205683] GrappleNext_StandAimDownRight [] {
-        word!(game.samus_new_pose_interrupted = kPose_AA_FaceR_Grappling_AimDR as u16);
-        HandleConnectingGrapple_StuckInPlace(game);
-    };
-    [10205692] GrappleNext_StandAimDownLeft [] {
-        word!(game.samus_new_pose_interrupted = kPose_AB_FaceL_Grappling_AimDL as u16);
-        HandleConnectingGrapple_StuckInPlace(game);
-    };
-    [10205701] GrappleNext_StandAimLeft [] {
-        word!(game.samus_new_pose_interrupted = kPose_A9_FaceL_Grappling as u16);
-        HandleConnectingGrapple_StuckInPlace(game);
-    };
-    [10205710] GrappleNext_CrouchAimRight [] {
-        word!(game.samus_new_pose_interrupted = kPose_B4_FaceR_Grappling_Crouch as u16);
-        HandleConnectingGrapple_StuckInPlace(game);
-    };
-    [10205719] GrappleNext_CrouchAimDownRight [] {
-        word!(game.samus_new_pose_interrupted = kPose_B6_FaceR_Grappling_Crouch_AimDR as u16);
-        HandleConnectingGrapple_StuckInPlace(game);
-    };
-    [10205728] GrappleNext_CrouchAimDownLeft [] {
-        word!(game.samus_new_pose_interrupted = kPose_B7_FaceL_Grappling_Crouch_AimDL as u16);
-        HandleConnectingGrapple_StuckInPlace(game);
-    };
-    [10205737] GrappleNext_CrouchAimLeft [] {
-        word!(game.samus_new_pose_interrupted = kPose_B5_FaceL_Grappling_Crouch as u16);
-        HandleConnectingGrapple_StuckInPlace(game);
-    };
+    grapple_swing::begin_connection(pose, transition_graphics, game);
 }
 pub unsafe fn HandleConnectingGrapple(game: &mut Game) {
     unsafe {
@@ -152,30 +125,6 @@ pub unsafe fn HandleConnectingGrapple(game: &mut Game) {
             );
         };
     }
-}
-macro_rules! initialize_connected_grapple_angle {
-    ($game:ident, $transition_graphics:literal) => {
-        word!($game.samus_special_transgfx_index = $transition_graphics);
-        let v0: u16 = u16::swap_bytes(actor_api::angle_from_delta(
-            (word!($game.samus_x_pos)).wrapping_sub(word!($game.grapple_beam_end_x_pos)),
-            (word!($game.samus_y_pos)).wrapping_sub(word!($game.grapple_beam_end_y_pos)),
-        ));
-        word!($game.grapple_beam_end_angle16 = v0);
-        word!($game.grapple_beam_end_angles_mirror = v0);
-        word!($game.grapple_beam_length_delta = 0);
-        if word!($game.grapple_beam_length) as i32 - 64i32 & 0x8000 == 0 {
-            word!($game.grapple_beam_length, wrapping_sub(24));
-        }
-    };
-}
-
-pub unsafe fn HandleConnectingGrapple_Swinging(game: &mut Game) {
-    initialize_connected_grapple_angle!(game, 9);
-    place_rope_origin(game);
-}
-pub unsafe fn HandleConnectingGrapple_StuckInPlace(game: &mut Game) {
-    initialize_connected_grapple_angle!(game, 10);
-    place_rope_origin(game);
 }
 pub unsafe fn HandleSpecialGrappleBeamAngles(game: &mut Game) -> u8 {
     unsafe {
