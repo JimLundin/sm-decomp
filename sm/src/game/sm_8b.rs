@@ -1933,32 +1933,6 @@ crate::game::callback_dispatch! {
                 cinematicspr_instr_ptr[v1] = addr_off_8BCE53 as u16; cinematic_var15 = 0; }
         }
     };
-    [9153896] SetSomeStuffForSpriteObject_11 [] {
-        if word!(game.cinematic_var13) != 0 {
-            if (word!(game.cinematic_var4) & 3) == 0 && word!(game.cinematic_var8) != 0 {
-                word!(game.cinematic_var8 -= 1);
-                word!(game.cinematicbg_arr7[(k >> 1)] += 1);
-            }
-        } else {
-            let v1: i32 = k as i32 >> 1;
-            word!(game.cinematicspr_instr_timer[v1] = 1);
-            word!(game.cinematicspr_instr_ptr[v1] = addr_off_8BCE53 as u16);
-        };
-    };
-    [9153958] SetSomeStuffForSpriteObject_13 [] {
-        if word!(game.cinematic_var13) != 0 {
-            if (word!(game.cinematic_var4) & 3) == 0
-                && word!(game.cinematic_var10) as i32 - 8i32 & 0x8000 != 0
-            {
-                word!(game.cinematic_var10 += 1);
-                word!(game.cinematicbg_arr8[(k >> 1)] -= 1);
-            }
-        } else {
-            let v1: i32 = k as i32 >> 1;
-            word!(game.cinematicspr_instr_timer[v1] = 1);
-            word!(game.cinematicspr_instr_ptr[v1] = addr_off_8BCE53 as u16);
-        };
-    };
     [9154074] SetSomeStuffForSpriteObject_18 [] {
         if word!(game.cinematic_var16) == 59 {
             let v1: i32 = k as i32 >> 1;
@@ -2235,6 +2209,8 @@ crate::game::callback_dispatch! {
         };
     };
     @external {
+        9153896 => [intro_pages::advance_laboratory_baby(j, false, game)];
+        9153958 => [intro_pages::advance_laboratory_baby(j, true, game)];
         9157412 => [advance_intro_baby_pursuit(j, game)];
         9171802 => [advance_zebes_stars(j, false, game)];
         9171829 => [advance_zebes_stars(j, true, game)];

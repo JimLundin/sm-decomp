@@ -51,6 +51,24 @@ unsafe fn load_japanese_line(j: u16, game: &mut Game) {
     }
 }
 
+pub(super) fn advance_laboratory_baby(object: u16, examined: bool, game: &mut Game) {
+    let slot = usize::from(object >> 1);
+    if word!(game.cinematic_var13) == 0 {
+        word!(game.cinematicspr_instr_timer[slot] = 1);
+        word!(game.cinematicspr_instr_ptr[slot] = 0xce53);
+    } else if word!(game.cinematic_var4) & 3 == 0 {
+        if examined {
+            if word!(game.cinematic_var10) as i32 - 8 & 0x8000 != 0 {
+                word!(game.cinematic_var10 += 1);
+                word!(game.cinematicbg_arr8[slot] -= 1);
+            }
+        } else if word!(game.cinematic_var8) != 0 {
+            word!(game.cinematic_var8 -= 1);
+            word!(game.cinematicbg_arr7[slot] += 1);
+        }
+    }
+}
+
 fn hide_caret(game: &mut Game) {
     word!(game.cinematicbg_arr7[15] = 8);
     word!(game.cinematicbg_arr8[15] = 248);
