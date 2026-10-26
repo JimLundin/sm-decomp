@@ -4,7 +4,10 @@ use super::{
     content::{Content, FootstepRegion, FootstepRule},
     effects::{EchoAxis, Host},
 };
-use crate::game::{liquid_surface::LiquidAtHeight, player_transitions as transitions};
+use crate::game::{
+    liquid_surface::LiquidAtHeight, player_transitions as transitions,
+    projectile_geometry::sine_offset, session::Session,
+};
 
 pub(super) fn footsteps(h: &mut impl Host) {
     let region = Content::footstep_region(h);
@@ -71,5 +74,47 @@ pub(crate) fn record_echo(h: &mut impl Host) {
             next = 0;
         }
         h.session_mut().projectiles.echoes.index = next;
+    }
+}
+
+pub(super) fn place_shinespark_crash(s: &mut Session) {
+    for slot in [1, 0] {
+        let offset = sine_offset::<true>(
+            s.projectiles.echoes.x_speed[slot],
+            u16::from(s.projectiles.echoes.index as u8),
+        );
+        s.projectiles.echoes.x[slot] = offset.x.wrapping_add(s.player.x);
+        s.projectiles.echoes.y[slot] = offset.y.wrapping_add(s.player.y);
+    }
+}
+
+pub(super) fn create_shinespark_echoes(h: &mut impl Host) {
+    const ANGLES: [u8; 12] = [
+        0, 0x80, 0, 0x80, 0x40, 0xc0, 0x40, 0xc0, 0xe0, 0x60, 0x20, 0xa0,
+    ];
+    h.session_mut().projectiles.echoes.index = 0;
+    if h.session().projectiles.count.wrapping_sub(5) & 0x8000 == 0 {
+        return;
+    }
+    let first = if h.session().projectiles.count.wrapping_sub(4) & 0x8000 != 0 {
+        3
+    } else {
+        4
+    };
+    for slot in first..=4 {
+        let s = h.session_mut();
+        s.projectiles.count = s.projectiles.count.wrapping_add(1);
+        s.projectiles.echoes.x_speed[slot - 1] = 64;
+        s.projectiles.echoes.x[slot - 1] = s.player.x;
+        s.projectiles.echoes.y[slot - 1] = s.player.y;
+        s.projectiles.shots[slot].kind = 0x8029;
+        // Captured slots 6 then 8 retain separate initializer publication intervals.
+        h.initialize_shinespark_echo((slot * 2) as u16);
+        h.session_mut().projectiles.shots[slot].motion = 0xd4d2;
+        // Reacquire pose, wrap its base to u16, then widen before adding lane 1.
+        let index =
+            usize::from(h.session().player.pose.wrapping_sub(201).wrapping_mul(2)) + (slot - 3);
+        h.session_mut().projectiles.shots[slot].variable = u16::from(ANGLES[index]);
+        h.session_mut().projectiles.shots[slot].x_speed = 0;
     }
 }

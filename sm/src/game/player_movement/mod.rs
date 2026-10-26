@@ -1,4 +1,4 @@
-//! Complete normal locomotion over the one owned player state.
+//! Normal locomotion and shinespark crash transitions share the owned player state.
 #![forbid(unsafe_code)]
 pub(crate) mod content;
 pub(crate) mod effects;

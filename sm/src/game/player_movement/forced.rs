@@ -1,13 +1,13 @@
 //! Scripted push, fall and collision recovery share the owned movement state.
 #![forbid(unsafe_code)]
-use super::{effects::Host, speed};
+use super::{effects::Host, presentation, speed};
 use crate::game::{
     player_collision::operations as collision,
     player_transitions::{
         self as transitions,
         state::{
-            BombJump, DrawMode, FrameGammaMode, InputMode, InterruptionAction, JumpKind,
-            LandingBounce, MomentumAction, MovementMode, PoseRequestWord,
+            BombJump, DrawMode, FrameGammaMode, HurtAction, InputMode, InterruptionAction,
+            JumpKind, LandingBounce, MomentumAction, MovementMode, PoseRequestWord,
         },
     },
     session::Session,
@@ -309,4 +309,132 @@ pub(crate) fn knockback_motion<H: Host>(h: &mut H, horizontal: bool, vertical: f
     }
     vertical(h);
     clear_collided_motion(h);
+}
+
+/// End flight before the crash animation, retaining untouched echo lanes.
+pub(crate) fn end_shinespark(h: &mut impl Host) -> u8 {
+    if h.session().inventory.health.current.wrapping_sub(30) & 0x8000 == 0
+        && h.session().player.collision.flags == 0
+    {
+        return 0;
+    }
+    let s = h.session_mut();
+    let left = s.player.movement_and_facing as u8 == 4;
+    s.projectiles.echoes.x_speed[0] = if left { 32 } else { 224 };
+    s.projectiles.echoes.x_speed[1] = if left { 160 } else { 96 };
+    s.projectiles.echoes.x[2] = if left { 4 } else { (-4i16) as u16 };
+    s.player.contact.y_speed = Default::default();
+    s.player.contact.extra_run = Default::default();
+    s.player.contact.speed_boost = 0;
+    s.player.transitions.landing_motion_compatibility = 0;
+    s.player.contact.y_direction = 0;
+    s.player.movement_handler = MovementMode::from_raw(0xd346);
+    s.player.transitions.draw_handler = DrawMode::ShinesparkEnd;
+    s.projectiles.echoes.index = 0;
+    s.projectiles.echoes.x[0] = s.player.x;
+    s.projectiles.echoes.x[1] = s.player.x;
+    s.projectiles.echoes.y[0] = s.player.y;
+    s.projectiles.echoes.y[1] = s.player.y;
+    s.projectiles.echoes.x_speed[2] = 0;
+    s.player.palette.hurt_flash = 0;
+    h.sound(1, 6, 0x35);
+    h.sound(3, 6, 0x10);
+    1
+}
+
+fn shinespark_timer_finished(s: &mut Session) -> bool {
+    let timer = &mut s.player.transitions.shinespark_start_stop_timer;
+    *timer = timer.wrapping_sub(1);
+    *timer == 0 || *timer & 0x8000 != 0
+}
+
+pub(crate) fn shinespark_windup(h: &mut impl Host) {
+    if shinespark_timer_finished(h.session_mut()) {
+        let s = h.session_mut();
+        s.player.transitions.interrupted =
+            PoseRequestWord::from_raw(if s.player.movement_and_facing as u8 == 4 {
+                204
+            } else {
+                203
+            });
+        s.player.movement_handler = MovementMode::ShinesparkVertical;
+        s.player.transitions.input_mode = InputMode::Disabled;
+        s.projectiles.echoes.index = 0;
+        s.projectiles.echoes.x_speed[0] = 0;
+        s.projectiles.echoes.x_speed[1] = 0;
+        s.projectiles.echoes.x[0] = 0;
+        s.projectiles.echoes.x[1] = 0;
+        h.sound(3, 9, 0xf);
+    }
+}
+
+pub(crate) fn shinespark_crash(h: &mut impl Host) {
+    h.session_mut().player.shine_timer = 15;
+    // Preserve the three-entry bounds failure after the shine-timer store.
+    match [0, 1, 2][usize::from(h.session().projectiles.echoes.index >> 8)] {
+        0 => expand_shinespark_crash(h.session_mut()),
+        1 => rotate_shinespark_crash(h.session_mut()),
+        _ => contract_shinespark_crash(h.session_mut()),
+    }
+    presentation::place_shinespark_crash(h.session_mut());
+}
+
+pub(crate) fn expand_shinespark_crash(s: &mut Session) {
+    let prior = s.projectiles.echoes.index;
+    let next = prior.wrapping_add(4);
+    s.projectiles.echoes.index = if prior.wrapping_sub(12) & 0x8000 == 0 {
+        next | 0x100
+    } else {
+        next
+    };
+}
+
+pub(crate) fn rotate_shinespark_crash(s: &mut Session) {
+    // u16 pointer offset(2) reached $AB4, the physical first byte of X[2].
+    // Each word is encoded LE; store speed[0] before rereading X[2]/speed[1].
+    s.projectiles.echoes.x_speed[0] = u16::from(
+        (s.projectiles.echoes.x[2] as u8).wrapping_add(s.projectiles.echoes.x_speed[0] as u8),
+    );
+    s.projectiles.echoes.x_speed[1] = u16::from(
+        (s.projectiles.echoes.x[2] as u8).wrapping_add(s.projectiles.echoes.x_speed[1] as u8),
+    );
+    s.projectiles.echoes.y[2] = s.projectiles.echoes.y[2].wrapping_add(4);
+    if s.projectiles.echoes.y[2].wrapping_sub(128) & 0x8000 == 0 {
+        s.projectiles.echoes.index = u16::from(s.projectiles.echoes.index as u8) | 0x200;
+    }
+}
+
+pub(crate) fn contract_shinespark_crash(s: &mut Session) {
+    s.projectiles.echoes.index = s.projectiles.echoes.index.wrapping_sub(4);
+    if s.projectiles.echoes.index as u8 == 0 {
+        s.player.movement_handler = MovementMode::from_raw(0xd3f3);
+        s.player.transitions.shinespark_start_stop_timer = 30;
+        s.projectiles.echoes.index = 0;
+        s.projectiles.echoes.x_speed[0] = 0;
+        s.projectiles.echoes.x_speed[1] = 0;
+    }
+}
+
+pub(crate) fn wait_shinespark_crash(s: &mut Session) {
+    s.player.shine_timer = 15;
+    if shinespark_timer_finished(s) {
+        s.player.movement_handler = MovementMode::from_raw(0xd40d);
+        s.player.transitions.draw_handler = DrawMode::Normal;
+    }
+}
+
+pub(crate) fn finish_shinespark_crash(h: &mut impl Host) {
+    presentation::create_shinespark_echoes(h);
+    let s = h.session_mut();
+    s.projectiles.controls.cooldown = 0;
+    s.player.shine_timer = 1;
+    s.player.transitions.transitional =
+        PoseRequestWord::from_raw(if s.player.movement_and_facing as u8 == 4 {
+            2
+        } else {
+            1
+        });
+    s.player.transitions.hurt = HurtAction::from_raw(2);
+    s.shared_sequence.stage = 0;
+    s.shared_sequence.value = 0;
 }
