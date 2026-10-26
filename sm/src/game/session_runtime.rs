@@ -627,6 +627,8 @@ crate::game::callback_dispatch! {
         11042892 => [()];
         11048675 => crate::game::actors::fune::initialize;
         11048752 => crate::game::actors::fune::advance;
+        11049710 => crate::game::actors::wrecked_ship_ghost::initialize;
+        11049788 => crate::game::actors::wrecked_ship_ghost::advance;
         11051336 => sm_a8::YappingMaw_Init;
         11051537 => sm_a8::YappingMaw_Main; 11052953 => sm_a8::YappingMaw_Touch;
         11053894 => crate::game::actors::kago::initialize;

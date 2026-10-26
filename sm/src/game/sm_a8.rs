@@ -50,7 +50,7 @@ crate::game::constants::typed_constants! { Consts_A8;
     addr_kYappingMaw_Ilist_A05B = 41051, addr_kYappingMaw_Ilist_A03D = 41021,
     addr_off_A8A025 = 40997, addr_kYappingMaw_Ilist_A01F = 40991,
     addr_kYappingMaw_Ilist_9FC7 = 40903, addr_kYappingMaw_Ilist_9F6F = 40815,
-    addr_loc_A89E90 = 40592, addr_kWreckedShipGhost_Ilist_9A8C = 39564,
+    addr_loc_A89E90 = 40592,
     addr_kMorphBallEye_Ilist_9026 = 36902, addr_kMorphBallEye_Ilist_9014 = 36884,
     addr_stru_A8900E = 36878, addr_kMorphBallEye_Ilist_9002 = 36866,
     addr_stru_A88FFC = 36860, addr_kMorphBallEye_Ilist_8FF0 = 36848,
@@ -61,7 +61,7 @@ crate::game::constants::typed_constants! { Consts_A8;
 }
 crate::type_aliases! {
     pub Enemy_KiHunter, Enemy_MiniDraygon, Enemy_NorfairLavaMan,
-        Enemy_WalkingLavaSeahorse, Enemy_WreckedShipGhost,
+        Enemy_WalkingLavaSeahorse,
         Enemy_WreckedShipOrbs = crate::game::enemy_layouts::EnemyLayout40;
 }
 
@@ -106,13 +106,11 @@ crate::ram_map::ram_pointer_functions! {
     Get_MaridiaFloater(o: i32) -> Enemy_MaridiaFloater = [0xf78, o as isize];
     Get_MaridiaPuffer(o: i32) -> Enemy_MaridiaPuffer = [0xf78, o as isize];
     Get_MiniDraygon(o: i32) -> Enemy_MiniDraygon = [0xf78, o as isize];
-    Get_WreckedShipGhost(o: i32) -> Enemy_WreckedShipGhost = [0xf78, o as isize];
     Get_YappingMaw(o: i32) -> Enemy_YappingMaw = [0xf78, o as isize];
 }
 type YappingMaw = Enemy_YappingMaw;
 type WreckedShipSpark = Enemy_WreckedShipSpark;
 type WreckedShipOrbs = Enemy_WreckedShipOrbs;
-type WreckedShipGhost = Enemy_WreckedShipGhost;
 type WalkingLavaSeahorse = Enemy_WalkingLavaSeahorse;
 type NorfairLavaMan = Enemy_NorfairLavaMan;
 type MorphBallEye = Enemy_MorphBallEye;
@@ -126,22 +124,6 @@ static g_word_A89050: u16 = 0x80;
 static g_word_A89052: u16 = 0xb0;
 static g_word_A89054: u16 = 0x80;
 static g_word_A89056: u16 = 0x80;
-static g_word_A89A9C: u16 = 0x10;
-static g_word_A89A9E: u16 = 0x40;
-static g_word_A89AA0: u16 = 0x1800;
-static g_word_A89AA2: u16 = 1;
-static g_word_A89AA4: u16 = 0x78;
-static g_word_A89AA6: u16 = 0x78;
-static g_word_A89AA8: [u16; 18] = [
-    0xffc0, 0xffc0, 0, 0xffc0, 0x40, 0, 0xffc0, 0, 0, 0, 0x40, 0, 0xffc0, 0x40, 0, 0x40, 0x40, 0x40,
-];
-static g_word_A89ACC: [u16; 17] = [1, 8, 1, 8, 1, 7, 1, 7, 2, 6, 2, 6, 3, 5, 3, 5, 0xffff];
-static kWreckedShipGhost_Palette: [u16; 16] = [
-    0x3800, 0x57ff, 0x42f7, 0x929, 0xa5, 0x4f5a, 0x36b5, 0x2610, 0x1dce, 0x1df, 0x1f, 0x18, 0xa,
-    0x6b9, 0xea, 0x45,
-];
-static g_word_A89D32: u16 = 1;
-static g_word_A89D34: u16 = 1;
 static g_word_A8C277: [i16; 3] = [-12, -16, -20];
 static g_word_A8C27D: [i16; 3] = [-20, -16, -12];
 static g_word_A8C19F: u16 = 0x40;
@@ -390,259 +372,6 @@ pub unsafe fn MiniDraygon_Func_11(game: &mut Game) {
             MiniDraygon_Func_12(game);
         }
     }
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallWreckedShipGhost(ea: u32, k: u16, game: &mut Game) => ea;
-    call (k, game); default { Unreachable(game); };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [11049794] WreckedShipGhost_Func_1 [] {
-        WreckedShipGhost_Func_3(k, game);
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        let v3: u16 = u16::swap_bytes(slot!(game, WreckedShipGhost[E].base.palette_index));
-        let mut v4: u16 = (16 * v3 as i32 + 256) as u16;
-        let mut v1: i32 = 16;
-        for _ in 0..16 {
-            let v5: i32 = v4 as i32 >> 1;
-            if (word!(game.palette_buffer[v5]) as i32 & 0x1f) - 31i32 & 0x8000 != 0 {
-                word!(game.palette_buffer[v5] += 1057);
-                v1 -= 1;
-            }
-            v4 = (v4).wrapping_add(2);
-        }
-        if ((v1 - 16i32) as i16) >= 0 {
-            slot!(game, WreckedShipGhost[E].var_A = (0xa89badi32) as u16);
-            let v7: u16 = u16::swap_bytes(slot!(game, WreckedShipGhost[E].base.palette_index));
-            let mut v8: u16 = (16 * v7 as i32 + 256) as u16;
-            for v9 in (0u16..32).step_by(2) {
-                word!(
-                    game.target_palettes[(v8 >> 1)] = kWreckedShipGhost_Palette[(v9 >> 1) as usize]
-                );
-                v8 = (v8).wrapping_add(2);
-            }
-        }
-    };
-    [11049901] WreckedShipGhost_Func_2 [] {
-        let v4: u16 = WreckedShipGhost_Func_8(game);
-        WreckedShipGhost_Func_3(word!(game.cur_enemy_index), game);
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        if slot!(game, WreckedShipGhost[E].var_B) | v4 == 0 {
-            slot!(game, WreckedShipGhost[E].base.properties, |old| (old) & (0xfaffu16));
-            slot!(game, WreckedShipGhost[E]; var_A = (0xa89c8ai32) as u16, var_00 = slot!(game, WreckedShipGhost[E].base.y_pos), var_B = 1, var_C = 2, var_01 = 0, var_02 = g_word_A89AA2, var_B = g_word_A89AA6, var_05 = 4)
-
-;
-            let v2: u16 = word!(game.samus_x_pos);
-            slot!(game, WreckedShipGhost[E].var_06 = word!(game.samus_x_pos));
-            slot!(game, WreckedShipGhost[E].var_07 = v2);
-            slot!(game, WreckedShipGhost[E].var_08 = v2);
-            slot!(game, WreckedShipGhost[E].var_09 = 12);
-            let v3: u16 = *(ram_ptr!(game, u16; 0xafa, word!(game.cur_enemy_index) as i32 as isize));
-            slot!(game, WreckedShipGhost[E]; var_0A = v3, var_0B = v3, var_0C = v3, var_0D = g_word_A89A9E, var_0E = g_word_A89A9C)
-;
-        }
-    };
-    [11050089] WreckedShipGhost_Func_4 [] {
-        if WreckedShipGhost_Func_8(game) == 0 {
-            let E: i32 = word!(game.cur_enemy_index) as i32;
-            slot!(game, WreckedShipGhost[E].var_A = (0xa89d13i32) as u16);
-            slot!(game, WreckedShipGhost[E].base.properties, |old| (old) | ((kEnemyProps_Invisible) as u16));
-            slot!(game, WreckedShipGhost[E].var_B = g_word_A89AA4);
-        }
-    };
-    [11050122] WreckedShipGhost_Func_5 [] {
-        let E = Get_WreckedShipGhost(k as i32, game);
-        words!((*E).base, y_pos, y_subpos += words!((*E), var_02, var_01));
-        words!(
-            (*E),
-            var_02,
-            var_01 += (if (((*E).base.y_pos) as i16).wrapping_sub(((*E).var_00) as i16) < 0 {
-                g_word_A89AA0 as i32
-            } else {
-                -(g_word_A89AA0 as i32)
-            }) as u32
-        );
-        (*E).var_B = (*E).var_B.wrapping_sub(1);
-        if (*E).var_B == 0 {
-            (*E).var_A = (0xa89c69i32) as u16;
-            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
-            let t: i32 = u16::swap_bytes((*E).base.palette_index) as i32;
-            let mut v9: u16 = (16 * t + 256) as u16;
-            for _ in 0..=16 {
-                word!(game.target_palettes[(v9 >> 1)] = 0x7fff);
-                v9 = (v9).wrapping_add(2);
-            }
-        }
-    };
-    [11050259] WreckedShipGhost_Func_6 [] {
-        let E: i32 = k as i32;
-        let wsgt_var_B: u16 = slot!(game, WreckedShipGhost[E].var_B);
-        if wsgt_var_B == 0 || {
-            let mut v3: u16 = (wsgt_var_B).wrapping_sub(1);
-            slot!(game, WreckedShipGhost[E].var_B = v3);
-            slot!(game, WreckedShipGhost[E].var_B) == 0
-        } {
-            slot!(game, WreckedShipGhost[E].var_B = 1);
-            slot!(game, WreckedShipGhost[E].var_C = 2);
-            slot!(game, WreckedShipGhost[E].var_A = (0xa89d36i32) as u16);
-        }
-    };
-    [11050294] WreckedShipGhost_Func_7 [] {
-        let mut v2: i16 = 0;
-        let E: i32 = k as i32;
-
-        let skip_reposition: bool =
-            if ((word!(game.samus_x_pos)) as i16).wrapping_sub((slot!(game, WreckedShipGhost[E].var_07)) as i16) < 0
-                || ((word!(game.samus_x_pos)) as i16).wrapping_sub((slot!(game, WreckedShipGhost[E].var_08)) as i16) >= 0
-                || {
-                    v2 = *(ram_ptr!(game, u16; 0xafa, k as i32 as isize)) as i16;
-                    (v2).wrapping_sub((slot!(game, WreckedShipGhost[E].var_0B)) as i16) < 0
-                }
-                || (v2).wrapping_sub((slot!(game, WreckedShipGhost[E].var_0C)) as i16) >= 0
-            {
-                slot!(game, WreckedShipGhost[E].var_0D = g_word_A89A9E);
-                let mut v4: i16 = 0;
-                if ((word!(game.samus_x_pos)) as i16).wrapping_sub((slot!(game, WreckedShipGhost[E].var_06)) as i16) >= 0 {
-                    v4 = (if word!(game.samus_x_pos) == slot!(game, WreckedShipGhost[E].var_06) {
-                        4
-                    } else {
-                        8
-                    }) as i16;
-                }
-                if v4 as i32 == slot!(game, WreckedShipGhost[E].var_05) as i32 {
-                    let mut v7: i16 = 0;
-                    let mut v9: i16 =
-                        ((word!(game.samus_y_pos)) as i16).wrapping_sub((slot!(game, WreckedShipGhost[E].var_0A)) as i16);
-                    if v9 >= 0 {
-                        v7 = (if v9 != 0 { 24 } else { 12 }) as i16;
-                    }
-                    if v7 as i32 == slot!(game, WreckedShipGhost[E].var_09) as i32 {
-                        let v10: u16 = (slot!(game, WreckedShipGhost[E].var_0E)).wrapping_sub(1);
-                        slot!(game, WreckedShipGhost[E].var_0E = v10);
-                        !(v10 == 0)
-                    } else {
-                        slot!(game, WreckedShipGhost[E].var_09 = v7 as u16);
-                        slot!(game, WreckedShipGhost[E].var_0E = g_word_A89A9C);
-                        true
-                    }
-                } else {
-                    slot!(game, WreckedShipGhost[E].var_05 = v4 as u16);
-                    slot!(game, WreckedShipGhost[E].var_0E = g_word_A89A9C);
-                    true
-                }
-            } else {
-                let mut v3: u16 = (slot!(game, WreckedShipGhost[E].var_0D)).wrapping_sub(1);
-                slot!(game, WreckedShipGhost[E].var_0D = v3);
-                !(v3 == 0)
-                    || ({
-                        slot!(game, WreckedShipGhost[E].var_05 = 4);
-                        slot!(game, WreckedShipGhost[E].var_09 = 12);
-                        false
-                    })
-            };
-        if skip_reposition {
-        } else {
-            slot!(game, WreckedShipGhost[E].var_A = (0xa89b42i32) as u16);
-            slot!(game, WreckedShipGhost[E].var_0D = g_word_A89A9E);
-            slot!(game, WreckedShipGhost[E].var_0E = g_word_A89A9C);
-            let v6: i32 = ((slot!(game, WreckedShipGhost[E].var_09)).wrapping_add(slot!(game, WreckedShipGhost[E].var_05))) as i32 >> 1;
-            slot!(game, WreckedShipGhost[E].base.x_pos = (g_word_A89AA8[v6 as usize]).wrapping_add(
-                *(ram_ptr!(game, u16; 0xaf6, k as i32 as isize)),
-            ));
-            slot!(game, WreckedShipGhost[E].base.y_pos = (g_word_A89AA8[(v6 + 1i32) as usize]).wrapping_add(
-                *(ram_ptr!(game, u16; 0xafa, k as i32 as isize)),
-            ));
-            return;
-        }
-        let v11: u16 = word!(game.samus_x_pos);
-        slot!(game, WreckedShipGhost[E].var_06 = word!(game.samus_x_pos));
-        slot!(game, WreckedShipGhost[E].var_07 = (v11).wrapping_sub(g_word_A89D32));
-        slot!(game, WreckedShipGhost[E].var_08 = (g_word_A89D32).wrapping_add(word!(game.samus_x_pos)));
-        let v13: u16 = word!(game.samus_y_pos);
-        slot!(game, WreckedShipGhost[E].var_0A = word!(game.samus_y_pos));
-        slot!(game, WreckedShipGhost[E].var_0B = (v13).wrapping_sub(g_word_A89D34));
-        slot!(game, WreckedShipGhost[E].var_0C = (g_word_A89D34).wrapping_add(word!(game.samus_y_pos)));
-    };
-}
-pub unsafe fn WreckedShipGhost_Func_3(k: u16, game: &mut Game) {
-    let E: i32 = k as i32;
-    let wsgt_var_B: u16 = slot!(game, WreckedShipGhost[E].var_B);
-    let make_visible: bool = (wsgt_var_B == 0)
-        || ({
-            let mut v3: u16 = (wsgt_var_B).wrapping_sub(1);
-            slot!(game, WreckedShipGhost[E].var_B = v3);
-            (v3 == 0)
-                && ({
-                    let mut wsgt_var_C: u16 = slot!(game, WreckedShipGhost[E].var_C);
-                    let mut v5: i16 = g_word_A89ACC[(wsgt_var_C >> 1) as usize] as i16;
-                    if v5 < 0 {
-                        slot!(game, WreckedShipGhost[E]; var_B = 0, var_C = 0);
-                        return;
-                    }
-                    slot!(game, WreckedShipGhost[E].var_B = v5 as u16);
-                    slot!(
-                        game,
-                        WreckedShipGhost[E].var_C = (wsgt_var_C).wrapping_add(2)
-                    );
-                    (wsgt_var_C & 2) == 0
-                })
-        });
-    if make_visible {
-        slot!(game, WreckedShipGhost[E].base.properties, |old| (old as i32
-            & !(kEnemyProps_Invisible as i32))
-            as u16);
-    };
-}
-pub unsafe fn WreckedShipGhost_Func_8(game: &mut Game) -> u16 {
-    let mut v0: u16 = 0;
-    if word!(game.door_transition_flag_enemies) == 0 {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        let v2: u16 = u16::swap_bytes(slot!(game, WreckedShipGhost[E].base.palette_index));
-        let mut v3: u16 = (16 * v2 as i32 + 256) as u16;
-        let r20: u16 = (16 * v2 as i32 + 288) as u16;
-        do_until! { ((v3) as i16).wrapping_sub((r20) as i16) >= 0 ;
-            let v4: i32 = v3 as i32 >> 1;
-            if word!(game.target_palettes[v4]) != word!(game.palette_buffer[v4]) {
-                let mut r18: u16 = (word!(game.target_palettes[v4])) & (0x1fu16);
-                let v5: u16 = (word!(game.palette_buffer[v4])) & (0x1fu16);
-                if v5 != r18 {
-                    let mut v6: u16 = if ((v5) as i16).wrapping_sub((r18) as i16) >= 0 {
-                        (v5).wrapping_sub(1)
-                    } else {
-                        (v5).wrapping_add(1)
-                    };
-                    r18 = v6;
-                    word!(game.palette_buffer[v4] = v6 | word!(game.palette_buffer[v4]) & 0xffe0);
-                    v0 = v0.wrapping_add(1);
-                }
-                r18 = (word!(game.target_palettes[v4])) & (0x3e0u16);
-                let v7: u16 = (word!(game.palette_buffer[v4])) & (0x3e0u16);
-                if v7 != r18 {
-                    let mut v8: u16 = if ((v7) as i16).wrapping_sub((r18) as i16) >= 0 {
-                        (v7).wrapping_sub(32)
-                    } else {
-                        (v7).wrapping_add(32)
-                    };
-                    word!(game.palette_buffer[v4] = v8 | word!(game.palette_buffer[v4]) & 0xfc1f);
-                    v0 = v0.wrapping_add(1);
-                }
-                r18 = (word!(game.target_palettes[v4])) & (0x7c00u16);
-                let v9: u16 = (word!(game.palette_buffer[v4])) & (0x7c00u16);
-                if v9 != r18 {
-                    let mut v10: u16 = if ((v9) as i16).wrapping_sub((r18) as i16) >= 0 {
-                        (v9).wrapping_sub(1024)
-                    } else {
-                        (v9).wrapping_add(1024)
-                    };
-                    r18 = v10;
-                    word!(
-                        game.palette_buffer[v4] = v10 | word!(game.palette_buffer[v4]) & 0x83ff
-                    );
-                    v0 = v0.wrapping_add(1);
-                }
-            }
-            v3 = (v3).wrapping_add(2);
-        }
-    }
-    v0
 }
 crate::game::callback_dispatch! {
     pub unsafe fn CallYappingMawFunc(ea: u32, game: &mut Game) => ea;
@@ -2011,32 +1740,6 @@ crate::game::callback_dispatch! {
             let E: i32 = word!(game.cur_enemy_index) as i32;
             actor_species_pre_instruction(((slot!(game, MorphBallEye[E].var_F)) as u32) | (0xa80000u32), game);
         }
-    };
-    [11049710] WreckedShipGhost_Init [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, WreckedShipGhost[E].base.properties, |old| (old as i32
-            | (kEnemyProps_DisableSamusColl as i32
-                | kEnemyProps_Tangible as i32
-                | kEnemyProps_Invisible as i32)) as u16);
-        slot!(game, WreckedShipGhost[E].base.instruction_timer = 1);
-        slot!(game, WreckedShipGhost[E].base.timer = 0);
-        slot!(game, WreckedShipGhost[E].base.current_instruction = addr_kWreckedShipGhost_Ilist_9A8C as u16);
-        slot!(game, WreckedShipGhost[E].var_A = (0xa89d13i32) as u16);
-        slot!(game, WreckedShipGhost[E].var_B = (g_word_A89AA4).wrapping_add(160));
-        let v2: u16 = u16::swap_bytes(slot!(game, WreckedShipGhost[E].base.palette_index));
-        let mut v3: u16 = (16 * v2 as i32 + 256) as u16;
-        for _ in 0..=16 {
-            word!(game.target_palettes[(v3 >> 1)] = 0);
-            v3 = (v3).wrapping_add(2);
-        }
-    };
-    [11049788] WreckedShipGhost_Main [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        CallWreckedShipGhost(
-            ((slot!(game, WreckedShipGhost[E].var_A)) as u32) | (0xa80000u32),
-            word!(game.cur_enemy_index),
-            game,
-        );
     };
     [11052989] YappingMaw_Shot [] {
         actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
