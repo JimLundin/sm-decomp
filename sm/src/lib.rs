@@ -350,6 +350,7 @@ pub mod game {
     pub(crate) mod beam_windows;
     pub mod constants;
     pub(crate) mod decompression;
+    pub(crate) mod demo_rooms;
     pub(crate) mod dialogue;
     pub(crate) mod dialogue_ram;
     pub(crate) mod enemy_layouts;

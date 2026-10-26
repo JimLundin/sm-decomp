@@ -13,8 +13,8 @@ pub(crate) use crate::game::session::Vector32;
 pub(crate) use crate::game_state::Game;
 pub(crate) use crate::ram_map::{ram_ptr, word};
 pub(crate) use crate::rtl::{
-    AddToHiLo, Load24, MakePairU16, Mult8x8, ReadRegWord, RomPtr, RtlWriteSram, SnesDivide,
-    Unreachable, WriteReg, WriteRegWord, abs16, mov24, rom_ptr, sign_extend8, words,
+    AddToHiLo, Load24, MakePairU16, Mult8x8, ReadRegWord, RtlWriteSram, SnesDivide, Unreachable,
+    WriteReg, WriteRegWord, abs16, mov24, rom_ptr, sign_extend8, words,
 };
 pub use crate::snes::registers::*;
 pub use crate::types::{

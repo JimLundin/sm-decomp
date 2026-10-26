@@ -1,6 +1,6 @@
 use crate::game::decompression::decompress_to_ram;
+use crate::game::demo_rooms;
 use crate::game::gameplay::advance as AdvanceGameplay;
-use crate::game::gameplay_flag_runtime;
 use crate::game::music::{CancelSoundEffects, advance_sound_effects};
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
 use crate::game::options_settings;
@@ -50,20 +50,6 @@ use crate::host::{Die, Warning};
 
 pub use crate::types::Func_V_Coroutine;
 
-crate::typed_struct! {
-    [
-        #[derive(Copy, Clone)]
-        #[repr(C, packed)]
-    ];
-    pub struct DemoRoomData {
-        pub room_ptr_: VoidP;
-        pub door_ptr, door_slot, screen_x_pos, screen_y_pos, samus_x_offs, samus_y_offs,
-            demo_length: u16;
-        pub demo_code_ptr: VoidP;
-    }
-
-}
-
 pub use crate::types::Consts_83;
 
 crate::game::constants::typed_constants! { Consts_83;
@@ -79,16 +65,7 @@ crate::game::constants::typed_constants! { i32;
     fnCinematicFunction_Intro_Initial = 0x8ba395, fnCinematicFunctionBlackoutFromCeres = 0x8bc11b,
     fnCinematicFunctionEscapeFromCebes = 0x8bd480,
 }
-const RomPtr_82: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x82>;
 const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
-#[inline]
-unsafe fn get_RoomDefHeader(a: u16, game: &mut Game) -> *mut RoomDefHeader {
-    unsafe { RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefHeader }
-}
-#[inline]
-unsafe fn get_DemoRoomData(a: u16, game: &mut Game) -> *mut DemoRoomData {
-    unsafe { RomPtr((0x820000u32) | ((a) as u32), game) as *mut DemoRoomData }
-}
 crate::game::constants::typed_constants! { u32;
     fnDoorTransitionFunction_HandleElevator = 8577405,
     fnPauseHook_Empty = 8946657,
@@ -96,26 +73,6 @@ crate::game::constants::typed_constants! { u32;
     fnUnpauseHook_Kraid_IsDead = 10994171, fnUnpauseHook_Kraid_IsAlive = 10994254,
     fnKraid_UnpauseHook_IsSinking = 10994336, fnPauseHook_Kraid = 10994469,
     fnMotherBrainsBody_UnpauseHook = 11110243,
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallDemoRoomDataFunc(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [8554778] DemoRoom_ChargeBeamRoomScroll21 [] {
-        *ram_ptr!(game; 0xcd20, 33) = 0;
-    };
-    [8554789] DemoRoom_SetBG2TilemapBase [] {
-        *(ram_ptr!(game, u16; 0x59)) = 74;
-    };
-    [8554795] DemoRoom_SetKraidFunctionTimer [] {
-        (*(ram_ptr!(game, EnemyData; 0xf78))).ai_preinstr = 60;
-    };
-    [8554802] DemoRoom_SetBrinstarBossBits [] {
-        gameplay_flag_runtime::set_boss_byte_at(1, 1, game);
-    };
-    @external {
-        8554788 => [()];
-    }
 }
 pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
     unsafe {
@@ -129,7 +86,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                 LoadStdBG3andSpriteTilesClearTilemaps(game);
                 LoadInitialPalette(game);
                 initialize_player(game);
-                LoadDemoRoomData(game);
+                demo_rooms::load(game);
             } else {
                 if word!(game.loading_game_state) as i32 != kLoadingGameState_5_Main as i32 {
                     if word!(game.loading_game_state) as i32
@@ -211,15 +168,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
             }
             match stage {
                 2 => {
-                    let r18: u16 = (*get_DemoRoomData(
-                        (crate::rtl::rom_table_word!(game, 0x82876c, word!(game.demo_set) as isize)
-                            as i32
-                            + 18i32 * (word!(game.demo_scene) as i32 - 1i32))
-                            as u16,
-                        game,
-                    ))
-                    .demo_code_ptr;
-                    CallDemoRoomDataFunc(((r18) as u32) | (0x820000u32), game);
+                    demo_rooms::finish_setup(game);
                     word!(game.game_state += 1);
                 }
                 3 => {
@@ -498,7 +447,7 @@ pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
 pub unsafe fn GameState_43_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
     unsafe {
         if word!(game.substate) != 1 {
-            CheckForNextDemo(game);
+            demo_rooms::advance_set(game);
         }
         crate::game::display_refresh::enable(true, game);
         word!(game.game_state += 1);
@@ -534,79 +483,6 @@ pub unsafe fn GameState_44_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
             word! {game; debug_disable_sounds = 0; cinematic_function = ((0x8b9b68i32) as u16); }
         }
         kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn CheckForNextDemo(game: &mut Game) {
-    unsafe {
-        if *(RomPtr_82(
-            (crate::rtl::rom_table_word!(game, 0x82876c, word!(game.demo_set) as isize) as i32
-                + 18 * word!(game.demo_scene) as i32) as u16,
-            game,
-        ) as *mut u16)
-            == 0xffff
-        {
-            word!(game.substate = 0);
-            let mut v0: u16 = (word!(game.demo_set)).wrapping_add(1);
-            if v0 >= word!(game.num_demo_sets) {
-                v0 = 0;
-            }
-            word! {game; demo_set = v0; demo_scene = 0; }
-        } else {
-            word!(game.substate = 0x8000);
-        };
-    }
-}
-pub unsafe fn LoadDemoRoomData(game: &mut Game) {
-    unsafe {
-        word!(game.door_def_ptr = 0);
-        let mut drd = get_DemoRoomData(
-            (18 * word!(game.demo_scene) as i32
-                + crate::rtl::rom_table_word!(game, 0x82876c, word!(game.demo_set) as isize) as i32)
-                as u16,
-            game,
-        );
-        word! { game;
-            room_ptr = (*drd).room_ptr_;
-            door_def_ptr = (*drd).door_ptr;
-            layer1_x_pos = (*drd).screen_x_pos;
-            bg1_x_offset = word!(game.layer1_x_pos);
-            layer1_y_pos = (*drd).screen_y_pos;
-            bg1_y_offset = word!(game.layer1_y_pos);
-            samus_y_pos = (word!(game.layer1_y_pos)).wrapping_add((*drd).samus_x_offs);
-            samus_prev_y_pos = word!(game.samus_y_pos);
-            samus_x_pos = ((*drd).samus_y_offs as i32 + word!(game.layer1_x_pos) as i32 + 128) as u16;
-            samus_prev_x_pos = word!(game.samus_x_pos);
-            demo_timer = (*drd).demo_length;
-        }
-        byte!(@pointer ram_ptr!(game, u16; 0x79f); 0) =
-            (*get_RoomDefHeader(word!(game.room_ptr), game)).area_index_;
-        word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
-        word!(game.demo_scene += 1);
-        let mut v1: u16 = 0;
-        word_transfers!(game, ascending, 4;
-            native(0xd830) <- value(-1i32 as u16),
-            native(0xd870) <- value(-1i32 as u16),
-            le(UNUSED_word_7ED8F0, 0) <- value(-1i32 as u16),
-            native(0xd908) <- value(-1i32 as u16),
-            native(0xd8f8) <- value(-1i32 as u16),
-            native(0xd900) <- value(-1i32 as u16),
-            native(0xd8b0) <- value(0),
-            native(0xd820) <- value(0),
-            native(0xd828) <- value(0),
-        );
-        v1 = 8;
-        word_transfers!(game, ascending, 28;
-            native(0xd838) <- value(-1i32 as u16),
-            native(0xd878) <- value(-1i32 as u16),
-            native(0xd8b8) <- value(0),
-        );
-        v1 = 64;
-        word_transfers!(game, ascending, 768; le(explored_map_tiles_saved, 0) <- value(0));
-        word! { game, 0;
-            samus_max_reserve_health, samus_reserve_health, reserve_health_mode,
-        }
-        word!(game.loading_game_state = kLoadingGameState_0_Intro as u16);
-        word!(game.debug_disable_minimap = 0);
     }
 }
 static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_V_Coroutine;

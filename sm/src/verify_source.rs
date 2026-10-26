@@ -1233,6 +1233,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         "sm/src/game/file_menu.rs",
         include_bytes!("game/file_menu.rs"),
     ),
+    (
+        "sm/src/game/demo_rooms.rs",
+        include_bytes!("game/demo_rooms.rs"),
+    ),
     ("sm/src/game/sm_82.rs", include_bytes!("game/sm_82.rs")),
     ("sm/src/game/sm_8b.rs", include_bytes!("game/sm_8b.rs")),
     ("sm/src/game/sm_9b.rs", include_bytes!("game/sm_9b.rs")),
