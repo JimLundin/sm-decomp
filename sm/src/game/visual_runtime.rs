@@ -2032,6 +2032,51 @@ pub(crate) fn initialize_ending_time_glyph(object: u16, glyph: u8, game: &mut Ga
     place_cinematic_sprite(object, (156 + 8 * u16::from(glyph), 160), 0, game);
 }
 
+pub(crate) fn advance_postcredits_zoom(zooming: bool, game: &mut Game) {
+    if zooming && word!(game.cinematic_var14) != 0 {
+        word!(game.cinematic_var14 -= 1);
+        fade_cinematic_colors(0x180, 0x10, false, game);
+        if word!(game.cinematic_var4) != 0 {
+            compose_cinematic_palette(game);
+        }
+    }
+    if !zooming || word!(game.cinematic_var4) == 0 {
+        if word!(game.cinematic_var17) != 0 {
+            word!(game.cinematic_var17 -= 1);
+            fade_cinematic_colors(0x1e0, 0x10, false, game);
+            compose_cinematic_palette(game);
+        }
+    } else {
+        word!(game.cinematic_var4 -= 1);
+    }
+    if zooming {
+        word!(game.cinematic_var5 = u16::from((word!(game.cinematic_var5) as u8).wrapping_sub(8)));
+        word!(game.cinematic_var6 -= 64);
+        if word!(game.cinematic_var6) as i32 - 24 & 0x8000 != 0 {
+            word! {game; cinematic_var6 = 24; cinematic_function = 0xe48a;
+            cinematic_var4 = 180; cinematic_var14 = 0; }
+        }
+        return;
+    }
+    advance_ending_graphics(EndingGraphics::Background, game);
+    if word!(game.cinematic_var4 -= 1, reread) == 0 {
+        game.g_ram[0x55] = 1;
+        set_cinematic_blend(17, 0, 0, 49, game);
+        set_fixed_color([63, 95, 159], game);
+        game.g_ram[0x5f] = 0;
+        game.g_ram[0x58] = 78;
+        game.g_ram[0x5d] = 84;
+        word_transfers!(game, ascending, 16; le(palette_buffer, 192) <- rom(0x8ce7e9, 192));
+        word! { game, 0; cinematic_var8, cinematic_var10 }
+        word! {game; cinematic_function = 0xe504; cinematic_var4 = 32; }
+        enable_cinematic_background(game);
+        set_cinematic_tilemap_updates(true, game);
+        word!(game.cinematicbg_var3 = 19456);
+        word_transfers!(game, descending, 64; native(0x337e) <- value(127));
+        queue_cinematic_tilemap(CinematicTilemap::FullText, game);
+    }
+}
+
 pub(crate) fn advance_ending_logo_palette(game: &mut Game) -> bool {
     let pair = (word!(game.cinematic_var4).wrapping_mul(4) >> 1) as isize;
     let second = crate::rtl::rom_table_word!(game, 0x8be5e7, pair + 1);

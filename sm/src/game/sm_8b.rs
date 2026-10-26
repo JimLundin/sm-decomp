@@ -564,13 +564,6 @@ static g_word_8BDE43: [u16; 16] = [
     0, 0x6f7b, 0x4a52, 0x1ce7, 0, 0x5ad6, 0x4a52, 0x35ad, 0x2529, 0x7fff, 0x56b5, 0x294a, 0x4210,
     0x2d6b, 0x18c6, 0x7fff,
 ];
-pub fn CinematicFunction_Intro_Func140(game: &mut Game) {
-    if word!(game.cinematic_var17) != 0 {
-        word!(game.cinematic_var17 -= 1);
-        fade_cinematic_colors(0x1e0, 0x10, false, game);
-        compose_cinematic_palette(game);
-    }
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallCinematicFunction(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -1501,46 +1494,6 @@ crate::game::callback_dispatch! {
             }
         }
     };
-    [9167790] CinematicFunction_Intro_Func139 [] {
-        if word!(game.cinematic_var14) != 0 {
-            word!(game.cinematic_var14 -= 1);
-            fade_cinematic_colors(0x180, 0x10, false, game);
-            if word!(game.cinematic_var4) != 0 {
-                compose_cinematic_palette(game);
-            }
-        }
-        if word!(game.cinematic_var4) != 0 {
-            word!(game.cinematic_var4 -= 1);
-        } else {
-            CinematicFunction_Intro_Func140(game);
-        }
-        word!(game.cinematic_var5 = (((word!(game.cinematic_var5)) as u8).wrapping_sub(8)) as u16);
-        word!(game.cinematic_var6 -= 64);
-        if word!(game.cinematic_var6) as i32 - 24i32 & 0x8000 != 0 {
-            word! {game; cinematic_var6 = 24; cinematic_function = ((0x8be48ai32) as u16);
-                cinematic_var4 = 180; cinematic_var14 = 0; }
-        }
-    };
-    [9168010] CinematicFunction_Intro_Func141 [] {
-        CinematicFunction_Intro_Func140(game);
-        crate::game::visual_runtime::advance_ending_graphics(EndingGraphics::Background, game);
-        if word!(game.cinematic_var4 -= 1, reread) == 0 {
-            *ram_ptr!(game; 0x55) = 1;
-            set_cinematic_blend(17, 0, 0, 49, game);
-            set_fixed_color([63, 95, -97i32 as u8], game);
-            *ram_ptr!(game; 0x5f) = 0;
-            *ram_ptr!(game; 0x58) = 78;
-            *ram_ptr!(game; 0x5d) = 84;
-            word_transfers!(game, ascending, 16; le(palette_buffer, 192) <- rom(0x8ce7e9, 192));
-            word! { game, 0; cinematic_var8, cinematic_var10 }
-            word! {game; cinematic_function = ((0x8be504i32) as u16); cinematic_var4 = 32; }
-            enable_cinematic_background(game);
-            set_cinematic_tilemap_updates(true, game);
-            word!(game.cinematicbg_var3 = 19456);
-            word_transfers!(game, descending, 64; native(0x337e) <- value(127));
-            queue_cinematic_tilemap(CinematicTilemap::FullText, game);
-        }
-    };
     [9168132] CinematicFunction_Intro_Func143 [] {
         fade_cinematic_fixed_color(game);
         let v0: bool = (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0;
@@ -1619,6 +1572,8 @@ crate::game::callback_dispatch! {
         *ram_ptr!(game; 0x69) = 16;
     };
     @external {
+        9167790 => [crate::game::visual_runtime::advance_postcredits_zoom(true, game)];
+        9168010 => [crate::game::visual_runtime::advance_postcredits_zoom(false, game)];
         9150249 => [crate::game::visual_runtime::advance_title_wait(game)];
         9167461 => [advance_postcredits_samus_message(true, game)];
         9167507 => [advance_postcredits_samus_message(false, game)];
