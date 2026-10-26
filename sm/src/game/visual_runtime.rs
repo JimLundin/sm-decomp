@@ -1879,11 +1879,44 @@ pub(crate) fn drift_cinematic_sprite(
     }
 }
 
-pub(crate) fn move_jumping_ending_samus(object: u16, game: &mut Game) {
+pub(crate) fn advance_ending_samus_jump(object: u16, phase: u8, game: &mut Game) {
+    if phase == 2 {
+        advance_ending_graphics(EndingGraphics::Samus, game);
+    }
     let low = ram_words::samus_y_subspeed;
     add_native_pair(low + 2, low, 0x3800, game);
     let velocity = words!(game.samus_y_speed, samus_y_subspeed);
     advance_cinematic_coordinate(object, true, velocity, game);
+    let slot = usize::from(object >> 1);
+    if phase == 2 {
+        if word!(game.cinematicbg_arr8[slot]) as i32 - 136 & 0x8000 == 0 {
+            word! {game; cinematicbg_arr8[slot] = 136; cinematicspr_instr_timer[slot] = 1;
+            cinematicspr_instr_ptr[slot] = 0xed9d; cinematicspr_preinstr_func[slot] = 0x93d9; }
+        }
+    } else if word!(game.cinematicbg_arr8[slot]) as i32 + 80 & 0x8000 != 0 {
+        if phase == 0 {
+            game.g_ram[0x52] = 3;
+        }
+        word! {game; cinematicspr_instr_timer[slot] = 1;
+        cinematicspr_instr_ptr[slot] = if phase == 0 { 0xed95 } else { 0xee9b }; }
+        if phase == 0 {
+            word! {game; cinematicspr_preinstr_func[slot] = 0xf5dd; cinematicbg_arr9[slot] = 3072; }
+        }
+    }
+}
+
+pub(crate) fn position_ending_samus_head(
+    object: u16,
+    jumping: bool,
+    cursor: u16,
+    game: &mut Game,
+) -> u16 {
+    let slot = usize::from(object >> 1) + 1;
+    let under_ten = word!(game.game_time_hours) as i32 - 10 & 0x8000 != 0;
+    let (x, y) = [[(118, 120), (120, 120)], [(120, 114), (121, 116)]][usize::from(jumping)]
+        [usize::from(under_ten)];
+    word! {game; cinematicbg_arr7[slot] = x; cinematicbg_arr8[slot] = y; }
+    cursor
 }
 
 pub(crate) fn fade_postcredits_samus_suit(game: &mut Game) {

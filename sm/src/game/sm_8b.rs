@@ -1,4 +1,4 @@
-use super::{intro_pages, visual_state::EndingGraphics};
+use super::intro_pages;
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
 pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
@@ -13,9 +13,9 @@ use crate::game::visual_runtime::{
     initialize_ceres_explosion, initialize_ending_cloud_band, initialize_ending_cloud_side,
     initialize_ending_time_glyph, initialize_intro_brain_particle, initialize_intro_rinka,
     initialize_shooting_stars, initialize_title_sprite, launch_cinematic_sprite, move_ending_cloud,
-    move_jumping_ending_samus, place_cinematic_sprite, prepare_credit_roll, prepare_ending_time,
-    shake_intro_mother_brain, start_intro_rinka, title_metroid_cry, title_metroid_palette,
-    wait_cinematic_scene, wait_ending_cloud,
+    place_cinematic_sprite, prepare_credit_roll, prepare_ending_time, shake_intro_mother_brain,
+    start_intro_rinka, title_metroid_cry, title_metroid_palette, wait_cinematic_scene,
+    wait_ending_cloud,
 };
 use crate::game::visual_runtime::{advance_cinematic_background_pre, fade_cinematic_fixed_color};
 use crate::game::visual_runtime::{
@@ -72,8 +72,8 @@ crate::game::constants::typed_constants! { Consts_8B;
     addr_kCinematicSpriteObjectDef_8BEEBB = 61115, addr_kCinematicSpriteObjectDef_8BEEB5 = 61109,
     addr_kCinematicSpriteObjectDef_8BEEAF = 61103, addr_kCinematicSpriteObjectDef_8BEEA9 = 61097,
     addr_kCinematicSpriteObjectDef_8BEEA3 = 61091, addr_kCinematicSpriteObjectDef_8BEE9D = 61085,
-    addr_off_8BEE9B = 61083, addr_word_8BED9D = 60829,
-    addr_word_8BED95 = 60821, addr_loc_8BE1B4 = 57780,
+    addr_off_8BEE9B = 61083,
+    addr_loc_8BE1B4 = 57780,
     addr_kMode7ObjectDef_8BD437 = 54327, addr_kMode7ObjectDef_8BD431 = 54321,
     addr_kMode7ObjectDef_8BD42B = 54315, addr_kMode7ObjectDef_8BD425 = 54309,
     addr_kMode7ObjectDef_8BD41F = 54303, addr_kMode7ObjectDef_8BD419 = 54297,
@@ -1766,24 +1766,6 @@ crate::game::callback_dispatch! {
         word!(game.cinematic_function = (0x8bde64i32) as u16);
     };
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
-    [9172375] CinematicSprInstr_Func213 [j] {
-        let v1: i32 = k as i32 >> 1;
-        if word!(game.game_time_hours) as i32 - 10i32 & 0x8000 != 0 {
-            word!(game.cinematicbg_arr7[(v1 + 1)] = 120);
-        } else {
-            word!(game.cinematicbg_arr7[(v1 + 1)] = 118);
-        }
-        word!(game.cinematicbg_arr8[(v1 + 1)] = 120);
-    };
-    [9172410] CinematicSprInstr_Func214 [j] {
-        let v1: i32 = k as i32 >> 1;
-        if word!(game.game_time_hours) as i32 - 10i32 & 0x8000 != 0 {
-            word! {game; cinematicbg_arr7[(v1 + 1)] = 121; cinematicbg_arr8[(v1 + 1)] = 116; }
-        } else {
-            word! {game; cinematicbg_arr7[(v1 + 1)] = 120; cinematicbg_arr8[(v1 + 1)] = 114; }
-        }
-    };
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
     [9172484] CinematicSprInstr_Func217 [j] {
         word!(game.cinematicbg_arr9[(k >> 1)] = 3584);
         word!(game.cinematic_function = (0x8be3aei32) as u16);
@@ -1799,6 +1781,8 @@ crate::game::callback_dispatch! {
         word! {game; samus_y_subspeed = 0; samus_y_speed = -16i32 as u16; }
     };
     @external {
+        9172375 => [crate::game::visual_runtime::position_ending_samus_head(k, false, j, game)];
+        9172410 => [crate::game::visual_runtime::position_ending_samus_head(k, true, j, game)];
         9149665 => [crate::game::visual_runtime::start_title_pan(0, j, game)];
         9149789 => [crate::game::visual_runtime::start_title_pan(1, j, game)];
         9149910 => [crate::game::visual_runtime::start_title_pan(2, j, game)];
@@ -1901,35 +1885,6 @@ crate::game::callback_dispatch! {
                 word!(game.cinematic_var13 = (word!(game.cinematic_var13) as i32 + 1 & 7) as u16);
             }
         };
-    };
-    [9172264] CinematicSprPreInstr_F528 [] {
-        move_jumping_ending_samus(k, game);
-        let v1: i32 = k as i32 >> 1;
-        if word!(game.cinematicbg_arr8[v1]) as i32 + 80 & 0x8000 != 0 {
-            *ram_ptr!(game; 0x52) = 3;
-            word!(game.cinematicspr_instr_timer[v1] = 1);
-            word!(game.cinematicspr_instr_ptr[v1] = addr_word_8BED95 as u16);
-            word!(game.cinematicspr_preinstr_func[v1] = (0x8bf5ddi32) as u16);
-            word!(game.cinematicbg_arr9[v1] = 3072);
-        }
-    };
-    [9172351] CinematicSprPreInstr_F57F [] {
-        move_jumping_ending_samus(k, game);
-        let v1: i32 = k as i32 >> 1;
-        if word!(game.cinematicbg_arr8[v1]) as i32 + 80 & 0x8000 != 0 {
-            word!(game.cinematicspr_instr_timer[v1] = 1);
-            word!(game.cinematicspr_instr_ptr[v1] = addr_off_8BEE9B as u16);
-        }
-    };
-    [9172445] CinematicFunction_Intro_Func215 [] {
-        crate::game::visual_runtime::advance_ending_graphics(EndingGraphics::Samus, game);
-        move_jumping_ending_samus(k, game);
-        let v1: i32 = k as i32 >> 1;
-        if word!(game.cinematicbg_arr8[v1]) as i32 - 136i32 & 0x8000 == 0 {
-            word! {game; cinematicbg_arr8[v1] = 136; cinematicspr_instr_timer[v1] = 1;
-                cinematicspr_instr_ptr[v1] = addr_word_8BED9D as u16;
-                cinematicspr_preinstr_func[v1] = ((0x8b93d9i32) as u16); }
-        }
     };
     @functions [pub unsafe fn (j: u16, game: &mut Game)];
     [9171621] CinematicFunction_Intro_Func184 [] {
@@ -2088,6 +2043,9 @@ crate::game::callback_dispatch! {
         };
     };
     @external {
+        9172264 => [crate::game::visual_runtime::advance_ending_samus_jump(j, 0, game)];
+        9172351 => [crate::game::visual_runtime::advance_ending_samus_jump(j, 1, game)];
+        9172445 => [crate::game::visual_runtime::advance_ending_samus_jump(j, 2, game)];
         9152771 => [intro_pages::wait_for_scene_end(j, true, game)];
         9157135 => [intro_pages::wait_for_scene_end(j, false, game)];
         9153896 => [intro_pages::advance_laboratory_baby(j, false, game)];
