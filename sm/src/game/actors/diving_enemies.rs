@@ -73,11 +73,7 @@ fn animate(runtime: &mut Runtime<'_>, profile: &Profile) {
                 crate::rtl::lorom_offset(profile.animations) as usize,
                 frame as isize,
             );
-        runtime.edit_actor(key, Native, |actor| {
-            actor.instruction = instruction;
-            actor.instruction_delay = 1;
-            actor.timer = 0;
-        });
+        runtime.edit_actor(key, Native, |actor| actor.restart_animation(instruction));
     }
 }
 fn burst(runtime: &mut Runtime<'_>, profile: &Profile, mut parameter: u16, chain: bool) {

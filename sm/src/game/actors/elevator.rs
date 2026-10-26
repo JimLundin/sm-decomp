@@ -19,9 +19,7 @@ pub(crate) fn initialize(game: &mut Game) {
     let key = combat::current(&runtime);
     runtime.edit_actor(key, Native, |actor| {
         actor.spritemap = 0x804d;
-        actor.instruction_delay = 1;
-        actor.timer = 0;
-        actor.instruction = 0x94d6;
+        actor.restart_animation(0x94d6);
         actor.parameters[0] = actor.parameters[0].wrapping_mul(2);
         actor.variables[0] = actor.y.whole;
     });

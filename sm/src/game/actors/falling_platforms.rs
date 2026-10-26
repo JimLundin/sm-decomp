@@ -21,11 +21,7 @@ fn animate(runtime: &mut Runtime<'_>, falling: bool, right: bool) {
     let instruction = [[0x9c3f, 0x9c13], [0x9be7, 0x9bbb]][usize::from(special)]
         [usize::from(falling)]
         + u16::from(right) * 0x16;
-    runtime.edit_actor(key, Native, |actor| {
-        actor.instruction = instruction;
-        actor.instruction_delay = 1;
-        actor.timer = 0;
-    });
+    runtime.edit_actor(key, Native, |actor| actor.restart_animation(instruction));
 }
 fn falling(runtime: &mut Runtime<'_>, value: bool) {
     let at = extra(combat::current(runtime));
