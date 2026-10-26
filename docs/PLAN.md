@@ -48,7 +48,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Qualified Core57: production111670, legacy18866, unsafe2853, verification39974; warnings179.
+Qualified Core58: production111674, legacy18794, unsafe2850, verification39974; warnings179.
 Core50 owns the actual native player/DSP allocations and shared APU RAM: +25 engine
 lines, no unsafe-line savings. GameOwner no longer promises Rust thread sharing;
 raw SDL userdata/gate/quiescence and native/audio shutdown contracts remain explicit.

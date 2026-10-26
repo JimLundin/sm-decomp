@@ -4,17 +4,20 @@
 use super::access::{AccessMode, ActorAccess, ActorKey as Key};
 use crate::game::callback_tables::callback_table;
 use crate::game::constants::{
-    bank_86::{addr_kEproj_DustCloudExplosion, addr_stru_868F8F},
+    bank_86::{
+        addr_kEproj_CrocomireSpikeWallPieces, addr_kEproj_DustCloudExplosion, addr_stru_868F8F,
+    },
     bank_a4::*,
     enemy_properties::kEnemyProps_Tangible,
 };
 use crate::game::enemy_layouts::EnemyLayout72 as Crocomire;
-use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
+use crate::game::enemy_projectiles::{ClearEprojs, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::music::{QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::session_runtime::Runtime;
 use crate::game::sprite_effect_runtime::create_sprite;
+use crate::game::visual_runtime::align_crocomire_background;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::rtl::abs16;
@@ -927,4 +930,77 @@ fn demolish_wall(game: &mut Game) {
         };
         SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
     }
+}
+
+pub(crate) fn advance_phase(game: &mut Game) {
+    Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+        enemy.variables[0] = enemy.variables[0].wrapping_add(2);
+    });
+}
+
+pub(crate) fn wait_for_melt(game: &mut Game) {
+    let E: i32 = 0;
+    let crocom_var_D: u16 = slot!(game, Crocomire[E].var_D);
+    if crocom_var_D != 0 {
+        slot!(game, Crocomire[E].var_D = (crocom_var_D).wrapping_sub(1));
+    } else {
+        slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
+        slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
+        slot!(game, Crocomire[E].var_E = 768);
+    };
+}
+
+pub(crate) fn rumble_and_wait(game: &mut Game) {
+    rumble(game);
+    align_crocomire_background(game);
+    wait_for_melt(game);
+}
+
+pub(crate) fn prepare_spike_wall(game: &mut Game) {
+    let E: i32 = 0;
+    let crocom_var_D: u16 = slot!(game, Crocomire[E].var_D);
+    if crocom_var_D != 0 {
+        slot!(game, Crocomire[E].var_D = (crocom_var_D).wrapping_sub(1));
+        let mut v3: i16 = word!(game.croco_target_0688) as i16;
+        let v4: i32 = word!(game.croco_target_0688) as i32 >> 1;
+        if crate::rtl::rom_table_word!(game, 0xa499cb, v4 as isize) != 0xffff {
+            let v5: u16 = word!(game.vram_write_queue_tail);
+            let entry = 0xd0 + usize::from(word!(game.vram_write_queue_tail));
+            word_transfers!(game, ascending, 1; native(entry) <- value(512));
+            word_transfers!(game, ascending, 1;
+                native(entry + 2) <- value(crate::rtl::rom_table_word!(game, 0xa499d9, v4 as isize)),
+            );
+            word_transfers!(game, ascending, 1; native(entry + 4) <- value(173));
+            word_transfers!(game, ascending, 1;
+                native(entry + 5) <- value((crate::rtl::rom_table_word!(game, 0xa499cb, v4 as isize) as i32
+                    + ((game.g_ram[0x52] as i32 & 7) << 13)) as u16),
+            );
+            word!(game.vram_write_queue_tail = (v5).wrapping_add(7));
+            word!(game.croco_target_0688 = ((v3) as u16).wrapping_add(2));
+        }
+    } else {
+        slot!(game, Crocomire[E].base.x_pos = 480);
+        slot!(game, Crocomire[E].base.y_pos = 54);
+        slot!(game, Crocomire[0x80i32].var_D = 80);
+        slot!(game, Crocomire[E]; var_E = 0, var_F = 0);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x20, 0x3, 0xb753 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x1e, 0x3, 0xb757 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x70, 0xb, 0xb747 as VoidP), game);
+        QueueSfx2_Max6(0x29, game);
+        slot!(game, Crocomire[E].base; current_instruction = addr_kCrocomire_Ilist_E158 as u16, instruction_timer = 1);
+        slot!(game, Crocomire[E].base.palette_index = 0);
+        word_transfers!(game, descending, 16; le(palette_buffer, 159) <- rom(0xa4b8fd, 15));
+        ClearEprojs(game);
+        let mut v8: u16 = 8;
+        for _ in 0..8 {
+            v8 = SpawnEprojWithGfx(
+                v8,
+                word!(game.cur_enemy_index),
+                addr_kEproj_CrocomireSpikeWallPieces as u16,
+                game,
+            );
+        }
+        QueueSfx2_Max6(0x30, game);
+        advance_phase(game);
+    };
 }
