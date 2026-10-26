@@ -2233,6 +2233,20 @@ pub(crate) fn start_title_pan(stage: usize, cursor: u16, game: &mut Game) -> u16
     cursor
 }
 
+pub(crate) fn advance_title_pan(stage: usize, game: &mut Game) -> bool {
+    let (offset, cutoff) = [(0, 7), (0, 176), (4, -163)][stage];
+    let velocity = words!((
+        word!(@read game, ram_words::g_word_7E199B + offset),
+        word!(@read game, ram_words::g_word_7E1999 + offset),
+    ));
+    let whole = ram_words::cinematic_var8 + offset;
+    let fraction = ram_words::cinematic_var7 + offset;
+    add_native_pair(whole, fraction, velocity, game);
+    let negative = (word!(@read game, whole) as i32 + cutoff) & 0x8000 != 0;
+    // The vertical pan ends on the opposite side of its cutoff.
+    negative != (stage == 2)
+}
+
 pub(crate) fn advance_title_wait(game: &mut Game) {
     let expired = word!(game.demo_timer -= 1, reread) & 0x8000 != 0;
     if word!(game.demo_timer) == 0 || expired {

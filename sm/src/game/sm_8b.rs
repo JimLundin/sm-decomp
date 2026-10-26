@@ -421,12 +421,8 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
     }
 }
 macro_rules! advance_cinematic_pan_to_blackout {
-    ($game:ident, $cutoff:literal, $sprite_definition:ident) => {
-        words!(
-            $game.cinematic_var8,
-            cinematic_var7 += words!($game.g_word_7E199B, g_word_7E1999)
-        );
-        if word!($game.cinematic_var8) as i32 + $cutoff & 0x8000 != 0 {
+    ($game:ident, $stage:literal, $sprite_definition:ident) => {
+        if crate::game::visual_runtime::advance_title_pan($stage, $game) {
             *ram_ptr!($game; 0x69) = 16;
             word!($game.cinematic_function = ((0x8b9a47i32) as u16));
             CinematicSprites.spawn($sprite_definition as u16,
@@ -562,27 +558,15 @@ crate::game::callback_dispatch! {
         QueueMusic_Delayed8(5, game);
     };
     [9149719] CinematicFunc_Func2 [] {
-        advance_cinematic_pan_to_blackout!(game, 7, addr_kCinematicSpriteObjectDef_8BA0F5);
+        advance_cinematic_pan_to_blackout!(game, 0, addr_kCinematicSpriteObjectDef_8BA0F5);
         MaybeSkipCinematics(game);
     };
     [9149840] CinematicFunc_Func4 [] {
-        advance_cinematic_pan_to_blackout!(game, 176, addr_kCinematicSpriteObjectDef_8BA0FB);
+        advance_cinematic_pan_to_blackout!(game, 1, addr_kCinematicSpriteObjectDef_8BA0FB);
         MaybeSkipCinematics(game);
     };
     [9149970] CinematicFunc_Func5 [] {
-        words!(
-            game.cinematic_var10,
-            cinematic_var9 += words!(game.g_word_7E199F, g_word_7E199D)
-        );
-        if word!(game.cinematic_var10) as i32 - 163i32 & 0x8000 == 0 {
-            *ram_ptr!(game; 0x69) = 16;
-            word!(game.cinematic_function = (0x8b9a47i32) as u16);
-            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BA101 as u16,
-                (0x8b9a47i32) as u16,
-                game,
-            );
-            set_cinematic_backdrop(false, game);
-        }
+        advance_cinematic_pan_to_blackout!(game, 2, addr_kCinematicSpriteObjectDef_8BA101);
         MaybeSkipCinematics(game);
     };
     [9150091] CinematicFunc_Func7 [] {
