@@ -28,12 +28,8 @@ crate::game::constants::typed_constants! { Consts_A8;
     addr_kKiHunter_Ilist_EA08 = 59912, addr_kKiHunter_Ilist_E9FA = 59898,
     addr_kBlueBrinstarFaceBlock_Ilist_E828 = 59432, addr_kBlueBrinstarFaceBlock_Ilist_E81A = 59418,
     addr_kBlueBrinstarFaceBlock_Ilist_E80C = 59404, addr_kWreckedShipSpark_Ilist_E5E5 = 58853,
-    addr_kWreckedShipSpark_Ilist_E5A7 = 58791, addr_kWalkingLavaSeahorse_Ilist_DCC1 = 56513,
-    addr_stru_A8DCBB = 56507, addr_kWalkingLavaSeahorse_Ilist_DC73 = 56435,
-    addr_stru_A8DC59 = 56409, addr_kWalkingLavaSeahorse_Ilist_DC57 = 56407,
-    addr_kWalkingLavaSeahorse_Ilist_DC51 = 56401, addr_stru_A8DC4B = 56395,
-    addr_kWalkingLavaSeahorse_Ilist_DC03 = 56323, addr_stru_A8DBE9 = 56297,
-    addr_kWalkingLavaSeahorse_Ilist_DBE7 = 56295, addr_kMaridiaPuffer_Ilist_D855 = 55381,
+    addr_kWreckedShipSpark_Ilist_E5A7 = 58791,
+    addr_kMaridiaPuffer_Ilist_D855 = 55381,
     addr_kMaridiaPuffer_Ilist_D841 = 55361,
     addr_loc_A8CF26 = 53030, addr_loc_A8CF18 = 53016,
     addr_stru_A8C199 = 49561,
@@ -48,7 +44,6 @@ crate::game::constants::typed_constants! { Consts_A8;
     addr_kYappingMaw_Ilist_A05B = 41051, addr_kYappingMaw_Ilist_A03D = 41021,
     addr_off_A8A025 = 40997, addr_kYappingMaw_Ilist_A01F = 40991,
     addr_kYappingMaw_Ilist_9FC7 = 40903, addr_kYappingMaw_Ilist_9F6F = 40815,
-    addr_loc_A89E90 = 40592,
     addr_kMorphBallEye_Ilist_9026 = 36902, addr_kMorphBallEye_Ilist_9014 = 36884,
     addr_stru_A8900E = 36878, addr_kMorphBallEye_Ilist_9002 = 36866,
     addr_stru_A88FFC = 36860, addr_kMorphBallEye_Ilist_8FF0 = 36848,
@@ -56,7 +51,6 @@ crate::game::constants::typed_constants! { Consts_A8;
 }
 crate::type_aliases! {
     pub Enemy_KiHunter, Enemy_NorfairLavaMan,
-        Enemy_WalkingLavaSeahorse,
         Enemy_WreckedShipOrbs = crate::game::enemy_layouts::EnemyLayout40;
 }
 
@@ -105,7 +99,6 @@ crate::ram_map::ram_pointer_functions! {
 type YappingMaw = Enemy_YappingMaw;
 type WreckedShipSpark = Enemy_WreckedShipSpark;
 type WreckedShipOrbs = Enemy_WreckedShipOrbs;
-type WalkingLavaSeahorse = Enemy_WalkingLavaSeahorse;
 type NorfairLavaMan = Enemy_NorfairLavaMan;
 type MorphBallEye = Enemy_MorphBallEye;
 type MaridiaPuffer = Enemy_MaridiaPuffer;
@@ -134,8 +127,6 @@ static g_word_A8D885: [i16; 8] = [0x3ff, 0x4ff, 0x5ff, 0x6ff, 0x7ff, 0x8ff, 0x9f
 static g_word_A8D895: [i16; 26] = [
     3, 1, 4, 1, 5, 2, 6, 2, 7, 2, 8, 3, 9, 3, 0xa, 4, 0xb, 4, 0xc, 5, 0xd, 5, 0xe, 6, 0xf, 6,
 ];
-static g_word_A8DCC7: u16 = 0x50;
-static g_word_A8DCCB: u16 = 0x70;
 static g_word_A8F180: u16 = 0x60;
 static g_word_A8F182: u16 = 0xe000;
 static g_word_A8F184: u16 = 0;
@@ -740,144 +731,6 @@ crate::game::countdown_callbacks! {
         (*E).var_B = ((*E).var_B).wrapping_sub((*E).var_C);
         (*E).var_D = ((*E).var_D).wrapping_sub((*E).var_B);
     };
-}
-pub unsafe fn WalkingLavaSeahorse_Func_2(k: u16, game: &mut Game) -> u16 {
-    let E: i32 = k as i32;
-    slot!(
-        game,
-        WalkingLavaSeahorse[E](var_B, var_C) += crate::rtl::words!((
-            slot!(game, WalkingLavaSeahorse[E].var_00),
-            slot!(game, WalkingLavaSeahorse[E].var_01)
-        ))
-    );
-    slot!(game, WalkingLavaSeahorse[E].var_B)
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallWalkingLavaSeahorseFunc(ea: u32, k: u16, game: &mut Game) => ea;
-    call (k, game); default { Unreachable(game); };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [11066955] WalkingLavaSeahorse_Func_7 [] {
-        ({ let (actor, amount) = (k, (2i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
-        let E: i32 = k as i32;
-        if ((abs16((slot!(game, WalkingLavaSeahorse[E].var_02)).wrapping_sub(slot!(game, WalkingLavaSeahorse[E].base.x_pos)))) as i16)
-            .wrapping_sub((g_word_A8DCCB) as i16)
-            >= 0
-        {
-            slot!(game, WalkingLavaSeahorse[E].var_A = (0xa8decdi32) as u16);
-            slot!(game, WalkingLavaSeahorse[E].var_B = -4i32 as u16);
-            slot!(game, WalkingLavaSeahorse[E].var_C = 0);
-            let mut v4: u16 = addr_kWalkingLavaSeahorse_Ilist_DC51 as u16;
-            if (slot!(game, WalkingLavaSeahorse[E].var_D) & 0x8000) == 0 {
-                v4 = addr_kWalkingLavaSeahorse_Ilist_DCC1 as u16;
-            }
-            slot!(game, WalkingLavaSeahorse[E].base; current_instruction = v4, instruction_timer = 1);
-        } else {
-            if slot!(game, WalkingLavaSeahorse[E].var_04) != 0 {
-                return;
-            }
-            let t: i32 = word!(game.samus_x_pos) as i32 - slot!(game, WalkingLavaSeahorse[E].base.x_pos) as i32;
-            let mut v3: u16 = 0;
-            if t & 0x8000 == 0 {
-                v3 = addr_kWalkingLavaSeahorse_Ilist_DC73 as u16;
-                if (slot!(game, WalkingLavaSeahorse[E].var_D) & 0x8000) != 0 {
-                    return;
-                }
-            } else {
-                v3 = addr_kWalkingLavaSeahorse_Ilist_DC03 as u16;
-                if (slot!(game, WalkingLavaSeahorse[E].var_D) & 0x8000) == 0 {
-                    return;
-                }
-            }
-            slot!(game, WalkingLavaSeahorse[E].base; current_instruction = v3, instruction_timer = 1);
-            slot!(game, WalkingLavaSeahorse[E].var_A = (0xa8decci32) as u16);
-        };
-    };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    @prefix { let E: i32 = k as i32; };
-    WalkingLavaSeahorse_Func_1 [] {
-        slot!(game, WalkingLavaSeahorse[E].var_B = -12i32 as u16);
-        slot!(game, WalkingLavaSeahorse[E]; var_C = 0, var_D = 0, var_E = 0, var_00 = 0);
-        slot!(game, WalkingLavaSeahorse[E].var_01 = 0x8000);
-    };
-    [11066737] WalkingLavaSeahorse_Func_3 [] {
-        let mut xxx: u16 = 0;
-        let v3: u16 = abs16((slot!(game, WalkingLavaSeahorse[E].var_03)).wrapping_sub(word!(game.samus_y_pos)));
-        if v3 as i32 - 32i32 & 0x8000 != 0 && {
-            xxx = (word!(game.samus_x_pos)).wrapping_sub(slot!(game, WalkingLavaSeahorse[E].base.x_pos));
-            ((abs16(xxx)) as i16).wrapping_sub((g_word_A8DCC7) as i16) < 0
-        } {
-            WalkingLavaSeahorse_Func_1(k, game);
-            let mut v4: u16 = addr_stru_A8DC4B as u16;
-            let mut v5: i16 = -2i16;
-            if xxx & 0x8000 == 0 {
-                v4 = addr_stru_A8DCBB as u16;
-                v5 = 2;
-            }
-            slot!(game, WalkingLavaSeahorse[E].var_D = v5 as u16);
-            slot!(game, WalkingLavaSeahorse[E].base; current_instruction = v4, instruction_timer = 1);
-            slot!(game, WalkingLavaSeahorse[E].var_A = (0xa8ddc6i32) as u16);
-            QueueSfx2_Max6(0x5e, game);
-        }
-    };
-    [11066822] WalkingLavaSeahorse_Func_4 [] {
-        slot!(game, WalkingLavaSeahorse[E].base(y_pos, y_subpos) += crate::rtl::words!((slot!(game, WalkingLavaSeahorse[E].var_B), slot!(game, WalkingLavaSeahorse[E].var_C))));
-        if (WalkingLavaSeahorse_Func_2(k, game) & 0x8000) == 0 {
-            sub_A8DDDE(k, game);
-        }
-    };
-    [11066885] WalkingLavaSeahorse_Func_6 [] {
-        if ({ let (actor, amount) = (k, (crate::rtl::words!((slot!(game, WalkingLavaSeahorse[E].var_B), slot!(game, WalkingLavaSeahorse[E].var_C)))) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            let t: i32 = word!(game.samus_x_pos) as i32 - slot!(game, WalkingLavaSeahorse[E].base.x_pos) as i32;
-            let mut v2: u16 = addr_kWalkingLavaSeahorse_Ilist_DBE7 as u16;
-            let mut v3: i16 = -2i16;
-            if t & 0x8000 == 0 {
-                v3 = 2;
-                v2 = addr_kWalkingLavaSeahorse_Ilist_DC57 as u16;
-            }
-            slot!(game, WalkingLavaSeahorse[E].var_D = v3 as u16);
-            slot!(game, WalkingLavaSeahorse[E].base; current_instruction = v2, instruction_timer = 1);
-            slot!(game, WalkingLavaSeahorse[E].var_A = (0xa8de4bi32) as u16);
-            slot!(game, WalkingLavaSeahorse[E].var_04 = 1);
-        } else {
-            WalkingLavaSeahorse_Func_2(k, game);
-        };
-    };
-    [11067085] WalkingLavaSeahorse_Func_8 [] {
-        slot!(game, WalkingLavaSeahorse[E].base(y_pos, y_subpos) += crate::rtl::words!((slot!(game, WalkingLavaSeahorse[E].var_B), slot!(game, WalkingLavaSeahorse[E].var_C))));
-        if (WalkingLavaSeahorse_Func_2(k, game) & 0x8000) == 0 {
-            slot!(game, WalkingLavaSeahorse[E].var_A = (0xa8deeci32) as u16);
-        }
-    };
-    [11067116] WalkingLavaSeahorse_Func_9 [] {
-        slot!(game, WalkingLavaSeahorse[E].base(y_pos, y_subpos) += crate::rtl::words!((slot!(game, WalkingLavaSeahorse[E].var_B), slot!(game, WalkingLavaSeahorse[E].var_C))));
-        if ((slot!(game, WalkingLavaSeahorse[E].base.y_pos)) as i16).wrapping_sub((slot!(game, WalkingLavaSeahorse[E].var_F)) as i16) >= 0 {
-            slot!(game, WalkingLavaSeahorse[E].base.y_pos = slot!(game, WalkingLavaSeahorse[E].var_F));
-            slot!(game, WalkingLavaSeahorse[E].base.x_pos = slot!(game, WalkingLavaSeahorse[E].var_02));
-            slot!(game, WalkingLavaSeahorse[E].var_A = (0xa8dd71i32) as u16);
-        } else {
-            WalkingLavaSeahorse_Func_2(k, game);
-        };
-    };
-    @external {
-        11067084 => [()];
-    }
-}
-pub unsafe fn sub_A8DDDE(k: u16, game: &mut Game) {
-    unsafe {
-        let v1 = gEnemyData(k as i32, game);
-        (*v1).ai_var_A = (0xa8de05i32) as u16;
-        let mut v2: u16 = addr_kWalkingLavaSeahorse_Ilist_DC51 as u16;
-        if ((*v1).ai_var_D & 0x8000) == 0 {
-            v2 = addr_kWalkingLavaSeahorse_Ilist_DCC1 as u16;
-        }
-        enemy_instruction! {[(*v1)]; instruction = v2, timer = 1}
-    }
-}
-pub unsafe fn WalkingLavaSeahorse_DF20(a: u16, game: &mut Game) {
-    {
-        SpawnEprojWithGfx(a, word!(game.cur_enemy_index), addr_loc_A89E90 as u16, game);
-        QueueSfx2_Max6(0x3f, game);
-    }
 }
 crate::game::callback_dispatch! {
     pub unsafe fn CallWreckedShipOrbsA(ea: u32, game: &mut Game) => ea;
@@ -1540,33 +1393,6 @@ crate::game::callback_dispatch! {
             word!(game.enemy_drawing_queue[((word!(game.cur_enemy_index) as i32 >> 1) + 97)] |= (0x200u16));
         };
     };
-    [11066573] WalkingLavaSeahorse_Init [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, WalkingLavaSeahorse[E].var_04 = 0);
-        slot!(game, WalkingLavaSeahorse[E].var_F = slot!(game, WalkingLavaSeahorse[E].base.y_pos));
-        slot!(game, WalkingLavaSeahorse[E].var_02 = slot!(game, WalkingLavaSeahorse[E].base.x_pos));
-        slot!(game, WalkingLavaSeahorse[E].base.properties, |old| (old) | ((kEnemyProps_DisableSamusColl) as u16));
-        slot!(game, WalkingLavaSeahorse[E].base.current_instruction = addr_kWalkingLavaSeahorse_Ilist_DBE7 as u16);
-        slot!(game, WalkingLavaSeahorse[E].var_A = (0xa8dd71i32) as u16);
-        WalkingLavaSeahorse_Func_1(word!(game.cur_enemy_index), game);
-        do_until! { (WalkingLavaSeahorse_Func_2(word!(game.cur_enemy_index), game) & 0x8000) == 0 ;
-            slot!(game, WalkingLavaSeahorse[E].base(y_pos, y_subpos) += crate::rtl::words!((slot!(game, WalkingLavaSeahorse[E].var_B), slot!(game, WalkingLavaSeahorse[E].var_C))));
-        }
-        while ({ let (actor, amount) = (word!(game.cur_enemy_index), (crate::rtl::words!((slot!(game, WalkingLavaSeahorse[E].var_B), slot!(game, WalkingLavaSeahorse[E].var_C)))) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) == 0
-        {
-            WalkingLavaSeahorse_Func_2(word!(game.cur_enemy_index), game);
-        }
-        slot!(game, WalkingLavaSeahorse[E].var_03 = slot!(game, WalkingLavaSeahorse[E].base.y_pos));
-        slot!(game, WalkingLavaSeahorse[E].base.y_pos = slot!(game, WalkingLavaSeahorse[E].var_F));
-    };
-    [11066731] WalkingLavaSeahorse_Main [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        CallWalkingLavaSeahorseFunc(
-            ((slot!(game, WalkingLavaSeahorse[E].var_A)) as u32) | (0xa80000u32),
-            word!(game.cur_enemy_index),
-            game,
-        );
-    };
     [11068355] WreckedShipOrbs_Main [] {
         WreckedShipOrbs_Func_1(game);
         WreckedShipOrbs_Func_2(game);
@@ -1943,52 +1769,6 @@ crate::game::callback_dispatch! {
     };
     [11073151] KiHunter_Instr_3 [] {
         slot!(game, KiHunter[word!(game.cur_enemy_index) as i32].var_A = (0xa8f68bi32) as u16);
-        jp
-    };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11067164] WalkingLavaSeahorse_Instr_4 [jp] { WalkingLavaSeahorse_DF20(0, game); };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11067187] WalkingLavaSeahorse_Instr_3 [jp] { WalkingLavaSeahorse_DF20(2, game); };
-    [11067193] WalkingLavaSeahorse_Instr_5 [jp] { WalkingLavaSeahorse_DF20(4, game); };
-    [11067199]
-    WalkingLavaSeahorse_Instr_6 [EnemyScript::jump(addr_kWalkingLavaSeahorse_Ilist_DBE7 as u16)] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, WalkingLavaSeahorse[E].var_A = (0xa8de4bi32) as u16);
-        let mut v3: i16 = ((word!(game.random_number)) as i16) & (3i16);
-        if (word!(game.random_number) & 3) == 0 {
-            v3 = 2;
-        }
-        slot!(game, WalkingLavaSeahorse[E].var_04 = v3 as u16);
-        if (slot!(game, WalkingLavaSeahorse[E].var_D) & 0x8000) == 0 {
-            return EnemyScript::jump(addr_kWalkingLavaSeahorse_Ilist_DC57 as u16);
-        }
-    };
-    [11067235]
-    WalkingLavaSeahorse_Instr_2 [WalkingLavaSeahorse_Instr_1(word!(game.cur_enemy_index), jp, game)] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        let wlse_var_04: u16 = slot!(game, WalkingLavaSeahorse[E].var_04);
-        if wlse_var_04 != 0 {
-            slot!(game, WalkingLavaSeahorse[E].var_04 = (wlse_var_04).wrapping_sub(1));
-        }
-    };
-    @functions [pub unsafe fn (
-    k: u16,
-    mut jp: EnemyScript,
-    game: &mut Game,
-) -> EnemyScript];
-    [11067249] WalkingLavaSeahorse_Instr_1 [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        if ({ let (actor, amount) = (word!(game.cur_enemy_index), (slot!(game, WalkingLavaSeahorse[E].var_D) as i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
-        {
-            jp = EnemyScript::jump(addr_stru_A8DBE9 as u16);
-            let mut wlse_var_D: i16 = slot!(game, WalkingLavaSeahorse[E].var_D) as i16;
-            if wlse_var_D < 0 {
-                jp = EnemyScript::jump(addr_stru_A8DC59 as u16);
-            }
-            slot!(game, WalkingLavaSeahorse[E].var_D = -(wlse_var_D as i32) as u16);
-        } else {
-            ({ let actor = word!(game.cur_enemy_index); actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
-        }
         jp
     };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
