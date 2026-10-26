@@ -18,8 +18,6 @@ use crate::game::visual_runtime::initialize_morph_eye_beam;
 pub use crate::types::Consts_A8;
 
 crate::game::constants::typed_constants! { Consts_A8;
-    addr_kBlueBrinstarFaceBlock_Ilist_E828 = 59432, addr_kBlueBrinstarFaceBlock_Ilist_E81A = 59418,
-    addr_kBlueBrinstarFaceBlock_Ilist_E80C = 59404,
     addr_kNorfairLavaMan_Ilist_AE0C = 44556, addr_kNorfairLavaMan_Ilist_ADDC = 44508,
     addr_kNorfairLavaMan_Ilist_ADAC = 44460, addr_kNorfairLavaMan_Ilist_AD7E = 44414,
     addr_kNorfairLavaMan_Ilist_AD50 = 44368, addr_kNorfairLavaMan_Ilist_AD3C = 44348,
@@ -59,10 +57,8 @@ crate::game::constants::typed_constants! { i32;
     fnsub_A8B291 = 0xa8b291, fnNorfairLavaMan_Func_13 = 0xa8b295,
     fnNorfairLavaMan_Func_15 = 0xa8b30d, fnNorfairLavaMan_Func_16 = 0xa8b31f,
     fnNorfairLavaMan_Func_17 = 0xa8b356, fnNorfairLavaMan_Func_18 = 0xa8b3a7,
-    fnBlueBrinstarFaceBlock_Func_1 = 0xa8e86e,
 }
 crate::ram_map::ram_pointer_functions! {
-    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
     Get_YappingMaw(o: i32) -> Enemy_YappingMaw = [0xf78, o as isize];
 }
@@ -490,28 +486,6 @@ pub unsafe fn NorfairLavaMan_Func_19(k: u16, game: &mut Game) {
     }
 }
 
-pub unsafe fn BlueBrinstarFaceBlock_Func_1(game: &mut Game) {
-    unsafe {
-        if word!(game.door_transition_flag_enemies) == 0 && {
-            word!(game.variables_for_enemy_graphics_drawn_hook[2] -= 1, reread) == 0
-        } {
-            word!(game.variables_for_enemy_graphics_drawn_hook[2] = 16);
-            let mut v0: u16 = word!(game.variables_for_enemy_graphics_drawn_hook[0]);
-            let mut v1: u16 =
-                (8u16).wrapping_mul(word!(game.variables_for_enemy_graphics_drawn_hook[1]));
-            for _ in 0..4 {
-                *(ram_ptr!(game, u16; 0xc000)).offset(((v0 as i32 >> 1) + 137) as isize) =
-                    crate::rtl::rom_table_word!(game, 0xa8e7cc, (v1 >> 1) as isize);
-                v1 = (v1).wrapping_add(2);
-                v0 = (v0).wrapping_add(2);
-            }
-            word!(
-                game.variables_for_enemy_graphics_drawn_hook[1] =
-                    (*((ram_ptr!(game, u16; 0x1794)).offset(1) as *mut u8) as i32 + 1 & 7) as u16
-            );
-        }
-    }
-}
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
@@ -596,58 +570,6 @@ crate::game::callback_dispatch! {
     [11056140] NorfairLavaMan_Shot [] {
         actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
         NorfairLavaMan_Common(game);
-    };
-    [11069486] BlueBrinstarFaceBlock_Init [] {
-        let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-        (*v0).current_instruction = addr_kBlueBrinstarFaceBlock_Ilist_E828 as u16;
-        let mut v1: u16 = (0xa8e86ei32) as u16;
-        if (word!(game.collected_items) & 4) == 0 {
-            v1 = (0xa8804ci32) as u16;
-        }
-        (*(ram_ptr!(game, LongPtr; 0x178c))).addr = v1;
-        *(&raw mut (*(ram_ptr!(game, LongPtr; 0x178c))).bank as *mut u16) = 168;
-        word!(
-            game.variables_for_enemy_graphics_drawn_hook[0] =
-                ((16 * (*v0).palette_index as i32 & 0xff00) >> 8) as u16
-        );
-        word!(game.variables_for_enemy_graphics_drawn_hook[2] = 16);
-        (*v0).parameter_2 =
-            (((*v0).parameter_2 as i32 & 1) >> 2 | ((*v0).parameter_2 as i32 & 1) << 15) as u16;
-    };
-    [11069614] BlueBrinstarFaceBlock_Main [] {
-        if (word!(game.collected_items) & 4) != 0 {
-            (*(ram_ptr!(game, LongPtr; 0x178c))).addr = (0xa8e86ei32) as u16;
-            let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-            word!(
-                game.variables_for_enemy_graphics_drawn_hook[0] =
-                    ((16 * (*v1).palette_index as i32 & 0xff00) >> 8) as u16
-            );
-            if (*v1).ai_var_A == 0 {
-                let SamusEnemyDelta_Y: u16 =
-                    { let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y) };
-                if ((abs16(SamusEnemyDelta_Y)) as i16).wrapping_sub(((*v1).parameter_1) as i16) < 0
-                {
-                    let SamusEnemyDelta_X: u16 =
-                        { let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) };
-                    (*v1).ai_var_B = SamusEnemyDelta_X;
-                    if ((abs16(SamusEnemyDelta_X)) as i16).wrapping_sub(((*v1).parameter_1) as i16)
-                        < 0
-                        && (*v1).ai_var_B & 0x8000 != (*v1).parameter_2
-                    {
-                        let mut v4: u16 = addr_kBlueBrinstarFaceBlock_Ilist_E80C as u16;
-                        if ((*v1).ai_var_B & 0x8000) == 0 {
-                            v4 = addr_kBlueBrinstarFaceBlock_Ilist_E81A as u16;
-                        }
-                        enemy_instruction! {[(*v1)]; instruction = v4, timer = 1}
-                        (*v1).ai_var_A = 1;
-                        word!(game.variables_for_enemy_graphics_drawn_hook[2] = 16);
-                    }
-                }
-            }
-        }
-    };
-    [11069725] BlueBrinstarFaceBlock_Shot [] {
-        word!(game.projectile_dir[word!(game.collision_detection_index)] &= !(0x10));
     };
     @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E: i32 = word!(game.cur_enemy_index) as i32; };

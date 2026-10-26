@@ -548,7 +548,7 @@ crate::game::address_dispatch! {
     {
         10518604 => [()]; 10738444 => sm_a3::Reflec_Func_1; 10851138 => sm_a5::Draygon_Func_36;
         10920690 => sm_a6::Ridley_A2F2; 11042892 => [()]; 11055282 => sm_a8::NorfairLavaMan_Func_6;
-        11062375 => crate::game::actors::wrecked_ship_robots::palette; 11069550 => sm_a8::BlueBrinstarFaceBlock_Func_1;
+        11062375 => crate::game::actors::wrecked_ship_robots::palette; 11069550 => crate::game::actors::blue_face_block::palette;
         11110278 => [()]; 11110345 => sm_a9::MotherBrain_DrawBrainNeck_EnemyGfxDrawHook;
         11110365 => sm_a9::MotherBrainsBrain_GfxDrawHook; 11129754 => sm_a9::DeadTorizo_MainGfxHook;
     }
@@ -661,7 +661,9 @@ crate::game::callback_dispatch! {
         11068355 => crate::game::actors::wrecked_ship_orbs::advance;
         11068983 => crate::game::actors::wrecked_ship_spark::initialize;
         11069070 => crate::game::actors::wrecked_ship_spark::advance;
-        11069198 => crate::game::actors::wrecked_ship_spark::shot;
+        11069198 | 11069725 => [crate::ram_map::word!(game.projectile_dir[crate::ram_map::word!(game.collision_detection_index)] &= !(0x10))];
+        11069486 => crate::game::actors::blue_face_block::initialize;
+        11069614 => crate::game::actors::blue_face_block::advance;
         11071880 => crate::game::actors::ki_hunter::initialize;
         11072020 => crate::game::actors::ki_hunter::initialize_wings; 11072092 => crate::game::actors::ki_hunter::advance;
         11072098 => crate::game::actors::ki_hunter::advance;

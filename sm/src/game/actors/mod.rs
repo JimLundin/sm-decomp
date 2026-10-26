@@ -79,6 +79,7 @@ pub(crate) mod composed_checks;
 
 mod overlap;
 pub(in crate::game) use overlap::axis_overlaps;
+pub(in crate::game) mod blue_face_block;
 pub(in crate::game) mod evir;
 pub(in crate::game) mod fune;
 pub(in crate::game) mod ki_hunter;

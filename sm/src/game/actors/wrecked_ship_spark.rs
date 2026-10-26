@@ -62,9 +62,6 @@ pub(crate) fn advance(game: &mut Game) {
         reload_delay(k, if active { 0 } else { 8 }, game);
     }
 }
-pub(crate) fn shot(game: &mut Game) {
-    word!(game.projectile_dir[word!(game.collision_detection_index)] &= !(0x10));
-}
 pub(crate) fn instruction(tangible: bool, script: EnemyScript, game: &mut Game) -> EnemyScript {
     let E = word!(game.cur_enemy_index) as i32;
     slot!(game, Spark[E].base.properties, |old| if tangible {
