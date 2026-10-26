@@ -225,9 +225,7 @@ pub(crate) unsafe fn initialize_room_effects(game: &mut Game) {
         }
     }
     game.g_ram[0x85] = 0;
-    game.g_ram[0x74] = 32;
-    game.g_ram[0x75] = 64;
-    game.g_ram[0x76] = 0x80;
+    set_fixed_color([32, 64, 0x80], game);
     game.g_ram[0x57] = 0;
     game.g_ram[0x69] = 19;
     game.g_ram[0x6f] = 0;
@@ -2679,9 +2677,7 @@ pub(crate) unsafe fn configure_cinematic_display(
                 game.g_ram[at] = 0;
             }
             if display == Credits {
-                game.g_ram[0x74] = 32;
-                game.g_ram[0x75] = 64;
-                game.g_ram[0x76] = 0x80;
+                set_fixed_color([32, 64, 0x80], game);
                 word!(game.oam_next_ptr = 0);
                 reset_cinematic_transform(128, 128, game);
                 word! { game; cinematic_var5 = 0; cinematic_var6 = 1; }
@@ -2712,9 +2708,7 @@ pub(crate) unsafe fn configure_cinematic_display(
             game.g_ram[0x6f] = 0;
             game.g_ram[0x72] = 0;
         }
-        game.g_ram[0x74] = 32;
-        game.g_ram[0x75] = 64;
-        game.g_ram[0x76] = 0x80;
+        set_fixed_color([32, 64, 0x80], game);
         if !escape {
             game.g_ram[0x57] = 0;
         }
@@ -2777,6 +2771,12 @@ pub(crate) unsafe fn reset_cinematic_transform(x: u16, y: u16, game: &mut Game) 
     }
 }
 
+pub(crate) fn set_fixed_color(channels: [u8; 3], game: &mut Game) {
+    for (channel, value) in channels.into_iter().enumerate() {
+        game.g_ram[0x74 + channel] = value;
+    }
+}
+
 pub(crate) fn set_cinematic_blend(
     main_screen: u8,
     sub_screen: u8,
@@ -2793,9 +2793,8 @@ pub(crate) fn set_cinematic_blend(
 pub(crate) fn set_cinematic_backdrop(lit: bool, game: &mut Game) {
     game.g_ram[0x6f] = 0;
     game.g_ram[0x72] = if lit { 0x81 } else { 0 };
-    game.g_ram[0x74] = if lit { 56 } else { 32 };
-    game.g_ram[0x75] = if lit { 88 } else { 64 };
-    game.g_ram[0x76] = 0x80;
+    let color = if lit { [56, 88, 0x80] } else { [32, 64, 0x80] };
+    set_fixed_color(color, game);
 }
 
 pub(crate) unsafe fn draw_cinematic_rectangle(

@@ -20,8 +20,8 @@ use crate::game::visual_runtime::{
     clear_cinematic_colors, clear_cinematic_sprites, clear_hdma, compose_cinematic_palette,
     configure_cinematic_display, enable_cinematic_background, fade_cinematic_colors,
     prepare_cinematic_palette_fade, queue_cinematic_tilemap, reset_cinematic_transform,
-    set_cinematic_backdrop, set_cinematic_blend, set_cinematic_tilemap_updates, set_hdma_enabled,
-    spawn_cinematic_sprite_at, update_cinematic_transform,
+    set_cinematic_backdrop, set_cinematic_blend, set_cinematic_tilemap_updates, set_fixed_color,
+    set_hdma_enabled, spawn_cinematic_sprite_at, update_cinematic_transform,
 };
 use crate::game::visual_state::CinematicObjects::{
     Background as CinematicBackground, Mode7 as CinematicMode7, Sprites as CinematicSprites,
@@ -203,9 +203,7 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                 mirror(TSW as u16, 0, 0x6d, false); mirror(CGWSEL as u16, 0, 0x6e, false);
                 mirror(CGADSUB as u16, 0, 0x71, false); byte(COLDATA as u16, 0xe0);
             }
-            *ram_ptr!(game; 0x74, 0) = 32;
-            *ram_ptr!(game; 0x74, 1) = 64;
-            *ram_ptr!(game; 0x74, 2) = 0x80;
+            set_fixed_color([32, 64, 0x80], game);
             crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
             GraphicsAsset::Decompress(0x9580d8, 0x15000).load(game);
             GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
@@ -835,9 +833,7 @@ crate::game::callback_dispatch! {
         if word!(game.cinematic_var6) as i32 - 32i32 & 0x8000 != 0 {
             *ram_ptr!(game; 0x6f) = 0;
             *ram_ptr!(game; 0x72) = 49;
-            *ram_ptr!(game; 0x74, 0) = 63;
-            *ram_ptr!(game; 0x74, 1) = 95;
-            *ram_ptr!(game; 0x74, 2) = -97i32 as u8;
+            set_fixed_color([63, 95, -97i32 as u8], game);
             clear_cinematic_sprites(game);
             enqueue_rom(0x8b, addr_kCinematicFunction_Intro_Func56_M7 as u16, game);
             word! {game; cinematic_var8 = -32i32 as u16; cinematic_var10 = -128i32 as u16;
@@ -1325,9 +1321,7 @@ crate::game::callback_dispatch! {
             *ram_ptr!(game; 0x6f) = 0;
             *ram_ptr!(game; 0x72) = 0;
             WriteReg(COLDATA as u16, 0xe0, game);
-            *ram_ptr!(game; 0x74, 0) = 32;
-            *ram_ptr!(game; 0x74, 1) = 64;
-            *ram_ptr!(game; 0x74, 2) = 0x80;
+            set_fixed_color([32, 64, 0x80], game);
             *ram_ptr!(game; 0x57) = 0;
             word! { game, 0;
                 cinematic_var7, cinematic_var8, cinematic_var9, cinematic_var10, g_word_7E1999,
@@ -1360,9 +1354,7 @@ crate::game::callback_dispatch! {
             *ram_ptr!(game; 0x55) = 7;
             *ram_ptr!(game; 0x5f) = 0x80;
             set_cinematic_blend(17, 0, 0, 48, game);
-            *ram_ptr!(game; 0x74, 0) = 63;
-            *ram_ptr!(game; 0x74, 1) = 95;
-            *ram_ptr!(game; 0x74, 2) = -97i32 as u8;
+            set_fixed_color([63, 95, -97i32 as u8], game);
             *ram_ptr!(game; 0x58) = 0;
             *ram_ptr!(game; 0x5d) = 0;
             word! { game, 0; palette_buffer[0], palette_buffer[16], palette_buffer[128] }
@@ -1665,9 +1657,7 @@ crate::game::callback_dispatch! {
         if word!(game.cinematic_var4 -= 1, reread) == 0 {
             *ram_ptr!(game; 0x55) = 1;
             set_cinematic_blend(17, 0, 0, 49, game);
-            *ram_ptr!(game; 0x74, 0) = 63;
-            *ram_ptr!(game; 0x74, 1) = 95;
-            *ram_ptr!(game; 0x74, 2) = -97i32 as u8;
+            set_fixed_color([63, 95, -97i32 as u8], game);
             *ram_ptr!(game; 0x5f) = 0;
             *ram_ptr!(game; 0x58) = 78;
             *ram_ptr!(game; 0x5d) = 84;
