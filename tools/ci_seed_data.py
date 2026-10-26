@@ -73,24 +73,81 @@ def regular_path(root, name, required=True):
     return path
 
 
+def runtime_seed_indexes(rows):
+    indexes = {}
+    for row in rows:
+        if "seed" not in row:
+            continue
+        match = re.fullmatch(r"([A-Za-z0-9-]+):([0-9]+)", row["seed"])
+        if not match or not 1 <= int(match[2]) <= 9999:
+            raise ValueError("unsupported runtime seed index: " + row["id"])
+        indexes.setdefault(match[1], set()).add(int(match[2]))
+    return indexes
+
+
+def runtime_seed_files(root, seed_indexes):
+    for capture, indexes in seed_indexes.items():
+        prefix = f"target/seeds/{capture}/"
+        with (root / prefix / "rooms.csv").open(newline="") as stream:
+            entries = list(csv.DictReader(stream))
+        for index in indexes:
+            matches = [entry for entry in entries
+                       if entry["room_index"] == str(index) and entry["region"] == "wram"]
+            if len(matches) != 1:
+                raise ValueError("seed index requires exactly one captured WRAM entry")
+            filename = matches[0]["file"]
+            if not re.fullmatch(rf"{index:04d}-[0-9A-F]{{4}}-wram\.bin", filename):
+                raise ValueError("unsupported indexed runtime seed filename")
+            yield {prefix + filename.replace("-wram.bin", suffix) for suffix in (
+                "-wram.bin", "-sram.bin", "-vram.bin", "-cgram.bin",
+                "-oam.bin", "-apuram.bin", "-registers.csv")}
+
+
 def pack(args):
     rows = selected_rows(args)
-    captures = {row["seed"].split(":")[0] for row in rows if "seed" in row}
     files = {}
-    for capture in sorted(captures):
-        directory = args.root / "target/seeds" / capture
-        for path in sorted(directory.iterdir()):
-            name = path.relative_to(args.root).as_posix()
-            if valid_name(name):
-                if not path.is_file() or path.is_symlink():
-                    raise ValueError("seed capture contains nonregular file")
-                files[name] = path
-        logs = (("snes9x.json", "snes9x.frames.csv", "snes9x.events.csv")
-                if f"target/seeds/{capture}/snes9x.json" in files
-                else ("lag.csv", "lag.csv.polls.csv", "lag.csv.events.csv"))
-        for name in logs:
-            if f"target/seeds/{capture}/{name}" not in files:
-                raise ValueError("capture is missing original logs")
+    runtime_only = getattr(args, "runtime_only", False)
+    if runtime_only:
+        seed_indexes = runtime_seed_indexes(rows)
+        for capture in seed_indexes:
+            name = f"target/seeds/{capture}/rooms.csv"
+            files[name] = regular_path(args.root, name)
+        for expected in runtime_seed_files(args.root, seed_indexes):
+            for name in sorted(expected):
+                files[name] = regular_path(args.root, name)
+        for row in rows:
+            if "seed" not in row:
+                continue
+            capture, index = row["seed"].split(":")
+            prefix = f"target/seeds/{capture}/{int(index):04d}-"
+            seed = next(path for name, path in files.items()
+                        if name.startswith(prefix) and name.endswith("-wram.bin"))
+            sha = hashlib.sha256()
+            for region, size in (("wram", 131072), ("sram", 8192), ("vram", 65536),
+                                 ("cgram", 512), ("oam", 544), ("apuram", 65536)):
+                data = seed.with_name(seed.name.replace("-wram.bin", f"-{region}.bin")).read_bytes()
+                if len(data) != size:
+                    raise ValueError(f"seed {region} requires {size} bytes")
+                sha.update(data)
+            sha.update(seed.with_name(seed.name.replace("-wram.bin", "-registers.csv")).read_bytes())
+            if sha.hexdigest() != row.get("seed_sha256"):
+                raise ValueError("seed payload hash mismatch: " + row["id"])
+    else:
+        captures = {row["seed"].split(":")[0] for row in rows if "seed" in row}
+        for capture in sorted(captures):
+            directory = args.root / "target/seeds" / capture
+            for path in sorted(directory.iterdir()):
+                name = path.relative_to(args.root).as_posix()
+                if valid_name(name):
+                    if not path.is_file() or path.is_symlink():
+                        raise ValueError("seed capture contains nonregular file")
+                    files[name] = path
+            logs = (("snes9x.json", "snes9x.frames.csv", "snes9x.events.csv")
+                    if f"target/seeds/{capture}/snes9x.json" in files
+                    else ("lag.csv", "lag.csv.polls.csv", "lag.csv.events.csv"))
+            for name in logs:
+                if f"target/seeds/{capture}/{name}" not in files:
+                    raise ValueError("capture is missing original logs")
     for row in rows:
         if "checkpoint" in row:
             name = "target/checkpoints/" + row["checkpoint"]
@@ -98,14 +155,14 @@ def pack(args):
             if digest(path) != row["checkpoint_sha256"]:
                 raise ValueError("checkpoint hash mismatch: " + row["id"])
             files[name] = path
-        if row["inputs"].startswith("corpus-") and "checkpoint" not in row:
+        if not runtime_only and row["inputs"].startswith("corpus-") and "checkpoint" not in row:
             continue
         name = "movies/" + row["inputs"]
         if not valid_name(name):
             raise ValueError("invalid corpus input name")
         path = args.root / name
-        if "checkpoint" in row:
-            path = regular_path(args.root, name)
+        if "checkpoint" in row or runtime_only:
+            path = regular_path(args.root, name, required="checkpoint" in row)
         # The original options prefix is exactly the first 8,250 supported words.
         if not path.exists() and row["inputs"] == "any-wait-prefix.inputs":
             data = b"".join((args.root / "movies/any-door-prefix.inputs").read_bytes().splitlines(True)[:8250])
@@ -140,24 +197,16 @@ def restore(args):
     if not args.sha256 or digest(args.bundle) != args.sha256:
         raise ValueError("encrypted seed bundle SHA256 mismatch")
     rows = selected_rows(args)
+    runtime_only = getattr(args, "runtime_only", False)
     inputs = {"movies/" + row["inputs"] for row in rows
-              if not row["inputs"].startswith("corpus-") or "checkpoint" in row}
+              if runtime_only or not row["inputs"].startswith("corpus-") or "checkpoint" in row}
     checkpoints = {"target/checkpoints/" + row["checkpoint"]
                    for row in rows if "checkpoint" in row}
     if any(not valid_name(name) for name in inputs):
         raise ValueError("invalid corpus input name")
     captures = {row["seed"].split(":")[0] for row in rows if "seed" in row}
     needed_indexes = {f"target/seeds/{capture}/rooms.csv" for capture in captures}
-    runtime_only = getattr(args, "runtime_only", False)
-    seed_indexes = {}
-    if runtime_only:
-        for row in rows:
-            if "seed" not in row:
-                continue
-            match = re.fullmatch(r"([A-Za-z0-9-]+):([0-9]+)", row["seed"])
-            if not match or not 1 <= int(match[2]) <= 9999:
-                raise ValueError("unsupported runtime seed index: " + row["id"])
-            seed_indexes.setdefault(match[1], set()).add(int(match[2]))
+    seed_indexes = runtime_seed_indexes(rows) if runtime_only else {}
     command, env = cipher(args, decrypt=True)
     process = subprocess.Popen(command, stdout=subprocess.PIPE, env=env)
     seen, restored = set(), set()
@@ -199,23 +248,9 @@ def restore(args):
         if (inputs | checkpoints | needed_indexes) - restored:
             raise ValueError("seed archive lacks selected corpus data")
         if runtime_only:
-            for capture, indexes in seed_indexes.items():
-                prefix = f"target/seeds/{capture}/"
-                with (args.root / prefix / "rooms.csv").open(newline="") as stream:
-                    entries = list(csv.DictReader(stream))
-                for index in indexes:
-                    matches = [entry for entry in entries
-                               if entry["room_index"] == str(index) and entry["region"] == "wram"]
-                    if len(matches) != 1:
-                        raise ValueError("seed index requires exactly one captured WRAM entry")
-                    filename = matches[0]["file"]
-                    if not re.fullmatch(rf"{index:04d}-[0-9A-F]{{4}}-wram\.bin", filename):
-                        raise ValueError("unsupported indexed runtime seed filename")
-                    expected = {prefix + filename.replace("-wram.bin", suffix) for suffix in (
-                        "-wram.bin", "-sram.bin", "-vram.bin", "-cgram.bin",
-                        "-oam.bin", "-apuram.bin", "-registers.csv")}
-                    if expected - restored:
-                        raise ValueError("seed archive lacks selected runtime companions")
+            for expected in runtime_seed_files(args.root, seed_indexes):
+                if expected - restored:
+                    raise ValueError("seed archive lacks selected runtime companions")
         for row in rows:
             name = "movies/" + row["inputs"]
             if name in inputs and digest(args.root / name) != row["input_sha256"]:
@@ -244,10 +279,8 @@ def main():
     parser.add_argument("--sha256", help="required pinned ciphertext digest for restoration")
     parser.add_argument("--segment", action="append", default=[])
     parser.add_argument("--runtime-only", action="store_true",
-                        help="restore only replay inputs, checkpoints and selected seed companions")
+                        help="pack or restore only replay inputs, checkpoints and selected seed companions")
     args = parser.parse_args()
-    if args.runtime_only and args.mode != "restore":
-        parser.error("--runtime-only requires restore mode")
     args.root = args.root.resolve()
     (pack if args.mode == "pack" else restore)(args)
 
