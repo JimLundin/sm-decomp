@@ -313,6 +313,30 @@ pub(crate) fn choose_spit(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScr
     jp
 }
 
+fn contact_edge(game: &mut Game) -> i32 {
+    slot!(game, Crocomire[0].base.x_pos) as i32
+        - slot!(game, Crocomire[0].base.x_width) as i32
+        - word!(game.samus_x_radius) as i32
+}
+fn contact(game: &mut Game) {
+    super::combat::contact_reaction(&mut Runtime::new(game), super::api::DeathHandling::Finalize);
+}
+pub(crate) fn touch(game: &mut Game) {
+    contact(game);
+    slot!(game, Crocomire[0].var_B, |flags| flags | 0x4000);
+    word!(game.extra_samus_x_displacement = -4i32 as u16);
+}
+pub(crate) fn push_player(game: &mut Game) {
+    if slot!(game, Crocomire[0].var_A) == 0
+        && ((contact_edge(game) - word!(game.samus_x_pos) as i32) as i16) < 0
+    {
+        contact(game);
+        word!(game.samus_x_pos = contact_edge(game) as u16);
+        word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
+        word!(game.extra_samus_x_displacement = -4i32 as u16);
+        word!(game.extra_samus_y_displacement = -1i32 as u16);
+    }
+}
 fn next_hit_count(flags: u16) -> u16 {
     ((flags & 0xf) + 1).min(15)
 }

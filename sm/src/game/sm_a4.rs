@@ -949,15 +949,6 @@ pub fn Crocomire_9B86(game: &mut Game) {
     advance_phase(game);
 }
 
-pub unsafe fn Crocomire_Func_92(game: &mut Game) {
-    actors::combat::contact_reaction(
-        &mut Runtime::new(game),
-        actors::api::DeathHandling::Finalize,
-    );
-    let E: i32 = 0;
-    slot!(game, Crocomire[E].var_B, |old| (old) | (0x4000u16));
-    word!(game.extra_samus_x_displacement = -4i32 as u16);
-}
 pub fn CrocomireTongue_Main() {}
 
 crate::game::callback_dispatch! {
@@ -1012,30 +1003,11 @@ crate::game::callback_dispatch! {
     [10783748] Crocomire_Main [] {
         let v0: i32 = slot!(game, Crocomire[0i32].var_A) as i32 >> 1;
         off_A48C14[v0 as usize](game);
-        Crocomire_Func_30(game);
+        actors::crocomire_reactions::push_player(game);
         Crocomire_Func_31(game);
     };
     @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E: i32 = 0; };
-    Crocomire_Func_30 [] {
-        if slot!(game, Crocomire[E].var_A) == 0
-            && ((slot!(game, Crocomire[E].base.x_pos) as i32
-                - slot!(game, Crocomire[E].base.x_width) as i32
-                - word!(game.samus_x_radius) as i32
-                - word!(game.samus_x_pos) as i32) as i16)
-                < 0
-        {
-            actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
-            word!(
-                game.samus_x_pos = (slot!(game, Crocomire[E].base.x_pos) as i32
-                    - slot!(game, Crocomire[E].base.x_width) as i32
-                    - word!(game.samus_x_radius) as i32) as u16
-            );
-            word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
-            word!(game.extra_samus_x_displacement = -4i32 as u16);
-            word!(game.extra_samus_y_displacement = -1i32 as u16);
-        }
-    };
     Crocomire_Func_35 [] {
         let crocom_var_20: u16 = slot!(game, Crocomire[E].var_20);
         if crocom_var_20 != 0 {

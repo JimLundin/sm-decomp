@@ -997,7 +997,7 @@ crate::game::address_dispatch! {
     {
         10518563 => [actor_api::contact_reaction(&mut Runtime::new(game), actor_api::DeathHandling::Finalize)]; 10670984 => [crate::game::large_snail::touch(true, game)];
         10670988 => [crate::game::large_snail::touch(false, game)]; 10780707 => sm_a4::Enemy_NormalTouchAI_A4;
-        10795325 => sm_a4::Crocomire_Func_92; 10795344 => [()]; 10846284 => [()];
+        10795325 => actors::crocomire_reactions::touch; 10795344 => [()]; 10846284 => [()];
         10851818 => actors::draygon_death::touch; 10874348 => actors::spore_spawn::touch;
         10936153 => sm_a6::sub_A6DF59; 10940479 => crate::game::ceres_doors::steam_touch; 10977356 => [()];
         10982539 => sm_a7::Kraid_Touch_ArmFoot; 10982544 => sm_a7::KraidsArm_Touch;
