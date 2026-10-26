@@ -7,11 +7,11 @@ use crate::game::sprite_drawing::Clip;
 use crate::game::visual_runtime::{
     METROID_PAL_1, METROID_PAL_2, METROID_PAL_3, METROID_PAL_4, advance_credit_roll,
     advance_intro_rinka, advance_shooting_stars, draw_cinematic_sprites, draw_intro_sprites,
-    drift_cinematic_sprite, initialize_ending_cloud_band, initialize_ending_cloud_side,
-    initialize_ending_time_glyph, initialize_intro_rinka, initialize_shooting_stars,
-    launch_cinematic_sprite, move_ending_cloud, place_cinematic_sprite, prepare_credit_roll,
-    prepare_ending_time, start_intro_rinka, title_metroid_cry, title_metroid_palette,
-    wait_cinematic_scene, wait_ending_cloud,
+    drift_cinematic_sprite, flash_intro_mother_brain, initialize_ending_cloud_band,
+    initialize_ending_cloud_side, initialize_ending_time_glyph, initialize_intro_rinka,
+    initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud, place_cinematic_sprite,
+    prepare_credit_roll, prepare_ending_time, shake_intro_mother_brain, start_intro_rinka,
+    title_metroid_cry, title_metroid_palette, wait_cinematic_scene, wait_ending_cloud,
 };
 use crate::game::visual_runtime::{advance_cinematic_background_pre, fade_cinematic_fixed_color};
 use crate::game::visual_runtime::{
@@ -522,31 +522,6 @@ pub unsafe fn SetSomeStuffForSpriteObject_16(game: &mut Game) {
     {
         word! {game; cinematicbg_arr7[15] = 8; cinematicbg_arr8[15] = 24;
         cinematicspr_instr_ptr[15] = addr_word_8BCBFB as u16; cinematicspr_instr_timer[15] = 1; }
-    }
-}
-pub unsafe fn CinematicFunction_Intro_Func37(k: u16, game: &mut Game) {
-    {
-        let mut v3: u16 = 0;
-        let v1: u16 = word!(game.cinematicspr_arr6[(k >> 1)]);
-        if v1 != 0 {
-            if (v1 & 1) != 0 {
-                word_transfers!(game, descending, 16; native(0xc1fe) <- rom(0x8ce3e9, 255));
-                v3 = k;
-            } else {
-                word_transfers!(game, descending, 16; native(0xc1fe) <- value(0x7fff));
-                v3 = k;
-            }
-            word!(game.cinematicspr_arr6[(v3 >> 1)] -= 1);
-        }
-    }
-}
-pub unsafe fn CinematicFunction_Intro_Func40(game: &mut Game) {
-    {
-        if (word!(game.cinematic_var12) & 1) != 0 {
-            word!(game.cinematic_var10 -= 4);
-        } else {
-            word!(game.cinematic_var10 += 4);
-        };
     }
 }
 static kCinematicFunction_Intro_Func46_Tab0: [u16; 5] = [0, 0x10, 0xfff0, 0xfff8, 8];
@@ -2170,7 +2145,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9156486] CinematicFunction_Intro_Func36 [] {
-        CinematicFunction_Intro_Func37(k, game);
+        flash_intro_mother_brain(k, game);
         let mut v1: u16 = 8;
         while (word!(game.projectile_type[(v1 >> 1)]) & 0xfff) != 256 {
             v1 = (v1).wrapping_sub(2);
@@ -2199,8 +2174,8 @@ crate::game::callback_dispatch! {
         }
     };
     [9156623] CinematicFunction_Intro_Func39 [] {
-        CinematicFunction_Intro_Func37(k, game);
-        CinematicFunction_Intro_Func40(game);
+        flash_intro_mother_brain(k, game);
+        shake_intro_mother_brain(game);
         let v1: i32 = k as i32 >> 1;
         let v2: u16 = (word!(game.cinematicspr_goto_timer[v1])).wrapping_add(1);
         word!(game.cinematicspr_goto_timer[v1] = v2);
@@ -2210,7 +2185,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9156654] CinematicSprPreInstr_B82E [] {
-        CinematicFunction_Intro_Func40(game);
+        shake_intro_mother_brain(game);
         if word!(game.cinematic_var13) == 0 {
             let v1: i32 = k as i32 >> 1;
             word! {game; cinematicspr_instr_timer[v1] = 1;

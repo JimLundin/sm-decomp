@@ -1718,6 +1718,27 @@ pub(crate) fn drift_cinematic_sprite(
     }
 }
 
+pub(crate) fn flash_intro_mother_brain(object: u16, game: &mut Game) {
+    let slot = usize::from(object >> 1);
+    let timer = word!(game.cinematicspr_arr6[slot]);
+    if timer != 0 {
+        if timer & 1 != 0 {
+            word_transfers!(game, descending, 16; native(0xc1fe) <- rom(0x8ce3e9, 255));
+        } else {
+            word_transfers!(game, descending, 16; native(0xc1fe) <- value(0x7fff));
+        }
+        word!(game.cinematicspr_arr6[slot] -= 1);
+    }
+}
+
+pub(crate) fn shake_intro_mother_brain(game: &mut Game) {
+    if word!(game.cinematic_var12) & 1 != 0 {
+        word!(game.cinematic_var10 -= 4);
+    } else {
+        word!(game.cinematic_var10 += 4);
+    }
+}
+
 pub(crate) fn wait_cinematic_scene(
     object: u16,
     scene: u16,
