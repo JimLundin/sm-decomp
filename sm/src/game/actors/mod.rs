@@ -83,5 +83,6 @@ pub(in crate::game) mod evir;
 pub(in crate::game) mod fune;
 pub(in crate::game) mod ki_hunter;
 pub(crate) mod lava_seahorse;
+pub(in crate::game) mod maridia_floater;
 pub(in crate::game) mod wrecked_ship_ghost;
 pub(in crate::game) mod wrecked_ship_robots;

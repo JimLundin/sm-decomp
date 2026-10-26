@@ -641,6 +641,11 @@ crate::game::callback_dispatch! {
         11057014 => crate::game::actors::beetom::initialize;
         11057165 => crate::game::actors::beetom::advance; 11058734 => crate::game::actors::beetom::touch;
         11058860 => crate::game::actors::beetom::shot;
+        11059657 => crate::game::actors::maridia_floater::initialize;
+        11059740 => [{ let address = crate::game::actors::maridia_floater::state_address(game); actor_species_pre_instruction(address, game); }];
+        11060670 => crate::game::actors::maridia_floater::touch;
+        11060719 => crate::game::actors::maridia_floater::shot;
+        11060799 => crate::game::actors::maridia_floater::power_bomb;
         11062135 => crate::game::actors::wrecked_ship_robots::initialize;
         11062220 => crate::game::actors::wrecked_ship_robots::initialize_dormant;
         11062326 => crate::game::actors::wrecked_ship_robots::advance;
@@ -701,7 +706,7 @@ crate::game::address_dispatch! {
         10998952 => [()];
         11047388 => [()];
         11055761 => [sm_a8::sub_A8B291(k)]; 11055765 => [sm_a8::NorfairLavaMan_Func_13(game)];
-        11060584 => [()];
+        11059843 | 11059878 | 11059919 | 11060075 | 11060193 | 11060329 | 11060444 | 11060480 | 11060509 | 11060584 | 11060585 | 11060639 => [crate::game::actors::maridia_floater::advance(ea as u16, k, game)];
         11192670 => [()]; 11197610 => [()]; 11200422 => [()]; 11174011 => [()]; 11763835 => [()];
         11192146 => sm_aa::Torizo_Func_5;
         11192364 => sm_aa::Torizo_Func_7;

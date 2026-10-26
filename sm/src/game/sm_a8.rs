@@ -24,9 +24,6 @@ crate::game::constants::typed_constants! { Consts_A8;
     addr_kWreckedShipSpark_Ilist_E5A7 = 58791,
     addr_kMaridiaPuffer_Ilist_D855 = 55381,
     addr_kMaridiaPuffer_Ilist_D841 = 55361,
-    addr_stru_A8C199 = 49561,
-    addr_kMaridiaFloater_Ilist_C191 = 49553, addr_kMaridiaFloater_Ilist_C183 = 49539,
-    addr_kMaridiaFloater_Ilist_C173 = 49523, addr_kMaridiaFloater_Ilist_C163 = 49507,
     addr_kNorfairLavaMan_Ilist_AE0C = 44556, addr_kNorfairLavaMan_Ilist_ADDC = 44508,
     addr_kNorfairLavaMan_Ilist_ADAC = 44460, addr_kNorfairLavaMan_Ilist_AD7E = 44414,
     addr_kNorfairLavaMan_Ilist_AD50 = 44368, addr_kNorfairLavaMan_Ilist_AD3C = 44348,
@@ -47,7 +44,7 @@ crate::type_aliases! {
 }
 
 crate::type_aliases! {
-    pub Enemy_WreckedShipSpark, Enemy_MaridiaFloater, Enemy_MorphBallEye =
+    pub Enemy_WreckedShipSpark, Enemy_MorphBallEye =
         crate::game::enemy_layouts::EnemyLayout8;
 }
 
@@ -72,18 +69,11 @@ crate::game::constants::typed_constants! { i32;
     fnsub_A8B291 = 0xa8b291, fnNorfairLavaMan_Func_13 = 0xa8b295,
     fnNorfairLavaMan_Func_15 = 0xa8b30d, fnNorfairLavaMan_Func_16 = 0xa8b31f,
     fnNorfairLavaMan_Func_17 = 0xa8b356, fnNorfairLavaMan_Func_18 = 0xa8b3a7,
-    fnMaridiaFloater_Func_3 = 0xa8c283, fnMaridiaFloater_Func_4 = 0xa8c2a6,
-    fnMaridiaFloater_Func_5 = 0xa8c2cf, fnMaridiaFloater_Func_6 = 0xa8c36b,
-    fnMaridiaFloater_Func_7 = 0xa8c3e1, fnMaridiaFloater_Func_8 = 0xa8c469,
-    fnMaridiaFloater_Func_9 = 0xa8c4dc, fnMaridiaFloater_Func_10 = 0xa8c500,
-    fnMaridiaFloater_Func_11 = 0xa8c51d, fnnullsub_256 = 0xa8c568,
-    fnMaridiaFloater_Func_12 = 0xa8c569, fnMaridiaFloater_Func_13 = 0xa8c59f,
     fnBlueBrinstarFaceBlock_Func_1 = 0xa8e86e,
 }
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
-    Get_MaridiaFloater(o: i32) -> Enemy_MaridiaFloater = [0xf78, o as isize];
     Get_MaridiaPuffer(o: i32) -> Enemy_MaridiaPuffer = [0xf78, o as isize];
     Get_YappingMaw(o: i32) -> Enemy_YappingMaw = [0xf78, o as isize];
 }
@@ -93,25 +83,12 @@ type WreckedShipOrbs = Enemy_WreckedShipOrbs;
 type NorfairLavaMan = Enemy_NorfairLavaMan;
 type MorphBallEye = Enemy_MorphBallEye;
 type MaridiaPuffer = Enemy_MaridiaPuffer;
-type MaridiaFloater = Enemy_MaridiaFloater;
 static g_word_A890CA: [i16; 4] = [-8, 8, 0, 0];
 static g_word_A890D2: [i16; 4] = [0, 0, -8, 8];
 static g_word_A89050: u16 = 0x80;
 static g_word_A89052: u16 = 0xb0;
 static g_word_A89054: u16 = 0x80;
 static g_word_A89056: u16 = 0x80;
-static g_word_A8C277: [i16; 3] = [-12, -16, -20];
-static g_word_A8C27D: [i16; 3] = [-20, -16, -12];
-static g_word_A8C19F: u16 = 0x40;
-static g_word_A8C1A1: [u16; 12] = [0, 1, 2, 3, 2, 1, 0, 0xffff, 0xfffe, 0xfffd, 0xfffe, 0xffff];
-static g_word_A8C1B9: u16 = 0;
-static g_word_A8C1BB: u16 = 0;
-static g_word_A8C1BD: u16 = 0;
-static g_word_A8C1BF: u16 = 0;
-static g_word_A8C1C1: u16 = 1;
-static g_word_A8C1C3: u16 = 0;
-static g_word_A8C1C5: u16 = 0xffff;
-static g_word_A8C1C7: u16 = 0x8000;
 static g_word_A8D871: [i16; 10] = [0xc0, 0xe0, 0, 0x20, 0x40, 0x40, 0x60, 0x80, 0xa0, 0xc0];
 static g_word_A8D885: [i16; 8] = [0x3ff, 0x4ff, 0x5ff, 0x6ff, 0x7ff, 0x8ff, 0x9ff, 0xaff];
 static g_word_A8D895: [i16; 26] = [
@@ -531,56 +508,6 @@ pub unsafe fn NorfairLavaMan_Func_19(k: u16, game: &mut Game) {
         word!(game.enemy_drawing_queue[(v1 + 64)] = 8);
     }
 }
-pub unsafe fn MaridiaFloater_Func_1(k: u16, game: &mut Game) {
-    {
-        for i in (0i32..=7).rev() {
-            SpawnEprojWithGfx(i as u16, k, addr_kEproj_MaridiaFloatersSpikes as u16, game);
-        }
-    }
-}
-pub unsafe fn MaridiaFloater_Func_2(k: u16, game: &mut Game) {
-    let v1: i32 = k as i32 >> 1;
-    let v2: u16 = word!(game.enemy_drawing_queue[(v1 + 103)]);
-    if v2 as i32 + 0x3e6f & 0x8000 != 0 {
-        let mut v3: u16 = (v2 as i32 - 4i32 + 15997) as u16 >> 1;
-        if v3 as i32 - 6i32 & 0x8000 == 0 {
-            v3 = 0;
-        }
-        word!(
-            game.enemy_drawing_queue[(v1 + 93)] = ((g_word_A8C277[(v3 >> 1) as usize]) as u16)
-                .wrapping_add(slot!(game, MaridiaFloater[k as i32].base.y_pos),)
-        );
-    } else {
-        let mut v4: u16 = (v2 as i32 - 4i32 + 15983) as u16 >> 1;
-        if v4 as i32 - 6i32 & 0x8000 == 0 {
-            v4 = 0;
-        }
-        word!(
-            game.enemy_drawing_queue[(v1 + 93)] = ((g_word_A8C27D[(v4 >> 1) as usize]) as u16)
-                .wrapping_add(slot!(game, MaridiaFloater[k as i32].base.y_pos),)
-        );
-    };
-}
-macro_rules! advance_maridia_floater_bob {
-    ($enemy:ident, $enemy_index:ident, $game:ident) => {
-        let v2: bool = (*$enemy).var_D == 1;
-        (*$enemy).var_D = (*$enemy).var_D.wrapping_sub(1);
-        let v3: bool = ((*$enemy).var_D & 0x8000) != 0;
-        if v2 || v3 {
-            (*$enemy).var_D = 5;
-            let v4: i32 = $enemy_index as i32 >> 1;
-            let v5: u16 = (g_word_A8C1A1[(*$enemy).var_C as usize])
-                .wrapping_add(word!($game.enemy_drawing_queue_sizes[v4]));
-            word!($game.enemy_drawing_queue[(v4 + 91)] = v5);
-            (*$enemy).base.x_pos = v5;
-            let mut v6: u16 = ((*$enemy).var_C).wrapping_add(1);
-            if (*$enemy).var_C as i32 - 11i32 & 0x8000 == 0 {
-                v6 = 0;
-            }
-            (*$enemy).var_C = v6;
-        }
-    };
-}
 
 crate::game::callback_dispatch! {
     pub unsafe fn CallMaridiaPuffer(ea: u32, game: &mut Game) => ea;
@@ -923,75 +850,6 @@ crate::game::callback_dispatch! {
     [11056140] NorfairLavaMan_Shot [] {
         actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
         NorfairLavaMan_Common(game);
-    };
-    [11059657] MaridiaFloater_Init [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, MaridiaFloater[E].base.properties, |old| (old) | ((kEnemyProps_DisableSamusColl) as u16));
-        slot!(game, MaridiaFloater[E].base.spritemap_pointer = addr_kSpritemap_Nothing_A8 as u16);
-        slot!(game, MaridiaFloater[E].base.instruction_timer = 1);
-        slot!(game, MaridiaFloater[E].base.timer = 0);
-        if slot!(game, MaridiaFloater[E].parameter_1) != 0 {
-            slot!(game, MaridiaFloater[E].var_A = slot!(game, MaridiaFloater[E].base.x_pos));
-            slot!(game, MaridiaFloater[E].var_B = slot!(game, MaridiaFloater[E].base.y_pos));
-            slot!(game, MaridiaFloater[E].var_F = (0xa8c568i32) as u16);
-            slot!(game, MaridiaFloater[E].base.current_instruction = addr_stru_A8C199 as u16);
-            slot!(game, MaridiaFloater[E].var_D = slot!(game, MaridiaFloater[E].parameter_2));
-        } else {
-            slot!(game, MaridiaFloater[E].var_E = 60);
-            slot!(game, MaridiaFloater[E].var_F = (0xa8c283i32) as u16);
-            slot!(game, MaridiaFloater[E].base.current_instruction = addr_kMaridiaFloater_Ilist_C173 as u16);
-        };
-    };
-    [11059740] MaridiaFloater_Main [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        actor_species_pre_instruction(((slot!(game, MaridiaFloater[E].var_F)) as u32) | (0xa80000u32), game);
-    };
-    [11060670] MaridiaFloater_Touch [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        if slot!(game, MaridiaFloater[E].parameter_2) == 0 {
-            let palette_index: u16 = slot!(game, MaridiaFloater[E].base.palette_index);
-            actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
-            if slot!(game, MaridiaFloater[E].base.health) == 0 {
-                word!(game.enemy_drawing_queue[((word!(game.cur_enemy_index) as i32 >> 1) + 97)] |= (0x200u16));
-                slot!(game, MaridiaFloater[E].base.palette_index = palette_index);
-                MaridiaFloater_Func_1(word!(game.cur_enemy_index), game);
-                slot!(game, MaridiaFloater[E].base.palette_index = 2560);
-            }
-        }
-    };
-    [11060719] MaridiaFloater_Shot [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        if slot!(game, MaridiaFloater[E].parameter_2) == 0 {
-            actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::ReactionOnly);
-            if (slot!(game, MaridiaFloater[E].base.ai_handler_bits) & 4) != 0 {
-                let v2: i32 = word!(game.cur_enemy_index) as i32 >> 1;
-                word!(game.enemy_drawing_queue[(v2 + 109)] = slot!(game, MaridiaFloater[E].base.frozen_timer));
-                word!(game.enemy_drawing_queue[(v2 + 99)] |= (4u16));
-            }
-            if (slot!(game, MaridiaFloater[E].base.ai_handler_bits) & 2) != 0 {
-                let v3: i32 = word!(game.cur_enemy_index) as i32 >> 1;
-                word!(game.enemy_drawing_queue[(v3 + 108)] = slot!(game, MaridiaFloater[E].base.flash_timer));
-                word!(game.enemy_drawing_queue[(v3 + 99)] |= (2u16));
-            }
-            if slot!(game, MaridiaFloater[E].base.health) == 0 {
-                slot!(game, MaridiaFloater[E].var_F = (0xa8c569i32) as u16);
-                slot!(game, MaridiaFloater[E].parameter_2 = 1);
-            }
-        }
-    };
-    [11060799] MaridiaFloater_Powerbomb [] {
-        Enemy_NormalPowerBombAI_A8(game);
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        if slot!(game, MaridiaFloater[E].base.health) != 0 {
-            let v1: i32 = word!(game.cur_enemy_index) as i32 >> 1;
-            word!(game.enemy_drawing_queue[(v1 + 111)] = slot!(game, MaridiaFloater[E].base.shake_timer));
-            word!(game.enemy_drawing_queue[(v1 + 110)] = slot!(game, MaridiaFloater[E].base.invincibility_timer));
-            word!(game.enemy_drawing_queue[(v1 + 108)] = slot!(game, MaridiaFloater[E].base.flash_timer));
-            word!(game.enemy_drawing_queue[(v1 + 109)] = slot!(game, MaridiaFloater[E].base.frozen_timer));
-            word!(game.enemy_drawing_queue[(v1 + 99)] = slot!(game, MaridiaFloater[E].base.ai_handler_bits));
-        } else {
-            word!(game.enemy_drawing_queue[((word!(game.cur_enemy_index) as i32 >> 1) + 97)] |= (0x200u16));
-        };
     };
     [11068355] WreckedShipOrbs_Main [] {
         WreckedShipOrbs_Func_1(game);
@@ -1410,24 +1268,6 @@ crate::game::callback_dispatch! {
         }
         NorfairLavaMan_Func_19(word!(game.cur_enemy_index), game);
     };
-    [11060585] MaridiaFloater_Func_12 [] {
-        let v1: i32 = k as i32 >> 1;
-        if word!(game.enemy_drawing_queue[(v1 + 103)]) as i32 + 0x3e6f & 0x8000 == 0 {
-            let v2: u16 =
-                (word!(game.enemy_drawing_queue[(v1 + 103)]) as i32 - 4i32 + 15983) as u16 >> 1;
-            if v2 != 0 {
-                word!(
-                    game.enemy_drawing_queue[(v1 + 103)] =
-                        crate::rtl::rom_table_word!(game, 0xa8c599, (v2 >> 1) as isize)
-                );
-                word!(game.enemy_drawing_queue[(v1 + 104)] = 1);
-            }
-        }
-        let E: i32 = k as i32;
-        slot!(game, MaridiaFloater[E].var_F = (0xa8c59fi32) as u16);
-        slot!(game, MaridiaFloater[E].var_E = 32);
-        MaridiaFloater_Func_2(k, game);
-    };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     @prefix { let E: i32 = word!(game.cur_enemy_index) as i32; };
     [11055386] NorfairLavaMan_Func_7 [] {
@@ -1513,148 +1353,6 @@ crate::game::callback_dispatch! {
         }
         NorfairLavaMan_Func_19(word!(game.cur_enemy_index), game);
     };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    @prefix { let E = Get_MaridiaFloater(k as i32, game); };
-    [11059919] MaridiaFloater_Func_5 [] {
-        if ((*E).base.ai_handler_bits & 1) != 0 {
-            (*E).var_F = (0xa8c3e1i32) as u16;
-            MaridiaFloater_Func_7(k, game);
-        } else {
-            advance_maridia_floater_bob!(E, k, game);
-            words!((*E), var_A, var_B += words!((g_word_A8C1B9, g_word_A8C1BB)));
-            if ({ let (actor, amount) = (k, (words!((*E), var_A, var_B)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
-                || ((*(ram_ptr!(game, u16; 0xf68)).offset(((k as i32 >> 1) + 1) as isize) as i32
-                    - g_word_A8C19F as i32
-                    - (*E).base.y_pos as i32) as i16)
-                    >= 0
-            {
-                let mfr_var_C: u16 = (*E).var_C;
-                if mfr_var_C == 0 || mfr_var_C == 6 {
-                    (*E).var_F = (0xa8c500i32) as u16;
-                    (*E).var_E = 10;
-                    let v10: i32 = k as i32 >> 1;
-                    word! {game; enemy_drawing_queue[(v10 + 104)] = 1;
-                        enemy_drawing_queue[(v10 + 103)] = addr_kMaridiaFloater_Ilist_C191 as u16; }
-                } else {
-                    (*E).var_F = (0xa8c36bi32) as u16;
-                }
-            }
-            MaridiaFloater_Func_2(k, game);
-        };
-    };
-    [11060075] MaridiaFloater_Func_6 [] {
-        let v2: bool = (*E).var_D == 1;
-        (*E).var_D = (*E).var_D.wrapping_sub(1);
-        let v3: bool = ((*E).var_D & 0x8000) != 0;
-        let move_down: bool = (!v2 && !v3)
-            || ({
-                (*E).var_D = 5;
-                let mut v4: i32 = k as i32 >> 1;
-                let v5: u16 = (g_word_A8C1A1[(*E).var_C as usize])
-                    .wrapping_add(word!(game.enemy_drawing_queue_sizes[v4]));
-                word!(game.enemy_drawing_queue[(v4 + 91)] = v5);
-                (*E).base.x_pos = v5;
-                if (*E).var_C != 0 && (*E).var_C != 6 {
-                    let mut v7: u16 = ((*E).var_C).wrapping_add(1);
-                    if v7 as i32 - 12i32 & 0x8000 == 0 {
-                        v7 = 0;
-                    }
-                    (*E).var_C = v7;
-                    true
-                } else {
-                    (*E).var_F = (0xa8c500i32) as u16;
-                    (*E).var_E = 10;
-                    word! {game; enemy_drawing_queue[(v4 + 104)] = 1;
-                        enemy_drawing_queue[(v4 + 103)] = addr_kMaridiaFloater_Ilist_C191 as u16; }
-                    false
-                }
-            });
-        if move_down {
-            words!((*E), var_A, var_B += words!((g_word_A8C1B9, g_word_A8C1BB)));
-            ({ let (actor, amount) = (k, (words!((*E), var_A, var_B)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
-        }
-        MaridiaFloater_Func_2(k, game);
-    };
-    [11060193] MaridiaFloater_Func_7 [] {
-        if ((*E).base.ai_handler_bits & 1) != 0 {
-            advance_maridia_floater_bob!(E, k, game);
-            words!((*E), var_A, var_B += words!((g_word_A8C1B9, g_word_A8C1BB)));
-            if ({ let (actor, amount) = (k, (words!((*E), var_A, var_B)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
-                || ((*(ram_ptr!(game, u16; 0xf68)).offset(((k as i32 >> 1) + 1) as isize) as i32
-                    - *(ram_ptr!(game, u16; 0xf68)).offset(((k as i32 >> 1) + 3) as isize) as i32
-                    - (*E).base.y_pos as i32) as i16)
-                    >= 0
-            {
-                if (*E).var_C == 0 || (*E).var_C == 6 {
-                    (*E).var_F = (0xa8c4dci32) as u16;
-                } else {
-                    (*E).var_F = (0xa8c469i32) as u16;
-                }
-            }
-            MaridiaFloater_Func_2(k, game);
-        } else {
-            (*E).var_F = (0xa8c36bi32) as u16;
-        };
-    };
-    [11060329] MaridiaFloater_Func_8 [] {
-        if ((*E).base.ai_handler_bits & 1) == 0 {
-            (*E).var_F = (0xa8c36bi32) as u16;
-            return;
-        }
-        let v2: bool = (*E).var_D == 1;
-        (*E).var_D = (*E).var_D.wrapping_sub(1);
-        let v3: bool = ((*E).var_D & 0x8000) != 0;
-        let move_down: bool = (!v2 && !v3)
-            || ({
-                (*E).var_D = 5;
-                let mut v4: i32 = k as i32 >> 1;
-                let mut v5: u16 = (g_word_A8C1A1[(*E).var_C as usize])
-                    .wrapping_add(word!(game.enemy_drawing_queue_sizes[v4]));
-                word!(game.enemy_drawing_queue[(v4 + 91)] = v5);
-                (*E).base.x_pos = v5;
-                if (*E).var_C != 0 && (*E).var_C != 6 {
-                    let mut v7: u16 = ((*E).var_C).wrapping_add(1);
-                    if v7 as i32 - 12i32 & 0x8000 == 0 {
-                        v7 = 0;
-                    }
-                    (*E).var_C = v7;
-                    true
-                } else {
-                    (*E).var_F = (0xa8c4dci32) as u16;
-                    false
-                }
-            });
-        if move_down {
-            words!((*E), var_A, var_B += words!((g_word_A8C1B9, g_word_A8C1BB)));
-            ({ let (actor, amount) = (k, (words!((*E), var_A, var_B)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
-        }
-        MaridiaFloater_Func_2(k, game);
-    };
-    [11060444] MaridiaFloater_Func_9 [] {
-        if ((*E).base.ai_handler_bits & 1) == 0 {
-            (*E).var_F = (0xa8c500i32) as u16;
-            (*E).var_E = 10;
-            let v2: i32 = k as i32 >> 1;
-            word!(game.enemy_drawing_queue[(v2 + 104)] = 1);
-            word!(game.enemy_drawing_queue[(v2 + 103)] = addr_kMaridiaFloater_Ilist_C191 as u16);
-        }
-        MaridiaFloater_Func_2(k, game);
-    };
-    [11060509] MaridiaFloater_Func_11 [] {
-        words!((*E), var_A, var_B += words!((g_word_A8C1BD, g_word_A8C1BF)));
-        ({ let (actor, amount) = (k, (words!((*E), var_A, var_B)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
-        let v4: i32 = k as i32 >> 1;
-        if (((*E).base.y_pos) as i16)
-            .wrapping_sub((word!(game.enemy_drawing_queue_sizes[(v4 + 1)])) as i16)
-            >= 0
-        {
-            (*E).base.y_pos = word!(game.enemy_drawing_queue_sizes[(v4 + 1)]);
-            (*E).var_F = (0xa8c283i32) as u16;
-            (*E).var_E = 60;
-            enemy_instruction! {[(*E).base]; timer = 1, instruction = addr_kMaridiaFloater_Ilist_C173 as u16}
-        }
-        MaridiaFloater_Func_2(k, game);
-    };
     @countdown [pub unsafe fn (k: u16, game: &mut Game)];
     before {
         let E: i32 = k as i32;
@@ -1672,46 +1370,4 @@ crate::game::callback_dispatch! {
     [11047374] MorphBallEye_Func_4 {
         slot!(game, MorphBallEye[E].var_F = (0xa890f1i32) as u16);
     };
-    @countdown [pub unsafe fn (k: u16, game: &mut Game)];
-    before {
-        let E: i32 = k as i32;
-        let v2: bool = slot!(game, MaridiaFloater[E].var_E) == 1;
-        slot!(game, MaridiaFloater[E].var_E, |old| old.wrapping_sub(1));
-        let v3: bool = (slot!(game, MaridiaFloater[E].var_E) & 0x8000) != 0;
-    }
-    when v2 || v3;
-    [11059843] MaridiaFloater_Func_3 {
-        let v4: i32 = k as i32 >> 1;
-        word!(game.enemy_drawing_queue[(v4 + 104)] = 1);
-        word!(game.enemy_drawing_queue[(v4 + 103)] = addr_kMaridiaFloater_Ilist_C183 as u16);
-        slot!(game, MaridiaFloater[E].var_F = (0xa8c2a6i32) as u16);
-        slot!(game, MaridiaFloater[E].var_E = 10);
-    } after {
-        MaridiaFloater_Func_2(k, game);
-    };
-    [11059878] MaridiaFloater_Func_4 {
-        slot!(game, MaridiaFloater[E].var_F = (0xa8c2cfi32) as u16);
-        slot!(game, MaridiaFloater[E].var_A = g_word_A8C1C5);
-        slot!(game, MaridiaFloater[E].var_B = g_word_A8C1C7);
-        slot!(game, MaridiaFloater[E].base; instruction_timer = 1, current_instruction = addr_kMaridiaFloater_Ilist_C163 as u16);
-    } after {
-        MaridiaFloater_Func_2(k, game);
-    };
-    [11060480] MaridiaFloater_Func_10 {
-        slot!(game, MaridiaFloater[E].var_F = (0xa8c51di32) as u16);
-        slot!(game, MaridiaFloater[E].var_A = g_word_A8C1C1);
-        slot!(game, MaridiaFloater[E].var_B = g_word_A8C1C3);
-    } after {
-        MaridiaFloater_Func_2(k, game);
-    };
-    [11060639] MaridiaFloater_Func_13 {
-        let v4: i32 = k as i32 >> 1;
-        word!(game.enemy_drawing_queue[(v4 + 100)] = 0);
-        word!(game.enemy_drawing_queue[(v4 + 97)] |= (0x200u16));
-        MaridiaFloater_Func_1(k, game);
-        let mut v5: u16 = 0;
-        ({ let (_ignored_key, animation) = (k, v5); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
-    } else {
-        MaridiaFloater_Func_2(k, game);
-    } after { ; };
 }
