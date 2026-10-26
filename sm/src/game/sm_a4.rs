@@ -82,17 +82,6 @@ pub fn Crocomire_Func_29(game: &mut Game) {
         word! { game, 0; reg_BG2HOFS, reg_BG2VOFS }
     }
 }
-pub unsafe fn Crocomire_Func_31(game: &mut Game) {
-    if word!(game.door_transition_flag_enemies) == 0 {
-        if slot!(game, Crocomire[0i32].base.flash_timer) != 0
-            && (word!(game.random_enemy_counter) & 2) != 0
-        {
-            word_transfers!(game, descending, 8; native(0xc0ee) <- value(0x7fff));
-        } else {
-            word_transfers!(game, descending, 8; native(0xc0ee) <- rom(0xa4b89d, 7));
-        }
-    }
-}
 pub unsafe fn Crocomire_Func_36(game: &mut Game) {
     unsafe {
         actors::crocomire_reactions::rumble(game);
@@ -882,7 +871,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (game: &mut Game)];
     [10782343] Crocomire_Hurt [] {
         Crocomire_Func_27(word!(game.cur_enemy_index), game);
-        Crocomire_Func_31(game);
+        actors::crocomire_reactions::update_palette(game);
     };
     [10783322] Crocomire_Init [] {
         word!(game.boss_id = 6);
@@ -929,7 +918,7 @@ crate::game::callback_dispatch! {
         let v0: i32 = slot!(game, Crocomire[0i32].var_A) as i32 >> 1;
         off_A48C14[v0 as usize](game);
         actors::crocomire_reactions::push_player(game);
-        Crocomire_Func_31(game);
+        actors::crocomire_reactions::update_palette(game);
     };
     @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E: i32 = 0; };

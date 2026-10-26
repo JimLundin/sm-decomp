@@ -313,6 +313,17 @@ pub(crate) fn choose_spit(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScr
     jp
 }
 
+pub(crate) fn update_palette(game: &mut Game) {
+    if word!(game.door_transition_flag_enemies) == 0 {
+        if slot!(game, Crocomire[0].base.flash_timer) != 0
+            && (word!(game.random_enemy_counter) & 2) != 0
+        {
+            word_transfers!(game, descending, 8; native(0xc0ee) <- value(0x7fff));
+        } else {
+            word_transfers!(game, descending, 8; native(0xc0ee) <- rom(0xa4b89d, 7));
+        }
+    }
+}
 fn wall_counter(runtime: &Runtime<'_>, key: u16) -> u16 {
     runtime
         .resolve_actor(Key::from_legacy(key), AccessMode::Native)
