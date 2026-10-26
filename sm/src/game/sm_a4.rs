@@ -18,7 +18,7 @@ use crate::game::enemy_projectiles::{ClearEprojs, SpawnEprojWithGfx, SpawnEprojW
 use crate::game::music::{QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::player_update::minimap;
 use crate::game::room_mechanisms::spawn_hardcoded;
-use crate::game::visual_runtime::spawn_hdma;
+use crate::game::visual_runtime::{align_crocomire_background, spawn_hdma};
 
 use crate::game::sprite_effect_runtime::create_sprite;
 
@@ -326,48 +326,12 @@ pub unsafe fn Crocomire_Func_27(k: u16, game: &mut Game) {
             }
             v1 = (v1).wrapping_sub(2);
             if (v1 & 0x8000) != 0 {
-                Crocomire_8BA4(game);
+                align_crocomire_background(game);
                 return;
             }
         }
         word!(game.reg_BG2VOFS += *(RomPtr_A4(spritemap_pointer, game) as *mut u16).offset(14));
-        Crocomire_8BA4(game);
-    }
-}
-pub fn Crocomire_8BA4(game: &mut Game) {
-    let E0: i32 = word!(game.cur_enemy_index) as i32;
-    let E1: i32 = word!(game.cur_enemy_index) as i32 + 64;
-    slot!(
-        game,
-        Crocomire[E1].base.x_pos =
-            (slot!(game, Crocomire[E1].var_A)).wrapping_add(slot!(game, Crocomire[E0].base.x_pos))
-    );
-    slot!(
-        game,
-        Crocomire[E1].base.y_pos = slot!(game, Crocomire[E0].base.y_pos)
-    );
-    let x_pos: u16 = slot!(game, Crocomire[E0].base.x_pos);
-    let scroll_bg2: bool = if ((x_pos) as i16).wrapping_sub((word!(game.layer1_x_pos)) as i16) >= 0
-    {
-        slot!(game, Crocomire[E0].base.x_pos) as i32
-            - 128i32
-            - (word!(game.layer1_x_pos) as i32 + 256)
-            & 0x8000
-            != 0
-    } else {
-        !(((x_pos as i32 + 128 - word!(game.layer1_x_pos) as i32) as i16) < 0)
-    };
-    if scroll_bg2 {
-        let mut v6: u16 = (word!(game.layer1_x_pos) as i32
-            - slot!(game, Crocomire[E0].base.x_pos) as i32
-            + 51) as u16;
-        let v4: u16 = abs16(v6);
-        if v4 as i32 - 284i32 & 0x8000 == 0 {
-            v6 = 256;
-        }
-        word!(game.reg_BG2HOFS = v6);
-    } else {
-        word!(game.reg_BG2HOFS = 256);
+        align_crocomire_background(game);
     }
 }
 pub fn nullsub_305(game: &mut Game) {}
@@ -412,7 +376,7 @@ pub unsafe fn Crocomire_Func_31(game: &mut Game) {
 pub unsafe fn Crocomire_Func_36(game: &mut Game) {
     unsafe {
         Crocomire_Func_35(game);
-        Crocomire_8BA4(game);
+        align_crocomire_background(game);
         Crocomire_8D47(game);
     }
 }

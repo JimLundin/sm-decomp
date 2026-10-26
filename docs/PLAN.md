@@ -53,45 +53,24 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 ## Work order
 
-1. **Current - lane A coverage.** 44/44 required scenarios have passing local evidence.
-   Golden Torizo passes 1,187 frames, fresh defeat at 1,066 and the full 120-frame tail;
-   its normalization and projectile-parameter regressions add 1 and 235 passing frames.
-   The original Snes9x seed preserves all five input ports and independently proved
-   VRAM read-buffer, CGRAM-low and Mode7 latch values. No invented register defaults.
-   Existing required rows and expectations remain intact; hosted verification and
-   the combined full corpus are separate obligations, not inferred from this result.
-   **A2 complete:** 69/83 rows use original seeds, thirteen use hash-bound native/oracle
-   checkpoints, and only the full 8780-frame intro boots with zero setup. The existing
-   runner and encrypted 22-asset bundle preserve full inputs, original windows,
-   guards, both Kago setup encounters and all twelve previously distributed assets.
-   These route starts are not original TAS seeds. Converted-row configured setup
-   falls from 1459878 to 28700 frames; original seeded warmups remain separate.
-   The final six rows plus smoke pass ordinary CLI 10/10, 7034 selected/zero setup.
-   Seven unused recipes removed; net support reduction is 340 lines across both A2
-   packets. Speed remains for the full intro input. A continues the next unclaimed
-   bank in REVIEW's queues; coverage and bank retirement do not finish owned Session.
-2. **Current - lane B retirement.** B1 sm_88/sm_a0/sm_81 and B3 sm_8f/sm_b2 are
-   retired. M2 sm_a8, eleven B2 cinematic families and B3 Goofball are integrated;
-   all 83 corpus rows passed on aebfee7d after bank-A2 deletion; later work uses scoped rows.
-   B1 sm_80 is retired with checked gameplay and retained backend contracts;
-   its affected rows pass, and B1 continues sm_82. B2 continues sm_8b after
-   consolidating the checked credits interpreter; cloud-motion rows are `credits`,
-   `credits-postroll-wave` and the four smoke rows. B3 sm_a2 is retired after
-   the complete Snail interaction; B3 continues sm_a3. Non-enemy banks aim at most 80% replacement size.
-   Windows M is now B4: retire sm_a8 families, then sm_b3.
-   B3 sm_a2 retirement passes 39 local rows and the scoped bank mutation campaign.
-   The new fixed 300-frame Gunship row detects bobbing beyond the entry tail;
-   The 8-frame crawler slope regression passes with the full 800-frame bomb-jump
-   window and both 14350-frame Kago setups; all 53 scoped rows pass after its fix.
-   Ending and enemy continuations pass all 30 scoped rows on the published source.
-   the full 83-row corpus passes on main with zero failing frames. Goofball macro sensitivity is open.
-   No further in-place bank codemods; cloud M moves to unsafe outside bank files.
-   A2 seeds remaining authored rows; bundle shard grouping is integrated.
-   B5/B6 cloud queues continue sm_a9/sm_a6, then sm_aa/sm_a7.
-   RAM remains authoritative; bank moves alone do not establish owned Session state.
-   Preserve full identities, ordered failures/effects, native/LE access and ROM provenance.
-   BG2 consolidation still needs scroll_tiles.row.bg2. Reject prototype 42c59cb's
-   whole-RAM aliases and false-safe Load24; retain unsafe backend contracts.
+1. **Lane A coverage complete:** 44/44 required scenarios have passing local evidence;
+   hosted verification and full-corpus runs remain separate obligations. A2 uses
+   69 original seeds and thirteen hash-bound native/oracle checkpoints; the full
+   8780-frame intro still boots. Authored route starts are not original TAS seeds.
+   Keep full inputs/windows/guards, both Kago setups and all distributed assets.
+   Golden Torizo preserves all five Snes9x input ports and independently observed
+   VRAM read-buffer, CGRAM-low and Mode7 latch values; no invented defaults.
+   A continues the next unclaimed bank in REVIEW; coverage does not finish Session.
+2. **Lane B retirement:** B1 continues sm_82, B2 sm_8b, B3 sm_a3, Windows M/B4
+   sm_a8 then sm_b3. B5/B6 continue sm_a9/sm_a6 then sm_aa/sm_a7. Cloud M removes
+   unsafe outside bank files; no further in-place bank codemods. Non-enemy
+   replacements aim <=80%. RAM remains authoritative; bank moves are transitional.
+   Cloud-motion rows: `credits`, `credits-postroll-wave` and the four smoke rows.
+   Keep the 300-frame Gunship row, 8-frame crawler regression, full 800-frame
+   bomb-jump window and both 14350-frame Kago setups. Goofball macro sensitivity
+   remains open. Preserve full identities, ordered failures/effects, native/LE
+   access and ROM provenance. Reject prototype 42c59cb's whole-RAM aliases and
+   false-safe Load24; retain unsafe backend contracts.
 3. **Then - finish owned gameplay.** Migrate remaining complete producer/consumer
    interactions, actual callers and legacy retirement. Close persistent ownership,
    content/topology/options boundaries and unsafe removal across the whole engine;
@@ -102,15 +81,12 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Core18 passes all 84 local rows; Core19 passes 12 affected/smoke/control rows,
-including the new fixed 2131-frame X-ray activation/release and original pickup.
-Qualified Core23: production 112120, legacy 21741, unsafe 3017, verification 39963.
-Its eight Crocomire/control rows pass; Core22's 22 pass with fresh checkpoint assets.
-Core20's Waver actor reuse removes 114 production
-lines; its extra unsafe-containing line is a deny attribute, not an operation.
-Core15's shared actor closeout costs 17 production lines; bank moves remain
-transitional rather than proof of owned Session state. The existing comparison
-normalizes 611..616; initializer continuation also relies on source review.
+Qualified Core24: production 112087, legacy 21681, unsafe 3015, verification 39963.
+Its 35 affected/control rows and the new fixed 1151-frame grapple swing row pass.
+The manifest now has 86 rows; whole-engine ownership and backend independence stay open.
+Retain the fixed 2131-frame X-ray activation/release row and original pickup.
+The existing comparison normalizes 611..616; initializer continuation also relies
+on source review. An unsafe deny attribute counts as a line, not an operation.
 Do not auto-rename macro-shared parameters. Held scrolling consolidation needs
 `scroll_tiles.row.bg2` coverage, absent in Ceres.
 
@@ -118,27 +94,20 @@ Mutation-driver audit: deleting the old room driver breaks retained local captur
 callers. Existing bank campaigns do not replace its unusual alias, failed-upload and
 custom-content checks; keep those checks until their consumers and coverage migrate.
 
-M1a (`tools/codemod/strip_unsafe_fixpoint.py`) keeps all 22 unsafe production contracts
-and the verifier bridge from [the review](M1A-REVIEW.md); bounded review found no remaining
-concrete violation in its 86 conversions. All 64 hosted rows passed at 3484808d.
-The rerun conservatively rejects imported aliases, validates Windows dep-info roots
-and preserves source newlines. All required unsafe contracts survive. Keep the predecessor rejected.
+M1a (`tools/codemod/strip_unsafe_fixpoint.py`) retains all 22 unsafe production
+contracts and the verifier bridge from [the audit](M1A-REVIEW.md). Keep its imported
+alias exclusions, Windows dep-info root checks and source newlines; the predecessor
+remains rejected.
 
 Checkpoint cache finding: whole Session/codec hashes invalidate lossless scalar
 migrations despite an unchanged RAM payload. A future format transition needs
 Session round-trip checks and defined actor-identity persistence; keep guards now.
 
-The local corpus saves matching manifest starts during setup and shares checkpoints
-across recipe namespaces only
-when SHA-bound canonical input prefixes match. Source, ROM, full-input and loader
-guards remain intact. A donor-only smoke trial passed all four rows with zero
-setup frames; Morph retains its full 1,200-frame window.
-
-Morph keeps every required hit/expectation and its fixed 1,200-frame window.
-The original room seed observes acquisition at 590 and message completion at 977,
-leaving 222 following frames. The former authored window observed 506 frames after
-the message; this conversion retains the full window, not that longer relative tail.
-Do not add a 120-frame early stop to this row.
+Checkpoint reuse across recipe namespaces requires SHA-bound matching canonical
+input prefixes; keep source, ROM, full-input and loader guards. Save matching
+manifest starts during setup. Morph retains every hit/expectation and its fixed
+1,200-frame window, with no 120-frame early stop. Its original seed leaves 222
+frames after message completion, versus the former authored window's 506-frame tail.
 
 ## Implementation rules
 

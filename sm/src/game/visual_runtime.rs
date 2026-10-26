@@ -3338,3 +3338,30 @@ pub(crate) fn draw_cinematic_sprites(ending: bool, game: &mut Game) {
         word_transfers!(game, 4, 128 - first; native(0x370 + 4 * first) <- value(0x80));
     }
 }
+
+/// Position Crocomire's second body part and align its BG2 image with the camera.
+pub(crate) fn align_crocomire_background(game: &mut Game) {
+    use crate::game::enemy_layouts::EnemyLayout72 as Crocomire;
+    use crate::ram_map::slot;
+    let primary = i32::from(word!(game.cur_enemy_index));
+    let secondary = i32::from(word!(game.cur_enemy_index)) + 64;
+    slot!(
+        game,
+        Crocomire[secondary].base.x_pos = slot!(game, Crocomire[secondary].var_A)
+            .wrapping_add(slot!(game, Crocomire[primary].base.x_pos))
+    );
+    slot!(
+        game,
+        Crocomire[secondary].base.y_pos = slot!(game, Crocomire[primary].base.y_pos)
+    );
+    let relative =
+        slot!(game, Crocomire[primary].base.x_pos).wrapping_sub(word!(game.layer1_x_pos)) as i16;
+    let offset = 51u16.wrapping_sub(relative as u16);
+    word!(
+        game.reg_BG2HOFS = if (-128..384).contains(&relative) && crate::rtl::abs16(offset) < 284 {
+            offset
+        } else {
+            256
+        }
+    );
+}
