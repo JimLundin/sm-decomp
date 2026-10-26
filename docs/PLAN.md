@@ -83,6 +83,7 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
    The new fixed 300-frame Gunship row detects bobbing beyond the entry tail;
    The 8-frame crawler slope regression passes with the full 800-frame bomb-jump
    window and both 14350-frame Kago setups; all 53 scoped rows pass after its fix.
+   Ending and enemy continuations pass all 30 scoped rows on the published source.
    the full 83-row corpus passes on main with zero failing frames. Goofball macro sensitivity is open.
    No further in-place bank codemods; cloud M moves to unsafe outside bank files.
    A2 seeds remaining authored rows; bundle shard grouping is integrated.

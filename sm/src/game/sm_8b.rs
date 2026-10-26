@@ -9,13 +9,12 @@ use crate::game::visual_runtime::{
     advance_credit_roll, advance_intro_baby_pursuit, advance_intro_rinka,
     advance_postcredits_samus_message, advance_shooting_stars, advance_zebes_destruction_zoom,
     advance_zebes_stars, chase_intro_baby_y, draw_cinematic_sprites, draw_intro_sprites,
-    drift_cinematic_sprite, fade_postcredits_samus_suit, flash_intro_mother_brain,
-    initialize_ceres_explosion, initialize_ending_cloud_band, initialize_ending_cloud_side,
-    initialize_ending_time_glyph, initialize_intro_brain_particle, initialize_intro_rinka,
-    initialize_shooting_stars, initialize_title_sprite, launch_cinematic_sprite, move_ending_cloud,
-    place_cinematic_sprite, prepare_credit_roll, prepare_ending_time, shake_intro_mother_brain,
-    start_intro_rinka, title_metroid_cry, title_metroid_palette, wait_cinematic_scene,
-    wait_ending_cloud,
+    drift_cinematic_sprite, fade_postcredits_samus_suit, initialize_ceres_explosion,
+    initialize_ending_cloud_band, initialize_ending_cloud_side, initialize_ending_time_glyph,
+    initialize_intro_brain_particle, initialize_intro_rinka, initialize_shooting_stars,
+    initialize_title_sprite, launch_cinematic_sprite, move_ending_cloud, place_cinematic_sprite,
+    prepare_credit_roll, prepare_ending_time, start_intro_rinka, title_metroid_cry,
+    title_metroid_palette, wait_cinematic_scene, wait_ending_cloud,
 };
 use crate::game::visual_runtime::{advance_cinematic_background_pre, fade_cinematic_fixed_color};
 use crate::game::visual_runtime::{
@@ -112,7 +111,7 @@ crate::game::constants::typed_constants! { Consts_8B;
     addr_kCinematicSpriteObjectDef_8BCE55 = 52821, addr_off_8BCE53 = 52819,
     addr_word_8BCD71 = 52593, addr_word_8BCC23 = 52259,
     addr_unk_8BCC03 = 52227, addr_word_8BCBFB = 52219,
-    addr_word_8BCB3B = 52027, addr_off_8BCB19 = 51993,
+    addr_word_8BCB3B = 52027,
     addr_kCinematicFunction_Intro_Func76_M7_2 = 50170, addr_kCinematicFunction_Intro_Func76_M7_1 = 50160,
     addr_kCinematicFunction_Intro_Func76_M7_0 = 50150, addr_kCinematicFunction_Intro_Func56_M7 = 48756,
     addr_kMode7ObjBabyMetroidInTitle = 41813, addr_kCinematicSpriteObjectDef_8BA125 = 41253,
@@ -1738,48 +1737,16 @@ crate::game::callback_dispatch! {
         }
     };
     [9156486] CinematicFunction_Intro_Func36 [] {
-        flash_intro_mother_brain(k, game);
-        let mut v1: u16 = 8;
-        while (word!(game.projectile_type[(v1 >> 1)]) & 0xfff) != 256 {
-            v1 = (v1).wrapping_sub(2);
-            if (v1 & 0x8000) != 0 {
-                return;
-            }
+        if crate::game::visual_runtime::advance_intro_mother_brain(k, 0, game) {
+            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF1B as u16, 0, game);
+            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF1B as u16, 1, game);
+            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF1B as u16, 2, game);
+            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF15 as u16, 0, game);
+            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF15 as u16, 1, game);
+            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF15 as u16, 2, game);
+            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF15 as u16, 3, game);
+            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF15 as u16, 4, game);
         }
-        if word!(game.projectile_x_pos[(v1 >> 1)]) as i32 - 84i32 & 0x8000 != 0 {
-            crate::game::player_projectiles::retire(v1, game);
-            let v2: i32 = k as i32 >> 1;
-            word!(game.cinematicspr_arr6[v2] = 8);
-            let v3: u16 = (word!(game.cinematicspr_goto_timer[v2])).wrapping_add(1);
-            word!(game.cinematicspr_goto_timer[v2] = v3);
-            if v3 == 4 {
-                word!(game.cinematicspr_goto_timer[v2] = 0);
-                word!(game.cinematicspr_preinstr_func[v2] = (0x8bb80fi32) as u16);
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF1B as u16, 0, game);
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF1B as u16, 1, game);
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF1B as u16, 2, game);
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF15 as u16, 0, game);
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF15 as u16, 1, game);
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF15 as u16, 2, game);
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF15 as u16, 3, game);
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF15 as u16, 4, game);
-            }
-        }
-    };
-    [9156623] CinematicFunction_Intro_Func39 [] {
-        flash_intro_mother_brain(k, game);
-        shake_intro_mother_brain(game);
-        let v1: i32 = k as i32 >> 1;
-        let v2: u16 = (word!(game.cinematicspr_goto_timer[v1])).wrapping_add(1);
-        word!(game.cinematicspr_goto_timer[v1] = v2);
-        if v2 as i32 - 128i32 & 0x8000 == 0 {
-            word!(game.cinematicspr_instr_timer[v1] = 1);
-            word!(game.cinematicspr_instr_ptr[v1] = addr_off_8BCB19 as u16);
-        }
-    };
-    [9156654] CinematicSprPreInstr_B82E [] {
-        shake_intro_mother_brain(game);
-        intro_pages::wait_for_scene_end(k, true, game);
     };
     [9157389] CinematicFunction_Intro_Func52 [] {
         let v1: bool = (word!(game.cinematic_var14 -= 1, reread) & 0x8000) != 0;
@@ -1949,6 +1916,8 @@ crate::game::callback_dispatch! {
         };
     };
     @external {
+        9156623 => [{ crate::game::visual_runtime::advance_intro_mother_brain(j, 1, game); }];
+        9156654 => [{ crate::game::visual_runtime::advance_intro_mother_brain(j, 2, game); }];
         9172264 => [crate::game::visual_runtime::advance_ending_samus_jump(j, 0, game)];
         9172351 => [crate::game::visual_runtime::advance_ending_samus_jump(j, 1, game)];
         9172445 => [crate::game::visual_runtime::advance_ending_samus_jump(j, 2, game)];
