@@ -19,18 +19,12 @@ pub use crate::game::constants::bank_82::*;
 
 use crate::game::animated_tiles;
 use crate::game::display_refresh::{GraphicsAsset, setup_transfer};
-use crate::game::enemy_projectiles::EnableEprojs;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::palette_effects::{self, fading};
-use crate::game::room_entry::{self, ArrivalRequest, EntrySignal, StartSite};
-use crate::game::room_mechanisms::set_enabled;
 use crate::game::room_state::{pause_draygon, unpause_draygon};
 use crate::game::samus_animation::{
     Samus_DrawDuringDeathAnim, Samus_DrawStartingDeathAnim, Samus_DrawWhenNotAnimatingOrDying,
 };
-use crate::game::save_slots::load_area_map;
-use crate::game::session_runtime::initialize_player;
-use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_8b::{
     GameState_1_OpeningCinematic_, GameState_37_CeresGoesBoomWithSamus_,
     GameState_39_EndingAndCredits_, LoadTitleSequenceGraphics,
@@ -44,7 +38,6 @@ use crate::game::sm_a7::{
 };
 use crate::game::sm_a9::MotherBrainsBody_UnpauseHook;
 use crate::game::sprite_drawing::{clear_high_table, finish_frame};
-use crate::game::{actors, session_runtime::Runtime};
 
 use crate::host::{Die, Warning};
 
@@ -73,122 +66,6 @@ crate::game::constants::typed_constants! { u32;
     fnUnpauseHook_Kraid_IsDead = 10994171, fnUnpauseHook_Kraid_IsAlive = 10994254,
     fnKraid_UnpauseHook_IsSinking = 10994336, fnPauseHook_Kraid = 10994469,
     fnMotherBrainsBody_UnpauseHook = 11110243,
-}
-pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        crate::verify_probe::hit("coroutine.init");
-        let resume_state: *mut u8 = ram_ptr!(game; 0x612);
-        let mut stage = *resume_state;
-        let mut waiting = stage >= 2;
-        if stage == 0 {
-            if word!(game.game_state) as i32 == kGameState_40_TransitionToDemo as i32 {
-                crate::game::display_refresh::initialize_gameplay(game);
-                initialize_player(game);
-                demo_rooms::load(game);
-            } else {
-                if word!(game.loading_game_state) as i32 != kLoadingGameState_5_Main as i32 {
-                    if word!(game.loading_game_state) as i32
-                        == kLoadingGameState_1F_StartingAtCeres as i32
-                    {
-                        word! {game; area_index = 6; load_station_index = 0; }
-                        crate::game::escape_timer::clear(game);
-                    } else if word!(game.loading_game_state) as i32
-                        == kLoadingGameState_22_EscapingCeres as i32
-                    {
-                        word! {game; area_index = 0; load_station_index = 18; }
-                        load_area_map(game);
-                    }
-                }
-                crate::game::display_refresh::initialize_gameplay(game);
-                initialize_player(game);
-                room_entry::begin(
-                    &mut Runtime::new(game),
-                    ArrivalRequest::Start(StartSite::CurrentLoadStation),
-                );
-            }
-        }
-        if stage <= 1 {
-            let yielded: u8 =
-                room_entry::protocol::resume(&mut Runtime::new(game), EntrySignal::Initial)
-                    .returned_byte();
-            if yielded != 0 {
-                *resume_state = 1;
-                return yielded;
-            }
-            crate::game::hud::initialize(game);
-            word_transfers!(game, ascending, 16; native(0xc380) <- native(0xc180));
-            word! { game, 1; screen_fade_delay, screen_fade_counter }
-            crate::game::display_refresh::enable(true, game);
-            EnableEprojs(game);
-            set_enabled(true, game);
-            palette_effects::set_enabled(true, game);
-            set_hdma_enabled(true, game);
-            animated_tiles::set_enabled(true, game);
-            crate::game::player_movement::speed::set_liquid_physics(
-                &mut crate::game::session_runtime::Runtime::new(game),
-            );
-            if word!(game.game_state) as i32 == kGameState_40_TransitionToDemo as i32 {
-                word!(game.loop_counter_transfer_enemies_to_vram = 6);
-                stage = 2;
-            } else if word!(game.loading_game_state) as i32
-                == kLoadingGameState_22_EscapingCeres as i32
-            {
-                QueueMusic_Delayed8(5, game);
-                word!(game.loop_counter_transfer_enemies_to_vram = 15);
-                stage = 3;
-            } else {
-                word!(game.loop_counter_transfer_enemies_to_vram = 6);
-                stage = 4;
-            }
-        }
-        if matches!(stage, 2..=4) {
-            crate::verify_probe::hit(match stage {
-                2 => "coroutine.init.demo",
-                3 => "coroutine.init.escape",
-                _ => "coroutine.init.normal",
-            });
-            loop {
-                if !waiting {
-                    actors::staging::transfer_actor_tiles_and_initialize(&mut Runtime::new(game));
-                }
-                let yielded: u8 = crate::game::display_refresh::wait(true, game);
-                if yielded != 0 {
-                    *resume_state = stage;
-                    return yielded;
-                }
-                word!(game.loop_counter_transfer_enemies_to_vram -= 1);
-                if (word!(game.loop_counter_transfer_enemies_to_vram) & 0x8000) != 0 {
-                    break;
-                }
-                waiting = false;
-            }
-            match stage {
-                2 => {
-                    demo_rooms::finish_setup(game);
-                    word!(game.game_state += 1);
-                }
-                3 => {
-                    word!(game.game_state += 1);
-                }
-                _ => {
-                    word!(game.game_state = kGameState_7_MainGameplayFadeIn as u16);
-                }
-            }
-            word_transfers!(game, ascending, 256; native(0xc000) <- le(target_palettes, 0));
-            if stage == 4 {
-                if word!(game.loading_game_state) as i32
-                    == kLoadingGameState_1F_StartingAtCeres as i32
-                {
-                    word!(game.palette_buffer[223] = 0);
-                    CallSomeSamusCode(8, game);
-                } else {
-                    CallSomeSamusCode(9, game);
-                }
-            }
-        }
-        *resume_state = 0;
-        0 as CoroutineRet
-    }
 }
 pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
     unsafe {
@@ -315,6 +192,7 @@ pub unsafe fn GameState_44_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
         kCoroutineNone as CoroutineRet
     }
 }
+const INITIALIZE: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::Initialize, game) };
 const GAMEPLAY: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::Gameplay, game) };
 const FADE_IN: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::FadeIn, game) };
 const UNPAUSE: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::Unpause, game) };
@@ -332,7 +210,7 @@ const DEMO: Func_V_Coroutine = |game| demo_rooms::play(game, |game| unsafe { GAM
 static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_V_Coroutine;
     reset_attract, GameState_1_OpeningCinematic_, GameState_2_GameOptionsMenu,
     GameState_3_Null, advance_file_menu, advance_map_menu,
-    InitAndLoadGameData_Async, FADE_IN, GAMEPLAY,
+    INITIALIZE, FADE_IN, GAMEPLAY,
     GameState_9_HitDoorBlock, GameState_10_LoadingNextRoom_Async,
     GameState_11_LoadingNextRoom_Async, GameState_12_Pausing_Darkening_Async,
     GameState_13_Pausing_Async, pause_fade_in, GameState_15_Paused_Async,
@@ -342,11 +220,11 @@ static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_
     GameState_24_SamusNoHealth_Explosion, GameState_25_SamusNoHealth_BlackOut,
     advance_game_over, RESERVE_TANKS, GameState_28_Unused,
     GameState_29_DebugGameOverMenu, GameState_37_CeresGoesBoomWithSamus_,
-    InitAndLoadGameData_Async, CERES_ELEVATOR,
+    INITIALIZE, CERES_ELEVATOR,
     GameState_33_BlackoutFromCeres, GameState_37_CeresGoesBoomWithSamus_, TIME_UP,
     GameState_36_WhitingOutFromTimeUp, GameState_37_CeresGoesBoomWithSamus_,
     GameState_38_SamusEscapesFromZebes, GameState_39_EndingAndCredits_,
-    InitAndLoadGameData_Async, GameState_41_TransitionToDemo, DEMO,
+    INITIALIZE, GameState_41_TransitionToDemo, DEMO,
     GameState_43_TransitionFromDemo, GameState_44_TransitionFromDemo,
 };
 pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {

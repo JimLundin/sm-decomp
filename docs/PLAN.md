@@ -102,6 +102,11 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
+Core15 passes all 84 local rows; Core16 passes 25 affected/smoke/control rows.
+Qualified Core16: production 112368, legacy 22107, unsafe 3085, verification 39963.
+Core15's shared actor closeout costs 17 production lines; bank moves remain
+transitional rather than proof of owned Session state. The existing comparison
+normalizes 611..616; initializer continuation also relies on source review.
 Do not auto-rename macro-shared parameters. Held scrolling consolidation needs
 `scroll_tiles.row.bg2` coverage, absent in Ceres.
 
@@ -192,6 +197,8 @@ Every routine commit runs exactly this, then commits:
    regression row with its fix. Never weaken a comparison or a row's expectations.
    On Windows, generate scoped AST mutants with cargo-mutants and execute them
    through the existing DLL rows; its Cargo/nextest runner cannot use this host.
+   Stable GNU instrument-coverage lacks profiler_builtins (private probe E0463);
+   installing LLVM tools alone does not enable local coverage on this toolchain.
 4. Body <=8 lines: what changed, rows run and result, legacy/production delta and
    ratio, `Score:`. Re-run a flaky step once; a second failure is real.
 

@@ -5,11 +5,13 @@
 //! observe live RAM. Only the entry resume point is held across those callbacks.
 use crate::game::actors;
 use crate::game::animated_tiles;
+use crate::game::demo_rooms;
 use crate::game::enemy_projectiles::EprojRunAll;
 use crate::game::message_boxes;
 use crate::game::palette_effects;
 use crate::game::player_projectiles::prepare;
 use crate::game::prelude::*;
+use crate::game::room_entry::{self, ArrivalRequest, EntrySignal, StartSite};
 use crate::game::room_mechanisms::run;
 use crate::game::room_scrolls::advance_camera;
 use crate::game::room_scrolls::{debug_position, update_scrolls};
@@ -40,6 +42,7 @@ impl ResumePoint {
 
 #[derive(Clone, Copy)]
 pub(crate) enum Entry {
+    Initialize,
     Gameplay,
     FadeIn,
     Unpause,
@@ -56,6 +59,114 @@ pub(crate) enum Entry {
 /// Entry stays fixed even when callbacks change the live game state.
 pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
     unsafe {
+        // Initial room loading retains the same unsafe backend contract on every
+        // resume path, including actor staging after the display callbacks are skipped.
+        if matches!(entry, Entry::Initialize) {
+            crate::verify_probe::hit("coroutine.init");
+            let mut stage = game.g_ram[0x612];
+            let mut waiting = stage >= 2;
+            if stage == 0 {
+                let demo = u32::from(word!(game.game_state)) == kGameState_40_TransitionToDemo;
+                if !demo {
+                    match u32::from(word!(game.loading_game_state)) {
+                        kLoadingGameState_1F_StartingAtCeres => {
+                            word! {game; area_index = 6; load_station_index = 0; }
+                            crate::game::escape_timer::clear(game);
+                        }
+                        kLoadingGameState_22_EscapingCeres => {
+                            word! {game; area_index = 0; load_station_index = 18; }
+                            crate::game::save_slots::load_area_map(game);
+                        }
+                        _ => {}
+                    }
+                }
+                crate::game::display_refresh::initialize_gameplay(game);
+                crate::game::session_runtime::initialize_player(game);
+                if demo {
+                    demo_rooms::load(game);
+                } else {
+                    room_entry::begin(
+                        &mut Runtime::new(game),
+                        ArrivalRequest::Start(StartSite::CurrentLoadStation),
+                    );
+                }
+            }
+            if stage <= 1 {
+                let yielded: u8 =
+                    room_entry::protocol::resume(&mut Runtime::new(game), EntrySignal::Initial)
+                        .returned_byte();
+                if yielded != 0 {
+                    game.g_ram[0x612] = 1;
+                    return yielded;
+                }
+                crate::game::hud::initialize(game);
+                word_transfers!(game, ascending, 16; native(0xc380) <- native(0xc180));
+                word! { game, 1; screen_fade_delay, screen_fade_counter }
+                crate::game::display_refresh::enable(true, game);
+                crate::game::enemy_projectiles::EnableEprojs(game);
+                crate::game::room_mechanisms::set_enabled(true, game);
+                palette_effects::set_enabled(true, game);
+                crate::game::visual_runtime::set_hdma_enabled(true, game);
+                animated_tiles::set_enabled(true, game);
+                crate::game::player_movement::speed::set_liquid_physics(&mut Runtime::new(game));
+                stage = if u32::from(word!(game.game_state)) == kGameState_40_TransitionToDemo {
+                    2
+                } else if u32::from(word!(game.loading_game_state))
+                    == kLoadingGameState_22_EscapingCeres
+                {
+                    crate::game::music::QueueMusic_Delayed8(5, game);
+                    3
+                } else {
+                    4
+                };
+                word!(game.loop_counter_transfer_enemies_to_vram = if stage == 3 { 15 } else { 6 });
+            }
+            if matches!(stage, 2..=4) {
+                crate::verify_probe::hit(match stage {
+                    2 => "coroutine.init.demo",
+                    3 => "coroutine.init.escape",
+                    _ => "coroutine.init.normal",
+                });
+                loop {
+                    if !waiting {
+                        actors::staging::transfer_actor_tiles_and_initialize(&mut Runtime::new(
+                            game,
+                        ));
+                    }
+                    let yielded: u8 = crate::game::display_refresh::wait(true, game);
+                    if yielded != 0 {
+                        game.g_ram[0x612] = stage;
+                        return yielded;
+                    }
+                    word!(game.loop_counter_transfer_enemies_to_vram -= 1);
+                    if (word!(game.loop_counter_transfer_enemies_to_vram) & 0x8000) != 0 {
+                        break;
+                    }
+                    waiting = false;
+                }
+                if stage == 2 {
+                    demo_rooms::finish_setup(game);
+                }
+                if stage == 4 {
+                    word!(game.game_state = kGameState_7_MainGameplayFadeIn as u16);
+                } else {
+                    word!(game.game_state += 1);
+                }
+                word_transfers!(game, ascending, 256; native(0xc000) <- le(target_palettes, 0));
+                if stage == 4 {
+                    if u32::from(word!(game.loading_game_state))
+                        == kLoadingGameState_1F_StartingAtCeres
+                    {
+                        word!(game.palette_buffer[223] = 0);
+                        player_command(8, game);
+                    } else {
+                        player_command(9, game);
+                    }
+                }
+            }
+            game.g_ram[0x612] = 0;
+            return 0 as CoroutineRet;
+        }
         if matches!(entry, Entry::CeresElevator) && word!(game.timer_status) != 0 {
             crate::game::escape_timer::draw(game);
         }
@@ -160,7 +271,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                 }
                 word!(game.game_state += 1);
             }
-            Entry::Gameplay => {}
+            Entry::Initialize | Entry::Gameplay => {}
         }
         0 as CoroutineRet
     }
