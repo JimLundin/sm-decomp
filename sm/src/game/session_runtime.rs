@@ -883,23 +883,7 @@ impl Runtime<'_> {
         }
     }
     pub(crate) fn actor_assertion_legacy(&mut self, drawing: bool) {
-        self.foreign(|_game| unsafe {
-            if drawing {
-                crate::c_library::__assert_fail(
-                    c"addr < 0x2000".as_ptr(),
-                    c"src/sm_rtl.h".as_ptr(),
-                    51,
-                    c"uint8 *RomPtr_RAM(uint16_t)".as_ptr(),
-                );
-            } else {
-                crate::c_library::__assert_fail(
-                    c"E->current_instruction & 0x8000".as_ptr(),
-                    c"src/sm_a0.c".as_ptr(),
-                    3399,
-                    c"void ProcessEnemyInstructions(void)".as_ptr(),
-                );
-            }
-        });
+        self.foreign(|_game| legacy_assertion(drawing));
     }
 }
 
@@ -1015,4 +999,25 @@ pub(crate) fn actor_direction_vector(
         u32::from(game.read_rom_word(0xa0b7ee, index * 2)) * u32::from(amplitude)
     });
     crate::game::session::Vector32 { x, y }
+}
+
+// Shared native diagnostic; callers retain their own publication boundary.
+pub(crate) fn legacy_assertion(drawing: bool) -> ! {
+    unsafe {
+        if drawing {
+            crate::c_library::__assert_fail(
+                c"addr < 0x2000".as_ptr(),
+                c"src/sm_rtl.h".as_ptr(),
+                51,
+                c"uint8 *RomPtr_RAM(uint16_t)".as_ptr(),
+            );
+        } else {
+            crate::c_library::__assert_fail(
+                c"E->current_instruction & 0x8000".as_ptr(),
+                c"src/sm_a0.c".as_ptr(),
+                3399,
+                c"void ProcessEnemyInstructions(void)".as_ptr(),
+            );
+        }
+    }
 }
