@@ -1,5 +1,5 @@
 """Draw a mobile-readable progress picture: production Rust by responsibility,
-split into owned, partly owned and legacy lines, with current totals, 24h change and per-area unsafe-block trends.
+split into owned, partly owned and legacy lines, with current totals, 1h change and per-area unsafe-block trends.
 
 Reads committed Git blobs only (no working tree, no network, standard library).
 CI publishes the result to GitHub Pages as treemap.svg; README.md embeds it.
@@ -163,9 +163,9 @@ def measure(rev):
 
 
 def history_samples(commit, when):
-    """Up to nine evenly spaced 24h snapshots on first-parent committed history."""
+    """Up to nine evenly spaced 1h snapshots on first-parent committed history."""
     end = datetime.datetime.fromisoformat(when)
-    start = end - datetime.timedelta(days=1)
+    start = end - datetime.timedelta(hours=1)
     samples = []
     for i in range(9):
         at = start + (end - start) * (i / 8)
@@ -211,10 +211,10 @@ def card(x, y, label, value, delta):
 
 def change(now, then, lower_is_better, fmt=short):
     if then is None:
-        return ('', 0)
+        return ('1h unavailable', 0)
     d = now - then
     sign = 0 if d == 0 else (-1 if (d > 0) == lower_is_better else 1)
-    return (f'{"+" if d > 0 else "-" if d < 0 else "+/-"}{fmt(abs(d))} in 24h', sign)
+    return (f'{"+" if d > 0 else "-" if d < 0 else "+/-"}{fmt(abs(d))} in 1h', sign)
 
 
 def main(out_path, rev='HEAD'):
@@ -252,11 +252,11 @@ def main(out_path, rev='HEAD'):
          'Block counts include explicit unsafe brace expressions. Comments, ordinary/raw/byte/C strings '
          'and character literals are ignored; counts describe source syntax, not macro expansions. '
          'Per-area unsafe counts sum exactly to the headlines; verification is excluded. '
-         'Headline changes compare the source with the latest first-parent ancestor at least 24 hours earlier. '
+         'Headline changes compare the source with its state one hour earlier, carried forward from the latest first-parent ancestor. '
          'Each small curve samples explicit unsafe blocks in that area at up to nine evenly spaced times '
-         'over the 24 hours ending at this commit, using first-parent committed source. Revisions are '
+         'over the one hour ending at this commit, using first-parent committed source. Revisions are '
          'measured once and shared by all rows. Curves use a local vertical range; lower means fewer blocks. '
-         'Green segments decrease, red segments increase and gray segments stay level. Missing early history '
+         'Green segments decrease, red segments increase and gray segments stay level. Sparse commits retain plateaus; no rate is extrapolated. Missing early history '
          'is left blank. Samples can miss changes between observations and area reclassification can change '
          'counts without removing unsafe code.</desc>',
          '<style>text{font-family:system-ui,Segoe UI,sans-serif;fill:#edf4fc}.h{font-size:22px;font-weight:650}'
@@ -271,7 +271,7 @@ def main(out_path, rev='HEAD'):
     for i, (label, value, delta) in enumerate(cards):
         p.append(card(PAD + (i % 2) * 169, 74 + (i // 2) * 104, label, value, delta))
     p.append(f'<text x="{PAD}" y="304" class="section">Production Rust by area</text>'
-             f'<text x="{W - PAD - 12}" y="304" class="l" text-anchor="end">24h</text>')
+             f'<text x="{W - PAD - 12}" y="304" class="l" text-anchor="end">1h</text>')
     for i, (k, name) in enumerate(NAMES.items()):
         p.append(f'<text x="{PAD + 12 + i * 104}" y="327" class="k {k}">{name}</text>')
     for i, r in enumerate(rows):
@@ -283,7 +283,7 @@ def main(out_path, rev='HEAD'):
         detail = ', '.join(f'{NAMES[k]} {c[k]:,}' for k in COLORS)
         p.append(f'<g><title>{escape(r["title"])}: {r["lines"]:,} production lines; {detail}; '
                  f'{u["functions"]:,} unsafe functions, {u["blocks"]:,} unsafe blocks; '
-                 f'24h unsafe-block samples, oldest first: {history}; local range {min(values.values())}-{max(values.values())}</title>'
+                 f'1h unsafe-block samples, oldest first: {history}; local range {min(values.values())}-{max(values.values())}</title>'
                  f'<rect x="{PAD}" y="{y}" width="{W - 2 * PAD}" height="{ROW_H}" rx="10" '
                  'fill="#101b28" stroke="#293a50"/>'
                  f'<text x="{PAD + 12}" y="{y + 26}" class="t">{escape(r["title"])}</text>'

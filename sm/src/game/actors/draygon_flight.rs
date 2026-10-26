@@ -79,6 +79,30 @@ pub(crate) fn opening(first: bool, game: &mut Game) {
         }
     }
 }
+/// Actor preparation and completion surround the existing synchronous HDMA install seam.
+pub(crate) fn initialize(install_layers: impl FnOnce(&mut Game), game: &mut Game) {
+    word_transfers!(game, descending, 25; le(target_palettes, 168) <- rom(0xa5a217, 24));
+    word_transfers!(game, descending, 2048; le(tilemap_stuff, 2047) <- value(824));
+    slot!(
+        game,
+        Draygon[word!(game.cur_enemy_index) as i32]
+            .base
+            .palette_index = 0xe00
+    );
+    // The native bank word also clears byte178F before the address word is stored.
+    word_transfers!(game, ascending, 1; native(0x178e) <- value(165), native(0x178c) <- value(0x9342));
+    word!(game.flag_process_all_enemies = 0xffff);
+    for (k, instruction) in [(0, 0x9889), (0x40, 0x9944), (0x80, 0x99fc), (0xc0, 0x9813)] {
+        slot!(game, Draygon[k].base.current_instruction = instruction);
+    }
+    word!(game.enemy_bg2_tilemap_size = 1024);
+    slot!(
+        game,
+        Draygon[word!(game.cur_enemy_index) as i32].var_A = 0x871b
+    );
+    install_layers(game);
+    slot!(game, Draygon[0].var_45 = 1);
+}
 pub(crate) fn initialize_part(arms: bool, game: &mut Game) {
     let k = word!(game.cur_enemy_index) as i32;
     let instruction = if arms { 0x97e7 } else { 0x99fc };
@@ -241,4 +265,25 @@ pub(crate) fn hide_parts(script: EnemyScript, game: &mut Game) -> EnemyScript {
 pub(crate) fn tangible(script: EnemyScript, game: &mut Game) -> EnemyScript {
     slot!(game, Draygon[0].base.properties, |old| old | 0x400);
     script
+}
+
+pub(crate) fn increase_grab_speed(game: &mut Game) {
+    if slot!(game, Draygon[0].var_0B) as i32 - 40 & 0x8000 != 0 {
+        slot!(game, Draygon[0].var_0B, |old| old.wrapping_add(8));
+    }
+}
+pub(crate) fn clear_grab_rotation(game: &mut Game) {
+    slot!(game, Draygon[0].var_2F = 0);
+}
+pub(crate) fn grab_timers(script: EnemyScript, game: &mut Game) -> EnemyScript {
+    slot!(game, Draygon[0]; var_0B = script.word(0), var_0C = script.word(2));
+    script.offset(2)
+}
+pub(crate) fn place_grab_start(game: &mut Game) {
+    slot!(game, Draygon[0].base; x_pos = 128, y_pos = 624,
+        properties = slot!(game, Draygon[0].base.properties) & 0x5bff | 0xa000);
+}
+pub(crate) fn set_state(state: u16, game: &mut Game) {
+    let k = word!(game.cur_enemy_index) as i32;
+    slot!(game, Draygon[k].var_A = state);
 }

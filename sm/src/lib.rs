@@ -284,6 +284,7 @@ pub mod game {
         (
             $(#[$metadata:meta])* $visibility:vis unsafe fn $name:ident $parameters:tt $(-> $result:ty)?
             => $selector:expr; $(setup { $($setup:tt)* })? call $arguments:tt; default $fallback:expr;
+            $(@body $body_mode:ident;)?
             $(
                 @functions [$($header:tt)*]; $(@prefix {$($prefix:tt)*};)?
                 $($([$pattern:pat])? $callback:ident $tail:tt $body:tt;)*
@@ -317,7 +318,8 @@ pub mod game {
                 }
             )*
             $(#[$metadata])*
-            $visibility unsafe fn $name $parameters $(-> $result)? { unsafe {
+            $visibility unsafe fn $name $parameters $(-> $result)? {
+                $crate::game::callback_dispatch!(@body [$($body_mode)?] {
                 $($($setup)*)?
                 match $selector {
                     $($($($pattern => $crate::game::address_dispatch!(@call $arguments $callback),)?)*)*
@@ -326,8 +328,11 @@ pub mod game {
                     $($($external_pattern => $crate::game::address_dispatch!(@call $arguments $target $(::$path_tail)*),)*)?
                     _ => $fallback
                 }
-            }}
+                })
+            }
         };
+        (@body [] {$($body:tt)*}) => { unsafe { $($body)* } };
+        (@body [checked] {$($body:tt)*}) => { { $($body)* } };
     }
     pub(crate) use callback_dispatch;
 
