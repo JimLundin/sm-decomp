@@ -84,9 +84,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
         let mut waiting = stage >= 2;
         if stage == 0 {
             if word!(game.game_state) as i32 == kGameState_40_TransitionToDemo as i32 {
-                InitIoForGameplay(game);
-                LoadStdBG3andSpriteTilesClearTilemaps(game);
-                LoadInitialPalette(game);
+                crate::game::display_refresh::initialize_gameplay(game);
                 initialize_player(game);
                 demo_rooms::load(game);
             } else {
@@ -103,9 +101,7 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                         load_area_map(game);
                     }
                 }
-                InitIoForGameplay(game);
-                LoadStdBG3andSpriteTilesClearTilemaps(game);
-                LoadInitialPalette(game);
+                crate::game::display_refresh::initialize_gameplay(game);
                 initialize_player(game);
                 room_entry::begin(
                     &mut Runtime::new(game),
@@ -194,68 +190,6 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
         }
         *resume_state = 0;
         0 as CoroutineRet
-    }
-}
-pub unsafe fn InitIoForGameplay(game: &mut Game) {
-    unsafe {
-        InitCpuForGameplay(game);
-        InitPpuForGameplay(game);
-    }
-}
-pub unsafe fn InitCpuForGameplay(game: &mut Game) {
-    unsafe {
-        crate::rtl::register_writes! { game;
-            mirror(NMITIMEN as u16, 1, 0x84, false); byte(WRIO as u16, 0);
-            byte(WRMPYA as u16, 0); byte(WRMPYB as u16, 0);
-            byte(WRDIVL as u16, 0); byte(WRDIVH as u16, 0);
-            byte(WRDIVB as u16, 0); byte(HTIMEL as u16, 0);
-            byte(HTIMEH as u16, 0); byte(VTIMEL as u16, 0);
-            byte(VTIMEH as u16, 0); byte(MDMAEN as u16, 0);
-            mirror(HDMAEN as u16, 0, 0x85, false); mirror(MEMSEL as u16, 1, 0x86, false);
-        }
-    }
-}
-pub unsafe fn InitPpuForGameplay(game: &mut Game) {
-    unsafe {
-        crate::rtl::register_writes! { game;
-            mirror(INIDISP as u16, 0x80, 0x51, false); mirror(OBSEL as u16, 3, 0x52, false);
-            byte(OAMADDL as u16, 0);
-        }
-        *(ram_ptr!(game, u16; 0x53) as *mut u8) = 0;
-        WriteReg(OAMADDH as u16, 0x80, game);
-        byte!(@pointer ram_ptr!(game, u16; 0x53); 1) = 0x80;
-        crate::rtl::register_writes! { game;
-            byte(OAMDATA as u16, 0); byte(OAMDATA as u16, 0);
-            mirror(BGMODE as u16, 9, 0x55, false); mirror(MOSAIC as u16, 0, 0x57, false);
-            mirror(BG12NBA as u16, 0, 0x5d, true); mirror(BG34NBA as u16, 4, 0x5e, true);
-            mirror(BG1SC as u16, 0x51, 0x58, true); mirror(BG2SC as u16, 0x49, 0x59, true);
-            mirror(BG3SC as u16, 0x5a, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
-            byte(VMAIN as u16, 0); mirror(W12SEL as u16, 0, 0x60, false);
-            mirror(W12SEL as u16, 0, 0x60, false); mirror(W34SEL as u16, 0, 0x61, false);
-            mirror(WOBJSEL as u16, 0, 0x62, false); mirror(WH0 as u16, 0, 0x63, false);
-            mirror(WH1 as u16, 0, 0x64, false); mirror(WH2 as u16, 0, 0x65, false);
-            mirror(WH3 as u16, 0, 0x66, false); mirror(WBGLOG as u16, 0, 0x67, false);
-            mirror(WOBJLOG as u16, 0, 0x68, false); mirror(TM as u16, 0x17, 0x69, false);
-            mirror(TMW as u16, 0, 0x6c, false); mirror(TS as u16, 0, 0x6b, false);
-            mirror(TSW as u16, 0, 0x6d, false); mirror(CGWSEL as u16, 0, 0x6e, false);
-            mirror(CGADSUB as u16, 0, 0x71, false); byte(COLDATA as u16, 0xe0);
-            mirror(SETINI as u16, 0, 0x77, false);
-        }
-        word!(game.oam_next_ptr = 0);
-        word_transfers!(game, ascending, 1023; native(0x3000) <- value(0));
-        word_transfers!(game, ascending, 1023; native(0x4000) <- value(0x6f));
-        word_transfers!(game, ascending, 127; native(0x4000) <- value(0x2c0f));
-    }
-}
-pub unsafe fn LoadInitialPalette(game: &mut Game) {
-    word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x9a8000, 0));
-}
-pub unsafe fn LoadStdBG3andSpriteTilesClearTilemaps(game: &mut Game) {
-    unsafe {
-        GraphicsAsset::VramWords(0x9ab200, 0x4000, 0x2000).load(game);
-        GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x2e00).load(game);
-        GraphicsAsset::VramWords(0x7e4000, 0x5000, 0x1000).load(game);
-        GraphicsAsset::VramWords(0x7e4000, 0x5800, 0x800).load(game);
     }
 }
 pub unsafe fn GameState_32_MadeItToCeresElevator(game: &mut Game) -> CoroutineRet {
