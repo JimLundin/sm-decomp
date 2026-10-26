@@ -8,7 +8,7 @@ use crate::game::{
     liquid_effects, mother_brain_visuals, scrolling_sky,
 };
 use crate::ram_map::{checked_word, word};
-use crate::rtl::Unreachable;
+use crate::rtl::{Unreachable, words};
 use crate::{
     game::{
         animated_tiles,
@@ -1716,6 +1716,15 @@ pub(crate) fn drift_cinematic_sprite(
     if wrap_horizontal {
         word!(game.cinematicbg_arr7[(object >> 1)] &= 0x1ff);
     }
+}
+
+pub(crate) fn move_jumping_ending_samus(object: u16, game: &mut Game) {
+    let (fraction, carry) = u16::from_le(word!(game.samus_y_subspeed)).overflowing_add(0x3800);
+    let whole = u16::from_le(word!(game.samus_y_speed)).wrapping_add(u16::from(carry));
+    word!(game.samus_y_subspeed = fraction.to_le());
+    word!(game.samus_y_speed = whole.to_le());
+    let velocity = words!(game.samus_y_speed, samus_y_subspeed);
+    advance_cinematic_coordinate(object, true, velocity, game);
 }
 
 pub(crate) fn flash_intro_mother_brain(object: u16, game: &mut Game) {

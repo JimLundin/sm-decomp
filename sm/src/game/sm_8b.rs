@@ -9,9 +9,10 @@ use crate::game::visual_runtime::{
     advance_intro_rinka, advance_shooting_stars, draw_cinematic_sprites, draw_intro_sprites,
     drift_cinematic_sprite, flash_intro_mother_brain, initialize_ending_cloud_band,
     initialize_ending_cloud_side, initialize_ending_time_glyph, initialize_intro_rinka,
-    initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud, place_cinematic_sprite,
-    prepare_credit_roll, prepare_ending_time, shake_intro_mother_brain, start_intro_rinka,
-    title_metroid_cry, title_metroid_palette, wait_cinematic_scene, wait_ending_cloud,
+    initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud,
+    move_jumping_ending_samus, place_cinematic_sprite, prepare_credit_roll, prepare_ending_time,
+    shake_intro_mother_brain, start_intro_rinka, title_metroid_cry, title_metroid_palette,
+    wait_cinematic_scene, wait_ending_cloud,
 };
 use crate::game::visual_runtime::{advance_cinematic_background_pre, fade_cinematic_fixed_color};
 use crate::game::visual_runtime::{
@@ -613,17 +614,6 @@ pub fn CinematicFunction_Intro_Func140(game: &mut Game) {
         word!(game.cinematic_var17 -= 1);
         fade_cinematic_colors(0x1e0, 0x10, false, game);
         compose_cinematic_palette(game);
-    }
-}
-pub unsafe fn CinematicFunction_Intro_Func210_EndingSamusFall(k: u16, game: &mut Game) {
-    unsafe {
-        words!(game.samus_y_speed, samus_y_subspeed += 0x3800);
-        let v1: i32 = k as i32 >> 1;
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
-            words!(game.samus_y_speed, samus_y_subspeed),
-        );
     }
 }
 crate::game::callback_dispatch! {
@@ -2287,7 +2277,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9172264] CinematicSprPreInstr_F528 [] {
-        CinematicFunction_Intro_Func210_EndingSamusFall(k, game);
+        move_jumping_ending_samus(k, game);
         let v1: i32 = k as i32 >> 1;
         if word!(game.cinematicbg_arr8[v1]) as i32 + 80 & 0x8000 != 0 {
             *ram_ptr!(game; 0x52) = 3;
@@ -2298,7 +2288,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9172351] CinematicSprPreInstr_F57F [] {
-        CinematicFunction_Intro_Func210_EndingSamusFall(k, game);
+        move_jumping_ending_samus(k, game);
         let v1: i32 = k as i32 >> 1;
         if word!(game.cinematicbg_arr8[v1]) as i32 + 80 & 0x8000 != 0 {
             word!(game.cinematicspr_instr_timer[v1] = 1);
@@ -2307,7 +2297,7 @@ crate::game::callback_dispatch! {
     };
     [9172445] CinematicFunction_Intro_Func215 [] {
         crate::game::visual_runtime::advance_ending_graphics(EndingGraphics::Samus, game);
-        CinematicFunction_Intro_Func210_EndingSamusFall(k, game);
+        move_jumping_ending_samus(k, game);
         let v1: i32 = k as i32 >> 1;
         if word!(game.cinematicbg_arr8[v1]) as i32 - 136i32 & 0x8000 == 0 {
             word! {game; cinematicbg_arr8[v1] = 136; cinematicspr_instr_timer[v1] = 1;
