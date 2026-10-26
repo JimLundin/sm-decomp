@@ -4,8 +4,8 @@ use crate::game::file_menu::advance as advance_file_menu;
 use crate::game::game_over::advance as advance_game_over;
 use crate::game::gameplay::advance as AdvanceGameplay;
 use crate::game::map_menu::advance as advance_map_menu;
-use crate::game::music::{CancelSoundEffects, advance_sound_effects};
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
+use crate::game::music::{advance_sound_effects, cancel_effects};
 use crate::game::options_settings;
 use crate::game::pause_controls::fade_in as pause_fade_in;
 pub use crate::game::prelude::*;
@@ -22,7 +22,6 @@ use crate::game::animated_tiles;
 use crate::game::display_refresh::{GraphicsAsset, setup_transfer};
 use crate::game::enemy_projectiles::EnableEprojs;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
-use crate::game::music::{QueueSfx1_Max15, QueueSfx2_Max15, QueueSfx3_Max15};
 use crate::game::palette_effects::{self, fading};
 use crate::game::room_entry::{self, ArrivalRequest, EntrySignal, StartSite};
 use crate::game::room_mechanisms::set_enabled;
@@ -231,9 +230,7 @@ pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
             word!(game.cinematic_function = (0x8bc11bi32) as u16);
             word! { game, 0; ceres_status, timer_status }
             QueueMusic_Delayed8(0, game);
-            QueueSfx1_Max15(2, game);
-            QueueSfx2_Max15(0x71, game);
-            QueueSfx3_Max15(1, game);
+            cancel_effects(15, game);
         }
         kCoroutineNone as CoroutineRet
     }
@@ -262,9 +259,7 @@ pub unsafe fn GameState_36_WhitingOutFromTimeUp(game: &mut Game) -> CoroutineRet
             word! { game, 0;
                 screen_fade_delay, screen_fade_counter, ceres_status, timer_status,
             }
-            QueueSfx1_Max15(2, game);
-            QueueSfx2_Max15(0x71, game);
-            QueueSfx3_Max15(1, game);
+            cancel_effects(15, game);
             if CheckEventHappened(0xe, game) != 0 {
                 word! { game, 0; game_options_screen_index, menu_index }
                 word_transfers!(game, descending, 128; le(eproj_y_subpos, 142) <- value(0));
@@ -293,9 +288,7 @@ pub unsafe fn GameState_38_SamusEscapesFromZebes(game: &mut Game) -> CoroutineRe
             word! {game; game_state = kGameState_39_EndingAndCredits as u16;
             cinematic_function = ((0x8bd480i32) as u16); timer_status = 0; }
             QueueMusic_Delayed8(0, game);
-            QueueSfx1_Max15(2, game);
-            QueueSfx2_Max15(0x71, game);
-            QueueSfx3_Max15(1, game);
+            cancel_effects(15, game);
         }
         kCoroutineNone as CoroutineRet
     }
@@ -577,7 +570,7 @@ pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
         animated_tiles::set_enabled(false, game);
         crate::game::display_refresh::capture_pause_background(game);
         CallPauseHook(Load24(ram_ptr!(game, LongPtr; 0x601)), game);
-        CancelSoundEffects(game);
+        cancel_effects(6, game);
         crate::game::pause_controls::save_graphics(game);
         crate::game::display_refresh::load_pause_assets(game);
         crate::game::display_refresh::upload_pause_map(game);
@@ -791,9 +784,7 @@ pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
             word! { game, 0; g_word_7E0DE4, g_word_7E0DE6 }
             word!(game.game_state += 1);
             word!(game.power_bomb_explosion_status = 0);
-            QueueSfx1_Max15(2, game);
-            QueueSfx2_Max15(0x71, game);
-            QueueSfx3_Max15(1, game);
+            cancel_effects(15, game);
             QueueMusic_Delayed8(0, game);
             QueueMusic_Delayed8(0xff39, game);
             QueueMusic_DelayedY(5, 0xe, game);

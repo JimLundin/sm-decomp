@@ -4,7 +4,7 @@ use crate::game::music::HandleMusicQueue;
 pub use crate::game::prelude::*;
 
 use crate::game::music::QueueSfx1_Max6;
-use crate::game::music::{CancelSoundEffects, advance_sound_effects};
+use crate::game::music::{advance_sound_effects, cancel_effects};
 
 use crate::rtl::ReadReg;
 
@@ -314,7 +314,7 @@ impl crate::game::dialogue::Context for LegacyDialogue<'_> {
         dialogue_ram::publish(state, self.0);
         unsafe {
             match effect {
-                CancelSounds => CancelSoundEffects(self.0),
+                CancelSounds => cancel_effects(6, self.0),
                 PrepareDisplay => InitializePpuForMessageBoxes(self.0),
                 ClearDisplay => ClearMessageBoxBg3Tilemap(self.0),
                 PrepareMessage => InitializeMessageBox(self.0),

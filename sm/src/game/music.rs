@@ -306,8 +306,8 @@ pub fn ResetSoundQueues(game: &mut Game) {
     }
 }
 
-pub fn CancelSoundEffects(game: &mut Game) {
-    QueueSfx1_Max6(2, game);
-    QueueSfx2_Max6(0x71, game);
-    QueueSfx3_Max6(1, game);
+pub(crate) fn cancel_effects(max_queued: u8, game: &mut Game) {
+    for (channel, sound) in [2, 0x71, 1].into_iter().enumerate() {
+        queue_sfx(channel, sound, max_queued, game);
+    }
 }
