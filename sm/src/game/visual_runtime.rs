@@ -766,6 +766,33 @@ pub(crate) fn check_animation_guard(game: &mut Game) -> bool {
 #[path = "../verification/samus_palette_observer.rs"]
 pub(crate) mod samus_observer;
 
+pub(crate) const METROID_PAL_1: [u16; 16] = [
+    0x1000, 0x6bf5, 0x2e41, 0x2da1, 0x2d01, 0x5e5f, 0x183f, 0x1014, 0x80a, 0x404, 0x4f9f, 0x3ed8,
+    0x2e12, 0x6f70, 0x7fff, 0x5ee0,
+];
+pub(crate) const METROID_PAL_2: [u16; 16] = [
+    0x3800, 0x6bf5, 0x6e1, 0x641, 0x5a1, 0x5e5f, 0x183f, 0x1014, 0x80a, 0x404, 0x4f9f, 0x3ed8,
+    0x2e12, 0x6f70, 0x7fff, 0x5ee0,
+];
+pub(crate) const METROID_PAL_3: [u16; 16] = [
+    0x3800, 0x77f8, 0x1344, 0x12a4, 0x1204, 0x6abf, 0x249f, 0x1c77, 0x146d, 0x1067, 0x5bff, 0x4b38,
+    0x3a72, 0x7bd3, 0x7fff, 0x6b43,
+];
+pub(crate) const METROID_PAL_4: [u16; 16] = [
+    0x3800, 0x7ffb, 0x1fa7, 0x1f07, 0x1e67, 0x771f, 0x30ff, 0x28da, 0x20d0, 0x1cca, 0x67ff, 0x579b,
+    0x46d5, 0x7bd6, 0x7fff, 0x77a6,
+];
+
+pub(crate) fn title_metroid_cry(sound: u16, cursor: u16, game: &mut Game) -> u16 {
+    crate::game::music::QueueSfx3_Max6(sound, game);
+    cursor
+}
+
+pub(crate) fn title_metroid_palette(palette: [u16; 16], cursor: u16, game: &mut Game) -> u16 {
+    word_transfers!(game, descending, 16; le(palette_buffer, 63) <- table(palette, 15));
+    cursor
+}
+
 fn refresh_title_gradient(game: &mut Game) {
     let mut cursor = crate::rtl::rom_table_word!(
         game,

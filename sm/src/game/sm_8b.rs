@@ -4,6 +4,15 @@ pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
+use crate::game::visual_runtime::{
+    METROID_PAL_1, METROID_PAL_2, METROID_PAL_3, METROID_PAL_4, advance_credit_roll,
+    advance_intro_rinka, advance_shooting_stars, draw_cinematic_sprites, draw_intro_sprites,
+    drift_cinematic_sprite, initialize_ending_cloud_band, initialize_ending_cloud_side,
+    initialize_ending_time_glyph, initialize_intro_rinka, initialize_shooting_stars,
+    launch_cinematic_sprite, move_ending_cloud, place_cinematic_sprite, prepare_credit_roll,
+    prepare_ending_time, start_intro_rinka, title_metroid_cry, title_metroid_palette,
+    wait_ending_cloud,
+};
 use crate::game::visual_runtime::{advance_cinematic_background_pre, fade_cinematic_fixed_color};
 use crate::game::visual_runtime::{
     advance_cinematic_fade, capture_cinematic_palette, clear_cinematic_background,
@@ -12,13 +21,6 @@ use crate::game::visual_runtime::{
     prepare_cinematic_palette_fade, queue_cinematic_tilemap, reset_cinematic_transform,
     set_cinematic_backdrop, set_cinematic_tilemap_updates, set_hdma_enabled,
     spawn_cinematic_sprite_at, update_cinematic_transform,
-};
-use crate::game::visual_runtime::{
-    advance_credit_roll, advance_intro_rinka, advance_shooting_stars, draw_cinematic_sprites,
-    draw_intro_sprites, drift_cinematic_sprite, initialize_ending_cloud_band,
-    initialize_ending_cloud_side, initialize_ending_time_glyph, initialize_intro_rinka,
-    initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud, place_cinematic_sprite,
-    prepare_credit_roll, prepare_ending_time, start_intro_rinka, wait_ending_cloud,
 };
 use crate::game::visual_state::CinematicObjects::{
     Background as CinematicBackground, Mode7 as CinematicMode7, Sprites as CinematicSprites,
@@ -452,22 +454,6 @@ macro_rules! finish_cinematic_and_clear_effects {
     };
 }
 
-static kCinematicPal1: [u16; 16] = [
-    0x1000, 0x6bf5, 0x2e41, 0x2da1, 0x2d01, 0x5e5f, 0x183f, 0x1014, 0x80a, 0x404, 0x4f9f, 0x3ed8,
-    0x2e12, 0x6f70, 0x7fff, 0x5ee0,
-];
-static kCinematicPal2: [u16; 16] = [
-    0x3800, 0x6bf5, 0x6e1, 0x641, 0x5a1, 0x5e5f, 0x183f, 0x1014, 0x80a, 0x404, 0x4f9f, 0x3ed8,
-    0x2e12, 0x6f70, 0x7fff, 0x5ee0,
-];
-static kCinematicPal3: [u16; 16] = [
-    0x3800, 0x77f8, 0x1344, 0x12a4, 0x1204, 0x6abf, 0x249f, 0x1c77, 0x146d, 0x1067, 0x5bff, 0x4b38,
-    0x3a72, 0x7bd3, 0x7fff, 0x6b43,
-];
-static kCinematicPal4: [u16; 16] = [
-    0x3800, 0x7ffb, 0x1fa7, 0x1f07, 0x1e67, 0x771f, 0x30ff, 0x28da, 0x20d0, 0x1cca, 0x67ff, 0x579b,
-    0x46d5, 0x7bd6, 0x7fff, 0x77a6,
-];
 pub unsafe fn GameState_37_CeresGoesBoomWithSamus_(game: &mut Game) -> CoroutineRet {
     unsafe {
         CallCinematicFunction(
@@ -2805,39 +2791,17 @@ crate::game::address_dispatch! {
         9150166 => CinematicSpriteInit_5; 9150207 => CinematicSpriteInit_6; 9147353 => [()];
     }
 }
-crate::game::callback_dispatch! {
-    pub unsafe fn CallMode7Instr(ea: u32, k: u16, j: u16, game: &mut Game) -> u16 => ea;
-    call (k, j, game); default Unreachable(game) as u16;
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
-    [9151067] PlayBabyMetroidCry1 [] {
-        QueueSfx3_Max6(0x23, game);
-        j
-    };
-    [9151075] PlayBabyMetroidCry2 [] {
-        QueueSfx3_Max6(0x26, game);
-        j
-    };
-    [9151083] PlayBabyMetroidCry3 [] {
-        QueueSfx3_Max6(0x27, game);
-        j
-    };
-    [9151091] CinematicSetPal1 [] {
-        word_transfers!(game, descending, 16; le(palette_buffer, 63) <- table(kCinematicPal1, 15));
-        j
-    };
-    [9151108] CinematicSetPal2 [] {
-        word_transfers!(game, descending, 16; le(palette_buffer, 63) <- table(kCinematicPal2, 15));
-        j
-    };
-    [9151125] CinematicSetPal3 [] {
-        word_transfers!(game, descending, 16; le(palette_buffer, 63) <- table(kCinematicPal3, 15));
-        j
-    };
-    [9151142] CinematicSetPal4 [] {
-        word_transfers!(game, descending, 16; le(palette_buffer, 63) <- table(kCinematicPal4, 15));
-        j
-    };
-    @external {
+crate::game::address_dispatch! {
+    pub unsafe fn CallMode7Instr(ea: u32, _k: u16, j: u16, game: &mut Game) -> u16 => ea;
+    call (_k, j, game); default Unreachable(game) as u16;
+    {
+        9151067 => [title_metroid_cry(0x23, j, game)];
+        9151075 => [title_metroid_cry(0x26, j, game)];
+        9151083 => [title_metroid_cry(0x27, j, game)];
+        9151091 => [title_metroid_palette(METROID_PAL_1, j, game)];
+        9151108 => [title_metroid_palette(METROID_PAL_2, j, game)];
+        9151125 => [title_metroid_palette(METROID_PAL_3, j, game)];
+        9151142 => [title_metroid_palette(METROID_PAL_4, j, game)];
         9155870 => [intro_pages::draw_japanese_text(&[addr_word_8BCF75 as u16, addr_word_8BCFBD as u16], true, j, game)];
         9155919 => [intro_pages::enable_text(j, game)]; 9155924 => [intro_pages::draw_japanese_text(&[addr_word_8BCFFD as u16, addr_word_8BD055 as u16], true, j, game)];
         9156024 => [intro_pages::wait_after_japanese_text(0xaf6c, j, game)];
