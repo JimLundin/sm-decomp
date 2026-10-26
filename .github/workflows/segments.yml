@@ -38,6 +38,7 @@ jobs:
       actions: write
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
+      linux_matrix: ${{ steps.plan.outputs.linux_matrix }}
       should_run: ${{ steps.plan.outputs.should_run }}
       movie_file: ${{ steps.plan.outputs.movie_file }}
       movie_sha256: ${{ steps.plan.outputs.movie_sha256 }}
@@ -51,6 +52,7 @@ jobs:
           CI_BRANCH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/ci/') }}
           MAIN_PUSH: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           BEFORE: ${{ github.event.before }}
+          LINUX: ${{ inputs.linux || startsWith(github.ref, 'refs/heads/ci/l1-') }}
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
@@ -151,6 +153,16 @@ jobs:
                                  'segments': ' '.join(r['id'] for r in chunk)})
           if not shards:
               raise SystemExit('no runnable rows selected')
+          linux_groups = {}
+          if os.environ.get('LINUX') == 'true':
+              for row in rows:
+                  if row['id'] in ('area-crateria', 'item-morph-ball'):
+                      if 'pending' in row or not ('seed' in row or 'checkpoint' in row):
+                          raise SystemExit('Linux smoke row requires an encrypted start: ' + row['id'])
+                      linux_groups.setdefault(seed_bundle(row), []).append(row['id'])
+          linux_shards = [{'seed_asset': asset, 'seed_sha256': digest,
+                           'segments': ' '.join(members)}
+                          for (asset, digest), members in linux_groups.items()]
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as out:
               out.write(f"Selection: {source}\n\n")
               out.write(f"{sum(len(s['segments'].split()) for s in shards)} rows in {len(shards)} shards\n\n")
@@ -158,6 +170,7 @@ jobs:
           with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
               out.write('should_run=true\n')
               out.write('matrix=' + json.dumps({'include': shards}) + '\n')
+              out.write('linux_matrix=' + json.dumps({'include': linux_shards}) + '\n')
           PY
 
   build:
@@ -461,9 +474,14 @@ jobs:
     if: inputs.linux || startsWith(github.ref, 'refs/heads/ci/l1-')
     runs-on: ubuntu-24.04
     timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix: ${{ fromJson(needs.plan.outputs.linux_matrix) }}
+    name: Linux ${{ matrix.segments }}
     env:
       CARGO_INCREMENTAL: '0'
-      SEGMENTS: area-crateria item-morph-ball
+      SEGMENTS: ${{ matrix.segments }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -499,15 +517,10 @@ jobs:
         run: python tools/verify_dll.py --build-only --direct
       - name: Unit tests through the shared object
         run: python tools/verify_dll.py --unit-tests --no-build
-      - name: Cache the pinned movie download
-        uses: actions/cache@v4
-        with:
-          path: movies/${{ needs.plan.outputs.movie_file }}
-          key: ${{ runner.os }}-movie-${{ needs.plan.outputs.movie_sha256 }}
-      - name: Prepare ROM, movie and route inputs
+      - name: Prepare ROM and selected runtime seeds
         env:
-          ROUTE: speed-booster
-          INPUTS: corpus-speed-booster.inputs
+          SEED_ASSET: ${{ matrix.seed_asset }}
+          SEED_SHA256: ${{ matrix.seed_sha256 }}
           ROM_00: ${{ secrets.SM_ROM_00 }}
           ROM_01: ${{ secrets.SM_ROM_01 }}
           ROM_02: ${{ secrets.SM_ROM_02 }}
@@ -555,7 +568,7 @@ jobs:
           ROM_44: ${{ secrets.SM_ROM_44 }}
         run: |
           python -B - <<'PY'
-          import base64, gzip, hashlib, io, os, pathlib, subprocess, sys, time, tomllib, urllib.error, urllib.request, zipfile
+          import base64, gzip, hashlib, os, pathlib, subprocess, sys, urllib.request
           encoded = "".join(os.environ[f"ROM_{i:02d}"] for i in range(45))
           if not encoded:
               raise SystemExit("ROM secrets are missing")
@@ -564,33 +577,14 @@ jobs:
               raise SystemExit('wrong ROM')
           pathlib.Path('rom').mkdir(exist_ok=True)
           pathlib.Path('rom/sm.smc').write_bytes(rom)
-          movies = tomllib.loads(pathlib.Path('movies/manifest.toml').read_text())['movies']
-          movie = next(m for m in movies if m['category'] == 'any%')
-          path = pathlib.Path('movies', movie['file'])
-          if path.exists():
-              data = path.read_bytes()
-          else:
-              request = urllib.request.Request(movie['download'], headers={'User-Agent': 'sm-decomp-ci'})
-              # Four total attempts; checksum validation below is never retried.
-              for attempt in range(4):
-                  try:
-                      with urllib.request.urlopen(request, timeout=120) as response:
-                          data = response.read()
-                      break
-                  except urllib.error.HTTPError as error:
-                      if error.code not in (429, 500, 502, 503, 504) or attempt == 3:
-                          raise
-                      print(f'Movie download HTTP {error.code}; attempt {attempt + 1}/4 failed, retrying', file=sys.stderr)
-                      time.sleep(2 ** attempt)
-              with zipfile.ZipFile(io.BytesIO(data)) as archive:
-                  if 'input' not in archive.namelist():
-                      data = archive.read(next(n for n in archive.namelist() if n.lower().endswith('.lsmv')))
-          # Cache hits and fresh downloads must pass the same manifest checksum.
-          if hashlib.sha256(data).hexdigest() != movie['sha256']:
-              raise SystemExit('wrong movie')
-          path.write_bytes(data)
-          subprocess.run([sys.executable, 'tools/movie_inputs.py', str(path), 'movies/' + os.environ['INPUTS'],
-                          '--rom', 'rom/sm.smc', '--route', os.environ['ROUTE']], check=True)
+          bundle = pathlib.Path(os.environ['RUNNER_TEMP']) / 'linux-seeds-v1.tar.gz.enc'
+          url = 'https://github.com/JimLundin/sm-decomp/releases/download/ci-data/' + os.environ['SEED_ASSET']
+          urllib.request.urlretrieve(url, bundle)
+          command = [sys.executable, 'tools/ci_seed_data.py', 'restore', str(bundle),
+                     '--sha256', os.environ['SEED_SHA256'], '--runtime-only']
+          for row in os.environ['SEGMENTS'].split():
+              command += ['--segment', row]
+          subprocess.run(command, check=True)
           PY
       - name: Run the smoke rows
         run: |
