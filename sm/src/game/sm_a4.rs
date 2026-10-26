@@ -2,7 +2,7 @@ use crate::game::actors;
 use crate::game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use crate::game::actors::api as actor_api;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
-use crate::game::enemy_script::{EnemyScript, bank_base};
+use crate::game::enemy_script::EnemyScript;
 use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
@@ -24,7 +24,6 @@ use crate::game::sprite_effect_runtime::create_sprite;
 
 pub type Enemy_Crocomire = crate::game::enemy_layouts::EnemyLayout72;
 
-pub use crate::types::CrocomireFunc;
 const RomPtr_A4: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa4>;
 use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
 crate::ram_map::ram_pointer_functions! {
@@ -38,281 +37,7 @@ static g_word_A4869A: u16 = 1;
 static g_word_A4869C: u16 = 3;
 static g_word_A4869E: u16 = 3;
 static g_word_A486A0: u16 = 8;
-static g_word_A486A2: u16 = 0x300;
 static g_word_A486A4: u16 = 0x640;
-const Crocomire_Func_13: CrocomireFunc = react_to_attack_hit::<20>;
-const Crocomire_Func_14: CrocomireFunc = react_to_attack_hit::<12>;
-const Crocomire_Func_15: CrocomireFunc = react_to_attack_hit::<12>;
-
-fn take_attack_hit(flags: &mut u16) -> bool {
-    let pending = *flags & 0x800 != 0;
-    *flags &= !0x800;
-    pending
-}
-
-fn react_to_attack_hit<const NEXT: u16>(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript {
-    Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        if take_attack_hit(&mut enemy.variables[1]) {
-            enemy.variables[2] = NEXT;
-            return EnemyScript::jump(addr_kCrocomire_Ilist_BC30 as u16);
-        } else if ((jp.offset_from(bank_base(enemy.bank)) as c_long
-            - addr_kCrocomire_Ilist_BDA2 as i32 as c_long) as i16)
-            >= 0
-        {
-            return EnemyScript::jump(addr_kCrocomire_Ilist_BD2A as u16);
-        }
-        jp
-    })
-}
-
-static off_A486B3: [CrocomireFunc; 21] = callback_table! { nonnull CrocomireFunc;
-    Crocomire_Func_2, Crocomire_Func_3, Crocomire_Func_4, Crocomire_Func_5, Crocomire_Func_7,
-    Crocomire_Func_8, Crocomire_Func_9, Crocomire_Func_10, Crocomire_Func_11, Crocomire_Func_13,
-    Crocomire_Func_14, Crocomire_Func_15, Crocomire_Func_16, Crocomire_Func_17,
-    Crocomire_Func_18, Crocomire_Func_21, Crocomire_Func_22, Crocomire_Func_23,
-    Crocomire_Func_24, Crocomire_Func_25, Crocomire_Func_26,
-};
-pub fn Crocomire_Func_5(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript {
-    Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        if take_attack_hit(&mut enemy.variables[1]) && enemy.variables[3] != 0 {
-            enemy.variables[2] = 12;
-            EnemyScript::jump(addr_kCrocomire_Ilist_BC30 as u16)
-        } else if (enemy.x.whole as i16).wrapping_sub(g_word_A486A2 as i16) < 0 {
-            enemy.variables[2] = 10;
-            EnemyScript::jump(addr_kCrocomire_Ilist_BE7E as u16)
-        } else if ((jp.offset_from(bank_base(enemy.bank)) as c_long
-            - addr_kCrocomire_Ilist_BC34 as i32 as c_long) as i16)
-            >= 0
-        {
-            EnemyScript::jump(addr_kCrocomire_Ilist_BBCE as u16)
-        } else {
-            jp
-        }
-    })
-}
-
-pub fn Crocomire_Func_7(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript {
-    let mut shot = None;
-    let next = Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        if take_attack_hit(&mut enemy.variables[1]) {
-            enemy.variables[2] = 12;
-            return EnemyScript::jump(addr_kCrocomire_Ilist_BC30 as u16);
-        }
-        let index = enemy.pre_instruction;
-        if (index as i16).wrapping_sub(18) < 0 {
-            enemy.pre_instruction = index.wrapping_add(2);
-            shot = Some(index);
-            jp
-        } else {
-            enemy.variables[2] = 6;
-            EnemyScript::jump(addr_kCrocomire_Ilist_BBCA as u16)
-        }
-    });
-    if let Some(index) = shot {
-        SpawnEprojWithGfx(index, game.cur_enemy_index(), addr_stru_868F8F as u16, game);
-        QueueSfx3_Max6(0x1c, game);
-    }
-    next
-}
-
-pub fn Crocomire_Func_8(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript {
-    Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        if take_attack_hit(&mut enemy.variables[1]) {
-            enemy.variables[2] = 12;
-            return EnemyScript::jump(addr_kCrocomire_Ilist_BC30 as u16);
-        }
-        jp
-    })
-}
-
-pub fn Crocomire_Func_9(_k: u16, _jp: EnemyScript, game: &mut Game) -> EnemyScript {
-    Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        enemy.variables[3] = enemy.variables[3].saturating_sub(1);
-        if enemy.variables[3] != 0 {
-            enemy.variables[2] = 12;
-            EnemyScript::jump(addr_kCrocomire_Ilist_BC34 as u16)
-        } else {
-            enemy.variables[2] = 6;
-            EnemyScript::jump(addr_kCrocomire_Ilist_BBCE as u16)
-        }
-    })
-}
-
-pub fn Crocomire_Func_10(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript {
-    Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        if (enemy.x.whole as i16).wrapping_sub(g_word_A486A2 as i16) >= 0 {
-            enemy.variables[2] = 6;
-            return EnemyScript::jump(addr_kCrocomire_Ilist_BBCE as u16);
-        }
-        jp
-    })
-}
-
-pub fn Crocomire_Func_11(_k: u16, _jp: EnemyScript, game: &mut Game) -> EnemyScript {
-    Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        enemy.variables[2] = 6;
-    });
-    EnemyScript::jump(addr_kCrocomire_Ilist_BD2A as u16)
-}
-
-pub fn Crocomire_Func_16(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript {
-    Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        enemy.variables[3] = enemy.variables[3].wrapping_sub(1);
-        if (enemy.variables[3] as i16).wrapping_sub(2) < 0 {
-            enemy.variables[3] = 0;
-            enemy.variables[2] = 6;
-            return EnemyScript::jump(addr_kCrocomire_Ilist_BBCE as u16);
-        }
-        jp
-    })
-}
-
-pub fn Crocomire_Func_17(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript {
-    let hit = Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        let flags = enemy.variables[1];
-        if flags & 0x800 == 0 {
-            return false;
-        }
-        enemy.variables[1] = flags & 0x1f00 | 0xa000;
-        enemy.variables[3] = 1;
-        enemy.variables[4] = 10;
-        enemy.variables[2] = 12;
-        true
-    });
-    if hit {
-        QueueSfx2_Max6(0x54, game);
-        jp
-    } else {
-        let key = Key::from_legacy(game.cur_enemy_index());
-        Runtime::new(game).edit_actor(key, AccessMode::Native, |enemy| enemy.variables[2] = 10);
-        EnemyScript::jump(addr_kCrocomire_Ilist_BD8E as u16)
-    }
-}
-
-pub fn Crocomire_Func_18(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript {
-    let next = Crocomire_Func_2(game.cur_enemy_index(), jp, game);
-    Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        enemy.variables[1] |= 0x200;
-        enemy.variables[3] = 32;
-        enemy.variables[2] = 30;
-    });
-    next
-}
-
-pub fn Crocomire_Func_21(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript {
-    let hit = Runtime::new(game)
-        .resolve_actor(Key::from_legacy(0), AccessMode::Native)
-        .variables[1]
-        & 0x100
-        != 0;
-    if hit {
-        let next = Crocomire_Func_2(game.cur_enemy_index(), jp, game);
-        Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-            enemy.variables[3] = 16;
-            enemy.variables[2] = 34;
-        });
-        next
-    } else {
-        let key = Key::from_legacy(game.cur_enemy_index());
-        let mut runtime = Runtime::new(game);
-        runtime.edit_actor(key, AccessMode::Native, |enemy| enemy.variables[2] = 20);
-        runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-            enemy.variables[2] = 32
-        });
-        EnemyScript::jump(addr_kCrocomire_Ilist_BAEA as u16)
-    }
-}
-
-pub fn Crocomire_Func_22(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript {
-    let next = Crocomire_Func_2(game.cur_enemy_index(), jp, game);
-    Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        if enemy.variables[3] == 0 {
-            enemy.variables[1] |= 0x2000;
-            enemy.variables[2] = 36;
-            return EnemyScript::jump(addr_kCrocomire_Ilist_BBCE as u16);
-        }
-        next
-    })
-}
-
-pub fn Crocomire_Func_23(_k: u16, _jp: EnemyScript, game: &mut Game) -> EnemyScript {
-    Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        if (enemy.x.whole as i16).wrapping_sub(672) < 0 {
-            enemy.variables[2] = 36;
-            enemy.variables[3] = 3;
-            return EnemyScript::jump(addr_kCrocomire_Ilist_BBCE as u16);
-        }
-        if enemy.variables[1] & 0x4000 == 0 {
-            enemy.variables[2] = 38;
-            enemy.variables[1] &= !0x400;
-        } else {
-            enemy.variables[3] = 5;
-            enemy.pre_instruction = enemy.variables[2];
-            enemy.variables[2] = 42;
-        }
-        EnemyScript::jump(addr_kCrocomire_Ilist_BCD8 as u16)
-    })
-}
-
-pub fn Crocomire_Func_24(_k: u16, _jp: EnemyScript, game: &mut Game) -> EnemyScript {
-    let mut runtime = Runtime::new(game);
-    let finished = runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        enemy.variables[3] = enemy.variables[3].saturating_sub(1);
-        if enemy.variables[3] == 0 {
-            enemy.variables[2] = 40;
-            enemy.variables[1] &= !0x400;
-            true
-        } else {
-            enemy.variables[2] = 36;
-            false
-        }
-    });
-    if finished {
-        EnemyScript::jump(addr_kCrocomire_Ilist_BBCE as u16)
-    } else {
-        runtime.edit_actor(Key::from_legacy(0x40), AccessMode::Native, |enemy| {
-            enemy.variables[3] = 0
-        });
-        runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-            enemy.variables[1] |= 0x400
-        });
-        EnemyScript::jump(addr_kCrocomire_Ilist_BCD8 as u16)
-    }
-}
-
-pub fn Crocomire_Func_25(_k: u16, _jp: EnemyScript, game: &mut Game) -> EnemyScript {
-    Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        if enemy.variables[1] & 0x2000 == 0 {
-            enemy.variables[1] &= 0xfcff;
-        }
-        enemy.variables[2] = 40;
-    });
-    EnemyScript::jump(addr_kCrocomire_Ilist_BBCE as u16)
-}
-
-pub fn Crocomire_Func_26(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript {
-    let mut sound = false;
-    let next = Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        if enemy.variables[3] == 0 {
-            enemy.variables[1] &= !0x4000;
-            enemy.instruction_delay = 1;
-            enemy.variables[2] = enemy.pre_instruction;
-            return EnemyScript::jump(addr_kCrocomire_Ilist_BCD8 as u16);
-        }
-        if enemy.variables[1] & 0x4000 != 0 {
-            enemy.variables[3] = enemy.variables[3].wrapping_sub(1);
-            sound = true;
-            return EnemyScript::jump(addr_kCrocomire_Ilist_BCD8 as u16);
-        }
-        enemy.variables[2] = 12;
-        jp
-    });
-    if sound {
-        QueueSfx2_Max6(0x3b, game);
-    }
-    next
-}
-
 pub unsafe fn Crocomire_Func_27(k: u16, game: &mut Game) {
     unsafe {
         word!(game.reg_BG2VOFS = (67u16).wrapping_sub(slot!(game, Crocomire[k as i32].base.y_pos)));
@@ -1568,49 +1293,9 @@ crate::game::callback_dispatch! {
 }
 
 crate::game::callback_dispatch! {
+    #[allow(unused_unsafe)]
     pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10782374] Crocomire_Instr_1 [off_A486B3[(crocom_var_C >> 1) as usize](
-            crocom_var_C,
-            jp,
-            game,
-        )] {
-        let key = Key::from_legacy(game.cur_enemy_index());
-        let crocom_var_C = Runtime::new(game).resolve_actor(key, AccessMode::Native).variables[2];
-    };
-    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    Crocomire_Func_2 [EnemyScript::jump(addr_kCrocomire_Ilist_BADE as u16)] {
-        Runtime::new(game).edit_actor(Key::from_legacy(k), AccessMode::Native, |enemy| {
-            enemy.instruction_delay = 1;
-        });
-    };
-    Crocomire_Func_3 [EnemyScript::jump(addr_kCrocomire_Ilist_BBCE as u16)] {
-        Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-            enemy.variables[2] = 4;
-        });
-    };
-    Crocomire_Func_4 [] {
-        let samus_x = game.samus_x_pos();
-        Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-            if (abs16(enemy.x.whole.wrapping_sub(samus_x)) as i16).wrapping_sub(224) < 0 {
-                enemy.variables[1] |= 0x8000;
-                enemy.variables[2] = 18;
-                return EnemyScript::jump(addr_kCrocomire_Ilist_BC56 as u16);
-            }
-            jp
-        })
-    };
-    [10782546] Crocomire_Instr_14 [] {
-        if game.random_number() & 0xfff < 1024 {
-            Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-                enemy.variables[2] = 8;
-                enemy.pre_instruction = 0;
-            });
-            return EnemyScript::jump(addr_kCrocomire_Ilist_BB36 as u16);
-        }
-        jp
-    };
     @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10783995] Crocomire_Instr_11 [jp] { QueueSfx2_Max6(0x74, game); };
     [10784007] Crocomire_Instr_7 [jp] { QueueSfx2_Max6(0x25, game); };
@@ -1673,4 +1358,8 @@ crate::game::callback_dispatch! {
     [10787533] Crocomire_Instr_25 => spawn_dust(jp, 0x30, game);
     [10787538] Crocomire_Instr_26 => spawn_dust(jp, 0x38, game);
     [10787543] Crocomire_Instr_27 => spawn_dust(jp, 0x40, game);
+    @external {
+        10782374 => [actors::crocomire_reactions::dispatch(k, j, game)];
+        10782546 => [actors::crocomire_reactions::choose_spit(k, j, game)];
+    }
 }
