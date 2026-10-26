@@ -162,21 +162,8 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                 nmi_copy_samus_halves, nmi_copy_samus_top_half_src,
                 nmi_copy_samus_bottom_half_src,
             }
+            crate::game::display_refresh::initialize_io_and_oam(None, game);
             crate::rtl::register_writes! { game;
-                mirror(NMITIMEN as u16, 1, 0x84, false); byte(WRIO as u16, 0);
-                byte(WRMPYA as u16, 0); byte(WRMPYB as u16, 0);
-                byte(WRDIVL as u16, 0); byte(WRDIVH as u16, 0);
-                byte(WRDIVB as u16, 0); byte(HTIMEL as u16, 0);
-                byte(HTIMEH as u16, 0); byte(VTIMEL as u16, 0);
-                byte(VTIMEH as u16, 0); byte(MDMAEN as u16, 0);
-                mirror(HDMAEN as u16, 0, 0x85, false); mirror(MEMSEL as u16, 1, 0x86, false);
-                mirror(OBSEL as u16, 3, 0x52, false); byte(OAMADDL as u16, 0);
-            }
-            *(ram_ptr!(game, u16; 0x53) as *mut u8) = 0;
-            WriteReg(OAMADDH as u16, 0x80, game);
-            byte!(@pointer ram_ptr!(game, u16; 0x53); 1) = 0x80;
-            crate::rtl::register_writes! { game;
-                byte(OAMDATA as u16, 0); byte(OAMDATA as u16, 0);
                 mirror(BGMODE as u16, 1, 0x55, false); mirror(MOSAIC as u16, 0, 0x57, false);
                 mirror(BG1SC as u16, 0, 0x58, false); mirror(BG2SC as u16, 0, 0x59, false);
                 mirror(BG3SC as u16, 0, 0x5a, false); mirror(BG4SC as u16, 0, 0x5c, false);

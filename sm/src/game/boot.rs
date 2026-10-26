@@ -7,10 +7,9 @@ use crate::ram_map::word;
 use crate::rtl::{
     APUI00, APUI01, APUI02, APUI03, BG1HOFS, BG1SC, BG1VOFS, BG2HOFS, BG2SC, BG2VOFS, BG3HOFS,
     BG3SC, BG3VOFS, BG4HOFS, BG4SC, BG4VOFS, BG12NBA, BG34NBA, BGMODE, CGADSUB, CGWSEL, COLDATA,
-    HDMAEN, HTIMEH, HTIMEL, INIDISP, M7A, M7B, M7C, M7D, M7SEL, M7X, M7Y, MDMAEN, MEMSEL, MOSAIC,
-    NMITIMEN, OAMADDH, OAMADDL, OAMDATA, OBSEL, RtlApuWrite, SETINI, TM, TMW, TS, TSW, VMAIN,
-    VTIMEH, VTIMEL, W12SEL, W34SEL, WBGLOG, WH0, WH1, WH2, WH3, WOBJLOG, WOBJSEL, WRDIVB, WRDIVH,
-    WRDIVL, WRIO, WRMPYA, WRMPYB, WriteReg,
+    INIDISP, M7A, M7B, M7C, M7D, M7SEL, M7X, M7Y, MEMSEL, MOSAIC, NMITIMEN, RtlApuWrite, SETINI,
+    TM, TMW, TS, TSW, VMAIN, W12SEL, W34SEL, WBGLOG, WH0, WH1, WH2, WH3, WOBJLOG, WOBJSEL,
+    WriteReg,
 };
 
 fn clear_work_ram(bytes: usize, game: &mut Game) {
@@ -80,24 +79,8 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
 
 unsafe fn initialize_registers(game: &mut Game) {
     unsafe {
+        crate::game::display_refresh::initialize_io_and_oam(Some(0x8f), game);
         crate::rtl::register_writes! { game;
-            mirror(NMITIMEN as u16, 1, 0x84, false); byte(WRIO as u16, 0);
-            byte(WRMPYA as u16, 0); byte(WRMPYB as u16, 0);
-            byte(WRDIVL as u16, 0); byte(WRDIVH as u16, 0);
-            byte(WRDIVB as u16, 0); byte(HTIMEL as u16, 0);
-            byte(HTIMEH as u16, 0); byte(VTIMEL as u16, 0);
-            byte(VTIMEH as u16, 0); byte(MDMAEN as u16, 0);
-            mirror(HDMAEN as u16, 0, 0x85, false); mirror(MEMSEL as u16, 1, 0x86, false);
-        }
-        crate::rtl::register_writes! { game;
-            mirror(INIDISP as u16, 0x8f, 0x51, false); mirror(OBSEL as u16, 3, 0x52, false);
-            byte(OAMADDL as u16, 0);
-        }
-        game.g_ram[0x53] = 0;
-        WriteReg(OAMADDH as u16, 0x80, game);
-        game.g_ram[0x54] = 0x80;
-        crate::rtl::register_writes! { game;
-            byte(OAMDATA as u16, 0); byte(OAMDATA as u16, 0);
             mirror(BGMODE as u16, 9, 0x55, false); mirror(MOSAIC as u16, 0, 0x57, false);
             mirror(BG1SC as u16, 0x40, 0x58, false); mirror(BG2SC as u16, 0x44, 0x59, false);
             mirror(BG3SC as u16, 0x48, 0x5a, false); mirror(BG4SC as u16, 0, 0x5c, false);

@@ -45,8 +45,8 @@ pub(crate) unsafe fn pause_graphics(paused: bool, game: &mut Game) {
     }
 }
 
-/// Requires a live, exclusively accessed SNES backend and prepared cartridge graphics.
-pub(crate) unsafe fn initialize_gameplay(game: &mut Game) {
+/// Requires live, exclusively accessed hardware for the ordered CPU I/O and OAM reset.
+pub(crate) unsafe fn initialize_io_and_oam(brightness: Option<u8>, game: &mut Game) {
     use crate::snes::registers::{
         HTIMEH, HTIMEL, MEMSEL, OAMADDH, OAMDATA, VTIMEH, VTIMEL, WRDIVB, WRDIVH, WRDIVL, WRIO,
         WRMPYA, WRMPYB,
@@ -60,10 +60,24 @@ pub(crate) unsafe fn initialize_gameplay(game: &mut Game) {
             byte(HTIMEH as u16, 0); byte(VTIMEL as u16, 0);
             byte(VTIMEH as u16, 0); byte(MDMAEN as u16, 0);
             mirror(HDMAEN as u16, 0, 0x85, false); mirror(MEMSEL as u16, 1, 0x86, false);
-            mirror(INIDISP as u16, 0x80, 0x51, false); mirror(OBSEL as u16, 3, 0x52, false);
+        }
+        if let Some(value) = brightness {
+            crate::rtl::write_register_and_mirror(INIDISP as u16, value, 0x51, false, game);
+        }
+        crate::rtl::register_writes! { game;
+            mirror(OBSEL as u16, 3, 0x52, false);
             mirror(OAMADDL as u16, 0, 0x53, false);
             mirror(OAMADDH as u16, 0x80, 0x54, false);
             byte(OAMDATA as u16, 0); byte(OAMDATA as u16, 0);
+        }
+    }
+}
+
+/// Requires a live, exclusively accessed SNES backend and prepared cartridge graphics.
+pub(crate) unsafe fn initialize_gameplay(game: &mut Game) {
+    unsafe {
+        initialize_io_and_oam(Some(0x80), game);
+        crate::rtl::register_writes! { game;
             mirror(BGMODE as u16, 9, 0x55, false); mirror(MOSAIC as u16, 0, 0x57, false);
             mirror(BG12NBA as u16, 0, 0x5d, true); mirror(BG34NBA as u16, 4, 0x5e, true);
             mirror(BG1SC as u16, 0x51, 0x58, true); mirror(BG2SC as u16, 0x49, 0x59, true);
