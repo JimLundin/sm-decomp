@@ -631,8 +631,9 @@ crate::game::callback_dispatch! {
         11051537 => sm_a8::YappingMaw_Main; 11052953 => sm_a8::YappingMaw_Touch;
         11053894 => crate::game::actors::kago::initialize;
         11053941 => crate::game::actors::kago::advance; 11053955 => crate::game::actors::kago::shot;
-        11057014 => sm_a8::Beetom_Init;
-        11057165 => sm_a8::Beetom_Main; 11058734 => sm_a8::Beetom_Touch;
+        11057014 => crate::game::actors::beetom::initialize;
+        11057165 => crate::game::actors::beetom::advance; 11058734 => crate::game::actors::beetom::touch;
+        11058860 => crate::game::actors::beetom::shot;
         11062374 => [()];
         11065545 => sm_a8::MaridiaPuffer_Init;
         11065611 => sm_a8::MaridiaPuffer_Main; 11066132 => sm_a8::MaridiaPuffer_Shot;
@@ -743,7 +744,7 @@ crate::game::callback_dispatch! {
         10651845 => [j];
         10716899 => sm_a3::Waver_Instr_1;
         10991155 => [sm_a7::Kraid_Instr_1(k, j)];
-        11056990 => [sm_a8::Beetom_Instr_1(k, j)];
+        11056990 => [j];
         11062987 => [sm_a8::WreckedShipRobot_Instr_7(k, j)];
         11063490 => [sm_a8::WreckedShipRobot_Instr_10(k, j)];
         11128756 => [sm_a9::Shitroid_Instr_1(k, j)];

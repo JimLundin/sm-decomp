@@ -878,22 +878,6 @@ pub unsafe fn Mochtroid_Func_4(k: u16, a: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn Sidehopper_Func_2(r22: u16, r24: u16, game: &mut Game) -> u16 {
-    unsafe {
-        crate::verify_probe::hit("hop.Sidehopper_Func_2");
-        let mut r18: u16 = 0;
-        let mut r20: u16 = 0;
-        do_until! { r20 as i32 - r22 as i32 & 0x8000 == 0 ;
-            r18 = (r18).wrapping_add(r24);
-            r20 = (r20).wrapping_add(
-                *((rom_ptr!(game, u16; 0xa2838f) as *mut u8)
-                    .offset((8i32 * r18 as i32) as isize)
-                    .offset(1) as *mut u16),
-            );
-        }
-        r18
-    }
-}
 pub unsafe fn Sidehopper_Func_4(k: u16, game: &mut Game) {
     unsafe {
         let v1: u16 =
@@ -1950,16 +1934,16 @@ crate::game::callback_dispatch! {
             (*E).var_05 = 2;
         }
         let v6: i32 = (*E).var_05 as i32 >> 1;
-        (*E).var_01 = Sidehopper_Func_2(
+        (*E).var_01 = crate::game::hopping_blobs::initial_hop_phase(
             crate::rtl::rom_table_word!(game, 0xa3aaee, v6 as isize),
             crate::rtl::rom_table_word!(game, 0xa3aae6, v6 as isize),
-            game,
+            game.capture_native_rom(),
         );
         let v8: i32 = (*E).var_05 as i32 >> 1;
-        (*E).var_02 = Sidehopper_Func_2(
+        (*E).var_02 = crate::game::hopping_blobs::initial_hop_phase(
             crate::rtl::rom_table_word!(game, 0xa3aafa, v8 as isize),
             crate::rtl::rom_table_word!(game, 0xa3aaf2, v8 as isize),
-            game,
+            game.capture_native_rom(),
         );
         (*E).var_B = (0xa3abd6i32) as u16;
     };

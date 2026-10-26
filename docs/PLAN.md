@@ -61,8 +61,8 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
    local rows pass. Full-corpus completion remains a separate obligation on main.
    B1 sm_80 is retired with checked gameplay and retained backend contracts;
    its affected rows pass, and B1 continues sm_82. B2 continues sm_8b after
-   consolidating the checked credits interpreter. B3 continues
-   sm_a2 with Rinka then sm_a3. Non-enemy banks aim at most 80% replacement size.
+   consolidating the checked credits interpreter. B3 continues sm_a2 after
+   Rinka/Gunship, then sm_a3. Non-enemy banks aim at most 80% replacement size.
    Windows M is now B4: retire sm_a8 families, then sm_b3.
    No further in-place bank codemods; cloud M moves to unsafe outside bank files.
    A2 seeds remaining authored rows; bundle shard grouping is integrated.

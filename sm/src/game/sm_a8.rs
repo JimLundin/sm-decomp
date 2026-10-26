@@ -14,7 +14,7 @@ use crate::ram_map::slot;
 pub use crate::game::constants::bank_86::*;
 
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
-use crate::game::music::{QueueSfx2_Max6, QueueSfx2_Max9, QueueSfx3_Max6};
+use crate::game::music::{QueueSfx2_Max6, QueueSfx2_Max9};
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
 use crate::game::visual_runtime::initialize_morph_eye_beam;
@@ -50,9 +50,6 @@ crate::game::constants::typed_constants! { Consts_A8;
     addr_kWreckedShipRobot_Ilist_C6E5 = 50917, addr_stru_A8C199 = 49561,
     addr_kMaridiaFloater_Ilist_C191 = 49553, addr_kMaridiaFloater_Ilist_C183 = 49539,
     addr_kMaridiaFloater_Ilist_C173 = 49523, addr_kMaridiaFloater_Ilist_C163 = 49507,
-    addr_kBeetom_Ilist_B728 = 46888, addr_kBeetom_Ilist_B708 = 46856,
-    addr_kBeetom_Ilist_B6F2 = 46834, addr_kBeetom_Ilist_B6CC = 46796,
-    addr_kBeetom_Ilist_B6AC = 46764, addr_kBeetom_Ilist_B696 = 46742,
     addr_kNorfairLavaMan_Ilist_AE0C = 44556, addr_kNorfairLavaMan_Ilist_ADDC = 44508,
     addr_kNorfairLavaMan_Ilist_ADAC = 44460, addr_kNorfairLavaMan_Ilist_AD7E = 44414,
     addr_kNorfairLavaMan_Ilist_AD50 = 44368, addr_kNorfairLavaMan_Ilist_AD3C = 44348,
@@ -74,7 +71,7 @@ crate::game::constants::typed_constants! { Consts_A8;
 }
 crate::type_aliases! {
     pub Enemy_Fune, Enemy_KiHunter, Enemy_MiniDraygon, Enemy_NorfairLavaMan,
-        Enemy_WalkingLavaSeahorse, Enemy_WreckedShipGhost, Enemy_Beetom,
+        Enemy_WalkingLavaSeahorse, Enemy_WreckedShipGhost,
         Enemy_WreckedShipOrbs = crate::game::enemy_layouts::EnemyLayout40;
 }
 
@@ -116,7 +113,6 @@ crate::game::constants::typed_constants! { i32;
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
-    Get_Beetom(o: i32) -> Enemy_Beetom = [0xf78, o as isize];
     Get_Fune(o: i32) -> Enemy_Fune = [0xf78, o as isize];
     Get_KiHunter(o: i32) -> Enemy_KiHunter = [0xf78, o as isize];
     Get_MaridiaFloater(o: i32) -> Enemy_MaridiaFloater = [0xf78, o as isize];
@@ -138,7 +134,6 @@ type MaridiaPuffer = Enemy_MaridiaPuffer;
 type MaridiaFloater = Enemy_MaridiaFloater;
 type KiHunter = Enemy_KiHunter;
 type Fune = Enemy_Fune;
-type Beetom = Enemy_Beetom;
 static g_word_A890CA: [i16; 4] = [-8, 8, 0, 0];
 static g_word_A890D2: [i16; 4] = [0, 0, -8, 8];
 static g_word_A89050: u16 = 0x80;
@@ -1147,397 +1142,6 @@ pub unsafe fn NorfairLavaMan_Func_19(k: u16, game: &mut Game) {
     if v2 as i32 - 8i32 & 0x8000 != 0 {
         word!(game.enemy_drawing_queue[(v1 + 64)] = 8);
     }
-}
-pub fn Beetom_Instr_1(k: u16, jp: EnemyScript) -> EnemyScript {
-    jp
-}
-pub use crate::game::sm_a3::Sidehopper_Func_2 as Beetom_Func_2;
-
-unsafe fn begin_beetom_hop(high: bool, state: u16, animation: u16, game: &mut Game) {
-    unsafe {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(
-            game,
-            Beetom[E].var_B = if high {
-                slot!(game, Beetom[E].var_03)
-            } else {
-                slot!(game, Beetom[E].var_02)
-            }
-        );
-        slot!(game, Beetom[E].var_C = state);
-        slot!(game, Beetom[E].var_05 = 0);
-        slot!(game, Beetom[E].var_00 = animation);
-        Beetom_Func_1(game);
-    }
-}
-unsafe fn walk_beetom<const LEFT: bool>(game: &mut Game) {
-    let E: i32 = word!(game.cur_enemy_index) as i32;
-    slot!(game, Beetom[E].var_D, |old| old.wrapping_sub(1));
-    if (slot!(game, Beetom[E].var_D) & 0x8000) != 0 {
-        slot!(game, Beetom[E].var_D = 64);
-        slot!(game, Beetom[E].var_C = (0xa8b814i32) as u16);
-    } else {
-        slot!(game, Beetom[E].base.x_pos, |old| old
-            .wrapping_add(if LEFT { 0xfff8 } else { 8 }));
-        if {
-            let (actor, amount) = (word!(game.cur_enemy_index), (1i16 as i32) << 16);
-            (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
-                == actor_api::MovementResult::Blocked) as u8
-        } != 0
-        {
-            slot!(game, Beetom[E].base.x_pos, |old| old
-                .wrapping_add(if LEFT { 8 } else { 0xfff8 }));
-            if {
-                let (actor, amount) = (
-                    word!(game.cur_enemy_index),
-                    if LEFT { -16384 } else { 16384 },
-                );
-                (actor_api::move_horizontal(
-                    &mut Runtime::new(game),
-                    Key::from_legacy(actor),
-                    amount,
-                    actor_api::SlopePolicy::Ignore,
-                ) == actor_api::MovementResult::Blocked) as u8
-            } != 0
-            {
-                slot!(game, Beetom[E].var_C = if LEFT { 0xb873 } else { 0xb85f });
-            }
-        } else {
-            slot!(game, Beetom[E].var_C = if LEFT { 0xb873 } else { 0xb85f });
-            slot!(game, Beetom[E].base.y_pos, |old| old.wrapping_sub(1));
-            slot!(game, Beetom[E].base.x_pos, |old| old
-                .wrapping_add(if LEFT { 8 } else { 0xfff8 }));
-        }
-    }
-}
-// Preserve the captured-value versus post-store-read variants of phase tests.
-macro_rules! advance_beetom_jump_descent {
-    ($enemy_index:ident, $game:ident, $frame_step:literal) => {
-        let E = Get_Beetom($enemy_index as i32, $game);
-        let v2: i32 = 8 * (*E).var_B as i32 >> 1;
-        if ({ let (actor, amount) = ($enemy_index, *($crate::rtl::rom_ptr!($game, u32; 0xa0cbc7))
-                .offset((v2 >> 1) as isize) as i32); (actor_api::move_vertical(&mut Runtime::new($game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
-        {
-            (*E).var_C = ((0xa8b814i32) as u16);
-        } else {
-            (*E).var_B = ((*E).var_B).wrapping_add($frame_step);
-            if (*E).var_B as i32 - 64i32 & 0x8000 == 0 {
-                (*E).var_B = 64;
-            }
-        }
-    };
-}
-
-pub unsafe fn Beetom_Func_23(k: u16, game: &mut Game) {
-    unsafe {
-        advance_beetom_jump_descent!(k, game, 4);
-    }
-}
-pub unsafe fn Beetom_Func_27(k: u16, game: &mut Game) {
-    unsafe {
-        advance_beetom_jump_descent!(k, game, 5);
-    }
-}
-
-unsafe fn advance_beetom_jump<const FALLING: bool, const STEP: u16, const CAPTURED: bool>(
-    k: u16,
-    game: &mut Game,
-) -> *mut Enemy_Beetom {
-    unsafe {
-        let E = Get_Beetom(k as i32, game);
-        let index: i32 = 8 * (*E).var_B as i32 >> 1;
-        let index = (index + if FALLING { 0 } else { 2 }) >> 1;
-        if {
-            let (actor, amount) = (
-                k,
-                *(rom_ptr!(game, u32; 0xa0cbc7)).offset(index as isize) as i32,
-            );
-            (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
-                == actor_api::MovementResult::Blocked) as u8
-        } != 0
-        {
-            (*E).var_C = if FALLING { 0xb814 } else { 0xb97a };
-        } else {
-            let next = if FALLING {
-                (*E).var_B.wrapping_add(STEP)
-            } else {
-                (*E).var_B.wrapping_sub(STEP)
-            };
-            (*E).var_B = next;
-            let tested = if CAPTURED { next } else { (*E).var_B };
-            if FALLING {
-                if tested as i32 - 64i32 & 0x8000 == 0 {
-                    (*E).var_B = 64;
-                }
-            } else if tested & 0x8000 != 0 {
-                (*E).var_B = 0;
-                (*E).var_05 = 1;
-            }
-        }
-        E
-    }
-}
-crate::forward_calls! { pub unsafe fn (k: u16, game: &mut Game);
-    Beetom_Func_22 => { crate::verify_probe::hit("hop.Beetom_Func_22"); advance_beetom_jump::<false, 4, false>(k, game) };
-    Beetom_Func_26 => { crate::verify_probe::hit("hop.Beetom_Func_26"); advance_beetom_jump::<false, 5, false>(k, game) };
-    Beetom_Func_30 => { crate::verify_probe::hit("hop.Beetom_Func_30"); advance_beetom_jump::<false, 5, true>(k, game) };
-    Beetom_Func_31 => { crate::verify_probe::hit("hop.Beetom_Func_31"); advance_beetom_jump::<true, 3, true>(k, game) };
-}
-
-unsafe fn move_beetom_hop(
-    rise: unsafe fn(u16, &mut Game),
-    fall: unsafe fn(u16, &mut Game),
-    horizontal: i32,
-    game: &mut Game,
-) {
-    unsafe {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        if slot!(game, Beetom[E].var_05) != 0 {
-            fall(word!(game.cur_enemy_index), game);
-        } else {
-            rise(word!(game.cur_enemy_index), game);
-        }
-        if {
-            let (actor, amount) = (word!(game.cur_enemy_index), horizontal);
-            (actor_api::move_horizontal(
-                &mut Runtime::new(game),
-                Key::from_legacy(actor),
-                amount,
-                actor_api::SlopePolicy::Ignore,
-            ) == actor_api::MovementResult::Blocked) as u8
-        } != 0
-        {
-            slot!(game, Beetom[E].var_09, |old| (old) ^ (1u16));
-            slot!(game, Beetom[E].var_C = (0xa8b97ai32) as u16);
-        }
-    }
-}
-pub unsafe fn Beetom_Func_37(k: u16, game: &mut Game) {
-    unsafe {
-        crate::verify_probe::hit("hop.Beetom_Func_37");
-        let E = advance_beetom_jump::<true, 1, true>(k, game);
-        let v4: u16 = (if (*E).var_09 != 0 { -2i32 } else { 2 }) as u16;
-        if {
-            let (actor, amount) = (k, (words!((v4, 0u16))) as i32);
-            (actor_api::move_horizontal(
-                &mut Runtime::new(game),
-                Key::from_legacy(actor),
-                amount,
-                actor_api::SlopePolicy::Ignore,
-            ) == actor_api::MovementResult::Blocked) as u8
-        } != 0
-        {
-            (*E).var_09 = ((*E).var_09) ^ (1u16);
-            (*E).var_C = (0xa8b97ai32) as u16;
-        }
-    }
-}
-
-crate::game::callback_dispatch! {
-    pub unsafe fn CallBeetomFunc(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [11057172] Beetom_Func_3 [] {
-        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x60); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0 {
-            slot!(game, Beetom[word!(game.cur_enemy_index) as i32].var_C = (0xa8b90fi32) as u16);
-        } else {
-            slot!(game, Beetom[word!(game.cur_enemy_index) as i32].var_C = (0xa8b82fi32) as u16);
-        };
-    };
-    [11057199] Beetom_Func_4 [] {
-        game.next_random();
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, Beetom[E].var_C = crate::rtl::rom_table_word!(
-            game,
-            0xa8b74e,
-            (word!(game.random_number) as i32 & 7) as isize
-        ));
-        slot!(game, Beetom[E].var_09 = (word!(game.random_number)) & (1u16));
-    };
-    [11058589] Beetom_Func_35 [] {
-        if ({ let (actor, amount) = (word!(game.cur_enemy_index), ((3u32) << 16 | 0u16 as u32) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
-        {
-            let E: i32 = word!(game.cur_enemy_index) as i32;
-            if slot!(game, Beetom[E].var_09) != 0 {
-                slot!(game, Beetom[E].var_C = (0xa8b873i32) as u16);
-            } else {
-                slot!(game, Beetom[E].var_C = (0xa8b85fi32) as u16);
-            }
-        }
-    };
-    [11058629] Beetom_Func_36 [] {
-        Beetom_Func_37(word!(game.cur_enemy_index), game);
-    };
-    @functions [pub unsafe fn (game: &mut Game)];
-    @prefix { let E: i32 = word!(game.cur_enemy_index) as i32; };
-    Beetom_Func_1 [] {
-        slot!(game, Beetom[E].base; current_instruction = slot!(game, Beetom[E].var_00), instruction_timer = 1);
-        slot!(game, Beetom[E].base.timer = 0);
-    };
-    Beetom_Init [] {
-        slot!(game, Beetom[E]; var_D = 0, var_C = 0, var_05 = 0, var_08 = 0, var_A = 0);
-        slot!(game, Beetom[E].var_E = 64);
-        slot!(game, Beetom[E].var_F = word!(game.joypad1_lastkeys));
-        word!(game.random_number = 23);
-        slot!(game, Beetom[E].var_02 = Beetom_Func_2(12288, 4, game));
-        slot!(game, Beetom[E].var_03 = Beetom_Func_2(0x4000, 5, game));
-        slot!(game, Beetom[E].var_04 = Beetom_Func_2(12288, 3, game));
-        slot!(game, Beetom[E].var_00 = addr_kBeetom_Ilist_B6F2 as u16);
-        if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) != 0 {
-            slot!(game, Beetom[E].var_00 = addr_kBeetom_Ilist_B696 as u16);
-        }
-        Beetom_Func_1(game);
-        slot!(game, Beetom[E].var_C = (0xa8b814i32) as u16);
-    };
-    [11057231] Beetom_Func_5 [] {
-        slot!(game, Beetom[E].var_D = 32);
-        slot!(game, Beetom[E].var_C = (0xa8b9b2i32) as u16);
-    };
-    [11057247] Beetom_Func_6 [] {
-        slot!(game, Beetom[E].var_C = (0xa8b9c1i32) as u16);
-        slot!(game, Beetom[E].var_00 = addr_kBeetom_Ilist_B696 as u16);
-        Beetom_Func_1(game);
-    };
-    [11057267] Beetom_Func_7 [] {
-        slot!(game, Beetom[E].var_C = (0xa8ba24i32) as u16);
-        slot!(game, Beetom[E].var_00 = addr_kBeetom_Ilist_B6F2 as u16);
-        Beetom_Func_1(game);
-    };
-    [11057423] Beetom_Func_12 [] {
-        slot!(game, Beetom[E].var_B = slot!(game, Beetom[E].var_04));
-        slot!(game, Beetom[E].var_00 = addr_kBeetom_Ilist_B708 as u16);
-        slot!(game, Beetom[E].var_C = (0xa8bc5ai32) as u16);
-        slot!(game, Beetom[E].var_09 = 1);
-        if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) != 0 {
-            slot!(game, Beetom[E].var_00 = addr_kBeetom_Ilist_B6AC as u16);
-            slot!(game, Beetom[E].var_C = (0xa8bc26i32) as u16);
-            slot!(game, Beetom[E].var_09 = 0);
-        }
-        Beetom_Func_1(game);
-        slot!(game, Beetom[E].var_05 = 0);
-    };
-    [11057490] Beetom_Func_13 [] {
-        slot!(game, Beetom[E].var_00 = addr_kBeetom_Ilist_B6CC as u16);
-        Beetom_Func_1(game);
-        slot!(game, Beetom[E].var_C = (0xa8bcf8i32) as u16);
-    };
-    [11057510] Beetom_Func_14 [] {
-        slot!(game, Beetom[E].var_00 = addr_kBeetom_Ilist_B728 as u16);
-        Beetom_Func_1(game);
-        slot!(game, Beetom[E].var_C = (0xa8bd42i32) as u16);
-    };
-    [11057530] Beetom_Func_15 [] {
-        slot!(game, Beetom[E].var_00 = addr_kBeetom_Ilist_B696 as u16);
-        if slot!(game, Beetom[E].var_09) != 0 {
-            slot!(game, Beetom[E].var_00 = addr_kBeetom_Ilist_B6F2 as u16);
-        }
-        Beetom_Func_1(game);
-        slot!(game, Beetom[E].var_05 = 0);
-        slot!(game, Beetom[E].var_C = (0xa8bd9di32) as u16);
-    };
-    [11057570] Beetom_Func_16 [] {
-        slot!(game, Beetom[E].var_B = 0);
-        slot!(game, Beetom[E].var_C = (0xa8bdc5i32) as u16);
-    };
-    [11057586] Beetom_Func_17 [] {
-        slot!(game, Beetom[E].var_D, |old| old.wrapping_sub(1));
-        if (slot!(game, Beetom[E].var_D) & 0x8000) != 0 {
-            slot!(game, Beetom[E].var_C = (0xa8b814i32) as u16);
-        }
-    };
-    Beetom_Func_34 [] {
-        if word!(game.joypad1_lastkeys) != slot!(game, Beetom[E].var_F) {
-            slot!(game, Beetom[E].var_F = word!(game.joypad1_lastkeys));
-            slot!(game, Beetom[E].var_E, |old| old.wrapping_sub(1));
-        }
-    };
-    [11058424] Beetom_Func_32 [] {
-        if slot!(game, Beetom[E].var_E) != 0 {
-            slot!(game, Beetom[E].base.x_pos = word!(game.samus_x_pos));
-            slot!(game, Beetom[E].base.y_pos = (word!(game.samus_y_pos)).wrapping_sub(4));
-            Beetom_Func_34(game);
-        } else {
-            if ({ let (actor, amount) = (word!(game.cur_enemy_index), ((16u32) << 16 | 0u16 as u32) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
-            {
-                slot!(game, Beetom[E].var_09 = 1);
-                ({ let (actor, amount) = (word!(game.cur_enemy_index), (words!((-32i32, 0u16))) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 });
-            }
-            slot!(game, Beetom[E].var_08 = 0);
-            slot!(game, Beetom[E].var_C = (0xa8b9a2i32) as u16);
-        };
-    };
-    [11058498] Beetom_Func_33 [] {
-        if slot!(game, Beetom[E].var_E) != 0 {
-            slot!(game, Beetom[E].base.x_pos = word!(game.samus_x_pos));
-            slot!(game, Beetom[E].base.y_pos = (word!(game.samus_y_pos)).wrapping_sub(4));
-            Beetom_Func_34(game);
-        } else {
-            if ({ let (actor, amount) = (word!(game.cur_enemy_index), (words!((-16i32, 0u16))) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
-            {
-                slot!(game, Beetom[E].var_09 = 0);
-                ({ let (actor, amount) = (word!(game.cur_enemy_index), ((32u32) << 16 | 0u16 as u32) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 });
-            }
-            slot!(game, Beetom[E].var_08 = 0);
-            slot!(game, Beetom[E].var_C = (0xa8b9a2i32) as u16);
-        };
-    };
-    Beetom_Main [] {
-        CallBeetomFunc(((slot!(game, Beetom[E].var_C)) as u32) | (0xa80000u32), game);
-    };
-    Beetom_Touch [] {
-        if slot!(game, Beetom[E].var_08) == 0 {
-            if slot!(game, Beetom[E].var_09) != 0 {
-                slot!(game, Beetom[E].var_C = (0xa8b966i32) as u16);
-            } else {
-                slot!(game, Beetom[E].var_C = (0xa8b952i32) as u16);
-            }
-            slot!(game, Beetom[E].var_08 = 1);
-            slot!(game, Beetom[E].var_E = 64);
-            slot!(game, Beetom[E].base.layer = 2);
-            slot!(game, Beetom[E].var_06 = (word!(game.samus_x_pos)).wrapping_sub(slot!(game, Beetom[E].base.x_pos)));
-            slot!(game, Beetom[E].var_07 = (word!(game.samus_y_pos)).wrapping_sub(slot!(game, Beetom[E].base.y_pos)));
-        }
-        let apply_touch_damage: bool = (word!(game.samus_contact_damage_index) != 0)
-            || ({
-                if (word!(game.random_enemy_counter) & 7) == 7
-                    && word!(game.samus_health) as i32 - 30i32 & 0x8000 == 0
-                {
-                    QueueSfx3_Max6(0x2d, game);
-                }
-                (slot!(game, Beetom[E].base.frame_counter) & 0x3f) == 63
-            });
-        if apply_touch_damage {
-            Enemy_NormalTouchAI_A8(game);
-            word! { game, 0; samus_invincibility_timer, samus_knockback_timer }
-        };
-    };
-    @forward [pub unsafe fn (game: &mut Game)];
-    [11057287]
-    Beetom_Func_8 => { crate::verify_probe::hit("hop.Beetom_Func_8"); begin_beetom_hop(false, 0xba84, addr_kBeetom_Ilist_B6AC as u16, game) };
-    [11057321]
-    Beetom_Func_9 => { crate::verify_probe::hit("hop.Beetom_Func_9"); begin_beetom_hop(false, 0xbab7, addr_kBeetom_Ilist_B708 as u16, game) };
-    [11057355]
-    Beetom_Func_10 => { crate::verify_probe::hit("hop.Beetom_Func_10"); begin_beetom_hop(true, 0xbb55, addr_kBeetom_Ilist_B6AC as u16, game) };
-    [11057389]
-    Beetom_Func_11 => { crate::verify_probe::hit("hop.Beetom_Func_11"); begin_beetom_hop(true, 0xbb88, addr_kBeetom_Ilist_B708 as u16, game) };
-    @forward [pub unsafe fn (game: &mut Game)];
-    [11057601]
-    Beetom_Func_18 => { crate::verify_probe::hit("hop.Beetom_Func_18"); walk_beetom::<true>(game) };
-    [11057700]
-    Beetom_Func_19 => { crate::verify_probe::hit("hop.Beetom_Func_19"); walk_beetom::<false>(game) };
-    @forward [pub unsafe fn (game: &mut Game)];
-    [11057796]
-    Beetom_Func_20 => { crate::verify_probe::hit("hop.Beetom_Func_20"); move_beetom_hop(Beetom_Func_22, Beetom_Func_23, -16384, game) };
-    [11057847]
-    Beetom_Func_21 => { crate::verify_probe::hit("hop.Beetom_Func_21"); move_beetom_hop(Beetom_Func_22, Beetom_Func_23, 16384, game) };
-    [11058005]
-    Beetom_Func_24 => { crate::verify_probe::hit("hop.Beetom_Func_24"); move_beetom_hop(Beetom_Func_26, Beetom_Func_27, -16384, game) };
-    [11058056]
-    Beetom_Func_25 => { crate::verify_probe::hit("hop.Beetom_Func_25"); move_beetom_hop(Beetom_Func_26, Beetom_Func_27, 16384, game) };
-    [11058214]
-    Beetom_Func_28 => { crate::verify_probe::hit("hop.Beetom_Func_28"); move_beetom_hop(Beetom_Func_30, Beetom_Func_31, -196608, game) };
-    [11058266]
-    Beetom_Func_29 => { crate::verify_probe::hit("hop.Beetom_Func_29"); move_beetom_hop(Beetom_Func_30, Beetom_Func_31, 196608, game) };
 }
 pub unsafe fn MaridiaFloater_Func_1(k: u16, game: &mut Game) {
     {
@@ -2782,16 +2386,6 @@ crate::game::callback_dispatch! {
     [11056140] NorfairLavaMan_Shot [] {
         actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
         NorfairLavaMan_Common(game);
-    };
-    [11058860] Beetom_Shot [] {
-        Enemy_NormalShotAI_A8(game);
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        if slot!(game, Beetom[E].base.frozen_timer) != 0
-            && (slot!(game, Beetom[E].var_C) as i32 == 0xa8bd42 & 0xffff || slot!(game, Beetom[E].var_C) as i32 == 0xa8bcf8 & 0xffff)
-        {
-            slot!(game, Beetom[E].var_C = (0xa8b97ai32) as u16);
-        }
-        slot!(game, Beetom[E].var_08 = 0);
     };
     [11059657] MaridiaFloater_Init [] {
         let E: i32 = word!(game.cur_enemy_index) as i32;
