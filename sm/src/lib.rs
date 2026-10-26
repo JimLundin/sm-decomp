@@ -456,6 +456,7 @@ pub mod game {
     pub(crate) mod erratic_fireball;
     pub(crate) mod fire_geysers;
     pub(crate) mod flies;
+    pub(crate) mod ground_patrol;
     pub(crate) mod hopping_blobs;
     pub(crate) mod lava_jumper;
     pub(crate) mod lava_seahorse_pair;
@@ -480,7 +481,6 @@ pub mod game {
     pub mod sm_aa;
     pub mod sm_b3;
     pub(crate) mod space_pirates;
-    pub(crate) mod spike_plant;
     pub(crate) mod spikey_platforms;
     pub mod sprite_objects;
     pub mod waver;

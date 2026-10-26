@@ -2,6 +2,7 @@ use crate::game::actors;
 use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
 use crate::game::actors::api as actor_api;
 use crate::game::enemy_script::EnemyScript;
+use crate::game::ground_patrol::{self, Kind as PatrolKind};
 pub use crate::game::prelude::*;
 use crate::game::rippers::{self, Kind};
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
@@ -62,20 +63,6 @@ static off_A2A3D3: [Func_V; 7] = callback_table! { nonnull Func_V;
     MaridiaSpikeyShell_1, MaridiaSpikeyShell_2, MaridiaSpikeyShell_3, MaridiaSpikeyShell_4,
     MaridiaSpikeyShell_5, MaridiaSpikeyShell_6, MaridiaSpikeyShell_7,
 };
-pub unsafe fn MaridiaSpikeyShell_8(k: u16, game: &mut Game) {
-    unsafe {
-        game.next_random();
-        let E = Get_MaridiaSpikeyShell(k as i32, game);
-        if ((byte!((*E).base.frame_counter; 0)).wrapping_add((word!(game.random_number)) as u8))
-            as i32
-            - 6i32
-            & 0x8000
-            != 0
-        {
-            (*E).var_E = 3;
-        }
-    }
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallMaridiaLargeSnailFunc(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -346,20 +333,6 @@ crate::game::callback_dispatch! {
         enemy_instruction! {[(*E).base]; instruction = addr_kMaridiaSpikeyShell_Ilist_A3BD as u16, timer = 1}
         (*E).base.timer = 0;
     };
-    MaridiaSpikeyShell_3 [] {
-        words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_C));
-        if (((*E).base.x_pos) as i16).wrapping_sub(((*E).var_01) as i16) < 0 {
-            (*E).var_E = (*E).var_E.wrapping_sub(1);
-        }
-        MaridiaSpikeyShell_8(word!(game.cur_enemy_index), game);
-    };
-    MaridiaSpikeyShell_4 [] {
-        words!((*E).base, x_pos, x_subpos += words!((*E), var_B, var_A));
-        if (((*E).base.x_pos) as i16).wrapping_sub(((*E).var_02) as i16) >= 0 {
-            (*E).var_E = 0;
-        }
-        MaridiaSpikeyShell_8(word!(game.cur_enemy_index), game);
-    };
     MaridiaSpikeyShell_5 [] {
         let v1: u16 = ((*E).var_00).wrapping_sub(1);
         (*E).var_00 = v1;
@@ -398,6 +371,9 @@ crate::game::callback_dispatch! {
     [10661995] Flies_Init [] { crate::game::flies::initialize(game); };
     [10666562] NorfairRio_Init [] { crate::game::norfair_rio::initialize(false, game); };
     [10667763] LowerNorfairRio_Init [] { crate::game::norfair_rio::initialize(true, game); };
+    @forward [pub fn (game: &mut Game)];
+    MaridiaSpikeyShell_3 => ground_patrol::advance(PatrolKind::Shell, false, game);
+    MaridiaSpikeyShell_4 => ground_patrol::advance(PatrolKind::Shell, true, game);
     @forward [pub unsafe fn (game: &mut Game)];
     [10662175] Flies_Main => update_randomized_pre_instruction(game);
     [10665682] NorfairLavajumpingEnemy_Main => update_randomized_pre_instruction(game);
@@ -424,7 +400,7 @@ crate::game::callback_dispatch! {
         10654337 => [crate::game::maridia_turtles::touch(false, game)];
         10654367 => [crate::game::maridia_turtles::touch(true, game)];
         10654479 => crate::game::maridia_turtles::shot;
-        10657608 => crate::game::spike_plant::initialize;
+        10657608 => ground_patrol::initialize_plant;
         10652077 => crate::game::mini_crocomire::initialize;
         10651420 => crate::game::goofball::initialize;
         10651548 => crate::game::goofball::advance;
@@ -475,7 +451,7 @@ crate::game::callback_dispatch! {
         10654919 => [crate::game::maridia_turtles::instruction(0x94c7, j, game)];
         10654929 => [{ QueueSfx2_Max6(0x3a, game); j }];
         10657578 => [{ QueueSfx2_Max6(0x34, game); j }];
-        10657941 => [{ crate::game::spike_plant::resume(k, game); j }];
+        10657941 => [{ ground_patrol::resume_plant(k, game); j }];
         10657959 => [crate::game::enemy_projectiles::spawn_scripted(0xdafe, j, game)];
         10652030 => [crate::game::enemy_projectiles::spawn_scripted(0xdbf2, j, game)];
         10652048 => [crate::game::mini_crocomire::resume(false, j, game)];
@@ -587,8 +563,8 @@ crate::game::callback_dispatch! {
     @external {
         10675796 | 10675885 | 10675953 | 10676020 | 10676041
             => [crate::game::lava_seahorse_pair::phase(k, ea as u16, game)];
-        10657722 => [crate::game::spike_plant::patrol(false, game)];
-        10657772 => [crate::game::spike_plant::patrol(true, game)];
+        10657722 => [ground_patrol::advance(PatrolKind::Plant, false, game)];
+        10657772 => [ground_patrol::advance(PatrolKind::Plant, true, game)];
         10652227 => [crate::game::mini_crocomire::patrol(false, game)];
         10652252 => [crate::game::mini_crocomire::patrol(true, game)];
         10659852 => [crate::game::gunship::phase(k, 0xa80c, game)];

@@ -1,9 +1,14 @@
-//! Spike plants share their patrol and the idle/firing animation variants.
+//! Bounded patrol shared by spike plants and Maridia spikey shells.
 #![forbid(unsafe_code)]
 use crate::game::actors::access::{AccessMode::Native, ActorAccess, ActorKey as Key};
 use crate::game::enemy_projectiles::host::Effects;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+
+pub(crate) enum Kind {
+    Plant,
+    Shell,
+}
 
 fn selected(runtime: &Runtime<'_>) -> Key {
     Key::from_legacy(runtime.word(0xe54))
@@ -23,7 +28,7 @@ fn animate(runtime: &mut Runtime<'_>, firing: bool) {
         );
     });
 }
-pub(crate) fn initialize(game: &mut Game) {
+pub(crate) fn initialize_plant(game: &mut Game) {
     let mut runtime = Runtime::new(game);
     let key = selected(&runtime);
     runtime.edit_actor(key, Native, |actor| actor.spritemap = 0x804d);
@@ -48,7 +53,8 @@ pub(crate) fn initialize(game: &mut Game) {
         runtime.edit_actor(key, Native, |actor| actor.variables[variable] = value);
     }
 }
-pub(crate) fn patrol(right: bool, game: &mut Game) {
+pub(crate) fn advance(kind: Kind, right: bool, game: &mut Game) {
+    let shell = matches!(kind, Kind::Shell);
     let mut runtime = Runtime::new(game);
     let raw = runtime.word(0xe54);
     let key = Key::from_legacy(raw);
@@ -58,23 +64,38 @@ pub(crate) fn patrol(right: bool, game: &mut Game) {
         actor.x.advance(speed as i32);
         actor.x.whole
     });
-    let bound = runtime.native_word(0x7800 + usize::from(raw) + if right { 2 } else { 0 });
+    let bound_offset = 2 * (usize::from(right) + usize::from(shell));
+    let bound = runtime.native_word(0x7800 + usize::from(raw) + bound_offset);
     if (x.wrapping_sub(bound) as i16 >= 0) == right {
         runtime.edit_actor(key, Native, |actor| {
-            actor.pre_instruction = if right { 0x9fba } else { 0x9fec };
-            actor.variables[4] = u16::from(!right);
+            if shell {
+                actor.variables[4] = if right {
+                    0
+                } else {
+                    actor.variables[4].wrapping_sub(1)
+                };
+            } else {
+                actor.pre_instruction = if right { 0x9fba } else { 0x9fec };
+                actor.variables[4] = u16::from(!right);
+            }
         });
     }
+    // Shell captures its RNG target before the effect; Plant selects afterward.
+    let chosen = shell.then(|| selected(&runtime));
     runtime.next_random();
-    let key = selected(&runtime);
+    let key = chosen.unwrap_or_else(|| selected(&runtime));
     let chance = runtime.resolve_actor(key, Native).frame.to_ne_bytes()[0]
         .wrapping_add(runtime.word(0x5e5) as u8);
-    if chance < 3 {
-        runtime.edit_actor(key, Native, |actor| actor.pre_instruction = 0xa01b);
-        animate(&mut runtime, true);
+    if chance < if shell { 6 } else { 3 } {
+        if shell {
+            runtime.edit_actor(key, Native, |actor| actor.variables[4] = 3);
+        } else {
+            runtime.edit_actor(key, Native, |actor| actor.pre_instruction = 0xa01b);
+            animate(&mut runtime, true);
+        }
     }
 }
-pub(crate) fn resume(k: u16, game: &mut Game) {
+pub(crate) fn resume_plant(k: u16, game: &mut Game) {
     Runtime::new(game).edit_actor(Key::from_legacy(k), Native, |actor| {
         actor.pre_instruction = if actor.variables[4] != 0 {
             0x9fec

@@ -120,8 +120,8 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/scanline_irq.rs"),
     ),
     (
-        "sm/src/game/spike_plant.rs",
-        include_bytes!("game/spike_plant.rs"),
+        "sm/src/game/ground_patrol.rs",
+        include_bytes!("game/ground_patrol.rs"),
     ),
     (
         "sm/src/game/hopping_blobs.rs",
