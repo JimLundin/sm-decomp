@@ -92,3 +92,4 @@ pub(in crate::game) mod wrecked_ship_ghost;
 pub(in crate::game) mod wrecked_ship_orbs;
 pub(in crate::game) mod wrecked_ship_robots;
 pub(in crate::game) mod wrecked_ship_spark;
+pub(crate) mod yapping_maw;

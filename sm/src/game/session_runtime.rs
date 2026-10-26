@@ -165,6 +165,13 @@ impl<'g> Runtime<'g> {
     pub(crate) fn inputs(&self) -> &ExternalInputs {
         &self.inputs
     }
+    // Legacy aliases observe the raw result before Drop republishes Session.
+    pub(crate) fn update_maw_visibility(&mut self, actor: i32) {
+        use crate::game::enemy_layouts::EnemyLayout104 as Maw;
+        let outside = u16::from(crate::game::actors::api::current_outside_screen(&*self));
+        let game = &mut *self.game;
+        crate::ram_map::slot!(game, Maw[actor].var_36 = outside);
+    }
     pub(crate) fn native_word(&self, at: usize) -> u16 {
         u16::from_ne_bytes([self.byte(at), self.byte(at + 1)])
     }
@@ -643,8 +650,18 @@ crate::game::callback_dispatch! {
         11048752 => crate::game::actors::fune::advance;
         11049710 => crate::game::actors::wrecked_ship_ghost::initialize;
         11049788 => crate::game::actors::wrecked_ship_ghost::advance;
-        11051336 => sm_a8::YappingMaw_Init;
-        11051537 => sm_a8::YappingMaw_Main; 11052953 => sm_a8::YappingMaw_Touch;
+        11051336 => crate::game::actors::yapping_maw::initialize;
+        11051537 => [{
+            if !crate::game::actors::yapping_maw::advance(game, |operand, game| {
+                crate::rtl::WriteReg(crate::rtl::WRMPYA as u16, operand, game);
+            }) {
+                crate::rtl::Unreachable(game);
+            }
+            crate::game::actors::yapping_maw::update_segments(game);
+        }];
+        11052953 => crate::game::actors::yapping_maw::touch;
+        11052989 => crate::game::actors::yapping_maw::shot;
+        11053109 => crate::game::actors::yapping_maw::frozen;
         11053894 => crate::game::actors::kago::initialize;
         11053941 => crate::game::actors::kago::advance; 11053955 => crate::game::actors::kago::shot;
         11057014 => crate::game::actors::beetom::initialize;
@@ -1008,6 +1025,7 @@ crate::game::callback_dispatch! {
         0xa50000..=0xa5ffff => [sm_a5::DispatchEnemyInstr(ea, k, j, game)];
         0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyInstr(ea, k, j, game)];
         0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyInstr(ea, k, j, game)];
+        11051207 | 11051225 | 11051243 | 11051261 | 11051279 | 11051297 | 11051315 => [crate::game::actors::yapping_maw::instruction(ea, j, game)];
         0xa80000..=0xa8ffff => [sm_a8::DispatchEnemyInstr(ea, k, j, game)];
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyInstr(ea, k, j, game)];
         0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyInstr(ea, k, j, game)];

@@ -3,7 +3,6 @@ use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::api as actor_api;
 use crate::game::enemy_script::EnemyScript;
 pub use crate::game::prelude::*;
-use crate::game::session_runtime::correct_previous_position;
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
 use crate::ram_map::slot;
 
@@ -11,8 +10,6 @@ pub use crate::game::constants::bank_86::*;
 
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
 use crate::game::music::QueueSfx2_Max6;
-use crate::game::session_runtime::player_command as CallSomeSamusCode;
-use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
 
 pub use crate::types::Consts_A8;
 
@@ -22,21 +19,14 @@ crate::game::constants::typed_constants! { Consts_A8;
     addr_kNorfairLavaMan_Ilist_AD50 = 44368, addr_kNorfairLavaMan_Ilist_AD3C = 44348,
     addr_kNorfairLavaMan_Ilist_AD0C = 44300, addr_kNorfairLavaMan_Ilist_ACDE = 44254,
     addr_kNorfairLavaMan_Ilist_ACB0 = 44208, addr_kNorfairLavaMan_Ilist_AC9C = 44188,
-    addr_kYappingMaw_Ilist_A079 = 41081, addr_off_A8A061 = 41057,
-    addr_kYappingMaw_Ilist_A05B = 41051, addr_kYappingMaw_Ilist_A03D = 41021,
-    addr_off_A8A025 = 40997, addr_kYappingMaw_Ilist_A01F = 40991,
-    addr_kYappingMaw_Ilist_9FC7 = 40903, addr_kYappingMaw_Ilist_9F6F = 40815,
 }
 crate::type_aliases! {
     pub Enemy_NorfairLavaMan = crate::game::enemy_layouts::EnemyLayout40;
 }
 
-pub type Enemy_YappingMaw = crate::game::enemy_layouts::EnemyLayout104;
-
 const RomPtr_A8: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa8>;
 crate::game::constants::typed_constants! { i32;
-    fnnullsub_152 = 0x90e90e, fnSamus_InputHandler_E913 = 0x90e913,
-    fnSamus_InputHandler_E91D = 0x90e91d, fnnullsub_170_A8 = 0xa8804c,
+    fnnullsub_170_A8 = 0xa8804c,
     fnNorfairLavaMan_Func_6 = 0xa8b0b2,
     fnNorfairLavaMan_Func_7 = 0xa8b11a, fnNorfairLavaMan_Func_8 = 0xa8b175,
     fnsub_A8B193 = 0xa8b193, fnNorfairLavaMan_Func_9 = 0xa8b1b8,
@@ -47,293 +37,8 @@ crate::game::constants::typed_constants! { i32;
 }
 crate::ram_map::ram_pointer_functions! {
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
-    Get_YappingMaw(o: i32) -> Enemy_YappingMaw = [0xf78, o as isize];
 }
-type YappingMaw = Enemy_YappingMaw;
 type NorfairLavaMan = Enemy_NorfairLavaMan;
-crate::game::callback_dispatch! {
-    pub unsafe fn CallYappingMawFunc(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    @prefix { let E = Get_YappingMaw(word!(game.cur_enemy_index) as i32, game); };
-    YappingMaw_Init [] {
-        let sprite_owner = word!(game.cur_enemy_index);
-        (*E).var_0C = (*E).base.x_pos;
-        (*E).var_0D = (*E).base.y_pos;
-        set_fields! {[(*E)], 0; var_00, var_01, var_02, var_03, var_04, var_05, var_06, var_07, var_30}
-        (*E).var_F = (*E).parameter_1;
-        (*E).var_E = 64;
-        (*E).base.current_instruction = addr_kYappingMaw_Ilist_9F6F as u16;
-        let mut R36: u16 = 57;
-        let mut R34: u16 = 8;
-        if (*E).parameter_2 == 0 {
-            (*E).base.current_instruction = addr_kYappingMaw_Ilist_9FC7 as u16;
-            R36 = 56;
-            R34 = -8i32 as u16;
-        }
-        (*E).base.instruction_timer = 1;
-        (*E).base.timer = 0;
-        (*E).var_A = (0xa8a235i32) as u16;
-        (*E).var_45 = ((*E).base.palette_index) & (0xe00u16);
-        let mut v1: i16 = 3;
-        (*E).var_44 = 3;
-        do_until! { v1 < 0 ;
-    SpawnEprojWithGfx(
-        v1 as u16,
-        word!(game.cur_enemy_index),
-        addr_kEproj_YappingMawsBody as u16,
-        game,
-    );
-    v1 = (((*E).var_44) as i16).wrapping_sub(1);
-    (*E).var_44 = v1 as u16;
-}
-        let v3: u16 = ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
-        (*E).var_47 = v3;
-        let sprite = create_sprite(
-            (*E).base.x_pos,
-            (R34).wrapping_add((*E).base.y_pos),
-            R36,
-            v3,
-            game,
-        );
-        slot!(game, YappingMaw[sprite_owner as i32].var_46 = sprite);
-    };
-    YappingMaw_Main [] {
-        (*E).var_35 = (*E).var_35.wrapping_sub(1);
-        (*E).var_36 = u16::from(actor_api::current_outside_screen(&Runtime::new(game)));
-        CallYappingMawFunc((((*E).var_A) as u32) | (0xa80000u32), game);
-        crate::game::enemy_projectiles::update_maw_segment(3, game);
-        crate::game::enemy_projectiles::update_maw_segment(2, game);
-        crate::game::enemy_projectiles::update_maw_segment(1, game);
-        crate::game::enemy_projectiles::update_maw_segment(0, game);
-    };
-    [11051573] YappingMaw_Func_1 [] {
-        let pair: PairU16 = { let (origin, target) = (Point16U {
-                x: (*E).base.x_pos,
-                y: (*E).base.y_pos,
-            }, Point16U {
-                x: word!(game.samus_x_pos),
-                y: word!(game.samus_y_pos),
-            }); { let result = actor_api::distance_and_direction(&mut Runtime::new(game), crate::game::session::Point { x: origin.x, y: origin.y }, crate::game::session::Point { x: target.x, y: target.y }); crate::types::PairU16 { k: result.distance, j: result.direction } } };
-        let v2: u16 = abs16(pair.k);
-        (*E).var_08 = v2;
-        if v2 as i32 - 32i32 & 0x8000 != 0 {
-            (*E).var_35 = 48;
-        } else if ((v2) as i16).wrapping_sub(((*E).var_F) as i16) < 0 {
-            if (*E).var_08 as i32 - 64i32 & 0x8000 == 0 {
-                (*E).var_08 = 64;
-            }
-            (*E).var_0A = pair.j;
-            (*E).var_A = (0xa8a28ci32) as u16;
-        }
-    };
-    [11051660] YappingMaw_Func_2 [] {
-        set_fields! {[(*E)], 0; var_B, var_C, var_D}
-        (*E).var_09 = (*E).var_08 >> 1;
-        let v1: u16 = ((64u8).wrapping_sub(((*E).var_0A) as u8)) as u16;
-        (*E).var_0B = v1;
-        if v1 as i32 - 128i32 & 0x8000 != 0 {
-            (*E).var_2F = 0;
-        } else {
-            (*E).var_2F = 1;
-        }
-        YappingMaw_Func_3(game);
-        let v2: u16 = (2 * (((((*E).var_0A) as u8).wrapping_add(16)) as i32 >> 5)) as u16;
-        (*E).var_34 = v2;
-        enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa8a097, (v2 >> 1) as isize), timer = 1}
-        (*E).base.timer = 0;
-        (*E).var_32 = *((rom_ptr!(game, u16; 0xa8a0a7) as *mut u8)
-            .offset(((2u16).wrapping_mul(v2)) as i32 as isize) as *mut u16);
-        (*E).var_33 = *((rom_ptr!(game, u16; 0xa8a0a9) as *mut u8)
-            .offset(((2u16).wrapping_mul(v2)) as i32 as isize) as *mut u16);
-        (*E).var_A = (0xa8a445i32) as u16;
-    };
-    YappingMaw_Func_3 [] {
-        (*E).var_0E = YappingMaw_Func_16(0x80, (*E).var_09, game);
-        (*E).var_0F = YappingMaw_Func_17(0x80, (*E).var_09 >> 1, game);
-    };
-    YappingMaw_Func_4 [] {
-        let varE32: u16 = (*E).var_00;
-        (*E).var_10 = YappingMaw_Func_16(0, varE32, game);
-        (*E).var_11 = YappingMaw_Func_17(0, varE32, game);
-        (*E).var_27 = (YappingMaw_Func_16((*E).var_0B, varE32, game)).wrapping_sub((*E).var_10);
-        (*E).var_28 = (YappingMaw_Func_17((*E).var_0B, varE32, game)).wrapping_sub((*E).var_11);
-    };
-    YappingMaw_Func_5 [] {
-        let varE32: u16 = (*E).var_02;
-        (*E).var_10 = YappingMaw_Func_16(0, varE32, game);
-        (*E).var_11 = YappingMaw_Func_17(0, varE32, game);
-        (*E).var_29 = (YappingMaw_Func_16((*E).var_0B, varE32, game)).wrapping_sub((*E).var_10);
-        (*E).var_2A = (YappingMaw_Func_17((*E).var_0B, varE32, game)).wrapping_sub((*E).var_11);
-    };
-    YappingMaw_Func_6 [] {
-        let varE32: u16 = (*E).var_04;
-        (*E).var_10 = YappingMaw_Func_16(0, varE32, game);
-        (*E).var_11 = YappingMaw_Func_17(0, varE32, game);
-        (*E).var_2B = (YappingMaw_Func_16((*E).var_0B, varE32, game)).wrapping_sub((*E).var_10);
-        (*E).var_2C = (YappingMaw_Func_17((*E).var_0B, varE32, game)).wrapping_sub((*E).var_11);
-    };
-    YappingMaw_Func_7 [] {
-        let varE32: u16 = (*E).var_06;
-        (*E).var_10 = YappingMaw_Func_16(0, varE32, game);
-        (*E).var_11 = YappingMaw_Func_17(0, varE32, game);
-        (*E).var_2D = (YappingMaw_Func_16((*E).var_0B, varE32, game)).wrapping_sub((*E).var_10);
-        (*E).var_2E = (YappingMaw_Func_17((*E).var_0B, varE32, game)).wrapping_sub((*E).var_11);
-    };
-    [11052101] YappingMaw_Func_8 [] {
-        let r20: u16 = (*E).var_B >> 2;
-        if (*E).var_2F != 0 {
-            (*E).var_21 = (128u16).wrapping_add(r20);
-            (*E).var_22 = (128 + r20 as i32 * 2) as u16;
-            (*E).var_23 = (128 + r20 as i32 * 3) as u16;
-            (*E).var_24 = (128 + r20 as i32 * 4) as u16;
-        } else {
-            (*E).var_21 = (128u16).wrapping_sub(r20);
-            (*E).var_22 = (128 - r20 as i32 * 2) as u16;
-            (*E).var_23 = (128 - r20 as i32 * 3) as u16;
-            (*E).var_24 = (128 - r20 as i32 * 4) as u16;
-        }
-        let mut varE32: u16 = (*E).var_09;
-        (*E).var_00 = (YappingMaw_Func_16((*E).var_21, varE32, game)).wrapping_sub((*E).var_0E);
-        (*E).var_02 = (YappingMaw_Func_16((*E).var_22, varE32, game)).wrapping_sub((*E).var_0E);
-        (*E).var_04 = (YappingMaw_Func_16((*E).var_23, varE32, game)).wrapping_sub((*E).var_0E);
-        (*E).var_06 = (YappingMaw_Func_16((*E).var_24, varE32, game)).wrapping_sub((*E).var_0E);
-        varE32 = (*E).var_09 >> 1;
-        (*E).var_01 = (YappingMaw_Func_17((*E).var_21, varE32, game)).wrapping_sub((*E).var_0F);
-        (*E).var_03 = (YappingMaw_Func_17((*E).var_22, varE32, game)).wrapping_sub((*E).var_0F);
-        (*E).var_05 = (YappingMaw_Func_17((*E).var_23, varE32, game)).wrapping_sub((*E).var_0F);
-        (*E).var_07 = (YappingMaw_Func_17((*E).var_24, varE32, game)).wrapping_sub((*E).var_0F);
-        YappingMaw_Func_4(game);
-        YappingMaw_Func_5(game);
-        YappingMaw_Func_6(game);
-        YappingMaw_Func_7(game);
-        (*E).var_00 = ((*E).var_00).wrapping_add((*E).var_27);
-        (*E).var_01 = ((*E).var_01).wrapping_add((*E).var_28);
-        (*E).var_02 = ((*E).var_02).wrapping_add((*E).var_29);
-        (*E).var_03 = ((*E).var_03).wrapping_add((*E).var_2A);
-        (*E).var_04 = ((*E).var_04).wrapping_add((*E).var_2B);
-        (*E).var_05 = ((*E).var_05).wrapping_add((*E).var_2C);
-        (*E).var_06 = ((*E).var_06).wrapping_add((*E).var_2D);
-        (*E).var_07 = ((*E).var_07).wrapping_add((*E).var_2E);
-        (*E).base.x_pos = ((*E).var_06).wrapping_add((*E).var_0C);
-        (*E).base.y_pos = ((*E).var_07).wrapping_add((*E).var_0D);
-        YappingMaw_Func_9(word!(game.cur_enemy_index), game);
-        if (*E).var_B & 0x8000 == 0 {
-            if (*E).var_B as i32 - 128i32 & 0x8000 == 0 {
-                (*E).var_B = 128;
-                (*E).var_C = 0;
-                (*E).var_D = ((*E).var_D).wrapping_add(4);
-            }
-        } else {
-            (*E).var_A = (0xa8a68ai32) as u16;
-            (*E).var_35 = 48;
-            if (*E).var_34 == 4 {
-                (*E).base.current_instruction = addr_kYappingMaw_Ilist_A01F as u16;
-            } else if (*E).var_34 == 12 {
-                (*E).base.current_instruction = addr_kYappingMaw_Ilist_A03D as u16;
-            } else {
-                (*E).base.current_instruction = addr_off_A8A025 as u16;
-            }
-            if (*E).parameter_2 == 0 {
-                if (*E).var_34 == 4 {
-                    (*E).base.current_instruction = addr_kYappingMaw_Ilist_A05B as u16;
-                } else {
-                    if (*E).var_34 != 12 {
-                        (*E).base.current_instruction = addr_off_A8A061 as u16;
-                        return;
-                    }
-                    (*E).base.current_instruction = addr_kYappingMaw_Ilist_A079 as u16;
-                }
-            } else {
-                return;
-            }
-        }
-        if (*E).var_30 != 0 {
-            YappingMaw_Func_10(game);
-        }
-    };
-    [11052682] YappingMaw_Func_11 [] {
-        if (*E).var_30 != 0 {
-            YappingMaw_Func_10(game);
-        }
-        (*E).var_E = (*E).var_E.wrapping_sub(1);
-        if ((*E).var_E & 0x8000) != 0 && word!(game.samus_input_handler) as i32 != 0x90e91d & 0xffff {
-            word!(game.samus_input_handler = (0x90e913i32) as u16);
-            (*E).var_30 = 0;
-            (*E).var_35 = 48;
-            (*E).var_E = 64;
-            (*E).var_A = (0xa8a235i32) as u16;
-        }
-    };
-
-
-
-
-    YappingMaw_Touch [] {
-        if ((*E).var_35 & 0x8000) != 0 && (*E).var_30 == 0 {
-            (*E).var_35 = 0;
-            (*E).var_30 = 1;
-            word!(game.samus_input_handler = (0x90e90ei32) as u16);
-        }
-    };
-    YappingMaw_Func_19 [] {
-        let enemy = word!(game.cur_enemy_index);
-        let appearance = (*E).var_45;
-        let handle = (*E).var_46;
-        sprite_effects::maw_appearance(handle, appearance, enemy, game);
-        crate::verify_probe::hit("sprite.maw.appearance");
-    };
-}
-pub unsafe fn YappingMaw_Func_9(k: u16, game: &mut Game) {
-    let E: i32 = k as i32;
-    let v2: i32 = slot!(game, YappingMaw[E].var_D) as i32 >> 1;
-    slot!(
-        game,
-        YappingMaw[E](var_B, var_C) += words!((
-            crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 1) as isize),
-            crate::rtl::rom_table_word!(game, 0xa2838f, v2 as isize)
-        ))
-    );
-    slot!(game, YappingMaw[E].var_D, |old| (old).wrapping_add(8));
-}
-pub unsafe fn YappingMaw_Func_10(game: &mut Game) {
-    CallSomeSamusCode(3, game);
-    let E: i32 = word!(game.cur_enemy_index) as i32;
-    word!(
-        game.samus_x_pos =
-            (slot!(game, YappingMaw[E].var_32)).wrapping_add(slot!(game, YappingMaw[E].base.x_pos))
-    );
-    word!(
-        game.samus_y_pos =
-            (slot!(game, YappingMaw[E].var_33)).wrapping_add(slot!(game, YappingMaw[E].base.y_pos))
-    );
-    correct_previous_position(game);
-}
-pub unsafe fn YappingMaw_Func_16(a: u16, varE32: u16, game: &mut Game) -> u16 {
-    unsafe { YappingMaw_Func_17((a).wrapping_sub(64), varE32, game) }
-}
-pub unsafe fn YappingMaw_Func_17(a: u16, varE32: u16, game: &mut Game) -> u16 {
-    unsafe {
-        let mut r20: u16 = 0;
-        let mut r22: u16 = 0;
-        let mut v1: i16 =
-            crate::rtl::rom_table_word!(game, 0xa0b1c3, -(a as i32) as u8 as isize) as i16;
-        if v1 < 0 {
-            v1 = -(v1 as i32) as i16;
-            r20 = r20.wrapping_add(1);
-        }
-        WriteReg(WRMPYA as u16, byte!(v1; 1), game);
-        if varE32 as u8 != 0 {
-            let prod: u16 = Mult8x8(byte!(v1; 1), varE32 as u8);
-            r22 = (2 * ((prod as i32 & 0xff00) >> 8)) as u16;
-            if r20 != 0 {
-                r22 = (2 * (-(prod as i32) as u16 as i32 >> 8) | 0xff00) as u16;
-            }
-        }
-        r22
-    }
-}
-
 static g_off_A8AF4F: [Func_V; 3] = callback_table! { nonnull Func_V;
     NorfairLavaMan_Func_1, NorfairLavaMan_Func_2, NorfairLavaMan_Func_3,
 };
@@ -470,38 +175,6 @@ crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
-    [11052989] YappingMaw_Shot [] {
-        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        if slot!(game, YappingMaw[E].base.health) != 0 {
-            if slot!(game, YappingMaw[E].base.frozen_timer) != 0 {
-                if word!(game.samus_input_handler) as i32 != 0x90e91d & 0xffff {
-                    word!(game.samus_input_handler = (0x90e913i32) as u16);
-                }
-                slot!(game, YappingMaw[E].var_30 = 0);
-            }
-        } else {
-            *(ram_ptr!(game, u16; 0x1997, slot!(game, YappingMaw[E].var_40) as i32 as isize)) = 0;
-            *(ram_ptr!(game, u16; 0x1997, slot!(game, YappingMaw[E].var_41) as i32 as isize)) = 0;
-            *(ram_ptr!(game, u16; 0x1997, slot!(game, YappingMaw[E].var_42) as i32 as isize)) = 0;
-            *(ram_ptr!(game, u16; 0x1997, slot!(game, YappingMaw[E].var_43) as i32 as isize)) = 0;
-            let sprite = slot!(game, YappingMaw[E].var_46);
-            sprite_effects::retire(sprite, game);
-            if word!(game.samus_input_handler) as i32 != 0x90e91d & 0xffff {
-                word!(game.samus_input_handler = (0x90e913i32) as u16);
-            }
-            slot!(game, YappingMaw[word!(game.cur_enemy_index) as i32].var_30 = 0);
-        };
-    };
-    [11053109] YappingMaw_Frozen [] {
-        Enemy_NormalFrozenAI_A8(game);
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        crate::game::enemy_projectiles::update_maw_palette(slot!(game, YappingMaw[E].var_40), game);
-        crate::game::enemy_projectiles::update_maw_palette(slot!(game, YappingMaw[E].var_41), game);
-        crate::game::enemy_projectiles::update_maw_palette(slot!(game, YappingMaw[E].var_42), game);
-        crate::game::enemy_projectiles::update_maw_palette(slot!(game, YappingMaw[E].var_43), game);
-        YappingMaw_Func_19(game);
-    };
     [11054987] NorfairLavaMan_Init [] {
         let v0: u16 = (2u16).wrapping_mul(
             slot!(game, NorfairLavaMan[word!(game.cur_enemy_index) as i32].parameter_1),
@@ -613,42 +286,6 @@ crate::game::callback_dispatch! {
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11051207] YappingMaw_Instr_2 [jp] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, YappingMaw[E].var_32 = crate::rtl::rom_table_word!(game, 0xa8a0ab, 0));
-        slot!(game, YappingMaw[E].var_33 = crate::rtl::rom_table_word!(game, 0xa8a0ad, 0));
-    };
-    [11051225] YappingMaw_Instr_4 [jp] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, YappingMaw[E].var_32 = crate::rtl::rom_table_word!(game, 0xa8a0c3, 0));
-        slot!(game, YappingMaw[E].var_33 = crate::rtl::rom_table_word!(game, 0xa8a0c5, 0));
-    };
-    [11051243] YappingMaw_Instr_5 [jp] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, YappingMaw[E].var_32 = crate::rtl::rom_table_word!(game, 0xa8a0b3, 0));
-        slot!(game, YappingMaw[E].var_33 = crate::rtl::rom_table_word!(game, 0xa8a0b5, 0));
-    };
-    [11051261] YappingMaw_Instr_7 [jp] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, YappingMaw[E].var_32 = crate::rtl::rom_table_word!(game, 0xa8a0bb, 0));
-        slot!(game, YappingMaw[E].var_33 = crate::rtl::rom_table_word!(game, 0xa8a0bd, 0));
-    };
-    [11051279] YappingMaw_Instr_3 [jp] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, YappingMaw[E].var_32 = crate::rtl::rom_table_word!(game, 0xa8a0a7, 0));
-        slot!(game, YappingMaw[E].var_33 = crate::rtl::rom_table_word!(game, 0xa8a0a9, 0));
-    };
-    [11051297] YappingMaw_Instr_6 [jp] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, YappingMaw[E].var_32 = crate::rtl::rom_table_word!(game, 0xa8a0b7, 0));
-        slot!(game, YappingMaw[E].var_33 = crate::rtl::rom_table_word!(game, 0xa8a0b9, 0));
-    };
-    [11051315] YappingMaw_Instr_1 [jp] {
-        if slot!(game, YappingMaw[word!(game.cur_enemy_index) as i32].var_36) == 0 {
-            QueueSfx2_Max6(0x2f, game);
-        }
-    };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11054610] NorfairLavaMan_Instr_1 [jp.offset(1)] {
         if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) == 0 {
