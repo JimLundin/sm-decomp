@@ -623,24 +623,6 @@ crate::game::callback_dispatch! {
             }
         }
     };
-    [9150249] CinematicFunc_Func1 [] {
-        let v0: bool = (word!(game.demo_timer -= 1, reread) & 0x8000) != 0;
-        let begin_fade: bool = if word!(game.demo_timer) == 0 || v0 {
-            word!(game.cinematic_function = (0x8b9faei32) as u16);
-            true
-        } else {
-            ((word!(game.joypad1_newkeys)
-                & (kButton_B as i32 | kButton_Start as i32 | kButton_A as i32) as u16)
-                != 0)
-                && ({
-                    word!(game.cinematic_function = (0x8b9f52i32) as u16);
-                    true
-                })
-        };
-        if begin_fade {
-            word! { game, 2; screen_fade_delay, screen_fade_counter }
-        };
-    };
     [9150290] CinematicFunc_Func10 [] {
         if advance_cinematic_fade(CinematicFade::SlowOut, game) {
             finish_cinematic_and_clear_effects!(game, 4, game_options_screen_index);
@@ -1651,6 +1633,7 @@ crate::game::callback_dispatch! {
         *ram_ptr!(game; 0x69) = 16;
     };
     @external {
+        9150249 => [crate::game::visual_runtime::advance_title_wait(game)];
         9167461 => [advance_postcredits_samus_message(true, game)];
         9167507 => [advance_postcredits_samus_message(false, game)];
         9164530 => [advance_zebes_destruction_zoom(2, 0xd731, Some(0xd701), game)];

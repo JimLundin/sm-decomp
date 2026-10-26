@@ -2032,6 +2032,19 @@ pub(crate) fn initialize_ending_time_glyph(object: u16, glyph: u8, game: &mut Ga
     place_cinematic_sprite(object, (156 + 8 * u16::from(glyph), 160), 0, game);
 }
 
+pub(crate) fn advance_title_wait(game: &mut Game) {
+    let expired = word!(game.demo_timer -= 1, reread) & 0x8000 != 0;
+    if word!(game.demo_timer) == 0 || expired {
+        word!(game.cinematic_function = 0x9fae);
+    } else {
+        if word!(game.joypad1_newkeys) & 0x9080 == 0 {
+            return;
+        }
+        word!(game.cinematic_function = 0x9f52);
+    }
+    word! { game, 2; screen_fade_delay, screen_fade_counter }
+}
+
 pub(crate) fn initialize_title_sprite(object: u16, variant: usize, game: &mut Game) {
     let (y, palette, effect) =
         [(48, 1024, 0xe194), (81, 512, 0xe198), (196, 2048, 0xe19c)][variant];
