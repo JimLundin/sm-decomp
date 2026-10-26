@@ -1,6 +1,6 @@
 //! Grapple swing placement, rope-length changes and swept block contact.
 use crate::game::actors::api as actor_api;
-use crate::game::music::QueueSfx1_Max15;
+use crate::game::music::{QueueSfx1_Max1, QueueSfx1_Max6, QueueSfx1_Max15};
 use crate::game::player_transitions as pt;
 use crate::game::prelude::*;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
@@ -451,6 +451,161 @@ pub(crate) fn launch_from_swing(game: &mut Game) {
         native(ram_words::samus_x_base_speed) <- value((horizontal >> 16) as u16));
 }
 
+macro_rules! initialize_grapple_endpoints {
+    (
+        $game:ident, $origin_x_table:literal, $pose_index:ident, $origin_y_table:literal,
+        $y_adjustment:ident, $previous_x_table:literal, $previous_y_table:literal $(,)?
+    ) => {
+        word! { $game;
+            grapple_beam_origin_x_offset =
+                crate::rtl::rom_table_word!($game, $origin_x_table, $pose_index as isize);
+            grapple_beam_origin_y_offset =
+                (crate::rtl::rom_table_word!($game, $origin_y_table, $pose_index as isize))
+                    .wrapping_sub($y_adjustment);
+            grapple_beam_end_x_pos =
+                (crate::rtl::rom_table_word!($game, $origin_x_table, $pose_index as isize))
+                    .wrapping_add(word!($game.samus_x_pos));
+            x_pos_of_start_of_grapple_beam = word!($game.grapple_beam_end_x_pos);
+            x_pos_of_start_of_grapple_beam_prevframe =
+                (crate::rtl::rom_table_word!($game, $previous_x_table, $pose_index as isize))
+                    .wrapping_add(word!($game.samus_x_pos));
+            grapple_beam_end_y_pos =
+                (crate::rtl::rom_table_word!($game, $origin_y_table, $pose_index as isize) as i32
+                    + word!($game.samus_y_pos) as i32
+                    - $y_adjustment as i32) as u16;
+            y_pos_of_start_of_grapple_beam = word!($game.grapple_beam_end_y_pos);
+            y_pos_of_start_of_grapple_beam_prevframe =
+                (crate::rtl::rom_table_word!($game, $previous_y_table, $pose_index as isize) as i32
+                    + word!($game.samus_y_pos) as i32
+                    - $y_adjustment as i32) as u16;
+        }
+    };
+}
+
+fn draygon_direction(pose: u16, game: &mut Game) -> u16 {
+    let (toward, down, up, straight) = if pose as i32 == kPose_BE_FaceL_Draygon_Move as i32 {
+        (kButton_Left, 6, 8, 7)
+    } else {
+        (kButton_Right, 3, 1, 2)
+    };
+    if word!(game.joypad1_lastkeys) as i32 & toward as i32 == 0 {
+        return straight;
+    }
+    if word!(game.joypad1_lastkeys) as i32 & kButton_Down as i32 != 0 {
+        return down;
+    }
+    if word!(game.joypad1_lastkeys) as i32 & kButton_Up as i32 != 0 {
+        return up;
+    }
+    straight
+}
+macro_rules! native_pose_parameter {
+    ($game:ident, $offset:literal) => {
+        $game.capture_native_rom().read(
+            crate::rtl::lorom_offset(0x91b629) as usize
+                + 8 * usize::from(word!($game.samus_pose))
+                + $offset,
+        )
+    };
+}
+
+static kIsGrappleBannedForMovementType: [u8; 28] = [
+    0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1,
+];
+#[forbid(unsafe_code)]
+pub(crate) fn cancel_incompatible_pose(game: &mut Game) {
+    if kIsGrappleBannedForMovementType[game.g_ram[0xa1f] as usize] == 0 {
+        if word!(game.grapple_beam_function) as i32 != 0x9bc4f0 & 0xffff
+            && word!(game.grapple_beam_function) as i32 + 0x3882 & 0x8000 != 0
+        {
+            let mut v0: i16 = native_pose_parameter!(game, 3) as i16;
+            if (v0 as u16 & 0xf0) == 0 {
+                if v0 as i32 == word!(game.grapple_beam_direction) as i32 {
+                    return;
+                }
+                if word!(game.grapple_varCF6) != 0 {
+                    QueueSfx1_Max6(7, game);
+                    word!(game.grapple_beam_function = (0x9bc51ei32) as u16);
+                    return;
+                }
+            }
+        } else {
+            return;
+        }
+    }
+    if word!(game.grapple_beam_function) as i32 != 0x9bc4f0 & 0xffff {
+        word!(game.grapple_beam_function = (0x9bc856i32) as u16);
+    }
+}
+
+#[forbid(unsafe_code)]
+pub(crate) fn start_firing(game: &mut Game) {
+    let mut r22: u16 = 0;
+    let mut v0: i32 = 0;
+    if word!(game.samus_pose) as i32 == kPose_F0_FaceR_Draygon_Move as i32
+        || word!(game.samus_pose) as i32 == kPose_BE_FaceL_Draygon_Move as i32
+    {
+        v0 = draygon_direction(word!(game.samus_pose), game) as i32;
+        r22 = 6;
+    } else {
+        r22 = native_pose_parameter!(game, 4) as u16;
+        v0 = native_pose_parameter!(game, 3) as i32;
+        if (v0 & 0xf0) != 0 {
+            word!(game.grapple_beam_function = (0x9bc856i32) as u16);
+            return;
+        }
+    }
+    word!(game.grapple_beam_direction = v0 as u16);
+    let v1: i32 = v0;
+    word! { game;
+        grapple_beam_extension_x_velocity =
+            crate::rtl::rom_table_word!(game, 0x9bc0db, v1 as isize);
+        grapple_beam_extension_y_velocity =
+            crate::rtl::rom_table_word!(game, 0x9bc0ef, v1 as isize);
+        grapple_beam_end_angle16 = crate::rtl::rom_table_word!(game, 0x9bc104, v1 as isize);
+        grapple_beam_end_angles_mirror = word!(game.grapple_beam_end_angle16);
+        grapple_varCF6 = 10;
+    }
+    if word!(game.samus_pose) as i32 == kPose_49_FaceL_Moonwalk as i32
+        || word!(game.samus_pose) as i32 == kPose_4A_FaceR_Moonwalk as i32
+        || game.g_ram[0xa1f] != 1
+    {
+        initialize_grapple_endpoints!(game, 0x9bc122, v1, 0x9bc136, r22, 0x9bc14a, 0x9bc15e);
+    } else {
+        initialize_grapple_endpoints!(game, 0x9bc172, v1, 0x9bc186, r22, 0x9bc19a, 0x9bc1ae);
+    }
+    word! { game, 0;
+        grapple_beam_end_x_subpos, grapple_beam_end_y_subpos, grapple_beam_end_x_suboffset,
+        grapple_beam_end_x_offset, grapple_beam_end_y_suboffset, grapple_beam_end_y_offset,
+        grapple_beam_flags,
+    }
+    word!(game.grapple_beam_length_delta = 12);
+    word! { game, 0;
+        grapple_beam_length, grapple_beam_unkD26, grapple_beam_unkD28, grapple_beam_unkD2A,
+        grapple_beam_unkD2C, grapple_beam_unkD2E, grapple_beam_unkD30, grapple_beam_unkD1E,
+        grapple_beam_unkD20,
+    }
+    word! {game; grapple_beam_unkD3A = 2; grapple_beam_unkD3C = 0;
+    grapple_point_anim_timer = 5;
+    grapple_point_anim_ptr = crate::rtl::rom_table_word!(game, 0x9bc342, 0); }
+    word! { game, 0;
+        grapple_beam_grapple_start_x, grapple_beam_unkD38, grapple_beam_unkD36,
+        slow_grabble_scrolling_flag,
+    }
+    start_rope_animation(game);
+    word! {game; samus_draw_handler = ((0x90eb86i32) as u16); grapple_walljump_timer = 0; }
+    crate::game::samus_palette::write_beam_palette(
+        &mut crate::game::session_runtime::Runtime::new(game),
+        2,
+    );
+    word! {game; palette_buffer[223] = 32657; grapple_beam_function = ((0x9bc703i32) as u16); }
+    QueueSfx1_Max1(5, game);
+    word! {game; flare_counter = 1; play_resume_charging_beam_sfx = 0; }
+    if word!(game.samus_movement_handler) as i32 == 0x90946e & 0xffff {
+        word!(game.samus_movement_handler = (0x90a337i32) as u16);
+    }
+}
+
 pub(crate) fn cancel(game: &mut Game) {
     QueueSfx1_Max15(7, game);
     if game.g_ram[0xa1f] == kMovementType_16_Grappling as u8 {
@@ -469,13 +624,7 @@ pub(crate) fn release_stationary(game: &mut Game) {
         kPose_02_FaceL_Normal as u16
     } else {
         let crouching = (i32::from(word!(game.samus_y_radius)) - 17) & 0x8000 != 0;
-        let directions = crate::rtl::lorom_offset(0x91b629) as usize + 3;
-        if game
-            .capture_native_rom()
-            .read(directions + 8 * usize::from(word!(game.samus_pose)))
-            & 0xf0
-            != 0
-        {
+        if native_pose_parameter!(game, 3) & 0xf0 != 0 {
             match (crouching, game.g_ram[0xa1e] == 4) {
                 (true, true) => kPose_28_FaceL_Crouch as u16,
                 (true, false) => kPose_27_FaceR_Crouch as u16,
@@ -485,15 +634,10 @@ pub(crate) fn release_stationary(game: &mut Game) {
         } else {
             let table = if crouching { 0x9bc9c4 } else { 0x9bc9ba };
             // Capture the destination image before the fresh native pose-byte read.
-            u16::from(
-                game.capture_native_rom().read(
-                    crate::rtl::lorom_offset(table) as usize
-                        + usize::from(
-                            game.capture_native_rom()
-                                .read(directions + 8 * usize::from(word!(game.samus_pose))),
-                        ),
-                ),
-            )
+            u16::from(game.capture_native_rom().read(
+                crate::rtl::lorom_offset(table) as usize
+                    + usize::from(native_pose_parameter!(game, 3)),
+            ))
         }
     };
     word!(game.samus_new_pose_transitional = pose);

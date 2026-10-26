@@ -14,9 +14,8 @@ pub use crate::game::constants::bank_9b::*;
 
 use crate::game::grapple_swing::{
     extend_beam as BlockCollGrappleBeam, react_beam as BlockReactGrapple,
-    start_rope_animation as GrappleFunc_AF87,
 };
-use crate::game::music::{QueueSfx1_Max1, QueueSfx1_Max6};
+use crate::game::music::QueueSfx1_Max6;
 use crate::game::session_runtime::player_bottom;
 
 const RomPtr_9B: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x9b>;
@@ -28,37 +27,6 @@ crate::game::constants::typed_constants! { i32;
     fnGrappleBeamFunc_Firing = 0x9bc703, fnGrappleBeamFunc_ConnectedLockedInPlace = 0x9bc77e,
     fnGrappleBeamFunc_Cancel = 0x9bc856,
     fnGrappleBeam_Func2 = 0x9bc8c5,
-}
-static kIsGrappleBannedForMovementType: [u8; 28] = [
-    0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1,
-];
-pub unsafe fn CancelGrappleBeamIfIncompatiblePose(game: &mut Game) {
-    unsafe {
-        if kIsGrappleBannedForMovementType[*ram_ptr!(game; 0xa1f) as usize] == 0 {
-            if word!(game.grapple_beam_function) as i32 != 0x9bc4f0 & 0xffff
-                && word!(game.grapple_beam_function) as i32 + 0x3882 & 0x8000 != 0
-            {
-                let mut v0: i16 = (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
-                    .offset(word!(game.samus_pose) as isize))
-                .direction_shots_fired as i16;
-                if (v0 as u16 & 0xf0) == 0 {
-                    if v0 as i32 == word!(game.grapple_beam_direction) as i32 {
-                        return;
-                    }
-                    if word!(game.grapple_varCF6) != 0 {
-                        QueueSfx1_Max6(7, game);
-                        word!(game.grapple_beam_function = (0x9bc51ei32) as u16);
-                        return;
-                    }
-                }
-            } else {
-                return;
-            }
-        }
-        if word!(game.grapple_beam_function) as i32 != 0x9bc4f0 & 0xffff {
-            word!(game.grapple_beam_function = (0x9bc856i32) as u16);
-        }
-    }
 }
 pub fn CheckIfGrappleIsConnectedToBlock(game: &mut Game) -> u8 {
     {
@@ -151,7 +119,7 @@ pub unsafe fn GrappleBeamHandler(game: &mut Game) {
             word!(game.grapple_varCF6 -= 1);
         }
         word!(game.samus_grapple_flags &= !(1));
-        CancelGrappleBeamIfIncompatiblePose(game);
+        grapple_swing::cancel_incompatible_pose(game);
         CallGrappleBeamFunc(
             ((word!(game.grapple_beam_function)) as u32) | (0x9b0000u32),
             game,
@@ -170,62 +138,6 @@ pub unsafe fn GrappleBeamHandler(game: &mut Game) {
         } else {
             word!(game.grapple_beam_flags &= !(1));
         };
-    }
-}
-macro_rules! initialize_grapple_endpoints {
-    (
-        $game:ident, $origin_x_table:literal, $pose_index:ident, $origin_y_table:literal,
-        $y_adjustment:ident, $previous_x_table:literal, $previous_y_table:literal $(,)?
-    ) => {
-        word! { $game;
-            grapple_beam_origin_x_offset =
-                crate::rtl::rom_table_word!($game, $origin_x_table, $pose_index as isize);
-            grapple_beam_origin_y_offset =
-                (crate::rtl::rom_table_word!($game, $origin_y_table, $pose_index as isize))
-                    .wrapping_sub($y_adjustment);
-            grapple_beam_end_x_pos =
-                (crate::rtl::rom_table_word!($game, $origin_x_table, $pose_index as isize))
-                    .wrapping_add(word!($game.samus_x_pos));
-            x_pos_of_start_of_grapple_beam = word!($game.grapple_beam_end_x_pos);
-            x_pos_of_start_of_grapple_beam_prevframe =
-                (crate::rtl::rom_table_word!($game, $previous_x_table, $pose_index as isize))
-                    .wrapping_add(word!($game.samus_x_pos));
-            grapple_beam_end_y_pos =
-                (crate::rtl::rom_table_word!($game, $origin_y_table, $pose_index as isize) as i32
-                    + word!($game.samus_y_pos) as i32
-                    - $y_adjustment as i32) as u16;
-            y_pos_of_start_of_grapple_beam = word!($game.grapple_beam_end_y_pos);
-            y_pos_of_start_of_grapple_beam_prevframe =
-                (crate::rtl::rom_table_word!($game, $previous_y_table, $pose_index as isize) as i32
-                    + word!($game.samus_y_pos) as i32
-                    - $y_adjustment as i32) as u16;
-        }
-    };
-}
-
-pub fn CheckBannedDraygonGrappleDirs(a: u16, game: &mut Game) -> u16 {
-    {
-        if a as i32 == kPose_BE_FaceL_Draygon_Move as i32 {
-            if (word!(game.joypad1_lastkeys) as i32 & kButton_Left as i32) != 0 {
-                if (word!(game.joypad1_lastkeys) as i32 & kButton_Down as i32) != 0 {
-                    return 6;
-                }
-                if (word!(game.joypad1_lastkeys) as i32 & kButton_Up as i32) != 0 {
-                    return 8;
-                }
-            }
-            return 7;
-        }
-        if (word!(game.joypad1_lastkeys) as i32 & kButton_Right as i32) == 0 {
-            return 2;
-        }
-        if (word!(game.joypad1_lastkeys) as i32 & kButton_Down as i32) != 0 {
-            return 3;
-        }
-        if (word!(game.joypad1_lastkeys) as i32 & kButton_Up as i32) == 0 {
-            return 2;
-        }
-        1
     }
 }
 crate::game::callback_dispatch! {
@@ -313,7 +225,7 @@ crate::game::callback_dispatch! {
         if (word!(game.button_config_shoot_x) & word!(game.joypad1_newkeys)) != 0
             || (word!(game.button_config_shoot_x) & word!(game.joypad1_newinput_samusfilter)) != 0
         {
-            GrappleBeamFunc_FireGoToCancel(game);
+            grapple_swing::start_firing(game);
         } else if word!(game.flare_counter) != 0 {
             word! { game, 0;
                 flare_counter, flare_animation_frame, flare_slow_sparks_anim_frame,
@@ -321,75 +233,6 @@ crate::game::callback_dispatch! {
                 flare_fast_sparks_anim_timer,
             }
             crate::game::samus_palette::load_suit(&mut Runtime::new(game), crate::game::visual_state::PaletteBuffer::Current);
-        }
-    };
-    [10208542] GrappleBeamFunc_FireGoToCancel [] {
-        let mut r22: u16 = 0;
-        let mut v0: i32 = 0;
-        if word!(game.samus_pose) as i32 == kPose_F0_FaceR_Draygon_Move as i32
-            || word!(game.samus_pose) as i32 == kPose_BE_FaceL_Draygon_Move as i32
-        {
-            v0 = CheckBannedDraygonGrappleDirs(word!(game.samus_pose), game) as i32;
-            r22 = 6;
-        } else {
-            r22 = (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
-                .offset(word!(game.samus_pose) as isize))
-            .y_offset_to_gfx as u16;
-            v0 = (*(rom_ptr!(game, SamusPoseParams; 0x91b629))
-                .offset(word!(game.samus_pose) as isize))
-            .direction_shots_fired as i32;
-            if (v0 & 0xf0) != 0 {
-                word!(game.grapple_beam_function = (0x9bc856i32) as u16);
-                return;
-            }
-        }
-        word!(game.grapple_beam_direction = v0 as u16);
-        let v1: i32 = v0;
-        word! { game;
-            grapple_beam_extension_x_velocity =
-                crate::rtl::rom_table_word!(game, 0x9bc0db, v1 as isize);
-            grapple_beam_extension_y_velocity =
-                crate::rtl::rom_table_word!(game, 0x9bc0ef, v1 as isize);
-            grapple_beam_end_angle16 = crate::rtl::rom_table_word!(game, 0x9bc104, v1 as isize);
-            grapple_beam_end_angles_mirror = word!(game.grapple_beam_end_angle16);
-            grapple_varCF6 = 10;
-        }
-        if word!(game.samus_pose) as i32 == kPose_49_FaceL_Moonwalk as i32
-            || word!(game.samus_pose) as i32 == kPose_4A_FaceR_Moonwalk as i32
-            || *ram_ptr!(game; 0xa1f) != 1
-        {
-            initialize_grapple_endpoints!(game, 0x9bc122, v1, 0x9bc136, r22, 0x9bc14a, 0x9bc15e);
-        } else {
-            initialize_grapple_endpoints!(game, 0x9bc172, v1, 0x9bc186, r22, 0x9bc19a, 0x9bc1ae);
-        }
-        word! { game, 0;
-            grapple_beam_end_x_subpos, grapple_beam_end_y_subpos, grapple_beam_end_x_suboffset,
-            grapple_beam_end_x_offset, grapple_beam_end_y_suboffset, grapple_beam_end_y_offset,
-            grapple_beam_flags,
-        }
-        word!(game.grapple_beam_length_delta = 12);
-        word! { game, 0;
-            grapple_beam_length, grapple_beam_unkD26, grapple_beam_unkD28, grapple_beam_unkD2A,
-            grapple_beam_unkD2C, grapple_beam_unkD2E, grapple_beam_unkD30, grapple_beam_unkD1E,
-            grapple_beam_unkD20,
-        }
-        word! {game; grapple_beam_unkD3A = 2; grapple_beam_unkD3C = 0;
-            grapple_point_anim_timer = 5;
-            grapple_point_anim_ptr = crate::rtl::rom_table_word!(game, 0x9bc342, 0); }
-        word! { game, 0;
-            grapple_beam_grapple_start_x, grapple_beam_unkD38, grapple_beam_unkD36,
-            slow_grabble_scrolling_flag,
-        }
-        GrappleFunc_AF87(game);
-        word! {game; samus_draw_handler = ((0x90eb86i32) as u16); grapple_walljump_timer = 0; }
-        crate::game::samus_palette::write_beam_palette(
-            &mut crate::game::session_runtime::Runtime::new(game), 2,
-        );
-        word! {game; palette_buffer[223] = 32657; grapple_beam_function = ((0x9bc703i32) as u16); }
-        QueueSfx1_Max1(5, game);
-        word! {game; flare_counter = 1; play_resume_charging_beam_sfx = 0; }
-        if word!(game.samus_movement_handler) as i32 == 0x90946e & 0xffff {
-            word!(game.samus_movement_handler = (0x90a337i32) as u16);
         }
     };
     [10209027] GrappleBeamFunc_Firing [] {
@@ -491,6 +334,7 @@ crate::game::callback_dispatch! {
         };
     };
     @external {
+        10208542 => grapple_swing::start_firing;
         10209366 => grapple_swing::cancel;
         10209477 => grapple_swing::release_stationary;
         10209742 => grapple_swing::release_walljump;
