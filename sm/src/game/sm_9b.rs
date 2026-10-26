@@ -378,16 +378,12 @@ macro_rules! initialize_connected_grapple_angle {
 }
 
 pub unsafe fn HandleConnectingGrapple_Swinging(game: &mut Game) {
-    unsafe {
-        initialize_connected_grapple_angle!(game, 9);
-        place_rope_origin(game);
-    }
+    initialize_connected_grapple_angle!(game, 9);
+    place_rope_origin(game);
 }
 pub unsafe fn HandleConnectingGrapple_StuckInPlace(game: &mut Game) {
-    unsafe {
-        initialize_connected_grapple_angle!(game, 10);
-        place_rope_origin(game);
-    }
+    initialize_connected_grapple_angle!(game, 10);
+    place_rope_origin(game);
 }
 pub unsafe fn HandleSpecialGrappleBeamAngles(game: &mut Game) -> u8 {
     unsafe {
