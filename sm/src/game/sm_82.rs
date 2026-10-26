@@ -3,8 +3,8 @@ use crate::game::file_menu::advance as advance_file_menu;
 use crate::game::game_over::advance as advance_game_over;
 use crate::game::gameplay::{Entry, advance as AdvanceGameplay};
 use crate::game::map_menu::advance as advance_map_menu;
+use crate::game::music::cancel_effects;
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
-use crate::game::music::{advance_sound_effects, cancel_effects};
 use crate::game::options_settings;
 use crate::game::pause_controls::fade_in as pause_fade_in;
 pub use crate::game::prelude::*;
@@ -29,9 +29,6 @@ use crate::game::sm_8b::{
 use crate::game::sm_9b::{
     GameState_24_SamusNoHealth_Explosion_Helper, HandleSamusDeathSequence, StartSamusDeathAnimation,
 };
-use crate::game::sprite_drawing::{clear_high_table, finish_frame};
-
-use crate::host::{Die, Warning};
 
 pub use crate::types::Func_V_Coroutine;
 
@@ -111,73 +108,11 @@ static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_
     INITIALIZE, DEMO_START, DEMO,
     DEMO_STOP, DEMO_NEXT,
 };
-pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        let mut st: i32 = *ram_ptr!(game; 0x611) as i32;
-        let begin_frame: bool = if st >= 1 && st <= 3 {
-            let mut _coret_: u8 = crate::game::boot::resume(game);
-            if _coret_ != 0 {
-                return _coret_;
-            }
-            true
-        } else {
-            !(st >= 10)
-                && ({
-                    if st != 0 {
-                        Die(c"Incorrect coroutine_state_0".as_ptr());
-                    }
-                    true
-                })
-        };
-        if begin_frame {
-            crate::update_place! { reference fresh149 = *ram_ptr!(game; 0x615) => 0; }
-            crate::update_place! { reference fresh150 = *ram_ptr!(game; 0x614) => *fresh149; }
-            crate::update_place! { reference fresh151 = *ram_ptr!(game; 0x613) => *fresh150; }
-            *ram_ptr!(game; 0x612) = *fresh151;
-            crate::game::controller_input::sample(game);
-            crate::game::visual_runtime::update_hdma(game);
-            game.next_random();
-            clear_high_table(game);
-            word! { game, 0;
-                oam_next_ptr, nmi_copy_samus_halves, nmi_copy_samus_top_half_src,
-                nmi_copy_samus_bottom_half_src,
-            }
-            st = word!(game.game_state) as i32 + 10;
-            *ram_ptr!(game; 0x611) = st as u8;
-        }
-        let mut _coret__0: u8 = kGameStateFuncs[(st - 10i32) as usize](game);
-        if _coret__0 != 0 {
-            return _coret__0;
-        }
-        advance_sound_effects(game, |channel, value, game| {
-            crate::native_audio::write_sound_port(channel, value, game)
-        });
-        finish_frame(game);
-        ShowSpareCpu(game);
-        if *ram_ptr!(game; 0x612)
-            | *ram_ptr!(game; 0x613)
-            | *ram_ptr!(game; 0x614)
-            | *ram_ptr!(game; 0x615)
-            != 0
-        {
-            printf(
-                c"Coroutine state: %d, %d, %d, %d\n".as_ptr(),
-                *ram_ptr!(game; 0x612) as i32,
-                *ram_ptr!(game; 0x613) as i32,
-                *ram_ptr!(game; 0x614) as i32,
-                *ram_ptr!(game; 0x615) as i32,
-            );
-            Warning(c"Coroutine State is broken!".as_ptr());
-        }
-        *ram_ptr!(game; 0x611) = 0;
-        kCoroutineNone as CoroutineRet
-    }
-}
 pub unsafe fn RunOneFrameOfGame(game: &mut Game) {
     unsafe {
-        let ret: CoroutineRet = RunOneFrameOfGameInner(game);
+        let ret: CoroutineRet = AdvanceGameplay(Entry::Frame(&kGameStateFuncs), game);
         if ret == 0 {
-            *ram_ptr!(game; 0x5b4) = 1;
+            game.g_ram[0x5b4] = 1;
         }
         crate::game::display_refresh::run(game);
     }
@@ -186,11 +121,6 @@ pub unsafe fn GameState_29_DebugGameOverMenu(game: &mut Game) -> CoroutineRet {
     unsafe {
         DebugGameOverMenu();
         kCoroutineNone as CoroutineRet
-    }
-}
-pub fn ShowSpareCpu(game: &mut Game) {
-    {
-        word!(game.joypad1_input_samusfilter = word!(game.joypad1_lastkeys));
     }
 }
 pub fn GameState_3_Null(game: &mut Game) -> CoroutineRet {

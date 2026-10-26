@@ -102,8 +102,8 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Core15 passes all 84 local rows; Core16/17 pass 25/28 affected/smoke/control rows.
-Qualified Core17: production 112334, legacy 21892, unsafe 3062, verification 39963.
+Core18 passes all 84 local rows; Core16/17 pass 25/28 affected/smoke/control rows.
+Qualified Core18: production 112308, legacy 21772, unsafe 3060, verification 39963.
 Core15's shared actor closeout costs 17 production lines; bank moves remain
 transitional rather than proof of owned Session state. The existing comparison
 normalizes 611..616; initializer continuation also relies on source review.

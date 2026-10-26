@@ -1,4 +1,4 @@
-//! Ordered gameplay phases and the continuation owned by this scheduler.
+//! Frame dispatch, ordered gameplay phases and their resumable continuations.
 //!
 //! Samus preparation includes projectile work; enemy processing and a possible
 //! message suspension separate it from movement/pose completion. Callbacks
@@ -26,6 +26,7 @@ use crate::game::sm_a7::{
 };
 use crate::game::sm_a9::MotherBrainsBody_UnpauseHook;
 use crate::ram_map::{checked_word, words as ram};
+use crate::types::Func_V_Coroutine;
 
 #[derive(Clone, Copy, PartialEq)]
 #[repr(u8)]
@@ -50,6 +51,7 @@ impl ResumePoint {
 
 #[derive(Clone, Copy)]
 pub(crate) enum Entry {
+    Frame(&'static [Func_V_Coroutine; 45]),
     Initialize,
     Gameplay,
     FadeIn,
@@ -185,6 +187,60 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                 }
             }
             game.g_ram[0x612] = 0;
+            return 0 as CoroutineRet;
+        }
+        if let Entry::Frame(dispatch) = entry {
+            let mut st: i32 = game.g_ram[0x611] as i32;
+            let begin_frame: bool = if st >= 1 && st <= 3 {
+                let mut _coret_: u8 = crate::game::boot::resume(game);
+                if _coret_ != 0 {
+                    return _coret_;
+                }
+                true
+            } else {
+                !(st >= 10)
+                    && ({
+                        if st != 0 {
+                            crate::host::Die(c"Incorrect coroutine_state_0".as_ptr());
+                        }
+                        true
+                    })
+            };
+            if begin_frame {
+                for offset in (0x612..0x616).rev() {
+                    game.g_ram[offset] = 0;
+                }
+                crate::game::controller_input::sample(game);
+                crate::game::visual_runtime::update_hdma(game);
+                game.next_random();
+                crate::game::sprite_drawing::clear_high_table(game);
+                word! { game, 0;
+                    oam_next_ptr, nmi_copy_samus_halves, nmi_copy_samus_top_half_src,
+                    nmi_copy_samus_bottom_half_src,
+                }
+                st = word!(game.game_state) as i32 + 10;
+                game.g_ram[0x611] = st as u8;
+            }
+            let mut _coret__0: u8 = dispatch[(st - 10i32) as usize](game);
+            if _coret__0 != 0 {
+                return _coret__0;
+            }
+            crate::game::music::advance_sound_effects(game, |channel, value, game| {
+                crate::native_audio::write_sound_port(channel, value, game)
+            });
+            crate::game::sprite_drawing::finish_frame(game);
+            word!(game.joypad1_input_samusfilter = word!(game.joypad1_lastkeys));
+            if game.g_ram[0x612] | game.g_ram[0x613] | game.g_ram[0x614] | game.g_ram[0x615] != 0 {
+                printf(
+                    c"Coroutine state: %d, %d, %d, %d\n".as_ptr(),
+                    game.g_ram[0x612] as i32,
+                    game.g_ram[0x613] as i32,
+                    game.g_ram[0x614] as i32,
+                    game.g_ram[0x615] as i32,
+                );
+                crate::host::Warning(c"Coroutine State is broken!".as_ptr());
+            }
+            game.g_ram[0x611] = 0;
             return 0 as CoroutineRet;
         }
         if matches!(entry, Entry::DemoStop) {
@@ -490,7 +546,8 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                 word!(game.game_state += 1);
                 game.g_ram[0x51] = 15;
             }
-            Entry::DemoStop
+            Entry::Frame(_)
+            | Entry::DemoStop
             | Entry::DemoNext
             | Entry::PauseSetup
             | Entry::Paused
