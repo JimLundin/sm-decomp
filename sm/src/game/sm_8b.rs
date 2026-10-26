@@ -1,4 +1,4 @@
-use super::intro_pages;
+use super::{intro_pages, visual_state::EndingGraphics};
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
 pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
@@ -124,9 +124,6 @@ crate::game::constants::typed_constants! { i32;
     fnSamusDrawHandler_Default = 0x90eb52,
 }
 const RomPtr_8C: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8c>;
-crate::ram_map::ram_pointer_functions! {
-    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
-}
 crate::game::constants::typed_constants! { u32;
     fnCinematicFunction_Intro_Initial = 9151381,
     fnCinematicFunctionBlackoutFromCeres = 9158939,
@@ -709,34 +706,6 @@ pub fn CinematicFunction_Intro_Func140(game: &mut Game) {
         compose_cinematic_palette(game);
     }
 }
-pub unsafe fn CinematicFunction_Intro_Func142(game: &mut Game) {
-    unsafe {
-        if word!(game.cinematic_var17) == 0
-            && word!(game.cinematic_var14) as i32 - 6i32 & 0x8000 != 0
-        {
-            let v0: u16 = (4u16).wrapping_mul(word!(game.cinematic_var14));
-            let mut v1: u16 = word!(game.vram_write_queue_tail);
-            let v2: i32 = 8 * word!(game.cinematic_var14) as i32 >> 1;
-            (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size =
-                crate::rtl::rom_table_word!(game, 0x8be45a, v2 as isize);
-            v1 = (v1).wrapping_add(2);
-            (*gVramWriteEntry(v1 as i32, game)).size =
-                crate::rtl::rom_table_word!(game, 0x8be45a, (v2 + 1) as isize);
-            v1 = (v1).wrapping_add(2);
-            crate::update_place! { previous fresh75 = v1 => v1.wrapping_add(1); }
-            *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-                fresh75 as i32,
-                game,
-            ))
-            .size as *mut u8) =
-                crate::rtl::rom_table_word!(game, 0x8be45a, (v0 as i32 + 2) as isize) as u8;
-            (*gVramWriteEntry(v1 as i32, game)).size =
-                crate::rtl::rom_table_word!(game, 0x8be45a, (v2 + 3) as isize);
-            word!(game.vram_write_queue_tail = (v1).wrapping_add(2));
-            word!(game.cinematic_var14 += 1);
-        }
-    }
-}
 pub unsafe fn CinematicFunction_Intro_Func160(j: u16, a: u16, game: &mut Game) {
     {
         word!(
@@ -754,30 +723,6 @@ pub unsafe fn CinematicFunction_Intro_Func210_EndingSamusFall(k: u16, game: &mut
             (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
             words!(game.samus_y_speed, samus_y_subspeed),
         );
-    }
-}
-pub unsafe fn CinematicFunction_Intro_Func216(game: &mut Game) {
-    unsafe {
-        if word!(game.cinematic_var14) as i32 - 16i32 & 0x8000 != 0 {
-            let v0: u16 = (2u16).wrapping_mul(word!(game.cinematic_var14));
-            let mut v1: u16 = word!(game.vram_write_queue_tail);
-            (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size = 2048;
-            v1 = (v1).wrapping_add(2);
-            let v2: i32 = v0 as i32 >> 1;
-            (*gVramWriteEntry(v1 as i32, game)).size =
-                crate::rtl::rom_table_word!(game, 0x8bf6b8, v2 as isize);
-            v1 = (v1).wrapping_add(2);
-            crate::update_place! { previous fresh28 = v1 => v1.wrapping_add(1); }
-            *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-                fresh28 as i32,
-                game,
-            ))
-            .size as *mut u8) = 127;
-            (*gVramWriteEntry(v1 as i32, game)).size =
-                crate::rtl::rom_table_word!(game, 0x8bf6d8, v2 as isize);
-            word!(game.vram_write_queue_tail = (v1).wrapping_add(2));
-            word!(game.cinematic_var14 += 1);
-        }
     }
 }
 crate::game::callback_dispatch! {
@@ -907,19 +852,7 @@ crate::game::callback_dispatch! {
         if advance_cinematic_fade(CinematicFade::SlowIn, game) {
             word! {game; cinematic_function = ((0x8ba5f8i32) as u16); cinematic_var4 = 60; }
             if word!(game.japanese_text_flag) != 0 {
-                let mut v0: u16 = word!(game.vram_write_queue_tail);
-                (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size = 256;
-                v0 = (v0).wrapping_add(2);
-                (*gVramWriteEntry(v0 as i32, game)).size = 12288;
-                v0 = (v0).wrapping_add(2);
-                crate::update_place! { previous fresh146 = v0 => v0.wrapping_add(1); }
-                *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-                    fresh146 as i32,
-                    game,
-                ))
-                .size as *mut u8) = 126;
-                (*gVramWriteEntry(v0 as i32, game)).size = 20192;
-                word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
+                queue_cinematic_tilemap(CinematicTilemap::JapaneseIntro, game);
             }
         }
     };
@@ -1870,7 +1803,7 @@ crate::game::callback_dispatch! {
     };
     [9168010] CinematicFunction_Intro_Func141 [] {
         CinematicFunction_Intro_Func140(game);
-        CinematicFunction_Intro_Func142(game);
+        crate::game::visual_runtime::advance_ending_graphics(EndingGraphics::Background, game);
         if word!(game.cinematic_var4 -= 1, reread) == 0 {
             *ram_ptr!(game; 0x55) = 1;
             *ram_ptr!(game; 0x69) = 17;
@@ -2542,7 +2475,7 @@ crate::game::callback_dispatch! {
         }
     };
     [9172445] CinematicFunction_Intro_Func215 [] {
-        CinematicFunction_Intro_Func216(game);
+        crate::game::visual_runtime::advance_ending_graphics(EndingGraphics::Samus, game);
         CinematicFunction_Intro_Func210_EndingSamusFall(k, game);
         let v1: i32 = k as i32 >> 1;
         if word!(game.cinematicbg_arr8[v1]) as i32 - 136i32 & 0x8000 == 0 {

@@ -152,6 +152,13 @@ pub(crate) enum CinematicTilemap {
     FullText,
     Eyes,
     Japanese,
+    JapaneseIntro,
+}
+
+#[derive(Clone, Copy)]
+pub(crate) enum EndingGraphics {
+    Background,
+    Samus,
 }
 
 #[derive(Clone, Copy)]

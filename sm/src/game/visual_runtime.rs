@@ -21,8 +21,8 @@ use crate::{
         session_runtime::Runtime,
         visual_host::{self, AnimationMember, PaletteMember, Source, StatueProjectile},
         visual_state::{
-            CinematicObjects, EyeBeamPhase, HazePhase, HdmaWave, PaletteBuffer, TourianStatuePhase,
-            Upload, Weather,
+            CinematicObjects, EndingGraphics, EyeBeamPhase, HazePhase, HdmaWave, PaletteBuffer,
+            TourianStatuePhase, Upload, Weather,
         },
     },
     game_state::Game,
@@ -2083,7 +2083,7 @@ pub(crate) fn queue_cinematic_tilemap(
     game: &mut Game,
 ) {
     use crate::game::visual_state::CinematicTilemap::*;
-    if !matches!(tiles, Japanese) && game.g_ram[0x55] == 7 {
+    if !matches!(tiles, Japanese | JapaneseIntro) && game.g_ram[0x55] == 7 {
         return;
     }
     let (size, source) = match tiles {
@@ -2091,6 +2091,7 @@ pub(crate) fn queue_cinematic_tilemap(
         FullText => (2048, 0x3000),
         Eyes => (128, 0x3b40),
         Japanese => (1536, 0x4000),
+        JapaneseIntro => (256, 0x3000),
     };
     let tail = word!(game.vram_write_queue_tail);
     for (offset, value) in [(0u16, size), (2, source)] {
@@ -2102,11 +2103,55 @@ pub(crate) fn queue_cinematic_tilemap(
     let destination = match tiles {
         Eyes => 18848,
         Japanese => 16768,
+        JapaneseIntro => 20192,
         _ => word!(game.cinematicbg_var3),
     };
     word_transfers!(game, ascending, 1;
         native(0xd0 + usize::from(tail.wrapping_add(5))) <- value(destination));
     word!(game.vram_write_queue_tail = tail.wrapping_add(7));
+}
+
+pub(crate) fn advance_ending_graphics(graphics: EndingGraphics, game: &mut Game) {
+    use EndingGraphics::*;
+    let limit = if matches!(graphics, Samus) { 16 } else { 6 };
+    if (matches!(graphics, Background) && word!(game.cinematic_var17) != 0)
+        || (i32::from(word!(game.cinematic_var14)) - limit) & 0x8000 == 0
+    {
+        return;
+    }
+    let frame = word!(game.cinematic_var14);
+    let index = match graphics {
+        Background => 4 * i32::from(frame),
+        Samus => i32::from(frame.wrapping_mul(2) >> 1),
+    };
+    let tail = word!(game.vram_write_queue_tail);
+    // Each ROM word stays between the preceding queue stores; bank indices wrap separately.
+    for field in [0u16, 2, 4, 5] {
+        let value = match (graphics, field) {
+            (Background, _) => crate::rtl::rom_table_word!(
+                game,
+                0x8be45a,
+                match field {
+                    0 => index,
+                    2 => index + 1,
+                    4 => i32::from(frame.wrapping_mul(4)) + 2,
+                    _ => index + 3,
+                } as isize
+            ),
+            (Samus, 0) => 2048,
+            (Samus, 2) => crate::rtl::rom_table_word!(game, 0x8bf6b8, index as isize),
+            (Samus, 4) => 127,
+            (Samus, _) => crate::rtl::rom_table_word!(game, 0x8bf6d8, index as isize),
+        };
+        let destination = 0xd0 + usize::from(tail.wrapping_add(field));
+        if field == 4 {
+            game.g_ram[destination] = value as u8;
+        } else {
+            word_transfers!(game, ascending, 1; native(destination) <- value(value));
+        }
+    }
+    word!(game.vram_write_queue_tail = tail.wrapping_add(7));
+    word!(game.cinematic_var14 += 1);
 }
 
 fn scaled_cinematic_value(value: u16, scale: u16) -> u16 {
