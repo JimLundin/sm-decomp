@@ -17,8 +17,9 @@ static STATES: [Func_V; 8] = callback_table! { nonnull Func_V;
 
 /// Requires a live, exclusively accessed graphics backend and native ROM allocation
 /// covering the referenced menu text, baby animation and save-map records.
-pub(crate) unsafe fn advance(game: &mut Game) {
+pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
     unsafe { STATES[word!(game.menu_index) as usize](game) };
+    0
 }
 
 unsafe fn prepare(game: &mut Game) {

@@ -23,10 +23,11 @@ static STATES: [Func_V; 23] = callback_table! { nonnull Func_V;
     close_room_window, fade_to_options,
 };
 /// Requires live exclusive hardware and native ROM covering referenced map records.
-pub(crate) unsafe fn advance(game: &mut Game) {
+pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
     unsafe {
         STATES[word!(game.menu_index) as usize](game);
     }
+    0
 }
 unsafe fn fade_to_options(game: &mut Game) {
     unsafe {

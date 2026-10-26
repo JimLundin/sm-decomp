@@ -1,12 +1,14 @@
 use crate::game::decompression::decompress_to_ram;
 use crate::game::demo_rooms;
+use crate::game::file_menu::advance as advance_file_menu;
+use crate::game::game_over::advance as advance_game_over;
 use crate::game::gameplay::advance as AdvanceGameplay;
+use crate::game::map_menu::advance as advance_map_menu;
 use crate::game::music::{CancelSoundEffects, advance_sound_effects};
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
 use crate::game::options_settings;
 use crate::game::pause_controls::fade_in as pause_fade_in;
 pub use crate::game::prelude::*;
-use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
 use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled};
 
@@ -487,7 +489,7 @@ pub unsafe fn GameState_44_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
 }
 static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_V_Coroutine;
     GameState_0_Reset_Async, GameState_1_OpeningCinematic, GameState_2_GameOptionsMenu,
-    GameState_3_Null, GameState_4_FileSelectMenus, GameState_5_FileSelectMap,
+    GameState_3_Null, advance_file_menu, advance_map_menu,
     InitAndLoadGameData_Async, GameState_7_MainGameplayFadeIn, AdvanceGameplay,
     GameState_9_HitDoorBlock, GameState_10_LoadingNextRoom_Async,
     GameState_11_LoadingNextRoom_Async, GameState_12_Pausing_Darkening_Async,
@@ -496,7 +498,7 @@ static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_
     GameState_19_SamusNoHealth, GameState_20_SamusNoHealth_BlackOut, GameState_21_SamusNoHealth,
     GameState_22_SamusNoHealth_Dying, GameState_23_SamusNoHealth_Flashing,
     GameState_24_SamusNoHealth_Explosion, GameState_25_SamusNoHealth_BlackOut,
-    GameState_26_GameOverMenu, GameState_27_ReserveTanksAuto, GameState_28_Unused,
+    advance_game_over, GameState_27_ReserveTanksAuto, GameState_28_Unused,
     GameState_29_DebugGameOverMenu, GameState_37_CeresGoesBoomWithSamus,
     InitAndLoadGameData_Async, GameState_32_MadeItToCeresElevator,
     GameState_33_BlackoutFromCeres, GameState_37_CeresGoesBoomWithSamus, GameState_35_TimeUp,
@@ -579,24 +581,6 @@ pub unsafe fn RunOneFrameOfGame(game: &mut Game) {
 pub unsafe fn GameState_29_DebugGameOverMenu(game: &mut Game) -> CoroutineRet {
     unsafe {
         DebugGameOverMenu();
-        kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn GameState_26_GameOverMenu(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        crate::game::game_over::advance(game);
-        kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn GameState_4_FileSelectMenus(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        crate::game::file_menu::advance(game);
-        kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn GameState_5_FileSelectMap(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        crate::game::map_menu::advance(game);
         kCoroutineNone as CoroutineRet
     }
 }
@@ -922,11 +906,6 @@ pub unsafe fn EquipmentScreenTransferBG1Tilemap(game: &mut Game) {
         GraphicsAsset::VramWords(0x7e3800, 0x3000, 0x800).load(game);
         word!(game.reg_BG1VOFS = 0);
     }
-}
-crate::forward_calls! { pub fn (game: &mut Game);
-    DrawBorderAroundSamusData => sprite_output::menu(0x48, 0x80, 0x10, 3584, game);
-    DrawBorderAroundDataCopyMode => sprite_output::menu(0x49, 0x80, 0x10, 3584, game);
-    DrawBorderAroundDataClearMode => sprite_output::menu(0x4a, 0x7c, 0x10, 3584, game);
 }
 pub fn HandleSamusOutOfHealthAndGameTile(game: &mut Game) {
     {

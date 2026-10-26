@@ -13,9 +13,6 @@ use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
 use crate::game::save_slots::load_area_map;
-use crate::game::sm_82::{
-    DrawBorderAroundDataClearMode, DrawBorderAroundDataCopyMode, DrawBorderAroundSamusData,
-};
 use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled};
 
 static STATES: [Func_V; 34] = callback_table! { nonnull Func_V;
@@ -38,10 +35,15 @@ static kBitShl: [u8; 3] = [1, 2, 4];
 
 /// Requires a live, exclusively accessed backend for screen and graphics transitions.
 /// The native ROM allocation must cover every referenced menu text and save-map record.
-pub(crate) unsafe fn advance(game: &mut Game) {
+pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
     unsafe {
         STATES[word!(game.menu_index) as usize](game);
     }
+    0
+}
+fn border(sprite: u16, game: &mut Game) {
+    let x = if sprite == 0x4a { 0x7c } else { 0x80 };
+    sprite_output::menu(sprite, x, 0x10, 3584, game);
 }
 unsafe fn prepare(game: &mut Game) {
     unsafe {
@@ -63,7 +65,7 @@ unsafe fn prepare(game: &mut Game) {
 }
 fn fade_to_options(game: &mut Game) {
     sprite_output::menu_selection(game);
-    DrawBorderAroundSamusData(game);
+    border(0x48, game);
     sprite_output::file_helmets(false, game);
     crate::game::display_refresh::fade(false, game);
     if (game.g_ram[0x51] & 0xf) == 0 {
@@ -72,7 +74,7 @@ fn fade_to_options(game: &mut Game) {
     }
 }
 fn fade_to_title(game: &mut Game) {
-    DrawBorderAroundSamusData(game);
+    border(0x48, game);
     sprite_output::file_helmets(false, game);
     crate::game::display_refresh::fade(false, game);
     if (game.g_ram[0x51] & 0xf) == 0 {
@@ -157,7 +159,7 @@ fn next_occupied_slot(game: &mut Game) -> Option<u8> {
     }
 }
 fn choose_copy(game: &mut Game) {
-    DrawBorderAroundDataCopyMode(game);
+    border(0x49, game);
     sprite_output::menu_selection(game);
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
         QueueSfx1_Max6(0x37, game);
@@ -183,7 +185,7 @@ fn choose_copy(game: &mut Game) {
 }
 unsafe fn begin_destination(game: &mut Game) {
     unsafe {
-        DrawBorderAroundDataCopyMode(game);
+        border(0x49, game);
         draw_destination(game);
         word!(game.menu_index += 1);
         let mut v0: u16 = 0;
@@ -214,7 +216,7 @@ unsafe fn draw_destination(game: &mut Game) {
 unsafe fn choose_destination(game: &mut Game) {
     unsafe {
         let mut v0: u16 = 0;
-        DrawBorderAroundDataCopyMode(game);
+        border(0x49, game);
         sprite_output::menu_selection(game);
         if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
             QueueSfx1_Max6(0x37, game);
@@ -262,7 +264,7 @@ unsafe fn choose_destination(game: &mut Game) {
 }
 unsafe fn begin_copy_confirmation(game: &mut Game) {
     unsafe {
-        DrawBorderAroundDataCopyMode(game);
+        border(0x49, game);
         menu_tilemap::set_palette(0, game);
         menu_tilemap::load(0x144, addr_kMenuTilemap_CopySamusToSamus as u16, game);
         set_native_word(
@@ -292,7 +294,7 @@ unsafe fn draw_confirmation(game: &mut Game) {
 }
 unsafe fn confirm_copy(game: &mut Game) {
     unsafe {
-        DrawBorderAroundDataCopyMode(game);
+        border(0x49, game);
         sprite_output::menu_selection(game);
         animate_copy_arrow(game);
         sprite_output::file_copy_arrow(game);
@@ -337,7 +339,7 @@ fn animate_copy_arrow(game: &mut Game) {
 unsafe fn copy_slot(game: &mut Game) {
     unsafe {
         static kBitShl_16bit: [u16; 3] = [1, 2, 4];
-        DrawBorderAroundDataCopyMode(game);
+        border(0x49, game);
         sprite_output::menu_selection(game);
         animate_copy_arrow(game);
         sprite_output::file_copy_arrow(game);
@@ -376,7 +378,7 @@ unsafe fn copy_slot(game: &mut Game) {
     }
 }
 fn copy_complete(game: &mut Game) {
-    DrawBorderAroundDataCopyMode(game);
+    border(0x49, game);
     if word!(game.joypad1_newkeys) != 0 {
         QueueSfx1_Max6(0x37, game);
         word!(game.menu_index += 1);
@@ -388,7 +390,7 @@ fn resume_main(game: &mut Game) {
 }
 unsafe fn begin_clear(game: &mut Game) {
     unsafe {
-        DrawBorderAroundDataClearMode(game);
+        border(0x4a, game);
         word!(game.menu_index += 1);
         reset_clear(game);
     }
@@ -405,7 +407,7 @@ unsafe fn reset_clear(game: &mut Game) {
     sprite_output::file_slot_cursor(211, game);
 }
 fn choose_clear(game: &mut Game) {
-    DrawBorderAroundDataClearMode(game);
+    border(0x4a, game);
     sprite_output::menu_selection(game);
     let movement_high = game.g_ram[0x90];
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
@@ -431,7 +433,7 @@ fn choose_clear(game: &mut Game) {
 }
 unsafe fn begin_clear_confirmation(game: &mut Game) {
     unsafe {
-        DrawBorderAroundDataClearMode(game);
+        border(0x4a, game);
         menu_tilemap::set_palette(0, game);
         menu_tilemap::load(0x140, addr_kMenuTilemap_ClearSamusA as u16, game);
         set_native_word(
@@ -448,7 +450,7 @@ unsafe fn begin_clear_confirmation(game: &mut Game) {
 unsafe fn confirm_clear(game: &mut Game) {
     unsafe {
         let keep_confirming: bool;
-        DrawBorderAroundDataClearMode(game);
+        border(0x4a, game);
         sprite_output::menu_selection(game);
         if word!(game.joypad1_newkeys) as i32 & (kButton_Up as i32 | kButton_Down as i32) != 0 {
             word!(game.eproj_id[15] ^= (1u16));
@@ -488,7 +490,7 @@ unsafe fn confirm_clear(game: &mut Game) {
 unsafe fn clear_slot(game: &mut Game) {
     unsafe {
         static kBitShl_Not: [u16; 3] = [0xfffe, 0xfffd, 0xfffb];
-        DrawBorderAroundDataClearMode(game);
+        border(0x4a, game);
         let sram_addr: i32 =
             crate::rtl::rom_table_word!(game, 0x81812b, word!(game.eproj_id[16]) as isize) as i32;
         game.g_sram
@@ -513,7 +515,7 @@ unsafe fn clear_slot(game: &mut Game) {
     }
 }
 unsafe fn clear_complete(game: &mut Game) {
-    DrawBorderAroundDataClearMode(game);
+    border(0x4a, game);
     if word!(game.joypad1_newkeys) != 0 {
         QueueSfx1_Max6(0x37, game);
         word!(game.menu_index += 1);
@@ -527,12 +529,12 @@ unsafe fn clear_complete(game: &mut Game) {
     }
 }
 fn return_main(game: &mut Game) {
-    DrawBorderAroundSamusData(game);
+    border(0x48, game);
     word!(game.menu_index -= 26);
 }
 fn turn_helmet(game: &mut Game) {
     sprite_output::menu_selection(game);
-    DrawBorderAroundSamusData(game);
+    border(0x48, game);
     sprite_output::file_helmets(true, game);
     if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0
         || word!(game.eproj_id[2]) == 7 && word!(game.cinematic_var7) == 0
@@ -559,7 +561,7 @@ fn fade_in_main(game: &mut Game) {
     sprite_output::file_helmets(false, game);
     sprite_output::file_menu_cursor(game);
     sprite_output::menu_selection(game);
-    DrawBorderAroundSamusData(game);
+    border(0x48, game);
     crate::game::display_refresh::fade(true, game);
     if (game.g_ram[0x51] & 0xf) == 15 {
         word!(game.menu_index += 1);
@@ -568,7 +570,7 @@ fn fade_in_main(game: &mut Game) {
 unsafe fn choose_main(game: &mut Game) {
     unsafe {
         let mut v2: u16 = 0;
-        DrawBorderAroundSamusData(game);
+        border(0x48, game);
         sprite_output::menu_selection(game);
         sprite_output::file_helmets(true, game);
         if word!(game.joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) == 0 {
