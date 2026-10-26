@@ -1,6 +1,7 @@
 use crate::game::decompression::decompress_to_ram;
 use crate::game::gameplay::advance as AdvanceGameplay;
 use crate::game::gameplay_flag_runtime;
+use crate::game::music::{CancelSoundEffects, advance_sound_effects};
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
 pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
@@ -17,6 +18,10 @@ pub use crate::game::constants::bank_82::*;
 use crate::game::animated_tiles;
 use crate::game::enemy_projectiles::EnableEprojs;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
+use crate::game::music::{
+    QueueSfx1_Max6, QueueSfx1_Max15, QueueSfx2_Max15, QueueSfx3_Max3, QueueSfx3_Max6,
+    QueueSfx3_Max15,
+};
 use crate::game::palette_effects;
 use crate::game::room_mechanisms::set_enabled;
 use crate::game::room_state::{pause_draygon, unpause_draygon};
@@ -34,9 +39,7 @@ use crate::game::sm_9b::{
 };
 use crate::game::sm_80::{
     ClearOamExt, ClearUnusedOam, GraphicsAsset, LoadFromLoadStation, LoadMirrorOfExploredMapTiles,
-    NextRandom, QueueClearingOfFxTilemap, QueueSfx1_Max6, QueueSfx1_Max15, QueueSfx2_Max6,
-    QueueSfx2_Max15, QueueSfx3_Max3, QueueSfx3_Max6, QueueSfx3_Max15, ResumeGameplay,
-    SetupDmaTransfer, StartGameplay_Async,
+    NextRandom, QueueClearingOfFxTilemap, ResumeGameplay, SetupDmaTransfer, StartGameplay_Async,
 };
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
@@ -690,7 +693,9 @@ pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
         if _coret__0 != 0 {
             return _coret__0;
         }
-        HandleSoundEffects(game);
+        advance_sound_effects(game, |channel, value, game| {
+            crate::native_audio::write_sound_port(channel, value, game)
+        });
         ClearUnusedOam(game);
         ShowSpareCpu(game);
         if *ram_ptr!(game; 0x612)
@@ -743,77 +748,6 @@ pub unsafe fn GameState_5_FileSelectMap(game: &mut Game) -> CoroutineRet {
     unsafe {
         crate::game::map_menu::advance(game);
         kCoroutineNone as CoroutineRet
-    }
-}
-static kSfxHandlers: [Func_Y_V; 5] = callback_table! { nonnull Func_Y_V;
-    SfxHandlers_0_SendToApu, SfxHandlers_1_WaitForAck, SfxHandlers_2_ClearRequest,
-    SfxHandlers_3_WaitForAck, SfxHandlers_4_Reset,
-};
-pub unsafe fn HandleSoundEffects(game: &mut Game) {
-    unsafe {
-        if ((word!(game.sound_handler_downtime)) as i8).wrapping_sub(1) >= 0 {
-            byte!(@pointer ram_ptr!(game, u16; 0x686); 0) =
-                ((word!(game.sound_handler_downtime)) as u8).wrapping_sub(1);
-            RtlApuWrite(APUI01, 0, game);
-            *ram_ptr!(game; 0x64d, 0) = 0;
-            RtlApuWrite(APUI02, 0, game);
-            *ram_ptr!(game; 0x64d, 1) = 0;
-            RtlApuWrite(APUI03, 0, game);
-            *ram_ptr!(game; 0x64d, 2) = 0;
-        } else {
-            for i in 0i32..3 {
-                kSfxHandlers[*ram_ptr!(game; 0x649, i as isize) as usize](i as u16, game);
-            }
-        };
-    }
-}
-pub unsafe fn SfxHandlers_0_SendToApu(j: u16, game: &mut Game) {
-    unsafe {
-        if *ram_ptr!(game; 0x643, j as isize) != *ram_ptr!(game; 0x646, j as isize) {
-            let v2: u8 = (*ram_ptr!(game; 0x643, j as isize) as i32 + j as i32 * 16) as u8;
-            let v3: u8 = *ram_ptr!(game; 0x656, v2 as isize);
-            RtlApuWrite((j as i32 + APUI01 as i32) as SnesRegs, v3, game);
-            *ram_ptr!(game; 0x64d, j as isize) = v3;
-            *ram_ptr!(game; 0x643, j as isize) = (v2 as i32 + 1 & 0xf) as u8;
-            crate::update_place! { reference fresh134 = *ram_ptr!(game; 0x649, j as isize) => (*fresh134).wrapping_add(1); }
-        }
-    }
-}
-pub unsafe fn SfxHandlers_1_WaitForAck(j: u16, game: &mut Game) {
-    unsafe {
-        let v1: u8 = *ram_ptr!(game; 0x64d, j as isize);
-        crate::update_place! { reference fresh138 = *ram_ptr!(game; 0x649, j as isize) => (*fresh138).wrapping_add(1); }
-        *ram_ptr!(game; 0x650, j as isize) = 6;
-    }
-}
-pub unsafe fn SfxHandlers_3_WaitForAck(j: u16, game: &mut Game) {
-    unsafe {
-        let v1: u8 = *ram_ptr!(game; 0x64d, j as isize);
-        *ram_ptr!(game; 0x649, j as isize) = 0;
-        SfxHandlers_0_SendToApu(j, game);
-    }
-}
-crate::game::countdown_callbacks! {
-    pub unsafe fn (j: u16, game: &mut Game);
-    before {
-        crate::update_place! { reference fresh135 [fresh136] = *ram_ptr!(game; 0x650, j as isize) => (*fresh135).wrapping_sub(1); }
-    }
-    when fresh136 == 1;
-    SfxHandlers_2_ClearRequest {
-        *ram_ptr!(game; 0x64d, j as isize) = 0;
-        crate::update_place! { reference fresh137 = *ram_ptr!(game; 0x649, j as isize) => (*fresh137).wrapping_add(1); }
-    };
-    SfxHandlers_4_Reset {
-        *ram_ptr!(game; 0x649, j as isize) = 0;
-    };
-}
-pub unsafe fn ResetSoundQueues(game: &mut Game) {
-    unsafe {
-        *(ram_ptr!(game, u16; 0x643)) = 0;
-        *(ram_ptr!(game, u16; 0x643, 2)) = 0;
-        *(ram_ptr!(game, u16; 0x646, 1)) = 0;
-        *(ram_ptr!(game, u16; 0x649)) = 0;
-        *ram_ptr!(game; 0x649, 2) = 0;
     }
 }
 pub fn ShowSpareCpu(game: &mut Game) {
@@ -3526,11 +3460,6 @@ pub unsafe fn FinishProcessingGameOverBabyMetroidAsm(game: &mut Game) {
             );
         };
     }
-}
-pub unsafe fn CancelSoundEffects(game: &mut Game) {
-    QueueSfx1_Max6(2, game);
-    QueueSfx2_Max6(0x71, game);
-    QueueSfx3_Max6(1, game);
 }
 pub unsafe fn AdvancePaletteFadeForAllPalettes_0xc(game: &mut Game) -> u8 {
     unsafe {

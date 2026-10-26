@@ -1,7 +1,8 @@
 //! Boot/reset sequencing over the authoritative compatibility state.
-use crate::game::sm_80::{APU_UploadBank, ClearOamExt, ClearUnusedOam};
+use crate::game::sm_80::{ClearOamExt, ClearUnusedOam};
 use crate::game::{save_slots, sm_8b::InitializeIoDisplayLogo_Async};
 use crate::game_state::Game;
+use crate::native_audio::upload_bank as APU_UploadBank;
 use crate::ram_map::word;
 use crate::rtl::{
     APUI00, APUI01, APUI02, APUI03, BG1HOFS, BG1SC, BG1VOFS, BG2HOFS, BG2SC, BG2VOFS, BG3HOFS,

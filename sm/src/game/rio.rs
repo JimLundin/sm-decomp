@@ -160,7 +160,7 @@ pub(crate) fn advance(game: &mut Game) -> bool {
     }
     drop(runtime);
     if sound {
-        crate::game::sm_80::QueueSfx2_Max6(0x65, game);
+        crate::game::music::QueueSfx2_Max6(0x65, game);
     }
     true
 }

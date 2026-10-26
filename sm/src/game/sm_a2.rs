@@ -15,10 +15,11 @@ use crate::game::enemy_projectiles::{
 };
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::message_boxes;
+use crate::game::music::{QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::palette_effects;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::session_runtime::player_face_forward;
-use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
+use crate::game::sm_80::NextRandom;
 use crate::game::sm_a9::MoveEnemyWithVelocity;
 
 pub use crate::types::Consts_A2;

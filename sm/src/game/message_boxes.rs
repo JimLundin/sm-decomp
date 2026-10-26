@@ -3,8 +3,8 @@ pub use crate::game::constants::bank_60::*;
 use crate::game::music::HandleMusicQueue;
 pub use crate::game::prelude::*;
 
-use crate::game::sm_80::QueueSfx1_Max6;
-use crate::game::sm_82::{CancelSoundEffects, HandleSoundEffects};
+use crate::game::music::QueueSfx1_Max6;
+use crate::game::music::{CancelSoundEffects, advance_sound_effects};
 
 use crate::rtl::ReadReg;
 
@@ -295,7 +295,9 @@ unsafe fn RestorePpuForMessageBox(game: &mut Game) {
 unsafe fn advance_audio(game: &mut Game) {
     unsafe {
         HandleMusicQueue(game);
-        HandleSoundEffects(game);
+        advance_sound_effects(game, |channel, value, game| {
+            crate::native_audio::write_sound_port(channel, value, game)
+        });
     }
 }
 

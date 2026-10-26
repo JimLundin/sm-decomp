@@ -69,10 +69,10 @@ impl EntryEffects for Runtime<'_> {
         self.foreign(|game| unsafe {
             match effect {
                 LeafEffect::QueueDoorSound => {
-                    game::sm_80::QueueSfx2_Max15(0x71, game);
+                    game::music::QueueSfx2_Max15(0x71, game);
                 }
                 LeafEffect::ResetSoundQueues => {
-                    game::sm_82::ResetSoundQueues(game);
+                    game::music::ResetSoundQueues(game);
                 }
                 LeafEffect::ClearTransitionSounds => {
                     game::session_runtime::player_command(0x1d, game);
@@ -217,7 +217,16 @@ impl EntryEffects for Runtime<'_> {
             match cause {
                 EntryWait::Nmi => crate::game::display_refresh::wait(true, game),
                 EntryWait::NoUpdate => crate::game::display_refresh::wait(false, game),
-                EntryWait::Music => game::sm_80::Play20FramesOfMusic_Async(game),
+                EntryWait::Music => {
+                    game::music::wait_for_music(game, |effect, game| match effect {
+                        game::music::MusicWaitEffect::EnableNmi(enabled) => {
+                            game::display_refresh::enable(enabled, game)
+                        }
+                        game::music::MusicWaitEffect::AdvanceQueue => {
+                            game::music::HandleMusicQueue(game)
+                        }
+                    })
+                }
                 EntryWait::Mechanisms => room_mechanisms::run_door(game),
             }
         })

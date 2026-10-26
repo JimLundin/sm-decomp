@@ -139,25 +139,10 @@ impl Host for Runtime<'_> {}
 impl Effects for Runtime<'_> {
     fn sound(&mut self, channel: SoundChannel, maximum: u8, cue: u16) {
         self.foreign(|game| {
-            use crate::game::sm_80::*;
-            match (channel, maximum) {
-                (SoundChannel::One, 1) => QueueSfx1_Max1(cue, game),
-                (SoundChannel::One, 3) => QueueSfx1_Max3(cue, game),
-                (SoundChannel::One, 6) => QueueSfx1_Max6(cue, game),
-                (SoundChannel::One, 9) => QueueSfx1_Max9(cue, game),
-                (SoundChannel::One, 15) => QueueSfx1_Max15(cue, game),
-                (SoundChannel::Two, 1) => QueueSfx2_Max1(cue, game),
-                (SoundChannel::Two, 3) => QueueSfx2_Max3(cue, game),
-                (SoundChannel::Two, 6) => QueueSfx2_Max6(cue, game),
-                (SoundChannel::Two, 9) => QueueSfx2_Max9(cue, game),
-                (SoundChannel::Two, 15) => QueueSfx2_Max15(cue, game),
-                (SoundChannel::Three, 1) => QueueSfx3_Max1(cue, game),
-                (SoundChannel::Three, 3) => QueueSfx3_Max3(cue, game),
-                (SoundChannel::Three, 6) => QueueSfx3_Max6(cue, game),
-                (SoundChannel::Three, 9) => QueueSfx3_Max9(cue, game),
-                (SoundChannel::Three, 15) => QueueSfx3_Max15(cue, game),
-                _ => unreachable!("mechanism sound limit"),
+            if !matches!(maximum, 1 | 3 | 6 | 9 | 15) {
+                unreachable!("mechanism sound limit");
             }
+            crate::game::music::queue_sfx(channel as usize, cue as u8, maximum, game);
         });
     }
     fn music(&mut self, track: u16) {

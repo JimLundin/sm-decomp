@@ -1,8 +1,5 @@
 //! HUD icons, resource counters and their ordered tilemap upload.
-use crate::game::{
-    menu_tilemap::native_record,
-    sm_80::{QueueSfx1_Max6, SetupDmaTransfer},
-};
+use crate::game::{menu_tilemap::native_record, music::QueueSfx1_Max6, sm_80::SetupDmaTransfer};
 use crate::game_state::Game;
 use crate::ram_map::{checked_word as at, word, words as fields};
 use crate::rtl::{MDMAEN, VMADDL, VMAIN, WriteReg};

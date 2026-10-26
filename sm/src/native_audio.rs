@@ -1,6 +1,27 @@
 //! Original upload handshake through the emulated APU bus.
 use crate::game_state::Game;
 
+/// Requires the selected live APU/SPC backend for the ordered upload.
+pub(crate) unsafe fn upload_bank(addr: u32, game: &mut Game) {
+    unsafe {
+        if !game.g_use_my_apu_code {
+            upload(addr, game);
+            return;
+        }
+        crate::rtl::RtlApuUpload(addr, game);
+    }
+}
+/// Requires the live APU backend; callers retain their frame/interrupt ownership.
+pub(crate) unsafe fn write_sound_port(channel: u8, value: u8, game: &mut Game) {
+    unsafe {
+        crate::rtl::RtlApuWrite(
+            crate::snes::registers::APUI01 + u32::from(channel),
+            value,
+            game,
+        );
+    }
+}
+
 /// The physical backend must be selected before installing the ROM patches.
 pub(crate) unsafe fn upload(mut source: u32, game: &mut Game) {
     unsafe {

@@ -4,9 +4,9 @@ use crate::game::constants::bank_81::{
     addr_kMenuTilemap_TryAgain, addr_kMenuTilemap_YesReturnToGame,
 };
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8};
+use crate::game::music::{QueueSfx1_Max6, QueueSfx3_Max6};
 use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
-use crate::game::sm_80::{QueueSfx1_Max6, QueueSfx3_Max6};
 use crate::game::sm_82::HandleGameOverBabyMetroid;
 use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled, spawn_hdma};
 use crate::game::{menu_tilemap, save_slots};

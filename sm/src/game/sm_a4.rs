@@ -15,9 +15,9 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a4::*;
 
 use crate::game::enemy_projectiles::{ClearEprojs, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
+use crate::game::music::{QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::player_update::minimap;
 use crate::game::room_mechanisms::spawn_hardcoded;
-use crate::game::sm_80::{QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::visual_runtime::spawn_hdma;
 
 use crate::game::sprite_effect_runtime::create_sprite;

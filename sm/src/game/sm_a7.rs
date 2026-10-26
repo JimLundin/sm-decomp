@@ -16,11 +16,10 @@ pub use crate::game::constants::bank_86::*;
 
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
+use crate::game::music::{QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx2_Max15, QueueSfx3_Max6};
 use crate::game::player_update::minimap;
 use crate::game::room_mechanisms::spawn_hardcoded;
-use crate::game::sm_80::{
-    GraphicsAsset, NextRandom, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx2_Max15, QueueSfx3_Max6,
-};
+use crate::game::sm_80::{GraphicsAsset, NextRandom};
 use crate::game::sm_82::AdvancePaletteFade_BgPalette6;
 use crate::game::sprite_effect_runtime::create_sprite;
 use crate::game::visual_runtime::initialize_phantoon_motion;

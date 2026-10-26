@@ -23,15 +23,16 @@ use crate::game::gameplay_flag_runtime::{
 use crate::game::mother_brain_samus_vitals as vitals;
 use crate::game::mother_brain_visuals::{self, Fade};
 use crate::game::mother_brain_visuals::{spawn_rainbow_hdma, spawn_rising_hdma};
+use crate::game::music::{
+    QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6,
+};
 use crate::game::palette_effects;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::room_state::load_fx_entry as LoadFxEntry;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::session_runtime::player_mother_brain;
-use crate::game::sm_80::{
-    NextRandom, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6,
-};
+use crate::game::sm_80::NextRandom;
 
 use crate::game::sm_a6::{
     HandleTypewriterText_Ext, HomingReversal, Ridley_Func_98, SetupZebesEscapeTypewriter,
@@ -5442,7 +5443,7 @@ crate::game::callback_dispatch! {
         SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, jp.word(4), game);
     };
     [11115247] MotherBrain_Instr_SpawnDeathBeamEproj [jp] {
-        let spawn_parameter = crate::game::sm_80::queue_sfx(1, 0x63, 6, game);
+        let spawn_parameter = crate::game::music::queue_sfx(1, 0x63, 6, game);
         SpawnEprojWithGfx(
             spawn_parameter,
             0x40,

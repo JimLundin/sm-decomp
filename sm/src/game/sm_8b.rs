@@ -26,13 +26,11 @@ pub use crate::game::constants::bank_60::*;
 
 use crate::game::explosion_window::spawn_power_bomb;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
+use crate::game::music::{QueueSfx1_Max15, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::palette_effects;
 use crate::game::player_projectiles::prepare;
 use crate::game::session_runtime::initialize_player;
-use crate::game::sm_80::{
-    ClearOamExt, ClearUnusedOam, GraphicsAsset, QueueMode7Transfers, QueueSfx1_Max15,
-    QueueSfx2_Max6, QueueSfx3_Max6,
-};
+use crate::game::sm_80::{ClearOamExt, ClearUnusedOam, GraphicsAsset, QueueMode7Transfers};
 use crate::game::visual_runtime::{initialize_intro_wave, initialize_title_gradient};
 
 pub use crate::types::Consts_8B;

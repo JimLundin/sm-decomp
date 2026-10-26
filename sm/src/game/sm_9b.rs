@@ -16,11 +16,12 @@ use crate::game::grapple_swing::{
     extend_beam as BlockCollGrappleBeam, react_beam as BlockReactGrapple,
     start_rope_animation as GrappleFunc_AF87,
 };
+use crate::game::music::{QueueSfx1_Max1, QueueSfx1_Max6, QueueSfx1_Max15};
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::samus_animation::DrawSamusSuitExploding;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::session_runtime::{player_bottom, settle_grapple};
-use crate::game::sm_80::{Multiply16x16, QueueSfx1_Max1, QueueSfx1_Max6, QueueSfx1_Max15};
+use crate::game::sm_80::Multiply16x16;
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]

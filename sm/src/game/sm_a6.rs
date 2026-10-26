@@ -23,21 +23,21 @@ use crate::game::enemy_projectiles::{
 use crate::game::gameplay_flag_runtime::{
     CheckEventHappened, ClearEventHappened, SetBossBitForCurArea, SetEventHappened,
 };
+use crate::game::music::{
+    QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6,
+};
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session_runtime::damage_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
-use crate::game::sm_80::{
-    NextRandom, QueueMode7Transfers, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6,
-    QueueSfx3_Max3, QueueSfx3_Max6,
-};
+use crate::game::sm_80::{NextRandom, QueueMode7Transfers};
 use crate::game::sm_a9::{
     ComputeCosMult, ComputeSinMult, MoveEnemyWithVelocity, Shitroid_Func_2, WriteColorsToPalette,
     WriteColorsToTargetPalette,
 };
 use crate::game::sprite_effect_runtime::create_sprite;
-use crate::game::visual_runtime::project_cinematic_point;
 
 const VANISH: u16 = ceres_doors::TANGIBLE | ceres_doors::INVISIBLE;
+use crate::game::visual_runtime::project_cinematic_point;
 
 pub type Enemy_Ridley = crate::game::enemy_layouts::EnemyLayout104;
 

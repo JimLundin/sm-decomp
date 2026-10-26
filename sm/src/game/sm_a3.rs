@@ -18,11 +18,10 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_b4::*;
 
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
+use crate::game::music::{QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::session_runtime::damage_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
-use crate::game::sm_80::{
-    Multiply16x16, NextRandom, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6,
-};
+use crate::game::sm_80::{Multiply16x16, NextRandom};
 use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
 pub use crate::game::waver::{Waver_Init, Waver_Instr_1, Waver_Main};
 

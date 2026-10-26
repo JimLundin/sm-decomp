@@ -12,8 +12,9 @@ use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
 
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::gameplay_flag_runtime::{CheckEventHappened, SetBossBitForCurArea};
+use crate::game::music::QueueSfx2_Max6;
 use crate::game::room_mechanisms::spawn_hardcoded;
-use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
+use crate::game::sm_80::NextRandom;
 use crate::game::sprite_effect_runtime::create_sprite;
 
 pub use crate::types::Consts_B3;

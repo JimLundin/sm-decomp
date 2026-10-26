@@ -1,9 +1,9 @@
 //! Mother Brain encounter palettes, wall sealing, earthquakes and body flicker.
 use crate::game::constants::bank_86::*;
 use crate::game::enemy_projectiles::SpawnEprojWithRoomGfx;
+use crate::game::music::QueueSfx2_Max6;
 use crate::game::prelude::*;
 use crate::game::room_mechanisms::spawn_hardcoded;
-use crate::game::sm_80::QueueSfx2_Max6;
 use crate::game::sm_a9::WriteColorsToPalette;
 const RomPtr_AD: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xad>;
 crate::ram_map::ram_pointer_functions! {

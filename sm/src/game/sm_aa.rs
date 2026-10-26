@@ -13,8 +13,9 @@ pub use crate::game::prelude::*;
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
 
 use crate::game::gameplay_flag_runtime::{CheckBossBitForCurArea, SetBossBitForCurArea};
+use crate::game::music::QueueSfx2_Max6;
 use crate::game::room_mechanisms::{spawn_collision, spawn_hardcoded};
-use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
+use crate::game::sm_80::NextRandom;
 use crate::game::sm_82::sub_82DAF7;
 
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};

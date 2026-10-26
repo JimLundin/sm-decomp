@@ -93,6 +93,7 @@ pub(crate) fn ceres_movement(game: &mut crate::game_state::Game, action: fn(&mut
 use crate::game::{
     constants::bank_90::addr_loc_908029,
     explosion_window::spawn_crystal_flash,
+    music::{QueueSfx1_Max6, QueueSfx3_Max6, QueueSfx3_Max9, QueueSfx3_Max15},
     player_collision::operations as player_collision,
     player_movement::{self, forced, speed},
     player_projectiles::initialize,
@@ -100,9 +101,7 @@ use crate::game::{
     projectile_geometry::sine_offset,
     projectile_initialization::Initialization,
     session_runtime::Runtime as CollisionRuntime,
-    sm_80::{
-        InvalidInterrupt_Crash, QueueSfx1_Max6, QueueSfx3_Max6, QueueSfx3_Max9, QueueSfx3_Max15,
-    },
+    sm_80::InvalidInterrupt_Crash,
     visual_runtime::set_hdma_enabled,
 };
 pub unsafe fn Samus_EndSuperJump(game: &mut Game) -> u8 {

@@ -1,8 +1,9 @@
 //! Area and room selection, with the original menu-state and RAM compatibility.
 use crate::game::constants::{bank_81::*, bank_82::*};
+use crate::game::music::QueueSfx1_Max6;
 use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
-use crate::game::sm_80::{LoadFromLoadStation, LoadMirrorOfExploredMapTiles, QueueSfx1_Max6};
+use crate::game::sm_80::{LoadFromLoadStation, LoadMirrorOfExploredMapTiles};
 use crate::game::sm_82::{
     AdvanceGradualColorChangeOfPalette, DisplayMapElevatorDestinations, DrawFileSelectMapIcons,
     DrawMapScrollArrowAndCheckToScroll, DrawRoomSelectMap, MapScrolling,

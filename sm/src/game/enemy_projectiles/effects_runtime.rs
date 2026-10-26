@@ -38,7 +38,7 @@ impl Effects for Runtime<'_> {
             if !(1..=3).contains(&channel) || !matches!(max, 1 | 3 | 6 | 9 | 15) {
                 unreachable!("invalid projectile sound channel/limit");
             }
-            crate::game::sm_80::queue_sfx(usize::from(channel - 1), sound as u8, max, game);
+            crate::game::music::queue_sfx(usize::from(channel - 1), sound as u8, max, game);
         });
     }
     fn unreachable(&mut self) {

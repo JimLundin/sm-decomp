@@ -260,18 +260,13 @@ impl Host for Runtime<'_> {
     }
     fn sound(&mut self, bank: u8, limit: u8, sound: u16) {
         self.foreign(|g| {
-            use crate::game::sm_80::*;
-            match (bank, limit) {
-                (1, 6) => QueueSfx1_Max6(sound, g),
-                (1, 9) => QueueSfx1_Max9(sound, g),
-                (1, 15) => QueueSfx1_Max15(sound, g),
-                (2, 6) => QueueSfx2_Max6(sound, g),
-                (3, 3) => QueueSfx3_Max3(sound, g),
-                (3, 6) => QueueSfx3_Max6(sound, g),
-                (3, 9) => QueueSfx3_Max9(sound, g),
-                (3, 15) => QueueSfx3_Max15(sound, g),
-                _ => unreachable!("unknown projectile sound queue"),
+            if !matches!(
+                (bank, limit),
+                (1, 6 | 9 | 15) | (2, 6) | (3, 3 | 6 | 9 | 15)
+            ) {
+                unreachable!("unknown projectile sound queue");
             }
+            crate::game::music::queue_sfx(usize::from(bank - 1), sound as u8, limit, g);
         });
     }
     fn player_step(&mut self, step: PlayerStep) {

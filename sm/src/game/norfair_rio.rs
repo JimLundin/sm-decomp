@@ -136,7 +136,7 @@ pub(crate) fn finish_animation(k: u16, lower: bool, recovering: bool, game: &mut
     runtime.edit_actor(key, Native, |actor| actor.pre_instruction = phase);
     drop(runtime);
     if !lower {
-        crate::game::sm_80::QueueSfx2_Max6(0x65, game);
+        crate::game::music::QueueSfx2_Max6(0x65, game);
     }
 }
 
@@ -191,6 +191,6 @@ pub(crate) fn dive(k: u16, lower: bool, turning: bool, game: &mut Game) {
     }
     drop(runtime);
     if sound {
-        crate::game::sm_80::QueueSfx2_Max6(0x64, game);
+        crate::game::music::QueueSfx2_Max6(0x64, game);
     }
 }

@@ -3,7 +3,7 @@ use crate::game::player_transitions::xray::BlendPhase;
 use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
 
-use crate::game::sm_80::QueueSfx1_Max6;
+use crate::game::music::QueueSfx1_Max6;
 
 use crate::game::session_runtime::finish_xray;
 

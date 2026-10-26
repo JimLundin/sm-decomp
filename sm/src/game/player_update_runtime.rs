@@ -192,12 +192,12 @@ pub(crate) fn advance_frame(game: &mut Game) {
 pub(crate) fn low_health(game: &mut Game) {
     if (game.samus_health().wrapping_sub(31) as i16) < 0 {
         if game.samus_health_warning() == 0 {
-            crate::game::sm_80::QueueSfx3_Max6(2, game);
+            crate::game::music::QueueSfx3_Max6(2, game);
             game.set_samus_health_warning(1);
         }
     } else if game.samus_health_warning() != 0 {
         game.set_samus_health_warning(0);
-        crate::game::sm_80::QueueSfx3_Max6(1, game);
+        crate::game::music::QueueSfx3_Max6(1, game);
     }
 }
 

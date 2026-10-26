@@ -31,7 +31,7 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         assert!((14..16).contains(&id));
         assert!(!g.g_snes.is_null(), "composed.real-hardware-carrier");
         crate::rtl::RtlReset(2, g);
-        crate::game::sm_80::APU_UploadBank(0xcf8000, g);
+        crate::native_audio::upload_bank(0xcf8000, g);
         fixture::install(g);
         steps::install_surface_content(g);
         crate::game::session_runtime::initialize_player(g);

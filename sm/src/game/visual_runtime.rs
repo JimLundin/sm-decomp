@@ -962,7 +962,7 @@ pub(crate) fn shake_room_with_sound(kind: u16, game: &mut Game) {
             index = 0;
             sound = SOUNDS[0];
         }
-        crate::game::sm_80::QueueSfx2_Max6(sound, game);
+        crate::game::music::QueueSfx2_Max6(sound, game);
         word!(
             game.earthquake_sfx_timer = SOUNDS[usize::from(index >> 1) + 1]
                 .wrapping_add(index & 1)

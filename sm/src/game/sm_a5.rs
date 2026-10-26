@@ -17,11 +17,12 @@ use core::mem::offset_of;
 pub use crate::game::constants::bank_86::*;
 
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
+use crate::game::music::{QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::player_movement::forced;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::session_runtime::damage_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
-use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
+use crate::game::sm_80::NextRandom;
 use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
 use crate::game::visual_runtime::{initialize_draygon_layer, spawn_bg3_scroll};
 

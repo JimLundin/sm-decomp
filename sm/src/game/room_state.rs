@@ -516,7 +516,7 @@ unsafe fn random_explosions(mask: u16, check_tile: bool, h: &mut Runtime<'_>) {
         if random < 8 {
             let sound = [0x24, 0, 0, 0x25, 0, 0, 0, 0][usize::from(random)];
             if sound != 0 {
-                h.foreign(|game| crate::game::sm_80::QueueSfx2_Max6(sound, game));
+                h.foreign(|game| crate::game::music::QueueSfx2_Max6(sound, game));
             }
         }
         let sprite = [3, 3, 9, 12, 12, 18, 18, 21][usize::from(random & 7)];

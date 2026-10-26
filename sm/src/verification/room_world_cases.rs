@@ -106,7 +106,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         }
         // These focused routes begin after reset rather than running Vector_RESET.
         // Install its actual base audio program before any retained music command.
-        crate::game::sm_80::APU_UploadBank(0xcf8000, g);
+        crate::native_audio::upload_bank(0xcf8000, g);
         assert!(!g.g_fail, "room.world.base-audio-upload-no-diagnostic");
         room_world_resources::install(g);
         assert!(!g.g_fail, "room.world.resources-no-diagnostic");

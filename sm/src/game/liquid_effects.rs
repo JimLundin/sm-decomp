@@ -1,9 +1,9 @@
 //! Liquid setup, rising motion, tide and background HDMA tables.
 use crate::game::animated_tiles;
 use crate::game::constants::bank_87::{addr_kAnimtiles_Acid, addr_kAnimtiles_Lava};
+use crate::game::music::QueueSfx2_Max6;
 use crate::game::prelude::*;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
-use crate::game::sm_80::QueueSfx2_Max6;
 use crate::game::visual_runtime::spawn_bg3_scroll;
 use crate::game::visual_runtime::{shake_room_with_sound, spawn_hdma};
 

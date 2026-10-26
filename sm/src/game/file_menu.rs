@@ -8,10 +8,11 @@ use crate::game::constants::bank_81::{
     addr_kMenuTilemap_Yes,
 };
 use crate::game::menu_tilemap::{self, main_menu as restore_main};
+use crate::game::music::{QueueSfx1_Max6, QueueSfx3_Max6};
 use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
-use crate::game::sm_80::{LoadMirrorOfExploredMapTiles, QueueSfx1_Max6, QueueSfx3_Max6};
+use crate::game::sm_80::LoadMirrorOfExploredMapTiles;
 use crate::game::sm_82::{
     DrawBorderAroundDataClearMode, DrawBorderAroundDataCopyMode, DrawBorderAroundSamusData,
 };

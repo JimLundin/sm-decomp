@@ -1,13 +1,11 @@
 use crate::game::decompression::{self, decompress_to_ram};
 use crate::game::display_refresh::ScrollingDmaLayout;
-use crate::game::music::HandleMusicQueue;
 pub use crate::game::prelude::*;
 use crate::game::room_state::load_tiles_and_palette;
 
 pub use crate::game::constants::bank_60::*;
 
 use crate::game::room_mechanisms::reload_graphics;
-use crate::rtl::RtlApuUpload;
 
 const RomPtr_80: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x80>;
 crate::ram_map::ram_pointer_functions! {
@@ -15,15 +13,6 @@ crate::ram_map::ram_pointer_functions! {
 }
 crate::game::constants::typed_constants! { i32;
     fnDoorTransition_FadeInScreenAndFinish = 0x82e737,
-}
-pub unsafe fn APU_UploadBank(addr: u32, game: &mut Game) {
-    unsafe {
-        if !game.g_use_my_apu_code {
-            crate::native_audio::upload(addr, game);
-            return;
-        }
-        RtlApuUpload(addr, game);
-    }
 }
 pub unsafe fn NextRandom(game: &mut Game) -> u16 {
     unsafe {
@@ -103,70 +92,6 @@ pub unsafe fn QueueMode7Transfers(db: u8, k: u16, game: &mut Game) {
         }
         crate::game::mode7_transfers::enqueue_rom(address, game);
     }
-}
-// Byte-backed queue layout from ram_map: three channels, sixteen slots each.
-pub(crate) fn queue_sfx(channel: usize, sound: u8, max_queued: u8, game: &mut Game) -> u16 {
-    #[cfg(sm_verify_dll)]
-    crate::game::visual_runtime::samus_observer::sound(channel, sound, max_queued);
-    let read_pos = 0x643 + channel;
-    let write_pos = 0x646 + channel;
-    let limit_pos = 0x653 + channel;
-    let buffer = 0x656 + 16 * channel;
-
-    // This write also happens when capacity or the sound gates reject the request.
-    game.g_ram[limit_pos] = max_queued;
-    let queued = game.g_ram[write_pos].wrapping_sub(game.g_ram[read_pos]) & 15;
-    if queued >= max_queued {
-        return u16::from_be_bytes([sound, queued]);
-    }
-    if game.debug_disable_sounds() != 0
-        || game.game_state() >= 40
-        || game.power_bomb_explosion_status() & 0x8000 != 0
-    {
-        return u16::from_be_bytes([queued, sound]);
-    }
-
-    let write = game.g_ram[write_pos];
-    let mut next = write.wrapping_add(1);
-    if next >= 16 {
-        next = 0;
-    }
-    // Preserve adjacent-RAM access for an out-of-range current write position.
-    let slot = buffer + usize::from(write);
-    if next == game.g_ram[read_pos] {
-        // Lower sound numbers take priority when the ring is full.
-        if sound < game.g_ram[slot] {
-            game.g_ram[slot] = sound;
-        }
-    } else {
-        game.g_ram[slot] = sound;
-        game.g_ram[write_pos] = next;
-        game.g_ram[buffer + usize::from(next)] = 0;
-    }
-    // Callers that forward the original accumulator need both queue depth and sound.
-    u16::from_be_bytes([queued, sound])
-}
-
-crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
-    QueueSfx1_Max15 => queue_sfx(0, sound as u8, 15, game);
-    QueueSfx1_Max9 => queue_sfx(0, sound as u8, 9, game);
-    QueueSfx1_Max3 => queue_sfx(0, sound as u8, 3, game);
-    QueueSfx1_Max1 => queue_sfx(0, sound as u8, 1, game);
-    QueueSfx1_Max6 => queue_sfx(0, sound as u8, 6, game);
-}
-crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
-    QueueSfx2_Max15 => queue_sfx(1, sound as u8, 15, game);
-    QueueSfx2_Max9 => queue_sfx(1, sound as u8, 9, game);
-    QueueSfx2_Max3 => queue_sfx(1, sound as u8, 3, game);
-    QueueSfx2_Max1 => queue_sfx(1, sound as u8, 1, game);
-    QueueSfx2_Max6 => queue_sfx(1, sound as u8, 6, game);
-}
-crate::forward_calls! { pub fn (sound: u16, game: &mut Game);
-    QueueSfx3_Max15 => queue_sfx(2, sound as u8, 15, game);
-    QueueSfx3_Max9 => queue_sfx(2, sound as u8, 9, game);
-    QueueSfx3_Max3 => queue_sfx(2, sound as u8, 3, game);
-    QueueSfx3_Max1 => queue_sfx(2, sound as u8, 1, game);
-    QueueSfx3_Max6 => queue_sfx(2, sound as u8, 6, game);
 }
 pub unsafe fn SetupDmaTransfer(p: *const c_void, game: &mut Game) {
     unsafe {
@@ -256,38 +181,6 @@ pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
         crate::game::room_entry::EntrySignal::Initial,
     );
     poll.returned_byte()
-}
-pub unsafe fn Play20FramesOfMusic_Async(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        crate::verify_probe::hit("coroutine.music");
-        let resume_state: *mut u8 = ram_ptr!(game; 0x614);
-        let resume = *resume_state;
-        if resume == 0 {
-            crate::game::display_refresh::enable(true, game);
-            word!(game.my_counter = 0);
-        }
-        if resume <= 1 {
-            let mut waiting = resume == 1;
-            loop {
-                if !waiting {
-                    if word!(game.my_counter) == 20 {
-                        crate::game::display_refresh::enable(false, game);
-                        break;
-                    }
-                    HandleMusicQueue(game);
-                }
-                let yielded: u8 = crate::game::display_refresh::wait(true, game);
-                if yielded != 0 {
-                    *resume_state = 1;
-                    return yielded;
-                }
-                word!(game.my_counter += 1);
-                waiting = false;
-            }
-        }
-        *resume_state = 0;
-        0 as CoroutineRet
-    }
 }
 pub unsafe fn ResumeGameplay(game: &mut Game) {
     unsafe {
