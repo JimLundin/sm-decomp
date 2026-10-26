@@ -18,13 +18,13 @@ pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_82::*;
 
 use crate::game::display_refresh::setup_transfer;
-use crate::game::palette_effects::{self, fading};
+use crate::game::palette_effects::fading;
 use crate::game::samus_animation::{
     Samus_DrawDuringDeathAnim, Samus_DrawStartingDeathAnim, Samus_DrawWhenNotAnimatingOrDying,
 };
 use crate::game::sm_8b::{
     GameState_1_OpeningCinematic_, GameState_37_CeresGoesBoomWithSamus_,
-    GameState_39_EndingAndCredits_, LoadTitleSequenceGraphics,
+    GameState_39_EndingAndCredits_,
 };
 use crate::game::sm_9b::{
     GameState_24_SamusNoHealth_Explosion_Helper, HandleSamusDeathSequence, StartSamusDeathAnimation,
@@ -59,59 +59,6 @@ crate::game::constants::typed_constants! { u32;
     fnKraid_UnpauseHook_IsSinking = 10994336, fnPauseHook_Kraid = 10994469,
     fnMotherBrainsBody_UnpauseHook = 11110243,
 }
-pub unsafe fn GameState_41_TransitionToDemo(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        let mut _coret_: u8 = GAMEPLAY(game);
-        if _coret_ != 0 {
-            return _coret_;
-        }
-        crate::game::visual_runtime::update_hdma(game);
-        word!(game.game_state += 1);
-        *ram_ptr!(game; 0x51) = 15;
-        kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn GameState_43_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        if word!(game.substate) != 1 {
-            demo_rooms::advance_set(game);
-        }
-        crate::game::display_refresh::enable(true, game);
-        word!(game.game_state += 1);
-        word! { game, 0; screen_fade_delay, screen_fade_counter }
-        clear_hdma(game);
-        crate::game::scanline_irq::disable(game);
-        word! { game, 0;
-            fx_layer_blending_config_a, cur_irq_handler, irqhandler_next_handler,
-        }
-        palette_effects::set_enabled(false, game);
-        palette_effects::clear(game);
-        word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
-        word_transfers!(game, descending, 270; native(0x996) <- value(0));
-        *ram_ptr!(game; 0x6e) = 0;
-        *ram_ptr!(game; 0x71) = 0;
-        *ram_ptr!(game; 0x69) = 16;
-        *ram_ptr!(game; 0x6b) = 0;
-        *ram_ptr!(game; 0x6c) = 0;
-        *ram_ptr!(game; 0x6d) = 0;
-        kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn GameState_44_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        word!(game.game_state = kGameState_1_OpeningCinematic as u16);
-        if (word!(game.substate) & 0x8000) != 0 {
-            word!(game.game_state = kGameState_40_TransitionToDemo as u16);
-        } else if word!(game.substate) != 0 {
-            LoadTitleSequenceGraphics(game);
-            word! {game; eproj_x_pos[4] = 2; cinematic_function = ((0x8b9a47i32) as u16); }
-        } else {
-            QueueMusic_Delayed8(0, game);
-            word! {game; debug_disable_sounds = 0; cinematic_function = ((0x8b9b68i32) as u16); }
-        }
-        kCoroutineNone as CoroutineRet
-    }
-}
 const INITIALIZE: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::Initialize, game) };
 const GAMEPLAY: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::Gameplay, game) };
 const FADE_IN: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::FadeIn, game) };
@@ -121,6 +68,9 @@ const CERES_ELEVATOR: Func_V_Coroutine =
 const CERES_BLACKOUT: Func_V_Coroutine =
     |game| unsafe { AdvanceGameplay(Entry::CeresBlackout, game) };
 const ZEBES_ESCAPE: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::ZebesEscape, game) };
+const DEMO_START: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::DemoStart, game) };
+const DEMO_STOP: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::DemoStop, game) };
+const DEMO_NEXT: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::DemoNext, game) };
 const PAUSE_SETUP: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::PauseSetup, game) };
 const PAUSED: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::Paused, game) };
 const UNPAUSE_SETUP: Func_V_Coroutine =
@@ -158,8 +108,8 @@ static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_
     CERES_BLACKOUT, GameState_37_CeresGoesBoomWithSamus_, TIME_UP,
     TIME_UP_EXIT, GameState_37_CeresGoesBoomWithSamus_,
     ZEBES_ESCAPE, GameState_39_EndingAndCredits_,
-    INITIALIZE, GameState_41_TransitionToDemo, DEMO,
-    GameState_43_TransitionFromDemo, GameState_44_TransitionFromDemo,
+    INITIALIZE, DEMO_START, DEMO,
+    DEMO_STOP, DEMO_NEXT,
 };
 pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
     unsafe {

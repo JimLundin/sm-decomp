@@ -164,17 +164,15 @@ pub(crate) fn reset_gameplay_layers(clear_current_irq: bool, game: &mut Game) {
     if clear_current_irq {
         word!(game.cur_irq_handler = 0);
     }
-    for (mirror, value) in [
-        (0x6e, 0),
-        (0x71, 0),
-        (0x69, 16),
-        (0x6b, 0),
-        (0x6c, 0),
-        (0x6d, 0),
-        (0x55, 9),
-    ] {
-        game.g_ram[mirror] = value;
-    }
+    reset_layer_mirrors(game);
+    game.g_ram[0x55] = 9;
+}
+
+pub(crate) fn reset_layer_mirrors(game: &mut Game) {
+    game.g_ram[0x6e] = 0;
+    game.g_ram[0x71] = 0;
+    game.g_ram[0x69] = 16;
+    game.g_ram[0x6b..0x6e].fill(0);
 }
 
 pub(crate) fn fade(fade_in: bool, game: &mut Game) {

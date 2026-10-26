@@ -54,6 +54,9 @@ pub(crate) enum Entry {
     Gameplay,
     FadeIn,
     Unpause,
+    DemoStart,
+    DemoStop,
+    DemoNext,
     PauseSetup,
     Paused,
     UnpauseSetup,
@@ -182,6 +185,38 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                 }
             }
             game.g_ram[0x612] = 0;
+            return 0 as CoroutineRet;
+        }
+        if matches!(entry, Entry::DemoStop) {
+            if word!(game.substate) != 1 {
+                demo_rooms::advance_set(game);
+            }
+            crate::game::display_refresh::enable(true, game);
+            word!(game.game_state += 1);
+            word! { game, 0; screen_fade_delay, screen_fade_counter }
+            crate::game::visual_runtime::clear_hdma(game);
+            crate::game::scanline_irq::disable(game);
+            word! { game, 0;
+                fx_layer_blending_config_a, cur_irq_handler, irqhandler_next_handler,
+            }
+            palette_effects::set_enabled(false, game);
+            palette_effects::clear(game);
+            word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
+            word_transfers!(game, descending, 270; native(0x996) <- value(0));
+            display_refresh::reset_layer_mirrors(game);
+            return 0 as CoroutineRet;
+        }
+        if matches!(entry, Entry::DemoNext) {
+            word!(game.game_state = kGameState_1_OpeningCinematic as u16);
+            if (word!(game.substate) & 0x8000) != 0 {
+                word!(game.game_state = kGameState_40_TransitionToDemo as u16);
+            } else if word!(game.substate) != 0 {
+                crate::game::sm_8b::LoadTitleSequenceGraphics(game);
+                word! {game; eproj_x_pos[4] = 2; cinematic_function = ((0x8b9a47i32) as u16); }
+            } else {
+                crate::game::music::QueueMusic_Delayed8(0, game);
+                word! {game; debug_disable_sounds = 0; cinematic_function = ((0x8b9b68i32) as u16); }
+            }
             return 0 as CoroutineRet;
         }
         if matches!(entry, Entry::PauseSetup) {
@@ -450,7 +485,14 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                     word!(game.game_state += 1);
                 }
             }
-            Entry::PauseSetup
+            Entry::DemoStart => {
+                crate::game::visual_runtime::update_hdma(game);
+                word!(game.game_state += 1);
+                game.g_ram[0x51] = 15;
+            }
+            Entry::DemoStop
+            | Entry::DemoNext
+            | Entry::PauseSetup
             | Entry::Paused
             | Entry::UnpauseSetup
             | Entry::TimeUpExit
