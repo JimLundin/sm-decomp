@@ -5,6 +5,7 @@ pub(in crate::game) mod api;
 pub(in crate::game) mod content;
 pub(in crate::game) mod effects;
 pub(crate) mod identity;
+pub(in crate::game) mod kago;
 pub(in crate::game) mod media;
 #[cfg(sm_verify_dll)]
 #[path = "../../verification/actor_movement_candidate.rs"]

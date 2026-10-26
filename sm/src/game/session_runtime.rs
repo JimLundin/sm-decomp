@@ -629,6 +629,8 @@ crate::game::callback_dispatch! {
         11048752 => sm_a8::Fune_Main;
         11051336 => sm_a8::YappingMaw_Init;
         11051537 => sm_a8::YappingMaw_Main; 11052953 => sm_a8::YappingMaw_Touch;
+        11053894 => crate::game::actors::kago::initialize;
+        11053941 => crate::game::actors::kago::advance; 11053955 => crate::game::actors::kago::shot;
         11057014 => sm_a8::Beetom_Init;
         11057165 => sm_a8::Beetom_Main; 11058734 => sm_a8::Beetom_Touch;
         11062374 => [()];

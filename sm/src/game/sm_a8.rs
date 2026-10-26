@@ -37,7 +37,7 @@ crate::game::constants::typed_constants! { Consts_A8;
     addr_kWalkingLavaSeahorse_Ilist_DC51 = 56401, addr_stru_A8DC4B = 56395,
     addr_kWalkingLavaSeahorse_Ilist_DC03 = 56323, addr_stru_A8DBE9 = 56297,
     addr_kWalkingLavaSeahorse_Ilist_DBE7 = 56295, addr_kMaridiaPuffer_Ilist_D855 = 55381,
-    addr_kMaridiaPuffer_Ilist_D841 = 55361, addr_loc_A8D02E = 53294,
+    addr_kMaridiaPuffer_Ilist_D841 = 55361,
     addr_loc_A8CF26 = 53030, addr_loc_A8CF18 = 53016,
     addr_kWreckedShipRobot_Ilist_CB65 = 52069, addr_kWreckedShipRobot_Ilist_CB1D = 51997,
     addr_kWreckedShipRobot_Ilist_CB09 = 51977, addr_kWreckedShipRobot_Ilist_CAFD = 51965,
@@ -58,7 +58,6 @@ crate::game::constants::typed_constants! { Consts_A8;
     addr_kNorfairLavaMan_Ilist_AD50 = 44368, addr_kNorfairLavaMan_Ilist_AD3C = 44348,
     addr_kNorfairLavaMan_Ilist_AD0C = 44300, addr_kNorfairLavaMan_Ilist_ACDE = 44254,
     addr_kNorfairLavaMan_Ilist_ACB0 = 44208, addr_kNorfairLavaMan_Ilist_AC9C = 44188,
-    addr_kKago_Ilist_AB32 = 43826, addr_kKago_Ilist_AB1E = 43806,
     addr_kYappingMaw_Ilist_A079 = 41081, addr_off_A8A061 = 41057,
     addr_kYappingMaw_Ilist_A05B = 41051, addr_kYappingMaw_Ilist_A03D = 41021,
     addr_off_A8A025 = 40997, addr_kYappingMaw_Ilist_A01F = 40991,
@@ -75,7 +74,7 @@ crate::game::constants::typed_constants! { Consts_A8;
 }
 crate::type_aliases! {
     pub Enemy_Fune, Enemy_KiHunter, Enemy_MiniDraygon, Enemy_NorfairLavaMan,
-        Enemy_WalkingLavaSeahorse, Enemy_WreckedShipGhost, Enemy_Beetom, Enemy_Kago,
+        Enemy_WalkingLavaSeahorse, Enemy_WreckedShipGhost, Enemy_Beetom,
         Enemy_WreckedShipOrbs = crate::game::enemy_layouts::EnemyLayout40;
 }
 
@@ -138,7 +137,6 @@ type MiniDraygon = Enemy_MiniDraygon;
 type MaridiaPuffer = Enemy_MaridiaPuffer;
 type MaridiaFloater = Enemy_MaridiaFloater;
 type KiHunter = Enemy_KiHunter;
-type Kago = Enemy_Kago;
 type Fune = Enemy_Fune;
 type Beetom = Enemy_Beetom;
 static g_word_A890CA: [i16; 4] = [-8, 8, 0, 0];
@@ -1019,17 +1017,6 @@ pub unsafe fn YappingMaw_Func_17(a: u16, varE32: u16, game: &mut Game) -> u16 {
     }
 }
 
-crate::game::callback_dispatch! {
-    pub unsafe fn CallKagoFunc(ea: u32, k: u16, game: &mut Game) => ea;
-    call (k, game); default { Unreachable(game); };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [11053947] Kago_Func_1 [] {
-        slot!(game, Kago[k as i32].var_A = (0xa8ab81i32) as u16);
-    };
-    @external {
-        11053953 => [()];
-    }
-}
 static g_off_A8AF4F: [Func_V; 3] = callback_table! { nonnull Func_V;
     NorfairLavaMan_Func_1, NorfairLavaMan_Func_2, NorfairLavaMan_Func_3,
 };
@@ -2775,46 +2762,6 @@ crate::game::callback_dispatch! {
         crate::game::enemy_projectiles::update_maw_palette(slot!(game, YappingMaw[E].var_42), game);
         crate::game::enemy_projectiles::update_maw_palette(slot!(game, YappingMaw[E].var_43), game);
         YappingMaw_Func_19(game);
-    };
-    [11053894] Kago_Init [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, Kago[E].base.properties, |old| (old) | ((kEnemyProps_DisableSamusColl) as u16));
-        slot!(game, Kago[E].base.instruction_timer = 1);
-        slot!(game, Kago[E].base.timer = 0);
-        slot!(game, Kago[E].var_E = 0);
-        slot!(game, Kago[E].base.current_instruction = addr_kKago_Ilist_AB1E as u16);
-        slot!(game, Kago[E].var_A = (0xa8ab7bi32) as u16);
-        slot!(game, Kago[E].var_F = 0);
-        slot!(game, Kago[E].var_04 = slot!(game, Kago[E].parameter_1));
-    };
-    [11053941] Kago_Main [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        CallKagoFunc(
-            ((slot!(game, Kago[E].var_A)) as u32) | (0xa80000u32),
-            word!(game.cur_enemy_index),
-            game,
-        );
-    };
-    [11053955] Kago_Shot [] {
-        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
-        word! {game; earthquake_type = 2; earthquake_timer = 16; }
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        if slot!(game, Kago[E].var_B) == 0 {
-            slot!(game, Kago[E].var_B = 1);
-            slot!(game, Kago[E].base; current_instruction = addr_kKago_Ilist_AB32 as u16, instruction_timer = 1);
-        }
-        let mut v2: i16 = ((slot!(game, Kago[E].var_04)) as i16).wrapping_sub(1);
-        slot!(game, Kago[E].var_04 = v2 as u16);
-        if v2 < 0 {
-            ({ let (_ignored_key, animation) = (word!(game.cur_enemy_index), 4); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
-            slot!(game, Kago[E].var_F = 1);
-        }
-        SpawnEprojWithGfx(
-            slot!(game, Kago[E].base.y_pos),
-            word!(game.cur_enemy_index),
-            addr_loc_A8D02E as u16,
-            game,
-        );
     };
     [11054987] NorfairLavaMan_Init [] {
         let v0: u16 = (2u16).wrapping_mul(
