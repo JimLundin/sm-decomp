@@ -544,14 +544,6 @@ pub unsafe fn MaybeHandleCinematicBgObjects(game: &mut Game) {
         }
     }
 }
-static kCinematicFunction_Intro_Func118_Tab0: [u16; 16] = [
-    0, 0x800, 0x1000, 0x1800, 0x2000, 0x2800, 0x3000, 0x3800, 0x4000, 0x4800, 0x5000, 0x5800,
-    0x6000, 0x6800, 0x7000, 0x7800,
-];
-static kCinematicFunction_Intro_Func118_Tab1: [u16; 16] = [
-    0, 0x800, 0x1000, 0x1800, 0x2000, 0x2800, 0x3000, 0x3800, 0, 0x800, 0x1000, 0x1800, 0x2000,
-    0x2800, 0x3000, 0x3800,
-];
 static g_word_8BDE43: [u16; 16] = [
     0, 0x6f7b, 0x4a52, 0x1ce7, 0, 0x5ad6, 0x4a52, 0x35ad, 0x2529, 0x7fff, 0x56b5, 0x294a, 0x4210,
     0x2d6b, 0x18c6, 0x7fff,
@@ -1218,23 +1210,6 @@ crate::game::callback_dispatch! {
                 cinematic_var4 = 0; }
         }
     };
-    [9165523] CinematicFunction_Intro_Func118 [] {
-        let v0: u16 = word!(game.cinematic_var4);
-        let v1: u16 = word!(game.mode7_vram_write_queue_tail);
-        let high_plane = word!(game.cinematic_var4) as i32 - 8i32 & 0x8000 != 0;
-        crate::game::mode7_transfers::write_word(v1, 0, if high_plane { 192 } else { 128 }, game);
-        // Keep the first store before either table lookup, including bounds failures.
-        crate::game::mode7_transfers::write_word(v1, 1, kCinematicFunction_Intro_Func118_Tab0[v0 as usize], game);
-        crate::game::mode7_transfers::write_word(v1, 3, 127, game);
-        crate::game::mode7_transfers::write_word(v1, 4, 2048, game);
-        crate::game::mode7_transfers::write_word(v1, 6, kCinematicFunction_Intro_Func118_Tab1[v0 as usize], game);
-        crate::game::mode7_transfers::write_word(v1, 8, if high_plane { 128 } else { 0 }, game);
-        word!(game.mode7_vram_write_queue_tail = (v1).wrapping_add(9));
-        if word!(game.cinematic_var4 += 1, reread) as i32 - 16i32 & 0x8000 == 0 {
-            *ram_ptr!(game; 0x55) = 1;
-            word! {game; cinematic_var4 = 0; cinematic_function = ((0x8bdb9di32) as u16); }
-        }
-    };
     [9165764] CinematicFunction_Intro_Func120 [] {
         if HasQueuedMusic(game) & 1 == 0 {
             *ram_ptr!(game; 0x55) = 7;
@@ -1513,6 +1488,7 @@ crate::game::callback_dispatch! {
         *ram_ptr!(game; 0x69) = 16;
     };
     @external {
+        9165523 => [crate::game::mode7_transfers::advance_ending_tile_upload(game)];
         9165989 => [{ crate::game::visual_runtime::advance_ending_gunship_spin(false, game); }];
         9167790 => [crate::game::visual_runtime::advance_postcredits_zoom(true, game)];
         9168010 => [crate::game::visual_runtime::advance_postcredits_zoom(false, game)];

@@ -16,6 +16,28 @@ pub(super) fn write_word(tail: u16, field: usize, value: u16, game: &mut Game) {
 }
 
 #[forbid(unsafe_code)]
+pub(super) fn advance_ending_tile_upload(game: &mut Game) {
+    use crate::ram_map::word;
+    let page = word!(game.cinematic_var4);
+    let tail = word!(game.mode7_vram_write_queue_tail);
+    let high_plane = word!(game.cinematic_var4) as i32 - 8 & 0x8000 != 0;
+    write_word(tail, 0, if high_plane { 192 } else { 128 }, game);
+    // Both original tables have 16 pages; bounds failure follows the first store.
+    assert!(page < 16);
+    let source = page * 0x800;
+    write_word(tail, 1, source, game);
+    write_word(tail, 3, 127, game);
+    write_word(tail, 4, 2048, game);
+    write_word(tail, 6, source & 0x3fff, game);
+    write_word(tail, 8, if high_plane { 128 } else { 0 }, game);
+    word!(game.mode7_vram_write_queue_tail = tail.wrapping_add(9));
+    if word!(game.cinematic_var4 += 1, reread) as i32 - 16 & 0x8000 == 0 {
+        game.g_ram[0x55] = 1;
+        word! {game; cinematic_var4 = 0; cinematic_function = 0xdb9d; }
+    }
+}
+
+#[forbid(unsafe_code)]
 fn read_word(game: &Game, at: usize) -> u16 {
     u16::from_ne_bytes([game.g_ram[at], game.g_ram[at + 1]])
 }
