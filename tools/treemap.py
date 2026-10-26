@@ -8,10 +8,10 @@ Usage: python tools/treemap.py OUT.svg [REVISION]
 import datetime, io, re, subprocess, sys, tarfile
 from html import escape
 from pathlib import PurePosixPath
-from zoneinfo import ZoneInfo
 
-W, H, TOP = 960, 520, 132
-COLORS = {'owned': '#a9d8b9', 'partial': '#f0d48f', 'legacy': '#c9d3d8'}
+W, H, TOP = 960, 520, 176
+COLORS = {'owned': '#164739', 'partial': '#594319', 'legacy': '#273b54'}
+ACCENTS = {'owned': '#67e8b3', 'partial': '#ffd080', 'legacy': '#a5bcd8'}
 NAMES = {'owned': 'Owned', 'partial': 'Partly owned', 'legacy': 'Legacy'}
 AREAS = [('movement', 'Samus movement'), ('samus', 'Samus actions'), ('enemies', 'Enemies'),
          ('bosses', 'Bosses'), ('rooms', 'Rooms & doors'), ('projectiles', 'Projectiles'),
@@ -68,6 +68,8 @@ def measure(rev):
         if VERIFY.search(path):
             continue
         m['production'] += lines
+        if re.fullmatch(r'sm/src/game/sm_[0-9a-f]{2}\.rs', path):
+            m['legacy_bank'] += lines
         m['rows'][area(path)][status(path, text)] += lines
     m['totals'] = {k: sum(r[k] for r in m['rows'].values()) for k in COLORS}
     # Checks come from the agents' Score lines; take the best of the latest few,
@@ -131,11 +133,11 @@ def short(n):
 def card(x, label, value, delta):
     """One headline number; delta is (text, sign) where sign>0 means better."""
     text, sign = delta
-    color = '#237343' if sign > 0 else '#a23b2a' if sign < 0 else '#6b7f86'
-    return (f'<rect x="{x}" y="40" width="232" height="56" rx="7" fill="#fff" stroke="#d6e0e2"/>'
-            f'<text x="{x + 12}" y="59" class="l">{escape(label)}</text>'
-            f'<text x="{x + 12}" y="86" class="v">{escape(value)}</text>'
-            f'<text x="{x + 220}" y="86" class="d" text-anchor="end" fill="{color}">{escape(text)}</text>')
+    tone = 'good' if sign > 0 else 'bad' if sign < 0 else 'neutral'
+    return (f'<rect x="{x}" y="48" width="232" height="82" rx="10" fill="#131f2e" stroke="#293a50"/>'
+            f'<text x="{x + 14}" y="70" class="l">{escape(label)}</text>'
+            f'<text x="{x + 14}" y="101" class="v">{escape(value)}</text>'
+            f'<text x="{x + 14}" y="119" class="d {tone}">{escape(text)}</text>')
 
 
 def change(now, then, lower_is_better, fmt=short):
@@ -144,6 +146,19 @@ def change(now, then, lower_is_better, fmt=short):
     d = now - then
     sign = 0 if d == 0 else (-1 if (d > 0) == lower_is_better else 1)
     return (f'{"+" if d > 0 else "−" if d < 0 else "±"}{fmt(abs(d))} in 24h', sign)
+
+
+def tile_title(title, room):
+    if 9.2 * len(title) <= room:
+        return [title], 't'
+    words = title.split()
+    pairs = [(" ".join(words[:i]), " ".join(words[i:])) for i in range(1, len(words))]
+    pairs.sort(key=lambda pair: max(map(len, pair)))
+    for width, css in ((9.2, 't'), (7.5, 't compact')):
+        for pair in pairs:
+            if width * max(map(len, pair)) <= room:
+                return pair, css
+    return [words[0]], 't compact'
 
 
 def main(out_path, rev='HEAD'):
@@ -157,52 +172,64 @@ def main(out_path, rev='HEAD'):
     checks = now['checks'] or (0, 0)
     old_checks = then['checks'][0] if then and then['checks'] else None
     cards = [
-        ('Required checks passing', f'{checks[0]} / {checks[1]}', change(checks[0], old_checks, False, str)),
-        ('Legacy lines', short(t['legacy']), change(t['legacy'], then and then['totals']['legacy'], True)),
-        ('Lines containing unsafe', f'{now["unsafe"]:,}', change(now['unsafe'], old('unsafe'), True, lambda n: f'{n:,}')),
-        ('Production lines', short(now['production']), change(now['production'], old('production'), True)),
+        ('Required checks', f'{checks[0]} / {checks[1]}', change(checks[0], old_checks, False, str)),
+        ('Legacy bank lines', f'{now["legacy_bank"]:,}', change(now['legacy_bank'], old('legacy_bank'), True)),
+        ('Unsafe lines', f'{now["unsafe"]:,}', change(now['unsafe'], old('unsafe'), True, lambda n: f'{n:,}')),
+        ('Production lines', f'{now["production"]:,}', change(now['production'], old('production'), True)),
     ]
     rows = sorted(({**dict(id=k, title=n), 'counts': now['rows'][k], 'lines': sum(now['rows'][k].values())}
                    for k, n in AREAS if sum(now['rows'][k].values())), key=lambda r: -r['lines'])
-    stamp = datetime.datetime.fromisoformat(when).astimezone(ZoneInfo('Europe/Stockholm'))
+    stamp = datetime.datetime.fromisoformat(when)
     p = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H + TOP}" viewBox="0 0 {W} {H + TOP}" role="img">',
-         f'<title>Engine migration at {commit[:7]}: {checks[0]}/{checks[1]} checks, {t["legacy"]:,} legacy, '
+         f'<title>Engine migration at {commit[:7]}: {checks[0]}/{checks[1]} checks, {now["legacy_bank"]:,} legacy bank, '
          f'{now["unsafe"]:,} unsafe, {now["production"]:,} production lines</title>',
-         '<style>text{font-family:system-ui,Segoe UI,sans-serif;fill:#17343e}.h{font-size:20px;font-weight:650}'
-         '.l{font-size:13px;fill:#526873}.v{font-size:22px;font-weight:650}.d{font-size:13px;font-weight:600}'
-         '.k{font-size:13px}.t{font-size:15px;font-weight:650}.s{font-size:12px}</style>',
-         f'<rect width="{W}" height="{H + TOP}" fill="#f5f7f7"/>',
-         '<text x="4" y="26" class="h">Super Metroid engine migration</text>',
-         f'<text x="{W - 4}" y="26" class="l" text-anchor="end">{commit[:7]} &#183; {stamp:%Y-%m-%d %H:%M %Z}</text>']
+         '<desc>Tile area represents production Rust lines by responsibility. Green bands are owned code, '
+         'amber bands are partly owned, and blue bands are legacy. Verification code is excluded from tile areas. '
+         'Headline legacy counts bank files; blue bands also include other legacy modules.</desc>',
+         '<style>text{font-family:system-ui,Segoe UI,sans-serif;fill:#edf4fc}.h{font-size:22px;font-weight:650}'
+         '.l{font-size:13px;fill:#b0c2d8}.v{font-size:26px;font-weight:650}.d{font-size:12px;font-weight:600}'
+         '.good{fill:#67e8b3}.bad{fill:#ff9e9e}.neutral{fill:#b0c2d8}'
+         '.k{font-size:13px;fill:#d2deed}.t{font-size:16px;font-weight:650}.compact{font-size:14px}'
+         '.s{font-size:12px;fill:#edf4fc}</style>',
+         f'<rect width="{W}" height="{H + TOP}" rx="12" fill="#0b121c"/>',
+         '<text x="4" y="29" class="h">Super Metroid · Codebase</text>',
+         f'<text x="{W - 4}" y="29" class="l" text-anchor="end">{commit[:7]} &#183; {stamp:%Y-%m-%d %H:%M %z}</text>']
     for i, (label, value, delta) in enumerate(cards):
         p.append(card(4 + i * 240, label, value, delta))
     x = 4
     for k, name in NAMES.items():
         label = f'{name} {short(t[k])}'
-        p.append(f'<rect x="{x}" y="108" width="12" height="12" rx="2" fill="{COLORS[k]}"/>'
-                 f'<text x="{x + 17}" y="119" class="k">{label}</text>')
+        p.append(f'<rect x="{x}" y="149" width="10" height="10" rx="3" fill="{ACCENTS[k]}"/>'
+                 f'<text x="{x + 17}" y="159" class="k">{label}</text>')
         x += 30 + 7.5 * len(label)
     for r in partition(rows, 0, 0, W, H):
         x0, y0, w, h, c = r['x'], r['y'] + TOP, r['w'], r['h'], r['counts']
         p.append(f'<clipPath id="c{r["id"]}"><rect x="{x0 + 2:.1f}" y="{y0 + 2:.1f}" width="{max(w - 4, 0):.1f}" '
-                 f'height="{max(h - 4, 0):.1f}" rx="7"/></clipPath><g clip-path="url(#c{r["id"]})">')
+                 f'height="{max(h - 4, 0):.1f}" rx="10"/></clipPath><g clip-path="url(#c{r["id"]})">')
         bx = x0
         for k in COLORS:
             bw = w * c[k] / r['lines']
             if bw:
                 p.append(f'<rect x="{bx:.1f}" y="{y0:.1f}" width="{bw:.1f}" height="{h:.1f}" fill="{COLORS[k]}"/>')
+                p.append(f'<rect x="{bx:.1f}" y="{y0 + 2:.1f}" width="{bw:.1f}" height="3" fill="{ACCENTS[k]}"/>')
                 bx += bw
         room = w - 16
-        title = next((s for s in (r['title'], r['title'].split(' ')[0]) if 8.6 * len(s) <= room), None)
-        if title and h >= 34:
-            p.append(f'<text x="{x0 + 9:.1f}" y="{y0 + h / 2 - (8 if h >= 60 else -5):.1f}" class="t">{escape(title)}</text>')
+        title, css = tile_title(r['title'], room)
+        if h < 80:
+            title = title[:1]
+        if h >= 34:
+            baseline = y0 + h / 2 - (17 if len(title) == 2 else 8 if h >= 60 else -5)
+            for i, line in enumerate(title):
+                p.append(f'<text x="{x0 + 9:.1f}" y="{baseline + i * 20:.1f}" class="{css}">{escape(line)}</text>')
         legacy, owned = round(c['legacy'] / r['lines'] * 100), round(c['owned'] / r['lines'] * 100)
         detail = next((s for s in (f'{legacy}% legacy · {owned}% owned · {short(r["lines"])}',
-                                   f'{legacy}% legacy · {short(r["lines"])}', f'{legacy}% legacy')
+                                   f'{legacy}% legacy · {short(r["lines"])}', f'{legacy}% legacy', short(r['lines']))
                        if 6.8 * len(s) <= room), None)
         if title and detail and h >= 60:
-            p.append(f'<text x="{x0 + 9:.1f}" y="{y0 + h / 2 + 10:.1f}" class="s">{escape(detail)}</text>')
+            p.append(f'<text x="{x0 + 9:.1f}" y="{y0 + h / 2 + (25 if len(title) == 2 else 10):.1f}" class="s">{escape(detail)}</text>')
         p.append('</g>')
+        p.append(f'<rect x="{x0 + 2:.1f}" y="{y0 + 2:.1f}" width="{max(w - 4, 0):.1f}" '
+                 f'height="{max(h - 4, 0):.1f}" rx="10" fill="none" stroke="#35465c"/>')
     p.append('</svg>')
     open(out_path, 'w', encoding='utf-8').write('\n'.join(p) + '\n')
 

@@ -29,7 +29,7 @@ jobs:
           mkdir -p site
           python tools/treemap.py site/treemap.svg HEAD
           printf '%s\n' '<!doctype html><meta charset="utf-8"><title>Engine migration</title>' \
-            '<body style="margin:0;background:#f5f7f7"><img src="treemap.svg" alt="Engine migration progress" style="width:100%;max-width:1200px;display:block;margin:auto">' \
+            '<meta name="color-scheme" content="dark"><body style="margin:0;background:#0b121c"><img src="treemap.svg" alt="Super Metroid codebase progress" style="width:100%;max-width:1200px;display:block;margin:auto">' \
             > site/index.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
