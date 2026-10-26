@@ -15,7 +15,8 @@ use crate::game::visual_runtime::{
 };
 use crate::game::visual_runtime::{
     advance_credit_roll, advance_shooting_stars, draw_cinematic_sprites, draw_intro_sprites,
-    initialize_shooting_stars, place_cinematic_sprite, prepare_credit_roll,
+    drift_cinematic_sprite, initialize_shooting_stars, launch_cinematic_sprite,
+    place_cinematic_sprite, prepare_credit_roll,
 };
 use crate::game::visual_state::CinematicObjects::{
     Background as CinematicBackground, Mode7 as CinematicMode7, Sprites as CinematicSprites,
@@ -2596,86 +2597,6 @@ crate::game::callback_dispatch! {
             word!(game.cinematicspr_preinstr_func[v1] = (0x8bbb0di32) as u16);
         }
     };
-    [9158453] CinematicFunction_Intro_Func60 [] {
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
-            0x4000,
-        );
-        word!(game.cinematicbg_arr7[v1] &= (0x1ffu16));
-    };
-    [9158495] CinematicFunction_Intro_Func62 [] {
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
-            4096,
-        );
-        word!(game.cinematicbg_arr7[v1] &= (0x1ffu16));
-    };
-    [9158537] CinematicFunction_Intro_Func64 [] {
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
-            2048,
-        );
-        word!(game.cinematicbg_arr7[v1] &= (0x1ffu16));
-    };
-    [9158598] CinematicFunction_Intro_Func66 [] {
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
-            -0x2000i32 as u32,
-        );
-    };
-    [9160066] CinematicFunction_Intro_Func82 [] {
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
-            -4096i32 as u32,
-        );
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
-            0x4000,
-        );
-    };
-    [9160797] CinematicFunction_Intro_Func91 [] {
-        word!(game.cinematicspr_goto_timer[v1] += 64);
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
-            -((word!(game.cinematicspr_goto_timer[v1]) as i16 as i32) << 8i32) as u32,
-        );
-        if word!(game.cinematicbg_arr8[v1]) as i32 + 128 & 0x8000 != 0 {
-            word!(game.cinematicspr_instr_timer[v1] = 1);
-            word!(game.cinematicspr_instr_ptr[v1] = addr_off_8BCE53 as u16);
-        }
-    };
-    [9160889] CinematicFunction_Intro_Func94 [] {
-        word!(game.cinematicspr_goto_timer[v1] += 32);
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
-            -((word!(game.cinematicspr_goto_timer[v1]) as i16 as i32) << 8i32) as u32,
-        );
-        if word!(game.cinematicbg_arr8[v1]) as i32 + 128 & 0x8000 != 0 {
-            word!(game.cinematicspr_instr_timer[v1] = 1);
-            word!(game.cinematicspr_instr_ptr[v1] = addr_off_8BCE53 as u16);
-            word!(game.cinematic_function = (0x8bcadfi32) as u16);
-        }
-    };
-    [9160968] CinematicFunction_Intro_Func97 [] {
-        word!(game.cinematicspr_goto_timer[v1] += 32);
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
-            -((word!(game.cinematicspr_goto_timer[v1]) as i16 as i32) << 8i32) as u32,
-        );
-        if word!(game.cinematicbg_arr8[v1]) as i32 + 128 & 0x8000 != 0 {
-            word!(game.cinematicspr_instr_timer[v1] = 1);
-            word!(game.cinematicspr_instr_ptr[v1] = addr_off_8BCE53 as u16);
-        }
-    };
     [9170866] CinematicFunction_Intro_Func151 [] {
         AddToHiLo(
             (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
@@ -2750,6 +2671,14 @@ crate::game::callback_dispatch! {
         word!(game.cinematicbg_arr7[v1] += 1);
     };
     @external {
+        9158453 => [drift_cinematic_sprite(j, 0x4000, None, true, game)];
+        9158495 => [drift_cinematic_sprite(j, 4096, None, true, game)];
+        9158537 => [drift_cinematic_sprite(j, 2048, None, true, game)];
+        9158598 => [drift_cinematic_sprite(j, -0x2000i32 as u32, None, false, game)];
+        9160066 => [drift_cinematic_sprite(j, 0x4000, Some(-4096i32 as u32), false, game)];
+        9160797 => [launch_cinematic_sprite(j, 64, false, game)];
+        9160889 => [launch_cinematic_sprite(j, 32, true, game)];
+        9160968 => [launch_cinematic_sprite(j, 32, false, game)];
         9158617 => [()]; 9147353 => [()]; 9147487 => [()]; 9152724 => [()];
         9172252 => [()];
     }

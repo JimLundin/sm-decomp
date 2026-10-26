@@ -1612,6 +1612,55 @@ impl CinematicObjects {
     }
 }
 
+// Native split coordinates retain low-before-high reads and writes.
+fn advance_cinematic_coordinate(object: u16, vertical: bool, velocity: u32, game: &mut Game) {
+    let offset = usize::from(object & !1) + if vertical { 0x20 } else { 0 };
+    let low = 0x1add + offset;
+    let high = 0x1a7d + offset;
+    let fraction = u16::from_ne_bytes([game.g_ram[low], game.g_ram[low + 1]]);
+    let whole = u16::from_ne_bytes([game.g_ram[high], game.g_ram[high + 1]]);
+    let position = (u32::from(fraction) | (u32::from(whole) << 16)).wrapping_add(velocity);
+    word_transfers!(game, ascending, 1;
+        native(low) <- value(position as u16),
+        native(high) <- value((position >> 16) as u16),
+    );
+}
+
+pub(crate) fn drift_cinematic_sprite(
+    object: u16,
+    horizontal: u32,
+    vertical: Option<u32>,
+    wrap_horizontal: bool,
+    game: &mut Game,
+) {
+    if let Some(velocity) = vertical {
+        advance_cinematic_coordinate(object, true, velocity, game);
+    }
+    advance_cinematic_coordinate(object, false, horizontal, game);
+    if wrap_horizontal {
+        word!(game.cinematicbg_arr7[(object >> 1)] &= 0x1ff);
+    }
+}
+
+pub(crate) fn launch_cinematic_sprite(
+    object: u16,
+    acceleration: u16,
+    advance_scene: bool,
+    game: &mut Game,
+) {
+    let slot = usize::from(object >> 1);
+    word!(game.cinematicspr_goto_timer[slot] += acceleration);
+    let velocity = -((word!(game.cinematicspr_goto_timer[slot]) as i16 as i32) << 8) as u32;
+    advance_cinematic_coordinate(object, true, velocity, game);
+    if (word!(game.cinematicbg_arr8[slot]) as i32 + 128) & 0x8000 != 0 {
+        word!(game.cinematicspr_instr_timer[slot] = 1);
+        word!(game.cinematicspr_instr_ptr[slot] = 0xce53);
+        if advance_scene {
+            word!(game.cinematic_function = 0xcadf);
+        }
+    }
+}
+
 pub(crate) fn place_cinematic_sprite(
     object: u16,
     position: (u16, u16),
