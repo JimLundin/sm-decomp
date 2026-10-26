@@ -43,7 +43,7 @@ crate::game::constants::typed_constants! { Consts_A3;
     addr_stru_A3CD02 = 52482, addr_stru_A3CCFA = 52474,
     addr_stru_A3CCF2 = 52466, addr_stru_A3CCEA = 52458,
     addr_stru_A3CCE2 = 52450,
-    addr_kBang_Ilist_B75E = 46942, addr_kMaridiaRefillCandy_Ilist_B3C1 = 46017,
+    addr_kBang_Ilist_B75E = 46942,
     addr_kMaridiaFish_Ilist_9072 = 36978,
     addr_kMaridiaFish_Ilist_9060 = 36960, addr_kMaridiaFish_Ilist_903C = 36924,
     addr_kMaridiaFish_Ilist_902A = 36906, addr_kFireflea_Ilist_8C2F = 35887,
@@ -57,7 +57,7 @@ crate::type_aliases! {
 }
 
 crate::type_aliases! {
-    pub Enemy_MaridiaFish, Enemy_MaridiaRefillCandy,
+    pub Enemy_MaridiaFish,
         Enemy_WreckedShipOrangeZoomer, Enemy_FireZoomer,
         Enemy_FireFlea, Enemy_Metroid = crate::game::enemy_layouts::EnemyLayout40;
 }
@@ -82,7 +82,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_FireFlea(o: i32) -> Enemy_FireFlea = [0xf78, o as isize];
     Get_FireZoomer(o: i32) -> Enemy_FireZoomer = [0xf78, o as isize];
     Get_MaridiaFish(o: i32) -> Enemy_MaridiaFish = [0xf78, o as isize];
-    Get_MaridiaRefillCandy(o: i32) -> Enemy_MaridiaRefillCandy = [0xf78, o as isize];
     Get_MaridiaSnail(o: i32) -> Enemy_MaridiaSnail = [0xf78, o as isize];
     Get_Metroid(o: i32) -> Enemy_Metroid = [0xf78, o as isize];
     Get_Reflec(o: i32) -> Enemy_Reflec = [0xf78, o as isize];
@@ -497,93 +496,6 @@ crate::prefixed_callbacks! {
             (*E).var_B = (0xa3a2d7i32) as u16;
         }
     };
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallMaridiaRefillCandyFunc(ea: u32, k: u16, game: &mut Game) => ea;
-    call (k, game); default { Unreachable(game); };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [10728616] MaridiaRefillCandy_Func_2 [] {
-        let E = Get_MaridiaRefillCandy(k as i32, game);
-        (*E).base.properties =
-            ((*E).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
-        if (({ let actor = k; actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y) }) & 0x8000) != 0 {
-            words!((*E).base, y_pos, y_subpos += -0x8000i32 as u32);
-        } else {
-            (*E).var_D = (*E).var_D.wrapping_sub(1);
-            MaridiaRefillCandy_Func_4(game);
-            (*E).var_F = 0;
-            (*E).parameter_1 = (0xa3b4d6i32) as u16;
-        };
-    };
-    [10728662] MaridiaRefillCandy_Func_3 [] {
-        let E = Get_MaridiaRefillCandy(k as i32, game);
-        let v2: i32 = (*E).var_00 as i32 >> 1;
-        let v: i32 = (words!((
-            crate::rtl::rom_table_word!(game, 0xa3b415, v2 as isize),
-            crate::rtl::rom_table_word!(game, 0xa3b415, (v2 + 1) as isize)
-        ))) as i32;
-        words!(
-            (*E).base,
-            x_pos,
-            x_subpos += (if (*E).var_D != 0 { v } else { -v }) as u32
-        );
-        if u16::from(actor_api::current_outside_screen(&Runtime::new(game))) == 0 {
-            MaridiaRefillCandy_Func_4(game);
-            return;
-        }
-        (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
-        (*E).base.x_pos = (*E).var_B;
-        (*E).base.y_pos = (*E).var_C;
-        (*E).var_D = 0;
-        MaridiaRefillCandy_Func_4(game);
-        (*E).parameter_1 = (0xa3b482i32) as u16;
-    };
-    @external {
-        10728578 => [MaridiaRefillCandy_Func_1(game)];
-    }
-}
-pub unsafe fn MaridiaRefillCandy_Func_1(game: &mut Game) {
-    unsafe {
-        if {
-            let (actor, distance) = (word!(game.cur_enemy_index), 0x80);
-            u16::from(actor_api::player_within(
-                &mut Runtime::new(game),
-                Key::from_legacy(actor),
-                actor_api::Axis::X,
-                distance,
-            ))
-        } != 0
-        {
-            let mut v1: i16 = 1;
-            if ({
-                let actor = word!(game.cur_enemy_index);
-                actor_api::player_delta(
-                    &Runtime::new(game),
-                    Key::from_legacy(actor),
-                    actor_api::Axis::X,
-                )
-            } & 0x8000)
-                == 0
-            {
-                v1 = 3;
-            }
-            let E = Get_MaridiaRefillCandy(word!(game.cur_enemy_index) as i32, game);
-            (*E).var_D = v1 as u16;
-            MaridiaRefillCandy_Func_4(game);
-            (*E).parameter_1 = (0xa3b4a8i32) as u16;
-        }
-    }
-}
-pub unsafe fn MaridiaRefillCandy_Func_4(game: &mut Game) {
-    unsafe {
-        let E = Get_MaridiaRefillCandy(word!(game.cur_enemy_index) as i32, game);
-        let mrcy_var_D: u16 = (*E).var_D;
-        if mrcy_var_D != (*E).var_E {
-            (*E).var_E = mrcy_var_D;
-            enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3b40d, mrcy_var_D as isize), timer = 1}
-            (*E).base.timer = 0;
-        }
-    }
 }
 pub fn Bang_Func_7(k: u16) {}
 pub unsafe fn Bang_Func_9(game: &mut Game) {
@@ -1180,23 +1092,6 @@ crate::game::callback_dispatch! {
         );
         StoneZoomer_E67A(word!(game.cur_enemy_index), game);
     };
-    [10728522] MaridiaRefillCandy_Init [] {
-        let E = Get_MaridiaRefillCandy(word!(game.cur_enemy_index) as i32, game);
-        (*E).parameter_1 = (0xa3b482i32) as u16;
-        set_fields! {[(*E)], 0; var_D, var_E, var_00}
-        (*E).base.current_instruction = addr_kMaridiaRefillCandy_Ilist_B3C1 as u16;
-        (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
-        (*E).var_B = (*E).base.x_pos;
-        (*E).var_C = (*E).base.y_pos;
-    };
-    [10728572] MaridiaRefillCandy_Main [] {
-        let E = Get_MaridiaRefillCandy(word!(game.cur_enemy_index) as i32, game);
-        CallMaridiaRefillCandyFunc(
-            (((*E).parameter_1) as u32) | (0xa30000u32),
-            word!(game.cur_enemy_index),
-            game,
-        );
-    };
     [10729071] NorfairSlowFireball_Init [] {
         let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
         (*v1).parameter_2 = 6;
@@ -1655,16 +1550,6 @@ crate::game::callback_dispatch! {
     };
     [10719402] MaridiaFish_Instr_2 [jp] {
         (*Get_MaridiaFish(word!(game.cur_enemy_index) as i32, game)).var_01 = 1;
-    };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10728489] MaridiaRefillCandy_Instr_1 [jp] {
-        (*Get_MaridiaRefillCandy(word!(game.cur_enemy_index) as i32, game)).var_00 = 4;
-    };
-    [10728500] MaridiaRefillCandy_Instr_2 [jp] {
-        (*Get_MaridiaRefillCandy(word!(game.cur_enemy_index) as i32, game)).var_00 = 8;
-    };
-    [10728511] MaridiaRefillCandy_Instr_3 [jp] {
-        (*Get_MaridiaRefillCandy(word!(game.cur_enemy_index) as i32, game)).var_00 = 12;
     };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10730104] Bang_Instr_1 [jp] { QueueSfx2_Max6(0x56, game); };
