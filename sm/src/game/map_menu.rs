@@ -6,7 +6,6 @@ use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::room_entry::{self, ArrivalRequest, StartSite};
 use crate::game::save_slots::load_area_map;
 use crate::game::session_runtime::Runtime;
-use crate::game::sm_82::DrawMapScrollArrowAndCheckToScroll;
 use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled};
 use crate::game::{menu_tilemap, menu_window};
 const AREAS: [u16; 6] = [0, 3, 5, 1, 4, 2];
@@ -399,10 +398,10 @@ unsafe fn initialize_room(game: &mut Game) {
         }
     }
 }
-unsafe fn choose_room(game: &mut Game) {
-    unsafe {
+fn choose_room(game: &mut Game) {
+    {
         draw_icons(IconMode::FileSelect, game);
-        scroll_arrows(game);
+        scroll_arrows(MapScreen::FileSelect, game);
         scroll(game);
         display_elevator_destinations(game);
         if word!(game.enable_debug) != 0
@@ -504,40 +503,6 @@ unsafe fn choose_room(game: &mut Game) {
             word!(game.menu_index += 1);
             QueueSfx1_Max6(0x38, game);
         }
-    }
-}
-unsafe fn scroll_arrows(game: &mut Game) {
-    unsafe {
-        if word!(game.map_min_x_scroll) as i32 - 24i32 - word!(game.reg_BG1HOFS) as i32 & 0x8000
-            != 0
-        {
-            DrawMapScrollArrowAndCheckToScroll(0x81, addr_kLeftMapScrollArrowData as u16, game);
-        }
-        if word!(game.map_max_x_scroll) as i32 - 232i32 - word!(game.reg_BG1HOFS) as i32 & 0x8000
-            == 0
-        {
-            DrawMapScrollArrowAndCheckToScroll(0x81, addr_kRightMapScrollArrowData as u16, game);
-        }
-        if word!(game.map_min_y_scroll) as i32 - 64i32 - word!(game.reg_BG1VOFS) as i32 & 0x8000
-            != 0
-        {
-            DrawMapScrollArrowAndCheckToScroll(0x81, addr_kUpMapScrollArrowData as u16, game);
-        }
-        if word!(game.map_max_y_scroll) as i32 - 145i32 - word!(game.reg_BG1VOFS) as i32 & 0x8000
-            != 0
-        {
-            if word!(game.map_scrolling_direction)
-                == game
-                    .capture_native_rom()
-                    .table_word(crate::rtl::lorom_offset(0x81af50) as usize, 4)
-            {
-                word! { game, 0;
-                    map_scrolling_gear_switch_timer, map_scrolling_direction, map_scrolling_speed_index,
-                }
-            }
-        } else {
-            DrawMapScrollArrowAndCheckToScroll(0x81, addr_kDownMapScrollArrowData as u16, game);
-        };
     }
 }
 unsafe fn show_room(game: &mut Game) {
@@ -1107,4 +1072,116 @@ fn draw_room_map(game: &mut Game) {
     word!(game.reg_BG1VOFS = -40i16 as u16);
     render_map(MapScreen::FileSelect, game);
     menu_tilemap::upload(4096, 0x7e3000, 0, false, game);
+}
+
+// The nine-entry union tables capture their native image before checking the index.
+fn animation_entry(table: u32, index: usize, game: &mut Game) -> u16 {
+    let record = menu_tilemap::native_record(table, game);
+    let offset = [0, 2, 4, 6, 8, 10, 12, 14, 16][index];
+    record.word(offset)
+}
+
+fn animation_ram_address(table: u32, index: usize, game: &mut Game) -> usize {
+    let address = animation_entry(table, index, game);
+    if address >= 0x2000 {
+        crate::game::session_runtime::legacy_assertion(true);
+    }
+    usize::from(address)
+}
+
+pub(crate) fn animate_pause_sprite(animation: u16, x: u16, y: u16, game: &mut Game) {
+    let index = (i32::from(animation) - 1) as usize;
+    let frame = animation_ram_address(0x82c0c4, index, game);
+    let timer = animation_ram_address(0x82c0b2, index, game);
+    let script = map_record(animation_entry(0x82c0e8, index, game), game);
+    set_native_word(timer, native_word(timer, game).wrapping_sub(1), game);
+    if native_word(timer, game) as i16 <= 0 {
+        set_native_word(frame, native_word(frame, game).wrapping_add(1), game);
+        let mut duration = u16::from(script.byte(3 * usize::from(native_word(frame, game))));
+        if duration == 255 {
+            set_native_word(frame, 0, game);
+            duration = u16::from(script.byte(0));
+        }
+        set_native_word(timer, duration, game);
+    }
+    let palette = crate::rtl::rom_table_word!(game, 0x82c0fa, 3);
+    let delta = u16::from(script.byte(3 * usize::from(native_word(frame, game)) + 2));
+    let variant = animation_ram_address(0x82c0d6, index, game);
+    let variant = 2 * u16::from(game.g_ram[variant]);
+    let sprite = map_record(
+        crate::rtl::rom_table_word!(game, 0x82c1e4, index as isize).wrapping_add(variant),
+        game,
+    )
+    .word(0);
+    sprite_output::menu(
+        delta.wrapping_add(sprite),
+        x,
+        y.wrapping_sub(1),
+        palette,
+        game,
+    );
+}
+
+pub(crate) fn draw_equipment_selector(game: &mut Game) {
+    if word!(game.samus_max_reserve_health)
+        | word!(game.collected_items)
+        | word!(game.collected_beams)
+        == 0
+    {
+        return;
+    }
+    let address = crate::rtl::rom_table_word!(
+        game,
+        0x82c18e,
+        word!(game.pausemenu_equipment_category_item) as u8 as isize
+    )
+    .wrapping_add(4 * u16::from(game.g_ram[0x756]));
+    let position = map_record(address, game);
+    animate_pause_sprite(3, position.word(0).wrapping_sub(1), position.word(2), game);
+}
+
+fn scroll_arrow(address: u32, game: &mut Game) {
+    let record = menu_tilemap::native_record(address, game);
+    animate_pause_sprite(record.word(4), record.word(0), record.word(2), game);
+    // Drawing can replace the image; input and direction use a fresh capture.
+    let record = menu_tilemap::native_record(address, game);
+    if word!(game.joypad1_lastkeys) & record.word(6) != 0
+        && word!(game.map_scrolling_direction) == 0
+    {
+        word!(game.map_scrolling_direction = record.word(8));
+    }
+}
+
+pub(crate) fn scroll_arrows(screen: MapScreen, game: &mut Game) {
+    let (base, top, bottom) = match screen {
+        MapScreen::Pause => (0x82b9a0, 56, 177),
+        MapScreen::FileSelect => (0x81af32, 64, 145),
+    };
+    if (i32::from(word!(game.map_min_x_scroll)) - 24 - i32::from(word!(game.reg_BG1HOFS))) & 0x8000
+        != 0
+    {
+        scroll_arrow(base, game);
+    }
+    if (i32::from(word!(game.map_max_x_scroll)) - 232 - i32::from(word!(game.reg_BG1HOFS))) & 0x8000
+        == 0
+    {
+        scroll_arrow(base + 10, game);
+    }
+    if (i32::from(word!(game.map_min_y_scroll)) - top - i32::from(word!(game.reg_BG1VOFS))) & 0x8000
+        != 0
+    {
+        scroll_arrow(base + 20, game);
+    }
+    if (i32::from(word!(game.map_max_y_scroll)) - bottom - i32::from(word!(game.reg_BG1VOFS)))
+        & 0x8000
+        != 0
+    {
+        if word!(game.map_scrolling_direction)
+            == menu_tilemap::native_record(base + 30, game).word(8)
+        {
+            word! { game, 0; map_scrolling_gear_switch_timer, map_scrolling_direction, map_scrolling_speed_index }
+        }
+    } else {
+        scroll_arrow(base + 30, game);
+    }
 }

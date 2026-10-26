@@ -62,18 +62,6 @@ crate::typed_struct! {
         pub demo_code_ptr: VoidP;
     }
 
-    pub struct C2RustUnnamed {
-        pub unused, lr_highlight, item_selector, unused2, unused3, map_scroll_arrow_up,
-            map_scroll_arrow_down, map_scroll_arrow_right, map_scroll_arrow_left: VoidP;
-    }
-
-}
-
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub union PauseScreenSpriteAnimationData {
-    pub c2rust_unnamed: C2RustUnnamed,
-    pub arr: [VoidP; 9],
 }
 
 pub use crate::types::Consts_83;
@@ -105,7 +93,6 @@ unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
 }
 const RomPtr_82: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x82>;
 const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
-use crate::rtl::rom_ptr_with_bank as RomPtrWithBank;
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
 }
@@ -1203,7 +1190,7 @@ pub unsafe fn PauseMenu_0_MapScreen(game: &mut Game) {
     unsafe {
         HandlePauseScreenLR(game);
         HandlePauseScreenStart(game);
-        HandleMapScrollArrows(game);
+        crate::game::map_menu::scroll_arrows(crate::game::map_menu::MapScreen::Pause, game);
         crate::game::map_menu::scroll(game);
         crate::game::map_menu::draw_player_marker(game);
         crate::game::map_menu::draw_icons(crate::game::map_menu::IconMode::Pause, game);
@@ -1214,7 +1201,7 @@ pub unsafe fn PauseMenu_0_MapScreen(game: &mut Game) {
 pub unsafe fn PauseMenu_1_EquipmentScreen(game: &mut Game) {
     unsafe {
         word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
-        EquipmentScreenMain(game);
+        crate::game::equipment_menu::update(game);
         HandlePauseScreenLR(game);
         HandlePauseScreenStart(game);
         word!(game.pause_screen_mode = 1);
@@ -1237,7 +1224,7 @@ pub unsafe fn PauseMenu_2(game: &mut Game) {
 }
 pub unsafe fn PauseMenu_5(game: &mut Game) {
     unsafe {
-        EquipmentScreenDrawItemSelector(game);
+        crate::game::map_menu::draw_equipment_selector(game);
         crate::game::menu_tilemap::reserve_tanks(game);
         HandlePauseMenuLRPressHighlight(game);
         crate::game::display_refresh::fade(false, game);
@@ -1292,7 +1279,7 @@ pub unsafe fn PauseMenu_7_EquipmentToMap_FadeIn(game: &mut Game) {
 }
 pub unsafe fn PauseMenu_4_MapToEquipment_FadeIn(game: &mut Game) {
     unsafe {
-        EquipmentScreenDrawItemSelector(game);
+        crate::game::map_menu::draw_equipment_selector(game);
         crate::game::menu_tilemap::reserve_tanks(game);
         word!(game.pause_screen_mode = 1);
         crate::game::display_refresh::fade(true, game);
@@ -1322,7 +1309,7 @@ pub unsafe fn GameState_16_Unpausing_Async(game: &mut Game) -> CoroutineRet {
 pub unsafe fn DrawPauseMenuDuringFadeout(game: &mut Game) {
     unsafe {
         if word!(game.pause_screen_mode) == 1 {
-            EquipmentScreenDrawItemSelector(game);
+            crate::game::map_menu::draw_equipment_selector(game);
             crate::game::menu_tilemap::reserve_tanks(game);
             HandlePauseMenuLRPressHighlight(game);
         } else {
@@ -1486,7 +1473,8 @@ pub fn ClearPauseMenuData(game: &mut Game) {
 pub unsafe fn HandlePauseScreenLR(game: &mut Game) {
     unsafe {
         HandlePauseScreenLrInput(game);
-        DrawLrHighlight(game);
+        crate::game::map_menu::animate_pause_sprite(2, 0x18, 0xd0, game);
+        crate::game::map_menu::animate_pause_sprite(2, 0xe8, 0xd0, game);
     }
 }
 pub unsafe fn HandlePauseScreenLrInput(game: &mut Game) {
@@ -1537,12 +1525,6 @@ pub unsafe fn HandlePauseMenuLRPressHighlight(game: &mut Game) {
                 );
             }
         }
-    }
-}
-pub unsafe fn DrawLrHighlight(game: &mut Game) {
-    unsafe {
-        DrawPauseScreenSpriteAnim(2, 0x18, 0xd0, game);
-        DrawPauseScreenSpriteAnim(2, 0xe8, 0xd0, game);
     }
 }
 pub unsafe fn HandlePauseScreenStart(game: &mut Game) {
@@ -1615,138 +1597,21 @@ pub unsafe fn UpdatePauseMenuLRStartVramTilemap(game: &mut Game) {
         word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
     }
 }
-pub unsafe fn DrawPauseScreenSpriteAnim(a: u16, input_k: u16, input_j: u16, game: &mut Game) {
-    unsafe {
-        let t: i32 = a as i32 - 1i32;
-        let v8 = RomPtr_RAM(
-            (*(rom_ptr!(game, PauseScreenSpriteAnimationData; 0x82c0c4))).arr[t as usize],
-            game,
-        ) as *mut u16;
-        let v5 = RomPtr_RAM(
-            (*(rom_ptr!(game, PauseScreenSpriteAnimationData; 0x82c0b2))).arr[t as usize],
-            game,
-        ) as *mut u16;
-        let v3 = RomPtr_82(
-            (*(rom_ptr!(game, PauseScreenSpriteAnimationData; 0x82c0e8))).arr[t as usize],
-            game,
-        );
-        *v5 = (*v5).wrapping_sub(1);
-        if (*v5 as i16) <= 0 {
-            *v8 = (*v8).wrapping_add(1);
-            let mut v10: u16 = *v3.offset((3 * *v8 as i32) as isize) as u16;
-            if v10 == 255 {
-                *v8 = 0;
-                v10 = *v3 as u16;
-            }
-            *v5 = v10;
-        }
-        let r3: u16 = crate::rtl::rom_table_word!(game, 0x82c0fa, 3);
-        let r24: i32 = *v3.offset((3 * *v8 as i32 + 2) as isize) as i32;
-        let r26: i32 = 2 * *RomPtr_RAM(
-            (*(rom_ptr!(game, PauseScreenSpriteAnimationData; 0x82c0d6))).arr[t as usize],
-            game,
-        ) as i32;
-        let v11 = RomPtr_82(
-            (r26 + crate::rtl::rom_table_word!(game, 0x82c1e4, t as isize) as i32) as u16,
-            game,
-        );
-        sprite_output::menu(
-            (r24 + *(v11 as *mut u16) as i32) as u16,
-            input_k,
-            (input_j).wrapping_sub(1),
-            r3,
-            game,
-        );
-    }
-}
 pub unsafe fn EquipmentScreenTransferBG1Tilemap(game: &mut Game) {
     unsafe {
         GraphicsAsset::VramWords(0x7e3800, 0x3000, 0x800).load(game);
         word!(game.reg_BG1VOFS = 0);
     }
 }
-pub unsafe fn EquipmentScreenMain(game: &mut Game) {
-    unsafe {
-        crate::game::equipment_menu::update(game);
-        EquipmentScreenDrawItemSelector(game);
-        crate::game::menu_tilemap::reserve_tanks(game);
-        crate::game::menu_tilemap::queue_equipment_wireframe(game);
-    }
-}
-
-pub unsafe fn EquipmentScreenDrawItemSelector(game: &mut Game) {
-    unsafe {
-        if word!(game.samus_max_reserve_health)
-            | ((word!(game.collected_items)) | (word!(game.collected_beams)))
-            != 0
-        {
-            let t = RomPtr_82(
-                (crate::rtl::rom_table_word!(
-                    game,
-                    0x82c18e,
-                    word!(game.pausemenu_equipment_category_item) as u8 as isize
-                ) as i32
-                    + 4 * byte!(@pointer ram_ptr!(game, u16; 0x755); 1) as i32)
-                    as u16,
-                game,
-            ) as *mut u16;
-            DrawPauseScreenSpriteAnim(3, (*t).wrapping_sub(1), *t.offset(1), game);
-        }
-    }
-}
-pub unsafe fn DrawPauseMenuDuringFadeIn(game: &mut Game) {
-    unsafe {
+pub fn DrawPauseMenuDuringFadeIn(game: &mut Game) {
+    {
         if word!(game.menu_index) != 0 {
-            EquipmentScreenDrawItemSelector(game);
+            crate::game::map_menu::draw_equipment_selector(game);
             crate::game::menu_tilemap::reserve_tanks(game);
         } else {
             crate::game::map_menu::draw_player_marker(game);
             crate::game::map_menu::draw_icons(crate::game::map_menu::IconMode::Pause, game);
             crate::game::map_menu::display_elevator_destinations(game);
-        };
-    }
-}
-pub unsafe fn DrawMapScrollArrowAndCheckToScroll(db: u8, k: u16, game: &mut Game) {
-    unsafe {
-        let v1 = RomPtrWithBank(db, k, game) as *const u16;
-        DrawPauseScreenSpriteAnim(*v1.offset(2), *v1, *v1.offset(1), game);
-        let v2 = RomPtrWithBank(db, k, game);
-        if (word!(game.joypad1_lastkeys) & *(v2.offset(6) as *mut u16)) != 0
-            && word!(game.map_scrolling_direction) == 0
-        {
-            word!(game.map_scrolling_direction = *(v2.offset(8) as *mut u16));
-        }
-    }
-}
-pub unsafe fn HandleMapScrollArrows(game: &mut Game) {
-    unsafe {
-        if word!(game.map_min_x_scroll) as i32 - 24i32 - word!(game.reg_BG1HOFS) as i32 & 0x8000
-            != 0
-        {
-            DrawMapScrollArrowAndCheckToScroll(0x82, addr_stru_82B9A0 as u16, game);
-        }
-        if word!(game.map_max_x_scroll) as i32 - 232i32 - word!(game.reg_BG1HOFS) as i32 & 0x8000
-            == 0
-        {
-            DrawMapScrollArrowAndCheckToScroll(0x82, addr_stru_82B9AA as u16, game);
-        }
-        if word!(game.map_min_y_scroll) as i32 - 56i32 - word!(game.reg_BG1VOFS) as i32 & 0x8000
-            != 0
-        {
-            DrawMapScrollArrowAndCheckToScroll(0x82, addr_stru_82B9B4 as u16, game);
-        }
-        if word!(game.map_max_y_scroll) as i32 - 177i32 - word!(game.reg_BG1VOFS) as i32 & 0x8000
-            != 0
-        {
-            if word!(game.map_scrolling_direction)
-                == (*(rom_ptr!(game, MapScrollArrowData; 0x82b9be))).map_scroll_dir
-            {
-                word! { game, 0;
-                    map_scrolling_gear_switch_timer, map_scrolling_direction, map_scrolling_speed_index,
-                }
-            }
-        } else {
-            DrawMapScrollArrowAndCheckToScroll(0x82, addr_stru_82B9BE as u16, game);
         };
     }
 }

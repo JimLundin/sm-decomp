@@ -30,6 +30,9 @@ pub(crate) fn update(game: &mut Game) {
             }
         }
     }
+    crate::game::map_menu::draw_equipment_selector(game);
+    menu_tilemap::reserve_tanks(game);
+    menu_tilemap::queue_equipment_wireframe(game);
 }
 
 fn reserves(game: &mut Game) {
