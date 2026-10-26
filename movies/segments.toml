@@ -18,6 +18,8 @@ required = [
 # Before the fix, step330 wrote 0000 instead of the final highlighted tile0458.
 [[segment]]
 id = "options-menu-return-parameter"
+checkpoint = "options-menu-return-parameter-329.smvchk"
+checkpoint_sha256 = "e7b90bc36a3188447f12e9d4fe2f5176ef7d6e95aff0bd80d68170ba753b68d5"
 inputs = "any-wait-prefix.inputs"
 input_sha256 = "2bf79cb51268465d36909fa4ae0e8988dc5463ea637c1b2dc58d8a8ac819aa58"
 start_frame = 329
@@ -50,6 +52,8 @@ expect = ["state:30", "area:ceres", "room:DF45"]
 # Includes initialization, the first demo tick, and 120 following demo frames.
 [[segment]]
 id = "demo-attract-setup"
+checkpoint = "demo-attract-setup-2619.smvchk"
+checkpoint_sha256 = "4b3a2c84ba046b5ac8724c3f65707c9220fa693ccb56ad5bc557577448c923e0"
 inputs = "attract-neutral.inputs"
 input_sha256 = "b6b897cc90e61d209a57277d3927c935b71dcfcbd8e4c9dadb9b45bd605db6f6"
 start_frame = 2619
@@ -378,6 +382,8 @@ after_expectations = 120
 # Run the entire window, including the health drops after the last door.
 [[segment]]
 id = "ice-return-business"
+checkpoint = "ice-return-business-161656-478c39.smvchk"
+checkpoint_sha256 = "d0337d901cfda6b35072834301b23d9c97fc56bcc27f199b8f2a3bc5efb47831"
 inputs = "corpus-ice-return-business.inputs"
 input_sha256 = "4b4090a970f52658d27d4f69fe0e6d30da43739519cf781ef722dacbecdb5721"
 start_frame = 161656
@@ -389,6 +395,8 @@ expect = ["door:A8B9", "door:A75D", "door:A815", "door:A7DE"]
 # Execute the full window; the frozen navigation build alone does not qualify current main.
 [[segment]]
 id = "power-bomb-room-entry"
+checkpoint = "power-bomb-room-entry-166082-478c39.smvchk"
+checkpoint_sha256 = "95b12f200789ad17b528e6af28163549bd1a30317fc8ff4465596b52874f206c"
 inputs = "corpus-power-bomb-room-entry.inputs"
 input_sha256 = "34ab4055b6904d0544e490632fbbb81b87f18d163e55c7c6208ee9e5bd2a7dfb"
 start_frame = 166082
@@ -578,6 +586,8 @@ after_expectations = 120
 
 [[segment]]
 id = "door-transition"
+checkpoint = "door-transition-13600-478c39.smvchk"
+checkpoint_sha256 = "d6a33fef4edb836b4c2c3d84acba18bb3003c2e423680da0186ec5ce1650ff58"
 inputs = "corpus-speed-booster.inputs"
 input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
 start_frame = 13600
@@ -610,6 +620,8 @@ after_expectations = 120
 
 [[segment]]
 id = "save-death-reload"
+checkpoint = "save-before-kago.smvchk"
+checkpoint_sha256 = "feaf49fc30422665feef4e44900a74bfbffe7d4192544eb4a4e9cb4d2db72e3b"
 inputs = "corpus-save-death-continue.inputs"
 input_sha256 = "af79d24c791c1414cd4b1b83f040da0787a2a69bd0d2c4d6b73fc667b7d74467"
 start_frame = 70000
@@ -622,6 +634,8 @@ after_expectations = 120
 # Additional diagnostic; does not satisfy the required save-death-reload scenario.
 [[segment]]
 id = "save-memory"
+checkpoint = "save-before-kago.smvchk"
+checkpoint_sha256 = "feaf49fc30422665feef4e44900a74bfbffe7d4192544eb4a4e9cb4d2db72e3b"
 inputs = "corpus-speed-booster.inputs"
 input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
 start_frame = 70000

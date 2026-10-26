@@ -53,13 +53,14 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
    VRAM read-buffer, CGRAM-low and Mode7 latch values. No invented register defaults.
    Existing required rows and expectations remain intact; hosted verification and
    the combined full corpus are separate obligations, not inferred from this result.
-   68/82 rows use original seeds. Remaining authored continuations from TAS seeds
-   miss required events despite matching frames. A2 next distributes hash-bound
-   native/oracle checkpoints through the existing runner and encrypted bundles;
-   keep full inputs, original windows, guards and required setup encounters.
-   These are verified route starts, not original TAS seeds; intro already has zero
-   setup. Batch six or more where practical; delete recipes only when no consumer
-   needs them and exact inputs remain distributable. Eight recipes remain live.
+   68/82 rows use original seeds; seven use hash-bound native/oracle checkpoints,
+   and seven retain boot starts. The existing runner and encrypted bundle preserve
+   full inputs, original windows, guards and both required Kago setup encounters.
+   These are verified route starts, not original TAS seeds; intro has zero setup.
+   A2 removed three unused recipes and 76 net support lines; five recipes remain.
+   Configured setup falls from 484286 to 28700 frames; ordinary CLI 12/12 passes.
+   Next migrate remaining boot starts where worthwhile, preserving their authored
+   events; delete a recipe only when no consumer needs it and inputs stay available.
 2. **Current - lane B retirement.** B1 sm_88/sm_a0/sm_81 and B3 sm_8f/sm_b2 are
    retired. M2 sm_a8, eleven B2 cinematic families and B3 Goofball are integrated;
    all 82 corpus rows passed on 6c675730 after bank-80 deletion; later work uses scoped rows.

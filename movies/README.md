@@ -262,8 +262,6 @@ Generate the shared authored route from the any% movie above, then run the corpu
 
 ```powershell
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-speed-booster.inputs --rom rom/sm.smc --route speed-booster
-python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-save-death-continue.inputs --rom rom/sm.smc --route save-death-continue
-python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-ice-return-business.inputs --rom rom/sm.smc --route ice-return-business
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-norfair-reserve.inputs --rom rom/sm.smc --route norfair-reserve
 python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --direct
 ```
@@ -272,10 +270,10 @@ The canonical route has 148,406 frames and SHA256
 `bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6`.
 Its controller words match the historical route; canonical casing/newlines change
 its byte hash. Use the new filename to preserve existing local inputs.
-The retained Ice navigation helper and its 120-frame neutral follow-up still feed
-`ice-return-business`, which traverses the upper shutter bypass and collects
-health drops in Business Center. Its optional segment runs all 4,426 selected
-frames. The separate `power-bomb-room-entry` navigation route remains in use.
+The unchanged bundled Ice inputs traverse the upper shutter bypass and collect
+health drops in Business Center; `ice-return-business` retains all 4,426 selected
+frames. The bundled `power-bomb-room-entry` inputs retain their separate 8,910-frame
+navigation window. Their generation recipes are retired after exact input distribution.
 
 For focused work, add repeatable `--segment ID`, for example
 `--segment item-morph-ball`. Selection reports PARTIAL coverage and does not
@@ -290,6 +288,46 @@ checkpoint can regenerate from boot; gameplay or expectation failures never caus
 a retry. Input paths resolve relative to the TOML file, so an isolated source snapshot
 can use the main checkout's absolute TOML path and its local movies. Keep ROMs,
 movies, inputs and checkpoints uncommitted.
+
+Seven rows can start from distributed, previously verified native-plus-oracle
+checkpoints. These are separate from the 68 original-emulator room-seeded rows;
+seven other rows still use boot replay. The checkpoint format is unchanged.
+
+| Row | Checkpoint frame | Compared setup to original start | Original ceiling |
+| --- | ---: | ---: | ---: |
+| `options-menu-return-parameter` | 329 | 0 | 5 |
+| `demo-attract-setup` | 2619 | 0 | 189 |
+| `door-transition` | 13600 | 0 | 290 |
+| `save-memory` | 55650 | 14350 | 1800 |
+| `save-death-reload` | 55650 | 14350 | 6064 |
+| `ice-return-business` | 161656 | 0 | 4426 |
+| `power-bomb-room-entry` | 166082 | 0 | 8910 |
+
+Each row names a flat `checkpoint` filename under `target/checkpoints` and its
+`checkpoint_sha256`. The full original input file, input SHA256, selected start,
+requirements and tails stay unchanged. The corpus validates the asset's hash and
+frame before invoking the existing loader, whose runtime, ROM, canonical input
+prefix, audio, payload and state round-trip guards remain in force. A rejected
+runtime checkpoint can regenerate from boot; required event failures cannot.
+The log distinguishes previously verified skipped prefixes from newly compared
+setup and selected frames. Skipped prefixes are not fresh coverage for the build.
+
+The explicit asset takes precedence over later local caches. Both save rows
+therefore compare the full 55650..70000 approach on each run, retaining the Kago
+`E7FF` encounter before the selected save window. The intro row still begins at
+zero and retains all 8,780 selected frames. Configured setup across these seven
+checkpoint rows falls from 484,286 to 28,700 frames, a reduction of 455,586.
+
+CI restores the unchanged full inputs and six checkpoint files from its pinned
+encrypted bundle through `ci_seed_data.py`. For a local copy of the same bundle:
+
+```powershell
+python tools/ci_seed_data.py restore checkpoint-seven.tar.gz.enc --rom rom/sm.smc --sha256 8b6610595422a04c0783b4c289ece3384b7e2357f2519104465a2aa8f826bfec --segment save-memory --segment save-death-reload --segment door-transition --segment ice-return-business --segment power-bomb-room-entry --segment options-menu-return-parameter --segment demo-attract-setup
+```
+
+The `save-death-continue`, `ice-return-business` and `power-bomb-room-entry`
+generators now have no consumers and are removed with their exclusive helpers.
+Five generators remain for the boot rows; full distributed inputs remain private.
 
 Ordinary pickup rows require a newly observed award, actual message completion and
 120 follow-up frames. Varia waits for its award and restored player handlers instead.
@@ -487,9 +525,9 @@ complete death sequence at 3399 and keeps 120 following frames. This death is
 observed in the patched paired-oracle replay, not an original-movie death capture;
 save/reload coverage remains separate. The original captured trajectory crosses a square slope within the selected
 window before its message pause. These seven rows remove 499,264 configured setup frames, leaving
-3,725 on a cold run. All eight authored route recipes still have other consumers.
-The attempted Ice seed did not reach its required doors; the original Ice row
-and recipe remain unchanged.
+3,725 on a cold run. At that point all eight authored recipes had other consumers.
+The attempted Ice seed did not reach its required doors; that attempted
+conversion left the original Ice row and recipe unchanged.
 
 ```powershell
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-item-charge.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0055-9D19-wram.bin --frames 1819
@@ -528,8 +566,8 @@ selected observations begin, or reused from matching verified checkpoints.
 
 These six rows remove 136,824 configured setup frames (146,580 to 9,756).
 All 4,496 selected frames pass. With these conversions, 68 of 82 rows are seeded;
-all eight authored recipes still have unseeded consumers, so none can yet be
-deleted. Reserve and shot-gate trials lacked their required events despite zero
+those conversions alone left all eight authored recipes with unseeded consumers.
+Reserve and shot-gate trials lacked their required events despite zero
 comparison differences; both original rows and their routes remain in use.
 
 Four more navigation/encounter rows use original `100-input-phase` observations,

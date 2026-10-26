@@ -103,6 +103,8 @@ jobs:
               if unknown:
                   raise SystemExit(f'unknown rows: {sorted(unknown)}')
           def seed_bundle(row):
+              if 'checkpoint' in row:
+                  return ('checkpoints-v1-seven-8b6610595422a04c.tar.gz.enc', '8b6610595422a04c0783b4c289ece3384b7e2357f2519104465a2aa8f826bfec')
               # Match exact seed identities, not capture prefixes: pickups and the
               # general bundle contain different subsets of 100-input-phase.
               seed = row.get('seed')
@@ -126,18 +128,18 @@ jobs:
               if 'pending' in r:
                   skipped.append((r['id'], 'pending'))
               else:
-                  kind = 'seed' if 'seed' in r else ('route' if r['inputs'].startswith('corpus-') else 'captured')
-                  identity = seed_bundle(r)[0] if kind == 'seed' else r['inputs']
+                  kind = 'checkpoint' if 'checkpoint' in r else ('seed' if 'seed' in r else ('route' if r['inputs'].startswith('corpus-') else 'captured'))
+                  identity = seed_bundle(r)[0] if kind in ('seed', 'checkpoint') else r['inputs']
                   groups.setdefault((kind, identity), []).append(r)
           shards = []
           for (kind, identity), members in sorted(groups.items()):
               members.sort(key=lambda r: r.get('start_frame', 0))
-              width = len(members) if kind == 'seed' else 9
+              width = len(members) if kind in ('seed', 'checkpoint') else 9
               for i in range(0, len(members), width):
                   chunk = members[i:i + width]
                   inputs = chunk[0]['inputs']
                   asset, digest = seed_bundle(chunk[0]) if kind != 'route' else ('', '')
-                  name = identity.removeprefix('seeds-v1-').split('-')[0] if kind == 'seed' else identity.removesuffix('.inputs')
+                  name = identity.removeprefix('seeds-v1-').split('-')[0] if kind in ('seed', 'checkpoint') else identity.removesuffix('.inputs')
                   shards.append({'name': f"{kind}-{name}-{i // width}",
                                  'kind': kind, 'inputs': inputs,
                                  'seed_asset': asset, 'seed_sha256': digest,

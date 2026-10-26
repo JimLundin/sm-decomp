@@ -448,13 +448,10 @@ def parse_bk2(text):
 # Original any% movie in movies/manifest.toml (TASVideos publication3653).
 ROUTE_SOURCE_SHA256 = 'e53b1ce15b3f01516eb64c68a6db2911f91bd97197eb05960779561be5c7cbe9'
 ROUTES = {
-    'save-death-continue': (76064, 'af79d24c791c1414cd4b1b83f040da0787a2a69bd0d2c4d6b73fc667b7d74467'),
-    'ice-return-business': (166082, '4b4090a970f52658d27d4f69fe0e6d30da43739519cf781ef722dacbecdb5721'),
     'speed-booster': (148406, 'bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6'),
     'crocomire': (171694, '90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe'),
     'crocomire-shot': (167295, 'e46b9a61eeded83064cc3a9fc29cf05d6a1cd18151c06cd6c9b78930af41766b'),
     'wave-gate': (153648, '1ce640c865d508ff2aab0f79c043c6da8aff9b74d6a1444d3a994e20d68db123'),
-    'power-bomb-room-entry': (174992, '34ab4055b6904d0544e490632fbbb81b87f18d163e55c7c6208ee9e5bd2a7dfb'),
     'norfair-reserve': (147887, '968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d'),
 }
 
@@ -1347,63 +1344,6 @@ def extend_ice(a):
     return a
 
 
-def extend_ice_return(a):
-    """Authored 2026-10-24 Ice return, including upper shutter bypass and health drops.
-
-    Controller expressions preserve the selected checked branches exactly.
-    This reaches Business Center; it does not qualify Crocomire or its approach.
-    """
-    assert len(a) == 161733
-    # Ice west exit, then jump/morph through the pre-Ice shaft passage.
-    a.extend(_holds('Y:1 None:1 Left:8 Left+X:1 Left:160 None:120'))
-    a.extend(_holds('Left:60 Left+A:14 Left+Down:1 Left:3 Left+Down:1 Left:110 None:30'))
-    a.extend(_holds('None:1 A:16 Down:1 Left:24 None:1'))
-    a.extend(_holds('Down:1 None:12 Down:1 None:12 Left:40 None:1'))
-    a.extend(_holds('Left:25 None:50 Right:16 None:18 Left:16 None:35'))
-    a.extend(_holds('None:15 Up:1 None:12 Up:1 None:12 Right:8 Right+X:1 Right:80 None:120'))
-    assert len(a) == 162763
-    # Trippers: fresh jump/shoot edges; selected branch ends on the third ledge.
-    a.extend(_holds('B+Right:1'))
-    a.extend(_holds('B+Right+A+X:1 B+Right+A:11') * 4)
-    a.extend(_holds('B+Right:2 B+Right+A+X:1 B+Right+A:23 None:1 B+Right:34'))
-    a.extend(_holds('B+Right+A+X:1 B+Right+A:11') * 5)
-    a.extend(_holds('B+Right:8'))
-    a.extend(_holds('B+Right+A+X:1 B+Right+A:11') * 5)
-    assert len(a) == 163001
-    a.extend(_holds('B+Right:25'))
-    a.extend(_holds('B+Right+A+X:1 B+Right+A:11') * 7)
-    a.extend(_holds('None:1'))
-    a.extend(_holds('Right+A+X:1 Right+A:11') * 8)
-    # Replace the final76 idle frames of the earlier exit trial at first gameplay.
-    a.extend(_holds('Right:30 None:34'))
-    assert len(a) == 163271
-    a.extend(_holds('B+Right+X:1 B+Right:11') * 20)
-    a.extend(_holds('None:120'))
-    # Closed growing shutters: ordinary bombs open the upper return tunnel.
-    # Early Down edges retain A to preserve jump height during airborne morph.
-    a.extend(_holds('Left:68 None:1 A:2 A+Down:1 A:2 A+Down:1 A:8 X:1 None:65'))
-    a.extend(_holds('Left:12 None:1 Up:1 None:12 Up:1 None:12 A:2 A+Down:1 A:2 A+Down:1 A:14 Right+A:24 Right:30 None:1'))
-    a.extend(_holds('Left:16 None:1'))
-    a.extend(_holds('Up:1 None:12 Up:1 None:12 A:2 A+Down:1 A:2 A+Down:1 A:20 Right+A:20 Right:15 None:1'))
-    a.extend(_holds('X:1 None:65 Right:18 None:1 Right:70 None:1'))
-    assert len(a) == 164155
-    # Wait for the tunnel Sova to return, bomb it from range, collect its drop.
-    a.extend(_holds('Right:60 None:800 None:38 X:1 Left:20 None:70 Right:28 None:1'))
-    a.extend(_holds('Right:165 None:35'))
-    a.extend(_holds('None:6 Up:1 None:12 Up:1 None:12 Right:1 Right+X:1 Right:60 None:130'))
-    assert len(a) == 165597
-    # Business Center: ranged freezing/kills and body contact with health drops.
-    a.extend(_holds('Right:10 None:8 R:3'))
-    a.extend(_holds('R+X:1 R:11') * 20)
-    a.extend(_holds('Right:8 Right+A:8 Right:24 Left:18 None:1 Down:1'))
-    a.extend(_holds('Down+X:1 Down:11') * 4)
-    a.extend(_holds('None:1 Up:1'))
-    a.extend(_holds('Up+X:1 Up:11') * 4)
-    a.extend(_holds('None:1 Right:2 None:1 A:12 A+Down:1'))
-    a.extend(_holds('Down+X:1 Down:11') * 4)
-    a.extend(_holds('None:1'))
-    assert len(a) == 166082
-    return a
 
 
 def extend_reserve(a):
@@ -1438,97 +1378,6 @@ def extend_reserve(a):
     return a
 
 
-def extend_power_bomb_entry(a):
-    """Continue the authored Ice-return route to the first Power Bomb room.
-
-    Room entry is navigation coverage; acquisition remains a separate check.
-    """
-    assert len(a) == 166082
-    a = list(a)
-    a.extend(_holds('A:20 Right+A:20 None:45'))  # business-ascent-platform1
-    a.extend(_holds('A:12 Left+A:35 None:45'))  # business-ascent-leftledge
-    a.extend(_holds('Right+A:35 None:50'))  # business-ascent-middle-direct
-    a.extend(_holds('Left+A:28 None:50'))  # business-ascent-upperleft-direct
-    a.extend(_holds('Left:10 None:4 A:24'))  # business-elevator-clearance-rise
-    a.extend(_holds('Right+A:38 None:50'))  # business-elevator-clearance-land
-    a.extend(_holds('Left:18 None:4'))  # business-elevator-center
-    a.extend(_holds('None:12 Up:1 None:40'))  # business-elevator-settled-trigger
-    a.extend(_holds('None:910'))  # business-elevator-arrived
-    a.extend(_holds('Left:12 Left+X:65 None:100'))  # pb-west-cf80
-    a.extend(_holds('Left+X:90 None:110'))  # pb-west-glass-tube
-    a.extend(_holds('Left+X:90 None:110'))  # pb-west-cf54
-    a.extend(_holds('Left+X:90 None:110'))  # pb-west-a408-entry
-    a.extend(_holds('B+Right:22 B+Left:20'))  # pb-a408-runup
-    a.extend(_holds('B+Left:5 B+Left+A:50'))  # pb-a408-running-hop
-    a.extend(_holds('Left+X:4 None:16'))  # pb-a408-center-landing
-    a.extend(_holds('B+Left+X:23'))  # pb-a408-center-runup
-    a.extend(_holds('B+Left+A:30'))  # pb-a408-west-early-jump
-    a.extend(_holds('Left+A:6 Down+A:1 A:1 A+X:1 None:20'))  # pb-a408-maw-ranged-down
-    a.extend(_holds('Left:3 Left+A:30 None:12'))  # pb-a408-west-ledge-final
-    a.extend(_holds('Left+X:30 None:110'))  # pb-west-a3dd-entry
-    a.extend(_holds('None:8 B+Left+X:24 B+Left+A:12 B+Left+A+X:1 B+Left+A:32'))  # pb-a3dd-center-hop
-    a.extend(_holds('None:1 Left+A:5 Left+A+X:1 Left+A:35'))  # pb-a3dd-stone-center
-    a.extend(_holds('Left+A:24 None:25 B+Left+X:18 B+Left+A:50'))  # pb-a3dd-west-hop
-    a.extend(_holds('Left+X:65 None:110'))  # pb-redtower-return
-    a.extend(_holds('Left+A+X:25 None:110'))  # pb-redtower-door-hop
-    a.extend(_holds('Left+X:100 None:110'))  # pb-energy-station-entry
-    a.extend(_holds('None:90 Left:72 None:350 A:1 None:40'))  # pb-energy-refilled
-    a.extend(_holds('Right:12 Right+A:50 Right+X:50 None:150'))  # pb-energy-exit
-    a.extend(_holds('Up:2 Up+X:1 None:10'))  # pb-tower-ripper1-freeze
-    a.extend(_holds('Left:13 None:4 A:20 Right+A:8'))  # pb-tower-ripper1-align-air
-    a.extend(_holds('Up+A:1 Right+A:6 Up+A:1 None:45'))  # pb-tower-ripper1-brake-land
-    a.extend(_holds('None:190 Up:2 Up+X:1 None:10'))  # pb-tower-ripper2-freeze
-    a.extend(_holds('Right:8 Right+A:8 Up+A:1 A:16'))  # pb-tower-ripper2-clear-rise
-    a.extend(_holds('Left+A:14 Up+A:1 None:45'))  # pb-tower-ripper2-land
-    a.extend(_holds('None:24 Up:2 Up+X:1 None:10'))  # pb-tower-ripper3-freeze
-    a.extend(_holds('Right:14 Right+A:6 Up+A:1 A:18'))  # pb-tower-ripper3-rise
-    a.extend(_holds('Left+A:14 Up+A:1 None:45'))  # pb-tower-ripper3-turn-land
-    a.extend(_holds('Right:1 None:95 R:2 X+R:1 None:25'))  # pb-tower-ripper4-gap-freeze
-    a.extend(_holds('Right+A:74 Up+A:1 None:18'))  # pb-tower-ripper4-gap-land
-    a.extend(_holds('A:36 Left+A:26 Up+A:1 None:25'))  # pb-tower-stone-gap
-    a.extend(_holds('Left:6 Left+A:10 Up+A:1 A:25 Right+A:18 Up+A:1 None:25'))  # pb-tower-second-stone-gap
-    a.extend(_holds('None:6 Right:18 None:8 Up:2 Up+X:1 None:20'))  # pb-tower-shot-shaft
-    a.extend(_holds('Up:2 Up+X:1 None:25 A:40 Right+A:10 Up+A:1 None:25'))  # pb-tower-shaft-upper-ledge
-    a.extend(_holds('Left:2 None:10 B+Left:1 B+Left+A:28 Up+A:1 None:15'))  # pb-tower-left-shaft-run-hop
-    a.extend(_holds('A:30 Left+A:24 Up+A:1 None:30'))  # pb-tower-mid-shaft-land
-    a.extend(_holds('Left:4 A:26 Right+A:40 Up+A:1 None:25'))  # pb-tower-right-middle-ledge
-    a.extend(_holds('Right:2 Right+X:20 None:20'))  # pb-tower-middle-recover
-    a.extend(_holds('A:26 Right+A:52 Up+A:1 None:20'))  # pb-tower-upper-right-ledge
-    a.extend(_holds('Right:10 None:4 A:27 Left+A:40 Up+A:1 None:31'))  # pb-tower-upper-left-clearance
-    a.extend(_holds('Left:12 None:8'))  # pb-tower-high-shelf-align
-    a.extend(_holds('None:4 A:40 Right+A:34 Up+A:1 None:20'))  # pb-tower-high-right-land
-    a.extend(_holds('A:40 Left+A:34 Up+A:1 None:20'))  # pb-tower-high-left-land
-    a.extend(_holds('Left:12 None:12 A:40 Right+A:34 Up+A:1 None:20'))  # pb-tower-high-right-second
-    a.extend(_holds('A:40 Left+A:34 Up+A:1 None:20'))  # pb-tower-top-left-shelf
-    a.extend(_holds('None:126 Up:2 Up+X:1 None:12'))  # pb-tower-upper-ripper1-freeze
-    a.extend(_holds('Right:12 Right+A:8 Up+A:1 A:20 Left+A:24 Up+A:1 None:50'))  # pb-tower-upper-ripper1-land
-    a.extend(_holds('Up:2 Up+X:1 None:12'))  # pb-tower-upper-ripper2-freeze
-    a.extend(_holds('Right:12 Right+A:8 Up+A:1 A:20 Left+A:24 Up+A:1 None:50'))  # pb-tower-upper-ripper2-land
-    a.extend(_holds('None:57 Up:2 Up+X:1 None:12'))  # pb-tower-upper-ripper3-freeze
-    a.extend(_holds('Right:12 Right+A:8 Up+A:1 A:20 Left+A:22 Up+A:1 None:52'))  # pb-tower-upper-ripper3-land
-    a.extend(_holds('Right:1 None:41 R:2 X+R:1 None:12'))  # pb-tower-upper-ripper4-diagonal-freeze
-    a.extend(_holds('A:16 A+R:2 A+X+R:1 A:1 None:85'))  # pb-tower-top-floor-air-shot
-    a.extend(_holds('Right:6 Right+A:24 Up+A:1 A:20 Right+A:24 Up+A:1 None:45'))  # pb-tower-top-opening-jump
-    a.extend(_holds('Right+X:50 None:110'))  # pb-east-a2f7-entry
-    a.extend(_holds('None:45 X:1 None:15 X:1 None:15 X:1 None:15'))  # pb-a2f7-entry-waver-clear
-    a.extend(_holds('Right:4 Right+A:7 Right:25 Up:1 None:8'))  # pb-a2f7-edge-short-hop
-    a.extend(_holds('Right:4 Right+A:7 Right:25 Up:1 None:8'))  # pb-a2f7-second-short-hop
-    a.extend(_holds('Right+X:8 None:12 Right:4 Right+A:7 Right:25 Up:1 None:8'))  # pb-a2f7-third-short-hop
-    a.extend(_holds('Right+X:8 None:12 Right:4 Right+A:7 Right:25 Up:1 None:8'))  # pb-a2f7-fourth-short-hop
-    a.extend(_holds('Right+X:12 None:12 Right:4 Right+A:7 Right:25 Up:1 None:8'))  # pb-a2f7-fifth-short-hop
-    a.extend(_holds('Right+X:13 None:12 Right:4 Right+A:7 Right:25 Up:1 None:8'))  # pb-a2f7-sixth-short-hop
-    a.extend(_holds('Right+X:8 None:12 Right:4 Right+A:7 Right:25 Up:1 None:8'))  # pb-a2f7-seventh-short-hop
-    a.extend(_holds('Right:4 Right+A:10 Right:24 Up:1 None:10'))  # pb-a2f7-raised-stone-hop
-    a.extend(_holds('Right:4 Right+A:8 Right:36 Up:1 None:10 Right+X:75 None:150'))  # pb-east-a322-entry
-    a.extend(_holds('Right:15 None:12 A:4 Down+A:2 Down+A+X:1 Down:12 Down+X:1 None:45'))  # pb-a322-upper-shot-floors
-    a.extend(_holds('A:4 Down+A:2 Down+A+X:1 None:60'))  # pb-a322-second-shot-floor
-    a.extend(_holds('Right:12 None:45'))  # pb-a322-lower-floor-drop
-    a.extend(_holds('Left:16 None:12 A:4 Down+A:2 Down+A+X:1 None:65'))  # pb-a322-final-shot-floor
-    a.extend(_holds('Right:16 None:100'))  # pb-a322-bottom-door-ledge
-    a.extend(_holds('Left:8 Select+Left:1 Left:1 Select+Left:1 Left:1 Left+X:1 Left:50 None:160'))  # pb-west-a3ae-green-door
-    a.extend(_holds('Left:20 None:170'))  # pb-a3ae-enter
-    assert len(a) == 174992
-    return a
 
 
 def extend_wave_gate(a):
@@ -1661,10 +1510,6 @@ def route_frames(source, name):
     for extend in (_early_route, _missile_route, extend_missile, extend_parlor,
                    extend_bombs, extend_hill, extend_green, extend_super):
         a = extend(a)
-    if name == 'save-death-continue':
-        # Retain the saved-slot route through observed contact input 72760.
-        # Authored idle exposure, then fresh A presses for Continue and both maps.
-        return a[:72761] + _holds('None:1800 A:1 None:300 A:1 None:300 A:1 None:900')
     if name in ('crocomire-shot', 'crocomire'):
         route = extend_crocomire_shot_regression(extend_wave_pickup(extend_wave_gate(extend_ice(extend_redtower(a)))))
         return extend_crocomire_completion(route) if name == 'crocomire' else route
@@ -1672,10 +1517,6 @@ def route_frames(source, name):
         return extend_wave_gate(extend_ice(extend_redtower(a)))
     if name == 'norfair-reserve':
         return extend_reserve(extend_redtower(a))
-    if name == 'power-bomb-room-entry':
-        return extend_power_bomb_entry(extend_ice_return(extend_ice(extend_redtower(a)) + _hold('', 120)))
-    if name == 'ice-return-business':
-        return extend_ice_return(extend_ice(extend_redtower(a)) + _hold('', 120))
     return extend_redtower(a)[:ROUTES[name][0]]
 
 

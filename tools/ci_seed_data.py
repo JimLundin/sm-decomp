@@ -35,6 +35,7 @@ def valid_name(name):
     if path.is_absolute() or ".." in path.parts or "\\" in name or ":" in name:
         return False
     return bool(re.fullmatch(r"movies/[A-Za-z0-9_-]+\.inputs", name) or re.fullmatch(
+        r"target/checkpoints/[A-Za-z0-9_-]+\.smvchk", name) or re.fullmatch(
         r"target/seeds/[A-Za-z0-9-]+/(?:rooms\.csv|lag\.csv(?:\.(?:polls|events|eof-polls|eof-hardware|phases|milestones)\.csv|\.eof\.json)?|"
         r"snes9x\.(?:json|frames\.csv|events\.csv|state|live\.json|history\.json)|"
         r"[0-9]{4}-[0-9A-F]{4}-(?:wram|sram|vram|cgram|oam|apuram)\.bin|"
@@ -46,8 +47,29 @@ def selected_rows(args):
     known = {row["id"] for row in rows}
     if set(args.segment) - known:
         raise ValueError("unknown selected row")
-    return [row for row in rows if "pending" not in row
-            and (not args.segment or row["id"] in args.segment)]
+    selected = [row for row in rows if "pending" not in row
+                and (not args.segment or row["id"] in args.segment)]
+    for row in selected:
+        if "checkpoint" not in row and "checkpoint_sha256" not in row:
+            continue
+        if (not isinstance(row.get("checkpoint"), str)
+                or not re.fullmatch(r"[A-Za-z0-9_-]+\.smvchk", row["checkpoint"])
+                or not isinstance(row.get("checkpoint_sha256"), str)
+                or not re.fullmatch(r"[0-9a-f]{64}", row["checkpoint_sha256"])
+                or "seed" in row or "seed_sha256" in row):
+            raise ValueError("invalid checkpoint name/hash pair or combined seed: " + row["id"])
+    return selected
+
+
+def regular_path(root, name, required=True):
+    path = root / name
+    if not path.resolve().is_relative_to(root):
+        raise ValueError("corpus path escapes checkout")
+    if any(part.is_symlink() for part in (path, *path.parents) if part != root):
+        raise ValueError("corpus path contains symlink")
+    if (required or path.exists()) and not path.is_file():
+        raise ValueError("corpus path is not a regular file")
+    return path
 
 
 def pack(args):
@@ -69,12 +91,20 @@ def pack(args):
             if f"target/seeds/{capture}/{name}" not in files:
                 raise ValueError("capture is missing original logs")
     for row in rows:
-        if row["inputs"].startswith("corpus-"):
+        if "checkpoint" in row:
+            name = "target/checkpoints/" + row["checkpoint"]
+            path = regular_path(args.root, name)
+            if digest(path) != row["checkpoint_sha256"]:
+                raise ValueError("checkpoint hash mismatch: " + row["id"])
+            files[name] = path
+        if row["inputs"].startswith("corpus-") and "checkpoint" not in row:
             continue
         name = "movies/" + row["inputs"]
         if not valid_name(name):
             raise ValueError("invalid corpus input name")
         path = args.root / name
+        if "checkpoint" in row:
+            path = regular_path(args.root, name)
         # The original options prefix is exactly the first 8,250 supported words.
         if not path.exists() and row["inputs"] == "any-wait-prefix.inputs":
             data = b"".join((args.root / "movies/any-door-prefix.inputs").read_bytes().splitlines(True)[:8250])
@@ -109,7 +139,12 @@ def restore(args):
     if not args.sha256 or digest(args.bundle) != args.sha256:
         raise ValueError("encrypted seed bundle SHA256 mismatch")
     rows = selected_rows(args)
-    inputs = {"movies/" + row["inputs"] for row in rows if not row["inputs"].startswith("corpus-")}
+    inputs = {"movies/" + row["inputs"] for row in rows
+              if not row["inputs"].startswith("corpus-") or "checkpoint" in row}
+    checkpoints = {"target/checkpoints/" + row["checkpoint"]
+                   for row in rows if "checkpoint" in row}
+    if any(not valid_name(name) for name in inputs):
+        raise ValueError("invalid corpus input name")
     captures = {row["seed"].split(":")[0] for row in rows if "seed" in row}
     needed_indexes = {f"target/seeds/{capture}/rooms.csv" for capture in captures}
     command, env = cipher(args, decrypt=True)
@@ -123,8 +158,11 @@ def restore(args):
                     raise ValueError("invalid or duplicate seed archive member")
                 seen.add(name)
                 parts = PurePosixPath(name).parts
-                if name not in inputs and not (parts[:2] == ("target", "seeds") and parts[2] in captures):
+                if name not in inputs | checkpoints and not (
+                        parts[:2] == ("target", "seeds") and parts[2] in captures):
                     continue
+                if name in checkpoints or name in inputs:
+                    regular_path(args.root, name, required=False)
                 destination = (args.root / name).resolve()
                 if not destination.is_relative_to(args.root):
                     raise ValueError("seed extraction escapes checkout")
@@ -142,8 +180,16 @@ def restore(args):
             pass
         if process.wait() != 0:
             raise RuntimeError("seed decryption failed")
-        if (inputs | needed_indexes) - restored:
+        if (inputs | checkpoints | needed_indexes) - restored:
             raise ValueError("seed archive lacks selected corpus data")
+        for row in rows:
+            name = "movies/" + row["inputs"]
+            if name in inputs and digest(args.root / name) != row["input_sha256"]:
+                raise ValueError("restored corpus input hash mismatch: " + row["id"])
+            if "checkpoint" in row:
+                path = args.root / "target/checkpoints" / row["checkpoint"]
+                if digest(path) != row["checkpoint_sha256"]:
+                    raise ValueError("restored checkpoint hash mismatch: " + row["id"])
     finally:
         process.stdout.close()
         if process.poll() is None:

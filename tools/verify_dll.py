@@ -314,6 +314,7 @@ def corpus_child(command, root):
 
 def run_corpus(root, args):
     import csv
+    import re
     import tomllib
     import uuid
 
@@ -341,12 +342,23 @@ def run_corpus(root, args):
     segments = {}
     for segment in recipe.get("segment", []):
         allowed = {"id", "inputs", "input_sha256", "start_frame", "frames", "require_hit",
-                   "after_hits", "expect", "after_expectations", "pending", "seed", "seed_sha256"}
+                   "after_hits", "expect", "after_expectations", "pending", "seed", "seed_sha256",
+                   "checkpoint", "checkpoint_sha256"}
         if not isinstance(segment, dict) or set(segment) - allowed:
             raise ValueError("corpus segment has unknown fields")
         name = segment.get("id")
         if not isinstance(name, str) or not name or name in segments:
             raise ValueError("corpus segment IDs must be distinct nonempty strings")
+        if "checkpoint" in segment or "checkpoint_sha256" in segment:
+            checkpoint = segment.get("checkpoint", "")
+            digest = segment.get("checkpoint_sha256", "")
+            if (not isinstance(checkpoint, str)
+                    or re.fullmatch(r"[A-Za-z0-9_-]+\.smvchk", checkpoint) is None
+                    or not isinstance(digest, str) or len(digest) != 64
+                    or any(c not in "0123456789abcdef" for c in digest)):
+                raise ValueError(f"corpus {name}: checkpoint requires a flat slug.smvchk and lowercase SHA-256")
+            if "seed" in segment or "seed_sha256" in segment:
+                raise ValueError(f"corpus {name}: checkpoint requires boot-authored inputs, not a seed")
         if "pending" in segment:
             if not isinstance(segment["pending"], str) or not segment["pending"]:
                 raise ValueError(f"corpus {name}: pending requires a reason")
@@ -385,6 +397,25 @@ def run_corpus(root, args):
     print(f"Corpus {'PARTIAL selection' if partial else 'full required scope'}: "
           f"{len(selected)} selected, {len(required)} required; {recipe_path}", flush=True)
     def input_matches(segment):
+        if "checkpoint" in segment:
+            recipe_root = recipe_path.parent.parent
+            checkpoint = recipe_root / "target/checkpoints" / segment["checkpoint"]
+            if not checkpoint.resolve().is_relative_to(recipe_root):
+                raise ValueError("configured checkpoint escapes checkout")
+            if any(part.is_symlink() for part in (checkpoint, *checkpoint.parents) if part != recipe_root):
+                raise ValueError("configured checkpoint contains symlink")
+            if not checkpoint.is_file():
+                raise ValueError("configured checkpoint is not a regular file")
+            data = checkpoint.read_bytes()
+            if hashlib.sha256(data).hexdigest() != segment["checkpoint_sha256"]:
+                raise ValueError("checkpoint SHA-256 does not match the recipe")
+            if len(data) < 56 or data[:8] != b"SMVERIFY":
+                raise ValueError("configured checkpoint has an invalid header")
+            frame = int.from_bytes(data[32:40], "little")
+            if not 0 < frame <= segment["start_frame"]:
+                raise ValueError("configured checkpoint frame must be positive and at or before start_frame")
+            segment["_checkpoint_path"] = checkpoint
+            segment["_checkpoint_frame"] = frame
         if "seed" in segment:
             capture, index = segment["seed"].split(":")
             directory = recipe_path.parent.parent / "target/seeds" / capture
@@ -493,7 +524,10 @@ def run_corpus(root, args):
         directory = cache_directory(segment)
         directory.mkdir(parents=True, exist_ok=True)
         candidates = []
-        if not force_boot:
+        if not force_boot and "checkpoint" in segment:
+            # Never let a later cache donor skip this row's required checked setup gap.
+            candidates.append((segment["_checkpoint_frame"], segment["_checkpoint_path"]))
+        elif not force_boot:
             for donor in donors.values():
                 for path in cache_directory(donor).glob("*.smvchk"):
                     frame = checkpoint_frame(path)
@@ -502,6 +536,9 @@ def run_corpus(root, args):
                         candidates.append((frame, path))
             candidates.sort(key=lambda pair: (pair[0], pair[1].stat().st_mtime_ns), reverse=True)
         previous, checkpoint = candidates[0] if candidates else (0, None)
+        if checkpoint:
+            print(f"PREFIX {segment['id']}: skip previously verified input frames 0..{previous}; "
+                  f"checkpoint {checkpoint}", flush=True)
         if previous == start:
             return checkpoint
         # Retain useful branch starts while verifying this prefix, bounded by the recipe.
