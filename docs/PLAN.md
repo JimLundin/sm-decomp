@@ -48,7 +48,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Qualified Core58: production111674, legacy18794, unsafe2850, verification39974; warnings179.
+Qualified Core59: production111666, legacy18663, unsafe2846, verification39974; warnings179.
 Core50 owns the actual native player/DSP allocations and shared APU RAM: +25 engine
 lines, no unsafe-line savings. GameOwner no longer promises Rust thread sharing;
 raw SDL userdata/gate/quiescence and native/audio shutdown contracts remain explicit.
@@ -57,7 +57,7 @@ restored encrypted members. Full86 passed136,526 selected+38,827 setup, zero fai
 both Kago setups independently ran14,350. Old33e6 checkpoints remain incompatible.
 Core51 full86 and Core52-55 scoped rows pass; results and measured costs live in commits.
 
-Next: publish qualified Core57-59 firing/pose and A4 families, then checked X-ray and Draygon work.
+Next: publish qualified checked X-ray and Draygon work; correct A4 initializer and native byte offsets.
 Core56 final476b8dc6638846c9 (35 contributions/575452 normalized source bytes) passes full86:
 136,526 selected+38,827 setup+189,475 genuine captures, zero failures; Core57-59 scoped rows pass.
 Core56 source71e806 owns the original input Vec/FILE and actual mirrored Cart image;
