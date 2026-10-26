@@ -13,8 +13,8 @@ use crate::game::visual_runtime::{
     initialize_ending_cloud_band, initialize_ending_cloud_side, initialize_ending_time_glyph,
     initialize_intro_brain_particle, initialize_intro_rinka, initialize_shooting_stars,
     initialize_title_sprite, launch_cinematic_sprite, move_ending_cloud, place_cinematic_sprite,
-    prepare_credit_roll, prepare_ending_time, start_intro_rinka, title_metroid_cry,
-    title_metroid_palette, wait_cinematic_scene, wait_ending_cloud,
+    prepare_credit_roll, prepare_ending_time, request_title_skip, start_intro_rinka,
+    title_metroid_cry, title_metroid_palette, wait_cinematic_scene, wait_ending_cloud,
 };
 use crate::game::visual_runtime::{advance_cinematic_background_pre, fade_cinematic_fixed_color};
 use crate::game::visual_runtime::{
@@ -317,25 +317,13 @@ pub unsafe fn GameState_1_OpeningCinematic_(game: &mut Game) -> CoroutineRet {
         CinematicMode7.advance(game);
         palette_effects::advance(game);
         draw_cinematic_sprites(false, game);
-        MaybeSkipCinematics(game);
+        request_title_skip(game);
         HandleCinematicsTransitions(game);
         update_cinematic_transform(false, game);
         kCoroutineNone as CoroutineRet
     }
 }
 pub fn CinematicFunctionNone() {}
-pub unsafe fn MaybeSkipCinematics(game: &mut Game) {
-    {
-        if word!(game.cinematic_function) as i32 + 0x60d8 & 0x8000 != 0
-            && (word!(game.joypad1_newkeys)
-                & (kButton_B as i32 | kButton_Start as i32 | kButton_A as i32) as u16)
-                != 0
-            && word!(game.cinematic_var18) == 0
-        {
-            word! {game; cinematic_var18 = 1; screen_fade_delay = 0; screen_fade_counter = 2; }
-        }
-    }
-}
 pub fn HandleCinematicsTransitions_1(game: &mut Game) {
     if advance_cinematic_fade(CinematicFade::FastOut, game) {
         word! {game; cinematic_var18 = 2; cinematic_function = ((0x8b9f28i32) as u16); }
@@ -559,15 +547,15 @@ crate::game::callback_dispatch! {
     };
     [9149719] CinematicFunc_Func2 [] {
         advance_cinematic_pan_to_blackout!(game, 0, addr_kCinematicSpriteObjectDef_8BA0F5);
-        MaybeSkipCinematics(game);
+        request_title_skip(game);
     };
     [9149840] CinematicFunc_Func4 [] {
         advance_cinematic_pan_to_blackout!(game, 1, addr_kCinematicSpriteObjectDef_8BA0FB);
-        MaybeSkipCinematics(game);
+        request_title_skip(game);
     };
     [9149970] CinematicFunc_Func5 [] {
         advance_cinematic_pan_to_blackout!(game, 2, addr_kCinematicSpriteObjectDef_8BA101);
-        MaybeSkipCinematics(game);
+        request_title_skip(game);
     };
     [9150091] CinematicFunc_Func7 [] {
         if (word!(game.nmi_frame_counter_word) & 1) == 0 {

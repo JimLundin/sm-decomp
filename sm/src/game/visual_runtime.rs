@@ -2277,6 +2277,15 @@ pub(crate) fn advance_title_pan(stage: usize, game: &mut Game) -> bool {
     negative != (stage == 2)
 }
 
+pub(crate) fn request_title_skip(game: &mut Game) {
+    if word!(game.cinematic_function) as i32 + 0x60d8 & 0x8000 != 0
+        && word!(game.joypad1_newkeys) & 0x9080 != 0
+        && word!(game.cinematic_var18) == 0
+    {
+        word! {game; cinematic_var18 = 1; screen_fade_delay = 0; screen_fade_counter = 2; }
+    }
+}
+
 pub(crate) fn advance_title_wait(game: &mut Game) {
     let expired = word!(game.demo_timer -= 1, reread) & 0x8000 != 0;
     if word!(game.demo_timer) == 0 || expired {
