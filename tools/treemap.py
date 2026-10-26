@@ -1,5 +1,5 @@
-"""Draw the progress picture: production Rust by responsibility, split into owned,
-partly owned and legacy lines, with four headline numbers and their 24-hour change.
+"""Draw a mobile-readable progress picture: production Rust by responsibility,
+split into owned, partly owned and legacy lines, with current totals and 24h change.
 
 Reads committed Git blobs only (no working tree, no network, standard library).
 CI publishes the result to GitHub Pages as treemap.svg; README.md embeds it.
@@ -9,7 +9,7 @@ import datetime, io, re, subprocess, sys, tarfile
 from html import escape
 from pathlib import PurePosixPath
 
-W, H, TOP = 960, 520, 176
+W, PAD, TOP, ROW_H, GAP = 360, 16, 338, 92, 10
 COLORS = {'owned': '#164739', 'partial': '#594319', 'legacy': '#273b54'}
 ACCENTS = {'owned': '#67e8b3', 'partial': '#ffd080', 'legacy': '#a5bcd8'}
 NAMES = {'owned': 'Owned', 'partial': 'Partly owned', 'legacy': 'Legacy'}
@@ -72,72 +72,21 @@ def measure(rev):
             m['legacy_bank'] += lines
         m['rows'][area(path)][status(path, text)] += lines
     m['totals'] = {k: sum(r[k] for r in m['rows'].values()) for k in COLORS}
-    # Checks come from the agents' Score lines; take the best of the latest few,
-    # since a rebased commit can carry a stale count.
-    log = git('log', '-60', '--format=%B', rev).decode('utf-8', 'replace')
-    scores = [(int(a), int(b)) for a, b in re.findall(r'^Score: checks (\d+)/(\d+)', log, re.M)[:10]]
-    m['checks'] = max(scores) if scores else None
     return m
-
-
-def small_partition(items, x, y, w, h):
-    if len(items) == 1:
-        return [dict(items[0], x=x, y=y, w=w, h=h)]
-    best, score, total = None, float('inf'), sum(r['lines'] for r in items)
-    for split in range(1, len(items)):
-        f = sum(r['lines'] for r in items[:split]) / total
-        for vertical in (True, False):
-            a = (x, y, w * f, h) if vertical else (x, y, w, h * f)
-            b = (x + w * f, y, w * (1 - f), h) if vertical else (x, y + h * f, w, h * (1 - f))
-            tiles = small_partition(items[:split], *a) + small_partition(items[split:], *b)
-            cost = max(max(r['w'] / r['h'], r['h'] / r['w'], 132 / r['w'] if r['w'] < 44 else 0) for r in tiles)
-            if cost < score:
-                best, score = tiles, cost
-    return best
-
-
-def partition(items, x, y, w, h):
-    """Squarified treemap; the last three tiles are placed to avoid slivers."""
-    scale = w * h / sum(r['lines'] for r in items)
-    pending, out = [dict(r, area=r['lines'] * scale) for r in items], []
-
-    def worst(row, side):
-        areas = [r['area'] for r in row]
-        s = sum(areas)
-        return max(side * side * max(areas) / (s * s), s * s / (side * side * min(areas)))
-
-    while pending:
-        if len(pending) <= 3:
-            out += small_partition(pending, x, y, w, h)
-            break
-        side, row = min(w, h), [pending.pop(0)]
-        while pending and len(pending) != 3 and worst(row + [pending[0]], side) <= worst(row, side):
-            row.append(pending.pop(0))
-        depth, offset = sum(r['area'] for r in row) / side, 0
-        for r in row:
-            span = r['area'] / depth
-            out.append(dict(r, x=x, y=y + offset, w=depth, h=span) if w >= h else
-                       dict(r, x=x + offset, y=y, w=span, h=depth))
-            offset += span
-        if w >= h:
-            x, w = x + depth, w - depth
-        else:
-            y, h = y + depth, h - depth
-    return out
 
 
 def short(n):
     return f'{n / 1000:.1f}k' if abs(n) >= 1000 else str(n)
 
 
-def card(x, label, value, delta):
+def card(x, y, label, value, delta):
     """One headline number; delta is (text, sign) where sign>0 means better."""
     text, sign = delta
     tone = 'good' if sign > 0 else 'bad' if sign < 0 else 'neutral'
-    return (f'<rect x="{x}" y="48" width="232" height="82" rx="10" fill="#131f2e" stroke="#293a50"/>'
-            f'<text x="{x + 14}" y="70" class="l">{escape(label)}</text>'
-            f'<text x="{x + 14}" y="101" class="v">{escape(value)}</text>'
-            f'<text x="{x + 14}" y="119" class="d {tone}">{escape(text)}</text>')
+    return (f'<rect x="{x}" y="{y}" width="159" height="94" rx="10" fill="#131f2e" stroke="#293a50"/>'
+            f'<text x="{x + 12}" y="{y + 23}" class="l">{escape(label)}</text>'
+            f'<text x="{x + 12}" y="{y + 55}" class="v">{escape(value)}</text>'
+            f'<text x="{x + 12}" y="{y + 79}" class="d {tone}">{escape(text)}</text>')
 
 
 def change(now, then, lower_is_better, fmt=short):
@@ -145,20 +94,7 @@ def change(now, then, lower_is_better, fmt=short):
         return ('', 0)
     d = now - then
     sign = 0 if d == 0 else (-1 if (d > 0) == lower_is_better else 1)
-    return (f'{"+" if d > 0 else "−" if d < 0 else "±"}{fmt(abs(d))} in 24h', sign)
-
-
-def tile_title(title, room):
-    if 9.2 * len(title) <= room:
-        return [title], 't'
-    words = title.split()
-    pairs = [(" ".join(words[:i]), " ".join(words[i:])) for i in range(1, len(words))]
-    pairs.sort(key=lambda pair: max(map(len, pair)))
-    for width, css in ((9.2, 't'), (7.5, 't compact')):
-        for pair in pairs:
-            if width * max(map(len, pair)) <= room:
-                return pair, css
-    return [words[0]], 't compact'
+    return (f'{"+" if d > 0 else "-" if d < 0 else "+/-"}{fmt(abs(d))} in 24h', sign)
 
 
 def main(out_path, rev='HEAD'):
@@ -169,67 +105,69 @@ def main(out_path, rev='HEAD'):
     now, then = measure(commit), (measure(base) if base else None)
     t = now['totals']
     old = (lambda k: then[k]) if then else (lambda k: None)
-    checks = now['checks'] or (0, 0)
-    old_checks = then['checks'][0] if then and then['checks'] else None
     cards = [
-        ('Required checks', f'{checks[0]} / {checks[1]}', change(checks[0], old_checks, False, str)),
+        ('Production lines', f'{now["production"]:,}', change(now['production'], old('production'), True)),
+        ('Owned code', f'{t["owned"]:,}', change(t['owned'], then['totals']['owned'] if then else None, False)),
         ('Legacy bank lines', f'{now["legacy_bank"]:,}', change(now['legacy_bank'], old('legacy_bank'), True)),
         ('Unsafe lines', f'{now["unsafe"]:,}', change(now['unsafe'], old('unsafe'), True, lambda n: f'{n:,}')),
-        ('Production lines', f'{now["production"]:,}', change(now['production'], old('production'), True)),
     ]
     rows = sorted(({**dict(id=k, title=n), 'counts': now['rows'][k], 'lines': sum(now['rows'][k].values())}
                    for k, n in AREAS if sum(now['rows'][k].values())), key=lambda r: -r['lines'])
     stamp = datetime.datetime.fromisoformat(when)
-    p = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H + TOP}" viewBox="0 0 {W} {H + TOP}" role="img">',
-         f'<title>Engine migration at {commit[:7]}: {checks[0]}/{checks[1]} checks, {now["legacy_bank"]:,} legacy bank, '
-         f'{now["unsafe"]:,} unsafe, {now["production"]:,} production lines</title>',
-         '<desc>Tile area represents production Rust lines by responsibility. Green bands are owned code, '
-         'amber bands are partly owned, and blue bands are legacy. Verification code is excluded from tile areas. '
-         'Headline legacy counts bank files; blue bands also include other legacy modules.</desc>',
+    height = TOP + len(rows) * (ROW_H + GAP) + 92
+    p = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{height}" viewBox="0 0 {W} {height}" role="img">',
+         f'<title>Super Metroid codebase at {commit[:7]}: {now["production"]:,} production, '
+         f'{t["owned"]:,} owned code, {now["legacy_bank"]:,} legacy bank and {now["unsafe"]:,} unsafe lines</title>',
+         '<desc>Each row is one responsibility; its number is the production Rust line count. '
+         'The stacked bar shows the fraction of those lines classified as owned (green), partly owned (amber) '
+         'or legacy (blue). The three numbers below the bar are their line counts in that order. '
+         'Rows have equal height; their size does not represent source volume. '
+         'These are whole-file source classifications, not proof that a subsystem is complete. Owned requires '
+         'forbid(unsafe_code), no unsafe operations, g_ram, Game or direct foreign calls. Bank files and '
+         'unsafe files without that marker are legacy; other files are partly owned. '
+         'The legacy bank headline is only a subset of the blue legacy total. '
+         'Unsafe counts all Rust, including verification; other totals exclude verification. '
+         'Headline changes compare the source with the latest ancestor at least 24 hours earlier.</desc>',
          '<style>text{font-family:system-ui,Segoe UI,sans-serif;fill:#edf4fc}.h{font-size:22px;font-weight:650}'
-         '.l{font-size:13px;fill:#b0c2d8}.v{font-size:26px;font-weight:650}.d{font-size:12px;font-weight:600}'
+         '.l{font-size:14px;fill:#b0c2d8}.v{font-size:26px;font-weight:650}.d{font-size:14px;font-weight:600}'
          '.good{fill:#67e8b3}.bad{fill:#ff9e9e}.neutral{fill:#b0c2d8}'
-         '.k{font-size:13px;fill:#d2deed}.t{font-size:16px;font-weight:650}.compact{font-size:14px}'
-         '.s{font-size:12px;fill:#edf4fc}</style>',
-         f'<rect width="{W}" height="{H + TOP}" rx="12" fill="#0b121c"/>',
-         '<text x="4" y="29" class="h">Super Metroid · Codebase</text>',
-         f'<text x="{W - 4}" y="29" class="l" text-anchor="end">{commit[:7]} &#183; {stamp:%Y-%m-%d %H:%M %z}</text>']
+         '.owned{fill:#67e8b3}.partial{fill:#ffd080}.legacy{fill:#a5bcd8}'
+         '.k{font-size:14px;font-weight:600}.t{font-size:17px;font-weight:650}'
+         '.s{font-size:15px;font-variant-numeric:tabular-nums}.section{font-size:18px;font-weight:650}</style>',
+         f'<rect width="{W}" height="{height}" rx="12" fill="#0b121c"/>',
+         f'<text x="{PAD}" y="32" class="h">Super Metroid &#183; Codebase</text>',
+         f'<text x="{PAD}" y="55" class="l">{commit[:7]} &#183; {stamp:%Y-%m-%d %H:%M %z}</text>']
     for i, (label, value, delta) in enumerate(cards):
-        p.append(card(4 + i * 240, label, value, delta))
-    x = 4
-    for k, name in NAMES.items():
-        label = f'{name} {short(t[k])}'
-        p.append(f'<rect x="{x}" y="149" width="10" height="10" rx="3" fill="{ACCENTS[k]}"/>'
-                 f'<text x="{x + 17}" y="159" class="k">{label}</text>')
-        x += 30 + 7.5 * len(label)
-    for r in partition(rows, 0, 0, W, H):
-        x0, y0, w, h, c = r['x'], r['y'] + TOP, r['w'], r['h'], r['counts']
-        p.append(f'<clipPath id="c{r["id"]}"><rect x="{x0 + 2:.1f}" y="{y0 + 2:.1f}" width="{max(w - 4, 0):.1f}" '
-                 f'height="{max(h - 4, 0):.1f}" rx="10"/></clipPath><g clip-path="url(#c{r["id"]})">')
-        bx = x0
+        p.append(card(PAD + (i % 2) * 169, 74 + (i // 2) * 104, label, value, delta))
+    p.append(f'<text x="{PAD}" y="304" class="section">Production Rust by area</text>')
+    for i, (k, name) in enumerate(NAMES.items()):
+        p.append(f'<text x="{PAD + 12 + i * 104}" y="327" class="k {k}">{name}</text>')
+    for i, r in enumerate(rows):
+        y, c = TOP + i * (ROW_H + GAP), r['counts']
+        detail = ', '.join(f'{NAMES[k]} {c[k]:,}' for k in COLORS)
+        p.append(f'<g><title>{escape(r["title"])}: {r["lines"]:,} production lines; {detail}</title>'
+                 f'<rect x="{PAD}" y="{y}" width="{W - 2 * PAD}" height="{ROW_H}" rx="10" '
+                 'fill="#101b28" stroke="#293a50"/>'
+                 f'<text x="{PAD + 12}" y="{y + 26}" class="t">{escape(r["title"])}</text>'
+                 f'<text x="{W - PAD - 12}" y="{y + 26}" class="s" text-anchor="end">{r["lines"]:,}</text>'
+                 f'<clipPath id="c{r["id"]}"><rect x="{PAD + 12}" y="{y + 42}" '
+                 f'width="{W - 2 * PAD - 24}" height="14" rx="5"/></clipPath>'
+                 f'<g clip-path="url(#c{r["id"]})">')
+        bx = PAD + 12
         for k in COLORS:
-            bw = w * c[k] / r['lines']
+            bw = (W - 2 * PAD - 24) * c[k] / r['lines']
             if bw:
-                p.append(f'<rect x="{bx:.1f}" y="{y0:.1f}" width="{bw:.1f}" height="{h:.1f}" fill="{COLORS[k]}"/>')
-                p.append(f'<rect x="{bx:.1f}" y="{y0 + 2:.1f}" width="{bw:.1f}" height="3" fill="{ACCENTS[k]}"/>')
+                p.append(f'<rect x="{bx:.4f}" y="{y + 42}" width="{bw:.4f}" height="14" fill="{ACCENTS[k]}"/>')
                 bx += bw
-        room = w - 16
-        title, css = tile_title(r['title'], room)
-        if h < 80:
-            title = title[:1]
-        if h >= 34:
-            baseline = y0 + h / 2 - (17 if len(title) == 2 else 8 if h >= 60 else -5)
-            for i, line in enumerate(title):
-                p.append(f'<text x="{x0 + 9:.1f}" y="{baseline + i * 20:.1f}" class="{css}">{escape(line)}</text>')
-        legacy, owned = round(c['legacy'] / r['lines'] * 100), round(c['owned'] / r['lines'] * 100)
-        detail = next((s for s in (f'{legacy}% legacy · {owned}% owned · {short(r["lines"])}',
-                                   f'{legacy}% legacy · {short(r["lines"])}', f'{legacy}% legacy', short(r['lines']))
-                       if 6.8 * len(s) <= room), None)
-        if title and detail and h >= 60:
-            p.append(f'<text x="{x0 + 9:.1f}" y="{y0 + h / 2 + (25 if len(title) == 2 else 10):.1f}" class="s">{escape(detail)}</text>')
         p.append('</g>')
-        p.append(f'<rect x="{x0 + 2:.1f}" y="{y0 + 2:.1f}" width="{max(w - 4, 0):.1f}" '
-                 f'height="{max(h - 4, 0):.1f}" rx="10" fill="none" stroke="#35465c"/>')
+        for j, k in enumerate(COLORS):
+            p.append(f'<text x="{PAD + 12 + j * 104}" y="{y + 80}" class="s {k}">{c[k]:,}</text>')
+        p.append('</g>')
+    footer = TOP + len(rows) * (ROW_H + GAP)
+    for i, line in enumerate(('Bars show the mix within each area.',
+                              'Legacy bank lines are part of blue legacy.',
+                              'Unsafe also counts verification Rust.')):
+        p.append(f'<text x="{PAD}" y="{footer + 20 + 23 * i}" class="l">{line}</text>')
     p.append('</svg>')
     open(out_path, 'w', encoding='utf-8').write('\n'.join(p) + '\n')
 
