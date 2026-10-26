@@ -1,4 +1,5 @@
 //! One aggregate authority for player, projectiles, mechanisms and their room.
+use crate::game::actors::diving_enemies::{self, Kind as DivingKind};
 use crate::game::player_projectiles::{
     access::{ShotLane, Store},
     content,
@@ -591,8 +592,8 @@ crate::game::callback_dispatch! {
         10679310 => [mechanisms::react(Kind::HorizontalShutter, Event::Shot, game)];
         10679322 => [mechanisms::react(Kind::HorizontalShutter, Event::PowerBomb, game)];
         10715212 => [()]; 10716909 => sm_a3::Waver_Init;
-        10717004 => sm_a3::Waver_Main; 10717536 => sm_a3::Metalee_Init;
-        10717561 => sm_a3::Metalee_Main; 10717967 => sm_a3::Metalee_Shot;
+        10717004 => sm_a3::Waver_Main; 10717536 => [diving_enemies::initialize(DivingKind::Metalee, game)];
+        10717561 => [diving_enemies::advance(DivingKind::Metalee, game)]; 10717967 => [diving_enemies::shot(DivingKind::Metalee, game)];
         10718827 => [{
                     sm_a3::Fireflea_Touch(crate::ram_map::word!(game.cur_enemy_index), game);
                 }];
@@ -601,7 +602,8 @@ crate::game::callback_dispatch! {
         10723661 => sm_a3::Roach_Init;
         10724048 => sm_a3::Roach_Main;
         10726351 => sm_a3::Sidehopper_Main;
-        10733230 => sm_a3::Skree_Init; 10733255 => sm_a3::Skree_Main;
+        10733230 => [diving_enemies::initialize(DivingKind::Skree, game)]; 10733255 => [diving_enemies::advance(DivingKind::Skree, game)];
+        10733557 => [diving_enemies::shot(DivingKind::Skree, game)];
         10738715 => [()];
         10743874 => [{
                     sm_a3::Metroid_Powerbomb(crate::ram_map::word!(game.cur_enemy_index), game);
@@ -941,6 +943,7 @@ crate::game::callback_dispatch! {
         10651845 => [j];
         11044751 | 11044763 | 11044790 | 11044811 => [crate::game::actors::evir::instruction(ea, j, game)];
         10716899 => sm_a3::Waver_Instr_1;
+        10717526 | 10733220 => [diving_enemies::ready(j, game)];
         10991155 => [sm_a7::Kraid_Instr_1(k, j)];
         11048485 | 11048497 | 11048522 | 11048547 | 11048572 | 11048597 | 11048628 => [crate::game::actors::fune::instruction(ea, j, game)];
         11056990 => [j];

@@ -17,7 +17,6 @@ use crate::cpu_infra::Call;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_b4::*;
 
-use crate::game::enemy_projectiles::SpawnEprojWithGfx;
 use crate::game::music::{QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::session_runtime::damage_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
@@ -45,7 +44,7 @@ crate::game::constants::typed_constants! { Consts_A3;
     addr_stru_A3CD12 = 52498, addr_stru_A3CD0A = 52490,
     addr_stru_A3CD02 = 52482, addr_stru_A3CCFA = 52474,
     addr_stru_A3CCF2 = 52466, addr_stru_A3CCEA = 52458,
-    addr_stru_A3CCE2 = 52450, addr_kSkree_Ilist_C65E = 50782,
+    addr_stru_A3CCE2 = 52450,
     addr_kBang_Ilist_B75E = 46942, addr_kMaridiaRefillCandy_Ilist_B3C1 = 46017,
     addr_kMochtroid_Ilist_A759 = 42841, addr_kMochtroid_Ilist_A745 = 42821,
     addr_kPlatformThatFallsWithSamus_Sprmap_A015 = 40981, addr_kPlatformThatFallsWithSamus_Sprmap_A009 = 40969,
@@ -56,7 +55,7 @@ crate::game::constants::typed_constants! { Consts_A3;
     addr_kElevator_Ilist_94D6 = 38102, addr_kMaridiaFish_Ilist_9072 = 36978,
     addr_kMaridiaFish_Ilist_9060 = 36960, addr_kMaridiaFish_Ilist_903C = 36924,
     addr_kMaridiaFish_Ilist_902A = 36906, addr_kFireflea_Ilist_8C2F = 35887,
-    addr_kMetalee_Ilist_8910 = 35088, addr_kWaver_Ilist_86A7 = 34471,
+    addr_kWaver_Ilist_86A7 = 34471,
     addr_kSpritemap_Nothing_A3 = 32845,
 }
 
@@ -67,12 +66,12 @@ crate::type_aliases! {
 
 crate::type_aliases! {
     pub Enemy_MaridiaFish, Enemy_MaridiaRefillCandy, Enemy_PlatformThatFallsWithSamus,
-        Enemy_Sidehopper, Enemy_Skree, Enemy_WreckedShipOrangeZoomer, Enemy_FireZoomer,
+        Enemy_Sidehopper, Enemy_WreckedShipOrangeZoomer, Enemy_FireZoomer,
         Enemy_FireFlea, Enemy_Metroid = crate::game::enemy_layouts::EnemyLayout40;
 }
 
 crate::type_aliases! {
-    pub Enemy_Metalee, Enemy_Reflec, Enemy_StoneZoomer, Enemy_Elevator =
+    pub Enemy_Reflec, Enemy_StoneZoomer, Enemy_Elevator =
         crate::game::enemy_layouts::EnemyLayout8;
 }
 
@@ -87,7 +86,6 @@ crate::game::constants::typed_constants! { i32;
 }
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
-    gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
     Get_Bang(o: i32) -> Enemy_Bang = [0xf78, o as isize];
     Get_Elevator(o: i32) -> Enemy_Elevator = [0xf78, o as isize];
     Get_FireFlea(o: i32) -> Enemy_FireFlea = [0xf78, o as isize];
@@ -95,137 +93,17 @@ crate::ram_map::ram_pointer_functions! {
     Get_MaridiaFish(o: i32) -> Enemy_MaridiaFish = [0xf78, o as isize];
     Get_MaridiaRefillCandy(o: i32) -> Enemy_MaridiaRefillCandy = [0xf78, o as isize];
     Get_MaridiaSnail(o: i32) -> Enemy_MaridiaSnail = [0xf78, o as isize];
-    Get_Metalee(o: i32) -> Enemy_Metalee = [0xf78, o as isize];
     Get_Metroid(o: i32) -> Enemy_Metroid = [0xf78, o as isize];
     Get_Mochtroid(o: i32) -> Enemy_Mochtroid = [0xf78, o as isize];
     Get_PlatformThatFallsWithSamus(o: i32) -> Enemy_PlatformThatFallsWithSamus = [0xf78, o as isize];
     Get_Reflec(o: i32) -> Enemy_Reflec = [0xf78, o as isize];
     Get_Roach(o: i32) -> Enemy_Roach = [0xf78, o as isize];
     Get_Sidehopper(o: i32) -> Enemy_Sidehopper = [0xf78, o as isize];
-    Get_Skree(o: i32) -> Enemy_Skree = [0xf78, o as isize];
     Get_StoneZoomer(o: i32) -> Enemy_StoneZoomer = [0xf78, o as isize];
     Get_WreckedShipOrangeZoomer(o: i32) -> Enemy_WreckedShipOrangeZoomer = [0xf78, o as isize];
 }
 static g_word_A3A76D: [i16; 4] = [2, 0, -2, 0];
 static g_word_A3A775: [i16; 4] = [0, -2, 0, 2];
-crate::game::callback_dispatch! {
-    pub unsafe fn CallMetaleeFunc(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    @prefix { let E = Get_Metalee(word!(game.cur_enemy_index) as i32, game); };
-    Metalee_Init [] {
-        set_fields! {[(*E)], 0; var_C, var_D, var_E}
-        (*E).base.current_instruction = addr_kMetalee_Ilist_8910 as u16;
-        (*E).var_B = (0xa38987i32) as u16;
-    };
-    Metalee_Main [] {
-        CallMetaleeFunc((((*E).var_B) as u32) | (0xa30000u32), game);
-    };
-    [10717575] Metalee_Func_1 [] {
-        if abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos))) < 0x48 {
-            Metalee_Func_2(word!(game.cur_enemy_index), game);
-            (*E).var_C = (*E).var_C.wrapping_add(1);
-            Metalee_Func_6(game);
-            (*E).var_B = (0xa389d4i32) as u16;
-        }
-    };
-    [10717683] Metalee_Func_4 [] {
-        (*E).var_A = 21;
-        let v1: u16 = ((*E).base.properties) | (3u16);
-        (*E).base.properties = v1;
-        if ({ let (actor, edge, amount) = (word!(game.cur_enemy_index), v1, ((*E).var_F as i16 as i32) << 16); (actor_api::probe_vertical_offset(&mut Runtime::new(game), Key::from_legacy(actor), if edge & 1 != 0 { actor_api::VerticalProbeEdge::Positive } else { actor_api::VerticalProbeEdge::Negative }, amount) == actor_api::MovementResult::Blocked) as u8 }) & 1
-            != 0
-        {
-            (*E).base.instruction_timer = 1;
-            (*E).base.timer = 0;
-            (*E).var_B = (0xa38a5ci32) as u16;
-            QueueSfx2_Max6(0x5c, game);
-        } else {
-            (*E).base.y_pos = ((*E).base.y_pos).wrapping_add((*E).var_F);
-            (*E).base.x_pos = ((*E).base.x_pos as i32
-                + if (((*E).base.x_pos) as i16).wrapping_sub((word!(game.samus_x_pos)) as i16) >= 0 {
-                    -2i32
-                } else {
-                    2
-                }) as u16;
-        };
-    };
-    [10717788] Metalee_Func_5 [] {
-        crate::update_place! { previous fresh8 = (*E).var_A => (*E).var_A.wrapping_sub(1); }
-        if fresh8 == 1 {
-            (*gEnemySpawnData(word!(game.cur_enemy_index) as i32, game)).vram_tiles_index =
-                ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
-            set_fields! {[(*E).base]; palette_index = 2560, vram_tiles_index = 0,
-                properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16), };
-        } else {
-            if (*E).var_A == 8 {
-                let v2: u16 = word!(game.cur_enemy_index);
-                let mut parameter = SpawnEprojWithGfx(8, v2, addr_stru_868BFA as u16, game);
-                parameter = SpawnEprojWithGfx(parameter, v2, addr_stru_868C08 as u16, game);
-                parameter = SpawnEprojWithGfx(parameter, v2, addr_stru_868C16 as u16, game);
-                SpawnEprojWithGfx(parameter, v2, addr_stru_868C24 as u16, game);
-            }
-            (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
-        };
-    };
-    Metalee_Func_6 [] {
-        let metalee_var_C: u16 = (*E).var_C;
-        if metalee_var_C != (*E).var_D {
-            (*E).var_D = metalee_var_C;
-            enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3894e, metalee_var_C as isize), timer = 1}
-            (*E).base.timer = 0;
-        }
-    };
-    Metalee_Shot [] {
-        let varE2A: u16 = (*E).base.vram_tiles_index;
-        let varE2C: u16 = (*E).base.palette_index;
-        Enemy_NormalShotAI_A3(game);
-        if (*Get_Metalee(word!(game.cur_enemy_index) as i32, game))
-            .base
-            .health
-            == 0
-        {
-            (*E).base.vram_tiles_index = varE2A;
-            (*E).base.palette_index = varE2C;
-            let v2: u16 = word!(game.cur_enemy_index);
-            SpawnEprojWithGfx(
-                (*E).var_A,
-                word!(game.cur_enemy_index),
-                addr_stru_868BFA as u16,
-                game,
-            );
-            SpawnEprojWithGfx(0, v2, addr_stru_868C08 as u16, game);
-            SpawnEprojWithGfx(0, v2, addr_stru_868C16 as u16, game);
-            SpawnEprojWithGfx(0, v2, addr_stru_868C24 as u16, game);
-            set_fields! {[(*E).base], 0; vram_tiles_index, palette_index}
-        }
-    };
-    @external {
-        10717652 => [{
-                    Metalee_Func_3(word!(game.cur_enemy_index), game);
-                }];
-    }
-}
-pub unsafe fn Metalee_Func_2(k: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_Metalee(k as i32, game);
-        let div: u16 =
-            SnesDivide((word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos), 24) as u8 as u16;
-        (*E).var_F = (div).wrapping_add(4);
-    }
-}
-pub unsafe fn Metalee_Func_3(k: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_Metalee(k as i32, game);
-        if (*E).var_E != 0 {
-            (*E).var_E = 0;
-            (*E).var_C = (*E).var_C.wrapping_add(1);
-            Metalee_Func_6(game);
-            (*E).var_B = (0xa389f3i32) as u16;
-            QueueSfx2_Max6(0x5b, game);
-        }
-    }
-}
 crate::prefixed_callbacks! {
     pub unsafe fn (k: u16, game: &mut Game);
     @prefix { let E = Get_FireFlea(k as i32, game); };
@@ -1191,94 +1069,6 @@ crate::game::countdown_callbacks! {
         (*E).var_0A = ((*E).var_0A).wrapping_sub((*E).var_09);
     };
 }
-crate::game::callback_dispatch! {
-    pub unsafe fn CallSkreeFunc(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    @prefix { let E = Get_Skree(word!(game.cur_enemy_index) as i32, game); };
-    Skree_Init [] {
-        set_fields! {[(*E)], 0; var_C, var_D, var_E}
-        (*E).base.current_instruction = addr_kSkree_Ilist_C65E as u16;
-        (*E).var_B = (0xa3c6d5i32) as u16;
-    };
-    Skree_Main [] {
-        CallSkreeFunc((((*E).var_B) as u32) | (0xa30000u32), game);
-    };
-    [10733269] Skree_Func_1 [] {
-        if abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos))) < 0x30 {
-            (*E).var_C = (*E).var_C.wrapping_add(1);
-            Skree_Func_5(game);
-            (*E).var_B = (0xa3c6f7i32) as u16;
-        }
-    };
-    [10733334] Skree_Func_3 [] {
-        (*E).var_A = 21;
-        let v1: u16 = ((*E).base.properties) | (3u16);
-        (*E).base.properties = v1;
-        if ({ let (actor, edge, amount) = (word!(game.cur_enemy_index), v1, (6i16 as i32) << 16); (actor_api::probe_vertical_offset(&mut Runtime::new(game), Key::from_legacy(actor), if edge & 1 != 0 { actor_api::VerticalProbeEdge::Positive } else { actor_api::VerticalProbeEdge::Negative }, amount) == actor_api::MovementResult::Blocked) as u8 }) & 1 != 0 {
-            (*E).base.instruction_timer = 1;
-            (*E).base.timer = 0;
-            (*E).var_B = (0xa3c77fi32) as u16;
-            QueueSfx2_Max6(0x5c, game);
-        } else {
-            (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(6);
-            (*E).base.x_pos = ((*E).base.x_pos as i32
-                + if (((*E).base.x_pos) as i16).wrapping_sub((word!(game.samus_x_pos)) as i16) >= 0 {
-                    -1i32
-                } else {
-                    1
-                }) as u16;
-        };
-    };
-    [10733439] Skree_Func_4 [] {
-        crate::update_place! { previous fresh18 = (*E).var_A => (*E).var_A.wrapping_sub(1); }
-        if fresh18 == 1 {
-            (*gEnemySpawnData(word!(game.cur_enemy_index) as i32, game)).vram_tiles_index =
-                ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
-            set_fields! {[(*E).base]; palette_index = 2560, vram_tiles_index = 0,
-                properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16), };
-        } else {
-            if (*E).var_A == 8 {
-                let v2: u16 = word!(game.cur_enemy_index);
-                let mut parameter = SpawnEprojWithGfx(
-                    8,
-                    word!(game.cur_enemy_index),
-                    addr_stru_868BC2 as u16,
-                    game,
-                );
-                parameter = SpawnEprojWithGfx(parameter, v2, addr_stru_868BD0 as u16, game);
-                parameter = SpawnEprojWithGfx(parameter, v2, addr_stru_868BDE as u16, game);
-                SpawnEprojWithGfx(parameter, v2, addr_stru_868BEC as u16, game);
-            }
-            (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
-        };
-    };
-    Skree_Func_5 [] {
-        let skree_var_C: u16 = (*E).var_C;
-        if skree_var_C != (*E).var_D {
-            (*E).var_D = skree_var_C;
-            enemy_instruction! {[(*E).base]; instruction = crate::rtl::rom_table_word!(game, 0xa3c69c, skree_var_C as isize), timer = 1}
-            (*E).base.timer = 0;
-        }
-    };
-    @external {
-        10733303 => [{
-                    Skree_Func_2(word!(game.cur_enemy_index), game);
-                }];
-    }
-}
-pub unsafe fn Skree_Func_2(k: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_Skree(k as i32, game);
-        if (*E).var_E != 0 {
-            (*E).var_E = 0;
-            (*E).var_C = (*E).var_C.wrapping_add(1);
-            Skree_Func_5(game);
-            (*E).var_B = (0xa3c716i32) as u16;
-            QueueSfx2_Max6(0x5b, game);
-        }
-    }
-}
 pub unsafe fn MaridiaSnail_Func_2(k: u16, j: u16, game: &mut Game) {
     unsafe {
         let v2: i32 = j as i32 >> 1;
@@ -1971,27 +1761,6 @@ crate::game::callback_dispatch! {
             crate::rtl::rom_table_word!(game, 0xa3b667, ((*v1).properties as i32 & 3) as isize);
         StoneZoomer_E67A(word!(game.cur_enemy_index), game);
     };
-    [10733557] Skree_Shot [] {
-        Enemy_NormalShotAI_SkipSomeParts_A3(game);
-        let E = Get_Skree(word!(game.cur_enemy_index) as i32, game);
-        if (*E).base.health == 0 {
-            let v1: u16 = word!(game.cur_enemy_index);
-            let mut parameter = SpawnEprojWithGfx(
-                (*E).var_A,
-                word!(game.cur_enemy_index),
-                addr_stru_868BC2 as u16,
-                game,
-            );
-            parameter = SpawnEprojWithGfx(parameter, v1, addr_stru_868BD0 as u16, game);
-            parameter = SpawnEprojWithGfx(parameter, v1, addr_stru_868BDE as u16, game);
-            SpawnEprojWithGfx(parameter, v1, addr_stru_868BEC as u16, game);
-            let mut v5: u16 = 2;
-            if (word!(game.projectile_type[word!(game.collision_detection_index)]) & 0xf00) != 512 {
-                v5 = 0;
-            }
-            ({ let (_ignored_key, animation) = ((2u16).wrapping_mul(word!(game.collision_detection_index)), v5); actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Normal { animation }) });
-        }
-    };
     [10735074] MaridiaSnail_Init [] {
         let E = Get_MaridiaSnail(word!(game.cur_enemy_index) as i32, game);
         (*E).var_F = (0xa3cf5fi32) as u16;
@@ -2586,14 +2355,6 @@ crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10717526] Metalee_Instr_1 [] {
-        (*Get_Metalee(word!(game.cur_enemy_index) as i32, game)).var_E = 1;
-        jp
-    };
-    [10733220] Skree_Instr_1 [] {
-        (*Get_Skree(word!(game.cur_enemy_index) as i32, game)).var_E = 1;
-        jp
-    };
     [10741344] Zoomer_Instr_SetPreinstr [] {
         (*gEnemyData(k as i32, game)).ai_preinstr = jp.word(0);
         jp.offset(1)
