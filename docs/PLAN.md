@@ -81,8 +81,10 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Qualified Core46: production 111744, legacy 19361, unsafe 2886, verification 39971.
-Its four smoke controls pass (2,187 selected); GameOwner safe-thread boundary follows source/type proof, not a runtime UB test.
+Qualified Core48: sm_b3 is retired; production111727, legacy19313, unsafe2882, verification39970.
+Botwoon plus four smoke rows pass (3,132 selected); full86 runs locally after this bank deletion.
+Scoped mutation11.40min: 3AST kills, 2unobserved pipe-flight survivors, 1separate dispatch kill; all945-frame windows preserved.
+Final retirement removes17 engine/48 legacy/4 unsafe/1 verification lines; full31/48=64.58%, LF conversion is not savings.
 Complete Botwoon/all15 B3 preinstruction routing adds2 engine lines, retires104 legacy/15 unsafe; full106/104=101.92%.
 GameOwner no longer promises Rust thread sharing; raw SDL userdata/gate/lifetime obligations remain explicit.
 Powerbomb retires -34 legacy/-2 engine/-1 unsafe with no verification growth; full caller-inclusive replacement35/37=94.59%.

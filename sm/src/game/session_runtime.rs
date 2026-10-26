@@ -554,7 +554,8 @@ use crate::game::enemy_script::EnemyScript;
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
 use crate::game::rippers::{self, Kind as RipperKind};
 use crate::game::{ground_patrol, large_snail};
-use crate::game::{sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b3, space_pirates};
+use crate::game::{sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, space_pirates};
+use crate::types::EnemyData;
 crate::game::address_dispatch! {
     unsafe fn actor_species_draw_hook(ea: u32, game: &mut Game) => ea;
         call (game); default { crate::rtl::Unreachable(game); };
@@ -745,19 +746,24 @@ crate::game::callback_dispatch! {
         11200476 => [()];
         11698252 => [()];
         11763788 => [()];
-        11765518 => [sm_b3::UnusedSpinningTurtleEye_Main()];
+        11765499 => [{
+            let e = i32::from(crate::ram_map::word!(game.cur_enemy_index));
+            crate::ram_map::slot!(game, EnemyData[e].properties, |old| old | crate::game::constants::enemy_properties::kEnemyProps_DisableSamusColl as u16);
+            crate::ram_map::slot!(game, EnemyData[e].current_instruction = 0x86a7);
+        }];
+        11765518 => [()];
         11765819 => crate::game::actors::brinstar_pipe_bug::initialize;
         11765882 => [{ let address = crate::game::actors::brinstar_pipe_bug::state_address(game); actor_species_pre_instruction(address, game); }];
         11766625 => crate::game::actors::norfair_pipe_bug::initialize;
         11766686 => [{
             let address = crate::game::actors::norfair_pipe_bug::state_address(game);
-            sm_b3::CallBugInstr(address, crate::ram_map::word!(game.cur_enemy_index), game);
+            actor_pipe_bug_state(address, crate::ram_map::word!(game.cur_enemy_index), game);
             crate::game::actors::norfair_pipe_bug::reset_offscreen(game);
         }];
         11767628 => crate::game::actors::yellow_pipe_bug::initialize;
         11767726 => [{
             let address = crate::game::actors::yellow_pipe_bug::state_address(game);
-            sm_b3::CallBugInstr(address, crate::ram_map::word!(game.cur_enemy_index), game);
+            actor_pipe_bug_state(address, crate::ram_map::word!(game.cur_enemy_index), game);
         }];
         11769219 => actors::botwoon::initialize;
         11769448 => actors::botwoon::update;
@@ -888,7 +894,33 @@ crate::game::callback_dispatch! {
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyAi(ea, game)];
         0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyAi(ea, game)];
         0xb20000..=0xb2ffff => [space_pirates::dispatch_ai(ea, game)];
-        0xb30000..=0xb3ffff => [sm_b3::DispatchEnemyAi(ea, game)];
+        0xb30000..=0xb3ffff => [{ crate::rtl::Unreachable(game); }];
+    }
+}
+fn actor_pipe_bug_state(ea: u32, _k: u16, game: &mut Game) {
+    match ea {
+        11766733 => actors::norfair_pipe_bug::await_group(game),
+        11766783 => actors::norfair_pipe_bug::await_player(game),
+        11766950 => actors::norfair_pipe_bug::rise(game),
+        11767039 => actors::norfair_pipe_bug::settle(game),
+        11767052 => actors::norfair_pipe_bug::move_to_limit(-16, game),
+        11767118 => actors::norfair_pipe_bug::move_to_limit(-32, game),
+        11767184 => actors::norfair_pipe_bug::move_to_limit(16, game),
+        11767250 => actors::norfair_pipe_bug::move_to_limit(32, game),
+        11767316 => actors::norfair_pipe_bug::fly(2, game),
+        11767349 => actors::norfair_pipe_bug::fly(0, game),
+        11767386 => actors::norfair_pipe_bug::start_flight(game),
+        11767733 => actors::yellow_pipe_bug::detect_player(game),
+        11767797 => {
+            actors::yellow_pipe_bug::launch_delay(crate::ram_map::word!(game.cur_enemy_index), game)
+        }
+        11767848 => actors::yellow_pipe_bug::fly(true, game),
+        11767997 => actors::yellow_pipe_bug::fly(false, game),
+        11768154 => actors::yellow_pipe_bug::turn(true, game),
+        11768280 => actors::yellow_pipe_bug::turn(false, game),
+        _ => {
+            crate::rtl::Unreachable(game);
+        }
     }
 }
 pub(crate) fn actor_b3_pre_instruction(ea: u32, k: u16, game: &mut Game) {
