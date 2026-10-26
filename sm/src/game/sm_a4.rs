@@ -23,7 +23,6 @@ pub use crate::game::constants::bank_a4::*;
 
 use crate::game::enemy_projectiles::SpawnEprojWithRoomGfx;
 use crate::game::music::QueueSfx2_Max6;
-use crate::game::player_update::minimap;
 use crate::game::visual_runtime::{CROCOMIRE_FLESH_SCROLL, CROCOMIRE_SKELETON_SCROLL};
 
 pub type Enemy_Crocomire = crate::game::enemy_layouts::EnemyLayout72;
@@ -99,24 +98,6 @@ crate::game::callback_dispatch! {
         actors::crocomire_reactions::update_background(word!(game.cur_enemy_index), game);
         actors::crocomire_reactions::update_palette(game);
     };
-    [10783322] Crocomire_Init [] {
-        if !actors::crocomire_reactions::prepare_initialization(game) {
-            minimap::disable_for_boss(&mut crate::game::session_runtime::Runtime::new(game));
-            word!(game.croco_word_7E069A = 0);
-            let E_0: i32 = word!(game.cur_enemy_index) as i32;
-            slot!(game, Crocomire[E_0]; var_A = 0, var_E = 0);
-            *(ram_ptr!(game, u16; 0xcd20)) = 0;
-            word_transfers!(game, descending, 17;
-                le(target_palettes, 176) <- rom(0xa4b8bd, 16),
-                le(target_palettes, 224) <- rom(0xa4b8dd, 16),
-            );
-            slot!(game, Crocomire[E_0].var_C = 4);
-            word! {game; UNUSED_word_7E179E = 16; camera_distance_index = 2;
-            enemy_bg2_tilemap_size = 1024; }
-            slot!(game, Crocomire[E_0].base; current_instruction = addr_kCrocomire_Ilist_BADE as u16, extra_properties = (slot!(game, Crocomire[E_0].base.extra_properties)) | (4u16), instruction_timer = 1)
-;
-        };
-    };
     [10783748] Crocomire_Main [] {
         let v0: i32 = slot!(game, Crocomire[0i32].var_A) as i32 >> 1;
         off_A48C14[v0 as usize](game);
@@ -151,6 +132,7 @@ crate::game::callback_dispatch! {
     [10780717] Enemy_NormalShotAI_A4 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
     [10780737] Enemy_NormalFrozenAI_A4 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
     @external {
+        10783322 => actors::crocomire_reactions::initialize;
         10795410 => actors::crocomire_reactions::power_bomb;
     }
 }

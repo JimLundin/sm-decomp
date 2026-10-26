@@ -19,6 +19,7 @@ use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::{QueueMusic_Delayed8, QueueSfx2_Max6, QueueSfx3_Max6};
+use crate::game::player_update::minimap;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::session_runtime::Runtime;
 use crate::game::sprite_effect_runtime::create_sprite;
@@ -1133,8 +1134,8 @@ fn erase_melt_columns(game: &mut Game) -> u16 {
     1
 }
 
-/// Returns true when the defeated-boss room setup completed.
-pub(crate) fn prepare_initialization(game: &mut Game) -> bool {
+/// Initializes the defeated or active boss room with the original ordered effects.
+pub(crate) fn initialize(game: &mut Game) {
     word!(game.boss_id = 6);
     word_transfers!(game, ascending, 2048; le(tilemap_stuff, 0) <- value(824));
     if (gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game)
@@ -1155,9 +1156,20 @@ pub(crate) fn prepare_initialization(game: &mut Game) -> bool {
         slot!(game, Crocomire[E].base.x_pos = 576);
         slot!(game, Crocomire[E].base; y_pos = 144, y_height = 28, x_width = 40);
         queue_tilemap_upload(2048, 0xfc, game);
-        true
     } else {
-        false
+        minimap::disable_for_boss(&mut crate::game::session_runtime::Runtime::new(game));
+        word!(game.croco_word_7E069A = 0);
+        let E_0: i32 = word!(game.cur_enemy_index) as i32;
+        slot!(game, Crocomire[E_0]; var_A = 0, var_E = 0);
+        word_transfers!(game, ascending, 1; native(0xcd20) <- value(0));
+        word_transfers!(game, descending, 17;
+            le(target_palettes, 176) <- rom(0xa4b8bd, 16),
+            le(target_palettes, 224) <- rom(0xa4b8dd, 16),
+        );
+        slot!(game, Crocomire[E_0].var_C = 4);
+        word! {game; UNUSED_word_7E179E = 16; camera_distance_index = 2;
+        enemy_bg2_tilemap_size = 1024; }
+        slot!(game, Crocomire[E_0].base; current_instruction = addr_kCrocomire_Ilist_BADE as u16, extra_properties = (slot!(game, Crocomire[E_0].base.extra_properties)) | (4u16), instruction_timer = 1);
     }
 }
 
