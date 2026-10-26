@@ -169,6 +169,16 @@ pub(super) enum Palette {
 }
 
 impl Palette {
+    fn crossfade(self, to_page: bool, game: &mut Game) {
+        fade_cinematic_colors(0, if to_page { 0x10 } else { 0x14 }, to_page, game);
+        fade_cinematic_colors(0x60, 0x10, to_page, game);
+        fade_cinematic_colors(0x1d2, 6, to_page, game);
+        for &(index, count) in self.colors() {
+            fade_cinematic_colors(index, count, !to_page, game);
+        }
+        compose_cinematic_palette(game);
+    }
+
     fn colors(self) -> &'static [(u16, u16)] {
         match self {
             Self::Gameplay => &[(0x28, 3), (0xe0, 0x10), (0x180, 0x20), (0x1e0, 0x10)],
@@ -272,27 +282,19 @@ pub(super) unsafe fn wait_for_scene(scene: Scene, game: &mut Game) {
     }
 }
 
-pub(super) unsafe fn fade_to_scene(palette: Palette, game: &mut Game) {
-    unsafe {
-        if (word!(game.cinematic_var4) & 3) == 0 {
-            fade_cinematic_colors(0, 0x14, false, game);
-            fade_cinematic_colors(0x60, 0x10, false, game);
-            fade_cinematic_colors(0x1d2, 6, false, game);
-            for &(index, count) in palette.colors() {
-                fade_cinematic_colors(index, count, true, game);
-            }
-            compose_cinematic_palette(game);
-        }
-        if (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0 {
-            *ram_ptr!(game; 0x69) = 21;
-            *ram_ptr!(game; 0x6b) = 0;
-            *ram_ptr!(game; 0x6f) = 0;
-            word_transfers!(game, ascending, 640; pause_map(128) <- value(47));
-            clear_japanese_tiles(game);
-            word!(game.cinematic_function = (0x8ba391i32) as u16);
-            if matches!(palette, Palette::Gameplay) && (word!(game.cinematic_var15) & 0x8000) != 0 {
-                palette_effects::spawn(addr_kPalfx_E1BC as u16, game);
-            }
+pub(super) fn fade_to_scene(palette: Palette, game: &mut Game) {
+    if (word!(game.cinematic_var4) & 3) == 0 {
+        palette.crossfade(false, game);
+    }
+    if (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0 {
+        game.g_ram[0x69] = 21;
+        game.g_ram[0x6b] = 0;
+        game.g_ram[0x6f] = 0;
+        word_transfers!(game, ascending, 640; pause_map(128) <- value(47));
+        clear_japanese_tiles(game);
+        word!(game.cinematic_function = (0x8ba391i32) as u16);
+        if matches!(palette, Palette::Gameplay) && (word!(game.cinematic_var15) & 0x8000) != 0 {
+            palette_effects::spawn(addr_kPalfx_E1BC as u16, game);
         }
     }
 }
@@ -313,27 +315,19 @@ pub(super) unsafe fn show_page(object: u16, next: u16, game: &mut Game) {
     }
 }
 
-pub(super) unsafe fn fade_to_page(palette: Palette, game: &mut Game) {
-    unsafe {
-        if (word!(game.cinematic_var13) & 3) == 0 {
-            fade_cinematic_colors(0, 0x10, true, game);
-            fade_cinematic_colors(0x60, 0x10, true, game);
-            fade_cinematic_colors(0x1d2, 6, true, game);
-            for &(index, count) in palette.colors() {
-                fade_cinematic_colors(index, count, false, game);
-            }
-            compose_cinematic_palette(game);
+pub(super) fn fade_to_page(palette: Palette, game: &mut Game) {
+    if (word!(game.cinematic_var13) & 3) == 0 {
+        palette.crossfade(true, game);
+    }
+    if (word!(game.cinematic_var13 -= 1, reread) & 0x8000) != 0 {
+        game.g_ram[0x69] = 22;
+        game.g_ram[0x6b] = 0;
+        game.g_ram[0x6f] = 0;
+        game.g_ram[0x72] = 0;
+        if matches!(palette, Palette::Scientist) {
+            word_transfers!(game, ascending, 7; native(0xc1c0) <- rom(0x8ce3e9, 224));
         }
-        if (word!(game.cinematic_var13 -= 1, reread) & 0x8000) != 0 {
-            *ram_ptr!(game; 0x69) = 22;
-            *ram_ptr!(game; 0x6b) = 0;
-            *ram_ptr!(game; 0x6f) = 0;
-            *ram_ptr!(game; 0x72) = 0;
-            if matches!(palette, Palette::Scientist) {
-                word_transfers!(game, ascending, 7; native(0xc1c0) <- rom(0x8ce3e9, 224));
-            }
-            word!(game.cinematic_function = (0x8ba391i32) as u16);
-        }
+        word!(game.cinematic_function = (0x8ba391i32) as u16);
     }
 }
 
