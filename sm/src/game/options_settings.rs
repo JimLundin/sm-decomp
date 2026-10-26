@@ -1,4 +1,4 @@
-//! Options selection, native setting words and their tilemap projection.
+//! Options selection, screen transitions and their tilemap projection.
 #![forbid(unsafe_code)]
 use crate::game::{constants::buttons::*, controller_input, menu_tilemap, music::QueueSfx1_Max6};
 use crate::game_state::Game;
@@ -200,4 +200,64 @@ pub(crate) fn scroll<const DOWN: bool>(game: &mut Game) {
     if word!(game.reg_BG1VOFS) == if DOWN { 32 } else { 0 } {
         word!(game.game_options_screen_index = 7);
     }
+}
+
+pub(crate) fn fade_in<const DISSOLVE: bool>(game: &mut Game) {
+    crate::game::display_refresh::fade(true, game);
+    if DISSOLVE && game.g_ram[0x57] != 3 {
+        game.g_ram[0x57] = game.g_ram[0x57].wrapping_sub(16);
+    }
+    if game.g_ram[0x51] != 15 {
+        return;
+    }
+    if DISSOLVE {
+        game.g_ram[0x57] = 0;
+    }
+    word! { game, 0; screen_fade_delay, screen_fade_counter }
+    if !DISSOLVE {
+        word!(game.game_options_screen_index += 1);
+    } else if word!(game.menu_option_index) == 0 {
+        word!(game.game_options_screen_index = 3);
+    } else {
+        word!(
+            game.game_options_screen_index = 7 + u16::from(word!(game.menu_option_index) & 4 != 0)
+        );
+        word!(game.menu_option_index = 0);
+    }
+}
+
+pub(crate) fn replace_screen(game: &mut Game) {
+    use crate::game::options_objects::spawn;
+    if word!(game.menu_option_index) != 0 {
+        if word!(game.menu_option_index) & 4 != 0 {
+            let japanese = word!(game.japanese_text_flag) != 0;
+            copy_screen(0x1dffe + usize::from(japanese) * 0x800, !japanese, game);
+            word!(game.menu_option_index = 0);
+            highlight_special(game);
+            word!(game.menu_option_index = 1);
+            highlight_special(game);
+            word!(game.menu_option_index = 4);
+            spawn(4, 0xf4d0, game);
+        } else {
+            let source = 0x1cffe + usize::from(word!(game.japanese_text_flag) != 0) * 0x800;
+            copy_screen(source, true, game);
+            // The controller initializer receives the final native word copied to tile zero.
+            let tile = u16::from_ne_bytes([game.g_ram[0x3000], game.g_ram[0x3001]]);
+            spawn(tile, 0xf4ca, game);
+            controller_input::load_binding_choices(game);
+            menu_tilemap::controller_bindings(game);
+        }
+    } else {
+        copy_screen(0x1c7fe, false, game);
+        highlight_language(game);
+        // The ROM passes the final language-highlight tile left in A (82:EFD7).
+        let tile = u16::from_le_bytes([game.g_ram[0x33b8], game.g_ram[0x33b9]]);
+        spawn(tile, 0xf4c4, game);
+    }
+}
+
+// Descending native destination words; Japanese/special and main sources retain LE reads.
+pub(crate) fn copy_screen(last_word: usize, native: bool, game: &mut Game) {
+    let source = crate::word_transfers::WordEndpoint::Ram(last_word as isize, native);
+    word_transfers!(game, descending, 1024; pause_map(1023) <- captured(source, 0));
 }

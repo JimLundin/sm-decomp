@@ -1125,11 +1125,11 @@ pub unsafe fn GameState_11_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRe
 static kGameOptionsMenuFuncs: [Func_V; 13] = [
     GameOptionsMenuFunc_0,
     GameOptionsMenu_1_LoadingOptionsScreen,
-    GameOptionsMenu_2_FadeInOptionsScreen,
+    options_settings::fade_in::<false>,
     options_settings::main_menu,
     GameOptionsMenu_4_StartGame,
     GameOptionsMenu_5_DissolveOutScreen,
-    GameOptionsMenu_6_DissolveInScreen,
+    options_settings::fade_in::<true>,
     options_settings::controller,
     options_settings::special,
     options_settings::scroll::<true>,
@@ -1187,7 +1187,7 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
         decompress_to_ram(0x9791c4, 0x1d000, game);
         decompress_to_ram(0x97938d, 0x1d800, game);
         decompress_to_ram(0x97953a, 0x1e000, game);
-        word_transfers!(game, descending, 1024; pause_map(1023) <- le(custom_background, 6398));
+        options_settings::copy_screen(0x1c7fe, false, game);
         // The ROM keeps the final copied tile in A through the object clear.
         let initial_tile = u16::from_le_bytes([game.g_ram[0x3000], game.g_ram[0x3001]]);
         word!(game.menu_option_index = 0);
@@ -1197,15 +1197,6 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
         crate::game::options_objects::spawn(0x0e00, addr_stru_82F4C4 as u16, game);
         word!(game.game_options_screen_index += 1);
         options_settings::highlight_language(game);
-    }
-}
-pub unsafe fn GameOptionsMenu_2_FadeInOptionsScreen(game: &mut Game) {
-    unsafe {
-        crate::game::display_refresh::fade(true, game);
-        if *ram_ptr!(game; 0x51) == 15 {
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-            word!(game.game_options_screen_index += 1);
-        }
     }
 }
 pub unsafe fn GameOptionsMenu_B_TransitionBackToFileSelect(game: &mut Game) {
@@ -1253,7 +1244,6 @@ pub unsafe fn GameOptionsMenu_4_StartGame(game: &mut Game) {
 }
 pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
     unsafe {
-        let mut v1: u16 = 0;
         crate::game::display_refresh::fade(false, game);
         if *ram_ptr!(game; 0x57) != 0xf3 {
             crate::update_place! { reference fresh70 = *ram_ptr!(game; 0x57) => (*fresh70).wrapping_add(16); }
@@ -1262,68 +1252,7 @@ pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
             crate::game::display_refresh::enable(true, game);
             word! { game, 0; screen_fade_delay, screen_fade_counter, reg_BG1VOFS }
             word!(game.game_options_screen_index += 1);
-            if word!(game.menu_option_index) != 0 {
-                if (word!(game.menu_option_index) & 4) != 0 {
-                    if word!(game.japanese_text_flag) != 0 {
-                        word_transfers!(game, descending, 1024;
-                            pause_map(1023) <- le(custom_background, 10494),
-                        );
-                    } else {
-                        word_transfers!(game, descending, 1024; pause_map(1023) <- native(0x1dffe));
-                    }
-                    word!(game.menu_option_index = 0);
-                    options_settings::highlight_special(game);
-                    word!(game.menu_option_index = 1);
-                    options_settings::highlight_special(game);
-                    word!(game.menu_option_index = 4);
-                    crate::game::options_objects::spawn(4, addr_stru_82F4D0 as u16, game);
-                } else {
-                    if word!(game.japanese_text_flag) != 0 {
-                        for k in (0u16..=1023).rev() {
-                            v1 = *(ram_ptr!(game, u16; 0x19602)).offset((k as i32 + 7423) as isize);
-                            (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap
-                                [k as usize] = v1;
-                        }
-                    } else {
-                        for m in (0u16..=1023).rev() {
-                            v1 = *(ram_ptr!(game, u16; 0x19602)).offset((m as i32 + 6399) as isize);
-                            (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap
-                                [m as usize] = v1;
-                        }
-                    }
-                    crate::game::options_objects::spawn(v1, addr_stru_82F4CA as u16, game);
-                    crate::game::controller_input::load_binding_choices(game);
-                    crate::game::menu_tilemap::controller_bindings(game);
-                }
-            } else {
-                word_transfers!(game, descending, 1024; pause_map(1023) <- le(custom_background, 6398));
-                options_settings::highlight_language(game);
-                // The ROM passes the final language-highlight tile left in A (82:EFD7).
-                let tile = u16::from_le_bytes([game.g_ram[0x33b8], game.g_ram[0x33b9]]);
-                crate::game::options_objects::spawn(tile, addr_stru_82F4C4 as u16, game);
-            }
-        }
-    }
-}
-pub unsafe fn GameOptionsMenu_6_DissolveInScreen(game: &mut Game) {
-    unsafe {
-        crate::game::display_refresh::fade(true, game);
-        if *ram_ptr!(game; 0x57) != 3 {
-            crate::update_place! { reference fresh72 = *ram_ptr!(game; 0x57) => (*fresh72).wrapping_sub(16); }
-        }
-        if *ram_ptr!(game; 0x51) == 15 {
-            *ram_ptr!(game; 0x57) = 0;
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-            if word!(game.menu_option_index) != 0 {
-                if (word!(game.menu_option_index) & 4) != 0 {
-                    word!(game.game_options_screen_index = 8);
-                } else {
-                    word!(game.game_options_screen_index = 7);
-                }
-                word!(game.menu_option_index = 0);
-            } else {
-                word!(game.game_options_screen_index = 3);
-            }
+            options_settings::replace_screen(game);
         }
     }
 }
