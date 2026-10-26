@@ -6,8 +6,8 @@ use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
 use crate::game::visual_runtime::{
     METROID_PAL_1, METROID_PAL_2, METROID_PAL_3, METROID_PAL_4, advance_ceres_station,
-    advance_credit_roll, advance_intro_rinka, advance_shooting_stars, draw_cinematic_sprites,
-    draw_intro_sprites, drift_cinematic_sprite, flash_intro_mother_brain,
+    advance_credit_roll, advance_intro_rinka, advance_shooting_stars, advance_zebes_stars,
+    draw_cinematic_sprites, draw_intro_sprites, drift_cinematic_sprite, flash_intro_mother_brain,
     initialize_ending_cloud_band, initialize_ending_cloud_side, initialize_ending_time_glyph,
     initialize_intro_rinka, initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud,
     move_jumping_ending_samus, place_cinematic_sprite, prepare_credit_roll, prepare_ending_time,
@@ -2250,13 +2250,6 @@ crate::game::callback_dispatch! {
             }
         };
     };
-    [9171802] CinematicSprPreInstr_F35A [] {
-        if word!(game.cinematic_function) as i32 == 0x8bdca5 & 0xffff {
-            let v1: i32 = k as i32 >> 1;
-            word! {game; cinematicspr_preinstr_func[v1] = ((0x8bf375i32) as u16);
-                cinematicspr_arr7[v1] = 0x4000; cinematicspr_goto_timer[v1] = 0; }
-        }
-    };
     [9172264] CinematicSprPreInstr_F528 [] {
         move_jumping_ending_samus(k, game);
         let v1: i32 = k as i32 >> 1;
@@ -2442,23 +2435,9 @@ crate::game::callback_dispatch! {
                 cinematicspr_preinstr_func[v1] = ((0x8b93d9i32) as u16); }
         };
     };
-    [9171829] CinematicFunction_Intro_Func189 [] {
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1b7d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
-            -32i32 as u32,
-        );
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
-            words!((
-                word!(game.cinematicspr_goto_timer[v1]),
-                word!(game.cinematicspr_arr7[v1])
-            )),
-        );
-        wait_cinematic_scene(k, 0xde63, None, game);
-    };
     @external {
+        9171802 => [advance_zebes_stars(j, false, game)];
+        9171829 => [advance_zebes_stars(j, true, game)];
         9158325 => [advance_ceres_station(j, game)];
         9160782 => [wait_cinematic_scene(j, 0xcade, Some(0xc85d), game)];
         9160874 => [wait_cinematic_scene(j, 0xcade, Some(0xc8b9), game)];

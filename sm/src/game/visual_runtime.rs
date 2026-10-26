@@ -1717,6 +1717,22 @@ pub(crate) fn advance_ceres_station(object: u16, game: &mut Game) {
     }
 }
 
+pub(crate) fn advance_zebes_stars(object: u16, moving: bool, game: &mut Game) {
+    let slot = usize::from(object >> 1);
+    if moving {
+        let offset = 2 * slot;
+        add_native_pair(0x1b7d + offset, 0x1afd + offset, -32i32 as u32, game);
+        let velocity = (u32::from(word!(game.cinematicspr_goto_timer[slot])) << 16)
+            | u32::from(word!(game.cinematicspr_arr7[slot]));
+        advance_cinematic_coordinate(object, false, velocity, game);
+        wait_cinematic_scene(object, 0xde63, None, game);
+    } else if word!(game.cinematic_function) == 0xdca5 {
+        word!(game.cinematicspr_preinstr_func[slot] = 0xf375);
+        word!(game.cinematicspr_arr7[slot] = 0x4000);
+        word!(game.cinematicspr_goto_timer[slot] = 0);
+    }
+}
+
 pub(crate) fn drift_cinematic_sprite(
     object: u16,
     horizontal: u32,
