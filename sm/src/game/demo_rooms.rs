@@ -1,9 +1,64 @@
-//! Attract-mode room selection, placement and delayed room setup.
+//! Attract-mode playback, room selection, placement and delayed setup.
 #![forbid(unsafe_code)]
 use crate::game::{gameplay_flag_runtime, menu_tilemap::native_record};
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::types::EnemyData;
+
+pub(crate) fn reset(game: &mut Game) -> u8 {
+    word! { game, 0; UNUSED_word_7E0DF8, UNUSED_word_7E0DFA, UNUSED_word_7E0DFC }
+    word! {game; cinematic_function = ((0x8b9b68i32) as u16); demo_set = 0; }
+    if word!(game.num_demo_sets) == 4 {
+        word!(game.demo_set = 3);
+    }
+    word!(game.game_state += 1);
+    0
+}
+
+pub(crate) fn play(game: &mut Game, gameplay: impl FnOnce(&mut Game) -> u8) -> u8 {
+    crate::verify_probe::hit("coroutine.demo");
+    let resume = game.g_ram[0x614];
+    'done: {
+        if resume > 2 {
+            break 'done;
+        }
+        'finish_demo: {
+            if resume != 1 {
+                let yielded: u8 = gameplay(game);
+                if yielded != 0 {
+                    game.g_ram[0x614] = 2;
+                    return yielded;
+                }
+                if word!(game.joypad1_newkeys) != 0 {
+                    word!(game.substate = 1);
+                    break 'finish_demo;
+                }
+                word!(game.demo_timer -= 1);
+                if !(word!(game.demo_timer) == 0 || (word!(game.demo_timer) & 0x8000) != 0) {
+                    break 'done;
+                }
+                word! {game; substate = 0; my_counter = 90; }
+            }
+            do_until! { word!(game.my_counter -= 1, reread) == 0;
+                let yielded: u8 = crate::game::display_refresh::wait(true, game);
+                if yielded != 0 {
+                    game.g_ram[0x614] = 1;
+                    return yielded;
+                }
+                if word!(game.joypad1_newkeys) != 0 {
+                    word!(game.substate = 1);
+                    break;
+                }
+            }
+        }
+        word!(game.game_state += 1);
+        word!(game.debug_disable_sounds = 0);
+        game.g_ram[0x51] = 0x80;
+        word! { game, 1; screen_fade_delay, screen_fade_counter }
+    }
+    game.g_ram[0x614] = 0;
+    0
+}
 
 pub(crate) fn advance_set(game: &mut Game) {
     let base = crate::rtl::rom_table_word!(game, 0x82876c, word!(game.demo_set) as isize);

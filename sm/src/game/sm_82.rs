@@ -1,5 +1,5 @@
 use crate::game::decompression::decompress_to_ram;
-use crate::game::demo_rooms;
+use crate::game::demo_rooms::{self, reset as reset_attract};
 use crate::game::file_menu::advance as advance_file_menu;
 use crate::game::game_over::advance as advance_game_over;
 use crate::game::gameplay::{Entry, advance as AdvanceGameplay};
@@ -275,53 +275,6 @@ pub unsafe fn GameState_41_TransitionToDemo(game: &mut Game) -> CoroutineRet {
         kCoroutineNone as CoroutineRet
     }
 }
-pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        crate::verify_probe::hit("coroutine.demo");
-        let resume_state: *mut u8 = ram_ptr!(game; 0x614);
-        let resume = *resume_state;
-        'done: {
-            if resume > 2 {
-                break 'done;
-            }
-            'finish_demo: {
-                if resume != 1 {
-                    let yielded: u8 = GAMEPLAY(game);
-                    if yielded != 0 {
-                        *resume_state = 2;
-                        return yielded;
-                    }
-                    if word!(game.joypad1_newkeys) != 0 {
-                        word!(game.substate = 1);
-                        break 'finish_demo;
-                    }
-                    word!(game.demo_timer -= 1);
-                    if !(word!(game.demo_timer) == 0 || (word!(game.demo_timer) & 0x8000) != 0) {
-                        break 'done;
-                    }
-                    word! {game; substate = 0; my_counter = 90; }
-                }
-                do_until! { word!(game.my_counter -= 1, reread) == 0;
-                    let yielded: u8 = crate::game::display_refresh::wait(true, game);
-                    if yielded != 0 {
-                        *resume_state = 1;
-                        return yielded;
-                    }
-                    if word!(game.joypad1_newkeys) != 0 {
-                        word!(game.substate = 1);
-                        break;
-                    }
-                }
-            }
-            word!(game.game_state += 1);
-            word!(game.debug_disable_sounds = 0);
-            *ram_ptr!(game; 0x51) = 0x80;
-            word! { game, 1; screen_fade_delay, screen_fade_counter }
-        }
-        *resume_state = 0;
-        0 as CoroutineRet
-    }
-}
 pub unsafe fn GameState_43_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
     unsafe {
         if word!(game.substate) != 1 {
@@ -375,8 +328,10 @@ const RESERVE_TANKS: Func_V_Coroutine =
 const PREPARE_DEATH: Func_V_Coroutine =
     |game| unsafe { AdvanceGameplay(Entry::PrepareDeath, game) };
 
+const DEMO: Func_V_Coroutine = |game| demo_rooms::play(game, |game| unsafe { GAMEPLAY(game) });
+
 static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_V_Coroutine;
-    GameState_0_Reset_Async, GameState_1_OpeningCinematic_, GameState_2_GameOptionsMenu,
+    reset_attract, GameState_1_OpeningCinematic_, GameState_2_GameOptionsMenu,
     GameState_3_Null, advance_file_menu, advance_map_menu,
     InitAndLoadGameData_Async, FADE_IN, GAMEPLAY,
     GameState_9_HitDoorBlock, GameState_10_LoadingNextRoom_Async,
@@ -392,7 +347,7 @@ static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_
     GameState_33_BlackoutFromCeres, GameState_37_CeresGoesBoomWithSamus_, TIME_UP,
     GameState_36_WhitingOutFromTimeUp, GameState_37_CeresGoesBoomWithSamus_,
     GameState_38_SamusEscapesFromZebes, GameState_39_EndingAndCredits_,
-    InitAndLoadGameData_Async, GameState_41_TransitionToDemo, GameState_42_PlayingDemo_Async,
+    InitAndLoadGameData_Async, GameState_41_TransitionToDemo, DEMO,
     GameState_43_TransitionFromDemo, GameState_44_TransitionFromDemo,
 };
 pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
@@ -475,17 +430,6 @@ pub unsafe fn GameState_29_DebugGameOverMenu(game: &mut Game) -> CoroutineRet {
 pub fn ShowSpareCpu(game: &mut Game) {
     {
         word!(game.joypad1_input_samusfilter = word!(game.joypad1_lastkeys));
-    }
-}
-pub fn GameState_0_Reset_Async(game: &mut Game) -> CoroutineRet {
-    {
-        word! { game, 0; UNUSED_word_7E0DF8, UNUSED_word_7E0DFA, UNUSED_word_7E0DFC }
-        word! {game; cinematic_function = ((0x8b9b68i32) as u16); demo_set = 0; }
-        if word!(game.num_demo_sets) == 4 {
-            word!(game.demo_set = 3);
-        }
-        word!(game.game_state += 1);
-        kCoroutineNone as CoroutineRet
     }
 }
 pub fn GameState_3_Null(game: &mut Game) -> CoroutineRet {
