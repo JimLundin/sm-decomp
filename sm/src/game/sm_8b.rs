@@ -16,8 +16,9 @@ use crate::game::visual_runtime::{
 use crate::game::visual_runtime::{
     advance_credit_roll, advance_shooting_stars, draw_cinematic_sprites, draw_intro_sprites,
     drift_cinematic_sprite, initialize_ending_cloud_band, initialize_ending_cloud_side,
-    initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud, place_cinematic_sprite,
-    prepare_credit_roll, wait_ending_cloud,
+    initialize_ending_time_glyph, initialize_shooting_stars, launch_cinematic_sprite,
+    move_ending_cloud, place_cinematic_sprite, prepare_credit_roll, prepare_ending_time,
+    wait_ending_cloud,
 };
 use crate::game::visual_state::CinematicObjects::{
     Background as CinematicBackground, Mode7 as CinematicMode7, Sprites as CinematicSprites,
@@ -654,14 +655,6 @@ pub fn CinematicFunction_Intro_Func140(game: &mut Game) {
         word!(game.cinematic_var17 -= 1);
         fade_cinematic_colors(0x1e0, 0x10, false, game);
         compose_cinematic_palette(game);
-    }
-}
-pub unsafe fn CinematicFunction_Intro_Func160(j: u16, a: u16, game: &mut Game) {
-    {
-        word!(
-            checked_i32,
-            game.cinematicspr_instr_ptr[(j >> 1)] += 8 * a as i32
-        );
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func210_EndingSamusFall(k: u16, game: &mut Game) {
@@ -2078,13 +2071,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
     [9171918] CinematicSprInstr_Func192 [j] {
         CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEEFD as u16, 0xf3ce, game);
-        let hours1: i32 = word!(game.game_time_hours) as i32 / 10;
-        let hours2: i32 = word!(game.game_time_hours) as i32 % 10;
-        word! {game; substate = hours1 as u16; suit_pickup_light_beam_pos = hours2 as u16; }
-        let min1: i32 = word!(game.game_time_minutes) as i32 / 10;
-        let min2: i32 = word!(game.game_time_minutes) as i32 % 10;
-        *(ram_ptr!(game, u16; 0xdf0)) = min1 as u16;
-        *(ram_ptr!(game, u16; 0xdf2)) = min2 as u16;
+        prepare_ending_time(game);
     };
     [9171995] CinematicSprInstr_Func193 [j] {
         CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF03 as u16, 0xf41b, game);
@@ -2762,30 +2749,6 @@ crate::game::callback_dispatch! {
             cinematicbg_arr9[v2] = 2560;
         }
     };
-    [9171038] CinematicFunction_Intro_Func159 [] {
-        CinematicFunction_Intro_Func160(j, word!(game.substate), game);
-        word!(game.cinematicbg_arr7[(j >> 1)] = 156);
-        CinematicFunction_Intro_Func158(j, game);
-    };
-    [9171053] CinematicFunction_Intro_Func161 [] {
-        CinematicFunction_Intro_Func160(j, word!(game.suit_pickup_light_beam_pos), game);
-        word!(game.cinematicbg_arr7[(j >> 1)] = 164);
-        CinematicFunction_Intro_Func158(j, game);
-    };
-    [9171068] CinematicFunction_Intro_Func162 [] {
-        word!(game.cinematicbg_arr7[(j >> 1)] = 172);
-        CinematicFunction_Intro_Func158(j, game);
-    };
-    [9171077] CinematicFunction_Intro_Func163 [] {
-        CinematicFunction_Intro_Func160(j, *(ram_ptr!(game, u16; 0xdf0)), game);
-        word!(game.cinematicbg_arr7[(j >> 1)] = 180);
-        CinematicFunction_Intro_Func158(j, game);
-    };
-    [9171092] CinematicFunction_Intro_Func164 [] {
-        CinematicFunction_Intro_Func160(j, *(ram_ptr!(game, u16; 0xdf2)), game);
-        word!(game.cinematicbg_arr7[(j >> 1)] = 188);
-        CinematicFunction_Intro_Func158(j, game);
-    };
     @functions [pub unsafe fn (j: u16, game: &mut Game)];
     @prefix { let v1: i32 = j as i32 >> 1; };
     [9150131] CinematicSpriteInit_4 [] {
@@ -2829,9 +2792,6 @@ crate::game::callback_dispatch! {
         word! { game, 128; cinematicbg_arr8[v1], cinematicbg_arr7[v1] }
         word! {game; cinematicbg_arr9[v1] = 3584; cinematicspr_goto_timer[v1] = 260; }
     };
-    CinematicFunction_Intro_Func158 [] {
-        word! {game; cinematicbg_arr8[v1] = 160; cinematicbg_arr9[v1] = 0; }
-    };
     [9171343] CinematicFunction_Intro_Func175 [] {
         word! {game; cinematicbg_arr7[v1] = 530; cinematicbg_arr8[v1] = 231;
             cinematicbg_arr9[v1] = 3584; cinematicspr_goto_timer[v1] = 8; }
@@ -2841,6 +2801,11 @@ crate::game::callback_dispatch! {
             cinematicbg_arr9[v1] = 3584; cinematicspr_goto_timer[v1] = 8; }
     };
     @external {
+        9171038 => [initialize_ending_time_glyph(j, 0, game)];
+        9171053 => [initialize_ending_time_glyph(j, 1, game)];
+        9171068 => [initialize_ending_time_glyph(j, 2, game)];
+        9171077 => [initialize_ending_time_glyph(j, 3, game)];
+        9171092 => [initialize_ending_time_glyph(j, 4, game)];
         9171122 => [initialize_ending_cloud_band(j, -96i32 as u16, game)];
         9171169 => [initialize_ending_cloud_band(j, -32i32 as u16, game)];
         9171177 => [initialize_ending_cloud_band(j, 288, game)];

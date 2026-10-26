@@ -1702,6 +1702,30 @@ pub(crate) fn move_ending_cloud(object: u16, velocity: (i16, i16), game: &mut Ga
     }
 }
 
+pub(crate) fn prepare_ending_time(game: &mut Game) {
+    let hours = word!(game.game_time_hours);
+    word! { game; substate = hours / 10; suit_pickup_light_beam_pos = hours % 10; }
+    let minutes = word!(game.game_time_minutes);
+    word_transfers!(game, ascending, 1;
+        native(0xdf0) <- value(minutes / 10), native(0xdf2) <- value(minutes % 10),
+    );
+}
+
+pub(crate) fn initialize_ending_time_glyph(object: u16, glyph: u8, game: &mut Game) {
+    if glyph != 2 {
+        let at = 0xdec + 2 * usize::from(glyph - u8::from(glyph > 2));
+        let bytes = [game.g_ram[at], game.g_ram[at + 1]];
+        // Hours are LE; minute digits retain native word order.
+        let digit = if glyph < 2 {
+            u16::from_le_bytes(bytes)
+        } else {
+            u16::from_ne_bytes(bytes)
+        };
+        word!(game.cinematicspr_instr_ptr[(object >> 1)] += digit.wrapping_mul(8));
+    }
+    place_cinematic_sprite(object, (156 + 8 * u16::from(glyph), 160), 0, game);
+}
+
 pub(crate) fn place_cinematic_sprite(
     object: u16,
     position: (u16, u16),
