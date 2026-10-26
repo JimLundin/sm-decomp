@@ -349,7 +349,7 @@ fn suit_pickup_shot(h: &mut impl Host, raw: u16) {
         }
     }
 }
-pub(super) fn reflect(h: &mut impl Host, raw: u16) {
+pub(in crate::game) fn reflect(h: &mut impl Host, raw: u16) {
     let kind = shot!(h, raw, kind);
     if kind & 0x100 != 0 {
         animation::initialize(h, raw, Initialization::Projectile);

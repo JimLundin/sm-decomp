@@ -198,7 +198,11 @@ pub(super) fn write_member_byte(h: &mut impl Host, member: EnemyMember, index: i
     }
 }
 
-pub(super) fn shot_word(h: &impl Host, member: super::host::ShotMember, index: isize) -> u16 {
+pub(in crate::game) fn shot_word(
+    h: &impl Host,
+    member: super::host::ShotMember,
+    index: isize,
+) -> u16 {
     if let Some(shot) = usize::try_from(index)
         .ok()
         .and_then(|i| h.session().projectiles.shots.get(i))
@@ -217,7 +221,7 @@ pub(super) fn shot_word(h: &impl Host, member: super::host::ShotMember, index: i
         h.shot_word(member, index)
     }
 }
-pub(super) fn set_shot_direction(h: &mut impl Host, index: isize, value: u16) {
+pub(in crate::game) fn set_shot_direction(h: &mut impl Host, index: isize, value: u16) {
     if let Some(shot) = usize::try_from(index)
         .ok()
         .and_then(|i| h.session_mut().projectiles.shots.get_mut(i))

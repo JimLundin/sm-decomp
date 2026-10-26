@@ -1,4 +1,5 @@
 mod access;
+pub(in crate::game) use access::{set_shot_direction, shot_word};
 mod actor_runtime;
 pub(crate) mod coordinates;
 mod effects_runtime;

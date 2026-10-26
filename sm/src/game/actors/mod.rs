@@ -2,6 +2,7 @@
 #![forbid(unsafe_code)]
 pub(in crate::game) mod access;
 pub(in crate::game) mod api;
+pub(in crate::game) mod bang;
 pub(in crate::game) mod beetom;
 pub(in crate::game) mod botwoon;
 pub(in crate::game) mod content;
@@ -22,6 +23,7 @@ pub(crate) mod movement_verification;
 #[path = "../../verification/actor_population_animation_entry.rs"]
 pub(crate) mod reference_population_animation;
 pub(in crate::game) mod refill_candy;
+pub(in crate::game) mod reflec;
 pub(in crate::game) mod roach;
 pub(in crate::game) mod scene;
 pub(in crate::game) mod sidehopper;

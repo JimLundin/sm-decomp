@@ -114,6 +114,8 @@ macro_rules! shot_native {
     };
 }
 
+pub(in crate::game) use {shot, shot_lane};
+
 pub(crate) fn room_level<H: super::host::Host>(h: &H, cell: u16) -> u16 {
     h.session()
         .room

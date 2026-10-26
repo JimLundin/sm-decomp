@@ -14,7 +14,7 @@ use crate::game::{
     combat_rules::{self as rules, GrappleOutcome, HealthResponse, LatchMode, Shot, ShotResponse},
     enemy_projectiles::{
         host::{Host as EprojHost, ShotMember},
-        lifecycle,
+        lifecycle, set_shot_direction, shot_word,
     },
     room_mechanisms::host::Effects as MechanismEffects,
     session::Point,
@@ -54,34 +54,9 @@ fn freeze(h: &mut impl ActorAccess, actor: ActorKey) {
     });
 }
 /// The collision selector is a full word index, not a wrapping byte handle.
-fn shot_word(h: &impl EprojHost, index: u16, member: ShotMember) -> u16 {
-    if let Some(shot) = h.session().projectiles.shots.get(usize::from(index)) {
-        match member {
-            ShotMember::Kind => shot.kind,
-            ShotMember::Direction => shot.direction,
-            ShotMember::Variable => shot.variable,
-            ShotMember::X => shot.x,
-            ShotMember::Y => shot.y,
-            ShotMember::XRadius => shot.x_radius,
-            ShotMember::YRadius => shot.y_radius,
-            ShotMember::Damage => shot.damage,
-        }
-    } else {
-        h.shot_word(member, isize::try_from(index).unwrap())
-    }
-}
-fn mark_shot(h: &mut impl EprojHost, index: u16) {
-    let direction = shot_word(h, index, ShotMember::Direction) | 0x10;
-    if let Some(shot) = h
-        .session_mut()
-        .projectiles
-        .shots
-        .get_mut(usize::from(index))
-    {
-        shot.direction = direction;
-    } else {
-        h.set_shot_direction(isize::try_from(index).unwrap(), direction);
-    }
+pub(super) fn mark_shot(h: &mut impl EprojHost, index: isize) {
+    let direction = shot_word(h, ShotMember::Direction, index) | 0x10;
+    set_shot_direction(h, index, direction);
 }
 fn sprite(h: &mut impl EprojHost, x: u16, y: u16, selector: u16) {
     sprite_objects::spawn(
@@ -239,10 +214,10 @@ pub(in crate::game) fn power_bomb_reaction<H: ActorHost + EprojHost>(
     }
 }
 fn shot_without_death<H: ActorHost + EprojHost>(h: &mut H) -> bool {
-    let index = h.session().room.collision_detection_index;
+    let index = h.session().room.collision_detection_index as isize;
     let shot = Shot {
-        damage: shot_word(h, index, ShotMember::Damage),
-        kind: shot_word(h, index, ShotMember::Kind),
+        damage: shot_word(h, ShotMember::Damage, index),
+        kind: shot_word(h, ShotMember::Kind, index),
     };
     let selected = current(h);
     let definition = capture_definition(h, selected);
@@ -264,10 +239,10 @@ fn shot_without_death<H: ActorHost + EprojHost>(h: &mut H) -> bool {
     };
     let damage = match shot.response(primary, charged) {
         ShotResponse::Dud => {
-            let index = h.session().room.collision_detection_index;
+            let index = h.session().room.collision_detection_index as isize;
             mark_shot(h, index);
-            let x = shot_word(h, index, ShotMember::X);
-            let y = shot_word(h, index, ShotMember::Y);
+            let x = shot_word(h, ShotMember::X, index);
+            let y = shot_word(h, ShotMember::Y, index);
             sprite(h, x, y, 6);
             h.queue_sound(1, 3, 0x3d);
             return false;
@@ -302,8 +277,8 @@ fn shot_without_death<H: ActorHost + EprojHost>(h: &mut H) -> bool {
     let actor = current(h);
     let projectile = shot_word(
         h,
-        h.session().room.collision_detection_index,
         ShotMember::Kind,
+        h.session().room.collision_detection_index as isize,
     );
     if projectile & 8 != 0 {
         h.edit_actor(actor, AccessMode::Native, |actor| actor.invincibility = 16);
@@ -313,8 +288,8 @@ fn shot_without_death<H: ActorHost + EprojHost>(h: &mut H) -> bool {
         damage,
         shot_word(
             h,
-            h.session().room.collision_detection_index,
             ShotMember::Kind,
+            h.session().room.collision_detection_index as isize,
         ),
         h.session().actors.combat.last_power,
         h.resolve_actor(actor, AccessMode::Native).frozen,
@@ -346,8 +321,8 @@ pub(in crate::game) fn shot_reaction<H: ActorHost + EprojHost>(h: &mut H, handli
     {
         let projectile = shot_word(
             h,
-            h.session().room.collision_detection_index,
             ShotMember::Kind,
+            h.session().room.collision_detection_index as isize,
         );
         let kind = (projectile >> 8) & 15;
         cause(h, kind);
@@ -362,12 +337,12 @@ pub(in crate::game) fn shot_reaction<H: ActorHost + EprojHost>(h: &mut H, handli
     }
 }
 pub(in crate::game) fn create_dud<H: ActorHost + EprojHost>(h: &mut H) {
-    let index = h.session().room.collision_detection_index;
-    let x = shot_word(h, index, ShotMember::X);
-    let y = shot_word(h, index, ShotMember::Y);
+    let index = h.session().room.collision_detection_index as isize;
+    let x = shot_word(h, ShotMember::X, index);
+    let y = shot_word(h, ShotMember::Y, index);
     sprite(h, x, y, 6);
     h.queue_sound(1, 3, 0x3d);
-    let index = h.session().room.collision_detection_index;
+    let index = h.session().room.collision_detection_index as isize;
     mark_shot(h, index);
 }
 pub(in crate::game) fn latch<H: ActorHost>(h: &mut H, mode: LatchMode) {
