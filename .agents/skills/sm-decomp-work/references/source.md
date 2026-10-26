@@ -1,7 +1,7 @@
 # Source role
 
 1. Confirm the item is unclaimed with the coordinator and use the assigned base
-   and file scope. Read the contracts that its state and effects reach.
+   and file scope. Read applicable contracts.
 2. Trace the complete responsibility: setup, update, callbacks, failure,
    reset/load, callers and retirement. Prefer existing owned modules and real
    shared behavior. Identify the actual state owner and remaining external writers.

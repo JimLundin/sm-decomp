@@ -1,6 +1,6 @@
 # Review role
 
-Review the assigned donor or composition at its exact source pin. The assignment
+Review the donor or composition at its source pin. The assignment
 determines review scope; PLAN determines required execution checks.
 
 - Reconstruct against the declared base. Check callers, retirement, unchanged
