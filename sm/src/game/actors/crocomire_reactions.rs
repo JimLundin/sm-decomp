@@ -735,3 +735,75 @@ pub(crate) fn prepare_skeleton_tilemap(game: &mut Game) {
     word_transfers!(game, ascending, 1024; le(tilemap_stuff, 0) <- value(824));
     load_melt_tilemap(0xa49e7b, game);
 }
+
+macro_rules! native_graphics_word {
+    ($game:ident, $address:expr, $offset:expr) => {{
+        let address = $address;
+        if address & 0x8000 == 0 {
+            crate::game::session_runtime::native_rom_diagnostic(address, $game);
+        }
+        $game.capture_native_rom().table_word(
+            crate::rtl::lorom_offset(address) as usize + $offset as usize,
+            0,
+        )
+    }};
+}
+
+pub(crate) fn queue_melt_graphics(offset: u16, live_size: bool, game: &mut Game) {
+    let entry = 0xd0 + usize::from(word!(game.vram_write_queue_tail));
+    for (source, destination) in [(0, 0), (6, 2), (4, 4), (2, 5)] {
+        let value = native_graphics_word!(game, 0xa49bc5 + source, {
+            if source == 0 && live_size {
+                word!(game.g_word_7E068A)
+            } else {
+                offset
+            }
+        });
+        word_transfers!(game, ascending, 1; native(entry + destination) <- value(value));
+    }
+}
+
+pub(crate) fn advance_melt_upload(game: &mut Game) {
+    let offset = word!(game.g_word_7E068A);
+    let tail = word!(game.vram_write_queue_tail);
+    if native_graphics_word!(game, 0xa49bc5, word!(game.g_word_7E068A)) == 0xffff {
+        let E: i32 = word!(game.cur_enemy_index) as i32;
+        slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
+        slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
+        word!(game.g_word_7E068A = 0);
+    } else {
+        queue_melt_graphics(offset, true, game);
+        word!(game.g_word_7E068A = offset.wrapping_add(8));
+        word!(game.vram_write_queue_tail = tail.wrapping_add(7));
+    };
+}
+
+pub(crate) fn prepare_melt_graphics(game: &mut Game) {
+    let E: i32 = word!(game.cur_enemy_index) as i32;
+    slot!(game, Crocomire[E].var_A, |old| (old).wrapping_add(2));
+    word! { game;
+        g_word_7E0692 = 256;
+        croco_cur_vline_idx = 0;
+        g_word_7E0698 = native_graphics_word!(game, 0xa49bc5, word!(game.croco_word_7E069A));
+        g_word_7E0694 = word!(game.g_word_7E0698);
+        g_word_7E0696 = native_graphics_word!(game, 0xa49bc7, word!(game.croco_word_7E069A));
+        g_word_7E068E = native_graphics_word!(game, 0xa49bc9, word!(game.croco_word_7E069A));
+    }
+    let bank: u8 = native_graphics_word!(game, 0xa49bcb, word!(game.croco_word_7E069A)) as u8;
+    let mut i: i32 = word!(game.croco_word_7E069A) as i32 + 8;
+    loop {
+        let mut v2: u16 = native_graphics_word!(game, 0xa49bc5, i);
+        if v2 == 0xffff {
+            break;
+        }
+        let mut v3: u16 = native_graphics_word!(game, 0xa49bc7, i);
+        for _ in 0..=word!(game.g_word_7E068E) {
+            word_transfers!(game, ascending, 1; native(v3) <- value(native_graphics_word!(game, (u32::from(bank) << 16) | u32::from(v2), 0)));
+            v3 = (v3).wrapping_add(2);
+            v2 = (v2).wrapping_add(2);
+        }
+        i = i as u16 as i32 + 4;
+    }
+    word! {game; croco_word_7E069A = (i + 2) as u16; g_word_7E068A = (i + 2) as u16; }
+    word_transfers!(game, descending, 65; native(0x71c) <- value(0));
+}
