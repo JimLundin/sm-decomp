@@ -3,36 +3,164 @@ use crate::game_state::Game;
 use crate::initial_state::InitialState;
 use crate::rtl::RtlApuWrite;
 use crate::rtl::words;
-use crate::snes::apu::{apu_cycle, apu_init, apu_reset, apu_saveload};
-use crate::snes::cart::{cart_init, cart_read, cart_reset, cart_saveload, cart_write};
-use crate::snes::cpu::{cpu_init, cpu_reset, cpu_saveload};
+use crate::snes::apu::{apu_cycle, apu_reset, apu_saveload};
+use crate::snes::cart::{cart_read, cart_reset, cart_saveload, cart_write};
+use crate::snes::cpu::{cpu_reset, cpu_saveload};
 use crate::snes::dma::{
-    dma_cycle, dma_doHdma, dma_init, dma_initHdma, dma_read, dma_reset, dma_saveload, dma_startDma,
-    dma_write,
+    dma_cycle, dma_doHdma, dma_initHdma, dma_read, dma_reset, dma_saveload, dma_startDma, dma_write,
 };
-use crate::snes::input::{input_init, input_reset};
+use crate::snes::input::input_reset;
 use crate::snes::ppu::{
-    ppu_checkOverscan, ppu_handleVblank, ppu_init, ppu_read, ppu_reset, ppu_runLine, ppu_saveload,
-    ppu_write,
+    ppu_checkOverscan, ppu_handleVblank, ppu_read, ppu_reset, ppu_runLine, ppu_saveload, ppu_write,
 };
+use crate::types::{Apu, ApuRegisters, Cart, Cpu, Dma, Dsp, Input, Ppu, Spc};
 pub use crate::types::{Snes, size_t};
 use ::core::ffi::{c_char, c_void};
+use std::cell::{Cell, UnsafeCell};
+use std::rc::Rc;
 pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 
-pub unsafe fn snes_init(ram: *mut u8) -> *mut Snes {
-    unsafe {
-        let snes = Box::into_raw(Box::new(Snes::INITIAL));
-        set_fields! {[(*snes)]; ram = ram, debug_cycles = false_0 != 0,
-        debug_apu_cycles = false_0 != 0, runningWhichVersion = 0, disableRender = false, };
-        set_fields! {[(*snes)], 0; cpuMemOps, cpuCyclesLeft}
-        (*snes).cpu = cpu_init(snes as *mut c_void, 0);
-        set_fields! {[(*snes)]; apu = apu_init(), dma = dma_init(snes), my_ppu = ppu_init(snes),
-        snes_ppu = ppu_init(snes), ppu = (*snes).snes_ppu, cart = cart_init(snes),
-        input1 = input_init(snes), input2 = input_init(snes), };
-        snes
+/// Own every device in one retained backend. Each allocation is stable and
+/// separate; raw repr(C) links are borrowed views, never the owners. Rc keeps
+/// reborrowing Game from imposing Box-style uniqueness on live device storage.
+pub(crate) struct Backend {
+    snes: Rc<Cell<Snes>>,
+    cpu: Rc<Cell<Cpu>>,
+    dma: Rc<Cell<Dma>>,
+    my_ppu: Rc<Cell<Ppu>>,
+    snes_ppu: Rc<Cell<Ppu>>,
+    apu: Rc<UnsafeCell<Apu>>,
+    spc: Rc<Cell<Spc>>,
+    dsp: Rc<UnsafeCell<Dsp>>,
+    cart: Rc<UnsafeCell<Cart>>,
+    input1: Rc<Cell<Input>>,
+    input2: Rc<Cell<Input>>,
+}
+#[forbid(unsafe_code)]
+impl Backend {
+    pub(crate) fn new(ram: *mut u8) -> Self {
+        let snes = Rc::new(Cell::new(Snes::INITIAL));
+        let cpu = Rc::new(Cell::new(Cpu {
+            mem: snes.as_ptr().cast(),
+            memType: 0,
+            ..Cpu::INITIAL
+        }));
+        let apu_ram = crate::apu_ram::ApuRam::new();
+        let spc = Rc::new(Cell::new(Spc::INITIAL));
+        let dsp = Rc::new(UnsafeCell::new(Dsp::new(apu_ram.clone())));
+        let apu = Rc::new(UnsafeCell::new(Apu {
+            spc: spc.as_ptr(),
+            dsp: dsp.get(),
+            ram: apu_ram,
+            registers: ApuRegisters::INITIAL,
+        }));
+        // Wire the backreference only after its APU destination is allocated.
+        spc.set(Spc {
+            apu: apu.get(),
+            ..Spc::INITIAL
+        });
+        let dma = Rc::new(Cell::new(Dma {
+            snes: snes.as_ptr(),
+            ..Dma::INITIAL
+        }));
+        let my_ppu = Rc::new(Cell::new(Ppu {
+            snes: snes.as_ptr(),
+            ..Ppu::INITIAL
+        }));
+        let snes_ppu = Rc::new(Cell::new(Ppu {
+            snes: snes.as_ptr(),
+            ..Ppu::INITIAL
+        }));
+        let cart = Rc::new(UnsafeCell::new(Cart {
+            snes: snes.as_ptr(),
+            type_0: 0,
+            rom: crate::rom::RomImage::default(),
+            romSize: 0,
+            ram: crate::save_ram::SaveRam::default(),
+            ramSize: 0,
+        }));
+        let input1 = Rc::new(Cell::new(Input {
+            snes: snes.as_ptr(),
+            type_0: 1,
+            currentState: 0,
+        }));
+        let input2 = Rc::new(Cell::new(Input {
+            snes: snes.as_ptr(),
+            type_0: 1,
+            currentState: 0,
+        }));
+        snes.set(Snes {
+            ram,
+            cpu: cpu.as_ptr(),
+            apu: apu.get(),
+            dma: dma.as_ptr(),
+            my_ppu: my_ppu.as_ptr(),
+            snes_ppu: snes_ppu.as_ptr(),
+            ppu: snes_ppu.as_ptr(),
+            cart: cart.get(),
+            input1: input1.as_ptr(),
+            input2: input2.as_ptr(),
+            ..Snes::INITIAL
+        });
+        Self {
+            snes,
+            cpu,
+            dma,
+            my_ppu,
+            snes_ppu,
+            apu,
+            spc,
+            dsp,
+            cart,
+            input1,
+            input2,
+        }
+    }
+
+    pub(crate) fn views(&self) -> (*mut Snes, *mut Cpu) {
+        (self.snes.as_ptr(), self.cpu.as_ptr())
+    }
+
+    /// Save inert copies, never borrow live devices or follow a supplied pointer.
+    /// Callers hold Game exclusivity; raw backend borrows must end before callbacks.
+    pub(crate) fn save_observation(
+        &self,
+        snes: *mut Snes,
+        cpu: *mut Cpu,
+        output: &mut crate::recording::RecordingBytes,
+    ) {
+        let mut io = crate::snapshot_io::SnapshotIo::Save(output);
+        assert_eq!(
+            snes,
+            self.snes.as_ptr(),
+            "observation requires the owned SNES"
+        );
+        io.state(&mut self.snes.get()).unwrap();
+        assert_eq!(cpu, self.cpu.as_ptr(), "observation requires the owned CPU");
+        io.state(&mut self.cpu.get()).unwrap();
+        assert_eq!(
+            self.snes.get().dma,
+            self.dma.as_ptr(),
+            "observation requires the owned DMA"
+        );
+        io.state(&mut self.dma.get()).unwrap();
+        // Select at the original final-device point, after the first three saves.
+        let selected = self.snes.get().ppu;
+        let ppu = if selected == self.snes_ppu.as_ptr() {
+            &self.snes_ppu
+        } else {
+            assert_eq!(
+                selected,
+                self.my_ppu.as_ptr(),
+                "observation requires an owned PPU"
+            );
+            &self.my_ppu
+        };
+        io.state(&mut ppu.get()).unwrap();
     }
 }
+
 pub unsafe fn snes_saveload(snes: *mut Snes, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
     unsafe {
         cpu_saveload((*snes).cpu, io);

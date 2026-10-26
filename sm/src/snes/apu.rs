@@ -1,8 +1,7 @@
 use crate::c_library::puts;
 use crate::game_state::Game;
-use crate::initial_state::InitialState;
-use crate::snes::dsp::{dsp_cycle, dsp_init, dsp_read, dsp_reset, dsp_saveload, dsp_write};
-use crate::snes::spc::{spc_init, spc_reset, spc_runOpcode, spc_saveload};
+use crate::snes::dsp::{dsp_cycle, dsp_read, dsp_reset, dsp_saveload, dsp_write};
+use crate::snes::spc::{spc_reset, spc_runOpcode, spc_saveload};
 use crate::tracing::getProcessorStateSpc;
 pub use crate::types::{Apu, ApuRegisters, DspRegWriteHistory, Timer, size_t};
 use ::core::mem::size_of;
@@ -19,19 +18,6 @@ static bootRom: [u8; 64] = [
     0xcb, 0xf4, 0xd7, 0, 0xfc, 0xd0, 0xf3, 0xab, 0x1, 0x10, 0xef, 0x7e, 0xf4, 0x10, 0xeb, 0xba,
     0xf6, 0xda, 0, 0xba, 0xf4, 0xc4, 0xf4, 0xdd, 0x5d, 0xd0, 0xdb, 0x1f, 0, 0, 0xc0, 0xff,
 ];
-pub unsafe fn apu_init() -> *mut Apu {
-    unsafe {
-        let apu = Box::into_raw(Box::new(Apu {
-            spc: core::ptr::null_mut(),
-            dsp: core::ptr::null_mut(),
-            ram: crate::apu_ram::ApuRam::new(),
-            registers: ApuRegisters::INITIAL,
-        }));
-        (*apu).spc = spc_init(apu);
-        (*apu).dsp = dsp_init((*apu).ram.clone());
-        apu
-    }
-}
 pub unsafe fn apu_reset(apu: *mut Apu) {
     unsafe {
         (*apu).registers.romReadable = true;

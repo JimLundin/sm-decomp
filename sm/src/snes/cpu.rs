@@ -2,7 +2,6 @@ use crate::c_library::{__assert_fail, printf};
 use crate::cpu_infra::{CpuOpcodeHook, HookedFunctionRts};
 use crate::game_state::Game;
 use crate::host::Die;
-use crate::initial_state::InitialState;
 use crate::rtl::words;
 use crate::snes::snes::{snes_cpuRead, snes_cpuWrite};
 use crate::types::{Cpu, Snes};
@@ -26,15 +25,6 @@ unsafe fn write_byte(cpu: *mut Cpu, adr: u32, val: u8, game: &mut Game) {
     unsafe {
         snes_cpuWrite((*cpu).mem as *mut Snes, adr, val, game);
     }
-}
-
-#[forbid(unsafe_code)]
-pub fn cpu_init(mem: *mut c_void, memType: i32) -> *mut Cpu {
-    Box::into_raw(Box::new(Cpu {
-        mem,
-        memType: memType as u8,
-        ..Cpu::INITIAL
-    }))
 }
 
 fn finish_reset(cpu: &mut Cpu) {

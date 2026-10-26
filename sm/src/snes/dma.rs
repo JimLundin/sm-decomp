@@ -1,5 +1,4 @@
 use crate::game_state::Game;
-use crate::initial_state::InitialState;
 use crate::rtl::words;
 use ::core::ffi::c_char;
 use ::core::mem::transmute;
@@ -22,13 +21,6 @@ static bAdrOffsets: [[i32; 4]; 8] = [
     [0, 0, 1, 1],
 ];
 static transferLength: [i32; 8] = [1, 2, 2, 4, 4, 4, 2, 4];
-#[forbid(unsafe_code)]
-pub fn dma_init(snes: *mut Snes) -> *mut Dma {
-    Box::into_raw(Box::new(Dma {
-        snes,
-        ..Dma::INITIAL
-    }))
-}
 pub unsafe fn dma_reset(dma: *mut Dma) {
     unsafe {
         for i in 0..8 {

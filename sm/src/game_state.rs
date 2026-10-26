@@ -9,6 +9,7 @@ use std::sync::Arc;
 /// State for one game and its differential oracle. Keep this heap allocation
 /// fixed while the emulated hardware holds pointers into `g_ram`.
 pub struct Game {
+    backend: Option<crate::snes::snes::Backend>,
     actor_identity: Option<crate::game::actors::identity::ActorIdentityState>,
     pub(crate) actor_snapshots: crate::game::actors::snapshot::ActorSnapshotSidecars,
     world: Arc<WorldBinding>,
@@ -82,6 +83,23 @@ macro_rules! ram_word_accessors {
 
 // Oracle snapshots own separate allocations, keeping construction stack usage bounded.
 impl Game {
+    /// Replace the complete backend, including failed-initialization storage.
+    /// # Safety
+    /// No device reference or raw consumer may survive replacement. Keep this
+    /// Game's RAM allocation fixed until all backend execution has stopped.
+    pub(crate) unsafe fn initialize_backend(&mut self) {
+        let backend = crate::snes::snes::Backend::new((&raw mut self.g_ram).cast());
+        (self.g_snes, self.g_cpu) = backend.views();
+        self.backend = Some(backend);
+    }
+
+    pub(crate) fn save_backend_observation(&self, output: &mut crate::recording::RecordingBytes) {
+        self.backend
+            .as_ref()
+            .expect("observation requires an owned backend")
+            .save_observation(self.g_snes, self.g_cpu, output);
+    }
+
     pub(crate) fn next_random(&mut self) -> u16 {
         let mut product = (u16::from(self.g_ram[0x5e5]) * 5).to_ne_bytes();
         let carry = u16::from(product[1]) + u16::from(self.g_ram[0x5e6].wrapping_mul(5)) + 1;
@@ -762,6 +780,7 @@ impl Game {
             crate::cpu_infra::RM_MINE
         };
         Box::new(Self {
+            backend: None,
             world,
             actor_identity: Some(crate::game::actors::identity::ActorIdentityState::empty()),
             actor_snapshots: Default::default(),

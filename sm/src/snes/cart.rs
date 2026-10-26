@@ -8,17 +8,6 @@ pub use crate::types::{Cart, Snes, size_t};
 use ::core::ffi::{c_char, c_void};
 use ::core::ptr::null_mut;
 pub const NULL: *mut c_void = null_mut::<c_void>();
-#[forbid(unsafe_code)]
-pub fn cart_init(snes: *mut Snes) -> *mut Cart {
-    Box::into_raw(Box::new(Cart {
-        snes,
-        type_0: 0,
-        rom: RomImage::default(),
-        romSize: 0,
-        ram: crate::save_ram::SaveRam::default(),
-        ramSize: 0,
-    }))
-}
 pub unsafe fn cart_reset(cart: *mut Cart) {}
 pub unsafe fn cart_saveload(cart: *mut Cart, io: &mut crate::snapshot_io::SnapshotIo<'_>) {
     unsafe {

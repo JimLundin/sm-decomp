@@ -120,6 +120,7 @@ def desktop_source(source):
     return 1;
   }
   SDL_Window* window = SDL_CreateWindow(""")
+    replace(r, "  bool custom_size  =", "  desktop_initialized = true;\n  bool custom_size  =")
     replace(r, "!g_renderer_funcs.Initialize(window)", "!sm_host_initialize_renderer(owner, &g_renderer_funcs, window)")
     replace(r, "SDL_AudioSpec want = { 0 }, have;", "SDL_AudioSpec want = {0}, have = {0};\n  want.userdata = have.userdata = (void *)owner;")
     replace(r, "  SDL_AudioDeviceID device = 0;\n", "")
@@ -169,8 +170,9 @@ def desktop_source(source):
 
 """ + routines[r][end:]
     replace(r, "if (!g_config.disable_frame_delay)", "if (!disable_render && !g_config.disable_frame_delay)")
-    replace(r, "  if (g_config.enable_audio) {\n    SDL_PauseAudioDevice(g_audio_device, 1);\n    SDL_CloseAudioDevice(g_audio_device);\n  }", "  SDL_PauseAudioDevice(g_audio_device, 1);\n  SDL_CloseAudioDevice(g_audio_device);")
-    replace(r, "g_renderer_funcs.Destroy();", "sm_host_destroy_renderer(owner, &g_renderer_funcs);")
+    cleanup_start = routines[r].index("  // clean sdl\n")
+    cleanup_end = routines[r].index("  //SaveConfigFile();", cleanup_start)
+    routines[r] = routines[r][:cleanup_start] + "  sm_desktop_close();\n" + routines[r][cleanup_end:]
     context = {"DrawPpuFrameWithPerf", "AudioCallback", "HandleCommand", "HandleCommand_Locked",
                "HandleInput", "HandleGamepadInput", "HandleGamepadAxisInput"}
     for name, text in routines.items():

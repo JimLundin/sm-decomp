@@ -81,17 +81,14 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Qualified Core36: production 111694, legacy 20103, unsafe 2949, verification 39967.
-Its ten Crocomire/cinematic/control rows pass (30,045 selected); postcredits 134/138/145 remain unobserved.
-Core35 passed 18 rows (62,243 selected); interpreter contracts remain unsafe.
-Core34 passed eight rows (18,223 selected + 28,700 setup); both full Kago gaps remain.
-Core33 passed eight rows (6,457 frames); checked native access costs five lines.
-Core32 passed 13 rows (40,510 frames); four release and two mosaic callbacks remain unobserved.
-Core30 passed 33 rows and Core27 passed 85 of 86; RAM ownership remains transitional.
-The lava-plume contract remains unsafe: its dynamic low-window observer requires a valid backend.
-A3 safe actor/observer paths still reach a null-backend snapshot; WorldBinding is not backend ownership.
+Qualified Core37: production 111783, legacy 20103, unsafe 2935, verification 39959.
+All 86 rows pass (136,526 selected + 38,827 setup), plus 189,475 fresh capture frames and separate C43 105.
+Eleven backend allocations now have stable owners; the snapshot observer blocker is closed.
+Ownership adds 104 runtime lines (89 Rust + 24 native - 9 generated), removes 14 unsafe and 8 verification.
+The fresh 33e6 checkpoint bundle is uploaded; all 22 restored members match byte-for-byte.
+Four release, two mosaic and three postcredits callbacks remain unobserved; native/failure variants are source-reviewed.
 Six read-only state projections preserve 57,621 bytes; exact native leaf variants remain source-reviewed.
-The manifest now has 86 rows; whole-engine ownership and backend independence stay open.
+The manifest remains 86 rows; hardware/Frame, external SpcPlayer ownership and backend independence remain open.
 Retain the fixed 2131-frame X-ray activation/release row and original pickup.
 The existing comparison normalizes 611..616; initializer continuation also relies
 on source review. An unsafe deny attribute counts as a line, not an operation.

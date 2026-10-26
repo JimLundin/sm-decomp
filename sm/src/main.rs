@@ -24,6 +24,7 @@ static mut g_my_pixels: [u8; 245760] = [0; 245760];
 #[link(name = "sm_desktop", kind = "static", modifiers = "-bundle")]
 unsafe extern "C-unwind" {
     fn sm_desktop_run(argc: i32, argv: *mut *mut c_char, owner: *const GameOwner) -> i32;
+    fn sm_desktop_close();
     fn sm_desktop_HandleInput(game: *mut Game, key: i32, modifiers: i32, pressed: bool);
     fn sm_desktop_HandleGamepadInput(game: *mut Game, button: i32, pressed: bool);
     fn sm_desktop_HandleGamepadAxisInput(game: *mut Game, id: i32, axis: i32, value: i32);
@@ -169,15 +170,6 @@ unsafe extern "C-unwind" fn sm_host_initialize_renderer(
 ) -> bool {
     unsafe {
         (*owner).with(|_game| (*funcs).Initialize.expect("non-null function pointer")(window))
-    }
-}
-#[unsafe(no_mangle)]
-unsafe extern "C-unwind" fn sm_host_destroy_renderer(
-    owner: *const GameOwner,
-    funcs: *const RendererFuncs,
-) {
-    unsafe {
-        (*owner).with(|_game| (*funcs).Destroy.expect("non-null function pointer")());
     }
 }
 #[unsafe(no_mangle)]
@@ -414,7 +406,9 @@ pub fn main() {
         apu_unlock: host_apu_unlock,
     });
     if std::env::args().nth(1).as_deref() == Some("verify") {
-        ::std::process::exit(owner.with(|game| verify::run(game)));
+        let status = owner.with(|game| verify::run(game));
+        drop(owner);
+        ::std::process::exit(status);
     }
     let mut args_strings: Vec<Vec<u8>> = ::std::env::args()
         .map(|arg| {
@@ -428,11 +422,22 @@ pub fn main() {
         .map(|arg| arg.as_mut_ptr() as *mut c_char)
         .chain(::core::iter::once(null_mut()))
         .collect();
-    unsafe {
-        ::std::process::exit(sm_desktop_run(
+    // Drop order also applies when a host callback unwinds through the C loop.
+    struct Desktop;
+    impl Drop for Desktop {
+        fn drop(&mut self) {
+            unsafe { sm_desktop_close() }
+        }
+    }
+    let desktop = Desktop;
+    let status = unsafe {
+        sm_desktop_run(
             (args_ptrs.len() - 1) as i32,
             args_ptrs.as_mut_ptr(),
             &*owner,
-        ) as i32)
-    }
+        )
+    };
+    drop(desktop);
+    drop(owner);
+    ::std::process::exit(status);
 }

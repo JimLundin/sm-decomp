@@ -23,7 +23,7 @@ int sm_host_find_button(int, uint32_t);
 void sm_host_debug(const void *);
 Snes *sm_host_start_game(const void *, const char *);
 bool sm_host_initialize_renderer(const void *, const RendererFuncs *, SDL_Window *);
-void sm_host_destroy_renderer(const void *, const RendererFuncs *);
+void sm_desktop_close(void);
 void sm_host_begin_draw(const RendererFuncs *, int, int, uint8_t **, int *);
 void sm_host_end_draw(const RendererFuncs *);
 void sm_host_create_player(const void *);

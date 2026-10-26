@@ -27,8 +27,8 @@ OpenSSL and the matching ROM are required to restore them. For Crocomire:
 
 ```powershell
 New-Item -ItemType Directory -Force target | Out-Null
-Invoke-WebRequest 'https://github.com/JimLundin/sm-decomp/releases/download/ci-data/checkpoints-v1-final-fdf74bcab62e16fc.tar.gz.enc' -OutFile target/checkpoints.enc
-python tools/ci_seed_data.py restore target/checkpoints.enc --rom rom/sm.smc --sha256 fdf74bcab62e16fccdd7590bf9b112846c50d8aa00a6773f200d27ba6883eed1 --segment boss-crocomire
+Invoke-WebRequest 'https://github.com/JimLundin/sm-decomp/releases/download/ci-data/Core37-33e6-full22.tar.gz.enc' -OutFile target/checkpoints.enc
+python tools/ci_seed_data.py restore target/checkpoints.enc --rom rom/sm.smc --sha256 f57fa43d377d66bce44521d2ada13ccf77601d92c94263193f55be76a9d3ce3a --segment boss-crocomire
 ```
 
 That bundle contains all thirteen checkpoint-backed rows. Original-emulator

@@ -70,9 +70,7 @@ impl Runtime<'_> {
                 LoadMode::Initial => self.foreign(|game| {
                     invalid_window(game, absolute);
                     #[cfg(sm_verify_dll)]
-                    unsafe {
-                        crate::room_background_observer::diagnostic(absolute, game);
-                    }
+                    crate::room_background_observer::diagnostic(absolute, game);
                 }),
                 LoadMode::Door => panic!("ROM address must select a LoROM window"),
             }

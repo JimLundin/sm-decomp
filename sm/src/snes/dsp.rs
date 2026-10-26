@@ -20,14 +20,20 @@ const _: () = {
 };
 
 #[forbid(unsafe_code)]
+impl Dsp {
+    pub(crate) fn new(ram: crate::apu_ram::ApuRam) -> Self {
+        Self {
+            state: DspState {
+                apu_ram: ram.as_mut_ptr(),
+                ..DspState::INITIAL
+            },
+            apu_memory: ram,
+        }
+    }
+}
+#[forbid(unsafe_code)]
 pub fn dsp_init(ram: crate::apu_ram::ApuRam) -> *mut Dsp {
-    Box::into_raw(Box::new(Dsp {
-        state: DspState {
-            apu_ram: ram.as_mut_ptr(),
-            ..DspState::INITIAL
-        },
-        apu_memory: ram,
-    }))
+    Box::into_raw(Box::new(Dsp::new(ram)))
 }
 pub unsafe fn dsp_reset(dsp: *mut Dsp) {
     unsafe {

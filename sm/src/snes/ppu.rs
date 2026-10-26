@@ -41,13 +41,6 @@ static spriteSizes: [[i32; 2]; 8] = [
     [16, 32],
     [16, 32],
 ];
-#[forbid(unsafe_code)]
-pub fn ppu_init(snes: *mut Snes) -> *mut Ppu {
-    Box::into_raw(Box::new(Ppu {
-        snes,
-        ..Ppu::INITIAL
-    }))
-}
 pub unsafe fn ppu_copy(ppu: *mut Ppu, ppu_src: *mut Ppu) {
     unsafe {
         let snes = (*ppu).snes;

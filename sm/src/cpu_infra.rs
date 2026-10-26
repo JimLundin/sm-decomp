@@ -17,7 +17,7 @@ use crate::rtl::{RomPtr, RtlSaveSnapshot, RtlSetupEmuCallbacks, WriteReg};
 use crate::snes::apu::apu_cycle;
 use crate::snes::cpu::{cpu_getFlags, cpu_runOpcode, cpu_setFlags};
 use crate::snes::dma::dma_doDma;
-use crate::snes::snes::{snes_handle_pos_stuff, snes_init};
+use crate::snes::snes::snes_handle_pos_stuff;
 use crate::snes::snes_other::snes_loadRom;
 use crate::tracing::getProcessorStateCpu;
 pub use crate::types::ProjectileInstr;
@@ -921,8 +921,7 @@ pub fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
 }
 pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
     unsafe {
-        game.g_snes = snes_init(&raw mut game.g_ram as *mut u8);
-        game.g_cpu = (*game.g_snes).cpu;
+        game.initialize_backend();
         let loaded: bool = loadRom(filename, game.g_snes, game);
         if !loaded {
             return null_mut::<Snes>();

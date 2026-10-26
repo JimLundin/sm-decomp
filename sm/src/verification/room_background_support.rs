@@ -1,5 +1,5 @@
 //! Actual device initialization and field-wise observation, synthetic assets only.
-use crate::{game_state::Game, recording::RecordingBytes, rom::RomImage, snapshot_io::SnapshotIo};
+use crate::{game_state::Game, recording::RecordingBytes, rom::RomImage};
 pub(crate) fn offset(a: u32) -> usize {
     crate::rtl::lorom_offset(a) as usize
 }
@@ -26,8 +26,7 @@ pub(crate) fn literal(r: &RomImage, a: u32, v: &[u8]) {
 pub(crate) unsafe fn initialized() -> Box<Game> {
     unsafe {
         let mut g = Game::new();
-        g.g_snes = crate::snes::snes::snes_init(g.g_ram.as_mut_ptr());
-        g.g_cpu = (*g.g_snes).cpu;
+        g.initialize_backend();
         let image = RomImage::zeroed(0x400000);
         for (a, v) in [(0x80a2f7, 0x4e), (0x80a2f8, 0x18), (0x80a29a, 0x38)] {
             bytes(&image, a, &[v]);
@@ -51,22 +50,18 @@ pub(crate) unsafe fn initialized() -> Box<Game> {
 }
 /// Existing typed serializer omits pointers/routing caches. It does not call
 /// snes_saveload, whose runningWhichVersion write is an observable side effect.
-pub(crate) unsafe fn snapshot(g: &mut Game) -> Vec<u8> {
-    unsafe {
-        let mut out = g.g_ram.to_vec();
-        out.push(u8::from(g.g_fail));
-        out.extend_from_slice(&g.decompress_src.to_le_bytes());
-        let mut machine = RecordingBytes::default();
-        let mut io = SnapshotIo::Save(&mut machine);
-        io.state(&mut *g.g_snes).unwrap();
-        io.state(&mut *g.g_cpu).unwrap();
-        io.state(&mut *(*g.g_snes).dma).unwrap();
-        io.state(&mut *(*g.g_snes).ppu).unwrap();
-        out.extend_from_slice(&(machine.size as u32).to_le_bytes());
-        out.extend_from_slice(machine.as_slice());
-        out
-    }
+#[forbid(unsafe_code)]
+pub(crate) fn snapshot(g: &mut Game) -> Vec<u8> {
+    let mut out = g.g_ram.to_vec();
+    out.push(u8::from(g.g_fail));
+    out.extend_from_slice(&g.decompress_src.to_le_bytes());
+    let mut machine = RecordingBytes::default();
+    g.save_backend_observation(&mut machine);
+    out.extend_from_slice(&(machine.size as u32).to_le_bytes());
+    out.extend_from_slice(machine.as_slice());
+    out
 }
+
 pub(crate) fn record(out: &mut Vec<u8>, tag: u8, payload: &[u8]) {
     out.push(tag);
     out.extend_from_slice(&(payload.len() as u32).to_le_bytes());
