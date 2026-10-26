@@ -66,6 +66,7 @@ Shared black-fade passes10967 selected+272 setup/0: -11 engine/-11 legacy; full1
 Shared tile-plane upload passes11161 selected+272 setup/0: -6 engine/-24 legacy; full23/29=79.31%.
 Its +2 unsafe lines retain hardware entry/block in display_refresh; blackout37 stays unobserved.
 Next: sm8b sprite instructions and complete sm9b grapple retirement; Linux/cloud lanes stay disjoint.
+Linux M: retire the Power Bomb/Crystal Flash fixed-color raw accesses; geometry and native dispatch stay retained.
 ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
 A4 post-push full86 passed on0a; its scoped3kills/1unobserved/1unviable gaps remain.
 Native player/DSP/APU and input Vec/FILE/Cart are owned; GameOwner does not promise Rust thread sharing.

@@ -1,4 +1,5 @@
 //! Power Bomb and Crystal Flash window geometry, expansion and afterglow.
+use crate::game::menu_tilemap::native_record;
 use crate::game::music::{QueueSfx1_Max6, QueueSfx1_Max15};
 use crate::game::player_movement::forced;
 use crate::game::session_runtime::Runtime;
@@ -36,13 +37,12 @@ static kPowerBombPreExplosionRadiusAccel: u16 = 0x80;
 static g_word_888B96: u16 = 3;
 static kPowerBombExplosionRadiusSpeed: u16 = 0;
 static kPowerBombExplosionRadiusAccel: u16 = 0x30;
-pub(crate) unsafe fn begin_pre_flash(game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0xc606) = -1i32 as u8;
-        *ram_ptr!(game; 0xc607) = 0;
-        word!(game.power_bomb_pre_explosion_flash_radius = 1024);
-        word!(game.power_bomb_pre_explosion_radius_speed = kPowerBombPreExplosionRadiusSpeed);
-    }
+#[forbid(unsafe_code)]
+pub(crate) fn begin_pre_flash(game: &mut Game) {
+    game.g_ram[0xc606] = 255;
+    game.g_ram[0xc607] = 0;
+    word!(game.power_bomb_pre_explosion_flash_radius = 1024);
+    word!(game.power_bomb_pre_explosion_radius_speed = kPowerBombPreExplosionRadiusSpeed);
 }
 pub(crate) fn begin_prescaled_pre_flash(game: &mut Game) {
     {
@@ -113,37 +113,29 @@ pub(crate) fn set_power_bomb_blending(k: u16, game: &mut Game) {
     }
 }
 
-macro_rules! fade_explosion_afterglow_color {
-    ($game:ident) => {
-        if (*ram_ptr!($game; 0x74, 0) & 0x1f) != 0 {
-            *ram_ptr!($game; 0x74, 0) =
-                ((*ram_ptr!($game; 0x74, 0) as i32 & 0x1f) - 1i32 | 0x20) as u8;
+#[forbid(unsafe_code)]
+fn fade_explosion_afterglow_color(game: &mut Game) {
+    for (address, mask) in [(0x74, 0x20), (0x75, 0x40), (0x76, 0x80)] {
+        if game.g_ram[address] & 0x1f != 0 {
+            game.g_ram[address] = (game.g_ram[address] & 0x1f).wrapping_sub(1) | mask;
         }
-        if (*ram_ptr!($game; 0x74, 1) & 0x1f) != 0 {
-            *ram_ptr!($game; 0x74, 1) =
-                ((*ram_ptr!($game; 0x74, 1) as i32 & 0x1f) - 1i32 | 0x40) as u8;
-        }
-        if (*ram_ptr!($game; 0x74, 2) & 0x1f) != 0 {
-            *ram_ptr!($game; 0x74, 2) =
-                ((*ram_ptr!($game; 0x74, 2) as i32 & 0x1f) - 1i32 | 0x80) as u8;
-        }
-    };
+    }
 }
 
-pub(crate) unsafe fn power_bomb_afterglow(k: u16, game: &mut Game) {
-    unsafe {
-        if (word!(game.power_bomb_explosion_status) & 0x8000) != 0 {
-            let v1: i32 = k as u8 as i32 >> 1;
-            if (word!(game.hdma_object_timers[v1] -= 1, reread) & 0x8000) != 0 {
-                crate::update_place! { reference fresh126 [fresh127] = *ram_ptr!(game; 0x1938, k as u8 as i32 as isize) => (*fresh126).wrapping_sub(1); }
-                if fresh127 == 1 {
-                    word!(game.hdma_object_instruction_timers[v1] = 1);
-                    word!(game.hdma_object_instruction_list_pointers[v1] += 2);
-                } else {
-                    fade_explosion_afterglow_color!(game);
-                    byte!(@pointer ram_ptr!(game, u16; 0x1908); k as u8 as i32 as isize) =
-                        g_word_888B96 as u8;
-                }
+#[forbid(unsafe_code)]
+pub(crate) fn power_bomb_afterglow(k: u16, game: &mut Game) {
+    if (word!(game.power_bomb_explosion_status) & 0x8000) != 0 {
+        let v1: i32 = k as u8 as i32 >> 1;
+        if (word!(game.hdma_object_timers[v1] -= 1, reread) & 0x8000) != 0 {
+            let at = 0x1938 + usize::from(k as u8);
+            let fresh127 = game.g_ram[at];
+            game.g_ram[at] = game.g_ram[at].wrapping_sub(1);
+            if fresh127 == 1 {
+                word!(game.hdma_object_instruction_timers[v1] = 1);
+                word!(game.hdma_object_instruction_list_pointers[v1] += 2);
+            } else {
+                fade_explosion_afterglow_color(game);
+                game.g_ram[0x1908 + usize::from(k as u8)] = g_word_888B96 as u8;
             }
         }
     }
@@ -372,18 +364,6 @@ fn calculate_explosion_hdma_table_pointers(k: u16, pre_explosion: bool, game: &m
     }
 }
 
-unsafe fn set_explosion_fixed_color(table: u32, pos: i32, game: &mut Game) {
-    unsafe {
-        for (channel, mask) in [(0, 0x20), (1, 0x40), (2, 0x80)] {
-            *ram_ptr!(game; 0x74, channel as isize) = *(game
-                .legacy_native_rom_ptr()
-                .offset(crate::rtl::lorom_offset(table)))
-            .offset((pos + channel) as isize)
-                | mask;
-        }
-    }
-}
-
 pub(crate) unsafe fn spawn_crystal_flash(game: &mut Game) {
     unsafe {
         word!(game.power_bomb_explosion_status = (0x888000i32) as u16);
@@ -395,14 +375,10 @@ pub(crate) unsafe fn spawn_crystal_flash(game: &mut Game) {
         spawn_hdma(0x88, &unk_88A2B8, game);
     }
 }
-pub(crate) unsafe fn begin_crystal_flash(game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0xc606) = -1i32 as u8;
-        *ram_ptr!(game; 0xc607) = 0;
-        word!(game.power_bomb_pre_explosion_flash_radius = 1024);
-        word!(game.power_bomb_pre_explosion_radius_speed = kPowerBombPreExplosionRadiusSpeed);
-        QueueSfx1_Max6(1, game);
-    }
+#[forbid(unsafe_code)]
+pub(crate) fn begin_crystal_flash(game: &mut Game) {
+    begin_pre_flash(game);
+    QueueSfx1_Max6(1, game);
 }
 pub(crate) fn finish_crystal_flash(k: u16, game: &mut Game) {
     {
@@ -415,35 +391,27 @@ pub(crate) fn finish_crystal_flash(k: u16, game: &mut Game) {
         }
     }
 }
-pub(crate) unsafe fn set_crystal_flash_blending(k: u16, game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0x60) = 0;
-        *ram_ptr!(game; 0x61) = 8;
-        *ram_ptr!(game; 0x62) = 0x80;
-        *ram_ptr!(game; 0x6e) = 2;
-        *ram_ptr!(game; 0x71) = 51;
-        *ram_ptr!(game; 0x6c) = 0;
-        *ram_ptr!(game; 0x6d) = 4;
-    }
+#[forbid(unsafe_code)]
+pub(crate) fn set_crystal_flash_blending(k: u16, game: &mut Game) {
+    game.g_ram[0x60] = 0;
+    game.g_ram[0x61] = 8;
+    game.g_ram[0x62] = 0x80;
+    game.g_ram[0x6e] = 2;
+    game.g_ram[0x71] = 51;
+    game.g_ram[0x6c] = 0;
+    game.g_ram[0x6d] = 4;
 }
-pub(crate) unsafe fn crystal_flash_afterglow(k: u16, game: &mut Game) {
-    unsafe {
-        if (word!(game.power_bomb_explosion_status) & 0x8000) != 0 {
-            let v1: i32 = k as i32 >> 1;
-            if (word!(game.hdma_object_timers[v1] -= 1, reread) & 0x8000) != 0 {
-                if ((*ram_ptr!(game; 0x74, 2)
-                    | *ram_ptr!(game; 0x74, 1)
-                    | *ram_ptr!(game; 0x74, 0))
-                    & 0x1f)
-                    != 0
-                {
-                    fade_explosion_afterglow_color!(game);
-                    byte!(@pointer ram_ptr!(game, u16; 0x1908); k as i32 as isize) =
-                        g_word_888B96 as u8;
-                } else {
-                    word!(game.hdma_object_instruction_timers[v1] = 1);
-                    word!(game.hdma_object_instruction_list_pointers[v1] += 2);
-                }
+#[forbid(unsafe_code)]
+pub(crate) fn crystal_flash_afterglow(k: u16, game: &mut Game) {
+    if (word!(game.power_bomb_explosion_status) & 0x8000) != 0 {
+        let v1: i32 = k as i32 >> 1;
+        if (word!(game.hdma_object_timers[v1] -= 1, reread) & 0x8000) != 0 {
+            if (game.g_ram[0x76] | game.g_ram[0x75] | game.g_ram[0x74]) & 0x1f != 0 {
+                fade_explosion_afterglow_color(game);
+                game.g_ram[0x1908 + usize::from(k)] = g_word_888B96 as u8;
+            } else {
+                word!(game.hdma_object_instruction_timers[v1] = 1);
+                word!(game.hdma_object_instruction_list_pointers[v1] += 2);
             }
         }
     }
@@ -480,15 +448,18 @@ impl Phase {
             }
         }
     }
-    unsafe fn set_color(self, game: &mut Game) {
-        unsafe {
-            let high = (self.radius(game) >> 8) as i32;
-            let (table, index) = if self == Self::PreFlash {
-                (0x889079, (high >> 3) & 0xf)
-            } else {
-                (0x888d85, high >> 3)
-            };
-            set_explosion_fixed_color(table, index * 3, game);
+    #[forbid(unsafe_code)]
+    fn set_color(self, game: &mut Game) {
+        let high = (self.radius(game) >> 8) as i32;
+        let (table, index) = if self == Self::PreFlash {
+            (0x889079, (high >> 3) & 0xf)
+        } else {
+            (0x888d85, high >> 3)
+        };
+        let pos = index * 3;
+        for (channel, mask) in [(0, 0x20), (1, 0x40), (2, 0x80)] {
+            game.g_ram[0x74 + channel as usize] =
+                native_record(table, game).byte((pos + channel) as usize) | mask;
         }
     }
     fn accelerate(self, game: &mut Game) {
