@@ -313,6 +313,97 @@ pub(crate) fn choose_spit(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScr
     jp
 }
 
+fn cap_byte(value: u8, limit: u8) -> u8 {
+    if value.wrapping_sub(limit) as i8 >= 0 {
+        limit
+    } else {
+        value
+    }
+}
+pub(crate) fn fill_scroll(game: &mut Game) {
+    let scroll = word!(game.reg_BG2VOFS);
+    word_transfers!(game, descending, 256; le(crocomire_bg2_scroll_hdma_data, 255) <- value(scroll));
+}
+pub(crate) fn melt_down(game: &mut Game) {
+    fill_scroll(game);
+    slot!(game, Crocomire[0].var_B, |old| old & !0x800);
+    update_background(word!(game.cur_enemy_index), game);
+    let key = word!(game.cur_enemy_index) as i32;
+    if slot!(game, Crocomire[key].base.y_pos) as i32 - 280 & 0x8000 != 0 {
+        let mut cursor = (8 * (word!(game.reg_BG2VOFS) as i32 + 288 & 0xfff8)) as u16;
+        for _ in 0..32 {
+            word!(game.tilemap_stuff[cursor >> 1] = 824);
+            cursor = cursor.wrapping_add(2);
+        }
+        word!(game.nmi_flag_bg2_enemy_vram_transfer = 1);
+        slot!(game, Crocomire[0].base.extra_properties, |old| old
+            & !0x8000);
+        let low = slot!(game, Crocomire[key].var_D) as u8;
+        slot!(byte game, Crocomire[key].var_D[0] = low.wrapping_add(0x80));
+        let next = (low.overflowing_add(0x80).1 as u8)
+            .wrapping_add(slot!(byte game, Crocomire[key].var_D[1]))
+            .wrapping_add(3);
+        let high = cap_byte(next, 48);
+        slot!(byte game, Crocomire[key].var_D[1] = high);
+        let carry = slot!(byte game, Crocomire[key].var_E[0])
+            .overflowing_add(high)
+            .1;
+        slot!(byte game, Crocomire[key].var_E[0] = match slot!(byte game, Crocomire[key].var_E[0]) { old => old.wrapping_add(high) });
+        let high = cap_byte(
+            (carry as u8).wrapping_add(slot!(byte game, Crocomire[key].var_E[1])),
+            3,
+        );
+        slot!(byte game, Crocomire[key].var_E[1] = high);
+        let velocity = slot!(game, Crocomire[key].var_E) as u8;
+        let carry = slot!(byte game, Crocomire[key].var_F[1])
+            .overflowing_add(velocity)
+            .1;
+        slot!(byte game, Crocomire[key].var_F[1] = match slot!(byte game, Crocomire[key].var_F[1]) { old => old.wrapping_add(velocity) });
+        let (step, carry) =
+            (carry as u8).overflowing_add(slot!(byte game, Crocomire[key].var_E[1]));
+        let carry = carry
+            | slot!(byte game, Crocomire[key].base.y_pos[0])
+                .overflowing_add(step)
+                .1;
+        slot!(byte game, Crocomire[key].base.y_pos[0] = match slot!(byte game, Crocomire[key].base.y_pos[0]) { old => old.wrapping_add(step) });
+        slot!(byte game, Crocomire[key].base.y_pos[1] = match slot!(byte game, Crocomire[key].base.y_pos[1]) { old => old.wrapping_add(carry as u8) });
+    } else {
+        slot!(game, Crocomire[key].var_A, |old| old.wrapping_add(1));
+        slot!(game, Crocomire[key].var_A, |old| old.wrapping_add(1));
+        slot!(game, Crocomire[0].var_D = 48);
+    }
+}
+pub(crate) fn melt_up(game: &mut Game) {
+    fill_scroll(game);
+    let key = word!(game.cur_enemy_index) as i32;
+    if slot!(game, Crocomire[key].base.y_pos) as i32 - 218 & 0x8000 != 0 {
+        slot!(game, Crocomire[key].var_A, |old| old.wrapping_add(1));
+        slot!(game, Crocomire[key].var_A, |old| old.wrapping_add(1));
+    } else {
+        update_background(word!(game.cur_enemy_index), game);
+        let mut acceleration = (slot!(game, Crocomire[0].var_D) as i16).wrapping_add(256);
+        if slot!(game, Crocomire[0].var_D) as i32 - 7680 & 0x8000 == 0 {
+            acceleration = 7936;
+        }
+        slot!(game, Crocomire[0].var_D = acceleration as u16);
+        let low = slot!(game, Crocomire[0].var_E) as u8;
+        let borrow = low < slot!(byte game, Crocomire[0].var_D[1]);
+        slot!(byte game, Crocomire[0].var_E[0] = low.wrapping_sub(slot!(byte game, Crocomire[0].var_D[1])));
+        let mut high = (slot!(byte game, Crocomire[0].var_E[1]) as i8).wrapping_sub(borrow as i8);
+        if high < 0 {
+            slot!(byte game, Crocomire[0].var_E[0] = 0xff);
+            high = 0;
+        }
+        slot!(byte game, Crocomire[0].var_E[1] = high as u8);
+        let fraction = slot!(byte game, Crocomire[0].var_F[1]);
+        let borrow = fraction < slot!(byte game, Crocomire[0].var_E[0]);
+        slot!(byte game, Crocomire[0].var_F[1] = fraction.wrapping_sub(slot!(byte game, Crocomire[0].var_E[0])));
+        let y = slot!(game, Crocomire[0].base.y_pos) as u8;
+        let step = (borrow as u8).wrapping_add(slot!(byte game, Crocomire[0].var_E[1]));
+        slot!(byte game, Crocomire[0].base.y_pos[0] = y.wrapping_sub(step));
+        slot!(byte game, Crocomire[0].base.y_pos[1] = match slot!(byte game, Crocomire[0].base.y_pos[1]) { old => old.wrapping_sub((y < step) as u8) });
+    }
+}
 pub(crate) fn update_background(k: u16, game: &mut Game) {
     word!(game.reg_BG2VOFS = 67u16.wrapping_sub(slot!(game, Crocomire[k as i32].base.y_pos)));
     let mut index = 32u16;

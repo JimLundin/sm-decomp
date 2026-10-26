@@ -166,7 +166,7 @@ pub unsafe fn Crocomire_Func_49(game: &mut Game) {
     unsafe {
         select_melt_animation::<true>(Key::from_legacy(0), game);
         Crocomire_Func_53(game);
-        Crocomire_Func_55(game);
+        actors::crocomire_reactions::melt_down(game);
         let E: i32 = 0;
         if slot!(game, Crocomire[E].var_A) == 62 {
             QueueMusic_Delayed8(6, game);
@@ -206,7 +206,7 @@ fn advance_skeleton_melt(game: &mut Game) {
     select_melt_animation::<true>(Key::from_legacy(game.cur_enemy_index()), game);
     unsafe {
         Crocomire_Func_53(game);
-        Crocomire_92D8(game);
+        actors::crocomire_reactions::melt_up(game);
     }
 }
 
@@ -214,7 +214,7 @@ pub unsafe fn Crocomire_Func_51(game: &mut Game) {
     unsafe {
         Crocomire_Func_53(game);
         select_melt_animation::<false>(Key::from_legacy(0), game);
-        Crocomire_Func_55(game);
+        actors::crocomire_reactions::melt_down(game);
     }
 }
 pub unsafe fn Crocomire_Func_52(game: &mut Game) {
@@ -251,117 +251,23 @@ pub unsafe fn Crocomire_Func_54(game: &mut Game) {
     unsafe {
         actors::crocomire_reactions::rumble(game);
         Crocomire_Func_53(game);
-        Crocomire_Func_55(game);
-    }
-}
-pub unsafe fn Crocomire_Func_55(game: &mut Game) {
-    unsafe {
-        Crocomire_Func_58(game);
-        let E0: i32 = 0;
-        slot!(game, Crocomire[E0].var_B, |old| old & !(0x800));
-        actors::crocomire_reactions::update_background(word!(game.cur_enemy_index), game);
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        if slot!(game, Crocomire[E].base.y_pos) as i32 - 280i32 & 0x8000 != 0 {
-            let mut v3: u16 = (8 * (word!(game.reg_BG2VOFS) as i32 + 288 & 0xfff8)) as u16;
-            for _ in 0..32 {
-                word!(game.tilemap_stuff[(v3 >> 1)] = 824);
-                v3 = (v3).wrapping_add(2);
-            }
-            word!(game.nmi_flag_bg2_enemy_vram_transfer = 1);
-            slot!(game, Crocomire[E0].base.extra_properties, |old| old
-                & !(0x8000));
-            let mut crocom_var_D: i8 = slot!(game, Crocomire[E].var_D) as i8;
-            slot!(byte game, Crocomire[E].var_D[0] = ((crocom_var_D) as u8).wrapping_add(0x80));
-            let mut v7: i8 = (u8::overflowing_add(crocom_var_D as u8, 0x80u8).1 as i32
-                + slot!(byte game, Crocomire[E].var_D[1]) as i32
-                + 3) as i8;
-            if v7 as i32 - 48i32 & 0x80 == 0 {
-                v7 = 48;
-            }
-            slot!(byte game, Crocomire[E].var_D[1] = v7 as u8);
-            let mut v8: bool =
-                u8::overflowing_add(slot!(byte game, Crocomire[E].var_E[0]), v7 as u8).1;
-            slot!(byte game, Crocomire[E].var_E[0] = match slot!(byte game, Crocomire[E].var_E[0]) { fresh13 => fresh13.wrapping_add((v7) as u8) });
-            let mut v9: i8 =
-                ((v8) as i8).wrapping_add((slot!(byte game, Crocomire[E].var_E[1])) as i8);
-            if v9 as i32 - 3i32 & 0x80 == 0 {
-                v9 = 3;
-            }
-            slot!(byte game, Crocomire[E].var_E[1] = v9 as u8);
-            let mut crocom_var_E: i8 = slot!(game, Crocomire[E].var_E) as i8;
-            v8 = u8::overflowing_add(
-                slot!(byte game, Crocomire[E].var_F[1isize]),
-                crocom_var_E as u8,
-            )
-            .1;
-            slot!(byte game, Crocomire[E].var_F[1] = match slot!(byte game, Crocomire[E].var_F[1]) { fresh14 => fresh14.wrapping_add((crocom_var_E) as u8) });
-            let mut crocom_var_E_high: i8 = slot!(byte game, Crocomire[E].var_E[1]) as i8;
-            let v13: bool = v8;
-            v8 = u8::overflowing_add(v8 as u8, crocom_var_E_high as u8).1;
-            let mut v12: i8 = ((v13) as i8).wrapping_add(crocom_var_E_high);
-            v8 = (v8 as i32
-                | u8::overflowing_add(slot!(byte game, Crocomire[E].base.y_pos[0]), v12 as u8).1
-                    as i32)
-                != 0;
-            slot!(byte game, Crocomire[E].base.y_pos[0] = match slot!(byte game, Crocomire[E].base.y_pos[0]) { fresh15 => fresh15.wrapping_add((v12) as u8) });
-            slot!(byte game, Crocomire[E].base.y_pos[1] = match slot!(byte game, Crocomire[E].base.y_pos[1]) { fresh16 => fresh16.wrapping_add((v8) as u8) });
-        } else {
-            slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
-            slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
-            slot!(game, Crocomire[E0].var_D = 48);
-        };
+        actors::crocomire_reactions::melt_down(game);
     }
 }
 pub unsafe fn Crocomire_929E(game: &mut Game) {
     unsafe {
         Crocomire_Func_53(game);
         select_melt_animation::<false>(Key::from_legacy(word!(game.cur_enemy_index)), game);
-        Crocomire_92D8(game);
+        actors::crocomire_reactions::melt_up(game);
     }
 }
 pub unsafe fn Crocomire_92CE(game: &mut Game) {
     unsafe {
         actors::crocomire_reactions::rumble(game);
         Crocomire_Func_53(game);
-        Crocomire_92D8(game);
+        actors::crocomire_reactions::melt_up(game);
     }
 }
-pub unsafe fn Crocomire_92D8(game: &mut Game) {
-    unsafe {
-        Crocomire_Func_58(game);
-        let EK: i32 = word!(game.cur_enemy_index) as i32;
-        if slot!(game, Crocomire[EK].base.y_pos) as i32 - 218i32 & 0x8000 != 0 {
-            slot!(game, Crocomire[EK].var_A, |old| old.wrapping_add(1));
-            slot!(game, Crocomire[EK].var_A, |old| old.wrapping_add(1));
-        } else {
-            actors::crocomire_reactions::update_background(word!(game.cur_enemy_index), game);
-            let E0: i32 = 0;
-            let mut v3: i16 = ((slot!(game, Crocomire[E0].var_D)) as i16).wrapping_add(256);
-            if slot!(game, Crocomire[E0].var_D) as i32 - 7680i32 & 0x8000 == 0 {
-                v3 = 7936;
-            }
-            slot!(game, Crocomire[E0].var_D = v3 as u16);
-            let crocom_var_E: u8 = slot!(game, Crocomire[E0].var_E) as u8;
-            let mut v5: bool = crocom_var_E < slot!(byte game, Crocomire[E0].var_D[1]);
-            slot!(byte game, Crocomire[E0].var_E[0] = (crocom_var_E).wrapping_sub(slot!(byte game, Crocomire[E0].var_D[1])));
-            let mut v6: i8 =
-                ((slot!(byte game, Crocomire[E0].var_E[1isize])) as i8).wrapping_sub((v5) as i8);
-            if v6 < 0 {
-                slot!(byte game, Crocomire[E0].var_E[0] = -1i32 as u8);
-                v6 = 0;
-            }
-            slot!(byte game, Crocomire[E0].var_E[1] = v6 as u8);
-            let crocom_var_F_high: u8 = slot!(byte game, Crocomire[E0].var_F[1]);
-            v5 = crocom_var_F_high < slot!(byte game, Crocomire[E0].var_E[0]);
-            slot!(byte game, Crocomire[E0].var_F[1] = (crocom_var_F_high).wrapping_sub(slot!(byte game, Crocomire[E0].var_E[0])));
-            let y_pos: u8 = slot!(game, Crocomire[E0].base.y_pos) as u8;
-            let v9: u8 = ((v5) as u8).wrapping_add(slot!(byte game, Crocomire[E0].var_E[1]));
-            slot!(byte game, Crocomire[E0].base.y_pos[0] = (y_pos).wrapping_sub(v9));
-            slot!(byte game, Crocomire[E0].base.y_pos[1] = match slot!(byte game, Crocomire[E0].base.y_pos[1]) { fresh7 => fresh7.wrapping_sub((y_pos < v9) as u8) });
-        };
-    }
-}
-
 macro_rules! load_crocomire_tilemap_until_sentinel {
     ($game:ident, $tilemap_table:literal) => {
         let mut i: i32 = 0;
@@ -419,15 +325,9 @@ pub unsafe fn Crocomire_93BE(k: u16, game: &mut Game) {
         word!(game.vram_write_queue_tail = (v2).wrapping_add(7));
     }
 }
-pub unsafe fn Crocomire_Func_58(game: &mut Game) {
-    {
-        let v0: u16 = word!(game.reg_BG2VOFS);
-        word_transfers!(game, descending, 256; le(crocomire_bg2_scroll_hdma_data, 255) <- value(v0));
-    }
-}
 pub unsafe fn Crocomire_Func_59(game: &mut Game) {
     unsafe {
-        Crocomire_Func_58(game);
+        actors::crocomire_reactions::fill_scroll(game);
         let E: i32 = word!(game.cur_enemy_index) as i32;
         slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
         slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
