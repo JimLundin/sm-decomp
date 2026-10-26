@@ -11,7 +11,7 @@ use super::constants::bank_91::{addr_stru_91877E, addr_stru_918784};
 use super::constants::samus_poses::kPose_02_FaceL_Normal;
 use super::palette_effects;
 use super::sm_8b::{
-    RevertButtonConfig, SetSomeStuffForSpriteObject_15, SetSomeStuffForSpriteObject_16,
+    SetSomeStuffForSpriteObject_15, SetSomeStuffForSpriteObject_16,
     addr_kCinematicBgObjectDef_8BCF5D, addr_kCinematicSpriteObjectDef_8BCE5B,
     addr_kCinematicSpriteObjectDef_8BCE55, addr_kCinematicSpriteObjectDef_8BCE61,
     addr_kCinematicSpriteObjectDef_8BCE67, addr_kCinematicSpriteObjectDef_8BCE73,
@@ -406,7 +406,7 @@ pub(super) unsafe fn fade_out_to_ceres(game: &mut Game) {
             }
             word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
             word!(game.cinematic_function = (0x8bbca0i32) as u16);
-            RevertButtonConfig(game);
+            crate::game::controller_input::restore_cinematic_bindings(game);
             word! { game, 0; samus_max_missiles, samus_missiles }
         }
     }

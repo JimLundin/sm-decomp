@@ -1,5 +1,8 @@
 //! Controller sampling, repeat edges and the menu's held-button filter.
-use crate::game::constants::buttons::{kButton_L, kButton_R, kButton_Select, kButton_Start};
+use crate::game::constants::buttons::{
+    kButton_A, kButton_B, kButton_Down, kButton_L, kButton_Left, kButton_R, kButton_Right,
+    kButton_Select, kButton_Start, kButton_Up, kButton_X, kButton_Y,
+};
 use crate::game_state::Game;
 use crate::ram_map::{checked_word as at, word, words as fields};
 use crate::rtl::{JOY1L, JOY2L, ReadRegWord};
@@ -111,4 +114,21 @@ fn debug_controls(game: &mut Game) {
         word!(game.debug_disable_sounds = 0);
         game.request_reset();
     }
+}
+
+// Intro playback saves only action bindings; its directional defaults remain after restoration.
+pub(crate) fn use_cinematic_bindings(game: &mut Game) {
+    word_transfers!(game, ascending, 7;
+        little(fields::button_config_shoot_x_saved) <- little(fields::button_config_shoot_x));
+    word! {game; button_config_up = kButton_Up as u16; button_config_down = kButton_Down as u16;
+    button_config_left = kButton_Left as u16; button_config_right = kButton_Right as u16;
+    button_config_shoot_x = kButton_X as u16; button_config_jump_a = kButton_A as u16;
+    button_config_run_b = kButton_B as u16; button_config_itemcancel_y = kButton_Y as u16;
+    button_config_itemswitch = kButton_Select as u16;
+    button_config_aim_down_L = kButton_L as u16; button_config_aim_up_R = kButton_R as u16; }
+}
+
+pub(crate) fn restore_cinematic_bindings(game: &mut Game) {
+    word_transfers!(game, ascending, 7;
+        little(fields::button_config_shoot_x) <- little(fields::button_config_shoot_x_saved));
 }

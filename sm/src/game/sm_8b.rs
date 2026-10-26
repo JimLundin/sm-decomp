@@ -614,35 +614,6 @@ macro_rules! chase_samus_with_cinematic_sprite {
     };
 }
 
-pub unsafe fn ResetButtonAssignmentsToDefault(game: &mut Game) {
-    {
-        word! {game; button_config_shoot_x_saved = word!(game.button_config_shoot_x);
-        button_config_jump_a_saved = word!(game.button_config_jump_a);
-        button_config_run_b_saved = word!(game.button_config_run_b);
-        button_config_itemcancel_y_saved = word!(game.button_config_itemcancel_y);
-        button_config_itemswitch_saved = word!(game.button_config_itemswitch);
-        button_config_aim_down_L_saved = word!(game.button_config_aim_down_L);
-        button_config_aim_up_R_saved = word!(game.button_config_aim_up_R);
-        button_config_up = kButton_Up as u16; button_config_down = kButton_Down as u16;
-        button_config_left = kButton_Left as u16; button_config_right = kButton_Right as u16;
-        button_config_shoot_x = kButton_X as u16; button_config_jump_a = kButton_A as u16;
-        button_config_run_b = kButton_B as u16; button_config_itemcancel_y = kButton_Y as u16;
-        button_config_itemswitch = kButton_Select as u16;
-        button_config_aim_down_L = kButton_L as u16; button_config_aim_up_R = kButton_R as u16; }
-    }
-}
-pub unsafe fn RevertButtonConfig(game: &mut Game) {
-    {
-        word!(game.button_config_shoot_x = word!(game.button_config_shoot_x_saved));
-        word!(game.button_config_jump_a = word!(game.button_config_jump_a_saved));
-        word!(game.button_config_run_b = word!(game.button_config_run_b_saved));
-        word!(game.button_config_itemcancel_y = word!(game.button_config_itemcancel_y_saved));
-        word!(game.button_config_itemswitch = word!(game.button_config_itemswitch_saved));
-        word!(game.button_config_aim_down_L = word!(game.button_config_aim_down_L_saved));
-        word!(game.button_config_aim_up_R = word!(game.button_config_aim_up_R_saved));
-    }
-}
-
 static kCinematicFunction_Intro_Func78_Tab0: [u16; 5] = [1, 16, 32, 48, 64];
 static kCinematicFunction_Intro_Func78_Tab1: [i16; 5] = [16, -16, 16, -16, 0];
 static kCinematicFunction_Intro_Func78_Tab2: [i16; 5] = [-16, 16, 16, -16, 0];
@@ -812,7 +783,7 @@ crate::game::callback_dispatch! {
         crate::game::visual_runtime::update_beam_tiles_and_palette(game);
         word! { game, 900; samus_max_missiles, samus_missiles }
         word! {game; cinematic_var15 = 0; samus_draw_handler = ((0x90eb52i32) as u16); }
-        ResetButtonAssignmentsToDefault(game);
+        crate::game::controller_input::use_cinematic_bindings(game);
         word! { game, 0; samus_invincibility_timer, samus_knockback_timer }
         word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
         word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0x8ce3e9, 0));
