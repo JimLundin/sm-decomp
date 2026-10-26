@@ -1279,7 +1279,7 @@ pub unsafe fn PauseMenu_0_MapScreen(game: &mut Game) {
         HandlePauseScreenLR(game);
         HandlePauseScreenStart(game);
         HandleMapScrollArrows(game);
-        MapScrolling(game);
+        crate::game::map_menu::scroll(game);
         MapScreenDrawSamusPositionIndicator(game);
         DrawMapIcons(game);
         DisplayMapElevatorDestinations(game);
@@ -1379,80 +1379,6 @@ pub unsafe fn PauseMenu_4_MapToEquipment_FadeIn(game: &mut Game) {
             }
             word!(game.menu_index = v0);
         }
-    }
-}
-static kMapScrollingFuncs: [Func_V; 5] = callback_table! { nonnull Func_V;
-    MapScrolling_0_None, MapScrolling_1_Left, MapScrolling_2_Right, MapScrolling_3_Up,
-    MapScrolling_4_Down,
-};
-pub unsafe fn MapScrolling(game: &mut Game) {
-    unsafe {
-        kMapScrollingFuncs[word!(game.map_scrolling_direction) as usize](game);
-    }
-}
-pub fn MapScrolling_0_None(game: &mut Game) {
-    {
-        word!(game.map_scrolling_gear_switch_timer = 4);
-    }
-}
-pub fn MapScrolling_GetSpeedIndex(game: &mut Game) -> u16 {
-    {
-        let result: u16 = word!(game.map_scrolling_speed_index);
-        if word!(game.map_scrolling_gear_switch_timer) == 0 {
-            return (word!(game.map_scrolling_speed_index)).wrapping_add(32);
-        }
-        result
-    }
-}
-static kMapScrollingSpeedTable: [u16; 32] = [
-    0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-];
-pub unsafe fn MapScrolling_1_Left(game: &mut Game) {
-    unsafe {
-        word!(
-            game.reg_BG1HOFS -=
-                kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) >> 1) as usize]
-        );
-        MapScrolling_Common(game);
-    }
-}
-pub unsafe fn MapScrolling_Common(game: &mut Game) {
-    {
-        word!(game.map_scrolling_speed_index += 1);
-        if (word!(game.map_scrolling_speed_index += 1, reread) & 0xf) == 0 {
-            QueueSfx1_Max6(0x36, game);
-            word! { game, 0; map_scrolling_direction, map_scrolling_speed_index }
-            if word!(game.map_scrolling_gear_switch_timer) != 0 {
-                word!(game.map_scrolling_gear_switch_timer -= 1);
-            }
-        }
-    }
-}
-pub unsafe fn MapScrolling_2_Right(game: &mut Game) {
-    unsafe {
-        word!(
-            game.reg_BG1HOFS +=
-                kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) >> 1) as usize]
-        );
-        MapScrolling_Common(game);
-    }
-}
-pub unsafe fn MapScrolling_3_Up(game: &mut Game) {
-    unsafe {
-        word!(
-            game.reg_BG1VOFS -=
-                kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) >> 1) as usize]
-        );
-        MapScrolling_Common(game);
-    }
-}
-pub unsafe fn MapScrolling_4_Down(game: &mut Game) {
-    unsafe {
-        word!(
-            game.reg_BG1VOFS +=
-                kMapScrollingSpeedTable[(MapScrolling_GetSpeedIndex(game) >> 1) as usize]
-        );
-        MapScrolling_Common(game);
     }
 }
 pub unsafe fn GameState_16_Unpausing_Async(game: &mut Game) -> CoroutineRet {

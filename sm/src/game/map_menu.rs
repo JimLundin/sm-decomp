@@ -8,7 +8,7 @@ use crate::game::save_slots::load_area_map;
 use crate::game::session_runtime::Runtime;
 use crate::game::sm_82::{
     DisplayMapElevatorDestinations, DrawFileSelectMapIcons, DrawMapScrollArrowAndCheckToScroll,
-    DrawRoomSelectMap, MapScrolling, SetupMapScrollingForFileSelectMap,
+    DrawRoomSelectMap, SetupMapScrollingForFileSelectMap,
 };
 use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled};
 use crate::game::{menu_tilemap, menu_window};
@@ -406,7 +406,7 @@ unsafe fn choose_room(game: &mut Game) {
     unsafe {
         DrawFileSelectMapIcons(game);
         scroll_arrows(game);
-        MapScrolling(game);
+        scroll(game);
         DisplayMapElevatorDestinations(game);
         if word!(game.enable_debug) != 0
             && (word!(game.joypad2_new_keys) as i32 & kButton_Select as i32) != 0
@@ -654,4 +654,38 @@ fn area_selection(game: &Game) -> Option<usize> {
     AREAS
         .iter()
         .position(|&area| area == word!(game.area_index))
+}
+
+const SCROLL_SPEEDS: [u16; 32] = [
+    0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+];
+
+/// Advance the shared file-select/pause-map scroll, with RAM as its only state.
+#[forbid(unsafe_code)]
+pub(crate) fn scroll(game: &mut Game) {
+    // Preserve the dispatch table's bounds failure before touching scroll state.
+    let direction = [0, 1, 2, 3, 4][usize::from(word!(game.map_scrolling_direction))];
+    if direction == 0 {
+        word!(game.map_scrolling_gear_switch_timer = 4);
+        return;
+    }
+    let mut index = word!(game.map_scrolling_speed_index);
+    if word!(game.map_scrolling_gear_switch_timer) == 0 {
+        index = index.wrapping_add(32);
+    }
+    let speed = SCROLL_SPEEDS[usize::from(index >> 1)];
+    match direction {
+        1 => word!(game.reg_BG1HOFS -= speed),
+        2 => word!(game.reg_BG1HOFS += speed),
+        3 => word!(game.reg_BG1VOFS -= speed),
+        _ => word!(game.reg_BG1VOFS += speed),
+    };
+    word!(game.map_scrolling_speed_index += 1);
+    if word!(game.map_scrolling_speed_index += 1, reread) & 0xf == 0 {
+        QueueSfx1_Max6(0x36, game);
+        word! { game, 0; map_scrolling_direction, map_scrolling_speed_index }
+        if word!(game.map_scrolling_gear_switch_timer) != 0 {
+            word!(game.map_scrolling_gear_switch_timer -= 1);
+        }
+    }
 }
