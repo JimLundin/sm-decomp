@@ -1,9 +1,11 @@
 //! Grapple swing placement, rope-length changes and swept block contact.
 use crate::game::actors::api as actor_api;
+use crate::game::music::QueueSfx1_Max15;
+use crate::game::player_transitions as pt;
 use crate::game::prelude::*;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::projectile_room::Axis;
-use crate::game::session_runtime::Runtime;
+use crate::game::session_runtime::{Runtime, player_command, settle_grapple};
 
 fn project_axis(origin: u16, sample: i16, length: u16) -> u16 {
     let distance = if sample == -256 || sample == 256 {
@@ -335,6 +337,107 @@ pub fn advance_swing(game: &mut Game) -> u8 {
     };
     word!(game.grapple_beam_unkD2E = decayed as u16);
     0
+}
+
+pub(crate) fn cancel(game: &mut Game) {
+    QueueSfx1_Max15(7, game);
+    if game.g_ram[0xa1f] == kMovementType_16_Grappling as u8 {
+        pt::request_fallback_pose(&mut Runtime::new(game));
+    } else {
+        player_command(0x1c, game);
+    }
+    finish_release(game);
+}
+
+pub(crate) fn release_stationary(game: &mut Game) {
+    QueueSfx1_Max15(7, game);
+    let pose = if word!(game.samus_pose) == kPose_B2_FaceR_Grapple_Air as u16 {
+        kPose_01_FaceR_Normal as u16
+    } else if word!(game.samus_pose) == kPose_B3_FaceL_Grapple_Air as u16 {
+        kPose_02_FaceL_Normal as u16
+    } else {
+        let crouching = (i32::from(word!(game.samus_y_radius)) - 17) & 0x8000 != 0;
+        let directions = crate::rtl::lorom_offset(0x91b629) as usize + 3;
+        if game
+            .capture_native_rom()
+            .read(directions + 8 * usize::from(word!(game.samus_pose)))
+            & 0xf0
+            != 0
+        {
+            match (crouching, game.g_ram[0xa1e] == 4) {
+                (true, true) => kPose_28_FaceL_Crouch as u16,
+                (true, false) => kPose_27_FaceR_Crouch as u16,
+                (false, true) => kPose_02_FaceL_Normal as u16,
+                (false, false) => kPose_01_FaceR_Normal as u16,
+            }
+        } else {
+            let table = if crouching { 0x9bc9c4 } else { 0x9bc9ba };
+            // Capture the destination image before the fresh native pose-byte read.
+            u16::from(
+                game.capture_native_rom().read(
+                    crate::rtl::lorom_offset(table) as usize
+                        + usize::from(
+                            game.capture_native_rom()
+                                .read(directions + 8 * usize::from(word!(game.samus_pose))),
+                        ),
+                ),
+            )
+        }
+    };
+    word!(game.samus_new_pose_transitional = pose);
+    word! {game; samus_hurt_switch_index = 0; input_to_pose_calc = 1; }
+    word! { game, 0;
+        samus_x_base_speed, samus_x_base_subspeed, samus_y_subspeed, samus_y_speed,
+    }
+    finish_release(game);
+}
+
+pub(crate) fn release_walljump(game: &mut Game) {
+    QueueSfx1_Max15(7, game);
+    if game.g_ram[0xa1e] == 8 {
+        word!(game.samus_new_pose_transitional = kPose_84_FaceL_Walljump as u16);
+    } else {
+        word!(game.samus_new_pose_transitional = kPose_83_FaceR_Walljump as u16);
+    }
+    word!(game.samus_hurt_switch_index = 6);
+    word! { game, 0;
+        samus_x_accel_mode, samus_collides_with_solid_enemy, samus_is_falling_flag,
+        UNUSED_word_7E0B1A, UNUSED_word_7E0B2A, samus_y_subspeed, samus_y_speed, samus_y_dir,
+        UNUSED_word_7E0B38, samus_x_base_speed, samus_x_base_subspeed,
+    }
+    finish_release(game);
+}
+
+pub(crate) fn release_swing(game: &mut Game) {
+    QueueSfx1_Max15(7, game);
+    if word!(game.grapple_beam_unkD26) & 0x8000 == 0 {
+        word!(game.samus_new_pose_transitional = kPose_52_FaceL_Jump_NoAim_MoveF as u16);
+    } else {
+        word!(game.samus_new_pose_transitional = kPose_51_FaceR_Jump_NoAim_MoveF as u16);
+    }
+    word!(game.samus_hurt_switch_index = 7);
+    finish_release(game);
+}
+
+fn finish_release(game: &mut Game) {
+    word! { game, 0;
+        grapple_beam_unkD1E, grapple_beam_unkD20, grapple_beam_direction, grapple_beam_unkD36,
+        grapple_walljump_timer, slow_grabble_scrolling_flag, grapple_varCF6, grapple_beam_flags,
+        flare_counter, flare_animation_frame, flare_slow_sparks_anim_frame,
+        flare_fast_sparks_anim_frame, flare_animation_timer, flare_slow_sparks_anim_timer,
+        flare_fast_sparks_anim_timer,
+    }
+    let beams = word!(game.equipped_beams) & 0xfff;
+    crate::game::samus_palette::write_beam_palette(
+        &mut crate::game::session_runtime::Runtime::new(game),
+        beams,
+    );
+    word!(game.grapple_beam_function = ((0x9bc4f0i32) as u16));
+    word!(game.samus_draw_handler = ((0x90eb52i32) as u16));
+    settle_grapple(game);
+    if word!(game.samus_auto_cancel_hud_item_index) != 0 {
+        word! { game, 0; hud_item_index, samus_auto_cancel_hud_item_index }
+    }
 }
 
 pub(crate) fn react_beam(game: &mut Game) -> u8 {

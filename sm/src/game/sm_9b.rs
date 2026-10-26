@@ -16,10 +16,9 @@ use crate::game::grapple_swing::{
     extend_beam as BlockCollGrappleBeam, react_beam as BlockReactGrapple,
     start_rope_animation as GrappleFunc_AF87,
 };
-use crate::game::music::{QueueSfx1_Max1, QueueSfx1_Max6, QueueSfx1_Max15};
+use crate::game::music::{QueueSfx1_Max1, QueueSfx1_Max6};
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
-use crate::game::session_runtime::player_command as CallSomeSamusCode;
-use crate::game::session_runtime::{player_bottom, settle_grapple};
+use crate::game::session_runtime::player_bottom;
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]
@@ -331,29 +330,6 @@ pub fn CheckBannedDraygonGrappleDirs(a: u16, game: &mut Game) -> u16 {
         1
     }
 }
-macro_rules! clear_grapple_state_after_release {
-    ($game:ident) => {
-        word! { $game, 0;
-            grapple_beam_unkD1E, grapple_beam_unkD20, grapple_beam_direction, grapple_beam_unkD36,
-            grapple_walljump_timer, slow_grabble_scrolling_flag, grapple_varCF6, grapple_beam_flags,
-            flare_counter, flare_animation_frame, flare_slow_sparks_anim_frame,
-            flare_fast_sparks_anim_frame, flare_animation_timer, flare_slow_sparks_anim_timer,
-            flare_fast_sparks_anim_timer,
-        }
-        let beams = word!($game.equipped_beams) & 0xfff;
-        crate::game::samus_palette::write_beam_palette(
-            &mut crate::game::session_runtime::Runtime::new($game),
-            beams,
-        );
-        word!($game.grapple_beam_function = ((0x9bc4f0i32) as u16));
-        word!($game.samus_draw_handler = ((0x90eb52i32) as u16));
-        settle_grapple($game);
-        if word!($game.samus_auto_cancel_hud_item_index) != 0 {
-            word! { $game, 0; hud_item_index, samus_auto_cancel_hud_item_index }
-        }
-    };
-}
-
 pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
     unsafe {
         let mut v0: u16 = 0;
@@ -668,139 +644,11 @@ crate::game::callback_dispatch! {
             word!(game.grapple_beam_function = (0x9bc8c5i32) as u16);
         };
     };
-    [10209366] GrappleBeamFunc_Cancel [] {
-        QueueSfx1_Max15(7, game);
-        if *ram_ptr!(game; 0xa1f) as i32 == kMovementType_16_Grappling as i32 {
-            pt::request_fallback_pose(&mut Runtime::new(game));
-        } else {
-            CallSomeSamusCode(0x1c, game);
-        }
-        clear_grapple_state_after_release!(game);
-    };
-    [10209477] GrappleBeam_Func2 [] {
-        let mut current_block: u64;
-        QueueSfx1_Max15(7, game);
-        if word!(game.samus_pose) as i32 == kPose_B2_FaceR_Grapple_Air as i32 {
-            current_block = 16041378612104114408;
-        } else {
-            if word!(game.samus_pose) as i32 == kPose_B3_FaceL_Grapple_Air as i32 {
-                current_block = 13151459208701579741;
-            } else if word!(game.samus_y_radius) as i32 - 17i32 & 0x8000 != 0 {
-                if ((*(rom_ptr!(game, SamusPoseParams; 0x91b629))
-                    .offset(word!(game.samus_pose) as isize))
-                .direction_shots_fired
-                    & 0xf0)
-                    != 0
-                {
-                    if *ram_ptr!(game; 0xa1e) == 4 {
-                        word!(game.samus_new_pose_transitional = kPose_28_FaceL_Crouch as u16);
-                    } else {
-                        word!(game.samus_new_pose_transitional = kPose_27_FaceR_Crouch as u16);
-                    }
-                } else {
-                    word!(
-                        game.samus_new_pose_transitional = *(rom_ptr!(game, u8; 0x9bc9c4)).offset(
-                            *(&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629)))
-                                .direction_shots_fired)
-                                .offset((8 * word!(game.samus_pose) as i32) as isize,)
-                                as isize,
-                        ) as u16
-                    );
-                }
-                current_block = 8968942556654489080;
-            } else if ((*(rom_ptr!(game, SamusPoseParams; 0x91b629))
-                .offset(word!(game.samus_pose) as isize))
-            .direction_shots_fired
-                & 0xf0)
-                != 0
-            {
-                if *ram_ptr!(game; 0xa1e) != 4 {
-                    current_block = 16041378612104114408;
-                } else {
-                    current_block = 13151459208701579741;
-                }
-            } else {
-                word!(
-                    game.samus_new_pose_transitional = *(rom_ptr!(game, u8; 0x9bc9ba)).offset(
-                        *(&raw mut (*(rom_ptr!(game, SamusPoseParams; 0x91b629)))
-                            .direction_shots_fired)
-                            .offset((8 * word!(game.samus_pose) as i32) as isize,)
-                            as isize,
-                    ) as u16
-                );
-                current_block = 8968942556654489080;
-            }
-            match current_block {
-                8968942556654489080 => {}
-                16041378612104114408 => {}
-                _ => {
-                    word!(game.samus_new_pose_transitional = kPose_02_FaceL_Normal as u16);
-                    current_block = 8968942556654489080;
-                }
-            }
-        }
-        if current_block == 16041378612104114408 {
-            word!(game.samus_new_pose_transitional = kPose_01_FaceR_Normal as u16);
-        }
-        word! {game; samus_hurt_switch_index = 0; input_to_pose_calc = 1; }
-        word! { game, 0;
-            samus_x_base_speed, samus_x_base_subspeed, samus_y_subspeed, samus_y_speed,
-            grapple_beam_unkD1E, grapple_beam_unkD20, grapple_beam_direction, grapple_beam_unkD36,
-            grapple_walljump_timer, slow_grabble_scrolling_flag, grapple_varCF6, grapple_beam_flags,
-            flare_counter, flare_animation_frame, flare_slow_sparks_anim_frame,
-            flare_fast_sparks_anim_frame, flare_animation_timer, flare_slow_sparks_anim_timer,
-            flare_fast_sparks_anim_timer,
-        }
-        let beams = word!(game.equipped_beams) & 0xfff;
-        crate::game::samus_palette::write_beam_palette(
-            &mut crate::game::session_runtime::Runtime::new(game), beams,
-        );
-        word!(game.grapple_beam_function = (0x9bc4f0i32) as u16);
-        word!(game.samus_draw_handler = (0x90eb52i32) as u16);
-        settle_grapple(game);
-        if word!(game.samus_auto_cancel_hud_item_index) != 0 {
-            word! { game, 0; hud_item_index, samus_auto_cancel_hud_item_index }
-        }
-    };
-    [10209742] GrappleBeamFunc_C9CE [] {
-        QueueSfx1_Max15(7, game);
-        if *ram_ptr!(game; 0xa1e) == 8 {
-            word!(game.samus_new_pose_transitional = kPose_84_FaceL_Walljump as u16);
-        } else {
-            word!(game.samus_new_pose_transitional = kPose_83_FaceR_Walljump as u16);
-        }
-        word!(game.samus_hurt_switch_index = 6);
-        word! { game, 0;
-            samus_x_accel_mode, samus_collides_with_solid_enemy, samus_is_falling_flag,
-            UNUSED_word_7E0B1A, UNUSED_word_7E0B2A, samus_y_subspeed, samus_y_speed, samus_y_dir,
-            UNUSED_word_7E0B38, samus_x_base_speed, samus_x_base_subspeed, grapple_beam_unkD1E,
-            grapple_beam_unkD20, grapple_beam_direction, grapple_beam_unkD36, grapple_walljump_timer,
-            slow_grabble_scrolling_flag, grapple_varCF6, grapple_beam_flags, flare_counter,
-            flare_animation_frame, flare_slow_sparks_anim_frame, flare_fast_sparks_anim_frame,
-            flare_animation_timer, flare_slow_sparks_anim_timer, flare_fast_sparks_anim_timer,
-        }
-        let beams = word!(game.equipped_beams) & 0xfff;
-        crate::game::samus_palette::write_beam_palette(
-            &mut crate::game::session_runtime::Runtime::new(game), beams,
-        );
-        word!(game.grapple_beam_function = (0x9bc4f0i32) as u16);
-        word!(game.samus_draw_handler = (0x90eb52i32) as u16);
-        settle_grapple(game);
-        if word!(game.samus_auto_cancel_hud_item_index) != 0 {
-            word! { game, 0; hud_item_index, samus_auto_cancel_hud_item_index }
-        }
-    };
-    [10210187] GrappleBeamFunc_ReleaseFromSwing [] {
-        QueueSfx1_Max15(7, game);
-        if (word!(game.grapple_beam_unkD26) & 0x8000) == 0 {
-            word!(game.samus_new_pose_transitional = kPose_52_FaceL_Jump_NoAim_MoveF as u16);
-        } else {
-            word!(game.samus_new_pose_transitional = kPose_51_FaceR_Jump_NoAim_MoveF as u16);
-        }
-        word!(game.samus_hurt_switch_index = 7);
-        clear_grapple_state_after_release!(game);
-    };
     @external {
+        10209366 => grapple_swing::cancel;
+        10209477 => grapple_swing::release_stationary;
+        10209742 => grapple_swing::release_walljump;
+        10210187 => grapple_swing::release_swing;
         10206052 => grapple_swing::apply_input;
         10206239 => grapple_swing::apply_gravity;
         10206463 => grapple_swing::accelerate;
