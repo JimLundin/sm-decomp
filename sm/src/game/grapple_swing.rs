@@ -499,13 +499,139 @@ fn draygon_direction(pose: u16, game: &mut Game) -> u16 {
     }
     straight
 }
+// Capture the native allocation before evaluating each fresh byte offset.
+macro_rules! native_grapple_byte {
+    ($game:ident, $address:literal, $offset:expr) => {
+        $game
+            .capture_native_rom()
+            .read(crate::rtl::lorom_offset($address) as usize + $offset)
+    };
+}
 macro_rules! native_pose_parameter {
     ($game:ident, $offset:literal) => {
-        $game.capture_native_rom().read(
-            crate::rtl::lorom_offset(0x91b629) as usize
-                + 8 * usize::from(word!($game.samus_pose))
-                + $offset,
+        native_grapple_byte!(
+            $game,
+            0x91b629,
+            8 * usize::from(word!($game.samus_pose)) + $offset
         )
+    };
+}
+macro_rules! place_samus_relative_to_grapple_origin {
+    ($game:ident, $offset_table:literal, $offset_index:ident) => {
+        word! { $game;
+            samus_x_pos = (word!($game.x_pos_of_start_of_grapple_beam)).wrapping_add(
+                native_grapple_byte!($game, $offset_table, usize::from($offset_index)) as i8 as u16,
+            );
+            samus_y_pos = (word!($game.y_pos_of_start_of_grapple_beam)).wrapping_add(
+                native_grapple_byte!($game, $offset_table, usize::from($offset_index) + 1) as i8 as u16,
+            );
+        }
+    };
+}
+
+macro_rules! restore_grapple_start_positions {
+    (
+        $pose_offset:ident, $game:ident, $origin_x_table:literal, $previous_x_table:literal,
+        $origin_y_table:literal, $y_adjustment:ident, $previous_y_table:literal $(,)?
+    ) => {
+        let v1: i32 = $pose_offset as i32 >> 1;
+        word! { $game;
+            x_pos_of_start_of_grapple_beam =
+                (crate::rtl::rom_table_word!($game, $origin_x_table, v1 as isize))
+                    .wrapping_add(word!($game.samus_x_pos));
+            x_pos_of_start_of_grapple_beam_prevframe =
+                (crate::rtl::rom_table_word!($game, $previous_x_table, v1 as isize))
+                    .wrapping_add(word!($game.samus_x_pos));
+            y_pos_of_start_of_grapple_beam =
+                (crate::rtl::rom_table_word!($game, $origin_y_table, v1 as isize) as i32
+                    + word!($game.samus_y_pos) as i32
+                    - $y_adjustment as i32) as u16;
+            y_pos_of_start_of_grapple_beam_prevframe =
+                (crate::rtl::rom_table_word!($game, $previous_y_table, v1 as isize) as i32
+                    + word!($game.samus_y_pos) as i32
+                    - $y_adjustment as i32) as u16;
+        }
+    };
+}
+
+#[forbid(unsafe_code)]
+pub(crate) fn position_swing(game: &mut Game) {
+    let v0: u16 = abs16(word!(game.grapple_beam_unkD26));
+    let mut v1: u16 = 0;
+    let start_grapple_animation: bool = if v0 as i32 - 64i32 & 0x8000 == 0 {
+        word!(game.slow_grabble_scrolling_flag = 1);
+        true
+    } else {
+        word!(game.slow_grabble_scrolling_flag = 0);
+        (((game.g_ram[0xcfb] as i32) << 8) != 0x8000)
+            || ({
+                if word!(game.samus_anim_frame) as i32 - 64i32 & 0x8000 != 0 {
+                    word! {game; samus_anim_frame_timer = 8; samus_anim_frame = 64; }
+                }
+                v1 = native_grapple_byte!(game, 0x9bc1c2, usize::from(game.g_ram[0xcfd])) as u16;
+                false
+            })
+    };
+    if start_grapple_animation {
+        word!(game.samus_anim_frame_timer = 15);
+        v1 = native_grapple_byte!(game, 0x9bc1c2, usize::from(game.g_ram[0xcfd])) as u16;
+        word!(game.samus_anim_frame = v1);
+    }
+    let v2: u16 = (2u16).wrapping_mul(v1);
+    if (abs16(word!(game.grapple_beam_unkD2E)) & 0xff00) == 256 {
+        let mut v3: u16 = word!(game.samus_anim_frame);
+        if word!(game.samus_anim_frame) as i32 - 64i32 & 0x8000 == 0 {
+            v3 = 16;
+        }
+        word!(game.samus_anim_frame = (v3).wrapping_add(32));
+    }
+    if game.g_ram[0xa1e] == 4 {
+        place_samus_relative_to_grapple_origin!(game, 0x9bc2c2, v2);
+    } else {
+        place_samus_relative_to_grapple_origin!(game, 0x9bc302, v2);
+    }
+    word! { game;
+        x_pos_of_start_of_grapple_beam_prevframe = word!(game.x_pos_of_start_of_grapple_beam);
+        y_pos_of_start_of_grapple_beam_prevframe = word!(game.y_pos_of_start_of_grapple_beam);
+    }
+    clamp_swing_position(game);
+}
+
+#[forbid(unsafe_code)]
+pub(crate) fn clamp_swing_position(game: &mut Game) {
+    let mut v0: i16 =
+        ((word!(game.samus_x_pos)) as i16).wrapping_sub((word!(game.samus_prev_x_pos)) as i16);
+    pt::clamp_previous_position(Runtime::new(game).session_mut(), v0);
+}
+
+#[forbid(unsafe_code)]
+pub(crate) fn position_anchored(game: &mut Game) {
+    let v0: i32 = word!(game.grapple_beam_direction) as i32;
+    word! { game;
+        samus_x_pos = (word!(game.x_pos_of_start_of_grapple_beam))
+            .wrapping_sub(crate::rtl::rom_table_word!(game, 0x9bc122, v0 as isize));
+        x_pos_of_start_of_grapple_beam_prevframe =
+            (crate::rtl::rom_table_word!(game, 0x9bc14a, v0 as isize))
+                .wrapping_add(word!(game.samus_x_pos));
+        samus_y_pos = (word!(game.y_pos_of_start_of_grapple_beam))
+            .wrapping_sub(crate::rtl::rom_table_word!(game, 0x9bc136, v0 as isize));
+        y_pos_of_start_of_grapple_beam_prevframe =
+            (crate::rtl::rom_table_word!(game, 0x9bc15e, v0 as isize))
+                .wrapping_add(word!(game.samus_y_pos));
+    }
+}
+
+#[forbid(unsafe_code)]
+pub(crate) fn restore_start_positions(game: &mut Game) {
+    let r22: u16 = native_pose_parameter!(game, 4) as u16;
+    let v0: u16 = (2u16).wrapping_mul(word!(game.grapple_beam_direction));
+    if word!(game.samus_pose) as i32 == kPose_49_FaceL_Moonwalk as i32
+        || word!(game.samus_pose) as i32 == kPose_4A_FaceR_Moonwalk as i32
+        || game.g_ram[0xa1f] != 1
+    {
+        restore_grapple_start_positions!(v0, game, 0x9bc122, 0x9bc14a, 0x9bc136, r22, 0x9bc15e);
+    } else {
+        restore_grapple_start_positions!(v0, game, 0x9bc172, 0x9bc19a, 0x9bc186, r22, 0x9bc1ae);
     };
 }
 

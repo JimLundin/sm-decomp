@@ -1545,7 +1545,7 @@ pub(crate) fn draw_player_frame(game: &mut Game) {
                 h.foreign(body::Samus_DrawEchoes);
             } else {
                 if matches!(grapple, 0xc703 | 0xc759) {
-                    h.foreign(|game| unsafe { crate::game::sm_9b::GrappleBeamFunc_BF1B(game) });
+                    h.foreign(crate::game::grapple_swing::restore_start_positions);
                 }
                 h.foreign(player_projectiles::grapple_flare);
                 h.foreign(draw_player_with_cannon);
