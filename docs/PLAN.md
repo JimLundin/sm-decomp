@@ -54,15 +54,16 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
    VRAM read-buffer, CGRAM-low and Mode7 latch values. No invented register defaults.
    Existing required rows and expectations remain intact; hosted verification and
    the combined full corpus are separate obligations, not inferred from this result.
-   68/82 rows use original seeds; seven use hash-bound native/oracle checkpoints,
-   and seven retain boot starts. The existing runner and encrypted bundle preserve
-   full inputs, original windows, guards and both required Kago setup encounters.
-   These are verified route starts, not original TAS seeds; intro has zero setup.
-   A2 removed three unused recipes and 76 net support lines; five recipes remain.
-   For those seven rows, configured setup falls from 484286 to 28700 frames;
-   ordinary CLI 12/12 passes. Six remaining nonzero boot starts total 975592 frames.
-   Next migrate remaining boot starts where worthwhile, preserving their authored
-   events; delete a recipe only when no consumer needs it and inputs stay available.
+   **A2 complete:** 68/82 rows use original seeds, thirteen use hash-bound native/oracle
+   checkpoints, and only the full 8780-frame intro boots with zero setup. The existing
+   runner and encrypted 22-asset bundle preserve full inputs, original windows,
+   guards, both Kago setup encounters and all twelve previously distributed assets.
+   These route starts are not original TAS seeds. Converted-row configured setup
+   falls from 1459878 to 28700 frames; original seeded warmups remain separate.
+   The final six rows plus smoke pass ordinary CLI 10/10, 7034 selected/zero setup.
+   Seven unused recipes removed; net support reduction is 340 lines across both A2
+   packets. Speed remains for the full intro input. A continues the next unclaimed
+   bank in REVIEW's queues; coverage and bank retirement do not finish owned Session.
 2. **Current - lane B retirement.** B1 sm_88/sm_a0/sm_81 and B3 sm_8f/sm_b2 are
    retired. M2 sm_a8, eleven B2 cinematic families and B3 Goofball are integrated;
    all 82 corpus rows passed on 6c675730 after bank-80 deletion; later work uses scoped rows.

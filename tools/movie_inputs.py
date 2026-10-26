@@ -449,10 +449,6 @@ def parse_bk2(text):
 ROUTE_SOURCE_SHA256 = 'e53b1ce15b3f01516eb64c68a6db2911f91bd97197eb05960779561be5c7cbe9'
 ROUTES = {
     'speed-booster': (148406, 'bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6'),
-    'crocomire': (171694, '90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe'),
-    'crocomire-shot': (167295, 'e46b9a61eeded83064cc3a9fc29cf05d6a1cd18151c06cd6c9b78930af41766b'),
-    'wave-gate': (153648, '1ce640c865d508ff2aab0f79c043c6da8aff9b74d6a1444d3a994e20d68db123'),
-    'norfair-reserve': (147887, '968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d'),
 }
 
 
@@ -1229,273 +1225,20 @@ def extend_redtower(a):
     return a
 
 
-def extend_ice(a):
-    """Authored Speed148406 -> Ice161613, without input/NMI timing changes.
-
-    Archived 2026-10-19 sessions01a153bb-3fca-7c60-acb7-ef6509fc3f25
-    and01a15498-a511-7142-a1de-18b74cb2ac99; ordinals identify original commands.
-    """
-    # First session: selected return route and farm refill.
-    assert len(a) == 148406
-    a = list(a)
-    a.extend(_holds('Left:8 Left+X:190 None:15'))  # ice-return-room-exit; ordinal 5510
-    a.extend(_holds('Left+A:20 Left+X:190 None:15'))  # ice-return-hall; ordinal 5519
-    a.extend(_holds('B+Left:300'))  # ice-hall-run-a; ordinal 5531
-    a.extend(_holds('B+Left+X:210 None:15'))  # ice-farm-return; ordinal 5540
-    a.extend(_holds('None:25 Left:10 Left+A+X:50 Up:35'))  # ice-farm-perch; ordinal 5549
-    a.extend(_holds('Down:1 None:10 Down:1 None:10') + _holds('X:1 None:19') * 20)  # ice-farm-bombs; ordinal 5558
-    a.extend(_holds('Right+X:20 None:8') + _holds('X:1 None:19') * 30)  # ice-farm-center-bombs; ordinal 5586
-    a.extend(_holds('X:1 None:19') * 30 + _holds('None:60'))  # ice-farm-full-refill; ordinal 5596
-    a.extend(_holds('Up:1 None:10 Up:1 None:10 Right:1 Right+A+X:60 None:20'))  # ice-farm-descend-align; ordinal 5610
-    a.extend(_holds('Right:13 Down:1 None:10 Down:1 None:10 X:1 None:100'))  # ice-farm-shaft-bomb; ordinal 5621
-    a.extend(_holds('Down:1 None:10 Down:1 None:10 Left:11 None:10 X:1 None:120'))  # ice-farm-morph-drop; ordinal 5630
-    a.extend(_holds('Right:5 None:10 X:1 None:140'))  # ice-farm-shaft-enter; ordinal 5639
-    a.extend(_holds('Right:4 None:75'))  # ice-farm-middle-drop; ordinal 5649
-    a.extend(_holds('Left:7 None:10 X:1 None:140'))  # ice-farm-lower-drop; ordinal 5658
-    a.extend(_holds('None:10 Up:1 None:10 Up:1 None:10 Left:1 Left+A+X:35 Up:1 Up+X:1 None:30'))  # ice-farm-bottom-hop; ordinal 5667
-    a.extend(_holds('Left:1 Left+A+X:52 Left:1 Left+X:180 None:15'))  # ice-bubble-arrival; ordinal 5692
-    a.extend(_holds('B+Left+X:180'))  # ice-bubble-west-descent; ordinal 5714
-    a.extend(_holds('Left+A:100 None:10'))  # ice-bubble-central-hop; ordinal 5723
-    a.extend(_holds('None:110 Left:80 None:20'))  # ice-bubble-lower-landing; ordinal 5732
-    a.extend(_holds('Left+A:100 Left:50 Left+X:160 None:15'))  # ice-green-bubbles-return; ordinal 5741
-    a.extend(_holds('Right:15 None:45 Left:50 None:10'))  # ice-bubble-west-foot; ordinal 5750
-    a.extend(_holds('Right:25 None:50 Left:75 None:10'))  # ice-bubble-low-door; ordinal 5759
-    a.extend(_holds('Left+X:170 None:15'))  # ice-green-tunnel-entry; ordinal 5770
-    a.extend(_holds('Left+X:20 B+Left+A:60 B+Left:20'))  # ice-green-tunnel-hop-a; ordinal 5785
-    a.extend(_holds('B+Left+A+X:1 B+Left+A:14') * 7 + _holds('B+Left:10'))  # ice-green-tunnel-hop-b; ordinal 5799
-    a.extend(_holds('B+Left+A+X:35 Up:1 None:50'))  # ice-green-tunnel-perch; ordinal 5808
-    a.extend(_holds('B+Left:3 B+Left+A+X:55 Up:1 None:20'))  # ice-green-tunnel-hop-c; ordinal 5817
-    a.extend(_holds('B+Left:3 B+Left+A+X:43 Up:1 None:30'))  # ice-green-tunnel-hop-d; ordinal 5826
-    # Second session: selected Ice approach, pickup and dismissed message.
-    assert len(a) == 154091
-    a.extend(_holds('B+Left+A+X:110 B+Left+X:12'))  # ice-dragon-west-b; ordinal 49
-    a.extend(_holds('B+Left+A+X:60 B+Left+X:2 B+Left+A+X:60 B+Left+X:2'))  # ice-dragon-west-c; ordinal 56
-    a.extend(_holds('B+Left+A+X:85 B+Left+X:2 B+Left+A+X:85 B+Left+X:2 B+Left+A+X:85 B+Left+X:2'))  # ice-dragon-west-d; ordinal 63
-    a.extend(_holds('B+Left+A+X:80 B+Left+X:2 B+Left+A+X:80 B+Left+X:2 B+Left+A+X:80 B+Left+X:2 B+Left+A+X:80 B+Left+X:2'))  # ice-dragon-west-e; ordinal 72
-    a.extend(_holds('B+Right+A:38 A:34 None:4'))  # ice-dragon-west-step-b; ordinal 109
-    a.extend(_holds('B+Left+A+X:48 A+X:36 None:3'))  # ice-dragon-west-high-a; ordinal 116
-    a.extend(_holds('B+Left+A+X:68 B+Left+X:2 B+Left+A+X:75 B+Left+X:2 B+Left+A+X:75 B+Left+X:2'))  # ice-dragon-west-f; ordinal 123
-    a.extend(_holds('B+Left+A+X:27 A+X:50 None:3'))  # ice-dragon-west-step-d; ordinal 144
-    a.extend(_holds('B+Left+A+X:68 B+Left+X:90'))  # ice-dragon-west-exit-b; ordinal 153
-    a.extend(_holds('B+Left+X:80'))  # ice-cathedral-entry; ordinal 160
-    a.extend(_holds('B+Left+A+X:42 A+X:28 None:3'))  # ice-cathedral-climb-a; ordinal 167
-    a.extend(_holds('B+Right:20 B+Right+A:12 A:16 B+Left+A:32 A:35 None:3'))  # ice-cathedral-climb-b; ordinal 188
-    a.extend(_holds('B+Right:25 None:12'))  # ice-cathedral-rightbase; ordinal 195
-    a.extend(_holds('B+Left+A+X:62 A+X:28 None:3'))  # ice-cathedral-climb-c; ordinal 202
-    a.extend(_holds('Right:19 None:12'))  # ice-cathedral-midbase; ordinal 209
-    a.extend(_holds('A:28 Left+A:24 A:35 None:3'))  # ice-cathedral-climb-d; ordinal 216
-    a.extend(_holds('B+Left+A+X:67 A+X:25 None:3'))  # ice-cathedral-high-a; ordinal 223
-    a.extend(_holds('B+Left:4 B+Left+A+X:85 B+Left+X:8'))  # ice-cathedral-west-a; ordinal 235
-    a.extend(_holds('B+Left+X:35'))  # ice-cathedral-midfall; ordinal 244
-    a.extend(_holds('Right:19 None:12 B+Right+A:31 A:48 None:3'))  # ice-cathedral-middle-step; ordinal 258
-    a.extend(_holds('B+Right+A+X:40 A+X:45 None:3'))  # ice-cathedral-middle-step-b; ordinal 265
-    a.extend(_holds('B+Left+A+X:61 A+X:25 None:3'))  # ice-cathedral-middle-high; ordinal 272
-    a.extend(_holds('X:10 B+Left+A+X:38 A+X:50 None:3'))  # ice-cathedral-center-top; ordinal 279
-    a.extend(_holds('B+Left:8 B+Left+A+X:72 X:12'))  # ice-cathedral-west-b; ordinal 286
-    a.extend(_holds('X:5 B+Left+A+X:39 A+X:52 None:3'))  # ice-cathedral-left-climb; ordinal 293
-    a.extend(_holds('B+Left+A+X:50 A+X:43 None:3'))  # ice-cathedral-left-top; ordinal 307
-    a.extend(_holds('B+Left:10 B+Left+A+X:65 X:20'))  # ice-cathedral-west-c; ordinal 314
-    a.extend(_holds('Up+X:3 Up:1 B+Left+A+X:70 B+Left+X:100'))  # ice-cathedral-west-exit-d; ordinal 344
-    a.extend(_holds('B+Left+X:80 B+Left:1 B+Left+X:63 B+Left+X+L:3 B+Left+L:1 B+Select+Left:1 B+Left:1 B+Select+Left:1 B+Left+X:1 B+Left:15 B+Left+X:1 B+Left:15 B+Left+X:1 B+Left:15 B+Y+Left:1 B+Left+X:80'))  # ice-entrance-safer-cross-c; ordinal 615
-    assert len(a) == 157527
-    # Ordinal 622: safer-cross-c + walljump-c[157525:158325].
-    # The following original climb holds ARE that 800-frame donor tail.
-    # Original donor crossing351 ended157525; replacement615 ends157527.
-    # Preserve the authored two-frame difference; no timing compensation.
-    a.extend(_holds('B+Left:4 B+Left+A:55 A:40 None:3'))  # ice-cathedral-entrance-climb-a; ordinal 367
-    a.extend(_holds('Up+X:65 Up:1 B+Left+A+X:60 A+X:40 None:3'))  # ice-cathedral-entrance-climb-b; ordinal 374
-    a.extend(_holds('B+Right:13'))  # ice-cathedral-entrance-leftledge; ordinal 383
-    a.extend(_holds('B+Right+A:20 B+Left+A:18 B+Right:3 B+Right+A:12 Up+A:1 Up+X:10'))  # ice-cathedral-entrance-walljump-b; ordinal 470
-    a.extend(_holds('Up:1 Up+X:1 Up:10 Up+X:1 Up:10 Up+X:1 Up:10 Up+X:1 Up:10 Up+X:1 Up:20'))  # ice-cathedral-entrance-openfloor; ordinal 520
-    a.extend(_holds('A+X:35 B+Left+A+X:43 X:30'))  # ice-cathedral-entrance-climb-c; ordinal 527
-    a.extend(_holds('X:10 B+Left+A+X:65 X:25 B+Right:13'))  # ice-cathedral-entrance-climb-d; ordinal 536
-    a.extend(_holds('B+Right+A:40 B+Left:3 B+Left+A:32 B+Left+X:90'))  # ice-cathedral-entrance-walljump-c; ordinal 543
-    assert len(a) == 158327
-    a.extend(_holds('None:140'))  # ice-business-healthier-entry; ordinal 634
-    a.extend(_holds('R:3 X+R:1 R:10 X+R:1 R:10 X+R:1 R:10 X+R:1 R:25'))  # ice-business-dragon-kill; ordinal 648
-    a.extend(_holds('B+Left+A+X:33 A+X:40 None:3'))  # ice-business-dragon-drop; ordinal 662
-    a.extend(_holds('B+Left+X:45 B+Select+Left:1 B+Left:1 B+Select+Left:1 B+Left+X:1 B+Left:135'))  # ice-business-ice-door; ordinal 671
-    a.extend(_holds('B+Y+Left:1 B+Left+X:220'))  # ice-access-run-a; ordinal 678
-    a.extend(_holds('B+Y+Left:1 B+Left+A+X:65 B+Left+X:105'))  # ice-access-west-exit; ordinal 685
-    a.extend(_holds('B+Left+A+X:35 B+Left+X:2'))  # ice-tripper-hop-b; ordinal 706
-    a.extend(_holds('B+Left+X:20'))  # ice-tripper-ledge-a; ordinal 713
-    a.extend(_holds('B+Left+X:12 B+Left+A+X:60 B+Left+X:2'))  # ice-tripper-hop-e; ordinal 741
-    a.extend(_holds('B+Left+X:5 B+Left+A+X:60 B+Left+X:130'))  # ice-tripper-west-exit; ordinal 748
-    a.extend(_holds('B+Left:1 B+Left+X:1 B+Left:140'))  # ice-tripper-west-door; ordinal 755
-    a.extend(_holds('B+Left+X:8 B+Left+A+X:35 X:20'))  # ice-pre-shaft-climb-a; ordinal 771
-    a.extend(_holds('B+Left:15 B+Right+A+X:43 X:20'))  # ice-pre-shaft-climb-b; ordinal 778
-    a.extend(_holds('B+Right:15 B+Left+A+X:43 X:20 B+Left:15 B+Right+A+X:43 X:20'))  # ice-pre-shaft-climb-c; ordinal 794
-    a.extend(_holds('B+Right:15 B+Left+A+X:43 X:20 B+Left:15 B+Right+A+X:43 X:20 B+Right:15 B+Left+A+X:43 X:20 B+Left:15 B+Right+A+X:43 X:20'))  # ice-pre-shaft-climb-d; ordinal 808
-    a.extend(_holds('B+Right+X:40 X:12'))  # ice-pre-shaft-top-right; ordinal 817
-    a.extend(_holds('Down:1 None:8 Down:1 None:10 Left:10 None:10 X:1 None:65'))  # ice-pre-shaft-bomb-floor; ordinal 824
-    a.extend(_holds('Down:1 None:20 Down:1 None:20 Left:8 None:10 X:1 None:65'))  # ice-pre-shaft-morph-a; ordinal 831
-    a.extend(_holds('None:64'))  # ice-pre-shaft-drop-a; ordinal 838
-    a.extend(_holds('Right:30'))  # ice-pre-shaft-crawl-a; ordinal 847
-    a.extend(_holds('Left:20'))  # ice-pre-shaft-drop-b; ordinal 854
-    a.extend(_holds('None:10 Right:24'))  # ice-pre-shaft-crawl-b; ordinal 861
-    a.extend(_holds('B+Right+X:1 B+Right:12 B+Right+X:1 B+Right:12 B+Right+X:1 B+Right:12 B+Right+X:1 B+Right:12'))  # ice-pre-shaft-crawl-c; ordinal 876
-    a.extend(_holds('Up:1 None:20 B+Right+X:50 B+Right:1 B+Right+X:1 B+Right:110'))  # ice-room-entry; ordinal 883
-    a.extend(_holds('B+Right+A+X:65 B+Right:1 B+Right+X:1 B+Right:130'))  # ice-room-entry-hop; ordinal 890
-    a.extend(_holds('B+Right+X:1 B+Right:18 B+Right+A+X:40 None:90'))  # ice-pickup-a; ordinal 897
-    a.extend(_holds('A:1 None:90'))  # ice-pickup-dismiss-a; ordinal 905
-    a.extend(_holds('None:160 A:1 None:90'))  # ice-beam-dismissed-161613; ordinal 928
-    # Ordinal 949 copies this exact route to ice-beam-161613.
-    assert len(a) == 161613
-    return a
 
 
 
 
-def extend_reserve(a):
-    """Norfair Reserve branch from the authored Bubble Mountain upper-west landing.
-
-    Preserve the selected controller sequence, including the intermediate missile
-    message. The final reserve message completes before the neutral follow-up.
-    """
-    assert len(a) == 148406
-    a = list(a[:145574])
-    a.extend(_holds('Select:1 None:1 Select:1 None:5 Left+X:140 None:15'))  # reserve-ac83-entry
-    a.extend(_holds('Y:1 X:1 None:10 X:1 None:10 X:1 None:10 X:1 None:10 X:1 None:10'))  # reserve-geruta-clear
-    a.extend(_holds('Left+A:43 Up+A:1 None:15'))  # reserve-first-pillar
-    a.extend(_holds('Left:6 Left+A:52 Up+A:1 None:12'))  # reserve-second-pillar-near
-    a.extend(_holds('Left:4 None:8'))  # reserve-second-pillar-settle
-    a.extend(_holds('None:180 A:1 None:60'))  # reserve-missile-message
-    a.extend(_holds('None:110 A:1 None:40'))  # reserve-missile-dismiss
-    a.extend(_holds('R:2 X+R:1 None:20'))  # reserve-aperture-shot
-    a.extend(_holds('Left:6 Left+A:10 A+X:1 Down+A:1 A:1 Down+A:1 Left+A:35'))  # reserve-aperture-close-morph
-    a.extend(_holds('Left:25'))  # reserve-aperture-through
-    a.extend(_holds('Left:60 Up:1 None:10 Up:1 Left+X:45 None:120'))  # reserve-ac5a-entry
-    a.extend(_holds('Left:45 None:120'))  # reserve-ac5a-cross
-    a.extend(_holds('Left:8 Left+A:50 Up+A:1 None:15'))  # reserve-room-first-stone
-    a.extend(_holds('Left+A:50 Up+A:1 None:15'))  # reserve-room-second-stone
-    a.extend(_holds('Left:6 Left+A:28 Down+A:1 A:1 A+X:1 A:10'))  # reserve-third-early-shot
-    a.extend(_holds('Left+A:12 A+L:2 A+X+L:1 Left+A:4 Up+A:1 None:10'))  # reserve-third-land-aimed
-    a.extend(_holds('Left:18 None:8'))  # reserve-third-recover
-    a.extend(_holds('Left+A:50 Up+A:1 None:15'))  # reserve-room-fourth-stone
-    a.extend(_holds('Left+A:50 Up+A:1 None:15 Left+A:50 Up+A:1 None:15'))  # reserve-tank-ledge
-    a.extend(_holds('L:2 X+L:1 None:12 Left:18 None:400 A:1 None:180'))  # reserve-collected
-    assert len(a) == 147887
-    return a
 
 
 
 
-def extend_wave_gate(a):
-    """Observed Bubble return -> ADAD gate re-close, without timing offsets."""
-    a = list(a[:152344])
-    assert len(a) == 152344
-    a.extend(_holds('Right+X:130 None:20'))  # Middle-east Bubble door.
-    a.extend(_holds('Right+A+X:20 Right+X:150 None:20'))
-    a.extend(_holds('Right+X:80 None:40'))  # AD5E shaft.
-    a.extend(_holds('Left+X:72 None:30'))
-    a.extend(_holds('None:25 Right+X:40 Right+A+X:35 Select:1 None:1 Select:1 Right+X:1 Right:25 Y:1 Right+X:150 None:20'))
-    a.extend(_holds('B+Right:4 B+Right+A+X:80 None:5'))  # ADAD moving platforms.
-    a.extend(_holds('None:10 Right+A+X:56 A+X:35 None:10'))
-    a.extend(_holds('B+Right:8 B+Right+A+X:28'))
-    a.extend(_holds('Right+A:22 Left:4 Right:4 Left:4 Right:4'))
-    a.extend(_holds('Up+X:1 Up:15 Up+X:1 Up:15 Up+X:1 Up:60'))  # Open the blue gate.
-    a.extend(_holds('Right+A+X:55 None:20'))  # Crossing triggers re-close.
-    assert len(a) == 153648
-    return a
 
 
-def extend_wave_pickup(a):
-    """Observed ADAD gate exit -> fresh Wave award and completed message."""
-    assert len(a) == 153648
-    a = list(a)
-    a.extend(_holds('Right+X:45 None:20 None:420 A:1 None:180'))  # Missile ledge.
-    a.extend(_holds('B+Right:31 B+Right+A:70 None:10'))  # Upper runway edge.
-    a.extend(_holds('Right+A:16 Left:2 Left+A:1 Right+A:20'))  # Spike ledge.
-    a.extend(_holds('Left:25 B+Right:6 B+Right+A:28 Left:3 Left+A:1 Right+A:25'))
-    a.extend(_holds('Right+A:17 Left:2 Left+A:14 Right+A:35 None:10'))  # Clear overhang.
-    a.extend(_holds('Right:10 Select:1 None:1 Select:1 Right+X:1 Right:25 Y:1 Right+X:150 None:20'))
-    a.extend(_holds('Right+A+X:55 None:100'))  # ADDE orb approach; ends154995.
-    a.extend(_holds('Right+A:1 Right+A+X:30 None:100'))  # Fresh Wave award.
-    a.extend(_holds('None:300 A:1 None:180'))  # Message dismissal and follow-up.
-    assert len(a) == 155607
-    return a
 
 
-def extend_crocomire_shot_regression(a):
-    """Observed Wave departure, refill, Crocomire fight and diagonal shot."""
-    assert len(a) == 155607
-    a = list(a)
-    a.extend(_holds('Left+X:180 None:15 Left+A+X:35 Left+X:160 None:15 B+Left+X:200'))
-    a.extend(_holds('None:25 Down:1 None:10 Down:1 None:10 Left:120'))
-    a.extend(_holds('None:10 Up:1 None:10 Up:1 None:10 Left+A+X:70'))
-    a.extend(_holds('Left+X:150 None:15 Right:20 Up+A:5 Left+A:3 Left+A+X:1'))
-    a.extend(_holds('A:10 Left+X:150 None:15 B+Left:4 B+Left+A:45 Left+X:50'))
-    a.extend(_holds('None:10 Up+A:25 Right+A:35 None:20 Right+X:38 None:5'))
-    a.extend(_holds('Right:23 None:10 Left:16 Up+A:25 Left+A:30 None:20'))
-    a.extend(_holds('Left:35 None:10 Up+A:25 Right+A:35 None:20 Left:45'))
-    a.extend(_holds('None:10 Up+A+X:25 Right+A+X:35 None:20 Right+X:38 None:10'))
-    a.extend(_holds('Right:22 None:10 Up+A:25 Left+A+X:35 None:20 Left:3'))
-    a.extend(_holds('Left+X:100 None:30 Left+X:140 None:100 Left+A:65 Left:55'))
-    a.extend(_holds('None:60 Left+A:70 Left:60 None:80 Left+A:45 None:110'))
-    a.extend(_holds('Up+A:8 Down+A:5 Down+A+X:1 None:100 Up+A:8 Down+A:5'))
-    a.extend(_holds('Down+A+X:1 None:100 Right:5 None:10 Down:5 None:5'))
-    a.extend(_holds('Down:5 None:110 Right:8 None:90 X:1 None:130'))
-    a.extend(_holds('X:1 Right:100 None:30 Left:10 X:1 Left:110'))
-    a.extend(_holds('None:40 Left:15 Left+X:1 Left:125 None:30 X:1'))
-    a.extend(_holds('Left:130 None:20 Up:10 None:15 Left:38 None:15'))
-    a.extend(_holds('Up:10 None:15 Up:5 None:10 Up+A:15 Left+A:45'))
-    a.extend(_holds('Left+X:100 None:30 Right:27 None:14 Left:3 Left+X:40'))
-    a.extend(_holds('None:15 Left+X:130 None:70 Left+X:75 None:40 Left:13'))
-    a.extend(_holds('None:10 Up+A:8 Down+A:5 Down+A+X:1 None:85 Left:65'))
-    a.extend(_holds('None:10 Up+A:5 Left+A:3 Left+A+X:1 Left+X:70 None:20'))
-    a.extend(_holds('Right:35 None:10 Left:3 None:5 Up+A:7 Left+A:2'))
-    a.extend(_holds('Left+A+X:1 Left:85 None:20 Left+X:140 None:60 Left:21'))
-    a.extend(_holds('None:100 Right:5 None:110 Left:13 None:10 Up+A:8'))
-    a.extend(_holds('Down+A:5 Down+A+X:1 None:165 Left:11 None:8 Up+A:8'))
-    a.extend(_holds('Down+A:5 None:15 Down:4 Down+X:1 None:180 Right:3'))
-    a.extend(_holds('Right+X:100 None:70 Right:35 None:240 Right:22 None:220'))
-    a.extend(_holds('Left:3 Left+A:15 Left+A+X:1 Left:125 None:60 Left+A:8'))
-    a.extend(_holds('Left+A+X:1 Left:130 None:65 B+Left+X:180 None:70 B+Left+A:65'))
-    a.extend(_holds('B+Left+X:50 B+Left+A:65 B+Left+X:50 B+Left+A:65 B+Left+X:100 None:75'))
-    a.extend(_holds('Left:30 None:45 Select:1 None:2 Select:1 None:5'))
-    a.extend(_holds('Left:14 None:8 Up+A:5 Down+A:3 Down+A+X:1 None:165'))
-    a.extend(_holds('Y:1 Right:25 X:80 None:15 Right:25 X:70'))
-    a.extend(_holds('None:20 X:70 None:20 X:70 A+X:10 A:1'))
-    a.extend(_holds('None:70 Right:15 X:65 A+X:10 A:1 None:65'))
-    a.extend(_holds('X:65 A+X:10 A:1 None:65 Right:10 X:65'))
-    a.extend(_holds('A+X:10 A:1 None:65 Right:20 X:65 A+X:10'))
-    a.extend(_holds('A:1 None:65 Left+X:30 Right+X:3 X:130 A+X:10'))
-    a.extend(_holds('A:1 None:35 X:65 A+X:10 A:1 None:30'))
-    a.extend(_holds('Right+X:12 X:53 A+X:10 A:1 None:35 Right+X:25'))
-    a.extend(_holds('X:60 Right+X:12 X:40 A+X:10 A:1 X:115'))
-    a.extend(_holds('A+X:10 A:1 None:35 Select:1 None:1 Select:1'))
-    a.extend(_holds('A:10 A+X:1 None:12 X:1 None:25 A:15'))
-    a.extend(_holds('A+X:1 None:25 X:1 None:35 A:13 A+X:1'))
-    a.extend(_holds('None:30 Y:1 X:65 A+X:14 A:1 None:30'))
-    a.extend(_holds('Right+X:25 X:40 A+X:14 A:1 None:30 X:70'))
-    a.extend(_holds('A+X:14 A:1 None:30 Right+X:12 X:98 A+X:14'))
-    a.extend(_holds('A:1 None:30 X:65 A+X:14 A:1 None:30'))
-    a.extend(_holds('Right:20 Select:1 None:200 A:14 A+X:1 None:10'))
-    a.extend(_holds('X:1 None:30 X:1 None:25 A:14 A+X:1'))
-    a.extend(_holds('None:10 X:1 None:30 Y:1 Right+X:20 X:45'))
-    a.extend(_holds('A+X:14 A:1 Select:1 None:9 X:1 None:30'))
-    a.extend(_holds('Y:1 Right+X:15 X:110 Left+X:15 Right+X:3 X:30'))
-    a.extend(_holds('Left+X:20 Right+X:3 X:25 X+R:44 R:1 Select+R:1'))
-    a.extend(_holds('R:10 X+R:1 R:10 X+R:1 R:20'))
-    assert len(a) == 167295
-    return a
 
 
-def extend_crocomire_completion(a):
-    # Continue the qualified fight, then both melts and the wall/skeleton sequence.
-    a = a[:167285]
-    a.extend(_holds('X+R:1 R:10 X+R:1 R:10 X+R:1 R:35'))
-    a.extend(_holds('Y:1 Right+X:15 X+R:101 R:1 Select+R:1 R:29'))
-    a.extend(_holds('X+R:1 R:30 Y:1 Right+X:23 X+R:158 R:1'))
-    a.extend(_holds('X+R:85 Right+X:14 X+R:50 R:1 X+R:80 Right+X:22'))
-    a.extend(_holds('X+R:15 R:1 X+R:60 Right+X:14 X+R:33 R:1'))
-    a.extend(_holds('X+R:60 Right+X:20 X+R:28 R:1 X+R:60 Right+X:20'))
-    a.extend(_holds('X+R:19 R:1 X+R:80 R:1 X+R:80 Right+X:22'))
-    a.extend(_holds('X+R:3 R:1 X+R:60 Right+X:20 X+R:32 R:1'))
-    a.extend(_holds('X+R:60 Right+X:20 X+R:40 R:1 X+R:70 None:1480'))
-    a.extend(_holds('B+Left:120 None:30 Left:18 None:1265'))
-    assert len(a) == 171694
-    return a
 
 
 def route_frames(source, name):
@@ -1510,13 +1253,6 @@ def route_frames(source, name):
     for extend in (_early_route, _missile_route, extend_missile, extend_parlor,
                    extend_bombs, extend_hill, extend_green, extend_super):
         a = extend(a)
-    if name in ('crocomire-shot', 'crocomire'):
-        route = extend_crocomire_shot_regression(extend_wave_pickup(extend_wave_gate(extend_ice(extend_redtower(a)))))
-        return extend_crocomire_completion(route) if name == 'crocomire' else route
-    if name == 'wave-gate':
-        return extend_wave_gate(extend_ice(extend_redtower(a)))
-    if name == 'norfair-reserve':
-        return extend_reserve(extend_redtower(a))
     return extend_redtower(a)[:ROUTES[name][0]]
 
 

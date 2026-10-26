@@ -185,6 +185,8 @@ after_expectations = 120
 
 [[segment]]
 id = "boss-crocomire"
+checkpoint = "crocomire-boss-167285.smvchk"
+checkpoint_sha256 = "e19ba70576bc0ec51eecfc72bd0e4268662f4ed089de39f10f921a7438674f60"
 inputs = "corpus-crocomire.inputs"
 input_sha256 = "90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe"
 start_frame = 167285
@@ -575,6 +577,8 @@ expect = ["room:AC83"]
 
 [[segment]]
 id = "pickup-reserve"
+checkpoint = "reserve-147273.smvchk"
+checkpoint_sha256 = "74c9113677bb61590d517b36681c45eeceff04590fd567ec877519f1aa5857dc"
 inputs = "corpus-norfair-reserve.inputs"
 input_sha256 = "968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d"
 start_frame = 147273
@@ -704,6 +708,8 @@ expect = ["state:8", "state:11"]
 # The predecessor writes 0000 instead of E64B to spawn.primary at step 153607.
 [[segment]]
 id = "shot-gate-spawn-parameter"
+checkpoint = "gate-153606.smvchk"
+checkpoint_sha256 = "c5f6904de23cc06c1587a0a164b189b2a55eba4586e0c3cc1fde44dfa8ec8f52"
 inputs = "corpus-wave-gate.inputs"
 input_sha256 = "1ce640c865d508ff2aab0f79c043c6da8aff9b74d6a1444d3a994e20d68db123"
 start_frame = 153606
@@ -738,6 +744,8 @@ expect = ["area:crateria"]
 # Onscreen dust writes its last bound before the following Crocomire spit drop.
 [[segment]]
 id = "crocomire-spit-drop-scratch"
+checkpoint = "crocomire-spit-167281.smvchk"
+checkpoint_sha256 = "a53c6a695aaa3dcad43a0547d15eab11f7b6a9458e22d6a51840707bd0e5d361"
 inputs = "corpus-crocomire-shot.inputs"
 input_sha256 = "e46b9a61eeded83064cc3a9fc29cf05d6a1cd18151c06cd6c9b78930af41766b"
 start_frame = 167281
@@ -747,6 +755,8 @@ expect = ["room:A98D", "state:8"]
 
 [[segment]]
 id = "crocomire-melt-graphics-buffer"
+checkpoint = "crocomire-melt-169057.smvchk"
+checkpoint_sha256 = "e6a957ce31f1e826371b180003c8952a846921b28922e1564402fe33562f19e6"
 inputs = "corpus-crocomire.inputs"
 input_sha256 = "90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe"
 start_frame = 169057
@@ -755,6 +765,8 @@ expect = ["room:A98D", "state:8"]
 
 [[segment]]
 id = "crocomire-wall-spawn-return"
+checkpoint = "crocomire-wall-171090.smvchk"
+checkpoint_sha256 = "e556373376d7d64eb1ca0723c514ac9c8986cfe4e4e284fffcdd1f8dacf2f139"
 inputs = "corpus-crocomire.inputs"
 input_sha256 = "90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe"
 start_frame = 171090

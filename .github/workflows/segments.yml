@@ -104,7 +104,7 @@ jobs:
                   raise SystemExit(f'unknown rows: {sorted(unknown)}')
           def seed_bundle(row):
               if 'checkpoint' in row:
-                  return ('checkpoints-v1-seven-8b6610595422a04c.tar.gz.enc', '8b6610595422a04c0783b4c289ece3384b7e2357f2519104465a2aa8f826bfec')
+                  return ('checkpoints-v1-final-fdf74bcab62e16fc.tar.gz.enc', 'fdf74bcab62e16fccdd7590bf9b112846c50d8aa00a6773f200d27ba6883eed1')
               # Match exact seed identities, not capture prefixes: pickups and the
               # general bundle contain different subsets of 100-input-phase.
               seed = row.get('seed')

@@ -262,7 +262,6 @@ Generate the shared authored route from the any% movie above, then run the corpu
 
 ```powershell
 python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-speed-booster.inputs --rom rom/sm.smc --route speed-booster
-python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-norfair-reserve.inputs --rom rom/sm.smc --route norfair-reserve
 python tools/verify_dll.py rom/sm.smc --corpus movies/segments.toml --direct
 ```
 
@@ -289,9 +288,10 @@ a retry. Input paths resolve relative to the TOML file, so an isolated source sn
 can use the main checkout's absolute TOML path and its local movies. Keep ROMs,
 movies, inputs and checkpoints uncommitted.
 
-Seven rows can start from distributed, previously verified native-plus-oracle
+Thirteen rows can start from distributed, previously verified native-plus-oracle
 checkpoints. These are separate from the 68 original-emulator room-seeded rows;
-seven other rows still use boot replay. The checkpoint format is unchanged.
+the intro remains a zero-setup boot row. The checkpoint format is unchanged.
+The first seven starts are listed here; six further starts appear below.
 
 | Row | Checkpoint frame | Compared setup to original start | Original ceiling |
 | --- | ---: | ---: | ---: |
@@ -318,16 +318,17 @@ therefore compare the full 55650..70000 approach on each run, retaining the Kago
 zero and retains all 8,780 selected frames. Configured setup across these seven
 checkpoint rows falls from 484,286 to 28,700 frames, a reduction of 455,586.
 
-CI restores the unchanged full inputs and six checkpoint files from its pinned
+CI restores the unchanged full inputs and checkpoint files from its pinned
 encrypted bundle through `ci_seed_data.py`. For a local copy of the same bundle:
 
 ```powershell
-python tools/ci_seed_data.py restore checkpoint-seven.tar.gz.enc --rom rom/sm.smc --sha256 8b6610595422a04c0783b4c289ece3384b7e2357f2519104465a2aa8f826bfec --segment save-memory --segment save-death-reload --segment door-transition --segment ice-return-business --segment power-bomb-room-entry --segment options-menu-return-parameter --segment demo-attract-setup
+python tools/ci_seed_data.py restore checkpoint-final.tar.gz.enc --rom rom/sm.smc --sha256 fdf74bcab62e16fccdd7590bf9b112846c50d8aa00a6773f200d27ba6883eed1 --segment save-memory --segment save-death-reload --segment door-transition --segment ice-return-business --segment power-bomb-room-entry --segment options-menu-return-parameter --segment demo-attract-setup
 ```
 
 The `save-death-continue`, `ice-return-business` and `power-bomb-room-entry`
 generators now have no consumers and are removed with their exclusive helpers.
-Five generators remain for the boot rows; full distributed inputs remain private.
+The six further rows below retire the other four specialized generators; only
+Speed Booster generation remains for the intro. Full distributed inputs remain private.
 
 Ordinary pickup rows require a newly observed award, actual message completion and
 120 follow-up frames. Varia waits for its award and restored player handlers instead.
@@ -346,28 +347,58 @@ Missing bosses/items/areas and credits remain explicit gaps.
 The `credits` expectation observes script progress; the separate `credits-complete` expectation requires the roll-ending transition.
 
 The `wave-gate` authored route reuses the checked Speed Booster/farm return,
-then crosses ADAD's moving platforms and opens its blue gate. Regenerate with
-`python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-wave-gate.inputs --rom rom/sm.smc --route wave-gate`.
+then crosses ADAD's moving platforms and opens its blue gate. Its unchanged full
+input is now restored from the encrypted checkpoint bundle.
 The additional `shot-gate-spawn-parameter` regression checks steps 153606..153615:
 the re-closing gate must preserve the projectile definition as its spawn parameter.
 This route does not yet qualify Wave acquisition or advance the required tally.
 
-The `crocomire-shot` authored route uses the retained Wave pickup helper before the Norfair refill
-and Crocomire fight. Regenerate with
-`python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-crocomire-shot.inputs --rom rom/sm.smc --route crocomire-shot`.
+The unchanged bundled `crocomire-shot` authored input includes Wave pickup, the
+Norfair refill and Crocomire fight.
 `crocomire-spit-drop-scratch` observes an onscreen dust bound followed by a spit
 pickup: the shared compatibility word must reach the pickup's spawn parameter.
-It covers the failing update and three subsequent frames; boss completion remains
-pending. Regenerate its setup from boot after the Session schema change.
+It covers the failing update and three subsequent frames. Boss completion remains
+a separate row; the native checkpoint loader retains its compatibility guards.
 
 The `crocomire` authored route continues `crocomire-shot` from the qualified
 frame-167285 fight state through both melts, the wall break and skeleton collapse.
-Regenerate it with
-`python tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/corpus-crocomire.inputs --rom rom/sm.smc --route crocomire`.
+Its full original input is restored from the encrypted bundle.
 `crocomire-melt-graphics-buffer` covers four frames from 169057;
 `crocomire-wall-spawn-return` covers four frames from 171090 and all eight piece spawns.
 `boss-crocomire` starts with the defeat flag clear at 167285, observes the flag
 at 171422, and requires 120 subsequent frames. The recipe ends at 171694.
+
+Six more authored-route rows retain their original full input files and selected
+windows while starting at exact, verified native/oracle checkpoints:
+
+| Row | Checkpoint / selected start | Original ceiling | Compared setup |
+| --- | ---: | ---: | ---: |
+| `pickup-reserve` | 147273 | 614 | 0 |
+| `shot-gate-spawn-parameter` | 153606 | 10 | 0 |
+| `crocomire-spit-drop-scratch` | 167281 | 4 | 0 |
+| `boss-crocomire` | 167285 | 4409 | 0 |
+| `crocomire-melt-graphics-buffer` | 169057 | 4 | 0 |
+| `crocomire-wall-spawn-return` | 171090 | 4 | 0 |
+
+These six rows remove 975,592 configured setup frames; their observations and
+follow-up tails are unchanged. Both earlier save rows still compare their complete
+Kago approach. The Reserve and Crocomire inputs share a verified prefix through
+145574 and then diverge: Reserve's later checkpoint cannot initialize Crocomire.
+The exact gate and Crocomire starts come from one checked continuation of the
+full Crocomire input, whose prefix also matches the gate and spit-regression files.
+The bundle preserves all 12 prior assets and adds four full inputs and six starts.
+
+Restore another selected row from the same cumulative bundle, for example:
+
+```powershell
+python tools/ci_seed_data.py restore checkpoint-final.tar.gz.enc --rom rom/sm.smc --sha256 fdf74bcab62e16fccdd7590bf9b112846c50d8aa00a6773f200d27ba6883eed1 --segment boss-crocomire
+```
+
+Repeat `--segment` for additional rows. The bundle contains all 13 checkpoint rows.
+
+The `norfair-reserve`, `wave-gate`, `crocomire-shot` and `crocomire` generators,
+plus their exclusive helpers, are retired: 264 fewer Python support lines. The
+remaining Speed Booster generator and all importer guards remain unchanged.
 
 For room-entry memory capture, create an empty `target/seeds/<movie>` directory
 and set `SM_LSNES_SEEDS` to its absolute path before the existing lsnes command.
@@ -568,7 +599,7 @@ These six rows remove 136,824 configured setup frames (146,580 to 9,756).
 All 4,496 selected frames pass. With these conversions, 68 of 82 rows are seeded;
 those conversions alone left all eight authored recipes with unseeded consumers.
 Reserve and shot-gate trials lacked their required events despite zero
-comparison differences; both original rows and their routes remain in use.
+comparison differences; those attempts left the original rows and routes unchanged.
 
 Four more navigation/encounter rows use original `100-input-phase` observations,
 with their existing input budgets, required hits, expectations and follow-up windows:
