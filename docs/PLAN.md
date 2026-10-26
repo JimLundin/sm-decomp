@@ -81,10 +81,10 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Qualified corrected Core45: production 111745, legacy 19361, unsafe 2887, verification 39971.
-Botwoon plus four smoke rows pass (3,132 selected); alternate/native/other B3 callback variants remain unobserved.
+Qualified Core46: production 111744, legacy 19361, unsafe 2886, verification 39971.
+Its four smoke controls pass (2,187 selected); GameOwner safe-thread boundary follows source/type proof, not a runtime UB test.
 Complete Botwoon/all15 B3 preinstruction routing adds2 engine lines, retires104 legacy/15 unsafe; full106/104=101.92%.
-GameOwner unsafeSync permits escaped SaveRam aliases; its separate M fix must qualify before bank deletion.
+GameOwner no longer promises Rust thread sharing; raw SDL userdata/gate/lifetime obligations remain explicit.
 Powerbomb retires -34 legacy/-2 engine/-1 unsafe with no verification growth; full caller-inclusive replacement35/37=94.59%.
 Escape animals share lava/rescue paths and migrate callers: -3 engine, -120 legacy, -4 unsafe; +4 verification, combined +1. All variants remain unobserved.
 Melt graphics preparation/upload share their ordered queue encoder: -7 engine, -79 legacy, -2 unsafe, no verification growth.

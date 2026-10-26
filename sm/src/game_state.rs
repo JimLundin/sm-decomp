@@ -843,8 +843,7 @@ pub struct GameOwner {
     gate: std::sync::Mutex<()>,
     game: std::cell::UnsafeCell<Box<Game>>,
 }
-// SDL callback and main share this owner; private game access is gate-protected.
-unsafe impl Sync for GameOwner {}
+// Shared Rc-backed state can escape with(), so this owner cannot implement Sync.
 impl GameOwner {
     pub fn new() -> Box<Self> {
         Self::with_world(WorldBinding::canonical_legacy())
