@@ -1,12 +1,13 @@
 //! Draygon acquisition, carrying, tail attacks and release share the player owner.
 //! Boss-specific words retain their native compatibility layout; no player copy exists.
 #![forbid(unsafe_code)]
-use super::{api, draygon_flight::turret};
+use super::{api, combat, draygon_flight::turret};
 use crate::game::enemy_layouts::EnemyLayout104 as Draygon;
+use crate::game::enemy_script::EnemyScript;
 use crate::game::player_movement::forced;
 use crate::game::session_runtime::{
     Runtime, actor_cosine, actor_direction_vector, actor_sine, correct_previous_position,
-    player_command,
+    damage_player, player_command,
 };
 use crate::game::sprite_effect_runtime::create_sprite;
 use crate::game_state::Game;
@@ -215,4 +216,23 @@ pub(crate) fn depart(game: &mut Game) {
         slot!(game, Draygon[0]; var_A = 0x87f4, var_B = 0);
         slot!(game, Draygon[0].base; x_pos = slot!(game, Draygon[0].var_00), y_pos = slot!(game, Draygon[0].var_01));
     }
+}
+
+pub(crate) fn slam(script: EnemyScript, game: &mut Game) -> EnemyScript {
+    slot!(game, Draygon[0].var_0F = 24);
+    let definition = slot!(game, Draygon[0].base.enemy_ptr);
+    let amount = Runtime::new(game)
+        .legacy_native_record(0xa0, definition)
+        .word(6);
+    let amount = combat::suit_damage(&mut Runtime::new(game), amount);
+    damage_player(amount, game);
+    word! {game; earthquake_timer = 32; earthquake_type = 7; }
+    create_sprite(
+        word!(game.samus_x_pos),
+        word!(game.samus_y_pos).wrapping_add(16),
+        21,
+        0,
+        game,
+    );
+    script
 }

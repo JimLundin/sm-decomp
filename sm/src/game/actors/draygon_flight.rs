@@ -3,8 +3,9 @@
 #![forbid(unsafe_code)]
 use crate::game::enemy_layouts::EnemyLayout104 as Draygon;
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
-use crate::game::session_runtime::actor_cosine;
-use crate::game::sprite_effect_runtime::draygon_body_bubble;
+use crate::game::enemy_script::EnemyScript;
+use crate::game::session_runtime::{Runtime, actor_cosine};
+use crate::game::sprite_effect_runtime::{self as sprites, draygon_body_bubble};
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::rtl::{abs16, words};
@@ -21,6 +22,61 @@ pub(crate) fn turret(game: &mut Game) {
             SpawnEprojWithGfx(3, index, 0x8e5e, game);
         }
     }
+}
+pub(crate) fn opening(first: bool, game: &mut Game) {
+    turret(game);
+    let limit = if first { 256 } else { 1232 };
+    if slot!(game, Draygon[0].var_B).wrapping_sub(limit) & 0x8000 != 0 {
+        if first {
+            if slot!(game, Draygon[0].var_B) == 0 {
+                let at = 0xd0 + usize::from(word!(game.vram_write_queue_tail));
+                let mut runtime = Runtime::new(game);
+                runtime.write_slice_native(at, 1536);
+                runtime.write_slice_native(at + 2, 0x9400);
+                // The native bank word deliberately overlaps the destination's low byte.
+                runtime.write_slice_native(at + 4, 177);
+                runtime.write_slice_native(at + 5, 27904);
+                drop(runtime);
+                word!(game.vram_write_queue_tail += 7);
+                sprites::draygon_spawn_trails(game);
+            }
+        } else {
+            sprites::draygon_trajectory(game);
+        }
+        slot!(game, Draygon[0].var_B, |old| old.wrapping_add(1));
+    } else {
+        slot!(game, Draygon[0].var_A = if first { 0x878b } else { 0x87f4 });
+        slot!(game, Draygon[0].var_B = 0);
+        if first {
+            let x = slot!(game, Draygon[0].base.x_pos);
+            slot!(game, Draygon[0].var_00 = x);
+            slot!(game, Draygon[0].var_02 = x.wrapping_add(672));
+            slot!(game, Draygon[0].var_01 = slot!(game, Draygon[0].base.y_pos));
+            slot!(game, Draygon[0].base.x_pos = slot!(game, Draygon[0].var_00));
+            slot!(game, Draygon[0].base.y_pos = slot!(game, Draygon[0].var_01));
+            slot!(game, Draygon[0].var_0F = 24);
+        }
+    }
+}
+pub(crate) fn synchronize_parts(game: &mut Game) {
+    let x = slot!(game, Draygon[0].base.x_pos);
+    for k in [0x40, 0x80, 0xc0] {
+        slot!(game, Draygon[k].base.x_pos = x);
+    }
+    let y = slot!(game, Draygon[0].base.y_pos);
+    for k in [0x40, 0x80, 0xc0] {
+        slot!(game, Draygon[k].base.y_pos = y);
+    }
+}
+pub(crate) fn scroll_layer(game: &mut Game) {
+    let x = i32::from(slot!(game, Draygon[0].var_5E)) + i32::from(word!(game.layer1_x_pos))
+        - i32::from(slot!(game, Draygon[0].base.x_pos))
+        - 450;
+    word!(game.reg_BG2HOFS = x as u16);
+    let y = i32::from(slot!(game, Draygon[0].var_5F)) + i32::from(word!(game.layer1_y_pos))
+        - i32::from(slot!(game, Draygon[0].base.y_pos))
+        - 192;
+    word!(game.reg_BG2VOFS = y as u16);
 }
 fn glide(right: bool, game: &mut Game) {
     let phase = slot!(game, Draygon[0].var_0D);
@@ -122,4 +178,32 @@ pub(crate) fn exit(right: bool, game: &mut Game) {
         slot!(game, Draygon[0].base; x_pos = if right { 592 } else { 0xffb0 }, y_pos = 0xffb0);
         slot!(game, Draygon[0].var_B = slot!(game, Draygon[0].var_C));
     }
+}
+
+pub(crate) fn pose(script: EnemyScript, game: &mut Game) -> EnemyScript {
+    for (k, offset) in [(0, 0), (0x40, 2), (0x80, 4), (0xc0, 6)] {
+        slot!(
+            game,
+            Draygon[k].base.current_instruction = script.word(offset)
+        );
+    }
+    for k in [0, 0x40, 0x80, 0xc0] {
+        slot!(game, Draygon[k].base.instruction_timer = 1);
+    }
+    script.offset(4)
+}
+pub(crate) fn layer_offsets(script: EnemyScript, game: &mut Game) -> EnemyScript {
+    slot!(game, Draygon[0].var_5E = script.word(0));
+    slot!(game, Draygon[0].var_5F = script.word(2));
+    script.offset(2)
+}
+pub(crate) fn hide_parts(script: EnemyScript, game: &mut Game) -> EnemyScript {
+    for k in [0x80, 0xc0] {
+        slot!(game, Draygon[k].base; instruction_timer = 1, current_instruction = 0x97b9);
+    }
+    script
+}
+pub(crate) fn tangible(script: EnemyScript, game: &mut Game) -> EnemyScript {
+    slot!(game, Draygon[0].base.properties, |old| old | 0x400);
+    script
 }

@@ -18,9 +18,9 @@ pub(crate) fn initialize(game: &mut Game) {
         actor.variables[0] = 0x804b;
     });
 }
-pub(crate) fn set_mode(script: EnemyScript, game: &mut Game) -> EnemyScript {
+pub(crate) fn set_mode(k: u16, script: EnemyScript, game: &mut Game) -> EnemyScript {
     let mode = script.word(0);
-    Runtime::new(game).edit_actor(Key::from_legacy(0x40), Native, |actor| {
+    Runtime::new(game).edit_actor(Key::from_legacy(k), Native, |actor| {
         actor.variables[0] = mode
     });
     script.offset(1)
