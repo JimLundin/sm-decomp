@@ -153,6 +153,10 @@ pub static FILES: &[(&str, &[u8])] = &[
     ),
     ("sm/src/game/rippers.rs", include_bytes!("game/rippers.rs")),
     (
+        "sm/src/game/rising_falling.rs",
+        include_bytes!("game/rising_falling.rs"),
+    ),
+    (
         "sm/src/game/player_transitions/mother_brain.rs",
         include_bytes!("game/player_transitions/mother_brain.rs"),
     ),

@@ -467,6 +467,7 @@ pub mod game {
     pub mod projectile_contact;
     pub(crate) mod rio;
     pub(crate) mod rippers;
+    pub(crate) mod rising_falling;
     pub mod sm_9b;
     pub mod sm_a2;
     pub mod sm_a3;

@@ -29,19 +29,16 @@ unsafe fn update_randomized_pre_instruction(game: &mut Game) {
 
 crate::game::constants::typed_constants! { Consts_A2;
     addr_kGripper_Sprmap_E44B = 58443, addr_kGripper_Sprmap_E43F = 58431,
-    addr_kHirisingSlowfalling_Ilist_D840 = 55360, addr_kHirisingSlowfalling_Ilist_D834 = 55348,
-    addr_kHirisingSlowfalling_Ilist_D82C = 55340, addr_kMaridiaLargeSnail_Ilist_CA4B = 51787,
+    addr_kMaridiaLargeSnail_Ilist_CA4B = 51787,
     addr_kMaridiaSpikeyShell_Ilist_A3BD = 41917, addr_kMaridiaSpikeyShell_Ilist_A3AB = 41899,
     addr_kSpritemap_Nothing_A2 = 32845,
 }
 
 crate::type_aliases! {
-    pub Enemy_MaridiaLargeSnail, Enemy_MaridiaSpikeyShell,
-        Enemy_HirisingSlowfalling =
+    pub Enemy_MaridiaLargeSnail, Enemy_MaridiaSpikeyShell =
         crate::game::enemy_layouts::EnemyLayout40;
 }
 
-const RomPtr_A2: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa2>;
 crate::game::constants::typed_constants! { i32;
     fnSamus_FrameHandlerAlfa_Func11 = 0x90e695, fnSamus_FrameHandlerBeta_Func17 = 0x90e725,
     fnnullsub_182 = 0xa2a01b, fnnullsub_187 = 0xa2a7d7,
@@ -51,7 +48,6 @@ crate::game::constants::typed_constants! { i32;
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
-    Get_HirisingSlowfalling(o: i32) -> Enemy_HirisingSlowfalling = [0xf78, o as isize];
     Get_MaridiaLargeSnail(o: i32) -> Enemy_MaridiaLargeSnail = [0xf78, o as isize];
     Get_MaridiaSpikeyShell(o: i32) -> Enemy_MaridiaSpikeyShell = [0xf78, o as isize];
 }
@@ -206,102 +202,6 @@ pub unsafe fn MaridiaLargeSnail_Func_12(game: &mut Game) {
         MaridiaLargeSnail_Touch(game);
     }
 }
-unsafe fn HirisingSlowfalling_Func_1(k: u16, game: &mut Game) -> u16 {
-    unsafe {
-        let E = Get_HirisingSlowfalling(k as i32, game);
-        Mult8x8((*E).parameter_1 as u8, (*E).var_F as u8)
-    }
-}
-pub unsafe fn HirisingSlowfalling_Func_2(k: u16, r18: u16, game: &mut Game) {
-    unsafe {
-        let mut v: u32 = 0;
-        let mut r24: u16 = 0;
-        do_until! { (v >> 16i32).wrapping_sub(r18 as u32) & 0x8000 == 0 ;
-            r24 = (r24).wrapping_add(512);
-            let v1: i32 = 4 * (r24 as i32 >> 8);
-            v = v.wrapping_add(words!((
-                crate::rtl::rom_table_word!(game, 0xa2838f, (v1 + 1) as isize),
-                crate::rtl::rom_table_word!(game, 0xa2838f, v1 as isize)
-            )));
-        }
-        (*Get_HirisingSlowfalling(k as i32, game)).var_06 = r24;
-    }
-}
-pub unsafe fn HirisingSlowfalling_Func_3(a: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_HirisingSlowfalling(word!(game.cur_enemy_index) as i32, game);
-        enemy_instruction! {[(*E).base]; instruction = a, timer = 1}
-        (*E).base.timer = 0;
-    }
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallHirisingSlowfalling(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [10674229] HirisingSlowfalling_Func_4 [] {
-        if ({ let (actor, distance) = (word!(game.cur_enemy_index), 0x50); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0 {
-            let E = Get_HirisingSlowfalling(word!(game.cur_enemy_index) as i32, game);
-            (*E).var_07 = (*E).parameter_2;
-            (*E).var_A = (0xa2e04fi32) as u16;
-        }
-    };
-    [10674255] HirisingSlowfalling_Func_5 [] {
-        let E = Get_HirisingSlowfalling(word!(game.cur_enemy_index) as i32, game);
-        let v1: i16 = (((*E).var_07) as i16).wrapping_sub(1);
-        (*E).var_07 = v1 as u16;
-        if v1 < 0 {
-            HirisingSlowfalling_Func_3(addr_kHirisingSlowfalling_Ilist_D834 as u16, game);
-            (*E).var_A = (0xa2e06ai32) as u16;
-        }
-    };
-    [10674282] HirisingSlowfalling_Func_6 [] {
-        let E = Get_HirisingSlowfalling(word!(game.cur_enemy_index) as i32, game);
-        let v2: i32 = 4 * byte!((*E).var_B; 1) as i32;
-        words!(
-            (*E).base,
-            y_pos,
-            y_subpos += words!((
-                crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 3) as isize),
-                crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 2) as isize)
-            ))
-        );
-        let v5: i16 = (((*E).var_B) as i16).wrapping_sub(512);
-        (*E).var_B = v5 as u16;
-        if v5 < 0 {
-            (*E).var_04 = (*E).var_02;
-            (*E).base.x_pos = (*E).var_04;
-            (*E).var_05 = (*E).var_03;
-            (*E).base.y_pos = (*E).var_05;
-            (*E).var_C = 0;
-            (*E).var_D = ((byte!((*E).parameter_1; 0)) as u16).wrapping_sub(1);
-            HirisingSlowfalling_Func_3(addr_kHirisingSlowfalling_Ilist_D840 as u16, game);
-            (*E).var_A = (0xa2e0cdi32) as u16;
-        }
-    };
-    [10674381] HirisingSlowfalling_Func_7 [] {
-        let E = Get_HirisingSlowfalling(word!(game.cur_enemy_index) as i32, game);
-        let v1 = RomPtr_A2(
-            ((*E).var_E as i32 + 4 * byte!((*E).var_C; 1) as i32) as u16,
-            game,
-        );
-        if *(v1 as *mut u16) == 0x8000 {
-            (*E).var_05 = ((*E).var_05).wrapping_add((*E).var_F);
-            (*E).var_C = 0;
-            (*E).var_D = (*E).var_D.wrapping_sub(1);
-            if ((*E).var_D & 0x8000) != 0 {
-                (*E).var_B = (*E).var_06;
-                set_fields! {[(*E).base]; x_pos = (*E).var_00, x_subpos = 0, y_pos = (*E).var_01,
-                    y_subpos = 0, };
-                HirisingSlowfalling_Func_3(addr_kHirisingSlowfalling_Ilist_D82C as u16, game);
-                (*E).var_A = (0xa2e035i32) as u16;
-            }
-        } else {
-            (*E).base.x_pos = (*(v1 as *mut u16)).wrapping_add((*E).var_04);
-            (*E).base.y_pos = (*(v1.offset(2) as *mut u16)).wrapping_add((*E).var_05);
-            (*E).var_C = ((*E).var_C).wrapping_add(256);
-        };
-    };
-}
 fn MaridiaLargeSnail_Func_10(k: u16, game: &mut Game) {
     actors::animation::restart_from_native_cache(&mut Runtime::new(game), usize::from(k), 0xa2cb77);
 }
@@ -377,28 +277,6 @@ crate::game::callback_dispatch! {
     [10671028] MaridiaLargeSnail_Shot [] {
         actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
         QueueSfx2_Max6(0x57, game);
-    };
-    [10674038] HirisingSlowfalling_Init [] {
-        HirisingSlowfalling_Func_3(addr_kHirisingSlowfalling_Ilist_D82C as u16, game);
-        let E = Get_HirisingSlowfalling(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_A = (0xa2e035i32) as u16;
-        (*E).var_00 = (*E).base.x_pos;
-        (*E).var_01 = (*E).base.y_pos;
-        let v2: i32 = byte!((*E).parameter_1; 1) as i32;
-        (*E).var_E = crate::rtl::rom_table_word!(game, 0xa2df5e, v2 as isize);
-        (*E).var_F = *(RomPtr_A2(
-            crate::rtl::rom_table_word!(game, 0xa2df6a, v2 as isize),
-            game,
-        ) as *mut u16);
-        let r18: u16 = HirisingSlowfalling_Func_1(word!(game.cur_enemy_index), game);
-        HirisingSlowfalling_Func_2(word!(game.cur_enemy_index), r18, game);
-        (*E).var_03 = ((*E).var_01).wrapping_sub(r18);
-        (*E).var_02 = (*E).var_00;
-        (*E).var_B = (*E).var_06;
-    };
-    [10674222] HirisingSlowfalling_Main [] {
-        let E = Get_HirisingSlowfalling(word!(game.cur_enemy_index) as i32, game);
-        CallHirisingSlowfalling((((*E).var_A) as u32) | (0xa20000u32), game);
     };
     @functions [pub fn (game: &mut Game)];
     [10674643] Gripper_Init [] {
@@ -532,6 +410,8 @@ crate::game::callback_dispatch! {
     [10649635] Enemy_NormalTouchAI_A2 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
     [10649645] Enemy_NormalShotAI_A2 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
     @external {
+        10674038 => [crate::game::rising_falling::update(true, game)];
+        10674222 => [crate::game::rising_falling::update(false, game)];
         10675718 => crate::game::lava_seahorse_pair::initialize;
         10675790 => [actor_species_pre_instruction(crate::game::lava_seahorse_pair::pre_instruction(game), game)];
         10676168 => [{ Enemy_NormalTouchAI_A2(game); crate::game::lava_seahorse_pair::synchronize(game); }];
