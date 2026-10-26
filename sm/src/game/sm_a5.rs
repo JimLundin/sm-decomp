@@ -73,22 +73,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_Draygon(o: i32) -> Enemy_Draygon = [0xf78, o as isize];
     Get_SporeSpawn(o: i32) -> Enemy_SporeSpawn = [0xf78, o as isize];
 }
-macro_rules! advance_draygon_scripted_y {
-    ($game:ident, $enemy:ident, $instruction:ident) => {
-        actors::draygon_flight::turret($game);
-        sprite_effects::draygon_body_bubble($game);
-        let $enemy = Get_Draygon(0, $game);
-        let draygon_var_B: u16 = (*$enemy).var_B;
-        if draygon_var_B == 104 {
-            let E3 = Get_Draygon(0xc0, $game);
-            enemy_instruction! {[(*E3).base]; instruction = $instruction as u16, timer = 1}
-        }
-        (*Get_Draygon(word!($game.cur_enemy_index) as i32, $game))
-            .base
-            .y_pos = *(ram_ptr!($game, u16; 0x9002, draygon_var_B as i32 as isize));
-    };
-}
-
 crate::game::callback_dispatch! {
     pub unsafe fn CallDraygonFunc(ea: u32, k: u16, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -131,115 +115,10 @@ crate::game::callback_dispatch! {
             (*E).var_B = 0;
         };
     };
-    [10848244] Draygon_Func_4 [] {
-        actors::draygon_flight::turret(game);
-        Draygon_Func_5(game);
-        let E = Get_Draygon(0, game);
-        (*E).var_A = (0xa588b1i32) as u16;
-        enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_97D1 as u16, timer = 1}
-        (*E).var_20 = 1;
-    };
-    [10848433] Draygon_Func_6 [] {
-        advance_draygon_scripted_y!(game, E, addr_kDraygon_Ilist_9C06);
-        (*E).var_B = ((*E).var_B).wrapping_sub(4);
-        if (*E).var_B != 0 {
-            words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_E));
-        } else {
-            (*E).var_A = (0xa58922i32) as u16;
-        };
-    };
-    [10848546] Draygon_Func_8 [] {
-        actors::draygon_flight::turret(game);
-        let E = Get_Draygon(0, game);
-        let t: u32 = draygon_divide(
-            ((*E).var_C >> 2) as u32,
-            ((672 - (*E).base.x_pos as i32) << 16) as u32,
-        );
-        words!((*E), var_D, var_E = t);
-        (*E).var_A = (0xa58951i32) as u16;
-    };
-    [10848593] Draygon_Func_9 [] {
-        actors::draygon_flight::turret(game);
-        let E = Get_Draygon(0, game);
-        let draygon_var_B: u16 = (*E).var_B;
-        if draygon_var_B == 104 {
-            let E3 = Get_Draygon(0xc0, game);
-            enemy_instruction! {[(*E3).base]; instruction = addr_kDraygon_Ilist_9BDA as u16, timer = 1}
-        }
-        (*Get_Draygon(word!(game.cur_enemy_index) as i32, game))
-            .base
-            .y_pos = *(ram_ptr!(game, u16; 0x9002, draygon_var_B as i32 as isize));
-        (*E).var_B = ((*E).var_B).wrapping_add(4);
-        if (*E).var_B == (*E).var_C {
-            (*E).var_B = 0;
-            if (word!(game.random_number) & 1) != 0 {
-                (*E).var_A = (0xa589b3i32) as u16;
-            } else {
-                (*E).var_A = (0xa58c8ei32) as u16;
-            }
-        } else {
-            words!((*E).base, x_pos, x_subpos += words!((*E), var_D, var_E));
-        };
-    };
     [10848691] Draygon_Func_10 [] {
         actors::draygon_flight::turret(game);
-        let E = Get_Draygon(0, game);
         printf(b"Wtf is varE26?\n\0" as *const u8 as *const c_char);
-        let varE26: u16 = 0;
-        let t: u32 = draygon_divide(
-            (varE26 >> 2) as u32,
-            ((abs16(((*E).var_02).wrapping_sub(word!(game.samus_x_pos))) as i32) << 16) as u32,
-        );
-        words!((*E), var_D, var_E = t);
-        (*E).var_A = (0xa58a00i32) as u16;
-        enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_97BB as u16, timer = 1}
-        (*E).var_20 = 0;
-        (*E).var_B = (*E).var_C;
-    };
-    [10848768] Draygon_Func_11 [] {
-        advance_draygon_scripted_y!(game, E, addr_kDraygon_Ilist_9813);
-        (*E).var_B = ((*E).var_B).wrapping_sub(4);
-        if (*E).var_B != 0 {
-            words!(
-                (*E).base,
-                x_pos,
-                x_subpos += -(words!(i32, (*E), var_D, var_E)) as u32
-            );
-        } else {
-            (*E).var_A = (0xa58a50i32) as u16;
-        };
-    };
-    [10848848] Draygon_Func_12 [] {
-        actors::draygon_flight::turret(game);
-        let E = Get_Draygon(0, game);
-        let t: u32 = draygon_divide(
-            ((*E).var_C >> 2) as u32,
-            (((*E).base.x_pos as i32 - (*E).var_00 as i32) << 16) as u32,
-        );
-        (*E).var_D = (t >> 16) as u16;
-        (*E).var_E = t as u16;
-        (*E).var_A = (0xa58a90i32) as u16;
-    };
-    [10848912] Draygon_Func_13 [] {
-        advance_draygon_scripted_y!(game, E, addr_kDraygon_Ilist_97E7);
-        (*E).var_B = ((*E).var_B).wrapping_add(4);
-        if (*E).var_B == (*E).var_C {
-            if (word!(game.random_number) & 1) != 0 {
-                (*E).var_A = (0xa587f4i32) as u16;
-                (*E).var_B = 0;
-                (*E).base.x_pos = (*E).var_00;
-                (*E).base.y_pos = (*E).var_01;
-            } else {
-                (*E).var_A = (0xa58b0ai32) as u16;
-                (*E).base.x_pos = (*E).var_00;
-            }
-        } else {
-            words!(
-                (*E).base,
-                x_pos,
-                x_subpos += -(words!(i32, (*E), var_D, var_E)) as u32
-            );
-        };
+        actors::draygon_sweep::begin(false, game);
     };
     [10850064] Draygon_Func_23 [] {
         word!(game.grapple_beam_function = (0x9bc8c5i32) as u16);
@@ -346,36 +225,6 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E = Get_Draygon(0, game); };
-    Draygon_Func_5 [] {
-        let mut varE24: u16 = 384;
-        let mut varE22: u16 = 0;
-        let mut varE26: u16 = 0;
-        loop {
-            varE22 = (varE22).wrapping_add((*E).var_0F);
-            let v1: u16 = (varE24).wrapping_sub((byte!(varE22; 1)) as u16);
-            if ((v1) as i16).wrapping_sub(((*E).var_01) as i16) < 0 {
-                break;
-            }
-            varE24 = (varE24).wrapping_sub((byte!(varE22; 1)) as u16);
-            crate::update_place! { previous fresh4 = varE26 => varE26.wrapping_add(1); }
-            *(ram_ptr!(game, u16; 0x9002, fresh4 as i32 as isize)) = v1;
-            varE26 = (varE26).wrapping_add(2);
-            varE26 = varE26.wrapping_add(1);
-            if varE26 as i32 - 2048i32 & 0x8000 == 0 {
-                Unreachable(game);
-            }
-        }
-        let t: u32 = draygon_divide(
-            (varE26 >> 2) as u32,
-            ((abs16(((*E).var_00).wrapping_sub(word!(game.samus_x_pos))) as i32) << 16) as u32,
-        );
-        words!((*E), var_D, var_E = t);
-        let v6: u16 = varE26;
-        *(ram_ptr!(game, u16; 0x9002, varE26 as i32 as isize)) =
-            (*E).base.y_pos;
-        (*E).var_B = v6;
-        (*E).var_C = v6;
-    };
     [10849817] Draygon_Func_22 [] {
         actors::draygon_flight::turret(game);
         if word!(game.samus_x_speed_divisor) != 0 {
@@ -498,6 +347,13 @@ crate::game::callback_dispatch! {
         }
     };
     @external {
+        10848244 => [actors::draygon_sweep::begin(true, game)];
+        10848433 => [actors::draygon_sweep::advance(true, false, game)];
+        10848546 => [actors::draygon_sweep::turn(true, game)];
+        10848593 => [actors::draygon_sweep::advance(true, true, game)];
+        10848768 => [actors::draygon_sweep::advance(false, false, game)];
+        10848848 => [actors::draygon_sweep::turn(false, game)];
+        10848912 => [actors::draygon_sweep::advance(false, true, game)];
         10849034 => [actors::draygon_flight::begin(true, game)];
         10849422 => [actors::draygon_flight::begin(false, game)];
         10849106 => [actors::draygon_flight::approach(true, game)];
@@ -1136,8 +992,4 @@ crate::game::callback_dispatch! {
         10854268 => [{ sprite_effects::draygon_spit(false, game); j }];
         10854318 => [{ sprite_effects::draygon_spit(true, game); j }];
     }
-}
-
-fn draygon_divide(divisor: u32, value: u32) -> u32 {
-    value.checked_div(divisor).unwrap_or(0)
 }

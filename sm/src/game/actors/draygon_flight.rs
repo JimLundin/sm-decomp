@@ -30,6 +30,9 @@ fn glide(right: bool, game: &mut Game) {
     );
     slot!(game, Draygon[0].var_0D, |old| (old as u8).wrapping_add(1)
         as u16);
+    displace(right, game);
+}
+pub(super) fn displace(right: bool, game: &mut Game) {
     let speed = words!((slot!(game, Draygon[0].var_D), slot!(game, Draygon[0].var_E)));
     let delta = if right {
         speed

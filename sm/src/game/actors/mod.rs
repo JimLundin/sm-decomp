@@ -90,6 +90,7 @@ pub(in crate::game) mod blue_face_block;
 pub(in crate::game) mod brinstar_pipe_bug;
 pub(in crate::game) mod draygon_eye;
 pub(in crate::game) mod draygon_flight;
+pub(in crate::game) mod draygon_sweep;
 pub(in crate::game) mod evir;
 pub(in crate::game) mod fune;
 pub(in crate::game) mod ki_hunter;
