@@ -1350,3 +1350,25 @@ pub(crate) fn open_skeleton_exit(game: &mut Game) {
     }
     advance_phase(game);
 }
+
+pub(crate) fn prepare_scroll_hdma(game: &mut Game) {
+    let mut v1: u16 = (2 * (slot!(game, Crocomire[0x40i32].base.y_pos) as i32 - 72i32)) as u16;
+    let v2: u16 = word!(game.reg_BG2VOFS);
+    do_until! { (v1 & 0x8000) != 0 ;
+        word!(game.crocomire_bg2_scroll_hdma_data[(v1 >> 1)] = v2);
+        v1 = (v1).wrapping_sub(2);
+    }
+    let E: i32 = word!(game.cur_enemy_index) as i32;
+    slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
+    slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
+    let v4: i32 = 0;
+    slot!(
+        game,
+        Crocomire[0x80i32].var_D = slot!(game, Crocomire[v4].base.x_pos)
+    );
+    word_transfers!(game, ascending, 1; native(0xcae0) <- value(255));
+    word_transfers!(game, ascending, 1; native(0xcae1) <- value(-13584i32 as u16));
+    word_transfers!(game, ascending, 1; native(0xcae3) <- value(225));
+    word_transfers!(game, ascending, 1; native(0xcae4) <- value(-13330i32 as u16));
+    word_transfers!(game, ascending, 1; native(0xcae6) <- value(0));
+}

@@ -24,7 +24,7 @@ pub use crate::game::constants::bank_a4::*;
 use crate::game::enemy_projectiles::SpawnEprojWithRoomGfx;
 use crate::game::music::QueueSfx2_Max6;
 use crate::game::player_update::minimap;
-use crate::game::visual_runtime::spawn_hdma;
+use crate::game::visual_runtime::{CROCOMIRE_FLESH_SCROLL, CROCOMIRE_SKELETON_SCROLL};
 
 pub type Enemy_Crocomire = crate::game::enemy_layouts::EnemyLayout72;
 
@@ -33,10 +33,10 @@ pub fn nullsub_305(game: &mut Game) {}
 static off_A48C14: [Func_V; 45] = callback_table! { nonnull Func_V;
     approach_wall, emit_melt_debris, rumble_and_wait, melt_rumble_up, melt_rumble_down,
     rumble_and_wait, melt_rumble_up, melt_rumble_down, prepare_flesh_tilemap, prepare_melt_graphics,
-    advance_melt_upload, melt_flesh_up, Crocomire_Func_64, advance_melt_scroll, Crocomire_Func_66,
+    advance_melt_upload, melt_flesh_up, CROCOMIRE_FLESH_SCROLL, advance_melt_scroll, Crocomire_Func_66,
     melt_flesh_down, wait_for_melt, melt_flesh_up, melt_flesh_down, wait_for_melt,
     melt_flesh_up, melt_flesh_down, prepare_skeleton_tilemap, prepare_melt_graphics, advance_melt_upload,
-    Crocomire_Func_63, melt_skeleton_up, Crocomire_9506, advance_melt_scroll, Crocomire_Func_66,
+    Crocomire_Func_63, melt_skeleton_up, CROCOMIRE_SKELETON_SCROLL, advance_melt_scroll, Crocomire_Func_66,
     complete_skeleton_melt, release_skeleton_room, wall_step, prepare_spike_wall,
     launch_skeleton, land_skeleton, finish_skeleton_escape, open_skeleton_exit, await_skeleton_script,
     advance_phase, Crocomire_9B86, nullsub_305, advance_phase, Crocomire_Func_29,
@@ -54,47 +54,6 @@ fn spawn_random_dust(game: &mut Game) {
         offset = offset.wrapping_neg();
     }
     spawn_dust(EnemyScript::Stop, offset, game);
-}
-pub unsafe fn Crocomire_Func_64(game: &mut Game) {
-    unsafe {
-        QueueSfx2_Max6(0x77, game);
-        Crocomire_950F(game);
-    }
-}
-pub unsafe fn Crocomire_9506(game: &mut Game) {
-    unsafe {
-        QueueSfx2_Max6(0x2d, game);
-        Crocomire_950F(game);
-    }
-}
-pub unsafe fn Crocomire_950F(game: &mut Game) {
-    unsafe {
-        static unk_A49559: SpawnHdmaObject_Args =
-            SpawnHdmaObject_Args::new(0x42, 0x10, 0x9563 as VoidP);
-        let mut v1: u16 = (2 * (slot!(game, Crocomire[0x40i32].base.y_pos) as i32 - 72i32)) as u16;
-        let v2: u16 = word!(game.reg_BG2VOFS);
-        do_until! { (v1 & 0x8000) != 0 ;
-            word!(game.crocomire_bg2_scroll_hdma_data[(v1 >> 1)] = v2);
-            v1 = (v1).wrapping_sub(2);
-        }
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
-        slot!(game, Crocomire[E].var_A, |old| old.wrapping_add(1));
-        let v4: i32 = 0;
-        slot!(
-            game,
-            Crocomire[0x80i32].var_D = slot!(game, Crocomire[v4].base.x_pos)
-        );
-        *(ram_ptr!(game, u16; 0xcae0)) = 255;
-        *(ram_ptr!(game, u16; 0xcae0, 1)) = -13584i32 as u16;
-        *(ram_ptr!(game, u16; 0xcae0, 3)) = 225;
-        *(ram_ptr!(game, u16; 0xcae0, 4)) = -13330i32 as u16;
-        *(ram_ptr!(game, u16; 0xcae0, 6)) = 0;
-        slot!(
-            game,
-            Crocomire[v4].var_1F = spawn_hdma(0xa4, &unk_A49559, game)
-        );
-    }
 }
 fn spawn_dust(jp: EnemyScript, offset: u16, game: &mut Game) -> EnemyScript {
     game.eproj_spawn_pt = {

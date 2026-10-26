@@ -100,6 +100,22 @@ pub(crate) unsafe fn initialize_intro_wave(game: &mut Game) {
     }
 }
 
+pub(crate) const CROCOMIRE_FLESH_SCROLL: crate::types::Func_V = start_crocomire_scroll::<0x77>;
+pub(crate) const CROCOMIRE_SKELETON_SCROLL: crate::types::Func_V = start_crocomire_scroll::<0x2d>;
+
+// Requires the same live, exclusively accessed backend as spawn_hdma.
+unsafe fn start_crocomire_scroll<const SOUND: u16>(game: &mut Game) {
+    use crate::game::enemy_layouts::EnemyLayout72 as Crocomire;
+    use crate::ram_map::slot;
+    static DEFINITION: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x10, 0x9563);
+    crate::game::music::QueueSfx2_Max6(SOUND, game);
+    crate::game::actors::crocomire_reactions::prepare_scroll_hdma(game);
+    slot!(
+        game,
+        Crocomire[0].var_1F = unsafe { spawn_hdma(0xa4, &DEFINITION, game) }
+    );
+}
+
 fn hdma_definition(args: &SpawnHdmaObject_Args) -> [u16; 2] {
     [
         u16::from_ne_bytes([args.dma_control, args.target_register]),
