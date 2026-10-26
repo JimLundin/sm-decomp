@@ -313,6 +313,16 @@ pub(crate) fn choose_spit(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScr
     jp
 }
 
+pub(crate) fn rumble(game: &mut Game) {
+    let remaining = slot!(game, Crocomire[0].var_20);
+    if remaining != 0 {
+        slot!(game, Crocomire[0].var_20 = remaining - 1);
+        if remaining == 1 {
+            slot!(game, Crocomire[0].var_20 = 32);
+            QueueSfx3_Max6(0x22, game);
+        }
+    }
+}
 fn contact_edge(game: &mut Game) -> i32 {
     slot!(game, Crocomire[0].base.x_pos) as i32
         - slot!(game, Crocomire[0].base.x_width) as i32

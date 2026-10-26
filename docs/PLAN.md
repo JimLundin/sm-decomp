@@ -81,8 +81,9 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Qualified Core28: production 111865, legacy 20701, unsafe 2964, verification 39967.
-Its 14 affected/control rows pass; Core27 passed 85 of 86, including all 44 required scenarios.
+Qualified Core29: production 111830, legacy 20639, unsafe 2961, verification 39967.
+Its 10 affected/control rows pass; Core28 passed 14 and Core27 passed 85 of 86.
+The lava-plume contract remains unsafe: its dynamic low-window observer requires a valid backend.
 Six read-only state projections preserve 57,621 bytes; exact native leaf variants remain source-reviewed.
 The manifest now has 86 rows; whole-engine ownership and backend independence stay open.
 Retain the fixed 2131-frame X-ray activation/release row and original pickup.

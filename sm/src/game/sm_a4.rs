@@ -15,7 +15,7 @@ pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a4::*;
 
 use crate::game::enemy_projectiles::{ClearEprojs, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
-use crate::game::music::{QueueSfx2_Max6, QueueSfx3_Max6};
+use crate::game::music::QueueSfx2_Max6;
 use crate::game::player_update::minimap;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::visual_runtime::{align_crocomire_background, spawn_hdma};
@@ -94,7 +94,7 @@ pub unsafe fn Crocomire_Func_31(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Func_36(game: &mut Game) {
     unsafe {
-        Crocomire_Func_35(game);
+        actors::crocomire_reactions::rumble(game);
         align_crocomire_background(game);
         Crocomire_8D47(game);
     }
@@ -280,7 +280,7 @@ pub unsafe fn Crocomire_Func_53(game: &mut Game) {
 }
 pub unsafe fn Crocomire_Func_54(game: &mut Game) {
     unsafe {
-        Crocomire_Func_35(game);
+        actors::crocomire_reactions::rumble(game);
         Crocomire_Func_53(game);
         Crocomire_Func_55(game);
     }
@@ -352,7 +352,7 @@ pub unsafe fn Crocomire_929E(game: &mut Game) {
 }
 pub unsafe fn Crocomire_92CE(game: &mut Game) {
     unsafe {
-        Crocomire_Func_35(game);
+        actors::crocomire_reactions::rumble(game);
         Crocomire_Func_53(game);
         Crocomire_92D8(game);
     }
@@ -1008,17 +1008,6 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E: i32 = 0; };
-    Crocomire_Func_35 [] {
-        let crocom_var_20: u16 = slot!(game, Crocomire[E].var_20);
-        if crocom_var_20 != 0 {
-            let v2: u16 = (crocom_var_20).wrapping_sub(1);
-            slot!(game, Crocomire[E].var_20 = v2);
-            if v2 == 0 {
-                slot!(game, Crocomire[E].var_20 = 32);
-                QueueSfx3_Max6(0x22, game);
-            }
-        }
-    };
     Crocomire_8D47 [] {
         let crocom_var_D: u16 = slot!(game, Crocomire[E].var_D);
         if crocom_var_D != 0 {
