@@ -86,5 +86,6 @@ pub(crate) mod lava_seahorse;
 pub(in crate::game) mod maridia_floater;
 pub(in crate::game) mod maridia_puffer;
 pub(in crate::game) mod wrecked_ship_ghost;
+pub(in crate::game) mod wrecked_ship_orbs;
 pub(in crate::game) mod wrecked_ship_robots;
 pub(in crate::game) mod wrecked_ship_spark;

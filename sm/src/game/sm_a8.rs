@@ -35,8 +35,7 @@ crate::game::constants::typed_constants! { Consts_A8;
     addr_kSpritemap_Nothing_A8 = 32845,
 }
 crate::type_aliases! {
-    pub Enemy_NorfairLavaMan,
-        Enemy_WreckedShipOrbs = crate::game::enemy_layouts::EnemyLayout40;
+    pub Enemy_NorfairLavaMan = crate::game::enemy_layouts::EnemyLayout40;
 }
 
 crate::type_aliases! {
@@ -68,7 +67,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_YappingMaw(o: i32) -> Enemy_YappingMaw = [0xf78, o as isize];
 }
 type YappingMaw = Enemy_YappingMaw;
-type WreckedShipOrbs = Enemy_WreckedShipOrbs;
 type NorfairLavaMan = Enemy_NorfairLavaMan;
 type MorphBallEye = Enemy_MorphBallEye;
 static g_word_A890CA: [i16; 4] = [-8, 8, 0, 0];
@@ -492,54 +490,6 @@ pub unsafe fn NorfairLavaMan_Func_19(k: u16, game: &mut Game) {
     }
 }
 
-crate::game::callback_dispatch! {
-    pub unsafe fn CallWreckedShipOrbsA(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    @prefix { let E: i32 = word!(game.cur_enemy_index) as i32; };
-    WreckedShipOrbs_Init [] {
-        slot!(game, WreckedShipOrbs[E].base.instruction_timer = 1);
-        slot!(game, WreckedShipOrbs[E].base.timer = 0);
-        slot!(game, WreckedShipOrbs[E].base.current_instruction = crate::rtl::rom_table_word!(game, 0xa8e380, slot!(game, WreckedShipOrbs[E].parameter_1) as isize))
-;
-        let v1: i32 = 8 * slot!(game, WreckedShipOrbs[E].parameter_2) as i32 >> 1;
-        slot!(game, WreckedShipOrbs[E].var_01 = crate::rtl::rom_table_word!(game, 0xa28187, v1 as isize));
-        slot!(game, WreckedShipOrbs[E].var_00 = crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 1) as isize));
-        slot!(game, WreckedShipOrbs[E].var_03 = crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 2) as isize));
-        slot!(game, WreckedShipOrbs[E].var_02 = crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 3) as isize));
-    };
-    WreckedShipOrbs_Func_1 [] {
-        slot!(game, WreckedShipOrbs[E].var_A = (0xa8e405i32) as u16);
-        if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y) }) & 0x8000) == 0 {
-            slot!(game, WreckedShipOrbs[E].var_A = (0xa8e424i32) as u16);
-        }
-    };
-    WreckedShipOrbs_Func_2 [] {
-        slot!(game, WreckedShipOrbs[E].var_B = (0xa8e443i32) as u16);
-        if (({ let actor = word!(game.cur_enemy_index); actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) }) & 0x8000) == 0 {
-            slot!(game, WreckedShipOrbs[E].var_B = (0xa8e462i32) as u16);
-        }
-    };
-    [11068421] WreckedShipOrbs_Func_3 [] {
-        slot!(game, WreckedShipOrbs[E].base(y_pos, y_subpos) += crate::rtl::words!((slot!(game, WreckedShipOrbs[E].var_03), slot!(game, WreckedShipOrbs[E].var_02))));
-    };
-    [11068452] WreckedShipOrbs_Func_4 [] {
-        slot!(game, WreckedShipOrbs[E].base(y_pos, y_subpos) += crate::rtl::words!((slot!(game, WreckedShipOrbs[E].var_01), slot!(game, WreckedShipOrbs[E].var_00))));
-    };
-    WreckedShipOrbs_Func_5 [] {
-        slot!(game, WreckedShipOrbs[E].base(x_pos, x_subpos) += crate::rtl::words!((slot!(game, WreckedShipOrbs[E].var_03), slot!(game, WreckedShipOrbs[E].var_02))));
-    };
-    WreckedShipOrbs_Func_6 [] {
-        slot!(game, WreckedShipOrbs[E].base(x_pos, x_subpos) += crate::rtl::words!((slot!(game, WreckedShipOrbs[E].var_01), slot!(game, WreckedShipOrbs[E].var_00))));
-    };
-}
-crate::game::address_dispatch! {
-    pub unsafe fn CallWreckedShipOrbsB(ea: u32, game: &mut Game) => ea;
-        call (game); default { Unreachable(game); };
-    {
-        11068483 => WreckedShipOrbs_Func_5; 11068514 => WreckedShipOrbs_Func_6;
-    }
-}
 pub unsafe fn BlueBrinstarFaceBlock_Func_1(game: &mut Game) {
     unsafe {
         if word!(game.door_transition_flag_enemies) == 0 && {
@@ -646,13 +596,6 @@ crate::game::callback_dispatch! {
     [11056140] NorfairLavaMan_Shot [] {
         actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
         NorfairLavaMan_Common(game);
-    };
-    [11068355] WreckedShipOrbs_Main [] {
-        WreckedShipOrbs_Func_1(game);
-        WreckedShipOrbs_Func_2(game);
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        CallWreckedShipOrbsA(((slot!(game, WreckedShipOrbs[E].var_A)) as u32) | (0xa80000u32), game);
-        CallWreckedShipOrbsB(((slot!(game, WreckedShipOrbs[E].var_B)) as u32) | (0xa80000u32), game);
     };
     [11069486] BlueBrinstarFaceBlock_Init [] {
         let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
