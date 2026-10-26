@@ -630,6 +630,12 @@ crate::game::callback_dispatch! {
         11045147 => crate::game::actors::evir::advance;
         11045278 => crate::game::actors::evir::advance_projectile;
         11045638 | 11045644 | 11045650 => [crate::game::actors::evir::damage(ea, game)];
+        11047000 => crate::game::actors::morph_ball_eye::initialize;
+        11047138 => [{
+            if let Some(address) = crate::game::actors::morph_ball_eye::state_address(game) {
+                actor_species_pre_instruction(address, game);
+            }
+        }];
         11048675 => crate::game::actors::fune::initialize;
         11048752 => crate::game::actors::fune::advance;
         11049710 => crate::game::actors::wrecked_ship_ghost::initialize;
@@ -710,6 +716,12 @@ crate::game::address_dispatch! {
         10735455 => [()];
         10739850 => [()]; 10741441 => [()];
         10998952 => [()];
+        11047153 | 11047214 | 11047264 | 11047374 => [{
+            if crate::game::actors::morph_ball_eye::prepare_update(ea as u16, k, game) {
+                crate::game::visual_runtime::initialize_morph_eye_beam(game);
+                crate::game::actors::morph_ball_eye::finish_beam(k, game);
+            }
+        }];
         11047388 => [()];
         11055761 => [sm_a8::sub_A8B291(k)]; 11055765 => [sm_a8::NorfairLavaMan_Func_13(game)];
         11059843 | 11059878 | 11059919 | 11060075 | 11060193 | 11060329 | 11060444 | 11060480 | 11060509 | 11060584 | 11060585 | 11060639 => [crate::game::actors::maridia_floater::advance(ea as u16, k, game)];

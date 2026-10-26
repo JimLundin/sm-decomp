@@ -13,7 +13,6 @@ use crate::game::enemy_projectiles::SpawnEprojWithGfx;
 use crate::game::music::QueueSfx2_Max6;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
-use crate::game::visual_runtime::initialize_morph_eye_beam;
 
 pub use crate::types::Consts_A8;
 
@@ -27,18 +26,9 @@ crate::game::constants::typed_constants! { Consts_A8;
     addr_kYappingMaw_Ilist_A05B = 41051, addr_kYappingMaw_Ilist_A03D = 41021,
     addr_off_A8A025 = 40997, addr_kYappingMaw_Ilist_A01F = 40991,
     addr_kYappingMaw_Ilist_9FC7 = 40903, addr_kYappingMaw_Ilist_9F6F = 40815,
-    addr_kMorphBallEye_Ilist_9026 = 36902, addr_kMorphBallEye_Ilist_9014 = 36884,
-    addr_stru_A8900E = 36878, addr_kMorphBallEye_Ilist_9002 = 36866,
-    addr_stru_A88FFC = 36860, addr_kMorphBallEye_Ilist_8FF0 = 36848,
-    addr_kSpritemap_Nothing_A8 = 32845,
 }
 crate::type_aliases! {
     pub Enemy_NorfairLavaMan = crate::game::enemy_layouts::EnemyLayout40;
-}
-
-crate::type_aliases! {
-    pub Enemy_MorphBallEye =
-        crate::game::enemy_layouts::EnemyLayout8;
 }
 
 pub type Enemy_YappingMaw = crate::game::enemy_layouts::EnemyLayout104;
@@ -47,9 +37,6 @@ const RomPtr_A8: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_p
 crate::game::constants::typed_constants! { i32;
     fnnullsub_152 = 0x90e90e, fnSamus_InputHandler_E913 = 0x90e913,
     fnSamus_InputHandler_E91D = 0x90e91d, fnnullsub_170_A8 = 0xa8804c,
-    fnMorphBallEye_Func_1 = 0xa890f1, fnMorphBallEye_Func_2 = 0xa8912e,
-    fnMorphBallEye_Func_3 = 0xa89160, fnMorphBallEye_Func_4 = 0xa891ce,
-    fnnullsub_244 = 0xa891dc,
     fnNorfairLavaMan_Func_6 = 0xa8b0b2,
     fnNorfairLavaMan_Func_7 = 0xa8b11a, fnNorfairLavaMan_Func_8 = 0xa8b175,
     fnsub_A8B193 = 0xa8b193, fnNorfairLavaMan_Func_9 = 0xa8b1b8,
@@ -64,13 +51,6 @@ crate::ram_map::ram_pointer_functions! {
 }
 type YappingMaw = Enemy_YappingMaw;
 type NorfairLavaMan = Enemy_NorfairLavaMan;
-type MorphBallEye = Enemy_MorphBallEye;
-static g_word_A890CA: [i16; 4] = [-8, 8, 0, 0];
-static g_word_A890D2: [i16; 4] = [0, 0, -8, 8];
-static g_word_A89050: u16 = 0x80;
-static g_word_A89052: u16 = 0xb0;
-static g_word_A89054: u16 = 0x80;
-static g_word_A89056: u16 = 0x80;
 crate::game::callback_dispatch! {
     pub unsafe fn CallYappingMawFunc(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -490,35 +470,6 @@ crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
-    [11047000] MorphBallEye_Init [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, MorphBallEye[E].base.properties, |old| (old) | ((kEnemyProps_DisableSamusColl) as u16));
-        slot!(game, MorphBallEye[E].base.spritemap_pointer = addr_kSpritemap_Nothing_A8 as u16);
-        slot!(game, MorphBallEye[E].base.instruction_timer = 1);
-        slot!(game, MorphBallEye[E].base.timer = 0);
-        if (slot!(game, MorphBallEye[E].parameter_2) & 0x8000) != 0 {
-            let v1: i32 = slot!(game, MorphBallEye[E].parameter_2) as i32 & 0xf;
-            slot!(game, MorphBallEye[E].base.x_pos, |old| (old).wrapping_add((g_word_A890CA[v1 as usize]) as u16));
-            slot!(game, MorphBallEye[E].base.y_pos, |old| (old).wrapping_add((g_word_A890D2[v1 as usize]) as u16));
-            slot!(game, MorphBallEye[E].var_F = (0xa891dci32) as u16);
-            slot!(game, MorphBallEye[E].base.current_instruction = crate::rtl::rom_table_word!(game, 0xa890da, v1 as isize))
-;
-            word_transfers!(game, descending, 256; native(0x92fe) <- value(255));
-        } else {
-            slot!(game, MorphBallEye[E].var_F = (0xa890f1i32) as u16);
-            if (slot!(game, MorphBallEye[E].parameter_1) & 1) != 0 {
-                slot!(game, MorphBallEye[E].base.current_instruction = addr_stru_A8900E as u16);
-            } else {
-                slot!(game, MorphBallEye[E].base.current_instruction = addr_stru_A88FFC as u16);
-            }
-        };
-    };
-    [11047138] MorphBallEye_Main [] {
-        if (word!(game.collected_items) & 4) != 0 {
-            let E: i32 = word!(game.cur_enemy_index) as i32;
-            actor_species_pre_instruction(((slot!(game, MorphBallEye[E].var_F)) as u32) | (0xa80000u32), game);
-        }
-    };
     [11052989] YappingMaw_Shot [] {
         actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
         let E: i32 = word!(game.cur_enemy_index) as i32;
@@ -798,42 +749,6 @@ crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
     call (k, game); default { crate::rtl::Unreachable(game); };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [11047153] MorphBallEye_Func_1 [] {
-        if ({ let (actor, distance) = (k, g_word_A89054); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
-            && ({ let (actor, distance) = (k, g_word_A89050); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
-        {
-            let E: i32 = k as i32;
-            slot!(game, MorphBallEye[E].var_E = 32);
-            slot!(game, MorphBallEye[E].base.instruction_timer = 1);
-            if (slot!(game, MorphBallEye[E].parameter_1) & 1) != 0 {
-                slot!(game, MorphBallEye[E].base.current_instruction = addr_kMorphBallEye_Ilist_9026 as u16);
-            } else {
-                slot!(game, MorphBallEye[E].base.current_instruction = addr_kMorphBallEye_Ilist_9014 as u16);
-            }
-            slot!(game, MorphBallEye[E].var_F = (0xa8912ei32) as u16);
-        }
-    };
-    [11047264] MorphBallEye_Func_3 [] {
-        let E: i32 = k as i32;
-        if ({ let (actor, distance) = (k, g_word_A89056); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
-            && ({ let (actor, distance) = (k, g_word_A89052); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
-        {
-            let v3: u16 = actor_api::angle_from_delta((word!(game.samus_x_pos)).wrapping_sub(slot!(game, MorphBallEye[E].base.x_pos)), (word!(game.samus_y_pos)).wrapping_sub(slot!(game, MorphBallEye[E].base.y_pos)));
-            slot!(game, MorphBallEye[E].var_D = v3);
-            slot!(game, MorphBallEye[E].base.current_instruction = (((v3 as i32 & 0xf0) >> 2) - 28756i32) as u16);
-        } else {
-            QueueSfx2_Max6(0x71, game);
-            slot!(game, MorphBallEye[E].var_C = 0);
-            slot!(game, MorphBallEye[E].var_E = 32);
-            if (slot!(game, MorphBallEye[E].parameter_1) & 1) != 0 {
-                slot!(game, MorphBallEye[E].base.current_instruction = addr_kMorphBallEye_Ilist_9002 as u16);
-            } else {
-                slot!(game, MorphBallEye[E].base.current_instruction = addr_kMorphBallEye_Ilist_8FF0 as u16);
-            }
-            slot!(game, MorphBallEye[E].var_F = (0xa891cei32) as u16);
-        }
-        slot!(game, MorphBallEye[E].base.instruction_timer = 1);
-    };
     [11055885] NorfairLavaMan_Func_15 [] {
         if *(ram_ptr!(game, u16; 0xe84))
             .offset(((word!(game.cur_enemy_index) as i32 >> 1) + 87) as isize) as i32
@@ -973,22 +888,5 @@ crate::game::callback_dispatch! {
             slot!(game, NorfairLavaMan[E].base.y_pos = slot!(game, NorfairLavaMan[E].var_13));
         }
         NorfairLavaMan_Func_19(word!(game.cur_enemy_index), game);
-    };
-    @countdown [pub unsafe fn (k: u16, game: &mut Game)];
-    before {
-        let E: i32 = k as i32;
-        let v2: bool = slot!(game, MorphBallEye[E].var_E) == 1;
-        slot!(game, MorphBallEye[E].var_E, |old| old.wrapping_sub(1));
-        let v3: bool = (slot!(game, MorphBallEye[E].var_E) & 0x8000) != 0;
-    }
-    when v2 || v3;
-    [11047214] MorphBallEye_Func_2 {
-        QueueSfx2_Max6(0x17, game);
-        initialize_morph_eye_beam(game);
-        slot!(game, MorphBallEye[E].var_F = (0xa89160i32) as u16);
-        slot!(game, MorphBallEye[E].var_D = actor_api::angle_from_delta((word!(game.samus_x_pos)).wrapping_sub(slot!(game, MorphBallEye[E].base.x_pos)), (word!(game.samus_y_pos)).wrapping_sub(slot!(game, MorphBallEye[E].base.y_pos))));
-    };
-    [11047374] MorphBallEye_Func_4 {
-        slot!(game, MorphBallEye[E].var_F = (0xa890f1i32) as u16);
     };
 }
