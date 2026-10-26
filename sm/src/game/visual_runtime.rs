@@ -2831,22 +2831,20 @@ pub(crate) fn queue_cinematic_tilemap(
         Japanese => (1536, 0x4000),
         JapaneseIntro => (256, 0x3000),
     };
-    let tail = word!(game.vram_write_queue_tail);
-    for (offset, value) in [(0u16, size), (2, source)] {
-        word_transfers!(game, ascending, 1;
-            native(0xd0 + usize::from(tail.wrapping_add(offset))) <- value(value));
-    }
-    game.g_ram[0xd0 + usize::from(tail.wrapping_add(4))] = 126;
-    // Earlier queue writes can overlap this destination field.
-    let destination = match tiles {
-        Eyes => 18848,
-        Japanese => 16768,
-        JapaneseIntro => 20192,
-        _ => word!(game.cinematicbg_var3),
-    };
-    word_transfers!(game, ascending, 1;
-        native(0xd0 + usize::from(tail.wrapping_add(5))) <- value(destination));
-    word!(game.vram_write_queue_tail = tail.wrapping_add(7));
+    crate::game::display_refresh::queue_native_transfer(
+        word!(game.vram_write_queue_tail),
+        size,
+        |_| source,
+        126,
+        // Earlier queue writes can overlap this destination field.
+        |game| match tiles {
+            Eyes => 18848,
+            Japanese => 16768,
+            JapaneseIntro => 20192,
+            _ => word!(game.cinematicbg_var3),
+        },
+        game,
+    );
 }
 
 pub(crate) fn advance_ending_graphics(graphics: EndingGraphics, game: &mut Game) {
