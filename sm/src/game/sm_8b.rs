@@ -915,55 +915,6 @@ crate::game::callback_dispatch! {
         crate::game::display_refresh::enable(true, game);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
     };
-    [9160604] CinematicFunction_Intro_Func87 [] {
-        if (word!(game.cinematic_var12) & 3) == 0 {
-            crate::update_place! { reference fresh116 = *ram_ptr!(game; 0x57) => (*fresh116).wrapping_sub(16); }
-        }
-        crate::game::display_refresh::fade(true, game);
-        if *ram_ptr!(game; 0x51) == 15 {
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-            word!(game.cinematic_function = (0x8bc7cai32) as u16);
-        }
-    };
-    [9160650] CinematicFunction_Intro_Func88 [] {
-        if (word!(game.cinematic_var12) & 3) == 0 {
-            crate::update_place! { reference fresh115 = *ram_ptr!(game; 0x57) => (*fresh115).wrapping_sub(16); }
-            if (*ram_ptr!(game; 0x57) & 0xf0) == 0 {
-                *ram_ptr!(game; 0x55) = 7;
-                *ram_ptr!(game; 0x5f) = 0x80;
-                *ram_ptr!(game; 0x58) = 0;
-                *ram_ptr!(game; 0x5d) = 0;
-                *ram_ptr!(game; 0x69) = 17;
-                word! {game; cinematic_var8 = 128; cinematic_var10 = -104i32 as u16;
-                    cinematic_var5 = 32; cinematic_var6 = 256; }
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCEA3 as u16,
-                    0x0100, // The preceding $198F store leaves $0100 in A.
-                    game,
-                );
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCEF7 as u16,
-                    0x0e00, // Palette left in A by the preceding sprite initializer.
-                    game,
-                );
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCEFD as u16,
-                    0x0800, // Palette left in A by the preceding sprite initializer.
-                    game,
-                );
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF03 as u16,
-                    0x0800, // Palette left in A by the preceding sprite initializer.
-                    game,
-                );
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF09 as u16,
-                    0x0800, // Palette left in A by the preceding sprite initializer.
-                    game,
-                );
-                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCEAF as u16,
-                    0x0800, // Palette left in A by the preceding sprite initializer.
-                    game,
-                );
-                word!(game.cinematic_function = (0x8ba38fi32) as u16);
-            }
-        }
-    };
     [9161439] CinematicFunction_Intro_Func95 [] {
         *ram_ptr!(game; 0x51) = 0x80;
         word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
@@ -1392,6 +1343,8 @@ crate::game::callback_dispatch! {
         *ram_ptr!(game; 0x69) = 16;
     };
     @external {
+        9160604 => [crate::game::visual_runtime::advance_intro_landing_mosaic(true, game)];
+        9160650 => [crate::game::visual_runtime::advance_intro_landing_mosaic(false, game)];
         9149719 => [crate::game::visual_runtime::advance_title_pan(0, game)];
         9149840 => [crate::game::visual_runtime::advance_title_pan(1, game)];
         9149970 => [crate::game::visual_runtime::advance_title_pan(2, game)];

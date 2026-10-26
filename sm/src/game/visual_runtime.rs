@@ -1819,6 +1819,39 @@ pub(crate) fn initialize_ceres_explosion(object: u16, pattern: CeresExplosion, g
     }
 }
 
+pub(crate) fn advance_intro_landing_mosaic(fading: bool, game: &mut Game) {
+    if word!(game.cinematic_var12) & 3 == 0 {
+        game.g_ram[0x57] = game.g_ram[0x57].wrapping_sub(16);
+        if !fading && game.g_ram[0x57] & 0xf0 == 0 {
+            game.g_ram[0x55] = 7;
+            game.g_ram[0x5f] = 0x80;
+            game.g_ram[0x58] = 0;
+            game.g_ram[0x5d] = 0;
+            game.g_ram[0x69] = 17;
+            word! {game; cinematic_var8 = 128; cinematic_var10 = -104i32 as u16;
+            cinematic_var5 = 32; cinematic_var6 = 256; }
+            for (definition, parameter) in [
+                (0xcea3, 0x0100), // The preceding $198F store leaves $0100 in A.
+                (0xcef7, 0x0e00), // Palette left in A by the preceding sprite initializer.
+                (0xcefd, 0x0800), // Palette left in A by the preceding sprite initializer.
+                (0xcf03, 0x0800), // Palette left in A by the preceding sprite initializer.
+                (0xcf09, 0x0800), // Palette left in A by the preceding sprite initializer.
+                (0xceaf, 0x0800), // Palette left in A by the preceding sprite initializer.
+            ] {
+                CinematicObjects::Sprites.spawn(definition, parameter, game);
+            }
+            word!(game.cinematic_function = 0xa38f);
+        }
+    }
+    if fading {
+        crate::game::display_refresh::fade(true, game);
+        if game.g_ram[0x51] == 15 {
+            word! { game, 0; screen_fade_delay, screen_fade_counter }
+            word!(game.cinematic_function = 0xc7ca);
+        }
+    }
+}
+
 pub(crate) fn advance_ceres_station(object: u16, game: &mut Game) {
     if word!(game.cinematic_function) == 0xbdf9 {
         let slot = usize::from(object >> 1);
