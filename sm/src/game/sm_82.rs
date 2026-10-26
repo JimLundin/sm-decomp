@@ -3,7 +3,6 @@ use crate::game::file_menu::advance as advance_file_menu;
 use crate::game::game_over::advance as advance_game_over;
 use crate::game::gameplay::{Entry, advance as AdvanceGameplay};
 use crate::game::map_menu::advance as advance_map_menu;
-use crate::game::music::HasQueuedMusic;
 use crate::game::options_settings;
 use crate::game::pause_controls::fade_in as pause_fade_in;
 pub use crate::game::prelude::*;
@@ -17,14 +16,12 @@ pub use crate::game::constants::bank_82::*;
 
 use crate::game::display_refresh::setup_transfer;
 use crate::game::samus_animation::{
-    Samus_DrawDuringDeathAnim, Samus_DrawStartingDeathAnim, Samus_DrawWhenNotAnimatingOrDying,
+    Samus_DrawStartingDeathAnim, Samus_DrawWhenNotAnimatingOrDying, begin_death, explode_suit,
+    flash_death,
 };
 use crate::game::sm_8b::{
     GameState_1_OpeningCinematic_, GameState_37_CeresGoesBoomWithSamus_,
     GameState_39_EndingAndCredits_,
-};
-use crate::game::sm_9b::{
-    GameState_24_SamusNoHealth_Explosion_Helper, HandleSamusDeathSequence, StartSamusDeathAnimation,
 };
 
 pub use crate::types::Func_V_Coroutine;
@@ -96,9 +93,9 @@ static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_
     GameState_11_LoadingNextRoom_Async, PAUSE_FADE_OUT,
     PAUSE_SETUP, pause_fade_in, PAUSED,
     UNPAUSE_FADE_OUT, UNPAUSE_SETUP, UNPAUSE,
-    PREPARE_DEATH, DEATH_BLACKOUT, GameState_21_SamusNoHealth,
-    GameState_22_SamusNoHealth_Dying, GameState_23_SamusNoHealth_Flashing,
-    GameState_24_SamusNoHealth_Explosion, GAME_OVER_FADE_OUT,
+    PREPARE_DEATH, DEATH_BLACKOUT, begin_death,
+    GameState_22_SamusNoHealth_Dying, flash_death,
+    explode_suit, GAME_OVER_FADE_OUT,
     advance_game_over, RESERVE_TANKS, GameState_28_Unused,
     GameState_29_DebugGameOverMenu, GameState_37_CeresGoesBoomWithSamus_,
     INITIALIZE, CERES_ELEVATOR,
@@ -130,40 +127,11 @@ pub unsafe fn GameState_28_Unused(game: &mut Game) -> CoroutineRet {
     crate::rtl::Unreachable(game);
     kCoroutineNone as CoroutineRet
 }
-pub unsafe fn GameState_21_SamusNoHealth(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        Samus_DrawWhenNotAnimatingOrDying(game);
-        if HasQueuedMusic(game) == 0 {
-            StartSamusDeathAnimation(game);
-            word!(game.game_state += 1);
-        }
-        kCoroutineNone as CoroutineRet
-    }
-}
 pub unsafe fn GameState_22_SamusNoHealth_Dying(game: &mut Game) -> CoroutineRet {
     {
         Samus_DrawStartingDeathAnim(game);
         let v0: bool = (word!(game.g_word_7E0DE8 -= 1, reread) & 0x8000) != 0;
         if word!(game.g_word_7E0DE8) == 0 || v0 {
-            word!(game.game_state += 1);
-        }
-        kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn GameState_23_SamusNoHealth_Flashing(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        if HandleSamusDeathSequence(game) != 0 {
-            word!(game.game_state += 1);
-        } else {
-            Samus_DrawDuringDeathAnim(game);
-        }
-        kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn GameState_24_SamusNoHealth_Explosion(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        if GameState_24_SamusNoHealth_Explosion_Helper(game) != 0 {
-            word! { game, 1; screen_fade_delay, screen_fade_counter }
             word!(game.game_state += 1);
         }
         kCoroutineNone as CoroutineRet

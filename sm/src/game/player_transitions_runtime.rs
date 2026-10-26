@@ -47,14 +47,7 @@ impl Content for Runtime<'_> {
     }
     fn animation_program(&mut self, program: AnimationProgram, advance: u16) -> RomRecord {
         let cursor = program.0.wrapping_add(advance);
-        if cursor & 0x8000 == 0 {
-            // Actual diagnostic and verifier observation occur before native
-            // acquisition. Do not use native_record's reduced invalid_window.
-            self.foreign(|game| unsafe {
-                crate::rtl::rom_bank_ptr::<0x91>(cursor, game);
-            });
-        }
-        visual_host::Content::table(self, Source::Native, 0x910000 | u32::from(cursor))
+        self.legacy_native_record(0x91, cursor)
     }
     fn landing_region(&self) -> LandingRegion {
         use LandingRegion::*;
