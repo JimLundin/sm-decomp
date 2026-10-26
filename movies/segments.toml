@@ -60,9 +60,11 @@ expect = ["state:41", "state:42"]
 # Full window reaches held-input pose changes, normal jumps and their animation tail.
 [[segment]]
 id = "samus-input-poses"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 8340
+seed = "100-input-phase:1"
+seed_sha256 = "c555cbf4669a2d3ed5e444aeb8e3e97d03bacafba50d5c93ec4d5c9dd42ae889"
+inputs = "seed-samus-input-poses.inputs"
+input_sha256 = "c4589f8125a93c1b1e66b593a10c11d78a4e28377e367d7052163160b83beff1"
+start_frame = 0
 frames = 440
 require_hit = ["samus.jump.normal", "transitions.phase.2", "transitions.phase.25"]
 expect = ["area:ceres", "room:DF45"]
@@ -164,9 +166,11 @@ after_expectations = 120
 
 [[segment]]
 id = "boss-kraid"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 115663
+seed = "100-input-phase:73"
+seed_sha256 = "2edce9c97864f0c38c41e0cc24e88a3b3e228aa2b22d03fa2a93f7d593c0fee4"
+inputs = "seed-boss-kraid.inputs"
+input_sha256 = "0429b534282d0ebda01e51763168035cdbe888466830abf5714e61899db4d7f8"
+start_frame = 0
 frames = 5560
 require_hit = ["actors.kraid.shot_ai.disabled", "boss.kraid.background_restored"]
 after_hits = 120
@@ -281,9 +285,11 @@ expect = ["item:morph-ball", "room:9E9F"]
 
 [[segment]]
 id = "item-bombs"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 48930
+seed = "100-input-phase:27"
+seed_sha256 = "c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
+inputs = "seed-item-bombs.inputs"
+input_sha256 = "83bfd2e9ba9286ac3e7afef9677b2d9f55def390ac0a077d92d4dd686684151f"
+start_frame = 0
 frames = 1400
 require_hit = ["coroutine.plm.message.completed"]
 after_hits = 120
@@ -292,9 +298,11 @@ after_expectations = 120
 
 [[segment]]
 id = "item-charge"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 77381
+seed = "100-input-phase:55"
+seed_sha256 = "36262820f622d995ea44ad6162fa8bace23adb165f3d26b06cf4104761297808"
+inputs = "seed-item-charge.inputs"
+input_sha256 = "57341da0bba3efb76d84775b8c377ad22136a6a063eaa8d29b012e6bf7dfc54c"
+start_frame = 700
 frames = 1119
 require_hit = ["coroutine.plm.message.completed"]
 after_hits = 120
@@ -544,12 +552,14 @@ expect = ["pickup:energy", "room:A4B1"]
 after_expectations = 120
 
 # Optional terrain regression on the existing authored reserve route.
-# Contact geometry is checked at frame 145737; this is not a new required check.
+# The seeded observation retains the full 398-frame AC83 window; this is not a new required check.
 [[segment]]
 id = "samus-square-slope-reserve"
-inputs = "corpus-norfair-reserve.inputs"
-input_sha256 = "968f37d5218ea77d18ba81e5022ceca78b0c53be6b22f3602895e08904901c2d"
-start_frame = 145574
+seed = "100-input-phase:92"
+seed_sha256 = "3afddc6d8ae3d3d5aadb42e4d773df3d67b3140701098e3b6513bc2d95a9a59e"
+inputs = "seed-samus-square-slope-reserve.inputs"
+input_sha256 = "6f3cb90c2edf67e1aeb0698fb8e65283f1451a0b520cae49a3f99787354ad151"
+start_frame = 0
 frames = 398
 expect = ["room:AC83"]
 
@@ -587,9 +597,11 @@ after_expectations = 120
 
 [[segment]]
 id = "elevator-up"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 34340
+seed = "100-input-phase:294"
+seed_sha256 = "e27b78a4c9d1210ab9f2b56255f8a3f5c8eb086db61bd09cd27465e2082236c5"
+inputs = "seed-elevator-up.inputs"
+input_sha256 = "4f826bd6db08ec10521112f1e7e6c2dbb53d84000ab0faacf2cf1cefaa6da337"
+start_frame = 25
 frames = 840
 expect = ["elevator:97B5"]
 after_expectations = 120
@@ -619,9 +631,11 @@ after_expectations = 120
 
 [[segment]]
 id = "death"
-inputs = "corpus-save-death-continue.inputs"
-input_sha256 = "af79d24c791c1414cd4b1b83f040da0787a2a69bd0d2c4d6b73fc667b7d74467"
-start_frame = 72761
+seed = "100-input-phase:142"
+seed_sha256 = "a1bdb9e6425c23be82d5047185c0aa619532c5e062a3329753c27320ad32df1f"
+inputs = "seed-death.inputs"
+input_sha256 = "b18179aff9ea5b427af9b1cdeb4efab9bf632a2a9d5da5daddd3a645e44ae307"
+start_frame = 3000
 frames = 1000
 expect = ["death"]
 after_expectations = 120

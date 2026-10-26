@@ -390,8 +390,12 @@ retain their measured lag NMI and unchanged input.
 Seeded corpus rows use `seed = "any-boundary:50"` to select a room index under
 `target/seeds/any-boundary/`. Their `seed_sha256` hashes WRAM, SRAM, VRAM, CGRAM,
 OAM, APU RAM and the register CSV in that order (the index's `observation_sha256`).
-Every file's contents are checked before and after replay. `start_frame` must be
-zero, and seeded rows never read or write verifier checkpoints. The boundary index
+Every file's contents are checked before and after replay. `start_frame` counts
+from the original seed: a nonzero value verifies that many setup frames before
+the selected window. Setup has no early stop and contributes no selected hits or
+expectations. Local checkpoints retain both machines and bind the ROM, original
+seed bytes, input prefix, audio backend and runtime codec; resumed runs require
+the same seed. Setup frames remain reported separately. The boundary index
 `room-seeds-any-boundary.csv` records all 197 any% entries; the initial 57-entry
 prefix is unchanged. `room-seeds-100-boundary.csv` records all 331 entries of the
 completed 100% instruction-boundary capture; seed binaries remain local.
@@ -454,6 +458,42 @@ all five resulting controller words, and the first replay input. At the normaliz
 `$80834A` boundary it restores only the recorded producer inputs, allowing the
 normal controller read to reproduce the original button edges. Old seeds without
 this supplement retain their existing behavior. No input words are guessed or shifted.
+
+Seven more rows use original `100-input-phase` observations with unchanged
+frame ceilings, required observations and full follow-up windows. Setup frames
+are verified before selected observations begin; cached runs may reuse them.
+
+| Row | Observation | Setup | Ceiling | Selected frames | Input words |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `boss-kraid` | `73`, `$A59F` | 0 | 5560 | 1161 | 2779 |
+| `item-bombs` | `27`, `$9804` | 0 | 1400 | 563 | 606 |
+| `samus-input-poses` | `1`, `$DF45` | 0 | 440 | 440 | 440 |
+| `samus-square-slope-reserve` | `92`, `$AC83` | 0 | 398 | 398 | 398 |
+| `elevator-up` | `294`, `$9E9F` | 25 | 840 | 837 | 865 |
+| `item-charge` | `55`, `$9D19` | 700 | 1119 | 687 | 1819 |
+| `death` | `142`, `$A98D` | 3000 | 1000 | 520 | 4042 |
+
+Input files are named `seed-<row>.inputs`. Regenerate each using the strict
+`movie_inputs.py` command below, its observation and the table's input-word count.
+The recordings retain every captured controller word and the original seed's
+input-phase metadata. Explicit early-stop rows may have fewer inputs than their
+ceiling, but still must complete every required observation and tail before EOF.
+
+Charge's setup excludes the earlier missile message: acquisition is observed at
+input 879, its own message completes at 1266, and 120 following frames complete.
+The elevator finishes at 741 and retains its full 120-frame tail. Death starts
+from an alive Crocomire-room observation, verifies 3000 setup frames, reaches the
+complete death sequence at 3399 and keeps 120 following frames. This death is
+observed in the patched paired-oracle replay, not an original-movie death capture;
+save/reload coverage remains separate. The original captured trajectory crosses a square slope within the selected
+window before its message pause. These seven rows remove 499,264 configured setup frames, leaving
+3,725 on a cold run. All eight authored route recipes still have other consumers.
+The attempted Ice seed did not reach its required doors; the original Ice row
+and recipe remain unchanged.
+
+```powershell
+python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-item-charge.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0055-9D19-wram.bin --frames 1819
+```
 
 Four more navigation/encounter rows use original `100-input-phase` observations,
 with their existing input budgets, required hits, expectations and follow-up windows:

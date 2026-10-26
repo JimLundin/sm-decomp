@@ -302,7 +302,7 @@ def corpus_child(command, root):
             process.wait()
     rejected = {
         "not a verifier checkpoint", "checkpoint frame overflow",
-        "checkpoint runtime changed; regenerate from boot", "checkpoint ROM differs",
+        "checkpoint runtime changed; regenerate from boot", "checkpoint ROM or seed differs",
         "checkpoint input prefix differs", "checkpoint audio backend differs",
         "checkpoint payload is corrupt", "checkpoint has extra state bytes",
         "checkpoint state did not round-trip", "truncated checkpoint",
@@ -366,9 +366,8 @@ def run_corpus(root, args):
                         or not seed.split(":")[0].replace("-", "").isalnum()
                         or not seed.split(":")[1].isdigit() or int(seed.split(":")[1]) < 1
                         or not isinstance(digest, str) or len(digest) != 64
-                        or any(c not in "0123456789abcdef" for c in digest)
-                        or segment["start_frame"] != 0):
-                    raise ValueError(f"corpus {name}: seed requires capture:index, payload SHA-256 and start_frame=0")
+                        or any(c not in "0123456789abcdef" for c in digest)):
+                    raise ValueError(f"corpus {name}: seed requires capture:index and payload SHA-256")
             integer(segment.get("frames"), name + " frames", 1)
             for key, tail in (("require_hit", "after_hits"), ("expect", "after_expectations")):
                 segment[key] = strings(segment.get(key, []), name + " " + key)
@@ -449,7 +448,8 @@ def run_corpus(root, args):
 
     def cache_directory(segment):
         # One digest retains the full identity without three long Windows path components.
-        identity = "\0".join((source, rom_hash, segment["input_sha256"]))
+        identity = "\0".join((source, rom_hash, segment["input_sha256"],
+                              segment.get("seed_sha256", "")))
         return cache / hashlib.sha256(identity.encode("ascii")).hexdigest()
 
     def checkpoint_frame(path):
@@ -458,10 +458,13 @@ def run_corpus(root, args):
         return int.from_bytes(header[32:40], "little") if len(header) == 56 and header[:8] == b"SMVERIFY" else None
 
     prefix_inputs = {}
-    donors = {item["input_sha256"]: item for item in segments.values()
-              if "pending" not in item and "seed" not in item}
+    donors = {(item["input_sha256"], item.get("seed_sha256")): item
+              for item in segments.values() if "pending" not in item}
 
     def shares_prefix(segment, donor, frame):
+        # Only the same initial state can share a verified input prefix.
+        if segment.get("seed_sha256") != donor.get("seed_sha256"):
+            return False
         # Compare recipe-bound canonical words; the DLL still validates the checkpoint.
         for item in (segment, donor):
             digest = item["input_sha256"]
@@ -495,8 +498,7 @@ def run_corpus(root, args):
                 for path in cache_directory(donor).glob("*.smvchk"):
                     frame = checkpoint_frame(path)
                     if (frame is not None and 0 < frame <= start
-                            and (donor["input_sha256"] == segment["input_sha256"]
-                                 or shares_prefix(segment, donor, frame))):
+                            and shares_prefix(segment, donor, frame)):
                         candidates.append((frame, path))
             candidates.sort(key=lambda pair: (pair[0], pair[1].stat().st_mtime_ns), reverse=True)
         previous, checkpoint = candidates[0] if candidates else (0, None)
@@ -504,8 +506,7 @@ def run_corpus(root, args):
             return checkpoint
         # Retain useful branch starts while verifying this prefix, bounded by the recipe.
         stops = sorted({item["start_frame"] for item in segments.values()
-                        if "pending" not in item and "seed" not in item
-                        and 0 < item["start_frame"] < start
+                        if "pending" not in item and 0 < item["start_frame"] < start
                         and shares_prefix(segment, item, item["start_frame"])})
         regenerated = False
         while previous < start:
@@ -513,6 +514,8 @@ def run_corpus(root, args):
             output = directory / f"{end}-{uuid.uuid4().hex}.smvchk"
             setup = command + [str(rom), str(segment["inputs"]), "--no-build",
                                "--frames", str(end - previous), "--checkpoint-out", str(output)]
+            if "seed" in segment:
+                setup += ["--seed", str(segment["_seed_path"])]
             if checkpoint:
                 setup += ["--checkpoint-in", str(checkpoint)]
             print(f"SETUP {segment['id']}: input frames {previous}..{end}", flush=True)
@@ -524,7 +527,7 @@ def run_corpus(root, args):
                 continue
             if not checkpoint or not rejected or regenerated:
                 return None
-            print(f"Checkpoint rejected for {segment['id']}; regenerate prefix from boot", flush=True)
+            print(f"Checkpoint rejected for {segment['id']}; regenerate prefix from its origin", flush=True)
             previous, checkpoint = 0, None
             regenerated = True
         return checkpoint
@@ -551,8 +554,10 @@ def run_corpus(root, args):
                 if key in segment:
                     replay += ["--" + key.replace("_", "-"), str(segment[key])]
             if "seed" in segment:
+                replay += ["--seed", str(segment["_seed_path"])]
+            if "seed" in segment and not start:
                 print(f"SEGMENT {name}: seed {segment['seed']}, budget {segment['frames']} frames", flush=True)
-                code, _ = corpus_child(replay + ["--seed", str(segment["_seed_path"])], root)
+                code, _ = corpus_child(replay, root)
                 if not input_matches(segment):
                     raise RuntimeError("inputs changed during seeded corpus segment")
                 if code:
@@ -632,9 +637,8 @@ def main():
     parser.add_argument("--rustc", default=shutil.which("rustc") or str(
         Path.home() / ".cargo" / "bin" / "rustc.exe"))
     args = parser.parse_args()
-    if args.seed is not None and (args.unit_tests or args.build_only or args.corpus is not None
-                                 or args.checkpoint_in is not None or args.checkpoint_out is not None):
-        parser.error("--seed requires a direct replay without checkpoint input or output")
+    if args.seed is not None and (args.unit_tests or args.build_only or args.corpus is not None):
+        parser.error("--seed requires a direct replay")
     if args.unit_tests and (args.build_only or args.frontend_check or args.rom is not None
                            or args.inputs is not None or args.corpus is not None or args.segment
                            or args.frames is not None or args.checkpoint_in is not None

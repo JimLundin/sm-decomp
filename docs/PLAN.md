@@ -53,8 +53,8 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
    VRAM read-buffer, CGRAM-low and Mode7 latch values. No invented register defaults.
    Existing required rows and expectations remain intact; hosted verification and
    the combined full corpus are separate obligations, not inferred from this result.
-   55/82 rows are seeded. The unused 25 route names are removed; eight live recipes
-   still share the early-route controller sequence. Seed the remaining 27 rows in
+   62/82 rows are seeded; eight live recipes still share the early-route controller
+   sequence. Seed the remaining 20 rows in
    batches of six or more, deleting newly unused recipes; preserve input guards.
 2. **Current - lane B retirement.** B1 sm_88/sm_a0/sm_81 and B3 sm_8f/sm_b2 are
    retired. M2 sm_a8, eleven B2 cinematic families and B3 Goofball are integrated;

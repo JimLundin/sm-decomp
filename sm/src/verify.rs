@@ -1006,8 +1006,8 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
     if load_sram && (checkpoint_in.is_some() || checkpoint_out.is_some()) {
         return Err("checkpoints require the deterministic clean-SRAM boot".into());
     }
-    if seed_in.is_some() && (checkpoint_in.is_some() || checkpoint_out.is_some() || load_sram) {
-        return Err("--seed cannot be combined with checkpoints or SRAM loading".into());
+    if seed_in.is_some() && load_sram {
+        return Err("--seed cannot be combined with SRAM loading".into());
     }
     if checkpoint_out.is_some_and(|path| std::path::Path::new(path).exists()) {
         return Err("checkpoint output already exists; choose a new path".into());
@@ -1085,11 +1085,12 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             1024,
             0,
         );
+        let origin = checkpoint::origin(&rom, seed_in.map(std::path::Path::new))?;
         let first = match checkpoint_in {
-            Some(path) => checkpoint::load(std::path::Path::new(path), game, &rom, &inputs)?,
+            Some(path) => checkpoint::load(std::path::Path::new(path), game, origin, &inputs)?,
             None => 0,
         };
-        if let Some(path) = seed_in {
+        if let Some(path) = seed_in.filter(|_| checkpoint_in.is_none()) {
             let first_input = inputs
                 .first()
                 .copied()
@@ -1208,7 +1209,10 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         }
         if let Some(path) = checkpoint_out {
             let end = first + completed;
-            checkpoint::save(std::path::Path::new(path), game, &rom, &inputs, end)?;
+            if checkpoint::origin(&rom, seed_in.map(std::path::Path::new))? != origin {
+                return Err("seed changed during replay".into());
+            }
+            checkpoint::save(std::path::Path::new(path), game, origin, &inputs, end)?;
             eprintln!("Saved verifier checkpoint before input frame {end}: {path}");
         }
         Ok(failures)

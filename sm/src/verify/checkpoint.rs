@@ -16,11 +16,42 @@ fn fingerprint(bytes: &[u8]) -> u64 {
     })
 }
 
+// Bind seed-backed checkpoints to their actual original observation, not its path.
+// Like the other checkpoint fingerprints this detects stale caches, not hostile input.
+pub(super) fn origin(rom: &[u8], seed: Option<&Path>) -> Result<u64, String> {
+    let Some(path) = seed else {
+        return Ok(fingerprint(rom));
+    };
+    let prefix = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .and_then(|name| name.strip_suffix("-wram.bin"))
+        .ok_or("seed path must name a -wram.bin file")?;
+    let mut identity = Vec::from(b"original-emulator-seed\0".as_slice());
+    identity.extend_from_slice(&fingerprint(rom).to_le_bytes());
+    for region in [
+        "wram.bin",
+        "sram.bin",
+        "vram.bin",
+        "cgram.bin",
+        "oam.bin",
+        "apuram.bin",
+        "registers.csv",
+    ] {
+        let path = path.with_file_name(format!("{prefix}-{region}"));
+        let bytes = std::fs::read(&path).map_err(|e| format!("{}: {e}", path.display()))?;
+        identity.extend_from_slice(&(bytes.len() as u64).to_le_bytes());
+        identity.extend_from_slice(&fingerprint(&bytes).to_le_bytes());
+    }
+    Ok(fingerprint(&identity))
+}
+
 fn compatibility() -> u64 {
     // Gameplay edits can reuse checkpoints. Changes to the state layout,
     // oracle, audio or hardware require regeneration from boot.
     let mut source = concat!(
         include_str!("checkpoint.rs"),
+        include_str!("seed.rs"),
         include_str!("../types.rs"),
         include_str!("../initial_state.rs"),
         include_str!("../game/room_entry/world.rs"),
@@ -417,7 +448,7 @@ pub(super) unsafe fn capture(game: &mut Game) -> Result<Vec<u8>, String> {
 pub(super) unsafe fn save(
     path: &Path,
     game: &mut Game,
-    rom: &[u8],
+    origin: u64,
     inputs: &[u16],
     completed: usize,
 ) -> Result<(), String> {
@@ -429,7 +460,7 @@ pub(super) unsafe fn save(
         let mut bytes = Vec::from(MAGIC.as_slice());
         for word in [
             compatibility(),
-            fingerprint(rom),
+            origin,
             input_fingerprint(&inputs[..completed]),
             completed as u64,
             u64::from(game.g_use_my_apu_code),
@@ -454,7 +485,7 @@ pub(super) unsafe fn save(
 pub(super) unsafe fn load(
     path: &Path,
     game: &mut Game,
-    rom: &[u8],
+    origin: u64,
     inputs: &[u16],
 ) -> Result<usize, String> {
     unsafe {
@@ -470,8 +501,8 @@ pub(super) unsafe fn load(
         if word(8) != compatibility() {
             return Err("checkpoint runtime changed; regenerate from boot".into());
         }
-        if word(16) != fingerprint(rom) {
-            return Err("checkpoint ROM differs".into());
+        if word(16) != origin {
+            return Err("checkpoint ROM or seed differs".into());
         }
         if completed > inputs.len() || word(24) != input_fingerprint(&inputs[..completed]) {
             return Err("checkpoint input prefix differs".into());
