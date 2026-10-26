@@ -1824,6 +1824,36 @@ pub(crate) fn advance_ceres_station(object: u16, game: &mut Game) {
     }
 }
 
+pub(crate) fn advance_zebes_flight(stage: u8, game: &mut Game) {
+    if stage == 0 {
+        word! {game; cinematic_var8 = 62; cinematic_var10 = -112i16 as u16;
+        cinematic_var5 = 32; cinematic_var6 = 16; cinematic_function = 0xc9f9; }
+        return;
+    }
+    let (horizontal, threshold, limit, increment, next) = [
+        (0xffff8000, ram_words::cinematic_var6, 1152, 4, 0xca36),
+        (0xffff8000, ram_words::cinematic_var8, -128, 16, 0xca85),
+        (0x2000, ram_words::cinematic_var6, 0x2000, 32, 0xcad0),
+    ][usize::from(stage - 1)];
+    add_native_pair(0x1997, 0x1995, 0x2000, game);
+    add_native_pair(0x1993, 0x1991, horizontal, game);
+    let negative = (word!(@read game, threshold) as i32 - limit) & 0x8000 != 0;
+    if negative == (stage == 2) {
+        if stage == 3 {
+            game.g_ram[0x69] = 16;
+        }
+        word!(game.cinematic_function = next);
+        if stage == 3 {
+            word!(game.cinematic_var4 = 64);
+        }
+    } else {
+        word!(game.cinematic_var6 += increment);
+        if stage == 2 && word!(game.cinematic_var5) != 224 {
+            word!(game.cinematic_var5 = (word!(game.cinematic_var5) as u8).wrapping_sub(1) as u16);
+        }
+    }
+}
+
 pub(crate) fn advance_zebes_destruction_zoom(
     speed: u16,
     next_scene: u16,

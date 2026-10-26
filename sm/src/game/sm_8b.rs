@@ -1009,40 +1009,6 @@ crate::game::callback_dispatch! {
             }
         }
     };
-    [9161209] CinematicFunction_Intro_Func105 [] {
-        words!(game.cinematic_var10, cinematic_var9 += 0x2000);
-        words!(game.cinematic_var8, cinematic_var7 += -0x8000i32 as u32);
-        if word!(game.cinematic_var6) as i32 - 1152i32 & 0x8000 != 0 {
-            word!(game.cinematic_var6 += 4);
-        } else {
-            word!(game.cinematic_function = (0x8bca36i32) as u16);
-        };
-    };
-    [9161270] CinematicFunction_Intro_Func106 [] {
-        words!(game.cinematic_var10, cinematic_var9 += 0x2000);
-        words!(game.cinematic_var8, cinematic_var7 += -0x8000i32 as u32);
-        if word!(game.cinematic_var8) as i32 + 128 & 0x8000 != 0 {
-            word!(game.cinematic_function = (0x8bca85i32) as u16);
-        } else {
-            word!(game.cinematic_var6 += 16);
-            if word!(game.cinematic_var5) != 224 {
-                word!(
-                    game.cinematic_var5 =
-                        (((word!(game.cinematic_var5)) as u8).wrapping_sub(1)) as u16
-                );
-            }
-        };
-    };
-    [9161349] CinematicFunction_Intro_Func107 [] {
-        words!(game.cinematic_var10, cinematic_var9 += 0x2000);
-        words!(game.cinematic_var8, cinematic_var7 += 0x2000);
-        if word!(game.cinematic_var6) as i32 - 0x2000i32 & 0x8000 != 0 {
-            word!(game.cinematic_var6 += 32);
-        } else {
-            *ram_ptr!(game; 0x69) = 16;
-            word! {game; cinematic_function = ((0x8bcad0i32) as u16); cinematic_var4 = 64; }
-        };
-    };
     [9161439] CinematicFunction_Intro_Func95 [] {
         *ram_ptr!(game; 0x51) = 0x80;
         word_transfers!(game, descending, 329; native(0x1c1d) <- value(0));
@@ -1471,6 +1437,9 @@ crate::game::callback_dispatch! {
         *ram_ptr!(game; 0x69) = 16;
     };
     @external {
+        9161209 => [crate::game::visual_runtime::advance_zebes_flight(1, game)];
+        9161270 => [crate::game::visual_runtime::advance_zebes_flight(2, game)];
+        9161349 => [crate::game::visual_runtime::advance_zebes_flight(3, game)];
         9165523 => [crate::game::mode7_transfers::advance_ending_tile_upload(game)];
         9165989 => [{ crate::game::visual_runtime::advance_ending_gunship_spin(false, game); }];
         9167790 => [crate::game::visual_runtime::advance_postcredits_zoom(true, game)];
@@ -1599,10 +1568,6 @@ crate::game::callback_dispatch! {
         }
     };
     [9161149] CinematicSprInstr_C9BD [j] { palette_effects::spawn(addr_loc_8BE1B4 as u16, game); };
-    [9161159] CinematicSprInstr_C9C7 [j] {
-        word! {game; cinematic_var8 = 62; cinematic_var10 = -112i32 as u16; cinematic_var5 = 32;
-            cinematic_var6 = 16; cinematic_function = ((0x8bc9f9i32) as u16); }
-    };
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
     [9171550] CinematicSprInstr_Func181 [j] {
         set_cinematic_blend(3, 16, 2, 34, game);
@@ -1682,6 +1647,7 @@ crate::game::callback_dispatch! {
         word! {game; samus_y_subspeed = 0; samus_y_speed = -16i32 as u16; }
     };
     @external {
+        9161159 => [{ crate::game::visual_runtime::advance_zebes_flight(0, game); j }];
         9172375 => [crate::game::visual_runtime::position_ending_samus_head(k, false, j, game)];
         9172410 => [crate::game::visual_runtime::position_ending_samus_head(k, true, j, game)];
         9149665 => [crate::game::visual_runtime::start_title_pan(0, j, game)];
