@@ -20,8 +20,8 @@ use crate::{
         session_runtime::Runtime,
         visual_host::{self, AnimationMember, PaletteMember, Source, StatueProjectile},
         visual_state::{
-            CinematicObjects, EndingGraphics, EyeBeamPhase, HazePhase, HdmaWave, PaletteBuffer,
-            TourianStatuePhase, Upload, Weather,
+            CeresExplosion, CinematicObjects, EndingGraphics, EyeBeamPhase, HazePhase, HdmaWave,
+            PaletteBuffer, TourianStatuePhase, Upload, Weather,
         },
     },
     game_state::Game,
@@ -1700,6 +1700,42 @@ fn add_native_pair(high: usize, low: usize, velocity: u32, game: &mut Game) {
 fn advance_cinematic_coordinate(object: u16, vertical: bool, velocity: u32, game: &mut Game) {
     let offset = usize::from(object & !1) + if vertical { 0x20 } else { 0 };
     add_native_pair(0x1a7d + offset, 0x1add + offset, velocity, game);
+}
+
+pub(crate) fn initialize_ceres_explosion(object: u16, pattern: CeresExplosion, game: &mut Game) {
+    let slot = usize::from(object >> 1);
+    let parameter = if matches!(pattern, CeresExplosion::Final) {
+        0
+    } else {
+        let parameter = usize::from(word!(game.cinematic_spawn_param));
+        word!(game.cinematicspr_goto_timer[slot] = word!(game.cinematic_spawn_param));
+        parameter
+    };
+    let (x, y, delays): (&[i16], &[i16], &[u16]) = match pattern {
+        CeresExplosion::First => (
+            &[16, -16, 16, -16, 0],
+            &[-16, 16, 16, -16, 0],
+            &[1, 16, 32, 48, 64],
+        ),
+        CeresExplosion::Second => (
+            &[14, 8, -16, -8, 0, 16, -12, -8],
+            &[-8, 12, 12, -14, 0, 14, 4, -16],
+            &[],
+        ),
+        CeresExplosion::Third => (&[8, 12, -8, -12], &[-4, 8, -10, 12], &[1, 4, 8, 16]),
+        CeresExplosion::Final => (&[0], &[0], &[]),
+    };
+    if !delays.is_empty() {
+        word!(game.cinematicspr_instr_timer[slot] = delays[parameter]);
+    }
+    // Keep the Y lookup and camera reads after the X store for aliased slots.
+    word! { game;
+        cinematicbg_arr7[slot] = (x[parameter] as i32 + word!(game.reg_M7X) as i32
+            - word!(game.cinematic_var8) as i32) as u16;
+        cinematicbg_arr8[slot] = (y[parameter] as i32 + word!(game.reg_M7Y) as i32
+            - word!(game.cinematic_var10) as i32) as u16;
+        cinematicbg_arr9[slot] = 2560;
+    }
 }
 
 pub(crate) fn advance_ceres_station(object: u16, game: &mut Game) {

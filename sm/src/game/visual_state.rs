@@ -156,6 +156,14 @@ pub(crate) enum CinematicTilemap {
 }
 
 #[derive(Clone, Copy)]
+pub(crate) enum CeresExplosion {
+    First,
+    Second,
+    Third,
+    Final,
+}
+
+#[derive(Clone, Copy)]
 pub(crate) enum EndingGraphics {
     Background,
     Samus,

@@ -8,11 +8,11 @@ use crate::game::visual_runtime::{
     METROID_PAL_1, METROID_PAL_2, METROID_PAL_3, METROID_PAL_4, advance_ceres_station,
     advance_credit_roll, advance_intro_rinka, advance_shooting_stars, advance_zebes_stars,
     draw_cinematic_sprites, draw_intro_sprites, drift_cinematic_sprite, flash_intro_mother_brain,
-    initialize_ending_cloud_band, initialize_ending_cloud_side, initialize_ending_time_glyph,
-    initialize_intro_rinka, initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud,
-    move_jumping_ending_samus, place_cinematic_sprite, prepare_credit_roll, prepare_ending_time,
-    shake_intro_mother_brain, start_intro_rinka, title_metroid_cry, title_metroid_palette,
-    wait_cinematic_scene, wait_ending_cloud,
+    initialize_ceres_explosion, initialize_ending_cloud_band, initialize_ending_cloud_side,
+    initialize_ending_time_glyph, initialize_intro_rinka, initialize_shooting_stars,
+    launch_cinematic_sprite, move_ending_cloud, move_jumping_ending_samus, place_cinematic_sprite,
+    prepare_credit_roll, prepare_ending_time, shake_intro_mother_brain, start_intro_rinka,
+    title_metroid_cry, title_metroid_palette, wait_cinematic_scene, wait_ending_cloud,
 };
 use crate::game::visual_runtime::{advance_cinematic_background_pre, fade_cinematic_fixed_color};
 use crate::game::visual_runtime::{
@@ -26,7 +26,9 @@ use crate::game::visual_runtime::{
 use crate::game::visual_state::CinematicObjects::{
     Background as CinematicBackground, Mode7 as CinematicMode7, Sprites as CinematicSprites,
 };
-use crate::game::visual_state::{CinematicDisplay, CinematicFade, CinematicTilemap};
+use crate::game::visual_state::{
+    CeresExplosion, CinematicDisplay, CinematicFade, CinematicTilemap,
+};
 
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_60::*;
@@ -540,15 +542,6 @@ macro_rules! chase_samus_with_cinematic_sprite {
     };
 }
 
-static kCinematicFunction_Intro_Func78_Tab0: [u16; 5] = [1, 16, 32, 48, 64];
-static kCinematicFunction_Intro_Func78_Tab1: [i16; 5] = [16, -16, 16, -16, 0];
-static kCinematicFunction_Intro_Func78_Tab2: [i16; 5] = [-16, 16, 16, -16, 0];
-static g_word_8BC4EB: [i16; 16] = [
-    14, -8, 8, 12, -16, 12, -8, -14, 0, 0, 16, 14, -12, 4, -8, -16,
-];
-static kCinematicFunction_Intro_Func81_Tab0: [i16; 4] = [1, 4, 8, 16];
-static kCinematicFunction_Intro_Func81_Tab1: [i16; 4] = [8, 12, -8, -12];
-static kCinematicFunction_Intro_Func81_Tab2: [i16; 4] = [-4, 8, -10, 12];
 pub unsafe fn GameState_39_EndingAndCredits_(game: &mut Game) -> CoroutineRet {
     unsafe {
         CallCinematicFunction(
@@ -2452,51 +2445,6 @@ crate::game::callback_dispatch! {
         let v2: i32 = j as i32 >> 1;
         word! {game; cinematicbg_arr8[v2] = 87; cinematicbg_arr9[v2] = 2048; }
     };
-    [9159732] CinematicFunction_Intro_Func78 [] {
-        let v1: u16 = word!(game.cinematic_spawn_param);
-        let v2: i32 = j as i32 >> 1;
-        word!(game.cinematicspr_goto_timer[v2] = word!(game.cinematic_spawn_param));
-        let v3: i32 = v1 as i32;
-        word! { game;
-            cinematicspr_instr_timer[v2] = kCinematicFunction_Intro_Func78_Tab0[v3 as usize];
-            cinematicbg_arr7[v2] = (kCinematicFunction_Intro_Func78_Tab1[v3 as usize] as i32
-                + word!(game.reg_M7X) as i32
-                - word!(game.cinematic_var8) as i32) as u16;
-            cinematicbg_arr8[v2] = (kCinematicFunction_Intro_Func78_Tab2[v3 as usize] as i32
-                + word!(game.reg_M7Y) as i32
-                - word!(game.cinematic_var10) as i32) as u16;
-            cinematicbg_arr9[v2] = 2560;
-        }
-    };
-    [9159865] CinematicFunction_Intro_Func80 [] {
-        let v1: u16 = word!(game.cinematic_spawn_param);
-        let v2: i32 = j as i32 >> 1;
-        word!(game.cinematicspr_goto_timer[v2] = word!(game.cinematic_spawn_param));
-        let v3: i32 = 2 * v1 as i32;
-        word! { game;
-            cinematicbg_arr7[v2] = (g_word_8BC4EB[v3 as usize] as i32 + word!(game.reg_M7X) as i32
-                - word!(game.cinematic_var8) as i32) as u16;
-            cinematicbg_arr8[v2] = (g_word_8BC4EB[(v3 + 1) as usize] as i32
-                + word!(game.reg_M7Y) as i32
-                - word!(game.cinematic_var10) as i32) as u16;
-            cinematicbg_arr9[v2] = 2560;
-        }
-    };
-    [9159987] CinematicFunction_Intro_Func81 [] {
-        let v1: u16 = word!(game.cinematic_spawn_param);
-        let v2: i32 = j as i32 >> 1;
-        word! { game;
-            cinematicspr_goto_timer[v2] = word!(game.cinematic_spawn_param);
-            cinematicspr_instr_timer[v2] = kCinematicFunction_Intro_Func81_Tab0[v1 as usize] as u16;
-            cinematicbg_arr7[v2] = (kCinematicFunction_Intro_Func81_Tab1[v1 as usize] as i32
-                + word!(game.reg_M7X) as i32
-                - word!(game.cinematic_var8) as i32) as u16;
-            cinematicbg_arr8[v2] = (kCinematicFunction_Intro_Func81_Tab2[v1 as usize] as i32
-                + word!(game.reg_M7Y) as i32
-                - word!(game.cinematic_var10) as i32) as u16;
-            cinematicbg_arr9[v2] = 2560;
-        }
-    };
     @functions [pub unsafe fn (j: u16, game: &mut Game)];
     @prefix { let v1: i32 = j as i32 >> 1; };
     [9150131] CinematicSpriteInit_4 [] {
@@ -2529,13 +2477,6 @@ crate::game::callback_dispatch! {
         }
         word! {game; cinematicbg_arr8[v1] = 87; cinematicbg_arr9[v1] = 2048; }
     };
-    [9160105] CinematicFunction_Intro_Func83 [] {
-        word! { game;
-            cinematicbg_arr7[v1] = (word!(game.reg_M7X)).wrapping_sub(word!(game.cinematic_var8));
-            cinematicbg_arr8[v1] = (word!(game.reg_M7Y)).wrapping_sub(word!(game.cinematic_var10));
-            cinematicbg_arr9[v1] = 2560;
-        }
-    };
     [9170841] CinematicFunction_Intro_Func150 [] {
         word! { game, 128; cinematicbg_arr8[v1], cinematicbg_arr7[v1] }
         word! {game; cinematicbg_arr9[v1] = 3584; cinematicspr_goto_timer[v1] = 260; }
@@ -2549,6 +2490,10 @@ crate::game::callback_dispatch! {
             cinematicbg_arr9[v1] = 3584; cinematicspr_goto_timer[v1] = 8; }
     };
     @external {
+        9159732 => [initialize_ceres_explosion(j, CeresExplosion::First, game)];
+        9159865 => [initialize_ceres_explosion(j, CeresExplosion::Second, game)];
+        9159987 => [initialize_ceres_explosion(j, CeresExplosion::Third, game)];
+        9160105 => [initialize_ceres_explosion(j, CeresExplosion::Final, game)];
         9156758 => [initialize_intro_rinka(j, game)];
         9171038 => [initialize_ending_time_glyph(j, 0, game)];
         9171053 => [initialize_ending_time_glyph(j, 1, game)];
