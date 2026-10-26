@@ -5,6 +5,7 @@ use super::host::{
     TileDefinitionCorner, TilemapDestination,
 };
 use crate::game::session_runtime::Runtime;
+use crate::game::xray_background::reveal_room_block;
 
 #[forbid(unsafe_code)]
 impl Runtime<'_> {
@@ -157,15 +158,10 @@ impl Graphics for Runtime<'_> {
         self.write_slice_le(0xa000 + byte_offset, value);
     }
     fn reveal_block(&mut self, block: u16, x: u16, y: u16) {
-        self.foreign(|game| reveal_mechanism_block(block, x, y, game));
+        self.foreign(|game| reveal_room_block(block, x, y, game));
     }
 }
 // Transfer descriptors store bank7E and a byte identity, exactly as the existing
 // NMI consumer expects. Runtime publication writes the current tile bytes to
 // compatibility memory; NMI resolves those bytes when consuming each descriptor.
 // Neither this queue nor DrawTarget retains a pointer into Session storage.
-
-// Qualified legacy renderer edge; the core owns no renderer or native pointer.
-fn reveal_mechanism_block(block: u16, x: u16, y: u16, game: &mut crate::game_state::Game) {
-    unsafe { crate::game::xray_background::reveal_room_block(block, x, y, game) }
-}

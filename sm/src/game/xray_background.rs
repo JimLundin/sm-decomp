@@ -37,19 +37,13 @@ fn upload_screen(source: u16, screen: u16, game: &mut Game) {
 }
 
 // Capture all four source tiles before the reverse-order writes, even when RAM aliases.
-unsafe fn write_block(destination: u16, tile: u16, offsets: [usize; 4], game: &mut Game) {
-    unsafe {
-        let source = (*(ram_ptr!(game, TileTables; 0xa000))).tables[tile as usize];
-        let tiles = [
-            source.top_left,
-            source.top_right,
-            source.bottom_left,
-            source.bottom_right,
-        ];
-        for corner in (0..4).rev() {
-            ram_ptr!(game, u16; 0x4000, destination as isize + 2 * offsets[corner] as isize)
-                .write_unaligned(tiles[corner]);
-        }
+#[forbid(unsafe_code)]
+fn write_block(destination: u16, tile: u16, offsets: [usize; 4], game: &mut Game) {
+    let tiles = game.g_ram[0xa000..0xc000].as_chunks::<8>().0[tile as usize];
+    for corner in (0..4).rev() {
+        let value = u16::from_ne_bytes([tiles[2 * corner], tiles[2 * corner + 1]]);
+        let at = 0x4000 + usize::from(destination) + 2 * offsets[corner];
+        game.g_ram[at..at + 2].copy_from_slice(&value.to_ne_bytes());
     }
 }
 
@@ -315,22 +309,18 @@ pub unsafe fn reveal_block(r18: u16, r22: u16, r36: u16, game: &mut Game) {
     }
 }
 
-pub unsafe fn reveal_room_block(a: u16, k: u16, j: u16, game: &mut Game) {
-    unsafe {
-        let R24: u16 = (k as i32 - (word!(game.layer1_x_pos) as i32 >> 4)) as u16;
-        let R26: u16 = (j as i32 - (word!(game.layer1_y_pos) as i32 >> 4)) as u16;
-        if R24 & 0x8000 == 0
-            && R24 as i32 - 16i32 & 0x8000 != 0
-            && R26 & 0x8000 == 0
-            && R26 as i32 - 16i32 & 0x8000 != 0
-        {
-            let R22: u16 = (4 * (R24 as i32 + 32 * R26 as i32)) as u16;
-            if (a & 0x800) != 0 {
-                write_block(R22, a & 0x3ff, [32, 33, 0, 1], game);
-            } else {
-                write_block(R22, a & 0x3ff, [0, 1, 32, 33], game);
-            }
-        }
+#[forbid(unsafe_code)]
+pub fn reveal_room_block(a: u16, k: u16, j: u16, game: &mut Game) {
+    let R24: u16 = (k as i32 - (word!(game.layer1_x_pos) as i32 >> 4)) as u16;
+    let R26: u16 = (j as i32 - (word!(game.layer1_y_pos) as i32 >> 4)) as u16;
+    if R24 & 0x8000 == 0
+        && R24 as i32 - 16i32 & 0x8000 != 0
+        && R26 & 0x8000 == 0
+        && R26 as i32 - 16i32 & 0x8000 != 0
+    {
+        let R22: u16 = (4 * (R24 as i32 + 32 * R26 as i32)) as u16;
+        let offsets = [0, 1, 32, 33].map(|corner| corner ^ usize::from((a & 0x800) >> 6));
+        write_block(R22, a & 0x3ff, offsets, game);
     }
 }
 pub fn capture_bg2_right(game: &mut Game) {
