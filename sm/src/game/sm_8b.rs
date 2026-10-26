@@ -20,7 +20,7 @@ use crate::game::visual_runtime::{
     clear_cinematic_colors, clear_cinematic_sprites, clear_hdma, compose_cinematic_palette,
     configure_cinematic_display, enable_cinematic_background, fade_cinematic_colors,
     prepare_cinematic_palette_fade, queue_cinematic_tilemap, reset_cinematic_transform,
-    set_cinematic_backdrop, set_cinematic_tilemap_updates, set_hdma_enabled,
+    set_cinematic_backdrop, set_cinematic_blend, set_cinematic_tilemap_updates, set_hdma_enabled,
     spawn_cinematic_sprite_at, update_cinematic_transform,
 };
 use crate::game::visual_state::CinematicObjects::{
@@ -1186,10 +1186,7 @@ crate::game::callback_dispatch! {
         palette_effects::set_enabled(true, game);
         crate::game::display_refresh::enable(true, game);
         word!(game.eproj_pre_instr[1] = 0);
-        *ram_ptr!(game; 0x69) = 17;
-        *ram_ptr!(game; 0x6b) = 1;
-        *ram_ptr!(game; 0x6f) = 2;
-        *ram_ptr!(game; 0x72) = 17;
+        set_cinematic_blend(17, 1, 2, 17, game);
         CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEEEB as u16, 0, game);
         CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEEF1 as u16, 0, game);
         CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEEEB as u16, 1, game);
@@ -1287,10 +1284,7 @@ crate::game::callback_dispatch! {
         word!(game.reg_M7D = 256);
         word! { game, 128; reg_M7X, reg_M7Y }
         word! { game, 0; cinematic_var8, cinematic_var10 }
-        *ram_ptr!(game; 0x69) = 1;
-        *ram_ptr!(game; 0x6b) = 16;
-        *ram_ptr!(game; 0x6f) = 2;
-        *ram_ptr!(game; 0x72) = 33;
+        set_cinematic_blend(1, 16, 2, 33, game);
         capture_cinematic_palette(game);
         prepare_cinematic_palette_fade(game);
         clear_cinematic_colors(0x1a0, 0x10, game);
@@ -1365,10 +1359,7 @@ crate::game::callback_dispatch! {
         if HasQueuedMusic(game) & 1 == 0 {
             *ram_ptr!(game; 0x55) = 7;
             *ram_ptr!(game; 0x5f) = 0x80;
-            *ram_ptr!(game; 0x69) = 17;
-            *ram_ptr!(game; 0x6b) = 0;
-            *ram_ptr!(game; 0x6f) = 0;
-            *ram_ptr!(game; 0x72) = 48;
+            set_cinematic_blend(17, 0, 0, 48, game);
             *ram_ptr!(game; 0x74, 0) = 63;
             *ram_ptr!(game; 0x74, 1) = 95;
             *ram_ptr!(game; 0x74, 2) = -97i32 as u8;
@@ -1508,10 +1499,7 @@ crate::game::callback_dispatch! {
     [9167120] CinematicFunction_Intro_Func130 [] {
         crate::game::display_refresh::fade(true, game);
         if *ram_ptr!(game; 0x51) == 15 {
-            *ram_ptr!(game; 0x69) = 2;
-            *ram_ptr!(game; 0x6b) = 16;
-            *ram_ptr!(game; 0x6f) = 2;
-            *ram_ptr!(game; 0x72) = 34;
+            set_cinematic_blend(2, 16, 2, 34, game);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             capture_cinematic_palette(game);
             prepare_cinematic_palette_fade(game);
@@ -1525,10 +1513,7 @@ crate::game::callback_dispatch! {
         compose_cinematic_palette(game);
         let v0: bool = (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0;
         if word!(game.cinematic_var4) == 0 || v0 {
-            *ram_ptr!(game; 0x69) = 18;
-            *ram_ptr!(game; 0x6b) = 4;
-            *ram_ptr!(game; 0x6f) = 2;
-            *ram_ptr!(game; 0x72) = 2;
+            set_cinematic_blend(18, 4, 2, 2, game);
             word! {game; cinematic_var4 = 180; cinematic_function = ((0x8be190i32) as u16); }
             initialize_intro_wave(game);
         }
@@ -1539,10 +1524,7 @@ crate::game::callback_dispatch! {
         if word!(game.cinematic_var4) == 0 || v0 {
             word_transfers!(game, ascending, 288; pause_map(288) <- rom(0x8cdc9b, 0));
             queue_cinematic_tilemap(CinematicTilemap::FullText, game);
-            *ram_ptr!(game; 0x69) = 1;
-            *ram_ptr!(game; 0x6b) = 0;
-            *ram_ptr!(game; 0x6f) = 0;
-            *ram_ptr!(game; 0x72) = 0;
+            set_cinematic_blend(1, 0, 0, 0, game);
             word! {game; cinematic_var4 = 180; cinematic_function = ((0x8be1d2i32) as u16);
                 g_word_7E0D9C = 0; }
         }
@@ -1566,10 +1548,7 @@ crate::game::callback_dispatch! {
                         game,
                     );
                     word!(game.cinematic_function = (0x8be293i32) as u16);
-                    *ram_ptr!(game; 0x69) = 16;
-                    *ram_ptr!(game; 0x6b) = 0;
-                    *ram_ptr!(game; 0x6f) = 0;
-                    *ram_ptr!(game; 0x72) = 0;
+                    set_cinematic_blend(16, 0, 0, 0, game);
                     return;
                 }
                 capture_cinematic_palette(game);
@@ -1580,10 +1559,7 @@ crate::game::callback_dispatch! {
             }
             clear_cinematic_colors(0x1a0, 0x10, game);
             compose_cinematic_palette(game);
-            *ram_ptr!(game; 0x69) = 2;
-            *ram_ptr!(game; 0x6b) = 16;
-            *ram_ptr!(game; 0x6f) = 2;
-            *ram_ptr!(game; 0x72) = 34;
+            set_cinematic_blend(2, 16, 2, 34, game);
             word!(game.cinematic_function = (0x8be265i32) as u16);
         }
     };
@@ -1605,10 +1581,7 @@ crate::game::callback_dispatch! {
             word_transfers!(game, descending, 288; native(0x347e) <- value(127));
             word_transfers!(game, ascending, 64; pause_map(384) <- rom(0x8cdedb, 0));
             queue_cinematic_tilemap(CinematicTilemap::FullText, game);
-            *ram_ptr!(game; 0x69) = 1;
-            *ram_ptr!(game; 0x6b) = 0;
-            *ram_ptr!(game; 0x6f) = 0;
-            *ram_ptr!(game; 0x72) = 0;
+            set_cinematic_blend(1, 0, 0, 0, game);
             word! {game; cinematic_var13 = 180; cinematic_function = ((0x8be2ddi32) as u16); }
         }
     };
@@ -1618,10 +1591,7 @@ crate::game::callback_dispatch! {
             if word!(game.game_time_hours) as i32 - 3i32 & 0x8000 != 0
                 || word!(game.game_time_hours) as i32 - 10i32 & 0x8000 != 0
             {
-                *ram_ptr!(game; 0x69) = 2;
-                *ram_ptr!(game; 0x6b) = 16;
-                *ram_ptr!(game; 0x6f) = 2;
-                *ram_ptr!(game; 0x72) = 34;
+                set_cinematic_blend(2, 16, 2, 34, game);
                 word!(game.cinematic_function = (0x8be314i32) as u16);
             } else {
                 word!(game.cinematic_function = (0x8be342i32) as u16);
@@ -1643,10 +1613,7 @@ crate::game::callback_dispatch! {
     };
     [9167682] CinematicFunction_Intro_Func145 [] {
         if (word!(game.cinematic_var4 -= 1, reread) & 0x8000) != 0 {
-            *ram_ptr!(game; 0x69) = 16;
-            *ram_ptr!(game; 0x6b) = 0;
-            *ram_ptr!(game; 0x6f) = 0;
-            *ram_ptr!(game; 0x72) = 0;
+            set_cinematic_blend(16, 0, 0, 0, game);
             *ram_ptr!(game; 0x55) = 7;
             *ram_ptr!(game; 0x5f) = 0x80;
             *ram_ptr!(game; 0x58) = 0;
@@ -1697,10 +1664,7 @@ crate::game::callback_dispatch! {
         crate::game::visual_runtime::advance_ending_graphics(EndingGraphics::Background, game);
         if word!(game.cinematic_var4 -= 1, reread) == 0 {
             *ram_ptr!(game; 0x55) = 1;
-            *ram_ptr!(game; 0x69) = 17;
-            *ram_ptr!(game; 0x6b) = 0;
-            *ram_ptr!(game; 0x6f) = 0;
-            *ram_ptr!(game; 0x72) = 49;
+            set_cinematic_blend(17, 0, 0, 49, game);
             *ram_ptr!(game; 0x74, 0) = 63;
             *ram_ptr!(game; 0x74, 1) = 95;
             *ram_ptr!(game; 0x74, 2) = -97i32 as u8;
@@ -1961,10 +1925,7 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
     [9171550] CinematicSprInstr_Func181 [j] {
-        *ram_ptr!(game; 0x69) = 3;
-        *ram_ptr!(game; 0x6b) = 16;
-        *ram_ptr!(game; 0x6f) = 2;
-        *ram_ptr!(game; 0x72) = 34;
+        set_cinematic_blend(3, 16, 2, 34, game);
         *ram_ptr!(game; 0x5d) = 100;
         *ram_ptr!(game; 0x59) = 84;
         word! {game; cinematic_var4 = 0; cinematic_function = ((0x8be58ai32) as u16); }
@@ -1979,10 +1940,7 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
     [9171639] CinematicSprInstr_Func185 [j] {
-        *ram_ptr!(game; 0x69) = 17;
-        *ram_ptr!(game; 0x6b) = 2;
-        *ram_ptr!(game; 0x6f) = 2;
-        *ram_ptr!(game; 0x72) = 17;
+        set_cinematic_blend(17, 2, 2, 17, game);
         *ram_ptr!(game; 0x59) = 124;
         spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEEBB as u16, 0, 0xf27c, game);
         spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEEF7 as u16, 2, 2, game);
@@ -1991,10 +1949,7 @@ crate::game::callback_dispatch! {
         palette_effects::spawn(addr_kPalfx_E1E8 as u16, game);
     };
     [9171706] CinematicSprInstr_Func186 [j] {
-        *ram_ptr!(game; 0x69) = 3;
-        *ram_ptr!(game; 0x6b) = 18;
-        *ram_ptr!(game; 0x6f) = 2;
-        *ram_ptr!(game; 0x72) = 51;
+        set_cinematic_blend(3, 18, 2, 51, game);
         *ram_ptr!(game; 0x58) = 116;
         *ram_ptr!(game; 0x59) = 120;
         palette_effects::spawn(addr_kPalfx_E1CC as u16, game);
@@ -2053,10 +2008,7 @@ crate::game::callback_dispatch! {
     [9172484] CinematicSprInstr_Func217 [j] {
         word!(game.cinematicbg_arr9[(k >> 1)] = 3584);
         word!(game.cinematic_function = (0x8be3aei32) as u16);
-        *ram_ptr!(game; 0x69) = 17;
-        *ram_ptr!(game; 0x6b) = 16;
-        *ram_ptr!(game; 0x6f) = 2;
-        *ram_ptr!(game; 0x72) = -127i32 as u8;
+        set_cinematic_blend(17, 16, 2, -127i32 as u8, game);
         word! {game; cinematic_var8 = -4i32 as u16; cinematic_var10 = -8i32 as u16;
             cinematic_var4 = 16; }
         word! { game, 32; cinematic_var14, cinematic_var17 }

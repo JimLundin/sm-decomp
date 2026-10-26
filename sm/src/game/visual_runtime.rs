@@ -2777,6 +2777,19 @@ pub(crate) unsafe fn reset_cinematic_transform(x: u16, y: u16, game: &mut Game) 
     }
 }
 
+pub(crate) fn set_cinematic_blend(
+    main_screen: u8,
+    sub_screen: u8,
+    color_window: u8,
+    color_math: u8,
+    game: &mut Game,
+) {
+    game.g_ram[0x69] = main_screen;
+    game.g_ram[0x6b] = sub_screen;
+    game.g_ram[0x6f] = color_window;
+    game.g_ram[0x72] = color_math;
+}
+
 pub(crate) fn set_cinematic_backdrop(lit: bool, game: &mut Game) {
     game.g_ram[0x6f] = 0;
     game.g_ram[0x72] = if lit { 0x81 } else { 0 };
