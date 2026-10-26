@@ -28,12 +28,10 @@ use crate::game::visual_runtime::{align_crocomire_background, spawn_hdma};
 
 pub type Enemy_Crocomire = crate::game::enemy_layouts::EnemyLayout72;
 
-const RomPtr_A4: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa4>;
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
 }
 type Crocomire = Enemy_Crocomire;
-static g_word_A4869E: u16 = 3;
 static g_word_A486A4: u16 = 0x640;
 pub fn nullsub_305(game: &mut Game) {}
 static off_A48C14: [Func_V; 45] = callback_table! { nonnull Func_V;
@@ -676,41 +674,6 @@ crate::game::callback_dispatch! {
             advance_phase(game);
         };
     };
-    [10795410] Crocomire_Powerbomb [] {
-        if slot!(game, Crocomire[E].var_A) == 0 && g_word_A4869E != 0 {
-            slot!(game, Crocomire[E].var_D = g_word_A4869E);
-            if slot!(game, Crocomire[E].var_C) != 24 {
-                slot!(game, Crocomire[E].var_B, |old| old & 0x3ff0 | 0x8000);
-                slot!(game, Crocomire[E].var_E = 10);
-                slot!(game, Crocomire[E].base.flash_timer, |old| (old).wrapping_add(4));
-                slot!(game, Crocomire[E].base.ai_handler_bits, |old| (old) | (2u16));
-                slot!(game, Crocomire[E].var_C = 24);
-                let mut spritemap_pointer: u16 = slot!(game, Crocomire[E].base.spritemap_pointer);
-                let mut v3: u16 = 0;
-                let mut n: i32 = *(RomPtr_A4(spritemap_pointer, game) as *mut u16) as i32;
-                loop {
-                    let mut v2: u16 = *(RomPtr_A4(spritemap_pointer, game) as *mut u16).offset(3);
-                    v3 = addr_kCrocomire_Ilist_BDAE as u16;
-                    if v2 as i32 == addr_kCrocomire_BigSprmap_D600 as i32 {
-                        break;
-                    }
-                    v3 = addr_kCrocomire_Ilist_BDB2 as u16;
-                    if v2 as i32 == addr_kCrocomire_BigSprmap_D51C as i32 {
-                        break;
-                    }
-                    spritemap_pointer = (spritemap_pointer).wrapping_add(8);
-                    n -= 1;
-                    if n != 0 {
-                        continue;
-                    }
-                    v3 = addr_kCrocomire_Ilist_BDB6 as u16;
-                    break;
-                }
-                let E0: i32 = 0;
-                slot!(game, Crocomire[E0].base; current_instruction = v3, instruction_timer = 1);
-            }
-        }
-    };
     @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E: i32 = word!(game.cur_enemy_index) as i32; };
     Crocomire_Func_63 [] {
@@ -738,6 +701,9 @@ crate::game::callback_dispatch! {
     [10780707] Enemy_NormalTouchAI_A4 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
     [10780717] Enemy_NormalShotAI_A4 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
     [10780737] Enemy_NormalFrozenAI_A4 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
+    @external {
+        10795410 => actors::crocomire_reactions::power_bomb;
+    }
 }
 
 crate::game::callback_dispatch! {

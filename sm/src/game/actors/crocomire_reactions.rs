@@ -807,3 +807,35 @@ pub(crate) fn prepare_melt_graphics(game: &mut Game) {
     word! {game; croco_word_7E069A = (i + 2) as u16; g_word_7E068A = (i + 2) as u16; }
     word_transfers!(game, descending, 65; native(0x71c) <- value(0));
 }
+
+pub(crate) fn power_bomb(game: &mut Game) {
+    let E: i32 = 0;
+    if slot!(game, Crocomire[E].var_A) == 0 {
+        slot!(game, Crocomire[E].var_D = 3);
+        if slot!(game, Crocomire[E].var_C) != 24 {
+            slot!(game, Crocomire[E].var_B, |old| old & 0x3ff0 | 0x8000);
+            slot!(game, Crocomire[E].var_E = 10);
+            slot!(game, Crocomire[E].base.flash_timer, |old| old
+                .wrapping_add(4));
+            slot!(game, Crocomire[E].base.ai_handler_bits, |old| old | 2u16);
+            slot!(game, Crocomire[E].var_C = 24);
+            let mut spritemap_pointer: u16 = slot!(game, Crocomire[E].base.spritemap_pointer);
+            let mut n: i32 =
+                native_graphics_word!(game, 0xa40000 | u32::from(spritemap_pointer), 0) as i32;
+            let instruction = loop {
+                let tag = native_graphics_word!(game, 0xa40000 | u32::from(spritemap_pointer), 6);
+                match u32::from(tag) {
+                    addr_kCrocomire_BigSprmap_D600 => break addr_kCrocomire_Ilist_BDAE as u16,
+                    addr_kCrocomire_BigSprmap_D51C => break addr_kCrocomire_Ilist_BDB2 as u16,
+                    _ => {}
+                }
+                spritemap_pointer = (spritemap_pointer).wrapping_add(8);
+                n -= 1;
+                if n == 0 {
+                    break addr_kCrocomire_Ilist_BDB6 as u16;
+                }
+            };
+            slot!(game, Crocomire[E].base; current_instruction = instruction, instruction_timer = 1);
+        }
+    }
+}
