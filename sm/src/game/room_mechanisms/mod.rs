@@ -44,7 +44,7 @@ use crate::{game_state::Game, types::SpawnHardcodedPlmArgs};
 use host::{Contact, ContactIdentity, SpawnSource};
 pub(crate) use rules::treadmill::{Direction, carry};
 
-pub(crate) unsafe fn spawn_hardcoded(args: SpawnHardcodedPlmArgs, game: &mut Game) {
+pub(crate) fn spawn_hardcoded(args: SpawnHardcodedPlmArgs, game: &mut Game) {
     creation::spawn(
         &mut Runtime::new(game),
         SpawnSource::Hardcoded {

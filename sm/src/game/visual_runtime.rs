@@ -1066,7 +1066,7 @@ pub(crate) unsafe fn advance_tourian_statue(
                 native(high) <- value((position >> 16) as u16),
             );
             if word!(game.hdma_object_B[(slot >> 1)]) == 0xff10 {
-                unsafe {
+                {
                     spawn_hardcoded(SpawnHardcodedPlmArgs::new(6, 12, 0xb773), game);
                 }
                 SetEventHappened(0xa, game);

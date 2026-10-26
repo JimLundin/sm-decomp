@@ -564,7 +564,7 @@ pub unsafe fn Shaktool_DC6F(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn sub_AAE784(game: &mut Game) {
-    unsafe {
+    {
         word_transfers!(game, descending, 16;
             le(target_palettes, 175) <- table(kChozoStatue_Palettes3, 15),
             le(target_palettes, 159) <- table(kChozoStatue_Palettes2, 15),

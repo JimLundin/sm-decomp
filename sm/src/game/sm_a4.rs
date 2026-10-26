@@ -141,7 +141,7 @@ pub unsafe fn Crocomire_Func_37(game: &mut Game) {
     }
 }
 pub unsafe fn Crocomire_8EE5(game: &mut Game) {
-    unsafe {
+    {
         for x in 0x61..=0x6a {
             spawn_hardcoded(SpawnHardcodedPlmArgs::new(x, 0xb, 0xb74f as VoidP), game);
         }
@@ -384,7 +384,7 @@ pub unsafe fn Crocomire_Func_68(game: &mut Game) {
     }
     QueueMusic_Delayed8(5, game);
     Runtime::new(game).write_slice_native(0xcd23, 256);
-    unsafe {
+    {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb757 as VoidP), game);
     }
     word!(game.camera_distance_index = 6);
@@ -528,7 +528,7 @@ pub unsafe fn Crocomire_Func_88(game: &mut Game) {
             }
         });
     if finished {
-        unsafe {
+        {
             spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb753 as VoidP), game);
         }
         scatter(DropSource::Crocomire, 0, game);
@@ -550,7 +550,7 @@ pub unsafe fn Crocomire_9B65(game: &mut Game) {
         runtime.write_slice_native(0xcd20, 257);
         runtime.write_slice_native(0xcd22, 257);
     }
-    unsafe {
+    {
         spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x1e, 0x3, 0xb753 as VoidP), game);
     }
     advance_phase(game);

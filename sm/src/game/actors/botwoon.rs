@@ -1,21 +1,26 @@
 //! Botwoon motion, path programs, attack animation and combat over native fields.
-//! Numeric dispatch and unsafe room creation remain explicit bank boundaries.
+//! Native-field compatibility retains independent body and callback epochs.
 #![forbid(unsafe_code)]
 use super::{access::ActorKey as Key, api, combat};
 use crate::game::constants::{bank_86::*, enemy_properties::*};
 use crate::game::enemy_layouts::EnemyLayout104 as Boss;
-use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
-use crate::game::gameplay_flag_runtime::SetBossBitForCurArea;
+use crate::game::enemy_projectiles::{
+    DropSource, SpawnEprojWithGfx, SpawnEprojWithRoomGfx, scatter_drop,
+};
+use crate::game::gameplay_flag_runtime::{SetBossBitForCurArea, boss_byte_at};
 use crate::game::music::{QueueMusic_Delayed8, QueueSfx2_Max6};
-use crate::game::session_runtime::{Runtime, actor_direction_vector, native_rom_diagnostic};
+use crate::game::room_mechanisms::{open_passage, spawn_hardcoded};
+use crate::game::session_runtime::{
+    Runtime, actor_b3_pre_instruction, actor_direction_vector, native_rom_diagnostic,
+};
 use crate::game::sprite_effect_runtime::create_sprite;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::rom::{RomRecord, lorom_offset};
 use crate::rtl::rom_table_word;
-use crate::types::Point16U;
+use crate::types::{Point16U, SpawnHardcodedPlmArgs};
 
-pub(crate) fn initialize(e: i32, game: &mut Game) {
+fn initialize_living(e: i32, game: &mut Game) {
     slot!(game, Boss[e].var_A = 24);
     loop {
         SpawnEprojWithGfx(
@@ -472,4 +477,86 @@ pub(crate) fn set_hitbox(x: u16, y: u16, game: &mut Game) {
 pub(crate) fn set_spitting(game: &mut Game) {
     let e = i32::from(word!(game.cur_enemy_index));
     slot!(game, Boss[e].var_5A = 1);
+}
+
+pub(crate) fn initialize(game: &mut Game) {
+    let e = i32::from(word!(game.cur_enemy_index));
+    if boss_byte_at(4, game) & 2 != 0 {
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(15, 4, 0xb797), game);
+        open_passage(game);
+        slot!(game, Boss[e].base.current_instruction = 0x9389);
+        slot!(game, Boss[e].base.properties, |old| old
+            | kEnemyProps_Deleted as u16);
+    } else {
+        initialize_living(e, game);
+    }
+}
+pub(crate) fn update(game: &mut Game) {
+    arm_death(game);
+    let e = i32::from(word!(game.cur_enemy_index));
+    let state = 0xb30000 | u32::from(slot!(game, Boss[e].var_D));
+    let k = word!(game.cur_enemy_index);
+    match state {
+        11769976 => wait_entry(game),
+        11770013 | 11770276 => {
+            let e = i32::from(word!(game.cur_enemy_index));
+            let changed = if state == 11770013 {
+                select_attack(e, game)
+            } else {
+                resume_chase(e, game)
+            };
+            if !changed {
+                step_body(e, game);
+                if state == 11770013 {
+                    detect_portal(word!(game.cur_enemy_index), game);
+                }
+            }
+        }
+        11770340 => {
+            let e = i32::from(word!(game.cur_enemy_index));
+            if await_spit(e, game) {
+                actor_b3_pre_instruction(
+                    0xb30000 | u32::from(slot!(game, Boss[e].var_F)),
+                    word!(game.cur_enemy_index),
+                    game,
+                );
+            }
+        }
+        11770438 => wait_collapse(game),
+        11770462 => fall(game),
+        11770570 => {
+            let e = i32::from(word!(game.cur_enemy_index));
+            if slot!(game, Boss[e].var_5F) != 0 {
+                slot!(game, Boss[e].var_D = 0x9af9);
+                let k = word!(game.cur_enemy_index);
+                spawn_hardcoded(SpawnHardcodedPlmArgs::new(15, 4, 0xb79b), game);
+                scatter_drop(DropSource::Botwoon, k, game);
+                slot!(game, Boss[i32::from(k)]; var_23 = 0, var_24 = 0, var_25 = 0);
+            }
+        }
+        11770617 => rubble(k, game),
+        _ => {
+            crate::rtl::Unreachable(game);
+        }
+    }
+    health_palette(game);
+}
+fn step_body(e: i32, game: &mut Game) {
+    match 0xb30000 | u32::from(slot!(game, Boss[e].var_E)) {
+        11770807 => seek_hole(game),
+        11788940 => advance_path(game),
+        11788880 => load_path(game),
+        _ => {
+            crate::rtl::Unreachable(game);
+        }
+    }
+    crate::game::enemy_projectiles::record_botwoon_head(game);
+    crate::game::enemy_projectiles::follow_botwoon_history(game);
+    actor_b3_pre_instruction(
+        0xb30000 | u32::from(slot!(game, Boss[e].var_F)),
+        word!(game.cur_enemy_index),
+        game,
+    );
+    crate::game::enemy_projectiles::orient_botwoon_body(game);
+    crate::game::enemy_projectiles::advance_botwoon_history(game);
 }

@@ -81,8 +81,10 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Qualified Core44: production 111743, legacy 19465, unsafe 2902, verification 39971.
-Its eight Crocomire/control rows pass (6,457 selected); direct Powerbomb handler coverage remains unestablished.
+Qualified corrected Core45: production 111745, legacy 19361, unsafe 2887, verification 39971.
+Botwoon plus four smoke rows pass (3,132 selected); alternate/native/other B3 callback variants remain unobserved.
+Complete Botwoon/all15 B3 preinstruction routing adds2 engine lines, retires104 legacy/15 unsafe; full106/104=101.92%.
+GameOwner unsafeSync permits escaped SaveRam aliases; its separate M fix must qualify before bank deletion.
 Powerbomb retires -34 legacy/-2 engine/-1 unsafe with no verification growth; full caller-inclusive replacement35/37=94.59%.
 Escape animals share lava/rescue paths and migrate callers: -3 engine, -120 legacy, -4 unsafe; +4 verification, combined +1. All variants remain unobserved.
 Melt graphics preparation/upload share their ordered queue encoder: -7 engine, -79 legacy, -2 unsafe, no verification growth.
