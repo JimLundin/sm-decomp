@@ -4,6 +4,7 @@ use crate::game::actors::api as actor_api;
 use crate::game::ceres_doors;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
+use crate::game::fire_geysers;
 use crate::game::gameplay_flag_runtime;
 use crate::game::music::QueueMusic_Delayed8;
 use crate::game::player_update::minimap;
@@ -42,7 +43,7 @@ use crate::game::visual_runtime::project_cinematic_point;
 pub type Enemy_Ridley = crate::game::enemy_layouts::EnemyLayout104;
 
 crate::type_aliases! {
-    pub Enemy_CeresDoor, Enemy_CeresSteam, Enemy_FireGeyser, Enemy_RidleysExplosion, Enemy_Zebetites
+    pub Enemy_CeresDoor, Enemy_CeresSteam, Enemy_RidleysExplosion, Enemy_Zebetites
         = crate::game::enemy_layouts::EnemyLayout8;
 }
 
@@ -89,7 +90,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_CeresRidley(o: i32) -> Enemy_CeresRidley = [0xf78, o as isize];
     Get_CeresSteam(o: i32) -> Enemy_CeresSteam = [0xf78, o as isize];
     Get_FakeKraid(o: i32) -> Enemy_FakeKraid = [0xf78, o as isize];
-    Get_FireGeyser(o: i32) -> Enemy_FireGeyser = [0xf78, o as isize];
     Get_MotherBrain(o: i32) -> Enemy_MotherBrain = [0xf78, o as isize];
     Get_NuclearWaffle(o: i32) -> Enemy_NuclearWaffle = [0xf78, o as isize];
     Get_Ridley(o: i32) -> Enemy_Ridley = [0xf78, o as isize];
@@ -98,50 +98,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_Zebetites(o: i32) -> Enemy_Zebetites = [0xf78, o as isize];
 }
 static g_word_A686F1: [u16; 2] = [0x1000, 0x1800];
-static g_word_A68DBB: u16 = 5;
-static g_word_A68DBD: u16 = 0xa;
-static g_word_A68DBF: u16 = 0xf;
-static g_word_A68DC1: u16 = 0x14;
-static g_word_A68DC3: u16 = 0x19;
-static g_word_A68DC5: u16 = 0x1e;
-static g_word_A68DC7: u16 = 0x23;
-static g_word_A68DC9: u16 = 0x28;
-static g_word_A68DCB: u16 = 0x2d;
-static g_word_A68DCD: u16 = 0x32;
-static g_word_A68DCF: u16 = 0x37;
-static g_word_A68DD1: u16 = 0x3c;
-static g_word_A68DD3: u16 = 0x41;
-static g_word_A68DD5: u16 = 0x46;
-static g_word_A68DD7: u16 = 0x4b;
-static g_word_A68DD9: u16 = 0x50;
-static g_word_A68DDB: u16 = 0x55;
-static g_word_A68DDD: u16 = 0x5a;
-static g_word_A68DDF: u16 = 0x5f;
-static g_word_A68DE1: u16 = 0x64;
-static g_word_A68DE3: u16 = 0x69;
-static g_word_A68DE5: u16 = 0x6e;
-static g_word_A68DE7: u16 = 0x18;
-static g_word_A68DE9: u16 = 0x18;
-static g_word_A68DEB: u16 = 0x18;
-static g_word_A68DED: u16 = 0x18;
-static g_word_A68DEF: u16 = 0x18;
-static g_word_A68DF1: u16 = 0x18;
-static g_word_A68DF3: u16 = 0x18;
-static g_word_A68DF5: u16 = 0x18;
-static g_word_A68DF7: u16 = 0x18;
-static g_word_A68DF9: u16 = 0x18;
-static g_word_A68DFB: u16 = 0x18;
-static g_word_A68DFD: u16 = 0x18;
-static g_word_A68DFF: u16 = 0x18;
-static g_word_A68E01: u16 = 0x18;
-static g_word_A68E03: u16 = 0x18;
-static g_word_A68E05: u16 = 0x18;
-static g_word_A68E07: u16 = 0x18;
-static g_word_A68E09: u16 = 0x18;
-static g_word_A68E0B: u16 = 0x14;
-static g_word_A68E0D: u16 = 0x10;
-static g_word_A68E0F: u16 = 0xc;
-static g_word_A68E11: u16 = 8;
 static g_word_A695F6: [u16; 4] = [0x190, 0xf0, 0xf0, 0x190];
 static g_word_A695FE: [u16; 4] = [0xffe8, 0xfff4, 0x18, 0xc];
 static g_word_A69606: [u16; 4] = [0x180, 0x100, 0x100, 0x180];
@@ -470,49 +426,6 @@ pub unsafe fn SpikeyPlatform_Func_5(k: u16, game: &mut Game) -> u16 {
         }
         0
     }
-}
-// Each animation step reads the live parent, then selects the adjacent child.
-unsafe fn set_fire_geyser_shape(offset: u16, height: u16, begin: bool, game: &mut Game) {
-    unsafe {
-        let y = (*Get_FireGeyser(word!(game.cur_enemy_index) as i32, game))
-            .var_D
-            .wrapping_sub(offset);
-        let child = Get_FireGeyser(word!(game.cur_enemy_index) as i32 + 64, game);
-        (*child).base.y_pos = y;
-        (*child).base.y_height = height;
-        if begin {
-            (*child).base.x_width = 8;
-        }
-    }
-}
-
-crate::game::callback_dispatch! {
-    pub unsafe fn CallFireGeyserFunc(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [10915887] FireGeyser_Func_1 [] {
-        let E = Get_FireGeyser(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_B = (*E).var_B.wrapping_sub(1);
-        if ((*E).var_B & 0x8000) != 0 {
-            (*E).var_A = (0xa69062i32) as u16;
-            (*E).var_C = 0;
-            (*E).base.instruction_timer = 1;
-            (*E).base.timer = 0;
-            (*E).base.current_instruction = addr_kFireGeyser_Ilist_8D1B as u16;
-            (*E).base.properties =
-                ((*E).base.properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
-            let E1 = Get_FireGeyser(word!(game.cur_enemy_index) as i32 + 64, game);
-            (*E1).base.properties = (*E1).base.properties & !(0x400);
-        }
-    };
-    [10915938] FireGeyser_Func_2 [] {
-        let E = Get_FireGeyser(word!(game.cur_enemy_index) as i32, game);
-        if (*E).var_C != 0 {
-            (*E).var_B = (*E).parameter_1;
-            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
-            (*E).var_A = (0xa6902fi32) as u16;
-        }
-    };
 }
 crate::game::callback_dispatch! {
     pub unsafe fn CallNuclearWaffleFunc(ea: u32, game: &mut Game) => ea;
@@ -4199,22 +4112,6 @@ crate::game::callback_dispatch! {
         (*v1).x_pos = word!(game.enemy_drawing_queue[(v0 + 91)]);
         (*v1).y_pos = (word!(game.enemy_drawing_queue[(v0 + 93)])).wrapping_add(12);
     };
-    [10915836] FireGeyser_Init [] {
-        let E = Get_FireGeyser(word!(game.cur_enemy_index) as i32, game);
-        (*E).base.current_instruction = addr_kFireGeyser_Ilist_8DA9 as u16;
-        if (*E).parameter_2 == 0 {
-            (*E).base.current_instruction = addr_kFireGeyser_Ilist_8D1B as u16;
-            (*E).var_A = (0xa6902fi32) as u16;
-            (*E).var_D = (*E).base.y_pos;
-            (*E).base.x_width = 0;
-        }
-    };
-    [10915875] FireGeyser_Main [] {
-        let E = Get_FireGeyser(word!(game.cur_enemy_index) as i32, game);
-        if (*E).parameter_2 == 0 {
-            CallFireGeyserFunc((((*E).var_A) as u32) | (0xa60000u32), game);
-        }
-    };
     [10917060] NuclearWaffle_Init [] {
         let E = Get_NuclearWaffle(word!(game.cur_enemy_index) as i32, game);
         (*E).base.current_instruction = addr_kNuclearWaffle_Ilist_9490 as u16;
@@ -4575,67 +4472,15 @@ crate::game::callback_dispatch! {
     [10911779] Enemy_NormalTouchAI_A6 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
     [10911789] Enemy_NormalShotAI_A6 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
     [10911809] Enemy_NormalFrozenAI_A6 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
+    @external {
+        10915836 => [fire_geysers::initialize(game)];
+        10915875 => [fire_geysers::run(game)];
+    }
 }
 
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10915247] FireGeyser_Instr_1 [jp] { QueueSfx2_Max6(0x61, game); };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10915347]
-    FireGeyser_Instr_2 [jp] { set_fire_geyser_shape(g_word_A68DBB, g_word_A68DE7, true, game); };
-    [10915373]
-    FireGeyser_Instr_3 [jp] { set_fire_geyser_shape(g_word_A68DBD, g_word_A68DE9, false, game); };
-    [10915393]
-    FireGeyser_Instr_4 [jp] { set_fire_geyser_shape(g_word_A68DBF, g_word_A68DEB, false, game); };
-    [10915413]
-    FireGeyser_Instr_5 [jp] { set_fire_geyser_shape(g_word_A68DC1, g_word_A68DED, false, game); };
-    [10915433]
-    FireGeyser_Instr_6 [jp] { set_fire_geyser_shape(g_word_A68DC3, g_word_A68DEF, false, game); };
-    [10915453]
-    FireGeyser_Instr_7 [jp] { set_fire_geyser_shape(g_word_A68DC5, g_word_A68DF1, false, game); };
-    [10915473]
-    FireGeyser_Instr_8 [jp] { set_fire_geyser_shape(g_word_A68DC7, g_word_A68DF3, false, game); };
-    [10915493]
-    FireGeyser_Instr_9 [jp] { set_fire_geyser_shape(g_word_A68DC9, g_word_A68DF5, false, game); };
-    [10915513]
-    FireGeyser_Instr_10 [jp] { set_fire_geyser_shape(g_word_A68DCB, g_word_A68DF7, false, game); };
-    [10915533]
-    FireGeyser_Instr_11 [jp] { set_fire_geyser_shape(g_word_A68DCD, g_word_A68DF9, false, game); };
-    [10915553]
-    FireGeyser_Instr_12 [jp] { set_fire_geyser_shape(g_word_A68DCF, g_word_A68DFB, false, game); };
-    [10915573]
-    FireGeyser_Instr_13 [jp] { set_fire_geyser_shape(g_word_A68DD1, g_word_A68DFD, false, game); };
-    [10915593]
-    FireGeyser_Instr_14 [jp] { set_fire_geyser_shape(g_word_A68DD3, g_word_A68DFF, false, game); };
-    [10915613]
-    FireGeyser_Instr_15 [jp] { set_fire_geyser_shape(g_word_A68DD5, g_word_A68E01, false, game); };
-    [10915633]
-    FireGeyser_Instr_16 [jp] { set_fire_geyser_shape(g_word_A68DD7, g_word_A68E03, false, game); };
-    [10915653]
-    FireGeyser_Instr_17 [jp] { set_fire_geyser_shape(g_word_A68DD9, g_word_A68E05, false, game); };
-    [10915673]
-    FireGeyser_Instr_18 [jp] { set_fire_geyser_shape(g_word_A68DDB, g_word_A68E07, false, game); };
-    [10915693]
-    FireGeyser_Instr_19 [jp] { set_fire_geyser_shape(g_word_A68DDD, g_word_A68E09, false, game); };
-    [10915713]
-    FireGeyser_Instr_20 [jp] { set_fire_geyser_shape(g_word_A68DDF, g_word_A68E0B, false, game); };
-    [10915733]
-    FireGeyser_Instr_21 [jp] { set_fire_geyser_shape(g_word_A68DE1, g_word_A68E0D, false, game); };
-    [10915753]
-    FireGeyser_Instr_22 [jp] { set_fire_geyser_shape(g_word_A68DE3, g_word_A68E0F, false, game); };
-    [10915773]
-    FireGeyser_Instr_23 [jp] { set_fire_geyser_shape(g_word_A68DE5, g_word_A68E11, false, game); };
-    [10915793] FireGeyser_Instr_24 [jp] {
-        let E = Get_FireGeyser(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_C = 1;
-        let E1 = Get_FireGeyser(word!(game.cur_enemy_index) as i32 + 64, game);
-        set_fields! {[(*E1).base], 0; x_width, y_height}
-        (*E).base.y_pos = (*E).var_D;
-        (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
-        (*E1).base.properties = ((*E1).base.properties) | (0x400u16);
-    };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10918694] FakeKraid_Instr_2 [jp] {
         let E = Get_FakeKraid(word!(game.cur_enemy_index) as i32, game);
@@ -4779,6 +4624,7 @@ crate::game::callback_dispatch! {
     [10938628] Ridley_Instr_12 => Ridley_E90C(k, jp, 0, game);
     [10938633] Ridley_Instr_13 => Ridley_E90C(k, jp, 0xe, game);
     @external {
+        10915247 | 10915347..=10915793 => [fire_geysers::instruction(ea, j, game)];
         10940701 => [ceres_doors::change_properties(k, VANISH, 0, j, game)];
         10940725 => [ceres_doors::change_properties(k, 0, VANISH, j, game)];
         10942014 => ceres_doors::branch_unless_samus_near;

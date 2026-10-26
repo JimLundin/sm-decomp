@@ -448,6 +448,7 @@ pub mod game {
     pub mod enemy_population;
     pub mod enemy_script;
     pub(crate) mod erratic_fireball;
+    pub(crate) mod fire_geysers;
     pub(crate) mod flies;
     pub(crate) mod hopping_blobs;
     pub(crate) mod lava_jumper;
