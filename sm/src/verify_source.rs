@@ -14,6 +14,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/maridia_floater.rs"),
     ),
     (
+        "sm/src/game/actors/maridia_puffer.rs",
+        include_bytes!("game/actors/maridia_puffer.rs"),
+    ),
+    (
         "sm/src/game/actors/lava_seahorse.rs",
         include_bytes!("game/actors/lava_seahorse.rs"),
     ),

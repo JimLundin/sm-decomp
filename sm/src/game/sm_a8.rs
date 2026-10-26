@@ -22,8 +22,6 @@ crate::game::constants::typed_constants! { Consts_A8;
     addr_kBlueBrinstarFaceBlock_Ilist_E828 = 59432, addr_kBlueBrinstarFaceBlock_Ilist_E81A = 59418,
     addr_kBlueBrinstarFaceBlock_Ilist_E80C = 59404, addr_kWreckedShipSpark_Ilist_E5E5 = 58853,
     addr_kWreckedShipSpark_Ilist_E5A7 = 58791,
-    addr_kMaridiaPuffer_Ilist_D855 = 55381,
-    addr_kMaridiaPuffer_Ilist_D841 = 55361,
     addr_kNorfairLavaMan_Ilist_AE0C = 44556, addr_kNorfairLavaMan_Ilist_ADDC = 44508,
     addr_kNorfairLavaMan_Ilist_ADAC = 44460, addr_kNorfairLavaMan_Ilist_AD7E = 44414,
     addr_kNorfairLavaMan_Ilist_AD50 = 44368, addr_kNorfairLavaMan_Ilist_AD3C = 44348,
@@ -50,8 +48,6 @@ crate::type_aliases! {
 
 pub type Enemy_YappingMaw = crate::game::enemy_layouts::EnemyLayout104;
 
-pub type Enemy_MaridiaPuffer = crate::game::enemy_layouts::EnemyLayout72Late;
-
 const RomPtr_A8: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa8>;
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
@@ -74,7 +70,6 @@ crate::game::constants::typed_constants! { i32;
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
-    Get_MaridiaPuffer(o: i32) -> Enemy_MaridiaPuffer = [0xf78, o as isize];
     Get_YappingMaw(o: i32) -> Enemy_YappingMaw = [0xf78, o as isize];
 }
 type YappingMaw = Enemy_YappingMaw;
@@ -82,18 +77,12 @@ type WreckedShipSpark = Enemy_WreckedShipSpark;
 type WreckedShipOrbs = Enemy_WreckedShipOrbs;
 type NorfairLavaMan = Enemy_NorfairLavaMan;
 type MorphBallEye = Enemy_MorphBallEye;
-type MaridiaPuffer = Enemy_MaridiaPuffer;
 static g_word_A890CA: [i16; 4] = [-8, 8, 0, 0];
 static g_word_A890D2: [i16; 4] = [0, 0, -8, 8];
 static g_word_A89050: u16 = 0x80;
 static g_word_A89052: u16 = 0xb0;
 static g_word_A89054: u16 = 0x80;
 static g_word_A89056: u16 = 0x80;
-static g_word_A8D871: [i16; 10] = [0xc0, 0xe0, 0, 0x20, 0x40, 0x40, 0x60, 0x80, 0xa0, 0xc0];
-static g_word_A8D885: [i16; 8] = [0x3ff, 0x4ff, 0x5ff, 0x6ff, 0x7ff, 0x8ff, 0x9ff, 0xaff];
-static g_word_A8D895: [i16; 26] = [
-    3, 1, 4, 1, 5, 2, 6, 2, 7, 2, 8, 3, 9, 3, 0xa, 4, 0xb, 4, 0xc, 5, 0xd, 5, 0xe, 6, 0xf, 6,
-];
 crate::game::callback_dispatch! {
     pub unsafe fn CallYappingMawFunc(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -509,142 +498,6 @@ pub unsafe fn NorfairLavaMan_Func_19(k: u16, game: &mut Game) {
     }
 }
 
-crate::game::callback_dispatch! {
-    pub unsafe fn CallMaridiaPuffer(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [11065664] MaridiaPuffer_Func_2 [] {
-        let v1: u8 = (({ let actor = word!(game.cur_enemy_index); actor_api::angle_to_player(&Runtime::new(game), Key::from_legacy(actor)) }) as u8)
-            .wrapping_sub(64);
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, MaridiaPuffer[E].var_01 = v1 as u16);
-        slot!(game, MaridiaPuffer[E].var_02 = v1 as u16);
-        slot!(game, MaridiaPuffer[E].var_A = (0xa8d963i32) as u16);
-        slot!(game, MaridiaPuffer[E].var_C = 24);
-    };
-    @functions [pub unsafe fn (game: &mut Game)];
-    @prefix { let E = Get_MaridiaPuffer(word!(game.cur_enemy_index) as i32, game); };
-    MaridiaPuffer_Init [] {
-        set_fields! {[(*E).base]; instruction_timer = 1, timer = 0,
-            current_instruction = addr_kMaridiaPuffer_Ilist_D841 as u16, };
-        let v1: i32 = ((4u16).wrapping_mul((*E).parameter_1)) as i32 >> 1;
-        let v2: u16 = g_word_A8D895[v1 as usize] as u16;
-        set_fields! {[(*E)]; var_05 = v2, var_F = v2,
-            var_06 = g_word_A8D895[(v1 + 1) as usize] as u16, var_E = 16,
-            var_A = (0xa8d92bi32) as u16,
-            var_00 = g_word_A8D885[(*E).parameter_2 as usize] as u16, };
-    };
-    MaridiaPuffer_Main [] {
-        let v1: u16 = ((*E).var_07).wrapping_sub(1);
-        (*E).var_07 = v1;
-        if v1 == 0 {
-            (*E).var_07 = 1;
-            (*E).var_03 = 0;
-        }
-        CallMaridiaPuffer((((*E).var_A) as u32) | (0xa80000u32), game);
-    };
-    [11065643] MaridiaPuffer_Func_1 [] {
-        crate::update_place! { previous fresh7 = (*E).var_E => (*E).var_E.wrapping_sub(1); }
-        if fresh7 == 1 {
-            (*E).var_E = 16;
-            (*E).var_A = (0xa8d940i32) as u16;
-        }
-    };
-    [11065699] MaridiaPuffer_Func_3 [] {
-        if (((*E).var_D) as i16).wrapping_sub(((*E).var_00) as i16) < 0 {
-            MaridiaPuffer_Func_8(word!(game.cur_enemy_index), game);
-        }
-        MaridiaPuffer_Func_6(game);
-        MaridiaPuffer_Func_7(game);
-        MaridiaPuffer_Func_5(game);
-    };
-    [11065724] MaridiaPuffer_Func_4 [] {
-        if ((*E).var_D as i16) > 0 && ((*E).var_B as i16) > 0 {
-            MaridiaPuffer_Func_6(game);
-            MaridiaPuffer_Func_7(game);
-            MaridiaPuffer_Func_9(word!(game.cur_enemy_index), game);
-        } else {
-            (*E).var_A = (0xa8d92bi32) as u16;
-            set_fields! {[(*E)], 0; var_B, var_C, var_D}
-        };
-    };
-    MaridiaPuffer_Func_6 [] {
-        let mut R26: u16 = 0;
-        let r18: u16 = crate::rtl::rom_table_word!(
-            game,
-            0xa0b1c3,
-            ((((*E).var_02) as u8).wrapping_add(64)) as isize
-        );
-        if (r18 & 0x8000) != 0 {
-            R26 = R26.wrapping_add(1);
-        }
-        let mut t: u32 = (((abs16(r18) as i32 & 0xff00) >> 8) * (*E).var_D as i32) as u32;
-        if R26 != 0 {
-            t = -(t as i32) as u32;
-        }
-        words!((*E).base, x_pos, x_subpos += t);
-    };
-    MaridiaPuffer_Func_7 [] {
-        let mut R26: u16 = 0;
-        let r18: u16 = crate::rtl::rom_table_word!(game, 0xa0b1c3, (*E).var_02 as u8 as isize);
-        if (r18 & 0x8000) != 0 {
-            R26 = R26.wrapping_add(1);
-        }
-        let mut t: u32 = (((abs16(r18) as i32 & 0xff00) >> 8) * (*E).var_D as i32) as u32;
-        if R26 != 0 {
-            t = -(t as i32) as u32;
-        }
-        words!((*E).base, y_pos, y_subpos += t);
-    };
-    MaridiaPuffer_Shot [] {
-        (*E).var_40 = (*E).base.health;
-        Enemy_NormalShotAI_A8(game);
-        if (*E).base.health == (*E).var_40 && (*E).var_03 == 0 {
-            set_fields! {[(*E).base]; instruction_timer = 1, timer = 0,
-                current_instruction = addr_kMaridiaPuffer_Ilist_D855 as u16, };
-            (*E).var_02 =
-                g_word_A8D871[(word!(game.projectile_dir[word!(game.collision_detection_index)]) as i32
-                    & 0xf) as usize] as u16;
-            (*E).var_B = 256;
-            (*E).var_D = 1536;
-            (*E).var_A = (0xa8d97ci32) as u16;
-            (*E).var_07 = 48;
-            (*E).var_03 = 1;
-        }
-    };
-}
-pub unsafe fn MaridiaPuffer_Func_5(game: &mut Game) {
-    let v1: u8 = (({
-        let actor = word!(game.cur_enemy_index);
-        actor_api::angle_to_player(&Runtime::new(game), Key::from_legacy(actor))
-    }) as u8)
-        .wrapping_sub(64);
-    let E: i32 = word!(game.cur_enemy_index) as i32;
-    slot!(game, MaridiaPuffer[E].var_01 = v1 as u16);
-    let v3: u16 = sign_extend8(((v1) as u16).wrapping_sub(slot!(game, MaridiaPuffer[E].var_02)));
-    let v4: u16 = abs16(v3);
-    if v4 as i32 - 48i32 & 0x8000 == 0 {
-        slot!(game, MaridiaPuffer[E].var_A = (0xa8d97ci32) as u16);
-        slot!(game, MaridiaPuffer[E].var_C = 24);
-    }
-}
-crate::game::countdown_callbacks! {
-    pub unsafe fn (k: u16, game: &mut Game);
-    before {
-        let E = Get_MaridiaPuffer(k as i32, game);
-        crate::update_place! { previous previous_timer = (*E).var_F => (*E).var_F.wrapping_sub(1); }
-    } when previous_timer == 1;
-    MaridiaPuffer_Func_8 {
-        (*E).var_F = (*E).var_05;
-        (*E).var_B = ((*E).var_B).wrapping_add((*E).var_C);
-        (*E).var_D = ((*E).var_D).wrapping_add((*E).var_B);
-    };
-    MaridiaPuffer_Func_9 {
-        (*E).var_F = (*E).var_06;
-        (*E).var_B = ((*E).var_B).wrapping_sub((*E).var_C);
-        (*E).var_D = ((*E).var_D).wrapping_sub((*E).var_B);
-    };
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallWreckedShipOrbsA(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };

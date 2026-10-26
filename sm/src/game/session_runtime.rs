@@ -653,8 +653,8 @@ crate::game::callback_dispatch! {
         11063693 => crate::game::actors::wrecked_ship_robots::shot_dormant;
         11063698 => crate::game::actors::wrecked_ship_robots::shot;
         11062374 => [()];
-        11065545 => sm_a8::MaridiaPuffer_Init;
-        11065611 => sm_a8::MaridiaPuffer_Main; 11066132 => sm_a8::MaridiaPuffer_Shot;
+        11065545 => crate::game::actors::maridia_puffer::initialize;
+        11065611 => crate::game::actors::maridia_puffer::advance; 11066132 => crate::game::actors::maridia_puffer::shot;
         11066573 => crate::game::actors::lava_seahorse::initialize;
         11066731 => crate::game::actors::lava_seahorse::advance;
         11068296 => sm_a8::WreckedShipOrbs_Init;
