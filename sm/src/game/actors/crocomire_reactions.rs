@@ -3,13 +3,19 @@
 #![forbid(unsafe_code)]
 use super::access::{AccessMode, ActorAccess, ActorKey as Key};
 use crate::game::callback_tables::callback_table;
-use crate::game::constants::{bank_86::addr_stru_868F8F, bank_a4::*};
-use crate::game::enemy_projectiles::SpawnEprojWithGfx;
+use crate::game::constants::{
+    bank_86::{addr_kEproj_DustCloudExplosion, addr_stru_868F8F},
+    bank_a4::*,
+};
+use crate::game::enemy_layouts::EnemyLayout72 as Crocomire;
+use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::music::{QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
+use crate::ram_map::{slot, word};
 use crate::rtl::abs16;
+use crate::types::Point16U;
 use core::ffi::c_long;
 
 type Reaction = fn(u16, EnemyScript, &mut Game) -> EnemyScript;
@@ -305,4 +311,68 @@ pub(crate) fn choose_spit(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScr
         return EnemyScript::jump(addr_kCrocomire_Ilist_BB36 as u16);
     }
     jp
+}
+
+fn next_hit_count(flags: u16) -> u16 {
+    ((flags & 0xf) + 1).min(15)
+}
+pub(crate) fn count_hit(game: &mut Game) {
+    let count = next_hit_count(slot!(game, Crocomire[0].var_B));
+    slot!(game, Crocomire[0].var_B, |flags| flags | count);
+}
+pub(crate) fn impact(game: &mut Game) {
+    let index = word!(game.collision_detection_index) as i32;
+    game.eproj_spawn_pt = Point16U {
+        x: word!(game.projectile_x_pos[index]),
+        y: word!(game.projectile_y_pos[index]),
+    };
+    let appearance = if word!(game.projectile_type[index]) & 0x200 == 0 {
+        6
+    } else {
+        29
+    };
+    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, appearance, game);
+}
+pub(crate) fn hit(game: &mut Game) {
+    slot!(game, Crocomire[0].base.invincibility_timer = 0);
+    let mut advance = ((slot!(game, Crocomire[0].base.x_pos) as i32
+        - slot!(game, Crocomire[0].base.x_width) as i32
+        - 256
+        - word!(game.layer1_x_pos) as i32) as i16)
+        >= 0;
+    if !advance {
+        let projectile = word!(game.projectile_type[word!(game.collision_detection_index)]);
+        if projectile & 0xf10 == 0 {
+            slot!(game, Crocomire[0].base.instruction_timer = 8);
+            impact(game);
+            return;
+        }
+        let recoil = [2u16, 1, 3]
+            .get(((projectile & 0xf00) >> 8) as usize)
+            .copied()
+            .unwrap_or(0);
+        advance = recoil != 0;
+        if advance {
+            slot!(game, Crocomire[0].var_D, |old| old.wrapping_add(recoil));
+        }
+    }
+    if advance {
+        let count = next_hit_count(slot!(game, Crocomire[0].var_B));
+        if slot!(game, Crocomire[0].var_B) & 0x800 == 0 {
+            let mut delay = 8;
+            if slot!(game, Crocomire[0].var_C) == 8 {
+                delay = 8;
+            }
+            slot!(game, Crocomire[0].base.instruction_timer, |old| old
+                .wrapping_add(delay));
+        }
+        slot!(
+            game,
+            Crocomire[0].var_B = count | slot!(game, Crocomire[0].var_B) & 0xb7f0 | 0x800
+        );
+        slot!(game, Crocomire[0].var_E = 10);
+    }
+    slot!(game, Crocomire[0].base.flash_timer, |old| old
+        .wrapping_add(14));
+    slot!(game, Crocomire[0].base.ai_handler_bits, |old| old | 2);
 }

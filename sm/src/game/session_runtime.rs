@@ -1014,8 +1014,8 @@ crate::game::callback_dispatch! {
         10846278 => [actor_api::create_dud(&mut Runtime::new(game))];
         10649676 => [()];
         10671028 => crate::game::large_snail::shot; 10780717 => sm_a4::Enemy_NormalShotAI_A4;
-        10795345 => sm_a4::Crocomire_Func_93; 10795368 => sm_a4::Crocomire_Func_94;
-        10795525 => sm_a4::Crocomire_Func_95; 10795700 => sm_a4::Crocomire_Func_1;
+        10795345 => actors::crocomire_reactions::count_hit; 10795368 => actors::crocomire_reactions::impact;
+        10795525 => actors::crocomire_reactions::hit; 10795700 => actors::crocomire_reactions::impact;
         10846253 => [actors::combat::shot_reaction(&mut Runtime::new(game), actor_api::ShotHandling::Finalize)]; 10846284 => [()];
         10851824 => actors::draygon_death::shot; 10874202 => actors::spore_spawn::shot; 10911820 => [()];
         10936202 => sm_a6::Ridley_Shot; 10977356 => [()]; 10982581 => [()];
