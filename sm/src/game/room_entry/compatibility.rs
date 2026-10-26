@@ -87,7 +87,9 @@ impl EntryEffects for Runtime<'_> {
                     actors::drawing::draw_scene(&mut Runtime::new(game));
                 }
                 LeafEffect::EnsureSamusDrawn => {
-                    game::sm_82::EnsureSamusDrawnEachFrame(game);
+                    if crate::ram_map::word!(game.elevator_flags) == 0 {
+                        game::samus_animation::Samus_DrawWhenNotAnimatingOrDying(game);
+                    }
                 }
                 LeafEffect::QueueEnemyTiles => {
                     actors::staging::queue_actor_tiles(&mut Runtime::new(game));

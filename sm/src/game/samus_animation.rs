@@ -165,9 +165,14 @@ pub fn Samus_DrawDuringDeathAnim(game: &mut Game) {
 pub fn Samus_DrawWhenNotAnimatingOrDying(game: &mut Game) {
     draw_body(game, Body::Frozen);
 }
-pub fn Samus_DrawStartingDeathAnim(game: &mut Game) {
+pub(crate) fn advance_death_pose(game: &mut Game) -> CoroutineRet {
     pt::advance_animation(&mut Runtime::new(game), pt::state::AnimationStep::Death);
     Samus_DrawDuringDeathAnim(game);
+    let expired = word!(game.g_word_7E0DE8 -= 1, reread) & 0x8000 != 0;
+    if word!(game.g_word_7E0DE8) == 0 || expired {
+        word!(game.game_state += 1);
+    }
+    0
 }
 
 // Death phases share palette selection and the native upload queue with live drawing.
