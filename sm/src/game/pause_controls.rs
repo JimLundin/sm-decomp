@@ -1,13 +1,111 @@
-//! Pause-screen input, saved graphics and transient highlights; RAM remains authoritative.
+//! Pause-screen lifecycle, input and saved graphics; RAM remains authoritative.
 #![forbid(unsafe_code)]
 use crate::game::{
     constants::buttons::{kButton_L, kButton_R, kButton_Start},
-    map_menu, menu_tilemap,
+    display_refresh, equipment_menu, map_menu, menu_tilemap,
     music::QueueSfx1_Max6,
     projectile_presentation_ram as sprite_output,
 };
 use crate::game_state::Game;
-use crate::ram_map::word;
+use crate::ram_map::{word, words as fields};
+
+pub(crate) fn initialize(game: &mut Game) {
+    map_menu::reset_animations(game);
+    menu_tilemap::equipment_icons(game);
+    menu_tilemap::pause_labels(0, game);
+    menu_tilemap::queue_pause_labels(game);
+    map_menu::scroll_limits(game);
+    map_menu::center_map(0x80, game);
+    word! { game, 1; screen_fade_delay, screen_fade_counter }
+    word! { game; pausemenu_leftarrow_animation_frame = 0; pausemenu_palette_animation_timer = 1; }
+    word! { game, 0; map_scrolling_direction, map_scrolling_speed_index }
+    display_refresh::queue_fx_clear(game);
+    word!(game.game_state += 1);
+}
+
+pub(crate) fn fade_in(game: &mut Game) -> u8 {
+    if word!(game.menu_index) != 0 {
+        draw_equipment(game);
+    } else {
+        draw_map(game);
+    }
+    display_refresh::fade(true, game);
+    if game.g_ram[0x51] == 15 {
+        word! { game, 0; screen_fade_delay, screen_fade_counter }
+        word!(game.game_state += 1);
+    }
+    0
+}
+
+pub(crate) fn update_map(game: &mut Game) {
+    advance(game);
+    map_menu::scroll_arrows(map_menu::MapScreen::Pause, game);
+    map_menu::scroll(game);
+    draw_map(game);
+    word!(game.pause_screen_mode = 0);
+}
+
+pub(crate) fn update_equipment(game: &mut Game) {
+    word! { game, 0; reg_BG1HOFS, reg_BG1VOFS }
+    equipment_menu::update(game);
+    advance(game);
+    word!(game.pause_screen_mode = 1);
+}
+
+pub(crate) fn fade_tab<const EQUIPMENT: bool>(game: &mut Game) {
+    if EQUIPMENT {
+        draw_equipment(game);
+    } else {
+        draw_map(game);
+    }
+    word!(game.pause_screen_mode = u16::from(EQUIPMENT));
+    display_refresh::fade(true, game);
+    if game.g_ram[0x51] == 15 {
+        word! { game, 0; screen_fade_delay, screen_fade_counter }
+        let mut selected = word!(game.pausemenu_button_label_mode);
+        if word!(game.pausemenu_button_label_mode) != 0 {
+            selected = 1;
+        }
+        word!(game.menu_index = selected);
+    }
+}
+
+fn draw_map(game: &mut Game) {
+    map_menu::draw_player_marker(game);
+    map_menu::draw_icons(map_menu::IconMode::Pause, game);
+    map_menu::display_elevator_destinations(game);
+}
+
+pub(crate) fn draw_equipment(game: &mut Game) {
+    map_menu::draw_equipment_selector(game);
+    menu_tilemap::reserve_tanks(game);
+}
+
+pub(crate) fn draw_unpause(game: &mut Game) {
+    draw_start(game);
+    if word!(game.pause_screen_mode) == 1 {
+        draw_equipment(game);
+        draw_shoulder(game);
+    } else {
+        // Unpause keeps the opposite icon/marker order from the active map.
+        map_menu::display_elevator_destinations(game);
+        map_menu::draw_icons(map_menu::IconMode::Pause, game);
+        map_menu::draw_player_marker(game);
+    }
+}
+
+pub(crate) fn resume(game: &mut Game) {
+    word!(game.reg_BG1HOFS = word!(game.bg1_x_offset).wrapping_add(word!(game.layer1_x_pos)));
+    word!(game.reg_BG1VOFS = word!(game.bg1_y_offset).wrapping_add(word!(game.layer1_y_pos)));
+    word!(game.reg_BG2HOFS = word!(game.bg2_x_scroll).wrapping_add(word!(game.layer2_x_pos)));
+    word!(game.reg_BG2VOFS = word!(game.bg2_y_scroll).wrapping_add(word!(game.layer2_y_pos)));
+    crate::game::visual_runtime::update_beam_tiles_and_palette(game);
+    // Palette timer/frame and pause_screen_mode survive this ordered reset.
+    word_transfers!(game, ascending, 10; little(fields::menu_index) <- value(0));
+    word_transfers!(game, ascending, 9; little(fields::UNUSED_word_7E073D) <- value(0));
+    word_transfers!(game, ascending, 9; little(fields::pausemenu_shoulder_button_highlight) <- value(0));
+    crate::game::session_runtime::player_command(0xc, game);
+}
 
 const GRAPHICS_MIRRORS: [usize; 17] = [
     0x58, 0x59, 0x5a, 0x5d, 0x5e, 0x52, 0xb1, 0xb5, 0xb9, 0xb3, 0xb7, 0xbb, 0x55, 0x91b, 0x91c,
@@ -32,7 +130,7 @@ pub(crate) fn restore_graphics(game: &mut Game) {
     }
 }
 
-pub(crate) fn advance(game: &mut Game) {
+fn advance(game: &mut Game) {
     shoulder_input(game);
     map_menu::animate_pause_sprite(2, 0x18, 0xd0, game);
     map_menu::animate_pause_sprite(2, 0xe8, 0xd0, game);
@@ -85,7 +183,7 @@ pub(crate) fn draw_shoulder(game: &mut Game) {
     }
 }
 
-pub(crate) fn draw_start(game: &mut Game) {
+fn draw_start(game: &mut Game) {
     if tick_highlight(game) {
         sprite_output::menu(0x2b, 0x90, 0xd0, 0, game);
     }
