@@ -348,7 +348,7 @@ jobs:
               url = 'https://github.com/JimLundin/sm-decomp/releases/download/ci-data/' + asset
               urllib.request.urlretrieve(url, bundle)
               command = [sys.executable, 'tools/ci_seed_data.py', 'restore', str(bundle),
-                         '--sha256', digest]
+                         '--sha256', digest, '--runtime-only']
               for row in os.environ['SEGMENTS'].split():
                   command += ['--segment', row]
               subprocess.run(command, check=True)

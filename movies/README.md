@@ -36,6 +36,9 @@ room seeds use separate bundles; the current asset names, hashes and exact
 row-to-bundle mapping are in [`seed_bundle` in the workflow](../.github/workflows/segments.yml).
 Restore each bundle with only its matching `--segment` selections. Restoration
 checks hashes and refuses to replace different existing files.
+Add `--runtime-only` when you only need to replay existing rows; it restores
+selected inputs, starts and seed companions. Keep the default full restore when
+regenerating inputs, because it also restores the original capture logs.
 
 The intro uses the remaining authored route. Download the any% movie listed in
 [manifest.toml](manifest.toml), extract the movie from its download ZIP, check

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Pack or restore ROM-encrypted corpus inputs and original-emulator seeds."""
 import argparse
+import csv
 import hashlib
 import io
 import os
@@ -147,6 +148,16 @@ def restore(args):
         raise ValueError("invalid corpus input name")
     captures = {row["seed"].split(":")[0] for row in rows if "seed" in row}
     needed_indexes = {f"target/seeds/{capture}/rooms.csv" for capture in captures}
+    runtime_only = getattr(args, "runtime_only", False)
+    seed_indexes = {}
+    if runtime_only:
+        for row in rows:
+            if "seed" not in row:
+                continue
+            match = re.fullmatch(r"([A-Za-z0-9-]+):([0-9]+)", row["seed"])
+            if not match or not 1 <= int(match[2]) <= 9999:
+                raise ValueError("unsupported runtime seed index: " + row["id"])
+            seed_indexes.setdefault(match[1], set()).add(int(match[2]))
     command, env = cipher(args, decrypt=True)
     process = subprocess.Popen(command, stdout=subprocess.PIPE, env=env)
     seen, restored = set(), set()
@@ -161,8 +172,13 @@ def restore(args):
                 if name not in inputs | checkpoints and not (
                         parts[:2] == ("target", "seeds") and parts[2] in captures):
                     continue
-                if name in checkpoints or name in inputs:
-                    regular_path(args.root, name, required=False)
+                if runtime_only and parts[:2] == ("target", "seeds"):
+                    filename = parts[3]
+                    if filename != "rooms.csv" and not (
+                            re.match(r"[0-9]{4}-", filename)
+                            and int(filename[:4]) in seed_indexes[parts[2]]):
+                        continue
+                regular_path(args.root, name, required=False)
                 destination = (args.root / name).resolve()
                 if not destination.is_relative_to(args.root):
                     raise ValueError("seed extraction escapes checkout")
@@ -182,6 +198,24 @@ def restore(args):
             raise RuntimeError("seed decryption failed")
         if (inputs | checkpoints | needed_indexes) - restored:
             raise ValueError("seed archive lacks selected corpus data")
+        if runtime_only:
+            for capture, indexes in seed_indexes.items():
+                prefix = f"target/seeds/{capture}/"
+                with (args.root / prefix / "rooms.csv").open(newline="") as stream:
+                    entries = list(csv.DictReader(stream))
+                for index in indexes:
+                    matches = [entry for entry in entries
+                               if entry["room_index"] == str(index) and entry["region"] == "wram"]
+                    if len(matches) != 1:
+                        raise ValueError("seed index requires exactly one captured WRAM entry")
+                    filename = matches[0]["file"]
+                    if not re.fullmatch(rf"{index:04d}-[0-9A-F]{{4}}-wram\.bin", filename):
+                        raise ValueError("unsupported indexed runtime seed filename")
+                    expected = {prefix + filename.replace("-wram.bin", suffix) for suffix in (
+                        "-wram.bin", "-sram.bin", "-vram.bin", "-cgram.bin",
+                        "-oam.bin", "-apuram.bin", "-registers.csv")}
+                    if expected - restored:
+                        raise ValueError("seed archive lacks selected runtime companions")
         for row in rows:
             name = "movies/" + row["inputs"]
             if name in inputs and digest(args.root / name) != row["input_sha256"]:
@@ -209,7 +243,11 @@ def main():
         if os.name == "nt" else "openssl"))
     parser.add_argument("--sha256", help="required pinned ciphertext digest for restoration")
     parser.add_argument("--segment", action="append", default=[])
+    parser.add_argument("--runtime-only", action="store_true",
+                        help="restore only replay inputs, checkpoints and selected seed companions")
     args = parser.parse_args()
+    if args.runtime_only and args.mode != "restore":
+        parser.error("--runtime-only requires restore mode")
     args.root = args.root.resolve()
     (pack if args.mode == "pack" else restore)(args)
 
