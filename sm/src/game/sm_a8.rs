@@ -4,8 +4,8 @@ use crate::game::actors::api as actor_api;
 use crate::game::enemy_script::EnemyScript;
 use crate::game::gameplay_flag_runtime;
 pub use crate::game::prelude::*;
+use crate::game::session_runtime::correct_previous_position;
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
-use crate::game::session_runtime::{actor_cosine, actor_sine, correct_previous_position};
 use crate::ram_map::slot;
 
 pub use crate::game::constants::bank_86::*;
@@ -19,19 +19,11 @@ use crate::game::visual_runtime::initialize_morph_eye_beam;
 pub use crate::types::Consts_A8;
 
 crate::game::constants::typed_constants! { Consts_A8;
-    addr_locret_A8F5E3 = 62947, addr_kKiHunter_Ilist_EB10 = 60176,
-    addr_kKiHunter_Ilist_EAF2 = 60146, addr_kKiHunter_Ilist_EADA = 60122,
-    addr_kKiHunter_Ilist_EAC2 = 60098, addr_kKiHunter_Ilist_EAA6 = 60070,
-    addr_kKiHunter_Ilist_EA8A = 60042, addr_kKiHunter_Ilist_EA7E = 60030,
-    addr_kKiHunter_Ilist_EA5E = 59998, addr_kKiHunter_Ilist_EA4E = 59982,
-    addr_kKiHunter_Ilist_EA32 = 59954, addr_kKiHunter_Ilist_EA24 = 59940,
-    addr_kKiHunter_Ilist_EA08 = 59912, addr_kKiHunter_Ilist_E9FA = 59898,
     addr_kBlueBrinstarFaceBlock_Ilist_E828 = 59432, addr_kBlueBrinstarFaceBlock_Ilist_E81A = 59418,
     addr_kBlueBrinstarFaceBlock_Ilist_E80C = 59404, addr_kWreckedShipSpark_Ilist_E5E5 = 58853,
     addr_kWreckedShipSpark_Ilist_E5A7 = 58791,
     addr_kMaridiaPuffer_Ilist_D855 = 55381,
     addr_kMaridiaPuffer_Ilist_D841 = 55361,
-    addr_loc_A8CF26 = 53030, addr_loc_A8CF18 = 53016,
     addr_stru_A8C199 = 49561,
     addr_kMaridiaFloater_Ilist_C191 = 49553, addr_kMaridiaFloater_Ilist_C183 = 49539,
     addr_kMaridiaFloater_Ilist_C173 = 49523, addr_kMaridiaFloater_Ilist_C163 = 49507,
@@ -50,7 +42,7 @@ crate::game::constants::typed_constants! { Consts_A8;
     addr_kSpritemap_Nothing_A8 = 32845,
 }
 crate::type_aliases! {
-    pub Enemy_KiHunter, Enemy_NorfairLavaMan,
+    pub Enemy_NorfairLavaMan,
         Enemy_WreckedShipOrbs = crate::game::enemy_layouts::EnemyLayout40;
 }
 
@@ -91,7 +83,6 @@ crate::game::constants::typed_constants! { i32;
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
-    Get_KiHunter(o: i32) -> Enemy_KiHunter = [0xf78, o as isize];
     Get_MaridiaFloater(o: i32) -> Enemy_MaridiaFloater = [0xf78, o as isize];
     Get_MaridiaPuffer(o: i32) -> Enemy_MaridiaPuffer = [0xf78, o as isize];
     Get_YappingMaw(o: i32) -> Enemy_YappingMaw = [0xf78, o as isize];
@@ -103,7 +94,6 @@ type NorfairLavaMan = Enemy_NorfairLavaMan;
 type MorphBallEye = Enemy_MorphBallEye;
 type MaridiaPuffer = Enemy_MaridiaPuffer;
 type MaridiaFloater = Enemy_MaridiaFloater;
-type KiHunter = Enemy_KiHunter;
 static g_word_A890CA: [i16; 4] = [-8, 8, 0, 0];
 static g_word_A890D2: [i16; 4] = [0, 0, -8, 8];
 static g_word_A89050: u16 = 0x80;
@@ -127,10 +117,6 @@ static g_word_A8D885: [i16; 8] = [0x3ff, 0x4ff, 0x5ff, 0x6ff, 0x7ff, 0x8ff, 0x9f
 static g_word_A8D895: [i16; 26] = [
     3, 1, 4, 1, 5, 2, 6, 2, 7, 2, 8, 3, 9, 3, 0xa, 4, 0xb, 4, 0xc, 5, 0xd, 5, 0xe, 6, 0xf, 6,
 ];
-static g_word_A8F180: u16 = 0x60;
-static g_word_A8F182: u16 = 0xe000;
-static g_word_A8F184: u16 = 0;
-static g_byte_A8F186: u8 = 0x30;
 crate::game::callback_dispatch! {
     pub unsafe fn CallYappingMawFunc(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -854,392 +840,6 @@ pub unsafe fn BlueBrinstarFaceBlock_Func_1(game: &mut Game) {
     }
 }
 crate::game::callback_dispatch! {
-    pub unsafe fn CallKiHunterFunc(ea: u32, k: u16, game: &mut Game) => ea;
-    call (k, game); default { Unreachable(game); };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [11072104] KiHunter_Func_1 [] {
-        let mut v4: i16 = 0;
-        let E: i32 = k as i32;
-        let update_velocity: bool =
-            if ({ let (actor, amount) = (k, (crate::rtl::words!((slot!(game, KiHunter[E].var_09), slot!(game, KiHunter[E].var_08)))) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-                v4 = -(slot!(game, KiHunter[E].var_09) as i32) as i16;
-                true
-            } else {
-                let y_pos: u16 = slot!(game, KiHunter[E].base.y_pos);
-                if ((y_pos) as i16).wrapping_sub((slot!(game, KiHunter[E].var_0A)) as i16) < 0 {
-                    v4 = 1;
-                    true
-                } else {
-                    !(((y_pos) as i16).wrapping_sub((slot!(game, KiHunter[E].var_0B)) as i16) < 0)
-                        && ({
-                            v4 = -1i16;
-                            true
-                        })
-                }
-            };
-        if update_velocity {
-            slot!(game, KiHunter[E].var_09 = v4 as u16);
-        }
-        if ({ let (actor, amount) = (k, (crate::rtl::words!((slot!(game, KiHunter[E].var_07), slot!(game, KiHunter[E].var_06)))) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            let mut v5: u16 = 0;
-            let v6: bool = (-(slot!(game, KiHunter[E].var_07) as i32) & 0x8000) != 0;
-            slot!(game, KiHunter[E].var_07 = -(slot!(game, KiHunter[E].var_07) as i32) as u16);
-            if !v6 {
-                v5 = 4;
-            }
-            let v7: i32 = v5 as i32 >> 1;
-            slot!(game, KiHunter[E].base.current_instruction = crate::rtl::rom_table_word!(game, 0xa8f3b0, v7 as isize))
-;
-            let E1: i32 = k as i32 + 64;
-            slot!(game, KiHunter[E1].base.current_instruction = crate::rtl::rom_table_word!(game, 0xa8f3b0, (v7 + 1) as isize))
-;
-            slot!(game, KiHunter[E].base.instruction_timer = 1);
-            slot!(game, KiHunter[E1].base.instruction_timer = 1);
-        }
-        ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
-        let r18: u16 = (word!(game.samus_x_pos)).wrapping_sub(slot!(game, KiHunter[E].base.x_pos));
-        let r20: u16 = abs16(r18);
-        if ((r20) as i16).wrapping_sub((g_word_A8F180) as i16) < 0
-            && word!(game.samus_y_pos) as i32 - slot!(game, KiHunter[E].base.y_pos) as i32 - 32i32 & 0x8000 == 0
-        {
-            let r24: u16 = (word!(game.samus_y_pos)).wrapping_sub(slot!(game, KiHunter[E].base.y_pos));
-            let mut v9: u16 = if (r18 & 0x8000) != 0 {
-                slot!(game, KiHunter[E].var_00 = -2i32 as u16);
-                slot!(game, KiHunter[E]; var_02 = 0, var_03 = 0);
-                slot!(game, KiHunter[E].var_04 = -1i32 as u16);
-                slot!(game, KiHunter[E].var_07 = -1i32 as u16);
-                slot!(game, KiHunter[E].var_05 = -8192i32 as u16);
-                slot!(game, KiHunter[E].var_F = 255);
-                slot!(game, KiHunter[E].var_0E = 240);
-                0
-            } else {
-                slot!(game, KiHunter[E].var_00 = 2);
-                slot!(game, KiHunter[E]; var_02 = 0, var_03 = 0, var_04 = 0);
-                slot!(game, KiHunter[E].var_05 = 0x2000);
-                slot!(game, KiHunter[E].var_F = 128);
-                slot!(game, KiHunter[E].var_07 = 1);
-                slot!(game, KiHunter[E].var_0E = 144);
-                4
-            };
-            let v10: i32 = v9 as i32 >> 1;
-            slot!(game, KiHunter[E].base.current_instruction = crate::rtl::rom_table_word!(game, 0xa8f3b0, v10 as isize))
-;
-            let E1_0: i32 = k as i32 + 64;
-            slot!(game, KiHunter[E1_0].base.current_instruction = crate::rtl::rom_table_word!(game, 0xa8f3b0, (v10 + 1) as isize))
-;
-            slot!(game, KiHunter[E].base.instruction_timer = 1);
-            slot!(game, KiHunter[E1_0].base.instruction_timer = 1);
-            slot!(game, KiHunter[E]; var_B = (r18).wrapping_add(slot!(game, KiHunter[E].base.x_pos)), var_C = slot!(game, KiHunter[E].base.y_pos), var_A = (0xa8f3b8i32) as u16, var_12 = r24, var_11 = r20, var_10 = 0)
-
-;
-        }
-    };
-    [11073203] KiHunter_Func_8 [] {
-        let mut v1: u16 = addr_kKiHunter_Ilist_EAF2 as u16;
-        let E: i32 = k as i32;
-        if ((slot!(game, KiHunter[E].base.x_pos)) as i16).wrapping_sub((word!(game.samus_x_pos)) as i16) < 0 {
-            v1 = addr_kKiHunter_Ilist_EB10 as u16;
-        }
-        slot!(game, KiHunter[E].base; current_instruction = v1, instruction_timer = 1);
-        slot!(game, KiHunter[E].var_A = addr_locret_A8F5E3 as u16);
-    };
-    [11073267] KiHunter_Func_9 [] {
-        let v1: i32 = k as i32 >> 1;
-        let E: i32 = k as i32;
-        slot!(game, KiHunter[E].base.x_pos = word!(game.enemy_drawing_queue[(v1 + 91)]));
-        slot!(game, KiHunter[E].base.y_pos = word!(game.enemy_drawing_queue[(v1 + 93)]));
-    };
-    [11073487] KiHunter_Func_10 [] {
-        let r18: u16 = slot!(game, KiHunter[word!(game.cur_enemy_index) as i32].var_00);
-        CallKiHunterBFunc(((r18) as u32) | (0xa80000u32), game);
-    };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    @prefix { let E = Get_KiHunter(k as i32, game); };
-    [11072440] KiHunter_Func_2 [] {
-        let moving_forward = ((*E).var_04 & 0x8000) == 0;
-        let past_turn = (((*E).var_F) as i16).wrapping_sub(((*E).var_0E) as i16) >= 0;
-        if moving_forward == past_turn && (*E).var_10 == 0 {
-            (*E).var_10 = 1;
-            let mut v2: u16 = addr_kKiHunter_Ilist_EA32 as u16;
-            if ((*E).var_04 & 0x8000) != 0 {
-                v2 = addr_kKiHunter_Ilist_EA08 as u16;
-            }
-            enemy_instruction! {[(*E).base]; instruction = v2, timer = 1}
-        }
-        let moving_forward = ((*E).var_04 & 0x8000) == 0;
-        words!((*E), var_02, var_03 += words!((*E), var_04, var_05));
-        let reached_speed_limit = if moving_forward {
-            (((*E).var_02) as i16).wrapping_sub(((*E).var_00) as i16) >= 0
-        } else {
-            (((*E).var_02) as i16).wrapping_sub(((*E).var_00) as i16) < 0
-        };
-        if reached_speed_limit {
-            (*E).var_02 = (*E).var_00;
-        }
-        (*E).var_F = ((*E).var_F).wrapping_add((*E).var_02);
-        let finished_arc = if moving_forward {
-            (*E).var_F as i32 - 256i32 & 0x8000 == 0
-        } else {
-            (*E).var_F as i32 - 128i32 & 0x8000 != 0
-        };
-        if finished_arc {
-            (*E).var_A = (0xa8f268i32) as u16;
-            return;
-        }
-        let mut r20: u16 = ((*E).var_B as i32 + actor_cosine((*E).var_F, (*E).var_11, game) as i32
-            - (*E).base.x_pos as i32) as u16;
-        let collided = if ({ let (actor, amount) = (k, (r20 as i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            if ((*E).var_04 & 0x8000) == 0 {
-                (*E).var_06 = 0;
-                (*E).var_07 = -1i32 as u16;
-            } else {
-                (*E).var_06 = 0;
-                (*E).var_07 = 1;
-            }
-            true
-        } else {
-            ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
-            r20 = ((*E).var_C as i32 + actor_sine((*E).var_F, (*E).var_12, game) as i32
-                - (*E).base.y_pos as i32) as u16;
-            ({ let (actor, amount) = (k, (r20 as i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
-        };
-        if collided {
-            (*E).var_A = (0xa8f4edi32) as u16;
-            (*E).var_08 = 0;
-            (*E).var_09 = -1i32 as u16;
-        };
-    };
-    [11072749] KiHunter_Func_3 [] {
-        if ({ let (actor, amount) = (k, (words!((*E), var_07, var_06)) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0
-            || {
-                ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
-                ({ let (actor, amount) = (k, (words!((*E), var_09, var_08)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0
-            }
-            || (((*E).base.y_pos) as i16).wrapping_sub(((*E).var_0D) as i16) < 0
-        {
-            (*E).var_A = (0xa8f268i32) as u16;
-        }
-    };
-    [11072858] KiHunter_Func_4 [] {
-        if ({ let (actor, amount) = (k, (words!((*E), var_09, var_08)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            (*E).var_A = (0xa8f58bi32) as u16;
-        } else {
-            words!(
-                (*E),
-                var_09,
-                var_08 += words!((g_word_A8F184, g_word_A8F182))
-            );
-        };
-    };
-    [11072907] KiHunter_Func_5 [] {
-        (*E).var_A = addr_locret_A8F5E3 as u16;
-        (*E).var_08 = 0;
-        (*E).var_09 = ((word!(game.random_number) as i32 & 1) - 8i32) as u16;
-        if (((*E).base.x_pos) as i16).wrapping_sub((word!(game.samus_x_pos)) as i16) >= 0 {
-            (*E).var_06 = 0;
-            (*E).var_07 = -2i32 as u16;
-            (*E).base.current_instruction = addr_kKiHunter_Ilist_EA8A as u16;
-        } else {
-            (*E).var_06 = 0;
-            (*E).var_07 = 2;
-            (*E).base.current_instruction = addr_kKiHunter_Ilist_EAA6 as u16;
-        }
-        (*E).base.instruction_timer = 1;
-    };
-    [11073008] KiHunter_Func_6 [] {
-        if ({ let (actor, amount) = (k, (words!((*E), var_09, var_08)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            if ((*E).var_09 & 0x8000) != 0 {
-                (*E).var_09 = 1;
-            } else {
-                (*E).var_08 = 0;
-                (*E).var_09 = -4i32 as u16;
-                (*E).var_A = addr_locret_A8F5E3 as u16;
-                (*E).var_0F = 12;
-                let mut v4: u16 = addr_kKiHunter_Ilist_EAC2 as u16;
-                if (*E).base.current_instruction as i32 + 0x155a & 0x8000 == 0 {
-                    v4 = addr_kKiHunter_Ilist_EADA as u16;
-                }
-                enemy_instruction! {[(*E).base]; instruction = v4, timer = 1}
-            }
-        } else if ({ let (actor, amount) = (k, (words!((*E), var_07, var_06)) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            (*E).var_07 = -((*E).var_07 as i32) as u16;
-        } else {
-            ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
-            words!(
-                (*E),
-                var_09,
-                var_08 += words!((g_word_A8F184, g_word_A8F182))
-            );
-        };
-    };
-    [11073163] KiHunter_Func_7 [] {
-        let v2: u16 = ((*E).var_0F).wrapping_sub(1);
-        (*E).var_0F = v2;
-        if v2 == 0 {
-            let mut v3: u16 = (0xa8f58bi32) as u16;
-            let v4: u16 = abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos)));
-            if v4 as i32 - 96i32 & 0x8000 != 0 {
-                v3 = (0xa8f6b3i32) as u16;
-            }
-            (*E).var_A = v3;
-        }
-    };
-    KiHunter_Func_15 [] {
-        set_fields! {[(*E)]; var_00 = (0xa8f7dbi32) as u16, var_B = (*E).var_0A,
-            var_F = -8192i32 as u16, var_05 = (*E).base.x_pos, var_06 = (*E).base.y_pos, };
-    };
-    KiHunter_Func_16 [] {
-        set_fields! {[(*E)]; var_00 = (0xa8f8adi32) as u16, var_B = (*E).var_0A,
-            var_F = -24576i32 as u16, var_05 = (*E).base.x_pos, var_06 = (*E).base.y_pos, };
-    };
-    @external {
-        11072995 => [()];
-    }
-}
-pub use self::KiHunter_Main as KiHunterWings_Main;
-pub unsafe fn sub_A8F6DC(k: u16, j: u16, game: &mut Game) {
-    QueueSfx2_Max6(0x4c, game);
-    SpawnEprojWithGfx(0, word!(game.cur_enemy_index), j, game);
-    slot!(
-        game,
-        KiHunter[word!(game.cur_enemy_index) as i32].var_0F = 24
-    );
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallKiHunterBFunc(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [11073709] KiHunter_Func_14 [] {
-        let mut khr_var_07: i16 = 0;
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, KiHunter[E].var_F, |old| (old).wrapping_add(
-            *((rom_ptr!(game, u16; 0xa2838f) as *mut u8)
-                .offset((8i32 * slot!(byte game, KiHunter[E].var_B[1isize]) as i32) as isize)
-                .offset(1) as *mut u16),
-        ));
-        let r20: u16 = (slot!(game, KiHunter[E].var_06) as i32
-            + actor_sine(slot!(byte game, KiHunter[E].var_F[1]) as u16, g_byte_A8F186 as u16, game) as i32
-            - slot!(game, KiHunter[E].var_02) as i32
-            - slot!(game, KiHunter[E].base.y_pos) as i32) as u16;
-        if ({ let (actor, amount) = (word!(game.cur_enemy_index), (r20 as i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            slot!(game, KiHunter[E].base.properties, |old| (old) | ((kEnemyProps_Deleted) as u16));
-            slot!(game, KiHunter[E].base.x_pos = slot!(game, KiHunter[E].var_08));
-            khr_var_07 = slot!(game, KiHunter[E].var_07) as i16;
-            slot!(game, KiHunter[E].base.y_pos = khr_var_07 as u16);
-        } else {
-            slot!(game, KiHunter[E].base.x_pos = (slot!(game, KiHunter[E].var_05) as i32
-                + actor_cosine(slot!(byte game, KiHunter[E].var_F[1]) as u16, g_byte_A8F186 as u16, game) as i32
-                - slot!(game, KiHunter[E].var_01) as i32) as u16);
-            if slot!(game, KiHunter[E].var_F) as i32 + 0x4000 & 0x8000 == 0 {
-                KiHunter_Func_15(word!(game.cur_enemy_index), game);
-                return;
-            }
-            khr_var_07 = ((slot!(game, KiHunter[E].var_B)) as i16).wrapping_sub(384);
-            if khr_var_07 < 0 {
-                khr_var_07 = 256;
-            }
-        }
-        slot!(game, KiHunter[word!(game.cur_enemy_index) as i32].var_B = khr_var_07 as u16);
-    };
-    @functions [pub unsafe fn (game: &mut Game)];
-    @prefix { let E: i32 = word!(game.cur_enemy_index) as i32; };
-    KiHunter_Init [] {
-        slot!(game, KiHunter[E].base.properties, |old| (old) | ((kEnemyProps_DisableSamusColl) as u16));
-        slot!(game, KiHunter[E].var_14 = 0);
-        slot!(game, KiHunter[E].base; instruction_timer = 1, timer = 0, current_instruction = addr_kKiHunter_Ilist_E9FA as u16)
-;
-        slot!(game, KiHunter[E]; var_F = 0, var_A = (0xa8f268i32) as u16, var_08 = 0, var_09 = 1, var_06 = 0, var_07 = -1i32 as u16)
-;
-        let v1: u16 = (slot!(game, KiHunter[E].base.y_pos)).wrapping_sub(16);
-        slot!(game, KiHunter[E].var_0A = v1);
-        slot!(game, KiHunter[E].var_0B = (v1).wrapping_add(32));
-        slot!(game, KiHunter[E].var_0C = slot!(game, KiHunter[E].base.x_pos));
-        slot!(game, KiHunter[E].var_0D = slot!(game, KiHunter[E].base.y_pos));
-        if (slot!(game, KiHunter[E].parameter_1) & 0x8000) != 0 {
-            slot!(game, KiHunter[E].var_14 = 1);
-            slot!(game, KiHunter[E].var_A = (0xa8f55ai32) as u16);
-            slot!(game, KiHunter[E].var_08 = 0);
-            slot!(game, KiHunter[E].var_09 = 1);
-        }
-    };
-    KiHunterWings_Init [] {
-        slot!(game, KiHunter[E].base.properties, |old| (old) | ((kEnemyProps_DisableSamusColl) as u16));
-        slot!(game, KiHunter[E].base.instruction_timer = 1);
-        slot!(game, KiHunter[E].base.timer = 0);
-        slot!(game, KiHunter[E].base.current_instruction = addr_kKiHunter_Ilist_EA4E as u16);
-        let v2: i32 = word!(game.cur_enemy_index) as i32 >> 1;
-        slot!(game, KiHunter[E].base.y_pos = word!(game.enemy_drawing_queue[(v2 + 93)]));
-        slot!(game, KiHunter[E].base.x_pos = word!(game.enemy_drawing_queue[(v2 + 91)]));
-        slot!(game, KiHunter[E].var_A = (0xa8f6f3i32) as u16);
-        slot!(game, KiHunter[E].base.palette_index = word!(game.enemy_drawing_queue[(v2 + 105)]));
-        slot!(game, KiHunter[E].base.vram_tiles_index = word!(game.enemy_drawing_queue[(v2 + 106)]));
-        if (word!(game.enemy_drawing_queue_sizes[(v2 + 6)]) & 0x8000) != 0 {
-            slot!(game, KiHunter[E].base.properties, |old| (old) | ((kEnemyProps_Deleted) as u16));
-        }
-    };
-    KiHunter_Main [] {
-        CallKiHunterFunc(
-            ((slot!(game, KiHunter[E].var_A)) as u32) | (0xa80000u32),
-            word!(game.cur_enemy_index),
-            game,
-        );
-    };
-    [11073499] KiHunter_Func_11 [] {
-        slot!(game, KiHunter[E].var_F, |old| (old).wrapping_add(
-            *(((rom_ptr!(game, u16; 0xa2838f)).offset(2) as *mut u8)
-                .offset((8i32 * slot!(byte game, KiHunter[E].var_B[1isize]) as i32) as isize)
-                .offset(1) as *mut u16),
-        ));
-        slot!(game, KiHunter[E].base.y_pos = (slot!(game, KiHunter[E].var_06) as i32
-            + actor_sine(slot!(byte game, KiHunter[E].var_F[1]) as u16, g_byte_A8F186 as u16, game) as i32
-            - slot!(game, KiHunter[E].var_04) as i32) as u16);
-        slot!(game, KiHunter[E].base.x_pos = (slot!(game, KiHunter[E].var_05) as i32
-            + actor_cosine(slot!(byte game, KiHunter[E].var_F[1]) as u16, g_byte_A8F186 as u16, game) as i32
-            - slot!(game, KiHunter[E].var_03) as i32) as u16);
-        if slot!(game, KiHunter[E].var_F) as i32 + 0x4000 & 0x8000 != 0 {
-            KiHunter_Func_16(word!(game.cur_enemy_index), game);
-        } else {
-            let mut v2: i16 = ((slot!(game, KiHunter[E].var_B)) as i16).wrapping_sub(384);
-            if v2 < 0 {
-                v2 = 256;
-            }
-            slot!(game, KiHunter[E].var_B = v2 as u16);
-        };
-    };
-    KiHunter_Func_17 [] {
-        slot!(game, KiHunter[E]; var_0A = 0, var_B = 0);
-        do_until! { v5 as i32 - 0x2000i32 & 0x8000 == 0 ;
-    let mut v3: u16 = (slot!(game, KiHunter[E].var_0A)).wrapping_add(384);
-    slot!(game, KiHunter[E].var_0A = v3);
-    v3 = v3 >> 8;
-    let mut v5: u16 = (*((rom_ptr!(game, u16; 0xa2838f) as *mut u8)
-        .offset((8i32 * v3 as i32) as isize)
-        .offset(1) as *mut u16))
-        .wrapping_add(slot!(game, KiHunter[E].var_D));
-    slot!(game, KiHunter[E].var_D = v5);
-}
-    };
-}
-pub unsafe fn KiHunter_Func_12(game: &mut Game) {
-    let v1: u16 = actor_cosine(0xe0, g_byte_A8F186 as u16, game);
-    let E: i32 = word!(game.cur_enemy_index) as i32;
-    slot!(game, KiHunter[E].var_03 = v1);
-    slot!(
-        game,
-        KiHunter[E].var_04 = actor_sine(0xe0, g_byte_A8F186 as u16, game)
-    );
-}
-pub unsafe fn KiHunter_Func_13(game: &mut Game) {
-    let v1: u16 = actor_cosine(0xa0, g_byte_A8F186 as u16, game);
-    let E: i32 = word!(game.cur_enemy_index) as i32;
-    slot!(game, KiHunter[E].var_01 = v1);
-    slot!(
-        game,
-        KiHunter[E].var_02 = actor_sine(0xa0, g_byte_A8F186 as u16, game)
-    );
-}
-
-crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
@@ -1483,49 +1083,6 @@ crate::game::callback_dispatch! {
     [11069725] BlueBrinstarFaceBlock_Shot [] {
         word!(game.projectile_dir[word!(game.collision_detection_index)] &= !(0x10));
     };
-    [11073281] KiHunter_Shot [] {
-        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
-        let old_cur_enemy_index: u16 = word!(game.cur_enemy_index);
-        let EK: i32 = word!(game.cur_enemy_index) as i32;
-        let E1: i32 = word!(game.cur_enemy_index) as i32 + 64;
-        let health: u16 = slot!(game, KiHunter[EK].base.health);
-        if health != 0 {
-            if health == slot!(game, KiHunter[E1].parameter_1)
-                || ((health) as i16).wrapping_sub((slot!(game, KiHunter[E1].parameter_1)) as i16) < 0
-            {
-                if slot!(game, KiHunter[EK].var_14) == 0 {
-                    slot!(game, KiHunter[EK]; var_14 = 1, var_A = (0xa8f55ai32) as u16, var_08 = 0, var_09 = 1)
-;
-                    word!(game.cur_enemy_index = (old_cur_enemy_index).wrapping_add(64));
-                    if slot!(game, KiHunter[E1].var_A) as i32 != 0xa8f7cf & 0xffff {
-                        slot!(game, KiHunter[E1].var_07 = slot!(game, KiHunter[E1].base.y_pos));
-                        slot!(game, KiHunter[E1].var_08 = slot!(game, KiHunter[E1].base.x_pos));
-                        KiHunter_Func_17(game);
-                        KiHunter_Func_12(game);
-                        KiHunter_Func_13(game);
-                        slot!(game, KiHunter[E1]; var_F = -8192i32 as u16, var_A = (0xa8f7cfi32) as u16, var_00 = (0xa8f7dbi32) as u16, var_06 = (slot!(game, KiHunter[E1].var_07)).wrapping_sub(slot!(game, KiHunter[E1].var_0B)), var_05 = slot!(game, KiHunter[E1].base.x_pos), var_B = slot!(game, KiHunter[E1].var_0A))
-
-
-;
-                        slot!(game, KiHunter[E1].base.current_instruction = addr_kKiHunter_Ilist_EA7E as u16);
-                        slot!(game, KiHunter[E1].base.spritemap_pointer = addr_kSpritemap_Nothing_A8 as u16);
-                        slot!(game, KiHunter[E1].base.instruction_timer = 1);
-                        slot!(game, KiHunter[E1].base.timer = 0);
-                        slot!(game, KiHunter[E1].base.properties, |old| (old) | ((kEnemyProps_ProcessedOffscreen) as u16))
-;
-                    }
-                    word!(game.cur_enemy_index = old_cur_enemy_index);
-                }
-            } else {
-                slot!(game, KiHunter[E1].base.ai_handler_bits = slot!(game, KiHunter[EK].base.ai_handler_bits));
-                slot!(game, KiHunter[E1].base.frozen_timer = slot!(game, KiHunter[EK].base.frozen_timer));
-                slot!(game, KiHunter[E1].base.invincibility_timer = slot!(game, KiHunter[EK].base.invincibility_timer));
-                slot!(game, KiHunter[E1].base.flash_timer = slot!(game, KiHunter[EK].base.flash_timer));
-            }
-        } else {
-            slot!(game, KiHunter[E1].base.properties = 512);
-        };
-    };
     @functions [pub unsafe fn (game: &mut Game)];
     @prefix { let E: i32 = word!(game.cur_enemy_index) as i32; };
     NorfairLavaMan_Func_1 [] {
@@ -1748,30 +1305,6 @@ crate::game::callback_dispatch! {
         slot!(game, NorfairLavaMan[word!(game.cur_enemy_index) as i32].var_04 = 256);
     };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11072806] KiHunter_Instr_1 [] {
-        let mut result: u16 = addr_kKiHunter_Ilist_E9FA as u16;
-        let mut r18: u16 = addr_kKiHunter_Ilist_EA4E as u16;
-        let E: i32 = k as i32;
-        if (slot!(game, KiHunter[E].var_07) & 0x8000) == 0 {
-            result = addr_kKiHunter_Ilist_EA24 as u16;
-            r18 = addr_kKiHunter_Ilist_EA5E as u16;
-        }
-        slot!(game, KiHunter[E].base; current_instruction = r18, instruction_timer = 1);
-        let E1: i32 = k as i32 + 64;
-        if slot!(game, KiHunter[E1].var_A) as i32 == 0xa8f6f3 & 0xffff {
-            slot!(game, KiHunter[E1].base; current_instruction = r18, instruction_timer = 1);
-        }
-        EnemyScript::jump(result)
-    };
-    [11072996] KiHunter_Instr_2 [] {
-        slot!(game, KiHunter[word!(game.cur_enemy_index) as i32].var_A = (0xa8f5f0i32) as u16);
-        jp
-    };
-    [11073151] KiHunter_Instr_3 [] {
-        slot!(game, KiHunter[word!(game.cur_enemy_index) as i32].var_A = (0xa8f68bi32) as u16);
-        jp
-    };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11068957] WreckedShipSpark_Instr_2 [jp] {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         slot!(game, WreckedShipSpark[E].base.properties, |old| (old) | ((kEnemyProps_Tangible) as u16));
@@ -1780,10 +1313,6 @@ crate::game::callback_dispatch! {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         slot!(game, WreckedShipSpark[E].base.properties, |old| (old as i32 & !(kEnemyProps_Tangible as i32)) as u16);
     };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11073234] KiHunter_Instr_4 [jp] { sub_A8F6DC(k, addr_loc_A8CF18 as u16, game); };
-    [11073240] KiHunter_Instr_5 [jp] { sub_A8F6DC(k, addr_loc_A8CF26 as u16, game); };
-
 }
 
 crate::game::callback_dispatch! {

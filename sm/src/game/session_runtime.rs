@@ -653,9 +653,10 @@ crate::game::callback_dispatch! {
         11066573 => crate::game::actors::lava_seahorse::initialize;
         11066731 => crate::game::actors::lava_seahorse::advance;
         11068296 => sm_a8::WreckedShipOrbs_Init;
-        11071880 => sm_a8::KiHunter_Init;
-        11072020 => sm_a8::KiHunterWings_Init; 11072092 => sm_a8::KiHunter_Main;
-        11072098 => sm_a8::KiHunterWings_Main;
+        11071880 => crate::game::actors::ki_hunter::initialize;
+        11072020 => crate::game::actors::ki_hunter::initialize_wings; 11072092 => crate::game::actors::ki_hunter::advance;
+        11072098 => crate::game::actors::ki_hunter::advance;
+        11073281 => crate::game::actors::ki_hunter::shot;
         11108428 => [()];
         11111301 => [{
                     sm_a9::MotherBrainsTubesFalling_Main(crate::ram_map::word!(game.cur_enemy_index), game);
@@ -764,6 +765,7 @@ crate::game::callback_dispatch! {
         11056990 => [j];
         11062537 | 11062692 | 11062762 | 11062917 | 11062987 | 11062991 | 11063146 | 11063216 | 11063371 | 11063441 | 11063490 | 11063494 | 11063506 | 11063552 | 11063559 | 11063601 | 11063613 | 11063659 => [crate::game::actors::wrecked_ship_robots::instruction(ea, k, j, game)];
         11067164 | 11067187 | 11067193 | 11067199 | 11067235 | 11067249 => [crate::game::actors::lava_seahorse::instruction(ea, j, game)];
+        11072806 | 11072996 | 11073151 | 11073234 | 11073240 => [crate::game::actors::ki_hunter::instruction(ea, k, j, game)];
         11128756 => [sm_a9::Shitroid_Instr_1(k, j)];
         11128778 => [sm_a9::Shitroid_Instr_2(k, j)];
         11139360 => [sm_a9::Shitroid_Instr_3(k, j)]; 11139382 => [sm_a9::Shitroid_Instr_4(k, j)];
