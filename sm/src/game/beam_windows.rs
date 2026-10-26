@@ -1,5 +1,5 @@
 use crate::game_state::Game;
-use crate::ram_map::{ram_ptr, word};
+use crate::ram_map::{slot, word};
 use crate::types::{Enemy_MotherBrain, Ram8000_Default};
 
 /// Advance the two 8.8 fixed-point edges and pack one SNES window word.
@@ -443,144 +443,163 @@ pub fn calculate_xray_window(
 }
 
 use crate::c_library::printf;
-crate::ram_map::ram_pointer_functions! {
-    rainbow_enemy(o: i32) -> Enemy_MotherBrain = [0xf78, o as isize];
-    rainbow_shared_state(o: i32) -> Ram8000_Default = [0x8000, o as isize];
+#[forbid(unsafe_code)]
+fn write_rainbow_word(value: u16, at: isize, game: &mut Game) {
+    word_transfers!(game, ascending, 1; native(at) <- value(value));
 }
+
 pub unsafe fn calculate_rainbow_window(game: &mut Game) {
     unsafe {
-        let E = rainbow_enemy(0, game);
-        let E1 = rainbow_enemy(0x40, game);
-        let mut r18: u16 = (byte!((*E).var_33; 1) >> 1) as u16;
-        (*E).var_3A = ((*E).var_31).wrapping_sub(r18);
-        (*E).var_3B = (r18).wrapping_add((*E).var_31);
-        let v2: u16 = (*((&raw mut (*E1).base.enemy_ptr as *mut u8).offset(1) as *mut u16) as i32
-            + 3584
-            & 0xff00) as u16;
-        (*E).var_3C = v2;
-        (*E).var_3E = v2;
-        let v3: u16 = ((*E1).base.y_pos).wrapping_add(5);
-        (*E).var_3D = v3;
-        (*E).var_3F = v3;
-        r18 = (4 * ((*E).var_3A as i32 & 0xc0)) as u16;
-        let i: i32 = (r18 as i32 | (*E).var_3B as i32 & 0xc0) >> 6;
+        let mut r18 = u16::from(slot!(byte game, Enemy_MotherBrain[0].var_33[1]) >> 1);
+        slot!(
+            game,
+            Enemy_MotherBrain[0].var_3A =
+                slot!(game, Enemy_MotherBrain[0].var_31).wrapping_sub(r18)
+        );
+        slot!(
+            game,
+            Enemy_MotherBrain[0].var_3B =
+                r18.wrapping_add(slot!(game, Enemy_MotherBrain[0].var_31))
+        );
+        let v2 =
+            (i32::from(slot!(game, Enemy_MotherBrain[0x41].base.enemy_ptr)) + 3584 & 0xff00) as u16;
+        slot!(game, Enemy_MotherBrain[0]; var_3C = v2, var_3E = v2);
+        let v3 = slot!(game, Enemy_MotherBrain[0x40].base.y_pos).wrapping_add(5);
+        slot!(game, Enemy_MotherBrain[0]; var_3D = v3, var_3F = v3);
+        r18 = (4 * (i32::from(slot!(game, Enemy_MotherBrain[0].var_3A)) & 0xc0)) as u16;
+        let i = (i32::from(r18) | i32::from(slot!(game, Enemy_MotherBrain[0].var_3B)) & 0xc0) >> 6;
         match i {
-            0 | 12 | 15 => rasterize_rainbow_down(game),
-            1 => rasterize_rainbow_right(game),
+            0 | 12 | 15 => {
+                let direction = match (slot!(game, Enemy_MotherBrain[0].var_3A) >> 6 & 2)
+                    | (slot!(game, Enemy_MotherBrain[0].var_3B) >> 7 & 1)
+                {
+                    0 => RainbowDirection::DownRight,
+                    2 => RainbowDirection::Down,
+                    3 => RainbowDirection::DownLeft,
+                    _ => panic!("non-null function pointer"),
+                };
+                let edges = [
+                    slot!(game, Enemy_MotherBrain[0].var_3C),
+                    slot!(game, Enemy_MotherBrain[0].var_3E),
+                ];
+                rasterize_rainbow_vertical(direction, edges[0], edges[1], game);
+                write_rainbow_fixed_header(0x9de6, game);
+            }
+            1 => {
+                let edges = [
+                    slot!(game, Enemy_MotherBrain[0].var_3C),
+                    slot!(game, Enemy_MotherBrain[0].var_3E),
+                ];
+                rasterize_rainbow_right_edges(edges[0], edges[1], game);
+                write_rainbow_fixed_header(0x9dec, game);
+            }
             5 | 6 | 10 => rasterize_rainbow_up(game),
             11 => (),
             _ => panic!("non-null function pointer"),
         }
     }
 }
-unsafe fn rasterize_rainbow_right(game: &mut Game) {
-    unsafe {
-        let E = rainbow_enemy(0, game);
-        rasterize_rainbow_right_edges((*E).var_3C, (*E).var_3E, game);
-        write_rainbow_fixed_header(0x9dec, game);
-    }
+#[forbid(unsafe_code)]
+fn write_rainbow_fixed_header(tail: u16, game: &mut Game) {
+    write_rainbow_word(16, 0x9c00, game);
+    write_rainbow_word(-25600i32 as u16, 0x9c01, game);
+    write_rainbow_word(16, 0x9c03, game);
+    write_rainbow_word(-25597i32 as u16, 0x9c04, game);
+    write_rainbow_word(240, 0x9c06, game);
+    write_rainbow_word(-25340i32 as u16, 0x9c07, game);
+    write_rainbow_word(244, 0x9c09, game);
+    write_rainbow_word(tail, 0x9c0a, game);
+    write_rainbow_word(0, 0x9c0c, game);
 }
-unsafe fn write_rainbow_fixed_header(tail: u16, game: &mut Game) {
-    unsafe {
-        *(ram_ptr!(game, u16; 0x9c00)) = 16;
-        *(ram_ptr!(game, u16; 0x9c00, 1)) = -25600i32 as u16;
-        *(ram_ptr!(game, u16; 0x9c00, 3)) = 16;
-        *(ram_ptr!(game, u16; 0x9c00, 4)) = -25597i32 as u16;
-        *(ram_ptr!(game, u16; 0x9c00, 6)) = 240;
-        *(ram_ptr!(game, u16; 0x9c00, 7)) = -25340i32 as u16;
-        *(ram_ptr!(game, u16; 0x9c00, 9)) = 244;
-        *(ram_ptr!(game, u16; 0x9c00, 10)) = tail;
-        *(ram_ptr!(game, u16; 0x9c00, 12)) = 0;
+#[forbid(unsafe_code)]
+fn rasterize_rainbow_right_edges(mut r22: u16, mut r24: u16, game: &mut Game) {
+    word! { game, 255; hdma_table_2[0], hdma_table_2[1] }
+    let r18 = crate::rtl::rom_table_word!(
+        game,
+        0x91c9d4,
+        slot!(byte game, Enemy_MotherBrain[0].var_3A[0]) as isize
+    );
+    let r20 = crate::rtl::rom_table_word!(
+        game,
+        0x91c9d4,
+        slot!(byte game, Enemy_MotherBrain[0].var_3B[0]) as isize
+    );
+    let mut mbn_var_3F = slot!(game, Enemy_MotherBrain[0].var_3F);
+    let mut dst = 0x9d00 + 2 * (mbn_var_3F as isize - 32 + 1);
+    write_rainbow_word(255, dst + 2, game);
+    write_rainbow_word(255, dst + 4, game);
+    let initial_dst = dst;
+    do_until! { mbn_var_3F == 32;
+        let (value, overflow) = r20.overflowing_add(r24);
+        if overflow {
+            break;
+        }
+        r24 = value;
+        crate::update_place! { previous current = dst => dst - 2; }
+        write_rainbow_word(u16::from(value.to_ne_bytes()[1]) | 0xff00, current, game);
+        mbn_var_3F = mbn_var_3F.wrapping_sub(1);
     }
-}
-unsafe fn rasterize_rainbow_right_edges(mut r22: u16, mut r24: u16, game: &mut Game) {
-    unsafe {
-        word! { game, 255; hdma_table_2[0], hdma_table_2[1] }
-        let E = rainbow_enemy(0, game);
-        let r18: u16 = crate::rtl::rom_table_word!(
-            game,
-            0x91c9d4,
-            *(&raw mut (*E).var_3A as *mut u8) as isize
-        );
-        let r20: u16 = crate::rtl::rom_table_word!(
-            game,
-            0x91c9d4,
-            *(&raw mut (*E).var_3B as *mut u8) as isize
-        );
-        let mut mbn_var_3F: u16 = (*E).var_3F;
-        let mut v2 = (ram_ptr!(game, u16; 0x9d00))
-            .offset((mbn_var_3F as i32 - 32i32) as isize)
-            .offset(1);
-        *v2.offset(1) = 255;
-        *v2.offset(2) = 255;
-        let v8 = v2;
-        do_until! { mbn_var_3F == 32 ;
-            let mut v4: u16 = (r20).wrapping_add(r24);
-            if u16::overflowing_add(r20, r24).1 {
-                break;
-            }
-            r24 = (r24).wrapping_add(r20);
-            crate::update_place! { previous fresh11 = v2 => v2.offset(-1); }
-            *fresh11 = ((byte!(v4; 1)) as u16) | (0xff00u16);
-            mbn_var_3F = mbn_var_3F.wrapping_sub(1);
+    do_until! { mbn_var_3F == 32;
+        crate::update_place! { previous current = dst => dst - 2; }
+        write_rainbow_word(255, current, game);
+        mbn_var_3F = mbn_var_3F.wrapping_sub(1);
+    }
+    let mut dst = initial_dst + 2;
+    let mut var_3F = slot!(game, Ram8000_Default[0x7088].var_3F);
+    loop {
+        let (value, overflow) = r18.overflowing_add(r22);
+        if overflow {
+            break;
         }
-        do_until! { mbn_var_3F == 32 ;
-            crate::update_place! { previous fresh12 = v2 => v2.offset(-1); }
-            *fresh12 = 255;
-            mbn_var_3F = mbn_var_3F.wrapping_sub(1);
+        r22 = value;
+        crate::update_place! { previous current = dst => dst + 2; }
+        write_rainbow_word(u16::from(value.to_ne_bytes()[1]) | 0xff00, current, game);
+        var_3F = var_3F.wrapping_add(1);
+        if var_3F == 232 {
+            return;
         }
-        let mut v5 = v8.offset(1);
-        let mut var_3F: u16 = (*rainbow_shared_state(0i32, game)).var_3F;
-        loop {
-            let mut v7: u16 = (r18).wrapping_add(r22);
-            if u16::overflowing_add(r18, r22).1 {
-                break;
-            }
-            r22 = (r22).wrapping_add(r18);
-            crate::update_place! { previous fresh13 = v5 => v5.offset(1); }
-            *fresh13 = ((byte!(v7; 1)) as u16) | (0xff00u16);
-            var_3F = var_3F.wrapping_add(1);
-            if var_3F == 232 {
-                return;
-            }
-        }
-        do_until! { var_3F == 232 ;
-            crate::update_place! { previous fresh14 = v5 => v5.offset(1); }
-            *fresh14 = 255;
-            var_3F = var_3F.wrapping_add(1);
-        }
+    }
+    do_until! { var_3F == 232;
+        crate::update_place! { previous current = dst => dst + 2; }
+        write_rainbow_word(255, current, game);
+        var_3F = var_3F.wrapping_add(1);
     }
 }
 unsafe fn rasterize_rainbow_up(game: &mut Game) {
     unsafe {
-        let E = rainbow_enemy(0, game);
-        let direction = match ((*E).var_3A >> 6 & 2) | ((*E).var_3B >> 7 & 1) {
+        let direction = match (slot!(game, Enemy_MotherBrain[0].var_3A) >> 6 & 2)
+            | (slot!(game, Enemy_MotherBrain[0].var_3B) >> 7 & 1)
+        {
             0 => RainbowDirection::UpRight,
             1 => RainbowDirection::Up,
             3 => RainbowDirection::UpLeft,
             _ => panic!("non-null function pointer"),
         };
-        rasterize_rainbow_vertical(direction, (*E).var_3C, (*E).var_3E, game);
-        *(ram_ptr!(game, u16; 0x9c00)) = 16;
-        *(ram_ptr!(game, u16; 0x9c00, 1)) = -25344i32 as u16;
-        *(ram_ptr!(game, u16; 0x9c00, 3)) = 16;
-        *(ram_ptr!(game, u16; 0x9c00, 4)) = -25342i32 as u16;
-        let v2: u16 = ((*E).var_3D).wrapping_sub(32);
+        let edges = [
+            slot!(game, Enemy_MotherBrain[0].var_3C),
+            slot!(game, Enemy_MotherBrain[0].var_3E),
+        ];
+        rasterize_rainbow_vertical(direction, edges[0], edges[1], game);
+        write_rainbow_word(16, 0x9c00, game);
+        write_rainbow_word(-25344i32 as u16, 0x9c01, game);
+        write_rainbow_word(16, 0x9c03, game);
+        write_rainbow_word(-25342i32 as u16, 0x9c04, game);
+        let v2 = slot!(game, Enemy_MotherBrain[0].var_3D).wrapping_sub(32);
         printf(c"Carry crap!\n".as_ptr());
         if v2 >= 0x80 {
-            *(ram_ptr!(game, u16; 0x9c00, 6)) = (v2 as i32 - 127i32 | 0x80) as u16;
-            *(ram_ptr!(game, u16; 0x9c00, 7)) = -25340i32 as u16;
-            *(ram_ptr!(game, u16; 0x9c00, 9)) = 255;
-            *(ram_ptr!(game, u16; 0x9c00, 10)) = (2 * (v2 as i32 - 127i32) - 25340i32) as u16;
-            *(ram_ptr!(game, u16; 0x9c00, 12)) = 127;
-            *(ram_ptr!(game, u16; 0x9c00, 13)) = (2 * (v2 as i32 - 127i32) - 25340i32 + 254) as u16;
-            *(ram_ptr!(game, u16; 0x9c00, 15)) = 0;
+            write_rainbow_word((v2 as i32 - 127 | 0x80) as u16, 0x9c06, game);
+            write_rainbow_word(-25340i32 as u16, 0x9c07, game);
+            write_rainbow_word(255, 0x9c09, game);
+            write_rainbow_word((2 * (v2 as i32 - 127) - 25340) as u16, 0x9c0a, game);
+            write_rainbow_word(127, 0x9c0c, game);
+            write_rainbow_word((2 * (v2 as i32 - 127) - 25340 + 254) as u16, 0x9c0d, game);
+            write_rainbow_word(0, 0x9c0f, game);
         } else {
-            *(ram_ptr!(game, u16; 0x9c00, 6)) = (v2) | (0x80u16);
-            *(ram_ptr!(game, u16; 0x9c00, 7)) = -25340i32 as u16;
-            *(ram_ptr!(game, u16; 0x9c00, 9)) = 127;
-            *(ram_ptr!(game, u16; 0x9c00, 10)) = (2 * v2 as i32 - 25340i32) as u16;
-            *(ram_ptr!(game, u16; 0x9c00, 12)) = 0;
+            write_rainbow_word(v2 | 0x80, 0x9c06, game);
+            write_rainbow_word(-25340i32 as u16, 0x9c07, game);
+            write_rainbow_word(127, 0x9c09, game);
+            write_rainbow_word((2 * v2 as i32 - 25340) as u16, 0x9c0a, game);
+            write_rainbow_word(0, 0x9c0c, game);
         };
     }
 }
@@ -594,102 +613,80 @@ enum RainbowDirection {
     DownLeft,
 }
 
-unsafe fn rasterize_rainbow_vertical(
-    direction: RainbowDirection,
-    mut left: u16,
-    mut right: u16,
-    game: &mut Game,
-) {
-    unsafe {
-        use RainbowDirection::*;
-        let down = matches!(direction, DownRight | Down | DownLeft);
-        let add_left = matches!(direction, UpRight | DownRight);
-        let add_right = matches!(direction, UpRight | Up | DownRight | Down);
-        let zero_sentinel = matches!(direction, DownLeft);
-        word! { game, 255; hdma_table_2[0], hdma_table_2[1] }
-        let enemy = rainbow_enemy(0, game);
-        let left_step = crate::rtl::rom_table_word!(game, 0x91c9d4, {
-            let angle = if down {
-                *(&raw mut (*enemy).var_3A as *mut u8)
-            } else {
-                *(&raw mut (*enemy).var_3B as *mut u8)
-            };
-            (if add_left {
-                angle
-            } else {
-                (-(angle as i32)) as u8
-            }) as isize
-        });
-        let right_step = crate::rtl::rom_table_word!(game, 0x91c9d4, {
-            let angle = if down {
-                *(&raw mut (*enemy).var_3B as *mut u8)
-            } else {
-                *(&raw mut (*enemy).var_3A as *mut u8)
-            };
-            (if add_right {
-                angle
-            } else {
-                (-(angle as i32)) as u8
-            }) as isize
-        });
-        let mut row = (*enemy).var_3D;
-        let mut dst = if down {
-            let mut remaining = row.wrapping_sub(32);
-            let mut dst = ram_ptr!(game, u16; 0x9d00).offset(2);
-            do_until! { remaining == 0;
-                crate::update_place! { previous current = dst => dst.offset(1); }
-                *current = 255;
-                remaining = remaining.wrapping_sub(1);
-            }
-            // Preserve the original post-fill read of the starting row.
-            row = (*rainbow_enemy(0, game)).var_3D;
-            dst
+#[forbid(unsafe_code)]
+fn rasterize_rainbow_vertical(direction: RainbowDirection, left: u16, right: u16, game: &mut Game) {
+    use RainbowDirection::*;
+    let down = matches!(direction, DownRight | Down | DownLeft);
+    let add_left = matches!(direction, UpRight | DownRight);
+    let add_right = matches!(direction, UpRight | Up | DownRight | Down);
+    let zero_sentinel = matches!(direction, DownLeft);
+    word! { game, 255; hdma_table_2[0], hdma_table_2[1] }
+    let left_step = crate::rtl::rom_table_word!(game, 0x91c9d4, {
+        let angle = if down {
+            slot!(byte game, Enemy_MotherBrain[0].var_3A[0])
         } else {
-            let dst = ram_ptr!(game, u16; 0x9d00)
-                .offset((row as i32 - 32) as isize)
-                .offset(1);
-            *dst.offset(1) = 255;
-            *dst.offset(2) = 255;
-            dst
+            slot!(byte game, Enemy_MotherBrain[0].var_3B[0])
         };
-        let mut edges = [u32::from(left), u32::from(right)];
-        let steps = [
-            if add_left {
-                u32::from(left_step)
-            } else {
-                (-(i32::from(left_step))) as u32
-            },
-            if add_right {
-                u32::from(right_step)
-            } else {
-                (-(i32::from(right_step))) as u32
-            },
-        ];
-        do_until! { row == if down { 232 } else { 32 };
-            let mut packed = advance_window_edges(&mut edges, steps, true);
-            if packed == if zero_sentinel { 0 } else { 0xffff } {
-                packed = 255;
-            }
-            crate::update_place! { previous current = dst => dst.offset(if down { 1 } else { -1 }); }
-            *current = packed;
-            row = if down {
-                row.wrapping_add(1)
-            } else {
-                row.wrapping_sub(1)
-            };
+        (if add_left {
+            angle
+        } else {
+            (-(i32::from(angle))) as u8
+        }) as isize
+    });
+    let right_step = crate::rtl::rom_table_word!(game, 0x91c9d4, {
+        let angle = if down {
+            slot!(byte game, Enemy_MotherBrain[0].var_3B[0])
+        } else {
+            slot!(byte game, Enemy_MotherBrain[0].var_3A[0])
+        };
+        (if add_right {
+            angle
+        } else {
+            (-(i32::from(angle))) as u8
+        }) as isize
+    });
+    let mut row = slot!(game, Enemy_MotherBrain[0].var_3D);
+    let mut dst = if down {
+        let mut remaining = row.wrapping_sub(32);
+        let mut dst = 0x9d00 + 4;
+        do_until! { remaining == 0;
+            crate::update_place! { previous current = dst => dst + 2; }
+            write_rainbow_word(255, current, game);
+            remaining = remaining.wrapping_sub(1);
         }
-    }
-}
-unsafe fn rasterize_rainbow_down(game: &mut Game) {
-    unsafe {
-        let E = rainbow_enemy(0, game);
-        let direction = match ((*E).var_3A >> 6 & 2) | ((*E).var_3B >> 7 & 1) {
-            0 => RainbowDirection::DownRight,
-            2 => RainbowDirection::Down,
-            3 => RainbowDirection::DownLeft,
-            _ => panic!("non-null function pointer"),
+        // Preserve the original post-fill read of the starting row.
+        row = slot!(game, Enemy_MotherBrain[0].var_3D);
+        dst
+    } else {
+        let dst = 0x9d00 + 2 * (row as isize - 32 + 1);
+        write_rainbow_word(255, dst + 2, game);
+        write_rainbow_word(255, dst + 4, game);
+        dst
+    };
+    let mut edges = [u32::from(left), u32::from(right)];
+    let steps = [
+        if add_left {
+            u32::from(left_step)
+        } else {
+            (-(i32::from(left_step))) as u32
+        },
+        if add_right {
+            u32::from(right_step)
+        } else {
+            (-(i32::from(right_step))) as u32
+        },
+    ];
+    do_until! { row == if down { 232 } else { 32 };
+        let mut packed = advance_window_edges(&mut edges, steps, true);
+        if packed == if zero_sentinel { 0 } else { 0xffff } {
+            packed = 255;
+        }
+        crate::update_place! { previous current = dst => dst + if down { 2 } else { -2 }; }
+        write_rainbow_word(packed, current, game);
+        row = if down {
+            row.wrapping_add(1)
+        } else {
+            row.wrapping_sub(1)
         };
-        rasterize_rainbow_vertical(direction, (*E).var_3C, (*E).var_3E, game);
-        write_rainbow_fixed_header(0x9de6, game);
     }
 }
