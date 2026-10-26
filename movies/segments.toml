@@ -392,7 +392,7 @@ start_frame = 161656
 frames = 4426
 expect = ["door:A8B9", "door:A75D", "door:A815", "door:A7DE"]
 
-# Optional navigation route; Power Bomb acquisition remains pending.
+# Optional navigation route; Power Bomb acquisition is covered by the required item row.
 # Checked on frozen source 992845a379e904fcd08da855e541dde0c0713389f8d37791c1ab04da6af5ad2f.
 # Execute the full window; the frozen navigation build alone does not qualify current main.
 [[segment]]
@@ -775,7 +775,8 @@ expect = ["room:A98D", "state:8"]
 require_hit = ["eproj.spawn.initialized"]
 
 # Preserve the room setup accumulator in the projectile spawn parameter.
-# Seeded rows cannot use checkpoints; replay through frame 1985 and three after it.
+# Explicit seed and distributed checkpoint fields cannot be combined; compatible internal checkpoints may be reused.
+# Replay through frame 1985 and three after it.
 [[segment]]
 id = "phantoon-exit-spawn-parameter"
 seed = "any-boundary:165"
@@ -787,7 +788,8 @@ frames = 1989
 expect = ["boss:phantoon", "state:11"]
 
 # Preserve the sound/opcode/coordinate accumulator passed to Mother Brain spawns.
-# Seeded replay cannot use checkpoints; first mismatch was 2719, last was 4555.
+# Explicit seed and distributed checkpoint fields cannot be combined; compatible internal checkpoints may be reused.
+# First mismatch was 2719, last was 4555.
 [[segment]]
 id = "mother-brain-beam-spawn-parameters"
 seed = "any-boundary:190"

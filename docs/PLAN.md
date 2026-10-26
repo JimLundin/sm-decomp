@@ -79,6 +79,8 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
    `credits-postroll-wave` and the four smoke rows. B3 continues sm_a2 after
    Rinka/Gunship, then sm_a3. Non-enemy banks aim at most 80% replacement size.
    Windows M is now B4: retire sm_a8 families, then sm_b3.
+   B3's final sm_a2 retirement is source-reviewed; local rows and the scoped bank
+   mutation campaign precede landing, then the full 82-row corpus runs on main.
    No further in-place bank codemods; cloud M moves to unsafe outside bank files.
    A2 seeds remaining authored rows; bundle shard grouping is integrated.
    B5/B6 cloud queues continue sm_a9/sm_a6, then sm_aa/sm_a7.
@@ -229,9 +231,10 @@ matched work in 76.06s versus 114.12s serial (1.50x). Three compilers reached
 2.088GiB free; a further speedup is unproven. Use separate budgets for compilation,
 replays and source work, not a blanket heavy-job count. Count accepted launchers
 before rustc appears; release compiler admission immediately after compilation.
-Start above 3GiB free and leave 2GiB after reserving 1.7GiB per DLL build or 1.4GiB
+Start above 3GiB free and leave 2GiB after reserving 1.8GiB per DLL build or 1.4GiB
 per library check plus admitted jobs' remaining growth. Stop the newest below 2GiB
 or on resource errors. Frozen, formatted source may compile while its final review runs;
+Core10's DLL process reached 1764MiB; the 1.8GiB budget replaces the older 1.7GiB estimate.
 DLL/publication use the reviewed final pin. Do not leave ready checks waiting on prose.
 Refill useful ready work immediately; completed workers need explicit new tasks.
 Measure CPU, free memory, paging, disk and completed useful work/time during real
