@@ -223,14 +223,7 @@ pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
             crate::game::display_refresh::enable(true, game);
             clear_hdma(game);
             crate::game::scanline_irq::disable(game);
-            word! { game, 0; fx_layer_blending_config_a, cur_irq_handler }
-            *ram_ptr!(game; 0x6e) = 0;
-            *ram_ptr!(game; 0x71) = 0;
-            *ram_ptr!(game; 0x69) = 16;
-            *ram_ptr!(game; 0x6b) = 0;
-            *ram_ptr!(game; 0x6c) = 0;
-            *ram_ptr!(game; 0x6d) = 0;
-            *ram_ptr!(game; 0x55) = 9;
+            crate::game::display_refresh::reset_gameplay_layers(true, game);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             word!(game.loading_game_state = kLoadingGameState_22_EscapingCeres as u16);
             word!(game.game_state = 34);
@@ -265,14 +258,7 @@ pub unsafe fn GameState_36_WhitingOutFromTimeUp(game: &mut Game) -> CoroutineRet
             crate::game::display_refresh::enable(true, game);
             clear_hdma(game);
             crate::game::scanline_irq::disable(game);
-            word! { game, 0; fx_layer_blending_config_a, cur_irq_handler }
-            *ram_ptr!(game; 0x6e) = 0;
-            *ram_ptr!(game; 0x71) = 0;
-            *ram_ptr!(game; 0x69) = 16;
-            *ram_ptr!(game; 0x6b) = 0;
-            *ram_ptr!(game; 0x6c) = 0;
-            *ram_ptr!(game; 0x6d) = 0;
-            *ram_ptr!(game; 0x55) = 9;
+            crate::game::display_refresh::reset_gameplay_layers(true, game);
             word! { game, 0;
                 screen_fade_delay, screen_fade_counter, ceres_status, timer_status,
             }
@@ -302,14 +288,7 @@ pub unsafe fn GameState_38_SamusEscapesFromZebes(game: &mut Game) -> CoroutineRe
             crate::game::display_refresh::enable(true, game);
             clear_hdma(game);
             crate::game::scanline_irq::disable(game);
-            word!(game.fx_layer_blending_config_a = 0);
-            *ram_ptr!(game; 0x6e) = 0;
-            *ram_ptr!(game; 0x71) = 0;
-            *ram_ptr!(game; 0x69) = 16;
-            *ram_ptr!(game; 0x6b) = 0;
-            *ram_ptr!(game; 0x6c) = 0;
-            *ram_ptr!(game; 0x6d) = 0;
-            *ram_ptr!(game; 0x55) = 9;
+            crate::game::display_refresh::reset_gameplay_layers(false, game);
             word! { game, 0; screen_fade_delay, screen_fade_counter }
             word! {game; game_state = kGameState_39_EndingAndCredits as u16;
             cinematic_function = ((0x8bd480i32) as u16); timer_status = 0; }
@@ -915,14 +894,7 @@ pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineR
         if fading::all(6, game) != 0 {
             clear_hdma(game);
             crate::game::scanline_irq::disable(game);
-            word! { game, 0; fx_layer_blending_config_a, cur_irq_handler }
-            *ram_ptr!(game; 0x6e) = 0;
-            *ram_ptr!(game; 0x71) = 0;
-            *ram_ptr!(game; 0x69) = 16;
-            *ram_ptr!(game; 0x6b) = 0;
-            *ram_ptr!(game; 0x6c) = 0;
-            *ram_ptr!(game; 0x6d) = 0;
-            *ram_ptr!(game; 0x55) = 9;
+            crate::game::display_refresh::reset_gameplay_layers(true, game);
             word! { game, 0;
                 game_options_screen_index, screen_fade_delay, screen_fade_counter,
             }

@@ -91,6 +91,24 @@ pub(crate) unsafe fn initialize_gameplay(game: &mut Game) {
     }
 }
 
+pub(crate) fn reset_gameplay_layers(clear_current_irq: bool, game: &mut Game) {
+    word!(game.fx_layer_blending_config_a = 0);
+    if clear_current_irq {
+        word!(game.cur_irq_handler = 0);
+    }
+    for (mirror, value) in [
+        (0x6e, 0),
+        (0x71, 0),
+        (0x69, 16),
+        (0x6b, 0),
+        (0x6c, 0),
+        (0x6d, 0),
+        (0x55, 9),
+    ] {
+        game.g_ram[mirror] = value;
+    }
+}
+
 pub(crate) fn fade(fade_in: bool, game: &mut Game) {
     let remaining = word!(game.screen_fade_counter).wrapping_sub(1);
     let due = (remaining as i16) < 0;
