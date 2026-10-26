@@ -202,6 +202,37 @@ pub(crate) fn scroll<const DOWN: bool>(game: &mut Game) {
     }
 }
 
+pub(crate) fn fade_out(game: &mut Game, screen: u16, enable: fn(&mut Game)) {
+    crate::game::display_refresh::fade(false, game);
+    if screen == 5 && game.g_ram[0x57] != 0xf3 {
+        game.g_ram[0x57] = game.g_ram[0x57].wrapping_add(16);
+    }
+    if game.g_ram[0x51] != 0x80 {
+        if screen == 0 && game.g_ram[0x51] == 14 {
+            let subscreen = u16::from(game.g_ram[0x6b]);
+            if game.g_ram[0x6b] & 4 == 0 {
+                crate::game::options_objects::spawn(subscreen, 0xf4d6, game);
+            }
+        }
+        return;
+    }
+    enable(game);
+    word! { game, 0; screen_fade_delay, screen_fade_counter }
+    match screen {
+        0 => word!(game.game_options_screen_index += 1),
+        5 => {
+            word!(game.reg_BG1VOFS = 0);
+            word!(game.game_options_screen_index += 1);
+            replace_screen(game);
+        }
+        11 => {
+            word!(game.game_state = 4);
+            word! { game, 0; menu_index, game_options_screen_index }
+        }
+        _ => word!(game.game_options_screen_index = 4),
+    }
+}
+
 pub(crate) fn fade_in<const DISSOLVE: bool>(game: &mut Game) {
     crate::game::display_refresh::fade(true, game);
     if DISSOLVE && game.g_ram[0x57] != 3 {

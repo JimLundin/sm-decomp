@@ -700,44 +700,30 @@ pub unsafe fn GameState_11_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRe
     poll.returned_byte()
 }
 
-static kGameOptionsMenuFuncs: [Func_V; 13] = [
-    GameOptionsMenuFunc_0,
-    GameOptionsMenu_1_LoadingOptionsScreen,
-    options_settings::fade_in::<false>,
-    options_settings::main_menu,
-    GameOptionsMenu_4_StartGame,
-    GameOptionsMenu_5_DissolveOutScreen,
-    options_settings::fade_in::<true>,
-    options_settings::controller,
-    options_settings::special,
-    options_settings::scroll::<true>,
-    options_settings::scroll::<false>,
-    GameOptionsMenu_B_TransitionBackToFileSelect,
-    GameOptionsMenu_C_FadeOutOptionsScreenToStart,
-];
 pub unsafe fn GameState_2_GameOptionsMenu(game: &mut Game) -> CoroutineRet {
     unsafe {
-        kGameOptionsMenuFuncs[word!(game.game_options_screen_index) as usize](game);
+        // Keep the original thirteen-entry bounds failure ahead of all menu effects.
+        let screen = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+            [usize::from(word!(game.game_options_screen_index))];
+        match screen {
+            1 => GameOptionsMenu_1_LoadingOptionsScreen(game),
+            2 => options_settings::fade_in::<false>(game),
+            3 => options_settings::main_menu(game),
+            4 => GameOptionsMenu_4_StartGame(game),
+            6 => options_settings::fade_in::<true>(game),
+            7 => options_settings::controller(game),
+            8 => options_settings::special(game),
+            9 => options_settings::scroll::<true>(game),
+            10 => options_settings::scroll::<false>(game),
+            _ => options_settings::fade_out(game, screen, |game| {
+                crate::game::display_refresh::enable(true, game);
+            }),
+        }
         crate::game::options_objects::advance_and_draw(game);
         if word!(game.game_options_screen_index) as i32 - 2i32 & 0x8000 == 0 {
             crate::game::menu_tilemap::queue_options(game);
         }
         kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn GameOptionsMenuFunc_0(game: &mut Game) {
-    unsafe {
-        crate::game::display_refresh::fade(false, game);
-        if *ram_ptr!(game; 0x51) == 0x80 {
-            crate::game::display_refresh::enable(true, game);
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-            word!(game.game_options_screen_index += 1);
-        } else if *ram_ptr!(game; 0x51) == 14 {
-            let v0: u16 = *ram_ptr!(game; 0x6b) as u16;
-            if (*ram_ptr!(game; 0x6b) & 4) == 0 {
-                crate::game::options_objects::spawn(v0, addr_stru_82F4D6 as u16, game);
-            }
-        }
     }
 }
 pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
@@ -777,27 +763,6 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
         options_settings::highlight_language(game);
     }
 }
-pub unsafe fn GameOptionsMenu_B_TransitionBackToFileSelect(game: &mut Game) {
-    unsafe {
-        crate::game::display_refresh::fade(false, game);
-        if *ram_ptr!(game; 0x51) == 0x80 {
-            crate::game::display_refresh::enable(true, game);
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-            word!(game.game_state = kGameState_4_FileSelectMenus as u16);
-            word! { game, 0; menu_index, game_options_screen_index }
-        }
-    }
-}
-pub unsafe fn GameOptionsMenu_C_FadeOutOptionsScreenToStart(game: &mut Game) {
-    unsafe {
-        crate::game::display_refresh::fade(false, game);
-        if *ram_ptr!(game; 0x51) == 0x80 {
-            crate::game::display_refresh::enable(true, game);
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-            word!(game.game_options_screen_index = 4);
-        }
-    }
-}
 pub unsafe fn GameOptionsMenu_4_StartGame(game: &mut Game) {
     {
         word!(game.game_options_screen_index = 0);
@@ -818,19 +783,5 @@ pub unsafe fn GameOptionsMenu_4_StartGame(game: &mut Game) {
             word!(game.cinematic_function = (0x8ba395i32) as u16);
             word! { game, 0; menu_option_index, screen_fade_delay, screen_fade_counter }
         };
-    }
-}
-pub unsafe fn GameOptionsMenu_5_DissolveOutScreen(game: &mut Game) {
-    unsafe {
-        crate::game::display_refresh::fade(false, game);
-        if *ram_ptr!(game; 0x57) != 0xf3 {
-            crate::update_place! { reference fresh70 = *ram_ptr!(game; 0x57) => (*fresh70).wrapping_add(16); }
-        }
-        if *ram_ptr!(game; 0x51) == 0x80 {
-            crate::game::display_refresh::enable(true, game);
-            word! { game, 0; screen_fade_delay, screen_fade_counter, reg_BG1VOFS }
-            word!(game.game_options_screen_index += 1);
-            options_settings::replace_screen(game);
-        }
     }
 }
