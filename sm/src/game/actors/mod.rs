@@ -10,6 +10,7 @@ pub(in crate::game) mod elevator;
 pub(in crate::game) mod falling_platforms;
 pub(crate) mod identity;
 pub(in crate::game) mod kago;
+pub(in crate::game) mod maridia_snail;
 pub(in crate::game) mod media;
 pub(crate) mod metroid;
 pub(in crate::game) mod mochtroid;

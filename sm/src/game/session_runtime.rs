@@ -1,8 +1,8 @@
 //! One aggregate authority for player, projectiles, mechanisms and their room.
 use crate::game::actors::diving_enemies::{self, Kind as DivingKind};
 use crate::game::actors::{
-    elevator, falling_platforms, metroid, mochtroid, refill_candy, roach, sidehopper,
-    wall_crawlers,
+    elevator, falling_platforms, maridia_snail, metroid, mochtroid, refill_candy, roach,
+    sidehopper, wall_crawlers,
 };
 use crate::game::player_projectiles::{
     access::{ShotLane, Store},
@@ -626,6 +626,9 @@ crate::game::callback_dispatch! {
         10739779 => [wall_crawlers::initialize(wall_crawlers::Kind::Orange, game)];
         10740436 | 10741148 | 10741353 => [wall_crawlers::initialize(wall_crawlers::Kind::Common, game)];
         10739851 | 10741442 => [{ let phase = wall_crawlers::state_address(game); actor_species_pre_instruction(phase, game); }];
+        10735074 => maridia_snail::initialize;
+        10735204 => [{ let phase = maridia_snail::prepare(game); actor_species_pre_instruction(phase, game); }];
+        10736560 => maridia_snail::touch; 10736745 => maridia_snail::shot;
         10742351 => metroid::initialize; 10742502 => metroid::frozen;
         10742579 => metroid::hurt; 10742680 => metroid::advance;
         10743275 => metroid::touch; 10743559 => metroid::shot;
@@ -880,6 +883,15 @@ crate::game::address_dispatch! {
         10652277 => [()];
         10657819 => [()]; 10659799 => [()];
         10676097 => [()]; 10730689 => [sm_a3::Bang_Func_7(k)];
+        10735526 => [maridia_snail::crawl(k, actor_api::Axis::Y, 0xa3cce2, game)];
+        10735543 => [maridia_snail::crawl(k, actor_api::Axis::X, 0xa3ccea, game)];
+        10735549 => [maridia_snail::crawl(k, actor_api::Axis::Y, 0xa3ccf2, game)];
+        10735566 => [maridia_snail::crawl(k, actor_api::Axis::X, 0xa3ccfa, game)];
+        10735572 => [maridia_snail::crawl(k, actor_api::Axis::Y, 0xa3cd02, game)];
+        10735589 => [maridia_snail::crawl(k, actor_api::Axis::X, 0xa3cd0a, game)];
+        10735595 => [maridia_snail::crawl(k, actor_api::Axis::Y, 0xa3cd12, game)];
+        10735612 => [maridia_snail::crawl(k, actor_api::Axis::X, 0xa3cd1a, game)];
+        10735456 => [maridia_snail::probe_edge(k, game)]; 10736051 => [maridia_snail::falling(k, game)];
         10739857 => [wall_crawlers::crawl(k, actor_api::Axis::X, true, game)];
         10740072 => [wall_crawlers::crawl(k, actor_api::Axis::Y, true, game)];
         10741448 => [wall_crawlers::crawl(k, actor_api::Axis::X, false, game)];
@@ -1025,6 +1037,11 @@ crate::game::callback_dispatch! {
         10725992 => [sidehopper::instruction(true, j, game)]; 10726142 => [sidehopper::instruction(false, j, game)];
         10728489 => [refill_candy::instruction(4, j, game)]; 10728500 => [refill_candy::instruction(8, j, game)];
         10728511 => [refill_candy::instruction(12, j, game)];
+        10734646 => [maridia_snail::instruction(k, 0, j, game)];
+        10734655 => [maridia_snail::instruction(k, 1, j, game)];
+        10734664 => [maridia_snail::instruction(k, 2, j, game)];
+        10734687 => [maridia_snail::instruction(k, 3, j, game)];
+        10734712 => [maridia_snail::instruction(k, 4, j, game)];
         10742437 => [metroid::sound(false, j, game)]; 10742449 => [metroid::sound(true, j, game)];
         10741344 | 10739650 => [wall_crawlers::set_state(k, j, game)];
         10991155 => [sm_a7::Kraid_Instr_1(k, j)];
