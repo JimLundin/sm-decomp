@@ -24,17 +24,16 @@ crate::typed_struct! {
     }
 }
 
-unsafe fn upload_screen(source: u16, screen: u16, game: &mut Game) {
-    unsafe {
-        let tail = word!(game.vram_write_queue_tail);
-        let entry = ram_ptr!(game; 0xd0, tail as isize);
-        (entry as *mut u16).write_unaligned(2048);
-        (entry.add(2) as *mut u16).write_unaligned(source);
-        (entry.add(4) as *mut u16).write_unaligned(126);
-        (entry.add(5) as *mut u16)
-            .write_unaligned(((game.g_ram[0x59] as u16 & 0xfc) << 8).wrapping_add(screen * 1024));
-        word!(game.vram_write_queue_tail = tail.wrapping_add(7));
-    }
+fn upload_screen(source: u16, screen: u16, game: &mut Game) {
+    let tail = word!(game.vram_write_queue_tail);
+    let entry = 0xd0 + usize::from(tail);
+    word_transfers!(game, ascending, 1;
+        native(entry) <- value(2048),
+        native(entry + 2) <- value(source),
+        native(entry + 4) <- value(126));
+    let target = ((game.g_ram[0x59] as u16 & 0xfc) << 8).wrapping_add(screen * 1024);
+    word_transfers!(game, ascending, 1; native(entry + 5) <- value(target));
+    word!(game.vram_write_queue_tail = tail.wrapping_add(7));
 }
 
 // Capture all four source tiles before the reverse-order writes, even when RAM aliases.
@@ -88,20 +87,14 @@ unsafe fn copy_background(game: &mut Game) {
     }
 }
 
-pub unsafe fn freeze_and_backup(k: u16, game: &mut Game) {
-    unsafe {
-        byte!(@pointer ram_ptr!(game, u16; 0xa78); 0) = 1;
-        byte!(@pointer ram_ptr!(game, u16; 0x1914); k as u8 as i32 as isize) =
-            word!(game.reg_BG2HOFS) as u8;
-        *ram_ptr!(game; 0x1914, k as u8 as i32 as isize, 1) =
-            byte!(@pointer ram_ptr!(game, u16; 0xb5); 1);
-        byte!(@pointer ram_ptr!(game, u16; 0x1920); k as u8 as i32 as isize) =
-            word!(game.reg_BG2VOFS) as u8;
-        *ram_ptr!(game; 0x1920, k as u8 as i32 as isize, 1) =
-            byte!(@pointer ram_ptr!(game, u16; 0xb7); 1);
-        byte!(@pointer ram_ptr!(game, u16; 0x192c); k as u8 as i32 as isize) =
-            *ram_ptr!(game; 0x59);
-    }
+pub fn freeze_and_backup(k: u16, game: &mut Game) {
+    game.g_ram[0xa78] = 1;
+    let index = usize::from(k as u8);
+    game.g_ram[0x1914 + index] = word!(game.reg_BG2HOFS) as u8;
+    game.g_ram[0x1915 + index] = game.g_ram[0xb6];
+    game.g_ram[0x1920 + index] = word!(game.reg_BG2VOFS) as u8;
+    game.g_ram[0x1921 + index] = game.g_ram[0xb8];
+    game.g_ram[0x192c + index] = game.g_ram[0x59];
 }
 #[forbid(unsafe_code)]
 pub fn capture_bg1_right(game: &mut Game) {
@@ -340,50 +333,45 @@ pub unsafe fn reveal_room_block(a: u16, k: u16, j: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn capture_bg2_right(game: &mut Game) {
-    unsafe {
-        if can_reveal_blocks(game) {
-            if word!(game.earthquake_timer) != 0 {
-                word! { game;
-                    reg_BG1HOFS = (word!(game.layer1_x_pos)).wrapping_add(word!(game.bg1_x_offset));
-                    reg_BG1VOFS = (word!(game.layer1_y_pos)).wrapping_add(word!(game.bg1_y_offset));
-                }
+pub fn capture_bg2_right(game: &mut Game) {
+    if can_reveal_blocks(game) {
+        if word!(game.earthquake_timer) != 0 {
+            word! { game;
+                reg_BG1HOFS = (word!(game.layer1_x_pos)).wrapping_add(word!(game.bg1_x_offset));
+                reg_BG1VOFS = (word!(game.layer1_y_pos)).wrapping_add(word!(game.bg1_y_offset));
             }
-            word!(game.reg_BG2HOFS = (word!(game.reg_BG1HOFS)) & (0xfu16));
-            word!(game.reg_BG2VOFS = (word!(game.reg_BG1VOFS)) & (0xfu16));
-            *ram_ptr!(game; 0x59) = 73;
         }
-        crate::game::vram_read_queue::enqueue(0x59, 1024, 0x5800, 2048, true, game);
+        word!(game.reg_BG2HOFS = (word!(game.reg_BG1HOFS)) & (0xfu16));
+        word!(game.reg_BG2VOFS = (word!(game.reg_BG1VOFS)) & (0xfu16));
+        game.g_ram[0x59] = 73;
     }
+    crate::game::vram_read_queue::enqueue(0x59, 1024, 0x5800, 2048, true, game);
 }
 pub fn can_reveal_blocks(game: &mut Game) -> bool {
     Runtime::new(game).xray_blend_mask() == 0x4000
 }
-pub unsafe fn upload_left(game: &mut Game) {
-    unsafe {
-        if can_reveal_blocks(game) {
-            upload_screen(0x4000, 0, game);
-        }
+pub fn upload_left(game: &mut Game) {
+    if can_reveal_blocks(game) {
+        upload_screen(0x4000, 0, game);
     }
 }
-pub unsafe fn upload_right(game: &mut Game) {
-    unsafe {
-        if can_reveal_blocks(game) {
-            upload_screen(0x4800, 1, game);
-        }
-        mov24(ram_ptr!(game, LongPtr; 0xa88), 0x9800e4);
-        mov24(ram_ptr!(game, LongPtr; 0xa8b), 0x98c8e4);
-        mov24(ram_ptr!(game, LongPtr; 0xa8e), 0x999098);
-        word! { game, 0;
-            hdma_var_1, demo_input_pre_instr, demo_input_instr_timer, demo_input_instr_ptr, demo_input,
-            demo_input_new,
-        }
-        if *ram_ptr!(game; 0xa1e) == 4 {
-            word!(game.xray_angle = 192);
-        } else {
-            word!(game.xray_angle = 64);
-        };
+pub fn upload_right(game: &mut Game) {
+    if can_reveal_blocks(game) {
+        upload_screen(0x4800, 1, game);
     }
+    for (at, value) in [(0xa88, 0x9800e4u32), (0xa8b, 0x98c8e4), (0xa8e, 0x999098)] {
+        word_transfers!(game, ascending, 1; native(at) <- value(value as u16));
+        game.g_ram[at + 2] = (value >> 16) as u8;
+    }
+    word! { game, 0;
+        hdma_var_1, demo_input_pre_instr, demo_input_instr_timer, demo_input_instr_ptr, demo_input,
+        demo_input_new,
+    }
+    if game.g_ram[0xa1e] == 4 {
+        word!(game.xray_angle = 192);
+    } else {
+        word!(game.xray_angle = 64);
+    };
 }
 pub fn setup_blending(_k: u16, game: &mut Game) {
     Runtime::new(game).apply_xray_blending(BlendPhase::Setup);
@@ -393,61 +381,57 @@ pub fn set_backdrop(game: &mut Game) {
         word!(game.palette_buffer[0] = 3171);
     }
 }
-pub unsafe fn restore_left(k: u16, game: &mut Game) {
-    unsafe {
-        mov24(ram_ptr!(game, LongPtr; 0xa88), 0x980001);
-        *(ram_ptr!(game, u16; 0xa8a, 1)) = 0;
-        word! { game, 0;
-            demo_input_prev, demo_input_prev_new, demo_backup_prev_controller_input,
-        }
-        word!(game.hdma_table_1[0] = 255);
-        Runtime::new(game).apply_xray_blending(BlendPhase::Restore);
-        word!(game.palette_buffer[0] = 0);
-        let v2: i32 = word!(game.hdma_object_index) as i32 >> 1;
-        word!(game.reg_BG2HOFS = word!(game.hdma_object_A[v2]));
-        word!(game.reg_BG2VOFS = word!(game.hdma_object_B[v2]));
-        *ram_ptr!(game; 0x59) = byte!(@pointer ram_ptr!(game, u16; 0x192c); word!(game.hdma_object_index) as i32 as isize);
-        if (word!(game.vram_write_queue_tail) as i16).wrapping_sub(240) < 0 {
-            upload_screen(0x5000, 0, game);
-            word!(game.demo_input_pre_instr += 1);
-        }
+pub fn restore_left(k: u16, game: &mut Game) {
+    word_transfers!(game, ascending, 1; native(0xa88) <- value(1));
+    game.g_ram[0xa8a] = 0x98;
+    word_transfers!(game, ascending, 1; native(0xa8b) <- value(0));
+    word! { game, 0;
+        demo_input_prev, demo_input_prev_new, demo_backup_prev_controller_input,
+    }
+    word!(game.hdma_table_1[0] = 255);
+    Runtime::new(game).apply_xray_blending(BlendPhase::Restore);
+    word!(game.palette_buffer[0] = 0);
+    let v2: i32 = word!(game.hdma_object_index) as i32 >> 1;
+    word!(game.reg_BG2HOFS = word!(game.hdma_object_A[v2]));
+    word!(game.reg_BG2VOFS = word!(game.hdma_object_B[v2]));
+    game.g_ram[0x59] = game.g_ram[0x192c + usize::from(word!(game.hdma_object_index))];
+    if (word!(game.vram_write_queue_tail) as i16).wrapping_sub(240) < 0 {
+        upload_screen(0x5000, 0, game);
+        word!(game.demo_input_pre_instr += 1);
     }
 }
-pub unsafe fn restore_right(k: u16, game: &mut Game) {
-    unsafe {
-        Runtime::new(game).apply_xray_blending(BlendPhase::Restore);
-        if (word!(game.vram_write_queue_tail) as i16).wrapping_sub(240) < 0 {
-            upload_screen(0x5800, 1, game);
-            word!(game.demo_input_pre_instr += 1);
-        }
+pub fn restore_right(k: u16, game: &mut Game) {
+    Runtime::new(game).apply_xray_blending(BlendPhase::Restore);
+    if (word!(game.vram_write_queue_tail) as i16).wrapping_sub(240) < 0 {
+        upload_screen(0x5800, 1, game);
+        word!(game.demo_input_pre_instr += 1);
     }
 }
 pub unsafe fn finish_restore(k: u16, game: &mut Game) {
-    unsafe {
-        Runtime::new(game).apply_xray_blending(BlendPhase::Restore);
-        if word!(game.time_is_frozen_flag) != 0 {
-            word! { game, 0;
-                time_is_frozen_flag, demo_input_pre_instr, demo_input_instr_timer, demo_input_instr_ptr,
-                xray_angle, demo_input, demo_input_new,
-            }
-            mov24(ram_ptr!(game, LongPtr; 0xa88), 0x980001);
-            *(ram_ptr!(game, u16; 0xa8a, 1)) = 0;
-            word! { game, 0;
-                demo_input_prev, demo_input_prev_new, demo_backup_prev_controller_input,
-            }
-            finish_xray(game);
-            *(ram_ptr!(game, u16; 0x18b4)).offset((word!(game.hdma_object_index) >> 1) as isize) =
-                0;
-            QueueSfx1_Max6(0xa, game);
-            if (word!(game.fx_type) as u8) != 36 {
-                *ram_ptr!(game; 0x74, 2) = 0x80;
-                *ram_ptr!(game; 0x74, 1) = 64;
-                *ram_ptr!(game; 0x74, 0) = 32;
-            }
-            word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(0xff));
-            if word!(game.samus_auto_cancel_hud_item_index) != 0 {
-                word! { game, 0; hud_item_index, samus_auto_cancel_hud_item_index }
-            }
+    Runtime::new(game).apply_xray_blending(BlendPhase::Restore);
+    if word!(game.time_is_frozen_flag) != 0 {
+        word! { game, 0;
+            time_is_frozen_flag, demo_input_pre_instr, demo_input_instr_timer, demo_input_instr_ptr,
+            xray_angle, demo_input, demo_input_new,
+        }
+        word_transfers!(game, ascending, 1; native(0xa88) <- value(1));
+        game.g_ram[0xa8a] = 0x98;
+        word_transfers!(game, ascending, 1; native(0xa8b) <- value(0));
+        word! { game, 0;
+            demo_input_prev, demo_input_prev_new, demo_backup_prev_controller_input,
+        }
+        finish_xray(game);
+        word_transfers!(game, ascending, 1;
+            native(0x18b4 + 2 * usize::from(word!(game.hdma_object_index) >> 1)) <- value(0));
+        QueueSfx1_Max6(0xa, game);
+        if (word!(game.fx_type) as u8) != 36 {
+            game.g_ram[0x76] = 0x80;
+            game.g_ram[0x75] = 64;
+            game.g_ram[0x74] = 32;
+        }
+        word_transfers!(game, descending, 256; le(hdma_table_1, 255) <- value(0xff));
+        if word!(game.samus_auto_cancel_hud_item_index) != 0 {
+            word! { game, 0; hud_item_index, samus_auto_cancel_hud_item_index }
         }
     }
 }

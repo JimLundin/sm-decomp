@@ -103,6 +103,8 @@ jobs:
               if unknown:
                   raise SystemExit(f'unknown rows: {sorted(unknown)}')
           def seed_bundle(row):
+              if row['id'] == 'xray-activate-release':
+                  return ('seeds-v1-xray-activation-9c5ad92da3d5d2dc.tar.gz.enc', '9c5ad92da3d5d2dc13cfae2e2a0906ca915b2329767f121183190d2ab96c25bc')
               if 'checkpoint' in row:
                   return ('checkpoints-v1-final-fdf74bcab62e16fc.tar.gz.enc', 'fdf74bcab62e16fccdd7590bf9b112846c50d8aa00a6773f200d27ba6883eed1')
               # Match exact seed identities, not capture prefixes: pickups and the

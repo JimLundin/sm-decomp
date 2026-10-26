@@ -996,3 +996,16 @@ input_sha256 = "65a524cd11d5b4a35bf9add300b091d64ce39888083e529633210eac5ced2d3c
 start_frame = 6762
 frames = 8
 expect = ["area:crateria", "room:92FD"]
+
+# Original item words through frame666, then authored standing/select/run/release input.
+# Fixed2131 frames retain activation and the return to the normal pose after release.
+[[segment]]
+id = "xray-activate-release"
+seed = "any-boundary:50"
+seed_sha256 = "39c756f499e9095ad4be8367c4f6bce2e6239c3c2f94f92935919548252347bd"
+inputs = "stand-select-four-scan.inputs"
+input_sha256 = "79d55dec3a45f88c92d155ca415ea17e3e930f9f31f4f450a59523d3b3bea537"
+start_frame = 0
+frames = 2131
+require_hit = ["coroutine.plm.message.completed"]
+expect = ["item:x-ray", "room:A2CE"]

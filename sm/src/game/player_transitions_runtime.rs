@@ -484,8 +484,8 @@ impl Runtime<'_> {
             |r| r.advance_xray_beam(BeamPhase::Initial),
             |r| r.advance_xray_beam(BeamPhase::Widening),
             |r| r.advance_xray_beam(BeamPhase::Full),
-            |r| r.foreign(|game| unsafe { restore_left(6, game) }),
-            |r| r.foreign(|game| unsafe { restore_right(8, game) }),
+            |r| r.foreign(|game| restore_left(6, game)),
+            |r| r.foreign(|game| restore_right(8, game)),
             |r| r.foreign(|game| unsafe { finish_restore(10, game) }),
         ];
         // Retain the six-entry bounds check after the blending writes.
