@@ -1300,6 +1300,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/draygon_grab.rs"),
     ),
     (
+        "sm/src/game/actors/draygon_death.rs",
+        include_bytes!("game/actors/draygon_death.rs"),
+    ),
+    (
         "sm/src/game/actors/draygon_sweep.rs",
         include_bytes!("game/actors/draygon_sweep.rs"),
     ),
