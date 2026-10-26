@@ -101,7 +101,6 @@ macro_rules! instruction_callbacks {
     };
 }
 pub(crate) use instruction_callbacks;
-pub(crate) use instruction_callbacks as prefixed_callbacks;
 
 // Declare forwarding wrappers with their original signatures and call order.
 // Unit wrappers retain a statement; value-returning wrappers retain a tail call.

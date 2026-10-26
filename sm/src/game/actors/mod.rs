@@ -10,6 +10,7 @@ pub(in crate::game) mod diving_enemies;
 pub(in crate::game) mod effects;
 pub(in crate::game) mod elevator;
 pub(in crate::game) mod falling_platforms;
+pub(in crate::game) mod fireflea;
 pub(crate) mod identity;
 pub(in crate::game) mod kago;
 pub(in crate::game) mod maridia_snail;

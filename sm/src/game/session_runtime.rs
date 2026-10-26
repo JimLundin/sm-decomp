@@ -610,9 +610,11 @@ crate::game::callback_dispatch! {
         10715212 => [()]; 10716909 => crate::game::waver::Waver_Init;
         10717004 => crate::game::waver::Waver_Main; 10717536 => [diving_enemies::initialize(DivingKind::Metalee, game)];
         10717561 => [diving_enemies::advance(DivingKind::Metalee, game)]; 10717967 => [diving_enemies::shot(DivingKind::Metalee, game)];
-        10718827 => [{
-                    sm_a3::Fireflea_Touch(crate::ram_map::word!(game.cur_enemy_index), game);
-                }];
+        10718509 => actors::fireflea::initialize;
+        10718702 => actors::fireflea::advance;
+        10718827 => actors::fireflea::touch;
+        10718851 => actors::fireflea::power_bomb;
+        10718857 => actors::fireflea::shot;
         10719413 => sm_a3::MaridiaFish_Init; 10719531 => sm_a3::MaridiaFish_Main;
         10720486 => elevator::initialize; 10720554 => elevator::advance;
         10722463 => [falling_platforms::initialize(true, game)]; 10722490 => [falling_platforms::initialize(false, game)];
@@ -871,7 +873,7 @@ crate::game::callback_dispatch! {
             };
             actor_species_pre_instruction(0xa20000 | u32::from(phase), game);
         }];
-        0xa30000..=0xa3ffff => [sm_a3::DispatchEnemyAi(ea, game)];
+        0xa30000..=0xa3ffff => [{ crate::rtl::Unreachable(game); }];
         0xa40000..=0xa4ffff => [sm_a4::DispatchEnemyAi(ea, game)];
         0xa50000..=0xa5ffff => [sm_a5::DispatchEnemyAi(ea, game)];
         0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyAi(ea, game)];

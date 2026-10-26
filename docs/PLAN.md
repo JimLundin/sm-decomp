@@ -81,8 +81,10 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Qualified Core39: production 111763, legacy 19949, unsafe 2919, verification 39959.
-Its eight Crocomire/control rows pass (6,457 selected); checked tilemap preparation and native upload queues retire.
+Qualified Core40: production 111759, legacy 19821, unsafe 2912, verification 39963.
+Its four smoke controls pass (2,187 selected); all Fireflea lifecycle and parameter branches remain unobserved.
+Fireflea retires 128 legacy lines and seven unsafe lines; four source-cache guard lines are separate verification.
+Core39 passed eight Crocomire/control rows (6,457 selected); tilemap and native upload queues are checked.
 Core38 passed 22 rows (66,513 selected); plume/melt and shared burst callers are checked.
 Core37 passed all 86 rows (136,526 selected + 38,827 setup), 189,475 fresh captures and separate C43 105.
 Eleven backend allocations now have stable owners; the snapshot observer blocker is closed.
