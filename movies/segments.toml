@@ -146,9 +146,11 @@ after_expectations = 120
 
 [[segment]]
 id = "boss-bomb-torizo"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 50329
+seed = "100-input-phase:27"
+seed_sha256 = "c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
+inputs = "authored-bomb-torizo.inputs"
+input_sha256 = "cb1badc64cca3aa72364677aa8c6d9ce2c827b42eca8e2712ad03deb5561dfe4"
+start_frame = 1441
 frames = 2491
 expect = ["boss:bomb-torizo"]
 after_expectations = 120
@@ -654,26 +656,32 @@ after_expectations = 120
 # The observed placement lag formerly incremented the native acknowledged-NMI counter.
 [[segment]]
 id = "door-loading-lag-nmi"
-inputs = "any-door-prefix.inputs"
-input_sha256 = "37329288686fa19d3cd68ae35e588ea131f260e37f17da8d876a3977430ac523"
-start_frame = 8262
+seed = "100-input-phase:1"
+seed_sha256 = "c555cbf4669a2d3ed5e444aeb8e3e97d03bacafba50d5c93ec4d5c9dd42ae889"
+inputs = "seed-door-loading-lag-nmi.inputs"
+input_sha256 = "cfcd0bdc59fe59c56c92deea482815d1e83fcab34472fde7d14766b8001bcb09"
+start_frame = 272
 frames = 5
 expect = ["state:11"]
 
 [[segment]]
 id = "tas-ceres-four-doors"
-inputs = "any-door-prefix.inputs"
-input_sha256 = "37329288686fa19d3cd68ae35e588ea131f260e37f17da8d876a3977430ac523"
-start_frame = 8239
+seed = "100-input-phase:1"
+seed_sha256 = "c555cbf4669a2d3ed5e444aeb8e3e97d03bacafba50d5c93ec4d5c9dd42ae889"
+inputs = "seed-ceres-four-doors.inputs"
+input_sha256 = "b1f94d32c856b2485df6f30ef792f55185ecb4118aba218882bfef1be6c78c2b"
+start_frame = 249
 frames = 861
 expect = ["door:DF8D", "door:DFD7", "door:E021", "door:E06B", "state:8"]
 
 # The recorded controller read at native step9216 crosses adjacent video frames.
 [[segment]]
 id = "tas-ceres-cross-frame-read"
-inputs = "any-cross-frame-prefix.inputs"
-input_sha256 = "ccd67ec9329ba43256552e73f2fdfd3d6791ecae85a6c6834504b3fb7633c001"
-start_frame = 9100
+seed = "100-input-phase:5"
+seed_sha256 = "a627651fd74a3c99e3a54adee5f7683e70f3bb2946c578d36269f3039b061594"
+inputs = "seed-ceres-cross-frame-read.inputs"
+input_sha256 = "3461a84c0665d15f13b32e35b145ef70b67c851a5bebce7d7b31ddb58e2429ea"
+start_frame = 32
 frames = 166
 require_hit = ["coroutine.door"]
 expect = ["state:8", "state:11"]
@@ -689,12 +697,14 @@ frames = 10
 require_hit = ["eproj.spawn.initialized"]
 expect = ["room:ADAD"]
 
-# Ceres Ridley's scripted push and 810 frames after its horizontal movement.
+# Ceres Ridley's scripted push in a fixed 1,000-frame window; falling-x at input 1268.
 [[segment]]
 id = "samus-forced-ceres"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 15000
+seed = "100-input-phase:6"
+seed_sha256 = "0a6d988b41a6ed6baf83f194d23219f8a98f47c38cea6c2bf81520d5461a2938"
+inputs = "seed-forced-ceres.inputs"
+input_sha256 = "63549693555e451bdf3c65147dc4fb3020049bc7acf765123bebc6c7a1d9f96d"
+start_frame = 1000
 frames = 1000
 require_hit = ["samus.bomb.falling-x"]
 expect = ["room:E0B5"]
@@ -702,9 +712,11 @@ expect = ["room:E0B5"]
 # Vertical bomb-jump lifecycle and subsequent gameplay.
 [[segment]]
 id = "samus-bomb-jump-vertical"
-inputs = "corpus-speed-booster.inputs"
-input_sha256 = "bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6"
-start_frame = 55650
+seed = "100-input-phase:27"
+seed_sha256 = "c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
+inputs = "authored-bomb-jump.inputs"
+input_sha256 = "65a524cd11d5b4a35bf9add300b091d64ce39888083e529633210eac5ced2d3c"
+start_frame = 6762
 frames = 800
 require_hit = ["samus.jump.bomb"]
 expect = ["area:crateria"]

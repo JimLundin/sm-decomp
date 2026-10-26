@@ -495,6 +495,43 @@ and recipe remain unchanged.
 python tools/movie_inputs.py movies/super-metroid-100-4010.lsmv movies/seed-item-charge.inputs --rom rom/sm.smc --lag-log target/seeds/100-input-phase/lag.csv --seed target/seeds/100-input-phase/0055-9D19-wram.bin --frames 1819
 ```
 
+Six further rows retain their original ceilings and required observations:
+
+| Row | Observation | Verified setup | Ceiling | Selected frames | Input words |
+| --- | --- | ---: | ---: | ---: | ---: |
+| `tas-ceres-cross-frame-read` | `5`, `$E06B` | 32 | 166 | 166 | 198 |
+| `tas-ceres-four-doors` | `1`, `$DF45` | 249 | 861 | 861 | 1110 |
+| `door-loading-lag-nmi` | `1`, `$DF45` | 272 | 5 | 5 | 277 |
+| `samus-forced-ceres` | `6`, `$E0B5` | 1000 | 1000 | 1000 | 2300 |
+| `boss-bomb-torizo` | `27`, `$9804` | 1441 | 2491 | 1664 | 3932 |
+| `samus-bomb-jump-vertical` | `27`, `$9804` | 6762 | 800 | 800 | 7562 |
+
+The first four inputs come from strict original-movie imports. Ceres seed 1
+starts at native input 7990; its four-door and loading inputs exactly equal the
+old route's `[7990:9100]` and `[7990:8267]` slices. Seed 5 starts at 9068;
+the cross-frame inputs equal `[9068:9266]`, retaining the read at native 9216
+(selected offset 116). The five-frame loading row still includes the recorded
+suspension. Forced Ceres uses the existing 2300-word Ridley import, selecting
+`[1000:2000]`; its required falling-x call occurs at 1268.
+
+The last two are **authored continuations from an original observation**.
+Their inputs are unchanged contiguous slices of `corpus-speed-booster.inputs`
+(SHA256 `bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6`):
+`[48888:52820]` for `authored-bomb-torizo.inputs`, and `[48888:56450]`
+for `authored-bomb-jump.inputs` (zero-based, end-exclusive). They are not captured
+TAS continuations. Seed 27 and its input-phase metadata remain unchanged;
+the first input is its recorded `0000`, with no bridge inputs or padding.
+Bomb Torizo's fresh defeat is observed at 2984, followed through 3105 with the
+full 120-frame tail. Bomb jump retains all 800 selected frames and five required
+probe calls at inputs 6791 through 7379. Setup frames are oracle-checked before
+selected observations begin, or reused from matching verified checkpoints.
+
+These six rows remove 136,824 configured setup frames (146,580 to 9,756).
+All 4,496 selected frames pass. With these conversions, 68 of 82 rows are seeded;
+all eight authored recipes still have unseeded consumers, so none can yet be
+deleted. Reserve and shot-gate trials lacked their required events despite zero
+comparison differences; both original rows and their routes remain in use.
+
 Four more navigation/encounter rows use original `100-input-phase` observations,
 with their existing input budgets, required hits, expectations and follow-up windows:
 
