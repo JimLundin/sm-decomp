@@ -47,7 +47,10 @@ pub(crate) enum Entry {
     FadeIn,
     Unpause,
     CeresElevator,
+    CeresBlackout,
+    ZebesEscape,
     TimeUp,
+    TimeUpExit,
     ReserveTanks,
     PrepareDeath,
 }
@@ -167,7 +170,28 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
             game.g_ram[0x612] = 0;
             return 0 as CoroutineRet;
         }
-        if matches!(entry, Entry::CeresElevator) && word!(game.timer_status) != 0 {
+        if matches!(entry, Entry::TimeUpExit) {
+            crate::game::display_refresh::fade(false, game);
+            if game.g_ram[0x51] == 0x80 {
+                crate::game::display_refresh::finish_gameplay(true, game);
+                word! { game, 0;
+                    screen_fade_delay, screen_fade_counter, ceres_status, timer_status,
+                }
+                crate::game::music::cancel_effects(15, game);
+                if crate::game::gameplay_flag_runtime::CheckEventHappened(0xe, game) != 0 {
+                    word! { game, 0; game_options_screen_index, menu_index }
+                    word_transfers!(game, descending, 128; le(eproj_y_subpos, 142) <- value(0));
+                    word!(game.game_state = kGameState_25_SamusNoHealth as u16);
+                } else {
+                    word!(game.game_state = kGameState_37_CeresGoesBoomWithSamus as u16);
+                    word!(game.cinematic_function = (0x8bc11bi32) as u16);
+                }
+            }
+            return 0 as CoroutineRet;
+        }
+        if matches!(entry, Entry::CeresElevator | Entry::CeresBlackout)
+            && word!(game.timer_status) != 0
+        {
             crate::game::escape_timer::draw(game);
         }
         if matches!(entry, Entry::ReserveTanks)
@@ -271,7 +295,27 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                 }
                 word!(game.game_state += 1);
             }
-            Entry::Initialize | Entry::Gameplay => {}
+            Entry::CeresBlackout | Entry::ZebesEscape => {
+                crate::game::display_refresh::fade(false, game);
+                if game.g_ram[0x51] == 0x80 {
+                    let ceres = matches!(entry, Entry::CeresBlackout);
+                    crate::game::display_refresh::finish_gameplay(ceres, game);
+                    word! { game, 0; screen_fade_delay, screen_fade_counter }
+                    if ceres {
+                        word!(game.loading_game_state = kLoadingGameState_22_EscapingCeres as u16);
+                        word!(game.game_state = 34);
+                        crate::game::save_slots::save(word!(game.selected_save_slot), game);
+                        word!(game.cinematic_function = (0x8bc11bi32) as u16);
+                        word! { game, 0; ceres_status, timer_status }
+                    } else {
+                        word! {game; game_state = kGameState_39_EndingAndCredits as u16;
+                        cinematic_function = ((0x8bd480i32) as u16); timer_status = 0; }
+                    }
+                    crate::game::music::QueueMusic_Delayed8(0, game);
+                    crate::game::music::cancel_effects(15, game);
+                }
+            }
+            Entry::TimeUpExit | Entry::Initialize | Entry::Gameplay => {}
         }
         0 as CoroutineRet
     }

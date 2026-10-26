@@ -149,6 +149,16 @@ pub(crate) unsafe fn upload_pause_map(game: &mut Game) {
     }
 }
 
+/// Requires a live, exclusively accessed backend for NMI and DMA register writes.
+pub(crate) unsafe fn finish_gameplay(clear_current_irq: bool, game: &mut Game) {
+    unsafe {
+        enable(true, game);
+        crate::game::visual_runtime::clear_hdma(game);
+    }
+    crate::game::scanline_irq::disable(game);
+    reset_gameplay_layers(clear_current_irq, game);
+}
+
 pub(crate) fn reset_gameplay_layers(clear_current_irq: bool, game: &mut Game) {
     word!(game.fx_layer_blending_config_a = 0);
     if clear_current_irq {
