@@ -4,6 +4,35 @@ use crate::game::{constants::buttons::*, controller_input, menu_tilemap, music::
 use crate::game_state::Game;
 use crate::ram_map::word;
 
+pub(crate) fn initialize(game: &mut Game, upload: fn(&mut Game)) {
+    game.g_ram[0x5d] = 0;
+    game.g_ram[0x69] = 19;
+    for mirror in [0x6b, 0x6c, 0x6d, 0x6e, 0x71, 0x6f] {
+        game.g_ram[mirror] = 0;
+    }
+    upload(game);
+    word! { game, 0;
+        reg_BG1HOFS, reg_BG1VOFS, reg_BG2HOFS, reg_BG2VOFS, debug_invincibility,
+    }
+    word_transfers!(game, descending, 256; le(palette_buffer, 255) <- rom(0x8ee400, 255));
+    for (index, source) in [0x978df4, 0x978fcd, 0x9791c4, 0x97938d, 0x97953a]
+        .into_iter()
+        .enumerate()
+    {
+        crate::game::decompression::decompress_to_ram(source, 0x1c000 + index * 0x800, game);
+    }
+    copy_screen(0x1c7fe, false, game);
+    // The ROM keeps the final copied tile in A through the object clear.
+    let initial_tile = u16::from_le_bytes([game.g_ram[0x3000], game.g_ram[0x3001]]);
+    word!(game.menu_option_index = 0);
+    crate::game::options_objects::clear(game);
+    crate::game::options_objects::spawn(initial_tile, 0xf4b8, game);
+    // The first initializer leaves its palette $0E00 in A for this call.
+    crate::game::options_objects::spawn(0x0e00, 0xf4c4, game);
+    word!(game.game_options_screen_index += 1);
+    highlight_language(game);
+}
+
 fn navigate(last: u16, game: &mut Game) {
     if word!(game.joypad1_newkeys) & kButton_Up as u16 != 0 {
         QueueSfx1_Max6(0x37, game);

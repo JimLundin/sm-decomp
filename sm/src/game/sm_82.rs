@@ -1,4 +1,3 @@
-use crate::game::decompression::decompress_to_ram;
 use crate::game::demo_rooms::{self, reset as reset_attract};
 use crate::game::file_menu::advance as advance_file_menu;
 use crate::game::game_over::advance as advance_game_over;
@@ -706,7 +705,14 @@ pub unsafe fn GameState_2_GameOptionsMenu(game: &mut Game) -> CoroutineRet {
         let screen = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
             [usize::from(word!(game.game_options_screen_index))];
         match screen {
-            1 => GameOptionsMenu_1_LoadingOptionsScreen(game),
+            1 => options_settings::initialize(game, |game| {
+                crate::rtl::register_writes! { game;
+                    mirror(VMADDL as u16, 0, 0x72, true); byte(VMADDH as u16, 0x58);
+                    byte(VMAIN as u16, 0x80);
+                }
+                setup_transfer(u16::from_ne_bytes([1, 0x18]), 0x8edc00, 0x800, game);
+                WriteReg(MDMAEN as u16, 2, game);
+            }),
             2 => options_settings::fade_in::<false>(game),
             3 => options_settings::main_menu(game),
             4 => GameOptionsMenu_4_StartGame(game),
@@ -724,43 +730,6 @@ pub unsafe fn GameState_2_GameOptionsMenu(game: &mut Game) -> CoroutineRet {
             crate::game::menu_tilemap::queue_options(game);
         }
         kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0x5d) = 0;
-        *ram_ptr!(game; 0x69) = 19;
-        *ram_ptr!(game; 0x6b) = 0;
-        *ram_ptr!(game; 0x6c) = 0;
-        *ram_ptr!(game; 0x6d) = 0;
-        *ram_ptr!(game; 0x6e) = 0;
-        *ram_ptr!(game; 0x71) = 0;
-        *ram_ptr!(game; 0x6f) = 0;
-        crate::rtl::register_writes! { game;
-            mirror(VMADDL as u16, 0, 0x72, true); byte(VMADDH as u16, 0x58);
-            byte(VMAIN as u16, 0x80);
-        }
-        setup_transfer(u16::from_ne_bytes([1, 0x18]), 0x8edc00, 0x800, game);
-        WriteReg(MDMAEN as u16, 2, game);
-        word! { game, 0;
-            reg_BG1HOFS, reg_BG1VOFS, reg_BG2HOFS, reg_BG2VOFS, debug_invincibility,
-        }
-        word_transfers!(game, descending, 256; le(palette_buffer, 255) <- rom(0x8ee400, 255));
-        decompress_to_ram(0x978df4, 0x1c000, game);
-        decompress_to_ram(0x978fcd, 0x1c800, game);
-        decompress_to_ram(0x9791c4, 0x1d000, game);
-        decompress_to_ram(0x97938d, 0x1d800, game);
-        decompress_to_ram(0x97953a, 0x1e000, game);
-        options_settings::copy_screen(0x1c7fe, false, game);
-        // The ROM keeps the final copied tile in A through the object clear.
-        let initial_tile = u16::from_le_bytes([game.g_ram[0x3000], game.g_ram[0x3001]]);
-        word!(game.menu_option_index = 0);
-        crate::game::options_objects::clear(game);
-        crate::game::options_objects::spawn(initial_tile, addr_stru_82F4B8 as u16, game);
-        // The first initializer leaves its palette $0E00 in A for this call.
-        crate::game::options_objects::spawn(0x0e00, addr_stru_82F4C4 as u16, game);
-        word!(game.game_options_screen_index += 1);
-        options_settings::highlight_language(game);
     }
 }
 pub unsafe fn GameOptionsMenu_4_StartGame(game: &mut Game) {
