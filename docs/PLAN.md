@@ -62,7 +62,7 @@ sm9b retired: 3872 selected+272 setup/0; -37 engine/-235 legacy/-14 unsafe/-1 ve
 Full224/239=93.72%; unsafe -14 includes9 enforcement attributes,4 bank lines and1 caller block.
 Actual AST3 kills3453 selected/0 setup in10.08min; unchangedtarget750d retains original0cdf attribution.
 Next: own-push full86, liquid motion and intro transitions; Linux/cloud remain disjoint.
-Linux M: retire remaining explosion-window row/shape pointers; keep the prescaled native diagnostic contract.
+Linux M: retire room camera/door split-word pointers and share ordered background queuing; keep RAM/backend contracts.
 ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
 A4 post-push full86 passed on0a; its scoped3kills/1unobserved/1unviable gaps remain.
 Native player/DSP/APU and input Vec/FILE/Cart are owned; GameOwner does not promise Rust thread sharing.

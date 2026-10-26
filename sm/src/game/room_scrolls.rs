@@ -1,5 +1,6 @@
 //! Room scroll definitions, camera following and their shared executors.
 //! Dispatch identities retain the full address; cell writes retain their order.
+#![forbid(unsafe_code)]
 mod camera;
 pub(crate) use camera::{calculate_blocks, calculate_scrolls, debug_position, layer2_position};
 pub(crate) mod door;
@@ -106,52 +107,62 @@ use crate::game::{
     player_collision::operations::Axis, player_movement::speed::record_camera_distance,
     session_runtime::Runtime,
 };
-use crate::ram_map::{ram_ptr, word};
+use crate::ram_map::{word, words as fields};
 use crate::rtl::{Unreachable, words};
 use camera::{auto_x, auto_y, trigger_down, trigger_left, trigger_right, trigger_up};
-pub(crate) unsafe fn advance_camera(game: &mut Game) {
-    unsafe {
-        if word!(game.slow_grabble_scrolling_flag) != 0 {
-            if (word!(game.samus_x_pos) & 0x8000) == 0 {
-                let mut v0: u16 = (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos));
-                if word!(game.samus_x_pos) < word!(game.layer1_x_pos) || v0 < 0x60 {
-                    word!(game.layer1_x_pos -= 3);
-                } else if v0 >= 0xa0 {
-                    word!(game.layer1_x_pos += 3);
-                }
-                if (word!(game.samus_y_pos) & 0x8000) == 0 {
-                    let v1: u16 = (word!(game.samus_y_pos)).wrapping_sub(word!(game.layer1_y_pos));
-                    if word!(game.samus_y_pos) < word!(game.layer1_y_pos) || v1 < 0x70 {
-                        word!(game.layer1_y_pos -= 3);
-                    } else if v1 >= 0x90 {
-                        word!(game.layer1_y_pos += 3);
-                    }
-                }
+// Native split motion reads low then high and writes low then high.
+fn add_native_motion(high: usize, low: usize, amount: u32, game: &mut Game) {
+    let low_word = u16::from_ne_bytes([game.g_ram[low], game.g_ram[low + 1]]);
+    let high_word = u16::from_ne_bytes([game.g_ram[high], game.g_ram[high + 1]]);
+    let position = u32::from(low_word) | (u32::from(high_word) << 16);
+    let next = position.wrapping_add(amount);
+    word_transfers!(game, ascending, 1;
+        native(low) <- value(next as u16),
+        native(high) <- value((next >> 16) as u16),
+    );
+}
+
+pub(crate) fn advance_camera(game: &mut Game) {
+    if word!(game.slow_grabble_scrolling_flag) != 0 {
+        if (word!(game.samus_x_pos) & 0x8000) == 0 {
+            let mut v0: u16 = (word!(game.samus_x_pos)).wrapping_sub(word!(game.layer1_x_pos));
+            if word!(game.samus_x_pos) < word!(game.layer1_x_pos) || v0 < 0x60 {
+                word!(game.layer1_x_pos -= 3);
+            } else if v0 >= 0xa0 {
+                word!(game.layer1_x_pos += 3);
             }
-            auto_x(game);
-            auto_y(game);
-        } else {
-            record_camera_distance(Runtime::new(game).session_mut(), Axis::X);
-            follow_x(game);
-            record_camera_distance(Runtime::new(game).session_mut(), Axis::Y);
-            follow_y(game);
-        }
-        match word!(game.scrolling_finished_hook) {
-            0 => {}
-            0x9589 => {
-                if word!(game.layer1_y_pos) <= 0x1d0 {
-                    word!(game.layer1_y_pos = 464);
+            if (word!(game.samus_y_pos) & 0x8000) == 0 {
+                let v1: u16 = (word!(game.samus_y_pos)).wrapping_sub(word!(game.layer1_y_pos));
+                if word!(game.samus_y_pos) < word!(game.layer1_y_pos) || v1 < 0x70 {
+                    word!(game.layer1_y_pos -= 3);
+                } else if v1 >= 0x90 {
+                    word!(game.layer1_y_pos += 3);
                 }
-            }
-            _ => {
-                Unreachable(game);
             }
         }
-        word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
-        word!(game.samus_prev_x_subpos = word!(game.samus_x_subpos));
-        word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
-        word!(game.samus_prev_y_subpos = word!(game.samus_y_subpos));
+        auto_x(game);
+        auto_y(game);
+    } else {
+        record_camera_distance(Runtime::new(game).session_mut(), Axis::X);
+        follow_x(game);
+        record_camera_distance(Runtime::new(game).session_mut(), Axis::Y);
+        follow_y(game);
     }
+    match word!(game.scrolling_finished_hook) {
+        0 => {}
+        0x9589 => {
+            if word!(game.layer1_y_pos) <= 0x1d0 {
+                word!(game.layer1_y_pos = 464);
+            }
+        }
+        _ => {
+            Unreachable(game);
+        }
+    }
+    word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
+    word!(game.samus_prev_x_subpos = word!(game.samus_x_subpos));
+    word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
+    word!(game.samus_prev_y_subpos = word!(game.samus_y_subpos));
 }
 macro_rules! chase_ideal_layer_position {
     (
@@ -160,87 +171,82 @@ macro_rules! chase_ideal_layer_position {
         $scroll_positive:path $(,)?
     ) => {
         if word!($game.$ideal_position) != word!($game.$position) {
-            if ((word!($game.$ideal_position)) as i16).wrapping_sub((word!($game.$position)) as i16)
-                < 0
-            {
-                words!(
-                    $game.$position,
-                    $subposition += -(words!(i32, $game.$movement, $movement_fraction)) as u32
-                );
+            let negative = (word!($game.$ideal_position) as i16)
+                .wrapping_sub(word!($game.$position) as i16)
+                < 0;
+            let amount = if negative {
+                -(words!(i32, $game.$movement, $movement_fraction)) as u32
+            } else {
+                words!($game.$movement, $movement_fraction)
+            };
+            add_native_motion(fields::$position, fields::$subposition, amount, $game);
+            if negative {
                 $scroll_negative($game);
             } else {
-                words!(
-                    $game.$position,
-                    $subposition += words!($game.$movement, $movement_fraction)
-                );
                 $scroll_positive($game);
             }
         }
     };
 }
 
-unsafe fn follow_x(game: &mut Game) {
-    unsafe {
-        static kSamus_HandleScroll_X_FaceLeft: [u16; 4] = [0xa0, 0x50, 0x20, 0xe0];
-        static kSamus_HandleScroll_X_FaceRight: [u16; 4] = [0x60, 0x40, 0x20, 0xe0];
-        if word!(game.samus_prev_x_pos) == word!(game.samus_x_pos) {
-            auto_x(game);
-            return;
-        }
-        let distances = if (word!(game.knockback_dir) != 0
-            || *ram_ptr!(game; 0xa1f) == 16
-            || word!(game.samus_x_accel_mode) == 1) as i32
-            ^ (*ram_ptr!(game; 0xa1e) != 4) as i32
-            != 0
-        {
-            &kSamus_HandleScroll_X_FaceRight
+fn follow_x(game: &mut Game) {
+    static kSamus_HandleScroll_X_FaceLeft: [u16; 4] = [0xa0, 0x50, 0x20, 0xe0];
+    static kSamus_HandleScroll_X_FaceRight: [u16; 4] = [0x60, 0x40, 0x20, 0xe0];
+    if word!(game.samus_prev_x_pos) == word!(game.samus_x_pos) {
+        auto_x(game);
+        return;
+    }
+    let distances = if (word!(game.knockback_dir) != 0
+        || game.g_ram[0xa1f] == 16
+        || word!(game.samus_x_accel_mode) == 1) as i32
+        ^ (game.g_ram[0xa1e] != 4) as i32
+        != 0
+    {
+        &kSamus_HandleScroll_X_FaceRight
+    } else {
+        &kSamus_HandleScroll_X_FaceLeft
+    };
+    word!(
+        game.ideal_layer1_xpos = word!(game.samus_x_pos)
+            .wrapping_sub(distances[(word!(game.camera_distance_index) >> 1) as usize])
+    );
+    chase_ideal_layer_position!(
+        game,
+        ideal_layer1_xpos,
+        layer1_x_pos,
+        layer1_x_subpos,
+        absolute_moved_last_frame_x,
+        absolute_moved_last_frame_x_fract,
+        trigger_left,
+        trigger_right
+    );
+}
+fn follow_y(game: &mut Game) {
+    if word!(game.samus_prev_y_pos) == word!(game.samus_y_pos) {
+        auto_y(game);
+    } else {
+        if word!(game.samus_y_dir) == 1 {
+            word!(
+                game.ideal_layer1_ypos =
+                    (word!(game.samus_y_pos)).wrapping_sub(word!(game.down_scroller))
+            );
         } else {
-            &kSamus_HandleScroll_X_FaceLeft
-        };
-        word!(
-            game.ideal_layer1_xpos = word!(game.samus_x_pos)
-                .wrapping_sub(distances[(word!(game.camera_distance_index) >> 1) as usize])
-        );
+            word!(
+                game.ideal_layer1_ypos =
+                    (word!(game.samus_y_pos)).wrapping_sub(word!(game.up_scroller))
+            );
+        }
         chase_ideal_layer_position!(
             game,
-            ideal_layer1_xpos,
-            layer1_x_pos,
-            layer1_x_subpos,
-            absolute_moved_last_frame_x,
-            absolute_moved_last_frame_x_fract,
-            trigger_left,
-            trigger_right
+            ideal_layer1_ypos,
+            layer1_y_pos,
+            layer1_y_subpos,
+            absolute_moved_last_frame_y,
+            absolute_moved_last_frame_y_fract,
+            trigger_up,
+            trigger_down
         );
-    }
-}
-unsafe fn follow_y(game: &mut Game) {
-    unsafe {
-        if word!(game.samus_prev_y_pos) == word!(game.samus_y_pos) {
-            auto_y(game);
-        } else {
-            if word!(game.samus_y_dir) == 1 {
-                word!(
-                    game.ideal_layer1_ypos =
-                        (word!(game.samus_y_pos)).wrapping_sub(word!(game.down_scroller))
-                );
-            } else {
-                word!(
-                    game.ideal_layer1_ypos =
-                        (word!(game.samus_y_pos)).wrapping_sub(word!(game.up_scroller))
-                );
-            }
-            chase_ideal_layer_position!(
-                game,
-                ideal_layer1_ypos,
-                layer1_y_pos,
-                layer1_y_subpos,
-                absolute_moved_last_frame_y,
-                absolute_moved_last_frame_y_fract,
-                trigger_up,
-                trigger_down
-            );
-        };
-    }
+    };
 }
 
 pub(crate) fn fill_viewport(game: &mut Game, mut flush: impl FnMut(&mut Game)) {
@@ -298,72 +304,33 @@ pub(crate) fn update_scrolls(game: &mut Game) {
 
 pub(crate) fn update_backgrounds(game: &mut Game) {
     calculate_blocks(game);
-    let mut v0: i32 = 0;
-    let v1: bool = ((word!(game.layer1_x_block)) as i16)
-        .wrapping_sub((word!(game.previous_layer1_x_block)) as i16)
-        < 0;
-    if word!(game.layer1_x_block) != word!(game.previous_layer1_x_block) {
-        word!(game.previous_layer1_x_block = word!(game.layer1_x_block));
-        if !v1 {
-            v0 = 16;
-        }
-        word!(game.blocks_to_update_x_block = (word!(game.layer1_x_block) as i32 + v0) as u16);
-        word!(game.vram_blocks_to_update_x_block = (word!(game.bg1_x_block) as i32 + v0) as u16);
-        word!(game.blocks_to_update_y_block = word!(game.layer1_y_block));
-        word!(game.vram_blocks_to_update_y_block = word!(game.bg1_y_block));
-        queue_scrolling_tiles(0x0, ScrollingDmaLayout::Column, game);
-    }
-    if game.g_ram[0x91b] & 1 == 0 {
-        let mut v2: i32 = 0;
-        let v3: bool = ((word!(game.layer2_x_block)) as i16)
-            .wrapping_sub((word!(game.previous_layer2_x_block)) as i16)
-            < 0;
-        if word!(game.layer2_x_block) != word!(game.previous_layer2_x_block) {
-            word!(game.previous_layer2_x_block = word!(game.layer2_x_block));
-            if !v3 {
-                v2 = 16;
+    // RAM's coordinates are two bytes apart; BG2's fields follow BG1 by four.
+    for (axis, layout) in [
+        (0, ScrollingDmaLayout::Column),
+        (2, ScrollingDmaLayout::Row),
+    ] {
+        for (layer, parameter) in [(0, 0), (4, 0x1c)] {
+            if layer != 0 && game.g_ram[0x91b + axis / 2] & 1 != 0 {
+                continue;
             }
-            word!(game.blocks_to_update_x_block = (word!(game.layer2_x_block) as i32 + v2) as u16);
-            word!(
-                game.vram_blocks_to_update_x_block = (word!(game.bg2_x_block) as i32 + v2) as u16
-            );
-            word!(game.blocks_to_update_y_block = word!(game.layer2_y_block));
-            word!(game.vram_blocks_to_update_y_block = word!(game.bg2_y_block));
-            queue_scrolling_tiles(0x1c, ScrollingDmaLayout::Column, game);
-        }
-    }
-    let mut v4: i32 = 1;
-    let v5: bool = ((word!(game.layer1_y_block)) as i16)
-        .wrapping_sub((word!(game.previous_layer1_y_block)) as i16)
-        < 0;
-    if word!(game.layer1_y_block) != word!(game.previous_layer1_y_block) {
-        word!(game.previous_layer1_y_block = word!(game.layer1_y_block));
-        if !v5 {
-            v4 = 15;
-        }
-        word!(game.blocks_to_update_y_block = (word!(game.layer1_y_block) as i32 + v4) as u16);
-        word!(game.vram_blocks_to_update_y_block = (word!(game.bg1_y_block) as i32 + v4) as u16);
-        word!(game.blocks_to_update_x_block = word!(game.layer1_x_block));
-        word!(game.vram_blocks_to_update_x_block = word!(game.bg1_x_block));
-        queue_scrolling_tiles(0x0, ScrollingDmaLayout::Row, game);
-    }
-    if game.g_ram[0x91c] & 1 == 0 {
-        let mut v6: i32 = 1;
-        let v7: bool = ((word!(game.layer2_y_block)) as i16)
-            .wrapping_sub((word!(game.previous_layer2_y_block)) as i16)
-            < 0;
-        if word!(game.layer2_y_block) != word!(game.previous_layer2_y_block) {
-            word!(game.previous_layer2_y_block = word!(game.layer2_y_block));
-            if !v7 {
-                v6 = 15;
+            let current = fields::layer1_x_block + layer + axis;
+            let previous = fields::previous_layer1_x_block + layer + axis;
+            let negative = (word!(@read game, current) as i16)
+                .wrapping_sub(word!(@read game, previous) as i16)
+                < 0;
+            if word!(@read game, current) != word!(@read game, previous) {
+                word!(@write game, previous, word!(@read game, current));
+                // Columns retain edges 0/16; rows retain edges 1/15.
+                let row = axis as i32 / 2;
+                let edge = if negative { row } else { 16 - row };
+                for (coordinate, edge) in [(axis, edge), (axis ^ 2, 0)] {
+                    word!(@write game, fields::blocks_to_update_x_block + coordinate,
+                        (word!(@read game, fields::layer1_x_block + layer + coordinate) as i32 + edge) as u16);
+                    word!(@write game, fields::vram_blocks_to_update_x_block + coordinate,
+                        (word!(@read game, fields::bg1_x_block + layer + coordinate) as i32 + edge) as u16);
+                }
+                queue_scrolling_tiles(parameter, layout, game);
             }
-            word!(game.blocks_to_update_y_block = (word!(game.layer2_y_block) as i32 + v6) as u16);
-            word!(
-                game.vram_blocks_to_update_y_block = (word!(game.bg2_y_block) as i32 + v6) as u16
-            );
-            word!(game.blocks_to_update_x_block = word!(game.layer2_x_block));
-            word!(game.vram_blocks_to_update_x_block = word!(game.bg2_x_block));
-            queue_scrolling_tiles(0x1c, ScrollingDmaLayout::Row, game);
         }
     }
 }
