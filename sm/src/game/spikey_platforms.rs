@@ -28,22 +28,25 @@ pub(crate) fn initialize(game: &mut Game) {
     let mut runtime = Runtime::new(game);
     let index = runtime.word(fields::cur_enemy_index);
     let (key, at) = (Key::from_legacy(index), usize::from(index));
-    let [table, wait] = runtime
-        .resolve_actor(key, Native)
-        .parameters
-        .map(|p| p & 0xff);
-    let speed = 8u16.wrapping_mul(table);
-    runtime.write_slice_native(at + SPEED, speed);
-    let fraction = speed_word(&runtime, (speed >> 1) + 1);
-    let whole = speed_word(&runtime, speed >> 1);
-    runtime.write_slice_native(at + RELOAD, wait);
     runtime.edit_actor(key, Native, |actor| {
         actor.instruction = 0x8b29;
-        let top = actor.y.whole;
-        let bottom = top.wrapping_add(actor.parameters[1] >> 8);
-        actor.variables = [WAIT, wait, top, bottom, fraction];
-        actor.pre_instruction = whole;
+        actor.variables[0] = WAIT;
     });
+    // Parameters are physical byte lanes of the native overlay, not numeric halves.
+    let speed = 8 * u16::from(runtime.byte(at + 0xfb4));
+    runtime.write_slice_native(at + SPEED, speed);
+    let fraction = speed_word(&runtime, (speed >> 1) + 1);
+    runtime.edit_actor(key, Native, |actor| actor.variables[4] = fraction);
+    let whole = speed_word(&runtime, speed >> 1);
+    runtime.edit_actor(key, Native, |actor| actor.pre_instruction = whole);
+    let height = u16::from(runtime.byte(at + 0xfb7));
+    runtime.edit_actor(key, Native, |actor| {
+        actor.variables[3] = actor.y.whole.wrapping_add(height);
+        actor.variables[2] = actor.y.whole;
+    });
+    let wait = u16::from(runtime.byte(at + 0xfb6));
+    runtime.write_slice_native(at + RELOAD, wait);
+    runtime.edit_actor(key, Native, |actor| actor.variables[1] = wait);
 }
 
 pub(crate) fn run(game: &mut Game) {
@@ -51,19 +54,18 @@ pub(crate) fn run(game: &mut Game) {
     let index = runtime.word(fields::cur_enemy_index);
     let (key, at) = (Key::from_legacy(index), usize::from(index));
     let start = runtime.resolve_actor(key, Native).y.whole;
-    let mut landed = false;
     match runtime.resolve_actor(key, Native).variables[0] {
         WAIT => {
-            let reload = runtime.native_word(at + RELOAD);
-            let speed = runtime.edit_actor(key, Native, |actor| {
+            let expired = runtime.edit_actor(key, Native, |actor| {
                 actor.variables[1] = actor.variables[1].wrapping_sub(1);
-                (actor.variables[1] == 0).then(|| {
-                    actor.variables[..2].copy_from_slice(&[FALL, reload]);
-                    8u16.wrapping_mul(actor.parameters[0] & 0xff)
-                })
+                actor.variables[1] == 0
             });
-            if let Some(speed) = speed {
+            if expired {
+                let reload = runtime.native_word(at + RELOAD);
+                runtime.edit_actor(key, Native, |actor| actor.variables[1] = reload);
+                let speed = 8 * u16::from(runtime.byte(at + 0xfb4));
                 runtime.write_slice_native(at + SPEED, speed);
+                runtime.edit_actor(key, Native, |actor| actor.variables[0] = FALL);
             }
         }
         FALL => {
@@ -71,19 +73,20 @@ pub(crate) fn run(game: &mut Game) {
             let speed = runtime.native_word(at + SPEED);
             let velocity = (u32::from(speed_word(&runtime, speed >> 1)) << 16)
                 | u32::from(speed_word(&runtime, (speed >> 1) + 1));
-            landed = runtime.edit_actor(key, Native, |actor| {
+            let landed = runtime.edit_actor(key, Native, |actor| {
                 actor.y.advance(velocity as i32);
-                let landed = actor.y.whole.wrapping_sub(actor.variables[3]) as i16 >= 0;
-                if landed {
-                    actor.variables[0] = REST;
-                    actor.y.whole = actor.variables[3];
-                }
-                landed
+                actor.y.whole.wrapping_sub(actor.variables[3]) as i16 >= 0
             });
             if landed {
                 runtime.write_slice_native(at + REST_TIMER, 64);
+                runtime.edit_actor(key, Native, |actor| {
+                    actor.variables[0] = REST;
+                    actor.y.whole = actor.variables[3];
+                });
+                runtime.queue_sound(2, 6, 0x1b);
             }
             carry_samus(&mut runtime, key, start);
+            let speed = runtime.native_word(at + SPEED);
             let fast = speed.wrapping_sub(504) & 0x8000 == 0;
             runtime.write_slice_native(at + SPEED, if fast { 512 } else { speed.wrapping_add(8) });
         }
@@ -106,10 +109,6 @@ pub(crate) fn run(game: &mut Game) {
             carry_samus(&mut runtime, key, start);
         }
         _ => runtime.unreachable(),
-    }
-    drop(runtime);
-    if landed {
-        crate::game::music::QueueSfx2_Max6(0x1b, game);
     }
 }
 

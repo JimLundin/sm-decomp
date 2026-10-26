@@ -7,7 +7,7 @@ use crate::{
 };
 use core::mem::offset_of;
 use std::panic::{AssertUnwindSafe, catch_unwind};
-pub(crate) const CASES: u32 = 36;
+pub(crate) const CASES: u32 = 37;
 pub(crate) fn offset(address: u32) -> usize {
     crate::rtl::lorom_offset(address) as usize
 }
@@ -328,6 +328,9 @@ pub(crate) fn capture_case(
     if id == 35 {
         return catch_unwind(AssertUnwindSafe(fire_geyser_widened)).ok();
     }
+    if id == 36 {
+        return catch_unwind(AssertUnwindSafe(spikey_initialization_prefix)).ok();
+    }
     let result = catch_unwind(AssertUnwindSafe(|| {
         let native = RomImage::zeroed(0x200000);
         let loaded = RomImage::zeroed(0x200000);
@@ -534,6 +537,94 @@ fn fire_geyser_widened() -> Vec<u8> {
             expected.as_slice(),
             "geyser finish {index:x}"
         );
+        assert!(!g.g_fail);
+        snapshot(&mut out, &g);
+    }
+    out
+}
+
+// Movies do not reach missing/truncated ROM or native parameter byte-lane checks.
+fn spikey_initialization_prefix() -> Vec<u8> {
+    use crate::game::spikey_platforms;
+    let mut out = b"B6SP1".to_vec();
+    let table = offset(0xa28187);
+    for mode in 0..3 {
+        let mut g = Game::new();
+        g.g_ram.fill(0);
+        g.g_ram[0xfb4..0xfb8].copy_from_slice(&[3, 0xa5, 7, 11]);
+        for (at, value) in [(0xf7e, 100), (0xfb0, 0x5555), (0xfb2, 0x6666)] {
+            put(&mut g, at, value);
+        }
+        g.register_native_rom(RomImage::zeroed(0x200000));
+        g.loaded_rom = match mode {
+            0 => None,
+            1 => Some(RomImage::zeroed(table + 27)),
+            _ => {
+                let image = RomImage::zeroed(0x200000);
+                for (at, value) in [(table + 24, 0x3344u16), (table + 26, 0x1122)] {
+                    for (lane, byte) in value.to_ne_bytes().into_iter().enumerate() {
+                        image.write(at + lane, byte);
+                    }
+                }
+                Some(image)
+            }
+        };
+        let mut expected = g.g_ram.to_vec();
+        for (at, value) in [(0xf92, 0x8b29u16), (0xfa8, 0x8bb4), (0x7804, 24)] {
+            expected[at..at + 2].copy_from_slice(&value.to_ne_bytes());
+        }
+        let result = catch_unwind(AssertUnwindSafe(|| spikey_platforms::initialize(&mut g)));
+        if mode < 2 {
+            let failure = result.expect_err("missing/truncated loaded ROM must fail");
+            let message = failure
+                .downcast_ref::<String>()
+                .map(String::as_str)
+                .or_else(|| failure.downcast_ref::<&str>().copied())
+                .unwrap();
+            if mode == 0 {
+                assert_eq!(message, "ROM must be loaded");
+            } else {
+                assert_eq!(
+                    message,
+                    format!(
+                        "index out of bounds: the len is {} but the index is {}",
+                        table + 27,
+                        table + 27
+                    )
+                );
+            }
+        } else {
+            result.unwrap();
+            for (at, value) in [
+                (0xfb0, 0x1122u16),
+                (0xfb2, 0x3344),
+                (0xfae, 111),
+                (0xfac, 100),
+                (0x7800, 7),
+                (0xfaa, 7),
+            ] {
+                expected[at..at + 2].copy_from_slice(&value.to_ne_bytes());
+            }
+        }
+        assert_eq!(
+            g.g_ram.as_slice(),
+            expected.as_slice(),
+            "spikey init prefix {mode}"
+        );
+        if mode == 2 {
+            put(&mut g, 0xfaa, 1);
+            g.g_ram[0xfb4] = 4;
+            expected[0xfb4] = 4;
+            for (at, value) in [(0xfa8, 0x8bdcu16), (0x7804, 32)] {
+                expected[at..at + 2].copy_from_slice(&value.to_ne_bytes());
+            }
+            spikey_platforms::run(&mut g);
+            assert_eq!(
+                g.g_ram.as_slice(),
+                expected.as_slice(),
+                "spikey wait physical parameter"
+            );
+        }
         assert!(!g.g_fail);
         snapshot(&mut out, &g);
     }
