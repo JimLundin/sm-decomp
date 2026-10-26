@@ -10,6 +10,7 @@ use std::sync::Arc;
 /// fixed while the emulated hardware holds pointers into `g_ram`.
 pub struct Game {
     backend: Option<crate::snes::snes::Backend>,
+    _native_player: Option<crate::spc_player::NativePlayer>,
     actor_identity: Option<crate::game::actors::identity::ActorIdentityState>,
     pub(crate) actor_snapshots: crate::game::actors::snapshot::ActorSnapshotSidecars,
     world: Arc<WorldBinding>,
@@ -91,6 +92,16 @@ impl Game {
         let backend = crate::snes::snes::Backend::new((&raw mut self.g_ram).cast());
         (self.g_snes, self.g_cpu) = backend.views();
         self.backend = Some(backend);
+    }
+
+    /// Replace the player and DSP; existing raw views become invalid.
+    /// # Safety
+    /// All native/audio users must stop before replacement and before Game drops.
+    /// History links stay borrowed, and live references must remain exclusive.
+    pub unsafe fn create_native_player(&mut self) {
+        let player = crate::spc_player::NativePlayer::new();
+        self.g_spc_player = player.view();
+        self._native_player = Some(player);
     }
 
     pub(crate) fn save_backend_observation(&self, output: &mut crate::recording::RecordingBytes) {
@@ -781,6 +792,7 @@ impl Game {
         };
         Box::new(Self {
             backend: None,
+            _native_player: None,
             world,
             actor_identity: Some(crate::game::actors::identity::ActorIdentityState::empty()),
             actor_snapshots: Default::default(),

@@ -31,10 +31,6 @@ impl Dsp {
         }
     }
 }
-#[forbid(unsafe_code)]
-pub fn dsp_init(ram: crate::apu_ram::ApuRam) -> *mut Dsp {
-    Box::into_raw(Box::new(Dsp::new(ram)))
-}
 pub unsafe fn dsp_reset(dsp: *mut Dsp) {
     unsafe {
         backend_reset(&raw mut (*dsp).state);

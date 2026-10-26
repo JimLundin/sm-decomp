@@ -1,11 +1,12 @@
 use crate::c_library::{__assert_fail, printf};
 use crate::initial_state::InitialState;
-use crate::snes::dsp::{dsp_cycle, dsp_init, dsp_reset, dsp_write};
+use crate::snes::dsp::{Dsp, dsp_cycle, dsp_reset, dsp_write};
 pub use crate::types::{
     Channel, DspRegWriteHistory, NativePlayerState, SfxChan, SfxRegs, SpcPlayer, size_t,
 };
 use ::core::ffi::c_char;
 use ::core::mem::size_of;
+use std::{cell::UnsafeCell, rc::Rc};
 pub const EVOLL: DspReg = 44;
 pub const EVOLR: DspReg = 60;
 pub const EFB: DspReg = 13;
@@ -634,15 +635,31 @@ crate::forward_calls! { pub unsafe fn (p: *mut SpcPlayer);
         2,
     );
 }
+/// Own the native player and its separate DSP without moving initialized nodes.
+/// Raw views borrow these allocations; live native references must be exclusive.
+pub(crate) struct NativePlayer {
+    player: Rc<UnsafeCell<SpcPlayer>>,
+    _dsp: Rc<UnsafeCell<Dsp>>,
+}
 #[forbid(unsafe_code)]
-pub fn SpcPlayer_Create() -> *mut SpcPlayer {
-    let ram = crate::apu_ram::ApuRam::new();
-    let state = NativePlayerState {
-        dsp: dsp_init(ram.clone()),
-        ram: ram.as_mut_ptr(),
-        ..NativePlayerState::INITIAL
-    };
-    Box::into_raw(Box::new(SpcPlayer { state, ram }))
+impl NativePlayer {
+    pub(crate) fn new() -> Self {
+        let ram = crate::apu_ram::ApuRam::new();
+        let dsp = Rc::new(UnsafeCell::new(Dsp::new(ram.clone())));
+        let state = NativePlayerState {
+            dsp: dsp.get(),
+            ram: ram.as_mut_ptr(),
+            ..NativePlayerState::INITIAL
+        };
+        Self {
+            player: Rc::new(UnsafeCell::new(SpcPlayer { state, ram })),
+            _dsp: dsp,
+        }
+    }
+
+    pub(crate) fn view(&self) -> *mut SpcPlayer {
+        self.player.get()
+    }
 }
 pub unsafe fn SpcPlayer_Initialize(p: *mut SpcPlayer) {
     unsafe {

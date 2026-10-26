@@ -13,7 +13,7 @@ use sm::c_library::{exit, fprintf, memcpy};
 use sm::game_state::{Game, GameOwner};
 use sm::host::Die;
 use sm::rtl::*;
-use sm::spc_player::{SpcPlayer_Create, SpcPlayer_Initialize};
+use sm::spc_player::SpcPlayer_Initialize;
 use sm::types::{FILE, RendererFuncs, Snes, size_t};
 mod verify;
 const kWindowTitle: &[u8] = b"SuperMet\0";
@@ -86,7 +86,7 @@ unsafe fn initialize_verify_audio(game: &mut Game) -> Result<(), String> {
         if g_audio_mutex.is_null() {
             return Err("unable to create audio mutex".into());
         }
-        game.g_spc_player = SpcPlayer_Create();
+        game.create_native_player();
         if game.g_spc_player.is_null() {
             SDL_DestroyMutex(g_audio_mutex);
             return Err("unable to initialize sound driver".into());
@@ -193,7 +193,7 @@ unsafe extern "C-unwind" fn sm_host_end_draw(funcs: *const RendererFuncs) {
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_create_player(owner: *const GameOwner) {
     unsafe {
-        (*owner).with(|game| game.g_spc_player = SpcPlayer_Create());
+        (*owner).with(|game| game.create_native_player());
     }
 }
 #[unsafe(no_mangle)]
