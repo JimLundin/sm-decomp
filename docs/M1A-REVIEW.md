@@ -1,10 +1,17 @@
 # M1a safe-signature review
 
-**Current requalification (2026-10-26, Core30):** only
-`GameState_22_SamusNoHealth_Dying` and `EnsureSamusDrawnEachFrame` are retired
-into their existing checked owners/callers. The historical 22-entry restoration
-list and witnesses below remain; this grants no blanket exception to the other
-20 entries or verifier bridge. The other five bank82 contracts and state28 stay exact.
+**Current requalification (2026-10-26, Core30/Core34):**
+`GameState_22_SamusNoHealth_Dying`, `EnsureSamusDrawnEachFrame` and
+`GameOptionsMenu_4_StartGame` are retired into existing checked owners/callers.
+The historical 22-entry restoration list and witnesses below remain; this grants
+no blanket exception to the other 19 entries or verifier bridge. The other four
+bank82 contracts and state28 stay exact; hardware state2 remains unsafe.
+
+Core34 reuses the checked native map record before saving, preserving diagnostic,
+native/loaded allocation separation, alias/checksum order and failure prefixes.
+Its eight rows pass: 18,223 selected + 28,700 setup frames, zero failures, both full
+14,350-frame Kago gaps, full intro and fresh options-return checkpoint. Exact
+menu4/debug/checksum variants remain source-reviewed; no blanket runtime claim.
 
 The checked LANDING/native OAM/full-odd ROM and interpreter/sound closures preserve
 the six lossless state projections, animation/drop/draw/drop order and observer
@@ -12,7 +19,7 @@ failure prefixes. The LANDING frame16 witness now panics after the animation
 update, before death-timer/state writes. The live elevator guard remains inside
 the same foreign boundary, including its skipped path.
 
-Local verification: 33/33 rows, 75,444 selected and 28,700 setup frames, zero
+Core30 local verification: 33/33 rows, 75,444 selected and 28,700 setup frames, zero
 failures; both full 14,350-frame Kago gaps and native/codec guards pass.
 Formatting/library pass with 184 warnings unchanged.
 

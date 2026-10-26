@@ -70,6 +70,27 @@ fn start(game: &mut Game) {
     }
 }
 
+pub(crate) fn finish_start(game: &mut Game) {
+    word!(game.game_options_screen_index = 0);
+    if word!(game.enable_debug) != 0 && (word!(game.joypad1_lastkeys) & 0x20) == 0 {
+        word!(game.game_state = 5);
+        if word!(game.loading_game_state) != 5 {
+            word!(game.loading_game_state = 5);
+            crate::game::save_slots::save(word!(game.selected_save_slot), game);
+        }
+    } else if word!(game.loading_game_state) != 0 {
+        word!(game.game_state = word!(game.loading_game_state));
+        if word!(game.loading_game_state) == 34 {
+            word!(game.cinematic_function = 0xc11b);
+        }
+        word! { game, 0; menu_option_index, game_options_screen_index }
+    } else {
+        word!(game.game_state = 30);
+        word!(game.cinematic_function = 0xa395);
+        word! { game, 0; menu_option_index, screen_fade_delay, screen_fade_counter }
+    }
+}
+
 fn dissolve(game: &mut Game) {
     game.g_ram[0x57] = 3;
     word! { game, 0; screen_fade_delay, screen_fade_counter }

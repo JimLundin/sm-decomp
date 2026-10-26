@@ -106,13 +106,11 @@ fn transfer_map(direction: Direction, game: &mut Game) {
         );
         let cursor = rom_table_word!(game, 0x8182d6, area as isize);
         // Preserve the original diagnostic before capturing its native allocation.
-        unsafe { crate::rtl::RomPtr(0x810000 | u32::from(cursor), game) };
-        let image = game.capture_native_rom();
-        let base = crate::rtl::lorom_offset(0x810000 | u32::from(cursor)) as usize;
+        let map = crate::game::menu_tilemap::native_record(0x810000 | u32::from(cursor), game);
         let mut packed = usize::from(rom_table_word!(game, 0x818138, area as isize));
         let mut record = 0;
         loop {
-            let unpacked = 0xcd52 + area * 256 + usize::from(image.read(base + record));
+            let unpacked = 0xcd52 + area * 256 + usize::from(map.byte(record));
             let packed_at = 0xd91c + packed;
             let (source, destination) = match direction {
                 Direction::Save => (unpacked, packed_at),

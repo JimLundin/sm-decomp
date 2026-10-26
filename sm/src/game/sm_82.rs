@@ -6,7 +6,6 @@ use crate::game::map_menu::advance as advance_map_menu;
 use crate::game::options_settings;
 use crate::game::pause_controls::fade_in as pause_fade_in;
 pub use crate::game::prelude::*;
-use crate::game::save_slots;
 
 use crate::cpu_infra::DebugGameOverMenu;
 
@@ -169,7 +168,7 @@ pub unsafe fn GameState_2_GameOptionsMenu(game: &mut Game) -> CoroutineRet {
             }),
             2 => options_settings::fade_in::<false>(game),
             3 => options_settings::main_menu(game),
-            4 => GameOptionsMenu_4_StartGame(game),
+            4 => options_settings::finish_start(game),
             6 => options_settings::fade_in::<true>(game),
             7 => options_settings::controller(game),
             8 => options_settings::special(game),
@@ -184,27 +183,5 @@ pub unsafe fn GameState_2_GameOptionsMenu(game: &mut Game) -> CoroutineRet {
             crate::game::menu_tilemap::queue_options(game);
         }
         kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn GameOptionsMenu_4_StartGame(game: &mut Game) {
-    {
-        word!(game.game_options_screen_index = 0);
-        if word!(game.enable_debug) != 0 && (word!(game.joypad1_lastkeys) & 0x20) == 0 {
-            word!(game.game_state = kGameState_5_FileSelectMap as u16);
-            if word!(game.loading_game_state) as i32 != kLoadingGameState_5_Main as i32 {
-                word!(game.loading_game_state = kGameState_5_FileSelectMap as u16);
-                save_slots::save(word!(game.selected_save_slot), game);
-            }
-        } else if word!(game.loading_game_state) != 0 {
-            word!(game.game_state = word!(game.loading_game_state));
-            if word!(game.loading_game_state) as i32 == kGameState_34_CeresGoesBoom as i32 {
-                word!(game.cinematic_function = (0x8bc11bi32) as u16);
-            }
-            word! { game, 0; menu_option_index, game_options_screen_index }
-        } else {
-            word!(game.game_state = kGameState_30_IntroCinematic as u16);
-            word!(game.cinematic_function = (0x8ba395i32) as u16);
-            word! { game, 0; menu_option_index, screen_fade_delay, screen_fade_counter }
-        };
     }
 }
