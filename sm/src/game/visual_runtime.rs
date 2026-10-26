@@ -1612,6 +1612,55 @@ impl CinematicObjects {
     }
 }
 
+const RINKA_POSITIONS: [(u16, u16); 4] = [(112, 72), (192, 56), (128, 48), (232, 80)];
+const RINKA_X_SPEED: [u32; 4] = [0x8000, 0xffff8000, 0x8000, 0xffff8000];
+
+pub(crate) fn initialize_intro_rinka(object: u16, game: &mut Game) {
+    let variant = usize::from(word!(game.cinematic_spawn_param));
+    let slot = usize::from(object >> 1);
+    word!(game.cinematicspr_goto_timer[slot] = word!(game.cinematic_spawn_param));
+    place_cinematic_sprite(object, RINKA_POSITIONS[variant], 3584, game);
+}
+
+pub(crate) fn start_intro_rinka(object: u16, cursor: u16, game: &mut Game) -> u16 {
+    let misses_samus = word!(game.cinematicspr_goto_timer[(object >> 1)]) != 0;
+    word!(
+        game.cinematicspr_preinstr_func[(object >> 1)] = if misses_samus { 0xb93b } else { 0xb8d8 }
+    );
+    cursor
+}
+
+pub(crate) fn advance_intro_rinka(object: u16, misses_samus: bool, game: &mut Game) {
+    let slot = usize::from(object >> 1);
+    let horizontal = if misses_samus {
+        RINKA_X_SPEED[usize::from(word!(game.cinematicspr_goto_timer[slot]))]
+    } else {
+        0x8000
+    };
+    advance_cinematic_coordinate(object, false, horizontal, game);
+    advance_cinematic_coordinate(object, true, 0x8000, game);
+    if misses_samus {
+        if !(word!(game.cinematicbg_arr8[slot]) as i32 - 16 & 0x8000 != 0
+            || word!(game.cinematicbg_arr8[slot]) as i32 - 208 & 0x8000 == 0
+            || word!(game.cinematicspr_preinstr_func[0]) == 0xb80f)
+        {
+            return;
+        }
+    } else if (word!(game.cinematicbg_arr7[slot]) as i32 + 8 - (word!(game.samus_x_pos) as i32 - 5))
+        & 0x8000
+        != 0
+    {
+        if word!(game.cinematicspr_preinstr_func[0]) != 0xb80f {
+            return;
+        }
+    } else {
+        word! { game, 11; samus_invincibility_timer, samus_knockback_timer }
+        word!(game.knockback_x_dir = 1);
+    }
+    word!(game.cinematicspr_instr_timer[slot] = 1);
+    word!(game.cinematicspr_instr_ptr[slot] = 0xce53);
+}
+
 // Native split coordinates retain low-before-high reads and writes.
 fn advance_cinematic_coordinate(object: u16, vertical: bool, velocity: u32, game: &mut Game) {
     let offset = usize::from(object & !1) + if vertical { 0x20 } else { 0 };

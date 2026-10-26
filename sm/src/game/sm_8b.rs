@@ -14,11 +14,11 @@ use crate::game::visual_runtime::{
     spawn_cinematic_sprite_at, update_cinematic_transform,
 };
 use crate::game::visual_runtime::{
-    advance_credit_roll, advance_shooting_stars, draw_cinematic_sprites, draw_intro_sprites,
-    drift_cinematic_sprite, initialize_ending_cloud_band, initialize_ending_cloud_side,
-    initialize_ending_time_glyph, initialize_shooting_stars, launch_cinematic_sprite,
-    move_ending_cloud, place_cinematic_sprite, prepare_credit_roll, prepare_ending_time,
-    wait_ending_cloud,
+    advance_credit_roll, advance_intro_rinka, advance_shooting_stars, draw_cinematic_sprites,
+    draw_intro_sprites, drift_cinematic_sprite, initialize_ending_cloud_band,
+    initialize_ending_cloud_side, initialize_ending_time_glyph, initialize_intro_rinka,
+    initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud, place_cinematic_sprite,
+    prepare_credit_roll, prepare_ending_time, start_intro_rinka, wait_ending_cloud,
 };
 use crate::game::visual_state::CinematicObjects::{
     Background as CinematicBackground, Mode7 as CinematicMode7, Sprites as CinematicSprites,
@@ -563,9 +563,6 @@ pub unsafe fn CinematicFunction_Intro_Func40(game: &mut Game) {
         };
     }
 }
-static kCinematicFunction_Intro_Func42_Tab0: [u16; 4] = [0x70, 0xc0, 0x80, 0xe8];
-static kCinematicFunction_Intro_Func42_Tab1: [u16; 4] = [0x50, 0x40, 0x38, 0x58];
-static kCinematicFunction_Intro_Func45_Tab0: [u16; 4] = [0, 0xffff, 0, 0xffff];
 static kCinematicFunction_Intro_Func46_Tab0: [u16; 5] = [0, 0x10, 0xfff0, 0xfff8, 8];
 static kCinematicFunction_Intro_Func46_Tab1: [u16; 5] = [0, 0xfff0, 8, 0xfff0, 8];
 static kCinematicFunction_Intro_Func46_Tab2: [u16; 5] = [1, 0x10, 0x20, 0x30, 0x40];
@@ -1943,15 +1940,6 @@ crate::game::callback_dispatch! {
         QueueSfx2_Max6(0xb, game);
         j
     };
-    [9156805] CinematicSprInstr_Func43 [] {
-        let v1: i32 = k as i32 >> 1;
-        if word!(game.cinematicspr_goto_timer[v1]) != 0 {
-            word!(game.cinematicspr_preinstr_func[v1] = (0x8bb93bi32) as u16);
-        } else {
-            word!(game.cinematicspr_preinstr_func[v1] = (0x8bb8d8i32) as u16);
-        }
-        j
-    };
     [9158818] CinematicCommonInstr_Func70 [] {
         word!(game.cinematic_function = (0x8bc0c5i32) as u16);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
@@ -2129,6 +2117,7 @@ crate::game::callback_dispatch! {
         word! {game; samus_y_subspeed = 0; samus_y_speed = -16i32 as u16; }
     };
     @external {
+        9156805 => [start_intro_rinka(k, j, game)];
         9155382 => [intro_pages::start_page(0xb35f, j, game)]; 9155390 => [intro_pages::start_page(0xb370, j, game)];
         9155398 => [intro_pages::start_page(0xb381, j, game)]; 9155406 => [intro_pages::start_page(0xb392, j, game)];
     }
@@ -2500,51 +2489,6 @@ crate::game::callback_dispatch! {
             word!(game.cinematicspr_goto_timer[v1] += 256);
         };
     };
-    [9156824] CinematicFunction_Intro_Func44 [] {
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
-            0x8000,
-        );
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
-            0x8000,
-        );
-        if word!(game.cinematicbg_arr7[v1]) as i32 + 8 - (word!(game.samus_x_pos) as i32 - 5i32)
-            & 0x8000
-            != 0
-        {
-            if word!(game.cinematicspr_preinstr_func[0]) as i32 != 0x8bb80f & 0xffff {
-                return;
-            }
-        } else {
-            word! { game, 11; samus_invincibility_timer, samus_knockback_timer }
-            word!(game.knockback_x_dir = 1);
-        }
-        word!(game.cinematicspr_instr_timer[v1] = 1);
-        word!(game.cinematicspr_instr_ptr[v1] = addr_off_8BCE53 as u16);
-    };
-    [9156923] CinematicFunction_Intro_Func45 [] {
-        let v2: i32 = word!(game.cinematicspr_goto_timer[v1]) as i32;
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
-            words!((kCinematicFunction_Intro_Func45_Tab0[v2 as usize], 0x8000u16)),
-        );
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
-            0x8000,
-        );
-        if word!(game.cinematicbg_arr8[v1]) as i32 - 16i32 & 0x8000 != 0
-            || word!(game.cinematicbg_arr8[v1]) as i32 - 208i32 & 0x8000 == 0
-            || word!(game.cinematicspr_preinstr_func[0]) as i32 == 0x8bb80f & 0xffff
-        {
-            word!(game.cinematicspr_instr_timer[v1] = 1);
-            word!(game.cinematicspr_instr_ptr[v1] = addr_off_8BCE53 as u16);
-        }
-    };
     [9157214] CinematicFunction_Intro_Func50 [] {
         if word!(game.cinematicspr_instr_ptr[(v1 + 1)]) as i32 + 0x3487 & 0x8000 == 0 {
             word!(game.cinematicspr_preinstr_func[v1] = (0x8bba73i32) as u16);
@@ -2619,6 +2563,8 @@ crate::game::callback_dispatch! {
         CinematicFunction_Intro_Func189b(k, game);
     };
     @external {
+        9156824 => [advance_intro_rinka(j, false, game)];
+        9156923 => [advance_intro_rinka(j, true, game)];
         9172053 => [wait_ending_cloud(j, true, 0xf464, game)];
         9172088 => [wait_ending_cloud(j, true, 0xf487, game)];
         9172123 => [wait_ending_cloud(j, false, 0xf4aa, game)];
@@ -2653,17 +2599,6 @@ crate::game::callback_dispatch! {
                 ((kSetSomeStuffForSpriteObject_6_Tab[v3 as usize]) as u16).wrapping_add(16);
             cinematicbg_arr8[v2] =
                 ((kSetSomeStuffForSpriteObject_6_Tab[(v3 + 1) as usize]) as u16).wrapping_add(59);
-            cinematicbg_arr9[v2] = 3584;
-        }
-    };
-    [9156758] CinematicFunction_Intro_Func42 [] {
-        let v1: u16 = word!(game.cinematic_spawn_param);
-        let v2: i32 = j as i32 >> 1;
-        word!(game.cinematicspr_goto_timer[v2] = word!(game.cinematic_spawn_param));
-        let v3: i32 = v1 as i32;
-        word! { game;
-            cinematicbg_arr7[v2] = kCinematicFunction_Intro_Func42_Tab0[v3 as usize];
-            cinematicbg_arr8[v2] = (kCinematicFunction_Intro_Func42_Tab1[v3 as usize]).wrapping_sub(8);
             cinematicbg_arr9[v2] = 3584;
         }
     };
@@ -2801,6 +2736,7 @@ crate::game::callback_dispatch! {
             cinematicbg_arr9[v1] = 3584; cinematicspr_goto_timer[v1] = 8; }
     };
     @external {
+        9156758 => [initialize_intro_rinka(j, game)];
         9171038 => [initialize_ending_time_glyph(j, 0, game)];
         9171053 => [initialize_ending_time_glyph(j, 1, game)];
         9171068 => [initialize_ending_time_glyph(j, 2, game)];
