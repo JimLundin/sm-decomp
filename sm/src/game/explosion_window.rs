@@ -6,8 +6,8 @@ use crate::game::session_runtime::Runtime;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::visual_runtime::spawn_hdma;
 use crate::game_state::Game;
-use crate::ram_map::{ram_ptr, word};
-use crate::rtl::{Mult8x8, rom_ptr};
+use crate::ram_map::word;
+use crate::rtl::Mult8x8;
 use crate::types::{Consts_88, Consts_89, SpawnHdmaObject_Args, VoidP};
 crate::game::constants::typed_constants! { Consts_88;
     addr_byte_889F06 = 40710, addr_kPowerBombExplosionShapeDef0 = 37446,
@@ -153,171 +153,163 @@ enum ExplosionWindowScale {
     CrystalFlash,
 }
 
-unsafe fn explosion_window_side(byte_read: bool, game: &mut Game) -> ExplosionWindowSide {
-    unsafe {
-        let mut high_byte = || {
-            if byte_read {
-                *ram_ptr!(game; 0xce7)
-            } else {
-                ((word!(game.power_bomb_explosion_x_pos_plus_0x100) as i32 & 0xff00) >> 8) as u8
-            }
-        };
-        if high_byte() != 0 {
-            if high_byte() == 1 {
-                ExplosionWindowSide::OnScreen
-            } else {
-                ExplosionWindowSide::Right
-            }
+#[forbid(unsafe_code)]
+fn explosion_window_side(byte_read: bool, game: &mut Game) -> ExplosionWindowSide {
+    let mut high_byte = || {
+        if byte_read {
+            game.g_ram[0xce7]
         } else {
-            ExplosionWindowSide::Left
+            ((word!(game.power_bomb_explosion_x_pos_plus_0x100) as i32 & 0xff00) >> 8) as u8
         }
+    };
+    if high_byte() != 0 {
+        if high_byte() == 1 {
+            ExplosionWindowSide::OnScreen
+        } else {
+            ExplosionWindowSide::Right
+        }
+    } else {
+        ExplosionWindowSide::Left
     }
 }
 
 macro_rules! write_explosion_window_row {
     ($k:expr, $left:expr, $right:expr, $game:ident) => {{
-        *(&raw mut $game.g_ram as *mut u8).offset(0xc406).offset($k) = $left;
-        *(&raw mut $game.g_ram as *mut u8).offset(0xc506).offset($k) = $right;
+        #[forbid(unsafe_code)]
+        {
+            $game.g_ram[(0xc406isize + $k) as usize] = $left;
+            $game.g_ram[(0xc506isize + $k) as usize] = $right;
+        }
     }};
 }
 
-unsafe fn calculate_power_bomb_hdma(
+#[forbid(unsafe_code)]
+fn calculate_power_bomb_hdma(
     mut k: u16,
-    mut j: *const u8,
+    mut j: crate::rom::RomRecord,
     side: ExplosionWindowSide,
     game: &mut Game,
 ) {
-    unsafe {
-        do_until! { k == 192;
-            let w: u8 = *j;
-            match side {
-                ExplosionWindowSide::Left => {
-                    let c: u8 = word!(game.power_bomb_explosion_x_pos_plus_0x100) as u8;
-                    // This unscaled path writes right before left and uses 1, not 255, when empty.
-                    if u8::overflowing_add(w, c).1 {
-                        *ram_ptr!(game; 0xc506, k as isize) = w.wrapping_add(c);
-                        *ram_ptr!(game; 0xc406, k as isize) = 0;
-                    } else {
-                        *ram_ptr!(game; 0xc506, k as isize) = 0;
-                        *ram_ptr!(game; 0xc406, k as isize) = 1;
-                    }
-                }
-                ExplosionWindowSide::OnScreen => {
-                    if w == 0 {
-                        break;
-                    }
-                    let c: u8 = word!(game.power_bomb_explosion_x_pos_plus_0x100) as u8;
-                    let right = if u8::overflowing_add(c, w).1 {
-                        255
-                    } else {
-                        c.wrapping_add(w)
-                    };
-                    let left = if c >= w { c.wrapping_sub(w) } else { 0 };
-                    write_explosion_window_row!(k as isize, left, right, game);
-                }
-                ExplosionWindowSide::Right => {
-                    if (word!(game.power_bomb_explosion_x_pos_plus_0x100) as u8) < w {
-                        let left =
-                            (word!(game.power_bomb_explosion_x_pos_plus_0x100) as u8).wrapping_sub(w);
-                        write_explosion_window_row!(k as isize, left, -(1i32) as u8, game);
-                    } else {
-                        write_explosion_window_row!(k as isize, -(1i32) as u8, -(2i32) as u8, game);
-                    }
+    do_until! { k == 192;
+        let w: u8 = j.byte(0);
+        match side {
+            ExplosionWindowSide::Left => {
+                let c: u8 = word!(game.power_bomb_explosion_x_pos_plus_0x100) as u8;
+                // This unscaled path writes right before left and uses 1, not 255, when empty.
+                if u8::overflowing_add(w, c).1 {
+                    game.g_ram[0xc506 + usize::from(k)] = w.wrapping_add(c);
+                    game.g_ram[0xc406 + usize::from(k)] = 0;
+                } else {
+                    game.g_ram[0xc506 + usize::from(k)] = 0;
+                    game.g_ram[0xc406 + usize::from(k)] = 1;
                 }
             }
-            j = j.offset(1);
-            k = k.wrapping_add(1);
+            ExplosionWindowSide::OnScreen => {
+                if w == 0 {
+                    break;
+                }
+                let c: u8 = word!(game.power_bomb_explosion_x_pos_plus_0x100) as u8;
+                let right = c.saturating_add(w);
+                let left = if c >= w { c.wrapping_sub(w) } else { 0 };
+                write_explosion_window_row!(k as isize, left, right, game);
+            }
+            ExplosionWindowSide::Right => {
+                if (word!(game.power_bomb_explosion_x_pos_plus_0x100) as u8) < w {
+                    let left =
+                        (word!(game.power_bomb_explosion_x_pos_plus_0x100) as u8).wrapping_sub(w);
+                    write_explosion_window_row!(k as isize, left, -(1i32) as u8, game);
+                } else {
+                    write_explosion_window_row!(k as isize, -(1i32) as u8, -(2i32) as u8, game);
+                }
+            }
         }
+        j.base = j.base.checked_add(1).expect("explosion shape offset overflow");
+        k = k.wrapping_add(1);
     }
 }
 
-unsafe fn calculate_explosion_hdma_scaled(
+#[forbid(unsafe_code)]
+fn calculate_explosion_hdma_scaled(
     mut k: u16,
     mut j: u16,
     scale: ExplosionWindowScale,
     side: ExplosionWindowSide,
     game: &mut Game,
 ) -> u16 {
-    unsafe {
-        let mut left: u8;
-        let mut right: u8;
-        do_until! { (j & 0x80) != 0;
-            let r20: u8 = (Mult8x8(
-                match scale {
-                    ExplosionWindowScale::PowerBomb(value) => value,
-                    ExplosionWindowScale::CrystalFlash => {
-                        ((word!(game.power_bomb_explosion_radius) as i32 & 0xff00) >> 8) as u8
-                    }
-                },
-                byte!(@pointer rom_ptr!(game; 0x88a206); (j as u8 as i32 + 32) as isize),
-            ) >> 8) as u8;
-            // Power Bomb reads its center between the two shape bytes; Crystal Flash reads after both.
-            let center_before_width = match scale {
-                ExplosionWindowScale::PowerBomb(_) => {
-                    Some(word!(game.power_bomb_explosion_x_pos_plus_0x100) as u8)
+    let mut left: u8;
+    let mut right: u8;
+    do_until! { (j & 0x80) != 0;
+        let r20: u8 = (Mult8x8(
+            match scale {
+                ExplosionWindowScale::PowerBomb(value) => value,
+                ExplosionWindowScale::CrystalFlash => {
+                    ((word!(game.power_bomb_explosion_radius) as i32 & 0xff00) >> 8) as u8
                 }
-                ExplosionWindowScale::CrystalFlash => None,
-            };
-            let w: u8 = (Mult8x8(
-                match scale {
-                    ExplosionWindowScale::PowerBomb(value) => value,
-                    ExplosionWindowScale::CrystalFlash => {
-                        ((word!(game.power_bomb_explosion_radius) as i32 & 0xff00) >> 8) as u8
-                    }
-                },
-                byte!(@pointer rom_ptr!(game; 0x88a206); j as u8 as isize),
-            ) >> 8) as u8;
-            let c = match center_before_width {
-                Some(c) => c,
-                None => word!(game.power_bomb_explosion_x_pos_plus_0x100) as u8,
-            };
-            match side {
-                ExplosionWindowSide::Left => {
-                    let visible = u8::overflowing_add(w, c).1;
-                    left = if visible { 0 } else { 255 };
-                    right = if visible { w.wrapping_add(c) } else { 0 };
-                }
-                ExplosionWindowSide::OnScreen => {
-                    right = if u8::overflowing_add(w, c).1 {
-                        255
-                    } else {
-                        w.wrapping_add(c)
-                    };
-                    let c = match scale {
-                        ExplosionWindowScale::PowerBomb(_) => {
-                            word!(game.power_bomb_explosion_x_pos_plus_0x100) as u8
-                        }
-                        ExplosionWindowScale::CrystalFlash => c,
-                    };
-                    left = if c < w { 0 } else { c.wrapping_sub(w) };
-                }
-                ExplosionWindowSide::Right => {
-                    left = if c < w { c.wrapping_sub(w) } else { 255 };
-                    right = if c < w { 255 } else { 0 };
-                }
+            },
+            native_record(0x88a206, game).byte(usize::from(j as u8) + 32),
+        ) >> 8) as u8;
+        // Power Bomb reads its center between the two shape bytes; Crystal Flash reads after both.
+        let center_before_width = match scale {
+            ExplosionWindowScale::PowerBomb(_) => {
+                Some(word!(game.power_bomb_explosion_x_pos_plus_0x100) as u8)
             }
-            loop {
-                write_explosion_window_row!(k as u8 as isize, left, right, game);
-                if (k as u8) == r20 {
-                    break;
+            ExplosionWindowScale::CrystalFlash => None,
+        };
+        let w: u8 = (Mult8x8(
+            match scale {
+                ExplosionWindowScale::PowerBomb(value) => value,
+                ExplosionWindowScale::CrystalFlash => {
+                    ((word!(game.power_bomb_explosion_radius) as i32 & 0xff00) >> 8) as u8
                 }
-                match scale {
+            },
+            native_record(0x88a206, game).byte(usize::from(j as u8)),
+        ) >> 8) as u8;
+        let c = match center_before_width {
+            Some(c) => c,
+            None => word!(game.power_bomb_explosion_x_pos_plus_0x100) as u8,
+        };
+        match side {
+            ExplosionWindowSide::Left => {
+                let visible = u8::overflowing_add(w, c).1;
+                left = if visible { 0 } else { 255 };
+                right = if visible { w.wrapping_add(c) } else { 0 };
+            }
+            ExplosionWindowSide::OnScreen => {
+                right = w.saturating_add(c);
+                let c = match scale {
                     ExplosionWindowScale::PowerBomb(_) => {
-                        *(&raw mut k as *mut u8) = ((k) as u8).wrapping_sub(1)
+                        word!(game.power_bomb_explosion_x_pos_plus_0x100) as u8
                     }
-                    ExplosionWindowScale::CrystalFlash => k = k.wrapping_sub(1),
-                }
+                    ExplosionWindowScale::CrystalFlash => c,
+                };
+                left = if c < w { 0 } else { c.wrapping_sub(w) };
+            }
+            ExplosionWindowSide::Right => {
+                left = if c < w { c.wrapping_sub(w) } else { 255 };
+                right = if c < w { 255 } else { 0 };
+            }
+        }
+        loop {
+            write_explosion_window_row!(k as u8 as isize, left, right, game);
+            if (k as u8) == r20 {
+                break;
             }
             match scale {
                 ExplosionWindowScale::PowerBomb(_) => {
-                    *(&raw mut j as *mut u8) = ((j) as u8).wrapping_add(1)
+                    k = u16::from_ne_bytes([(k as u8).wrapping_sub(1), k.to_ne_bytes()[1]])
                 }
-                ExplosionWindowScale::CrystalFlash => j = j.wrapping_add(1),
+                ExplosionWindowScale::CrystalFlash => k = k.wrapping_sub(1),
             }
         }
-        game.k_out = byte!(k; 0) as u16;
-        ((right as i32) << 8 | left as i32) as u16
+        match scale {
+            ExplosionWindowScale::PowerBomb(_) => {
+                j = u16::from_ne_bytes([(j as u8).wrapping_add(1), j.to_ne_bytes()[1]])
+            }
+            ExplosionWindowScale::CrystalFlash => j = j.wrapping_add(1),
+        }
     }
+    game.k_out = k.to_ne_bytes()[0] as u16;
+    ((right as i32) << 8 | left as i32) as u16
 }
 
 fn calculate_explosion_hdma_table_pointers(k: u16, pre_explosion: bool, game: &mut Game) {
@@ -483,86 +475,85 @@ fn advance_instruction(k: u16, game: &mut Game) {
     }
 }
 
-pub(crate) unsafe fn update_scaled(k: u16, phase: Phase, game: &mut Game) {
-    unsafe {
-        if word!(game.power_bomb_explosion_status) & 0x8000 == 0 {
-            return;
+#[forbid(unsafe_code)]
+pub(crate) fn update_scaled(k: u16, phase: Phase, game: &mut Game) {
+    if word!(game.power_bomb_explosion_status) & 0x8000 == 0 {
+        return;
+    }
+    calculate_explosion_hdma_table_pointers(k, phase == Phase::PreFlash, game);
+    let bottom = (Mult8x8(
+        (phase.radius(game) >> 8) as u8,
+        native_record(0x88a286, game).byte(0),
+    ) >> 8) as i32;
+    let side = explosion_window_side(phase == Phase::PreFlash, game);
+    let scale = if phase == Phase::CrystalFlash {
+        ExplosionWindowScale::CrystalFlash
+    } else {
+        ExplosionWindowScale::PowerBomb((phase.radius(game) >> 8) as u8)
+    };
+    let edges = calculate_explosion_hdma_scaled(bottom as u16, 96, scale, side, game);
+    // k_out is a byte. All three original downward counters stop before a
+    // negative index; the pre-flash byte counter wraps only on that last step.
+    let right = if phase == Phase::PreFlash {
+        edges.to_ne_bytes()[1]
+    } else {
+        (edges >> 8) as u8
+    };
+    let mut row = game.k_out as u8;
+    do_until! { row & 0x80 != 0;
+        write_explosion_window_row!(row as isize, edges as u8, right, game);
+        row = row.wrapping_sub(1);
+    }
+    let mut row = bottom + 1;
+    while row != 0xc0 {
+        write_explosion_window_row!(row as isize, 255, 0, game);
+        row += 1;
+        if phase != Phase::PowerBomb {
+            row = row as u8 as i32;
         }
-        calculate_explosion_hdma_table_pointers(k, phase == Phase::PreFlash, game);
-        let bottom =
-            (Mult8x8((phase.radius(game) >> 8) as u8, *rom_ptr!(game; 0x88a286)) >> 8) as i32;
-        let side = explosion_window_side(phase == Phase::PreFlash, game);
-        let scale = if phase == Phase::CrystalFlash {
-            ExplosionWindowScale::CrystalFlash
-        } else {
-            ExplosionWindowScale::PowerBomb((phase.radius(game) >> 8) as u8)
-        };
-        let edges = calculate_explosion_hdma_scaled(bottom as u16, 96, scale, side, game);
-        // k_out is a byte. All three original downward counters stop before a
-        // negative index; the pre-flash byte counter wraps only on that last step.
-        let right = if phase == Phase::PreFlash {
-            edges.to_ne_bytes()[1]
-        } else {
-            (edges >> 8) as u8
-        };
-        let mut row = game.k_out as u8;
-        do_until! { row & 0x80 != 0;
-            write_explosion_window_row!(row as isize, edges as u8, right, game);
-            row = row.wrapping_sub(1);
-        }
-        let mut row = bottom + 1;
-        while row != 0xc0 {
-            write_explosion_window_row!(row as isize, 255, 0, game);
-            row += 1;
-            if phase != Phase::PowerBomb {
-                row = row as u8 as i32;
-            }
-        }
-        phase.set_color(game);
-        phase.expand(game);
-        let threshold = match phase {
-            Phase::PreFlash => 0x9200,
-            Phase::PowerBomb => 0x8600,
-            Phase::CrystalFlash => 0x2000,
-        };
-        if phase.radius(game) < threshold {
-            phase.accelerate(game);
-        } else {
-            advance_instruction(k, game);
-        }
+    }
+    phase.set_color(game);
+    phase.expand(game);
+    let threshold = match phase {
+        Phase::PreFlash => 0x9200,
+        Phase::PowerBomb => 0x8600,
+        Phase::CrystalFlash => 0x2000,
+    };
+    if phase.radius(game) < threshold {
+        phase.accelerate(game);
+    } else {
+        advance_instruction(k, game);
     }
 }
 
 pub(crate) unsafe fn update_prescaled(k: u16, phase: Phase, game: &mut Game) {
-    unsafe {
-        if word!(game.power_bomb_explosion_status) & 0x8000 == 0 {
-            return;
+    if word!(game.power_bomb_explosion_status) & 0x8000 == 0 {
+        return;
+    }
+    calculate_explosion_hdma_table_pointers(k, phase == Phase::PreFlash, game);
+    let shape = native_record(
+        0x880000 | u32::from(word!(game.pre_scaled_power_bomb_explosion_shape_def_ptr)),
+        game,
+    );
+    let side = explosion_window_side(false, game);
+    calculate_power_bomb_hdma(0, shape, side, game);
+    phase.set_color(game);
+    word!(game.pre_scaled_power_bomb_explosion_shape_def_ptr += 192);
+    let end = if phase == Phase::PreFlash {
+        0xa206
+    } else {
+        addr_byte_889F06 as u16
+    };
+    if word!(game.pre_scaled_power_bomb_explosion_shape_def_ptr) == end {
+        advance_instruction(k, game);
+        if phase == Phase::PowerBomb {
+            word!(game.hdma_object_D[(k >> 1)] = 32);
         }
-        calculate_explosion_hdma_table_pointers(k, phase == Phase::PreFlash, game);
-        let shape = crate::rtl::rom_bank_ptr::<0x88>(
-            word!(game.pre_scaled_power_bomb_explosion_shape_def_ptr),
-            game,
-        );
-        let side = explosion_window_side(false, game);
-        calculate_power_bomb_hdma(0, shape, side, game);
-        phase.set_color(game);
-        word!(game.pre_scaled_power_bomb_explosion_shape_def_ptr += 192);
-        let end = if phase == Phase::PreFlash {
-            0xa206
-        } else {
-            addr_byte_889F06 as u16
-        };
-        if word!(game.pre_scaled_power_bomb_explosion_shape_def_ptr) == end {
-            advance_instruction(k, game);
-            if phase == Phase::PowerBomb {
-                word!(game.hdma_object_D[(k >> 1)] = 32);
-            }
-        }
-        if word!(game.power_bomb_pre_explosion_radius_speed) as i32 + (phase.radius(game) as i32)
-            < 0x10000
-        {
-            phase.expand(game);
-            phase.accelerate(game);
-        }
+    }
+    if word!(game.power_bomb_pre_explosion_radius_speed) as i32 + (phase.radius(game) as i32)
+        < 0x10000
+    {
+        phase.expand(game);
+        phase.accelerate(game);
     }
 }
