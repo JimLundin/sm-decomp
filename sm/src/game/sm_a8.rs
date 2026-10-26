@@ -14,7 +14,7 @@ use crate::ram_map::slot;
 pub use crate::game::constants::bank_86::*;
 
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
-use crate::game::music::{QueueSfx2_Max6, QueueSfx2_Max9};
+use crate::game::music::QueueSfx2_Max6;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
 use crate::game::visual_runtime::initialize_morph_eye_beam;
@@ -60,7 +60,6 @@ crate::game::constants::typed_constants! { Consts_A8;
     addr_off_A8A025 = 40997, addr_kYappingMaw_Ilist_A01F = 40991,
     addr_kYappingMaw_Ilist_9FC7 = 40903, addr_kYappingMaw_Ilist_9F6F = 40815,
     addr_loc_A89E90 = 40592, addr_kWreckedShipGhost_Ilist_9A8C = 39564,
-    addr_off_A896DF = 38623, addr_off_A896D7 = 38615,
     addr_kMorphBallEye_Ilist_9026 = 36902, addr_kMorphBallEye_Ilist_9014 = 36884,
     addr_stru_A8900E = 36878, addr_kMorphBallEye_Ilist_9002 = 36866,
     addr_stru_A88FFC = 36860, addr_kMorphBallEye_Ilist_8FF0 = 36848,
@@ -70,7 +69,7 @@ crate::game::constants::typed_constants! { Consts_A8;
     addr_kSpritemap_Nothing_A8 = 32845,
 }
 crate::type_aliases! {
-    pub Enemy_Fune, Enemy_KiHunter, Enemy_MiniDraygon, Enemy_NorfairLavaMan,
+    pub Enemy_KiHunter, Enemy_MiniDraygon, Enemy_NorfairLavaMan,
         Enemy_WalkingLavaSeahorse, Enemy_WreckedShipGhost,
         Enemy_WreckedShipOrbs = crate::game::enemy_layouts::EnemyLayout40;
 }
@@ -113,7 +112,6 @@ crate::game::constants::typed_constants! { i32;
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
-    Get_Fune(o: i32) -> Enemy_Fune = [0xf78, o as isize];
     Get_KiHunter(o: i32) -> Enemy_KiHunter = [0xf78, o as isize];
     Get_MaridiaFloater(o: i32) -> Enemy_MaridiaFloater = [0xf78, o as isize];
     Get_MaridiaPuffer(o: i32) -> Enemy_MaridiaPuffer = [0xf78, o as isize];
@@ -133,7 +131,6 @@ type MiniDraygon = Enemy_MiniDraygon;
 type MaridiaPuffer = Enemy_MaridiaPuffer;
 type MaridiaFloater = Enemy_MaridiaFloater;
 type KiHunter = Enemy_KiHunter;
-type Fune = Enemy_Fune;
 static g_word_A890CA: [i16; 4] = [-8, 8, 0, 0];
 static g_word_A890D2: [i16; 4] = [0, 0, -8, 8];
 static g_word_A89050: u16 = 0x80;
@@ -407,73 +404,6 @@ pub unsafe fn MiniDraygon_Func_11(game: &mut Game) {
             slot!(game, MiniDraygon[E]; var_0B = 0, var_0C = 1, var_C = (0xa88a78i32) as u16, var_0C = 1, var_02 = addr_kMiniDraygon_Ilist_8775 as u16);
             MiniDraygon_Func_12(game);
         }
-    }
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallFuneFunc(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    @prefix { let E: i32 = word!(game.cur_enemy_index) as i32; };
-    Fune_Init [] {
-        slot!(game, Fune[E].var_A = addr_off_A896D7 as u16);
-        slot!(game, Fune[E].var_B = (0xa89737i32) as u16);
-        let v1: u16 = (slot!(game, Fune[E].parameter_1)) & (0xfu16);
-        slot!(game, Fune[E].var_D = v1);
-        if v1 != 0 {
-            slot!(game, Fune[E].var_A = addr_off_A896DF as u16);
-            slot!(game, Fune[E].var_B = (0xa8975ci32) as u16);
-        }
-        if (slot!(game, Fune[E].parameter_1) & 0xf0) != 0 {
-            slot!(game, Fune[E].var_A, |old| (old).wrapping_add(2));
-        }
-        Fune_Func_4(game);
-        slot!(game, Fune[E].var_C = slot!(byte game, Fune[E].parameter_2[1]) as u16);
-        slot!(game, Fune[E].var_F = slot!(byte game, Fune[E].parameter_1[1]) as u16);
-        slot!(game, Fune[E].var_E = 0);
-    };
-    Fune_Main [] {
-        CallFuneFunc(((slot!(game, Fune[E].var_B)) as u32) | (0xa80000u32), game);
-    };
-    [11048759] Fune_Func_1 [] {
-        slot!(game, Fune[E].var_E, |old| old.wrapping_add(1));
-        if ((slot!(game, Fune[E].var_E)) as i16).wrapping_sub((slot!(game, Fune[E].var_F)) as i16) >= 0 {
-            slot!(game, Fune[E].var_A, |old| (old).wrapping_sub(4));
-            Fune_Func_4(game);
-            slot!(game, Fune[E].var_B = (0xa8978ei32) as u16);
-            slot!(game, Fune[E].var_E = 0);
-        }
-    };
-    [11048796] Fune_Func_2 [] {
-        slot!(game, Fune[E].var_00 = slot!(game, Fune[E].var_A));
-        if Fune_Func_3(game) != 0 {
-            let mut fune_var_00: u16 = slot!(game, Fune[E].var_00);
-            slot!(game, Fune[E].var_A = fune_var_00);
-            fune_var_00 = (fune_var_00).wrapping_sub(4);
-            slot!(game, Fune[E].var_00 = fune_var_00);
-            slot!(game, Fune[E].var_A = fune_var_00);
-            Fune_Func_4(game);
-            slot!(game, Fune[E].var_B = (0xa8978fi32) as u16);
-        }
-        slot!(game, Fune[E].var_A = slot!(game, Fune[E].var_00));
-    };
-    Fune_Func_4 [] {
-        slot!(game, Fune[E].base; instruction_timer = 1, timer = 0, current_instruction = *(RomPtr_A8(slot!(game, Fune[E].var_A), game) as *mut u16))
-;
-    };
-    @external {
-        11048846 => [()]; 11048847 => [()];
-    }
-}
-pub unsafe fn Fune_Func_3(game: &mut Game) -> u16 {
-    let E: i32 = word!(game.cur_enemy_index) as i32;
-    {
-        let (actor, distance) = (word!(game.cur_enemy_index), slot!(game, Fune[E].var_C));
-        u16::from(actor_api::player_within(
-            &mut Runtime::new(game),
-            Key::from_legacy(actor),
-            actor_api::Axis::Y,
-            distance,
-        ))
     }
 }
 crate::game::callback_dispatch! {
@@ -2816,73 +2746,6 @@ crate::game::callback_dispatch! {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         slot!(game, MiniDraygon[E]; var_0C = 0, var_0B = 0);
         slot!(game, MiniDraygon[E].var_C = (0xa88a34i32) as u16);
-    };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11048485] Fune_Instr_2 [jp] { QueueSfx2_Max9(0x1f, game); };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    @prefix {
-        word!(
-            game.cinematic_var9 = *(&raw mut (*(Get_Fune
-                as unsafe fn(i32, &mut Game) -> *mut Enemy_Fune)(
-                word!(game.cur_enemy_index) as i32,
-                game,
-            ))
-            .parameter_2 as *mut u8)
-                 as u16
-        );
-    };
-    [11048497] Fune_Instr_6 [jp] {
-
-        SpawnEprojWithGfx(
-            0,
-            word!(game.cur_enemy_index),
-            addr_stru_86DFBC as u16,
-            game,
-        );
-    };
-    [11048522] Fune_Instr_7 [jp] {
-
-        SpawnEprojWithGfx(
-            1,
-            word!(game.cur_enemy_index),
-            addr_stru_86DFBC as u16,
-            game,
-        );
-    };
-    [11048547] Fune_Instr_1 [jp] {
-
-        SpawnEprojWithGfx(
-            0,
-            word!(game.cur_enemy_index),
-            addr_stru_86DFCA as u16,
-            game,
-        );
-    };
-    [11048572] Fune_Instr_4 [jp] {
-
-        SpawnEprojWithGfx(
-            1,
-            word!(game.cur_enemy_index),
-            addr_stru_86DFCA as u16,
-            game,
-        );
-    };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11048597] Fune_Instr_3 [jp] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, Fune[E].var_A, |old| (old).wrapping_add(4));
-        slot!(game, Fune[E].var_B = (0xa89737i32) as u16);
-        if slot!(game, Fune[E].var_D) != 0 {
-            slot!(game, Fune[E].var_B = (0xa8975ci32) as u16);
-        }
-    };
-    [11048628] Fune_Instr_5 [jp] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, Fune[E].var_A, |old| (old).wrapping_add(4));
-        slot!(game, Fune[E].var_B = (0xa89737i32) as u16);
-        if slot!(game, Fune[E].var_D) != 0 {
-            slot!(game, Fune[E].var_B = (0xa8975ci32) as u16);
-        }
     };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11051207] YappingMaw_Instr_2 [jp] {

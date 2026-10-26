@@ -58,7 +58,7 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
    batches of six or more, deleting newly unused recipes; preserve input guards.
 2. **Current - lane B retirement.** B1 sm_88/sm_a0/sm_81 and B3 sm_8f/sm_b2 are
    retired. M2 sm_a8, eleven B2 cinematic families and B3 Goofball are integrated;
-   local rows pass. Full-corpus completion remains a separate obligation on main.
+   all 82 corpus rows passed on 6c675730 after bank-80 deletion; later work uses scoped rows.
    B1 sm_80 is retired with checked gameplay and retained backend contracts;
    its affected rows pass, and B1 continues sm_82. B2 continues sm_8b after
    consolidating the checked credits interpreter. B3 continues sm_a2 after

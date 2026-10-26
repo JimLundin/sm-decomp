@@ -625,8 +625,8 @@ crate::game::callback_dispatch! {
         11001242 => [()];
         11001873 => [()];
         11042892 => [()];
-        11048675 => sm_a8::Fune_Init;
-        11048752 => sm_a8::Fune_Main;
+        11048675 => crate::game::actors::fune::initialize;
+        11048752 => crate::game::actors::fune::advance;
         11051336 => sm_a8::YappingMaw_Init;
         11051537 => sm_a8::YappingMaw_Main; 11052953 => sm_a8::YappingMaw_Touch;
         11053894 => crate::game::actors::kago::initialize;
@@ -744,6 +744,7 @@ crate::game::callback_dispatch! {
         10651845 => [j];
         10716899 => sm_a3::Waver_Instr_1;
         10991155 => [sm_a7::Kraid_Instr_1(k, j)];
+        11048485 | 11048497 | 11048522 | 11048547 | 11048572 | 11048597 | 11048628 => [crate::game::actors::fune::instruction(ea, j, game)];
         11056990 => [j];
         11062987 => [sm_a8::WreckedShipRobot_Instr_7(k, j)];
         11063490 => [sm_a8::WreckedShipRobot_Instr_10(k, j)];
