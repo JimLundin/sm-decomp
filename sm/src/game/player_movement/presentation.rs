@@ -9,6 +9,15 @@ use crate::game::{
     projectile_geometry::sine_offset, session::Session,
 };
 
+// Query each full-width angle lazily in the original threshold order.
+pub(crate) fn xray_animation_frame(facing: u8, mut angle: impl FnMut() -> u16) -> u16 {
+    let first = if facing == 4 { 153 } else { 25 };
+    let band = (0..4)
+        .find(|&band| angle().wrapping_sub(first + 25 * band) & 0x8000 != 0)
+        .unwrap_or(4);
+    if facing == 4 { 4 - band } else { band }
+}
+
 pub(super) fn footsteps(h: &mut impl Host) {
     let region = Content::footstep_region(h);
     let rule = if region == FootstepRegion::Crateria && h.inputs().cinematic == 0 {

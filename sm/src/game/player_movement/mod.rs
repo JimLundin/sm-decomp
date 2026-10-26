@@ -7,7 +7,7 @@ mod presentation;
 mod selectors;
 pub(crate) mod speed;
 
-pub(crate) use presentation::record_echo;
+pub(crate) use presentation::{record_echo, xray_animation_frame};
 
 pub(crate) fn advance_normal(h: &mut impl effects::Host) {
     if h.inputs().frozen == 0 {

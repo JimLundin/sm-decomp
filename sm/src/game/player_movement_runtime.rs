@@ -184,11 +184,19 @@ crate::game::callback_dispatch! {
             spawn_crystal_flash(game);
         }
     };
+    [9494328] Samus_MoveHandler_Knockback [] {
+        match KNOCKBACK_MOTION[usize::from(word!(game.knockback_dir))] {
+            Some(motion) => motion(&mut Runtime::new(game)),
+            None => crate::rtl::invalid_interrupt(game),
+        }
+        word!(game.input_to_pose_calc = 0);
+    };
+    @functions [pub fn (game: &mut Game)];
     [9492315] kSamusMoveHandler_CrystalFlashFinish [] {
-        if word!(game.samus_y_pos) != *(ram_ptr!(game, u16; 0xdf0)) {
+        if word!(game.samus_y_pos) != u16::from_ne_bytes([game.g_ram[0xdf0], game.g_ram[0xdf1]]) {
             word!(game.samus_y_pos += 1);
         }
-        if *ram_ptr!(game; 0xa1f) == 0 {
+        if game.g_ram[0xa1f] == 0 {
             word! {game; power_bomb_flag = 0; samus_shine_timer = -1i32 as u16;
                 samus_movement_handler = ((0x90a337i32) as u16); }
             if word!(game.samus_input_handler) as i32 != 0x90e91d & 0xffff {
@@ -197,39 +205,13 @@ crate::game::callback_dispatch! {
             }
         }
     };
-    [9494328] Samus_MoveHandler_Knockback [] {
-        match KNOCKBACK_MOTION[usize::from(word!(game.knockback_dir))] {
-            Some(motion) => motion(&mut Runtime::new(game)),
-            None => crate::rtl::invalid_interrupt(game),
-        }
-        word!(game.input_to_pose_calc = 0);
-    };
     [9496911] SamusMovementType_Xray [] {
-        let mut v0: u16 = 0;
-        if *ram_ptr!(game; 0xa1f) as i32 != kMovementType_0E_TurningAroundOnGround as i32 {
+        if game.g_ram[0xa1f] as i32 != kMovementType_0E_TurningAroundOnGround as i32 {
             word!(game.samus_anim_frame_timer = 15);
-            if *ram_ptr!(game; 0xa1e) == 4 {
-                if word!(game.xray_angle) as i32 - 153i32 & 0x8000 != 0 {
-                    v0 = 4;
-                } else if word!(game.xray_angle) as i32 - 178i32 & 0x8000 != 0 {
-                    v0 = 3;
-                } else if word!(game.xray_angle) as i32 - 203i32 & 0x8000 != 0 {
-                    v0 = 2;
-                } else {
-                    v0 = ((word!(game.xray_angle) as i32 - 228i32 & 0x8000) != 0) as u16;
-                }
-            } else if word!(game.xray_angle) as i32 - 25i32 & 0x8000 != 0 {
-                v0 = 0;
-            } else if word!(game.xray_angle) as i32 - 50i32 & 0x8000 != 0 {
-                v0 = 1;
-            } else if word!(game.xray_angle) as i32 - 75i32 & 0x8000 != 0 {
-                v0 = 2;
-            } else if word!(game.xray_angle) as i32 - 100i32 & 0x8000 != 0 {
-                v0 = 3;
-            } else {
-                v0 = 4;
-            }
-            word!(game.samus_anim_frame = v0);
+            let frame = player_movement::xray_animation_frame(game.g_ram[0xa1e], || {
+                word!(game.xray_angle)
+            });
+            word!(game.samus_anim_frame = frame);
         }
     };
     [9498699] Samus_Func25_ShineSpark [] {
