@@ -9,6 +9,12 @@ use crate::game::{
 use crate::game_state::Game;
 use crate::ram_map::{word, words as fields};
 
+pub(crate) fn hook_address(pausing: bool, game: &Game) -> u32 {
+    let offset = if pausing { 0x601 } else { 0x604 };
+    // Load24 reads four native bytes, including the following field, before masking.
+    u32::from_ne_bytes(game.g_ram[offset..offset + 4].try_into().unwrap()) & 0xffffff
+}
+
 pub(crate) fn initialize(game: &mut Game) {
     map_menu::reset_animations(game);
     menu_tilemap::equipment_icons(game);

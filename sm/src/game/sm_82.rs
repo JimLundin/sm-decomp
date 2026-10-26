@@ -9,7 +9,7 @@ use crate::game::options_settings;
 use crate::game::pause_controls::fade_in as pause_fade_in;
 pub use crate::game::prelude::*;
 use crate::game::save_slots;
-use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled};
+use crate::game::visual_runtime::clear_hdma;
 
 use crate::cpu_infra::DebugGameOverMenu;
 
@@ -17,10 +17,8 @@ pub use crate::game::constants::bank_8f::*;
 pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_82::*;
 
-use crate::game::animated_tiles;
-use crate::game::display_refresh::{GraphicsAsset, setup_transfer};
+use crate::game::display_refresh::setup_transfer;
 use crate::game::palette_effects::{self, fading};
-use crate::game::room_state::{pause_draygon, unpause_draygon};
 use crate::game::samus_animation::{
     Samus_DrawDuringDeathAnim, Samus_DrawStartingDeathAnim, Samus_DrawWhenNotAnimatingOrDying,
 };
@@ -31,11 +29,6 @@ use crate::game::sm_8b::{
 use crate::game::sm_9b::{
     GameState_24_SamusNoHealth_Explosion_Helper, HandleSamusDeathSequence, StartSamusDeathAnimation,
 };
-use crate::game::sm_a7::{
-    Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
-    UnpauseHook_Kraid_IsDead,
-};
-use crate::game::sm_a9::MotherBrainsBody_UnpauseHook;
 use crate::game::sprite_drawing::{clear_high_table, finish_frame};
 
 use crate::host::{Die, Warning};
@@ -128,6 +121,10 @@ const CERES_ELEVATOR: Func_V_Coroutine =
 const CERES_BLACKOUT: Func_V_Coroutine =
     |game| unsafe { AdvanceGameplay(Entry::CeresBlackout, game) };
 const ZEBES_ESCAPE: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::ZebesEscape, game) };
+const PAUSE_SETUP: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::PauseSetup, game) };
+const PAUSED: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::Paused, game) };
+const UNPAUSE_SETUP: Func_V_Coroutine =
+    |game| unsafe { AdvanceGameplay(Entry::UnpauseSetup, game) };
 const PAUSE_FADE_OUT: Func_V_Coroutine =
     |game| unsafe { AdvanceGameplay(Entry::PauseFadeOut, game) };
 const UNPAUSE_FADE_OUT: Func_V_Coroutine =
@@ -150,8 +147,8 @@ static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_
     INITIALIZE, FADE_IN, GAMEPLAY,
     GameState_9_HitDoorBlock, GameState_10_LoadingNextRoom_Async,
     GameState_11_LoadingNextRoom_Async, PAUSE_FADE_OUT,
-    GameState_13_Pausing_Async, pause_fade_in, GameState_15_Paused_Async,
-    UNPAUSE_FADE_OUT, GameState_17_Unpausing_Async, UNPAUSE,
+    PAUSE_SETUP, pause_fade_in, PAUSED,
+    UNPAUSE_FADE_OUT, UNPAUSE_SETUP, UNPAUSE,
     PREPARE_DEATH, GameState_20_SamusNoHealth_BlackOut, GameState_21_SamusNoHealth,
     GameState_22_SamusNoHealth_Dying, GameState_23_SamusNoHealth_Flashing,
     GameState_24_SamusNoHealth_Explosion, GAME_OVER_FADE_OUT,
@@ -253,118 +250,6 @@ pub unsafe fn GameState_28_Unused(game: &mut Game) -> CoroutineRet {
     unsafe {
         crate::rtl::Unreachable(game);
         kCoroutineNone as CoroutineRet
-    }
-}
-crate::game::address_dispatch! {
-    pub unsafe fn CallPauseHook(ea: u32, game: &mut Game) => ea;
-        call (game); default { Unreachable(game); };
-    {
-        8946657 => [()]; 9423094 => pause_draygon; 10994469 => PauseHook_Kraid;
-    }
-}
-crate::game::address_dispatch! {
-    pub unsafe fn CallUnpauseHook_Async(ea: u32, game: &mut Game) -> CoroutineRet => ea;
-        call (game); default {
-            Unreachable(game);
-            kCoroutineNone as CoroutineRet
-        };
-    {
-        8946657 => [kCoroutineNone as CoroutineRet]; 9423100 => unpause_draygon;
-        10994171 => UnpauseHook_Kraid_IsDead; 10994254 => UnpauseHook_Kraid_IsAlive;
-        10994336 => Kraid_UnpauseHook_IsSinking; 11110243 => MotherBrainsBody_UnpauseHook;
-    }
-}
-pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        set_hdma_enabled(false, game);
-        crate::rtl::write_register_and_mirror(HDMAEN as u16, 0, 0x85, true, game);
-        animated_tiles::set_enabled(false, game);
-        crate::game::display_refresh::capture_pause_background(game);
-        CallPauseHook(Load24(ram_ptr!(game, LongPtr; 0x601)), game);
-        cancel_effects(6, game);
-        crate::game::pause_controls::save_graphics(game);
-        crate::game::display_refresh::load_pause_assets(game);
-        crate::game::display_refresh::upload_pause_map(game);
-        word_transfers!(game, ascending, 256; pause_map(384) <- le(palette_buffer, 0));
-        word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0xb6f000, 0));
-        crate::game::display_refresh::pause_graphics(true, game);
-        crate::game::pause_controls::initialize(game);
-        kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn GameState_15_Paused_Async(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        crate::game::controller_input::filter(3, game);
-        // Preserve the eight-entry bounds failure before any tab work.
-        let tab = [0, 1, 2, 3, 4, 5, 6, 7][usize::from(word!(game.menu_index))];
-        match tab {
-            0 => crate::game::pause_controls::update_map(game),
-            1 => crate::game::pause_controls::update_equipment(game),
-            2 | 5 => crate::game::pause_controls::fade_out_tab(game, tab == 5, |game| {
-                crate::game::display_refresh::enable(true, game);
-            }),
-            3 | 6 => crate::game::pause_controls::load_tab(game, tab == 3, |game| {
-                if tab == 3 {
-                    GraphicsAsset::VramWords(0x7e3800, 0x3000, 0x800).load(game);
-                } else {
-                    crate::game::display_refresh::upload_pause_map(game);
-                }
-            }),
-            4 => crate::game::pause_controls::fade_tab::<true>(game),
-            _ => crate::game::pause_controls::fade_tab::<false>(game),
-        }
-        crate::game::hud::advance(game);
-        crate::game::map_menu::animate_palette(game);
-        kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        let mut _state_variable_: *mut u8 = ram_ptr!(game; 0x612);
-        let run_unpause_hook: bool;
-        match *_state_variable_ as i32 {
-            0 => {
-                GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x1000).load(game);
-                word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- pause_map(384));
-                crate::game::display_refresh::pause_graphics(false, game);
-                crate::game::pause_controls::resume(game);
-                WriteRegWord(MDMAEN as u16, 0, game);
-                crate::game::display_refresh::enable(false, game);
-                crate::game::scanline_irq::disable(game);
-                crate::game::room_state::load_tiles_and_palette(game);
-                crate::game::room_entry::background::load(
-                    &mut crate::game::session_runtime::Runtime::new(game),
-                    crate::game::room_entry::content::LoadMode::Initial,
-                );
-                crate::game::room_scrolls::fill_viewport(game, |game| {
-                    crate::game::display_refresh::flush_tilemaps(game)
-                });
-                crate::game::room_mechanisms::reload_graphics(game);
-                crate::game::display_refresh::enable(true, game);
-                crate::game::scanline_irq::enable(false, game);
-                crate::game::pause_controls::restore_graphics(game);
-                GraphicsAsset::VramWords(0x7edf5c, u16::from(game.g_ram[0x59] & 0xfc) << 8, 0x1000)
-                    .load(game);
-                word! { game, 1; screen_fade_delay, screen_fade_counter }
-                run_unpause_hook = true;
-            }
-            1 => run_unpause_hook = true,
-            _ => run_unpause_hook = false,
-        }
-        if run_unpause_hook {
-            let mut _coret_: u8 =
-                CallUnpauseHook_Async(Load24(ram_ptr!(game, LongPtr; 0x604)), game);
-            if _coret_ != 0 {
-                *_state_variable_ = 1;
-                return _coret_;
-            }
-            set_hdma_enabled(true, game);
-            animated_tiles::set_enabled(true, game);
-            crate::game::player_projectiles::restore_sound(game);
-            word!(game.game_state += 1);
-        }
-        *_state_variable_ = 0;
-        0 as CoroutineRet
     }
 }
 pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineRet {

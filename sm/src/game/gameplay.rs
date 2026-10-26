@@ -6,9 +6,11 @@
 use crate::game::actors;
 use crate::game::animated_tiles;
 use crate::game::demo_rooms;
+use crate::game::display_refresh::{self, GraphicsAsset};
 use crate::game::enemy_projectiles::EprojRunAll;
 use crate::game::message_boxes;
 use crate::game::palette_effects;
+use crate::game::pause_controls;
 use crate::game::player_projectiles::prepare;
 use crate::game::prelude::*;
 use crate::game::room_entry::{self, ArrivalRequest, EntrySignal, StartSite};
@@ -16,7 +18,13 @@ use crate::game::room_mechanisms::run;
 use crate::game::room_scrolls::advance_camera;
 use crate::game::room_scrolls::{debug_position, update_scrolls};
 use crate::game::room_state::advance_room;
+use crate::game::room_state::{pause_draygon, unpause_draygon};
 use crate::game::session_runtime::{Runtime, player_command};
+use crate::game::sm_a7::{
+    Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
+    UnpauseHook_Kraid_IsDead,
+};
+use crate::game::sm_a9::MotherBrainsBody_UnpauseHook;
 use crate::ram_map::{checked_word, words as ram};
 
 #[derive(Clone, Copy, PartialEq)]
@@ -46,6 +54,9 @@ pub(crate) enum Entry {
     Gameplay,
     FadeIn,
     Unpause,
+    PauseSetup,
+    Paused,
+    UnpauseSetup,
     PauseFadeOut,
     UnpauseFadeOut,
     GameOverFadeOut,
@@ -169,6 +180,104 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                         player_command(9, game);
                     }
                 }
+            }
+            game.g_ram[0x612] = 0;
+            return 0 as CoroutineRet;
+        }
+        if matches!(entry, Entry::PauseSetup) {
+            crate::game::visual_runtime::set_hdma_enabled(false, game);
+            crate::rtl::write_register_and_mirror(HDMAEN as u16, 0, 0x85, true, game);
+            animated_tiles::set_enabled(false, game);
+            display_refresh::capture_pause_background(game);
+            match pause_controls::hook_address(true, game) {
+                8946657 => {}
+                9423094 => pause_draygon(game),
+                10994469 => PauseHook_Kraid(game),
+                _ => {
+                    Unreachable(game);
+                }
+            }
+            crate::game::music::cancel_effects(6, game);
+            pause_controls::save_graphics(game);
+            display_refresh::load_pause_assets(game);
+            display_refresh::upload_pause_map(game);
+            word_transfers!(game, ascending, 256; pause_map(384) <- le(palette_buffer, 0));
+            word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0xb6f000, 0));
+            display_refresh::pause_graphics(true, game);
+            pause_controls::initialize(game);
+            return 0 as CoroutineRet;
+        }
+        if matches!(entry, Entry::Paused) {
+            crate::game::controller_input::filter(3, game);
+            // Preserve the eight-entry bounds failure before any tab work.
+            let tab = [0, 1, 2, 3, 4, 5, 6, 7][usize::from(word!(game.menu_index))];
+            match tab {
+                0 => pause_controls::update_map(game),
+                1 => pause_controls::update_equipment(game),
+                2 | 5 => pause_controls::fade_out_tab(game, tab == 5, |game| {
+                    display_refresh::enable(true, game);
+                }),
+                3 | 6 => pause_controls::load_tab(game, tab == 3, |game| {
+                    if tab == 3 {
+                        GraphicsAsset::VramWords(0x7e3800, 0x3000, 0x800).load(game);
+                    } else {
+                        display_refresh::upload_pause_map(game);
+                    }
+                }),
+                4 => pause_controls::fade_tab::<true>(game),
+                _ => pause_controls::fade_tab::<false>(game),
+            }
+            crate::game::hud::advance(game);
+            crate::game::map_menu::animate_palette(game);
+            return 0 as CoroutineRet;
+        }
+        if matches!(entry, Entry::UnpauseSetup) {
+            let resume = game.g_ram[0x612];
+            if resume == 0 {
+                GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x1000).load(game);
+                word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- pause_map(384));
+                display_refresh::pause_graphics(false, game);
+                pause_controls::resume(game);
+                WriteRegWord(MDMAEN as u16, 0, game);
+                display_refresh::enable(false, game);
+                crate::game::scanline_irq::disable(game);
+                crate::game::room_state::load_tiles_and_palette(game);
+                crate::game::room_entry::background::load(
+                    &mut Runtime::new(game),
+                    crate::game::room_entry::content::LoadMode::Initial,
+                );
+                crate::game::room_scrolls::fill_viewport(game, |game| {
+                    display_refresh::flush_tilemaps(game)
+                });
+                crate::game::room_mechanisms::reload_graphics(game);
+                display_refresh::enable(true, game);
+                crate::game::scanline_irq::enable(false, game);
+                pause_controls::restore_graphics(game);
+                GraphicsAsset::VramWords(0x7edf5c, u16::from(game.g_ram[0x59] & 0xfc) << 8, 0x1000)
+                    .load(game);
+                word! { game, 1; screen_fade_delay, screen_fade_counter }
+            }
+            if resume <= 1 {
+                let yielded = match pause_controls::hook_address(false, game) {
+                    8946657 => 0,
+                    9423100 => unpause_draygon(game),
+                    10994171 => UnpauseHook_Kraid_IsDead(game),
+                    10994254 => UnpauseHook_Kraid_IsAlive(game),
+                    10994336 => Kraid_UnpauseHook_IsSinking(game),
+                    11110243 => MotherBrainsBody_UnpauseHook(game),
+                    _ => {
+                        Unreachable(game);
+                        0
+                    }
+                };
+                if yielded != 0 {
+                    game.g_ram[0x612] = 1;
+                    return yielded;
+                }
+                crate::game::visual_runtime::set_hdma_enabled(true, game);
+                animated_tiles::set_enabled(true, game);
+                crate::game::player_projectiles::restore_sound(game);
+                word!(game.game_state += 1);
             }
             game.g_ram[0x612] = 0;
             return 0 as CoroutineRet;
@@ -341,7 +450,10 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                     word!(game.game_state += 1);
                 }
             }
-            Entry::TimeUpExit
+            Entry::PauseSetup
+            | Entry::Paused
+            | Entry::UnpauseSetup
+            | Entry::TimeUpExit
             | Entry::UnpauseFadeOut
             | Entry::GameOverFadeOut
             | Entry::Initialize
