@@ -9,10 +9,11 @@ use crate::game::visual_runtime::{
     advance_credit_roll, advance_intro_rinka, advance_shooting_stars, advance_zebes_stars,
     draw_cinematic_sprites, draw_intro_sprites, drift_cinematic_sprite, flash_intro_mother_brain,
     initialize_ceres_explosion, initialize_ending_cloud_band, initialize_ending_cloud_side,
-    initialize_ending_time_glyph, initialize_intro_rinka, initialize_shooting_stars,
-    launch_cinematic_sprite, move_ending_cloud, move_jumping_ending_samus, place_cinematic_sprite,
-    prepare_credit_roll, prepare_ending_time, shake_intro_mother_brain, start_intro_rinka,
-    title_metroid_cry, title_metroid_palette, wait_cinematic_scene, wait_ending_cloud,
+    initialize_ending_time_glyph, initialize_intro_brain_particle, initialize_intro_rinka,
+    initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud,
+    move_jumping_ending_samus, place_cinematic_sprite, prepare_credit_roll, prepare_ending_time,
+    shake_intro_mother_brain, start_intro_rinka, title_metroid_cry, title_metroid_palette,
+    wait_cinematic_scene, wait_ending_cloud,
 };
 use crate::game::visual_runtime::{advance_cinematic_background_pre, fade_cinematic_fixed_color};
 use crate::game::visual_runtime::{
@@ -514,12 +515,6 @@ static kSetSomeStuffForSpriteObject_9_Tab1: [i16; 138] = [
     -0x6000, 4, -0x4000, 4, -0x2000, 5, 0, 5, 0x2000, 5, 0x4000, 5, 0x6000, 5, -0x8000, 5, -0x6000,
     5, -0x4000, 5, -0x2000,
 ];
-static kCinematicFunction_Intro_Func46_Tab0: [u16; 5] = [0, 0x10, 0xfff0, 0xfff8, 8];
-static kCinematicFunction_Intro_Func46_Tab1: [u16; 5] = [0, 0xfff0, 8, 0xfff0, 8];
-static kCinematicFunction_Intro_Func46_Tab2: [u16; 5] = [1, 0x10, 0x20, 0x30, 0x40];
-static kCinematicFunction_Intro_Func47_Tab0: [u16; 3] = [0x10, 0xfff0, 0xfff0];
-static kCinematicFunction_Intro_Func47_Tab1: [u16; 3] = [0, 4, 0xfff8];
-static kCinematicFunction_Intro_Func47_Tab2: [u16; 3] = [1, 8, 0x10];
 
 macro_rules! chase_samus_with_cinematic_sprite {
     ($game:ident, $y_offset:literal, $object_slot:ident) => {
@@ -2408,32 +2403,6 @@ crate::game::callback_dispatch! {
             cinematicbg_arr9[v2] = 3584;
         }
     };
-    [9157005] CinematicFunction_Intro_Func46 [] {
-        let v1: u16 = word!(game.cinematic_spawn_param);
-        let v2: i32 = j as i32 >> 1;
-        word!(game.cinematicspr_goto_timer[v2] = word!(game.cinematic_spawn_param));
-        let v3: i32 = v1 as i32;
-        word! { game;
-            cinematicbg_arr7[v2] = (kCinematicFunction_Intro_Func46_Tab0[v3 as usize]).wrapping_add(56);
-            cinematicbg_arr8[v2] =
-                (kCinematicFunction_Intro_Func46_Tab1[v3 as usize]).wrapping_add(111);
-            cinematicspr_instr_timer[v2] = kCinematicFunction_Intro_Func46_Tab2[v3 as usize];
-            cinematicbg_arr9[v2] = 2560;
-        }
-    };
-    [9157076] CinematicFunction_Intro_Func47 [] {
-        let v1: u16 = word!(game.cinematic_spawn_param);
-        let v2: i32 = j as i32 >> 1;
-        word!(game.cinematicspr_goto_timer[v2] = word!(game.cinematic_spawn_param));
-        let v3: i32 = v1 as i32;
-        word! { game;
-            cinematicbg_arr7[v2] = (kCinematicFunction_Intro_Func47_Tab0[v3 as usize]).wrapping_add(56);
-            cinematicbg_arr8[v2] =
-                (kCinematicFunction_Intro_Func47_Tab1[v3 as usize]).wrapping_add(111);
-            cinematicspr_instr_timer[v2] = kCinematicFunction_Intro_Func47_Tab2[v3 as usize];
-            cinematicbg_arr9[v2] = 2560;
-        }
-    };
     [9158560] CinematicFunction_Intro_Func65 [] {
         if word!(game.cinematic_spawn_param) != 0 {
             word!(game.cinematicbg_arr7[(j >> 1)] = 224);
@@ -2490,6 +2459,8 @@ crate::game::callback_dispatch! {
             cinematicbg_arr9[v1] = 3584; cinematicspr_goto_timer[v1] = 8; }
     };
     @external {
+        9157005 => [initialize_intro_brain_particle(j, true, game)];
+        9157076 => [initialize_intro_brain_particle(j, false, game)];
         9159732 => [initialize_ceres_explosion(j, CeresExplosion::First, game)];
         9159865 => [initialize_ceres_explosion(j, CeresExplosion::Second, game)];
         9159987 => [initialize_ceres_explosion(j, CeresExplosion::Third, game)];

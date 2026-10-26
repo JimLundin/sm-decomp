@@ -1702,6 +1702,29 @@ fn advance_cinematic_coordinate(object: u16, vertical: bool, velocity: u32, game
     add_native_pair(0x1a7d + offset, 0x1add + offset, velocity, game);
 }
 
+pub(crate) fn initialize_intro_brain_particle(object: u16, big: bool, game: &mut Game) {
+    let parameter = usize::from(word!(game.cinematic_spawn_param));
+    let slot = usize::from(object >> 1);
+    word!(game.cinematicspr_goto_timer[slot] = word!(game.cinematic_spawn_param));
+    let particles: &[(u16, u16, u16)] = if big {
+        &[
+            (56, 111, 1),
+            (72, 95, 16),
+            (40, 119, 32),
+            (48, 95, 48),
+            (64, 119, 64),
+        ]
+    } else {
+        &[(72, 111, 1), (40, 115, 8), (40, 103, 16)]
+    };
+    word! { game;
+        cinematicbg_arr7[slot] = particles[parameter].0;
+        cinematicbg_arr8[slot] = particles[parameter].1;
+        cinematicspr_instr_timer[slot] = particles[parameter].2;
+        cinematicbg_arr9[slot] = 2560;
+    }
+}
+
 pub(crate) fn initialize_ceres_explosion(object: u16, pattern: CeresExplosion, game: &mut Game) {
     let slot = usize::from(object >> 1);
     let parameter = if matches!(pattern, CeresExplosion::Final) {
