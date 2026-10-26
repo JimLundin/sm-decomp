@@ -1,6 +1,7 @@
 use crate::game::actors;
 use crate::game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use crate::game::actors::api as actor_api;
+use crate::game::actors::crocomire_reactions::wall_step;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
 use crate::game::gameplay_flag_host::BossWordOrder;
@@ -61,7 +62,7 @@ static off_A48C14: [Func_V; 45] = callback_table! { nonnull Func_V;
     Crocomire_Func_51, Crocomire_8D47, Crocomire_929E, Crocomire_Func_51, Crocomire_8D47,
     Crocomire_929E, Crocomire_Func_51, Crocomire_Func_59, Crocomire_Func_60, Crocomire_Func_62,
     Crocomire_Func_63, advance_skeleton_melt, Crocomire_9506, Crocomire_Func_65, Crocomire_Func_66,
-    Crocomire_Func_49, Crocomire_Func_68, Crocomire_Func_70, Crocomire_Func_71,
+    Crocomire_Func_49, Crocomire_Func_68, wall_step, Crocomire_Func_71,
     Crocomire_Func_72, Crocomire_Func_73, Crocomire_Func_88, Crocomire_9B65, Crocomire_Func_90,
     advance_phase, Crocomire_9B86, nullsub_305, advance_phase, Crocomire_Func_29,
     Crocomire_Func_69,
@@ -711,82 +712,6 @@ pub unsafe fn Crocomire_Func_68(game: &mut Game) {
             enemy.variables[3] = countdown
         });
     }
-}
-
-pub fn Crocomire_Func_70(game: &mut Game) {
-    let mut runtime = Runtime::new(game);
-    let mut cursor = runtime
-        .resolve_actor(Key::from_legacy(0), AccessMode::Native)
-        .variables[3];
-    let image = runtime.loaded_image().expect("ROM must be loaded");
-    let target = image.table_word(
-        crate::rom::lorom_offset(0xa498ca) as usize,
-        (cursor >> 1) as isize,
-    );
-    if target == 0x8080 {
-        runtime.edit_actor(Key::from_legacy(0x40), AccessMode::Native, |enemy| {
-            enemy.variables[3] = 0x8080
-        });
-        runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-            enemy.variables[3] = 128
-        });
-        drop(runtime);
-        word_transfers!(game, descending, 16; le(palette_buffer, 191) <- rom(0xa4b91d, 15));
-        advance_phase(game);
-        return;
-    }
-    let current = runtime
-        .resolve_actor(Key::from_legacy(0x40), AccessMode::Native)
-        .variables[3];
-    if current != target {
-        let step = runtime
-            .resolve_actor(Key::from_legacy(0xc0), AccessMode::Native)
-            .variables[3];
-        let next = if (current as i16).wrapping_sub(target as i16) >= 0 {
-            current.wrapping_sub(step)
-        } else {
-            current.wrapping_add(step)
-        };
-        runtime.edit_actor(Key::from_legacy(0x40), AccessMode::Native, |enemy| {
-            enemy.variables[3] = next
-        });
-        return;
-    }
-    if target & 0x8000 != 0 {
-        let countdown = runtime
-            .resolve_actor(Key::from_legacy(0x80), AccessMode::Native)
-            .variables[3];
-        if countdown != 0 {
-            runtime.edit_actor(Key::from_legacy(0x80), AccessMode::Native, |enemy| {
-                enemy.variables[3] = countdown.wrapping_sub(1)
-            });
-            runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-                enemy.variables[3] = cursor.wrapping_sub(2)
-            });
-            drop(runtime);
-            QueueSfx2_Max6(0x2b, game);
-            return;
-        }
-        cursor = cursor.wrapping_add(2);
-        let countdown = image.table_word(
-            crate::rom::lorom_offset(0xa498ca) as usize,
-            (cursor >> 1) as isize,
-        );
-        runtime.edit_actor(Key::from_legacy(0x80), AccessMode::Native, |enemy| {
-            enemy.variables[3] = countdown
-        });
-        cursor = cursor.wrapping_add(2);
-        let step = image.table_word(
-            crate::rom::lorom_offset(0xa498ca) as usize,
-            (cursor >> 1) as isize,
-        );
-        runtime.edit_actor(Key::from_legacy(0xc0), AccessMode::Native, |enemy| {
-            enemy.variables[3] = step
-        });
-    }
-    runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        enemy.variables[3] = cursor.wrapping_add(2)
-    });
 }
 
 fn spawn_dust(jp: EnemyScript, offset: u16, game: &mut Game) -> EnemyScript {

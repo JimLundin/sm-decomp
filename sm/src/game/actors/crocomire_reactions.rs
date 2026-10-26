@@ -313,6 +313,69 @@ pub(crate) fn choose_spit(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScr
     jp
 }
 
+fn wall_counter(runtime: &Runtime<'_>, key: u16) -> u16 {
+    runtime
+        .resolve_actor(Key::from_legacy(key), AccessMode::Native)
+        .variables[3]
+}
+fn set_wall_counter(runtime: &mut Runtime<'_>, key: u16, value: u16) {
+    runtime.edit_actor(Key::from_legacy(key), AccessMode::Native, |enemy| {
+        enemy.variables[3] = value
+    });
+}
+pub(crate) fn wall_step(game: &mut Game) {
+    let mut runtime = Runtime::new(game);
+    let mut cursor = wall_counter(&runtime, 0);
+    let image = runtime.loaded_image().expect("ROM must be loaded");
+    let target = image.table_word(
+        crate::rom::lorom_offset(0xa498ca) as usize,
+        (cursor >> 1) as isize,
+    );
+    if target == 0x8080 {
+        set_wall_counter(&mut runtime, 0x40, 0x8080);
+        set_wall_counter(&mut runtime, 0, 128);
+        drop(runtime);
+        word_transfers!(game, descending, 16; le(palette_buffer, 191) <- rom(0xa4b91d, 15));
+        Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+            enemy.variables[0] = enemy.variables[0].wrapping_add(2);
+        });
+        return;
+    }
+    let current = wall_counter(&runtime, 0x40);
+    if current != target {
+        let step = wall_counter(&runtime, 0xc0);
+        let next = if (current as i16).wrapping_sub(target as i16) >= 0 {
+            current.wrapping_sub(step)
+        } else {
+            current.wrapping_add(step)
+        };
+        set_wall_counter(&mut runtime, 0x40, next);
+        return;
+    }
+    if target & 0x8000 != 0 {
+        let countdown = wall_counter(&runtime, 0x80);
+        if countdown != 0 {
+            set_wall_counter(&mut runtime, 0x80, countdown.wrapping_sub(1));
+            set_wall_counter(&mut runtime, 0, cursor.wrapping_sub(2));
+            drop(runtime);
+            QueueSfx2_Max6(0x2b, game);
+            return;
+        }
+        cursor = cursor.wrapping_add(2);
+        let countdown = image.table_word(
+            crate::rom::lorom_offset(0xa498ca) as usize,
+            (cursor >> 1) as isize,
+        );
+        set_wall_counter(&mut runtime, 0x80, countdown);
+        cursor = cursor.wrapping_add(2);
+        let step = image.table_word(
+            crate::rom::lorom_offset(0xa498ca) as usize,
+            (cursor >> 1) as isize,
+        );
+        set_wall_counter(&mut runtime, 0xc0, step);
+    }
+    set_wall_counter(&mut runtime, 0, cursor.wrapping_add(2));
+}
 pub(crate) fn rumble(game: &mut Game) {
     let remaining = slot!(game, Crocomire[0].var_20);
     if remaining != 0 {
