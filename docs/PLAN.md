@@ -81,8 +81,8 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Qualified Core25: production 112062, legacy 21328, unsafe 3015, verification 39967.
-Its 23 affected/control rows pass; Core24's 35 plus the new fixed grapple row pass.
+Qualified Core26: production 111993, legacy 20980, unsafe 3005, verification 39967.
+Its 24 affected/control rows pass; Core25's 23 and Core24's 35 plus grapple pass.
 The manifest now has 86 rows; whole-engine ownership and backend independence stay open.
 Retain the fixed 2131-frame X-ray activation/release row and original pickup.
 The existing comparison normalizes 611..616; initializer continuation also relies

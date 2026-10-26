@@ -155,6 +155,105 @@ pub fn change_length(game: &mut Game) -> u8 {
     word!(game.grapple_beam_length = end);
     0
 }
+pub(crate) fn apply_input(game: &mut Game) {
+    if word!(game.joypad1_newkeys) & kButton_Up as u16 != 0 {
+        if word!(game.grapple_beam_length) != 0 {
+            word!(game.grapple_beam_length_delta = (-2i16) as u16);
+        }
+    } else if word!(game.joypad1_newkeys) & kButton_Down as u16 != 0 {
+        if (i32::from(word!(game.grapple_beam_length)) - 64) & 0x8000 != 0 {
+            word!(game.grapple_beam_length_delta = 2);
+        } else {
+            word!(game.grapple_beam_length = 64);
+        }
+    }
+    let angle = u16::from(game.g_ram[0xcfb]) << 8;
+    if (0x4000..0xc000).contains(&angle) {
+        let direction = if word!(game.joypad1_lastkeys) & 0x200 != 0 {
+            1i16
+        } else if word!(game.joypad1_lastkeys) & 0x100 != 0 {
+            -1
+        } else {
+            0
+        };
+        if direction != 0 {
+            if angle == 0x8000 && word!(game.grapple_beam_unkD26) == 0 {
+                word!(game.grapple_beam_unkD26 = (direction * 256) as u16);
+            }
+            let acceleration =
+                if word!(game.grapple_beam_flags) != 0 && word!(game.grapple_beam_flags) & 1 != 0 {
+                    6
+                } else {
+                    12
+                };
+            word!(game.grapple_beam_unkD2A = (direction * acceleration) as u16);
+            return;
+        }
+    }
+    word!(game.grapple_beam_unkD2A = 0);
+}
+
+pub(crate) fn apply_gravity(game: &mut Game) {
+    let angle = word!(game.grapple_beam_end_angle16);
+    if angle & 0xff00 == 0x8000 {
+        word! { game, 0; grapple_beam_unkD28, grapple_beam_unkD2C }
+        if abs16(word!(game.grapple_beam_unkD26)).to_ne_bytes()[1] == 0 {
+            word!(game.grapple_beam_unkD26 = 0);
+        }
+        return;
+    }
+    let direction = if angle & 0x8000 != 0 { -1i16 } else { 1 };
+    let shift = if matches!(angle & 0xc000, 0 | 0xc000) {
+        2
+    } else {
+        0
+    };
+    word!(game.grapple_beam_unkD2C = (direction * (5 >> shift)) as u16);
+    let shift = shift
+        + u32::from(word!(game.grapple_beam_flags) != 0 && word!(game.grapple_beam_flags) & 1 != 0);
+    word!(game.grapple_beam_unkD28 = (direction * (24 >> shift)) as u16);
+}
+
+pub(crate) fn accelerate(game: &mut Game) {
+    word!(
+        checked_i32,
+        game.grapple_beam_unkD26 +=
+            (word!(game.grapple_beam_unkD2A) as i32 + word!(game.grapple_beam_unkD28) as i32)
+    );
+    if (word!(game.grapple_beam_unkD26) ^ word!(game.grapple_beam_end_angle16)) & 0x8000 != 0 {
+        word!(game.grapple_beam_unkD26 += word!(game.grapple_beam_unkD2C));
+    }
+    let velocity = word!(game.grapple_beam_unkD26) as i16;
+    if velocity.unsigned_abs() >= 0x480 {
+        word!(game.grapple_beam_unkD26 = velocity.clamp(-0x480, 0x480) as u16);
+    }
+}
+
+pub(crate) fn rebound_jump(game: &mut Game) {
+    if word!(game.grapple_beam_unkD30) == 0
+        || word!(game.button_config_jump_a) & word!(game.joypad1_newkeys) == 0
+    {
+        return;
+    }
+    let velocity = word!(game.grapple_beam_unkD26);
+    let impulse = if velocity == 0 {
+        0
+    } else {
+        let magnitude =
+            if word!(game.grapple_beam_flags) != 0 && word!(game.grapple_beam_flags) & 1 != 0 {
+                0x180u16
+            } else {
+                0x300
+            };
+        if velocity & 0x8000 != 0 {
+            magnitude.wrapping_neg()
+        } else {
+            magnitude
+        }
+    };
+    word!(game.grapple_beam_unkD2E = impulse);
+}
+
 pub fn advance_swing(game: &mut Game) -> u8 {
     let scale = if word!(game.grapple_beam_flags) & 1 != 0 {
         160

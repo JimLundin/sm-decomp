@@ -2,7 +2,7 @@ use crate::game::actors;
 use crate::game::actors::api as actor_api;
 use crate::game::combat_rules::GrappleOutcome;
 use crate::game::display_refresh::queue_native_transfer;
-use crate::game::grapple_swing::{advance_swing, change_length, place_rope_origin};
+use crate::game::grapple_swing::{self, advance_swing, change_length, place_rope_origin};
 use crate::game::player_transitions as pt;
 pub use crate::game::prelude::*;
 use crate::game::session_access::SessionAccess;
@@ -45,11 +45,6 @@ crate::game::constants::typed_constants! { i32;
 static kDeathAnimationFrames: [u8; 28] = [
     5, 5, 5, 5, 1, 5, 5, 0, 1, 0, 5, 5, 5, 5, 5, 5, 5, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5,
 ];
-static g_word_9BC118: u16 = 24;
-static g_word_9BC11A: u16 = 0xc;
-static g_word_9BC11C: u16 = 5;
-static g_word_9BC11E: u16 = 0x480;
-static g_word_9BC120: u16 = 0x300;
 static g_word_9BB7BF: [u16; 5] = [0x8400, 0x8800, 0x8c00, 0x9000, 0x8000];
 static g_word_9BB7C9: [u16; 5] = [0x6200, 0x6400, 0x6600, 0x6800, 0x6000];
 static kShadesOfWhite: [u16; 22] = [
@@ -642,140 +637,6 @@ crate::game::callback_dispatch! {
     pub unsafe fn CallGrappleBeamFunc(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
-    [10206052] GrappleBeamFunc_BB64 [] {
-        if (word!(game.joypad1_newkeys) as i32 & kButton_Up as i32) != 0 {
-            if word!(game.grapple_beam_length) != 0 {
-                word!(game.grapple_beam_length_delta = -2i32 as u16);
-            }
-        } else if (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) != 0 {
-            if word!(game.grapple_beam_length) as i32 - 64i32 & 0x8000 != 0 {
-                word!(game.grapple_beam_length_delta = 2);
-            } else {
-                word!(game.grapple_beam_length = 64);
-            }
-        }
-        if !(((*ram_ptr!(game; 0xcfb) as i32) << 8) - 0x4000i32 & 0x8000 != 0
-            || ((*ram_ptr!(game; 0xcfb) as i32) << 8) + 0x4000 & 0x8000 == 0)
-        {
-            let continue_grapple_setup: bool = if (word!(game.joypad1_lastkeys) & 0x200) != 0 {
-                if ((*ram_ptr!(game; 0xcfb) as i32) << 8) == 0x8000
-                    && word!(game.grapple_beam_unkD26) == 0
-                {
-                    word!(game.grapple_beam_unkD26 = 256);
-                }
-                if word!(game.grapple_beam_flags) != 0 && (word!(game.grapple_beam_flags) & 1) != 0
-                {
-                    word!(game.grapple_beam_unkD2A = g_word_9BC11A >> 1);
-                } else {
-                    word!(game.grapple_beam_unkD2A = g_word_9BC11A);
-                }
-                false
-            } else {
-                ((word!(game.joypad1_lastkeys) & 0x100) == 0)
-                    || ({
-                        if ((*ram_ptr!(game; 0xcfb) as i32) << 8) == 0x8000
-                            && word!(game.grapple_beam_unkD26) == 0
-                        {
-                            word!(game.grapple_beam_unkD26 = -256i32 as u16);
-                        }
-                        if word!(game.grapple_beam_flags) != 0
-                            && (word!(game.grapple_beam_flags) & 1) != 0
-                        {
-                            word!(game.grapple_beam_unkD2A = -(g_word_9BC11A as i32 >> 1) as u16);
-                        } else {
-                            word!(game.grapple_beam_unkD2A = -(g_word_9BC11A as i32) as u16);
-                        }
-                        false
-                    })
-            };
-            if !(continue_grapple_setup) {
-                return;
-            }
-        }
-        word!(game.grapple_beam_unkD2A = 0);
-    };
-    [10206239] GrappleBeamFunc_BC1F [] {
-        if (word!(game.grapple_beam_end_angle16) & 0xc000) == 0xc000 {
-            word!(game.grapple_beam_unkD2C = -(g_word_9BC11C as i32 >> 2) as u16);
-            if word!(game.grapple_beam_flags) != 0 && (word!(game.grapple_beam_flags) & 1) != 0 {
-                word!(game.grapple_beam_unkD28 = -(g_word_9BC118 as i32 >> 3) as u16);
-            } else {
-                word!(game.grapple_beam_unkD28 = -(g_word_9BC118 as i32 >> 2) as u16);
-            }
-        } else if word!(game.grapple_beam_end_angle16) & 0x8000 != 0 {
-            if ((*ram_ptr!(game; 0xcfb) as i32) << 8) == 0x8000 {
-                word! { game, 0; grapple_beam_unkD28, grapple_beam_unkD2C }
-                let mut v0: u16 = word!(game.grapple_beam_unkD26);
-                if (word!(game.grapple_beam_unkD26) & 0x8000) != 0 {
-                    v0 = !(word!(game.grapple_beam_unkD26) as i32 - 1i32) as u16;
-                }
-                if byte!(v0; 1) as i32 - 1i32 & 0x8000 != 0 {
-                    word!(game.grapple_beam_unkD26 = 0);
-                }
-            } else {
-                word!(game.grapple_beam_unkD2C = -(g_word_9BC11C as i32) as u16);
-                if word!(game.grapple_beam_flags) != 0 && (word!(game.grapple_beam_flags) & 1) != 0
-                {
-                    word!(game.grapple_beam_unkD28 = -(g_word_9BC118 as i32 >> 1) as u16);
-                } else {
-                    word!(game.grapple_beam_unkD28 = -(g_word_9BC118 as i32) as u16);
-                }
-            }
-        } else if (word!(game.grapple_beam_end_angle16) & 0x4000) != 0 {
-            word!(game.grapple_beam_unkD2C = g_word_9BC11C);
-            if word!(game.grapple_beam_flags) != 0 && (word!(game.grapple_beam_flags) & 1) != 0 {
-                word!(game.grapple_beam_unkD28 = g_word_9BC118 >> 1);
-            } else {
-                word!(game.grapple_beam_unkD28 = g_word_9BC118);
-            }
-        } else {
-            word!(game.grapple_beam_unkD2C = g_word_9BC11C >> 2);
-            if word!(game.grapple_beam_flags) != 0 && (word!(game.grapple_beam_flags) & 1) != 0 {
-                word!(game.grapple_beam_unkD28 = g_word_9BC118 >> 3);
-            } else {
-                word!(game.grapple_beam_unkD28 = g_word_9BC118 >> 2);
-            }
-        };
-    };
-    [10206463] GrappleBeamFunc_BCFF [] {
-        word!(checked_i32, game.grapple_beam_unkD26 += (word!(game.grapple_beam_unkD2A) as i32 + word!(game.grapple_beam_unkD28) as i32));
-        if ((word!(game.grapple_beam_unkD26) ^ word!(game.grapple_beam_end_angle16)) & 0x8000) != 0
-        {
-            word!(game.grapple_beam_unkD26 += word!(game.grapple_beam_unkD2C));
-        }
-        if (word!(game.grapple_beam_unkD26) & 0x8000) == 0 {
-            if word!(game.grapple_beam_unkD26) >= g_word_9BC11E {
-                word!(game.grapple_beam_unkD26 = g_word_9BC11E);
-            }
-        } else if (-(word!(game.grapple_beam_unkD26) as i32) as u16) >= g_word_9BC11E {
-            word!(game.grapple_beam_unkD26 = -(g_word_9BC11E as i32) as u16);
-        }
-    };
-    [10206532] GrappleBeamFunc_BD44 [] {
-        if word!(game.grapple_beam_unkD30) != 0
-            && (word!(game.button_config_jump_a) & word!(game.joypad1_newkeys)) != 0
-        {
-            if word!(game.grapple_beam_unkD26) != 0 {
-                if (word!(game.grapple_beam_unkD26) & 0x8000) != 0 {
-                    if word!(game.grapple_beam_flags) != 0
-                        && (word!(game.grapple_beam_flags) & 1) != 0
-                    {
-                        word!(game.grapple_beam_unkD2E = -(g_word_9BC120 as i32 >> 1) as u16);
-                    } else {
-                        word!(game.grapple_beam_unkD2E = -(g_word_9BC120 as i32) as u16);
-                    }
-                } else if word!(game.grapple_beam_flags) != 0
-                    && (word!(game.grapple_beam_flags) & 1) != 0
-                {
-                    word!(game.grapple_beam_unkD2E = g_word_9BC120 >> 1);
-                } else {
-                    word!(game.grapple_beam_unkD2E = g_word_9BC120);
-                }
-            } else {
-                word!(game.grapple_beam_unkD2E = 0);
-            }
-        }
-    };
     [10206613] GrappleBeamFunc_BD95 [] {
         let v0: u16 = abs16(word!(game.grapple_beam_unkD26));
         let mut v1: u16 = 0;
@@ -983,13 +844,13 @@ crate::game::callback_dispatch! {
     };
     [10209181] GrappleBeamFunc_Connected_Swinging [] {
         if (word!(game.button_config_shoot_x) & word!(game.joypad1_lastkeys)) != 0 {
-            GrappleBeamFunc_BB64(game);
+            grapple_swing::apply_input(game);
             if word!(game.grapple_beam_length_delta) != 0 {
                 change_length(game);
             }
-            GrappleBeamFunc_BC1F(game);
-            GrappleBeamFunc_BCFF(game);
-            GrappleBeamFunc_BD44(game);
+            grapple_swing::apply_gravity(game);
+            grapple_swing::accelerate(game);
+            grapple_swing::rebound_jump(game);
             advance_swing(game);
             if (word!(game.grapple_beam_unkD36) & 0x8000) != 0
                 && HandleSpecialGrappleBeamAngles(game) & 1 != 0
@@ -1166,4 +1027,10 @@ crate::game::callback_dispatch! {
         word!(game.samus_hurt_switch_index = 7);
         clear_grapple_state_after_release!(game);
     };
+    @external {
+        10206052 => grapple_swing::apply_input;
+        10206239 => grapple_swing::apply_gravity;
+        10206463 => grapple_swing::accelerate;
+        10206532 => grapple_swing::rebound_jump;
+    }
 }
