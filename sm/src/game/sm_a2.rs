@@ -9,7 +9,6 @@ use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_86::*;
 
-use crate::game::enemy_projectiles::SpawnEprojWithGfx;
 use crate::game::music::QueueSfx2_Max6;
 
 pub use crate::types::Consts_A2;
@@ -29,7 +28,6 @@ unsafe fn update_randomized_pre_instruction(game: &mut Game) {
 }
 
 crate::game::constants::typed_constants! { Consts_A2;
-    addr_kLavaSeahorse_Ilist_E5A1 = 58785, addr_kLavaSeahorse_Ilist_E59B = 58779,
     addr_kGripper_Sprmap_E44B = 58443, addr_kGripper_Sprmap_E43F = 58431,
     addr_kHirisingSlowfalling_Ilist_D840 = 55360, addr_kHirisingSlowfalling_Ilist_D834 = 55348,
     addr_kHirisingSlowfalling_Ilist_D82C = 55340, addr_kMaridiaLargeSnail_Ilist_CA4B = 51787,
@@ -38,8 +36,7 @@ crate::game::constants::typed_constants! { Consts_A2;
 }
 
 crate::type_aliases! {
-    pub Enemy_LavaSeahorse,
-        Enemy_MaridiaLargeSnail, Enemy_MaridiaSpikeyShell,
+    pub Enemy_MaridiaLargeSnail, Enemy_MaridiaSpikeyShell,
         Enemy_HirisingSlowfalling =
         crate::game::enemy_layouts::EnemyLayout40;
 }
@@ -50,16 +47,11 @@ crate::game::constants::typed_constants! { i32;
     fnnullsub_182 = 0xa2a01b, fnnullsub_187 = 0xa2a7d7,
     fnMaridiaLargeSnail_Func_7 = 0xa2cf66,
     fnMaridiaLargeSnail_Func_8 = 0xa2cfa9,
-    fnLavaSeahorse_Func_1 = 0xa2e654,
-    fnLavaSeahorse_Func_2 = 0xa2e6ad, fnLavaSeahorse_Func_3 = 0xa2e6f1,
-    fnLavaSeahorse_Func_4 = 0xa2e734, fnLavaSeahorse_Func_5 = 0xa2e749,
-    fnnullsub_196 = 0xa2e781,
 }
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
     Get_HirisingSlowfalling(o: i32) -> Enemy_HirisingSlowfalling = [0xf78, o as isize];
-    Get_LavaSeahorse(o: i32) -> Enemy_LavaSeahorse = [0xf78, o as isize];
     Get_MaridiaLargeSnail(o: i32) -> Enemy_MaridiaLargeSnail = [0xf78, o as isize];
     Get_MaridiaSpikeyShell(o: i32) -> Enemy_MaridiaSpikeyShell = [0xf78, o as isize];
 }
@@ -313,27 +305,6 @@ crate::game::callback_dispatch! {
 fn MaridiaLargeSnail_Func_10(k: u16, game: &mut Game) {
     actors::animation::restart_from_native_cache(&mut Runtime::new(game), usize::from(k), 0xa2cb77);
 }
-fn lava_seahorse_animation(child: bool, game: &mut Game) {
-    let raw = usize::from(game.cur_enemy_index()) + if child { 64 } else { 0 };
-    actors::animation::restart_from_native_cache(&mut Runtime::new(game), raw, 0xa2e5ef);
-}
-pub unsafe fn LavaSeahorse_E7DA(game: &mut Game) {
-    unsafe {
-        let E = Get_LavaSeahorse(word!(game.cur_enemy_index) as i32, game);
-        if (*E).base.health != 0 {
-            let shake_timer: u16 = (*E).base.shake_timer;
-            let E1 = Get_LavaSeahorse(word!(game.cur_enemy_index) as i32 + 64, game);
-            set_fields! {[(*E1).base]; shake_timer = shake_timer,
-            invincibility_timer = (*E).base.invincibility_timer,
-            flash_timer = (*E).base.flash_timer, frozen_timer = (*E).base.frozen_timer,
-            ai_handler_bits = (*E).base.ai_handler_bits, };
-        } else {
-            let E1_0 = Get_LavaSeahorse(word!(game.cur_enemy_index) as i32 + 64, game);
-            (*E1_0).base.properties = ((*E1_0).base.properties) | (0x200u16);
-        };
-    }
-}
-
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
@@ -452,37 +423,6 @@ crate::game::callback_dispatch! {
         rippers::advance(Kind::Ripper, game);
     };
     @functions [pub unsafe fn (game: &mut Game)];
-    [10675718] LavaSeahorse_Init [] {
-        let E = Get_LavaSeahorse(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_02 = 0;
-        if (*E).parameter_1 != 0 {
-            set_fields! {[(*E)], 2; var_00, var_01}
-            (*E).base.current_instruction = addr_kLavaSeahorse_Ilist_E5A1 as u16;
-            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
-            (*E).var_F = (0xa2e781i32) as u16;
-        } else {
-            set_fields! {[(*E)], 0; var_00, var_01}
-            (*E).base.current_instruction = addr_kLavaSeahorse_Ilist_E59B as u16;
-            (*E).var_F = (0xa2e654i32) as u16;
-        };
-    };
-    [10675790] LavaSeahorse_Main [] {
-        let E = Get_LavaSeahorse(word!(game.cur_enemy_index) as i32, game);
-        actor_species_pre_instruction((((*E).var_F) as u32) | (0xa20000u32), game);
-    };
-    [10676168] LavaSeahorse_Touch [] {
-        Enemy_NormalTouchAI_A2(game);
-        LavaSeahorse_E7DA(game);
-    };
-    [10676174] LavaSeahorse_Shot [] {
-        Enemy_NormalShotAI_A2(game);
-        LavaSeahorse_E7DA(game);
-    };
-    [10676180] LavaSeahorse_Powerbomb [] {
-        Enemy_NormalPowerBombAI_A2(game);
-        LavaSeahorse_E7DA(game);
-    };
-    @functions [pub unsafe fn (game: &mut Game)];
     [10657715] SpikeShootingPlant_Main [] {
         let phase = {
             let runtime = Runtime::new(game);
@@ -592,6 +532,11 @@ crate::game::callback_dispatch! {
     [10649635] Enemy_NormalTouchAI_A2 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
     [10649645] Enemy_NormalShotAI_A2 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
     @external {
+        10675718 => crate::game::lava_seahorse_pair::initialize;
+        10675790 => [actor_species_pre_instruction(crate::game::lava_seahorse_pair::pre_instruction(game), game)];
+        10676168 => [{ Enemy_NormalTouchAI_A2(game); crate::game::lava_seahorse_pair::synchronize(game); }];
+        10676174 => [{ Enemy_NormalShotAI_A2(game); crate::game::lava_seahorse_pair::synchronize(game); }];
+        10676180 => [{ Enemy_NormalPowerBombAI_A2(game); crate::game::lava_seahorse_pair::synchronize(game); }];
         10663280 => [crate::game::lavaquake::update(true, game)];
         10663311 => [crate::game::lavaquake::update(false, game)];
         10653036 => [crate::game::maridia_turtles::initialize(false, game)];
@@ -635,12 +580,8 @@ crate::game::callback_dispatch! {
     [10669257] MaridiaLargeSnail_Instr_CCC9 [jp] {
         (*Get_MaridiaLargeSnail(word!(game.cur_enemy_index) as i32, game)).var_03 = 0;
     };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10675707] LavaSeahorse_Instr_E5FB [] {
-        (*Get_LavaSeahorse(word!(game.cur_enemy_index) as i32, game)).var_02 = 1;
-        jp
-    };
     @external {
+        10675707 => [crate::game::lava_seahorse_pair::fire_ready(j, game)];
         10666441 | 10666452 | 10666463 | 10666474 | 10666485 | 10666496 | 10666507
         | 10666518 | 10666529 | 10666540 | 10666551 | 10667730 | 10667741 | 10667752
             => [crate::game::norfair_rio::instruction(ea, j, game)];
@@ -666,32 +607,6 @@ crate::game::callback_dispatch! {
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
     call (k, game); default { crate::rtl::Unreachable(game); };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [10675953] LavaSeahorse_Func_3 [] {
-        lava_seahorse_animation(false, game);
-        let E = Get_LavaSeahorse(k as i32, game);
-        if (*E).var_02 != 0 {
-            (*E).var_02 = 0;
-            (*E).var_01 = -1i32 as u16;
-            SpawnEprojWithGfx(0xffff, k, addr_kEproj_LavaSeahorseFireball as u16, game);
-            QueueSfx2_Max6(0x61, game);
-            crate::update_place! { previous fresh20 = (*E).var_D => (*E).var_D.wrapping_sub(1); }
-            if fresh20 == 1 {
-                (*E).var_00 = ((*E).var_00).wrapping_sub(4);
-                (*E).var_D = 96;
-                (*E).var_F = (0xa2e734i32) as u16;
-            }
-        }
-    };
-    [10676020] LavaSeahorse_Func_4 [] {
-        let E = Get_LavaSeahorse(k as i32, game);
-        crate::update_place! { previous fresh21 = (*E).var_D => (*E).var_D.wrapping_sub(1); }
-        if fresh21 == 1 {
-            (*E).var_D = 48;
-            (*E).var_F = (0xa2e749i32) as u16;
-            lava_seahorse_animation(false, game);
-        }
-    };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     @prefix { let E = Get_MaridiaLargeSnail(k as i32, game); };
     MaridiaLargeSnail_Func_2 [] {
@@ -789,47 +704,9 @@ crate::game::callback_dispatch! {
     [10666929] NorfairRio_Func_5 [] { crate::game::norfair_rio::dive(k, false, false, game); };
     [10667990] LowerNorfairRio_Func_4 [] { crate::game::norfair_rio::dive(k, true, true, game); };
     [10668077] LowerNorfairRio_Func_5 [] { crate::game::norfair_rio::dive(k, true, false, game); };
-    @countdown [pub unsafe fn (k: u16, game: &mut Game)];
-    before {
-        let E = Get_LavaSeahorse(k as i32, game);
-        (*E).var_D = (*E).var_D.wrapping_sub(1);
-    }
-    when ((*E).var_D & 0x8000) != 0;
-    [10675796] LavaSeahorse_Func_1 {
-        (*E).var_D = 48;
-        (*E).var_F = (0xa2e6adi32) as u16;
-        let t: u16 = { let actor = k; actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X) };
-        (*E).var_A = (*E).var_A & 0x7fff | t & 0x8000;
-        if ((*E).var_A & 0x8000) != 0 {
-            crate::update_place! { reference fresh16 = *(&raw mut (*E).var_00 as *mut u8) => *fresh16 & !(1); }
-            let E1 = Get_LavaSeahorse(k as i32 + 64, game);
-            crate::update_place! { reference fresh17 = *(&raw mut (*E1).var_00 as *mut u8) => *fresh17 & !(1); }
-        } else {
-            crate::update_place! { reference fresh18 = *(&raw mut (*E).var_00 as *mut u8) => (*fresh18) | (1u8); }
-            let E1_0 = Get_LavaSeahorse(k as i32 + 64, game);
-            crate::update_place! { reference fresh19 = *(&raw mut (*E1_0).var_00 as *mut u8) => (*fresh19) | (1u8); }
-        }
-        lava_seahorse_animation(false, game);
-        lava_seahorse_animation(true, game);
-    };
-    [10675885] LavaSeahorse_Func_2 {
-        (*E).var_00 = ((*E).var_00).wrapping_add(4);
-        (*E).var_D = 3;
-        (*E).var_F = (0xa2e6f1i32) as u16;
-    } after {
-        (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
-        let E1 = Get_LavaSeahorse(k as i32 + 64, game);
-        (*E1).base.y_pos = (*E1).base.y_pos.wrapping_sub(1);
-    };
-    [10676041] LavaSeahorse_Func_5 {
-        (*E).var_D = 128;
-        (*E).var_F = (0xa2e654i32) as u16;
-    } after {
-        (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
-        let E1 = Get_LavaSeahorse(k as i32 + 64, game);
-        (*E1).base.y_pos = (*E1).base.y_pos.wrapping_add(1);
-    };
     @external {
+        10675796 | 10675885 | 10675953 | 10676020 | 10676041
+            => [crate::game::lava_seahorse_pair::phase(k, ea as u16, game)];
         10657722 => [crate::game::spike_plant::patrol(false, game)];
         10657772 => [crate::game::spike_plant::patrol(true, game)];
         10652227 => [crate::game::mini_crocomire::patrol(false, game)];
