@@ -5,6 +5,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  workflow_run:
+    workflows: [Segments]
+    types: [completed]
 permissions:
   contents: read
 concurrency:
@@ -20,7 +23,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # the 24-hour change needs history
+          ref: main
+          fetch-depth: 0 # the 1-hour curves need history
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
