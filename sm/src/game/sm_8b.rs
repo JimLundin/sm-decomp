@@ -4,6 +4,7 @@ pub use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
+use crate::game::visual_runtime::advance_cinematic_coordinate;
 use crate::game::visual_runtime::{
     METROID_PAL_1, METROID_PAL_2, METROID_PAL_3, METROID_PAL_4, advance_ceres_station,
     advance_credit_roll, advance_intro_baby_pursuit, advance_intro_rinka,
@@ -1515,32 +1516,26 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     @prefix { let v1: i32 = k as i32 >> 1; };
     [9152916] SetSomeStuffForSpriteObject_7 [] {
-        let v3: i32 = 2 * byte!(@pointer (ram_ptr!(game, u16; 0x1b7d)).offset(v1 as isize); 0) as i32;
+        let v3: i32 = 2 * game.g_ram[0x1b7d + 2 * v1 as usize] as i32;
         crate::native_assertion! {
             '_c2rust_label: (v3 + 1) < 12;
             b"v3 + 1 < 12\0", b"src/sm_8b.c\0", 2389, b"void SetSomeStuffForSpriteObject_7(uint16)\0"
         };
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
-            words!((
-                kSetSomeStuffForSpriteObject_7_Tab0[v3 as usize],
-                kSetSomeStuffForSpriteObject_7_Tab0[(v3 + 1) as usize] as u16
-            )),
-        );
-        let v6: i32 = 2 * byte!(@pointer (ram_ptr!(game, u16; 0x1b7d)).offset(v1 as isize); 1) as i32;
+        let velocity = words!((
+            kSetSomeStuffForSpriteObject_7_Tab0[v3 as usize],
+            kSetSomeStuffForSpriteObject_7_Tab0[(v3 + 1) as usize] as u16
+        ));
+        advance_cinematic_coordinate(k, false, velocity, game);
+        let v6: i32 = 2 * game.g_ram[0x1b7d + 2 * v1 as usize + 1] as i32;
         crate::native_assertion! {
             '_c2rust_label_0: (v6 + 1) < 82;
             b"v6 + 1 < 82\0", b"src/sm_8b.c\0", 2392, b"void SetSomeStuffForSpriteObject_7(uint16)\0"
         };
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
-            words!((
-                kSetSomeStuffForSpriteObject_7_Tab1[v6 as usize],
-                kSetSomeStuffForSpriteObject_7_Tab1[(v6 + 1) as usize]
-            )),
-        );
+        let velocity = words!((
+            kSetSomeStuffForSpriteObject_7_Tab1[v6 as usize],
+            kSetSomeStuffForSpriteObject_7_Tab1[(v6 + 1) as usize]
+        ));
+        advance_cinematic_coordinate(k, true, velocity, game);
         if word!(game.cinematicbg_arr8[v1]) as i32 - 168i32 & 0x8000 != 0 {
             word!(game.cinematicspr_goto_timer[v1] += 256);
         } else {
@@ -1549,51 +1544,42 @@ crate::game::callback_dispatch! {
         };
     };
     [9153203] SetSomeStuffForSpriteObject_9 [] {
-        let v3: i32 = 2 * byte!(@pointer (ram_ptr!(game, u16; 0x1b7d)).offset(v1 as isize); 0) as i32;
+        let v3: i32 = 2 * game.g_ram[0x1b7d + 2 * v1 as usize] as i32;
         crate::native_assertion! {
             '_c2rust_label: (v3 + 1) < 10;
             b"v3 + 1 < 10\0", b"src/sm_8b.c\0", 2442, b"void SetSomeStuffForSpriteObject_9(uint16)\0"
         };
-        AddToHiLo(
-            (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
-            (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
-            words!((
-                kSetSomeStuffForSpriteObject_9_Tab0[v3 as usize],
-                kSetSomeStuffForSpriteObject_9_Tab0[(v3 + 1) as usize] as u16
-            )),
-        );
+        let velocity = words!((
+            kSetSomeStuffForSpriteObject_9_Tab0[v3 as usize],
+            kSetSomeStuffForSpriteObject_9_Tab0[(v3 + 1) as usize] as u16
+        ));
+        advance_cinematic_coordinate(k, false, velocity, game);
         if (word!(game.cinematicspr_goto_timer[v1]) & 1) != 0 {
             let v12: i32 =
-                2 * byte!(@pointer (ram_ptr!(game, u16; 0x1b7d)).offset(v1 as isize); 1) as i32;
+                2 * game.g_ram[0x1b7d + 2 * v1 as usize + 1] as i32;
             crate::native_assertion! {
                 '_c2rust_label_0: (v12 + 1) < 124;
                 b"v12 + 1 < 124\0", b"src/sm_8b.c\0", 2446,
                 b"void SetSomeStuffForSpriteObject_9(uint16)\0"
             };
-            AddToHiLo(
-                (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
-                (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
-                words!((
-                    kSetSomeStuffForSpriteObject_9_Tab2[v12 as usize],
-                    kSetSomeStuffForSpriteObject_9_Tab2[(v12 + 1) as usize] as u16
-                )),
-            );
+            let velocity = words!((
+                kSetSomeStuffForSpriteObject_9_Tab2[v12 as usize],
+                kSetSomeStuffForSpriteObject_9_Tab2[(v12 + 1) as usize] as u16
+            ));
+            advance_cinematic_coordinate(k, true, velocity, game);
         } else {
             let v6: i32 =
-                2 * byte!(@pointer (ram_ptr!(game, u16; 0x1b7d)).offset(v1 as isize); 1) as i32;
+                2 * game.g_ram[0x1b7d + 2 * v1 as usize + 1] as i32;
             crate::native_assertion! {
                 '_c2rust_label_1: (v6 + 1) < 138;
                 b"v6 + 1 < 138\0", b"src/sm_8b.c\0", 2450,
                 b"void SetSomeStuffForSpriteObject_9(uint16)\0"
             };
-            AddToHiLo(
-                (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
-                (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
-                words!((
-                    kSetSomeStuffForSpriteObject_9_Tab1[v6 as usize],
-                    kSetSomeStuffForSpriteObject_9_Tab1[(v6 + 1) as usize] as u16
-                )),
-            );
+            let velocity = words!((
+                kSetSomeStuffForSpriteObject_9_Tab1[v6 as usize],
+                kSetSomeStuffForSpriteObject_9_Tab1[(v6 + 1) as usize] as u16
+            ));
+            advance_cinematic_coordinate(k, true, velocity, game);
         }
         if word!(game.cinematicbg_arr8[v1]) as i32 - 168i32 & 0x8000 == 0 {
             word!(game.cinematicspr_instr_timer[v1] = 1);

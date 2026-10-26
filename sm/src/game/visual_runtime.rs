@@ -1758,7 +1758,12 @@ fn add_native_pair(high: usize, low: usize, velocity: u32, game: &mut Game) {
     );
 }
 
-fn advance_cinematic_coordinate(object: u16, vertical: bool, velocity: u32, game: &mut Game) {
+pub(crate) fn advance_cinematic_coordinate(
+    object: u16,
+    vertical: bool,
+    velocity: u32,
+    game: &mut Game,
+) {
     let offset = usize::from(object & !1) + if vertical { 0x20 } else { 0 };
     add_native_pair(0x1a7d + offset, 0x1add + offset, velocity, game);
 }

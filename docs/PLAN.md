@@ -81,7 +81,7 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Qualified Core54: production111676, legacy19036, unsafe2852, verification39970; warnings179.
+Qualified Core55: production111667, legacy19022, unsafe2852, verification39970; warnings179.
 Native player/DSP allocations have actual owners: +25 engine lines, no unsafe-line savings; raw callback contracts remain.
 Fresh4d25 checkpoints and actual rebuilt desktop archive pass source/native guards; old33e6 checkpoints remain incompatible.
 Full86 passes136,526 selected+38,827 setup/0 failures;189,475 genuine capture frames, both Kago setups independent14,350.
@@ -92,6 +92,7 @@ Independent full86:136,526 selected+38,827 setup/0 failures; captures retain Cor
 Grapple connection: -14 substantive engine/-101 legacy/-2 unsafe lines; five rows3338+272 setup pass, seven native angles remain unobserved.
 Door-state dispatch: -14 engine/-14 legacy/-3 unsafe lines; seven rows4096+297 setup pass, Runtime Drop ordering unchanged.
 Grapple release impulse: -23 substantive engine/-53 legacy/-1 unsafe line; five rows3338+272 setup pass, launch variants remain source-reviewed.
+Laboratory sprite motion: -9 engine/-14 legacy, five raw updates and five selectors retired; full8780 intro+smoke10967+272 setup pass.
 Next: publish qualified grapple/door/cinematic families; complete ROM-load ownership/new476b verification runs in parallel.
 
 Scoped mutation11.40min: 3AST kills, 2unobserved pipe-flight survivors, 1separate dispatch kill; all945-frame windows preserved.
