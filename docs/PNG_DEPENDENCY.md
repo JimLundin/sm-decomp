@@ -38,7 +38,7 @@ dependency code; it has not been eliminated from the program.
 
 Run these direct PowerShell commands from the repository root. They require
 Windows `tar`, the `stable-x86_64-pc-windows-gnu` Rust toolchain and an existing
-SDL2 installation. Install the [CPU dependency](CPU_DEPENDENCY.md) first.
+SDL2 installation. Install the [native dependencies](NATIVE_DEPENDENCIES.md) first.
 Set `$codecNativeDirectory` to the native library directory
 already used by that installation; the path below is the verified workspace
 layout. The commands install the distinct codec archive and leave SDL files alone.
@@ -99,7 +99,7 @@ These commands compile for the current Unix host. **Linux and other Unix builds
 were not exercised in this experiment.** They require SDL2 development libraries,
 Rust, `curl`, `tar`, `shasum`, `ar`, and Clang with
 `-ftrivial-auto-var-init=zero` support, such as Clang 16 or newer. Run them from
-the repository root after installing the [CPU dependency](CPU_DEPENDENCY.md).
+the repository root after installing the [native dependencies](NATIVE_DEPENDENCIES.md).
 The default `$codec_lib` below uses the same library prefix as that guide.
 
 ```sh

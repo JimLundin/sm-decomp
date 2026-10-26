@@ -6,10 +6,8 @@ Install [rustup](https://rustup.rs/), Python 3.11+ and SDL2 development librarie
 (`apt install libsdl2-dev` on Debian/Ubuntu). The project uses Rust edition 2024;
 [rust-toolchain.toml](../rust-toolchain.toml) selects the compiler.
 
-Build the pinned native libraries using the relevant guides:
-[CPU, PPU and DSP](CPU_DEPENDENCY.md), [SPC and music](SPC_DEPENDENCY.md),
-[configuration and utilities](CONFIG_DEPENDENCY.md), [shaders](SHADER_DEPENDENCY.md),
-[desktop host](DESKTOP_DEPENDENCY.md), and [PNG decoding](PNG_DEPENDENCY.md).
+Build the pinned libraries using [native dependencies](NATIVE_DEPENDENCIES.md)
+and the separate [PNG decoder recipe](PNG_DEPENDENCY.md).
 The Python installers require an explicit `--target`: `x86_64-windows-gnu`, or
 `x86_64-linux-gnu` for LakeSnes, configuration and music. The desktop installer
 currently accepts only the Windows target. Use matching SDL2 headers and libraries.

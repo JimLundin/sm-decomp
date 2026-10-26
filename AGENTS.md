@@ -1,45 +1,25 @@
 # Agent instructions
 
-Read `docs/PLAN.md` first. It replaces every earlier workflow, skill, ticket
-and evidence rule. Ignore `.scratch/`, readiness gates, acceptance pointers,
-translation scopes and anything else from before 2026-10-17; that project
-is archived in the branch `archive/pre-transpile-2026-10-17`.
-
-Then read `docs/REVIEW.md`. Its directives (summarized at the top
-of `docs/PLAN.md`) take priority over the existing work order. Its
-**Milestone plan** decides what you work on: pick your lane (A CI speed,
-M mechanical safety, or B1-B6 bank retirement), take the next unclaimed item, and end every commit
-body with its `Score:` line. The reviewer may change goals and process (user
-grant, 2026-10-25); re-read REVIEW.md's Milestone plan at the start of each item.
+Read [docs/PLAN.md](docs/PLAN.md) first, then [docs/REVIEW.md](docs/REVIEW.md).
+PLAN owns the implementation loop, verification, Git concurrency and resource
+limits. REVIEW's **Milestone plan** takes priority over PLAN's work order; re-read
+it at the start of each item and take the next unclaimed lane item. The reviewer
+may change goals/process (user grant, 2026-10-25). End each commit body with `Score:`.
 
 Before changing subsystem boundaries, state ownership, or backend architecture,
-read `docs/target-architecture/README.md` for the accepted destination and
-Windows migration policy. Current work and checks still follow `docs/PLAN.md`.
+read [the accepted destination](docs/target-architecture/README.md), including
+its Windows migration policy. Read linked technical contracts when the task
+reaches them; current work and checks still follow PLAN.
 
-## The loop
+Follow PLAN's Fast loop and definition of done: one focused change, named local
+rows, `sh tools/progress.sh`, then commit/push with the result and explained
+metric increases. Preserve behavior and SNES RAM compatibility. If stuck for
+over an hour on an item, record findings in PLAN and stop.
 
-1. Take the earliest unfinished item in `docs/PLAN.md`.
-2. Make one focused change in `sm/`.
-3. Run `docs/PLAN.md`'s **Fast loop** (named rows locally; hosted CI runs the
-   rest on push). No new failing frames; fix a red CI run from your last push first.
-4. `sh tools/progress.sh`; numbers must not go up without a reason.
-5. Commit to `main` with a message that says what changed and the verify
-   result. Update `docs/PLAN.md` when an item is done or the plan changes.
+`sm/src` is authoritative; there is no C to regenerate from. Resolve unclear
+behavior with the oracle, `ram_map.rs` and [bank logs](https://patrickjohnston.org/bank/).
+Keep ROMs and derived game data out of Git. Improve the existing verifier instead
+of adding process tooling, evidence stores or dashboards. Never reserve Git locks.
 
-## Rules
-
-- Never reserve or hold Git commit locks. Follow the Git concurrency rule
-  at the top of `docs/PLAN.md` before any Git write.
-- `sm/src` is the source of truth. There is no C to consult or regenerate
-  from. When the meaning of code is unclear, use the oracle and the
-  `ram_map.rs` names, and the bank logs at https://patrickjohnston.org/bank/.
-- Preserve behaviour exactly, quirks included. The oracle decides, not taste.
-- Keep `g_ram` byte-compatible with the SNES layout.
-- Small commits. A refactor that touches many files is fine if it is one
-  mechanical idea; mixing ideas in one commit is not.
-- Do not build process tooling, evidence stores or dashboards. If the loop
-  above is too slow or too weak, say so in `docs/PLAN.md` and fix the verify
-  run itself.
-- Never commit ROMs, save states or anything derived from the ROM.
-- When stuck for more than an hour of work on one item, write down what you
-  found in `docs/PLAN.md` under that item and stop.
+Pre-2026-10-17 workflows, `.scratch/`, readiness gates, acceptance pointers and
+translation scopes are inactive in `archive/pre-transpile-2026-10-17`.
