@@ -2,7 +2,6 @@ use crate::game::actors;
 use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::api as actor_api;
 use crate::game::enemy_script::EnemyScript;
-use crate::game::gameplay_flag_runtime;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::correct_previous_position;
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
@@ -20,8 +19,7 @@ pub use crate::types::Consts_A8;
 
 crate::game::constants::typed_constants! { Consts_A8;
     addr_kBlueBrinstarFaceBlock_Ilist_E828 = 59432, addr_kBlueBrinstarFaceBlock_Ilist_E81A = 59418,
-    addr_kBlueBrinstarFaceBlock_Ilist_E80C = 59404, addr_kWreckedShipSpark_Ilist_E5E5 = 58853,
-    addr_kWreckedShipSpark_Ilist_E5A7 = 58791,
+    addr_kBlueBrinstarFaceBlock_Ilist_E80C = 59404,
     addr_kNorfairLavaMan_Ilist_AE0C = 44556, addr_kNorfairLavaMan_Ilist_ADDC = 44508,
     addr_kNorfairLavaMan_Ilist_ADAC = 44460, addr_kNorfairLavaMan_Ilist_AD7E = 44414,
     addr_kNorfairLavaMan_Ilist_AD50 = 44368, addr_kNorfairLavaMan_Ilist_AD3C = 44348,
@@ -42,16 +40,13 @@ crate::type_aliases! {
 }
 
 crate::type_aliases! {
-    pub Enemy_WreckedShipSpark, Enemy_MorphBallEye =
+    pub Enemy_MorphBallEye =
         crate::game::enemy_layouts::EnemyLayout8;
 }
 
 pub type Enemy_YappingMaw = crate::game::enemy_layouts::EnemyLayout104;
 
 const RomPtr_A8: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa8>;
-crate::ram_map::ram_pointer_functions! {
-    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
-}
 crate::game::constants::typed_constants! { i32;
     fnnullsub_152 = 0x90e90e, fnSamus_InputHandler_E913 = 0x90e913,
     fnSamus_InputHandler_E91D = 0x90e91d, fnnullsub_170_A8 = 0xa8804c,
@@ -73,7 +68,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_YappingMaw(o: i32) -> Enemy_YappingMaw = [0xf78, o as isize];
 }
 type YappingMaw = Enemy_YappingMaw;
-type WreckedShipSpark = Enemy_WreckedShipSpark;
 type WreckedShipOrbs = Enemy_WreckedShipOrbs;
 type NorfairLavaMan = Enemy_NorfairLavaMan;
 type MorphBallEye = Enemy_MorphBallEye;
@@ -546,57 +540,6 @@ crate::game::address_dispatch! {
         11068483 => WreckedShipOrbs_Func_5; 11068514 => WreckedShipOrbs_Func_6;
     }
 }
-unsafe fn WreckedShipSpark_Func_4(k: u16, r18: u16, game: &mut Game) {
-    {
-        let E: i32 = k as i32;
-        let mut wssk_var_E: i16 = slot!(game, WreckedShipSpark[E].var_E) as i16;
-        if wssk_var_E < 0 {
-            wssk_var_E = ((game.next_random() as i32 & 0x3f) + 4) as i16;
-        }
-        slot!(
-            game,
-            WreckedShipSpark[E].var_F = (r18).wrapping_add((wssk_var_E) as u16)
-        );
-    }
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallWreckedShipSpark(ea: u32, k: u16, game: &mut Game) => ea;
-    call (k, game); default { Unreachable(game); };
-    @countdown [pub unsafe fn (k: u16, game: &mut Game)];
-    before {
-        let E: i32 = k as i32;
-    }
-    when slot!(game, WreckedShipSpark[E].var_F) == 1;
-    [11069077] WreckedShipSpark_Func_1 {
-        slot!(game, WreckedShipSpark[E].var_B = (0xa8e6b7i32) as u16);
-        slot!(game, WreckedShipSpark[E].base; current_instruction = addr_kWreckedShipSpark_Ilist_E5A7 as u16, instruction_timer = 1);
-        WreckedShipSpark_Func_4(k, 0, game);
-    } else {
-        slot!(game, WreckedShipSpark[E].var_F, |old| old.wrapping_sub(1));
-    } after { ; };
-    [11069111] WreckedShipSpark_Func_2 {
-        slot!(game, WreckedShipSpark[E].var_B = (0xa8e695i32) as u16);
-        slot!(game, WreckedShipSpark[E].base; current_instruction = addr_kWreckedShipSpark_Ilist_E5E5 as u16, instruction_timer = 1);
-        WreckedShipSpark_Func_4(k, 8, game);
-    } else {
-        slot!(game, WreckedShipSpark[E].var_F, |old| old.wrapping_sub(1));
-    } after { ; };
-    [11069148] WreckedShipSpark_Func_3 {
-        let v2: u16 = word!(game.cur_enemy_index);
-        SpawnEprojWithGfx(
-            0,
-            word!(game.cur_enemy_index),
-            addr_kEproj_Sparks as u16,
-            game,
-        );
-        WreckedShipSpark_Func_4(v2, 0, game);
-    } else {
-        slot!(game, WreckedShipSpark[E].var_F, |old| old.wrapping_sub(1));
-    } after { ; };
-    @external {
-        11069076 => [()];
-    }
-}
 pub unsafe fn BlueBrinstarFaceBlock_Func_1(game: &mut Game) {
     unsafe {
         if word!(game.door_transition_flag_enemies) == 0 && {
@@ -710,37 +653,6 @@ crate::game::callback_dispatch! {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         CallWreckedShipOrbsA(((slot!(game, WreckedShipOrbs[E].var_A)) as u32) | (0xa80000u32), game);
         CallWreckedShipOrbsB(((slot!(game, WreckedShipOrbs[E].var_B)) as u32) | (0xa80000u32), game);
-    };
-    [11068983] WreckedShipSpark_Init [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        let v2: i32 = slot!(game, WreckedShipSpark[E].parameter_1) as i32 & 3;
-        slot!(game, WreckedShipSpark[E].var_B = crate::rtl::rom_table_word!(game, 0xa8e688, v2 as isize));
-        slot!(game, WreckedShipSpark[E].var_E = slot!(game, WreckedShipSpark[E].parameter_2));
-        WreckedShipSpark_Func_4(word!(game.cur_enemy_index), 0, game);
-        slot!(game, WreckedShipSpark[E].base; instruction_timer = 1, current_instruction = crate::rtl::rom_table_word!(game, 0xa8e682, v2 as isize));
-        slot!(game, WreckedShipSpark[E].base.timer = 0);
-        slot!(game, WreckedShipSpark[E].base.instruction_timer = 1);
-        if (gameplay_flag_runtime::boss_byte_at(word!(game.area_index), game) & 1) == 0 {
-            slot!(game, WreckedShipSpark[E].base.properties, |old| (old)
-                | (*((&raw mut (*(gVramWriteEntry
-                    as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-                    0i32, game
-                )
-                .offset(6))
-                .vram_dst as *mut u8)
-                    .offset(1) as *mut u16)));
-        }
-    };
-    [11069070] WreckedShipSpark_Main [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        CallWreckedShipSpark(
-            ((slot!(game, WreckedShipSpark[E].var_B)) as u32) | (0xa80000u32),
-            word!(game.cur_enemy_index),
-            game,
-        );
-    };
-    [11069198] WreckedShipSpark_Shot [] {
-        word!(game.projectile_dir[word!(game.collision_detection_index)] &= !(0x10));
     };
     [11069486] BlueBrinstarFaceBlock_Init [] {
         let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
@@ -1014,15 +926,6 @@ crate::game::callback_dispatch! {
     };
     [11054916] NorfairLavaMan_Instr_3 [jp] {
         slot!(game, NorfairLavaMan[word!(game.cur_enemy_index) as i32].var_04 = 256);
-    };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11068957] WreckedShipSpark_Instr_2 [jp] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, WreckedShipSpark[E].base.properties, |old| (old) | ((kEnemyProps_Tangible) as u16));
-    };
-    [11068970] WreckedShipSpark_Instr_1 [jp] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, WreckedShipSpark[E].base.properties, |old| (old as i32 & !(kEnemyProps_Tangible as i32)) as u16);
     };
 }
 
