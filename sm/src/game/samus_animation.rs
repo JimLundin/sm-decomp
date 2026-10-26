@@ -286,19 +286,17 @@ fn queue_body_tiles(h: &mut Runtime<'_>) {
     }
 }
 pub unsafe fn DrawSamusSuitExploding(game: &mut Game) {
-    unsafe {
-        let r18: u16 = (if *ram_ptr!(game; 0xa1e) == 4 {
-            word!(game.g_word_7E0DE4) as i32 + 2085
-        } else {
-            word!(game.g_word_7E0DE4) as i32 + 2076
-        }) as u16;
-        sprite_output::samus(
-            r18,
-            (word!(game.samus_x_pos), word!(game.samus_y_pos)),
-            game,
-            &mut sprite_output::Native,
-        );
-    }
+    let r18: u16 = (if game.g_ram[0xa1e] == 4 {
+        word!(game.g_word_7E0DE4) as i32 + 2085
+    } else {
+        word!(game.g_word_7E0DE4) as i32 + 2076
+    }) as u16;
+    sprite_output::samus(
+        r18,
+        (word!(game.samus_x_pos), word!(game.samus_y_pos)),
+        game,
+        &mut sprite_output::Native,
+    );
 }
 
 unsafe fn sprite_y_offset(doubled_pose: u16, game: &mut Game) -> i32 {
