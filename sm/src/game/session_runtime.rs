@@ -548,7 +548,7 @@ crate::game::address_dispatch! {
     {
         10518604 => [()]; 10738444 => sm_a3::Reflec_Func_1; 10851138 => sm_a5::Draygon_Func_36;
         10920690 => sm_a6::Ridley_A2F2; 11042892 => [()]; 11055282 => sm_a8::NorfairLavaMan_Func_6;
-        11062375 => sm_a8::WreckedShipRobot_Func_1; 11069550 => sm_a8::BlueBrinstarFaceBlock_Func_1;
+        11062375 => crate::game::actors::wrecked_ship_robots::palette; 11069550 => sm_a8::BlueBrinstarFaceBlock_Func_1;
         11110278 => [()]; 11110345 => sm_a9::MotherBrain_DrawBrainNeck_EnemyGfxDrawHook;
         11110365 => sm_a9::MotherBrainsBrain_GfxDrawHook; 11129754 => sm_a9::DeadTorizo_MainGfxHook;
     }
@@ -634,6 +634,12 @@ crate::game::callback_dispatch! {
         11057014 => crate::game::actors::beetom::initialize;
         11057165 => crate::game::actors::beetom::advance; 11058734 => crate::game::actors::beetom::touch;
         11058860 => crate::game::actors::beetom::shot;
+        11062135 => crate::game::actors::wrecked_ship_robots::initialize;
+        11062220 => crate::game::actors::wrecked_ship_robots::initialize_dormant;
+        11062326 => crate::game::actors::wrecked_ship_robots::advance;
+        11063668 => crate::game::actors::wrecked_ship_robots::touch_dormant;
+        11063693 => crate::game::actors::wrecked_ship_robots::shot_dormant;
+        11063698 => crate::game::actors::wrecked_ship_robots::shot;
         11062374 => [()];
         11065545 => sm_a8::MaridiaPuffer_Init;
         11065611 => sm_a8::MaridiaPuffer_Main; 11066132 => sm_a8::MaridiaPuffer_Shot;
@@ -746,8 +752,7 @@ crate::game::callback_dispatch! {
         10991155 => [sm_a7::Kraid_Instr_1(k, j)];
         11048485 | 11048497 | 11048522 | 11048547 | 11048572 | 11048597 | 11048628 => [crate::game::actors::fune::instruction(ea, j, game)];
         11056990 => [j];
-        11062987 => [sm_a8::WreckedShipRobot_Instr_7(k, j)];
-        11063490 => [sm_a8::WreckedShipRobot_Instr_10(k, j)];
+        11062537 | 11062692 | 11062762 | 11062917 | 11062987 | 11062991 | 11063146 | 11063216 | 11063371 | 11063441 | 11063490 | 11063494 | 11063506 | 11063552 | 11063559 | 11063601 | 11063613 | 11063659 => [crate::game::actors::wrecked_ship_robots::instruction(ea, k, j, game)];
         11128756 => [sm_a9::Shitroid_Instr_1(k, j)];
         11128778 => [sm_a9::Shitroid_Instr_2(k, j)];
         11139360 => [sm_a9::Shitroid_Instr_3(k, j)]; 11139382 => [sm_a9::Shitroid_Instr_4(k, j)];

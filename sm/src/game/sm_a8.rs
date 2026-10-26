@@ -2,7 +2,6 @@ use crate::game::actors;
 use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::api as actor_api;
 use crate::game::enemy_script::EnemyScript;
-use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
@@ -39,15 +38,7 @@ crate::game::constants::typed_constants! { Consts_A8;
     addr_kWalkingLavaSeahorse_Ilist_DBE7 = 56295, addr_kMaridiaPuffer_Ilist_D855 = 55381,
     addr_kMaridiaPuffer_Ilist_D841 = 55361,
     addr_loc_A8CF26 = 53030, addr_loc_A8CF18 = 53016,
-    addr_kWreckedShipRobot_Ilist_CB65 = 52069, addr_kWreckedShipRobot_Ilist_CB1D = 51997,
-    addr_kWreckedShipRobot_Ilist_CB09 = 51977, addr_kWreckedShipRobot_Ilist_CAFD = 51965,
-    addr_kWreckedShipRobot_Ilist_CA7D = 51837, addr_kWreckedShipRobot_Ilist_CA01 = 51713,
-    addr_kWreckedShipRobot_Ilist_C985 = 51589, addr_kWreckedShipRobot_Ilist_C92D = 51501,
-    addr_kWreckedShipRobot_Ilist_C91B = 51483, addr_kWreckedShipRobot_Ilist_C8D1 = 51409,
-    addr_kWreckedShipRobot_Ilist_C8BD = 51389, addr_kWreckedShipRobot_Ilist_C8B1 = 51377,
-    addr_kWreckedShipRobot_Ilist_C833 = 51251, addr_kWreckedShipRobot_Ilist_C7BB = 51131,
-    addr_kWreckedShipRobot_Ilist_C73F = 51007, addr_stru_A8C6E9 = 50921,
-    addr_kWreckedShipRobot_Ilist_C6E5 = 50917, addr_stru_A8C199 = 49561,
+    addr_stru_A8C199 = 49561,
     addr_kMaridiaFloater_Ilist_C191 = 49553, addr_kMaridiaFloater_Ilist_C183 = 49539,
     addr_kMaridiaFloater_Ilist_C173 = 49523, addr_kMaridiaFloater_Ilist_C163 = 49507,
     addr_kNorfairLavaMan_Ilist_AE0C = 44556, addr_kNorfairLavaMan_Ilist_ADDC = 44508,
@@ -75,7 +66,7 @@ crate::type_aliases! {
 }
 
 crate::type_aliases! {
-    pub Enemy_WreckedShipRobot, Enemy_WreckedShipSpark, Enemy_MaridiaFloater, Enemy_MorphBallEye =
+    pub Enemy_WreckedShipSpark, Enemy_MaridiaFloater, Enemy_MorphBallEye =
         crate::game::enemy_layouts::EnemyLayout8;
 }
 
@@ -106,7 +97,6 @@ crate::game::constants::typed_constants! { i32;
     fnMaridiaFloater_Func_9 = 0xa8c4dc, fnMaridiaFloater_Func_10 = 0xa8c500,
     fnMaridiaFloater_Func_11 = 0xa8c51d, fnnullsub_256 = 0xa8c568,
     fnMaridiaFloater_Func_12 = 0xa8c569, fnMaridiaFloater_Func_13 = 0xa8c59f,
-    fnWreckedShipRobot_Func_1 = 0xa8cc67,
     fnBlueBrinstarFaceBlock_Func_1 = 0xa8e86e,
 }
 crate::ram_map::ram_pointer_functions! {
@@ -121,7 +111,6 @@ crate::ram_map::ram_pointer_functions! {
 }
 type YappingMaw = Enemy_YappingMaw;
 type WreckedShipSpark = Enemy_WreckedShipSpark;
-type WreckedShipRobot = Enemy_WreckedShipRobot;
 type WreckedShipOrbs = Enemy_WreckedShipOrbs;
 type WreckedShipGhost = Enemy_WreckedShipGhost;
 type WalkingLavaSeahorse = Enemy_WalkingLavaSeahorse;
@@ -165,10 +154,6 @@ static g_word_A8C1C1: u16 = 1;
 static g_word_A8C1C3: u16 = 0;
 static g_word_A8C1C5: u16 = 0xffff;
 static g_word_A8C1C7: u16 = 0x8000;
-static g_word_A8CCC1: [i16; 31] = [
-    0x1f, 0x18, 0xf, 8, 0x40, 0x18, 0xf, 8, 0x1f, 0x10, 0xf, 8, 0x1f, 0x18, 0x10, 8, 0x1f, 0x18,
-    0xf, 0x40, 0xf, 8, 0x1f, 0x18, 0x10, 0x18, 0xf, 8, 0x1f, 0x10, -1,
-];
 static g_word_A8D871: [i16; 10] = [0xc0, 0xe0, 0, 0x20, 0x40, 0x40, 0x60, 0x80, 0xa0, 0xc0];
 static g_word_A8D885: [i16; 8] = [0x3ff, 0x4ff, 0x5ff, 0x6ff, 0x7ff, 0x8ff, 0x9ff, 0xaff];
 static g_word_A8D895: [i16; 26] = [
@@ -1124,218 +1109,6 @@ macro_rules! advance_maridia_floater_bob {
     };
 }
 
-pub unsafe fn WreckedShipRobot_Func_1(game: &mut Game) {
-    unsafe {
-        let mut v2: i16 = 0;
-        if word!(game.door_transition_flag_enemies) == 0
-            && word!(game.wrecked_ship_robot_palanim_timer) != 0
-        {
-            if word!(game.wrecked_ship_robot_palanim_timer -= 1, reread) == 0 {
-                let mut v1: i32 = 0;
-                let mut i: u16 = *(ram_ptr!(game, u16; 0xd656));
-                loop {
-                    v1 = i as i32 >> 1;
-                    v2 = g_word_A8CCC1[v1 as usize];
-                    if v2 >= 0 {
-                        break;
-                    }
-                    i = 0;
-                }
-                let v3: i32 = 16
-                    * ((word!(game.wrecked_ship_robot_palanim_palindex) as i32 & 0xff00) >> 8)
-                    >> 1;
-                word!(game.palette_buffer[(v3 + 137)] = v2 as u16);
-                word!(game.palette_buffer[(v3 + 138)] = g_word_A8CCC1[(v1 + 1) as usize] as u16);
-                word!(game.palette_buffer[(v3 + 139)] = g_word_A8CCC1[(v1 + 2) as usize] as u16);
-                word!(game.palette_buffer[(v3 + 140)] = g_word_A8CCC1[(v1 + 3) as usize] as u16);
-                word!(
-                    game.wrecked_ship_robot_palanim_timer = g_word_A8CCC1[(v1 + 4) as usize] as u16
-                );
-                *(ram_ptr!(game, u16; 0xd656)) = (i).wrapping_add(10);
-            }
-        }
-    }
-}
-pub unsafe fn WreckedShipRobot_Func_2(k: u16, game: &mut Game) {
-    let E: i32 = k as i32;
-    let wsrt_var_B: u16 = slot!(game, WreckedShipRobot[E].var_B);
-    if wsrt_var_B != 0 {
-        slot!(
-            game,
-            WreckedShipRobot[E].var_B = (wsrt_var_B).wrapping_sub(1)
-        );
-    }
-}
-// Movement callbacks can change the live enemy index. Keep the captured
-// robot for its state/coordinate stores and reread the index before each call.
-unsafe fn move_wrecked_ship_robot(
-    jp: EnemyScript,
-    motion: (u16, i16),
-    instructions: (u16, Option<u16>),
-    restore_y_first: bool,
-    game: &mut Game,
-) -> EnemyScript {
-    unsafe {
-        let (facing, step) = motion;
-        let (wall_instruction, edge_instruction) = instructions;
-        WreckedShipRobot_Func_2(word!(game.cur_enemy_index), game);
-        let robot: i32 = word!(game.cur_enemy_index) as i32;
-        slot!(game, WreckedShipRobot[robot].var_A = facing);
-        if {
-            let (actor, amount) = (word!(game.cur_enemy_index), (step as i32) << 16);
-            (actor_api::move_horizontal(
-                &mut Runtime::new(game),
-                Key::from_legacy(actor),
-                amount,
-                actor_api::SlopePolicy::Ignore,
-            ) == actor_api::MovementResult::Blocked) as u8
-        } != 0
-        {
-            slot!(game, WreckedShipRobot[robot].var_B, |old| old
-                .wrapping_add(8));
-            return EnemyScript::jump(wall_instruction);
-        }
-        if {
-            let actor = word!(game.cur_enemy_index);
-            0u16.wrapping_sub(u16::from(actor_api::touches_player_from_above(
-                &Runtime::new(game),
-                Key::from_legacy(actor),
-            )))
-        } != 0
-        {
-            word! {game; extra_samus_x_subdisplacement = 0; extra_samus_x_displacement = step as u16; }
-        }
-        let Some(edge_instruction) = edge_instruction else {
-            return jp;
-        };
-        slot!(
-            game,
-            WreckedShipRobot[robot].var_D = slot!(game, WreckedShipRobot[robot].base.y_pos)
-        );
-        let x = slot!(game, WreckedShipRobot[robot].base.x_pos);
-        slot!(game, WreckedShipRobot[robot].var_C = x);
-        slot!(
-            game,
-            WreckedShipRobot[robot].base.x_pos = if step < 0 {
-                (x as i32
-                    - slot!(game, WreckedShipRobot[robot].base.x_width) as i32
-                    - slot!(game, WreckedShipRobot[robot].base.x_width) as i32)
-                    as u16
-            } else {
-                (slot!(game, WreckedShipRobot[robot].base.x_width) as i32
-                    + slot!(game, WreckedShipRobot[robot].base.x_width) as i32
-                    + x as i32) as u16
-            }
-        );
-        let ground = {
-            let (actor, amount) = (word!(game.cur_enemy_index), 1 << 16);
-            (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount)
-                == actor_api::MovementResult::Blocked) as u8
-        } != 0;
-        if !ground {
-            slot!(game, WreckedShipRobot[robot].var_B, |old| old
-                .wrapping_add(8));
-        }
-        if restore_y_first {
-            slot!(
-                game,
-                WreckedShipRobot[robot].base.y_pos = slot!(game, WreckedShipRobot[robot].var_D)
-            );
-            slot!(
-                game,
-                WreckedShipRobot[robot].base.x_pos = slot!(game, WreckedShipRobot[robot].var_C)
-            );
-        } else {
-            slot!(
-                game,
-                WreckedShipRobot[robot].base.x_pos = slot!(game, WreckedShipRobot[robot].var_C)
-            );
-            slot!(
-                game,
-                WreckedShipRobot[robot].base.y_pos = slot!(game, WreckedShipRobot[robot].var_D)
-            );
-        }
-        if !ground {
-            slot!(
-                game,
-                WreckedShipRobot[robot].var_A = if step < 0 { 512 } else { 0xfe00 }
-            );
-            return EnemyScript::jump(edge_instruction);
-        }
-        jp
-    }
-}
-
-pub unsafe fn WreckedShipRobot_Instr_7(k: u16, jp: EnemyScript) -> EnemyScript {
-    EnemyScript::jump(addr_kWreckedShipRobot_Ilist_C92D as u16)
-}
-pub unsafe fn WreckedShipRobot_Instr_10(k: u16, jp: EnemyScript) -> EnemyScript {
-    EnemyScript::jump(addr_stru_A8C6E9 as u16)
-}
-pub unsafe fn WreckedShipRobot_CommonInstr(
-    k: u16,
-    jp: EnemyScript,
-    r50: u16,
-    r48: u16,
-    game: &mut Game,
-) -> EnemyScript {
-    unsafe {
-        let E: i32 = k as i32;
-        if slot!(game, WreckedShipRobot[E].var_B) != 0 {
-            WreckedShipRobot_Func_2(k, game);
-        } else {
-            let v3: u16 = ((word!(game.random_number) as i32 & 0x1f) + 16) as u16;
-            slot!(game, WreckedShipRobot[E].var_B = v3);
-            SpawnEprojWithGfx(v3, word!(game.cur_enemy_index), r48, game);
-            return EnemyScript::jump(r50);
-        }
-        jp
-    }
-}
-pub unsafe fn WreckedShipRobot_D10C(
-    k: u16,
-    jp: EnemyScript,
-    r50: u16,
-    game: &mut Game,
-) -> EnemyScript {
-    unsafe {
-        let E: i32 = k as i32;
-        if slot!(game, WreckedShipRobot[E].var_B) != 0 {
-            WreckedShipRobot_Func_2(k, game);
-        } else {
-            let v3: u16 = ((word!(game.random_number) as i32 & 0x1f) + 16) as u16;
-            slot!(game, WreckedShipRobot[E].var_B = v3);
-            SpawnEprojWithGfx(
-                v3,
-                word!(game.cur_enemy_index),
-                addr_kEproj_WreckedShipRobotLaserHorizontal as u16,
-                game,
-            );
-            return EnemyScript::jump(r50);
-        }
-        jp
-    }
-}
-pub unsafe fn WreckedShipRobot_D147(
-    k: u16,
-    jp: EnemyScript,
-    r48: u16,
-    r50: u16,
-    game: &mut Game,
-) -> EnemyScript {
-    unsafe {
-        let E: i32 = k as i32;
-        if slot!(game, WreckedShipRobot[E].var_B) != 0 {
-            WreckedShipRobot_Func_2(k, game);
-        } else {
-            let v3: u16 = ((word!(game.random_number) as i32 & 0x1f) + 16) as u16;
-            slot!(game, WreckedShipRobot[E].var_B = v3);
-            SpawnEprojWithGfx(v3, word!(game.cur_enemy_index), r48, game);
-            return EnemyScript::jump(r50);
-        }
-        jp
-    }
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallMaridiaPuffer(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -2386,88 +2159,6 @@ crate::game::callback_dispatch! {
             word!(game.enemy_drawing_queue[((word!(game.cur_enemy_index) as i32 >> 1) + 97)] |= (0x200u16));
         };
     };
-    [11062135] WreckedShipRobot_Init [] {
-        if (gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game) & 1) != 0 {
-            (*(ram_ptr!(game, LongPtr; 0x178c))).bank = -88i32 as u8;
-            (*(ram_ptr!(game, LongPtr; 0x178c))).addr = (0xa8cc67i32) as u16;
-            let E: i32 = word!(game.cur_enemy_index) as i32;
-            slot!(game, WreckedShipRobot[E].base; properties = (slot!(game, WreckedShipRobot[E].base.properties)) | (0xa000u16), instruction_timer = 4, timer = 0, current_instruction = addr_kWreckedShipRobot_Ilist_C6E5 as u16)
-
-;
-            slot!(game, WreckedShipRobot[E].var_A = -512i32 as u16);
-            word!(game.wrecked_ship_robot_palanim_timer = 1);
-            *(ram_ptr!(game, u16; 0xd656)) = 0;
-            slot!(game, WreckedShipRobot[E].var_B = 0);
-            word!(game.wrecked_ship_robot_palanim_palindex = slot!(game, WreckedShipRobot[E].base.palette_index));
-        } else {
-            WreckedShipRobotDeactivated_Init(game);
-        };
-    };
-    [11062220] WreckedShipRobotDeactivated_Init [] {
-        let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-        let mut parameter_1: u16 = (*v0).parameter_1;
-        if parameter_1 & 0x8000 != 0 || parameter_1 as i32 - 4i32 & 0x8000 == 0 {
-            parameter_1 = 0;
-        }
-        set_fields! {[(*v0)]; parameter_1 = parameter_1,
-        current_instruction = crate::rtl::rom_table_word!(game, 0xa8cc30, parameter_1 as isize),
-        properties = ((*v0).properties) | (0x8000u16), instruction_timer = 1, timer = 0, };
-        word!(game.wrecked_ship_robot_palanim_timer = 0);
-        (*v0).ai_var_E = 0;
-        (*v0).ai_preinstr = 1;
-        let v2: i32 =
-            16 * ((word!(game.wrecked_ship_robot_palanim_palindex) as i32 & 0xff00) >> 8) >> 1;
-        word! { game, 10;
-            palette_buffer[(v2 + 137)], palette_buffer[(v2 + 138)], palette_buffer[(v2 + 139)],
-            palette_buffer[(v2 + 140)],
-        }
-    };
-    [11062326] WreckedShipRobot_Main [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        if ({ let (actor, amount) = (word!(game.cur_enemy_index), (crate::rtl::words!((slot!(game, WreckedShipRobot[E].var_F), slot!(game, WreckedShipRobot[E].var_E)))) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) == 0
-        {
-            slot!(game, WreckedShipRobot[E].base.instruction_timer, |old| old.wrapping_add(1));
-            slot!(game, WreckedShipRobot[E](var_F, var_E) += 0x8000);
-        }
-    };
-    [11063668] WreckedShipRobotDeactivated_Touch [] {
-        if (((*gEnemyData(word!(game.cur_enemy_index) as i32, game)).x_pos) as i16)
-            .wrapping_sub((word!(game.samus_x_pos)) as i16)
-            < 0
-        {
-            word!(game.extra_samus_x_displacement = 4);
-        } else {
-            word!(game.extra_samus_x_displacement = -4i32 as u16);
-        };
-    };
-    [11063693] WreckedShipRobotDeactivated_Shot [] {
-        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
-    };
-    [11063698] WreckedShipRobot_Shot [] {
-        if (gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game) & 1) != 0 {
-            actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
-            let E: i32 = word!(game.cur_enemy_index) as i32;
-            if slot!(game, WreckedShipRobot[E].base.health) != 0 {
-                let mut v1: u16 = if (slot!(game, WreckedShipRobot[E].var_A) & 0x8000) != 0 {
-                    if ((word!(game.samus_x_pos)) as i16).wrapping_sub((slot!(game, WreckedShipRobot[E].base.x_pos)) as i16)
-                        >= 0
-                    {
-                        addr_kWreckedShipRobot_Ilist_C833 as u16
-                    } else {
-                        addr_kWreckedShipRobot_Ilist_C7BB as u16
-                    }
-                } else if ((word!(game.samus_x_pos)) as i16).wrapping_sub((slot!(game, WreckedShipRobot[E].base.x_pos)) as i16)
-                    < 0
-                {
-                    addr_kWreckedShipRobot_Ilist_CA7D as u16
-                } else {
-                    addr_kWreckedShipRobot_Ilist_CA01 as u16
-                };
-                slot!(game, WreckedShipRobot[E].base; current_instruction = v1, instruction_timer = 1);
-                slot!(game, WreckedShipRobot[E].var_B, |old| (old).wrapping_add(64));
-            }
-        }
-    };
     [11066573] WalkingLavaSeahorse_Init [] {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         slot!(game, WalkingLavaSeahorse[E].var_04 = 0);
@@ -2878,21 +2569,6 @@ crate::game::callback_dispatch! {
         slot!(game, NorfairLavaMan[word!(game.cur_enemy_index) as i32].var_04 = 256);
     };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11063441] WreckedShipRobot_Instr_3 [] {
-        let E: i32 = word!(game.cur_enemy_index) as i32;
-        if ((word!(game.layer1_x_pos)) as i16).wrapping_sub((slot!(game, WreckedShipRobot[E].base.x_pos)) as i16) < 0
-            && ((word!(game.layer1_x_pos) as i32 + 256 - slot!(game, WreckedShipRobot[E].base.x_pos) as i32) as i16) >= 0
-            && ((word!(game.layer1_y_pos)) as i16).wrapping_sub((slot!(game, WreckedShipRobot[E].base.y_pos)) as i16) < 0
-            && ((word!(game.layer1_y_pos) as i32 + 224 - slot!(game, WreckedShipRobot[E].base.y_pos) as i32) as i16) >= 0
-        {
-            QueueSfx2_Max6(0x68, game);
-        }
-        jp
-    };
-    [11063659] WreckedShipRobot_Instr_11 [] {
-        WreckedShipRobot_Func_2(word!(game.cur_enemy_index), game);
-        jp
-    };
     [11072806] KiHunter_Instr_1 [] {
         let mut result: u16 = addr_kKiHunter_Ilist_E9FA as u16;
         let mut r18: u16 = addr_kKiHunter_Ilist_EA4E as u16;
@@ -2974,106 +2650,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11073234] KiHunter_Instr_4 [jp] { sub_A8F6DC(k, addr_loc_A8CF18 as u16, game); };
     [11073240] KiHunter_Instr_5 [jp] { sub_A8F6DC(k, addr_loc_A8CF26 as u16, game); };
-    @forward [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11062537] WreckedShipRobot_Instr_4 => move_wrecked_ship_robot(
-        jp,
-        (0xfe00, -4),
-        (
-            addr_kWreckedShipRobot_Ilist_C73F as u16,
-            Some(addr_kWreckedShipRobot_Ilist_CB65 as u16),
-        ),
-        false,
-        game,
-    );
-    [11062692] WreckedShipRobot_Instr_9 => move_wrecked_ship_robot(
-        jp,
-        (0xfe00, -4),
-        (addr_kWreckedShipRobot_Ilist_C73F as u16, None),
-        false,
-        game,
-    );
-    [11062762] WreckedShipRobot_Instr_6 => move_wrecked_ship_robot(
-        jp,
-        (0xfe00, 4),
-        (
-            addr_stru_A8C6E9 as u16,
-            Some(addr_kWreckedShipRobot_Ilist_C91B as u16),
-        ),
-        false,
-        game,
-    );
-    [11062917] WreckedShipRobot_Instr_8 => move_wrecked_ship_robot(
-        jp,
-        (0xfe00, 4),
-        (addr_stru_A8C6E9 as u16, None),
-        false,
-        game,
-    );
-    @forward [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11062991] WreckedShipRobot_Instr_15 => move_wrecked_ship_robot(
-        jp,
-        (512, 4),
-        (
-            addr_kWreckedShipRobot_Ilist_C985 as u16,
-            Some(addr_kWreckedShipRobot_Ilist_C91B as u16),
-        ),
-        false,
-        game,
-    );
-    [11063146] WreckedShipRobot_Instr_18 => move_wrecked_ship_robot(
-        jp,
-        (512, 4),
-        (addr_kWreckedShipRobot_Ilist_C985 as u16, None),
-        false,
-        game,
-    );
-    [11063216] WreckedShipRobot_Instr_16 => move_wrecked_ship_robot(
-        jp,
-        (512, -4),
-        (
-            addr_stru_A8C6E9 as u16,
-            Some(addr_kWreckedShipRobot_Ilist_CB65 as u16),
-        ),
-        true,
-        game,
-    );
-    [11063371]
-    WreckedShipRobot_Instr_17 => move_wrecked_ship_robot(jp, (512, -4), (addr_stru_A8C6E9 as u16, None), false, game);
-    @forward [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11063494] WreckedShipRobot_Instr_14 => WreckedShipRobot_CommonInstr(
-        k,
-        jp,
-        addr_kWreckedShipRobot_Ilist_CB1D as u16,
-        addr_kEproj_WreckedShipRobotLaserUpRight as u16,
-        game,
-    );
-    [11063506] WreckedShipRobot_Instr_2 => WreckedShipRobot_CommonInstr(
-        k,
-        jp,
-        addr_kWreckedShipRobot_Ilist_C8D1 as u16,
-        addr_kEproj_WreckedShipRobotLaserUpLeft as u16,
-        game,
-    );
-    @forward [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11063552]
-    WreckedShipRobot_Instr_13 => WreckedShipRobot_D10C(k, jp, addr_kWreckedShipRobot_Ilist_CB09 as u16, game);
-    [11063559]
-    WreckedShipRobot_Instr_1 => WreckedShipRobot_D10C(k, jp, addr_kWreckedShipRobot_Ilist_C8BD as u16, game);
-    @forward [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11063601] WreckedShipRobot_Instr_12 => WreckedShipRobot_D147(
-        k,
-        jp,
-        addr_kEproj_WreckedShipRobotLaserDownRight as u16,
-        addr_kWreckedShipRobot_Ilist_CAFD as u16,
-        game,
-    );
-    [11063613] WreckedShipRobot_Instr_5 => WreckedShipRobot_D147(
-        k,
-        jp,
-        addr_kEproj_WreckedShipRobotLaserDownLeft as u16,
-        addr_kWreckedShipRobot_Ilist_C8B1 as u16,
-        game,
-    );
+
 }
 
 crate::game::callback_dispatch! {
