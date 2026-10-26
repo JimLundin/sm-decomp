@@ -1392,104 +1392,6 @@ pub unsafe fn GameState_18_Unpausing(game: &mut Game) -> CoroutineRet {
         kCoroutineNone as CoroutineRet
     }
 }
-#[derive(Clone, Copy)]
-enum MapScreen {
-    Pause,
-    FileSelect,
-}
-
-// Render both map screens with the original mask/ROM/RAM access order.
-unsafe fn render_map_tilemap(screen: MapScreen, game: &mut Game) {
-    unsafe {
-        let mut v0: u16 = word!(game.area_index);
-        if word!(game.area_index) as i32 - 7i32 & 0x8000 == 0 {
-            v0 = 0;
-        }
-        let r0 = RomPtr(
-            Load24((rom_ptr!(game, LongPtr; 0x82964a)).offset(v0 as isize)),
-            game,
-        ) as *const u16;
-        let r3 = match screen {
-            MapScreen::Pause => ram_ptr!(game, Ram4000; 0x4000) as *mut u16,
-            MapScreen::FileSelect => ram_ptr!(game, Ram3000; 0x3000) as *mut u16,
-        };
-        let mut r6 = RomPtr_82(
-            crate::rtl::rom_table_word!(game, 0x829717, v0 as isize),
-            game,
-        ) as *const u16;
-        let mut r9 = ram_ptr!(game; 0x7f7) as *const u16;
-        if *ram_ptr!(game; 0xd908, word!(game.area_index) as isize) != 0 {
-            let mut mapped = u16::swap_bytes(*r6);
-            r6 = r6.offset(1);
-            let mut explored = u16::swap_bytes(*r9);
-            r9 = r9.offset(1);
-            for tile in 0..2048 {
-                let mut value = *r0.offset(tile);
-                let was_explored = explored & 0x8000 != 0;
-                explored = explored.wrapping_mul(2);
-                if was_explored {
-                    value &= 0xfbff;
-                    mapped = mapped.wrapping_mul(2);
-                } else {
-                    let was_mapped = mapped & 0x8000 != 0;
-                    mapped = mapped.wrapping_mul(2);
-                    if !was_mapped {
-                        value = 31;
-                    }
-                }
-                *r3.offset(tile) = value;
-                if tile & 15 == 15 {
-                    // Keep the original prefetch after the final tile too.
-                    mapped = u16::swap_bytes(*r6);
-                    r6 = r6.offset(1);
-                    explored = u16::swap_bytes(*r9);
-                    r9 = r9.offset(1);
-                }
-            }
-        } else {
-            let mut tile = 0;
-            for byte in 0..256 {
-                for _ in 0..8 {
-                    let explored = ram_ptr!(game; 0x7f7, byte);
-                    let previous = *explored;
-                    *explored = ((*explored as i32) << 1) as u8;
-                    #[cfg(sm_verify_dll)]
-                    crate::game::session_runtime::player_legacy_edges::map_write(
-                        game,
-                        byte as usize,
-                        tile as usize,
-                        0,
-                    );
-                    if previous & 0x80 == 0 {
-                        *r3.offset(tile) = match screen {
-                            MapScreen::Pause => 31,
-                            MapScreen::FileSelect => 15,
-                        };
-                    } else {
-                        *explored = (*explored).wrapping_add(1);
-                        #[cfg(sm_verify_dll)]
-                        crate::game::session_runtime::player_legacy_edges::map_write(
-                            game,
-                            byte as usize,
-                            tile as usize,
-                            1,
-                        );
-                        *r3.offset(tile) = *r0.offset(tile) & 0xfbff;
-                    }
-                    #[cfg(sm_verify_dll)]
-                    crate::game::session_runtime::player_legacy_edges::map_write(
-                        game,
-                        byte as usize,
-                        tile as usize,
-                        2,
-                    );
-                    tile += 1;
-                }
-            }
-        }
-    }
-}
-
 pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
     unsafe {
         word! {game; reg_BG1HOFS = word!(game.reg_BG4HOFS); reg_BG1VOFS = word!(game.reg_BG4VOFS); }
@@ -1497,7 +1399,7 @@ pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
             byte(VMADDL as u16, 0); byte(VMADDH as u16, 0x30);
             byte(VMAIN as u16, 0x80);
         }
-        LoadPauseMenuMapTilemap(game);
+        crate::game::map_menu::render_map(crate::game::map_menu::MapScreen::Pause, game);
         setup_transfer(u16::from_ne_bytes([1, 0x18]), 0x7e4000, 0x1000, game);
         crate::rtl::register_writes! { game;
             byte(MDMAEN as u16, 2); byte(VMADDL as u16, 0xaa);
@@ -1514,28 +1416,6 @@ pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
             crate::rtl::rom_table_word!(game, 0x82965f, v0 as isize),); byte(A1B1 as u16, 0x82);
             byte(MDMAEN as u16, 2);
         }
-    }
-}
-pub unsafe fn LoadPauseMenuMapTilemap(game: &mut Game) {
-    unsafe {
-        render_map_tilemap(MapScreen::Pause, game);
-    }
-}
-pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0x5d) = 51;
-        *ram_ptr!(game; 0x69) = 19;
-        word!(game.reg_BG1VOFS = -40i32 as u16);
-        render_map_tilemap(MapScreen::FileSelect, game);
-        let v16: u16 = word!(game.vram_write_queue_tail);
-        let v17 = gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game);
-        (*v17).size = 4096;
-        (*v17).src.addr = (ram_ptr!(game, Ram3000; 0x3000) as *mut u8)
-            .offset_from(&raw mut game.g_ram as *mut u8) as c_long
-            as VoidP;
-        (*v17).src.bank = 126;
-        (*v17).vram_dst = ((*ram_ptr!(game; 0x58) as i32 & 0xfc) << 8) as u16;
-        word!(game.vram_write_queue_tail = (v16).wrapping_add(7));
     }
 }
 pub unsafe fn SetupPpuForPauseMenu(game: &mut Game) {

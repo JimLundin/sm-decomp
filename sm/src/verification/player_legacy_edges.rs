@@ -1,6 +1,7 @@
 //! Candidate-only contracts for retained callbacks and physical map writes.
 //! Runs on an initialized verification host; no predecessor unaligned u16 path.
 use super::Runtime;
+use crate::game::map_menu::{MapScreen, render_map};
 use crate::{game_state::Game, ram_map::words as w, rom::RomImage};
 use std::cell::RefCell;
 pub(crate) const COUNT: usize = 1;
@@ -131,10 +132,8 @@ fn map(g: &mut Game) {
             ..Default::default()
         }
     });
-    // Flag zero is intentional: the mapped branch dereferences an odd u16 address.
-    unsafe {
-        crate::game::sm_82::LoadPauseMenuMapTilemap(g);
-    }
+    // Retain the flag-zero rotations and every intermediate physical write.
+    render_map(MapScreen::Pause, g);
     OBS.with(|cell| {
         let o = cell.borrow();
         assert_eq!((o.shifted, o.incremented, o.completed), (2048, 1024, 2048));

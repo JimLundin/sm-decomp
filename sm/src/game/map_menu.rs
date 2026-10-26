@@ -6,7 +6,7 @@ use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::room_entry::{self, ArrivalRequest, StartSite};
 use crate::game::save_slots::load_area_map;
 use crate::game::session_runtime::Runtime;
-use crate::game::sm_82::{DrawMapScrollArrowAndCheckToScroll, DrawRoomSelectMap};
+use crate::game::sm_82::DrawMapScrollArrowAndCheckToScroll;
 use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled};
 use crate::game::{menu_tilemap, menu_window};
 const AREAS: [u16; 6] = [0, 3, 5, 1, 4, 2];
@@ -374,7 +374,7 @@ unsafe fn open_room_window(game: &mut Game) {
 unsafe fn initialize_room(game: &mut Game) {
     unsafe {
         load_area_map(game);
-        DrawRoomSelectMap(game);
+        draw_room_map(game);
         room_entry::begin(
             &mut Runtime::new(game),
             ArrivalRequest::Start(StartSite::CurrentLoadStation),
@@ -1036,4 +1036,75 @@ pub(crate) fn scroll_limits(game: &mut Game) {
         game.map_max_y_scroll =
             find_map_edge(source.as_ref(), MapEdge::Bottom, game).wrapping_mul(8)
     );
+}
+
+pub(crate) enum MapScreen {
+    Pause,
+    FileSelect,
+}
+
+pub(crate) fn render_map(screen: MapScreen, game: &mut Game) {
+    let mut area = word!(game.area_index);
+    if (i32::from(word!(game.area_index)) - 7) & 0x8000 == 0 {
+        area = 0;
+    }
+    let address = menu_tilemap::native_record(0x82964a, game).load24(3 * usize::from(area));
+    let tiles = menu_tilemap::native_record(address, game);
+    let (destination, empty) = match screen {
+        MapScreen::Pause => (0x4000, 31),
+        MapScreen::FileSelect => (0x3000, 15),
+    };
+    let bitmap = map_record(
+        crate::rtl::rom_table_word!(game, 0x829717, area as isize),
+        game,
+    );
+    if game.g_ram[0xd908 + usize::from(word!(game.area_index))] != 0 {
+        let mut mapped = bitmap.word(0).swap_bytes();
+        let mut explored = native_word(0x7f7, game).swap_bytes();
+        for index in 0..2048 {
+            let mut value = tiles.word(2 * index);
+            if explored & 0x8000 != 0 {
+                value &= 0xfbff;
+            } else if mapped & 0x8000 == 0 {
+                value = 31;
+            }
+            explored = explored.wrapping_mul(2);
+            mapped = mapped.wrapping_mul(2);
+            set_native_word(destination + 2 * index, value, game);
+            if index & 15 == 15 {
+                // Retain the native/physical prefetch after the final tile too.
+                let offset = 2 * ((index + 1) / 16);
+                mapped = bitmap.word(offset).swap_bytes();
+                explored = native_word(0x7f7 + offset, game).swap_bytes();
+            }
+        }
+    } else {
+        for index in 0..2048 {
+            let byte = index / 8;
+            let explored = 0x7f7 + byte;
+            let previous = game.g_ram[explored];
+            game.g_ram[explored] = game.g_ram[explored].wrapping_mul(2);
+            #[cfg(sm_verify_dll)]
+            crate::game::session_runtime::player_legacy_edges::map_write(game, byte, index, 0);
+            let value = if previous & 0x80 == 0 {
+                empty
+            } else {
+                game.g_ram[explored] = game.g_ram[explored].wrapping_add(1);
+                #[cfg(sm_verify_dll)]
+                crate::game::session_runtime::player_legacy_edges::map_write(game, byte, index, 1);
+                tiles.word(2 * index) & 0xfbff
+            };
+            set_native_word(destination + 2 * index, value, game);
+            #[cfg(sm_verify_dll)]
+            crate::game::session_runtime::player_legacy_edges::map_write(game, byte, index, 2);
+        }
+    }
+}
+
+fn draw_room_map(game: &mut Game) {
+    game.g_ram[0x5d] = 51;
+    game.g_ram[0x69] = 19;
+    word!(game.reg_BG1VOFS = -40i16 as u16);
+    render_map(MapScreen::FileSelect, game);
+    menu_tilemap::upload(4096, 0x7e3000, 0, false, game);
 }
