@@ -1137,13 +1137,6 @@ fn accelerated_speed(fraction: u16, whole: u16, acceleration: u32, limit: u16) -
     }
 }
 
-fn move_position(position: &mut crate::game::session::Position, amount: u32) {
-    let next =
-        (u32::from(position.fraction) | (u32::from(position.whole) << 16)).wrapping_add(amount);
-    position.fraction = next as u16;
-    position.whole = (next >> 16) as u16;
-}
-
 fn advance_phase(game: &mut Game) {
     Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
         enemy.variables[0] = enemy.variables[0].wrapping_add(2);
@@ -1170,7 +1163,7 @@ pub fn Crocomire_Func_72(game: &mut Game) {
             let speed = accelerated_speed(enemy.variables[4], enemy.pre_instruction, 0x8000, 2);
             enemy.variables[4] = speed as u16;
             enemy.pre_instruction = (speed >> 16) as u16;
-            move_position(&mut enemy.x, speed);
+            enemy.x.advance(speed as i32);
         }
     });
     let finished = runtime.edit_actor(Key::from_legacy(0x80), AccessMode::Native, |enemy| {
@@ -1193,8 +1186,8 @@ pub fn Crocomire_Func_73(game: &mut Game) {
         let speed = accelerated_speed(enemy.variables[4], enemy.pre_instruction, 2048, 5);
         enemy.variables[4] = speed as u16;
         enemy.pre_instruction = (speed >> 16) as u16;
-        move_position(&mut enemy.y, 0xe000);
-        move_position(&mut enemy.x, speed);
+        enemy.y.advance(0xe000);
+        enemy.x.advance(speed as i32);
         (enemy.x.whole as i16).wrapping_sub(576) >= 0
     });
     if impact {
