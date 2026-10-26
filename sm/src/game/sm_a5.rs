@@ -637,7 +637,8 @@ crate::game::callback_dispatch! {
         10850078 => [Draygon_Func_24(k, game)];
         10850262 => [Draygon_Func_25(k, game)]; 10850516 => [Draygon_Func_26(k, game)];
         10850565 => [Draygon_Func_27(k, game)]; 10850596 => [Draygon_Func_28(k, game)];
-        10863757 => [Draygon_Func_48(k, game)]; 10863891 => [Draygon_Func_49(k, game)];
+        10863757 => [actors::draygon_eye::advance(k, false, game)];
+        10863891 => [actors::draygon_eye::advance(k, true, game)];
         10873626 => [()]; 10873682 => [SporeSpawn_Func_2(k, game)];
     }
 }
@@ -944,77 +945,6 @@ pub unsafe fn Draygon_Func_46(game: &mut Game) {
         (*Get_Draygon(0, game)).var_46 = next;
     }
 }
-pub unsafe fn Draygon_Func_48(k: u16, game: &mut Game) {
-    unsafe {
-        if ((*Get_Draygon(k as i32, game)).base.frame_counter & 0x7f) == 0 {
-            let E1 = Get_Draygon(0x40, game);
-            game.eproj_spawn_pt = Point16U {
-                x: (((*E1).base.x_pos).wrapping_sub(24)),
-                y: (((*E1).base.y_pos).wrapping_sub(32)),
-            };
-            SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x18, game);
-        }
-        let E0 = Get_Draygon(0, game);
-        let v4: u16 = actor_api::angle_from_delta(
-            (word!(game.samus_x_pos) as i32 - ((*E0).base.x_pos as i32 - 24i32)) as u16,
-            (word!(game.samus_y_pos) as i32 - ((*E0).base.y_pos as i32 - 32i32)) as u16,
-        );
-        let E = Get_Draygon(word!(game.cur_enemy_index) as i32, game);
-        if v4 != (*E).var_F {
-            let mut v6: u16 = addr_kDraygon_Ilist_99BA as u16;
-            if v4 as i32 - 32i32 & 0x8000 == 0 {
-                v6 = addr_kDraygon_Ilist_99B4 as u16;
-                if v4 as i32 - 96i32 & 0x8000 == 0 {
-                    v6 = addr_kDraygon_Ilist_99C0 as u16;
-                    if v4 as i32 - 160i32 & 0x8000 == 0 {
-                        v6 = addr_kDraygon_Ilist_99AE as u16;
-                        if v4 as i32 - 224i32 & 0x8000 == 0 {
-                            v6 = addr_kDraygon_Ilist_99BA as u16;
-                        }
-                    }
-                }
-            }
-            (*E).var_F = v4;
-            enemy_instruction! {[(*E).base]; instruction = v6, timer = 1}
-            (*E).base.timer = 0;
-        }
-    }
-}
-pub unsafe fn Draygon_Func_49(k: u16, game: &mut Game) {
-    unsafe {
-        let E0 = Get_Draygon(0, game);
-        if ((*Get_Draygon(k as i32, game)).base.frame_counter & 0x7f) == 0 {
-            game.eproj_spawn_pt = Point16U {
-                x: (((*E0).base.x_pos).wrapping_add(24)),
-                y: (((*E0).base.y_pos).wrapping_sub(32)),
-            };
-            SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x18, game);
-        }
-        let v4: u16 = actor_api::angle_from_delta(
-            (word!(game.samus_x_pos) as i32 - ((*E0).base.x_pos as i32 + 24)) as u16,
-            (word!(game.samus_y_pos) as i32 - ((*E0).base.y_pos as i32 - 32i32)) as u16,
-        );
-        let E = Get_Draygon(word!(game.cur_enemy_index) as i32, game);
-        if v4 != (*E).var_F {
-            let mut v6: u16 = addr_kDraygon_Ilist_9D5C as u16;
-            if v4 as i32 - 32i32 & 0x8000 == 0 {
-                v6 = addr_kDraygon_Ilist_9D50 as u16;
-                if v4 as i32 - 96i32 & 0x8000 == 0 {
-                    v6 = addr_kDraygon_Ilist_9D62 as u16;
-                    if v4 as i32 - 160i32 & 0x8000 == 0 {
-                        v6 = addr_kDraygon_Ilist_9D56 as u16;
-                        if v4 as i32 - 224i32 & 0x8000 == 0 {
-                            v6 = addr_kDraygon_Ilist_9D5C as u16;
-                        }
-                    }
-                }
-            }
-            (*E).var_F = v4;
-            enemy_instruction! {[(*E).base]; instruction = v6, timer = 1}
-            (*E).base.timer = 0;
-        }
-    }
-}
 pub unsafe fn sub_A5E9F5(game: &mut Game) {
     {
         if (word!(game.nmi_frame_counter_word) & 0xf) == 0 {
@@ -1171,11 +1101,6 @@ crate::game::callback_dispatch! {
         actors::combat::power_bomb_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
         sub_A5960D(game);
     };
-    [10863723] DraygonsEye_Init [] {
-        let E = Get_Draygon(word!(game.cur_enemy_index) as i32, game);
-        (*E).base.current_instruction = addr_kDraygon_Ilist_9944 as u16;
-        (*E).var_A = (0xa5804bi32) as u16;
-    };
     [10863750] DraygonsEye_Main [] {
         let E = Get_Draygon(word!(game.cur_enemy_index) as i32, game);
         CallDraygonFunc(
@@ -1300,6 +1225,7 @@ crate::game::callback_dispatch! {
     [10846243] Enemy_NormalTouchAI_A5 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
     [10846253] Enemy_NormalShotAI_A5 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
     [10846273] Enemy_NormalFrozenAI_A5 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
+    @external { 10863723 => [actors::draygon_eye::initialize(game)]; }
 }
 
 crate::game::callback_dispatch! {
@@ -1389,7 +1315,6 @@ crate::game::callback_dispatch! {
         );
     };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10863739] Draygon_Instr_3 [jp.offset(1)] { (*Get_Draygon(0x40, game)).var_A = jp.word(0); };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10872671] Draygon_Instr_25 [jp] {
         let E = Get_Draygon(0, game);
@@ -1461,6 +1386,7 @@ crate::game::callback_dispatch! {
         create_sprite(x, y, 3, 0, game);
         QueueSfx2_Max6(0x25, game);
     };
+    @external { 10863739 => [actors::draygon_eye::set_mode(j, game)]; }
 }
 
 fn draygon_divide(divisor: u32, value: u32) -> u32 {
