@@ -58,7 +58,13 @@ pub(crate) fn opening(first: bool, game: &mut Game) {
         }
     }
 }
-pub(crate) fn synchronize_parts(game: &mut Game) {
+pub(crate) fn update(body: bool, dispatch: impl FnOnce(u32, u16, &mut Game), game: &mut Game) {
+    let k = word!(game.cur_enemy_index) as i32;
+    let state = 0xa50000 | u32::from(slot!(game, Draygon[k].var_A));
+    dispatch(state, word!(game.cur_enemy_index), game);
+    if !body {
+        return;
+    }
     let x = slot!(game, Draygon[0].base.x_pos);
     for k in [0x40, 0x80, 0xc0] {
         slot!(game, Draygon[k].base.x_pos = x);
