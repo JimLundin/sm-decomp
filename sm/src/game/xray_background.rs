@@ -6,23 +6,7 @@ use crate::game::session_runtime::Runtime;
 use crate::game::music::QueueSfx1_Max6;
 
 use crate::game::session_runtime::finish_xray;
-
-const RomPtr_8F: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8f>;
-const RomPtr_91: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x91>;
-crate::typed_struct! {
-    [
-        #[derive(Copy, Clone)]
-        #[repr(C, packed)]
-    ];
-    struct BlockDefinition {
-        pub value: u16;
-        pub addr: VoidP;
-    }
-    struct RoomBlock {
-        pub x_block, y_block: u8;
-        pub level_data_block: u16;
-    }
-}
+use crate::rom::RomRecord;
 
 fn upload_screen(source: u16, screen: u16, game: &mut Game) {
     let tail = word!(game.vram_write_queue_tail);
@@ -129,180 +113,186 @@ pub unsafe fn build_overlay(game: &mut Game) {
     }
 }
 
-unsafe fn block_definition(k: u16, game: &mut Game) -> *const u8 {
-    unsafe {
-        let bts: u16 = *ram_ptr!(game; 0x16402, k as isize) as u16;
-        let r40: u16 = (word!(game.level_data[k])) & (0xf000u16);
-        let mut i: i32 = 0;
-        loop {
-            let mut value: u16 =
-                (*(rom_ptr!(game, BlockDefinition; 0x91d2d6)).offset(i as isize)).value;
-            if value == 0xffff {
-                break;
-            }
-            if value == r40 {
-                let mut p = RomPtr_91(
-                    (*(rom_ptr!(game, BlockDefinition; 0x91d2d6)).offset(i as isize)).addr,
-                    game,
-                );
-                loop {
-                    value = *(p as *mut u16);
-                    if value == 0xffff {
-                        break;
-                    }
-                    if value == 0xff00 || value == bts {
-                        return RomPtr_91(*(p.offset(2) as *mut u16), game);
-                    }
-                    p = p.offset(4);
-                }
-                return null::<u8>();
-            }
-            i += 1;
-        }
-        null::<u8>()
+#[forbid(unsafe_code)]
+fn native_record(bank: u8, address: u16, game: &mut Game) -> RomRecord {
+    let absolute = (u32::from(bank) << 16) | u32::from(address);
+    if address & 0x8000 == 0 {
+        crate::game::session_runtime::native_rom_diagnostic(absolute, game);
+    }
+    drop(game.capture_native_rom_binding());
+    RomRecord {
+        image: game.capture_native_rom(),
+        base: crate::rtl::lorom_offset(absolute) as usize,
     }
 }
-pub unsafe fn reveal_left_neighbor(dst_r22: u16, r34: u16, game: &mut Game) {
-    unsafe {
-        if r34 == 0 {
+
+#[forbid(unsafe_code)]
+fn definition_word(index: isize, game: &Game) -> u16 {
+    game.capture_native_rom()
+        .table_word(crate::rtl::lorom_offset(0x91d2d6) as usize, index)
+}
+
+#[forbid(unsafe_code)]
+fn block_bts(block: i32, game: &Game) -> u8 {
+    let at = usize::try_from(0x16402isize + block as isize).expect("X-ray BTS outside RAM");
+    game.g_ram[at]
+}
+
+#[forbid(unsafe_code)]
+fn block_definition(k: u16, game: &mut Game) -> Option<RomRecord> {
+    let bts = u16::from(block_bts(i32::from(k), game));
+    let kind = word!(game.level_data[k]) & 0xf000;
+    let mut index = 0i32;
+    loop {
+        let value = definition_word(2 * index as isize, game);
+        if value == 0xffff {
+            return None;
+        }
+        if value == kind {
+            let entries = native_record(0x91, definition_word(2 * index as isize + 1, game), game);
+            let mut offset = 0;
+            loop {
+                let value = entries.word(offset);
+                if value == 0xffff {
+                    return None;
+                }
+                if value == 0xff00 || value == bts {
+                    return Some(native_record(0x91, entries.word(offset + 2), game));
+                }
+                offset += 4;
+            }
+        }
+        index += 1;
+    }
+}
+
+// Neighbor tiles read each corner immediately before its ascending store, including aliases.
+#[forbid(unsafe_code)]
+fn write_neighbor(destination: u16, tile: u16, offsets: [usize; 4], game: &mut Game) {
+    for (corner, offset) in offsets.into_iter().enumerate() {
+        let source = 0xa000 + 8 * usize::from(tile) + 2 * corner;
+        let value = u16::from_ne_bytes([game.g_ram[source], game.g_ram[source + 1]]);
+        let at = 0x4000 + usize::from(destination) + 2 * offset;
+        game.g_ram[at..at + 2].copy_from_slice(&value.to_ne_bytes());
+    }
+}
+
+#[forbid(unsafe_code)]
+pub fn reveal_left_neighbor(dst_r22: u16, r34: u16, game: &mut Game) {
+    if r34 == 0 {
+        return;
+    }
+    let Some(descriptor) = block_definition(r34.wrapping_sub(1), game) else {
+        return;
+    };
+    if descriptor.word(0) != 0xcf4e {
+        if descriptor.word(0) != 0xcf6f {
             return;
         }
-        let jp = block_definition((r34).wrapping_sub(1), game);
-        let dst = (&raw mut (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps as *mut u16
-            as *mut u8)
-            .offset(dst_r22 as i32 as isize) as *mut u16;
-        if jp.is_null() {
-            return;
-        }
-        if *(jp as *mut u16) as i32 != 0x91cf4e & 0xffff {
-            if *(jp as *mut u16) as i32 != 0x91cf6f & 0xffff {
+        write_neighbor(dst_r22, descriptor.word(8), [64, 65, 96, 97], game);
+    }
+    write_neighbor(dst_r22, descriptor.word(4), [0, 1, 32, 33], game);
+}
+
+#[forbid(unsafe_code)]
+fn follow_extension(dst_r22: u16, r36: u16, which_dir: bool, game: &mut Game) {
+    let mut y = (r36 as i32 / word!(game.room_width_in_blocks) as i32) as u16;
+    let mut x = (r36 as i32 % word!(game.room_width_in_blocks) as i32) as u16;
+    let mut kind = word!(game.level_data[r36]) & 0xf000;
+    let mut step = block_bts(i32::from(r36), game) as i8 as i32;
+    if step != 0 {
+        let mut vertical = which_dir;
+        loop {
+            let variable = if vertical { &mut y } else { &mut x };
+            if ((*variable as i32 + step) as i16) < 0 {
+                write_block(dst_r22, 0xff, [0, 1, 32, 33], game);
                 return;
             }
-            let src = (&raw mut (*(ram_ptr!(game, TileTables; 0xa000))).tables as *mut TileTable)
-                .offset(*(jp.offset(8) as *mut u16) as i32 as isize);
-            *dst.offset(64) = (*src).top_left;
-            *dst.offset(65) = (*src).top_right;
-            *dst.offset(96) = (*src).bottom_left;
-            *dst.offset(97) = (*src).bottom_right;
+            *variable = (*variable as i32 + step) as u16;
+            let pos = y as i32 * word!(game.room_width_in_blocks) as i32 + x as i32;
+            step = block_bts(pos, game) as i8 as i32;
+            kind = word!(game.level_data[pos]) & 0xf000;
+            if kind == 0xd000 {
+                vertical = true;
+            } else {
+                if kind != 0x5000 {
+                    break;
+                }
+                if step < 0 {
+                    vertical = false;
+                }
+            }
         }
-        let src_0 = (&raw mut (*(ram_ptr!(game, TileTables; 0xa000))).tables as *mut TileTable)
-            .offset(*(jp.offset(4) as *mut u16) as i32 as isize);
-        *dst = (*src_0).top_left;
-        *dst.offset(1) = (*src_0).top_right;
-        *dst.offset(32) = (*src_0).bottom_left;
-        *dst.offset(33) = (*src_0).bottom_right;
     }
-}
-unsafe fn follow_extension(dst_r22: u16, r36: u16, which_dir: bool, game: &mut Game) {
-    unsafe {
-        let mut y: u16 = (r36 as i32 / word!(game.room_width_in_blocks) as i32) as u16;
-        let mut x: u16 = (r36 as i32 % word!(game.room_width_in_blocks) as i32) as u16;
-        let mut r48: u16 = (word!(game.level_data[r36])) & (0xf000u16);
-        let mut step: i32 = *ram_ptr!(game; 0x16402, r36 as isize) as i8 as i32;
-        if step != 0 {
-            let mut variable = if which_dir { &raw mut y } else { &raw mut x };
-            loop {
-                if ((*variable as i32 + step) as i16) < 0 {
-                    write_block(dst_r22, 0xff, [0, 1, 32, 33], game);
-                    return;
-                }
-                *variable = (*variable as i32 + step) as u16;
-                let pos: i32 = y as i32 * word!(game.room_width_in_blocks) as i32 + x as i32;
-                step = *ram_ptr!(game; 0x16402, pos as isize) as i8 as i32;
-                r48 = (word!(game.level_data[pos])) & (0xf000u16);
-                if r48 == 0xd000 {
-                    variable = &raw mut y;
-                } else {
-                    if r48 != 0x5000 {
-                        break;
-                    }
-                    if step < 0 {
-                        variable = &raw mut x;
-                    }
-                }
+    if definition_word(2, game) == kind {
+        let entries = native_record(0x91, definition_word(3, game), game);
+        let mut offset = 0;
+        while entries.word(offset) != 0xffff {
+            if entries.word(offset) == 0xff00 || entries.word(offset) as i32 == step & 0xff {
+                let tile =
+                    native_record(0x91, entries.word(offset + 2).wrapping_add(2), game).word(0);
+                write_block(dst_r22, tile, [0, 1, 32, 33], game);
+                return;
             }
-        }
-        if (*(rom_ptr!(game, BlockDefinition; 0x91d2d6)).offset(1)).value == r48 {
-            let mut t = RomPtr_91(
-                (*(rom_ptr!(game, BlockDefinition; 0x91d2d6)).offset(1)).addr,
-                game,
-            ) as *mut u16;
-            while *t != 0xffff {
-                if *t == 0xff00 || *t as i32 == step & 0xff {
-                    let tile = *(RomPtr_91((*t.offset(1)).wrapping_add(2), game) as *const u16);
-                    write_block(dst_r22, tile, [0, 1, 32, 33], game);
-                    return;
-                }
-                t = t.offset(2);
-            }
+            offset += 4;
         }
     }
 }
 
-unsafe fn dispatch_reveal(
+#[forbid(unsafe_code)]
+fn dispatch_reveal(
     ea: u32,
-    jp: *const u8,
+    jp: &RomRecord,
     columns_left: u16,
     destination: u16,
     block: u16,
     game: &mut Game,
 ) {
-    unsafe {
-        let (width, height, repeat_tile) = match ea {
-            0x91ce79 => {
-                follow_extension(destination, block, true, game);
-                return;
+    let (width, height, repeat_tile) = match ea {
+        0x91ce79 => {
+            follow_extension(destination, block, true, game);
+            return;
+        }
+        0x91cebb => {
+            follow_extension(destination, block, false, game);
+            return;
+        }
+        0x91cf3e if word!(game.area_index) != 1 => return,
+        0x91cf36 | 0x91cf3e => (1, 1, false),
+        0x91cf4e => (2, 1, false),
+        0x91cf62 => (1, 2, true),
+        0x91cf6f => (2, 2, false),
+        _ => {
+            Unreachable(game);
+            return;
+        }
+    };
+    for row in 0..height {
+        for column in 0..width {
+            if column == 1 && columns_left == 1 {
+                continue;
             }
-            0x91cebb => {
-                follow_extension(destination, block, false, game);
-                return;
-            }
-            0x91cf3e if word!(game.area_index) != 1 => return,
-            0x91cf36 | 0x91cf3e => (1, 1, false),
-            0x91cf4e => (2, 1, false),
-            0x91cf62 => (1, 2, true),
-            0x91cf6f => (2, 2, false),
-            _ => {
-                Unreachable(game);
-                return;
-            }
-        };
-        for row in 0..height {
-            for column in 0..width {
-                if column == 1 && columns_left == 1 {
-                    continue;
-                }
-                let descriptor = if repeat_tile {
-                    2
-                } else {
-                    2 + 2 * (row * width + column)
-                };
-                let tile = *(jp.add(descriptor) as *const u16);
-                let base = row * 64 + column * 2;
-                write_block(
-                    destination,
-                    tile,
-                    [base, base + 1, base + 32, base + 33],
-                    game,
-                );
-            }
+            let descriptor = if repeat_tile {
+                2
+            } else {
+                2 + 2 * (row * width + column)
+            };
+            let tile = jp.word(descriptor);
+            let base = row * 64 + column * 2;
+            write_block(
+                destination,
+                tile,
+                [base, base + 1, base + 32, base + 33],
+                game,
+            );
         }
     }
 }
 
-pub unsafe fn reveal_block(r18: u16, r22: u16, r36: u16, game: &mut Game) {
-    unsafe {
-        let jp = block_definition(r36, game);
-        if !jp.is_null() {
-            dispatch_reveal(
-                ((*(jp as *mut u16)) as u32) | (0x910000u32),
-                jp,
-                r18,
-                r22,
-                r36,
-                game,
-            );
-        }
+#[forbid(unsafe_code)]
+pub fn reveal_block(r18: u16, r22: u16, r36: u16, game: &mut Game) {
+    if let Some(jp) = block_definition(r36, game) {
+        dispatch_reveal(u32::from(jp.word(0)) | 0x910000, &jp, r18, r22, r36, game);
     }
 }
 
@@ -426,18 +416,19 @@ pub unsafe fn finish_restore(k: u16, game: &mut Game) {
 pub unsafe fn reveal_room_items(game: &mut Game) {
     unsafe {
         crate::game::room_mechanisms::reveal_items(game);
-        let RS = RomPtr_8F(word!(game.roomdefroomstate_ptr), game) as *const RoomDefRoomstate;
-        if (*RS).xray_special_casing_ptr != 0 {
-            let mut p = RomPtr_8F((*RS).xray_special_casing_ptr, game) as *const RoomBlock;
-            while (*p).x_block != 0 || (*p).y_block != 0 {
-                reveal_room_block(
-                    (*p).level_data_block,
-                    (*p).x_block as u16,
-                    (*p).y_block as u16,
-                    game,
-                );
-                p = p.offset(1);
-            }
+    }
+    let state = native_record(0x8f, word!(game.roomdefroomstate_ptr), game);
+    if state.word(0x10) != 0 {
+        let entries = native_record(0x8f, state.word(0x10), game);
+        let mut offset = 0;
+        while entries.byte(offset) != 0 || entries.byte(offset + 1) != 0 {
+            reveal_room_block(
+                entries.word(offset + 2),
+                entries.byte(offset) as u16,
+                entries.byte(offset + 1) as u16,
+                game,
+            );
+            offset += 4;
         }
     }
 }
