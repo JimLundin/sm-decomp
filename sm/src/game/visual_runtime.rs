@@ -1909,6 +1909,29 @@ pub(crate) fn drift_cinematic_sprite(
     }
 }
 
+pub(crate) fn initialize_ending_sprite_pair(object: u16, leftward: bool, game: &mut Game) {
+    let position = if leftward { (530, 231) } else { (246, 519) };
+    place_cinematic_sprite(object, position, 3584, game);
+    word!(game.cinematicspr_goto_timer[(object >> 1)] = 8);
+}
+
+pub(crate) fn advance_ending_sprite_pair(slot: usize, leftward: bool, game: &mut Game) -> bool {
+    let (direction, threshold, stop_x, stop_y) =
+        [(1, 395, 394, 367), (-1, 382, 382, 383)][usize::from(!leftward)];
+    let step = (i32::from(word!(game.cinematicspr_goto_timer[slot])) * direction) as u16;
+    word!(game.cinematicbg_arr8[slot] += step);
+    let x = word!(game.cinematicbg_arr7[slot]).wrapping_sub(step);
+    word!(game.cinematicbg_arr7[slot] = x);
+    let arrived = (i32::from(x) - threshold & 0x8000 != 0) == leftward;
+    if arrived {
+        word! {game; cinematicbg_arr7[slot] = stop_x; cinematicbg_arr8[slot] = stop_y;
+        cinematicspr_preinstr_func[slot] = 0x93d9; }
+    } else {
+        word!(game.cinematicspr_goto_timer[slot] += 2);
+    }
+    arrived
+}
+
 pub(crate) fn update_ending_critters(object: u16, initialize: bool, game: &mut Game) {
     let slot = usize::from(object >> 1);
     if initialize {

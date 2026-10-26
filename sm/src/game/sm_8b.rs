@@ -1829,31 +1829,12 @@ crate::game::callback_dispatch! {
         }
     };
     [9171431] CinematicFunction_Intro_Func179 [] {
-        word!(game.cinematicbg_arr8[v1] += word!(game.cinematicspr_goto_timer[v1]));
-        let v2: u16 =
-            (word!(game.cinematicbg_arr7[v1])).wrapping_sub(word!(game.cinematicspr_goto_timer[v1]));
-        word!(game.cinematicbg_arr7[v1] = v2);
-        if v2 as i32 - 395i32 & 0x8000 != 0 {
-            word! {game; cinematicbg_arr7[v1] = 394; cinematicbg_arr8[v1] = 367;
-                cinematicspr_preinstr_func[v1] = ((0x8b93d9i32) as u16); }
+        if crate::game::visual_runtime::advance_ending_sprite_pair(v1 as usize, true, game) {
             palette_effects::spawn(addr_kPalfx_E200 as u16, game);
-        } else {
-            word!(game.cinematicspr_goto_timer[v1] += 2);
-        };
-    };
-    [9171495] CinematicFunction_Intro_Func180 [] {
-        word!(game.cinematicbg_arr8[v1] -= word!(game.cinematicspr_goto_timer[v1]));
-        let v2: u16 =
-            (word!(game.cinematicspr_goto_timer[v1])).wrapping_add(word!(game.cinematicbg_arr7[v1]));
-        word!(game.cinematicbg_arr7[v1] = v2);
-        if v2 as i32 - 382i32 & 0x8000 != 0 {
-            word!(game.cinematicspr_goto_timer[v1] += 2);
-        } else {
-            word! {game; cinematicbg_arr7[v1] = 382; cinematicbg_arr8[v1] = 383;
-                cinematicspr_preinstr_func[v1] = ((0x8b93d9i32) as u16); }
-        };
+        }
     };
     @external {
+        9171495 => [{ crate::game::visual_runtime::advance_ending_sprite_pair(usize::from(j >> 1), false, game); }];
         9156623 => [{ crate::game::visual_runtime::advance_intro_mother_brain(j, 1, game); }];
         9156654 => [{ crate::game::visual_runtime::advance_intro_mother_brain(j, 2, game); }];
         9172264 => [crate::game::visual_runtime::advance_ending_samus_jump(j, 0, game)];
@@ -1941,15 +1922,9 @@ crate::game::callback_dispatch! {
         }
         word! {game; cinematicbg_arr8[v1] = 87; cinematicbg_arr9[v1] = 2048; }
     };
-    [9171343] CinematicFunction_Intro_Func175 [] {
-        word! {game; cinematicbg_arr7[v1] = 530; cinematicbg_arr8[v1] = 231;
-            cinematicbg_arr9[v1] = 3584; cinematicspr_goto_timer[v1] = 8; }
-    };
-    [9171368] CinematicFunction_Intro_Func176 [] {
-        word! {game; cinematicbg_arr7[v1] = 246; cinematicbg_arr8[v1] = 519;
-            cinematicbg_arr9[v1] = 3584; cinematicspr_goto_timer[v1] = 8; }
-    };
     @external {
+        9171343 => [crate::game::visual_runtime::initialize_ending_sprite_pair(j, true, game)];
+        9171368 => [crate::game::visual_runtime::initialize_ending_sprite_pair(j, false, game)];
         9170841 => [crate::game::visual_runtime::update_ending_critters(j, true, game)];
         9150131 => [initialize_title_sprite(j, 0, game)];
         9150166 => [initialize_title_sprite(j, 1, game)];
