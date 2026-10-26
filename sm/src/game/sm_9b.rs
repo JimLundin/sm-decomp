@@ -17,7 +17,6 @@ use crate::game::grapple_swing::{
     start_rope_animation as GrappleFunc_AF87,
 };
 use crate::game::music::{QueueSfx1_Max1, QueueSfx1_Max6};
-use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session_runtime::player_bottom;
 
 const RomPtr_9B: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x9b>;
@@ -227,58 +226,6 @@ pub fn CheckBannedDraygonGrappleDirs(a: u16, game: &mut Game) -> u16 {
             return 2;
         }
         1
-    }
-}
-pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
-    unsafe {
-        let mut v0: u16 = 0;
-        if (word!(game.grapple_beam_unkD26) & 0x8000) == 0 {
-            v0 = (2u16).wrapping_mul(word!(game.grapple_beam_unkD26));
-            let mut v2: i16 = kSinCosTable8bit_Sext
-                [(byte!(@pointer ram_ptr!(game, u16; 0xcfa); 1) as i32 + 64) as usize];
-            if v2 >= 0 {
-                words!(
-                    game.samus_y_speed,
-                    samus_y_subspeed = game.multiply_with_scratch(v2 as u16, v0)
-                );
-                word!(game.samus_y_dir = 2);
-            } else {
-                words!(
-                    game.samus_y_speed,
-                    samus_y_subspeed = game.multiply_with_scratch(-(v2 as i32) as u16, v0)
-                );
-                word!(game.samus_y_dir = 1);
-            }
-        } else {
-            v0 = (-2i32 * word!(game.grapple_beam_unkD26) as i32) as u16;
-            let mut v1: i16 = kSinCosTable8bit_Sext
-                [(byte!(@pointer ram_ptr!(game, u16; 0xcfa); 1) as i32 + 64) as usize];
-            if v1 < 0 {
-                words!(
-                    game.samus_y_speed,
-                    samus_y_subspeed = game.multiply_with_scratch(-(v1 as i32) as u16, v0)
-                );
-                word!(game.samus_y_dir = 2);
-            } else {
-                words!(
-                    game.samus_y_speed,
-                    samus_y_subspeed = game.multiply_with_scratch(v1 as u16, v0)
-                );
-                word!(game.samus_y_dir = 1);
-            }
-        }
-        word!(game.samus_x_accel_mode = 2);
-        let mut r18: u16 = (3 * (v0 as i32 >> 9)) as u16;
-        r18 = (64u16).wrapping_sub(r18);
-        let v3: u16 = abs16(
-            kSinCosTable8bit_Sext
-                [(((*ram_ptr!(game; 0xcfb)).wrapping_sub((r18) as u8)) as i32 + 64) as usize]
-                as u16,
-        );
-        words!(
-            game.samus_x_base_speed,
-            samus_x_base_subspeed = game.multiply_with_scratch(v3, v0)
-        );
     }
 }
 crate::game::callback_dispatch! {
@@ -519,7 +466,7 @@ crate::game::callback_dispatch! {
             }
         }
         if word!(game.grapple_beam_unkD26) != 0 || word!(game.grapple_beam_end_angle16) != 0x8000 {
-            PropelSamusFromGrappleSwing(game);
+            grapple_swing::launch_from_swing(game);
             word!(game.grapple_beam_function = (0x9bcb8bi32) as u16);
             word!(game.samus_movement_handler = (0x90946ei32) as u16);
         } else {

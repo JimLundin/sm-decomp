@@ -6,6 +6,7 @@ use crate::game::prelude::*;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::projectile_room::Axis;
 use crate::game::session_runtime::{Runtime, player_command, settle_grapple};
+use crate::ram_map::words as ram_words;
 
 fn project_axis(origin: u16, sample: i16, length: u16) -> u16 {
     let distance = if sample == -256 || sample == 256 {
@@ -422,6 +423,32 @@ pub fn advance_swing(game: &mut Game) -> u8 {
     };
     word!(game.grapple_beam_unkD2E = decayed as u16);
     0
+}
+
+#[forbid(unsafe_code)]
+pub(crate) fn launch_from_swing(game: &mut Game) {
+    let backwards = word!(game.grapple_beam_unkD26) & 0x8000 != 0;
+    let magnitude = if backwards {
+        (-2i32 * i32::from(word!(game.grapple_beam_unkD26))) as u16
+    } else {
+        2u16.wrapping_mul(word!(game.grapple_beam_unkD26))
+    };
+    let sample = kSinCosTable8bit_Sext[usize::from(game.g_ram[0xcfb]) + 64];
+    let vertical = game.multiply_with_scratch(sample.unsigned_abs(), magnitude);
+    word_transfers!(game, ascending, 1;
+        native(ram_words::samus_y_subspeed) <- value(vertical as u16),
+        native(ram_words::samus_y_speed) <- value((vertical >> 16) as u16));
+    word!(game.samus_y_dir = if (sample < 0) == backwards { 2 } else { 1 });
+    word!(game.samus_x_accel_mode = 2);
+    let adjustment = 64u16.wrapping_sub((3 * (i32::from(magnitude) >> 9)) as u16);
+    let sample = abs16(
+        kSinCosTable8bit_Sext[usize::from(game.g_ram[0xcfb].wrapping_sub(adjustment as u8)) + 64]
+            as u16,
+    );
+    let horizontal = game.multiply_with_scratch(sample, magnitude);
+    word_transfers!(game, ascending, 1;
+        native(ram_words::samus_x_base_subspeed) <- value(horizontal as u16),
+        native(ram_words::samus_x_base_speed) <- value((horizontal >> 16) as u16));
 }
 
 pub(crate) fn cancel(game: &mut Game) {
