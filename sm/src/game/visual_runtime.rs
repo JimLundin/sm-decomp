@@ -2244,7 +2244,7 @@ unsafe fn advance_cinematic_object(objects: CinematicObjects, object: u16, game:
     }
 }
 
-fn cinematic_native_record<const BANK: u8>(cursor: u16, game: &mut Game) -> RomRecord {
+pub(super) fn cinematic_native_record<const BANK: u8>(cursor: u16, game: &mut Game) -> RomRecord {
     let address = (u32::from(BANK) << 16) | u32::from(cursor);
     if address & 0x8000 == 0 {
         crate::game::session_runtime::native_rom_diagnostic(address, game);

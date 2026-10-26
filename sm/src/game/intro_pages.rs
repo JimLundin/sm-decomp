@@ -26,28 +26,23 @@ use crate::game::music::QueueMusic_Delayed8;
 use crate::game_state::Game;
 use crate::ram_map::{checked_word, ram_ptr, word};
 
-unsafe fn load_japanese_line(j: u16, game: &mut Game) {
-    unsafe {
-        let mut tt = crate::rtl::rom_bank_ptr::<0x8b>(j, game) as *mut u16;
-        let mut v2: u16 = *tt;
-        let mut r18: i32 = *tt.offset(1) as i32;
-        let dst = &raw mut (*(ram_ptr!(game, crate::types::Ram4000; 0x4000)))
-            .intro_japanese_text_tiles as *mut u16;
-        do_until! { r18 == 0 ;
-            crate::c_library::memcpy(
-                dst.offset((v2 >> 1) as isize) as *mut core::ffi::c_void,
-                ram_ptr!(game, u16; (*tt.offset(2) as i32 + 0x1a000) as isize) as *const core::ffi::c_void,
-                16 as usize,
-            );
-            crate::c_library::memcpy(
-                dst.offset((v2 as i32 + 768 >> 1) as isize) as *mut core::ffi::c_void,
-                ram_ptr!(game, u16; (*tt.offset(3) as i32 + 0x1a000) as isize) as *const core::ffi::c_void,
-                16 as usize,
-            );
-            v2 = (v2).wrapping_add(16);
-            tt = tt.offset(2);
-            r18 -= 1;
+fn load_japanese_line(address: u16, game: &mut Game) {
+    let record = super::visual_runtime::cinematic_native_record::<0x8b>(address, game);
+    let mut destination = record.word(0);
+    let mut remaining = i32::from(record.word(2));
+    let mut cursor = 4;
+    do_until! { remaining == 0;
+        // Finish each glyph copy before reading the next native source word.
+        for (word_offset, row_offset) in [(0, 0), (2, 768)] {
+            let target = 0x4000 + ((usize::from(destination) + row_offset) >> 1) * 2;
+            let source = 0x1a000 + usize::from(record.word(cursor + word_offset));
+            for byte in 0..16 {
+                game.g_ram[target + byte] = game.g_ram[source + byte];
+            }
         }
+        destination = destination.wrapping_add(16);
+        cursor += 4;
+        remaining -= 1;
     }
 }
 
@@ -342,37 +337,33 @@ pub(super) unsafe fn fade_to_page(palette: Palette, game: &mut Game) {
     }
 }
 
-pub(super) unsafe fn draw_japanese_text(
+pub(super) fn draw_japanese_text(
     lines: &[u16],
     restore_palette: bool,
     j: u16,
     game: &mut Game,
 ) -> u16 {
-    unsafe {
-        set_cinematic_tilemap_updates(false, game);
-        if restore_palette {
-            word!(game.palette_buffer[17] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 17));
-            word!(game.palette_buffer[18] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 18));
-            word!(game.palette_buffer[19] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 19));
-        }
-        clear_japanese_tiles(game);
-        for &line in lines {
-            load_japanese_line(line, game);
-        }
-        queue_cinematic_tilemap(CinematicTilemap::Japanese, game);
-        j
+    set_cinematic_tilemap_updates(false, game);
+    if restore_palette {
+        word!(game.palette_buffer[17] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 17));
+        word!(game.palette_buffer[18] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 18));
+        word!(game.palette_buffer[19] = crate::rtl::rom_table_word!(game, 0x8ce3e9, 19));
     }
+    clear_japanese_tiles(game);
+    for &line in lines {
+        load_japanese_line(line, game);
+    }
+    queue_cinematic_tilemap(CinematicTilemap::Japanese, game);
+    j
 }
 
-pub(super) unsafe fn continue_japanese_text(next: u16, lines: &[u16], k: u16, game: &mut Game) {
-    unsafe {
-        if word!(game.joypad1_newkeys) != 0 {
-            let slot = k as usize >> 1;
-            word! {game; mode7_obj_instr_ptr[slot] = next; mode7_obj_instr_timer[slot] = 1;
-            mode7_obj_preinstr_func[slot] = ((0x8b93d9i32) as u16); }
-            draw_japanese_text(lines, false, 0, game);
-            word!(game.cinematic_var16 = 60);
-        }
+pub(super) fn continue_japanese_text(next: u16, lines: &[u16], k: u16, game: &mut Game) {
+    if word!(game.joypad1_newkeys) != 0 {
+        let slot = k as usize >> 1;
+        word! {game; mode7_obj_instr_ptr[slot] = next; mode7_obj_instr_timer[slot] = 1;
+        mode7_obj_preinstr_func[slot] = ((0x8b93d9i32) as u16); }
+        draw_japanese_text(lines, false, 0, game);
+        word!(game.cinematic_var16 = 60);
     }
 }
 
