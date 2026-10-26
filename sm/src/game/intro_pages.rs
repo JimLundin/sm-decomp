@@ -11,7 +11,6 @@ use super::constants::bank_91::{addr_stru_91877E, addr_stru_918784};
 use super::constants::samus_poses::kPose_02_FaceL_Normal;
 use super::palette_effects;
 use super::sm_8b::{
-    SetSomeStuffForSpriteObject_15, SetSomeStuffForSpriteObject_16,
     addr_kCinematicBgObjectDef_8BCF5D, addr_kCinematicSpriteObjectDef_8BCE5B,
     addr_kCinematicSpriteObjectDef_8BCE55, addr_kCinematicSpriteObjectDef_8BCE61,
     addr_kCinematicSpriteObjectDef_8BCE67, addr_kCinematicSpriteObjectDef_8BCE73,
@@ -20,7 +19,7 @@ use super::sm_8b::{
 use super::visual_runtime::{
     clear_cinematic_colors, compose_cinematic_palette, fade_cinematic_colors,
     initialize_intro_crossfade, prepare_cinematic_palette_fade, queue_cinematic_tilemap,
-    set_cinematic_tilemap_updates, spawn_cinematic_sprite_at,
+    set_cinematic_blend, set_cinematic_tilemap_updates, spawn_cinematic_sprite_at,
 };
 use super::visual_state::CinematicTilemap;
 use crate::game::music::QueueMusic_Delayed8;
@@ -50,6 +49,18 @@ unsafe fn load_japanese_line(j: u16, game: &mut Game) {
             r18 -= 1;
         }
     }
+}
+
+fn hide_caret(game: &mut Game) {
+    word!(game.cinematicbg_arr7[15] = 8);
+    word!(game.cinematicbg_arr8[15] = 248);
+}
+
+pub(super) fn reset_caret(game: &mut Game) {
+    word!(game.cinematicbg_arr7[15] = 8);
+    word!(game.cinematicbg_arr8[15] = 24);
+    word!(game.cinematicspr_instr_ptr[15] = 0xcbfb);
+    word!(game.cinematicspr_instr_timer[15] = 1);
 }
 
 pub(super) fn clear_english_text(game: &mut Game) {
@@ -219,12 +230,9 @@ pub(super) unsafe fn wait_for_scene(scene: Scene, game: &mut Game) {
                 Palette::Scientist
             }
         };
-        *ram_ptr!(game; 0x69) = 6;
-        *ram_ptr!(game; 0x6b) = 17;
-        *ram_ptr!(game; 0x6f) = 2;
-        *ram_ptr!(game; 0x72) = 0;
+        set_cinematic_blend(6, 17, 2, 0, game);
         initialize_intro_crossfade(game);
-        SetSomeStuffForSpriteObject_15(game);
+        hide_caret(game);
         word!(
             game.cinematic_function = match palette {
                 Palette::Gameplay => 0xb250,
@@ -351,7 +359,7 @@ pub(super) unsafe fn show_final_page(game: &mut Game) {
         clear_english_text(game);
         CinematicBackground.spawn(addr_kCinematicBgObjectDef_8BCF5D as u16, 0x4c00, game);
         word!(game.cinematic_function = (0x8ba390i32) as u16);
-        SetSomeStuffForSpriteObject_16(game);
+        reset_caret(game);
         QueueMusic_Delayed8(0, game);
     }
 }
@@ -372,22 +380,17 @@ pub(super) unsafe fn wait_for_final_page(game: &mut Game) {
     }
 }
 
-unsafe fn setup_page_palettes(game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0x69) = 6;
-        *ram_ptr!(game; 0x6b) = 17;
-        *ram_ptr!(game; 0x6f) = 2;
-        *ram_ptr!(game; 0x72) = 0;
-        word_transfers!(game, ascending, 256; native(0x2200) <- rom(0x8ce3e9, 0));
-        prepare_cinematic_palette_fade(game);
-        clear_cinematic_colors(0, 0x10, game);
-        clear_cinematic_colors(0x60, 0x10, game);
-        clear_cinematic_colors(0x1d2, 6, game);
-        compose_cinematic_palette(game);
-        word!(game.cinematic_var4 = 127);
-        set_cinematic_tilemap_updates(true, game);
-        SetSomeStuffForSpriteObject_16(game);
-    }
+fn setup_page_palettes(game: &mut Game) {
+    set_cinematic_blend(6, 17, 2, 0, game);
+    word_transfers!(game, ascending, 256; native(0x2200) <- rom(0x8ce3e9, 0));
+    prepare_cinematic_palette_fade(game);
+    clear_cinematic_colors(0, 0x10, game);
+    clear_cinematic_colors(0x60, 0x10, game);
+    clear_cinematic_colors(0x1d2, 6, game);
+    compose_cinematic_palette(game);
+    word!(game.cinematic_var4 = 127);
+    set_cinematic_tilemap_updates(true, game);
+    reset_caret(game);
 }
 
 pub(super) fn enable_text(j: u16, game: &mut Game) -> u16 {

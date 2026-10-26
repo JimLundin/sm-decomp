@@ -512,17 +512,6 @@ static kSetSomeStuffForSpriteObject_9_Tab1: [i16; 138] = [
     -0x6000, 4, -0x4000, 4, -0x2000, 5, 0, 5, 0x2000, 5, 0x4000, 5, 0x6000, 5, -0x8000, 5, -0x6000,
     5, -0x4000, 5, -0x2000,
 ];
-pub unsafe fn SetSomeStuffForSpriteObject_15(game: &mut Game) {
-    {
-        word! {game; cinematicbg_arr7[15] = 8; cinematicbg_arr8[15] = 248; }
-    }
-}
-pub unsafe fn SetSomeStuffForSpriteObject_16(game: &mut Game) {
-    {
-        word! {game; cinematicbg_arr7[15] = 8; cinematicbg_arr8[15] = 24;
-        cinematicspr_instr_ptr[15] = addr_word_8BCBFB as u16; cinematicspr_instr_timer[15] = 1; }
-    }
-}
 static kCinematicFunction_Intro_Func46_Tab0: [u16; 5] = [0, 0x10, 0xfff0, 0xfff8, 8];
 static kCinematicFunction_Intro_Func46_Tab1: [u16; 5] = [0, 0xfff0, 8, 0xfff0, 8];
 static kCinematicFunction_Intro_Func46_Tab2: [u16; 5] = [1, 0x10, 0x20, 0x30, 0x40];
@@ -775,7 +764,7 @@ crate::game::callback_dispatch! {
         CinematicBackground.spawn(addr_kCinematicBgObjectDef_8BCF63 as u16, 0x4c00, game);
         word! { game, 8; cinematic_var10, reg_BG2VOFS, reg_BG3VOFS }
         intro_pages::clear_english_text(game);
-        SetSomeStuffForSpriteObject_16(game);
+        intro_pages::reset_caret(game);
         QueueMusic_Delayed8(0, game);
         QueueMusic_Delayed8(0xff36, game);
         QueueMusic_DelayedY(5, 0xe, game);
