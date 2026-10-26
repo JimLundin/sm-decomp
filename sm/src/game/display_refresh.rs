@@ -519,6 +519,24 @@ pub(crate) enum GraphicsAsset {
 }
 
 impl GraphicsAsset {
+    pub(crate) unsafe fn load_planes(self, fill: u8, word_reset: bool, game: &mut Game) {
+        unsafe {
+            Self::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
+            WriteReg(VMAIN as u16, 0, game);
+            if word_reset {
+                WriteRegWord(VMADDL as u16, 0, game);
+            } else {
+                WriteReg(VMADDL as u16, 0, game);
+                WriteReg(VMADDH as u16, 0, game);
+            }
+            for _ in 0i16..0x4000i16 {
+                WriteReg(VMDATAL as u16, fill, game);
+            }
+            self.load(game);
+            Self::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
+        }
+    }
+
     pub(crate) unsafe fn load(self, game: &mut Game) {
         unsafe {
             crate::verify_probe::hit(match &self {

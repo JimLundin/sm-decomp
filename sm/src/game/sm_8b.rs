@@ -366,16 +366,7 @@ pub unsafe fn LoadTitleSequenceGraphics(game: &mut Game) {
         GraphicsAsset::Decompress(0x96fc04, 0x14000).load(game);
         GraphicsAsset::Decompress(0x9580d8, 0x15000).load(game);
         GraphicsAsset::Decompress(0x95a5e1, 0x19000).load(game);
-        GraphicsAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
-        crate::rtl::register_writes! { game;
-            byte(VMAIN as u16, 0); byte(VMADDL as u16, 0);
-            byte(VMADDH as u16, 0);
-        }
-        for _ in 0i16..0x4000i16 {
-            WriteReg(VMDATAL as u16, 0xff, game);
-        }
-        GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x1000).load(game);
-        GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
+        GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x1000).load_planes(0xff, false, game);
         reset_cinematic_transform(128, 128, game);
         crate::game::display_refresh::enable(true, game);
         word! { game, 1; screen_fade_delay, screen_fade_counter }
@@ -642,15 +633,8 @@ crate::game::callback_dispatch! {
         GraphicsAsset::Decompress(0x95a82f, 0x10000).load(game);
         GraphicsAsset::Decompress(0x96fe69, 0x14000).load(game);
         GraphicsAsset::Decompress(0x96d10a, 0x15000).load(game);
-        GraphicsAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
-        crate::rtl::register_writes! { game;
-            byte(VMAIN as u16, 0); word(VMADDL as u16, 0);
-        }
-        for _ in 0i16..0x4000i16 {
-            WriteReg(VMDATAL as u16, 0x8c, game);
-        }
-        GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x300).load(game);
-        GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
+        GraphicsAsset::VramLowBytes(0x7f4000, 0x0000, 0x300)
+            .load_planes(0x8c, true, game);
         reset_cinematic_transform(56, 24, game);
         word! {game; cinematic_var8 = -72i32 as u16; cinematic_var10 = -104i32 as u16;
             cinematic_var5 = 224; cinematic_var6 = 512; }
@@ -737,16 +721,8 @@ crate::game::callback_dispatch! {
         GraphicsAsset::Decompress(0x95a82f, 0x10000).load(game);
         GraphicsAsset::Decompress(0x96fe69, 0x14000).load(game);
         GraphicsAsset::Decompress(0x96d10a, 0x15000).load(game);
-        GraphicsAsset::VramHighBytes(0x7f0000, 0x0000, 0x4000).load(game);
-        crate::rtl::register_writes! { game;
-            byte(VMAIN as u16, 0); byte(VMADDL as u16, 0);
-            byte(VMADDH as u16, 0);
-        }
-        for _ in 0i16..0x4000i16 {
-            WriteReg(VMDATAL as u16, 0x8c, game);
-        }
-        GraphicsAsset::VramLowBytes(0x7f4600, 0x0000, 0x600).load(game);
-        GraphicsAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
+        GraphicsAsset::VramLowBytes(0x7f4600, 0x0000, 0x600)
+            .load_planes(0x8c, false, game);
         GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x1a00).load(game);
         reset_cinematic_transform(52, 48, game);
         word! {game; cinematic_var8 = -44i32 as u16; cinematic_var10 = -112i32 as u16;
