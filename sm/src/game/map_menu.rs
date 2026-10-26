@@ -1,14 +1,13 @@
 //! Area and room selection, with the original menu-state and RAM compatibility.
 use crate::game::constants::{bank_81::*, bank_82::*};
-use crate::game::music::QueueSfx1_Max6;
+use crate::game::music::{QueueSfx1_Max6, QueueSfx3_Max6};
 use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::room_entry::{self, ArrivalRequest, StartSite};
 use crate::game::save_slots::load_area_map;
 use crate::game::session_runtime::Runtime;
 use crate::game::sm_82::{
-    DisplayMapElevatorDestinations, DrawFileSelectMapIcons, DrawMapScrollArrowAndCheckToScroll,
-    DrawRoomSelectMap, SetupMapScrollingForFileSelectMap,
+    DrawMapScrollArrowAndCheckToScroll, DrawRoomSelectMap, SetupMapScrollingForFileSelectMap,
 };
 use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled};
 use crate::game::{menu_tilemap, menu_window};
@@ -404,10 +403,10 @@ unsafe fn initialize_room(game: &mut Game) {
 }
 unsafe fn choose_room(game: &mut Game) {
     unsafe {
-        DrawFileSelectMapIcons(game);
+        draw_icons(IconMode::FileSelect, game);
         scroll_arrows(game);
         scroll(game);
-        DisplayMapElevatorDestinations(game);
+        display_elevator_destinations(game);
         if word!(game.enable_debug) != 0
             && (word!(game.joypad2_new_keys) as i32 & kButton_Select as i32) != 0
         {
@@ -544,21 +543,17 @@ unsafe fn scroll_arrows(game: &mut Game) {
     }
 }
 unsafe fn show_room(game: &mut Game) {
-    unsafe {
-        DrawFileSelectMapIcons(game);
-        DisplayMapElevatorDestinations(game);
-        word!(game.menu_index += 1);
-    }
+    draw_icons(IconMode::FileSelect, game);
+    display_elevator_destinations(game);
+    word!(game.menu_index += 1);
 }
 unsafe fn fade_room(game: &mut Game) {
-    unsafe {
-        DrawFileSelectMapIcons(game);
-        DisplayMapElevatorDestinations(game);
-        crate::game::display_refresh::fade(false, game);
-        if (game.g_ram[0x51] & 0xf) == 0 {
-            word!(game.menu_index += 1);
-            set_native_word(0xf78 + core::mem::offset_of!(EnemyData, x_pos), 32, game);
-        }
+    draw_icons(IconMode::FileSelect, game);
+    display_elevator_destinations(game);
+    crate::game::display_refresh::fade(false, game);
+    if (game.g_ram[0x51] & 0xf) == 0 {
+        word!(game.menu_index += 1);
+        set_native_word(0xf78 + core::mem::offset_of!(EnemyData, x_pos), 32, game);
     }
 }
 unsafe fn start_game(game: &mut Game) {
@@ -687,5 +682,238 @@ pub(crate) fn scroll(game: &mut Game) {
         if word!(game.map_scrolling_gear_switch_timer) != 0 {
             word!(game.map_scrolling_gear_switch_timer -= 1);
         }
+    }
+}
+
+fn map_record(cursor: u16, game: &mut Game) -> crate::rom::RomRecord {
+    let address = 0x820000 | u32::from(cursor);
+    if cursor & 0x8000 == 0 {
+        crate::game::session_runtime::native_rom_diagnostic(address, game);
+    }
+    crate::rom::RomRecord {
+        image: game.capture_native_rom(),
+        base: crate::rtl::lorom_offset(address) as usize,
+    }
+}
+
+fn draw_record(sprite: u16, record: &crate::rom::RomRecord, palette: u16, game: &mut Game) {
+    sprite_output::menu(
+        sprite,
+        record.word(0).wrapping_sub(word!(game.reg_BG1HOFS)),
+        record.word(2).wrapping_sub(word!(game.reg_BG1VOFS)),
+        palette,
+        game,
+    );
+}
+
+#[derive(Clone, Copy)]
+pub(crate) enum IconMode {
+    Pause,
+    FileSelect,
+}
+
+pub(crate) fn draw_icons(mode: IconMode, game: &mut Game) {
+    if matches!(mode, IconMode::FileSelect) {
+        animate_palette(game);
+    }
+    boss_icons(9, 0xc7cb, game);
+    for (sprite, table) in [(0xb, 0xc7db), (0xa, 0xc7eb), (0x4e, 0xc7fb)] {
+        icon_group(sprite, table, u16::MAX, 3584, game);
+    }
+    match mode {
+        IconMode::Pause => {
+            if word!(game.area_index) == word!(game.sram_area_index) {
+                let bits = station_bits(0, game);
+                let mut bytes = bits.to_ne_bytes();
+                bytes[0] = bits as u8
+                    & [1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80][word!(game.load_station_index) as usize];
+                icon_group(8, 0xc80b, u16::from_ne_bytes(bytes), 1024, game);
+            }
+            if word!(game.enable_debug) != 0 {
+                icon_group(8, 0xc82b, u16::MAX, 1024, game);
+            }
+        }
+        IconMode::FileSelect => {
+            let sprite = advance_marker(game);
+            // This fixed table is native and linear; only its result is bank-wrapped.
+            let address = game.capture_native_rom().table_word(
+                crate::rtl::lorom_offset(0x82c80b) as usize,
+                word!(game.area_index) as isize,
+            );
+            let record = map_record(address, game);
+            let offset = 4 * usize::from(word!(game.load_station_index));
+            let x = record.word(offset).wrapping_sub(word!(game.reg_BG1HOFS));
+            let y = record
+                .word(offset + 2)
+                .wrapping_sub(word!(game.reg_BG1VOFS));
+            if word!(game.samus_position_indicator_animation_loop_counter) & 1 == 0 {
+                sprite_output::menu(0x12, x, y, 3584, game);
+            }
+            sprite_output::menu(sprite, x, y, 3584, game);
+            if word!(game.enable_debug) != 0 {
+                let saves = station_bits(0, game);
+                icon_group(0xc, 0xc80b, saves, 1536, game);
+                let elevators = station_bits(1, game);
+                icon_group(0x17, 0xc81b, elevators, 1536, game);
+                icon_group(0xc, 0xc82b, u16::MAX, 1536, game);
+            }
+        }
+    }
+    if word!(game.area_index) == 0 {
+        sprite_output::menu(
+            0x63,
+            0xd8u16.wrapping_sub(word!(game.reg_BG1HOFS)),
+            0x28u16.wrapping_sub(word!(game.reg_BG1VOFS)),
+            3584,
+            game,
+        );
+    }
+}
+
+fn station_bits(offset: usize, game: &mut Game) -> u16 {
+    let address = 0xd8f8 + 2 * usize::from(word!(game.area_index)) + offset;
+    u16::from_ne_bytes([game.g_ram[address], game.g_ram[address + 1]])
+}
+
+fn icon_group(sprite: u16, table: u16, mut bits: u16, palette: u16, game: &mut Game) {
+    let mut cursor = map_record(
+        (i32::from(table) + 2 * i32::from(word!(game.area_index))) as u16,
+        game,
+    )
+    .word(0);
+    if cursor == 0 {
+        return;
+    }
+    loop {
+        let record = map_record(cursor, game);
+        if record.word(0) & 0x8000 != 0 {
+            break;
+        }
+        let visible = bits & 1 != 0;
+        bits >>= 1;
+        if visible && explored(record.word(0), record.word(2), game) {
+            draw_record(sprite, &record, palette, game);
+        }
+        cursor = cursor.wrapping_add(4);
+    }
+}
+
+fn explored(x: u16, y: u16, game: &mut Game) -> bool {
+    let offset =
+        usize::from((x & 0xff00) >> 1) + usize::from(x as u8 >> 6) + usize::from((y & 0xfff8) >> 1);
+    game.g_ram[0x7f7 + offset] & (0x80 >> ((x >> 3) & 7)) != 0
+}
+
+fn boss_icons(sprite: u16, table: u16, game: &mut Game) {
+    let mut bits =
+        crate::game::gameplay_flag_runtime::boss_byte_at(word!(game.area_index), game) as i32;
+    let cursor = map_record(
+        (i32::from(table) + 2 * i32::from(word!(game.area_index))) as u16,
+        game,
+    )
+    .word(0);
+    if cursor == 0 {
+        return;
+    }
+    let mut record = map_record(cursor, game);
+    loop {
+        match record.word(0) {
+            0xffff => return,
+            0xfffe => bits >>= 1,
+            _ => {
+                let defeated = bits & 1 != 0;
+                bits >>= 1;
+                if defeated {
+                    draw_record(0x62, &record, 3584, game);
+                    draw_record(sprite, &record, 3072, game);
+                } else if word!(game.has_area_map) != 0 {
+                    draw_record(sprite, &record, 3584, game);
+                } else {
+                    // An undisplayed undefeated boss consumes a second bit.
+                    bits >>= 1;
+                }
+            }
+        }
+        record.base += 4;
+    }
+}
+
+pub(crate) fn animate_palette(game: &mut Game) {
+    if word!(game.pausemenu_palette_animation_timer) as u8 == 0 {
+        return;
+    }
+    game.g_ram[0x73b] = (word!(game.pausemenu_palette_animation_timer) as u8).wrapping_sub(1);
+    if word!(game.pausemenu_palette_animation_timer) as u8 != 0 {
+        return;
+    }
+    let mut frame = i32::from(word!(game.pausemenu_palette_animation_frame)) + 1;
+    loop {
+        game.g_ram[0x74f] = frame as u8;
+        let timer = game
+            .capture_native_rom()
+            .read(crate::rtl::lorom_offset(0x82c10c) as usize + 3 * frame as usize);
+        if timer != 0xff {
+            game.g_ram[0x73b] = timer;
+            break;
+        }
+        QueueSfx3_Max6(0x2a, game);
+        frame = 0;
+    }
+    let frame_word = u16::from_ne_bytes([0, word!(game.pausemenu_palette_animation_frame) as u8]);
+    let mut source = (frame_word >> 3) + 30;
+    for index in (176..192).rev() {
+        let color = crate::rtl::rom_table_word!(game, 0x82a987, (source >> 1) as isize);
+        word_transfers!(game, ascending, 1; native(0xc000 + 2 * index) <- value(color));
+        source = source.wrapping_sub(2);
+    }
+}
+
+fn advance_marker(game: &mut Game) -> u16 {
+    const DELAYS: [u16; 4] = [8, 4, 8, 4];
+    const SPRITES: [u16; 4] = [0x5f, 0x60, 0x61, 0x60];
+    let mut timer = word!(game.samus_position_indicator_animation_timer);
+    if timer == 0 {
+        let mut frame = word!(game.samus_position_indicator_animation_frame).wrapping_add(2);
+        if (frame as i16).wrapping_sub(8) >= 0 {
+            word!(game.samus_position_indicator_animation_loop_counter += 1);
+            frame = 0;
+        }
+        word!(game.samus_position_indicator_animation_frame = frame);
+        timer = DELAYS[(frame >> 1) as usize];
+        word!(game.samus_position_indicator_animation_timer = timer);
+    }
+    word!(game.samus_position_indicator_animation_timer = timer.wrapping_sub(1));
+    SPRITES[(word!(game.samus_position_indicator_animation_frame) >> 1) as usize]
+}
+
+pub(crate) fn draw_player_marker(game: &mut Game) {
+    let sprite = advance_marker(game);
+    sprite_output::menu(
+        sprite,
+        (8 * (i32::from(word!(game.room_x_coordinate_on_map)) + i32::from(game.g_ram[0xaf7]))
+            - i32::from(word!(game.reg_BG1HOFS))) as u16,
+        (8 * (i32::from(word!(game.room_y_coordinate_on_map)) + i32::from(game.g_ram[0xafb]) + 1)
+            - i32::from(word!(game.reg_BG1VOFS))) as u16,
+        3584,
+        game,
+    );
+}
+
+pub(crate) fn display_elevator_destinations(game: &mut Game) {
+    if game.g_ram[0xd908 + usize::from(word!(game.area_index))] == 0 {
+        return;
+    }
+    let mut cursor = i32::from(crate::rtl::rom_table_word!(
+        game,
+        0x82c74d,
+        word!(game.area_index) as isize
+    ));
+    loop {
+        let record = map_record(cursor as u16, game);
+        if record.word(0) == 0xffff {
+            break;
+        }
+        draw_record(record.word(4), &record, 0, game);
+        cursor += 6;
     }
 }

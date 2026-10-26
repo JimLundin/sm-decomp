@@ -1261,7 +1261,7 @@ pub unsafe fn GameState_15_Paused_Async(game: &mut Game) -> CoroutineRet {
         crate::game::controller_input::filter(3, game);
         MainPauseRoutine(game);
         crate::game::hud::advance(game);
-        HandlePauseScreenPaletteAnimation(game);
+        crate::game::map_menu::animate_palette(game);
         kCoroutineNone as CoroutineRet
     }
 }
@@ -1281,9 +1281,9 @@ pub unsafe fn PauseMenu_0_MapScreen(game: &mut Game) {
         HandlePauseScreenStart(game);
         HandleMapScrollArrows(game);
         crate::game::map_menu::scroll(game);
-        MapScreenDrawSamusPositionIndicator(game);
-        DrawMapIcons(game);
-        DisplayMapElevatorDestinations(game);
+        crate::game::map_menu::draw_player_marker(game);
+        crate::game::map_menu::draw_icons(crate::game::map_menu::IconMode::Pause, game);
+        crate::game::map_menu::display_elevator_destinations(game);
         word!(game.pause_screen_mode = 0);
     }
 }
@@ -1298,9 +1298,9 @@ pub unsafe fn PauseMenu_1_EquipmentScreen(game: &mut Game) {
 }
 pub unsafe fn PauseMenu_2(game: &mut Game) {
     unsafe {
-        DisplayMapElevatorDestinations(game);
-        MapScreenDrawSamusPositionIndicator(game);
-        DrawMapIcons(game);
+        crate::game::map_menu::display_elevator_destinations(game);
+        crate::game::map_menu::draw_player_marker(game);
+        crate::game::map_menu::draw_icons(crate::game::map_menu::IconMode::Pause, game);
         HandlePauseMenuLRPressHighlight(game);
         word!(game.pause_screen_mode = 0);
         crate::game::display_refresh::fade(false, game);
@@ -1326,7 +1326,7 @@ pub unsafe fn PauseMenu_5(game: &mut Game) {
 }
 pub unsafe fn PauseMenu_3_MapToEquipment_Load(game: &mut Game) {
     unsafe {
-        DisplayMapElevatorDestinations(game);
+        crate::game::map_menu::display_elevator_destinations(game);
         EquipmentScreenSetupReserveMode(game);
         EquipmentScreenTransferBG1Tilemap(game);
         word!(game.pause_screen_mode = 1);
@@ -1339,7 +1339,7 @@ pub unsafe fn PauseMenu_3_MapToEquipment_Load(game: &mut Game) {
 }
 pub unsafe fn PauseMenu_6_EquipmentToMap_Load(game: &mut Game) {
     unsafe {
-        DisplayMapElevatorDestinations(game);
+        crate::game::map_menu::display_elevator_destinations(game);
         LoadPauseMenuMapTilemapAndAreaLabel(game);
         SetPauseScreenButtonLabelPalettes(game);
         word!(game.pausemenu_lr_animation_frame = 0);
@@ -1351,9 +1351,9 @@ pub unsafe fn PauseMenu_6_EquipmentToMap_Load(game: &mut Game) {
 }
 pub unsafe fn PauseMenu_7_EquipmentToMap_FadeIn(game: &mut Game) {
     unsafe {
-        MapScreenDrawSamusPositionIndicator(game);
-        DrawMapIcons(game);
-        DisplayMapElevatorDestinations(game);
+        crate::game::map_menu::draw_player_marker(game);
+        crate::game::map_menu::draw_icons(crate::game::map_menu::IconMode::Pause, game);
+        crate::game::map_menu::display_elevator_destinations(game);
         word!(game.pause_screen_mode = 0);
         crate::game::display_refresh::fade(true, game);
         if *ram_ptr!(game; 0x51) == 15 {
@@ -1402,9 +1402,9 @@ pub unsafe fn DrawPauseMenuDuringFadeout(game: &mut Game) {
             EquipmentScreenDisplayReserveTankAmount(game);
             HandlePauseMenuLRPressHighlight(game);
         } else {
-            DisplayMapElevatorDestinations(game);
-            DrawMapIcons(game);
-            MapScreenDrawSamusPositionIndicator(game);
+            crate::game::map_menu::display_elevator_destinations(game);
+            crate::game::map_menu::draw_icons(crate::game::map_menu::IconMode::Pause, game);
+            crate::game::map_menu::draw_player_marker(game);
         };
     }
 }
@@ -2137,37 +2137,6 @@ pub unsafe fn DrawPauseScreenSpriteAnim(a: u16, input_k: u16, input_j: u16, game
         );
     }
 }
-pub unsafe fn HandlePauseScreenPaletteAnimation(game: &mut Game) {
-    unsafe {
-        let mut v2: u16 = 0;
-        let mut v1: u8 = 0;
-        if word!(game.pausemenu_palette_animation_timer) as u8 != 0 {
-            byte!(@pointer ram_ptr!(game, u16; 0x73b); 0) =
-                ((word!(game.pausemenu_palette_animation_timer)) as u8).wrapping_sub(1);
-            if word!(game.pausemenu_palette_animation_timer) as u8 == 0 {
-                let mut i: i32 = word!(game.pausemenu_palette_animation_frame) as i32 + 1;
-                loop {
-                    byte!(@pointer ram_ptr!(game, u16; 0x74f); 0) = i as u8;
-                    v1 = byte!(@pointer rom_ptr!(game; 0x82c10c); (3 * i) as isize);
-                    if v1 != 0xff {
-                        break;
-                    }
-                    QueueSfx3_Max6(0x2a, game);
-                    i = 0;
-                }
-                byte!(@pointer ram_ptr!(game, u16; 0x73b); 0) = v1;
-                byte!(v2; 0) = 0;
-                byte!(v2; 1) = word!(game.pausemenu_palette_animation_frame) as u8;
-                let mut v3: u16 = ((v2 as i32 >> 3) + 30) as u16;
-                for j in (0u16..=30).rev().step_by(2) {
-                    *(ram_ptr!(game, u16; 0xc000)).offset(((j as i32 >> 1) + 176) as isize) =
-                        crate::rtl::rom_table_word!(game, 0x82a987, (v3 >> 1) as isize);
-                    v3 = (v3).wrapping_sub(2);
-                }
-            }
-        }
-    }
-}
 pub unsafe fn EquipmentScreenSetupReserveMode(game: &mut Game) {
     unsafe {
         let mut current_block: u64;
@@ -2887,227 +2856,10 @@ pub unsafe fn DrawPauseMenuDuringFadeIn(game: &mut Game) {
             EquipmentScreenDrawItemSelector(game);
             EquipmentScreenDisplayReserveTankAmount(game);
         } else {
-            MapScreenDrawSamusPositionIndicator(game);
-            DrawMapIcons(game);
-            DisplayMapElevatorDestinations(game);
+            crate::game::map_menu::draw_player_marker(game);
+            crate::game::map_menu::draw_icons(crate::game::map_menu::IconMode::Pause, game);
+            crate::game::map_menu::display_elevator_destinations(game);
         };
-    }
-}
-static kMap_Criteria_SavePoints: [u16; 16] = [
-    0xd8, 0x28, 0x90, 0x38, 0xfffe, 0xfffe, 0xfffe, 0xfffe, 0xfffe, 0xfffe, 0xfffe, 0xfffe, 0xfffe,
-    0xfffe, 0xfffe, 0xfffe,
-];
-pub unsafe fn DrawMapIcons(game: &mut Game) {
-    unsafe {
-        DrawBossMapIcons(9, addr_kMapIconDataPointers as u16, game);
-        DrawSimpleMapIcons(
-            0xb,
-            (addr_kMapIconDataPointers as i32 + 0x10) as u16,
-            3584,
-            game,
-        );
-        DrawSimpleMapIcons(
-            0xa,
-            (addr_kMapIconDataPointers as i32 + 0x20) as u16,
-            3584,
-            game,
-        );
-        DrawSimpleMapIcons(
-            0x4e,
-            (addr_kMapIconDataPointers as i32 + 0x30) as u16,
-            3584,
-            game,
-        );
-        DrawSaveStationMapIcon(8, 0xc80b, 1024, game);
-        if word!(game.enable_debug) != 0 {
-            DrawSimpleMapIcons(8, 0xc82b, 1024, game);
-        }
-        if word!(game.area_index) == 0 {
-            sprite_output::menu(
-                0x63,
-                (kMap_Criteria_SavePoints[0i32 as usize]).wrapping_sub(word!(game.reg_BG1HOFS)),
-                (kMap_Criteria_SavePoints[1i32 as usize]).wrapping_sub(word!(game.reg_BG1VOFS)),
-                3584,
-                game,
-            );
-        }
-    }
-}
-pub unsafe fn DrawFileSelectMapIcons(game: &mut Game) {
-    unsafe {
-        HandlePauseScreenPaletteAnimation(game);
-        DrawBossMapIcons(9, 0xc7cb, game);
-        DrawSimpleMapIcons(0xb, 0xc7db, 3584, game);
-        DrawSimpleMapIcons(0xa, 0xc7eb, 3584, game);
-        DrawSimpleMapIcons(0x4e, 0xc7fb, 3584, game);
-        let a: u16 = UpdateSamusPositionIndicatorAnimation(game);
-        let data: *const u16 = (RomPtr_82(
-            *((&raw mut (*(rom_ptr!(game, MapIconDataPointers; 0x82c7cb)).offset(4)).crateria
-                as *mut u8)
-                .offset((2i32 * word!(game.area_index) as i32) as isize)
-                as *mut VoidP),
-            game,
-        ) as *mut u16)
-            .offset((word!(game.load_station_index) as i32 * 2) as isize);
-        let v1: u16 = (*data).wrapping_sub(word!(game.reg_BG1HOFS));
-        let v2: u16 = (*data.offset(1)).wrapping_sub(word!(game.reg_BG1VOFS));
-        if (word!(game.samus_position_indicator_animation_loop_counter) & 1) == 0 {
-            sprite_output::menu(0x12, v1, v2, 3584, game);
-        }
-        sprite_output::menu(a, v1, v2, 3584, game);
-        if word!(game.enable_debug) != 0 {
-            DrawDebugSaveMapIcons(0xc, 0xc80b, 1536, game);
-            DrawDebugElevatorMapIcons(0x17, 0xc81b, 1536, game);
-            DrawSimpleMapIcons(0xc, 0xc82b, 1536, game);
-        }
-        if word!(game.area_index) == 0 {
-            sprite_output::menu(
-                0x63,
-                (kMap_Criteria_SavePoints[0i32 as usize]).wrapping_sub(word!(game.reg_BG1HOFS)),
-                (kMap_Criteria_SavePoints[1i32 as usize]).wrapping_sub(word!(game.reg_BG1VOFS)),
-                3584,
-                game,
-            );
-        }
-    }
-}
-pub unsafe fn DrawSaveStationMapIcon(a: u16, k: u16, r3: u16, game: &mut Game) {
-    unsafe {
-        static kShlBit: [u8; 8] = [1, 2, 4, 8, 0x10, 0x20, 0x40, 0x80];
-        let R34: u16 = a;
-        if word!(game.area_index) == word!(game.sram_area_index) {
-            let mut R36: u16 =
-                *(ram_ptr!(game, u16; 0xd8f8, (2 * word!(game.area_index) as i32) as isize));
-            byte!(R36; 0) = ((R36) as u8) & (kShlBit[word!(game.load_station_index) as usize]);
-            let v2: u16 = *(RomPtr_82((k as i32 + 2 * word!(game.area_index) as i32) as u16, game)
-                as *mut u16);
-            if v2 != 0 {
-                DrawMapIconsOfType(v2, R34, R36, r3, game);
-            }
-        }
-    }
-}
-pub unsafe fn DrawDebugSaveMapIcons(a: u16, k: u16, r3: u16, game: &mut Game) {
-    unsafe {
-        let R34: u16 = a;
-        let R36: u16 = *(ram_ptr!(game, u16; 0xd8f8, (2 * word!(game.area_index) as i32) as isize));
-        let v2: u16 =
-            *(RomPtr_82((k as i32 + 2 * word!(game.area_index) as i32) as u16, game) as *mut u16);
-        if v2 != 0 {
-            DrawMapIconsOfType(v2, R34, R36, r3, game);
-        }
-    }
-}
-pub unsafe fn DrawDebugElevatorMapIcons(a: u16, k: u16, r3: u16, game: &mut Game) {
-    unsafe {
-        let R34: u16 = a;
-        let R36: u16 =
-            *(ram_ptr!(game, u16; 0xd8f8, (2 * word!(game.area_index) as i32 + 1) as isize));
-        let v2: u16 =
-            *(RomPtr_82((k as i32 + 2 * word!(game.area_index) as i32) as u16, game) as *mut u16);
-        if v2 != 0 {
-            DrawMapIconsOfType(v2, R34, R36, r3, game);
-        }
-    }
-}
-pub unsafe fn DrawSimpleMapIcons(a: u16, k: u16, r3: u16, game: &mut Game) {
-    unsafe {
-        let R34: u16 = a;
-        let v2: u16 =
-            *(RomPtr_82((k as i32 + 2 * word!(game.area_index) as i32) as u16, game) as *mut u16);
-        if v2 != 0 {
-            DrawMapIconsOfType(v2, R34, -1i32 as u16, r3, game);
-        }
-    }
-}
-pub unsafe fn DrawMapIconsOfType(mut a: u16, r34: u16, mut r36: u16, r3: u16, game: &mut Game) {
-    unsafe {
-        loop {
-            let v2 = RomPtr_82(a, game) as *const u16;
-            if (*v2 & 0x8000) != 0 {
-                break;
-            }
-            let mut v3: i8 = ((r36) as i8) & (1i8);
-            r36 = r36 >> 1;
-            if v3 != 0 {
-                let mut v4: i16 = CheckIfMapPositionIsExplored(*v2, *v2.offset(1), game) as i16;
-                if v4 != 0 {
-                    sprite_output::menu(
-                        r34,
-                        (*v2).wrapping_sub(word!(game.reg_BG1HOFS)),
-                        (*v2.offset(1)).wrapping_sub(word!(game.reg_BG1VOFS)),
-                        r3,
-                        game,
-                    );
-                }
-            }
-            a = (a).wrapping_add(4);
-        }
-    }
-}
-pub unsafe fn CheckIfMapPositionIsExplored(k: u16, j: u16, game: &mut Game) -> u16 {
-    unsafe {
-        static kBits0x80Shr: [u8; 8] = [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1];
-        let mut r18: i32 = ((k) & (0xff00u16)) as i32 >> 1;
-        r18 += k as u8 as i32 >> 6;
-        r18 += ((j) & (0xfff8u16)) as i32 >> 1;
-        let v3: u16 = (k as i32 >> 3 & 7) as u16;
-        ((kBits0x80Shr[v3 as usize] & *ram_ptr!(game; 0x7f7, r18 as isize)) != 0) as u16
-    }
-}
-pub unsafe fn DrawBossMapIcons(a: u16, k: u16, game: &mut Game) {
-    unsafe {
-        let mut bits: i32 =
-            gameplay_flag_runtime::boss_byte_at(word!(game.area_index), game) as i32;
-        let t: i32 = *(RomPtr_82((k as i32 + 2 * word!(game.area_index) as i32) as u16, game)
-            as *mut u16) as i32;
-        if t == 0 {
-            return;
-        }
-        let mut v4 = RomPtr_82(t as u16, game) as *const u16;
-        loop {
-            if *v4 == 0xffff {
-                return;
-            }
-            let mut advance_boss_bit: bool = !(*v4 != 0xfffe)
-                || ({
-                    let v5: i32 = bits & 1;
-                    bits >>= 1;
-                    if v5 != 0 {
-                        sprite_output::menu(
-                            0x62,
-                            (*v4).wrapping_sub(word!(game.reg_BG1HOFS)),
-                            (*v4.offset(1)).wrapping_sub(word!(game.reg_BG1VOFS)),
-                            3584,
-                            game,
-                        );
-                        sprite_output::menu(
-                            a,
-                            (*v4).wrapping_sub(word!(game.reg_BG1HOFS)),
-                            (*v4.offset(1)).wrapping_sub(word!(game.reg_BG1VOFS)),
-                            3072,
-                            game,
-                        );
-                        false
-                    } else {
-                        !(word!(game.has_area_map) != 0)
-                            || ({
-                                sprite_output::menu(
-                                    a,
-                                    (*v4).wrapping_sub(word!(game.reg_BG1HOFS)),
-                                    (*v4.offset(1)).wrapping_sub(word!(game.reg_BG1VOFS)),
-                                    3584,
-                                    game,
-                                );
-                                false
-                            })
-                    }
-                });
-            if advance_boss_bit {
-                bits >>= 1;
-            }
-            v4 = v4.offset(2);
-        }
     }
 }
 pub unsafe fn DrawMapScrollArrowAndCheckToScroll(db: u8, k: u16, game: &mut Game) {
@@ -3154,70 +2906,10 @@ pub unsafe fn HandleMapScrollArrows(game: &mut Game) {
         };
     }
 }
-pub unsafe fn MapScreenDrawSamusPositionIndicator(game: &mut Game) {
-    unsafe {
-        let a: u16 = UpdateSamusPositionIndicatorAnimation(game);
-        sprite_output::menu(
-            a,
-            (8 * (word!(game.room_x_coordinate_on_map) as i32
-                + byte!(@pointer ram_ptr!(game, u16; 0xaf6); 1) as i32)
-                - word!(game.reg_BG1HOFS) as i32) as u16,
-            (8 * (word!(game.room_y_coordinate_on_map) as i32
-                + byte!(@pointer ram_ptr!(game, u16; 0xafa); 1) as i32
-                + 1)
-                - word!(game.reg_BG1VOFS) as i32) as u16,
-            3584,
-            game,
-        );
-    }
-}
-static kMap_SamusPositionIndicator_Delays: [u16; 4] = [8, 4, 8, 4];
-static kMap_SamusPositionIndicator_SpritemapIds: [u16; 4] = [0x5f, 0x60, 0x61, 0x60];
-pub fn UpdateSamusPositionIndicatorAnimation(game: &mut Game) -> u16 {
-    {
-        let mut v0: u16 = word!(game.samus_position_indicator_animation_timer);
-        if v0 == 0 {
-            let mut v1: u16 =
-                (word!(game.samus_position_indicator_animation_frame)).wrapping_add(2);
-            if ((v1) as i16).wrapping_sub(8) >= 0 {
-                word!(game.samus_position_indicator_animation_loop_counter += 1);
-                v1 = 0;
-            }
-            word!(game.samus_position_indicator_animation_frame = v1);
-            v0 = kMap_SamusPositionIndicator_Delays[(v1 >> 1) as usize];
-            word!(game.samus_position_indicator_animation_timer = v0);
-        }
-        word!(game.samus_position_indicator_animation_timer = (v0).wrapping_sub(1));
-        kMap_SamusPositionIndicator_SpritemapIds
-            [(word!(game.samus_position_indicator_animation_frame) >> 1) as usize]
-    }
-}
 crate::forward_calls! { pub fn (game: &mut Game);
     DrawBorderAroundSamusData => sprite_output::menu(0x48, 0x80, 0x10, 3584, game);
     DrawBorderAroundDataCopyMode => sprite_output::menu(0x49, 0x80, 0x10, 3584, game);
     DrawBorderAroundDataClearMode => sprite_output::menu(0x4a, 0x7c, 0x10, 3584, game);
-}
-pub unsafe fn DisplayMapElevatorDestinations(game: &mut Game) {
-    unsafe {
-        if *ram_ptr!(game; 0xd908, word!(game.area_index) as isize) != 0 {
-            let mut i: i32 =
-                crate::rtl::rom_table_word!(game, 0x82c74d, word!(game.area_index) as isize) as i32;
-            loop {
-                let v1 = RomPtr_82(i as u16, game);
-                if *(v1 as *mut u16) == 0xffff {
-                    break;
-                }
-                sprite_output::menu(
-                    *(v1.offset(4) as *mut u16),
-                    (*(v1 as *mut u16)).wrapping_sub(word!(game.reg_BG1HOFS)),
-                    (*(v1.offset(2) as *mut u16)).wrapping_sub(word!(game.reg_BG1VOFS)),
-                    0,
-                    game,
-                );
-                i += 6;
-            }
-        }
-    }
 }
 pub fn HandleSamusOutOfHealthAndGameTile(game: &mut Game) {
     {
