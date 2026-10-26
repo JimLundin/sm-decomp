@@ -10,16 +10,13 @@ use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_86::*;
 
-use crate::game::enemy_projectiles::{
-    Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
-};
+use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::message_boxes;
 use crate::game::music::{QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::palette_effects;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::session_runtime::player_face_forward;
-use crate::game::sm_a9::MoveEnemyWithVelocity;
 
 pub use crate::types::Consts_A2;
 
@@ -42,7 +39,6 @@ crate::game::constants::typed_constants! { Consts_A2;
     addr_kGripper_Sprmap_E44B = 58443, addr_kGripper_Sprmap_E43F = 58431,
     addr_kHirisingSlowfalling_Ilist_D840 = 55360, addr_kHirisingSlowfalling_Ilist_D834 = 55348,
     addr_kHirisingSlowfalling_Ilist_D82C = 55340, addr_kMaridiaLargeSnail_Ilist_CA4B = 51787,
-    addr_kRinka_Ilist_BA0C = 47628, addr_kRinka_Ilist_B9E0 = 47584,
     addr_kNorfairErraticFireball_Ilist_B51A = 46362,
      addr_kGunshipTop_Ilist_A61C = 42524,
     addr_kGunshipTop_Ilist_A616 = 42518, addr_kGunshipTop_Ilist_A60E = 42510,
@@ -63,7 +59,7 @@ crate::game::constants::typed_constants! { Consts_A2;
 crate::type_aliases! {
     pub Enemy_LavaSeahorse, Enemy_MaridiaTurtle,
         Enemy_MaridiaLargeSnail, Enemy_MaridiaSpikeyShell,
-        Enemy_Rinka, Enemy_GunshipTop, Enemy_HirisingSlowfalling,
+        Enemy_GunshipTop, Enemy_HirisingSlowfalling,
         Enemy_LavaquakeRocks, Enemy_MiniMaridiaTurtle =
         crate::game::enemy_layouts::EnemyLayout40;
 }
@@ -104,7 +100,6 @@ crate::game::constants::typed_constants! { i32;
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
-    gRam8000_Default(o: i32) -> Ram8000_Default = [0x8000, o as isize];
     Get_GunshipBottom(o: i32) -> Enemy_GunshipBottom = [0xf78, o as isize];
     Get_GunshipTop(o: i32) -> Enemy_GunshipTop = [0xf78, o as isize];
     Get_HirisingSlowfalling(o: i32) -> Enemy_HirisingSlowfalling = [0xf78, o as isize];
@@ -116,7 +111,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_MaridiaTurtle(o: i32) -> Enemy_MaridiaTurtle = [0xf78, o as isize];
     Get_MiniMaridiaBeybladeTurtle(o: i32) -> Enemy_MiniMaridiaBeybladeTurtle = [0xf78, o as isize];
     Get_MiniMaridiaTurtle(o: i32) -> Enemy_MiniMaridiaTurtle = [0xf78, o as isize];
-    Get_Rinka(o: i32) -> Enemy_Rinka = [0xf78, o as isize];
 }
 static g_word_A28D50: u16 = 0x30;
 static g_word_A28D52: u16 = 1;
@@ -797,283 +791,6 @@ crate::game::callback_dispatch! {
         }
     };
 }
-pub unsafe fn Rinka_1(k: u16, game: &mut Game) {
-    unsafe {
-        let mut v2: u16 = 0;
-        let ES = gEnemySpawnData(k as i32, game);
-        if Rinka_10((*ES).x_pos, (*ES).y_pos, game) as i32 != 0 || {
-            v2 = Rinka_2(k, game);
-            (*gRam8000_Default(v2 as i32, game).offset(31)).var_3F & 1 != 0
-        } {
-            for v3 in (0u16..66).step_by(6) {
-                let v4: i32 = v3 as i32 >> 1;
-                let x: u16 = crate::rtl::rom_table_word!(game, 0xa2b75b, v4 as isize);
-                let y: u16 = crate::rtl::rom_table_word!(game, 0xa2b75b, (v4 + 1) as isize);
-                if !Rinka_10(x, y, game)
-                    && (*gRam8000_Default(
-                        crate::rtl::rom_table_word!(game, 0xa2b75b, (v4 + 2) as isize) as i32,
-                        game,
-                    )
-                    .offset(31))
-                    .var_3F
-                        & 1
-                        == 0
-                {
-                    let E = Get_Rinka(k as i32, game);
-                    (*ES).x_pos = x;
-                    (*E).base.x_pos = x;
-                    (*ES).y_pos = y;
-                    (*E).base.y_pos = y;
-                    let v9: u16 = crate::rtl::rom_table_word!(
-                        game,
-                        0xa2b75b,
-                        ((v3 as i32 >> 1) + 2) as isize
-                    );
-                    (*gRam8000_Default(v9 as i32, game).offset(31)).var_3F = -1i32 as u16;
-                    (*E).var_D = v9;
-                    return;
-                }
-            }
-            let mut v10: u16 = 0;
-            while (*gRam8000_Default(
-                crate::rtl::rom_table_word!(game, 0xa2b75b, ((v10 as i32 >> 1) + 2) as isize)
-                    as i32,
-                game,
-            )
-            .offset(31))
-            .var_3F
-                & 1
-                != 0
-            {
-                v10 = (v10).wrapping_add(6);
-                if ((v10) as i16).wrapping_sub(66) >= 0 {
-                    return;
-                }
-            }
-            let v11: i32 = v10 as i32 >> 1;
-            let v12: u16 = crate::rtl::rom_table_word!(game, 0xa2b75b, v11 as isize);
-            (*ES).x_pos = v12;
-            let E_0 = Get_Rinka(k as i32, game);
-            (*E_0).base.x_pos = v12;
-            let v15: u16 = crate::rtl::rom_table_word!(game, 0xa2b75b, (v11 + 1) as isize);
-            (*ES).y_pos = v15;
-            (*E_0).base.y_pos = v15;
-            let v16: u16 = crate::rtl::rom_table_word!(game, 0xa2b75b, (v11 + 2) as isize);
-            (*E_0).var_D = v16;
-            (*gRam8000_Default(v16 as i32, game).offset(31)).var_3F = -1i32 as u16;
-        } else {
-            (*Get_Rinka(k as i32, game)).var_D = v2;
-            (*gRam8000_Default(v2 as i32, game).offset(31)).var_3F = -1i32 as u16;
-        };
-    }
-}
-pub unsafe fn Rinka_2(k: u16, game: &mut Game) -> u16 {
-    unsafe {
-        let mut v1: u16 = 0;
-        loop {
-            let v2: i32 = v1 as i32 >> 1;
-            let mut v3 = gEnemySpawnData(k as i32, game);
-            if crate::rtl::rom_table_word!(game, 0xa2b75b, v2 as isize) == (*v3).x_pos
-                && crate::rtl::rom_table_word!(game, 0xa2b75b, (v2 + 1) as isize) == (*v3).y_pos
-            {
-                break;
-            }
-            v1 = (v1).wrapping_add(6);
-            if v1 as i32 - 66i32 & 0x8000 == 0 {
-                v1 = 0;
-                return crate::rtl::rom_table_word!(
-                    game,
-                    0xa2b75b,
-                    ((v1 as i32 >> 1) + 2) as isize
-                );
-            }
-        }
-        crate::rtl::rom_table_word!(game, 0xa2b75b, ((v1 as i32 >> 1) + 2) as isize)
-    }
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallRinkaFunc(ea: u32, k: u16, game: &mut Game) => ea;
-    call (k, game); default { Unreachable(game); };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [10664018] Rinka_5 [] {
-        if Rinka_9(k, game) & 1 != 0 {
-            Rinka_B865(k, game);
-        }
-    };
-    [10664027] Rinka_B85B [] {
-        MoveEnemyWithVelocity(game);
-        if Rinka_9(k, game) & 1 != 0 {
-            Rinka_B865(k, game);
-        }
-    };
-    @countdown [pub unsafe fn (k: u16, game: &mut Game)];
-    before {
-        let E = Get_Rinka(k as i32, game);
-        (*E).var_F = (*E).var_F.wrapping_sub(1);
-    }
-    when ((*E).var_F & 0x8000) != 0;
-    [10663903] Rinka_3 {
-        (*E).var_A = (0xa2b85bi32) as u16;
-        let mut v3: u16 = if (*E).parameter_1 != 0 {
-            ((*E).base.properties as i32 & !(kEnemyProps_Tangible as i32)) as u16
-        } else {
-            (*E).base.properties & 0xf3ff | 0x800
-        };
-        (*E).base.properties = v3;
-        let r18: u16 = -(actor_api::angle_from_delta((word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos), (word!(game.samus_y_pos)).wrapping_sub((*E).base.y_pos)) as i32
-            + 0x80i32) as u8 as u16;
-        (*E).var_B = Math_MultBySin(0x120, r18);
-        (*E).var_C = Math_MultByCos(0x120, r18);
-    };
-    [10664004] Rinka_4 {
-        (*E).base.health = 10;
-        Rinka_Init2(k, game);
-    };
-}
-pub unsafe fn Rinka_B865(k: u16, game: &mut Game) {
-    unsafe {
-        if (*Get_Rinka(k as i32, game)).parameter_1 != 0 && {
-            Rinka_8(k, game);
-            (*Get_Rinka(0i32, game)).var_1D != 0
-        } {
-            Rinka_6(k, game);
-            actors::population::delete_connected(&mut Runtime::new(game));
-        } else {
-            Rinka_6(k, game);
-            Rinka_Init2(k, game);
-        };
-    }
-}
-pub unsafe fn Rinka_9(k: u16, game: &mut Game) -> u8 {
-    unsafe {
-        let E = Get_Rinka(k as i32, game);
-        let mut y_pos: i16 = (*E).base.y_pos as i16;
-        let result: u8 = 1;
-        if y_pos >= 0 {
-            let mut v3: i16 = (y_pos as i32 + 16 - word!(game.layer1_y_pos) as i32) as i16;
-            if v3 >= 0 && v3 as i32 - 256i32 & 0x8000 != 0 {
-                let mut x_pos: i16 = (*E).base.x_pos as i16;
-                if x_pos >= 0 {
-                    let mut v5: i16 = (x_pos as i32 + 16 - word!(game.layer1_x_pos) as i32) as i16;
-                    if v5 >= 0 && v5 as i32 - 288i32 & 0x8000 != 0 {
-                        return 0;
-                    }
-                }
-            }
-        }
-        result
-    }
-}
-pub fn Rinka_10(r18: u16, r20: u16, game: &mut Game) -> bool {
-    {
-        (r20 & 0x8000) != 0
-            || ((r20) as i16).wrapping_sub((word!(game.layer1_y_pos)) as i16) < 0
-            || r20 as i32 - word!(game.layer1_y_pos) as i32 - 224i32 & 0x8000 == 0
-            || (r20 & 0x8000) != 0
-            || ((r18) as i16).wrapping_sub((word!(game.layer1_x_pos)) as i16) < 0
-            || r18 as i32 - word!(game.layer1_x_pos) as i32 - 256i32 & 0x8000 == 0
-    }
-}
-pub unsafe fn Rinka_Frozen(k: u16, game: &mut Game) {
-    unsafe {
-        if Rinka_9(k, game) & 1 != 0 {
-            (*Get_Rinka(k as i32, game)).base.frozen_timer = 0;
-        }
-        actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
-        if (*Get_Rinka(0i32, game)).var_1D != 0 {
-            Rinka_6(k, game);
-            Rinka_8(k, game);
-            let v1: u16 = 0;
-            ({
-                let animation = v1;
-                actors::combat::die(
-                    &mut Runtime::new(game),
-                    actors::api::DeathKind::Rinka { animation },
-                )
-            });
-        }
-    }
-}
-pub unsafe fn Rinka_Powerbomb(k: u16, game: &mut Game) {
-    unsafe {
-        if ((*Get_Rinka(k as i32, game)).base.properties as i32 & kEnemyProps_Invisible as i32) == 0
-        {
-            actors::combat::power_bomb_reaction(
-                &mut Runtime::new(game),
-                actors::api::DeathHandling::LeavePending,
-            );
-            Rinka_B960(k, game);
-        }
-    }
-}
-crate::prefixed_callbacks! {
-    pub unsafe fn (k: u16, game: &mut Game);
-    @prefix { let E = Get_Rinka(k as i32, game); };
-    Rinka_Init2 [] {
-        if (*E).parameter_1 != 0 {
-            Rinka_1(k, game);
-        }
-        let mut v2 = gEnemySpawnData(k as i32, game);
-        (*E).base.x_pos = (*v2).x_pos;
-        (*E).base.y_pos = (*v2).y_pos;
-        Rinka_Init3(k, game);
-    };
-    Rinka_Init3 [] {
-        (*E).var_A = (0xa2b852i32) as u16;
-        (*E).var_F = 26;
-        set_fields! {[(*E)], 0; var_B, var_C}
-        if (*E).parameter_1 != 0 {
-            if (*Get_Rinka(0i32, game)).var_1D != 0 {
-                (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
-            } else {
-                enemy_instruction! {[(*E).base]; instruction = addr_kRinka_Ilist_BA0C as u16, timer = 1}
-                (*E).base.timer = 0;
-            }
-        } else {
-            enemy_instruction! {[(*E).base]; instruction = addr_kRinka_Ilist_B9E0 as u16, timer = 1}
-            (*E).base.timer = 0;
-        };
-    };
-    Rinka_6 [] {
-        if (*E).parameter_1 != 0 && ((*E).base.properties as i32 & kEnemyProps_Invisible as i32) == 0 {
-            let E0 = Get_Rinka(0, game);
-            let mut v3: i16 = (((*E0).var_1E) as i16).wrapping_sub(1);
-            if v3 < 0 {
-                v3 = 0;
-            }
-            (*E0).var_1E = v3 as u16;
-        }
-    };
-    Rinka_8 [] {
-        if (*E).parameter_1 != 0 {
-            let rinka_var_D: u16 = (*E).var_D;
-            if rinka_var_D != 0 {
-                (*gRam8000_Default(rinka_var_D as i32, game).offset(31)).var_3F = 0;
-                (*E).var_D = 0;
-            }
-        }
-    };
-    Rinka_B960 [] {
-        if (*E).base.health == 0 {
-            Rinka_6(k, game);
-            Rinka_8(k, game);
-            if (*E).parameter_1 != 0 {
-                (*E).base.properties = ((*E).base.properties as i32
-                    | (kEnemyProps_Tangible as i32 | kEnemyProps_Invisible as i32))
-                    as u16;
-                game.eproj_spawn_pt = Point16U {
-                    x: (*E).base.x_pos,
-                    y: (*E).base.y_pos,
-                };
-                SpawnEprojWithRoomGfx(0xe509, 3, game);
-                (*E).var_A = (0xa2b844i32) as u16;
-                (*E).var_F = 1;
-            } else {
-                ({ let animation = 0; actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Rinka { animation }) });
-            }
-        }
-    };
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallMaridiaLargeSnailFunc(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -1580,50 +1297,17 @@ crate::game::callback_dispatch! {
         let E = Get_LavaquakeRocks(word!(game.cur_enemy_index) as i32, game);
         CallLavaQuakeRocksFunc((((*E).var_A) as u32) | (0xa20000u32), game);
     };
-    [10663426] Rinka_Init [] {
-        let E = Get_Rinka(word!(game.cur_enemy_index) as i32, game);
-        if (*E).parameter_1 != 0 {
-            Rinka_1(word!(game.cur_enemy_index), game);
-            (*E).base.properties = ((*E).base.properties as i32
-                & !(kEnemyProps_RespawnIfKilled as i32
-                    | kEnemyProps_DisableSamusColl as i32
-                    | kEnemyProps_ProcessedOffscreen as i32
-                    | kEnemyProps_Tangible as i32)
-                | 0x2c00) as u16;
-        } else {
-            (*E).base.properties = ((*E).base.properties as i32
-                & !(kEnemyProps_RespawnIfKilled as i32
-                    | kEnemyProps_DisableSamusColl as i32
-                    | kEnemyProps_ProcessedOffscreen as i32
-                    | kEnemyProps_Tangible as i32)
-                | 0x6400) as u16;
-        }
-        (*E).base.palette_index = 1024;
-        Rinka_Init3(word!(game.cur_enemy_index), game);
-    };
+    @functions [pub fn (game: &mut Game)];
+    [10663426] Rinka_Init [] { crate::game::rinka::initialize(game); };
+    @functions [pub unsafe fn (game: &mut Game)];
     [10663876] Rinka_Main [] {
-        let E = Get_Rinka(word!(game.cur_enemy_index) as i32, game);
-        if (*E).parameter_1 != 0 && (*Get_Rinka(0i32, game)).var_1D != 0 {
-            Rinka_6(word!(game.cur_enemy_index), game);
-            Rinka_8(word!(game.cur_enemy_index), game);
-            let mut v2: u16 = 0;
-            ({ let animation = v2; actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Rinka { animation }) });
-        } else {
-            CallRinkaFunc(
-                (((*E).var_A) as u32) | (0xa20000u32),
-                word!(game.cur_enemy_index),
-                game,
-            );
-        };
+        if !crate::game::rinka::advance(game) {
+            Unreachable(game);
+        }
     };
-    [10664263] Rinka_Touch [] {
-        actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
-        Rinka_B960(word!(game.cur_enemy_index), game);
-    };
-    [10664269] Rinka_Shot [] {
-        actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::ReactionOnly);
-        Rinka_B960(word!(game.cur_enemy_index), game);
-    };
+    @functions [pub fn (game: &mut Game)];
+    [10664263] Rinka_Touch [] { crate::game::rinka::contact(game); };
+    [10664269] Rinka_Shot [] { crate::game::rinka::shot(game); };
     @functions [pub fn (game: &mut Game)];
     [10664909] Rio_Init [] {
         crate::game::rio::initialize(game);
@@ -1988,29 +1672,10 @@ crate::game::callback_dispatch! {
     MaridiaSpikeyShell_Instr_A56D [jp] { (*Get_MaridiaSpikeyShell(k as i32, game)).var_E = 0; };
     [10659185]
     MaridiaSpikeyShell_Instr_A571 [jp] { (*Get_MaridiaSpikeyShell(k as i32, game)).var_E = 1; };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10664371] Rinka_Instr_B9B3 [jp] {
-        let E = Get_Rinka(k as i32, game);
-        (*E).base.properties = ((*E).base.properties as i32
-            | (kEnemyProps_Tangible as i32 | kEnemyProps_Invisible as i32))
-            as u16;
-    };
-    [10664381] Rinka_Instr_B9BD [jp] {
-        let E = Get_Rinka(k as i32, game);
-        (*E).base.properties = ((*E).base.properties as i32
-            | (kEnemyProps_ProcessedOffscreen as i32
-                | kEnemyProps_Tangible as i32
-                | kEnemyProps_Invisible as i32)) as u16;
-    };
-    [10664391] Rinka_Instr_B9C7 [jp] {
-        let E = Get_Rinka(k as i32, game);
-        (*E).base.properties = ((*E).base.properties as i32
-            & !(kEnemyProps_Tangible as i32 | kEnemyProps_Invisible as i32))
-            as u16;
-        (*E).var_A = (0xa2b7dfi32) as u16;
-        let E0 = Get_Rinka(0, game);
-        (*E0).var_1E = (*E0).var_1E.wrapping_add(1);
-    };
+    @functions [pub fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
+    [10664371] Rinka_Instr_B9B3 [jp] { crate::game::rinka::hide(k, false, game); };
+    [10664381] Rinka_Instr_B9BD [jp] { crate::game::rinka::hide(k, true, game); };
+    [10664391] Rinka_Instr_B9C7 [jp] { crate::game::rinka::launch(k, game); };
     @functions [pub fn (_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10664899] EnemyInstr_Rio_Instr_1 [jp] {
         crate::game::rio::instruction_finished(game);

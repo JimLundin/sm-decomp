@@ -416,6 +416,7 @@ pub mod game {
     pub(crate) mod goofball;
     pub(crate) mod hud;
     pub mod progress_flags;
+    pub(crate) mod rinka;
     pub(crate) mod room_backgrounds;
     pub mod room_entry;
     pub(crate) mod room_mechanisms;

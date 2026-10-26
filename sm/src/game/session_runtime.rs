@@ -569,10 +569,10 @@ crate::game::callback_dispatch! {
         10656319 => sm_a2::ThinHoppingBlobs_Init;
         10656381 => sm_a2::ThinHoppingBlobs_Main;
         10664233 => [{
-                    sm_a2::Rinka_Frozen(crate::ram_map::word!(game.cur_enemy_index), game);
+                    crate::game::rinka::frozen(crate::ram_map::word!(game.cur_enemy_index), game);
                 }];
         10664275 => [{
-                    sm_a2::Rinka_Powerbomb(crate::ram_map::word!(game.cur_enemy_index), game);
+                    crate::game::rinka::power_bomb(crate::ram_map::word!(game.cur_enemy_index), game);
                 }];
         10669268 => sm_a2::MaridiaLargeSnail_Init;
         10676698 => [mechanisms::initialize(Kind::TimedShutter, game)];
