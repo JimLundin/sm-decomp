@@ -1,7 +1,7 @@
 //! Draygon damage, death approach, ring, sinking and rewards.
 //! Boss words remain native compatibility state; player and sprites use their owners.
 #![forbid(unsafe_code)]
-use super::{api, combat};
+use super::{api, combat, draygon_flight::facing_animation};
 use crate::game::enemy_layouts::EnemyLayout104 as Draygon;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop};
 use crate::game::gameplay_flag_host::BossWordOrder;
@@ -14,11 +14,6 @@ use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::rtl::abs16;
 
-fn facing_animation(k: i32, left: u16, right: u16, game: &mut Game) {
-    let instructions = [left, right];
-    let instruction = instructions[usize::from(slot!(game, Draygon[0].var_20) != 0)];
-    slot!(game, Draygon[k].base; current_instruction = instruction, instruction_timer = 1);
-}
 pub(crate) fn damage_palette(native: bool, game: &mut Game) {
     let mut cursor = slot!(game, Draygon[0].var_0E).wrapping_mul(4);
     for index in 89..93 {
@@ -107,8 +102,8 @@ pub(crate) fn after_damage(game: &mut Game) {
         return;
     }
     word!(game.grapple_beam_function = 0xc8c5);
-    facing_animation(0, 0x9867, 0x9c5a, game);
-    facing_animation(0x40, 0x997a, 0x9d1c, game);
+    facing_animation(0, 0, [0x9867, 0x9c5a], game);
+    facing_animation(0, 0x40, [0x997a, 0x9d1c], game);
     slot!(game, Draygon[0x40].var_A = 0x804b);
     slot!(game, Draygon[0].var_A = 0x9185);
     forced::release_from_draygon(&mut Runtime::new(game));
@@ -159,7 +154,7 @@ pub(crate) fn approach(game: &mut Game) {
     let properties = slot!(game, Draygon[0].base.properties) | 0x200;
     slot!(game, Draygon[0x80].base.properties = properties);
     slot!(game, Draygon[0xc0].base.properties = properties);
-    facing_animation(0x40, 0x999c, 0x9d3e, game);
+    facing_animation(0, 0x40, [0x999c, 0x9d3e], game);
     slot!(game, Draygon[0x40].var_A = 0x804b);
 }
 pub(crate) fn ring(game: &mut Game) {

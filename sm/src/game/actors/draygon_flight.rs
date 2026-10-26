@@ -11,6 +11,15 @@ use crate::ram_map::{slot, word};
 use crate::rtl::{abs16, words};
 use crate::types::Point16U;
 
+pub(crate) fn facing_animation(
+    facing_key: i32,
+    part_key: i32,
+    instructions: [u16; 2],
+    game: &mut Game,
+) {
+    let instruction = instructions[usize::from(slot!(game, Draygon[facing_key].var_20) != 0)];
+    slot!(game, Draygon[part_key].base; current_instruction = instruction, instruction_timer = 1);
+}
 pub(crate) fn turret(game: &mut Game) {
     if word!(game.nmi_frame_counter_word) & 0x3f == 0 {
         let index = 2 * ((game.next_random() & 3) + 2);

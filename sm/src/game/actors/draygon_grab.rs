@@ -1,7 +1,10 @@
 //! Draygon acquisition, carrying, tail attacks and release share the player owner.
 //! Boss-specific words retain their native compatibility layout; no player copy exists.
 #![forbid(unsafe_code)]
-use super::{api, combat, draygon_flight::turret};
+use super::{
+    api, combat,
+    draygon_flight::{facing_animation, turret},
+};
 use crate::game::enemy_layouts::EnemyLayout104 as Draygon;
 use crate::game::enemy_script::EnemyScript;
 use crate::game::player_movement::forced;
@@ -37,14 +40,6 @@ fn electric_flash(game: &mut Game) -> bool {
     slot!(game, Draygon[0].base.ai_handler_bits, |old| old | 2);
     true
 }
-fn tail(k: u16, left: u16, right: u16, game: &mut Game) {
-    let instruction = if slot!(game, Draygon[k as i32].var_20) != 0 {
-        right
-    } else {
-        left
-    };
-    slot!(game, Draygon[0x80].base; current_instruction = instruction, instruction_timer = 1);
-}
 pub(crate) fn acquire(game: &mut Game) {
     turret(game);
     if word!(game.samus_x_speed_divisor) == 0 {
@@ -68,12 +63,7 @@ pub(crate) fn acquire(game: &mut Game) {
             & 0x8000
             != 0
     {
-        let instruction = if slot!(game, Draygon[0].var_20) != 0 {
-            0x9c38
-        } else {
-            0x9845
-        };
-        slot!(game, Draygon[0xc0].base; current_instruction = instruction, instruction_timer = 1);
+        facing_animation(0, 0xc0, [0x9845, 0x9c38], game);
         if player_command(0xd, game) != 0 {
             slot!(game, Draygon[0].var_A = 0x8f10);
         } else {
@@ -100,12 +90,7 @@ pub(crate) fn center(k: u16, game: &mut Game) {
         && abs16(slot!(game, Draygon[0].base.y_pos).wrapping_sub(384)).wrapping_sub(2) & 0x8000 != 0
     {
         slot!(game, Draygon[0].var_A = 0x8fd6);
-        let instruction = if slot!(game, Draygon[0].var_20) != 0 {
-            0x9cb4
-        } else {
-            0x9922
-        };
-        slot!(game, Draygon[k as i32].base; current_instruction = instruction, instruction_timer = 1);
+        facing_animation(0, k as i32, [0x9922, 0x9cb4], game);
         slot!(game, Draygon[0].base.properties, |old| old | 0x400);
     } else {
         let dx = 256u16.wrapping_sub(slot!(game, Draygon[0].base.x_pos));
@@ -178,12 +163,12 @@ pub(crate) fn pause(k: u16, game: &mut Game) {
     if remaining == 0 {
         slot!(game, Draygon[0].var_A = 0x8fd6);
     } else if remaining == 63 {
-        tail(0, 0x9ae8, 0x9ea1, game);
+        facing_animation(0, 0x80, [0x9ae8, 0x9ea1], game);
     }
 }
 pub(crate) fn start_release(k: u16, game: &mut Game) {
     attach(k, game);
-    tail(k, 0x9a68, 0x9e21, game);
+    facing_animation(k as i32, 0x80, [0x9a68, 0x9e21], game);
     slot!(game, Draygon[0].var_A = 0x9124);
 }
 pub(crate) fn attach(k: u16, game: &mut Game) {
@@ -205,7 +190,7 @@ pub(crate) fn release(game: &mut Game) {
     word!(game.samus_grapple_flags = 0);
     slot!(game, Draygon[0].var_A = 0x9154);
     slot!(game, Draygon[0].base.properties, |old| old & !0x400);
-    tail(0, 0x9b5a, 0x9f15, game);
+    facing_animation(0, 0x80, [0x9b5a, 0x9f15], game);
 }
 pub(crate) fn depart(game: &mut Game) {
     turret(game);
