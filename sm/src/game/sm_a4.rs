@@ -2,10 +2,10 @@ use crate::game::actors;
 use crate::game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use crate::game::actors::api as actor_api;
 use crate::game::actors::crocomire_reactions::{
-    advance_melt_scroll, advance_melt_upload, advance_phase, approach_wall, emit_lava_plume,
-    melt_flesh_down, melt_flesh_up, melt_rumble_down, melt_rumble_up, melt_skeleton_up,
-    prepare_flesh_tilemap, prepare_melt_graphics, prepare_skeleton_tilemap, prepare_spike_wall,
-    queue_tilemap_upload, rumble_and_wait, select_melt_animation, wait_for_melt, wall_step,
+    advance_melt_scroll, advance_melt_upload, advance_phase, approach_wall, complete_skeleton_melt,
+    emit_melt_debris, melt_flesh_down, melt_flesh_up, melt_rumble_down, melt_rumble_up,
+    melt_skeleton_up, prepare_flesh_tilemap, prepare_melt_graphics, prepare_skeleton_tilemap,
+    prepare_spike_wall, queue_tilemap_upload, rumble_and_wait, wait_for_melt, wall_step,
 };
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
@@ -20,7 +20,7 @@ use crate::ram_map::words as ram;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_a4::*;
 
-use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
+use crate::game::enemy_projectiles::SpawnEprojWithRoomGfx;
 use crate::game::music::QueueSfx2_Max6;
 use crate::game::player_update::minimap;
 use crate::game::room_mechanisms::spawn_hardcoded;
@@ -31,13 +31,13 @@ pub type Enemy_Crocomire = crate::game::enemy_layouts::EnemyLayout72;
 type Crocomire = Enemy_Crocomire;
 pub fn nullsub_305(game: &mut Game) {}
 static off_A48C14: [Func_V; 45] = callback_table! { nonnull Func_V;
-    approach_wall, Crocomire_Func_52, rumble_and_wait, melt_rumble_up, melt_rumble_down,
+    approach_wall, emit_melt_debris, rumble_and_wait, melt_rumble_up, melt_rumble_down,
     rumble_and_wait, melt_rumble_up, melt_rumble_down, prepare_flesh_tilemap, prepare_melt_graphics,
     advance_melt_upload, melt_flesh_up, Crocomire_Func_64, advance_melt_scroll, Crocomire_Func_66,
     melt_flesh_down, wait_for_melt, melt_flesh_up, melt_flesh_down, wait_for_melt,
     melt_flesh_up, melt_flesh_down, prepare_skeleton_tilemap, prepare_melt_graphics, advance_melt_upload,
     Crocomire_Func_63, melt_skeleton_up, Crocomire_9506, advance_melt_scroll, Crocomire_Func_66,
-    Crocomire_Func_49, Crocomire_Func_68, wall_step, prepare_spike_wall,
+    complete_skeleton_melt, Crocomire_Func_68, wall_step, prepare_spike_wall,
     Crocomire_Func_72, Crocomire_Func_73, Crocomire_Func_88, Crocomire_9B65, Crocomire_Func_90,
     advance_phase, Crocomire_9B86, nullsub_305, advance_phase, Crocomire_Func_29,
     Crocomire_Func_69,
@@ -55,50 +55,6 @@ fn spawn_random_dust(game: &mut Game) {
     }
     spawn_dust(EnemyScript::Stop, offset, game);
 }
-pub unsafe fn Crocomire_Func_49(game: &mut Game) {
-    unsafe {
-        select_melt_animation::<true>(Key::from_legacy(0), game);
-        emit_lava_plume(game);
-        actors::crocomire_reactions::melt_down(game);
-        let E: i32 = 0;
-        if slot!(game, Crocomire[E].var_A) == 62 {
-            QueueMusic_Delayed8(6, game);
-            slot!(game, Crocomire[E].var_A = 88);
-            slot!(
-                game,
-                Crocomire[E].base.current_instruction = addr_kCrocomire_Ilist_E1D2 as u16
-            );
-            *(ram_ptr!(game, u16; 0xcd20, 4)) = 257;
-            word!(game.debug_disable_minimap = 0);
-            slot!(
-                game,
-                Crocomire[0x40i32].base.properties =
-                    slot!(game, Crocomire[0x40i32].base.properties) | (0x200u16)
-            );
-
-            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x4e, 0x3, 0xb753 as VoidP), game);
-            word! { game, 0; camera_distance_index, croco_target_0688 }
-        }
-    }
-}
-
-pub unsafe fn Crocomire_Func_52(game: &mut Game) {
-    unsafe {
-        let v0: u16 = *(ram_ptr!(game, u16; 0x9015, 1));
-        if *(ram_ptr!(game, u16; 0x9015, 1)) as i32 - 22i32 & 0x8000 != 0 {
-            let v1: u16 = *(ram_ptr!(game, u16; 0x9015, 1));
-            crate::update_place! { unaligned_word fresh17 = &raw mut (*(ram_ptr!(game, u16; 0x9015, 1))) => (u16::from_le(fresh17.read_unaligned())).wrapping_add(2); }
-            SpawnEprojWithGfx(
-                crate::rtl::rom_table_word!(game, 0xa49156, (v0 >> 1) as isize),
-                v1,
-                addr_stru_868F9D as u16,
-                game,
-            );
-        }
-        melt_rumble_down(game);
-    }
-}
-
 pub unsafe fn Crocomire_Func_64(game: &mut Game) {
     unsafe {
         QueueSfx2_Max6(0x77, game);
@@ -335,23 +291,7 @@ crate::game::callback_dispatch! {
         actors::crocomire_reactions::update_palette(game);
     };
     [10783322] Crocomire_Init [] {
-        word!(game.boss_id = 6);
-        word_transfers!(game, ascending, 2048; le(tilemap_stuff, 0) <- value(824));
-        if (gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game) & 2) != 0 {
-            *(ram_ptr!(game, u16; 0xcd20)) = 257;
-            *(ram_ptr!(game, u16; 0xcd20, 2)) = 257;
-            word!(game.croco_target_0688 = 0);
-            let E: i32 = 0;
-            slot!(game, Crocomire[E].base.properties, |old| old & 0x7bff | 0x400);
-            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x20, 0x3, 0xb753 as VoidP), game);
-            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x1e, 0x3, 0xb753 as VoidP), game);
-            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x61, 0xb, 0xb747 as VoidP), game);
-            slot!(game, Crocomire[E].var_A = 84);
-            slot!(game, Crocomire[E].base; current_instruction = addr_kCrocomire_Ilist_E1CC as u16, instruction_timer = 1);
-            slot!(game, Crocomire[E].base.x_pos = 576);
-            slot!(game, Crocomire[E].base; y_pos = 144, y_height = 28, x_width = 40);
-            queue_tilemap_upload(2048, 0xfc, game);
-        } else {
+        if !actors::crocomire_reactions::prepare_initialization(game) {
             minimap::disable_for_boss(&mut crate::game::session_runtime::Runtime::new(game));
             word!(game.croco_word_7E069A = 0);
             let E_0: i32 = word!(game.cur_enemy_index) as i32;

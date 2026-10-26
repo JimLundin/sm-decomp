@@ -6,6 +6,7 @@ use crate::game::callback_tables::callback_table;
 use crate::game::constants::{
     bank_86::{
         addr_kEproj_CrocomireSpikeWallPieces, addr_kEproj_DustCloudExplosion, addr_stru_868F8F,
+        addr_stru_868F9D,
     },
     bank_a4::*,
     enemy_properties::kEnemyProps_Tangible,
@@ -13,13 +14,15 @@ use crate::game::constants::{
 use crate::game::enemy_layouts::EnemyLayout72 as Crocomire;
 use crate::game::enemy_projectiles::{ClearEprojs, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::enemy_script::{EnemyScript, bank_base};
-use crate::game::music::{QueueSfx2_Max6, QueueSfx3_Max6};
+use crate::game::gameplay_flag_host::BossWordOrder;
+use crate::game::gameplay_flag_runtime;
+use crate::game::music::{QueueMusic_Delayed8, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::session_runtime::Runtime;
 use crate::game::sprite_effect_runtime::create_sprite;
 use crate::game::visual_runtime::align_crocomire_background;
 use crate::game_state::Game;
-use crate::ram_map::{slot, word};
+use crate::ram_map::{checked_word, slot, word};
 use crate::rtl::abs16;
 use crate::types::{Point16U, SpawnHardcodedPlmArgs, VoidP};
 use core::ffi::c_long;
@@ -1126,4 +1129,72 @@ fn erase_melt_columns(game: &mut Game) -> u16 {
     word!(game.vram_write_queue_tail = (v8).wrapping_add(7));
     word!(game.g_word_7E068A += 8);
     1
+}
+
+/// Returns true when the defeated-boss room setup completed.
+pub(crate) fn prepare_initialization(game: &mut Game) -> bool {
+    word!(game.boss_id = 6);
+    word_transfers!(game, ascending, 2048; le(tilemap_stuff, 0) <- value(824));
+    if (gameplay_flag_runtime::boss_word_at(word!(game.area_index), BossWordOrder::Native, game)
+        & 2)
+        != 0
+    {
+        word_transfers!(game, ascending, 1; native(0xcd20) <- value(257));
+        word_transfers!(game, ascending, 1; native(0xcd22) <- value(257));
+        word!(game.croco_target_0688 = 0);
+        let E: i32 = 0;
+        slot!(game, Crocomire[E].base.properties, |old| old & 0x7bff
+            | 0x400);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x20, 0x3, 0xb753 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x1e, 0x3, 0xb753 as VoidP), game);
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x61, 0xb, 0xb747 as VoidP), game);
+        slot!(game, Crocomire[E].var_A = 84);
+        slot!(game, Crocomire[E].base; current_instruction = addr_kCrocomire_Ilist_E1CC as u16, instruction_timer = 1);
+        slot!(game, Crocomire[E].base.x_pos = 576);
+        slot!(game, Crocomire[E].base; y_pos = 144, y_height = 28, x_width = 40);
+        queue_tilemap_upload(2048, 0xfc, game);
+        true
+    } else {
+        false
+    }
+}
+
+pub(crate) fn complete_skeleton_melt(game: &mut Game) {
+    select_melt_animation::<true>(Key::from_legacy(0), game);
+    emit_lava_plume(game);
+    melt_down(game);
+    let E: i32 = 0;
+    if slot!(game, Crocomire[E].var_A) == 62 {
+        QueueMusic_Delayed8(6, game);
+        slot!(game, Crocomire[E].var_A = 88);
+        slot!(
+            game,
+            Crocomire[E].base.current_instruction = addr_kCrocomire_Ilist_E1D2 as u16
+        );
+        word_transfers!(game, ascending, 1; native(0xcd24) <- value(257));
+        word!(game.debug_disable_minimap = 0);
+        slot!(
+            game,
+            Crocomire[0x40i32].base.properties =
+                slot!(game, Crocomire[0x40i32].base.properties) | (0x200u16)
+        );
+
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x4e, 0x3, 0xb753 as VoidP), game);
+        word! { game, 0; camera_distance_index, croco_target_0688 }
+    }
+}
+
+pub(crate) fn emit_melt_debris(game: &mut Game) {
+    let v0: u16 = u16::from_ne_bytes([game.g_ram[0x9016], game.g_ram[0x9017]]);
+    if u16::from_ne_bytes([game.g_ram[0x9016], game.g_ram[0x9017]]) as i32 - 22i32 & 0x8000 != 0 {
+        let v1: u16 = u16::from_ne_bytes([game.g_ram[0x9016], game.g_ram[0x9017]]);
+        checked_word!(game, 0x9016; += 2);
+        SpawnEprojWithGfx(
+            crate::rtl::rom_table_word!(game, 0xa49156, (v0 >> 1) as isize),
+            v1,
+            addr_stru_868F9D as u16,
+            game,
+        );
+    }
+    melt_rumble_down(game);
 }
