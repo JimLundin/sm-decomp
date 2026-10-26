@@ -81,7 +81,7 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Qualified Core51: production111732, legacy19204, unsafe2858, verification39970; warnings179.
+Qualified Core52: production111716, legacy19103, unsafe2856, verification39970; warnings179.
 Native player/DSP allocations have actual owners: +25 engine lines, no unsafe-line savings; raw callback contracts remain.
 Fresh4d25 checkpoints and actual rebuilt desktop archive pass source/native guards; old33e6 checkpoints remain incompatible.
 Full86 passes136,526 selected+38,827 setup/0 failures;189,475 genuine capture frames, both Kago setups independent14,350.
@@ -89,6 +89,7 @@ All22 encrypted release members restore byte-for-byte; initialized machine paylo
 Retired sm_b3 separately passed post-deletion full86:136,526 selected+38,555 setup/0 failures.
 Frame dispatch shares21 wrappers via45 bank-private descriptors: -12 engine/-19 unsafe lines; readonly table +360 bytes.
 Independent full86:136,526 selected+38,827 setup/0 failures; captures retain Core50 provenance.
+Grapple connection: -14 substantive engine/-101 legacy/-2 unsafe lines; five rows3338+272 setup pass, seven native angles remain unobserved.
 Next: publish qualified grapple/door/cinematic families; complete ROM-load ownership/new476b verification runs in parallel.
 
 Scoped mutation11.40min: 3AST kills, 2unobserved pipe-flight survivors, 1separate dispatch kill; all945-frame windows preserved.

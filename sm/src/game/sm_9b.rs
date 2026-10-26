@@ -20,15 +20,6 @@ use crate::game::music::{QueueSfx1_Max1, QueueSfx1_Max6};
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session_runtime::player_bottom;
 
-crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
-    pub struct GrappleBeamSpecialAngles {
-        pub field_0, field_2, field_4, field_6: u16;
-        pub field_8: VoidP;
-    }
-}
-
 const RomPtr_9B: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x9b>;
 const RomPtr_A0: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa0>;
 crate::game::constants::typed_constants! { i32;
@@ -79,98 +70,6 @@ pub fn CheckIfGrappleIsConnectedToBlock(game: &mut Game) -> u8 {
             return 0;
         }
         word!(game.samus_grapple_flags = 1);
-        1
-    }
-}
-pub unsafe fn CallGrappleNextFunc(ea: u32, game: &mut Game) {
-    let (pose, transition_graphics) = match ea {
-        10205657 => (kPose_B2_FaceR_Grapple_Air as u16, 9),
-        10205666 => (kPose_B3_FaceL_Grapple_Air as u16, 9),
-        10205674 => (kPose_A8_FaceR_Grappling as u16, 10),
-        10205683 => (kPose_AA_FaceR_Grappling_AimDR as u16, 10),
-        10205692 => (kPose_AB_FaceL_Grappling_AimDL as u16, 10),
-        10205701 => (kPose_A9_FaceL_Grappling as u16, 10),
-        10205710 => (kPose_B4_FaceR_Grappling_Crouch as u16, 10),
-        10205719 => (kPose_B6_FaceR_Grappling_Crouch_AimDR as u16, 10),
-        10205728 => (kPose_B7_FaceL_Grappling_Crouch_AimDL as u16, 10),
-        10205737 => (kPose_B5_FaceL_Grappling_Crouch as u16, 10),
-        _ => {
-            Unreachable(game);
-            return;
-        }
-    };
-    grapple_swing::begin_connection(pose, transition_graphics, game);
-}
-pub unsafe fn HandleConnectingGrapple(game: &mut Game) {
-    unsafe {
-        if *ram_ptr!(game; 0xa1f) as i32 == kMovementType_1A_GrabbedByDraygon as i32 {
-            word!(game.grapple_beam_function = (0x9bc77ei32) as u16);
-            word!(game.grapple_beam_length_delta = 0);
-        } else {
-            let v1: i32 = 2 * word!(game.grapple_beam_direction) as i32;
-            let table = if word!(game.samus_y_speed) != 0 || word!(game.samus_y_subspeed) != 0 {
-                0x9bc3ee
-            } else if *ram_ptr!(game; 0xa1f) == 5 {
-                0x9bc416
-            } else {
-                0x9bc3c6
-            };
-            word!(
-                game.grapple_beam_function = crate::rtl::rom_table_word!(game, table, v1 as isize)
-            );
-            CallGrappleNextFunc(
-                u32::from(crate::rtl::rom_table_word!(game, table, (v1 + 1) as isize)) | 0x9b0000,
-                game,
-            );
-        };
-    }
-}
-pub unsafe fn HandleSpecialGrappleBeamAngles(game: &mut Game) -> u8 {
-    unsafe {
-        let mut v0: u16 = 7;
-        while word!(game.grapple_beam_end_angle16)
-            != (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_0
-        {
-            v0 = v0.wrapping_sub(1);
-            if (v0 & 0x8000) != 0 {
-                return 0;
-            }
-        }
-        word! { game;
-            samus_new_pose_interrupted =
-                (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_2;
-            samus_x_pos = (word!(game.grapple_beam_end_x_pos)).wrapping_add(
-                (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_4,
-            );
-            samus_y_pos = (word!(game.grapple_beam_end_y_pos)).wrapping_add(
-                (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_6,
-            );
-            grapple_beam_function =
-                (*(rom_ptr!(game, GrappleBeamSpecialAngles; 0x9bc43e)).offset(v0 as isize)).field_8;
-        }
-        word! { game, 0; samus_special_transgfx_index, slow_grabble_scrolling_flag }
-        let v2: i16 =
-            ((word!(game.samus_x_pos)) as i16).wrapping_sub((word!(game.samus_prev_x_pos)) as i16);
-        if ((word!(game.samus_x_pos)) as i16).wrapping_sub((word!(game.samus_prev_x_pos)) as i16)
-            < 0
-        {
-            if v2 as i32 + 12 & 0x8000 != 0 {
-                word!(game.samus_prev_x_pos = (word!(game.samus_x_pos)).wrapping_add(12));
-            }
-        } else if v2 as i32 - 13i32 & 0x8000 == 0 {
-            word!(game.samus_prev_x_pos = (word!(game.samus_x_pos)).wrapping_sub(12));
-        }
-        let v3: i16 =
-            ((word!(game.samus_y_pos)) as i16).wrapping_sub((word!(game.samus_prev_y_pos)) as i16);
-        if ((word!(game.samus_y_pos)) as i16).wrapping_sub((word!(game.samus_prev_y_pos)) as i16)
-            < 0
-        {
-            if v3 as i32 + 12 & 0x8000 != 0 {
-                word!(game.samus_prev_y_pos = (word!(game.samus_y_pos)).wrapping_add(12));
-            }
-        } else if v3 as i32 - 13i32 & 0x8000 == 0 {
-            word!(game.samus_prev_y_pos = (word!(game.samus_y_pos)).wrapping_sub(12));
-        }
         1
     }
 }
@@ -579,7 +478,7 @@ crate::game::callback_dispatch! {
             }
         }
         QueueSfx1_Max6(6, game);
-        HandleConnectingGrapple(game);
+        grapple_swing::connect_beam(game);
         word!(game.grapple_beam_length_delta = -8i32 as u16);
         word!(game.samus_grapple_flags |= (1u16));
     };
@@ -602,7 +501,7 @@ crate::game::callback_dispatch! {
             grapple_swing::rebound_jump(game);
             advance_swing(game);
             if (word!(game.grapple_beam_unkD36) & 0x8000) != 0
-                && HandleSpecialGrappleBeamAngles(game) & 1 != 0
+                && grapple_swing::apply_special_angle(game) & 1 != 0
             {
                 return;
             }

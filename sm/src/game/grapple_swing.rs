@@ -119,7 +119,92 @@ fn check_clearance(angle: u16, game: &mut Game) -> u8 {
         }
     }
 }
-pub(crate) fn begin_connection(pose: u16, transition_graphics: u16, game: &mut Game) {
+#[forbid(unsafe_code)]
+fn dispatch_connection(ea: u32, game: &mut Game) {
+    let (pose, transition_graphics) = match ea {
+        10205657 => (kPose_B2_FaceR_Grapple_Air as u16, 9),
+        10205666 => (kPose_B3_FaceL_Grapple_Air as u16, 9),
+        10205674 => (kPose_A8_FaceR_Grappling as u16, 10),
+        10205683 => (kPose_AA_FaceR_Grappling_AimDR as u16, 10),
+        10205692 => (kPose_AB_FaceL_Grappling_AimDL as u16, 10),
+        10205701 => (kPose_A9_FaceL_Grappling as u16, 10),
+        10205710 => (kPose_B4_FaceR_Grappling_Crouch as u16, 10),
+        10205719 => (kPose_B6_FaceR_Grappling_Crouch_AimDR as u16, 10),
+        10205728 => (kPose_B7_FaceL_Grappling_Crouch_AimDL as u16, 10),
+        10205737 => (kPose_B5_FaceL_Grappling_Crouch as u16, 10),
+        _ => {
+            Unreachable(game);
+            return;
+        }
+    };
+    begin_connection(pose, transition_graphics, game);
+}
+#[forbid(unsafe_code)]
+pub(crate) fn connect_beam(game: &mut Game) {
+    if game.g_ram[0xa1f] as i32 == kMovementType_1A_GrabbedByDraygon as i32 {
+        word!(game.grapple_beam_function = (0x9bc77ei32) as u16);
+        word!(game.grapple_beam_length_delta = 0);
+    } else {
+        let v1: i32 = 2 * word!(game.grapple_beam_direction) as i32;
+        let table = if word!(game.samus_y_speed) != 0 || word!(game.samus_y_subspeed) != 0 {
+            0x9bc3ee
+        } else if game.g_ram[0xa1f] == 5 {
+            0x9bc416
+        } else {
+            0x9bc3c6
+        };
+        word!(game.grapple_beam_function = crate::rtl::rom_table_word!(game, table, v1 as isize));
+        dispatch_connection(
+            u32::from(crate::rtl::rom_table_word!(game, table, (v1 + 1) as isize)) | 0x9b0000,
+            game,
+        );
+    };
+}
+// Each field reacquires the registered native image at its original read point.
+macro_rules! special_angle_word {
+    ($game:ident, $row:ident, $offset:literal) => {
+        $game.capture_native_rom().table_word(
+            crate::rtl::lorom_offset(0x9bc43e) as usize + 10 * usize::from($row) + $offset,
+            0,
+        )
+    };
+}
+macro_rules! clamp_previous_grapple_position {
+    ($game:ident, $current:ident, $previous:ident) => {
+        let delta: i16 = (word!($game.$current) as i16).wrapping_sub(word!($game.$previous) as i16);
+        if (word!($game.$current) as i16).wrapping_sub(word!($game.$previous) as i16) < 0 {
+            if delta as i32 + 12 & 0x8000 != 0 {
+                word!($game.$previous = word!($game.$current).wrapping_add(12));
+            }
+        } else if delta as i32 - 13 & 0x8000 == 0 {
+            word!($game.$previous = word!($game.$current).wrapping_sub(12));
+        }
+    };
+}
+#[forbid(unsafe_code)]
+pub(crate) fn apply_special_angle(game: &mut Game) -> u8 {
+    let mut row: u16 = 7;
+    while word!(game.grapple_beam_end_angle16) != special_angle_word!(game, row, 0) {
+        row = row.wrapping_sub(1);
+        if row & 0x8000 != 0 {
+            return 0;
+        }
+    }
+    word! { game;
+        samus_new_pose_interrupted = special_angle_word!(game, row, 2);
+        samus_x_pos = word!(game.grapple_beam_end_x_pos)
+            .wrapping_add(special_angle_word!(game, row, 4));
+        samus_y_pos = word!(game.grapple_beam_end_y_pos)
+            .wrapping_add(special_angle_word!(game, row, 6));
+        grapple_beam_function = special_angle_word!(game, row, 8);
+    }
+    word! { game, 0; samus_special_transgfx_index, slow_grabble_scrolling_flag }
+    clamp_previous_grapple_position!(game, samus_x_pos, samus_prev_x_pos);
+    clamp_previous_grapple_position!(game, samus_y_pos, samus_prev_y_pos);
+    1
+}
+
+fn begin_connection(pose: u16, transition_graphics: u16, game: &mut Game) {
     word!(game.samus_new_pose_interrupted = pose);
     word!(game.samus_special_transgfx_index = transition_graphics);
     let angle = u16::swap_bytes(actor_api::angle_from_delta(
