@@ -5,11 +5,11 @@ use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
 use crate::game::visual_runtime::{
-    METROID_PAL_1, METROID_PAL_2, METROID_PAL_3, METROID_PAL_4, advance_credit_roll,
-    advance_intro_rinka, advance_shooting_stars, draw_cinematic_sprites, draw_intro_sprites,
-    drift_cinematic_sprite, flash_intro_mother_brain, initialize_ending_cloud_band,
-    initialize_ending_cloud_side, initialize_ending_time_glyph, initialize_intro_rinka,
-    initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud,
+    METROID_PAL_1, METROID_PAL_2, METROID_PAL_3, METROID_PAL_4, advance_ceres_station,
+    advance_credit_roll, advance_intro_rinka, advance_shooting_stars, draw_cinematic_sprites,
+    draw_intro_sprites, drift_cinematic_sprite, flash_intro_mother_brain,
+    initialize_ending_cloud_band, initialize_ending_cloud_side, initialize_ending_time_glyph,
+    initialize_intro_rinka, initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud,
     move_jumping_ending_samus, place_cinematic_sprite, prepare_credit_roll, prepare_ending_time,
     shake_intro_mother_brain, start_intro_rinka, title_metroid_cry, title_metroid_palette,
     wait_cinematic_scene, wait_ending_cloud,
@@ -2235,25 +2235,6 @@ crate::game::callback_dispatch! {
                 cinematicspr_instr_ptr[kh] = addr_off_8BCE53 as u16; cinematic_var15 = 0; }
         };
     };
-    [9158325] CinematicFunction_Intro_Func58 [] {
-        if word!(game.cinematic_function) as i32 == 0x8bbdf9 & 0xffff {
-            let v1: i32 = k as i32 >> 1;
-            word!(game.cinematicspr_goto_timer[v1] += 128);
-            let d: i32 = (word!(game.cinematicspr_goto_timer[v1]) as i16 as i32) << 8;
-            AddToHiLo(
-                (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
-                (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
-                d as u32,
-            );
-            AddToHiLo(
-                (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
-                (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
-                d as u32,
-            );
-            words!(game.cinematic_var8, cinematic_var7 += d as u32);
-            words!(game.cinematic_var10, cinematic_var9 += d as u32);
-        }
-    };
     [9159817] CinematicSprPreInstr_C489 [] {
         if word!(game.cinematic_function) as i32 == 0x8bc5ca & 0xffff {
             word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8b93d9i32) as u16);
@@ -2478,6 +2459,7 @@ crate::game::callback_dispatch! {
         wait_cinematic_scene(k, 0xde63, None, game);
     };
     @external {
+        9158325 => [advance_ceres_station(j, game)];
         9160782 => [wait_cinematic_scene(j, 0xcade, Some(0xc85d), game)];
         9160874 => [wait_cinematic_scene(j, 0xcade, Some(0xc8b9), game)];
         9160953 => [wait_cinematic_scene(j, 0xcade, Some(0xc908), game)];

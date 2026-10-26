@@ -7,7 +7,7 @@ use crate::game::{
     explosion_window::{self, Phase},
     liquid_effects, mother_brain_visuals, scrolling_sky,
 };
-use crate::ram_map::{checked_word, word};
+use crate::ram_map::{checked_word, word, words as ram_words};
 use crate::rtl::{Unreachable, words};
 use crate::{
     game::{
@@ -1688,11 +1688,8 @@ pub(crate) fn advance_intro_rinka(object: u16, misses_samus: bool, game: &mut Ga
     word!(game.cinematicspr_instr_ptr[slot] = 0xce53);
 }
 
-// Native split coordinates retain low-before-high reads and writes.
-fn advance_cinematic_coordinate(object: u16, vertical: bool, velocity: u32, game: &mut Game) {
-    let offset = usize::from(object & !1) + if vertical { 0x20 } else { 0 };
-    let low = 0x1add + offset;
-    let high = 0x1a7d + offset;
+// Native split words retain low-before-high reads and writes.
+fn add_native_pair(high: usize, low: usize, velocity: u32, game: &mut Game) {
     let fraction = u16::from_ne_bytes([game.g_ram[low], game.g_ram[low + 1]]);
     let whole = u16::from_ne_bytes([game.g_ram[high], game.g_ram[high + 1]]);
     let position = (u32::from(fraction) | (u32::from(whole) << 16)).wrapping_add(velocity);
@@ -1700,6 +1697,24 @@ fn advance_cinematic_coordinate(object: u16, vertical: bool, velocity: u32, game
         native(low) <- value(position as u16),
         native(high) <- value((position >> 16) as u16),
     );
+}
+
+fn advance_cinematic_coordinate(object: u16, vertical: bool, velocity: u32, game: &mut Game) {
+    let offset = usize::from(object & !1) + if vertical { 0x20 } else { 0 };
+    add_native_pair(0x1a7d + offset, 0x1add + offset, velocity, game);
+}
+
+pub(crate) fn advance_ceres_station(object: u16, game: &mut Game) {
+    if word!(game.cinematic_function) == 0xbdf9 {
+        let slot = usize::from(object >> 1);
+        word!(game.cinematicspr_goto_timer[slot] += 128);
+        let velocity = ((word!(game.cinematicspr_goto_timer[slot]) as i16 as i32) << 8) as u32;
+        advance_cinematic_coordinate(object, true, velocity, game);
+        advance_cinematic_coordinate(object, false, velocity, game);
+        for low in [ram_words::cinematic_var7, ram_words::cinematic_var9] {
+            add_native_pair(low + 2, low, velocity, game);
+        }
+    }
 }
 
 pub(crate) fn drift_cinematic_sprite(
@@ -1719,10 +1734,8 @@ pub(crate) fn drift_cinematic_sprite(
 }
 
 pub(crate) fn move_jumping_ending_samus(object: u16, game: &mut Game) {
-    let (fraction, carry) = u16::from_le(word!(game.samus_y_subspeed)).overflowing_add(0x3800);
-    let whole = u16::from_le(word!(game.samus_y_speed)).wrapping_add(u16::from(carry));
-    word!(game.samus_y_subspeed = fraction.to_le());
-    word!(game.samus_y_speed = whole.to_le());
+    let low = ram_words::samus_y_subspeed;
+    add_native_pair(low + 2, low, 0x3800, game);
     let velocity = words!(game.samus_y_speed, samus_y_subspeed);
     advance_cinematic_coordinate(object, true, velocity, game);
 }
