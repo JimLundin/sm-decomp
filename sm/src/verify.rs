@@ -1038,7 +1038,10 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         // bit 0, Y at bit 1, ... R at bit 11 (the input latch reverses it).
         inputs.push(pad.reverse_bits());
     }
-    if frame_limit == Some(0) || frame_limit.is_some_and(|n| n > inputs.len()) {
+    // Only explicit early stops may use a ceiling beyond the available inputs.
+    // The existing hit, expectation and tail checks still reject premature EOF.
+    let early_stop = after_hits.is_some() || after_expectations.is_some();
+    if frame_limit == Some(0) || (!early_stop && frame_limit.is_some_and(|n| n > inputs.len())) {
         return Err(format!(
             "invalid frame limit, inputs contain {}",
             inputs.len()
@@ -1097,7 +1100,8 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         let frames = frame_limit.unwrap_or(inputs.len() - first);
         let end = first
             .checked_add(frames)
-            .filter(|&end| end <= inputs.len())
+            .filter(|&end| early_stop || end <= inputs.len())
+            .map(|end| end.min(inputs.len()))
             .ok_or("requested segment extends past the movie")?;
         if frames == 0 {
             return Err("requested segment is empty".into());
