@@ -58,6 +58,14 @@ pub(crate) fn opening(first: bool, game: &mut Game) {
         }
     }
 }
+pub(crate) fn initialize_part(arms: bool, game: &mut Game) {
+    let k = word!(game.cur_enemy_index) as i32;
+    let instruction = if arms { 0x97e7 } else { 0x99fc };
+    slot!(game, Draygon[k].base; current_instruction = instruction, palette_index = 0xe00);
+    if arms {
+        slot!(game, Draygon[k].base.layer = 2);
+    }
+}
 pub(crate) fn update(body: bool, dispatch: impl FnOnce(u32, u16, &mut Game), game: &mut Game) {
     let k = word!(game.cur_enemy_index) as i32;
     let state = 0xa50000 | u32::from(slot!(game, Draygon[k].var_A));

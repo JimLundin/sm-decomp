@@ -24,7 +24,6 @@ crate::type_aliases! {
 }
 
 crate::ram_map::ram_pointer_functions! {
-    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     Get_Draygon(o: i32) -> Enemy_Draygon = [0xf78, o as isize];
 }
 crate::game::callback_dispatch! {
@@ -98,21 +97,12 @@ crate::game::callback_dispatch! {
         (*Get_Draygon(0i32, game)).var_45 = 1;
         minimap::disable_for_boss(&mut crate::game::session_runtime::Runtime::new(game));
     };
-    [10864025] DraygonsTail_Init [] {
-        let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-        (*v0).current_instruction = addr_kDraygon_Ilist_99FC as u16;
-        (*v0).palette_index = 0xe00;
-    };
-    [10864045] DraygonsArms_Init [] {
-        let v0 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-        (*v0).current_instruction = addr_kDraygon_Ilist_97E7 as u16;
-        (*v0).palette_index = 0xe00;
-        (*v0).layer = 2;
-    };
     @external {
         10851661 => [actors::draygon_death::hurt(game)];
         10847996 => [actors::draygon_flight::update(true, |state, k, game| CallDraygonFunc(state, k, game), game)];
         10863750 => [actors::draygon_flight::update(false, |state, k, game| CallDraygonFunc(state, k, game), game)];
+        10864025 => [actors::draygon_flight::initialize_part(false, game)];
+        10864045 => [actors::draygon_flight::initialize_part(true, game)];
         10846223 => [actors::combat::select_frozen_ai(&mut Runtime::new(game))];
         10846243 => [actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize)];
         10846253 => [actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize)];
