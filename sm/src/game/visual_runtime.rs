@@ -2294,7 +2294,7 @@ pub(crate) fn start_title_pan(stage: usize, cursor: u16, game: &mut Game) -> u16
     cursor
 }
 
-pub(crate) fn advance_title_pan(stage: usize, game: &mut Game) -> bool {
+pub(crate) fn advance_title_pan(stage: usize, game: &mut Game) {
     let (offset, cutoff) = [(0, 7), (0, 176), (4, -163)][stage];
     let velocity = words!((
         word!(@read game, ram_words::g_word_7E199B + offset),
@@ -2305,7 +2305,14 @@ pub(crate) fn advance_title_pan(stage: usize, game: &mut Game) -> bool {
     add_native_pair(whole, fraction, velocity, game);
     let negative = (word!(@read game, whole) as i32 + cutoff) & 0x8000 != 0;
     // The vertical pan ends on the opposite side of its cutoff.
-    negative != (stage == 2)
+    if negative != (stage == 2) {
+        game.g_ram[0x69] = 16;
+        word!(game.cinematic_function = 0x9a47);
+        let definition = [0xa0f5, 0xa0fb, 0xa101][stage];
+        CinematicObjects::Sprites.spawn(definition, 0x9a47, game);
+        set_cinematic_backdrop(false, game);
+    }
+    request_title_skip(game);
 }
 
 pub(crate) fn request_title_skip(game: &mut Game) {

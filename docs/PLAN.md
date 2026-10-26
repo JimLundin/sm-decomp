@@ -81,8 +81,8 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Qualified Core29: production 111830, legacy 20639, unsafe 2961, verification 39967.
-Its 10 affected/control rows pass; Core28 passed 14 and Core27 passed 85 of 86.
+Qualified Core30: production 111801, legacy 20596, unsafe 2959, verification 39967.
+Its 33 affected/control rows pass; Core29 passed 10 and Core27 passed 85 of 86.
 The lava-plume contract remains unsafe: its dynamic low-window observer requires a valid backend.
 Six read-only state projections preserve 57,621 bytes; exact native leaf variants remain source-reviewed.
 The manifest now has 86 rows; whole-engine ownership and backend independence stay open.
@@ -96,8 +96,9 @@ Mutation-driver audit: deleting the old room driver breaks retained local captur
 callers. Existing bank campaigns do not replace its unusual alias, failed-upload and
 custom-content checks; keep those checks until their consumers and coverage migrate.
 
-M1a (`tools/codemod/strip_unsafe_fixpoint.py`) retains all 22 unsafe production
-contracts and the verifier bridge from [the audit](M1A-REVIEW.md). Keep its imported
+M1a originally restored 22 production contracts and the verifier bridge from
+[the audit](M1A-REVIEW.md); Core30 specifically requalifies two. The other 20
+historical requirements and bridge retain their own safety closures. Keep imported
 alias exclusions, Windows dep-info root checks and source newlines; the predecessor
 remains rejected.
 
