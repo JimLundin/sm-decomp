@@ -1600,7 +1600,7 @@ impl CinematicObjects {
         checked_word!(game, layout.parameter; = parameter);
         for slot in (0..layout.slots).rev() {
             if checked_word!(game, layout.instructions + 2 * usize::from(slot);) == 0 {
-                return unsafe { initialize_cinematic_object(self, definition, slot * 2, game) };
+                return initialize_cinematic_object(self, definition, slot * 2, game);
             }
         }
         1
@@ -2344,43 +2344,153 @@ pub(crate) unsafe fn spawn_cinematic_sprite_at(
     game: &mut Game,
 ) -> u8 {
     word!(game.cinematic_spawn_param = parameter);
-    unsafe { initialize_cinematic_object(CinematicObjects::Sprites, definition, slot, game) }
+    initialize_cinematic_object(CinematicObjects::Sprites, definition, slot, game)
 }
 
-unsafe fn initialize_cinematic_object(
+fn initialize_cinematic_object(
     objects: CinematicObjects,
     definition: u16,
     object: u16,
     game: &mut Game,
 ) -> u8 {
-    use crate::game::sm_8b as bank;
     use CinematicObjects::*;
     let layout = objects.layout();
     let offset = usize::from(object & !1);
     let stride = 2 * usize::from(layout.slots);
-    unsafe {
-        let definition = crate::rtl::rom_bank_ptr::<0x8b>(definition, game);
-        checked_word!(game, layout.instructions + stride + offset;
-            = (definition.add(2) as *const u16).read_unaligned());
-        checked_word!(game, layout.instructions + offset;
-            = (definition.add(4) as *const u16).read_unaligned());
-        checked_word!(game, layout.instructions + 2 * stride + offset; = 1);
-        for field in layout.cleared {
-            checked_word!(game, field + offset; = 0);
-        }
-        // Setup is read after publication, and Mode7 alone receives a word index.
-        let setup = u32::from((definition as *const u16).read_unaligned()) | 0x8b0000;
-        match objects {
-            Sprites => bank::CallCinematicSpriteObjectSetup(setup, object, game),
-            Mode7 => bank::CallCinematicSpriteInit(setup, object >> 1, game),
-            Background => {
-                if setup != 0x8b93d9 {
-                    Unreachable(game);
-                }
+    let record = cinematic_native_record::<0x8b>(definition, game);
+    checked_word!(game, layout.instructions + stride + offset; = record.word(2));
+    checked_word!(game, layout.instructions + offset; = record.word(4));
+    checked_word!(game, layout.instructions + 2 * stride + offset; = 1);
+    for field in layout.cleared {
+        checked_word!(game, field + offset; = 0);
+    }
+    // Setup is read after publication, and Mode7 alone receives a word index.
+    let setup = u32::from(record.word(0)) | 0x8b0000;
+    drop(record);
+    match objects {
+        Sprites => initialize_cinematic_sprite(setup, object, false, game),
+        Mode7 => initialize_cinematic_sprite(setup, object >> 1, true, game),
+        Background => {
+            if setup != 0x8b93d9 {
+                Unreachable(game);
             }
         }
     }
     0
+}
+
+fn initialize_cinematic_sprite(setup: u32, object: u16, mode7: bool, game: &mut Game) {
+    const EGG_POSITIONS: [i16; 12] = [
+        0x5c, 0x58, 0x63, 0x58, 0x59, 0x5d, 0x60, 0x5b, 0x66, 0x5e, 0x63, 0x60,
+    ];
+    let slot = usize::from(object >> 1);
+    match setup {
+        9149210 => place_cinematic_sprite(object, (128, 48), 1024, game),
+        9149229 => place_cinematic_sprite(object, (128, 81), 0, game),
+        9149248 => place_cinematic_sprite(object, (128, 196), 2048, game),
+        9149628 | 9149770 | 9149891 | 9150021 => {
+            place_cinematic_sprite(object, (129, 112), 512, game)
+        }
+        9150131 => initialize_title_sprite(object, 0, game),
+        9150166 => initialize_title_sprite(object, 1, game),
+        9150207 => initialize_title_sprite(object, 2, game),
+        9147353 => {}
+        _ if mode7 => {
+            Unreachable(game);
+        }
+        9152856 => {
+            let parameter = word!(game.cinematic_spawn_param);
+            word!(game.cinematicspr_goto_timer[slot] = word!(game.cinematic_spawn_param));
+            let position = usize::from(4u16.wrapping_mul(parameter) >> 1);
+            word! { game;
+                cinematicbg_arr7[slot] = (EGG_POSITIONS[position] as u16).wrapping_add(16);
+                cinematicbg_arr8[slot] = (EGG_POSITIONS[position + 1] as u16).wrapping_add(59);
+                cinematicbg_arr9[slot] = 3584;
+            }
+        }
+        9153178 => {
+            word! { game;
+                cinematicspr_goto_timer[slot] = word!(game.cinematic_spawn_param);
+                cinematicbg_arr7[slot] = word!(game.cinematicbg_arr7[13]);
+                cinematicbg_arr8[slot] = word!(game.cinematicbg_arr8[13]);
+                cinematicbg_arr9[slot] = 3584;
+            }
+        }
+        9158270 => {
+            if word!(game.cinematic_spawn_param) != 0 {
+                word!(game.cinematicspr_preinstr_func[slot] = 0xbfc6);
+                word!(game.cinematicbg_arr7[slot] = -32i32 as u16);
+            } else {
+                word!(game.cinematicspr_goto_timer[slot] = -1024i32 as u16);
+                word!(game.cinematicbg_arr7[slot] = 112);
+            }
+            word! {game; cinematicbg_arr8[slot] = 87; cinematicbg_arr9[slot] = 2048; }
+        }
+        9158560 => {
+            if word!(game.cinematic_spawn_param) != 0 {
+                word!(game.cinematicbg_arr7[slot] = 224);
+            } else {
+                word!(game.cinematicbg_arr7[slot] = 112);
+                word!(game.cinematicspr_preinstr_func[slot] = 0xbfd9);
+            }
+            word! {game; cinematicbg_arr8[slot] = 87; cinematicbg_arr9[slot] = 2048; }
+        }
+        9171343 => initialize_ending_sprite_pair(object, true, game),
+        9171368 => initialize_ending_sprite_pair(object, false, game),
+        9170841 => update_ending_critters(object, true, game),
+        9157005 => initialize_intro_brain_particle(object, true, game),
+        9157076 => initialize_intro_brain_particle(object, false, game),
+        9159732 => initialize_ceres_explosion(object, CeresExplosion::First, game),
+        9159865 => initialize_ceres_explosion(object, CeresExplosion::Second, game),
+        9159987 => initialize_ceres_explosion(object, CeresExplosion::Third, game),
+        9160105 => initialize_ceres_explosion(object, CeresExplosion::Final, game),
+        9156758 => initialize_intro_rinka(object, game),
+        9171038 => initialize_ending_time_glyph(object, 0, game),
+        9171053 => initialize_ending_time_glyph(object, 1, game),
+        9171068 => initialize_ending_time_glyph(object, 2, game),
+        9171077 => initialize_ending_time_glyph(object, 3, game),
+        9171092 => initialize_ending_time_glyph(object, 4, game),
+        9171122 => initialize_ending_cloud_band(object, -96i32 as u16, game),
+        9171169 => initialize_ending_cloud_band(object, -32i32 as u16, game),
+        9171177 => initialize_ending_cloud_band(object, 288, game),
+        9171185 => initialize_ending_cloud_band(object, 352, game),
+        9171193 => initialize_ending_cloud_side(object, true, game),
+        9171230 => initialize_ending_cloud_side(object, false, game),
+        9152705 => place_cinematic_sprite(object, (8, 24), 3072, game),
+        9152725 | 9157195 => place_cinematic_sprite(object, (112, 155), 3584, game),
+        9153877 => place_cinematic_sprite(object, (84, 139), 3072, game),
+        9153939 => place_cinematic_sprite(object, (112, 111), 3072, game),
+        9154055 => place_cinematic_sprite(object, (128, 216), 3072, game),
+        9156467 => place_cinematic_sprite(object, (56, 111), 3584, game),
+        9158434 => place_cinematic_sprite(object, (80, 159), 2048, game),
+        9158476 => place_cinematic_sprite(object, (116, 160), 3072, game),
+        9158518 => place_cinematic_sprite(object, (128, 96), 2048, game),
+        9158787 => place_cinematic_sprite(object, (124, 186), 0, game),
+        9158834 => place_cinematic_sprite(object, (124, 204), 0, game),
+        9160763 => place_cinematic_sprite(object, (136, 111), 3584, game),
+        9160855 => place_cinematic_sprite(object, (128, 127), 2048, game),
+        9161026 => place_cinematic_sprite(object, (48, 47), 2048, game),
+        9161046 => place_cinematic_sprite(object, (208, 47), 2048, game),
+        9161066 => place_cinematic_sprite(object, (48, 207), 2048, game),
+        9161086 => place_cinematic_sprite(object, (208, 207), 2048, game),
+        9161106 => place_cinematic_sprite(object, (128, 186), 0, game),
+        9161190 => place_cinematic_sprite(object, (128, 204), 0, game),
+        9170922 => place_cinematic_sprite(object, (128, 128), 3584, game),
+        9170941 => place_cinematic_sprite(object, (-128i32 as u16, 128), 3584, game),
+        9170949 => place_cinematic_sprite(object, (128, 128), 2560, game),
+        9170968 => place_cinematic_sprite(object, (128, 128), 3072, game),
+        9170987 => place_cinematic_sprite(object, (128, 96), 1024, game),
+        9171006 => place_cinematic_sprite(object, (128, 160), 512, game),
+        9171267 => place_cinematic_sprite(object, (120, 136), 2560, game),
+        9171286 => place_cinematic_sprite(object, (120, 152), 3072, game),
+        9171305 => place_cinematic_sprite(object, (124, 108), 3072, game),
+        9171324 => place_cinematic_sprite(object, (121, 107), 2560, game),
+        9171393 => place_cinematic_sprite(object, (385, 366), 3584, game),
+        9171412 => place_cinematic_sprite(object, (391, 384), 3584, game),
+        _ => {
+            Unreachable(game);
+        }
+    }
 }
 
 pub(crate) fn clear_cinematic_sprites(game: &mut Game) {

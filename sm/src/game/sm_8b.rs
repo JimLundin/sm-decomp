@@ -9,12 +9,10 @@ use crate::game::visual_runtime::{
     advance_credit_roll, advance_intro_baby_pursuit, advance_intro_rinka,
     advance_postcredits_samus_message, advance_shooting_stars, advance_zebes_destruction_zoom,
     advance_zebes_stars, chase_intro_baby_y, draw_cinematic_sprites, draw_intro_sprites,
-    drift_cinematic_sprite, fade_postcredits_samus_suit, initialize_ceres_explosion,
-    initialize_ending_cloud_band, initialize_ending_cloud_side, initialize_ending_time_glyph,
-    initialize_intro_brain_particle, initialize_intro_rinka, initialize_shooting_stars,
-    initialize_title_sprite, launch_cinematic_sprite, move_ending_cloud, place_cinematic_sprite,
-    prepare_credit_roll, prepare_ending_time, request_title_skip, start_intro_rinka,
-    title_metroid_cry, title_metroid_palette, wait_cinematic_scene, wait_ending_cloud,
+    drift_cinematic_sprite, fade_postcredits_samus_suit, initialize_shooting_stars,
+    launch_cinematic_sprite, move_ending_cloud, prepare_credit_roll, prepare_ending_time,
+    request_title_skip, start_intro_rinka, title_metroid_cry, title_metroid_palette,
+    wait_cinematic_scene, wait_ending_cloud,
 };
 use crate::game::visual_runtime::{advance_cinematic_background_pre, fade_cinematic_fixed_color};
 use crate::game::visual_runtime::{
@@ -28,9 +26,7 @@ use crate::game::visual_runtime::{
 use crate::game::visual_state::CinematicObjects::{
     Background as CinematicBackground, Mode7 as CinematicMode7, Sprites as CinematicSprites,
 };
-use crate::game::visual_state::{
-    CeresExplosion, CinematicDisplay, CinematicFade, CinematicTilemap,
-};
+use crate::game::visual_state::{CinematicDisplay, CinematicFade, CinematicTilemap};
 
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_60::*;
@@ -462,9 +458,6 @@ pub unsafe fn GameState_37_CeresGoesBoomWithSamus_(game: &mut Game) -> Coroutine
     }
 }
 pub fn CinematicFunc_Nothing() {}
-static kSetSomeStuffForSpriteObject_6_Tab: [i16; 12] = [
-    0x5c, 0x58, 0x63, 0x58, 0x59, 0x5d, 0x60, 0x5b, 0x66, 0x5e, 0x63, 0x60,
-];
 static kSetSomeStuffForSpriteObject_7_Tab0: [i16; 12] = [
     -1, 0x4000, 0, 0x4000, -1, -0x8000, -1, 0x2000, 0, -0x8000, 0, 0x2000,
 ];
@@ -1859,134 +1852,6 @@ crate::game::callback_dispatch! {
         9160968 => [launch_cinematic_sprite(j, 32, false, game)];
         9158617 => [()]; 9147353 => [()]; 9147487 => [()]; 9152724 => [()];
         9172252 => [()];
-    }
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallCinematicSpriteObjectSetup(ea: u32, j: u16, game: &mut Game) => ea;
-    call (j, game); default { Unreachable(game); };
-    @functions [pub unsafe fn (j: u16, game: &mut Game)];
-    [9152856] SetSomeStuffForSpriteObject_6 [] {
-        let v1: u16 = word!(game.cinematic_spawn_param);
-        let v2: i32 = j as i32 >> 1;
-        word!(game.cinematicspr_goto_timer[v2] = word!(game.cinematic_spawn_param));
-        let v3: i32 = ((4u16).wrapping_mul(v1)) as i32 >> 1;
-        word! { game;
-            cinematicbg_arr7[v2] =
-                ((kSetSomeStuffForSpriteObject_6_Tab[v3 as usize]) as u16).wrapping_add(16);
-            cinematicbg_arr8[v2] =
-                ((kSetSomeStuffForSpriteObject_6_Tab[(v3 + 1) as usize]) as u16).wrapping_add(59);
-            cinematicbg_arr9[v2] = 3584;
-        }
-    };
-    [9158560] CinematicFunction_Intro_Func65 [] {
-        if word!(game.cinematic_spawn_param) != 0 {
-            word!(game.cinematicbg_arr7[(j >> 1)] = 224);
-        } else {
-            let v1: i32 = j as i32 >> 1;
-            word!(game.cinematicbg_arr7[v1] = 112);
-            word!(game.cinematicspr_preinstr_func[v1] = (0x8bbfd9i32) as u16);
-        }
-        let v2: i32 = j as i32 >> 1;
-        word! {game; cinematicbg_arr8[v2] = 87; cinematicbg_arr9[v2] = 2048; }
-    };
-    @functions [pub unsafe fn (j: u16, game: &mut Game)];
-    @prefix { let v1: i32 = j as i32 >> 1; };
-    [9153178] SetSomeStuffForSpriteObject_8 [] {
-        word! {game; cinematicspr_goto_timer[v1] = word!(game.cinematic_spawn_param);
-            cinematicbg_arr7[v1] = word!(game.cinematicbg_arr7[13]);
-            cinematicbg_arr8[v1] = word!(game.cinematicbg_arr8[13]); cinematicbg_arr9[v1] = 3584; }
-    };
-    [9158270] CinematicFunction_Intro_Func57 [] {
-        if word!(game.cinematic_spawn_param) != 0 {
-            word!(game.cinematicspr_preinstr_func[v1] = (0x8bbfc6i32) as u16);
-            word!(game.cinematicbg_arr7[v1] = -32i32 as u16);
-        } else {
-            word!(game.cinematicspr_goto_timer[v1] = -1024i32 as u16);
-            word!(game.cinematicbg_arr7[v1] = 112);
-        }
-        word! {game; cinematicbg_arr8[v1] = 87; cinematicbg_arr9[v1] = 2048; }
-    };
-    @external {
-        9171343 => [crate::game::visual_runtime::initialize_ending_sprite_pair(j, true, game)];
-        9171368 => [crate::game::visual_runtime::initialize_ending_sprite_pair(j, false, game)];
-        9170841 => [crate::game::visual_runtime::update_ending_critters(j, true, game)];
-        9150131 => [initialize_title_sprite(j, 0, game)];
-        9150166 => [initialize_title_sprite(j, 1, game)];
-        9150207 => [initialize_title_sprite(j, 2, game)];
-        9157005 => [initialize_intro_brain_particle(j, true, game)];
-        9157076 => [initialize_intro_brain_particle(j, false, game)];
-        9159732 => [initialize_ceres_explosion(j, CeresExplosion::First, game)];
-        9159865 => [initialize_ceres_explosion(j, CeresExplosion::Second, game)];
-        9159987 => [initialize_ceres_explosion(j, CeresExplosion::Third, game)];
-        9160105 => [initialize_ceres_explosion(j, CeresExplosion::Final, game)];
-        9156758 => [initialize_intro_rinka(j, game)];
-        9171038 => [initialize_ending_time_glyph(j, 0, game)];
-        9171053 => [initialize_ending_time_glyph(j, 1, game)];
-        9171068 => [initialize_ending_time_glyph(j, 2, game)];
-        9171077 => [initialize_ending_time_glyph(j, 3, game)];
-        9171092 => [initialize_ending_time_glyph(j, 4, game)];
-        9171122 => [initialize_ending_cloud_band(j, -96i32 as u16, game)];
-        9171169 => [initialize_ending_cloud_band(j, -32i32 as u16, game)];
-        9171177 => [initialize_ending_cloud_band(j, 288, game)];
-        9171185 => [initialize_ending_cloud_band(j, 352, game)];
-        9171193 => [initialize_ending_cloud_side(j, true, game)];
-        9171230 => [initialize_ending_cloud_side(j, false, game)];
-        9147353 => [()];
-        9149210 => [place_cinematic_sprite(j, (128, 48), 1024, game)];
-        9149229 => [place_cinematic_sprite(j, (128, 81), 0, game)];
-        9149248 => [place_cinematic_sprite(j, (128, 196), 2048, game)];
-        9149628 => [place_cinematic_sprite(j, (129, 112), 512, game)];
-        9149770 => [place_cinematic_sprite(j, (129, 112), 512, game)];
-        9149891 => [place_cinematic_sprite(j, (129, 112), 512, game)];
-        9150021 => [place_cinematic_sprite(j, (129, 112), 512, game)];
-        9152705 => [place_cinematic_sprite(j, (8, 24), 3072, game)];
-        9152725 => [place_cinematic_sprite(j, (112, 155), 3584, game)];
-        9153877 => [place_cinematic_sprite(j, (84, 139), 3072, game)];
-        9153939 => [place_cinematic_sprite(j, (112, 111), 3072, game)];
-        9154055 => [place_cinematic_sprite(j, (128, 216), 3072, game)];
-        9156467 => [place_cinematic_sprite(j, (56, 111), 3584, game)];
-        9157195 => [place_cinematic_sprite(j, (112, 155), 3584, game)];
-        9158434 => [place_cinematic_sprite(j, (80, 159), 2048, game)];
-        9158476 => [place_cinematic_sprite(j, (116, 160), 3072, game)];
-        9158518 => [place_cinematic_sprite(j, (128, 96), 2048, game)];
-        9158787 => [place_cinematic_sprite(j, (124, 186), 0, game)];
-        9158834 => [place_cinematic_sprite(j, (124, 204), 0, game)];
-        9160763 => [place_cinematic_sprite(j, (136, 111), 3584, game)];
-        9160855 => [place_cinematic_sprite(j, (128, 127), 2048, game)];
-        9161026 => [place_cinematic_sprite(j, (48, 47), 2048, game)];
-        9161046 => [place_cinematic_sprite(j, (208, 47), 2048, game)];
-        9161066 => [place_cinematic_sprite(j, (48, 207), 2048, game)];
-        9161086 => [place_cinematic_sprite(j, (208, 207), 2048, game)];
-        9161106 => [place_cinematic_sprite(j, (128, 186), 0, game)];
-        9161190 => [place_cinematic_sprite(j, (128, 204), 0, game)];
-        9170922 => [place_cinematic_sprite(j, (128, 128), 3584, game)];
-        9170941 => [place_cinematic_sprite(j, (-128i32 as u16, 128), 3584, game)];
-        9170949 => [place_cinematic_sprite(j, (128, 128), 2560, game)];
-        9170968 => [place_cinematic_sprite(j, (128, 128), 3072, game)];
-        9170987 => [place_cinematic_sprite(j, (128, 96), 1024, game)];
-        9171006 => [place_cinematic_sprite(j, (128, 160), 512, game)];
-        9171267 => [place_cinematic_sprite(j, (120, 136), 2560, game)];
-        9171286 => [place_cinematic_sprite(j, (120, 152), 3072, game)];
-        9171305 => [place_cinematic_sprite(j, (124, 108), 3072, game)];
-        9171324 => [place_cinematic_sprite(j, (121, 107), 2560, game)];
-        9171393 => [place_cinematic_sprite(j, (385, 366), 3584, game)];
-        9171412 => [place_cinematic_sprite(j, (391, 384), 3584, game)];
-    }
-}
-crate::game::address_dispatch! {
-    #[allow(unused_unsafe)]
-    pub unsafe fn CallCinematicSpriteInit(ea: u32, j: u16, game: &mut Game) => ea;
-        call (j, game); default { Unreachable(game); };
-    {
-        9149210 => [place_cinematic_sprite(j, (128, 48), 1024, game)];
-        9149229 => [place_cinematic_sprite(j, (128, 81), 0, game)];
-        9149248 => [place_cinematic_sprite(j, (128, 196), 2048, game)];
-        9149628 => [place_cinematic_sprite(j, (129, 112), 512, game)];
-        9149770 => [place_cinematic_sprite(j, (129, 112), 512, game)];
-        9149891 => [place_cinematic_sprite(j, (129, 112), 512, game)];
-        9150021 => [place_cinematic_sprite(j, (129, 112), 512, game)];
-        9150131 => [initialize_title_sprite(j, 0, game)];
-        9150166 => [initialize_title_sprite(j, 1, game)]; 9150207 => [initialize_title_sprite(j, 2, game)]; 9147353 => [()];
     }
 }
 crate::game::address_dispatch! {
