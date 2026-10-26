@@ -1512,10 +1512,6 @@ crate::game::callback_dispatch! {
         CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCEC7 as u16, 3, game);
         j
     };
-    [9171888] CinematicSprInstr_Func190 [] {
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEECD as u16, 0xf3b0, game);
-        j
-    };
     [9172253] CinematicSprInstr_Func208 [] {
         spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEF3F as u16, 0, 0, game);
         j
@@ -1596,25 +1592,6 @@ crate::game::callback_dispatch! {
         word! {game; cinematic_function = ((0x8bdb9ei32) as u16); cinematic_var4 = 120; }
     };
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
-    [9171918] CinematicSprInstr_Func192 [j] {
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEEFD as u16, 0xf3ce, game);
-        prepare_ending_time(game);
-    };
-    [9171995] CinematicSprInstr_Func193 [j] {
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF03 as u16, 0xf41b, game);
-    };
-    [9172004] CinematicSprInstr_Func194 [j] {
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF09 as u16, 0xf424, game);
-    };
-    [9172013] CinematicSprInstr_Func195 [j] {
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF0F as u16, 0xf42d, game);
-    };
-    [9172022] CinematicSprInstr_Func196 [j] {
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF15 as u16, 0xf436, game);
-    };
-    [9172031] CinematicSprInstr_Func197 [j] {
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF1B as u16, 0xf43f, game);
-    };
     [9172040] CinematicSprInstr_Func198 [j] {
         word! { game, 0; screen_fade_delay, screen_fade_counter }
         word!(game.cinematic_function = (0x8bde64i32) as u16);
@@ -1635,6 +1612,13 @@ crate::game::callback_dispatch! {
         word! {game; samus_y_subspeed = 0; samus_y_speed = -16i32 as u16; }
     };
     @external {
+        9171888 => [{ CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEECD as u16, 0xf3b0, game); j }];
+        9171918 => [{ CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEEFD as u16, 0xf3ce, game); prepare_ending_time(game); j }];
+        9171995 => [{ CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF03 as u16, 0xf41b, game); j }];
+        9172004 => [{ CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF09 as u16, 0xf424, game); j }];
+        9172013 => [{ CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF0F as u16, 0xf42d, game); j }];
+        9172022 => [{ CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF15 as u16, 0xf436, game); j }];
+        9172031 => [{ CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF1B as u16, 0xf43f, game); j }];
         9161159 => [{ crate::game::visual_runtime::advance_zebes_flight(0, game); j }];
         9172375 => [crate::game::visual_runtime::position_ending_samus_head(k, false, j, game)];
         9172410 => [crate::game::visual_runtime::position_ending_samus_head(k, true, j, game)];
