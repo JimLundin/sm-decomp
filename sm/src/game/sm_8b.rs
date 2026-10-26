@@ -1664,38 +1664,8 @@ crate::game::callback_dispatch! {
     pub unsafe fn CallCinematicSprInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> u16 => ea;
     call (k, j, game); default Unreachable(game) as u16;
     @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
-    [9149665] CinematicSprInstr_9CE1 [] {
-        *ram_ptr!(game; 0x69) = 17;
-        word! {game; cinematic_function = ((0x8b9d17i32) as u16); cinematic_var6 = 72;
-            cinematic_var8 = 315; cinematic_var7 = 0; cinematic_var10 = 225; cinematic_var9 = 0;
-            g_word_7E199B = -2i32 as u16; g_word_7E1999 = 0x8000; }
-        set_cinematic_backdrop(true, game);
-        j
-    };
-    [9149789] CinematicSprInstr_9D5D [] {
-        *ram_ptr!(game; 0x69) = 17;
-        word! {game; cinematic_function = ((0x8b9d90i32) as u16); cinematic_var6 = 96;
-            cinematic_var8 = 44; cinematic_var7 = 0; cinematic_var10 = -155i32 as u16;
-            cinematic_var9 = 0; g_word_7E199B = -2i32 as u16; g_word_7E1999 = 0x8000; }
-        j
-    };
-    [9149910] CinematicSprInstr_9DD6 [] {
-        *ram_ptr!(game; 0x69) = 17;
-        word! {game; cinematic_function = ((0x8b9e12i32) as u16); cinematic_var6 = 96;
-            cinematic_var8 = -177i32 as u16; cinematic_var7 = 0;
-            cinematic_var10 = -160i32 as u16; }
-        word! { game, 0; cinematic_var9, g_word_7E199B, g_word_7E1999 }
-        word! {game; g_word_7E199F = 1; g_word_7E199D = 0x8000; }
-        set_cinematic_backdrop(true, game);
-        j
-    };
     [9150040] CinematicSprInstr_Func8 [] {
-        *ram_ptr!(game; 0x69) = 17;
-        word! {game; cinematic_function = ((0x8b9e8bi32) as u16); cinematic_var6 = 67; }
-        word! { game, 0;
-            cinematic_var8, cinematic_var7, cinematic_var10, cinematic_var9, g_word_7E199B,
-            g_word_7E1999, g_word_7E199F, g_word_7E199D,
-        }
+        crate::game::visual_runtime::start_title_pan(3, j, game);
         initialize_title_gradient(game);
         j
     };
@@ -1888,6 +1858,9 @@ crate::game::callback_dispatch! {
         word! {game; samus_y_subspeed = 0; samus_y_speed = -16i32 as u16; }
     };
     @external {
+        9149665 => [crate::game::visual_runtime::start_title_pan(0, j, game)];
+        9149789 => [crate::game::visual_runtime::start_title_pan(1, j, game)];
+        9149910 => [crate::game::visual_runtime::start_title_pan(2, j, game)];
         9156805 => [start_intro_rinka(k, j, game)];
         9155382 => [intro_pages::start_page(0xb35f, j, game)]; 9155390 => [intro_pages::start_page(0xb370, j, game)];
         9155398 => [intro_pages::start_page(0xb381, j, game)]; 9155406 => [intro_pages::start_page(0xb392, j, game)];

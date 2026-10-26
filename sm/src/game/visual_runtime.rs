@@ -2032,6 +2032,28 @@ pub(crate) fn initialize_ending_time_glyph(object: u16, glyph: u8, game: &mut Ga
     place_cinematic_sprite(object, (156 + 8 * u16::from(glyph), 160), 0, game);
 }
 
+pub(crate) fn start_title_pan(stage: usize, cursor: u16, game: &mut Game) -> u16 {
+    let (next, zoom, x, y) = [
+        (0x9d17, 72, 315, 225),
+        (0x9d90, 96, 44, -155i16 as u16),
+        (0x9e12, 96, -177i16 as u16, -160i16 as u16),
+        (0x9e8b, 67, 0, 0),
+    ][stage];
+    game.g_ram[0x69] = 17;
+    word! {game; cinematic_function = next; cinematic_var6 = zoom;
+    cinematic_var8 = x; cinematic_var7 = 0; cinematic_var10 = y; cinematic_var9 = 0;
+    g_word_7E199B = if stage < 2 { -2i16 as u16 } else { 0 };
+    g_word_7E1999 = if stage < 2 { 0x8000 } else { 0 }; }
+    if stage >= 2 {
+        word! {game; g_word_7E199F = u16::from(stage == 2);
+        g_word_7E199D = if stage == 2 { 0x8000 } else { 0 }; }
+    }
+    if matches!(stage, 0 | 2) {
+        set_cinematic_backdrop(true, game);
+    }
+    cursor
+}
+
 pub(crate) fn advance_title_wait(game: &mut Game) {
     let expired = word!(game.demo_timer -= 1, reread) & 0x8000 != 0;
     if word!(game.demo_timer) == 0 || expired {
