@@ -32,9 +32,7 @@ pub use crate::types::Consts_A3;
 
 crate::game::constants::typed_constants! { Consts_A3;
     addr_kMetroid_Ilist_EA25 = 59941, addr_kMetroid_Ilist_E9CF = 59855,
-    addr_locret_A3E08A = 57482, addr_kWreckedShipOrangeZoomer_Ilist_E01F = 57375,
-    addr_kWreckedShipOrangeZoomer_Ilist_E003 = 57347, addr_kWreckedShipOrangeZoomer_Ilist_DFE7 = 57319,
-    addr_kWreckedShipOrangeZoomer_Ilist_DFCB = 57291, addr_stru_A3CD3A = 52538,
+    addr_stru_A3CD3A = 52538,
     addr_stru_A3CD32 = 52530, addr_stru_A3CD2A = 52522,
     addr_stru_A3CD22 = 52514, addr_stru_A3CD1A = 52506,
     addr_stru_A3CD12 = 52498, addr_stru_A3CD0A = 52490,
@@ -56,12 +54,11 @@ crate::type_aliases! {
 
 crate::type_aliases! {
     pub Enemy_MaridiaFish,
-        Enemy_WreckedShipOrangeZoomer, Enemy_FireZoomer,
         Enemy_FireFlea, Enemy_Metroid = crate::game::enemy_layouts::EnemyLayout40;
 }
 
 crate::type_aliases! {
-    pub Enemy_Reflec, Enemy_StoneZoomer =
+    pub Enemy_Reflec =
         crate::game::enemy_layouts::EnemyLayout8;
 }
 
@@ -72,19 +69,14 @@ crate::game::constants::typed_constants! { i32;
     fnBang_Func_10 = 0xa3bd1c, fnBang_Func_11 = 0xa3bd2c,
     fnnullsub_215 = 0xa3cf5f, fnMaridiaSnail_Func_15 = 0xa3d1b3,
     fnReflec_Func_1 = 0xa3db0c, fnnullsub_304 = 0xa3e6c1,
-    fnFireZoomer_Func_1 = 0xa3e6c8, fnFireZoomer_Func_2 = 0xa3e785,
 }
 crate::ram_map::ram_pointer_functions! {
-    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     Get_Bang(o: i32) -> Enemy_Bang = [0xf78, o as isize];
     Get_FireFlea(o: i32) -> Enemy_FireFlea = [0xf78, o as isize];
-    Get_FireZoomer(o: i32) -> Enemy_FireZoomer = [0xf78, o as isize];
     Get_MaridiaFish(o: i32) -> Enemy_MaridiaFish = [0xf78, o as isize];
     Get_MaridiaSnail(o: i32) -> Enemy_MaridiaSnail = [0xf78, o as isize];
     Get_Metroid(o: i32) -> Enemy_Metroid = [0xf78, o as isize];
     Get_Reflec(o: i32) -> Enemy_Reflec = [0xf78, o as isize];
-    Get_StoneZoomer(o: i32) -> Enemy_StoneZoomer = [0xf78, o as isize];
-    Get_WreckedShipOrangeZoomer(o: i32) -> Enemy_WreckedShipOrangeZoomer = [0xf78, o as isize];
 }
 crate::prefixed_callbacks! {
     pub unsafe fn (k: u16, game: &mut Game);
@@ -506,62 +498,6 @@ pub unsafe fn Reflec_Func_1(game: &mut Game) {
         }
     }
 }
-pub unsafe fn StoneZoomer_E67A(k: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_StoneZoomer(k as i32, game);
-        (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A3 as u16;
-        (*E).base.instruction_timer = 1;
-        (*E).var_F = (0xa3e6c1i32) as u16;
-        if (*E).parameter_1 != 255 {
-            let v2: u16 = crate::rtl::rom_table_word!(game, 0xa3e5f0, (*E).parameter_1 as isize);
-            (*E).var_A = v2;
-            (*E).var_B = v2;
-        }
-        if ((*E).base.properties & 3) != 0 {
-            if ((*E).base.properties & 3) == 2 {
-                (*E).var_B = -((*E).var_B as i32) as u16;
-            }
-        } else {
-            (*E).var_A = -((*E).var_A as i32) as u16;
-        };
-    }
-}
-pub unsafe fn FireZoomer_E8A5(k: u16, game: &mut Game) -> i32 {
-    unsafe {
-        let E = Get_FireZoomer(word!(game.cur_enemy_index) as i32, game);
-        let xpos: u16 = (*E).base.x_pos;
-        let ypos: u16 = (if (*E).var_B & 0x8000 != 0 {
-            (*E).base.y_pos as i32 - (*E).base.y_height as i32
-        } else {
-            (*E).base.y_pos as i32 + (*E).base.y_height as i32 - 1i32
-        }) as u16;
-        {
-            let (x, y) = (xpos, ypos);
-            actor_api::select_block_at(
-                &mut Runtime::new(game),
-                crate::game::session::Point { x, y },
-            )
-        };
-        if (word!(game.level_data[word!(game.cur_block_index)]) & 0xf000) == 4096
-            && (*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) & 0x1f) >= 5
-        {
-            let v1: u16 = crate::rtl::rom_table_word!(
-                game,
-                0xa3e931,
-                ((4 * (*ram_ptr!(game; 0x16402, word!(game.cur_block_index) as isize) as i32
-                    & 0x1f)) as u16
-                    >> 1) as isize,
-            );
-            if ((*E).var_A as i16) >= 0 {
-                game.multiply_with_scratch((*E).var_A, v1) as i32
-            } else {
-                -(game.multiply_with_scratch(-((*E).var_A as i32) as u16, v1) as i32)
-            }
-        } else {
-            ((*E).var_A as i16 as i32) << 8
-        }
-    }
-}
 static off_A3EC09: [Func_Y_V; 4] = callback_table! { nonnull Func_Y_V;
     Metroid_Func_1, Metroid_Func_2, Metroid_Func_3, Metroid_Func_4,
 };
@@ -804,33 +740,6 @@ crate::game::callback_dispatch! {
         Enemy_NormalShotAI_A3(game);
         Fireflea_Common(game);
     };
-    [10720995] Crab_Init [] {
-        let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-        (*v1).parameter_2 = 8;
-        (*v1).current_instruction = crate::rtl::rom_table_word!(
-            game,
-            0xa396db,
-            ((*v1).current_instruction as i32 & 3) as isize
-        );
-        StoneZoomer_E67A(word!(game.cur_enemy_index), game);
-    };
-    [10721595] Slug_Init [] {
-        let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-        (*v1).parameter_2 = 10;
-        (*v1).current_instruction = crate::rtl::rom_table_word!(
-            game,
-            0xa3992b,
-            ((*v1).current_instruction as i32 & 3) as isize
-        );
-        StoneZoomer_E67A(word!(game.cur_enemy_index), game);
-    };
-    [10729071] NorfairSlowFireball_Init [] {
-        let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-        (*v1).parameter_2 = 6;
-        (*v1).current_instruction =
-            crate::rtl::rom_table_word!(game, 0xa3b667, ((*v1).properties as i32 & 3) as isize);
-        StoneZoomer_E67A(word!(game.cur_enemy_index), game);
-    };
     [10735074] MaridiaSnail_Init [] {
         let E = Get_MaridiaSnail(word!(game.cur_enemy_index) as i32, game);
         (*E).var_F = (0xa3cf5fi32) as u16;
@@ -943,60 +852,6 @@ crate::game::callback_dispatch! {
             crate::game::player_projectiles::reflect(v0, game);
             QueueSfx2_Max6(0x57, game);
         };
-    };
-    [10739779] WreckedShipOrangeZoomer_Init [] {
-        let E = Get_WreckedShipOrangeZoomer(word!(game.cur_enemy_index) as i32, game);
-        (*E).base.current_instruction = crate::rtl::rom_table_word!(
-            game,
-            0xa3e03b,
-            ((*E).base.current_instruction as i32 & 3) as isize
-        );
-        (*E).var_F = addr_locret_A3E08A as u16;
-        let v1: u16 = crate::rtl::rom_table_word!(game, 0xa3e5f0, (*E).parameter_1 as isize);
-        (*E).var_A = v1;
-        (*E).var_B = v1;
-        if ((*E).base.properties & 3) != 0 {
-            if ((*E).base.properties & 3) == 2 {
-                (*E).var_B = -((*E).var_B as i32) as u16;
-            }
-        } else {
-            (*E).var_A = -((*E).var_A as i32) as u16;
-        };
-    };
-    [10739851] WreckedShipOrangeZoomer_Main [] {
-        let E = Get_WreckedShipOrangeZoomer(word!(game.cur_enemy_index) as i32, game);
-        actor_species_pre_instruction((((*E).var_F) as u32) | (0xa30000u32), game);
-    };
-    [10740436] BigEyeBugs_Init [] {
-        let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);
-        (*v1).current_instruction = crate::rtl::rom_table_word!(
-            game,
-            0xa3e2cc,
-            ((*v1).current_instruction as i32 & 3) as isize
-        );
-        StoneZoomer_E67A(word!(game.cur_enemy_index), game);
-    };
-    [10741148] FireZoomer_Init [] {
-        let E = Get_FireZoomer(word!(game.cur_enemy_index) as i32, game);
-        (*E).base.current_instruction = crate::rtl::rom_table_word!(
-            game,
-            0xa3e2cc,
-            ((*E).base.current_instruction as i32 & 3) as isize
-        );
-        StoneZoomer_E67A(word!(game.cur_enemy_index), game);
-    };
-    [10741353] StoneZoomer_Init [] {
-        let E = Get_StoneZoomer(word!(game.cur_enemy_index) as i32, game);
-        (*E).base.current_instruction = crate::rtl::rom_table_word!(
-            game,
-            0xa3e2cc,
-            ((*E).base.current_instruction as i32 & 3) as isize
-        );
-        StoneZoomer_E67A(word!(game.cur_enemy_index), game);
-    };
-    [10741442] StoneZoomer_Main [] {
-        let E = Get_StoneZoomer(word!(game.cur_enemy_index) as i32, game);
-        actor_species_pre_instruction((((*E).var_F) as u32) | (0xa30000u32), game);
     };
     [10742351] Metroid_Init [] {
         let enemy = word!(game.cur_enemy_index);
@@ -1265,11 +1120,6 @@ crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [10741344] Zoomer_Instr_SetPreinstr [] {
-        (*gEnemyData(k as i32, game)).ai_preinstr = jp.word(0);
-        jp.offset(1)
-    };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10719382] MaridiaFish_Instr_3 [jp] {
         (*Get_MaridiaFish(word!(game.cur_enemy_index) as i32, game))
             .base
@@ -1314,15 +1164,6 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10738632] Reflec_Instr_1 [jp.offset(1)] { (*Get_Reflec(k as i32, game)).parameter_2 = jp.word(0); };
-    @functions [pub unsafe fn (
-    k: u16,
-    jp: EnemyScript,
-    game: &mut Game,
-) -> EnemyScript];
-    [10739650] WreckedShipOrangeZoomer_Func_1 [] {
-        (*Get_WreckedShipOrangeZoomer(k as i32, game)).var_F = jp.word(0);
-        jp.offset(1)
-    };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10742437] Metroid_Instr_2 [jp] { QueueSfx2_Max6(0x50, game); };
     [10742449] Metroid_Instr_1 [jp] {
@@ -1369,195 +1210,6 @@ crate::game::callback_dispatch! {
         if (*E).var_0A != 0 || ((*E).var_09 as i16) <= 0 {
             (*E).var_F = (0xa3bca5i32) as u16;
         }
-    };
-    [10739857] WreckedShipOrangeZoomer_Func_2 [] {
-        let mut v7: i16 = 0;
-        let E = Get_WreckedShipOrangeZoomer(k as i32, game);
-        if word!(game.earthquake_timer) == 30 && word!(game.earthquake_type) == 20 {
-            (*E).var_03 = (*E).var_F;
-            (*E).var_F = (0xa3e785i32) as u16;
-        }
-        if ({ let (actor, amount) = (k, Shift8AddMagn((*E).var_A as i16, 1) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Follow) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            (*E).var_04 = 0;
-            ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
-            if ({ let (actor, amount) = (k, ((*E).var_B as i16 as i32) << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) == 0 {
-                let negate_displacement: bool = if ((word!(game.samus_y_pos)) as i16)
-                    .wrapping_sub(((*E).base.y_pos) as i16)
-                    >= 0
-                {
-                    v7 = (*E).var_B as i16;
-                    v7 < 0
-                } else {
-                    v7 = (*E).var_B as i16;
-                    v7 >= 0
-                };
-                if negate_displacement {
-                    v7 = -(v7 as i32) as i16;
-                }
-                (*E).var_B = v7 as u16;
-                return;
-            }
-            (*E).var_A = -((*E).var_A as i32) as u16;
-            let mut v9: u16 = addr_kWreckedShipOrangeZoomer_Ilist_E01F as u16;
-            if ((*E).var_B & 0x8000) != 0 {
-                v9 = addr_kWreckedShipOrangeZoomer_Ilist_E003 as u16;
-            }
-            enemy_instruction! {[(*E).base]; instruction = v9, timer = 1}
-        } else {
-            let v11: u16 = ((*E).var_04).wrapping_add(1);
-            (*E).var_04 = v11;
-            if v11 as i32 - 4i32 & 0x8000 != 0 {
-                (*E).var_B = -((*E).var_B as i32) as u16;
-                let mut v12: u16 = addr_kWreckedShipOrangeZoomer_Ilist_E01F as u16;
-                if ((*E).var_B & 0x8000) != 0 {
-                    v12 = addr_kWreckedShipOrangeZoomer_Ilist_E003 as u16;
-                }
-                enemy_instruction! {[(*E).base]; instruction = v12, timer = 1}
-            } else {
-                (*E).var_03 = (*E).var_F;
-                (*E).var_F = (0xa3e785i32) as u16;
-            }
-        };
-    };
-    [10741448] FireZoomer_Func_1 [] {
-        let E = Get_FireZoomer(k as i32, game);
-        if word!(game.earthquake_timer) == 30 && word!(game.earthquake_type) == 20 {
-            (*E).var_03 = (*E).var_F;
-            (*E).var_F = (0xa3e785i32) as u16;
-        }
-        if ({ let (actor, amount) = (k, Shift8AddMagn((*E).var_A as i16, 1) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            (*E).var_04 = 0;
-            ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
-            if ({ let (actor, amount) = (k, ((*E).var_B as i16 as i32) << 8); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-                (*E).var_A = -((*E).var_A as i32) as u16;
-                let fzr_parameter_2: u16 = (*E).parameter_2;
-                let mut v7: u16 = if ((*E).var_B & 0x8000) == 0 {
-                    crate::rtl::rom_table_word!(game, 0xa3e63c, (fzr_parameter_2 >> 1) as isize)
-                } else {
-                    crate::rtl::rom_table_word!(game, 0xa3e630, (fzr_parameter_2 >> 1) as isize)
-                };
-                enemy_instruction! {[(*E).base]; instruction = v7, timer = 1}
-            }
-        } else {
-            let v8: u16 = ((*E).var_04).wrapping_add(1);
-            (*E).var_04 = v8;
-            if v8 as i32 - 4i32 & 0x8000 != 0 {
-                (*E).var_B = -((*E).var_B as i32) as u16;
-                let v9: u16 = (*E).parameter_2;
-                let mut v10: u16 = if ((*E).var_B & 0x8000) == 0 {
-                    crate::rtl::rom_table_word!(game, 0xa3e63c, (v9 >> 1) as isize)
-                } else {
-                    crate::rtl::rom_table_word!(game, 0xa3e630, (v9 >> 1) as isize)
-                };
-                enemy_instruction! {[(*E).base]; instruction = v10, timer = 1}
-            } else {
-                (*E).var_03 = (*E).var_F;
-                (*E).var_F = (0xa3e785i32) as u16;
-            }
-        };
-    };
-    [10741637] FireZoomer_Func_2 [] {
-        let E = Get_FireZoomer(k as i32, game);
-        if ({ let (actor, amount) = (k, (words!((*E), var_02, var_01)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            if (*E).parameter_1 == 255 {
-                set_fields! {[(*E)], 128; var_A, var_B}
-            }
-            set_fields! {[(*E)], 0; var_01, var_02, var_04}
-            (*E).var_F = (*E).var_03;
-        } else {
-            if (*E).var_02 as i32 - 4i32 & 0x8000 != 0 {
-                words!((*E), var_02, var_01 += 0x8000);
-            }
-            if (*E).var_01 == 0 && (*E).var_02 == 0 {
-                (*E).var_F = (0xa3e6c8i32) as u16;
-            }
-        };
-    };
-    [10741746] FireZoomer_Func_3 [] {
-        let E = Get_FireZoomer(k as i32, game);
-        if word!(game.earthquake_timer) == 30 && word!(game.earthquake_type) == 20 {
-            (*E).var_03 = (*E).var_F;
-            (*E).var_F = (0xa3e785i32) as u16;
-        }
-        if ({ let (actor, amount) = (k, Shift8AddMagn((*E).var_B as i16, 1) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            (*E).var_04 = 0;
-            let amt: i32 = FireZoomer_E8A5(k, game);
-            if ({ let (actor, amount) = (k, amt); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-                (*E).var_B = -((*E).var_B as i32) as u16;
-                let fzr_parameter_2: u16 = (*E).parameter_2;
-                let mut v6: u16 = if ((*E).var_A & 0x8000) == 0 {
-                    crate::rtl::rom_table_word!(game, 0xa3e654, (fzr_parameter_2 >> 1) as isize)
-                } else {
-                    crate::rtl::rom_table_word!(game, 0xa3e648, (fzr_parameter_2 >> 1) as isize)
-                };
-                enemy_instruction! {[(*E).base]; instruction = v6, timer = 1}
-            } else {
-                ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
-            }
-        } else {
-            let v7: u16 = ((*E).var_04).wrapping_add(1);
-            (*E).var_04 = v7;
-            if v7 as i32 - 4i32 & 0x8000 != 0 {
-                (*E).var_A = -((*E).var_A as i32) as u16;
-                let v8: u16 = (*E).parameter_2;
-                let mut v9: u16 = if ((*E).var_A & 0x8000) == 0 {
-                    crate::rtl::rom_table_word!(game, 0xa3e654, (v8 >> 1) as isize)
-                } else {
-                    crate::rtl::rom_table_word!(game, 0xa3e648, (v8 >> 1) as isize)
-                };
-                enemy_instruction! {[(*E).base]; instruction = v9, timer = 1}
-            } else {
-                (*E).var_03 = (*E).var_F;
-                (*E).var_F = (0xa3e785i32) as u16;
-            }
-        };
-    };
-    [10740072] sub_A3E168 [] {
-        let mut v7: i16 = 0;
-        let E = Get_WreckedShipOrangeZoomer(k as i32, game);
-        if word!(game.earthquake_timer) == 30 && word!(game.earthquake_type) == 20 {
-            (*E).var_03 = (*E).var_F;
-            (*E).var_F = (0xa3e785i32) as u16;
-        }
-        if ({ let (actor, amount) = (k, Shift8AddMagn((*E).var_B as i16, 1) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            (*E).var_04 = 0;
-            if ({ let (actor, amount) = (k, ((*E).var_A as i16 as i32) << 8); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Follow) == actor_api::MovementResult::Blocked) as u8 }) == 0 {
-                ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
-                if ((word!(game.samus_x_pos)) as i16).wrapping_sub(((*E).base.x_pos) as i16) >= 0 {
-                    v7 = (*E).var_A as i16;
-                    if v7 < 0 {
-                        v7 = -(v7 as i32) as i16;
-                    }
-                } else {
-                    v7 = (*E).var_A as i16;
-                    if v7 >= 0 {
-                        v7 = -(v7 as i32) as i16;
-                    }
-                }
-                (*E).var_A = v7 as u16;
-                return;
-            }
-            (*E).var_B = -((*E).var_B as i32) as u16;
-            let mut v9: u16 = addr_kWreckedShipOrangeZoomer_Ilist_DFE7 as u16;
-            if ((*E).var_A & 0x8000) != 0 {
-                v9 = addr_kWreckedShipOrangeZoomer_Ilist_DFCB as u16;
-            }
-            enemy_instruction! {[(*E).base]; instruction = v9, timer = 1}
-        } else {
-            let v11: u16 = ((*E).var_04).wrapping_add(1);
-            (*E).var_04 = v11;
-            if v11 as i32 - 4i32 & 0x8000 != 0 {
-                (*E).var_A = -((*E).var_A as i32) as u16;
-                let mut v12: u16 = addr_kWreckedShipOrangeZoomer_Ilist_DFE7 as u16;
-                if ((*E).var_A & 0x8000) != 0 {
-                    v12 = addr_kWreckedShipOrangeZoomer_Ilist_DFCB as u16;
-                }
-                enemy_instruction! {[(*E).base]; instruction = v12, timer = 1}
-            } else {
-                (*E).var_03 = (*E).var_F;
-                (*E).var_F = (0xa3e785i32) as u16;
-            }
-        };
     };
     [10735526] MaridiaSnail_Func_9 [] {
         let v1: u16 = (if (*Get_MaridiaSnail(k as i32, game)).var_05 != 0 {
@@ -1710,7 +1362,7 @@ crate::game::callback_dispatch! {
                     MaridiaSnail_Func_16(k, game);
                 }
                 (*E).base.properties = (*E).var_C | (*E).base.properties & !(3);
-                StoneZoomer_E67A(k, game);
+                actors::wall_crawlers::prepare(k, game);
                 (*E).var_F = (0xa3cf5fi32) as u16;
                 enemy_instruction! {[(*E).base]; instruction = (*E).var_D, timer = 1}
                 (*E).base.timer = 0;

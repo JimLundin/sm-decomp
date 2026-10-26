@@ -1,7 +1,7 @@
 //! One aggregate authority for player, projectiles, mechanisms and their room.
 use crate::game::actors::diving_enemies::{self, Kind as DivingKind};
 use crate::game::actors::{
-    elevator, falling_platforms, maridia_fish, mochtroid, refill_candy, roach, sidehopper,
+    elevator, falling_platforms, mochtroid, refill_candy, roach, sidehopper, wall_crawlers,
 };
 use crate::game::player_projectiles::{
     access::{ShotLane, Store},
@@ -619,6 +619,12 @@ crate::game::callback_dispatch! {
         10725245 => mochtroid::initialize; 10725264 => mochtroid::advance; 10725715 => mochtroid::touch;
         10725800 => [actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize)];
         10723079 => [()];
+        10720995 => [wall_crawlers::initialize(wall_crawlers::Kind::Crab, game)];
+        10721595 => [wall_crawlers::initialize(wall_crawlers::Kind::Slug, game)];
+        10729071 => [wall_crawlers::initialize(wall_crawlers::Kind::Fireball, game)];
+        10739779 => [wall_crawlers::initialize(wall_crawlers::Kind::Orange, game)];
+        10740436 | 10741148 | 10741353 => [wall_crawlers::initialize(wall_crawlers::Kind::Common, game)];
+        10739851 | 10741442 => [{ let phase = wall_crawlers::state_address(game); actor_species_pre_instruction(phase, game); }];
         10723661 => roach::initialize;
         10724048 => roach::advance;
         10726153 => sidehopper::initialize; 10726351 => sidehopper::advance;
@@ -872,6 +878,11 @@ crate::game::address_dispatch! {
         10652277 => [()];
         10657819 => [()]; 10659799 => [()];
         10676097 => [()]; 10730689 => [sm_a3::Bang_Func_7(k)];
+        10739857 => [wall_crawlers::crawl(k, actor_api::Axis::X, true, game)];
+        10740072 => [wall_crawlers::crawl(k, actor_api::Axis::Y, true, game)];
+        10741448 => [wall_crawlers::crawl(k, actor_api::Axis::X, false, game)];
+        10741746 => [wall_crawlers::crawl(k, actor_api::Axis::Y, false, game)];
+        10741637 => [wall_crawlers::falling(k, game)];
         10735455 => [()];
         10739850 => [()]; 10741441 => [()];
         10998952 => [()];
@@ -1012,6 +1023,7 @@ crate::game::callback_dispatch! {
         10725992 => [sidehopper::instruction(true, j, game)]; 10726142 => [sidehopper::instruction(false, j, game)];
         10728489 => [refill_candy::instruction(4, j, game)]; 10728500 => [refill_candy::instruction(8, j, game)];
         10728511 => [refill_candy::instruction(12, j, game)];
+        10741344 | 10739650 => [wall_crawlers::set_state(k, j, game)];
         10991155 => [sm_a7::Kraid_Instr_1(k, j)];
         11048485 | 11048497 | 11048522 | 11048547 | 11048572 | 11048597 | 11048628 => [crate::game::actors::fune::instruction(ea, j, game)];
         11056990 => [j];

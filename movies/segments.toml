@@ -985,3 +985,14 @@ input_sha256 = "3d0413b939faefc465e96ea037b4c7a9bdc019cdd975562348be445e6631043d
 start_frame = 0
 frames = 300
 expect = ["area:crateria", "room:91F8"]
+
+# Fixed window starts at the authenticated Stone Zoomer movement mismatch.
+[[segment]]
+id = "wall-crawler-slope-step"
+seed = "100-input-phase:27"
+seed_sha256 = "c402c17601f3ac1b274a8c1914e306ed304371b8e65031975d5b67947591528c"
+inputs = "authored-bomb-jump.inputs"
+input_sha256 = "65a524cd11d5b4a35bf9add300b091d64ce39888083e529633210eac5ced2d3c"
+start_frame = 6762
+frames = 8
+expect = ["area:crateria", "room:92FD"]
