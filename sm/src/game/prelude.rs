@@ -9,7 +9,6 @@ pub use crate::game::constants::loading_game_states::*;
 pub use crate::game::constants::projectile_types::*;
 pub use crate::game::constants::samus_movement::*;
 pub use crate::game::constants::samus_poses::*;
-pub(crate) use crate::game::session::Vector32;
 pub(crate) use crate::game_state::Game;
 pub(crate) use crate::ram_map::{ram_ptr, word};
 pub(crate) use crate::rtl::{

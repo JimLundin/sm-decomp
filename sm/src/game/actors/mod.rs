@@ -108,6 +108,7 @@ pub(in crate::game) mod maridia_puffer;
 pub(in crate::game) mod morph_ball_eye;
 pub(in crate::game) mod norfair_lava_man;
 pub(in crate::game) mod norfair_pipe_bug;
+pub(crate) mod spore_spawn;
 pub(in crate::game) mod wrecked_ship_ghost;
 pub(in crate::game) mod wrecked_ship_orbs;
 pub(in crate::game) mod wrecked_ship_robots;

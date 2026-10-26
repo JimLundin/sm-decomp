@@ -1,27 +1,17 @@
 use crate::game::actors;
-use crate::game::actors::api as actor_api;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
-use crate::game::gameplay_flag_host::BossWordOrder;
-use crate::game::gameplay_flag_runtime;
 use crate::game::player_update::minimap;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
-use crate::game::session_runtime::{actor_cosine, actor_direction_vector, actor_sine};
 
-pub use crate::game::constants::bank_86::*;
-
-use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::music::{QueueSfx2_Max6, QueueSfx3_Max6};
-use crate::game::room_mechanisms::spawn_hardcoded;
-use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
+use crate::game::sprite_effect_runtime as sprite_effects;
 use crate::game::visual_runtime::{initialize_draygon_layer, spawn_bg3_scroll};
 
 pub use crate::types::Consts_A5;
 
 crate::game::constants::typed_constants! { Consts_A5;
-    addr_kDraygon_Ilist_E77D = 59261, addr_stru_A5E729 = 59177,
-    addr_kDraygon_Ilist_E6D5 = 59093, addr_kDraygon_Ilist_E6C7 = 59079,
     addr_kDraygon_Ilist_E6B9 = 59065, addr_kDraygon_BigSprmap_C11B = 49435,
     addr_kDraygon_BigSprmap_C08F = 49295, addr_word_A5A297 = 41623,
     addr_kDraygon_MorePalettes2 = 41591, addr_kDraygon_Palette = 41463,
@@ -30,18 +20,16 @@ crate::game::constants::typed_constants! { Consts_A5;
     addr_kDraygon_Ilist_98ED = 39149, addr_kDraygon_Ilist_9889 = 39049,
     addr_kDraygon_Ilist_9825 = 38949, addr_kDraygon_Ilist_9813 = 38931,
     addr_kDraygon_Ilist_97E7 = 38887, addr_kDraygon_Ilist_97D1 = 38865,
-    addr_kDraygon_Ilist_97BB = 38843, addr_kDraygon_Ilist_97B9 = 38841,
 }
 
 crate::type_aliases! {
-    pub Enemy_Draygon, Enemy_SporeSpawn = crate::game::enemy_layouts::EnemyLayout104;
+    pub Enemy_Draygon = crate::game::enemy_layouts::EnemyLayout104;
 }
 
 const RomPtr_A5: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa5>;
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     Get_Draygon(o: i32) -> Enemy_Draygon = [0xf78, o as isize];
-    Get_SporeSpawn(o: i32) -> Enemy_SporeSpawn = [0xf78, o as isize];
 }
 crate::game::callback_dispatch! {
     pub unsafe fn CallDraygonFunc(ea: u32, k: u16, game: &mut Game) => ea;
@@ -52,50 +40,10 @@ crate::game::callback_dispatch! {
         printf(b"Wtf is varE26?\n\0" as *const u8 as *const c_char);
         actors::draygon_sweep::begin(false, game);
     };
-    [10873627] SporeSpawn_Func_1 [] {
-        crate::game::enemy_projectiles::update_spore_stem(game);
-        let E = Get_SporeSpawn(word!(game.cur_enemy_index) as i32, game);
-        let v1: u16 = ((*E).base.y_pos).wrapping_add(1);
-        (*E).base.y_pos = v1;
-        if v1 as i32 - 624i32 & 0x8000 == 0 {
-            enemy_instruction! {[(*E).base]; instruction = addr_kDraygon_Ilist_E6D5 as u16, timer = 1}
-        }
-        let E0 = Get_SporeSpawn(0, game);
-        (*E0).var_0B = 48;
-        (*E0).var_0C = 1;
-        (*E0).var_0A = 192;
-    };
-    [10873755] SporeSpawn_Func_3 [] {
-        let E0 = Get_SporeSpawn(0, game);
-        (*E0).var_43 = ((64u8).wrapping_sub(
-            (actor_api::angle_from_delta((128u16).wrapping_sub((*E0).base.x_pos), (624u16).wrapping_sub((*E0).base.y_pos))) as u8,
-        )) as u16;
-        let E = Get_SporeSpawn(word!(game.cur_enemy_index) as i32, game);
-        let pt: Vector32 = actor_direction_vector(byte!((*E0).var_43; 0) as u16, 1, game);
-        (*E).var_28 = (pt.x >> 16) as u16;
-        (*E).var_29 = pt.x as u16;
-        (*E).var_2A = (pt.y >> 16) as u16;
-        (*E).var_2B = pt.y as u16;
-    };
-    [10873838] SporeSpawn_Func_4 [] {
-        let E = Get_SporeSpawn(word!(game.cur_enemy_index) as i32, game);
-        let E0 = Get_SporeSpawn(0, game);
-        let varE20: u16 = byte!((*E0).var_43; 0) as u16;
-        ({ let (phase, point) = (varE20, Vector32 {
-                x: words!((*E), var_28, var_29),
-                y: words!((*E), var_2A, var_2B),
-            }); Runtime::new(game).session_mut().compatibility_enemy_scratch = phase; actor_api::apply_vector(&mut Runtime::new(game), phase, point) });
-        let v2: u16 = abs16(((*E0).base.x_pos).wrapping_sub(128));
-        if v2 as i32 - 8i32 & 0x8000 != 0 {
-            let v3: u16 = abs16(((*E0).base.y_pos).wrapping_sub(624));
-            if v3 as i32 - 8i32 & 0x8000 != 0 {
-                (*E0).var_A = (0xa5eb1ai32) as u16;
-            }
-        }
-        crate::game::enemy_projectiles::update_spore_stem(game);
-        sub_A5E9F5(game);
-    };
     @external {
+        10873627 => [actors::spore_spawn::descend(game)];
+        10873755 => [actors::spore_spawn::begin_return(game)];
+        10873838 => [actors::spore_spawn::finish_return(game)];
         10848027 => [actors::draygon_flight::opening(true, game)];
         10848139 => [actors::draygon_flight::opening(false, game)];
         10850693 => [actors::draygon_death::approach(game)];
@@ -126,7 +74,7 @@ crate::game::callback_dispatch! {
         10850565 => [actors::draygon_grab::start_release(k, game)]; 10850596 => [actors::draygon_grab::attach(k, game)];
         10863757 => [actors::draygon_eye::advance(k, false, game)];
         10863891 => [actors::draygon_eye::advance(k, true, game)];
-        10873626 => [()]; 10873682 => [SporeSpawn_Func_2(k, game)];
+        10873626 => [()]; 10873682 => [actors::spore_spawn::orbit(k, game)];
     }
 }
 macro_rules! copy_draygon_hurt_palette {
@@ -145,77 +93,6 @@ macro_rules! copy_draygon_hurt_palette {
             32 as size_t,
         );
     };
-}
-
-pub unsafe fn sub_A5E9F5(game: &mut Game) {
-    {
-        if (word!(game.nmi_frame_counter_word) & 0xf) == 0 {
-            game.next_random();
-            let x: u16 = ((word!(game.random_number) as i32 & 0x3f) + 96) as u16;
-            let y: u16 = ((((word!(game.random_number)) & (0xf00u16)) as i32 >> 8) + 480) as u16;
-            create_sprite(x, y, 21, 0, game);
-        }
-    }
-}
-crate::game::address_dispatch! {
-    pub unsafe fn CallSporeSpawnFunc(ea: u32, game: &mut Game) => ea;
-        call (game); default { Unreachable(game); };
-    {
-        10873626 => [()]; 10873627 => SporeSpawn_Func_1;
-        10873682 => [{
-                    SporeSpawn_Func_2(word!(game.cur_enemy_index), game);
-                }];
-        10873755 => SporeSpawn_Func_3; 10873838 => SporeSpawn_Func_4;
-    }
-}
-pub unsafe fn SporeSpawn_Func_2(k: u16, game: &mut Game) {
-    unsafe {
-        crate::game::enemy_projectiles::update_spore_stem(game);
-        let E0 = Get_SporeSpawn(0, game);
-        let E = Get_SporeSpawn(k as i32, game);
-        (*E).base.x_pos = ((*E).var_C).wrapping_add(actor_cosine((*E0).var_0A, (*E0).var_0B, game));
-        (*E).base.y_pos = ((*E).var_D).wrapping_add(actor_sine(
-            (2 * ((*E0).var_0A as i32 - 64i32)) as u16,
-            ((*E0).var_0B).wrapping_sub(16),
-            game,
-        ));
-        (*E0).var_0A = ((byte!((*E0).var_0C; 0)).wrapping_add(((*E0).var_0A) as u8)) as u16;
-    }
-}
-
-pub unsafe fn SporeSpawn_Func_6(game: &mut Game) {
-    unsafe {
-        if (*Get_SporeSpawn(word!(game.cur_enemy_index) as i32, game))
-            .base
-            .health
-            == 0
-        {
-            let E = Get_SporeSpawn(word!(game.cur_enemy_index) as i32, game);
-            let E0 = Get_SporeSpawn(0, game);
-            (*E0).var_0E = 0;
-            set_fields! {[(*E).base], 0; invincibility_timer, flash_timer, ai_handler_bits}
-            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
-            word_transfers!(game, descending, 14; native(0x19b1) <- value(0));
-            enemy_instruction! {[(*E0).base]; instruction = addr_kDraygon_Ilist_E77D as u16, timer = 1}
-            let area = word!(game.area_index);
-            let bits = gameplay_flag_runtime::boss_word_at(area, BossWordOrder::Little, game);
-            gameplay_flag_runtime::set_boss_word_le(area, bits | 2, game);
-            word!(game.scrolling_finished_hook = 0);
-            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x7, 0x1e, 0xb78f as VoidP), game);
-        }
-    }
-}
-pub unsafe fn SporeSpawn_Func_7(a: u16, game: &mut Game) {
-    {
-        let mut v1: u16 = a;
-        for i in (0i32..32).step_by(2) {
-            word!(
-                game.palette_buffer[((i >> 1) + 144)] =
-                    crate::rtl::rom_table_word!(game, 0xa5e379, (v1 >> 1) as isize)
-            );
-            v1 = (v1).wrapping_add(2);
-        }
-    }
 }
 
 crate::game::callback_dispatch! {
@@ -296,112 +173,15 @@ crate::game::callback_dispatch! {
         (*v0).palette_index = 0xe00;
         (*v0).layer = 2;
     };
-    [10873386] SporeSpawn_Init [] {
-        word_transfers!(game, ascending, 16; le(target_palettes, 240) <- rom(0xa5e359, 0));
-        SpawnEprojWithGfx(
-            0,
-            word!(game.cur_enemy_index),
-            addr_kEproj_SporeSpawnsStalk as u16,
-            game,
-        );
-        SpawnEprojWithGfx(
-            1,
-            word!(game.cur_enemy_index),
-            addr_kEproj_SporeSpawnsStalk as u16,
-            game,
-        );
-        SpawnEprojWithGfx(
-            2,
-            word!(game.cur_enemy_index),
-            addr_kEproj_SporeSpawnsStalk as u16,
-            game,
-        );
-        SpawnEprojWithGfx(
-            3,
-            word!(game.cur_enemy_index),
-            addr_kEproj_SporeSpawnsStalk as u16,
-            game,
-        );
-        let E = Get_SporeSpawn(word!(game.cur_enemy_index) as i32, game);
-        let E0 = Get_SporeSpawn(0, game);
-        set_fields! {[(*E)]; var_04 = (*E).base.x_pos, var_05 = ((*E).base.y_pos).wrapping_sub(72),
-        var_C = (*E).base.x_pos, var_D = (*E).base.y_pos, var_F = 0, };
-        if (gameplay_flag_runtime::boss_byte_at(word!(game.area_index), game) & 2) != 0 {
-            (*E0).base.current_instruction = addr_kDraygon_Ilist_E6B9 as u16;
-            (*E0).var_A = (0xa5eb1ai32) as u16;
-            (*E0).base.properties = ((*E0).base.properties) | (0x8000u16);
-            crate::game::enemy_projectiles::update_spore_stem(game);
-            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x7, 0x1e, 0xb793 as VoidP), game);
-            word!(game.scrolling_finished_hook = 0);
-        } else {
-            (*E0).base.current_instruction = addr_kDraygon_Ilist_E6C7 as u16;
-            word!(game.flag_process_all_enemies = -1i32 as u16);
-            let v5: u16 = word!(game.cur_enemy_index);
-            (*E).var_A = (0xa5eb1ai32) as u16;
-            word!(game.scrolling_finished_hook = (0x909589i32) as u16);
-            (*E).base.y_pos = ((*E).base.y_pos).wrapping_sub(128);
-            SpawnEprojWithGfx(0, v5, addr_kEproj_SporeSpawners as u16, game);
-            SpawnEprojWithGfx(1, v5, addr_kEproj_SporeSpawners as u16, game);
-            SpawnEprojWithGfx(2, v5, addr_kEproj_SporeSpawners as u16, game);
-            SpawnEprojWithGfx(3, v5, addr_kEproj_SporeSpawners as u16, game);
-            crate::game::enemy_projectiles::update_spore_stem(game);
-        };
-    };
-    [10873619] SporeSpawn_Main [] {
-        let E = Get_SporeSpawn(word!(game.cur_enemy_index) as i32, game);
-        CallSporeSpawnFunc((((*E).var_A) as u32) | (0xa50000u32), game);
-    };
-    [10874202] SporeSpawn_Shot [] {
-        let mut v0: u16 = (2u16).wrapping_mul(word!(game.collision_detection_index));
-        let v1: u16 = word!(game.projectile_type[word!(game.collision_detection_index)]);
-        if (v1 & 0x700) != 0 || (v1 & 0x10) != 0 {
-            actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Flash);
-            v0 = word!(game.cur_enemy_index);
-            let EK = Get_SporeSpawn(v0 as i32, game);
-            if (*EK).base.flash_timer != 0 {
-                let E = Get_SporeSpawn(0, game);
-                (*EK).var_A = (0xa5eb52i32) as u16;
-                let mut v4: i16 = 2;
-                if (*EK).base.health as i32 - 400i32 & 0x8000 != 0 {
-                    if ((*E).var_0C & 0x8000) != 0 {
-                        v4 = -2i16;
-                    }
-                    (*E).var_0C = v4 as u16;
-                }
-                if (*E).var_2F == 0 {
-                    (*E).var_0C = -((*E).var_0C as i32) as u16;
-                    (*E).var_2F = 1;
-                    enemy_instruction! {[(*EK).base]; instruction = addr_stru_A5E729 as u16, timer = 1}
-                    let mut v7: u16 = 96;
-                    let health: u16 = (*EK).base.health;
-                    if health as i32 - 70i32 & 0x8000 == 0 {
-                        v7 = 64;
-                        if health as i32 - 410i32 & 0x8000 == 0 {
-                            v7 = 32;
-                            if health as i32 - 770i32 & 0x8000 == 0 {
-                                v7 = 0;
-                            }
-                        }
-                    }
-                    if health != (*E).var_40 {
-                        (*E).var_40 = health;
-                        SporeSpawn_Func_7(v7, game);
-                    }
-                }
-            }
-            SporeSpawn_Func_6(game);
-        }
-    };
-    [10874348] SporeSpawn_Touch [] {
-        actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
-        SporeSpawn_Func_6(game);
-    };
-    @forward [pub unsafe fn (game: &mut Game)];
-    [10846223] Enemy_GrappleReact_CancelBeam_A5 => actors::combat::select_frozen_ai(&mut Runtime::new(game));
-    [10846243] Enemy_NormalTouchAI_A5 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize);
-    [10846253] Enemy_NormalShotAI_A5 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize);
-    [10846273] Enemy_NormalFrozenAI_A5 => actors::scheduling::update_frozen_enemy(&mut Runtime::new(game));
     @external {
+        10846223 => [actors::combat::select_frozen_ai(&mut Runtime::new(game))];
+        10846243 => [actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize)];
+        10846253 => [actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize)];
+        10846273 => [actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
+        10873386 => [actors::spore_spawn::initialize(game)];
+        10873619 => [actors::spore_spawn::update(game)];
+        10874202 => [actors::spore_spawn::shot(game)];
+        10874348 => [actors::spore_spawn::touch(game)];
         10851818 => [actors::draygon_death::touch(game)];
         10851847 => [actors::draygon_death::power_bomb(game)];
         10863723 => [actors::draygon_eye::initialize(game)]; }
@@ -430,58 +210,15 @@ crate::game::callback_dispatch! {
             properties = (*E).base.properties & 0x5bff | 0xa000, };
     };
     [10872981] Draygon_Instr_23 [jp.offset(1)] { QueueSfx2_Max6(jp.word(0), game); };
-    [10873009] Draygon_Instr_30 [jp] { scatter(DropSource::SporeSpawn, k, game); };
     [10873018] Draygon_Instr_20 [jp.offset(1)] {
         (*Get_Draygon(word!(game.cur_enemy_index) as i32, game)).var_A = jp.word(0);
     };
-    [10873034] Draygon_Instr_29 [jp.offset(1)] {
-        let v2: u16 = jp.word(0);
-        word_transfers!(game, ascending, 16;
-            le(palette_buffer, 144) <- rom(0xa5e3f9, (v2 as i32 >> 1)),
-        );
-        word_transfers!(game, ascending, 16;
-            le(palette_buffer, 64) <- rom(0xa5e4f9, (v2 as i32 >> 1)),
-        );
-        word_transfers!(game, ascending, 16;
-            le(palette_buffer, 112) <- rom(0xa5e5d9, (v2 as i32 >> 1)),
-        );
-    };
-    [10873116] Draygon_Instr_19 [jp.offset(1)] {
-        let v2: u16 = jp.word(0);
-        word_transfers!(game, ascending, 16;
-            le(target_palettes, 144) <- rom(0xa5e3f9, (v2 as i32 >> 1)),
-        );
-        word_transfers!(game, ascending, 16;
-            le(target_palettes, 64) <- rom(0xa5e4f9, (v2 as i32 >> 1)),
-        );
-        word_transfers!(game, ascending, 16;
-            le(target_palettes, 112) <- rom(0xa5e5d9, (v2 as i32 >> 1)),
-        );
-    };
-    [10873198] Draygon_Instr_28 [jp] {
-        game.next_random();
-        let mut r18: u16 = ((word!(game.random_number) as i32 & 0x7f) - 64i32) as u16;
-        let E = Get_Draygon(0, game);
-        r18 = (r18).wrapping_add((*E).base.x_pos);
-        let mut r20: u16 =
-            ((((word!(game.random_number)) & (0x7f00u16)) as i32 >> 8) - 64i32) as u16;
-        r20 = (r20).wrapping_add((*E).base.y_pos);
-        game.eproj_spawn_pt = Point16U { x: r18, y: r20 };
-        SpawnEprojWithRoomGfx(0xe509, 0x15, game);
-        QueueSfx2_Max6(0x29, game);
-    };
-    [10873265] Draygon_Instr_26 [jp] {
-        game.next_random();
-        let E = Get_Draygon(0, game);
-        let x: u16 =
-            ((*E).base.x_pos as i32 + (word!(game.random_number) as i32 & 0x7f) - 64i32) as u16;
-        let y: u16 = ((*E).base.y_pos as i32
-            + (((word!(game.random_number)) & (0x3f00u16)) as i32 >> 8)
-            - 32i32) as u16;
-        create_sprite(x, y, 3, 0, game);
-        QueueSfx2_Max6(0x25, game);
-    };
     @external {
+        10873034 => [actors::spore_spawn::fade(false, j, game)];
+        10873116 => [actors::spore_spawn::fade(true, j, game)];
+        10873198 => [actors::spore_spawn::emit_spore(j, game)];
+        10873265 => [actors::spore_spawn::emit_hurt(j, game)];
+        10873009 => [{ scatter(DropSource::SporeSpawn, k, game); j }];
         10851549 => [actors::draygon_flight::pose(j, game)];
         10852150 => [actors::draygon_eye::set_mode(k, j, game)];
         10852501 => [{ word!(game.room_loading_irq_handler = 12); j }];

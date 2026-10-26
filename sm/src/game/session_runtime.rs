@@ -998,7 +998,7 @@ crate::game::address_dispatch! {
         10518563 => [actor_api::contact_reaction(&mut Runtime::new(game), actor_api::DeathHandling::Finalize)]; 10670984 => [crate::game::large_snail::touch(true, game)];
         10670988 => [crate::game::large_snail::touch(false, game)]; 10780707 => sm_a4::Enemy_NormalTouchAI_A4;
         10795325 => sm_a4::Crocomire_Func_92; 10795344 => [()]; 10846284 => [()];
-        10851818 => actors::draygon_death::touch; 10874348 => sm_a5::SporeSpawn_Touch;
+        10851818 => actors::draygon_death::touch; 10874348 => actors::spore_spawn::touch;
         10936153 => sm_a6::sub_A6DF59; 10940479 => crate::game::ceres_doors::steam_touch; 10977356 => [()];
         10982539 => sm_a7::Kraid_Touch_ArmFoot; 10982544 => sm_a7::KraidsArm_Touch;
         11001237 => sm_a7::Phantoon_Touch; 11122117 => [()];
@@ -1016,8 +1016,8 @@ crate::game::callback_dispatch! {
         10671028 => crate::game::large_snail::shot; 10780717 => sm_a4::Enemy_NormalShotAI_A4;
         10795345 => sm_a4::Crocomire_Func_93; 10795368 => sm_a4::Crocomire_Func_94;
         10795525 => sm_a4::Crocomire_Func_95; 10795700 => sm_a4::Crocomire_Func_1;
-        10846253 => sm_a5::Enemy_NormalShotAI_A5; 10846284 => [()];
-        10851824 => actors::draygon_death::shot; 10874202 => sm_a5::SporeSpawn_Shot; 10911820 => [()];
+        10846253 => [actors::combat::shot_reaction(&mut Runtime::new(game), actor_api::ShotHandling::Finalize)]; 10846284 => [()];
+        10851824 => actors::draygon_death::shot; 10874202 => actors::spore_spawn::shot; 10911820 => [()];
         10936202 => sm_a6::Ridley_Shot; 10977356 => [()]; 10982581 => [()];
         10982582 => [sm_a7::Kraid_Arm_Shot(j, game)]; 11001243 => sm_a7::Phantoon_Shot;
         11121923 => sm_a9::MotherBrainsBody_Shot; 11121927 => sm_a9::MotherBrainsBrain_Shot;
