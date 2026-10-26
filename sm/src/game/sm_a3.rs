@@ -17,7 +17,7 @@ use crate::cpu_infra::Call;
 pub use crate::game::constants::bank_86::*;
 pub use crate::game::constants::bank_b4::*;
 
-use crate::game::music::{QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6};
+use crate::game::music::{QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::session_runtime::damage_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 
@@ -52,7 +52,7 @@ crate::game::constants::typed_constants! { Consts_A3;
     addr_kPlatformThatFallsWithSamus_Ilist_9C29 = 39977, addr_kPlatformThatFallsWithSamus_Ilist_9C13 = 39955,
     addr_kPlatformThatFallsWithSamus_Ilist_9BFD = 39933, addr_kPlatformThatFallsWithSamus_Ilist_9BE7 = 39911,
     addr_kPlatformThatFallsWithSamus_Ilist_9BD1 = 39889, addr_kPlatformThatFallsWithSamus_Ilist_9BBB = 39867,
-    addr_kElevator_Ilist_94D6 = 38102, addr_kMaridiaFish_Ilist_9072 = 36978,
+    addr_kMaridiaFish_Ilist_9072 = 36978,
     addr_kMaridiaFish_Ilist_9060 = 36960, addr_kMaridiaFish_Ilist_903C = 36924,
     addr_kMaridiaFish_Ilist_902A = 36906, addr_kFireflea_Ilist_8C2F = 35887,
     addr_kWaver_Ilist_86A7 = 34471,
@@ -71,7 +71,7 @@ crate::type_aliases! {
 }
 
 crate::type_aliases! {
-    pub Enemy_Reflec, Enemy_StoneZoomer, Enemy_Elevator =
+    pub Enemy_Reflec, Enemy_StoneZoomer =
         crate::game::enemy_layouts::EnemyLayout8;
 }
 
@@ -87,7 +87,6 @@ crate::game::constants::typed_constants! { i32;
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     Get_Bang(o: i32) -> Enemy_Bang = [0xf78, o as isize];
-    Get_Elevator(o: i32) -> Enemy_Elevator = [0xf78, o as isize];
     Get_FireFlea(o: i32) -> Enemy_FireFlea = [0xf78, o as isize];
     Get_FireZoomer(o: i32) -> Enemy_FireZoomer = [0xf78, o as isize];
     Get_MaridiaFish(o: i32) -> Enemy_MaridiaFish = [0xf78, o as isize];
@@ -246,79 +245,6 @@ crate::game::callback_dispatch! {
     MaridiaFish_Main [] {
         CallMaridiaFishFunc((((*E).var_A) as u32) | (0xa30000u32), game);
     };
-}
-static off_A39540: [Func_V; 4] = callback_table! { nonnull Func_V;
-    Elevator_Func_1, Elevator_Func_2, Elevator_Func_3, Elevator_Func3b,
-};
-pub unsafe fn Elevator_Func_1(game: &mut Game) {
-    unsafe {
-        if (crate::rtl::rom_table_word!(
-            game,
-            0xa394e2,
-            ((*Get_Elevator(word!(game.cur_enemy_index) as i32, game)).parameter_1 >> 1) as isize,
-        ) & word!(game.joypad1_newkeys))
-            != 0
-        {
-            QueueSfx3_Max6(0xb, game);
-            QueueSfx1_Max6(0x32, game);
-            CallSomeSamusCode(7, game);
-            crate::game::player_projectiles::reset(game);
-            Elevator_Func_4(game);
-            word!(game.elevator_status += 1);
-        } else {
-            word!(game.elevator_flags = 0);
-        };
-    }
-}
-pub unsafe fn Elevator_Func_2(game: &mut Game) {
-    unsafe {
-        let E = Get_Elevator(word!(game.cur_enemy_index) as i32, game);
-        if (*E).parameter_1 != 0 {
-            word!(game.elevator_direction = 0x8000);
-            words!((*E).base, y_pos, y_subpos += -0x18000i32 as u32);
-        } else {
-            word!(game.elevator_direction = 0);
-            words!((*E).base, y_pos, y_subpos += 0x18000);
-        }
-        Elevator_Func_4(game);
-    }
-}
-pub unsafe fn Elevator_Func_3(game: &mut Game) {
-    unsafe {
-        word!(game.elevator_status += 1);
-        Elevator_Func3b(game);
-    }
-}
-pub unsafe fn Elevator_Func3b(game: &mut Game) {
-    unsafe {
-        let E = Get_Elevator(word!(game.cur_enemy_index) as i32, game);
-        if (*E).parameter_1 != 0 {
-            words!((*E).base, y_pos, y_subpos += 0x18000);
-            if (*E).base.y_pos < (*E).var_A {
-                Elevator_Func_4(game);
-                return;
-            }
-        } else {
-            words!((*E).base, y_pos, y_subpos += -0x18000i32 as u32);
-            if (*E).base.y_pos >= (*E).var_A {
-                Elevator_Func_4(game);
-                return;
-            }
-        }
-        word! { game, 0; elevator_status, elevator_flags }
-        QueueSfx3_Max6(0x25, game);
-        (*E).base.y_pos = (*E).var_A;
-        CallSomeSamusCode(0xb, game);
-        Elevator_Func_4(game);
-    }
-}
-pub unsafe fn Elevator_Func_4(game: &mut Game) {
-    unsafe {
-        let E = Get_Elevator(word!(game.cur_enemy_index) as i32, game);
-        word! {game; samus_y_pos = ((*E).base.y_pos).wrapping_sub(26); samus_y_subpos = 0;
-        samus_x_pos = (*E).base.x_pos; }
-        word! { game, 0; samus_y_speed, samus_y_subspeed }
-    }
 }
 pub unsafe fn PlatformThatFalls_Init(k: u16, j: u16, game: &mut Game) {
     unsafe {
@@ -1606,28 +1532,6 @@ crate::game::callback_dispatch! {
     [10718857] Fireflea_Shot [] {
         Enemy_NormalShotAI_A3(game);
         Fireflea_Common(game);
-    };
-    [10720486] Elevator_Init [] {
-        let E = Get_Elevator(word!(game.cur_enemy_index) as i32, game);
-        set_fields! {[(*E).base]; spritemap_pointer = addr_kSpritemap_Nothing_A3 as u16,
-        instruction_timer = 1, timer = 0, current_instruction = addr_kElevator_Ilist_94D6 as u16, };
-        (*E).parameter_1 = ((*E).parameter_1).wrapping_mul(2);
-        (*E).var_A = (*E).base.y_pos;
-        if word!(game.elevator_status) != 2 {
-            crate::update_place! { unaligned_word fresh5 = &raw mut (*(ram_ptr!(game, u16; 0xe18))) => 0; }
-            word!(game.elevator_flags = u16::from_le(fresh5.read_unaligned()));
-        }
-        if words!(game.elevator_status, elevator_flags) != 0 {
-            (*E).base.y_pos = (*E).parameter_2;
-            Elevator_Func_4(game);
-        }
-    };
-    [10720554] Elevator_Frozen [] {
-        if word!(game.door_transition_flag_elevator_zebetites) == 0
-            && words!(game.elevator_status, elevator_flags) != 0
-        {
-            off_A39540[word!(game.elevator_status) as usize](game);
-        }
     };
     [10720995] Crab_Init [] {
         let v1 = gEnemyData(word!(game.cur_enemy_index) as i32, game);

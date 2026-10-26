@@ -1,5 +1,6 @@
 //! One aggregate authority for player, projectiles, mechanisms and their room.
 use crate::game::actors::diving_enemies::{self, Kind as DivingKind};
+use crate::game::actors::elevator;
 use crate::game::player_projectiles::{
     access::{ShotLane, Store},
     content,
@@ -605,6 +606,7 @@ crate::game::callback_dispatch! {
                     sm_a3::Fireflea_Touch(crate::ram_map::word!(game.cur_enemy_index), game);
                 }];
         10719413 => sm_a3::MaridiaFish_Init; 10719531 => sm_a3::MaridiaFish_Main;
+        10720486 => elevator::initialize; 10720554 => elevator::advance;
         10723079 => [()];
         10723661 => sm_a3::Roach_Init;
         10724048 => sm_a3::Roach_Main;

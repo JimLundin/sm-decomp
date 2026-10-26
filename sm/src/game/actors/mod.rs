@@ -6,6 +6,7 @@ pub(in crate::game) mod beetom;
 pub(in crate::game) mod content;
 pub(in crate::game) mod diving_enemies;
 pub(in crate::game) mod effects;
+pub(in crate::game) mod elevator;
 pub(crate) mod identity;
 pub(in crate::game) mod kago;
 pub(in crate::game) mod media;
