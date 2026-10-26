@@ -81,8 +81,11 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Qualified Core48: sm_b3 is retired; production111727, legacy19313, unsafe2882, verification39970.
-Botwoon plus four smoke rows pass (3,132 selected); full86 runs locally after this bank deletion.
+Qualified Core49: production111719, legacy19216, unsafe2877, verification39970; warnings179.
+Crocomire wall retirement: -8 engine/-97 legacy/-5 unsafe; full95/103=92.23% preserves native read order.
+Eight Crocomire/smoke rows pass (6,457 selected/0 setup/0 failures); native/failure variants remain source-reviewed.
+Retired sm_b3 passes post-deletion full86:136,526 selected+38,555 setup/0 failures; both Kago setups independent14,350.
+Next: qualify actual native-player ownership/new4d25 checkpoints, then shared bank-local Frame descriptors.
 Scoped mutation11.40min: 3AST kills, 2unobserved pipe-flight survivors, 1separate dispatch kill; all945-frame windows preserved.
 Final retirement removes17 engine/48 legacy/4 unsafe/1 verification lines; full31/48=64.58%, LF conversion is not savings.
 Complete Botwoon/all15 B3 preinstruction routing adds2 engine lines, retires104 legacy/15 unsafe; full106/104=101.92%.

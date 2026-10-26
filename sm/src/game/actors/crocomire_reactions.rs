@@ -6,17 +6,19 @@ use crate::game::callback_tables::callback_table;
 use crate::game::constants::{
     bank_86::{addr_kEproj_DustCloudExplosion, addr_stru_868F8F},
     bank_a4::*,
+    enemy_properties::kEnemyProps_Tangible,
 };
 use crate::game::enemy_layouts::EnemyLayout72 as Crocomire;
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::music::{QueueSfx2_Max6, QueueSfx3_Max6};
+use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::session_runtime::Runtime;
 use crate::game::sprite_effect_runtime::create_sprite;
 use crate::game_state::Game;
 use crate::ram_map::{slot, word};
 use crate::rtl::abs16;
-use crate::types::Point16U;
+use crate::types::{Point16U, SpawnHardcodedPlmArgs, VoidP};
 use core::ffi::c_long;
 
 type Reaction = fn(u16, EnemyScript, &mut Game) -> EnemyScript;
@@ -837,5 +839,92 @@ pub(crate) fn power_bomb(game: &mut Game) {
             };
             slot!(game, Crocomire[E].base; current_instruction = instruction, instruction_timer = 1);
         }
+    }
+}
+
+pub(crate) fn approach_wall(game: &mut Game) {
+    update_wall(game);
+    word_transfers!(game, ascending, 1; native(0xcd24) <- value(257));
+    if word!(game.samus_x_pos) as i32 - 1312i32 & 0x8000 == 0 {
+        word_transfers!(game, ascending, 1; native(0xcd24) <- value(256));
+    }
+    update_background(word!(game.cur_enemy_index), game);
+}
+
+fn update_wall(game: &mut Game) {
+    let E0: i32 = 0;
+    if slot!(game, Crocomire[E0].base.x_pos) as i32 - 1536i32 & 0x8000 != 0 {
+        word! { game, 0; kraid_unk9000, g_word_7E9002, g_word_7E9006, g_word_7E900A }
+    } else if slot!(game, Crocomire[E0].base.x_pos) as i32 - 1552i32 & 0x8000 != 0 {
+        if word!(game.kraid_unk9000) == 0 {
+            word!(game.kraid_unk9000 = 1);
+            game.eproj_spawn_pt = Point16U { x: 1536, y: 176 };
+            SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
+        }
+    } else if slot!(game, Crocomire[E0].base.x_pos) as i32 - 1552i32 & 0x8000 != 0 {
+        word! { game, 0; g_word_7E9002, g_word_7E9006, g_word_7E900A }
+    } else if slot!(game, Crocomire[E0].base.x_pos) as i32 - 1568i32 & 0x8000 != 0 {
+        if word!(game.g_word_7E9002) == 0 {
+            word!(game.g_word_7E9002 = 1);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x61, 0xb, 0xb74b as VoidP), game);
+            game.eproj_spawn_pt = Point16U { x: 1568, y: 176 };
+            SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
+        }
+    } else {
+        let x_pos: u16 = slot!(game, Crocomire[E0].base.x_pos);
+        if x_pos as i32 - 1568i32 & 0x8000 != 0 {
+            word! { game, 0; g_word_7E9006, g_word_7E900A }
+        } else if x_pos as i32 - 1584i32 & 0x8000 != 0 {
+            if word!(game.g_word_7E9006) == 0 {
+                word!(game.g_word_7E9006 = 1);
+                spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x62, 0xb, 0xb74b as VoidP), game);
+                spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x63, 0xb, 0xb74b as VoidP), game);
+                game.eproj_spawn_pt = Point16U { x: 1584, y: 176 };
+                SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
+            }
+        } else if ((x_pos) as i16).wrapping_sub((1600u16) as i16) >= 0 {
+            demolish_wall(game);
+            slot!(game, Crocomire[E0].var_20 = 1);
+            word!(game.g_word_7E9018 = 1);
+            let _v3: u16 = word!(game.cur_enemy_index);
+            let EK: i32 = word!(game.cur_enemy_index) as i32;
+            slot!(game, Crocomire[EK].var_A, |old| (old).wrapping_add(2));
+            for key in (0..=0x140i32).step_by(0x40) {
+                slot!(game, Crocomire[key].var_00 = 2);
+            }
+            for key in (0..=0x140i32).step_by(0x40) {
+                slot!(game, Crocomire[key].var_01 = 0);
+            }
+            QueueSfx2_Max6(0x3b, game);
+            word_transfers!(game, ascending, 1; native(0x9016) <- value(0));
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x4e, 0x3, 0xb757 as VoidP), game);
+            slot!(game, Crocomire[EK].base; current_instruction = addr_kCrocomire_Ilist_BFB0 as u16, instruction_timer = 1);
+            slot!(game, Crocomire[EK].base.properties, |old| (old)
+                | ((kEnemyProps_Tangible) as u16));
+            let E1: i32 = word!(game.cur_enemy_index) as i32 + 64;
+            slot!(game, Crocomire[E1].base; instruction_timer = 0x7fff, current_instruction = addr_kCrocomire_Ilist_BF62 as u16);
+            slot!(
+                game,
+                Crocomire[0x40i32].base.properties =
+                    slot!(game, Crocomire[0x40i32].base.properties) | (0x100u16)
+            );
+
+            slot!(game, Crocomire[EK]; var_E = 0, var_F = 0);
+            slot!(game, Crocomire[EK].var_D = 2048);
+            slot!(game, Crocomire[0i32].base.y_height = 16);
+        }
+    };
+}
+
+fn demolish_wall(game: &mut Game) {
+    for x in 0x61..=0x6a {
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(x, 0xb, 0xb74f as VoidP), game);
+    }
+    for (offset, y) in [176, 192, 176, 192, 192, 192, 192].into_iter().enumerate() {
+        game.eproj_spawn_pt = Point16U {
+            x: 1536 + 16 * offset as u16,
+            y,
+        };
+        SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
     }
 }

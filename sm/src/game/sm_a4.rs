@@ -2,10 +2,10 @@ use crate::game::actors;
 use crate::game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use crate::game::actors::api as actor_api;
 use crate::game::actors::crocomire_reactions::{
-    advance_melt_upload, emit_lava_plume, melt_flesh_down, melt_flesh_up, melt_rumble_down,
-    melt_rumble_up, melt_skeleton_up, prepare_flesh_tilemap, prepare_melt_graphics,
-    prepare_skeleton_tilemap, queue_melt_graphics, queue_tilemap_upload, select_melt_animation,
-    wall_step,
+    advance_melt_upload, approach_wall, emit_lava_plume, melt_flesh_down, melt_flesh_up,
+    melt_rumble_down, melt_rumble_up, melt_skeleton_up, prepare_flesh_tilemap,
+    prepare_melt_graphics, prepare_skeleton_tilemap, queue_melt_graphics, queue_tilemap_upload,
+    select_melt_animation, wall_step,
 };
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
@@ -32,10 +32,9 @@ crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
 }
 type Crocomire = Enemy_Crocomire;
-static g_word_A486A4: u16 = 0x640;
 pub fn nullsub_305(game: &mut Game) {}
 static off_A48C14: [Func_V; 45] = callback_table! { nonnull Func_V;
-    Crocomire_Func_28, Crocomire_Func_52, Crocomire_Func_36, melt_rumble_up, melt_rumble_down,
+    approach_wall, Crocomire_Func_52, Crocomire_Func_36, melt_rumble_up, melt_rumble_down,
     Crocomire_Func_36, melt_rumble_up, melt_rumble_down, prepare_flesh_tilemap, prepare_melt_graphics,
     advance_melt_upload, melt_flesh_up, Crocomire_Func_64, Crocomire_Func_65, Crocomire_Func_66,
     melt_flesh_down, Crocomire_8D47, melt_flesh_up, melt_flesh_down, Crocomire_8D47,
@@ -46,16 +45,6 @@ static off_A48C14: [Func_V; 45] = callback_table! { nonnull Func_V;
     advance_phase, Crocomire_9B86, nullsub_305, advance_phase, Crocomire_Func_29,
     Crocomire_Func_69,
 };
-pub unsafe fn Crocomire_Func_28(game: &mut Game) {
-    unsafe {
-        Crocomire_Func_37(game);
-        *(ram_ptr!(game, u16; 0xcd20, 4)) = 257;
-        if word!(game.samus_x_pos) as i32 - 1312i32 & 0x8000 == 0 {
-            *(ram_ptr!(game, u16; 0xcd20, 4)) = 256;
-        }
-        actors::crocomire_reactions::update_background(word!(game.cur_enemy_index), game);
-    }
-}
 pub fn Crocomire_Func_29(game: &mut Game) {
     {
         word! { game, 0; reg_BG2HOFS, reg_BG2VOFS }
@@ -66,92 +55,6 @@ pub unsafe fn Crocomire_Func_36(game: &mut Game) {
         actors::crocomire_reactions::rumble(game);
         align_crocomire_background(game);
         Crocomire_8D47(game);
-    }
-}
-pub unsafe fn Crocomire_Func_37(game: &mut Game) {
-    unsafe {
-        let E0: i32 = 0;
-        if slot!(game, Crocomire[E0].base.x_pos) as i32 - 1536i32 & 0x8000 != 0 {
-            word! { game, 0; kraid_unk9000, g_word_7E9002, g_word_7E9006, g_word_7E900A }
-        } else if slot!(game, Crocomire[E0].base.x_pos) as i32 - 1552i32 & 0x8000 != 0 {
-            if word!(game.kraid_unk9000) == 0 {
-                word!(game.kraid_unk9000 = 1);
-                game.eproj_spawn_pt = Point16U { x: 1536, y: 176 };
-                SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
-            }
-        } else if slot!(game, Crocomire[E0].base.x_pos) as i32 - 1552i32 & 0x8000 != 0 {
-            word! { game, 0; g_word_7E9002, g_word_7E9006, g_word_7E900A }
-        } else if slot!(game, Crocomire[E0].base.x_pos) as i32 - 1568i32 & 0x8000 != 0 {
-            if word!(game.g_word_7E9002) == 0 {
-                word!(game.g_word_7E9002 = 1);
-                spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x61, 0xb, 0xb74b as VoidP), game);
-                game.eproj_spawn_pt = Point16U { x: 1568, y: 176 };
-                SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
-            }
-        } else {
-            let x_pos: u16 = slot!(game, Crocomire[E0].base.x_pos);
-            if x_pos as i32 - 1568i32 & 0x8000 != 0 {
-                word! { game, 0; g_word_7E9006, g_word_7E900A }
-            } else if x_pos as i32 - 1584i32 & 0x8000 != 0 {
-                if word!(game.g_word_7E9006) == 0 {
-                    word!(game.g_word_7E9006 = 1);
-                    spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x62, 0xb, 0xb74b as VoidP), game);
-                    spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x63, 0xb, 0xb74b as VoidP), game);
-                    game.eproj_spawn_pt = Point16U { x: 1584, y: 176 };
-                    SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
-                }
-            } else if ((x_pos) as i16).wrapping_sub((g_word_A486A4) as i16) >= 0 {
-                Crocomire_8EE5(game);
-                slot!(game, Crocomire[E0].var_20 = 1);
-                word!(game.g_word_7E9018 = 1);
-                let v3: u16 = word!(game.cur_enemy_index);
-                let EK: i32 = word!(game.cur_enemy_index) as i32;
-                slot!(game, Crocomire[EK].var_A, |old| (old).wrapping_add(2));
-                slot!(game, Crocomire[0i32].var_00 = 2);
-                slot!(game, Crocomire[0x40i32].var_00 = 2);
-                slot!(game, Crocomire[0x80i32].var_00 = 2);
-                slot!(game, Crocomire[0xc0i32].var_00 = 2);
-                slot!(game, Crocomire[0x100i32].var_00 = 2);
-                slot!(game, Crocomire[0x140i32].var_00 = 2);
-                slot!(game, Crocomire[0i32].var_01 = 0);
-                slot!(game, Crocomire[0x40i32].var_01 = 0);
-                slot!(game, Crocomire[0x80i32].var_01 = 0);
-                slot!(game, Crocomire[0xc0i32].var_01 = 0);
-                slot!(game, Crocomire[0x100i32].var_01 = 0);
-                slot!(game, Crocomire[0x140i32].var_01 = 0);
-                QueueSfx2_Max6(0x3b, game);
-                *(ram_ptr!(game, u16; 0x9015, 1)) = 0;
-                spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x4e, 0x3, 0xb757 as VoidP), game);
-                slot!(game, Crocomire[EK].base; current_instruction = addr_kCrocomire_Ilist_BFB0 as u16, instruction_timer = 1);
-                slot!(game, Crocomire[EK].base.properties, |old| (old)
-                    | ((kEnemyProps_Tangible) as u16));
-                let E1: i32 = word!(game.cur_enemy_index) as i32 + 64;
-                slot!(game, Crocomire[E1].base; instruction_timer = 0x7fff, current_instruction = addr_kCrocomire_Ilist_BF62 as u16);
-                slot!(
-                    game,
-                    Crocomire[0x40i32].base.properties =
-                        slot!(game, Crocomire[0x40i32].base.properties) | (0x100u16)
-                );
-
-                slot!(game, Crocomire[EK]; var_E = 0, var_F = 0);
-                slot!(game, Crocomire[EK].var_D = 2048);
-                slot!(game, Crocomire[0i32].base.y_height = 16);
-            }
-        };
-    }
-}
-pub unsafe fn Crocomire_8EE5(game: &mut Game) {
-    {
-        for x in 0x61..=0x6a {
-            spawn_hardcoded(SpawnHardcodedPlmArgs::new(x, 0xb, 0xb74f as VoidP), game);
-        }
-        for (offset, y) in [176, 192, 176, 192, 192, 192, 192].into_iter().enumerate() {
-            game.eproj_spawn_pt = Point16U {
-                x: 1536 + 16 * offset as u16,
-                y,
-            };
-            SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x15, game);
-        }
     }
 }
 fn spawn_random_dust(game: &mut Game) {
