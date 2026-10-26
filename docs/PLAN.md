@@ -15,6 +15,7 @@ Git concurrency: never reserve or hold index/ref locks. Use Git's own short-live
 locks only during actual writes; no locks during builds, checks, reasoning or waits.
 Recheck HEAD, index and other work before every Git write; reconcile changes and
 preserve others' work. Do not delete another process's lock or force-push main.
+Push every commit to remote immediately after committing (user, 2026-10-26).
 
 ## Review directives (user direction, 2026-10-24; reset 2026-10-25 12:30)
 
@@ -181,7 +182,7 @@ Every routine commit runs exactly this, then commits:
 
 **Hosted mode (user decision 18:05; live since 1f57df1, 19:07 CET):**
 cloud agents only (Windows agents: Landing above). Name the rows in a `Rows:` body
-line and push only the tip of a stack to one live `ci/<lane>-<topic>` branch.
+line and push each commit immediately to one live `ci/<lane>-<topic>` branch.
 `Segments` runs the union of `Rows:` over `origin/main..HEAD` plus the smoke set;
 green auto-lands on main (rebased; a conflict fails the land and the author rebases).
 A red run is that author's next task. Main's full corpus runs every 3h, on bank-file
