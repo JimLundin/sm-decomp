@@ -38,12 +38,25 @@ impl ResumePoint {
     }
 }
 
+#[derive(Clone, Copy)]
+pub(crate) enum Entry {
+    Gameplay,
+    FadeIn,
+    Unpause,
+    CeresElevator,
+    TimeUp,
+}
+
 /// Advances through completion or a suspension, returning the callee's exact
 /// yield byte. Nested PLM/message continuations remain owned by those modules.
 /// Gameplay callbacks still have unsafe memory contracts; this is not a safe
 /// facade over them. The scheduler's continuation access itself is checked.
-pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
+/// Entry stays fixed even when callbacks change the live game state.
+pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
     unsafe {
+        if matches!(entry, Entry::CeresElevator) && word!(game.timer_status) != 0 {
+            crate::game::escape_timer::draw(game);
+        }
         crate::verify_probe::hit("coroutine.gameplay");
         let resume = ResumePoint::read(game);
         if resume == ResumePoint::Start {
@@ -97,6 +110,34 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
             finish_frame(game);
         }
         game.set_coroutine_state_1(ResumePoint::Start as u8);
+        match entry {
+            Entry::FadeIn | Entry::Unpause => {
+                crate::game::display_refresh::fade(true, game);
+                if game.g_ram[0x51] == 15 {
+                    word! { game, 0; screen_fade_delay, screen_fade_counter }
+                    if matches!(entry, Entry::FadeIn) {
+                        word!(game.game_state += 1);
+                    } else {
+                        word!(game.game_state = kGameState_8_MainGameplay as u16);
+                    }
+                }
+            }
+            Entry::CeresElevator => {
+                let negative =
+                    (word!(game.reached_ceres_elevator_fade_timer -= 1, reread) & 0x8000) != 0;
+                if word!(game.reached_ceres_elevator_fade_timer) == 0 || negative {
+                    word!(game.game_state += 1);
+                    word! { game, 0; screen_fade_delay, screen_fade_counter }
+                }
+            }
+            Entry::TimeUp => {
+                if palette_effects::fading::all(8, game) != 0 {
+                    word!(game.game_state = kGameState_36_WhitingOutFromTimeUp as u16);
+                    word! { game, 0; screen_fade_delay, screen_fade_counter }
+                }
+            }
+            Entry::Gameplay => {}
+        }
         0 as CoroutineRet
     }
 }

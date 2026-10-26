@@ -2,7 +2,7 @@ use crate::game::decompression::decompress_to_ram;
 use crate::game::demo_rooms;
 use crate::game::file_menu::advance as advance_file_menu;
 use crate::game::game_over::advance as advance_game_over;
-use crate::game::gameplay::advance as AdvanceGameplay;
+use crate::game::gameplay::{Entry, advance as AdvanceGameplay};
 use crate::game::map_menu::advance as advance_map_menu;
 use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8, QueueMusic_DelayedY};
 use crate::game::music::{advance_sound_effects, cancel_effects};
@@ -191,29 +191,12 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
         0 as CoroutineRet
     }
 }
-pub unsafe fn GameState_32_MadeItToCeresElevator(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        if word!(game.timer_status) != 0 {
-            crate::game::escape_timer::draw(game);
-        }
-        let mut _coret_: u8 = AdvanceGameplay(game);
-        if _coret_ != 0 {
-            return _coret_;
-        }
-        let v0: bool = (word!(game.reached_ceres_elevator_fade_timer -= 1, reread) & 0x8000) != 0;
-        if word!(game.reached_ceres_elevator_fade_timer) == 0 || v0 {
-            word!(game.game_state += 1);
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-        }
-        kCoroutineNone as CoroutineRet
-    }
-}
 pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
     unsafe {
         if word!(game.timer_status) != 0 {
             crate::game::escape_timer::draw(game);
         }
-        let mut _coret_: u8 = AdvanceGameplay(game);
+        let mut _coret_: u8 = GAMEPLAY(game);
         if _coret_ != 0 {
             return _coret_;
         }
@@ -231,19 +214,6 @@ pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
             word! { game, 0; ceres_status, timer_status }
             QueueMusic_Delayed8(0, game);
             cancel_effects(15, game);
-        }
-        kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn GameState_35_TimeUp(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        let mut _coret_: u8 = AdvanceGameplay(game);
-        if _coret_ != 0 {
-            return _coret_;
-        }
-        if fading::all(8, game) != 0 {
-            word!(game.game_state = kGameState_36_WhitingOutFromTimeUp as u16);
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
         }
         kCoroutineNone as CoroutineRet
     }
@@ -274,7 +244,7 @@ pub unsafe fn GameState_36_WhitingOutFromTimeUp(game: &mut Game) -> CoroutineRet
 }
 pub unsafe fn GameState_38_SamusEscapesFromZebes(game: &mut Game) -> CoroutineRet {
     unsafe {
-        let mut _coret_: u8 = AdvanceGameplay(game);
+        let mut _coret_: u8 = GAMEPLAY(game);
         if _coret_ != 0 {
             return _coret_;
         }
@@ -295,7 +265,7 @@ pub unsafe fn GameState_38_SamusEscapesFromZebes(game: &mut Game) -> CoroutineRe
 }
 pub unsafe fn GameState_41_TransitionToDemo(game: &mut Game) -> CoroutineRet {
     unsafe {
-        let mut _coret_: u8 = AdvanceGameplay(game);
+        let mut _coret_: u8 = GAMEPLAY(game);
         if _coret_ != 0 {
             return _coret_;
         }
@@ -316,7 +286,7 @@ pub unsafe fn GameState_42_PlayingDemo_Async(game: &mut Game) -> CoroutineRet {
             }
             'finish_demo: {
                 if resume != 1 {
-                    let yielded: u8 = AdvanceGameplay(game);
+                    let yielded: u8 = GAMEPLAY(game);
                     if yielded != 0 {
                         *resume_state = 2;
                         return yielded;
@@ -393,21 +363,28 @@ pub unsafe fn GameState_44_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
         kCoroutineNone as CoroutineRet
     }
 }
+const GAMEPLAY: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::Gameplay, game) };
+const FADE_IN: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::FadeIn, game) };
+const UNPAUSE: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::Unpause, game) };
+const CERES_ELEVATOR: Func_V_Coroutine =
+    |game| unsafe { AdvanceGameplay(Entry::CeresElevator, game) };
+const TIME_UP: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::TimeUp, game) };
+
 static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_V_Coroutine;
     GameState_0_Reset_Async, GameState_1_OpeningCinematic_, GameState_2_GameOptionsMenu,
     GameState_3_Null, advance_file_menu, advance_map_menu,
-    InitAndLoadGameData_Async, GameState_7_MainGameplayFadeIn, AdvanceGameplay,
+    InitAndLoadGameData_Async, FADE_IN, GAMEPLAY,
     GameState_9_HitDoorBlock, GameState_10_LoadingNextRoom_Async,
     GameState_11_LoadingNextRoom_Async, GameState_12_Pausing_Darkening_Async,
     GameState_13_Pausing_Async, pause_fade_in, GameState_15_Paused_Async,
-    GameState_16_Unpausing_Async, GameState_17_Unpausing_Async, GameState_18_Unpausing,
+    GameState_16_Unpausing_Async, GameState_17_Unpausing_Async, UNPAUSE,
     GameState_19_SamusNoHealth, GameState_20_SamusNoHealth_BlackOut, GameState_21_SamusNoHealth,
     GameState_22_SamusNoHealth_Dying, GameState_23_SamusNoHealth_Flashing,
     GameState_24_SamusNoHealth_Explosion, GameState_25_SamusNoHealth_BlackOut,
     advance_game_over, GameState_27_ReserveTanksAuto, GameState_28_Unused,
     GameState_29_DebugGameOverMenu, GameState_37_CeresGoesBoomWithSamus_,
-    InitAndLoadGameData_Async, GameState_32_MadeItToCeresElevator,
-    GameState_33_BlackoutFromCeres, GameState_37_CeresGoesBoomWithSamus_, GameState_35_TimeUp,
+    InitAndLoadGameData_Async, CERES_ELEVATOR,
+    GameState_33_BlackoutFromCeres, GameState_37_CeresGoesBoomWithSamus_, TIME_UP,
     GameState_36_WhitingOutFromTimeUp, GameState_37_CeresGoesBoomWithSamus_,
     GameState_38_SamusEscapesFromZebes, GameState_39_EndingAndCredits_,
     InitAndLoadGameData_Async, GameState_41_TransitionToDemo, GameState_42_PlayingDemo_Async,
@@ -509,20 +486,6 @@ pub fn GameState_0_Reset_Async(game: &mut Game) -> CoroutineRet {
 pub fn GameState_3_Null(game: &mut Game) -> CoroutineRet {
     kCoroutineNone as CoroutineRet
 }
-pub unsafe fn GameState_7_MainGameplayFadeIn(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        let mut _coret_: u8 = AdvanceGameplay(game);
-        if _coret_ != 0 {
-            return _coret_;
-        }
-        crate::game::display_refresh::fade(true, game);
-        if *ram_ptr!(game; 0x51) == 15 {
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-            word!(game.game_state += 1);
-        }
-        kCoroutineNone as CoroutineRet
-    }
-}
 pub unsafe fn GameState_28_Unused(game: &mut Game) -> CoroutineRet {
     unsafe {
         crate::rtl::Unreachable(game);
@@ -531,7 +494,7 @@ pub unsafe fn GameState_28_Unused(game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn GameState_12_Pausing_Darkening_Async(game: &mut Game) -> CoroutineRet {
     unsafe {
-        let mut _coret_: u8 = AdvanceGameplay(game);
+        let mut _coret_: u8 = GAMEPLAY(game);
         if _coret_ != 0 {
             return _coret_;
         }
@@ -719,27 +682,13 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
         0 as CoroutineRet
     }
 }
-pub unsafe fn GameState_18_Unpausing(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        let mut _coret_: u8 = AdvanceGameplay(game);
-        if _coret_ != 0 {
-            return _coret_;
-        }
-        crate::game::display_refresh::fade(true, game);
-        if *ram_ptr!(game; 0x51) == 15 {
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-            word!(game.game_state = kGameState_8_MainGameplay as u16);
-        }
-        kCoroutineNone as CoroutineRet
-    }
-}
 pub unsafe fn GameState_27_ReserveTanksAuto(game: &mut Game) -> CoroutineRet {
     unsafe {
         if *ram_ptr!(game; 0x612) == 0 && crate::game::reserve_tanks::refill_auto(game) != 0 {
             word! {game; time_is_frozen_flag = 0; game_state = kGameState_8_MainGameplay as u16; }
             CallSomeSamusCode(0x10, game);
         }
-        let mut _coret_: u8 = AdvanceGameplay(game);
+        let mut _coret_: u8 = GAMEPLAY(game);
         if _coret_ != 0 {
             return _coret_;
         }
@@ -749,7 +698,7 @@ pub unsafe fn GameState_27_ReserveTanksAuto(game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn GameState_19_SamusNoHealth(game: &mut Game) -> CoroutineRet {
     unsafe {
-        let mut _coret_: u8 = AdvanceGameplay(game);
+        let mut _coret_: u8 = GAMEPLAY(game);
         if _coret_ != 0 {
             return _coret_;
         }
@@ -768,7 +717,7 @@ pub unsafe fn GameState_19_SamusNoHealth(game: &mut Game) -> CoroutineRet {
 }
 pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineRet {
     unsafe {
-        let mut _coret_: u8 = AdvanceGameplay(game);
+        let mut _coret_: u8 = GAMEPLAY(game);
         if _coret_ != 0 {
             return _coret_;
         }
