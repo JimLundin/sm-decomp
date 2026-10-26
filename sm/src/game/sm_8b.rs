@@ -15,7 +15,7 @@ use crate::game::visual_runtime::{
 };
 use crate::game::visual_runtime::{
     advance_credit_roll, advance_shooting_stars, draw_cinematic_sprites, draw_intro_sprites,
-    initialize_shooting_stars, prepare_credit_roll,
+    initialize_shooting_stars, place_cinematic_sprite, prepare_credit_roll,
 };
 use crate::game::visual_state::CinematicObjects::{
     Background as CinematicBackground, Mode7 as CinematicMode7, Sprites as CinematicSprites,
@@ -431,9 +431,6 @@ macro_rules! advance_cinematic_pan_to_blackout {
     };
 }
 
-pub use self::CinematicSpriteInit_0 as CinematicSpriteInit_1;
-pub use self::CinematicSpriteInit_0 as CinematicSpriteInit_2;
-pub use self::CinematicSpriteInit_0 as CinematicSpriteInit_3;
 macro_rules! finish_cinematic_and_clear_effects {
     ($game:ident, $next_state:literal, $index_field:ident) => {
         crate::game::display_refresh::enable(true, $game);
@@ -572,7 +569,6 @@ static kCinematicFunction_Intro_Func46_Tab2: [u16; 5] = [1, 0x10, 0x20, 0x30, 0x
 static kCinematicFunction_Intro_Func47_Tab0: [u16; 3] = [0x10, 0xfff0, 0xfff0];
 static kCinematicFunction_Intro_Func47_Tab1: [u16; 3] = [0, 4, 0xfff8];
 static kCinematicFunction_Intro_Func47_Tab2: [u16; 3] = [1, 8, 0x10];
-pub use self::SetSomeStuffForSpriteObject_3 as CinematicFunction_Intro_Func49;
 
 macro_rules! chase_samus_with_cinematic_sprite {
     ($game:ident, $y_offset:literal, $object_slot:ident) => {
@@ -2761,12 +2757,6 @@ crate::game::callback_dispatch! {
 crate::game::callback_dispatch! {
     pub unsafe fn CallCinematicSpriteObjectSetup(ea: u32, j: u16, game: &mut Game) => ea;
     call (j, game); default { Unreachable(game); };
-    @functions [pub unsafe fn (v0: u16, game: &mut Game)];
-    [9152705] SetSomeStuffForSpriteObject_2 [] {
-        let v1: i32 = v0 as i32 >> 1;
-        word! {game; cinematicbg_arr7[v1] = 8; cinematicbg_arr8[v1] = 24;
-            cinematicbg_arr9[v1] = 3072; }
-    };
     @functions [pub unsafe fn (j: u16, game: &mut Game)];
     [9152856] SetSomeStuffForSpriteObject_6 [] {
         let v1: u16 = word!(game.cinematic_spawn_param);
@@ -2916,22 +2906,6 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (j: u16, game: &mut Game)];
     @prefix { let v1: i32 = j as i32 >> 1; };
-    [9149210] CinematicSpriteInit_7 [] {
-        word! {game; cinematicbg_arr7[v1] = 128; cinematicbg_arr8[v1] = 48;
-            cinematicbg_arr9[v1] = 1024; }
-    };
-    [9149229] CinematicSpriteInit_8 [] {
-        word! {game; cinematicbg_arr7[v1] = 128; cinematicbg_arr8[v1] = 81;
-            cinematicbg_arr9[v1] = 0; }
-    };
-    [9149248] CinematicSpriteInit_9 [] {
-        word! {game; cinematicbg_arr7[v1] = 128; cinematicbg_arr8[v1] = 196;
-            cinematicbg_arr9[v1] = 2048; }
-    };
-    [9149628] CinematicSpriteInit_0 [] {
-        word! {game; cinematicbg_arr7[v1] = 129; cinematicbg_arr8[v1] = 112;
-            cinematicbg_arr9[v1] = 512; }
-    };
     [9150131] CinematicSpriteInit_4 [] {
         word! {game; cinematicbg_arr7[v1] = 128; cinematicbg_arr8[v1] = 48;
             cinematicbg_arr9[v1] = 1024; }
@@ -2947,30 +2921,10 @@ crate::game::callback_dispatch! {
             cinematicbg_arr9[v1] = 2048; }
         palette_effects::spawn(addr_kPalfx_E19C as u16, game);
     };
-    [9152725] SetSomeStuffForSpriteObject_3 [] {
-        word! {game; cinematicbg_arr7[v1] = 112; cinematicbg_arr8[v1] = 155;
-            cinematicbg_arr9[v1] = 3584; }
-    };
     [9153178] SetSomeStuffForSpriteObject_8 [] {
         word! {game; cinematicspr_goto_timer[v1] = word!(game.cinematic_spawn_param);
             cinematicbg_arr7[v1] = word!(game.cinematicbg_arr7[13]);
             cinematicbg_arr8[v1] = word!(game.cinematicbg_arr8[13]); cinematicbg_arr9[v1] = 3584; }
-    };
-    [9153877] SetSomeStuffForSpriteObject_10 [] {
-        word! {game; cinematicbg_arr7[v1] = 84; cinematicbg_arr8[v1] = 139;
-            cinematicbg_arr9[v1] = 3072; }
-    };
-    [9153939] SetSomeStuffForSpriteObject_12 [] {
-        word! {game; cinematicbg_arr7[v1] = 112; cinematicbg_arr8[v1] = 111;
-            cinematicbg_arr9[v1] = 3072; }
-    };
-    [9154055] SetSomeStuffForSpriteObject_17 [] {
-        word! {game; cinematicbg_arr7[v1] = 128; cinematicbg_arr8[v1] = 216;
-            cinematicbg_arr9[v1] = 3072; }
-    };
-    [9156467] CinematicFunction_Intro_Func35 [] {
-        word! {game; cinematicbg_arr7[v1] = 56; cinematicbg_arr8[v1] = 111;
-            cinematicbg_arr9[v1] = 3584; }
     };
     [9158270] CinematicFunction_Intro_Func57 [] {
         if word!(game.cinematic_spawn_param) != 0 {
@@ -2982,26 +2936,6 @@ crate::game::callback_dispatch! {
         }
         word! {game; cinematicbg_arr8[v1] = 87; cinematicbg_arr9[v1] = 2048; }
     };
-    [9158434] CinematicFunction_Intro_Func59 [] {
-        word! {game; cinematicbg_arr7[v1] = 80; cinematicbg_arr8[v1] = 159;
-            cinematicbg_arr9[v1] = 2048; }
-    };
-    [9158476] CinematicFunction_Intro_Func61 [] {
-        word! {game; cinematicbg_arr7[v1] = 116; cinematicbg_arr8[v1] = 160;
-            cinematicbg_arr9[v1] = 3072; }
-    };
-    [9158518] CinematicFunction_Intro_Func63 [] {
-        word! {game; cinematicbg_arr7[v1] = 128; cinematicbg_arr8[v1] = 96;
-            cinematicbg_arr9[v1] = 2048; }
-    };
-    [9158787] CinematicFunction_Intro_Func68 [] {
-        word! {game; cinematicbg_arr7[v1] = 124; cinematicbg_arr8[v1] = 186;
-            cinematicbg_arr9[v1] = 0; }
-    };
-    [9158834] CinematicFunction_Intro_Func71 [] {
-        word! {game; cinematicbg_arr7[v1] = 124; cinematicbg_arr8[v1] = 204;
-            cinematicbg_arr9[v1] = 0; }
-    };
     [9160105] CinematicFunction_Intro_Func83 [] {
         word! { game;
             cinematicbg_arr7[v1] = (word!(game.reg_M7X)).wrapping_sub(word!(game.cinematic_var8));
@@ -3009,65 +2943,9 @@ crate::game::callback_dispatch! {
             cinematicbg_arr9[v1] = 2560;
         }
     };
-    [9160763] CinematicFunction_Intro_Func89 [] {
-        word! {game; cinematicbg_arr7[v1] = 136; cinematicbg_arr8[v1] = 111;
-            cinematicbg_arr9[v1] = 3584; }
-    };
-    [9160855] CinematicFunction_Intro_Func92 [] {
-        word! {game; cinematicbg_arr7[v1] = 128; cinematicbg_arr8[v1] = 127;
-            cinematicbg_arr9[v1] = 2048; }
-    };
-    [9161026] CinematicFunction_Intro_Func98 [] {
-        word! {game; cinematicbg_arr7[v1] = 48; cinematicbg_arr8[v1] = 47;
-            cinematicbg_arr9[v1] = 2048; }
-    };
-    [9161046] CinematicFunction_Intro_Func99 [] {
-        word! {game; cinematicbg_arr7[v1] = 208; cinematicbg_arr8[v1] = 47;
-            cinematicbg_arr9[v1] = 2048; }
-    };
-    [9161066] CinematicFunction_Intro_Func100 [] {
-        word! {game; cinematicbg_arr7[v1] = 48; cinematicbg_arr8[v1] = 207;
-            cinematicbg_arr9[v1] = 2048; }
-    };
-    [9161086] CinematicFunction_Intro_Func101 [] {
-        word! {game; cinematicbg_arr7[v1] = 208; cinematicbg_arr8[v1] = 207;
-            cinematicbg_arr9[v1] = 2048; }
-    };
-    [9161106] CinematicFunction_Intro_Func102 [] {
-        word! {game; cinematicbg_arr7[v1] = 128; cinematicbg_arr8[v1] = 186;
-            cinematicbg_arr9[v1] = 0; }
-    };
-    [9161190] CinematicFunction_Intro_Func104 [] {
-        word! {game; cinematicbg_arr7[v1] = 128; cinematicbg_arr8[v1] = 204;
-            cinematicbg_arr9[v1] = 0; }
-    };
     [9170841] CinematicFunction_Intro_Func150 [] {
         word! { game, 128; cinematicbg_arr8[v1], cinematicbg_arr7[v1] }
         word! {game; cinematicbg_arr9[v1] = 3584; cinematicspr_goto_timer[v1] = 260; }
-    };
-    [9170922] CinematicFunction_Intro_Func152 [] {
-        word! { game, 128; cinematicbg_arr7[v1], cinematicbg_arr8[v1] }
-        word!(game.cinematicbg_arr9[v1] = 3584);
-    };
-    [9170941] CinematicFunction_Intro_Func153 [] {
-        word! {game; cinematicbg_arr7[v1] = -128i32 as u16; cinematicbg_arr8[v1] = 128;
-            cinematicbg_arr9[v1] = 3584; }
-    };
-    [9170949] CinematicFunction_Intro_Func154 [] {
-        word! { game, 128; cinematicbg_arr7[v1], cinematicbg_arr8[v1] }
-        word!(game.cinematicbg_arr9[v1] = 2560);
-    };
-    [9170968] CinematicFunction_Intro_Func155 [] {
-        word! { game, 128; cinematicbg_arr7[v1], cinematicbg_arr8[v1] }
-        word!(game.cinematicbg_arr9[v1] = 3072);
-    };
-    [9170987] CinematicFunction_Intro_Func156 [] {
-        word! {game; cinematicbg_arr7[v1] = 128; cinematicbg_arr8[v1] = 96;
-            cinematicbg_arr9[v1] = 1024; }
-    };
-    [9171006] CinematicFunction_Intro_Func157 [] {
-        word! {game; cinematicbg_arr7[v1] = 128; cinematicbg_arr8[v1] = 160;
-            cinematicbg_arr9[v1] = 512; }
     };
     CinematicFunction_Intro_Func158 [] {
         word! {game; cinematicbg_arr8[v1] = 160; cinematicbg_arr9[v1] = 0; }
@@ -3098,22 +2976,6 @@ crate::game::callback_dispatch! {
         }
         word!(game.cinematicbg_arr9[v1] = 2560);
     };
-    [9171267] CinematicFunction_Intro_Func171 [] {
-        word! {game; cinematicbg_arr7[v1] = 120; cinematicbg_arr8[v1] = 136;
-            cinematicbg_arr9[v1] = 2560; }
-    };
-    [9171286] CinematicFunction_Intro_Func172 [] {
-        word! {game; cinematicbg_arr7[v1] = 120; cinematicbg_arr8[v1] = 152;
-            cinematicbg_arr9[v1] = 3072; }
-    };
-    [9171305] CinematicFunction_Intro_Func173 [] {
-        word! {game; cinematicbg_arr7[v1] = 124; cinematicbg_arr8[v1] = 108;
-            cinematicbg_arr9[v1] = 3072; }
-    };
-    [9171324] CinematicFunction_Intro_Func174 [] {
-        word! {game; cinematicbg_arr7[v1] = 121; cinematicbg_arr8[v1] = 107;
-            cinematicbg_arr9[v1] = 2560; }
-    };
     [9171343] CinematicFunction_Intro_Func175 [] {
         word! {game; cinematicbg_arr7[v1] = 530; cinematicbg_arr8[v1] = 231;
             cinematicbg_arr9[v1] = 3584; cinematicspr_goto_timer[v1] = 8; }
@@ -3122,29 +2984,61 @@ crate::game::callback_dispatch! {
         word! {game; cinematicbg_arr7[v1] = 246; cinematicbg_arr8[v1] = 519;
             cinematicbg_arr9[v1] = 3584; cinematicspr_goto_timer[v1] = 8; }
     };
-    [9171393] CinematicFunction_Intro_Func177 [] {
-        word! {game; cinematicbg_arr7[v1] = 385; cinematicbg_arr8[v1] = 366;
-            cinematicbg_arr9[v1] = 3584; }
-    };
-    [9171412] CinematicFunction_Intro_Func178 [] {
-        word! {game; cinematicbg_arr7[v1] = 391; cinematicbg_arr8[v1] = 384;
-            cinematicbg_arr9[v1] = 3584; }
-    };
     @external {
         9147353 => [()];
-        9149770 => CinematicSpriteInit_1; 9149891 => CinematicSpriteInit_2;
-        9150021 => CinematicSpriteInit_3;
-        9157195 => CinematicFunction_Intro_Func49;
+        9149210 => [place_cinematic_sprite(j, (128, 48), 1024, game)];
+        9149229 => [place_cinematic_sprite(j, (128, 81), 0, game)];
+        9149248 => [place_cinematic_sprite(j, (128, 196), 2048, game)];
+        9149628 => [place_cinematic_sprite(j, (129, 112), 512, game)];
+        9149770 => [place_cinematic_sprite(j, (129, 112), 512, game)];
+        9149891 => [place_cinematic_sprite(j, (129, 112), 512, game)];
+        9150021 => [place_cinematic_sprite(j, (129, 112), 512, game)];
+        9152705 => [place_cinematic_sprite(j, (8, 24), 3072, game)];
+        9152725 => [place_cinematic_sprite(j, (112, 155), 3584, game)];
+        9153877 => [place_cinematic_sprite(j, (84, 139), 3072, game)];
+        9153939 => [place_cinematic_sprite(j, (112, 111), 3072, game)];
+        9154055 => [place_cinematic_sprite(j, (128, 216), 3072, game)];
+        9156467 => [place_cinematic_sprite(j, (56, 111), 3584, game)];
+        9157195 => [place_cinematic_sprite(j, (112, 155), 3584, game)];
+        9158434 => [place_cinematic_sprite(j, (80, 159), 2048, game)];
+        9158476 => [place_cinematic_sprite(j, (116, 160), 3072, game)];
+        9158518 => [place_cinematic_sprite(j, (128, 96), 2048, game)];
+        9158787 => [place_cinematic_sprite(j, (124, 186), 0, game)];
+        9158834 => [place_cinematic_sprite(j, (124, 204), 0, game)];
+        9160763 => [place_cinematic_sprite(j, (136, 111), 3584, game)];
+        9160855 => [place_cinematic_sprite(j, (128, 127), 2048, game)];
+        9161026 => [place_cinematic_sprite(j, (48, 47), 2048, game)];
+        9161046 => [place_cinematic_sprite(j, (208, 47), 2048, game)];
+        9161066 => [place_cinematic_sprite(j, (48, 207), 2048, game)];
+        9161086 => [place_cinematic_sprite(j, (208, 207), 2048, game)];
+        9161106 => [place_cinematic_sprite(j, (128, 186), 0, game)];
+        9161190 => [place_cinematic_sprite(j, (128, 204), 0, game)];
+        9170922 => [place_cinematic_sprite(j, (128, 128), 3584, game)];
+        9170941 => [place_cinematic_sprite(j, (-128i32 as u16, 128), 3584, game)];
+        9170949 => [place_cinematic_sprite(j, (128, 128), 2560, game)];
+        9170968 => [place_cinematic_sprite(j, (128, 128), 3072, game)];
+        9170987 => [place_cinematic_sprite(j, (128, 96), 1024, game)];
+        9171006 => [place_cinematic_sprite(j, (128, 160), 512, game)];
+        9171267 => [place_cinematic_sprite(j, (120, 136), 2560, game)];
+        9171286 => [place_cinematic_sprite(j, (120, 152), 3072, game)];
+        9171305 => [place_cinematic_sprite(j, (124, 108), 3072, game)];
+        9171324 => [place_cinematic_sprite(j, (121, 107), 2560, game)];
+        9171393 => [place_cinematic_sprite(j, (385, 366), 3584, game)];
+        9171412 => [place_cinematic_sprite(j, (391, 384), 3584, game)];
     }
 }
 crate::game::address_dispatch! {
     pub unsafe fn CallCinematicSpriteInit(ea: u32, j: u16, game: &mut Game) => ea;
         call (j, game); default { Unreachable(game); };
     {
-        9149210 => CinematicSpriteInit_7; 9149229 => CinematicSpriteInit_8;
-        9149248 => CinematicSpriteInit_9; 9149628 => CinematicSpriteInit_0;
-        9149770 => CinematicSpriteInit_1; 9149891 => CinematicSpriteInit_2;
-        9150021 => CinematicSpriteInit_3; 9150131 => CinematicSpriteInit_4;
+        9149210 => [place_cinematic_sprite(j, (128, 48), 1024, game)];
+        9149229 => [place_cinematic_sprite(j, (128, 81), 0, game)];
+        9149248 => [place_cinematic_sprite(j, (128, 196), 2048, game)];
+        9149628 => [place_cinematic_sprite(j, (129, 112), 512, game)];
+        9149770 => [place_cinematic_sprite(j, (129, 112), 512, game)];
+        9149891 => [place_cinematic_sprite(j, (129, 112), 512, game)];
+        9150021 => [place_cinematic_sprite(j, (129, 112), 512, game)];
+        9150131 => CinematicSpriteInit_4;
         9150166 => CinematicSpriteInit_5; 9150207 => CinematicSpriteInit_6; 9147353 => [()];
     }
 }

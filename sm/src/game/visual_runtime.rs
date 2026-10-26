@@ -1612,6 +1612,18 @@ impl CinematicObjects {
     }
 }
 
+pub(crate) fn place_cinematic_sprite(
+    object: u16,
+    position: (u16, u16),
+    palette: u16,
+    game: &mut Game,
+) {
+    let slot = usize::from(object >> 1);
+    word!(game.cinematicbg_arr7[slot] = position.0);
+    word!(game.cinematicbg_arr8[slot] = position.1);
+    word!(game.cinematicbg_arr9[slot] = palette);
+}
+
 pub(crate) unsafe fn spawn_cinematic_sprite_at(
     definition: u16,
     slot: u16,
