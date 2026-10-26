@@ -1718,6 +1718,23 @@ pub(crate) fn drift_cinematic_sprite(
     }
 }
 
+pub(crate) fn wait_cinematic_scene(
+    object: u16,
+    scene: u16,
+    next_preinstruction: Option<u16>,
+    game: &mut Game,
+) {
+    if word!(game.cinematic_function) == scene {
+        let slot = usize::from(object >> 1);
+        if let Some(next) = next_preinstruction {
+            word!(game.cinematicspr_preinstr_func[slot] = next);
+        } else {
+            word!(game.cinematicspr_instr_timer[slot] = 1);
+            word!(game.cinematicspr_instr_ptr[slot] = 0xee9b);
+        }
+    }
+}
+
 pub(crate) fn launch_cinematic_sprite(
     object: u16,
     acceleration: u16,

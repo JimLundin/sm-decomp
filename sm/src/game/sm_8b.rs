@@ -11,7 +11,7 @@ use crate::game::visual_runtime::{
     initialize_ending_time_glyph, initialize_intro_rinka, initialize_shooting_stars,
     launch_cinematic_sprite, move_ending_cloud, place_cinematic_sprite, prepare_credit_roll,
     prepare_ending_time, start_intro_rinka, title_metroid_cry, title_metroid_palette,
-    wait_ending_cloud,
+    wait_cinematic_scene, wait_ending_cloud,
 };
 use crate::game::visual_runtime::{advance_cinematic_background_pre, fade_cinematic_fixed_color};
 use crate::game::visual_runtime::{
@@ -2304,47 +2304,11 @@ crate::game::callback_dispatch! {
             }
         };
     };
-    [9160782] CinematicFunction_Intro_Func90 [] {
-        if word!(game.cinematic_function) as i32 == 0x8bcade & 0xffff {
-            word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8bc85di32) as u16);
-        }
-    };
-    [9160874] CinematicFunction_Intro_Func93 [] {
-        if word!(game.cinematic_function) as i32 == 0x8bcade & 0xffff {
-            word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8bc8b9i32) as u16);
-        }
-    };
-    [9160953] CinematicFunction_Intro_Func96 [] {
-        if word!(game.cinematic_function) as i32 == 0x8bcade & 0xffff {
-            word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8bc908i32) as u16);
-        }
-    };
     [9171802] CinematicSprPreInstr_F35A [] {
         if word!(game.cinematic_function) as i32 == 0x8bdca5 & 0xffff {
             let v1: i32 = k as i32 >> 1;
             word! {game; cinematicspr_preinstr_func[v1] = ((0x8bf375i32) as u16);
                 cinematicspr_arr7[v1] = 0x4000; cinematicspr_goto_timer[v1] = 0; }
-        }
-    };
-    [9171867] CinematicFunction_Intro_Func189b [] {
-        if word!(game.cinematic_function) as i32 == 0x8bde63 & 0xffff {
-            let v5: i32 = k as i32 >> 1;
-            word!(game.cinematicspr_instr_timer[v5] = 1);
-            word!(game.cinematicspr_instr_ptr[v5] = addr_off_8BEE9B as u16);
-        }
-    };
-    [9171897] CinematicFunction_Intro_Func191 [] {
-        if word!(game.cinematic_function) as i32 == 0x8bde80 & 0xffff {
-            let v1: i32 = k as i32 >> 1;
-            word!(game.cinematicspr_instr_timer[v1] = 1);
-            word!(game.cinematicspr_instr_ptr[v1] = addr_off_8BEE9B as u16);
-        }
-    };
-    [9172231] CinematicFunction_Intro_Func207 [] {
-        if word!(game.cinematic_function) as i32 == 0x8bdb9d & 0xffff {
-            let v1: i32 = k as i32 >> 1;
-            word!(game.cinematicspr_instr_timer[v1] = 1);
-            word!(game.cinematicspr_instr_ptr[v1] = addr_off_8BEE9B as u16);
         }
     };
     [9172264] CinematicSprPreInstr_F528 [] {
@@ -2546,9 +2510,15 @@ crate::game::callback_dispatch! {
                 word!(game.cinematicspr_arr7[v1])
             )),
         );
-        CinematicFunction_Intro_Func189b(k, game);
+        wait_cinematic_scene(k, 0xde63, None, game);
     };
     @external {
+        9160782 => [wait_cinematic_scene(j, 0xcade, Some(0xc85d), game)];
+        9160874 => [wait_cinematic_scene(j, 0xcade, Some(0xc8b9), game)];
+        9160953 => [wait_cinematic_scene(j, 0xcade, Some(0xc908), game)];
+        9171867 => [wait_cinematic_scene(j, 0xde63, None, game)];
+        9171897 => [wait_cinematic_scene(j, 0xde80, None, game)];
+        9172231 => [wait_cinematic_scene(j, 0xdb9d, None, game)];
         9156824 => [advance_intro_rinka(j, false, game)];
         9156923 => [advance_intro_rinka(j, true, game)];
         9172053 => [wait_ending_cloud(j, true, 0xf464, game)];
