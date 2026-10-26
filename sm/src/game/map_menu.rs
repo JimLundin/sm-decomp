@@ -6,9 +6,7 @@ use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::room_entry::{self, ArrivalRequest, StartSite};
 use crate::game::save_slots::load_area_map;
 use crate::game::session_runtime::Runtime;
-use crate::game::sm_82::{
-    DrawMapScrollArrowAndCheckToScroll, DrawRoomSelectMap, SetupMapScrollingForFileSelectMap,
-};
+use crate::game::sm_82::{DrawMapScrollArrowAndCheckToScroll, DrawRoomSelectMap};
 use crate::game::visual_runtime::{clear_hdma, set_hdma_enabled};
 use crate::game::{menu_tilemap, menu_window};
 const AREAS: [u16; 6] = [0, 3, 5, 1, 4, 2];
@@ -387,7 +385,9 @@ unsafe fn initialize_room(game: &mut Game) {
         game.g_ram[0x79f] = room.byte(1);
         game.g_ram[0x7a1] = room.byte(2);
         game.g_ram[0x7a3] = room.byte(3);
-        SetupMapScrollingForFileSelectMap(game);
+        reset_animations(game);
+        scroll_limits(game);
+        center_map(112, game);
         word!(game.map_min_y_scroll += 24);
         word!(game.reg_BG2VOFS = 24);
         crate::ram_map::checked_word!(game, 0x69; = crate::ram_map::checked_word!(game, 0x69;) & !4);
@@ -904,4 +904,136 @@ pub(crate) fn display_elevator_destinations(game: &mut Game) {
         draw_record(record.word(4), &record, 0, game);
         cursor += 6;
     }
+}
+
+pub(crate) fn reset_animations(game: &mut Game) {
+    word! { game, 0;
+        pausemenu_reserve_tank_delay_ctr, reg_BG1HOFS, reg_BG2HOFS, reg_BG3HOFS, reg_BG2VOFS,
+        reg_BG3VOFS, pausemenu_button_label_mode, pausemenu_lr_animation_frame, UNUSED_word_7E0745,
+        samus_position_indicator_animation_frame, samus_position_indicator_animation_timer,
+        samus_position_indicator_animation_loop_counter,
+    }
+    word! {game; pausemenu_lr_animation_timer = game.capture_native_rom().table_word(crate::rtl::lorom_offset(0x82c10c) as usize, 0);
+    pausemenu_palette_animation_timer = 1; pausemenu_palette_animation_frame = 0; }
+}
+
+pub(crate) fn center_map(vertical_center: u16, game: &mut Game) {
+    word!(
+        game.reg_BG1HOFS = (i32::from(word!(game.map_min_x_scroll))
+            + (i32::from(word!(game.map_max_x_scroll).wrapping_sub(word!(game.map_min_x_scroll)))
+                >> 1)
+            - 128) as u16
+    );
+    let x = (8
+        * (i32::from(word!(game.room_x_coordinate_on_map))
+            + i32::from((word!(game.samus_x_pos) & 0xff00) >> 8))
+        - i32::from(word!(game.reg_BG1HOFS))) as u16;
+    let right = 224i16.wrapping_sub(x as i16);
+    if right >= 0 {
+        let left = 32u16.wrapping_sub(x);
+        if left & 0x8000 == 0 {
+            word!(game.reg_BG1HOFS -= left);
+        }
+    } else {
+        word!(game.reg_BG1HOFS -= right as u16);
+    }
+    let middle = (i32::from(word!(game.map_min_y_scroll))
+        + (i32::from(word!(game.map_max_y_scroll).wrapping_sub(word!(game.map_min_y_scroll))) >> 1)
+        + 16) as u16;
+    let aligned = (i32::from(vertical_center) - i32::from(middle)) & 0xfff8;
+    word!(game.reg_BG1VOFS = (-aligned) as u16);
+    let y = (8
+        * (i32::from(word!(game.room_y_coordinate_on_map)) + i32::from(game.g_ram[0xafb]) + 1)
+        + aligned) as u16;
+    let top = 64i16.wrapping_sub(y as i16);
+    if top >= 0 {
+        word!(game.reg_BG1VOFS -= top as u16);
+        if (i32::from(word!(game.reg_BG1VOFS)) + 40) & 0x8000 != 0 {
+            word!(game.reg_BG1VOFS = -40i32 as u16);
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+enum MapEdge {
+    Left,
+    Right,
+    Top,
+    Bottom,
+}
+
+fn find_map_edge(source: Option<&crate::rom::RomRecord>, edge: MapEdge, game: &mut Game) -> u16 {
+    let read = |offset: usize| match source {
+        Some(record) => record.byte(offset),
+        None => game.g_ram[0x7f7 + offset],
+    };
+    match edge {
+        MapEdge::Left | MapEdge::Right => {
+            let right = matches!(edge, MapEdge::Right);
+            for step in 0..64u16 {
+                let column = if right { 63 - step } else { step };
+                // The original left scan starts its second half one byte earlier.
+                let base = usize::from(column / 8)
+                    + if column < 32 {
+                        0
+                    } else if right {
+                        124
+                    } else {
+                        123
+                    };
+                let mask = 0x80u8 >> (column & 7);
+                for offset in (0..128).step_by(4) {
+                    if mask & read(base + offset) != 0 {
+                        return column;
+                    }
+                }
+            }
+            if right { 28 } else { 26 }
+        }
+        MapEdge::Top | MapEdge::Bottom => {
+            let bottom = matches!(edge, MapEdge::Bottom);
+            // Both searches stop before the final row at the opposite edge.
+            for step in 0..31u16 {
+                let row = if bottom { 31 - step } else { step };
+                let base = 4 * usize::from(row);
+                for offset in 0..4 {
+                    if read(base + offset) != 0 || read(base + 128 + offset) != 0 {
+                        return row;
+                    }
+                }
+            }
+            if bottom { 11 } else { 1 }
+        }
+    }
+}
+
+pub(crate) fn scroll_limits(game: &mut Game) {
+    let source = if word!(game.has_area_map) != 0 {
+        let pointer = map_record(
+            (i32::from(addr_kPauseMenuMapData as u16) + 2 * i32::from(word!(game.area_index)))
+                as u16,
+            game,
+        )
+        .word(0);
+        Some(map_record(pointer, game))
+    } else {
+        None
+    };
+    word!(
+        game.map_min_x_scroll = find_map_edge(source.as_ref(), MapEdge::Left, game).wrapping_mul(8)
+    );
+    if word!(game.area_index) == 4 {
+        word!(game.map_min_x_scroll -= 24);
+    }
+    word!(
+        game.map_max_x_scroll =
+            find_map_edge(source.as_ref(), MapEdge::Right, game).wrapping_mul(8)
+    );
+    word!(
+        game.map_min_y_scroll = find_map_edge(source.as_ref(), MapEdge::Top, game).wrapping_mul(8)
+    );
+    word!(
+        game.map_max_y_scroll =
+            find_map_edge(source.as_ref(), MapEdge::Bottom, game).wrapping_mul(8)
+    );
 }

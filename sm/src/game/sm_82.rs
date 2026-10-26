@@ -1164,57 +1164,12 @@ pub unsafe fn BackupGameplayPalettesAndLoadForPause(game: &mut Game) {
 pub unsafe fn ContinueInitPauseMenu(game: &mut Game) {
     unsafe {
         SetupPpuForPauseMenu(game);
-        ResetPauseMenuAnimations(game);
+        crate::game::map_menu::reset_animations(game);
         crate::game::menu_tilemap::equipment_icons(game);
         set_pause_label_palettes(0, game);
         UpdatePauseMenuLRStartVramTilemap(game);
-        DetermineMapScrollLimits(game);
-        SetupMapScrollingForPauseMenu(0x80, game);
-    }
-}
-pub unsafe fn SetupMapScrollingForFileSelectMap(game: &mut Game) {
-    unsafe {
-        ResetPauseMenuAnimations(game);
-        DetermineMapScrollLimits(game);
-        word!(
-            game.reg_BG1HOFS = (word!(game.map_min_x_scroll) as i32
-                + (((word!(game.map_max_x_scroll)).wrapping_sub(word!(game.map_min_x_scroll)))
-                    as i32
-                    >> 1)
-                - 128i32) as u16
-        );
-        let mut r18: u16 = (8
-            * (word!(game.room_x_coordinate_on_map) as i32
-                + ((word!(game.samus_x_pos) as i32 & 0xff00) >> 8))
-            - word!(game.reg_BG1HOFS) as i32) as u16;
-        let v0: i16 = (224i16).wrapping_sub((r18) as i16);
-        if (224i16).wrapping_sub((r18) as i16) >= 0 {
-            r18 = (32u16).wrapping_sub(r18);
-            if (r18 & 0x8000) == 0 {
-                word!(game.reg_BG1HOFS -= r18);
-            }
-        } else {
-            r18 = (224u16).wrapping_sub(r18);
-            word!(game.reg_BG1HOFS -= (v0) as u16);
-        }
-        r18 = (word!(game.map_min_y_scroll) as i32
-            + (((word!(game.map_max_y_scroll)).wrapping_sub(word!(game.map_min_y_scroll))) as i32
-                >> 1)
-            + 16) as u16;
-        word!(game.reg_BG1VOFS = -(112 - r18 as i32 & 0xfff8) as u16);
-        r18 = (8
-            * (word!(game.room_y_coordinate_on_map) as i32
-                + byte!(@pointer ram_ptr!(game, u16; 0xafa); 1) as i32
-                + 1)
-            + (112 - r18 as i32 & 0xfff8)) as u16;
-        let v1: i16 = (64i16).wrapping_sub((r18) as i16);
-        if (64i16).wrapping_sub((r18) as i16) >= 0 {
-            r18 = (64u16).wrapping_sub(r18);
-            word!(game.reg_BG1VOFS -= (v1) as u16);
-            if word!(game.reg_BG1VOFS) as i32 + 40 & 0x8000 != 0 {
-                word!(game.reg_BG1VOFS = -40i32 as u16);
-            }
-        }
+        crate::game::map_menu::scroll_limits(game);
+        crate::game::map_menu::center_map(0x80, game);
     }
 }
 pub unsafe fn GameState_14_Paused_Async(game: &mut Game) -> CoroutineRet {
@@ -1538,78 +1493,6 @@ unsafe fn render_map_tilemap(screen: MapScreen, game: &mut Game) {
     }
 }
 
-#[derive(Clone, Copy)]
-enum MapEdge {
-    Left,
-    Right,
-    Top,
-    Bottom,
-}
-
-unsafe fn find_map_edge(mut source: *const u8, edge: MapEdge) -> u16 {
-    unsafe {
-        match edge {
-            MapEdge::Left | MapEdge::Right => {
-                let right = matches!(edge, MapEdge::Right);
-                let mut column: u16 = if right { 63 } else { 0 };
-                loop {
-                    let mask = k0x80Shr[(column & 7) as usize];
-                    for offset in (0..128).step_by(4) {
-                        if mask & *source.offset(offset) != 0 {
-                            return column;
-                        }
-                    }
-                    column = if right {
-                        column.wrapping_sub(1)
-                    } else {
-                        column.wrapping_add(1)
-                    };
-                    if if right {
-                        column & 0x8000 != 0
-                    } else {
-                        (column as i16).wrapping_sub(64) >= 0
-                    } {
-                        return if right { 28 } else { 26 };
-                    }
-                    if column & 7 == if right { 7 } else { 0 } {
-                        source = source.offset(if right { -1 } else { 1 });
-                    }
-                    if column == if right { 31 } else { 32 } {
-                        source = source.offset(if right { -124 } else { 123 });
-                    }
-                }
-            }
-            MapEdge::Top | MapEdge::Bottom => {
-                let bottom = matches!(edge, MapEdge::Bottom);
-                let mut second = source.offset(128);
-                let mut row: u16 = if bottom { 31 } else { 0 };
-                let mut offset: u16 = 0;
-                while *source.offset(offset as isize) == 0 && *second.offset(offset as isize) == 0 {
-                    offset = offset.wrapping_add(1);
-                    if (offset as i16).wrapping_sub(4) >= 0 {
-                        offset = 0;
-                        source = source.offset(if bottom { -4 } else { 4 });
-                        second = second.offset(if bottom { -4 } else { 4 });
-                        row = if bottom {
-                            row.wrapping_sub(1)
-                        } else {
-                            row.wrapping_add(1)
-                        };
-                        if if bottom {
-                            row == 0
-                        } else {
-                            (row as i16).wrapping_sub(31) >= 0
-                        } {
-                            return if bottom { 11 } else { 1 };
-                        }
-                    }
-                }
-                row
-            }
-        }
-    }
-}
-
 pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
     unsafe {
         word! {game; reg_BG1HOFS = word!(game.reg_BG4HOFS); reg_BG1VOFS = word!(game.reg_BG4VOFS); }
@@ -1658,82 +1541,6 @@ pub unsafe fn DrawRoomSelectMap(game: &mut Game) {
         word!(game.vram_write_queue_tail = (v16).wrapping_add(7));
     }
 }
-pub unsafe fn SetupMapScrollingForPauseMenu(a: u16, game: &mut Game) {
-    unsafe {
-        word!(
-            game.reg_BG1HOFS = (word!(game.map_min_x_scroll) as i32
-                + (((word!(game.map_max_x_scroll)).wrapping_sub(word!(game.map_min_x_scroll)))
-                    as i32
-                    >> 1)
-                - 128i32) as u16
-        );
-        let mut r18: u16 = (8
-            * (word!(game.room_x_coordinate_on_map) as i32
-                + ((word!(game.samus_x_pos) as i32 & 0xff00) >> 8))
-            - word!(game.reg_BG1HOFS) as i32) as u16;
-        let mut v1: i16 = (224i16).wrapping_sub((r18) as i16);
-        if (224i16).wrapping_sub((r18) as i16) >= 0 {
-            r18 = (32u16).wrapping_sub(r18);
-            if (r18 & 0x8000) == 0 {
-                word!(game.reg_BG1HOFS -= r18);
-            }
-        } else {
-            r18 = (224u16).wrapping_sub(r18);
-            word!(game.reg_BG1HOFS -= (v1) as u16);
-        }
-        r18 = (word!(game.map_min_y_scroll) as i32
-            + (((word!(game.map_max_y_scroll)).wrapping_sub(word!(game.map_min_y_scroll))) as i32
-                >> 1)
-            + 16) as u16;
-        word!(game.reg_BG1VOFS = -(a as i32 - r18 as i32 & 0xfff8) as u16);
-        r18 = (8
-            * (word!(game.room_y_coordinate_on_map) as i32
-                + byte!(@pointer ram_ptr!(game, u16; 0xafa); 1) as i32
-                + 1)
-            + (a as i32 - r18 as i32 & 0xfff8)) as u16;
-        let mut v2: i16 = (64i16).wrapping_sub((r18) as i16);
-        if v2 >= 0 {
-            word!(game.reg_BG1VOFS -= (v2) as u16);
-            if word!(game.reg_BG1VOFS) as i32 + 40 & 0x8000 != 0 {
-                word!(game.reg_BG1VOFS = -40i32 as u16);
-            }
-        }
-    }
-}
-static k0x80Shr: [u8; 8] = [0x80, 0x40, 0x20, 0x10, 8, 4, 2, 1];
-
-crate::forward_calls! { unsafe fn (r0: *const u8) -> u16;
-    DetermineLeftmostMapColumn => find_map_edge(r0, MapEdge::Left);
-    DetermineRightmostMapColumn => find_map_edge(r0, MapEdge::Right);
-    DetermineTopmostMapColumn => find_map_edge(r0, MapEdge::Top);
-    DetermineBottommostMapColumn => find_map_edge(r0, MapEdge::Bottom);
-}
-pub unsafe fn DetermineMapScrollLimits(game: &mut Game) {
-    unsafe {
-        let mut r6: *const u8 = if word!(game.has_area_map) != 0 {
-            RomPtr_82(
-                *(RomPtr_82(
-                    (addr_kPauseMenuMapData as i32 + 2 * word!(game.area_index) as i32) as u16,
-                    game,
-                ) as *mut u16),
-                game,
-            )
-        } else {
-            ram_ptr!(game; 0x7f7)
-        };
-        word!(game.map_min_x_scroll = (DetermineLeftmostMapColumn(r6)).wrapping_mul(8));
-        if word!(game.area_index) == 4 {
-            word!(game.map_min_x_scroll -= 24);
-        }
-        word!(
-            game.map_max_x_scroll = (DetermineRightmostMapColumn(r6.offset(131))).wrapping_mul(8)
-        );
-        word!(game.map_min_y_scroll = (DetermineTopmostMapColumn(r6)).wrapping_mul(8));
-        word!(
-            game.map_max_y_scroll = (DetermineBottommostMapColumn(r6.offset(124))).wrapping_mul(8)
-        );
-    }
-}
 pub unsafe fn SetupPpuForPauseMenu(game: &mut Game) {
     unsafe {
         crate::rtl::register_writes! { game;
@@ -1747,18 +1554,6 @@ pub unsafe fn SetupPpuForPauseMenu(game: &mut Game) {
         crate::update_place! { reference fresh25 = *ram_ptr!(game; 0x74, 1) => (*fresh25) & (0xe0u8); }
         crate::update_place! { reference fresh26 = *ram_ptr!(game; 0x74, 2) => (*fresh26) & (0xe0u8); }
         *ram_ptr!(game; 0x71) = 0;
-    }
-}
-pub unsafe fn ResetPauseMenuAnimations(game: &mut Game) {
-    unsafe {
-        word! { game, 0;
-            pausemenu_reserve_tank_delay_ctr, reg_BG1HOFS, reg_BG2HOFS, reg_BG3HOFS, reg_BG2VOFS,
-            reg_BG3VOFS, pausemenu_button_label_mode, pausemenu_lr_animation_frame, UNUSED_word_7E0745,
-            samus_position_indicator_animation_frame, samus_position_indicator_animation_timer,
-            samus_position_indicator_animation_loop_counter,
-        }
-        word! {game; pausemenu_lr_animation_timer = *(rom_ptr!(game, u8; 0x82c10c) as *mut u16);
-        pausemenu_palette_animation_timer = 1; pausemenu_palette_animation_frame = 0; }
     }
 }
 pub unsafe fn ClearSamusBeamTiles(game: &mut Game) {
