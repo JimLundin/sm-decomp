@@ -91,6 +91,64 @@ pub(crate) unsafe fn initialize_gameplay(game: &mut Game) {
     }
 }
 
+/// Requires a live, exclusively accessed SNES backend for VRAM readback.
+pub(crate) unsafe fn capture_pause_background(game: &mut Game) {
+    use crate::snes::registers::{A2A1L, BBAD1, DAS10, NTRL1};
+    unsafe {
+        crate::rtl::register_writes! { game;
+            word(VMADDL as u16,
+            (u16::from(game.g_ram[0x59] & 0xfc) << 8) | 1,); byte(VMAIN as u16, 0x80);
+            byte(DMAP1 as u16, 0x81); byte(BBAD1 as u16, 0x39);
+            word(A1T1L as u16, 0xdf5c); byte(A1B1 as u16, 0x7e);
+            word(DAS1L as u16, 0x1000); byte(DAS10 as u16, 0);
+            word(A2A1L as u16, 0); byte(NTRL1 as u16, 0);
+            byte(MDMAEN as u16, 2);
+        }
+    }
+}
+
+/// Requires a live, exclusively accessed SNES backend and pause graphics assets.
+pub(crate) unsafe fn load_pause_assets(game: &mut Game) {
+    unsafe {
+        GraphicsAsset::VramWords(0xb68000, 0, 0x4000).load(game);
+        GraphicsAsset::VramWords(0xb6c000, 0x2000, 0x2000).load(game);
+        GraphicsAsset::VramWords(0x9ab200, 0x4000, 0x2000).load(game);
+        GraphicsAsset::VramWords(0xb6e000, 0x3800, 0x800).load(game);
+        GraphicsAsset::WramBytes(0xb6e400, 0x7e3400, 0x400).load(game);
+        GraphicsAsset::WramBytes(0xb6e800, 0x7e3800, 0x800).load(game);
+        crate::game::menu_tilemap::prepare_equipment_frame(game);
+    }
+}
+
+/// Requires a live, exclusively accessed SNES backend throughout map and label upload.
+pub(crate) unsafe fn upload_pause_map(game: &mut Game) {
+    use crate::snes::registers::{BBAD1, DAS1H};
+    unsafe {
+        word! {game; reg_BG1HOFS = word!(game.reg_BG4HOFS); reg_BG1VOFS = word!(game.reg_BG4VOFS); }
+        crate::rtl::register_writes! { game;
+            byte(VMADDL as u16, 0); byte(VMADDH as u16, 0x30);
+            byte(VMAIN as u16, 0x80);
+        }
+        crate::game::map_menu::render_map(crate::game::map_menu::MapScreen::Pause, game);
+        setup_transfer(u16::from_ne_bytes([1, 0x18]), 0x7e4000, 0x1000, game);
+        crate::rtl::register_writes! { game;
+            byte(MDMAEN as u16, 2); byte(VMADDL as u16, 0xaa);
+            byte(VMADDH as u16, 0x38); byte(VMAIN as u16, 0x80);
+            byte(DMAP1 as u16, 1); byte(BBAD1 as u16, 0x18);
+            byte(DAS1L as u16, 0x18); byte(DAS1H as u16, 0);
+        }
+        let mut area: u16 = word!(game.area_index);
+        if word!(game.area_index) as i32 - 7i32 & 0x8000 == 0 {
+            area = 0;
+        }
+        crate::rtl::register_writes! { game;
+            word(A1T1L as u16,
+            crate::rtl::rom_table_word!(game, 0x82965f, area as isize),); byte(A1B1 as u16, 0x82);
+            byte(MDMAEN as u16, 2);
+        }
+    }
+}
+
 pub(crate) fn reset_gameplay_layers(clear_current_irq: bool, game: &mut Game) {
     word!(game.fx_layer_blending_config_a = 0);
     if clear_current_irq {

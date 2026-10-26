@@ -582,56 +582,18 @@ pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
         set_hdma_enabled(false, game);
         crate::rtl::write_register_and_mirror(HDMAEN as u16, 0, 0x85, true, game);
         animated_tiles::set_enabled(false, game);
-        BackupBG2TilemapForPauseMenu(game);
+        crate::game::display_refresh::capture_pause_background(game);
         CallPauseHook(Load24(ram_ptr!(game, LongPtr; 0x601)), game);
         CancelSoundEffects(game);
         crate::game::pause_controls::save_graphics(game);
-        LoadPauseMenuTilesAndClearBG2(game);
-        LoadPauseScreenBaseTilemaps(game);
-        LoadPauseMenuMapTilemapAndAreaLabel(game);
-        BackupGameplayPalettesAndLoadForPause(game);
+        crate::game::display_refresh::load_pause_assets(game);
+        crate::game::display_refresh::upload_pause_map(game);
+        word_transfers!(game, ascending, 256; pause_map(384) <- le(palette_buffer, 0));
+        word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0xb6f000, 0));
         crate::game::display_refresh::pause_graphics(true, game);
         crate::game::pause_controls::initialize(game);
         kCoroutineNone as CoroutineRet
     }
-}
-pub unsafe fn BackupBG2TilemapForPauseMenu(game: &mut Game) {
-    unsafe {
-        crate::rtl::register_writes! { game;
-            word(VMADDL as u16,
-            ((*ram_ptr!(game; 0x59) as i32 & 0xfc) << 8 | 1) as u16,); byte(VMAIN as u16, 0x80);
-            byte(DMAP1 as u16, 0x81); byte(BBAD1 as u16, 0x39);
-            word(A1T1L as u16, 0xdf5c); byte(A1B1 as u16, 0x7e);
-            word(DAS1L as u16, 0x1000); byte(DAS10 as u16, 0);
-            word(A2A1L as u16, 0); byte(NTRL1 as u16, 0);
-            byte(MDMAEN as u16, 2);
-        }
-    }
-}
-pub unsafe fn RestoreBG2TilemapFromPauseScreen(game: &mut Game) {
-    unsafe {
-        GraphicsAsset::VramWords(0x7edf5c, (*ram_ptr!(game; 0x59) as u16 & 0xfc) << 8, 0x1000)
-            .load(game);
-    }
-}
-pub unsafe fn LoadPauseMenuTilesAndClearBG2(game: &mut Game) {
-    unsafe {
-        GraphicsAsset::VramWords(0xb68000, 0, 0x4000).load(game);
-        GraphicsAsset::VramWords(0xb6c000, 0x2000, 0x2000).load(game);
-        GraphicsAsset::VramWords(0x9ab200, 0x4000, 0x2000).load(game);
-    }
-}
-pub unsafe fn LoadPauseScreenBaseTilemaps(game: &mut Game) {
-    unsafe {
-        GraphicsAsset::VramWords(0xb6e000, 0x3800, 0x800).load(game);
-        GraphicsAsset::WramBytes(0xb6e400, 0x7e3400, 0x400).load(game);
-        GraphicsAsset::WramBytes(0xb6e800, 0x7e3800, 0x800).load(game);
-        crate::game::menu_tilemap::prepare_equipment_frame(game);
-    }
-}
-pub unsafe fn BackupGameplayPalettesAndLoadForPause(game: &mut Game) {
-    word_transfers!(game, ascending, 256; pause_map(384) <- le(palette_buffer, 0));
-    word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- rom(0xb6f000, 0));
 }
 pub unsafe fn GameState_15_Paused_Async(game: &mut Game) -> CoroutineRet {
     unsafe {
@@ -688,7 +650,8 @@ pub unsafe fn PauseMenu_3_MapToEquipment_Load(game: &mut Game) {
     unsafe {
         crate::game::map_menu::display_elevator_destinations(game);
         crate::game::reserve_tanks::prepare_menu(game);
-        EquipmentScreenTransferBG1Tilemap(game);
+        GraphicsAsset::VramWords(0x7e3800, 0x3000, 0x800).load(game);
+        word!(game.reg_BG1VOFS = 0);
         word!(game.pause_screen_mode = 1);
         crate::game::menu_tilemap::pause_labels(word!(game.pausemenu_button_label_mode), game);
         word!(game.pausemenu_lr_animation_frame = 0);
@@ -700,7 +663,7 @@ pub unsafe fn PauseMenu_3_MapToEquipment_Load(game: &mut Game) {
 pub unsafe fn PauseMenu_6_EquipmentToMap_Load(game: &mut Game) {
     unsafe {
         crate::game::map_menu::display_elevator_destinations(game);
-        LoadPauseMenuMapTilemapAndAreaLabel(game);
+        crate::game::display_refresh::upload_pause_map(game);
         crate::game::menu_tilemap::pause_labels(word!(game.pausemenu_button_label_mode), game);
         word!(game.pausemenu_lr_animation_frame = 0);
         word!(game.pausemenu_lr_animation_timer = *(rom_ptr!(game, u8; 0x82c10c) as *mut u16));
@@ -727,7 +690,7 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
         let run_unpause_hook: bool;
         match *_state_variable_ as i32 {
             0 => {
-                ClearSamusBeamTiles(game);
+                GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x1000).load(game);
                 word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- pause_map(384));
                 crate::game::display_refresh::pause_graphics(false, game);
                 crate::game::pause_controls::resume(game);
@@ -746,7 +709,8 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
                 crate::game::display_refresh::enable(true, game);
                 crate::game::scanline_irq::enable(false, game);
                 crate::game::pause_controls::restore_graphics(game);
-                RestoreBG2TilemapFromPauseScreen(game);
+                GraphicsAsset::VramWords(0x7edf5c, u16::from(game.g_ram[0x59] & 0xfc) << 8, 0x1000)
+                    .load(game);
                 word! { game, 1; screen_fade_delay, screen_fade_counter }
                 run_unpause_hook = true;
             }
@@ -781,43 +745,6 @@ pub unsafe fn GameState_18_Unpausing(game: &mut Game) -> CoroutineRet {
             word!(game.game_state = kGameState_8_MainGameplay as u16);
         }
         kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
-    unsafe {
-        word! {game; reg_BG1HOFS = word!(game.reg_BG4HOFS); reg_BG1VOFS = word!(game.reg_BG4VOFS); }
-        crate::rtl::register_writes! { game;
-            byte(VMADDL as u16, 0); byte(VMADDH as u16, 0x30);
-            byte(VMAIN as u16, 0x80);
-        }
-        crate::game::map_menu::render_map(crate::game::map_menu::MapScreen::Pause, game);
-        setup_transfer(u16::from_ne_bytes([1, 0x18]), 0x7e4000, 0x1000, game);
-        crate::rtl::register_writes! { game;
-            byte(MDMAEN as u16, 2); byte(VMADDL as u16, 0xaa);
-            byte(VMADDH as u16, 0x38); byte(VMAIN as u16, 0x80);
-            byte(DMAP1 as u16, 1); byte(BBAD1 as u16, 0x18);
-            byte(DAS1L as u16, 0x18); byte(DAS1H as u16, 0);
-        }
-        let mut v0: u16 = word!(game.area_index);
-        if word!(game.area_index) as i32 - 7i32 & 0x8000 == 0 {
-            v0 = 0;
-        }
-        crate::rtl::register_writes! { game;
-            word(A1T1L as u16,
-            crate::rtl::rom_table_word!(game, 0x82965f, v0 as isize),); byte(A1B1 as u16, 0x82);
-            byte(MDMAEN as u16, 2);
-        }
-    }
-}
-pub unsafe fn ClearSamusBeamTiles(game: &mut Game) {
-    unsafe {
-        GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x1000).load(game);
-    }
-}
-pub unsafe fn EquipmentScreenTransferBG1Tilemap(game: &mut Game) {
-    unsafe {
-        GraphicsAsset::VramWords(0x7e3800, 0x3000, 0x800).load(game);
-        word!(game.reg_BG1VOFS = 0);
     }
 }
 pub fn HandleSamusOutOfHealthAndGameTile(game: &mut Game) {
