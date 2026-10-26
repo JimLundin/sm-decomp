@@ -556,7 +556,7 @@ crate::game::address_dispatch! {
         call (game); default { crate::rtl::Unreachable(game); };
     {
         10518604 => [()]; 10738444 => sm_a3::Reflec_Func_1; 10851138 => sm_a5::Draygon_Func_36;
-        10920690 => sm_a6::Ridley_A2F2; 11042892 => [()]; 11055282 => sm_a8::NorfairLavaMan_Func_6;
+        10920690 => sm_a6::Ridley_A2F2; 11042892 => [()]; 11055282 => crate::game::actors::norfair_lava_man::palette;
         11062375 => crate::game::actors::wrecked_ship_robots::palette; 11069550 => crate::game::actors::blue_face_block::palette;
         11110278 => [()]; 11110345 => sm_a9::MotherBrain_DrawBrainNeck_EnemyGfxDrawHook;
         11110365 => sm_a9::MotherBrainsBrain_GfxDrawHook; 11129754 => sm_a9::DeadTorizo_MainGfxHook;
@@ -664,6 +664,9 @@ crate::game::callback_dispatch! {
         11053109 => crate::game::actors::yapping_maw::frozen;
         11053894 => crate::game::actors::kago::initialize;
         11053941 => crate::game::actors::kago::advance; 11053955 => crate::game::actors::kago::shot;
+        11054987 => crate::game::actors::norfair_lava_man::initialize;
+        11055370 => [{ let address = crate::game::actors::norfair_lava_man::state_address(game); actor_species_pre_instruction(address, game); }];
+        11056128 | 11056134 | 11056140 => [crate::game::actors::norfair_lava_man::damage(ea, game)];
         11057014 => crate::game::actors::beetom::initialize;
         11057165 => crate::game::actors::beetom::advance; 11058734 => crate::game::actors::beetom::touch;
         11058860 => crate::game::actors::beetom::shot;
@@ -853,7 +856,13 @@ crate::game::address_dispatch! {
             }
         }];
         11047388 => [()];
-        11055761 => [sm_a8::sub_A8B291(k)]; 11055765 => [sm_a8::NorfairLavaMan_Func_13(game)];
+        11055386 | 11055477 | 11055507 | 11055544 | 11055581 | 11055885 | 11055903 | 11055958 | 11056039 => [crate::game::actors::norfair_lava_man::advance(ea as u16, game)];
+        11055620 => [{
+            let (actor, diagnostic) = crate::game::actors::norfair_lava_man::prepare_descent(game);
+            if let Some(value) = diagnostic { sm_a8::warn_lava_height(value); }
+            crate::game::actors::norfair_lava_man::finish_descent(actor, game);
+        }];
+        11055761 => [()]; 11055765 => [crate::game::actors::norfair_lava_man::ascend(game)];
         11059843 | 11059878 | 11059919 | 11060075 | 11060193 | 11060329 | 11060444 | 11060480 | 11060509 | 11060584 | 11060585 | 11060639 => [crate::game::actors::maridia_floater::advance(ea as u16, k, game)];
         11192670 => [()]; 11197610 => [()]; 11200422 => [()]; 11174011 => [()]; 11763835 => [()];
         11192146 => sm_aa::Torizo_Func_5;
@@ -911,7 +920,6 @@ crate::game::address_dispatch! {
         10661165 => [crate::game::gunship::phase(k, 0xad2d, game)];
         0xa30000..=0xa3ffff => [sm_a3::DispatchEnemyPreInstr(ea, k, game)];
         0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyPreInstr(ea, k, game)];
-        0xa80000..=0xa8ffff => [sm_a8::DispatchEnemyPreInstr(ea, k, game)];
         0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyPreInstr(ea, k, game)];
         0xb30000..=0xb3ffff => [sm_b3::DispatchEnemyPreInstr(ea, k, game)];
     }
@@ -1026,7 +1034,7 @@ crate::game::callback_dispatch! {
         0xa60000..=0xa6ffff => [sm_a6::DispatchEnemyInstr(ea, k, j, game)];
         0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyInstr(ea, k, j, game)];
         11051207 | 11051225 | 11051243 | 11051261 | 11051279 | 11051297 | 11051315 => [crate::game::actors::yapping_maw::instruction(ea, j, game)];
-        0xa80000..=0xa8ffff => [sm_a8::DispatchEnemyInstr(ea, k, j, game)];
+        11054610 | 11054630 | 11054640 | 11054650 | 11054661 | 11054672 | 11054682 | 11054692 | 11054728 | 11054742 | 11054778 | 11054794 | 11054820 | 11054846 | 11054872 | 11054916 => [crate::game::actors::norfair_lava_man::instruction(ea, j, game)];
         0xa90000..=0xa9ffff => [sm_a9::DispatchEnemyInstr(ea, k, j, game)];
         0xaa0000..=0xaaffff => [sm_aa::DispatchEnemyInstr(ea, k, j, game)];
         0xb20000..=0xb2ffff => [space_pirates::dispatch_instruction(ea, k, j, game)];
