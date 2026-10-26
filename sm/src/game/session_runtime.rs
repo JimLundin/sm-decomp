@@ -749,7 +749,7 @@ crate::game::callback_dispatch! {
             sm_b3::CallBugInstr(address, crate::ram_map::word!(game.cur_enemy_index), game);
         }];
         11769219 => sm_b3::Botwoon_Init;
-        11771926 => sm_b3::Botwoon_Shot;
+        11771926 => crate::game::actors::botwoon::shot;
         11791130 => [()];
         10652144 => [{
             let index = game.cur_enemy_index();

@@ -1,49 +1,37 @@
 use crate::game::actors;
 use crate::game::actors::access::ActorKey as Key;
 use crate::game::actors::api as actor_api;
+use crate::game::actors::botwoon;
 pub use crate::game::constants::bank_86::*;
+use crate::game::enemy_layouts::EnemyLayout104 as Boss;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
 use crate::game::gameplay_flag_runtime;
-use crate::game::music::QueueMusic_Delayed8;
 pub use crate::game::prelude::*;
-use crate::game::session_runtime::actor_direction_vector;
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
+use crate::ram_map::slot;
 
-use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
-use crate::game::gameplay_flag_runtime::{CheckEventHappened, SetBossBitForCurArea};
+use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::music::QueueSfx2_Max6;
 use crate::game::room_mechanisms::spawn_hardcoded;
-use crate::game::sprite_effect_runtime::create_sprite;
 
 pub use crate::types::Consts_B3;
 
 crate::game::constants::typed_constants! { Consts_B3;
     addr_kEscapeDachora_Ilist_E964 = 59748, addr_kEscapeEtecoon_Ilist_E5DA = 58842,
     addr_kEscapeEtecoon_Ilist_E5AE = 58798, addr_kEscapeEtecoon_Ilist_E582 = 58754,
-    addr_kEscapeEtecoon_Ilist_E556 = 58710, addr_loc_B3E28C = 57996,
-    addr_stru_B3E150 = 57680, addr_kBotwoon_Ilist_9389 = 37769,
+    addr_kEscapeEtecoon_Ilist_E556 = 58710,
     addr_kUnusedSpinningTurtleEye_Ilist_86A7 = 34471, addr_kSpritemap_Nothing_B3 = 32845,
 }
-pub use crate::types::Enemy_Botwoon;
 crate::type_aliases! {
     pub Enemy_EscapeDachora, Enemy_EscapeEtecoon = crate::game::enemy_layouts::EnemyLayout8;
 }
 
-const RomPtr_B3: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xb3>;
-crate::game::constants::typed_constants! { i32;
-    fnnullsub_171_B3 = 0xb3807b,
-    fnBotwoon_Func_26 = 0xb39dc0, fnBotwoon_Func_27 = 0xb39e7d,
-    fnBotwoon_Func_28 = 0xb39ee0, fnBotwoon_Func_29 = 0xb39f34,
-    fnBotwoon_Func_30 = 0xb39f7a,
-}
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
-    Get_Botwoon(o: i32) -> Enemy_Botwoon = [0xf78, o as isize];
     Get_EscapeDachora(o: i32) -> Enemy_EscapeDachora = [0xf78, o as isize];
     Get_EscapeEtecoon(o: i32) -> Enemy_EscapeEtecoon = [0xf78, o as isize];
 }
-static g_word_B39E77: [i16; 3] = [2, 3, 4];
 pub fn UnusedSpinningTurtleEye_Main() {}
 crate::game::callback_dispatch! {
     pub unsafe fn CallBugInstr(ea: u32, _k: u16, game: &mut Game) => ea;
@@ -68,396 +56,74 @@ crate::game::callback_dispatch! {
         11768280 => [actors::yellow_pipe_bug::turn(false, game)];
     }
 }
-pub unsafe fn Botwoon_QueueExplosionSfx(game: &mut Game) {
-    QueueSfx2_Max6(0x24, game);
-}
+// Room creation and narrow numeric dispatch retain their unsafe bank contracts.
 crate::game::callback_dispatch! {
     pub unsafe fn CallBotwoonFuncVarD(ea: u32, k: u16, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
-    @prefix { let E = Get_Botwoon(word!(game.cur_enemy_index) as i32, game); };
     Botwoon_Init [] {
-        if (gameplay_flag_runtime::boss_byte_at(4, game) & 2) != 0 {
+        let e = i32::from(word!(game.cur_enemy_index));
+        if gameplay_flag_runtime::boss_byte_at(4, game) & 2 != 0 {
             spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x4, 0xb797 as VoidP), game);
             crate::game::room_mechanisms::open_passage(game);
-            (*E).base.current_instruction = addr_kBotwoon_Ilist_9389 as u16;
-            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
+            slot!(game, Boss[e].base.current_instruction = 0x9389);
+            slot!(game, Boss[e].base.properties, |old| old | kEnemyProps_Deleted as u16);
         } else {
-            let v3: u16 = 24;
-            (*E).var_A = 24;
-            do_until! { v5;
-    SpawnEprojWithGfx(
-        v3,
-        word!(game.cur_enemy_index),
-        addr_kEproj_BotwoonsBody as u16,
-        game,
-    );
-    (*E).var_A = (*E).var_A.wrapping_sub(1);
-    let mut v5: bool = (((*E).var_A) as i16).wrapping_sub(1) < 0;
-    (*E).var_A = (*E).var_A.wrapping_sub(1);
-}
-            (*E).base.current_instruction = addr_kBotwoon_Ilist_9389 as u16;
-            set_fields! {[(*E)]; var_3B = addr_kBotwoon_Ilist_9389 as u16,
-                var_D = (0xb39878i32) as u16, var_E = (0xb39bb7i32) as u16,
-                var_F = (0xb39dc0i32) as u16, var_20 = 256,
-                var_38 = crate::rtl::rom_table_word!(game, 0xb394bb, 0),
-                var_C = crate::rtl::rom_table_word!(game, 0xb394bb, 1), };
-            set_fields! {[(*E)], 1; var_33, var_34, var_59}
-            (*E).var_36 = -1i32 as u16;
-            (*E).var_37 = 0;
-            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
-            let mut health: u16 = (*E).base.health;
-            (*E).var_5B = health;
-            health = health >> 1;
-            (*E).var_5C = health;
-            (*E).var_5D = health >> 1;
-            let x_pos: u16 = (*E).base.x_pos;
-            (*E).var_50 = x_pos;
-            (*E).var_52 = x_pos;
-            (*E).var_54 = x_pos;
-            (*E).var_56 = x_pos;
-            let y_pos: u16 = (*E).base.y_pos;
-            set_fields! {[(*E)]; var_51 = y_pos, var_53 = y_pos, var_55 = y_pos, var_57 = y_pos,
-                var_4E = (((*E).base.palette_index as i32 >> 4) + 256) as u16, };
-        };
-    };
-    Botwoon_Func_3 [] {
-        if (*E).var_2F != 0 && (*E).var_3E != 0 {
-            (*E).var_30 = 1;
-            (*E).var_D = (0xb39a46i32) as u16;
-            (*E).var_22 = 240;
-            set_fields! {[(*E)], 0; var_2F, var_3E}
+            botwoon::initialize(e, game);
         }
     };
-    Botwoon_HealthBasedPalHandling [] {
-        if (*E).var_4F != 16
-            && (((*E).base.health) as i16).wrapping_sub(
-                (crate::rtl::rom_table_word!(game, 0xb3981b, ((*E).var_4F >> 1) as isize)) as i16,
-            ) < 0
-        {
-            let mut r18: u16 = (16u16).wrapping_mul((*E).var_4F);
-            let mut r20: u16 = (*E).var_4E;
-            do_until! { r20 == 512 ;
-    crate::update_place! { previous fresh5 = r18 => r18.wrapping_add(1); }
-    word!(
-        game.palette_buffer[(r20 >> 1)] =
-            crate::rtl::rom_table_word!(game, 0xb3971b, (fresh5 >> 1) as isize)
-    );
-    r18 = r18.wrapping_add(1);
-    r20 = (r20).wrapping_add(2);
-}
-            (*E).var_4F = ((*E).var_4F).wrapping_add(2);
+    [11770013] Botwoon_Chase [] {
+        let e = i32::from(word!(game.cur_enemy_index));
+        if !botwoon::select_attack(e, game) {
+            step_botwoon_body(e, game);
+            botwoon::detect_portal(word!(game.cur_enemy_index), game);
         }
     };
-    [11769976] Botwoon_Func_6 [] {
-        let v1: u16 = ((*E).var_20).wrapping_sub(1);
-        (*E).var_20 = v1;
-        if v1 == 0 {
-            (*E).var_D = (0xb3989di32) as u16;
+    [11770276] Botwoon_FollowPath [] {
+        let e = i32::from(word!(game.cur_enemy_index));
+        if !botwoon::resume_chase(e, game) {
+            step_botwoon_body(e, game);
         }
     };
-    [11770013] Botwoon_Func_7 [] {
-        if (*E).var_3C != 0 {
-            (*E).var_3C = 0;
-            let mut r18: u8 = 0;
-            if (*E).var_33 == 0 && (*E).var_59 == 0 && (*E).var_3F == 0 {
-                r18 = ((game.next_random()) as u8) & (0xeu8);
-            }
-            (*E).var_59 = 0;
-            if r18 == 0 || r18 == 2 || r18 == 4 {
-                Botwoon_Func_8(game);
-            } else {
-                if r18 != 6 && r18 != 8 && r18 != 10 && r18 != 12 && r18 != 14 {
-                    Unreachable(game);
-                }
-                Botwoon_Func_9(game);
-            }
-        } else {
-            CallBotwoonFuncVarE((((*E).var_E) as u32) | (0xb30000u32), game);
-            crate::game::enemy_projectiles::record_botwoon_head(game);
-            crate::game::enemy_projectiles::follow_botwoon_history(game);
-            actor_species_pre_instruction((((*E).var_F) as u32) | (0xb30000u32), game);
-            crate::game::enemy_projectiles::orient_botwoon_body(game);
-            crate::game::enemy_projectiles::advance_botwoon_history(game);
-            Botwoon_Func_31(word!(game.cur_enemy_index), game);
-        };
-    };
-    Botwoon_Func_8 [] {
-        set_fields! {[(*E)]; var_D = (0xb399a4i32) as u16, var_E = (0xb3e250i32) as u16,
-            var_21 = 0, var_F = (0xb39dc0i32) as u16, var_4B = 0, };
-        Botwoon_Func_10(word!(game.cur_enemy_index), game);
-    };
-    Botwoon_Func_9 [] {
-        (*E).var_D = (0xb399e4i32) as u16;
-        (*E).var_F = (0xb39e7di32) as u16;
-        (*E).var_21 = 48;
-        (*E).base.properties = ((*E).base.properties as i32 & !(kEnemyProps_Tangible as i32)) as u16;
-    };
-    [11770276] Botwoon_Func_12 [] {
-        if (*E).var_3C != 0 {
-            (*E).var_3C = 0;
-            (*E).var_D = (0xb3989di32) as u16;
-            (*E).var_E = (0xb39bb7i32) as u16;
-            if (*E).var_33 != 0 {
-                (*E).var_35 = 0;
-            }
-        } else {
-            CallBotwoonFuncVarE((((*E).var_E) as u32) | (0xb30000u32), game);
-            crate::game::enemy_projectiles::record_botwoon_head(game);
-            crate::game::enemy_projectiles::follow_botwoon_history(game);
-            actor_species_pre_instruction((((*E).var_F) as u32) | (0xb30000u32), game);
-            crate::game::enemy_projectiles::orient_botwoon_body(game);
-            crate::game::enemy_projectiles::advance_botwoon_history(game);
-        };
-    };
-    [11770340] Botwoon_Func_13 [] {
-        if (*E).var_21 != 0 {
-            (*E).var_2E = 0;
-            actor_species_pre_instruction((((*E).var_F) as u32) | (0xb30000u32), game);
-        } else {
-            (*E).var_3C = 0;
-            (*E).var_D = (0xb399a4i32) as u16;
-            (*E).var_E = (0xb3e250i32) as u16;
-            (*E).var_F = (0xb39dc0i32) as u16;
-            if (*E).var_2F != 0 || {
-                let mut v3: u16 = (game.next_random()) & (1u16);
-                (*E).var_33 = v3;
-                (*E).var_34 = v3;
-                (*E).var_34 == 0
-            } {
-                (*E).var_4B = 0;
-            } else {
-                (*E).var_35 = 0;
-                (*E).var_36 = -1i32 as u16;
-            }
-            Botwoon_Func_10(word!(game.cur_enemy_index), game);
-        };
-    };
-    [11770438] Botwoon_Func_14 [] {
-        let v1: u16 = ((*E).var_22).wrapping_add(1);
-        (*E).var_22 = v1;
-        if v1 as i32 - 256i32 & 0x8000 == 0 {
-            (*E).var_D = (0xb39a5ei32) as u16;
+    [11770340] Botwoon_AwaitSpit [] {
+        let e = i32::from(word!(game.cur_enemy_index));
+        if botwoon::await_spit(e, game) {
+            actor_species_pre_instruction(0xb30000 | u32::from(slot!(game, Boss[e].var_F)), game);
         }
     };
-    [11770462] Botwoon_Func_15 [] {
-        let v2: i32 = 8 * byte!((*E).var_28; 1) as i32 >> 1;
-        words!(
-            (*E).base,
-            y_pos,
-            y_subpos += words!((
-                crate::rtl::rom_table_word!(game, 0xa2838f, (v2 + 1) as isize),
-                crate::rtl::rom_table_word!(game, 0xa2838f, v2 as isize)
-            ))
-        );
-        if (*E).base.y_pos as i32 - 200i32 & 0x8000 != 0 {
-            (*E).var_28 = ((*E).var_28).wrapping_add(192);
-        } else {
-            (*E).base.y_pos = 200;
-            (*E).var_D = (0xb39acai32) as u16;
-            game.eproj_spawn_pt = Point16U {
-                x: (*E).base.x_pos,
-                y: (*E).base.y_pos,
-            };
-            SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, 0x1d, game);
-            Botwoon_QueueExplosionSfx(game);
-            (*E).base.properties = ((*E).base.properties) | (0x500u16);
-        };
-    };
-    [11770570] Botwoon_Func_16 [] {
-        if (*E).var_5F != 0 {
-            (*E).var_D = (0xb39af9i32) as u16;
-            Botwoon_Func_17(word!(game.cur_enemy_index), game);
+    [11770570] Botwoon_AwaitBody [] {
+        let e = i32::from(word!(game.cur_enemy_index));
+        if slot!(game, Boss[e].var_5F) != 0 {
+            slot!(game, Boss[e].var_D = 0x9af9);
+            let k = word!(game.cur_enemy_index);
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x4, 0xb79b as VoidP), game);
+            scatter(DropSource::Botwoon, k, game);
+            slot!(game, Boss[i32::from(k)]; var_23 = 0, var_24 = 0, var_25 = 0);
         }
     };
-    Botwoon_Func_21 [] {
-        let pt: Vector32 = actor_direction_vector((*E).var_3A, (*E).var_38, game);
-        Runtime::new(game).session_mut().compatibility_enemy_scratch = (*E).var_3A;
-        ({ let (phase, point) = ((*E).var_3A, pt); actor_api::apply_vector(&mut Runtime::new(game), phase, point) });
-    };
-    Botwoon_Shot [] {
-        (*E).var_4C = (*E).base.health;
-        Enemy_NormalShotAI_SkipSomeParts_B3(game);
-        if (*E).base.health == 0 {
-            (*E).var_2F = 1;
-            Botwoon_Func_4(game);
-        }
-    };
-    Botwoon_Func_32 [] {
-        (*E).var_E = addr_loc_B3E28C as u16;
-        (*E).var_3C = 0;
-        let v1 = RomPtr_B3(((*E).var_40 as i32 + addr_stru_B3E150 as i32) as u16, game);
-        (*E).var_42 = *(v1 as *mut u16);
-        (*E).var_37 = *(v1.offset(4) as *mut u16);
-        let v2: i16 = *(v1.offset(2) as *mut u16) as i16;
-        (*E).var_44 = v2 as u16;
-        if v2 < 0 {
-            (*E).var_42 = ((*E).var_42).wrapping_sub(4);
-        }
-        Botwoon_Func_33(game);
+    @functions [unsafe fn (e: i32, game: &mut Game)];
+    step_botwoon_body [] {
+        CallBotwoonFuncVarE(0xb30000 | u32::from(slot!(game, Boss[e].var_E)), game);
+        crate::game::enemy_projectiles::record_botwoon_head(game);
+        crate::game::enemy_projectiles::follow_botwoon_history(game);
+        actor_species_pre_instruction(0xb30000 | u32::from(slot!(game, Boss[e].var_F)), game);
+        crate::game::enemy_projectiles::orient_botwoon_body(game);
+        crate::game::enemy_projectiles::advance_botwoon_history(game);
     };
     @external {
-        11770617 => [Botwoon_Func_18(k, game)];
+        11769976 => botwoon::wait_entry;
+        11770438 => botwoon::wait_collapse;
+        11770462 => botwoon::fall;
+        11770617 => [botwoon::rubble(k, game)];
     }
 }
 crate::game::callback_dispatch! {
     pub unsafe fn CallBotwoonFuncVarE(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [11770807] Botwoon_Func_19 [] {
-        let pt: Point16U = Botwoon_Func_20(word!(game.cur_enemy_index), game);
-        let v1: u16 = actor_api::angle_from_delta(pt.x, pt.y);
-        let E = Get_Botwoon(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_39 = v1;
-        (*E).var_3A = ((64u8).wrapping_sub((v1) as u8)) as u16;
-        if (*E).var_33 == (*E).var_34 {
-            Botwoon_Func_21(game);
-        } else {
-            (*E).var_34 = (*E).var_33;
-            (*E).var_3C = 1;
-        };
-    };
-    [11788940] Botwoon_Func_33 [] {
-        let mut x: u16 = 0;
-        let mut y: u16 = 0;
-        let E = Get_Botwoon(word!(game.cur_enemy_index) as i32, game);
-        let mut n: i32 = (*E).var_38 as i32;
-        let step: i32 = if ((*E).var_44 & 0x8000) == 0 {
-            2
-        } else {
-            -2i32
-        };
-        do_until! { n == 0 ;
-    let v6 = RomPtr_B3((*E).var_42, game);
-    let v7: u16 = sign_extend8(*v6 as u16);
-    let mut v8: u16 = 0;
-    if v7 == 0xff80 || {
-        x = (x).wrapping_add(v7);
-        v8 = sign_extend8(*v6.offset(1) as u16);
-        v8 == 0xff80
-    } {
-        (*E).var_41 = 0;
-        (*E).var_3C = 1;
-        return;
-    }
-    y = (y).wrapping_add(v8);
-    (*E).var_42 = ((*E).var_42 as i32 + step) as u16;
-    n -= 1;
-}
-        if ((*E).var_44 & 0x8000) != 0 {
-            x = -(x as i32) as u16;
-            y = -(y as i32) as u16;
-        }
-        (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(x);
-        (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(y);
-    };
     @external {
-        11788880 => Botwoon_Func_32;
-    }
-}
-pub unsafe fn Botwoon_Func_4(game: &mut Game) {
-    unsafe {
-        let E = Get_Botwoon(0, game);
-        (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
-    }
-}
-pub unsafe fn Botwoon_Func_10(k: u16, game: &mut Game) {
-    unsafe {
-        Botwoon_Func_11(k, game);
-        let E = Get_Botwoon(k as i32, game);
-        let r18: u16 = (if (*E).var_33 != 0 { 128 } else { 0 }) as u16;
-        (*E).var_40 =
-            ((game.next_random() as i32 & 0x18) + r18 as i32 + 4 * (*E).var_37 as i32) as u16;
-    }
-}
-pub unsafe fn Botwoon_Func_11(k: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_Botwoon(k as i32, game);
-        if (*E).var_33 == 0 {
-            (*E).var_3F = 0;
-            let mut health: i16 = (*E).base.health as i16;
-            if health > 0 && (health).wrapping_sub(((*E).var_5C) as i16) < 0 {
-                if (health).wrapping_sub(((*E).var_5D) as i16) < 0 {
-                    (*E).var_3F = 2;
-                } else {
-                    (*E).var_3F = 1;
-                }
-                let v3: i32 = ((4u16).wrapping_mul((*E).var_3F)) as i32 >> 1;
-                (*E).var_38 = crate::rtl::rom_table_word!(game, 0xb394bb, v3 as isize);
-                (*E).var_C = crate::rtl::rom_table_word!(game, 0xb394bb, (v3 + 1) as isize);
-            }
-        }
-    }
-}
-pub unsafe fn Botwoon_Func_17(k: u16, game: &mut Game) {
-    unsafe {
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x4, 0xb79b as VoidP), game);
-        scatter(DropSource::Botwoon, k, game);
-        let E = Get_Botwoon(k as i32, game);
-        set_fields! {[(*E)], 0; var_23, var_24, var_25}
-    }
-}
-pub unsafe fn Botwoon_Func_18(k: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_Botwoon(k as i32, game);
-        if (*E).var_23 as i32 - 192i32 & 0x8000 != 0 {
-            if (*E).var_23 as i32 - 64i32 & 0x8000 == 0 {
-                let v2: i16 = (((*E).var_24) as i16).wrapping_sub(1);
-                (*E).var_24 = v2 as u16;
-                if v2 < 0 {
-                    (*E).var_24 = 12;
-                    let x: u16 = ((game.next_random() as i32 & 0x1f) + 232) as u16;
-                    let y: u16 =
-                        ((*E).var_23 as i32 + (game.next_random() as i32 & 0x1f) - 8i32) as u16;
-                    create_sprite(x, y, 29, 2560, game);
-                    Botwoon_QueueExplosionSfx(game);
-                }
-                let v3: i16 = (((*E).var_25) as i16).wrapping_sub(1);
-                (*E).var_25 = v3 as u16;
-                if v3 < 0 {
-                    (*E).var_25 = 4;
-                    for _ in 0..2 {
-                        let x_0: u16 = ((game.next_random() as i32 & 0x3f) + 224) as u16;
-                        let y_0: u16 = ((*Get_Botwoon(k as i32, game)).var_23 as i32
-                            + ((game.next_random() as i32 & 0x1f) - 8i32))
-                            as u16;
-                        create_sprite(x_0, y_0, 9, 2560, game);
-                    }
-                }
-            }
-            (*E).var_23 = (*E).var_23.wrapping_add(1);
-        } else {
-            (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
-            SetBossBitForCurArea(2, game);
-            QueueMusic_Delayed8(3, game);
-        };
-    }
-}
-pub unsafe fn Botwoon_Func_20(k: u16, game: &mut Game) -> Point16U {
-    unsafe {
-        let E = Get_Botwoon(k as i32, game);
-        let v2: i32 = (*E).var_37 as i32 >> 1;
-        let v3: u16 = (crate::rtl::rom_table_word!(game, 0xb3949b, v2 as isize) as i32 + 4
-            - (*E).base.x_pos as i32) as u16;
-        let mut r18: u16 = v3;
-        if v3 as i32 - 256i32 & 0x8000 != 0 {
-            if v3 as i32 + 256 & 0x8000 != 0 {
-                r18 = -255i32 as u16;
-            }
-        } else {
-            r18 = 255;
-        }
-        let v4: u16 = (crate::rtl::rom_table_word!(game, 0xb3949b, (v2 + 2) as isize) as i32 + 4
-            - (*E).base.y_pos as i32) as u16;
-        let mut r20: u16 = v4;
-        if v4 as i32 - 256i32 & 0x8000 != 0 {
-            if v4 as i32 + 256 & 0x8000 != 0 {
-                r20 = -255i32 as u16;
-            }
-        } else {
-            r20 = 255;
-        }
-        Point16U { x: r18, y: r20 }
+        11770807 => botwoon::seek_hole;
+        11788940 => botwoon::advance_path;
+        11788880 => botwoon::load_path;
     }
 }
 
@@ -471,31 +137,17 @@ crate::game::callback_dispatch! {
         (*v0).current_instruction = addr_kUnusedSpinningTurtleEye_Ilist_86A7 as u16;
     };
     [11769448] Botwoon_Main [] {
-        Botwoon_Func_3(game);
-        let E = Get_Botwoon(word!(game.cur_enemy_index) as i32, game);
+        botwoon::arm_death(game);
+        let e = i32::from(word!(game.cur_enemy_index));
         CallBotwoonFuncVarD(
-            (((*E).var_D) as u32) | (0xb30000u32),
+            0xb30000 | u32::from(slot!(game, Boss[e].var_D)),
             word!(game.cur_enemy_index),
             game,
         );
-        Botwoon_HealthBasedPalHandling(game);
+        botwoon::health_palette(game);
     };
-    [11771903] Botwoon_Touch [] {
-        Enemy_NormalTouchAI_SkipDeathAnim_B3(game);
-        let E = Get_Botwoon(word!(game.cur_enemy_index) as i32, game);
-        if (*E).base.health == 0 {
-            (*E).var_2F = 1;
-            Botwoon_Func_4(game);
-        }
-    };
-    [11771969] Botwoon_Powerbomb [] {
-        Enemy_NormalPowerBombAI_SkipDeathAnim_B3(game);
-        let E = Get_Botwoon(word!(game.cur_enemy_index) as i32, game);
-        if (*E).base.health == 0 {
-            (*E).var_2F = 1;
-            Botwoon_Func_4(game);
-        }
-    };
+    [11771903] Botwoon_Touch [] { botwoon::contact(false, game); };
+    [11771969] Botwoon_Powerbomb [] { botwoon::contact(true, game); };
     [11789909] EscapeEtecoon_Main [] {
         let E = Get_EscapeEtecoon(word!(game.cur_enemy_index) as i32, game);
         actor_species_pre_instruction((((*E).var_F) as u32) | (0xb30000u32), game);
@@ -531,32 +183,11 @@ crate::game::callback_dispatch! {
             (*E).base.current_instruction = addr_kEscapeDachora_Ilist_E964 as u16;
         };
     };
-    @forward [pub unsafe fn (game: &mut Game)];
-    Enemy_NormalTouchAI_SkipDeathAnim_B3 => actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
-    Enemy_NormalShotAI_SkipSomeParts_B3 => actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::ReactionOnly);
-    Enemy_NormalPowerBombAI_SkipDeathAnim_B3 => actors::combat::power_bomb_reaction(&mut Runtime::new(game), actors::api::DeathHandling::LeavePending);
 }
 
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyInstr(ea: u32, k: u16, j: EnemyScript, game: &mut Game) -> EnemyScript => ea;
     call (k, j, game); default { crate::rtl::Unreachable(game); EnemyScript::Stop };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    @prefix { let E = Get_Botwoon(word!(game.cur_enemy_index) as i32, game); };
-    [11769031] Botwoon_Instr_1 [jp] {  (*E).base.x_width = 8; (*E).base.y_height = 16; };
-    [11769047] Botwoon_Instr_2 [jp] {  set_fields! {[(*E).base], 12; x_width, y_height} };
-    [11769063] Botwoon_Instr_3 [jp] {  (*E).base.x_width = 16; (*E).base.y_height = 8; };
-    [11769079] Botwoon_Instr_4 [jp] {  set_fields! {[(*E).base], 12; x_width, y_height} };
-    [11769095] Botwoon_Instr_5 [jp] {  (*E).base.x_width = 8; (*E).base.y_height = 16; };
-    [11769111] Botwoon_Instr_6 [jp] {  (*E).base.x_width = 8; (*E).base.y_height = 16; };
-    [11769127] Botwoon_Instr_7 [jp] {  set_fields! {[(*E).base], 12; x_width, y_height} };
-    [11769143] Botwoon_Instr_8 [jp] {  (*E).base.x_width = 16; (*E).base.y_height = 8; };
-    [11769159] Botwoon_Instr_9 [jp] {  set_fields! {[(*E).base], 12; x_width, y_height} };
-    [11769175] Botwoon_Instr_10 [jp] {  (*E).base.x_width = 8; (*E).base.y_height = 16; };
-    @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
-    [11769191] Botwoon_Instr_SetSpitting [jp] {
-        (*Get_Botwoon(word!(game.cur_enemy_index) as i32, game)).var_5A = 1;
-    };
-    [11769202] Botwoon_Instr_QueueSpitSfx [jp] { QueueSfx2_Max6(0x7c, game); };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11789637] EscapeEtecoon_Instr_1 [] {
         if word!(game.lava_acid_y_pos) >= 0xce {
@@ -588,21 +219,19 @@ crate::game::callback_dispatch! {
     @prefix { let E = Get_EscapeDachora(word!(game.cur_enemy_index) as i32, game); };
     [11791049] EscapeDachora_Instr_1 [jp] {  (*E).base.x_pos = ((*E).base.x_pos).wrapping_sub(6); };
     [11791063] EscapeDachora_Instr_4 [jp] {  (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(6); };
+    @external {
+        11769031 | 11769095 | 11769111 | 11769175 => [{ botwoon::set_hitbox(8, 16, game); j }];
+        11769047 | 11769079 | 11769127 | 11769159 => [{ botwoon::set_hitbox(12, 12, game); j }];
+        11769063 | 11769143 => [{ botwoon::set_hitbox(16, 8, game); j }];
+        11769191 => [{ botwoon::set_spitting(game); j }];
+        11769202 => [{ QueueSfx2_Max6(0x7c, game); j }];
+    }
 }
 
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyPreInstr(ea: u32, k: u16, game: &mut Game) => ea;
     call (k, game); default { crate::rtl::Unreachable(game); };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    [11771770] Botwoon_Func_30 [] {
-        let E = Get_Botwoon(k as i32, game);
-        let v2: i16 = (((*E).var_21) as i16).wrapping_sub(1);
-        (*E).var_21 = v2 as u16;
-        if v2 < 0 {
-            (*E).var_21 = 0;
-            (*E).var_F = (0xb39dc0i32) as u16;
-        }
-    };
     [11789916] EscapeEtecoon_E65C [] {
         let E = Get_EscapeEtecoon(k as i32, game);
         words!((*E).base, x_pos, x_subpos += 0x38000);
@@ -631,119 +260,11 @@ crate::game::callback_dispatch! {
         }
         ({ let (actor, amount) = (k, (1i16 as i32) << 16); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 });
     };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    @prefix { let E = Get_Botwoon(word!(game.cur_enemy_index) as i32, game); };
-    [11771328] Botwoon_Func_26 [] {
-        let x: u16 = ((*E).base.x_pos).wrapping_sub((*E).var_56);
-        let y: u16 = ((*E).base.y_pos).wrapping_sub((*E).var_57);
-        let r22: u16 = actor_api::angle_from_delta(x, y);
-        if x != 0 || y != 0 {
-            let mut v1: u16 = if (*E).var_33 != 0 {
-                (*E).base.layer = 7;
-                (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
-                addr_kBotwoon_Ilist_9389 as u16
-            } else {
-                (*E).base.layer = 2;
-                (*E).base.properties =
-                    ((*E).base.properties as i32 & !(kEnemyProps_Tangible as i32)) as u16;
-                (*E).var_45 = ((*E).var_45 as i32
-                    + (((r22) as i8).wrapping_sub(((*E).var_45) as i8)) as i32 * 3 / 4)
-                    as u8 as u16;
-                crate::rtl::rom_table_word!(game, 0xb3946b, ((*E).var_45 >> 5) as isize)
-            };
-            if v1 != (*E).var_3B {
-                (*E).base.current_instruction = v1;
-                (*E).var_3B = v1;
-                (*E).base.instruction_timer = 1;
-                (*E).base.timer = 0;
-            }
-        }
-        set_fields! {[(*E)]; var_56 = (*E).var_54, var_57 = (*E).var_55, var_54 = (*E).var_52,
-            var_55 = (*E).var_53, var_52 = (*E).var_50, var_53 = (*E).var_51,
-            var_50 = (*E).base.x_pos, var_51 = (*E).base.y_pos, };
-    };
-    [11771517] Botwoon_Func_27 [] {
-        (*E).base.layer = 2;
-        let v2: u16 = { let actor = word!(game.cur_enemy_index); actor_api::angle_to_player(&Runtime::new(game), Key::from_legacy(actor)) };
-        (*E).var_3D = v2;
-        let v3: u16 = crate::rtl::rom_table_word!(
-            game,
-            0xb3948b,
-            ((((v2) as u8).wrapping_add(16)) >> 5) as isize
-        );
-        (*E).base.current_instruction = v3;
-        (*E).var_3B = v3;
-        (*E).base.instruction_timer = 1;
-        (*E).base.timer = 0;
-        (*E).var_3D = ((64u8).wrapping_sub(((*E).var_3D) as u8)) as u16;
-        (*E).var_F = (0xb39ee0i32) as u16;
-        if (*E).var_D != 0x99e4 {
-            (*E).var_F = (0xb39f34i32) as u16;
-        }
-        actor_species_pre_instruction((((*E).var_F) as u32) | (0xb30000u32), game);
-    };
-    [11771616] Botwoon_Func_28 [] {
-        if (*E).var_5A != 0 {
-            *ram_ptr!(game; 0x60b) = (((*E).var_3D) as u8).wrapping_sub(32);
-            let varE32: u16 = g_word_B39E77[(*E).var_3F as usize] as u16;
-            for _ in 0..5 {
-                SpawnEprojWithGfx(
-                    varE32,
-                    word!(game.cur_enemy_index),
-                    addr_kEproj_BotwoonsSpit as u16,
-                    game,
-                );
-                crate::update_place! { reference fresh2 = *ram_ptr!(game; 0x60b) => (*fresh2).wrapping_add(16); }
-            }
-            (*E).var_5A = 0;
-            (*E).var_F = (0xb39f7ai32) as u16;
-        }
-    };
-    [11771700] Botwoon_Func_29 [] {
-        *ram_ptr!(game; 0x60b) = (((*E).var_3D) as u8).wrapping_sub(16);
-        let varE32: u16 = g_word_B39E77[(*E).var_3F as usize] as u16;
-        for _ in 0..3 {
-            SpawnEprojWithGfx(
-                varE32,
-                word!(game.cur_enemy_index),
-                addr_kEproj_BotwoonsSpit as u16,
-                game,
-            );
-            crate::update_place! { reference fresh3 = *ram_ptr!(game; 0x60b) => (*fresh3).wrapping_add(16); }
-        }
-        (*Get_Botwoon(word!(game.cur_enemy_index) as i32, game)).var_F = (0xb39f7ai32) as u16;
-    };
-    Botwoon_Func_31 [] {
-        if (*Get_Botwoon(k as i32, game)).var_35 == 0 {
-            let mut n: i32 = 24;
-            loop {
-                let v2: i32 = n >> 1;
-                if (((*E).base.x_pos) as i16)
-                    .wrapping_sub((crate::rtl::rom_table_word!(game, 0xb3949b, v2 as isize)) as i16)
-                    >= 0
-                    && (((*E).base.x_pos) as i16).wrapping_sub(
-                        (crate::rtl::rom_table_word!(game, 0xb3949b, (v2 + 1) as isize)) as i16,
-                    ) < 0
-                    && (((*E).base.y_pos) as i16).wrapping_sub(
-                        (crate::rtl::rom_table_word!(game, 0xb3949b, (v2 + 2) as isize)) as i16,
-                    ) >= 0
-                    && (((*E).base.y_pos) as i16).wrapping_sub(
-                        (crate::rtl::rom_table_word!(game, 0xb3949b, (v2 + 3) as isize)) as i16,
-                    ) < 0
-                {
-                    (*E).var_35 = 1;
-                    (*E).var_33 = ((*E).var_33) ^ (1u16);
-                    (*E).var_36 = (*E).var_B;
-                    (*E).var_26 = (*E).var_26.wrapping_sub(1);
-                    break;
-                } else {
-                    (*E).var_35 = 0;
-                    n -= 8;
-                    if n < 0 {
-                        break;
-                    }
-                }
-            }
-        }
-    };
+    @external {
+        11771328 => [botwoon::animate_motion(game)];
+        11771517 => [{ let address = botwoon::aim_spit(game); actor_species_pre_instruction(address, game); }];
+        11771616 => [botwoon::spit(true, game)];
+        11771700 => [botwoon::spit(false, game)];
+        11771770 => [botwoon::wait_spit(k, game)];
+    }
 }
