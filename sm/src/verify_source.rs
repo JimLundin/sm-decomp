@@ -34,6 +34,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/actors/norfair_lava_man.rs"),
     ),
     (
+        "sm/src/game/actors/yellow_pipe_bug.rs",
+        include_bytes!("game/actors/yellow_pipe_bug.rs"),
+    ),
+    (
         "sm/src/game/actors/yapping_maw.rs",
         include_bytes!("game/actors/yapping_maw.rs"),
     ),

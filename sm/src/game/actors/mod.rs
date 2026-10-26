@@ -104,3 +104,4 @@ pub(in crate::game) mod wrecked_ship_orbs;
 pub(in crate::game) mod wrecked_ship_robots;
 pub(in crate::game) mod wrecked_ship_spark;
 pub(crate) mod yapping_maw;
+pub(in crate::game) mod yellow_pipe_bug;

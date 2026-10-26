@@ -727,8 +727,12 @@ crate::game::callback_dispatch! {
             sm_b3::CallBugInstr(address, crate::ram_map::word!(game.cur_enemy_index), game);
             crate::game::actors::norfair_pipe_bug::reset_offscreen(game);
         }];
-        11767628 => sm_b3::BrinstarYellowPipeBug_Init;
-        11767726 => sm_b3::BrinstarYellowPipeBug_Main; 11769219 => sm_b3::Botwoon_Init;
+        11767628 => crate::game::actors::yellow_pipe_bug::initialize;
+        11767726 => [{
+            let address = crate::game::actors::yellow_pipe_bug::state_address(game);
+            sm_b3::CallBugInstr(address, crate::ram_map::word!(game.cur_enemy_index), game);
+        }];
+        11769219 => sm_b3::Botwoon_Init;
         11771926 => sm_b3::Botwoon_Shot;
         11791130 => [()];
         10652144 => [{
