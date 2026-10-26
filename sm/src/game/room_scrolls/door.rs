@@ -1,8 +1,6 @@
 //! Door camera setup and stepping; RAM remains authoritative between callbacks.
-use crate::game::sm_80::{
-    CalculateBgScrollAndLayerPositionBlocks, CalculateBgScrolls, CalculateLayer2Xpos,
-    CalculateLayer2Ypos, UpdateScrollVarsUpdateMap,
-};
+use super::{calculate_blocks, calculate_scrolls, layer2_position, update_map};
+use crate::game::room_entry::content::Axis;
 use crate::game_state::Game;
 use crate::ram_map::word;
 use crate::rtl::words;
@@ -15,23 +13,23 @@ pub(crate) unsafe fn begin(game: &mut Game) {
         let direction = word!(game.door_direction) & 3;
         let backwards = matches!(direction, 0 | 2);
         let block_delta = if backwards { u16::MAX } else { 1 };
-        CalculateLayer2Xpos(game);
+        layer2_position(Axis::X, game);
         match direction {
             0 | 1 => {
                 let offset = if backwards { 0xff00 } else { 256 };
                 word!(game.layer2_x_pos += offset);
-                CalculateLayer2Ypos(game);
+                layer2_position(Axis::Y, game);
                 word!(game.layer1_x_pos += offset);
             }
             2 => {
-                CalculateLayer2Ypos(game);
+                layer2_position(Axis::Y, game);
                 word!(game.layer2_y_pos -= 224);
                 word!(game.layer1_y_pos -= 224);
             }
             _ => {
                 let previous_y = word!(game.layer1_y_pos);
                 word!(game.layer1_y_pos += 31);
-                CalculateLayer2Ypos(game);
+                layer2_position(Axis::Y, game);
                 word!(game.layer2_y_pos += 224);
                 word!(game.layer1_y_pos = previous_y.wrapping_add(256));
             }
@@ -60,8 +58,8 @@ pub(crate) unsafe fn begin(game: &mut Game) {
 }
 
 unsafe fn prepare_blocks(vertical: bool, delta: u16, game: &mut Game) {
-    unsafe {
-        CalculateBgScrollAndLayerPositionBlocks(game);
+    {
+        calculate_blocks(game);
     }
     word!(game.previous_layer1_x_block = word!(game.layer1_x_block));
     word!(game.previous_layer2_x_block = word!(game.layer2_x_block));
@@ -97,10 +95,10 @@ pub(crate) unsafe fn horizontal(left: bool, game: &mut Game) -> u8 {
         let delta = if left { 0xfffc } else { 4 };
         word!(game.layer1_x_pos += delta);
         word!(game.layer2_x_pos += delta);
-        UpdateScrollVarsUpdateMap(game);
+        update_map(game);
         word!(game.door_transition_frame_counter = frame.wrapping_add(1));
         if frame == 63 && !left {
-            UpdateScrollVarsUpdateMap(game);
+            update_map(game);
         }
         (frame == 63) as u8
     }
@@ -115,7 +113,7 @@ unsafe fn first_vertical_frame(offset: u16, block_delta: u16, game: &mut Game) {
         let layer2 = word!(game.layer2_y_pos);
         word!(game.layer2_y_pos -= offset);
         prepare_blocks(true, block_delta, game);
-        UpdateScrollVarsUpdateMap(game);
+        update_map(game);
         word! { game; layer2_y_pos = layer2; layer1_y_pos = layer1;
         reg_BG2VOFS = bg2; reg_BG1VOFS = bg1; }
     }
@@ -137,13 +135,13 @@ pub(crate) unsafe fn down(game: &mut Game) -> u8 {
             word!(game.samus_prev_y_pos = word!(game.samus_y_pos));
             word!(game.layer1_y_pos += 4);
             word!(game.layer2_y_pos += 4);
-            UpdateScrollVarsUpdateMap(game);
+            update_map(game);
         }
         word!(game.door_transition_frame_counter = frame.wrapping_add(1));
         if frame.wrapping_add(1) < 0x39 {
             return 0;
         }
-        UpdateScrollVarsUpdateMap(game);
+        update_map(game);
         1
     }
 }
@@ -166,9 +164,9 @@ pub(crate) unsafe fn up(game: &mut Game) -> u8 {
             word!(game.layer1_y_pos -= 4);
             word!(game.layer2_y_pos -= 4);
             if word!(game.door_transition_frame_counter) >= 5 {
-                UpdateScrollVarsUpdateMap(game);
+                update_map(game);
             } else {
-                CalculateBgScrolls(game);
+                calculate_scrolls(game);
             }
         }
         word!(game.door_transition_frame_counter = frame.wrapping_add(1));

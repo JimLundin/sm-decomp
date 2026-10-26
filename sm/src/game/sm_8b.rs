@@ -24,13 +24,15 @@ use crate::game::visual_state::{CinematicDisplay, CinematicFade, CinematicTilema
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_60::*;
 
+use crate::game::display_refresh::GraphicsAsset;
 use crate::game::explosion_window::spawn_power_bomb;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
+use crate::game::mode7_transfers::enqueue_rom;
 use crate::game::music::{QueueSfx1_Max15, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::palette_effects;
 use crate::game::player_projectiles::prepare;
 use crate::game::session_runtime::initialize_player;
-use crate::game::sm_80::{ClearOamExt, ClearUnusedOam, GraphicsAsset, QueueMode7Transfers};
+use crate::game::sprite_drawing::{clear_high_table, finish_frame};
 use crate::game::visual_runtime::{initialize_intro_wave, initialize_title_gradient};
 
 pub use crate::types::Consts_8B;
@@ -152,8 +154,8 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
         if stage == 0 {
             crate::rtl::write_register_and_mirror(INIDISP as u16, 0x8f, 0x51, false, game);
             word!(game.oam_next_ptr = 0);
-            ClearOamExt(game);
-            ClearUnusedOam(game);
+            clear_high_table(game);
+            finish_frame(game);
             word! { game, 0;
                 nmi_copy_samus_halves, nmi_copy_samus_top_half_src,
                 nmi_copy_samus_bottom_half_src,
@@ -237,7 +239,7 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                     _ => {}
                 }
             }
-            ClearOamExt(game);
+            clear_high_table(game);
             word!(game.oam_next_ptr = 0);
             AddNintentoLogoToOam(game);
             stage = match stage {
@@ -266,7 +268,7 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                     }
                 }
             };
-            ClearUnusedOam(game);
+            finish_frame(game);
         }
         *resume_state = 0;
         0 as CoroutineRet
@@ -1080,7 +1082,7 @@ crate::game::callback_dispatch! {
             *ram_ptr!(game; 0x74, 1) = 95;
             *ram_ptr!(game; 0x74, 2) = -97i32 as u8;
             clear_cinematic_sprites(game);
-            QueueMode7Transfers(0x8b, addr_kCinematicFunction_Intro_Func56_M7 as u16, game);
+            enqueue_rom(0x8b, addr_kCinematicFunction_Intro_Func56_M7 as u16, game);
             word! {game; cinematic_var8 = -32i32 as u16; cinematic_var10 = -128i32 as u16;
                 cinematic_var5 = 32; }
             CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF39 as u16,
@@ -1237,11 +1239,11 @@ crate::game::callback_dispatch! {
             word!(game.cinematic_var6 = 768);
             CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF2D as u16, 0, game);
             if word!(game.game_state) == 37 {
-                QueueMode7Transfers(0x8b, addr_kCinematicFunction_Intro_Func76_M7_2 as u16, game);
+                enqueue_rom(0x8b, addr_kCinematicFunction_Intro_Func76_M7_2 as u16, game);
             } else {
-                QueueMode7Transfers(0x8b, addr_kCinematicFunction_Intro_Func76_M7_0 as u16, game);
+                enqueue_rom(0x8b, addr_kCinematicFunction_Intro_Func76_M7_0 as u16, game);
             }
-            QueueMode7Transfers(0x8b, addr_kCinematicFunction_Intro_Func76_M7_1 as u16, game);
+            enqueue_rom(0x8b, addr_kCinematicFunction_Intro_Func76_M7_1 as u16, game);
             word!(game.cinematic_function = (0x8bc5cai32) as u16);
         };
     };

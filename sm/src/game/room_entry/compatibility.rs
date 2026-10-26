@@ -144,13 +144,13 @@ impl EntryEffects for Runtime<'_> {
                     game::visual_runtime::spawn_bg3_scroll(game);
                 }
                 LeafEffect::SaveExploredMap => {
-                    game::sm_80::SaveExploredMapTilesToSaved(game);
+                    game::save_slots::save_area_map(game);
                 }
                 LeafEffect::LoadExploredMap => {
-                    game::sm_80::LoadMirrorOfExploredMapTiles(game);
+                    game::save_slots::load_area_map(game);
                 }
                 LeafEffect::MarkElevatorsUsed => {
-                    game::sm_80::SetElevatorsAsUsed(game);
+                    game::save_slots::mark_elevator(game);
                 }
                 LeafEffect::EnableNmi => {
                     crate::game::display_refresh::enable(true, game);
@@ -176,18 +176,24 @@ impl EntryEffects for Runtime<'_> {
     fn camera_call(&mut self, effect: CameraEffect) -> u8 {
         self.foreign(|game| unsafe {
             match effect {
-                CameraEffect::CalculateLayer2X => game::sm_80::CalculateLayer2Xpos(game),
-                CameraEffect::CalculateLayer2Y => game::sm_80::CalculateLayer2Ypos(game),
+                CameraEffect::CalculateLayer2X => {
+                    game::room_scrolls::layer2_position(Axis::X, game)
+                }
+                CameraEffect::CalculateLayer2Y => {
+                    game::room_scrolls::layer2_position(Axis::Y, game)
+                }
                 CameraEffect::CalculateLayer2AndScrolls => {
-                    game::sm_80::CalculateLayer2PosAndScrollsWhenScrolling(game);
+                    game::room_scrolls::update_scrolls(game);
                     0
                 }
                 CameraEffect::CalculateBgScrolls => {
-                    game::sm_80::CalculateBgScrolls(game);
+                    game::room_scrolls::calculate_scrolls(game);
                     0
                 }
                 CameraEffect::DisplayVisibleRoom => {
-                    game::sm_80::DisplayViewablePartOfRoom(game);
+                    game::room_scrolls::fill_viewport(game, |game| {
+                        game::display_refresh::flush_tilemaps(game)
+                    });
                     0
                 }
                 CameraEffect::FixDoorMovingUp => {
@@ -362,13 +368,15 @@ impl EntryEffects for Runtime<'_> {
             VramDecodeTarget::MainTiles => 0,
             VramDecodeTarget::Cre => 0x5000,
         };
-        self.foreign(|game| unsafe { game::sm_80::DecompressToVRAM(source, target, game) });
+        self.foreign(|game| unsafe {
+            game::display_refresh::DecompressToVRAM(source, target, game)
+        });
     }
     fn copy_vram(&mut self, destination: VramDestination, source: AssetSource, bytes: u16) {
         let destination = destination.compatibility_word();
         let source = source.compatibility_address(&self.session().world);
         self.foreign(|game| unsafe {
-            game::sm_80::CopyToVramNow(destination, source, bytes, game)
+            game::display_refresh::CopyToVramNow(destination, source, bytes, game)
         });
     }
     fn decode_level_and_copy_planes(&mut self, source: AssetSource) {

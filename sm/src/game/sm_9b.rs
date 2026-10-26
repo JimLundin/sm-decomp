@@ -21,7 +21,6 @@ use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::samus_animation::DrawSamusSuitExploding;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::session_runtime::{player_bottom, settle_grapple};
-use crate::game::sm_80::Multiply16x16;
 
 crate::typed_struct! {
     #[derive(Copy, Clone)]
@@ -646,13 +645,13 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
             if v2 >= 0 {
                 words!(
                     game.samus_y_speed,
-                    samus_y_subspeed = Multiply16x16(v2 as u16, v0, game)
+                    samus_y_subspeed = game.multiply_with_scratch(v2 as u16, v0)
                 );
                 word!(game.samus_y_dir = 2);
             } else {
                 words!(
                     game.samus_y_speed,
-                    samus_y_subspeed = Multiply16x16(-(v2 as i32) as u16, v0, game)
+                    samus_y_subspeed = game.multiply_with_scratch(-(v2 as i32) as u16, v0)
                 );
                 word!(game.samus_y_dir = 1);
             }
@@ -663,13 +662,13 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
             if v1 < 0 {
                 words!(
                     game.samus_y_speed,
-                    samus_y_subspeed = Multiply16x16(-(v1 as i32) as u16, v0, game)
+                    samus_y_subspeed = game.multiply_with_scratch(-(v1 as i32) as u16, v0)
                 );
                 word!(game.samus_y_dir = 2);
             } else {
                 words!(
                     game.samus_y_speed,
-                    samus_y_subspeed = Multiply16x16(v1 as u16, v0, game)
+                    samus_y_subspeed = game.multiply_with_scratch(v1 as u16, v0)
                 );
                 word!(game.samus_y_dir = 1);
             }
@@ -684,7 +683,7 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
         );
         words!(
             game.samus_x_base_speed,
-            samus_x_base_subspeed = Multiply16x16(v3, v0, game)
+            samus_x_base_subspeed = game.multiply_with_scratch(v3, v0)
         );
     }
 }

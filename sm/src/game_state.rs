@@ -82,6 +82,24 @@ macro_rules! ram_word_accessors {
 
 // Oracle snapshots own separate allocations, keeping construction stack usage bounded.
 impl Game {
+    pub(crate) fn next_random(&mut self) -> u16 {
+        let mut product = (u16::from(self.g_ram[0x5e5]) * 5).to_ne_bytes();
+        let carry = u16::from(product[1]) + u16::from(self.g_ram[0x5e6].wrapping_mul(5)) + 1;
+        product[1] = carry as u8;
+        let result = u16::from_ne_bytes(product).wrapping_add(17 + (carry >> 8));
+        crate::ram_map::checked_word!(self.random_number = result);
+        #[cfg(sm_verify_dll)]
+        crate::cpu_infra::player_transitions_composed::random_after(self);
+        result
+    }
+
+    pub(crate) fn multiply_with_scratch(&mut self, a: u16, b: u16) -> u32 {
+        self.g_ram[0x5e9..0x5eb].copy_from_slice(&a.to_le_bytes());
+        self.g_ram[0x5eb..0x5ed].copy_from_slice(&b.to_le_bytes());
+        let result: u32 = (a as u32).wrapping_mul(b as u32);
+        result
+    }
+
     pub(crate) fn request_reset(&mut self) {
         crate::ram_map::word!(self.game_state = u16::MAX);
     }

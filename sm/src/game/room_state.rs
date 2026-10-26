@@ -1,12 +1,12 @@
 //! Compatibility entry adapters and retained level/graphics backend leaves.
 use crate::game::decompression::decompress_to_ram;
+use crate::game::display_refresh::CopyToVramNow;
 use crate::game::room_entry::{
     content::{LoadMode, SelectorCursor, SelectorKind},
     installation, selection,
 };
 use crate::game::session_access::SessionAccess;
 use crate::game::session_runtime::Runtime;
-use crate::game::sm_80::CopyToVramNow;
 use crate::game_state::Game;
 use crate::ram_map::{checked_word, ram_ptr, word, words as ram};
 use crate::rtl::rom_bank_record;
@@ -494,12 +494,12 @@ pub(crate) unsafe fn advance_room(game: &mut Game) {
 }
 
 unsafe fn random_explosions(mask: u16, check_tile: bool, h: &mut Runtime<'_>) {
-    unsafe {
+    {
         if h.word(ram::time_is_frozen_flag) != 0 || h.word(ram::nmi_frame_counter_word) & mask != 0
         {
             return;
         }
-        let random = h.foreign(|game| crate::game::sm_80::NextRandom(game));
+        let random = h.foreign(|game| game.next_random());
         let x = h.word(ram::layer1_x_pos).wrapping_add(random as u8 as u16);
         let y = h
             .word(ram::layer1_y_pos)
@@ -512,7 +512,7 @@ unsafe fn random_explosions(mask: u16, check_tile: bool, h: &mut Runtime<'_>) {
                 return;
             }
         }
-        let random = h.foreign(|game| crate::game::sm_80::NextRandom(game)) & 15;
+        let random = h.foreign(|game| game.next_random()) & 15;
         if random < 8 {
             let sound = [0x24, 0, 0, 0x25, 0, 0, 0, 0][usize::from(random)];
             if sound != 0 {
@@ -535,7 +535,7 @@ unsafe fn select_earthquake(
         let remaining = timer.wrapping_sub(1);
         h.write_slice_native(0x7e1, remaining);
         (remaining == 0).then_some(ending)
-    } else if unsafe { h.foreign(|game| crate::game::sm_80::NextRandom(game)) } < threshold {
+    } else if h.foreign(|game| game.next_random()) < threshold {
         h.write_slice_le(0x7e1, 42);
         Some(starting)
     } else {

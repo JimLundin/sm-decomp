@@ -1,7 +1,8 @@
 //! Camera limits and scroll-cell rules; live callers retain RAM authority.
 #![forbid(unsafe_code)]
+use crate::game::room_entry::content::Axis;
 use crate::game_state::Game;
-use crate::ram_map::word;
+use crate::ram_map::{word, words as W};
 
 // Multiplication uses the width's low byte. A column may include a full-word
 // row stride; it is added afterward, with the original word wrapping.
@@ -233,5 +234,61 @@ fn retreat_to_boundary(previous: u16, distance: u16, boundary: u16) -> u16 {
         boundary
     } else {
         next
+    }
+}
+
+pub(crate) fn layer2_position(axis: Axis, game: &mut Game) -> u8 {
+    let (control, source, destination) = match axis {
+        Axis::X => (0x91b, W::layer1_x_pos, W::layer2_x_pos),
+        Axis::Y => (0x91c, W::layer1_y_pos, W::layer2_y_pos),
+    };
+    let scale = game.g_ram[control];
+    if scale == 1 {
+        return 1;
+    }
+    let position = word!(@read game, source);
+    let position = if scale == 0 {
+        position
+    } else {
+        (u32::from(position) * u32::from(scale & 0xfe) >> 8) as u16
+    };
+    word!(@write game, destination, position);
+    0
+}
+
+pub(crate) fn calculate_scrolls(game: &mut Game) {
+    {
+        word!(game.reg_BG1HOFS = (word!(game.bg1_x_offset)).wrapping_add(word!(game.layer1_x_pos)));
+        word!(game.reg_BG1VOFS = (word!(game.bg1_y_offset)).wrapping_add(word!(game.layer1_y_pos)));
+        word!(game.reg_BG2HOFS = (word!(game.bg2_x_scroll)).wrapping_add(word!(game.layer2_x_pos)));
+        word!(game.reg_BG2VOFS = (word!(game.bg2_y_scroll)).wrapping_add(word!(game.layer2_y_pos)));
+    }
+}
+
+pub(crate) fn calculate_blocks(game: &mut Game) {
+    {
+        crate::verify_probe::hit("camera.blocks");
+        word! {game; bg1_x_block = word!(game.reg_BG1HOFS) >> 4;
+        bg2_x_block = word!(game.reg_BG2HOFS) >> 4;
+        layer1_x_block = ((word!(game.layer1_x_pos) as i16) >> 4) as u16;
+        layer2_x_block = ((word!(game.layer2_x_pos) as i16) >> 4) as u16;
+        bg1_y_block = word!(game.reg_BG1VOFS) >> 4; bg2_y_block = word!(game.reg_BG2VOFS) >> 4;
+        layer1_y_block = ((word!(game.layer1_y_pos) as i16) >> 4) as u16;
+        layer2_y_block = ((word!(game.layer2_y_pos) as i16) >> 4) as u16; }
+    }
+}
+
+pub(crate) fn debug_position(game: &mut Game) {
+    {
+        if (word!(game.joypad2_new_keys) & 0x40) != 0 {
+            word!(game.debug_saveload_scrollpos_toggle += 1);
+        }
+        if word!(game.debug_saveload_scrollpos_toggle) & 1 != 0 {
+            word!(game.layer1_x_pos = word!(game.debug_saved_xscroll));
+            word!(game.layer1_y_pos = word!(game.debug_saved_yscroll));
+        } else {
+            word!(game.debug_saved_xscroll = word!(game.layer1_x_pos));
+            word!(game.debug_saved_yscroll = word!(game.layer1_y_pos));
+        };
     }
 }

@@ -121,3 +121,16 @@ fn extension(map: &impl Geometry, record: usize, index: usize, x: u16, game: &mu
         ((x & 0x100) >> 8 | u16::from((map.x(record) as i16) < 0) * 2) << (2 * (index >> 2 & 7));
     game.g_ram[offset..offset + 2].copy_from_slice(&(old | bits).to_ne_bytes());
 }
+
+pub(crate) fn finish_frame(game: &mut Game) {
+    let first_unused_sprite = u16::from_le_bytes([game.g_ram[0x590], game.g_ram[0x591]]) >> 2;
+    for sprite in first_unused_sprite..128 {
+        // Each four-byte OAM entry stores its Y coordinate in byte 1.
+        game.g_ram[0x371 + usize::from(sprite) * 4] = 0xf0;
+    }
+    word_transfers!(game, ascending, 1; native(0x590) <- value(0));
+}
+
+pub(crate) fn clear_high_table(game: &mut Game) {
+    word_transfers!(game, ascending, 16; native(0x570) <- value(0));
+}

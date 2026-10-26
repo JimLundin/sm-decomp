@@ -114,7 +114,7 @@ impl Effects for Runtime<'_> {
         self.foreign(crate::game::animated_tiles::native::unreachable)
     }
     fn random_word(&mut self) -> u16 {
-        self.foreign(|game| unsafe { crate::game::sm_80::NextRandom(game) })
+        self.foreign(crate::game_state::Game::next_random)
     }
     fn grapple_transition(&mut self, transition: GrappleTransition) {
         self.foreign(|game| unsafe {

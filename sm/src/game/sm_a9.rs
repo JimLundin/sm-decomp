@@ -32,7 +32,6 @@ use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::room_state::load_fx_entry as LoadFxEntry;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::session_runtime::player_mother_brain;
-use crate::game::sm_80::NextRandom;
 
 use crate::game::sm_a6::{
     HandleTypewriterText_Ext, HomingReversal, Ridley_Func_98, SetupZebesEscapeTypewriter,
@@ -2190,7 +2189,7 @@ pub unsafe fn MotherBrain_GenerateExplosions(a: u16, r22: u16, r24: u16, game: &
                 };
                 let v6 = RomPtr_A9(r22, game) as *const u16;
                 let mut v7: u16 = *v6;
-                let Random: u16 = NextRandom(game);
+                let Random: u16 = game.next_random();
                 if Random >= 0x4000 {
                     v7 = *v6.offset(1);
                     if Random >= 0xe000 {
@@ -2369,7 +2368,7 @@ pub unsafe fn MotherBrain_Phase2_DecideAttackStrategy_DoubleRet(game: &mut Game)
 }
 pub unsafe fn MotherBrain_FiringBomb_DecideOnCrouching(game: &mut Game) {
     unsafe {
-        if NextRandom(game) >= 0x8000 {
+        if game.next_random() >= 0x8000 {
             (*Get_MotherBrain(0i32, game)).var_A = (0xa9b7c6i32) as u16;
             MotherBrain_FiringBomb_Crouch(game);
         } else {
@@ -2819,7 +2818,7 @@ crate::game::callback_dispatch! {
                 y: g_word_A9B393[(v3 + 1) as usize],
             };
             let mut v4: u16 = 3;
-            if NextRandom(game) < 0x4000 {
+            if game.next_random() < 0x4000 {
                 v4 = 12;
             }
             SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as u16, v4, game);

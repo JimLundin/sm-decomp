@@ -1,8 +1,11 @@
 //! Room scroll definitions, camera following and their shared executors.
 //! Dispatch identities retain the full address; cell writes retain their order.
 mod camera;
+pub(crate) use camera::{calculate_blocks, calculate_scrolls, debug_position, layer2_position};
 pub(crate) mod door;
 
+use crate::game::display_refresh::{ScrollingDmaLayout, queue_scrolling_tiles};
+use crate::game::room_entry::content::Axis as CameraAxis;
 use crate::game_state::Game;
 
 #[derive(Clone, Copy)]
@@ -237,5 +240,130 @@ unsafe fn follow_y(game: &mut Game) {
                 trigger_down
             );
         };
+    }
+}
+
+pub(crate) fn fill_viewport(game: &mut Game, mut flush: impl FnMut(&mut Game)) {
+    let mut v1: i32 = (game.g_ram[0x58] as i32 - game.g_ram[0x59] as i32) << 8;
+    word!(game.size_of_bg2 = (v1 & 0xf800) as u16);
+    calculate_blocks(game);
+    let mut v2: i32 = 0;
+    do_until! { v3 == 16 ;
+        let mut v3: i32 = v2;
+        word!(game.blocks_to_update_x_block = word!(game.layer1_x_block));
+        word!(game.blocks_to_update_y_block = word!(game.layer1_y_block));
+        word!(game.vram_blocks_to_update_x_block = word!(game.bg1_x_block));
+        word!(game.vram_blocks_to_update_y_block = word!(game.bg1_y_block));
+        queue_scrolling_tiles(0x0, ScrollingDmaLayout::Column, game);
+        if game.g_ram[0x91b] & 1 == 0 {
+            word!(game.blocks_to_update_x_block = word!(game.layer2_x_block));
+            word!(game.blocks_to_update_y_block = word!(game.layer2_y_block));
+            word!(game.vram_blocks_to_update_x_block = word!(game.bg2_x_block));
+            word!(game.vram_blocks_to_update_y_block = word!(game.bg2_y_block));
+            queue_scrolling_tiles(0x1c, ScrollingDmaLayout::Column, game);
+        }
+        flush(game);
+        word!(game.layer1_x_block += 1);
+        word!(game.bg1_x_block += 1);
+        word!(game.layer2_x_block += 1);
+        word!(game.bg2_x_block += 1);
+        v2 += 1;
+    }
+}
+
+pub(crate) fn update_map(game: &mut Game) {
+    calculate_scrolls(game);
+    update_backgrounds(game);
+}
+
+pub(crate) fn update_scrolls(game: &mut Game) {
+    if word!(game.time_is_frozen_flag) == 0 {
+        word!(game.reg_BG1HOFS = (word!(game.bg1_x_offset)).wrapping_add(word!(game.layer1_x_pos)));
+        word!(game.reg_BG1VOFS = (word!(game.bg1_y_offset)).wrapping_add(word!(game.layer1_y_pos)));
+        if layer2_position(CameraAxis::X, game) == 0 {
+            word!(
+                game.reg_BG2HOFS =
+                    (word!(game.bg2_x_scroll)).wrapping_add(word!(game.layer2_x_pos))
+            );
+        }
+        if layer2_position(CameraAxis::Y, game) == 0 {
+            word!(
+                game.reg_BG2VOFS =
+                    (word!(game.bg2_y_scroll)).wrapping_add(word!(game.layer2_y_pos))
+            );
+        }
+        update_backgrounds(game);
+    }
+}
+
+pub(crate) fn update_backgrounds(game: &mut Game) {
+    calculate_blocks(game);
+    let mut v0: i32 = 0;
+    let v1: bool = ((word!(game.layer1_x_block)) as i16)
+        .wrapping_sub((word!(game.previous_layer1_x_block)) as i16)
+        < 0;
+    if word!(game.layer1_x_block) != word!(game.previous_layer1_x_block) {
+        word!(game.previous_layer1_x_block = word!(game.layer1_x_block));
+        if !v1 {
+            v0 = 16;
+        }
+        word!(game.blocks_to_update_x_block = (word!(game.layer1_x_block) as i32 + v0) as u16);
+        word!(game.vram_blocks_to_update_x_block = (word!(game.bg1_x_block) as i32 + v0) as u16);
+        word!(game.blocks_to_update_y_block = word!(game.layer1_y_block));
+        word!(game.vram_blocks_to_update_y_block = word!(game.bg1_y_block));
+        queue_scrolling_tiles(0x0, ScrollingDmaLayout::Column, game);
+    }
+    if game.g_ram[0x91b] & 1 == 0 {
+        let mut v2: i32 = 0;
+        let v3: bool = ((word!(game.layer2_x_block)) as i16)
+            .wrapping_sub((word!(game.previous_layer2_x_block)) as i16)
+            < 0;
+        if word!(game.layer2_x_block) != word!(game.previous_layer2_x_block) {
+            word!(game.previous_layer2_x_block = word!(game.layer2_x_block));
+            if !v3 {
+                v2 = 16;
+            }
+            word!(game.blocks_to_update_x_block = (word!(game.layer2_x_block) as i32 + v2) as u16);
+            word!(
+                game.vram_blocks_to_update_x_block = (word!(game.bg2_x_block) as i32 + v2) as u16
+            );
+            word!(game.blocks_to_update_y_block = word!(game.layer2_y_block));
+            word!(game.vram_blocks_to_update_y_block = word!(game.bg2_y_block));
+            queue_scrolling_tiles(0x1c, ScrollingDmaLayout::Column, game);
+        }
+    }
+    let mut v4: i32 = 1;
+    let v5: bool = ((word!(game.layer1_y_block)) as i16)
+        .wrapping_sub((word!(game.previous_layer1_y_block)) as i16)
+        < 0;
+    if word!(game.layer1_y_block) != word!(game.previous_layer1_y_block) {
+        word!(game.previous_layer1_y_block = word!(game.layer1_y_block));
+        if !v5 {
+            v4 = 15;
+        }
+        word!(game.blocks_to_update_y_block = (word!(game.layer1_y_block) as i32 + v4) as u16);
+        word!(game.vram_blocks_to_update_y_block = (word!(game.bg1_y_block) as i32 + v4) as u16);
+        word!(game.blocks_to_update_x_block = word!(game.layer1_x_block));
+        word!(game.vram_blocks_to_update_x_block = word!(game.bg1_x_block));
+        queue_scrolling_tiles(0x0, ScrollingDmaLayout::Row, game);
+    }
+    if game.g_ram[0x91c] & 1 == 0 {
+        let mut v6: i32 = 1;
+        let v7: bool = ((word!(game.layer2_y_block)) as i16)
+            .wrapping_sub((word!(game.previous_layer2_y_block)) as i16)
+            < 0;
+        if word!(game.layer2_y_block) != word!(game.previous_layer2_y_block) {
+            word!(game.previous_layer2_y_block = word!(game.layer2_y_block));
+            if !v7 {
+                v6 = 15;
+            }
+            word!(game.blocks_to_update_y_block = (word!(game.layer2_y_block) as i32 + v6) as u16);
+            word!(
+                game.vram_blocks_to_update_y_block = (word!(game.bg2_y_block) as i32 + v6) as u16
+            );
+            word!(game.blocks_to_update_x_block = word!(game.layer2_x_block));
+            word!(game.vram_blocks_to_update_x_block = word!(game.bg2_x_block));
+            queue_scrolling_tiles(0x1c, ScrollingDmaLayout::Row, game);
+        }
     }
 }

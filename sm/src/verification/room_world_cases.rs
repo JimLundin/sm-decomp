@@ -139,7 +139,10 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             put(g, 0x78b, site.index);
             put(g, 0x5f7, 0xa534);
             record(&mut out, 0, g);
-            crate::game::sm_80::LoadFromLoadStation(g);
+            room_entry::begin(
+                &mut Runtime::new(g),
+                ArrivalRequest::Start(StartSite::CurrentLoadStation),
+            );
             assert_eq!(word(g, 0x79b), room, "room.world.current-station-room");
             assert_eq!(word(g, 0x78d), exit, "room.world.current-station-exit");
             assert_eq!(
@@ -192,7 +195,7 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             g.g_ram[0x16402] = 0;
             record(&mut out, 0, g);
             let moved = crate::game::player_collision::operations::displace(
-                &mut crate::game::session_runtime::Runtime::new(g),
+                &mut Runtime::new(g),
                 crate::game::player_collision::operations::DisplacementRequest::TerrainOnly {
                     axis: crate::game::player_collision::operations::Axis::X,
                     amount: 65536,
@@ -285,7 +288,11 @@ unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
             record(&mut out, 0, g);
             let mut done = false;
             for step in 0..192 {
-                let returned = crate::game::sm_80::StartGameplay_Async(g);
+                let returned = room_entry::protocol::resume(
+                    &mut Runtime::new(g),
+                    room_entry::EntrySignal::Initial,
+                )
+                .returned_byte();
                 assert!(!g.g_fail, "room.world.initial-no-diagnostic-{step}");
                 if returned == 0 {
                     done = true;

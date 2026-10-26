@@ -22,7 +22,6 @@ use crate::game::player_movement::forced;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::session_runtime::damage_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
-use crate::game::sm_80::NextRandom;
 use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
 use crate::game::visual_runtime::{initialize_draygon_layer, spawn_bg3_scroll};
 
@@ -77,7 +76,7 @@ crate::ram_map::ram_pointer_functions! {
 pub unsafe fn Draygon_Func_3(game: &mut Game) {
     unsafe {
         if (word!(game.nmi_frame_counter_word) & 0x3f) == 0 {
-            let mut Random: i8 = NextRandom(game) as i8;
+            let mut Random: i8 = game.next_random() as i8;
             let result: u16 = (2 * ((Random as i32 & 3) + 2)) as u16;
             if (*Get_Draygon(result as i32, game)).var_40 == 0 {
                 let v2: i32 = (4 * ((Random as i32 & 3) + 2)) as u16 as i32 >> 1;
@@ -813,9 +812,9 @@ pub unsafe fn Draygon_Func_28(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Draygon_Func_34(game: &mut Game) {
-    unsafe {
+    {
         if (word!(game.nmi_frame_counter_word) & 7) == 0 {
-            let x: u16 = ((NextRandom(game) as i32 & 0x7f) + 192) as u16;
+            let x: u16 = ((game.next_random() as i32 & 0x7f) + 192) as u16;
             let y: u16 = ((((word!(game.random_number)) & (0x3f00u16)) as i32 >> 8) + 400) as u16;
             create_sprite(x, y, 21, 0, game);
         }
@@ -912,7 +911,7 @@ pub unsafe fn sub_A5960D(game: &mut Game) {
 }
 unsafe fn Draygon_Func_47(game: &mut Game) -> Point16U {
     unsafe {
-        NextRandom(game);
+        game.next_random();
         let E = Get_Draygon(0, game);
         let r18: u16 = ((word!(game.random_number) as i32 & 0x7f) - 64i32) as u16;
         let r20: u16 = (((word!(game.random_number) as i32 & 0x7f00) >> 8) - 64i32) as u16;
@@ -1017,9 +1016,9 @@ pub unsafe fn Draygon_Func_49(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn sub_A5E9F5(game: &mut Game) {
-    unsafe {
+    {
         if (word!(game.nmi_frame_counter_word) & 0xf) == 0 {
-            NextRandom(game);
+            game.next_random();
             let x: u16 = ((word!(game.random_number) as i32 & 0x3f) + 96) as u16;
             let y: u16 = ((((word!(game.random_number)) & (0xf00u16)) as i32 >> 8) + 480) as u16;
             create_sprite(x, y, 21, 0, game);
@@ -1367,7 +1366,7 @@ crate::game::callback_dispatch! {
             x: (((*E).base.x_pos).wrapping_sub(28)),
             y: (((*E).base.y_pos).wrapping_sub(16)),
         };
-        word!(game.cinematic_var9 = ((NextRandom(game) as i32 & 0x3f) + 128) as u16);
+        word!(game.cinematic_var9 = ((game.next_random() as i32 & 0x3f) + 128) as u16);
         SpawnEprojWithGfx(
             2,
             word!(game.cur_enemy_index),
@@ -1381,7 +1380,7 @@ crate::game::callback_dispatch! {
             x: (((*E).base.x_pos).wrapping_add(24)),
             y: (((*E).base.y_pos).wrapping_sub(16)),
         };
-        word!(game.cinematic_var9 = ((NextRandom(game) as i32 & 0x3f) + 192) as u16);
+        word!(game.cinematic_var9 = ((game.next_random() as i32 & 0x3f) + 192) as u16);
         SpawnEprojWithGfx(
             2,
             word!(game.cur_enemy_index),
@@ -1440,7 +1439,7 @@ crate::game::callback_dispatch! {
         );
     };
     [10873198] Draygon_Instr_28 [jp] {
-        NextRandom(game);
+        game.next_random();
         let mut r18: u16 = ((word!(game.random_number) as i32 & 0x7f) - 64i32) as u16;
         let E = Get_Draygon(0, game);
         r18 = (r18).wrapping_add((*E).base.x_pos);
@@ -1452,7 +1451,7 @@ crate::game::callback_dispatch! {
         QueueSfx2_Max6(0x29, game);
     };
     [10873265] Draygon_Instr_26 [jp] {
-        NextRandom(game);
+        game.next_random();
         let E = Get_Draygon(0, game);
         let x: u16 =
             ((*E).base.x_pos as i32 + (word!(game.random_number) as i32 & 0x7f) - 64i32) as u16;

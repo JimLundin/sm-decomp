@@ -14,12 +14,12 @@ use core::mem::offset_of;
 
 pub use crate::game::constants::bank_86::*;
 
+use crate::game::display_refresh::GraphicsAsset;
 use crate::game::enemy_layouts::enemy_layout;
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::music::{QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx2_Max15, QueueSfx3_Max6};
 use crate::game::player_update::minimap;
 use crate::game::room_mechanisms::spawn_hardcoded;
-use crate::game::sm_80::{GraphicsAsset, NextRandom};
 use crate::game::sm_82::AdvancePaletteFade_BgPalette6;
 use crate::game::sprite_effect_runtime::create_sprite;
 use crate::game::visual_runtime::initialize_phantoon_motion;
@@ -222,7 +222,7 @@ crate::game::callback_dispatch! {
         (*E).base.properties =
             ((*E).base.properties as i32 & !(kEnemyProps_Tangible as i32)) as u16;
         (*E).var_E =
-            crate::rtl::rom_table_word!(game, 0xa7cd41, (NextRandom(game) as i32 & 7) as isize);
+            crate::rtl::rom_table_word!(game, 0xa7cd41, (game.next_random() as i32 & 7) as isize);
         (*E).var_F = (0xa7d60di32) as u16;
         let E1 = Get_Phantoon(0x40, game);
         enemy_instruction! {[(*E1).base]; timer = 1, instruction = addr_kKraid_Ilist_CC9D as u16}
@@ -231,7 +231,7 @@ crate::game::callback_dispatch! {
         let E = Get_Phantoon(0, game);
         (*E).var_E = 60;
         let v1: u16 =
-            crate::rtl::rom_table_word!(game, 0xa7cd53, (NextRandom(game) as i32 & 7) as isize);
+            crate::rtl::rom_table_word!(game, 0xa7cd53, (game.next_random() as i32 & 7) as isize);
         let E1 = Get_Phantoon(0x40, game);
         (*E1).var_A = v1;
         if (word!(game.nmi_frame_counter_word) & 1) != 0 {
@@ -2142,7 +2142,7 @@ pub unsafe fn Phantoon_Func_7(k: u16, game: &mut Game) {
                 }
                 enemy_instruction! {[(*E).base]; timer = 1, instruction = addr_kKraid_Ilist_CCEB as u16}
             } else {
-                let v5: u16 = (NextRandom(game)) & (3u16);
+                let v5: u16 = (game.next_random()) & (3u16);
                 (*E).var_A = v5;
                 let v6: u16 = crate::rtl::rom_table_word!(game, 0xa7ccfd, v5 as isize);
                 let v7: u16 = *(RomPtr_A7(v6, game) as *mut u16);
@@ -3110,7 +3110,7 @@ crate::game::callback_dispatch! {
                     if damage as i32 - 300i32 & 0x8000 == 0 {
                         (*EK).var_F = (0xa7d6b9i32) as u16;
                     } else {
-                        let v10: u16 = (NextRandom(game)) & (7u16);
+                        let v10: u16 = (game.next_random()) & (7u16);
                         (*Get_Phantoon(0x40i32, game)).var_B =
                             *(&raw const g_byte_A7CDA5 as *const u8).offset(v10 as i32 as isize)
                                 as u16;
@@ -3353,7 +3353,7 @@ crate::game::callback_dispatch! {
     };
     [10999522] Phantoon_MoveLeftOrRightAndPickEyeOpenPatt [] {
         let E = Get_Phantoon(0, game);
-        if (NextRandom(game) & 1) != 0 {
+        if (game.next_random() & 1) != 0 {
             (*E).var_A = 136;
             (*E).base.x_pos = 208;
         } else {
@@ -3402,7 +3402,7 @@ crate::game::callback_dispatch! {
             let E = Get_Phantoon(k as i32, game);
             (*E).var_F = (0xa7d7f7i32) as u16;
             (*E).var_E =
-                crate::rtl::rom_table_word!(game, 0xa7cd63, (NextRandom(game) as i32 & 7) as isize);
+                crate::rtl::rom_table_word!(game, 0xa7cd63, (game.next_random() as i32 & 7) as isize);
         }
     };
     [10999850] Phantoon_FadeOutBeforeFirstFireballRain [] {
@@ -4128,7 +4128,7 @@ crate::game::callback_dispatch! {
             0xa7cd53,
             (word!(game.nmi_frame_counter_word) as i32 >> 1 & 3) as isize
         );
-        if (NextRandom(game) & 1) != 0 {
+        if (game.next_random() & 1) != 0 {
             let E = Get_Phantoon(0, game);
             set_fields! {[(*E)], 0; var_C, var_B, var_D}
             (*E1).var_C = 1;
@@ -4165,7 +4165,7 @@ crate::game::callback_dispatch! {
         }
     };
     [10999799] Phantoon_SpawnRainingFireballs {
-        let a: u16 = (NextRandom(game)) & (7u16);
+        let a: u16 = (game.next_random()) & (7u16);
         let v4: i32 = 8 * a as i32 >> 1;
         let E0 = Get_Phantoon(0, game);
         (*E0).var_A = crate::rtl::rom_table_word!(game, 0xa7cdad, v4 as isize);

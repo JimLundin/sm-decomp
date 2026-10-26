@@ -1,5 +1,5 @@
 //! Boot/reset sequencing over the authoritative compatibility state.
-use crate::game::sm_80::{ClearOamExt, ClearUnusedOam};
+use crate::game::sprite_drawing::{clear_high_table, finish_frame};
 use crate::game::{save_slots, sm_8b::InitializeIoDisplayLogo_Async};
 use crate::game_state::Game;
 use crate::native_audio::upload_bank as APU_UploadBank;
@@ -57,8 +57,8 @@ pub(crate) unsafe fn resume(game: &mut Game) -> u8 {
                 game.g_ram[address] = 0;
             }
             word! { game, 0; oam_next_ptr, reg_OAMaddr_UNUSED }
-            ClearOamExt(game);
-            ClearUnusedOam(game);
+            clear_high_table(game);
+            finish_frame(game);
             word! { game, 0;
                 nmi_copy_samus_halves, nmi_copy_samus_top_half_src, nmi_copy_samus_bottom_half_src,
             }

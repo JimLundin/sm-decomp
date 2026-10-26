@@ -30,7 +30,7 @@ pub(crate) enum Operation {
     Station,
 }
 pub(crate) fn run(operation: Operation, g: &mut Game) -> Option<i32> {
-    unsafe {
+    {
         match operation {
             Operation::Right(n) => Some(
                 crate::game::player_collision::operations::displace(
@@ -53,7 +53,12 @@ pub(crate) fn run(operation: Operation, g: &mut Game) -> Option<i32> {
                 .displacement,
             ),
             Operation::Station => {
-                crate::game::sm_80::LoadFromLoadStation(g);
+                crate::game::room_entry::begin(
+                    &mut crate::game::session_runtime::Runtime::new(g),
+                    crate::game::room_entry::ArrivalRequest::Start(
+                        crate::game::room_entry::StartSite::CurrentLoadStation,
+                    ),
+                );
                 None
             }
         }

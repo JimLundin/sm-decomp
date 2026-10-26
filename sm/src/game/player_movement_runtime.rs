@@ -101,7 +101,6 @@ use crate::game::{
     projectile_geometry::sine_offset,
     projectile_initialization::Initialization,
     session_runtime::Runtime as CollisionRuntime,
-    sm_80::InvalidInterrupt_Crash,
     visual_runtime::set_hdma_enabled,
 };
 pub unsafe fn Samus_EndSuperJump(game: &mut Game) -> u8 {
@@ -331,7 +330,7 @@ crate::game::callback_dispatch! {
     [9494328] Samus_MoveHandler_Knockback [] {
         match KNOCKBACK_MOTION[usize::from(word!(game.knockback_dir))] {
             Some(motion) => motion(&mut Runtime::new(game)),
-            None => InvalidInterrupt_Crash(game),
+            None => crate::rtl::invalid_interrupt(game),
         }
         word!(game.input_to_pose_calc = 0);
     };
@@ -381,7 +380,7 @@ crate::game::callback_dispatch! {
         9490603 => [advance_shinespark(&[player_collision::Axis::Y], game)];
         9490647 => [advance_shinespark(&[player_collision::Axis::X, player_collision::Axis::Y], game)];
         9490694 => [advance_shinespark(&[player_collision::Axis::X], game)];
-        9494352 => [InvalidInterrupt_Crash(game)];
+        9494352 => [crate::rtl::invalid_interrupt(game)];
         9494355 => [forced::knockback_motion(&mut Runtime::new(game), true, speed::move_y_with_speed)];
         9494365 => [forced::knockback_motion(&mut Runtime::new(game), false, speed::move_y_with_speed)];
         9494372 => [forced::knockback_motion(&mut Runtime::new(game), true, speed::no_speed_y)];
@@ -391,7 +390,7 @@ crate::game::callback_dispatch! {
             forced::consume_crystal_flash(runtime.session_mut(), frame);
         }];
         9494565 => [forced::begin_bomb_jump(&mut Runtime::new(game))];
-        9494578 => [forced::advance_bomb_jump(&mut Runtime::new(game), |h| h.foreign(|game| InvalidInterrupt_Crash(game)))];
+        9494578 => [forced::advance_bomb_jump(&mut Runtime::new(game), |h| h.foreign(|game| crate::rtl::invalid_interrupt(game)))];
         9494653 => [forced::finish_bomb_jump(Runtime::new(game).session_mut())];
         9496846 => [()];
     }

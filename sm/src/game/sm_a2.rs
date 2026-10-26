@@ -19,14 +19,13 @@ use crate::game::music::{QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::palette_effects;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::session_runtime::player_face_forward;
-use crate::game::sm_80::NextRandom;
 use crate::game::sm_a9::MoveEnemyWithVelocity;
 
 pub use crate::types::Consts_A2;
 
 unsafe fn update_randomized_pre_instruction(game: &mut Game) {
     unsafe {
-        NextRandom(game);
+        game.next_random();
         let phase = {
             let runtime = Runtime::new(game);
             let key = Key::from_legacy(runtime.word(0xe54));
@@ -245,8 +244,8 @@ pub fn MiniCrocomire_Func8(game: &mut Game) {
     }
 }
 pub unsafe fn MiniCrocomire_Func9(game: &mut Game) -> u8 {
-    unsafe {
-        NextRandom(game);
+    {
+        game.next_random();
         let index = game.cur_enemy_index();
         let frame = MiniCrocomireState::new(game, index).frame_counter_low();
         if frame.wrapping_add(game.random_number() as u8) < 2 {
@@ -622,8 +621,8 @@ fn thin_blob_phase(variable: usize, game: &mut Game) -> u32 {
         )
 }
 unsafe fn thin_blob_random(game: &mut Game) -> u16 {
-    unsafe {
-        NextRandom(game);
+    {
+        game.next_random();
     }
     let runtime = Runtime::new(game);
     let key = Key::from_legacy(runtime.word(0xe54));
@@ -712,8 +711,8 @@ crate::game::callback_dispatch! {
     @external { 10657176 => ThinHoppingBlobs_Func15; }
 }
 pub unsafe fn SpikeShootingPlant_4(game: &mut Game) {
-    unsafe {
-        NextRandom(game);
+    {
+        game.next_random();
     }
     crate::game::spike_plant::try_shoot(game);
 }
@@ -723,7 +722,7 @@ static off_A2A3D3: [Func_V; 7] = callback_table! { nonnull Func_V;
 };
 pub unsafe fn MaridiaSpikeyShell_8(k: u16, game: &mut Game) {
     unsafe {
-        NextRandom(game);
+        game.next_random();
         let E = Get_MaridiaSpikeyShell(k as i32, game);
         if ((byte!((*E).base.frame_counter; 0)).wrapping_add((word!(game.random_number)) as u8))
             as i32
@@ -772,10 +771,10 @@ crate::game::callback_dispatch! {
             game.cinematic_var9 = crate::rtl::rom_table_word!(
                 game,
                 0xa2b550,
-                ((NextRandom(game) as i32 & 0x1e) >> 1) as isize,
+                ((game.next_random() as i32 & 0x1e) >> 1) as isize,
             )
         );
-        let v1: i32 = (NextRandom(game) as i32 & 0x1e) >> 1;
+        let v1: i32 = (game.next_random() as i32 & 0x1e) >> 1;
         SpawnEprojWithGfx(
             crate::rtl::rom_table_word!(game, 0xa2b530, v1 as isize),
             word!(game.cur_enemy_index),
@@ -787,7 +786,7 @@ crate::game::callback_dispatch! {
         (*E).var_B = crate::rtl::rom_table_word!(
             game,
             0xa2b520,
-            (((NextRandom(game)) & (0xeu16)) >> 1) as isize
+            (((game.next_random()) & (0xeu16)) >> 1) as isize
         );
     };
     [10663402] LavaquakeRocks_3 [] {
@@ -1631,7 +1630,7 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (game: &mut Game)];
     [10664931] Rio_Main [] {
-        NextRandom(game);
+        game.next_random();
         if !crate::game::rio::advance(game) {
             Unreachable(game);
         }

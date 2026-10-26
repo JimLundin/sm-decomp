@@ -1,10 +1,10 @@
 //! HUD icons, resource counters and their ordered tilemap upload.
-use crate::game::{menu_tilemap::native_record, music::QueueSfx1_Max6, sm_80::SetupDmaTransfer};
+use crate::game::{
+    display_refresh::setup_transfer, menu_tilemap::native_record, music::QueueSfx1_Max6,
+};
 use crate::game_state::Game;
 use crate::ram_map::{checked_word as at, word, words as fields};
 use crate::rtl::{MDMAEN, VMADDL, VMAIN, WriteReg};
-use crate::types::StartDmaCopy;
-use core::ffi::c_void;
 
 const WEAPON_DIGITS: u32 = 8429011;
 const HEALTH_DIGITS: u32 = 8428991;
@@ -65,8 +65,7 @@ pub(crate) unsafe fn initialize(game: &mut Game) {
         crate::rtl::register_writes! { game;
             word(VMADDL as u16, 0x5800); word(VMAIN as u16, 0x80);
         }
-        static TILES: StartDmaCopy = StartDmaCopy::vram_words(1, 0x80988b, 0x40);
-        SetupDmaTransfer(&raw const TILES as *const c_void, game);
+        setup_transfer(u16::from_ne_bytes([1, 0x18]), 0x80988b, 0x40, game);
         WriteReg(MDMAEN as u16, 2, game);
         word_transfers!(game, ascending, 96; le(hud_tilemap, 0) <- table(INITIAL_TILES, 0));
         for (item, mask) in [(Item::Xray, 0x8000), (Item::Grapple, 0x4000)] {

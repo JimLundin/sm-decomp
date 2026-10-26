@@ -430,7 +430,6 @@ pub mod game {
     pub(crate) mod session_access;
     pub(crate) mod session_encoding;
     pub(crate) mod session_runtime;
-    pub mod sm_80;
     pub mod sm_82;
     pub mod sm_8b;
     pub(crate) mod sprite_drawing;

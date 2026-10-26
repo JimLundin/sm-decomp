@@ -2,10 +2,6 @@
 use crate::game::{actors, session_runtime::Runtime};
 use crate::game_state::Game;
 
-pub(super) fn next_random(game: &mut Game) -> u16 {
-    unsafe { crate::game::sm_80::NextRandom(game) }
-}
-
 pub(super) fn call_player_code(code: u16, game: &mut Game) -> u16 {
     crate::game::session_runtime::player_command(code, game)
 }

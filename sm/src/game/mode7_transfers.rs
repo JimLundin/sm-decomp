@@ -21,7 +21,11 @@ fn read_word(game: &Game, at: usize) -> u16 {
 }
 
 #[forbid(unsafe_code)]
-pub(super) fn enqueue_rom(address: u32, game: &mut Game) {
+pub(super) fn enqueue_rom(bank: u8, cursor: u16, game: &mut Game) {
+    let address = (u32::from(bank) << 16) | u32::from(cursor);
+    if address & 0x8000 == 0 {
+        crate::rtl::report_invalid_rom_address(address, game);
+    }
     let address = address | 0x8000;
     let mut source = 0;
     let mut destination = QUEUE + usize::from(word!(game.mode7_vram_write_queue_tail));

@@ -21,7 +21,7 @@ use crate::game::enemy_projectiles::SpawnEprojWithGfx;
 use crate::game::music::{QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::session_runtime::damage_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
-use crate::game::sm_80::{Multiply16x16, NextRandom};
+
 use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
 pub use crate::game::waver::{Waver_Init, Waver_Instr_1, Waver_Main};
 
@@ -531,7 +531,7 @@ crate::game::callback_dispatch! {
         Roach_Func_29(word!(game.cur_enemy_index), game);
     };
     [10724534] Roach_Func_26 [] {
-        let v1: u8 = ((NextRandom(game)) as u8).wrapping_sub(64);
+        let v1: u8 = ((game.next_random()) as u8).wrapping_sub(64);
         let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
         (*E).var_C = ((*E).var_C).wrapping_add((v1) as u16);
         Roach_Func_18(word!(game.cur_enemy_index), game);
@@ -542,7 +542,7 @@ crate::game::callback_dispatch! {
         (*E).var_B = (0xa3a476i32) as u16;
     };
     [10724592] Roach_Func_27 [] {
-        let v1: u8 = ((NextRandom(game)) as u8).wrapping_sub(64);
+        let v1: u8 = ((game.next_random()) as u8).wrapping_sub(64);
         let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
         (*E).var_C = ((*E).var_C).wrapping_add((v1) as u16);
         Roach_Func_18(word!(game.cur_enemy_index), game);
@@ -897,7 +897,7 @@ pub unsafe fn Sidehopper_Func_2(r22: u16, r24: u16, game: &mut Game) -> u16 {
 pub unsafe fn Sidehopper_Func_4(k: u16, game: &mut Game) {
     unsafe {
         let v1: u16 =
-            crate::rtl::rom_table_word!(game, 0xa3aae2, (NextRandom(game) as i32 & 1) as isize);
+            crate::rtl::rom_table_word!(game, 0xa3aae2, (game.next_random() as i32 & 1) as isize);
         (*Get_Sidehopper(k as i32, game)).var_B = v1;
     }
 }
@@ -1582,9 +1582,9 @@ pub unsafe fn FireZoomer_E8A5(k: u16, game: &mut Game) -> i32 {
                     >> 1) as isize,
             );
             if ((*E).var_A as i16) >= 0 {
-                Multiply16x16((*E).var_A, v1, game) as i32
+                game.multiply_with_scratch((*E).var_A, v1) as i32
             } else {
-                -(Multiply16x16(-((*E).var_A as i32) as u16, v1, game) as i32)
+                -(game.multiply_with_scratch(-((*E).var_A as i32) as u16, v1) as i32)
             }
         } else {
             ((*E).var_A as i16 as i32) << 8
@@ -1934,7 +1934,7 @@ crate::game::callback_dispatch! {
     };
     [10726153] Sidehopper_Init [] {
         word!(game.random_number = 37);
-        NextRandom(game);
+        game.next_random();
         let E = Get_Sidehopper(word!(game.cur_enemy_index) as i32, game);
         set_fields! {[(*E)], 0; var_03, var_04, var_05}
         let v2: u16 = (2u16).wrapping_mul(rom_record(0xa0, (*E).base.enemy_ptr, game).word(offset_of!(EnemyDef, field_2A)));
@@ -2684,7 +2684,7 @@ crate::game::callback_dispatch! {
     };
     @functions [pub unsafe fn (k: u16, mut jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10734712] MaridiaSnail_Instr_5 [] {
-        if (*Get_MaridiaSnail(k as i32, game)).var_08 == 2 || (NextRandom(game) & 1) != 0 {
+        if (*Get_MaridiaSnail(k as i32, game)).var_08 == 2 || (game.next_random() & 1) != 0 {
             jp = jp.offset(-(3i32 as isize));
         }
         jp
@@ -2703,7 +2703,7 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [10742437] Metroid_Instr_2 [jp] { QueueSfx2_Max6(0x50, game); };
     [10742449] Metroid_Instr_1 [jp] {
-        let v2: i32 = NextRandom(game) as i32 & 7;
+        let v2: i32 = game.next_random() as i32 & 7;
         QueueSfx2_Max6(
             crate::rtl::rom_table_word!(game, 0xa3ead6, v2 as isize),
             game,

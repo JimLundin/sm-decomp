@@ -3,7 +3,6 @@ use crate::game::prelude::*;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::projectile_room::Axis;
 use crate::game::session_runtime::Runtime;
-use crate::game::sm_80::Multiply16x16;
 
 fn project_axis(origin: u16, sample: i16, length: u16) -> u16 {
     let distance = if sample == -256 || sample == 256 {
@@ -180,7 +179,7 @@ pub unsafe fn advance_swing(game: &mut Game) -> u8 {
         } else {
             velocity
         };
-        let distance = (Multiply16x16(magnitude, scale, game) >> 8) as u16;
+        let distance = (game.multiply_with_scratch(magnitude, scale) >> 8) as u16;
         if distance == 0 {
             return 0;
         }

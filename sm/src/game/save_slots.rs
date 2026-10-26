@@ -184,3 +184,44 @@ pub(crate) unsafe fn verify_boot(game: &mut Game) {
         }
     }
 }
+
+fn area_map_words(area: u16) -> impl Iterator<Item = (usize, u16)> {
+    let first = area.swap_bytes();
+    (0u16..128)
+        .map(move |index| first.wrapping_add(index * 2) >> 1)
+        .enumerate()
+}
+
+pub(crate) fn load_area_map(game: &mut Game) {
+    for (active, saved) in area_map_words(word!(game.area_index)) {
+        word_transfers!(game, ascending, 1; native(0x7f7 + active * 2) <- le(explored_map_tiles_saved, saved));
+    }
+    word!(game.has_area_map = game.g_ram[0xd908 + usize::from(word!(game.area_index))] as u16);
+}
+
+pub(crate) fn save_area_map(game: &mut Game) {
+    for (active, saved) in area_map_words(word!(game.area_index)) {
+        word_transfers!(game, ascending, 1; le(explored_map_tiles_saved, saved) <- native(0x7f7 + active * 2));
+    }
+    if word!(game.has_area_map) != 0 {
+        let flag = 0xd908 + usize::from(word!(game.area_index));
+        word!(game, flag; = word!(game, flag;) | 0xff);
+    }
+}
+
+pub(crate) fn mark_elevator(game: &mut Game) {
+    let table = rom_table_word!(game, 0x80cd46, word!(game.area_index) as isize);
+    let displacement = 4 * ((word!(game.elevator_door_properties_orientation) & 15) as i32 - 1);
+    let cursor = (i32::from(table) + displacement) as u16;
+    // Retain the diagnostic before capturing its native allocation.
+    if cursor & 0x8000 == 0 {
+        crate::game::session_runtime::native_rom_diagnostic(0x800000 | u32::from(cursor), game);
+    }
+    let image = game.capture_native_rom();
+    let base = crate::rtl::lorom_offset(0x800000 | u32::from(cursor)) as usize;
+    for record in [0, 2] {
+        let destination = 0xd8f8 + usize::from(image.read(base + record));
+        let previous = game.g_ram[destination];
+        game.g_ram[destination] = previous | image.read(base + record + 1);
+    }
+}

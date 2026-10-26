@@ -4,7 +4,7 @@ use super::host::Effects;
 use crate::game::session_runtime::Runtime;
 impl Effects for Runtime<'_> {
     fn next_random(&mut self) -> u16 {
-        self.foreign(|game| super::legacy::next_random(game))
+        self.foreign(crate::game_state::Game::next_random)
     }
     fn grapple_pickup_query(&mut self) -> u16 {
         self.foreign(|game| super::legacy::call_player_code(0xd, game))

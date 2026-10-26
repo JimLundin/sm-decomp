@@ -105,8 +105,8 @@ pub(crate) fn advance_frame(game: &mut Game) {
     match mode {
         Gameplay | Escape => {
             if advance_beta(Gameplay, game).is_err() {
-                unsafe {
-                    crate::game::sm_80::InvalidInterrupt_Crash(game);
+                {
+                    crate::rtl::invalid_interrupt(game);
                 }
             }
             if word!(game.power_bomb_flag) == 0

@@ -23,13 +23,13 @@ use crate::game::enemy_projectiles::{
 use crate::game::gameplay_flag_runtime::{
     CheckEventHappened, ClearEventHappened, SetBossBitForCurArea, SetEventHappened,
 };
+use crate::game::mode7_transfers::enqueue_rom;
 use crate::game::music::{
     QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6,
 };
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session_runtime::damage_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
-use crate::game::sm_80::{NextRandom, QueueMode7Transfers};
 use crate::game::sm_a9::{
     ComputeCosMult, ComputeSinMult, MoveEnemyWithVelocity, Shitroid_Func_2, WriteColorsToPalette,
     WriteColorsToTargetPalette,
@@ -715,7 +715,7 @@ pub unsafe fn CeresRidley_Func_33(game: &mut Game) {
             let E = Get_CeresRidley(0, game);
             let v1: u16 = ((*E).var_36 as i32 + 1 & 3) as u16;
             (*E).var_36 = v1;
-            QueueMode7Transfers(
+            enqueue_rom(
                 0xa6,
                 crate::rtl::rom_table_word!(game, 0xa6acda, v1 as isize),
                 game,
@@ -729,7 +729,7 @@ pub unsafe fn CeresRidley_Func_34(game: &mut Game) {
             let E = Get_CeresRidley(0, game);
             let v1: u16 = ((*E).var_37 as i32 + 1 & 1) as u16;
             (*E).var_37 = v1;
-            QueueMode7Transfers(
+            enqueue_rom(
                 0xa6,
                 crate::rtl::rom_table_word!(game, 0xa6ad45, v1 as isize),
                 game,
@@ -1055,7 +1055,7 @@ crate::game::callback_dispatch! {
     };
     [10924833] Ridley_Func_3b [] {
         let r18: u16 = Ridley_Func_4(game);
-        let v0: i32 = 2 * (NextRandom(game) as i32 & 7);
+        let v0: i32 = 2 * (game.next_random() as i32 & 7);
         let v1: u16 = *((RomPtr_A6 as unsafe fn(u16, &mut Game) -> *const u8)(r18, game)
             .offset(v0 as isize) as *mut u16);
         let E = Get_Ridley(0, game);
@@ -4035,7 +4035,7 @@ pub unsafe fn CeresDoor_Func_6(k: u16, game: &mut Game) {
                 let v5: i32 = ((4u16).wrapping_mul((*E0).var_F)) as i32 >> 1;
                 set_explosion_spawn_offset!(game, E, 0xa6f840, v5);
                 let mut v6: u16 = 3;
-                if NextRandom(game) < 0x4000 {
+                if game.next_random() < 0x4000 {
                     v6 = 12;
                 }
                 SpawnEprojWithRoomGfx(0xe509, v6, game);
@@ -4045,8 +4045,8 @@ pub unsafe fn CeresDoor_Func_6(k: u16, game: &mut Game) {
     }
 }
 pub unsafe fn CeresDoor_Func_8(game: &mut Game) {
-    unsafe {
-        QueueMode7Transfers(
+    {
+        enqueue_rom(
             0xa6,
             crate::rtl::rom_table_word!(
                 game,
@@ -4336,7 +4336,7 @@ crate::game::callback_dispatch! {
         let ridley_parameter_1: u16 = (*E).parameter_1;
         (*E).var_F =
             crate::rtl::rom_table_word!(game, 0xa6c6ce, (ridley_parameter_1 >> 1) as isize);
-        let Random: u16 = NextRandom(game);
+        let Random: u16 = game.next_random();
         (*E).var_B = (if Random & 0x8000 != 0 {
             -(Random as i32 & 0x130i32)
         } else {
@@ -4464,7 +4464,7 @@ crate::game::callback_dispatch! {
         properties = ((*E).base.properties) | ((kEnemyProps_DisableSamusColl) as u16),
         extra_properties = ((*E).base.extra_properties) | (4u16), instruction_timer = 1,
         timer = 0, palette_index = 2560, };
-        (*E).var_D = ((NextRandom(game) as i32 & 0x1f) + 1) as u16;
+        (*E).var_D = ((game.next_random() as i32 & 0x1f) + 1) as u16;
         let v1: i32 = (*E).parameter_1 as i32;
         (*E).base.current_instruction = crate::rtl::rom_table_word!(game, 0xa6eff5, v1 as isize);
         (*E).var_A = crate::rtl::rom_table_word!(game, 0xa6f001, v1 as isize);

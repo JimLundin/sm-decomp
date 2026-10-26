@@ -17,7 +17,6 @@ pub(crate) use crate::rtl::{
     Unreachable, WriteReg, WriteRegWord, abs16, mov24, rom_ptr, sign_extend8, words,
 };
 pub use crate::snes::registers::*;
-pub(crate) use crate::types::TileDrawOrder;
 pub use crate::types::{
     Buttons, CheckEnemyColl_Result, CheckSolidEnemyColl_Result, CoroutineRet, DoorDef,
     Enemy_MotherBrain, EnemyBase, EnemyData, EnemyDef, EnemySpawnData, EnemyTileset, EprojDef,
@@ -25,8 +24,7 @@ pub use crate::types::{
     Func_U8, Func_V, Func_Y_V, Func_Y_Y, Hitbox, LongPtr, MapIconDataPointers, MapScrollArrowData,
     OamEnt, Pair_Bool_Amt, PairU16, Point16U, Ram3000, Ram3800, Ram4000, Ram8000_Default, Rect16U,
     RoomDefHeader, RoomDefRoomstate, SamusPose, SamusPoseParams, SnesRegs, SpawnHardcodedPlmArgs,
-    SpawnHdmaObject_Args, StartDmaCopy, TileTable, TileTables, VoidP, VramWriteEntry,
-    Vulnerability, size_t,
+    SpawnHdmaObject_Args, TileTable, TileTables, VoidP, VramWriteEntry, Vulnerability, size_t,
 };
 pub(crate) use ::core::ffi::{c_char, c_long, c_void};
 pub(crate) use ::core::mem::transmute;

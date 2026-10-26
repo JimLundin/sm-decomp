@@ -179,12 +179,6 @@ crate::typed_struct! {
         pub instruction_list: VoidP;
     }
 
-    pub struct StartDmaCopy {
-        pub chan, dmap, bbad: u8;
-        pub a1: LongPtr;
-        pub das: VoidP;
-    }
-
     pub struct TileTable {
         pub top_left, top_right, bottom_left, bottom_right: u16;
     }
@@ -777,65 +771,6 @@ impl SpawnHdmaObject_Args {
             target_register,
             instruction_list,
         }
-    }
-}
-
-impl StartDmaCopy {
-    const fn new(channel: u8, mode: u8, register: u8, source: u32, size: u16) -> Self {
-        Self {
-            chan: channel,
-            dmap: mode,
-            bbad: register,
-            a1: LongPtr {
-                addr: source as u16,
-                bank: (source >> 16) as u8,
-            },
-            das: size,
-        }
-    }
-
-    /// Copy alternating low/high VRAM bytes. VMAIN controls address stepping.
-    pub const fn vram_words(channel: u8, source: u32, size: u16) -> Self {
-        Self::new(
-            channel,
-            1,
-            crate::snes::registers::VMDATAL as u8,
-            source,
-            size,
-        )
-    }
-
-    /// Copy only the low byte of each VRAM word.
-    pub const fn vram_low_bytes(channel: u8, source: u32, size: u16) -> Self {
-        Self::new(
-            channel,
-            0,
-            crate::snes::registers::VMDATAL as u8,
-            source,
-            size,
-        )
-    }
-
-    /// Copy only the high byte of each VRAM word.
-    pub const fn vram_high_bytes(channel: u8, source: u32, size: u16) -> Self {
-        Self::new(
-            channel,
-            0,
-            crate::snes::registers::VMDATAH as u8,
-            source,
-            size,
-        )
-    }
-
-    /// Copy bytes through the auto-incrementing WRAM data port.
-    pub const fn wram_bytes(channel: u8, source: u32, size: u16) -> Self {
-        Self::new(
-            channel,
-            0,
-            crate::snes::registers::WMDATA as u8,
-            source,
-            size,
-        )
     }
 }
 

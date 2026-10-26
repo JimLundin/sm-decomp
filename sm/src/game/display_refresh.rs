@@ -1,12 +1,17 @@
 //! Ordered display refresh and the NMI request/completion handshake.
+use crate::game::constants::bank_60::{
+    addr_unk_6053E0, addr_unk_605000, addr_unk_605400, addr_unk_605880,
+};
+use crate::game::decompression::{self, decompress_to_ram};
 use crate::game::{animated_tiles, mode7_transfers, vram_read_queue};
 use crate::game_state::Game;
 use crate::ram_map::{checked_word as at, word};
 use crate::rtl::{
     A1B0, A1B1, A1T0L, A1T1L, BG1HOFS, BG1SC, BG2SC, BG3SC, BG4SC, BG12NBA, BG34NBA, BGMODE, CGADD,
     CGADSUB, CGWSEL, COLDATA, DAS0L, DAS1L, DMAP0, DMAP1, HDMAEN, INIDISP, M7A, M7SEL, MDMAEN,
-    MOSAIC, NMITIMEN, OAMADDL, OBSEL, SETINI, TM, TMW, TS, TSW, VMADDL, VMAIN, W12SEL, W34SEL,
-    WBGLOG, WH0, WH1, WH2, WH3, WOBJLOG, WOBJSEL, WriteReg, WriteRegWord,
+    MOSAIC, Mult8x8, NMITIMEN, OAMADDL, OBSEL, RDVRAML, ReadRegWord, SETINI, TM, TMW, TS, TSW,
+    VMADDH, VMADDL, VMAIN, VMDATAL, W12SEL, W34SEL, WBGLOG, WH0, WH1, WH2, WH3, WMADDH, WMADDL,
+    WMADDM, WOBJLOG, WOBJSEL, WriteReg, WriteRegWord,
 };
 
 /// Set the forced-blank mirror bit for the next display refresh.
@@ -231,9 +236,8 @@ unsafe fn upload_palette_and_oam(game: &mut Game) {
         }
 
         // Channel 1 uploads palette_buffer to CGRAM.
+        setup_transfer(0x2200, 0x7ec000, 0x0200, game);
         crate::rtl::register_writes! { game;
-            word(DMAP1 as u16, 0x2200); word(A1T1L as u16, 0xc000);
-            byte(A1B1 as u16, 0x7e); word(DAS1L as u16, 0x0200);
             byte(CGADD as u16, 0); byte(MDMAEN as u16, 3);
         }
         crate::verify_probe::hit("palette.dma.uploaded");
@@ -323,4 +327,249 @@ pub(crate) unsafe fn run(game: &mut Game) {
         }
         word!(game.nmi_frame_counter_including_lag += 1);
     }
+}
+
+/// Requires a live, exclusively accessed SNES backend for ordered channel-1 setup.
+pub(crate) unsafe fn setup_transfer(mode: u16, source: u32, bytes: u16, game: &mut Game) {
+    unsafe {
+        crate::rtl::register_writes! { game;
+            word(DMAP1 as u16, mode); word(A1T1L as u16, source as u16);
+            byte(A1B1 as u16, (source >> 16) as u8); word(DAS1L as u16, bytes);
+        }
+    }
+}
+// Graphics loads keep source, destination, then transfer size together.
+// Decompression uses RAM offsets; VRAM uses word addresses. WRAM transfers
+// retain all three destination-register bytes, including ignored bank bits.
+pub(crate) enum GraphicsAsset {
+    Decompress(u32, usize),
+    VramWords(u32, u16, u16),
+    VramLowBytes(u32, u16, u16),
+    VramHighBytes(u32, u16, u16),
+    WramBytes(u32, u32, u16),
+}
+
+impl GraphicsAsset {
+    pub(crate) unsafe fn load(self, game: &mut Game) {
+        unsafe {
+            crate::verify_probe::hit(match &self {
+                Self::Decompress(..) => "graphics-load-decompress",
+                Self::VramWords(..) => "graphics-load-vram-words",
+                Self::VramLowBytes(..) => "graphics-load-vram-low",
+                Self::VramHighBytes(..) => "graphics-load-vram-high",
+                Self::WramBytes(..) => "graphics-load-wram",
+            });
+            let (mode, source, size, vram) = match self {
+                Self::Decompress(source, destination) => {
+                    decompress_to_ram(source, destination, game);
+                    return;
+                }
+                Self::VramWords(source, destination, size) => {
+                    ([1, 0x18], source, size, Some((destination, 0x80)))
+                }
+                Self::VramLowBytes(source, destination, size) => {
+                    ([0, 0x18], source, size, Some((destination, 0)))
+                }
+                Self::VramHighBytes(source, destination, size) => {
+                    ([0, 0x19], source, size, Some((destination, 0x80)))
+                }
+                Self::WramBytes(source, destination, size) => {
+                    crate::rtl::register_writes! { game;
+                        byte(WMADDL as u16, destination as u8);
+                        byte(WMADDM as u16, (destination >> 8) as u8);
+                        byte(WMADDH as u16, (destination >> 16) as u8);
+                    }
+                    ([0, 0x80], source, size, None)
+                }
+            };
+            if let Some((destination, vmain)) = vram {
+                crate::rtl::register_writes! { game;
+                    byte(VMADDL as u16, destination as u8); byte(VMADDH as u16, (destination >> 8) as u8);
+                    byte(VMAIN as u16, vmain);
+                }
+            }
+            // The old packed descriptor read its adjacent mode/register bytes natively.
+            setup_transfer(u16::from_ne_bytes(mode), source, size, game);
+            WriteReg(MDMAEN as u16, 2, game);
+        }
+    }
+}
+
+pub unsafe fn CopyToVramNow(vram_dst: u16, src: u32, size: u16, game: &mut Game) {
+    unsafe {
+        crate::rtl::register_writes! { game;
+            byte(INIDISP as u16, 0x80); word(VMADDL as u16, vram_dst);
+        }
+        setup_transfer(0x1801, src, size, game);
+        crate::rtl::register_writes! { game;
+            byte(VMAIN as u16, 0x80); byte(MDMAEN as u16, 2);
+            byte(INIDISP as u16, 0xf);
+        }
+    }
+}
+
+// The hardware adapter is constructed only by the unsafe VRAM entry point.
+// The shared decoder and RAM output do not contain unsafe operations.
+struct DecompressionVram<'a>(&'a mut Game);
+impl decompression::Output for DecompressionVram<'_> {
+    fn next_byte(&mut self) -> u8 {
+        decompression::next_byte(self.0)
+    }
+    fn read(&mut self, position: i32) -> u8 {
+        unsafe { ReadPpuByte(position as u16, self.0) }
+    }
+    fn write(&mut self, position: i32, value: u8, back_reference: bool) {
+        unsafe {
+            if back_reference {
+                WriteRegWord(VMADDL as u16, (position >> 1) as u16, self.0);
+            }
+            WriteReg((VMDATAL as i32 + (position & 1)) as u16, value, self.0);
+        }
+    }
+}
+unsafe fn ReadPpuByte(addr: u16, game: &mut Game) -> u8 {
+    unsafe {
+        WriteRegWord(VMADDL as u16, addr >> 1, game);
+        ReadRegWord(RDVRAML as u16, game);
+        let data: u16 = ReadRegWord(RDVRAML as u16, game);
+        (if addr & 1 != 0 {
+            (data as i32 & 0xff00) >> 8
+        } else {
+            data as i32
+        }) as u8
+    }
+}
+pub unsafe fn DecompressToVRAM(src: u32, dst_addr: u16, game: &mut Game) {
+    game.decompress_src = src;
+    decompression::decode(i32::from(dst_addr), &mut DecompressionVram(game));
+}
+
+pub(crate) fn queue_scrolling_tiles(k: u16, layout: ScrollingDmaLayout, game: &mut Game) {
+    use crate::ram_map::word_arrays;
+    if word!(game.irq_enable_mode7) != 0 {
+        return;
+    }
+    let row = matches!(layout, ScrollingDmaLayout::Row);
+    crate::verify_probe::hit(match (row, k != 0) {
+        (false, false) => "scroll_tiles.column.bg1",
+        (false, true) => "scroll_tiles.column.bg2",
+        (true, false) => "scroll_tiles.row.bg1",
+        (true, true) => "scroll_tiles.row.bg2",
+    });
+    let product = Mult8x8(
+        word!(game.blocks_to_update_y_block) as u8,
+        word!(game.room_width_in_blocks) as u8,
+    );
+    let mut source_offset = product
+        .wrapping_add(word!(game.blocks_to_update_x_block))
+        .wrapping_mul(2)
+        .wrapping_add(2);
+    if k != 0 {
+        source_offset = source_offset.wrapping_add(0x9600);
+    }
+    let source = 0x10000 + usize::from(source_offset);
+    let parameters = (if row { 0x964 } else { 0x956 }) + usize::from(k);
+    // Columns store the wrapped size first; rows store the unwrapped size first.
+    if row {
+        let within_screen = word!(game.vram_blocks_to_update_x_block) & 15;
+        set_native_word(parameters, 4 * (16 - within_screen), game);
+        set_native_word(parameters + 2, 4 * (within_screen + 1), game);
+    } else {
+        let wrapped = 4 * (word!(game.vram_blocks_to_update_y_block) & 15);
+        set_native_word(parameters + 2, wrapped, game);
+        set_native_word(parameters, (wrapped ^ 0x3f) + 1, game);
+    }
+    let tile_row = Mult8x8(word!(game.vram_blocks_to_update_y_block) as u8 & 15, 0x40);
+    let tile_column = word!(game.vram_blocks_to_update_x_block) & 31;
+    let origin = tile_row.wrapping_add(2 * tile_column);
+    let mut screen = if tile_column >= 16 {
+        addr_unk_6053E0 as u16
+    } else {
+        addr_unk_605000 as u16
+    };
+    if k != 0 {
+        screen = screen.wrapping_sub(word!(game.size_of_bg2));
+    }
+    set_native_word(parameters + 4, origin.wrapping_add(screen), game);
+    let wrapped_destination = if row {
+        let mut wrapped_screen = if tile_column >= 16 {
+            addr_unk_605000 as u16
+        } else {
+            addr_unk_605400 as u16
+        };
+        if k != 0 {
+            wrapped_screen = wrapped_screen.wrapping_sub(word!(game.size_of_bg2));
+        }
+        tile_row.wrapping_add(wrapped_screen)
+    } else {
+        (2 * tile_column).wrapping_add(screen)
+    };
+    set_native_word(parameters + 6, wrapped_destination, game);
+    let buffer_base = if row {
+        word_arrays::bg1_column_update_tilemap_top_halves
+    } else {
+        word_arrays::bg1_column_update_tilemap_left_halves
+    };
+    let buffer = buffer_base + if k != 0 { 264 } else { 0 };
+    let half_bytes = if row { 68 } else { 64 };
+    let wrapped_source = native_word(parameters, game).wrapping_add(buffer as u16);
+    set_native_word(parameters + 8, wrapped_source, game);
+    set_native_word(
+        parameters + 10,
+        wrapped_source.wrapping_add(half_bytes),
+        game,
+    );
+    let mut source_delta = 0u16;
+    for block_index in 0..if row { 17 } else { 16 } {
+        let block = native_word(source + 2 * usize::from(source_delta >> 1), game);
+        let first = buffer + 4 * block_index;
+        let second = first + usize::from(half_bytes);
+        let destinations = if row {
+            [first, first + 2, second, second + 2]
+        } else {
+            [first, second, first + 2, second + 2]
+        };
+        let flip = usize::from((block >> 10) & 3);
+        let tile_flip = (block & 0x0c00) << 4;
+        let first_tile = usize::from(block & 0x03ff) * 4;
+        for (corner, destination) in destinations.into_iter().enumerate() {
+            // Read each tile immediately before storing it: staging may overlap the table.
+            let source = 0xa000 + 2 * (first_tile + (corner ^ flip));
+            let tile = at!(game, source;) ^ tile_flip;
+            at!(game, destination; = tile);
+        }
+        // The column stride is reread after drawing each block.
+        source_delta = source_delta.wrapping_add(if row {
+            2
+        } else {
+            word!(game.room_width_in_blocks).wrapping_mul(2)
+        });
+    }
+    set_native_word(
+        parameters + 12,
+        native_word(parameters + 12, game).wrapping_add(1),
+        game,
+    );
+}
+
+fn native_word(offset: usize, game: &Game) -> u16 {
+    u16::from_ne_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+}
+
+fn set_native_word(offset: usize, value: u16, game: &mut Game) {
+    let bytes = value.to_ne_bytes();
+    game.g_ram[offset] = bytes[0];
+    game.g_ram[offset + 1] = bytes[1];
+}
+
+pub(crate) fn queue_fx_clear(game: &mut Game) {
+    word_transfers!(game, descending, 1920; native(0x4efe) <- value(6222));
+    let tail = word!(game.vram_write_queue_tail);
+    let entry = 0xd0 + usize::from(word!(game.vram_write_queue_tail));
+    set_native_word(entry, 3840, game);
+    set_native_word(entry + 2, 0x4000, game);
+    // The bank store is deliberately a native word, overlapping the destination low byte.
+    set_native_word(entry + 4, 126, game);
+    set_native_word(entry + 5, addr_unk_605880 as u16, game);
+    word!(game.vram_write_queue_tail = tail.wrapping_add(7));
 }

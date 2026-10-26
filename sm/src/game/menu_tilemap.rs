@@ -112,7 +112,8 @@ pub(crate) unsafe fn prepare_graphics(game: &mut Game) {
         (0x8ed600, 0x4000, 0x600),
     ] {
         unsafe {
-            crate::game::sm_80::GraphicsAsset::VramWords(source, destination, bytes).load(game)
+            crate::game::display_refresh::GraphicsAsset::VramWords(source, destination, bytes)
+                .load(game)
         };
     }
 }

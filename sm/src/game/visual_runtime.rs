@@ -1779,7 +1779,7 @@ unsafe fn advance_cinematic_object(objects: CinematicObjects, object: u16, game:
                 game.cinematicspr_whattodraw[(selected >> 1)] =
                     (payload.add(2) as *const u16).read_unaligned()
             ),
-            Mode7 => crate::game::sm_80::QueueMode7Transfers(
+            Mode7 => crate::game::mode7_transfers::enqueue_rom(
                 0x8b,
                 (payload.add(2) as *const u16).read_unaligned(),
                 game,
@@ -1849,7 +1849,7 @@ unsafe fn draw_cinematic_background(object: u16, position: u16, game: &mut Game)
                     };
                     word!(game.cinematicbg_arr8[15] = bottom.wrapping_sub(8));
                     if record.word(4) != 0xd67d && word!(game.cinematicbg_var1) != 0 {
-                        crate::game::sm_80::QueueSfx3_Max6(0xd, game);
+                        crate::game::music::QueueSfx3_Max6(0xd, game);
                     }
                 }
                 draw_cinematic_rectangle(command != 0x88fd, definition, position, game);

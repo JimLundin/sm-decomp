@@ -16,6 +16,7 @@ pub use crate::game::constants::bank_60::*;
 pub use crate::game::constants::bank_82::*;
 
 use crate::game::animated_tiles;
+use crate::game::display_refresh::{GraphicsAsset, setup_transfer};
 use crate::game::enemy_projectiles::EnableEprojs;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::music::{
@@ -23,11 +24,13 @@ use crate::game::music::{
     QueueSfx3_Max15,
 };
 use crate::game::palette_effects;
+use crate::game::room_entry::{self, ArrivalRequest, EntrySignal, StartSite};
 use crate::game::room_mechanisms::set_enabled;
 use crate::game::room_state::{pause_draygon, unpause_draygon};
 use crate::game::samus_animation::{
     Samus_DrawDuringDeathAnim, Samus_DrawStartingDeathAnim, Samus_DrawWhenNotAnimatingOrDying,
 };
+use crate::game::save_slots::load_area_map;
 use crate::game::session_runtime::initialize_player;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::sm_8b::{
@@ -37,15 +40,12 @@ use crate::game::sm_8b::{
 use crate::game::sm_9b::{
     GameState_24_SamusNoHealth_Explosion_Helper, HandleSamusDeathSequence, StartSamusDeathAnimation,
 };
-use crate::game::sm_80::{
-    ClearOamExt, ClearUnusedOam, GraphicsAsset, LoadFromLoadStation, LoadMirrorOfExploredMapTiles,
-    NextRandom, QueueClearingOfFxTilemap, ResumeGameplay, SetupDmaTransfer, StartGameplay_Async,
-};
 use crate::game::sm_a7::{
     Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
     UnpauseHook_Kraid_IsDead,
 };
 use crate::game::sm_a9::MotherBrainsBody_UnpauseHook;
+use crate::game::sprite_drawing::{clear_high_table, finish_frame};
 use crate::game::{actors, session_runtime::Runtime};
 
 use crate::host::{Die, Warning};
@@ -171,18 +171,23 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                         == kLoadingGameState_22_EscapingCeres as i32
                     {
                         word! {game; area_index = 0; load_station_index = 18; }
-                        LoadMirrorOfExploredMapTiles(game);
+                        load_area_map(game);
                     }
                 }
                 InitIoForGameplay(game);
                 LoadStdBG3andSpriteTilesClearTilemaps(game);
                 LoadInitialPalette(game);
                 initialize_player(game);
-                LoadFromLoadStation(game);
+                room_entry::begin(
+                    &mut Runtime::new(game),
+                    ArrivalRequest::Start(StartSite::CurrentLoadStation),
+                );
             }
         }
         if stage <= 1 {
-            let yielded: u8 = StartGameplay_Async(game);
+            let yielded: u8 =
+                room_entry::protocol::resume(&mut Runtime::new(game), EntrySignal::Initial)
+                    .returned_byte();
             if yielded != 0 {
                 *resume_state = 1;
                 return yielded;
@@ -680,8 +685,8 @@ pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
             *ram_ptr!(game; 0x612) = *fresh151;
             crate::game::controller_input::sample(game);
             crate::game::visual_runtime::update_hdma(game);
-            NextRandom(game);
-            ClearOamExt(game);
+            game.next_random();
+            clear_high_table(game);
             word! { game, 0;
                 oam_next_ptr, nmi_copy_samus_halves, nmi_copy_samus_top_half_src,
                 nmi_copy_samus_bottom_half_src,
@@ -696,7 +701,7 @@ pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
         advance_sound_effects(game, |channel, value, game| {
             crate::native_audio::write_sound_port(channel, value, game)
         });
-        ClearUnusedOam(game);
+        finish_frame(game);
         ShowSpareCpu(game);
         if *ram_ptr!(game; 0x612)
             | *ram_ptr!(game; 0x613)
@@ -1071,7 +1076,7 @@ pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
         word! { game, 1; screen_fade_delay, screen_fade_counter }
         word! {game; pausemenu_leftarrow_animation_frame = 0; pausemenu_palette_animation_timer = 1; }
         word! { game, 0; map_scrolling_direction, map_scrolling_speed_index }
-        QueueClearingOfFxTilemap(game);
+        crate::game::display_refresh::queue_fx_clear(game);
         word!(game.game_state += 1);
         kCoroutineNone as CoroutineRet
     }
@@ -1485,7 +1490,20 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
             0 => {
                 ClearSamusBeamTiles(game);
                 ContinueInitGameplayResume(game);
-                ResumeGameplay(game);
+                WriteRegWord(MDMAEN as u16, 0, game);
+                crate::game::display_refresh::enable(false, game);
+                crate::game::scanline_irq::disable(game);
+                crate::game::room_state::load_tiles_and_palette(game);
+                crate::game::room_entry::background::load(
+                    &mut crate::game::session_runtime::Runtime::new(game),
+                    crate::game::room_entry::content::LoadMode::Initial,
+                );
+                crate::game::room_scrolls::fill_viewport(game, |game| {
+                    crate::game::display_refresh::flush_tilemaps(game)
+                });
+                crate::game::room_mechanisms::reload_graphics(game);
+                crate::game::display_refresh::enable(true, game);
+                crate::game::scanline_irq::enable(false, game);
                 RestoreSomeGfxStateForPause(game);
                 RestoreBG2TilemapFromPauseScreen(game);
                 word! { game, 1; screen_fade_delay, screen_fade_counter }
@@ -1702,8 +1720,7 @@ pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
             byte(VMAIN as u16, 0x80);
         }
         LoadPauseMenuMapTilemap(game);
-        static unk_8293E9: StartDmaCopy = StartDmaCopy::vram_words(1, 0x7e4000, 0x1000);
-        SetupDmaTransfer(&raw const unk_8293E9 as *const c_void, game);
+        setup_transfer(u16::from_ne_bytes([1, 0x18]), 0x7e4000, 0x1000, game);
         crate::rtl::register_writes! { game;
             byte(MDMAEN as u16, 2); byte(VMADDL as u16, 0xaa);
             byte(VMADDH as u16, 0x38); byte(VMAIN as u16, 0x80);
@@ -3898,8 +3915,7 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen(game: &mut Game) {
             mirror(VMADDL as u16, 0, 0x72, true); byte(VMADDH as u16, 0x58);
             byte(VMAIN as u16, 0x80);
         }
-        static unk_82EC3D: StartDmaCopy = StartDmaCopy::vram_words(1, 0x8edc00, 0x800);
-        SetupDmaTransfer(&raw const unk_82EC3D as *const c_void, game);
+        setup_transfer(u16::from_ne_bytes([1, 0x18]), 0x8edc00, 0x800, game);
         WriteReg(MDMAEN as u16, 2, game);
         word! { game, 0;
             reg_BG1HOFS, reg_BG1VOFS, reg_BG2HOFS, reg_BG2VOFS, debug_invincibility,

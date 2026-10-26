@@ -78,7 +78,7 @@ pub(crate) fn run() -> bool {
 }
 // Only the maintained native entry has an unsafe signature; no synthetic RNG.
 fn next_random(g: &mut Game) -> u16 {
-    unsafe { crate::game::sm_80::NextRandom(g) }
+    g.next_random()
 }
 fn new_save_file(g: &mut Game) {
     crate::game::save_slots::initialize(g)

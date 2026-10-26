@@ -3,7 +3,9 @@ use crate::game::constants::{bank_81::*, bank_82::*};
 use crate::game::music::QueueSfx1_Max6;
 use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
-use crate::game::sm_80::{LoadFromLoadStation, LoadMirrorOfExploredMapTiles};
+use crate::game::room_entry::{self, ArrivalRequest, StartSite};
+use crate::game::save_slots::load_area_map;
+use crate::game::session_runtime::Runtime;
 use crate::game::sm_82::{
     AdvanceGradualColorChangeOfPalette, DisplayMapElevatorDestinations, DrawFileSelectMapIcons,
     DrawMapScrollArrowAndCheckToScroll, DrawRoomSelectMap, MapScrolling,
@@ -377,9 +379,12 @@ unsafe fn open_room_window(game: &mut Game) {
 }
 unsafe fn initialize_room(game: &mut Game) {
     unsafe {
-        LoadMirrorOfExploredMapTiles(game);
+        load_area_map(game);
         DrawRoomSelectMap(game);
-        LoadFromLoadStation(game);
+        room_entry::begin(
+            &mut Runtime::new(game),
+            ArrivalRequest::Start(StartSite::CurrentLoadStation),
+        );
         set_hdma_enabled(false, game);
         clear_hdma(game);
         let room = menu_tilemap::native_record(0x8f0000 | u32::from(word!(game.room_ptr)), game);

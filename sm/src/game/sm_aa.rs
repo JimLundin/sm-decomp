@@ -15,7 +15,6 @@ use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
 use crate::game::gameplay_flag_runtime::{CheckBossBitForCurArea, SetBossBitForCurArea};
 use crate::game::music::QueueSfx2_Max6;
 use crate::game::room_mechanisms::{spawn_collision, spawn_hardcoded};
-use crate::game::sm_80::NextRandom;
 use crate::game::sm_82::sub_82DAF7;
 
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
@@ -1189,7 +1188,7 @@ crate::game::callback_dispatch! {
         if (Torizo_Func_12(k, game) & 0x8000) != 0
             || ({ let (actor, threshold) = (k, 0x20); let delta = actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X); u8::from((delta as i16).wrapping_abs() as u16 >= threshold) }) & 1 == 0
             || ({ let (actor, threshold) = (k, 0x60); let delta = actor_api::player_delta(&Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X); u8::from((delta as i16).wrapping_abs() as u16 >= threshold) }) & 1 != 0
-            || (NextRandom(game) & 0x110) != 0
+            || (game.next_random() & 0x110) != 0
         {
             return jp.offset(1);
         }
@@ -1199,7 +1198,7 @@ crate::game::callback_dispatch! {
     };
     [11195508] Torizo_Instr_55 [EnemyScript::jump(jp.word(0))] {
         let E = Get_Torizo(k as i32, game);
-        if (*E).base.health > 0x788 || (NextRandom(game) & 0x102) != 0 {
+        if (*E).base.health > 0x788 || (game.next_random() & 0x102) != 0 {
             return jp.offset(1);
         }
         (*E).var_09 = 0;
@@ -1225,7 +1224,7 @@ crate::game::callback_dispatch! {
         }
         let E = Get_Torizo(k as i32, game);
         if (*E).var_07 <= 0x168
-            && ((word!(game.joypad1_lastkeys) & 0x300) == 0 || (NextRandom(game) & 0x101) == 0)
+            && ((word!(game.joypad1_lastkeys) & 0x300) == 0 || (game.next_random() & 0x101) == 0)
         {
             return jp.offset(1);
         }

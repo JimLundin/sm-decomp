@@ -14,7 +14,6 @@ use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
 use crate::game::gameplay_flag_runtime::{CheckEventHappened, SetBossBitForCurArea};
 use crate::game::music::QueueSfx2_Max6;
 use crate::game::room_mechanisms::spawn_hardcoded;
-use crate::game::sm_80::NextRandom;
 use crate::game::sprite_effect_runtime::create_sprite;
 
 pub use crate::types::Consts_B3;
@@ -490,7 +489,7 @@ crate::game::callback_dispatch! {
             (*E).var_3C = 0;
             let mut r18: u8 = 0;
             if (*E).var_33 == 0 && (*E).var_59 == 0 && (*E).var_3F == 0 {
-                r18 = ((NextRandom(game)) as u8) & (0xeu8);
+                r18 = ((game.next_random()) as u8) & (0xeu8);
             }
             (*E).var_59 = 0;
             if r18 == 0 || r18 == 2 || r18 == 4 {
@@ -549,7 +548,7 @@ crate::game::callback_dispatch! {
             (*E).var_E = (0xb3e250i32) as u16;
             (*E).var_F = (0xb39dc0i32) as u16;
             if (*E).var_2F != 0 || {
-                let mut v3: u16 = (NextRandom(game)) & (1u16);
+                let mut v3: u16 = (game.next_random()) & (1u16);
                 (*E).var_33 = v3;
                 (*E).var_34 = v3;
                 (*E).var_34 == 0
@@ -696,7 +695,7 @@ pub unsafe fn Botwoon_Func_10(k: u16, game: &mut Game) {
         let E = Get_Botwoon(k as i32, game);
         let r18: u16 = (if (*E).var_33 != 0 { 128 } else { 0 }) as u16;
         (*E).var_40 =
-            ((NextRandom(game) as i32 & 0x18) + r18 as i32 + 4 * (*E).var_37 as i32) as u16;
+            ((game.next_random() as i32 & 0x18) + r18 as i32 + 4 * (*E).var_37 as i32) as u16;
     }
 }
 pub unsafe fn Botwoon_Func_11(k: u16, game: &mut Game) {
@@ -735,9 +734,9 @@ pub unsafe fn Botwoon_Func_18(k: u16, game: &mut Game) {
                 (*E).var_24 = v2 as u16;
                 if v2 < 0 {
                     (*E).var_24 = 12;
-                    let x: u16 = ((NextRandom(game) as i32 & 0x1f) + 232) as u16;
+                    let x: u16 = ((game.next_random() as i32 & 0x1f) + 232) as u16;
                     let y: u16 =
-                        ((*E).var_23 as i32 + (NextRandom(game) as i32 & 0x1f) - 8i32) as u16;
+                        ((*E).var_23 as i32 + (game.next_random() as i32 & 0x1f) - 8i32) as u16;
                     create_sprite(x, y, 29, 2560, game);
                     Botwoon_QueueExplosionSfx(game);
                 }
@@ -746,9 +745,9 @@ pub unsafe fn Botwoon_Func_18(k: u16, game: &mut Game) {
                 if v3 < 0 {
                     (*E).var_25 = 4;
                     for _ in 0..2 {
-                        let x_0: u16 = ((NextRandom(game) as i32 & 0x3f) + 224) as u16;
+                        let x_0: u16 = ((game.next_random() as i32 & 0x3f) + 224) as u16;
                         let y_0: u16 = ((*Get_Botwoon(k as i32, game)).var_23 as i32
-                            + ((NextRandom(game) as i32 & 0x1f) - 8i32))
+                            + ((game.next_random() as i32 & 0x1f) - 8i32))
                             as u16;
                         create_sprite(x_0, y_0, 9, 2560, game);
                     }

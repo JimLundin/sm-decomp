@@ -16,7 +16,6 @@ pub use crate::game::constants::bank_86::*;
 use crate::game::enemy_projectiles::SpawnEprojWithGfx;
 use crate::game::music::{QueueSfx2_Max6, QueueSfx2_Max9, QueueSfx3_Max6};
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
-use crate::game::sm_80::NextRandom;
 use crate::game::sprite_effect_runtime::{self as sprite_effects, create_sprite};
 use crate::game::visual_runtime::initialize_morph_eye_beam;
 
@@ -1359,7 +1358,7 @@ crate::game::callback_dispatch! {
         };
     };
     [11057199] Beetom_Func_4 [] {
-        NextRandom(game);
+        game.next_random();
         let E: i32 = word!(game.cur_enemy_index) as i32;
         slot!(game, Beetom[E].var_C = crate::rtl::rom_table_word!(
             game,
@@ -2139,11 +2138,11 @@ crate::game::address_dispatch! {
     }
 }
 unsafe fn WreckedShipSpark_Func_4(k: u16, r18: u16, game: &mut Game) {
-    unsafe {
+    {
         let E: i32 = k as i32;
         let mut wssk_var_E: i16 = slot!(game, WreckedShipSpark[E].var_E) as i16;
         if wssk_var_E < 0 {
-            wssk_var_E = ((NextRandom(game) as i32 & 0x3f) + 4) as i16;
+            wssk_var_E = ((game.next_random() as i32 & 0x3f) + 4) as i16;
         }
         slot!(
             game,

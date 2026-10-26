@@ -1,7 +1,6 @@
 //! Shared byte decoder for room, graphics and tilemap assets.
 #![forbid(unsafe_code)]
 use crate::game_state::Game;
-use std::io::Write;
 
 // Output implementations retain their byte/write protocol. VRAM also needs
 // the back-reference flag to preserve its address-register writes.
@@ -14,12 +13,7 @@ pub(super) trait Output {
 pub(super) fn next_byte(game: &mut Game) -> u8 {
     let address = game.decompress_src;
     if address & 0x8000 == 0 {
-        let _ = write!(
-            std::io::stdout().lock(),
-            "RomPtr - Invalid access 0x{address:x}!{}",
-            if cfg!(windows) { "\r\n" } else { "\n" }
-        );
-        game.g_fail = true;
+        crate::rtl::report_invalid_rom_address(address, game);
     }
     // RomPtr aliases both halves of a bank; retain the unmasked source cursor.
     let value = game.read_rom_byte(address | 0x8000, 0);

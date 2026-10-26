@@ -12,7 +12,7 @@ use crate::game::music::{QueueSfx1_Max6, QueueSfx3_Max6};
 use crate::game::prelude::*;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
-use crate::game::sm_80::LoadMirrorOfExploredMapTiles;
+use crate::game::save_slots::load_area_map;
 use crate::game::sm_82::{
     DrawBorderAroundDataClearMode, DrawBorderAroundDataCopyMode, DrawBorderAroundSamusData,
 };
@@ -503,7 +503,7 @@ unsafe fn clear_slot(game: &mut Game) {
         save_slots::initialize(game);
         save_slots::load(word!(game.eproj_id[16]), game);
         word!(game.area_index = word!(game.eproj_id[16]));
-        LoadMirrorOfExploredMapTiles(game);
+        load_area_map(game);
         word_transfers!(game, ascending, 288; native(0x3b00) <- value(15));
         word!(game.nonempty_save_slots &= (kBitShl_Not[word!(game.eproj_id[16]) as usize]));
         menu_tilemap::set_palette(0, game);
@@ -633,7 +633,7 @@ unsafe fn choose_main(game: &mut Game) {
                     save_slots::initialize(game);
                     word!(game.has_area_map = 0);
                 } else {
-                    LoadMirrorOfExploredMapTiles(game);
+                    load_area_map(game);
                 }
             } else {
                 if word!(game.selected_save_slot) == 3 {

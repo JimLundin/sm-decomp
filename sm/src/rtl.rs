@@ -762,9 +762,26 @@ pub unsafe fn mov24(a: *mut LongPtr, d: u32) {
 pub unsafe fn Load24(src: *const LongPtr) -> u32 {
     unsafe { *(src as *mut u32) & 0xffffff }
 }
+pub fn invalid_interrupt(game: &mut Game) {
+    unreachable_failure(true, game);
+    loop {}
+}
 pub unsafe fn Unreachable(game: &mut Game) -> bool {
+    unreachable_failure(false, game)
+}
+// Only these fixed static diagnostics cross the native assertion boundary.
+// No caller-provided pointers or backend allocations are accessed.
+fn unreachable_failure(invalid_interrupt: bool, game: &mut Game) -> bool {
     unsafe {
-        printf(c"Unreachable!\n".as_ptr());
+        for message in [
+            invalid_interrupt.then_some(c"InvalidInterrupt_Crash\n"),
+            Some(c"Unreachable!\n"),
+        ]
+        .into_iter()
+        .flatten()
+        {
+            printf(message.as_ptr());
+        }
         crate::native_assertion! {
             '_c2rust_label;
             b"0\0", b"src/sm_rtl.c\0", 512, b"_Bool Unreachable(void)\0"
@@ -819,6 +836,17 @@ pub(crate) unsafe fn rom_bank_ptr<const BANK: u8>(addr: u16, game: &mut Game) ->
 #[inline]
 pub(crate) unsafe fn rom_ptr_with_bank(bank: u8, addr: u16, game: &mut Game) -> *const u8 {
     unsafe { RomPtr((u32::from(bank) << 16) | u32::from(addr), game) }
+}
+
+#[forbid(unsafe_code)]
+pub(crate) fn report_invalid_rom_address(address: u32, game: &mut Game) {
+    use std::io::Write;
+    let _ = write!(
+        std::io::stdout().lock(),
+        "RomPtr - Invalid access 0x{address:x}!{}",
+        if cfg!(windows) { "\r\n" } else { "\n" }
+    );
+    game.g_fail = true;
 }
 
 pub unsafe fn RomPtr(addr: u32, game: &mut Game) -> *const u8 {

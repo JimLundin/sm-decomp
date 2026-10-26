@@ -62,7 +62,11 @@ pub(crate) unsafe fn run(id: u32, g: &mut Game) -> Vec<u8> {
         let mut done = false;
         for step in 0..192 {
             crate::verify_probe::begin_frame(step);
-            let returned = crate::game::sm_80::StartGameplay_Async(g);
+            let returned = room_entry::protocol::resume(
+                &mut Runtime::new(g),
+                room_entry::EntrySignal::Initial,
+            )
+            .returned_byte();
             assert!(!g.g_fail, "composed.start.no-diagnostic-{step}");
             if returned == 0 {
                 done = true;

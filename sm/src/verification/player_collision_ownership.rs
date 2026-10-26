@@ -4,7 +4,7 @@
 use crate::{
     game::{
         player_projectiles::access::Store, player_transitions as pt, session_access::SessionAccess,
-        session_runtime::Runtime, sm_80, sm_a9,
+        session_runtime::Runtime, sm_a9,
     },
     game_state::Game,
     rom::{RomImage, lorom_offset},
@@ -261,7 +261,7 @@ unsafe fn multiply(g: &mut Game, out: &mut Vec<u8>) {
     seed_lanes(g);
     let mut expected = g.g_ram.to_vec();
     record(out, 0, 0, g);
-    let result = unsafe { sm_80::Multiply16x16(0xf123, 0x0123, g) };
+    let result = g.multiply_with_scratch(0xf123, 0x0123);
     assert_eq!(result, 0x01121ac9, "collision.owner.multiply.product");
     put(&mut expected, 0x5e9, 0xf123);
     put(&mut expected, 0x5eb, 0x0123);
@@ -438,7 +438,7 @@ fn foreign_unwind(g: &mut Game, out: &mut Vec<u8>) {
     let error = catch_unwind(AssertUnwindSafe(|| {
         let mut rt = Runtime::new(g);
         rt.foreign(|g| {
-            unsafe { sm_80::Multiply16x16(0x1234, 0x5678, g) };
+            g.multiply_with_scratch(0x1234, 0x5678);
             g.g_ram[0xdc7] = 0xe1;
             panic!("collision ownership controlled foreign unwind");
         });

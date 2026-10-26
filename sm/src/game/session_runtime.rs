@@ -360,7 +360,7 @@ impl Host for Runtime<'_> {
         self.foreign(|g| draw_trail(g, pair, right, frozen));
     }
     fn invalid_damage(&mut self) {
-        self.foreign(|g| unsafe { crate::game::sm_80::InvalidInterrupt_Crash(g) });
+        self.foreign(|g| crate::rtl::invalid_interrupt(g));
     }
     fn unknown(&mut self) -> bool {
         self.foreign(|g| unsafe { crate::rtl::Unreachable(g) })
