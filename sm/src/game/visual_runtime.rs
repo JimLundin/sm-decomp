@@ -35,7 +35,11 @@ pub(crate) unsafe fn spawn_bg3_scroll(game: &mut Game) {
 
 crate::forward_calls! { pub(crate) unsafe fn (game: &mut Game);
     initialize_ceres_elevator => spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 5, 0xd939), game);
-    initialize_draygon_layer => spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x2c, 0xdf4f), game);
+    initialize_draygon_layer => {
+        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x2c, 0xdf4f), game);
+        word!(game.room_loading_irq_handler = 12);
+        spawn_bg3_scroll(game);
+    };
     initialize_morph_eye_beam => spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x41, 0x26, 0xe8ec), game);
     initialize_intro_crossfade => spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x31, 0xec03), game);
 }

@@ -102,6 +102,7 @@ pub(crate) fn initialize(install_layers: impl FnOnce(&mut Game), game: &mut Game
     );
     install_layers(game);
     slot!(game, Draygon[0].var_45 = 1);
+    crate::game::player_update::minimap::disable_for_boss(&mut Runtime::new(game));
 }
 pub(crate) fn initialize_part(arms: bool, game: &mut Game) {
     let k = word!(game.cur_enemy_index) as i32;

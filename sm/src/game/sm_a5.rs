@@ -1,13 +1,12 @@
 use crate::game::actors;
 use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
-use crate::game::player_update::minimap;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::Runtime;
 
 use crate::game::music::{QueueSfx2_Max6, QueueSfx3_Max6};
 use crate::game::sprite_effect_runtime as sprite_effects;
-use crate::game::visual_runtime::{initialize_draygon_layer, spawn_bg3_scroll};
+use crate::game::visual_runtime::initialize_draygon_layer;
 
 crate::game::callback_dispatch! {
     pub unsafe fn CallDraygonFunc(ea: u32, k: u16, game: &mut Game) => ea;
@@ -60,12 +59,7 @@ crate::game::callback_dispatch! {
     call (game); default { crate::rtl::Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
     @external {
-        10847879 => [{ actors::draygon_flight::initialize(|game| {
-            initialize_draygon_layer(game);
-            word!(game.room_loading_irq_handler = 12);
-            spawn_bg3_scroll(game);
-        }, game);
-        minimap::disable_for_boss(&mut Runtime::new(game)); }];
+        10847879 => [actors::draygon_flight::initialize(|game| initialize_draygon_layer(game), game)];
         10851661 => [actors::draygon_death::hurt(game)];
         10847996 => [actors::draygon_flight::update(true, |state, k, game| CallDraygonFunc(state, k, game), game)];
         10863750 => [actors::draygon_flight::update(false, |state, k, game| CallDraygonFunc(state, k, game), game)];
