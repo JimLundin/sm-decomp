@@ -10,6 +10,9 @@ review, build, replay and coordination. Load the assigned role and only the
 technical contracts it reaches. PLAN remains authoritative for the Fast loop,
 verification, Git/resource limits, progress, commit/push and definition of done.
 
+For Windows/Linux assignments and handoffs, use the user-requested
+[GitHub mailbox](https://github.com/JimLundin/sm-decomp/issues/2).
+
 Before changing ownership, interfaces or backend architecture, read the
 [accepted destination](docs/target-architecture/README.md) and its Windows policy.
 

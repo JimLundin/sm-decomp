@@ -8,6 +8,9 @@ earlier versions; this file holds only current findings.
 
 ## Milestone plan (2026-10-24)
 
+At each item's start, check the user-requested Windows/Linux
+[coordination mailbox](https://github.com/JimLundin/sm-decomp/issues/2) for ownership and handoffs.
+
 Set by the reviewer at the user's request so progress is countable. It replaces
 "consolidate exercised subsystems" with one unit of work: **retire a legacy bank**.
 Baseline at 5096059: 24/44 checks; `game/sm_*.rs` 23 files, **55,342 lines, 3,160
