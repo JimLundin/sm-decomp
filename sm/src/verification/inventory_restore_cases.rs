@@ -58,8 +58,7 @@ const AMMO: [usize; 3] = [
     w::samus_super_missiles,
     w::samus_power_bombs,
 ];
-const SHIP_STATE: usize =
-    0xf78 + core::mem::offset_of!(crate::game::sm_a2::Enemy_GunshipTop, var_F);
+const SHIP_STATE: usize = 0xf78 + core::mem::offset_of!(crate::types::EnemyData, ai_preinstr);
 const OBSERVED: [usize; 16] = [
     w::samus_health,
     w::samus_max_health,
@@ -286,7 +285,7 @@ unsafe fn gunship(id: u32, game: &mut Game) -> Vec<u8> {
         put(&mut expected_ram, SHIP_STATE, 0xab1f);
     }
     begin_trace();
-    unsafe { crate::game::sm_a2::GunshipTop_12(0, game) };
+    crate::game::gunship::phase(0, 0xaaa2, game);
     let trace = finish_trace();
     assert_eq!(trace, expected_trace, "gunship restore ordering {id}");
     assert_eq!(

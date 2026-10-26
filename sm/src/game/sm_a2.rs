@@ -4,19 +4,13 @@ use crate::game::actors::api as actor_api;
 use crate::game::enemy_script::EnemyScript;
 pub use crate::game::prelude::*;
 use crate::game::rippers::{self, Kind};
-use crate::game::save_slots;
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
 
 pub use crate::game::constants::bank_8d::*;
 pub use crate::game::constants::bank_86::*;
 
-use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
-use crate::game::gameplay_flag_runtime::CheckEventHappened;
-use crate::game::message_boxes;
-use crate::game::music::{QueueSfx2_Max6, QueueSfx3_Max6};
-use crate::game::palette_effects;
-use crate::game::session_runtime::player_command as CallSomeSamusCode;
-use crate::game::session_runtime::player_face_forward;
+use crate::game::enemy_projectiles::SpawnEprojWithGfx;
+use crate::game::music::QueueSfx2_Max6;
 
 pub use crate::types::Consts_A2;
 
@@ -40,9 +34,6 @@ crate::game::constants::typed_constants! { Consts_A2;
     addr_kHirisingSlowfalling_Ilist_D840 = 55360, addr_kHirisingSlowfalling_Ilist_D834 = 55348,
     addr_kHirisingSlowfalling_Ilist_D82C = 55340, addr_kMaridiaLargeSnail_Ilist_CA4B = 51787,
     addr_kNorfairErraticFireball_Ilist_B51A = 46362,
-     addr_kGunshipTop_Ilist_A61C = 42524,
-    addr_kGunshipTop_Ilist_A616 = 42518, addr_kGunshipTop_Ilist_A60E = 42510,
-    addr_kGunshipTop_Ilist_A5EE = 42478, addr_kGunshipTop_Ilist_A5BE = 42430,
     addr_kMaridiaSpikeyShell_Ilist_A3BD = 41917, addr_kMaridiaSpikeyShell_Ilist_A3AB = 41899,
     addr_locret_A28E09 = 36361, addr_kMaridiaBeybladeTurtle_Ilist_8D40 = 36160,
     addr_kMaridiaBeybladeTurtle_Ilist_8D28 = 36136, addr_kMaridiaBeybladeTurtle_Ilist_8D14 = 36116,
@@ -59,37 +50,23 @@ crate::game::constants::typed_constants! { Consts_A2;
 crate::type_aliases! {
     pub Enemy_LavaSeahorse, Enemy_MaridiaTurtle,
         Enemy_MaridiaLargeSnail, Enemy_MaridiaSpikeyShell,
-        Enemy_GunshipTop, Enemy_HirisingSlowfalling,
+        Enemy_HirisingSlowfalling,
         Enemy_LavaquakeRocks, Enemy_MiniMaridiaTurtle =
         crate::game::enemy_layouts::EnemyLayout40;
 }
 
 crate::type_aliases! {
     pub Enemy_MaridiaBeybladeTurtle, Enemy_MiniCrocomire,
-        Enemy_GunshipBottom,
         Enemy_MiniMaridiaBeybladeTurtle =
         crate::game::enemy_layouts::EnemyLayout8;
 }
 
 const RomPtr_A2: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa2>;
-crate::ram_map::ram_pointer_functions! {
-    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
-}
 crate::game::constants::typed_constants! { i32;
     fnSamus_FrameHandlerAlfa_Func11 = 0x90e695, fnSamus_FrameHandlerBeta_Func17 = 0x90e725,
     fnMiniCrocomire_PreInstr5 = 0xa28a43, fnMiniCrocomire_PreInstr6 = 0xa28a5c,
     fnnullsub_175 = 0xa28a75,
     fnnullsub_182 = 0xa2a01b, fnnullsub_187 = 0xa2a7d7,
-    fnGunshipTop_3 = 0xa2a80c, fnGunshipTop_4 = 0xa2a8d0,
-    fnGunshipTop_5 = 0xa2a942, fnGunshipTop_6 = 0xa2a950,
-    fnGunshipTop_7 = 0xa2a987, fnGunshipTop_8 = 0xa2a9bd,
-    fnGunshipTop_9 = 0xa2aa4f, fnGunshipTop_10 = 0xa2aa5d,
-    fnGunshipTop_11 = 0xa2aa94, fnGunshipTop_12 = 0xa2aaa2,
-    fnGunshipTop_13 = 0xa2ab1f, fnGunshipTop_14 = 0xa2ab60,
-    fnGunshipTop_15 = 0xa2ab6e, fnGunshipTop_16 = 0xa2aba5,
-    fnGunshipTop_17 = 0xa2abc7, fnGunshipTop_18 = 0xa2ac1b,
-    fnGunshipTop_19 = 0xa2acd7, fnGunshipTop_20 = 0xa2ad0e,
-    fnGunshipTop_21 = 0xa2ad2d,
     fnMaridiaLargeSnail_Func_7 = 0xa2cf66,
     fnMaridiaLargeSnail_Func_8 = 0xa2cfa9,
     fnLavaSeahorse_Func_1 = 0xa2e654,
@@ -100,8 +77,6 @@ crate::game::constants::typed_constants! { i32;
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     gEnemySpawnData(o: i32) -> EnemySpawnData = [0x7000, o as isize];
-    Get_GunshipBottom(o: i32) -> Enemy_GunshipBottom = [0xf78, o as isize];
-    Get_GunshipTop(o: i32) -> Enemy_GunshipTop = [0xf78, o as isize];
     Get_HirisingSlowfalling(o: i32) -> Enemy_HirisingSlowfalling = [0xf78, o as isize];
     Get_LavaSeahorse(o: i32) -> Enemy_LavaSeahorse = [0xf78, o as isize];
     Get_LavaquakeRocks(o: i32) -> Enemy_LavaquakeRocks = [0xf78, o as isize];
@@ -728,26 +703,6 @@ pub unsafe fn MaridiaSpikeyShell_8(k: u16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn GunshipTop_1(k: u16, game: &mut Game) {
-    unsafe {
-        let E0 = Get_GunshipTop(k as i32, game);
-        let v3: bool = (*E0).var_D == 1;
-        (*E0).var_D = (*E0).var_D.wrapping_sub(1);
-        let v4: bool = ((*E0).var_D & 0x8000) != 0;
-        if v3 as i32 != 0 || v4 as i32 != 0 {
-            let v5: u16 = (2u16).wrapping_mul((*E0).var_C);
-            (*E0).var_D = byte!(@pointer rom_ptr!(game; 0xa2a7cf); v5 as isize) as u16;
-            let v6: u16 =
-                byte!(@pointer rom_ptr!(game; 0xa2a7cf); (v5 as i32 + 1) as isize) as i8 as u16;
-            (*E0).base.y_pos = ((*E0).base.y_pos).wrapping_add(v6);
-            let E1 = Get_GunshipTop(k as i32 + 64, game);
-            (*E1).base.y_pos = ((*E1).base.y_pos).wrapping_add(v6);
-            let E2 = Get_GunshipTop(k as i32 + 128, game);
-            (*E2).base.y_pos = ((*E2).base.y_pos).wrapping_add(v6);
-            (*E0).var_C = ((*E0).var_C as i32 + 1 & 3) as u16;
-        }
-    }
-}
 crate::game::callback_dispatch! {
     pub unsafe fn CallLavaQuakeRocksFunc(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
@@ -1210,81 +1165,13 @@ crate::game::callback_dispatch! {
         let e = Get_MaridiaSpikeyShell(word!(game.cur_enemy_index) as i32, game);
         off_A2A3D3[((*e).var_E as i16 as i32 + 2i32) as usize](game);
     };
-    [10659396] GunshipTop_Init [] {
-        let E = Get_GunshipTop(word!(game.cur_enemy_index) as i32, game);
-        (*E).base.properties = ((*E).base.properties as i32
-            | (kEnemyProps_DisableSamusColl as i32 | kEnemyProps_Tangible as i32))
-            as u16;
-        (*E).base.instruction_timer = 1;
-        (*E).base.timer = 0;
-        (*E).base.current_instruction = addr_kGunshipTop_Ilist_A616 as u16;
-        (*E).base.palette_index = 3584;
-        if word!(game.game_state) != 40 || word!(game.demo_set) != 0 {
-            if word!(game.loading_game_state) as i32 == kLoadingGameState_22_EscapingCeres as i32 {
-                (*E).base.y_pos = (word!(game.samus_y_pos)).wrapping_sub(17);
-                (*E).var_F = (0xa2a80ci32) as u16;
-            } else {
-                let v3: u16 = ((*E).base.y_pos).wrapping_sub(25);
-                (*E).base.y_pos = v3;
-                (*E).var_E = v3;
-                (*E).var_F = (0xa2a9bdi32) as u16;
-            }
-        } else {
-            word!(game.samus_y_pos = 1138);
-            let v5: u16 = ((*E).base.y_pos).wrapping_sub(25);
-            (*E).base.y_pos = v5;
-            (*E).var_E = v5;
-            (*E).var_F = (0xa2ab60i32) as u16;
-            (*Get_GunshipTop(0i32, game)).var_A = 144;
-        }
-        palette_effects::spawn(addr_stru_8DE1C0 as u16, game);
-        (*Get_GunshipTop(word!(game.cur_enemy_index) as i32, game)).var_D = 1;
-        (*Get_GunshipTop(0i32, game)).var_C = 0;
-    };
-    [10659538] GunshipBottom_Init [] {
-        let E = Get_GunshipBottom(word!(game.cur_enemy_index) as i32, game);
-        (*E).base.properties = ((*E).base.properties as i32
-            | (kEnemyProps_DisableSamusColl as i32 | kEnemyProps_Tangible as i32))
-            as u16;
-        (*E).base.instruction_timer = 1;
-        (*E).base.timer = 0;
-        if (*E).parameter_2 != 0 {
-            (*E).base.current_instruction = addr_kGunshipTop_Ilist_A60E as u16;
-        } else {
-            (*E).base.current_instruction = addr_kGunshipTop_Ilist_A61C as u16;
-        }
-        let v2: i32 = word!(game.cur_enemy_index) as i32 >> 1;
-        (*E).base.vram_tiles_index = word!(game.enemy_drawing_queue[(v2 + 106)]);
-        (*E).base.palette_index = 3584;
-        if (*E).parameter_2 != 0 {
-            (*E).base.y_pos = (word!(game.enemy_drawing_queue[(v2 + 61)])).wrapping_sub(1);
-            if word!(game.game_state) as i32 == kPose_28_FaceL_Crouch as i32
-                && word!(game.demo_set) == 0
-            {
-                enemy_instruction! {[(*E).base]; timer = 1, instruction = addr_kGunshipTop_Ilist_A5BE as u16}
-            }
-        } else if word!(game.loading_game_state) as i32 == kGameState_34_CeresGoesBoom as i32 {
-            (*E).base.y_pos = (word!(game.samus_y_pos)).wrapping_add(23);
-        } else {
-            (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(15);
-            (*E).var_D = 71;
-        }
-        (*E).var_F = (0xa2a7d7i32) as u16;
-    };
+    @functions [pub fn (game: &mut Game)];
+    [10659396] GunshipTop_Init [] { crate::game::gunship::initialize_top(game); };
+    [10659538] GunshipBottom_Init [] { crate::game::gunship::initialize_bottom(game); };
+    @functions [pub unsafe fn (game: &mut Game)];
     [10659673] GunshipTop_Main [] {
-        let E1 = Get_GunshipTop(word!(game.cur_enemy_index) as i32 + 64, game);
-        let v2: bool = (*E1).var_D == 1;
-        (*E1).var_D = (*E1).var_D.wrapping_sub(1);
-        let v3: bool = ((*E1).var_D & 0x8000) != 0;
-        if v2 as i32 != 0 || v3 as i32 != 0 {
-            QueueSfx2_Max6(0x4d, game);
-            (*E1).var_D = 70;
-        }
-        let E0 = Get_GunshipTop(word!(game.cur_enemy_index) as i32, game);
-        if (*E0).var_F as i32 + 0x56be & 0x8000 == 0 && (*E0).var_F as i32 + 0x53e5 & 0x8000 != 0 {
-            GunshipTop_1(word!(game.cur_enemy_index), game);
-        }
-        actor_species_pre_instruction((((*E0).var_F) as u32) | (0xa20000u32), game);
+        let phase = crate::game::gunship::advance(game);
+        actor_species_pre_instruction(phase, game);
     };
     [10663280] LavaquakeRocks_Init [] {
         let E = Get_LavaquakeRocks(word!(game.cur_enemy_index) as i32, game);
@@ -1771,279 +1658,6 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     [10657722] SpikeShootingPlant_2 [] { crate::game::spike_plant::patrol(false, game); SpikeShootingPlant_4(game); };
     [10657772] SpikeShootingPlant_3 [] { crate::game::spike_plant::patrol(true, game); SpikeShootingPlant_4(game); };
-    [10659852] GunshipTop_3 [] {
-        let E = Get_GunshipTop(k as i32, game);
-        if (*E).base.y_pos as i32 - 768i32 & 0x8000 != 0 {
-            words!(game.samus_y_pos, samus_y_subpos += 0x48000);
-            let v3 = Get_GunshipTop(k as i32 + 128, game);
-            words!((*v3).base, y_pos, y_subpos += 0x48000);
-            let v5 = Get_GunshipTop(k as i32 + 64, game);
-            words!((*v5).base, y_pos, y_subpos += 0x48000);
-            words!((*E).base, y_pos, y_subpos += 0x48000);
-        } else {
-            words!(game.samus_y_pos, samus_y_subpos += 0x28000);
-            let v8 = Get_GunshipTop(k as i32 + 128, game);
-            words!((*v8).base, y_pos, y_subpos += 0x28000);
-            let v10 = Get_GunshipTop(k as i32 + 64, game);
-            words!((*v10).base, y_pos, y_subpos += 0x28000);
-            words!((*E).base, y_pos, y_subpos += 0x28000);
-            if (*E).base.y_pos as i32 - 1119i32 & 0x8000 == 0 {
-                (*E).base.y_pos = 1119;
-                (*v10).base.y_pos = 1159;
-                (*v8).base.y_pos = ((*E).base.y_pos).wrapping_sub(1);
-                (*E).var_F = (0xa2a8d0i32) as u16;
-                (*E).var_E = 0;
-            }
-        };
-    };
-    [10660048] GunshipTop_4 [] {
-        let GunshipTop = Get_GunshipTop(k as i32, game);
-        let mut v2: i32 = (*GunshipTop).var_E as i32;
-        word!(game.samus_y_pos += crate::rtl::rom_table_word!(game, 0xa2a622, v2 as isize));
-        let v3 = Get_GunshipTop(k as i32 + 128, game);
-        (*v3).base.y_pos = ((*v3).base.y_pos).wrapping_add(crate::rtl::rom_table_word!(
-            game,
-            0xa2a622,
-            v2 as isize
-        ));
-        let v4 = Get_GunshipTop(k as i32 + 64, game);
-        (*v4).base.y_pos = ((*v4).base.y_pos).wrapping_add(crate::rtl::rom_table_word!(
-            game,
-            0xa2a622,
-            v2 as isize
-        ));
-        (*GunshipTop).base.y_pos = ((*GunshipTop).base.y_pos)
-            .wrapping_add(crate::rtl::rom_table_word!(game, 0xa2a622, v2 as isize));
-        let mut v5: u16 = ((*GunshipTop).var_E).wrapping_add(1);
-        (*GunshipTop).var_E = v5;
-        if v5 as i32 - 17i32 & 0x8000 == 0 {
-            set_fields! {[(*GunshipTop)]; var_F = (0xa2a942i32) as u16,
-            var_E = (*GunshipTop).base.y_pos, var_D = 1, };
-            let v6 = Get_GunshipTop(0, game);
-            (*v6).var_C = 0;
-            word!(game.samus_x_pos = ((*GunshipTop).base.x_pos).wrapping_add(1));
-            word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
-            let v7 = Get_GunshipTop(k as i32 + 128, game);
-            enemy_instruction! {[(*v7).base]; timer = 1, instruction = addr_kGunshipTop_Ilist_A5BE as u16}
-            (*v6).var_A = 144;
-            QueueSfx3_Max6(0x14, game);
-        }
-    };
-    [10660176] GunshipTop_6 [] {
-        let E = Get_GunshipTop(k as i32, game);
-        let r18: u16 = ((*E).var_E).wrapping_sub(30);
-        if word!(game.samus_y_pos -= 1, reread) as i32 - r18 as i32 & 0x8000 != 0 {
-            (*E).var_F = (0xa2a987i32) as u16;
-            let E2 = Get_GunshipTop(k as i32 + 128, game);
-            enemy_instruction! {[(*E2).base]; timer = 1, instruction = addr_kGunshipTop_Ilist_A5EE as u16}
-            (*Get_GunshipTop(0i32, game)).var_A = 144;
-            QueueSfx3_Max6(0x15, game);
-        }
-    };
-    [10660285] GunshipTop_8 [] {
-        if word!(game.game_state) == 8 && word!(game.frame_handler_alfa) as i32 == 0x90e695 & 0xffff
-        {
-            let E = Get_GunshipTop(k as i32, game);
-            if (((*E).base.x_pos as i32 - 8i32 - word!(game.samus_x_pos) as i32) as i16) < 0
-                && (((*E).base.x_pos as i32 + 8 - word!(game.samus_x_pos) as i32) as i16) >= 0
-                && (((*E).base.y_pos as i32 - 64i32 - word!(game.samus_y_pos) as i32) as i16) < 0
-                && (((*E).base.y_pos) as i16).wrapping_sub((word!(game.samus_y_pos)) as i16) >= 0
-                && *ram_ptr!(game; 0xa1f) == 0
-                && (word!(game.joypad1_newkeys) as i32 & kButton_Down as i32) != 0
-            {
-                (*E).var_F = (0xa2aa4fi32) as u16;
-                if word!(game.samus_x_pos) != 1152 {
-                    word!(game.samus_x_pos = (*E).base.x_pos);
-                    word!(game.samus_prev_x_pos = word!(game.samus_x_pos));
-                }
-                player_face_forward(game);
-                CallSomeSamusCode(0x1a, game);
-                word!(game.elevator_status = 0);
-                let v3: u16 = ((*E).base.y_pos).wrapping_sub(1);
-                let E2 = Get_GunshipTop(k as i32 + 128, game);
-                (*E2).base.y_pos = v3;
-                enemy_instruction! {[(*E2).base]; timer = 1, instruction = addr_kGunshipTop_Ilist_A5BE as u16}
-                (*Get_GunshipTop(0i32, game)).var_A = 144;
-                QueueSfx3_Max6(0x14, game);
-            }
-        }
-    };
-    [10660445] GunshipTop_10 [] {
-        let E = Get_GunshipTop(k as i32, game);
-        let r18: u16 = ((*E).var_E).wrapping_add(18);
-        word!(game.samus_y_pos += 2);
-        if word!(game.samus_y_pos) as i32 - r18 as i32 & 0x8000 == 0 {
-            (*E).var_F = (0xa2aa94i32) as u16;
-            let E2 = Get_GunshipTop(k as i32 + 128, game);
-            enemy_instruction! {[(*E2).base]; timer = 1, instruction = addr_kGunshipTop_Ilist_A5EE as u16}
-            (*Get_GunshipTop(0i32, game)).var_A = 144;
-            QueueSfx3_Max6(0x15, game);
-        }
-    };
-    [10660514] GunshipTop_12 [] {
-        if CheckEventHappened(0xe, game) != 0 {
-            (*Get_GunshipTop(k as i32, game)).var_F = (0xa2abc7i32) as u16;
-            let E = Get_GunshipTop(k as i32 + 64, game);
-            set_fields! {[(*E)], 0; var_F, var_E}
-            word! { game, 0; substate, suit_pickup_light_beam_pos }
-            *(ram_ptr!(game, u16; 0xdf0)) = 0;
-            *(ram_ptr!(game, u16; 0xdf2)) = 0;
-            CallSomeSamusCode(0xa, game);
-        } else {
-            crate::game::item_pickups_runtime::restore(crate::game::item_pickups::Resource::Health, 2, game);
-            crate::game::item_pickups_runtime::restore(crate::game::item_pickups::Resource::Missiles, 2, game);
-            crate::game::item_pickups_runtime::restore(crate::game::item_pickups::Resource::SuperMissiles, 2, game);
-            crate::game::item_pickups_runtime::restore(crate::game::item_pickups::Resource::PowerBombs, 2, game);
-            if ((word!(game.samus_reserve_health)) as i16)
-                .wrapping_sub((word!(game.samus_max_reserve_health)) as i16)
-                >= 0
-                && ((word!(game.samus_health)) as i16)
-                    .wrapping_sub((word!(game.samus_max_health)) as i16)
-                    >= 0
-                && ((word!(game.samus_missiles)) as i16)
-                    .wrapping_sub((word!(game.samus_max_missiles)) as i16)
-                    >= 0
-                && ((word!(game.samus_super_missiles)) as i16)
-                    .wrapping_sub((word!(game.samus_max_super_missiles)) as i16)
-                    >= 0
-                && ((word!(game.samus_power_bombs)) as i16)
-                    .wrapping_sub((word!(game.samus_max_power_bombs)) as i16)
-                    >= 0
-            {
-                (*Get_GunshipTop(k as i32, game)).var_F = (0xa2ab1fi32) as u16;
-            }
-        };
-    };
-    [10660639] GunshipTop_13 [] {
-        let rv: i32 = message_boxes::poll(0x1c, game);
-        if rv < 0 {
-            return;
-        }
-        if rv != 2 {
-            crate::update_place! { unaligned_word fresh3 = &raw mut (*(ram_ptr!(game, u16; 0xd8f8))) => (u16::from_le(fresh3.read_unaligned())) | (1u16); }
-            word!(game.load_station_index = 0);
-            save_slots::save(word!(game.selected_save_slot), game);
-        }
-        (*Get_GunshipTop(k as i32, game)).var_F = (0xa2ab60i32) as u16;
-        let E = Get_GunshipTop(k as i32 + 128, game);
-        enemy_instruction! {[(*E).base]; timer = 1, instruction = addr_kGunshipTop_Ilist_A5BE as u16}
-        (*Get_GunshipTop(0i32, game)).var_A = 144;
-        QueueSfx3_Max6(0x14, game);
-    };
-    [10660718] GunshipTop_15 [] {
-        let E = Get_GunshipTop(k as i32, game);
-        let r18: u16 = ((*E).var_E).wrapping_sub(30);
-        word!(game.samus_y_pos -= 2);
-        if word!(game.samus_y_pos) as i32 - r18 as i32 & 0x8000 != 0 {
-            (*E).var_F = (0xa2aba5i32) as u16;
-            let E2 = Get_GunshipTop(k as i32 + 128, game);
-            enemy_instruction! {[(*E2).base]; timer = 1, instruction = addr_kGunshipTop_Ilist_A5EE as u16}
-            (*Get_GunshipTop(0i32, game)).var_A = 144;
-            QueueSfx3_Max6(0x15, game);
-        }
-    };
-    [10660807] GunshipTop_17 [] {
-        let v1: u16 = word!(game.substate);
-        let mut v2: u16 = word!(game.vram_write_queue_tail);
-        (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size = 1024;
-        v2 = (v2).wrapping_add(2);
-        let v3: i32 = v1 as i32 >> 1;
-        (*gVramWriteEntry(v2 as i32, game)).size =
-            crate::rtl::rom_table_word!(game, 0xa2ac07, v3 as isize);
-        v2 = (v2).wrapping_add(2);
-        crate::update_place! { previous fresh5 = v2 => v2.wrapping_add(1); }
-        *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-            fresh5 as i32,
-            game,
-        ))
-        .size as *mut u8) = -108i32 as u8;
-        (*gVramWriteEntry(v2 as i32, game)).size =
-            crate::rtl::rom_table_word!(game, 0xa2ac11, v3 as isize);
-        word!(game.vram_write_queue_tail = (v2).wrapping_add(2));
-        word!(game.substate += 2);
-        if word!(game.substate) as i32 - 10i32 & 0x8000 == 0 {
-            (*Get_GunshipTop(k as i32, game)).var_F = (0xa2ac1bi32) as u16;
-            word!(game.substate = 0);
-        }
-    };
-    [10660891] GunshipTop_18 [] {
-        let E1 = Get_GunshipTop(k as i32 + 64, game);
-        let gtp_var_E: u16 = (*E1).var_E;
-        if gtp_var_E as i32 - 64i32 & 0x8000 != 0 {
-            let mut v3: u16 = if (gtp_var_E & 1) != 0 {
-                (word!(game.samus_y_pos)).wrapping_add(1)
-            } else {
-                (word!(game.samus_y_pos)).wrapping_sub(1)
-            };
-            word! {game; samus_y_pos = v3; samus_prev_y_pos = v3; }
-        } else {
-            let mut v4: u16 = if (gtp_var_E & 1) != 0 {
-                (word!(game.samus_y_pos)).wrapping_add(2)
-            } else {
-                (word!(game.samus_y_pos)).wrapping_sub(2)
-            };
-            word! {game; samus_y_pos = v4; samus_prev_y_pos = v4; }
-        }
-        let mut v5: i16 = ((word!(game.samus_y_pos)) as i16).wrapping_sub(17);
-        let E0 = Get_GunshipTop(k as i32, game);
-        (*E0).base.y_pos = (word!(game.samus_y_pos)).wrapping_sub(17);
-        (*Get_GunshipTop(k as i32 + 128i32, game)).base.y_pos = ((v5) as u16).wrapping_sub(1);
-        (*E1).base.y_pos = (word!(game.samus_y_pos)).wrapping_add(23);
-        let v7: u16 = ((*E1).var_E).wrapping_add(1);
-        (*E1).var_E = v7;
-        if v7 as i32 - 128i32 & 0x8000 != 0 {
-            if v7 == 64 {
-                SpawnEprojWithRoomGfx(addr_stru_86A379 as u16, 0, game);
-                SpawnEprojWithRoomGfx(addr_stru_86A379 as u16, 2, game);
-                SpawnEprojWithRoomGfx(addr_stru_86A379 as u16, 4, game);
-                SpawnEprojWithRoomGfx(addr_stru_86A379 as u16, 6, game);
-                SpawnEprojWithRoomGfx(addr_stru_86A379 as u16, 8, game);
-                SpawnEprojWithRoomGfx(addr_stru_86A379 as u16, 0xa, game);
-            }
-        } else {
-            (*E0).var_F = (0xa2acd7i32) as u16;
-            (*Get_GunshipTop(0i32, game)).var_A = 0;
-        };
-    };
-    [10661079] GunshipTop_19 [] {
-        word!(game.samus_y_pos -= 2);
-        let mut v1: i16 = ((word!(game.samus_y_pos)) as i16).wrapping_sub(17);
-        let E0 = Get_GunshipTop(k as i32, game);
-        (*E0).base.y_pos = (word!(game.samus_y_pos)).wrapping_sub(17);
-        (*Get_GunshipTop(k as i32 + 128i32, game)).base.y_pos = ((v1) as u16).wrapping_sub(1);
-        let E1 = Get_GunshipTop(k as i32 + 64, game);
-        (*E1).base.y_pos = (word!(game.samus_y_pos)).wrapping_add(23);
-        if (*E0).base.y_pos as i32 - 896i32 & 0x8000 != 0 {
-            (*E0).var_F = (0xa2ad0ei32) as u16;
-            (*E1).var_F = 512;
-        }
-    };
-    [10661134] GunshipTop_20 [] {
-        GunshipTop_21(k, game);
-        let E = Get_GunshipTop(k as i32, game);
-        if (*E).base.y_pos as i32 - 256i32 & 0x8000 != 0 {
-            (*E).var_F = (0xa2ad2di32) as u16;
-            word!(game.game_state = 38);
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-        }
-    };
-    [10661165] GunshipTop_21 [] {
-        let E = Get_GunshipTop(k as i32 + 64, game);
-        let v3: u16 = ((*E).var_F).wrapping_add(64);
-        (*E).var_F = v3;
-        if (v3 as i32 & 0xff00) - 2560i32 & 0x8000 == 0 {
-            (*E).var_F = 2304;
-        }
-        let v6: u32 = (words!(game.samus_y_pos, samus_y_subpos)).wrapping_sub(words!((
-            ((*E).var_F >> 8),
-            (((*E).var_F as i32) << 8) as u16
-        )));
-        word! {game; samus_y_subpos = v6 as u16; samus_y_pos = (v6 >> 16) as u16; }
-        let v5: u16 = (word!(game.samus_y_pos)).wrapping_sub(17);
-        (*Get_GunshipTop(k as i32, game)).base.y_pos = v5;
-        (*Get_GunshipTop(k as i32 + 128i32, game)).base.y_pos = (v5).wrapping_sub(1);
-        (*E).base.y_pos = (word!(game.samus_y_pos)).wrapping_add(23);
-    };
     [10675953] LavaSeahorse_Func_3 [] {
         LavaSeahorse_Func_6(game);
         let E = Get_LavaSeahorse(k as i32, game);
@@ -2067,66 +1681,6 @@ crate::game::callback_dispatch! {
             (*E).var_D = 48;
             (*E).var_F = (0xa2e749i32) as u16;
             LavaSeahorse_Func_6(game);
-        }
-    };
-    @functions [pub unsafe fn (k: u16, game: &mut Game)];
-    @prefix { let E = Get_GunshipTop(0, game); };
-    [10660162] GunshipTop_5 [] {
-        let v2: bool = (*E).var_A == 1;
-        (*E).var_A = (*E).var_A.wrapping_sub(1);
-        let v3: bool = ((*E).var_A & 0x8000) != 0;
-        if v2 as i32 != 0 || v3 as i32 != 0 {
-            (*Get_GunshipTop(k as i32, game)).var_F = (0xa2a950i32) as u16;
-        }
-    };
-    [10660231] GunshipTop_7 [] {
-        let v2: bool = (*E).var_A == 1;
-        (*E).var_A = (*E).var_A.wrapping_sub(1);
-        let v3: bool = ((*E).var_A & 0x8000) != 0;
-        if v2 as i32 != 0 || v3 as i32 != 0 {
-            (*Get_GunshipTop(k as i32, game)).var_F = (0xa2a9bdi32) as u16;
-            word!(game.frame_handler_alfa = (0x90e695i32) as u16);
-            word!(game.frame_handler_beta = (0x90e725i32) as u16);
-            word!(game.loading_game_state = kLoadingGameState_5_Main as u16);
-            crate::update_place! { unaligned_word fresh11 = &raw mut (*(ram_ptr!(game, u16; 0xd8f8))) => (u16::from_le(fresh11.read_unaligned())) | (1u16); }
-            word!(game.load_station_index = 0);
-            save_slots::save(word!(game.selected_save_slot), game);
-        }
-    };
-    [10660431] GunshipTop_9 [] {
-        let v2: bool = (*E).var_A == 1;
-        (*E).var_A = (*E).var_A.wrapping_sub(1);
-        let v3: bool = ((*E).var_A & 0x8000) != 0;
-        if v2 as i32 != 0 || v3 as i32 != 0 {
-            (*Get_GunshipTop(k as i32, game)).var_F = (0xa2aa5di32) as u16;
-        }
-    };
-    [10660500] GunshipTop_11 [] {
-        let v2: bool = (*E).var_A == 1;
-        (*E).var_A = (*E).var_A.wrapping_sub(1);
-        let v3: bool = ((*E).var_A & 0x8000) != 0;
-        if v2 as i32 != 0 || v3 as i32 != 0 {
-            (*Get_GunshipTop(k as i32, game)).var_F = (0xa2aaa2i32) as u16;
-        }
-    };
-    [10660704] GunshipTop_14 [] {
-        let v2: bool = (*E).var_A == 1;
-        (*E).var_A = (*E).var_A.wrapping_sub(1);
-        let v3: bool = ((*E).var_A & 0x8000) != 0;
-        if v2 as i32 != 0 || v3 as i32 != 0 {
-            (*Get_GunshipTop(k as i32, game)).var_F = (0xa2ab6ei32) as u16;
-        }
-    };
-    [10660773] GunshipTop_16 [] {
-        let v2: bool = (*E).var_A == 1;
-        (*E).var_A = (*E).var_A.wrapping_sub(1);
-        let v3: bool = ((*E).var_A & 0x8000) != 0;
-        if v2 as i32 != 0 || v3 as i32 != 0 {
-            (*Get_GunshipTop(k as i32, game)).var_F = (0xa2a9bdi32) as u16;
-            if word!(game.game_state) as i32 - kGameState_40_TransitionToDemo as i32 & 0x8000 != 0 {
-                word!(game.frame_handler_alfa = (0x90e695i32) as u16);
-                word!(game.frame_handler_beta = (0x90e725i32) as u16);
-            }
         }
     };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
@@ -2274,4 +1828,25 @@ crate::game::callback_dispatch! {
         let E1 = Get_LavaSeahorse(k as i32 + 64, game);
         (*E1).base.y_pos = (*E1).base.y_pos.wrapping_add(1);
     };
+    @external {
+        10659852 => [crate::game::gunship::phase(k, 0xa80c, game)];
+        10660048 => [crate::game::gunship::phase(k, 0xa8d0, game)];
+        10660162 => [crate::game::gunship::phase(k, 0xa942, game)];
+        10660176 => [crate::game::gunship::phase(k, 0xa950, game)];
+        10660231 => [crate::game::gunship::phase(k, 0xa987, game)];
+        10660285 => [crate::game::gunship::phase(k, 0xa9bd, game)];
+        10660431 => [crate::game::gunship::phase(k, 0xaa4f, game)];
+        10660445 => [crate::game::gunship::phase(k, 0xaa5d, game)];
+        10660500 => [crate::game::gunship::phase(k, 0xaa94, game)];
+        10660514 => [crate::game::gunship::phase(k, 0xaaa2, game)];
+        10660639 => [crate::game::gunship::phase(k, 0xab1f, game)];
+        10660704 => [crate::game::gunship::phase(k, 0xab60, game)];
+        10660718 => [crate::game::gunship::phase(k, 0xab6e, game)];
+        10660773 => [crate::game::gunship::phase(k, 0xaba5, game)];
+        10660807 => [crate::game::gunship::phase(k, 0xabc7, game)];
+        10660891 => [crate::game::gunship::phase(k, 0xac1b, game)];
+        10661079 => [crate::game::gunship::phase(k, 0xacd7, game)];
+        10661134 => [crate::game::gunship::phase(k, 0xad0e, game)];
+        10661165 => [crate::game::gunship::phase(k, 0xad2d, game)];
+    }
 }
