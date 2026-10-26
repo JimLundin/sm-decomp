@@ -12,7 +12,9 @@ use crate::game::constants::{
     enemy_properties::kEnemyProps_Tangible,
 };
 use crate::game::enemy_layouts::EnemyLayout72 as Crocomire;
-use crate::game::enemy_projectiles::{ClearEprojs, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
+use crate::game::enemy_projectiles::{
+    ClearEprojs, DropSource, SpawnEprojWithGfx, SpawnEprojWithRoomGfx, scatter_drop as scatter,
+};
 use crate::game::enemy_script::{EnemyScript, bank_base};
 use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
@@ -1197,4 +1199,154 @@ pub(crate) fn emit_melt_debris(game: &mut Game) {
         );
     }
     melt_rumble_down(game);
+}
+
+pub(crate) fn release_skeleton_room(game: &mut Game) {
+    if (game.samus_x_pos() as i16).wrapping_sub(640) >= 0 {
+        return;
+    }
+    QueueMusic_Delayed8(5, game);
+    Runtime::new(game).write_slice_native(0xcd23, 256);
+    {
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb757 as VoidP), game);
+    }
+    word!(game.camera_distance_index = 6);
+    let mut runtime = Runtime::new(game);
+    // Fixed, disjoint records; no callback or fallible operation between these writes.
+    runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+        enemy.properties = enemy.properties & 0x7bff | kEnemyProps_Tangible as u16;
+        enemy.variables[3] = 4;
+        enemy.variables[1] = 0;
+        enemy.radius.y = 56;
+        enemy.variables[0] = enemy.variables[0].wrapping_add(2);
+    });
+    runtime.edit_actor(Key::from_legacy(0x40), AccessMode::Native, |enemy| {
+        enemy.properties |= 0x500;
+        enemy.variables[3] = 0;
+    });
+    for (key, countdown) in [(0x80, 10), (0xc0, 1)] {
+        runtime.edit_actor(Key::from_legacy(key), AccessMode::Native, |enemy| {
+            enemy.variables[3] = countdown
+        });
+    }
+}
+
+fn accelerated_speed(fraction: u16, whole: u16, acceleration: u32, limit: u16) -> u32 {
+    let speed = ((u32::from(whole) << 16) | u32::from(fraction)).wrapping_add(acceleration);
+    if ((speed >> 16) as i16).wrapping_sub(limit as i16) >= 0 {
+        speed & 0xffff | (u32::from(limit) << 16)
+    } else {
+        speed
+    }
+}
+
+pub(crate) fn reposition_skeleton(game: &mut Game) {
+    Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+        enemy.x.whole = enemy.x.whole.wrapping_sub(2);
+        if (enemy.x.whole as i16).wrapping_sub(480) < 0 {
+            enemy.x.whole = 480;
+            enemy.y.whole = 54;
+            enemy.variables[0] = 62;
+        } else {
+            enemy.y.whole = 220;
+        }
+    });
+}
+
+pub(crate) fn launch_skeleton(game: &mut Game) {
+    let mut runtime = Runtime::new(game);
+    runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+        if (enemy.x.whole as i16).wrapping_sub(224) < 0 {
+            let speed = accelerated_speed(enemy.variables[4], enemy.pre_instruction, 0x8000, 2);
+            enemy.variables[4] = speed as u16;
+            enemy.pre_instruction = (speed >> 16) as u16;
+            enemy.x.advance(speed as i32);
+        }
+    });
+    let finished = runtime.edit_actor(Key::from_legacy(0x80), AccessMode::Native, |enemy| {
+        let previous = enemy.variables[3];
+        enemy.variables[3] = previous.saturating_sub(1);
+        previous == 1
+    });
+    if finished {
+        runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+            enemy.variables[4] = 0;
+            enemy.instruction = addr_kCrocomire_Ilist_E14A as u16;
+            enemy.instruction_delay = 1;
+            enemy.variables[0] = enemy.variables[0].wrapping_add(2);
+        });
+    }
+}
+
+pub(crate) fn land_skeleton(game: &mut Game) {
+    let impact = Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+        let speed = accelerated_speed(enemy.variables[4], enemy.pre_instruction, 2048, 5);
+        enemy.variables[4] = speed as u16;
+        enemy.pre_instruction = (speed >> 16) as u16;
+        enemy.y.advance(0xe000);
+        enemy.x.advance(speed as i32);
+        (enemy.x.whole as i16).wrapping_sub(576) >= 0
+    });
+    if impact {
+        QueueSfx2_Max6(0x25, game);
+        let mut runtime = Runtime::new(game);
+        let palette = runtime
+            .resolve_actor(Key::from_legacy(0), AccessMode::Native)
+            .palette;
+        runtime.edit_actor(Key::from_legacy(0x40), AccessMode::Native, |enemy| {
+            enemy.palette = palette
+        });
+        runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+            enemy.instruction = addr_kCrocomire_Ilist_E158 as u16;
+            enemy.instruction_delay = 1;
+            enemy.variables[0] = enemy.variables[0].wrapping_add(2);
+        });
+    }
+}
+
+pub(crate) fn finish_skeleton_escape(game: &mut Game) {
+    let finished =
+        Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+            if (enemy.instruction as i16).wrapping_add(0x1e3a) < 0 {
+                let speed = accelerated_speed(enemy.variables[4], enemy.pre_instruction, 4096, 6);
+                enemy.variables[4] = speed as u16;
+                enemy.pre_instruction = (speed >> 16) as u16;
+                false
+            } else {
+                enemy.instruction = addr_kCrocomire_Ilist_E1CC as u16;
+                enemy.instruction_delay = 1;
+                enemy.x.whole = enemy.x.whole.wrapping_add(64);
+                enemy.y.whole = enemy.y.whole.wrapping_add(21);
+                enemy.radius.y = 28;
+                enemy.radius.x = 40;
+                true
+            }
+        });
+    if finished {
+        {
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb753 as VoidP), game);
+        }
+        scatter(DropSource::Crocomire, 0, game);
+        advance_phase(game);
+    }
+}
+
+pub(crate) fn await_skeleton_script(game: &mut Game) {
+    Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
+        if (enemy.instruction as i16).wrapping_add(0x1e3a) >= 0 {
+            enemy.variables[0] = enemy.variables[0].wrapping_add(2);
+        }
+    });
+}
+
+pub(crate) fn open_skeleton_exit(game: &mut Game) {
+    {
+        let mut runtime = Runtime::new(game);
+        runtime.write_slice_native(0xcd20, 257);
+        runtime.write_slice_native(0xcd22, 257);
+    }
+    {
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x1e, 0x3, 0xb753 as VoidP), game);
+    }
+    advance_phase(game);
 }

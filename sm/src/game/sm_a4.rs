@@ -2,12 +2,13 @@ use crate::game::actors;
 use crate::game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
 use crate::game::actors::api as actor_api;
 use crate::game::actors::crocomire_reactions::{
-    advance_melt_scroll, advance_melt_upload, advance_phase, approach_wall, complete_skeleton_melt,
-    emit_melt_debris, melt_flesh_down, melt_flesh_up, melt_rumble_down, melt_rumble_up,
-    melt_skeleton_up, prepare_flesh_tilemap, prepare_melt_graphics, prepare_skeleton_tilemap,
-    prepare_spike_wall, queue_tilemap_upload, rumble_and_wait, wait_for_melt, wall_step,
+    advance_melt_scroll, advance_melt_upload, advance_phase, approach_wall, await_skeleton_script,
+    complete_skeleton_melt, emit_melt_debris, finish_skeleton_escape, land_skeleton,
+    launch_skeleton, melt_flesh_down, melt_flesh_up, melt_rumble_down, melt_rumble_up,
+    melt_skeleton_up, open_skeleton_exit, prepare_flesh_tilemap, prepare_melt_graphics,
+    prepare_skeleton_tilemap, prepare_spike_wall, queue_tilemap_upload, release_skeleton_room,
+    reposition_skeleton, rumble_and_wait, wait_for_melt, wall_step,
 };
-use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
 use crate::game::gameplay_flag_host::BossWordOrder;
 use crate::game::gameplay_flag_runtime;
@@ -23,7 +24,6 @@ pub use crate::game::constants::bank_a4::*;
 use crate::game::enemy_projectiles::SpawnEprojWithRoomGfx;
 use crate::game::music::QueueSfx2_Max6;
 use crate::game::player_update::minimap;
-use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::visual_runtime::spawn_hdma;
 
 pub type Enemy_Crocomire = crate::game::enemy_layouts::EnemyLayout72;
@@ -37,10 +37,10 @@ static off_A48C14: [Func_V; 45] = callback_table! { nonnull Func_V;
     melt_flesh_down, wait_for_melt, melt_flesh_up, melt_flesh_down, wait_for_melt,
     melt_flesh_up, melt_flesh_down, prepare_skeleton_tilemap, prepare_melt_graphics, advance_melt_upload,
     Crocomire_Func_63, melt_skeleton_up, Crocomire_9506, advance_melt_scroll, Crocomire_Func_66,
-    complete_skeleton_melt, Crocomire_Func_68, wall_step, prepare_spike_wall,
-    Crocomire_Func_72, Crocomire_Func_73, Crocomire_Func_88, Crocomire_9B65, Crocomire_Func_90,
+    complete_skeleton_melt, release_skeleton_room, wall_step, prepare_spike_wall,
+    launch_skeleton, land_skeleton, finish_skeleton_escape, open_skeleton_exit, await_skeleton_script,
     advance_phase, Crocomire_9B86, nullsub_305, advance_phase, Crocomire_Func_29,
-    Crocomire_Func_69,
+    reposition_skeleton,
 };
 pub fn Crocomire_Func_29(game: &mut Game) {
     {
@@ -96,36 +96,6 @@ pub unsafe fn Crocomire_950F(game: &mut Game) {
         );
     }
 }
-pub unsafe fn Crocomire_Func_68(game: &mut Game) {
-    if (game.samus_x_pos() as i16).wrapping_sub(640) >= 0 {
-        return;
-    }
-    QueueMusic_Delayed8(5, game);
-    Runtime::new(game).write_slice_native(0xcd23, 256);
-    {
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb757 as VoidP), game);
-    }
-    word!(game.camera_distance_index = 6);
-    let mut runtime = Runtime::new(game);
-    // Fixed, disjoint records; no callback or fallible operation between these writes.
-    runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        enemy.properties = enemy.properties & 0x7bff | kEnemyProps_Tangible as u16;
-        enemy.variables[3] = 4;
-        enemy.variables[1] = 0;
-        enemy.radius.y = 56;
-        enemy.variables[0] = enemy.variables[0].wrapping_add(2);
-    });
-    runtime.edit_actor(Key::from_legacy(0x40), AccessMode::Native, |enemy| {
-        enemy.properties |= 0x500;
-        enemy.variables[3] = 0;
-    });
-    for (key, countdown) in [(0x80, 10), (0xc0, 1)] {
-        runtime.edit_actor(Key::from_legacy(key), AccessMode::Native, |enemy| {
-            enemy.variables[3] = countdown
-        });
-    }
-}
-
 fn spawn_dust(jp: EnemyScript, offset: u16, game: &mut Game) -> EnemyScript {
     game.eproj_spawn_pt = {
         let runtime = Runtime::new(game);
@@ -148,126 +118,6 @@ fn walk(k: u16, pixels: i32, game: &mut Game) -> actor_api::MovementResult {
         actor_api::SlopePolicy::Ignore,
     )
 }
-fn accelerated_speed(fraction: u16, whole: u16, acceleration: u32, limit: u16) -> u32 {
-    let speed = ((u32::from(whole) << 16) | u32::from(fraction)).wrapping_add(acceleration);
-    if ((speed >> 16) as i16).wrapping_sub(limit as i16) >= 0 {
-        speed & 0xffff | (u32::from(limit) << 16)
-    } else {
-        speed
-    }
-}
-
-pub fn Crocomire_Func_69(game: &mut Game) {
-    Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        enemy.x.whole = enemy.x.whole.wrapping_sub(2);
-        if (enemy.x.whole as i16).wrapping_sub(480) < 0 {
-            enemy.x.whole = 480;
-            enemy.y.whole = 54;
-            enemy.variables[0] = 62;
-        } else {
-            enemy.y.whole = 220;
-        }
-    });
-}
-
-pub fn Crocomire_Func_72(game: &mut Game) {
-    let mut runtime = Runtime::new(game);
-    runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        if (enemy.x.whole as i16).wrapping_sub(224) < 0 {
-            let speed = accelerated_speed(enemy.variables[4], enemy.pre_instruction, 0x8000, 2);
-            enemy.variables[4] = speed as u16;
-            enemy.pre_instruction = (speed >> 16) as u16;
-            enemy.x.advance(speed as i32);
-        }
-    });
-    let finished = runtime.edit_actor(Key::from_legacy(0x80), AccessMode::Native, |enemy| {
-        let previous = enemy.variables[3];
-        enemy.variables[3] = previous.saturating_sub(1);
-        previous == 1
-    });
-    if finished {
-        runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-            enemy.variables[4] = 0;
-            enemy.instruction = addr_kCrocomire_Ilist_E14A as u16;
-            enemy.instruction_delay = 1;
-            enemy.variables[0] = enemy.variables[0].wrapping_add(2);
-        });
-    }
-}
-
-pub fn Crocomire_Func_73(game: &mut Game) {
-    let impact = Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        let speed = accelerated_speed(enemy.variables[4], enemy.pre_instruction, 2048, 5);
-        enemy.variables[4] = speed as u16;
-        enemy.pre_instruction = (speed >> 16) as u16;
-        enemy.y.advance(0xe000);
-        enemy.x.advance(speed as i32);
-        (enemy.x.whole as i16).wrapping_sub(576) >= 0
-    });
-    if impact {
-        QueueSfx2_Max6(0x25, game);
-        let mut runtime = Runtime::new(game);
-        let palette = runtime
-            .resolve_actor(Key::from_legacy(0), AccessMode::Native)
-            .palette;
-        runtime.edit_actor(Key::from_legacy(0x40), AccessMode::Native, |enemy| {
-            enemy.palette = palette
-        });
-        runtime.edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-            enemy.instruction = addr_kCrocomire_Ilist_E158 as u16;
-            enemy.instruction_delay = 1;
-            enemy.variables[0] = enemy.variables[0].wrapping_add(2);
-        });
-    }
-}
-
-pub unsafe fn Crocomire_Func_88(game: &mut Game) {
-    let finished =
-        Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-            if (enemy.instruction as i16).wrapping_add(0x1e3a) < 0 {
-                let speed = accelerated_speed(enemy.variables[4], enemy.pre_instruction, 4096, 6);
-                enemy.variables[4] = speed as u16;
-                enemy.pre_instruction = (speed >> 16) as u16;
-                false
-            } else {
-                enemy.instruction = addr_kCrocomire_Ilist_E1CC as u16;
-                enemy.instruction_delay = 1;
-                enemy.x.whole = enemy.x.whole.wrapping_add(64);
-                enemy.y.whole = enemy.y.whole.wrapping_add(21);
-                enemy.radius.y = 28;
-                enemy.radius.x = 40;
-                true
-            }
-        });
-    if finished {
-        {
-            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x30, 0x3, 0xb753 as VoidP), game);
-        }
-        scatter(DropSource::Crocomire, 0, game);
-        advance_phase(game);
-    }
-}
-
-pub fn Crocomire_Func_90(game: &mut Game) {
-    Runtime::new(game).edit_actor(Key::from_legacy(0), AccessMode::Native, |enemy| {
-        if (enemy.instruction as i16).wrapping_add(0x1e3a) >= 0 {
-            enemy.variables[0] = enemy.variables[0].wrapping_add(2);
-        }
-    });
-}
-
-pub unsafe fn Crocomire_9B65(game: &mut Game) {
-    {
-        let mut runtime = Runtime::new(game);
-        runtime.write_slice_native(0xcd20, 257);
-        runtime.write_slice_native(0xcd22, 257);
-    }
-    {
-        spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x1e, 0x3, 0xb753 as VoidP), game);
-    }
-    advance_phase(game);
-}
-
 pub fn Crocomire_9B86(game: &mut Game) {
     QueueMusic_Delayed8(6, game);
     word!(game.camera_distance_index = 0);
