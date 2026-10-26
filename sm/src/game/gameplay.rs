@@ -45,6 +45,8 @@ pub(crate) enum Entry {
     Unpause,
     CeresElevator,
     TimeUp,
+    ReserveTanks,
+    PrepareDeath,
 }
 
 /// Advances through completion or a suspension, returning the callee's exact
@@ -56,6 +58,13 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
     unsafe {
         if matches!(entry, Entry::CeresElevator) && word!(game.timer_status) != 0 {
             crate::game::escape_timer::draw(game);
+        }
+        if matches!(entry, Entry::ReserveTanks)
+            && game.g_ram[0x612] == 0
+            && crate::game::reserve_tanks::refill_auto(game) != 0
+        {
+            word! {game; time_is_frozen_flag = 0; game_state = kGameState_8_MainGameplay as u16; }
+            player_command(0x10, game);
         }
         crate::verify_probe::hit("coroutine.gameplay");
         let resume = ResumePoint::read(game);
@@ -135,6 +144,21 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                     word!(game.game_state = kGameState_36_WhitingOutFromTimeUp as u16);
                     word! { game, 0; screen_fade_delay, screen_fade_counter }
                 }
+            }
+            Entry::ReserveTanks => {
+                crate::game::session_runtime::player_update_runtime::low_health(game);
+            }
+            Entry::PrepareDeath => {
+                word_transfers!(game, descending, 256; pause_map(639) <- le(palette_buffer, 255));
+                word_transfers!(game, descending, 192; le(target_palettes, 191) <- value(0));
+                word_transfers!(game, descending, 48; le(target_palettes, 255) <- value(0));
+                word_transfers!(game, descending, 16; le(target_palettes, 207) <- le(palette_buffer, 207));
+                word!(game.game_options_screen_index = 3);
+                word! { game, 0;
+                    g_word_7E0DE4, g_word_7E0DE6, g_word_7E0DE8, hud_item_index,
+                    samus_auto_cancel_hud_item_index, samus_invincibility_timer, samus_knockback_timer,
+                }
+                word!(game.game_state += 1);
             }
             Entry::Gameplay => {}
         }

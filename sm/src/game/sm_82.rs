@@ -370,6 +370,11 @@ const CERES_ELEVATOR: Func_V_Coroutine =
     |game| unsafe { AdvanceGameplay(Entry::CeresElevator, game) };
 const TIME_UP: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::TimeUp, game) };
 
+const RESERVE_TANKS: Func_V_Coroutine =
+    |game| unsafe { AdvanceGameplay(Entry::ReserveTanks, game) };
+const PREPARE_DEATH: Func_V_Coroutine =
+    |game| unsafe { AdvanceGameplay(Entry::PrepareDeath, game) };
+
 static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_V_Coroutine;
     GameState_0_Reset_Async, GameState_1_OpeningCinematic_, GameState_2_GameOptionsMenu,
     GameState_3_Null, advance_file_menu, advance_map_menu,
@@ -378,10 +383,10 @@ static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_
     GameState_11_LoadingNextRoom_Async, GameState_12_Pausing_Darkening_Async,
     GameState_13_Pausing_Async, pause_fade_in, GameState_15_Paused_Async,
     GameState_16_Unpausing_Async, GameState_17_Unpausing_Async, UNPAUSE,
-    GameState_19_SamusNoHealth, GameState_20_SamusNoHealth_BlackOut, GameState_21_SamusNoHealth,
+    PREPARE_DEATH, GameState_20_SamusNoHealth_BlackOut, GameState_21_SamusNoHealth,
     GameState_22_SamusNoHealth_Dying, GameState_23_SamusNoHealth_Flashing,
     GameState_24_SamusNoHealth_Explosion, GameState_25_SamusNoHealth_BlackOut,
-    advance_game_over, GameState_27_ReserveTanksAuto, GameState_28_Unused,
+    advance_game_over, RESERVE_TANKS, GameState_28_Unused,
     GameState_29_DebugGameOverMenu, GameState_37_CeresGoesBoomWithSamus_,
     InitAndLoadGameData_Async, CERES_ELEVATOR,
     GameState_33_BlackoutFromCeres, GameState_37_CeresGoesBoomWithSamus_, TIME_UP,
@@ -680,39 +685,6 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
         }
         *_state_variable_ = 0;
         0 as CoroutineRet
-    }
-}
-pub unsafe fn GameState_27_ReserveTanksAuto(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        if *ram_ptr!(game; 0x612) == 0 && crate::game::reserve_tanks::refill_auto(game) != 0 {
-            word! {game; time_is_frozen_flag = 0; game_state = kGameState_8_MainGameplay as u16; }
-            CallSomeSamusCode(0x10, game);
-        }
-        let mut _coret_: u8 = GAMEPLAY(game);
-        if _coret_ != 0 {
-            return _coret_;
-        }
-        crate::game::session_runtime::player_update_runtime::low_health(game);
-        kCoroutineNone as CoroutineRet
-    }
-}
-pub unsafe fn GameState_19_SamusNoHealth(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        let mut _coret_: u8 = GAMEPLAY(game);
-        if _coret_ != 0 {
-            return _coret_;
-        }
-        word_transfers!(game, descending, 256; pause_map(639) <- le(palette_buffer, 255));
-        word_transfers!(game, descending, 192; le(target_palettes, 191) <- value(0));
-        word_transfers!(game, descending, 48; le(target_palettes, 255) <- value(0));
-        word_transfers!(game, descending, 16; le(target_palettes, 207) <- le(palette_buffer, 207));
-        word!(game.game_options_screen_index = 3);
-        word! { game, 0;
-            g_word_7E0DE4, g_word_7E0DE6, g_word_7E0DE8, hud_item_index,
-            samus_auto_cancel_hud_item_index, samus_invincibility_timer, samus_knockback_timer,
-        }
-        word!(game.game_state += 1);
-        kCoroutineNone as CoroutineRet
     }
 }
 pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineRet {
