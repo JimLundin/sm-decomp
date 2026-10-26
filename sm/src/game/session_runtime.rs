@@ -566,7 +566,7 @@ crate::game::callback_dispatch! {
             #[cfg(sm_verify_dll)]
             crate::game::actors::reference_population_animation::dispatch_noop(game);
         }];
-        10656319 => sm_a2::ThinHoppingBlobs_Init;
+        10656319 => crate::game::hopping_blobs::initialize;
         10656381 => sm_a2::ThinHoppingBlobs_Main;
         10664233 => [{
                     crate::game::rinka::frozen(crate::ram_map::word!(game.cur_enemy_index), game);

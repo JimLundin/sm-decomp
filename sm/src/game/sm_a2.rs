@@ -452,105 +452,12 @@ pub unsafe fn MaridiaBeybladeTurtle_Func4(game: &mut Game) {
         }
     }
 }
-fn thin_blob_phase(variable: usize, game: &mut Game) -> u32 {
-    let runtime = Runtime::new(game);
-    let key = Key::from_legacy(runtime.word(0xe54));
-    0xa20000
-        | u32::from(
-            runtime
-                .resolve_actor(key, actors::access::AccessMode::Native)
-                .variables[variable],
-        )
-}
-unsafe fn thin_blob_random(game: &mut Game) -> u16 {
-    {
-        game.next_random();
-    }
-    let runtime = Runtime::new(game);
-    let key = Key::from_legacy(runtime.word(0xe54));
-    runtime
-        .resolve_actor(key, actors::access::AccessMode::Native)
-        .frame
-        .wrapping_add(runtime.word(0x5e5))
-        & 7
-}
-unsafe fn prepare_thin_blob(k: u16, game: &mut Game) {
-    {
-        let mut runtime = Runtime::new(game);
-        if runtime.native_word(0x7800 + usize::from(k)).wrapping_sub(3) & 0x8000 != 0 {
-            let raw = runtime.word(0xe54);
-            let key = Key::from_legacy(raw);
-            let distance = runtime
-                .resolve_actor(key, actors::access::AccessMode::Native)
-                .parameters[1];
-            let close = actor_api::player_within(&mut runtime, key, actor_api::Axis::X, distance);
-            runtime.write_slice_native(0x7800 + usize::from(raw), u16::from(close));
-        }
-    }
-    let raw = game.cur_enemy_index();
-    crate::game::hopping_blobs::choose_direction(raw, game);
-    let random = unsafe { thin_blob_random(game) };
-    crate::game::hopping_blobs::choose_jump(raw, random, game);
-    crate::game::hopping_blobs::prepare_velocity(game);
-}
-pub unsafe fn ThinHoppingBlobs_Func6(k: u16, game: &mut Game) {
-    let ready = {
-        let mut runtime = Runtime::new(game);
-        let key = Key::from_legacy(k);
-        runtime.edit_actor(key, actors::access::AccessMode::Native, |actor| {
-            actor.variables[2] = actor.variables[2].wrapping_sub(1);
-        });
-        if runtime
-            .resolve_actor(key, actors::access::AccessMode::Native)
-            .variables[2]
-            & 0x8000
-            == 0
-        {
-            false
-        } else {
-            runtime.edit_actor(key, actors::access::AccessMode::Native, |actor| {
-                actor.variables[3] = 0x9b81;
-                actor.variables[2] = actor.parameters[0];
-            });
-            runtime.write_slice_native(0x7802 + usize::from(k), 1);
-            true
-        }
-    };
-    if ready {
+pub unsafe fn ThinHoppingBlobs_Main(game: &mut Game) {
+    if !crate::game::hopping_blobs::advance(game) {
         unsafe {
-            prepare_thin_blob(k, game);
+            Unreachable(game);
         }
     }
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallThinHoppingBlobs(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub fn (game: &mut Game)];
-    ThinHoppingBlobs_Init [] { crate::game::hopping_blobs::initialize(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    ThinHoppingBlobs_Main [] { CallThinHoppingBlobs(thin_blob_phase(3, game), game); };
-    [10656641] ThinHoppingBlobs_Func7 [] { CallThinHoppingBlobsVarE(thin_blob_phase(4, game), game); };
-    ThinHoppingBlobs_Func15 [] {
-        let raw = word!(game.cur_enemy_index);
-        if crate::game::hopping_blobs::fall(game) {
-            let random = thin_blob_random(game);
-            let mut runtime = Runtime::new(game);
-            runtime.write_slice_native(0x7800 + usize::from(raw), (random & 1) + 5);
-            runtime.edit_actor(Key::from_legacy(raw), actors::access::AccessMode::Native, |actor| actor.variables[3] = 0x9b65);
-        }
-    };
-    @external { 10656613 => [{ ThinHoppingBlobs_Func6(word!(game.cur_enemy_index), game); }]; }
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallThinHoppingBlobsVarE(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub fn (game: &mut Game)];
-    [10657035] ThinHoppingBlobs_Func11 [] { crate::game::hopping_blobs::land(crate::game::hopping_blobs::Landing::Animate(0x99d5), game); };
-    [10657067] ThinHoppingBlobs_Func12 [] { crate::game::hopping_blobs::land(crate::game::hopping_blobs::Landing::Animate(0x99c1), game); };
-    [10657099] ThinHoppingBlobs_Func13 [] { crate::game::hopping_blobs::land(crate::game::hopping_blobs::Landing::Animate(0x99ad), game); };
-    [10657131] ThinHoppingBlobs_Func14 [] { crate::game::hopping_blobs::land(crate::game::hopping_blobs::Landing::Restart, game); };
-    [10657229] ThinHoppingBlobs_Func16 [] { crate::game::hopping_blobs::land(crate::game::hopping_blobs::Landing::Repeat, game); };
-    @external { 10657176 => ThinHoppingBlobs_Func15; }
 }
 pub unsafe fn SpikeShootingPlant_4(game: &mut Game) {
     {
