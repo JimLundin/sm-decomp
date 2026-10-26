@@ -1,6 +1,7 @@
 use crate::game::actors;
 use crate::game::actors::api as actor_api;
 use crate::game::combat_rules::GrappleOutcome;
+use crate::game::display_refresh::queue_native_transfer;
 use crate::game::grapple_swing::{advance_swing, change_length, place_rope_origin};
 use crate::game::player_transitions as pt;
 pub use crate::game::prelude::*;
@@ -33,9 +34,6 @@ crate::typed_struct! {
 
 const RomPtr_9B: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x9b>;
 const RomPtr_A0: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa0>;
-crate::ram_map::ram_pointer_functions! {
-    gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
-}
 crate::game::constants::typed_constants! { i32;
     fnSamus_MoveHandler_ReleaseFromGrapple = 0x90946e, fnSamus_MovementHandler_Normal = 0x90a337,
     fnSamusDrawHandler_Default = 0x90eb52, fnsub_90EB86 = 0x90eb86,
@@ -155,23 +153,15 @@ pub unsafe fn CopyPalettesForSamusDeath(v0: u16, game: &mut Game) {
         );
     }
 }
-pub unsafe fn QueueTransferOfSamusDeathSequence(v0: u16, game: &mut Game) {
-    unsafe {
-        let mut v1: u16 = word!(game.vram_write_queue_tail);
-        (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size = 1024;
-        v1 = (v1).wrapping_add(2);
-        let v2: i32 = v0 as i32 >> 1;
-        (*gVramWriteEntry(v1 as i32, game)).size = g_word_9BB7BF[v2 as usize];
-        v1 = (v1).wrapping_add(2);
-        crate::update_place! { previous fresh7 = v1 => v1.wrapping_add(1); }
-        *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-            fresh7 as i32,
-            game,
-        ))
-        .size as *mut u8) = 0x9b;
-        (*gVramWriteEntry(v1 as i32, game)).size = g_word_9BB7C9[v2 as usize];
-        word!(game.vram_write_queue_tail = (v1).wrapping_add(2));
-    }
+pub fn QueueTransferOfSamusDeathSequence(frame: u16, game: &mut Game) {
+    queue_native_transfer(
+        word!(game.vram_write_queue_tail),
+        1024,
+        |_| g_word_9BB7BF[usize::from(frame >> 1)],
+        0x9b,
+        |_| g_word_9BB7C9[usize::from(frame >> 1)],
+        game,
+    );
 }
 pub unsafe fn GameState_24_SamusNoHealth_Explosion_Helper(game: &mut Game) -> u16 {
     unsafe {
@@ -474,54 +464,36 @@ macro_rules! restore_grapple_start_positions {
     };
 }
 
-pub unsafe fn UpdateGrappleBeamTilesAndIncrFlameCtr(game: &mut Game) {
-    unsafe {
-        UpdateGrappleBeamTiles(game);
-        if word!(game.flare_counter) as i32 - 120i32 & 0x8000 != 0 {
-            word!(game.flare_counter += 1);
+pub fn UpdateGrappleBeamTilesAndIncrFlameCtr(game: &mut Game) {
+    if (word!(game.grapple_point_anim_timer -= 1, reread) & 0x8000) != 0 {
+        word!(game.grapple_point_anim_timer = 5);
+        word!(game.grapple_point_anim_ptr += 512);
+        if ((word!(game.grapple_point_anim_ptr)) as i16)
+            .wrapping_sub((crate::rtl::rom_table_word!(game, 0x9bc344, 0)) as i16)
+            >= 0
+        {
+            word!(game.grapple_point_anim_ptr = crate::rtl::rom_table_word!(game, 0x9bc342, 0));
         }
     }
-}
-pub unsafe fn UpdateGrappleBeamTiles(game: &mut Game) {
-    unsafe {
-        if (word!(game.grapple_point_anim_timer -= 1, reread) & 0x8000) != 0 {
-            word!(game.grapple_point_anim_timer = 5);
-            word!(game.grapple_point_anim_ptr += 512);
-            if ((word!(game.grapple_point_anim_ptr)) as i16)
-                .wrapping_sub((crate::rtl::rom_table_word!(game, 0x9bc344, 0)) as i16)
-                >= 0
-            {
-                word!(game.grapple_point_anim_ptr = crate::rtl::rom_table_word!(game, 0x9bc342, 0));
-            }
-        }
-        let mut v0: u16 = word!(game.vram_write_queue_tail);
-        (*gVramWriteEntry(word!(game.vram_write_queue_tail) as i32, game)).size = 32;
-        v0 = (v0).wrapping_add(2);
-        (*gVramWriteEntry(v0 as i32, game)).size = word!(game.grapple_point_anim_ptr);
-        v0 = (v0).wrapping_add(2);
-        crate::update_place! { previous fresh27 = v0 => v0.wrapping_add(1); }
-        *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-            fresh27 as i32,
-            game,
-        ))
-        .size as *mut u8) = -102i32 as u8;
-        (*gVramWriteEntry(v0 as i32, game)).size = 25088;
-        word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
-        let v1: u16 = (*ram_ptr!(game; 0xcfb) as i32 >> 1 & 0xfe) as u16;
-        v0 = (v0).wrapping_add(2);
-        (*gVramWriteEntry(v0 as i32, game)).size = 128;
-        v0 = (v0).wrapping_add(2);
-        (*gVramWriteEntry(v0 as i32, game)).size =
-            crate::rtl::rom_table_word!(game, 0x9bc346, (v1 >> 1) as isize);
-        v0 = (v0).wrapping_add(2);
-        crate::update_place! { previous fresh28 = v0 => v0.wrapping_add(1); }
-        *(&raw mut (*(gVramWriteEntry as unsafe fn(i32, &mut Game) -> *mut VramWriteEntry)(
-            fresh28 as i32,
-            game,
-        ))
-        .size as *mut u8) = -102i32 as u8;
-        (*gVramWriteEntry(v0 as i32, game)).size = 25104;
-        word!(game.vram_write_queue_tail = (v0).wrapping_add(2));
+    let cursor = queue_native_transfer(
+        word!(game.vram_write_queue_tail),
+        32,
+        |game| word!(game.grapple_point_anim_ptr),
+        0x9a,
+        |_| 0x6200,
+        game,
+    );
+    let index = (game.g_ram[0xcfb] >> 1 & 0xfe) >> 1;
+    queue_native_transfer(
+        cursor,
+        128,
+        |game| crate::rtl::rom_table_word!(game, 0x9bc346, isize::from(index)),
+        0x9a,
+        |_| 0x6210,
+        game,
+    );
+    if word!(game.flare_counter) as i32 - 120i32 & 0x8000 != 0 {
+        word!(game.flare_counter += 1);
     }
 }
 pub unsafe fn GrappleBeamHandler(game: &mut Game) {

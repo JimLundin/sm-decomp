@@ -4,6 +4,7 @@ use crate::game::constants::bank_81::{
     addr_kMenuTilemap_SamusA, addr_kMenuTilemap_SamusB, addr_kMenuTilemap_SamusC,
     addr_kMenuTilemap_SamusData, addr_kMenuTilemap_TIME,
 };
+use crate::game::display_refresh::queue_native_transfer;
 use crate::game::projectile_presentation_ram as sprite_output;
 use crate::game::save_slots;
 use crate::game_state::Game;
@@ -489,40 +490,36 @@ fn reserve_digits(hundreds: u16, remainder: u16, game: &mut Game) {
 
 pub(crate) fn queue_equipment_wireframe(game: &mut Game) {
     equipment_wireframe(game);
-    queue_ram_tilemap(1280, 0x3900, |_| 0x3080, game);
+    queue_native_transfer(
+        word!(game.vram_write_queue_tail),
+        1280,
+        |_| 0x3900,
+        126,
+        |_| 0x3080,
+        game,
+    );
 }
 
 pub(crate) fn queue_pause_labels(game: &mut Game) {
-    queue_ram_tilemap(
+    queue_native_transfer(
+        word!(game.vram_write_queue_tail),
         128,
-        0x3640,
+        |_| 0x3640,
+        126,
         |game| (u16::from(game.g_ram[0x59] & 0xfc) << 8) + 800,
         game,
     );
 }
 
 pub(crate) fn queue_options(game: &mut Game) {
-    queue_ram_tilemap(2048, 0x3000, |_| 0x5000, game);
-}
-
-fn queue_ram_tilemap(
-    size: u16,
-    source: u16,
-    destination: impl FnOnce(&Game) -> u16,
-    game: &mut Game,
-) {
-    let mut cursor = word!(game.vram_write_queue_tail);
-    for value in [size, source] {
-        word_transfers!(game, ascending, 1;
-            native(0xd0 + usize::from(cursor)) <- value(value));
-        cursor = cursor.wrapping_add(2);
-    }
-    game.g_ram[0xd0 + usize::from(cursor)] = 126;
-    cursor = cursor.wrapping_add(1);
-    let destination = destination(game);
-    word_transfers!(game, ascending, 1;
-        native(0xd0 + usize::from(cursor)) <- value(destination));
-    word!(game.vram_write_queue_tail = cursor.wrapping_add(2));
+    queue_native_transfer(
+        word!(game.vram_write_queue_tail),
+        2048,
+        |_| 0x3000,
+        126,
+        |_| 0x5000,
+        game,
+    );
 }
 
 fn reserve_palette(game: &mut Game) -> u16 {

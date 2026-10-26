@@ -104,9 +104,9 @@ Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
 Core18 passes all 84 local rows; Core19 passes 12 affected/smoke/control rows,
 including the new fixed 2131-frame X-ray activation/release and original pickup.
-Qualified Core20: production 112159, legacy 21772, unsafe 3043, verification 39963.
-Its 14 affected/control rows pass; Waver reuses the actor owner and removes 114
-production lines. One extra unsafe-containing line is a deny attribute, not an operation.
+Qualified Core21: production 112138, legacy 21744, unsafe 3034, verification 39963.
+Its 32 affected/control rows pass. Core20's Waver actor reuse removes 114 production
+lines; its extra unsafe-containing line is a deny attribute, not an operation.
 Core15's shared actor closeout costs 17 production lines; bank moves remain
 transitional rather than proof of owned Session state. The existing comparison
 normalizes 611..616; initializer continuation also relies on source review.

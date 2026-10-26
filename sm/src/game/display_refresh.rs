@@ -718,6 +718,30 @@ fn set_native_word(offset: usize, value: u16, game: &mut Game) {
     game.g_ram[offset + 1] = bytes[1];
 }
 
+/// Publish a native queue record, evaluating each source after preceding stores.
+#[forbid(unsafe_code)]
+pub(crate) fn queue_native_transfer(
+    mut cursor: u16,
+    size: u16,
+    source: impl FnOnce(&Game) -> u16,
+    bank: u8,
+    destination: impl FnOnce(&Game) -> u16,
+    game: &mut Game,
+) -> u16 {
+    set_native_word(0xd0 + usize::from(cursor), size, game);
+    cursor = cursor.wrapping_add(2);
+    let source = source(game);
+    set_native_word(0xd0 + usize::from(cursor), source, game);
+    cursor = cursor.wrapping_add(2);
+    game.g_ram[0xd0 + usize::from(cursor)] = bank;
+    cursor = cursor.wrapping_add(1);
+    let destination = destination(game);
+    set_native_word(0xd0 + usize::from(cursor), destination, game);
+    cursor = cursor.wrapping_add(2);
+    word!(game.vram_write_queue_tail = cursor);
+    cursor
+}
+
 pub(crate) fn queue_fx_clear(game: &mut Game) {
     word_transfers!(game, descending, 1920; native(0x4efe) <- value(6222));
     let tail = word!(game.vram_write_queue_tail);
