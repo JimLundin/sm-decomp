@@ -70,6 +70,47 @@ pub(crate) fn fade_tab<const EQUIPMENT: bool>(game: &mut Game) {
     }
 }
 
+pub(crate) fn fade_out_tab(game: &mut Game, equipment: bool, enable: fn(&mut Game)) {
+    if equipment {
+        draw_equipment(game);
+    } else {
+        map_menu::display_elevator_destinations(game);
+        map_menu::draw_player_marker(game);
+        map_menu::draw_icons(map_menu::IconMode::Pause, game);
+    }
+    draw_shoulder(game);
+    // Equipment fade preserves this mode; map fade resets it after drawing.
+    if !equipment {
+        word!(game.pause_screen_mode = 0);
+    }
+    display_refresh::fade(false, game);
+    if game.g_ram[0x51] == 0x80 {
+        enable(game);
+        word! { game, 0; screen_fade_delay, screen_fade_counter }
+        word!(game.menu_index += 1);
+    }
+}
+
+pub(crate) fn load_tab(game: &mut Game, equipment: bool, upload: impl FnOnce(&mut Game)) {
+    map_menu::display_elevator_destinations(game);
+    if equipment {
+        crate::game::reserve_tanks::prepare_menu(game);
+    }
+    upload(game);
+    if equipment {
+        word!(game.reg_BG1VOFS = 0);
+        word!(game.pause_screen_mode = 1);
+    }
+    menu_tilemap::pause_labels(word!(game.pausemenu_button_label_mode), game);
+    word!(game.pausemenu_lr_animation_frame = 0);
+    word!(game.pausemenu_lr_animation_timer = menu_tilemap::native_record(0x82c10c, game).word(0));
+    word! { game, 1; screen_fade_delay, screen_fade_counter }
+    if !equipment {
+        word!(game.pause_screen_mode = 0);
+    }
+    word!(game.menu_index += 1);
+}
+
 fn draw_map(game: &mut Game) {
     map_menu::draw_player_marker(game);
     map_menu::draw_icons(map_menu::IconMode::Pause, game);

@@ -496,78 +496,27 @@ pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
 pub unsafe fn GameState_15_Paused_Async(game: &mut Game) -> CoroutineRet {
     unsafe {
         crate::game::controller_input::filter(3, game);
-        MainPauseRoutine(game);
+        // Preserve the eight-entry bounds failure before any tab work.
+        let tab = [0, 1, 2, 3, 4, 5, 6, 7][usize::from(word!(game.menu_index))];
+        match tab {
+            0 => crate::game::pause_controls::update_map(game),
+            1 => crate::game::pause_controls::update_equipment(game),
+            2 | 5 => crate::game::pause_controls::fade_out_tab(game, tab == 5, |game| {
+                crate::game::display_refresh::enable(true, game);
+            }),
+            3 | 6 => crate::game::pause_controls::load_tab(game, tab == 3, |game| {
+                if tab == 3 {
+                    GraphicsAsset::VramWords(0x7e3800, 0x3000, 0x800).load(game);
+                } else {
+                    crate::game::display_refresh::upload_pause_map(game);
+                }
+            }),
+            4 => crate::game::pause_controls::fade_tab::<true>(game),
+            _ => crate::game::pause_controls::fade_tab::<false>(game),
+        }
         crate::game::hud::advance(game);
         crate::game::map_menu::animate_palette(game);
         kCoroutineNone as CoroutineRet
-    }
-}
-static kPauseMenuFuncs: [Func_V; 8] = [
-    crate::game::pause_controls::update_map,
-    crate::game::pause_controls::update_equipment,
-    PauseMenu_2,
-    PauseMenu_3_MapToEquipment_Load,
-    crate::game::pause_controls::fade_tab::<true>,
-    PauseMenu_5,
-    PauseMenu_6_EquipmentToMap_Load,
-    crate::game::pause_controls::fade_tab::<false>,
-];
-pub unsafe fn MainPauseRoutine(game: &mut Game) {
-    unsafe {
-        kPauseMenuFuncs[word!(game.menu_index) as usize](game);
-    }
-}
-pub unsafe fn PauseMenu_2(game: &mut Game) {
-    unsafe {
-        crate::game::map_menu::display_elevator_destinations(game);
-        crate::game::map_menu::draw_player_marker(game);
-        crate::game::map_menu::draw_icons(crate::game::map_menu::IconMode::Pause, game);
-        crate::game::pause_controls::draw_shoulder(game);
-        word!(game.pause_screen_mode = 0);
-        crate::game::display_refresh::fade(false, game);
-        if *ram_ptr!(game; 0x51) == 0x80 {
-            crate::game::display_refresh::enable(true, game);
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-            word!(game.menu_index += 1);
-        }
-    }
-}
-pub unsafe fn PauseMenu_5(game: &mut Game) {
-    unsafe {
-        crate::game::pause_controls::draw_equipment(game);
-        crate::game::pause_controls::draw_shoulder(game);
-        crate::game::display_refresh::fade(false, game);
-        if *ram_ptr!(game; 0x51) == 0x80 {
-            crate::game::display_refresh::enable(true, game);
-            word! { game, 0; screen_fade_delay, screen_fade_counter }
-            word!(game.menu_index += 1);
-        }
-    }
-}
-pub unsafe fn PauseMenu_3_MapToEquipment_Load(game: &mut Game) {
-    unsafe {
-        crate::game::map_menu::display_elevator_destinations(game);
-        crate::game::reserve_tanks::prepare_menu(game);
-        GraphicsAsset::VramWords(0x7e3800, 0x3000, 0x800).load(game);
-        word!(game.reg_BG1VOFS = 0);
-        word!(game.pause_screen_mode = 1);
-        crate::game::menu_tilemap::pause_labels(word!(game.pausemenu_button_label_mode), game);
-        word!(game.pausemenu_lr_animation_frame = 0);
-        word!(game.pausemenu_lr_animation_timer = *(rom_ptr!(game, u8; 0x82c10c) as *mut u16));
-        word! { game, 1; screen_fade_delay, screen_fade_counter }
-        word!(game.menu_index += 1);
-    }
-}
-pub unsafe fn PauseMenu_6_EquipmentToMap_Load(game: &mut Game) {
-    unsafe {
-        crate::game::map_menu::display_elevator_destinations(game);
-        crate::game::display_refresh::upload_pause_map(game);
-        crate::game::menu_tilemap::pause_labels(word!(game.pausemenu_button_label_mode), game);
-        word!(game.pausemenu_lr_animation_frame = 0);
-        word!(game.pausemenu_lr_animation_timer = *(rom_ptr!(game, u8; 0x82c10c) as *mut u16));
-        word! { game, 1; screen_fade_delay, screen_fade_counter }
-        word!(game.pause_screen_mode = 0);
-        word!(game.menu_index += 1);
     }
 }
 pub unsafe fn GameState_16_Unpausing_Async(game: &mut Game) -> CoroutineRet {
