@@ -8,7 +8,7 @@ use crate::{
             creation,
             host::{Contact, SpawnSource},
         },
-        session_runtime::Runtime,
+        session_runtime::{Runtime, native_rom_diagnostic},
         visual_host::{self, Source},
     },
     rom::RomRecord,
@@ -36,8 +36,9 @@ impl Content for Runtime<'_> {
             if table & 0x8000 == 0 {
                 // Preserve diagnostic, verifier callback, and native allocation
                 // acquisition before the later fresh loaded-ROM lookup.
-                self.foreign(|game| unsafe {
-                    crate::rtl::rom_bank_ptr::<0x94>(table, game);
+                self.foreign(|game| {
+                    native_rom_diagnostic(0x940000 | u32::from(table), game);
+                    drop(game.capture_native_rom_binding());
                 });
             }
             self.game.read_rom_word(
