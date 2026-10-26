@@ -48,7 +48,7 @@ crate::type_aliases! {
 }
 
 crate::type_aliases! {
-    pub Enemy_FakeKraid, Enemy_SpikeyPlatform, Enemy_Boulder =
+    pub Enemy_FakeKraid, Enemy_Boulder =
         crate::game::enemy_layouts::EnemyLayout40;
 }
 
@@ -94,7 +94,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_NuclearWaffle(o: i32) -> Enemy_NuclearWaffle = [0xf78, o as isize];
     Get_Ridley(o: i32) -> Enemy_Ridley = [0xf78, o as isize];
     Get_RidleysExplosion(o: i32) -> Enemy_RidleysExplosion = [0xf78, o as isize];
-    Get_SpikeyPlatform(o: i32) -> Enemy_SpikeyPlatform = [0xf78, o as isize];
     Get_Zebetites(o: i32) -> Enemy_Zebetites = [0xf78, o as isize];
 }
 static g_word_A686F1: [u16; 2] = [0x1000, 0x1800];
@@ -320,111 +319,6 @@ pub unsafe fn Boulder_Func_9(j: u16, game: &mut Game) {
                 crate::rtl::rom_table_word!(game, 0xa2838f, v3 as isize)
             ))
         );
-    }
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallSpikeyPlatformFunc(ea: u32, k: u16, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    @prefix { let E = Get_SpikeyPlatform(word!(game.cur_enemy_index) as i32, game); };
-    SpikeyPlatform_Init [] {
-        (*E).base.current_instruction = addr_kSpikeyPlatform_Ilist_8B29 as u16;
-        (*E).var_A = (0xa68bb4i32) as u16;
-        let v1: u16 = (8u16).wrapping_mul((byte!((*E).parameter_1; 0)) as u16);
-        (*E).var_02 = v1;
-        let v2: i32 = v1 as i32 >> 1;
-        (*E).var_E = crate::rtl::rom_table_word!(game, 0xa28187, (v2 + 1) as isize);
-        (*E).var_F = crate::rtl::rom_table_word!(game, 0xa28187, v2 as isize);
-        (*E).var_D = ((*E).base.y_pos).wrapping_add((byte!((*E).parameter_2; 1)) as u16);
-        (*E).var_C = (*E).base.y_pos;
-        let spm_parameter_2_low: u16 = byte!((*E).parameter_2; 0) as u16;
-        (*E).var_00 = spm_parameter_2_low;
-        (*E).var_B = spm_parameter_2_low;
-    };
-    SpikeyPlatform_Main [] {
-        CallSpikeyPlatformFunc(
-            (((*E).var_A) as u32) | (0xa60000u32),
-            word!(game.cur_enemy_index),
-            game,
-        );
-    };
-    [10914740] SpikeyPlatform_Func_1 [] {
-        (*E).var_B = (*E).var_B.wrapping_sub(1);
-        if (*E).var_B == 0 {
-            (*E).var_B = (*E).var_00;
-            (*E).var_02 = (8u16).wrapping_mul((byte!((*E).parameter_1; 0)) as u16);
-            (*E).var_A = (0xa68bdci32) as u16;
-        }
-    };
-    [10914780] SpikeyPlatform_Func_2 [] {
-        (*E).var_01 = (*E).base.y_pos;
-        let v1: i32 = (*E).var_02 as i32 >> 1;
-        words!(
-            (*E).base,
-            y_pos,
-            y_subpos += words!((
-                crate::rtl::rom_table_word!(game, 0xa28187, v1 as isize),
-                crate::rtl::rom_table_word!(game, 0xa28187, (v1 + 1) as isize)
-            ))
-        );
-        if (((*E).base.y_pos) as i16).wrapping_sub(((*E).var_D) as i16) >= 0 {
-            (*E).var_03 = 64;
-            (*E).var_A = (0xa68c4ai32) as u16;
-            (*E).base.y_pos = (*E).var_D;
-            QueueSfx2_Max6(0x1b, game);
-        }
-        if SpikeyPlatform_Func_5(word!(game.cur_enemy_index), game) != 0 {
-            word!(checked_i32, game.extra_samus_y_displacement += ((*E).base.y_pos as i32 - (*E).var_01 as i32));
-        }
-        let mut v4: i16 = (((*E).var_02) as i16).wrapping_add(8);
-        if (*E).var_02 as i32 - 504i32 & 0x8000 == 0 {
-            v4 = 512;
-        }
-        (*E).var_02 = v4 as u16;
-    };
-    [10914909] SpikeyPlatform_Func_4 [] {
-        (*E).var_01 = (*E).base.y_pos;
-        words!((*E).base, y_pos, y_subpos += -0x8000i32 as u32);
-        if (((*E).base.y_pos) as i16).wrapping_sub(((*E).var_C) as i16) < 0 {
-            (*E).var_A = (0xa68bb4i32) as u16;
-            (*E).base.y_pos = (*E).var_C;
-        }
-        if SpikeyPlatform_Func_5(word!(game.cur_enemy_index), game) != 0 {
-            word!(checked_i32, game.extra_samus_y_displacement += ((*E).base.y_pos as i32 - (*E).var_01 as i32));
-        }
-    };
-    @external {
-        10914890 => [SpikeyPlatform_Func_3(k, game)];
-    }
-}
-pub unsafe fn SpikeyPlatform_Func_3(k: u16, game: &mut Game) {
-    unsafe {
-        let E = Get_SpikeyPlatform(k as i32, game);
-        let v2: u16 = ((*E).var_03).wrapping_sub(1);
-        (*E).var_03 = v2;
-        if v2 == 0 {
-            (*E).var_A = (0xa68c5di32) as u16;
-        }
-    }
-}
-pub unsafe fn SpikeyPlatform_Func_5(k: u16, game: &mut Game) -> u16 {
-    unsafe {
-        let E = Get_SpikeyPlatform(k as i32, game);
-        let v2: u16 = abs16((word!(game.samus_x_pos)).wrapping_sub((*E).base.x_pos));
-        let mut v3: bool = v2 < word!(game.samus_x_radius);
-        let v4: u16 = (v2).wrapping_sub(word!(game.samus_x_radius));
-        if !v3 && v4 >= (*E).base.x_width {
-            return 0;
-        }
-        if ((word!(game.samus_y_pos) as i32 + 5 - (*E).base.y_pos as i32) as i16) < 0 {
-            let v6: u16 = ((*E).base.y_pos as i32 - (word!(game.samus_y_pos) as i32 + 5)) as u16;
-            v3 = v6 < word!(game.samus_y_radius);
-            let v7: u16 = (v6).wrapping_sub(word!(game.samus_y_radius));
-            if v3 || v7 == (*E).base.y_height || v7 < (*E).base.y_height {
-                return -1i32 as u16;
-            }
-        }
-        0
     }
 }
 crate::game::callback_dispatch! {

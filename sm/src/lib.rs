@@ -472,6 +472,7 @@ pub mod game {
     pub mod sm_b3;
     pub(crate) mod space_pirates;
     pub(crate) mod spike_plant;
+    pub(crate) mod spikey_platforms;
     pub mod sprite_objects;
     pub mod waver;
 }

@@ -615,8 +615,7 @@ crate::game::callback_dispatch! {
         10874354 => [()];
         10911820 => [()];
         10913525 => sm_a6::Boulder_Init; 10913683 => sm_a6::Boulder_Main;
-        10914607 => sm_a6::SpikeyPlatform_Init;
-        10914733 => sm_a6::SpikeyPlatform_Main;
+        10914607 => crate::game::spikey_platforms::initialize; 10914733 => crate::game::spikey_platforms::run;
         10920181 => sm_a6::CeresRidley_Init; 10920584 => sm_a6::CeresRidley_Main;
         10924583 => sm_a6::Ridley_Main;
         10924682 => sm_a6::Ridley_Func_2; 10924695 => sm_a6::Ridley_Hurt;
