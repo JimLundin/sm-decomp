@@ -244,16 +244,6 @@ pub mod bank_91 {
     }
 }
 
-pub mod bank_9b {
-    use crate::types::Consts_9B;
-
-    crate::game::constants::typed_constants! { Consts_9B;
-        addr_kSamusPalette_PowerSuit = 0x9400, addr_kSamusPalette_VariaSuit = 0x9520,
-        addr_kSamusPalette_GravitySuit = 0x9800, addr_word_9BA120 = 0xa120,
-        addr_word_9BA380 = 0xa380, addr_word_9BA3A0 = 0xa3a0,
-    }
-}
-
 pub mod bank_a0 {
     use crate::types::Consts_A0;
 

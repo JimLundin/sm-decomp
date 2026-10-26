@@ -306,20 +306,19 @@ impl Host for Runtime<'_> {
             self.owned_call(player_transitions_runtime::dispatch_input);
             return;
         }
-        self.foreign(|g| unsafe {
-            use crate::game::sm_9b;
+        self.foreign(|g| {
             match step {
                 PlayerStep::Radius => set_player_radius(g),
                 PlayerStep::Input => unreachable!("input handled by shared owner"),
                 PlayerStep::SuitIndex => unreachable!("suit index handled by shared owner"),
                 PlayerStep::Acceleration => unreachable!("acceleration handled by shared owner"),
                 PlayerStep::InsideBlock => unreachable!("inside block handled by shared owner"),
-                PlayerStep::Grapple => sm_9b::GrappleBeamHandler(g),
+                PlayerStep::Grapple => crate::game::grapple_swing::update(g),
                 PlayerStep::Xray => unreachable!("X-ray handled by shared owner"),
                 PlayerStep::RestoreControl => {
                     crate::game::session_runtime::player_command(0x14, g);
                 }
-            }
+            };
         });
     }
     fn palette(&mut self, effect: PaletteEffect) -> u8 {

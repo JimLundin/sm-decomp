@@ -486,7 +486,6 @@ pub mod game {
     pub(crate) mod rio;
     pub(crate) mod rippers;
     pub(crate) mod rising_falling;
-    pub mod sm_9b;
     pub mod sm_a3;
     pub mod sm_a5;
     pub mod sm_a6;

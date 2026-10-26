@@ -1549,7 +1549,7 @@ pub(crate) fn draw_player_frame(game: &mut Game) {
                 }
                 h.foreign(player_projectiles::grapple_flare);
                 h.foreign(draw_player_with_cannon);
-                h.foreign(crate::game::sm_9b::UpdateGrappleBeamTilesAndIncrFlameCtr);
+                h.foreign(crate::game::grapple_swing::update_tiles);
                 if h.session().player.grapple_length != 0 {
                     h.foreign(crate::game::grapple_swing::draw_rope);
                 }

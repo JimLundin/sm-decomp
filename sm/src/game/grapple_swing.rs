@@ -1,11 +1,15 @@
-//! Grapple swing placement, rope-length changes and swept block contact.
-use crate::game::actors::api as actor_api;
+//! Grapple controller, swing placement, rope-length changes and swept block contact.
+#![forbid(unsafe_code)]
+use crate::game::actors::{self, api as actor_api};
+use crate::game::combat_rules::GrappleOutcome;
+use crate::game::display_refresh::queue_native_transfer;
 use crate::game::music::{QueueSfx1_Max1, QueueSfx1_Max6, QueueSfx1_Max15};
+use crate::game::player_collision::operations as player_collision;
 use crate::game::player_transitions as pt;
 use crate::game::prelude::*;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::projectile_room::Axis;
-use crate::game::session_runtime::{Runtime, player_command, settle_grapple};
+use crate::game::session_runtime::{Runtime, player_bottom, player_command, settle_grapple};
 use crate::ram_map::words as ram_words;
 
 fn project_axis(origin: u16, sample: i16, length: u16) -> u16 {
@@ -120,7 +124,6 @@ fn check_clearance(angle: u16, game: &mut Game) -> u8 {
         }
     }
 }
-#[forbid(unsafe_code)]
 fn dispatch_connection(ea: u32, game: &mut Game) {
     let (pose, transition_graphics) = match ea {
         10205657 => (kPose_B2_FaceR_Grapple_Air as u16, 9),
@@ -140,7 +143,6 @@ fn dispatch_connection(ea: u32, game: &mut Game) {
     };
     begin_connection(pose, transition_graphics, game);
 }
-#[forbid(unsafe_code)]
 pub(crate) fn connect_beam(game: &mut Game) {
     if game.g_ram[0xa1f] as i32 == kMovementType_1A_GrabbedByDraygon as i32 {
         word!(game.grapple_beam_function = (0x9bc77ei32) as u16);
@@ -182,7 +184,6 @@ macro_rules! clamp_previous_grapple_position {
         }
     };
 }
-#[forbid(unsafe_code)]
 pub(crate) fn apply_special_angle(game: &mut Game) -> u8 {
     let mut row: u16 = 7;
     while word!(game.grapple_beam_end_angle16) != special_angle_word!(game, row, 0) {
@@ -425,7 +426,6 @@ pub fn advance_swing(game: &mut Game) -> u8 {
     0
 }
 
-#[forbid(unsafe_code)]
 pub(crate) fn launch_from_swing(game: &mut Game) {
     let backwards = word!(game.grapple_beam_unkD26) & 0x8000 != 0;
     let magnitude = if backwards {
@@ -554,7 +554,6 @@ macro_rules! restore_grapple_start_positions {
     };
 }
 
-#[forbid(unsafe_code)]
 pub(crate) fn position_swing(game: &mut Game) {
     let v0: u16 = abs16(word!(game.grapple_beam_unkD26));
     let mut v1: u16 = 0;
@@ -597,14 +596,12 @@ pub(crate) fn position_swing(game: &mut Game) {
     clamp_swing_position(game);
 }
 
-#[forbid(unsafe_code)]
 pub(crate) fn clamp_swing_position(game: &mut Game) {
     let mut v0: i16 =
         ((word!(game.samus_x_pos)) as i16).wrapping_sub((word!(game.samus_prev_x_pos)) as i16);
     pt::clamp_previous_position(Runtime::new(game).session_mut(), v0);
 }
 
-#[forbid(unsafe_code)]
 pub(crate) fn position_anchored(game: &mut Game) {
     let v0: i32 = word!(game.grapple_beam_direction) as i32;
     word! { game;
@@ -621,7 +618,6 @@ pub(crate) fn position_anchored(game: &mut Game) {
     }
 }
 
-#[forbid(unsafe_code)]
 pub(crate) fn restore_start_positions(game: &mut Game) {
     let r22: u16 = native_pose_parameter!(game, 4) as u16;
     let v0: u16 = (2u16).wrapping_mul(word!(game.grapple_beam_direction));
@@ -638,7 +634,6 @@ pub(crate) fn restore_start_positions(game: &mut Game) {
 static kIsGrappleBannedForMovementType: [u8; 28] = [
     0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1,
 ];
-#[forbid(unsafe_code)]
 pub(crate) fn cancel_incompatible_pose(game: &mut Game) {
     if kIsGrappleBannedForMovementType[game.g_ram[0xa1f] as usize] == 0 {
         if word!(game.grapple_beam_function) as i32 != 0x9bc4f0 & 0xffff
@@ -664,7 +659,6 @@ pub(crate) fn cancel_incompatible_pose(game: &mut Game) {
     }
 }
 
-#[forbid(unsafe_code)]
 pub(crate) fn start_firing(game: &mut Game) {
     let mut r22: u16 = 0;
     let mut v0: i32 = 0;
@@ -833,4 +827,220 @@ pub(crate) fn start_rope_animation(game: &mut Game) {
 }
 pub(crate) fn draw_rope(game: &mut Game) {
     crate::game::grapple_rope::draw(&mut Runtime::new(game));
+}
+
+fn connected_to_block(game: &mut Game) -> bool {
+    word! { game, 0;
+        grapple_beam_extension_x_velocity, grapple_beam_extension_y_velocity,
+    }
+    let connected = react_beam(game) & 1 != 0;
+    if connected {
+        word!(game.samus_grapple_flags = 1);
+    }
+    connected
+}
+
+pub(crate) fn update_tiles(game: &mut Game) {
+    if (word!(game.grapple_point_anim_timer -= 1, reread) & 0x8000) != 0 {
+        word!(game.grapple_point_anim_timer = 5);
+        word!(game.grapple_point_anim_ptr += 512);
+        if ((word!(game.grapple_point_anim_ptr)) as i16)
+            .wrapping_sub((crate::rtl::rom_table_word!(game, 0x9bc344, 0)) as i16)
+            >= 0
+        {
+            word!(game.grapple_point_anim_ptr = crate::rtl::rom_table_word!(game, 0x9bc342, 0));
+        }
+    }
+    let cursor = queue_native_transfer(
+        word!(game.vram_write_queue_tail),
+        32,
+        |game| word!(game.grapple_point_anim_ptr),
+        0x9a,
+        |_| 0x6200,
+        game,
+    );
+    let index = (game.g_ram[0xcfb] >> 1 & 0xfe) >> 1;
+    queue_native_transfer(
+        cursor,
+        128,
+        |game| crate::rtl::rom_table_word!(game, 0x9bc346, isize::from(index)),
+        0x9a,
+        |_| 0x6210,
+        game,
+    );
+    if word!(game.flare_counter) as i32 - 120i32 & 0x8000 != 0 {
+        word!(game.flare_counter += 1);
+    }
+}
+
+pub(crate) fn update(game: &mut Game) {
+    let mut r18: u16 = 0;
+    if word!(game.grapple_varCF6) != 0 {
+        word!(game.grapple_varCF6 -= 1);
+    }
+    word!(game.samus_grapple_flags &= !(1));
+    cancel_incompatible_pose(game);
+    dispatch(
+        ((word!(game.grapple_beam_function)) as u32) | (0x9b0000u32),
+        game,
+    );
+    if word!(game.grapple_beam_function) as i32 != 0x9bc4f0 & 0xffff
+        && word!(game.grapple_beam_function) as i32 - (0x9bc856 & 0xffff) & 0x8000 != 0
+        && (word!(game.samus_suit_palette_index) & 4) == 0
+        && word!(game.fx_type) != 0
+        && {
+            r18 = player_bottom(game);
+            (word!(game.fx_y_pos) & 0x8000) == 0
+        }
+        && word!(game.fx_y_pos) as i32 - r18 as i32 & 0x8000 != 0
+    {
+        word!(game.grapple_beam_flags |= (1u16));
+    } else {
+        word!(game.grapple_beam_flags &= !(1));
+    };
+}
+
+fn shoot_held(game: &Game) -> bool {
+    word!(game.button_config_shoot_x) & word!(game.joypad1_lastkeys) != 0
+}
+
+fn dispatch(ea: u32, game: &mut Game) {
+    match ea {
+        0x9bc4f0 => {
+            if (word!(game.button_config_shoot_x) & word!(game.joypad1_newkeys)) != 0
+                || (word!(game.button_config_shoot_x) & word!(game.joypad1_newinput_samusfilter))
+                    != 0
+            {
+                start_firing(game);
+            } else if word!(game.flare_counter) != 0 {
+                word! { game, 0;
+                    flare_counter, flare_animation_frame, flare_slow_sparks_anim_frame,
+                    flare_fast_sparks_anim_frame, flare_animation_timer, flare_slow_sparks_anim_timer,
+                    flare_fast_sparks_anim_timer,
+                }
+                crate::game::samus_palette::load_suit(
+                    &mut Runtime::new(game),
+                    crate::game::visual_state::PaletteBuffer::Current,
+                );
+            }
+        }
+        0x9bc703 => {
+            let shooting = shoot_held(game);
+            if shooting {
+                word!(game.grapple_beam_length += word!(game.grapple_beam_length_delta));
+            }
+            if !shooting || word!(game.grapple_beam_length) as i32 - 128 & 0x8000 == 0 {
+                word!(game.grapple_beam_function = 0xc856);
+                return;
+            }
+            let contact = actors::contacts::grapple_contact(&mut Runtime::new(game));
+            let outcome = match contact {
+                Some(contact) => actors::combat::resolve_grapple(&mut Runtime::new(game), contact),
+                None => GrappleOutcome::Miss,
+            };
+            let attached = match outcome {
+                GrappleOutcome::Attach => true,
+                GrappleOutcome::Cancel => false,
+                GrappleOutcome::Miss => {
+                    let v2: u8 = extend_beam(game);
+                    if (v2 & 1) == 0 {
+                        return;
+                    }
+                    v2 & 0x40 != 0
+                }
+            };
+            if !attached {
+                word!(game.grapple_beam_function = 0xc856);
+                return;
+            }
+            QueueSfx1_Max6(6, game);
+            connect_beam(game);
+            word!(game.grapple_beam_length_delta = -8i32 as u16);
+            word!(game.samus_grapple_flags |= (1u16));
+        }
+        0x9bc77e | 0x9bc814 => {
+            let attached = shoot_held(game)
+                && ((ea == 0x9bc77e
+                    && actors::contacts::grapple_contact(&mut Runtime::new(game))
+                        .is_some_and(|contact| contact.has_reaction()))
+                    || connected_to_block(game));
+            if !attached {
+                if ea == 0x9bc814 {
+                    word!(game.grapple_walljump_timer = 30);
+                    word!(game.grapple_beam_function = 0xc832);
+                } else {
+                    word!(game.grapple_beam_function = 0xc856);
+                }
+            }
+        }
+        0x9bc79d => {
+            if shoot_held(game) {
+                apply_input(game);
+                if word!(game.grapple_beam_length_delta) != 0 {
+                    change_length(game);
+                }
+                apply_gravity(game);
+                accelerate(game);
+                rebound_jump(game);
+                advance_swing(game);
+                if (word!(game.grapple_beam_unkD36) & 0x8000) != 0
+                    && apply_special_angle(game) & 1 != 0
+                {
+                    return;
+                }
+                let keep_swinging: bool =
+                    if actors::contacts::grapple_contact(&mut Runtime::new(game))
+                        .is_some_and(|contact| contact.has_reaction())
+                    {
+                        word!(game.grapple_beam_flags |= (0x8000u16));
+                        false
+                    } else {
+                        !connected_to_block(game)
+                    };
+                if !keep_swinging {
+                    place_rope_origin(game);
+                    position_swing(game);
+                    return;
+                }
+            }
+            if word!(game.grapple_beam_unkD26) != 0
+                || word!(game.grapple_beam_end_angle16) != 0x8000
+            {
+                launch_from_swing(game);
+                word!(game.grapple_beam_function = (0x9bcb8bi32) as u16);
+                word!(game.samus_movement_handler = (0x90946ei32) as u16);
+            } else {
+                word!(game.grapple_beam_function = (0x9bc8c5i32) as u16);
+            };
+        }
+        0x9bc832 => {
+            if (word!(game.grapple_walljump_timer -= 1, reread) & 0x8000) == 0 {
+                let request = player_collision::JumpRequest {
+                    kind: player_collision::JumpKind::Grapple,
+                    amount: (16i16 as i32) << 16,
+                };
+                if player_collision::jump_admission(&mut Runtime::new(game), request) {
+                    word!(game.grapple_beam_function = (0x9bc9cei32) as u16);
+                }
+            } else {
+                word!(game.grapple_beam_function = (0x9bc8c5i32) as u16);
+            };
+        }
+        0x9bbd95 => position_swing(game),
+        0x9bbe98 => clamp_swing_position(game),
+        0x9bbeeb => position_anchored(game),
+        0x9bbf1b => restore_start_positions(game),
+        0x9bc51e => start_firing(game),
+        0x9bc856 => cancel(game),
+        0x9bc8c5 => release_stationary(game),
+        0x9bc9ce => release_walljump(game),
+        0x9bcb8b => release_swing(game),
+        0x9bbb64 => apply_input(game),
+        0x9bbc1f => apply_gravity(game),
+        0x9bbcff => accelerate(game),
+        0x9bbd44 => rebound_jump(game),
+        _ => {
+            Unreachable(game);
+        }
+    }
 }

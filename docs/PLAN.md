@@ -48,23 +48,20 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current tipf83: production112259, legacy17683, unsafe2806, verification40422; warnings165.
-It retires161 sm82 lines and persists actor/media allocation identities and saved ROM patches.
-Net +511 engine (persistence +564, frame -53), -161 legacy, -1 unsafe, +371 verification;
-frame full replacement167/220=75.91%. RAM/native frame dependencies remain explicit.
+Current tip5b: production112222, legacy17448, unsafe2792, verification40421; warnings165.
+Core sm82 persists actor/media identities and saved ROM patches: +511 engine/-161 legacy/-1 unsafe/+371 verification.
+Frame full167/220=75.91%; RAM/native frame dependencies remain explicit.
 Codec f158c44fac33eac7 has39 contributors/652740 normalized source bytes.
 Prepared110/initialized329+5,14 genuine captures189475 frames and full22 byte-identical restore pass.
 Required sm82 AST8.06min:3 options kills; unsafe gameplay omission unavailable.
 Post-sm82 full86 on pusheda9 passed136526 selected+38827 setup/0 in303.254s;
 all14 originals/guards and bothKago14350 retained. Never restamp old codecs.
-
-Grapple four-leaf cut passes3872 selected+272 setup: +12 engine/-112 legacy/unsafe0.
-Shared IO/OAM plus current beam union passes31655 selected+272 setup: -16 engine/-13 legacy/+2 hardware unsafe.
-Shared black-fade passes10967 selected+272 setup/0: -11 engine/-11 legacy; full18/29=62.07%.
-Shared tile-plane upload passes11161 selected+272 setup/0: -6 engine/-24 legacy; full23/29=79.31%.
-Its +2 unsafe lines retain hardware entry/block in display_refresh; blackout37 stays unobserved.
+Blackout37/native failure variants remain unobserved; hardware entry contracts stay explicit.
 Safe sprite dispatch passes22959 selected+272 setup/0; +20 engine/-127 legacy/-6 unsafe, full176/156=112.82%.
-Next: complete sm9b retirement (3 AST kills), then intro transitions and liquid motion; Linux/cloud stay disjoint.
+sm9b retired: 3872 selected+272 setup/0; -37 engine/-235 legacy/-14 unsafe/-1 verification.
+Full224/239=93.72%; unsafe -14 includes9 enforcement attributes,4 bank lines and1 caller block.
+Actual AST3 kills3453 selected/0 setup in10.08min; unchangedtarget750d retains original0cdf attribution.
+Next: own-push full86, liquid motion and intro transitions; Linux/cloud remain disjoint.
 Linux M: retire the Power Bomb/Crystal Flash fixed-color raw accesses; geometry and native dispatch stay retained.
 ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
 A4 post-push full86 passed on0a; its scoped3kills/1unobserved/1unviable gaps remain.
