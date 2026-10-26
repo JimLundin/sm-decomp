@@ -99,13 +99,11 @@ pub(super) fn clear_japanese_tiles(game: &mut Game) {
 // Narrative callbacks retain their ROM addresses; these functions own the shared
 // page/scene lifecycle, including the Japanese continuation and input delay.
 pub(super) unsafe fn create_japanese_text(object: u16, j: u16, game: &mut Game) -> u16 {
-    unsafe {
-        word!(game.cinematicbg_var1 = 0);
-        if word!(game.japanese_text_flag) != 0 {
-            CinematicMode7.spawn(object, word!(game.japanese_text_flag), game);
-        }
-        j
+    word!(game.cinematicbg_var1 = 0);
+    if word!(game.japanese_text_flag) != 0 {
+        CinematicMode7.spawn(object, word!(game.japanese_text_flag), game);
     }
+    j
 }
 
 pub(super) fn reset_text_marker(game: &mut Game) {
@@ -119,28 +117,26 @@ pub(super) unsafe fn spawn_marker(
     j: u16,
     game: &mut Game,
 ) -> u16 {
-    unsafe {
-        reset_text_marker(game);
-        if word!(game.japanese_text_flag) != 0 {
-            let failed = CinematicSprites.spawn(
-                addr_kCinematicSpriteObjectDef_8BCE73 as u16,
-                word!(game.japanese_text_flag),
-                game,
-            ) != 0;
-            if let Some(object) = continuation {
-                // The arrow leaves its palette in A; a full allocator leaves slot zero's instruction.
-                let parameter = if failed {
-                    word!(game.cinematicspr_instr_ptr[0])
-                } else {
-                    0x0c00
-                };
-                CinematicMode7.spawn(object, parameter, game);
-                return j;
-            }
+    reset_text_marker(game);
+    if word!(game.japanese_text_flag) != 0 {
+        let failed = CinematicSprites.spawn(
+            addr_kCinematicSpriteObjectDef_8BCE73 as u16,
+            word!(game.japanese_text_flag),
+            game,
+        ) != 0;
+        if let Some(object) = continuation {
+            // The arrow leaves its palette in A; a full allocator leaves slot zero's instruction.
+            let parameter = if failed {
+                word!(game.cinematicspr_instr_ptr[0])
+            } else {
+                0x0c00
+            };
+            CinematicMode7.spawn(object, parameter, game);
+            return j;
         }
-        word!(game.cinematic_function = next);
-        j
     }
+    word!(game.cinematic_function = next);
+    j
 }
 
 fn page_input_ready(game: &mut Game) -> bool {
@@ -308,11 +304,9 @@ pub(super) fn start_page(next: u16, j: u16, game: &mut Game) -> u16 {
 }
 
 pub(super) unsafe fn show_page(object: u16, next: u16, game: &mut Game) {
-    unsafe {
-        CinematicBackground.spawn(object, 0x4c00, game);
-        word!(game.cinematic_function = next);
-        setup_page_palettes(game);
-    }
+    CinematicBackground.spawn(object, 0x4c00, game);
+    word!(game.cinematic_function = next);
+    setup_page_palettes(game);
 }
 
 pub(super) fn fade_to_page(palette: Palette, game: &mut Game) {
@@ -368,14 +362,12 @@ pub(super) fn wait_after_japanese_text(next: u16, j: u16, game: &mut Game) -> u1
 }
 
 pub(super) unsafe fn show_final_page(game: &mut Game) {
-    unsafe {
-        set_cinematic_tilemap_updates(true, game);
-        clear_english_text(game);
-        CinematicBackground.spawn(addr_kCinematicBgObjectDef_8BCF5D as u16, 0x4c00, game);
-        word!(game.cinematic_function = (0x8ba390i32) as u16);
-        reset_caret(game);
-        QueueMusic_Delayed8(0, game);
-    }
+    set_cinematic_tilemap_updates(true, game);
+    clear_english_text(game);
+    CinematicBackground.spawn(addr_kCinematicBgObjectDef_8BCF5D as u16, 0x4c00, game);
+    word!(game.cinematic_function = (0x8ba390i32) as u16);
+    reset_caret(game);
+    QueueMusic_Delayed8(0, game);
 }
 
 pub(super) unsafe fn wait_for_final_page(game: &mut Game) {

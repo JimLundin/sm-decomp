@@ -1595,7 +1595,7 @@ impl CinematicObjects {
         }
     }
 
-    pub(crate) unsafe fn spawn(self, definition: u16, parameter: u16, game: &mut Game) -> u8 {
+    pub(crate) fn spawn(self, definition: u16, parameter: u16, game: &mut Game) -> u8 {
         let layout = self.layout();
         checked_word!(game, layout.parameter; = parameter);
         for slot in (0..layout.slots).rev() {
@@ -1630,6 +1630,18 @@ impl CinematicObjects {
             }
             queue_cinematic_tilemap(CinematicTilemap::Eyes, game);
         }
+    }
+}
+
+pub(crate) fn spawn_cinematic_burst(
+    mut definition: u16,
+    parameters: core::ops::Range<u16>,
+    stride: u16,
+    game: &mut Game,
+) {
+    for parameter in parameters {
+        CinematicObjects::Sprites.spawn(definition, parameter, game);
+        definition = definition.wrapping_add(stride);
     }
 }
 
@@ -2052,7 +2064,7 @@ pub(crate) fn advance_postcredits_samus_message(fade_suit: bool, game: &mut Game
     }
 }
 
-pub(crate) fn advance_intro_mother_brain(object: u16, stage: u8, game: &mut Game) -> bool {
+pub(crate) fn advance_intro_mother_brain(object: u16, stage: u8, game: &mut Game) {
     let slot = usize::from(object >> 1);
     if stage != 2 {
         let timer = word!(game.cinematicspr_arr6[slot]);
@@ -2068,10 +2080,10 @@ pub(crate) fn advance_intro_mother_brain(object: u16, stage: u8, game: &mut Game
     if stage == 0 {
         let Some(projectile) = (0..5).rfind(|&i| word!(game.projectile_type[i]) & 0xfff == 256)
         else {
-            return false;
+            return;
         };
         if word!(game.projectile_x_pos[projectile]) as i32 - 84 & 0x8000 == 0 {
-            return false;
+            return;
         }
         crate::game::player_projectiles::retire(2 * projectile as u16, game);
         word!(game.cinematicspr_arr6[slot] = 8);
@@ -2083,19 +2095,19 @@ pub(crate) fn advance_intro_mother_brain(object: u16, stage: u8, game: &mut Game
         }
         if stage == 2 {
             crate::game::intro_pages::wait_for_scene_end(object, true, game);
-            return false;
+            return;
         }
     }
     let count = word!(game.cinematicspr_goto_timer[slot]).wrapping_add(1);
     word!(game.cinematicspr_goto_timer[slot] = count);
     if stage == 0 && count == 4 {
         word! {game; cinematicspr_goto_timer[slot] = 0; cinematicspr_preinstr_func[slot] = 0xb80f; }
-        return true;
+        spawn_cinematic_burst(0xcf1b, 0..3, 0, game);
+        spawn_cinematic_burst(0xcf15, 0..5, 0, game);
     }
     if stage == 1 && count as i32 - 128 & 0x8000 == 0 {
         word! {game; cinematicspr_instr_timer[slot] = 1; cinematicspr_instr_ptr[slot] = 0xcb19; }
     }
-    false
 }
 
 pub(crate) fn wait_cinematic_scene(

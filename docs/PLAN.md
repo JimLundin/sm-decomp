@@ -81,8 +81,8 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
 
 Persistent whole-engine ownership and backend independence remain open. Larger
 reductions need live caller migration; the unused-bank scan found no removable family.
-Qualified Core27: production 111904, legacy 20744, unsafe 2970, verification 39967.
-Its 85 of 86 rows pass, including all 44 required scenarios; only options-return is excluded.
+Qualified Core28: production 111865, legacy 20701, unsafe 2964, verification 39967.
+Its 14 affected/control rows pass; Core27 passed 85 of 86, including all 44 required scenarios.
 Six read-only state projections preserve 57,621 bytes; exact native leaf variants remain source-reviewed.
 The manifest now has 86 rows; whole-engine ownership and backend independence stay open.
 Retain the fixed 2131-frame X-ray activation/release row and original pickup.
