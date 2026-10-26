@@ -493,9 +493,7 @@ unsafe fn execute_hdma_instruction(
             refresh_title_gradient(game);
         }
         _ => {
-            unsafe {
-                crate::rtl::Unreachable(game);
-            }
+            crate::rtl::Unreachable(game);
             return Script::Stop;
         }
     }
@@ -662,7 +660,7 @@ impl visual_host::Effects for Runtime<'_> {
         self.foreign(|game| animated_tiles::native::upload(request, game));
     }
     fn invalid_palette_instruction(&mut self) {
-        self.foreign(|game| unsafe {
+        self.foreign(|game| {
             crate::rtl::Unreachable(game);
         });
     }
@@ -1549,7 +1547,7 @@ pub(crate) fn draw_player_frame(game: &mut Game) {
         }
         DrawMode::Disabled | DrawMode::Empty | DrawMode::Elevator => {}
         DrawMode::Unknown(_) => {
-            h.foreign(|game| unsafe { crate::rtl::Unreachable(game) });
+            h.foreign(|game| crate::rtl::Unreachable(game));
         }
     }
     h.foreign(player_projectiles::draw_projectiles);
@@ -2641,83 +2639,81 @@ pub(crate) unsafe fn advance_cinematic_background_pre(command: u32, object: u16,
                 word!(game.cinematicbg_preinstr[(object >> 1)] = 0x93d9);
             }
         }
-        _ => unsafe {
+        _ => {
             Unreachable(game);
-        },
+        }
     }
 }
 
 unsafe fn draw_cinematic_background(object: u16, position: u16, game: &mut Game) {
-    unsafe {
-        let definition = word!(game.cinematicbg_arr1[(object >> 1)]);
-        let command = cinematic_native_record::<0x8c>(definition, game).word(0);
-        match command {
-            0x8849 => {}
-            0x884d | 0x88b7 | 0x88fd => {
-                if command == 0x884d {
-                    word!(game.cinematicbg_var1 = u16::from(word!(game.cinematicbg_var1) == 0));
-                    crate::game::intro_pages::spawn_text_glow(definition, position, game);
-                    let record = cinematic_native_record::<0x8c>(
-                        word!(game.cinematicbg_instr_ptr[(object >> 1)]),
-                        game,
-                    );
-                    let bottom = if (record.word(6) as i16) < 0 {
-                        word!(game.cinematicbg_arr7[15] = 8);
-                        8 * (u16::from(record.byte(3)) + 2)
-                    } else {
-                        word!(game.cinematicbg_arr7[15] = 8 * u16::from(record.byte(8)));
-                        8 * u16::from(record.byte(9))
-                    };
-                    word!(game.cinematicbg_arr8[15] = bottom.wrapping_sub(8));
-                    if record.word(4) != 0xd67d && word!(game.cinematicbg_var1) != 0 {
-                        crate::game::music::QueueSfx3_Max6(0xd, game);
-                    }
-                }
-                draw_cinematic_rectangle(command != 0x88fd, definition, position, game);
-            }
-            0x896b | 0x89cf => {
-                let mut destination =
-                    u16::from(position as u8) + 128 * u16::from(position.to_ne_bytes()[1]);
-                let record = cinematic_native_record::<0x8c>(definition, game);
-                let width = u16::from(record.byte(2));
-                let height = u16::from(record.byte(3));
-                let columns = command == 0x89cf;
-                let (length, mut remaining) = if columns {
-                    (height, i32::from(width))
+    let definition = word!(game.cinematicbg_arr1[(object >> 1)]);
+    let command = cinematic_native_record::<0x8c>(definition, game).word(0);
+    match command {
+        0x8849 => {}
+        0x884d | 0x88b7 | 0x88fd => {
+            if command == 0x884d {
+                word!(game.cinematicbg_var1 = u16::from(word!(game.cinematicbg_var1) == 0));
+                crate::game::intro_pages::spawn_text_glow(definition, position, game);
+                let record = cinematic_native_record::<0x8c>(
+                    word!(game.cinematicbg_instr_ptr[(object >> 1)]),
+                    game,
+                );
+                let bottom = if (record.word(6) as i16) < 0 {
+                    word!(game.cinematicbg_arr7[15] = 8);
+                    8 * (u16::from(record.byte(3)) + 2)
                 } else {
-                    (width, i32::from(height))
+                    word!(game.cinematicbg_arr7[15] = 8 * u16::from(record.byte(8)));
+                    8 * u16::from(record.byte(9))
                 };
-                let mut source = definition.wrapping_add(4);
-                let mut tail = word!(game.mode7_vram_write_queue_tail);
-                loop {
-                    for (field, value) in [
-                        (0, 128),
-                        (1, source),
-                        (3, 139),
-                        (4, length),
-                        (6, destination),
-                        (8, if columns { 2 } else { 0 }),
-                    ] {
-                        crate::game::mode7_transfers::write_word(tail, field, value, game);
-                    }
-                    tail = tail.wrapping_add(9);
-                    source = source.wrapping_add(length);
-                    destination = destination.wrapping_add(if columns { 1 } else { 128 });
-                    // Row counts wrap at u16; column counts retain their signed decrement.
-                    remaining = if columns {
-                        remaining - 1
-                    } else {
-                        i32::from((remaining as u16).wrapping_sub(1))
-                    };
-                    if remaining == 0 {
-                        break;
-                    }
+                word!(game.cinematicbg_arr8[15] = bottom.wrapping_sub(8));
+                if record.word(4) != 0xd67d && word!(game.cinematicbg_var1) != 0 {
+                    crate::game::music::QueueSfx3_Max6(0xd, game);
                 }
-                word!(game.mode7_vram_write_queue_tail = tail);
             }
-            _ => {
-                Unreachable(game);
+            draw_cinematic_rectangle(command != 0x88fd, definition, position, game);
+        }
+        0x896b | 0x89cf => {
+            let mut destination =
+                u16::from(position as u8) + 128 * u16::from(position.to_ne_bytes()[1]);
+            let record = cinematic_native_record::<0x8c>(definition, game);
+            let width = u16::from(record.byte(2));
+            let height = u16::from(record.byte(3));
+            let columns = command == 0x89cf;
+            let (length, mut remaining) = if columns {
+                (height, i32::from(width))
+            } else {
+                (width, i32::from(height))
+            };
+            let mut source = definition.wrapping_add(4);
+            let mut tail = word!(game.mode7_vram_write_queue_tail);
+            loop {
+                for (field, value) in [
+                    (0, 128),
+                    (1, source),
+                    (3, 139),
+                    (4, length),
+                    (6, destination),
+                    (8, if columns { 2 } else { 0 }),
+                ] {
+                    crate::game::mode7_transfers::write_word(tail, field, value, game);
+                }
+                tail = tail.wrapping_add(9);
+                source = source.wrapping_add(length);
+                destination = destination.wrapping_add(if columns { 1 } else { 128 });
+                // Row counts wrap at u16; column counts retain their signed decrement.
+                remaining = if columns {
+                    remaining - 1
+                } else {
+                    i32::from((remaining as u16).wrapping_sub(1))
+                };
+                if remaining == 0 {
+                    break;
+                }
             }
+            word!(game.mode7_vram_write_queue_tail = tail);
+        }
+        _ => {
+            Unreachable(game);
         }
     }
 }

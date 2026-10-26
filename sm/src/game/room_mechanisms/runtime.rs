@@ -182,7 +182,7 @@ impl Effects for Runtime<'_> {
             SuitPickup::Varia => runtime.begin_suit_pickup(false),
             SuitPickup::Gravity => runtime.begin_suit_pickup(true),
             SuitPickup::Unknown(_) => {
-                runtime.foreign(|game| unsafe { crate::rtl::Unreachable(game) });
+                runtime.foreign(|game| crate::rtl::Unreachable(game));
             }
         });
     }
@@ -276,7 +276,7 @@ impl Effects for Runtime<'_> {
                 crate::c_library::printf(c"ERROR: PlmSetup_QuicksandSurfaceB is broken!!\n".as_ptr());
                 crate::rtl::Unreachable(game);0
             },
-            Diagnostic::Unreachable=>unsafe{crate::rtl::Unreachable(game) as u8},
+            Diagnostic::Unreachable=>crate::rtl::Unreachable(game) as u8,
             Diagnostic::UnsupportedSetup=>{
                 use crate::c_library::__assert_fail;use core::ffi::c_char;
                 unsafe{crate::native_assertion! { '_c2rust_label; b"0\0", b"src/sm_84.c\0", 1370, b"uint8 UNUSED_sub_84B3E3(uint16)\0" };}0

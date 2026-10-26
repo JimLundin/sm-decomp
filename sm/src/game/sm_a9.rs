@@ -127,6 +127,7 @@ static g_byte_A9F56A: [i8; 16] = [
     0x10, 0xf, 0xe, 0xd, 0xc, 0xb, 0xa, 9, 8, 7, 6, 5, 4, 3, 2, 1,
 ];
 crate::game::callback_dispatch! {
+    #[allow(unused_unsafe)]
     pub unsafe fn CallCorpseRottingMove(ea: u32, k: u16, j: u16, game: &mut Game) => ea;
     call (k, j, game); default { Unreachable(game); };
     @forward [pub fn (j: u16, k: u16, game: &mut Game)];

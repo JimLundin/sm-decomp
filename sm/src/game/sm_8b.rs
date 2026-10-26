@@ -1990,6 +1990,7 @@ crate::game::callback_dispatch! {
     }
 }
 crate::game::address_dispatch! {
+    #[allow(unused_unsafe)]
     pub unsafe fn CallCinematicSpriteInit(ea: u32, j: u16, game: &mut Game) => ea;
         call (j, game); default { Unreachable(game); };
     {
@@ -2005,6 +2006,7 @@ crate::game::address_dispatch! {
     }
 }
 crate::game::address_dispatch! {
+    #[allow(unused_unsafe)]
     pub unsafe fn CallMode7Instr(ea: u32, _k: u16, j: u16, game: &mut Game) -> u16 => ea;
     call (_k, j, game); default Unreachable(game) as u16;
     {
@@ -2025,6 +2027,7 @@ crate::game::address_dispatch! {
     }
 }
 crate::game::address_dispatch! {
+    #[allow(unused_unsafe)]
     pub unsafe fn CallMode7PreInstr(ea: u32, k: u16, game: &mut Game) => ea;
         call (k, game); default { Unreachable(game); };
     {

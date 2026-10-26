@@ -94,11 +94,9 @@ crate::forward_calls! { unsafe fn (game: &mut Game);
     fade_to_map => fade(false, 0, game);
 }
 unsafe fn fade(fade_in: bool, brightness: u8, game: &mut Game) {
-    unsafe {
-        animate_baby(game, |game| {
-            Unreachable(game);
-        })
-    };
+    animate_baby(game, |game| {
+        Unreachable(game);
+    });
     sprite_output::menu_selection(game);
     crate::game::display_refresh::fade(fade_in, game);
     if game.g_ram[0x51] & 0xf == brightness {
@@ -107,11 +105,9 @@ unsafe fn fade(fade_in: bool, brightness: u8, game: &mut Game) {
 }
 
 unsafe fn choose(game: &mut Game) {
-    unsafe {
-        animate_baby(game, |game| {
-            Unreachable(game);
-        })
-    };
+    animate_baby(game, |game| {
+        Unreachable(game);
+    });
     sprite_output::menu_selection(game);
     if word!(game.joypad1_newkeys) & (kButton_Select | kButton_Up | kButton_Down) as u16 != 0 {
         QueueSfx1_Max6(0x37, game);
@@ -148,11 +144,9 @@ unsafe fn load_map(game: &mut Game) {
 
 unsafe fn fade_to_title(game: &mut Game) {
     sprite_output::menu_selection(game);
-    unsafe {
-        animate_baby(game, |game| {
-            Unreachable(game);
-        })
-    };
+    animate_baby(game, |game| {
+        Unreachable(game);
+    });
     crate::game::display_refresh::fade(false, game);
     if game.g_ram[0x51] & 0xf == 0 {
         game.request_reset();

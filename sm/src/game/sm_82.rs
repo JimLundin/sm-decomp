@@ -127,10 +127,8 @@ pub fn GameState_3_Null(game: &mut Game) -> CoroutineRet {
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_28_Unused(game: &mut Game) -> CoroutineRet {
-    unsafe {
-        crate::rtl::Unreachable(game);
-        kCoroutineNone as CoroutineRet
-    }
+    crate::rtl::Unreachable(game);
+    kCoroutineNone as CoroutineRet
 }
 pub unsafe fn GameState_20_SamusNoHealth_BlackOut(game: &mut Game) -> CoroutineRet {
     unsafe {

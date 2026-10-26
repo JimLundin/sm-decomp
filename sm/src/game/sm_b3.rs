@@ -34,6 +34,7 @@ crate::ram_map::ram_pointer_functions! {
 }
 pub fn UnusedSpinningTurtleEye_Main() {}
 crate::game::callback_dispatch! {
+    #[allow(unused_unsafe)]
     pub unsafe fn CallBugInstr(ea: u32, _k: u16, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
     @external {
@@ -118,6 +119,7 @@ crate::game::callback_dispatch! {
     }
 }
 crate::game::callback_dispatch! {
+    #[allow(unused_unsafe)]
     pub unsafe fn CallBotwoonFuncVarE(ea: u32, game: &mut Game) => ea;
     call (game); default { Unreachable(game); };
     @external {

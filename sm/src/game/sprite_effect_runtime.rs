@@ -80,7 +80,7 @@ impl sprite_effect_host::Effects for Runtime<'_> {
         });
     }
     fn invalid_sprite_instruction(&mut self) {
-        self.foreign(|game| unsafe { crate::rtl::Unreachable(game) });
+        self.foreign(|game| crate::rtl::Unreachable(game));
     }
 }
 #[forbid(unsafe_code)]

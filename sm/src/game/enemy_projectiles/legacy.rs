@@ -15,9 +15,7 @@ pub(super) fn ridley_offscreen(x: u16, y: u16, game: &mut Game) -> u8 {
 }
 
 pub(super) fn unreachable(game: &mut Game) {
-    unsafe {
-        crate::rtl::Unreachable(game);
-    }
+    crate::rtl::Unreachable(game);
 }
 pub(super) fn draw_spritemap(
     offscreen: bool,

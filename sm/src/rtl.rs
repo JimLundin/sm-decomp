@@ -766,7 +766,7 @@ pub fn invalid_interrupt(game: &mut Game) {
     unreachable_failure(true, game);
     loop {}
 }
-pub unsafe fn Unreachable(game: &mut Game) -> bool {
+pub fn Unreachable(game: &mut Game) -> bool {
     unreachable_failure(false, game)
 }
 // Only these fixed static diagnostics cross the native assertion boundary.

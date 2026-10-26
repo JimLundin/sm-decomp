@@ -1,7 +1,7 @@
 //! Qualified legacy diagnostics and synchronous DMA submission.
 use crate::game_state::Game;
 pub(crate) fn unreachable(game: &mut Game) -> u16 {
-    unsafe { crate::rtl::Unreachable(game) as u16 }
+    crate::rtl::Unreachable(game) as u16
 }
 pub(crate) fn upload(request: crate::game::visual_state::Upload, game: &mut Game) {
     use crate::game::prelude::*;

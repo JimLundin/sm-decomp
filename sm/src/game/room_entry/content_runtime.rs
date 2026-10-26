@@ -221,7 +221,7 @@ impl EntryContent for Runtime<'_> {
         }
     }
     fn invalid_selector(&mut self, _address: u32) -> Option<SelectorCursor> {
-        let value = self.foreign(|game| unsafe { crate::rtl::Unreachable(game) }) as u16;
+        let value = self.foreign(|game| crate::rtl::Unreachable(game)) as u16;
         (value != 0).then_some(SelectorCursor::Legacy(value))
     }
     fn capture_state(&mut self, state: &Identity<StateId>) -> StateCapture {

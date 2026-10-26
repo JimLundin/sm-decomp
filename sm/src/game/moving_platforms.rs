@@ -250,7 +250,7 @@ pub(crate) unsafe fn update(kind: Kind, game: &mut Game) {
         &HORIZONTAL
     };
     let Some(phase) = p.decode(field!(game, e, var_A)) else {
-        unsafe { Unreachable(game) };
+        Unreachable(game);
         return;
     };
     match phase {
@@ -638,7 +638,7 @@ unsafe fn update_timed(game: &mut Game) {
             }
         }
         _ => {
-            unsafe { Unreachable(game) };
+            Unreachable(game);
         }
     }
 }

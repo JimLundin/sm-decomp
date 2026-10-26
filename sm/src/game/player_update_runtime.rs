@@ -183,9 +183,9 @@ pub(crate) fn advance_frame(game: &mut Game) {
         }
         LowHealth => low_health(game),
         Frozen | EquipmentFrozen | Drained | ResumeRecorder => {}
-        Unknown(_) => unsafe {
+        Unknown(_) => {
             crate::rtl::Unreachable(game);
-        },
+        }
     }
 }
 
@@ -209,6 +209,7 @@ use crate::game::{
 };
 use crate::ram_map::word as legacy_word;
 crate::game::callback_dispatch! {
+    #[allow(unused_unsafe)]
     unsafe fn advance_gamma(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
     @functions [pub fn (game: &mut Game)];

@@ -125,7 +125,7 @@ impl Effects for Runtime<'_> {
         });
     }
     fn invalid_bounce(&mut self, _site: BounceFault, _value: u16) {
-        self.foreign(|game| unsafe {
+        self.foreign(|game| {
             crate::rtl::Unreachable(game);
         });
     }

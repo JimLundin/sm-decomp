@@ -71,49 +71,45 @@ fn move_toward_target(game: &mut Game) -> u8 {
     }
 }
 unsafe fn advance_motion(game: &mut Game) {
-    unsafe {
-        let state = word!(game.fx_rising_function_bank_88);
-        if matches!(state, 0xb367 | 0xb382) {
-            shake_room_with_sound(21, game);
+    let state = word!(game.fx_rising_function_bank_88);
+    if matches!(state, 0xb367 | 0xb382) {
+        shake_room_with_sound(21, game);
+    }
+    match state {
+        0xb343 | 0xc428 => {
+            let velocity = word!(game.fx_y_vel);
+            let target = word!(game.fx_target_y_pos);
+            let base = word!(game.fx_base_y_pos);
+            if velocity != 0
+                && if velocity & 0x8000 == 0 {
+                    target > base
+                } else {
+                    target < base
+                }
+            {
+                word!(
+                    game.fx_rising_function_bank_88 = if state == 0xb343 { 0xb367 } else { 0xc44c }
+                );
+            }
         }
-        match state {
-            0xb343 | 0xc428 => {
-                let velocity = word!(game.fx_y_vel);
-                let target = word!(game.fx_target_y_pos);
-                let base = word!(game.fx_base_y_pos);
-                if velocity != 0
-                    && if velocity & 0x8000 == 0 {
-                        target > base
-                    } else {
-                        target < base
-                    }
-                {
-                    word!(
-                        game.fx_rising_function_bank_88 =
-                            if state == 0xb343 { 0xb367 } else { 0xc44c }
-                    );
+        0xb367 | 0xc44c => {
+            if word!(game.fx_timer -= 1, reread) == 0 {
+                word!(
+                    game.fx_rising_function_bank_88 = if state == 0xb367 { 0xb382 } else { 0xc458 }
+                );
+            }
+        }
+        0xb382 | 0xc458 => {
+            if move_toward_target(game) & 1 != 0 {
+                if state == 0xb382 {
+                    word! { game; fx_y_vel = 0; fx_rising_function_bank_88 = 0xb343; }
+                } else {
+                    word! { game; fx_rising_function_bank_88 = 0xc428; fx_y_vel = 0; }
                 }
             }
-            0xb367 | 0xc44c => {
-                if word!(game.fx_timer -= 1, reread) == 0 {
-                    word!(
-                        game.fx_rising_function_bank_88 =
-                            if state == 0xb367 { 0xb382 } else { 0xc458 }
-                    );
-                }
-            }
-            0xb382 | 0xc458 => {
-                if move_toward_target(game) & 1 != 0 {
-                    if state == 0xb382 {
-                        word! { game; fx_y_vel = 0; fx_rising_function_bank_88 = 0xb343; }
-                    } else {
-                        word! { game; fx_rising_function_bank_88 = 0xc428; fx_y_vel = 0; }
-                    }
-                }
-            }
-            _ => {
-                Unreachable(game);
-            }
+        }
+        _ => {
+            Unreachable(game);
         }
     }
 }

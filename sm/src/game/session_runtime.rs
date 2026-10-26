@@ -375,7 +375,7 @@ impl Host for Runtime<'_> {
         self.foreign(|g| crate::rtl::invalid_interrupt(g));
     }
     fn unknown(&mut self) -> bool {
-        self.foreign(|g| unsafe { crate::rtl::Unreachable(g) })
+        self.foreign(|g| crate::rtl::Unreachable(g))
     }
     fn room_level(&self, cell: u16) -> u16 {
         self.word(0x10002 + usize::from(cell) * 2)
