@@ -535,13 +535,14 @@ impl Runtime<'_> {
     }
 }
 
-use crate::game::actors::api as actor_api;
+use crate::game::actors::access::{AccessMode, ActorAccess, ActorKey as Key};
+use crate::game::actors::{self, api as actor_api};
 use crate::game::combat_rules::LatchMode;
 use crate::game::enemy_script::EnemyScript;
 use crate::game::moving_platforms::{self as mechanisms, Event, Kind};
-use crate::game::{
-    sm_a2, sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b3, space_pirates,
-};
+use crate::game::rippers::{self, Kind as RipperKind};
+use crate::game::{ground_patrol, large_snail};
+use crate::game::{sm_a3, sm_a4, sm_a5, sm_a6, sm_a7, sm_a8, sm_a9, sm_aa, sm_b3, space_pirates};
 crate::game::address_dispatch! {
     unsafe fn actor_species_draw_hook(ea: u32, game: &mut Game) => ea;
         call (game); default { crate::rtl::Unreachable(game); };
@@ -567,14 +568,14 @@ crate::game::callback_dispatch! {
             crate::game::actors::reference_population_animation::dispatch_noop(game);
         }];
         10656319 => crate::game::hopping_blobs::initialize;
-        10656381 => sm_a2::ThinHoppingBlobs_Main;
+        10656381 => [{ if !crate::game::hopping_blobs::advance(game) { crate::rtl::Unreachable(game); } }];
         10664233 => [{
                     crate::game::rinka::frozen(crate::ram_map::word!(game.cur_enemy_index), game);
                 }];
         10664275 => [{
                     crate::game::rinka::power_bomb(crate::ram_map::word!(game.cur_enemy_index), game);
                 }];
-        10669268 => sm_a2::MaridiaLargeSnail_Init;
+        10669268 => crate::game::large_snail::initialize;
         10676698 => [mechanisms::initialize(Kind::TimedShutter, game)];
         10676918 => [mechanisms::update(Kind::TimedShutter, game)];
         10677765 => [mechanisms::initialize(Kind::Platform, game)];
@@ -691,7 +692,117 @@ crate::game::callback_dispatch! {
         11767726 => sm_b3::BrinstarYellowPipeBug_Main; 11769219 => sm_b3::Botwoon_Init;
         11771926 => sm_b3::Botwoon_Shot;
         11791130 => [()];
-        0xa20000..=0xa2ffff => [sm_a2::DispatchEnemyAi(ea, game)];
+        10652144 => [{
+            let index = game.cur_enemy_index();
+            let preinstruction = Runtime::new(game)
+                .resolve_actor(Key::from_legacy(index), AccessMode::LittleEndian)
+                .pre_instruction;
+            actor_species_pre_instruction(u32::from(preinstruction) | 0xa20000, game);
+        }];
+        10653138 => [{
+            if !crate::game::maridia_turtles::advance(false, game) { crate::rtl::Unreachable(game); }
+        }];
+        10653998 => [{
+            if !crate::game::maridia_turtles::advance(true, game) { crate::rtl::Unreachable(game); }
+        }];
+        10659396 => [crate::game::gunship::initialize_top(game)];
+        10659538 => [crate::game::gunship::initialize_bottom(game)];
+        10659673 => [{
+            let phase = crate::game::gunship::advance(game);
+            actor_species_pre_instruction(phase, game);
+        }];
+        10663426 => [crate::game::rinka::initialize(game)];
+        10663876 => [{
+            if !crate::game::rinka::advance(game) {
+                crate::rtl::Unreachable(game);
+            }
+        }];
+        10664263 => [crate::game::rinka::contact(game)];
+        10664269 => [crate::game::rinka::shot(game)];
+        10664909 => [crate::game::rio::initialize(game)];
+        10664931 => [{
+            game.next_random();
+            if !crate::game::rio::advance(game) {
+                crate::rtl::Unreachable(game);
+            }
+        }];
+        10669331 => [{
+            let action = large_snail::prepare(game);
+            match action {
+                0xcde6 | 0xce2b => {
+                    let walking = action == 0xce2b;
+                    let (raw, phase) = large_snail::begin_action(walking, game);
+                    if let Some(phase) = phase {
+                        actor_species_pre_instruction(0xa20000 | u32::from(phase), game);
+                    }
+                    if walking {
+                        large_snail::walk(raw, game);
+                    }
+                }
+                0xcf40 => large_snail::end_action(game),
+                _ => {
+                    crate::rtl::Unreachable(game);
+                }
+            }
+            large_snail::finish(game);
+        }];
+        10674643 => [rippers::initialize(RipperKind::Gripper, game)];
+        10674721 => [rippers::advance(RipperKind::Gripper, game)];
+        10674968 => [rippers::initialize(RipperKind::JetPowered, game)];
+        10675027 => [rippers::advance(RipperKind::JetPowered, game)];
+        10675113 => [rippers::jet_shot(game)];
+        10675359 => [rippers::initialize(RipperKind::Ripper, game)];
+        10675418 => [rippers::advance(RipperKind::Ripper, game)];
+        10657715 => [{
+            let phase = {
+                let runtime = Runtime::new(game);
+                runtime.resolve_actor(Key::from_legacy(runtime.word(0xe54)), actors::access::AccessMode::Native).pre_instruction
+            };
+            actor_species_pre_instruction(0xa20000 | u32::from(phase), game);
+        }];
+        10662880 => [crate::game::erratic_fireball::update(true, game)];
+        10662927 => [crate::game::erratic_fireball::update(false, game)];
+        10665625 => [crate::game::lava_jumper::initialize(game)];
+        10661995 => [crate::game::flies::initialize(game)];
+        10666562 => [crate::game::norfair_rio::initialize(false, game)];
+        10667763 => [crate::game::norfair_rio::initialize(true, game)];
+        10649615 => [actors::combat::select_frozen_ai(&mut Runtime::new(game))];
+        10649610 => [actors::combat::die(&mut Runtime::new(game), actors::api::DeathKind::Grapple)];
+        10649665 => [actors::scheduling::update_frozen_enemy(&mut Runtime::new(game))];
+        10649635 => [actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize)];
+        10649645 => [actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize)];
+        10670988 => [large_snail::touch(false, game)];
+        10671028 => large_snail::shot;
+        10658809 => ground_patrol::initialize_shell;
+        10658942 => ground_patrol::advance_shell;
+        10659193 => ground_patrol::shot_shell;
+        10674038 => [crate::game::rising_falling::update(true, game)];
+        10674222 => [crate::game::rising_falling::update(false, game)];
+        10675718 => crate::game::lava_seahorse_pair::initialize;
+        10675790 => [actor_species_pre_instruction(crate::game::lava_seahorse_pair::pre_instruction(game), game)];
+        10676168 => [{ actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];
+        10676174 => [{ actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];
+        10676180 => [{ actors::combat::power_bomb_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize); crate::game::lava_seahorse_pair::synchronize(game); }];
+        10663280 => [crate::game::lavaquake::update(true, game)];
+        10663311 => [crate::game::lavaquake::update(false, game)];
+        10653036 => [crate::game::maridia_turtles::initialize(false, game)];
+        10653085 => [crate::game::maridia_turtles::initialize(true, game)];
+        10654337 => [crate::game::maridia_turtles::touch(false, game)];
+        10654367 => [crate::game::maridia_turtles::touch(true, game)];
+        10654479 => crate::game::maridia_turtles::shot;
+        10657608 => ground_patrol::initialize_plant;
+        10652077 => crate::game::mini_crocomire::initialize;
+        10651420 => crate::game::goofball::initialize;
+        10651548 => crate::game::goofball::advance;
+        10662175 | 10665682 | 10666615 | 10667812 => [{
+            game.next_random();
+            let phase = {
+                let runtime = Runtime::new(game);
+                let key = Key::from_legacy(runtime.word(0xe54));
+                runtime.resolve_actor(key, AccessMode::Native).pre_instruction
+            };
+            actor_species_pre_instruction(0xa20000 | u32::from(phase), game);
+        }];
         0xa30000..=0xa3ffff => [sm_a3::DispatchEnemyAi(ea, game)];
         0xa40000..=0xa4ffff => [sm_a4::DispatchEnemyAi(ea, game)];
         0xa50000..=0xa5ffff => [sm_a5::DispatchEnemyAi(ea, game)];
@@ -731,7 +842,54 @@ crate::game::address_dispatch! {
         11195889 => sm_aa::Torizo_D5F1;
         11200474 => [()];
         11197611 => [()];
-        0xa20000..=0xa2ffff => [sm_a2::DispatchEnemyPreInstr(ea, k, game)];
+        10665692 => [crate::game::lava_jumper::follow_parent(k, game)];
+        10665754 => [crate::game::lava_jumper::launch(k, game)];
+        10665790 => [crate::game::lava_jumper::advance(k, crate::game::lava_jumper::Flight::Rising, game)];
+        10665852 => [crate::game::lava_jumper::advance(k, crate::game::lava_jumper::Flight::Turning, game)];
+        10665916 => [crate::game::lava_jumper::advance(k, crate::game::lava_jumper::Flight::Falling, game)];
+        10662222 => [crate::game::flies::circle(k, false, game)];
+        10662268 => [crate::game::flies::circle(k, true, game)];
+        10662314 => [crate::game::flies::dive(k, false, game)];
+        10662354 => [crate::game::flies::dive(k, true, game)];
+        10666625 => [crate::game::norfair_rio::follow_parent(k, false, game)];
+        10666727 => [crate::game::norfair_rio::wait_to_dive(k, false, game)];
+        10666815 => [crate::game::norfair_rio::finish_animation(k, false, false, game)];
+        10667014 => [crate::game::norfair_rio::finish_animation(k, false, true, game)];
+        10667822 => [crate::game::norfair_rio::follow_parent(k, true, game)];
+        10667889 => [crate::game::norfair_rio::wait_to_dive(k, true, game)];
+        10667963 => [crate::game::norfair_rio::finish_animation(k, true, false, game)];
+        10668168 => [crate::game::norfair_rio::finish_animation(k, true, true, game)];
+        10666849 => [crate::game::norfair_rio::dive(k, false, true, game)];
+        10666929 => [crate::game::norfair_rio::dive(k, false, false, game)];
+        10667990 => [crate::game::norfair_rio::dive(k, true, true, game)];
+        10668077 => [crate::game::norfair_rio::dive(k, true, false, game)];
+        10669926 => [large_snail::bounce(false, k, game)];
+        10669993 => [large_snail::bounce(true, k, game)];
+        10675796 | 10675885 | 10675953 | 10676020 | 10676041
+            => [crate::game::lava_seahorse_pair::phase(k, ea as u16, game)];
+        10657722 => [ground_patrol::advance_plant(false, game)];
+        10657772 => [ground_patrol::advance_plant(true, game)];
+        10652227 => [crate::game::mini_crocomire::patrol(false, game)];
+        10652252 => [crate::game::mini_crocomire::patrol(true, game)];
+        10659852 => [crate::game::gunship::phase(k, 0xa80c, game)];
+        10660048 => [crate::game::gunship::phase(k, 0xa8d0, game)];
+        10660162 => [crate::game::gunship::phase(k, 0xa942, game)];
+        10660176 => [crate::game::gunship::phase(k, 0xa950, game)];
+        10660231 => [crate::game::gunship::phase(k, 0xa987, game)];
+        10660285 => [crate::game::gunship::phase(k, 0xa9bd, game)];
+        10660431 => [crate::game::gunship::phase(k, 0xaa4f, game)];
+        10660445 => [crate::game::gunship::phase(k, 0xaa5d, game)];
+        10660500 => [crate::game::gunship::phase(k, 0xaa94, game)];
+        10660514 => [crate::game::gunship::phase(k, 0xaaa2, game)];
+        10660639 => [crate::game::gunship::phase(k, 0xab1f, game)];
+        10660704 => [crate::game::gunship::phase(k, 0xab60, game)];
+        10660718 => [crate::game::gunship::phase(k, 0xab6e, game)];
+        10660773 => [crate::game::gunship::phase(k, 0xaba5, game)];
+        10660807 => [crate::game::gunship::phase(k, 0xabc7, game)];
+        10660891 => [crate::game::gunship::phase(k, 0xac1b, game)];
+        10661079 => [crate::game::gunship::phase(k, 0xacd7, game)];
+        10661134 => [crate::game::gunship::phase(k, 0xad0e, game)];
+        10661165 => [crate::game::gunship::phase(k, 0xad2d, game)];
         0xa30000..=0xa3ffff => [sm_a3::DispatchEnemyPreInstr(ea, k, game)];
         0xa70000..=0xa7ffff => [sm_a7::DispatchEnemyPreInstr(ea, k, game)];
         0xa80000..=0xa8ffff => [sm_a8::DispatchEnemyPreInstr(ea, k, game)];
@@ -743,8 +901,8 @@ crate::game::address_dispatch! {
     unsafe fn actor_species_touch(ea: u32, game: &mut Game) => ea;
         call (game); default { crate::rtl::Unreachable(game); };
     {
-        10518563 => [actor_api::contact_reaction(&mut Runtime::new(game), actor_api::DeathHandling::Finalize)]; 10670984 => sm_a2::MaridiaLargeSnail_Func_12;
-        10670988 => sm_a2::MaridiaLargeSnail_Touch; 10780707 => sm_a4::Enemy_NormalTouchAI_A4;
+        10518563 => [actor_api::contact_reaction(&mut Runtime::new(game), actor_api::DeathHandling::Finalize)]; 10670984 => [crate::game::large_snail::touch(true, game)];
+        10670988 => [crate::game::large_snail::touch(false, game)]; 10780707 => sm_a4::Enemy_NormalTouchAI_A4;
         10795325 => sm_a4::Crocomire_Func_92; 10795344 => [()]; 10846284 => [()];
         10851818 => sm_a5::Draygon_Touch; 10874348 => sm_a5::SporeSpawn_Touch;
         10936153 => sm_a6::sub_A6DF59; 10940479 => crate::game::ceres_doors::steam_touch; 10977356 => [()];
@@ -761,7 +919,7 @@ crate::game::callback_dispatch! {
         10518573 => [actor_api::shot_reaction(&mut Runtime::new(game), actor_api::ShotHandling::Finalize)];
         10846278 => [actor_api::create_dud(&mut Runtime::new(game))];
         10649676 => [()];
-        10671028 => sm_a2::MaridiaLargeSnail_Shot; 10780717 => sm_a4::Enemy_NormalShotAI_A4;
+        10671028 => crate::game::large_snail::shot; 10780717 => sm_a4::Enemy_NormalShotAI_A4;
         10795345 => sm_a4::Crocomire_Func_93; 10795368 => sm_a4::Crocomire_Func_94;
         10795525 => sm_a4::Crocomire_Func_95; 10795700 => sm_a4::Crocomire_Func_1;
         10846253 => sm_a5::Enemy_NormalShotAI_A5; 10846284 => [()];
@@ -796,7 +954,52 @@ crate::game::callback_dispatch! {
         11139472 => [sm_a9::Shitroid_Instr_6(k, j)];
         11190984 => [sm_aa::Torizo_Instr_7(k, j)];
         11196831 => [sm_aa::Shaktool_Instr_6(k, j)];
-        0xa20000..=0xa2ffff => [sm_a2::DispatchEnemyInstr(ea, k, j, game)];
+        10664371 => [{
+            crate::game::rinka::hide(k, false, game);
+            j
+        }];
+        10664381 => [{
+            crate::game::rinka::hide(k, true, game);
+            j
+        }];
+        10664391 => [{
+            crate::game::rinka::launch(k, game);
+            j
+        }];
+        10664899 => [{
+            crate::game::rio::instruction_finished(game);
+            j
+        }];
+        10665614 => [{
+            crate::game::lava_jumper::instruction_finished(game);
+            j
+        }];
+        10668907 => [{ crate::game::music::QueueSfx2_Max6(0xe, game); j }];
+        10669235 => [{ large_snail::script_flag(4, 1, game); j }];
+        10669246 => [{ large_snail::script_flag(6, 1, game); j }];
+        10669257 => [{ large_snail::script_flag(6, 0, game); j }];
+        10675707 => [crate::game::lava_seahorse_pair::fire_ready(j, game)];
+        10666441 | 10666452 | 10666463 | 10666474 | 10666485 | 10666496 | 10666507
+        | 10666518 | 10666529 | 10666540 | 10666551 | 10667730 | 10667741 | 10667752
+            => [crate::game::norfair_rio::instruction(ea, j, game)];
+        10654593 => [crate::game::maridia_turtles::instruction(0x9381, j, game)];
+        10654738 => [crate::game::maridia_turtles::instruction(0x9412, j, game)];
+        10654791 => [crate::game::maridia_turtles::instruction(0x9447, j, game)];
+        10654801 => [crate::game::maridia_turtles::instruction(0x9451, j, game)];
+        10654827 => [crate::game::maridia_turtles::instruction(0x946b, j, game)];
+        10654853 => [crate::game::maridia_turtles::instruction(0x9485, j, game)];
+        10654881 => [crate::game::maridia_turtles::instruction(0x94a1, j, game)];
+        10654919 => [crate::game::maridia_turtles::instruction(0x94c7, j, game)];
+        10654929 => [{ crate::game::music::QueueSfx2_Max6(0x3a, game); j }];
+        10657578 => [{ crate::game::music::QueueSfx2_Max6(0x34, game); j }];
+        10659181 => [{ ground_patrol::direct_shell(k, 0, game); j }];
+        10659185 => [{ ground_patrol::direct_shell(k, 1, game); j }];
+        10657941 => [{ ground_patrol::resume_plant(k, game); j }];
+        10657959 => [crate::game::enemy_projectiles::spawn_scripted(0xdafe, j, game)];
+        10652030 => [crate::game::enemy_projectiles::spawn_scripted(0xdbf2, j, game)];
+        10652048 => [crate::game::mini_crocomire::resume(false, j, game)];
+        10652061 => [crate::game::mini_crocomire::resume(true, j, game)];
+        10651846 => [crate::game::goofball::landed(j, game)];
         0xa30000..=0xa3ffff => [sm_a3::DispatchEnemyInstr(ea, k, j, game)];
         0xa40000..=0xa4ffff => [sm_a4::DispatchEnemyInstr(ea, k, j, game)];
         0xa50000..=0xa5ffff => [sm_a5::DispatchEnemyInstr(ea, k, j, game)];

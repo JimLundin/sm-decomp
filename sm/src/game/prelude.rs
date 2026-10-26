@@ -27,5 +27,4 @@ pub use crate::types::{
     SpawnHdmaObject_Args, TileTable, TileTables, VoidP, VramWriteEntry, Vulnerability, size_t,
 };
 pub(crate) use ::core::ffi::{c_char, c_long, c_void};
-pub(crate) use ::core::mem::transmute;
 pub(crate) use ::core::ptr::{null, null_mut};

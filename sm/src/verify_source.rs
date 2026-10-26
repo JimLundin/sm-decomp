@@ -144,6 +144,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/scanline_irq.rs"),
     ),
     (
+        "sm/src/game/large_snail.rs",
+        include_bytes!("game/large_snail.rs"),
+    ),
+    (
         "sm/src/game/ground_patrol.rs",
         include_bytes!("game/ground_patrol.rs"),
     ),
@@ -1220,7 +1224,6 @@ pub static FILES: &[(&str, &[u8])] = &[
     ("sm/src/game/sm_82.rs", include_bytes!("game/sm_82.rs")),
     ("sm/src/game/sm_8b.rs", include_bytes!("game/sm_8b.rs")),
     ("sm/src/game/sm_9b.rs", include_bytes!("game/sm_9b.rs")),
-    ("sm/src/game/sm_a2.rs", include_bytes!("game/sm_a2.rs")),
     ("sm/src/game/sm_a3.rs", include_bytes!("game/sm_a3.rs")),
     ("sm/src/game/sm_a4.rs", include_bytes!("game/sm_a4.rs")),
     ("sm/src/game/sm_a5.rs", include_bytes!("game/sm_a5.rs")),

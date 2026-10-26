@@ -974,3 +974,14 @@ input_sha256 = "344e9a8d6654c87f8b7470205e2313a8f3e8c3350f79e3ad3e7350f87f2c1442
 start_frame = 0
 frames = 11790
 expect = ["credits-complete"]
+
+# Fixed window includes the first Gunship bob at input frame 274.
+[[segment]]
+id = "gunship-bobbing-cycle"
+seed = "100-input-phase:12"
+seed_sha256 = "cebb82e3b4a7ba2c89aec1b5f783c160a6dc857dd5a72b65fc8a784c954215ae"
+inputs = "seed-area-crateria.inputs"
+input_sha256 = "3d0413b939faefc465e96ea037b4c7a9bdc019cdd975562348be445e6631043d"
+start_frame = 0
+frames = 300
+expect = ["area:crateria", "room:91F8"]

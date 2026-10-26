@@ -461,6 +461,7 @@ pub mod game {
     pub(crate) mod flies;
     pub(crate) mod ground_patrol;
     pub(crate) mod hopping_blobs;
+    pub(crate) mod large_snail;
     pub(crate) mod lava_jumper;
     pub(crate) mod lava_seahorse_pair;
     pub(crate) mod lavaquake;
@@ -473,7 +474,6 @@ pub mod game {
     pub(crate) mod rippers;
     pub(crate) mod rising_falling;
     pub mod sm_9b;
-    pub mod sm_a2;
     pub mod sm_a3;
     pub mod sm_a4;
     pub mod sm_a5;

@@ -60,7 +60,7 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
    VRAM read-buffer, CGRAM-low and Mode7 latch values. No invented register defaults.
    Existing required rows and expectations remain intact; hosted verification and
    the combined full corpus are separate obligations, not inferred from this result.
-   **A2 complete:** 68/82 rows use original seeds, thirteen use hash-bound native/oracle
+   **A2 complete:** 69/83 rows use original seeds, thirteen use hash-bound native/oracle
    checkpoints, and only the full 8780-frame intro boots with zero setup. The existing
    runner and encrypted 22-asset bundle preserve full inputs, original windows,
    guards, both Kago setup encounters and all twelve previously distributed assets.
@@ -76,11 +76,12 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
    B1 sm_80 is retired with checked gameplay and retained backend contracts;
    its affected rows pass, and B1 continues sm_82. B2 continues sm_8b after
    consolidating the checked credits interpreter; cloud-motion rows are `credits`,
-   `credits-postroll-wave` and the four smoke rows. B3 continues sm_a2 after
-   Rinka/Gunship, then sm_a3. Non-enemy banks aim at most 80% replacement size.
+   `credits-postroll-wave` and the four smoke rows. B3 sm_a2 is retired after
+   the complete Snail interaction; B3 continues sm_a3. Non-enemy banks aim at most 80% replacement size.
    Windows M is now B4: retire sm_a8 families, then sm_b3.
-   B3's final sm_a2 retirement is source-reviewed; local rows and the scoped bank
-   mutation campaign precede landing, then the full 82-row corpus runs on main.
+   B3 sm_a2 retirement passes 39 local rows and the scoped bank mutation campaign.
+   The new fixed 300-frame Gunship row detects bobbing beyond the entry tail;
+   the full 83-row corpus runs on main after landing. Goofball macro sensitivity is open.
    No further in-place bank codemods; cloud M moves to unsafe outside bank files.
    A2 seeds remaining authored rows; bundle shard grouping is integrated.
    B5/B6 cloud queues continue sm_a9/sm_a6, then sm_aa/sm_a7.
