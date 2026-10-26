@@ -317,37 +317,20 @@ pub unsafe fn HandleConnectingGrapple(game: &mut Game) {
             word!(game.grapple_beam_length_delta = 0);
         } else {
             let v1: i32 = 2 * word!(game.grapple_beam_direction) as i32;
-            if word!(game.samus_y_speed) != 0 || word!(game.samus_y_subspeed) != 0 {
-                word!(
-                    game.grapple_beam_function =
-                        crate::rtl::rom_table_word!(game, 0x9bc3ee, v1 as isize)
-                );
-                CallGrappleNextFunc(
-                    ((crate::rtl::rom_table_word!(game, 0x9bc3ee, (v1 + 1) as isize)) as u32)
-                        | (0x9b0000u32),
-                    game,
-                );
+            let table = if word!(game.samus_y_speed) != 0 || word!(game.samus_y_subspeed) != 0 {
+                0x9bc3ee
             } else if *ram_ptr!(game; 0xa1f) == 5 {
-                word!(
-                    game.grapple_beam_function =
-                        crate::rtl::rom_table_word!(game, 0x9bc416, v1 as isize)
-                );
-                CallGrappleNextFunc(
-                    ((crate::rtl::rom_table_word!(game, 0x9bc416, (v1 + 1) as isize)) as u32)
-                        | (0x9b0000u32),
-                    game,
-                );
+                0x9bc416
             } else {
-                word!(
-                    game.grapple_beam_function =
-                        crate::rtl::rom_table_word!(game, 0x9bc3c6, v1 as isize)
-                );
-                CallGrappleNextFunc(
-                    ((crate::rtl::rom_table_word!(game, 0x9bc3c6, (v1 + 1) as isize)) as u32)
-                        | (0x9b0000u32),
-                    game,
-                );
-            }
+                0x9bc3c6
+            };
+            word!(
+                game.grapple_beam_function = crate::rtl::rom_table_word!(game, table, v1 as isize)
+            );
+            CallGrappleNextFunc(
+                u32::from(crate::rtl::rom_table_word!(game, table, (v1 + 1) as isize)) | 0x9b0000,
+                game,
+            );
         };
     }
 }

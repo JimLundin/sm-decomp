@@ -103,6 +103,8 @@ jobs:
               if unknown:
                   raise SystemExit(f'unknown rows: {sorted(unknown)}')
           def seed_bundle(row):
+              if row['id'] == 'samus-grapple-connect-swing':
+                  return ('CONNECT-e5c5a415-9.tar.gz.enc', 'fefac98ed43a3f3529349fa7d40dd469c353bd68dc1e697bba7f2f967ca06501')
               if row['id'] == 'xray-activate-release':
                   return ('seeds-v1-xray-activation-9c5ad92da3d5d2dc.tar.gz.enc', '9c5ad92da3d5d2dc13cfae2e2a0906ca915b2329767f121183190d2ab96c25bc')
               if 'checkpoint' in row:
