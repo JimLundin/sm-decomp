@@ -19,6 +19,7 @@ pub(crate) mod movement_verification;
 #[path = "../../verification/actor_population_animation_entry.rs"]
 pub(crate) mod reference_population_animation;
 pub(in crate::game) mod refill_candy;
+pub(in crate::game) mod roach;
 pub(in crate::game) mod scene;
 pub(in crate::game) mod sidehopper;
 pub(crate) mod snapshot;

@@ -1,7 +1,7 @@
 //! One aggregate authority for player, projectiles, mechanisms and their room.
 use crate::game::actors::diving_enemies::{self, Kind as DivingKind};
 use crate::game::actors::{
-    elevator, falling_platforms, maridia_fish, mochtroid, refill_candy, sidehopper,
+    elevator, falling_platforms, maridia_fish, mochtroid, refill_candy, roach, sidehopper,
 };
 use crate::game::player_projectiles::{
     access::{ShotLane, Store},
@@ -614,8 +614,8 @@ crate::game::callback_dispatch! {
         10725245 => mochtroid::initialize; 10725264 => mochtroid::advance; 10725715 => mochtroid::touch;
         10725800 => [actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize)];
         10723079 => [()];
-        10723661 => sm_a3::Roach_Init;
-        10724048 => sm_a3::Roach_Main;
+        10723661 => roach::initialize;
+        10724048 => roach::advance;
         10726153 => sidehopper::initialize; 10726351 => sidehopper::advance;
         10728522 => refill_candy::initialize; 10728572 => refill_candy::advance;
         10733230 => [diving_enemies::initialize(DivingKind::Skree, game)]; 10733255 => [diving_enemies::advance(DivingKind::Skree, game)];

@@ -5,9 +5,7 @@ use crate::game::enemy_projectiles::{DropSource, scatter_drop as scatter};
 use crate::game::enemy_script::EnemyScript;
 pub use crate::game::prelude::*;
 use crate::game::session_runtime::{Runtime, actor_species_pre_instruction};
-use crate::game::session_runtime::{
-    actor_cosine, actor_cosine_full, actor_direction_vector, actor_sine, actor_sine_full,
-};
+use crate::game::session_runtime::{actor_cosine, actor_sine};
 use crate::game::visual_runtime::darken_fireflea_room;
 
 use crate::cpu_infra::Call;
@@ -52,7 +50,7 @@ crate::game::constants::typed_constants! { Consts_A3;
 }
 
 crate::type_aliases! {
-    pub Enemy_Bang, Enemy_MaridiaSnail, Enemy_Roach =
+    pub Enemy_Bang, Enemy_MaridiaSnail =
         crate::game::enemy_layouts::EnemyLayout72;
 }
 
@@ -85,7 +83,6 @@ crate::ram_map::ram_pointer_functions! {
     Get_MaridiaSnail(o: i32) -> Enemy_MaridiaSnail = [0xf78, o as isize];
     Get_Metroid(o: i32) -> Enemy_Metroid = [0xf78, o as isize];
     Get_Reflec(o: i32) -> Enemy_Reflec = [0xf78, o as isize];
-    Get_Roach(o: i32) -> Enemy_Roach = [0xf78, o as isize];
     Get_StoneZoomer(o: i32) -> Enemy_StoneZoomer = [0xf78, o as isize];
     Get_WreckedShipOrangeZoomer(o: i32) -> Enemy_WreckedShipOrangeZoomer = [0xf78, o as isize];
 }
@@ -230,271 +227,6 @@ crate::game::callback_dispatch! {
     };
     MaridiaFish_Main [] {
         CallMaridiaFishFunc((((*E).var_A) as u32) | (0xa30000u32), game);
-    };
-}
-macro_rules! set_roach_trigonometric_velocity {
-    (
-        $enemy:ident, $cosine_high:ident, $cosine_low:ident, $angle_adjust:ident, $game:ident,
-        $sine_high:ident, $sine_low:ident $(,)?
-    ) => {
-        words!(
-            (*$enemy),
-            $cosine_high,
-            $cosine_low = actor_cosine_full(
-                ((byte!((*$enemy).parameter_1; 1isize)).$angle_adjust(32)) as u16,
-                byte!((*$enemy).parameter_1; 0) as u16,
-                $game,
-            )
-        );
-        words!(
-            (*$enemy),
-            $sine_high,
-            $sine_low = actor_sine_full(
-                ((byte!((*$enemy).parameter_1; 1isize)).$angle_adjust(32)) as u16,
-                byte!((*$enemy).parameter_1; 0) as u16,
-                $game,
-            )
-        );
-    };
-}
-
-crate::game::callback_dispatch! {
-    pub unsafe fn CallRoachFunc(ea: u32, game: &mut Game) => ea;
-    call (game); default { Unreachable(game); };
-    @functions [pub unsafe fn (game: &mut Game)];
-    [10724097] Roach_Func_10 [] {
-        (*Get_Roach(word!(game.cur_enemy_index) as i32, game)).var_B = (0xa3a407i32) as u16;
-    };
-    [10724107] Roach_Func_11 [] {
-        (*Get_Roach(word!(game.cur_enemy_index) as i32, game)).var_B = (0xa3a40ei32) as u16;
-    };
-    [10724117] Roach_Func_12 [] {
-        word!(game.random_number = 11);
-        (*Get_Roach(word!(game.cur_enemy_index) as i32, game)).var_B = (0xa3a4f0i32) as u16;
-    };
-    [10724171] Roach_Func_15 [] {
-        let v1: u8 = (64u8).wrapping_sub(
-            ({ let actor = word!(game.cur_enemy_index); actor_api::angle_to_player(&Runtime::new(game), Key::from_legacy(actor)) }) as u8,
-        );
-        let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_C = v1 as u16;
-        Roach_Func_18(word!(game.cur_enemy_index), game);
-        Roach_Func_17(word!(game.cur_enemy_index), game);
-        (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, ((*E).var_23 >> 1) as isize);
-        Roach_Func_1(game);
-        (*E).var_B = (0xa3a440i32) as u16;
-    };
-    [10724224] Roach_Func_16 [] {
-        let v1: u16 = (64
-            - ({ let actor = word!(game.cur_enemy_index); actor_api::angle_to_player(&Runtime::new(game), Key::from_legacy(actor)) }) as i32
-            + 0x80) as u8 as u16;
-        let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_C = v1;
-        Roach_Func_18(word!(game.cur_enemy_index), game);
-        Roach_Func_17(word!(game.cur_enemy_index), game);
-        (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, ((*E).var_23 >> 1) as isize);
-        Roach_Func_1(game);
-        (*E).var_B = (0xa3a447i32) as u16;
-    };
-    [10724359] Roach_Func_19 [] {
-        Roach_Func_29(word!(game.cur_enemy_index), game);
-    };
-    [10724534] Roach_Func_26 [] {
-        let v1: u8 = ((game.next_random()) as u8).wrapping_sub(64);
-        let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_C = ((*E).var_C).wrapping_add((v1) as u16);
-        Roach_Func_18(word!(game.cur_enemy_index), game);
-        Roach_Func_17(word!(game.cur_enemy_index), game);
-        (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, ((*E).var_23 >> 1) as isize);
-        Roach_Func_1(game);
-        (*E).var_F = 32;
-        (*E).var_B = (0xa3a476i32) as u16;
-    };
-    [10724592] Roach_Func_27 [] {
-        let v1: u8 = ((game.next_random()) as u8).wrapping_sub(64);
-        let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_C = ((*E).var_C).wrapping_add((v1) as u16);
-        Roach_Func_18(word!(game.cur_enemy_index), game);
-        Roach_Func_17(word!(game.cur_enemy_index), game);
-        (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, ((*E).var_23 >> 1) as isize);
-        Roach_Func_1(game);
-        (*E).var_F = 32;
-        (*E).var_B = (0xa3a462i32) as u16;
-    };
-    @functions [pub unsafe fn (game: &mut Game)];
-    @prefix { let E = Get_Roach(word!(game.cur_enemy_index) as i32, game); };
-    Roach_Func_1 [] {
-        let roach_var_24: u16 = (*E).var_24;
-        if roach_var_24 != (*E).var_25 {
-            (*E).var_25 = roach_var_24;
-            enemy_instruction! {[(*E).base]; instruction = roach_var_24, timer = 1}
-            (*E).base.timer = 0;
-        }
-    };
-    Roach_Init [] {
-        set_fields! {[(*E)], 0; var_25, var_24}
-        Roach_Func_2(word!(game.cur_enemy_index), game);
-        Roach_Func_4(word!(game.cur_enemy_index), game);
-        Roach_Func_5(word!(game.cur_enemy_index), game);
-        Roach_Func_6(word!(game.cur_enemy_index), game);
-        Roach_Func_7(word!(game.cur_enemy_index), game);
-        Roach_Func_8(word!(game.cur_enemy_index), game);
-        (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, ((*E).var_20 >> 1) as isize);
-        Roach_Func_1(game);
-        (*E).var_B = (0xa3a2d7i32) as u16;
-    };
-    Roach_Main [] {
-        CallRoachFunc((((*E).var_B) as u32) | (0xa30000u32), game);
-    };
-    [10724055] Roach_Func_9 [] {
-        if ({ let (actor, distance) = (word!(game.cur_enemy_index), byte!((*E).parameter_2; 0) as u16); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::X, distance)) }) != 0
-            && ({ let (actor, distance) = (word!(game.cur_enemy_index), byte!((*E).parameter_2; 0) as u16); u16::from(actor_api::player_within(&mut Runtime::new(game), Key::from_legacy(actor), actor_api::Axis::Y, distance)) }) != 0
-        {
-            (*E).var_B = crate::rtl::rom_table_word!(
-                game,
-                0xa3a121,
-                *(&raw mut (*E).parameter_2 as *mut u8).offset(1) as isize
-            );
-        }
-    };
-    [10724133] Roach_Func_13 [] {
-        (*E).var_A = 512;
-        word!(game.random_number = 11);
-        (*E).var_B = (0xa3a4b6i32) as u16;
-    };
-    [10724155] Roach_Func_14 [] {
-        (*E).var_F = 32;
-        (*E).var_B = (0xa3a44ei32) as u16;
-    };
-    [10724366] Roach_Func_20 [] {
-        if ((*E).base.frame_counter & 0x10) != 0 {
-            (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, ((*E).var_22 >> 1) as isize);
-            Roach_Func_1(game);
-            Roach_Func_31(word!(game.cur_enemy_index), game);
-        } else {
-            (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, ((*E).var_21 >> 1) as isize);
-            Roach_Func_1(game);
-            Roach_Func_30(word!(game.cur_enemy_index), game);
-        };
-    };
-    [10724470] Roach_Func_25 [] {
-        (*E).var_A = (*E).var_A.wrapping_sub(1);
-        let mut v2: bool = ((*E).var_A & 0x8000) != 0;
-        if !v2 {
-            (*E).var_F = (*E).var_F.wrapping_sub(1);
-            v2 = ((*E).var_F & 0x8000) != 0;
-            if !v2 {
-                let v3: u16 = abs16(((*E).base.x_pos).wrapping_sub(word!(game.samus_x_pos)));
-                if v3 as i32 - 96i32 & 0x8000 == 0 {
-                    let v4: u16 = abs16(((*E).base.y_pos).wrapping_sub(word!(game.samus_y_pos)));
-                    if v4 as i32 - 96i32 & 0x8000 == 0 {
-                        Roach_Func_28(game);
-                    }
-                }
-            } else {
-                (*E).var_B = (0xa3a4b6i32) as u16;
-                return;
-            }
-        }
-        Roach_Func_32(word!(game.cur_enemy_index), game);
-    };
-    Roach_Func_28 [] {
-        (*E).var_0D = -((*E).var_0D as i32) as u16;
-        (*E).var_0C = -((*E).var_0C as i32) as u16;
-        (*E).var_0F = -((*E).var_0F as i32) as u16;
-        (*E).var_0E = -((*E).var_0E as i32) as u16;
-        let v1: u16 = ((*E).var_23 as i32 + 4 & 7) as u16;
-        (*E).var_23 = v1;
-        (*E).var_24 = crate::rtl::rom_table_word!(game, 0xa3a111, (v1 >> 1) as isize);
-        Roach_Func_1(game);
-    };
-    @forward [pub unsafe fn (game: &mut Game)];
-    [10724416] Roach_Func_21 => Roach_Func_32(word!(game.cur_enemy_index), game);
-    [10724423] Roach_Func_22 => Roach_Func_32(word!(game.cur_enemy_index), game);
-    @countdown [pub unsafe fn (game: &mut Game)];
-    before {
-        let E = Get_Roach(word!(game.cur_enemy_index) as i32, game);
-        (*E).var_F = (*E).var_F.wrapping_sub(1);
-    }
-    when ((*E).var_F & 0x8000) != 0;
-    [10724430] Roach_Func_23 {
-        (*E).var_B = (0xa3a2d7i32) as u16;
-    } else {
-        Roach_Func_29(word!(game.cur_enemy_index), game);
-    } after { ; };
-    [10724450] Roach_Func_24 {
-        (*E).var_B = (0xa3a4f0i32) as u16;
-    } else {
-        Roach_Func_33(word!(game.cur_enemy_index), game);
-    } after { ; };
-}
-crate::prefixed_callbacks! {
-    pub unsafe fn (k: u16, game: &mut Game);
-    @prefix { let E = Get_Roach(k as i32, game); };
-    Roach_Func_2 [] {
-        let pt: Vector32 = actor_direction_vector(
-            byte!((*E).parameter_1; 1) as u16,
-            byte!((*E).parameter_1; 0) as u16,
-            game,
-        );
-        words!((*E), var_01, var_00 = pt.x);
-        words!((*E), var_03, var_02 = pt.y);
-    };
-    Roach_Func_4 [] {
-        set_roach_trigonometric_velocity!(E, var_05, var_04, wrapping_sub, game, var_07, var_06);
-    };
-    Roach_Func_5 [] {
-        set_roach_trigonometric_velocity!(E, var_09, var_08, wrapping_add, game, var_0B, var_0A);
-    };
-    Roach_Func_6 [] {
-        (*E).var_20 = (2 * (((byte!((*E).parameter_1; 1isize)).wrapping_sub(48)) as i32 >> 5)) as u16;
-    };
-    Roach_Func_7 [] {
-        (*E).var_21 = (2 * (((byte!((*E).parameter_1; 1isize)).wrapping_sub(80)) as i32 >> 5)) as u16;
-    };
-    Roach_Func_8 [] {
-        (*E).var_22 = (2 * ((byte!((*E).parameter_1; 1) as i32 - 48i32 + 32) as u8 as i32 >> 5)) as u16;
-    };
-    Roach_Func_17 [] {
-        (*E).var_23 = (2 * (((((*E).var_C) as u8).wrapping_sub(48)) as i32 >> 5)) as u16;
-    };
-    Roach_Func_18 [] {
-        words!(
-            (*E),
-            var_0D,
-            var_0C = actor_cosine_full((*E).var_C, byte!((*E).parameter_1; 0) as u16, game)
-        );
-        words!(
-            (*E),
-            var_0F,
-            var_0E = actor_sine_full((*E).var_C, byte!((*E).parameter_1; 0) as u16, game)
-        );
-    };
-    Roach_Func_29 [] {
-        let varE20: u16 = byte!((*E).parameter_1; 1) as u16;
-        ({ let (phase, point) = (varE20, Vector32 {
-                x: words!((*E), var_01, var_00),
-                y: words!((*E), var_03, var_02),
-            }); Runtime::new(game).session_mut().compatibility_enemy_scratch = phase; actor_api::apply_vector(&mut Runtime::new(game), phase, point) });
-    };
-    Roach_Func_30 [] {
-        words!((*E).base, x_pos, x_subpos += words!((*E), var_05, var_04));
-        words!((*E).base, y_pos, y_subpos += words!((*E), var_07, var_06));
-    };
-    Roach_Func_31 [] {
-        words!((*E).base, x_pos, x_subpos += words!((*E), var_09, var_08));
-        words!((*E).base, y_pos, y_subpos += words!((*E), var_0B, var_0A));
-    };
-    Roach_Func_32 [] {
-        words!((*E).base, x_pos, x_subpos += words!((*E), var_0D, var_0C));
-        words!((*E).base, y_pos, y_subpos += words!((*E), var_0F, var_0E));
-    };
-    Roach_Func_33 [] {
-        if ({ let (actor, amount) = (k, (words!((*E), var_0D, var_0C)) as i32); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            (*E).var_B = (0xa3a2d7i32) as u16;
-        } else if ({ let (actor, amount) = (k, (words!((*E), var_0F, var_0E)) as i32); (actor_api::move_vertical(&mut Runtime::new(game), Key::from_legacy(actor), amount) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            (*E).var_B = (0xa3a2d7i32) as u16;
-        }
     };
 }
 pub fn Bang_Func_7(k: u16) {}
