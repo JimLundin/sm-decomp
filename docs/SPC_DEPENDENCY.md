@@ -9,7 +9,7 @@ requires repeating the comparisons against maintained Rust.
 Only `spc.c` is compiled. Its nine transitive project headers are also pinned:
 **2,104 external C/header lines** in total. They are independently published
 code, not project implementation moved outside the count. Keep
-[the 2021 MIT license](../third_party/lakesnes/LICENSE-SPC-2021.txt) with builds.
+[the 2021 MIT license](../THIRD_PARTY_NOTICES.md#lakesnes-ppu-dsp-and-spc700) with builds.
 The CPU dependency continues using its separate, existing revision and license.
 
 The Rust `Spc` layout, allocation, reset read order, 15-byte legacy save span,
@@ -58,7 +58,7 @@ separately by the PPU change. Local reproduction inputs and logs are under
 
 The native music engine uses selected routines from
 [snesrev/zelda3 at 45a149d8b4bb8098f53d1009f76e76e7d8b79bbf](https://github.com/snesrev/zelda3/tree/45a149d8b4bb8098f53d1009f76e76e7d8b79bbf).
-Keep the [Zelda3 MIT notice](../third_party/zelda3/LICENSE.txt) with distributed
+Keep the [Zelda3 MIT notice](../THIRD_PARTY_NOTICES.md#snesrevzelda3) with distributed
 binaries. This dependency is separate from the SPC interpreter above: native
 music behavior remains fixed independently of uploaded SPC instruction bytes.
 

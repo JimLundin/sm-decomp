@@ -4,7 +4,7 @@ Configuration parsing, keyboard/gamepad mapping and byte-string/file helpers
 use selected [Zelda3 sources](https://github.com/snesrev/zelda3/tree/45a149d8b4bb8098f53d1009f76e76e7d8b79bbf/src)
 at revision `45a149d8b4bb8098f53d1009f76e76e7d8b79bbf`. Current Rust defines the
 behavior; the installer applies explicit compatibility changes to that pin.
-Include the [MIT notice](../third_party/zelda3/LICENSE.txt) with distributed binaries.
+Include the [MIT notice](../THIRD_PARTY_NOTICES.md#snesrevzelda3) with distributed binaries.
 
 Install alongside the existing SDL/native libraries:
 

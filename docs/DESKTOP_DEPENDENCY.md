@@ -4,7 +4,7 @@ Window management, SDL presentation, keyboard/gamepad commands, frame scheduling
 performance digits and audio buffering use selected [Zelda3 desktop routines](https://github.com/snesrev/zelda3/blob/45a149d8b4bb8098f53d1009f76e76e7d8b79bbf/src/main.c).
 The revision is `45a149d8b4bb8098f53d1009f76e76e7d8b79bbf`; current Rust defines
 the behavior and the installer applies explicit compatibility changes.
-Distribute the [Zelda3 MIT notice](../third_party/zelda3/LICENSE.txt) with binaries.
+Distribute the [Zelda3 MIT notice](../THIRD_PARTY_NOTICES.md#snesrevzelda3) with binaries.
 
 Install alongside SDL and the other native libraries:
 

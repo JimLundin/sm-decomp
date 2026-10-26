@@ -32,17 +32,24 @@ they exercise; other paths remain to be checked.
 
 ## Credits and licence
 
-Game logic, runtime and SNES emulation come from snesrev/sm (MIT, see
-[its license](third_party/snesrev/LICENSE.txt)), translated to Rust with c2rust.
-The hardware adapters link unmodified LakeSnes code under its
-[CPU license](third_party/lakesnes/LICENSE.txt) and
-[PPU/DSP license](third_party/lakesnes/LICENSE-2022.txt) and
-[SPC license](third_party/lakesnes/LICENSE-SPC-2021.txt). PNG decoding uses
-stb_image under its [MIT license](third_party/stb_image/LICENSE.txt).
-Native music, configuration, utilities, shaders and the desktop host use
-selected Zelda3 routines with maintained SM compatibility changes under the
-[Zelda3 MIT license](third_party/zelda3/LICENSE.txt).
-Names and labels also draw on Patrick Johnston's
-[bank logs](https://patrickjohnston.org/bank/). Original contributions in this
-repository are MIT ([LICENSE](LICENSE)). Super Metroid is a trademark of
-Nintendo; no ROM or game data is included.
+The following projects supply translated or linked code; their applicable
+copyright and license notices are retained in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+| Project | Code used here |
+| --- | --- |
+| [snesrev/sm](https://github.com/snesrev/sm/tree/578f90b3cc49557bb70060ad033bb90b8cf8ac50) | One-time Rust translation of gameplay, runtime and SNES emulation; [translation record](tools/transpile/README.md). |
+| LakeSnes: [CPU](https://github.com/dinkc64/LakeSnes/tree/048a0d72568668f74e0cdf371dcd9e8efd614965), [PPU/DSP](https://github.com/angelo-wf/LakeSnes/tree/28b8fbc15ad15afff003165ff4f2a8adb1c93d18), [SPC700](https://github.com/elzo-d/LakeSnes/tree/1da16a22db4d0f2e7f6960a9846ef4e1f3acbd29) | Pinned native hardware implementations, fetched by [the installer](tools/install_lakesnes.py) and linked into builds. |
+| [snesrev/zelda3](https://github.com/snesrev/zelda3/tree/45a149d8b4bb8098f53d1009f76e76e7d8b79bbf) | Selected music, configuration, utility, shader and desktop routines with maintained SM compatibility changes. |
+| [stb_image 2.26](https://crates.io/crates/stb-sys/0.6.0) | PNG decoder implementation; [source pins and build instructions](docs/PNG_DEPENDENCY.md). |
+
+Tools and reference material: [c2rust](https://github.com/immunant/c2rust)
+performed the original translation; Patrick Johnston's
+[bank logs](https://patrickjohnston.org/bank/) inform names and labels;
+[lsnes](https://tasvideos.org/EmulatorResources/Lsnes) and
+[Snes9x](https://github.com/snes9xgit/snes9x) provide independent replay and
+snapshot observations. These credits do not imply their implementations are
+bundled with this repository.
+
+Original contributions are MIT ([LICENSE](LICENSE)). Super Metroid is a
+trademark of Nintendo; no ROM or game data is included.

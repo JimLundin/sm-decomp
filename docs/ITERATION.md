@@ -17,7 +17,7 @@ Their source
 caches default under `%LOCALAPPDATA%` on Windows or `$XDG_CACHE_HOME`/`~/.cache`
 on Linux; `--prefix` overrides the cache. Keep archives for different targets in
 separate directories on `LIBRARY_PATH`. Upstream versions and
-licenses are indexed in [third_party](../third_party/README.md).
+licenses are collected in [third-party notices](../THIRD_PARTY_NOTICES.md).
 
 Supply an unheadered Super Metroid (Japan, USA) (En,Ja) ROM at `rom/sm.smc`
 (SHA-1 `da957f0d63d14cb441d215462904c4fa8519c613`). No ROM or game data is included.

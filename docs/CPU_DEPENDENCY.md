@@ -18,7 +18,7 @@ The installer checks every downloaded file against its pinned SHA256 and builds
 `liblakesnes_backend.a`. Add its directory to `LIBRARY_PATH` alongside the CPU,
 SPC, PNG and SDL libraries. Rebuild this archive after editing `sm/src/snes/backend.c`;
 the verifier rejects an archive whose compiled bridge hash is stale. Include
-[the pinned revision's MIT license](../third_party/lakesnes/LICENSE-2022.txt)
+[the pinned revision's MIT license](../THIRD_PARTY_NOTICES.md#lakesnes-ppu-dsp-and-spc700)
 with distributed binaries.
 
 PPU register calls use a temporary beam-position/open-bus view and restore the original
@@ -91,7 +91,7 @@ The script fetches four unmodified pinned files, verifies SHA256 and creates
 `liblakesnes_cpu.a`. No C
 behavioral glue or modified external source is used. The external closure has
 2,836 C/header lines, disclosed separately from every maintained Rust adapter
-and installer line. Include [the upstream MIT license](../third_party/lakesnes/LICENSE.txt)
+and installer line. Include [the upstream MIT license](../THIRD_PARTY_NOTICES.md#lakesnes-cpu)
 with distributed builds.
 
 Install the uniquely named archive alongside SDL in its configured native-library

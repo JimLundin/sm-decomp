@@ -4,7 +4,7 @@ GLSL preset parsing, shader compilation, multipass rendering and resource
 destruction use selected [Zelda3 shader routines](https://github.com/snesrev/zelda3/blob/45a149d8b4bb8098f53d1009f76e76e7d8b79bbf/src/glsl_shader.c).
 Revision `45a149d8b4bb8098f53d1009f76e76e7d8b79bbf` is pinned by source hashes.
 The installer applies explicit compatibility changes against current Rust.
-Distribute the [Zelda3 MIT notice](../third_party/zelda3/LICENSE.txt) with binaries.
+Distribute the [Zelda3 MIT notice](../THIRD_PARTY_NOTICES.md#snesrevzelda3) with binaries.
 
 The existing configuration installer builds the shader as a separate member of
 `libsm_config.a`. Rebuild the desktop archive too: its source checks include the
