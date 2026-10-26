@@ -19,6 +19,32 @@ pub(crate) fn set_blank(blank: bool, game: &mut Game) {
     game.g_ram[0x51] = game.g_ram[0x51] & 0x7f | if blank { 0x80 } else { 0 };
 }
 
+/// Requires a live, exclusively accessed SNES backend for ordered PPU writes.
+pub(crate) unsafe fn pause_graphics(paused: bool, game: &mut Game) {
+    let (objects, bg1, bg2, bg3) = if paused {
+        (1, 0x31, 0x38, 0x58)
+    } else {
+        (3, 0x51, 0x49, 0x5a)
+    };
+    unsafe {
+        crate::rtl::register_writes! { game;
+            mirror(OBSEL as u16, objects, 0x52, false); mirror(BGMODE as u16, 9, 0x55, false);
+            mirror(BG12NBA as u16, 0, 0x5d, true); mirror(BG34NBA as u16, 4, 0x5e, true);
+            mirror(BG1SC as u16, bg1, 0x58, true); mirror(BG2SC as u16, bg2, 0x59, true);
+            mirror(BG3SC as u16, bg3, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
+        }
+        if paused {
+            crate::rtl::register_writes! { game;
+                mirror(TM as u16, 0x17, 0x69, false); mirror(MOSAIC as u16, 0, 0x57, false);
+            }
+            for offset in 0x74..0x77 {
+                game.g_ram[offset] &= 0xe0;
+            }
+            game.g_ram[0x71] = 0;
+        }
+    }
+}
+
 pub(crate) fn fade(fade_in: bool, game: &mut Game) {
     let remaining = word!(game.screen_fade_counter).wrapping_sub(1);
     let due = (remaining as i16) < 0;

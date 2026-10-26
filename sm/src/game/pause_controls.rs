@@ -1,4 +1,4 @@
-//! Pause-screen input and transient button highlights; RAM remains authoritative.
+//! Pause-screen input, saved graphics and transient highlights; RAM remains authoritative.
 #![forbid(unsafe_code)]
 use crate::game::{
     constants::buttons::{kButton_L, kButton_R, kButton_Start},
@@ -8,6 +8,29 @@ use crate::game::{
 };
 use crate::game_state::Game;
 use crate::ram_map::word;
+
+const GRAPHICS_MIRRORS: [usize; 17] = [
+    0x58, 0x59, 0x5a, 0x5d, 0x5e, 0x52, 0xb1, 0xb5, 0xb9, 0xb3, 0xb7, 0xbb, 0x55, 0x91b, 0x91c,
+    0x57, 0x71,
+];
+
+pub(crate) fn save_graphics(game: &mut Game) {
+    for (index, source) in GRAPHICS_MIRRORS.into_iter().enumerate() {
+        // The six scroll mirrors are read as LE words, then truncated to a byte.
+        let value = if (6..12).contains(&index) {
+            u16::from_le_bytes([game.g_ram[source], game.g_ram[source + 1]]) as u8
+        } else {
+            game.g_ram[source]
+        };
+        game.g_ram[0x765 + index] = value;
+    }
+}
+
+pub(crate) fn restore_graphics(game: &mut Game) {
+    for index in [13, 14, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 15, 16] {
+        game.g_ram[GRAPHICS_MIRRORS[index]] = game.g_ram[0x765 + index];
+    }
+}
 
 pub(crate) fn advance(game: &mut Game) {
     shoulder_input(game);

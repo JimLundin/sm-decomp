@@ -811,7 +811,7 @@ pub unsafe fn GameState_13_Pausing_Async(game: &mut Game) -> CoroutineRet {
         BackupBG2TilemapForPauseMenu(game);
         CallPauseHook(Load24(ram_ptr!(game, LongPtr; 0x601)), game);
         CancelSoundEffects(game);
-        BackupSomeGfxStateForPause(game);
+        crate::game::pause_controls::save_graphics(game);
         LoadPauseMenuTilesAndClearBG2(game);
         LoadPauseScreenBaseTilemaps(game);
         LoadPauseMenuMapTilemapAndAreaLabel(game);
@@ -844,48 +844,6 @@ pub unsafe fn RestoreBG2TilemapFromPauseScreen(game: &mut Game) {
             .load(game);
     }
 }
-pub unsafe fn BackupSomeGfxStateForPause(game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0x765) = *ram_ptr!(game; 0x58);
-        *ram_ptr!(game; 0x766) = *ram_ptr!(game; 0x59);
-        *ram_ptr!(game; 0x767) = *ram_ptr!(game; 0x5a);
-        *ram_ptr!(game; 0x768) = *ram_ptr!(game; 0x5d);
-        *ram_ptr!(game; 0x769) = *ram_ptr!(game; 0x5e);
-        *ram_ptr!(game; 0x76a) = *ram_ptr!(game; 0x52);
-        *ram_ptr!(game; 0x76b) = word!(game.reg_BG1HOFS) as u8;
-        *ram_ptr!(game; 0x76c) = word!(game.reg_BG2HOFS) as u8;
-        *ram_ptr!(game; 0x76d) = word!(game.reg_BG3HOFS) as u8;
-        *ram_ptr!(game; 0x76e) = word!(game.reg_BG1VOFS) as u8;
-        *ram_ptr!(game; 0x76f) = word!(game.reg_BG2VOFS) as u8;
-        *ram_ptr!(game; 0x770) = word!(game.reg_BG3VOFS) as u8;
-        *ram_ptr!(game; 0x771) = *ram_ptr!(game; 0x55);
-        *ram_ptr!(game; 0x772) = *ram_ptr!(game; 0x91b);
-        *ram_ptr!(game; 0x773) = *ram_ptr!(game; 0x91c);
-        *ram_ptr!(game; 0x774) = *ram_ptr!(game; 0x57);
-        *ram_ptr!(game; 0x775) = *ram_ptr!(game; 0x71);
-    }
-}
-pub unsafe fn RestoreSomeGfxStateForPause(game: &mut Game) {
-    unsafe {
-        *ram_ptr!(game; 0x91b) = *ram_ptr!(game; 0x772);
-        *ram_ptr!(game; 0x91c) = *ram_ptr!(game; 0x773);
-        *ram_ptr!(game; 0x55) = *ram_ptr!(game; 0x771);
-        byte!(@pointer ram_ptr!(game, u16; 0xbb); 0) = *ram_ptr!(game; 0x770);
-        byte!(@pointer ram_ptr!(game, u16; 0xb7); 0) = *ram_ptr!(game; 0x76f);
-        byte!(@pointer ram_ptr!(game, u16; 0xb3); 0) = *ram_ptr!(game; 0x76e);
-        byte!(@pointer ram_ptr!(game, u16; 0xb9); 0) = *ram_ptr!(game; 0x76d);
-        byte!(@pointer ram_ptr!(game, u16; 0xb5); 0) = *ram_ptr!(game; 0x76c);
-        byte!(@pointer ram_ptr!(game, u16; 0xb1); 0) = *ram_ptr!(game; 0x76b);
-        *ram_ptr!(game; 0x52) = *ram_ptr!(game; 0x76a);
-        *ram_ptr!(game; 0x5e) = *ram_ptr!(game; 0x769);
-        *ram_ptr!(game; 0x5d) = *ram_ptr!(game; 0x768);
-        *ram_ptr!(game; 0x5a) = *ram_ptr!(game; 0x767);
-        *ram_ptr!(game; 0x59) = *ram_ptr!(game; 0x766);
-        *ram_ptr!(game; 0x58) = *ram_ptr!(game; 0x765);
-        *ram_ptr!(game; 0x57) = *ram_ptr!(game; 0x774);
-        *ram_ptr!(game; 0x71) = *ram_ptr!(game; 0x775);
-    }
-}
 pub unsafe fn LoadPauseMenuTilesAndClearBG2(game: &mut Game) {
     unsafe {
         GraphicsAsset::VramWords(0xb68000, 0, 0x4000).load(game);
@@ -907,7 +865,7 @@ pub unsafe fn BackupGameplayPalettesAndLoadForPause(game: &mut Game) {
 }
 pub unsafe fn ContinueInitPauseMenu(game: &mut Game) {
     unsafe {
-        SetupPpuForPauseMenu(game);
+        crate::game::display_refresh::pause_graphics(true, game);
         crate::game::map_menu::reset_animations(game);
         crate::game::menu_tilemap::equipment_icons(game);
         crate::game::menu_tilemap::pause_labels(0, game);
@@ -1099,7 +1057,7 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
                 crate::game::room_mechanisms::reload_graphics(game);
                 crate::game::display_refresh::enable(true, game);
                 crate::game::scanline_irq::enable(false, game);
-                RestoreSomeGfxStateForPause(game);
+                crate::game::pause_controls::restore_graphics(game);
                 RestoreBG2TilemapFromPauseScreen(game);
                 word! { game, 1; screen_fade_delay, screen_fade_counter }
                 run_unpause_hook = true;
@@ -1163,21 +1121,6 @@ pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel(game: &mut Game) {
         }
     }
 }
-pub unsafe fn SetupPpuForPauseMenu(game: &mut Game) {
-    unsafe {
-        crate::rtl::register_writes! { game;
-            mirror(OBSEL as u16, 1, 0x52, false); mirror(BGMODE as u16, 9, 0x55, false);
-            mirror(BG12NBA as u16, 0, 0x5d, true); mirror(BG34NBA as u16, 4, 0x5e, true);
-            mirror(BG1SC as u16, 0x31, 0x58, true); mirror(BG2SC as u16, 0x38, 0x59, true);
-            mirror(BG3SC as u16, 0x58, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
-            mirror(TM as u16, 0x17, 0x69, false); mirror(MOSAIC as u16, 0, 0x57, false);
-        }
-        crate::update_place! { reference fresh24 = *ram_ptr!(game; 0x74, 0) => (*fresh24) & (0xe0u8); }
-        crate::update_place! { reference fresh25 = *ram_ptr!(game; 0x74, 1) => (*fresh25) & (0xe0u8); }
-        crate::update_place! { reference fresh26 = *ram_ptr!(game; 0x74, 2) => (*fresh26) & (0xe0u8); }
-        *ram_ptr!(game; 0x71) = 0;
-    }
-}
 pub unsafe fn ClearSamusBeamTiles(game: &mut Game) {
     unsafe {
         GraphicsAsset::VramWords(0x9ad200, 0x6000, 0x1000).load(game);
@@ -1186,21 +1129,11 @@ pub unsafe fn ClearSamusBeamTiles(game: &mut Game) {
 pub unsafe fn ContinueInitGameplayResume(game: &mut Game) {
     unsafe {
         word_transfers!(game, ascending, 256; le(palette_buffer, 0) <- pause_map(384));
-        SetupPpuForGameplayResume(game);
+        crate::game::display_refresh::pause_graphics(false, game);
         CalculateBgScrolls_Unpause(game);
         crate::game::visual_runtime::update_beam_tiles_and_palette(game);
         ClearPauseMenuData(game);
         CallSomeSamusCode(0xc, game);
-    }
-}
-pub unsafe fn SetupPpuForGameplayResume(game: &mut Game) {
-    unsafe {
-        crate::rtl::register_writes! { game;
-            mirror(OBSEL as u16, 3, 0x52, false); mirror(BGMODE as u16, 9, 0x55, false);
-            mirror(BG12NBA as u16, 0, 0x5d, true); mirror(BG34NBA as u16, 4, 0x5e, true);
-            mirror(BG1SC as u16, 0x51, 0x58, true); mirror(BG2SC as u16, 0x49, 0x59, true);
-            mirror(BG3SC as u16, 0x5a, 0x5a, true); mirror(BG4SC as u16, 0, 0x5c, true);
-        }
     }
 }
 pub fn CalculateBgScrolls_Unpause(game: &mut Game) {

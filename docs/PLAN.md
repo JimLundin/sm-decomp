@@ -72,7 +72,7 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
    bank in REVIEW's queues; coverage and bank retirement do not finish owned Session.
 2. **Current - lane B retirement.** B1 sm_88/sm_a0/sm_81 and B3 sm_8f/sm_b2 are
    retired. M2 sm_a8, eleven B2 cinematic families and B3 Goofball are integrated;
-   all 82 corpus rows passed on 6c675730 after bank-80 deletion; later work uses scoped rows.
+   all 83 corpus rows passed on aebfee7d after bank-A2 deletion; later work uses scoped rows.
    B1 sm_80 is retired with checked gameplay and retained backend contracts;
    its affected rows pass, and B1 continues sm_82. B2 continues sm_8b after
    consolidating the checked credits interpreter; cloud-motion rows are `credits`,
@@ -81,7 +81,7 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
    Windows M is now B4: retire sm_a8 families, then sm_b3.
    B3 sm_a2 retirement passes 39 local rows and the scoped bank mutation campaign.
    The new fixed 300-frame Gunship row detects bobbing beyond the entry tail;
-   the full 83-row corpus runs on main after landing. Goofball macro sensitivity is open.
+   the full 83-row corpus passes on main with zero failing frames. Goofball macro sensitivity is open.
    No further in-place bank codemods; cloud M moves to unsafe outside bank files.
    A2 seeds remaining authored rows; bundle shard grouping is integrated.
    B5/B6 cloud queues continue sm_a9/sm_a6, then sm_aa/sm_a7.
