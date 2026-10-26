@@ -11,8 +11,8 @@ use crate::game::visual_runtime::{
     advance_postcredits_samus_message, advance_shooting_stars, advance_zebes_destruction_zoom,
     advance_zebes_stars, chase_intro_baby_y, draw_cinematic_sprites, draw_intro_sprites,
     drift_cinematic_sprite, initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud,
-    prepare_credit_roll, prepare_ending_time, request_title_skip, start_intro_rinka,
-    title_metroid_cry, title_metroid_palette, wait_cinematic_scene, wait_ending_cloud,
+    prepare_credit_roll, request_title_skip, title_metroid_cry, title_metroid_palette,
+    wait_cinematic_scene, wait_ending_cloud,
 };
 use crate::game::visual_runtime::{advance_cinematic_background_pre, fade_cinematic_fixed_color};
 use crate::game::visual_runtime::{
@@ -35,7 +35,7 @@ use crate::game::display_refresh::GraphicsAsset;
 use crate::game::explosion_window::spawn_power_bomb;
 use crate::game::gameplay_flag_runtime::CheckEventHappened;
 use crate::game::mode7_transfers::enqueue_rom;
-use crate::game::music::{QueueSfx1_Max15, QueueSfx2_Max6, QueueSfx3_Max6};
+use crate::game::music::QueueSfx3_Max6;
 use crate::game::palette_effects;
 use crate::game::player_projectiles::prepare;
 use crate::game::session_runtime::initialize_player;
@@ -1264,146 +1264,19 @@ crate::game::callback_dispatch! {
         9168826 => [()];
     }
 }
-crate::game::callback_dispatch! {
-    pub unsafe fn CallCinematicSprInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> u16 => ea;
-    call (k, j, game); default Unreachable(game) as u16;
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
-    [9150040] CinematicSprInstr_Func8 [] {
-        crate::game::visual_runtime::start_title_pan(3, j, game);
-        initialize_title_gradient(game);
-        j
-    };
-    [9150157] CinematicSprInstr_Func9 [] {
-        let v0: u16 = 0x9ecd;
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BA113 as u16, v0, game);
-        j
-    };
-    [9150192] CinematicSprInstr_sub_8B9EF0 [] {
-        word!(game.cinematicbg_arr9[(k >> 1)] = 0);
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BA113 as u16, 0, game);
-        j
-    };
-    [9150233] CinematicSprInstr_9F19 [] {
-        word! {game; demo_timer = 900; cinematic_function = ((0x8b9f29i32) as u16); }
-        j
-    };
-    [9158818] CinematicCommonInstr_Func70 [] {
-        word!(game.cinematic_function = (0x8bc0c5i32) as u16);
-        word! { game, 1; screen_fade_delay, screen_fade_counter }
-        j
-    };
-    [9172253] CinematicSprInstr_Func208 [] {
-        spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEF3F as u16, 0, 0, game);
-        j
-    };
-    [9172308] CinematicSprInstr_Func211 [] {
-        if word!(game.game_time_hours) as i32 - 10i32 & 0x8000 != 0 {
-            spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEF7B as u16, 2, 0, game);
+pub unsafe fn CallCinematicSprInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> u16 {
+    unsafe {
+        if let Some(cursor) =
+            crate::game::visual_runtime::execute_cinematic_sprite_instruction(ea, k, j, game)
+        {
+            cursor
+        } else if ea == 9150040 {
+            crate::game::visual_runtime::start_title_pan(3, j, game);
+            initialize_title_gradient(game);
+            j
         } else {
-            spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEF75 as u16, 2, 0, game);
+            Unreachable(game) as u16
         }
-        spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEF6F as u16, 0, 0, game);
-        j
-    };
-    @functions [pub unsafe fn (k: u16, mut j: u16, game: &mut Game) -> u16];
-    [9158806] CinematicCommonInstr_Func69 [] {
-        if word!(game.japanese_text_flag) == 0 {
-            j = (j).wrapping_add(6);
-        }
-        j
-    };
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
-    [9161125] CinematicSprInstr_C9A5 [j] { palette_effects::spawn(addr_kPalfx_E1B0 as u16, game); };
-    [9161135] CinematicSprInstr_C9AF [j] {
-        if word!(game.japanese_text_flag) != 0 {
-            CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCEB5 as u16,
-                word!(game.japanese_text_flag),
-                game,
-            );
-        }
-    };
-    [9161149] CinematicSprInstr_C9BD [j] { palette_effects::spawn(addr_loc_8BE1B4 as u16, game); };
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
-    [9171550] CinematicSprInstr_Func181 [j] {
-        set_cinematic_blend(3, 16, 2, 34, game);
-        *ram_ptr!(game; 0x5d) = 100;
-        *ram_ptr!(game; 0x59) = 84;
-        word! {game; cinematic_var4 = 0; cinematic_function = ((0x8be58ai32) as u16); }
-    };
-    [9171588] CinematicSprInstr_Func182 [j] {
-        palette_effects::spawn(addr_kPalfx_E1C4 as u16, game);
-        word!(game.palette_buffer[254] = 1);
-    };
-    [9171605] CinematicSprInstr_Func183 [j] {
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEEB5 as u16, 0xf295, game);
-        word!(game.palette_buffer[0] = 0x7fff);
-    };
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
-    [9171639] CinematicSprInstr_Func185 [j] {
-        set_cinematic_blend(17, 2, 2, 17, game);
-        *ram_ptr!(game; 0x59) = 124;
-        spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEEBB as u16, 0, 0xf27c, game);
-        spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEEF7 as u16, 2, 2, game);
-        palette_effects::spawn(addr_kPalfx_E1C8 as u16, game);
-        palette_effects::spawn(addr_kPalfx_E1D0 as u16, game);
-        palette_effects::spawn(addr_kPalfx_E1E8 as u16, game);
-    };
-    [9171706] CinematicSprInstr_Func186 [j] {
-        set_cinematic_blend(3, 18, 2, 51, game);
-        *ram_ptr!(game; 0x58) = 116;
-        *ram_ptr!(game; 0x59) = 120;
-        palette_effects::spawn(addr_kPalfx_E1CC as u16, game);
-        spawn_cinematic_sprite_at(addr_kCinematicSpriteObjectDef_8BEEC1 as u16, 6, 6, game);
-    };
-    [9171755] CinematicSprInstr_Func187 [j] {
-        *ram_ptr!(game; 0x69) = 0;
-        *ram_ptr!(game; 0x6b) = 0;
-        word! { game, 0x7fff; palette_buffer[0], palette_buffer[128] }
-        word_transfers!(game, descending, 16; le(palette_buffer, 31) <- value(0x7fff));
-        word! {game; cinematic_function = ((0x8bdb9ei32) as u16); cinematic_var4 = 120; }
-    };
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
-    [9172040] CinematicSprInstr_Func198 [j] {
-        word! { game, 0; screen_fade_delay, screen_fade_counter }
-        word!(game.cinematic_function = (0x8bde64i32) as u16);
-    };
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
-    [9172484] CinematicSprInstr_Func217 [j] {
-        word!(game.cinematicbg_arr9[(k >> 1)] = 3584);
-        word!(game.cinematic_function = (0x8be3aei32) as u16);
-        set_cinematic_blend(17, 16, 2, -127i32 as u8, game);
-        word! {game; cinematic_var8 = -4i32 as u16; cinematic_var10 = -8i32 as u16;
-            cinematic_var4 = 16; }
-        word! { game, 32; cinematic_var14, cinematic_var17 }
-        capture_cinematic_palette(game);
-        prepare_cinematic_palette_fade(game);
-        QueueSfx1_Max15(0x22, game);
-    };
-    [9172561] CinematicSprInstr_Func218 [j] {
-        word! {game; samus_y_subspeed = 0; samus_y_speed = -16i32 as u16; }
-    };
-    @external {
-        9152792 => [{ spawn_cinematic_burst(0xcecd, 0..6, 6, game); QueueSfx2_Max6(0xb, game); j }];
-        9159684 => [{ spawn_cinematic_burst(0xcebb, 0..5, 0, game); j }];
-        9159948 => [{ spawn_cinematic_burst(0xcec7, 0..4, 0, game); j }];
-        9157153 => [{ spawn_cinematic_burst(0xcf21, 0..2, 0, game); j }];
-        9157174 => [{ spawn_cinematic_burst(0xcf21, 2..4, 0, game); j }];
-        9171888 => [{ CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEECD as u16, 0xf3b0, game); j }];
-        9171918 => [{ CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEEFD as u16, 0xf3ce, game); prepare_ending_time(game); j }];
-        9171995 => [{ CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF03 as u16, 0xf41b, game); j }];
-        9172004 => [{ CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF09 as u16, 0xf424, game); j }];
-        9172013 => [{ CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF0F as u16, 0xf42d, game); j }];
-        9172022 => [{ CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF15 as u16, 0xf436, game); j }];
-        9172031 => [{ CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BEF1B as u16, 0xf43f, game); j }];
-        9161159 => [{ crate::game::visual_runtime::advance_zebes_flight(0, game); j }];
-        9172375 => [crate::game::visual_runtime::position_ending_samus_head(k, false, j, game)];
-        9172410 => [crate::game::visual_runtime::position_ending_samus_head(k, true, j, game)];
-        9149665 => [crate::game::visual_runtime::start_title_pan(0, j, game)];
-        9149789 => [crate::game::visual_runtime::start_title_pan(1, j, game)];
-        9149910 => [crate::game::visual_runtime::start_title_pan(2, j, game)];
-        9156805 => [start_intro_rinka(k, j, game)];
-        9155382 => [intro_pages::start_page(0xb35f, j, game)]; 9155390 => [intro_pages::start_page(0xb370, j, game)];
-        9155398 => [intro_pages::start_page(0xb381, j, game)]; 9155406 => [intro_pages::start_page(0xb392, j, game)];
     }
 }
 crate::game::callback_dispatch! {

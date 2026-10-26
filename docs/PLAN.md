@@ -48,14 +48,12 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current tipd1bc: production112278, legacy17810, unsafe2820, verification40422; warnings172.
+Current tipf83: production112259, legacy17683, unsafe2806, verification40422; warnings165.
 It retires161 sm82 lines and persists actor/media allocation identities and saved ROM patches.
 Net +511 engine (persistence +564, frame -53), -161 legacy, -1 unsafe, +371 verification;
 frame full replacement167/220=75.91%. RAM/native frame dependencies remain explicit.
 Codec f158c44fac33eac7 has39 contributors/652740 normalized source bytes.
-Prepared110 and initialized329+5 pass;14 genuine captures189475 frames and full22
-byte-identical encrypted restore pass. b387 full86 passes136526 selected+38827 setup;
-latestfe4 MessageBox28+options passes25071 selected+29672 setup, zero failures.
+Prepared110/initialized329+5,14 genuine captures189475 frames and full22 byte-identical restore pass.
 Required sm82 AST8.06min:3 options kills; unsafe gameplay omission unavailable.
 Post-sm82 full86 on pusheda9 passed136526 selected+38827 setup/0 in303.254s;
 all14 originals/guards and bothKago14350 retained. Never restamp old codecs.
@@ -65,7 +63,8 @@ Shared IO/OAM plus current beam union passes31655 selected+272 setup: -16 engine
 Shared black-fade passes10967 selected+272 setup/0: -11 engine/-11 legacy; full18/29=62.07%.
 Shared tile-plane upload passes11161 selected+272 setup/0: -6 engine/-24 legacy; full23/29=79.31%.
 Its +2 unsafe lines retain hardware entry/block in display_refresh; blackout37 stays unobserved.
-Next: sm8b sprite instructions and complete sm9b grapple retirement; Linux/cloud lanes stay disjoint.
+Safe sprite dispatch passes22959 selected+272 setup/0; +20 engine/-127 legacy/-6 unsafe, full176/156=112.82%.
+Next: complete sm9b retirement (3 AST kills), then intro transitions and liquid motion; Linux/cloud stay disjoint.
 Linux M: retire the Power Bomb/Crystal Flash fixed-color raw accesses; geometry and native dispatch stay retained.
 ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
 A4 post-push full86 passed on0a; its scoped3kills/1unobserved/1unviable gaps remain.
