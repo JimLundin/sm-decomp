@@ -14,7 +14,8 @@ use crate::game::visual_runtime::{
     spawn_cinematic_sprite_at, update_cinematic_transform,
 };
 use crate::game::visual_runtime::{
-    advance_shooting_stars, draw_cinematic_sprites, draw_intro_sprites, initialize_shooting_stars,
+    advance_credit_roll, advance_shooting_stars, draw_cinematic_sprites, draw_intro_sprites,
+    initialize_shooting_stars, prepare_credit_roll,
 };
 use crate::game::visual_state::CinematicObjects::{
     Background as CinematicBackground, Mode7 as CinematicMode7, Sprites as CinematicSprites,
@@ -122,7 +123,6 @@ crate::game::constants::typed_constants! { i32;
     fnSamus_FrameHandlerAlfa_Func12 = 0x90e6c9, fnSamus_Func15 = 0x90e833,
     fnSamusDrawHandler_Default = 0x90eb52,
 }
-const RomPtr_8B: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8b>;
 const RomPtr_8C: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8c>;
 crate::ram_map::ram_pointer_functions! {
     gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize];
@@ -284,89 +284,22 @@ pub fn AddNintentoLogoToOam(game: &mut Game) {
         game,
     );
 }
-pub unsafe fn EnableTextGlowObjects_(game: &mut Game) {
-    {
-        word!(game.cinematic_var25 |= (0x8000u16));
-    }
-}
-pub unsafe fn DisableTextGlowObjects_(game: &mut Game) {
-    {
-        word!(game.cinematic_var25 &= !(0x8000));
-    }
-}
-pub unsafe fn CinematicFunction_Intro_Func128(a: u16, game: &mut Game) {
-    {
-        word_transfers!(game, descending, 1024; native(0x37fe) <- value(a));
-        word! { game, 0;
-            cinematic_var26, cinematic_var21, cinematic_var22, cinematic_var23, cinematic_var24,
-        }
-        word!(game.cinematicbg_var3 = 18432);
-        word! { game, 0;
-            eproj_pre_instr[0], cinematic_var7, cinematic_var8, cinematic_var9, cinematic_var10,
-        }
-    }
-}
-pub unsafe fn CreditsObject_Init(j: u16, game: &mut Game) {
-    unsafe {
-        let v1 = RomPtr_8B(j, game);
-        word! {game; cinematic_var24 = *(v1.offset(2) as *mut u16);
-        cinematic_var21 = *(v1.offset(4) as *mut u16); cinematic_var22 = 1; cinematic_var23 = 0; }
-        advance_cinematic_background_pre(((*(v1 as *mut u16)) as u32) | (0x8b0000u32), 0, game);
-    }
-}
+// Legacy pre-instruction and failure contracts remain in the bank.
 pub unsafe fn CreditsObject_Process(game: &mut Game) {
     unsafe {
-        if (word!(game.cinematic_var25) & 0x8000) != 0 {
+        if word!(game.cinematic_var25) & 0x8000 != 0 {
             if word!(game.cinematic_var21) != 0 {
-                CreditsObject_ProcessOne(game);
+                advance_cinematic_background_pre(
+                    0x8b0000 | u32::from(word!(game.cinematic_var24)),
+                    0,
+                    game,
+                );
+                if !advance_credit_roll(game) {
+                    Unreachable(game);
+                }
             }
+            // Delete and disable still publish this frame's tilemap.
             queue_cinematic_tilemap(CinematicTilemap::FullText, game);
-        }
-    }
-}
-pub unsafe fn CreditsObject_ProcessOne(game: &mut Game) {
-    unsafe {
-        advance_cinematic_background_pre(
-            ((word!(game.cinematic_var24)) as u32) | (0x8b0000u32),
-            0,
-            game,
-        );
-        words!(game.cinematic_var10, cinematic_var9 += 0x8000);
-        if word!(game.cinematic_var10) as i32 - word!(game.eproj_pre_instr[0]) as i32 - 8i32
-            & 0x8000
-            == 0
-        {
-            word!(game.eproj_pre_instr[0] = word!(game.cinematic_var10));
-            let mut i: i32 = word!(game.cinematic_var21) as i32;
-            loop {
-                let v2 = RomPtr_8C(i as u16, game) as *const u16;
-                let v3: u16 = *v2;
-                if (*v2 & 0x8000) == 0 {
-                    break;
-                }
-                i = CallIntroObjectInstr(((v3) as u32) | (0x8b0000u32), 0, (i + 2) as u16, game)
-                    as i32;
-                if i == 0 {
-                    return;
-                }
-            }
-            CreditsObject_Func1(i as u16, game);
-            word!(game.cinematic_var26 = (word!(game.cinematic_var26) as i32 + 1 & 0x1f) as u16);
-            word!(game.cinematic_var21 = (i + 4) as u16);
-        }
-    }
-}
-pub unsafe fn CreditsObject_Func1(j: u16, game: &mut Game) {
-    unsafe {
-        let mut RegWord: u16 = Mult8x8(word!(game.cinematic_var26) as u8, 0x40);
-        let mut src = ram_ptr!(game; 0x10000, *(RomPtr_8C(j, game) as *mut u16).offset(1) as i32 as isize)
-            as *const u16;
-        for _ in 0..=31 {
-            crate::update_place! { previous fresh6 = src => src.offset(1); }
-            *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16
-                as *mut u8)
-                .offset(RegWord as i32 as isize) as *mut u16) = *fresh6;
-            RegWord = (RegWord).wrapping_add(2);
         }
     }
 }
@@ -1744,10 +1677,8 @@ crate::game::callback_dispatch! {
         initialize_shooting_stars(game);
         GraphicsAsset::Decompress(0x97eeff, 0x10000).load(game);
         clear_cinematic_background(0x7f, game);
-        CinematicFunction_Intro_Func128(0x7f, game);
-        EnableTextGlowObjects_(game);
-        word! { game, 3; screen_fade_delay, screen_fade_counter }
-        CreditsObject_Init(addr_stru_8BF6F8 as u16, game);
+        let pre = prepare_credit_roll(addr_stru_8BF6F8 as u16, game);
+        advance_cinematic_background_pre(pre, 0, game);
         word!(game.cinematic_function = (0x8bdb9di32) as u16);
     };
     [9167120] CinematicFunction_Intro_Func130 [] {
@@ -3320,41 +3251,6 @@ crate::game::callback_dispatch! {
         9150021 => CinematicSpriteInit_3;
         9157195 => CinematicFunction_Intro_Func49;
     }
-}
-crate::game::callback_dispatch! {
-    pub unsafe fn CallIntroObjectInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> u16 => ea;
-    call (k, j, game); default Unreachable(game) as u16;
-    @functions [pub unsafe fn (k: u16, j: u16, game: &mut Game) -> u16];
-    [9148926] IntroObject_Delete [] {
-        word!(game.cinematic_var21 = 0);
-        0
-    };
-    [9148934] IntroObject_Goto [] {
-        *(RomPtr_8C(j, game) as *mut u16)
-    };
-    [9148941] IntroObject_DecTimerGoto [] {
-        if word!(game.cinematic_var23 -= 1, reread) != 0 {
-            IntroObject_Goto(k, j, game)
-        } else {
-            (j).wrapping_add(2)
-        }
-    };
-    [9148951] IntroObject_SetTimer [] {
-        word!(game.cinematic_var23 = *(RomPtr_8C(j, game) as *mut u16));
-        (j).wrapping_add(2)
-    };
-    [9172734] CinematicFunction_Intro_Func219 [] {
-        DisableTextGlowObjects_(game);
-        word_transfers!(game, ascending, 252; le(palette_buffer, 4) <- rom(0x8ce7e9, 4));
-        *ram_ptr!(game; 0x69) = 0;
-        *ram_ptr!(game; 0x51) = 0x80;
-        word! { game, 0;
-            screen_fade_delay, screen_fade_counter, cinematic_var9, cinematic_var10,
-        }
-        word! {game; eproj_pre_instr[1] = 1; cinematic_function = ((0x8be0f4i32) as u16);
-            cinematic_var4 = 60; }
-        j
-    };
 }
 crate::game::address_dispatch! {
     pub unsafe fn CallCinematicSpriteInit(ea: u32, j: u16, game: &mut Game) => ea;
