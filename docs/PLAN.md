@@ -53,12 +53,14 @@ ROM) keep `ci/<lane>-<topic>` branches with auto-land on green. Seeds/lag logs i
    VRAM read-buffer, CGRAM-low and Mode7 latch values. No invented register defaults.
    Existing required rows and expectations remain intact; hosted verification and
    the combined full corpus are separate obligations, not inferred from this result.
-   Next: move authored rows onto original room seeds, then delete their corresponding
-   route recipes from tools/movie_inputs.py. Keep current provenance and input guards.
+   55/82 rows are seeded. The unused 25 route names are removed; eight live recipes
+   still share the early-route controller sequence. Seed the remaining 27 rows in
+   batches of six or more, deleting newly unused recipes; preserve input guards.
 2. **Current - lane B retirement.** B1 sm_88/sm_a0/sm_81 and B3 sm_8f/sm_b2 are
    retired. M2 sm_a8, eleven B2 cinematic families and B3 Goofball are integrated;
    local rows pass. Full-corpus completion remains a separate obligation on main.
-   B1 finishes sm_80 then sm_82; B2 continues sm_8b with credits-roll; B3 continues
+   B1 finishes checked sm_80 retirement before more sm_82; B2 fixes credits-roll's
+   remaining unsafe operations before landing it in sm_8b. B3 continues
    sm_a2 with Rinka then sm_a3. Non-enemy banks aim at most 80% replacement size.
    Windows M is now B4: retire sm_a8 families, then sm_b3.
    No further in-place bank codemods; cloud M moves to unsafe outside bank files.
@@ -125,6 +127,10 @@ Do not add a 120-frame early stop to this row.
   raw pointers or backend modules. Safe wrappers and package moves are transitional.
   Do not turn `word!` into a whole-RAM borrow while retained raw pointers remain;
   migrate offsets/handles and use checked, scoped access with overlapping reads intact.
+- Retirements add no unsafe to non-bank files. Only hardware/IO register functions
+  may retain unsafe in the existing platform owner, named in the commit body.
+  Otherwise convert to checked access or retain the function in its bank. New owned
+  modules forbid unsafe; every B body gives its ratio, with a reason above 90%.
 - Scope each responsibility: API, owner, setup/update/failure paths, callers and retirement.
   Adopt caller migration with deletion; preparation needs named consumers and a deletion step.
   Shared consumers or forwarding facades alone are not completion.

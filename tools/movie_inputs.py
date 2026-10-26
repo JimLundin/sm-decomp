@@ -448,32 +448,7 @@ def parse_bk2(text):
 # Original any% movie in movies/manifest.toml (TASVideos publication3653).
 ROUTE_SOURCE_SHA256 = 'e53b1ce15b3f01516eb64c68a6db2911f91bd97197eb05960779561be5c7cbe9'
 ROUTES = {
-    'ceres-escape': (20989, '0f906b2af9e5fa5856b14efe4197a76399b3cb6f5cd20795c9b30eabede5cf0b'),
-    'morph-ball': (28301, 'a1470d7c61e371e42d2ef8c6a874d09f5c7d6ab2350c809812ea94d35f4870a5'),
-    'missile-pickup': (32591, '6b6153b5691992b341a85f744dcd0fbcddc1499f7b9be8309fc587c159053e86'),
-    'parlor-return': (42651, '109ebae783ee29eaac7b22c7e87fbcd3050dff1bf3ff8a4d29dfff61cde43d50'),
-    'bomb-corridor-entry': (46133, '9176ce688474956cd965f9780220db3b05204ed23980ae3d8d205c5e6a24cd4b'),
-    'bomb-pickup': (50329, '245a5f8add96661d26982360b233d9f682ff44e529f4a24ee3f0e70e7dc4bad9'),
-    'bomb-torizo': (52820, 'c133839513c05faa67d69057eb22db32d03a3ae6cd0ec89e0ae6fa25d48727dd'),
-    'parlor-hill-top': (56786, '5e6e409166f00cc5c40d82cbd4ddc5ec4af6bb165016b174f3ef34190103c9ac'),
-    'gunship-refilled': (60402, '091688e6bda5853a376ddc49d237a107a05a34623482de6be5a888045554cd16'),
-    'green-brinstar-arrival': (67278, '847d107b875dfd80251a53b2d53cee2cd41ea9f91cc1b8e19e21fbfb773d7777'),
-    'early-supers-door': (68096, 'cc6c83bd7f3a3925a520bd4bbda2bb8c2cefc3287f1625d91d9d95d9faf35125'),
-    'super-missiles': (69700, '26ceb1e7ee4bcd20821a09d80d518566755626bf5d4b344b9ea8e2dbb0ae846a'),
-    'green-brinstar-save': (71800, 'e060c7f2408b95180cdd98c091821775e3c0c279c89131256962ddd68d0b4554'),
     'save-death-continue': (76064, 'af79d24c791c1414cd4b1b83f040da0787a2a69bd0d2c4d6b73fc667b7d74467'),
-    'charge-beam': (78380, '9e7a8563adf61d0b1a62f864664df066d64fc7abcfa3cd3c08be60926c36d983'),
-    'red-tower': (85800, '45bebd810937cf03267f5a053c7e5dd9cf002ad3f46f34cab2eb5bc68a3d411e'),
-    'redtower-shaft-open': (86483, 'bebda37ee6cf6d8236f36719cb9e04b5ab65abefe070e49088d9e1df175947cb'),
-    'spazer': (90706, 'f1e1f18b3ce11974f5049d2429960a4f07d5728307cd5dad7d202efe223f41f5'),
-    'hi-jump': (99191, 'c14c52e9860a306076f660edad39907deb3ffaabfd6d0670ead1d9f203492948'),
-    'kraid-refilled': (115663, '0959e0716ab17f1386612db2be86f8444a76d7f8fe06cfadc90ab96953ccfcc8'),
-    'kraid-phase2': (119823, '5f9574353373aecf84ecd3b44eb4cc9205478fbcad9bb6b3e851fae41728b971'),
-    'kraid-defeated': (120820, 'a4a03b12d7491dba63661997e9db2a190ebbe15d8ce94bdf54760fea629c25ec'),
-    'varia-suit': (122732, '53b375049fd8012820edd0d224df29782891893f553d5f3d690b5a3f079a3648'),
-    'warehouse-return': (128547, '2fba8c0b64d929b6206ccb12d349d965d2f8bec60ebd504dfb5db36ded390d8a'),
-    'warehouse-energy': (129802, '18f230ec4d4891261df5552bb84af789d3a2345d4e135f93c086d996c19dee5d'),
-    'bubble-mountain': (138749, '06344dfe6f82874f0bca8b4fac2e7e712abb6f21540b2997edfd0599f85558da'),
     'ice-return-business': (166082, '4b4090a970f52658d27d4f69fe0e6d30da43739519cf781ef722dacbecdb5721'),
     'speed-booster': (148406, 'bc907fc429252418216b7f575e26be148f7cf863a71c3947b4ffa3c6c6027de6'),
     'crocomire': (171694, '90223d25514f15bb92cfe255402f6561fe598b46dd7a07435dcecff682f3dabe'),
@@ -521,7 +496,6 @@ def _early_route(any_inputs):
     a = a[:18665] + _hold('B Left', 7) + _hold('', 8) + _hold('B Left A', 16) + _hold('B Right A', 38) + _hold('A', 45)  #446 center-spin-rev-16
     a = a[:18745] + _hold('B Right', 7) + _hold('', 35) + _hold('A', 20) + _hold('B Left A', 40) + _hold('A', 40)  #520 left192-wait-20
     a = a[:18865] + _hold('', 5) + _hold('A', 20) + _hold('B Right A', 44) + _hold('A', 55) + _hold('', 2000)  #550 escape-20
-    yield 'ceres-escape', list(a)
     a += _hold('B Left X', 600) + _hold('', 100)  #648 left
     a = a[:21590] + _hold('B Left X', 1200) + _hold('', 100)  #685 west
     a = a[:22005]; a[-5:] = _hold('B Left', 5)
@@ -538,7 +512,7 @@ def _early_route(any_inputs):
     a = a[:27255] + _hold('', 5) + _hold('B Right A', 22) + _hold('B Left A', 85) + _hold('', 700) + _hold('A', 1) + _hold('', 100)  #1488 wallloop-27255
     a = a[:27350] + _hold('', 5) + _hold('B Left A', 100) + _hold('', 600) + _hold('A', 1) + _hold('', 120)  #1527 morph-pedestal-27350
     a = a[:27500] + _hold('B Left A', 80) + _hold('', 600) + _hold('A', 1) + _hold('', 120)  #1571 collect-jump
-    yield 'morph-ball', a
+    return a
 
 
 def _missile_route(morph):
@@ -554,7 +528,7 @@ def _missile_route(morph):
     a = a[:31400] + _hold('', 5) + _hold('Down', 5) + _hold('', 5) + _hold('Down', 5) + _hold('Left', 180) + _hold('', 80) #2270 lower-roll
     a = a[:31600] + _hold('Up', 8) + _hold('', 8) + _hold('Up', 8) + _hold('', 10) + _hold('Left X', 100) + _hold('', 80) #2309 door-shoot
     a = a[:31780] + _hold('Left X', 90) + _hold('', 600) + _hold('A', 1) + _hold('', 120) #2365 a107-left
-    yield 'missile-pickup', a
+    return a
 
 
 
@@ -606,7 +580,7 @@ def extend_missile(a):
     a += _holds('Right:1 None:15 A:25 Left+A:13 Right+A:4 X:65 None:20') #2419
     a += _holds('A:25 Right+A:30 Left+A:4 X:65 None:20') #2450
     a += _holds('Up+X:60 None:5 Up+A+X:80 None:200') #2479
-    yield 'parlor-return', a
+    return a
 
 
 def extend_parlor(a):
@@ -635,7 +609,6 @@ def extend_parlor(a):
     a = a[:42940] + _hold('Left X', 8) + _hold('X', 30) + s[293:] #221
     a = a[:44650] + _hold('Left', 1) + _hold('', 20) + [x | BUTTON_BITS['X'] for x in s[1307:]] #335
     a = a[:45210] + _hold('Right X', 14) + _hold('X', 120) + s[1850:] #434
-    yield 'bomb-corridor-entry', list(a)
     a += _holds('Down:1 None:8 Down:1 None:12 Right+X:80 Down+X:80 None:120') #488 bomb-morph-entry
     a += _holds('Left:35 None:80 Right:90 None:120') #542 bomb-left-drop
     a += _holds('Up:1 None:30 Right+X:80 None:160') #594 bomb-left-unmorph
@@ -648,7 +621,7 @@ def extend_parlor(a):
     a += _holds('Select:1 None:10 Right+X:70 None:700 A:1 None:120') #930 bomb-orb-contact
     a += _holds('Left+X:100 None:5 Left+A+X:70 None:120') #982 bomb-exit-left
     a += _holds('None:5 A+X:20 Left+A+X:60 None:160') #1034 bomb-exit-up
-    yield 'bomb-pickup', a
+    return a
 
 
 def extend_bombs(a):
@@ -657,7 +630,6 @@ def extend_bombs(a):
     cycle = _hold('B Right A X', 65) + _hold('Left X', 1) + _hold('X', 230) + _hold('B Left A X', 65) + _hold('Right X', 1) + _hold('X', 230)
     a = a[:50400] + cycle*8 + _hold('', 120) #1241
     a = a[:50700] + (_hold('X', 1) + _hold('', 9))*200 + _hold('', 120) #1291 fight-right-tap
-    yield 'bomb-torizo', list(a)
     a += _holds('Left+X:55 None:5 A+X:20 Left+A+X:70 None:140') #1345 torizo-exit
     a += _holds('None:5 Left+A+X:90 None:120') #1379 torizo-exit-hop
     a += _holds('Left+X:250 None:5 Left+A+X:70 None:120') #1425 torizo-return-parlor
@@ -677,7 +649,7 @@ def extend_bombs(a):
     a = a[:56330] #3148
     a += _holds('Up:1 None:20 B+Left+X:6 B+Left+A+X:100 None:120') #3148 hall-west
     a += _holds('None:5 A+X:24 Left+A+X:60 None:120') #3234 hill-top
-    yield 'parlor-hill-top', a
+    return a
 
 
 def extend_hill(a):
@@ -688,7 +660,6 @@ def extend_hill(a):
     a = a[:58337] + _hold('Left X', 13) + _hold('', 20) + _hold('Down', 1) + _hold('', 700) #25078
     a += _hold('A', 1) + _hold('', 600) + _hold('B Left X', 80) + _hold('', 120) #25178
     a += _hold('', 300) + _hold('B Left X', 110) + _hold('', 120) #25237
-    yield 'gunship-refilled', list(a)
     a += _hold('B Left X', 190) + _hold('', 120) #26382
     a += _hold('Left A X', 22) + _hold('B Left X', 70) + _hold('', 120) #26455
     a += _hold('B Left X', 10) + _hold('B Left A X', 60) + _hold('', 120) #26526
@@ -709,7 +680,7 @@ def extend_hill(a):
     a += _hold('B Right X', 90) + _hold('B Left X', 150) + _hold('', 120) #16101
     a += (_hold('B Left X', 35) + _hold('B Left A X', 35))*6 + _hold('B Left X', 100) + _hold('', 120) #27214
     a += _hold('Left', 24) + _hold('', 20) + _hold('Down', 1) + _hold('', 1100) + _hold('Left', 35) + _hold('', 90) + _hold('Right', 38) + _hold('', 120) #27297
-    yield 'green-brinstar-arrival', a
+    return a
 
 
 def extend_green(a):
@@ -717,7 +688,6 @@ def extend_green(a):
     a += _holds('Right+X:20 None:60 Left+X:32 None:80 Right+X:32 None:80 Left+X:30 None:120')
     a = a[:67300] + _holds('Right+X:30 None:100') #39765
     a = a[:67300] + _holds('Right:75 None:30 Select:1 None:20 A:3 A+X:1 None:90 A:3 A+X:1 None:90 A:3 A+X:1 None:90 A:3 A+X:1 None:90 A:3 A+X:1 None:90 Right:80 None:120') #40562
-    yield 'early-supers-door', list(a)
     # Original authored tuples, archived session01a15330-201d-7fc0-a594-a9c60b0a2a44.
     a += _holds('Right:10 None:20 Left:7 B+Left+A:12 B+Right:3 B+Right+A:19 A:30 None:40') #585
     a += _holds('Left:14 B+Left+A:12 B+Right:3 B+Right+A:19 A:30 None:80') #600
@@ -733,7 +703,7 @@ def extend_green(a):
     a += _holds('B+Left+A+X:15 B+Left+X:60 None:10') #902
     a += _holds('None:180 A:1 None:60') #916
     a += _hold('', 130) + _hold('A', 1) + _hold('', 65) #938
-    yield 'super-missiles', a
+    return a
 
 
 def extend_super(a):
@@ -777,7 +747,6 @@ def extend_super(a):
     a += _hold('A', 1) + _hold('', 162)
     # 1300 green-save-71800.inputs
     a += _hold('A', 1) + _hold('', 60) + _hold('Right', 1) + _hold('', 38)
-    yield 'green-brinstar-save', list(a)
     # 1350 bigpink-save-exit.inputs
     for word, n in [(_buttons('Y'), 1), (_buttons('Right A'), 40), (_buttons('Right X'), 60), (_buttons(''), 140)]:
         a += [word] * n
@@ -856,7 +825,6 @@ def extend_super(a):
     a += _hold('X R', 35) + _hold('Left A', 18) + _hold('', 400)
     # 1824 charge-beam-78380.inputs
     a += _hold('A', 1) + _hold('', 89) + _hold('X', 90) + _hold('', 80)
-    yield 'charge-beam', list(a)
     # 1894 charge-return-hop1.inputs
     a += _hold('B Right A', 60) + _hold('', 20)
     # 1903 charge-return-hop2.inputs
@@ -928,7 +896,6 @@ def extend_super(a):
     # 2371 red-tower-85800.inputs
     a += _hold('Y', 1) + _hold('', 110)
     assert len(a) == 85800
-    yield 'red-tower', list(a)
     # 2427 redtower-first-drop.inputs
     a += _hold('B Right X', 48) + _hold('', 55)
     # 2439 redtower-left-drop.inputs
@@ -941,7 +908,7 @@ def extend_super(a):
     a += _hold('Left', 16) + _hold('', 55)
     # 2518 redtower-shaft-open.inputs
     a += _hold('X', 1) + _hold('', 170)
-    yield 'redtower-shaft-open', a
+    return a
 
 
 def extend_redtower(a):
@@ -1693,9 +1660,7 @@ def route_frames(source, name):
     a = source
     for extend in (_early_route, _missile_route, extend_missile, extend_parlor,
                    extend_bombs, extend_hill, extend_green, extend_super):
-        for milestone, a in extend(a):
-            if milestone == name:
-                return a
+        a = extend(a)
     if name == 'save-death-continue':
         # Retain the saved-slot route through observed contact input 72760.
         # Authored idle exposure, then fresh A presses for Continue and both maps.
