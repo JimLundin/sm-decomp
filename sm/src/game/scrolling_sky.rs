@@ -1,16 +1,10 @@
 //! Scrolling sky setup, parallax, HDMA bands and tile uploads.
 use crate::game::liquid_effects::WATER_WAVE;
+use crate::game::menu_tilemap::native_record;
 use crate::game::prelude::*;
 use crate::game::visual_runtime::spawn_hdma;
+use crate::ram_map::slot;
 crate::ram_map::ram_pointer_functions! { gVramWriteEntry(a: i32) -> VramWriteEntry = [(0xd0 + a) as isize]; }
-crate::typed_struct! {
-    #[derive(Copy, Clone)]
-    #[repr(C, packed)]
-    pub struct HdmaScrollEntry {
-        pub top_pos, scroll_subspeed, scroll_speed: u16;
-        pub hdma_data_table_entry: VoidP;
-    }
-}
 
 pub unsafe fn initialize_banded_sky(game: &mut Game) {
     unsafe {
@@ -198,71 +192,67 @@ fn damage_above_screen(game: &mut Game) {
         }
     }
 }
-pub unsafe fn advance_parallax(k: u16, game: &mut Game) {
-    unsafe {
-        let mut r24: u16 = 0;
-        *ram_ptr!(game; 0x59) = 74;
-        for v1 in 0u16..23 {
-            let entry = (rom_ptr!(game, HdmaScrollEntry; 0x88aec1)).offset(v1 as isize);
-            let v3 = ram_ptr!(game, u16; (*entry).hdma_data_table_entry as isize);
-            AddToHiLo(
-                v3.offset(1),
-                v3,
-                words!(((*entry).scroll_speed, (*entry).scroll_subspeed)),
-            );
-        }
-        word! { game, 0; scrolling_sky_bg2_hdma_data[44], scrolling_sky_bg2_hdma_data[45] }
-        *(ram_ptr!(game, u16; 0x9f00)) = 31;
-        *(ram_ptr!(game, u16; 0x9f00, 1)) = 1438;
-        let mut r18: u16 = (word!(game.layer1_y_pos)).wrapping_add(32);
-        let r20: u16 = (word!(game.layer1_y_pos)).wrapping_add(224);
-        let mut v6: u16 = 3;
-        for v5 in 0u16..23 {
-            let entry = (rom_ptr!(game, HdmaScrollEntry; 0x88aec1)).offset(v5 as isize);
-            while ((r18) as i16).wrapping_sub(((*entry).top_pos) as i16) >= 0
-                && ((r18) as i16).wrapping_sub(((*entry.offset(1)).top_pos) as i16) < 0
-            {
-                let mut v8: u16 = ((*entry.offset(1)).top_pos).wrapping_sub(r18);
-                r24 = v8;
-                if v8 as i32 - 128i32 & 0x8000 == 0 {
-                    *(ram_ptr!(game, u16; 0x9f00, v6 as isize)) = 127;
-                    *(ram_ptr!(game, u16; 0x9f00, (v6 as i32 + 1) as isize)) =
-                        ((*entry).hdma_data_table_entry).wrapping_add(2);
-                    v6 = (v6).wrapping_add(3);
-                    v8 = (r24).wrapping_sub(127);
-                }
-                *(ram_ptr!(game, u16; 0x9f00, v6 as isize)) = v8;
-                *(ram_ptr!(game, u16; 0x9f00, (v6 as i32 + 1) as isize)) =
-                    ((*entry).hdma_data_table_entry).wrapping_add(2);
-                r18 = (r18).wrapping_add(r24);
-                v6 = (v6).wrapping_add(3);
-                if r18 as i32 - r20 as i32 & 0x8000 == 0 {
-                    *(ram_ptr!(game, u16; 0x9f00, (v6 as i32 + 3) as isize)) = 0;
-                    return;
-                }
-            }
-        }
-        let mut i: u16 = (1535u16).wrapping_sub(r18);
-        loop {
-            r24 = i;
-            if i as i32 - 128i32 & 0x8000 != 0 {
-                break;
-            }
-            *(ram_ptr!(game, u16; 0x9f00, v6 as isize)) = 127;
-            *(ram_ptr!(game, u16; 0x9f00, (v6 as i32 + 1) as isize)) = 181;
-            v6 = (v6).wrapping_add(3);
-            i = (r24).wrapping_sub(127);
-        }
-        *(ram_ptr!(game, u16; 0x9f00, v6 as isize)) = i;
-        *(ram_ptr!(game, u16; 0x9f00, (v6 as i32 + 1) as isize)) = 181;
-        *(ram_ptr!(game, u16; 0x9f00, (v6 as i32 + 3) as isize)) = 0;
-    }
+#[forbid(unsafe_code)]
+fn write_sky_word(value: u16, offset: isize, game: &mut Game) {
+    word_transfers!(game, ascending, 1; native(0x9f00 + offset) <- value(value));
 }
-pub unsafe fn update_parallax(k: u16, game: &mut Game) {
-    unsafe {
-        if word!(game.time_is_frozen_flag) == 0 {
-            advance_parallax(k, game);
+
+#[forbid(unsafe_code)]
+pub fn advance_parallax(k: u16, game: &mut Game) {
+    game.g_ram[0x59] = 74;
+    for v1 in 0u16..23 {
+        let entry = native_record(0x88aec1 + 8 * u32::from(v1), game);
+        let at = i32::from(entry.word(6)) - 0xf78;
+        let value = words!((entry.word(4), entry.word(2)));
+        slot!(game, PairU16[at](j, k) += value);
+    }
+    word! { game, 0; scrolling_sky_bg2_hdma_data[44], scrolling_sky_bg2_hdma_data[45] }
+    write_sky_word(31, 0, game);
+    write_sky_word(1438, 1, game);
+    let mut r18: u16 = (word!(game.layer1_y_pos)).wrapping_add(32);
+    let r20: u16 = (word!(game.layer1_y_pos)).wrapping_add(224);
+    let mut v6: u16 = 3;
+    for v5 in 0u16..23 {
+        let entry = native_record(0x88aec1 + 8 * u32::from(v5), game);
+        while ((r18) as i16).wrapping_sub(entry.word(0) as i16) >= 0
+            && ((r18) as i16).wrapping_sub(entry.word(8) as i16) < 0
+        {
+            let height = entry.word(8).wrapping_sub(r18);
+            let mut v8 = height;
+            if v8 as i32 - 128i32 & 0x8000 == 0 {
+                write_sky_word(127, v6 as isize, game);
+                write_sky_word(entry.word(6).wrapping_add(2), v6 as isize + 1, game);
+                v6 = (v6).wrapping_add(3);
+                v8 = (height).wrapping_sub(127);
+            }
+            write_sky_word(v8, v6 as isize, game);
+            write_sky_word(entry.word(6).wrapping_add(2), v6 as isize + 1, game);
+            r18 = (r18).wrapping_add(height);
+            v6 = (v6).wrapping_add(3);
+            if r18 as i32 - r20 as i32 & 0x8000 == 0 {
+                write_sky_word(0, v6 as isize + 3, game);
+                return;
+            }
         }
+    }
+    let mut i: u16 = (1535u16).wrapping_sub(r18);
+    loop {
+        if i as i32 - 128i32 & 0x8000 != 0 {
+            break;
+        }
+        write_sky_word(127, v6 as isize, game);
+        write_sky_word(181, v6 as isize + 1, game);
+        v6 = (v6).wrapping_add(3);
+        i = (i).wrapping_sub(127);
+    }
+    write_sky_word(i, v6 as isize, game);
+    write_sky_word(181, v6 as isize + 1, game);
+    write_sky_word(0, v6 as isize + 3, game);
+}
+#[forbid(unsafe_code)]
+pub fn update_parallax(k: u16, game: &mut Game) {
+    if word!(game.time_is_frozen_flag) == 0 {
+        advance_parallax(k, game);
     }
 }
 unsafe fn queue_tile_rows(src: *const u16, game: &mut Game) {
