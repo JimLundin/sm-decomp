@@ -401,7 +401,7 @@ pub unsafe fn GameState_44_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
     }
 }
 static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_V_Coroutine;
-    GameState_0_Reset_Async, GameState_1_OpeningCinematic, GameState_2_GameOptionsMenu,
+    GameState_0_Reset_Async, GameState_1_OpeningCinematic_, GameState_2_GameOptionsMenu,
     GameState_3_Null, advance_file_menu, advance_map_menu,
     InitAndLoadGameData_Async, GameState_7_MainGameplayFadeIn, AdvanceGameplay,
     GameState_9_HitDoorBlock, GameState_10_LoadingNextRoom_Async,
@@ -412,11 +412,11 @@ static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_
     GameState_22_SamusNoHealth_Dying, GameState_23_SamusNoHealth_Flashing,
     GameState_24_SamusNoHealth_Explosion, GameState_25_SamusNoHealth_BlackOut,
     advance_game_over, GameState_27_ReserveTanksAuto, GameState_28_Unused,
-    GameState_29_DebugGameOverMenu, GameState_37_CeresGoesBoomWithSamus,
+    GameState_29_DebugGameOverMenu, GameState_37_CeresGoesBoomWithSamus_,
     InitAndLoadGameData_Async, GameState_32_MadeItToCeresElevator,
-    GameState_33_BlackoutFromCeres, GameState_37_CeresGoesBoomWithSamus, GameState_35_TimeUp,
-    GameState_36_WhitingOutFromTimeUp, GameState_37_CeresGoesBoomWithSamus,
-    GameState_38_SamusEscapesFromZebes, GameState_39_EndingAndCredits,
+    GameState_33_BlackoutFromCeres, GameState_37_CeresGoesBoomWithSamus_, GameState_35_TimeUp,
+    GameState_36_WhitingOutFromTimeUp, GameState_37_CeresGoesBoomWithSamus_,
+    GameState_38_SamusEscapesFromZebes, GameState_39_EndingAndCredits_,
     InitAndLoadGameData_Async, GameState_41_TransitionToDemo, GameState_42_PlayingDemo_Async,
     GameState_43_TransitionFromDemo, GameState_44_TransitionFromDemo,
 };
@@ -513,15 +513,8 @@ pub fn GameState_0_Reset_Async(game: &mut Game) -> CoroutineRet {
         kCoroutineNone as CoroutineRet
     }
 }
-pub unsafe fn GameState_1_OpeningCinematic(game: &mut Game) -> CoroutineRet {
-    unsafe { GameState_1_OpeningCinematic_(game) }
-}
 pub fn GameState_3_Null(game: &mut Game) -> CoroutineRet {
     kCoroutineNone as CoroutineRet
-}
-crate::forward_calls! { pub unsafe fn (game: &mut Game) -> CoroutineRet;
-    GameState_37_CeresGoesBoomWithSamus => GameState_37_CeresGoesBoomWithSamus_(game);
-    GameState_39_EndingAndCredits => GameState_39_EndingAndCredits_(game);
 }
 pub unsafe fn GameState_7_MainGameplayFadeIn(game: &mut Game) -> CoroutineRet {
     unsafe {
