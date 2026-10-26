@@ -11,8 +11,8 @@ use ::core::mem::{MaybeUninit, size_of};
 use ::core::ptr::null_mut;
 
 use crate::c_library::{
-    __assert_fail, fclose, fopen, fprintf, fread, fseek, ftell, memcmp, memcpy, memset, printf,
-    puts, rewind, snprintf, stderr, time,
+    __assert_fail, fopen, fprintf, fread, fseek, ftell, memcmp, memcpy, memset, printf, puts,
+    rewind, snprintf, stderr, time,
 };
 use crate::rtl::{RomPtr, RtlSaveSnapshot, RtlSetupEmuCallbacks, WriteReg};
 use crate::snes::apu::apu_cycle;
@@ -81,6 +81,10 @@ crate::ram_map::ram_pointer_functions! {
 
 pub unsafe fn Call(addr: u32, game: &mut Game) {
     unsafe {
+        assert!(
+            game.supports_legacy_persistence(),
+            "Call: CPU authority is unavailable for a prepared world"
+        );
         crate::native_assertion! {
             '_c2rust_label: addr & 0x8000 != 0;
             b"addr & 0x8000\0", b"src/sm_cpu_infra.c\0", 54, b"void Call(uint32)\0"
@@ -845,47 +849,51 @@ unsafe fn RestoreSnapshot(s: &Snapshot, snes: &mut Snes, c: &mut Cpu) {
 }
 pub unsafe fn RunAsmCode(pc: u32, a: u16, x: u16, y: u16, flags: i32, game: &mut Game) -> i32 {
     unsafe {
-        let org_sp: u16 = (*game.g_cpu).sp;
-        let org_pc: u16 = (*game.g_cpu).pc;
-        let org_b: u8 = (*game.g_cpu).db;
-        let org_dp: u16 = (*game.g_cpu).dp;
-        printf(c"RunAsmCode!\n".as_ptr());
-        game.g_ram[0x1ffffi32 as usize] = 1;
-        let dc: bool = (*game.g_snes).debug_cycles;
-        crate::set_fields! {[(*game.g_cpu)]; db = (pc >> 16) as u8, a = a, x = x, y = y,
-        spBreakpoint = (*game.g_cpu).sp, k = (pc >> 16) as u8, pc = (pc & 0xffff) as u16,
-        mf = flags & 1 != 0, xf = (flags & 2) >> 1 != 0, };
-        game.g_calling_asm_from_c = true_0 != 0;
-        while game.g_calling_asm_from_c {
-            let pc_0: u32 = (words!(i32, (*(*game.g_snes).cpu), k, pc)) as u32;
-            if (*game.g_snes).debug_cycles {
-                let mut line = [0u8; 80];
-                getProcessorStateCpu(game.g_snes, &mut line, game);
-                puts(line.as_ptr().cast());
-                line[0] = 0;
-            }
-            cpu_runOpcode(game.g_cpu, game);
-            while (*(*game.g_snes).dma).dmaBusy {
-                dma_doDma((*game.g_snes).dma, game);
-            }
-            if flags & 1 != 0 {
-                let mut i: i32 = 0;
-                while i < 10 {
-                    apu_cycle((*game.g_snes).apu, game);
-                    i += 1;
+        assert!(
+            game.supports_legacy_persistence(),
+            "RunAsmCode: CPU authority is unavailable for a prepared world"
+        );
+        let actor_transition = game.prepare_actor_canonical();
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let org_sp: u16 = (*game.g_cpu).sp;
+            let org_pc: u16 = (*game.g_cpu).pc;
+            let org_b: u8 = (*game.g_cpu).db;
+            let org_dp: u16 = (*game.g_cpu).dp;
+            printf(c"RunAsmCode!\n".as_ptr());
+            game.g_ram[0x1ffffi32 as usize] = 1;
+            let dc: bool = (*game.g_snes).debug_cycles;
+            crate::set_fields! {[(*game.g_cpu)]; db = (pc >> 16) as u8, a = a, x = x, y = y,
+            spBreakpoint = (*game.g_cpu).sp, k = (pc >> 16) as u8, pc = (pc & 0xffff) as u16,
+            mf = flags & 1 != 0, xf = (flags & 2) >> 1 != 0, };
+            game.g_calling_asm_from_c = true_0 != 0;
+            while game.g_calling_asm_from_c {
+                let pc_0: u32 = (words!(i32, (*(*game.g_snes).cpu), k, pc)) as u32;
+                if (*game.g_snes).debug_cycles {
+                    let mut line = [0u8; 80];
+                    getProcessorStateCpu(game.g_snes, &mut line, game);
+                    puts(line.as_ptr().cast());
+                    line[0] = 0;
+                }
+                cpu_runOpcode(game.g_cpu, game);
+                while (*(*game.g_snes).dma).dmaBusy {
+                    dma_doDma((*game.g_snes).dma, game);
+                }
+                if flags & 1 != 0 {
+                    let mut i: i32 = 0;
+                    while i < 10 {
+                        apu_cycle((*game.g_snes).apu, game);
+                        i += 1;
+                    }
                 }
             }
-        }
-        crate::set_fields! {[(*game.g_cpu)]; dp = org_dp, sp = org_sp, db = org_b, pc = org_pc, };
-        (*game.g_snes).debug_cycles = dc;
-        game.g_calling_asm_from_c_ret
-    }
-}
-struct RomInputFile(*mut crate::types::FILE);
-impl Drop for RomInputFile {
-    fn drop(&mut self) {
-        unsafe {
-            fclose(self.0);
+            crate::set_fields! {[(*game.g_cpu)]; dp = org_dp, sp = org_sp, db = org_b, pc = org_pc, };
+            (*game.g_snes).debug_cycles = dc;
+            game.g_calling_asm_from_c_ret
+        }));
+        game.commit_actor_canonical(actor_transition);
+        match result {
+            Ok(result) => result,
+            Err(panic) => std::panic::resume_unwind(panic),
         }
     }
 }
@@ -896,7 +904,7 @@ unsafe fn loadRom(name: *const c_char, snes: *mut Snes, game: &mut Game) -> bool
             puts(c"Failed to read file".as_ptr());
             return false_0 != 0;
         }
-        let file = RomInputFile(file);
+        let file = crate::util::InputFile(file);
         fseek(file.0, 0, crate::util::SEEK_END);
         let length: size_t = ftell(file.0) as size_t;
         rewind(file.0);

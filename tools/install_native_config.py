@@ -101,6 +101,22 @@ def config_sources(source, header):
     source = source[:first] + source[last:]
     source = replace(source, '"zelda3.user.ini"', '"sm.user.ini"')
     source = replace(source, '"zelda3.ini"', '"sm.ini"')
+    # Input allocations and recursive temporary paths belong to the Rust owner.
+    header = replace(header, "void ParseConfigFile(const char *filename);", "void ParseConfigFile(void *owner, const char *filename);")
+    source = replace(source, 'static bool ParseOneConfigFile(const char *filename, int depth)',
+                     'bool sm_config_parse_one_file(void *owner, const char *filename, int depth)')
+    source = replace(source, '(char*)ReadWholeFile(filename, NULL)', 'sm_config_read_file(owner, filename)')
+    source = replace(source, 'void ParseConfigFile(const char *filename)',
+                     'void ParseConfigFile(void *owner, const char *filename)')
+    source = replace(source, 'ParseOneConfigFile("sm.user.ini", 0)',
+                     'sm_config_parse_one_file(owner, "sm.user.ini", 0)')
+    source = replace(source, 'ParseOneConfigFile(filename, 0)',
+                     'sm_config_parse_one_file(owner, filename, 0)')
+    source = replace(source, '      char *new_filename = ReplaceFilenameWithNewPath(filename, NextPossiblyQuotedString(&tt));\n'
+                            '      if (depth > 10 || !ParseOneConfigFile(new_filename, depth + 1))\n'
+                            '        fprintf(stderr, "Warning: Unable to read %s\\n", new_filename);\n'
+                            '      free(new_filename);',
+                     '      sm_config_include(owner, filename, NextPossiblyQuotedString(&tt), depth);')
     # Use the same writable FILE pointer exposed by the native frontend.
     source = source.replace('fprintf(stderr,', 'fprintf(sm_config_stderr(),')
     return rename_symbols(source), rename_symbols(header)

@@ -94,14 +94,14 @@ def desktop_source(source):
     replace("RenderNumber", "char buf[32], *s;", "char buf[32] = {0}, *s;")
     # Retain the published event/window loop, replacing only game-owned phases.
     r = "main"
-    replace(r, "int main(int argc, char** argv)", "int main(int argc, char** argv, const void *owner)")
+    replace(r, "int main(int argc, char** argv)", "int main(int argc, char** argv, const void *owner, void *config)")
     start = routines[r].index("  ParseConfigFile(config_file);")
     end = routines[r].index("  if (g_config.fullscreen == 1)", start)
     routines[r] = routines[r][:start] + """  if (argc >= 1 && strcmp(argv[0], "--debug") == 0) {
     sm_host_debug(owner);
     argc -= 1; argv += 1;
   }
-  ParseConfigFile(config_file);
+  sm_host_parse_config(config, config_file);
   g_snes_width = g_config.extended_aspect_ratio * 2 + 256;
   g_snes_height = 240;
   g_ppu_render_flags = g_config.new_renderer * kPpuRenderFlags_NewRenderer |

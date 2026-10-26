@@ -17,7 +17,7 @@ enum { kPpuRenderFlags_NewRenderer = 1, kPpuRenderFlags_4x4Mode7 = 2,
        kSaveLoad_Save = 1, kSaveLoad_Load = 2, kSaveLoad_Replay = 3 };
 void sm_host_die(const char *);
 FILE *sm_host_stderr(void);
-void sm_host_parse_config(const char *);
+void sm_host_parse_config(void *, const char *);
 int sm_host_find_key(int, int);
 int sm_host_find_button(int, uint32_t);
 void sm_host_debug(const void *);

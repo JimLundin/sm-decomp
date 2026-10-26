@@ -23,7 +23,12 @@ static mut g_my_pixels: [u8; 245760] = [0; 245760];
 
 #[link(name = "sm_desktop", kind = "static", modifiers = "-bundle")]
 unsafe extern "C-unwind" {
-    fn sm_desktop_run(argc: i32, argv: *mut *mut c_char, owner: *const GameOwner) -> i32;
+    fn sm_desktop_run(
+        argc: i32,
+        argv: *mut *mut c_char,
+        owner: *const GameOwner,
+        config: *mut c_void,
+    ) -> i32;
     fn sm_desktop_close();
     fn sm_desktop_HandleInput(game: *mut Game, key: i32, modifiers: i32, pressed: bool);
     fn sm_desktop_HandleGamepadInput(game: *mut Game, button: i32, pressed: bool);
@@ -136,9 +141,9 @@ unsafe extern "C-unwind" fn sm_host_stderr() -> *mut FILE {
     unsafe { stderr }
 }
 #[unsafe(no_mangle)]
-unsafe extern "C-unwind" fn sm_host_parse_config(name: *const c_char) {
+unsafe extern "C-unwind" fn sm_host_parse_config(config: *mut c_void, name: *const c_char) {
     unsafe {
-        sm::config::ParseConfigFile(name);
+        sm::config::ParseConfigFile(name, &mut *config.cast::<sm::config::ConfigOwner>());
     }
 }
 #[unsafe(no_mangle)]
@@ -392,6 +397,7 @@ pub unsafe extern "C" fn __assert_fail(
 }
 
 pub fn main() {
+    let mut config = sm::config::ConfigOwner::new();
     let owner = GameOwner::new();
     check_dependency();
 
@@ -408,6 +414,7 @@ pub fn main() {
     if std::env::args().nth(1).as_deref() == Some("verify") {
         let status = owner.with(|game| verify::run(game));
         drop(owner);
+        drop(config);
         ::std::process::exit(status);
     }
     let mut args_strings: Vec<Vec<u8>> = ::std::env::args()
@@ -435,9 +442,11 @@ pub fn main() {
             (args_ptrs.len() - 1) as i32,
             args_ptrs.as_mut_ptr(),
             &*owner,
+            (&mut config as *mut sm::config::ConfigOwner).cast(),
         )
     };
     drop(desktop);
     drop(owner);
+    drop(config);
     ::std::process::exit(status);
 }

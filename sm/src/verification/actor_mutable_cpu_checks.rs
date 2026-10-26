@@ -5,6 +5,7 @@ use crate::{game::actors::mutable_content_checks as fixture, game_state::Game};
 /// Called only by initialized room_world case11, after SnesInit/audio/PPU setup.
 pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
     unsafe {
+        cpu_writer_admission(game.world().clone());
         assert!(
             !game.g_snes.is_null() && !game.g_cpu.is_null() && !game.g_spc_player.is_null(),
             "actor.mutable.initialized_hardware_required"
@@ -88,5 +89,82 @@ pub(crate) unsafe fn run(game: &mut Game) -> Vec<u8> {
         output.extend_from_slice(&game.g_ram);
         output.extend_from_slice(&[0x4c, 0x80]);
         output
+    }
+}
+
+// No movie reaches prepared CPU fallback or a truncated-Cart unwind; canonical RAM code is its control.
+fn cpu_writer_admission(world: std::sync::Arc<crate::game::room_entry::world::WorldBinding>) {
+    use crate::{game::session_runtime::Runtime, game_state::GameOwner, rom::RomImage};
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+    unsafe {
+        GameOwner::with_world(world).with(|g| {
+            let ram = g.g_ram.to_vec();
+            let identity = g.actor_identity().clone();
+            for direct in [false, true] {
+                let rejected = catch_unwind(AssertUnwindSafe(|| {
+                    let mut runtime = Runtime::new(g);
+                    runtime.foreign(|g| {
+                        if direct {
+                            super::RunAsmCode(0, 0, 0, 0, 0, g);
+                        } else {
+                            super::Call(0, g);
+                        }
+                    });
+                }))
+                .unwrap_err();
+                let expected = if direct {
+                    "RunAsmCode: CPU authority is unavailable for a prepared world"
+                } else {
+                    "Call: CPU authority is unavailable for a prepared world"
+                };
+                assert_eq!(rejected.downcast_ref::<&str>(), Some(&expected));
+                assert!(g.g_cpu.is_null() && g.g_snes.is_null());
+                assert_eq!(g.g_ram.as_slice(), ram.as_slice());
+                assert_eq!(g.actor_identity(), &identity);
+                assert!(
+                    !g.actor_identity_is_with_session() && !g.g_calling_asm_from_c && !g.g_fail
+                );
+            }
+        });
+        GameOwner::new().with(|g| {
+            g.initialize_backend();
+            let cart = (*g.g_snes).cart;
+            crate::snes::cart::cart_load(cart, 1, RomImage::zeroed(0x10000), 0);
+            (*g.g_cpu).sp = 0x1ff;
+            for failure in [false, true] {
+                let program: &[u8] = if failure {
+                    &[0x8f, 0x38, 0x17, 0x7e, 0x5c, 0x10, 0x80, 0x80]
+                } else {
+                    &[0x8f, 0x38, 0x17, 0x7e, 0x6b]
+                };
+                g.g_ram[0x8000..0x8000 + program.len()].copy_from_slice(program);
+                if failure {
+                    (*cart).rom = RomImage::zeroed(1);
+                }
+                let value = if failure { 0 } else { 0xdaff };
+                let mut expected = g.actor_identity().clone();
+                let transition = expected.prepare_canonical_transition().unwrap();
+                let result = catch_unwind(AssertUnwindSafe(|| {
+                    let mut runtime = Runtime::new(g);
+                    let result =
+                        runtime.foreign(|g| super::RunAsmCode(0x7e8000, value, 0, 0, 0, g));
+                    assert_eq!(runtime.word(0x1738), value);
+                    result
+                }));
+                if failure {
+                    assert!(result.is_err());
+                    assert_eq!(((*g.g_cpu).k, (*g.g_cpu).pc), (0x80, 0x8011));
+                } else {
+                    assert_eq!(result.unwrap(), 0);
+                    assert_eq!(((*g.g_cpu).sp, (*g.g_cpu).pc), (0x1ff, 0));
+                }
+                assert_eq!(&g.g_ram[0x1738..0x173a], &value.to_le_bytes());
+                assert_eq!(g.g_ram[0x1ffff], 1);
+                assert_eq!(g.g_calling_asm_from_c, failure);
+                assert!(!g.actor_identity_is_with_session());
+                expected.commit_canonical_transition(transition, &g.g_ram);
+                assert_eq!(g.actor_identity(), &expected);
+            }
+        });
     }
 }

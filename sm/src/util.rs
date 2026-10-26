@@ -18,6 +18,16 @@ pub const true_0: i32 = 1;
 pub const false_0: i32 = 0;
 pub const SEEK_END: i32 = 2;
 
+// ROM and configuration readers close the actual CRT stream on return or unwind.
+pub(crate) struct InputFile(pub(crate) *mut FILE);
+impl Drop for InputFile {
+    fn drop(&mut self) {
+        unsafe {
+            crate::c_library::fclose(self.0);
+        }
+    }
+}
+
 #[link(name = "sm_config", kind = "static", modifiers = "-bundle")]
 unsafe extern "C-unwind" {
     #[link_name = "sm_util_NextDelim"]

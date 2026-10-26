@@ -118,7 +118,8 @@ pub const false_0: i32 = 0;
 unsafe extern "C-unwind" {
     #[link_name = "sm_config_state"]
     pub static mut g_config: Config;
-    fn sm_config_parse_file(filename: *const c_char);
+    fn sm_config_parse_file(owner: *mut c_void, filename: *const c_char);
+    fn sm_config_parse_one_file(owner: *mut c_void, filename: *const c_char, depth: i32) -> bool;
     fn sm_config_find_key(code: SDL_Keycode, modifiers: SDL_Keymod) -> i32;
     fn sm_config_find_button(button: i32, modifiers: u32) -> i32;
     fn sm_config_parse_bool(value: *const c_char, result: *mut bool) -> bool;
@@ -153,10 +154,98 @@ pub(crate) fn check_dependency() {
     });
 }
 
-pub unsafe fn ParseConfigFile(filename: *const c_char) {
+// Native views borrow these actual mutable CRT allocations across includes/reloads.
+// Keyboard/gamepad numeric maps have separate native lifetimes.
+pub struct ConfigOwner {
+    inputs: Vec<ConfigBuffer>,
+}
+struct ConfigBuffer(core::ptr::NonNull<c_void>);
+impl Drop for ConfigBuffer {
+    fn drop(&mut self) {
+        unsafe { crate::c_library::free(self.0.as_ptr()) }
+    }
+}
+impl ConfigOwner {
+    pub fn new() -> Self {
+        Self { inputs: Vec::new() }
+    }
+}
+impl Drop for ConfigOwner {
+    fn drop(&mut self) {
+        if !self.inputs.is_empty() {
+            unsafe {
+                g_config.link_graphics = null_mut();
+                g_config.memory_buffer = null_mut();
+                g_config.shader = null_mut();
+                g_config.msu_path = null_mut();
+            }
+        }
+    }
+}
+
+/// # Safety
+/// All live native configuration views must belong to this owner. Parsing requires
+/// exclusive access to native config/maps; all consumers must stop before it drops.
+pub unsafe fn ParseConfigFile(filename: *const c_char, owner: &mut ConfigOwner) {
     unsafe {
         check_dependency();
-        sm_config_parse_file(filename);
+        sm_config_parse_file((owner as *mut ConfigOwner).cast(), filename);
+    }
+}
+
+// Retain native read/seek/narrowing and mutable malloc storage without adopting it
+// into a Rust allocator. A successful input remains owned even if parsing unwinds.
+#[unsafe(no_mangle)]
+unsafe extern "C-unwind" fn sm_config_read_file(
+    owner: *mut c_void,
+    name: *const c_char,
+) -> *mut c_char {
+    unsafe {
+        use crate::c_library::{fopen, fread, fseek, ftell, malloc, rewind};
+        let file = fopen(name, c"rb".as_ptr());
+        if file.is_null() {
+            return null_mut();
+        }
+        let file = crate::util::InputFile(file);
+        fseek(file.0, 0, crate::util::SEEK_END);
+        let length = ftell(file.0) as size_t;
+        rewind(file.0);
+        let data = malloc(length.checked_add(1).expect("config input size overflow"));
+        if data.is_null() {
+            crate::host::Die(c"malloc failed".as_ptr());
+        }
+        let buffer = ConfigBuffer(core::ptr::NonNull::new(data).expect("config allocation failed"));
+        data.cast::<u8>().add(length).write(0);
+        if fread(data, 1, length, file.0) as u32 as size_t != length {
+            crate::host::Die(c"fread failed".as_ptr());
+        }
+        drop(file);
+        (*owner.cast::<ConfigOwner>()).inputs.push(buffer);
+        data.cast()
+    }
+}
+
+// The temporary include path keeps its original allocation and normal free point.
+// Rust owns this recursive scope, including callbacks unwinding through native C.
+#[unsafe(no_mangle)]
+unsafe extern "C-unwind" fn sm_config_include(
+    owner: *mut c_void,
+    filename: *const c_char,
+    name: *const c_char,
+    depth: i32,
+) {
+    unsafe {
+        let path = crate::util::ReplaceFilenameWithNewPath(filename, name);
+        let path = ConfigBuffer(
+            core::ptr::NonNull::new(path.cast()).expect("config include path allocation failed"),
+        );
+        if depth > 10 || !sm_config_parse_one_file(owner, path.0.as_ptr().cast(), depth + 1) {
+            crate::c_library::fprintf(
+                crate::c_library::stderr,
+                c"Warning: Unable to read %s\n".as_ptr(),
+                path.0.as_ptr(),
+            );
+        }
     }
 }
 
