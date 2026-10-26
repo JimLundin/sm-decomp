@@ -2,7 +2,6 @@
 use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorAccess, ActorKey as Key};
 use crate::game::player_transitions::xray::BeamPhase;
 use crate::game::projectile_presentation_ram as sprite_output;
-use crate::game::sm_8b::ConfigureTitleSequenceGradientHDMA;
 use crate::game::xray_background::{self, finish_restore, restore_left, restore_right};
 use crate::game::{
     explosion_window::{self, Phase},
@@ -493,9 +492,7 @@ unsafe fn execute_hdma_instruction(
         8973471 => Runtime::new(game).reset_hdma_wave(slot),
         8973215 => {
             game.g_ram[0x6f] = 0;
-            unsafe {
-                ConfigureTitleSequenceGradientHDMA(game);
-            }
+            refresh_title_gradient(game);
         }
         _ => {
             unsafe {
@@ -769,11 +766,25 @@ pub(crate) fn check_animation_guard(game: &mut Game) -> bool {
 #[path = "../verification/samus_palette_observer.rs"]
 pub(crate) mod samus_observer;
 
+fn refresh_title_gradient(game: &mut Game) {
+    let mut cursor = crate::rtl::rom_table_word!(
+        game,
+        0x8cbc5d,
+        ((word!(game.cinematic_var6) & 0xf0) >> 4) as isize
+    );
+    for slot in 0usize.. {
+        let value = cinematic_native_record::<0x8c>(cursor, game).word(0);
+        word!(game.hdma_table_1[slot] = value);
+        if value == 0 {
+            break;
+        }
+        cursor = cursor.wrapping_add(2);
+    }
+}
+
 pub(crate) fn advance_title_gradient(backdrop: bool, game: &mut Game) {
     if backdrop {
-        unsafe {
-            ConfigureTitleSequenceGradientHDMA(game);
-        }
+        refresh_title_gradient(game);
     }
     if checked_word!(game.cinematic_function) == 0x9b68 {
         Runtime::new(game).advance_hdma_program();

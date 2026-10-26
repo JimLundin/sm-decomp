@@ -452,25 +452,6 @@ macro_rules! finish_cinematic_and_clear_effects {
     };
 }
 
-pub unsafe fn ConfigureTitleSequenceGradientHDMA(game: &mut Game) {
-    unsafe {
-        let mut v0: u16 = crate::rtl::rom_table_word!(
-            game,
-            0x8cbc5d,
-            ((word!(game.cinematic_var6) as i32 & 0xf0) >> 4) as isize
-        );
-        let mut i: i32 = 0;
-        loop {
-            let v2: u16 = *(RomPtr_8C(v0, game) as *mut u16);
-            word!(game.hdma_table_1[(i >> 1)] = v2);
-            if v2 == 0 {
-                break;
-            }
-            v0 = (v0).wrapping_add(2);
-            i += 2;
-        }
-    }
-}
 static kCinematicPal1: [u16; 16] = [
     0x1000, 0x6bf5, 0x2e41, 0x2da1, 0x2d01, 0x5e5f, 0x183f, 0x1014, 0x80a, 0x404, 0x4f9f, 0x3ed8,
     0x2e12, 0x6f70, 0x7fff, 0x5ee0,
