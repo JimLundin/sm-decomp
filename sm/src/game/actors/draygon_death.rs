@@ -34,6 +34,41 @@ pub(crate) fn damage_palette(native: bool, game: &mut Game) {
         cursor = cursor.wrapping_add(2);
     }
 }
+fn copy_hurt_palette(default: u16, target: usize, game: &mut Game) {
+    let k = word!(game.cur_enemy_index) as i32;
+    let palette = if slot!(game, Draygon[k].base.flash_timer) & 2 != 0 {
+        0xa297
+    } else {
+        default
+    };
+    let address = 0xa50000 | u32::from(palette);
+    if address & 0x8000 == 0 {
+        crate::game::session_runtime::native_rom_diagnostic(address, game);
+    }
+    let image = game.capture_native_rom();
+    let source = crate::rtl::lorom_offset(address) as usize;
+    for offset in 0..32 {
+        let byte = image.read(source + offset);
+        game.g_ram[target + offset] = byte;
+    }
+}
+pub(crate) fn hurt(game: &mut Game) {
+    copy_hurt_palette(0xa277, 0xc0a0, game);
+    let k = word!(game.cur_enemy_index) as i32;
+    if slot!(game, Draygon[k].base.flash_timer) & 2 == 0 {
+        damage_palette(false, game);
+    }
+    copy_hurt_palette(0xa1f7, 0xc1e0, game);
+    if word!(game.samus_grapple_flags) & 1 != 0
+        && slot!(game, Draygon[0].base.frame_counter) & 7 == 0
+    {
+        let health = (slot!(game, Draygon[0].base.health) as i16)
+            .wrapping_sub(256)
+            .max(0);
+        slot!(game, Draygon[0].base.health = health as u16);
+        after_damage(game);
+    }
+}
 fn update_damage_palette(game: &mut Game) {
     let mut cursor: i32 = 0;
     while (slot!(game, Draygon[0].base.health) as i16).wrapping_sub(crate::rtl::rom_table_word!(

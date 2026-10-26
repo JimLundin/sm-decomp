@@ -12,9 +12,6 @@ use crate::game::visual_runtime::{initialize_draygon_layer, spawn_bg3_scroll};
 pub use crate::types::Consts_A5;
 
 crate::game::constants::typed_constants! { Consts_A5;
-    addr_kDraygon_Ilist_E6B9 = 59065, addr_kDraygon_BigSprmap_C11B = 49435,
-    addr_kDraygon_BigSprmap_C08F = 49295, addr_word_A5A297 = 41623,
-    addr_kDraygon_MorePalettes2 = 41591, addr_kDraygon_Palette = 41463,
     addr_kDraygon_Ilist_99FC = 39420, addr_kDraygon_Ilist_99C0 = 39360,
     addr_kDraygon_Ilist_997A = 39290, addr_kDraygon_Ilist_9944 = 39236,
     addr_kDraygon_Ilist_98ED = 39149, addr_kDraygon_Ilist_9889 = 39049,
@@ -26,7 +23,6 @@ crate::type_aliases! {
     pub Enemy_Draygon = crate::game::enemy_layouts::EnemyLayout104;
 }
 
-const RomPtr_A5: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa5>;
 crate::ram_map::ram_pointer_functions! {
     gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     Get_Draygon(o: i32) -> Enemy_Draygon = [0xf78, o as isize];
@@ -77,24 +73,6 @@ crate::game::callback_dispatch! {
         10873626 => [()]; 10873682 => [actors::spore_spawn::orbit(k, game)];
     }
 }
-macro_rules! copy_draygon_hurt_palette {
-    ($game:ident, $palette:ident, $destination:ident, $row_offset:literal) => {
-        if ((*Get_Draygon(word!($game.cur_enemy_index) as i32, $game))
-            .base
-            .flash_timer
-            & 2)
-            != 0
-        {
-            $palette = addr_word_A5A297 as u16;
-        }
-        memcpy(
-            ram_ptr!($game, c_void; $destination as i32 as isize, $row_offset),
-            RomPtr_A5($palette, $game) as *const c_void,
-            32 as size_t,
-        );
-    };
-}
-
 crate::game::callback_dispatch! {
     pub(crate) unsafe fn DispatchEnemyAi(ea: u32, game: &mut Game) => ea;
     call (game); default { crate::rtl::Unreachable(game); };
@@ -129,31 +107,6 @@ crate::game::callback_dispatch! {
         );
         actors::draygon_flight::synchronize_parts(game);
     };
-    [10851661] Draygon_Hurt [] {
-        let mut v0: u16 = addr_kDraygon_MorePalettes2 as u16;
-        copy_draygon_hurt_palette!(game, v0, addr_kDraygon_BigSprmap_C08F, 17);
-        if ((*Get_Draygon(word!(game.cur_enemy_index) as i32, game))
-            .base
-            .flash_timer
-            & 2)
-            == 0
-        {
-            actors::draygon_death::damage_palette(false, game);
-        }
-        let mut v5: u16 = addr_kDraygon_Palette as u16;
-        copy_draygon_hurt_palette!(game, v5, addr_kDraygon_BigSprmap_C11B, 197);
-        if (word!(game.samus_grapple_flags) & 1) != 0 {
-            let E = Get_Draygon(0, game);
-            if ((*E).base.frame_counter & 7) == 0 {
-                let mut v9: i16 = (((*E).base.health) as i16).wrapping_sub(256);
-                if v9 < 0 {
-                    v9 = 0;
-                }
-                (*E).base.health = v9 as u16;
-                actors::draygon_death::after_damage(game);
-            }
-        }
-    };
     [10863750] DraygonsEye_Main [] {
         let E = Get_Draygon(word!(game.cur_enemy_index) as i32, game);
         CallDraygonFunc(
@@ -174,6 +127,7 @@ crate::game::callback_dispatch! {
         (*v0).layer = 2;
     };
     @external {
+        10851661 => [actors::draygon_death::hurt(game)];
         10846223 => [actors::combat::select_frozen_ai(&mut Runtime::new(game))];
         10846243 => [actors::combat::contact_reaction(&mut Runtime::new(game), actors::api::DeathHandling::Finalize)];
         10846253 => [actors::combat::shot_reaction(&mut Runtime::new(game), actors::api::ShotHandling::Finalize)];
