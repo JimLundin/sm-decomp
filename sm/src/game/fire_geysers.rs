@@ -87,7 +87,7 @@ pub(crate) fn run(game: &mut Game) {
 pub(crate) fn instruction(ea: u32, script: EnemyScript, game: &mut Game) -> EnemyScript {
     let step = match ea {
         0xa68daf => {
-            crate::game::sm_80::QueueSfx2_Max6(0x61, game);
+            crate::game::music::QueueSfx2_Max6(0x61, game);
             return script;
         }
         0xa68fd1 => {

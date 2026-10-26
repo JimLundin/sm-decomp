@@ -109,7 +109,7 @@ pub(crate) fn run(game: &mut Game) {
     }
     drop(runtime);
     if landed {
-        crate::game::sm_80::QueueSfx2_Max6(0x1b, game);
+        crate::game::music::QueueSfx2_Max6(0x1b, game);
     }
 }
 
