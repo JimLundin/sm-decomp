@@ -313,6 +313,32 @@ pub(crate) fn choose_spit(_k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScr
     jp
 }
 
+pub(crate) fn update_background(k: u16, game: &mut Game) {
+    word!(game.reg_BG2VOFS = 67u16.wrapping_sub(slot!(game, Crocomire[k as i32].base.y_pos)));
+    let mut index = 32u16;
+    let spritemap = loop {
+        let candidate = slot!(game, Crocomire[0].base.spritemap_pointer);
+        if candidate == crate::rtl::rom_table_word!(game, 0xa48b79, (index >> 1) as isize) {
+            break candidate;
+        }
+        index = index.wrapping_sub(2);
+        if index & 0x8000 != 0 {
+            crate::game::visual_runtime::align_crocomire_background(game);
+            return;
+        }
+    };
+    word!(
+        game.reg_BG2VOFS += {
+            let address = 0xa40000 | u32::from(spritemap);
+            if spritemap & 0x8000 == 0 {
+                crate::game::session_runtime::native_rom_diagnostic(address, game);
+            }
+            game.capture_native_rom()
+                .table_word(crate::rom::lorom_offset(address) as usize, 14)
+        }
+    );
+    crate::game::visual_runtime::align_crocomire_background(game);
+}
 pub(crate) fn update_palette(game: &mut Game) {
     if word!(game.door_transition_flag_enemies) == 0 {
         if slot!(game, Crocomire[0].base.flash_timer) != 0

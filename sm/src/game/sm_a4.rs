@@ -33,27 +33,6 @@ crate::ram_map::ram_pointer_functions! {
 type Crocomire = Enemy_Crocomire;
 static g_word_A4869E: u16 = 3;
 static g_word_A486A4: u16 = 0x640;
-pub unsafe fn Crocomire_Func_27(k: u16, game: &mut Game) {
-    unsafe {
-        word!(game.reg_BG2VOFS = (67u16).wrapping_sub(slot!(game, Crocomire[k as i32].base.y_pos)));
-        let mut v1: u16 = 32;
-        let mut spritemap_pointer: u16 = 0;
-        loop {
-            spritemap_pointer = slot!(game, Crocomire[0i32].base.spritemap_pointer);
-            if spritemap_pointer == crate::rtl::rom_table_word!(game, 0xa48b79, (v1 >> 1) as isize)
-            {
-                break;
-            }
-            v1 = (v1).wrapping_sub(2);
-            if (v1 & 0x8000) != 0 {
-                align_crocomire_background(game);
-                return;
-            }
-        }
-        word!(game.reg_BG2VOFS += *(RomPtr_A4(spritemap_pointer, game) as *mut u16).offset(14));
-        align_crocomire_background(game);
-    }
-}
 pub fn nullsub_305(game: &mut Game) {}
 static off_A48C14: [Func_V; 45] = callback_table! { nonnull Func_V;
     Crocomire_Func_28, Crocomire_Func_52, Crocomire_Func_36, Crocomire_92CE, Crocomire_Func_54,
@@ -74,7 +53,7 @@ pub unsafe fn Crocomire_Func_28(game: &mut Game) {
         if word!(game.samus_x_pos) as i32 - 1312i32 & 0x8000 == 0 {
             *(ram_ptr!(game, u16; 0xcd20, 4)) = 256;
         }
-        Crocomire_Func_27(word!(game.cur_enemy_index), game);
+        actors::crocomire_reactions::update_background(word!(game.cur_enemy_index), game);
     }
 }
 pub fn Crocomire_Func_29(game: &mut Game) {
@@ -280,7 +259,7 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
         Crocomire_Func_58(game);
         let E0: i32 = 0;
         slot!(game, Crocomire[E0].var_B, |old| old & !(0x800));
-        Crocomire_Func_27(word!(game.cur_enemy_index), game);
+        actors::crocomire_reactions::update_background(word!(game.cur_enemy_index), game);
         let E: i32 = word!(game.cur_enemy_index) as i32;
         if slot!(game, Crocomire[E].base.y_pos) as i32 - 280i32 & 0x8000 != 0 {
             let mut v3: u16 = (8 * (word!(game.reg_BG2VOFS) as i32 + 288 & 0xfff8)) as u16;
@@ -355,7 +334,7 @@ pub unsafe fn Crocomire_92D8(game: &mut Game) {
             slot!(game, Crocomire[EK].var_A, |old| old.wrapping_add(1));
             slot!(game, Crocomire[EK].var_A, |old| old.wrapping_add(1));
         } else {
-            Crocomire_Func_27(word!(game.cur_enemy_index), game);
+            actors::crocomire_reactions::update_background(word!(game.cur_enemy_index), game);
             let E0: i32 = 0;
             let mut v3: i16 = ((slot!(game, Crocomire[E0].var_D)) as i16).wrapping_add(256);
             if slot!(game, Crocomire[E0].var_D) as i32 - 7680i32 & 0x8000 == 0 {
@@ -547,7 +526,7 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
         }
         slot!(game, Crocomire[E0].base.x_pos = crocom_var_D);
         if Crocomire_Func_67(game) != 0 {
-            Crocomire_Func_27(word!(game.cur_enemy_index), game);
+            actors::crocomire_reactions::update_background(word!(game.cur_enemy_index), game);
             let mut v4: u16 = (word!(game.g_word_7E0694)).wrapping_sub(3);
             let skip_tilemap_update: bool = (word!(game.g_word_7E0694) as i32 - 19i32 & 0x8000
                 != 0)
@@ -870,7 +849,7 @@ crate::game::callback_dispatch! {
     call (game); default { crate::rtl::Unreachable(game); };
     @functions [pub unsafe fn (game: &mut Game)];
     [10782343] Crocomire_Hurt [] {
-        Crocomire_Func_27(word!(game.cur_enemy_index), game);
+        actors::crocomire_reactions::update_background(word!(game.cur_enemy_index), game);
         actors::crocomire_reactions::update_palette(game);
     };
     [10783322] Crocomire_Init [] {
