@@ -1,5 +1,5 @@
 """Draw a mobile-readable progress picture: production Rust by responsibility,
-split into owned, partly owned and legacy lines, with current totals and 24h change.
+split into owned, partly owned and legacy lines, with current totals, 24h change and per-area unsafe-block trends.
 
 Reads committed Git blobs only (no working tree, no network, standard library).
 CI publishes the result to GitHub Pages as treemap.svg; README.md embeds it.
@@ -162,6 +162,39 @@ def measure(rev):
     return m
 
 
+def history_samples(commit, when):
+    """Up to nine evenly spaced 24h snapshots on first-parent committed history."""
+    end = datetime.datetime.fromisoformat(when)
+    start = end - datetime.timedelta(days=1)
+    samples = []
+    for i in range(9):
+        at = start + (end - start) * (i / 8)
+        revision = commit if i == 8 else git(
+            'rev-list', '--first-parent', '-1', f'--before={at.isoformat()}', commit
+        ).decode().strip()
+        if revision:
+            samples.append((i, revision))
+    return samples
+
+
+def trend(values, x, y, width=84, height=22):
+    """Local-scale source samples; retain increases, decreases and plateaus."""
+    low, high = min(values.values()), max(values.values())
+    points = [(x + width * i / 8,
+               y + height / 2 if low == high else y + height * (high - n) / (high - low))
+              for i, n in values.items()]
+    p = [f'<path d="M{x},{y + height} h{width}" fill="none" stroke="#293a50"/>']
+    counts = list(values.values())
+    for i, ((ax, ay), (bx, by)) in enumerate(zip(points, points[1:])):
+        color = '#67e8b3' if counts[i + 1] < counts[i] else '#ff9e9e' if counts[i + 1] > counts[i] else '#b0c2d8'
+        p.append(f'<path d="M{ax:.2f},{ay:.2f} L{bx:.2f},{by:.2f}" fill="none" '
+                 f'stroke="{color}" stroke-width="1.8" stroke-linecap="round"/>')
+    if points:
+        px, py = points[-1]
+        p.append(f'<circle cx="{px:.2f}" cy="{py:.2f}" r="2" fill="#edf4fc"/>')
+    return ''.join(p)
+
+
 def short(n):
     return f'{n / 1000:.1f}k' if abs(n) >= 1000 else str(n)
 
@@ -187,9 +220,10 @@ def change(now, then, lower_is_better, fmt=short):
 def main(out_path, rev='HEAD'):
     commit = git('rev-parse', rev).decode().strip()
     when = git('log', '-1', '--format=%cI', commit).decode().strip()
-    day_before = (datetime.datetime.fromisoformat(when) - datetime.timedelta(days=1)).isoformat()
-    base = git('rev-list', '-1', f'--before={day_before}', commit).decode().strip() or None
-    now, then = measure(commit), (measure(base) if base else None)
+    samples = history_samples(commit, when)
+    base = next((r for i, r in samples if i == 0), None)
+    measurements = {r: measure(r) for r in dict.fromkeys(r for _, r in samples)}
+    now, then = measurements[commit], measurements.get(base)
     old = (lambda k: then[k]) if then else (lambda k: None)
     cards = [
         ('Production lines', f'{now["production"]:,}', change(now['production'], old('production'), True)),
@@ -218,7 +252,13 @@ def main(out_path, rev='HEAD'):
          'Block counts include explicit unsafe brace expressions. Comments, ordinary/raw/byte/C strings '
          'and character literals are ignored; counts describe source syntax, not macro expansions. '
          'Per-area unsafe counts sum exactly to the headlines; verification is excluded. '
-         'Headline changes compare the source with the latest ancestor at least 24 hours earlier.</desc>',
+         'Headline changes compare the source with the latest first-parent ancestor at least 24 hours earlier. '
+         'Each small curve samples explicit unsafe blocks in that area at up to nine evenly spaced times '
+         'over the 24 hours ending at this commit, using first-parent committed source. Revisions are '
+         'measured once and shared by all rows. Curves use a local vertical range; lower means fewer blocks. '
+         'Green segments decrease, red segments increase and gray segments stay level. Missing early history '
+         'is left blank. Samples can miss changes between observations and area reclassification can change '
+         'counts without removing unsafe code.</desc>',
          '<style>text{font-family:system-ui,Segoe UI,sans-serif;fill:#edf4fc}.h{font-size:22px;font-weight:650}'
          '.l{font-size:14px;fill:#b0c2d8}.v{font-size:26px;font-weight:650}.d{font-size:14px;font-weight:600}'
          '.good{fill:#67e8b3}.bad{fill:#ff9e9e}.neutral{fill:#b0c2d8}'
@@ -230,21 +270,27 @@ def main(out_path, rev='HEAD'):
          f'<text x="{PAD}" y="55" class="l">{commit[:7]} &#183; {stamp:%Y-%m-%d %H:%M %z}</text>']
     for i, (label, value, delta) in enumerate(cards):
         p.append(card(PAD + (i % 2) * 169, 74 + (i // 2) * 104, label, value, delta))
-    p.append(f'<text x="{PAD}" y="304" class="section">Production Rust by area</text>')
+    p.append(f'<text x="{PAD}" y="304" class="section">Production Rust by area</text>'
+             f'<text x="{W - PAD - 12}" y="304" class="l" text-anchor="end">24h</text>')
     for i, (k, name) in enumerate(NAMES.items()):
         p.append(f'<text x="{PAD + 12 + i * 104}" y="327" class="k {k}">{name}</text>')
     for i, r in enumerate(rows):
         y, c = TOP + i * (ROW_H + GAP), r['counts']
         u = now['unsafe_by_area'][r['id']]
+        values = {j: measurements[revision]['unsafe_by_area'][r['id']]['blocks']
+                  for j, revision in samples}
+        history = ', '.join(str(n) for n in values.values())
         detail = ', '.join(f'{NAMES[k]} {c[k]:,}' for k in COLORS)
         p.append(f'<g><title>{escape(r["title"])}: {r["lines"]:,} production lines; {detail}; '
-                 f'{u["functions"]:,} unsafe functions, {u["blocks"]:,} unsafe blocks</title>'
+                 f'{u["functions"]:,} unsafe functions, {u["blocks"]:,} unsafe blocks; '
+                 f'24h unsafe-block samples, oldest first: {history}; local range {min(values.values())}-{max(values.values())}</title>'
                  f'<rect x="{PAD}" y="{y}" width="{W - 2 * PAD}" height="{ROW_H}" rx="10" '
                  'fill="#101b28" stroke="#293a50"/>'
                  f'<text x="{PAD + 12}" y="{y + 26}" class="t">{escape(r["title"])}</text>'
                  f'<text x="{W - PAD - 12}" y="{y + 26}" class="s" text-anchor="end">{r["lines"]:,}</text>'
                  f'<text x="{PAD + 12}" y="{y + 47}" class="l">Unsafe: {u["functions"]:,} fn '
                  f'&#183; {u["blocks"]:,} blocks</text>'
+                 + trend(values, W - PAD - 12 - 84, y + 35) +
                  f'<clipPath id="c{r["id"]}"><rect x="{PAD + 12}" y="{y + 62}" '
                  f'width="{W - 2 * PAD - 24}" height="14" rx="5"/></clipPath>'
                  f'<g clip-path="url(#c{r["id"]})">')
