@@ -195,13 +195,6 @@ pub unsafe fn GameState_24_SamusNoHealth_Explosion(game: &mut Game) -> Coroutine
         kCoroutineNone as CoroutineRet
     }
 }
-pub unsafe fn WaitUntilEndOfVblankAndEnableIrq(game: &mut Game) {
-    unsafe {
-        if (*ram_ptr!(game; 0x84) & 0x30) != 0x30 {
-            crate::game::scanline_irq::enable(true, game);
-        }
-    }
-}
 pub unsafe fn EnsureSamusDrawnEachFrame(game: &mut Game) {
     {
         if word!(game.elevator_flags) == 0 {

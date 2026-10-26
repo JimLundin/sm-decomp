@@ -158,17 +158,17 @@ impl EntryEffects for Runtime<'_> {
                 LeafEffect::DisableNmi => {
                     crate::game::display_refresh::enable(false, game);
                 }
-                LeafEffect::EnableIrq => {
-                    game::scanline_irq::enable(false, game);
+                LeafEffect::EnableIrq | LeafEffect::WaitVblankEnableIrq => {
+                    let immediate = matches!(effect, LeafEffect::WaitVblankEnableIrq);
+                    if !immediate || game.g_ram[0x84] & 0x30 != 0x30 {
+                        game::scanline_irq::enable(immediate, game);
+                    }
                 }
                 LeafEffect::DisableIrq => {
                     game::scanline_irq::disable(game);
                 }
                 LeafEffect::WaitVblankClearHdma => {
                     game::visual_runtime::clear_hdma(game);
-                }
-                LeafEffect::WaitVblankEnableIrq => {
-                    game::sm_82::WaitUntilEndOfVblankAndEnableIrq(game);
                 }
             }
         });
