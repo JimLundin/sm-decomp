@@ -46,64 +46,52 @@ crate::game::constants::typed_constants! { u32;
     fnKraid_UnpauseHook_IsSinking = 10994336, fnPauseHook_Kraid = 10994469,
     fnMotherBrainsBody_UnpauseHook = 11110243,
 }
-const INITIALIZE: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::Initialize, game) };
-const GAMEPLAY: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::Gameplay, game) };
-const FADE_IN: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::FadeIn, game) };
-const UNPAUSE: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::Unpause, game) };
-const CERES_ELEVATOR: Func_V_Coroutine =
-    |game| unsafe { AdvanceGameplay(Entry::CeresElevator, game) };
-const CERES_BLACKOUT: Func_V_Coroutine =
-    |game| unsafe { AdvanceGameplay(Entry::CeresBlackout, game) };
-const ZEBES_ESCAPE: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::ZebesEscape, game) };
-const DEMO_START: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::DemoStart, game) };
-const DEMO_STOP: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::DemoStop, game) };
-const DEMO_NEXT: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::DemoNext, game) };
-const PAUSE_SETUP: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::PauseSetup, game) };
-const PAUSED: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::Paused, game) };
-const UNPAUSE_SETUP: Func_V_Coroutine =
-    |game| unsafe { AdvanceGameplay(Entry::UnpauseSetup, game) };
-const PAUSE_FADE_OUT: Func_V_Coroutine =
-    |game| unsafe { AdvanceGameplay(Entry::PauseFadeOut, game) };
-const UNPAUSE_FADE_OUT: Func_V_Coroutine =
-    |game| unsafe { AdvanceGameplay(Entry::UnpauseFadeOut, game) };
-const GAME_OVER_FADE_OUT: Func_V_Coroutine =
-    |game| unsafe { AdvanceGameplay(Entry::GameOverFadeOut, game) };
-const TIME_UP_EXIT: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::TimeUpExit, game) };
-const TIME_UP: Func_V_Coroutine = |game| unsafe { AdvanceGameplay(Entry::TimeUp, game) };
+#[derive(Clone, Copy)]
+enum FrameEntry {
+    Advance(Entry),
+    Callback(Func_V_Coroutine),
+}
+use FrameEntry::{Advance, Callback};
 
-const RESERVE_TANKS: Func_V_Coroutine =
-    |game| unsafe { AdvanceGameplay(Entry::ReserveTanks, game) };
-const PREPARE_DEATH: Func_V_Coroutine =
-    |game| unsafe { AdvanceGameplay(Entry::PrepareDeath, game) };
-
-const DEATH_BLACKOUT: Func_V_Coroutine =
-    |game| unsafe { AdvanceGameplay(Entry::DeathBlackout, game) };
-
-const DEMO: Func_V_Coroutine = |game| demo_rooms::play(game, |game| unsafe { GAMEPLAY(game) });
-
-static kGameStateFuncs: [Func_V_Coroutine; 45] = callback_table! { nonnull Func_V_Coroutine;
-    reset_attract, GameState_1_OpeningCinematic_, GameState_2_GameOptionsMenu,
-    GameState_3_Null, advance_file_menu, advance_map_menu,
-    INITIALIZE, FADE_IN, GAMEPLAY,
-    GameState_9_HitDoorBlock, GameState_10_LoadingNextRoom_Async,
-    GameState_11_LoadingNextRoom_Async, PAUSE_FADE_OUT,
-    PAUSE_SETUP, pause_fade_in, PAUSED,
-    UNPAUSE_FADE_OUT, UNPAUSE_SETUP, UNPAUSE,
-    PREPARE_DEATH, DEATH_BLACKOUT, begin_death,
-    advance_death_pose, flash_death,
-    explode_suit, GAME_OVER_FADE_OUT,
-    advance_game_over, RESERVE_TANKS, GameState_28_Unused,
-    GameState_29_DebugGameOverMenu, GameState_37_CeresGoesBoomWithSamus_,
-    INITIALIZE, CERES_ELEVATOR,
-    CERES_BLACKOUT, GameState_37_CeresGoesBoomWithSamus_, TIME_UP,
-    TIME_UP_EXIT, GameState_37_CeresGoesBoomWithSamus_,
-    ZEBES_ESCAPE, GameState_39_EndingAndCredits_,
-    INITIALIZE, DEMO_START, DEMO,
-    DEMO_STOP, DEMO_NEXT,
+const DEMO: Func_V_Coroutine = |game| {
+    demo_rooms::play(game, |game| unsafe {
+        AdvanceGameplay(Entry::Gameplay, game)
+    })
 };
+
+static GAME_STATE_ENTRIES: [FrameEntry; 45] = callback_table! { FrameEntry;
+    {Callback(reset_attract)}, {Callback(GameState_1_OpeningCinematic_)}, {Callback(GameState_2_GameOptionsMenu)},
+    {Callback(GameState_3_Null)}, {Callback(advance_file_menu)}, {Callback(advance_map_menu)},
+    {Advance(Entry::Initialize)}, {Advance(Entry::FadeIn)}, {Advance(Entry::Gameplay)},
+    {Callback(GameState_9_HitDoorBlock)}, {Callback(GameState_10_LoadingNextRoom_Async)},
+    {Callback(GameState_11_LoadingNextRoom_Async)}, {Advance(Entry::PauseFadeOut)},
+    {Advance(Entry::PauseSetup)}, {Callback(pause_fade_in)}, {Advance(Entry::Paused)},
+    {Advance(Entry::UnpauseFadeOut)}, {Advance(Entry::UnpauseSetup)}, {Advance(Entry::Unpause)},
+    {Advance(Entry::PrepareDeath)}, {Advance(Entry::DeathBlackout)}, {Callback(begin_death)},
+    {Callback(advance_death_pose)}, {Callback(flash_death)},
+    {Callback(explode_suit)}, {Advance(Entry::GameOverFadeOut)},
+    {Callback(advance_game_over)}, {Advance(Entry::ReserveTanks)}, {Callback(GameState_28_Unused)},
+    {Callback(GameState_29_DebugGameOverMenu)}, {Callback(GameState_37_CeresGoesBoomWithSamus_)},
+    {Advance(Entry::Initialize)}, {Advance(Entry::CeresElevator)},
+    {Advance(Entry::CeresBlackout)}, {Callback(GameState_37_CeresGoesBoomWithSamus_)}, {Advance(Entry::TimeUp)},
+    {Advance(Entry::TimeUpExit)}, {Callback(GameState_37_CeresGoesBoomWithSamus_)},
+    {Advance(Entry::ZebesEscape)}, {Callback(GameState_39_EndingAndCredits_)},
+    {Advance(Entry::Initialize)}, {Advance(Entry::DemoStart)}, {Callback(DEMO)},
+    {Advance(Entry::DemoStop)}, {Advance(Entry::DemoNext)},
+};
+unsafe fn dispatch_game_state(index: u16, game: &mut Game) -> u16 {
+    unsafe {
+        let returned: CoroutineRet = match GAME_STATE_ENTRIES[usize::from(index)] {
+            Advance(entry) => AdvanceGameplay(entry, game),
+            Callback(callback) => callback(game),
+        };
+        u16::from(returned)
+    }
+}
+
 pub unsafe fn RunOneFrameOfGame(game: &mut Game) {
     unsafe {
-        let ret: CoroutineRet = AdvanceGameplay(Entry::Frame(&kGameStateFuncs), game);
+        let ret: CoroutineRet = AdvanceGameplay(Entry::Frame(dispatch_game_state), game);
         if ret == 0 {
             game.g_ram[0x5b4] = 1;
         }

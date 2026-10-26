@@ -26,7 +26,7 @@ use crate::game::sm_a7::{
 };
 use crate::game::sm_a9::MotherBrainsBody_UnpauseHook;
 use crate::ram_map::{checked_word, words as ram};
-use crate::types::Func_V_Coroutine;
+use crate::types::Func_Y_Y;
 
 #[derive(Clone, Copy, PartialEq)]
 #[repr(u8)]
@@ -51,7 +51,7 @@ impl ResumePoint {
 
 #[derive(Clone, Copy)]
 pub(crate) enum Entry {
-    Frame(&'static [Func_V_Coroutine; 45]),
+    Frame(Func_Y_Y),
     Initialize,
     Gameplay,
     FadeIn,
@@ -222,7 +222,7 @@ pub(crate) unsafe fn advance(entry: Entry, game: &mut Game) -> CoroutineRet {
                 st = word!(game.game_state) as i32 + 10;
                 game.g_ram[0x611] = st as u8;
             }
-            let mut _coret__0: u8 = dispatch[(st - 10i32) as usize](game);
+            let mut _coret__0: u8 = dispatch((st - 10i32) as u16, game) as u8;
             if _coret__0 != 0 {
                 return _coret__0;
             }
