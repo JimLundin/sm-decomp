@@ -173,7 +173,7 @@ crate::game::callback_dispatch! {
             != 0
         {
             word! {game; samus_anim_frame_timer = 3; samus_anim_frame = 6; }
-            *(ram_ptr!(game, u16; 0xdf0)) = word!(game.samus_y_pos);
+            word_transfers!(game, ascending, 1; native(0xdf0) <- value(word!(game.samus_y_pos)));
             word!(game.samus_movement_handler = (0x90d6cei32) as u16);
             word! { game, 0; samus_invincibility_timer, samus_knockback_timer }
             QueueSfx3_Max15(1, game);

@@ -7,7 +7,7 @@ use super::{
     world::{ExitId, Identity, RoomId, StateCondition, StateId},
 };
 use crate::{
-    game::session_runtime::{Runtime, invalid_window},
+    game::session_runtime::{Runtime, invalid_window, native_rom_diagnostic},
     rom::RomRecord,
 };
 use core::mem::offset_of;
@@ -44,9 +44,10 @@ impl Runtime<'_> {
     }
     fn room_pointer_diagnostic(&mut self, bank: u8, address: u16) {
         if address & 0x8000 == 0 {
-            self.foreign(|game| unsafe {
+            self.foreign(|game| {
                 // Keep the actual RomPtr observer and native binding acquisition.
-                let _ = crate::rtl::RomPtr((u32::from(bank) << 16) | u32::from(address), game);
+                native_rom_diagnostic((u32::from(bank) << 16) | u32::from(address), game);
+                let _ = game.legacy_native_rom_ptr();
             });
         }
     }
