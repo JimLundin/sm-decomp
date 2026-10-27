@@ -48,7 +48,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current tipfee3: production112170, legacy17385, unsafe2752, verification40421; warnings165.
+Current tipc4ff: production112130, legacy17385, unsafe2733, verification40421; warnings165.
 Core sm82 persists actor/media identities and saved ROM patches; RAM/native frame dependencies remain explicit.
 Codec f158c44fac33eac7 has39 contributors/652740 normalized source bytes.
 Prepared110/initialized329+5,14 genuine captures189475 frames and full22 byte-identical restore pass.
@@ -65,8 +65,9 @@ Sky passes3599 selected+272 setup/0: +3 engine/-4 unsafe; 17 RAM pointers/six na
 Intro callbacks pass11161 selected+272 setup/0: -4 engine/-30 legacy/-4 unsafe; existing page handlers reused.
 Mode7 callbacks pass11161 selected+272 setup/0: +4 engine/-33 legacy/-2 unsafe; signature closure, raw operations unchanged.
 Text glow passes10967 selected+272 setup/0: engine/legacy unchanged, unsafe -2; native pointer and two byte reads retired.
-Next: Linux file menu, Mother Brain flicker, native FX definitions and background/credits; source work remains disjoint.
-Linux M: file-menu donor five10967+272/0; final cinematic composition library pass/hosted next; -41 substantive/-18 unsafe metric, branches source-only.
+Mother Brain flicker/earthquake passes22681 selected+272 setup/0: +1 engine/-1 unsafe; five dereferences/two RAM pointers retired.
+Next: native FX definitions, background/credits and logo/page2 raw writes; source work remains disjoint.
+Linux file-menu a04/source57ea landed: five10967 selected+272 setup/0; -41 engine/-18 unsafe, claim/branch retired.
 ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
 A4 post-push full86 passed on0a; its scoped3kills/1unobserved/1unviable gaps remain.
 Native player/DSP/APU and input Vec/FILE/Cart are owned; GameOwner does not promise Rust thread sharing.

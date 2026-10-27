@@ -5,9 +5,9 @@ use crate::game::music::QueueSfx2_Max6;
 use crate::game::prelude::*;
 use crate::game::room_mechanisms::spawn_hardcoded;
 use crate::game::sm_a9::WriteColorsToPalette;
+use crate::ram_map::{checked_word, slot};
 const RomPtr_AD: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xad>;
 crate::ram_map::ram_pointer_functions! {
-    gEnemyData(o: i32) -> EnemyData = [0xf78, o as isize];
     Get_MotherBrain(o: i32) -> Enemy_MotherBrain = [0xf78, o as isize];
 }
 pub enum Fade {
@@ -120,23 +120,24 @@ pub unsafe fn seal_wall(game: &mut Game) {
         (*Get_MotherBrain(0i32, game)).var_A = (0xa9881di32) as u16;
     }
 }
-pub unsafe fn start_earthquake(a: u16, game: &mut Game) {
+#[forbid(unsafe_code)]
+pub fn start_earthquake(a: u16, game: &mut Game) {
     {
         word! {game; earthquake_type = a; earthquake_timer = 20; }
         QueueSfx2_Max6(0x25, game);
     }
 }
-pub unsafe fn flicker_body(game: &mut Game) {
-    unsafe {
-        let v0 = gEnemyData(0, game);
-        if (*v0).frame_counter & 1 != 0 {
-            crate::update_place! { unaligned_word fresh0 = &raw mut (*(ram_ptr!(game, u16; 0x69))) => (u16::from_le(fresh0.read_unaligned())) | (2u16); }
-            (*v0).properties = ((*v0).properties as i32 & !(kEnemyProps_Invisible as i32)) as u16;
-        } else {
-            crate::update_place! { unaligned_word fresh1 = &raw mut (*(ram_ptr!(game, u16; 0x69))) => u16::from_le(fresh1.read_unaligned()) & !(2); }
-            (*v0).properties = ((*v0).properties) | ((kEnemyProps_Invisible) as u16);
-        };
-    }
+#[forbid(unsafe_code)]
+pub fn flicker_body(game: &mut Game) {
+    if slot!(game, EnemyData[0].frame_counter) & 1 != 0 {
+        checked_word!(game, 0x69; = checked_word!(game, 0x69;) | 2);
+        slot!(game, EnemyData[0].properties, |properties| properties
+            & !(kEnemyProps_Invisible as u16));
+    } else {
+        checked_word!(game, 0x69; = checked_word!(game, 0x69;) & !2);
+        slot!(game, EnemyData[0].properties, |properties| properties
+            | kEnemyProps_Invisible as u16);
+    };
 }
 
 crate::forward_calls! { pub(crate) unsafe fn (game: &mut Game) -> u16;
