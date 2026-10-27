@@ -471,21 +471,21 @@ pub(super) fn spawn_text_glow(definition: u16, position: u16, game: &mut Game) {
     }
 }
 
-pub(super) unsafe fn advance_text_glow(game: &mut Game) {
+#[forbid(unsafe_code)]
+pub(super) fn advance_text_glow(game: &mut Game) {
     let mut object = 14i32;
     while object >= 0 {
         word!(game.cinematic_var19 = object as u16);
         if checked_word!(game, 0x19f7 + object as usize;) != 0 {
-            unsafe {
-                advance_text_glow_object(game);
-            }
+            advance_text_glow_object(game);
             object = i32::from(word!(game.cinematic_var19));
         }
         object -= 2;
     }
 }
 
-unsafe fn advance_text_glow_object(game: &mut Game) {
+#[forbid(unsafe_code)]
+fn advance_text_glow_object(game: &mut Game) {
     let object = usize::from(word!(game.cinematic_var19));
     let timer_at = 0x1a07 + (object & !1);
     let timer = checked_word!(game, timer_at;);
@@ -497,9 +497,9 @@ unsafe fn advance_text_glow_object(game: &mut Game) {
     let definition = u16::from_ne_bytes([game.g_ram[0x19f7 + object], game.g_ram[0x19f8 + object]]);
     let mut row = 2 * u16::from(game.g_ram[0x1a17 + (object & !1)])
         + 64 * u16::from(game.g_ram[0x1a27 + object]);
-    let (width, mut rows) = unsafe {
-        let definition = crate::rtl::rom_bank_ptr::<0x8c>(definition, game);
-        (i32::from(*definition.add(2)), i32::from(*definition.add(3)))
+    let (width, mut rows) = {
+        let definition = super::visual_runtime::cinematic_native_record::<0x8c>(definition, game);
+        (i32::from(definition.byte(2)), i32::from(definition.byte(3)))
     };
     loop {
         let mut column = row;
