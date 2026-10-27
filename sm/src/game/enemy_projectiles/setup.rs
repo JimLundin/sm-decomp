@@ -17,6 +17,11 @@ use crate::game::constants::bank_a0::*;
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session::{Point, Vector32};
 
+fn native_setup_word(address: u16, index: isize, ctx: &mut impl Host) -> u16 {
+    let record = ctx.loaded_record(0x86, address);
+    record.native_word(index.checked_mul(2).expect("ROM table offset overflow"))
+}
+
 pub(super) fn dispatch(ea: u32, j: u16, ctx: &mut impl Host) {
     match ea {
         8817209 => Eproj_Init_0x8aaf(j, ctx),
@@ -412,11 +417,7 @@ pub(super) fn EprojInit_BombTorizoStatueBreaking(j: u16, ctx: &mut impl Host) {
     let v2: i32 = ctx.session().enemy_projectiles.spawn.primary as i32 >> 1;
     let v3: i32 = j as i32 >> 1;
     {
-        let value = {
-            let record = ctx.loaded_record(0x86, 0xa7ab);
-            let index: isize = v2 as isize;
-            record.native_word(index.checked_mul(2).expect("ROM table offset overflow"))
-        };
+        let value = native_setup_word(0xa7ab, v2 as isize, ctx);
         enemy!(ctx, value => (v3) as isize, program);
     };
     {
@@ -726,11 +727,7 @@ pub(super) fn EprojInit_MotherBrainGlassShatteringShard(j: u16, ctx: &mut impl H
     enemy!(ctx, kSinCosTable8bit_Sext[(v3 + 64) as usize] as u16 => (v2) as isize, velocity_x);
     enemy!(ctx, (4 * kSinCosTable8bit_Sext[v3 as usize] as i32) as u16 => (v2) as isize, velocity_y);
     {
-        let value = {
-            let record = ctx.loaded_record(0x86, 0xce41);
-            let index: isize = ((v1 as i32 >> 4 & 0x1e) as u16 >> 1) as isize;
-            record.native_word(index.checked_mul(2).expect("ROM table offset overflow"))
-        };
+        let value = native_setup_word(0xce41, ((v1 as i32 >> 4 & 0x1e) as u16 >> 1) as isize, ctx);
         enemy!(ctx, value => (v2) as isize, program);
     };
     enemy!(ctx, 1600 => (v2) as isize, graphics);
@@ -797,11 +794,7 @@ pub(super) fn EprojInit_N00bTubeShards(j: u16, ctx: &mut impl Host) {
         enemy!(ctx, value => (v2) as isize, y);
     };
     {
-        let value = {
-            let record = ctx.loaded_record(0x86, 0xd760);
-            let index: isize = v1 as isize;
-            record.native_word(index.checked_mul(2).expect("ROM table offset overflow"))
-        };
+        let value = native_setup_word(0xd760, v1 as isize, ctx);
         enemy!(ctx, value => (v2) as isize, program);
     };
     enemy!(ctx, kEprojInit_N00bTubeShards_Xvel[v1 as usize] as u16 => (v2) as isize, velocity_x);
@@ -871,19 +864,11 @@ pub(super) fn EprojInit_Sparks(j: u16, ctx: &mut impl Host) {
 
     let v4: u16 = ((ctx.next_random() as i32 & 0x1c) >> 1) as u16;
     {
-        let value = {
-            let record = ctx.loaded_record(0x86, 0xf3d4);
-            let index: isize = (v4 as i32 + 0) as isize;
-            record.native_word(index.checked_mul(2).expect("ROM table offset overflow"))
-        };
+        let value = native_setup_word(0xf3d4, (v4 as i32 + 0) as isize, ctx);
         enemy!(ctx, value => (v2) as isize, behavior_b);
     };
     {
-        let value = {
-            let record = ctx.loaded_record(0x86, 0xf3d4);
-            let index: isize = (v4 as i32 + 1) as isize;
-            record.native_word(index.checked_mul(2).expect("ROM table offset overflow"))
-        };
+        let value = native_setup_word(0xf3d4, (v4 as i32 + 1) as isize, ctx);
         enemy!(ctx, value => (v2) as isize, behavior_a);
     };
 }
@@ -1013,11 +998,7 @@ pub(super) fn sub_86D992(v0: u16, ctx: &mut impl Host) {
 
     enemy!(ctx, ctx.session().enemy_projectiles.spawn.primary => (v2) as isize, behavior_a);
     {
-        let value = {
-            let record = ctx.loaded_record(0x86, 0xd96a);
-            let index: isize = (v1 >> 1) as isize;
-            record.native_word(index.checked_mul(2).expect("ROM table offset overflow"))
-        };
+        let value = native_setup_word(0xd96a, (v1 >> 1) as isize, ctx);
         enemy!(ctx, value => (v2) as isize, program);
     };
 
@@ -1070,11 +1051,7 @@ pub(super) fn EprojInit_CrocomireSpikeWallPieces(j: u16, ctx: &mut impl Host) {
     let v1: i32 = j as i32 >> 1;
 
     {
-        let value = {
-            let record = ctx.loaded_record(0x86, 0x9105);
-            let index: isize = ((j as i32 - 20i32) as u16 >> 1) as isize;
-            record.native_word(index.checked_mul(2).expect("ROM table offset overflow"))
-        };
+        let value = native_setup_word(0x9105, ((j as i32 - 20i32) as u16 >> 1) as isize, ctx);
         enemy!(ctx, value => (v1) as isize, y);
     };
     enemy!(ctx, 528 => (v1) as isize, x);
@@ -1163,11 +1140,7 @@ pub(super) fn EprojInit_A379(j: u16, ctx: &mut impl Host) {
     enemy!(ctx, (word_86A2D6[v3 as usize] as i32 + ctx.session().player.x as i32) as u16 => (v1) as isize, x);
     enemy!(ctx, (ctx.session().player.y as i32 + 80) as u16 => (v1) as isize, y);
     {
-        let value = {
-            let record = ctx.loaded_record(0x86, 0xa2e2);
-            let index: isize = v3 as isize;
-            record.native_word(index.checked_mul(2).expect("ROM table offset overflow"))
-        };
+        let value = native_setup_word(0xa2e2, v3 as isize, ctx);
         enemy!(ctx, value => (v1) as isize, program);
     };
     enemy!(ctx, v2 => (v1) as isize, behavior_a);
@@ -1310,22 +1283,14 @@ pub(super) fn EprojInit_MotherBrainRoomTurrets(j: u16, ctx: &mut impl Host) {
     } | 0x100);
     enemy!(ctx, v3 => (v1) as isize, y_fraction);
     {
-        let value = {
-            let record = ctx.loaded_record(0x86, 0xbeb9);
-            let index: isize = ((2 * v3 as u8 as i32) as u16 >> 1) as isize;
-            record.native_word(index.checked_mul(2).expect("ROM table offset overflow"))
-        };
+        let value = native_setup_word(0xbeb9, ((2 * v3 as u8 as i32) as u16 >> 1) as isize, ctx);
         enemy!(ctx, value => (v1) as isize, program);
     };
     let v4: i32 = v2 as i32 >> 1;
     enemy!(ctx, kEprojInit_MotherBrainRoomTurrets_X[v4 as usize] as u16 => (v1) as isize, x);
     enemy!(ctx, EprojInit_MotherBrainRoomTurrets_Y[v4 as usize] as u16 => (v1) as isize, y);
     {
-        let value = {
-            let record = ctx.loaded_record(0x86, 0xbec9);
-            let index: isize = v4 as isize;
-            record.native_word(index.checked_mul(2).expect("ROM table offset overflow"))
-        };
+        let value = native_setup_word(0xbec9, v4 as isize, ctx);
         enemy!(ctx, value => (v1) as isize, x_fraction);
     };
     Eproj_SetXvelRandom(j, ctx);
@@ -1575,11 +1540,7 @@ pub(super) fn EprojInit_BotwoonsBody(j: u16, ctx: &mut impl Host) {
     } else {
         48
     }) as u16;
-    let v3: u16 = {
-        let record = ctx.loaded_record(0x86, 0xe9f1);
-        let index: isize = (v2 >> 1) as isize;
-        record.native_word(index.checked_mul(2).expect("ROM table offset overflow"))
-    };
+    let v3: u16 = native_setup_word(0xe9f1, (v2 >> 1) as isize, ctx);
 
     enemy!(ctx, v3 => (v1) as isize, program);
     enemy!(ctx, v3 => (v1) as isize, behavior_b);
@@ -1647,11 +1608,7 @@ pub(super) fn EprojInit_GoldenTorizoSuperMissile(j: u16, ctx: &mut impl Host) {
     enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v3 as u16), Le).x.whole as i32 + word_86B205[v4 as usize] as i32) as u16 => (v2) as isize, x);
     enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v3 as u16), Le).y.whole as i32 - 52i32) as u16 => (v2) as isize, y);
     {
-        let value = {
-            let record = ctx.loaded_record(0x86, 0xb209);
-            let index: isize = v4 as isize;
-            record.native_word(index.checked_mul(2).expect("ROM table offset overflow"))
-        };
+        let value = native_setup_word(0xb209, v4 as isize, ctx);
         enemy!(ctx, value => (v2) as isize, program);
     };
 }
@@ -1759,19 +1716,11 @@ pub(super) fn EprojInit_NamiFuneFireball(j: u16, ctx: &mut impl Host) {
             .parameters[1] as u8) as i32) as u16 as i32
         >> 1;
     {
-        let value = {
-            let record = ctx.loaded_record(0x86, 0xdeb6);
-            let index: isize = v4 as isize;
-            record.native_word(index.checked_mul(2).expect("ROM table offset overflow"))
-        };
+        let value = native_setup_word(0xdeb6, v4 as isize, ctx);
         enemy!(ctx, value => (v2) as isize, velocity_y);
     };
     {
-        let value = {
-            let record = ctx.loaded_record(0x86, 0xdeb6);
-            let index: isize = (v4 + 1) as isize;
-            record.native_word(index.checked_mul(2).expect("ROM table offset overflow"))
-        };
+        let value = native_setup_word(0xdeb6, (v4 + 1) as isize, ctx);
         enemy!(ctx, value => (v2) as isize, velocity_x);
     };
 }
