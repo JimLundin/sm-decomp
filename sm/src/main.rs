@@ -164,8 +164,8 @@ unsafe extern "C-unwind" fn sm_host_debug(owner: *const GameOwner) {
 unsafe extern "C-unwind" fn sm_host_start_game(
     owner: *const GameOwner,
     filename: *const c_char,
-) -> *mut Snes {
-    unsafe { (*owner).with(|game| sm::cpu_infra::SnesInit(filename, game)) }
+) -> bool {
+    unsafe { (*owner).with(|game| !sm::cpu_infra::SnesInit(filename, game).is_null()) }
 }
 #[unsafe(no_mangle)]
 unsafe extern "C-unwind" fn sm_host_initialize_renderer(
@@ -208,10 +208,13 @@ unsafe extern "C-unwind" fn sm_host_initialize_player(owner: *const GameOwner) {
     }
 }
 #[unsafe(no_mangle)]
-unsafe extern "C-unwind" fn sm_host_prepare_pixels(snes: *mut Snes) {
+unsafe extern "C-unwind" fn sm_host_prepare_pixels(owner: *const GameOwner) {
     unsafe {
-        sm::snes::ppu::PpuBeginDrawing((*snes).snes_ppu, (&raw mut g_pixels).cast(), 1024, 0);
-        sm::snes::ppu::PpuBeginDrawing((*snes).my_ppu, (&raw mut g_my_pixels).cast(), 1024, 0);
+        (*owner).with(|game| {
+            let snes = game.g_snes;
+            sm::snes::ppu::PpuBeginDrawing((*snes).snes_ppu, (&raw mut g_pixels).cast(), 1024, 0);
+            sm::snes::ppu::PpuBeginDrawing((*snes).my_ppu, (&raw mut g_my_pixels).cast(), 1024, 0);
+        });
     }
 }
 #[unsafe(no_mangle)]

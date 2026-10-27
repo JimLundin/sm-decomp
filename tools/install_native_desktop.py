@@ -112,8 +112,7 @@ def desktop_source(source):
     replace(r, "g_config.output_method == kOutputMethod_OpenGL ||\n      g_config.output_method == kOutputMethod_OpenGL_ES", "g_config.output_method == kOutputMethod_OpenGL")
     replace(r, "OpenGLRenderer_Create(&g_renderer_funcs, (g_config.output_method == kOutputMethod_OpenGL_ES));", "sm_host_OpenGLRenderer_Create(&g_renderer_funcs);")
     replace(r, "  SDL_Window* window = SDL_CreateWindow(", """  const char *filename = argv[0] ? argv[0] : "sm.smc";
-  Snes *snes = sm_host_start_game(owner, filename);
-  if (!snes) {
+  if (!sm_host_start_game(owner, filename)) {
     char error[256] = {0};
     snprintf(error, sizeof(error), "unable to load rom: %s", filename);
     Die(error);
@@ -134,7 +133,7 @@ def desktop_source(source):
     replace(r, "g_audio_channels = have.channels;", "g_audio_channels = 2;")
     start = routines[r].index("  if (argc >= 1 && !g_run_without_emu)")
     end = routines[r].index("  for (int i = 0; i < SDL_NumJoysticks(); i++)", start)
-    routines[r] = routines[r][:start] + """  sm_host_prepare_pixels(snes);
+    routines[r] = routines[r][:start] + """  sm_host_prepare_pixels(owner);
 #ifdef _WIN32
   _mkdir("saves");
 #else

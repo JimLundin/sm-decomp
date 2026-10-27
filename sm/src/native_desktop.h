@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <SDL.h>
 typedef struct Game Game;
-typedef struct Snes Snes;
 typedef struct RendererFuncs {
   bool (*Initialize)(SDL_Window *);
   void (*Destroy)(void);
@@ -21,14 +20,14 @@ void sm_host_parse_config(void *, const char *);
 int sm_host_find_key(int, int);
 int sm_host_find_button(int, uint32_t);
 void sm_host_debug(const void *);
-Snes *sm_host_start_game(const void *, const char *);
+bool sm_host_start_game(const void *, const char *);
 bool sm_host_initialize_renderer(const void *, const RendererFuncs *, SDL_Window *);
 void sm_desktop_close(void);
 void sm_host_begin_draw(const RendererFuncs *, int, int, uint8_t **, int *);
 void sm_host_end_draw(const RendererFuncs *);
 void sm_host_create_player(const void *);
 void sm_host_initialize_player(const void *);
-void sm_host_prepare_pixels(Snes *);
+void sm_host_prepare_pixels(const void *);
 void sm_host_read_sram(const void *);
 void sm_host_key(const void *, int, int, bool);
 void sm_host_button(const void *, int, bool);

@@ -48,10 +48,15 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current sourceb5aa: production111938, legacy17353, unsafe2713, verification40385; warnings165.
+Current source6dd3: production111941, legacy17353, unsafe2713, verification40385; warnings165.
 Core sm82 persists actor/media identities and saved ROM patches; RAM/native frame dependencies remain explicit.
-Codec f158c44fac33eac7 has39 contributors/652740 normalized source bytes.
-Prepared110/initialized329+5,14 genuine captures189475 frames and full22 byte-identical restore pass.
+Historical f158c44fac33eac7 qualification retains39 contributors/652740 source bytes;
+prepared110/initialized329+5,14 captures189475 frames and full22 byte-identical restore at original source.
+Native startup now returns success; pixel preparation borrows the current GameOwner, no retained Snes pointer.
+Native3 source6dd3/library/frontend33 checks+569 inputs/DLLfe9e passes; five local rows10967 selected+272 setup/0.
+Codec2854b408fa453744 has39 contributors/652841 source bytes; prepared110 source lines/boot329+5
+retain accepted dce54 attribution. No full14/full22/full86, startup/device or full ownership claim.
+Cost +3 engine Rust, -1 native header/-1 installer support; unsafe/legacy/verification unchanged.
 Required sm82 AST8.06min:3 options kills; unsafe gameplay omission unavailable.
 Blackout37/native failure variants remain unobserved; hardware entry contracts stay explicit.
 sm9b retired: scoped AST3 kills3453 selected/0 setup; original target750d/0cdf attribution retained.
@@ -72,7 +77,8 @@ Exact spike/DBF2/lavaquake kernels remain source-only.
 Linux M: setup14 shares fresh native-word reads -51 physical/-52 substantive engine; source review pass.
 Keep seven fresh indices/five multi-read blocks; source9964 passed16 rows16977 selected+1713 setup/0 and ordinary CI.
 Linux M: six more signed8.8 projectile blocks reuse unchanged axis helper -43 physical/substantive engine.
-Sourceb5aa review/format/library pass165 warnings; eight related+smoke rows pending; exact variants remain source-only.
+Sourceb5aa review/format/library pass165 warnings; eight related+smoke rows3924 selected+272 setup/0;
+Linux tested=landed7aa8 author receipt6432458588; exact variants remain source-only.
 ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
 Native player/DSP/APU and input Vec/FILE/Cart are owned; GameOwner does not promise Rust thread sharing.
 Keep SDL/native/audio quiescence and CRT order; invalid SIZE_MAX/malloc0 callbacks
