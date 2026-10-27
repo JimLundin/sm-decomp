@@ -292,29 +292,27 @@ pub fn HandleCinematicsTransitions_1(game: &mut Game) {
     }
 }
 pub unsafe fn HandleCinematicsTransitions_2(game: &mut Game) {
-    unsafe {
-        clear_cinematic_sprites(game);
-        CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BA119 as u16, 0, game);
-        CinematicSprites.spawn(
-            addr_kCinematicSpriteObjectDef_8BA125 as u16,
-            0x0400, // Palette left in A by the first sprite initializer.
-            game,
-        );
-        word! {game; screen_fade_delay = 0; screen_fade_counter = 2; cinematic_var6 = 256; }
-        word! { game, 0;
-            cinematic_var8, cinematic_var7, cinematic_var10, cinematic_var9, g_word_7E199B,
-            g_word_7E1999, g_word_7E199F, g_word_7E199D,
-        }
-        word!(game.cinematic_var18 = 3);
-        word_transfers!(game, ascending, 128; le(palette_buffer, 128) <- rom(0x8ce1e9, 128));
-        word! {game; palette_buffer[201] = 0x7fff; palette_buffer[202] = 32128; }
-        palette_effects::clear(game);
-        palette_effects::spawn(addr_kPalfx_E1A0 as u16, game);
-        palette_effects::spawn(addr_kPalfx_E1A4 as u16, game);
-        set_cinematic_backdrop(false, game);
-        game.ram().write_byte(0x69, 17);
-        initialize_title_gradient(game);
+    clear_cinematic_sprites(game);
+    CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BA119 as u16, 0, game);
+    CinematicSprites.spawn(
+        addr_kCinematicSpriteObjectDef_8BA125 as u16,
+        0x0400, // Palette left in A by the first sprite initializer.
+        game,
+    );
+    word! {game; screen_fade_delay = 0; screen_fade_counter = 2; cinematic_var6 = 256; }
+    word! { game, 0;
+        cinematic_var8, cinematic_var7, cinematic_var10, cinematic_var9, g_word_7E199B,
+        g_word_7E1999, g_word_7E199F, g_word_7E199D,
     }
+    word!(game.cinematic_var18 = 3);
+    word_transfers!(game, ascending, 128; le(palette_buffer, 128) <- rom(0x8ce1e9, 128));
+    word! {game; palette_buffer[201] = 0x7fff; palette_buffer[202] = 32128; }
+    palette_effects::clear(game);
+    palette_effects::spawn(addr_kPalfx_E1A0 as u16, game);
+    palette_effects::spawn(addr_kPalfx_E1A4 as u16, game);
+    set_cinematic_backdrop(false, game);
+    game.ram().write_byte(0x69, 17);
+    initialize_title_gradient(game);
 }
 pub fn HandleCinematicsTransitions_3(game: &mut Game) {
     if advance_cinematic_fade(CinematicFade::FastIn, game) {
@@ -1213,18 +1211,16 @@ crate::game::callback_dispatch! {
     }
 }
 pub unsafe fn CallCinematicSprInstr(ea: u32, k: u16, j: u16, game: &mut Game) -> u16 {
-    unsafe {
-        if let Some(cursor) =
-            crate::game::visual_runtime::execute_cinematic_sprite_instruction(ea, k, j, game)
-        {
-            cursor
-        } else if ea == 9150040 {
-            crate::game::visual_runtime::start_title_pan(3, j, game);
-            initialize_title_gradient(game);
-            j
-        } else {
-            Unreachable(game) as u16
-        }
+    if let Some(cursor) =
+        crate::game::visual_runtime::execute_cinematic_sprite_instruction(ea, k, j, game)
+    {
+        cursor
+    } else if ea == 9150040 {
+        crate::game::visual_runtime::start_title_pan(3, j, game);
+        initialize_title_gradient(game);
+        j
+    } else {
+        Unreachable(game) as u16
     }
 }
 macro_rules! advance_particle_axis {

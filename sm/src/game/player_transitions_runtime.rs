@@ -147,7 +147,7 @@ impl Runtime<'_> {
         visual_host::Effects::sound(self, 2, 6, 0x56);
         let program = if gravity { 0xd67a } else { 0xd5a2 };
         let args = SpawnHdmaObject_Args::new(0x41, 0x26, program);
-        self.foreign(|game| unsafe { crate::game::visual_runtime::spawn_hdma(0x91, &args, game) });
+        self.foreign(|game| crate::game::visual_runtime::spawn_hdma(0x91, &args, game));
     }
 
     pub(crate) fn initialize_suit_pickup_hdma(&mut self) {
@@ -528,7 +528,7 @@ impl Runtime<'_> {
         {
             return;
         }
-        self.foreign(|game| unsafe {
+        self.foreign(|game| {
             let image = game.capture_native_rom_binding();
             crate::game::visual_runtime::spawn_hdma_words(
                 0x91,

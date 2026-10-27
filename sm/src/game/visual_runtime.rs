@@ -29,11 +29,11 @@ use crate::{
     types::{SpawnHardcodedPlmArgs, SpawnHdmaObject_Args},
 };
 
-pub(crate) unsafe fn spawn_bg3_scroll(game: &mut Game) {
-    unsafe { spawn_hdma_last(0x88, &SpawnHdmaObject_Args::new(0x43, 0x11, 0xd8d0), game) }
+pub(crate) fn spawn_bg3_scroll(game: &mut Game) {
+    spawn_hdma_last(0x88, &SpawnHdmaObject_Args::new(0x43, 0x11, 0xd8d0), game)
 }
 
-crate::forward_calls! { pub(crate) unsafe fn (game: &mut Game);
+crate::forward_calls! { pub(crate) fn (game: &mut Game);
     initialize_ceres_elevator => spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 5, 0xd939), game);
     initialize_draygon_layer => {
         spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x2c, 0xdf4f), game);
@@ -44,32 +44,26 @@ crate::forward_calls! { pub(crate) unsafe fn (game: &mut Game);
     initialize_intro_crossfade => spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x31, 0xec03), game);
 }
 
-pub(crate) unsafe fn initialize_ceres_ridley(game: &mut Game) {
-    unsafe {
-        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 5, 0xd906), game);
-        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x2c, 0xd91d), game);
-    }
+pub(crate) fn initialize_ceres_ridley(game: &mut Game) {
+    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 5, 0xd906), game);
+    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x2c, 0xd91d), game);
 }
 
-pub(crate) unsafe fn initialize_bomb_torizo_haze(game: &mut Game) {
-    unsafe {
-        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(2, 0x32, 0xdd4a), game);
-        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x32, 0xdd62), game);
-    }
+pub(crate) fn initialize_bomb_torizo_haze(game: &mut Game) {
+    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(2, 0x32, 0xdd4a), game);
+    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x32, 0xdd62), game);
 }
 
-pub(crate) unsafe fn initialize_room_haze(game: &mut Game) {
+pub(crate) fn initialize_room_haze(game: &mut Game) {
     let program = if crate::game::gameplay_flag_runtime::CheckBossBitForCurArea(1, game) & 1 != 0 {
         0xdeeb
     } else {
         0xded3
     };
-    unsafe {
-        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 0x32, program), game);
-    }
+    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 0x32, program), game);
 }
 
-pub(crate) unsafe fn initialize_phantoon_motion(direction: u16, speed: u16, game: &mut Game) {
+pub(crate) fn initialize_phantoon_motion(direction: u16, speed: u16, game: &mut Game) {
     use crate::game::actors::access::AccessMode::Native;
     {
         let mut runtime = Runtime::new(game);
@@ -82,30 +76,23 @@ pub(crate) unsafe fn initialize_phantoon_motion(direction: u16, speed: u16, game
             actor.pre_instruction = speed;
         });
     }
-    unsafe {
-        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0xf, 0xe4a8), game);
-    }
+    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0xf, 0xe4a8), game);
 }
 
-pub(crate) unsafe fn initialize_title_gradient(game: &mut Game) {
-    unsafe {
-        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x32, 0xeb73), game);
-        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x31, 0xeb85), game);
-    }
+pub(crate) fn initialize_title_gradient(game: &mut Game) {
+    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x32, 0xeb73), game);
+    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x31, 0xeb85), game);
 }
 
-pub(crate) unsafe fn initialize_intro_wave(game: &mut Game) {
+pub(crate) fn initialize_intro_wave(game: &mut Game) {
     word!(game.g_word_7E0D9C = 1);
     word_transfers!(game, ascending, 1; native(0xd9e) <- value(0x4000));
     word!(game.loop_counter_transfer_enemies_to_vram = 8);
     Runtime::new(game).initialize_wave_pair(0xd82, 0x9800);
-    unsafe {
-        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x11, 0xec8a), game);
-    }
+    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x11, 0xec8a), game);
 }
 
-// Requires the same live, exclusively accessed backend as spawn_hdma.
-pub(crate) unsafe fn advance_crocomire(game: &mut Game) {
+pub(crate) fn advance_crocomire(game: &mut Game) {
     use crate::game::actors::crocomire_reactions::{self as crocomire};
     use crate::game::enemy_layouts::EnemyLayout72 as Crocomire;
     use crate::ram_map::slot;
@@ -115,7 +102,7 @@ pub(crate) unsafe fn advance_crocomire(game: &mut Game) {
         crocomire::prepare_scroll_hdma(game);
         slot!(
             game,
-            Crocomire[0].var_1F = unsafe { spawn_hdma(0xa4, &DEFINITION, game) }
+            Crocomire[0].var_1F = spawn_hdma(0xa4, &DEFINITION, game)
         );
     }
     crocomire::push_player(game);
@@ -129,35 +116,25 @@ fn hdma_definition(args: &SpawnHdmaObject_Args) -> [u16; 2] {
     ]
 }
 
-// Hardware-facing entry points require a live, exclusively accessed SNES backend.
-pub(crate) unsafe fn spawn_hdma(bank: u8, args: &SpawnHdmaObject_Args, game: &mut Game) -> u16 {
-    unsafe {
-        let words = hdma_definition(args);
-        spawn_hdma_words(bank, |index| words[index], game)
+// Allocation publishes RAM first and checks the owned backend at each register byte.
+pub(crate) fn spawn_hdma(bank: u8, args: &SpawnHdmaObject_Args, game: &mut Game) -> u16 {
+    let words = hdma_definition(args);
+    spawn_hdma_words(bank, |index| words[index], game)
+}
+
+pub(crate) fn spawn_hdma_last(bank: u8, args: &SpawnHdmaObject_Args, game: &mut Game) {
+    let words = hdma_definition(args);
+    initialize_hdma(5, bank, |index| words[index], game);
+}
+
+pub(crate) fn spawn_hdma_words(bank: u8, read_word: impl Fn(usize) -> u16, game: &mut Game) -> u16 {
+    match (0..6).find(|&slot| checked_word!(game.hdma_object_channels_bitmask[slot]) == 0) {
+        Some(slot) => initialize_hdma(slot, bank, read_word, game),
+        None => u16::MAX,
     }
 }
 
-pub(crate) unsafe fn spawn_hdma_last(bank: u8, args: &SpawnHdmaObject_Args, game: &mut Game) {
-    unsafe {
-        let words = hdma_definition(args);
-        initialize_hdma(5, bank, |index| words[index], game);
-    }
-}
-
-pub(crate) unsafe fn spawn_hdma_words(
-    bank: u8,
-    read_word: impl Fn(usize) -> u16,
-    game: &mut Game,
-) -> u16 {
-    unsafe {
-        match (0..6).find(|&slot| checked_word!(game.hdma_object_channels_bitmask[slot]) == 0) {
-            Some(slot) => initialize_hdma(slot, bank, read_word, game),
-            None => u16::MAX,
-        }
-    }
-}
-
-unsafe fn initialize_hdma(
+fn initialize_hdma(
     slot: usize,
     bank: u8,
     read_word: impl Fn(usize) -> u16,
@@ -175,9 +152,9 @@ unsafe fn initialize_hdma(
     let channel = 0x20 + 0x10 * slot as u16;
     checked_word!(game.hdma_object_bank_slot[slot] = (u16::from(bank) << 8) | channel);
     let control = read_word(0);
-    unsafe {
-        crate::rtl::WriteRegWord(crate::rtl::DMAP0 as u16 + channel, control, game);
-    }
+    let register = crate::rtl::DMAP0 as u16 + channel;
+    crate::rtl::write_dma_register(register, control as u8, game);
+    crate::rtl::write_dma_register(register + 1, (control >> 8) as u8, game);
     2 * slot as u16
 }
 
@@ -267,10 +244,8 @@ pub(crate) unsafe fn update_hdma(game: &mut Game) {
         && checked_word!(game.power_bomb_explosion_status) & 0x4000 != 0
     {
         checked_word!(game.power_bomb_explosion_status = 0x8000);
-        unsafe {
-            spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 0x28, 0x8ace), game);
-            spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 0x29, 0x8b80), game);
-        }
+        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 0x28, 0x8ace), game);
+        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x40, 0x29, 0x8b80), game);
     }
     checked_word!(game.fx_layer_blending_config_c = checked_word!(game.fx_layer_blending_config_a));
     if checked_word!(game.hdma_objects_enable_flag) & 0x8000 != 0 {
@@ -860,11 +835,9 @@ pub(crate) fn darken_fireflea_room(game: &mut Game) {
     }
 }
 
-pub(crate) unsafe fn initialize_fireflea_lighting(game: &mut Game) {
+pub(crate) fn initialize_fireflea_lighting(game: &mut Game) {
     word! {game; fireflea_flashing_timer = 6; fireflea_flashing_index = 0; }
-    unsafe {
-        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x11, 0xb0ac), game);
-    }
+    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x11, 0xb0ac), game);
     word_transfers!(game, ascending, 1; native(0x9e00) <- value(0));
     word! { game, 0; UNUSED_word_7E177C, fireflea_darkness_level }
     word!(game.UNUSED_word_7E1780 = 24);
@@ -1037,19 +1010,17 @@ pub(crate) fn shake_room_with_sound(kind: u16, game: &mut Game) {
     word!(game.earthquake_timer |= 0x20);
 }
 
-pub(crate) unsafe fn initialize_tourian_statue(game: &mut Game) {
-    unsafe {
-        if CheckEventHappened(0xa, game) & 1 != 0 {
-            spawn_hardcoded(SpawnHardcodedPlmArgs::new(6, 12, 0xb777), game);
-            word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
-        }
-        game.ram().write_byte(0x59, 74);
-        word!(game.fx_rising_function_bank_88 = 0xc428);
-        word!(game.fx_y_pos = word!(game.fx_base_y_pos));
-        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x11, 0xd856), game);
-        spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x10, 0xdcfa), game);
-        spawn_bg3_scroll(game);
+pub(crate) fn initialize_tourian_statue(game: &mut Game) {
+    if CheckEventHappened(0xa, game) & 1 != 0 {
+        spawn_hardcoded(SpawnHardcodedPlmArgs::new(6, 12, 0xb777), game);
+        word_transfers!(game, ascending, 1; native(0xcd20) <- value(514));
     }
+    game.ram().write_byte(0x59, 74);
+    word!(game.fx_rising_function_bank_88 = 0xc428);
+    word!(game.fx_y_pos = word!(game.fx_base_y_pos));
+    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x11, 0xd856), game);
+    spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x42, 0x10, 0xdcfa), game);
+    spawn_bg3_scroll(game);
 }
 
 pub(crate) unsafe fn advance_tourian_statue(
@@ -1118,7 +1089,7 @@ fn advance_statue_program(slot: u16, game: &mut Game) {
     word!(game.hdma_object_instruction_list_pointers[(slot >> 1)] += 2);
 }
 
-pub(crate) unsafe fn initialize_weather(weather: Weather, game: &mut Game) {
+pub(crate) fn initialize_weather(weather: Weather, game: &mut Game) {
     use crate::game::constants::bank_87::{addr_kAnimtiles_Rain, addr_kAnimtiles_Spores};
     let (control, program, tiles) = match weather {
         Weather::Rain => (0x43, 0xd96c, Some(addr_kAnimtiles_Rain)),
@@ -1126,16 +1097,14 @@ pub(crate) unsafe fn initialize_weather(weather: Weather, game: &mut Game) {
         Weather::Fog => (0x43, 0xdb19, None),
     };
     game.ram().write_byte(0x5b, 92);
-    unsafe {
-        spawn_hdma(
-            0x88,
-            &SpawnHdmaObject_Args::new(control, 0x11, program),
-            game,
-        );
-        if let Some(tiles) = tiles {
-            spawn_bg3_scroll(game);
-            animated_tiles::spawn(tiles as u16, game);
-        }
+    spawn_hdma(
+        0x88,
+        &SpawnHdmaObject_Args::new(control, 0x11, program),
+        game,
+    );
+    if let Some(tiles) = tiles {
+        spawn_bg3_scroll(game);
+        animated_tiles::spawn(tiles as u16, game);
     }
 }
 

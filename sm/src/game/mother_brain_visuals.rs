@@ -135,7 +135,7 @@ pub fn flicker_body(game: &mut Game) {
     };
 }
 
-crate::forward_calls! { pub(crate) unsafe fn (game: &mut Game) -> u16;
+crate::forward_calls! { pub(crate) fn (game: &mut Game) -> u16;
     spawn_rising_hdma => crate::game::visual_runtime::spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0, 0x2c, 0xe727), game);
     spawn_rainbow_hdma => crate::game::visual_runtime::spawn_hdma(0x88, &SpawnHdmaObject_Args::new(0x41, 0x26, 0xe751), game);
 }

@@ -77,92 +77,89 @@ pub(crate) fn unpause_draygon(game: &mut Game) -> crate::types::CoroutineRet {
     0
 }
 
-pub(crate) unsafe fn setup_script(address: u32, game: &mut Game) {
+pub(crate) fn setup_script(address: u32, game: &mut Game) {
     use crate::game::room_mechanisms::spawn_hardcoded;
     use crate::game::visual_runtime::initialize_room_haze;
     use crate::game::{animated_tiles, constants::bank_87::*, scrolling_sky};
     use crate::types::SpawnHardcodedPlmArgs;
-    unsafe {
-        match address {
-            9408916 => {
-                spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x3d, 0xb, 0xbb30), game);
-                word! {game; earthquake_type = 24; earthquake_timer = u16::MAX; }
+    match address {
+        9408916 => {
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x3d, 0xb, 0xbb30), game);
+            word! {game; earthquake_type = 24; earthquake_timer = u16::MAX; }
+        }
+        9408937 => spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x10, 0x87, 0xb964), game),
+        9408946 => spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0xa, 0xb9ed), game),
+        9408957 => {
+            word! {game; earthquake_type = 6; earthquake_timer = u16::MAX; }
+            scrolling_sky::initialize_land(game);
+        }
+        9408969 => scrolling_sky::initialize_land(game),
+        9408974 => scrolling_sky::initialize_ocean(game),
+        9408983 => {
+            for animation in [
+                addr_kAnimtiles_TourianStatue_Kraid,
+                addr_kAnimtiles_TourianStatue_Phantoon,
+                addr_kAnimtiles_TourianStatue_Draygon,
+                addr_kAnimtiles_TourianStatue_Ridley,
+            ] {
+                animated_tiles::spawn(animation as u16, game);
             }
-            9408937 => spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x10, 0x87, 0xb964), game),
-            9408946 => spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0xa, 0xb9ed), game),
-            9408957 => {
-                word! {game; earthquake_type = 6; earthquake_timer = u16::MAX; }
-                scrolling_sky::initialize_land(game);
+        }
+        9423048 => {
+            crate::game::enemy_projectiles::SpawnEprojWithRoomGfx(
+                crate::game::constants::bank_86::addr_kEproj_PrePhantomRoom as u16,
+                0xc8c8,
+                game,
+            );
+        }
+        9423059 => spawn_hardcoded(SpawnHardcodedPlmArgs::new(0, 0, 0xb8eb), game),
+        9423069 => {
+            // LongPtr stores its address in native order, then the bank byte.
+            for (at, hook) in [(0x601, 0xc8f6), (0x604, 0xc8fc)] {
+                word_transfers!(game, ascending, 1; native(at) <- value(hook));
+                game.ram().write_byte(at + 2, 0x8f);
             }
-            9408969 => scrolling_sky::initialize_land(game),
-            9408974 => scrolling_sky::initialize_ocean(game),
-            9408983 => {
-                for animation in [
-                    addr_kAnimtiles_TourianStatue_Kraid,
-                    addr_kAnimtiles_TourianStatue_Phantoon,
-                    addr_kAnimtiles_TourianStatue_Draygon,
-                    addr_kAnimtiles_TourianStatue_Ridley,
-                ] {
-                    animated_tiles::spawn(animation as u16, game);
-                }
-            }
-            9423048 => {
-                crate::game::enemy_projectiles::SpawnEprojWithRoomGfx(
-                    crate::game::constants::bank_86::addr_kEproj_PrePhantomRoom as u16,
-                    0xc8c8,
-                    game,
-                );
-            }
-            9423059 => spawn_hardcoded(SpawnHardcodedPlmArgs::new(0, 0, 0xb8eb), game),
-            9423069 => {
-                // LongPtr stores its address in native order, then the bank byte.
-                for (at, hook) in [(0x601, 0xc8f6), (0x604, 0xc8fc)] {
-                    word_transfers!(game, ascending, 1; native(at) <- value(hook));
-                    game.ram().write_byte(at + 2, 0x8f);
-                }
-            }
-            9423114 => {
-                let at = 0xd908 + usize::from(word!(game.area_index));
-                let collected =
-                    u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)])
-                        | 1;
-                word_transfers!(game, ascending, 1; native(at) <- value(collected));
-                word!(game.has_area_map = collected);
-            }
-            9423135 => {
-                crate::game::gameplay_flag_runtime::SetEventHappened(0xe, game);
-                word! {game; earthquake_type = 18; earthquake_timer = u16::MAX; }
-            }
-            9423155 | 9423187 => {
-                let kind = if address == 9423187 {
-                    spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x10, 0x10, 0xb968), game);
-                    21
-                } else {
-                    18
-                };
-                word!(game.earthquake_type = kind);
-                word_transfers!(game, ascending, 1;
+        }
+        9423114 => {
+            let at = 0xd908 + usize::from(word!(game.area_index));
+            let collected =
+                u16::from_ne_bytes([game.ram().read_byte(at), game.ram().read_byte(at + 1)]) | 1;
+            word_transfers!(game, ascending, 1; native(at) <- value(collected));
+            word!(game.has_area_map = collected);
+        }
+        9423135 => {
+            crate::game::gameplay_flag_runtime::SetEventHappened(0xe, game);
+            word! {game; earthquake_type = 18; earthquake_timer = u16::MAX; }
+        }
+        9423155 | 9423187 => {
+            let kind = if address == 9423187 {
+                spawn_hardcoded(SpawnHardcodedPlmArgs::new(0x10, 0x10, 0xb968), game);
+                21
+            } else {
+                18
+            };
+            word!(game.earthquake_type = kind);
+            word_transfers!(game, ascending, 1;
                     native(0x7e3) <- value(kind), native(0x7e1) <- value(0));
-                word!(game.earthquake_timer = u16::MAX);
-            }
-            9423174 => {
-                word! {game; earthquake_type = 21; earthquake_timer = u16::MAX; }
-            }
-            9423214 => {
-                spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x26, 0xba48), game);
-                initialize_room_haze(game);
-            }
-            9423222 => initialize_room_haze(game),
-            9423227 => {
-                game.ram().write_byte(0x5d, 102);
-                initialize_room_haze(game);
-                word!(game.hdma_data_table_in_ceres = 9);
-            }
-            9408955 | 9408956 | 9408979 | 9408980 | 9408981 | 9408982 | 9409012 | 9409013
-            | 9409014 | 9409015 | 9423047 | 9423056 | 9423057 | 9423058 | 9423068 | 9423134 => {}
-            _ => {
-                crate::rtl::Unreachable(game);
-            }
+            word!(game.earthquake_timer = u16::MAX);
+        }
+        9423174 => {
+            word! {game; earthquake_type = 21; earthquake_timer = u16::MAX; }
+        }
+        9423214 => {
+            spawn_hardcoded(SpawnHardcodedPlmArgs::new(0xf, 0x26, 0xba48), game);
+            initialize_room_haze(game);
+        }
+        9423222 => initialize_room_haze(game),
+        9423227 => {
+            game.ram().write_byte(0x5d, 102);
+            initialize_room_haze(game);
+            word!(game.hdma_data_table_in_ceres = 9);
+        }
+        9408955 | 9408956 | 9408979 | 9408980 | 9408981 | 9408982 | 9409012 | 9409013 | 9409014
+        | 9409015 | 9423047 | 9423056 | 9423057 | 9423058 | 9423068 | 9423134 => {}
+        _ => {
+            crate::rtl::Unreachable(game);
         }
     }
 }
@@ -398,7 +395,7 @@ pub(crate) fn load_fx_header(game: &mut Game) {
             .table(Source::Loaded, 0x83abf0)
             .word(usize::from(kind & !1));
         h.write_word_le(tilemap, ram::fx_tilemap_ptr);
-        let initialize: Option<unsafe fn(&mut Game)> = match kind >> 1 {
+        let initialize: Option<fn(&mut Game)> = match kind >> 1 {
             0 | 7..=15 => None,
             1 => Some(liquid_effects::initialize_lava),
             2 => Some(liquid_effects::initialize_acid),
@@ -406,7 +403,7 @@ pub(crate) fn load_fx_header(game: &mut Game) {
             4..=6 => {
                 let weather =
                     [Weather::Spores, Weather::Rain, Weather::Fog][usize::from((kind >> 1) - 4)];
-                h.foreign(|game| unsafe { visual_runtime::initialize_weather(weather, game) });
+                h.foreign(|game| visual_runtime::initialize_weather(weather, game));
                 None
             }
             16 => Some(scrolling_sky::initialize_land),
@@ -419,7 +416,7 @@ pub(crate) fn load_fx_header(game: &mut Game) {
             _ => panic!("room FX kind outside callback table"),
         };
         if let Some(initialize) = initialize {
-            h.foreign(|game| unsafe { initialize(game) });
+            h.foreign(initialize);
         }
     }
     for (field, table, spawn) in [

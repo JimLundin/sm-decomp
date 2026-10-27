@@ -5,20 +5,16 @@ use crate::game::prelude::*;
 use crate::game::visual_runtime::spawn_hdma;
 use crate::ram_map::slot;
 
-pub unsafe fn initialize_banded_sky(game: &mut Game) {
-    unsafe {
-        word! {game; fx_y_pos = 1248; fx_type = 6; }
-        static unk_88A62E: SpawnHdmaObject_Args =
-            SpawnHdmaObject_Args::new(0x2, 0x12, 0xad63 as VoidP);
-        static unk_88A636: SpawnHdmaObject_Args =
-            SpawnHdmaObject_Args::new(0x42, 0x11, 0xad4e as VoidP);
-        static unk_88A63E: SpawnHdmaObject_Args =
-            SpawnHdmaObject_Args::new(0x42, 0xd, 0xad39 as VoidP);
-        spawn_hdma(0x88, &unk_88A62E, game);
-        spawn_hdma(0x88, &unk_88A636, game);
-        spawn_hdma(0x88, &unk_88A63E, game);
-        update_vertical_scroll(0, game);
-    }
+pub fn initialize_banded_sky(game: &mut Game) {
+    word! {game; fx_y_pos = 1248; fx_type = 6; }
+    static unk_88A62E: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x2, 0x12, 0xad63 as VoidP);
+    static unk_88A636: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x42, 0x11, 0xad4e as VoidP);
+    static unk_88A63E: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xd, 0xad39 as VoidP);
+    spawn_hdma(0x88, &unk_88A62E, game);
+    spawn_hdma(0x88, &unk_88A636, game);
+    spawn_hdma(0x88, &unk_88A63E, game);
+    update_vertical_scroll(0, game);
 }
 #[forbid(unsafe_code)]
 fn sky_table_word(address: u32, index: isize, game: &Game) -> u16 {
@@ -166,22 +162,18 @@ fn append_upper_band(k: u16, mut r18: u16, r20: u16, r22: u16, game: &mut Game) 
 }
 static LAND_SCROLL: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xf, 0xad76 as VoidP);
 static OCEAN_SCROLL: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xf, 0xad89 as VoidP);
-pub unsafe fn initialize_land(game: &mut Game) {
-    unsafe {
-        game.ram()
-            .write_byte(0x91b, game.ram().read_byte(0x91b) | 1);
-        game.ram()
-            .write_byte(0x91c, game.ram().read_byte(0x91c) | 1);
-        spawn_hdma(0x88, &LAND_SCROLL, game);
-        word! {game; set_to_e0_by_scrolling_sky = 224; UNUSED_word_7E059C = 0; }
-    }
+pub fn initialize_land(game: &mut Game) {
+    game.ram()
+        .write_byte(0x91b, game.ram().read_byte(0x91b) | 1);
+    game.ram()
+        .write_byte(0x91c, game.ram().read_byte(0x91c) | 1);
+    spawn_hdma(0x88, &LAND_SCROLL, game);
+    word! {game; set_to_e0_by_scrolling_sky = 224; UNUSED_word_7E059C = 0; }
 }
-pub unsafe fn initialize_ocean(game: &mut Game) {
-    unsafe {
-        game.ram().write_byte(0x59, 74);
-        spawn_hdma(0x88, &OCEAN_SCROLL, game);
-        word! {game; set_to_e0_by_scrolling_sky = 224; UNUSED_word_7E059C = 0; }
-    }
+pub fn initialize_ocean(game: &mut Game) {
+    game.ram().write_byte(0x59, 74);
+    spawn_hdma(0x88, &OCEAN_SCROLL, game);
+    word! {game; set_to_e0_by_scrolling_sky = 224; UNUSED_word_7E059C = 0; }
 }
 fn damage_above_screen(game: &mut Game) {
     {

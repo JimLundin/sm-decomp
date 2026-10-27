@@ -961,25 +961,46 @@ pub(crate) unsafe fn write_reg_execution(reg: u16, value: u8, game: &mut Executi
     let views = game.backend.views();
     unsafe { write_reg_parts(reg, value, game, views) }
 }
+// Bank-0 DMA writes have an inert cartridge tail; preserve byte observations.
+#[forbid(unsafe_code)]
+pub(crate) fn write_dma_register(reg: u16, value: u8, game: &mut Game) {
+    let views = (game.g_snes, game.g_cpu);
+    let (backend, mut host) = game.execution_parts();
+    let backend = backend.expect("execution requires an owned backend");
+    assert!(
+        (0x4300..=0x437f).contains(&reg),
+        "DMA register outside bank-0 window"
+    );
+    backend.write_dma_register(reg, value);
+    observe_register_write(reg, value, &mut host, backend, views);
+}
 unsafe fn write_reg_parts(
     reg: u16,
     value: u8,
     game: &mut Execution<'_>,
+    views: (*mut Snes, *mut Cpu),
+) {
+    unsafe { game.write(reg as u32, value) };
+    observe_register_write(reg, value, &mut game.host, game.backend, views);
+}
+#[forbid(unsafe_code)]
+fn observe_register_write(
+    _reg: u16,
+    _value: u8,
+    _host: &mut HostContext<'_>,
+    _backend: &crate::snes::snes::Backend,
     _views: (*mut Snes, *mut Cpu),
 ) {
-    unsafe {
-        game.write(reg as u32, value);
-        #[cfg(sm_verify_dll)]
-        crate::room_background_observer::written_parts(
-            reg,
-            value,
-            game.host.ram,
-            game.host.loaded_rom,
-            game.host.g_fail,
-            game.host.decompress_src,
-            |output| observe_backend(Some(&*game.backend), _views, output),
-        );
-    }
+    #[cfg(sm_verify_dll)]
+    crate::room_background_observer::written_parts(
+        _reg,
+        _value,
+        _host.ram,
+        _host.loaded_rom,
+        _host.g_fail,
+        _host.decompress_src,
+        |output| observe_backend(Some(_backend), _views, output),
+    );
 }
 /// Magnitude of a signed SNES word; 0x8000 remains the unsigned value 0x8000.
 #[inline]

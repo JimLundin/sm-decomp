@@ -48,7 +48,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current source1f8d: production114104, legacy18210, unsafe2634, verification41832; warnings160.
+Current source17f: production114055, legacy18206, unsafe2575, verification41832; warnings160.
 Qualified WRAM/Execution: Game/Backend share stable WorkRam; private DMA/Input
 storage and actual byte/getter/macro consumers close with exact RAM layout.
 Initialized329+5, full86 (136526 selected+38827 setup),14 genuine captures189475,
@@ -68,7 +68,15 @@ Net -73 production/-162 legacy/-4 unsafe/+4 verification; new palette owner88 li
 AA05 DB59 reversal shares ordered segment operations:5 rows3093 selected+272 setup/0,
 fmt/library/DLL160 unchanged warnings; -62 production/-62 legacy, unsafe/verification unchanged.
 Exact incremental route preserves AA04 palette/stride/broadcast proofs and all X resets before Y.
-Next: finish qualified fixed HDMA writer cohort on current main, then coordinated Phantoon figure-eight.
+Fixed HDMA allocation uses bounded DMA bytes with the original low/observer/high/observer protocol.
+32 declarations and fixed initializer/caller cohort close; generic interpreter/bus/native contracts remain.
+Final17f fmt/library/DLL160 unchanged warnings and570 compiled source/native bindings pass.
+Qualified0e29 unique rows49235 selected+33413 setup/0; genuineb2d six captures183971+329/5,
+exact affected9-member encrypted restore and both Kago14350 approaches retain original source/profile lineage.
+Final AA05 five joint rows bind17f; no accepted capture/29-row repeat or full86/14/22 claim.
+Net -49 physical production/-4 legacy/-59 unsafe/verification0;12 lines are formatter reflow, not size savings.
+Whole Session/backend independence and source-only allocation/observer/mapper/CrystalFlash variants remain unfinished.
+Next: coordinated Phantoon figure-eight six-function cohort, preserving current A7 ownership.
 
 Source-only: Blackout37, exact page2 callback, sky initializers, CrystalFlashStart,
 spike/DBF2/lavaquake and additional signed8.8 kernels; MotherBrain magnitude,

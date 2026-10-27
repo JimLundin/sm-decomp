@@ -204,99 +204,85 @@ impl Palette {
 }
 
 pub(super) unsafe fn wait_for_scene(scene: Scene, game: &mut Game) {
-    unsafe {
-        if !page_input_ready(game) {
-            return;
-        }
-        let palette = match scene {
-            Scene::MotherBrain | Scene::BabyMetroid => {
-                let mother_brain = matches!(scene, Scene::MotherBrain);
-                game.ram()
-                    .write_byte(0x58, if mother_brain { 80 } else { 84 });
-                if !mother_brain {
-                    word! {game; room_width_in_blocks = 32; room_height_in_blocks = 16; }
-                }
-                word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
-                pt::finish_pose_change(&mut Runtime::new(game));
-                let (x, y) = if mother_brain { (155, 115) } else { (376, 147) };
-                word! {game; samus_x_pos = x; samus_prev_x_pos = x; samus_y_pos = y;
-                samus_prev_y_pos = y; cinematic_var8 = 0; cinematic_var13 = 127; }
-                if mother_brain {
-                    // The preceding $1A4B store leaves $007F in the ROM accumulator.
-                    spawn_cinematic_sprite_at(
-                        addr_kCinematicSpriteObjectDef_8BCE55 as u16,
-                        0,
-                        0x7f,
-                        game,
-                    );
-                    // Palette left in A by the first sprite initializer.
-                    CinematicSprites.spawn(
-                        addr_kCinematicSpriteObjectDef_8BCF27 as u16,
-                        0x0e00,
-                        game,
-                    );
-                    word_transfers!(game, ascending, 224; le(level_data, 0) <- rom(0x8cbec3, 0));
-                    word_transfers!(game, ascending, 256; native(0x16402) <- value(0));
-                    word!(game.hud_item_index = 1);
-                } else {
-                    CinematicSprites.spawn(
-                        addr_kCinematicSpriteObjectDef_8BCE5B as u16,
-                        0x7f,
-                        game,
-                    );
-                    CinematicSprites.spawn(
-                        addr_kCinematicSpriteObjectDef_8BCE79 as u16,
-                        0x0e00,
-                        game,
-                    );
-                    word!(game.cinematic_var11 = 0);
-                    word_transfers!(game, ascending, 384; le(level_data, 0) <- rom(0x8cc083, 0));
-                    word!(game.hud_item_index = 0);
-                }
-                word!(game.frame_handler_alfa = (0x90e6c9i32) as u16);
-                word!(game.frame_handler_beta = (0x90e833i32) as u16);
-                pt::demo::start(Runtime::new(game).session_mut());
-                let input = if mother_brain {
-                    addr_stru_918784
-                } else {
-                    addr_stru_91877E
-                };
-                // EnableDemoInput leaves $8000 in the ROM accumulator for the loader.
-                pt::demo::load(&mut Runtime::new(game), 0x8000, input as u16);
-                word!(game.cinematic_var15 = if mother_brain { u16::MAX } else { 1 });
-                Palette::Gameplay
-            }
-            Scene::ScientistPage3 | Scene::ScientistPage4 => {
-                let scientist = matches!(scene, Scene::ScientistPage3);
-                game.ram().write_byte(0x58, if scientist { 88 } else { 92 });
-                word!(game.cinematic_var8 = if scientist { 32 } else { 0 });
-                word!(game.cinematic_var10 = if scientist { 8 } else { -24i16 as u16 });
-                word!(game.cinematic_var13 = 127);
-                let object = if scientist {
-                    addr_kCinematicSpriteObjectDef_8BCE61
-                } else {
-                    addr_kCinematicSpriteObjectDef_8BCE67
-                };
-                CinematicSprites.spawn(object as u16, 0x7f, game);
-                Palette::Scientist
-            }
-        };
-        set_cinematic_blend(6, 17, 2, 0, game);
-        initialize_intro_crossfade(game);
-        hide_caret(game);
-        word!(
-            game.cinematic_function = match palette {
-                Palette::Gameplay => 0xb250,
-                Palette::Scientist => 0xb2d2,
-            }
-        );
-        word_transfers!(game, ascending, 256; native(0x2200) <- rom(0x8ce3e9, 0));
-        prepare_cinematic_palette_fade(game);
-        for &(index, count) in palette.colors() {
-            clear_cinematic_colors(index, count, game);
-        }
-        compose_cinematic_palette(game);
+    if !page_input_ready(game) {
+        return;
     }
+    let palette = match scene {
+        Scene::MotherBrain | Scene::BabyMetroid => {
+            let mother_brain = matches!(scene, Scene::MotherBrain);
+            game.ram()
+                .write_byte(0x58, if mother_brain { 80 } else { 84 });
+            if !mother_brain {
+                word! {game; room_width_in_blocks = 32; room_height_in_blocks = 16; }
+            }
+            word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
+            pt::finish_pose_change(&mut Runtime::new(game));
+            let (x, y) = if mother_brain { (155, 115) } else { (376, 147) };
+            word! {game; samus_x_pos = x; samus_prev_x_pos = x; samus_y_pos = y;
+            samus_prev_y_pos = y; cinematic_var8 = 0; cinematic_var13 = 127; }
+            if mother_brain {
+                // The preceding $1A4B store leaves $007F in the ROM accumulator.
+                spawn_cinematic_sprite_at(
+                    addr_kCinematicSpriteObjectDef_8BCE55 as u16,
+                    0,
+                    0x7f,
+                    game,
+                );
+                // Palette left in A by the first sprite initializer.
+                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCF27 as u16, 0x0e00, game);
+                word_transfers!(game, ascending, 224; le(level_data, 0) <- rom(0x8cbec3, 0));
+                word_transfers!(game, ascending, 256; native(0x16402) <- value(0));
+                word!(game.hud_item_index = 1);
+            } else {
+                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCE5B as u16, 0x7f, game);
+                CinematicSprites.spawn(addr_kCinematicSpriteObjectDef_8BCE79 as u16, 0x0e00, game);
+                word!(game.cinematic_var11 = 0);
+                word_transfers!(game, ascending, 384; le(level_data, 0) <- rom(0x8cc083, 0));
+                word!(game.hud_item_index = 0);
+            }
+            word!(game.frame_handler_alfa = (0x90e6c9i32) as u16);
+            word!(game.frame_handler_beta = (0x90e833i32) as u16);
+            pt::demo::start(Runtime::new(game).session_mut());
+            let input = if mother_brain {
+                addr_stru_918784
+            } else {
+                addr_stru_91877E
+            };
+            // EnableDemoInput leaves $8000 in the ROM accumulator for the loader.
+            pt::demo::load(&mut Runtime::new(game), 0x8000, input as u16);
+            word!(game.cinematic_var15 = if mother_brain { u16::MAX } else { 1 });
+            Palette::Gameplay
+        }
+        Scene::ScientistPage3 | Scene::ScientistPage4 => {
+            let scientist = matches!(scene, Scene::ScientistPage3);
+            game.ram().write_byte(0x58, if scientist { 88 } else { 92 });
+            word!(game.cinematic_var8 = if scientist { 32 } else { 0 });
+            word!(game.cinematic_var10 = if scientist { 8 } else { -24i16 as u16 });
+            word!(game.cinematic_var13 = 127);
+            let object = if scientist {
+                addr_kCinematicSpriteObjectDef_8BCE61
+            } else {
+                addr_kCinematicSpriteObjectDef_8BCE67
+            };
+            CinematicSprites.spawn(object as u16, 0x7f, game);
+            Palette::Scientist
+        }
+    };
+    set_cinematic_blend(6, 17, 2, 0, game);
+    initialize_intro_crossfade(game);
+    hide_caret(game);
+    word!(
+        game.cinematic_function = match palette {
+            Palette::Gameplay => 0xb250,
+            Palette::Scientist => 0xb2d2,
+        }
+    );
+    word_transfers!(game, ascending, 256; native(0x2200) <- rom(0x8ce3e9, 0));
+    prepare_cinematic_palette_fade(game);
+    for &(index, count) in palette.colors() {
+        clear_cinematic_colors(index, count, game);
+    }
+    compose_cinematic_palette(game);
 }
 
 pub(super) fn fade_to_scene(palette: Palette, game: &mut Game) {

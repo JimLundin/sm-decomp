@@ -16,21 +16,19 @@ crate::game::constants::typed_constants! { Consts_89;
     addr_kIndirectHdmaTable_PowerBombExplodeRight = 41217, addr_kIndirectHdmaTable_PowerBombExplodeLeft = 38912,
 }
 
-pub(crate) unsafe fn spawn_power_bomb(game: &mut Game) {
-    unsafe {
-        if word!(game.time_is_frozen_flag) != 0 {
-            word!(game.power_bomb_explosion_status = 0x4000);
-        } else {
-            QueueSfx1_Max15(1, game);
-            word!(game.power_bomb_explosion_status = 0x8000);
-            static unk_888ABA: SpawnHdmaObject_Args =
-                SpawnHdmaObject_Args::new(0x40, 0x28, 0x8ace as VoidP);
-            static unk_888AC2: SpawnHdmaObject_Args =
-                SpawnHdmaObject_Args::new(0x40, 0x29, 0x8b80 as VoidP);
-            spawn_hdma(0x88, &unk_888ABA, game);
-            spawn_hdma(0x88, &unk_888AC2, game);
-        };
-    }
+pub(crate) fn spawn_power_bomb(game: &mut Game) {
+    if word!(game.time_is_frozen_flag) != 0 {
+        word!(game.power_bomb_explosion_status = 0x4000);
+    } else {
+        QueueSfx1_Max15(1, game);
+        word!(game.power_bomb_explosion_status = 0x8000);
+        static unk_888ABA: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0x40, 0x28, 0x8ace as VoidP);
+        static unk_888AC2: SpawnHdmaObject_Args =
+            SpawnHdmaObject_Args::new(0x40, 0x29, 0x8b80 as VoidP);
+        spawn_hdma(0x88, &unk_888ABA, game);
+        spawn_hdma(0x88, &unk_888AC2, game);
+    };
 }
 static kPowerBombPreExplosionRadiusSpeed: u16 = 0x3000;
 static kPowerBombPreExplosionRadiusAccel: u16 = 0x80;
@@ -361,16 +359,14 @@ fn calculate_explosion_hdma_table_pointers(k: u16, pre_explosion: bool, game: &m
     }
 }
 
-pub(crate) unsafe fn spawn_crystal_flash(game: &mut Game) {
-    unsafe {
-        word!(game.power_bomb_explosion_status = (0x888000i32) as u16);
-        static unk_88A2B0: SpawnHdmaObject_Args =
-            SpawnHdmaObject_Args::new(0x40, 0x28, 0xa2bd as VoidP);
-        static unk_88A2B8: SpawnHdmaObject_Args =
-            SpawnHdmaObject_Args::new(0x40, 0x29, 0xa32a as VoidP);
-        spawn_hdma(0x88, &unk_88A2B0, game);
-        spawn_hdma(0x88, &unk_88A2B8, game);
-    }
+pub(crate) fn spawn_crystal_flash(game: &mut Game) {
+    word!(game.power_bomb_explosion_status = (0x888000i32) as u16);
+    static unk_88A2B0: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x40, 0x28, 0xa2bd as VoidP);
+    static unk_88A2B8: SpawnHdmaObject_Args =
+        SpawnHdmaObject_Args::new(0x40, 0x29, 0xa32a as VoidP);
+    spawn_hdma(0x88, &unk_88A2B0, game);
+    spawn_hdma(0x88, &unk_88A2B8, game);
 }
 #[forbid(unsafe_code)]
 pub(crate) fn begin_crystal_flash(game: &mut Game) {

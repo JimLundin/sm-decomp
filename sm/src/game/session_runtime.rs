@@ -345,7 +345,7 @@ impl Host for Runtime<'_> {
         self.foreign(|g| crate::game::visual_runtime::set_hdma_enabled(true, g));
     }
     fn spawn_power_bomb(&mut self) {
-        self.foreign(|g| unsafe { crate::game::explosion_window::spawn_power_bomb(g) });
+        self.foreign(|g| crate::game::explosion_window::spawn_power_bomb(g));
     }
     fn spawn_mechanism(&mut self, header: u16) {
         let mut contact = crate::game::room_mechanisms::host::Contact::Absent;

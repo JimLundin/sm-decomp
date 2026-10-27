@@ -9,40 +9,32 @@ use crate::game::visual_runtime::{shake_room_with_sound, spawn_hdma};
 
 pub const WATER_WAVE: [i16; 16] = [0, 1, 1, 0, 0, -1, -1, 0, 0, 1, 1, 0, 0, -1, -1, 0];
 
-pub unsafe fn initialize_lava(game: &mut Game) {
-    unsafe {
-        initialize_hot(addr_kAnimtiles_Lava as u16, game);
-    }
+pub fn initialize_lava(game: &mut Game) {
+    initialize_hot(addr_kAnimtiles_Lava as u16, game);
 }
-pub unsafe fn initialize_acid(game: &mut Game) {
-    unsafe {
-        initialize_hot(addr_kAnimtiles_Acid as u16, game);
-    }
+pub fn initialize_acid(game: &mut Game) {
+    initialize_hot(addr_kAnimtiles_Acid as u16, game);
 }
-unsafe fn initialize_hot(tiles: u16, game: &mut Game) {
-    unsafe {
-        word!(game.fx_rising_function_bank_88 = 0xb343);
-        word!(game.lava_acid_y_pos = word!(game.fx_base_y_pos));
-        static SURFACE: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x12, 0xc3e1);
-        static BACKGROUND: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x10, 0xc3f0);
-        spawn_hdma(0x88, &SURFACE, game);
+fn initialize_hot(tiles: u16, game: &mut Game) {
+    word!(game.fx_rising_function_bank_88 = 0xb343);
+    word!(game.lava_acid_y_pos = word!(game.fx_base_y_pos));
+    static SURFACE: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x12, 0xc3e1);
+    static BACKGROUND: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x10, 0xc3f0);
+    spawn_hdma(0x88, &SURFACE, game);
+    spawn_hdma(0x88, &BACKGROUND, game);
+    spawn_bg3_scroll(game);
+    animated_tiles::spawn(tiles, game);
+}
+pub fn initialize_water(game: &mut Game) {
+    word!(game.fx_rising_function_bank_88 = 0xc428);
+    word!(game.fx_y_pos = word!(game.fx_base_y_pos));
+    static SURFACE: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x11, 0xd856);
+    static BACKGROUND: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xf, 0xd847);
+    spawn_hdma(0x88, &SURFACE, game);
+    if word!(game.fx_liquid_options) & 2 != 0 {
         spawn_hdma(0x88, &BACKGROUND, game);
-        spawn_bg3_scroll(game);
-        animated_tiles::spawn(tiles, game);
     }
-}
-pub unsafe fn initialize_water(game: &mut Game) {
-    unsafe {
-        word!(game.fx_rising_function_bank_88 = 0xc428);
-        word!(game.fx_y_pos = word!(game.fx_base_y_pos));
-        static SURFACE: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0x11, 0xd856);
-        static BACKGROUND: SpawnHdmaObject_Args = SpawnHdmaObject_Args::new(0x42, 0xf, 0xd847);
-        spawn_hdma(0x88, &SURFACE, game);
-        if word!(game.fx_liquid_options) & 2 != 0 {
-            spawn_hdma(0x88, &BACKGROUND, game);
-        }
-        spawn_bg3_scroll(game);
-    }
+    spawn_bg3_scroll(game);
 }
 
 fn move_toward_target(game: &mut Game) -> u8 {

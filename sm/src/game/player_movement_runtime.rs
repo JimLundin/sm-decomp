@@ -167,6 +167,7 @@ crate::game::callback_dispatch! {
     [9478967] Samus_MovementHandler_Normal [] {
         player_movement::advance_normal(&mut Runtime::new(game));
     };
+    @functions [pub fn (game: &mut Game)];
     [9492088] SamusMoveHandler_CrystalFlashStart [] {
         word!(game.samus_y_pos -= 2);
         if (word!(game.timer_for_shinesparks_startstop -= 1, reread) & 0x8000)
@@ -184,6 +185,7 @@ crate::game::callback_dispatch! {
             spawn_crystal_flash(game);
         }
     };
+    @functions [pub unsafe fn (game: &mut Game)];
     [9494328] Samus_MoveHandler_Knockback [] {
         match KNOCKBACK_MOTION[usize::from(word!(game.knockback_dir))] {
             Some(motion) => motion(&mut Runtime::new(game)),
