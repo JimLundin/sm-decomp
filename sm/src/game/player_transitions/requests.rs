@@ -86,74 +86,35 @@ fn hit(h: &mut impl Host) -> bool {
         }
     }
 }
-#[derive(Clone, Copy)]
-enum Bomb {
-    Stand,
-    Jump,
-    Ball,
-    CancelInput,
-    Cancel,
-}
-const BOMB: [Bomb; 28] = {
-    use Bomb::*;
-    [
-        Stand,
-        Jump,
-        CancelInput,
-        CancelInput,
-        Ball,
-        Stand,
-        Jump,
-        Ball,
-        Ball,
-        Ball,
-        Ball,
-        Jump,
-        Jump,
-        Jump,
-        CancelInput,
-        CancelInput,
-        Jump,
-        Ball,
-        Ball,
-        Ball,
-        Jump,
-        Jump,
-        Jump,
-        CancelInput,
-        CancelInput,
-        CancelInput,
-        Cancel,
-        Cancel,
-    ]
-};
 fn bomb(h: &mut impl Host) {
     if h.session().player.transitions.bomb_jump.to_raw() >> 8 != 0 {
         return;
     }
-    let target = BOMB[usize::from(h.session().player.movement_and_facing >> 8)];
-    let selected = match target {
-        Bomb::Stand if h.inputs().frozen != 0 => {
+    let movement = usize::from(h.session().player.movement_and_facing >> 8);
+    let _ = [(); 28][movement];
+    let selected = match movement {
+        0 | 5 if h.inputs().frozen != 0 => {
             h.session_mut().player.transitions.bomb_jump = BombJump::from_raw(0);
             false
         }
-        Bomb::Stand | Bomb::Jump => {
+        0 | 1 | 5 | 6 | 11..=13 | 16 | 20..=22 => {
             let pose = facing_pose(h, 0x52, 0x51);
             interrupted(h, pose);
             true
         }
-        Bomb::Ball => {
+        4 | 7..=10 | 17..=19 => {
             let pose = h.session().player.pose;
             interrupted(h, pose);
             true
         }
-        Bomb::CancelInput | Bomb::Cancel => {
-            if matches!(target, Bomb::CancelInput) {
+        2 | 3 | 14 | 15 | 23..=27 => {
+            if movement < 26 {
                 h.session_mut().player.transitions.input_mode = InputMode::Normal;
             }
             h.session_mut().player.transitions.bomb_jump = BombJump::from_raw(0);
             false
         }
+        _ => unreachable!(),
     };
     if selected {
         h.session_mut().player.transitions.interruption = InterruptionAction::from_raw(3);
