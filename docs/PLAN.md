@@ -48,7 +48,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current source9964: production111981, legacy17353, unsafe2713, verification40385; warnings165.
+Current sourceb5aa: production111938, legacy17353, unsafe2713, verification40385; warnings165.
 Core sm82 persists actor/media identities and saved ROM patches; RAM/native frame dependencies remain explicit.
 Codec f158c44fac33eac7 has39 contributors/652740 normalized source bytes.
 Prepared110/initialized329+5,14 genuine captures189475 frames and full22 byte-identical restore pass.
@@ -70,7 +70,9 @@ Linux M: share four owned projectile axis kernels -23 physical/-24 substantive e
 Source1bf7 passed six rows2429 selected+272 setup/0 and ordinary CI; tested=landedae0f.
 Exact spike/DBF2/lavaquake kernels remain source-only.
 Linux M: setup14 shares fresh native-word reads -51 physical/-52 substantive engine; source review pass.
-Keep seven fresh indices/five multi-read blocks; source9964 format/library pass165 warnings; 16 related/smoke rows pending.
+Keep seven fresh indices/five multi-read blocks; source9964 passed16 rows16977 selected+1713 setup/0 and ordinary CI.
+Linux M: six more signed8.8 projectile blocks reuse unchanged axis helper -43 physical/substantive engine.
+Sourceb5aa review/format/library pass165 warnings; eight related+smoke rows pending; exact variants remain source-only.
 ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
 Native player/DSP/APU and input Vec/FILE/Cart are owned; GameOwner does not promise Rust thread sharing.
 Keep SDL/native/audio quiescence and CRT order; invalid SIZE_MAX/malloc0 callbacks

@@ -956,14 +956,7 @@ pub(super) fn sub_86D89F(k: u16, ctx: &mut impl Host) {
 
 pub(super) fn sub_86D8DF(k: u16, ctx: &mut impl Host) {
     let v5: i32 = k as i32 >> 1;
-    let amt: i32 = (enemy!(ctx, (v5) as isize, velocity_y) as i16 as i32) << 8;
-    add_split(
-        SlotField::Y,
-        SlotField::YFraction,
-        v5 as isize,
-        amt as u32,
-        ctx,
-    );
+    move_spike_axis(k, false, SlotField::VelocityY, ctx);
     enemy!(ctx, enemy!(ctx, (v5) as isize, behavior_b) => (v5) as isize, x);
 }
 
@@ -1134,13 +1127,7 @@ pub(super) fn EprojInit_ShaktoolAttackFrontCircle(v1: u16, ctx: &mut impl Host) 
 
 pub(super) fn Eproj_PreInit_0x8aaf(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
-    add_split(
-        SlotField::Y,
-        SlotField::YFraction,
-        v1 as isize,
-        ((enemy!(ctx, (v1) as isize, velocity_y) as i16 as i32) << 8) as u32,
-        ctx,
-    );
+    move_spike_axis(k, false, SlotField::VelocityY, ctx);
     if enemy!(ctx, (v1) as isize, y) >= enemy!(ctx, (v1) as isize, counter) {
         enemy!(ctx, 0 => (v1) as isize, definition);
     }
@@ -1466,24 +1453,8 @@ pub(super) fn EprojPreInstr_GoldenTorizoSuperMissile(k: u16, ctx: &mut impl Host
 
 pub(super) fn sub_86B535(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
-    let split_amount =
-        ((enemy!(ctx, (v1 as usize) as isize, velocity_x) as i16 as i32) << 8) as u32;
-    add_split(
-        SlotField::X,
-        SlotField::XFraction,
-        (v1 as usize) as isize,
-        split_amount,
-        ctx,
-    );
-    let split_amount =
-        ((enemy!(ctx, (v1 as usize) as isize, velocity_y) as i16 as i32) << 8) as u32;
-    add_split(
-        SlotField::Y,
-        SlotField::YFraction,
-        (v1 as usize) as isize,
-        split_amount,
-        ctx,
-    );
+    move_spike_axis(k, true, SlotField::VelocityX, ctx);
+    move_spike_axis(k, false, SlotField::VelocityY, ctx);
     let v6: i16 = enemy!(ctx, (v1 as usize) as isize, velocity_y) as i16;
     if v6 >= 0 {
         enemy!(
@@ -1521,23 +1492,9 @@ pub(super) fn Eproj_DeleteIfYposOutside(k: u16, ctx: &mut impl Host) {
 
 pub(super) fn EprojPreInstr_TourianStatueUnlockingParticle(k: u16, ctx: &mut impl Host) {
     let v1: i32 = k as i32 >> 1;
-    let mut amt: i32 = (enemy!(ctx, (v1) as isize, velocity_x) as i16 as i32) << 8;
-    add_split(
-        SlotField::X,
-        SlotField::XFraction,
-        v1 as isize,
-        amt as u32,
-        ctx,
-    );
+    move_spike_axis(k, true, SlotField::VelocityX, ctx);
     let v7: u16 = (ctx.inputs().fx_y as i32 - enemy!(ctx, (v1) as isize, y) as i32) as u16;
-    amt = (enemy!(ctx, (v1) as isize, velocity_y) as i16 as i32) << 8;
-    add_split(
-        SlotField::Y,
-        SlotField::YFraction,
-        v1 as isize,
-        amt as u32,
-        ctx,
-    );
+    move_spike_axis(k, false, SlotField::VelocityY, ctx);
     if ((v7 as i32 ^ ctx.inputs().fx_y as i32 - enemy!(ctx, (v1) as isize, y) as i32) & 0x8000) != 0
     {
         SpawnEprojWithRoomGfx(addr_stru_86BA5C as u16, k, ctx);
