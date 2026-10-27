@@ -56,12 +56,12 @@ Required sm82 AST8.06min:3 options kills; unsafe gameplay omission unavailable.
 Blackout37/native failure variants remain unobserved; hardware entry contracts stay explicit.
 sm9b retired: scoped AST3 kills3453 selected/0 setup; original target750d/0cdf attribution retained.
 Own-sm9b941 full86 passes136526 selected+38827 setup/0; all14 originals and bothKago14350 retained.
-Recent liquid/elevator/Sky cuts passed affected original rows; hardware/native failure variants remain scoped.
 Intro/Mode7/text-glow batch passed full intro8780 and original smoke; signature-only growth counted, native reads checked.
 Logo/page2 passes10967 selected+272 setup/0; boot has replay/source support, exact page2 callback remains unobserved.
 Launcher cleanup passes local2187 selected+272 setup/0 and Linux10 existing before/after entry runs; -36 verification, engine unchanged.
 Display shadows pass current10967 selected+272 setup/0: 49 static raw byte sites retired; line counts unchanged.
-Next: particle-axis dedup and Sky byte references; cloud boss-bank claims remain separate.
+Particle axes pass10967 selected+272 setup/0: five authored steps shared; -12 engine/-12 legacy, native diagnostics retained.
+Next: Sky byte references and coordinated first WRAM ownership cohort; cloud boss-bank claims remain separate.
 Linux M: map-menu selection/safe callbacks -25 engine/-16 unsafe metric; raw pointers unchanged, six unsafe entries retained.
 ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
 Native player/DSP/APU and input Vec/FILE/Cart are owned; GameOwner does not promise Rust thread sharing.

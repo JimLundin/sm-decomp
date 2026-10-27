@@ -1227,6 +1227,23 @@ pub unsafe fn CallCinematicSprInstr(ea: u32, k: u16, j: u16, game: &mut Game) ->
         }
     }
 }
+macro_rules! advance_particle_axis {
+    ($game:ident, $k:ident, $slot:ident, $vertical:literal, $table:ident;
+        $label:lifetime, $index:ident, $limit:literal;
+        $expression:literal, $line:literal, $function:literal) => {
+        let $index: i32 = 2 * $game.g_ram[0x1b7d + 2 * $slot as usize + $vertical as usize] as i32;
+        crate::native_assertion! {
+            $label: ($index + 1) < $limit;
+            $expression, b"src/sm_8b.c\0", $line, $function
+        };
+        let velocity = words!((
+            $table[$index as usize],
+            $table[($index + 1) as usize] as u16
+        ));
+        advance_cinematic_coordinate($k, $vertical, velocity, $game);
+    };
+}
+
 crate::game::callback_dispatch! {
     pub unsafe fn CallCinematicSprPreInstr(ea: u32, j: u16, game: &mut Game) => ea;
     call (j, game); default { Unreachable(game); };
@@ -1289,26 +1306,16 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     @prefix { let v1: i32 = k as i32 >> 1; };
     [9152916] SetSomeStuffForSpriteObject_7 [] {
-        let v3: i32 = 2 * game.g_ram[0x1b7d + 2 * v1 as usize] as i32;
-        crate::native_assertion! {
-            '_c2rust_label: (v3 + 1) < 12;
-            b"v3 + 1 < 12\0", b"src/sm_8b.c\0", 2389, b"void SetSomeStuffForSpriteObject_7(uint16)\0"
+        advance_particle_axis! {
+            game, k, v1, false, kSetSomeStuffForSpriteObject_7_Tab0;
+            '_c2rust_label, v3, 12;
+            b"v3 + 1 < 12\0", 2389, b"void SetSomeStuffForSpriteObject_7(uint16)\0"
         };
-        let velocity = words!((
-            kSetSomeStuffForSpriteObject_7_Tab0[v3 as usize],
-            kSetSomeStuffForSpriteObject_7_Tab0[(v3 + 1) as usize] as u16
-        ));
-        advance_cinematic_coordinate(k, false, velocity, game);
-        let v6: i32 = 2 * game.g_ram[0x1b7d + 2 * v1 as usize + 1] as i32;
-        crate::native_assertion! {
-            '_c2rust_label_0: (v6 + 1) < 82;
-            b"v6 + 1 < 82\0", b"src/sm_8b.c\0", 2392, b"void SetSomeStuffForSpriteObject_7(uint16)\0"
+        advance_particle_axis! {
+            game, k, v1, true, kSetSomeStuffForSpriteObject_7_Tab1;
+            '_c2rust_label_0, v6, 82;
+            b"v6 + 1 < 82\0", 2392, b"void SetSomeStuffForSpriteObject_7(uint16)\0"
         };
-        let velocity = words!((
-            kSetSomeStuffForSpriteObject_7_Tab1[v6 as usize],
-            kSetSomeStuffForSpriteObject_7_Tab1[(v6 + 1) as usize]
-        ));
-        advance_cinematic_coordinate(k, true, velocity, game);
         if word!(game.cinematicbg_arr8[v1]) as i32 - 168i32 & 0x8000 != 0 {
             word!(game.cinematicspr_goto_timer[v1] += 256);
         } else {
@@ -1317,42 +1324,23 @@ crate::game::callback_dispatch! {
         };
     };
     [9153203] SetSomeStuffForSpriteObject_9 [] {
-        let v3: i32 = 2 * game.g_ram[0x1b7d + 2 * v1 as usize] as i32;
-        crate::native_assertion! {
-            '_c2rust_label: (v3 + 1) < 10;
-            b"v3 + 1 < 10\0", b"src/sm_8b.c\0", 2442, b"void SetSomeStuffForSpriteObject_9(uint16)\0"
+        advance_particle_axis! {
+            game, k, v1, false, kSetSomeStuffForSpriteObject_9_Tab0;
+            '_c2rust_label, v3, 10;
+            b"v3 + 1 < 10\0", 2442, b"void SetSomeStuffForSpriteObject_9(uint16)\0"
         };
-        let velocity = words!((
-            kSetSomeStuffForSpriteObject_9_Tab0[v3 as usize],
-            kSetSomeStuffForSpriteObject_9_Tab0[(v3 + 1) as usize] as u16
-        ));
-        advance_cinematic_coordinate(k, false, velocity, game);
         if (word!(game.cinematicspr_goto_timer[v1]) & 1) != 0 {
-            let v12: i32 =
-                2 * game.g_ram[0x1b7d + 2 * v1 as usize + 1] as i32;
-            crate::native_assertion! {
-                '_c2rust_label_0: (v12 + 1) < 124;
-                b"v12 + 1 < 124\0", b"src/sm_8b.c\0", 2446,
-                b"void SetSomeStuffForSpriteObject_9(uint16)\0"
+            advance_particle_axis! {
+                game, k, v1, true, kSetSomeStuffForSpriteObject_9_Tab2;
+                '_c2rust_label_0, v12, 124;
+                b"v12 + 1 < 124\0", 2446, b"void SetSomeStuffForSpriteObject_9(uint16)\0"
             };
-            let velocity = words!((
-                kSetSomeStuffForSpriteObject_9_Tab2[v12 as usize],
-                kSetSomeStuffForSpriteObject_9_Tab2[(v12 + 1) as usize] as u16
-            ));
-            advance_cinematic_coordinate(k, true, velocity, game);
         } else {
-            let v6: i32 =
-                2 * game.g_ram[0x1b7d + 2 * v1 as usize + 1] as i32;
-            crate::native_assertion! {
-                '_c2rust_label_1: (v6 + 1) < 138;
-                b"v6 + 1 < 138\0", b"src/sm_8b.c\0", 2450,
-                b"void SetSomeStuffForSpriteObject_9(uint16)\0"
+            advance_particle_axis! {
+                game, k, v1, true, kSetSomeStuffForSpriteObject_9_Tab1;
+                '_c2rust_label_1, v6, 138;
+                b"v6 + 1 < 138\0", 2450, b"void SetSomeStuffForSpriteObject_9(uint16)\0"
             };
-            let velocity = words!((
-                kSetSomeStuffForSpriteObject_9_Tab1[v6 as usize],
-                kSetSomeStuffForSpriteObject_9_Tab1[(v6 + 1) as usize] as u16
-            ));
-            advance_cinematic_coordinate(k, true, velocity, game);
         }
         if word!(game.cinematicbg_arr8[v1]) as i32 - 168i32 & 0x8000 == 0 {
             word!(game.cinematicspr_instr_timer[v1] = 1);
