@@ -48,7 +48,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current tip8698: production112166, legacy17418, unsafe2756, verification40421; warnings165.
+Current tipaf29: production112170, legacy17385, unsafe2754, verification40421; warnings165.
 Core sm82 persists actor/media identities and saved ROM patches; RAM/native frame dependencies remain explicit.
 Codec f158c44fac33eac7 has39 contributors/652740 normalized source bytes.
 Prepared110/initialized329+5,14 genuine captures189475 frames and full22 byte-identical restore pass.
@@ -63,7 +63,8 @@ Liquid passes9211 selected+272 setup/0: -7 engine/-6 unsafe; eleven RAM pointers
 Ceres elevator passes11088 selected+272 setup/0: +1 engine/-1 unsafe; ten RAM pointers retired.
 Sky passes3599 selected+272 setup/0: +3 engine/-4 unsafe; 17 RAM pointers/six native ROM acquisitions retired.
 Intro callbacks pass11161 selected+272 setup/0: -4 engine/-30 legacy/-4 unsafe; existing page handlers reused.
-Next: Mode7/text glow, background/credits and native FX definitions; Linux/cloud remain disjoint.
+Mode7 callbacks pass11161 selected+272 setup/0: +4 engine/-33 legacy/-2 unsafe; signature closure, raw operations unchanged.
+Next: text glow, Mother Brain flicker, native FX definitions and background/credits; Linux/cloud remain disjoint.
 Linux M: geometry and room camera/door cuts landed; next file-menu copy/clear remains source preparation.
 ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
 A4 post-push full86 passed on0a; its scoped3kills/1unobserved/1unviable gaps remain.

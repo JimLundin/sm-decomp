@@ -6,13 +6,11 @@ use crate::game::save_slots;
 use crate::game::sprite_drawing::Clip;
 use crate::game::visual_runtime::advance_cinematic_coordinate;
 use crate::game::visual_runtime::{
-    METROID_PAL_1, METROID_PAL_2, METROID_PAL_3, METROID_PAL_4, advance_ceres_station,
-    advance_credit_roll, advance_intro_baby_pursuit, advance_intro_rinka,
+    advance_ceres_station, advance_credit_roll, advance_intro_baby_pursuit, advance_intro_rinka,
     advance_postcredits_samus_message, advance_shooting_stars, advance_zebes_destruction_zoom,
     advance_zebes_stars, chase_intro_baby_y, draw_cinematic_sprites, draw_intro_sprites,
     drift_cinematic_sprite, initialize_shooting_stars, launch_cinematic_sprite, move_ending_cloud,
-    prepare_credit_roll, request_title_skip, title_metroid_cry, title_metroid_palette,
-    wait_cinematic_scene, wait_ending_cloud,
+    prepare_credit_roll, request_title_skip, wait_cinematic_scene, wait_ending_cloud,
 };
 use crate::game::visual_runtime::{advance_cinematic_background_pre, fade_cinematic_fixed_color};
 use crate::game::visual_runtime::{
@@ -1449,36 +1447,5 @@ crate::game::callback_dispatch! {
         9160968 => [launch_cinematic_sprite(j, 32, false, game)];
         9158617 => [()]; 9147353 => [()]; 9147487 => [()]; 9152724 => [()];
         9172252 => [()];
-    }
-}
-crate::game::address_dispatch! {
-    #[allow(unused_unsafe)]
-    pub unsafe fn CallMode7Instr(ea: u32, _k: u16, j: u16, game: &mut Game) -> u16 => ea;
-    call (_k, j, game); default Unreachable(game) as u16;
-    {
-        9151067 => [title_metroid_cry(0x23, j, game)];
-        9151075 => [title_metroid_cry(0x26, j, game)];
-        9151083 => [title_metroid_cry(0x27, j, game)];
-        9151091 => [title_metroid_palette(METROID_PAL_1, j, game)];
-        9151108 => [title_metroid_palette(METROID_PAL_2, j, game)];
-        9151125 => [title_metroid_palette(METROID_PAL_3, j, game)];
-        9151142 => [title_metroid_palette(METROID_PAL_4, j, game)];
-        9155870 => [intro_pages::draw_japanese_text(&[addr_word_8BCF75 as u16, addr_word_8BCFBD as u16], true, j, game)];
-        9155919 => [intro_pages::enable_text(j, game)]; 9155924 => [intro_pages::draw_japanese_text(&[addr_word_8BCFFD as u16, addr_word_8BD055 as u16], true, j, game)];
-        9156024 => [intro_pages::wait_after_japanese_text(0xaf6c, j, game)];
-        9156035 => [intro_pages::draw_japanese_text(&[addr_word_8BD0F9 as u16], true, j, game)]; 9156123 => [intro_pages::wait_after_japanese_text(0xb0f2, j, game)];
-        9156134 => [intro_pages::draw_japanese_text(&[addr_word_8BD1B9 as u16, addr_word_8BD215 as u16], true, j, game)]; 9156234 => [intro_pages::wait_after_japanese_text(0xb123, j, game)];
-        9156245 => [intro_pages::draw_japanese_text(&[addr_word_8BD2D5 as u16], true, j, game)]; 9156333 => [intro_pages::wait_after_japanese_text(0xb1da, j, game)];
-        9156344 => [intro_pages::draw_japanese_text(&[addr_word_8BD371 as u16], false, j, game)]; 9156363 => [intro_pages::enable_text(j, game)];
-    }
-}
-crate::game::address_dispatch! {
-    #[allow(unused_unsafe)]
-    pub unsafe fn CallMode7PreInstr(ea: u32, k: u16, game: &mut Game) => ea;
-        call (k, game); default { Unreachable(game); };
-    {
-        9147353 => [()]; 9155973 => [intro_pages::continue_japanese_text(54181, &[addr_word_8BD085 as u16, addr_word_8BD0E1 as u16], k, game)];
-        9156078 => [intro_pages::continue_japanese_text(54203, &[addr_word_8BD15D as u16], k, game)]; 9156183 => [intro_pages::continue_japanese_text(54225, &[addr_word_8BD259 as u16, addr_word_8BD2A5 as u16], k, game)];
-        9156288 => [intro_pages::continue_japanese_text(addr_off_8BD3E7 as u16, &[addr_word_8BD30D as u16], k, game)];
     }
 }

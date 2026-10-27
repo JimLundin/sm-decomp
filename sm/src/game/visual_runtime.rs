@@ -2797,6 +2797,43 @@ pub(crate) fn set_cinematic_tilemap_updates(enabled: bool, game: &mut Game) {
         | (u16::from(enabled) << 15));
 }
 
+#[forbid(unsafe_code)]
+pub(crate) fn cinematic_mode7_command(address: u32, operand: u16, game: &mut Game) -> u16 {
+    use crate::game::intro_pages;
+    crate::game::callback_dispatch!(@body [checked] {
+    match address {
+        9151067 => title_metroid_cry(0x23, operand, game),
+        9151075 => title_metroid_cry(0x26, operand, game),
+        9151083 => title_metroid_cry(0x27, operand, game),
+        9151091 => title_metroid_palette(METROID_PAL_1, operand, game),
+        9151108 => title_metroid_palette(METROID_PAL_2, operand, game),
+        9151125 => title_metroid_palette(METROID_PAL_3, operand, game),
+        9151142 => title_metroid_palette(METROID_PAL_4, operand, game),
+        9155870 => intro_pages::draw_japanese_text(&[0xcf75, 0xcfbd], true, operand, game),
+        9155919 => intro_pages::enable_text(operand, game), 9155924 => intro_pages::draw_japanese_text(&[0xcffd, 0xd055], true, operand, game),
+        9156024 => intro_pages::wait_after_japanese_text(0xaf6c, operand, game),
+        9156035 => intro_pages::draw_japanese_text(&[0xd0f9], true, operand, game), 9156123 => intro_pages::wait_after_japanese_text(0xb0f2, operand, game),
+        9156134 => intro_pages::draw_japanese_text(&[0xd1b9, 0xd215], true, operand, game), 9156234 => intro_pages::wait_after_japanese_text(0xb123, operand, game),
+        9156245 => intro_pages::draw_japanese_text(&[0xd2d5], true, operand, game), 9156333 => intro_pages::wait_after_japanese_text(0xb1da, operand, game),
+        9156344 => intro_pages::draw_japanese_text(&[0xd371], false, operand, game), 9156363 => intro_pages::enable_text(operand, game),
+        _ => Unreachable(game) as u16,
+    }
+    })
+}
+
+#[forbid(unsafe_code)]
+pub(crate) fn cinematic_mode7_pre(address: u32, object: u16, game: &mut Game) {
+    use crate::game::intro_pages;
+    crate::game::callback_dispatch!(@body [checked] {
+    match address {
+        9147353 => {}, 9155973 => intro_pages::continue_japanese_text(54181, &[0xd085, 0xd0e1], object, game),
+        9156078 => intro_pages::continue_japanese_text(54203, &[0xd15d], object, game), 9156183 => intro_pages::continue_japanese_text(54225, &[0xd259, 0xd2a5], object, game),
+        9156288 => intro_pages::continue_japanese_text(0xd3e7, &[0xd30d], object, game),
+        _ => { Unreachable(game); },
+    }
+    })
+}
+
 unsafe fn advance_cinematic_object<const BANK: u8>(
     objects: CinematicObjects,
     object: u16,
@@ -2812,7 +2849,7 @@ unsafe fn advance_cinematic_object<const BANK: u8>(
             | 0x8b0000;
         match objects {
             Sprites => bank::CallCinematicSprPreInstr(pre, object, game),
-            Mode7 => bank::CallMode7PreInstr(pre, object, game),
+            Mode7 => cinematic_mode7_pre(pre, object, game),
             Background => advance_cinematic_background_pre(pre, object, game),
         }
         let selected = checked_word!(game, layout.current;);
@@ -2883,7 +2920,7 @@ unsafe fn advance_cinematic_object<const BANK: u8>(
                     let command = u32::from(instruction) | 0x8b0000;
                     match objects {
                         Sprites => bank::CallCinematicSprInstr(command, selected, operand, game),
-                        Mode7 => bank::CallMode7Instr(command, selected, operand, game),
+                        Mode7 => cinematic_mode7_command(command, operand, game),
                         Background => {
                             cinematic_background_command(command, selected, operand, game)
                         }
