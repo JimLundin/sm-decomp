@@ -70,7 +70,8 @@ fn move_toward_target(game: &mut Game) -> u8 {
         reached as u8
     }
 }
-unsafe fn advance_motion(game: &mut Game) {
+#[forbid(unsafe_code)]
+fn advance_motion(game: &mut Game) {
     let state = word!(game.fx_rising_function_bank_88);
     if matches!(state, 0xb367 | 0xb382) {
         shake_room_with_sound(21, game);
@@ -113,32 +114,31 @@ unsafe fn advance_motion(game: &mut Game) {
         }
     }
 }
-unsafe fn advance_tide(game: &mut Game) {
-    unsafe {
-        // The control word and product store deliberately straddle named RAM words.
-        let control = *(ram_ptr!(game, u16; 0x197c, 1));
-        let (amplitude, sign_mask, positive_step, negative_step) = if control & 0x8000 != 0 {
-            (8u16, 0x1000, 288, 192)
-        } else if control & 0x4000 != 0 {
-            (32u16, 0x400, 224, 128)
-        } else {
-            return;
-        };
-        word! { game, 0; fx_y_suboffset, fx_y_offset }
-        let sine = kSinCosTable8bit_Sext[(word!(game.tide_phase) >> 8) as usize] as u16;
-        let product = amplitude.wrapping_mul(sine);
-        if sine & sign_mask != 0 {
-            word!(game.fx_y_offset, wrapping_sub(1));
-        }
-        *(ram_ptr!(game, u16; 0x1970, 1)) = product;
-        word!(
-            game.tide_phase += if sine & 0x8000 == 0 {
-                positive_step
-            } else {
-                negative_step
-            }
-        );
+#[forbid(unsafe_code)]
+fn advance_tide(game: &mut Game) {
+    // The control word and product store deliberately straddle named RAM words.
+    let control = u16::from_ne_bytes([game.g_ram[0x197d], game.g_ram[0x197e]]);
+    let (amplitude, sign_mask, positive_step, negative_step) = if control & 0x8000 != 0 {
+        (8u16, 0x1000, 288, 192)
+    } else if control & 0x4000 != 0 {
+        (32u16, 0x400, 224, 128)
+    } else {
+        return;
+    };
+    word! { game, 0; fx_y_suboffset, fx_y_offset }
+    let sine = kSinCosTable8bit_Sext[(word!(game.tide_phase) >> 8) as usize] as u16;
+    let product = amplitude.wrapping_mul(sine);
+    if sine & sign_mask != 0 {
+        word!(game.fx_y_offset, wrapping_sub(1));
     }
+    word_transfers!(game, ascending, 1; native(0x1971) <- value(product));
+    word!(
+        game.tide_phase += if sine & 0x8000 == 0 {
+            positive_step
+        } else {
+            negative_step
+        }
+    );
 }
 fn surface_scroll(position: u16, camera: u16) -> u16 {
     let relative = (position as i16).wrapping_sub(camera as i16);
@@ -168,82 +168,79 @@ fn table_height(position: u16, camera: u16, water: bool) -> u16 {
 }
 
 static kLavaSoundEffects: [u8; 8] = [0x12, 0x13, 0x14, 0x12, 0x13, 0x14, 0x12, 0x13];
-pub unsafe fn lava_surface(k: u16, game: &mut Game) {
-    unsafe {
-        word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_b));
-        if word!(game.time_is_frozen_flag) == 0 {
-            advance_motion(game);
-            advance_tide(game);
-            words!(
-                game.lava_acid_y_pos,
-                lava_acid_y_subpos = (words!(game.fx_y_offset, fx_y_suboffset))
-                    .wrapping_add(words!(game.fx_base_y_pos, fx_base_y_subpos),)
-            );
-            word!(game.bg3_xpos = word!(game.reg_BG1HOFS));
-            *(ram_ptr!(game, u16; 0x9c00)) = 0;
-            word!(game.bg3_ypos = 0);
-            *(ram_ptr!(game, u16; 0x9c00, 2)) =
-                surface_scroll(word!(game.lava_acid_y_pos), word!(game.layer1_y_pos));
-            if word!(game.fx_type) == 2 && (word!(game.lava_acid_y_pos) & 0x8000) == 0 {
-                let v5: i32 = word!(game.hdma_object_index) as u8 as i32 >> 1;
-                crate::update_place! { unaligned_word fresh101 [fresh102] = &raw mut (*(ram_ptr!(game, u16; 0x192c)).offset(v5 as isize)) => (u16::from_le(fresh101.read_unaligned())).wrapping_sub(1); }
-                if fresh102 == 1 {
-                    word!(game.hdma_object_C[v5] = 112);
-                    QueueSfx2_Max6(
-                        kLavaSoundEffects[(word!(game.random_number) as i32 & 7) as usize] as u16,
-                        game,
-                    );
-                }
-            }
-            word!(game.random_number = u16::swap_bytes(word!(game.random_number)));
-            let v8 = table_height(word!(game.lava_acid_y_pos), word!(game.layer1_y_pos), false);
-            *(ram_ptr!(game, u16; 0x18d8))
-                .offset((word!(game.hdma_object_index) as u8 >> 1) as isize) =
-                (3 * ((v8 as i32 ^ 0x1ff) + 1 & 0x3ff) + 0xb62a) as u16;
-        } else {
-        }
-    }
-}
-pub unsafe fn water_surface(k: u16, game: &mut Game) {
-    unsafe {
-        word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_b));
-        if word!(game.time_is_frozen_flag) != 0 {
-            return;
-        }
+#[forbid(unsafe_code)]
+pub fn lava_surface(k: u16, game: &mut Game) {
+    word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_b));
+    if word!(game.time_is_frozen_flag) == 0 {
         advance_motion(game);
         advance_tide(game);
-        words!(
-            game.fx_y_pos,
-            fx_y_subpos = (words!(game.fx_y_offset, fx_y_suboffset))
-                .wrapping_add(words!(game.fx_base_y_pos, fx_base_y_subpos),)
-        );
-        word!(game.bg3_ypos = surface_scroll(word!(game.fx_y_pos), word!(game.layer1_y_pos)));
-        let v5: i32 = k as i32 >> 1;
-        let r20: u16 = (word!(game.layer1_x_pos)).wrapping_add(
-            (byte!(@pointer (ram_ptr!(game, u16; 0x192c)).offset(v5 as isize); 1) as i8) as u16,
-        );
-        crate::update_place! { unaligned_word fresh98 [fresh99] = &raw mut (*(ram_ptr!(game, u16; 0x1920)).offset(v5 as isize)) => (u16::from_le(fresh98.read_unaligned())).wrapping_sub(1); }
-        if fresh99 == 1 {
-            word!(game.hdma_object_B[v5] = 10);
-            word!(
-                game.hdma_object_A[v5] = (word!(game.hdma_object_A[v5]) as i32 + 2 & 0x1e) as u16
-            );
+        let position = words!(game.fx_y_offset, fx_y_suboffset)
+            .wrapping_add(words!(game.fx_base_y_pos, fx_base_y_subpos));
+        word_transfers!(game, ascending, 1;
+            native(0x1960) <- value(position as u16),
+            native(0x1962) <- value((position >> 16) as u16));
+        word!(game.bg3_xpos = word!(game.reg_BG1HOFS));
+        word_transfers!(game, ascending, 1; native(0x9c00) <- value(0));
+        word!(game.bg3_ypos = 0);
+        let scroll = surface_scroll(word!(game.lava_acid_y_pos), word!(game.layer1_y_pos));
+        word_transfers!(game, ascending, 1; native(0x9c02) <- value(scroll));
+        if word!(game.fx_type) == 2 && (word!(game.lava_acid_y_pos) & 0x8000) == 0 {
+            let v5: i32 = word!(game.hdma_object_index) as u8 as i32 >> 1;
+            let remaining = word!(game.hdma_object_C[v5]);
+            word!(game.hdma_object_C[v5] = remaining.wrapping_sub(1));
+            if remaining == 1 {
+                word!(game.hdma_object_C[v5] = 112);
+                QueueSfx2_Max6(
+                    kLavaSoundEffects[(word!(game.random_number) as i32 & 7) as usize] as u16,
+                    game,
+                );
+            }
         }
-        let mut v7: u8 = word!(game.hdma_object_A[v5]) as u8;
-        for i in (0i32..=30).rev().step_by(2) {
-            *(ram_ptr!(game, u16; 0x9c00, (v7 as i32 + 4) as isize)) =
-                ((WATER_WAVE[(i >> 1i32) as usize]) as u16).wrapping_add(r20);
-            v7 = (v7 as i32 - 2i32 & 0x1e) as u8;
-        }
-        if (word!(game.fx_liquid_options) & 1) != 0 {
-            word!(game.hdma_object_C[(k >> 1)] += 64);
-        }
-        let v9 = table_height(word!(game.fx_y_pos), word!(game.layer1_y_pos), true);
-        word!(
-            game.hdma_object_table_pointers[(k >> 1)] =
-                (3 * ((v9 as i32 ^ 0x1ff) + 1 & 0x3ff) + 0xc645) as u16
-        );
+        word!(game.random_number = u16::swap_bytes(word!(game.random_number)));
+        let v8 = table_height(word!(game.lava_acid_y_pos), word!(game.layer1_y_pos), false);
+        let pointer = (3 * ((v8 as i32 ^ 0x1ff) + 1 & 0x3ff) + 0xb62a) as u16;
+        word_transfers!(game, ascending, 1;
+            native(0x18d8 + 2 * usize::from(word!(game.hdma_object_index) as u8 >> 1)) <- value(pointer));
+    } else {
     }
+}
+#[forbid(unsafe_code)]
+pub fn water_surface(k: u16, game: &mut Game) {
+    word!(game.fx_layer_blending_config_c = word!(game.fx_layer_blending_config_b));
+    if word!(game.time_is_frozen_flag) != 0 {
+        return;
+    }
+    advance_motion(game);
+    advance_tide(game);
+    let position = words!(game.fx_y_offset, fx_y_suboffset)
+        .wrapping_add(words!(game.fx_base_y_pos, fx_base_y_subpos));
+    word_transfers!(game, ascending, 1;
+        native(0x195c) <- value(position as u16),
+        native(0x195e) <- value((position >> 16) as u16));
+    word!(game.bg3_ypos = surface_scroll(word!(game.fx_y_pos), word!(game.layer1_y_pos)));
+    let v5: i32 = k as i32 >> 1;
+    let r20: u16 = (word!(game.layer1_x_pos))
+        .wrapping_add((game.g_ram[0x192d + 2 * v5 as usize] as i8) as u16);
+    let remaining = word!(game.hdma_object_B[v5]);
+    word!(game.hdma_object_B[v5] = remaining.wrapping_sub(1));
+    if remaining == 1 {
+        word!(game.hdma_object_B[v5] = 10);
+        word!(game.hdma_object_A[v5] = (word!(game.hdma_object_A[v5]) as i32 + 2 & 0x1e) as u16);
+    }
+    let mut v7: u8 = word!(game.hdma_object_A[v5]) as u8;
+    for i in (0i32..=30).rev().step_by(2) {
+        let value = (WATER_WAVE[(i >> 1) as usize] as u16).wrapping_add(r20);
+        word_transfers!(game, ascending, 1; native(0x9c04 + usize::from(v7)) <- value(value));
+        v7 = (v7 as i32 - 2i32 & 0x1e) as u8;
+    }
+    if (word!(game.fx_liquid_options) & 1) != 0 {
+        word!(game.hdma_object_C[(k >> 1)] += 64);
+    }
+    let v9 = table_height(word!(game.fx_y_pos), word!(game.layer1_y_pos), true);
+    word!(
+        game.hdma_object_table_pointers[(k >> 1)] =
+            (3 * ((v9 as i32 ^ 0x1ff) + 1 & 0x3ff) + 0xc645) as u16
+    );
 }
 
 #[derive(Clone, Copy)]
@@ -252,61 +249,60 @@ enum Wave {
     LavaVertical,
     Water,
 }
-unsafe fn fill_wave(k: u16, wave: Wave, game: &mut Game) {
-    unsafe {
-        let slot = (k >> 1) as usize;
-        if word!(game.hdma_object_B[slot] -= 1, reread) == 0 {
-            word!(
-                game.hdma_object_B[slot] = if matches!(wave, Wave::LavaVertical) {
-                    4
-                } else {
-                    6
-                }
-            );
-            let step = if matches!(wave, Wave::Water) { 2 } else { -2 };
-            word!(
-                game.hdma_object_A[slot] =
-                    (word!(game.hdma_object_A[slot]) as i32 + step & 0x1e) as u16
-            );
-        }
-        let horizontal = matches!(wave, Wave::LavaHorizontal);
-        let scroll_phase = if horizontal {
-            0
-        } else {
-            2 * (word!(game.reg_BG2VOFS) & 0xf)
+#[forbid(unsafe_code)]
+fn fill_wave(k: u16, wave: Wave, game: &mut Game) {
+    let slot = (k >> 1) as usize;
+    if word!(game.hdma_object_B[slot] -= 1, reread) == 0 {
+        word!(
+            game.hdma_object_B[slot] = if matches!(wave, Wave::LavaVertical) {
+                4
+            } else {
+                6
+            }
+        );
+        let step = if matches!(wave, Wave::Water) { 2 } else { -2 };
+        word!(
+            game.hdma_object_A[slot] =
+                (word!(game.hdma_object_A[slot]) as i32 + step & 0x1e) as u16
+        );
+    }
+    let horizontal = matches!(wave, Wave::LavaHorizontal);
+    let scroll_phase = if horizontal {
+        0
+    } else {
+        2 * (word!(game.reg_BG2VOFS) & 0xf)
+    };
+    let mut sample = if horizontal {
+        game.g_ram[0x1914 + usize::from(k)]
+    } else {
+        word!(game.hdma_object_A[slot]) as u8
+    };
+    if !horizontal {
+        sample = (sample as u16 + scroll_phase & 0x1e) as u8;
+    }
+    let mut row = (scroll_phase + 30 & 0x1e) as u8;
+    for _ in 0..16 {
+        let value = match wave {
+            Wave::LavaHorizontal => {
+                (crate::rtl::rom_table_word!(game, 0x88b589, (sample >> 1) as isize)
+                    .wrapping_add(word!(game.reg_BG2HOFS)))
+                    & 0x1ff
+            }
+            Wave::LavaVertical => {
+                (crate::rtl::rom_table_word!(game, 0x88b60a, (sample >> 1) as isize)
+                    .wrapping_add(word!(game.reg_BG2VOFS)))
+                    & 0x1ff
+            }
+            Wave::Water => {
+                (WATER_WAVE[(sample >> 1) as usize] as u16).wrapping_add(word!(game.reg_BG2HOFS))
+            }
         };
-        let mut sample = if horizontal {
-            byte!(@pointer ram_ptr!(game, u16; 0x1914); k as isize)
-        } else {
-            word!(game.hdma_object_A[slot]) as u8
-        };
-        if !horizontal {
-            sample = (sample as u16 + scroll_phase & 0x1e) as u8;
-        }
-        let mut row = (scroll_phase + 30 & 0x1e) as u8;
-        for _ in 0..16 {
-            let value = match wave {
-                Wave::LavaHorizontal => {
-                    (crate::rtl::rom_table_word!(game, 0x88b589, (sample >> 1) as isize)
-                        .wrapping_add(word!(game.reg_BG2HOFS)))
-                        & 0x1ff
-                }
-                Wave::LavaVertical => {
-                    (crate::rtl::rom_table_word!(game, 0x88b60a, (sample >> 1) as isize)
-                        .wrapping_add(word!(game.reg_BG2VOFS)))
-                        & 0x1ff
-                }
-                Wave::Water => (WATER_WAVE[(sample >> 1) as usize] as u16)
-                    .wrapping_add(word!(game.reg_BG2HOFS)),
-            };
-            // Water's table starts one word later than lava/acid's.
-            word!(
-                game.g_word_7E9C46[(row >> 1) as usize + matches!(wave, Wave::Water) as usize] =
-                    value
-            );
-            row = row.wrapping_sub(2) & 0x1e;
-            sample = sample.wrapping_sub(2) & 0x1e;
-        }
+        // Water's table starts one word later than lava/acid's.
+        word!(
+            game.g_word_7E9C46[(row >> 1) as usize + matches!(wave, Wave::Water) as usize] = value
+        );
+        row = row.wrapping_sub(2) & 0x1e;
+        sample = sample.wrapping_sub(2) & 0x1e;
     }
 }
 pub unsafe fn lava_background(k: u16, game: &mut Game) {
@@ -315,8 +311,7 @@ pub unsafe fn lava_background(k: u16, game: &mut Game) {
         let active = word!(game.time_is_frozen_flag) == 0 && word!(game.fx_liquid_options) & 6 != 0;
         let horizontal = active && word!(game.fx_liquid_options) & 2 == 0;
         WriteReg(
-            (byte!(@pointer ram_ptr!(game, u16; 0x18c0); k as isize) as u16)
-                .wrapping_add(BBAD0 as u16),
+            (game.g_ram[0x18c0 + usize::from(k)] as u16).wrapping_add(BBAD0 as u16),
             if horizontal { 0xf } else { 0x10 },
             game,
         );
@@ -340,30 +335,28 @@ pub unsafe fn lava_background(k: u16, game: &mut Game) {
         );
     }
 }
-pub unsafe fn water_background(k: u16, game: &mut Game) {
-    unsafe {
-        word!(game.g_word_7E9C44 = word!(game.reg_BG2HOFS));
-        if word!(game.time_is_frozen_flag) != 0 {
-            water_flat(k, game);
-        } else if word!(game.fx_liquid_options) & 2 == 0 {
-            word!(game.hdma_object_channels_bitmask[(k as u8 >> 1)] = 0);
-            water_flat(k, game);
-        } else {
-            water_wave(k, game);
-        }
-        let height = table_height(word!(game.fx_y_pos), word!(game.layer1_y_pos), true);
-        word!(
-            game.hdma_object_table_pointers[(k as u8 >> 1)] =
-                3 * ((height ^ 0x1ff) & 0x3ff) + 0xcf46
-        );
+#[forbid(unsafe_code)]
+pub fn water_background(k: u16, game: &mut Game) {
+    word!(game.g_word_7E9C44 = word!(game.reg_BG2HOFS));
+    if word!(game.time_is_frozen_flag) != 0 {
+        water_flat(k, game);
+    } else if word!(game.fx_liquid_options) & 2 == 0 {
+        word!(game.hdma_object_channels_bitmask[(k as u8 >> 1)] = 0);
+        water_flat(k, game);
+    } else {
+        water_wave(k, game);
     }
+    let height = table_height(word!(game.fx_y_pos), word!(game.layer1_y_pos), true);
+    word!(
+        game.hdma_object_table_pointers[(k as u8 >> 1)] = 3 * ((height ^ 0x1ff) & 0x3ff) + 0xcf46
+    );
 }
-pub unsafe fn water_wave(k: u16, game: &mut Game) {
-    unsafe {
-        fill_wave(k as u8 as u16, Wave::Water, game);
-    }
+#[forbid(unsafe_code)]
+pub fn water_wave(k: u16, game: &mut Game) {
+    fill_wave(k as u8 as u16, Wave::Water, game);
 }
-pub unsafe fn water_flat(_k: u16, game: &mut Game) {
+#[forbid(unsafe_code)]
+pub fn water_flat(_k: u16, game: &mut Game) {
     {
         let value = word!(game.reg_BG2HOFS);
         word_transfers!(game, descending, 16; native(0x9c66) <- value(value));

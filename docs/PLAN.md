@@ -48,21 +48,21 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current tip5b: production112222, legacy17448, unsafe2792, verification40421; warnings165.
-Core sm82 persists actor/media identities and saved ROM patches: +511 engine/-161 legacy/-1 unsafe/+371 verification.
-Frame full167/220=75.91%; RAM/native frame dependencies remain explicit.
+Current tip279b: production112166, legacy17448, unsafe2765, verification40421; warnings165.
+Core sm82 persists actor/media identities and saved ROM patches; RAM/native frame dependencies remain explicit.
 Codec f158c44fac33eac7 has39 contributors/652740 normalized source bytes.
 Prepared110/initialized329+5,14 genuine captures189475 frames and full22 byte-identical restore pass.
 Required sm82 AST8.06min:3 options kills; unsafe gameplay omission unavailable.
-Post-sm82 full86 on pusheda9 passed136526 selected+38827 setup/0 in303.254s;
-all14 originals/guards and bothKago14350 retained. Never restamp old codecs.
+Post-sm82 full86 passed; never restamp old codecs.
 Blackout37/native failure variants remain unobserved; hardware entry contracts stay explicit.
 Safe sprite dispatch passes22959 selected+272 setup/0; +20 engine/-127 legacy/-6 unsafe, full176/156=112.82%.
 sm9b retired: 3872 selected+272 setup/0; -37 engine/-235 legacy/-14 unsafe/-1 verification.
 Full224/239=93.72%; unsafe -14 includes9 enforcement attributes,4 bank lines and1 caller block.
 Actual AST3 kills3453 selected/0 setup in10.08min; unchangedtarget750d retains original0cdf attribution.
-Next: own-push full86, liquid motion and intro transitions; Linux/cloud remain disjoint.
-Linux M: retire room camera/door split-word pointers and share ordered background queuing; keep RAM/backend contracts.
+Own-sm9b941 full86 passes136526 selected+38827 setup/0; all14 originals and bothKago14350 retained.
+Liquid passes9211 selected+272 setup/0: -7 engine/-6 unsafe; eleven RAM pointers/two split stores retired.
+Next: Ceres elevator, intro/Mode7/text glow and Sky bands/queues; Linux/cloud remain disjoint.
+Linux M: geometry and room camera/door cuts landed; next file-menu copy/clear remains source preparation.
 ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
 A4 post-push full86 passed on0a; its scoped3kills/1unobserved/1unviable gaps remain.
 Native player/DSP/APU and input Vec/FILE/Cart are owned; GameOwner does not promise Rust thread sharing.
