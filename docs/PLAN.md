@@ -48,12 +48,11 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current tip279b: production112166, legacy17448, unsafe2765, verification40421; warnings165.
+Current tip798b: production112167, legacy17448, unsafe2764, verification40421; warnings165.
 Core sm82 persists actor/media identities and saved ROM patches; RAM/native frame dependencies remain explicit.
 Codec f158c44fac33eac7 has39 contributors/652740 normalized source bytes.
 Prepared110/initialized329+5,14 genuine captures189475 frames and full22 byte-identical restore pass.
 Required sm82 AST8.06min:3 options kills; unsafe gameplay omission unavailable.
-Post-sm82 full86 passed; never restamp old codecs.
 Blackout37/native failure variants remain unobserved; hardware entry contracts stay explicit.
 Safe sprite dispatch passes22959 selected+272 setup/0; +20 engine/-127 legacy/-6 unsafe, full176/156=112.82%.
 sm9b retired: 3872 selected+272 setup/0; -37 engine/-235 legacy/-14 unsafe/-1 verification.
@@ -61,7 +60,8 @@ Full224/239=93.72%; unsafe -14 includes9 enforcement attributes,4 bank lines and
 Actual AST3 kills3453 selected/0 setup in10.08min; unchangedtarget750d retains original0cdf attribution.
 Own-sm9b941 full86 passes136526 selected+38827 setup/0; all14 originals and bothKago14350 retained.
 Liquid passes9211 selected+272 setup/0: -7 engine/-6 unsafe; eleven RAM pointers/two split stores retired.
-Next: Ceres elevator, intro/Mode7/text glow and Sky bands/queues; Linux/cloud remain disjoint.
+Ceres elevator passes11088 selected+272 setup/0: +1 engine/-1 unsafe; ten RAM pointers retired.
+Next: intro/Mode7/text glow and Sky bands/queues; Linux/cloud remain disjoint.
 Linux M: geometry and room camera/door cuts landed; next file-menu copy/clear remains source preparation.
 ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
 A4 post-push full86 passed on0a; its scoped3kills/1unobserved/1unviable gaps remain.

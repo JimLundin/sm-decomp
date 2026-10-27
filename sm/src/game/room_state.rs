@@ -8,7 +8,7 @@ use crate::game::room_entry::{
 use crate::game::session_access::SessionAccess;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
-use crate::ram_map::{checked_word, ram_ptr, word, words as ram};
+use crate::ram_map::{checked_word, word, words as ram};
 use crate::rtl::rom_bank_record;
 use crate::types::{EnemyDef, EnemyTileset};
 use core::mem::offset_of;
@@ -440,48 +440,49 @@ pub(crate) fn load_fx_header(game: &mut Game) {
     }
 }
 
-pub(crate) unsafe fn advance_ceres_elevator(game: &mut Game) {
-    unsafe {
-        let mut v1: i16 = 0;
-        if (word!(game.ceres_status) & 0x8000) != 0 {
-            if (112i16).wrapping_sub((word!(game.samus_x_pos)) as i16) < 0
-                && (144i16).wrapping_sub((word!(game.samus_x_pos)) as i16) >= 0
-                && word!(game.samus_y_pos) as i32 - 128i32 & 0x8000 != 0
-                && word!(game.samus_y_pos) as i32 - 75i32 & 0x8000 == 0
-                && word!(game.samus_y_speed) == 0
-                && word!(game.samus_y_subspeed) == 0
-                && word!(game.game_state) as i32 == 8
-            {
-                crate::game::session_runtime::player_command(2, game);
-                word! { game, 0; screen_fade_delay, screen_fade_counter }
-                word!(game.game_state = 32);
-            }
-            crate::update_place! { unaligned_word fresh0 = &raw mut (*(ram_ptr!(game, u16; 0x7e1, 2))) => (u16::from_le(fresh0.read_unaligned())).wrapping_sub(1); }
-            if *(ram_ptr!(game, i16; 0x7e1, 2)) < 0 {
-                let v0: i32 = ((6u16).wrapping_mul(*(ram_ptr!(game, u16; 0x7e1)))) as i32 >> 1;
-                *(ram_ptr!(game, u16; 0x7e1, 2)) =
-                    crate::rtl::rom_table_word!(game, 0x89ad5f, v0 as isize);
-                word!(
-                    game.reg_M7B = crate::rtl::rom_table_word!(game, 0x89ad5f, (v0 + 1) as isize)
-                );
-                word!(game.reg_M7C = -(word!(game.reg_M7B) as i32) as u16);
-                word!(
-                    game.reg_M7A = crate::rtl::rom_table_word!(game, 0x89ad5f, (v0 + 2) as isize)
-                );
-                word!(game.reg_M7D = word!(game.reg_M7A));
-                if *(ram_ptr!(game, i16; 0x7e1)) < 0 {
-                    v1 = ((*(ram_ptr!(game, u16; 0x7e1))) as i16).wrapping_sub(1);
-                    if *(ram_ptr!(game, u16; 0x7e1)) == 0x8001 {
-                        v1 = 0;
-                    }
-                } else {
-                    v1 = ((*(ram_ptr!(game, u16; 0x7e1))) as i16).wrapping_add(1);
-                    if *(ram_ptr!(game, u16; 0x7e1)) == 67 {
-                        v1 = -32700i16;
-                    }
+#[forbid(unsafe_code)]
+pub(crate) fn advance_ceres_elevator(game: &mut Game) {
+    let mut v1: i16 = 0;
+    if (word!(game.ceres_status) & 0x8000) != 0 {
+        if (112i16).wrapping_sub((word!(game.samus_x_pos)) as i16) < 0
+            && (144i16).wrapping_sub((word!(game.samus_x_pos)) as i16) >= 0
+            && word!(game.samus_y_pos) as i32 - 128i32 & 0x8000 != 0
+            && word!(game.samus_y_pos) as i32 - 75i32 & 0x8000 == 0
+            && word!(game.samus_y_speed) == 0
+            && word!(game.samus_y_subspeed) == 0
+            && word!(game.game_state) as i32 == 8
+        {
+            crate::game::session_runtime::player_command(2, game);
+            word! { game, 0; screen_fade_delay, screen_fade_counter }
+            word!(game.game_state = 32);
+        }
+        let countdown = word!(@read game, 0x7e3);
+        word!(@write game, 0x7e3, countdown.wrapping_sub(1));
+        if (u16::from_ne_bytes([game.g_ram[0x7e3], game.g_ram[0x7e4]]) as i16) < 0 {
+            let v0: i32 = ((6u16)
+                .wrapping_mul(u16::from_ne_bytes([game.g_ram[0x7e1], game.g_ram[0x7e2]])))
+                as i32
+                >> 1;
+            let delay = crate::rtl::rom_table_word!(game, 0x89ad5f, v0 as isize);
+            word_transfers!(game, ascending, 1; native(0x7e3) <- value(delay));
+            word!(game.reg_M7B = crate::rtl::rom_table_word!(game, 0x89ad5f, (v0 + 1) as isize));
+            word!(game.reg_M7C = -(word!(game.reg_M7B) as i32) as u16);
+            word!(game.reg_M7A = crate::rtl::rom_table_word!(game, 0x89ad5f, (v0 + 2) as isize));
+            word!(game.reg_M7D = word!(game.reg_M7A));
+            if (u16::from_ne_bytes([game.g_ram[0x7e1], game.g_ram[0x7e2]]) as i16) < 0 {
+                v1 = ((u16::from_ne_bytes([game.g_ram[0x7e1], game.g_ram[0x7e2]])) as i16)
+                    .wrapping_sub(1);
+                if u16::from_ne_bytes([game.g_ram[0x7e1], game.g_ram[0x7e2]]) == 0x8001 {
+                    v1 = 0;
                 }
-                *(ram_ptr!(game, u16; 0x7e1)) = v1 as u16;
+            } else {
+                v1 = ((u16::from_ne_bytes([game.g_ram[0x7e1], game.g_ram[0x7e2]])) as i16)
+                    .wrapping_add(1);
+                if u16::from_ne_bytes([game.g_ram[0x7e1], game.g_ram[0x7e2]]) == 67 {
+                    v1 = -32700i16;
+                }
             }
+            word_transfers!(game, ascending, 1; native(0x7e1) <- value(v1 as u16));
         }
     }
 }
