@@ -30,9 +30,13 @@ above 90%. Necessary safety growth must be counted and explained, not relabeled.
 Never reserve or hold Git index/ref locks; Git's own short locks cover actual writes
 only. Before every Git write, fetch/reconcile current origin/main, recheck HEAD/index
 and preserve others' work. Never delete another process's lock or force-push main.
-Windows agents run named local rows on a tip rebased onto current origin/main,
-commit to main and immediately `git push origin HEAD:main`. A rejected push means
-fetch/rebase, rerun only affected rows, then push. No Windows stacks or ci/windows branches.
+Windows has one implementation/Git integrator under the new oversight session.
+Linux development is stopped by the user (2026-10-27); preserve its frozen handoffs.
+Windows source owners may push coherent temporary migration branches with pending
+checks clearly named (user/oversight grant, 2026-10-27). Main requires qualification.
+Run named local rows on a tip reconciled with current origin/main, commit to main
+and immediately `git push origin HEAD:main`. A rejected push means fetch/rebase,
+rerun only affected rows, then push. Keep one Git writer and no force pushes.
 Land verified work promptly; holding it over an hour is a stall. No docs-only commits
 without a code commit beside them. Update PLAN only for active direction or blockers.
 
@@ -46,7 +50,9 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current source9787: production116413, legacy17793, unsafe2579, verification43167; warnings160.
+Current renderer source c942: production117070, legacy17793, unsafe2586,
+verification43673; incremental-enabled no-default library warnings200 versus
+202 at the identical-profile published9787 baseline, zero added/two removed.
 
 Prepared room cohort9787 qualifies Levels/Tiles/Palette/Background/Fx catalogs and
 application room-pack selection before native startup. Selected Windows desktop ROM
@@ -61,7 +67,22 @@ All34 original jobs are collected. Codec45/a239 and its45 contributor bytes are 
 by the two-line fixture correction; accepted04 proofs retain their original lineage.
 Net+1909 production/+1039 verification/+34 unsafe metric/+67 support/legacy0.
 Catalog/schema/pack validation and compatibility adapters grow code; no raw-operation
-or backend retirement claim. Next: the independently assigned shared renderer cohort.
+or backend retirement claim.
+Shared renderer C01/V03 final06 c942 passes independent source review, scoped final
+format, direct DLL/source/native guards, 24 units and isolated cases40/42. Mode1/Mode7
+pixels, sprite limits/aliases/failure prefixes and actual EXTBG/enabled-mosaic
+dispatch use independent literal expectations; original39 and corrected40/43 remain.
+Final DLL b01c retains 48 codec contributors, 951201 raw/940208 normalized bytes and
+codec2cdd23f3f10e7e57. All contributors are byte-identical to qualified03; its 17 rows,
+26638 ordinary comparisons/0, full Morph1200, initialized329+resume5 and prepared
+checkpoint/reset/continuation/rejection retain original df9b/5921 attribution.
+Final06 actual no-default check passes at incremental1: 200 warnings versus202
+same-profile9787, zero new. Original05 incremental0 158/160 and the failed cross-profile
+comparison remain preserved. No source, warning suppression or DLL/runtime repeat.
+Net +657 production/+506 verification/+7 unsafe-containing/legacy0; new 944-line
+core/prepared/records and 288-line PPU reduction are counted together. Four formatter
+joins are not savings; raw/backend retirement0 and full-engine claims remain open.
+Next: Windows composes frozen Linux V22 and Windows C22 under oversight for #22.
 Qualified WRAM/Execution: Game/Backend share stable WorkRam; private DMA/Input
 storage and actual byte/getter/macro consumers close with exact RAM layout.
 Initialized329+5, full86 (136526 selected+38827 setup),14 genuine captures189475,
@@ -107,7 +128,8 @@ Mother Brain22 callback outcomes/both frame interpreters/three sprite-map consum
 Ten raw native captures/21 word loads/one byte load removed; unsafe entry/backend/spawn/palette contracts retained.
 Source93a fmt/library/DLL160 unchanged warnings/source571/native/all41rawcodec pass;7rows10883 selected+272 setup/0.
 Net -51 production/-51 legacy/-1 unsafe/verification0; uncovered: DeadTorizo_MainGfxHook D761 at296,187,0.
-README now displays the committed staged-source SVG; treemap support+57 lines/Pages publisher-51, no engine-size credit.
+Historical README SVG/treemap publishing is retired by the user; do not regenerate
+progress images or Pages/image CI. Earlier support+57/publisher-51 earned no engine-size credit.
 Shared EnemyScript replaces the duplicate projectile cursor/record/position/byte layer across both hosts, lifecycle, commands and verifier adapters.
 Sourced672 fmt/library/DLL160 unchanged warnings/source570/native/all41rawcodec pass;21rows32443 selected+1713 setup/0.
 Three missing old-codec starts replaced by genuine3ac captures18742 comparisons/0; inheritedb2d provenance remains distinct from currentd672 execution.
@@ -228,7 +250,8 @@ Declare the next budget and notify the integrator/Compute, then launch without w
 Start with >3GiB free, leave >=2GiB after remaining growth, and keep >=50GiB disk including outputs; new overlaps share one ledger.
 Default source handoff is one lossless canonical patch and complete inventory against actual main; use a64MiB scoped host source budget.
 Keep four bank consumer owners and one primitive owner disjoint. Transfer accepted proofs by exact hashes instead of repeating campaigns.
-Use available Linux capacity for local format/type checks when Windows compiler budgets do not fit; Windows DLL/replay still bind final source/native identities.
+Use bounded local Windows owners for source/review/checks; do not reactivate the
+stopped Linux host. Windows DLL/replay still bind final source/native identities.
 After each qualified cycle, reassess1h landed unsafe/legacy/production changes and source/review/build/replay/landing time, then address the measured bottleneck.
 Partition independent groups/use spare CPU; preserve shared prefixes and all identity
 guards. Run ready original-seed subsets during serial capture dependencies, then complete
@@ -263,7 +286,7 @@ checked source/rebuild loaded DLLs. Explicit followup_task wakes completed worke
 send_message alone does not. Refill ready work without waiting on review prose.
 Budget compilers/replays/source separately, including accepted launchers before rustc
 and admitted jobs' remaining growth; release admission as soon as compilation ends.
-Start compilers above3GiB free; reserve1.6GiB/library or2.1GiB/DLL and leave >=2GiB.
+Start compilers above3GiB free; reserve1.6GiB/library or2.225GiB/direct DLL and leave >=2GiB.
 Below2GiB/resource errors stop newest producer, not every lightweight reader.
 Measure CPU/RAM/paging/disk/useful throughput: two -j1 builds76.06s versus114.12s serial;
 three is unproven. Raise concurrency only when budgets
@@ -275,7 +298,9 @@ Keep >=50GiB after budgets; cleanup below75GiB to restore100GiB. Below50GiB hold
 builds/copies/captures; bounded running jobs may finish and existing-artifact/source work continues.
 Budget copies/temporaries/retained outputs/captures:300MiB fresh workflow or200MiB
 remaining for copied direct-only work, ABOVE reserve. Seed dependencies, not full targets;
-reuse checked builds, CARGO_INCREMENTAL=0 for disposable snapshots; preserve others' caches.
+reuse checked builds and keep incremental caches enabled, bound to toolchain/profile
+and source/native/output identities. Preserve others' caches and compare warnings
+in the same profile.
 Assign cleanup ownership; preserve source/results/reusable checkpoints/loaded DLLs.
 Resolve paths/verify unneeded artifacts first; explicit compiler-file allowlists, nonrecursive
 non-force deletion preferred. Never delete another worker's artifacts/locks/directories.

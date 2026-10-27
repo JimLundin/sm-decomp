@@ -1461,6 +1461,18 @@ pub static FILES: &[(&str, &[u8])] = &[
     ),
     ("sm/src/ram_map.rs", include_bytes!("ram_map.rs")),
     ("sm/src/recording.rs", include_bytes!("recording.rs")),
+    (
+        "sm/src/rendering/mod.rs",
+        include_bytes!("rendering/mod.rs"),
+    ),
+    (
+        "sm/src/rendering/prepared.rs",
+        include_bytes!("rendering/prepared.rs"),
+    ),
+    (
+        "sm/src/rendering/records.rs",
+        include_bytes!("rendering/records.rs"),
+    ),
     ("sm/src/rom.rs", include_bytes!("rom.rs")),
     ("sm/src/room_pack.rs", include_bytes!("room_pack.rs")),
     ("sm/src/rom_patches.rs", include_bytes!("rom_patches.rs")),

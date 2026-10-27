@@ -72,6 +72,9 @@ pub(crate) fn capture_case(
     id: u32,
     run: fn(Operation, &mut Game) -> Option<u8>,
 ) -> Option<Vec<u8>> {
+    if id >= 38 {
+        return raster_capture_case(id);
+    }
     if id >= CASES {
         return None;
     }
@@ -496,4 +499,361 @@ pub(crate) fn capture_case(
             None
         }
     }
+}
+
+// No movie has hand-authored planes and palette; both actual consumers must meet literal BGRA.
+fn raster_pixels(id: u32) {
+    let mut p = raster_fixture();
+    p.screenEnabled[0] = 7;
+    p.layer
+        .iter_mut()
+        .take(3)
+        .for_each(|l| l.mainScreenEnabled = true);
+    for i in 0..3 {
+        p.bgLayer[i].tilemapAdr = 0x1000 + i as u16 * 0x400;
+        p.bgLayer[i].tileAdr = i as u16 * 0x100;
+    }
+    p.cgram[1] = 31;
+    p.cgram[2] = 31 << 5;
+    p.cgram[3] = 31 << 10;
+    if id == 38 {
+        for base in [0x1000, 0x1400, 0x1800] {
+            p.vram[base..base + 0x400].fill(2);
+            p.vram[base] = 0;
+        }
+        p.vram[1] = 0x80;
+        p.vram[0x101] = 0x8000;
+        p.vram[0x201] = 0x8080;
+        p.vram[0x1800] = 0x2000;
+    } else {
+        p.mode = 7;
+        p.screenEnabled[0] = 1;
+        p.m7matrix = [256, 0, 0, 256, 0x1fff, 0x1fff, 0, 0];
+        p.vram.fill(0);
+        p.vram[0] = 1;
+        p.vram[72] = 0x0100;
+        p.vram[73] = 0x0200;
+        p.vram[74] = 0x0300;
+    }
+    let mut out = [0x5a; 1024];
+    p.renderBuffer = out.as_mut_ptr();
+    let expected = if id == 38 {
+        [[255, 0, 0, 0], [0; 4], [0; 4]]
+    } else {
+        [[0, 0, 255, 0], [0, 255, 0, 0], [255, 0, 0, 0]]
+    };
+    let prepared = raster_prepared(&p);
+    unsafe {
+        crate::snes::ppu::ppu_run_line(&mut *p, 1, &true);
+    }
+    for (x, pixel) in expected.iter().enumerate() {
+        assert_eq!(&out[x * 4..x * 4 + 4], pixel);
+        assert_eq!(&prepared.pixels[x], pixel);
+    }
+    assert_eq!(&out[12..], &[0; 1012]);
+    assert!(prepared.pixels[3..].iter().all(|p| *p == [0; 4]));
+    if id == 39 {
+        p.m7largeField = true;
+        p.m7matrix[6] = 0x1000;
+        let clipped = raster_prepared(&p);
+        assert_eq!(clipped.pixels[0], [0; 4]);
+        p.m7charFill = true;
+        p.vram[8] = 0x0200;
+        assert_eq!(raster_prepared(&p).pixels[0], [0, 255, 0, 0]);
+    }
+}
+// No movie reaches exact 32/33-object and 34/35-tile boundaries or signed workspace aliases.
+fn raster_sprites() {
+    for (size, count, range, time) in [
+        (0, 32, false, false),
+        (0, 33, true, false),
+        (3, 17, false, false),
+        (3, 18, false, true),
+    ] {
+        let mut p = raster_fixture();
+        p.objSize = size;
+        p.vram[0] = 0xff;
+        for i in 0..count {
+            p.oam[i * 2] = 0;
+        }
+        let mut out = [0x5a; 1024];
+        p.renderBuffer = out.as_mut_ptr();
+        let prepared = raster_prepared(&p);
+        unsafe {
+            crate::snes::ppu::ppu_run_line(&mut *p, 1, &true);
+        }
+        assert_eq!(
+            (p.rangeOver, p.timeOver, p.lineHasSprites),
+            (range, time, true)
+        );
+        assert_eq!(p.objBuffer.data[..8], [0x2681; 8]);
+        assert_eq!(prepared.sprites.pixels[..8], [0x2681; 8]);
+        assert_eq!(
+            (
+                prepared.sprites.overflow.range,
+                prepared.sprites.overflow.time
+            ),
+            (range, time)
+        );
+    }
+    let mut p = raster_fixture();
+    p.oam[0] = 0;
+    p.vram[0] = 0xff;
+    p.screenEnabled[0] = 16;
+    p.extraLeftCur = 1;
+    p.extraRightCur = 2;
+    p.extraLeftRight = 1;
+    p.bgBuffers[1].data[255] = 0x2681;
+    p.renderPitch = 0x2682;
+    p.cgram[129] = 31;
+    p.cgram[130] = 31 << 10;
+    p.cgram[131] = 31 << 5;
+    // x=256 aliases initialized alignment padding; x=257 aliases renderPitch.
+    let padding = core::mem::offset_of!(crate::types::Ppu, objBuffer)
+        + core::mem::size_of::<crate::types::PpuPixelPrioBufs>();
+    assert_eq!(
+        core::mem::offset_of!(crate::types::Ppu, renderPitch),
+        padding + 2
+    );
+    unsafe {
+        (&raw mut *p)
+            .cast::<u8>()
+            .add(padding)
+            .cast::<u16>()
+            .write_unaligned(0x2683);
+    }
+    let mut out = [0x5a; 1036];
+    p.renderBuffer = out.as_mut_ptr();
+    unsafe {
+        crate::snes::ppu::ppu_run_line(&mut *p, 1, &true);
+    }
+    assert_eq!(&out[..4], &[0, 0, 255, 0]);
+    assert_eq!(&out[1028..1032], &[0, 255, 0, 0]);
+    assert_eq!(&out[1032..], &[255, 0, 0, 0]);
+    p.screenEnabled[0] = 0;
+    unsafe {
+        crate::snes::ppu::ppu_run_line(&mut *p, 1, &true);
+    }
+    assert_eq!(&out[..4], &[0; 4]);
+    assert_eq!(&out[1028..1032], &[0; 4]);
+    assert_eq!(&out[1032..], &[0; 4]);
+}
+// No movie forces a lazy media failure/unwind after first span or reads the last native VRAM tail word.
+fn raster_failures() {
+    use crate::rendering::*;
+    let mut p = raster_fixture();
+    p.oam[0] = 0;
+    p.oam[2] = 8;
+    let input = SpriteInput {
+        words: &p.oam,
+        extension: &p.highOam,
+        tile_words: [0; 2],
+        size: 0,
+        rotation: None,
+        interlace: false,
+        even_frame: false,
+    };
+    for panic in [false, true] {
+        let source = RasterReads {
+            reads: Default::default(),
+            stop: 3,
+            panic,
+        };
+        let mut pixels = [BACKDROP; 256];
+        let result = catch_unwind(AssertUnwindSafe(|| {
+            evaluate_sprites(
+                &source,
+                &input,
+                0,
+                &mut pixels,
+                Overflow {
+                    range: true,
+                    time: false,
+                },
+            )
+        }));
+        if panic {
+            assert!(result.is_err());
+        } else {
+            assert_eq!(result.unwrap(), Err(RasterFault::Word(0)));
+        }
+        assert_eq!(&*source.reads.borrow(), &[0, 8, 0]);
+        assert_eq!(pixels[..8], [0x2681; 8]);
+        assert_eq!(pixels[8..], [BACKDROP; 248]);
+    }
+    let mut p = raster_fixture();
+    p.screenEnabled[0] = 1;
+    p.bgLayer[0].tilemapAdr = 0x7fff;
+    p.bgLayer[0].hScroll = 248;
+    p.bgLayer[0].tileAdr = 0x100;
+    p.cgram[25] = 1;
+    p.cgram[1] = 31;
+    p.vram[0x111] = 0xff;
+    let mut out = [0x5a; 1024];
+    p.renderBuffer = out.as_mut_ptr();
+    unsafe {
+        crate::snes::ppu::ppu_run_line(&mut *p, 1, &true);
+    }
+    assert_eq!(&out[..32], &[0, 0, 255, 0].repeat(8)[..]);
+    p.objSize = 8;
+    p.lineHasSprites = true;
+    p.rangeOver = true;
+    out.fill(0x5a);
+    let result = catch_unwind(AssertUnwindSafe(|| unsafe {
+        crate::snes::ppu::ppu_run_line(&mut *p, 1, &true)
+    }));
+    let payload = result.unwrap_err();
+    assert_eq!(
+        payload.downcast_ref::<String>().map(String::as_str),
+        Some("PPU raster fault: SpriteSize(8)")
+    );
+    assert!(p.lineHasSprites && p.rangeOver && !p.timeOver);
+    assert_eq!(p.objBuffer.data, [BACKDROP; 256]);
+    assert_eq!(out, [0x5a; 1024]);
+}
+// No movie isolates EXTBG/mosaic dispatch, duplicate logic or native packed fixed-color overflow.
+fn raster_fallback() {
+    let mut p = raster_fixture();
+    p.cgram[0] = 1;
+    p.mathEnabled[5] = true;
+    p.fixedColorR = 32;
+    p.fixedColorG = 1;
+    let mut out = [0x5a; 1024];
+    p.renderBuffer = out.as_mut_ptr();
+    for (native, expected) in [(true, [0, 8, 8, 0]), (false, [0, 8, 255, 0])] {
+        unsafe {
+            crate::snes::ppu::ppu_run_line(&mut *p, 1, &native);
+        }
+        assert_eq!(&out[..4], &expected);
+    }
+    p.fixedColorR = 0;
+    p.fixedColorG = 0;
+    p.cgram[0] = 31;
+    p.clipMode = 2;
+    p.windowsel = 10 << 20;
+    p.window1left = 0;
+    p.window1right = 1;
+    p.window2left = 1;
+    p.window2right = 2;
+    p.windowLayer[5].window1enabled = true;
+    p.windowLayer[5].window2enabled = true;
+    p.windowLayer[5].maskLogic = 1;
+    for (native, expected) in [(true, [0; 4]), (false, [0, 0, 255, 0])] {
+        unsafe {
+            crate::snes::ppu::ppu_run_line(&mut *p, 1, &native);
+        }
+        assert_eq!(&out[..4], &expected);
+        assert_eq!(&out[4..8], &[0; 4]);
+    }
+    // BG1's high-priority 0x83 texel selects red3 ahead of blue131 in EXTBG.
+    p.mode = 7;
+    p.screenEnabled[0] = 3;
+    p.layer[0].mainScreenEnabled = true;
+    p.layer[1].mainScreenEnabled = true;
+    p.m7matrix = [256, 0, 0, 256, 0, 0, 0, 0];
+    p.vram[0] = 1;
+    p.vram[72] = 0x8300;
+    p.cgram[0] = 0;
+    p.cgram[3] = 31;
+    p.cgram[0x83] = 31 << 10;
+    for (extbg, expected) in [(false, [0; 4]), (true, [0, 0, 255, 0])] {
+        p.m7extBg = extbg;
+        unsafe {
+            crate::snes::ppu::ppu_run_line(&mut *p, 1, &true);
+        }
+        assert_eq!(&out[..4], &expected);
+        assert_eq!(&out[4..8], &[0; 4]);
+    }
+    // Adjacent texels 1,2,3,0 become 1,1,3,3 only through enabled size2 mosaic.
+    p.mode = 1;
+    p.screenEnabled[0] = 1;
+    p.layer[1].mainScreenEnabled = false;
+    p.bgLayer[0].tilemapAdr = 0x1000;
+    p.mosaicSize = 2;
+    p.clipMode = 0;
+    p.vram.fill(0);
+    p.vram[1] = 0x60a0;
+    p.cgram[1] = 31;
+    p.cgram[2] = 31 << 5;
+    p.cgram[3] = 31 << 10;
+    let red: [u8; 4] = [0, 0, 255, 0];
+    let blue = [255, 0, 0, 0];
+    p.bgLayer[0].mosaicEnabled = true;
+    p.mosaicEnabled = 1;
+    unsafe {
+        crate::snes::ppu::ppu_run_line(&mut *p, 1, &true);
+    }
+    for (pixel, expected) in out.chunks_exact(4).zip([red, red, blue, blue]) {
+        assert_eq!(pixel, &expected);
+    }
+    p.bgLayer[0].mosaicEnabled = false;
+    p.mosaicEnabled = 0;
+    p.forcedBlank = true;
+    unsafe {
+        crate::snes::ppu::ppu_run_line(&mut *p, 1, &true);
+    }
+    assert_eq!(out, [0; 1024]);
+    assert!(!p.lineHasSprites);
+    p.rangeOver = true;
+    p.timeOver = true;
+    let even = p.evenFrame;
+    unsafe {
+        crate::snes::ppu::ppu_run_line(&mut *p, 0, &true);
+    }
+    assert_eq!(
+        (p.rangeOver, p.timeOver, p.evenFrame, p.mosaicStartLine),
+        (false, false, !even, 1)
+    );
+}
+// No movie supplies i32::MAX scanline; preserve the active profile's signed-overflow behavior.
+fn raster_panic_prefix() {
+    let overflow = catch_unwind(|| std::hint::black_box(i32::MAX) + std::hint::black_box(1i32));
+    if let Ok(value) = &overflow {
+        assert_eq!(*value, i32::MIN);
+    }
+    let mut p = raster_fixture();
+    p.screenEnabled[0] = 1;
+    p.bgLayer[0].vScroll = 1;
+    p.bgLayer[0].tilemapAdr = 0x1000;
+    p.vram[0] = 0xff;
+    p.cgram[1] = 31;
+    p.lineHasSprites = true;
+    p.rangeOver = true;
+    p.objBuffer.data.fill(0x1234);
+    let mut out = [0x5a; 1024];
+    p.renderBuffer = out.as_mut_ptr();
+    p.renderPitch = 0;
+    let result = catch_unwind(AssertUnwindSafe(|| unsafe {
+        crate::snes::ppu::ppu_run_line(&mut *p, i32::MAX, &true)
+    }));
+    if overflow.is_err() {
+        assert!(result.is_err());
+        assert_eq!(out, [0x5a; 1024]);
+    } else {
+        assert!(result.is_ok());
+        // Wrapped y is i32::MIN: row zero of tile zero is opaque red at every x.
+        assert!(out.chunks_exact(4).all(|pixel| pixel == [0, 0, 255, 0]));
+    }
+    assert_eq!(p.lastBrightnessMult, 15);
+    assert_eq!(p.brightnessMult[31], 255);
+    assert_eq!(p.objBuffer.data, [0x0500; 256]);
+    assert!(!p.lineHasSprites);
+    assert!(p.rangeOver);
+    assert!(!p.timeOver);
+}
+pub(crate) fn raster_capture_case(id: u32) -> Option<Vec<u8>> {
+    catch_unwind(AssertUnwindSafe(|| {
+        match id {
+            38 | 39 => raster_pixels(id),
+            40 => raster_sprites(),
+            41 => raster_failures(),
+            42 => raster_fallback(),
+            43 => raster_panic_prefix(),
+            _ => return None,
+        }
+        let mut out = b"RMPX1".to_vec();
+        out.extend_from_slice(&id.to_le_bytes());
+        Some(out)
+    }))
+    .unwrap_or(None)
 }

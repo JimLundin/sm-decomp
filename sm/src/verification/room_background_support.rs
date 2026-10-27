@@ -268,3 +268,122 @@ pub(crate) unsafe fn check_prepared_dma(
         }
     }
 }
+
+// No movie supplies independently authored media; share only input records, never expected pixels.
+pub(crate) fn raster_fixture() -> Box<crate::types::Ppu> {
+    use crate::initial_state::InitialState;
+    let mut p = Box::new(crate::types::Ppu::INITIAL);
+    p.brightness = 15;
+    p.mode = 1;
+    p.mosaicSize = 1;
+    p.mosaicStartLine = 1;
+    for sprite in p.oam.chunks_exact_mut(2) {
+        sprite[0] = 0x8000;
+    }
+    p
+}
+pub(crate) fn raster_prepared(p: &crate::types::Ppu) -> crate::rendering::prepared::RenderedLine {
+    use crate::rendering::{prepared::*, *};
+    let media = IndexedImage::new(p.vram.to_vec(), p.cgram).unwrap();
+    let sprites = PreparedSprites {
+        words: p.oam,
+        extension: p.highOam,
+        tile_words: [p.objTileAdr1, p.objTileAdr2],
+        size: p.objSize,
+        rotation: p.objPriority.then_some(p.oamAdr),
+        interlace: p.objInterlace,
+        even_frame: p.evenFrame,
+    };
+    let mosaic = PreparedMosaic {
+        native_enabled: p.mosaicEnabled,
+        background0_enabled: p.bgLayer[0].mosaicEnabled,
+        size: p.mosaicSize,
+        start_line: p.mosaicStartLine,
+        modulo: p.mosaicModulo,
+    };
+    PreparedInput {
+        media: &media,
+        sprites: &sprites,
+        mode: p.mode,
+        forced_blank: p.forcedBlank,
+        backgrounds: core::array::from_fn(|i| {
+            let b = &p.bgLayer[i];
+            Background {
+                horizontal_scroll: b.hScroll,
+                vertical_scroll: b.vScroll,
+                map_words: b.tilemapAdr,
+                tile_words: b.tileAdr,
+                wider: b.tilemapWider,
+                higher: b.tilemapHigher,
+            }
+        }),
+        windows: Windows {
+            first: [p.window1left, p.window1right],
+            second: [p.window2left, p.window2right],
+            native_flags: p.windowsel,
+            layers: core::array::from_fn(|i| {
+                let w = &p.windowLayer[i];
+                Window {
+                    first_enabled: w.window1enabled,
+                    first_inverted: w.window1inversed,
+                    second_enabled: w.window2enabled,
+                    second_inverted: w.window2inversed,
+                    logic: w.maskLogic,
+                }
+            }),
+        },
+        routing: Routing {
+            enabled: p.screenEnabled,
+            windowed: p.screenWindowed,
+        },
+        affine: Affine {
+            matrix: p.m7matrix,
+            horizontal_flip: p.m7xFlip,
+            vertical_flip: p.m7yFlip,
+            large_field: p.m7largeField,
+            character_fill: p.m7charFill,
+        },
+        mosaic: &mosaic,
+        color: ColorMath {
+            clip: p.clipMode,
+            prevent: p.preventMathMode,
+            enabled: p.mathEnabled,
+            add_subscreen: p.addSubscreen,
+            subtract: p.subtractColor,
+            half: p.halfColor,
+            fixed: [p.fixedColorR, p.fixedColorG, p.fixedColorB],
+            brightness: p.brightness,
+        },
+    }
+    .render(
+        1,
+        Overflow {
+            range: p.rangeOver,
+            time: p.timeOver,
+        },
+    )
+    .unwrap()
+}
+// No movie injects an indexed-media error or checked panic after a completed sprite span.
+pub(crate) struct RasterReads {
+    pub reads: std::cell::RefCell<Vec<usize>>,
+    pub stop: usize,
+    pub panic: bool,
+}
+impl crate::rendering::IndexedSource for RasterReads {
+    fn word(&self, index: usize) -> Result<u16, crate::rendering::RasterFault> {
+        let mut reads = self.reads.borrow_mut();
+        reads.push(index);
+        if reads.len() == self.stop {
+            if self.panic {
+                let empty: Vec<u16> = Vec::new();
+                return Ok(empty[index]);
+            }
+            return Err(crate::rendering::RasterFault::Word(index));
+        }
+        Ok(if index & 8 == 0 { 0xff } else { 0 })
+    }
+    fn palette(&self, _: u8) -> Result<u16, crate::rendering::RasterFault> {
+        Ok(31)
+    }
+}

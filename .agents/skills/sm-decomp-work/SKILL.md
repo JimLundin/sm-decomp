@@ -5,13 +5,20 @@ description: Implement, review, compile, replay, or coordinate an assigned sm-de
 
 # sm-decomp work
 
-Target: owned Session, our renderer/audio, Map Rando. Bank retirement is intermediate.
+Target: a portable boot-to-credits engine with one deterministic owned Session,
+our renderer/audio and Map Rando, within PLAN/REVIEW's size goals. Bank retirement
+is intermediate.
 
 Read living [PLAN](../../../docs/PLAN.md) first, then [REVIEW](../../../docs/REVIEW.md)'s
-Milestone plan. They own priorities, verification, Git and resources. Use the
-authoritative repository for instructions and the assigned checkout for source.
+Milestone plan; re-read it at each item's start. Direct user instructions win.
+REVIEW sets current priorities; PLAN owns the Fast loop, verification, resources,
+Git and completion. Use the authoritative repository for instructions and the
+assigned checkout for source. sm/src is authoritative; preserve behavior and
+SNES RAM compatibility.
 
 ## Load your assigned role
+
+Load only the assigned guide and the technical contracts it reaches.
 
 | Role | Guide |
 | --- | --- |
@@ -23,18 +30,21 @@ authoritative repository for instructions and the assigned checkout for source.
 
 ## Read contracts when reached
 
-- Ownership/interfaces/backend/content/topology/options/media: [destination](../../../docs/target-architecture/README.md), then its relevant contracts.
-- RAM/aliases/reset/load/oracle/persistence: [state migration](../../../docs/ENGINE_STATE_MIGRATION.md).
+- Ownership/interfaces/backend/content/topology/options/media: [destination](../../../docs/target-architecture/README.md), including its Windows migration policy, then relevant contracts.
+- RAM/aliases/reset/load/oracle/persistence: [state migration](../../../docs/ENGINE_STATE_MIGRATION.md). Resolve unclear behavior with the oracle, ram_map.rs and [bank logs](https://patrickjohnston.org/bank/).
 - Host/native commands: [iteration](../../../docs/ITERATION.md), [dependencies](../../../docs/NATIVE_DEPENDENCIES.md).
 - Project completion: [validation](../../../docs/target-architecture/VALIDATION.md).
 
 ## Assignment and handoff
 
-Assign role, item, owner, repository, checkout/base, allowed files, rows and recipient.
-Pruned snapshots still need the authoritative repository path.
+Assign role, item, owner, authoritative repository, checkout/base/source pin,
+allowed files, rows, resource budget and next recipient. Pruned snapshots still
+need the authoritative repository path.
 
-    Use $sm-decomp-work. Role: source. Repo: <path>. Checkout/base: <path@revision>.
-    Item/files: <scope>. Rows: <ids>. Owner/recipient: <agents>.
+    Use $sm-decomp-work. Role: source. Repo: <path>. Checkout/base/pin: <path@revision/hash>.
+    Item/files: <scope>. Rows/budget: <ids/allowance>. Owner/recipient: <agents>.
 
-Handoff: exact pins/artifacts, live handles, passed checks, unverified gaps, next action.
+Before finishing, name owner, allowed files, exact source/artifact hashes,
+actual live or terminal handles, results, unverified gaps, next action and recipient.
+Transfer accepted checks only for unchanged pinned source and relevant dependencies.
 Route additional user requests to the coordinator. Role completion is not project completion.

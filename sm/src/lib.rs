@@ -543,6 +543,7 @@ pub mod host;
 mod execution;
 pub mod game_state;
 pub mod recording;
+pub mod rendering;
 pub mod rom;
 pub mod rom_patches;
 pub mod room_pack;

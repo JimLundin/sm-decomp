@@ -1,1081 +1,249 @@
 # External review
 
-Living third-party review, commissioned by the user. A reviewer checks in
-periodically, updates this file and, when needed, the Review directives
-section of [PLAN.md](PLAN.md).
-The user directs implementation agents to adjust to it. Git history keeps
-earlier versions; this file holds only current findings.
+Living independent review, commissioned by the user. This file holds current
+direction; [qualified history](https://github.com/JimLundin/sm-decomp/blob/0fed89119ad22ec698c114c5b31aed37bd6bc53e/docs/REVIEW.md)
+and linked issue receipts retain earlier decisions and evidence.
 
 ## Milestone plan (2026-10-27)
 
-**Active oversight directive (updated 2026-10-27).** The user assigns this
-session independent, proactive oversight alongside the running implementer.
-This directive supersedes older work-order and pacing advice below; PLAN's
-Fast loop, resource limits and landing rules remain in force. Existing source
-owners and the sole Windows integrator retain their assignments.
-
-**Continuous lane work (user, 2026-10-27).** Keep a current responsibility and
-one concrete ready follow-up for both Windows and Linux. Name the owner, allowed
-files, required input, result and next recipient before the current task ends.
-Inspect actual handles at handoffs; a correction comment or `send_message` does
-not reactivate a completed worker. Use `followup_task` for terminal handles,
-preserving live jobs, frozen source and accepted evidence. While one lane waits
-for a required input, assign independent preparation or the next complete
-dependency scope under PLAN's budgets; do not repeat accepted checks to fill time.
-
-The missed outer-source reactivation was corrected. Final SOURCE06 is frozen;
-Linux owns its independent composition review and the bounded milestone3
-interface preparation. Reuse the completed Session/sprite/task20 surveys to
-choose concrete next owners, callers and checks; do not repeat those surveys.
-Windows keeps the prepared catalog/DMA composition and native archive, compiles
-immutable corrected source during independent review, then qualifies and
-publishes promptly. The
-[cross-host refill directive](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6446640277)
-holds current assignments; no prose/ACK gate is added to source or compilation.
-
-Current published main/origin `79efbfb6` has complete source/tool identity
-`cdee47b8`, measured by the existing source_hash command. Engine/native inputs
-remain byte-identical to the prepared-table publication `3c908c32`, whose
-historical qualified source is `38455802`: production 114,504, legacy 17,793,
-unsafe-containing lines 2,545, verification 42,128. That table qualification
-retains its original 586 inputs / 6,297,471 raw bytes, 573 source bindings,
-codec43 / `3e92b93347c1e182` and 160 warnings. Its old DLL is not attributed to
-the new tool-bound source; final room-cohort builds bind the complete composition.
-The independent frontend verification sequencing repair is published; its nine
-Python orchestration checks pass. Actual room-cohort frontend linking and runtime
-qualification remain assigned to Windows. Count its ten support lines once in
-the outer-source reconciliation; preserve original engine/native attribution.
-Native [milestone1](https://github.com/JimLundin/sm-decomp/milestone/1) and its
-required tasks3/8/9/10 are achieved and closed. [Milestone2](https://github.com/JimLundin/sm-decomp/milestone/2)
-is active as [deliverable12](https://github.com/JimLundin/sm-decomp/issues/12);
-preparation11 is closed because its exact source assignment is released.
-A9 corpse
-animation landed `c872ad44`: -60 production/-60 legacy/-23 unsafe/verification0;
-eight rows passed 11,183 selected + 272 setup / 0 failures. Six native captures,
-seventeen word dereferences and one MemCpy were removed; twenty-one address-label
-joins receive no substantive size credit. Kraid's complete frame cohort landed
-`4857622f`: -36 production/-36 legacy/+1 unsafe metric from a forbid attribute/
-verification0. Its five rows passed 3,348 selected + 272 setup / 0 failures;
-twelve native capture forms were removed and four unrelated native calls remain.
-Both landings retain codec 41/3ac09138dc065e54, 160 unchanged warnings and the
-actual source/native/input guards, including full Morph1200. Combined published
-delta: -96 production/-96 legacy/-22 unsafe/verification0. No fresh capture was needed.
-Since WRAM landed, actual main added260 production, removed666 legacy/92 unsafe
-metric lines and added300 verification. Against `6ad82e25`, including WRAM's
-growth, the net remains +2,580 production/+440 legacy/-167 unsafe/+1,743 verification.
-
-Prior WRAM/Execution landing `43117e05` remains +2,320 production/+1,106 legacy/
--75 unsafe/+1,443 verification against `6ad82e25`, with canonical ce8b and
-86/86 rows, 44/44 required scenarios, all 14 fresh captures and full 22
-byte-identical encrypted restore verified. Count each actual main delta once.
-These checks do not prove the full engine.
-
-Latest table cycle: library22.56s/DLL67.73s,160 unchanged warnings; all nine
-original jobs passed and were collected. Their STARTs span0.573s; six rows11216
-selected+272 setup and genuine329/resume5 total11822 ordinary comparisons/0.
-Qualification receipt13:52:49UTC to source assignment14:35:12UTC is42m23s;
-confirmed publication receipt13:55:49UTC to assignment is39m23s. Planning/handoff
-still caused excessive idle time. Freeze shared interfaces and activate source
-owners before tracker/doc packets. New DMA/application authors were explicitly
-reactivated14:35UTC; Linux catalog SOURCE/independent REVIEW are actually RUNNING
-at14:44:26UTC [6445007479](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6445007479).
-No document/ACK or milestone1 administrative gate remains.
-
-Previous qualified cycles: A9 library 20.2305s/DLL 66.3167s/replay 50.9132s/
-EXIT-to-push 90.7405s; Kraid library 20.137s/DLL 66.411s/replay 18.0719s/
-EXIT-to-push 88.8000s [6440810470](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6440810470).
-Source readiness and handoff currently dominate idle time. Check explicit macro
-grammar and obsolete imports before freezing the next source; keep independent
-review and permitted compilation overlapping. Previous HDMA receipt/capture/restore
-proofs retain their original b2d producer / 0e29 consumers / 17f5 consumers and
-codec3ac lineage; no accepted runtime is repeated. Collect overlapping mailbox
-creation/update windows so a cutoff does not miss a published review.
-Projectile library 19.4061s/DLL 66.4828s and Crocomire library 20.1831s/DLL
-73.6446s passed on their actual distinct source pins. Projectile's final three
-rows waited on three genuine checkpoint gaps; its other eighteen rows ran first.
-Prepare the named checkpoint/input/profile availability alongside source work,
-then run only missing edges. Botwoon's library21.1746s/DLL67.4339s passed, but
-DLL completion to controls took111.971s, to first rows145.817s; independent
-initialization/discovery launched72.2s after rows with ample RAM. Last restore
-to confirmed push took~132s. Prepare exact existing executable commands and
-owners before the DLL returns; launch ready independent groups in one awaited
-batch under PLAN budgets, collect each original handle, then publish promptly.
-No new scheduler/cache/framework or repeated accepted campaign is justified. Preserve original Git-blob newlines before source
-freeze; the cursor patch's CRLF-to-LF change inflated review without size credit.
-Do not renormalize a qualified pin or repeat its checks for newline cleanup.
-
-Mother Brain and README support landed `b5b05ad9`: -51 production/-51 legacy/-1 unsafe/verification0, seven rows10883+272/0.
-README displays committed staged-source SVG; Pages image publisher is deleted. Projectile deduplication closes21rows32443+1713/0
-and three minimal genuine captures18742/0, total52898 comparisons. Net -57 production/legacy0/-1 unsafe attribute/+18 verification;
-46 substantive lines exclude11 formatter joins. Current Crocomire joint source retains its separate reviewed selector dependency.
-
-Direct CI follow-through: current main's CI, Segments and Progress feed runs all
-succeeded. The Actions registry has no Pages workflow; the obsolete Pages site
-configuration was removed and its API now returns 404. README's committed SVG
-remains the sole progress display. Historical failed/cancelled runs are history,
-not a new failure or a reason to repeat local engine qualification.
-
-Crocomire core and typed consumer: 21 reactions/choose-spit are separated; seven rows6453+272/0 and all source/native/codec guards pass.
-Actual joint cost +37 production/+4 verification/legacy0/+1 forbid attribute, raw operations unchanged. Private selector getter preserves
-full/odd keys and the original velocity-write then actor-key then separate x/y-read order. Native storage is retained; this is no size-saving claim.
-
-Next work, in order:
-
-1. **Landed: the complete Botwoon five-word death protocol.**
-   Actual main `8483b15c`/source `92da8e11` closes pending hit, active death,
-   tail readiness, previous health and body landing across combat, arming,
-   spit wait, tail/history, body/head landing and reached projectile adapters.
-   Native words remain 801e/f,8020/1,803c/d,8818/9,883e/f; 8834/5 is spit_armed.
-   Preserve unknown u16s, captured shot versus fresh post-contact identity,
-   full/odd aliases, native/LE publication and the actual reset 7000..9800;
-   delete/reuse does not clear these signals. Protocol export precedes room
-   key/asset conversion. Maw keeps the independently checked low/high raw store
-   and adopts only the ten new protocol-byte overlaps, without input refresh.
-   The 51-line whole-RAM/gamma witness passed, including actor0x7fd6 terrain
-   Drop republication and actor0x10 tail readiness. The detached pure protocol
-   registration and actual player_detached example passed; combat stays in its
-   existing Runtime-dependent owner.
-   Library/DLL/source/native guards passed with160 unchanged main warnings.
-   The complete42/247e codec qualification passed: five original rows3132+272/0,
-   initialized329+resume5, actual runtime guard/eproj27, genuine collapse
-   capture480 (active1/head9a46/delay248/health300/body0/selected0), original
-   continuation465-to945 and fresh boss824+120 tail, phase480-to481/delay249,
-   and exact12-member encrypted restore. There were4684 actual comparisons/0,
-   including one explicitly repeated phase frame, not4684 unique comparisons.
-   Final aggregate8886592a and publication are recorded in
-   [6442637785](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6442637785).
-   Full cost +169 production/+60 verification/legacy0/+1 forbid attribute;
-   raw-operation retirement0. No whole-engine/independent-backend claim.
-2. **Landed: prepared room TileTables plus the shared CRE table.**
-   Actual published3c908c32/source38455802 imports caller-owned immutable bytes
-   into a validated versioned SMTT catalog and binds before GameOwner/SnesInit.
-   Actual initial2/3 and CRE2 door4/5, immutable/live/unproduced RAM references,
-   pack roundtrip/rejection, runtime guard and genuine prepared checkpoint
-   continuation pass. Changed-catalog consumer runs a committed frame and534 audio
-   samples before exact world-revision rejection; complete capture is unchanged.
-   Nine original jobs total11822 ordinary comparisons/0 at codec43/3e92; no
-   encrypted distribution/restore was assigned. Final independent review
-   [6443405464](https://github.com/JimLundin/sm-decomp/issues/3#issuecomment-6443405464),
-   [qualification6443640155](https://github.com/JimLundin/sm-decomp/issues/5#issuecomment-6443640155),
-   [publication6443737984](https://github.com/JimLundin/sm-decomp/issues/5#issuecomment-6443737984)
-   and independent readback6443723241 retain actual source/native/input pins.
-   Full cost+545 production/+210 verification/+1 forbid attribute/legacy0/
-   raw-operation retirement0 exceeds forecast180..400 production/15..60 verification.
-   New module526 - old decompression39 + world43 + compatibility14 + registration1
-   is545; decoder relocation earns no savings. The149-line decoder/VRAM pool
-   remains for Legacy, Options, Kraid and46 cinematic sites. Prepared execution
-   preserves last Legacy decompress_src; there is no stored prepared cursor.
-   Loader structural malformed fixtures currently retain stale checksums; add a
-   checksum-valid malformed witness during the next loader edit, not a separate
-   completed-table freeze. Full remaining room/application consumers are below.
-
-3. **Execute the complete external prepared room-pack loading cohort.**
-   [Exact source/roles/files/API/rows/budgets assignment6444793969](https://github.com/JimLundin/sm-decomp/issues/11#issuecomment-6444793969)
-   is released against3c908c32/source38455802. Native deliverable12: Linux source
-   linux_verifier_readiness owns catalog/room consumers13; local existing SOURCE
-   checkpoint_common_caller owns disjoint DMA primitive14; checkpoint_flexible_interface
-   owns outer pack/application/literal inventory15. Linux ownership_frontier
-   independently reviews composition16. Windows implementation_overseer/Core/Input
-   owns qualification/publication17 and sole Git integration; external acceptance18.
-   Final review depends on all three source deliveries; final qualification on
-   review; acceptance on publication. Independent authoring/preparation runs now.
-
-   Current handoff: catalogue01 + DMA01 + frozen outer SOURCE06 + checkpoint19
-   compose source68557f2e:588 inputs/6414440 bytes/575 literal bindings,
-   codec45/a239acb01e0789a4. SOURCE03 header/LoROM/normalization/allocation and
-   detached registration, SOURCE04 native textual directory search, SOURCE05
-   public checkpoint-helper caller and SOURCE06 path guards are preserved.
-   Windows composition04 library19.765s, real verifier-host check23.198s,
-   frontend build/link72.236s and formatting pass at this exact source;
-   library warnings remain160. Seven exact native desktop input hashes retain
-   their original archive proof. [Final independent source approval](https://github.com/JimLundin/sm-decomp/issues/16#issuecomment-6448505194)
-   closes every source finding. Final direct DLL71.571s passes at17:15:33UTC
-   on the same source/codec. Runtime/capture and publication remain open;
-   collect the original handle and launch the prepared groups immediately.
-
-   Explicit first Windows desktop pack profile: ASCII ROM filename/path;
-   ASCII cwd only for automatic native directory search of a relative ROM.
-   Absolute ASCII ROM paths do not depend on cwd encoding; --config skips
-   that directory-search guard. Pack filenames, verifier/export and sm.exe
-   verify keep Rust filesystem handling. No-room-pack flow invokes no new
-   checks. SOURCE06 enforces this before GameOwner construction; document the
-   concise CLI limit in README beside code. No universal native Unicode claim.
-
-   Independent final-source forecast versus published79: production+1909,
-   verification+1037, support+67, all-source unsafe-containing+34, legacy/raw
-   retirement0. Resulting Score116413/17793/2579/43165 needs staged publication
-   readback. Verification exceeds the original230..570 forecast and must remain
-   counted in full; the already published support10 is counted once.
-
-   Settled flow: `sm.exe --room-pack PATH ROM`. One bounded standard-library SMRP
-   wire codec carries full WorldDefinition/CompatibilityKeys, vanilla reference
-   profile/options0 and complete required room-use catalogs. Real generic import/
-   writer and shared file selector validate before GameOwner/SnesInit/native
-   SwitchDirectory; resolve path and remove only new arguments there. Missing
-   value/duplicate/missing/malformed/incompatible/unsupported profile fails
-   explicitly with no selected-content fallback. Retain GameOwner::new/with_world,
-   Config ABI/buffers/hooks/device/shutdown/save/replay restrictions. No --start
-   or Session::open facade. CurrentLoadStation sites are area6/index0 and0/index18.
-   Catalogue API: PreparedRoomAssets/PreparedRoomError import/to_bytes/load and
-   WorldBinding::prepared_with_room_assets. Reuse SMTT/single decoder; install
-   Levels, Tiles/shared CRE, room Palette/compressed Background with actual RAM/
-   VRAM live/unproduced/overlap and VMADD/dummy/actual/odd-byte contracts. Decode
-   level then actual LE header then existing layer2/BTS branch/copy/failure order;
-   [6444165581](https://github.com/JimLundin/sm-decomp/issues/11#issuecomment-6444165581)
-   is accepted. No inference from dimensions/produced length or whole-plane
-   preflight. FX includes ordered selectors/all8 indexed slots beyond default/
-   FFFF, blend/type/area data/ordered IDs/0x840 tilemaps; MotherBrain entries2/1,
-   native/LE/odd/wrapped/live-exit/callback order remain.
-
-   Raw Background/FX/transition9ab200 and blanks80a29a/80a2f7/80a2f8 use borrowed
-   execution::DmaRomSource::new(first,bytes), checked mapped-ROM lookup and unsafe
-   rtl::write_dma_start(mask,&source,&mut Game). Source covers MDMAEN pre-reads
-   t then t+1 AND synchronous normal-DMA drain at actual cartridge ROM branch
-   after bus/mapper/SRAM classification/romSize-1 mapping. Preserve captured/
-   foreign Snes/CPU, observer/cart-tail/diagnostic/offIndex/channel/counter/timer/
-   failure order. DMA wraps16-bit address in the same bank; pre-read can carry;
-   size0 means65536. Catalogue supplies complete exact windows; uncovered ROM
-   reads remain a dependency, not invented bytes. CPU/HDMA/B-to-A/WRAM/register/
-   SRAM/Legacy stay live; no stored source/cursor. Prepared Palette receipts tag
-   ResourceId+catalog revision only after successful decode; retain exact Legacy
-   RomImage allocation/Actor staging/row/revoke/failure/adoption behavior.
-
-   Catalogue owns verify/checkpoint.rs new prepared_assets.rs/room_pack.rs
-   contributor includes and tagged Palette codec integration. Outer source
-   explicitly owns actual verify_source.rs literal inventory and lib/verify_dll
-   registration [6445077746](https://github.com/JimLundin/sm-decomp/issues/15#issuecomment-6445077746).
-   Preserve the Windows-owned frozen verify_dll.py frontend-check support repair
-   when composing option/producer forwarding; no full-file overwrite.
-   External file/shared selector/sm_verify_args must reach selected GameOwner
-   initial2/3, CRE2 doors4/5, CurrentLoadStation9/10 and prepared checkpoint.
-   Changed background/level/VRAM/FX/Palette/DMA/runtime/allocation checks use
-   existing runner; only necessary witnesses for unreachable live header/
-   pre-read/all8 indexed FX/Prepared receipt/checksum-valid structural rejection.
-   Genuine initialized/capture/roundtrip/continuation binds final resulting codec,
-   reset retention and committed frame/audio rejected capture. PLAN affected
-   area/door/FX/MotherBrain rows+four smokes/full Morph1200 and all source/native/
-   input/origin guards remain. No old-codec restamp, invented encrypted restore
-   or repeated accepted table campaign. main.rs requires matching desktop archive;
-   Windows59 known input/artifact paths/commands are prepared during source work.
-
-   Full incremental forecast+1700..3800 production/+280..770 support/
-   +230..570 verification, retirement0. DMA100..180 production/20..50 verification
-   is INCLUDED in catalogue900..2100/80..220 once; outer800..1700/150..350 is
-   separate. Measure import/schema/identity/adapters/callers/dependencies and
-   explain growth. Prepared room assets cease live ROM acquisition when this
-   cohort closes; Actor/media/FX/audio/native/PPU/DMA/SDL/backend/non-room decoder
-   costs remain. Milestone3's actual owned Session/open-step-checkpoint/
-   independent pixels/timed cue is future work. Local source64MiB per owner,
-   Linux own ledger; no target/ROM copies/unadmitted builds/replays. Windows final
-   composition uses fresh budgets/one immutable source/DLL/output pin; original
-   ready groups launch together and every original handle is collected. REVIEW
-   travels beside code, no docs-only commit, CI observer or new framework.
-
-4. **Preserve the completed observation-epoch proof; defer its standalone rewrite.**
-   All45 scalar observations and five Session overlaps are traced. Admission and
-   successful foreign return capture Game; set_byte rebuilds from raw Game and
-   overrides gamma; successful owned_call refreshes only four actor values from
-   the live projection. Direct owned edits need not refresh observations, as the
-   existing collision and detached sprite checks explicitly require. Keep these
-   boundaries; Maw adoption must not trigger an input refresh.
-   Of67 old selector sites,54 already capture locals and13 are inline/requeries;
-   Crocomire replaces exactly one with the accepted selected_actor()->ActorKey.
-   Its fresh getter does not replace other captures or expose private controls.
-   A complete five-field retirement also reaches23 species methods/99 call sites
-   and both Runtime/detached adapters. Native health decoding, full/odd keys and
-   unwind prefixes remain. Gross removal is roughly17 lines before replacements;
-   forecast +25..80 production/+20..60 verification, raw-operation retirement0.
-   No standalone source/codec campaign, blanket refresh or getter facade is assigned.
-5. **Retain the sprite-to-render consumer closure as future architecture work.**
-   The survey is complete; no preview product/source assignment is selected.
-   Actual presentation copies256x240 PPU pixels through SDL/OpenGL, and gameplay
-   return precedes scanline/HDMA/IRQ/display settlement. An independent256x224
-   sprite contribution needs prepared indexed media, sprite evaluation/rasterization,
-   actual presentation and pixel evidence. It cannot replace normal full-frame
-   presentation or recover composition by overlaying the final PPU pixels.
-   Preserve immediate atmospheric4077/4078/4079 aliases, self-cursor overwrite,
-   X-before-fresh-Y, OAM-to-Samus aliases, NMI544-byte display commitment,
-   later display effects and sprite32/tile34 limits. Session still lacks OAM
-   370/570/590 projection; a forwarded writer/delayed command list does not close it.
-   RtlRunFrame's bool means replay status, not commit success. No implemented
-   Scene/TickOutput/indexed-media renderer or revision-leased submission exists.
-   First all-cost forecast +1050..2600 production, plus support/verification,
-   retires0 PPU lines; complete backgrounds/HUD/effects/frame composition and
-   accepted device lifecycle add further costs. Palette/Actor checkpoints retain
-   ResourceId plus exact RomImage-allocation provenance until explicitly migrated.
-   Keep those costs visible and overlapping room/media/revision estimates counted
-   once. A complete drawing-to-pixels consumer, reset/load/adoption and equivalent
-   coverage must exist before retiring the working presentation/backend path.
-6. **Retain the completed Session transfer constraints.** Gamma's
-   eleven named modes plus Unknown are traced. A standalone typed dispatch grows
-   roughly10..30 production lines and removes no raw operation/backend owner;
-   no elapsed speedup is established. owned_call refreshes four actor observations
-   but omits frame_gamma, which later settlement reads. A complete gamma cut needs
-   full projected input refresh before/after, under the existing preflight/unwind
-   guard, with Ceres/timer/unknown effects retained. Defer the isolated campaign.
-   Terrain imports/exports copy46,592 bytes and allocate two boxes per side, but
-   direct storage changes require complete producer/consumer authority closure.
-   Actual yapping_maw::advance ends with Runtime::update_maw_visibility then Drop:
-   full enemy0x7fd6 aliases var_36 at0x10002. The raw outside=1 write is followed
-   by republication of the imported terrain word, e.g.0x3456; direct RAM would
-   retain1 and change behavior. Physical BTS block0x9bfe reads0x800000/1 through
-   backend mirroring to WRAM0/1; direct indexing reaches out-of-bounds0x20000.
-   Room installation, PLM mutation, collision/rendering and physical aliases,
-   reset/load/oracle and CPU/DMA/HDMA writers must close together before deleting
-   the copied storage. Defer standalone caching; prepare one full responsibility
-   whose original fields/adapters/foreign transfers actually disappear.
-
-7. **Source active: one shared owned rasterizer, with same-cohort replacement.**
-   [Task21](https://github.com/JimLundin/sm-decomp/issues/21) is the first reusable
-   responsibility toward task20's complete Morph9E9F Session. Linux V source
-   linux_verifier_readiness owns new rendering core/records/prepared consumer;
-   local C checkpoint_flexible_interface was actually reactivated17:27UTC for
-   the private ppu.rs adapter/removal donor. C alone changes current PPU/shared
-   registration through the sole Windows integrator; Linux ownership_frontier
-   independently reviews. Inspect Linux handles before actual reactivation.
-   Source-author64MiB budgets are separate from current final qualification.
-   All room-pack freezes remain immutable; task21 adds no publication gate.
-
-   Reuse the complete native BG/sprite/span/window/priority/color/Mode7
-   computation behind one safe backend-free line interface. Two actual consumers
-   are required: retained PPU and prepared input. Remove500..550 old mixed
-   algorithm lines in the same qualified cohort; full added/replacement700..1150
-   forecasts net+150..650 production/+100..250 verification/+30..100 support.
-   Count movements/records/adapters once; no size-saving or backend-retirement
-   claim. Preserve exact native/reference differences, admitted aliases and
-   publication/failure order; EXTBG/mosaic fallback/registers/snapshots/reference
-   pixel selection remain disclosed. RAM replay alone cannot qualify pixels.
-   Ready follow-up is complete prepared message composition using the existing
-   dialogue runner, including saved display/request/resume/reset/checkpoint.
-
-   Task20's six-role+8900..21100 forecast would leave125313..137513 production
-   lines including retained SOURCE06, before genuine retirement. It is not a
-   blanket source assignment. Preserve the full Morph1200/eight proof groups;
-   freeze its development-only sealed start conversion, exact normal/dialogue
-   Tick settlement, semantic checkpoint/audio establishment and portable
-   dependency graph before expanding those roles. Complete owned Session,
-   full Scene, media lifetimes, audio and actual backend-absent play stay open.
-
-Radius's accepted source proof and lower bound 1,668 completed preparations remain
-scoped evidence; 93,184 terrain-byte accesses per pair is not an elapsed speedup.
-Normal/Demo producers exclude the Word-room-asset counterexample, but generic
-preflight_export does not validate the whole encoding. No tiny Radius-only codec
-campaign, persistent state bag, new observer/framework or codec-only cache.
-CPU-I/O also remains unselected: own-CPU equality would narrow the admitted
-foreign-Snes.cpu contract and alter 4211's failure/publication prefix
-[6440065848](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6440065848).
-Any future 47-field cut must retain the two selected-CPU raw effects and count them.
-
-Choose further work by the largest complete removable dependency or duplicated
-responsibility with understood callers and rows. State net benefit and removal
-condition before authoring; tiny cleanups should not dominate qualification.
-
-Apply review effort to risk. For an unchanged private numerical helper, review
-its callers and run PLAN's affected rows plus smokes. Ownership, macros, callbacks,
-reset/load and codec changes need explicit source reasoning for those boundaries
-and their required execution evidence. Transfer exact unchanged leaf proofs only
-when the shared API/dependency relationship still matches. Repeat checks only for
-changed source, failed results or a concrete unresolved concern; retain scoped
-mutation before bank deletion and full-corpus waypoint policy.
-
-At the next completed qualification cycle, report landed net deltas and time in
-source/review/build/capture/replay/landing; use that to choose the next bottleneck
-correction. If integration still has no compiler pass after one hour, give the
-exact remaining group and recovery action, following PLAN's stall rule. Estimates
-must name the next observable result, separately from finished qualification.
-Do not invent a new deadline from unsafe line counts: these include attributes
-and scopes and can fall without removing raw operations. Keep raw-operation
-removal and closed ownership dependencies explicit beside the existing Score.
-Bank deletion, safe wrappers and replay passes remain intermediate achievements;
-owned Session, independent media and Map Rando acceptance remain the destination.
-
-**Size feasibility, actual engine main3c908c32.** Production114504, legacy17793,
-unsafe-containing lines2545 and verification42128 leave14504 net production
-lines above100000. If only banks changed, replacements could total at most3289
-lines (18.5%); at80% replacement, another~10945 lines must disappear elsewhere,
-before forecast1700..3800 room-loading growth and future independent media.
-Bank moves alone cannot substantiate the size promise. Existing independent
-terrain/duplicate assessments found no justified >100-line owned-domain merge;
-small candidate pools are not enough. Investigate complete responsibilities in
-existing actor/projectile/Session modules alongside bank closures, including the
-compatibility adapters and future media cost. Do not sacrifice fidelity or
-readability for arithmetic, or sum overlapping draft savings.
-
-**Landed primitive: fixed DMA-register writes for HDMA allocation.**
-The existing owned DMA writer now serves as the
-leaf for `visual_runtime::{initialize_hdma,spawn_hdma,spawn_hdma_last,
-spawn_hdma_words}` and their fixed initializers. Allocation only selects slots
-0..5; control/target writes therefore use 0x4320/21 through 0x4370/71. The
-prior generic `WriteRegWord` kept these wrappers unsafe although the joined
-backend's DMA-register mutation is safe. Corrected source/compiled guards and
-the complete affected new-codec qualification passed; actual landing is `579b5cd6`.
-
-Preserve the entire register-write protocol: low byte, post-write observer,
-high byte, post-write observer; original missing-backend failure point; original
-definition read(1), publication and later read(0); u16::MAX on exhausted slots.
-Do not directly substitute Game's seed writer: it omits the generic write
-observer. Generic bus writes also call the cartridge after register dispatch;
-prove that tail inert for these exact bank-0 addresses and all supported mapper
-types. Reuse the existing observer, including its ROM mutation/failed-observation
-behavior. HDMA interpreter channel bytes can select outside this range and must
-retain the general path. Qualify the complete initializer cohort once with its
-named Ceres/intro/Morph/boss/X-ray rows plus PLAN smokes. Count actual leaf and
-caller removal; keep unrelated bus, HDMA execution, reset and renderer contracts.
-
-**Landed runner preflight: reject an incomplete source inventory before compiling.**
-`a52992cf` includes the exact reviewed [handoff6437909267](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6437909267).
-It reuses the existing loaded-library guard's expected-file classification; all 569
-bindings passed then and Phantoon's actual 571 bindings pass. Missing, duplicate,
-wrong-path, inactive, conditional and unfamiliar literal-list entries fail before
-compiler startup. Runtime guards remain unchanged. Cost +42 support Python lines/
-+1,904 raw bytes, zero Rust metric delta; warm median 130ms is not a measured build
-saving. No readoption or recapture is needed. Full conservative library reuse
-remains: all five inventory exclusions are actual checkpoint include_str! rlib
-inputs. A 569-file-only rlib key would therefore omit real compiled dependencies.
-
-**Prepared architecture closure: owned continuation and checkpoint locality.**
-This is design ahead of the existing queue, not a second work order. Keep the
-accepted Session seam: `open`, `step`, `checkpoint`. A sealed owned Checkpoint
-describes a complete committed Tick; validated NewGame/PlayerSave/Scenario starts
-serve tools and Map Rando without arbitrary mutable field access. Our gameplay
-Checkpoint and the existing full verifier `.smvchk` have distinct purposes: the
-latter still needs both PPUs, CPU/DMA/APU/SPC/DSP/native player, recorder, SRAM,
-Actor lineage and allocation-equivalence state.
-
-Current `verify/checkpoint.rs::machine` reaches Game's scratch/recorder/tracing
-storage, WorkRam, devices and post-load ROM patch behavior. New `Execution` only
-borrows a `HostContext`; it does not own the persisted fields. Prepare one complete
-storage cohort with its initializers and actual reset/load/Runtime consumers,
-remove the original fields, then move private capture/preflight/ordered adoption
-to that owner and the existing concrete backend adapters. Preserve each store,
-partial-failure publication, fresh selector and allocation identity. Do not
-replace the traversal with a participant registry, raw struct dump or mirrored
-state. Classify new persistent fields deliberately as encoded, reconstructed
-or unnecessary. No first scalar extraction earns removal of whole Game from
-codec compatibility; initialization, restore, RAM/ROM and backend dependencies
-must close before a contributor can disappear. Prepare the coherent closure
-before one codec freeze/capture campaign, rather than recapturing per extraction.
-Do not combine unrelated decoder, projectile, recorder and oracle fields into
-a permanent Session state bag. StateRecorder and ApuQueue already own storage.
-The current archive visits 31 distinct non-RAM Game fields; classify their actual
-responsibilities. A bounded candidate is the existing decoder's source-cursor
-lifecycle, but that alone earns no code/unsafe/capture saving and adds a real
-codec contributor. Do not schedule a cursor wrapper as the next throughput fix.
-
-The existing runner already reuses complete DLLs and exact-source prefixes.
-Its 56-byte checkpoint header lacks capture-source/native/build-profile context;
-switching caches to codec-only or scanning opaque old directories would lose a
-guard. Future genuinely captured envelopes can own immutable provenance, including
-where the current producer's executed interval began. Inherited prefix history
-must remain distinct from current execution. Keep configured setup gaps, both
-independent Kago14350 approaches, full input/prefix/origin checks and source/native
-build guards. No sidecar registry, backfill or restamp. Cross-source development
-reuse needs that context and equal validated codec/native/profile; target gameplay
-Checkpoints still require the exact gameplay fingerprint, including topology/options.
-
-Removal evidence: the schema and every initialize/capture/preflight/adopt path no
-longer call an excluded implementation. Then use the existing full original
-Morph1200 continuation with one unrelated private numerical edit: changed checked
-build source, unchanged genuinely captured codec, identical end machine/Actor
-payload and zero failures. This is a deferred falsifier, not a run or present speed
-claim. Rust changes still compile; prepared-content changes can avoid compilation
-only after those definitions are actual data. Current process/source owners and
-PLAN's Fast loop, deletion and waypoint checks retain their authority.
-
-At each item's start, check the user-requested Windows/Linux
-[coordination mailbox](https://github.com/JimLundin/sm-decomp/issues/2) for ownership and handoffs.
-
-Set by the reviewer at the user's request so progress is countable. It replaces
-"consolidate exercised subsystems" with one unit of work: **retire a legacy bank**.
-Baseline at 5096059: 24/44 checks; `game/sm_*.rs` 23 files, **55,342 lines, 3,160
-unsafe lines** (of 116,960 production and 4,965 unsafe total).
-
-**Scoreboard** — last line of every agent commit body, measured locally:
-`Score: checks 24/44 · legacy 55342 · production 116960 · unsafe 4965`.
-`legacy` = `cat sm/src/game/sm_*.rs | wc -l`. From 2026-10-25 append
-`· verification N` (verification Rust lines, as `progress.sh` reports).
-Priority of the numbers (from 2026-10-25 16:00): **unsafe** and checks first, then
-legacy, then size. Legacy alone can fall by moving code; unsafe cannot.
-
-**Size goal (user aspiration, 2026-10-24).** Lines should fall substantially:
-owned code uses native types and data instead of re-expressing 65816 routines.
-Reference: snesrev's routine-by-routine C is ~76,500 game-logic lines. Budgets,
-total production: ≤110,000 by 10-26 (layering check), ≤100,000 when all banks
-are retired, **aspiration ~75,000** for the finished engine (game logic ~60,000,
-platform/renderer/audio ~15,000). Each retired bank's replacement code should be
-at most ~70% of the bank lines it removes; report the ratio per bank. Do not
-compress formatting, delete comments or move code into verification paths to
-meet a budget; behaviour and quirks still win over size.
-
-**Verification policy (user direction, 2026-10-24).** Verification means movie
-slices turned into focused tests, kept out of production code:
-
-- A test is data: a `movies/segments.toml` row (movie, frame window from a
-  checkpoint, per-frame oracle comparison, expectations) run by the one existing
-  generic runner. New evidence for a change is a new or named row, not new Rust.
-- Every frame-comparison failure becomes a regression row: the shortest window
-  from a checkpoint before the first differing frame through a few frames after,
-  committed with its fix.
-- No new hand-written fixture modules (the `verification/*_cases.rs`,
-  `*_checks.rs` style that pokes RAM/ROM words into a constructed world). Delete
-  an existing fixture once a segment exercises the same code; that deletion is
-  progress. A constructed test is allowed only for behaviour no movie reaches,
-  under ~100 lines, with the reason in its first line.
-- Production code gets no new probes, observers or `cfg(sm_verify_dll)` blocks
-  (589 production lines in 91 files mention verify/probe/observer today); remove
-  them as banks retire. After A1.3, lane A tries instrumentation coverage
-  (`cargo llvm-cov` on a segment run) to prove which code a segment executed,
-  replacing hand-placed probes.
-- Verification Rust (38,993 now, 33% of production) must fall from here; target
-  under ~15,000 once the movies drive coverage.
-
-
-**Reset (2026-10-25 12:30, user grant to change goals and process).** Diagnosis
-after 18 hours: the code moves, but slowly. (1) Each commit carried a heavy proof
-ritual (mutation kills, independent controls, optimized + frontend builds, clean
-reruns), so a 50-line bank family took 30-60 minutes on a machine limited to three
-compilers; PLAN's **Fast loop** now replaces it. (2) Lane A spent ~10 hours aligning
-one 129,712-frame movie end to end and is stuck on timing drift at the first Ceres
-audio upload; hand routes give ~1 check/hour and the 18 pending rows are late-game.
-(3) Lane B ran one or two agents on two banks while 30,000 of the 51,800 legacy lines
-are enemy AI gated behind coverage. The changes below remove those three limits.
-
-**Throughput reset 2 (2026-10-25 16:00, user direction: finish within days, use
-hosted CI).** Measured by the reviewer before this change:
-- Pace: 36 lane commits in the 24h to 14:00, ~150 legacy lines and ~10 unsafe lines
-  each. At that rate 4,600 unsafe lines take weeks. Hand-moving one function per
-  commit cannot meet the goal; most unsafe comes from a few access primitives.
-- Primitive experiment (compile-only, scripted, ~10 min): make `word!` bounds-checked
-  `g_ram` indexing, then strip `unsafe` from every fn the compiler accepts (fixpoint):
-  269 fns become safe, unsafe lines 4,603 -> 4,170, plus 224 now-unneeded `unsafe`
-  blocks for `cargo fix`. On the oracle: 40 of 40 runnable rows pass (Segments run
-  40203144686, branch `ci/safe-word`).
-- What keeps the remaining ~1,100 bank fns unsafe (by fn): enemy raw pointers
-  (`Get_X(k)` / `(*E).field`) ~450, `ram_ptr!` ~360, only calls to unsafe fns ~280
-  (fall once callees are safe), ROM pointers ~110, hardware/IO ~50.
-- Hosted oracle: `.github/workflows/segments.yml` runs every route-generated row
-  (40 rows, 14 Windows shards) in 32 min with the ROM from secrets; 0 failures on
-  b06f9ca (run 40199817511). Standard runners are free on this public repo.
-- `ci.yml` had been red on every push since 10-24 11:53 (`--example sm_verify` and
-  the detached build), unseen because the Fast loop builds neither.
-
-**Throughput reset 3 (2026-10-25 23:25, user request; supersedes conflicting notes below).**
-Measured: from 17:37 to 23:07 main moved legacy -1,215 (~220/h), unsafe -151 (~27/h),
-production +200. The last hour *wrote* ~4,400 legacy lines of B work (five bank files), but
-no B commit has landed since 18:26. **Writing is no longer the bottleneck; landing is.**
-Causes: (1) 45 of 82 rows still replay from boot: route shards take 12-30 min, seeded
-shards under 1 min, so a branch run takes 30-45 min at six shards; (2) stacked branches
-re-ran the same rows and were cancelled; (3) shared files (`lib.rs`, `verify_source.rs`,
-`sm_82.rs`) make auto-land rebases fail. Coverage is done (44/44, 6c366e5), which unlocks
-every boss bank (~20k lines), and those banks hardly touch each other. Changes:
-- **Landing (user, 23:25):** Windows agents land on local green (PLAN "Landing"). Hosted
-  main is the backstop; a red main is fixed or reverted before anyone else lands.
-- **Lane A -> CI speed (A2), then bank work.** A2.1: move all 45 boot-replay rows onto
-  seeds (several per commit) and delete their recipes from `tools/movie_inputs.py`
-  (1,796 lines). A2.2: pack seed rows into a few shards (~40 s setup each now, for 3 s of
-  rows). Target: a branch run in <=10 min by 10-26 06:00. Then A takes the B4 queue.
-- **Lane M: no more in-place M2 codemods on bank files.** Converting a bank in place and
-  then moving it again is double work, and a retirement removes more raw dereferences
-  (sm_b2: -291) than a codemod does (sm_a8: -27 unsafe for +149 lines). The cloud M agent
-  lands `ci/m2-sm-a8` and then works on unsafe outside the banks: M3 `ram_ptr!`, M4 ROM
-  pointers, `main.rs`/`rtl.rs`/platform (~400 lines). The Windows M agent becomes B4.
-- **Lane B: six queues, one bank file each.** Boss and enemy banks are open now (rows pass).
-  B1 `sm_80` -> `sm_82`; B2 `sm_8b`; B3 `sm_a2` -> `sm_a3`; B4 (Windows M agent) `sm_a8`
-  after `ci/m2-sm-a8` lands -> `sm_b3`; B5/B6 (cloud workers, hosted mode; scheduled tasks "sm-decomp cloud worker B5/B6",
-  hourly at :05 and :20 from 00:05 on 10-26; boss rows are seeded, so they need not wait for A2)
-  `sm_a9` -> `sm_aa` and `sm_a6` -> `sm_a7`; whoever frees up first takes `sm_a5`, `sm_9b`,
-  then `sm_a4`. Retire into owned safe modules (sm_b2 style). Shared registry edits
-  (`lib.rs`, `verify_source.rs`) stay one line each so rebases merge cleanly.
-- **Size:** moves run ~95%. Moving code into safe modules comes first for now (unsafe,
-  then legacy); the <=80% target applies again to `sm_80`, `sm_82`, `sm_8b`, the non-enemy
-  banks, where shared owners already exist.
-
-**Landed (10-26 01:00, reviewer).** The 00:00 order worked: 27 B commits reached main in the
-hour and **five bank files are gone** (`sm_88`, `sm_a0`, `sm_81`, `sm_8f`, `sm_b2`); legacy
-47,590 -> 40,331. Main green (runs 100-101); full corpus run 95 in progress. Next, in order:
-1. **Unsafe now moves instead of falling.** Bank-file unsafe fell 2,372 -> 1,862, but total only
-   4,188 -> 3,905: +227 unsafe lines landed in owned modules (`map_menu.rs` alone has 39, its
-   `unsafe fn advance/prepare/fade_palette` copied from `sm_81`). From now, a retirement may not
-   add `unsafe` to a non-bank file: convert the moved code to checked access (`word!`,
-   `ActorAccess`, `slot`) in the same commit, or leave that fn in the bank. Only hardware/IO
-   register fns may move unsafe, into the existing platform owner, named in the body. New owned
-   modules start `#![forbid(unsafe_code)]` (B5/B6 already do).
-2. **Production is the lagging waypoint** (114,607 vs <=114,000 at 12:00). Moves ran 82-97%
-   (`sm_81` 97%, `sm_b2` 96%, `sm_8f` 93%); `sm_a2` Goofball (67%) and B5 (85%) show it can be
-   done. B6's 183% (bbefa6a, +54 production) is not acceptable: B6's next commit must lower
-   production. Every B commit body states its ratio; above 90% needs the one-line reason.
-3. **Lane A:** 55/82 seeded, but `tools/movie_inputs.py` is still 1,766 lines: seeding rows
-   without deleting their recipes is half of A2. The next A commit deletes every recipe no
-   unseeded row uses (name the line count), then seeds the remaining 27 rows, 6+ per commit.
-4. **Queues now:** B1 `sm_80` (714 left: delete it before more `sm_82`), B2 `sm_8b` (3,420),
-   B3 `sm_a2` -> `sm_a3`, B4 (Windows M agent) `sm_a8` families -> `sm_b3` (M2 sm_a8 landed in
-   090d163; no more `M:` codemods on banks), B5 `sm_a9`, B6 `sm_a6`. Cloud M: M3 (`ram_ptr!`)
-   outside banks on `ci/m3-ram-bytes`; delete the obsolete `ci/m2-sm-a8`.
-
-**Lane M — mechanical safety (one agent, new: start a fourth agent if the machine
-allows, else it takes the B3 slot; M's local work is `cargo check` only).**
-Unit of work: one primitive made safe across the whole crate by a script, then the
-fixpoint strip, in one commit. Push it to a `ci/<topic>` branch first; land on main
-when Segments is green there (rebase and rerun the script, never hand-merge a
-codemod). Body: the script (or its path), unsafe before/after, the Segments run.
-- **M1** safe `word!` + fixpoint + `cargo fix` for unused `unsafe`. Prototype green:
-  `ci/safe-word` (42c59cb on b06f9ca) passed all 40 runnable rows on Segments run
-  40203144686. Land it: rebase onto main, apply the `ram_map.rs` change, rerun
-  `tools/codemod/strip_unsafe.py` (on that branch), `cargo fix`, push to `ci/m1`,
-  land when green. Target unsafe <= 4,000.
-- **M1 revised (16:55 check-in; lane M stalled two check-ins, 0 commits, no `ci/m1`).**
-  B2's finding (PLAN item 2) is right: 42c59cb's whole-RAM `&mut` can alias live
-  enemy `*mut` pointers, and its strip made raw-pointer `Load24` safe. Do not land it.
-  Sound first deliverable, **M1a, due 18:00 as a `ci/m1a` push**: the fixpoint strip
-  alone, `word!` unchanged, stripping `unsafe` only from fns whose signature has no raw
-  pointer and whose body then compiles with no `unsafe {}` block; then `cargo fix` for
-  unused blocks. Then M2 (removes retained enemy pointers), then safe `word!` (M1b).
-  Owner: the B3 agent (sm_a4 quiet this hour) until a fourth agent starts.
-- **M1 done (17:55 check-in), sound form:** d0fffa6 made `word!` checked caller-side
-  byte access (no whole-RAM borrow, so no alias with live enemy pointers) and cleared 123
-  blocks; all 59 rows passed locally. Lane M then hand-audited ~10 fns per commit
-  (62e33d9, 4a515c9) and started M2 (92ac60e Ripper). **Next M commit: the scripted
-  fixpoint strip (M1a)** now that `word!` is checked: strip `unsafe` from every fn with
-  no raw pointer in its signature whose body compiles without an `unsafe {}` block,
-  iterate to a fixpoint, `cargo fix`; one commit, script path in the body. Target
-  unsafe <= 3,900 (10-26 12:00) from that commit alone; hand audits only after it.
-- **M2** enemy records by slot: replace `Get_X(k) -> *mut` and `(*E).field` with a
-  safe slot accessor that re-borrows `game.g_ram` per access; codemod per bank,
-  common enemies first (`sm_a2`, `sm_a3`, `sm_a8`, `sm_b3`), then bosses; fixpoint
-  after each. Report unsafe per bank.
-- **M3** `ram_ptr!` -> checked byte/word/slice views. **M4** ROM pointers ->
-  `&'static` slices or typed table reads; hardware register fns safe.
-After M4, re-measure and set the next primitive from what still holds unsafe.
-
-**Lane C — CI as the verification pipeline (user decisions 2026-10-25 18:05, live).**
-Why: at ~760 legacy lines/hour, 48,715 lines is ~64 agent-hours, about a week. The one
-Windows machine is the limit, and it only matters because rows can run nowhere else:
-the code already compiles on Linux (reviewer ran `cargo check` in a cloud session: 302
-warnings, same as Windows). The user approved four changes: lift the local-only rule,
-encrypted seeds in CI, cloud agents with auto-land, a Linux verifier spike. Order:
-- **C0b (lane A, next commit; unblocked by the lifted CI rule):** gate the two mutation
-  steps in `ci.yml` (and the ROM-prep/report steps) behind `workflow_dispatch`; scripts
-  stay for local capture callers. `ci.yml` green.
-- **C3 status (18:52):** `ci/c3-pipeline` (8520ac1, based on main 22013c1) ran its rows
-  green in Segments run 40217351891; `land` refused by design (workflow edits cannot be
-  pushed with `GITHUB_TOKEN`). **The C agent fast-forwards main to it by hand now**, then
-  rebases `ci/l1-linux`. Workflow-only commits after C3 land by hand the same way.
-- **C0b done (0fd90cf); `ci.yml` green on main since; the 18:00 CI miss is corrected. C2
-  landed early (8e2e9a0).** Lane A's next code: Mother Brain phase seeds (A1.3 (1)).
-- **C1 (done):** `segments.yml` on main and `ci/**`; 3 green runs on main, ~45 min each.
-- **C2 (lane A, due 10-26 06:00):** seeds and lag logs in CI. Pack `target/seeds/` plus
-  lag logs, encrypt (`openssl enc -aes-256-cbc -pbkdf2`) with a key derived from the
-  ROM itself (`sha256("sm-decomp-seeds-v1" + ROM bytes)`): no new secret, since CI
-  already decrypts the ROM and only ROM holders can read the seeds. Upload as a release asset on a `ci-data` tag (ciphertext only),
-  decrypt on the runner. `segments.yml` then runs seed rows, one shard per seed: no
-  shard replays from boot. Target: the whole corpus under 15 min.
-- **C3 (first cloud agent, due 10-26 06:00):** (a) on `ci/**`, `segments.yml` runs only
-  the head commit's `Rows:` rows plus the smoke set (all rows if none named); (b) an
-  auto-land job: on green, rebase onto main and fast-forward main; conflict = fail and
-  leave the branch. Main keeps the full corpus, with only the newest push queued.
-  Then every lane switches to PLAN's hosted mode.
-- **L1 (same cloud agent after C3, ~3h spike):** build the verifier as a Linux shared
-  library (`verify_dll.py` loads it with `ctypes.CDLL`; the oracle core is portable C).
-  Go: the smoke set passes on `ubuntu-24.04` with byte-identical results to Windows.
-  Then shards move to Linux (faster, more runners). No-go: write down the blocker.
-- **Runner budget:** the free plan allows ~20 concurrent jobs; one full run uses 14. If
-  branch runs queue over 15 min after C3, the reviewer asks the user about a paid plan
-  or larger runners before adding agents.
-- **Runner budget (user decision 20:05: no paid plan, no larger runners; free tier only).**
-  Free public-repo runners cost nothing but cap at ~20 concurrent jobs. At 19:52 every
-  land dispatched the full corpus (33 shards) on main, so main alone held the pool and
-  branch runs queued; a TASVideos 503 also failed `ci/windows-file-menu` before any frame.
-  C agent's next commit (workflow, hand-landed), in order: (1) hand-land
-  `ci/movie-download-retry` (rows green, land refused only as a workflow edit); (2) the
-  land job stops dispatching the full corpus; main runs it on a schedule every 3h, on
-  bank-file deletion and at waypoints, matrix `max-parallel: 6`; (3) the plan job runs the
-  union of `Rows:` over `origin/main..HEAD`; (4) cache downloaded movies (`actions/cache`
-  keyed by hash). Agents: push only the tip of a stack, one live branch each; a bank
-  retirement's full run waits until no other full run is queued. No new agents until
-  branch runs start within 10 min.
-
-**Landing jam (20:52).** Branch work is no longer verified faster than it is written: at
-20:52, 7 `ci/windows-*` branches plus M1a and Spore Spawn were unlanded, both bank
-deletions among them. PLAN's landing jam rule applies: one live rebased branch per agent,
-retirement branches run their rows (not the full corpus), main's full run follows each
-deletion. Land order: M1a, Spore Spawn, `sm_88` deletion, `sm_a0` deletion, then sm_81.
-**B landing (22:52, updated 23:25):** five bank files (`sm_88`, `sm_a0`, `sm_81`, `sm_8f`,
-`sm_b2`) sit on `ci/b-integrate`, `ci/b1-retirements` and `ci/b3-retirements`. Under reset 3, B1
-lands b-integrate + b1 on local green now (rebase, run the union of their `Rows:`, push to
-main); B3 then rebases b3 and does the same. Delete the `ci/b*` branches after landing.
-**Ratios:** `sm_8f` (94%) and `sm_b2` (96%) moved nearly line for line into owned modules: the
-new code is safe and well named, so accept them, but `sm_80`/`sm_82` must aim <=80%.
-**Lane A (22:52): credits flipped, 43/44** (01b3036, 13 rows, 51,276 frames). Left: Golden
-Torizo: add the three PPU fields (PLAN item 1) to the RAM-to-Session converter, then the row.
-After it, A moves authored rows onto seeds and deletes recipes from `tools/movie_inputs.py`.
-**M2 `sm_a4` (`ci/m2-sm-a4`):** -215 raw dereferences, but production +121, legacy +43, unsafe
--5. `slot!` is a one-time cost; later M2 banks must not grow production.
-**M2 production (22:52, not followed):** `ci/m2-sm-a8` (pushed 22:05, after the 21:52 rule)
-is legacy +126, production +149 for unsafe -27; one `slot!` per access spells every field
-access out. Land it (unsafe first), but the next M2 commit changes `enemy_slots.py` to bind
-one typed slot view per fn (`let e = slot_view!(k)`) so a bank's lines do not grow; rerun on
-`sm_a4`/`sm_a8` in the same commit. M2 commits that grow production need their reason.
-
-**Cloud agents (user approved 18:05).** Linux sessions without the ROM, hosted mode
-only, one lane item each, own `ci/<lane>-<topic>` branches. Start with two: **C3+L1**
-(above), then **lane M** (M1a fixpoint strip, then M2 per enemy bank; compile-checked
-codemods suit agents that cannot run rows locally). Add enemy-bank B agents once C2+C3
-run seeded rows in CI. Windows agents keep A, B1, B2, B3. **Launched 18:35 CET** as one-off cloud sessions: `C:` agent (C3 then L1) and
-`M:` cloud agent (M1a fixpoint, then M2 on banks the Windows M agent is not touching).
-The Windows lane-M agent keeps its M2 hand moves; it does not run M1a.
-
-**Lane A — coverage (one agent): room-seeded TAS segments (A1).** Stop aligning the
-whole movie. Restart alignment at every room instead: the TAS emulator gives the true
-state at each room entry, so drift never accumulates past one room. Both the oracle
-and the native branch start each frame from the same state, so an imperfect seed
-can only lose route fidelity, never fake a pass.
-- **A1.1 Dump (≤2h).** Extend `tools/lsnes_lag_log.lua`: at the first gameplay
-  frame after each room change ($079B changes, $0998 back to gameplay) write WRAM,
-  SRAM, VRAM, CGRAM, OAM and APU RAM (lsnes memory-region reads) plus the movie index to
-  `target/seeds/` (local, ROM-derived, never committed; hashes only). Run on any% and
-  100%. Commit the Lua and the room/index list it prints.
-- **A1.2 Seed (≤3h).** Add `--seed PATH` to the verifier (verification side, not
-  production): boot as now, load the seed's memories, rebuild owned state from RAM
-  through the existing codecs/checkpoint loader, then run that room's inputs from the
-  existing lag-aware importer. **Go:** one seed runs ≥600 frames with 0 oracle
-  failures and reaches the same next room as the capture. **No-go:** name the state
-  that could not be derived from RAM and fix that converter: RAM-to-Session loading
-  is on the long-term path (save states, Map Rando), not throwaway.
-- **A1.3 Flip rows.** `segments.toml` gains `seed = "<movie>:<room index>"` in place
-  of an authored prefix. Point the 18 pending rows (bosses, late items, Wrecked Ship,
-  Maridia, Tourian, credits) at 100%/any% seeds, several per commit, each named. Then
-  move existing authored rows onto seeds and delete their recipes from
-  `tools/movie_inputs.py` (credit: support code falls).
-- **A1.1 done for any%** (9290c2d: 197 room seeds, hashes only in
-  `movies/room-seeds-any.csv`); the 100% capture rides along with A1.2. Crocomire's
-  hand route is done (75fa0b1). No more hand routes: lane A's next code is A1.2
-  `--seed` (first deliverable by 15:52: load one seed and report the first frame
-  that diverges, even if no-go). A0 stays parked at
-  10,555 with its finding in PLAN item 1; A1 does not need it.
-- **A1.2 go reported, not landed (14:52 check-in).** PLAN item 1 (written in 4943d38)
-  says a seeded trial passed 600 frames and reached the captured next room, with
-  "integration after the queued bank changes", and the 100% capture (331 seeds) is
-  done; none of it is committed. That is held work, a stall. Land it now as its own
-  `A:` commit: `--seed`, the 100% index CSV and one `seed =` row naming the room and
-  frames. It is verification-side, so it waits for no bank queue. The lane-A agent
-  does no bank work until it lands. Then A1.3: flip one pending row per commit,
-  starting with the cheapest, to reach ≥28/44 by 18:00.
-
-- **A1.3 status (17:55 check-in): 40/44.** Gravity, Grapple (100% seeds), Botwoon (low%
-  seed 122) flipped this hour; MB purple-breath regression added. Pending: Spore Spawn
-  (absent from any%/100%), Golden Torizo (skipped in 100%), Mother Brain (100% 10,000-frame
-  trial: 0 oracle differences, but misses the capture's defeat), credits. Next, in order:
-  (1) Mother Brain: 0 differences means the seed drifts from the capture, not a native
-  bug; capture extra seeds inside the MB room at each phase change and chain rows from
-  them; credits follows from the last MB seed. (2) Spore Spawn and Golden Torizo: index
-  one published movie that fights each (as low% did for Botwoon) and seed from it.
-  No hand routes.
-- **A1.3 status (20:52): 41/44** (f2a7264 Mother Brain fresh defeat from a phase seed);
-  Spore Spawn 42/44 on `ci/windows-spore-spawn`. Left: Golden Torizo, credits (chain from
-  the MB phase seeds), then move authored rows onto seeds and delete their recipes.
-
-**Lane B — bank retirement (up to three agents, one bank each).** Unchanged method:
-for each function, delete it if unreachable or duplicated, otherwise move it onto safe
-Session state with native types (enums/fn values, named views, range tests), no new
-Host/effects/adapter layer; a bank is done when its file is deleted, with the full
-corpus and scoped mutants run once before deletion. Report the replacement ratio per
-commit; aim ≤70% (bd76e2a ran 154%: production must fall with each move; a
-commit that grows production needs a one-line reason no smaller form exists). Each commit also deletes what the move makes dead (verify/probe
-hooks: 607 lines/94 files, duplicated owned paths). Queues:
-- **B1:** `sm_90` (finish) → `sm_81` → `sm_80` → `sm_82`.
-- **B2:** `sm_88` → `sm_8b`.
-- **B3 (new):** finish `sm_89` (48 lines left, the 18:00 deletion) before more `sm_a0`;
-  small banks `sm_89` (182) → `sm_a0` (458) → `sm_8f` (421) → `sm_b2`
-  (880), then enemy families already met in a passing row (name the row and the enemy;
-  e.g. Ceres/Crateria/Brinstar/Norfair common enemies in `sm_a2`, `sm_a3`, `sm_a8`,
-  `sm_b3`). `sm_a4` Crocomire (1,630) is unlocked by `boss-crocomire` and follows
-  `sm_89` in B3. Other boss banks wait for their A1.3 row: `sm_a5` Draygon,
-  `sm_a6` Ridley, `sm_a7` Kraid/Phantoon, `sm_aa` Torizos, `sm_a9` Mother Brain,
-  `sm_9b` Grapple.
-If only two lane-B agents run, B3 waits; never two agents on one bank.
-**18:52: B3 moves to `sm_a0` now** (330 lines, the 10-26 12:00 deletion, unowned): delete
-it, then `sm_8f`. `sm_a4` grew again (17f04a1, 153%) after the 17:55 directive; converting
-its raw getters to checked actors is M2 work, so it goes to lane M (cloud codemod), not B3.
-Every B commit must now lower **production**, not just legacy: 10-26 12:00 needs -1,145 and
-the last hour gave -32. Delete dead hooks (607/93) with each move.
-PLAN.md is 241 lines (limit ~200): the next B1 commit trims work-order item 2 to <=15 lines.
-**17:55:** `sm_a4` ran 108% and 146% this hour (legacy +68): checked-Actor closures grow
-the bank. Next `sm_a4` commits must lower legacy (delete or move out whole families);
-a growing commit needs the one-line reason. `sm_88` is at 442 lines: finish and delete
-it before the 10-26 18:00 waypoint.
-Commit unit (from 16:00): a whole function family or small bank, several hundred lines
-is fine; run locally only the rows the change reaches, Segments on main runs the rest.
-After each M step lands, rebase onto it before continuing; do not re-add `unsafe`.
-
-History: A0.1-A0.2 done (7867e91, cec060e); A0.3 aligned 9,266 steps, then an
-elapsed-NMI experiment reached 10,555 (parked 11:52). `sm_94` deleted (ca42bc5, ratio
-~75%), `sm_91` deleted (52ba836, ~79%).
-
-**Waypoints** (Europe/Stockholm; reset 2026-10-25 12:30; a miss gets a diagnosis and one corrective step):
-
-| By | Checks | Unsafe lines | Banks deleted (cumulative) | Legacy | Production | Result |
-| --- | ---: | ---: | --- | ---: | ---: | --- |
-| 10-25 06:00 | A0.4 any% to credits | | sm_94 | <=54,600 | <=116,500 | **MISS** |
-| 10-25 18:00 | >=28/44; A1.2 go/no-go recorded | CI green; M1 on a branch | + sm_91, sm_90, sm_89 | <=50,300 | <=115,300 | **HIT except CI**: 40/44, A1.2 go, M1 landed (d0fffa6), banks deleted, legacy 48,715, production 115,177; `ci.yml` red until 0fd90cf (19:18) |
-| 10-26 12:00 | >=42/44 (**44/44 met 23:07**, 6c366e5); branch run <=10 min (A2) | <=3,900 (M1 landed) | + sm_a0 | <=47,000 | <=114,000 | |
-| 10-26 18:00 | 44/44 (raised 17:55) | <=3,300 (M2 common enemies) | + sm_88, sm_8f, sm_81 | <=44,000 | <=112,500 | |
-| 10-27 18:00 | 44/44 | <=2,300 (M2 bosses, M3) | + sm_80, sm_b2, first boss bank | <=36,000 | <=109,000 | |
-| 10-28 18:00 | 44/44 + 100% seeds | <=1,200 (M4) | + sm_82, sm_8b | <=28,000 | <=105,000 | |
-
-Unsafe targets after M1 are estimates from the fn counts above; the reviewer
-re-baselines them after M2's first bank.
-
-The previous 18:00 and 10-26 production lines (≤114,000, ≤110,000) assumed a 70%
-ratio and missed three hours running at ~80%; the reset lines assume 75% plus hook
-deletion. End-state budgets in the size goal stand (≤100,000 with all banks retired,
-~75,000 aspiration).
-
-**18:00 CI miss (recorded 17:55 CET):** `ci.yml` is red only in its two mutation steps
-(`player_detached/mutations.py`, `room_mutations.py`; run 40211656694). C0b was not done:
-PLAN's "Local validation" note records a direct user instruction to the agents not to use
-or observe CI, and the agents' audit (PLAN item 2) keeps the drivers for local capture
-callers. The user lifted the local-only rule at 18:05. Corrective step: C0b, the next lane-A
-commit, gates those steps behind `workflow_dispatch`, keeping the scripts.
-
-**06:00 miss (recorded 05:52 CET):** no agent committed 23:48-05:50; the plan was not
-the blocker. Corrective step done: agents restarted ~05:50; sm_94 deleted 06:51 CET.
-
-Progress picture: `tools/treemap.py`, committed beside source; no other dashboards.
-
-**Progress feed (user request, 2026-10-25).** Every push to main posts the measured
-line deltas, lane, ratio and flags to issue #1 (`progress-feed.yml`). It reads the
-`Score:` line for checks, so keep that line exact; agents do not maintain the feed.
-
-## Check-ins
-
-- **2026-10-26 01:00 CET (e3e5237), no stall; B landing cleared:** agent commits since c1be617:
-  A 4 (seeds 41 -> 55/82, shard grouping), M 3 (sm_a8 M2 landed, fixpoint rerun, harness fix),
-  B 27: B1 10 (`sm_88`, `sm_a0`, `sm_81` deleted; `sm_80` -1,791), B2 12 (`sm_8b` -1,508), B3 3
-  (`sm_8f`, `sm_b2` deleted; `sm_a2` Goofball), B5 1, B6 1 (both auto-landed, ~5 min runs). All
-  `Score:`, 0 docs-only. Score `44/44 · 40331 · 114607 · 3905 · 39514` (last 44 · 47590 · 115354 ·
-  4188 · 39463); warnings 255 unique (491 with duplicates); hooks 607/95. 10-26 12:00: legacy and
-  banks **ahead** (18:00 targets met), unsafe on (5 over), production **behind** (607 over),
-  recipes behind (1,766 unchanged). Verification +51, non-bank unsafe +227: see Landed (01:00).
-- **2026-10-26 00:00 CET (c1be617), B landing stall, 3rd of last 4 check-ins:** agent
-  commits since 853aa47: A 4 (6c366e5 Golden Torizo quirk fix + 2 regression rows; 3 A2 seed
-  rows), M 0 on main (`ci/m2-sm-a8` rebased 23:44, run queued), **B 0 written, 0 landed**
-  (B1-B3 silent since 22:51; last B on main 19:27). 1 user chore (6c00ef1). All `Score:`, 0
-  docs-only. Score `44/44 · 47590 · 115354 · 4188 · 39463` (last 43 · 47589 · 115353 · 4188
-  · 39401); warnings 296; hooks 607/93. A2: 41/82 seeded (37), recipes 1,766 (1,796), seeded
-  branch run 6.5 min. 10-26 12:00: checks met; A2 on pace if batched; legacy, sm_a0, unsafe,
-  production **behind** until `ci/b1-retirements` lands (rows green, run 40237511884). Treemap OK.
-- **2026-10-25 22:52 CET (853aa47), no stall, B landing pending:** 4 non-review commits on
-  main since d83432d: A 1 (01b3036 **credits flipped, 43/44**), M 2 (sm_a4 M2 +121 production;
-  common enemies -429 legacy, 110%), 2 user-requested docs cleanups (Jim; not counted). On `ci/`:
-  B 9 new code commits (B1 `sm_81` deleted + 4 `sm_80`; B3 `sm_8f`, `sm_b2` deleted; b-integrate
-  rebased with `sm_88`, `sm_a0` deletions), M `sm_a8` (+149 production). All `Score:`. Score
-  `43/44 · 47589 · 115353 · 4188 · 39401` (last 42 · 47983 · 115197 · 4197 · 39353); warnings
-  296; hooks 607/93. 10-26 12:00: checks met; legacy, sm_a0 ahead once b1 lands (b1 tip 43,213);
-  unsafe (b1 tip 4,046 vs 3,900) and production (114,812 vs 114,000) behind. Treemap OK.
-- **2026-10-25 21:52 CET (6ea29c9), B landing stall, second in a row:** 3 agent commits on
-  main since 648afab: A 2 (0086292 **Spore Spawn, 42/44**, regression row; 876fbfb branch rows
-  only), M 1 (1225f54 M1a fixpoint landed, -95 unsafe), B 0 (third check-in). Unlanded:
-  `ci/b-integrate` (6 B, conflicts with M1a, see Milestone plan), credits (43/44), M2 sm_a4,
-  common enemies (-429 legacy, 110%). All `Score:`, 0 docs-only. Score `42/44 · 47983 · 115197
-  · 4197 · 39353` (last 41 · 47998 · 115215 · 4292 · 39353); warnings 297; hooks 607/93.
-  10-26 12:00: checks met; legacy and sm_a0 on if b-integrate lands; unsafe, production behind.
-  Treemap OK (200, 6ea29c9); its "Legacy 62.2k" counts unsafe files too, not Score's legacy.
-- **2026-10-25 20:52 CET (648afab), landing stall in B1/B3 (first):** 8 agent commits
-  landed since 6bd23aa: A 3 (f2a7264 **Mother Brain defeat, 41/44**; download retry; runner
-  budget), M 4 (Rio, Norfair Rio, Flies: -392 legacy), B2 `sm_88` 1; **B1 `sm_81` and B3
-  `sm_a0` 0 on main two check-ins running** while `sm_88`/`sm_a0` deletions, sm_81 stacks,
-  M1a (-95 unsafe) and Spore Spawn (42/44) wait on `ci/` (runs cancelled, branches 10
-  behind). All `Score:`, 0 docs-only. Score `41/44 · 47998 · 115215 · 4292 · 39353` (last
-  40 · 48466 · 115145 · 4307 · 39347); warnings 297; hooks 607/93. 10-26 12:00: checks and
-  legacy on pace if held work lands; unsafe, sm_a0, production **behind** (production +70:
-  b782ca4 grew it 69). Changed: PLAN landing jam rule; M2 must not grow production.
-- **2026-10-25 19:52 CET (6bd23aa), no stall, CI queue is the bottleneck:** 6 agent
-  commits on main since 3d80523: A 2 (0fd90cf **C0b done, `ci.yml` green**; 8e2e9a0 **C2
-  landed early**, 63 runnable rows), C 3 (C3 live, L1 go), M 1 docs-only (M1A-REVIEW, 17%).
-  B landed 0, but 10 commits sit on `ci/windows-*`, `ci/m1a-fixpoint` (all <30 min old;
-  sm_88 retirement, sm_81 -823, sm_a0, Rio, M1a -95 unsafe) waiting on runners: main's
-  build queued 15 min, 33 shards queued. Score unchanged `40/44 · 48466 · 115145 · 4307 ·
-  39347` (last 40 · 48466 · 115145 · 4304 · 39336); warnings 301; hooks 607/93. 10-26 12:00:
-  legacy on pace if the queue lands; production, unsafe, checks behind. Changed: CI budget (20:05: user rules out paid runners; free-tier plan).
-- **2026-10-25 18:52 CET (3d80523), no stall, half hour:** 7 agent commits since 9fff566, all
-  18:17-18:25: A 1 (67fb989 checkpoint tooling; no flip, **no C0b, 2nd miss**), M 2 (bc07cde
-  Gripper M2; 0924e3b disk tooling), B1 `sm_81` 2, B2 `sm_88` 1, B3 `sm_a4` 1 (+36 legacy,
-  153%, against the 17:55 directive); cloud C 3 on `ci/` (C3 rows green, land refused: workflow
-  edit). All `Score:`, 0 docs-only. Score `40/44 · 48466 · 115145 · 4304 · 39336` (last 40 ·
-  48715 · 115177 · 4327 · 39336); warnings 301; hooks 607/93. 10-26 12:00: legacy on, checks,
-  unsafe (M1a not pushed), sm_a0 and production **behind**. Changed: C3 hand-land, B3 to sm_a0.
-- **2026-10-25 17:55 CET (9fff566), no stall, best hour so far:** 19 agent commits since
-  3ea69a0: A 5 (Gravity, Grapple, Botwoon flipped; MB regression), M 5 (d0fffa6 checked
-  `word!`, -124 unsafe; Ripper M2), B1 `sm_81` 3, B2 `sm_88` 3, B3 `sm_a4` 3; all `Score:`,
-  0 docs-only. Score `checks 40/44 · legacy 48715 · production 115177 · unsafe 4327 ·
-  verification 39336` (last 37 · 49512 · 115340 · 4546 · 39240); warnings 302 (357).
-  18:00 hit except `ci.yml` (user decision asked). Changed: M1 done, M1a fixpoint next;
-  A1.3 next steps; checks waypoints raised; `sm_a4` growth flagged.
-- **2026-10-25 16:55 CET (3ea69a0), stall in lane M (2nd check-in, 0 commits):** 7 agent
-  commits since 9b062a7: A 4 (Draygon, Space Jump, MB spawn regression, C0 compile),
-  B1 `sm_81` 1, B2 `sm_88` 2 (unsafe -31 then +33: backend contracts restored, sound),
-  B3 0, M 0; all `Score:`, 0 docs-only. Score `checks 37/44 · legacy 49512 · production
-  115340 · unsafe 4546 · verification 39240` (last 35 · 49698 · 115375 · 4554 · 39232);
-  warnings 357. 18:00: checks/legacy/banks met, production 40 over, `ci.yml` red,
-  M1 unsound. Changed: M1a (sound strip) to B3 agent; C0b drops mutation steps.
-- **2026-10-25 15:55 CET (9b062a7), no stall, short hour (15 min after reset 2):**
-  5 agent commits since f2d3a05: A 2 (6f579a3 Ridley, f207b36 Phantoon: checks 33 -> 35),
-  B1 `sm_81` 1 (a2088b5), B2 `sm_88` 1 (89%), B3 `sm_a4` 1 (44%); M 0 (lane opened at
-  15:40); all labelled with `Score:`, bodies <=8 lines naming rows. Score `checks 35/44 ·
-  legacy 49698 · production 115375 · unsafe 4554 · verification 39232` (last 33 · 49901 ·
-  115411 · 4567 · 39228); warnings 357 (362). 18:00: checks, legacy, banks met;
-  production 75 over (on pace); unsafe/M1 branch and green `ci.yml` still open. No changes.
-
-## Lane watch (2026-10-24 23:52)
-
-- d0d1961 is a sound bank-retirement step (−90 engine, adapter and `CollInfo`
-  record deleted, `Definitions` implemented directly on `Game`), but it moved a
-  `printf` `unsafe` block into an impl that was `#[forbid(unsafe_code)]`. Route
-  ROM-pointer warnings through a safe logger when the bank's last family goes.
-- Commit bodies are compressed to the point of code ("no-default376, source1f25").
-  Keep ~8 lines but write words: which checks ran, which segments, result.
-- 00:55: lane A is executing A0 as written (logger read-only, no frames dropped,
-  hashes only, no fixture Rust). Label map/report commits `A:` only beside a lane
-  A code or tool commit; a427ba4 alone counted as no lane progress.
-
-## Corpus watch (2026-10-24 22:52)
-
-- Consolidation is clean (no unsafe added, verify cfg kept behind diagnostic
-  calls, coverage named per commit: Crateria 800, Ceres 8340–8780, boot 77381+),
-  but small: −144 production/hour puts 110,000 ~48 hours out. 98aafd4 is +5
-  production for 7 unsafe functions retired; acceptable, stated.
-- Verification grew 7× faster than production fell, mostly hand-written fixture
-  checks per adoption. Directive now caps verification added at production
-  deleted per adoption; checkpoint segments are the preferred evidence.
-- Coverage produced no commit this hour. If the Power Bomb route is not a checked
-  segment by next check-in, that is a coverage stall for the third time today.
-
-## Progress picture (user request, 2026-10-25 21:30)
-
-The interactive codebase map is retired at the user's request. The one progress view
-is `tools/treemap.py`: production Rust by area, banded owned / partly owned / legacy,
-with four headline numbers (required checks, legacy, unsafe, production lines) and
-their 1-hour change. The user retired Pages/image CI on 2026-10-27: README displays
-the committed docs/treemap.svg directly. Generate it from staged Rust with
-tools/treemap.py --staged beside each code commit; its source identity excludes
-the generated SVG. PROGRESS.md was removed at the user's request, f2f6178.
-
-## Initial review (2026-10-24, a408c8f)
-
-## Baseline measured at a408c8f
-
-| Measure | Value |
-| --- | --- |
-| Production Rust in `sm/src` (excluding `verification`/`verify` paths) | 94,285 on 2026-10-21 → **117,986** now |
-| Verification Rust | 1,316 on 2026-10-21 → **35,653** now |
-| Lines containing `unsafe` in `sm/src` | 8,537 on 2026-10-17 → **5,042** now |
-| Files with `forbid(unsafe_code)` | 289 |
-| Commits since 2026-10-21 touching only `docs/`, `PROGRESS.md`, `README.md`, `AGENTS.md` | **226 of 412 (55%)** |
-| `docs/PLAN.md` | 1,642 lines (mandatory pre-read) |
-| Markdown in `docs/` + `PROGRESS.md` | ~15,000 lines, plus 875 KB of HTML reports |
-| `cfg(sm_verify_dll)` sites in production code | 183 |
-| `.probe("…")` calls in production code | 114 |
-| `cargo check --no-default-features --lib` warnings | 2,426 (1,084 unnecessary parentheses, 228 unused variables, 83 unused imports) |
-| `#[test]` functions | 39 |
-| Exercised normal gameplay for the adopted player work | ~8,577 frames, one gameplay room; any% replay reaches six rooms, no credits |
-
-## What is working
-
-- The per-frame ROM oracle is the project's strongest asset.
-- Owned modules such as `game/player_movement/` are good Rust: forbidden
-  unsafe, typed state, real enums (`LiquidAtHeight`), no RAM pointers.
-- Unsafe lines fell by 41% and the library compiles.
-
-## Findings and directives
-
-### 1. Coverage is the bottleneck (highest priority)
-
-Adoption claims rest on very little exercised gameplay. One room of normal
-play cannot establish fidelity for locomotion, collision or transitions, and
-targeted mutations only test what the replay already reaches.
-
-Directive: build an oracle checkpoint corpus before further adoption.
-- Keep the replay in sync with the TAS (input/lag alignment) as far as it can
-  go, and/or capture `.smvchk` checkpoints from the oracle side covering every
-  area (Crateria, Brinstar, Norfair, Wrecked Ship, Maridia, Tourian), each
-  boss, the main item pickups, doors/elevators, save/load, death, and credits.
-- Checkpoints are ROM-derived: generate them locally, never commit them. Commit
-  only the recipe (movie, frame ranges, required probes) so any agent can
-  regenerate the corpus.
-- Done when one command replays every segment and reports per-segment
-  pass/fail and rooms visited. Every later adoption must name which segments
-  exercise it.
-
-### 2. Production size is growing against the goal
-
-The goal is below 100,000 production lines; it went from 94k to 118k in three
-days. Adoptions add Host/Effects/Content layers and adapters while the bank
-files stay large (`sm_a9.rs` 5.7k, `sm_8b.rs` 4.9k, `sm_a6.rs` 4.9k).
-
-Directive:
-- Every adoption commit reports production lines added and bank/legacy lines
-  deleted in the same commit. Net production growth needs a one-line reason.
-- Prefer deleting legacy bank code over adding new layers. Do not introduce a
-  new Host trait, effects/content split or adapter unless an existing one
-  cannot serve.
-- Next production target: back under 110,000 before starting a new subsystem.
-
-### 3. Process outweighs product
-
-Over half of recent commits change only reports. `AGENTS.md` already forbids
-dashboards and evidence stores, yet PROGRESS.md, the atlas and the
-architecture report are maintained by hand on most commits.
-
-Directive:
-- Rewrite `docs/PLAN.md` to at most ~200 lines: goal, rules, validation
-  strategy, the current item and the next three. Move dated history and
-  completed-item narratives to [the historical archive](https://github.com/JimLundin/sm-decomp/blob/01b30366c1b798463c2726db69f31afd4abbdcab/docs/HISTORY.md), which agents need not read.
-- `PROGRESS.md` becomes a short table generated by `tools/progress.sh`
-  (production lines, verification lines, unsafe lines, warnings, checkpoint
-  segments passing). Update it at most once per adopted milestone, in the
-  same commit as the milestone.
-- Stop refreshing `docs/codebase-map`, `docs/architecture.html` and
-  [the former architecture report](https://github.com/JimLundin/sm-decomp/blob/01b30366c1b798463c2726db69f31afd4abbdcab/docs/target-architecture/report.html) per commit. Refresh only on user request.
-- Target: under 20% of commits are docs-only.
-
-### 4. Verification hooks have leaked into production code
-
-183 `cfg(sm_verify_dll)` blocks and 114 probe strings sit in gameplay code.
-Mutation tests patch source text from Python, so any reformat breaks them.
-
-Directive:
-- Route probes through one trait method on the host with a no-op production
-  implementation; remove inline `cfg(sm_verify_dll)` from gameplay functions
-  where a host method can carry the difference.
-- Evaluate `cargo-mutants` (scoped to owned modules) to replace text-patch
-  mutation recipes. Keep the Python recipes only where cargo-mutants cannot
-  reach, and do not add new ones without trying it first.
-- Do not grow the verification tree for each adoption; reuse the checkpoint
-  corpus from item 1.
-
-### 5. Hygiene
-
-- One mechanical commit: `cargo fix` and `cargo clippy --fix` for the c2rust
-  leftovers (parentheses, unused imports/variables), verified by a full
-  replay. Then keep the warning count from rising; record it in progress.
-- Explicitly `#[allow(improper_ctypes)]` the eight FFI declarations whose
-  layout is already guarded by `offset_of!` asserts (e.g. `SpcPlayer`, `Dsp`),
-  with a comment, so real FFI warnings stand out.
-- Add plain `#[test]` unit tests for pure owned logic (speed tables, liquid
-  physics, pose resolution). They are fast and catch errors before the oracle.
-
-### 6. CI on main
-
-Many agents commit directly to `main`. The 2026-10-24 local validation policy
-stays: CI does not gate an individual adoption. But a red `main` is a stop
-signal: the next adoption does not start until main is green again or the
-failing commit is reverted.
-
-## Order of work
-
-1. Hygiene commit (item 5, first two bullets): small, mechanical, unblocks
-   readable warnings.
-2. PLAN/PROGRESS reduction (item 3).
-3. Checkpoint corpus (item 1).
-4. Resume subsystem adoption under the size rule (item 2), using the corpus,
-   with probe consolidation (item 4) done inside the subsystems being touched.
+The user assigns this session proactive oversight of pace, fidelity and the
+accepted owned-engine architecture. This plan supersedes older work-order and
+pacing advice. PLAN remains authoritative for the Fast loop, verification,
+resources, Git, commit/push and completion. Preserve current source owners,
+cloud bank claims and the sole Windows integrator. The user stopped Linux development
+on 2026-10-27; its frozen source and receipts remain preserved. Implementation,
+review and qualification now run on Windows under the new oversight session.
+
+### Current publication and acceptance
+
+The accepted room-cohort publication baseline is **0fed8911**, canonical source
+`9787b6195e8a0b9690a8f28bf13b90567e2a2711e71bbbfe8f070a230b6c27b4`.
+The external room-pack cohort is independently accepted; all nine required
+issues and [milestone 2](https://github.com/JimLundin/sm-decomp/milestone/2) are closed.
+[Acceptance receipt](https://github.com/JimLundin/sm-decomp/issues/18#issuecomment-6449872237)
+matches all 588 published Git blobs/worktree/frozen inputs, 6,414,506 raw bytes
+and all 32 donor leaves. No acceptance build/replay was repeated.
+
+| Measure | Published total | Room-cohort delta against 79efbfb6 |
+| --- | ---: | ---: |
+| Production | 116,413 | +1,909 |
+| Legacy | 17,793 | 0 |
+| Unsafe-containing lines | 2,579 | +34 |
+| Verification | 43,167 | +1,039 |
+| Support | Separate from engine totals | +67 |
+
+All 38 distinct background cases pass and all 34 original attempted jobs are
+collected. SOURCE06/composition04 retains its original 21,481 ordinary comparisons
+with zero differences, 23 units, seven selected-pack cases and genuine initialized/
+prepared checkpoint, reset, continuation and changed-world rejection proofs.
+Composition05 changes only two fixture expectations for existing clears at
+0782/0612, with all assertions intact. Only cases34-36 ran on that successor.
+Final fmt/host/library/frontend/direct-DLL/source/native guards pass, with 160
+unchanged warnings. All 45 codec contributors remain byte-identical, codec
+`a239acb01e0789a4`; preserve each original source/DLL/input attribution.
+[Original qualification](https://github.com/JimLundin/sm-decomp/issues/17#issuecomment-6449152367)
+and [narrow successor approval](https://github.com/JimLundin/sm-decomp/issues/16#issuecomment-6449263844)
+hold the exact relationship.
+
+Catalog/schema/validation/adapters grow code. Verification exceeds forecast and
+is counted in full. Raw-operation and backend retirement are 0; no savings,
+whole-Session or full-engine claim. Windows desktop selected ROM/search paths
+retain the documented ASCII policy; pack/verifier paths retain Rust handling.
+Absolute ASCII ROM paths do not depend on cwd; --config skips relative directory
+search. No-room-pack flow has no new guard.
+
+### Qualified shared renderer #21
+
+[Exact source and qualification assignment](https://github.com/JimLundin/sm-decomp/issues/21).
+Final composition06 is independently source-reviewed and locally qualified.
+
+| Role | Owner | Current result and next action |
+| --- | --- | --- |
+| V source | Linux, stopped | Frozen V03 rendering core/records/prepared consumer retained unchanged. |
+| C source and case42 | Windows checkpoint_flexible_interface | Frozen C01 adapter and final independent EXTBG/mosaic dispatch witness; source allowance released. |
+| Review | Windows oversight renderer reviewer | Exact final06 ten-file composition and unchanged codec/source transfer pass. |
+| Standalone compile | Original Linux receipt | V03 metadata compile passed in 0.554s; preserve its original attribution. |
+| Final build/runtime/Git | Windows implementation integrator | Final06 direct/library/source/native, 24 units and isolated40/42 pass; sole publisher. |
+
+Final source is `c942fe048da941424ee0bf653cab4c335b1615598d6e4a9f8c886bfaa1f1124b`,
+DLL SHA256 `b01c256132f1f2b2ae37501326b20ff8f4a320124a62be1f6519cc87e0e6a282`.
+All ten final leaf pins and all 48 raw codec contributors match the reviewed inputs.
+Final06 adds the 94-line case42 body (+43 verification), preserves every original
+assertion and original39/corrected40/43, and clears both mosaic controls before
+the original native forced-blank check. Independent EXTBG BG1 priority and enabled
+Mode1 mosaic require literal pixels through actual PpuRunLine dispatch.
+
+Actual final06 no-default library has 200 warnings versus202 from the published9787
+baseline with the same compiler/options/native inputs and incremental1: zero added,
+two obsolete PPU warnings removed. Earlier incremental0 158/160 and the failed
+cross-profile comparison retain their original evidence; no suppression or source fix.
+Final direct build took78.197s, minimum free RAM2.200GiB; persistent cache466796262 bytes.
+This first cold cached build establishes no speedup over the original uncached65.181s.
+
+Original03 source df9b/DLL5921 retains 17 rows/26638 ordinary comparisons/0,
+full Morph1200, initialized329+resume5 and prepared checkpoint/reset/continuation/
+changed-world rejection. Codec48/2cdd23f3f10e7e57 (raw951201/normalized940208 bytes)
+is unchanged; no captures, accepted rows or successful DLL/runtime jobs were repeated.
+Final net is **+657 production/+506 verification/+7 unsafe-containing/legacy0**:
+production117070, verification43673, unsafe2586, legacy17793. No net-savings,
+raw-operation retirement, backend independence or full Session claim.
+
+V03 three-leaf raw canonical is
+`229850c73132771b4472b650fb359c656fc84697ac8b101bc480ee075633b31f`:
+core 527 / records 253 / prepared 164 = 944 physical production lines. Its ordinary signed
+operators now retain original overflow failure points; four joined lines are
+formatter reflow, with substantive savings0. Records and mutable-workspace
+interface are unchanged from V02. [Exact correction](https://github.com/JimLundin/sm-decomp/issues/21#issuecomment-6449997768)
+and [full inventory](https://github.com/JimLundin/sm-decomp/issues/21#issuecomment-6450048171)
+bind the source. Do not rewrite already frozen inputs.
+
+C's frozen ppu.rs is 510 lines / 19,101 bytes, SHA256
+`fd8639c60bd744f288e6ae9433d5dda9778c3e8e649f6a29dcd8a0329cb57bb0`,
+versus 798 lines / 30,190 bytes at base0fed. Donor SOURCE_C01 is in the assigned
+owned-raster-C01 experiment; TRANSPORT.json is 19,957 bytes, SHA256
+`e04c79d27e48316146e3e4ef844c6f992ce8b5b5ce4fb64dbbcae12bc1ea98e9`.
+The source-only complete provisional cost is **+657 production**, or +661 when
+excluding V's four formatter joins, **+6 verification registration / support 0 /
+legacy 0 / unsafe-containing -7** before assigned executor checks. The small
+overrun over +650 is explained by native tails, signed aliases and staged reference
+reads; fidelity/readability remain required. Raw/backend retirement claim is0.
+No C compiler/runtime/pixel evidence is implied by rustfmt/static checks.
+
+Preserve these interfaces and source contracts:
+
+- BG wraps its base before column/plane additions. Reads reach801e; retain 31
+  native tail words, port/padding/cgram aliases. No final-address mask or zeros.
+- Sprite evaluation writes directly through a narrow mutable 256-word native
+  workspace. Completed pixels survive explicit errors and Rust unwinding.
+  Success publishes sticky overflow before lineHasSprites; failure keeps prior
+  flags/lineHasSprites. No production panic wrapper or whole-Ppu borrow.
+- Keep brightness/backdrop/forcedblank/line0 mutation order. C acquires gated
+  signed sprite aliases from surrounding native storage. Per-pixel borrows end
+  before the original four-byte native commit. Preserve failures and aliases.
+- Pure color begin/needs-subscreen/finish stages retain native/reference policy,
+  including pseudo-hires/modes5/6 subpixels without math. EXTBG/mosaic fallback,
+  register/latch/snapshot/reference/device dependencies remain disclosed.
+- Keep whole ppu.rs in checkpoint contributors and add all three rendering
+  leaves, plus actual library/literal registrations, through the sole integrator.
+  New codec requires genuine initialized/required starts/continuation and complete
+  source/native/ROM/input guards. Never restamp 05 checkpoints.
+
+The safe core and actual prepared consumer must compile without oldsm/SNES/native/
+device/ROM dependencies. The direct metadata entry reaches only the three frozen
+leaves and std/core; whole sm --no-default-features is not that proof. Retain the
+original Linux detached proof; no new Linux job. Source authors remain source-only.
+Release original handles before changed-entry reuse.
+
+**Independent pixels are required.** Oracle and mine movie branches both use the
+shared renderer. Their pixel/RAM agreement alone cannot establish fidelity.
+The existing verifier now supplies independent Mode1/Mode7 pixels, priority/masks/
+color/scanline/affine, alias/failure and actual EXTBG/mosaic boundary witnesses.
+Broader variants and checked-overflow mutation sensitivity remain scoped/unproven.
+PLAN affected rows/four smokes/full Morph1200 retain their original proofs.
+
+### Source alongside qualification: message composition #22
+
+[Complete source/consumer/rows/budget assignment](https://github.com/JimLundin/sm-decomp/issues/22)
+is released to the new Windows message source owner. Compose frozen Linux V22
+from [the complete delivery](https://github.com/JimLundin/sm-decomp/issues/22#issuecomment-6451197429)
+and Windows owned-message-C01 on exact renderer source c942 in a private checkout.
+The 902-line V donor's original metadata compile1.048s passes; full V/C review and
+runtime remain open. C's 340-line adapter removes53 lines: net+849 production before
+registration, above forecast and counted in full. No Linux worker is reactivated.
+One 64MiB source-only allowance; the implementation integrator owns build/replay/Git.
+
+Reuse the unchanged 295-line dialogue runner and frozen V03 renderer. One pure
+message-composition implementation serves the native writer and an actual prepared
+display consumer. Remove replaced borders/text/button/selection/radius/scanline
+bodies in the same cohort. Keep lazy draw/drawing/fresh modify reads, scratch/text/
+DAS/word/bound failure order, do-until zero/odd/wrapped behavior, letter priority,
+HDMA repeat/count and palette/saved-display restore order. Preserve live request
+clearing, parent/child suspension, input filtering, reset/load and checkpoints.
+
+Prepared starts require complete validated saved display, message/font/media IDs
+and revisions; missing data rejects. Do not infer a message or initial display
+from 9E9F. Native writable RAM and separately owned prepared display do not become
+competing authorities. display_refresh::wait's0782 request/acknowledgment structure
+is retained; no new clock, loop-to-completion or invented 60Hz policy. Audio/device
+delivery and full Session/Scene extraction remain explicit dependencies.
+
+Full incremental forecast **+100..550 production / +80..200 verification /
++30..100 support**, with every helper/record/adapter/registration/consumer counted
+once. Runner movement earns no deletion. Qualification binds published #21
+dependencies, while independent source work proceeds now. Reuse the existing
+runner/checkpoint/pixel method and original artifacts; no new framework or repeated
+completed survey. Native hardware/audio and full backend retirement remain open.
+
+### Full owned playable slice #20 remains open
+
+[Four accepted interface decisions](https://github.com/JimLundin/sm-decomp/issues/20#issuecomment-6449486236)
+refine the full Morph9E9F proposal. Its six-role+8,900..21,100 production estimate
+is not blanket authorization. Preserve all eight full-slice proof groups and the
+original full 1,200 Morph route.
+
+1. Tools construct G's complete sealed validated start; D owns immutable envelope/
+   IDs. Session never runs CPU normalization, opens a RAM dump or guesses fields.
+2. Initial observation is Tick 0; input index i commits Tick(i+1). Preserve actual
+   normal/dialogue suspension, source sampling and late NMI/HDMA/IRQ settlement.
+3. G checkpoints semantic audio intent/delays; A mixer/voices/echo and C epoch/
+   acceptance/outbox stay outside. Opening never resends an accepted fanfare batch.
+4. Actual portable/default/headless edges exclude oldsm/backend/native/reference/
+   devices. Reuse actual pure leaves once; package moves alone do not establish it.
+
+[Existing seed/trace facts](https://github.com/JimLundin/sm-decomp/issues/20#issuecomment-6448986920)
+use normalized WRAM06b4d253, not unavailable raw89960823. Room 9E9F / state 9EB1,
+equipment 0 and next input 18109 are observed. The original full 1,200 trace stays
+in 9E9F; award 590 / completion 977 retain source eba0 / DLL a1c0 / codec 3ac provenance.
+These facts do not establish complete initial Scene/audio or a committed Scenario.
+Exact cadence/reference policy and G's complete field schema still need evidence.
+Use the completed original reader; do not start duplicate artifact surveys.
+
+Scene extraction still needs immediate atmospheric/OAM/Samus aliases, NMI544-byte
+display commitment and later effects. Terrain/observation/gamma surveys remain
+scoped constraints; no standalone cache, dispatch facade or getter campaign is
+released. ENGINE_STATE_MIGRATION and retained qualified history hold their actual
+foreign-transfer/reset/adoption/failure contracts.
+
+### Pace, readable handoffs and publication
+
+Keep useful Windows owners assigned to current work and one concrete ready follow-up. Name
+owner, allowed files, required pin, result and next recipient before completion.
+Inspect actual handles; send_message does not wake a terminal worker. Use
+followup_task, preserve live jobs/frozen sources and refill before report prose.
+Do not repeat accepted checks to fill time. Current #21 authors' next source is #22;
+review/compile/runtime owners have its precise next proof scope.
+
+Use Markdown for issue instructions and operational comments: owner, result,
+next action and actual blocker. Use parallel lists/tables, spaces between numbers
+and words, and details for raw transport. Windows communication_representative
+remains the sole user-facing #6 writer; route facts through its root.
+
+Latest room-cohort final DLL-to-corrected-case START gap was 82.185s; last corrected
+EXIT-to-commit was 5m35s. Mailbox publication confirmation was 6m50s after EXIT,
+not an exact push duration. Launch prepared admitted groups without a prose ACK,
+collect original handles, then commit/push qualified source promptly. Overlap
+source/review/compilation under PLAN budgets; final publication binds the actual
+reviewed source. Report each cycle's source/review/build/capture/replay/landing
+time and net deltas, then correct the measured bottleneck.
+
+Pages publishing was removed earlier. The user also retired the README progress
+image and treemap generation. No Pages/image CI or staged SVG generation is a
+completion step. Keep measured Score in code commits; no docs-only commit or
+routine Windows CI observation. This reviewer update travels with the next code.
+Preserve untracked docs/codebase-map and other workers' source/caches/locks.
+
+### Size and final acceptance
+
+Actual renderer production117,070 is17,070 above100,000. With17,793 legacy lines,
+bank-only replacement could retain at most723 lines (4.1%); at80% replacement,
+about13,512 further lines must disappear elsewhere before future media growth.
+Moves, formatter joins and verification relocation are not savings. Count every
+retained backend, compatibility adapter, new owner and dependency once. Do not
+sacrifice fidelity/readability to meet arithmetic or claim unsafe attributes as
+retired raw operations.
+
+Choose later work by complete removable dependencies or genuinely duplicated
+responsibilities with understood callers and proof. Tiny isolated cleanups must
+not dominate qualification. Full owned Session, independent renderer/audio/backend,
+boot-to-credits fidelity, Map Rando and the size goals remain open. The accepted
+architecture/validation contracts determine their completion.

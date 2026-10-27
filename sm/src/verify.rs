@@ -1396,7 +1396,8 @@ mod coverage_checks {
         macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-        let tests: [(&str, fn()); 23] = cases![
+        let tests: [(&str, fn()); 24] = cases![
+            independently_authored_raster_pixels_and_prefixes,
             room_pack_uses_native_header_selection_and_final_block_mirroring,
             room_pack_rejects_checksum_valid_structural_errors,
             room_pack_selection_rejects_missing_duplicate_and_option_values,
@@ -1436,6 +1437,17 @@ mod coverage_checks {
             tests.len()
         );
         i32::from(failed != 0)
+    }
+
+    // Movies share the renderer and cannot supply independent pixel/failure expectations.
+    #[cfg_attr(test, test)]
+    fn independently_authored_raster_pixels_and_prefixes() {
+        for id in 38..=43 {
+            assert!(
+                sm::verify_room_background_case(id).is_some(),
+                "raster case {id}"
+            );
+        }
     }
 
     // Movies cannot select tied/negative native headers, unsupported mappers or raw mirrors.
