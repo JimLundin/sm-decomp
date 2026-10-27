@@ -14,8 +14,8 @@ This directive supersedes older work-order and pacing advice below; PLAN's
 Fast loop, resource limits and landing rules remain in force. Existing source
 owners and the sole Windows integrator retain their assignments.
 
-Qualified projectile source `d6724a62` on published Mother Brain/support parent `b5b05ad9`: production 113,753, legacy 17,793,
-unsafe-containing lines 2,542, verification 41,854. Canonical source has 583 inputs / 6,260,187 raw bytes; source preflight has 570 bindings. A9 corpse
+Qualified Crocomire source `32c9b193` on published projectile parent `70edf55f`: production 113,790, legacy 17,793,
+unsafe-containing lines 2,543, verification 41,858. Canonical source has 584 inputs / 6,261,518 raw bytes; source preflight has 571 bindings. A9 corpse
 animation landed `c872ad44`: -60 production/-60 legacy/-23 unsafe/verification0;
 eight rows passed 11,183 selected + 272 setup / 0 failures. Six native captures,
 seventeen word dereferences and one MemCpy were removed; twenty-one address-label
@@ -50,6 +50,10 @@ Mother Brain and README support landed `b5b05ad9`: -51 production/-51 legacy/-1 
 README displays committed staged-source SVG; Pages image publisher is deleted. Projectile deduplication closes21rows32443+1713/0
 and three minimal genuine captures18742/0, total52898 comparisons. Net -57 production/legacy0/-1 unsafe attribute/+18 verification;
 46 substantive lines exclude11 formatter joins. Current Crocomire joint source retains its separate reviewed selector dependency.
+
+Crocomire core and typed consumer: 21 reactions/choose-spit are separated; seven rows6453+272/0 and all source/native/codec guards pass.
+Actual joint cost +37 production/+4 verification/legacy0/+1 forbid attribute, raw operations unchanged. Private selector getter preserves
+full/odd keys and the original velocity-write then actor-key then separate x/y-read order. Native storage is retained; this is no size-saving claim.
 
 Next work, in order:
 

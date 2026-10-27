@@ -108,7 +108,15 @@ impl ActorEffects for Runtime<'_> {
         actor: ActorKey,
         script: EnemyScript,
     ) -> EnemyScript {
-        self.actor_instruction_legacy(routine.0, actor.byte_index(), script)
+        match routine.0 {
+            10782374 => self.owned_call(|runtime| {
+                super::crocomire_attack::dispatch(actor.byte_index(), script, runtime)
+            }),
+            10782546 => self.owned_call(|runtime| {
+                super::crocomire_attack::choose_spit(actor.byte_index(), script, runtime)
+            }),
+            _ => self.actor_instruction_legacy(routine.0, actor.byte_index(), script),
+        }
     }
     fn actor_hitbox_touch(&mut self, routine: ActorRoutine) {
         self.actor_touch_legacy(routine.0);

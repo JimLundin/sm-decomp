@@ -38,6 +38,9 @@ impl Deref for ActorRead<'_> {
 }
 /// Both read variants borrow Self. No projected-value detach constructor exists.
 pub(in crate::game) trait ActorAccess: SessionAccess {
+    fn selected_actor(&self) -> ActorKey {
+        ActorKey::from_legacy(self.session().actors.controls.selected)
+    }
     #[cfg(sm_verify_dll)]
     fn actor_movement_observe(&mut self, _tag: u8) {}
     fn resolve_actor<'a>(&'a self, key: ActorKey, mode: AccessMode) -> ActorRead<'a>;

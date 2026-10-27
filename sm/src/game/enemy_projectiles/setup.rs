@@ -1559,9 +1559,9 @@ pub(super) fn EprojInit_CrocomireProjectile(j: u16, ctx: &mut impl Host) {
     enemy!(ctx, -512i32 as u16 => (v2) as isize, velocity_x);
     enemy!(ctx, 1 => (v2) as isize, velocity_y);
 
-    let v3 = ctx.inputs().current_enemy as i32 as u16;
-    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v3 as u16), Le).x.whole as i32 - 32i32) as u16 => (v2) as isize, x);
-    enemy!(ctx, (ctx.resolve_actor(Key::from_legacy(v3 as u16), Le).y.whole as i32 - 16i32) as u16 => (v2) as isize, y);
+    let v3 = ctx.selected_actor();
+    enemy!(ctx, (ctx.resolve_actor(v3, Le).x.whole as i32 - 32i32) as u16 => (v2) as isize, x);
+    enemy!(ctx, (ctx.resolve_actor(v3, Le).y.whole as i32 - 16i32) as u16 => (v2) as isize, y);
 
     enemy!(ctx, 0 => (v2) as isize, counter);
     enemy!(ctx, 0 => (v2) as isize, x_fraction);

@@ -98,6 +98,7 @@ mod overlap;
 pub(in crate::game) use overlap::axis_overlaps;
 pub(in crate::game) mod blue_face_block;
 pub(in crate::game) mod brinstar_pipe_bug;
+pub(in crate::game) mod crocomire_attack;
 pub(in crate::game) mod crocomire_reactions;
 pub(in crate::game) mod draygon_death;
 pub(in crate::game) mod draygon_eye;
