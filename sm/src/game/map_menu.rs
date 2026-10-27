@@ -29,16 +29,14 @@ pub(crate) unsafe fn advance(game: &mut Game) -> CoroutineRet {
     }
     0
 }
-unsafe fn fade_to_options(game: &mut Game) {
-    unsafe {
-        draw_area_labels(game);
-        crate::game::display_refresh::fade(false, game);
-        if (game.g_ram[0x51] & 0xf) == 0 {
-            word! {game; game_state = kGameState_2_GameOptionsMenu as u16; menu_index = 0; }
-        }
+fn fade_to_options(game: &mut Game) {
+    draw_area_labels(game);
+    crate::game::display_refresh::fade(false, game);
+    if (game.g_ram[0x51] & 0xf) == 0 {
+        word! {game; game_state = kGameState_2_GameOptionsMenu as u16; menu_index = 0; }
     }
 }
-unsafe fn prepare(game: &mut Game) {
+fn prepare(game: &mut Game) {
     menu_tilemap::clear(game);
     menu_tilemap::upload(2048, 0x7e3600, 1, true, game);
     word! {game; palette_change_num = 0; }
@@ -47,7 +45,7 @@ unsafe fn prepare(game: &mut Game) {
     word! { game, 0; target_palettes[14], target_palettes[30] }
     word!(game.menu_index += 1);
 }
-unsafe fn fade_palette(game: &mut Game) {
+fn fade_palette(game: &mut Game) {
     if crate::game::palette_effects::fading::file_select(game) != 0 {
         word! { game, 0; reg_BG1VOFS, reg_BG1HOFS, reg_BG2VOFS, reg_BG2HOFS }
         word!(game.file_select_map_area_index = area_selection(game).unwrap_or(0) as u16);
@@ -111,82 +109,74 @@ unsafe fn configure_area_window(game: &mut Game) {
         }
     }
 }
-unsafe fn open_area_window(game: &mut Game) {
-    unsafe {
-        draw_area_labels(game);
-        if menu_window::open_from_center(game) {
-            game.g_ram[0x727] = ((word!(game.menu_index)) as u8).wrapping_add(1);
-            game.g_ram[0x69] &= !2;
-            game.g_ram[0x6c] = 0;
-            game.g_ram[0x6d] = 0;
-            word! {game; reg_BG2VOFS = 24; pausemenu_palette_animation_timer = 1; }
-            let mut v1: u16 = 0;
-            word_transfers!(game, ascending, 800; xray(0) <- rom(0xb6e000, 0));
-            v1 = 800;
-            word_transfers!(game, ascending, 224; xray(800) <- value(10241));
-            v1 = 1024;
-            menu_tilemap::area_label(game);
-            word_transfers!(game, descending, 160; xray(959) <- rom(0x81b14b, 160));
-            menu_tilemap::upload(2048, 0x7e4000, 1, false, game);
-        }
+fn open_area_window(game: &mut Game) {
+    draw_area_labels(game);
+    if menu_window::open_from_center(game) {
+        game.g_ram[0x727] = ((word!(game.menu_index)) as u8).wrapping_add(1);
+        game.g_ram[0x69] &= !2;
+        game.g_ram[0x6c] = 0;
+        game.g_ram[0x6d] = 0;
+        word! {game; reg_BG2VOFS = 24; pausemenu_palette_animation_timer = 1; }
+        let mut v1: u16 = 0;
+        word_transfers!(game, ascending, 800; xray(0) <- rom(0xb6e000, 0));
+        v1 = 800;
+        word_transfers!(game, ascending, 224; xray(800) <- value(10241));
+        v1 = 1024;
+        menu_tilemap::area_label(game);
+        word_transfers!(game, descending, 160; xray(959) <- rom(0x81b14b, 160));
+        menu_tilemap::upload(2048, 0x7e4000, 1, false, game);
     }
 }
-unsafe fn choose_area(game: &mut Game) {
-    unsafe {
-        let mut v0: i16 = word!(game.joypad1_newkeys) as i16;
-        'handle_action: {
-            if word!(game.joypad1_newkeys) as i32 & (kButton_Up as i32 | kButton_Left as i32) != 0 {
-                v0 = word!(game.enable_debug) as i16;
-                if word!(game.enable_debug) != 0 {
-                    let mut selection = word!(game.file_select_map_area_index);
-                    for _ in 0..3 {
-                        selection = previous_area(selection);
-                        if area_available(selection, game) != 0 {
+#[forbid(unsafe_code)]
+fn choose_area(game: &mut Game) {
+    let mut keys = word!(game.joypad1_newkeys) as i16;
+    'handle_action: {
+        let previous = word!(game.joypad1_newkeys) & (kButton_Up | kButton_Left) as u16 != 0;
+        let attempts = if previous {
+            3
+        } else if word!(game.joypad1_newkeys)
+            & (kButton_Select | kButton_Down | kButton_Right) as u16
+            != 0
+        {
+            6
+        } else {
+            0
+        };
+        if attempts != 0 {
+            keys = word!(game.enable_debug) as i16;
+            if word!(game.enable_debug) != 0 {
+                let mut selection = word!(game.file_select_map_area_index);
+                for _ in 0..attempts {
+                    selection = if previous {
+                        previous_area(selection)
+                    } else {
+                        next_area(selection)
+                    };
+                    if area_available(selection, game) != 0 {
+                        if previous {
                             QueueSfx1_Max6(0x37, game);
-                            switch_area(selection, game);
-                            draw_area_labels(game);
-                            return;
                         }
+                        switch_area(selection, game);
+                        if !previous {
+                            QueueSfx1_Max6(0x37, game);
+                        }
+                        break 'handle_action;
                     }
-                    break 'handle_action;
                 }
-            } else if word!(game.joypad1_newkeys) as i32
-                & (kButton_Select as i32 | kButton_Down as i32 | kButton_Right as i32)
-                != 0
-            {
-                v0 = word!(game.enable_debug) as i16;
-                if word!(game.enable_debug) != 0 {
-                    let mut n: i32 = 6;
-                    let mut R28_0: u16 = word!(game.file_select_map_area_index);
-                    loop {
-                        R28_0 = next_area(R28_0);
-                        if area_available(R28_0, game) != 0 {
-                            break;
-                        }
-                        n -= 1;
-                        if n == 0 {
-                            break 'handle_action;
-                        }
-                    }
-                    switch_area(R28_0, game);
-                    QueueSfx1_Max6(0x37, game);
-                    draw_area_labels(game);
-                    return;
-                }
-            }
-            if v0 < 0 {
-                word!(game.menu_index = 22);
-                draw_area_labels(game);
-                return;
-            }
-            if v0 as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
-                QueueSfx1_Max6(0x38, game);
-                select_area(game);
-                return;
+                break 'handle_action;
             }
         }
-        draw_area_labels(game);
+        if keys < 0 {
+            word!(game.menu_index = 22);
+            break 'handle_action;
+        }
+        if keys as i32 & (kButton_Start as i32 | kButton_A as i32) != 0 {
+            QueueSfx1_Max6(0x38, game);
+            select_area(game);
+            return;
+        }
     }
+    draw_area_labels(game);
 }
 fn previous_area(a: u16) -> u16 {
     let result: u16 = (a).wrapping_sub(1);
@@ -202,55 +192,44 @@ fn next_area(a: u16) -> u16 {
     }
     result
 }
-unsafe fn select_area(game: &mut Game) {
-    unsafe {
-        word!(game.menu_index += 1);
-        if word!(game.enable_debug) == 0 {
-            word!(game.area_index = word!(game.sram_area_index));
-            word!(game.load_station_index = word!(game.sram_save_station_index));
-            draw_area_labels(game);
-            return;
-        }
-        word!(game.area_index = AREAS[word!(game.file_select_map_area_index) as usize]);
-        let mut q: u16 = native_word(0xd8f8 + 2 * usize::from(word!(game.area_index)), game);
-        let mut v0: u16 = 0;
-        let r0 = station_coordinates(word!(game.area_index), game);
-        let mut r20: u16 = 16;
-        's_43: loop {
-            let mut v2: i8 = ((q) as i8) & (1i8);
-            q = q >> 1;
-            if v2 != 0 {
-                let mut v3: i16 = r0.table_word((2 * v0 as i32) as isize) as i16;
-                if v3 != -2i16 {
-                    if v3 != -1i16 {
-                        break;
-                    }
-                    v0 = -1i32 as u16;
-                }
-            }
-            v0 = v0.wrapping_add(1);
-            r20 = r20.wrapping_sub(1);
-            if r20 != 0 {
-                continue;
-            }
-            loop {
-                let mut v4: i16 = r0.table_word((2 * v0 as i32) as isize) as i16;
-                if v4 != -2i16 {
-                    if v4 != -1i16 {
-                        break 's_43;
-                    }
-                    v0 = -1i32 as u16;
-                }
-                v0 = v0.wrapping_add(1);
-                r20 = r20.wrapping_sub(1);
-                if r20 == 0 {
-                    Unreachable(game);
-                }
-            }
-        }
-        word!(game.load_station_index = v0);
+#[forbid(unsafe_code)]
+fn select_area(game: &mut Game) {
+    word!(game.menu_index += 1);
+    if word!(game.enable_debug) == 0 {
+        word!(game.area_index = word!(game.sram_area_index));
+        word!(game.load_station_index = word!(game.sram_save_station_index));
         draw_area_labels(game);
+        return;
     }
+    word!(game.area_index = AREAS[word!(game.file_select_map_area_index) as usize]);
+    let mut bits = native_word(0xd8f8 + 2 * usize::from(word!(game.area_index)), game);
+    let mut station = 0u16;
+    let coordinates = station_coordinates(word!(game.area_index), game);
+    let mut remaining = 16u16;
+    let mut unlocked_only = true;
+    loop {
+        if !unlocked_only || {
+            let unlocked = bits & 1 != 0;
+            bits >>= 1;
+            unlocked
+        } {
+            match coordinates.table_word((2 * i32::from(station)) as isize) {
+                0xfffe => {}
+                0xffff => station = u16::MAX,
+                _ => break,
+            }
+        }
+        station = station.wrapping_add(1);
+        remaining = remaining.wrapping_sub(1);
+        if remaining == 0 {
+            if !unlocked_only {
+                Unreachable(game);
+            }
+            unlocked_only = false;
+        }
+    }
+    word!(game.load_station_index = station);
+    draw_area_labels(game);
 }
 fn area_available(a: u16, game: &mut Game) -> u16 {
     let v1: i32 = 2 * AREAS[a as usize] as i32;
@@ -279,7 +258,7 @@ fn switch_area(R28: u16, game: &mut Game) {
 static LABEL_POSITIONS: [u16; 12] = [
     0x5b, 0x32, 0x2a, 0x7f, 0x5e, 0xb5, 0xce, 0x50, 0xce, 0x9f, 0x87, 0x8b,
 ];
-unsafe fn draw_area_labels(game: &mut Game) {
+fn draw_area_labels(game: &mut Game) {
     let mut r3: u16 = 0;
     sprite_output::menu(
         crate::rtl::rom_table_word!(game, 0x82c749, 0),
@@ -358,18 +337,16 @@ unsafe fn begin_room_window(game: &mut Game) {
         QueueSfx1_Max6(0x3b, game);
     }
 }
-unsafe fn open_room_window(game: &mut Game) {
-    unsafe {
-        menu_window::advance(menu_window::Motion::Expand, game);
-        if (word!(game.expand_sq_timer -= 1, reread) & 0x8000) != 0 {
-            word!(game.menu_index += 1);
-            game.g_ram[0x69] = 2;
-            game.g_ram[0x6c] = 0;
-            game.g_ram[0x6d] = 0;
-            game.g_ram[0x6b] = 0;
-        }
-        draw_area_labels(game);
+fn open_room_window(game: &mut Game) {
+    menu_window::advance(menu_window::Motion::Expand, game);
+    if (word!(game.expand_sq_timer -= 1, reread) & 0x8000) != 0 {
+        word!(game.menu_index += 1);
+        game.g_ram[0x69] = 2;
+        game.g_ram[0x6c] = 0;
+        game.g_ram[0x6d] = 0;
+        game.g_ram[0x6b] = 0;
     }
+    draw_area_labels(game);
 }
 unsafe fn initialize_room(game: &mut Game) {
     unsafe {
@@ -506,12 +483,12 @@ fn choose_room(game: &mut Game) {
         }
     }
 }
-unsafe fn show_room(game: &mut Game) {
+fn show_room(game: &mut Game) {
     draw_icons(IconMode::FileSelect, game);
     display_elevator_destinations(game);
     word!(game.menu_index += 1);
 }
-unsafe fn fade_room(game: &mut Game) {
+fn fade_room(game: &mut Game) {
     draw_icons(IconMode::FileSelect, game);
     display_elevator_destinations(game);
     crate::game::display_refresh::fade(false, game);
@@ -520,7 +497,7 @@ unsafe fn fade_room(game: &mut Game) {
         set_native_word(0xf78 + core::mem::offset_of!(EnemyData, x_pos), 32, game);
     }
 }
-unsafe fn start_game(game: &mut Game) {
+fn start_game(game: &mut Game) {
     let timer = 0xf78 + core::mem::offset_of!(EnemyData, x_pos);
     set_native_word(timer, native_word(timer, game).wrapping_sub(1), game);
     if native_word(timer, game) == 0 {
@@ -576,16 +553,14 @@ unsafe fn begin_return_window(game: &mut Game) {
         word! { game, 0; reg_BG1VOFS, reg_BG1HOFS }
     }
 }
-unsafe fn close_room_window(game: &mut Game) {
-    unsafe {
-        menu_window::advance(menu_window::Motion::Contract, game);
-        draw_area_labels(game);
-        if (word!(game.expand_sq_timer -= 1, reread) & 0x8000) != 0 {
-            word!(game.menu_index -= 15);
-            game.g_ram[0x69] = 17;
-            game.g_ram[0x6c] = 0;
-            game.g_ram[0x6d] = 0;
-        }
+fn close_room_window(game: &mut Game) {
+    menu_window::advance(menu_window::Motion::Contract, game);
+    draw_area_labels(game);
+    if (word!(game.expand_sq_timer -= 1, reread) & 0x8000) != 0 {
+        word!(game.menu_index -= 15);
+        game.g_ram[0x69] = 17;
+        game.g_ram[0x6c] = 0;
+        game.g_ram[0x6d] = 0;
     }
 }
 

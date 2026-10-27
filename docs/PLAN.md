@@ -48,7 +48,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current tipb116: production112130, legacy17365, unsafe2732, verification40421; warnings165.
+Current tip9e84: production112105, legacy17365, unsafe2716, verification40421; warnings165.
 Core sm82 persists actor/media identities and saved ROM patches; RAM/native frame dependencies remain explicit.
 Codec f158c44fac33eac7 has39 contributors/652740 normalized source bytes.
 Prepared110/initialized329+5,14 genuine captures189475 frames and full22 byte-identical restore pass.
@@ -63,7 +63,7 @@ Native FX definitions pass11183 selected+272 setup/0: -1 engine/unsafe unchanged
 Background/credits passes22765 selected+272 setup/0: +2 engine/-19 legacy/-1 unsafe; signature closure, raw operations unchanged.
 Logo/page2 passes10967 selected+272 setup/0: -1 engine/-1 legacy; eight raw operations retired, unsafe entries retained.
 Next: duplicated verification launchers and remaining B2 raw cones; cloud boss-bank claims remain separate.
-Linux file-menu a04/source57ea landed: five10967 selected+272 setup/0; -41 engine/-18 unsafe, claim/branch retired.
+Linux M: map-menu selection/safe callbacks -25 engine/-16 unsafe metric; raw pointers unchanged, six unsafe entries retained.
 ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
 Native player/DSP/APU and input Vec/FILE/Cart are owned; GameOwner does not promise Rust thread sharing.
 Keep SDL/native/audio quiescence and CRT order; invalid SIZE_MAX/malloc0 callbacks
