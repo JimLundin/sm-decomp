@@ -33,46 +33,37 @@ struct Step {
     footstep: bool,
 }
 
-const fn step(dx: i16, dy: i16, footstep: bool) -> Step {
+const fn step(dx: i16, dy: i16, scroll_x: i16, footstep: bool) -> Step {
     Step {
         dx: dx as u16,
         dy: dy as u16,
-        scroll_x: 0,
-        footstep,
-    }
-}
-
-const fn scrolled(scroll_x: i16, dy: i16) -> Step {
-    Step {
-        dx: 0,
-        dy: dy as u16,
         scroll_x: scroll_x as u16,
-        footstep: false,
+        footstep,
     }
 }
 
 fn movement(ea: u32) -> Option<Step> {
     Some(match ea {
-        11113910 => scrolled(4, -10),
-        11113920 => scrolled(4, -16),
-        11113930 => scrolled(-2, -12),
-        11113950 => scrolled(4, 12),
-        11113960 => scrolled(-2, 16),
-        11113970 => scrolled(-2, 10),
-        11113980 | 11114224 => step(1, -2, false),
-        11113996 => step(2, 0, false),
-        11114012 => step(0, 1, false),
-        11114018 => step(3, 1, true),
-        11114040 => step(15, -2, false),
-        11114056 => step(6, -4, false),
-        11114072 => step(-2, 4, false),
-        11114088 | 11114110 => step(-1, 2, true),
-        11114132 => step(-2, 0, false),
-        11114148 => step(0, -1, false),
-        11114154 => step(-3, -1, false),
-        11114170 => step(-15, 2, true),
-        11114192 => step(-6, 4, false),
-        11114208 => step(2, -4, false),
+        11113910 => step(0, -10, 4, false),
+        11113920 => step(0, -16, 4, false),
+        11113930 => step(0, -12, -2, false),
+        11113950 => step(0, 12, 4, false),
+        11113960 => step(0, 16, -2, false),
+        11113970 => step(0, 10, -2, false),
+        11113980 | 11114224 => step(1, -2, 0, false),
+        11113996 => step(2, 0, 0, false),
+        11114012 => step(0, 1, 0, false),
+        11114018 => step(3, 1, 0, true),
+        11114040 => step(15, -2, 0, false),
+        11114056 => step(6, -4, 0, false),
+        11114072 => step(-2, 4, 0, false),
+        11114088 | 11114110 => step(-1, 2, 0, true),
+        11114132 => step(-2, 0, 0, false),
+        11114148 => step(0, -1, 0, false),
+        11114154 => step(-3, -1, 0, false),
+        11114170 => step(-15, 2, 0, true),
+        11114192 => step(-6, 4, 0, false),
+        11114208 => step(2, -4, 0, false),
         _ => return None,
     })
 }
