@@ -6,11 +6,10 @@ use crate::ram_map::word_arrays as A;
 use crate::rom::RomImage;
 impl Host for Runtime<'_> {}
 impl Content for Runtime<'_> {
-    type Script = super::script::EprojScript<RomImage>;
     type Loaded = super::content::LoadedRecord;
     type Native = super::content::NativeRecord;
-    fn script(&self, bank_address: u16) -> Self::Script {
-        Self::Script::new(self.loaded_image().expect("ROM loaded"), bank_address)
+    fn script_image(&self) -> RomImage {
+        self.loaded_image().expect("ROM loaded")
     }
     fn loaded_record(&mut self, bank: u8, bank_address: u16) -> Self::Loaded {
         let address = (u32::from(bank) << 16) | u32::from(bank_address);

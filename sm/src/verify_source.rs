@@ -876,10 +876,6 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/enemy_projectiles/runtime.rs"),
     ),
     (
-        "sm/src/game/enemy_projectiles/script.rs",
-        include_bytes!("game/enemy_projectiles/script.rs"),
-    ),
-    (
         "sm/src/game/enemy_projectiles/setup.rs",
         include_bytes!("game/enemy_projectiles/setup.rs"),
     ),

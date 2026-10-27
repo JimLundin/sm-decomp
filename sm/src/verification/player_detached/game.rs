@@ -44,6 +44,8 @@ pub(crate) mod contact_rules;
 pub(crate) mod drop_rules;
 #[path = "enemy_projectiles.rs"]
 pub(crate) mod enemy_projectiles;
+#[path = "../../game/enemy_script.rs"]
+pub(crate) mod enemy_script;
 #[path = "../../game/session_access.rs"]
 pub(crate) mod session_access;
 
@@ -85,15 +87,15 @@ pub(crate) mod progress_flags;
 
 #[path = "../../game/player_collision/mod.rs"]
 pub(crate) mod player_collision;
-#[path = "../../game/player_transitions/mod.rs"]
-pub(crate) mod player_transitions;
 #[path = "player_collision_host.rs"]
 pub(crate) mod player_collision_host;
-#[path = "player_transitions_host.rs"]
-pub(crate) mod player_transitions_host;
 #[cfg(test)]
 #[path = "../player_collision_owned_checks.rs"]
 pub(crate) mod player_collision_owned_checks;
+#[path = "../../game/player_transitions/mod.rs"]
+pub(crate) mod player_transitions;
+#[path = "player_transitions_host.rs"]
+pub(crate) mod player_transitions_host;
 
 #[path = "../../game/player_movement/mod.rs"]
 pub(crate) mod player_movement;

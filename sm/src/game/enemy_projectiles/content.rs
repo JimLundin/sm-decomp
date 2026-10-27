@@ -1,12 +1,7 @@
 //! Owned native and loaded records; source selection remains an adapter decision.
 #![forbid(unsafe_code)]
-use super::{host, script::ScriptBytes};
+use super::host;
 use crate::rom::RomImage;
-impl ScriptBytes for RomImage {
-    fn read_byte(&self, position: usize) -> u8 {
-        self.read(position)
-    }
-}
 pub(crate) struct LoadedRecord {
     image: RomImage,
     base: usize,

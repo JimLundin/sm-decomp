@@ -45,6 +45,9 @@ impl EnemyScript {
         // Original script words use native byte order, including unaligned data.
         u16::from_ne_bytes([self.byte(offset), self.byte(offset + 1)])
     }
+    pub(crate) fn bank_address(&self, base: usize) -> u16 {
+        self.cursor().1.wrapping_sub(base) as u16
+    }
     pub fn load24(&self, offset: isize) -> u32 {
         // Load24 reads the adjacent fourth byte before masking the native word.
         u32::from_ne_bytes(core::array::from_fn(|i| self.byte(offset + i as isize))) & 0xffffff

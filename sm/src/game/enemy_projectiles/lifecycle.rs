@@ -1,8 +1,9 @@
 //! Complete allocation and script scheduling over the owned projectile pool.
 #![forbid(unsafe_code)]
 use super::access::enemy;
-use super::host::{DefinitionField, Host, LoadedRecord, ScriptRecord};
+use super::host::{DefinitionField, Host, LoadedRecord};
 use crate::game::actors::access::{AccessMode::LittleEndian as Le, ActorKey as Key};
+use crate::game::enemy_script::EnemyScript;
 
 pub(super) fn set_enabled(h: &mut impl Host, enabled: bool) {
     let flags = h.session().enemy_projectiles.flags;
@@ -75,19 +76,26 @@ pub(super) fn process(h: &mut impl Host, handle: u16) {
         return;
     }
     // One captured allocation supplies every command operand until this frame ends.
-    let mut script = h.script(enemy!(h, index, program));
-    while script.native_word(0) & 0x8000 != 0 {
-        let instruction = 0x860000 | u32::from(script.native_word(0));
-        script.seek(script.offset(2).unwrap());
-        let Some(next) = super::commands::dispatch(instruction, selected, &script, h) else {
+    let program = enemy!(h, index, program);
+    let image = h.script_image();
+    let mut script = EnemyScript::at(image.clone(), 0x28000 + usize::from(program));
+    while script.word(0) & 0x8000 != 0 {
+        let instruction = 0x860000 | u32::from(script.word(0));
+        script = script.advance(2);
+        let next = super::commands::dispatch(instruction, selected, &script, h);
+        let Some(next) = next.resolve(&image, 0x28000) else {
             return;
         };
-        script.seek(next);
+        script = next;
     }
     let index = (selected >> 1) as isize;
-    enemy!(h, index, delay = script.native_word(0));
-    enemy!(h, index, spritemap = script.native_word(2));
-    enemy!(h, index, program = script.bank_address().wrapping_add(4));
+    enemy!(h, index, delay = script.word(0));
+    enemy!(h, index, spritemap = script.word(2));
+    enemy!(
+        h,
+        index,
+        program = script.bank_address(0x28000).wrapping_add(4)
+    );
     h.probe("eproj.frame.saved");
 }
 pub(crate) fn advance(h: &mut impl Host) {

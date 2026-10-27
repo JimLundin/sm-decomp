@@ -25,8 +25,6 @@ pub(crate) mod pre_actions;
 pub(crate) mod pre_helpers;
 #[path = "../../game/enemy_projectiles/presentation.rs"]
 pub(crate) mod presentation;
-#[path = "../../game/enemy_projectiles/script.rs"]
-pub(crate) mod script;
 #[path = "../../game/enemy_projectiles/setup.rs"]
 pub(crate) mod setup;
 #[path = "../../game/enemy_projectiles/setup_helpers.rs"]
@@ -37,6 +35,7 @@ pub(crate) mod shared;
 pub(crate) mod shared_pre;
 #[path = "../../game/enemy_projectiles/tables.rs"]
 pub(crate) mod tables;
+use crate::game::enemy_script::EnemyScript;
 use host::Host;
 pub(crate) fn spawn_room(h: &mut impl Host, definition: u16, parameter: u16) -> u16 {
     lifecycle::spawn_room(h, definition, parameter)
@@ -77,16 +76,24 @@ const fnEprojPreInstr_Empty: i32 = 0x86efdf;
 
 // Expose the maintained command dispatcher, without reimplementing its spawn rule.
 pub(crate) fn sprite_command(h: &mut impl Host, k: u16, address: u16) {
-    let script = h.script(address);
-    assert!(commands::dispatch(8842467, k, &script, h).is_some());
+    let script = EnemyScript::at(h.script_image(), 0x28000 + usize::from(address));
+    assert!(!matches!(
+        commands::dispatch(8842467, k, &script, h),
+        EnemyScript::Stop
+    ));
 }
 
 // Expose actual maintained flag-dependent entrypoints; no behavior is duplicated.
 pub(crate) fn flag_command(h: &mut impl Host, identity: u32, k: u16, address: u16) -> usize {
-    let script = h.script(address);
-    commands::dispatch(identity, k, &script, h)
-        .expect("flag command continues")
-        .0
+    let image = h.script_image();
+    let script = EnemyScript::at(image.clone(), 0x28000 + usize::from(address));
+    let next = commands::dispatch(identity, k, &script, h)
+        .resolve(&image, 0x28000)
+        .expect("flag command continues");
+    let EnemyScript::At { position, .. } = next else {
+        unreachable!()
+    };
+    position
 }
 pub(crate) fn eye_door(h: &mut impl Host, k: u16) {
     pre_actions::EprojPreInstr_EyeDoorProjectile(k, h);

@@ -2,20 +2,8 @@
 #![forbid(unsafe_code)]
 use crate::game::session::Vector32;
 use crate::game::session_access::SessionAccess;
+use crate::rom::RomImage;
 
-// Opaque physical byte position in the captured script allocation. This preserves
-// checked linear offset and numeric-jump behavior of maintained EprojScript.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct ScriptPosition(pub(crate) usize);
-pub trait ScriptRecord {
-    fn byte(&self, byte_offset: isize) -> u8;
-    fn native_word(&self, byte_offset: isize) -> u16;
-    fn long24(&self) -> u32;
-    fn bank_address(&self) -> u16;
-    fn offset(&self, byte_delta: isize) -> Option<ScriptPosition>;
-    fn jump(&self, bank_address: u16) -> Option<ScriptPosition>;
-    fn seek(&mut self, position: ScriptPosition);
-}
 #[derive(Clone, Copy)]
 pub enum DefinitionField {
     Initialize,
@@ -38,11 +26,10 @@ pub trait NativeRecord {
     fn long_le(&self, byte_offset: isize) -> u32;
 }
 pub trait Content {
-    type Script: ScriptRecord;
     type Loaded: LoadedRecord;
     type Native: NativeRecord;
     // Capture loaded allocation for script frame; no low-window diagnostic.
-    fn script(&self, bank_address: u16) -> Self::Script;
+    fn script_image(&self) -> RomImage;
     // Diagnostic before loaded/native allocation capture for low bank window.
     fn loaded_record(&mut self, bank: u8, bank_address: u16) -> Self::Loaded;
     fn native_record(&mut self, bank: u8, bank_address: u16) -> Self::Native;

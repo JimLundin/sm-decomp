@@ -1,16 +1,25 @@
 //! Candidate adapter for the frozen actual-old 354-case observations.
 //! Declare as a private child of enemy_projectiles to exercise real production paths.
 //! This first tranche does not cover all setup/pre-action/contact/drawing families.
-type EprojScript = super::script::EprojScript<crate::rom::RomImage>;
 use super::{
     ClearEprojs, DisableEprojs, EnableEprojs, EprojRunAll, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
 };
+use crate::game::enemy_script::EnemyScript;
 
 // Candidate-only adapters invoke the maintained implementation and publish the
 // exclusive owner on normal return or unwind before the unchanged observations.
-fn CallEprojInstr(ea: u32, k: u16, script: &EprojScript, game: &mut Game) -> Option<usize> {
+fn CallEprojInstr(ea: u32, k: u16, script: &EnemyScript, game: &mut Game) -> Option<usize> {
+    let EnemyScript::At { image, .. } = script else {
+        unreachable!()
+    };
     super::with_execution(game, |ctx| super::commands::dispatch(ea, k, script, ctx))
-        .map(|position| position.0)
+        .resolve(image, 0x28000)
+        .map(|next| {
+            let EnemyScript::At { position, .. } = next else {
+                unreachable!()
+            };
+            position
+        })
 }
 fn MoveEprojWithVelocity(k: u16, game: &mut Game) -> u16 {
     super::with_execution(game, |ctx| super::shared::MoveEprojWithVelocity(k, ctx))
@@ -298,7 +307,7 @@ unsafe fn original_execute(id: u32, game: &mut Game, image: &RomImage) -> Option
             return CallEprojInstr(
                 COMMANDS[(n / 6) as usize],
                 index,
-                &EprojScript::new(image.clone(), cursor),
+                &EnemyScript::at(image.clone(), 0x28000 + usize::from(cursor as u16)),
                 game,
             );
         }
@@ -326,7 +335,7 @@ unsafe fn original_execute(id: u32, game: &mut Game, image: &RomImage) -> Option
             return CallEprojInstr(
                 QUEUES[(n / 4) as usize],
                 34,
-                &EprojScript::new(image.clone(), cursor),
+                &EnemyScript::at(image.clone(), 0x28000 + usize::from(cursor as u16)),
                 game,
             );
         }
@@ -358,7 +367,12 @@ unsafe fn original_execute(id: u32, game: &mut Game, image: &RomImage) -> Option
             short.write(0x31000, 0xff);
         }
         // The executor captures its instruction image separately from Game.
-        CallEprojInstr(command, 1, &EprojScript::new(short, 0x9000), game)
+        CallEprojInstr(
+            command,
+            1,
+            &EnemyScript::at(short, 0x28000 + usize::from(0x9000 as u16)),
+            game,
+        )
     }
 }
 

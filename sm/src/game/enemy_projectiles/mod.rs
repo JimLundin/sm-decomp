@@ -26,7 +26,6 @@ pub(in crate::game) mod lifecycle;
 mod pre_actions;
 mod pre_helpers;
 pub(in crate::game) mod presentation;
-mod script;
 mod setup;
 mod setup_helpers;
 mod shared;

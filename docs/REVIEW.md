@@ -14,9 +14,8 @@ This directive supersedes older work-order and pacing advice below; PLAN's
 Fast loop, resource limits and landing rules remain in force. Existing source
 owners and the sole Windows integrator retain their assignments.
 
-Current engine main/origin `4857622f`: production 113,861, legacy 17,844,
-unsafe-containing lines 2,544, verification 41,836. Canonical source is `eba0`,
-584 inputs / 6,266,063 raw bytes; source preflight has 571 bindings. A9 corpse
+Qualified projectile source `d6724a62` on published Mother Brain/support parent `b5b05ad9`: production 113,753, legacy 17,793,
+unsafe-containing lines 2,542, verification 41,854. Canonical source has 583 inputs / 6,260,187 raw bytes; source preflight has 570 bindings. A9 corpse
 animation landed `c872ad44`: -60 production/-60 legacy/-23 unsafe/verification0;
 eight rows passed 11,183 selected + 272 setup / 0 failures. Six native captures,
 seventeen word dereferences and one MemCpy were removed; twenty-one address-label
@@ -46,6 +45,11 @@ review and permitted compilation overlapping. Previous HDMA receipt/capture/rest
 proofs retain their original b2d producer / 0e29 consumers / 17f5 consumers and
 codec3ac lineage; no accepted runtime is repeated. Collect overlapping mailbox
 creation/update windows so a cutoff does not miss a published review.
+
+Mother Brain and README support landed `b5b05ad9`: -51 production/-51 legacy/-1 unsafe/verification0, seven rows10883+272/0.
+README displays committed staged-source SVG; Pages image publisher is deleted. Projectile deduplication closes21rows32443+1713/0
+and three minimal genuine captures18742/0, total52898 comparisons. Net -57 production/legacy0/-1 unsafe attribute/+18 verification;
+46 substantive lines exclude11 formatter joins. Current Crocomire joint source retains its separate reviewed selector dependency.
 
 Next work, in order:
 

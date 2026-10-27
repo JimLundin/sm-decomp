@@ -50,7 +50,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current source93a: production113810, legacy17793, unsafe2543, verification41836; warnings160.
+Current sourced672: production113753, legacy17793, unsafe2542, verification41854; warnings160.
 Qualified WRAM/Execution: Game/Backend share stable WorkRam; private DMA/Input
 storage and actual byte/getter/macro consumers close with exact RAM layout.
 Initialized329+5, full86 (136526 selected+38827 setup),14 genuine captures189475,
@@ -97,7 +97,12 @@ Ten raw native captures/21 word loads/one byte load removed; unsafe entry/backen
 Source93a fmt/library/DLL160 unchanged warnings/source571/native/all41rawcodec pass;7rows10883 selected+272 setup/0.
 Net -51 production/-51 legacy/-1 unsafe/verification0; uncovered: DeadTorizo_MainGfxHook D761 at296,187,0.
 README now displays the committed staged-source SVG; treemap support+57 lines/Pages publisher-51, no engine-size credit.
-Next: accepted disjoint projectile-script deduplication on this parent; exact final qualification underway.
+Shared EnemyScript replaces the duplicate projectile cursor/record/position/byte layer across both hosts, lifecycle, commands and verifier adapters.
+Sourced672 fmt/library/DLL160 unchanged warnings/source570/native/all41rawcodec pass;21rows32443 selected+1713 setup/0.
+Three missing old-codec starts replaced by genuine3ac captures18742 comparisons/0; inheritedb2d provenance remains distinct from currentd672 execution.
+Net -57 production/legacy0/-1 unsafe from duplicate forbid removal/+18 verification;11 formatter joins excluded,46 substantive lines removed.
+Fresh loaded-image/three-byte operand/zero-target/lazy callback and failure prefixes retained; internal checked-offset panic wording uses the shared reader.
+Next: complete Crocomire core plus typed selector consumer on this parent; final joint qualification underway.
 
 Source-only: Blackout37, exact page2 callback, sky initializers, CrystalFlashStart,
 spike/DBF2/lavaquake and additional signed8.8 kernels; MotherBrain magnitude,
