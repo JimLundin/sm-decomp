@@ -48,7 +48,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current source4ece: production114239, legacy18434, unsafe2638, verification41828; warnings160.
+Current source89b1: production114166, legacy18272, unsafe2634, verification41832; warnings160.
 Qualified WRAM/Execution: Game/Backend share stable WorkRam; private DMA/Input
 storage and actual byte/getter/macro consumers close with exact RAM layout.
 Initialized329+5, full86 (136526 selected+38827 setup),14 genuine captures189475,
@@ -62,7 +62,10 @@ B2 continuations4ece:3 callbacks/12 resumes pass19 rows62432 selected+272 setup/
 fmt/library/DLL160 unchanged warnings and complete source/native/input/seed guards.
 Net -5 production/-25 legacy/+1 unsafe metric from two safety attributes; bank remains.
 Source-list preflight569 entries adds42 support lines; original loaded guards retained.
-Next: reviewed fixed HDMA writer/initializer cohort and separate Linux AA family on current main.
+AA04 shares Shaktool segments and Torizo palettes:9 rows6180 selected+1713 setup/0,
+fmt/library/DLL160 unchanged warnings; Golden five ports/latches and source/native/input guards retained.
+Net -73 production/-162 legacy/-4 unsafe/+4 verification; new palette owner88 lines, bank remains.
+Next: reviewed fixed HDMA writer/initializer cohort; actual affected25/new-codec capture campaign running.
 
 Source-only: Blackout37, exact page2 callback, sky initializers, CrystalFlashStart,
 spike/DBF2/lavaquake and additional signed8.8 kernels; MotherBrain magnitude,
@@ -188,7 +191,7 @@ checked source/rebuild loaded DLLs. Explicit followup_task wakes completed worke
 send_message alone does not. Refill ready work without waiting on review prose.
 Budget compilers/replays/source separately, including accepted launchers before rustc
 and admitted jobs' remaining growth; release admission as soon as compilation ends.
-Start compilers above3GiB free; reserve1.6GiB/library or1.8GiB/DLL and leave >=2GiB.
+Start compilers above3GiB free; reserve1.6GiB/library or2.1GiB/DLL and leave >=2GiB.
 Below2GiB/resource errors stop newest producer, not every lightweight reader.
 Measure CPU/RAM/paging/disk/useful throughput: two -j1 builds76.06s versus114.12s serial;
 three is unproven. Raise concurrency only when budgets

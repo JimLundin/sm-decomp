@@ -178,6 +178,10 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/palette_effects/fading.rs"),
     ),
     (
+        "sm/src/game/palette_effects/torizo.rs",
+        include_bytes!("game/palette_effects/torizo.rs"),
+    ),
+    (
         "sm/src/game/goofball.rs",
         include_bytes!("game/goofball.rs"),
     ),

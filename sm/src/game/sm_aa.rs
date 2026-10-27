@@ -19,7 +19,7 @@ use crate::game::palette_effects::fading::selected;
 use crate::game::room_mechanisms::{spawn_collision, spawn_hardcoded};
 
 use crate::game::enemy_projectiles::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
-use crate::game::palette_effects;
+use crate::game::palette_effects::{self, torizo};
 use crate::game::projectile_geometry::SINE_COSINE as kSinCosTable8bit_Sext;
 use crate::game::session_runtime::player_command as CallSomeSamusCode;
 use crate::game::visual_runtime::initialize_bomb_torizo_haze;
@@ -57,57 +57,11 @@ static g_word_AAC460: [i16; 8] = [0, -6, -6, -7, 0, 0, 0, 0];
 static g_word_AAC4BD: [i16; 20] = [
     -5, 0, -5, -19, -16, -7, 0, -7, -17, -18, 5, 0, 5, 19, 16, 7, 0, 7, 17, 18,
 ];
-static g_word_AAC532: [i16; 20] = [
-    -5, 0, -5, -0x13, -0x10, -7, 0, -7, -0x11, -0x12, 5, 0, 5, 0x13, 0x10, 7, 0, 7, 0x11, 0x12,
-];
 static g_word_AAC95F: [i16; 2] = [0xdb, 0x1a8];
 static g_word_AAC963: [i16; 2] = [0xb3, 0x90];
 static g_word_AAC96B: [i16; 2] = [0x2800, 0x2800];
 static g_word_AAC96F: [i16; 2] = [0x12, 0x12];
 static g_word_AAC973: [i16; 2] = [0x30, 0x29];
-static kTorizo_Palette: [u16; 16] = [
-    0x3800, 0x3ff, 0x33b, 0x216, 0x113, 0x6b1e, 0x4a16, 0x3591, 0x20e9, 0x1580, 0x1580, 0x1580,
-    0x1580, 0x1580, 0x1580, 0x1580,
-];
-static kTorizo_Palettes_1: [u16; 16] = [
-    0x3800, 0x2df, 0x1d7, 0xac, 0x5a73, 0x41ad, 0x2d08, 0x1863, 0x1486, 0x145, 0x145, 0x145,
-    0x7fff, 0x145, 0x145, 0,
-];
-static kTorizo_Palettes_2: [u16; 16] = [
-    0x3800, 0x679f, 0x5299, 0x252e, 0x14aa, 0x5efc, 0x4657, 0x35b2, 0x2d70, 0x5b7f, 0x3df8, 0x2d0e,
-    0x5f5f, 0x5e1a, 0x5d35, 0xc63,
-];
-static kTorizo_Palettes_3: [u16; 16] = [
-    0x3800, 0x4aba, 0x35b2, 0x847, 3, 0x4215, 0x2970, 0x18cb, 0x1089, 0x463a, 0x28b3, 0x1809,
-    0x6f7f, 0x51fd, 0x4113, 0xc63,
-];
-static kTorizo_Palettes_4: [u16; 16] = [
-    0x3800, 0x56ba, 0x41b2, 0x1447, 0x403, 0x4e15, 0x3570, 0x24cb, 0x1868, 0x6f7f, 0x51f8, 0x410e,
-    0x31f, 0x1da, 0xf5, 0xc63,
-];
-static kTorizo_Palettes_5: [u16; 16] = [
-    0x3800, 0x4215, 0x2d0d, 2, 0, 0x3970, 0x20cb, 0xc26, 0x403, 0x463a, 0x28b3, 0x1809, 0x6f7f,
-    0x51fd, 0x4113, 0xc63,
-];
-static kTorizo_Palettes_6: [u16; 16] = [
-    0x3800, 0x6ab5, 0x49b0, 0x1c45, 0xc01, 0x5613, 0x416d, 0x2cc9, 0x2066, 0x5714, 0x31cc, 0x14e3,
-    0x5630, 0x3569, 0x1883, 0xc66,
-];
-static kTorizo_Palettes_7: [u16; 16] = [
-    0x3800, 0x5610, 0x350b, 0x800, 0, 0x416e, 0x2cc8, 0x1823, 0xc01, 0x6a31, 0x4caa, 0x2406,
-    0x7f7b, 0x75f4, 0x4d10, 0xc63,
-];
-static kTorizo_Palettes_8: [u16; 16] = [
-    0x3800, 0x4bbe, 0x6b9, 0xa8, 0, 0x173a, 0x276, 0x1f2, 0x14d, 0x73e0, 0x4f20, 0x2a20, 0x7fe0,
-    0x5aa0, 0x5920, 0x43,
-];
-static kTorizo_Palettes_10: [u16; 16] = [
-    0x3800, 0x3719, 0x214, 3, 0, 0x295, 0x1d1, 0x14d, 0xa8, 0x4b40, 0x25e0, 0xe0, 0x6b40, 0x4600,
-    0x4480, 0,
-];
-static g_word_AAD59A: [i16; 20] = [
-    -5, 0, -5, -19, -16, -7, 0, -7, -17, -18, 5, 0, 5, 19, 16, 7, 0, 7, 17, 18,
-];
 static g_word_AADEE9: [u16; 7] = [0, 0x20, 0x60, 0xc0, 0x140, 0x1a0, 0x1e0];
 static kChozoStatue_Palette: [u16; 16] = [
     0x3800, 0x633f, 0x4a9f, 0x2ddf, 0x6739, 0x4e73, 0x318c, 0x18c6, 0x27ff, 0x1af7, 0xdce, 0xc6,
@@ -125,35 +79,50 @@ static kChozoStatue_Palettes3: [u16; 16] = [
     0x3800, 0x633f, 0x4a9f, 0x2ddf, 0x2295, 0x118d, 0x8e8, 0x85, 0x27ff, 0x1af7, 0xdce, 0xc6,
     0x3fff, 0x2b39, 0x5294, 1,
 ];
-pub unsafe fn Torizo_C250(game: &mut Game) {
-    word_transfers!(game, descending, 16;
-        le(target_palettes, 175) <- table(kTorizo_Palettes_3, 15),
-        le(target_palettes, 159) <- table(kTorizo_Palettes_2, 15),
+// Runtime movement retains native and PLM entry obligations.
+unsafe fn torizo_stride(
+    k: u16,
+    jp: EnemyScript,
+    blocked_left: u16,
+    blocked_right: u16,
+    pause: u16,
+    game: &mut Game,
+) -> EnemyScript {
+    let E: i32 = k as i32;
+    slot!(
+        game,
+        Enemy_Torizo[E].var_A = g_word_AAC4BD[(jp.word(0) >> 1) as usize] as u16
     );
-}
-pub unsafe fn Torizo_C268(game: &mut Game) {
-    word_transfers!(game, descending, 16;
-        le(target_palettes, 175) <- table(kTorizo_Palettes_5, 15),
-        le(target_palettes, 159) <- table(kTorizo_Palettes_4, 15),
-    );
-}
-pub unsafe fn Torizo_C280(game: &mut Game) {
-    word_transfers!(game, descending, 16;
-        le(target_palettes, 175) <- table(kTorizo_Palettes_7, 15),
-        le(target_palettes, 159) <- table(kTorizo_Palettes_6, 15),
-    );
-}
-pub unsafe fn Torizo_C298(game: &mut Game) {
-    word_transfers!(game, descending, 16;
-        le(target_palettes, 175) <- table(kTorizo_Palettes_10, 15),
-        le(target_palettes, 159) <- table(kTorizo_Palettes_8, 15),
-    );
-}
-pub unsafe fn Torizo_C2B0(game: &mut Game) {
-    word_transfers!(game, descending, 16;
-        le(palette_buffer, 175) <- table(kTorizo_Palettes_5, 15),
-        le(palette_buffer, 159) <- table(kTorizo_Palettes_4, 15),
-    );
+    if {
+        let (actor, amount) = (k, (slot!(game, Enemy_Torizo[E].var_A) as i16 as i32) << 16);
+        actor_api::move_horizontal(
+            &mut Runtime::new(game),
+            Key::from_legacy(actor),
+            amount,
+            actor_api::SlopePolicy::Ignore,
+        ) == actor_api::MovementResult::Blocked
+    } {
+        slot!(game, Enemy_Torizo[E].var_03 = 0);
+        if (slot!(game, Enemy_Torizo[E].parameter_1) & 0x8000) != 0 {
+            EnemyScript::jump(blocked_left)
+        } else {
+            EnemyScript::jump(blocked_right)
+        }
+    } else {
+        actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(k));
+        if ((slot!(game, Enemy_Torizo[E].parameter_1) as i32
+            ^ word!(game.samus_x_pos) as i32 - slot!(game, Enemy_Torizo[E].base.x_pos) as i32)
+            & 0x8000)
+            == 0
+        {
+            if slot!(game, Enemy_Torizo[E].var_03) == 0 {
+                slot!(game, Enemy_Torizo[E].var_03 = pause);
+            }
+            jp.offset(1)
+        } else {
+            jp.offset(1)
+        }
+    }
 }
 pub fn Torizo_Instr_7(k: u16, jp: EnemyScript) -> EnemyScript {
     jp
@@ -317,7 +286,7 @@ crate::game::callback_dispatch! {
         };
     };
     Torizo_Func_11 [] {
-        SetGoldenTorizoPalette(slot!(game, Enemy_Torizo[E].base.health), game);
+        torizo::health_current(slot!(game, Enemy_Torizo[E].base.health), game);
     };
     Torizo_D5F1 [] {
         torizo_fall_until_timer!(E, k, game, addr_kTorizo_Ilist_D203, addr_kTorizo_Ilist_D2BF);
@@ -422,53 +391,28 @@ pub unsafe fn Shaktool_D956(k: u16, jp: EnemyScript, a: u16, game: &mut Game) ->
     jp
 }
 pub use self::Torizo_Instr_7 as Shaktool_Instr_6;
+fn shaktool_segments(base: u16) -> impl Iterator<Item = i32> {
+    [0, 64, 128, 192, 256, 320, 384]
+        .into_iter()
+        .map(move |offset| i32::from(base) + offset)
+}
 pub unsafe fn Shaktool_DB0E(k: u16, a: u16, game: &mut Game) {
     let shakt_var_E: u16 = slot!(game, Enemy_Shaktool[k as i32].var_E);
-    slot!(game, Enemy_Shaktool[shakt_var_E as i32].parameter_1 = a);
-    slot!(
-        game,
-        Enemy_Shaktool[shakt_var_E as i32 + 64i32].parameter_1 = a
-    );
-    slot!(
-        game,
-        Enemy_Shaktool[shakt_var_E as i32 + 128i32].parameter_1 = a
-    );
-    slot!(
-        game,
-        Enemy_Shaktool[shakt_var_E as i32 + 192i32].parameter_1 = a
-    );
-    slot!(
-        game,
-        Enemy_Shaktool[shakt_var_E as i32 + 256i32].parameter_1 = a
-    );
-    slot!(
-        game,
-        Enemy_Shaktool[shakt_var_E as i32 + 320i32].parameter_1 = a
-    );
-    slot!(
-        game,
-        Enemy_Shaktool[shakt_var_E as i32 + 384i32].parameter_1 = a
-    );
+    for segment in shaktool_segments(shakt_var_E) {
+        slot!(game, Enemy_Shaktool[segment].parameter_1 = a);
+    }
 }
 pub unsafe fn Shaktool_DB27(k: u16, a: u16, game: &mut Game) {
     let shakto_var_E: u16 = slot!(game, Enemy_Shaktool[k as i32].var_E);
-    slot!(game, Enemy_Shaktool[shakto_var_E as i32].var_A = a);
-    slot!(game, Enemy_Shaktool[shakto_var_E as i32 + 64i32].var_A = a);
-    slot!(game, Enemy_Shaktool[shakto_var_E as i32 + 128i32].var_A = a);
-    slot!(game, Enemy_Shaktool[shakto_var_E as i32 + 192i32].var_A = a);
-    slot!(game, Enemy_Shaktool[shakto_var_E as i32 + 256i32].var_A = a);
-    slot!(game, Enemy_Shaktool[shakto_var_E as i32 + 320i32].var_A = a);
-    slot!(game, Enemy_Shaktool[shakto_var_E as i32 + 384i32].var_A = a);
+    for segment in shaktool_segments(shakto_var_E) {
+        slot!(game, Enemy_Shaktool[segment].var_A = a);
+    }
 }
 pub unsafe fn Shaktool_DB40(k: u16, a: u16, game: &mut Game) {
     let shakto_var_E: u16 = slot!(game, Enemy_Shaktool[k as i32].var_E);
-    slot!(game, Enemy_Shaktool[shakto_var_E as i32].var_B = a);
-    slot!(game, Enemy_Shaktool[shakto_var_E as i32 + 64i32].var_B = a);
-    slot!(game, Enemy_Shaktool[shakto_var_E as i32 + 128i32].var_B = a);
-    slot!(game, Enemy_Shaktool[shakto_var_E as i32 + 192i32].var_B = a);
-    slot!(game, Enemy_Shaktool[shakto_var_E as i32 + 256i32].var_B = a);
-    slot!(game, Enemy_Shaktool[shakto_var_E as i32 + 320i32].var_B = a);
-    slot!(game, Enemy_Shaktool[shakto_var_E as i32 + 384i32].var_B = a);
+    for segment in shaktool_segments(shakto_var_E) {
+        slot!(game, Enemy_Shaktool[segment].var_B = a);
+    }
 }
 pub unsafe fn Shaktool_DB59(k: u16, game: &mut Game) {
     let mut shakto_var_E: u16 = slot!(game, Enemy_Shaktool[k as i32].var_E);
@@ -614,34 +558,9 @@ pub unsafe fn Shaktool_DC6F(k: u16, game: &mut Game) {
         let E: i32 = k as i32;
         Shaktool_DB40(k, slot!(game, Enemy_Shaktool[E].var_A), game);
         let shakto_var_E: u16 = slot!(game, Enemy_Shaktool[E].var_E);
-        slot!(
-            game,
-            Enemy_Shaktool[shakto_var_E as i32].var_C = g_word_AADEE9[0i32 as usize]
-        );
-        slot!(
-            game,
-            Enemy_Shaktool[shakto_var_E as i32 + 64i32].var_C = g_word_AADEE9[1i32 as usize]
-        );
-        slot!(
-            game,
-            Enemy_Shaktool[shakto_var_E as i32 + 128i32].var_C = g_word_AADEE9[2i32 as usize]
-        );
-        slot!(
-            game,
-            Enemy_Shaktool[shakto_var_E as i32 + 192i32].var_C = g_word_AADEE9[3i32 as usize]
-        );
-        slot!(
-            game,
-            Enemy_Shaktool[shakto_var_E as i32 + 256i32].var_C = g_word_AADEE9[4i32 as usize]
-        );
-        slot!(
-            game,
-            Enemy_Shaktool[shakto_var_E as i32 + 320i32].var_C = g_word_AADEE9[5i32 as usize]
-        );
-        slot!(
-            game,
-            Enemy_Shaktool[shakto_var_E as i32 + 384i32].var_C = g_word_AADEE9[6i32 as usize]
-        );
+        for (index, segment) in shaktool_segments(shakto_var_E).enumerate() {
+            slot!(game, Enemy_Shaktool[segment].var_C = g_word_AADEE9[index]);
+        }
     }
 }
 pub unsafe fn sub_AAE784(game: &mut Game) {
@@ -664,12 +583,9 @@ crate::game::callback_dispatch! {
             & 1
             != 0
         {
-            word_transfers!(game, descending, 16;
-                le(palette_buffer, 175) <- value(0x7fff),
-                le(palette_buffer, 159) <- value(0x7fff),
-            );
+            torizo::flash_current(game);
         } else {
-            Torizo_C2B0(game);
+            torizo::restore_current(game);
         };
     };
     [11192695] GoldTorizo_Touch [] {
@@ -695,10 +611,7 @@ crate::game::callback_dispatch! {
     [11195322] GoldTorizo_Hurt [] {
         Torizo_C620(word!(game.cur_enemy_index), game);
         if slot!(game, EnemyData[word!(game.cur_enemy_index) as i32].flash_timer) & 1 != 0 {
-            word_transfers!(game, descending, 16;
-                le(palette_buffer, 175) <- value(0x7fff),
-                le(palette_buffer, 159) <- value(0x7fff),
-            );
+            torizo::flash_current(game);
         } else {
             Torizo_Func_11(word!(game.cur_enemy_index), game);
         };
@@ -765,13 +678,9 @@ crate::game::callback_dispatch! {
         let E: i32 = word!(game.cur_enemy_index) as i32;
         if slot!(game, Enemy_Shaktool[E].base.health) == 0 {
             let shakto_var_E: u16 = slot!(game, Enemy_Shaktool[E].var_E);
-            slot!(game, Enemy_Shaktool[shakto_var_E as i32].base.properties = 512);
-            slot!(game, Enemy_Shaktool[shakto_var_E as i32 + 64i32].base.properties = 512);
-            slot!(game, Enemy_Shaktool[shakto_var_E as i32 + 128i32].base.properties = 512);
-            slot!(game, Enemy_Shaktool[shakto_var_E as i32 + 192i32].base.properties = 512);
-            slot!(game, Enemy_Shaktool[shakto_var_E as i32 + 256i32].base.properties = 512);
-            slot!(game, Enemy_Shaktool[shakto_var_E as i32 + 320i32].base.properties = 512);
-            slot!(game, Enemy_Shaktool[shakto_var_E as i32 + 384i32].base.properties = 512);
+            for segment in shaktool_segments(shakto_var_E) {
+                slot!(game, Enemy_Shaktool[segment].base.properties = 512);
+            }
         }
     };
     [11200278] N00bTubeCracks_Init [] {
@@ -842,12 +751,9 @@ crate::game::callback_dispatch! {
             slot!(game, Enemy_Torizo[E].base.y_pos = g_word_AAC963[v2 as usize] as u16);
             slot!(game, Enemy_Torizo[E].var_A = 0);
             slot!(game, Enemy_Torizo[E].var_B = 256);
-            word_transfers!(game, descending, 16;
-                le(target_palettes, 255) <- table(kTorizo_Palettes_1, 15),
-                le(target_palettes, 191) <- table(kTorizo_Palette, 15),
-            );
+            torizo::initialize_targets(game);
             if word!(game.area_index) != 0 {
-                Torizo_C280(game);
+                torizo::set_targets(torizo::GOLDEN_START, game);
                 if word!(game.joypad1_lastkeys) == 0xc0c0 {
                     word! { game, 700; samus_health, samus_max_health }
                     word! { game, 300; samus_max_reserve_health, samus_reserve_health }
@@ -861,7 +767,7 @@ crate::game::callback_dispatch! {
                     word! { game, 4111; equipped_beams, collected_beams }
                 }
             } else {
-                Torizo_C250(game);
+                torizo::set_targets(torizo::BOMB_START, game);
                 initialize_bomb_torizo_haze(game);
             }
         };
@@ -968,7 +874,7 @@ crate::game::callback_dispatch! {
         }
     };
     [11186801] Torizo_Instr_6 [jp] { selected(0x600, game); };
-    [11188557] Torizo_Instr_5 [jp] { Torizo_C268(game); };
+    [11188557] Torizo_Instr_5 [jp] { torizo::set_targets(torizo::BOMB_ACTIVE, game); };
     [11188561] Torizo_Instr_9 [jp] {
         QueueMusic_Delayed8(g_word_AAB098, game);
         palette_effects::spawn(addr_stru_8DF759 as u16, game);
@@ -1069,56 +975,24 @@ crate::game::callback_dispatch! {
             .wrapping_sub((g_word_AAC460[((v2 as i32 & 0xf) >> 1) as usize]) as u16));
     };
     [11191408] Torizo_Instr_16 [] {
-        let E: i32 = k as i32;
-        slot!(game, Enemy_Torizo[E].var_A = g_word_AAC4BD[(jp.word(0) >> 1) as usize] as u16);
-        if ({ let (actor, amount) = (k, (slot!(game, Enemy_Torizo[E].var_A) as i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            slot!(game, Enemy_Torizo[E].var_03 = 0);
-            if (slot!(game, Enemy_Torizo[E].parameter_1) & 0x8000) != 0 {
-                EnemyScript::jump(addr_kTorizo_Ilist_B962 as u16)
-            } else {
-                EnemyScript::jump(addr_kTorizo_Ilist_BDD8 as u16)
-            }
-        } else {
-            ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
-            if ((slot!(game, Enemy_Torizo[E].parameter_1) as i32
-                ^ word!(game.samus_x_pos) as i32 - slot!(game, Enemy_Torizo[E].base.x_pos) as i32)
-                & 0x8000)
-                == 0
-            {
-                if slot!(game, Enemy_Torizo[E].var_03) == 0 {
-                    slot!(game, Enemy_Torizo[E].var_03 = 72);
-                }
-                jp.offset(1)
-            } else {
-                jp.offset(1)
-            }
-        }
+        torizo_stride(
+            k,
+            jp,
+            addr_kTorizo_Ilist_B962 as u16,
+            addr_kTorizo_Ilist_BDD8 as u16,
+            72,
+            game,
+        )
     };
     [11191525] Torizo_Instr_27 [] {
-        let E: i32 = k as i32;
-        slot!(game, Enemy_Torizo[E].var_A = g_word_AAC532[(jp.word(0) >> 1) as usize] as u16);
-        if ({ let (actor, amount) = (k, (slot!(game, Enemy_Torizo[E].var_A) as i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            slot!(game, Enemy_Torizo[E].var_03 = 0);
-            if (slot!(game, Enemy_Torizo[E].parameter_1) & 0x8000) != 0 {
-                EnemyScript::jump(addr_kTorizo_Ilist_BD0E as u16)
-            } else {
-                EnemyScript::jump(addr_kTorizo_Ilist_C188 as u16)
-            }
-        } else {
-            ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
-            if ((slot!(game, Enemy_Torizo[E].parameter_1) as i32
-                ^ word!(game.samus_x_pos) as i32 - slot!(game, Enemy_Torizo[E].base.x_pos) as i32)
-                & 0x8000)
-                == 0
-            {
-                if slot!(game, Enemy_Torizo[E].var_03) == 0 {
-                    slot!(game, Enemy_Torizo[E].var_03 = 72);
-                }
-                jp.offset(1)
-            } else {
-                jp.offset(1)
-            }
-        }
+        torizo_stride(
+            k,
+            jp,
+            addr_kTorizo_Ilist_BD0E as u16,
+            addr_kTorizo_Ilist_C188 as u16,
+            72,
+            game,
+        )
     };
     [11191642] Torizo_Instr_23 [] {
         if (slot!(game, Enemy_Torizo[k as i32].var_B) & 0x8000) != 0 {
@@ -1204,7 +1078,7 @@ crate::game::callback_dispatch! {
             EnemyScript::jump(jp.word(0))
         }
     };
-    [11193054] Torizo_Instr_41 [jp] { Torizo_C298(game); };
+    [11193054] Torizo_Instr_41 [jp] { torizo::set_targets(torizo::GOLDEN_ACTIVE, game); };
     [11193058] Torizo_Instr_42 [jp] {
         QueueMusic_Delayed8(5, game);
         let E: i32 = k as i32;
@@ -1342,30 +1216,14 @@ crate::game::callback_dispatch! {
         }
     };
     [11195725] Torizo_Instr_54 [] {
-        let E: i32 = k as i32;
-        slot!(game, Enemy_Torizo[E].var_A = g_word_AAD59A[(jp.word(0) >> 1) as usize] as u16);
-        if ({ let (actor, amount) = (k, (slot!(game, Enemy_Torizo[E].var_A) as i16 as i32) << 16); (actor_api::move_horizontal(&mut Runtime::new(game), Key::from_legacy(actor), amount, actor_api::SlopePolicy::Ignore) == actor_api::MovementResult::Blocked) as u8 }) != 0 {
-            slot!(game, Enemy_Torizo[E].var_03 = 0);
-            if (slot!(game, Enemy_Torizo[E].parameter_1) & 0x8000) != 0 {
-                EnemyScript::jump(addr_kTorizo_Ilist_D203 as u16)
-            } else {
-                EnemyScript::jump(addr_kTorizo_Ilist_D2BF as u16)
-            }
-        } else {
-            ({ let actor = k; actor_api::snap_to_slopes(&mut Runtime::new(game), Key::from_legacy(actor)) as u8 });
-            if ((slot!(game, Enemy_Torizo[E].parameter_1) as i32
-                ^ word!(game.samus_x_pos) as i32 - slot!(game, Enemy_Torizo[E].base.x_pos) as i32)
-                & 0x8000)
-                == 0
-            {
-                if slot!(game, Enemy_Torizo[E].var_03) == 0 {
-                    slot!(game, Enemy_Torizo[E].var_03 = 16);
-                }
-                jp.offset(1)
-            } else {
-                jp.offset(1)
-            }
-        }
+        torizo_stride(
+            k,
+            jp,
+            addr_kTorizo_Ilist_D203 as u16,
+            addr_kTorizo_Ilist_D2BF as u16,
+            16,
+            game,
+        )
     };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     @prefix { let E: i32 = k as i32; };
@@ -1400,13 +1258,10 @@ crate::game::callback_dispatch! {
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
     [11196858] Shaktool_Instr_1 [] {
         let shakt_var_E: u16 = slot!(game, Enemy_Shaktool[k as i32].var_E);
-        slot!(game, Enemy_Shaktool[shakt_var_E as i32].var_F = crate::rtl::rom_table_word!(game, 0xaadedb, 0));
-        slot!(game, Enemy_Shaktool[shakt_var_E as i32 + 64i32].var_F = crate::rtl::rom_table_word!(game, 0xaadedb, 1));
-        slot!(game, Enemy_Shaktool[shakt_var_E as i32 + 128i32].var_F = crate::rtl::rom_table_word!(game, 0xaadedb, 2));
-        slot!(game, Enemy_Shaktool[shakt_var_E as i32 + 192i32].var_F = crate::rtl::rom_table_word!(game, 0xaadedb, 3));
-        slot!(game, Enemy_Shaktool[shakt_var_E as i32 + 256i32].var_F = crate::rtl::rom_table_word!(game, 0xaadedb, 4));
-        slot!(game, Enemy_Shaktool[shakt_var_E as i32 + 320i32].var_F = crate::rtl::rom_table_word!(game, 0xaadedb, 5));
-        slot!(game, Enemy_Shaktool[shakt_var_E as i32 + 384i32].var_F = crate::rtl::rom_table_word!(game, 0xaadedb, 6));
+        for (index, segment) in shaktool_segments(shakt_var_E).enumerate() {
+            let pre_instruction = crate::rtl::rom_table_word!(game, 0xaadedb, index as isize);
+            slot!(game, Enemy_Shaktool[segment].var_F = pre_instruction);
+        }
         jp
     };
     @functions [pub unsafe fn (k: u16, jp: EnemyScript, game: &mut Game) -> EnemyScript];
@@ -1605,21 +1460,4 @@ crate::game::callback_dispatch! {
             }
         };
     };
-}
-
-pub unsafe fn SetGoldenTorizoPalette(a: u16, game: &mut Game) {
-    let mut v1: i16 = ((a.to_ne_bytes()[1]) as i16) & (0x78i16);
-    if (v1 as u16 & 0x40) != 0 {
-        v1 = 56;
-    }
-    let mut v2: u16 = (4 * v1 as i32 | 0x1e) as u16;
-    for i in (0i32..=30).rev().step_by(2) {
-        let v4: i32 = v2 as i32 >> 1;
-        let v5: i32 = i >> 1;
-        word! { game;
-            palette_buffer[(v5 + 160)] = crate::rtl::rom_table_word!(game, 0x848132, v4 as isize);
-            palette_buffer[(v5 + 144)] = crate::rtl::rom_table_word!(game, 0x848032, v4 as isize);
-        }
-        v2 = (v2).wrapping_sub(2);
-    }
 }

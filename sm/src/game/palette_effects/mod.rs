@@ -1,6 +1,7 @@
 //! Palette effects using the shared gameplay Session and runtime.
 pub(crate) mod execution;
 pub(crate) mod fading;
+pub(crate) mod torizo;
 use crate::game::session_runtime::Runtime;
 use crate::game_state::Game;
 
