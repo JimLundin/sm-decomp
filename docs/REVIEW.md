@@ -141,16 +141,40 @@ color/scanline/affine, alias/failure and actual EXTBG/mosaic boundary witnesses.
 Broader variants and checked-overflow mutation sensitivity remain scoped/unproven.
 PLAN affected rows/four smokes/full Morph1200 retain their original proofs.
 
-### Source alongside qualification: message composition #22
+### Qualified message composition #22
+
+Message composition #22 source5787/DLL8d58 is independently source-reviewed and qualified.
+One safe core serves native drawing and the actual prepared dialogue/display consumer;
+live queue consumption, stale completion, authored media IDs and0782 waits are preserved.
+Actual26 units and26 distinct rows pass: 21784 selected +29672 setup/0.
+Setup includes charge700, Ceres249+lag23 and BOTH independent Kago14350 approaches.
+Full Morph1200 ran once; genuine initialized329+resume5 and authored55650+91623 captures pass.
+Final codec54/d3e20adab0249af3 binds1024520 raw/1013226 normalized bytes; no old restamp.
+Independent full-display/glyph/restoration pixels,360 waits, input/effects, checkpoint,
+changed/missing media/content and reset checks pass. Frozen predecessors remain preserved.
+Net +866 production/+357 verification/+2 unsafe-containing attributes/legacy0/support0.
+Catalog/validation/resumable media and independent fixtures exceed forecasts and count in full.
+Raw-operation/backend retirement0; native audio/device/ROM and full Session/Scene remain open.
+Next: Windows source owner01a17eee advances the released #20 Scene/display cohort. Its complete
+Scenario/Checkpoint schema, initial Scene/audio and Reference profile remain required.
+
+This assigned cohort passes26/26 rows, including23/44 manifest-required rows;
+the three extra rows remain required smokes/save diagnostics for this assignment.
+Final source5787 retains approved SOURCE04 production and the four-line verifier reset
+successor. The actual library dependency transfer avoids a repeated successful check;
+final direct DLL/units bind the recomputed codec and every frozen source/native input.
+Full required-corpus coverage and full engine ownership are separate unfinished claims.
+
+The original assignment and its preserved behavior constraints follow.
 
 [Complete source/consumer/rows/budget assignment](https://github.com/JimLundin/sm-decomp/issues/22)
-is released to the new Windows message source owner. Compose frozen Linux V22
-from [the complete delivery](https://github.com/JimLundin/sm-decomp/issues/22#issuecomment-6451197429)
-and Windows owned-message-C01 on exact renderer source c942 in a private checkout.
-The 902-line V donor's original metadata compile1.048s passes; full V/C review and
-runtime remain open. C's 340-line adapter removes53 lines: net+849 production before
-registration, above forecast and counted in full. No Linux worker is reactivated.
-One 64MiB source-only allowance; the implementation integrator owns build/replay/Git.
+was completed by composing frozen Linux V22 from [the original delivery](https://github.com/JimLundin/sm-decomp/issues/22#issuecomment-6451197429)
+with Windows owned-message-C01 on published renderer source c942. The original
+902-line V donor's metadata compile1.048s keeps its exact original attribution.
+C's 340-line adapter replaces53 lines; complete final cost includes all helpers,
+validation, consumers and registrations. Original source allowances are released;
+Linux remains stopped. Final qualification and source-only publication receipts
+are in the dedicated #22 issue. The integrator owns build/replay/Git.
 
 Reuse the unchanged 295-line dialogue runner and frozen V03 renderer. One pure
 message-composition implementation serves the native writer and an actual prepared

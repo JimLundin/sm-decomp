@@ -41,14 +41,19 @@ dependencies and measured resource budgets permit.
   or experiment, then compare useful throughput and resource costs. Preserve
   accepted proofs by exact hashes; repeat checks only for changed dependencies or
   a new concern. Claim speedup only from comparable measured evidence.
+  Persist actual phase/launch START and terminal EXIT when available. Label queue,
+  metadata, handoff and collection times separately. Report unknown boundaries
+  and elapsed/idle durations when evidence is missing. Direct result handoffs
+  need no documentation ACK.
 - Separate net engine changes from verification/support costs and count all
   retained owners, adapters and dependencies once. Keep full portable owned
   Session, independent rendering/audio/backend, boot-to-credits fidelity, Map Rando
   and PLAN/REVIEW's size goals open until the destination validation is satisfied.
-- For authorized GitHub mailbox assignments/handoffs, follow issue #2's Markdown
-  communication directive: owner, result, next action and actual blocker, with
-  spaced numbers/words and raw transport in details. Route user-facing #6 facts
-  through the root to its sole communication representative.
+- Use local session handoffs when available; keep durable source, review,
+  qualification and architecture records in dedicated active task issues.
+  Closed issue #2 retains historical receipts; follow its Markdown directive:
+  owner, result, next action and blocker, spaced numbers/words and raw transport
+  in details. Route user-facing #6 facts through the root to its sole representative.
 
 An executor handoff or paused observation is not project completion. Name the
 next owner, exact pin/handle and unfinished work before ending a role; route new

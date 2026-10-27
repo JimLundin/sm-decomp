@@ -50,9 +50,10 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current renderer source c942: production117070, legacy17793, unsafe2586,
-verification43673; incremental-enabled no-default library warnings200 versus
-202 at the identical-profile published9787 baseline, zero added/two removed.
+Current message source5787: production117936, legacy17793, unsafe2588,
+verification44030. Actual incremental1 no-default library retains200 warnings,
+zero added identities against the identical-profile renderer baseline200.
+The verifier-only reset successor transfers all1013 actual compiler inputs unchanged.
 
 Prepared room cohort9787 qualifies Levels/Tiles/Palette/Background/Fx catalogs and
 application room-pack selection before native startup. Selected Windows desktop ROM
@@ -82,7 +83,20 @@ comparison remain preserved. No source, warning suppression or DLL/runtime repea
 Net +657 production/+506 verification/+7 unsafe-containing/legacy0; new 944-line
 core/prepared/records and 288-line PPU reduction are counted together. Four formatter
 joins are not savings; raw/backend retirement0 and full-engine claims remain open.
-Next: Windows composes frozen Linux V22 and Windows C22 under oversight for #22.
+Message composition #22 source5787/DLL8d58 is independently source-reviewed and qualified.
+One safe core serves native drawing and the actual prepared dialogue/display consumer;
+live queue consumption, stale completion, authored media IDs and0782 waits are preserved.
+Actual26 units and26 distinct rows pass: 21784 selected +29672 setup/0.
+Setup includes charge700, Ceres249+lag23 and BOTH independent Kago14350 approaches.
+Full Morph1200 ran once; genuine initialized329+resume5 and authored55650+91623 captures pass.
+Final codec54/d3e20adab0249af3 binds1024520 raw/1013226 normalized bytes; no old restamp.
+Independent full-display/glyph/restoration pixels,360 waits, input/effects, checkpoint,
+changed/missing media/content and reset checks pass. Frozen predecessors remain preserved.
+Net +866 production/+357 verification/+2 unsafe-containing attributes/legacy0/support0.
+Catalog/validation/resumable media and independent fixtures exceed forecasts and count in full.
+Raw-operation/backend retirement0; native audio/device/ROM and full Session/Scene remain open.
+Next: Windows source owner01a17eee advances the released #20 Scene/display cohort. Its complete
+Scenario/Checkpoint schema, initial Scene/audio and Reference profile remain required.
 Qualified WRAM/Execution: Game/Backend share stable WorkRam; private DMA/Input
 storage and actual byte/getter/macro consumers close with exact RAM layout.
 Initialized329+5, full86 (136526 selected+38827 setup),14 genuine captures189475,

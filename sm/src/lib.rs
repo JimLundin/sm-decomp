@@ -372,6 +372,7 @@ pub mod game {
     pub mod menu_tilemap;
     pub mod menu_window;
     pub mod message_boxes;
+    pub mod message_composition;
     pub(crate) mod mode7_transfers;
     pub(crate) mod moving_platforms;
     pub(crate) mod prelude;

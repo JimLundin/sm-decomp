@@ -1389,6 +1389,9 @@ pub(super) fn run_unit_tests() -> i32 {
 #[cfg(any(test, sm_verify_dll))]
 mod coverage_checks {
     use super::*;
+    use sm::game::message_composition::{prepared::*, *};
+    use sm::rendering::{self as r, IndexedSource, prepared::*};
+    use std::sync::Arc;
 
     #[cfg(sm_verify_dll)]
     pub(super) fn run() -> i32 {
@@ -1396,7 +1399,9 @@ mod coverage_checks {
         macro_rules! cases {
             ($($test:ident),+ $(,)?) => { [$( (stringify!($test), $test as fn()), )+] };
         }
-        let tests: [(&str, fn()); 24] = cases![
+        let tests: [(&str, fn()); 26] = cases![
+            prepared_message_pixels_delay_queue_and_checkpoint,
+            prepared_message_rejects_changed_content_and_resets,
             independently_authored_raster_pixels_and_prefixes,
             room_pack_uses_native_header_selection_and_final_block_mirroring,
             room_pack_rejects_checksum_valid_structural_errors,
@@ -1437,6 +1442,340 @@ mod coverage_checks {
             tests.len()
         );
         i32::from(failed != 0)
+    }
+
+    // Movies cannot supply an independently authored complete saved display.
+    fn prepared_message_line() -> DisplayLine {
+        let background = r::Background {
+            horizontal_scroll: 0,
+            vertical_scroll: u16::MAX,
+            map_words: 0x5880,
+            tile_words: 0x4000,
+            wider: false,
+            higher: false,
+        };
+        let window = r::Window {
+            first_enabled: false,
+            first_inverted: false,
+            second_enabled: false,
+            second_inverted: false,
+            logic: 0,
+        };
+        DisplayLine {
+            mode: 1,
+            extended_background: false,
+            forced_blank: false,
+            backgrounds: [background; 3],
+            windows: r::Windows {
+                first: [0; 2],
+                second: [0; 2],
+                native_flags: 0,
+                layers: [window; 6],
+            },
+            routing: r::Routing {
+                enabled: [4, 0],
+                windowed: [0; 2],
+            },
+            affine: r::Affine {
+                matrix: [0; 8],
+                horizontal_flip: false,
+                vertical_flip: false,
+                large_field: false,
+                character_fill: false,
+            },
+            color: r::ColorMath {
+                clip: 0,
+                prevent: 0,
+                enabled: [false; 6],
+                add_subscreen: false,
+                subtract: false,
+                half: false,
+                fixed: [0; 3],
+                brightness: 15,
+            },
+        }
+    }
+
+    // Movies cannot author complete font/media identities or differing restored palettes.
+    fn prepared_message_fixture(text: u16) -> (Arc<Definitions>, PreparedStart) {
+        let revision = Revision([1; 32]);
+        let mut font = vec![0; 0x800];
+        font[8..16].fill(0xff00);
+        font[16..24].fill(0x00ff);
+        let message = MessageDefinition {
+            id: MessageId(1),
+            kind: MessageKind::Content,
+            size: BoxSize::Small,
+            modifier: ButtonModifier::None,
+            button_byte_offset: None,
+            text: (0..32).map(|i| text + (i & 1)).collect::<Vec<_>>().into(),
+        };
+        let map = MessageDefinition {
+            id: MessageId(2),
+            kind: MessageKind::Map,
+            size: BoxSize::Large,
+            ..message.clone()
+        };
+        let definition = FontDefinition {
+            id: AssetId(1),
+            revision,
+            first_word: 0x4000,
+            words: font.clone().into(),
+        };
+        let definitions =
+            Arc::new(Definitions::new(revision, definition, vec![message, map]).unwrap());
+        let image = |restored: bool| {
+            let mut words = vec![0; 0x8000];
+            words[0x4000..0x4800].copy_from_slice(&font);
+            for (i, word) in words[0x5880..0x5c00].iter_mut().enumerate() {
+                *word = if restored {
+                    14
+                } else {
+                    0x3801 + (i & 1) as u16
+                };
+            }
+            let mut palette = [0; 256];
+            palette[25] = if restored { 31 << 5 } else { 31 };
+            palette[26] = if restored { 31 << 10 } else { 31 << 5 };
+            Arc::new(IndexedImage::new(words, palette).unwrap())
+        };
+        let saved = FullDisplay {
+            media_id: AssetId(2),
+            revision,
+            media: image(false),
+            sprites: Arc::new(PreparedSprites {
+                words: [0; 256],
+                extension: [0x55; 32],
+                tile_words: [0; 2],
+                size: 0,
+                rotation: None,
+                interlace: false,
+                even_frame: false,
+            }),
+            mosaic: Arc::new(PreparedMosaic {
+                native_enabled: 0,
+                background0_enabled: false,
+                size: 1,
+                start_line: 1,
+                modulo: [0; 256],
+            }),
+            lines: Box::new([prepared_message_line(); 224]),
+            overflow: r::Overflow {
+                range: false,
+                time: false,
+            },
+        };
+        let restored = FullDisplay {
+            media_id: AssetId(4),
+            media: image(true),
+            ..saved.clone()
+        };
+        let mut active = saved.clone();
+        active.media_id = AssetId(3);
+        for line in active.lines.iter_mut() {
+            line.backgrounds[2].map_words = 0x5800;
+        }
+        (
+            definitions,
+            PreparedStart {
+                saved,
+                active,
+                restored,
+                tile_workspace: [0; 768],
+                shoot_button: 0x80,
+                run_button: 0x20,
+                initial_interval: 0,
+                initial_wait_pending: false,
+            },
+        )
+    }
+
+    fn prepared_message_pixels(
+        frame: &MessageFrame,
+        bands: [[u8; 4]; 2],
+        rows: std::ops::Range<usize>,
+    ) {
+        assert_eq!(frame.pixels.len(), 224 * 256);
+        for (i, pixel) in frame.pixels.iter().enumerate() {
+            let expected = if rows.contains(&(i / 256)) {
+                bands[i % 256 / 8 % 2]
+            } else {
+                [0; 4]
+            };
+            assert_eq!(*pixel, expected, "prepared pixel {i}");
+        }
+    }
+
+    fn prepared_message_waits(
+        owner: &mut PreparedOwner,
+        sample: InputSample,
+        intervals: std::ops::RangeInclusive<u64>,
+    ) -> StepOutput {
+        intervals
+            .map(|interval| {
+                let step = owner.resume(interval, sample).unwrap();
+                assert_eq!(step.outcome, Outcome::Suspended);
+                assert_eq!(step.effects, [Effect::AdvanceAudio]);
+                step
+            })
+            .last()
+            .unwrap()
+    }
+
+    // Shared movie pixels cannot prove saved-map recovery, 360 waits or stale-completion ownership.
+    #[cfg_attr(test, test)]
+    fn prepared_message_pixels_delay_queue_and_checkpoint() {
+        let (definitions, start) = prepared_message_fixture(0x3801);
+        let (mut owner, frame) = PreparedOwner::open(definitions.clone(), start.clone()).unwrap();
+        prepared_message_pixels(&frame, [[0, 255, 0, 0], [0, 0, 255, 0]], 0..224);
+        let sample = InputSample {
+            new_keys: 1,
+            held_keys: 0,
+            bug_fix_counter: 1,
+        };
+        assert_eq!(owner.resume(1, sample).err(), Some(Fault::NoRequest));
+        owner.queue(MessageId(1)).unwrap();
+        let mut step = owner.resume(1, sample).unwrap();
+        assert_eq!(step.outcome, Outcome::Suspended);
+        assert_eq!(step.effects, [Effect::CancelSounds]);
+        prepared_message_pixels(&step.frame, [[0; 4]; 2], 0..224);
+        let checkpoint = owner.checkpoint().unwrap();
+        (owner, _) = PreparedOwner::reopen(definitions.clone(), start.clone(), checkpoint).unwrap();
+        step = prepared_message_waits(&mut owner, sample, 2..=14);
+        prepared_message_pixels(&step.frame, [[0, 0, 255, 0], [16, 239, 140, 0]], 119..127);
+        assert_eq!(owner.resume(14, sample).err(), Some(Fault::Interval));
+        assert_eq!(owner.poll(MessageId(2)).unwrap(), None);
+        owner.queue(MessageId(999)).unwrap();
+        step = prepared_message_waits(&mut owner, sample, 15..=214);
+        let checkpoint = owner.checkpoint().unwrap();
+        let reopened =
+            PreparedOwner::reopen(definitions.clone(), start.clone(), checkpoint).unwrap();
+        assert_eq!(reopened.1.pixels, step.frame.pixels);
+        owner = reopened.0;
+        prepared_message_waits(&mut owner, sample, 215..=374);
+        let dismiss = InputSample {
+            held_keys: 1,
+            ..sample
+        };
+        for (interval, input) in [(375, sample), (376, dismiss)] {
+            step = owner.resume(interval, input).unwrap();
+            assert_eq!(step.outcome, Outcome::Suspended);
+            assert!(step.effects.is_empty());
+        }
+        prepared_message_waits(&mut owner, sample, 377..=388);
+        step = owner.resume(389, sample).unwrap();
+        assert_eq!(step.outcome, Outcome::Complete);
+        assert_eq!(
+            step.effects,
+            [Effect::AdvanceAudio, Effect::ResumeMovementSound]
+        );
+        prepared_message_pixels(&step.frame, [[255, 0, 0, 0], [0, 255, 0, 0]], 0..224);
+        assert_eq!(owner.resume(390, sample).err(), Some(Fault::NoRequest));
+        owner.queue(MessageId(2)).unwrap();
+        step = owner.resume(390, sample).unwrap();
+        assert_eq!(step.outcome, Outcome::Suspended);
+        assert_eq!(step.effects, [Effect::CancelSounds]);
+        assert_eq!(owner.poll(MessageId(1)).unwrap(), Some(0));
+        owner.queue(MessageId(999)).unwrap();
+        prepared_message_waits(&mut owner, sample, 391..=413);
+        step = owner.resume(414, dismiss).unwrap();
+        assert_eq!(step.outcome, Outcome::Suspended);
+        assert!(step.effects.is_empty());
+        prepared_message_waits(&mut owner, sample, 415..=426);
+        step = owner.resume(427, sample).unwrap();
+        assert_eq!(step.outcome, Outcome::Complete);
+        assert_eq!(
+            step.effects,
+            [
+                Effect::AdvanceAudio,
+                Effect::ResumeMovementSound,
+                Effect::SelectPause
+            ]
+        );
+        prepared_message_pixels(&step.frame, [[255, 0, 0, 0], [0, 255, 0, 0]], 0..224);
+        assert_eq!(owner.poll(MessageId(2)).unwrap(), Some(0));
+        assert_eq!(owner.resume(428, sample).err(), Some(Fault::NoRequest));
+        owner.queue(MessageId(999)).unwrap();
+        assert_eq!(
+            owner.resume(428, sample).err(),
+            Some(Fault::MissingMessage(MessageId(999)))
+        );
+    }
+
+    // Movies cannot author missing media IDs, same-revision changes or fresh prepared reset admission.
+    #[cfg_attr(test, test)]
+    fn prepared_message_rejects_changed_content_and_resets() {
+        let (definitions, start) = prepared_message_fixture(0x3801);
+        let (mut owner, _) = PreparedOwner::open(definitions.clone(), start.clone()).unwrap();
+        let sample = InputSample {
+            new_keys: 0,
+            held_keys: 0,
+            bug_fix_counter: 0,
+        };
+        owner.queue(MessageId(1)).unwrap();
+        owner.resume(1, sample).unwrap();
+        let checkpoint = owner.checkpoint().unwrap();
+        for index in 0..3 {
+            let mut missing = start.clone();
+            match index {
+                0 => &mut missing.saved,
+                1 => &mut missing.active,
+                _ => &mut missing.restored,
+            }
+            .media_id = AssetId(0);
+            assert_eq!(
+                owner.reset(missing.clone()).err(),
+                Some(Fault::MissingDisplay)
+            );
+            assert_eq!(
+                PreparedOwner::open(definitions.clone(), missing).err(),
+                Some(Fault::MissingDisplay)
+            );
+            let mut changed = start.clone();
+            match index {
+                0 => &mut changed.saved,
+                1 => &mut changed.active,
+                _ => &mut changed.restored,
+            }
+            .media_id = AssetId(99);
+            assert_eq!(
+                PreparedOwner::reopen(definitions.clone(), changed, checkpoint.clone()).err(),
+                Some(Fault::ChangedContent)
+            );
+        }
+        let (changed, _) = prepared_message_fixture(0x3802);
+        assert_eq!(
+            PreparedOwner::reopen(changed, start.clone(), checkpoint.clone()).err(),
+            Some(Fault::ChangedContent)
+        );
+        for (word_delta, palette_delta) in [(1, 0), (0, 1)] {
+            let mut changed = start.clone();
+            let mut words = (0..0x8000)
+                .map(|i| start.saved.media.word(i).unwrap())
+                .collect::<Vec<_>>();
+            let mut palette = core::array::from_fn(|i| start.saved.media.palette(i as u8).unwrap());
+            words[0x5880] ^= word_delta;
+            palette[26] ^= palette_delta;
+            changed.saved.media = Arc::new(IndexedImage::new(words, palette).unwrap());
+            assert_eq!(
+                PreparedOwner::reopen(definitions.clone(), changed, checkpoint.clone()).err(),
+                Some(Fault::ChangedContent)
+            );
+        }
+        let mut changed = start.clone();
+        changed.initial_wait_pending = true;
+        assert_eq!(
+            PreparedOwner::reopen(definitions.clone(), changed, checkpoint).err(),
+            Some(Fault::ChangedContent)
+        );
+        let (mut reset, frame) = owner.reset(start).unwrap();
+        prepared_message_pixels(&frame, [[0, 255, 0, 0], [0, 0, 255, 0]], 0..224);
+        assert_eq!(reset.resume(1, sample).err(), Some(Fault::NoRequest));
+        reset.queue(MessageId(1)).unwrap();
+        assert_eq!(
+            reset.resume(1, sample).unwrap().effects,
+            [Effect::CancelSounds]
+        );
     }
 
     // Movies share the renderer and cannot supply independent pixel/failure expectations.

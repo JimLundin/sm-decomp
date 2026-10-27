@@ -1,5 +1,6 @@
 //! Message boxes, input confirmation, animation and saved-game feedback.
 pub use crate::game::constants::bank_60::*;
+use crate::game::message_composition as composition;
 use crate::game::music::HandleMusicQueue;
 pub use crate::game::prelude::*;
 
@@ -10,13 +11,6 @@ use crate::rtl::ReadReg;
 
 const MESSAGE_CONFIG_BASE: usize = crate::rtl::lorom_offset(0x85869b) as usize;
 
-static kMsgBoxSpecialButtonTilemapOffs: [u16; 27] = [
-    0, 0x12a, 0x12a, 0x12c, 0x12c, 0x12c, 0, 0, 0, 0, 0, 0, 0x120, 0, 0, 0, 0, 0, 0x12a, 0, 0, 0,
-    0, 0, 0, 0, 0,
-];
-static kTileNumbersForButtonLetters: [u16; 8] = [
-    0x28e0, 0x3ce1, 0x2cf7, 0x38f8, 0x38d0, 0x38eb, 0x38f1, 0x284e,
-];
 unsafe fn InitializePpuForMessageBoxes(game: &mut Game) {
     unsafe {
         game.ram().fill(0x5f9..0x5fb, 0);
@@ -66,16 +60,6 @@ unsafe fn ClearMessageBoxBg3Tilemap(game: &mut Game) {
         }
     }
 }
-static kLargeMsgBoxTopBottomBorderTilemap: [u16; 32] = [
-    0xe, 0xe, 0xe, 0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0x280f, 0x280f, 0x280f, 0x280f,
-    0x280f, 0x280f, 0x280f, 0x280f, 0x280f, 0x280f, 0x280f, 0x280f, 0x280f, 0x280f, 0x280f, 0x280f,
-    0x280f, 0x280f, 0x284e, 0x284e, 0xe, 0xe, 0xe,
-];
-static kSmallMsgBoxTopBottomBorderTilemap: [u16; 32] = [
-    0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0x284e,
-    0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0x284e, 0xe,
-    0xe, 0xe, 0xe, 0xe, 0xe, 0xe,
-];
 #[forbid(unsafe_code)]
 fn message_tile(start: u16, byte_offset: u16, game: &mut Game) -> u16 {
     let address = 0x850000 | u32::from(start);
@@ -102,27 +86,24 @@ fn WriteMessageTilemap(game: &mut Game) -> u16 {
     let length = configs
         .table_word(MESSAGE_CONFIG_BASE, 3 * message + 2)
         .wrapping_sub(start);
-    game.message_box_das0l_value = length.wrapping_add(128);
-    let mut remaining = i32::from(length >> 1);
-    let mut word = 32u16;
-    let mut source_offset = 0u16;
-    do_until! { remaining == 0;
-        // Map every word, including the mapper's invalid-address diagnostics.
-        let tile = message_tile(start, source_offset, game);
-        let byte_offset = 2 * (usize::from(word) + 256);
-        let _ = &[(); 0x800][byte_offset..byte_offset + 2];
-        game.ram().copy_in(0x3000 + byte_offset, &tile.to_le_bytes());
-        word = word.wrapping_add(1);
-        source_offset = source_offset.wrapping_add(2);
-        remaining -= 1;
+    game.message_box_das0l_value = composition::dma_length(length);
+    let mut cursor = composition::TextCursor::new(length);
+    loop {
+        // Keep every fresh media query before the selected destination check.
+        let tile = message_tile(start, cursor.source_offset, game);
+        let byte_offset = composition::destination_byte_offset(cursor.word);
+        game.ram()
+            .copy_in(0x3000 + byte_offset, &tile.to_le_bytes());
+        if cursor.advance() {
+            break;
+        }
     }
-    word
+    cursor.word
 }
 fn WriteMessageBoxTilemapRow(mut word: u16, tiles: &[u16], game: &mut Game) {
     // Preserve the legacy table bounds and any writes before a bounds failure.
     for tile in tiles {
-        let byte_offset = 2 * (usize::from(word) + 256);
-        let _ = &[(); 0x800][byte_offset..byte_offset + 2];
+        let byte_offset = composition::destination_byte_offset(word);
         game.ram()
             .copy_in(0x3000 + byte_offset, &tile.to_le_bytes());
         word = word.wrapping_add(1);
@@ -134,44 +115,35 @@ crate::game::callback_dispatch! {
     @body checked;
     @functions [fn (game: &mut Game)];
     [8749658] WriteLargeMessageBoxTilemap [] {
-        WriteMessageBoxTilemapRow(0, &kLargeMsgBoxTopBottomBorderTilemap, game);
+        WriteMessageBoxTilemapRow(0, composition::border(composition::BoxSize::Large), game);
         let end = WriteMessageTilemap(game);
-        WriteMessageBoxTilemapRow(end, &kLargeMsgBoxTopBottomBorderTilemap, game);
+        WriteMessageBoxTilemapRow(end, composition::border(composition::BoxSize::Large), game);
     };
     [8749705] WriteSmallMessageBoxTilemap [] {
-        WriteMessageBoxTilemapRow(0, &kSmallMsgBoxTopBottomBorderTilemap, game);
+        WriteMessageBoxTilemapRow(0, composition::border(composition::BoxSize::Small), game);
         let end = WriteMessageTilemap(game);
-        WriteMessageBoxTilemapRow(end, &kSmallMsgBoxTopBottomBorderTilemap, game);
+        WriteMessageBoxTilemapRow(end, composition::border(composition::BoxSize::Small), game);
     };
 }
 fn MsgBoxMakeHdmaTable(game: &mut Game) {
     let radius = u16::from_le_bytes([game.ram().read_byte(0x5a2), game.ram().read_byte(0x5a3)]);
-    let upper = 0x7b00u16.wrapping_sub(radius) >> 8;
-    let lower = radius.wrapping_add(0x7c00) >> 8;
-
-    // Each scanline and its edge move together, so their difference stays constant.
+    let values = composition::radius_values(radius);
     for at in (0x30bc..0x30f8).step_by(2) {
-        game.ram()
-            .copy_in(at, &99u16.wrapping_sub(upper).to_le_bytes());
+        game.ram().copy_in(at, &values.top_scroll.to_le_bytes());
     }
     for at in (0x30f8..0x3134).step_by(2) {
-        game.ram()
-            .copy_in(at, &148u16.wrapping_sub(lower).to_le_bytes());
+        game.ram().copy_in(at, &values.bottom_scroll.to_le_bytes());
     }
     game.ram().fill(0x3134..0x31e0, 0);
-
-    // Preserve the scratch words left after all 30 scanlines.
-    game.ram()
-        .copy_in(0x5a4, &lower.wrapping_add(30).to_le_bytes());
-    game.ram().copy_in(0x5a6, &178u16.to_le_bytes());
-    game.ram()
-        .copy_in(0x5a8, &upper.wrapping_sub(30).to_le_bytes());
-    game.ram().copy_in(0x5aa, &69u16.to_le_bytes());
+    // Retain the final scratch publication order after all scanline writes.
+    game.ram().copy_in(0x5a4, &values.scratch[0].to_le_bytes());
+    game.ram().copy_in(0x5a6, &values.scratch[1].to_le_bytes());
+    game.ram().copy_in(0x5a8, &values.scratch[2].to_le_bytes());
+    game.ram().copy_in(0x5aa, &values.scratch[3].to_le_bytes());
 }
 unsafe fn SetupMessageBoxBg3YscrollHdma(game: &mut Game) {
     unsafe {
-        game.ram()
-            .copy_in(0x3380, &[0xff, 0x00, 0x30, 0xe1, 0xfe, 0x30, 0x00]);
+        game.ram().copy_in(0x3380, &composition::HDMA_DESCRIPTOR);
         crate::rtl::register_writes! { game;
             byte(DMAP6 as u16, 0x42); byte(BBAD6 as u16, 0x12);
             byte(A1T6L as u16, 0x80); byte(DAS6L as u16, 0x80);
@@ -198,29 +170,14 @@ unsafe fn SetupPpuForActiveMessageBox(r52: u16, game: &mut Game) {
 }
 unsafe fn DrawSpecialButtonAndSetupPpuForLargeMessageBox(a: u16, game: &mut Game) {
     unsafe {
-        let buttons = [
-            kButton_A,
-            kButton_B,
-            kButton_X,
-            kButton_Y,
-            kButton_Select,
-            kButton_L,
-            kButton_R,
-        ];
-        let letter = buttons
-            .iter()
-            .position(|&button| a & button as u16 != 0)
-            .unwrap_or(7);
+        let tile = composition::button_letter(a);
         let message =
             u16::from_le_bytes([game.ram().read_byte(0x1c1f), game.ram().read_byte(0x1c20)])
                 as isize
                 - 1;
-        let offset = usize::from(kMsgBoxSpecialButtonTilemapOffs[message as usize]);
-        game.ram().copy_in(
-            0x3200 + offset,
-            &kTileNumbersForButtonLetters[letter].to_le_bytes(),
-        );
-        SetupPpuForActiveMessageBox(416, game);
+        let offset = composition::special_button_offset(message);
+        game.ram().copy_in(0x3200 + offset, &tile.to_le_bytes());
+        SetupPpuForActiveMessageBox(composition::map_offset(composition::BoxSize::Large), game);
     }
 }
 crate::game::callback_dispatch! {
@@ -236,8 +193,8 @@ crate::game::callback_dispatch! {
         DrawSpecialButtonAndSetupPpuForLargeMessageBox(button, game);
     };
     @forward [unsafe fn (game: &mut Game)];
-    [8750134] SetupPpuForSmallMessageBox => SetupPpuForActiveMessageBox(448, game);
-    [8750145] SetupPpuForLargeMessageBox => SetupPpuForActiveMessageBox(416, game);
+    [8750134] SetupPpuForSmallMessageBox => SetupPpuForActiveMessageBox(composition::map_offset(composition::BoxSize::Small), game);
+    [8750145] SetupPpuForLargeMessageBox => SetupPpuForActiveMessageBox(composition::map_offset(composition::BoxSize::Large), game);
 }
 unsafe fn InitializeMessageBox(game: &mut Game) {
     unsafe {
@@ -254,21 +211,11 @@ unsafe fn InitializeMessageBox(game: &mut Game) {
         CallMsgBoxModify(0x850000 | u32::from(modify), game);
     }
 }
-static kSaveConfirmationSelectionTilemap: [u16; 96] = [
-    0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0x3c4e, 0x3c4e, 0x38cc, 0x38cd, 0x3cf8, 0x3ce4, 0x3cf2, 0x3c4e,
-    0x3c4e, 0x3c4e, 0x3c4e, 0x3c4e, 0x3c4e, 0x2ced, 0x2cee, 0x3c4e, 0x3c4e, 0x3c4e, 0x3c4e, 0xe,
-    0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0x3c4e, 0x3c4e, 0x38cc, 0x38cd,
-    0x3cf8, 0x3ce4, 0x3cf2, 0x3c4e, 0x3c4e, 0x3c4e, 0x3c4e, 0x3c4e, 0x3c4e, 0x2ced, 0x2cee, 0x3c4e,
-    0x3c4e, 0x3c4e, 0x3c4e, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe,
-    0x3c4e, 0x3c4e, 0x3c4e, 0x3c4e, 0x2cf8, 0x2ce4, 0x2cf2, 0x3c4e, 0x3c4e, 0x3c4e, 0x3c4e, 0x38cc,
-    0x38cd, 0x3ced, 0x3cee, 0x3c4e, 0x3c4e, 0x3c4e, 0x3c4e, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe, 0xe,
-];
 unsafe fn DrawSaveConfirmationSelection(game: &mut Game) {
     unsafe {
         let selection =
             u16::from_le_bytes([game.ram().read_byte(0x5f9), game.ram().read_byte(0x5fa)]);
-        let row = if selection == 2 { 64 } else { 32 };
-        WriteMessageBoxTilemapRow(128, &kSaveConfirmationSelectionTilemap[row..row + 32], game);
+        WriteMessageBoxTilemapRow(128, composition::selection_row(selection), game);
         crate::rtl::register_writes! { game;
             word(VMADDL as u16, addr_unk_6059A0 as u16); word(DMAP1 as u16, 0x1801);
             word(A1T1L as u16, 0x3200); word(A1B1 as u16, 0x7e);

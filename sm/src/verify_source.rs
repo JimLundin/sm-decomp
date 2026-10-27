@@ -976,6 +976,18 @@ pub static FILES: &[(&str, &[u8])] = &[
         include_bytes!("game/message_boxes.rs"),
     ),
     (
+        "sm/src/game/message_composition/mod.rs",
+        include_bytes!("game/message_composition/mod.rs"),
+    ),
+    (
+        "sm/src/game/message_composition/native.rs",
+        include_bytes!("game/message_composition/native.rs"),
+    ),
+    (
+        "sm/src/game/message_composition/prepared.rs",
+        include_bytes!("game/message_composition/prepared.rs"),
+    ),
+    (
         "sm/src/game/menu_tilemap.rs",
         include_bytes!("game/menu_tilemap.rs"),
     ),

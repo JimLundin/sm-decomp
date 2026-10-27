@@ -10,9 +10,11 @@ review, build, replay and coordination. Load the assigned role and only the
 technical contracts it reaches. PLAN remains authoritative for the Fast loop,
 verification, Git/resource limits, progress, commit/push and definition of done.
 
-For Windows/Linux assignments and handoffs, use the user-requested
-[GitHub mailbox](https://github.com/JimLundin/sm-decomp/issues/2).
-Format GitHub issue bodies, instructions and comments using the
+For assignments and handoffs, use local session communication when available;
+keep durable source/review/qualification/architecture records in dedicated active
+task issues ([user policy](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6453578412)).
+The closed [mailbox](https://github.com/JimLundin/sm-decomp/issues/2) retains historical receipts.
+Format GitHub issue bodies, instructions and comments using the still-valid
 [Markdown communication directive](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6445792069).
 
 Before changing ownership, interfaces or backend architecture, read the
