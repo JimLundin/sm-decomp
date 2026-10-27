@@ -1716,8 +1716,8 @@ pub(crate) fn chase_intro_baby_y(object: u16, y_offset: i32, game: &mut Game) {
 pub(crate) fn advance_intro_baby_pursuit(object: u16, game: &mut Game) {
     let slot = usize::from(object >> 1);
     if word!(game.cinematic_var13) == 0 {
-        word! {game; cinematicspr_instr_timer[slot] = 1;
-        cinematicspr_instr_ptr[slot] = 0xce53; cinematic_var15 = 0; }
+        resume_cinematic_sprite(slot, 0xce53, game);
+        word!(game.cinematic_var15 = 0);
         return;
     }
     if word!(game.cinematicspr_goto_timer[slot]) as i32 - 128 & 0x8000 != 0 {
@@ -1774,8 +1774,7 @@ pub(crate) fn advance_intro_rinka(object: u16, misses_samus: bool, game: &mut Ga
         word! { game, 11; samus_invincibility_timer, samus_knockback_timer }
         word!(game.knockback_x_dir = 1);
     }
-    word!(game.cinematicspr_instr_timer[slot] = 1);
-    word!(game.cinematicspr_instr_ptr[slot] = 0xce53);
+    resume_cinematic_sprite(slot, 0xce53, game);
 }
 
 // Native split words retain low-before-high reads and writes.
@@ -2023,7 +2022,7 @@ pub(crate) fn update_ending_critters(object: u16, initialize: bool, game: &mut G
     advance_cinematic_coordinate(object, true, 128, game);
     word!(game.cinematicspr_arr6[slot] = word!(game.cinematicspr_arr6[slot]));
     if word!(game.cinematicbg_arr7[slot] += 1, reread) as i32 - 272 & 0x8000 == 0 {
-        word! {game; cinematicspr_instr_timer[slot] = 1; cinematicspr_instr_ptr[slot] = 0xee9b; }
+        resume_cinematic_sprite(slot, 0xee9b, game);
     }
 }
 
@@ -2234,7 +2233,7 @@ pub(crate) fn advance_intro_mother_brain(object: u16, stage: u8, game: &mut Game
         spawn_cinematic_burst(0xcf15, 0..5, 0, game);
     }
     if stage == 1 && count as i32 - 128 & 0x8000 == 0 {
-        word! {game; cinematicspr_instr_timer[slot] = 1; cinematicspr_instr_ptr[slot] = 0xcb19; }
+        resume_cinematic_sprite(slot, 0xcb19, game);
     }
 }
 
@@ -2383,6 +2382,12 @@ pub(crate) fn execute_cinematic_sprite_instruction(
     })
 }
 
+#[forbid(unsafe_code)]
+pub(crate) fn resume_cinematic_sprite(slot: usize, instruction: u16, game: &mut Game) {
+    word!(game.cinematicspr_instr_timer[slot] = 1);
+    word!(game.cinematicspr_instr_ptr[slot] = instruction);
+}
+
 pub(crate) fn wait_cinematic_scene(
     object: u16,
     scene: u16,
@@ -2394,8 +2399,7 @@ pub(crate) fn wait_cinematic_scene(
         if let Some(next) = next_preinstruction {
             word!(game.cinematicspr_preinstr_func[slot] = next);
         } else {
-            word!(game.cinematicspr_instr_timer[slot] = 1);
-            word!(game.cinematicspr_instr_ptr[slot] = 0xee9b);
+            resume_cinematic_sprite(slot, 0xee9b, game);
         }
     }
 }
@@ -2411,8 +2415,7 @@ pub(crate) fn launch_cinematic_sprite(
     let velocity = -((word!(game.cinematicspr_goto_timer[slot]) as i16 as i32) << 8) as u32;
     advance_cinematic_coordinate(object, true, velocity, game);
     if (word!(game.cinematicbg_arr8[slot]) as i32 + 128) & 0x8000 != 0 {
-        word!(game.cinematicspr_instr_timer[slot] = 1);
-        word!(game.cinematicspr_instr_ptr[slot] = 0xce53);
+        resume_cinematic_sprite(slot, 0xce53, game);
         if advance_scene {
             word!(game.cinematic_function = 0xcadf);
         }

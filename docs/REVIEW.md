@@ -8,36 +8,44 @@ earlier versions; this file holds only current findings.
 
 ## Milestone plan (2026-10-24)
 
-**Active oversight directive (2026-10-27 09:50 CET).** The user assigns this
+**Active oversight directive (2026-10-27 10:20 CET).** The user assigns this
 session independent, proactive oversight alongside the running implementer.
 This directive supersedes older work-order and pacing advice below; PLAN's
 Fast loop, resource limits and landing rules remain in force. Existing source
 owners and the sole Windows integrator retain their assignments.
 
-Measured main `6ad82e25`: production 111,924, legacy 17,353, unsafe-containing
-lines 2,712, verification 40,385 (`progress.sh`, independently run). Between
-`2adc3ae3` at 02:24 and main at 07:07, production fell 181 (~38/hour), legacy
-12 and unsafe-containing lines 2. Reported 44/44 is retained scenario evidence,
-not a fresh run or complete-engine proof. The joint WRAM/Execution change is
-unlanded; its larger draft savings cannot be added to main's progress.
-Mailbox compiler failures show incomplete macro-consumer closure. Resources
-were sufficient in the implementer's latest report: failure is source/integration.
+Current main/origin `43117e05`, pushed 10:13:48 CET: production 114,244, legacy
+18,459, unsafe-containing lines 2,637, verification 41,828. Canonical raw source
+ce8b and remote==HEAD independently verified. Versus prior main `6ad82e25`,
+landed net +2,320 production, +1,106 legacy, -75 unsafe-containing and +1,443
+verification; draft-to-draft cleanup is not additional main progress. Actual
+86/86 rows and 44/44 required scenarios pass, all14 fresh captures and full22
+byte-identical encrypted restore pass. These checks do not prove the full engine.
+
+Final frozen cycle: library19.68s, DLL65.59s, runtime30m45.9s, landing2m04.7s.
+Executor reports ~24m26s on the capture dependency path. Earlier source/review
+times overlap and are incomplete; macro/consumer closure and warning corrections
+caused the earlier integration delay. One mailbox cutoff also missed an already
+published review; collect an overlapping recent creation/order window. Current
+source/runtime blockers are closed. Do not repeat the accepted campaign.
 
 Next work, in order:
 
-1. **Close and land the current WRAM/Execution integration.** Current owners
-   correct the complete A6/A7/A9 diagnostic groups, including macro definitions,
-   affected expansions, import scopes and width semantics. Use the compiler
-   result from the full composition to find remaining groups; do not repair
-   one emitted error at a time. Preserve byte/failure/effect order and transitive
-   unsafe contracts. Freeze the reviewed composition, qualify its actual
-   codec with genuine captures and required replay rows, reconcile main and
-   land promptly. Keep the existing oracle and identity guards.
-2. **Overlap useful disjoint source work with qualification.** Continue the
-   already assigned sm_8b and Linux sm_aa family work outside the frozen join.
-   Oversight prepares independent source findings and the next complete scope;
-   it must not create another shared-file owner or duplicate the donor reviews.
-3. **After landing, select the next complete responsibility from actual main.**
+1. **Land ready family work from actual main.** Existing sm_8b and Linux AA04
+   owners rebase their complete scopes onto `43117e05`, preserving ce8b corrections.
+   Sole integrator reconciles shared callback/registration proposals and may adopt
+   the ready precompile guard beside code. Verify actual codec/native relationships;
+   unchanged contributors retain accepted capture proof and use PLAN's affected
+   rows plus smokes. Transfer exact unchanged leaf reviews; count each net once.
+2. **Close the prepared fixed HDMA-allocation protocol.** Existing Windows source
+   owner `crt_bank_closure` is active in an isolated snapshot; no competing owner.
+   Complete the bounded writer, existing observer and fixed initializer callers
+   together, preserving the contracts below. Current estimate10-35 net production
+   lines and ~30 declaration candidates is provisional; count actual operations
+   and dependency removal. Changes to current codec contributors still need one
+   genuine qualification of the full coherent cut. Coordinate sm_8b's three visual
+   callback proposals through the integrator.
+3. **Select the next complete responsibility from measured main.**
    Choose the largest removable unsafe dependency or duplicated family whose
    callers and required rows are understood. State the expected net benefit
    and removal condition before implementation. Several matching functions can
@@ -64,12 +72,12 @@ removal and closed ownership dependencies explicit beside the existing Score.
 Bank deletion, safe wrappers and replay passes remain intermediate achievements;
 owned Session, independent media and Map Rando acceptance remain the destination.
 
-**Size feasibility, final reviewed ce8b.** Independent `progress.sh` and Linux's
+**Size feasibility, landed ce8b.** Independent `progress.sh` and Linux's
 final review agree: production 114,244, legacy 18,459, unsafe-containing 2,637
-and verification 41,828. Versus main `6ad82e25`: +2,320 production, +1,106 legacy,
--75 unsafe-containing and +1,443 verification. Source/format/library/DLL pass;
-at 10:08 CET all14 genuine captures pass, while full22 restore/final10 rows and
-landing remain unfinished. Reaching 100,000 needs 14,244 net production lines
+and verification 41,828. Versus prior main `6ad82e25`: +2,320 production, +1,106
+legacy, -75 unsafe-containing and +1,443 verification. Source/format/library/DLL,
+full14/full22/full86 qualification and landing pass. Reaching 100,000 needs 14,244
+net production lines
 removed. If only banks changed, their replacements could total at most 4,215
 lines (22.8%); at 80% replacement, another ~10,552 lines must disappear elsewhere.
 Bank moves alone cannot substantiate the existing size promise. After this cut,
@@ -79,13 +87,13 @@ campaign. Include future adapters/media cost and remeasure actual main; do not
 trade behavioral fidelity or source readability for an arithmetic target.
 
 **Prepared next primitive: fixed DMA-register writes for HDMA allocation.**
-After the current join lands, investigate the existing owned DMA writer as the
+The assigned source owner investigates the existing owned DMA writer as the
 leaf for `visual_runtime::{initialize_hdma,spawn_hdma,spawn_hdma_last,
 spawn_hdma_words}` and their fixed initializers. Allocation only selects slots
 0..5; control/target writes therefore use 0x4320/21 through 0x4370/71. The
 current generic `WriteRegWord` makes these wrappers unsafe although the joined
-backend's DMA-register mutation is safe. This is a scoped opportunity, not an
-approved source change or a new claimed reduction.
+backend's DMA-register mutation is safe. Assignment is active; no source PASS,
+runtime result or reduction is claimed before the concrete handoff is verified.
 
 Preserve the entire register-write protocol: low byte, post-write observer,
 high byte, post-write observer; original missing-backend failure point; original
@@ -102,13 +110,13 @@ caller removal; keep unrelated bus, HDMA execution, reset and renderer contracts
 **Ready support handoff: fail before compiling an incomplete source inventory.**
 The isolated `tools/verify_dll.py` draft in [mailbox6437909267](https://github.com/JimLundin/sm-decomp/issues/2#issuecomment-6437909267)
 reuses the loaded-library guard's exact expected-file classification and checks
-literal FILES bindings before compiler startup. Actual569 bindings pass; missing,
+literal FILES bindings before compiler startup. All 569 bindings pass; missing,
 duplicate, wrong-path and inactive/conditional entries fail before the compiler.
 The runtime source/native guards remain unchanged. Cost +42 support Python lines,
-+1,904 raw bytes; production/legacy/unsafe/verification Rust all0. Warm preflight
-median130ms is measured, not a claimed build-time reduction. Sole integrator may
++1,904 raw bytes; production/legacy/unsafe/verification Rust all zero. Warm preflight
+median 130ms is measured, not a claimed build-time reduction. Sole integrator may
 adopt the lossless exact-parent patch beside the next code change; it must not
-alter or delay current ce8b qualification/landing.
+invalidate the accepted ce8b campaign or cause unnecessary recapture.
 
 **Prepared architecture closure: owned continuation and checkpoint locality.**
 This is design ahead of the existing queue, not a second work order. Keep the
@@ -132,9 +140,15 @@ or unnecessary. No first scalar extraction earns removal of whole Game from
 codec compatibility; initialization, restore, RAM/ROM and backend dependencies
 must close before a contributor can disappear. Prepare the coherent closure
 before one codec freeze/capture campaign, rather than recapturing per extraction.
+Do not combine unrelated decoder, projectile, recorder and oracle fields into
+a permanent Session state bag. StateRecorder and ApuQueue already own storage.
+The current archive visits 31 distinct non-RAM Game fields; classify their actual
+responsibilities. A bounded candidate is the existing decoder's source-cursor
+lifecycle, but that alone earns no code/unsafe/capture saving and adds a real
+codec contributor. Do not schedule a cursor wrapper as the next throughput fix.
 
 The existing runner already reuses complete DLLs and exact-source prefixes.
-Its56-byte checkpoint header lacks capture-source/native/build-profile context;
+Its 56-byte checkpoint header lacks capture-source/native/build-profile context;
 switching caches to codec-only or scanning opaque old directories would lose a
 guard. Future genuinely captured envelopes can own immutable provenance, including
 where the current producer's executed interval began. Inherited prefix history

@@ -1255,26 +1255,6 @@ crate::game::callback_dispatch! {
         game.ram().write_byte(0x51, 15);
         word!(game.cinematicspr_preinstr_func[(k >> 1)] = (0x8b93d9i32) as u16);
     };
-    [9152744] SetSomeStuffForSpriteObject_4_MetroidEgg [] {
-        if word!(game.samus_x_pos) as i32 - 169i32 & 0x8000 != 0 {
-            let v1: i32 = k as i32 >> 1;
-            word!(game.cinematicspr_instr_timer[v1] = 1);
-            word!(game.cinematicspr_instr_ptr[v1] = addr_word_8BCB3B as u16);
-            word!(game.cinematicspr_preinstr_func[v1] = (0x8b93d9i32) as u16);
-        }
-    };
-    [9154074] SetSomeStuffForSpriteObject_18 [] {
-        if word!(game.cinematic_var16) == 59 {
-            let v1: i32 = k as i32 >> 1;
-            word!(game.cinematicspr_instr_timer[v1] = 1);
-            word!(game.cinematicspr_instr_ptr[v1] = addr_word_8BCC23 as u16);
-        }
-        if word!(game.cinematic_var13) == 127 {
-            let v2: i32 = k as i32 >> 1;
-            word!(game.cinematicspr_instr_timer[v2] = 1);
-            word!(game.cinematicspr_instr_ptr[v2] = addr_off_8BCE53 as u16);
-        }
-    };
     [9157389] CinematicFunction_Intro_Func52 [] {
         let v1: bool = (word!(game.cinematic_var14 -= 1, reread) & 0x8000) != 0;
         if word!(game.cinematic_var14) == 0 || v1 {
@@ -1297,14 +1277,6 @@ crate::game::callback_dispatch! {
                 word!(game.cinematic_var13 = (word!(game.cinematic_var13) as i32 + 1 & 7) as u16);
             }
         };
-    };
-    @functions [pub unsafe fn (j: u16, game: &mut Game)];
-    [9171621] CinematicFunction_Intro_Func184 [] {
-        if word!(game.cinematicspr_instr_ptr[15]) == 0 {
-            let v2: i32 = j as i32 >> 1;
-            word!(game.cinematicspr_instr_timer[v2] = 1);
-            word!(game.cinematicspr_instr_ptr[v2] = addr_off_8BEE9B as u16);
-        }
     };
     @functions [pub unsafe fn (k: u16, game: &mut Game)];
     @prefix { let v1: i32 = k as i32 >> 1; };
@@ -1376,6 +1348,9 @@ crate::game::callback_dispatch! {
         }
     };
     @external {
+        9152744 => [intro_pages::advance_scene_sprite(j, 0, game)];
+        9154074 => [intro_pages::advance_scene_sprite(j, 1, game)];
+        9171621 => [intro_pages::advance_scene_sprite(j, 2, game)];
         9156486 => [crate::game::visual_runtime::advance_intro_mother_brain(j, 0, game)];
         9171495 => [{ crate::game::visual_runtime::advance_ending_sprite_pair(usize::from(j >> 1), false, game); }];
         9156623 => [{ crate::game::visual_runtime::advance_intro_mother_brain(j, 1, game); }];

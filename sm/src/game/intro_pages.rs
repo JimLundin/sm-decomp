@@ -49,11 +49,29 @@ fn load_japanese_line(address: u16, game: &mut Game) {
     }
 }
 
+#[forbid(unsafe_code)]
+pub(super) fn advance_scene_sprite(object: u16, scene: u8, game: &mut Game) {
+    let slot = usize::from(object >> 1);
+    if scene == 0 {
+        if word!(game.samus_x_pos) as i32 - 169 & 0x8000 != 0 {
+            super::visual_runtime::resume_cinematic_sprite(slot, 0xcb3b, game);
+            word!(game.cinematicspr_preinstr_func[slot] = 0x93d9);
+        }
+    } else if scene == 1 {
+        if word!(game.cinematic_var16) == 59 {
+            super::visual_runtime::resume_cinematic_sprite(slot, 0xcc23, game);
+        }
+        if word!(game.cinematic_var13) == 127 {
+            super::visual_runtime::resume_cinematic_sprite(slot, 0xce53, game);
+        }
+    } else if word!(game.cinematicspr_instr_ptr[15]) == 0 {
+        super::visual_runtime::resume_cinematic_sprite(slot, 0xee9b, game);
+    }
+}
+
 pub(super) fn wait_for_scene_end(object: u16, stop_samus: bool, game: &mut Game) {
     if word!(game.cinematic_var13) == 0 {
-        let slot = usize::from(object >> 1);
-        word!(game.cinematicspr_instr_timer[slot] = 1);
-        word!(game.cinematicspr_instr_ptr[slot] = 0xce53);
+        super::visual_runtime::resume_cinematic_sprite(usize::from(object >> 1), 0xce53, game);
         if stop_samus {
             word!(game.cinematic_var15 = 0);
         }
@@ -63,8 +81,7 @@ pub(super) fn wait_for_scene_end(object: u16, stop_samus: bool, game: &mut Game)
 pub(super) fn advance_laboratory_baby(object: u16, examined: bool, game: &mut Game) {
     let slot = usize::from(object >> 1);
     if word!(game.cinematic_var13) == 0 {
-        word!(game.cinematicspr_instr_timer[slot] = 1);
-        word!(game.cinematicspr_instr_ptr[slot] = 0xce53);
+        super::visual_runtime::resume_cinematic_sprite(slot, 0xce53, game);
     } else if word!(game.cinematic_var4) & 3 == 0 {
         if examined {
             if word!(game.cinematic_var10) as i32 - 8 & 0x8000 != 0 {

@@ -48,62 +48,34 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current sourcece8b: production114244, legacy18459, unsafe2637, verification41828; warnings160.
-Core sm82 persists actor/media identities and saved ROM patches; RAM/native frame dependencies remain explicit.
-Historical f158c44fac33eac7 qualification retains39 contributors/652740 source bytes;
-prepared110/initialized329+5,14 captures189475 frames and full22 byte-identical restore at original source.
-Native startup now returns success; pixel preparation borrows the current GameOwner, no retained Snes pointer.
-Native3 source6dd3/library/frontend33 checks+569 inputs/DLLfe9e passes; five local rows10967 selected+272 setup/0.
-Codec2854b408fa453744 has39 contributors/652841 source bytes; prepared110 source lines/boot329+5
-retain accepted dce54 attribution. No full14/full22/full86, startup/device or full ownership claim.
-Cost +3 engine Rust, -1 native header/-1 installer support; unsafe/legacy/verification unchanged.
-Required sm82 AST8.06min:3 options kills; unsafe gameplay omission unavailable.
-Blackout37/native failure variants remain unobserved; hardware entry contracts stay explicit.
-sm9b retired: scoped AST3 kills3453 selected/0 setup; original target750d/0cdf attribution retained.
-Own-sm9b941 full86 passes136526 selected+38827 setup/0; all14 originals and bothKago14350 retained.
-Logo/page2 passes10967 selected+272 setup/0; boot has replay/source support, exact page2 callback remains unobserved.
-Launcher cleanup passes local2187 selected+272 setup/0 and Linux10 existing before/after entry runs; -36 verification, engine unchanged.
-Display shadows pass current10967 selected+272 setup/0: 49 static raw byte sites retired; line counts unchanged.
-Particle axes pass10967 selected+272 setup/0: five authored steps shared; -12 engine/-12 legacy, native diagnostics retained.
-Sky byte references pass2787 selected+272 setup/0: three raw accesses/two mutable bindings retired; initializers remain source-scoped.
-Next: joint stable WRAM ownership; Linux backend storage, Windows Game/RAM and actual consumers, cloud banks coordinated first.
-Linux M: map-menu selection/safe callbacks -25 engine/-16 unsafe metric; raw pointers unchanged, six unsafe entries retained.
-Linux M: native room diagnostic/store +1 engine/-1 unsafe metric; Bomb request dispatch -39 engine/unsafe0.
-Combined source2d5c passed eight hosted rows17968 selected+21384 setup/0 and ordinary CI; tested=landed88b3.
-Keep low-address failure, fresh native pointer capture and CrystalFlashStart source scope explicit.
-Linux M: share four owned projectile axis kernels -23 physical/-24 substantive engine; unsafe/interfaces unchanged.
-Source1bf7 passed six rows2429 selected+272 setup/0 and ordinary CI; tested=landedae0f.
-Exact spike/DBF2/lavaquake kernels remain source-only.
-Windows M: two MotherBrain signed magnitude paths share one private pure helper; -3 physical/-5 substantive engine.
-Source d6fa/library165 unchanged/DLLde438 passes seven local rows10883 selected+272 setup/0;
-exact two variants remain source-only. Raw source grows50 bytes; unsafe/legacy/verification/support unchanged.
-Windows M: MotherBrain visuals replace three native actor pointer accesses with existing slot values; private getter removed.
-Source18c78/library165 unchanged/DLLff98 passes9 local rows19784 selected+272 setup/0; fullMother/intro8780/Morph1200 retained.
-Cost -5 engine (-3 getter, -2 unused compiler wrapper lines), -1 unsafe; legacy/verification/support unchanged, raw -147B.
-Codec39/2854 unchanged; health guard/bands and exact seal-wall store-order variants remain source-scoped.
-Windows M: MotherBrain body shares one pure Step constructor for all22 movement addresses; duplicate constructor removed.
-Source84bdd/library165 unchanged/DLLc26e passes9 rows19784 selected+272 setup/0; fullMother/intro8780/Morph1200 retained.
-Cost -9 physical/-8 substantive engine, -63B; explicit arguments add18 tokens. Unsafe/legacy/verification/support and codec39 unchanged.
-Linux M: setup14 shares fresh native-word reads -51 physical/-52 substantive engine; source review pass.
-Keep seven fresh indices/five multi-read blocks; source9964 passed16 rows16977 selected+1713 setup/0 and ordinary CI.
-Linux M: six more signed8.8 projectile blocks reuse unchanged axis helper -43 physical/substantive engine.
-Sourceb5aa review/format/library pass165 warnings; eight related+smoke rows3924 selected+272 setup/0;
-Linux tested=landed7aa8 author receipt6432458588; exact variants remain source-only.
-ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
-Native player/DSP/APU and input Vec/FILE/Cart are owned; GameOwner does not promise Rust thread sharing.
-Keep SDL/native/audio quiescence and CRT order; invalid SIZE_MAX/malloc0 callbacks
-remain outside universal equivalence. Whole Session and independent media remain unfinished.
-WRAM/Execution ce8b qualified: owned backend WRAM binding, private DMA/Input storage,
-Execution links and all actual byte/getter/macro consumers close; g_ram layout remains exact.
-Final fmt/library/DLL pass160 warnings vs165, no new warning identities; native11 archives/29 inputs bound.
-Full86/44 required:136526 selected+38827 setup; all14 original captures189475/0 and full22 encrypted byte-identical restore.
-Genuine initialized329/payload+5 continuation, both independent Kago14350, complete inputs/native/source and611..616 guards retained.
-Net versus84bdd: +2320 production/+1106 legacy/-75 unsafe/+1443 verification; +188216 canonical raw bytes.
-Growth is checked WRAM value operations and expanded consumer bindings, counted as engine; this is not architectural deduplication.
-Compiler fixpoint removes96 unnecessary blocks/94 flattened bodies, no unsafe function signatures; conservative taint remains.
-Checker reuses only unchanged accepted compiler results (+13 support lines); no cross-workload speed claim.
-Session/backend independence, native/device/failure variants and full owned gameplay remain unfinished.
-Next: complete fixed HDMA writer/initializer cohort, separate sm8b and Linux AA source drafts; qualify each on current main.
+Current source4ece: production114239, legacy18434, unsafe2638, verification41828; warnings160.
+Qualified WRAM/Execution: Game/Backend share stable WorkRam; private DMA/Input
+storage and actual byte/getter/macro consumers close with exact RAM layout.
+Initialized329+5, full86 (136526 selected+38827 setup),14 genuine captures189475,
+full22 byte-identical restore and both Kago14350 pass at recorded source/native identities.
+Prepared110/native-startup proofs retain original dce54/f158 attribution; no startup/device,
+full Session/backend independence or universal native/failure claim. Prior receipts and
+mutation witnesses remain in [qualified history](https://github.com/JimLundin/sm-decomp/blob/43117e058f0de398858dfd8be5db4f3d75e9a0d8/docs/PLAN.md#current-work-and-limits).
+Net WRAM cut versus84bdd: +2320 production/+1106 legacy/-75 unsafe/+1443 verification;
++188216 canonical raw bytes. Checked consumer/value safety grows engine code, not deduplication.
+B2 continuations4ece:3 callbacks/12 resumes pass19 rows62432 selected+272 setup/0,
+fmt/library/DLL160 unchanged warnings and complete source/native/input/seed guards.
+Net -5 production/-25 legacy/+1 unsafe metric from two safety attributes; bank remains.
+Source-list preflight569 entries adds42 support lines; original loaded guards retained.
+Next: reviewed fixed HDMA writer/initializer cohort and separate Linux AA family on current main.
+
+Source-only: Blackout37, exact page2 callback, sky initializers, CrystalFlashStart,
+spike/DBF2/lavaquake and additional signed8.8 kernels; MotherBrain magnitude,
+health/bands and seal-wall store-order variants. Preserve setup14's seven fresh indices
+and five multi-read blocks, low-address failure and fresh native pointer capture.
+Keep CRT logger buffering/output/error/flush hold.
+Native player/DSP/APU and input Vec/FILE/Cart owners retain SDL/native/audio quiescence,
+CRT order and GameOwner's non-sharing contract; SIZE_MAX/malloc0 cases remain excluded.
+sm82 AST:3 options kills/8.06min, unsafe gameplay omission unavailable. sm9b AST:3 kills,
+original750d/0cdf attribution and own941 post-deletion full86 retained.
+Fixpoint96 unnecessary blocks/94 flattened bodies strips no unsafe function signatures;
+conservative taint and reuse of only unchanged accepted compiler results remain required.
+Checker+13 support lines; old timing is not a cross-workload speedup.
 
 Coverage is86 manifest rows/44 required scenarios, not universal behavior proof.
 Keep full inputs/guards/assets: intro8780, Morph1200, bomb-jump800, crawler8, Gunship300,
@@ -216,7 +188,7 @@ checked source/rebuild loaded DLLs. Explicit followup_task wakes completed worke
 send_message alone does not. Refill ready work without waiting on review prose.
 Budget compilers/replays/source separately, including accepted launchers before rustc
 and admitted jobs' remaining growth; release admission as soon as compilation ends.
-Start compilers above3GiB free; reserve1.4GiB/library or1.8GiB/DLL and leave >=2GiB.
+Start compilers above3GiB free; reserve1.6GiB/library or1.8GiB/DLL and leave >=2GiB.
 Below2GiB/resource errors stop newest producer, not every lightweight reader.
 Measure CPU/RAM/paging/disk/useful throughput: two -j1 builds76.06s versus114.12s serial;
 three is unproven. Raise concurrency only when budgets

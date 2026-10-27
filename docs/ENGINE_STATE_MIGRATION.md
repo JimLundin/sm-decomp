@@ -28,10 +28,12 @@ and the condition that permits its removal.
 
 ## Memory and identity constraints
 
-- Rust gameplay, the CPU's `Snes::ram`, snapshots and physical writes share the
-  same `g_ram` allocation. Keep its SNES byte layout compatible while any consumer
-  depends on it. Do not create whole-RAM references or slices while retained raw
-  pointers can alias them; checked access alone does not settle aliasing.
+- Game and the retained Backend share one stable WorkRam allocation. Gameplay,
+  CPU/physical access and snapshot capture/adoption use that allocation; snapshots
+  are separate byte copies. Keep its SNES byte layout compatible while consumers
+  depend on it. WorkRam copies Cell<u8> values without exposing live u8 references
+  or a raw RAM base. Preserve this value-copy model and audit remaining raw aliases
+  before introducing references or slices.
 - Indexed/native operations can reach another nominal field or array. Preserve
   full-u16 and odd identities, wrapping arithmetic, unknown values, native versus
   little-endian words, allocation provenance and off-table alias behavior.

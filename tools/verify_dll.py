@@ -5,6 +5,7 @@ import ctypes
 import hashlib
 import json
 import os
+import re
 import runpy
 from pathlib import Path
 import shutil
@@ -62,6 +63,51 @@ def load_host(dll):
     return host
 
 
+def library_source_paths(root):
+    paths = {path.relative_to(root).as_posix()
+             for path in (root / "sm" / "src").rglob("*")
+             if path.suffix in (".rs", ".c", ".h")}
+    paths.difference_update(("sm/src/main.rs", "sm/src/verify.rs",
+                             "sm/src/verify_dll.rs", "sm/src/verify/checkpoint.rs",
+                             "sm/src/verify/seed.rs"))
+    return paths
+
+
+def check_source_inventory(root):
+    """Reject incomplete literal source bindings before starting a compiler."""
+    expected = library_source_paths(root)
+    inventory = (root / "sm/src/verify_source.rs").read_text(encoding="utf-8")
+    declaration = re.fullmatch(
+        r'(?:\s*//![^\n]*\n)*\s*pub\s+static\s+FILES\s*:\s*'
+        r'&\[\(&str,\s*&\[u8\]\)\]\s*=\s*&\[(.*)\];\s*',
+        inventory, re.DOTALL,
+    )
+    if declaration is None:
+        raise RuntimeError("source preflight requires the literal FILES declaration in sm/src/verify_source.rs")
+    entries = declaration.group(1)
+    offset = 0
+    for binding in re.finditer(
+        r'\(\s*"([^"\\]+)",\s*include_bytes!\s*\(\s*"([^"\\]+)"\s*\),?\s*\)\s*,',
+        entries,
+    ):
+        if entries[offset:binding.start()].strip():
+            raise RuntimeError("source preflight requires literal FILES tuples; comments or expressions need review")
+        offset = binding.end()
+        path, included = binding.groups()
+        if path not in expected:
+            raise RuntimeError(f"unexpected or repeated game-library source: {path}; "
+                               "update sm/src/verify_source.rs before building")
+        expected.remove(path)
+        if (root / "sm/src" / included).resolve() != (root / path).resolve():
+            raise RuntimeError(f"game-library source include differs: {path}; "
+                               "update sm/src/verify_source.rs before building")
+    if entries[offset:].strip():
+        raise RuntimeError("source preflight requires literal FILES tuples; comments or expressions need review")
+    if expected:
+        raise RuntimeError("game-library source list incomplete; update sm/src/verify_source.rs: "
+                           + ", ".join(sorted(expected)))
+
+
 def check_library(host, root):
     """Compare the rlib's compiled source bytes, not the host's environment."""
     if not hasattr(host, "sm_verify_source_file"):
@@ -73,12 +119,7 @@ def check_library(host, root):
 
     host.sm_verify_source_file.argtypes = [ctypes.c_size_t]
     host.sm_verify_source_file.restype = SourceFile
-    expected = {path.relative_to(root).as_posix()
-                for path in (root / "sm" / "src").rglob("*")
-                if path.suffix in (".rs", ".c", ".h")}
-    expected.difference_update(("sm/src/main.rs", "sm/src/verify.rs",
-                                "sm/src/verify_dll.rs", "sm/src/verify/checkpoint.rs",
-                                "sm/src/verify/seed.rs"))
+    expected = library_source_paths(root)
     for index in range(len(expected) + 1):
         source = host.sm_verify_source_file(index)
         if source.path_len == 0:
@@ -194,6 +235,7 @@ def cargo_host(root, rustc, output, source, frontend=False, retry=True):
 
 
 def build(root, rustc, use_cargo=None, frontend=False):
+    check_source_inventory(root)
     source = source_hash(root)
     output = root / "target" / "verify-dll"
     output.mkdir(parents=True, exist_ok=True)
