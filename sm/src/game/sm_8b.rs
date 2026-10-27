@@ -563,30 +563,6 @@ crate::game::callback_dispatch! {
         QueueMusic_Delayed8(0, game);
         QueueMusic_Delayed8(0xff3f, game);
     };
-    [9151911] CinematicFunction_Intro_FadeIn [] {
-        if HasQueuedMusic(game) & 1 == 0 {
-            word!(game.cinematic_function = (0x8ba5bdi32) as u16);
-            word! { game, 2; screen_fade_delay, screen_fade_counter }
-        }
-    };
-    [9151933] CinematicFunction_Intro_DrawInitJpn [] {
-        if advance_cinematic_fade(CinematicFade::SlowIn, game) {
-            word! {game; cinematic_function = ((0x8ba5f8i32) as u16); cinematic_var4 = 60; }
-            if word!(game.japanese_text_flag) != 0 {
-                queue_cinematic_tilemap(CinematicTilemap::JapaneseIntro, game);
-            }
-        }
-    };
-    [9152057] CinematicFunc_Intro_WaitForQueueWait4secs [] {
-        if HasQueuedMusic(game) & 1 == 0 {
-            word! {game; cinematic_function = ((0x8ba64ci32) as u16); cinematic_var4 = 240; }
-        }
-    };
-    [9152099] CinematicFunc_Intro_WaitForFadeOut [] {
-        if advance_cinematic_fade(CinematicFade::SlowOut, game) {
-            word!(game.cinematic_function = (0x8ba66fi32) as u16);
-        }
-    };
     [9152111] CinematicFunc_Intro_SetupTextPage2 [] {
         intro_pages::clear_japanese_tiles(game);
         GraphicsAsset::VramWords(0x7e4000, 0x4180, 0x600).load(game);
@@ -612,18 +588,6 @@ crate::game::callback_dispatch! {
         QueueMusic_Delayed8(0xff36, game);
         QueueMusic_DelayedY(5, 0xe, game);
         word!(game.cinematic_function = (0x8ba82bi32) as u16);
-    };
-    [9152555] CinematicFunc_Intro_WaitFadeinShowText [] {
-        if HasQueuedMusic(game) & 1 == 0 {
-            word!(game.cinematic_function = (0x8ba84ai32) as u16);
-            word! { game, 2; screen_fade_delay, screen_fade_counter }
-            CinematicBackground.spawn(addr_kCinematicBgObjectDef_8BCF3F as u16, 0x4c00, game);
-        }
-    };
-    [9152586] CinematicFunc_Intro_WaitForFadeinSleep [] {
-        if advance_cinematic_fade(CinematicFade::SlowIn, game) {
-            word!(game.cinematic_function = (0x8ba391i32) as u16);
-        }
     };
     [9157792] CinematicFunction_Intro_Func54 [] {
         configure_cinematic_display(CinematicDisplay::Station, game);
@@ -1247,6 +1211,12 @@ crate::game::callback_dispatch! {
         9150248 => [()];
         9151375 => [()]; 9151376 => [()];
         9151377 => [CinematicFunc_Nothing()];
+        9151911 => [intro_pages::wait_for_music(0xa5bd, game)];
+        9151933 => [intro_pages::wait_for_fade(CinematicFade::SlowIn, 0xa5f8, game)];
+        9152057 => [intro_pages::wait_for_music(0xa64c, game)];
+        9152099 => [intro_pages::wait_for_fade(CinematicFade::SlowOut, 0xa66f, game)];
+        9152555 => [intro_pages::wait_for_music(0xa84a, game)];
+        9152586 => [intro_pages::wait_for_fade(CinematicFade::SlowIn, 0xa391, game)];
         9154232 => [intro_pages::wait_for_scene(intro_pages::Scene::MotherBrain, game)];
         9154412 => [intro_pages::wait_for_scene(intro_pages::Scene::BabyMetroid, game)];
         9154802 => [intro_pages::wait_for_scene(intro_pages::Scene::ScientistPage3, game)]; 9154851 => [intro_pages::wait_for_scene(intro_pages::Scene::ScientistPage4, game)];

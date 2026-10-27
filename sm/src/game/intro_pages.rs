@@ -11,18 +11,20 @@ use super::constants::bank_91::{addr_stru_91877E, addr_stru_918784};
 use super::constants::samus_poses::kPose_02_FaceL_Normal;
 use super::palette_effects;
 use super::sm_8b::{
-    addr_kCinematicBgObjectDef_8BCF5D, addr_kCinematicSpriteObjectDef_8BCE5B,
-    addr_kCinematicSpriteObjectDef_8BCE55, addr_kCinematicSpriteObjectDef_8BCE61,
-    addr_kCinematicSpriteObjectDef_8BCE67, addr_kCinematicSpriteObjectDef_8BCE73,
-    addr_kCinematicSpriteObjectDef_8BCE79, addr_kCinematicSpriteObjectDef_8BCF27,
+    addr_kCinematicBgObjectDef_8BCF3F, addr_kCinematicBgObjectDef_8BCF5D,
+    addr_kCinematicSpriteObjectDef_8BCE5B, addr_kCinematicSpriteObjectDef_8BCE55,
+    addr_kCinematicSpriteObjectDef_8BCE61, addr_kCinematicSpriteObjectDef_8BCE67,
+    addr_kCinematicSpriteObjectDef_8BCE73, addr_kCinematicSpriteObjectDef_8BCE79,
+    addr_kCinematicSpriteObjectDef_8BCF27,
 };
 use super::visual_runtime::{
-    clear_cinematic_colors, compose_cinematic_palette, fade_cinematic_colors,
-    initialize_intro_crossfade, prepare_cinematic_palette_fade, queue_cinematic_tilemap,
-    set_cinematic_blend, set_cinematic_tilemap_updates, spawn_cinematic_sprite_at,
+    advance_cinematic_fade, clear_cinematic_colors, compose_cinematic_palette,
+    fade_cinematic_colors, initialize_intro_crossfade, prepare_cinematic_palette_fade,
+    queue_cinematic_tilemap, set_cinematic_blend, set_cinematic_tilemap_updates,
+    spawn_cinematic_sprite_at,
 };
-use super::visual_state::CinematicTilemap;
-use crate::game::music::QueueMusic_Delayed8;
+use super::visual_state::{CinematicFade, CinematicTilemap};
+use crate::game::music::{HasQueuedMusic, QueueMusic_Delayed8};
 use crate::game_state::Game;
 use crate::ram_map::{checked_word, ram_ptr, word};
 
@@ -295,6 +297,32 @@ pub(super) fn fade_to_scene(palette: Palette, game: &mut Game) {
     }
 }
 
+pub(super) fn wait_for_music(next: u16, game: &mut Game) {
+    if HasQueuedMusic(game) & 1 == 0 {
+        word!(game.cinematic_function = next);
+        if next == 0xa64c {
+            word!(game.cinematic_var4 = 240);
+        } else {
+            word! { game, 2; screen_fade_delay, screen_fade_counter }
+            if next == 0xa84a {
+                CinematicBackground.spawn(addr_kCinematicBgObjectDef_8BCF3F as u16, 0x4c00, game);
+            }
+        }
+    }
+}
+
+pub(super) fn wait_for_fade(fade: CinematicFade, next: u16, game: &mut Game) {
+    if advance_cinematic_fade(fade, game) {
+        word!(game.cinematic_function = next);
+        if next == 0xa5f8 {
+            word!(game.cinematic_var4 = 60);
+            if word!(game.japanese_text_flag) != 0 {
+                queue_cinematic_tilemap(CinematicTilemap::JapaneseIntro, game);
+            }
+        }
+    }
+}
+
 pub(super) fn start_page(next: u16, j: u16, game: &mut Game) -> u16 {
     word!(game.cinematic_function = next);
     set_cinematic_tilemap_updates(false, game);
@@ -303,7 +331,7 @@ pub(super) fn start_page(next: u16, j: u16, game: &mut Game) -> u16 {
     j
 }
 
-pub(super) unsafe fn show_page(object: u16, next: u16, game: &mut Game) {
+pub(super) fn show_page(object: u16, next: u16, game: &mut Game) {
     CinematicBackground.spawn(object, 0x4c00, game);
     word!(game.cinematic_function = next);
     setup_page_palettes(game);
@@ -361,7 +389,7 @@ pub(super) fn wait_after_japanese_text(next: u16, j: u16, game: &mut Game) -> u1
     j
 }
 
-pub(super) unsafe fn show_final_page(game: &mut Game) {
+pub(super) fn show_final_page(game: &mut Game) {
     set_cinematic_tilemap_updates(true, game);
     clear_english_text(game);
     CinematicBackground.spawn(addr_kCinematicBgObjectDef_8BCF5D as u16, 0x4c00, game);
@@ -370,18 +398,16 @@ pub(super) unsafe fn show_final_page(game: &mut Game) {
     QueueMusic_Delayed8(0, game);
 }
 
-pub(super) unsafe fn wait_for_final_page(game: &mut Game) {
-    unsafe {
-        if page_input_ready(game) {
-            word!(game.cinematic_var13 = 127);
-            if word!(game.japanese_text_flag) != 0 {
-                word!(game.cinematic_function = (0x8bb207i32) as u16);
-                set_cinematic_tilemap_updates(false, game);
-                clear_japanese_tiles(game);
-                queue_cinematic_tilemap(CinematicTilemap::Japanese, game);
-            } else {
-                show_final_page(game);
-            }
+pub(super) fn wait_for_final_page(game: &mut Game) {
+    if page_input_ready(game) {
+        word!(game.cinematic_var13 = 127);
+        if word!(game.japanese_text_flag) != 0 {
+            word!(game.cinematic_function = (0x8bb207i32) as u16);
+            set_cinematic_tilemap_updates(false, game);
+            clear_japanese_tiles(game);
+            queue_cinematic_tilemap(CinematicTilemap::Japanese, game);
+        } else {
+            show_final_page(game);
         }
     }
 }
