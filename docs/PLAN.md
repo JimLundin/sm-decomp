@@ -48,7 +48,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current tipc4ff: production112130, legacy17385, unsafe2733, verification40421; warnings165.
+Current tip5cac: production112129, legacy17385, unsafe2733, verification40421; warnings165.
 Core sm82 persists actor/media identities and saved ROM patches; RAM/native frame dependencies remain explicit.
 Codec f158c44fac33eac7 has39 contributors/652740 normalized source bytes.
 Prepared110/initialized329+5,14 genuine captures189475 frames and full22 byte-identical restore pass.
@@ -66,7 +66,8 @@ Intro callbacks pass11161 selected+272 setup/0: -4 engine/-30 legacy/-4 unsafe; 
 Mode7 callbacks pass11161 selected+272 setup/0: +4 engine/-33 legacy/-2 unsafe; signature closure, raw operations unchanged.
 Text glow passes10967 selected+272 setup/0: engine/legacy unchanged, unsafe -2; native pointer and two byte reads retired.
 Mother Brain flicker/earthquake passes22681 selected+272 setup/0: +1 engine/-1 unsafe; five dereferences/two RAM pointers retired.
-Next: native FX definitions, background/credits and logo/page2 raw writes; source work remains disjoint.
+Native FX definitions pass11183 selected+272 setup/0: -1 engine/unsafe unchanged; duplicate capture/raw pointer retired.
+Next: background/credits and logo/page2 raw writes; source work remains disjoint.
 Linux file-menu a04/source57ea landed: five10967 selected+272 setup/0; -41 engine/-18 unsafe, claim/branch retired.
 ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
 A4 post-push full86 passed on0a; its scoped3kills/1unobserved/1unviable gaps remain.

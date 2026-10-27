@@ -355,10 +355,9 @@ fn apply_fx(h: &mut Runtime<'_>, definition: &RomRecord, palette: PaletteBuffer)
     }
 }
 
+#[forbid(unsafe_code)]
 fn fx_definition(address: u16, game: &mut Game) -> RomRecord {
-    let address = 0x830000 | u32::from(address);
-    unsafe { crate::rtl::RomPtr(address, game) };
-    crate::game::player_projectiles::content::captured(game.capture_native_rom(), address)
+    crate::game::menu_tilemap::native_record(0x830000 | u32::from(address), game)
 }
 
 pub(crate) fn load_fx_entry(index: u16, game: &mut Game) {
