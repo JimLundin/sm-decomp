@@ -171,43 +171,27 @@ pub(super) fn Eproj_PreInstr_SkreeParticle(k: u16, ctx: &mut impl Host) {
     }
 }
 
+fn move_spike_axis(k: u16, x: bool, velocity: SlotField, ctx: &mut impl Host) {
+    let index = (k >> 1) as isize;
+    let amount = ((read_member(ctx, velocity, index) as i16 as i32) << 8) as u32;
+    let (high, low) = if x {
+        (SlotField::X, SlotField::XFraction)
+    } else {
+        (SlotField::Y, SlotField::YFraction)
+    };
+    add_split(high, low, index, amount, ctx);
+}
+
 pub(super) fn EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k: u16, ctx: &mut impl Host) {
-    let v1: i32 = k as i32 >> 1;
-    let split_amount =
-        ((enemy!(ctx, (v1 as usize) as isize, velocity_y) as i16 as i32) << 8) as u32;
-    add_split(
-        SlotField::Y,
-        SlotField::YFraction,
-        (v1 as usize) as isize,
-        split_amount,
-        ctx,
-    );
+    move_spike_axis(k, false, SlotField::VelocityY, ctx);
 }
 
 pub(super) fn EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(k: u16, ctx: &mut impl Host) {
-    let v1: i32 = k as i32 >> 1;
-    let split_amount =
-        ((enemy!(ctx, (v1 as usize) as isize, velocity_y) as i16 as i32) << 8) as u32;
-    add_split(
-        SlotField::X,
-        SlotField::XFraction,
-        (v1 as usize) as isize,
-        split_amount,
-        ctx,
-    );
+    move_spike_axis(k, true, SlotField::VelocityY, ctx);
 }
 
 pub(super) fn EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k: u16, ctx: &mut impl Host) {
-    let v1: i32 = k as i32 >> 1;
-    let split_amount =
-        ((enemy!(ctx, (v1 as usize) as isize, velocity_x) as i16 as i32) << 8) as u32;
-    add_split(
-        SlotField::X,
-        SlotField::XFraction,
-        (v1 as usize) as isize,
-        split_amount,
-        ctx,
-    );
+    move_spike_axis(k, true, SlotField::VelocityX, ctx);
 }
 
 pub(super) fn EprojPreInstr_SpikeShootingPlantSpikes_6_MoveX1Y1(k: u16, ctx: &mut impl Host) {
@@ -1920,14 +1904,7 @@ pub(super) fn sub_86D7DE(k: u16, ctx: &mut impl Host) {
 }
 
 pub(super) fn EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(k: u16, ctx: &mut impl Host) {
-    let v1: i32 = k as i32 >> 1;
-    add_split(
-        SlotField::Y,
-        SlotField::YFraction,
-        v1 as isize,
-        ((enemy!(ctx, (v1) as isize, velocity_x) as i16 as i32) << 8) as u32,
-        ctx,
-    );
+    move_spike_axis(k, false, SlotField::VelocityX, ctx);
 }
 
 pub(super) use self::EprojPreInstr_SpikeShootingPlantSpikes_MoveX1 as EprojPreInstr_DBF2_MoveX1;

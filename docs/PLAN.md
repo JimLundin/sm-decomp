@@ -48,7 +48,7 @@ shared Python installers/runtime-only restores are support work, counted separat
 
 ## Current work and limits
 
-Current source2d5c: production112055, legacy17353, unsafe2713, verification40385; warnings165.
+Current source1bf7: production112032, legacy17353, unsafe2713, verification40385; warnings165.
 Core sm82 persists actor/media identities and saved ROM patches; RAM/native frame dependencies remain explicit.
 Codec f158c44fac33eac7 has39 contributors/652740 normalized source bytes.
 Prepared110/initialized329+5,14 genuine captures189475 frames and full22 byte-identical restore pass.
@@ -64,8 +64,10 @@ Sky byte references pass2787 selected+272 setup/0: three raw accesses/two mutabl
 Next: joint stable WRAM ownership; Linux backend storage, Windows Game/RAM and actual consumers, cloud banks coordinated first.
 Linux M: map-menu selection/safe callbacks -25 engine/-16 unsafe metric; raw pointers unchanged, six unsafe entries retained.
 Linux M: native room diagnostic/store +1 engine/-1 unsafe metric; Bomb request dispatch -39 engine/unsafe0.
-Combined final source2d5c has format/library/source review pass; hosted eight-row qualification pending.
+Combined source2d5c passed eight hosted rows17968 selected+21384 setup/0 and ordinary CI; tested=landed88b3.
 Keep low-address failure, fresh native pointer capture and CrystalFlashStart source scope explicit.
+Linux M: share four owned projectile axis kernels -23 physical/-24 substantive engine; unsafe/interfaces unchanged.
+Source1bf7 format/library/review pass; related six rows pending, exact spike/DBF2/lavaquake kernels source-only.
 ROM logger substitution is held for CRT buffering/output/error/flush equivalence.
 Native player/DSP/APU and input Vec/FILE/Cart are owned; GameOwner does not promise Rust thread sharing.
 Keep SDL/native/audio quiescence and CRT order; invalid SIZE_MAX/malloc0 callbacks
